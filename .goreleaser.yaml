@@ -50,6 +50,7 @@ brews:
       owner: hero-engine
       name: homebrew-tap
       token: "{{ .Env.TAP_TOKEN }}"
+    directory: Formula
     url_template: "https://github.com/hero-engine/hero-releases/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     homepage: "https://hero-engine.dev"
     description: "Spec-driven AI engineering workflow"
