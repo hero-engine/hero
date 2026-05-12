@@ -117,12 +117,11 @@ func TestRunDryRun(t *testing.T) {
 	}
 }
 
-func TestRunRefusesOverwrite(t *testing.T) {
+func TestRunRefusesOverwriteOnDrift(t *testing.T) {
 	sourceDir := t.TempDir()
 	targetDir := t.TempDir()
 	createContent(t, sourceDir)
 
-	// First install
 	opts := Options{
 		SourceDir: sourceDir,
 		Target:    TargetOpenCode,
@@ -131,19 +130,81 @@ func TestRunRefusesOverwrite(t *testing.T) {
 		Force:     false,
 	}
 
-	_, err := Run(opts)
-	if err != nil {
+	if _, err := Run(opts); err != nil {
 		t.Fatalf("first Run failed: %v", err)
 	}
 
-	// Second install without force should fail
-	_, err = Run(opts)
-	if err == nil {
-		t.Fatal("Run should refuse to overwrite without --force")
+	// Introduce drift: the installed file no longer matches what we'd
+	// write. Without --force, the second install must refuse rather
+	// than silently clobbering the local edit.
+	driftPath := filepath.Join(targetDir, ".opencode", "agents", "engineer.md")
+	if err := os.WriteFile(driftPath, []byte("# Engineer Agent (locally edited)"), 0o644); err != nil {
+		t.Fatalf("seed drift: %v", err)
 	}
 
+	_, err := Run(opts)
+	if err == nil {
+		t.Fatal("Run should refuse to overwrite drifted file without --force")
+	}
 	if !strings.Contains(err.Error(), "refusing to overwrite") {
 		t.Errorf("error should mention refusing to overwrite: %v", err)
+	}
+}
+
+func TestRunIdempotentReinstall(t *testing.T) {
+	sourceDir := t.TempDir()
+	targetDir := t.TempDir()
+	createContent(t, sourceDir)
+
+	opts := Options{
+		SourceDir: sourceDir,
+		Target:    TargetOpenCode,
+		Mode:      ModeProject,
+		TargetDir: targetDir,
+		Force:     false,
+	}
+
+	if _, err := Run(opts); err != nil {
+		t.Fatalf("first Run failed: %v", err)
+	}
+
+	// Same binary, same source, nothing edited: second Run should
+	// succeed silently — the canonical content already matches what
+	// we would write, so the idempotency contract takes over.
+	result, err := Run(opts)
+	if err != nil {
+		t.Fatalf("idempotent re-run should succeed: %v", err)
+	}
+	if len(result.Skipped) != 0 {
+		t.Errorf("idempotent re-run should not record Skipped entries, got %v", result.Skipped)
+	}
+}
+
+func TestRunIdempotentAcrossTargets(t *testing.T) {
+	sourceDir := t.TempDir()
+	targetDir := t.TempDir()
+	createContent(t, sourceDir)
+
+	// First harness — populates the canonical .hero/ tree.
+	if _, err := Run(Options{
+		SourceDir: sourceDir,
+		Target:    TargetClaude,
+		Mode:      ModeProject,
+		TargetDir: targetDir,
+	}); err != nil {
+		t.Fatalf("first target install failed: %v", err)
+	}
+
+	// Second harness against the same project — must succeed without
+	// --force, even though canonical content already exists from the
+	// first install. This is the user-facing multi-harness scenario.
+	if _, err := Run(Options{
+		SourceDir: sourceDir,
+		Target:    TargetOpenCode,
+		Mode:      ModeProject,
+		TargetDir: targetDir,
+	}); err != nil {
+		t.Fatalf("second target install must succeed without --force: %v", err)
 	}
 }
 
