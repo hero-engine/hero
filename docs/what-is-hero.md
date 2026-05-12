@@ -97,6 +97,32 @@ so it can answer questions like "why does this file exist," "what's
 blocked," and "what conventions apply to the code I'm editing right
 now."
 
+## Coding Is the First Vertical, Not the Only One
+
+Most of this guide talks about AI *coding* tools because engineering
+is the domain Hero ships with today — and what most early users are
+using it for. But the underlying engine is domain-agnostic: capturing
+context, running spec lifecycles, querying a project corpus is a
+shape that fits more than one kind of knowledge work.
+
+Hero is built as two layers:
+
+- **Hero Core** — the domain-agnostic engine: corpus, graph, search,
+  spec lifecycle, install machinery, retrieval, handoff
+- **Domain packs** — the vocabulary and workflows for a specific
+  domain (the slash commands, agents, and skills)
+
+`domains/engineering/` is the complete, in-production pack. A
+`domains/sales/` scaffold also lives in the repo, alongside notes on
+how a sales vertical's specs, agents, and workflows would differ —
+not yet usable, but a deliberate placeholder for what a second
+vertical looks like. Other verticals are possible.
+
+If you're using Hero today, you'll almost certainly be using the
+engineering pack. Knowing the core/domain split matters mostly when
+you read the source tree — it's why `core/`, `domains/engineering/`,
+and `domains/sales/` exist as separate directories.
+
 ## What Hero Doesn't Try to Be
 
 - **Not a replacement for your AI tool.** Hero plugs into the tools
