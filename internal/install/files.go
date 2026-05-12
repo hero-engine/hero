@@ -1,9 +1,9 @@
 package install
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -18,7 +18,21 @@ func copyFileFromFS(opts Options, result *Result, srcFS fs.FS, srcPath, dst stri
 		return nil
 	}
 
+	// Read source once; reused for both the equality check and the write.
+	srcData, err := fs.ReadFile(srcFS, srcPath)
+	if err != nil {
+		return err
+	}
+
 	if _, err := os.Stat(dst); err == nil && !opts.Force {
+		// Existing destination: idempotency contract — if the bytes match
+		// what we'd write, treat as a silent no-op (canonical content is
+		// re-materialized on every install across harnesses). Only refuse
+		// when the user has actually edited the file.
+		dstData, readErr := os.ReadFile(dst)
+		if readErr == nil && bytes.Equal(srcData, dstData) {
+			return nil
+		}
 		result.Skipped = append(result.Skipped, dst)
 		return fmt.Errorf("refusing to overwrite %s (use --force to replace)", dst)
 	}
@@ -27,20 +41,7 @@ func copyFileFromFS(opts Options, result *Result, srcFS fs.FS, srcPath, dst stri
 		return err
 	}
 
-	srcFile, err := srcFS.Open(srcPath)
-	if err != nil {
-		return err
-	}
-	defer srcFile.Close()
-
-	dstFile, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer dstFile.Close()
-
-	_, err = io.Copy(dstFile, srcFile)
-	if err != nil {
+	if err := os.WriteFile(dst, srcData, 0o644); err != nil {
 		return err
 	}
 
