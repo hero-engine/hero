@@ -194,6 +194,50 @@ updates what changed without trampling hand-edited knowledge. This is
 the move that took Hero from "interesting in greenfield" to "useful in
 an existing codebase with five years of history."
 
+## Architected as Core + Domain Packs
+
+Although everything above is framed in terms of AI *coding* tools,
+the engine itself is not coding-specific. Hero is built in two
+layers:
+
+- **Hero Core** lives under `core/` and contains the domain-agnostic
+  pieces: the corpus structure, graph store, retrieval layer, spec
+  lifecycle plumbing, install machinery, MCP server, and the small
+  set of commands that any vertical needs (handoff, resume, search,
+  ask, etc.).
+- **Domain packs** live under `domains/<name>/` and contain the
+  vocabulary and workflows for a specific knowledge-work vertical:
+  the slash commands, agents, skills, mission, and (where useful)
+  custom spec types.
+
+The shipped pack is `domains/engineering/` — the engineering
+vertical (Hero Code). It's complete and in production use: 11
+domain-specific slash commands, 30 specialist agents, 31 skills, and
+the spec types (feature, bug, decision, initiative) the engineering
+loop is built around.
+
+A second pack, `domains/sales/`, exists as a scaffold today — its
+`mission.md` and directory structure are checked in to triangulate
+what belongs in core versus what belongs in a vertical. It is not
+yet usable as a working domain. The point of having it sit in the
+repo alongside engineering is that it forces the boundary to be
+real, not aspirational.
+
+What this means in practice:
+
+- `hero install --domain engineering` installs the engineering pack
+  on top of core. `hero install --domain sales` will install the
+  sales pack on top of core when that pack is built out.
+- New verticals (support, ops, research, writing, design) can be
+  built as additional domain packs that reuse the core engine.
+- The corpus shape — specs, knowledge, graph, retrieval — is the
+  same regardless of vertical. Only the vocabulary changes.
+
+If you're evaluating Hero today, you're almost certainly evaluating
+the engineering pack. But the core/domain split is a real
+architectural commitment, not a marketing line — it shapes how the
+codebase is organized and how the install path works.
+
 ## How It Plugs In
 
 Hero is harness-agnostic. The same corpus drives:
