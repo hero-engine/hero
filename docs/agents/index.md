@@ -15,6 +15,7 @@ Lead agents that coordinate other agents to complete complex workflows.
 | `feature-delivery-lead` | Coordinate agents to design features and diagnose bugs; produces spec documents |
 | `platform-delivery-lead` | Coordinate agents for migrations, refactors, platform changes, and scaling work |
 | `product-ideator` | Explore product direction, brainstorm features, produce prioritized work items |
+| `session-primer` | Load session context — what's in progress, active conventions, decisions, and watch-outs. Read-only. |
 
 ## Architecture
 

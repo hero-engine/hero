@@ -61,6 +61,9 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Introduction:
+    - What Is Hero?: what-is-hero.md
+    - Why Hero: why-hero.md
   - Getting Started:
     - Installation: getting-started/installation.md
     - Project Setup: getting-started/project-setup.md
