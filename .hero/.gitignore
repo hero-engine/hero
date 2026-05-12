@@ -1,0 +1,8 @@
+# Per-project local overrides (tokens, personal preferences)
+hero.local.json
+
+# Active session registry (ephemeral, not committed)
+.active-sessions.json
+
+# Search index (rebuilt with hero index)
+index.db

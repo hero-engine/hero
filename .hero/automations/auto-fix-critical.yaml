@@ -1,0 +1,18 @@
+name: Auto-fix critical diagnosed bugs
+enabled: true
+trigger:
+  type: feed
+  event: diagnosis_complete
+  filter:
+    priority: critical
+    hero_status: planning
+action:
+  command: deliver
+  args: "{{slug}} --autopilot"
+  model: claude-sonnet-4-6-20250514
+  budget: 5.00
+approval:
+  required: true
+  gate: in-review
+  notify: ""
+  reviewers: []

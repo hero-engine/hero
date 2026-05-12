@@ -1,0 +1,83 @@
+{
+  "code_scan": {
+    "depth": "normal",
+    "exclude": [
+      "node_modules",
+      "vendor",
+      "bower_components",
+      "jspm_packages",
+      ".pnpm",
+      ".yarn",
+      "dist",
+      "build",
+      "out",
+      "output",
+      ".output",
+      "target",
+      "bin",
+      "obj",
+      "generated",
+      "third_party",
+      "__generated__",
+      "__pycache__",
+      ".cache",
+      ".parcel-cache",
+      ".venv",
+      "venv",
+      "env",
+      ".env",
+      ".next",
+      ".nuxt",
+      ".svelte-kit",
+      ".angular",
+      ".git",
+      ".hg",
+      ".svn",
+      ".idea",
+      ".vscode",
+      "coverage",
+      ".nyc_output",
+      "htmlcov",
+      "tmp",
+      "temp",
+      "logs"
+    ],
+    "parser": "auto"
+  },
+  "content": {
+    "agents_path": "agents",
+    "commands_path": "commands",
+    "skills_path": "skills"
+  },
+  "conventions": {
+    "enforce": true,
+    "scope_default": "*"
+  },
+  "folder": ".hero",
+  "knowledge": {
+    "auto_capture": true
+  },
+  "next": {
+    "projected": true
+  },
+  "repos": {},
+  "sync": {
+    "auto": false,
+    "target": "none"
+  },
+  "team": {
+    "auto_context": true,
+    "nudge_level": "gentle",
+    "require_review": false,
+    "stale_days": 14
+  },
+  "tracker": {
+    "base_url": "",
+    "post_on_deliver": false,
+    "post_on_design": false,
+    "project": "",
+    "token_env": "",
+    "type": "none",
+    "user_email": ""
+  }
+}

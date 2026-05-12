@@ -1,0 +1,179 @@
+package serve
+
+import (
+	"bufio"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
+	"github.com/hero-engine/hero/internal/config"
+)
+
+// Run starts the MCP server, reading from input and writing to output.
+// It blocks until the input is closed.
+func (s *MCPServer) Run() error {
+	// Enable debug logging if HERO_MCP_DEBUG is set
+	if os.Getenv("HERO_MCP_DEBUG") != "" {
+		logPath := filepath.Join(s.heroDir, "mcp-debug.log")
+		f, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "hero mcp: cannot open debug log %s: %v\n", logPath, err)
+		} else {
+			s.debugLog = f
+			defer f.Close()
+			s.logDebug("=== MCP session started (hero %s) ===", s.version)
+		}
+	}
+
+	scanner := bufio.NewScanner(s.input)
+	// Allow large messages (1MB)
+	scanner.Buffer(make([]byte, 1024*1024), 1024*1024)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		var req JSONRPCRequest
+		if err := json.Unmarshal([]byte(line), &req); err != nil {
+			s.logDebug("→ PARSE ERROR: %s", line)
+			s.sendError(nil, ErrCodeParse, "Parse error")
+			continue
+		}
+
+		s.logDebug("→ %s (id=%s)", req.Method, string(req.ID))
+		if req.Params != nil {
+			s.logDebug("  params: %s", string(req.Params))
+		}
+
+		s.handleRequest(&req)
+	}
+
+	return scanner.Err()
+}
+
+func (s *MCPServer) handleRequest(req *JSONRPCRequest) {
+	switch req.Method {
+	case "initialize":
+		s.handleInitialize(req)
+	case "notifications/initialized":
+		// Notification — no response needed
+	case "prompts/list":
+		// Hero doesn't support prompts; return empty list
+		s.sendResult(req.ID, map[string]interface{}{"prompts": []interface{}{}})
+	case "resources/list":
+		// Hero doesn't support resources; return empty list
+		s.sendResult(req.ID, map[string]interface{}{"resources": []interface{}{}})
+	case "tools/list":
+		s.handleToolsList(req)
+	case "tools/call":
+		s.handleToolsCall(req)
+	case "ping":
+		s.sendResult(req.ID, map[string]interface{}{})
+	default:
+		s.sendError(req.ID, ErrCodeMethodNotFound, fmt.Sprintf("Method not found: %s", req.Method))
+	}
+}
+
+func (s *MCPServer) handleInitialize(req *JSONRPCRequest) {
+	// Extract optional hero_profile from client meta (non-standard extension)
+	if req.Params != nil {
+		var params struct {
+			Meta map[string]interface{} `json:"_meta"`
+		}
+		if err := json.Unmarshal(req.Params, &params); err == nil {
+			if profile, ok := params.Meta["hero_profile"].(string); ok {
+				s.profile = profile
+			}
+		}
+	}
+
+	// Build dynamic instructions via auto-prime if configured
+	instructions := "Hero provides spec-driven AI engineering workflow tools. Use these tools to query project knowledge, search specs, check workspace health, and get context-aware nudges."
+
+	cfg, cfgErr := config.Load(s.projectRoot)
+	if cfgErr == nil && cfg.Prime.AutoEnabled() {
+		if primeCtx, err := BuildPrimeContext(s.heroDir, s.projectRoot, cfg.Prime.KnowledgeEnabled()); err == nil && primeCtx != "" {
+			instructions = primeCtx
+		}
+	}
+
+	result := InitializeResult{
+		ProtocolVersion: "2025-03-26",
+		Capabilities: MCPCapabilities{
+			Tools: &MCPToolsCapability{},
+		},
+		ServerInfo: MCPServerInfo{
+			Name:    "hero",
+			Version: s.version,
+		},
+		Instructions: instructions,
+	}
+	s.sendResult(req.ID, result)
+}
+
+func (s *MCPServer) handleToolsList(req *JSONRPCRequest) {
+	tools := s.toolDefinitions()
+	if s.filter != nil {
+		tools = s.filter.FilterTools(tools, s.profile)
+	}
+	result := ToolsListResult{
+		Tools: tools,
+	}
+	s.sendResult(req.ID, result)
+}
+
+// finishToolCall wraps a tool's (string, error) result in the
+// appropriate ToolCallResult shape and emits it to the client.
+// Consolidated here so dispatch sites stay tiny.
+func (s *MCPServer) finishToolCall(reqID json.RawMessage, result string, toolErr error) {
+	if toolErr != nil {
+		s.sendResult(reqID, ToolCallResult{
+			Content: []ToolContent{{Type: "text", Text: fmt.Sprintf("Error: %v", toolErr)}},
+			IsError: true,
+		})
+		return
+	}
+	s.sendResult(reqID, ToolCallResult{
+		Content: []ToolContent{{Type: "text", Text: result}},
+	})
+}
+
+func (s *MCPServer) sendResult(id json.RawMessage, result interface{}) {
+	s.send(JSONRPCResponse{
+		JSONRPC: "2.0",
+		ID:      id,
+		Result:  result,
+	})
+}
+
+func (s *MCPServer) sendError(id json.RawMessage, code int, message string) {
+	s.send(JSONRPCResponse{
+		JSONRPC: "2.0",
+		ID:      id,
+		Error:   &JSONRPCError{Code: code, Message: message},
+	})
+}
+
+func (s *MCPServer) send(resp JSONRPCResponse) {
+	data, err := json.Marshal(resp)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "hero mcp: marshal error: %v\n", err)
+		return
+	}
+	s.logDebug("← %s", string(data))
+	fmt.Fprintf(s.output, "%s\n", data)
+}
+
+// logDebug writes a timestamped line to the debug log if enabled.
+func (s *MCPServer) logDebug(format string, args ...interface{}) {
+	if s.debugLog == nil {
+		return
+	}
+	msg := fmt.Sprintf(format, args...)
+	fmt.Fprintf(s.debugLog, "%s  %s\n", time.Now().Format("15:04:05.000"), msg)
+}

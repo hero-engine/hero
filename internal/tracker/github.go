@@ -1,0 +1,439 @@
+package tracker
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/hero-engine/hero/internal/spec"
+)
+
+const defaultGitHubAPI = "https://api.github.com"
+
+// gitHub implements the Tracker interface for GitHub Issues.
+type gitHub struct {
+	owner   string
+	repo    string
+	token   string
+	baseURL string
+	client  *http.Client
+}
+
+func newGitHub(project, token, baseURL string) (*gitHub, error) {
+	parts := strings.SplitN(project, "/", 2)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return nil, fmt.Errorf("github project must be in owner/repo format, got %q", project)
+	}
+	if baseURL == "" {
+		baseURL = defaultGitHubAPI
+	}
+	baseURL = strings.TrimRight(baseURL, "/")
+
+	return &gitHub{
+		owner:   parts[0],
+		repo:    parts[1],
+		token:   token,
+		baseURL: baseURL,
+		client:  &http.Client{Timeout: 30 * time.Second},
+	}, nil
+}
+
+func (g *gitHub) Name() string { return "github" }
+
+// CreateIssue creates a GitHub issue from a spec. Returns the issue number as a string.
+func (g *gitHub) CreateIssue(s *spec.Spec) (string, error) {
+	payload := map[string]interface{}{
+		"title": fmt.Sprintf("[%s] %s", s.Type, s.Title),
+		"body":  IssueBody(s),
+		"labels": []string{
+			fmt.Sprintf("hero:%s", s.Type),
+			fmt.Sprintf("hero:%s", StatusLabel(s.Status)),
+		},
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf("marshaling issue: %w", err)
+	}
+
+	url := fmt.Sprintf("%s/repos/%s/%s/issues", g.baseURL, g.owner, g.repo)
+	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
+	if err != nil {
+		return "", fmt.Errorf("creating request: %w", err)
+	}
+	g.setHeaders(req)
+
+	resp, err := g.client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("creating issue: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		respBody, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("github API returned %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	var result struct {
+		Number int    `json:"number"`
+		URL    string `json:"html_url"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", fmt.Errorf("decoding response: %w", err)
+	}
+
+	return fmt.Sprintf("%d", result.Number), nil
+}
+
+// UpdateStatus adds a comment to the issue and optionally closes/reopens it.
+func (g *gitHub) UpdateStatus(issueID string, status spec.Status) error {
+	// Add a status comment
+	comment := map[string]string{
+		"body": fmt.Sprintf("**Hero status update:** %s", StatusLabel(status)),
+	}
+	commentBody, err := json.Marshal(comment)
+	if err != nil {
+		return fmt.Errorf("marshaling comment: %w", err)
+	}
+
+	url := fmt.Sprintf("%s/repos/%s/%s/issues/%s/comments", g.baseURL, g.owner, g.repo, issueID)
+	req, err := http.NewRequest("POST", url, bytes.NewReader(commentBody))
+	if err != nil {
+		return fmt.Errorf("creating comment request: %w", err)
+	}
+	g.setHeaders(req)
+
+	resp, err := g.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("posting comment: %w", err)
+	}
+	resp.Body.Close()
+
+	// Close the issue if the spec is completed or superseded
+	if status == spec.StatusCompleted || status == spec.StatusSuperseded {
+		return g.setIssueState(issueID, "closed")
+	}
+
+	return nil
+}
+
+// GetIssue retrieves issue info from GitHub.
+func (g *gitHub) GetIssue(issueID string) (*Issue, error) {
+	url := fmt.Sprintf("%s/repos/%s/%s/issues/%s", g.baseURL, g.owner, g.repo, issueID)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("creating request: %w", err)
+	}
+	g.setHeaders(req)
+
+	resp, err := g.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("getting issue: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("github API returned %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	var result struct {
+		Number int    `json:"number"`
+		Title  string `json:"title"`
+		State  string `json:"state"`
+		URL    string `json:"html_url"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("decoding response: %w", err)
+	}
+
+	return &Issue{
+		ID:     fmt.Sprintf("%d", result.Number),
+		Title:  result.Title,
+		Status: result.State,
+		URL:    result.URL,
+	}, nil
+}
+
+func (g *gitHub) setIssueState(issueID, state string) error {
+	payload := map[string]string{"state": state}
+	body, _ := json.Marshal(payload)
+
+	url := fmt.Sprintf("%s/repos/%s/%s/issues/%s", g.baseURL, g.owner, g.repo, issueID)
+	req, err := http.NewRequest("PATCH", url, bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("creating patch request: %w", err)
+	}
+	g.setHeaders(req)
+
+	resp, err := g.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("updating issue state: %w", err)
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("github API returned %d when updating state", resp.StatusCode)
+	}
+	return nil
+}
+
+func (g *gitHub) setHeaders(req *http.Request) {
+	req.Header.Set("Authorization", "Bearer "+g.token)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+}
+
+// AddComment posts a comment to a GitHub issue.
+func (g *gitHub) AddComment(issueID, body string) error {
+	url := fmt.Sprintf("%s/repos/%s/%s/issues/%s/comments", g.baseURL, g.owner, g.repo, issueID)
+	payload, _ := json.Marshal(map[string]string{"body": body})
+	req, err := http.NewRequest("POST", url, bytes.NewReader(payload))
+	if err != nil {
+		return fmt.Errorf("creating request: %w", err)
+	}
+	g.setHeaders(req)
+
+	resp, err := g.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("posting comment: %w", err)
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		return fmt.Errorf("github comment API returned %d", resp.StatusCode)
+	}
+	return nil
+}
+
+// AttachFile posts file contents as a comment (GitHub Issues doesn't support file attachments via API).
+func (g *gitHub) AttachFile(issueID, filePath, fileName string) error {
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return fmt.Errorf("reading file: %w", err)
+	}
+	body := fmt.Sprintf("**Attached: %s**\n\n<details>\n<summary>Click to expand</summary>\n\n```\n%s\n```\n\n</details>", fileName, string(content))
+	return g.AddComment(issueID, body)
+}
+
+// ListIssues fetches open issues from GitHub. Optionally filters by label.
+func (g *gitHub) ListIssues(label string, limit int) ([]Issue, error) {
+	if limit <= 0 {
+		limit = 30
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	url := fmt.Sprintf("%s/repos/%s/%s/issues?state=open&per_page=%d", g.baseURL, g.owner, g.repo, limit)
+	if label != "" {
+		url += "&labels=" + label
+	}
+
+	return g.fetchIssueList(url)
+}
+
+// Search fetches issues from GitHub using a structured query.
+func (g *gitHub) Search(query SearchQuery) ([]Issue, error) {
+	limit := query.Limit
+	if limit <= 0 {
+		limit = 30
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	// GitHub doesn't support raw JQL or filter IDs, but we can build a search query
+	if query.RawQuery != "" {
+		// Use GitHub search API with the raw query
+		return g.searchIssues(query.RawQuery, limit)
+	}
+
+	// Build URL from field-level filters using the list endpoint
+	state := "open"
+	if query.Status != "" {
+		switch strings.ToLower(query.Status) {
+		case "closed", "done", "completed":
+			state = "closed"
+		case "all":
+			state = "all"
+		}
+	}
+
+	url := fmt.Sprintf("%s/repos/%s/%s/issues?state=%s&per_page=%d", g.baseURL, g.owner, g.repo, state, limit)
+
+	// Labels (comma-separated)
+	labels := query.Labels
+	if len(labels) > 0 {
+		url += "&labels=" + strings.Join(labels, ",")
+	}
+
+	// Assignee
+	if query.Assignee != "" {
+		switch strings.ToLower(query.Assignee) {
+		case "unassigned", "none", "empty":
+			url += "&assignee=none"
+		default:
+			url += "&assignee=" + query.Assignee
+		}
+	}
+
+	// Sort
+	if query.OrderBy != "" {
+		switch strings.ToLower(query.OrderBy) {
+		case "created", "created desc", "created asc":
+			url += "&sort=created"
+		case "updated", "updated desc", "updated asc":
+			url += "&sort=updated"
+		case "comments", "comments desc", "comments asc":
+			url += "&sort=comments"
+		}
+		if strings.HasSuffix(strings.ToLower(query.OrderBy), " asc") {
+			url += "&direction=asc"
+		}
+	}
+
+	return g.fetchIssueList(url)
+}
+
+// searchIssues uses the GitHub search API for raw queries.
+func (g *gitHub) searchIssues(rawQuery string, limit int) ([]Issue, error) {
+	// Scope to this repo
+	q := fmt.Sprintf("repo:%s/%s %s", g.owner, g.repo, rawQuery)
+	searchURL := fmt.Sprintf("%s/search/issues", g.baseURL)
+
+	req, err := http.NewRequest("GET", searchURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("creating request: %w", err)
+	}
+	params := req.URL.Query()
+	params.Set("q", q)
+	params.Set("per_page", fmt.Sprintf("%d", limit))
+	req.URL.RawQuery = params.Encode()
+	g.setHeaders(req)
+
+	resp, err := g.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("searching issues: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("github API returned %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	var result struct {
+		Items []struct {
+			Number    int    `json:"number"`
+			Title     string `json:"title"`
+			State     string `json:"state"`
+			URL       string `json:"html_url"`
+			Body      string `json:"body"`
+			CreatedAt string `json:"created_at"`
+			User      struct {
+				Login string `json:"login"`
+			} `json:"user"`
+			Assignee *struct {
+				Login string `json:"login"`
+			} `json:"assignee"`
+			Labels []struct {
+				Name string `json:"name"`
+			} `json:"labels"`
+		} `json:"items"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("decoding response: %w", err)
+	}
+
+	issues := make([]Issue, 0, len(result.Items))
+	for _, r := range result.Items {
+		issue := Issue{
+			ID:          fmt.Sprintf("%d", r.Number),
+			Title:       r.Title,
+			Status:      r.State,
+			URL:         r.URL,
+			Reporter:    r.User.Login,
+			CreatedAt:   r.CreatedAt,
+			Description: truncateDescription(r.Body, 500),
+		}
+		if r.Assignee != nil {
+			issue.Assignee = r.Assignee.Login
+		}
+		for _, l := range r.Labels {
+			issue.Labels = append(issue.Labels, l.Name)
+		}
+		issues = append(issues, issue)
+	}
+	return issues, nil
+}
+
+// fetchIssueList fetches issues from a GitHub list endpoint URL.
+func (g *gitHub) fetchIssueList(url string) ([]Issue, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("creating request: %w", err)
+	}
+	g.setHeaders(req)
+
+	resp, err := g.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("listing issues: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("github API returned %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	var results []struct {
+		Number    int    `json:"number"`
+		Title     string `json:"title"`
+		State     string `json:"state"`
+		URL       string `json:"html_url"`
+		Body      string `json:"body"`
+		CreatedAt string `json:"created_at"`
+		User      *struct {
+			Login string `json:"login"`
+		} `json:"user"`
+		Assignee *struct {
+			Login string `json:"login"`
+		} `json:"assignee"`
+		Labels []struct {
+			Name string `json:"name"`
+		} `json:"labels"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
+		return nil, fmt.Errorf("decoding response: %w", err)
+	}
+
+	issues := make([]Issue, 0, len(results))
+	for _, r := range results {
+		issue := Issue{
+			ID:          fmt.Sprintf("%d", r.Number),
+			Title:       r.Title,
+			Status:      r.State,
+			URL:         r.URL,
+			CreatedAt:   r.CreatedAt,
+			Description: truncateDescription(r.Body, 500),
+		}
+		if r.User != nil {
+			issue.Reporter = r.User.Login
+		}
+		if r.Assignee != nil {
+			issue.Assignee = r.Assignee.Login
+		}
+		for _, l := range r.Labels {
+			issue.Labels = append(issue.Labels, l.Name)
+		}
+		issues = append(issues, issue)
+	}
+	return issues, nil
+}

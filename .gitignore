@@ -1,0 +1,64 @@
+# Build output
+/hero
+/hero-cloud
+dist/
+
+# SQLite index
+index.db
+
+# Knowledge graph cache (regenerable from sources of truth + git history)
+.hero/graph.db
+.hero/graph.db-wal
+.hero/graph.db-shm
+
+# Per-machine NEXT state — auto-rewritten every Stop hook + agent scratch.
+# Tracked NEXT.md and .hero/next/<user>.md are project/user-durable;
+# anything ending in .local.md is genuinely local and never tracked.
+.hero/next/*.local.md
+
+# GoReleaser
+__snapshot/
+
+# OS
+.DS_Store
+site/
+
+# Auto-generated code intelligence (re-scan to regenerate)
+.hero/knowledge/code/
+
+# Per-machine satellite manifest (which subprojects are symlinked locally)
+.hero/satellites.local.json
+
+#claude
+.claude/settings.local.json
+
+# E2E smoke-test scratch (cloned target repos + per-run logs)
+tmp/
+
+# Per-machine smoke run state (last-run.json is regenerated on every `hero smoke`)
+.hero/smoke/
+
+# Install-rendered canonical content + harness symlinks.
+# These are generated on every `hero install` from the embedded source
+# (which lives at agents/, commands/, skills/, domains/<x>/..., core/...).
+# Hero's own repo embeds source for distribution; the canonical .hero/
+# tree and the harness symlinks pointing at it are install artifacts,
+# not source. Run `make install` (or `hero install project . --target X`)
+# after cloning to materialize them.
+.hero/agents/
+.hero/commands/
+.hero/skills/
+.hero/install-state.json
+.claude/agents
+.claude/commands
+.claude/skills
+.opencode/agents
+.opencode/commands
+.opencode/skills
+.cursor/rules/agents
+.cursor/rules/commands
+.cursor/rules/skills
+.codex/agents
+.codex/commands
+.codex/skills
+

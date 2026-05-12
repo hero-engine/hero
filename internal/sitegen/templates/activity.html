@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Activity — {{.SiteName}}</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1><a href="index.html">{{.SiteName}}</a></h1>
+  <nav>
+    <a href="index.html">Home</a>
+    <span class="generated">generated {{.Generated}}</span>
+  </nav>
+</header>
+
+<main>
+  <p class="breadcrumb"><a href="index.html">home</a> / Activity</p>
+  <h2>All recent commits</h2>
+  {{if .Commits}}
+    <ul class="commits">
+      {{range .Commits}}
+        <li>
+          <code class="sha">{{shortSha .SHA}}</code>
+          <span class="subject">{{oneLine .Subject}}</span>
+          <span class="meta">{{shortDate .Date}} · {{.Author}}</span>
+        </li>
+      {{end}}
+    </ul>
+  {{else}}
+    <p class="empty">No activity yet — run <code>hero scan</code> to populate the graph.</p>
+  {{end}}
+</main>
+
+<footer>
+  <p><a href="index.html">← back to {{.SiteName}}</a></p>
+</footer>
+</body>
+</html>

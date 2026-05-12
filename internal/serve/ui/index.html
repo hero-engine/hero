@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero Dashboard</title>
+  <link rel="stylesheet" href="/ui/style.css">
+</head>
+<body>
+  <div id="app">
+    <nav id="sidebar">
+      <div class="sidebar-header">
+        <h1 class="logo">Hero</h1>
+        <select id="project-select" aria-label="Select project"></select>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#/" data-page="overview" class="active">Overview</a></li>
+        <li><a href="#/board" data-page="board">Board</a></li>
+        <li><a href="#/bugs" data-page="bugs">Bugs</a></li>
+        <li><a href="#/knowledge" data-page="knowledge">Knowledge</a></li>
+        <li><a href="#/search" data-page="search">Search</a></li>
+      </ul>
+      <div class="nav-section-label">Team</div>
+      <ul class="nav-links">
+        <li><a href="#/jobs" data-page="jobs">Jobs</a></li>
+        <li><a href="#/team" data-page="team">Team</a></li>
+        <li><a href="#/health" data-page="health">Health</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <span id="sse-status" class="status-dot disconnected" title="SSE disconnected"></span>
+        <span id="last-update">—</span>
+      </div>
+    </nav>
+    <main id="content">
+      <div id="page-loading" class="loading">Loading…</div>
+    </main>
+  </div>
+  <script src="/ui/app.js"></script>
+</body>
+</html>

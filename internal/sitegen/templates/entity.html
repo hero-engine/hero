@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Entity.Title}} — {{.SiteName}}</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header>
+  <h1><a href="../index.html">{{.SiteName}}</a></h1>
+  <nav>
+    <a href="../activity.html">Activity</a>
+    <span class="generated">generated {{.Generated}}</span>
+  </nav>
+</header>
+
+<main class="entity">
+  <p class="breadcrumb"><a href="../index.html">home</a> / {{.Entity.Type}}</p>
+  <h2>{{.Entity.Title}}</h2>
+  <p class="meta">
+    <code>{{.Entity.Key}}</code>
+    {{if .Entity.Status}}<span class="badge">{{.Entity.Status}}</span>{{end}}
+  </p>
+
+  {{if .Body}}
+  <section>
+    <h3>Description</h3>
+    <pre class="body">{{.Body}}</pre>
+  </section>
+  {{end}}
+
+  {{if .RelatedNodes}}
+  <section>
+    <h3>Related</h3>
+    <ul class="entities">
+      {{range .RelatedNodes}}
+        <li>
+          <span class="badge type">{{.Type}}</span>
+          <a href="../{{if eq .Type "Feature"}}features{{else if eq .Type "Initiative"}}initiatives{{else if eq .Type "Decision"}}decisions{{else if eq .Type "Note"}}notes{{end}}/{{.Slug}}.html">{{.Title}}</a>
+          <code>{{.Key}}</code>
+        </li>
+      {{end}}
+    </ul>
+  </section>
+  {{end}}
+</main>
+
+<footer>
+  <p><a href="../index.html">← back to {{.SiteName}}</a></p>
+</footer>
+</body>
+</html>
