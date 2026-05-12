@@ -1,0 +1,4 @@
+# >>> hero next merge driver (managed) >>>
+.hero/next/*.md merge=hero-next
+.hero/NEXT.md merge=hero-next
+# <<< hero next merge driver (managed) <<<

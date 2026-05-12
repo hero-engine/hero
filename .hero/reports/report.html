@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hero Report — hero</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --bg2: #f8f9fa;
+            --bg3: #e9ecef;
+            --text: #212529;
+            --text2: #6c757d;
+            --border: #dee2e6;
+            --primary: #4a9eff;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --radius: 8px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px; line-height: 1.6; color: var(--text);
+            background: var(--bg2); padding: 32px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header {
+            background: var(--bg); border-radius: var(--radius);
+            padding: 32px; margin-bottom: 24px; box-shadow: var(--shadow);
+        }
+        .header h1 { font-size: 24px; font-weight: 700; }
+        .header .meta { color: var(--text2); margin-top: 4px; font-size: 13px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .card {
+            background: var(--bg); border-radius: var(--radius);
+            padding: 24px; box-shadow: var(--shadow);
+        }
+        .card h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--text); }
+        .metric { text-align: center; }
+        .metric .number { font-size: 36px; font-weight: 700; color: var(--primary); }
+        .metric .label { font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text2); font-weight: 600; text-align: left; padding: 8px 12px; border-bottom: 2px solid var(--border); }
+        td { padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+        tr:hover td { background: var(--bg2); }
+        .badge {
+            display: inline-block; padding: 2px 8px; border-radius: 12px;
+            font-size: 11px; font-weight: 500;
+        }
+        .badge-planning { background: #fff3cd; color: #856404; }
+        .badge-in-review { background: #d1ecf1; color: #0c5460; }
+        .badge-delivering { background: #cce5ff; color: #004085; }
+        .badge-completed { background: #d4edda; color: #155724; }
+        .badge-convention { background: #e8daef; color: #4a235a; }
+        .badge-decision { background: #fadbd8; color: #78281f; }
+        .badge-rule { background: #fdebd0; color: #784212; }
+        .badge-external { background: #d1f2eb; color: #0e6655; }
+        .badge-context { background: #eaecee; color: #2c3e50; }
+        .badge-note { background: #eaecee; color: #6c757d; }
+        .badge-feature { background: #cce5ff; color: #004085; }
+        .badge-bug { background: #f8d7da; color: #721c24; }
+        .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 120px; margin-top: 16px; }
+        .bar-col { display: flex; flex-direction: column; align-items: center; flex: 1; }
+        .bar {
+            width: 100%; border-radius: 4px 4px 0 0;
+            background: var(--primary); min-height: 4px; transition: height 0.3s;
+        }
+        .bar-label { font-size: 11px; color: var(--text2); margin-top: 6px; }
+        .bar-value { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+        .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .coverage-bar { height: 8px; border-radius: 4px; background: var(--bg3); overflow: hidden; margin: 8px 0; }
+        .coverage-fill { height: 100%; border-radius: 4px; }
+        .coverage-row { margin-bottom: 12px; }
+        .coverage-label { display: flex; justify-content: space-between; font-size: 12px; }
+        .stale-warning { color: var(--danger); font-weight: 500; }
+        .section { margin-bottom: 24px; }
+        .empty { color: var(--text2); font-style: italic; padding: 16px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>hero — Hero Report</h1>
+            <div class="meta">Generated 2026-04-12 16:42</div>
+        </div>
+
+        <div class="grid">
+            <div class="card metric">
+                <div class="number">21</div>
+                <div class="label">Total Specs</div>
+            </div>
+            <div class="card metric">
+                <div class="number" style="color: var(--primary);">9</div>
+                <div class="label">In Flight</div>
+            </div>
+            <div class="card metric">
+                <div class="number" style="color: var(--success);">10</div>
+                <div class="label">Completed</div>
+            </div>
+            <div class="card metric">
+                <div class="number">0</div>
+                <div class="label">Stale (14+ days)</div>
+            </div>
+        </div>
+
+        <div class="grid" style="grid-template-columns: 1fr 1fr;">
+            <div class="card">
+                <h2>Work Specs by Status</h2>
+                
+                <div class="legend">
+                    
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #ffc107;"></div>
+                        planning: 10
+                    </div>
+                    
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #28a745;"></div>
+                        completed: 10
+                    </div>
+                    
+                </div>
+                
+            </div>
+            <div class="card">
+                <h2>Knowledge Base</h2>
+                
+                <div class="legend">
+                    
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #adb5bd;"></div>
+                        note: 1
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+
+        
+        <div class="card section">
+            <h2>Velocity — Completed per Month</h2>
+            <div class="bar-chart">
+                
+                <div class="bar-col">
+                    <div class="bar-value">10</div>
+                    <div class="bar" style="height: 100%;"></div>
+                    <div class="bar-label">2026-04</div>
+                </div>
+                
+            </div>
+        </div>
+        
+
+        
+        <div class="card section">
+            <h2>Coverage</h2>
+            <div class="coverage-row">
+                <div class="coverage-label">
+                    <span>Tracker linked</span>
+                    <span>0/19</span>
+                </div>
+                <div class="coverage-bar">
+                    <div class="coverage-fill" style="width: 0%; background: var(--primary);"></div>
+                </div>
+            </div>
+            <div class="coverage-row">
+                <div class="coverage-label">
+                    <span>Claimed / assigned</span>
+                    <span>0/19</span>
+                </div>
+                <div class="coverage-bar">
+                    <div class="coverage-fill" style="width: 0%; background: var(--success);"></div>
+                </div>
+            </div>
+            <div class="coverage-row">
+                <div class="coverage-label">
+                    <span>Has Changes section</span>
+                    <span>16/19</span>
+                </div>
+                <div class="coverage-bar">
+                    <div class="coverage-fill" style="width: 84%; background: var(--warning);"></div>
+                </div>
+            </div>
+        </div>
+        
+
+        
+        <div class="card section">
+            <h2>In-Flight Work</h2>
+            <table>
+                <thead><tr><th>Spec</th><th>Type</th><th>Status</th><th>Age</th><th>Owner</th></tr></thead>
+                <tbody>
+                
+                <tr>
+                    <td><strong>cloud-admin</strong><br><span style="color: var(--text2);">Cloud Admin and Enterprise Controls</span></td>
+                    <td><span class="badge badge-feature">feature</span></td>
+                    <td><span class="badge badge-planning">planning</span></td>
+                    <td>0h ago</td>
+                    <td>—</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>cloud-api</strong><br><span style="color: var(--text2);">Cloud REST API</span></td>
+                    <td><span class="badge badge-feature">feature</span></td>
+                    <td><span class="badge badge-planning">planning</span></td>
+                    <td>0h ago</td>
+                    <td>—</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>cloud-auth</strong><br><span style="color: var(--text2);">Cloud Authentication and Org Management</span></td>
+                    <td><span class="badge badge-feature">feature</span></td>
+                    <td><span class="badge badge-planning">planning</span></td>
+                    <td>0h ago</td>
+                    <td>—</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>cloud-billing</strong><br><span style="color: var(--text2);">Cloud Billing and Subscription Management</span></td>
+                    <td><span class="badge badge-feature">feature</span></td>
+                    <td><span class="badge badge-planning">planning</span></td>
+                    <td>0h ago</td>
+                    <td>—</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>cloud-dashboard</strong><br><span style="color: var(--text2);">Cloud Dashboard — Web UI for Team Visibility</span></td>
+                    <td><span class="badge badge-feature">feature</span></td>
+                    <td><span class="badge badge-planning">planning</span></td>
+                    <td>0h ago</td>
+                    <td>—</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>cloud-mcp</strong><br><span style="color: var(--text2);">Cloud MCP — Cross-Repo Knowledge Federation</span></td>
+                    <td><span class="badge badge-feature">feature</span></td>
+                    <td><span class="badge badge-planning">planning</span></td>
+                    <td>0h ago</td>
+                    <td>—</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>cloud-notifications</strong><br><span style="color: var(--text2);">Cloud Notifications and Activity Alerts</span></td>
+                    <td><span class="badge badge-feature">feature</span></td>
+                    <td><span class="badge badge-planning">planning</span></td>
+                    <td>0h ago</td>
+                    <td>—</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>cloud-sync</strong><br><span style="color: var(--text2);">Cloud Spec Sync</span></td>
+                    <td><span class="badge badge-feature">feature</span></td>
+                    <td><span class="badge badge-planning">planning</span></td>
+                    <td>0h ago</td>
+                    <td>—</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>hero-v2-system-design</strong><br><span style="color: var(--text2);">Hero v2 — System Design</span></td>
+                    <td><span class="badge badge-feature">feature</span></td>
+                    <td><span class="badge badge-planning">planning</span></td>
+                    <td>16h ago</td>
+                    <td>—</td>
+                </tr>
+                
+                </tbody>
+            </table>
+        </div>
+        
+
+        
+
+        
+        <div class="card section">
+            <h2>Recently Modified</h2>
+            <table>
+                <thead><tr><th>Spec</th><th>Type</th><th>Status</th><th>Last Updated</th></tr></thead>
+                <tbody>
+                
+                <tr>
+                    <td><strong>cloud-admin</strong><br><span style="color: var(--text2);">Cloud Admin and Enterprise Controls</span></td>
+                    <td><span class="badge badge-feature">feature</span></td>
+                    <td><span class="badge badge-planning">planning</span></td>
+                    <td>0h ago</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>cloud-notifications</strong><br><span style="color: var(--text2);">Cloud Notifications and Activity Alerts</span></td>
+                    <td><span class="badge badge-feature">feature</span></td>
+                    <td><span class="badge badge-planning">planning</span></td>
+                    <td>0h ago</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>cloud-billing</strong><br><span style="color: var(--text2);">Cloud Billing and Subscription Management</span></td>
+                    <td><span class="badge badge-feature">feature</span></td>
+                    <td><span class="badge badge-planning">planning</span></td>
+                    <td>0h ago</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>cloud-mcp</strong><br><span style="color: var(--text2);">Cloud MCP — Cross-Repo Knowledge Federation</span></td>
+                    <td><span class="badge badge-feature">feature</span></td>
+                    <td><span class="badge badge-planning">planning</span></td>
+                    <td>0h ago</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>cloud-dashboard</strong><br><span style="color: var(--text2);">Cloud Dashboard — Web UI for Team Visibility</span></td>
+                    <td><span class="badge badge-feature">feature</span></td>
+                    <td><span class="badge badge-planning">planning</span></td>
+                    <td>0h ago</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>cloud-sync</strong><br><span style="color: var(--text2);">Cloud Spec Sync</span></td>
+                    <td><span class="badge badge-feature">feature</span></td>
+                    <td><span class="badge badge-planning">planning</span></td>
+                    <td>0h ago</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>cloud-api</strong><br><span style="color: var(--text2);">Cloud REST API</span></td>
+                    <td><span class="badge badge-feature">feature</span></td>
+                    <td><span class="badge badge-planning">planning</span></td>
+                    <td>0h ago</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>cloud-auth</strong><br><span style="color: var(--text2);">Cloud Authentication and Org Management</span></td>
+                    <td><span class="badge badge-feature">feature</span></td>
+                    <td><span class="badge badge-planning">planning</span></td>
+                    <td>0h ago</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>hero-cloud</strong><br><span style="color: var(--text2);">Hero Cloud — Team Visibility and Cross-Repo Knowledge Platform</span></td>
+                    <td><span class="badge badge-initiative">initiative</span></td>
+                    <td><span class="badge badge-planning">planning</span></td>
+                    <td>0h ago</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>effort-estimation</strong><br><span style="color: var(--text2);">&#34;Effort Estimation — Complexity-Based Cost Prediction&#34;</span></td>
+                    <td><span class="badge badge-feature">feature</span></td>
+                    <td><span class="badge badge-completed">completed</span></td>
+                    <td>0h ago</td>
+                </tr>
+                
+                </tbody>
+            </table>
+        </div>
+        
+    </div>
+</body>
+</html>

@@ -1,0 +1,92 @@
+site_name: Hero
+site_description: Spec-driven AI engineering workflow
+site_url: https://hero-engine.github.io/hero
+repo_url: https://github.com/hero-engine/hero
+repo_name: hero-engine/hero
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.critic
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.tilde
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Project Setup: getting-started/project-setup.md
+    - First Workflow: getting-started/first-workflow.md
+  - Concepts:
+    - The Core Loop: concepts/core-loop.md
+    - Specs & Lifecycle: concepts/specs.md
+    - Knowledge Base: concepts/knowledge-base.md
+    - Agents & Skills: concepts/agents-and-skills.md
+  - Workflows:
+    - Discovery & Design: workflows/discovery-and-design.md
+    - Delivery & Debugging: workflows/delivery-and-debugging.md
+    - Review & Quality: workflows/review-and-quality.md
+    - Sprint & Planning: workflows/sprint-and-planning.md
+    - Knowledge & Standards: workflows/knowledge-and-standards.md
+  - CLI Reference:
+    - Overview: cli/overview.md
+    - Spec Management: cli/spec-management.md
+    - Search & Context: cli/search-and-context.md
+    - Tracker Integration: cli/tracker-integration.md
+    - Testing & Demos: cli/testing-and-demos.md
+    - Server & MCP: cli/server-and-mcp.md
+  - Commands Reference: commands/index.md
+  - Agents Reference: agents/index.md
+  - Configuration:
+    - hero.json: configuration/hero-json.md
+    - Tracker Setup: configuration/tracker-setup.md
+    - MCP Setup: configuration/mcp-setup.md
+  - Project Structure: project-structure.md

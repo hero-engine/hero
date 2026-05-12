@@ -1,0 +1,3 @@
+[mcp_servers.hero]
+args = ["mcp"]
+command = "hero"

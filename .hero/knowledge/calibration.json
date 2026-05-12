@@ -1,0 +1,730 @@
+{
+  "generated": "2026-04-23T21:03:42.600837Z",
+  "spec_count": 55,
+  "global_ratio": 3.2741629824235328,
+  "by_type": {
+    "feature": {
+      "count": 55,
+      "avg_ratio": 3.2741629824235328,
+      "avg_days": 6.848713399179677,
+      "avg_commits": 15.981818181818182
+    }
+  },
+  "entries": [
+    {
+      "slug": "demo-recording",
+      "type": "feature",
+      "estimated_points": 12.5,
+      "actual_signals": {
+        "days_elapsed": 6.776594805422396,
+        "commits": 46,
+        "files_changed": 7,
+        "criteria_count": 12
+      },
+      "actual_points": 49.55318961084479,
+      "ratio": 3.964255168867583
+    },
+    {
+      "slug": "playwright-test-generation",
+      "type": "feature",
+      "estimated_points": 12.5,
+      "actual_signals": {
+        "days_elapsed": 6.7765948097641315,
+        "commits": 46,
+        "files_changed": 7,
+        "criteria_count": 13
+      },
+      "actual_points": 50.05318961952826,
+      "ratio": 4.004255169562261
+    },
+    {
+      "slug": "agent-cold-start",
+      "type": "feature",
+      "estimated_points": 8.7,
+      "actual_signals": {
+        "days_elapsed": 1.8071870762478819,
+        "commits": 7,
+        "files_changed": 4,
+        "criteria_count": 7
+      },
+      "actual_points": 14.614374152495763,
+      "ratio": 1.6798131209765246
+    },
+    {
+      "slug": "agent-contribution-tracking",
+      "type": "feature",
+      "estimated_points": 12.5,
+      "actual_signals": {
+        "days_elapsed": 7.776594825336146,
+        "commits": 40,
+        "files_changed": 7,
+        "criteria_count": 10
+      },
+      "actual_points": 47.553189650672294,
+      "ratio": 3.8042551720537836
+    },
+    {
+      "slug": "ai-governance-layer",
+      "type": "feature",
+      "estimated_points": 2,
+      "actual_signals": {
+        "days_elapsed": 0,
+        "commits": 0,
+        "files_changed": 0,
+        "criteria_count": 0
+      },
+      "actual_points": 0,
+      "ratio": 0
+    },
+    {
+      "slug": "api-surface-index",
+      "type": "feature",
+      "estimated_points": 3,
+      "actual_signals": {
+        "days_elapsed": 2.776594828444757,
+        "commits": 0,
+        "files_changed": 0,
+        "criteria_count": 0
+      },
+      "actual_points": 5.553189656889514,
+      "ratio": 1.8510632189631713
+    },
+    {
+      "slug": "async-delivery",
+      "type": "feature",
+      "estimated_points": 2,
+      "actual_signals": {
+        "days_elapsed": 0,
+        "commits": 0,
+        "files_changed": 0,
+        "criteria_count": 0
+      },
+      "actual_points": 0,
+      "ratio": 0
+    },
+    {
+      "slug": "bulk-issue-import",
+      "type": "feature",
+      "estimated_points": 10,
+      "actual_signals": {
+        "days_elapsed": 8.776594831670081,
+        "commits": 23,
+        "files_changed": 6,
+        "criteria_count": 7
+      },
+      "actual_points": 38.55318966334016,
+      "ratio": 3.8553189663340164
+    },
+    {
+      "slug": "cloud-api",
+      "type": "feature",
+      "estimated_points": 7,
+      "actual_signals": {
+        "days_elapsed": 8.77659483321185,
+        "commits": 0,
+        "files_changed": 0,
+        "criteria_count": 6
+      },
+      "actual_points": 20.5531896664237,
+      "ratio": 2.9361699523462432
+    },
+    {
+      "slug": "cloud-auth",
+      "type": "feature",
+      "estimated_points": 5.7,
+      "actual_signals": {
+        "days_elapsed": 8.776594834605566,
+        "commits": 0,
+        "files_changed": 2,
+        "criteria_count": 7
+      },
+      "actual_points": 23.053189669211132,
+      "ratio": 4.04441924021248
+    },
+    {
+      "slug": "cloud-sync",
+      "type": "feature",
+      "estimated_points": 9.5,
+      "actual_signals": {
+        "days_elapsed": 8.77659483607596,
+        "commits": 7,
+        "files_changed": 3,
+        "criteria_count": 7
+      },
+      "actual_points": 27.55318967215192,
+      "ratio": 2.90033575496336
+    },
+    {
+      "slug": "config-env-map",
+      "type": "feature",
+      "estimated_points": 3,
+      "actual_signals": {
+        "days_elapsed": 2.7765948376669214,
+        "commits": 0,
+        "files_changed": 0,
+        "criteria_count": 0
+      },
+      "actual_points": 5.553189675333843,
+      "ratio": 1.8510632251112809
+    },
+    {
+      "slug": "confluence-wiki-sync",
+      "type": "feature",
+      "estimated_points": 8.4,
+      "actual_signals": {
+        "days_elapsed": 8.776594839463808,
+        "commits": 26,
+        "files_changed": 4,
+        "criteria_count": 9
+      },
+      "actual_points": 39.053189678927616,
+      "ratio": 4.649189247491383
+    },
+    {
+      "slug": "context-injection",
+      "type": "feature",
+      "estimated_points": 9.4,
+      "actual_signals": {
+        "days_elapsed": 8.776594841127107,
+        "commits": 15,
+        "files_changed": 6,
+        "criteria_count": 0
+      },
+      "actual_points": 31.053189682254214,
+      "ratio": 3.3035308172610867
+    },
+    {
+      "slug": "conventions-and-decisions",
+      "type": "feature",
+      "estimated_points": 9.4,
+      "actual_signals": {
+        "days_elapsed": 8.7765948450189,
+        "commits": 15,
+        "files_changed": 6,
+        "criteria_count": 0
+      },
+      "actual_points": 31.0531896900378,
+      "ratio": 3.3035308180891274
+    },
+    {
+      "slug": "deep-mode-llm-descriptions",
+      "type": "feature",
+      "estimated_points": 3,
+      "actual_signals": {
+        "days_elapsed": 2.7765948471176736,
+        "commits": 0,
+        "files_changed": 0,
+        "criteria_count": 0
+      },
+      "actual_points": 5.553189694235347,
+      "ratio": 1.8510632314117823
+    },
+    {
+      "slug": "demo-recording",
+      "type": "feature",
+      "estimated_points": 12.5,
+      "actual_signals": {
+        "days_elapsed": 6.77659484882389,
+        "commits": 46,
+        "files_changed": 7,
+        "criteria_count": 12
+      },
+      "actual_points": 49.55318969764778,
+      "ratio": 3.9642551758118225
+    },
+    {
+      "slug": "design-mockups",
+      "type": "feature",
+      "estimated_points": 13.1,
+      "actual_signals": {
+        "days_elapsed": 8.776594850510822,
+        "commits": 30,
+        "files_changed": 7,
+        "criteria_count": 0
+      },
+      "actual_points": 39.553189701021644,
+      "ratio": 3.0193274580932554
+    },
+    {
+      "slug": "ears-acceptance-criteria",
+      "type": "feature",
+      "estimated_points": 12.5,
+      "actual_signals": {
+        "days_elapsed": 0.7883069230136575,
+        "commits": 13,
+        "files_changed": 7,
+        "criteria_count": 7
+      },
+      "actual_points": 18.576613846027314,
+      "ratio": 1.4861291076821852
+    },
+    {
+      "slug": "effort-estimation",
+      "type": "feature",
+      "estimated_points": 4.5,
+      "actual_signals": {
+        "days_elapsed": 8.776594852059814,
+        "commits": 2,
+        "files_changed": 2,
+        "criteria_count": 6
+      },
+      "actual_points": 23.553189704119628,
+      "ratio": 5.234042156471029
+    },
+    {
+      "slug": "error-pattern-catalog",
+      "type": "feature",
+      "estimated_points": 4.5,
+      "actual_signals": {
+        "days_elapsed": 2.7765948536956366,
+        "commits": 0,
+        "files_changed": 0,
+        "criteria_count": 0
+      },
+      "actual_points": 5.553189707391273,
+      "ratio": 1.2340421571980607
+    },
+    {
+      "slug": "git-hook-integration",
+      "type": "feature",
+      "estimated_points": 9.8,
+      "actual_signals": {
+        "days_elapsed": 7.776594855444283,
+        "commits": 23,
+        "files_changed": 5,
+        "criteria_count": 9
+      },
+      "actual_points": 36.55318971088857,
+      "ratio": 3.7299173174376086
+    },
+    {
+      "slug": "hand-delivery-workflow",
+      "type": "feature",
+      "estimated_points": 3.5,
+      "actual_signals": {
+        "days_elapsed": 0,
+        "commits": 0,
+        "files_changed": 0,
+        "criteria_count": 0
+      },
+      "actual_points": 0,
+      "ratio": 0
+    },
+    {
+      "slug": "hero-ask",
+      "type": "feature",
+      "estimated_points": 7.1,
+      "actual_signals": {
+        "days_elapsed": 7.7765948604452655,
+        "commits": 19,
+        "files_changed": 3,
+        "criteria_count": 8
+      },
+      "actual_points": 32.05318972089053,
+      "ratio": 4.514533763505709
+    },
+    {
+      "slug": "hero-context-pipe",
+      "type": "feature",
+      "estimated_points": 8.4,
+      "actual_signals": {
+        "days_elapsed": 7.776594862307743,
+        "commits": 25,
+        "files_changed": 4,
+        "criteria_count": 9
+      },
+      "actual_points": 36.553189724615486,
+      "ratio": 4.351570205311367
+    },
+    {
+      "slug": "hero-dashboard-ui",
+      "type": "feature",
+      "estimated_points": 12.8,
+      "actual_signals": {
+        "days_elapsed": 7.776594864158148,
+        "commits": 25,
+        "files_changed": 7,
+        "criteria_count": 0
+      },
+      "actual_points": 35.0531897283163,
+      "ratio": 2.7385304475247105
+    },
+    {
+      "slug": "hero-pulse",
+      "type": "feature",
+      "estimated_points": 9.8,
+      "actual_signals": {
+        "days_elapsed": 7.776594865784317,
+        "commits": 36,
+        "files_changed": 5,
+        "criteria_count": 10
+      },
+      "actual_points": 43.55318973156864,
+      "ratio": 4.444203033833534
+    },
+    {
+      "slug": "hero-serve-daemon",
+      "type": "feature",
+      "estimated_points": 13.4,
+      "actual_signals": {
+        "days_elapsed": 8.776594867429768,
+        "commits": 39,
+        "files_changed": 7,
+        "criteria_count": 0
+      },
+      "actual_points": 44.05318973485954,
+      "ratio": 3.2875514727507116
+    },
+    {
+      "slug": "html-report",
+      "type": "feature",
+      "estimated_points": 4.5,
+      "actual_signals": {
+        "days_elapsed": 8.77659487270419,
+        "commits": 1,
+        "files_changed": 2,
+        "criteria_count": 5
+      },
+      "actual_points": 22.55318974540838,
+      "ratio": 5.011819943424084
+    },
+    {
+      "slug": "index-extensions",
+      "type": "feature",
+      "estimated_points": 8,
+      "actual_signals": {
+        "days_elapsed": 8.776594874423425,
+        "commits": 8,
+        "files_changed": 5,
+        "criteria_count": 0
+      },
+      "actual_points": 26.55318974884685,
+      "ratio": 3.3191487186058564
+    },
+    {
+      "slug": "jira-deep-integration",
+      "type": "feature",
+      "estimated_points": 9.8,
+      "actual_signals": {
+        "days_elapsed": 8.776594876281552,
+        "commits": 33,
+        "files_changed": 5,
+        "criteria_count": 8
+      },
+      "actual_points": 43.0531897525631,
+      "ratio": 4.3931826278125605
+    },
+    {
+      "slug": "knowledge-contradiction-detection",
+      "type": "feature",
+      "estimated_points": 9.8,
+      "actual_signals": {
+        "days_elapsed": 8.776594878678369,
+        "commits": 2,
+        "files_changed": 5,
+        "criteria_count": 9
+      },
+      "actual_points": 28.053189757356737,
+      "ratio": 2.8625703834037486
+    },
+    {
+      "slug": "mcp-tool-filtering",
+      "type": "feature",
+      "estimated_points": 8.4,
+      "actual_signals": {
+        "days_elapsed": 8.77659488033684,
+        "commits": 36,
+        "files_changed": 4,
+        "criteria_count": 9
+      },
+      "actual_points": 44.053189760673675,
+      "ratio": 5.244427352461152
+    },
+    {
+      "slug": "model-role-config",
+      "type": "feature",
+      "estimated_points": 11.2,
+      "actual_signals": {
+        "days_elapsed": 8.776594882002547,
+        "commits": 26,
+        "files_changed": 6,
+        "criteria_count": 8
+      },
+      "actual_points": 40.5531897640051,
+      "ratio": 3.6208205146433126
+    },
+    {
+      "slug": "multi-project-serve",
+      "type": "feature",
+      "estimated_points": 14,
+      "actual_signals": {
+        "days_elapsed": 8.776594883731436,
+        "commits": 26,
+        "files_changed": 7,
+        "criteria_count": 0
+      },
+      "actual_points": 37.55318976746287,
+      "ratio": 2.682370697675919
+    },
+    {
+      "slug": "playwright-test-generation",
+      "type": "feature",
+      "estimated_points": 12.5,
+      "actual_signals": {
+        "days_elapsed": 6.776594885804641,
+        "commits": 46,
+        "files_changed": 7,
+        "criteria_count": 13
+      },
+      "actual_points": 50.05318977160928,
+      "ratio": 4.004255181728743
+    },
+    {
+      "slug": "post-mortem-replay",
+      "type": "feature",
+      "estimated_points": 4.5,
+      "actual_signals": {
+        "days_elapsed": 8.776594887177142,
+        "commits": 1,
+        "files_changed": 2,
+        "criteria_count": 6
+      },
+      "actual_points": 23.053189774354284,
+      "ratio": 5.122931060967619
+    },
+    {
+      "slug": "prime-command",
+      "type": "feature",
+      "estimated_points": 6.5,
+      "actual_signals": {
+        "days_elapsed": 8.776594888737234,
+        "commits": 5,
+        "files_changed": 1,
+        "criteria_count": 8
+      },
+      "actual_points": 25.05318977747447,
+      "ratio": 3.854336888842226
+    },
+    {
+      "slug": "reasoning-log",
+      "type": "feature",
+      "estimated_points": 13.9,
+      "actual_signals": {
+        "days_elapsed": 7.776594890260682,
+        "commits": 26,
+        "files_changed": 8,
+        "criteria_count": 10
+      },
+      "actual_points": 41.553189780521365,
+      "ratio": 2.989438113706573
+    },
+    {
+      "slug": "root-cause-classification",
+      "type": "feature",
+      "estimated_points": 4.5,
+      "actual_signals": {
+        "days_elapsed": 8.776594891767731,
+        "commits": 10,
+        "files_changed": 2,
+        "criteria_count": 5
+      },
+      "actual_points": 27.053189783535462,
+      "ratio": 6.011819951896769
+    },
+    {
+      "slug": "second-model-review",
+      "type": "feature",
+      "estimated_points": 10.1,
+      "actual_signals": {
+        "days_elapsed": 8.776594893385209,
+        "commits": 4,
+        "files_changed": 5,
+        "criteria_count": 8
+      },
+      "actual_points": 28.553189786770417,
+      "ratio": 2.827048493739645
+    },
+    {
+      "slug": "skills-git-native",
+      "type": "feature",
+      "estimated_points": 10.7,
+      "actual_signals": {
+        "days_elapsed": 7.776594894932766,
+        "commits": 19,
+        "files_changed": 5,
+        "criteria_count": 10
+      },
+      "actual_points": 35.053189789865534,
+      "ratio": 3.275999045781826
+    },
+    {
+      "slug": "spec-decomposition",
+      "type": "feature",
+      "estimated_points": 2.9,
+      "actual_signals": {
+        "days_elapsed": 8.776594896280672,
+        "commits": 1,
+        "files_changed": 1,
+        "criteria_count": 5
+      },
+      "actual_points": 21.553189792561344,
+      "ratio": 7.43213441122805
+    },
+    {
+      "slug": "spec-drift-detection",
+      "type": "feature",
+      "estimated_points": 16.6,
+      "actual_signals": {
+        "days_elapsed": 1.8071892001854282,
+        "commits": 41,
+        "files_changed": 10,
+        "criteria_count": 9
+      },
+      "actual_points": 38.61437840037085,
+      "ratio": 2.3261673735163164
+    },
+    {
+      "slug": "spec-quality-scoring",
+      "type": "feature",
+      "estimated_points": 1.5,
+      "actual_signals": {
+        "days_elapsed": 0,
+        "commits": 0,
+        "files_changed": 0,
+        "criteria_count": 0
+      },
+      "actual_points": 0,
+      "ratio": 0
+    },
+    {
+      "slug": "spec-triage",
+      "type": "feature",
+      "estimated_points": 12.5,
+      "actual_signals": {
+        "days_elapsed": 7.77659489954264,
+        "commits": 3,
+        "files_changed": 7,
+        "criteria_count": 10
+      },
+      "actual_points": 29.05318979908528,
+      "ratio": 2.3242551839268226
+    },
+    {
+      "slug": "spec-types-lifecycle",
+      "type": "feature",
+      "estimated_points": 5.3,
+      "actual_signals": {
+        "days_elapsed": 8.776594901012071,
+        "commits": 15,
+        "files_changed": 3,
+        "criteria_count": 0
+      },
+      "actual_points": 28.053189802024143,
+      "ratio": 5.293054679627197
+    },
+    {
+      "slug": "sprint-from-tracker",
+      "type": "feature",
+      "estimated_points": 10.7,
+      "actual_signals": {
+        "days_elapsed": 8.776594902787732,
+        "commits": 20,
+        "files_changed": 5,
+        "criteria_count": 8
+      },
+      "actual_points": 36.553189805575464,
+      "ratio": 3.416185963137894
+    },
+    {
+      "slug": "sprint-planner",
+      "type": "feature",
+      "estimated_points": 2.9,
+      "actual_signals": {
+        "days_elapsed": 8.776594906537754,
+        "commits": 1,
+        "files_changed": 1,
+        "criteria_count": 5
+      },
+      "actual_points": 21.55318981307551,
+      "ratio": 7.4321344183019
+    },
+    {
+      "slug": "status-reconciliation",
+      "type": "feature",
+      "estimated_points": 13.3,
+      "actual_signals": {
+        "days_elapsed": 7.776594908207801,
+        "commits": 13,
+        "files_changed": 8,
+        "criteria_count": 0
+      },
+      "actual_points": 30.053189816415603,
+      "ratio": 2.2596383320613236
+    },
+    {
+      "slug": "team-coordination",
+      "type": "feature",
+      "estimated_points": 9.4,
+      "actual_signals": {
+        "days_elapsed": 8.776594909677234,
+        "commits": 11,
+        "files_changed": 6,
+        "criteria_count": 0
+      },
+      "actual_points": 29.05318981935447,
+      "ratio": 3.0907648743994116
+    },
+    {
+      "slug": "treesitter-parser-backend",
+      "type": "feature",
+      "estimated_points": 3,
+      "actual_signals": {
+        "days_elapsed": 2.7765949112281594,
+        "commits": 0,
+        "files_changed": 0,
+        "criteria_count": 0
+      },
+      "actual_points": 5.553189822456319,
+      "ratio": 1.8510632741521063
+    },
+    {
+      "slug": "v2-agents-and-skills",
+      "type": "feature",
+      "estimated_points": 20.5,
+      "actual_signals": {
+        "days_elapsed": 8.776594913095451,
+        "commits": 10,
+        "files_changed": 14,
+        "criteria_count": 0
+      },
+      "actual_points": 36.5531898261909,
+      "ratio": 1.7830824305458977
+    },
+    {
+      "slug": "v2-commands",
+      "type": "feature",
+      "estimated_points": 8,
+      "actual_signals": {
+        "days_elapsed": 8.776594914752478,
+        "commits": 3,
+        "files_changed": 5,
+        "criteria_count": 0
+      },
+      "actual_points": 24.053189829504955,
+      "ratio": 3.0066487286881194
+    },
+    {
+      "slug": "version-tracking-upgrade",
+      "type": "feature",
+      "estimated_points": 16.3,
+      "actual_signals": {
+        "days_elapsed": 7.776594916504514,
+        "commits": 35,
+        "files_changed": 10,
+        "criteria_count": 0
+      },
+      "actual_points": 43.05318983300903,
+      "ratio": 2.6412999897551552
+    }
+  ]
+}

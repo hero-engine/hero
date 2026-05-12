@@ -1,0 +1,72 @@
+// Package serve provides the hero daemon: MCP server, HTTP API, file watcher, and event stream.
+package serve
+
+import (
+	"io"
+	"os"
+
+	"github.com/hero-engine/hero/internal/refs"
+)
+
+// This file is the slim public surface for the Hero MCP server. The
+// implementation is split across:
+//
+//   mcp_protocol.go      JSON-RPC + MCP protocol types and error codes
+//   mcp_lifecycle.go     Run, request routing, initialize, tools/list,
+//                        sendResult/sendError/send, logDebug,
+//                        finishToolCall result wrapping
+//   mcp_dispatch.go      tools/call dispatch — table-driven handler map
+//   mcp_tools_def.go     toolDefinitions() — the canonical tool list
+//   mcp_tools.go         all tool handler implementations and helpers
+//                        (read / mutate / analyze, with shared formatters)
+//   mcp_expand.go        hero_expand and ref-store wiring
+//   mcp_resolvers.go     ref-store resolvers per kind
+//   mcp_summaries.go     compact-mode summary builders
+//   envelope.go          [hero envelope] text helper + compact arg
+
+// MCPServer handles the MCP protocol over stdio.
+type MCPServer struct {
+	heroDir     string
+	projectRoot string
+	version     string
+	input       io.Reader
+	output      io.Writer
+	filter      *ToolFilter // optional tool filter; nil = allow all
+	profile     string      // active tool profile (set during initialize)
+	debugLog    *os.File    // optional debug log file; nil = no logging
+
+	// Two-tier MCP responses (spec: two-tier-mcp-responses).
+	// refsStore is opened lazily on first use; refsRegistry holds
+	// resolvers for each ref kind so hero_expand can rehydrate.
+	refsStore    *refs.Store
+	refsRegistry *refs.Registry
+	sessionID    string
+}
+
+// NewMCPServer creates an MCP server for the given hero workspace.
+func NewMCPServer(heroDir, projectRoot, version string) *MCPServer {
+	s := &MCPServer{
+		heroDir:      heroDir,
+		projectRoot:  projectRoot,
+		version:      version,
+		input:        os.Stdin,
+		output:       os.Stdout,
+		refsRegistry: refs.NewRegistry(),
+		sessionID:    refs.SessionID(projectRoot, os.Getpid()),
+	}
+	s.setupResolvers()
+	return s
+}
+
+// NewMCPServerWithFilter creates an MCP server with a tool filter.
+func NewMCPServerWithFilter(heroDir, projectRoot, version string, filter *ToolFilter) *MCPServer {
+	s := NewMCPServer(heroDir, projectRoot, version)
+	s.filter = filter
+	return s
+}
+
+// SetIO overrides the default stdin/stdout (for testing).
+func (s *MCPServer) SetIO(in io.Reader, out io.Writer) {
+	s.input = in
+	s.output = out
+}

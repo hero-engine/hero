@@ -1,0 +1,17 @@
+name: Auto-diagnose new bugs
+enabled: true
+trigger:
+  type: tracker
+  event: issue_created
+  filter:
+    type: Bug
+    status: Open
+action:
+  command: diagnose
+  args: "{{tracker_id}}"
+  mode: autopilot
+  model: claude-sonnet-4-6-20250514
+  budget: 2.00
+approval:
+  required: false
+  notify: ""

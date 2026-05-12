@@ -1,0 +1,89 @@
+name: Smoke
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    # Nightly at 07:00 UTC (~midnight US Pacific)
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Smoke mode"
+        type: choice
+        options: [since, all]
+        default: since
+      ref:
+        description: "Git ref for --since (default: origin/main)"
+        type: string
+        default: origin/main
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Need full history so `hero smoke --since <base>` can diff.
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.26.x"
+          cache: true
+
+      - name: Build hero
+        run: make build
+
+      - name: Determine smoke mode and base ref
+        id: mode
+        run: |
+          set -e
+          case "${GITHUB_EVENT_NAME}" in
+            pull_request)
+              echo "mode=since" >> "$GITHUB_OUTPUT"
+              echo "ref=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+              ;;
+            push)
+              echo "mode=since" >> "$GITHUB_OUTPUT"
+              echo "ref=${{ github.event.before }}" >> "$GITHUB_OUTPUT"
+              ;;
+            schedule)
+              echo "mode=all" >> "$GITHUB_OUTPUT"
+              echo "ref=" >> "$GITHUB_OUTPUT"
+              ;;
+            workflow_dispatch)
+              echo "mode=${{ inputs.mode }}" >> "$GITHUB_OUTPUT"
+              echo "ref=${{ inputs.ref }}" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+      - name: Run smokes
+        env:
+          # External-dep smokes (Jira, GitHub API, team server) skip by default.
+          # Set to 1 in a workflow that has the credentials to run them.
+          HERO_SMOKE_EXTERNAL: "0"
+        run: |
+          set -e
+          if [ "${{ steps.mode.outputs.mode }}" = "all" ]; then
+            ./hero smoke --all
+          else
+            ./hero smoke --since "${{ steps.mode.outputs.ref }}"
+          fi
+
+      - name: Upload smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-results-${{ github.run_id }}
+          path: |
+            tmp/e2e/**
+            .hero/smoke/last-run.json
+          if-no-files-found: ignore
+          retention-days: 14

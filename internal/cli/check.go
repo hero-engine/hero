@@ -1,0 +1,424 @@
+package cli
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
+	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/index"
+	"github.com/hero-engine/hero/internal/install"
+	"github.com/hero-engine/hero/internal/reconcile"
+	"github.com/hero-engine/hero/internal/spec"
+	"github.com/spf13/cobra"
+)
+
+// runSatelliteDryRun is the cross-file shim used by check.go and
+// elsewhere. It is defined here next to its only consumers so the
+// install package does not have to depend on cobra/CLI flags.
+func runSatelliteDryRun(heroDir, rootDir string) (*install.RepairResult, error) {
+	return install.Repair(install.RepairOptions{
+		HeroDir: heroDir,
+		RootDir: rootDir,
+		DryRun:  true,
+	})
+}
+
+var checkCmd = &cobra.Command{
+	Use:   "check",
+	Short: "Health check the hero workspace",
+	Long: `Reports on workspace health: stale specs, unclaimed work, convention count,
+and general corpus statistics.`,
+	RunE: runCheck,
+}
+
+var checkStaleDays int
+var checkReconcile bool
+var checkKnowledge bool
+
+func init() {
+	checkCmd.Flags().IntVar(&checkStaleDays, "stale-days", 14, "number of days before a planning spec is considered stale")
+	checkCmd.Flags().BoolVar(&checkReconcile, "reconcile", false, "auto-fix status drift (promotes planning → delivering when git evidence is clear)")
+	checkCmd.Flags().BoolVar(&checkKnowledge, "knowledge", false, "lint knowledge base for stale references, orphans, and pending enrichment")
+
+	// Subverbs migrated from top-level commands. `hero check` alone
+	// runs the default health check; subverbs target specific
+	// dimensions of corpus health.
+	checkCmd.AddCommand(validateCmd) // hero check validate (was hero validate)
+	checkCmd.AddCommand(triageCmd)   // hero check triage   (was hero triage)
+	checkCmd.AddCommand(conflictsCmd) // hero check conflicts (was hero conflicts)
+}
+
+func runCheck(cmd *cobra.Command, args []string) error {
+	projectRoot := findProjectRoot()
+	cfg, err := config.Load(projectRoot)
+	if err != nil {
+		return fmt.Errorf("loading config: %w", err)
+	}
+
+	heroDir := cfg.HeroDir(projectRoot)
+	if _, err := os.Stat(heroDir); os.IsNotExist(err) {
+		return fmt.Errorf("no hero workspace found (run 'hero init' first)")
+	}
+
+	// Use stale-days from config if set
+	staleDays := checkStaleDays
+	if cfg.Team.StaleDays > 0 && !cmd.Flags().Changed("stale-days") {
+		staleDays = cfg.Team.StaleDays
+	}
+
+	idx, err := index.Open(heroDir)
+	if err != nil {
+		return fmt.Errorf("opening index: %w", err)
+	}
+	defer idx.Close()
+
+	stats, err := idx.GetStats()
+	if err != nil {
+		return fmt.Errorf("getting stats: %w", err)
+	}
+
+	fmt.Println("Hero workspace health check")
+	fmt.Println("===========================")
+	fmt.Println()
+
+	// Corpus stats
+	fmt.Printf("Corpus: %d specs total\n", stats.TotalSpecs)
+	fmt.Printf("  %d features, %d bugs, %d conventions, %d decisions\n",
+		stats.Features, stats.Bugs, stats.Conventions, stats.Decisions)
+	if stats.Initiatives > 0 {
+		fmt.Printf("  %d initiatives\n", stats.Initiatives)
+	}
+	fmt.Printf("  %d files tracked, %d approach docs, %d root causes\n",
+		stats.FilesTracked, stats.DecisionDocs, stats.RootCauses)
+	fmt.Println()
+
+	issues := 0
+
+	// Check stale specs
+	stale, err := idx.CheckStale(staleDays)
+	if err == nil && len(stale) > 0 {
+		issues += len(stale)
+		fmt.Printf("Stale specs (>%d days in planning/in-review):\n", staleDays)
+		for _, s := range stale {
+			fmt.Printf("  %-30s  %-10s  %-10s  %s\n", s.Slug, s.Type, s.Status, s.Title)
+		}
+		fmt.Println()
+	}
+
+	// Check unclaimed specs
+	unclaimed, err := idx.CheckUnclaimed()
+	if err == nil && len(unclaimed) > 0 {
+		issues += len(unclaimed)
+		fmt.Printf("Unclaimed specs (planning/in-review with no claim):\n")
+		for _, s := range unclaimed {
+			fmt.Printf("  %-30s  %-10s  %-10s  %s\n", s.Slug, s.Type, s.Status, s.Title)
+		}
+		fmt.Println()
+	}
+
+	// In-flight summary
+	inFlight := stats.Planning + stats.InReview + stats.Delivering
+	if inFlight > 0 {
+		fmt.Printf("In-flight: %d planning, %d in-review, %d delivering\n",
+			stats.Planning, stats.InReview, stats.Delivering)
+		if stats.Claims > 0 {
+			fmt.Printf("  %d claimed\n", stats.Claims)
+		}
+		fmt.Println()
+	}
+
+	// Status drift (git-derived reconciliation)
+	findings := reconcile.Reconcile(heroDir, projectRoot)
+	if len(findings) > 0 {
+		fixed := 0
+		fmt.Printf("Status drift (%d spec(s) out of sync with git):\n", len(findings))
+		for _, f := range findings {
+			issues++
+			action := "→"
+			suffix := ""
+			if checkReconcile && f.CanAutoFix() {
+				if f.NeedsMove() {
+					// Completed spec stuck in planning — move it to specs/
+					destPath, moved, err := moveToSpecs(f.Spec.Path, heroDir)
+					if err != nil {
+						suffix = fmt.Sprintf("  (move failed: %v)", err)
+					} else if moved {
+						action = "✓"
+						suffix = fmt.Sprintf("  (moved to %s)", destPath)
+						fixed++
+					}
+				} else {
+					if err := updateFrontmatterStatus(f.Spec.Path, string(f.SuggestedStatus)); err != nil {
+						suffix = fmt.Sprintf("  (auto-fix failed: %v)", err)
+					} else {
+						action = "✓"
+						suffix = "  (fixed)"
+						fixed++
+					}
+				}
+			}
+			fmt.Printf("  %-30s  %s %s %s  %s%s\n",
+				f.Spec.Slug,
+				f.CurrentStatus,
+				action,
+				f.SuggestedStatus,
+				f.Evidence,
+				suffix,
+			)
+		}
+		if fixed > 0 {
+			fmt.Printf("\n  %d spec(s) auto-fixed. Run 'hero index' to update the search index.\n", fixed)
+		} else if !checkReconcile {
+			fmt.Printf("\n  Run 'hero check --reconcile' to auto-fix eligible items.\n")
+		}
+		fmt.Println()
+	}
+
+	// Knowledge lint
+	if checkKnowledge {
+		knowledgeIssues := runKnowledgeLint(heroDir, projectRoot)
+		issues += knowledgeIssues
+	}
+
+	// Pre-commit hook installation — without it, projected NEXT files
+	// don't travel with commits and handoff state strands locally.
+	// Only meaningful inside a git repo; non-git workspaces (test
+	// fixtures, exported snapshots) skip the check entirely.
+	// Spec: pre-commit-auto-stage-next.
+	if _, err := resolveGitDir(projectRoot); err == nil {
+		switch {
+		case !preCommitHookInstalled(projectRoot):
+			issues++
+			fmt.Println("Pre-commit hook not installed:")
+			fmt.Println("  Projected NEXT files won't travel with commits — handoff")
+			fmt.Println("  state will strand on this machine. Run 'hero next install-hooks'")
+			fmt.Println("  to fix.")
+			fmt.Println()
+		default:
+			// Hook installed — check whether its managed block content
+			// matches the current binary's hookScript() output. Drift
+			// happens when the user upgrades hero but the installed
+			// hook predates the new script. Spec: hero-upgrade-refreshes-hooks.
+			if stale, err := preCommitHookStale(projectRoot); err == nil && stale {
+				issues++
+				fmt.Println("Pre-commit hook is stale:")
+				fmt.Println("  Installed managed block doesn't match the current hero")
+				fmt.Println("  binary's hook script. Run 'hero upgrade' (or")
+				fmt.Println("  'hero next install-hooks') to refresh.")
+				fmt.Println()
+			}
+		}
+	}
+
+	// Kickoff section coverage — every non-completed work spec should
+	// carry a `## Kickoff` section so it surfaces in `hero queue` and
+	// gives the user a paste-ready cold-start prompt for that spec.
+	// Spec: kickoff-prompts-queue.
+	if missing, err := missingKickoffSpecs(heroDir); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: kickoff coverage check failed: %v\n", err)
+	} else if len(missing) > 0 {
+		issues += len(missing)
+		fmt.Printf("Specs missing `## Kickoff` section (%d):\n", len(missing))
+		for _, s := range missing {
+			fmt.Printf("  %-30s  %-10s  %s\n", s.Slug, s.Status, s.Title)
+		}
+		fmt.Println("  These specs are excluded from `hero queue`. Run /design or")
+		fmt.Println("  /deliver on each, or hand-edit per skills/kickoff-prompt.md.")
+		fmt.Println()
+	}
+
+	// Status truthfulness — one-line summary plus an issue count
+	// bump for any spec lying about being completed. Run `hero check
+	// status` for the full breakdown.
+	if line, lyingPartial, err := statusTruthfulnessSummary(); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: status truthfulness audit failed: %v\n", err)
+	} else if line != "" {
+		fmt.Println(line)
+		if lyingPartial > 0 {
+			fmt.Println("  Run 'hero check status' for the full breakdown.")
+			issues += lyingPartial
+		}
+		fmt.Println()
+	}
+
+	// Satellite drift — dry-run repair to surface findings.
+	if satIssues := reportSatelliteDrift(projectRoot, heroDir); satIssues > 0 {
+		issues += satIssues
+	}
+
+	if issues == 0 {
+		fmt.Println("No issues found.")
+	} else {
+		fmt.Printf("%d issue(s) found.\n", issues)
+	}
+
+	return nil
+}
+
+// reportSatelliteDrift runs the satellite reconciler in dry-run mode
+// and prints any findings to stdout. Returns the count of findings,
+// which is added to the overall issue count.
+func reportSatelliteDrift(projectRoot, heroDir string) int {
+	res, err := runSatelliteDryRun(heroDir, projectRoot)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: satellite check failed: %v\n", err)
+		return 0
+	}
+	if res == nil || len(res.Findings) == 0 {
+		return 0
+	}
+	fmt.Printf("Satellite drift (%d):\n", len(res.Findings))
+	fmt.Print(res.FormatFindings())
+	fmt.Println("  Run 'hero install --repair' to fix automatically-repairable issues.")
+	fmt.Println()
+	return len(res.Findings)
+}
+
+// missingKickoffSpecs returns work specs (feature/bug) in an open
+// status that lack a `## Kickoff` section. Knowledge specs and
+// closed work specs are skipped — kickoff is only meaningful for
+// pickup-able work.
+func missingKickoffSpecs(heroDir string) ([]*spec.Spec, error) {
+	specs, err := spec.Discover(heroDir)
+	if err != nil {
+		return nil, err
+	}
+	var out []*spec.Spec
+	for _, s := range specs {
+		if !s.IsWorkSpec() {
+			continue
+		}
+		switch s.Status {
+		case spec.StatusCompleted, spec.StatusSuperseded:
+			continue
+		}
+		if strings.TrimSpace(s.Kickoff()) == "" {
+			out = append(out, s)
+		}
+	}
+	return out, nil
+}
+
+// statusTruthfulnessSummary returns the one-line summary plus the
+// count of lying+partial specs (used to bump the overall issue
+// counter). Empty line and zero count when no completed specs exist.
+func statusTruthfulnessSummary() (string, int, error) {
+	report, err := buildStatusReport()
+	if err != nil {
+		return "", 0, err
+	}
+	return statusSummaryLine(report), report.Lying + report.Partial, nil
+}
+
+func runKnowledgeLint(heroDir, projectRoot string) int {
+	issues := 0
+	knowledgeDir := filepath.Join(heroDir, "knowledge")
+
+	// Find all knowledge specs
+	specs, err := spec.Discover(heroDir)
+	if err != nil {
+		return 0
+	}
+
+	var knowledgeSpecs []*spec.Spec
+	for _, s := range specs {
+		if s.IsKnowledge() {
+			knowledgeSpecs = append(knowledgeSpecs, s)
+		}
+	}
+
+	if len(knowledgeSpecs) == 0 {
+		return 0
+	}
+
+	fmt.Println("Knowledge lint:")
+
+	// 1. Check for pending enrichment (ingested but not summarized)
+	pendingCount := 0
+	for _, s := range knowledgeSpecs {
+		if strings.Contains(s.RawContent, "Pending enrichment") || strings.Contains(s.RawContent, "To be filled by agent") {
+			pendingCount++
+			if pendingCount <= 5 {
+				fmt.Printf("  ⚠ %s — pending enrichment (ingested but not summarized)\n", s.Slug)
+			}
+		}
+	}
+	if pendingCount > 5 {
+		fmt.Printf("  ... and %d more pending enrichment\n", pendingCount-5)
+	}
+	issues += pendingCount
+
+	// 2. Check for stale knowledge (not modified in 90+ days)
+	staleCount := 0
+	cutoff := time.Now().AddDate(0, 0, -90)
+	for _, s := range knowledgeSpecs {
+		if s.ModifiedAt.Before(cutoff) {
+			staleCount++
+			if staleCount <= 5 {
+				age := int(time.Since(s.ModifiedAt).Hours() / 24)
+				fmt.Printf("  ⚠ %s — stale (%d days since last update)\n", s.Slug, age)
+			}
+		}
+	}
+	if staleCount > 5 {
+		fmt.Printf("  ... and %d more stale entries\n", staleCount-5)
+	}
+	issues += staleCount
+
+	// 3. Check for file references that no longer exist
+	brokenRefs := 0
+	for _, s := range knowledgeSpecs {
+		for _, f := range s.FilesTouched {
+			abs := filepath.Join(projectRoot, f)
+			if _, err := os.Stat(abs); os.IsNotExist(err) {
+				brokenRefs++
+				if brokenRefs <= 5 {
+					fmt.Printf("  ⚠ %s — references non-existent file %s\n", s.Slug, f)
+				}
+			}
+		}
+	}
+	if brokenRefs > 5 {
+		fmt.Printf("  ... and %d more broken references\n", brokenRefs-5)
+	}
+	issues += brokenRefs
+
+	// 4. Check for orphan raw files (raw/ entries with no corresponding knowledge entry)
+	rawDir := filepath.Join(knowledgeDir, "raw")
+	if entries, err := os.ReadDir(rawDir); err == nil {
+		orphanCount := 0
+		for _, entry := range entries {
+			if entry.IsDir() {
+				continue
+			}
+			slug := strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))
+			found := false
+			for _, s := range knowledgeSpecs {
+				if s.Slug == slug {
+					found = true
+					break
+				}
+			}
+			if !found {
+				orphanCount++
+				if orphanCount <= 3 {
+					fmt.Printf("  ⚠ raw/%s — orphan (no knowledge entry references it)\n", entry.Name())
+				}
+			}
+		}
+		if orphanCount > 3 {
+			fmt.Printf("  ... and %d more orphan raw files\n", orphanCount-3)
+		}
+		issues += orphanCount
+	}
+
+	if issues == 0 {
+		fmt.Println("  ✓ Knowledge base is clean")
+	}
+	fmt.Println()
+
+	return issues
+}

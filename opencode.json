@@ -1,0 +1,72 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "build": {
+      "permission": {
+        "skill": {
+          "*": "allow"
+        },
+        "task": {
+          "*": "allow"
+        }
+      }
+    },
+    "plan": {
+      "permission": {
+        "bash": {
+          "*": "ask",
+          "git diff*": "allow",
+          "git log*": "allow",
+          "git status*": "allow",
+          "ls *": "allow",
+          "rg *": "allow"
+        },
+        "edit": "deny",
+        "skill": {
+          "*": "allow"
+        },
+        "task": {
+          "*": "deny",
+          "api-engineer": "allow",
+          "architecture-reviewer": "allow",
+          "brownfield-architect": "allow",
+          "convention-author": "allow",
+          "debug-investigator": "allow",
+          "dependency-analyst": "allow",
+          "devops-engineer": "allow",
+          "documentation-engineer": "allow",
+          "feature-delivery-lead": "allow",
+          "greenfield-architect": "allow",
+          "integration-engineer": "allow",
+          "issue-tracker": "allow",
+          "migration-engineer": "allow",
+          "performance-engineer": "allow",
+          "platform-delivery-lead": "allow",
+          "pr-reviewer": "allow",
+          "product-ideator": "allow",
+          "project-context-builder": "allow",
+          "release-engineer": "allow",
+          "security-reviewer": "allow",
+          "test-architect": "allow"
+        }
+      }
+    }
+  },
+  "mcp": {
+    "hero": {
+      "type": "local",
+      "command": [
+        "hero",
+        "mcp"
+      ]
+    }
+  },
+  "permission": {
+    "skill": {
+      "*": "allow"
+    },
+    "task": {
+      "*": "allow"
+    }
+  }
+}
