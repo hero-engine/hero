@@ -24,12 +24,12 @@ builds:
       - -s -w -X main.version={{.Version}}
 
 archives:
-  - format: tar.gz
+  - formats: [tar.gz]
     name_template: >-
       {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
     format_overrides:
       - goos: windows
-        format: zip
+        formats: [zip]
 
 checksum:
   name_template: "checksums.txt"
@@ -49,9 +49,14 @@ brews:
   - repository:
       owner: hero-engine
       name: homebrew-tap
-    homepage: "https://github.com/hero-engine/hero"
+      token: "{{ .Env.TAP_TOKEN }}"
+    url_template: "https://github.com/hero-engine/hero-releases/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    homepage: "https://hero-engine.dev"
     description: "Spec-driven AI engineering workflow"
     license: "MIT"
+    commit_author:
+      name: hero-engine-bot
+      email: noreply@hero-engine.dev
     install: |
       bin.install "hero"
     test: |
@@ -60,7 +65,7 @@ brews:
 release:
   github:
     owner: hero-engine
-    name: hero
+    name: hero-releases
   draft: false
   prerelease: auto
   name_template: "v{{.Version}}"
