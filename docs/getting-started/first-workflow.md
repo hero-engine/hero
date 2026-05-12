@@ -22,7 +22,7 @@ The spec is a markdown file with YAML frontmatter:
 ---
 title: "Add CSV Export to Reports Page"
 type: feature
-status: draft
+status: planning
 priority: medium
 ---
 ```
@@ -30,7 +30,7 @@ priority: medium
 Review the spec. The AI will surface tradeoffs and ask for your input — this is where you catch misunderstandings before any code is written.
 
 !!! info
-    The spec status moves through: `draft` → `approved` → `in-progress` → `done`. You approve the spec before any implementation begins.
+    The spec status moves through: `planning` → `in-review` → `delivering` → `completed`. You approve the spec before any implementation begins.
 
 ## 2. Deliver the Feature
 

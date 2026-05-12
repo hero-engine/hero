@@ -76,15 +76,32 @@ hero install project . --target codex
 hero install project . --target copilot
 ```
 
-For sub-folder harness sessions in a monorepo:
+For monorepos where the AI tool runs from a subfolder, register each
+subfolder as a satellite of the root install:
 
 ```bash
 hero install project . --target cursor --workspace services/auth
+hero install satellites list
+hero install satellites add services/auth
+hero install --repair
 ```
 
-`hero install` copies the current command, agent, and skill files into
-the target harness format and registers `hero mcp` so the tool can call
-Hero directly.
+Hero ships content in two layers: a shared `core/` pack and one or more
+domain packs (currently `domains/engineering/` and a scaffolded
+`domains/sales/`). The active domain comes from `hero.json` or the
+`--domain` flag:
+
+```bash
+hero install project . --target claude --domain engineering
+hero domain
+```
+
+`hero install` copies the active domain's command, agent, and skill
+files into the target harness format and registers `hero mcp` so the
+tool can call Hero directly. Use `--migrate` to reconcile drifted
+copies across multiple harnesses, `--force-managed` to regenerate
+Hero-managed sections inside `AGENTS.md`/`CLAUDE.md` after a release,
+and `hero verify-install` to audit install state.
 
 Current installed content counts:
 
@@ -152,15 +169,15 @@ The binary is organized around a few stable groups.
 
 | Area | Commands |
 |---|---|
-| Session context | `hero resume`, `hero next`, `hero recap`, `hero feed`, `hero relevant`, `hero ask`, `hero search` |
-| Spec lifecycle | `hero spec new`, `hero spec deliver`, `hero spec verify`, `hero spec complete`, `hero spec claim`, `hero spec plan`, `hero diff`, `hero drift` |
+| Session context | `hero resume`, `hero next`, `hero recap`, `hero feed`, `hero relevant`, `hero ask`, `hero search`, `hero do` |
+| Spec lifecycle | `hero spec new`, `hero spec deliver`, `hero spec verify`, `hero spec complete`, `hero spec claim`, `hero spec plan`, `hero diff`, `hero drift`, `hero list`, `hero queue`, `hero suggest` |
 | Acceptance criteria | `hero ac list`, `hero ac record`, `hero ac status`, `hero ac history`, `hero coverage`, `hero spec contract` |
-| Workspace health | `hero status`, `hero dashboard`, `hero check`, `hero docs check`, `hero smoke`, `hero ci` |
+| Workspace health | `hero status`, `hero dashboard`, `hero check`, `hero docs check`, `hero smoke`, `hero ci`, `hero anchor`, `hero tripwire` |
 | Graph and retrieval | `hero scan`, `hero graph`, `hero extract`, `hero impact`, `hero why`, `hero blocked` |
 | Tracker and sync | `hero sync connect`, `hero sync import`, `hero sync pull`, `hero sync spec`, `hero sync link`, `hero sync comment`, `hero sync attach`, `hero sync graph` |
-| Automation and headless work | `hero agent run`, `hero agent jobs`, `hero agent approve`, `hero agent automate`, `hero pipeline` |
+| Automation and headless work | `hero agent run`, `hero agent jobs`, `hero agent approve`, `hero agent automate`, `hero pipeline`, `hero watch` |
 | Publishing and server | `hero serve`, `hero mcp`, `hero publish wiki`, `hero publish pages`, `hero login`, `hero logout` |
-| Installation | `hero install`, `hero upgrade`, `hero uninstall`, `hero trust` |
+| Installation | `hero install`, `hero install satellites`, `hero upgrade`, `hero uninstall`, `hero verify-install`, `hero trust`, `hero domain` |
 
 Useful examples:
 
@@ -227,9 +244,13 @@ include claim/event/plan/enrich/test/demo helpers.
 │   └── initiatives/
 ├── specs/                      # completed specs
 ├── knowledge/
+│   ├── conventions/
+│   ├── decisions/
+│   ├── rules/
 │   ├── context/
 │   ├── notes/
-│   └── rules/
+│   ├── templates/
+│   └── external/
 ├── next/                       # per-user and local handoff projections
 ├── smoke/                      # per-feature smoke metadata
 ├── events.log                  # cross-session activity feed source
@@ -348,6 +369,8 @@ for the full reference.
 
 ## More Docs
 
+- [What Is Hero?](docs/what-is-hero.md) — plain-English overview
+- [Why Hero](docs/why-hero.md) — deeper technical evaluation
 - [Getting Started](GETTING-STARTED.md)
 - [Docs Index](docs/index.md)
 - [Commands Reference](docs/commands/index.md)

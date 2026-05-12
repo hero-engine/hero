@@ -55,15 +55,38 @@ hero install project . --target copilot
 hero install project . --target generic
 ```
 
-For monorepos where the harness runs from a sub-folder:
+The installer copies 27 slash command definitions, 34 agents, and 45
+skills from the active **domain pack**, then registers the `hero mcp`
+server so the harness can call Hero's 41 MCP tools.
+
+Hero ships content in layers: a shared `core/` pack and one or more
+domain packs (`domains/engineering/` for engineering teams,
+`domains/sales/` scaffolded for sales). The active domain comes from
+`hero.json` or `--domain`:
+
+```bash
+hero install project . --target claude --domain engineering
+hero domain                    # show / switch active domain
+```
+
+For monorepos where the harness runs from a sub-folder, register each
+sub-folder as a satellite of the root install:
 
 ```bash
 hero install project . --target cursor --workspace services/auth
+hero install satellites list
+hero install satellites add services/auth
+hero install --repair          # verify symlinks/markers
 ```
 
-The installer copies 27 slash command definitions, 34 agents, and 45
-skills, then registers the `hero mcp` server so the harness can call
-Hero's 41 MCP tools.
+Other useful install flags:
+
+```bash
+hero install --migrate         # reconcile drifted copies across harnesses
+hero install --force-managed   # regenerate managed AGENTS.md / CLAUDE.md sections
+hero install --no-touch-claude-md  # leave CLAUDE.md alone
+hero verify-install            # audit install state
+```
 
 ---
 

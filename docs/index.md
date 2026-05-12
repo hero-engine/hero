@@ -61,6 +61,8 @@ Then in your AI tool:
 
 ## Next Steps
 
+- [What Is Hero?](what-is-hero.md) — plain-English explainer
+- [Why Hero](why-hero.md) — deeper technical evaluation
 - [Installation](getting-started/installation.md)
 - [Project Setup](getting-started/project-setup.md)
 - [First Workflow](getting-started/first-workflow.md)

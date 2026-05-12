@@ -32,6 +32,7 @@ plain natural-language asks are routed to these same workflows.
 | `/discover` | Explore product direction and possible work. |
 | `/design` | Produce a feature, platform, or documentation spec. |
 | `/diagnose` | Investigate a bug and produce a fix spec. |
+| `/challenge` | Push back on a diagnosis — re-examine the root cause with new context. |
 | `/deliver` | Implement and validate an approved spec. |
 | `/review` | Review PRs, current changes, security, architecture, tests, or specs. |
 | `/scrub` | Remove quality issues such as dead code, weak types, duplication, stale comments, and legacy cruft. |
