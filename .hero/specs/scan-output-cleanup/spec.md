@@ -1,7 +1,7 @@
 ---
 title: Scan output cleanup — three first-five-minutes papercuts
 type: bug
-status: delivering
+status: completed
 severity: low
 priority: medium
 tags: [scan, cli, ux, onboarding]
