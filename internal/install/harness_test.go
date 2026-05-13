@@ -50,8 +50,8 @@ func (h *installHarness) seedSource() {
 	h.t.Helper()
 
 	files := map[string]string{
-		"agents/engineer.md":         "# Engineer agent\nGeneric engineer.",
-		"agents/reviewer.md":         "# Reviewer agent\nReviews PRs.",
+		"agents/engineer.md":         "---\nname: engineer\ndescription: Generic engineer.\n---\n# Engineer agent\nGeneric engineer.",
+		"agents/reviewer.md":         "---\nname: reviewer\ndescription: Reviews PRs.\n---\n# Reviewer agent\nReviews PRs.",
 		"commands/design.md":         "# /design command\nProduces a spec.",
 		"commands/deliver.md":        "# /deliver command\nImplements a spec.",
 		"skills/spec-format.md":      "# spec-format skill\nDefines spec structure.",
@@ -202,6 +202,46 @@ func (h *installHarness) mustHaveSameContent(relA, relB string) {
 	if string(dataA) != string(dataB) {
 		h.t.Fatalf("%s and %s differ\n--- %s ---\n%s\n--- %s ---\n%s",
 			relA, relB, relA, string(dataA), relB, string(dataB))
+	}
+}
+
+// mustBeRegisterableSubagent asserts that an agent file lands at rel and
+// carries the YAML frontmatter Claude Code's subagent registry requires:
+// `name:` matching expectedName, and a non-empty `description:`. This
+// catches the silent-degradation bug where an agent file ships without
+// `name:` and Claude Code drops it from the Task tool's subagent_type
+// list with no error surfaced.
+func (h *installHarness) mustBeRegisterableSubagent(rel, expectedName string) {
+	h.t.Helper()
+	full := filepath.Join(h.TargetDir, rel)
+	data, err := os.ReadFile(full)
+	if err != nil {
+		h.t.Fatalf("read %s: %v", rel, err)
+	}
+	s := string(data)
+	if !strings.HasPrefix(s, "---\n") {
+		h.t.Fatalf("%s: missing YAML frontmatter (no leading ---)", rel)
+	}
+	rest := s[len("---\n"):]
+	end := strings.Index(rest, "\n---")
+	if end < 0 {
+		h.t.Fatalf("%s: unterminated YAML frontmatter", rel)
+	}
+	fm := rest[:end]
+	var nameVal, descVal string
+	for _, line := range strings.Split(fm, "\n") {
+		if strings.HasPrefix(line, "name:") {
+			nameVal = strings.TrimSpace(strings.TrimPrefix(line, "name:"))
+		}
+		if strings.HasPrefix(line, "description:") {
+			descVal = strings.TrimSpace(strings.TrimPrefix(line, "description:"))
+		}
+	}
+	if nameVal != expectedName {
+		h.t.Fatalf("%s: expected `name: %s`, got %q — Claude Code will silently drop this agent from the subagent registry", rel, expectedName, nameVal)
+	}
+	if descVal == "" {
+		h.t.Fatalf("%s: missing required `description:` frontmatter field", rel)
 	}
 }
 

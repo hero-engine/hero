@@ -1,4 +1,5 @@
 ---
+name: api-engineer
 description: Design and implement API changes with strong contract discipline, compatibility awareness, and pragmatic boundary design.
 mode: subagent
 temperature: 0.1

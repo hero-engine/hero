@@ -1,4 +1,5 @@
 ---
+name: greenfield-architect
 description: Design new products and systems with simple starting architectures and a clean path to scale.
 mode: subagent
 role: design

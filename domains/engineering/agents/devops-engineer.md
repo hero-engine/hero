@@ -1,4 +1,5 @@
 ---
+name: devops-engineer
 description: Improve CI/CD, deployment, environment, and operational setup with pragmatic infrastructure and delivery judgment.
 mode: subagent
 temperature: 0.1

@@ -1,4 +1,5 @@
 ---
+name: security-reviewer
 description: Review code and design changes for authentication, authorization, data exposure, input handling, and security risk.
 mode: subagent
 role: review

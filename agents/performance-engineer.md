@@ -1,4 +1,5 @@
 ---
+name: performance-engineer
 description: Investigate and improve application performance with attention to bottlenecks, measurement quality, and practical optimization tradeoffs.
 mode: subagent
 temperature: 0.1

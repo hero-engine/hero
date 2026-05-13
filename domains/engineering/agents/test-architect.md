@@ -1,4 +1,5 @@
 ---
+name: test-architect
 description: Design test strategies for features and changes — determine what kinds of tests are needed, where test boundaries fall, and how to maximize coverage ROI.
 mode: subagent
 temperature: 0.1
