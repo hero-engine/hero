@@ -67,7 +67,7 @@ func init() {
 	scanCmd.Flags().BoolVar(&scanDryRun, "dry-run", false, "show what would be generated without writing")
 	scanCmd.Flags().BoolVar(&scanForce, "force", false, "overwrite existing knowledge entries")
 	scanCmd.Flags().BoolVar(&scanCodeOnly, "code", false, "run code intelligence scan only")
-	scanCmd.Flags().BoolVar(&scanNoHooks, "no-hooks", false, "skip auto-installing the pre-commit hook for projected NEXT files")
+	scanCmd.Flags().BoolVar(&scanNoHooks, "no-hooks", false, "deprecated no-op — hook install moved to 'hero init'; kept for backwards compatibility")
 
 	RegisterSmoke(scanCmd, func(cmd *cobra.Command) error {
 		scanDryRun = true
@@ -87,22 +87,10 @@ func runScan(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no hero workspace found (run 'hero init' first)")
 	}
 
-	// Auto-install the pre-commit hook so projected NEXT files travel
-	// with commits. Skipped in dry-run, when --no-hooks is set, when
-	// not in a git repo, or when already installed (idempotent on the
-	// marker block, but skipping the call avoids redundant disk writes
-	// and stdout noise). Best-effort: a failure here doesn't block the
-	// scan. Spec: pre-commit-auto-stage-next.
-	if !scanDryRun && !scanNoHooks && !preCommitHookInstalled(projectRoot) {
-		if _, err := resolveGitDir(projectRoot); err == nil {
-			if err := installNextHooksQuiet(projectRoot); err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: pre-commit hook install failed: %v\n", err)
-			} else {
-				fmt.Println("Installed pre-commit hook (projected NEXT files will travel with commits).")
-				fmt.Println("  Pass --no-hooks next time to skip; to remove, delete the marker block in .git/hooks/pre-commit.")
-			}
-		}
-	}
+	// Pre-commit hook install moved to `hero init` (spec:
+	// scan-output-cleanup). `--no-hooks` is preserved as a no-op flag
+	// for backwards compatibility with existing scripts.
+	_ = scanNoHooks
 
 	// Code-only mode
 	if scanCodeOnly {
@@ -172,6 +160,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 			if mergeResult.Skipped > 0 && !scanForce {
 				fmt.Println("Use --force to overwrite customized entries.")
+			}
+			if mergeResult.Updated > 0 && mergeResult.Skipped == 0 && mergeResult.Created == 0 {
+				fmt.Println("Updated entries hadn't been customized — they regenerate cleanly. Hand-edits are preserved on future scans.")
 			}
 
 			if mergeResult.Created+mergeResult.Updated > 0 {
@@ -579,18 +570,29 @@ func writeWorkSubgraph(cfg config.Config, projectRoot, heroDir string, store *gr
 		report.add(stepResult{name: "tier-2", skipped: true, reason: "no sources to extract from"})
 	}
 
-	// Memory ingest.
+	// Claude Code memory ingest. Omit the step entirely when the dir
+	// doesn't exist (the common case for projects without much Claude
+	// Code activity yet); emit a friendly skip if the dir exists but
+	// is empty so users can see the step ran.
 	memDir := memory.DirForProject(projectRoot)
-	if memSummary, err := memory.WriteGraph(memDir, repoKey, store); err != nil {
-		report.add(stepResult{name: "memory", failed: true, err: err})
-	} else if memSummary.Files > 0 {
-		report.add(stepResult{
-			name:   "memory",
-			ok:     true,
-			detail: fmt.Sprintf("%d files (scope: local)", memSummary.Files),
-		})
-	} else {
-		report.add(stepResult{name: "memory", skipped: true, reason: memDir + " not present or empty"})
+	if memDir != "" {
+		if _, statErr := os.Stat(memDir); statErr == nil {
+			if memSummary, err := memory.WriteGraph(memDir, repoKey, store); err != nil {
+				report.add(stepResult{name: "claude-memory", failed: true, err: err})
+			} else if memSummary.Files > 0 {
+				report.add(stepResult{
+					name:   "claude-memory",
+					ok:     true,
+					detail: fmt.Sprintf("%d files (scope: local)", memSummary.Files),
+				})
+			} else {
+				report.add(stepResult{
+					name:    "claude-memory",
+					skipped: true,
+					reason:  "Claude Code memory store for this project is empty — Hero will pull from it automatically as you accumulate memories.",
+				})
+			}
+		}
 	}
 
 	// Tracker pull.

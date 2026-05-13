@@ -2,6 +2,7 @@ package cli
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -247,5 +248,135 @@ func TestScanGeneratesTestConvention(t *testing.T) {
 	content := string(data)
 	if !strings.Contains(content, "Jest") {
 		t.Error("convention missing Jest")
+	}
+}
+
+func TestScanDoesNotInstallPreCommitHook(t *testing.T) {
+	env := newTestEnv(t)
+	if err := exec.Command("git", "init", "-q", env.dir).Run(); err != nil {
+		t.Fatalf("git init: %v", err)
+	}
+
+	// Pre-confirm: no hook installed yet (newTestEnv calls init which
+	// might install one — but newTestEnv runs init *before* git init
+	// here, so the hook install during init would have no-op'd
+	// because there was no git repo. Confirm.)
+	hookPath := filepath.Join(env.dir, ".git", "hooks", "pre-commit")
+	if _, err := os.Stat(hookPath); !os.IsNotExist(err) {
+		t.Skipf("pre-commit hook already exists from earlier setup; can't isolate scan behavior")
+	}
+
+	os.WriteFile(filepath.Join(env.dir, "main.go"), []byte("package main\n"), 0o644)
+	os.WriteFile(filepath.Join(env.dir, "go.mod"), []byte("module example.com/test\n"), 0o644)
+
+	out, err := runCmd("scan")
+	if err != nil {
+		t.Fatalf("scan: %v", err)
+	}
+
+	if strings.Contains(out, "Installed pre-commit hook") {
+		t.Errorf("scan should not print hook install line: %q", out)
+	}
+	if _, err := os.Stat(hookPath); !os.IsNotExist(err) {
+		t.Errorf("scan should not create .git/hooks/pre-commit (stat err=%v)", err)
+	}
+}
+
+func TestScanNoHooksFlagAccepted(t *testing.T) {
+	env := newTestEnv(t)
+	os.WriteFile(filepath.Join(env.dir, "main.go"), []byte("package main\n"), 0o644)
+	os.WriteFile(filepath.Join(env.dir, "go.mod"), []byte("module example.com/test\n"), 0o644)
+
+	if _, err := runCmd("scan", "--no-hooks"); err != nil {
+		t.Errorf("scan --no-hooks should be accepted as a no-op flag: %v", err)
+	}
+}
+
+func TestScanOmitsClaudeMemoryStepWhenAbsent(t *testing.T) {
+	env := newTestEnv(t)
+	// Point HOME at a temp dir so memory.DirForProject resolves to a
+	// non-existent path.
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	os.WriteFile(filepath.Join(env.dir, "main.go"), []byte("package main\n"), 0o644)
+	os.WriteFile(filepath.Join(env.dir, "go.mod"), []byte("module example.com/test\n"), 0o644)
+
+	out, err := runCmd("scan")
+	if err != nil {
+		t.Fatalf("scan: %v", err)
+	}
+
+	if strings.Contains(out, "claude-memory") {
+		t.Errorf("scan should not emit a claude-memory line when the dir is absent: %q", out)
+	}
+	// And explicitly: no stray "memory" line carrying the old label either.
+	if strings.Contains(out, "⊘  memory:") || strings.Contains(out, "⊘ memory:") {
+		t.Errorf("scan should not emit the old 'memory' label: %q", out)
+	}
+}
+
+func TestScanEmitsFriendlyClaudeMemoryWhenEmpty(t *testing.T) {
+	env := newTestEnv(t)
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	// Create the empty memory dir at the path memory.DirForProject
+	// would compute: ~/.claude/projects/<encoded>/memory. The scan
+	// resolves symlinks on macOS (/var → /private/var), so do the
+	// same before encoding to ensure the paths match.
+	resolved, err := filepath.EvalSymlinks(env.dir)
+	if err != nil {
+		t.Fatalf("EvalSymlinks: %v", err)
+	}
+	encoded := strings.ReplaceAll(resolved, string(filepath.Separator), "-")
+	memDir := filepath.Join(home, ".claude", "projects", encoded, "memory")
+	if err := os.MkdirAll(memDir, 0o755); err != nil {
+		t.Fatalf("mkdir memDir: %v", err)
+	}
+
+	os.WriteFile(filepath.Join(env.dir, "main.go"), []byte("package main\n"), 0o644)
+	os.WriteFile(filepath.Join(env.dir, "go.mod"), []byte("module example.com/test\n"), 0o644)
+
+	out, err := runCmd("scan")
+	if err != nil {
+		t.Fatalf("scan: %v", err)
+	}
+
+	if !strings.Contains(out, "claude-memory") {
+		t.Errorf("expected claude-memory step when memory dir exists: %q", out)
+	}
+	if !strings.Contains(out, "Claude Code memory store for this project is empty") {
+		t.Errorf("expected friendly empty-memory reason in output: %q", out)
+	}
+	// No raw path leak.
+	if strings.Contains(out, memDir+" not present or empty") {
+		t.Errorf("output should not contain raw path skip reason: %q", out)
+	}
+}
+
+func TestScanExplainsUncustomizedUpdates(t *testing.T) {
+	env := newTestEnv(t)
+	os.WriteFile(filepath.Join(env.dir, "main.go"), []byte("package main\n"), 0o644)
+	os.WriteFile(filepath.Join(env.dir, "go.mod"), []byte("module example.com/test\n"), 0o644)
+
+	// First scan: all entries are created. No explanation expected
+	// (Created > 0).
+	out1, err := runCmd("scan")
+	if err != nil {
+		t.Fatalf("first scan: %v", err)
+	}
+	if strings.Contains(out1, "Updated entries hadn't been customized") {
+		t.Errorf("first scan should not print uncustomized explanation: %q", out1)
+	}
+
+	// Second scan: entries are now re-updated (still uncustomized).
+	// Explanation should appear.
+	out2, err := runCmd("scan")
+	if err != nil {
+		t.Fatalf("second scan: %v", err)
+	}
+	if !strings.Contains(out2, "Updated entries hadn't been customized — they regenerate cleanly. Hand-edits are preserved on future scans.") {
+		t.Errorf("second scan should print uncustomized explanation: %q", out2)
 	}
 }

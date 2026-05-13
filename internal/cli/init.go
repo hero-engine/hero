@@ -28,13 +28,17 @@ custom config) but will refresh AGENTS.md unless --no-agents is set.`,
 }
 
 var (
-	initFolder   string
-	initNoAgents bool
+	initFolder       string
+	initNoAgents     bool
+	initInstallHooks bool
+	initNoHooks      bool
 )
 
 func init() {
 	initCmd.Flags().StringVar(&initFolder, "folder", config.DefaultFolder, "folder name for the hero workspace")
 	initCmd.Flags().BoolVar(&initNoAgents, "no-agents", false, "skip AGENTS.md generation")
+	initCmd.Flags().BoolVar(&initInstallHooks, "install-hooks", true, "install the pre-commit hook so projected NEXT files travel with commits")
+	initCmd.Flags().BoolVar(&initNoHooks, "no-hooks", false, "skip installing the pre-commit hook")
 }
 
 func runInit(cmd *cobra.Command, args []string) error {
@@ -125,6 +129,21 @@ func runInit(cmd *cobra.Command, args []string) error {
 	fmt.Printf("  mocks/                — design mockups and visual prototypes\n")
 	fmt.Printf("  hero.json             — configuration\n")
 	fmt.Printf("  hero.local.json       — local overrides, gitignored (tokens, personal prefs)\n")
+
+	// Install pre-commit hook so projected NEXT files travel with
+	// commits. Belongs at init (setup-time) rather than scan
+	// (analysis-time). Best-effort: a failure doesn't block init.
+	if initInstallHooks && !initNoHooks && !preCommitHookInstalled(projectRoot) {
+		if _, gerr := resolveGitDir(projectRoot); gerr == nil {
+			if herr := installNextHooksQuiet(projectRoot); herr != nil {
+				fmt.Fprintf(os.Stderr, "  warning: pre-commit hook install failed: %v\n", herr)
+			} else {
+				fmt.Println()
+				fmt.Println("  Installed pre-commit hook (projected NEXT files will travel with commits).")
+				fmt.Println("  Pass --no-hooks next time to skip; to remove, delete the marker block in .git/hooks/pre-commit.")
+			}
+		}
+	}
 
 	// Generate AGENTS.md if not disabled
 	if !initNoAgents {
