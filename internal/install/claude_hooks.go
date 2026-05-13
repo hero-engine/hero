@@ -28,6 +28,12 @@ const heroCheckpointCmd = "hero next checkpoint --quiet"
 //   PreCompact — fires before context compaction; the most dangerous moment for losing state
 var claudeHookEvents = []string{"Stop", "PreCompact"}
 
+// heroAllowlistEntry is the permissions.allow entry that tells Claude
+// Code to auto-approve any Bash tool call starting with `hero`. Without
+// it, Claude prompts on every hero invocation. With it, the user grants
+// persistent approval for the command prefix.
+const heroAllowlistEntry = "Bash(hero:*)"
+
 // wireClaudeHooks merges hero-managed Stop and PreCompact hooks into
 // .claude/settings.json (or ~/.claude/settings.json in global mode).
 // Idempotent: existing hero entries are removed before fresh ones are
@@ -77,6 +83,82 @@ func wireClaudeHooks(opts Options, result *Result) error {
 
 	result.Merged = append(result.Merged, settingsPath)
 	return nil
+}
+
+// wireClaudePermissions ensures `permissions.allow` in
+// .claude/settings.json contains `Bash(hero:*)` so Claude Code stops
+// prompting on every `hero` invocation. Idempotent: if the entry is
+// already present, the file is left untouched and `added` is false.
+// Other allowlist entries and unrelated settings keys are preserved.
+func wireClaudePermissions(opts Options, result *Result) (added bool, err error) {
+	settingsPath, err := claudeSettingsPath(opts)
+	if err != nil {
+		return false, err
+	}
+
+	if opts.DryRun {
+		progressf(opts, "  settings.json -> %s (wire Bash(hero:*) permission)\n", settingsPath)
+		return false, nil
+	}
+
+	settings := map[string]interface{}{}
+	if data, readErr := os.ReadFile(settingsPath); readErr == nil {
+		if jsonErr := json.Unmarshal(data, &settings); jsonErr != nil {
+			return false, fmt.Errorf("parsing %s: %w", settingsPath, jsonErr)
+		}
+	} else if !os.IsNotExist(readErr) {
+		return false, fmt.Errorf("reading %s: %w", settingsPath, readErr)
+	}
+
+	permissions, _ := settings["permissions"].(map[string]interface{})
+	if permissions == nil {
+		permissions = map[string]interface{}{}
+	}
+	allow, _ := permissions["allow"].([]interface{})
+
+	for _, entry := range allow {
+		if s, ok := entry.(string); ok && s == heroAllowlistEntry {
+			// Already present — nothing to do.
+			return false, nil
+		}
+	}
+
+	allow = append(allow, heroAllowlistEntry)
+	permissions["allow"] = allow
+	settings["permissions"] = permissions
+
+	out, err := json.MarshalIndent(settings, "", "  ")
+	if err != nil {
+		return false, fmt.Errorf("marshaling settings: %w", err)
+	}
+	out = append(out, '\n')
+
+	if err := os.MkdirAll(filepath.Dir(settingsPath), 0o755); err != nil {
+		return false, fmt.Errorf("creating dir for %s: %w", settingsPath, err)
+	}
+	if err := os.WriteFile(settingsPath, out, 0o644); err != nil {
+		return false, fmt.Errorf("writing %s: %w", settingsPath, err)
+	}
+
+	if result != nil {
+		result.Merged = append(result.Merged, settingsPath)
+	}
+	return true, nil
+}
+
+// EnsureClaudeHeroAllowlist applies the Bash(hero:*) permission to the
+// project's .claude/settings.json. Used by `hero trust claude` to
+// re-apply the entry on demand without going through the full installer.
+// Returns whether the entry was newly added and the absolute settings
+// path it was written to.
+func EnsureClaudeHeroAllowlist(projectDir string) (added bool, path string, err error) {
+	opts := Options{Mode: ModeProject, TargetDir: projectDir}
+	settingsPath, err := claudeSettingsPath(opts)
+	if err != nil {
+		return false, "", err
+	}
+	added, err = wireClaudePermissions(opts, nil)
+	return added, settingsPath, err
 }
 
 // UnwireClaudeHooks removes hero-managed Stop / PreCompact entries from

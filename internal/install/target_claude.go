@@ -76,5 +76,11 @@ func runClaude(opts Options) (*Result, error) {
 		fmt.Printf("  warning: could not wire claude hooks: %v\n", err)
 	}
 
+	// Add Bash(hero:*) to permissions.allow so Claude Code stops
+	// prompting on every `hero` invocation.
+	if _, err := wireClaudePermissions(opts, result); err != nil {
+		fmt.Printf("  warning: could not wire claude permissions: %v\n", err)
+	}
+
 	return result, nil
 }

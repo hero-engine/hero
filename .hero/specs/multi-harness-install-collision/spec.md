@@ -1,7 +1,7 @@
 ---
 title: Multi-Harness Install Collision — Second Target Refuses Identical Canonical Content
 type: bug
-status: delivering
+status: completed
 severity: medium
 priority: high
 created: 2026-05-12
