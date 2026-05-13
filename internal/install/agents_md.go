@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/hero-engine/hero/internal/config"
 )
 
 // agents_md.go — AGENTS.md as the single canonical root instruction file
@@ -51,10 +53,64 @@ func installAgentsMd(opts Options, result *Result, agentsMdPath string) error {
 		Path:        agentsMdPath,
 		Label:       "AGENTS.md",
 		DefaultH1:   "# AGENTS.md",
-		Body:        generateAgentsMdBody(),
+		Body:        generateAgentsMdBody(resolveContentPathsForBody(opts)),
 		AllowSkip:   false,
 		SkipEnabled: false,
 	})
+}
+
+// contentPathsForBody holds project-relative content paths to embed in
+// the managed-region body. Defaults match the canonical .hero/ layout
+// when no override is configured; hero-on-hero uses content.<kind>_path
+// in hero.json to point at top-level agents/commands/skills/.
+type contentPathsForBody struct {
+	Agents   string
+	Commands string
+	Skills   string
+}
+
+// resolveContentPathsForBody resolves the project-relative content paths
+// the AGENTS.md / CLAUDE.md body should describe. Project mode reads the
+// project's hero.json so the body matches the actual canonical layout
+// (default `.hero/agents/` etc., or whatever `content.<kind>_path`
+// overrides specify). Global mode and missing TargetDir get the default
+// `.hero/<kind>/` strings — those are what every fresh project will
+// have.
+func resolveContentPathsForBody(opts Options) contentPathsForBody {
+	defaults := contentPathsForBody{
+		Agents:   ".hero/agents/",
+		Commands: ".hero/commands/",
+		Skills:   ".hero/skills/",
+	}
+	if opts.Mode != ModeProject || opts.TargetDir == "" {
+		return defaults
+	}
+	cfg, err := config.Load(opts.TargetDir)
+	if err != nil {
+		return defaults
+	}
+	absAgents, absCommands, absSkills := CanonicalDirs(opts.TargetDir, cfg)
+	return contentPathsForBody{
+		Agents:   relForBody(opts.TargetDir, absAgents, defaults.Agents),
+		Commands: relForBody(opts.TargetDir, absCommands, defaults.Commands),
+		Skills:   relForBody(opts.TargetDir, absSkills, defaults.Skills),
+	}
+}
+
+// relForBody returns absPath as a project-relative slash-prefixed string
+// with a trailing slash (matching the human-readable convention used in
+// the Project Structure section). Falls back to fallback on any Rel
+// error.
+func relForBody(projectRoot, absPath, fallback string) string {
+	rel, err := filepath.Rel(projectRoot, absPath)
+	if err != nil || rel == "" || rel == "." {
+		return fallback
+	}
+	rel = filepath.ToSlash(rel)
+	if !strings.HasSuffix(rel, "/") {
+		rel += "/"
+	}
+	return rel
 }
 
 // installManagedSpec describes how installManagedMarkdown should handle a
@@ -195,7 +251,14 @@ func (o Options) heroVersion() string {
 // header so it composes cleanly under whatever the user's H1 is. (Or, for
 // fresh files, under the default `# AGENTS.md` title in
 // computeAgentsMdContent.)
-func generateAgentsMdBody() string {
+//
+// paths describe the project-relative canonical content locations the
+// "Project Structure" section should reference. They MUST match the
+// actual on-disk layout — pointing the model at directories that don't
+// exist sends it hunting through the workspace from first principles
+// and is the most common reason a non-Claude-Code harness wanders
+// after `hero scan`.
+func generateAgentsMdBody(paths contentPathsForBody) string {
 	var sb strings.Builder
 
 	sb.WriteString("## Hero — Spec-Driven AI Engineering\n\n")
@@ -248,13 +311,14 @@ func generateAgentsMdBody() string {
 	sb.WriteString("- `hero check` — health check\n\n")
 
 	sb.WriteString("### Project Structure\n\n")
-	sb.WriteString("- `commands/` — Slash command definitions (workflows like /design, /deliver, /diagnose)\n")
-	sb.WriteString("- `agents/` — Specialized agent roles (feature-delivery-lead, debug-investigator, etc.)\n")
-	sb.WriteString("- `skills/` — Domain-specific knowledge and patterns\n")
+	sb.WriteString(fmt.Sprintf("- `%s` — Slash command definitions (workflows like /design, /deliver, /diagnose)\n", paths.Commands))
+	sb.WriteString(fmt.Sprintf("- `%s` — Specialized agent roles (feature-delivery-lead, debug-investigator, etc.)\n", paths.Agents))
+	sb.WriteString(fmt.Sprintf("- `%s` — Domain-specific knowledge and patterns (each skill is a subdir with SKILL.md)\n", paths.Skills))
 	sb.WriteString("- `.hero/planning/` — Active specs being worked on\n")
 	sb.WriteString("- `.hero/specs/` — Completed specs (archive)\n")
 	sb.WriteString("- `.hero/knowledge/` — Project knowledge base (conventions, decisions, context)\n")
-	sb.WriteString("- `hero.json` — Project configuration\n\n")
+	sb.WriteString("- `.hero/hero.json` — Project configuration\n\n")
+	sb.WriteString("Your harness may expose the agent/command/skill directories under its own prefix (`.claude/`, `.opencode/`, `.cursor/`, etc.) as symlinks back to the canonical paths above. Edit only the canonical files — harness directories are views.\n\n")
 
 	sb.WriteString("### Important Rules\n\n")
 	sb.WriteString("- **Don't assume.** Surface tradeoffs and ask questions if anything is unclear. Present multiple interpretations instead of picking one silently.\n")
