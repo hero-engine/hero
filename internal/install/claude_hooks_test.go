@@ -195,6 +195,170 @@ func TestUnwireClaudeHooks_NoSettingsFile(t *testing.T) {
 	}
 }
 
+// TestWireClaudePermissions_FromEmpty verifies that wiring against a
+// directory with no settings.json yet creates one containing only the
+// permissions allowlist (mirrors wireClaudeHooks behavior).
+func TestWireClaudePermissions_FromEmpty(t *testing.T) {
+	dir := t.TempDir()
+	opts := Options{Mode: ModeProject, TargetDir: dir}
+
+	added, err := wireClaudePermissions(opts, &Result{})
+	if err != nil {
+		t.Fatalf("wireClaudePermissions: %v", err)
+	}
+	if !added {
+		t.Fatal("expected added=true on first wire")
+	}
+
+	allow := allowlistFromSettings(t, dir)
+	if len(allow) != 1 || allow[0] != "Bash(hero:*)" {
+		t.Errorf("permissions.allow = %v, want [Bash(hero:*)]", allow)
+	}
+}
+
+// TestEnsureClaudeHeroAllowlistIdempotent: calling the exported
+// helper repeatedly must not duplicate the hero entry and must
+// preserve unrelated allowlist entries.
+func TestEnsureClaudeHeroAllowlistIdempotent(t *testing.T) {
+	dir := t.TempDir()
+	settingsPath := filepath.Join(dir, ".claude", "settings.json")
+	if err := os.MkdirAll(filepath.Dir(settingsPath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	seed := `{"permissions": {"allow": ["Bash(*)"]}}`
+	if err := os.WriteFile(settingsPath, []byte(seed), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	for i := 0; i < 3; i++ {
+		added, gotPath, err := EnsureClaudeHeroAllowlist(dir)
+		if err != nil {
+			t.Fatalf("call %d: %v", i, err)
+		}
+		if gotPath != settingsPath {
+			t.Errorf("call %d: path = %q, want %q", i, gotPath, settingsPath)
+		}
+		if i == 0 && !added {
+			t.Errorf("call 0: expected added=true (entry missing)")
+		}
+		if i > 0 && added {
+			t.Errorf("call %d: expected added=false on subsequent calls", i)
+		}
+	}
+
+	allow := allowlistFromSettings(t, dir)
+	wantOrdered := []string{"Bash(*)", "Bash(hero:*)"}
+	if len(allow) != len(wantOrdered) {
+		t.Fatalf("permissions.allow = %v, want %v", allow, wantOrdered)
+	}
+	for i, want := range wantOrdered {
+		if allow[i] != want {
+			t.Errorf("permissions.allow[%d] = %q, want %q (full=%v)", i, allow[i], want, allow)
+		}
+	}
+}
+
+// TestWireClaudePermissions_PreservesOtherKeys: seed settings.json
+// with unrelated top-level keys plus the user's own hook entries, then
+// wire permissions. Everything except the new allowlist entry must
+// survive byte-equivalent.
+func TestWireClaudePermissions_PreservesOtherKeys(t *testing.T) {
+	dir := t.TempDir()
+	settingsPath := filepath.Join(dir, ".claude", "settings.json")
+	if err := os.MkdirAll(filepath.Dir(settingsPath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	seed := `{
+  "model": "sonnet",
+  "permissions": {"allow": ["Bash(ls)"], "deny": ["Bash(rm:*)"]},
+  "hooks": {
+    "Stop": [
+      {"matcher": "", "hooks": [{"type": "command", "command": "echo user-stop"}]}
+    ]
+  }
+}`
+	if err := os.WriteFile(settingsPath, []byte(seed), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	added, err := wireClaudePermissions(Options{Mode: ModeProject, TargetDir: dir}, &Result{})
+	if err != nil {
+		t.Fatalf("wireClaudePermissions: %v", err)
+	}
+	if !added {
+		t.Fatal("expected added=true")
+	}
+
+	settings := readSettings(t, dir)
+	if settings["model"] != "sonnet" {
+		t.Errorf("model key lost: %v", settings["model"])
+	}
+	hooks, _ := settings["hooks"].(map[string]interface{})
+	stop, _ := hooks["Stop"].([]interface{})
+	if len(stop) != 1 {
+		t.Errorf("user Stop hook lost: %v", stop)
+	}
+	perms, _ := settings["permissions"].(map[string]interface{})
+	if deny, _ := perms["deny"].([]interface{}); len(deny) != 1 || deny[0] != "Bash(rm:*)" {
+		t.Errorf("permissions.deny clobbered: %v", deny)
+	}
+
+	allow := allowlistFromSettings(t, dir)
+	want := []string{"Bash(ls)", "Bash(hero:*)"}
+	if len(allow) != len(want) {
+		t.Fatalf("permissions.allow = %v, want %v", allow, want)
+	}
+	for i, w := range want {
+		if allow[i] != w {
+			t.Errorf("permissions.allow[%d] = %q, want %q", i, allow[i], w)
+		}
+	}
+}
+
+// TestInstallClaudeWritesHeroAllowlist: the full claude install path
+// must end up with Bash(hero:*) in permissions.allow without the user
+// having to run `hero trust claude` separately.
+func TestInstallClaudeWritesHeroAllowlist(t *testing.T) {
+	sourceDir := t.TempDir()
+	targetDir := t.TempDir()
+	createContent(t, sourceDir)
+
+	if _, err := Run(Options{
+		SourceDir: sourceDir,
+		Target:    TargetClaude,
+		Mode:      ModeProject,
+		TargetDir: targetDir,
+	}); err != nil {
+		t.Fatalf("claude install failed: %v", err)
+	}
+
+	allow := allowlistFromSettings(t, targetDir)
+	found := false
+	for _, e := range allow {
+		if e == "Bash(hero:*)" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("permissions.allow missing Bash(hero:*): %v", allow)
+	}
+}
+
+func allowlistFromSettings(t *testing.T, dir string) []string {
+	t.Helper()
+	settings := readSettings(t, dir)
+	perms, _ := settings["permissions"].(map[string]interface{})
+	raw, _ := perms["allow"].([]interface{})
+	out := make([]string, 0, len(raw))
+	for _, e := range raw {
+		if s, ok := e.(string); ok {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
 func readSettings(t *testing.T, dir string) map[string]interface{} {
 	t.Helper()
 	data, err := os.ReadFile(filepath.Join(dir, ".claude", "settings.json"))
