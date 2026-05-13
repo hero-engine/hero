@@ -480,6 +480,15 @@ func detectFromMarkers(root string) ([]Framework, []BuildTool, []PackageMgr, []L
 		{"playwright.config.ts", func() {
 			testFrames = append(testFrames, TestFramework{"Playwright", "TypeScript", "playwright.config.ts"})
 		}},
+		{"playwright.config.js", func() {
+			testFrames = append(testFrames, TestFramework{"Playwright", "JavaScript", "playwright.config.js"})
+		}},
+		{"playwright.config.mts", func() {
+			testFrames = append(testFrames, TestFramework{"Playwright", "TypeScript", "playwright.config.mts"})
+		}},
+		{"vitest.config.mts", func() {
+			testFrames = append(testFrames, TestFramework{"Vitest", "TypeScript", "vitest.config.mts"})
+		}},
 		{"cypress.config.ts", func() {
 			testFrames = append(testFrames, TestFramework{"Cypress", "TypeScript", "cypress.config.ts"})
 		}},
@@ -500,10 +509,90 @@ func detectFromMarkers(root string) ([]Framework, []BuildTool, []PackageMgr, []L
 		if pkgJSON != "" {
 			pkgFrameworks := detectFromPackageJSON(pkgJSON)
 			frameworks = append(frameworks, pkgFrameworks...)
+			testFrames = append(testFrames, detectTestFromPackageJSON(pkgJSON, testFrames)...)
 		}
 	}
 
+	// Detect JVM test frameworks from Gradle / Maven build files.
+	testFrames = append(testFrames, detectJVMTestFrameworks(root, testFrames)...)
+
 	return frameworks, buildTools, pkgMgrs, linters, testFrames
+}
+
+// detectTestFromPackageJSON catches test frameworks that live as
+// package.json dependencies without a root-level config file (Vitest
+// configured inline in vite.config, Playwright configured via project
+// dirs, Jest configured under "jest" key, etc.). Avoids duplicating
+// already-detected frames.
+func detectTestFromPackageJSON(content string, existing []TestFramework) []TestFramework {
+	already := make(map[string]bool, len(existing))
+	for _, tf := range existing {
+		already[tf.Name] = true
+	}
+	checks := []struct {
+		dep, name, lang string
+	}{
+		{`"vitest"`, "Vitest", "JavaScript"},
+		{`"@playwright/test"`, "Playwright", "JavaScript"},
+		{`"jest"`, "Jest", "JavaScript"},
+		{`"@jest/core"`, "Jest", "JavaScript"},
+		{`"cypress"`, "Cypress", "JavaScript"},
+		{`"mocha"`, "Mocha", "JavaScript"},
+		{`"ava"`, "AVA", "JavaScript"},
+	}
+	var out []TestFramework
+	for _, c := range checks {
+		if !already[c.name] && strings.Contains(content, c.dep) {
+			out = append(out, TestFramework{c.name, c.lang, "package.json"})
+			already[c.name] = true
+		}
+	}
+	return out
+}
+
+// detectJVMTestFrameworks looks at Gradle/Maven build files plus the
+// conventional src/test/{groovy,kotlin,java} directories to pick up
+// Spock, JUnit, Kotest, and TestNG without depending on a root-level
+// config file (these frameworks don't use one).
+func detectJVMTestFrameworks(root string, existing []TestFramework) []TestFramework {
+	already := make(map[string]bool, len(existing))
+	for _, tf := range existing {
+		already[tf.Name] = true
+	}
+
+	var buildContent string
+	for _, name := range []string{"build.gradle", "build.gradle.kts", "pom.xml"} {
+		if fileExists(root, name) {
+			buildContent += readFileStr(root, name) + "\n"
+		}
+	}
+
+	add := func(name, lang, indicator string) []TestFramework {
+		if already[name] {
+			return nil
+		}
+		already[name] = true
+		return []TestFramework{{name, lang, indicator}}
+	}
+
+	var out []TestFramework
+	if strings.Contains(buildContent, "spock-core") || strings.Contains(buildContent, "org.spockframework") {
+		out = append(out, add("Spock", "Groovy", "build.gradle")...)
+	} else if dirExists(root, "src/test/groovy") {
+		out = append(out, add("Spock", "Groovy", "src/test/groovy")...)
+	}
+	if strings.Contains(buildContent, "io.kotest") {
+		out = append(out, add("Kotest", "Kotlin", "build.gradle")...)
+	}
+	if strings.Contains(buildContent, "org.testng") || strings.Contains(buildContent, "<artifactId>testng</artifactId>") {
+		out = append(out, add("TestNG", "Java", "build.gradle/pom.xml")...)
+	}
+	if strings.Contains(buildContent, "junit-jupiter") || strings.Contains(buildContent, "<artifactId>junit") {
+		out = append(out, add("JUnit", "Java", "build.gradle/pom.xml")...)
+	} else if dirExists(root, "src/test/java") || dirExists(root, "src/test/kotlin") {
+		out = append(out, add("JUnit", "Java", "src/test")...)
+	}
+	return out
 }
 
 func detectFromPackageJSON(content string) []Framework {
