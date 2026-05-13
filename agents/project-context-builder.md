@@ -1,4 +1,5 @@
 ---
+name: project-context-builder
 description: Analyze a codebase and create or improve project instruction files such as AGENTS.md for faster, more accurate future prompting.
 mode: subagent
 temperature: 0.1

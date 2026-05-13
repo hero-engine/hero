@@ -1,4 +1,5 @@
 ---
+name: engineer
 description: Execute approved specs and implementation plans into minimal, correct, tested code changes. Detects the project stack and loads language-specific skills automatically.
 mode: subagent
 role: execution

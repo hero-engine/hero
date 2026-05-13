@@ -1,4 +1,5 @@
 ---
+name: issue-tracker
 description: Maintain local issue queue reports from the tracking system so engineering can review and prioritize work without repeated manual lookups.
 mode: subagent
 temperature: 0.1

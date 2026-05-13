@@ -1,4 +1,5 @@
 ---
+name: architecture-reviewer
 description: Review architecture proposals for overengineering, scale dead ends, and operational risk.
 mode: subagent
 role: review

@@ -1,4 +1,5 @@
 ---
+name: convention-author
 description: Analyze codebase patterns and produce convention specs that document how a pattern should be applied, with concrete examples and anti-patterns.
 mode: subagent
 temperature: 0.1

@@ -1,4 +1,5 @@
 ---
+name: product-ideator
 description: Explore product direction, brainstorm features, evaluate tradeoffs, and produce a prioritized list of work items ready for the design phase. Powers the /discover command.
 mode: subagent
 temperature: 0.4

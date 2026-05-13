@@ -1,4 +1,5 @@
 ---
+name: platform-delivery-lead
 description: Coordinate architecture and engineering agents for migrations, refactors, platform changes, and scaling work. Produces spec documents for the hero workflow.
 mode: subagent
 temperature: 0.1

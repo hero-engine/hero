@@ -21,6 +21,13 @@ func TestHarness_SmokeClaude(t *testing.T) {
 	h.mustBeRegularFile(".claude/agents/engineer.md")
 	h.mustBeRegularFile(".claude/agents/reviewer.md")
 
+	// Subagent registration contract: every installed agent file must
+	// carry `name:` and `description:` frontmatter so Claude Code's Task
+	// tool actually exposes them as subagent_type values. Regression
+	// guard for claude-subagent-frontmatter-registration.
+	h.mustBeRegisterableSubagent(".claude/agents/engineer.md", "engineer")
+	h.mustBeRegisterableSubagent(".claude/agents/reviewer.md", "reviewer")
+
 	// Commands installed flat.
 	h.mustBeRegularFile(".claude/commands/design.md")
 	h.mustBeRegularFile(".claude/commands/deliver.md")

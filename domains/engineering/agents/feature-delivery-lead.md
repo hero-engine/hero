@@ -1,4 +1,5 @@
 ---
+name: feature-delivery-lead
 description: Coordinate architecture, investigation, and engineering agents to design features and diagnose bugs. Produces spec documents for the hero workflow.
 mode: subagent
 temperature: 0.1

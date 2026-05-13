@@ -1,4 +1,5 @@
 ---
+name: type-scrubber
 description: Find weak types (any, interface{}, unknown) and replace with strong types. Consolidate duplicated type definitions.
 mode: subagent
 role: execution

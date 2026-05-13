@@ -1,4 +1,5 @@
 ---
+name: ui-designer
 description: Design and generate visual UI mockups as self-contained HTML prototypes.
 ---
 
