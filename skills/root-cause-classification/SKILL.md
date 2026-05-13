@@ -1,3 +1,7 @@
+---
+name: root-cause-classification
+description: Structured approach to diagnosing bugs and classifying their root cause as code, data, environment, dependency, design, or process.
+---
 # Root Cause Classification
 
 A structured approach to diagnosing bugs and classifying their root causes.

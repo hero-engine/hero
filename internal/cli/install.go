@@ -69,6 +69,7 @@ var installCmd = &cobra.Command{
 
 var (
 	installTarget          string
+	installOnlyTarget      bool
 	installForce           bool
 	installDryRun          bool
 	installWorkspace       string
@@ -83,6 +84,7 @@ var (
 
 func init() {
 	installCmd.Flags().StringVar(&installTarget, "target", "", "target tool (opencode|cursor|claude|copilot|codex|generic)")
+	installCmd.Flags().BoolVar(&installOnlyTarget, "only-target", false, "install ONLY the named --target; skip auto-sync of any other detected harnesses in the same project")
 	installCmd.Flags().BoolVar(&installForce, "force", false, "overwrite existing files")
 	installCmd.Flags().BoolVar(&installDryRun, "dry-run", false, "show what would be copied")
 	installCmd.Flags().StringVar(&installWorkspace, "workspace", "", "sub-folder workspace path — writes MCP config there pointing at the project root (e.g. services/auth)")
@@ -114,52 +116,28 @@ func runInstall(cmd *cobra.Command, args []string) error {
 		binaryVersion = "dev"
 	}
 
-	// --migrate short-circuits the install body and runs the
-	// multi-target migration: detect installed harnesses, reconcile
-	// drifted copies, promote winners to canonical, re-install each
-	// target as symlinks. No --target flag required (auto-detected).
+	// --migrate is preserved as a backward-compatibility entry point.
+	// Under render-direct-install, every regular install already runs
+	// legacy cleanup (removes `.hero/{agents,commands,skills}/` mirror,
+	// removes harness symlinks pointing at it). So --migrate just runs
+	// install with auto-sync — picking up every detected target — and
+	// the cleanup happens transparently.
 	if installMigrate {
 		if mode != install.ModeProject || targetDir == "" {
 			return fmt.Errorf("--migrate requires project mode with an explicit target path")
 		}
-		contentFS := hero.ContentFS()
-		if installDomain != "" {
-			domainFS, derr := hero.DomainFS(installDomain)
-			if derr != nil {
-				return derr
+		fmt.Println("Note: `--migrate` is now equivalent to a regular install — legacy")
+		fmt.Println("symlink/canonical cleanup runs automatically. Continuing.")
+		// Fall through to the regular install body below by treating
+		// the target as required. If no --target flag was passed, detect
+		// the first installed harness; auto-sync will refresh the rest.
+		if installTarget == "" {
+			if detected, derr := install.DetectFirstInstalledTarget(targetDir); derr == nil && detected != "" {
+				installTarget = string(detected)
+			} else {
+				return fmt.Errorf("--migrate requires either a --target flag or a previously-installed harness in %s", targetDir)
 			}
-			contentFS = domainFS
 		}
-		start := time.Now()
-		var report *install.MigrationReport
-		var err error
-		runMigrate := func() {
-			report, err = install.RunMigrate(install.Options{
-				ContentFS:          contentFS,
-				Mode:               mode,
-				TargetDir:          targetDir,
-				Force:              true, // migrate implies force
-				DryRun:             installDryRun,
-				Version:            binaryVersion,
-				Domain:             installDomain,
-				ForceManagedRegion: installForceManaged,
-				NoTouchClaudeMd:    installNoTouchClaudeMd,
-				Quiet:              installJSON,
-			})
-		}
-		if installJSON {
-			silenceStdout(runMigrate)
-			return emitJSON(install.MigrateJSONOutput{
-				Report:     report,
-				DurationMs: time.Since(start).Milliseconds(),
-				Error:      install.NewJSONError("migrate_failed", err),
-			}, err)
-		}
-		runMigrate()
-		if report != nil {
-			fmt.Print(report.StringReport())
-		}
-		return err
 	}
 
 	// --repair short-circuits the install body and just runs satellite
@@ -228,6 +206,11 @@ func runInstall(cmd *cobra.Command, args []string) error {
 		ForceManagedRegion: installForceManaged,
 		NoTouchClaudeMd:    installNoTouchClaudeMd,
 		Quiet:              installJSON,
+		// Auto-sync detected sibling harnesses so adding one target to
+		// an existing multi-harness project refreshes the others too —
+		// prevents drift between install moments. Suppressed in
+		// --only-target mode (future flag), global mode, and dry-run.
+		AutoSyncTargets: mode == install.ModeProject && !installOnlyTarget,
 	}
 
 	if opts.DryRun && !installJSON {

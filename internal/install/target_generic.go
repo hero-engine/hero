@@ -7,11 +7,10 @@ import (
 )
 
 // runGeneric installs to a tool-agnostic layout using .ai/ for agents,
-// commands, skills and AGENTS.md at the project root. Any MCP-capable
-// tool can pick up Hero via .mcp.json (registered in Run()).
-//
-// Under P2, .ai/{agents,commands,skills} become symlinks to the canonical
-// .hero/ tree.
+// commands, skills and AGENTS.md at the project root. `.ai/` is a Hero
+// convention with no consuming loader — it's the catch-all for tools
+// without a dedicated installer. Any MCP-capable tool can pick up Hero
+// via .mcp.json (registered in Run()).
 
 func runGeneric(opts Options) (*Result, error) {
 	if opts.Mode != ModeProject || opts.TargetDir == "" {
@@ -26,18 +25,14 @@ func runGeneric(opts Options) (*Result, error) {
 	destBase := filepath.Join(opts.TargetDir, ".ai")
 	result := &Result{}
 
-	agentsDir, commandsDir, skillsDir, err := ResolveCanonicalDirs(opts.TargetDir)
-		if err != nil {
-			return nil, err
-		}
-	if _, err := linkOrRenderDir(opts, result, "agents", agentsDir, filepath.Join(destBase, "agents"), false, false); err != nil {
-		return nil, fmt.Errorf("linking agents: %w", err)
+	if err := installFlat(opts, result, "agents", filepath.Join(destBase, "agents")); err != nil {
+		return nil, fmt.Errorf("installing agents: %w", err)
 	}
-	if _, err := linkOrRenderDir(opts, result, "commands", commandsDir, filepath.Join(destBase, "commands"), false, false); err != nil {
-		return nil, fmt.Errorf("linking commands: %w", err)
+	if err := installFlat(opts, result, "commands", filepath.Join(destBase, "commands")); err != nil {
+		return nil, fmt.Errorf("installing commands: %w", err)
 	}
-	if _, err := linkOrRenderDir(opts, result, "skills", skillsDir, filepath.Join(destBase, "skills"), true, false); err != nil {
-		return nil, fmt.Errorf("linking skills: %w", err)
+	if err := installSkillsNested(opts, result, filepath.Join(destBase, "skills")); err != nil {
+		return nil, fmt.Errorf("installing skills: %w", err)
 	}
 
 	agentsMdPath := filepath.Join(opts.TargetDir, "AGENTS.md")

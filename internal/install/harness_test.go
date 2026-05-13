@@ -49,14 +49,19 @@ func newInstallHarness(t *testing.T) *installHarness {
 func (h *installHarness) seedSource() {
 	h.t.Helper()
 
+	// Skills land in seed under the legacy flat layout `skills/<name>.md`
+	// because cursor's fallback path (target_cursor.go uses installFlat
+	// for skills) requires flat source. installSkillsNested transparently
+	// rewrites flat source into the nested `<name>/SKILL.md` destination
+	// for the other targets, so this single seed shape works everywhere.
 	files := map[string]string{
-		"agents/engineer.md":         "---\nname: engineer\ndescription: Generic engineer.\n---\n# Engineer agent\nGeneric engineer.",
-		"agents/reviewer.md":         "---\nname: reviewer\ndescription: Reviews PRs.\n---\n# Reviewer agent\nReviews PRs.",
-		"commands/design.md":         "# /design command\nProduces a spec.",
-		"commands/deliver.md":        "# /deliver command\nImplements a spec.",
-		"skills/spec-format.md":      "# spec-format skill\nDefines spec structure.",
-		"skills/test-strategy.md":    "# test-strategy skill\nTest pyramid guidance.",
-		"opencode.json":              `{"$schema":"https://opencode.ai/config.json"}`,
+		"agents/engineer.md":      "---\nname: engineer\ndescription: Generic engineer.\n---\n# Engineer agent\nGeneric engineer.",
+		"agents/reviewer.md":      "---\nname: reviewer\ndescription: Reviews PRs.\n---\n# Reviewer agent\nReviews PRs.",
+		"commands/design.md":      "---\ndescription: Produces a spec.\n---\n# /design command\n",
+		"commands/deliver.md":     "---\ndescription: Implements a spec.\n---\n# /deliver command\n",
+		"skills/spec-format.md":   "---\ndescription: Defines spec structure.\n---\n# spec-format skill\n",
+		"skills/test-strategy.md": "---\ndescription: Test pyramid guidance.\n---\n# test-strategy skill\n",
+		"opencode.json":           `{"$schema":"https://opencode.ai/config.json"}`,
 	}
 
 	for relPath, body := range files {
@@ -205,44 +210,232 @@ func (h *installHarness) mustHaveSameContent(relA, relB string) {
 	}
 }
 
-// mustBeRegisterableSubagent asserts that an agent file lands at rel and
-// carries the YAML frontmatter Claude Code's subagent registry requires:
-// `name:` matching expectedName, and a non-empty `description:`. This
-// catches the silent-degradation bug where an agent file ships without
-// `name:` and Claude Code drops it from the Task tool's subagent_type
-// list with no error surfaced.
-func (h *installHarness) mustBeRegisterableSubagent(rel, expectedName string) {
+// mustSatisfyContract walks the installed destination directory for
+// the given (target, kind) and asserts every file matches the declared
+// HarnessContract from internal/install/contracts.go. Reads bytes off
+// the destination so it works for both symlinked and rendered-copy
+// installs.
+//
+// Fails the test if no contract is declared for the cell — every
+// (target, kind) the target installs MUST have a contract.
+func (h *installHarness) mustSatisfyContract(target Target, kind ContentKind) {
 	h.t.Helper()
-	full := filepath.Join(h.TargetDir, rel)
-	data, err := os.ReadFile(full)
+	contract, ok := ContractsFor(target, kind)
+	if !ok {
+		h.t.Fatalf("no HarnessContract declared for (%s, %s) — add one to internal/install/contracts.go", target, kind)
+	}
+	dir := h.harnessDirFor(target, kind)
+	entries, err := os.ReadDir(dir)
 	if err != nil {
-		h.t.Fatalf("read %s: %v", rel, err)
+		h.t.Fatalf("(%s, %s): read installed dir %s: %v", target, kind, dir, err)
 	}
+	found := 0
+	for _, e := range entries {
+		var filePath string
+		if kind == KindSkills {
+			// Nested layout: <name>/SKILL.md
+			if !e.IsDir() {
+				continue
+			}
+			filePath = filepath.Join(dir, e.Name(), "SKILL.md")
+			if _, err := os.Stat(filePath); err != nil {
+				continue
+			}
+		} else if e.IsDir() {
+			// Some kinds nest one more level (e.g. Copilot prompts under
+			// .github/prompts/agents/<name>.prompt.md). Recurse one level
+			// for files matching the contract suffix.
+			nested, _ := os.ReadDir(filepath.Join(dir, e.Name()))
+			for _, ne := range nested {
+				if ne.IsDir() {
+					continue
+				}
+				if !contractFilenameMatches(contract, ne.Name()) {
+					continue
+				}
+				h.assertContract(filepath.Join(dir, e.Name(), ne.Name()), contract, target, kind)
+				found++
+			}
+			continue
+		} else {
+			if !contractFilenameMatches(contract, e.Name()) {
+				continue
+			}
+			filePath = filepath.Join(dir, e.Name())
+		}
+		h.assertContract(filePath, contract, target, kind)
+		found++
+	}
+	if found == 0 {
+		h.t.Fatalf("(%s, %s): expected at least one file at %s, found none", target, kind, dir)
+	}
+}
+
+// contractFilenameMatches returns true if name is a candidate file for
+// the contract — matches the FilenameSuffix if set, or ends in .md /
+// .toml when no suffix is declared.
+func contractFilenameMatches(c HarnessContract, name string) bool {
+	if c.FilenameSuffix != "" {
+		return strings.HasSuffix(name, c.FilenameSuffix)
+	}
+	if c.FilenameRequired != "" {
+		return name == c.FilenameRequired
+	}
+	return strings.HasSuffix(name, ".md") || strings.HasSuffix(name, ".toml")
+}
+
+// assertContract validates a single file against a HarnessContract.
+func (h *installHarness) assertContract(absPath string, c HarnessContract, target Target, kind ContentKind) {
+	h.t.Helper()
+	data, err := os.ReadFile(absPath)
+	if err != nil {
+		h.t.Fatalf("read %s: %v", absPath, err)
+	}
+	if c.FilenameRequired != "" && filepath.Base(absPath) != c.FilenameRequired {
+		h.t.Fatalf("(%s, %s) %s: filename %q does not match required %q", target, kind, absPath, filepath.Base(absPath), c.FilenameRequired)
+	}
+	if c.FilenameSuffix != "" && !strings.HasSuffix(filepath.Base(absPath), c.FilenameSuffix) {
+		h.t.Fatalf("(%s, %s) %s: filename %q does not have required suffix %q", target, kind, absPath, filepath.Base(absPath), c.FilenameSuffix)
+	}
+	if len(c.RequiredFields) > 0 {
+		switch c.Format {
+		case FormatTOML:
+			h.assertTomlRequiredFields(absPath, target, kind, c, data)
+		default:
+			h.assertYAMLRequiredFields(absPath, target, kind, c, data)
+		}
+	}
+	if c.ContentValidator != nil {
+		if err := c.ContentValidator(data); err != nil {
+			h.t.Fatalf("(%s, %s) %s: content validator failed: %v", target, kind, absPath, err)
+		}
+	}
+}
+
+func (h *installHarness) assertYAMLRequiredFields(absPath string, target Target, kind ContentKind, c HarnessContract, data []byte) {
+	h.t.Helper()
+	fm, ok := harnessExtractFrontmatter(data)
+	if !ok {
+		h.t.Fatalf("(%s, %s) %s: missing or malformed YAML frontmatter (required keys: %v)", target, kind, absPath, c.RequiredFields)
+	}
+	for _, key := range c.RequiredFields {
+		val, present := harnessFrontmatterValue(fm, key)
+		if !present {
+			h.t.Fatalf("(%s, %s) %s: missing required frontmatter key `%s:`", target, kind, absPath, key)
+		}
+		if strings.TrimSpace(val) == "" {
+			h.t.Fatalf("(%s, %s) %s: frontmatter key `%s:` present but empty", target, kind, absPath, key)
+		}
+	}
+}
+
+// assertTomlRequiredFields scans top-level TOML keys for the required
+// names. Uses a tiny line-based probe — sufficient for the simple TOML
+// shape Hero emits (key = "value" or key = """ ... """).
+func (h *installHarness) assertTomlRequiredFields(absPath string, target Target, kind ContentKind, c HarnessContract, data []byte) {
+	h.t.Helper()
+	for _, key := range c.RequiredFields {
+		if !tomlHasTopLevelKey(data, key) {
+			h.t.Fatalf("(%s, %s) %s: missing required TOML key `%s`", target, kind, absPath, key)
+		}
+	}
+}
+
+// tomlHasTopLevelKey returns true if data has a top-level `key = ...`
+// or `key=...` line outside any [section]. Triple-quoted multi-line
+// strings are skipped over.
+func tomlHasTopLevelKey(data []byte, key string) bool {
+	lines := strings.Split(string(data), "\n")
+	inSection := false
+	inMultiline := false
+	prefix := key
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if inMultiline {
+			if strings.Contains(line, `"""`) {
+				inMultiline = false
+			}
+			continue
+		}
+		if strings.HasPrefix(trimmed, "[") {
+			inSection = !strings.HasPrefix(trimmed, "[[")
+			// Treat any [section] header as exiting the top-level scope.
+			inSection = strings.HasPrefix(trimmed, "[") && !strings.HasPrefix(trimmed, "[[")
+			continue
+		}
+		if inSection {
+			continue
+		}
+		// Strip leading whitespace; check `key =` or `key=`.
+		if strings.HasPrefix(trimmed, prefix) {
+			rest := strings.TrimSpace(strings.TrimPrefix(trimmed, prefix))
+			if strings.HasPrefix(rest, "=") {
+				// Detect entering a multi-line string.
+				value := strings.TrimSpace(strings.TrimPrefix(rest, "="))
+				if strings.HasPrefix(value, `"""`) && !strings.HasSuffix(value[3:], `"""`) {
+					inMultiline = true
+				}
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// harnessDirFor returns the absolute path of the installed destination
+// dir for the given (target, kind) under h.TargetDir. Mirrors the
+// destBase logic in each internal/install/target_*.go.
+func (h *installHarness) harnessDirFor(target Target, kind ContentKind) string {
+	h.t.Helper()
+	var destBase string
+	switch target {
+	case TargetClaude:
+		destBase = filepath.Join(h.TargetDir, ".claude")
+	case TargetOpenCode:
+		destBase = filepath.Join(h.TargetDir, ".opencode")
+	case TargetCursor:
+		destBase = filepath.Join(h.TargetDir, ".cursor", "rules")
+	case TargetCodex:
+		destBase = filepath.Join(h.TargetDir, ".codex")
+	case TargetCopilot:
+		destBase = filepath.Join(h.TargetDir, ".github", "copilot")
+	case TargetGeneric:
+		destBase = filepath.Join(h.TargetDir, ".ai")
+	default:
+		h.t.Fatalf("harnessDirFor: unknown target %q", target)
+	}
+	return filepath.Join(destBase, string(kind))
+}
+
+// harnessExtractFrontmatter pulls the YAML block out of a
+// `---\n...\n---\n` header and returns (frontmatter, ok). Returns
+// ok=false if the file does not start with a frontmatter marker or
+// the block is unterminated.
+func harnessExtractFrontmatter(data []byte) ([]byte, bool) {
+	const marker = "---\n"
 	s := string(data)
-	if !strings.HasPrefix(s, "---\n") {
-		h.t.Fatalf("%s: missing YAML frontmatter (no leading ---)", rel)
+	if !strings.HasPrefix(s, marker) {
+		return nil, false
 	}
-	rest := s[len("---\n"):]
+	rest := s[len(marker):]
 	end := strings.Index(rest, "\n---")
 	if end < 0 {
-		h.t.Fatalf("%s: unterminated YAML frontmatter", rel)
+		return nil, false
 	}
-	fm := rest[:end]
-	var nameVal, descVal string
-	for _, line := range strings.Split(fm, "\n") {
-		if strings.HasPrefix(line, "name:") {
-			nameVal = strings.TrimSpace(strings.TrimPrefix(line, "name:"))
+	return []byte(rest[:end]), true
+}
+
+// harnessFrontmatterValue scans frontmatter for `key:` at the start of
+// a line and returns (value-after-colon, present). Match is line-prefix
+// only — does not parse nested YAML structures.
+func harnessFrontmatterValue(fm []byte, key string) (string, bool) {
+	prefix := key + ":"
+	for _, line := range strings.Split(string(fm), "\n") {
+		if strings.HasPrefix(line, prefix) {
+			return strings.TrimPrefix(line, prefix), true
 		}
-		if strings.HasPrefix(line, "description:") {
-			descVal = strings.TrimSpace(strings.TrimPrefix(line, "description:"))
-		}
 	}
-	if nameVal != expectedName {
-		h.t.Fatalf("%s: expected `name: %s`, got %q — Claude Code will silently drop this agent from the subagent registry", rel, expectedName, nameVal)
-	}
-	if descVal == "" {
-		h.t.Fatalf("%s: missing required `description:` frontmatter field", rel)
-	}
+	return "", false
 }
 
 // runTwiceMustBeNoop runs install twice with the same options and asserts

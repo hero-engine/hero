@@ -80,6 +80,25 @@ type Options struct {
 	// Quiet suppresses per-file progress prints. Used by --json output
 	// modes so the structured result is the only thing on stdout.
 	Quiet bool
+
+	// TrustedChecksums maps destination path (relative to TargetDir,
+	// using forward slashes) to its SHA-256 checksum from a prior Hero
+	// install. When the install pipeline encounters a destination file
+	// whose current bytes match the entry here, it treats the file as
+	// "Hero-installed at a previous version, safe to update" — even
+	// without --force. Used by `hero upgrade` to migrate users from
+	// legacy install layouts to the current one without losing
+	// user-edited files (those won't be in the trust map; their
+	// destination drift is preserved).
+	TrustedChecksums map[string]string
+
+	// AutoSyncTargets, when true, makes `hero install --target X` also
+	// refresh any other installed harness targets detected in the same
+	// project. Prevents drift between harnesses when the binary version
+	// changes between install moments. Set by the install CLI command
+	// by default; recursive auto-sync calls clear this flag so we don't
+	// loop.
+	AutoSyncTargets bool
 }
 
 // sourceFS returns the filesystem to read content from.
@@ -107,17 +126,21 @@ type CopyAction struct {
 	Dest   string `json:"dest"`
 }
 
-// Run performs the installation.
+// Run performs the installation. Each per-target installer renders
+// content directly from the embedded source to the harness's documented
+// destination paths — no canonical-on-disk mirror, no symlinks.
+//
+// Project mode (the common case) also cleans up legacy install artifacts
+// from earlier Hero architectures: `.hero/{agents,commands,skills}/`
+// canonical dirs and harness-dir symlinks pointing at them are removed
+// when their content is detectably Hero-authored.
 func Run(opts Options) (*Result, error) {
-	// Materialize the canonical .hero/{agents,commands,skills}/ tree first
-	// (project mode only). Each harness target's content dirs then
-	// symlink-or-render against this canonical tree. Migration callers
-	// pass SkipCanonicalRender to preserve disk-detected winner content
-	// they just promoted to canonical.
-	canonicalResult := &Result{}
-	if !opts.SkipCanonicalRender {
-		if err := installCanonical(opts, canonicalResult); err != nil {
-			return nil, err
+	// Legacy migration: remove `.hero/{agents,commands,skills}/` canonical
+	// mirror and any harness symlinks pointing at it. Idempotent —
+	// no-op after the first install on the new architecture.
+	if opts.Mode == ModeProject && opts.TargetDir != "" && !opts.SkipCanonicalRender {
+		if err := cleanupLegacyCanonicalSymlinks(opts, opts.TargetDir); err != nil {
+			fmt.Printf("  warning: legacy canonical/symlink cleanup: %v\n", err)
 		}
 	}
 
@@ -145,39 +168,32 @@ func Run(opts Options) (*Result, error) {
 		return result, err
 	}
 
-	// Roll the canonical-install actions into the returned result so
-	// callers see the full operation list.
 	if result == nil {
 		result = &Result{}
 	}
-	result.Copied = append(canonicalResult.Copied, result.Copied...)
-	result.Merged = append(canonicalResult.Merged, result.Merged...)
-	result.Skipped = append(canonicalResult.Skipped, result.Skipped...)
 
-	// Register MCP server in agent config
 	if mcpErr := RegisterMCP(opts.Target, opts); mcpErr != nil {
-		// Non-fatal: log but don't fail the install
 		fmt.Printf("  warning: could not register MCP server: %v\n", mcpErr)
 	}
 
-	// Register project in the global daemon registry (~/.hero/projects.json)
 	if opts.Mode == ModeProject && opts.TargetDir != "" {
 		if regErr := RegisterProject(opts.TargetDir, opts.DryRun); regErr != nil {
-			// Non-fatal: log but don't fail the install
 			fmt.Printf("  warning: could not register project in daemon registry: %v\n", regErr)
 		}
 	}
 
-	// Stamp version and file checksums
 	if opts.Mode == ModeProject && opts.TargetDir != "" && !opts.DryRun {
 		StampInstallVersion(opts, result)
-		// Record per-target install-state. Under P2, content dirs are
-		// symlinks when the host supports them, otherwise rendered copies.
-		mode := "rendered"
-		if hostSupportsSymlinks() {
-			mode = "symlink"
+		RecordTargetInstall(opts, "rendered")
+	}
+
+	// Auto-sync: refresh other installed harnesses so they stay at the
+	// same binary version (drift prevention). Suppressed when the caller
+	// is itself an auto-sync recursive call.
+	if opts.AutoSyncTargets && opts.Mode == ModeProject && opts.TargetDir != "" && !opts.DryRun {
+		if err := autoSyncSiblings(opts, result); err != nil {
+			fmt.Printf("  warning: auto-sync sibling targets: %v\n", err)
 		}
-		RecordTargetInstall(opts, mode)
 	}
 
 	return result, nil

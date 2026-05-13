@@ -1421,24 +1421,26 @@ func TestRunCodexProject(t *testing.T) {
 		t.Error("expected files to be copied")
 	}
 
-	// Content goes into .codex/
-	agentPath := filepath.Join(targetDir, ".codex", "agents", "engineer.md")
-	if _, err := os.Stat(agentPath); err != nil {
-		t.Errorf("agent not installed to .codex/agents: %v", err)
+	// Codex agents render as TOML (Codex requires .toml; markdown is
+	// silently dropped). Source: codex-rs/core/src/config/agent_roles.rs:518-550
+	agentTomlPath := filepath.Join(targetDir, ".codex", "agents", "engineer.toml")
+	if _, err := os.Stat(agentTomlPath); err != nil {
+		t.Errorf("agent not rendered as TOML at .codex/agents/engineer.toml: %v", err)
 	}
-	cmdPath := filepath.Join(targetDir, ".codex", "commands", "design.md")
-	if _, err := os.Stat(cmdPath); err != nil {
-		t.Errorf("command not installed to .codex/commands: %v", err)
+	// Markdown form is dead bytes — must NOT be present.
+	if _, err := os.Stat(filepath.Join(targetDir, ".codex", "agents", "engineer.md")); err == nil {
+		t.Error("dead .codex/agents/engineer.md should not be installed (Codex only reads .toml)")
 	}
-	// Skills must be installed as <name>/SKILL.md per Anthropic's SKILL.md
-	// format (same convention as Claude Code and opencode).
-	skillPath := filepath.Join(targetDir, ".codex", "skills", "spec-format", "SKILL.md")
+	// No commands loader exists in Codex — Hero installs Hero commands as
+	// skills under .agents/skills/ instead. (See target_codex.go.)
+	if _, err := os.Stat(filepath.Join(targetDir, ".codex", "commands")); err == nil {
+		t.Error(".codex/commands should not exist (Codex has no command loader)")
+	}
+	// Skills land at .agents/skills/<name>/SKILL.md (preferred location;
+	// also picked up by OpenCode's cross-tool fallback).
+	skillPath := filepath.Join(targetDir, ".agents", "skills", "spec-format", "SKILL.md")
 	if _, err := os.Stat(skillPath); err != nil {
-		t.Errorf("skill not installed to .codex/skills/<name>/SKILL.md: %v", err)
-	}
-	flatSkill := filepath.Join(targetDir, ".codex", "skills", "spec-format.md")
-	if _, err := os.Stat(flatSkill); err == nil {
-		t.Errorf("legacy flat skill file still present at %s", flatSkill)
+		t.Errorf("skill not installed to .agents/skills/<name>/SKILL.md: %v", err)
 	}
 
 	// AGENTS.md at project root
@@ -1485,9 +1487,14 @@ func TestRunCodexGlobal(t *testing.T) {
 		t.Error("expected files to be copied")
 	}
 
-	agentPath := filepath.Join(home, ".codex", "agents", "engineer.md")
+	agentPath := filepath.Join(home, ".codex", "agents", "engineer.toml")
 	if _, err := os.Stat(agentPath); err != nil {
-		t.Errorf("agent not installed globally to ~/.codex: %v", err)
+		t.Errorf("agent not installed globally to ~/.codex as TOML: %v", err)
+	}
+	// Skills land at ~/.agents/skills/ in global mode.
+	skillPath := filepath.Join(home, ".agents", "skills", "spec-format", "SKILL.md")
+	if _, err := os.Stat(skillPath); err != nil {
+		t.Errorf("skill not installed globally to ~/.agents/skills/: %v", err)
 	}
 }
 

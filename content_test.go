@@ -55,6 +55,49 @@ func TestEmbeddedAgents_HaveRequiredFrontmatter(t *testing.T) {
 	}
 }
 
+// TestEmbeddedSkills_HaveRequiredFrontmatter enforces that every
+// canonical skill carries `description:` in its YAML frontmatter.
+//
+// Claude Code itself accepts skills without frontmatter (filename
+// becomes name, first paragraph becomes description), but `description:`
+// is load-bearing for model-driven skill invocation — without it,
+// Claude has no clear signal for when to invoke the skill. Hero's
+// authoring contract requires it. Mirrors the install-side
+// HarnessContract for (TargetClaude, KindSkills).
+func TestEmbeddedSkills_HaveRequiredFrontmatter(t *testing.T) {
+	cases := []struct {
+		name string
+		fsys fs.FS
+		root string
+	}{
+		{"legacy/root", legacyContent, "skills"},
+		{"core", coreContent, "core/skills"},
+		{"engineering", engineeringContent, "domains/engineering/skills"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			entries, err := fs.ReadDir(tc.fsys, tc.root)
+			if err != nil {
+				t.Fatalf("read %s: %v", tc.root, err)
+			}
+			if len(entries) == 0 {
+				t.Fatalf("%s: no skill entries found", tc.root)
+			}
+			for _, e := range entries {
+				if !e.IsDir() {
+					continue // skills are nested under <name>/SKILL.md
+				}
+				skillPath := path.Join(tc.root, e.Name(), "SKILL.md")
+				if _, err := fs.Stat(tc.fsys, skillPath); err != nil {
+					continue // not a skill dir
+				}
+				assertSkillFrontmatter(t, tc.fsys, skillPath)
+			}
+		})
+	}
+}
+
 func assertAgentFrontmatter(t *testing.T, fsys fs.FS, p string) {
 	t.Helper()
 	data, err := fs.ReadFile(fsys, p)
@@ -84,6 +127,33 @@ func assertAgentFrontmatter(t *testing.T, fsys fs.FS, p string) {
 	}
 	if strings.TrimSpace(meta.Description) == "" {
 		t.Fatalf("%s: missing required `description:` frontmatter field", p)
+	}
+}
+
+// assertSkillFrontmatter enforces the skill contract: a SKILL.md must
+// have YAML frontmatter with a non-empty `description:`. Mirrors
+// internal/install/contracts.go (TargetClaude, KindSkills).
+func assertSkillFrontmatter(t *testing.T, fsys fs.FS, p string) {
+	t.Helper()
+	data, err := fs.ReadFile(fsys, p)
+	if err != nil {
+		t.Fatalf("read %s: %v", p, err)
+	}
+	fm, body, ok := splitFrontmatter(data)
+	if !ok {
+		t.Fatalf("%s: missing or malformed YAML frontmatter", p)
+	}
+	if len(strings.TrimSpace(string(body))) == 0 {
+		t.Fatalf("%s: empty body", p)
+	}
+	var meta struct {
+		Description string `yaml:"description"`
+	}
+	if err := yaml.Unmarshal(fm, &meta); err != nil {
+		t.Fatalf("%s: parse frontmatter: %v", p, err)
+	}
+	if strings.TrimSpace(meta.Description) == "" {
+		t.Fatalf("%s: missing required `description:` frontmatter field — model-driven skill invocation depends on it", p)
 	}
 }
 
