@@ -34,7 +34,8 @@ func runDocsCheck(cmd *cobra.Command, args []string) error {
 	// Count actual .md files in each directory.
 	agentCount := countMDFiles(filepath.Join(projectRoot, "agents"))
 	commandCount := countMDFiles(filepath.Join(projectRoot, "commands"))
-	skillCount := countMDFiles(filepath.Join(projectRoot, "skills"))
+	// Skills are directories containing SKILL.md, not flat .md files.
+	skillCount := countSkillDirs(filepath.Join(projectRoot, "skills"))
 
 	fmt.Println("Documentation freshness check")
 	fmt.Println("=============================")
@@ -96,16 +97,22 @@ func runDocsCheck(cmd *cobra.Command, args []string) error {
 		if docFile == "README.md" {
 			contentLower := strings.ToLower(content)
 			type dirCheck struct {
-				label string
-				dir   string
+				label    string
+				dir      string
+				skillDir bool
 			}
 			dirs := []dirCheck{
-				{"agents", filepath.Join(projectRoot, "agents")},
-				{"commands", filepath.Join(projectRoot, "commands")},
-				{"skills", filepath.Join(projectRoot, "skills")},
+				{"agents", filepath.Join(projectRoot, "agents"), false},
+				{"commands", filepath.Join(projectRoot, "commands"), false},
+				{"skills", filepath.Join(projectRoot, "skills"), true},
 			}
 			for _, dc := range dirs {
-				missing := findUnmentioned(dc.dir, contentLower)
+				var missing []string
+				if dc.skillDir {
+					missing = findUnmentionedSkills(dc.dir, contentLower)
+				} else {
+					missing = findUnmentioned(dc.dir, contentLower)
+				}
 				if len(missing) > 0 {
 					issues += len(missing)
 					fmt.Printf("\n  Unmentioned %s:\n", dc.label)
@@ -141,6 +148,47 @@ func countMDFiles(dir string) int {
 		}
 	}
 	return count
+}
+
+// countSkillDirs returns the number of skill directories under dir. Each skill
+// is a subdirectory containing a SKILL.md file.
+func countSkillDirs(dir string) int {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return 0
+	}
+	count := 0
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		if _, err := os.Stat(filepath.Join(dir, e.Name(), "SKILL.md")); err == nil {
+			count++
+		}
+	}
+	return count
+}
+
+// findUnmentionedSkills returns names of skill directories not mentioned in the
+// lowercased readme content.
+func findUnmentionedSkills(dir, readmeLower string) []string {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil
+	}
+	var missing []string
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		if _, err := os.Stat(filepath.Join(dir, e.Name(), "SKILL.md")); err != nil {
+			continue
+		}
+		if !strings.Contains(readmeLower, strings.ToLower(e.Name())) {
+			missing = append(missing, e.Name())
+		}
+	}
+	return missing
 }
 
 // findUnmentioned returns basenames (without .md) of files in dir that are not
