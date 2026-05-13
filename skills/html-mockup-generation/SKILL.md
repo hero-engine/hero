@@ -1,3 +1,7 @@
+---
+name: html-mockup-generation
+description: Guidelines for generating self-contained HTML mockups that look professional and are easy to iterate on.
+---
 # HTML Mockup Generation
 
 Guidelines for generating self-contained HTML mockups that look professional and are easy to iterate on.

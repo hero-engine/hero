@@ -21,22 +21,6 @@ type InstallJSONOutput struct {
 	Error      *JSONError `json:"error,omitempty"`
 }
 
-// MigrateJSONOutput is what `hero install --migrate --json` emits.
-// Reuses MigrationReport's structure; adds an envelope for timing /
-// error info.
-type MigrateJSONOutput struct {
-	Report     *MigrationReport `json:"report"`
-	DurationMs int64            `json:"duration_ms"`
-	Error      *JSONError       `json:"error,omitempty"`
-}
-
-// VerifyJSONOutput is what `hero verify-install --json` emits.
-type VerifyJSONOutput struct {
-	Report     *VerificationReport `json:"report"`
-	DurationMs int64               `json:"duration_ms"`
-	Error      *JSONError          `json:"error,omitempty"`
-}
-
 // JSONError is the structured error shape consumers parse. Code is a
 // stable machine-readable string; Message is human-readable; Detail
 // is optional supplemental info.

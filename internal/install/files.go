@@ -2,6 +2,8 @@ package install
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/fs"
@@ -33,8 +35,16 @@ func copyFileFromFS(opts Options, result *Result, srcFS fs.FS, srcPath, dst stri
 		if readErr == nil && bytes.Equal(srcData, dstData) {
 			return nil
 		}
-		result.Skipped = append(result.Skipped, dst)
-		return fmt.Errorf("refusing to overwrite %s (use --force to replace)", dst)
+		// Trusted-checksum upgrade path: if the destination file matches
+		// a checksum recorded as Hero-installed at a prior version,
+		// it's safe to overwrite even though bytes differ from current
+		// canonical (the prior install just had different bytes).
+		if isTrustedHeroInstalledFile(opts, dst, dstData) {
+			// fall through to write
+		} else {
+			result.Skipped = append(result.Skipped, dst)
+			return fmt.Errorf("refusing to overwrite %s (use --force to replace)", dst)
+		}
 	}
 
 	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
@@ -47,6 +57,30 @@ func copyFileFromFS(opts Options, result *Result, srcFS fs.FS, srcPath, dst stri
 
 	result.Copied = append(result.Copied, CopyAction{Source: srcPath, Dest: dst})
 	return nil
+}
+
+// isTrustedHeroInstalledFile checks whether dst's current bytes match
+// a checksum recorded in opts.TrustedChecksums for the equivalent
+// project-relative path. Used to authorize overwriting a file whose
+// bytes drift from current canonical because Hero installed it at a
+// prior version (i.e. it's "Hero-authored, just outdated").
+func isTrustedHeroInstalledFile(opts Options, dst string, dstData []byte) bool {
+	if len(opts.TrustedChecksums) == 0 || opts.TargetDir == "" {
+		return false
+	}
+	rel, err := filepath.Rel(opts.TargetDir, dst)
+	if err != nil {
+		return false
+	}
+	rel = filepath.ToSlash(rel)
+	want, ok := opts.TrustedChecksums[rel]
+	if !ok {
+		return false
+	}
+	got := sha256.Sum256(dstData)
+	// Match version.FileChecksum format: "sha256:" + hex.
+	gotChecksum := "sha256:" + hex.EncodeToString(got[:])
+	return gotChecksum == want
 }
 
 // mergeJSONFromData does a shallow merge of source JSON data into an existing

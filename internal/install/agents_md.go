@@ -5,8 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/hero-engine/hero/internal/config"
 )
 
 // agents_md.go — AGENTS.md as the single canonical root instruction file
@@ -69,31 +67,15 @@ type contentPathsForBody struct {
 	Skills   string
 }
 
-// resolveContentPathsForBody resolves the project-relative content paths
-// the AGENTS.md / CLAUDE.md body should describe. Project mode reads the
-// project's hero.json so the body matches the actual canonical layout
-// (default `.hero/agents/` etc., or whatever `content.<kind>_path`
-// overrides specify). Global mode and missing TargetDir get the default
-// `.hero/<kind>/` strings — those are what every fresh project will
-// have.
+// resolveContentPathsForBody returns project-relative paths describing
+// where agents/commands/skills live for the installed harness. Under
+// render-direct-install, each target writes to its own harness dir, so
+// the AGENTS.md body just lists generic per-harness destinations.
 func resolveContentPathsForBody(opts Options) contentPathsForBody {
-	defaults := contentPathsForBody{
-		Agents:   ".hero/agents/",
-		Commands: ".hero/commands/",
-		Skills:   ".hero/skills/",
-	}
-	if opts.Mode != ModeProject || opts.TargetDir == "" {
-		return defaults
-	}
-	cfg, err := config.Load(opts.TargetDir)
-	if err != nil {
-		return defaults
-	}
-	absAgents, absCommands, absSkills := CanonicalDirs(opts.TargetDir, cfg)
 	return contentPathsForBody{
-		Agents:   relForBody(opts.TargetDir, absAgents, defaults.Agents),
-		Commands: relForBody(opts.TargetDir, absCommands, defaults.Commands),
-		Skills:   relForBody(opts.TargetDir, absSkills, defaults.Skills),
+		Agents:   "<harness>/agents/",
+		Commands: "<harness>/commands/",
+		Skills:   "<harness>/skills/",
 	}
 }
 

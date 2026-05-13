@@ -3,7 +3,6 @@ package install
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -21,13 +20,6 @@ func TestHarness_SmokeClaude(t *testing.T) {
 	h.mustBeRegularFile(".claude/agents/engineer.md")
 	h.mustBeRegularFile(".claude/agents/reviewer.md")
 
-	// Subagent registration contract: every installed agent file must
-	// carry `name:` and `description:` frontmatter so Claude Code's Task
-	// tool actually exposes them as subagent_type values. Regression
-	// guard for claude-subagent-frontmatter-registration.
-	h.mustBeRegisterableSubagent(".claude/agents/engineer.md", "engineer")
-	h.mustBeRegisterableSubagent(".claude/agents/reviewer.md", "reviewer")
-
 	// Commands installed flat.
 	h.mustBeRegularFile(".claude/commands/design.md")
 	h.mustBeRegularFile(".claude/commands/deliver.md")
@@ -37,6 +29,15 @@ func TestHarness_SmokeClaude(t *testing.T) {
 	h.mustBeRegularFile(".claude/skills/spec-format/SKILL.md")
 	h.mustBeRegularFile(".claude/skills/test-strategy/SKILL.md")
 	h.mustNotExist(".claude/skills/spec-format.md")
+
+	// Per-target HarnessContract enforcement (install-contract-registry-foundation).
+	// Each installed file must satisfy the contract declared in
+	// internal/install/contracts.go for its (target, kind) cell.
+	// Subsumes the earlier mustBeRegisterableSubagent assertions and
+	// extends coverage to commands and skills.
+	h.mustSatisfyContract(TargetClaude, KindAgents)
+	h.mustSatisfyContract(TargetClaude, KindCommands)
+	h.mustSatisfyContract(TargetClaude, KindSkills)
 
 	// Under P1: both AGENTS.md and CLAUDE.md are regular files with the
 	// same managed-block treatment. Same body content, different roots so
@@ -74,101 +75,160 @@ func TestHarness_SmokeCursor(t *testing.T) {
 	h.mustBeRegularFile(".cursor/rules/skills/spec-format.md")
 }
 
-func TestHarness_CanonicalAndSymlinks(t *testing.T) {
+// TestHarness_SmokeCodex covers the corrected Codex install layout
+// from harness-install-paths-match-loaders:
+//   - Agents render as TOML at .codex/agents/<n>.toml
+//     (markdown is dead bytes — Codex only reads .toml files)
+//   - Commands NOT installed (Codex has no command loader)
+//   - Skills land at .agents/skills/ (cross-tool standard) — no
+//     longer at .codex/skills/
+//   - AGENTS.md and .codex/hooks.json land at root
+func TestHarness_SmokeCodex(t *testing.T) {
 	h := newInstallHarness(t)
+	// Pre-init the .hero/ workspace so installInstructionsMd /
+	// installAgentsMd run (they no-op without a workspace).
+	if err := os.MkdirAll(filepath.Join(h.TargetDir, ".hero"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	res := h.Run(TargetCodex, nil)
 
-	// Pre-init the .hero/ workspace so P2 canonical-and-symlink mode kicks
-	// in for the harness target.
+	h.mustBeRegularFile(".codex/agents/engineer.toml")
+	h.mustBeRegularFile(".codex/agents/reviewer.toml")
+	h.mustNotExist(".codex/agents/engineer.md")
+	h.mustNotExist(".codex/commands")
+
+	h.mustBeRegularFile(".agents/skills/spec-format/SKILL.md")
+	h.mustBeRegularFile(".agents/skills/test-strategy/SKILL.md")
+
+	h.mustBeRegularFile("AGENTS.md")
+	h.mustContain("AGENTS.md", "hero:managed-start")
+	h.mustBeRegularFile(".codex/hooks.json")
+
+	if len(res.Copied) == 0 {
+		t.Error("expected Run to record copied files")
+	}
+}
+
+// TestHarness_SmokeCopilot covers the corrected Copilot install layout:
+//   - Agents render as .prompt.md under .github/prompts/agents/
+//   - Commands render as .prompt.md under .github/prompts/commands/
+//   - Skills land at .github/skills/<n>/SKILL.md (Copilot's recognized
+//     skill folder; .github/copilot/skills/ was never read)
+//   - .github/copilot/{agents,commands,skills}/ MUST be absent
+//   - .github/copilot-instructions.md is the workspace instruction file
+func TestHarness_SmokeCopilot(t *testing.T) {
+	h := newInstallHarness(t)
+	if err := os.MkdirAll(filepath.Join(h.TargetDir, ".hero"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	res := h.Run(TargetCopilot, nil)
+
+	// New paths Copilot actually reads.
+	h.mustBeRegularFile(".github/prompts/agents/engineer.prompt.md")
+	h.mustBeRegularFile(".github/prompts/commands/design.prompt.md")
+	h.mustBeRegularFile(".github/skills/spec-format/SKILL.md")
+	h.mustBeRegularFile(".github/copilot-instructions.md")
+
+	// Old dead-bytes locations must NOT be installed.
+	h.mustNotExist(".github/copilot/agents")
+	h.mustNotExist(".github/copilot/commands")
+	h.mustNotExist(".github/copilot/skills")
+
+	if len(res.Copied) == 0 {
+		t.Error("expected Run to record copied files")
+	}
+}
+
+// TestHarness_SmokeGeneric covers the catch-all Generic target. .ai/
+// is Hero convention with no consuming loader; layout matches the
+// canonical kinds.
+func TestHarness_SmokeGeneric(t *testing.T) {
+	h := newInstallHarness(t)
+	if err := os.MkdirAll(filepath.Join(h.TargetDir, ".hero"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	res := h.Run(TargetGeneric, nil)
+
+	h.mustBeRegularFile(".ai/agents/engineer.md")
+	h.mustBeRegularFile(".ai/commands/design.md")
+	h.mustBeRegularFile(".ai/skills/spec-format/SKILL.md")
+	h.mustBeRegularFile("AGENTS.md")
+
+	if len(res.Copied) == 0 {
+		t.Error("expected Run to record copied files")
+	}
+}
+
+// TestHarness_RenderDirect_NoCanonicalMirror confirms the
+// render-direct-install architecture: agents/commands/skills land
+// directly at each harness's documented destination, and there is
+// NO `.hero/{agents,commands,skills}/` canonical mirror or any
+// symlinks at the harness destinations.
+func TestHarness_RenderDirect_NoCanonicalMirror(t *testing.T) {
+	h := newInstallHarness(t)
 	if err := os.MkdirAll(filepath.Join(h.TargetDir, ".hero"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 
 	h.Run(TargetClaude, nil)
 
-	// Canonical content materialized.
-	h.mustBeRegularFile(".hero/agents/engineer.md")
-	h.mustBeRegularFile(".hero/commands/design.md")
-	h.mustBeRegularFile(".hero/skills/spec-format/SKILL.md")
+	// Harness destinations have real files (not symlinks).
+	for _, kindDir := range []string{".claude/agents", ".claude/commands", ".claude/skills"} {
+		info, err := os.Lstat(filepath.Join(h.TargetDir, kindDir))
+		if err != nil {
+			t.Errorf("expected %s to exist as a directory: %v", kindDir, err)
+			continue
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			t.Errorf("%s should NOT be a symlink under render-direct architecture", kindDir)
+		}
+		if !info.IsDir() {
+			t.Errorf("%s should be a directory", kindDir)
+		}
+	}
+	h.mustBeRegularFile(".claude/agents/engineer.md")
+	h.mustBeRegularFile(".claude/commands/design.md")
+	h.mustBeRegularFile(".claude/skills/spec-format/SKILL.md")
 
-	// Harness dirs are symlinks pointing at canonical.
-	for _, link := range []string{".claude/agents", ".claude/commands", ".claude/skills"} {
-		target := h.mustBeSymlink(link)
-		if !strings.Contains(target, ".hero") {
-			t.Errorf("%s symlink should point into .hero/, got %q", link, target)
+	// .hero/{agents,commands,skills}/ canonical mirror must NOT exist.
+	for _, mirror := range []string{".hero/agents", ".hero/commands", ".hero/skills"} {
+		if _, err := os.Stat(filepath.Join(h.TargetDir, mirror)); err == nil {
+			t.Errorf(".hero/ canonical mirror %s should not be created under render-direct architecture", mirror)
+		}
+	}
+}
+
+// TestHarness_RenderDirect_MultiTargetIndependent confirms that
+// installing multiple harness targets in the same project produces
+// independent rendered files per harness — no shared canonical, no
+// symlinks. The auto-sync feature keeps them at the same binary
+// version (covered by separate auto-sync tests).
+func TestHarness_RenderDirect_MultiTargetIndependent(t *testing.T) {
+	h := newInstallHarness(t)
+	if err := os.MkdirAll(filepath.Join(h.TargetDir, ".hero"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	h.Run(TargetClaude, nil)
+	h.Run(TargetOpenCode, nil)
+	h.Run(TargetCursor, nil)
+
+	// Each harness has its own rendered file.
+	for _, file := range []string{
+		".claude/agents/engineer.md",
+		".opencode/agents/engineer.md",
+		".cursor/rules/agents/engineer.md",
+	} {
+		h.mustBeRegularFile(file)
+		info, _ := os.Lstat(filepath.Join(h.TargetDir, file))
+		if info != nil && info.Mode()&os.ModeSymlink != 0 {
+			t.Errorf("%s should be a regular file, got symlink", file)
 		}
 	}
 
-	// Files visible through the symlink — proves the symlink resolves.
-	h.mustBeRegularFile(".claude/agents/engineer.md")
-	h.mustBeRegularFile(".claude/skills/spec-format/SKILL.md")
-}
-
-// TestHarness_MigratesLegacyDirToSymlink verifies the P2 migration path:
-// a legacy install left .claude/agents/ as a regular directory full of
-// rendered copies; running install --force migrates that to a symlink
-// pointing at canonical content (no files lost — canonical has the same
-// content materialized from the same source).
-func TestHarness_MigratesLegacyDirToSymlink(t *testing.T) {
-	h := newInstallHarness(t)
-	if err := os.MkdirAll(filepath.Join(h.TargetDir, ".hero"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-
-	// Simulate the legacy state: regular directory with a stale copy.
-	legacyAgentsDir := filepath.Join(h.TargetDir, ".claude", "agents")
-	if err := os.MkdirAll(legacyAgentsDir, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(legacyAgentsDir, "stale.md"), []byte("stale\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	// Without --force, install should refuse to clobber the legacy dir.
-	if _, err := Run(Options{
-		SourceDir: h.SourceDir,
-		Target:    TargetClaude,
-		Mode:      ModeProject,
-		TargetDir: h.TargetDir,
-		Force:     false,
-	}); err == nil {
-		t.Error("expected install without --force to refuse legacy directory migration")
-	}
-
-	// With --force, install migrates the dir to a symlink.
-	h.Run(TargetClaude, func(o *Options) { o.Force = true })
-
-	target := h.mustBeSymlink(".claude/agents")
-	if !strings.Contains(target, ".hero") {
-		t.Errorf("expected symlink to canonical, got %q", target)
-	}
-	// Files visible through the symlink come from canonical, not the
-	// removed stale dir.
-	h.mustBeRegularFile(".claude/agents/engineer.md")
-	h.mustNotExist(".claude/agents/stale.md")
-}
-
-// TestHarness_MultipleTargetsShareCanonical asserts that installing
-// multiple harness targets in the same project all converge on the same
-// canonical content tree — agents/commands/skills are physically materialized
-// once in .hero/, and each harness directory is a separate symlink into it.
-func TestHarness_MultipleTargetsShareCanonical(t *testing.T) {
-	h := newInstallHarness(t)
-	if err := os.MkdirAll(filepath.Join(h.TargetDir, ".hero"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-
-	h.Run(TargetClaude, nil)
-	h.Run(TargetOpenCode, func(o *Options) { o.Force = true })
-	h.Run(TargetCursor, func(o *Options) { o.Force = true })
-
-	// Single canonical materialization.
-	h.mustBeRegularFile(".hero/agents/engineer.md")
-
-	// Each harness has its own symlink, but they all resolve to the same
-	// canonical file.
-	for _, link := range []string{".claude/agents", ".opencode/agents", ".cursor/rules/agents"} {
-		h.mustBeSymlink(link)
-		h.mustBeRegularFile(filepath.Join(link, "engineer.md"))
+	// .hero/agents/ canonical mirror must NOT exist.
+	if _, err := os.Stat(filepath.Join(h.TargetDir, ".hero", "agents")); err == nil {
+		t.Error(".hero/agents/ canonical mirror should not be created under render-direct architecture")
 	}
 }
 

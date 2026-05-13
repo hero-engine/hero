@@ -64,68 +64,6 @@ func TestInstallJSONOutput_WithError(t *testing.T) {
 	}
 }
 
-func TestVerifyJSONOutput_StableShape(t *testing.T) {
-	out := VerifyJSONOutput{
-		Report: &VerificationReport{
-			TargetDir:       "/p",
-			DetectedTargets: []Target{TargetClaude, TargetOpenCode},
-			Issues: []VerificationIssue{
-				{Severity: "error", Code: "broken_symlink", Path: ".claude/agents", Message: "nope"},
-			},
-			Clean: false,
-		},
-		DurationMs: 7,
-	}
-	data, _ := json.Marshal(out)
-	s := string(data)
-	for _, key := range []string{
-		`"report":{`,
-		`"target_dir":"/p"`,
-		`"detected_targets":["claude","opencode"]`,
-		`"issues":[`,
-		`"severity":"error"`,
-		`"code":"broken_symlink"`,
-		`"path":".claude/agents"`,
-		`"message":"nope"`,
-		`"clean":false`,
-		`"duration_ms":7`,
-	} {
-		if !strings.Contains(s, key) {
-			t.Errorf("expected %s in JSON, got: %s", key, s)
-		}
-	}
-}
-
-func TestMigrateJSONOutput_StableShape(t *testing.T) {
-	out := MigrateJSONOutput{
-		Report: &MigrationReport{
-			DetectedTargets: []Target{TargetClaude, TargetOpenCode},
-			PromotedFiles:   map[string][]string{"agents": {"/p/.hero/agents/x.md"}},
-			Conflicts: []MigrationConflict{
-				{Kind: "agents", File: "x.md", Winner: "/p/.claude/agents/x.md"},
-			},
-			DryRun: true,
-		},
-		DurationMs: 13,
-	}
-	data, _ := json.Marshal(out)
-	s := string(data)
-	for _, key := range []string{
-		`"detected_targets":["claude","opencode"]`,
-		`"promoted_files":{"agents":["/p/.hero/agents/x.md"]}`,
-		`"conflicts":[`,
-		`"kind":"agents"`,
-		`"file":"x.md"`,
-		`"winner":"/p/.claude/agents/x.md"`,
-		`"dry_run":true`,
-		`"duration_ms":13`,
-	} {
-		if !strings.Contains(s, key) {
-			t.Errorf("expected %s in JSON, got: %s", key, s)
-		}
-	}
-}
-
 func TestNewJSONError_NilReturnsNil(t *testing.T) {
 	if NewJSONError("x", nil) != nil {
 		t.Error("NewJSONError(_, nil) must return nil so omitempty works")

@@ -190,92 +190,105 @@ func runUpgrade(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// upgradeTarget runs the per-target upgrade pass: walk subdirs from
-// the embedded FS, compare with checksums, write/update where allowed.
-// Returns (updated, skipped, checksums-of-newly-written-files).
+// trustedChecksumsFromInfo returns the project-relative-path → SHA256
+// map a prior Hero install recorded. Used by upgrade so the install
+// pipeline can distinguish "Hero installed this at an older version"
+// (safe to refresh) from "user edited this after Hero installed it"
+// (must preserve).
+func trustedChecksumsFromInfo(info *version.Info) map[string]string {
+	if info == nil || len(info.InstalledFiles) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(info.InstalledFiles))
+	for k, v := range info.InstalledFiles {
+		out[filepath.ToSlash(k)] = v
+	}
+	return out
+}
+
+// upgradeTarget runs the per-target upgrade by invoking the target's
+// own installer (install.Run with Force=upgradeForce). This delegates
+// to the per-target install class so upgrade automatically inherits
+// every install-side behavior:
+//   - Cleanup of dead bytes from prior install layouts
+//     (e.g. .codex/agents/*.md once Codex switched to .toml).
+//   - Format-rendering for harnesses that need a different shape
+//     than canonical (Codex TOML, Copilot .prompt.md).
+//   - Symlinks-where-supported under the canonical-source layout.
+//   - Hook/permission/MCP wiring.
+//
+// User-customized files survive: the install pipeline's
+// copyFileFromFS refuses to overwrite drifted destinations unless
+// Force is set (multi-harness-install-collision contract).
 func upgradeTarget(projectRoot string, target install.Target, contentFS fs.FS, info *version.Info) (int, int, map[string]string) {
-	updated := 0
-	skipped := 0
 	checksums := make(map[string]string)
 
-	for _, subdir := range []string{"agents", "commands", "skills"} {
-		entries, err := fs.ReadDir(contentFS, subdir)
-		if err != nil {
-			continue
-		}
-
-		destDir := resolveTargetDir(projectRoot, target, subdir)
-		if destDir == "" {
-			continue
-		}
-
-		for _, entry := range entries {
-			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
-				continue
-			}
-
-			srcPath := subdir + "/" + entry.Name()
-			destPath := filepath.Join(destDir, entry.Name())
-
-			relPath, _ := filepath.Rel(projectRoot, destPath)
-			if relPath == "" {
-				relPath = filepath.Join(subdir, entry.Name())
-			}
-
-			// Check if destination exists and whether it's been modified
-			if _, err := os.Stat(destPath); err == nil {
-				if !upgradeForce && version.IsFileModified(info, relPath, destPath) {
-					if upgradeDryRun {
-						fmt.Printf("  skip    %s (customized)\n", relPath)
-					} else {
-						fmt.Printf("  skip    %s (customized — use --force to overwrite)\n", relPath)
-					}
-					skipped++
-					continue
-				}
-			}
-
-			if upgradeDryRun {
-				fmt.Printf("  update  %s\n", relPath)
-				updated++
-				continue
-			}
-
-			data, err := fs.ReadFile(contentFS, srcPath)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "  error   %s: %v\n", relPath, err)
-				continue
-			}
-
-			if err := os.MkdirAll(filepath.Dir(destPath), 0o755); err != nil {
-				fmt.Fprintf(os.Stderr, "  error   %s: %v\n", relPath, err)
-				continue
-			}
-
-			if err := os.WriteFile(destPath, data, 0o644); err != nil {
-				fmt.Fprintf(os.Stderr, "  error   %s: %v\n", relPath, err)
-				continue
-			}
-
-			if cs, err := version.FileChecksum(destPath); err == nil {
-				checksums[relPath] = cs
-			}
-
-			fmt.Printf("  update  %s\n", relPath)
-			updated++
-		}
+	opts := install.Options{
+		Target:           target,
+		Mode:             install.ModeProject,
+		TargetDir:        projectRoot,
+		Force:            upgradeForce,
+		DryRun:           upgradeDryRun,
+		ContentFS:        contentFS,
+		TrustedChecksums: trustedChecksumsFromInfo(info),
+	}
+	result, err := install.Run(opts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "  error   %s: %v\n", target, err)
+		return 0, 0, checksums
 	}
 
-	if !upgradeDryRun {
-		mcpOpts := install.Options{
-			Target:    target,
-			Mode:      install.ModeProject,
-			TargetDir: projectRoot,
+	updated := len(result.Copied)
+	skipped := len(result.Skipped)
+
+	for _, action := range result.Copied {
+		relPath, _ := filepath.Rel(projectRoot, action.Dest)
+		if relPath == "" {
+			relPath = filepath.Base(action.Dest)
 		}
-		if mcpErr := install.RegisterMCP(target, mcpOpts); mcpErr != nil {
-			fmt.Printf("  warning: could not update MCP server config: %v\n", mcpErr)
-		} else {
-			fmt.Println("  update  MCP server config")
+		fmt.Printf("  update  %s\n", relPath)
+	}
+	for _, skipMsg := range result.Skipped {
+		fmt.Printf("  skip    %s\n", skipMsg)
+	}
+
+	// Record per-file checksums at the harness-destination paths so the
+	// version-info trust map survives upgrade cycles. Destinations may
+	// be symlinks to canonical (filepath.Walk wouldn't recurse through
+	// them) — resolve each destDir via EvalSymlinks before walking, then
+	// rewrite paths back into harness-relative form.
+	if !upgradeDryRun {
+		for _, kind := range []string{"agents", "commands", "skills"} {
+			destDir := resolveTargetDir(projectRoot, target, kind)
+			if destDir == "" {
+				continue
+			}
+			realDir, err := filepath.EvalSymlinks(destDir)
+			if err != nil {
+				continue
+			}
+			_ = filepath.Walk(realDir, func(path string, info os.FileInfo, err error) error {
+				if err != nil || info == nil || info.IsDir() {
+					return nil
+				}
+				cs, err := version.FileChecksum(path)
+				if err != nil {
+					return nil
+				}
+				// Rewrite the canonical-resolved path back into a
+				// destDir-relative path for trust-map keying.
+				inner, err := filepath.Rel(realDir, path)
+				if err != nil {
+					return nil
+				}
+				harnessPath := filepath.Join(destDir, inner)
+				rel, err := filepath.Rel(projectRoot, harnessPath)
+				if err != nil {
+					return nil
+				}
+				checksums[rel] = cs
+				return nil
+			})
 		}
 	}
 
