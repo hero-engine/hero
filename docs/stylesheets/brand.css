@@ -1,0 +1,59 @@
+/* Hero brand palette — minimal overrides on top of Material defaults. */
+
+:root {
+  --hero-blue-300: #9bc1e6;
+  --hero-blue-500: #6cb6ff;
+  --hero-blue-700: #2a6cb5;
+  --hero-ink: #14181e;
+}
+
+/* Primary color (header background) — same in light and dark. */
+[data-md-color-primary="custom"] {
+  --md-primary-fg-color: var(--hero-ink);
+  --md-primary-fg-color--light: #252b33;
+  --md-primary-fg-color--dark: #0d1117;
+  --md-primary-bg-color: #ffffff;
+  --md-primary-bg-color--light: rgba(255, 255, 255, 0.7);
+}
+
+/* Accent (links, hover states) — deeper blue in light, brighter in dark. */
+[data-md-color-accent="custom"] {
+  --md-accent-fg-color: var(--hero-blue-700);
+  --md-accent-fg-color--transparent: rgba(42, 108, 181, 0.1);
+  --md-accent-bg-color: #ffffff;
+  --md-accent-bg-color--light: rgba(255, 255, 255, 0.7);
+}
+
+[data-md-color-scheme="slate"][data-md-color-accent="custom"] {
+  --md-accent-fg-color: var(--hero-blue-500);
+  --md-accent-fg-color--transparent: rgba(108, 182, 255, 0.1);
+}
+
+/* Link color follows the accent. */
+[data-md-color-scheme="default"] .md-typeset a {
+  color: var(--hero-blue-700);
+}
+
+[data-md-color-scheme="slate"] .md-typeset a {
+  color: var(--hero-blue-500);
+}
+
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  height: 1.5rem;
+  width: 1.5rem;
+  color: var(--hero-blue-300);
+}
+
+/* Site title "Hero" in the header — match the logo color. */
+.md-header__title .md-ellipsis,
+.md-header__topic .md-ellipsis:first-child {
+  color: var(--hero-blue-300);
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+.md-typeset h1 {
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}

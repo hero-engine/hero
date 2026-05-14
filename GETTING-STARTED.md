@@ -11,17 +11,33 @@ harness content.
 
 ## 1. Install
 
+**macOS / Linux (Homebrew):**
+
 ```bash
 brew install hero-engine/tap/hero
 ```
 
-Or build from source:
+**Linux (install script):**
 
 ```bash
-git clone https://github.com/hero-engine/hero.git
-cd hero
-make install
+curl -fsSL https://raw.githubusercontent.com/hero-engine/hero-releases/main/install.sh | sh
 ```
+
+**Windows (Scoop):**
+
+```powershell
+scoop bucket add hero-engine https://github.com/hero-engine/scoop-bucket
+scoop install hero
+```
+
+**Windows (PowerShell install script):**
+
+```powershell
+irm https://raw.githubusercontent.com/hero-engine/hero-releases/main/install.ps1 | iex
+```
+
+All install options — direct downloads, build-from-source, version pinning —
+are documented in [docs/getting-started/installation.md](docs/getting-started/installation.md).
 
 Verify:
 

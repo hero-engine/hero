@@ -52,17 +52,33 @@ escape hatch for scripting, inspection, sync, and verification.
 
 ## Install
 
+**macOS / Linux (Homebrew):**
+
 ```bash
 brew install hero-engine/tap/hero
 ```
 
-Or build from source:
+**Linux (install script):**
 
 ```bash
-git clone https://github.com/hero-engine/hero.git
-cd hero
-make install
+curl -fsSL https://raw.githubusercontent.com/hero-engine/hero-releases/main/install.sh | sh
 ```
+
+**Windows (Scoop):**
+
+```powershell
+scoop bucket add hero-engine https://github.com/hero-engine/scoop-bucket
+scoop install hero
+```
+
+**Windows (PowerShell install script):**
+
+```powershell
+irm https://raw.githubusercontent.com/hero-engine/hero-releases/main/install.ps1 | iex
+```
+
+Full options — including direct downloads and build-from-source — are in
+the [installation guide](docs/getting-started/installation.md).
 
 Initialize a project and install Hero into your coding tool:
 

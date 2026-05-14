@@ -63,6 +63,20 @@ brews:
     test: |
       system "#{bin}/hero", "--version"
 
+scoops:
+  - repository:
+      owner: hero-engine
+      name: scoop-bucket
+      token: "{{ .Env.TAP_TOKEN }}"
+    directory: bucket
+    url_template: "https://github.com/hero-engine/hero-releases/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    homepage: "https://hero-engine.dev"
+    description: "Spec-driven AI engineering workflow"
+    license: "MIT"
+    commit_author:
+      name: hero-engine-bot
+      email: noreply@hero-engine.dev
+
 release:
   github:
     owner: hero-engine
