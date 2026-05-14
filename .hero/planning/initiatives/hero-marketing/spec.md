@@ -87,7 +87,7 @@ Anti-positioning (what Hero is not):
 
 | Surface | Purpose | Owner |
 |---|---|---|
-| Landing page (hero.dev or similar) | Convert visitors → installs | hero-landing-page |
+| Landing page (heroengine.ai) | Convert visitors → installs | hero-landing-page |
 | Docs site | Self-serve onboarding + reference | hero-docs-site |
 | GitHub repo | Source, issues, releases, social card | hero-repo-polish (folded into landing) |
 | Homebrew tap | Install path for macOS/Linux | hero-distribution |
@@ -104,7 +104,7 @@ Anti-positioning (what Hero is not):
 |---|---|---|---|
 | hero-positioning | Narrative, ICP, messaging, comparison | P0 | M |
 | hero-landing-page | Public homepage with install CTA | P0 | M |
-| hero-docs-site | Hosted docs at docs.hero.dev (or similar) | P0 | M |
+| hero-docs-site | Hosted docs at docs.heroengine.ai | P0 | M |
 | hero-distribution | Homebrew formula, install.sh, GitHub releases | P0 | M |
 | hero-demo-content | GIFs, screencast, social cards | P0 | S |
 | hero-launch-playbook | Show HN, Reddit, X, podcast outreach | P0 | S |
@@ -156,10 +156,14 @@ Anti-positioning (what Hero is not):
 
 ## Open questions
 
-- Domain: do we have hero.dev, gohero.io, hero.so, etc.? Need to lock one
-  before landing page work starts.
-- Hosting: GitHub Pages (free, simple) vs Vercel/Netlify (better DX) vs
-  self-hosted on Cloudflare Pages.
+- ~~Domain: do we have hero.dev, gohero.io, hero.so, etc.? Need to lock one
+  before landing page work starts.~~ — resolved 2026-05-14: `heroengine.ai`
+  (see `.hero/knowledge/decisions/domain-name.md`). `teamhero.cloud` parked
+  for possible microsite use.
+- ~~Hosting: GitHub Pages (free, simple) vs Vercel/Netlify (better DX) vs
+  self-hosted on Cloudflare Pages.~~ — resolved: Cloudflare Pages for both
+  landing and docs (unlimited bandwidth, native PR previews, one dashboard
+  with our DNS).
 - Telemetry vendor: PostHog (open-source, self-hostable) vs Plausible
   (privacy-first, simple) vs roll our own via the existing daemon.
 - Community surface: Discord (best engagement, more work) vs GitHub

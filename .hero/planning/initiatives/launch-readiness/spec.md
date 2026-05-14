@@ -41,7 +41,7 @@ something we'd be proud to show off without caveats.
 | # | Spec | Notes |
 |---|---|---|
 | 1 | [`hero-telemetry`](../../features/hero-telemetry/spec.md) | Opt-in usage analytics + feedback channel. Spec already written. Trust-sensitive — strict consent UX, minimal payload, public schema. |
-| 2 | Production deploy of `hero-cloud` to `teamhero.cloud` | Domain purchased. Needs: TLS, secrets management (not env vars in plaintext), CockroachDB managed instance (Cockroach Cloud or self-hosted on Fly/Railway), CI deploy pipeline, healthchecks, basic monitoring. |
+| 2 | Production deploy of `hero-cloud` to `cloud.heroengine.ai` (or chosen subdomain) | Domain `heroengine.ai` resolved 2026-05-14 (see `.hero/knowledge/decisions/domain-name.md`); `teamhero.cloud` parked. Needs: TLS, secrets management (not env vars in plaintext), CockroachDB managed instance (Cockroach Cloud or self-hosted on Fly/Railway), CI deploy pipeline, healthchecks, basic monitoring. |
 | 3 | Onboarding documentation polish | Walkthrough that takes a fresh user from `brew install hero` to syncing with their team in under 5 minutes. |
 
 ## Pre-conditions for picking this up

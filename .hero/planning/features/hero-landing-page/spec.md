@@ -134,4 +134,4 @@ A landing page lets us:
 
 ## Decisions
 
-- **Domain**: `teamhero.cloud` (purchased 2026-04-26)
+- **Domain**: `heroengine.ai` (purchased 2026-05-14). `teamhero.cloud` (purchased 2026-04-26) is parked for possible future microsite use.

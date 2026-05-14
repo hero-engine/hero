@@ -77,7 +77,7 @@ at first run, stored at `~/.hero/install-id`). Resets if the user runs
 ```
 ┌──────────────┐
 │  hero CLI    │
-│  hero serve  │  ─── HTTPS POST ──▶  collector.hero.dev
+│  hero serve  │  ─── HTTPS POST ──▶  collector.heroengine.ai
 └──────────────┘                      (proxy, strips IPs)
                                               │
                                               ▼
@@ -153,9 +153,9 @@ channels:
 - Opt-in prompt fires once on first run; never again unless reset
 - `hero telemetry --show` prints actual queued events, no surprises
 - Collector strips IPs and rate-limits aggressively
-- Privacy policy page exists at hero.dev/privacy and is linked from
+- Privacy policy page exists at heroengine.ai/privacy and is linked from
   the prompt
-- Telemetry is documented in detail at docs.hero.dev/telemetry
+- Telemetry is documented in detail at docs.heroengine.ai/telemetry
 - Total network traffic ≤ 5 KB/day per active install
 - A backend dashboard answers: weekly active installs, command
   popularity, install→init→first-spec funnel, retention by week
@@ -176,6 +176,6 @@ channels:
   numbers post) to build trust + feed content engine?
 - Do we delay first-run prompt until after the first command (less
   intrusive) or hit it at install (clearer informed consent)?
-- Domain decision blocks `collector.hero.dev` URL
+- ~~Domain decision blocks `collector.hero.dev` URL~~ — resolved: `collector.heroengine.ai`
 - Hosting: own VPS vs PostHog Cloud paid plan? Lean self-host for
   privacy story.

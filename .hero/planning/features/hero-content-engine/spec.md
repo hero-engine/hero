@@ -75,7 +75,7 @@ evidence that Hero works.
 
 | Channel | Cadence | Format |
 |---|---|---|
-| docs.hero.dev/blog | Weekly | Canonical |
+| docs.heroengine.ai/blog | Weekly | Canonical |
 | dev.to | Weekly (canonical link to docs) | Mirrored |
 | Hacker News | Selective (deep dives + opinions) | Submit |
 | X / Bluesky | Every post | Thread or single |
