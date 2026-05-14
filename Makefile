@@ -4,7 +4,7 @@ MODULE  := github.com/hero-engine/hero
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS := -ldflags "-s -w -X main.version=$(VERSION)"
 
-.PHONY: build cloud clean install bootstrap test tidy dist release snapshot dev smoke smoke-all
+.PHONY: build cloud clean install bootstrap test tidy dist release snapshot dev smoke smoke-all sync-install-scripts
 
 build:
 	go build $(LDFLAGS) -o $(BINARY) ./cmd/hero/
@@ -40,6 +40,23 @@ smoke-all: build
 
 tidy:
 	go mod tidy
+
+# Sync install.sh/install.ps1 to hero-engine/hero-releases (the public URL
+# users curl/iex from). The canonical source lives in scripts/; the
+# release repo is a mirror so the raw URLs work without needing the
+# private source repo to be public. Re-run after editing either script.
+sync-install-scripts:
+	@tmp=$$(mktemp -d) && \
+	git clone -q git@github.com-hero-engine:hero-engine/hero-releases.git $$tmp && \
+	cp scripts/install.sh scripts/install.ps1 $$tmp/ && \
+	cd $$tmp && \
+	if git diff --quiet; then echo "install scripts already in sync"; else \
+	  git add install.sh install.ps1 && \
+	  git -c user.email=noreply@hero-engine.dev -c user.name=hero-engine-bot commit -q -m "Sync install scripts from hero@$$(cd - >/dev/null && git rev-parse --short HEAD)" && \
+	  git push -q origin main && \
+	  echo "synced install scripts to hero-releases"; \
+	fi; \
+	rm -rf $$tmp
 
 # Local dev: start CockroachDB + hero-cloud
 dev:

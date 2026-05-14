@@ -7,6 +7,25 @@ specs, decisions, conventions, acceptance criteria, attempts, failures,
 and recent activity into a local `.hero/` corpus, then exposes that
 context to AI coding tools through slash commands, CLI commands, and MCP.
 
+## Just tell it what you want
+
+You don't have to memorize commands. Describe what you need in plain
+English and Hero routes it to the right workflow:
+
+| You say... | Hero runs |
+|---|---|
+| "There's a bug in checkout, can you investigate?" | `/diagnose` |
+| "Let's add CSV export to the reports page" | `/design` |
+| "Ship the auth spec" | `/deliver` |
+| "Review this PR" | `/review` |
+| "Break this epic into smaller pieces" | `/compose` |
+| "What's the convention for error handling here?" | `/convention` |
+| "Help me decide between Postgres and SQLite" | `/decide` |
+| "Where did we leave off?" | `/resume` |
+
+Slash commands and the CLI are always there when you want precision —
+but day to day, conversation is the interface.
+
 ```mermaid
 graph LR
     A["/resume"] --> B["/discover"]
@@ -36,11 +55,17 @@ Current installed surfaces: 27 slash commands, 34 agents, 45 skills, and
 ## Quick Start
 
 ```bash
+# macOS / Linux
 brew install hero-engine/tap/hero
+# Linux (no Homebrew): curl -fsSL https://raw.githubusercontent.com/hero-engine/hero-releases/main/install.sh | sh
+# Windows: scoop bucket add hero-engine https://github.com/hero-engine/scoop-bucket && scoop install hero
+
 cd your-project
 hero init
 hero install project . --target opencode
 ```
+
+See the [installation guide](getting-started/installation.md) for all options.
 
 Then in your AI tool:
 

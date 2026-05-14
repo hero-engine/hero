@@ -5,8 +5,12 @@ The `hero` binary manages the spec corpus — the collection of design specs, bu
 ## Installation
 
 ```bash
+# macOS / Linux
 brew install hero-engine/tap/hero
 ```
+
+See the [installation guide](../getting-started/installation.md) for Linux
+install scripts and Windows (Scoop / PowerShell) options.
 
 ## Command Groups
 
