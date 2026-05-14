@@ -17,7 +17,7 @@ smoke: deferred
 ## Goal
 
 Publish the docs that live in this repo (and `mkdocs.yml`) as a hosted,
-searchable site at a stable URL — `docs.teamhero.cloud`. New
+searchable site at a stable URL — `docs.heroengine.ai`. New
 users should find their answer in under three clicks; advanced users
 should be able to grep the entire reference.
 
@@ -35,7 +35,7 @@ specific docs page is a free re-pitch of the product.
 ## Information architecture
 
 ```
-docs.teamhero.cloud/
+docs.heroengine.ai/
 ├── /                                  # landing → quickstart
 ├── /quickstart/                       # 5-min getting started
 ├── /concepts/
@@ -76,10 +76,11 @@ docs.teamhero.cloud/
 - **Generator**: keep `mkdocs` with the `material` theme — it's already
   set up, has good search, dark mode, and copy-button code blocks. Don't
   switch to Docusaurus / Nextra unless there's a concrete reason.
-- **Hosting**: GitHub Pages from the `gh-pages` branch, fronted by
-  Cloudflare for the custom domain. Free, deterministic.
-- **CI**: GitHub Actions step that builds mkdocs on every push to `main`
-  and deploys. Runs in < 60s.
+- **Hosting**: Cloudflare Pages connected to the private GitHub repo.
+  Free, unlimited bandwidth, native PR previews, single dashboard with
+  the Cloudflare DNS that already fronts the domain.
+- **CI**: Cloudflare Pages builds on every push to `main` and on every
+  PR (preview deployment). No separate GitHub Actions step needed.
 - **Search**: built-in Material search is fine for v1. Algolia DocSearch
   if it gets bigger.
 - **Versioning**: `mike` for versioned docs once we cut a v1.0 — defer
@@ -111,7 +112,7 @@ every CI build so reference never drifts from source.
 
 ## Acceptance criteria
 
-- `docs.hero.dev` (or chosen domain) resolves with HTTPS
+- `docs.heroengine.ai` resolves with HTTPS
 - Search works across all pages
 - Quickstart leads to a working install + first spec in < 5 minutes
 - Every CLI command, slash command, agent, skill, and MCP tool has a
@@ -129,7 +130,7 @@ every CI build so reference never drifts from source.
 
 ## Decisions
 
-- **Domain**: `docs.teamhero.cloud` (parent domain purchased 2026-04-26)
+- **Domain**: `docs.heroengine.ai` (parent domain `heroengine.ai` purchased 2026-05-14). Supersedes earlier `docs.teamhero.cloud` plan; see `.hero/knowledge/decisions/domain-name.md`.
 
 ## Open questions
 

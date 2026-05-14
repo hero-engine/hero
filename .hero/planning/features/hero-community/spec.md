@@ -115,7 +115,7 @@ Categories:
 
 - README "Contributors" section auto-updated by all-contributors bot
 - Every release notes contributors by GitHub handle
-- A Hall of Fame page on docs.hero.dev for first 50 contributors
+- A Hall of Fame page on docs.heroengine.ai for first 50 contributors
   (one-time, retired after that)
 
 ## Acceptance criteria

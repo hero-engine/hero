@@ -48,7 +48,7 @@ a leak in the funnel.
 
 ### Install script (Linux + macOS) — secondary
 
-- `curl -fsSL https://hero.dev/install.sh | sh`
+- `curl -fsSL https://heroengine.ai/install.sh | sh`
 - Detects OS + arch, downloads the right binary from the latest GitHub
   release, verifies checksum, drops it in `~/.local/bin` or `/usr/local/bin`
 - Source lives in `scripts/install.sh` in this repo, served from the
@@ -100,7 +100,7 @@ Updates homebrew tap formula via tap repo PR
    ↓
 Pushes container image to ghcr.io
    ↓
-Posts changelog to #releases (community channel) and to RSS at hero.dev/releases.xml
+Posts changelog to #releases (community channel) and to RSS at heroengine.ai/releases.xml
 ```
 
 Tags follow semver. We write a `RELEASING.md` covering: version bump
@@ -120,7 +120,7 @@ checklist, breaking-change policy, deprecation window, hotfix process.
 
 - `brew install <tap>/hero && hero --version` works on a clean macOS
   machine in one command
-- `curl -fsSL https://<domain>/install.sh | sh && hero --version` works
+- `curl -fsSL https://heroengine.ai/install.sh | sh && hero --version` works
   on a clean Ubuntu container in one command
 - `hero update` upgrades to latest regardless of install path
 - Every release has signed checksums and a `cosign` verification example
@@ -148,7 +148,7 @@ checklist, breaking-change policy, deprecation window, hotfix process.
 ## Open questions
 
 - Tap name: `hero-cli/tap`, `heroworkflow/tap`, or something else?
-- Domain decision (see initiative open questions) blocks `install.sh` URL
+- ~~Domain decision blocks `install.sh` URL~~ — resolved: `heroengine.ai`
 - Submit to homebrew-core now, or wait until star count + maintenance
   history are convincing? Lean wait.
 - Container image: do we ship `hero` only, or `hero` + a sample `.hero/`
