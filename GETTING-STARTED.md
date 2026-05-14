@@ -83,7 +83,6 @@ Other useful install flags:
 
 ```bash
 hero install --migrate         # reconcile drifted copies across harnesses
-hero install --force-managed   # regenerate managed AGENTS.md / CLAUDE.md sections
 hero install --no-touch-claude-md  # leave CLAUDE.md alone
 hero verify-install            # audit install state
 ```

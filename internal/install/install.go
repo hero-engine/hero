@@ -58,12 +58,6 @@ type Options struct {
 	ProjectRoot string // for workspace mode: the actual project root (where .hero/ lives)
 	Domain      string // domain pack to install (default: engineering)
 
-	// ForceManagedRegion overrides the safety check that refuses to
-	// regenerate AGENTS.md / config-file managed regions when the user
-	// has edited inside the markers. With this flag set, the regenerate
-	// happens anyway and the user's in-region edits are lost.
-	ForceManagedRegion bool
-
 	// NoTouchClaudeMd skips CLAUDE.md handling entirely. User accepts that
 	// Claude Code won't see Hero content via CLAUDE.md (other harnesses
 	// still get it via AGENTS.md). Niche; for users who want absolute

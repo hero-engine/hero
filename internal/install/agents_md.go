@@ -127,9 +127,10 @@ type installManagedSpec struct {
 // All paths idempotent — re-running with no content change produces zero
 // filesystem writes.
 //
-// Hand-edits inside an existing versioned managed region refuse to
-// regenerate unless opts.ForceManagedRegion is set, so users don't lose
-// in-region edits silently.
+// The managed region is always regenerated in place. The markers themselves
+// signal that the content between them is owned by Hero; users who edit
+// inside the markers have ignored that signal and will lose their edits on
+// the next install.
 func installManagedMarkdown(opts Options, result *Result, spec installManagedSpec) error {
 	if spec.AllowSkip && spec.SkipEnabled {
 		return nil
@@ -142,16 +143,6 @@ func installManagedMarkdown(opts Options, result *Result, spec installManagedSpe
 	if data, err := os.ReadFile(spec.Path); err == nil {
 		existing = string(data)
 		wasNew = false
-	}
-
-	// Detect hand-edits inside an existing versioned managed region.
-	if !opts.ForceManagedRegion {
-		if mr := FindManagedRegion(existing); mr.Present && !mr.Legacy && managedRegionDrifted(mr, spec.Body) {
-			return fmt.Errorf(
-				"%s managed region has been edited by hand at %s — move your edits outside the markers and re-run, or use --force-managed to overwrite",
-				spec.Label, spec.Path,
-			)
-		}
 	}
 
 	newContent := computeManagedContent(existing, region, spec.DefaultH1)
@@ -204,16 +195,6 @@ func computeManagedContent(existing, region, defaultH1 string) string {
 		return sb.String()
 	}
 	return InsertManagedRegion(existing, region)
-}
-
-// managedRegionDrifted reports whether the managed-region body in `mr`
-// looks like Hero's current generated body, allowing trailing whitespace
-// differences. If true, the user has hand-edited inside the markers.
-func managedRegionDrifted(mr ManagedRegion, currentBody string) bool {
-	if !mr.Present {
-		return false
-	}
-	return strings.TrimSpace(mr.Body) != strings.TrimSpace(currentBody)
 }
 
 // heroVersion returns opts.Version or "dev" if empty — used to stamp the
