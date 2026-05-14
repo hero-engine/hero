@@ -102,7 +102,6 @@ Multiple AI tools, drifted copies, post-upgrade resets:
 
 ```bash
 hero install --migrate          # reconcile drifted copies across harnesses
-hero install --force-managed    # regenerate managed AGENTS.md / CLAUDE.md sections
 hero verify-install             # audit install state
 ```
 

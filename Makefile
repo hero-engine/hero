@@ -25,7 +25,7 @@ install: build
 # with Claude Code (or any other Hero-native harness) "just works."
 # Idempotent — re-running is a no-op when content is unchanged.
 bootstrap: build
-	./$(BINARY) install project . --target claude --force --force-managed
+	./$(BINARY) install project . --target claude --force
 
 test:
 	go test ./...

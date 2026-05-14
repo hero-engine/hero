@@ -76,7 +76,6 @@ var (
 	installDomain          string
 	installForceRoot       bool
 	installRepair          bool
-	installForceManaged    bool
 	installNoTouchClaudeMd bool
 	installMigrate         bool
 	installJSON            bool
@@ -91,7 +90,6 @@ func init() {
 	installCmd.Flags().StringVar(&installDomain, "domain", "", "domain pack to install (default: from hero.json or engineering)")
 	installCmd.Flags().BoolVar(&installForceRoot, "root", false, "force root install even when an ancestor already has .hero/ (creates a nested workspace; rare)")
 	installCmd.Flags().BoolVar(&installRepair, "repair", false, "skip install; verify and repair existing satellite symlinks/markers and reconcile against subprojects.json")
-	installCmd.Flags().BoolVar(&installForceManaged, "force-managed", false, "regenerate Hero managed regions in AGENTS.md / CLAUDE.md / config files even if hand-edited (drops user edits inside the markers)")
 	installCmd.Flags().BoolVar(&installNoTouchClaudeMd, "no-touch-claude-md", false, "skip CLAUDE.md handling entirely (Claude Code won't see Hero content via CLAUDE.md, but other harnesses still get it via AGENTS.md)")
 	installCmd.Flags().BoolVar(&installMigrate, "migrate", false, "auto-detect installed harness targets, reconcile drifted copies (newest mtime wins), promote to canonical, and re-install each target as symlinks pointing at canonical")
 	installCmd.Flags().BoolVar(&installJSON, "json", false, "emit a single JSON result object on stdout instead of human-readable progress output (for programmatic consumers like a Hero-native client)")
@@ -203,7 +201,6 @@ func runInstall(cmd *cobra.Command, args []string) error {
 		DryRun:             installDryRun,
 		Version:            binaryVersion,
 		Domain:             domain,
-		ForceManagedRegion: installForceManaged,
 		NoTouchClaudeMd:    installNoTouchClaudeMd,
 		Quiet:              installJSON,
 		// Auto-sync detected sibling harnesses so adding one target to
