@@ -9,6 +9,7 @@ import (
 	"github.com/hero-engine/hero/internal/async"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/install"
+	"github.com/hero-engine/hero/internal/peering"
 	"github.com/hero-engine/hero/internal/spec"
 	"github.com/hero-engine/hero/internal/version"
 	"github.com/hero-engine/hero/internal/workspace"
@@ -56,6 +57,13 @@ func runStatus(cmd *cobra.Command, args []string) error {
 	// Surface workspace location and active scope when running from a
 	// satellite or subfolder. Quiet when at root with no scope.
 	printWorkspaceContext(projectRoot, heroDir)
+
+	// Auto-fire peer-side completion: any awaiting_peer spec whose
+	// peer counterpart has reached completed is flipped to handed_back
+	// before we render. Best-effort — silent on per-spec errors.
+	if transitioned, err := peering.ReconcileAwaitingPeer(projectRoot, nil); err == nil && len(transitioned) > 0 {
+		fmt.Printf("Peer-side completion detected for %d spec(s): %v — moved to handed_back.\n\n", len(transitioned), transitioned)
+	}
 
 	specs, err := spec.Discover(heroDir)
 	if err != nil {
