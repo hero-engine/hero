@@ -3,11 +3,14 @@ package cli
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
+	contractpeering "github.com/hero-engine/hero/contracts/peering"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/index"
 	"github.com/hero-engine/hero/internal/mission"
+	"github.com/hero-engine/hero/internal/peering"
 	"github.com/hero-engine/hero/internal/retrieval"
 	"github.com/spf13/cobra"
 )
@@ -36,18 +39,22 @@ so users know it succeeded.`,
 }
 
 var (
-	relevantFiles []string
+	relevantFiles    []string
+	relevantPeers    []string
+	relevantSurface  string
 )
 
 func init() {
 	relevantCmd.Flags().StringSliceVar(&relevantFiles, "files", nil, "file paths to check for context (alternative to positional args)")
+	relevantCmd.Flags().StringSliceVar(&relevantPeers, "peer", nil, "include peer-surface conventions from this peer alias (repeatable)")
+	relevantCmd.Flags().StringVar(&relevantSurface, "surface", "", "filter peer conventions to those tagged with this surface (e.g. http-response)")
 }
 
 func runRelevant(cmd *cobra.Command, args []string) error {
 	files := append([]string{}, relevantFiles...)
 	files = append(files, args...)
-	if len(files) == 0 {
-		return fmt.Errorf("no files specified — pass paths positionally or via --files")
+	if len(files) == 0 && len(relevantPeers) == 0 {
+		return fmt.Errorf("no files specified — pass paths positionally, via --files, or use --peer to request peer-surface conventions")
 	}
 
 	projectRoot := findProjectRoot()
@@ -57,8 +64,9 @@ func runRelevant(cmd *cobra.Command, args []string) error {
 	}
 
 	nudgeLevel := cfg.Team.NudgeLevel
-	if nudgeLevel == "off" {
-		return nil // silently do nothing — explicitly disabled
+	if nudgeLevel == "off" && len(relevantPeers) == 0 {
+		// --peer is an explicit ask: honor it even when nudge is off.
+		return nil
 	}
 
 	heroDir := cfg.HeroDir(projectRoot)
@@ -68,21 +76,27 @@ func runRelevant(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	ret, err := retrieval.New(heroDir)
-	if err != nil {
-		// Index unavailable — silent, non-fatal.
-		return nil
-	}
-	defer ret.Close()
-
-	result, err := ret.NudgeFiles(files)
-	if err != nil {
-		// Retrieval error — silent, non-fatal.
-		return nil
+	// Resolve peer conventions first so we can decide whether the
+	// command produced *any* output at the end.
+	peerConventions, peerErr := loadPeerConventions(cfg, projectRoot, relevantPeers, relevantSurface)
+	if peerErr != nil {
+		// Peer resolution errors are user-actionable — surface them.
+		return peerErr
 	}
 
-	if result.IsEmpty() {
-		// No relevant context — silent, the whole point of nudge.
+	var result *index.NudgeResult
+	if len(files) > 0 {
+		ret, err := retrieval.New(heroDir)
+		if err == nil {
+			defer ret.Close()
+			if r, err := ret.NudgeFiles(files); err == nil {
+				result = r
+			}
+		}
+	}
+
+	localEmpty := result == nil || result.IsEmpty()
+	if localEmpty && len(peerConventions) == 0 {
 		return nil
 	}
 
@@ -93,16 +107,100 @@ func runRelevant(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	switch nudgeLevel {
-	case "gentle":
-		printGentleNudge(result)
-	case "assertive":
-		printAssertiveNudge(result)
-	default:
-		printGentleNudge(result)
+	if !localEmpty {
+		switch nudgeLevel {
+		case "assertive":
+			printAssertiveNudge(result)
+		default:
+			printGentleNudge(result)
+		}
+	}
+
+	if len(peerConventions) > 0 {
+		printPeerConventions(peerConventions, relevantSurface)
 	}
 
 	return nil
+}
+
+// peerConventionGroup bundles peer-surface conventions read from a
+// single peer's manifest, keyed by display alias.
+type peerConventionGroup struct {
+	Alias    string
+	PeerID   string
+	Entries  []contractpeering.ConventionEntry
+}
+
+// loadPeerConventions reads each requested peer's manifest, optionally
+// filters by surface, and returns one group per peer. Returns a clear
+// error when a peer alias is unconfigured or its manifest is missing —
+// the user asked for this signal explicitly and a silent miss would be
+// misleading.
+func loadPeerConventions(cfg config.Config, projectRoot string, peers []string, surface string) ([]peerConventionGroup, error) {
+	if len(peers) == 0 {
+		return nil, nil
+	}
+	// De-duplicate aliases while preserving order.
+	seen := map[string]bool{}
+	var ordered []string
+	for _, p := range peers {
+		if seen[p] {
+			continue
+		}
+		seen[p] = true
+		ordered = append(ordered, p)
+	}
+
+	var out []peerConventionGroup
+	for _, alias := range ordered {
+		peerPath, err := cfg.ResolveRepoPath(projectRoot, alias)
+		if err != nil {
+			return nil, fmt.Errorf("peer %q: %w", alias, err)
+		}
+		manifest, err := peering.ReadPeerManifest(peerPath, cfg.Folder)
+		if err != nil {
+			return nil, fmt.Errorf("peer %q: %w", alias, err)
+		}
+		entries := manifest.Conventions
+		if surface != "" {
+			entries = peering.FilterConventionsBySurface(entries, surface)
+		}
+		// Stable display order.
+		sort.Slice(entries, func(i, j int) bool { return entries[i].Slug < entries[j].Slug })
+		out = append(out, peerConventionGroup{
+			Alias:   alias,
+			PeerID:  manifest.Repo.PeerID,
+			Entries: entries,
+		})
+	}
+	return out, nil
+}
+
+// printPeerConventions renders the peer-surface block. Distinct from
+// the local nudge formatting so the boundary is obvious to a reader.
+func printPeerConventions(groups []peerConventionGroup, surface string) {
+	fmt.Println("---")
+	if surface != "" {
+		fmt.Printf("**Hero** — peer-surface conventions (surface: %s):\n", surface)
+	} else {
+		fmt.Println("**Hero** — peer-surface conventions:")
+	}
+	fmt.Println()
+	for _, g := range groups {
+		fmt.Printf("Peer `%s` (peer_id %s):\n", g.Alias, g.PeerID)
+		if len(g.Entries) == 0 {
+			fmt.Println("  (no peer-surface conventions match)")
+			continue
+		}
+		for _, e := range g.Entries {
+			surf := ""
+			if len(e.Surface) > 0 {
+				surf = " [" + strings.Join(e.Surface, ",") + "]"
+			}
+			fmt.Printf("  - %s — %s%s\n    path: %s\n", e.Slug, e.Title, surf, e.Path)
+		}
+	}
+	fmt.Println("---")
 }
 
 func printGentleNudge(result *index.NudgeResult) {
