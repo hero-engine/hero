@@ -82,6 +82,29 @@ type PeeringConfig struct {
 	// per-convention `peer: true` frontmatter flag. Default empty —
 	// publish set is empty by default.
 	PublishConventions []string `json:"publish_conventions,omitempty"`
+
+	// Subagent configures the LLM CLI used by `hero peer call` to
+	// spawn a subagent in a peer workspace. Nil → use built-in
+	// defaults (claude CLI). See SubagentConfig for the contract.
+	Subagent *SubagentConfig `json:"subagent,omitempty"`
+}
+
+// SubagentConfig configures the local LLM CLI invocation used by
+// `hero peer call`. Hero shells out to Command + Args with the peer
+// workspace as cwd, pipes the prompt envelope on stdin, and parses a
+// structured `<peer-call-result>` block out of stdout.
+type SubagentConfig struct {
+	// Command is the executable to invoke. Default: "claude".
+	Command string `json:"command,omitempty"`
+
+	// Args are passed before any Hero-added flags (budget, prompt
+	// piping mode, etc.). Default: ["-p"] (non-interactive print
+	// mode).
+	Args []string `json:"args,omitempty"`
+
+	// EnvPassthrough is the list of environment variables to forward
+	// to the subagent. Default: ["ANTHROPIC_API_KEY", "PATH", "HOME"].
+	EnvPassthrough []string `json:"env_passthrough,omitempty"`
 }
 
 // ContentConfig declares where canonical agent/command/skill content
