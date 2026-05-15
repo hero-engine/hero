@@ -146,13 +146,22 @@ func wireClaudePermissions(opts Options, result *Result) (added bool, err error)
 	return true, nil
 }
 
-// EnsureClaudeHeroAllowlist applies the Bash(hero:*) permission to the
-// project's .claude/settings.json. Used by `hero trust claude` to
-// re-apply the entry on demand without going through the full installer.
+// EnsureClaudeHeroAllowlist applies the Bash(hero:*) permission to a
+// Claude Code settings.json. Used by `hero trust claude` to re-apply
+// the entry on demand without going through the full installer.
+//
+// In ModeProject the entry lands in <projectDir>/.claude/settings.json;
+// projectDir must be non-empty.
+// In ModeGlobal the entry lands in ~/.claude/settings.json; projectDir
+// is ignored.
+//
 // Returns whether the entry was newly added and the absolute settings
 // path it was written to.
-func EnsureClaudeHeroAllowlist(projectDir string) (added bool, path string, err error) {
-	opts := Options{Mode: ModeProject, TargetDir: projectDir}
+func EnsureClaudeHeroAllowlist(mode Mode, projectDir string) (added bool, path string, err error) {
+	if mode == ModeProject && projectDir == "" {
+		return false, "", fmt.Errorf("project mode requires a target directory")
+	}
+	opts := Options{Mode: mode, TargetDir: projectDir}
 	settingsPath, err := claudeSettingsPath(opts)
 	if err != nil {
 		return false, "", err

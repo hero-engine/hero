@@ -231,7 +231,7 @@ func TestEnsureClaudeHeroAllowlistIdempotent(t *testing.T) {
 	}
 
 	for i := 0; i < 3; i++ {
-		added, gotPath, err := EnsureClaudeHeroAllowlist(dir)
+		added, gotPath, err := EnsureClaudeHeroAllowlist(ModeProject, dir)
 		if err != nil {
 			t.Fatalf("call %d: %v", i, err)
 		}
@@ -256,6 +256,205 @@ func TestEnsureClaudeHeroAllowlistIdempotent(t *testing.T) {
 			t.Errorf("permissions.allow[%d] = %q, want %q (full=%v)", i, allow[i], want, allow)
 		}
 	}
+}
+
+// TestEnsureClaudeHeroAllowlist_GlobalScope verifies that ModeGlobal
+// writes the allowlist into $HOME/.claude/settings.json and does not
+// create any project-local .claude directory.
+func TestEnsureClaudeHeroAllowlist_GlobalScope(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	// Sanity: a separate "project" dir that must NOT be touched.
+	projectDir := t.TempDir()
+
+	added, gotPath, err := EnsureClaudeHeroAllowlist(ModeGlobal, "")
+	if err != nil {
+		t.Fatalf("EnsureClaudeHeroAllowlist: %v", err)
+	}
+	if !added {
+		t.Errorf("expected added=true on first call")
+	}
+	wantPath := filepath.Join(home, ".claude", "settings.json")
+	if gotPath != wantPath {
+		t.Errorf("path = %q, want %q", gotPath, wantPath)
+	}
+
+	allow := allowlistFromSettings(t, home)
+	if len(allow) != 1 || allow[0] != "Bash(hero:*)" {
+		t.Errorf("permissions.allow = %v, want [Bash(hero:*)]", allow)
+	}
+
+	if _, err := os.Stat(filepath.Join(projectDir, ".claude")); !os.IsNotExist(err) {
+		t.Errorf("project .claude must not exist after global trust: stat err = %v", err)
+	}
+}
+
+// TestEnsureClaudeHeroAllowlist_GlobalIdempotent verifies that repeat
+// global calls don't duplicate the hero entry and preserve unrelated
+// user entries already in $HOME/.claude/settings.json.
+func TestEnsureClaudeHeroAllowlist_GlobalIdempotent(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	settingsPath := filepath.Join(home, ".claude", "settings.json")
+	if err := os.MkdirAll(filepath.Dir(settingsPath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	seed := `{"permissions": {"allow": ["Bash(ls)", "Bash(hero:*)"]}}`
+	if err := os.WriteFile(settingsPath, []byte(seed), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	for i := 0; i < 3; i++ {
+		added, gotPath, err := EnsureClaudeHeroAllowlist(ModeGlobal, "")
+		if err != nil {
+			t.Fatalf("call %d: %v", i, err)
+		}
+		if gotPath != settingsPath {
+			t.Errorf("call %d: path = %q, want %q", i, gotPath, settingsPath)
+		}
+		if added {
+			t.Errorf("call %d: expected added=false (entry seeded)", i)
+		}
+	}
+
+	allow := allowlistFromSettings(t, home)
+	heroCount := 0
+	for _, e := range allow {
+		if e == "Bash(hero:*)" {
+			heroCount++
+		}
+	}
+	if heroCount != 1 {
+		t.Errorf("Bash(hero:*) must appear exactly once, got %d (allow=%v)", heroCount, allow)
+	}
+	if !func() bool {
+		for _, e := range allow {
+			if e == "Bash(ls)" {
+				return true
+			}
+		}
+		return false
+	}() {
+		t.Errorf("user entry Bash(ls) was lost: %v", allow)
+	}
+}
+
+// TestEnsureClaudeHeroAllowlist_GlobalPreservesOtherKeys verifies that
+// global wiring touches only permissions.allow — unrelated top-level
+// keys (model, hooks, permissions.deny) survive byte-equivalent.
+func TestEnsureClaudeHeroAllowlist_GlobalPreservesOtherKeys(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	settingsPath := filepath.Join(home, ".claude", "settings.json")
+	if err := os.MkdirAll(filepath.Dir(settingsPath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	seed := `{
+  "model": "sonnet",
+  "permissions": {"allow": ["Bash(ls)"], "deny": ["Bash(rm:*)"]},
+  "hooks": {
+    "Stop": [
+      {"matcher": "", "hooks": [{"type": "command", "command": "echo user-stop"}]}
+    ]
+  }
+}`
+	if err := os.WriteFile(settingsPath, []byte(seed), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	added, _, err := EnsureClaudeHeroAllowlist(ModeGlobal, "")
+	if err != nil {
+		t.Fatalf("EnsureClaudeHeroAllowlist: %v", err)
+	}
+	if !added {
+		t.Fatal("expected added=true")
+	}
+
+	settings := readSettings(t, home)
+	if settings["model"] != "sonnet" {
+		t.Errorf("model key lost: %v", settings["model"])
+	}
+	hooks, _ := settings["hooks"].(map[string]interface{})
+	stop, _ := hooks["Stop"].([]interface{})
+	if len(stop) != 1 {
+		t.Errorf("user Stop hook lost: %v", stop)
+	}
+	perms, _ := settings["permissions"].(map[string]interface{})
+	if deny, _ := perms["deny"].([]interface{}); len(deny) != 1 || deny[0] != "Bash(rm:*)" {
+		t.Errorf("permissions.deny clobbered: %v", deny)
+	}
+
+	allow := allowlistFromSettings(t, home)
+	want := []string{"Bash(ls)", "Bash(hero:*)"}
+	if len(allow) != len(want) {
+		t.Fatalf("permissions.allow = %v, want %v", allow, want)
+	}
+	for i, w := range want {
+		if allow[i] != w {
+			t.Errorf("permissions.allow[%d] = %q, want %q", i, allow[i], w)
+		}
+	}
+}
+
+// TestEnsureClaudeHeroAllowlist_ProjectAndGlobalIndependent verifies
+// project and global writes target distinct files and don't bleed into
+// each other.
+func TestEnsureClaudeHeroAllowlist_ProjectAndGlobalIndependent(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	projectDir := t.TempDir()
+
+	addedG1, _, err := EnsureClaudeHeroAllowlist(ModeGlobal, "")
+	if err != nil {
+		t.Fatalf("global pass 1: %v", err)
+	}
+	if !addedG1 {
+		t.Errorf("global pass 1: expected added=true")
+	}
+
+	addedP, _, err := EnsureClaudeHeroAllowlist(ModeProject, projectDir)
+	if err != nil {
+		t.Fatalf("project: %v", err)
+	}
+	if !addedP {
+		t.Errorf("project: expected added=true")
+	}
+
+	addedG2, _, err := EnsureClaudeHeroAllowlist(ModeGlobal, "")
+	if err != nil {
+		t.Fatalf("global pass 2: %v", err)
+	}
+	if addedG2 {
+		t.Errorf("global pass 2: expected added=false (already present)")
+	}
+
+	if !containsHeroAllow(allowlistFromSettings(t, home)) {
+		t.Errorf("global file missing Bash(hero:*)")
+	}
+	if !containsHeroAllow(allowlistFromSettings(t, projectDir)) {
+		t.Errorf("project file missing Bash(hero:*)")
+	}
+}
+
+// TestEnsureClaudeHeroAllowlist_ProjectModeRequiresDir verifies the
+// guard against an empty projectDir in project mode.
+func TestEnsureClaudeHeroAllowlist_ProjectModeRequiresDir(t *testing.T) {
+	_, _, err := EnsureClaudeHeroAllowlist(ModeProject, "")
+	if err == nil {
+		t.Fatal("expected error for empty projectDir in project mode")
+	}
+}
+
+func containsHeroAllow(allow []string) bool {
+	for _, e := range allow {
+		if e == "Bash(hero:*)" {
+			return true
+		}
+	}
+	return false
 }
 
 // TestWireClaudePermissions_PreservesOtherKeys: seed settings.json
