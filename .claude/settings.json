@@ -32,7 +32,8 @@
       "Glob",
       "Grep",
       "WebFetch",
-      "WebSearch"
+      "WebSearch",
+      "Bash(hero:*)"
     ]
   }
 }
