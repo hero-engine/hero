@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-15T02:53:16Z · 90 ready specs_
+_Generated: 2026-05-15T16:31:16Z · 97 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -71,26 +71,28 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## hero-trust-global-scope — Hero Trust Global Scope — Apply Hero Allowlist to User-Level Claude Settings
+## hero-governance — "Hero Governance — Classification, Policy-Filtered Retrieval, Agent Identity, Audit-by-Construction"
 _feature · planning · horizon: now_
 
-Adds optional `<project|global>` scope to `hero trust claude`, mirroring
-`hero install`'s positional pattern, so one command can write
-`Bash(hero:*)` into `~/.claude/settings.json` and stop prompts across
-every project at once.
+Foundational governance model for Hero — classifications, subjects, policies,
+agent identity, and a single retrieval filter — split between the OSS
+contracts package (vocabulary + API shape) and the paid enforcement engine.
 
-**Status:** planning — spec just landed, no code yet.
+**Status:** planning — spec just landed; this is the foundation for the
+hero-cloud repo split and the Community Edition packaging specs.
 
-**Pick up at:** start in `internal/install/claude_hooks.go` — change
-`EnsureClaudeHeroAllowlist` to take a `Mode` plus a `projectDir`, route
-through the existing `claudeSettingsPath(opts)` helper which already
-handles both scopes. Then thread the positional arg through
-`internal/cli/trust.go`. Tests last.
+**Pick up at:** lock the contracts-package surface first: write the Go
+interfaces for `Classification`, `Subject`, `Principal`, `Scope`,
+`PolicyNode`, `AuditEvent`, and the `Retriever` signature. Land those in
+a new `contracts/governance/` directory before any enforcement work.
 
-→ `.hero/planning/features/hero-trust-global-scope/spec.md`
+→ `.hero/planning/features/hero-governance/spec.md`
 
-**Files:** `internal/cli/trust.go`, `internal/install/claude_hooks.go:149-162`, `internal/install/claude_hooks.go:268-288`, `internal/cli/trust_test.go`, `internal/install/claude_hooks_test.go`
-**Skip:** Codex global trust — Codex has no Hero-writable user permission file; the codex case stays instructional-only. Flag form (`--global`) — `hero install` uses positional, so trust matches.
+**Files:** `contracts/governance/` (new), `internal/graph/node.go`,
+`internal/retrieval/`, `.hero/planning/features/agent-outposts/spec.md`,
+`.hero/planning/features/tenant-isolation-rls/spec.md`
+**Skip:** designing the admin UI, SSO/SAML wiring, specific PII regex
+catalogs, and LLM-call wrapping mechanics — all are out of scope here.
 
 ---
 
@@ -278,6 +280,150 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
+## domain-plugin-architecture — Domain Plugin Architecture — Refactor Content into Swappable Domain Packs
+_feature · planning · horizon: next_
+
+Foundation primitive for `hero-domains`. Pure refactor — move existing engineering content into `domains/engineering/` and add `hero init --domain` / `hero domain switch` plumbing. Zero new behavior, but unblocks every other primitive and every future domain pack (PM, QA, design, etc).
+
+**Status:** planning — design exists from 2026-04-25; reframed as the foundation for the PM-first roadmap on 2026-05-15. No code written yet.
+
+**Pick up at:** `/deliver` this spec. Examples below have been updated from sales-first to PM-first to reflect the current sequencing, but the actual refactor is content-agnostic — PM-specific pack content lives in the separate `hero-pm` spec.
+
+→ `/deliver domain-plugin-architecture`
+
+**Files:** .hero/planning/features/domain-plugin-architecture/spec.md, .hero/planning/initiatives/hero-domains/spec.md, embed.go, internal/install/install.go, internal/cli/init.go
+**Skip:** Third-party domain packs loaded from disk (deferred to a future spec). Multi-domain coexistence in one workspace (handled by domain-scoped-knowledge-graph).
+
+---
+
+## hero-qa — Hero QA — Quality Assurance Domain Pack
+_feature · planning · horizon: next_
+
+Second non-engineering Hero domain pack: QA. Test plans, regression suites, bug intake, agents for test design and regression curation, dashboard views for coverage and flaky tests. Integrations are explicitly undecided — TestRail, Xray, Zephyr, qTest, and "team's spreadsheet" are all real choices. Bugs from QA already flow into engineering's `/diagnose`; the QA pack makes raising one ergonomic. Parent initiative names this as the proof that Hero is a platform, not "engineering with synonyms."
+
+**Status:** planning — sketch-grade brief written 2026-05-15. Blocked on platform primitives 1–6 and `hero-pm` lessons.
+
+**Pick up at:** Run `/design hero-qa`. Before any artifact-type table, do a real domain discovery pass — pick one or two QA tooling targets (TestRail or Xray most likely), resolve the integration-shape question, and confirm the artifact list with someone who actually runs a QA org. Many unknowns; expect this design to take more passes than `hero-pm`.
+
+→ `/design hero-qa`
+
+**Files:** .hero/planning/features/hero-qa/spec.md, .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/hero-pm/spec.md
+**Skip:** Generic "supports every test-management tool" integration in v1. Building QA agents before primitives 1–6 ship. Treating QA as a thin variation of engineering — that's the failure mode the parent initiative is trying to avoid.
+
+---
+
+## hero-pm — Hero PM — Product Management Domain Pack
+_feature · planning · horizon: next_
+
+First non-engineering Hero domain pack. PM-shaped spec types (PRD, story, epic, roadmap-item), PM agents and workflows, PM dashboard views. Reuses existing tracker integrations (Jira/Linear/GitHub). Killer demo: a Jira epic becomes a Hero story, `/design` turns it into an engineering `feature` spec, and the handoff edge appears in the graph.
+
+**Status:** planning — `/design`-ready brief written 2026-05-15. Implementation blocked on parent initiative's platform primitives (work items 1–5: domain-plugin-architecture, spec-type-registry, domain-routing-and-agents, dashboard-view-registry, scan-pluggability).
+
+**Pick up at:** Either wait for the platform primitives, or run `/design hero-pm` ahead in parallel to resolve the 5 open questions (OKRs in/out, cross-tracker handoff, single- vs multi-domain projects, acceptance-criteria format, roadmap horizon model) so design lands the moment primitives are ready.
+
+→ `/design hero-pm`
+
+**Files:** .hero/planning/features/hero-pm/spec.md, .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/domain-plugin-architecture/spec.md
+**Skip:** New tracker integrations in v1 (reuse Jira/Linear/GitHub only). OKRs as a PM spec type (defer to v2; may belong in a separate `strategy` domain).
+
+---
+
+## hero-domains — Hero Domains — Platform Architecture for Non-Engineering Verticals
+_initiative · planning · horizon: next_
+
+Make Hero work for non-engineers — starting with PM, then QA. The core engine stays the same; each domain ships its own agents, commands, spec types, dashboard views, and integrations as a "pack."
+
+**Status:** planning — reshaped from sales-first to PM-first on 2026-05-15; eight-item sequenced roadmap of platform primitives + PM + QA packs is in place.
+
+**Pick up at:** Design the first platform primitive, `domain-plugin-architecture` — refactor existing engineering content into `domains/engineering/` and add `hero init --domain` plumbing. Spec stub already exists.
+
+→ `/design domain-plugin-architecture`
+
+**Files:** .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/domain-plugin-architecture/spec.md, .hero/planning/features/hero-pm/spec.md
+**Skip:** Sales-first sequencing (deferred — high integration cost, low spec-fit). New tracker integrations for PM v1 (reuse Jira/Linear/GitHub).
+
+---
+
+## domain-scoped-knowledge-graph — Domain-Scoped Knowledge Graph — Namespace Tags on Graph Nodes
+_feature · planning · horizon: next_
+
+Add domain namespace tags to every knowledge graph node and edge. Today the graph is flat: a `Spec`, a `Component`, a `Decision` lives in one undifferentiated namespace. When PM and engineering coexist (later), PM stories and engineering features collide unless the graph knows which domain a node belongs to. Tag every node now; teach queries (`hero why`, `hero blocked`, `hero search`) to filter by active domain or render the boundary.
+
+**Status:** planning — stub written 2026-05-15. Blocked on `domain-plugin-architecture`.
+
+**Pick up at:** Run `/design domain-scoped-knowledge-graph`. First decision: edge semantics for cross-domain handoff (`story → feature` from `/design`) — does this need a new edge kind, or is it a regular edge that crosses a namespace boundary? Then audit every query path that touches the graph and decide its v1 stance on filtering.
+
+→ `/design domain-scoped-knowledge-graph`
+
+**Files:** .hero/planning/features/domain-scoped-knowledge-graph/spec.md, .hero/planning/initiatives/hero-domains/spec.md, internal/index/, internal/graph/
+**Skip:** Full multi-active-domain runtime in v1 — single-active-domain is enough. Namespace tags now so v2 can flip the switch without re-indexing.
+
+---
+
+## scan-pluggability — Scan Pluggability — Per-Domain `hero scan` Implementations
+_feature · planning · horizon: next_
+
+Make `hero scan` domain-aware. Today scan is a code scanner: detect languages, frameworks, test runners, write engineering-shaped knowledge. PM needs a totally different scan: import a roadmap doc, parse tracker epics, ingest OKRs. Generalize `hero scan` to dispatch to the active pack's scanner; engineering's code scan becomes the reference impl under `domains/engineering/scan/`. PM-specific scanners ship in `hero-pm`, not here.
+
+**Status:** planning — stub written 2026-05-15. Blocked on `domain-plugin-architecture` and `spec-type-registry`.
+
+**Pick up at:** Run `/design scan-pluggability`. First decision: scan output schema — do all domains emit the same node/edge types into the graph, or domain-typed nodes? Then design the dispatch surface (`hero scan` reads active pack and runs its scanner).
+
+→ `/design scan-pluggability`
+
+**Files:** .hero/planning/features/scan-pluggability/spec.md, .hero/planning/initiatives/hero-domains/spec.md, internal/scan/, internal/index/
+**Skip:** Designing PM scanners (roadmap-doc parser, tracker-epic ingester) — those live in `hero-pm`. This spec only ships the dispatch shape and engineering's reference scanner.
+
+---
+
+## dashboard-view-registry — Dashboard View Registry — Pluggable Dashboard Pages per Domain
+_feature · planning · horizon: next_
+
+Make dashboard pages pluggable per domain. Today every page (spec kanban, drift, velocity, CI status) is fixed in the dashboard code. Move to a config-driven page registry where each domain pack ships its own `views/` manifest. Engineering's existing pages become the reference registration under `domains/engineering/views/`. PM ships Roadmap, Story queue, Intake funnel, Handoff stream.
+
+**Status:** planning — stub written 2026-05-15. Blocked on `domain-plugin-architecture`.
+
+**Pick up at:** Run `/design dashboard-view-registry`. First decision: server-rendered registration (Go code in the pack) vs client-side registration (manifest + a known view-component catalog). Then design the domain router — cross-domain navigation is first-class, not bolted on.
+
+→ `/design dashboard-view-registry`
+
+**Files:** .hero/planning/features/dashboard-view-registry/spec.md, .hero/planning/initiatives/hero-domains/spec.md, internal/serve/
+**Skip:** A generic "drop your React app here" plugin system. Views register declaratively with a fixed component catalog; full custom HTML is out of v1 scope.
+
+---
+
+## domain-routing-and-agents — Domain Routing and Agents — Active-Pack AGENTS.md and Agent Loader
+_feature · planning · horizon: next_
+
+Make agent routing and discovery domain-aware. Today `AGENTS.md` and the routing table in `CLAUDE.md` are engineering-shaped, hardcoded at the repo root. Move them into the active domain pack so a PM project routes to PM agents, not engineering ones. `feature-delivery-lead` should not be findable in a PM-only project.
+
+**Status:** planning — stub written 2026-05-15. Blocked on `domain-plugin-architecture`.
+
+**Pick up at:** Run `/design domain-routing-and-agents`. First job is to map every place the model consults `AGENTS.md` or the natural-language routing table today, then design the loader that selects the active pack's table. Resolve open question #1 (multi-domain loader behavior) by deferring most of it to `domain-scoped-knowledge-graph` (item #6) — but pick a v1 stance now.
+
+→ `/design domain-routing-and-agents`
+
+**Files:** .hero/planning/features/domain-routing-and-agents/spec.md, .hero/planning/initiatives/hero-domains/spec.md, AGENTS.md, CLAUDE.md
+**Skip:** Multi-domain coexistence in a single workspace v1 — `domain-scoped-knowledge-graph` (item #6) handles that. Build single-active-domain routing first.
+
+---
+
+## spec-type-registry — Spec Type Registry — Domain-Declared Spec Types and Lifecycles
+_feature · planning · horizon: next_
+
+Make spec types pluggable per domain. Today `feature`, `bug`, `convention`, `decision` are hardcoded across the parser, lint, status filters, importers, dashboard, and command routing. Each domain pack should declare its own spec types, lifecycle states, frontmatter schema, and which commands accept them. Blocking for `hero-pm` (PRD, story, epic, roadmap-item don't exist yet).
+
+**Status:** planning — stub written 2026-05-15. Blocked on `domain-plugin-architecture`.
+
+**Pick up at:** Run `/design spec-type-registry`. First job is the audit — grep `internal/spec/`, `internal/lint/`, importers, and dashboard for hardcoded type literals to size the surface area honestly. Then resolve open question #1: registry declared in Go code, manifest file, or both.
+
+→ `/design spec-type-registry`
+
+**Files:** .hero/planning/features/spec-type-registry/spec.md, .hero/planning/initiatives/hero-domains/spec.md, internal/spec/, internal/lint/
+**Skip:** Adding PM spec types here — those live in `hero-pm`. This spec only ships the registry mechanism plus engineering's reference declaration.
+
+---
+
 ## e2e-onboarding — E2E Onboarding Suite — Fresh Repo to Productive Workspace
 _feature · planning · horizon: next_
 
@@ -432,13 +578,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## domain-plugin-architecture — Domain Plugin Architecture — Refactor Content into Swappable Domain Packs
-_feature · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/domain-plugin-architecture/spec.md)_
-
----
-
 ## launch-readiness — Launch Readiness — Telemetry, Deploy, and Public-Use Polish
 _initiative · planning · horizon: someday_
 
@@ -478,13 +617,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · planning · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-positioning/spec.md)_
-
----
-
-## hero-domains — Hero Domains — Platform Architecture for Non-Engineering Verticals
-_initiative · planning · horizon: someday_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-domains/spec.md)_
 
 ---
 
