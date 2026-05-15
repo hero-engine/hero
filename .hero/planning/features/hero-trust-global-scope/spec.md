@@ -1,10 +1,11 @@
 ---
 title: Hero Trust Global Scope — Apply Hero Allowlist to User-Level Claude Settings
 type: feature
-status: planning
+status: completed
 priority: medium
 tags: [cli, trust, claude, permissions, install]
 created: 2026-05-14
+completed: 2026-05-15
 relates-to: [claude-trust-permission-allowlist]
 ---
 
@@ -22,23 +23,20 @@ Boundaries) because Codex owns its own approval state.
 
 ## Kickoff
 
-Adds optional `<project|global>` scope to `hero trust claude`, mirroring
-`hero install`'s positional pattern, so one command can write
-`Bash(hero:*)` into `~/.claude/settings.json` and stop prompts across
-every project at once.
+Shipped. `hero trust claude` now takes an optional `<project|global>`
+positional scope. `hero trust claude global` writes `Bash(hero:*)` into
+`~/.claude/settings.json`, ending Claude Code prompt fatigue across
+every project on the machine — including ones where `hero install` was
+never run.
 
-**Status:** planning — spec just landed, no code yet.
+**Status:** completed.
 
-**Pick up at:** start in `internal/install/claude_hooks.go` — change
-`EnsureClaudeHeroAllowlist` to take a `Mode` plus a `projectDir`, route
-through the existing `claudeSettingsPath(opts)` helper which already
-handles both scopes. Then thread the positional arg through
-`internal/cli/trust.go`. Tests last.
+**What landed:**
+- `internal/install/claude_hooks.go`: `EnsureClaudeHeroAllowlist(mode, projectDir)` — routes through existing `claudeSettingsPath(opts)`; rejects empty `projectDir` in project mode.
+- `internal/cli/trust.go`: positional scope arg, `RangeArgs(1,2)`, `Use` updated. Global path renders with `~` substitution. Codex with explicit scope prints a no-effect note.
+- Tests: 5 new CLI tests, 5 new install-package tests; existing tests unchanged.
 
-→ `.hero/planning/features/hero-trust-global-scope/spec.md`
-
-**Files:** `internal/cli/trust.go`, `internal/install/claude_hooks.go:149-162`, `internal/install/claude_hooks.go:268-288`, `internal/cli/trust_test.go`, `internal/install/claude_hooks_test.go`
-**Skip:** Codex global trust — Codex has no Hero-writable user permission file; the codex case stays instructional-only. Flag form (`--global`) — `hero install` uses positional, so trust matches.
+→ `.hero/specs/hero-trust-global-scope/spec.md`
 
 ## Context
 
