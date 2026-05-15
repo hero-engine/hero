@@ -19,12 +19,26 @@ into a domain pack so other domains can be added without forking the
 codebase. The core engine stays unchanged; domain packs are swappable
 content directories.
 
+## Kickoff
+
+Foundation primitive for `hero-domains`. Pure refactor — move existing engineering content into `domains/engineering/` and add `hero init --domain` / `hero domain switch` plumbing. Zero new behavior, but unblocks every other primitive and every future domain pack (PM, QA, design, etc).
+
+**Status:** planning — design exists from 2026-04-25; reframed as the foundation for the PM-first roadmap on 2026-05-15. No code written yet.
+
+**Pick up at:** `/deliver` this spec. Examples below have been updated from sales-first to PM-first to reflect the current sequencing, but the actual refactor is content-agnostic — PM-specific pack content lives in the separate `hero-pm` spec.
+
+→ `/deliver domain-plugin-architecture`
+
+**Files:** .hero/planning/features/domain-plugin-architecture/spec.md, .hero/planning/initiatives/hero-domains/spec.md, embed.go, internal/install/install.go, internal/cli/init.go
+**Skip:** Third-party domain packs loaded from disk (deferred to a future spec). Multi-domain coexistence in one workspace (handled by domain-scoped-knowledge-graph).
+
 ## Problem
 
 Today, agents/, commands/, and skills/ are baked into the root of the
 repo and the embedded filesystem. There's no concept of "this is
-engineering-specific content." Adding a sales domain would mean either
-forking the repo or cramming sales agents alongside engineering agents.
+engineering-specific content." Adding a non-engineering domain (PM,
+QA, etc.) would mean either forking the repo or cramming domain content
+alongside engineering content.
 
 ## Design
 
@@ -55,7 +69,7 @@ on `hero.json` domain setting.
 
 ```bash
 hero init                        # defaults to --domain engineering
-hero init --domain sales         # uses domains/sales/ content
+hero init --domain pm            # uses domains/pm/ content
 ```
 
 Writes `"domain": "<name>"` into `hero.json`.
@@ -100,10 +114,10 @@ engineering.
 ## Acceptance Criteria
 
 - WHEN `hero init --domain engineering` runs THE SYSTEM SHALL create a workspace with engineering agents, commands, and skills
-- WHEN `hero init --domain sales` runs and a sales domain pack exists THE SYSTEM SHALL create a workspace with sales agents, commands, and skills
+- WHEN `hero init --domain pm` runs and a PM domain pack exists THE SYSTEM SHALL create a workspace with PM agents, commands, and skills
 - WHEN `hero init` runs without `--domain` THE SYSTEM SHALL default to the engineering domain
 - WHEN `hero domain list` runs THE SYSTEM SHALL list all available domain packs in the embedded filesystem
-- WHEN `hero domain switch sales` runs THE SYSTEM SHALL reinstall content from the sales domain pack while preserving .hero/ data
+- WHEN `hero domain switch pm` runs THE SYSTEM SHALL reinstall content from the PM domain pack while preserving .hero/ data
 - WHEN a project has no `domain` key in hero.json THE SYSTEM SHALL behave identically to the engineering domain
 - THE SYSTEM SHALL embed all domain packs in the single hero binary
 

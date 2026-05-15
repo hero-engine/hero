@@ -2,12 +2,12 @@
 title: Hero Domains — Platform Architecture for Non-Engineering Verticals
 type: initiative
 status: planning
-tags: [platform, domains, sales, marketing, research, vertical]
+tags: [platform, domains, product-management, qa, roadmap, vertical]
 created: 2026-04-25
 relations:
   - target: hero-platform
     kind: related
-horizon: someday
+horizon: next
 ---
 
 ## Goal
@@ -15,30 +15,89 @@ horizon: someday
 Transform Hero from an engineering-specific tool into a domain-agnostic
 platform where the core engine (specs, knowledge, agents, automations,
 runner, dashboard) stays the same but the domain content (agents, skills,
-commands, integrations) swaps based on the user's function. Start with
-sales as the first non-engineering domain.
+commands, spec types, integrations, dashboard views) swaps based on the
+user's function. Start with Product Management as the first non-engineering
+domain because it produces spec-shaped artifacts, reuses existing trackers,
+and closes the loop with engineering in a single session.
+
+## Kickoff
+
+Make Hero work for non-engineers — starting with PM, then QA. The core engine stays the same; each domain ships its own agents, commands, spec types, dashboard views, and integrations as a "pack."
+
+**Status:** planning — reshaped from sales-first to PM-first on 2026-05-15; eight-item sequenced roadmap of platform primitives + PM + QA packs is in place.
+
+**Pick up at:** Design the first platform primitive, `domain-plugin-architecture` — refactor existing engineering content into `domains/engineering/` and add `hero init --domain` plumbing. Spec stub already exists.
+
+→ `/design domain-plugin-architecture`
+
+**Files:** .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/domain-plugin-architecture/spec.md, .hero/planning/features/hero-pm/spec.md
+**Skip:** Sales-first sequencing (deferred — high integration cost, low spec-fit). New tracker integrations for PM v1 (reuse Jira/Linear/GitHub).
 
 ## Problem
 
 Hero's core loop — design before you act, capture knowledge, coordinate
 specialists, automate repetitive work — isn't unique to software
-engineering. Sales teams design deal strategies, capture competitive intel,
-coordinate specialists (SE, legal, exec sponsor), and automate pipeline
-hygiene. Research teams design studies, capture literature reviews,
-coordinate collaborators, and automate paper tracking. The workflow is
-universal; the vocabulary and integrations are domain-specific.
+engineering. Product managers refine roadmap bets into PRDs and stories.
+QA leads design test plans and triage defects. Designers shape product
+specs. The workflow is universal; the vocabulary, artifacts, and
+integrations are domain-specific.
 
-Today Hero's agents, skills, and commands are hardcoded for engineering.
-A sales user would need to rip out 33 agents and write new ones. The
-platform architecture should make this a configuration choice, not a
-fork.
+Today Hero's agents, skills, commands, spec types, integrations, and
+dashboard views are all hardcoded for engineering. A PM user would need to
+rip out 33 agents and write new ones — and even then would hit the deeper
+problem that the spec-type registry has no notion of `prd`, `story`, or
+`epic`. The platform architecture should make new domains a configuration
+choice, not a fork.
+
+## Domain selection rationale
+
+We evaluated eight candidate domains across four axes before committing to
+Product Management as the first non-engineering vertical.
+
+| Domain | Workflow clarity | Integration surface | Spec-shaped output | First-UX risk |
+|---|---|---|---|---|
+| Product Mgmt | High | Low (reuse existing tracker) | Very high | Low |
+| QA | High | Medium-high (fragmented: TestRail, Xray, Zephyr, qTest, sheets) | Medium | Medium |
+| Customer Support | High | Medium (Zendesk/Intercom/Front/HelpScout — pick one) | Low (tickets are transactional) | Medium |
+| Design (UX) | High | Medium (Figma + tracker) | High (design specs, design system entries) | Low-medium |
+| Data / Analytics | Medium | Medium (warehouse + BI) | High (metric specs, experiment specs) | Low-medium |
+| Sales | Medium | High (CRM + quote + comp) | Low | High |
+| Marketing | Low (too many sub-disciplines) | High | Low | High |
+| Finance | Medium | High + regulated | Low | High |
+
+### Recommendation
+
+1. **PM first** — spec-shaped artifacts (PRDs, stories, epics, roadmap
+   items), reuses existing trackers (Jira/Linear/GitHub), closes the loop
+   with engineering in one session, and creates a network effect on
+   existing engineering workflows.
+2. **QA second** — symmetric downstream value, surfaces gaps PM didn't
+   hit (test plans, defect lifecycles, regression suites). Less
+   spec-shaped, more integration-fragmented.
+3. **Design and Data/Analytics** — spin off as separate initiatives
+   after PM ships. Both have spec-shaped output but different integration
+   shapes that warrant their own design pass.
+4. **Customer Support** — clean workflow but transactional artifacts;
+   revisit after multi-domain primitives are battle-tested.
+5. **Sales / Marketing / Finance** — deferred. See _Deferred domains_
+   below.
+
+### Tradeoff acknowledged
+
+PM-first is the safest learning ground for the multi-domain primitives
+but risks feeling like incremental engineering extension — "engineering
+with different words." QA-first would more visibly prove "Hero is more
+than an engineering tool" at the cost of higher integration scope and a
+weaker spec-shape fit. The recommendation favors PM-first because we
+need the primitives proven against the lowest-risk content domain
+before we ask the platform to absorb fragmented integration shapes.
 
 ## Architecture
 
 ### Domain packs
 
-A domain is a directory of agents/, commands/, skills/, and an optional
-integrations/ folder:
+A domain is a directory of agents/, commands/, skills/, spec types, an
+integrations manifest, and a dashboard view manifest:
 
 ```
 domains/
@@ -46,25 +105,28 @@ domains/
     agents/              # 33 engineering agents
     commands/            # 30+ engineering commands
     skills/              # 40+ engineering skills
+    spec-types.json      # feature, bug, convention, decision
+    views/               # dashboard view manifest
     integrations.json    # github, jira, linear
     AGENTS.md            # engineering routing table
-  sales/
-    agents/              # sales-specific agents
-    commands/            # sales-specific commands
-    skills/              # sales-specific skills
-    integrations.json    # salesforce, hubspot, gong
-    AGENTS.md            # sales routing table
-  research/
-    agents/              # research agents (future)
+  pm/
+    agents/              # product-strategist, story-writer, ...
+    commands/            # /refine, /triage, /roadmap
+    skills/              # PM-specific skills
+    spec-types.json      # prd, story, epic, roadmap-item
+    views/               # roadmap, story queue, intake funnel, handoff
+    integrations.json    # jira/linear/github (reused)
+    AGENTS.md            # PM routing table
+  qa/                    # second domain (future)
     ...
 ```
 
 ### Domain selection
 
 ```bash
-hero init --domain sales           # new project with sales domain
+hero init --domain pm              # new project with PM domain
 hero init --domain engineering     # default, same as today
-hero domain switch sales           # switch an existing project
+hero domain switch pm              # switch an existing project
 hero domain list                   # list available domains
 ```
 
@@ -72,7 +134,7 @@ The domain is stored in `hero.json`:
 
 ```json
 {
-  "domain": "sales",
+  "domain": "pm",
   "folder": ".hero"
 }
 ```
@@ -92,15 +154,16 @@ Everything in `internal/` stays the same:
 
 ### What's domain-specific (the content layer)
 
-| Component | Engineering | Sales |
+| Component | Engineering | Product Management |
 |---|---|---|
-| Spec types | feature, bug, convention, decision | deal, campaign, objection, playbook |
-| Agents | feature-delivery-lead, debug-investigator, engineer | deal-strategist, pipeline-analyst, proposal-writer |
-| Commands | /design, /deliver, /diagnose, /scrub | /qualify, /forecast, /propose, /win |
-| Skills | go-stack, testing-and-validation | discovery-call, competitive-analysis |
-| Integrations | GitHub, Jira, Linear | Salesforce, HubSpot, Gong, LinkedIn |
-| AGENTS.md | Engineering routing table | Sales routing table |
-| Scans | Code scan (languages, frameworks) | CRM scan (pipeline, stages, fields) |
+| Spec types | feature, bug, convention, decision | prd, story, epic, roadmap-item |
+| Agents | feature-delivery-lead, debug-investigator, engineer | product-strategist, story-writer, roadmap-curator, intake-triager |
+| Commands | /design, /deliver, /diagnose, /scrub | /refine, /triage, /roadmap (plus reused /design, /deliver, /diagnose) |
+| Skills | go-stack, testing-and-validation | discovery-framing, INVEST-shaping, roadmap-grooming |
+| Integrations | GitHub, Jira, Linear | Jira, Linear, GitHub (reused — no new integrations v1) |
+| AGENTS.md | Engineering routing table | PM routing table |
+| Scans | Code scan (languages, frameworks) | Roadmap-doc / tracker-epic scan |
+| Dashboard views | Specs kanban, drift, CI status, velocity | Roadmap, Story queue, Intake funnel, Handoff stream |
 
 ### Integration interface
 
@@ -116,32 +179,140 @@ type DomainIntegration interface {
 }
 ```
 
-Engineering has GitHub/Jira/Linear. Sales has Salesforce/HubSpot. Each
-is a Go package under `internal/integrations/<name>/`.
+Engineering has GitHub/Jira/Linear. PM v1 reuses the same three. Future
+domains (QA, Design) may add new providers — the interface must accept
+roadmap-shaped (Productboard, Aha) and test-management-shaped (TestRail,
+Xray) tools without forcing a tracker-shaped abstraction.
 
 ### UI customization
 
-The dashboard (`hero serve`) adapts to the domain:
-- Engineering: specs kanban, drift reports, CI status, velocity
-- Sales: pipeline view, forecast chart, deal stage board, win/loss analysis
+The dashboard (`hero serve`) adapts to the domain. Each pack registers
+views via a `views/` manifest and declares a default landing page.
 
-The dashboard reads the domain from `hero.json` and renders
-domain-appropriate pages. Shared infrastructure (jobs, automations, team)
-stays the same.
+- Engineering: specs kanban, drift reports, CI status, velocity
+- PM: Roadmap (default landing), Story queue, Intake funnel, Handoff stream
+
+Shared infrastructure (jobs, automations, team server) stays the same;
+only the page registry and routing differ per domain.
 
 ## Children
 
-| Slug | Title | Priority |
-|---|---|---|
-| domain-plugin-architecture | Refactor content into domain packs | P0 |
-| hero-sales | Sales domain — agents, skills, commands, Salesforce integration | P0 |
+Work items 1–6 are platform primitives that must land before any
+non-engineering domain content can ship. Item 7 (PM) is the first content
+pack. Item 8 (QA) is the second domain, planned to surface gaps PM didn't
+hit.
+
+| # | Slug | Title | Kind | Priority |
+|---|---|---|---|---|
+| 1 | domain-plugin-architecture | Refactor engineering content into a domain pack | Platform primitive | P0 |
+| 2 | spec-type-registry | Domain-declared spec types and lifecycles | Platform primitive | P0 |
+| 3 | domain-routing-and-agents | Active-domain AGENTS.md and agent loader | Platform primitive | P0 |
+| 4 | dashboard-view-registry | Pluggable dashboard pages per domain | Platform primitive | P0 |
+| 5 | scan-pluggability | Per-domain scanners | Platform primitive | P0 |
+| 6 | domain-scoped-knowledge-graph | Namespace tags on graph nodes | Platform primitive | P0 |
+| 7 | hero-pm | Product Management domain pack | Domain content pack | P0 |
+| 8 | hero-qa | QA domain pack | Domain content pack | P1 |
+
+### Deferred candidates (outside this initiative)
+
+The following are plausible follow-on domain packs but are not children
+of `hero-domains`. Each should be spun off as its own initiative after
+PM ships and the primitives are proven.
+
+- **hero-design** — UX/design specs, design system entries, Figma
+  integration. Spec-shape fit is high; integration shape is novel.
+- **hero-data-analytics** — metric specs, experiment specs, warehouse
+  + BI integration. Spec-shape fit is high; integration shape is novel.
+
+### Deferred domains (revisit after multi-domain platform proven)
+
+- **Sales** — high CRM/quote/comp integration surface, low spec-shaped
+  output. Original CRO-brother rationale is still live — re-engage once
+  the platform has absorbed two content packs (PM, QA) and we know the
+  `DomainIntegration` interface tolerates CRM shapes.
+- **Customer Support** — clean workflow but transactional artifacts;
+  ticket lifecycle doesn't map cleanly onto spec lifecycle.
+- **Marketing** — too many sub-disciplines (content, growth, brand,
+  events) to model as one domain. Likely a future cluster of domains.
+- **Finance** — high integration surface plus regulatory constraints
+  (SOX, audit trails) that warrant their own design pass.
 
 ## Sequencing
 
-1. **domain-plugin-architecture** — refactor the existing engineering
-   content into `domains/engineering/`, add domain selection to `hero init`
-   and `hero.json`, update `hero install` to copy from the active domain.
-   Small refactor, no new features.
-2. **hero-sales** — write the sales agents, commands, skills, and
-   Salesforce integration. This is the content work that needs domain
-   expertise (the CRO brother).
+The order below is dictated by hard dependencies — every primitive after
+#1 assumes the domain-pack layout exists, and #7 (PM) cannot ship until
+the registry-shaped primitives (#2, #3, #4, #5) are in place.
+
+1. **domain-plugin-architecture** — foundation. Pure refactor of existing
+   engineering content into `domains/engineering/`, plus `hero init --domain`,
+   `hero domain switch/list`, the `domain` field in `hero.json`, and
+   `hero install` reading from the active pack. Zero new behavior.
+2. **spec-type-registry** — blocking for PM. Today's spec types
+   (`feature`, `bug`, `convention`, `decision`) are hardcoded across the
+   spec parser, lint, status filters, and importers. Each domain pack
+   must declare its spec types, lifecycle states, frontmatter schema, and
+   accepting commands. Budget for a full audit of `internal/spec/`.
+3. **domain-routing-and-agents** — without this, the model routes to
+   engineering agents inside a PM project because the hardcoded
+   `AGENTS.md` routing table is engineering-shaped. The active pack's
+   routing table must be authoritative.
+4. **dashboard-view-registry** — PM ships its own dashboard pages
+   (Roadmap, Story queue, Intake funnel, Handoff stream). Today pages
+   are fixed in the dashboard. Move to a config-driven registry plus
+   per-domain `views/` manifest.
+5. **scan-pluggability** — PM onboarding needs domain-specific scanning
+   (import roadmap docs, tracker epics) instead of code scanning.
+   Generalize `hero scan` and reduce the existing engineering scan to a
+   reference implementation under `domains/engineering/scan/`. Depends
+   on #2 — domain scanners can only emit type-correct nodes once the
+   spec-type registry exists.
+6. **domain-scoped-knowledge-graph** — namespace tags on graph nodes
+   so queries can filter or join by domain. P0 because the PM killer
+   demo (PM `story` handed off to engineering `feature` via `/design`)
+   requires PM and engineering content to coexist in one graph from
+   day one — flat-namespace queries would silently mix domains. Adding
+   tags later forces a re-index, so land it before PM ships.
+7. **hero-pm** — first non-engineering domain. Depends on #1–#6.
+   Validates the platform end-to-end and is the proving ground for the
+   platform narrative. See the child spec for the full artifact-type
+   table, workflow list, agent roster, and open questions.
+8. **hero-qa** — second domain. Hard dependency on primitives #1–#6.
+   Soft sequencing behind #7: design can proceed in parallel with PM
+   delivery, but `hero-qa` should not ship before `hero-pm` so PM
+   lessons (especially around the spec-type registry and dashboard
+   view registry) inform the QA pack's shape. Closes the downstream
+   loop from engineering and is the test that the platform absorbs a
+   meaningfully different content shape (test plans, defect lifecycles)
+   without regressing PM.
+
+## Cross-cutting risks
+
+1. **Spec-type registry hardcoding is deeper than it looks.** Spec types
+   are referenced from the parser, lint, status filters, importers, and
+   the dashboard. Budget for a full audit during #2 rather than
+   discovering the surface area mid-delivery.
+2. **Knowledge graph queries need domain-aware filtering before PM
+   ships.** Even in single-domain v1, every query path that touches the
+   graph must tolerate a namespace tag — silently mixing domains in
+   shared queries is worse than blocking on the work upfront.
+3. **Dashboard needs a domain router, not just a page registry.** The
+   dashboard must select the active pack and route to its default
+   landing — not just expose a flat list of pages.
+4. **`hero init --domain` and `hero domain switch` are dangerous on
+   populated workspaces.** Switching domains must hide-not-delete and
+   warn loudly. Treat the switch as a re-install of content with
+   `.hero/` data preserved.
+5. **PM-as-first-domain may feel like "engineering with different
+   words."** The platform narrative needs QA on a real cadence — plan
+   #8 with intent, not as an afterthought, so the multi-domain story
+   holds up under scrutiny.
+6. **Integration reuse is right for v1, trap for v2.** PM reusing
+   Jira/Linear/GitHub is correct for the first content pack. The
+   `DomainIntegration` interface must be shaped to accept roadmap tools
+   (Productboard, Aha) and test-management tools (TestRail, Xray)
+   without forcing a tracker-shaped abstraction onto them. Design the
+   interface with this in mind during #1 even though no new providers
+   ship until #8 or later.
+
+Role and permission shapes (multi-user permissioning per domain) are
+deferred to the `cloud-admin` initiative — not in scope here.
