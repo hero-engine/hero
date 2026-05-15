@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-13T03:48:56Z · 90 ready specs_
+_Generated: 2026-05-15T02:53:16Z · 90 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -71,21 +71,26 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## harness-install-paths-match-loaders — Harness Install Paths — Land Files Where Each Tool Actually Loads Them
+## hero-trust-global-scope — Hero Trust Global Scope — Apply Hero Allowlist to User-Level Claude Settings
 _feature · planning · horizon: now_
 
-Source-verified install paths per harness. Read the matrix,
-implement each target's class to land files at the right paths
-in the right formats, preserve canonical-symlink architecture
-where formats match.
+Adds optional `<project|global>` scope to `hero trust claude`, mirroring
+`hero install`'s positional pattern, so one command can write
+`Bash(hero:*)` into `~/.claude/settings.json` and stop prompts across
+every project at once.
 
-**Pick up at:** `/deliver` this spec.
+**Status:** planning — spec just landed, no code yet.
 
-**Highlights:**
-- Codex agents need TOML rendering (not markdown). Hero's current `.codex/agents/*.md` install is dead.
-- Codex commands have no loader anywhere — install Hero commands as skills under `.agents/skills/`.
-- Copilot ignores everything in `.github/copilot/` subdirs. Skills live at `.github/skills/`. Agents and commands render as `.prompt.md` files in `.github/prompts/`.
-- Claude, OpenCode, Cursor, Generic install paths are already correct; only docstring updates and global-mode coverage gaps.
+**Pick up at:** start in `internal/install/claude_hooks.go` — change
+`EnsureClaudeHeroAllowlist` to take a `Mode` plus a `projectDir`, route
+through the existing `claudeSettingsPath(opts)` helper which already
+handles both scopes. Then thread the positional arg through
+`internal/cli/trust.go`. Tests last.
+
+→ `.hero/planning/features/hero-trust-global-scope/spec.md`
+
+**Files:** `internal/cli/trust.go`, `internal/install/claude_hooks.go:149-162`, `internal/install/claude_hooks.go:268-288`, `internal/cli/trust_test.go`, `internal/install/claude_hooks_test.go`
+**Skip:** Codex global trust — Codex has no Hero-writable user permission file; the codex case stays instructional-only. Flag form (`--global`) — `hero install` uses positional, so trust matches.
 
 ---
 
@@ -434,10 +439,31 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
+## launch-readiness — Launch Readiness — Telemetry, Deploy, and Public-Use Polish
+_initiative · planning · horizon: someday_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/launch-readiness/spec.md)_
+
+---
+
 ## hero-marketing — Hero Marketing — Positioning, Distribution, and Launch
 _initiative · planning · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-marketing/spec.md)_
+
+---
+
+## hero-community — Hero Community — Discord/Discussions, Contributor Guide, Issue Templates
+_feature · planning · horizon: someday_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-community/spec.md)_
+
+---
+
+## hero-telemetry — Hero Telemetry — Opt-In Usage Analytics + Feedback Channel
+_feature · planning · horizon: someday_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-telemetry/spec.md)_
 
 ---
 
@@ -452,13 +478,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · planning · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-positioning/spec.md)_
-
----
-
-## launch-readiness — Launch Readiness — Telemetry, Deploy, and Public-Use Polish
-_initiative · planning · horizon: someday_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/launch-readiness/spec.md)_
 
 ---
 
@@ -480,20 +499,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · planning · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/configurable-workspace-location/spec.md)_
-
----
-
-## hero-community — Hero Community — Discord/Discussions, Contributor Guide, Issue Templates
-_feature · planning · horizon: someday_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-community/spec.md)_
-
----
-
-## hero-telemetry — Hero Telemetry — Opt-In Usage Analytics + Feedback Channel
-_feature · planning · horizon: someday_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-telemetry/spec.md)_
 
 ---
 
