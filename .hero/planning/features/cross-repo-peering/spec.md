@@ -80,34 +80,50 @@ handoff trail recorded on every spec, and passive contract-import
 surfacing.
 
 **Status:** delivering — Phase 0 (identity + contracts/peering/ +
-resolver) and Phase 1 (handoff lifecycle + trail + async drop + peer
-manifest) have landed.
+resolver), Phase 1 (handoff lifecycle + trail + async drop + peer
+manifest), and Phase 2 (sync peer call advisory + spec-out, peer CLI,
+`hero relevant --peer`, auto-fire peer-side completion) have landed.
 
-**Pick up at:** Phase 2 — sync peer call (advisory + spec-out) and
-the convention-loading fallback (`hero relevant --peer <alias>`).
-The advisory mode is no-write subagent dispatch into the peer's
-workspace returning structured findings. Spec-out mode runs the
-peer's `/design` flow under that subagent, writes a peer-side spec
-with `received_from`, and ties it into the handoff lifecycle so the
-originator moves to `awaiting_peer`. Budget enforcement
-(`--budget-turns`, `--budget-tokens`) ships in the same phase. The
-Open Question to nail at Phase 2 start: the exact subagent
-invocation API (likely shell-out `hero peer-call-server` in the
-peer's cwd, parse structured stdout).
+**Pick up at:** Phase 3 — contract-import passive surfacing + pilot
+gate. Wire the Go import scanner to detect when edited files import a
+Go symbol listed in any configured peer's manifest `contracts:`
+section, then surface a one-line signal in `/resume` and `hero
+context` naming the symbol, peer alias, governing convention, and
+last-changed commit. No blocking, no prompts. **Pilot gate** at exit:
+dogfood the full ladder on the user's three real repos and confirm
+the flow is tag-team-shaped, not ceremony, before opening Phase 4
+(cloud transport + boundary nudge).
 
 → `.hero/planning/features/cross-repo-peering/spec.md`
 
-**Files (Phase 2):** `internal/peering/peercall.go` (new),
-`internal/cli/peer.go` (new — `hero peer manifest|list|show|call`),
-`internal/cli/relevant.go` (extend with `--peer` and `--surface`),
-`internal/peering/resolve.go` (peer manifest reader, exposed via
-`hero relevant --peer`). **Already in place from Phase 0/1:**
-`contracts/peering/`, `internal/peering/{identity,trail,handoff,
-manifest}.go`, `internal/cli/handoff.go`, peer_id minting,
-CrossRepoResolver dual-keying, `hero queue` Incoming Handoffs,
-`hero status` Handed Back surfacing.
+**Files (Phase 3):** `internal/peering/contract_imports.go` (new —
+Go import scanner that walks edited files for peer-owned symbols),
+`internal/cli/resume.go` and `internal/cli/context.go` (add the
+passive one-liner). **Manifest already carries the `contracts:`
+section** from Phase 0 (`contracts/peering/manifest.go:ContractsSection`).
+**Already in place from Phase 0/1/2:** `contracts/peering/`,
+`internal/peering/{identity,trail,handoff,manifest,peercall,
+resolve}.go`, `internal/cli/{handoff,peer}.go`, `hero relevant
+--peer/--surface`, auto-fire `awaiting_peer → handed_back` at
+`hero status` render time.
 **Skip:** machine-to-machine peering across hosts, auto-trigger
-boundary modes, full-delivery sync peer call — all v3+.
+boundary nudges, full-delivery sync peer call — all v4+.
+
+**Locked Phase 2 decisions (don't relitigate):**
+1. *Subagent invocation API* — Option A, shell-out to a configured
+   LLM CLI (default `claude`), prompt envelope on stdin, parse
+   `<peer-call-result>...</peer-call-result>` YAML fence from stdout.
+   Config: `peering.subagent.command|args|env_passthrough` in
+   `hero.json`. Hero never holds an API key.
+2. *Budget defaults* — advisory 20 turns / 50k tokens; spec-out 50
+   turns / 150k tokens. Pass through to subagent via
+   `HERO_PEER_CALL_BUDGET_TURNS|TOKENS` env vars; subagent honors at
+   harness level.
+3. *Auto-fire trigger* — on-demand at `hero status` render time, no
+   daemon. `peering.ReconcileAwaitingPeer` walks every awaiting_peer
+   spec, reads peer counterpart status via the resolved peer path,
+   flips to `handed_back` with a trail entry when the peer's spec is
+   `completed`.
 
 ## Context
 
@@ -894,10 +910,14 @@ isn't an open question — it's a Phase 3 entry gate.
    reason)`; performs two-side write, emits events, appends trail
    entries.
 9. `internal/peering/peercall.go` — `Call(peerAlias, mode, prompt,
-   budget, relatedSpec)`; spawns the peer-side subagent, handles
-   the three modes, returns the structured result.
-10. `internal/peering/resolve.go` — peer manifest reader, trail
-    walker, peer_id ↔ alias resolver. Wraps `os.ReadFile` + YAML.
+   budget, relatedSpec)`; spawns the peer-side subagent (configured
+   LLM CLI via Option A — defaults to `claude`), parses
+   `<peer-call-result>` YAML fence from stdout, returns the
+   structured result. Phase 2.
+10. `internal/peering/resolve.go` — peer manifest reader,
+    `PeerSpecStatus`, `ReconcileAwaitingPeer` (auto-fire
+    awaiting_peer → handed_back at status render time),
+    `FilterConventionsBySurface`. Phase 2.
 11. `internal/peering/contract_imports.go` — Go import scanner that
     detects edited files importing peer-owned contract symbols.
 12. `internal/peering/trail.go` — read and write `## Handoff Trail`
@@ -1093,13 +1113,24 @@ These were open at draft-time and are now locked. Captured in
 
 Small enough to discover during delivery, not blocking.
 
-- **Subagent invocation API for sync peer call.** How exactly does
-  A spawn a subagent in B's workspace? Likely path: shell-out
-  `hero peer-call-server <prompt> --mode=...` in B's cwd, parse
-  structured stdout. Lock during Phase 2.
-- **Budget defaults for advisory and spec-out.** Pick reasonable
-  values during Phase 2 implementation. Suggest 20 turns / 50k
-  tokens for advisory; 50 turns / 150k tokens for spec-out.
+- **Subagent invocation API for sync peer call.** *Resolved in
+  Phase 2.* Shell-out to a configured LLM CLI (Option A). Default
+  command: `claude`. Hero exec's `<command> <args...>` with
+  `cwd = <peer-path>`, pipes a prompt envelope on stdin, parses a
+  `<peer-call-result>...</peer-call-result>` YAML fence from stdout.
+  Config block: `peering.subagent.{command,args,env_passthrough}` in
+  `hero.json`. Budget passed via `HERO_PEER_CALL_BUDGET_TURNS|TOKENS`
+  env vars. See `internal/peering/peercall.go:Call`.
+- **Budget defaults for advisory and spec-out.** *Resolved in
+  Phase 2.* Advisory: 20 turns / 50,000 tokens. Spec-out: 50 turns /
+  150,000 tokens. Constants `DefaultAdvisoryTurns`,
+  `DefaultAdvisoryTokens`, `DefaultSpecOutTurns`, `DefaultSpecOutTokens`
+  in `internal/peering/peercall.go`. User-supplied non-zero values
+  override.
+- **Auto-fire trigger for `awaiting_peer → handed_back`.** *Resolved
+  in Phase 2.* On-demand at `hero status` render time via
+  `peering.ReconcileAwaitingPeer`. No daemon, no fs-watch, no polling
+  thread — a side effect of viewing status. Idempotent.
 - **Trail entry format: YAML block list vs. structured prose.**
   Spec drafts a YAML-ish list; final format chosen during
   implementation. Constraint: must round-trip parse cleanly.
