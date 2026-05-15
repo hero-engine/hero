@@ -51,25 +51,50 @@ Structural migration spec that splits the cloud server code out of the
 `contracts/` package as the seam and a `hero.ref` pin for reproducible
 builds.
 
-**Status:** delivering — Phase 0 fully landed. The `contracts/`
-package skeleton (types + signatures only) lives at the repo root with
-a `governance/` subpackage, a `ContractsVersion` /
-`ServerMinContractsVersion` pair in `version.go`, an `Event` envelope,
-and a base `Node` shape. Two symmetric boundary tests now enforce the
-seam:
-- `contracts/contracts_boundary_test.go` (`TestContractsImportBoundary`)
-  fails on any in-repo import out of `contracts/...`.
-- `cloud/cloud_boundary_test.go` (`TestCloudImportBoundary`) fails on
-  any in-repo import into `cloud/...` or `cmd/hero-cloud/...` that
-  isn't `contracts/...` or another cloud-side path.
-Survey of current cloud-side code shows zero `internal/...` imports —
-the trees are already self-contained, so no migration onto
-`contracts/...` was required in this phase. `go build`, `go vet`,
-`go test ./...` all green; drift clean.
+**Status:** delivering — Phase 0 and Phase 1 both landed. Phase 0
+carved the `contracts/` leaf package (governance + Node + Event +
+ContractsVersion / ServerMinContractsVersion) inside `hero` and stood
+up the two symmetric boundary tests
+(`contracts/contracts_boundary_test.go` and
+`cloud/cloud_boundary_test.go`). Phase 1 cut a new private repo at
+`github.com/hero-engine/hero-cloud`, sibling-checked-out at
+`~/projects/hero-engine/repository/hero-cloud`. Mechanism: per-prefix
+`git subtree split` for `cloud/` and `cmd/hero-cloud/` in a throwaway
+clone, each branch filter-branch-rewritten to bake in its destination
+prefix, then merged into `hero-cloud`'s `main` as a single inaugural
+commit with both subtree histories as parents. Per-file
+`git log --follow` traces every moved file back to its v0.8.0 root
+commit in `hero` (acceptance criterion verified). The cloud trees in
+`hero` are untouched — Phase 3 deletes after Phase 2 cutover + soak.
 
-**Pick up at:** Phase 1 — cut a new `hero-cloud` repo via the
-single-prefix `_split/` subtree-split flow described under Migration
-Plan. Phase 0 follow-ons are complete; no remaining prerequisites.
+Seam infrastructure on `hero-cloud`: `go.mod` with module
+`github.com/hero-engine/hero-cloud` and a committed
+`replace github.com/hero-engine/hero => ../hero` directive; `hero.ref`
+pinned at `1763417` (Phase 0 head) with bump-rule doc comment;
+`scripts/hero-pin-fetch.sh` idempotent and safe for local and CI;
+minimal `.github/workflows/ci.yml` (one job, Go 1.26.1, ubuntu-latest:
+fetch pin, build, vet, test); README; `.gitignore`.
+
+Seam smoke canary: `cloud/internal/seam_smoke.go` +
+`seam_smoke_test.go` actually import
+`github.com/hero-engine/hero/contracts/governance`, exercise
+`Classification`, `Subject`, `SubjectType`, and the `Compare`
+ordering. This is the first real cross-repo dependency on the
+contracts package; previously the boundary tests fired zero
+violations only because cloud code happened not to import contracts
+at all. The smoke is the canary going forward — if the seam ever
+breaks in either direction, this package's compile/test fails first.
+
+`go build`, `go vet`, `go test ./...` all green in both repos at the
+end of Phase 1.
+
+**Pick up at:** Phase 2 — deployment cut-over. Update any external
+CI/deployment that targets the cloud binary to build from
+`hero-cloud` instead of `hero`, smoke-test the binary built from the
+new repo, and verify identical behavior to the pre-split build.
+Phase 3 (delete `cloud/` and `cmd/hero-cloud/` from `hero`) follows
+after a soak window of at least one development week with
+`hero-cloud` as the source of truth.
 
 → `.hero/planning/initiatives/hero-cloud-split/spec.md`
 
@@ -615,11 +640,30 @@ to one afternoon.
 
 ## Risks
 
+- **Contracts seam under-exercised.** Phase 0's boundary tests fired
+  zero violations only because cloud-side code did not import
+  `contracts/...` at all. Phase 1's `cloud/internal/seam_smoke.go`
+  canary is the first real cross-repo dependency, but it is
+  deliberately minimal (Classification, Subject, SubjectType,
+  Compare). As real cloud features begin to depend on more of the
+  contracts surface — audit events, agent tokens, policy nodes,
+  retriever interface, event envelopes — each new dependency must be
+  scrutinized for cross-repo coupling that should not have crossed
+  the seam. Mitigation: as cloud features land that touch new
+  contract types, extend the seam smoke (or accept new genuine
+  callers as replacement canaries) so any future contracts
+  rename/move/ABI break still surfaces immediately on a fresh CI
+  build of `hero-cloud`. The smoke is the start, not the finish, of
+  seam validation.
 - **Subtree split misses files or history.** Files referenced by
   import but not staged under `_split/` will fail to build on the new
   repo. Mitigation: dry-run the split into a throwaway destination
   before the real cut; run `go build ./...` on the throwaway; only
-  proceed when green.
+  proceed when green. (Phase 1 resolved: per-prefix `git subtree split`
+  + filter-branch prefix rewrite preserved per-file history through
+  `git log --follow`; the single-prefix `_split/` approach the spec
+  originally recommended loses per-file history at the staging-move
+  commit and was rejected.)
 - **`replace` directive footgun for non-sibling layouts.** If a
   developer has `hero` checked out at a different relative path, the
   build silently fails or picks up a stale module. Mitigation:
@@ -687,15 +731,21 @@ to one afternoon.
 
 ## Open Questions
 
-- **Module name for `hero-cloud`.** Suggested:
-  `github.com/hero-engine/hero-cloud`. Confirm before Phase 1.
-- **Repo hosting.** Both stay private; confirm both live under the
-  same GitHub org (or wherever `hero` is hosted today) for simple
-  cross-repo permissions.
-- **Single-prefix vs. multi-prefix subtree split.** Spec recommends
-  the single-prefix `_split/` staging approach for cleaner
-  destination history. Confirm the synthetic move commit is
-  acceptable, or override to per-prefix splits.
+- **Module name for `hero-cloud`.** Resolved in Phase 1:
+  `github.com/hero-engine/hero-cloud`.
+- **Repo hosting.** Resolved in Phase 1: both live under the
+  `hero-engine` GitHub org; `hero-cloud` is private. Cross-repo
+  permissions inherit org membership.
+- **Single-prefix vs. multi-prefix subtree split.** Resolved in
+  Phase 1: per-prefix split was chosen over the single-prefix
+  `_split/` staging approach because the latter loses per-file
+  history through `git log --follow` at the staging-move commit.
+  Per-prefix splits + filter-branch prefix rewrite preserve full
+  per-file history while still producing a clean inaugural commit
+  on `hero-cloud`'s `main` (single first-parent merge with both
+  subtree histories as additional parents). The acceptance
+  criterion ("`git log --follow` returning the pre-split history on
+  the new repo") is met.
 - **Should `docker-compose.yml` move?** Audit during Phase 1: if its
   sole purpose is bringing up the cloud server for local testing, it
   moves. If it also brings up local-MCP dependencies that `hero` uses
@@ -718,6 +768,42 @@ to one afternoon.
   `hero-cloud`) verify that the local sibling `hero` checkout's SHA
   matches `hero.ref`, with a warning if drifted? Useful guardrail;
   not required for v1.
-- **CI provider.** Inherit whatever `hero` uses today. If GitHub
-  Actions, the pin-fetch step is a few lines of YAML; document the
-  exact workflow file in the Phase 1 PR.
+- **CI provider.** Resolved in Phase 1: GitHub Actions. The
+  pin-fetch step is wired in
+  `hero-cloud/.github/workflows/ci.yml` and depends on a
+  `HERO_REPO_TOKEN` secret (falls back to `GITHUB_TOKEN` for the
+  public-clone path once `hero` opens up; while `hero` is private,
+  the secret must be configured on the `hero-cloud` repo before CI
+  green is reached).
+
+## Phase 1 Follow-Ups
+
+Captured during Phase 1 execution; deferred from the inaugural cut
+to keep its scope clean. None block Phase 2 or Phase 3.
+
+- **`hero-cloud/.hero/` workspace.** Deferred. The Phase 1 plan
+  called for `hero init` in the new repo, but doing it correctly
+  (right `hero.json`, knowledge seeds, scan-friendly layout) is
+  more than a five-minute task and would have bloated the
+  inaugural commit. Action: open a follow-on spec for
+  `hero-cloud-workspace-init` after Phase 2 cutover. Until then,
+  hero-cloud has no `.hero/` and the split spec lives only in this
+  repo.
+- **`hero-cloud/CLAUDE.md` and `AGENTS.md`.** Deferred. Phase 1
+  acceptance criteria call for the cross-repo workflow doc to live
+  in `hero-cloud/CLAUDE.md`; it does not yet. README on hero-cloud
+  covers the basics. Action: write CLAUDE.md and AGENTS.md as part
+  of the workspace-init follow-on.
+- **`HERO_REPO_TOKEN` secret in hero-cloud repo settings.** The CI
+  workflow references it; until configured on the GitHub repo, CI
+  will fail at `hero-pin-fetch.sh`. One-time manual setup;
+  document and execute as part of Phase 2.
+- **Convention specs.** Phase 4 of the spec calls for
+  `contracts-import-discipline.md` in `hero` and
+  `cross-repo-workflow.md` in `hero-cloud`. Phase 4 has not started.
+- **Seam smoke broadening.** As cloud features depend on more
+  contracts surface (audit, agent tokens, retriever, etc.), either
+  extend `cloud/internal/seam_smoke.go` to exercise the new
+  symbols, or accept new genuine callers as replacement canaries
+  and retire the smoke. The seam is now exercised but not
+  comprehensively covered.
