@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/hero-engine/hero/internal/peering"
 	"github.com/hero-engine/hero/internal/version"
 	"github.com/hero-engine/hero/internal/workspace"
 	"github.com/spf13/cobra"
@@ -42,6 +43,13 @@ func init() {
 		heroDir := filepath.Join(projectRoot, ".hero")
 		if _, err := os.Stat(heroDir); os.IsNotExist(err) {
 			return // no workspace, nothing to check
+		}
+
+		// Migrate workspaces predating peer_id: mint one on first
+		// invocation when missing. Best-effort — errors here don't
+		// block the user's command.
+		if _, minted, err := peering.EnsurePeerID(projectRoot, "migration"); err == nil && minted {
+			fmt.Fprintf(os.Stderr, "hero: minted peer_id for cross-repo peering (recorded in events.log)\n")
 		}
 
 		binaryVersion := rootCmd.Version

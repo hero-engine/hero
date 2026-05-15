@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/peering"
 	"github.com/hero-engine/hero/internal/scan"
 	"github.com/hero-engine/hero/internal/version"
 	"github.com/spf13/cobra"
@@ -46,6 +47,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 	cfg := config.DefaultConfig()
 	cfg.Folder = initFolder
+	cfg.PeerID = peering.MintPeerID()
 
 	heroDir := cfg.HeroDir(projectRoot)
 
@@ -111,6 +113,12 @@ func runInit(cmd *cobra.Command, args []string) error {
 	}
 	if err := version.StampInit(heroDir, binaryVersion); err != nil {
 		fmt.Fprintf(os.Stderr, "  warning: could not write version stamp: %v\n", err)
+	}
+
+	// Record the peer_id mint in the events log so the moment of
+	// identity assignment is recoverable. Best-effort.
+	if cfg.PeerID != "" {
+		peering.RecordPeerIDMintEvent(heroDir, cfg.PeerID, "init")
 	}
 
 	fmt.Printf("Initialized hero workspace at %s\n", heroDir)
