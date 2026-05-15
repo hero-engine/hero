@@ -7,6 +7,15 @@ specs, decisions, conventions, acceptance criteria, attempts, failures,
 and recent activity into a local `.hero/` corpus, then exposes that
 context to AI coding tools through slash commands, CLI commands, and MCP.
 
+```mermaid
+graph LR
+    A["/resume"] --> B["/discover"]
+    B --> C["/design"]
+    C --> D["/deliver"]
+    E["/diagnose"] --> D
+    D --> F["/handoff"]
+```
+
 ## Just tell it what you want
 
 You don't have to memorize commands. Describe what you need in plain
@@ -25,15 +34,6 @@ English and Hero routes it to the right workflow:
 
 Slash commands and the CLI are always there when you want precision —
 but day to day, conversation is the interface.
-
-```mermaid
-graph LR
-    A["/resume"] --> B["/discover"]
-    B --> C["/design"]
-    C --> D["/deliver"]
-    E["/diagnose"] --> D
-    D --> F["/handoff"]
-```
 
 ## Why Hero?
 
