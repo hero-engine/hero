@@ -81,26 +81,38 @@ surfacing.
 
 **Status:** delivering — Phase 0 (identity + contracts/peering/ +
 resolver), Phase 1 (handoff lifecycle + trail + async drop + peer
-manifest), and Phase 2 (sync peer call advisory + spec-out, peer CLI,
-`hero relevant --peer`, auto-fire peer-side completion) have landed.
+manifest), Phase 2 (sync peer call advisory + spec-out, peer CLI,
+`hero relevant --peer`, auto-fire peer-side completion), and Phase 3
+(contract-import passive surfacing + pilot harness +
+peering-protocol convention with dogfood checklist) have all landed.
 
-**Pick up at:** Phase 3 — contract-import passive surfacing + pilot
-gate. Wire the Go import scanner to detect when edited files import a
-Go symbol listed in any configured peer's manifest `contracts:`
-section, then surface a one-line signal in `/resume` and `hero
-context` naming the symbol, peer alias, governing convention, and
-last-changed commit. No blocking, no prompts. **Pilot gate** at exit:
-dogfood the full ladder on the user's three real repos and confirm
-the flow is tag-team-shaped, not ceremony, before opening Phase 4
-(cloud transport + boundary nudge).
+**Pick up at:** the pilot dogfood. The mechanics for the full ladder
+are wired, unit-tested, and end-to-end integration-tested against a
+three-sibling fixture (`internal/peering/integration_test.go`). The
+exit gate for Phase 3 is the user walking the dogfood checklist in
+`.hero/knowledge/conventions/peering-protocol.md` against their
+three real repos and answering "tag team or ceremony?". If ceremony,
+scope a Phase 3.5 ergonomics pass before Phase 4. If tag team, open
+Phase 4 — cloud transport (graph-memory-federation hook-up) plus
+the boundary-nudge upgrade (structural contract edits suggest an
+advisory call via `hero nudge`).
 
 → `.hero/planning/features/cross-repo-peering/spec.md`
 
-**Files (Phase 3):** `internal/peering/contract_imports.go` (new —
-Go import scanner that walks edited files for peer-owned symbols),
-`internal/cli/resume.go` and `internal/cli/context.go` (add the
-passive one-liner). **Manifest already carries the `contracts:`
-section** from Phase 0 (`contracts/peering/manifest.go:ContractsSection`).
+**Files (Phase 3, landed):**
+`internal/peering/contract_imports.go` (Go import scanner — changed
+files, peer-aware, with test/generated/vendor filters);
+`internal/peering/contract_imports_test.go` (unit coverage);
+`internal/peering/integration_test.go` (three-sibling pilot harness
+exercising the full ladder end-to-end);
+`internal/cli/brief.go` (wires the passive signal into `hero resume`
+output after the brief);
+`internal/cli/context.go` (new `hero context imports` subcommand
+mirroring the `context scope` pattern);
+`.hero/knowledge/conventions/peering-protocol.md` (protocol +
+dogfood checklist). The manifest already carries the `contracts:`
+section from Phase 0
+(`contracts/peering/manifest.go:ContractsSection`).
 **Already in place from Phase 0/1/2:** `contracts/peering/`,
 `internal/peering/{identity,trail,handoff,manifest,peercall,
 resolve}.go`, `internal/cli/{handoff,peer}.go`, `hero relevant
@@ -950,9 +962,21 @@ isn't an open question — it's a Phase 3 entry gate.
 21. `internal/cli/queue.go` — add "Incoming Handoffs" section.
 22. `internal/cli/status.go` — surface peer-side completion of
     handed-off specs.
-23. `internal/cli/context.go` and `internal/cli/resume.go` (or
-    equivalent) — add contract-import passive surfacing
-    one-liner.
+23. `internal/cli/context.go` and `internal/cli/brief.go`
+    (Phase 3 — `brief.go` is where `hero resume` lives) —
+    add contract-import passive surfacing one-liner. New
+    `hero context imports` subcommand exposes the same signal
+    for slash-command templates.
+33. `internal/peering/integration_test.go` (Phase 3, new) — pilot
+    harness test exercising the full ladder against three mock
+    sibling workspaces (app / client / desktop): manifest read
+    across boundary, advisory + spec-out dry-run calls, async
+    handoff, peer-side completion auto-firing to handed_back,
+    contract-import passive surfacing (positive and negative).
+34. `internal/peering/contract_imports_test.go` (Phase 3, new) —
+    unit coverage for the scanner: positive hit, test-file filter,
+    generated-code filter, vendor filter, import-without-reference
+    no-op, no-peer-manifest no-op, signal rendering.
 24. `internal/index/index.go` — call into `internal/peering` during
     indexing to regenerate the peer manifest.
 25. `internal/events/log.go` — register new `peer.handoff.*` and
