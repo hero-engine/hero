@@ -1,6 +1,35 @@
 {
+  "folder": ".hero",
+  "peer_id": "6341a260-0409-4663-9a04-92ff34b01288",
+  "team": {
+    "require_review": false,
+    "stale_days": 14,
+    "auto_context": true,
+    "nudge_level": "gentle"
+  },
+  "tracker": {
+    "type": "none",
+    "project": "",
+    "token_env": "",
+    "base_url": "",
+    "user_email": "",
+    "post_on_design": false,
+    "post_on_deliver": false
+  },
+  "sync": {
+    "target": "none",
+    "auto": false
+  },
+  "conventions": {
+    "enforce": true,
+    "scope_default": "*"
+  },
+  "knowledge": {
+    "auto_capture": true
+  },
   "code_scan": {
     "depth": "normal",
+    "parser": "auto",
     "exclude": [
       "node_modules",
       "vendor",
@@ -41,43 +70,14 @@
       "tmp",
       "temp",
       "logs"
-    ],
-    "parser": "auto"
+    ]
+  },
+  "next": {
+    "projected": true
   },
   "content": {
     "agents_path": "agents",
     "commands_path": "commands",
     "skills_path": "skills"
-  },
-  "conventions": {
-    "enforce": true,
-    "scope_default": "*"
-  },
-  "folder": ".hero",
-  "knowledge": {
-    "auto_capture": true
-  },
-  "next": {
-    "projected": true
-  },
-  "repos": {},
-  "sync": {
-    "auto": false,
-    "target": "none"
-  },
-  "team": {
-    "auto_context": true,
-    "nudge_level": "gentle",
-    "require_review": false,
-    "stale_days": 14
-  },
-  "tracker": {
-    "base_url": "",
-    "post_on_deliver": false,
-    "post_on_design": false,
-    "project": "",
-    "token_env": "",
-    "type": "none",
-    "user_email": ""
   }
 }

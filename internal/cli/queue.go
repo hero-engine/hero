@@ -166,6 +166,11 @@ func runQueue(cmd *cobra.Command, args []string) error {
 	subproject := resolveSubprojectFilter(queueSubproject)
 	maybePrintScopeHint(cmd.ErrOrStderr(), queueSubproject, subproject)
 
+	// Surface specs that arrived via cross-repo handoff before the
+	// ranked queue. These are work this workspace owes its peers and
+	// shouldn't sink under unrelated work.
+	renderIncomingHandoffs(cmd.OutOrStdout(), specs)
+
 	sel := spec.Selector{
 		Filter: spec.Filter{
 			Horizons:             horizons,
@@ -183,4 +188,36 @@ func runQueue(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 	return renderSpecs(cmd.OutOrStdout(), out, queueFormat)
+}
+
+// renderIncomingHandoffs lists specs that arrived from a peer via
+// cross-repo handoff (received_from frontmatter set) and are still in
+// an open state.
+func renderIncomingHandoffs(w interface{ Write(p []byte) (int, error) }, specs []*spec.Spec) {
+	var incoming []*spec.Spec
+	for _, s := range specs {
+		if s.ReceivedFrom == nil {
+			continue
+		}
+		if s.Status == spec.StatusCompleted || s.Status == spec.StatusSuperseded {
+			continue
+		}
+		incoming = append(incoming, s)
+	}
+	if len(incoming) == 0 {
+		return
+	}
+	fmt.Fprintf(w, "Incoming Handoffs (%d):\n", len(incoming))
+	for _, s := range incoming {
+		from := s.ReceivedFrom.PeerAliasDisplay
+		if from == "" {
+			from = s.ReceivedFrom.PeerID
+		}
+		fmt.Fprintf(w, "  %-30s  %-12s  from %s/%s\n",
+			s.Slug, string(s.Status), from, s.ReceivedFrom.OriginatorSlug)
+		if s.ReceivedFrom.Reason != "" {
+			fmt.Fprintf(w, "    reason: %s\n", s.ReceivedFrom.Reason)
+		}
+	}
+	fmt.Fprintln(w)
 }

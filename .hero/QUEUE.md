@@ -6,7 +6,48 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-15T19:06:29Z · 99 ready specs_
+_Generated: 2026-05-15T19:22:02Z · 99 ready specs_
+
+## cross-repo-peering — "Cross-Repo Peering — Conventions Travel, Specs Hand Off, Heroes Call Each Other"
+_feature · delivering · horizon: now_
+
+Three-tier ladder for sibling Hero workspaces: sync peer call (ask
+B's Hero now), async handoff (pass the spec to B), or convention
+import (load B's rules into A). Backed by a stable peer UUID, a
+handoff trail recorded on every spec, and passive contract-import
+surfacing.
+
+**Status:** delivering — Phase 0 (identity + contracts/peering/ +
+resolver) and Phase 1 (handoff lifecycle + trail + async drop + peer
+manifest) have landed.
+
+**Pick up at:** Phase 2 — sync peer call (advisory + spec-out) and
+the convention-loading fallback (`hero relevant --peer <alias>`).
+The advisory mode is no-write subagent dispatch into the peer's
+workspace returning structured findings. Spec-out mode runs the
+peer's `/design` flow under that subagent, writes a peer-side spec
+with `received_from`, and ties it into the handoff lifecycle so the
+originator moves to `awaiting_peer`. Budget enforcement
+(`--budget-turns`, `--budget-tokens`) ships in the same phase. The
+Open Question to nail at Phase 2 start: the exact subagent
+invocation API (likely shell-out `hero peer-call-server` in the
+peer's cwd, parse structured stdout).
+
+→ `.hero/planning/features/cross-repo-peering/spec.md`
+
+**Files (Phase 2):** `internal/peering/peercall.go` (new),
+`internal/cli/peer.go` (new — `hero peer manifest|list|show|call`),
+`internal/cli/relevant.go` (extend with `--peer` and `--surface`),
+`internal/peering/resolve.go` (peer manifest reader, exposed via
+`hero relevant --peer`). **Already in place from Phase 0/1:**
+`contracts/peering/`, `internal/peering/{identity,trail,handoff,
+manifest}.go`, `internal/cli/handoff.go`, peer_id minting,
+CrossRepoResolver dual-keying, `hero queue` Incoming Handoffs,
+`hero status` Handed Back surfacing.
+**Skip:** machine-to-machine peering across hosts, auto-trigger
+boundary modes, full-delivery sync peer call — all v3+.
+
+---
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -68,36 +109,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · delivering · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/e2e-validation/spec.md)_
-
----
-
-## cross-repo-peering — "Cross-Repo Peering — Conventions Travel, Specs Hand Off, Heroes Call Each Other"
-_feature · planning · horizon: now_
-
-Three-tier ladder for sibling Hero workspaces: sync peer call (ask
-B's Hero now), async handoff (pass the spec to B), or convention
-import (load B's rules into A). Backed by a stable peer UUID, a
-handoff trail recorded on every spec, and passive contract-import
-surfacing.
-
-**Status:** planning — design is locked, phasing sequenced, ready to
-move toward `/deliver`. Existing `hero repos` foundation is the
-launch point.
-
-**Pick up at:** Phase 0 — mint peer UUIDs at `hero init`, plumb the
-UUID through `hero.json`, upgrade `CrossRepoResolver` to dual-key on
-UUID (canonical) and alias (display). Phase 1 follows immediately
-with the handoff lifecycle and trail records.
-
-→ `.hero/planning/features/cross-repo-peering/spec.md`
-
-**Files:** `internal/cli/repos.go`, `internal/cli/init.go`,
-`internal/spec/resolve.go`, `internal/config/config.go:1137-1184`,
-`contracts/peering/` (new),
-`.hero/planning/features/hero-cloud-split/spec.md` (contracts seam),
-`.hero/planning/features/graph-memory-federation/spec.md` (cloud).
-**Skip:** machine-to-machine peering across hosts, auto-trigger
-boundary modes, full-delivery sync peer call — all v2+.
 
 ---
 

@@ -39,6 +39,22 @@ const (
 	// Reset to completed once the regressed AC is passing again.
 	StatusRegressed Status = "regressed"
 
+	// Cross-repo handoff states (from the originator's view; the
+	// receiver's spec uses the standard lifecycle). See
+	// cross-repo-peering spec for the full state machine.
+	//
+	// StatusHandedOff — the originator just gave the spec to a peer
+	// (initial transition; appears briefly until the peer-side spec
+	// is observed in `delivering` and the status flips to
+	// StatusAwaitingPeer).
+	StatusHandedOff Status = "handed_off"
+	// StatusAwaitingPeer — steady state while the peer works.
+	StatusAwaitingPeer Status = "awaiting_peer"
+	// StatusHandedBack — the peer finished (or explicitly bounced),
+	// the ball is back on the originator's side for verification or
+	// follow-up.
+	StatusHandedBack Status = "handed_back"
+
 	// Convention states
 	StatusDraft  Status = "draft"
 	StatusActive Status = "active"
@@ -109,6 +125,11 @@ type Spec struct {
 	Sections     map[string]string // section name (lowercase) -> content
 	FilesTouched []string          // extracted from Changes section
 
+	// ReceivedFrom is populated when this spec was scaffolded by a
+	// cross-repo handoff or spec-out peer call. peer_id is the
+	// canonical join key back to the originating workspace.
+	ReceivedFrom *ReceivedFromBlock
+
 	// Tracker metadata — populated from tracker-prefixed frontmatter fields
 	// (e.g. jira_status, github_assignee, linear_priority).
 	TrackerName     string // which tracker: "jira", "github", "linear"
@@ -120,6 +141,20 @@ type Spec struct {
 	Description     string // short description (2-3 sentences) from tracker
 	RawContent      string // full file content including frontmatter
 	ThreeFile       bool   // true if loaded from three-file layout
+}
+
+// ReceivedFromBlock mirrors contracts/peering.ReceivedFrom for use in
+// the parsed spec model. Kept in the spec package (rather than
+// importing peering directly) so the spec package stays a leaf with
+// no contracts dependency, and so a reader can inspect the block
+// without dragging in the wire-shape package.
+type ReceivedFromBlock struct {
+	PeerID           string
+	PeerAliasDisplay string
+	OriginatorSlug   string
+	HandedOffAt      time.Time
+	AtCommit         string
+	Reason           string
 }
 
 // SmokeConfig holds the smoke: frontmatter block for a spec.
@@ -412,6 +447,18 @@ func (s *Spec) parseFrontmatter(content string) string {
 				s.Smoke = smokeCfg
 				i = consumed - 1
 			}
+		case "received_from":
+			// Block form recording cross-repo provenance:
+			//   received_from:
+			//     peer_id: 9c1c2f3e-...
+			//     peer_alias_display: client
+			//     originator_slug: order-failure-error-display
+			//     handed_off_at: 2026-05-15T14:00:00Z
+			//     at_commit: 3176736
+			//     reason: "Symptom is in the client, root cause is the API response shape."
+			rf, consumed := parseReceivedFromBlock(lines, i+1, closeIdx)
+			s.ReceivedFrom = rf
+			i = consumed - 1
 		default:
 			// Parse tracker-prefixed fields: jira_*, github_*, linear_*
 			for _, prefix := range []string{"jira_", "github_", "linear_"} {
@@ -553,6 +600,48 @@ func parseSmokeBlock(lines []string, start, end int) (*SmokeConfig, int) {
 		}
 	}
 	return cfg, idx
+}
+
+// parseReceivedFromBlock parses the indented YAML block under a
+// `received_from:` key on a receiver-side spec. Returns a populated
+// block and the index of the next line the outer parser should
+// resume from. Unknown fields are tolerated.
+func parseReceivedFromBlock(lines []string, start, end int) (*ReceivedFromBlock, int) {
+	out := &ReceivedFromBlock{}
+	idx := start
+	for ; idx < end; idx++ {
+		raw := lines[idx]
+		trimmed := strings.TrimSpace(raw)
+		if trimmed == "" {
+			continue
+		}
+		if leadingSpaceCount(raw) == 0 {
+			break
+		}
+		k, v, ok := strings.Cut(trimmed, ":")
+		if !ok {
+			continue
+		}
+		k = strings.TrimSpace(k)
+		v = strings.TrimSpace(strings.Trim(v, "\""))
+		switch k {
+		case "peer_id":
+			out.PeerID = v
+		case "peer_alias_display":
+			out.PeerAliasDisplay = v
+		case "originator_slug":
+			out.OriginatorSlug = v
+		case "handed_off_at":
+			if t, err := time.Parse(time.RFC3339, v); err == nil {
+				out.HandedOffAt = t
+			}
+		case "at_commit":
+			out.AtCommit = v
+		case "reason":
+			out.Reason = v
+		}
+	}
+	return out, idx
 }
 
 // applyRelField parses "key: value" inside a YAML object and assigns
@@ -948,9 +1037,48 @@ func (s *Spec) IsKnowledge() bool {
 		s.Type == TypeNote || s.Type == TypeTripwire
 }
 
-// IsInFlight returns true if the spec is currently being worked on.
+// IsInFlight returns true if the spec is currently being worked on,
+// either locally (planning/in-review/delivering) or by a peer
+// (handed_off/awaiting_peer). handed_back also counts: the ball is
+// back on this side awaiting verification.
 func (s *Spec) IsInFlight() bool {
-	return s.Status == StatusPlanning || s.Status == StatusInReview || s.Status == StatusDelivering
+	switch s.Status {
+	case StatusPlanning, StatusInReview, StatusDelivering,
+		StatusHandedOff, StatusAwaitingPeer, StatusHandedBack:
+		return true
+	}
+	return false
+}
+
+// IsHandoffPending reports whether this spec is in the originator's
+// "elsewhere" states: handed_off or awaiting_peer. These are excluded
+// from the active-delivering invariant (per spec-status-integrity)
+// because the actual work is happening in a peer workspace.
+func (s *Spec) IsHandoffPending() bool {
+	return s.Status == StatusHandedOff || s.Status == StatusAwaitingPeer
+}
+
+// IsHandedBack reports whether the peer has completed (or bounced)
+// and the originator must verify or pick the spec back up.
+func (s *Spec) IsHandedBack() bool {
+	return s.Status == StatusHandedBack
+}
+
+// IsLocallyDelivering reports whether the spec is being actively
+// worked on by this workspace (i.e. counts toward the
+// active-delivering invariant). Excludes handoff-pending states
+// where the work is happening on a peer.
+//
+// Coordination point with spec-status-integrity: when that spec adds
+// an explicit "max concurrent active-delivering" invariant, it must
+// consult IsLocallyDelivering (not IsInFlight) so the handoff states
+// are excluded. Until that integrity check lands, this helper
+// documents the contract at the source.
+//
+// TODO(cross-repo-peering, spec-status-integrity): wire the active-
+// delivering invariant check to use IsLocallyDelivering.
+func (s *Spec) IsLocallyDelivering() bool {
+	return s.Status == StatusDelivering
 }
 
 // EffectiveHorizon returns the spec's horizon, defaulting to

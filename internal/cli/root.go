@@ -122,6 +122,7 @@ func init() {
 	rootCmd.AddCommand(adminCmd)   // admin team / users / domain / repos
 	rootCmd.AddCommand(tripwireCmd)
 	rootCmd.AddCommand(anchorCmd)
+	rootCmd.AddCommand(handoffCmd) // cross-repo async handoff
 
 	// Wrap every direct subcommand that has a RunE with the smoke interceptor.
 	// Must come after all AddCommand calls so the full command set is present.

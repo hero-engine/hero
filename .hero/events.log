@@ -4,3 +4,4 @@
 {"ts":"2026-05-05T03:04:04.316245Z","type":"spec_created","agent":"human/chet-bellows","slug":"next-noop-writes","message":"Designed next-noop-writes to suppress timestamp-only NEXT handoff rewrites while preserving updated timestamps for real semantic changes."}
 {"ts":"2026-05-05T03:08:28.577995Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"next-noop-writes","message":"Delivered next-noop-writes: checkpoint writes now skip unchanged files and preserve updated timestamps for projected NEXT files when semantic content is unchanged."}
 {"ts":"2026-05-05T22:06:37.96339Z","type":"files_modified","agent":"mcp/hero","slug":"docs-scrub","message":"Deep documentation scrub: rewrote README/Getting Started/MCP/team docs and updated stale agent/command references to current CLI groupings."}
+{"ts":"2026-05-15T19:21:07.877837Z","type":"workspace.peer_id_minted","agent":"hero","message":"peer_id minted (migration): 6341a260-0409-4663-9a04-92ff34b01288"}
