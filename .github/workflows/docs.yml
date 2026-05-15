@@ -7,8 +7,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "docs/**"
-      - "mkdocs.yml"
+      - "web/docs/**"
   workflow_dispatch:
     inputs:
       deploy:
@@ -32,10 +31,12 @@ jobs:
       - run: pip install -r requirements-docs.txt
 
       - name: Build docs
+        working-directory: web/docs
         run: mkdocs build --strict
 
       - name: Deploy to GitHub Pages
         if: >
           (github.event_name == 'workflow_dispatch' && inputs.deploy) ||
           (github.event_name == 'push' && vars.DEPLOY_DOCS == 'true')
+        working-directory: web/docs
         run: mkdocs gh-deploy --force

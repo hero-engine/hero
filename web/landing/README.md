@@ -1,8 +1,8 @@
 # Hero Landing Page
 
 Public homepage served at **heroengine.ai**. Plain HTML + inlined CSS, no
-build step. Mirrors the `docs/` deploy pattern via Cloudflare Workers
-static assets.
+build step. Peer surface to `web/docs/` — same Cloudflare Workers static
+assets deploy pattern.
 
 ## Layout
 

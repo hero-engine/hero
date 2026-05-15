@@ -78,7 +78,7 @@ irm https://raw.githubusercontent.com/hero-engine/hero-releases/main/install.ps1
 ```
 
 Full options — including direct downloads and build-from-source — are in
-the [installation guide](docs/getting-started/installation.md).
+the [installation guide](web/docs/src/getting-started/installation.md).
 
 Initialize a project and install Hero into your coding tool:
 
@@ -297,7 +297,7 @@ skills/                   installed skills
 core/                     core domain pack content
 domains/engineering/      Hero Code domain pack
 domains/sales/            scaffolded Hero Sales domain pack
-docs/                     documentation
+web/                      public web surfaces (docs, landing)
 cloud/                    team server and cloud backend
 ```
 
@@ -379,19 +379,19 @@ Common `.hero/hero.json` fields:
 }
 ```
 
-See [docs/configuration/hero-json.md](docs/configuration/hero-json.md)
+See [web/docs/src/configuration/hero-json.md](web/docs/src/configuration/hero-json.md)
 for the full reference.
 
 ---
 
 ## More Docs
 
-- [What Is Hero?](docs/what-is-hero.md) — plain-English overview
-- [Why Hero](docs/why-hero.md) — deeper technical evaluation
+- [What Is Hero?](web/docs/src/what-is-hero.md) — plain-English overview
+- [Why Hero](web/docs/src/why-hero.md) — deeper technical evaluation
 - [Getting Started](GETTING-STARTED.md)
-- [Docs Index](docs/index.md)
-- [Commands Reference](docs/commands/index.md)
-- [Project Structure](docs/project-structure.md)
+- [Docs Index](web/docs/src/index.md)
+- [Commands Reference](web/docs/src/commands/index.md)
+- [Project Structure](web/docs/src/project-structure.md)
 - [MCP Setup](MCP-SETUP.md)
 - [Team Server](TEAM-SERVER.md)
 

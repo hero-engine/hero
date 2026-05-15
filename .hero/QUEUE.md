@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-15T17:55:43Z · 99 ready specs_
+_Generated: 2026-05-15T18:53:08Z · 99 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_

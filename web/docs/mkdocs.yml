@@ -3,6 +3,7 @@ site_description: Spec-driven AI engineering workflow
 site_url: https://docs.heroengine.ai
 repo_url: https://github.com/hero-engine/hero
 repo_name: hero-engine/hero
+docs_dir: src
 
 theme:
   name: material
