@@ -37,7 +37,7 @@ irm https://raw.githubusercontent.com/hero-engine/hero-releases/main/install.ps1
 ```
 
 All install options — direct downloads, build-from-source, version pinning —
-are documented in [docs/getting-started/installation.md](docs/getting-started/installation.md).
+are documented in [web/docs/src/getting-started/installation.md](web/docs/src/getting-started/installation.md).
 
 Verify:
 

@@ -56,7 +56,7 @@ ready for a Plausible or PostHog provider.
 ## Problem
 
 Today the GitHub README is the public face of Hero. The docs site
-(`docs/`, served from Cloudflare via root `wrangler.toml`) tells people
+(`web/docs/src/`, served from Cloudflare via `web/docs/wrangler.toml`) tells people
 *how* to use Hero — but a visitor arriving cold at heroengine.ai has
 nowhere to land that says *what Hero is* in one paragraph and funnels them
 into installing. We need that page now, not later.
@@ -85,7 +85,7 @@ both are deferred. v1 is intentionally small so it can ship this week.
   or a `hero status` snapshot). No animated GIF or video required for v1.
 - **Primary CTA** — a tabbed install block with three platforms, each
   with a copy button. Mirror the commands shown in
-  `docs/getting-started/installation.md`:
+  `web/docs/src/getting-started/installation.md`:
   - **macOS** — `brew install hero-engine/tap/hero`
   - **Windows** — `scoop bucket add hero-engine https://github.com/hero-engine/scoop-bucket && scoop install hero` is the primary command. A PowerShell `irm ... | iex` line is offered as a secondary, smaller line below.
   - **Linux** — `curl -fsSL https://raw.githubusercontent.com/hero-engine/hero-releases/main/install.sh | sh`
@@ -100,11 +100,11 @@ both are deferred. v1 is intentionally small so it can ship this week.
 - Tiny screenshot per step if we have one; otherwise text-only is fine
 
 ### Section 2 — You don't memorize commands
-- One-paragraph claim drawn from `docs/what-is-hero.md` ("Hero installs
+- One-paragraph claim drawn from `web/docs/src/what-is-hero.md` ("Hero installs
   as slash commands … but you don't have to memorize them — just say
   what you want.")
 - A small example block — five lines, one per mapping (taken verbatim
-  from `docs/what-is-hero.md`):
+  from `web/docs/src/what-is-hero.md`):
   - `"fix the login timeout bug"` → `/diagnose`
   - `"add CSV export to the reports page"` → `/design`
   - `"implement the auth spec"` → `/deliver`
@@ -171,7 +171,7 @@ both are deferred. v1 is intentionally small so it can ship this week.
 - **Framework**: plain HTML + Tailwind. Chosen to match the docs site's
   minimalism and to keep the page hand-editable by anyone reading the
   source — no build-step ceremony to learn.
-- **Hosting**: Cloudflare Pages, mirroring `docs/`. Create
+- **Hosting**: Cloudflare Pages, mirroring `web/docs/src/`. Create
   `web/landing/wrangler.toml` modeled on the project-root `wrangler.toml`
   (`name = "hero-landing"`, `compatibility_date`, `[assets] directory =
   "./site"`).
@@ -186,13 +186,13 @@ both are deferred. v1 is intentionally small so it can ship this week.
 Canonical copy lives in the docs and README — the implementer should
 quote and adapt rather than write fresh:
 
-- `docs/what-is-hero.md` — one-liner ("Hero gives your project a memory
+- `web/docs/src/what-is-hero.md` — one-liner ("Hero gives your project a memory
   that AI coding tools can use"), sub-line, and the natural-language
   routing example block (see "You Don't Memorize Commands" section).
-- `docs/why-hero.md` — value-prop copy (the problem precisely, what
+- `web/docs/src/why-hero.md` — value-prop copy (the problem precisely, what
   Hero adds, when it's a fit / when it isn't). Useful for the "Why
   specs" cards and the core-loop explanations.
-- `docs/getting-started/installation.md` — exact install commands per
+- `web/docs/src/getting-started/installation.md` — exact install commands per
   platform; mirror these verbatim in the install tabs so they stay in
   sync with what we publish.
 - `README.md` (repo root) — fallback for anything not yet in docs.
@@ -226,7 +226,7 @@ quote and adapt rather than write fresh:
 - WHERE telemetry is enabled THE SYSTEM SHALL fire events for: page view,
   install-CTA click, docs-link click, GitHub-link click
 - THE SYSTEM SHALL be deployable via the same Cloudflare workflow as
-  `docs/`, with its source living under `web/landing/` in this repo
+  `web/docs/src/`, with its source living under `web/landing/` in this repo
 
 ## Out of scope
 
@@ -248,7 +248,7 @@ quote and adapt rather than write fresh:
 - *(resolved)* Third coming-soon card? **Tripwire system** (more visceral
   than monorepo support; can revisit if monorepo lands first).
 - *(resolved)* NL-routing example count? **Five** — use the full set
-  from `docs/what-is-hero.md`.
+  from `web/docs/src/what-is-hero.md`.
 - *(resolved)* Codex in harness row? **Yes** — installer is real
   (`internal/install/target_codex.go`).
 - *(resolved)* `hero why` placement? **Own card** in Section 3 (Why
@@ -258,7 +258,7 @@ quote and adapt rather than write fresh:
 
 - **Domain**: `heroengine.ai` (purchased 2026-05-14). `teamhero.cloud`
   (purchased 2026-04-26) is parked for possible future microsite use.
-- **Stack**: plain HTML + Tailwind, Cloudflare Pages, mirror the `docs/`
+- **Stack**: plain HTML + Tailwind, Cloudflare Pages, mirror the `web/docs/src/`
   deploy pattern. Locked to remove the original "Astro vs Eleventy vs
   plain HTML" ambiguity.
 - **v1 scope**: ship what we have this week — no demo video, no
@@ -286,7 +286,7 @@ Phase 1 (2026-05-15) — files created:
   in-directory `favicon.svg` / `og-image.svg`, telemetry hook added
   via `window.heroTrack` + `data-track` attributes, UA-based default
   install tab)
-- `web/landing/site/favicon.svg` — copied from `docs/assets/favicon.svg`
+- `web/landing/site/favicon.svg` — copied from `web/docs/src/assets/favicon.svg`
 - `web/landing/site/og-image.svg` — 1200x630 OG card with bolt + wordmark
 - `web/landing/site/robots.txt` — allow all, sitemap pointer
 - `web/landing/wrangler.toml` — `name = "hero-landing"`, mirrors root

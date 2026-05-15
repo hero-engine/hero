@@ -59,6 +59,9 @@ These are run in the terminal, not as slash commands:
 - `.hero/planning/` — Active specs being worked on
 - `.hero/specs/` — Completed specs (archive)
 - `.hero/knowledge/` — Project knowledge base (conventions, decisions, context)
+- `web/` — Public web surfaces, one peer per surface:
+  - `web/docs/` — mkdocs Material site (`hero-docs` Worker). Sources in `src/`, build output in `site/` (gitignored), `mkdocs.yml` and `wrangler.toml` at the surface root
+  - `web/landing/` — static HTML landing page for heroengine.ai (`hero-landing` Worker). `site/` is committed; no build step
 - `hero.json` — Project configuration
 
 ### Important Rules

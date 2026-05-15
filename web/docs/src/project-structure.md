@@ -31,7 +31,7 @@ hero/
 ├── domains/engineering/      # Hero Code domain pack source
 ├── domains/sales/            # scaffolded Hero Sales domain pack
 ├── cloud/                    # team server / cloud backend
-├── docs/                     # documentation
+├── web/                      # public web surfaces (docs, landing, ...)
 └── .hero/                    # this repo's Hero workspace
 ```
 
