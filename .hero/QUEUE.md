@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-15T16:31:16Z · 97 ready specs_
+_Generated: 2026-05-15T17:55:43Z · 99 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -68,6 +68,49 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/e2e-validation/spec.md)_
+
+---
+
+## cross-repo-peering — "Cross-Repo Peering — Conventions Travel, Specs Hand Off"
+_feature · planning · horizon: now_
+
+Lets a Hero workspace pull in a sibling repo's conventions and hand
+specs off to it without leaving the CLI — so backend and client
+heroes stop stepping on each other's patterns.
+
+**Status:** planning — spec just landed; no code yet. Existing
+`hero repos` foundation is the launch point, not a teardown target.
+
+**Pick up at:** validate the design fork (conventions-by-import vs.
+spec-handoff-as-primary) with the user before any code lands. Then
+start Phase 1 — the convention manifest + `hero relevant --peer`
+flag, which is the lowest-risk slice and unblocks the rest.
+
+→ `.hero/planning/features/cross-repo-peering/spec.md`
+
+**Files:** `internal/cli/repos.go`, `internal/spec/resolve.go`,
+`internal/config/config.go:1137-1184`,
+`.hero/planning/features/hero-cloud-split/spec.md` (for contracts seam),
+`.hero/planning/features/graph-memory-federation/spec.md` (cloud counterpart).
+**Skip:** building a new cross-repo registry; we have `hero repos` and
+it works. Re-inventing federation in v1; cloud federation is a
+separate spec that this one composes with.
+
+---
+
+## recap-register-missing — "`hero recap register/unregister` referenced in slash commands but never implemented"
+_bug · planning · horizon: now_
+
+`/deliver` and `/diagnose` tell the agent to run `hero recap register <session-id> <slug> <cmd>` to survive compaction, but `hero recap` has no subcommands — only flags. The agent fails the very first instruction.
+
+**Status:** planning — root cause confirmed (DESIGN: docs shipped ahead of code). Two fix directions captured. Recommendation: remove the broken instruction and rely on the existing `hero next ask/suggest/reflection` projection.
+
+**Pick up at:** delete the "register the active spec" block from `commands/{deliver,diagnose}.md` and the engineering-domain twin under `domains/engineering/commands/{deliver,diagnose}.md`. Replace with a one-line pointer to the `next-handoff-emit` skill, or remove entirely if `/deliver` and `/diagnose` already invoke that skill upstream.
+
+→ `.hero/planning/bugs/recap-register-missing/spec.md`
+
+**Files:** `commands/deliver.md:8-13`, `commands/diagnose.md:10-14`, `domains/engineering/commands/deliver.md:8-13`, `domains/engineering/commands/diagnose.md:10-14`, `content.go:16-26`
+**Skip:** implementing `hero recap register/unregister` — `hero next ask/suggest/reflection` (the projection model) already preserves the equivalent state through compaction, and adding a second mechanism duplicates the surface.
 
 ---
 
