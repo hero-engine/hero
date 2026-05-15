@@ -7,10 +7,43 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/spf13/cobra"
 )
+
+// readPeerIDFromRepo reads the peer_id from a sibling workspace's
+// hero.json. Returns "" if the file is missing or has no peer_id.
+func readPeerIDFromRepo(absPath, heroFolder string) string {
+	path := filepath.Join(absPath, heroFolder, "hero.json")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	var shape struct {
+		PeerID string `json:"peer_id"`
+	}
+	if json.Unmarshal(data, &shape) != nil {
+		return ""
+	}
+	return shape.PeerID
+}
+
+// recordPeerMeta upserts the peer_id (+scanned_at) for an alias into
+// cfg.RepoMeta. Caller is responsible for persisting cfg.
+func recordPeerMeta(cfg *config.Config, alias, peerID string) {
+	if peerID == "" {
+		return
+	}
+	if cfg.RepoMeta == nil {
+		cfg.RepoMeta = make(map[string]config.RepoMetaEntry)
+	}
+	cfg.RepoMeta[alias] = config.RepoMetaEntry{
+		PeerID:    peerID,
+		ScannedAt: time.Now().UTC().Format(time.RFC3339),
+	}
+}
 
 var reposCmd = &cobra.Command{
 	Use:   "repos",
@@ -116,10 +149,21 @@ func runReposList(cmd *cobra.Command, args []string) error {
 
 	for _, alias := range aliases {
 		s := statuses[alias]
+		peerInfo := ""
+		if meta, ok := cfg.RepoMeta[alias]; ok && meta.PeerID != "" {
+			peerInfo = "  peer_id=" + meta.PeerID
+		} else if s.Accessible {
+			// Try lazily reading the sibling's peer_id so the list
+			// reflects current ground truth even for repos that were
+			// registered before peer_id existed.
+			if id := readPeerIDFromRepo(s.Path, cfg.Folder); id != "" {
+				peerInfo = "  peer_id=" + id
+			}
+		}
 		if s.Accessible {
-			fmt.Printf("  ✓ %-25s  %s\n", alias, s.Path)
+			fmt.Printf("  ✓ %-25s  %s%s\n", alias, s.Path, peerInfo)
 		} else {
-			fmt.Printf("  ✗ %-25s  %s  (%s)\n", alias, s.Path, s.Error)
+			fmt.Printf("  ✗ %-25s  %s  (%s)%s\n", alias, s.Path, s.Error, peerInfo)
 		}
 	}
 	return nil
@@ -146,6 +190,8 @@ func runReposAdd(cmd *cobra.Command, args []string) error {
 		fmt.Printf("The repo will be registered but cross-repo features won't work until it's initialized.\n\n")
 	}
 
+	peerID := readPeerIDFromRepo(absPath, cfg.Folder)
+
 	if reposLocal {
 		// Write to hero.local.json
 		localCfg, err := config.LoadLocal(projectRoot, cfg.Folder)
@@ -156,6 +202,7 @@ func runReposAdd(cmd *cobra.Command, args []string) error {
 			localCfg.Repos = make(map[string]string)
 		}
 		localCfg.Repos[alias] = repoPath
+		recordPeerMeta(&localCfg, alias, peerID)
 		if err := config.SaveLocal(projectRoot, cfg.Folder, localCfg); err != nil {
 			return fmt.Errorf("saving local config: %w", err)
 		}
@@ -165,10 +212,14 @@ func runReposAdd(cmd *cobra.Command, args []string) error {
 			cfg.Repos = make(map[string]string)
 		}
 		cfg.Repos[alias] = repoPath
+		recordPeerMeta(&cfg, alias, peerID)
 		if err := cfg.Save(projectRoot); err != nil {
 			return fmt.Errorf("saving config: %w", err)
 		}
 		fmt.Printf("Added %s → %s (in hero.json)\n", alias, repoPath)
+	}
+	if peerID != "" {
+		fmt.Printf("  peer_id %s recorded\n", peerID)
 	}
 
 	return nil
@@ -276,7 +327,12 @@ func runReposScan(cmd *cobra.Command, args []string) error {
 		}
 		for _, d := range newRepos {
 			cfg.Repos[d.alias] = d.rel
-			fmt.Printf("  ✓ %s → %s\n", d.alias, d.rel)
+			recordPeerMeta(&cfg, d.alias, d.peerID)
+			if d.peerID != "" {
+				fmt.Printf("  ✓ %s → %s  peer_id=%s\n", d.alias, d.rel, d.peerID)
+			} else {
+				fmt.Printf("  ✓ %s → %s  (no peer_id — peer predates peering)\n", d.alias, d.rel)
+			}
 		}
 		if err := cfg.Save(projectRoot); err != nil {
 			return fmt.Errorf("saving config: %w", err)
@@ -287,7 +343,11 @@ func runReposScan(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Discovered %d new hero workspace(s):\n\n", len(newRepos))
 	for _, d := range newRepos {
-		fmt.Printf("  %-25s  %s\n", d.alias, d.rel)
+		if d.peerID != "" {
+			fmt.Printf("  %-25s  %-30s  peer_id=%s\n", d.alias, d.rel, d.peerID)
+		} else {
+			fmt.Printf("  %-25s  %-30s  (no peer_id)\n", d.alias, d.rel)
+		}
 	}
 	fmt.Printf("\nTo register them all at once:\n\n")
 	fmt.Printf("  hero repos scan --auto\n\n")
@@ -301,9 +361,10 @@ func runReposScan(cmd *cobra.Command, args []string) error {
 }
 
 type repoDiscovery struct {
-	alias string
-	path  string
-	rel   string
+	alias  string
+	path   string
+	rel    string
+	peerID string
 }
 
 func scanDir(root string, maxDepth int, skipPath, heroFolder string, found *[]repoDiscovery) {
@@ -338,7 +399,8 @@ func scanDir(root string, maxDepth int, skipPath, heroFolder string, found *[]re
 				rel = absDir
 			}
 			alias := filepath.Base(absDir)
-			*found = append(*found, repoDiscovery{alias, absDir, rel})
+			peerID := readPeerIDFromRepo(absDir, heroFolder)
+			*found = append(*found, repoDiscovery{alias, absDir, rel, peerID})
 		}
 
 		// Recurse if depth allows

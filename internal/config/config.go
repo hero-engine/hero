@@ -16,8 +16,16 @@ const (
 
 // Config represents the hero.json configuration file.
 type Config struct {
-	Folder      string            `json:"folder"`
-	Domain      string            `json:"domain,omitempty"`
+	Folder string `json:"folder"`
+	// PeerID is the stable UUID identifying this workspace across all
+	// peering operations (handoffs, peer calls, manifest, trail
+	// entries). Minted at `hero init`; migrated in on first invocation
+	// when missing on an older workspace. See contracts/peering for
+	// the wire-shape side. Display alias for human reading lives
+	// outside Config (registered via `hero repos add` on peers).
+	PeerID  string            `json:"peer_id,omitempty"`
+	Peering *PeeringConfig    `json:"peering,omitempty"`
+	Domain  string            `json:"domain,omitempty"`
 	Team        *TeamConfig       `json:"team,omitempty"`
 	Tracker     *TrackerConfig    `json:"tracker,omitempty"`
 	Import      *ImportConfig     `json:"import,omitempty"`
@@ -43,7 +51,37 @@ type Config struct {
 	Delivery    *DeliveryConfig   `json:"delivery,omitempty"`
 	Environment *EnvironmentConfig `json:"environment,omitempty"`
 	Repos       map[string]string `json:"repos,omitempty"`
-	Content     *ContentConfig    `json:"content,omitempty"`
+	// RepoMeta carries peer-discovery metadata for each entry in Repos,
+	// keyed by the same alias. peer_id is the canonical join key for
+	// cross-repo peering; the Repos map keeps its alias→path shape
+	// untouched for backward compatibility.
+	RepoMeta map[string]RepoMetaEntry `json:"repo_meta,omitempty"`
+	Content  *ContentConfig           `json:"content,omitempty"`
+}
+
+// RepoMetaEntry holds peer-discovery metadata about a configured
+// sibling repo. Written by `hero repos scan` and `hero repos add`
+// when the sibling has a peer_id in its hero.json.
+type RepoMetaEntry struct {
+	PeerID    string `json:"peer_id,omitempty"`
+	ScannedAt string `json:"scanned_at,omitempty"`
+}
+
+// PeeringConfig holds peer-related workspace settings.
+type PeeringConfig struct {
+	// Display is an optional human-readable label for this workspace
+	// in peer manifests.
+	Display string `json:"display,omitempty"`
+
+	// ScopeHint is an optional role tag ("backend", "web", …) for
+	// this workspace in peer manifests.
+	ScopeHint string `json:"scope_hint,omitempty"`
+
+	// PublishConventions is a list of convention slugs (or glob
+	// patterns) that should be marked peer-surface even without the
+	// per-convention `peer: true` frontmatter flag. Default empty —
+	// publish set is empty by default.
+	PublishConventions []string `json:"publish_conventions,omitempty"`
 }
 
 // ContentConfig declares where canonical agent/command/skill content
