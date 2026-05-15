@@ -88,13 +88,23 @@ breaks in either direction, this package's compile/test fails first.
 `go build`, `go vet`, `go test ./...` all green in both repos at the
 end of Phase 1.
 
+Phase 1 workspace follow-ups landed 2026-05-15 (hero-cloud commit
+`4f93ed3`): `.hero/` workspace bootstrapped in hero-cloud with a
+hero-cloud-specific `mission.md`, CLAUDE.md committed, and two
+scaffold specs filed (`ci-token-setup` for the GitHub PAT, and
+`seam-canary-expansion` for ongoing seam coverage). Convention
+specs (`contracts-import-discipline.md` here,
+`cross-repo-workflow.md` in hero-cloud) are still pending and
+tracked as a separate follow-on.
+
 **Pick up at:** Phase 2 — deployment cut-over. Update any external
 CI/deployment that targets the cloud binary to build from
 `hero-cloud` instead of `hero`, smoke-test the binary built from the
 new repo, and verify identical behavior to the pre-split build.
-Phase 3 (delete `cloud/` and `cmd/hero-cloud/` from `hero`) follows
-after a soak window of at least one development week with
-`hero-cloud` as the source of truth.
+Configure `HERO_REPO_TOKEN` on the hero-cloud repo (see scaffold
+spec) to unblock CI green. Phase 3 (delete `cloud/` and
+`cmd/hero-cloud/` from `hero`) follows after a soak window of at
+least one development week with `hero-cloud` as the source of truth.
 
 → `.hero/planning/initiatives/hero-cloud-split/spec.md`
 
@@ -781,29 +791,32 @@ to one afternoon.
 Captured during Phase 1 execution; deferred from the inaugural cut
 to keep its scope clean. None block Phase 2 or Phase 3.
 
-- **`hero-cloud/.hero/` workspace.** Deferred. The Phase 1 plan
-  called for `hero init` in the new repo, but doing it correctly
-  (right `hero.json`, knowledge seeds, scan-friendly layout) is
-  more than a five-minute task and would have bloated the
-  inaugural commit. Action: open a follow-on spec for
-  `hero-cloud-workspace-init` after Phase 2 cutover. Until then,
-  hero-cloud has no `.hero/` and the split spec lives only in this
-  repo.
-- **`hero-cloud/CLAUDE.md` and `AGENTS.md`.** Deferred. Phase 1
-  acceptance criteria call for the cross-repo workflow doc to live
-  in `hero-cloud/CLAUDE.md`; it does not yet. README on hero-cloud
-  covers the basics. Action: write CLAUDE.md and AGENTS.md as part
-  of the workspace-init follow-on.
-- **`HERO_REPO_TOKEN` secret in hero-cloud repo settings.** The CI
-  workflow references it; until configured on the GitHub repo, CI
-  will fail at `hero-pin-fetch.sh`. One-time manual setup;
-  document and execute as part of Phase 2.
+- **~~`hero-cloud/.hero/` workspace.~~** **Landed 2026-05-15** in
+  hero-cloud commit `4f93ed3`. Workspace bootstrapped with
+  `hero.json`, a hero-cloud-specific `mission.md` (operational
+  layer charter, relationship to core hero), empty `planning/`,
+  `specs/`, `knowledge/`, `next/` (placeholder `.gitkeep`s), and
+  the local `.hero/.gitignore`. `hero status` and `hero list` work
+  inside hero-cloud.
+- **~~`hero-cloud/CLAUDE.md` and `AGENTS.md`.~~** **Landed
+  2026-05-15** in the same hero-cloud commit. CLAUDE.md documents
+  the cross-repo workflow, import discipline, boundary tests, and
+  the seam smoke canary, plus the standard Hero slash-command
+  routing table. AGENTS.md was previously written by `hero init`'s
+  auto-install and is in place.
+- **`HERO_REPO_TOKEN` secret in hero-cloud repo settings.**
+  Captured as a scaffold spec at
+  `hero-cloud/.hero/planning/bugs/ci-token-setup/spec.md`
+  (status `planning`, priority `high`). Still a one-time manual
+  GitHub setup; blocks CI green and therefore Phase 2.
 - **Convention specs.** Phase 4 of the spec calls for
   `contracts-import-discipline.md` in `hero` and
   `cross-repo-workflow.md` in `hero-cloud`. Phase 4 has not started.
-- **Seam smoke broadening.** As cloud features depend on more
-  contracts surface (audit, agent tokens, retriever, etc.), either
-  extend `cloud/internal/seam_smoke.go` to exercise the new
-  symbols, or accept new genuine callers as replacement canaries
-  and retire the smoke. The seam is now exercised but not
-  comprehensively covered.
+  Tracked as a separate follow-on (next round); the CLAUDE.md
+  in hero-cloud documents the rule informally in the meantime.
+- **Seam smoke broadening.** Captured as a scaffold spec at
+  `hero-cloud/.hero/planning/features/seam-canary-expansion/spec.md`
+  (status `planning`, priority `low`). Trigger: cloud features
+  begin to depend on contracts shapes beyond
+  `Classification`/`Subject`/`SubjectType`/`Compare`. The expansion
+  is feature-driven, not scheduled directly.
