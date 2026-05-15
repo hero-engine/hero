@@ -51,24 +51,25 @@ Structural migration spec that splits the cloud server code out of the
 `contracts/` package as the seam and a `hero.ref` pin for reproducible
 builds.
 
-**Status:** delivering — Phase 0 landed. The `contracts/` package
-skeleton (types + signatures only) lives at the repo root with a
-`governance/` subpackage, a `ContractsVersion` / `ServerMinContractsVersion`
-pair in `version.go`, an `Event` envelope, a base `Node` shape, and a
-`TestContractsImportBoundary` test that walks `go list -deps -json` and
-fails on any in-repo import outside `contracts/...`. `go build`,
-`go vet`, `go test ./contracts/...` all green. No enforcement logic, no
-repo cut yet.
+**Status:** delivering — Phase 0 fully landed. The `contracts/`
+package skeleton (types + signatures only) lives at the repo root with
+a `governance/` subpackage, a `ContractsVersion` /
+`ServerMinContractsVersion` pair in `version.go`, an `Event` envelope,
+and a base `Node` shape. Two symmetric boundary tests now enforce the
+seam:
+- `contracts/contracts_boundary_test.go` (`TestContractsImportBoundary`)
+  fails on any in-repo import out of `contracts/...`.
+- `cloud/cloud_boundary_test.go` (`TestCloudImportBoundary`) fails on
+  any in-repo import into `cloud/...` or `cmd/hero-cloud/...` that
+  isn't `contracts/...` or another cloud-side path.
+Survey of current cloud-side code shows zero `internal/...` imports —
+the trees are already self-contained, so no migration onto
+`contracts/...` was required in this phase. `go build`, `go vet`,
+`go test ./...` all green; drift clean.
 
 **Pick up at:** Phase 1 — cut a new `hero-cloud` repo via the
 single-prefix `_split/` subtree-split flow described under Migration
-Plan. Before that, the remaining Phase 0 follow-ons are:
-1. migrate current in-repo cloud-server imports of equivalent shapes
-   (where they exist) to consume from `contracts/...` instead, and
-2. add the symmetric "cloud-imports" lint targeting `cloud/` +
-   `cmd/hero-cloud/` so the same rule fires on the future hero-cloud
-   tree before the cut. Both are small refactors and may land as their
-   own commits.
+Plan. Phase 0 follow-ons are complete; no remaining prerequisites.
 
 → `.hero/planning/initiatives/hero-cloud-split/spec.md`
 
