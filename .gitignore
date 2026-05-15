@@ -22,6 +22,7 @@ __snapshot/
 # OS
 .DS_Store
 site/
+!web/landing/site/
 
 # Auto-generated code intelligence (re-scan to regenerate)
 .hero/knowledge/code/
