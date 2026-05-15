@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-15T18:53:08Z · 99 ready specs_
+_Generated: 2026-05-15T19:06:29Z · 99 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -71,30 +71,33 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## cross-repo-peering — "Cross-Repo Peering — Conventions Travel, Specs Hand Off"
+## cross-repo-peering — "Cross-Repo Peering — Conventions Travel, Specs Hand Off, Heroes Call Each Other"
 _feature · planning · horizon: now_
 
-Lets a Hero workspace pull in a sibling repo's conventions and hand
-specs off to it without leaving the CLI — so backend and client
-heroes stop stepping on each other's patterns.
+Three-tier ladder for sibling Hero workspaces: sync peer call (ask
+B's Hero now), async handoff (pass the spec to B), or convention
+import (load B's rules into A). Backed by a stable peer UUID, a
+handoff trail recorded on every spec, and passive contract-import
+surfacing.
 
-**Status:** planning — spec just landed; no code yet. Existing
-`hero repos` foundation is the launch point, not a teardown target.
+**Status:** planning — design is locked, phasing sequenced, ready to
+move toward `/deliver`. Existing `hero repos` foundation is the
+launch point.
 
-**Pick up at:** validate the design fork (conventions-by-import vs.
-spec-handoff-as-primary) with the user before any code lands. Then
-start Phase 1 — the convention manifest + `hero relevant --peer`
-flag, which is the lowest-risk slice and unblocks the rest.
+**Pick up at:** Phase 0 — mint peer UUIDs at `hero init`, plumb the
+UUID through `hero.json`, upgrade `CrossRepoResolver` to dual-key on
+UUID (canonical) and alias (display). Phase 1 follows immediately
+with the handoff lifecycle and trail records.
 
 → `.hero/planning/features/cross-repo-peering/spec.md`
 
-**Files:** `internal/cli/repos.go`, `internal/spec/resolve.go`,
-`internal/config/config.go:1137-1184`,
-`.hero/planning/features/hero-cloud-split/spec.md` (for contracts seam),
-`.hero/planning/features/graph-memory-federation/spec.md` (cloud counterpart).
-**Skip:** building a new cross-repo registry; we have `hero repos` and
-it works. Re-inventing federation in v1; cloud federation is a
-separate spec that this one composes with.
+**Files:** `internal/cli/repos.go`, `internal/cli/init.go`,
+`internal/spec/resolve.go`, `internal/config/config.go:1137-1184`,
+`contracts/peering/` (new),
+`.hero/planning/features/hero-cloud-split/spec.md` (contracts seam),
+`.hero/planning/features/graph-memory-federation/spec.md` (cloud).
+**Skip:** machine-to-machine peering across hosts, auto-trigger
+boundary modes, full-delivery sync peer call — all v2+.
 
 ---
 
