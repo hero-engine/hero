@@ -38,6 +38,19 @@
   color: var(--hero-blue-500);
 }
 
+/* Active sidebar/TOC nav link — needs explicit color since .md-typeset doesn't reach the nav. */
+[data-md-color-scheme="default"] .md-nav__link--active,
+[data-md-color-scheme="default"] .md-nav__item--active > .md-nav__link {
+  color: var(--hero-blue-700);
+  font-weight: 600;
+}
+
+[data-md-color-scheme="slate"] .md-nav__link--active,
+[data-md-color-scheme="slate"] .md-nav__item--active > .md-nav__link {
+  color: var(--hero-blue-500);
+  font-weight: 600;
+}
+
 .md-header__button.md-logo img,
 .md-header__button.md-logo svg {
   height: 1.5rem;
