@@ -12,6 +12,7 @@ import (
 	"github.com/hero-engine/hero/internal/digest"
 	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/graph"
+	"github.com/hero-engine/hero/internal/peering"
 	"github.com/hero-engine/hero/internal/traversal"
 	"github.com/spf13/cobra"
 )
@@ -113,7 +114,39 @@ func runResume(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 	fmt.Print(brief.Markdown())
+
+	// Phase 3 cross-repo-peering: passive surface peer-owned contract
+	// imports in the changed-files set. Best-effort — never fail
+	// `hero resume` on a peering miss. Always uses the working-tree
+	// dirty set so the signal fires whether or not --focus / --auto
+	// was supplied (those flags bias the brief; the signal is
+	// independent).
+	scanFiles := focus
+	if len(scanFiles) == 0 {
+		scanFiles = autoFocus(projectRoot)
+	}
+	if signal := contractImportSignalForFocus(projectRoot, scanFiles); signal != "" {
+		fmt.Println()
+		fmt.Print(signal)
+	}
 	return nil
+}
+
+// contractImportSignalForFocus runs the contract-import scanner over
+// the given focus files and returns the rendered passive signal,
+// or "" if nothing to surface. Errors are swallowed by design: the
+// signal is supplementary context, never a blocker.
+func contractImportSignalForFocus(projectRoot string, files []string) string {
+	if len(files) == 0 {
+		return ""
+	}
+	hits, err := peering.ScanContractImports(projectRoot, peering.ScanOptions{
+		ChangedFiles: files,
+	})
+	if err != nil {
+		return ""
+	}
+	return peering.RenderContractImportSignal(hits)
 }
 
 // --- graph search (powers the default `hero search`) ---------------------

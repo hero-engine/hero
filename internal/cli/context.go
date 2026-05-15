@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/hero-engine/hero/internal/install"
+	"github.com/hero-engine/hero/internal/peering"
 	"github.com/hero-engine/hero/internal/workspace"
 	"github.com/spf13/cobra"
 )
@@ -35,9 +36,68 @@ active scope.`,
 	RunE: runContextScope,
 }
 
+// contextImportsCmd surfaces peer-owned contract imports across
+// changed files. Phase 3 of cross-repo-peering: pure passive signal,
+// no blocking, no prompts.
+//
+// Wired into the slash-command resume / context flow alongside
+// `hero context scope`. Quiet (no output, exit 0) when no changed
+// file imports a peer-owned contract symbol — so the slash-command
+// template can call it unconditionally.
+var (
+	contextImportsFiles []string
+)
+
+var contextImportsCmd = &cobra.Command{
+	Use:   "imports",
+	Short: "Surface peer-owned contract symbols imported by changed files",
+	Long: `Scans changed files in the working tree for Go imports of contract
+symbols listed in any configured peer's manifest. When a match is
+found, prints a one-line signal naming the symbol, the owning peer,
+the governing convention, and the last-changed commit on the peer
+side.
+
+This is a passive context signal — it never blocks, prompts, or
+auto-triggers a peer call. Use it as a hint that the change you're
+making crosses a repo boundary.
+
+By default scans the dirty files reported by ` + "`git status`" + `. Pass
+--files to override (comma-separated paths, repeatable).`,
+	RunE: runContextImports,
+}
+
 func init() {
 	contextCmd.AddCommand(contextScopeCmd)
+	contextCmd.AddCommand(contextImportsCmd)
+	contextImportsCmd.Flags().StringSliceVar(&contextImportsFiles, "files", nil, "files to scan (defaults to git-status dirty set)")
 	rootCmd.AddCommand(contextCmd)
+}
+
+func runContextImports(cmd *cobra.Command, args []string) error {
+	projectRoot := findProjectRoot()
+	files := contextImportsFiles
+	if len(files) == 0 {
+		files = append(files, args...)
+	}
+	if len(files) == 0 {
+		files = autoFocus(projectRoot)
+	}
+	if len(files) == 0 {
+		return nil
+	}
+	hits, err := peering.ScanContractImports(projectRoot, peering.ScanOptions{
+		ChangedFiles: files,
+	})
+	if err != nil {
+		// Stay quiet on scan errors — passive signal, not a guardrail.
+		return nil
+	}
+	signal := peering.RenderContractImportSignal(hits)
+	if signal == "" {
+		return nil
+	}
+	fmt.Fprint(cmd.OutOrStdout(), signal)
+	return nil
 }
 
 func runContextScope(cmd *cobra.Command, args []string) error {
