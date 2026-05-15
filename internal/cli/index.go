@@ -8,6 +8,7 @@ import (
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/index"
 	"github.com/hero-engine/hero/internal/install"
+	"github.com/hero-engine/hero/internal/peering"
 	"github.com/hero-engine/hero/internal/spec"
 	"github.com/hero-engine/hero/internal/workspace"
 	"github.com/spf13/cobra"
@@ -53,6 +54,11 @@ func runIndex(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("refreshing index: %w", err)
 		}
+		// Regenerate the peer manifest after a stale refresh too —
+		// convention edits may have changed publish status.
+		if mErr := peering.GenerateAndWriteManifest(projectRoot); mErr != nil && !indexQuiet {
+			fmt.Fprintf(os.Stderr, "  warning: peer manifest regen failed: %v\n", mErr)
+		}
 		if !indexQuiet {
 			if stats.IsClean() {
 				fmt.Printf("Index is current (%d specs scanned in %dms)\n", stats.Scanned, stats.DurationMS)
@@ -71,6 +77,11 @@ func runIndex(cmd *cobra.Command, args []string) error {
 	stats, err := index.Rebuild(heroDir)
 	if err != nil {
 		return fmt.Errorf("rebuilding index: %w", err)
+	}
+
+	// Regenerate the peer manifest as part of the full rebuild.
+	if mErr := peering.GenerateAndWriteManifest(projectRoot); mErr != nil && !indexQuiet {
+		fmt.Fprintf(os.Stderr, "  warning: peer manifest regen failed: %v\n", mErr)
 	}
 
 	if indexQuiet {

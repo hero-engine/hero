@@ -88,6 +88,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 	}
 
 	var planning, inReview, delivering, completed []*spec.Spec
+	var handoffPending, handedBack []*spec.Spec
 	var conventions, decisions, rules, external, context, notes []*spec.Spec
 	for _, s := range specs {
 		switch {
@@ -116,14 +117,23 @@ func runStatus(cmd *cobra.Command, args []string) error {
 				delivering = append(delivering, s)
 			case spec.StatusCompleted:
 				completed = append(completed, s)
+			case spec.StatusHandedOff, spec.StatusAwaitingPeer:
+				handoffPending = append(handoffPending, s)
+			case spec.StatusHandedBack:
+				handedBack = append(handedBack, s)
 			}
 		}
 	}
 
-	// Print in-flight work
+	// Surface handed-back work prominently — the peer finished and
+	// the ball is on this side again.
+	printSpecGroup("Handed Back (verify on this side)", handedBack, projectRoot, true)
+	// Then normal in-flight work.
 	printSpecGroup("Delivering", delivering, projectRoot, true)
 	printSpecGroup("In Review", inReview, projectRoot, true)
 	printSpecGroup("Planning", planning, projectRoot, true)
+	// Handoffs in flight elsewhere.
+	printSpecGroup("Handed Off / Awaiting Peer", handoffPending, projectRoot, true)
 	fmt.Println()
 
 	// Print completed
@@ -181,7 +191,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 	printConnectionHealth(cfg)
 
 	// Summary with version info
-	totalInFlight := len(planning) + len(inReview) + len(delivering)
+	totalInFlight := len(planning) + len(inReview) + len(delivering) + len(handoffPending) + len(handedBack)
 	totalKnowledge := len(conventions) + len(decisions) + len(rules) + len(external) + len(context) + len(notes)
 
 	binaryVersion := rootCmd.Version

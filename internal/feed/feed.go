@@ -13,6 +13,12 @@ import (
 )
 
 // Valid event types.
+//
+// Adding a new type: append it here. ReadEvents tolerates unknown
+// types in old log lines, but the IsValidType gate on hero event
+// blocks the CLI from creating them ad-hoc. Cross-repo peering event
+// kinds (peer.*, workspace.peer_id_minted) are listed alongside the
+// original feed kinds so the events.log stays consistent.
 var ValidTypes = []string{
 	"spec_created",
 	"spec_updated",
@@ -20,6 +26,16 @@ var ValidTypes = []string{
 	"decision_made",
 	"blocker_hit",
 	"delivery_complete",
+	"subproject_changed",
+
+	// cross-repo-peering (Phase 0+1)
+	"workspace.peer_id_minted",
+	"peer.handoff.sent",
+	"peer.handoff.received",
+	"peer.handoff.bounced",
+	"peer.handoff.accepted",
+	"peer.call.invoked",
+	"peer.call.completed",
 }
 
 // FeedEvent is a single entry in the activity feed.
