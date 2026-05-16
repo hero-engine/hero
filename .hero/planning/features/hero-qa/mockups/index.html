@@ -161,6 +161,8 @@ h2 .h2sub { font-weight: 500; font-size: 14px; color: var(--text-muted); margin-
 }
 .tile.killer .tile-num { background: var(--accent-qa-gutter-bg); color: var(--accent-qa-gutter); }
 .tile.default-landing .tile-num { background: #eaf2fb; color: var(--hero-blue-700); }
+.tile.ai-brand .tile-num { background: #eaf2fb; color: var(--hero-blue-700); }
+.tile-tag.ai-brand { background: var(--hero-blue-700); }
 .tile-title { font-size: 17px; font-weight: 600; margin: 0 0 6px; }
 .tile-tag {
     display: inline-flex; align-items: center; gap: 4px;
@@ -191,7 +193,7 @@ h2 .h2sub { font-weight: 500; font-size: 14px; color: var(--text-muted); margin-
         <div class="logo"><svg viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg></div>
         <div>
             <div class="eyebrow">Hero QA Domain Pack</div>
-            <h1>Eight mockup surfaces</h1>
+            <h1>Nine mockup surfaces</h1>
         </div>
     </div>
 
@@ -206,11 +208,13 @@ h2 .h2sub { font-weight: 500; font-size: 14px; color: var(--text-muted); margin-
     <section class="preamble">
         <p>UX exploration for the <strong>Hero QA domain pack</strong> — the quality surface that lives alongside Hero's engineering and PM surfaces in the same workspace. Thesis: <em>Hero QA is the quality spine of the sprint and release, not a TestRail clone with chat.</em> Coverage is a story-completion gate; regression status is a release-readiness signal; AI authors 40-80 test cases per sprint in minutes; defects from TestRail/Xray/Jira/GitHub are unified into one queue by normalization (kept fidelity, no migration).</p>
 
-        <p>The pack reuses PM's locked UX grammar wholesale — left nav · tabbed center pane · artifact header + body · <strong>bottom strip</strong> with state-aware action buttons + chat input · <strong>right panel</strong> with sticky ambient region atop a rolling chat scroll. What's <em>QA-unique</em>: coverage signals in story rows, AC-traceable case rendering, the <strong>three-action rejection composer</strong> on stories in <code>qa-ready</code> (Add AC · Suggest new story · Reject as quality issue — preventing scope-creep through the gate), the <strong>four-action test-issue triage</strong> (bad test · reject story · raise bug · flag regression), the active <strong>flaky backlog</strong> with verdict workflow driving toward zero, and the <strong>release-gate verdict banner</strong> aggregating coverage + regression + blockers into Go/No-Go.</p>
+        <p><strong>AI-assisted workflow is the centerpiece, not decoration.</strong> Every screen renders the four AI surfaces that make Hero feel like a colleague, not a tool: a prominent <em>Chat</em> entry pinned at the top of the left nav (bolt icon); the <strong>inline-propose pattern</strong> where agents like <code>test-author</code> and <code>qa-investigator</code> land proposed content <em>in the artifact</em> (case rows, finding text, verdict reasoning) with per-item Accept/Edit/Reject and "⏎ to accept" hints; a <strong>right-rail chat</strong> with a sticky ambient region atop a rolling agent conversation showing real prompts, agent responses, and system events; a <strong>two-row bottom strip</strong> combining state-aware verb buttons with a chat input carrying the model chip (<code>Sonnet 4.6</code>), <code>/</code> and <code>@</code> tool affordances. Non-engineering domains welcome heavier AI assistance — these surfaces ship leaned-in, not hidden.</p>
 
-        <p>The <strong>Reject (compose findings)</strong> button on a story in <code>qa-ready</code> is the platform thesis in one click — the QA equivalent of PM's <em>Hand off to /design</em>. It lives inline-prominent in the bottom strip with all three radio actions equally visible. Cyan-teal (<code>#0891b2</code>) is reserved for QA-authored cross-pack content (the collapsible <em>QA Findings</em> block written into PM stories on rejection).</p>
+        <p>What's <em>QA-unique</em> beyond the shared AI grammar: coverage signals in story rows, AC-traceable case rendering with derivation provenance, the <strong>three-action rejection composer</strong> on stories in <code>qa-ready</code> (Add AC · Suggest new story · Reject as quality issue — preventing scope-creep through the gate), the <strong>four-action test-issue triage</strong> (bad test · reject story · raise bug · flag regression) ranked by `test-issue-triager` confidence, the active <strong>flaky backlog</strong> with verdict workflow driving toward zero, and the <strong>release-gate verdict banner</strong> aggregating coverage + regression + blockers into Go/No-Go with the reasoning chain visible.</p>
 
-        <p>Eight screens follow. Open them in order: Story queue (default landing) → Story qa-ready rejection (brand interaction) → Test plan editor (coverage matrix) → Test case editor (format-aware) → Unified inbox (normalization across sources) → Release-gate (Go/No-Go) → Flaky backlog (zero-flake drive) → Cross-domain handoff stream (QA-side graph events).</p>
+        <p>The <strong>Reject (compose findings)</strong> button on a story in <code>qa-ready</code> is the platform thesis in one click — the QA equivalent of PM's <em>Hand off to /design</em>. It lives inline-prominent in the bottom strip with all three radio actions equally visible, and the findings textarea is an <em>AI-proposed block from <code>qa-investigator</code></em>, not a blank field. Cyan-teal (<code>#0891b2</code>) is reserved for QA-authored cross-pack content (the collapsible <em>QA Findings</em> block written into PM stories on rejection).</p>
+
+        <p>Nine screens follow. Open them in order: Story queue (default landing) → Story qa-ready rejection (brand interaction) → Test plan editor with proposed Case-C6 → Test case editor (AI-authored provenance + history) → Unified inbox (ranked-confidence triage) → Release-gate (reasoned Go/No-Go) → Flaky backlog (proposed verdicts) → Cross-domain handoff stream (pattern detection) → <strong>AI authoring mid-flight</strong> (the brand demo — five proposed cases landing inline in real time).</p>
     </section>
 
     <h2>Six design-original contributions <span class="h2sub">things that don't appear in any QA tool studied</span></h2>
@@ -234,14 +238,39 @@ h2 .h2sub { font-weight: 500; font-size: 14px; color: var(--text-muted); margin-
             <div>Examples</div>
         </div>
         <div class="role-row">
-            <div class="surface">Bottom strip buttons</div>
+            <div class="surface">Left nav · Chat entry</div>
+            <div class="word verb">AI access</div>
+            <div class="desc">Bolt-icon chat tab pinned at top of left nav. Always one click away. Same single rolling conversation visible across all artifacts.</div>
+        </div>
+        <div class="role-row">
+            <div class="surface">Bottom strip · verb row</div>
             <div class="word verb">Verbs</div>
             <div class="desc">Author cases · Reject (compose findings) · Approve &amp; mark Complete · Run · Classify · Promote to regression</div>
         </div>
         <div class="role-row">
-            <div class="surface">Ambient (sticky chat top)</div>
+            <div class="surface">Bottom strip · chat input</div>
+            <div class="word verb">AI input</div>
+            <div class="desc">Model chip (<code>Sonnet 4.6</code>) · placeholder ("Refine this case — try 'add a step for retry exhaustion'…") · <code>/</code> and <code>@</code> tools · send. Carries the same chat shown in the right rail.</div>
+        </div>
+        <div class="role-row">
+            <div class="surface">Inline-proposed blocks</div>
+            <div class="word qa">AI authoring</div>
+            <div class="desc"><em>Proposed by <code>test-author</code> · just now</em> badges with pulsing dot. Land in the artifact (case rows, finding text, verdict reasoning). Per-block Accept · Edit · Reject + "⏎ to accept" hint. Edited / accepted states change border color.</div>
+        </div>
+        <div class="role-row">
+            <div class="surface">Ambient · static facts</div>
             <div class="word noun">Nouns / smarts</div>
-            <div class="desc">Coverage gap card · "AC#3 is failing" · linked engineering feature + delivery state · "qa-flake-curator classification: test-issue (87% confidence)"</div>
+            <div class="desc">Coverage gap card · "AC#3 is failing" · linked engineering feature + delivery state · parent epic chip</div>
+        </div>
+        <div class="role-row">
+            <div class="surface">Ambient · AI suggestions</div>
+            <div class="word noun">Actionable</div>
+            <div class="desc">Dashed-blue cards with pulse + agent name + Accept/Override/Dismiss buttons. e.g. "Suggestion · <code>qa-flake-curator</code> · 87% confidence — RC-441 looks like test-issue. Accept verdict?"</div>
+        </div>
+        <div class="role-row">
+            <div class="surface">Right-rail chat scroll</div>
+            <div class="word noun">Conversation</div>
+            <div class="desc">Realistic agent thread under the ambient region. User bubbles with <code>via /command</code> · agent bubbles with reasoning · <code>sys-event</code> rows for state transitions ("<code>test-author</code> drafted 5 cases → proposed inline").</div>
         </div>
         <div class="role-row">
             <div class="surface">Artifact header chips</div>
@@ -926,8 +955,150 @@ h2 .h2sub { font-weight: 500; font-size: 14px; color: var(--text-muted); margin-
             <div class="tile-body">
                 <span class="tile-num">08</span>
                 <h3 class="tile-title">Cross-domain handoff stream — QA-side</h3>
-                <p class="tile-blurb">Cross-pack visibility play. QA-driven cross-domain events as a graph timeline: rejections sent back to engineering, bugs raised from failures, seam requests, regression promotions, approvals. Time toggle + direction filter. <strong>Edge timeline</strong> in the right rail shows the full lineage of a selected rejection (round 1 → fix → round 2 → engineer notified). Each event carries its edge-type chip — the platform's vocabulary made visible.</p>
+                <p class="tile-blurb">Cross-pack visibility play. QA-driven cross-domain events as a graph timeline: rejections sent back to engineering, bugs raised from failures, seam requests, regression promotions, approvals. Time toggle + direction filter. <strong>Edge timeline</strong> in the right rail shows the full lineage of a selected rejection (round 1 → fix → round 2 → engineer notified). Each event carries its edge-type chip — the platform's vocabulary made visible. <code>qa-investigator</code> surfaces a pattern-detection proposed-block: "Story-2847 has 2 rejections — route to PM for AC tightening?"</p>
                 <p class="tile-influences">Linear cycle view timeline · Kanbanize cycle-time histogram · Hero-shaped graph traversal · Aha strategic-context strip</p>
+            </div>
+        </a>
+
+        <!-- 09 — AI AUTHORING MID-FLIGHT (featured, AI brand demo) -->
+        <a href="09-ai-authoring-inflight.html" class="tile ai-brand featured">
+            <div class="preview">
+                <svg viewBox="0 0 720 320" preserveAspectRatio="xMidYMid slice">
+                    <rect width="720" height="320" fill="#ffffff"/>
+                    <rect x="0" y="0" width="720" height="22" fill="#ffffff" stroke="#e4e7eb"/>
+                    <path d="M28 6 L20 16 L26 16 L24 22 L34 14 L28 14 Z" fill="#9bc1e6"/>
+                    <text x="40" y="14" font-size="9" font-weight="700" fill="#1a1d23" font-family="Inter,sans-serif">Hero</text>
+                    <rect x="64" y="6" width="22" height="10" rx="3" fill="#eef0f4"/>
+                    <text x="75" y="14" font-size="7" fill="#5d646e" font-weight="700" text-anchor="middle" font-family="Inter,sans-serif">QA</text>
+
+                    <!-- left nav with prominent chat entry -->
+                    <rect x="0" y="22" width="120" height="298" fill="#f7f8fa"/>
+                    <rect x="6" y="30" width="108" height="16" rx="3" fill="#eaf2fb"/>
+                    <path d="M22 34 L17 41 L21 41 L19 46 L26 39 L22 39 Z" fill="#9bc1e6"/>
+                    <text x="32" y="42" font-size="8" font-weight="700" fill="#2a6cb5" font-family="Inter,sans-serif">Chat</text>
+                    <rect x="80" y="36" width="6" height="6" rx="3" fill="#6cb6ff"/>
+                    <line x1="6" y1="52" x2="114" y2="52" stroke="#e4e7eb"/>
+                    <text x="12" y="64" font-size="7" fill="#5d646e" font-family="Inter,sans-serif">Story queue</text>
+                    <text x="12" y="78" font-size="7" font-weight="700" fill="#1a1d23" font-family="Inter,sans-serif">Test plans</text>
+                    <text x="12" y="92" font-size="7" fill="#5d646e" font-family="Inter,sans-serif">Test cases</text>
+
+                    <!-- center: 5 proposed cards (2 accepted, 1 edited, 2 pending) -->
+                    <text x="130" y="38" font-size="9" font-weight="700" fill="#1a1d23" font-family="Inter,sans-serif">Plan: agent-retry-config-coverage · Story-2853</text>
+                    <text x="130" y="50" font-size="7" font-weight="600" fill="#2a6cb5" font-family="Inter,sans-serif">5 cases proposed by test-author · 2 accepted · 1 edited · 2 pending</text>
+                    <circle cx="465" cy="48" r="3" fill="#6cb6ff">
+                        <animate attributeName="opacity" values="0.4;1;0.4" dur="1.8s" repeatCount="indefinite"/>
+                    </circle>
+
+                    <!-- Case #1: accepted (green border) -->
+                    <rect x="130" y="60" width="380" height="32" rx="6" fill="#f0fdf4" stroke="#16a249"/>
+                    <rect x="138" y="66" width="86" height="11" rx="5" fill="#bbf7d0"/>
+                    <text x="181" y="74" font-size="6" font-weight="700" fill="#16a249" text-anchor="middle" font-family="Inter,sans-serif">accepted · 60s ago</text>
+                    <rect x="138" y="80" width="280" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="138" y="86" width="160" height="3" rx="1" fill="#5d646e"/>
+
+                    <!-- Case #2: edited (amber border) -->
+                    <rect x="130" y="98" width="380" height="36" rx="6" fill="#fffbeb" stroke="#d97706"/>
+                    <rect x="138" y="104" width="74" height="11" rx="5" fill="#fed7aa"/>
+                    <text x="175" y="112" font-size="6" font-weight="700" fill="#d97706" text-anchor="middle" font-family="Inter,sans-serif">edited · 30s ago</text>
+                    <rect x="138" y="118" width="280" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="138" y="124" width="220" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="420" y="102" width="40" height="11" rx="4" fill="#d97706"/>
+                    <text x="440" y="110" font-size="6" font-weight="700" fill="white" text-anchor="middle" font-family="Inter,sans-serif">Accept</text>
+                    <rect x="464" y="102" width="36" height="11" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <text x="482" y="110" font-size="6" fill="#5d646e" text-anchor="middle" font-family="Inter,sans-serif">Revert</text>
+
+                    <!-- Case #3: accepted -->
+                    <rect x="130" y="140" width="380" height="30" rx="6" fill="#f0fdf4" stroke="#16a249"/>
+                    <rect x="138" y="146" width="86" height="11" rx="5" fill="#bbf7d0"/>
+                    <text x="181" y="154" font-size="6" font-weight="700" fill="#16a249" text-anchor="middle" font-family="Inter,sans-serif">accepted · 30s ago</text>
+                    <rect x="138" y="160" width="280" height="3" rx="1" fill="#1a1d23"/>
+
+                    <!-- Case #4: pending (blue border, default proposed) -->
+                    <rect x="130" y="176" width="380" height="36" rx="6" fill="#eff6ff" stroke="#6cb6ff"/>
+                    <rect x="138" y="182" width="118" height="11" rx="5" fill="#dbeafe"/>
+                    <text x="197" y="190" font-size="6" font-weight="700" fill="#2a6cb5" text-anchor="middle" font-family="Inter,sans-serif">proposed by test-author · now</text>
+                    <circle cx="143" cy="187" r="2" fill="#2a6cb5">
+                        <animate attributeName="opacity" values="0.4;1;0.4" dur="1.8s" repeatCount="indefinite"/>
+                    </circle>
+                    <rect x="138" y="196" width="280" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="138" y="202" width="200" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="380" y="180" width="40" height="11" rx="4" fill="#2a6cb5"/>
+                    <text x="400" y="188" font-size="6" font-weight="700" fill="white" text-anchor="middle" font-family="Inter,sans-serif">Accept</text>
+                    <rect x="424" y="180" width="28" height="11" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <text x="438" y="188" font-size="6" fill="#5d646e" text-anchor="middle" font-family="Inter,sans-serif">Edit</text>
+                    <rect x="456" y="180" width="34" height="11" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <text x="473" y="188" font-size="6" fill="#5d646e" text-anchor="middle" font-family="Inter,sans-serif">Reject</text>
+
+                    <!-- Case #5: pending -->
+                    <rect x="130" y="218" width="380" height="32" rx="6" fill="#eff6ff" stroke="#6cb6ff"/>
+                    <rect x="138" y="224" width="118" height="11" rx="5" fill="#dbeafe"/>
+                    <text x="197" y="232" font-size="6" font-weight="700" fill="#2a6cb5" text-anchor="middle" font-family="Inter,sans-serif">proposed by test-author · now</text>
+                    <circle cx="143" cy="229" r="2" fill="#2a6cb5">
+                        <animate attributeName="opacity" values="0.4;1;0.4" dur="1.8s" repeatCount="indefinite"/>
+                    </circle>
+                    <rect x="138" y="238" width="280" height="3" rx="1" fill="#1a1d23"/>
+
+                    <!-- bottom strip with chat input pre-filled -->
+                    <rect x="120" y="258" width="392" height="62" fill="white" stroke="#e4e7eb"/>
+                    <text x="130" y="270" font-size="6" font-weight="700" fill="#2a6cb5" font-family="Inter,sans-serif">AUTHORING MID-FLIGHT · 2 accepted · 1 edited · 2 pending</text>
+                    <circle cx="260" cy="268" r="2" fill="#6cb6ff">
+                        <animate attributeName="opacity" values="0.4;1;0.4" dur="1.8s" repeatCount="indefinite"/>
+                    </circle>
+                    <rect x="130" y="276" width="80" height="14" rx="4" fill="#2a6cb5"/>
+                    <text x="170" y="285" font-size="7" font-weight="700" fill="white" text-anchor="middle" font-family="Inter,sans-serif">Accept all remaining</text>
+                    <rect x="216" y="276" width="78" height="14" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <text x="255" y="285" font-size="7" fill="#1a1d23" text-anchor="middle" font-family="Inter,sans-serif">Regenerate 4 &amp; 5</text>
+                    <!-- pre-filled chat input -->
+                    <rect x="130" y="296" width="370" height="18" rx="5" fill="white" stroke="#6cb6ff" stroke-width="1.5"/>
+                    <rect x="136" y="301" width="32" height="8" rx="3" fill="#eef0f4"/>
+                    <text x="152" y="307" font-size="6" font-weight="700" fill="#5d646e" text-anchor="middle" font-family="Inter,sans-serif">Sonnet 4.6</text>
+                    <text x="174" y="307" font-size="7" fill="#1a1d23" font-family="Inter,sans-serif">Make #5 use boundary value for max-attempts</text>
+                    <rect x="476" y="299" width="20" height="13" rx="3" fill="#2a6cb5"/>
+                    <text x="486" y="308" font-size="7" font-weight="700" fill="white" text-anchor="middle" font-family="Inter,sans-serif">↗</text>
+
+                    <!-- right rail: ambient + chat scroll -->
+                    <rect x="522" y="22" width="198" height="298" fill="#f7f8fa" stroke="#e4e7eb"/>
+                    <text x="530" y="40" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">CHAT · Plan agent-retry-config-coverage</text>
+                    <!-- ambient suggest -->
+                    <rect x="528" y="48" width="184" height="56" rx="6" fill="#f7fbff" stroke="#6cb6ff" stroke-dasharray="3 2"/>
+                    <text x="536" y="60" font-size="6" font-weight="700" fill="#2a6cb5" font-family="Inter,sans-serif">SUGGESTION · test-author</text>
+                    <circle cx="697" cy="58" r="2" fill="#2a6cb5"/>
+                    <rect x="536" y="66" width="160" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="536" y="73" width="140" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="536" y="80" width="130" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="536" y="91" width="76" height="11" rx="3" fill="#2a6cb5"/>
+                    <text x="574" y="99" font-size="6" font-weight="700" fill="white" text-anchor="middle" font-family="Inter,sans-serif">Accept all</text>
+                    <!-- chat bubbles -->
+                    <rect x="558" y="118" width="148" height="32" rx="9" fill="#cce0f5"/>
+                    <text x="565" y="129" font-size="6" fill="#2a6cb5" font-weight="600" font-family="Menlo,monospace">via /author-cases</text>
+                    <rect x="565" y="134" width="120" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="565" y="141" width="110" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="528" y="158" width="172" height="36" rx="9" fill="#f4f5f7"/>
+                    <rect x="535" y="166" width="100" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="535" y="173" width="160" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="535" y="180" width="150" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="535" y="187" width="120" height="3" rx="1" fill="#5d646e"/>
+                    <!-- sys events -->
+                    <rect x="528" y="200" width="184" height="14" rx="3" fill="white" stroke="#e4e7eb"/>
+                    <text x="534" y="210" font-size="6" fill="#5d646e" font-family="Menlo,monospace">test-author proposed 5 cases · 90s</text>
+                    <rect x="528" y="218" width="184" height="14" rx="3" fill="white" stroke="#e4e7eb"/>
+                    <text x="534" y="228" font-size="6" fill="#5d646e" font-family="Menlo,monospace">Jamie accepted #1 · 60s</text>
+                    <rect x="528" y="236" width="184" height="14" rx="3" fill="white" stroke="#e4e7eb"/>
+                    <text x="534" y="246" font-size="6" fill="#5d646e" font-family="Menlo,monospace">Jamie edited #2 · 30s</text>
+                    <rect x="528" y="254" width="184" height="14" rx="3" fill="white" stroke="#e4e7eb"/>
+                    <text x="534" y="264" font-size="6" fill="#5d646e" font-family="Menlo,monospace">Jamie accepted #3 · 30s</text>
+                    <!-- recent user bubble teaser -->
+                    <rect x="566" y="276" width="140" height="22" rx="9" fill="#cce0f5"/>
+                    <rect x="572" y="282" width="120" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="572" y="289" width="100" height="3" rx="1" fill="#1a1d23"/>
+                </svg>
+            </div>
+            <div class="tile-body">
+                <span class="tile-num">09 · AI BRAND DEMO</span>
+                <span class="tile-tag ai-brand">AI brand demo</span>
+                <h3 class="tile-title">AI authoring mid-flight — five cases landing inline</h3>
+                <p class="tile-blurb">The QA equivalent of PM's <code>08-inline-proposal.html</code>. Jamie just clicked <em>Author cases</em> on Story-2853. <code>test-author</code> is mid-flight — 5 proposed cases land in the test plan's Cases tab as <code>.proposed-block</code>s. <strong>Two accepted</strong> (green border), <strong>one edited</strong> (amber border, "edited 30s ago"), <strong>two still pending</strong> (blue border, pulsing "proposed by <code>test-author</code> · now"). Right-rail chat scroll shows the authoring conversation; bottom-strip chat input is <em>pre-filled</em> with Jamie's next refinement prompt. Pulsing dots on pending proposals + on the mid-flight status label make the live-AI feel visceral.</p>
+                <p class="tile-influences">PM <code>08-inline-proposal.html</code> as gold standard · MetaGPT single-output-artifact discipline · BMad sequential handoff payload · ChatPRD inline-edit-and-accept · Functionize NL-to-test composition</p>
             </div>
         </a>
 

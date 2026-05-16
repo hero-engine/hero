@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<!-- Hero QA Mock: 07-unified-inbox | Singleton view, kind tabs, normalized rows with source decoration preserved -->
-<!-- The unification thesis visible: bugs (Jira/GitHub) + test issues (TestRail/Xray/Native) in one queue, triage from the right rail. -->
+<!-- Hero QA Mock: 07-unified-inbox | AI-surface retrofit -->
+<!-- Demonstrates ambient-suggest + inline-propose + ranked-action triage + chat-scroll for the QA inbox. -->
+<!-- The triage actions are not just buttons — they are the AI's *ranked output*; the agent's reasoning lives next to them. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Unified inbox · All · Hero QA</title>
+<title>Unified inbox · RC-441 triage · Hero QA</title>
 <style>
 :root {
     --bg: #ffffff; --bg-secondary: #f7f8fa; --bg-tertiary: #eef0f4; --bg-hover: #f0f2f6;
@@ -14,6 +15,9 @@
     --hero-blue-300: #9bc1e6; --hero-blue-500: #6cb6ff; --hero-blue-700: #2a6cb5;
     --success: #16a249; --warning: #d97706; --danger: #dc2626;
     --accent-qa-gutter: #0891b2;
+    --accent-qa-cyan: #0e7490;
+    --accent-qa-cyan-bg: #f0fbfd;
+    --accent-qa-cyan-border: #c6e9ef;
     --accent-qa-ready: #0284c7;
     --accent-qa-rejected: #d97706;
     --accent-flaky: #a855f7;
@@ -46,7 +50,7 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 .avatar.aisha { background: linear-gradient(135deg, #ff9eb4, #ec4899); }
 .avatar.sarah { background: linear-gradient(135deg, #6ee7b7, #047857); }
 
-.body-grid { display: grid; grid-template-columns: 240px 1fr 360px; height: calc(100vh - 48px); min-height: 0; }
+.body-grid { display: grid; grid-template-columns: 240px 1fr 380px; height: calc(100vh - 48px); min-height: 0; }
 
 /* Left nav */
 .nav { background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 12px 8px; overflow-y: auto; display: flex; flex-direction: column; }
@@ -229,33 +233,202 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 .row-age { font-size: 11px; color: var(--text-muted); text-align: right; }
 .row-assignee { display: flex; justify-content: flex-end; }
 
+/* Inline proposed block — inset under the selected row */
+.row-inset {
+    padding: 0 24px 14px;
+    background: linear-gradient(180deg, #eaf2fb 0%, var(--bg) 100%);
+    border-bottom: 1px solid var(--border);
+}
+.row-inset-pad { padding-top: 10px; }
+.proposed-block {
+    border: 1.5px dashed var(--hero-blue-500);
+    background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+    border-radius: 8px;
+    padding: 12px 14px 8px;
+    position: relative;
+}
+.proposed-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10.5px; font-weight: 600;
+    color: var(--hero-blue-700);
+    background: white; border: 1px solid #cfe1f4;
+    padding: 2px 8px; border-radius: 10px;
+    position: absolute; top: -10px; left: 12px;
+}
+.proposed-badge .dot-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); }
+.proposed-badge code { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; background: transparent; color: var(--hero-blue-700); }
+.proposed-text {
+    margin-top: 4px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    padding: 4px 0 2px;
+    color: var(--text);
+}
+.proposed-text strong { font-weight: 600; }
+.proposed-text code { background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; font-size: 11.5px; font-family: ui-monospace, Menlo, monospace; }
+.proposed-actions {
+    display: flex; gap: 4px; margin-top: 8px;
+    padding-top: 6px; border-top: 1px dashed var(--hero-blue-300);
+    align-items: center;
+}
+.proposed-actions button {
+    border: 0; background: transparent; font-family: inherit;
+    font-size: 11.5px; padding: 3px 9px; border-radius: 4px;
+    cursor: pointer; color: var(--text-secondary);
+    display: inline-flex; align-items: center; gap: 4px; font-weight: 500;
+}
+.proposed-actions button.accept { color: var(--hero-blue-700); font-weight: 600; background: #eaf2fb; }
+.proposed-actions button.accept:hover { background: #d6e7f8; }
+.proposed-actions button.edit { color: var(--text); }
+.proposed-actions button.reject { color: var(--text-muted); }
+.proposed-actions button:hover { background: var(--bg-hover); }
+.proposed-actions .hint { margin-left: auto; font-size: 10.5px; color: var(--text-muted); }
+
+/* Bottom chat input strip — QA cyan-tinged, no verbs */
+.bottom-strip {
+    border-top: 1px solid var(--border);
+    background: var(--accent-qa-cyan-bg);
+    padding: 8px 14px 10px;
+    flex-shrink: 0;
+}
+.bottom-input {
+    display: flex; align-items: center; gap: 8px;
+    border: 1px solid var(--accent-qa-cyan-border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    background: var(--bg);
+}
+.bottom-input:focus-within {
+    border-color: var(--hero-blue-500);
+    box-shadow: 0 0 0 3px rgba(108, 182, 255, 0.18);
+}
+.bottom-input input {
+    flex: 1; border: 0; outline: 0;
+    font-family: inherit; font-size: 13px;
+    color: var(--text); background: transparent;
+}
+.bottom-input input::placeholder { color: var(--text-muted); }
+.bottom-input .tool {
+    width: 22px; height: 22px;
+    display: grid; place-items: center;
+    border-radius: 4px; cursor: pointer;
+    color: var(--text-muted);
+    font-family: ui-monospace, Menlo, monospace; font-size: 12px;
+}
+.bottom-input .tool:hover { background: var(--bg-hover); color: var(--text); }
+.model-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--bg-tertiary); padding: 2px 8px;
+    border-radius: 4px; font-size: 10.5px;
+    color: var(--text-secondary); font-weight: 600; cursor: pointer;
+}
+.model-chip .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-500); }
+.send-btn {
+    width: 26px; height: 26px; border-radius: 6px;
+    background: var(--primary); color: white;
+    border: 0; cursor: pointer;
+    display: grid; place-items: center;
+}
+.send-btn:hover { background: var(--hero-blue-700); }
+
 /* Right panel */
 .right-panel { border-left: 1px solid var(--border); background: var(--bg); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 .right-header { height: 36px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--border); background: var(--bg-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); }
+.right-header .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
 .right-header .ctx-label { margin-left: auto; text-transform: none; letter-spacing: 0; font-size: 11px; color: var(--text-muted); font-weight: 400; font-family: ui-monospace, Menlo, monospace; }
-.right-scroll { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+.right-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-height: 0; }
 
-/* Selected item header in right rail */
-.sel-head {
-    display: flex; flex-direction: column; gap: 6px;
-    padding-bottom: 12px; border-bottom: 1px solid var(--border);
-}
-.sel-head .sel-meta {
-    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-}
-.sel-head .sel-title {
-    font-size: 14px; font-weight: 600; line-height: 1.35;
-}
-.sel-head .sel-id { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: var(--text); background: var(--bg-tertiary); padding: 1px 6px; border-radius: 3px; }
-.sel-meta-row { display: flex; gap: 14px; font-size: 11px; color: var(--text-muted); }
-
-/* Triage panel — the brand surface */
-.triage-panel {
+/* Ambient block — sticks to top of right rail */
+.ambient {
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg) 88%, rgba(255,255,255,0) 100%);
+    padding: 10px 14px 12px;
+    border-bottom: 1px solid var(--border);
     display: flex; flex-direction: column; gap: 8px;
+    flex-shrink: 0;
+}
+.ambient-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
+.ambient-card {
+    border: 1px solid var(--border); border-radius: 7px;
+    background: var(--bg); padding: 8px 10px;
+    font-size: 12px; display: flex; align-items: center; gap: 8px;
+}
+.ambient-card.relationship { background: var(--bg-secondary); }
+.ambient-card .label {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-muted); flex-shrink: 0;
+}
+.ambient-card .body { flex: 1; min-width: 0; }
+.ambient-card .body strong { font-weight: 600; }
+.ambient-card .body .sub { color: var(--text-muted); font-size: 11px; }
+.ambient-card .body .rel-link { color: var(--hero-blue-700); font-weight: 600; font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; }
+.ambient-card.crosskind {
+    background: linear-gradient(180deg, #fdf7ed 0%, var(--bg) 100%);
+    border-color: #f3deb8;
+    flex-direction: column; align-items: stretch; gap: 4px;
+}
+.ambient-card.crosskind .head {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--accent-qa-rejected); margin-bottom: 2px;
+}
+.ambient-card.crosskind .body { font-size: 12px; line-height: 1.5; }
+.ambient-card.crosskind .actions { display: flex; gap: 4px; margin-top: 4px; }
+.ambient-card.crosskind .actions button {
+    border: 0; background: transparent; font-family: inherit;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 9px; border-radius: 4px; cursor: pointer;
+    color: var(--text-secondary);
+}
+.ambient-card.crosskind .actions button.primary { background: #eaf2fb; color: var(--hero-blue-700); }
+.ambient-card.crosskind .actions button:hover { background: var(--bg-hover); }
+.ambient-card.crosskind .actions button.primary:hover { background: #d6e7f8; }
+
+/* Ambient-suggest — agent-driven recommendation card */
+.ambient-suggest {
+    border: 1px dashed var(--hero-blue-500);
+    background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+    border-radius: 7px;
+    padding: 9px 11px;
+    font-size: 12px; line-height: 1.5;
+}
+.ambient-suggest .head {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--hero-blue-700); margin-bottom: 5px;
+}
+.ambient-suggest .head .pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-700); }
+.ambient-suggest .head code { font-family: ui-monospace, Menlo, monospace; font-size: 10px; background: transparent; color: var(--hero-blue-700); }
+.ambient-suggest strong { font-weight: 600; }
+.ambient-suggest .actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
+.ambient-suggest .actions button {
+    border: 0; background: transparent; font-family: inherit;
+    font-size: 11px; padding: 3px 9px; border-radius: 4px; cursor: pointer;
+    color: var(--text-secondary); font-weight: 500;
+}
+.ambient-suggest .actions button.primary {
+    color: white; background: var(--accent-qa-rejected); font-weight: 600;
+}
+.ambient-suggest .actions button.primary:hover { background: #b86606; }
+.ambient-suggest .actions button:hover { background: var(--bg-hover); }
+
+/* Triage panel — now annotated with ranked confidence */
+.triage-panel {
+    padding: 12px 14px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    display: flex; flex-direction: column; gap: 8px;
+    flex-shrink: 0;
 }
 .section-label {
     font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
     color: var(--text-muted); margin-bottom: 2px;
+    display: flex; align-items: center; gap: 6px;
+}
+.section-label .agent-tag {
+    font-family: ui-monospace, Menlo, monospace; font-size: 10px;
+    background: #eaf2fb; color: var(--hero-blue-700);
+    padding: 1px 5px; border-radius: 3px;
+    text-transform: none; letter-spacing: 0;
+    font-weight: 600;
 }
 .triage-btn {
     display: flex; align-items: center; gap: 10px;
@@ -268,13 +441,14 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
     font-family: inherit; font-size: 12.5px;
     text-align: left;
     color: var(--text);
+    position: relative;
 }
 .triage-btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
 .triage-btn.primary {
-    background: var(--primary); color: white;
-    border-color: var(--primary);
+    background: var(--accent-qa-rejected); color: white;
+    border-color: var(--accent-qa-rejected);
 }
-.triage-btn.primary:hover { background: var(--hero-blue-700); }
+.triage-btn.primary:hover { background: #b86606; }
 .triage-btn.primary .tb-sub { color: rgba(255,255,255,0.85); }
 .triage-btn .tb-icon {
     width: 26px; height: 26px;
@@ -285,99 +459,58 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
     flex-shrink: 0;
 }
 .triage-btn.primary .tb-icon { background: rgba(255,255,255,0.18); color: white; }
-.triage-btn .tb-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.triage-btn .tb-name { font-weight: 600; }
+.triage-btn .tb-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.triage-btn .tb-name { font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.triage-btn .tb-name .conf {
+    font-size: 10.5px; font-weight: 600;
+    padding: 1px 5px; border-radius: 3px;
+    background: var(--bg-tertiary); color: var(--text-secondary);
+    font-family: ui-monospace, Menlo, monospace;
+}
+.triage-btn.primary .tb-name .conf {
+    background: rgba(255,255,255,0.25); color: white;
+}
 .triage-btn .tb-sub { font-size: 10.5px; color: var(--text-muted); }
-
-/* Investigator nudge */
-.nudge {
-    border: 1px dashed var(--hero-blue-500);
-    background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
-    border-radius: 7px;
-    padding: 9px 11px;
-    font-size: 12px; line-height: 1.5;
+/* Confidence bar visualization */
+.triage-btn .conf-bar {
+    position: absolute; bottom: 0; left: 0;
+    height: 2px;
+    background: var(--hero-blue-500);
+    border-bottom-left-radius: 6px;
 }
-.nudge .nudge-head {
+.triage-btn.primary .conf-bar {
+    background: rgba(255,255,255,0.5);
+}
+
+/* Chat scroll at bottom of right rail */
+.chat-scroll {
+    flex: 1; min-height: 0;
+    padding: 12px 14px 10px;
+    display: flex; flex-direction: column; gap: 10px;
+    overflow-y: auto;
+}
+.bubble-wrap { display: flex; flex-direction: column; gap: 3px; max-width: 100%; }
+.bubble-wrap.user { align-items: flex-end; }
+.bubble-wrap.agent { align-items: flex-start; }
+.via { font-size: 10px; color: var(--text-muted); padding: 0 4px; }
+.via code { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: var(--text-secondary); }
+.bubble { max-width: 300px; padding: 10px 13px; border-radius: 12px; font-size: 12.5px; line-height: 1.55; word-wrap: break-word; }
+.bubble.user { background: rgba(155, 193, 230, 0.22); color: var(--text); }
+.bubble.agent { background: #f4f5f7; color: var(--text); }
+.bubble code { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; background: rgba(0,0,0,0.06); padding: 0 4px; border-radius: 3px; }
+.bubble strong { font-weight: 600; }
+.sys-event {
     display: flex; align-items: center; gap: 6px;
-    font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
-    color: var(--hero-blue-700); margin-bottom: 5px;
+    padding: 6px 0; color: var(--text-muted);
+    font-size: 11px; font-style: italic;
+    border-top: 1px dashed var(--border);
+    border-bottom: 1px dashed var(--border);
+    margin: 2px 0;
 }
-.nudge .nudge-head .pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-700); }
-.nudge strong { font-weight: 600; }
-
-/* Cross-kind relationships */
-.rel-card {
-    border: 1px solid var(--border);
-    background: var(--bg);
-    border-radius: 7px;
-    padding: 9px 11px;
-    font-size: 12px;
-    display: flex; flex-direction: column; gap: 4px;
-}
-.rel-card .rel-row { display: flex; align-items: center; gap: 8px; }
-.rel-card .rel-icon { width: 16px; height: 16px; color: var(--text-muted); flex-shrink: 0; }
-.rel-card .rel-link { color: var(--hero-blue-700); font-weight: 600; font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; }
-.rel-card .rel-sub { font-size: 11px; color: var(--text-muted); margin-left: 24px; }
-.rel-card.ambient {
-    background: linear-gradient(180deg, #fdf7ed 0%, var(--bg) 100%);
-    border-color: #f3deb8;
-}
-.rel-card.ambient .rel-head {
-    font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
-    color: var(--accent-qa-rejected); margin-bottom: 4px;
-}
-.rel-card.ambient .rel-actions { display: flex; gap: 6px; margin-top: 6px; }
-.rel-card.ambient .rel-actions button {
-    border: 0; background: transparent;
-    font-family: inherit; font-size: 11px; font-weight: 600;
-    padding: 3px 9px; border-radius: 4px; cursor: pointer;
-    color: var(--text-secondary);
-}
-.rel-card.ambient .rel-actions button.accept { background: #eaf2fb; color: var(--hero-blue-700); }
-.rel-card.ambient .rel-actions button:hover { background: var(--bg-hover); }
-.rel-card.ambient .rel-actions button.accept:hover { background: #d6e7f8; }
-
-/* From source collapsible */
-.from-source {
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    background: var(--bg);
-}
-.from-source-head {
-    display: flex; align-items: center; gap: 8px;
-    padding: 8px 11px;
-    cursor: pointer;
-    font-size: 12px; font-weight: 600;
-}
-.from-source-head .chev { color: var(--text-muted); transition: transform 0.15s; }
-.from-source.open .chev { transform: rotate(90deg); }
-.from-source-body {
-    padding: 0 11px 10px;
-    display: flex; flex-direction: column; gap: 6px;
-    font-size: 11.5px;
-}
-.from-source.collapsed .from-source-body { display: none; }
-.fs-row { display: flex; gap: 8px; align-items: baseline; }
-.fs-row .fs-key { color: var(--text-muted); width: 90px; flex-shrink: 0; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
-.fs-row .fs-val { color: var(--text); }
-.fs-row .fs-val .fs-pill { font-family: ui-monospace, Menlo, monospace; font-size: 11px; background: var(--bg-tertiary); padding: 1px 5px; border-radius: 3px; }
-.fs-comment {
-    margin-top: 4px;
-    padding: 7px 9px;
-    background: var(--bg-secondary);
-    border-radius: 5px;
-    color: var(--text-secondary);
-    font-size: 11.5px; line-height: 1.5;
-    border-left: 2px solid var(--accent-qa-gutter);
-}
-.fs-comment .fs-comment-meta { font-size: 10.5px; color: var(--text-muted); margin-bottom: 2px; }
-.fs-link {
-    margin-top: 4px;
-    display: inline-flex; align-items: center; gap: 5px;
-    font-size: 11.5px; color: var(--hero-blue-700); font-weight: 600;
-    cursor: pointer; text-decoration: none;
-}
-.fs-link:hover { text-decoration: underline; }
+.sys-event::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
+.sys-event code { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; font-style: normal; }
+.sys-event.inline-event { color: var(--hero-blue-700); border-color: #cfe1f4; }
+.sys-event.inline-event::before { background: var(--hero-blue-700); }
 
 </style>
 </head>
@@ -498,6 +631,37 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                         <div class="row-status"><span class="status-dot"></span>Triage pending</div>
                         <div class="row-age">2h</div>
                         <div class="row-assignee"></div>
+                    </div>
+
+                    <!-- INLINE PROPOSED BLOCK — agent's triage recommendation lives in the artifact, not the chat -->
+                    <div class="row-inset">
+                        <div class="row-inset-pad">
+                            <div class="proposed-block">
+                                <span class="proposed-badge">
+                                    <span class="dot-pulse"></span>
+                                    proposed by <code>test-issue-triager</code> · just now
+                                </span>
+                                <div class="proposed-text">
+                                    <strong>Suggested triage: Reject linked story.</strong>
+                                    The failure on RC-441's third-retry assertion contradicts Story-2847 AC#3 (retry sequence). Confidence: <strong>87%</strong>. Alternative routes ranked: Raise as new bug (8%), Flag as regression (4%), Mark as bad test (1%).
+                                </div>
+                                <div class="proposed-actions">
+                                    <button class="accept">
+                                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                                        Accept
+                                    </button>
+                                    <button class="edit">
+                                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M3 6h6M6 3v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                        Override
+                                    </button>
+                                    <button class="reject">
+                                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l2 2 6-6M6 10h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                        Show evidence chain
+                                    </button>
+                                    <span class="hint">⏎ to accept</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="row">
@@ -672,50 +836,72 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                     </div>
                 </div>
             </div>
+
+            <!-- Bottom chat input strip — QA cyan-tinged, no verb buttons -->
+            <div class="bottom-strip">
+                <div class="bottom-input">
+                    <span class="model-chip"><span class="dot"></span>Sonnet 4.6</span>
+                    <input placeholder="Ask about the inbox — try &quot;bulk-triage all TestRail failures from build #1284&quot;…" />
+                    <span class="tool">/</span><span class="tool">@</span>
+                    <button class="send-btn"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+                </div>
+            </div>
         </main>
 
         <aside class="right-panel">
             <div class="right-header">
-                <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="2" fill="currentColor"/></svg>
-                Triage
-                <span class="ctx-label">RC-441 · TestRail</span>
+                <span class="status-dot"></span>Chat · RC-441 triage
+                <span class="ctx-label">· TestRail</span>
             </div>
             <div class="right-scroll">
 
-                <div class="sel-head">
-                    <div class="sel-meta">
-                        <span class="kind-chip test-issue">Test issue</span>
-                        <span class="src-pill testrail" style="padding:1px 6px"><span class="src-dot"></span>TestRail</span>
-                        <span class="sel-id">RC-441</span>
+                <!-- Ambient section — relationships + cross-kind possibly-related + agent suggestion -->
+                <div class="ambient">
+                    <div class="ambient-label">Ambient · about RC-441</div>
+
+                    <div class="ambient-card relationship">
+                        <span class="label">Linked</span>
+                        <div class="body">
+                            <strong>Test case <span class="rel-link">RC-441</span></strong>
+                            <div class="sub">covers Story-2847 AC#3 · suite agent-runtime-regression</div>
+                        </div>
                     </div>
-                    <div class="sel-title">RC-441 failed on build #1284 — assertion mismatch on third retry attempt</div>
-                    <div class="sel-meta-row">
-                        <span><span class="prio-dot high" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>priority high · severity med</span>
-                        <span>age 2h</span>
+
+                    <div class="ambient-card crosskind">
+                        <div class="head">Possibly related · graph nudge</div>
+                        <div class="body">
+                            <span class="rel-link" style="color:var(--hero-blue-700);font-weight:600;font-family:ui-monospace,Menlo,monospace;font-size:11.5px">BUG-9912</span> hit the same build (#1284) in the retry-mechanism area. Link as <code style="font-family:ui-monospace,Menlo,monospace;background:rgba(255,255,255,0.7);padding:1px 5px;border-radius:3px;font-size:11px">raised-bug-from-failure</code>?
+                        </div>
+                        <div class="actions">
+                            <button class="primary">Link</button>
+                            <button>Dismiss</button>
+                        </div>
+                    </div>
+
+                    <div class="ambient-suggest">
+                        <div class="head"><span class="pulse"></span>Suggestion · <code>test-issue-triager</code> · 87% confidence</div>
+                        RC-441 failed on AC#3 of Story-2847 — assertion mismatch on third retry. This contradicts existing AC. Suggest <strong>Reject linked story</strong>.
+                        <div class="actions">
+                            <button class="primary">Accept (reject Story-2847)</button>
+                            <button>Override (choose different action)</button>
+                            <button>Show evidence</button>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Triage panel — four ranked actions with confidence sub-labels -->
                 <div class="triage-panel">
-                    <div class="section-label">Triage actions</div>
+                    <div class="section-label">Triage actions · ranked by <span class="agent-tag">test-issue-triager</span></div>
 
                     <button class="triage-btn primary">
                         <span class="tb-icon">
                             <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 8l3 3 7-7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12l3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/></svg>
                         </span>
                         <span class="tb-body">
-                            <span class="tb-name">Reject linked story</span>
+                            <span class="tb-name">Reject linked story <span class="conf">87%</span></span>
                             <span class="tb-sub">Open rejection composer against Story-2847</span>
                         </span>
-                    </button>
-
-                    <button class="triage-btn">
-                        <span class="tb-icon">
-                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-                        </span>
-                        <span class="tb-body">
-                            <span class="tb-name">Mark as bad test</span>
-                            <span class="tb-sub">Close test issue · flag RC-441 for fix</span>
-                        </span>
+                        <span class="conf-bar" style="width:87%"></span>
                     </button>
 
                     <button class="triage-btn">
@@ -723,9 +909,10 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                             <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                         </span>
                         <span class="tb-body">
-                            <span class="tb-name">Raise as new bug</span>
+                            <span class="tb-name">Raise as new bug <span class="conf">8%</span></span>
                             <span class="tb-sub">Open /diagnose chain with case context</span>
                         </span>
+                        <span class="conf-bar" style="width:8%"></span>
                     </button>
 
                     <button class="triage-btn">
@@ -733,70 +920,61 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                             <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 13V3l5 4 5-4v10" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
                         </span>
                         <span class="tb-body">
-                            <span class="tb-name">Flag as regression</span>
+                            <span class="tb-name">Flag as regression <span class="conf">4%</span></span>
                             <span class="tb-sub">Open /diagnose · flag regression suite</span>
                         </span>
+                        <span class="conf-bar" style="width:4%"></span>
+                    </button>
+
+                    <button class="triage-btn">
+                        <span class="tb-icon">
+                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        </span>
+                        <span class="tb-body">
+                            <span class="tb-name">Mark as bad test <span class="conf">1%</span></span>
+                            <span class="tb-sub">Close test issue · flag RC-441 for fix</span>
+                        </span>
+                        <span class="conf-bar" style="width:1%"></span>
                     </button>
                 </div>
 
-                <div class="nudge">
-                    <div class="nudge-head"><span class="pulse"></span>qa-investigator · suggestion</div>
-                    Assertion mismatch on third retry attempt — observed backoff <strong>0.5/1/2s</strong>, expected <strong>1/2/4s</strong>. This contradicts <strong>AC#3 of Story-2847</strong> (retry on flush). Suggest <strong>Reject linked story</strong> rather than marking the test bad.
-                </div>
+                <!-- Chat scroll — the agent's reasoning lives here -->
+                <div class="chat-scroll">
+                    <div class="bubble-wrap user">
+                        <div class="via">via <code>/triage-test-issue</code></div>
+                        <div class="bubble user">Triage RC-441.</div>
+                    </div>
 
-                <div>
-                    <div class="section-label" style="margin-bottom:6px">Cross-kind relationships</div>
-                    <div style="display:flex;flex-direction:column;gap:8px">
-                        <div class="rel-card">
-                            <div class="rel-row">
-                                <svg class="rel-icon" width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-                                <span>Linked case <a class="rel-link">RC-441</a></span>
-                            </div>
-                            <div class="rel-sub">opens Test case editor · covers Story-2847 AC#3</div>
-                            <div class="rel-row" style="margin-top:2px">
-                                <svg class="rel-icon" width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 5l5 5 5-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 10V2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-                                <span>Suite <a class="rel-link">regression-suite agent-runtime</a></span>
-                            </div>
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            Running <code>test-issue-triager</code>. Reading RC-441 failure signature against Story-2847 AC and existing regression suite. Failure pattern: assertion mismatch on retry sequence. Cross-reference: BUG-9912 (Jira, Diego, 4h ago) — same retry-mechanism area. Top action: <strong>Reject linked story</strong> (87%) — implementation contradicts AC#3.
                         </div>
+                    </div>
 
-                        <div class="rel-card ambient">
-                            <div class="rel-head">Possibly related · graph nudge</div>
-                            <div style="font-size:12px;line-height:1.5">
-                                <a class="rel-link">BUG-9912</a> hit the same build (#1284) in the retry-mechanism area. Link as <span style="font-family:ui-monospace,Menlo,monospace;background:rgba(255,255,255,0.7);padding:1px 5px;border-radius:3px;font-size:11px">raised-bug-from-failure</span>?
-                            </div>
-                            <div class="rel-actions">
-                                <button class="accept">Link</button>
-                                <button>Dismiss</button>
-                            </div>
+                    <div class="sys-event inline-event">
+                        <code>test-issue-triager</code> analyzed RC-441 · just now
+                    </div>
+
+                    <div class="sys-event inline-event">
+                        <code>duplicate-detector</code> scanned: 1 related bug (BUG-9912) · just now
+                    </div>
+
+                    <div class="bubble-wrap user">
+                        <div class="bubble user">Jamie: Why not just raise a new bug?</div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            BUG-9912 already covers the parent issue. Rejecting Story-2847 forces the AC violation to be addressed before delivery — cleaner loop than a parallel defect that may not close before release.
                         </div>
                     </div>
                 </div>
-
-                <div class="from-source open">
-                    <div class="from-source-head">
-                        <span class="src-pill testrail" style="padding:1px 6px"><span class="src-dot"></span>TestRail</span>
-                        <span>From source</span>
-                        <svg class="chev" width="11" height="11" viewBox="0 0 12 12" fill="none" style="margin-left:auto"><path d="M4 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                    </div>
-                    <div class="from-source-body">
-                        <div class="fs-row"><span class="fs-key">TR priority</span><span class="fs-val"><span class="fs-pill">P2</span></span></div>
-                        <div class="fs-row"><span class="fs-key">Custom sev</span><span class="fs-val"><span class="fs-pill">regression</span></span></div>
-                        <div class="fs-row"><span class="fs-key">Suite</span><span class="fs-val">agent-runtime-regression</span></div>
-                        <div class="fs-row"><span class="fs-key">Run</span><span class="fs-val">build #1284 · 2h ago</span></div>
-                        <div class="fs-comment">
-                            <div class="fs-comment-meta">Tomás Reyes · TR comment · 1h ago</div>
-                            Re-ran on build #1284 with verbose timing. Backoff observed 0.5/1/2s consistently — matches BUG-9912 retry-area report. Sending to inbox for Jamie.
-                        </div>
-                        <a class="fs-link">Open in TestRail <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4 2h6v6M10 2L5 7M5 4H3v6h6V7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-                    </div>
-                </div>
-
             </div>
         </aside>
     </div>
 </div>
 <script>
-// Minor interactivity: kind tabs, source pills, row selection, source collapsible.
+// Minor interactivity: kind tabs, source pills, row selection.
 document.querySelectorAll('.kind-tab').forEach(t => {
     t.addEventListener('click', () => {
         document.querySelectorAll('.kind-tab').forEach(x => x.classList.remove('active'));
@@ -808,10 +986,6 @@ document.querySelectorAll('.row').forEach(r => {
         document.querySelectorAll('.row').forEach(x => x.classList.remove('selected'));
         r.classList.add('selected');
     });
-});
-document.querySelector('.from-source-head').addEventListener('click', (e) => {
-    e.currentTarget.parentElement.classList.toggle('open');
-    e.currentTarget.parentElement.classList.toggle('collapsed');
 });
 document.querySelectorAll('.src-pill').forEach(p => {
     p.addEventListener('click', () => {

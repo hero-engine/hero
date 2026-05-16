@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- Hero QA Mock: 02-test-plan-editor | The PRD-equivalent for QA. Coverage matrix is the centerpiece. -->
+<!-- Hero QA Mock: 02-test-plan-editor | AI-surface retrofit. -->
+<!-- Demonstrates inline-propose for QA: test-author drafts negative Case-C6 IN the matrix to close AC#4 gap. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -114,12 +115,62 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 .plan-tab.active .tab-count { color: var(--hero-blue-500); }
 
 /* Coverage-gap callout */
-.gap-callout { display: flex; align-items: center; gap: 10px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 7px; padding: 10px 14px; margin-bottom: 14px; }
-.gap-callout .icon { width: 22px; height: 22px; border-radius: 50%; background: var(--warning); color: white; display: grid; place-items: center; flex-shrink: 0; font-weight: 700; font-size: 13px; }
-.gap-callout .text { flex: 1; font-size: 12.5px; color: #78350f; }
+.gap-callout { display: flex; align-items: flex-start; gap: 10px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 7px; padding: 10px 14px; margin-bottom: 14px; }
+.gap-callout .icon { width: 22px; height: 22px; border-radius: 50%; background: var(--warning); color: white; display: grid; place-items: center; flex-shrink: 0; font-weight: 700; font-size: 13px; margin-top: 1px; }
+.gap-callout .text { flex: 1; font-size: 12.5px; color: #78350f; line-height: 1.5; }
 .gap-callout .text strong { color: #92400e; }
-.gap-callout button { font-family: inherit; font-size: 12px; font-weight: 600; background: var(--warning); color: white; border: 0; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
-.gap-callout button:hover { background: #b45309; }
+.gap-callout .text .sub { display: block; margin-top: 2px; font-size: 11.5px; color: #a16207; }
+
+/* Inline proposed-block — the AI-authored Case-C6 */
+.proposed-block {
+    border: 1.5px dashed var(--hero-blue-500);
+    background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+    border-radius: 8px;
+    padding: 14px 14px 10px;
+    position: relative;
+    margin-bottom: 14px;
+}
+.proposed-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10.5px; font-weight: 600;
+    color: var(--hero-blue-700);
+    background: white; border: 1px solid #cfe1f4;
+    padding: 2px 8px; border-radius: 10px;
+    position: absolute; top: -10px; left: 14px;
+}
+.proposed-badge .dot-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); animation: pulse 1.6s infinite; }
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+}
+.proposed-badge code { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; background: transparent; color: var(--hero-blue-700); padding: 0; }
+.proposed-title { display: flex; align-items: center; gap: 8px; margin: 4px 0 8px; font-size: 13px; font-weight: 600; color: var(--text); }
+.proposed-title .case-pill { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; font-weight: 700; color: var(--hero-blue-700); background: #eaf2fb; padding: 2px 6px; border-radius: 3px; }
+.proposed-title .closes-pill { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; font-weight: 600; color: #92400e; background: #fef3c7; padding: 2px 6px; border-radius: 3px; }
+.proposed-text { font-size: 12.5px; line-height: 1.55; color: var(--text); }
+.proposed-text .steps { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; padding-left: 0; }
+.proposed-text .step { display: flex; align-items: flex-start; gap: 8px; font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.proposed-text .step .step-num { flex-shrink: 0; font-weight: 700; color: var(--hero-blue-700); }
+.proposed-text .step .arrow { color: var(--text-muted); }
+.proposed-text code { background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; font-size: 11.5px; font-family: ui-monospace, Menlo, monospace; }
+.proposed-text .steps-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 700; margin: 8px 0 4px; }
+.proposed-actions {
+    display: flex; gap: 4px; margin-top: 10px;
+    padding-top: 8px; border-top: 1px dashed var(--hero-blue-300);
+    align-items: center;
+}
+.proposed-actions button {
+    border: 0; background: transparent; font-family: inherit;
+    font-size: 11.5px; padding: 4px 10px; border-radius: 4px;
+    cursor: pointer; color: var(--text-secondary);
+    display: inline-flex; align-items: center; gap: 5px; font-weight: 500;
+}
+.proposed-actions button.accept { color: white; background: var(--success); font-weight: 600; }
+.proposed-actions button.accept:hover { background: #128a3c; }
+.proposed-actions button.edit { color: var(--text); }
+.proposed-actions button.reject { color: var(--text-muted); }
+.proposed-actions button.edit:hover, .proposed-actions button.reject:hover { background: var(--bg-hover); }
+.proposed-actions .hint { margin-left: auto; font-size: 10.5px; color: var(--text-muted); }
 
 /* Matrix header */
 .matrix-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
@@ -134,12 +185,16 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 .matrix-wrap { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--bg); }
 .matrix { width: 100%; border-collapse: collapse; font-size: 12px; }
 .matrix thead th { background: var(--bg-secondary); border-bottom: 1px solid var(--border); padding: 0; text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 11px; }
-.matrix th.ac-col-head { padding: 9px 14px; width: 44%; }
-.matrix th.case-col { width: 11.2%; text-align: center; border-left: 1px solid var(--border); position: relative; }
+.matrix th.ac-col-head { padding: 9px 14px; width: 40%; }
+.matrix th.case-col { width: 10%; text-align: center; border-left: 1px solid var(--border); position: relative; }
 .matrix th.case-col .case-id { display: block; padding: 9px 0 2px; font-family: ui-monospace, Menlo, monospace; font-weight: 700; color: var(--text); font-size: 11.5px; }
 .matrix th.case-col .case-state { display: block; font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; padding-bottom: 7px; }
 .matrix th.case-col .case-state.pass { color: var(--accent-pass); }
 .matrix th.case-col .case-state.fail { color: var(--accent-fail); }
+.matrix th.case-col.proposed-col { background: linear-gradient(180deg, #f7fbff 0%, var(--bg-secondary) 100%); border-left: 1.5px dashed var(--hero-blue-500); }
+.matrix th.case-col.proposed-col .case-id { color: var(--hero-blue-700); }
+.matrix th.case-col.proposed-col .case-state.proposed { color: var(--hero-blue-700); display: inline-flex; align-items: center; gap: 4px; justify-content: center; width: 100%; }
+.matrix th.case-col.proposed-col .case-state.proposed .dot-pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-700); animation: pulse 1.6s infinite; display: inline-block; }
 .matrix tbody tr { border-bottom: 1px solid var(--border); }
 .matrix tbody tr:last-child { border-bottom: 0; }
 .matrix tbody tr:hover { background: var(--bg-secondary); }
@@ -147,6 +202,7 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 .matrix td.ac-cell { padding: 12px 14px; }
 .matrix td.case-cell { text-align: center; border-left: 1px solid var(--border); height: 54px; cursor: pointer; transition: background-color 0.12s; }
 .matrix td.case-cell:hover { background: #eaf2fb; }
+.matrix td.case-cell.proposed-cell { border-left: 1.5px dashed var(--hero-blue-500); background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%); }
 .ac-row-label { display: flex; align-items: flex-start; gap: 8px; }
 .ac-id { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; font-weight: 700; color: var(--hero-blue-700); background: #eaf2fb; padding: 2px 6px; border-radius: 3px; flex-shrink: 0; margin-top: 1px; }
 .ac-text { font-family: ui-monospace, Menlo, monospace; font-size: 12px; line-height: 1.5; color: var(--text); }
@@ -157,20 +213,23 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 .cov-check { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 6px; font-weight: 700; font-size: 14px; background: rgba(22, 162, 73, 0.12); color: var(--accent-coverage-full); border: 1px solid rgba(22, 162, 73, 0.28); }
 .cov-check.fail { background: rgba(220, 38, 38, 0.10); color: var(--accent-coverage-none); border-color: rgba(220, 38, 38, 0.25); }
 .cov-empty { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--bg-tertiary); }
+.cov-proposed { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 6px; font-weight: 700; font-size: 16px; background: rgba(108, 182, 255, 0.10); color: var(--hero-blue-700); border: 1.5px dashed var(--hero-blue-500); letter-spacing: 1px; }
 
 /* Rollup */
-.matrix-rollup { padding: 10px 14px; background: var(--bg-secondary); border-top: 1px solid var(--border); display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--text-secondary); }
+.matrix-rollup { padding: 10px 14px; background: var(--bg-secondary); border-top: 1px solid var(--border); display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--text-secondary); flex-wrap: wrap; }
 .matrix-rollup .stat { display: inline-flex; align-items: center; gap: 5px; }
 .matrix-rollup .stat strong { color: var(--text); font-weight: 600; }
 .matrix-rollup .stat .dot { width: 7px; height: 7px; border-radius: 50%; }
 .matrix-rollup .stat .dot.green { background: var(--accent-pass); }
 .matrix-rollup .stat .dot.red { background: var(--accent-fail); }
+.matrix-rollup .stat .dot.blue { background: var(--hero-blue-700); }
 .matrix-rollup .sep { color: var(--text-muted); }
 
 /* Bottom strip */
 .bottom-strip { border-top: 1px solid var(--border); background: var(--bg); padding: 8px 14px 10px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
 .bottom-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .bottom-actions-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; margin-right: 4px; }
+.bottom-actions-label .pending-pill { background: #eaf2fb; color: var(--hero-blue-700); border-radius: 8px; padding: 1px 6px; font-weight: 700; margin-left: 4px; }
 .action-btn { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 11px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 500; }
 .action-btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
 .action-btn svg { color: var(--text-muted); }
@@ -192,9 +251,9 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 .right-header { height: 36px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--border); background: var(--bg-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); }
 .right-header .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
 .right-header .ctx-label { margin-left: auto; text-transform: none; letter-spacing: 0; font-size: 11px; color: var(--text-muted); font-weight: 400; font-family: ui-monospace, Menlo, monospace; }
-.right-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+.right-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-height: 0; }
 
-.ambient { padding: 10px 14px 14px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+.ambient { padding: 10px 14px 14px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
 .ambient-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
 .ambient-card { border: 1px solid var(--border); border-radius: 7px; background: var(--bg); padding: 9px 11px; font-size: 12px; line-height: 1.5; }
 .ambient-card .head { display: flex; align-items: center; gap: 6px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px; }
@@ -205,34 +264,47 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 .ambient-card .body code { font-family: ui-monospace, Menlo, monospace; font-size: 11px; background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; }
 .ambient-card .actions { display: flex; gap: 4px; margin-top: 6px; }
 .ambient-card .actions button { border: 0; background: transparent; font-family: inherit; font-size: 11px; padding: 2px 8px; border-radius: 4px; cursor: pointer; color: var(--text-secondary); font-weight: 500; }
-.ambient-card .actions button.primary { color: var(--hero-blue-700); }
+.ambient-card .actions button.primary { color: var(--hero-blue-700); font-weight: 600; }
 .ambient-card .actions button:hover { background: var(--bg-hover); }
 .ambient-card.integrity { background: linear-gradient(180deg, #ecfdf5 0%, var(--bg) 100%); border-color: #a7f3d0; }
 .ambient-card.integrity .head { color: #047857; }
 .ambient-card.integrity .head .pulse { background: var(--accent-pass); }
 
-/* Plan metadata (collapsible) */
-.meta-block { padding: 10px 14px 12px; border-bottom: 1px solid var(--border); }
-.meta-head { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
-.meta-head .label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
-.meta-head .chev { color: var(--text-muted); transition: transform 0.15s; }
-.meta-head.open .chev { transform: rotate(90deg); }
-.meta-rows { margin-top: 8px; display: grid; grid-template-columns: 80px 1fr; gap: 4px 10px; font-size: 11.5px; }
-.meta-rows .k { color: var(--text-muted); font-weight: 500; }
-.meta-rows .v { color: var(--text); }
-.meta-rows .v code { font-family: ui-monospace, Menlo, monospace; font-size: 11px; background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; }
+/* Actionable ambient suggestion (matches gold-standard pattern) */
+.ambient-suggest { border: 1px dashed var(--hero-blue-500); background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%); border-radius: 7px; padding: 9px 11px; font-size: 12px; line-height: 1.5; }
+.ambient-suggest .head { display: flex; align-items: center; gap: 6px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--hero-blue-700); margin-bottom: 4px; }
+.ambient-suggest .head .pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-700); animation: pulse 1.6s infinite; }
+.ambient-suggest .body { color: var(--text); }
+.ambient-suggest .body strong { font-weight: 600; }
+.ambient-suggest .body code { font-family: ui-monospace, Menlo, monospace; font-size: 11px; background: rgba(255,255,255,0.6); padding: 0 4px; border-radius: 3px; }
+.ambient-suggest .actions { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+.ambient-suggest .actions button { border: 0; background: transparent; font-family: inherit; font-size: 11px; padding: 3px 9px; border-radius: 4px; cursor: pointer; color: var(--text-secondary); font-weight: 500; }
+.ambient-suggest .actions button.primary { color: white; background: var(--hero-blue-700); font-weight: 600; }
+.ambient-suggest .actions button.primary:hover { background: #1e5594; }
+.ambient-suggest .actions button:not(.primary):hover { background: var(--bg-hover); }
 
-/* Activity stream */
-.activity { padding: 10px 14px 16px; display: flex; flex-direction: column; gap: 8px; }
-.activity-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
-.activity-item { display: flex; align-items: flex-start; gap: 8px; font-size: 11.5px; color: var(--text-secondary); line-height: 1.45; }
-.activity-item .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-500); margin-top: 5px; flex-shrink: 0; }
-.activity-item .dot.green { background: var(--accent-pass); }
-.activity-item .dot.red { background: var(--accent-fail); }
-.activity-item .ts { color: var(--text-muted); font-size: 10.5px; }
-.activity-item code { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; }
-
-/* Tooltip via title attr is fine; matrix cells use it */
+/* Chat scroll in right rail (replaces metadata + activity sections) */
+.chat-scroll { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.chat-section-header { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+.chat-section-header .pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-500); }
+.chat-section-header .ctx { margin-left: auto; text-transform: none; letter-spacing: 0; font-size: 10.5px; color: var(--text-muted); font-weight: 400; font-family: ui-monospace, Menlo, monospace; }
+.bubble-wrap { display: flex; flex-direction: column; gap: 3px; max-width: 100%; }
+.bubble-wrap.user { align-items: flex-end; }
+.bubble-wrap.agent { align-items: flex-start; }
+.via { font-size: 10px; color: var(--text-muted); padding: 0 4px; }
+.via code { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: var(--text-secondary); }
+.bubble { max-width: 300px; padding: 9px 13px; border-radius: 12px; font-size: 12.5px; line-height: 1.55; word-wrap: break-word; }
+.bubble.user { background: rgba(155, 193, 230, 0.22); color: var(--text); }
+.bubble.agent { background: #f4f5f7; color: var(--text); }
+.bubble code { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; background: rgba(0,0,0,0.06); padding: 0 4px; border-radius: 3px; }
+.bubble strong { font-weight: 600; }
+.sys-event { display: flex; align-items: center; gap: 6px; padding: 5px 0; color: var(--text-muted); font-size: 11px; font-style: italic; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); }
+.sys-event::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
+.sys-event code { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; font-style: normal; }
+.sys-event.inline-event { color: var(--hero-blue-700); border-color: #cfe1f4; }
+.sys-event.inline-event::before { background: var(--hero-blue-700); }
+.sys-event.inline-event code { background: #eaf2fb; color: var(--hero-blue-700); }
+.sys-event .ts { color: var(--text-muted); font-style: normal; font-size: 10.5px; margin-left: auto; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -306,7 +378,7 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                         <span class="chip assignee"><div class="avatar sm jamie">JL</div>Jamie Liu</span>
                         <span class="chip tracker">STORY-2847 ↗</span>
                         <span class="chip release"><span class="dot"></span>release 2026-05-26</span>
-                        <span class="chip">5 cases · 5 AC</span>
+                        <span class="chip">5 AC · 5 cases · 1 proposed</span>
                     </div>
 
                     <div class="plan-tabs">
@@ -320,15 +392,55 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                     <!-- Coverage-gap callout (yellow strip above matrix) -->
                     <div class="gap-callout">
                         <div class="icon">!</div>
-                        <div class="text"><strong>AC#4 partially covered</strong> — happy path only, no negative case for missing parent-session-id.</div>
-                        <button>Author negative case</button>
+                        <div class="text">
+                            <strong>AC#4 partially covered</strong> — happy path only (C1, C2), no negative case for missing <code style="background:rgba(146,64,14,0.10);padding:0 4px;border-radius:3px;font-family:ui-monospace,Menlo,monospace;font-size:11.5px">parent-session-id</code>.
+                            <span class="sub">A proposal from <code style="background:rgba(146,64,14,0.10);padding:0 4px;border-radius:3px;font-family:ui-monospace,Menlo,monospace;font-size:11.5px">test-author</code> sits inline below — review &amp; accept to close the gap.</span>
+                        </div>
+                    </div>
+
+                    <!-- INLINE PROPOSAL — AI-authored Case-C6 sits in the artifact, ready to accept -->
+                    <div class="proposed-block">
+                        <span class="proposed-badge">
+                            <span class="dot-pulse"></span>
+                            proposed by <code>test-author</code> · just now
+                        </span>
+                        <div class="proposed-title">
+                            <span class="case-pill">Case-C6</span>
+                            <span>Verify trace span emitted without <code style="font-family:ui-monospace,Menlo,monospace;background:var(--bg-tertiary);padding:0 4px;border-radius:3px;font-size:11.5px">parent-session-id</code></span>
+                            <span class="closes-pill" style="margin-left:auto">closes AC#4</span>
+                        </div>
+                        <div class="proposed-text">
+                            Negative case targeting the orphan-tagging path. Exercises the codepath where no upstream session context exists and verifies graceful behaviour when context arrives late or never.
+                            <div class="steps-label">Steps</div>
+                            <div class="steps">
+                                <div class="step"><span class="step-num">1.</span><span>Initialize agent run with no <code>parent-session-id</code> <span class="arrow">→</span> assert span emits with <code>parent=null</code>, run is tagged <code>orphan=true</code>.</span></div>
+                                <div class="step"><span class="step-num">2.</span><span>Verify downstream service receives span with null <code>parent-id</code>, no error logged, no retry triggered.</span></div>
+                                <div class="step"><span class="step-num">3.</span><span>Inject <code>session-id</code> mid-run <span class="arrow">→</span> span ignores late binding; orphan tag remains stable for the duration of the run.</span></div>
+                                <div class="step"><span class="step-num">4.</span><span>Verify graceful behaviour when <code>parent-session-id</code> arrives after the span has been flushed — no retroactive mutation, no duplicate emission.</span></div>
+                            </div>
+                        </div>
+                        <div class="proposed-actions">
+                            <button class="accept">
+                                <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                                Accept (add Case-C6 to plan)
+                            </button>
+                            <button class="edit">
+                                <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 10l1-3 6-6 2 2-6 6-3 1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                                Edit
+                            </button>
+                            <button class="reject">
+                                <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                Reject
+                            </button>
+                            <span class="hint">⏎ accept · E edit · ⌫ reject</span>
+                        </div>
                     </div>
 
                     <!-- Matrix header with Print button -->
                     <div class="matrix-head">
                         <div class="title">
                             Coverage matrix
-                            <span class="badge">5 AC × 5 cases</span>
+                            <span class="badge">5 AC × 6 cases (1 proposed)</span>
                         </div>
                         <div class="actions">
                             <button class="btn-secondary" title="Print as compliance report (qTest-style traceability export)">
@@ -338,7 +450,7 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                         </div>
                     </div>
 
-                    <!-- The matrix -->
+                    <!-- The matrix (now with C6 proposed column) -->
                     <div class="matrix-wrap">
                         <table class="matrix">
                             <thead>
@@ -364,6 +476,10 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                                         <span class="case-id">C5</span>
                                         <span class="case-state fail">FAIL</span>
                                     </th>
+                                    <th class="case-col proposed-col" title="C6 (proposed by test-author): Verify span emitted without parent-session-id">
+                                        <span class="case-id">C6</span>
+                                        <span class="case-state proposed"><span class="dot-pulse"></span>PROPOSED</span>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -382,6 +498,7 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                                     <td class="case-cell"><span class="cov-empty"></span></td>
                                     <td class="case-cell"><span class="cov-empty"></span></td>
                                     <td class="case-cell"><span class="cov-empty"></span></td>
+                                    <td class="case-cell proposed-cell"><span class="cov-empty"></span></td>
                                 </tr>
                                 <tr>
                                     <td class="ac-cell">
@@ -398,6 +515,7 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                                     <td class="case-cell"><span class="cov-empty"></span></td>
                                     <td class="case-cell"><span class="cov-empty"></span></td>
                                     <td class="case-cell"><span class="cov-empty"></span></td>
+                                    <td class="case-cell proposed-cell"><span class="cov-empty"></span></td>
                                 </tr>
                                 <tr>
                                     <td class="ac-cell">
@@ -414,14 +532,15 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                                     <td class="case-cell" title="C3 covers AC#3 · last run PASS"><span class="cov-check">✓</span></td>
                                     <td class="case-cell" title="C4 covers AC#3 · last run PASS"><span class="cov-check">✓</span></td>
                                     <td class="case-cell"><span class="cov-empty"></span></td>
+                                    <td class="case-cell proposed-cell"><span class="cov-empty"></span></td>
                                 </tr>
-                                <tr>
+                                <tr style="background:#fffbeb">
                                     <td class="ac-cell">
                                         <div class="ac-row-label">
                                             <span class="ac-id">AC#4</span>
                                             <div>
                                                 <div class="ac-text"><span class="kw">When</span> a span lacks <code>parent-session-id</code>, <span class="kw">then</span> the run shall be tagged orphan and surfaced.</div>
-                                                <div class="ac-cover-summary" style="color:var(--warning)">Partial — happy path only, no negative case</div>
+                                                <div class="ac-cover-summary" style="color:var(--warning)">Partial — happy path only (C1, C2). <strong style="color:var(--hero-blue-700)">C6 proposed</strong> to close gap.</div>
                                             </div>
                                         </div>
                                     </td>
@@ -430,6 +549,7 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                                     <td class="case-cell"><span class="cov-empty"></span></td>
                                     <td class="case-cell"><span class="cov-empty"></span></td>
                                     <td class="case-cell"><span class="cov-empty"></span></td>
+                                    <td class="case-cell proposed-cell" title="C6 (proposed) would cover AC#4 negative case · pending acceptance"><span class="cov-proposed">···</span></td>
                                 </tr>
                                 <tr>
                                     <td class="ac-cell">
@@ -446,51 +566,59 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                                     <td class="case-cell" title="C3 covers AC#5 · last run PASS"><span class="cov-check">✓</span></td>
                                     <td class="case-cell"><span class="cov-empty"></span></td>
                                     <td class="case-cell" title="C5 covers AC#5 · last run FAIL — backoff sequence 0.5/1/2 ≠ AC 1/2/4"><span class="cov-check fail">✗</span></td>
+                                    <td class="case-cell proposed-cell"><span class="cov-empty"></span></td>
                                 </tr>
                             </tbody>
                         </table>
                         <div class="matrix-rollup">
-                            <span class="stat"><strong>5/5</strong> AC covered</span>
+                            <span class="stat"><strong>4/5</strong> AC fully covered</span>
                             <span class="sep">·</span>
-                            <span class="stat"><strong>5</strong> cases</span>
+                            <span class="stat"><strong>1</strong> partial</span>
+                            <span class="sep">·</span>
+                            <span class="stat"><strong>5</strong> cases <span style="color:var(--hero-blue-700)">+1 proposed</span></span>
                             <span class="sep">·</span>
                             <span class="stat"><strong>12</strong> last-run results</span>
                             <span class="sep">·</span>
                             <span class="stat"><span class="dot green"></span><strong>11</strong> pass</span>
                             <span class="stat"><span class="dot red"></span><strong>1</strong> fail</span>
+                            <span class="stat"><span class="dot blue"></span><strong>1</strong> pending</span>
                         </div>
                     </div>
+
+                    <p style="margin-top:14px;font-size:12px;color:var(--text-muted);font-style:italic">
+                        Note · proposed cases live <strong style="color:var(--text-secondary)">in the matrix</strong>, not the chat. The chat logs the action (see right panel); the plan is the source of truth.
+                    </p>
 
                 </div>
             </div>
 
             <div class="bottom-strip">
                 <div class="bottom-actions">
-                    <span class="bottom-actions-label">Plan · in-flight</span>
+                    <span class="bottom-actions-label">In-flight plan · 1 AC partial · <span class="pending-pill">1 case proposed pending</span></span>
                     <button class="action-btn primary">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        Author negative case
+                    </button>
+                    <button class="action-btn">
                         <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 2l7 4-7 4V2z" fill="currentColor"/></svg>
                         Run remaining
                     </button>
                     <button class="action-btn">
                         <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M6 3.5V6l1.5 1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-                        Show run progress
+                        Show progress
                     </button>
                     <button class="action-btn">
                         <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M3 3l6 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
                         Mark blocked
                     </button>
                     <button class="action-btn">
-                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                        Author missing cases
-                    </button>
-                    <button class="action-btn">
                         <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6h6M5 3l3 3-3 3M10 2v8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        Promote cases to regression
+                        Promote to regression
                     </button>
                 </div>
                 <div class="bottom-input">
                     <span class="model-chip"><span class="dot"></span>Sonnet 4.6</span>
-                    <input placeholder="Ask about this plan…" />
+                    <input placeholder="Ask about coverage — try &quot;author a negative case for AC#4&quot;…" />
                     <span class="tool">/</span><span class="tool">@</span>
                     <button class="send-btn"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
                 </div>
@@ -507,6 +635,19 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                 <div class="ambient">
                     <div class="ambient-label">Ambient · about this plan</div>
 
+                    <!-- Actionable suggestion — the one that drove the inline proposal -->
+                    <div class="ambient-suggest">
+                        <div class="head"><span class="pulse"></span>Suggestion · coverage-strategist</div>
+                        <div class="body">
+                            <strong>AC#4 partial</strong> — covered by <code>C1</code> + <code>C2</code> (happy path only). No negative case for missing <code>parent-session-id</code>. Author one to close the gap?
+                        </div>
+                        <div class="actions">
+                            <button class="primary">Accept (author negative case)</button>
+                            <button>Show evidence</button>
+                            <button>Dismiss</button>
+                        </div>
+                    </div>
+
                     <div class="ambient-card">
                         <div class="head curator"><span class="pulse"></span>regression-curator</div>
                         <div class="body">
@@ -519,55 +660,65 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                         </div>
                     </div>
 
-                    <div class="ambient-card">
-                        <div class="head"><span class="pulse"></span>Story status</div>
-                        <div class="body">
-                            Story marked <code>qa-ready</code> <strong>2h ago</strong>. Authoring budget remaining: <strong>0</strong> <span style="color:var(--accent-pass)">(you're done!)</span>
-                        </div>
-                    </div>
-
                     <div class="ambient-card integrity">
                         <div class="head"><span class="pulse"></span>Plan integrity</div>
                         <div class="body">
-                            <strong>5 cases × 5 AC × 1 last-run</strong> = good plan integrity. Coverage is complete and currently green except for C5 (backoff sequence).
+                            <strong>5 cases × 5 AC × 1 last-run</strong> = mostly green. C5 backoff sequence failing; AC#4 gap pending C6 acceptance.
                         </div>
                     </div>
                 </div>
 
-                <div class="meta-block">
-                    <div class="meta-head open">
-                        <span class="label">Plan metadata</span>
-                        <svg class="chev" width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4 4l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                <!-- Chat-scroll: realistic conversation that drove the proposal -->
+                <div class="chat-scroll">
+                    <div class="chat-section-header">
+                        <span class="pulse"></span>Chat · Plan agent-trace-coverage
+                        <span class="ctx">· just now</span>
                     </div>
-                    <div class="meta-rows">
-                        <span class="k">Created</span><span class="v">May 13 · Jamie Liu</span>
-                        <span class="k">Scope</span><span class="v">Agent runtime trace-span emit, child spans, retry &amp; backoff.</span>
-                        <span class="k">Out-of-scope</span><span class="v">OTLP exporter wire-up (covered by plan <code>otlp-export</code>).</span>
-                        <span class="k">Risk areas</span><span class="v">Backoff timing sensitivity; cardinality on tool-call attributes.</span>
-                    </div>
-                </div>
 
-                <div class="activity">
-                    <div class="activity-label">Activity</div>
-                    <div class="activity-item">
-                        <span class="dot"></span>
-                        <div><strong>Tomás</strong> added <code>Case-C5</code> — backoff-sequence verification. <div class="ts">1h ago</div></div>
+                    <div class="bubble-wrap user">
+                        <div class="via">via <code>/plan-coverage</code></div>
+                        <div class="bubble user">Show me coverage status for Story-2847's plan.</div>
                     </div>
-                    <div class="activity-item">
-                        <span class="dot red"></span>
-                        <div><strong>Jamie</strong> ran cases <code>C1-C5</code> against build <code>#1284</code>: <span style="color:var(--accent-pass)">4 pass</span> / <span style="color:var(--accent-fail)">1 fail</span>. <div class="ts">1h ago</div></div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            Running <code>coverage-strategist</code>. 5 AC, 5 cases, 12 last-run results. <strong>AC#4 is the gap</strong> — covered by C1 + C2 happy paths, missing negative cases. Want me to author one?
+                        </div>
                     </div>
-                    <div class="activity-item">
-                        <span class="dot green"></span>
-                        <div><strong>Tomás</strong> promoted <code>Case-C1</code> stability to ready. <div class="ts">3h ago</div></div>
+
+                    <div class="sys-event inline-event">
+                        <strong style="font-style:normal">Tomás</strong>&nbsp;added <code>Case-C5</code>
+                        <span class="ts">1h ago</span>
                     </div>
-                    <div class="activity-item">
-                        <span class="dot"></span>
-                        <div><code>test-author</code> drafted C3 + C4 from AC#3 (boundary-value-analysis). <div class="ts">5h ago</div></div>
+
+                    <div class="sys-event inline-event">
+                        <strong style="font-style:normal">Jamie</strong>&nbsp;ran <code>C1-C5</code> against build <code>#1284</code>: 4 pass / 1 fail
+                        <span class="ts">1h ago</span>
                     </div>
-                    <div class="activity-item">
-                        <span class="dot"></span>
-                        <div><strong>Jamie</strong> opened plan <code>agent-trace-coverage</code>. <div class="ts">May 13</div></div>
+
+                    <div class="sys-event inline-event">
+                        <code>regression-curator</code>&nbsp;flagged: C3 + C4 both cover AC#3 — propose demoting C4?
+                        <span class="ts">8m ago</span>
+                    </div>
+
+                    <div class="sys-event inline-event">
+                        <code>coverage-strategist</code>&nbsp;detected AC#4 gap
+                        <span class="ts">just now</span>
+                    </div>
+
+                    <div class="sys-event inline-event">
+                        <code>test-author</code>&nbsp;drafted negative case for AC#4 → proposed inline in matrix
+                        <span class="ts">just now</span>
+                    </div>
+
+                    <div class="bubble-wrap user">
+                        <div class="bubble user"><strong>Jamie:</strong> Yes, author the negative case.</div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            Running <code>test-author</code> with <code>--inline-propose</code>. Will propose <code>Case-C6</code> (parent-session-id missing path) inline. Accept / edit / reject in the matrix.
+                        </div>
                     </div>
                 </div>
 
@@ -589,15 +740,13 @@ document.querySelectorAll('.matrix td.case-cell').forEach(function(c){
         if (t) console.log('cell:', t);
     });
 });
-// Collapse plan-metadata block
-var mh = document.querySelector('.meta-head');
-if (mh) {
-    mh.addEventListener('click', function(){
-        mh.classList.toggle('open');
-        var rows = mh.parentElement.querySelector('.meta-rows');
-        rows.style.display = mh.classList.contains('open') ? '' : 'none';
+// Proposed-block actions (visual only)
+document.querySelectorAll('.proposed-actions button').forEach(function(b){
+    b.addEventListener('click', function(e){
+        e.stopPropagation();
+        console.log('proposed-action:', b.textContent.trim());
     });
-}
+});
 </script>
 </body>
 </html>

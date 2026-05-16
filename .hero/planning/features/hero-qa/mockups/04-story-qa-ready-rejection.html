@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <!-- Hero QA Mock: 04-story-qa-ready-rejection | THE brand interaction screen -->
-<!-- Layout: shared shell (left nav + center artifact + right rail) + 3-action rejection composer mid-composition in bottom strip -->
+<!-- Layout: shared shell (left nav + center artifact + right rail). -->
+<!-- Bottom strip now mirrors PM 08-inline-proposal: composer holds the action radios + an AI-PROPOSED findings block ('proposed by qa-investigator'), -->
+<!-- then a verb-button row, then the chat input. Right rail carries ambient (with ambient-suggest from qa-investigator) AND a live chat-scroll. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -138,6 +140,7 @@ body {
     display: flex; flex-direction: column;
 }
 .nav-section { margin-bottom: 14px; }
+.nav-section.chat-section { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
 .nav-label {
     text-transform: uppercase; letter-spacing: 0.5px;
     font-size: 10px; font-weight: 600; color: var(--text-muted);
@@ -154,9 +157,20 @@ body {
 .nav-link .count { margin-left: auto; font-size: 11px; color: var(--text-muted); }
 .nav-icon { width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0; }
 .nav-link.active .nav-icon { color: var(--accent-qa-ready); }
-.nav-link.chat-entry { color: var(--hero-blue-700); font-weight: 600; }
-.nav-link.chat-entry .nav-icon { color: var(--hero-blue-300); }
-.nav-link.chat-entry:hover { background: #eaf2fb; }
+.nav-link.chat-entry {
+    color: var(--hero-blue-700); font-weight: 600;
+    padding: 7px 8px;
+    background: #eaf2fb;
+    border: 1px solid #cfe1f4;
+}
+.nav-link.chat-entry .nav-icon { color: var(--hero-blue-700); width: 16px; height: 16px; }
+.nav-link.chat-entry:hover { background: #d9eaf9; }
+.nav-link.chat-entry .live-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent-qa-ready);
+    box-shadow: 0 0 0 3px rgba(2,132,199,0.18);
+    margin-left: auto;
+}
 .nav-saved {
     padding: 3px 8px 3px 26px;
     font-size: 12px; color: var(--text-secondary);
@@ -175,11 +189,11 @@ body {
     margin-top: 8px;
     font-size: 12px; color: var(--text-secondary);
 }
-/* Cross-pack viewing indicator */
+/* Cross-pack viewing indicator (chip under Chat) */
 .viewing-banner {
     display: flex; align-items: center; gap: 6px;
-    margin: 0 0 12px;
-    padding: 7px 9px;
+    margin: 8px 0 6px;
+    padding: 6px 8px;
     background: var(--accent-handoff-bg);
     border: 1px solid rgba(124,58,237,0.25);
     border-radius: 6px;
@@ -466,18 +480,19 @@ body {
     text-align: center;
 }
 
-/* ── Bottom strip — COMPOSER MID-COMPOSITION ───────────────────── */
+/* ── Bottom strip — COMPOSER (three rows: composer / bottom-actions / bottom-input) ─── */
 .bottom-strip {
     border-top: 1px solid var(--border);
     background: var(--bg-secondary);
     padding: 0;
     flex-shrink: 0;
+    display: flex; flex-direction: column;
 }
 .composer {
     border: 1.5px solid var(--accent-qa-ready);
     background: var(--bg);
     border-radius: 10px;
-    margin: 10px 14px 8px;
+    margin: 10px 14px 6px;
     box-shadow:
         0 1px 3px rgba(0,0,0,0.04),
         0 4px 16px rgba(2, 132, 199, 0.18);
@@ -524,9 +539,9 @@ body {
 
 .composer-body {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1.15fr;
     gap: 14px;
-    padding: 12px 14px;
+    padding: 14px 14px 12px;
 }
 .composer-radios {
     display: flex; flex-direction: column; gap: 6px;
@@ -590,7 +605,7 @@ body {
     margin-left: 6px;
 }
 
-/* Composer right column — textarea + nudge + actions */
+/* Composer right column — proposed-block findings */
 .composer-right {
     display: flex; flex-direction: column; gap: 8px;
 }
@@ -604,103 +619,189 @@ body {
     font-weight: 400; text-transform: none; letter-spacing: 0;
     color: var(--text-muted); font-size: 11px;
 }
-.findings-textarea {
-    border: 1px solid var(--border-strong);
-    border-radius: 7px;
-    background: var(--bg);
-    padding: 10px 12px;
-    font-family: inherit;
-    font-size: 12.5px; line-height: 1.55;
-    color: var(--text);
-    min-height: 100px;
-    resize: vertical;
-    outline: none;
+.findings-label .edited-tag {
+    margin-left: auto;
+    font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+    color: var(--warning);
+    font-size: 10px;
+    background: #fffaf0;
+    border: 1px solid #fed7aa;
+    border-radius: 9px;
+    padding: 1px 7px;
 }
-.findings-textarea:focus {
+
+/* PROPOSED BLOCK — agent-proposed findings (mirrors PM 08-inline-proposal) */
+.proposed-block {
+    border: 1.5px dashed var(--hero-blue-500);
+    background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+    border-radius: 8px;
+    padding: 14px 14px 8px;
+    position: relative;
+}
+.proposed-block.edited {
+    border-color: var(--warning);
+    background: linear-gradient(180deg, #fffaf0 0%, var(--bg) 100%);
+}
+.proposed-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10.5px; font-weight: 600;
+    color: var(--hero-blue-700);
+    background: white; border: 1px solid #cfe1f4;
+    padding: 2px 8px; border-radius: 10px;
+    position: absolute; top: -10px; left: 12px;
+}
+.proposed-block.edited .proposed-badge {
+    color: var(--warning); border-color: #fed7aa;
+}
+.proposed-badge .dot-pulse {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--hero-blue-700);
+    animation: pulse-soft 1.6s ease-in-out infinite;
+}
+.proposed-block.edited .proposed-badge .dot-pulse { background: var(--warning); }
+@keyframes pulse-soft {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(42,108,181,0.45); }
+    50% { opacity: 0.75; box-shadow: 0 0 0 4px rgba(42,108,181,0); }
+}
+.proposed-badge code {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 10.5px; background: transparent;
+    color: inherit;
+}
+.proposed-text {
+    margin-top: 2px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    padding: 4px 0 4px;
+    color: var(--text);
+}
+.proposed-text code {
+    background: var(--bg-tertiary);
+    padding: 0 4px; border-radius: 3px;
+    font-size: 11.5px;
+    font-family: ui-monospace, Menlo, monospace;
+}
+.proposed-text .edit-highlight {
+    background: rgba(217,119,6,0.14);
+    padding: 0 3px; border-radius: 2px;
+    font-style: italic;
+}
+.proposed-actions {
+    display: flex; gap: 4px; margin-top: 8px;
+    padding-top: 8px; border-top: 1px dashed var(--hero-blue-300);
+    align-items: center;
+}
+.proposed-block.edited .proposed-actions { border-top-color: #fed7aa; }
+.proposed-actions button {
+    border: 0; background: transparent; font-family: inherit;
+    font-size: 11.5px; padding: 4px 10px; border-radius: 5px;
+    cursor: pointer; color: var(--text-secondary);
+    display: inline-flex; align-items: center; gap: 5px; font-weight: 500;
+}
+.proposed-actions button.accept {
+    color: white;
+    background: linear-gradient(180deg, #0ea5e9, var(--accent-qa-ready));
+    font-weight: 600;
+    box-shadow:
+        0 1px 2px rgba(2, 132, 199, 0.3),
+        0 2px 6px rgba(2, 132, 199, 0.2);
+}
+.proposed-actions button.accept:hover {
+    transform: translateY(-0.5px);
+    box-shadow:
+        0 1px 2px rgba(2, 132, 199, 0.3),
+        0 4px 10px rgba(2, 132, 199, 0.3);
+}
+.proposed-actions button.edit { color: var(--text); }
+.proposed-actions button.regen { color: var(--text-secondary); }
+.proposed-actions button:not(.accept):hover { background: var(--bg-hover); }
+.proposed-actions .hint {
+    margin-left: auto;
+    font-size: 10.5px; color: var(--text-muted);
+}
+.proposed-actions .hint .kbd { font-size: 9.5px; }
+
+/* Bottom-actions verb row (under composer) */
+.bottom-actions {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    padding: 4px 14px 4px;
+}
+.bottom-actions-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-muted); font-weight: 600;
+    margin-right: 4px;
+    display: inline-flex; align-items: center; gap: 6px;
+}
+.bottom-actions-label .ready-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent-qa-ready);
+    box-shadow: 0 0 0 3px rgba(2,132,199,0.18);
+}
+.action-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    height: 28px; padding: 0 11px; border-radius: 14px;
+    border: 1px solid var(--border); background: var(--bg);
+    color: var(--text); cursor: pointer;
+    font-size: 12px; font-family: inherit; font-weight: 500;
+}
+.action-btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+.action-btn svg { color: var(--text-muted); }
+.action-btn.primary {
+    background: linear-gradient(180deg, #0ea5e9, var(--accent-qa-ready));
+    border-color: #0369a1;
+    color: white; font-weight: 600;
+    box-shadow:
+        0 1px 2px rgba(2, 132, 199, 0.3),
+        0 2px 8px rgba(2, 132, 199, 0.2);
+}
+.action-btn.primary svg { color: white; }
+.action-btn.primary:hover {
+    transform: translateY(-0.5px);
+    box-shadow:
+        0 1px 2px rgba(2, 132, 199, 0.3),
+        0 4px 12px rgba(2, 132, 199, 0.32);
+}
+
+/* Bottom input row */
+.bottom-input {
+    display: flex; align-items: center; gap: 8px;
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 6px 10px; background: var(--bg);
+    margin: 4px 14px 10px;
+}
+.bottom-input:focus-within {
     border-color: var(--hero-blue-500);
     box-shadow: 0 0 0 3px rgba(108, 182, 255, 0.18);
 }
-.findings-textarea .caret {
-    display: inline-block;
-    width: 1.5px; height: 14px;
-    background: var(--text);
-    vertical-align: -2px;
-    animation: caret-blink 1s steps(2) infinite;
+.bottom-input input {
+    flex: 1; border: 0; outline: 0;
+    font-family: inherit; font-size: 13px; color: var(--text);
+    background: transparent;
 }
-@keyframes caret-blink { 50% { opacity: 0; } }
-
-/* Inline nudge from qa-investigator */
-.investigator-nudge {
-    display: flex; align-items: flex-start; gap: 8px;
-    padding: 8px 10px;
-    background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
-    border: 1px dashed var(--hero-blue-500);
-    border-radius: 7px;
-    font-size: 11.5px; line-height: 1.45;
+.bottom-input input::placeholder { color: var(--text-muted); }
+.bottom-input .tool {
+    width: 22px; height: 22px; display: grid; place-items: center;
+    border-radius: 4px; cursor: pointer; color: var(--text-muted);
+    font-family: ui-monospace, Menlo, monospace; font-size: 12px;
 }
-.investigator-nudge .agent-tag {
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 9.5px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.4px;
-    color: var(--hero-blue-700);
-    background: #eaf2fb;
-    border-radius: 9px;
-    padding: 1px 6px;
-    flex-shrink: 0;
+.bottom-input .tool:hover { background: var(--bg-hover); color: var(--text); }
+.model-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--bg-tertiary); padding: 2px 8px;
+    border-radius: 4px; font-size: 10.5px;
+    color: var(--text-secondary); font-weight: 600; cursor: pointer;
 }
-.investigator-nudge code {
-    font-family: ui-monospace, Menlo, monospace;
-    background: var(--bg-tertiary);
-    padding: 0 4px; border-radius: 3px;
-    font-size: 10.5px;
-}
-.investigator-nudge .pulse {
+.model-chip .dot {
     width: 5px; height: 5px; border-radius: 50%;
-    background: var(--hero-blue-700);
-    flex-shrink: 0; margin-top: 6px;
+    background: var(--hero-blue-500);
 }
-
-.composer-foot {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 14px;
-    border-top: 1px solid var(--border);
-    background: var(--bg-secondary);
+.send-btn {
+    width: 26px; height: 26px; border-radius: 6px;
+    background: var(--primary); color: white;
+    border: 0; cursor: pointer;
+    display: grid; place-items: center;
 }
-.composer-foot .hint {
-    font-size: 11px; color: var(--text-muted);
-    flex: 1;
-    display: flex; align-items: center; gap: 6px;
-}
-.composer-foot .hint .kbd { font-size: 10px; }
-.btn {
-    height: 30px; padding: 0 14px;
-    border-radius: 7px; font-size: 12.5px;
-    font-family: inherit; font-weight: 500;
-    cursor: pointer;
-    display: inline-flex; align-items: center; gap: 6px;
-}
-.btn-cancel {
-    background: var(--bg); border: 1px solid var(--border-strong);
-    color: var(--text-secondary);
-}
-.btn-cancel:hover { background: var(--bg-hover); color: var(--text); }
-.btn-submit {
-    background: linear-gradient(180deg, #0ea5e9, var(--accent-qa-ready));
-    border: 1px solid #0369a1;
-    color: white;
-    font-weight: 600;
-    box-shadow:
-        0 1px 2px rgba(2, 132, 199, 0.35),
-        0 3px 8px rgba(2, 132, 199, 0.25),
-        inset 0 -1px 0 rgba(0,0,0,0.12);
-}
-.btn-submit:hover {
-    box-shadow:
-        0 1px 2px rgba(2, 132, 199, 0.35),
-        0 5px 14px rgba(2, 132, 199, 0.4),
-        inset 0 -1px 0 rgba(0,0,0,0.12);
-    transform: translateY(-0.5px);
-}
+.send-btn:hover { background: var(--hero-blue-700); }
 
 /* ── Right panel ───────────────────────────────────────────────── */
 .right-panel {
@@ -732,67 +833,78 @@ body {
 }
 .right-scroll {
     flex: 1; overflow-y: auto;
-    padding: 12px 14px 18px;
-    display: flex; flex-direction: column; gap: 14px;
+    display: flex; flex-direction: column;
+    min-height: 0;
 }
 
+/* Ambient section (sticky top, holds suggest + eng-feature + preview) */
+.ambient {
+    background: var(--bg);
+    padding: 12px 14px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 10px;
+    flex-shrink: 0;
+}
 .rail-label {
     font-size: 9.5px; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.6px; color: var(--text-muted);
     margin-bottom: 2px;
 }
 
-/* Ambient cards */
-.ambient-card {
-    border: 1px solid var(--border); border-radius: 8px;
-    background: var(--bg);
+/* Ambient suggest — new card from qa-investigator */
+.ambient-suggest {
+    border: 1px dashed var(--hero-blue-500);
+    background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+    border-radius: 8px;
     padding: 10px 11px;
     font-size: 12px; line-height: 1.5;
-    display: flex; flex-direction: column; gap: 6px;
 }
-.ambient-card .label {
-    font-size: 9.5px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.5px; color: var(--text-muted);
-    display: flex; align-items: center; gap: 5px;
-}
-.ambient-card .label .agent-name {
+.ambient-suggest .head {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 9.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
     color: var(--hero-blue-700);
+    margin-bottom: 5px;
+}
+.ambient-suggest .head .pulse {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--hero-blue-700);
+    animation: pulse-soft 1.6s ease-in-out infinite;
+}
+.ambient-suggest .head code {
     font-family: ui-monospace, Menlo, monospace;
-    text-transform: none;
-    letter-spacing: 0;
+    text-transform: none; letter-spacing: 0;
     font-size: 10.5px;
+    color: var(--hero-blue-700);
 }
-.ambient-card.high-priority {
-    border-color: #fdba74;
-    background: linear-gradient(180deg, #fff7ed 0%, var(--bg) 100%);
-}
-.ambient-card.high-priority .label { color: var(--warning); }
-.ambient-card .body { color: var(--text); }
-.ambient-card .body code {
+.ambient-suggest .body { color: var(--text); }
+.ambient-suggest .body strong { color: var(--accent-qa-ready); font-weight: 600; }
+.ambient-suggest .body code {
     font-family: ui-monospace, Menlo, monospace;
     background: var(--bg-tertiary);
     padding: 0 4px; border-radius: 3px;
     font-size: 11px;
 }
-.ambient-card .body strong { font-weight: 600; }
-.ambient-card .body em { color: var(--text-secondary); font-style: italic; }
-.ambient-card .sub {
-    font-size: 11px; color: var(--text-muted);
+.ambient-suggest .actions {
+    display: flex; gap: 4px; margin-top: 8px;
+    padding-top: 6px; border-top: 1px dashed var(--hero-blue-300);
 }
-.ambient-card .mini-actions {
-    display: flex; gap: 4px;
-    margin-top: 2px;
-}
-.ambient-card .mini-actions button {
+.ambient-suggest .actions button {
     border: 0; background: transparent; font-family: inherit;
-    font-size: 11px; padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; padding: 3px 9px; border-radius: 4px;
     cursor: pointer; color: var(--text-secondary); font-weight: 500;
 }
-.ambient-card .mini-actions button.primary {
-    color: var(--accent-qa-ready);
-    background: var(--accent-qa-ready-bg);
+.ambient-suggest .actions button.primary {
+    color: white;
+    background: var(--accent-qa-ready);
+    font-weight: 600;
 }
-.ambient-card .mini-actions button:hover { background: var(--bg-hover); }
+.ambient-suggest .actions button:not(.primary):hover { background: var(--bg-hover); }
+.ambient-suggest .actions .conf {
+    margin-left: auto;
+    font-size: 10px; color: var(--text-muted);
+    align-self: center;
+}
 
 /* Engineering feature rail (cross-domain) */
 .eng-feature-card {
@@ -858,6 +970,7 @@ body {
     background: var(--bg);
     padding: 10px 11px;
     position: relative;
+    margin-top: 4px;
 }
 .preview-card .preview-tag {
     position: absolute;
@@ -906,11 +1019,79 @@ body {
     display: flex; align-items: center; gap: 5px;
 }
 
-.rail-divider {
-    height: 1px;
-    background: var(--border);
+/* Right rail — chat scroll (under ambient) */
+.chat-scroll {
+    flex: 1; min-height: 0;
+    overflow-y: auto;
+    padding: 12px 14px 14px;
+    display: flex; flex-direction: column; gap: 10px;
+    background: var(--bg);
+}
+.chat-scroll .chat-subhead {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--text-muted);
+    margin-bottom: 2px;
+}
+.bubble-wrap { display: flex; flex-direction: column; gap: 3px; max-width: 100%; }
+.bubble-wrap.user { align-items: flex-end; }
+.bubble-wrap.agent { align-items: flex-start; }
+.via { font-size: 10px; color: var(--text-muted); padding: 0 4px; }
+.via code {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 10px; color: var(--text-secondary);
+}
+.bubble {
+    max-width: 305px; padding: 9px 13px;
+    border-radius: 12px; font-size: 12.5px; line-height: 1.5;
+    word-wrap: break-word;
+}
+.bubble.user {
+    background: rgba(155, 193, 230, 0.22);
+    color: var(--text);
+}
+.bubble.agent {
+    background: #f4f5f7;
+    color: var(--text);
+}
+.bubble code {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px;
+    background: rgba(0,0,0,0.06);
+    padding: 0 4px; border-radius: 3px;
+}
+.bubble strong { font-weight: 600; }
+.sys-event {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 0;
+    color: var(--text-muted);
+    font-size: 11px; font-style: italic;
+    border-top: 1px dashed var(--border);
+    border-bottom: 1px dashed var(--border);
     margin: 2px 0;
 }
+.sys-event::before {
+    content: '';
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--text-muted);
+    flex-shrink: 0;
+}
+.sys-event code {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 10.5px;
+    background: var(--bg-tertiary);
+    padding: 0 4px; border-radius: 3px;
+    font-style: normal;
+}
+.sys-event.inline-event {
+    color: var(--hero-blue-700);
+    border-color: #cfe1f4;
+}
+.sys-event.inline-event::before { background: var(--hero-blue-700); }
+.sys-event.qa-event {
+    color: var(--accent-qa-ready);
+    border-color: #bae6fd;
+}
+.sys-event.qa-event::before { background: var(--accent-qa-ready); }
 
 /* Active session mini list */
 .session-mini {
@@ -966,19 +1147,20 @@ body {
         <!-- ─── LEFT NAV ─────────────────────────────────────────── -->
         <nav class="nav">
 
-            <!-- Cross-pack viewing indicator -->
-            <div class="viewing-banner">
-                <span class="domain-tag">QA</span>
-                <svg class="arrow" width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 6h6M6 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span class="target">Viewing PM story</span>
-            </div>
-
-            <div class="nav-section">
+            <!-- Chat entry at the top — the primary AI surface -->
+            <div class="nav-section chat-section">
                 <a class="nav-link chat-entry">
                     <svg class="nav-icon" viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
                     Chat
-                    <span class="count" style="color:var(--accent-qa-ready);font-weight:600">●</span>
+                    <span class="live-dot" title="qa-investigator is active"></span>
                 </a>
+
+                <!-- Cross-pack viewing indicator (chip under Chat) -->
+                <div class="viewing-banner">
+                    <span class="domain-tag">QA</span>
+                    <svg class="arrow" width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 6h6M6 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span class="target">Viewing PM story</span>
+                </div>
             </div>
 
             <div class="nav-section">
@@ -1179,15 +1361,17 @@ body {
                             <svg class="chev" width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4 4l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" transform="rotate(90 6 6)"/></svg>
                         </div>
                         <div class="qa-findings-empty">
-                            QA Findings appear here after rejection. Compose a finding in the strip below to attach.
+                            QA Findings appear here after rejection. Accept the AI-proposed finding in the composer below to attach.
                         </div>
                     </div>
 
                 </div>
             </div>
 
-            <!-- ─── BOTTOM STRIP — THE THREE-ACTION COMPOSER ─────── -->
+            <!-- ─── BOTTOM STRIP — composer (action + AI-proposed finding) + verb-button row + chat input ─── -->
             <div class="bottom-strip">
+
+                <!-- ROW 1: composer card -->
                 <div class="composer">
 
                     <!-- Composer head -->
@@ -1204,7 +1388,7 @@ body {
                         </span>
                     </div>
 
-                    <!-- Composer body — radios on left, findings textarea + nudge on right -->
+                    <!-- Composer body — radios on left, AI-proposed findings on right -->
                     <div class="composer-body">
 
                         <!-- LEFT: Three actions -->
@@ -1241,43 +1425,81 @@ body {
                             </div>
                         </div>
 
-                        <!-- RIGHT: Findings textarea + nudge -->
+                        <!-- RIGHT: AI-proposed findings block (the brand interaction) -->
                         <div class="composer-right">
                             <div class="findings-label">
                                 Findings
-                                <span class="format-hint">· Markdown · 187 chars</span>
+                                <span class="format-hint">· Markdown · 412 chars</span>
+                                <span class="edited-tag">edited by Jamie</span>
                             </div>
-                            <div class="findings-textarea" contenteditable="true" spellcheck="false">Retry succeeded but backoff sequence was <code style="font-family:ui-monospace,Menlo,monospace;background:var(--bg-tertiary);padding:0 3px;border-radius:2px">0.5s / 1s / 2s</code> instead of the <code style="font-family:ui-monospace,Menlo,monospace;background:var(--bg-tertiary);padding:0 3px;border-radius:2px">1s / 2s / 4s</code> specified in AC#3. Implementation appears to use a 0.5s base — likely a config default override in <code style="font-family:ui-monospace,Menlo,monospace;background:var(--bg-tertiary);padding:0 3px;border-radius:2px">trace_emitter.retry_base_ms</code>.<span class="caret"></span></div>
 
-                            <div class="investigator-nudge">
-                                <span class="pulse"></span>
-                                <span class="agent-tag">
-                                    <svg width="5" height="5" viewBox="0 0 6 6"><circle cx="3" cy="3" r="2.5" fill="currentColor"/></svg>
-                                    qa-investigator
+                            <!-- PROPOSED BLOCK — this is the artifact, not a generic textarea -->
+                            <div class="proposed-block edited">
+                                <span class="proposed-badge">
+                                    <span class="dot-pulse"></span>
+                                    proposed by <code>qa-investigator</code> · edited 12s ago
                                 </span>
-                                <span>
-                                    Finding contradicts existing AC#3 (backoff values). Default nudge: <strong>Reject as quality issue</strong> — engineer should fix to match spec, not amend the AC. Confidence <strong>91%</strong>.
-                                </span>
+                                <div class="proposed-text">
+                                    Retry-with-backoff implementation does not match <strong>AC#3</strong>. Observed sequence in <code>C3 · retry on flush</code>: <code>0.5s / 1s / 2s</code>. AC#3 specifies: <code>1s / 2s / 4s</code> <span class="edit-highlight">(see backoff sequence numbers above)</span>. Implementation appears to use a 0.5s base via the default <code>RetryConfig</code> in <code>trace_emitter.retry_base_ms</code>. This is a direct contradiction of the acceptance criterion; recommending rejection as a <strong>quality issue</strong> rather than scope-expansion — engineer should fix to match the spec'd values, not amend AC#3.
+                                </div>
+                                <div class="proposed-actions">
+                                    <button class="accept">
+                                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                                        Accept (submit rejection)
+                                    </button>
+                                    <button class="edit">
+                                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 10l1-3 6-6 2 2-6 6-3 1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                                        Edit
+                                    </button>
+                                    <button class="regen">
+                                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6a4 4 0 117 2.7M9 6V3.2H6.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                        Regenerate
+                                    </button>
+                                    <span class="hint">
+                                        <span class="kbd">⏎</span> submit · <span class="kbd">E</span> edit
+                                    </span>
+                                </div>
                             </div>
+
                         </div>
 
-                    </div>
-
-                    <!-- Composer foot -->
-                    <div class="composer-foot">
-                        <div class="hint">
-                            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style="color:var(--text-muted)"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M6 4.5v2 M6 7.5v0.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-                            On submit, story transitions <code style="font-family:ui-monospace,Menlo,monospace;background:var(--bg-tertiary);padding:0 3px;border-radius:3px;font-size:10.5px">qa-ready</code> → <code style="font-family:ui-monospace,Menlo,monospace;background:var(--bg-tertiary);padding:0 3px;border-radius:3px;font-size:10.5px">qa-rejected</code>. Diego is notified in-session.
-                            <span class="kbd" style="margin-left:auto">⌘↩</span>
-                        </div>
-                        <button class="btn btn-cancel">Cancel</button>
-                        <button class="btn btn-submit">
-                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-                            Submit rejection
-                        </button>
                     </div>
 
                 </div>
+
+                <!-- ROW 2: verb-button row (bottom-actions) -->
+                <div class="bottom-actions">
+                    <span class="bottom-actions-label">
+                        <span class="ready-dot"></span>
+                        QA-ready story · proposed rejection pending
+                    </span>
+                    <button class="action-btn primary">
+                        <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                        Submit rejection
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Approve &amp; mark Complete
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6a4 4 0 117 2.7M9 6V3.2H6.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Regenerate findings
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/></svg>
+                        Discuss
+                    </button>
+                </div>
+
+                <!-- ROW 3: chat input -->
+                <div class="bottom-input">
+                    <span class="model-chip"><span class="dot"></span>Sonnet 4.6</span>
+                    <input placeholder="Refine the proposed finding — try &quot;soften the language&quot; or &quot;add what passed&quot;…" />
+                    <span class="tool" title="Slash commands">/</span>
+                    <span class="tool" title="Mention">@</span>
+                    <button class="send-btn"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+                </div>
+
             </div>
 
         </main>
@@ -1286,69 +1508,39 @@ body {
         <aside class="right-panel">
             <div class="right-header">
                 <span class="status-dot"></span>
-                Ambient
-                <span class="ctx-label">· Story-2847 · qa-ready</span>
+                Chat · Story-2847
+                <span class="ctx-label">qa-ready · round 2</span>
             </div>
 
             <div class="right-scroll">
 
-                <!-- High-priority ambient (matches selected action) -->
-                <div>
-                    <div class="rail-label">QA signals</div>
-                    <div class="ambient-card high-priority" style="margin-top:6px;">
-                        <div class="label">
-                            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 1L11 10.5H1L6 1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
-                            Coverage failure
-                            <span class="agent-name">· qa-investigator</span>
-                        </div>
-                        <div class="body">
-                            <strong>AC#3 is failing in 1 of 2 cases.</strong> The failing case (<code>C3 · retry on flush</code>) shows backoff <code>0.5/1/2</code>, not the spec'd <code>1/2/4</code>.
-                        </div>
-                        <div class="sub">Recommends classifying as <strong style="color:var(--warning)">Reject as quality issue</strong> — implementation gap, not scope gap.</div>
-                    </div>
+                <!-- AMBIENT (sticky-ish top) — eng-feature card + cross-pack preview + ambient-suggest -->
+                <div class="ambient">
 
-                    <!-- Card 2: qa-ready dwell -->
-                    <div class="ambient-card" style="margin-top:8px;">
-                        <div class="label">
-                            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M6 3.5v3l2 1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-                            Dwell time
+                    <div class="rail-label">Ambient · about Story-2847</div>
+
+                    <!-- AI suggestion from qa-investigator — drives the proposed action -->
+                    <div class="ambient-suggest">
+                        <div class="head">
+                            <span class="pulse"></span>
+                            Suggestion · <code>qa-investigator</code>
                         </div>
                         <div class="body">
-                            Story has been in <code>qa-ready</code> for <strong>3h 12m</strong>. Diego's engineering session is open — he'll see the rejection ambient card the moment you submit.
+                            AC#3 contradicts implementation. Default rejection action: <strong>Reject as quality issue</strong>. Confidence 91%.
                         </div>
-                        <div class="sub">
-                            <div class="session-mini diego" style="padding:3px 0;display:inline-flex">
-                                <div class="avatar xs diego">DR</div>
-                                <span class="who">Diego active in <code style="font-family:ui-monospace,Menlo,monospace;background:var(--bg-tertiary);padding:0 3px;border-radius:2px;font-size:10.5px">feature: agent-trace-spans</code></span>
-                            </div>
+                        <div class="actions">
+                            <button class="primary">Accept default</button>
+                            <button>Show evidence</button>
+                            <button>Override</button>
+                            <span class="conf">91%</span>
                         </div>
                     </div>
 
-                    <!-- Card 3: round-1 history -->
-                    <div class="ambient-card" style="margin-top:8px;">
-                        <div class="label">
-                            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 6a3 3 0 016 0M9 6L7.5 4M9 6l1.5-2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 7.5L1.5 6 0 7.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity="0"/></svg>
-                            Prior round
-                        </div>
-                        <div class="body">
-                            Round 1 rejection (4d ago) → <strong>Add AC</strong> for retry semantics. Engineer addressed in commit <code>f3a912</code>. Round 2 is on AC#3 implementation, not new scope.
-                        </div>
-                        <div class="mini-actions">
-                            <button>Open round 1</button>
-                            <button>View diff</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="rail-divider"></div>
-
-                <!-- Engineering feature rail (cross-domain) -->
-                <div>
-                    <div class="rail-label">Linked engineering</div>
-                    <div class="eng-feature-card" style="margin-top:6px;">
+                    <!-- Engineering feature card (linked, cross-domain) -->
+                    <div class="eng-feature-card">
                         <div class="head">
                             <span class="edge-icon">QA → ENG</span>
-                            Cross-domain link
+                            Linked engineering
                         </div>
                         <div class="spec">feature · agent-trace-spans</div>
                         <div class="row">
@@ -1362,12 +1554,9 @@ body {
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Preview of what Diego WILL see -->
-                <div>
-                    <div class="rail-label">After submit · what Diego sees</div>
-                    <div class="preview-card" style="margin-top:14px;">
+                    <!-- Cross-pack preview tile (what Diego sees on submit) -->
+                    <div class="preview-card">
                         <span class="preview-tag">Preview · cross-pack</span>
                         <div class="pretend-card">
                             <div class="who">
@@ -1382,6 +1571,47 @@ body {
                             <span>Surfaces the moment you click <strong style="color:var(--accent-handoff)">Submit rejection</strong> — no email, no Slack, no migration.</span>
                         </div>
                     </div>
+
+                </div>
+
+                <!-- CHAT SCROLL — live agent reasoning that led to the proposal -->
+                <div class="chat-scroll">
+
+                    <div class="chat-subhead">Conversation · since story landed in qa-ready</div>
+
+                    <div class="bubble-wrap user">
+                        <div class="via">via <code>/reject-story</code></div>
+                        <div class="bubble user">Diego marked this qa-ready an hour ago. Compose findings for me — focus on what's failing.</div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            Running <code>qa-investigator</code>. Reading 5 AC against last run. <strong>AC#3</strong> (retry on flush) — implementation uses 0.5s base; AC specifies 1s. This contradicts existing AC — recommending <code>Reject as quality issue</code>. Will propose findings inline in composer.
+                        </div>
+                    </div>
+
+                    <div class="sys-event inline-event">
+                        <code>qa-investigator</code> analyzed Story-2847 run · 3m ago
+                    </div>
+
+                    <div class="sys-event inline-event">
+                        <code>qa-investigator</code> proposed findings → composer · 2m ago
+                    </div>
+
+                    <div class="sys-event qa-event">
+                        Jamie selected <strong>Reject as quality issue</strong> · just now
+                    </div>
+
+                    <div class="bubble-wrap user">
+                        <div class="bubble user">Jamie: Make it specific about the backoff sequence numbers.</div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            Updating findings to cite <code>0.5/1/2</code> vs <code>1/2/4</code> explicitly. Revise inline?
+                        </div>
+                    </div>
+
                 </div>
 
             </div>
@@ -1407,18 +1637,31 @@ document.querySelector('.composer-head .close')?.addEventListener('click', (e) =
     if (composer) composer.style.display = 'none';
 });
 
-// Cancel button — same effect as close
-document.querySelector('.btn-cancel')?.addEventListener('click', () => {
-    alert('Composer cancelled — no rejection submitted.');
-});
-
-// Submit — show what happens (mockup, not real)
-document.querySelector('.btn-submit')?.addEventListener('click', () => {
+// Accept proposed finding — submit rejection
+document.querySelector('.proposed-actions button.accept')?.addEventListener('click', () => {
     alert('Mockup: would submit rejection.\n\n' +
         '• Story transitions qa-ready → qa-rejected\n' +
-        '• QA Findings — Round 2 block expands with the textarea content (QA-cyan gutter)\n' +
+        '• QA Findings — Round 2 block expands with the proposed text (QA-cyan gutter)\n' +
         '• Diego receives ambient card in his engineering session\n' +
         '• Coverage rail shows updated state');
+});
+
+// Edit / Regenerate hooks (no-op mockup actions)
+document.querySelector('.proposed-actions button.edit')?.addEventListener('click', () => {
+    alert('Mockup: would open the proposed-block as an editable text area, preserving cite markers.');
+});
+document.querySelector('.proposed-actions button.regen')?.addEventListener('click', () => {
+    alert('Mockup: would re-run `qa-investigator` with the same context and replace the proposed text.');
+});
+
+// Bottom-row primary action mirrors the proposed-block accept
+document.querySelector('.action-btn.primary')?.addEventListener('click', () => {
+    document.querySelector('.proposed-actions button.accept')?.click();
+});
+
+// Ambient-suggest actions
+document.querySelector('.ambient-suggest .actions button.primary')?.addEventListener('click', () => {
+    alert('Mockup: would accept default action — selects Reject as quality issue and focuses the proposed-block.');
 });
 </script>
 
