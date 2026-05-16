@@ -24,7 +24,7 @@ and closes the loop with engineering in a single session.
 
 Make Hero work for non-engineers — starting with PM, then QA. The core engine stays the same; each domain ships its own agents, commands, spec types, dashboard views, and integrations as a "pack."
 
-**Status:** planning — reshaped from sales-first to PM-first on 2026-05-15; eight-item sequenced roadmap of platform primitives + PM + QA packs is in place.
+**Status:** planning — reshaped from sales-first to PM-first on 2026-05-15; eight-item sequenced roadmap of platform primitives + PM + QA packs is in place. PM design pack complete (spec + research-brief + agent-pack-design + mockup-brief + 9 mockups + handoff-to-hero-code). QA design pack reached parity 2026-05-16 (spec + research-brief + agent-pack-design + mockup-brief; 32 locked decisions; HTML mockups + handoff doc still owed). QA design surfaced two new platform-primitive amendments — lifecycle overlays on primitive #2 (`spec-type-registry`) and cross-pack ambient population on primitive #4 (`dashboard-view-registry`) — both required before either pack can ship.
 
 **Pick up at:** Design the first platform primitive, `domain-plugin-architecture` — refactor existing engineering content into `domains/engineering/` and add `hero init --domain` plumbing. Spec stub already exists.
 
@@ -217,21 +217,53 @@ hit.
 
 The following are plausible follow-on domain packs but are not children
 of `hero-domains`. Each should be spun off as its own initiative after
-PM ships and the primitives are proven.
+PM ships and the primitives are proven. Ordering reflects current
+sequencing instinct, not commitment.
 
+- **hero-ops** _(new, 2026-05-16)_ — incident specs, runbook specs,
+  post-mortem specs, on-call rotation context. Highest spec-shape fit
+  of any unbuilt candidate (post-mortem is already spec-shaped;
+  `incident-response` and `root-cause-classification` skills already
+  ship in engineering). Integration target is well-defined (PagerDuty
+  / Datadog / Sentry — pick one). Cleanest silo-tearing edge:
+  incident → `/diagnose` → bug, closing the "feature shipped →
+  incident raised → bug filed → lesson captured" loop. Strongest
+  candidate for the *third* domain after PM + QA.
+- **hero-customer-support** _(reframed, 2026-05-16)_ — was previously
+  filed under "deferred forever" with "tickets don't map onto specs."
+  Reframed as a serious candidate because the silo-tearing surface is
+  the largest of any domain (CS ↔ PM intake ↔ engineering bug ↔ Ops
+  incident), and agentic deflection + escalation routing is reshaping
+  the category in real time. The artifact-shape concern is real (a
+  ticket is not a spec) and may be the right place to introduce a
+  second artifact archetype alongside specs — possibly a "case"
+  shape that has spec-like persistence but ticket-like volume.
+  Boldest "Hero replaces a category" story we have. The one we're
+  most excited to design even though it's hardest.
 - **hero-design** — UX/design specs, design system entries, Figma
   integration. Spec-shape fit is high; integration shape is novel.
+  Tight PM↔design coupling (PRD ↔ design spec) makes this the
+  smallest, cleanest of the deferred candidates.
 - **hero-data-analytics** — metric specs, experiment specs, warehouse
   + BI integration. Spec-shape fit is high; integration shape is novel.
+  Closes PM principle #5 ("Learn from what shipped") which today
+  references this domain as a dependency.
+- **hero-customer-success / revops** _(new, 2026-05-16)_ — distinct
+  from raw Sales. Onboarding plays, retention specs, expansion plays,
+  QBR briefs, account-health rollups. Spec-shape fit is real (a play
+  is a spec); integration narrower than full CRM (Gainsight / Catalyst
+  / native CRM modules). May be the right *first* revenue-side domain
+  before tackling raw Sales.
 
 ### Deferred domains (revisit after multi-domain platform proven)
 
 - **Sales** — high CRM/quote/comp integration surface, low spec-shaped
-  output. Original CRO-brother rationale is still live — re-engage once
-  the platform has absorbed two content packs (PM, QA) and we know the
-  `DomainIntegration` interface tolerates CRM shapes.
-- **Customer Support** — clean workflow but transactional artifacts;
-  ticket lifecycle doesn't map cleanly onto spec lifecycle.
+  output. Original CRO-brother rationale is still live and an existing
+  `hero-sales` spec captures the design from before this initiative
+  was reshaped. Re-engage once the platform has absorbed two content
+  packs (PM, QA) and we know the `DomainIntegration` interface
+  tolerates CRM shapes. May follow `hero-customer-success` rather
+  than precede it.
 - **Marketing** — too many sub-disciplines (content, growth, brand,
   events) to model as one domain. Likely a future cluster of domains.
 - **Finance** — high integration surface plus regulatory constraints
