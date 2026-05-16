@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-15T19:44:21Z · 100 ready specs_
+_Generated: 2026-05-15T20:14:50Z · 99 ready specs_
 
 ## cross-repo-peering — "Cross-Repo Peering — Conventions Travel, Specs Hand Off, Heroes Call Each Other"
 _feature · delivering · horizon: now_
@@ -19,26 +19,38 @@ surfacing.
 
 **Status:** delivering — Phase 0 (identity + contracts/peering/ +
 resolver), Phase 1 (handoff lifecycle + trail + async drop + peer
-manifest), and Phase 2 (sync peer call advisory + spec-out, peer CLI,
-`hero relevant --peer`, auto-fire peer-side completion) have landed.
+manifest), Phase 2 (sync peer call advisory + spec-out, peer CLI,
+`hero relevant --peer`, auto-fire peer-side completion), and Phase 3
+(contract-import passive surfacing + pilot harness +
+peering-protocol convention with dogfood checklist) have all landed.
 
-**Pick up at:** Phase 3 — contract-import passive surfacing + pilot
-gate. Wire the Go import scanner to detect when edited files import a
-Go symbol listed in any configured peer's manifest `contracts:`
-section, then surface a one-line signal in `/resume` and `hero
-context` naming the symbol, peer alias, governing convention, and
-last-changed commit. No blocking, no prompts. **Pilot gate** at exit:
-dogfood the full ladder on the user's three real repos and confirm
-the flow is tag-team-shaped, not ceremony, before opening Phase 4
-(cloud transport + boundary nudge).
+**Pick up at:** the pilot dogfood. The mechanics for the full ladder
+are wired, unit-tested, and end-to-end integration-tested against a
+three-sibling fixture (`internal/peering/integration_test.go`). The
+exit gate for Phase 3 is the user walking the dogfood checklist in
+`.hero/knowledge/conventions/peering-protocol.md` against their
+three real repos and answering "tag team or ceremony?". If ceremony,
+scope a Phase 3.5 ergonomics pass before Phase 4. If tag team, open
+Phase 4 — cloud transport (graph-memory-federation hook-up) plus
+the boundary-nudge upgrade (structural contract edits suggest an
+advisory call via `hero nudge`).
 
 → `.hero/planning/features/cross-repo-peering/spec.md`
 
-**Files (Phase 3):** `internal/peering/contract_imports.go` (new —
-Go import scanner that walks edited files for peer-owned symbols),
-`internal/cli/resume.go` and `internal/cli/context.go` (add the
-passive one-liner). **Manifest already carries the `contracts:`
-section** from Phase 0 (`contracts/peering/manifest.go:ContractsSection`).
+**Files (Phase 3, landed):**
+`internal/peering/contract_imports.go` (Go import scanner — changed
+files, peer-aware, with test/generated/vendor filters);
+`internal/peering/contract_imports_test.go` (unit coverage);
+`internal/peering/integration_test.go` (three-sibling pilot harness
+exercising the full ladder end-to-end);
+`internal/cli/brief.go` (wires the passive signal into `hero resume`
+output after the brief);
+`internal/cli/context.go` (new `hero context imports` subcommand
+mirroring the `context scope` pattern);
+`.hero/knowledge/conventions/peering-protocol.md` (protocol +
+dogfood checklist). The manifest already carries the `contracts:`
+section from Phase 0
+(`contracts/peering/manifest.go:ContractsSection`).
 **Already in place from Phase 0/1/2:** `contracts/peering/`,
 `internal/peering/{identity,trail,handoff,manifest,peercall,
 resolve}.go`, `internal/cli/{handoff,peer}.go`, `hero relevant
@@ -132,22 +144,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _bug · planning · horizon: now_
 
 Reproduce: cd into a clean repo with no `CLAUDE.md` or `AGENTS.md`, run `hero install --target claude`. Expected: only `CLAUDE.md` lands. Observed: both `CLAUDE.md` and `AGENTS.md` are emitted with the same managed-block content. Fix likely lives in the install target dispatch in the hero CLI — read the install command source, find where both files get written, and gate `AGENTS.md` emission on the target not being `claude` (or on a generic/fallback target). Update tests to cover each target's expected file set.
-
----
-
-## recap-register-missing — "`hero recap register/unregister` referenced in slash commands but never implemented"
-_bug · planning · horizon: now_
-
-`/deliver` and `/diagnose` tell the agent to run `hero recap register <session-id> <slug> <cmd>` to survive compaction, but `hero recap` has no subcommands — only flags. The agent fails the very first instruction.
-
-**Status:** planning — root cause confirmed (DESIGN: docs shipped ahead of code). Two fix directions captured. Recommendation: remove the broken instruction and rely on the existing `hero next ask/suggest/reflection` projection.
-
-**Pick up at:** delete the "register the active spec" block from `commands/{deliver,diagnose}.md` and the engineering-domain twin under `domains/engineering/commands/{deliver,diagnose}.md`. Replace with a one-line pointer to the `next-handoff-emit` skill, or remove entirely if `/deliver` and `/diagnose` already invoke that skill upstream.
-
-→ `.hero/planning/bugs/recap-register-missing/spec.md`
-
-**Files:** `commands/deliver.md:8-13`, `commands/diagnose.md:10-14`, `domains/engineering/commands/deliver.md:8-13`, `domains/engineering/commands/diagnose.md:10-14`, `content.go:16-26`
-**Skip:** implementing `hero recap register/unregister` — `hero next ask/suggest/reflection` (the projection model) already preserves the equivalent state through compaction, and adding a second mechanism duplicates the surface.
 
 ---
 

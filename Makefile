@@ -1,19 +1,15 @@
 BINARY  := hero
-CLOUD   := hero-cloud
 MODULE  := github.com/hero-engine/hero
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS := -ldflags "-s -w -X main.version=$(VERSION)"
 
-.PHONY: build cloud clean install bootstrap test tidy dist release snapshot dev smoke smoke-all sync-install-scripts
+.PHONY: build clean install bootstrap test tidy dist release snapshot smoke smoke-all sync-install-scripts
 
 build:
 	go build $(LDFLAGS) -o $(BINARY) ./cmd/hero/
 
-cloud:
-	go build $(LDFLAGS) -o $(CLOUD) ./cmd/hero-cloud/
-
 clean:
-	rm -f $(BINARY) $(CLOUD)
+	rm -f $(BINARY)
 	rm -rf dist/
 
 install: build
@@ -57,17 +53,6 @@ sync-install-scripts:
 	  echo "synced install scripts to hero-releases"; \
 	fi; \
 	rm -rf $$tmp
-
-# Local dev: start CockroachDB + hero-cloud
-dev:
-	docker compose up -d cockroachdb init-db
-	@echo "Waiting for CockroachDB..."
-	@sleep 3
-	go run $(LDFLAGS) ./cmd/hero-cloud/
-
-# Stop local dev services
-dev-stop:
-	docker compose down
 
 # Cross-compile for common targets
 dist:
