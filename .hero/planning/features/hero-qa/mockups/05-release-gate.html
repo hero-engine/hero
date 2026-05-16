@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<!-- Hero QA Mock: 05-release-gate | Release-gate Go/No-Go destination view -->
+<!-- Layout: left nav + verdict banner + blockers list + coverage/regression/sign-off + right rail + bottom strip -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Release readiness: 2026-05-26 · Hero QA</title>
+<style>
+:root {
+    --bg: #ffffff;
+    --bg-secondary: #f7f8fa;
+    --bg-tertiary: #eef0f4;
+    --bg-hover: #f0f2f6;
+    --text: #1a1d23;
+    --text-secondary: #5d646e;
+    --text-muted: #8a929c;
+    --border: #e4e7eb;
+    --border-strong: #d0d4da;
+    --primary: #2a6cb5;
+    --primary-hover: #6cb6ff;
+    --hero-blue-300: #9bc1e6;
+    --hero-blue-500: #6cb6ff;
+    --hero-blue-700: #2a6cb5;
+    --hero-ink: #14181e;
+    --success: #16a249;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --info: #0284c7;
+    --accent-handoff: #7c3aed;
+    --accent-handoff-bg: #f5f0ff;
+    /* QA-specific tokens */
+    --accent-coverage-full: #16a249;
+    --accent-coverage-partial: #d97706;
+    --accent-coverage-none: #dc2626;
+    --accent-qa-gutter: #0891b2;
+    --accent-qa-ready: #0284c7;
+    --accent-qa-rejected: #d97706;
+    --accent-flaky: #a855f7;
+    --accent-pass: #16a249;
+    --accent-fail: #dc2626;
+    /* Verdict palette — amber for No-Go (recoverable) */
+    --verdict-amber-bg: #fffaf0;
+    --verdict-amber-border: #f59e0b;
+    --verdict-amber-strong: #92400e;
+    --verdict-amber-deep: #b45309;
+    --verdict-green: #16a249;
+    --verdict-red: #dc2626;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+    font-size: 13px; line-height: 1.45;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text); background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ── App shell ─────────────────────────────────────────────────── */
+.shell { display: grid; grid-template-rows: 48px 1fr; height: 100vh; }
+.chrome {
+    display: grid;
+    grid-template-columns: 240px 1fr auto;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    padding: 0 16px 0 0;
+    gap: 16px;
+}
+.chrome-workspace {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 12px; height: 100%;
+    border-right: 1px solid var(--border);
+    font-weight: 600;
+}
+.workspace-logo { width: 22px; height: 22px; display: grid; place-items: center; color: var(--hero-blue-300); }
+.workspace-logo svg { display: block; width: 22px; height: 22px; }
+.domain-pill {
+    margin-left: auto;
+    background: #eaf2fb; color: var(--hero-blue-700);
+    border: 1px solid #cfe1f4;
+    border-radius: 4px; padding: 2px 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+    display: inline-flex; align-items: center; gap: 4px;
+    cursor: pointer;
+}
+.search {
+    grid-column: 2;
+    display: flex; align-items: center; gap: 8px;
+    max-width: 440px; width: 100%; justify-self: center;
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: 6px; padding: 5px 10px;
+    color: var(--text-muted);
+}
+.search input { background: transparent; border: 0; outline: 0; flex: 1; font-size: 12px; color: var(--text-secondary); font-family: inherit; }
+.kbd {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: var(--bg); border: 1px solid var(--border);
+    border-bottom-width: 2px; border-radius: 3px;
+    padding: 0 5px; font-size: 10px; color: var(--text-muted); line-height: 14px;
+}
+.chrome-right { display: flex; align-items: center; gap: 12px; }
+.preset-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #eaf2fb; color: var(--hero-blue-700);
+    border: 1px solid #cfe1f4;
+    padding: 3px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 600;
+}
+.preset-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); }
+.avatar {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: linear-gradient(135deg, #ffd47e, #f97373);
+    color: white; font-size: 10px; font-weight: 600;
+    display: inline-grid; place-items: center;
+    border: 1px solid var(--border);
+}
+.avatar.sm { width: 18px; height: 18px; font-size: 9px; }
+.avatar.xs { width: 14px; height: 14px; font-size: 8px; }
+.avatar.diego { background: linear-gradient(135deg, #6cb6ff, #4f7cf7); }
+.avatar.sarah { background: linear-gradient(135deg, #84e1bc, #16a249); }
+.avatar.aisha { background: linear-gradient(135deg, #f4a4ff, #b465ec); }
+.avatar.marcus { background: linear-gradient(135deg, #fcc46d, #f97316); }
+.avatar.priya { background: linear-gradient(135deg, #ff9eb4, #ec4899); }
+.avatar.jamie { background: linear-gradient(135deg, #7dd3fc, #0284c7); }
+.avatar.tomas { background: linear-gradient(135deg, #fde68a, #d97706); }
+.avatar.yuki { background: linear-gradient(135deg, #c4b5fd, #7c3aed); }
+
+/* ── Body 3-column ─────────────────────────────────────────────── */
+.body-grid {
+    display: grid;
+    grid-template-columns: 240px 1fr 380px;
+    height: calc(100vh - 48px);
+    min-height: 0;
+}
+
+/* ── Left nav ──────────────────────────────────────────────────── */
+.nav {
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    padding: 12px 8px; overflow-y: auto;
+    display: flex; flex-direction: column;
+}
+.nav-section { margin-bottom: 14px; }
+.nav-label {
+    text-transform: uppercase; letter-spacing: 0.5px;
+    font-size: 10px; font-weight: 600; color: var(--text-muted);
+    padding: 4px 8px;
+}
+.nav-link {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 8px; border-radius: 4px;
+    color: var(--text-secondary); text-decoration: none;
+    font-size: 12.5px; cursor: pointer;
+}
+.nav-link:hover { background: var(--bg-hover); color: var(--text); }
+.nav-link.active { background: var(--bg-tertiary); color: var(--text); font-weight: 500; }
+.nav-link .count { margin-left: auto; font-size: 11px; color: var(--text-muted); }
+.nav-link .count.warn { background: #fef3c7; color: #92400e; border-radius: 8px; padding: 0 5px; }
+.nav-icon { width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0; }
+.nav-link.active .nav-icon { color: var(--primary); }
+.nav-link.chat-entry { color: var(--hero-blue-700); font-weight: 600; }
+.nav-link.chat-entry .nav-icon { color: var(--hero-blue-300); }
+.nav-link.chat-entry:hover { background: #eaf2fb; }
+.nav-session {
+    display: flex; align-items: center; gap: 6px;
+    padding: 3px 8px;
+    font-size: 11.5px; color: var(--text-secondary);
+    border-radius: 4px; cursor: pointer;
+}
+.nav-session:hover { background: var(--bg-hover); }
+.nav-session .pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
+.nav-spacer { flex: 1; }
+.nav-user {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px; border-top: 1px solid var(--border);
+    margin-top: 8px;
+    font-size: 12px; color: var(--text-secondary);
+}
+
+/* ── Center pane ──────────────────────────────────────────────── */
+.center {
+    display: grid;
+    grid-template-rows: 34px 1fr auto;
+    min-height: 0; overflow: hidden;
+}
+
+/* Tab strip */
+.tab-strip {
+    display: flex; align-items: stretch;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+}
+.tab {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 0 12px;
+    border-right: 1px solid var(--border);
+    background: var(--bg-secondary); color: var(--text-muted);
+    font-size: 12px; cursor: pointer;
+    height: 34px; max-width: 280px;
+}
+.tab .tab-type-chip {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.4px; padding: 1px 5px; border-radius: 3px;
+    background: var(--bg-tertiary); color: var(--text-muted);
+    flex-shrink: 0;
+}
+.tab .tab-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab .tab-close {
+    width: 14px; height: 14px; display: grid; place-items: center;
+    border-radius: 3px; opacity: 0; color: var(--text-muted); flex-shrink: 0;
+}
+.tab:hover .tab-close { opacity: 1; }
+.tab.active {
+    background: var(--bg); color: var(--text); font-weight: 500;
+    box-shadow: inset 0 2px 0 var(--hero-blue-700);
+}
+.tab.active .tab-type-chip { background: #eaf2fb; color: var(--hero-blue-700); }
+.tab.active .tab-close { opacity: 0.6; }
+.tab.chat-tab .tab-type-chip { background: #eaf2fb; color: var(--hero-blue-700); }
+.tab-strip-spacer { flex: 1; border-right: 0; }
+
+/* Artifact area (scrollable) */
+.artifact-scroll {
+    overflow-y: auto;
+    min-height: 0;
+    background: var(--bg);
+}
+.artifact-padded { padding: 22px 32px 28px; max-width: 980px; }
+
+/* Artifact header / chips */
+.context-strip {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11.5px; color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+.context-strip a { color: var(--text-secondary); text-decoration: none; cursor: pointer; }
+.context-strip a:hover { color: var(--primary); }
+.context-strip .sep { color: var(--text-muted); }
+.context-strip .type-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--bg-tertiary); border-radius: 3px;
+    padding: 1px 6px; font-size: 10.5px; font-weight: 600;
+    color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px;
+}
+.artifact-title {
+    font-size: 22px; line-height: 1.35; font-weight: 600;
+    margin: 0 0 14px; letter-spacing: -0.2px;
+}
+.chip-row {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+    margin-bottom: 18px;
+}
+.chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    height: 22px; padding: 0 8px;
+    border-radius: 11px; font-size: 11px; font-weight: 500;
+    background: var(--bg-tertiary); color: var(--text-secondary);
+    border: 1px solid transparent;
+}
+.chip .dot { width: 6px; height: 6px; border-radius: 50%; }
+.chip.type { font-weight: 600; }
+.chip.state-reviewing { background: #fff7ed; color: #9a3412; border-color: #fed7aa; }
+.chip.state-reviewing .dot { background: var(--warning); }
+.chip.sprint { background: #eaf2fb; color: var(--hero-blue-700); }
+.chip.sprint .dot { background: var(--hero-blue-700); }
+.chip.tracker { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; cursor: pointer; }
+.chip.assignee { padding-left: 3px; gap: 6px; cursor: pointer; }
+.chip.priority-p0 { background: #fef2f2; color: #b91c1c; font-weight: 700; }
+.chip.priority-p0 .dot { background: var(--danger); }
+.chip.priority-p1 { background: #fff7ed; color: #9a3412; font-weight: 700; }
+.chip.priority-p1 .dot { background: var(--warning); }
+
+/* ── THE VERDICT BANNER — centerpiece ──────────────────────────── */
+.verdict-banner {
+    position: relative;
+    border: 2px solid var(--verdict-amber-border);
+    border-radius: 12px;
+    background:
+        linear-gradient(180deg, var(--verdict-amber-bg) 0%, #fff5e0 100%);
+    padding: 22px 26px 20px;
+    margin-bottom: 26px;
+    box-shadow:
+        0 1px 2px rgba(245, 158, 11, 0.08),
+        0 8px 24px rgba(245, 158, 11, 0.12);
+    overflow: hidden;
+}
+.verdict-banner::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; bottom: 0; width: 6px;
+    background: var(--verdict-amber-border);
+}
+.verdict-head {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 14px;
+}
+.verdict-icon {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: var(--verdict-amber-border);
+    color: white;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35);
+}
+.verdict-title {
+    font-size: 26px; font-weight: 700;
+    color: var(--verdict-amber-strong);
+    letter-spacing: -0.4px;
+    line-height: 1.15;
+}
+.verdict-title .verdict-word {
+    background: var(--verdict-amber-border);
+    color: white;
+    padding: 2px 10px; border-radius: 6px;
+    font-size: 22px;
+    margin-right: 6px;
+    display: inline-block;
+    transform: translateY(-2px);
+}
+.verdict-sub {
+    color: var(--verdict-amber-deep);
+    font-size: 13px; font-weight: 500;
+    margin-top: 2px;
+}
+.verdict-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+.verdict-stat {
+    background: white;
+    border: 1px solid #fbd99b;
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 3px;
+}
+.verdict-stat .label {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-muted);
+}
+.verdict-stat .value {
+    font-size: 15px; font-weight: 600;
+    color: var(--text);
+    display: flex; align-items: center; gap: 6px;
+}
+.verdict-stat .value .ok { color: var(--success); }
+.verdict-stat .value .warn { color: var(--warning); }
+.verdict-stat .value .fail { color: var(--danger); }
+.verdict-stat .meta { font-size: 11px; color: var(--text-muted); }
+.verdict-actions {
+    display: flex; gap: 8px; flex-wrap: wrap;
+}
+.verdict-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    background: white;
+    border: 1px solid #fbd99b;
+    border-radius: 7px;
+    font-family: inherit; font-size: 12px; font-weight: 600;
+    color: var(--verdict-amber-deep);
+    cursor: pointer;
+}
+.verdict-btn:hover { background: #fff5e0; border-color: var(--verdict-amber-border); }
+.verdict-btn.destructive { color: #9a3412; border-color: #fcb47e; }
+.verdict-btn.destructive:hover { background: #ffedd5; }
+
+/* ── Section headers ──────────────────────────────────────────── */
+.section {
+    margin-top: 26px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    overflow: hidden;
+}
+.section-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+}
+.section-head .chev {
+    width: 12px; height: 12px; color: var(--text-muted);
+    transition: transform 0.15s ease;
+}
+.section.collapsed .chev { transform: rotate(-90deg); }
+.section.collapsed .section-body { display: none; }
+.section-head .title {
+    font-size: 12.5px; font-weight: 700;
+    color: var(--text);
+    text-transform: uppercase; letter-spacing: 0.4px;
+}
+.section-head .meta {
+    margin-left: auto;
+    font-size: 11.5px; color: var(--text-muted);
+    font-weight: 400;
+    display: flex; align-items: center; gap: 8px;
+}
+.section-body { padding: 6px 0; }
+
+/* ── Blockers list ────────────────────────────────────────────── */
+.blocker-row {
+    display: grid;
+    grid-template-columns: auto auto 1fr auto auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+}
+.blocker-row:last-child { border-bottom: 0; }
+.blocker-row:hover { background: var(--bg-hover); }
+.blocker-id {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px; font-weight: 700;
+    color: var(--text-secondary);
+    background: var(--bg-tertiary);
+    padding: 3px 7px;
+    border-radius: 4px;
+    min-width: 32px; text-align: center;
+}
+.blocker-body { min-width: 0; }
+.blocker-title {
+    font-size: 13px; color: var(--text);
+    font-weight: 500;
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 3px;
+}
+.blocker-title .mono {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    background: var(--bg-tertiary);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--text-secondary);
+}
+.blocker-meta {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 11.5px; color: var(--text-muted);
+}
+.blocker-meta .owner {
+    display: inline-flex; align-items: center; gap: 5px;
+    color: var(--text-secondary);
+}
+.blocker-meta .state-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #eff6ff; color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    padding: 1px 6px; border-radius: 9px;
+    font-size: 10.5px; font-weight: 600;
+}
+.blocker-meta .state-chip .dot { width: 5px; height: 5px; border-radius: 50%; background: #3b82f6; }
+.blocker-meta .age { color: var(--danger); font-weight: 600; }
+.blocker-meta .eta { color: var(--info); }
+.blocker-actions {
+    display: flex; gap: 6px; flex-shrink: 0;
+}
+.btn-sm {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 9px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: inherit; font-size: 11.5px; font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+.btn-sm:hover { background: var(--bg-hover); color: var(--text); border-color: var(--border-strong); }
+.btn-sm.primary { background: var(--primary); color: white; border-color: var(--primary); }
+.btn-sm.primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+.btn-sm.qa { background: #eaf2fb; color: var(--hero-blue-700); border-color: #cfe1f4; font-weight: 600; }
+.btn-sm.qa:hover { background: #d8e7f7; }
+
+/* ── Coverage bars ─────────────────────────────────────────────── */
+.coverage-summary {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 16px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.coverage-summary .legend {
+    display: flex; gap: 12px;
+}
+.coverage-summary .legend-item {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px;
+}
+.coverage-summary .legend-dot {
+    width: 9px; height: 9px; border-radius: 2px;
+}
+.coverage-bars {
+    padding: 0 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.coverage-row {
+    display: grid;
+    grid-template-columns: 110px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    font-size: 11.5px;
+}
+.coverage-row .story-id {
+    font-family: ui-monospace, Menlo, monospace;
+    color: var(--text-secondary);
+    font-size: 11px;
+}
+.coverage-bar {
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+}
+.coverage-bar .seg {
+    height: 100%;
+}
+.coverage-bar .seg.full { background: var(--accent-coverage-full); }
+.coverage-bar .seg.partial { background: var(--accent-coverage-partial); }
+.coverage-bar .seg.none { background: var(--accent-coverage-none); opacity: 0.55; }
+.coverage-row .ratio {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px;
+    color: var(--text-secondary);
+    min-width: 36px;
+    text-align: right;
+}
+.coverage-row .ratio.partial { color: var(--accent-coverage-partial); font-weight: 600; }
+
+/* ── Regression snapshot ──────────────────────────────────────── */
+.regression-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 14px 16px 4px;
+}
+.reg-stat {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 10px 12px;
+    text-align: left;
+}
+.reg-stat .label {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+.reg-stat .value {
+    font-size: 18px; font-weight: 700;
+    color: var(--text);
+}
+.reg-stat .value.pass { color: var(--success); }
+.reg-stat .value.fail { color: var(--danger); }
+.reg-stat .value.flaky { color: var(--accent-flaky); }
+.reg-stat .sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.regression-suites {
+    padding: 10px 16px 16px;
+}
+.suite-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 12px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border);
+    font-size: 12px;
+}
+.suite-row:last-child { border-bottom: 0; }
+.suite-row .suite-name {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    color: var(--text);
+}
+.suite-row .suite-bar {
+    width: 140px;
+    height: 6px;
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.suite-row .suite-bar .fill { height: 100%; background: var(--success); }
+.suite-row .suite-bar .fill.warn { background: var(--warning); }
+.suite-row .ratio {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    min-width: 70px;
+    text-align: right;
+    font-weight: 600;
+}
+.suite-row .ratio.ok::after { content: ' ✓'; color: var(--success); }
+.suite-row .ratio.warn { color: var(--warning); }
+.suite-row .ratio.warn::after { content: ' ⚠'; }
+
+/* ── Sign-off log ─────────────────────────────────────────────── */
+.signoff-list { padding: 4px 0; }
+.signoff-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+}
+.signoff-row:last-child { border-bottom: 0; }
+.signoff-icon {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    color: white; flex-shrink: 0;
+}
+.signoff-icon.done { background: var(--success); }
+.signoff-icon.pending { background: var(--bg-tertiary); color: var(--text-muted); border: 1.5px dashed var(--border-strong); }
+.signoff-body { font-size: 12.5px; color: var(--text); }
+.signoff-body .actor { font-weight: 600; }
+.signoff-body .scope { color: var(--text-secondary); }
+.signoff-body.pending .actor { color: var(--text-secondary); }
+.signoff-body.pending { color: var(--text-muted); }
+.signoff-time {
+    font-size: 11px; color: var(--text-muted);
+    font-family: ui-monospace, Menlo, monospace;
+}
+.signoff-nudge {
+    font-size: 11px;
+    color: var(--hero-blue-700);
+    background: #eaf2fb;
+    padding: 2px 8px;
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+/* ── Bottom strip ──────────────────────────────────────────────── */
+.bottom-strip {
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+    padding: 8px 14px 10px;
+    display: flex; flex-direction: column; gap: 6px;
+    flex-shrink: 0;
+}
+.bottom-actions {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    align-items: center;
+}
+.bottom-actions-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-muted); font-weight: 600;
+    margin-right: 4px;
+}
+.action-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    height: 28px; padding: 0 11px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text); cursor: pointer;
+    font-size: 12px; font-family: inherit;
+    font-weight: 500;
+}
+.action-btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+.action-btn svg { color: var(--text-muted); }
+.action-btn:hover svg { color: var(--text-secondary); }
+.action-btn.primary {
+    background: var(--success); color: white; border-color: var(--success);
+    font-weight: 600;
+}
+.action-btn.primary:hover { background: #15803d; border-color: #15803d; }
+.action-btn.primary:disabled,
+.action-btn.primary.disabled {
+    background: var(--bg-tertiary); color: var(--text-muted);
+    border-color: var(--border); cursor: not-allowed;
+    opacity: 0.7;
+}
+.action-btn.primary.disabled svg { color: var(--text-muted); }
+.action-btn.destructive {
+    color: var(--danger); border-color: #fecaca; background: #fef2f2;
+}
+.action-btn.destructive:hover { background: #fee2e2; border-color: #fca5a5; }
+.action-btn .tooltip-hint {
+    font-size: 10px; color: var(--text-muted);
+    margin-left: 4px;
+}
+.bottom-input {
+    display: flex; align-items: center; gap: 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    background: var(--bg);
+}
+.bottom-input:focus-within {
+    border-color: var(--hero-blue-500);
+    box-shadow: 0 0 0 3px rgba(108, 182, 255, 0.18);
+}
+.bottom-input input {
+    flex: 1; border: 0; outline: 0;
+    font-family: inherit; font-size: 13px;
+    color: var(--text); background: transparent;
+}
+.bottom-input input::placeholder { color: var(--text-muted); }
+.bottom-input .tool {
+    width: 22px; height: 22px;
+    display: grid; place-items: center;
+    border-radius: 4px; cursor: pointer;
+    color: var(--text-muted);
+    font-family: ui-monospace, Menlo, monospace; font-size: 12px;
+}
+.bottom-input .tool:hover { background: var(--bg-hover); color: var(--text); }
+.model-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--bg-tertiary);
+    padding: 2px 8px; border-radius: 4px;
+    font-size: 10.5px; color: var(--text-secondary);
+    font-weight: 600; cursor: pointer;
+}
+.model-chip .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-500); }
+.send-btn {
+    width: 26px; height: 26px; border-radius: 6px;
+    background: var(--primary); color: white;
+    border: 0; cursor: pointer;
+    display: grid; place-items: center;
+}
+.send-btn:hover { background: var(--primary-hover); }
+
+/* ── Right panel ──────────────────────────────────────────────── */
+.right-panel {
+    border-left: 1px solid var(--border);
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+.right-header {
+    height: 36px; flex-shrink: 0;
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-secondary);
+}
+.right-header .status-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--success);
+}
+.right-header .ctx-label {
+    margin-left: auto;
+    text-transform: none; letter-spacing: 0;
+    font-size: 11px; color: var(--text-muted); font-weight: 400;
+    font-family: ui-monospace, Menlo, monospace;
+}
+.right-scroll {
+    flex: 1; overflow-y: auto;
+    display: flex; flex-direction: column;
+}
+.ambient {
+    padding: 10px 14px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 8px;
+}
+.ambient-label {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--text-muted);
+}
+.ambient-card {
+    border: 1px solid var(--border); border-radius: 7px;
+    background: var(--bg);
+    padding: 9px 11px;
+    font-size: 12px;
+    line-height: 1.5;
+    display: flex; gap: 9px;
+}
+.ambient-card .ac-icon {
+    width: 22px; height: 22px;
+    border-radius: 5px;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+.ambient-card.warn .ac-icon { background: #fef3c7; color: var(--warning); }
+.ambient-card.info .ac-icon { background: #eaf2fb; color: var(--hero-blue-700); }
+.ambient-card.good .ac-icon { background: #dcfce7; color: var(--success); }
+.ambient-card .body { flex: 1; min-width: 0; }
+.ambient-card .body strong { font-weight: 600; }
+.ambient-card .body code {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px;
+    background: var(--bg-tertiary);
+    padding: 0 4px; border-radius: 3px;
+}
+.ambient-card .body .sub {
+    color: var(--text-muted); font-size: 11px;
+    margin-top: 4px;
+}
+.right-section {
+    border-bottom: 1px solid var(--border);
+}
+.right-section-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px;
+    font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+}
+.right-section-head .chev {
+    width: 11px; height: 11px; color: var(--text-muted); margin-left: auto;
+    transition: transform 0.15s ease;
+}
+.right-section.collapsed .chev { transform: rotate(-90deg); }
+.right-section.collapsed .right-section-body { display: none; }
+.right-section-body {
+    padding: 0 14px 14px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+.policy-rule {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px;
+    padding: 5px 0;
+    align-items: baseline;
+}
+.policy-rule .badge {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 10.5px; font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    text-align: center;
+    min-width: 32px;
+}
+.policy-rule .badge.p0 { background: #fef2f2; color: var(--danger); }
+.policy-rule .badge.p1 { background: #fff7ed; color: var(--warning); }
+.policy-rule .badge.p2 { background: var(--bg-tertiary); color: var(--text-secondary); }
+.policy-rule .desc { font-size: 11.5px; color: var(--text); }
+.policy-edit {
+    margin-top: 10px;
+    font-size: 11px; color: var(--hero-blue-700);
+    cursor: pointer;
+    font-weight: 600;
+}
+.policy-edit:hover { text-decoration: underline; }
+
+</style>
+</head>
+<body>
+<div class="shell">
+
+    <!-- Top chrome -->
+    <header class="chrome">
+        <div class="chrome-workspace">
+            <div class="workspace-logo"><svg viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg></div>
+            <span>Hero</span>
+            <span class="domain-pill" title="Switch domain">QA
+                <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+        </div>
+        <div class="search">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <input placeholder="Search or jump to…" />
+            <span class="kbd">⌘K</span>
+        </div>
+        <div class="chrome-right">
+            <span class="preset-chip"><span class="dot"></span>Inline gate · Step-by-step · Persistent-link</span>
+            <div class="avatar jamie" title="Jamie Liu (QA Lead)">JL</div>
+        </div>
+    </header>
+
+    <div class="body-grid">
+
+        <!-- ─── LEFT NAV ─────────────────────────────────────────── -->
+        <nav class="nav">
+            <div class="nav-section">
+                <a class="nav-link chat-entry">
+                    <svg class="nav-icon" viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+                    Chat
+                    <span class="count" style="color:var(--hero-blue-700);font-weight:600">●</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-label">QA</div>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="7" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="11" width="8" height="2" rx="1" fill="currentColor"/></svg>
+                    Story queue<span class="count">12</span>
+                </a>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2.5" width="11" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 6h5M5 9h5M5 12h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                    Test plans
+                </a>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M3 2.5h7l3 3v8a.5.5 0 01-.5.5h-9.5a.5.5 0 01-.5-.5v-11z" stroke="currentColor" stroke-width="1.3"/><path d="M5 8h6M5 11h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                    Test cases<span class="count">218</span>
+                </a>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                    Regression suites
+                </a>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M8 1.5l1.8 4.4 4.7.4-3.6 3.2 1.1 4.6L8 11.7 4 14.1l1.1-4.6L1.5 6.3l4.7-.4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                    Flaky tests<span class="count warn">8</span>
+                </a>
+                <a class="nav-link active">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M3 2.5h10v6L8 11.5 3 8.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M6 13.5h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                    Release gates<span class="count">3</span>
+                </a>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 4h12v9H2z" stroke="currentColor" stroke-width="1.3"/><path d="M2 6l6 4 6-4" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                    Unified inbox<span class="count">47</span>
+                </a>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="4" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/><circle cx="12" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.3"/></svg>
+                    Handoff stream
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-label">Active sessions</div>
+                <div class="nav-session"><span class="pulse"></span>Jamie · release-2026-05-26</div>
+                <div class="nav-session"><span class="pulse" style="background:var(--warning)"></span>Tomás · RC-441 verdict</div>
+                <div class="nav-session"><span class="pulse" style="background:var(--text-muted)"></span>Yuki · regression run</div>
+            </div>
+            <div class="nav-spacer"></div>
+            <div class="nav-user">
+                <div class="avatar sm jamie">JL</div>Jamie Liu · QA Lead
+            </div>
+        </nav>
+
+        <!-- ─── CENTER PANE ───────────────────────────────────────── -->
+        <main class="center">
+
+            <!-- Tab strip -->
+            <div class="tab-strip">
+                <div class="tab chat-tab">
+                    <span class="tab-type-chip">Chat</span>
+                    <span class="tab-label">Conversation</span>
+                </div>
+                <div class="tab active">
+                    <span class="tab-type-chip">Release-gate</span>
+                    <span class="tab-label">2026-05-26 · Sprint 23 cut</span>
+                    <span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+                </div>
+                <div class="tab">
+                    <span class="tab-type-chip">Bug</span>
+                    <span class="tab-label">agent-trace-flush-loops</span>
+                    <span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+                </div>
+                <div class="tab">
+                    <span class="tab-type-chip">Story</span>
+                    <span class="tab-label">2853 · Configure retry policy</span>
+                    <span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+                </div>
+                <div class="tab-strip-spacer"></div>
+            </div>
+
+            <!-- Artifact scroll -->
+            <div class="artifact-scroll">
+                <div class="artifact-padded">
+
+                    <!-- Context strip -->
+                    <div class="context-strip">
+                        <span class="type-chip">QA</span>
+                        <a>Release gates</a>
+                        <span class="sep">›</span>
+                        <span style="color:var(--text)">2026-05-26 (Sprint 23 cut)</span>
+                    </div>
+
+                    <!-- Title -->
+                    <h1 class="artifact-title">Release readiness: 2026-05-26</h1>
+
+                    <!-- Metadata pills -->
+                    <div class="chip-row">
+                        <span class="chip type"><span class="dot" style="background:var(--text-secondary)"></span>release-gate</span>
+                        <span class="chip state-reviewing"><span class="dot"></span>reviewing</span>
+                        <span class="chip assignee"><div class="avatar xs jamie">JL</div>Jamie Liu</span>
+                        <span class="chip sprint"><span class="dot"></span>Sprint 23 · May 13 – May 26</span>
+                        <span class="chip tracker">release-2026-05-26 ↗</span>
+                    </div>
+
+                    <!-- ── THE VERDICT BANNER ──────────────────────── -->
+                    <div class="verdict-banner">
+                        <div class="verdict-head">
+                            <div class="verdict-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2L1.5 21h21L12 2z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" fill="currentColor" fill-opacity="0"/><path d="M12 9v5M12 17.5v.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+                            </div>
+                            <div>
+                                <div class="verdict-title"><span class="verdict-word">NO-GO</span></div>
+                                <div class="verdict-sub">2 blockers open, 1 sign-off pending · gate stays closed until resolution</div>
+                            </div>
+                        </div>
+
+                        <div class="verdict-summary">
+                            <div class="verdict-stat">
+                                <span class="label">Coverage</span>
+                                <span class="value"><span class="ok">11 / 12</span> stories fully covered
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="color:var(--success);margin-left:auto"><path d="M3 7l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </span>
+                                <span class="meta">1 story partial · Story-2853</span>
+                            </div>
+                            <div class="verdict-stat">
+                                <span class="label">Regression</span>
+                                <span class="value"><span class="warn">142 / 148</span> passing (96%)
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="color:var(--warning);margin-left:auto"><path d="M7 1.5l6 11h-12z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M7 6v3M7 10.5v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                                </span>
+                                <span class="meta">6 failing · 3 flaky (verdict pending)</span>
+                            </div>
+                            <div class="verdict-stat">
+                                <span class="label">Blockers</span>
+                                <span class="value"><span class="fail">2 P0</span> open, 1 P1 awaiting sign-off
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="color:var(--danger);margin-left:auto"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.6"/><path d="M7 4v4M7 9.5v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                                </span>
+                                <span class="meta">B1, B2 (P0) · B3 (P1)</span>
+                            </div>
+                        </div>
+
+                        <div class="verdict-actions">
+                            <button class="verdict-btn">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6a4 4 0 117 2.7M9 6V3.2H6.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                Re-aggregate
+                            </button>
+                            <button class="verdict-btn destructive" title="Requires reason capture">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                Override to Go
+                                <svg width="10" height="10" viewBox="0 0 12 12" fill="none" style="margin-left:2px;opacity:0.6"><path d="M4 2h6v6M10 2L5 7M5 5v5H1V3h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </button>
+                            <button class="verdict-btn">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M6 3.5V6l1.7 1.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                Defer to next cycle
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ── BLOCKERS SECTION ────────────────────────── -->
+                    <div class="section" id="sec-blockers">
+                        <div class="section-head" onclick="toggleSection('sec-blockers')">
+                            <svg class="chev" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span class="title">Blockers</span>
+                            <span class="meta">3 named · 2 P0 · 1 P1 awaiting sign-off</span>
+                        </div>
+                        <div class="section-body">
+
+                            <!-- B1 -->
+                            <div class="blocker-row">
+                                <span class="blocker-id">B1</span>
+                                <span class="chip priority-p0"><span class="dot"></span>P0</span>
+                                <div class="blocker-body">
+                                    <div class="blocker-title">
+                                        <span class="mono">bug: agent-trace-flush-loops</span>
+                                        <span style="color:var(--text-secondary)">— blocking retry mechanism</span>
+                                    </div>
+                                    <div class="blocker-meta">
+                                        <span class="owner"><div class="avatar xs diego">DR</div>Diego Ramirez</span>
+                                        <span class="state-chip"><span class="dot"></span>delivering</span>
+                                        <span class="age">Open 2d</span>
+                                    </div>
+                                </div>
+                                <div class="blocker-actions">
+                                    <button class="btn-sm">Open bug →</button>
+                                </div>
+                                <span></span>
+                            </div>
+
+                            <!-- B2 -->
+                            <div class="blocker-row">
+                                <span class="blocker-id">B2</span>
+                                <span class="chip priority-p0"><span class="dot"></span>P0</span>
+                                <div class="blocker-body">
+                                    <div class="blocker-title">
+                                        <span class="mono">bug: span-id-collision-under-load</span>
+                                        <span style="color:var(--text-secondary)">— trace correlation breaks at &gt; 500 rps</span>
+                                    </div>
+                                    <div class="blocker-meta">
+                                        <span class="owner"><div class="avatar xs aisha">AP</div>Aisha Patel</span>
+                                        <span class="state-chip"><span class="dot"></span>delivering</span>
+                                        <span class="eta">ETA tomorrow (May 17)</span>
+                                    </div>
+                                </div>
+                                <div class="blocker-actions">
+                                    <button class="btn-sm">Open bug →</button>
+                                </div>
+                                <span></span>
+                            </div>
+
+                            <!-- B3 -->
+                            <div class="blocker-row">
+                                <span class="blocker-id">B3</span>
+                                <span class="chip priority-p1"><span class="dot"></span>P1</span>
+                                <div class="blocker-body">
+                                    <div class="blocker-title">
+                                        <span class="mono">Story-2853</span>
+                                        <span style="color:var(--text-secondary)">— Configure agent retry policy via dashboard</span>
+                                    </div>
+                                    <div class="blocker-meta">
+                                        <span style="color:var(--accent-coverage-none);font-weight:600">Coverage 0/4 AC</span>
+                                        <span style="color:var(--text-muted)">·</span>
+                                        <span style="color:var(--text-secondary)">awaiting QA sign-off override</span>
+                                        <span class="owner"><div class="avatar xs jamie">JL</div>Jamie Liu</span>
+                                    </div>
+                                </div>
+                                <div class="blocker-actions">
+                                    <button class="btn-sm">Open story →</button>
+                                    <button class="btn-sm qa">Sign off →</button>
+                                </div>
+                                <span></span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ── COVERAGE BREAKDOWN ──────────────────────── -->
+                    <div class="section" id="sec-coverage">
+                        <div class="section-head" onclick="toggleSection('sec-coverage')">
+                            <svg class="chev" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span class="title">Coverage breakdown</span>
+                            <span class="meta">12 stories · 11 fully · 1 partial · 0 uncovered</span>
+                        </div>
+                        <div class="section-body">
+                            <div class="coverage-summary">
+                                <div class="legend">
+                                    <span class="legend-item"><span class="legend-dot" style="background:var(--accent-coverage-full)"></span>Full</span>
+                                    <span class="legend-item"><span class="legend-dot" style="background:var(--accent-coverage-partial)"></span>Partial</span>
+                                    <span class="legend-item"><span class="legend-dot" style="background:var(--accent-coverage-none);opacity:0.55"></span>Uncovered</span>
+                                </div>
+                                <span style="margin-left:auto;font-size:11px;color:var(--text-muted)">Last aggregated: 12m ago</span>
+                            </div>
+                            <div class="coverage-bars">
+                                <div class="coverage-row"><span class="story-id">Story-2847</span><span class="coverage-bar"><span class="seg full" style="width:100%"></span></span><span class="ratio">5/5</span></div>
+                                <div class="coverage-row"><span class="story-id">Story-2848</span><span class="coverage-bar"><span class="seg full" style="width:100%"></span></span><span class="ratio">3/3</span></div>
+                                <div class="coverage-row"><span class="story-id">Story-2849</span><span class="coverage-bar"><span class="seg full" style="width:100%"></span></span><span class="ratio">4/4</span></div>
+                                <div class="coverage-row"><span class="story-id">Story-2850</span><span class="coverage-bar"><span class="seg full" style="width:100%"></span></span><span class="ratio">6/6</span></div>
+                                <div class="coverage-row"><span class="story-id">Story-2851</span><span class="coverage-bar"><span class="seg full" style="width:100%"></span></span><span class="ratio">2/2</span></div>
+                                <div class="coverage-row"><span class="story-id">Story-2852</span><span class="coverage-bar"><span class="seg full" style="width:100%"></span></span><span class="ratio">5/5</span></div>
+                                <div class="coverage-row"><span class="story-id">Story-2853</span><span class="coverage-bar"><span class="seg none" style="width:100%"></span></span><span class="ratio partial">0/4</span></div>
+                                <div class="coverage-row"><span class="story-id">Story-2854</span><span class="coverage-bar"><span class="seg full" style="width:100%"></span></span><span class="ratio">3/3</span></div>
+                                <div class="coverage-row"><span class="story-id">Story-2855</span><span class="coverage-bar"><span class="seg full" style="width:100%"></span></span><span class="ratio">7/7</span></div>
+                                <div class="coverage-row"><span class="story-id">Story-2856</span><span class="coverage-bar"><span class="seg full" style="width:100%"></span></span><span class="ratio">4/4</span></div>
+                                <div class="coverage-row"><span class="story-id">Story-2857</span><span class="coverage-bar"><span class="seg full" style="width:100%"></span></span><span class="ratio">3/3</span></div>
+                                <div class="coverage-row"><span class="story-id">Story-2858</span><span class="coverage-bar"><span class="seg full" style="width:100%"></span></span><span class="ratio">5/5</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── REGRESSION SNAPSHOT ─────────────────────── -->
+                    <div class="section" id="sec-regression">
+                        <div class="section-head" onclick="toggleSection('sec-regression')">
+                            <svg class="chev" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span class="title">Regression snapshot</span>
+                            <span class="meta">148 cases · 142 passing · 6 failing · 3 flaky</span>
+                        </div>
+                        <div class="section-body">
+                            <div class="regression-summary">
+                                <div class="reg-stat">
+                                    <div class="label">Total cases</div>
+                                    <div class="value">148</div>
+                                    <div class="sub">across 3 active suites</div>
+                                </div>
+                                <div class="reg-stat">
+                                    <div class="label">Passing</div>
+                                    <div class="value pass">142</div>
+                                    <div class="sub">96% pass rate</div>
+                                </div>
+                                <div class="reg-stat">
+                                    <div class="label">Failing</div>
+                                    <div class="value fail">6</div>
+                                    <div class="sub">2 in telemetry · 4 in webhooks</div>
+                                </div>
+                                <div class="reg-stat">
+                                    <div class="label">Flaky</div>
+                                    <div class="value flaky">3</div>
+                                    <div class="sub">verdict pending</div>
+                                </div>
+                            </div>
+                            <div class="regression-suites">
+                                <div class="suite-row">
+                                    <span class="suite-name">agent-runtime-regression</span>
+                                    <span class="suite-bar"><span class="fill" style="width:100%"></span></span>
+                                    <span class="ratio ok">89 / 89</span>
+                                </div>
+                                <div class="suite-row">
+                                    <span class="suite-name">telemetry-regression</span>
+                                    <span class="suite-bar"><span class="fill warn" style="width:93%"></span></span>
+                                    <span class="ratio warn">28 / 30</span>
+                                </div>
+                                <div class="suite-row">
+                                    <span class="suite-name">webhooks-regression</span>
+                                    <span class="suite-bar"><span class="fill warn" style="width:86%"></span></span>
+                                    <span class="ratio warn">25 / 29</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── SIGN-OFF LOG ────────────────────────────── -->
+                    <div class="section" id="sec-signoff">
+                        <div class="section-head" onclick="toggleSection('sec-signoff')">
+                            <svg class="chev" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span class="title">Sign-off log</span>
+                            <span class="meta">2 of 3 received · engineering pending</span>
+                        </div>
+                        <div class="section-body">
+                            <div class="signoff-list">
+                                <div class="signoff-row">
+                                    <span class="signoff-icon done">
+                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    </span>
+                                    <div class="signoff-body">
+                                        <span class="actor">Jamie Liu</span>
+                                        <span class="scope">signed off Sprint 23 coverage</span>
+                                    </div>
+                                    <span class="signoff-time">May 25, 14:22</span>
+                                </div>
+                                <div class="signoff-row">
+                                    <span class="signoff-icon done">
+                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    </span>
+                                    <div class="signoff-body">
+                                        <span class="actor">Marcus Johnson</span>
+                                        <span class="scope">signed off PM scope</span>
+                                    </div>
+                                    <span class="signoff-time">May 25, 16:08</span>
+                                </div>
+                                <div class="signoff-row">
+                                    <span class="signoff-icon pending">
+                                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.4"/><path d="M6 3.5V6l1.5 1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                                    </span>
+                                    <div class="signoff-body pending">
+                                        <span class="actor">Sarah Chen</span>
+                                        <span class="scope">— pending engineering sign-off</span>
+                                    </div>
+                                    <span class="signoff-nudge" title="Ping Sarah's active session">Nudge →</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ─── BOTTOM STRIP ──────────────────────────────────── -->
+            <div class="bottom-strip">
+                <div class="bottom-actions">
+                    <span class="bottom-actions-label">Reviewing</span>
+                    <button class="action-btn primary disabled" title="Disabled while P0 blockers are open" disabled>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Approve (go)
+                        <span class="tooltip-hint" style="color:rgba(255,255,255,0.55)">2 blockers open</span>
+                    </button>
+                    <button class="action-btn destructive">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                        Reject (no-go with reasons)
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.4"/><path d="M6 3.5V6l1.7 1.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                        Defer to next cycle (per blocker)
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6a4 4 0 117 2.7M9 6V3.2H6.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Re-aggregate
+                    </button>
+                </div>
+                <div class="bottom-input">
+                    <span class="model-chip"><span class="dot"></span>Sonnet 4.6</span>
+                    <input placeholder="Ask about release-2026-05-26…" />
+                    <span class="tool" title="Slash commands">/</span>
+                    <span class="tool" title="Mention an artifact">@</span>
+                    <span class="tool" title="Attach">
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M11 5l-5 5a2 2 0 102.8 2.8L14 7.5a3.5 3.5 0 00-5-5L4 7.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    <button class="send-btn" title="Send">
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- ─── RIGHT PANEL ──────────────────────────────────────── -->
+        <aside class="right-panel">
+            <div class="right-header">
+                <span class="status-dot"></span>
+                Release gate
+                <span class="ctx-label">· release-2026-05-26</span>
+            </div>
+            <div class="right-scroll">
+
+                <!-- Ambient -->
+                <div class="ambient">
+                    <div class="ambient-label">Ambient · about this gate</div>
+
+                    <div class="ambient-card warn">
+                        <span class="ac-icon">
+                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1.5l6.5 12h-13z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 6.5v3.5M8 12v0.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                        </span>
+                        <div class="body">
+                            <strong>B1 has been open 2 days.</strong><br>
+                            <code>release-gate-reviewer</code> recommends gate stays <strong>No-Go</strong> until resolved.
+                            <div class="sub">Confidence: 94% · based on past 18 releases</div>
+                        </div>
+                    </div>
+
+                    <div class="ambient-card info">
+                        <span class="ac-icon">
+                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 4h12v9H2z" stroke="currentColor" stroke-width="1.4"/><path d="M2 6l6 4 6-4" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+                        </span>
+                        <div class="body">
+                            <strong>Sign-off pending from Sarah</strong> (engineering). Hero's <code>handoff-coordinator</code> is notifying her active session now.
+                            <div class="sub">Sent 8m ago · no read receipt yet</div>
+                        </div>
+                    </div>
+
+                    <div class="ambient-card good">
+                        <span class="ac-icon">
+                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 8l3 3 7-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        <div class="body">
+                            <strong>If B1 + B2 close today,</strong> gate flips to <span style="color:var(--success);font-weight:600">Go</span> pending B3 sign-off.
+                            <div class="sub">Projected verdict path · auto-updates on re-aggregate</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Blocker policy -->
+                <div class="right-section" id="rsec-policy">
+                    <div class="right-section-head" onclick="toggleRightSection('rsec-policy')">
+                        Blocker policy
+                        <svg class="chev" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <div class="right-section-body">
+                        <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;font-weight:600">Defaults · this workspace</div>
+                        <div class="policy-rule">
+                            <span class="badge p0">P0</span>
+                            <span class="desc">Hold release. Override requires reason capture + leadership sign-off.</span>
+                        </div>
+                        <div class="policy-rule">
+                            <span class="badge p1">P1</span>
+                            <span class="desc">Hold without explicit sign-off. Fast-path sign-off available on blocker row.</span>
+                        </div>
+                        <div class="policy-rule">
+                            <span class="badge p2">P2+</span>
+                            <span class="desc">Candidate for defer-to-next-cycle. Doesn't block.</span>
+                        </div>
+                        <div class="policy-edit">Edit blocker policy →</div>
+                    </div>
+                </div>
+
+                <!-- Linked release -->
+                <div class="right-section" id="rsec-release">
+                    <div class="right-section-head" onclick="toggleRightSection('rsec-release')">
+                        Linked release
+                        <svg class="chev" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <div class="right-section-body">
+                        <div style="font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--text);margin-bottom:4px">release-2026-05-26</div>
+                        <div style="font-size:11.5px;color:var(--text-secondary)">Sprint 23 cut · scheduled May 26, 16:00 PT</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:6px">12 stories · 8 bugs fixed · 4 features delivering</div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+    </div>
+</div>
+
+<script>
+function toggleSection(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.toggle('collapsed');
+}
+function toggleRightSection(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.toggle('collapsed');
+}
+// Override button affordance — show modal trigger hint
+document.querySelectorAll('.verdict-btn.destructive').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        // Modal trigger — would open reason-capture composer
+        // (not rendered in this mockup, but the affordance is here)
+    });
+});
+</script>
+</body>
+</html>

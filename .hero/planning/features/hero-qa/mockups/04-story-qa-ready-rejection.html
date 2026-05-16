@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<!-- Hero QA Mock: 04-story-qa-ready-rejection | THE brand interaction screen -->
+<!-- Layout: shared shell (left nav + center artifact + right rail) + 3-action rejection composer mid-composition in bottom strip -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Story-2847 (qa-ready) — Compose rejection · Hero QA</title>
+<style>
+:root {
+    /* Inherited PM tokens */
+    --bg: #ffffff;
+    --bg-secondary: #f7f8fa;
+    --bg-tertiary: #eef0f4;
+    --bg-hover: #f0f2f6;
+    --text: #1a1d23;
+    --text-secondary: #5d646e;
+    --text-muted: #8a929c;
+    --border: #e4e7eb;
+    --border-strong: #d0d4da;
+    --primary: #2a6cb5;
+    --primary-hover: #6cb6ff;
+    --hero-blue-300: #9bc1e6;
+    --hero-blue-500: #6cb6ff;
+    --hero-blue-700: #2a6cb5;
+    --hero-ink: #14181e;
+    --success: #16a249;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --info: #0284c7;
+    --accent-handoff: #7c3aed;
+    --accent-handoff-bg: #f5f0ff;
+    /* QA-specific tokens */
+    --accent-coverage-full: #16a249;
+    --accent-coverage-partial: #d97706;
+    --accent-coverage-none: #dc2626;
+    --accent-qa-gutter: #0891b2;
+    --accent-qa-gutter-bg: #ecfeff;
+    --accent-qa-ready: #0284c7;
+    --accent-qa-ready-bg: #e0f2fe;
+    --accent-qa-rejected: #d97706;
+    --accent-flaky: #a855f7;
+    --accent-pass: #16a249;
+    --accent-fail: #dc2626;
+    --accent-blocked: #6b7280;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+    font-size: 13px; line-height: 1.45;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text); background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ── App shell ─────────────────────────────────────────────────── */
+.shell { display: grid; grid-template-rows: 48px 1fr; height: 100vh; }
+.chrome {
+    display: grid;
+    grid-template-columns: 240px 1fr auto;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    padding: 0 16px 0 0;
+    gap: 16px;
+}
+.chrome-workspace {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 12px; height: 100%;
+    border-right: 1px solid var(--border);
+    font-weight: 600;
+}
+.workspace-logo { width: 22px; height: 22px; display: grid; place-items: center; color: var(--hero-blue-300); }
+.workspace-logo svg { display: block; width: 22px; height: 22px; }
+.domain-pill {
+    margin-left: auto;
+    background: var(--accent-qa-ready-bg); color: var(--accent-qa-ready);
+    border-radius: 4px; padding: 2px 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+    display: inline-flex; align-items: center; gap: 4px;
+    cursor: pointer;
+}
+.search {
+    grid-column: 2;
+    display: flex; align-items: center; gap: 8px;
+    max-width: 440px; width: 100%; justify-self: center;
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: 6px; padding: 5px 10px;
+    color: var(--text-muted);
+}
+.search input { background: transparent; border: 0; outline: 0; flex: 1; font-size: 12px; color: var(--text-secondary); font-family: inherit; }
+.kbd {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: var(--bg); border: 1px solid var(--border);
+    border-bottom-width: 2px; border-radius: 3px;
+    padding: 0 5px; font-size: 10px; color: var(--text-muted); line-height: 14px;
+}
+.chrome-right { display: flex; align-items: center; gap: 8px; }
+.preset-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #eaf2fb; color: var(--hero-blue-700);
+    border: 1px solid #cfe1f4;
+    padding: 3px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 600;
+}
+.preset-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); }
+.preset-chip .sep { color: var(--hero-blue-300); margin: 0 3px; }
+.avatar {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: linear-gradient(135deg, #ffd47e, #f97373);
+    color: white; font-size: 10px; font-weight: 600;
+    display: inline-grid; place-items: center;
+    border: 1px solid var(--border);
+}
+.avatar.sm { width: 18px; height: 18px; font-size: 9px; }
+.avatar.xs { width: 14px; height: 14px; font-size: 8px; }
+.avatar.diego { background: linear-gradient(135deg, #6cb6ff, #4f7cf7); }
+.avatar.sarah { background: linear-gradient(135deg, #84e1bc, #16a249); }
+.avatar.aisha { background: linear-gradient(135deg, #f4a4ff, #b465ec); }
+.avatar.marcus { background: linear-gradient(135deg, #fcc46d, #f97316); }
+.avatar.priya { background: linear-gradient(135deg, #ff9eb4, #ec4899); }
+.avatar.jamie { background: linear-gradient(135deg, #67e8f9, #0891b2); }
+.avatar.tomas { background: linear-gradient(135deg, #fda4af, #e11d48); }
+.avatar.yuki { background: linear-gradient(135deg, #c4b5fd, #7c3aed); }
+
+/* ── Body 3-column ─────────────────────────────────────────────── */
+.body-grid {
+    display: grid;
+    grid-template-columns: 240px 1fr 380px;
+    height: calc(100vh - 48px);
+    min-height: 0;
+}
+
+/* ── Left nav ──────────────────────────────────────────────────── */
+.nav {
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    padding: 12px 8px; overflow-y: auto;
+    display: flex; flex-direction: column;
+}
+.nav-section { margin-bottom: 14px; }
+.nav-label {
+    text-transform: uppercase; letter-spacing: 0.5px;
+    font-size: 10px; font-weight: 600; color: var(--text-muted);
+    padding: 4px 8px;
+}
+.nav-link {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 8px; border-radius: 4px;
+    color: var(--text-secondary); text-decoration: none;
+    font-size: 12.5px; cursor: pointer;
+}
+.nav-link:hover { background: var(--bg-hover); color: var(--text); }
+.nav-link.active { background: var(--bg-tertiary); color: var(--text); font-weight: 500; }
+.nav-link .count { margin-left: auto; font-size: 11px; color: var(--text-muted); }
+.nav-icon { width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0; }
+.nav-link.active .nav-icon { color: var(--accent-qa-ready); }
+.nav-link.chat-entry { color: var(--hero-blue-700); font-weight: 600; }
+.nav-link.chat-entry .nav-icon { color: var(--hero-blue-300); }
+.nav-link.chat-entry:hover { background: #eaf2fb; }
+.nav-saved {
+    padding: 3px 8px 3px 26px;
+    font-size: 12px; color: var(--text-secondary);
+    border-radius: 4px; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+}
+.nav-saved:hover { background: var(--bg-hover); color: var(--text); }
+.nav-saved::before {
+    content: ''; width: 4px; height: 4px; border-radius: 50%;
+    background: var(--text-muted); flex-shrink: 0;
+}
+.nav-spacer { flex: 1; }
+.nav-user {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px; border-top: 1px solid var(--border);
+    margin-top: 8px;
+    font-size: 12px; color: var(--text-secondary);
+}
+/* Cross-pack viewing indicator */
+.viewing-banner {
+    display: flex; align-items: center; gap: 6px;
+    margin: 0 0 12px;
+    padding: 7px 9px;
+    background: var(--accent-handoff-bg);
+    border: 1px solid rgba(124,58,237,0.25);
+    border-radius: 6px;
+    font-size: 11px; color: var(--accent-handoff);
+    font-weight: 600;
+}
+.viewing-banner .domain-tag {
+    background: var(--accent-qa-ready); color: white;
+    padding: 1px 5px; border-radius: 3px;
+    font-size: 9.5px; letter-spacing: 0.4px;
+}
+.viewing-banner .arrow { color: var(--accent-handoff); }
+.viewing-banner .target { color: var(--text-secondary); font-weight: 500; }
+
+/* ── Center pane ──────────────────────────────────────────────── */
+.center {
+    display: grid;
+    grid-template-rows: 34px 1fr auto;
+    min-height: 0; overflow: hidden;
+}
+
+/* Tab strip */
+.tab-strip {
+    display: flex; align-items: stretch;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+}
+.tab {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 0 12px;
+    border-right: 1px solid var(--border);
+    background: var(--bg-secondary); color: var(--text-muted);
+    font-size: 12px; cursor: pointer;
+    height: 34px; max-width: 280px;
+}
+.tab .tab-type-chip {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.4px; padding: 1px 5px; border-radius: 3px;
+    background: var(--bg-tertiary); color: var(--text-muted);
+    flex-shrink: 0;
+}
+.tab .tab-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab .tab-close {
+    width: 14px; height: 14px; display: grid; place-items: center;
+    border-radius: 3px; opacity: 0; color: var(--text-muted); flex-shrink: 0;
+}
+.tab:hover .tab-close { opacity: 1; }
+.tab.active {
+    background: var(--bg); color: var(--text); font-weight: 500;
+    box-shadow: inset 0 2px 0 var(--accent-qa-ready);
+}
+.tab.active .tab-type-chip { background: var(--accent-qa-ready-bg); color: var(--accent-qa-ready); }
+.tab.active .tab-close { opacity: 0.6; }
+.tab.chat-tab .tab-type-chip { background: #eaf2fb; color: var(--hero-blue-700); }
+.tab-strip-spacer { flex: 1; border-right: 0; }
+
+/* Artifact area (scrollable) */
+.artifact-scroll {
+    overflow-y: auto;
+    min-height: 0;
+}
+.artifact-padded { padding: 22px 32px 24px; max-width: 920px; }
+
+/* Context strip */
+.context-strip {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11.5px; color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+.context-strip a { color: var(--text-secondary); text-decoration: none; }
+.context-strip a:hover { color: var(--primary); }
+.context-strip .sep { color: var(--text-muted); }
+.context-strip .type-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--bg-tertiary); border-radius: 3px;
+    padding: 1px 6px; font-size: 10.5px; font-weight: 600;
+    color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px;
+}
+.context-strip .domain-stamp {
+    background: var(--accent-handoff-bg); color: var(--accent-handoff);
+    border-radius: 3px; padding: 1px 6px; font-size: 10.5px;
+    font-weight: 700; letter-spacing: 0.3px;
+}
+.artifact-title {
+    font-size: 22px; line-height: 1.35; font-weight: 600;
+    margin: 0 0 14px; letter-spacing: -0.2px;
+}
+
+/* Chips */
+.chip-row {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+    margin-bottom: 18px;
+}
+.chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    height: 22px; padding: 0 8px;
+    border-radius: 11px; font-size: 11px; font-weight: 500;
+    background: var(--bg-tertiary); color: var(--text-secondary);
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+.chip .dot { width: 6px; height: 6px; border-radius: 50%; }
+.chip.status-qa-ready {
+    background: var(--accent-qa-ready-bg);
+    color: var(--accent-qa-ready);
+    border: 1px solid #bae6fd;
+    font-weight: 600;
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.08);
+}
+.chip.status-qa-ready .dot { background: var(--accent-qa-ready); }
+.chip.priority-high { background: #fef2f2; color: #b91c1c; }
+.chip.priority-high .dot { background: #dc2626; }
+.chip.points { background: var(--bg-tertiary); color: var(--text-secondary); font-family: ui-monospace, Menlo, monospace; }
+.chip.assignee { padding-left: 3px; gap: 6px; }
+.chip.tracker { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; }
+.chip.linked-feature {
+    background: var(--accent-handoff-bg);
+    color: var(--accent-handoff);
+    border: 1px solid rgba(124,58,237,0.25);
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 10.5px;
+}
+.chip.linked-feature .dot { background: var(--accent-handoff); }
+.chip.round { background: #fef3c7; color: #92400e; font-weight: 600; }
+.chip.round .dot { background: var(--warning); }
+
+/* Coverage rail */
+.coverage-rail {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px;
+    background: linear-gradient(180deg, var(--bg-secondary), var(--bg));
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 18px;
+}
+.coverage-rail-label {
+    font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+.coverage-grid {
+    display: flex; gap: 4px;
+    flex: 1;
+}
+.coverage-cell {
+    flex: 1;
+    height: 28px;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10.5px; font-weight: 600;
+    color: white;
+    font-family: ui-monospace, Menlo, monospace;
+    position: relative;
+}
+.coverage-cell.pass { background: var(--accent-pass); }
+.coverage-cell.fail {
+    background: var(--accent-fail);
+    box-shadow: 0 0 0 2px #fecaca;
+}
+.coverage-cell .ac-label {
+    position: absolute; top: -16px; left: 0; right: 0;
+    text-align: center;
+    font-size: 9.5px; color: var(--text-muted);
+    font-weight: 600;
+}
+.coverage-rail-link {
+    flex-shrink: 0;
+    font-size: 11.5px; color: var(--primary);
+    text-decoration: none; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 4px;
+}
+.coverage-rail-link:hover { text-decoration: underline; }
+.coverage-rail-summary {
+    flex-shrink: 0;
+    font-size: 11.5px; color: var(--text-secondary);
+}
+.coverage-rail-summary strong { color: var(--text); }
+.coverage-rail-summary .bad { color: var(--accent-fail); font-weight: 600; }
+
+/* Section title */
+.section-title {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-secondary);
+    margin: 24px 0 10px;
+    display: flex; align-items: center; gap: 8px;
+}
+.section-title .count {
+    background: var(--bg-tertiary); color: var(--text-secondary);
+    border-radius: 9px; padding: 0 6px; font-size: 10px;
+}
+.body-prose p { margin: 0 0 10px; font-size: 13.5px; line-height: 1.6; }
+.body-prose code {
+    background: var(--bg-tertiary); padding: 1px 5px; border-radius: 3px;
+    font-size: 12px; font-family: ui-monospace, Menlo, monospace;
+}
+.read-only-note {
+    font-size: 10.5px; color: var(--text-muted); font-style: italic;
+    margin-left: auto;
+    text-transform: none; letter-spacing: 0; font-weight: 400;
+}
+
+/* EARS */
+.ears-list { margin: 0; padding: 0; list-style: none; }
+.ears-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 8px 8px 4px;
+    border-bottom: 1px dashed var(--border);
+}
+.ears-row.targeted {
+    background: #fff7ed;
+    border-radius: 6px;
+    border-bottom: 1px dashed #fed7aa;
+    box-shadow: inset 3px 0 0 var(--accent-fail);
+    padding-left: 12px;
+}
+.ears-check {
+    width: 16px; height: 16px; flex-shrink: 0; margin-top: 1.5px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 4px; background: var(--bg);
+    display: grid; place-items: center;
+    opacity: 0.5;
+}
+.ears-row.pass .ears-check {
+    background: var(--success); border-color: var(--success); opacity: 1;
+}
+.ears-row.pass .ears-check svg { color: white; }
+.ears-row.fail .ears-check {
+    background: var(--accent-fail); border-color: var(--accent-fail); opacity: 1;
+}
+.ears-row.fail .ears-check svg { color: white; }
+.ears-text { font-size: 12.5px; font-family: ui-monospace, Menlo, monospace; line-height: 1.55; flex: 1; }
+.ears-text .kw { color: var(--text-secondary); font-weight: 600; }
+.ears-row.pass .ears-text { color: var(--text-secondary); }
+.ears-meta {
+    flex-shrink: 0;
+    font-size: 10px; color: var(--text-muted);
+    font-family: ui-monospace, Menlo, monospace;
+}
+.ears-meta.fail-meta { color: var(--accent-fail); font-weight: 600; }
+
+/* QA Findings collapsible block (with QA-cyan gutter) */
+.qa-findings-block {
+    margin-top: 22px;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent-qa-gutter);
+    border-radius: 6px;
+    background: var(--bg);
+    overflow: hidden;
+}
+.qa-findings-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: var(--accent-qa-gutter-bg);
+    cursor: pointer;
+}
+.qa-findings-head .icon {
+    width: 18px; height: 18px;
+    display: grid; place-items: center;
+    background: var(--accent-qa-gutter);
+    color: white;
+    border-radius: 4px;
+    font-size: 9.5px; font-weight: 700;
+}
+.qa-findings-head .title {
+    font-size: 12.5px; font-weight: 600;
+    color: var(--accent-qa-gutter);
+}
+.qa-findings-head .round-tag {
+    background: var(--bg); color: var(--accent-qa-gutter);
+    border: 1px solid var(--accent-qa-gutter);
+    border-radius: 9px;
+    padding: 0 7px;
+    font-size: 10px; font-weight: 700;
+}
+.qa-findings-head .chev {
+    margin-left: auto; color: var(--accent-qa-gutter);
+}
+.qa-findings-empty {
+    padding: 14px;
+    font-size: 12px; color: var(--text-muted); font-style: italic;
+    border-top: 1px dashed var(--border);
+    text-align: center;
+}
+
+/* ── Bottom strip — COMPOSER MID-COMPOSITION ───────────────────── */
+.bottom-strip {
+    border-top: 1px solid var(--border);
+    background: var(--bg-secondary);
+    padding: 0;
+    flex-shrink: 0;
+}
+.composer {
+    border: 1.5px solid var(--accent-qa-ready);
+    background: var(--bg);
+    border-radius: 10px;
+    margin: 10px 14px 8px;
+    box-shadow:
+        0 1px 3px rgba(0,0,0,0.04),
+        0 4px 16px rgba(2, 132, 199, 0.18);
+    overflow: hidden;
+}
+.composer-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 14px;
+    background: var(--accent-qa-ready-bg);
+    border-bottom: 1px solid #bae6fd;
+}
+.composer-head-icon {
+    width: 18px; height: 18px;
+    background: var(--accent-qa-ready);
+    color: white;
+    border-radius: 4px;
+    display: grid; place-items: center;
+}
+.composer-head .title {
+    font-size: 12.5px; font-weight: 600;
+    color: var(--accent-qa-ready);
+}
+.composer-head .target {
+    font-family: ui-monospace, Menlo, monospace;
+    background: var(--bg);
+    color: var(--accent-qa-ready);
+    border: 1px solid #bae6fd;
+    padding: 1px 6px; border-radius: 3px;
+    font-size: 11px; font-weight: 600;
+}
+.composer-head .step {
+    margin-left: auto;
+    font-size: 10.5px; color: var(--accent-qa-ready);
+    font-weight: 600;
+}
+.composer-head .close {
+    width: 18px; height: 18px;
+    display: grid; place-items: center;
+    cursor: pointer;
+    color: var(--accent-qa-ready);
+    border-radius: 3px;
+}
+.composer-head .close:hover { background: rgba(2,132,199,0.1); }
+
+.composer-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    padding: 12px 14px;
+}
+.composer-radios {
+    display: flex; flex-direction: column; gap: 6px;
+}
+.composer-radios .label {
+    font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+.radio-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--bg);
+    cursor: pointer;
+}
+.radio-row:hover { background: var(--bg-secondary); }
+.radio-row.selected {
+    border-color: var(--accent-qa-ready);
+    background: var(--accent-qa-ready-bg);
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.1);
+}
+.radio-row.nudged {
+    border-style: dashed;
+    border-color: var(--hero-blue-500);
+}
+.radio-marker {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 1.5px solid var(--border-strong);
+    background: var(--bg);
+    flex-shrink: 0; margin-top: 1.5px;
+    display: grid; place-items: center;
+}
+.radio-row.selected .radio-marker {
+    border-color: var(--accent-qa-ready);
+}
+.radio-row.selected .radio-marker::after {
+    content: '';
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent-qa-ready);
+}
+.radio-text { font-size: 12.5px; line-height: 1.4; flex: 1; }
+.radio-text .head {
+    font-weight: 600; color: var(--text);
+}
+.radio-row.selected .radio-text .head { color: var(--accent-qa-ready); }
+.radio-text .sub {
+    font-size: 11px; color: var(--text-muted);
+    margin-top: 2px;
+}
+.radio-text .nudge-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #eaf2fb; color: var(--hero-blue-700);
+    border: 1px dashed var(--hero-blue-500);
+    border-radius: 9px;
+    padding: 1px 6px;
+    font-size: 9.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.4px;
+    margin-left: 6px;
+}
+
+/* Composer right column — textarea + nudge + actions */
+.composer-right {
+    display: flex; flex-direction: column; gap: 8px;
+}
+.findings-label {
+    font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    display: flex; align-items: center; gap: 6px;
+}
+.findings-label .format-hint {
+    font-weight: 400; text-transform: none; letter-spacing: 0;
+    color: var(--text-muted); font-size: 11px;
+}
+.findings-textarea {
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    background: var(--bg);
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 12.5px; line-height: 1.55;
+    color: var(--text);
+    min-height: 100px;
+    resize: vertical;
+    outline: none;
+}
+.findings-textarea:focus {
+    border-color: var(--hero-blue-500);
+    box-shadow: 0 0 0 3px rgba(108, 182, 255, 0.18);
+}
+.findings-textarea .caret {
+    display: inline-block;
+    width: 1.5px; height: 14px;
+    background: var(--text);
+    vertical-align: -2px;
+    animation: caret-blink 1s steps(2) infinite;
+}
+@keyframes caret-blink { 50% { opacity: 0; } }
+
+/* Inline nudge from qa-investigator */
+.investigator-nudge {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 8px 10px;
+    background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+    border: 1px dashed var(--hero-blue-500);
+    border-radius: 7px;
+    font-size: 11.5px; line-height: 1.45;
+}
+.investigator-nudge .agent-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 9.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.4px;
+    color: var(--hero-blue-700);
+    background: #eaf2fb;
+    border-radius: 9px;
+    padding: 1px 6px;
+    flex-shrink: 0;
+}
+.investigator-nudge code {
+    font-family: ui-monospace, Menlo, monospace;
+    background: var(--bg-tertiary);
+    padding: 0 4px; border-radius: 3px;
+    font-size: 10.5px;
+}
+.investigator-nudge .pulse {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--hero-blue-700);
+    flex-shrink: 0; margin-top: 6px;
+}
+
+.composer-foot {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-secondary);
+}
+.composer-foot .hint {
+    font-size: 11px; color: var(--text-muted);
+    flex: 1;
+    display: flex; align-items: center; gap: 6px;
+}
+.composer-foot .hint .kbd { font-size: 10px; }
+.btn {
+    height: 30px; padding: 0 14px;
+    border-radius: 7px; font-size: 12.5px;
+    font-family: inherit; font-weight: 500;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-cancel {
+    background: var(--bg); border: 1px solid var(--border-strong);
+    color: var(--text-secondary);
+}
+.btn-cancel:hover { background: var(--bg-hover); color: var(--text); }
+.btn-submit {
+    background: linear-gradient(180deg, #0ea5e9, var(--accent-qa-ready));
+    border: 1px solid #0369a1;
+    color: white;
+    font-weight: 600;
+    box-shadow:
+        0 1px 2px rgba(2, 132, 199, 0.35),
+        0 3px 8px rgba(2, 132, 199, 0.25),
+        inset 0 -1px 0 rgba(0,0,0,0.12);
+}
+.btn-submit:hover {
+    box-shadow:
+        0 1px 2px rgba(2, 132, 199, 0.35),
+        0 5px 14px rgba(2, 132, 199, 0.4),
+        inset 0 -1px 0 rgba(0,0,0,0.12);
+    transform: translateY(-0.5px);
+}
+
+/* ── Right panel ───────────────────────────────────────────────── */
+.right-panel {
+    border-left: 1px solid var(--border);
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+.right-header {
+    height: 36px; flex-shrink: 0;
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-secondary);
+}
+.right-header .status-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--accent-qa-ready);
+    box-shadow: 0 0 0 3px rgba(2,132,199,0.18);
+}
+.right-header .ctx-label {
+    margin-left: auto;
+    text-transform: none; letter-spacing: 0;
+    font-size: 11px; color: var(--text-muted); font-weight: 400;
+    font-family: ui-monospace, Menlo, monospace;
+}
+.right-scroll {
+    flex: 1; overflow-y: auto;
+    padding: 12px 14px 18px;
+    display: flex; flex-direction: column; gap: 14px;
+}
+
+.rail-label {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--text-muted);
+    margin-bottom: 2px;
+}
+
+/* Ambient cards */
+.ambient-card {
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg);
+    padding: 10px 11px;
+    font-size: 12px; line-height: 1.5;
+    display: flex; flex-direction: column; gap: 6px;
+}
+.ambient-card .label {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-muted);
+    display: flex; align-items: center; gap: 5px;
+}
+.ambient-card .label .agent-name {
+    color: var(--hero-blue-700);
+    font-family: ui-monospace, Menlo, monospace;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 10.5px;
+}
+.ambient-card.high-priority {
+    border-color: #fdba74;
+    background: linear-gradient(180deg, #fff7ed 0%, var(--bg) 100%);
+}
+.ambient-card.high-priority .label { color: var(--warning); }
+.ambient-card .body { color: var(--text); }
+.ambient-card .body code {
+    font-family: ui-monospace, Menlo, monospace;
+    background: var(--bg-tertiary);
+    padding: 0 4px; border-radius: 3px;
+    font-size: 11px;
+}
+.ambient-card .body strong { font-weight: 600; }
+.ambient-card .body em { color: var(--text-secondary); font-style: italic; }
+.ambient-card .sub {
+    font-size: 11px; color: var(--text-muted);
+}
+.ambient-card .mini-actions {
+    display: flex; gap: 4px;
+    margin-top: 2px;
+}
+.ambient-card .mini-actions button {
+    border: 0; background: transparent; font-family: inherit;
+    font-size: 11px; padding: 2px 8px; border-radius: 4px;
+    cursor: pointer; color: var(--text-secondary); font-weight: 500;
+}
+.ambient-card .mini-actions button.primary {
+    color: var(--accent-qa-ready);
+    background: var(--accent-qa-ready-bg);
+}
+.ambient-card .mini-actions button:hover { background: var(--bg-hover); }
+
+/* Engineering feature rail (cross-domain) */
+.eng-feature-card {
+    border: 1.5px solid var(--accent-handoff);
+    border-radius: 9px;
+    background: linear-gradient(180deg, var(--accent-handoff-bg) 0%, var(--bg) 70%);
+    padding: 11px 12px;
+    display: flex; flex-direction: column; gap: 7px;
+}
+.eng-feature-card .head {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 9.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--accent-handoff);
+}
+.eng-feature-card .edge-icon {
+    background: var(--accent-handoff);
+    color: white;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 9px;
+}
+.eng-feature-card .spec {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 12px; font-weight: 600;
+    color: var(--text);
+}
+.eng-feature-card .row {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11.5px; color: var(--text-secondary);
+    flex-wrap: wrap;
+}
+.eng-feature-card .row .state-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #ecfdf5; color: #047857;
+    border-radius: 9px; padding: 0 7px;
+    font-size: 10.5px; font-weight: 600;
+}
+.eng-feature-card .row .state-chip .dot {
+    width: 5px; height: 5px; border-radius: 50%; background: var(--success);
+}
+.eng-feature-card .row .commit-line {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 10.5px;
+    color: var(--text-muted);
+    display: flex; align-items: center; gap: 5px;
+    width: 100%;
+    padding-top: 4px;
+    border-top: 1px dashed var(--border);
+    margin-top: 2px;
+}
+.eng-feature-card .row .commit-line code {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 0 4px; border-radius: 3px;
+    color: var(--accent-handoff);
+}
+
+/* Preview card — what Diego WILL see */
+.preview-card {
+    border: 1.5px dashed var(--accent-handoff);
+    border-radius: 8px;
+    background: var(--bg);
+    padding: 10px 11px;
+    position: relative;
+}
+.preview-card .preview-tag {
+    position: absolute;
+    top: -8px; left: 10px;
+    background: var(--bg);
+    color: var(--accent-handoff);
+    border: 1px solid var(--accent-handoff);
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+}
+.preview-card .pretend-card {
+    border: 1px solid rgba(124,58,237,0.25);
+    border-radius: 6px;
+    background: var(--accent-handoff-bg);
+    padding: 8px 10px;
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--text);
+}
+.preview-card .pretend-card .who {
+    font-size: 9.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.4px;
+    color: var(--accent-handoff);
+    display: flex; align-items: center; gap: 5px;
+    margin-bottom: 4px;
+}
+.preview-card .pretend-card .who .avatar { border-color: white; }
+.preview-card .pretend-card code {
+    font-family: ui-monospace, Menlo, monospace;
+    background: rgba(255,255,255,0.6);
+    padding: 0 4px; border-radius: 3px;
+    font-size: 10.5px;
+}
+.preview-card .pretend-card .link {
+    display: inline-block;
+    margin-top: 4px;
+    color: var(--accent-handoff);
+    font-weight: 600;
+    font-size: 11px;
+}
+.preview-card .pre-note {
+    font-size: 10.5px; color: var(--text-muted);
+    margin-top: 7px;
+    display: flex; align-items: center; gap: 5px;
+}
+
+.rail-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 2px 0;
+}
+
+/* Active session mini list */
+.session-mini {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+.session-mini:hover { background: var(--bg-hover); color: var(--text); }
+.session-mini::before {
+    content: '';
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--success);
+    flex-shrink: 0;
+}
+.session-mini.diego::before { background: var(--accent-handoff); }
+.session-mini .who { flex: 1; }
+.session-mini .session-time { color: var(--text-muted); font-size: 10.5px; font-family: ui-monospace, Menlo, monospace; }
+
+</style>
+</head>
+<body>
+<div class="shell">
+
+    <!-- Top chrome -->
+    <header class="chrome">
+        <div class="chrome-workspace">
+            <div class="workspace-logo"><svg viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg></div>
+            <span>Hero</span>
+            <span class="domain-pill" title="Switch domain">QA
+                <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+        </div>
+        <div class="search">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <input placeholder="Search stories, cases, plans…" />
+            <span class="kbd">⌘K</span>
+        </div>
+        <div class="chrome-right">
+            <span class="preset-chip">
+                <span class="dot"></span>Inline gate
+                <span class="sep">·</span>Step-by-step
+                <span class="sep">·</span>Persistent-link
+            </span>
+            <div class="avatar jamie" title="Jamie Liu — QA Lead">JL</div>
+        </div>
+    </header>
+
+    <div class="body-grid">
+
+        <!-- ─── LEFT NAV ─────────────────────────────────────────── -->
+        <nav class="nav">
+
+            <!-- Cross-pack viewing indicator -->
+            <div class="viewing-banner">
+                <span class="domain-tag">QA</span>
+                <svg class="arrow" width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 6h6M6 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span class="target">Viewing PM story</span>
+            </div>
+
+            <div class="nav-section">
+                <a class="nav-link chat-entry">
+                    <svg class="nav-icon" viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+                    Chat
+                    <span class="count" style="color:var(--accent-qa-ready);font-weight:600">●</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">QA</div>
+                <a class="nav-link active">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="7" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="11" width="8" height="2" rx="1" fill="currentColor"/></svg>
+                    Story queue<span class="count">12</span>
+                </a>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2.5" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                    Test plans
+                </a>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M3 3h6l4 4v6.5a.5.5 0 01-.5.5h-9.5a.5.5 0 01-.5-.5v-11z" stroke="currentColor" stroke-width="1.3"/><path d="M9 3v4h4" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                    Test cases
+                </a>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M8 4v4l2.5 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                    Regression suites
+                </a>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M3 13l3-7 2 4 2-6 3 9" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/></svg>
+                    Flaky tests<span class="count" style="background:#f3e8ff;color:#7c3aed;border-radius:8px;padding:0 5px">8</span>
+                </a>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3 3 7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Release gates
+                </a>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M2 6h12M5 9h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                    Unified inbox<span class="count" style="background:#fef3c7;color:#92400e;border-radius:8px;padding:0 5px">47</span>
+                </a>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="4" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/><circle cx="12" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.3"/></svg>
+                    Handoff stream
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Active sessions</div>
+                <div class="session-mini">
+                    <div class="avatar xs jamie">JL</div>
+                    <span class="who">Jamie (you)</span>
+                    <span class="session-time">now</span>
+                </div>
+                <div class="session-mini diego">
+                    <div class="avatar xs diego">DR</div>
+                    <span class="who">Diego · ENG</span>
+                    <span class="session-time">3m</span>
+                </div>
+                <div class="session-mini">
+                    <div class="avatar xs tomas">TR</div>
+                    <span class="who">Tomás · QA</span>
+                    <span class="session-time">1h</span>
+                </div>
+            </div>
+
+            <div class="nav-spacer"></div>
+            <div class="nav-user">
+                <div class="avatar sm jamie">JL</div>Jamie Liu · QA Lead
+            </div>
+        </nav>
+
+        <!-- ─── CENTER PANE ───────────────────────────────────────── -->
+        <main class="center">
+
+            <!-- Tab strip -->
+            <div class="tab-strip">
+                <div class="tab chat-tab">
+                    <span class="tab-type-chip">Chat</span>
+                    <span class="tab-label">Conversation</span>
+                </div>
+                <div class="tab active">
+                    <span class="tab-type-chip">Story</span>
+                    <span class="tab-label">2847 · Agent trace spans (qa-ready)</span>
+                    <span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+                </div>
+                <div class="tab">
+                    <span class="tab-type-chip">Plan</span>
+                    <span class="tab-label">agent-trace-coverage</span>
+                    <span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+                </div>
+                <div class="tab">
+                    <span class="tab-type-chip">Case</span>
+                    <span class="tab-label">C3 · retry on flush</span>
+                    <span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+                </div>
+                <div class="tab-strip-spacer"></div>
+            </div>
+
+            <!-- Artifact scroll -->
+            <div class="artifact-scroll">
+                <div class="artifact-padded">
+
+                    <!-- Context strip — cross-pack breadcrumb -->
+                    <div class="context-strip">
+                        <span class="domain-stamp">PM</span>
+                        <span class="type-chip">Roadmap</span>
+                        <a>Agent Observability</a>
+                        <span class="sep">›</span>
+                        <span class="type-chip">Story</span>
+                        <span style="color:var(--text)">2847</span>
+                        <span style="margin-left:auto;font-size:10.5px;color:var(--text-muted);font-style:italic">PM-owned · QA viewing</span>
+                    </div>
+
+                    <!-- Title -->
+                    <h1 class="artifact-title">As an SRE I need agent runs to emit structured trace spans so I can correlate them with downstream service latency.</h1>
+
+                    <!-- Metadata chips -->
+                    <div class="chip-row">
+                        <span class="chip status-qa-ready"><span class="dot"></span>qa-ready</span>
+                        <span class="chip round"><span class="dot"></span>Round 2</span>
+                        <span class="chip priority-high"><span class="dot"></span>high</span>
+                        <span class="chip points">5 pts</span>
+                        <span class="chip assignee"><div class="avatar sm diego">DR</div>Diego Ramirez</span>
+                        <span class="chip tracker">STORY-2847 ↗</span>
+                        <span class="chip linked-feature"><span class="dot"></span>feature: agent-trace-spans</span>
+                    </div>
+
+                    <!-- Coverage rail -->
+                    <div style="position:relative;margin-top:18px;">
+                        <div class="coverage-rail" style="margin-top:18px;">
+                            <div class="coverage-rail-label">Coverage</div>
+                            <div class="coverage-grid">
+                                <div class="coverage-cell pass" title="AC#1 · 1 of 1 case passing">
+                                    <span class="ac-label">AC#1</span>1/1 ✓
+                                </div>
+                                <div class="coverage-cell pass" title="AC#2 · 1 of 1 case passing">
+                                    <span class="ac-label">AC#2</span>1/1 ✓
+                                </div>
+                                <div class="coverage-cell fail" title="AC#3 · 1 of 2 cases failing — retry on flush">
+                                    <span class="ac-label">AC#3</span>1/2 ✗
+                                </div>
+                                <div class="coverage-cell pass" title="AC#4 · 1 of 1 case passing">
+                                    <span class="ac-label">AC#4</span>1/1 ✓
+                                </div>
+                                <div class="coverage-cell pass" title="AC#5 · 1 of 1 case passing">
+                                    <span class="ac-label">AC#5</span>1/1 ✓
+                                </div>
+                            </div>
+                            <div class="coverage-rail-summary">
+                                <strong>4 / 5</strong> AC passing
+                                · <span class="bad">AC#3 failing</span>
+                            </div>
+                            <a class="coverage-rail-link" href="#">Open test plan
+                                <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M3 6h6M6 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <h3 class="section-title">Description
+                        <span class="read-only-note">read-only · PM-owned</span>
+                    </h3>
+                    <div class="body-prose">
+                        <p>Today, when an agent run misbehaves in production, the on-call SRE has no way to correlate the run with the downstream services it called. We log run-level events, but they don't share an identifier with the HTTP requests, queue messages, or LLM-provider calls the agent triggered downstream.</p>
+                        <p>The fix is OpenTelemetry-compatible trace spans emitted from the agent runtime. Each run becomes a root span; each tool call becomes a child span; each downstream HTTP call inherits the run's trace context.</p>
+                    </div>
+
+                    <!-- Acceptance criteria -->
+                    <h3 class="section-title">Acceptance criteria · EARS
+                        <span class="count">5</span>
+                    </h3>
+                    <ul class="ears-list">
+                        <li class="ears-row pass">
+                            <span class="ears-check"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                            <span class="ears-text"><span class="kw">WHEN</span> an agent run starts <span class="kw">THE SYSTEM SHALL</span> emit a trace span with run-id and parent-session-id.</span>
+                            <span class="ears-meta">AC#1 · C1 ✓</span>
+                        </li>
+                        <li class="ears-row pass">
+                            <span class="ears-check"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                            <span class="ears-text"><span class="kw">WHILE</span> a run is active <span class="kw">THE SYSTEM SHALL</span> emit child spans for each tool call, including tool name and duration.</span>
+                            <span class="ears-meta">AC#2 · C2 ✓</span>
+                        </li>
+                        <li class="ears-row fail targeted">
+                            <span class="ears-check"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+                            <span class="ears-text"><span class="kw">IF</span> a span fails to flush <span class="kw">THEN THE SYSTEM SHALL</span> retry with exponential backoff (1s, 2s, 4s — max 3 attempts) before dropping.</span>
+                            <span class="ears-meta fail-meta">AC#3 · C3 ✗ / C4 ✓</span>
+                        </li>
+                        <li class="ears-row pass">
+                            <span class="ears-check"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                            <span class="ears-text"><span class="kw">WHEN</span> downstream HTTP calls are made <span class="kw">THE SYSTEM SHALL</span> inject W3C <code>traceparent</code> headers automatically.</span>
+                            <span class="ears-meta">AC#4 · C1,C2 ✓</span>
+                        </li>
+                        <li class="ears-row pass">
+                            <span class="ears-check"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                            <span class="ears-text"><span class="kw">IF</span> OTLP endpoint is unreachable for &gt; 60s <span class="kw">THEN THE SYSTEM SHALL</span> log a single degraded-mode warning and buffer up to 10k spans in memory.</span>
+                            <span class="ears-meta">AC#5 · C5 ✓</span>
+                        </li>
+                    </ul>
+
+                    <!-- QA Findings — Round 2 (empty, awaiting composer submit) -->
+                    <div class="qa-findings-block">
+                        <div class="qa-findings-head">
+                            <span class="icon">QA</span>
+                            <span class="title">QA Findings — Round 2</span>
+                            <span class="round-tag">empty</span>
+                            <svg class="chev" width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4 4l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" transform="rotate(90 6 6)"/></svg>
+                        </div>
+                        <div class="qa-findings-empty">
+                            QA Findings appear here after rejection. Compose a finding in the strip below to attach.
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ─── BOTTOM STRIP — THE THREE-ACTION COMPOSER ─────── -->
+            <div class="bottom-strip">
+                <div class="composer">
+
+                    <!-- Composer head -->
+                    <div class="composer-head">
+                        <div class="composer-head-icon">
+                            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 6h6M6 3v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                        </div>
+                        <span class="title">Compose finding</span>
+                        <span style="font-size:11.5px;color:var(--text-secondary)">for</span>
+                        <span class="target">AC#3 · retry on flush</span>
+                        <span class="step">Round 2 · composing</span>
+                        <span class="close" title="Cancel">
+                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        </span>
+                    </div>
+
+                    <!-- Composer body — radios on left, findings textarea + nudge on right -->
+                    <div class="composer-body">
+
+                        <!-- LEFT: Three actions -->
+                        <div class="composer-radios">
+                            <div class="label">Action · what should this finding do?</div>
+
+                            <div class="radio-row">
+                                <span class="radio-marker"></span>
+                                <div class="radio-text">
+                                    <div class="head">Add AC to this story</div>
+                                    <div class="sub">In current scope. Adds an EARS-shaped AC; engineer must satisfy.</div>
+                                </div>
+                            </div>
+
+                            <div class="radio-row">
+                                <span class="radio-marker"></span>
+                                <div class="radio-text">
+                                    <div class="head">Suggest new story</div>
+                                    <div class="sub">Out of scope — opens an intake-item. Prevents goalpost-moving on this story.</div>
+                                </div>
+                            </div>
+
+                            <div class="radio-row selected nudged">
+                                <span class="radio-marker"></span>
+                                <div class="radio-text">
+                                    <div class="head">Reject as quality issue
+                                        <span class="nudge-tag">
+                                            <svg width="6" height="6" viewBox="0 0 6 6"><circle cx="3" cy="3" r="2.5" fill="currentColor"/></svg>
+                                            agent nudge
+                                        </span>
+                                    </div>
+                                    <div class="sub">Implementation doesn't meet AC. Story returns to engineering with findings; no new AC.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT: Findings textarea + nudge -->
+                        <div class="composer-right">
+                            <div class="findings-label">
+                                Findings
+                                <span class="format-hint">· Markdown · 187 chars</span>
+                            </div>
+                            <div class="findings-textarea" contenteditable="true" spellcheck="false">Retry succeeded but backoff sequence was <code style="font-family:ui-monospace,Menlo,monospace;background:var(--bg-tertiary);padding:0 3px;border-radius:2px">0.5s / 1s / 2s</code> instead of the <code style="font-family:ui-monospace,Menlo,monospace;background:var(--bg-tertiary);padding:0 3px;border-radius:2px">1s / 2s / 4s</code> specified in AC#3. Implementation appears to use a 0.5s base — likely a config default override in <code style="font-family:ui-monospace,Menlo,monospace;background:var(--bg-tertiary);padding:0 3px;border-radius:2px">trace_emitter.retry_base_ms</code>.<span class="caret"></span></div>
+
+                            <div class="investigator-nudge">
+                                <span class="pulse"></span>
+                                <span class="agent-tag">
+                                    <svg width="5" height="5" viewBox="0 0 6 6"><circle cx="3" cy="3" r="2.5" fill="currentColor"/></svg>
+                                    qa-investigator
+                                </span>
+                                <span>
+                                    Finding contradicts existing AC#3 (backoff values). Default nudge: <strong>Reject as quality issue</strong> — engineer should fix to match spec, not amend the AC. Confidence <strong>91%</strong>.
+                                </span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Composer foot -->
+                    <div class="composer-foot">
+                        <div class="hint">
+                            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style="color:var(--text-muted)"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M6 4.5v2 M6 7.5v0.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                            On submit, story transitions <code style="font-family:ui-monospace,Menlo,monospace;background:var(--bg-tertiary);padding:0 3px;border-radius:3px;font-size:10.5px">qa-ready</code> → <code style="font-family:ui-monospace,Menlo,monospace;background:var(--bg-tertiary);padding:0 3px;border-radius:3px;font-size:10.5px">qa-rejected</code>. Diego is notified in-session.
+                            <span class="kbd" style="margin-left:auto">⌘↩</span>
+                        </div>
+                        <button class="btn btn-cancel">Cancel</button>
+                        <button class="btn btn-submit">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                            Submit rejection
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+        </main>
+
+        <!-- ─── RIGHT PANEL ──────────────────────────────────────── -->
+        <aside class="right-panel">
+            <div class="right-header">
+                <span class="status-dot"></span>
+                Ambient
+                <span class="ctx-label">· Story-2847 · qa-ready</span>
+            </div>
+
+            <div class="right-scroll">
+
+                <!-- High-priority ambient (matches selected action) -->
+                <div>
+                    <div class="rail-label">QA signals</div>
+                    <div class="ambient-card high-priority" style="margin-top:6px;">
+                        <div class="label">
+                            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 1L11 10.5H1L6 1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+                            Coverage failure
+                            <span class="agent-name">· qa-investigator</span>
+                        </div>
+                        <div class="body">
+                            <strong>AC#3 is failing in 1 of 2 cases.</strong> The failing case (<code>C3 · retry on flush</code>) shows backoff <code>0.5/1/2</code>, not the spec'd <code>1/2/4</code>.
+                        </div>
+                        <div class="sub">Recommends classifying as <strong style="color:var(--warning)">Reject as quality issue</strong> — implementation gap, not scope gap.</div>
+                    </div>
+
+                    <!-- Card 2: qa-ready dwell -->
+                    <div class="ambient-card" style="margin-top:8px;">
+                        <div class="label">
+                            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M6 3.5v3l2 1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                            Dwell time
+                        </div>
+                        <div class="body">
+                            Story has been in <code>qa-ready</code> for <strong>3h 12m</strong>. Diego's engineering session is open — he'll see the rejection ambient card the moment you submit.
+                        </div>
+                        <div class="sub">
+                            <div class="session-mini diego" style="padding:3px 0;display:inline-flex">
+                                <div class="avatar xs diego">DR</div>
+                                <span class="who">Diego active in <code style="font-family:ui-monospace,Menlo,monospace;background:var(--bg-tertiary);padding:0 3px;border-radius:2px;font-size:10.5px">feature: agent-trace-spans</code></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: round-1 history -->
+                    <div class="ambient-card" style="margin-top:8px;">
+                        <div class="label">
+                            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 6a3 3 0 016 0M9 6L7.5 4M9 6l1.5-2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 7.5L1.5 6 0 7.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity="0"/></svg>
+                            Prior round
+                        </div>
+                        <div class="body">
+                            Round 1 rejection (4d ago) → <strong>Add AC</strong> for retry semantics. Engineer addressed in commit <code>f3a912</code>. Round 2 is on AC#3 implementation, not new scope.
+                        </div>
+                        <div class="mini-actions">
+                            <button>Open round 1</button>
+                            <button>View diff</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rail-divider"></div>
+
+                <!-- Engineering feature rail (cross-domain) -->
+                <div>
+                    <div class="rail-label">Linked engineering</div>
+                    <div class="eng-feature-card" style="margin-top:6px;">
+                        <div class="head">
+                            <span class="edge-icon">QA → ENG</span>
+                            Cross-domain link
+                        </div>
+                        <div class="spec">feature · agent-trace-spans</div>
+                        <div class="row">
+                            <span class="state-chip"><span class="dot"></span>delivered</span>
+                            <span style="display:inline-flex;align-items:center;gap:5px"><div class="avatar xs diego">DR</div>Diego Ramirez</span>
+                        </div>
+                        <div class="row">
+                            <div class="commit-line">
+                                <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><circle cx="3" cy="6" r="1.5" stroke="currentColor" stroke-width="1.3"/><circle cx="9" cy="6" r="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 6h3" stroke="currentColor" stroke-width="1.3"/></svg>
+                                <code>f3a912</code> · Diego · "add retry backoff sequence" · 2h ago
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview of what Diego WILL see -->
+                <div>
+                    <div class="rail-label">After submit · what Diego sees</div>
+                    <div class="preview-card" style="margin-top:14px;">
+                        <span class="preview-tag">Preview · cross-pack</span>
+                        <div class="pretend-card">
+                            <div class="who">
+                                <div class="avatar xs diego">DR</div>
+                                Diego's engineering session · ambient
+                            </div>
+                            Your linked story <strong>Story-2847</strong> was QA-rejected (round 2). Findings: retry backoff sequence doesn't match AC#3 — implementation emits <code>0.5/1/2</code>, AC specifies <code>1/2/4</code>.
+                            <div class="link">Open story →</div>
+                        </div>
+                        <div class="pre-note">
+                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M6 4.5v2 M6 7.5v0.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                            <span>Surfaces the moment you click <strong style="color:var(--accent-handoff)">Submit rejection</strong> — no email, no Slack, no migration.</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+    </div>
+</div>
+
+<script>
+// Radio selection — the brand interaction. Click a row to select that action.
+const rows = document.querySelectorAll('.radio-row');
+rows.forEach(row => {
+    row.addEventListener('click', () => {
+        rows.forEach(r => r.classList.remove('selected'));
+        row.classList.add('selected');
+    });
+});
+
+// Composer close — hide composer
+document.querySelector('.composer-head .close')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const composer = document.querySelector('.composer');
+    if (composer) composer.style.display = 'none';
+});
+
+// Cancel button — same effect as close
+document.querySelector('.btn-cancel')?.addEventListener('click', () => {
+    alert('Composer cancelled — no rejection submitted.');
+});
+
+// Submit — show what happens (mockup, not real)
+document.querySelector('.btn-submit')?.addEventListener('click', () => {
+    alert('Mockup: would submit rejection.\n\n' +
+        '• Story transitions qa-ready → qa-rejected\n' +
+        '• QA Findings — Round 2 block expands with the textarea content (QA-cyan gutter)\n' +
+        '• Diego receives ambient card in his engineering session\n' +
+        '• Coverage rail shows updated state');
+});
+</script>
+
+</body>
+</html>
