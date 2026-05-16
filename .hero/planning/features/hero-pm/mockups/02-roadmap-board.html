@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<!-- Hero PM Mock: 02-roadmap-board | Locked layout: workspace singleton -->
+<!-- Now/Next/Later horizon roadmap with Shape Up betting-table cues -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Roadmap · Hero PM</title>
+<style>
+:root {
+    --bg: #ffffff; --bg-secondary: #f7f8fa; --bg-tertiary: #eef0f4; --bg-hover: #f0f2f6;
+    --text: #1a1d23; --text-secondary: #5d646e; --text-muted: #8a929c;
+    --border: #e4e7eb; --border-strong: #d0d4da;
+    --primary: #2a6cb5; --primary-hover: #6cb6ff;
+    --hero-blue-300: #9bc1e6; --hero-blue-500: #6cb6ff; --hero-blue-700: #2a6cb5; --hero-ink: #14181e;
+    --success: #16a249; --warning: #d97706; --danger: #dc2626; --info: #0284c7;
+    --accent-handoff: #7c3aed; --accent-handoff-bg: #f5f0ff;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+    font-size: 13px; line-height: 1.45;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased;
+}
+
+.shell { display: grid; grid-template-rows: 48px 1fr; height: 100vh; }
+.chrome {
+    display: grid; grid-template-columns: 240px 1fr auto;
+    align-items: center; border-bottom: 1px solid var(--border);
+    background: var(--bg); padding: 0 16px 0 0; gap: 16px;
+}
+.chrome-workspace {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 12px; height: 100%;
+    border-right: 1px solid var(--border); font-weight: 600;
+}
+.workspace-logo { width: 22px; height: 22px; display: grid; place-items: center; color: var(--hero-blue-300); }
+.workspace-logo svg { display: block; width: 22px; height: 22px; }
+.domain-pill {
+    margin-left: auto; background: var(--bg-tertiary); color: var(--text-secondary);
+    border-radius: 4px; padding: 2px 6px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.3px;
+    display: inline-flex; align-items: center; gap: 4px; cursor: pointer;
+}
+.search {
+    grid-column: 2; display: flex; align-items: center; gap: 8px;
+    max-width: 440px; width: 100%; justify-self: center;
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: 6px; padding: 5px 10px; color: var(--text-muted);
+}
+.search input { background: transparent; border: 0; outline: 0; flex: 1; font-size: 12px; color: var(--text-secondary); font-family: inherit; }
+.kbd { font-family: ui-monospace, Menlo, monospace; background: var(--bg); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 3px; padding: 0 5px; font-size: 10px; color: var(--text-muted); line-height: 14px; }
+.chrome-right { display: flex; align-items: center; gap: 12px; }
+.preset-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #eaf2fb; color: var(--hero-blue-700);
+    border: 1px solid #cfe1f4;
+    padding: 3px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 600;
+}
+.preset-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); }
+.avatar { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, #ffd47e, #f97373); color: white; font-size: 10px; font-weight: 600; display: inline-grid; place-items: center; border: 1px solid var(--border); }
+.avatar.sm { width: 18px; height: 18px; font-size: 9px; }
+.avatar.diego { background: linear-gradient(135deg, #6cb6ff, #4f7cf7); }
+.avatar.sarah { background: linear-gradient(135deg, #84e1bc, #16a249); }
+.avatar.aisha { background: linear-gradient(135deg, #f4a4ff, #b465ec); }
+.avatar.marcus { background: linear-gradient(135deg, #fcc46d, #f97316); }
+.avatar.priya { background: linear-gradient(135deg, #ff9eb4, #ec4899); }
+
+.body-grid { display: grid; grid-template-columns: 240px 1fr 380px; height: calc(100vh - 48px); min-height: 0; }
+
+.nav { background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 12px 8px; overflow-y: auto; display: flex; flex-direction: column; }
+.nav-section { margin-bottom: 14px; }
+.nav-label { text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px; font-weight: 600; color: var(--text-muted); padding: 4px 8px; }
+.nav-link { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 4px; color: var(--text-secondary); text-decoration: none; font-size: 12.5px; cursor: pointer; }
+.nav-link:hover { background: var(--bg-hover); color: var(--text); }
+.nav-link.active { background: var(--bg-tertiary); color: var(--text); font-weight: 500; }
+.nav-link .count { margin-left: auto; font-size: 11px; color: var(--text-muted); }
+.nav-icon { width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0; }
+.nav-link.active .nav-icon { color: var(--primary); }
+.nav-link.chat-entry { color: var(--hero-blue-700); font-weight: 600; }
+.nav-link.chat-entry .nav-icon { color: var(--hero-blue-300); }
+.nav-link.chat-entry:hover { background: #eaf2fb; }
+.nav-saved { padding: 3px 8px 3px 26px; font-size: 12px; color: var(--text-secondary); border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.nav-saved:hover { background: var(--bg-hover); color: var(--text); }
+.nav-saved.active { background: var(--bg-tertiary); color: var(--text); font-weight: 500; }
+.nav-saved::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
+.nav-spacer { flex: 1; }
+.nav-user { display: flex; align-items: center; gap: 8px; padding: 8px; border-top: 1px solid var(--border); margin-top: 8px; font-size: 12px; color: var(--text-secondary); }
+
+.center { display: grid; grid-template-rows: 34px 1fr auto; min-height: 0; overflow: hidden; }
+.tab-strip { display: flex; align-items: stretch; background: var(--bg-secondary); border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tab { display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; border-right: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-muted); font-size: 12px; cursor: pointer; height: 34px; max-width: 240px; }
+.tab .tab-type-chip { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 1px 5px; border-radius: 3px; background: var(--bg-tertiary); color: var(--text-muted); flex-shrink: 0; }
+.tab .tab-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab .tab-close { width: 14px; height: 14px; display: grid; place-items: center; border-radius: 3px; opacity: 0; color: var(--text-muted); flex-shrink: 0; }
+.tab:hover .tab-close { opacity: 1; }
+.tab.active { background: var(--bg); color: var(--text); font-weight: 500; box-shadow: inset 0 2px 0 var(--hero-blue-700); }
+.tab.active .tab-type-chip { background: #eaf2fb; color: var(--hero-blue-700); }
+.tab.active .tab-close { opacity: 0.6; }
+.tab.chat-tab .tab-type-chip { background: #eaf2fb; color: var(--hero-blue-700); }
+.tab-strip-spacer { flex: 1; border-right: 0; }
+
+.center-scroll { overflow-y: auto; min-height: 0; }
+.workspace-padded { padding: 22px 28px 28px; }
+.ws-header { display: flex; align-items: flex-end; gap: 14px; margin-bottom: 8px; }
+.ws-title { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; margin: 0; }
+.ws-sub { color: var(--text-muted); font-size: 12px; margin-left: auto; display: flex; gap: 14px; align-items: center; }
+
+.horizons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 20px; }
+.col-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; padding: 0 4px; }
+.col-head .lab { font-size: 13px; font-weight: 600; }
+.col-head .count { background: var(--bg-tertiary); color: var(--text-secondary); padding: 1px 7px; border-radius: 9px; font-size: 11px; font-weight: 600; }
+.col-head .sub { color: var(--text-muted); font-size: 11px; margin-left: auto; }
+.col { display: flex; flex-direction: column; gap: 10px; }
+
+.r-card { border: 1px solid var(--border); border-radius: 8px; background: var(--bg); padding: 11px 12px; display: flex; flex-direction: column; gap: 8px; cursor: pointer; }
+.r-card:hover { border-color: var(--border-strong); box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.r-card .title { font-size: 13.5px; font-weight: 600; line-height: 1.35; }
+.r-card .meta { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.chip { display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 7px; border-radius: 10px; font-size: 10.5px; font-weight: 500; background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid transparent; }
+.chip .dot { width: 5px; height: 5px; border-radius: 50%; }
+.chip.appetite-2w { background: #eaf2fb; color: var(--hero-blue-700); }
+.chip.appetite-2w .dot { background: var(--hero-blue-700); }
+.chip.appetite-6w { background: #fef3c7; color: #92400e; }
+.chip.appetite-6w .dot { background: #d97706; }
+.chip.committed { background: #ecfdf5; color: #047857; }
+.chip.committed .dot { background: #16a249; }
+.chip.cross-domain { background: var(--accent-handoff-bg); color: var(--accent-handoff); border-color: rgba(124,58,237,0.25); }
+.chip.cross-domain .dot { background: var(--accent-handoff); }
+.r-card .evidence { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted); }
+.r-card .pitch-line { font-size: 11.5px; color: var(--text-secondary); line-height: 1.45; }
+
+.deferred-lane { margin-top: 22px; padding: 14px 16px; background: var(--bg-secondary); border: 1px dashed var(--border); border-radius: 8px; }
+.deferred-lane h4 { margin: 0 0 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
+.deferred-lane .count { background: var(--bg-tertiary); padding: 1px 6px; border-radius: 8px; font-size: 11px; color: var(--text-muted); }
+.deferred-items { display: flex; flex-wrap: wrap; gap: 8px; }
+.deferred-item { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 5px 9px; font-size: 11.5px; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 6px; }
+.deferred-item .why { color: var(--text-muted); font-size: 11px; }
+
+/* Bottom strip */
+.bottom-strip { border-top: 1px solid var(--border); background: var(--bg); padding: 8px 14px 10px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+.bottom-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.bottom-actions-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; margin-right: 4px; }
+.action-btn { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 11px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 500; }
+.action-btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+.action-btn svg { color: var(--text-muted); }
+.bottom-input { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; background: var(--bg); }
+.bottom-input:focus-within { border-color: var(--hero-blue-500); box-shadow: 0 0 0 3px rgba(108, 182, 255, 0.18); }
+.bottom-input input { flex: 1; border: 0; outline: 0; font-family: inherit; font-size: 13px; color: var(--text); background: transparent; }
+.bottom-input input::placeholder { color: var(--text-muted); }
+.bottom-input .tool { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 4px; cursor: pointer; color: var(--text-muted); font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+.bottom-input .tool:hover { background: var(--bg-hover); color: var(--text); }
+.model-chip { display: inline-flex; align-items: center; gap: 5px; background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-size: 10.5px; color: var(--text-secondary); font-weight: 600; cursor: pointer; }
+.model-chip .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-500); }
+.send-btn { width: 26px; height: 26px; border-radius: 6px; background: var(--primary); color: white; border: 0; cursor: pointer; display: grid; place-items: center; }
+.send-btn:hover { background: var(--primary-hover); }
+
+/* Right panel */
+.right-panel { border-left: 1px solid var(--border); background: var(--bg); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.right-header { height: 36px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--border); background: var(--bg-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); }
+.right-header .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+.right-header .ctx-label { margin-left: auto; text-transform: none; letter-spacing: 0; font-size: 11px; color: var(--text-muted); font-weight: 400; font-family: ui-monospace, Menlo, monospace; }
+.right-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+.ambient { position: sticky; top: 0; z-index: 2; background: linear-gradient(180deg, var(--bg) 0%, var(--bg) 88%, rgba(255,255,255,0) 100%); padding: 10px 14px 14px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+.ambient-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
+.ambient-card { border: 1px solid var(--border); border-radius: 7px; background: var(--bg); padding: 8px 10px; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+.ambient-card.relationship { background: var(--bg-secondary); }
+.ambient-card .label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); flex-shrink: 0; }
+.ambient-card .body { flex: 1; min-width: 0; }
+.ambient-card .body strong { font-weight: 600; }
+.ambient-card .body .sub { color: var(--text-muted); font-size: 11px; }
+.ambient-suggest { border: 1px dashed var(--hero-blue-500); background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%); border-radius: 7px; padding: 8px 10px; font-size: 12px; line-height: 1.45; }
+.ambient-suggest .head { display: flex; align-items: center; gap: 6px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--hero-blue-700); margin-bottom: 4px; }
+.ambient-suggest .head .pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-700); }
+.ambient-suggest .actions { display: flex; gap: 4px; margin-top: 6px; }
+.ambient-suggest .actions button { border: 0; background: transparent; font-family: inherit; font-size: 11px; padding: 2px 8px; border-radius: 4px; cursor: pointer; color: var(--text-secondary); font-weight: 500; }
+.ambient-suggest .actions button.primary { color: var(--hero-blue-700); }
+.ambient-suggest .actions button:hover { background: var(--bg-hover); }
+.ambient-rollup { display: flex; align-items: center; font-size: 11.5px; color: var(--text-secondary); cursor: pointer; padding: 2px 0; }
+.ambient-rollup .chev { margin-left: 4px; color: var(--text-muted); }
+
+.chat-scroll { flex: 1; padding: 12px 14px 10px; display: flex; flex-direction: column; gap: 10px; }
+.bubble-wrap { display: flex; flex-direction: column; gap: 3px; max-width: 100%; }
+.bubble-wrap.user { align-items: flex-end; }
+.bubble-wrap.agent { align-items: flex-start; }
+.via { font-size: 10px; color: var(--text-muted); padding: 0 4px; }
+.via code { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: var(--text-secondary); }
+.bubble { max-width: 300px; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 21px; word-wrap: break-word; }
+.bubble.user { background: rgba(155, 193, 230, 0.22); color: var(--text); }
+.bubble.agent { background: #f4f5f7; color: var(--text); }
+.bubble code { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; background: rgba(0,0,0,0.06); padding: 0 4px; border-radius: 3px; }
+.bubble strong { font-weight: 600; }
+.sys-event { align-self: stretch; display: flex; align-items: center; gap: 6px; padding: 6px 0; color: var(--text-muted); font-size: 11px; font-style: italic; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); margin: 4px 0; }
+.sys-event::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
+.sys-event code { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; font-style: normal; }
+</style>
+</head>
+<body>
+<div class="shell">
+    <header class="chrome">
+        <div class="chrome-workspace">
+            <div class="workspace-logo"><svg viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg></div>
+            <span>Hero</span>
+            <span class="domain-pill">PM
+                <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </span>
+        </div>
+        <div class="search">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <input placeholder="Search or jump to…" />
+            <span class="kbd">⌘K</span>
+        </div>
+        <div class="chrome-right">
+            <span class="preset-chip"><span class="dot"></span>Horizon · Cycle 6w</span>
+            <div class="avatar marcus">MJ</div>
+        </div>
+    </header>
+
+    <div class="body-grid">
+        <nav class="nav">
+            <div class="nav-section">
+                <a class="nav-link chat-entry">
+                    <svg class="nav-icon" viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+                    Chat
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-label">Plan</div>
+                <a class="nav-link active">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="3.5" height="10" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="6.5" y="3" width="3.5" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="11" y="3" width="3.5" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>
+                    Roadmap
+                </a>
+                <div class="nav-saved">Q3 bets</div>
+                <div class="nav-saved active">Now / Next / Later</div>
+                <div class="nav-saved">Customer-led</div>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="7" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="11" width="8" height="2" rx="1" fill="currentColor"/></svg>
+                    Story queue<span class="count">47</span>
+                </a>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M3 2.5h7l3 3v8a.5.5 0 01-.5.5h-9.5a.5.5 0 01-.5-.5v-11z" stroke="currentColor" stroke-width="1.3"/><path d="M5 8h6M5 11h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                    PRDs
+                </a>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 3h12l-4 6v4l-4-2V9L2 3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                    Intake<span class="count" style="background:#fef3c7;color:#92400e;border-radius:8px;padding:0 5px">23</span>
+                </a>
+                <div class="nav-saved">Mobile bugs</div>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="4" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/><circle cx="12" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.3"/></svg>
+                    Handoff stream
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-label">Workspace</div>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                    Conventions
+                </a>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M8 1.5l6 3v4c0 3-2.5 5.5-6 6.5-3.5-1-6-3.5-6-6.5v-4l6-3z" stroke="currentColor" stroke-width="1.3"/></svg>
+                    Decisions
+                </a>
+            </div>
+            <div class="nav-spacer"></div>
+            <div class="nav-user">
+                <div class="avatar sm marcus">MJ</div>Marcus Johnson
+            </div>
+        </nav>
+
+        <main class="center">
+            <div class="tab-strip">
+                <div class="tab chat-tab">
+                    <span class="tab-type-chip">Chat</span>
+                    <span class="tab-label">Conversation</span>
+                </div>
+                <div class="tab active">
+                    <span class="tab-type-chip">Roadmap</span>
+                    <span class="tab-label">Roadmap · Now / Next / Later</span>
+                    <span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+                </div>
+                <div class="tab">
+                    <span class="tab-type-chip">Story</span>
+                    <span class="tab-label">2847 · Agent trace spans</span>
+                    <span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+                </div>
+                <div class="tab-strip-spacer"></div>
+            </div>
+
+            <div class="center-scroll">
+                <div class="workspace-padded">
+                    <div class="ws-header">
+                        <h1 class="ws-title">Roadmap</h1>
+                        <div class="ws-sub">
+                            <span>17 active bets · 3 cycles ahead</span>
+                            <span>Saved view: <strong style="color:var(--text)">Now / Next / Later</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="horizons">
+                        <div class="col">
+                            <div class="col-head"><span class="lab">Now</span><span class="count">5</span><span class="sub">Cycle 14 · in flight</span></div>
+
+                            <div class="r-card">
+                                <div class="title">Agent observability</div>
+                                <div class="meta">
+                                    <span class="chip committed"><span class="dot"></span>committed</span>
+                                    <span class="chip appetite-6w"><span class="dot"></span>6w</span>
+                                    <span class="chip cross-domain"><span class="dot"></span>→ ENG · delivering</span>
+                                </div>
+                                <div class="pitch-line">SREs can correlate agent runs with downstream service latency via OTLP spans.</div>
+                                <div class="evidence">
+                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 1l1.4 3 3.3.4-2.4 2.3.6 3.3L6 8.5 3.1 10l.6-3.3L1.3 4.4l3.3-.4L6 1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+                                    23 evidence · 4 stories · Marcus
+                                </div>
+                            </div>
+
+                            <div class="r-card">
+                                <div class="title">SSO refresh + device trust</div>
+                                <div class="meta">
+                                    <span class="chip committed"><span class="dot"></span>committed</span>
+                                    <span class="chip appetite-2w"><span class="dot"></span>2w</span>
+                                    <span class="chip cross-domain"><span class="dot"></span>→ ENG · delivering</span>
+                                </div>
+                                <div class="pitch-line">Enterprise IT can rotate SAML certs without taking the workforce offline.</div>
+                                <div class="evidence">
+                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 1l1.4 3 3.3.4-2.4 2.3.6 3.3L6 8.5 3.1 10l.6-3.3L1.3 4.4l3.3-.4L6 1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+                                    19 evidence · 6 stories · Aisha
+                                </div>
+                            </div>
+
+                            <div class="r-card">
+                                <div class="title">Workspace export (CSV + JSON)</div>
+                                <div class="meta">
+                                    <span class="chip committed"><span class="dot"></span>committed</span>
+                                    <span class="chip appetite-2w"><span class="dot"></span>2w</span>
+                                </div>
+                                <div class="pitch-line">Admins can extract their data without raising a ticket.</div>
+                                <div class="evidence">
+                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 1l1.4 3 3.3.4-2.4 2.3.6 3.3L6 8.5 3.1 10l.6-3.3L1.3 4.4l3.3-.4L6 1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+                                    8 evidence · 3 stories · Sarah
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <div class="col-head"><span class="lab">Next</span><span class="count">6</span><span class="sub">Cycle 15 candidates</span></div>
+
+                            <div class="r-card">
+                                <div class="title">Mobile push notifications</div>
+                                <div class="meta">
+                                    <span class="chip"><span class="dot" style="background:var(--text-muted)"></span>candidate</span>
+                                    <span class="chip appetite-6w"><span class="dot"></span>6w</span>
+                                </div>
+                                <div class="pitch-line">Users on mobile get alerts for run failures without polling the app.</div>
+                                <div class="evidence">
+                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 1l1.4 3 3.3.4-2.4 2.3.6 3.3L6 8.5 3.1 10l.6-3.3L1.3 4.4l3.3-.4L6 1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+                                    34 evidence · 8 stories
+                                </div>
+                            </div>
+
+                            <div class="r-card">
+                                <div class="title">Workspace billing v2</div>
+                                <div class="meta">
+                                    <span class="chip"><span class="dot" style="background:var(--text-muted)"></span>candidate</span>
+                                    <span class="chip appetite-6w"><span class="dot"></span>6w</span>
+                                </div>
+                                <div class="pitch-line">Per-seat pricing with usage caps; finance team can self-serve invoices.</div>
+                                <div class="evidence">
+                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 1l1.4 3 3.3.4-2.4 2.3.6 3.3L6 8.5 3.1 10l.6-3.3L1.3 4.4l3.3-.4L6 1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+                                    12 evidence · 5 stories
+                                </div>
+                            </div>
+
+                            <div class="r-card">
+                                <div class="title">Smarter retry policies (per-tool)</div>
+                                <div class="meta">
+                                    <span class="chip"><span class="dot" style="background:var(--text-muted)"></span>candidate</span>
+                                    <span class="chip appetite-2w"><span class="dot"></span>2w</span>
+                                </div>
+                                <div class="pitch-line">Tool-specific backoff + circuit breakers stop runaway retry storms.</div>
+                                <div class="evidence">
+                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 1l1.4 3 3.3.4-2.4 2.3.6 3.3L6 8.5 3.1 10l.6-3.3L1.3 4.4l3.3-.4L6 1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+                                    7 evidence · 2 stories
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <div class="col-head"><span class="lab">Later</span><span class="count">6</span><span class="sub">Q4-2026+</span></div>
+
+                            <div class="r-card">
+                                <div class="title">Multi-region failover</div>
+                                <div class="meta">
+                                    <span class="chip"><span class="dot" style="background:var(--text-muted)"></span>candidate</span>
+                                    <span class="chip appetite-6w"><span class="dot"></span>6w</span>
+                                </div>
+                                <div class="pitch-line">Enterprise customers get RPO &lt;5min for catastrophic region loss.</div>
+                                <div class="evidence">
+                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 1l1.4 3 3.3.4-2.4 2.3.6 3.3L6 8.5 3.1 10l.6-3.3L1.3 4.4l3.3-.4L6 1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+                                    18 evidence · 0 stories
+                                </div>
+                            </div>
+
+                            <div class="r-card">
+                                <div class="title">Knowledge graph public API</div>
+                                <div class="meta">
+                                    <span class="chip"><span class="dot" style="background:var(--text-muted)"></span>candidate</span>
+                                    <span class="chip appetite-6w"><span class="dot"></span>6w</span>
+                                </div>
+                                <div class="pitch-line">External tools can query Hero's graph for cross-domain reporting.</div>
+                                <div class="evidence">
+                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 1l1.4 3 3.3.4-2.4 2.3.6 3.3L6 8.5 3.1 10l.6-3.3L1.3 4.4l3.3-.4L6 1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+                                    9 evidence · 0 stories
+                                </div>
+                            </div>
+
+                            <div class="r-card">
+                                <div class="title">Cross-tracker handoff (Jira ↔ Linear)</div>
+                                <div class="meta">
+                                    <span class="chip"><span class="dot" style="background:var(--text-muted)"></span>candidate</span>
+                                    <span class="chip appetite-2w"><span class="dot"></span>2w</span>
+                                </div>
+                                <div class="pitch-line">PM on Jira can hand off to engineering on Linear without manual re-entry.</div>
+                                <div class="evidence">
+                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 1l1.4 3 3.3.4-2.4 2.3.6 3.3L6 8.5 3.1 10l.6-3.3L1.3 4.4l3.3-.4L6 1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+                                    4 evidence · 0 stories
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="deferred-lane">
+                        <h4>Deferred · trade-offs visible <span class="count">4</span></h4>
+                        <div class="deferred-items">
+                            <span class="deferred-item">In-app trace viewer <span class="why">— APM tools suffice for v1</span></span>
+                            <span class="deferred-item">OKR specs <span class="why">— belongs in strategy domain</span></span>
+                            <span class="deferred-item">Productboard integration <span class="why">— Jira covers v1 needs</span></span>
+                            <span class="deferred-item">Forced point estimation <span class="why">— violates principle 2</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-strip">
+                <div class="bottom-actions">
+                    <span class="bottom-actions-label">Roadmap</span>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 9l3-3 2 2 3-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Prioritize
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><rect x="2" y="2" width="3" height="3" stroke="currentColor" stroke-width="1.3"/><rect x="7" y="2" width="3" height="3" stroke="currentColor" stroke-width="1.3"/><rect x="2" y="7" width="3" height="3" stroke="currentColor" stroke-width="1.3"/></svg>
+                        Group by…
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M6 4v2.5l1.5 1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        Find stale
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 2v8l3-2 3 2V2H3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                        Save view
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.3"/><path d="M6 4v2l1 1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        Discover
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/></svg>
+                        Discuss
+                    </button>
+                </div>
+                <div class="bottom-input">
+                    <span class="model-chip"><span class="dot"></span>Sonnet 4.6</span>
+                    <input placeholder="Ask about the roadmap…" />
+                    <span class="tool">/</span>
+                    <span class="tool">@</span>
+                    <span class="tool"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M11 5l-5 5a2 2 0 102.8 2.8L14 7.5a3.5 3.5 0 00-5-5L4 7.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <button class="send-btn"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+                </div>
+            </div>
+        </main>
+
+        <aside class="right-panel">
+            <div class="right-header">
+                <span class="status-dot"></span>
+                Chat
+                <span class="ctx-label">· Roadmap / Now Next Later</span>
+            </div>
+            <div class="right-scroll">
+
+                <div class="ambient">
+                    <div class="ambient-label">Ambient · about this roadmap</div>
+
+                    <div class="ambient-card relationship">
+                        <span class="label">Stats</span>
+                        <div class="body">
+                            <strong>17 active</strong> · 5 now · 6 next · 6 later
+                            <div class="sub">4 deferred · 2 dropped this cycle</div>
+                        </div>
+                    </div>
+
+                    <div class="ambient-card relationship">
+                        <span class="label">Cycle 14</span>
+                        <div class="body">
+                            <strong>Week 3 of 6</strong> · 2 bets on track · 1 at risk
+                            <div class="sub">SSO refresh: uphill_deciding (slowing)</div>
+                        </div>
+                    </div>
+
+                    <div class="ambient-suggest">
+                        <div class="head"><span class="pulse"></span>Suggestion · roadmap-curator</div>
+                        <strong>Mobile push notifications</strong> has 34 evidence and 8 candidate stories — strongest signal in <em>Next</em>. Promote to <em>Now</em> for Cycle 15?
+                        <div class="actions">
+                            <button class="primary">Promote</button>
+                            <button>Show evidence</button>
+                            <button>Dismiss</button>
+                        </div>
+                    </div>
+
+                    <div class="ambient-suggest">
+                        <div class="head"><span class="pulse"></span>Suggestion · prioritization-strategist</div>
+                        <strong>Billing v2</strong> and <strong>Multi-region failover</strong> compete for infra-eng + finance in Q3. Trade-off worth surfacing?
+                        <div class="actions">
+                            <button class="primary">Compare</button>
+                            <button>Dismiss</button>
+                        </div>
+                    </div>
+
+                    <div class="ambient-rollup">
+                        12 events this cycle
+                        <svg class="chev" width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4 4l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    </div>
+                </div>
+
+                <div class="chat-scroll">
+                    <div class="sys-event">
+                        <code>roadmap-curator</code> flagged 2 candidates as stale (no evidence in 60d) · this morning
+                    </div>
+
+                    <div class="bubble-wrap user">
+                        <div class="via">via <code>/roadmap</code></div>
+                        <div class="bubble user">What's the strongest evidence bet in Next right now?</div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            <strong>Mobile push notifications</strong> — 34 evidence items (28 customer, 6 internal), 8 candidate stories drafted. Top-quartile coverage in enterprise + mid-market. Want me to draft a pitch?
+                        </div>
+                    </div>
+
+                    <div class="bubble-wrap user">
+                        <div class="bubble user">Yes — 6w appetite. Lean on the SRE feedback specifically.</div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            Drafting via <code>prd-author</code> + <code>discovery-researcher</code>. Opening PRD <code>mobile-push-notifications</code> in a new tab.
+                        </div>
+                    </div>
+
+                    <div class="sys-event">
+                        <code>prd-author</code> created PRD <code>mobile-push-notifications</code> · 1m ago
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+</body>
+</html>

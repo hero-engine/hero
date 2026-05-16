@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-16T13:52:20Z · 99 ready specs_
+_Generated: 2026-05-16T14:21:29Z · 99 ready specs_
 
 ## cross-repo-peering — "Cross-Repo Peering — Conventions Travel, Specs Hand Off, Heroes Call Each Other"
 _feature · delivering · horizon: now_

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<!-- Hero PM Mock: 07-chat-tab | Locked layout: design mode (Chat tab) -->
+<!-- Full hero-code chrome: provider/model picker, context fullness, attachments, mentions, slash, reasoning. -->
+<!-- No bottom strip when Chat tab is active — the chat IS the surface. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Chat · Hero PM (design mode)</title>
+<style>
+:root {
+    --bg: #ffffff; --bg-secondary: #f7f8fa; --bg-tertiary: #eef0f4; --bg-hover: #f0f2f6;
+    --text: #1a1d23; --text-secondary: #5d646e; --text-muted: #8a929c;
+    --border: #e4e7eb; --border-strong: #d0d4da;
+    --primary: #2a6cb5; --primary-hover: #6cb6ff;
+    --hero-blue-300: #9bc1e6; --hero-blue-500: #6cb6ff; --hero-blue-700: #2a6cb5;
+    --success: #16a249; --warning: #d97706; --danger: #dc2626;
+    --accent-handoff: #7c3aed; --accent-handoff-bg: #f5f0ff;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased; }
+
+.shell { display: grid; grid-template-rows: 48px 1fr; height: 100vh; }
+.chrome { display: grid; grid-template-columns: 240px 1fr auto; align-items: center; border-bottom: 1px solid var(--border); background: var(--bg); padding: 0 16px 0 0; gap: 16px; }
+.chrome-workspace { display: flex; align-items: center; gap: 8px; padding: 0 12px; height: 100%; border-right: 1px solid var(--border); font-weight: 600; }
+.workspace-logo { width: 22px; height: 22px; display: grid; place-items: center; color: var(--hero-blue-300); }
+.workspace-logo svg { display: block; width: 22px; height: 22px; }
+.domain-pill { margin-left: auto; background: var(--bg-tertiary); color: var(--text-secondary); border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+.search { grid-column: 2; display: flex; align-items: center; gap: 8px; max-width: 440px; width: 100%; justify-self: center; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; color: var(--text-muted); }
+.search input { background: transparent; border: 0; outline: 0; flex: 1; font-size: 12px; color: var(--text-secondary); font-family: inherit; }
+.kbd { font-family: ui-monospace, Menlo, monospace; background: var(--bg); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 3px; padding: 0 5px; font-size: 10px; color: var(--text-muted); line-height: 14px; }
+.chrome-right { display: flex; align-items: center; gap: 12px; }
+.preset-chip { display: inline-flex; align-items: center; gap: 6px; background: #eaf2fb; color: var(--hero-blue-700); border: 1px solid #cfe1f4; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.preset-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); }
+.avatar { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, #ffd47e, #f97373); color: white; font-size: 10px; font-weight: 600; display: inline-grid; place-items: center; border: 1px solid var(--border); }
+.avatar.sm { width: 18px; height: 18px; font-size: 9px; }
+.avatar.marcus { background: linear-gradient(135deg, #fcc46d, #f97316); }
+.avatar.sarah { background: linear-gradient(135deg, #84e1bc, #16a249); }
+
+/* No right panel in this mockup — Chat is full center pane */
+.body-grid { display: grid; grid-template-columns: 240px 1fr; height: calc(100vh - 48px); min-height: 0; }
+
+.nav { background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 12px 8px; overflow-y: auto; display: flex; flex-direction: column; }
+.nav-section { margin-bottom: 14px; }
+.nav-label { text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px; font-weight: 600; color: var(--text-muted); padding: 4px 8px; }
+.nav-link { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 4px; color: var(--text-secondary); text-decoration: none; font-size: 12.5px; cursor: pointer; }
+.nav-link:hover { background: var(--bg-hover); color: var(--text); }
+.nav-link.active { background: var(--bg-tertiary); color: var(--text); font-weight: 500; }
+.nav-link .count { margin-left: auto; font-size: 11px; color: var(--text-muted); }
+.nav-icon { width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0; }
+.nav-link.active .nav-icon { color: var(--primary); }
+.nav-link.chat-entry { color: var(--hero-blue-700); font-weight: 600; }
+.nav-link.chat-entry .nav-icon { color: var(--hero-blue-300); }
+.nav-link.chat-entry.active { background: #eaf2fb; }
+.nav-link.chat-entry.active .nav-icon { color: var(--hero-blue-700); }
+.nav-saved { padding: 3px 8px 3px 26px; font-size: 12px; color: var(--text-secondary); border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.nav-saved:hover { background: var(--bg-hover); color: var(--text); }
+.nav-saved::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); }
+.nav-spacer { flex: 1; }
+.nav-user { display: flex; align-items: center; gap: 8px; padding: 8px; border-top: 1px solid var(--border); margin-top: 8px; font-size: 12px; color: var(--text-secondary); }
+
+/* Center pane — full chat */
+.center { display: grid; grid-template-rows: 34px auto 1fr auto; min-height: 0; overflow: hidden; background: var(--bg); }
+
+.tab-strip { display: flex; align-items: stretch; background: var(--bg-secondary); border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tab { display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; border-right: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-muted); font-size: 12px; cursor: pointer; height: 34px; max-width: 240px; }
+.tab .tab-type-chip { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 1px 5px; border-radius: 3px; background: var(--bg-tertiary); color: var(--text-muted); flex-shrink: 0; }
+.tab .tab-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab .tab-close { width: 14px; height: 14px; display: grid; place-items: center; border-radius: 3px; opacity: 0; color: var(--text-muted); flex-shrink: 0; }
+.tab:hover .tab-close { opacity: 1; }
+.tab.active { background: var(--bg); color: var(--text); font-weight: 500; box-shadow: inset 0 2px 0 var(--hero-blue-700); }
+.tab.active .tab-type-chip { background: #eaf2fb; color: var(--hero-blue-700); }
+.tab.chat-tab .tab-type-chip { background: #eaf2fb; color: var(--hero-blue-700); }
+.tab-strip-spacer { flex: 1; border-right: 0; }
+
+/* Hero-code chrome bar */
+.chat-chrome {
+    display: flex; align-items: center; gap: 10px;
+    height: 44px;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+    font-size: 12px;
+}
+.provider-picker {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 28px; padding: 0 10px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px;
+    font-weight: 500; cursor: pointer;
+}
+.provider-picker .anthropic-dot {
+    width: 8px; height: 8px; border-radius: 2px;
+    background: linear-gradient(135deg, #d97757, #b85a3f);
+}
+.provider-picker .model {
+    color: var(--text); font-weight: 600;
+}
+.provider-picker .vendor { color: var(--text-muted); font-weight: 400; }
+.provider-picker .chev { color: var(--text-muted); margin-left: 4px; }
+
+.context-indicator {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 0 10px; height: 28px;
+    background: var(--bg);
+    border: 1px solid var(--border); border-radius: 6px;
+    font-size: 11.5px; color: var(--text-secondary);
+}
+.context-indicator .bar {
+    width: 60px; height: 4px; border-radius: 2px;
+    background: var(--bg-tertiary); overflow: hidden;
+}
+.context-indicator .fill {
+    height: 100%; background: var(--hero-blue-500);
+}
+.context-indicator strong { color: var(--text); font-weight: 600; }
+
+.chrome-spacer { flex: 1; }
+.chrome-action {
+    width: 28px; height: 28px; display: grid; place-items: center;
+    border: 1px solid var(--border); border-radius: 6px;
+    background: var(--bg); color: var(--text-secondary); cursor: pointer;
+}
+.chrome-action:hover { background: var(--bg-hover); color: var(--text); }
+
+/* Conversation area */
+.conv-scroll { overflow-y: auto; min-height: 0; }
+.conv-padded {
+    max-width: 720px; margin: 0 auto;
+    padding: 28px 32px 24px;
+    display: flex; flex-direction: column; gap: 16px;
+}
+
+.bubble-wrap { display: flex; flex-direction: column; gap: 4px; max-width: 100%; }
+.bubble-wrap.user { align-items: flex-end; }
+.bubble-wrap.agent { align-items: flex-start; }
+.via {
+    font-size: 11px; color: var(--text-muted); padding: 0 6px;
+    display: inline-flex; align-items: center; gap: 5px;
+}
+.via code { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--text-secondary); }
+.bubble {
+    max-width: 640px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    font-size: 14px; line-height: 22px;
+    word-wrap: break-word;
+}
+.bubble.user { background: rgba(155, 193, 230, 0.22); color: var(--text); }
+.bubble.agent { background: #f4f5f7; color: var(--text); }
+.bubble code { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 3px; }
+.bubble strong { font-weight: 600; }
+.bubble p { margin: 0 0 10px; }
+.bubble p:last-child { margin-bottom: 0; }
+.bubble ul { margin: 4px 0 8px 20px; padding: 0; }
+.bubble li { margin-bottom: 4px; }
+
+.reasoning-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11.5px; color: var(--text-secondary);
+    background: var(--bg-secondary); border: 1px dashed var(--border);
+    border-radius: 12px; padding: 3px 10px;
+    font-family: ui-monospace, Menlo, monospace;
+    cursor: pointer;
+}
+.reasoning-pill.expanded {
+    background: var(--bg); border-style: solid;
+}
+.reasoning-body {
+    margin-top: 6px;
+    max-width: 640px;
+    background: var(--bg-secondary);
+    border-left: 3px solid var(--hero-blue-300);
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 12.5px; line-height: 1.6;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+.reasoning-body strong { color: var(--text); font-weight: 600; font-style: normal; }
+
+/* Tool calls */
+.toolcall {
+    max-width: 640px;
+    border: 1px solid var(--border); border-radius: 9px;
+    background: var(--bg); overflow: hidden;
+    margin-top: 6px;
+}
+.toolcall-head {
+    background: var(--bg-secondary);
+    padding: 8px 12px;
+    font-size: 12px; color: var(--text-secondary);
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid var(--border);
+}
+.toolcall-head code {
+    font-family: ui-monospace, Menlo, monospace; font-size: 11.5px;
+    background: var(--bg-tertiary); padding: 1px 6px; border-radius: 3px; color: var(--text); font-weight: 600;
+}
+.toolcall-head .chev { margin-left: auto; color: var(--text-muted); }
+.toolcall-head .duration { color: var(--text-muted); font-family: ui-monospace, Menlo, monospace; font-size: 11px; }
+.toolcall-body {
+    padding: 10px 12px;
+    font-size: 12.5px; line-height: 1.55;
+    color: var(--text-secondary);
+}
+.toolcall-body code { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; background: var(--bg-tertiary); padding: 1px 4px; border-radius: 3px; color: var(--text); }
+.toolcall-body .result-list { margin: 6px 0 0; padding: 0 0 0 16px; }
+.toolcall-body .result-list li { margin-bottom: 4px; }
+
+/* System events */
+.sys-event {
+    align-self: stretch;
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 0;
+    color: var(--text-muted); font-size: 12px;
+    font-style: italic;
+    border-top: 1px dashed var(--border);
+    border-bottom: 1px dashed var(--border);
+    margin: 6px 0;
+}
+.sys-event::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--text-muted); }
+.sys-event.cross-domain {
+    color: var(--accent-handoff);
+    border-color: rgba(124,58,237,0.25);
+}
+.sys-event.cross-domain::before { background: var(--accent-handoff); }
+.sys-event code {
+    font-family: ui-monospace, Menlo, monospace; font-size: 11.5px;
+    background: var(--bg-tertiary); padding: 1px 5px; border-radius: 3px;
+    font-style: normal;
+}
+
+/* Input area — large, full-featured */
+.input-wrap {
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+    padding: 16px 0 18px;
+}
+.input-inner {
+    max-width: 720px; margin: 0 auto;
+    padding: 0 32px;
+}
+.input-box {
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg);
+    padding: 12px 14px 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.input-box:focus-within {
+    border-color: var(--hero-blue-500);
+    box-shadow: 0 0 0 4px rgba(108, 182, 255, 0.16);
+}
+.input-area {
+    width: 100%; min-height: 22px; max-height: 240px;
+    border: 0; outline: 0; resize: none;
+    font-family: inherit; font-size: 14px; line-height: 22px;
+    color: var(--text); background: transparent;
+    padding: 0;
+}
+.input-area::placeholder { color: var(--text-muted); }
+.input-toolrow {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+}
+.input-tool {
+    display: inline-flex; align-items: center; gap: 5px;
+    height: 26px; padding: 0 9px;
+    border-radius: 6px;
+    color: var(--text-secondary); cursor: pointer;
+    font-size: 12px;
+}
+.input-tool:hover { background: var(--bg-hover); color: var(--text); }
+.input-tool .glyph {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 12px; font-weight: 600;
+}
+.input-tool.reasoning {
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    color: var(--text-secondary);
+}
+.input-tool.reasoning.on {
+    background: #eaf2fb; border-color: #cfe1f4; color: var(--hero-blue-700);
+}
+.input-tool.reasoning.on .dot {
+    width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-700);
+}
+.input-spacer { flex: 1; }
+.send-btn-lg {
+    height: 32px; padding: 0 16px; border-radius: 8px;
+    background: var(--primary); color: white;
+    border: 0; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: inherit; font-size: 13px; font-weight: 600;
+}
+.send-btn-lg:hover { background: var(--primary-hover); }
+.input-hint {
+    margin-top: 6px;
+    font-size: 11px; color: var(--text-muted);
+    display: flex; align-items: center; gap: 12px;
+    justify-content: flex-end;
+}
+.input-hint .kbd-mini {
+    font-family: ui-monospace, Menlo, monospace;
+    background: var(--bg-tertiary);
+    padding: 0 4px; border-radius: 2px; font-size: 10px;
+}
+</style>
+</head>
+<body>
+<div class="shell">
+    <header class="chrome">
+        <div class="chrome-workspace">
+            <div class="workspace-logo"><svg viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg></div>
+            <span>Hero</span>
+            <span class="domain-pill">PM <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </div>
+        <div class="search"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><input placeholder="Search or jump to…" /><span class="kbd">⌘K</span></div>
+        <div class="chrome-right"><span class="preset-chip"><span class="dot"></span>Cycle · 6w</span><div class="avatar marcus">MJ</div></div>
+    </header>
+
+    <div class="body-grid">
+        <nav class="nav">
+            <div class="nav-section">
+                <a class="nav-link chat-entry active">
+                    <svg class="nav-icon" viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+                    Chat
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-label">Plan</div>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="3.5" height="10" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="6.5" y="3" width="3.5" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="11" y="3" width="3.5" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>Roadmap</a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="7" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="11" width="8" height="2" rx="1" fill="currentColor"/></svg>Story queue<span class="count">47</span></a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M3 2.5h7l3 3v8a.5.5 0 01-.5.5h-9.5a.5.5 0 01-.5-.5v-11z" stroke="currentColor" stroke-width="1.3"/><path d="M5 8h6M5 11h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>PRDs</a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 3h12l-4 6v4l-4-2V9L2 3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Intake<span class="count" style="background:#fef3c7;color:#92400e;border-radius:8px;padding:0 5px">23</span></a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="4" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/><circle cx="12" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.3"/></svg>Handoff stream</a>
+            </div>
+            <div class="nav-spacer"></div>
+            <div class="nav-user"><div class="avatar sm marcus">MJ</div>Marcus Johnson</div>
+        </nav>
+
+        <main class="center">
+            <div class="tab-strip">
+                <div class="tab chat-tab active">
+                    <span class="tab-type-chip">Chat</span>
+                    <span class="tab-label">Conversation</span>
+                    <span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+                </div>
+                <div class="tab"><span class="tab-type-chip">Roadmap</span><span class="tab-label">Roadmap</span><span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></div>
+                <div class="tab"><span class="tab-type-chip">Story</span><span class="tab-label">2847 · Agent trace spans</span><span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></div>
+                <div class="tab-strip-spacer"></div>
+            </div>
+
+            <!-- Hero-code chrome bar -->
+            <div class="chat-chrome">
+                <div class="provider-picker">
+                    <span class="anthropic-dot"></span>
+                    <span class="vendor">Anthropic / </span>
+                    <span class="model">Claude Sonnet 4.6</span>
+                    <svg class="chev" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </div>
+                <div class="context-indicator">
+                    <span>Context</span>
+                    <span class="bar"><span class="fill" style="width:22%"></span></span>
+                    <span><strong>22%</strong> of 200K</span>
+                </div>
+                <div class="chrome-spacer"></div>
+                <button class="chrome-action" title="Attachments">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M11 5l-5 5a2 2 0 102.8 2.8L14 7.5a3.5 3.5 0 00-5-5L4 7.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <button class="chrome-action" title="New conversation">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </button>
+                <button class="chrome-action" title="History">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v3l2 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+
+            <!-- Conversation -->
+            <div class="conv-scroll">
+                <div class="conv-padded">
+
+                    <div class="bubble-wrap user">
+                        <div class="bubble user">
+                            I want to plan Cycle 15 bets. We just shipped audit-retention and slack-digest. What's the strongest signal in <strong>Next</strong> right now, factoring evidence + customer segment overlap with shipped wins?
+                        </div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="reasoning-pill expanded">▾ Thinking · 14s</div>
+                        <div class="reasoning-body">
+                            <strong>Plan.</strong> Pull the Next-band roadmap-items with their evidence rollups; cross-reference customer segments against the 2 most-recently shipped wins; surface overlap; weight by evidence count.
+                            <br><br>
+                            <strong>Check.</strong> Mobile push-notifications has 34 evidence, mostly enterprise+mid-market — same segments as audit-retention (enterprise) and slack-digest (mid-market). That's a strong overlap signal. Workspace billing v2 is finance-led, different segment.
+                        </div>
+
+                        <div class="bubble agent">
+                            <p>Strongest signal: <strong>Mobile push notifications</strong>.</p>
+                            <ul>
+                                <li><strong>34 evidence items</strong> — 28 customer, 6 internal — the highest in the Next band.</li>
+                                <li>Customer segments: <strong>enterprise (Mintwave, NorthBank) + mid-market</strong> — same segments that drove audit-retention and slack-digest adoption (both shipped Cycle 13). Compounding effect.</li>
+                                <li>The intake funnel just merged two recent items (Mintwave Intercom + NorthBank Zendesk) describing the same delivery failure, so the signal is fresh, not legacy.</li>
+                            </ul>
+                            <p>Trade-off worth surfacing: <strong>workspace billing v2</strong> competes for Q3 finance-engineer capacity. If billing slips, push wins on capacity too.</p>
+                        </div>
+
+                        <div class="toolcall">
+                            <div class="toolcall-head">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="color:var(--text-muted)"><path d="M2 3h8M2 6h8M2 9h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                                <code>hero search</code>
+                                <span class="duration">evidence rollup · 1.2s · 34 results</span>
+                                <span class="chev"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+                            </div>
+                            <div class="toolcall-body">
+                                Aggregated <code>tag=mobile-push</code> across intake + customer interviews + sales notes.
+                                <ul class="result-list">
+                                    <li><code>intake-item · 23 mentions</code> (Intercom 14, Zendesk 7, GitHub 2)</li>
+                                    <li><code>interview · 6 references</code> (3 enterprise, 3 mid-market)</li>
+                                    <li><code>sales-call · 5 references</code> ($420K renewal-risk tagged)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bubble-wrap user">
+                        <div class="bubble user">Convincing. Draft a pitch — 6w appetite. Use the Mintwave SRE quote as the customer voice. Include rabbit holes for iOS background fetch + Android Doze.</div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            <p>On it. Drafting via <code>prd-author</code> with <code>shape-up-pitch</code> skill. Including:</p>
+                            <ul>
+                                <li><strong>Problem</strong> with Priya R. (Mintwave) quote</li>
+                                <li><strong>Appetite</strong> · 6w · cycle 15</li>
+                                <li><strong>Solution sketch</strong> — high-priority notification channel + APNs/FCM critical alert paths</li>
+                                <li><strong>Rabbit holes</strong> — iOS background fetch limits, Android Doze mode, BatteryStats throttling</li>
+                                <li><strong>No-gos</strong> — full alerting platform, in-app DND scheduling</li>
+                            </ul>
+                        </div>
+
+                        <div class="toolcall">
+                            <div class="toolcall-head">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="color:var(--accent-handoff)"><path d="M3 2.5h7l3 3v8a.5.5 0 01-.5.5h-9.5a.5.5 0 01-.5-.5v-11z" stroke="currentColor" stroke-width="1.3"/></svg>
+                                <code>prd-author --inline-propose</code>
+                                <span class="duration">drafting · 8 sections · 6.7s</span>
+                                <span class="chev"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+                            </div>
+                            <div class="toolcall-body">
+                                Created <code>PRD mobile-push-reliability</code> with 8 proposed sections. Opening in tab — accept / edit / reject inline.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sys-event">
+                        <code>prd-author</code> created PRD <code>mobile-push-reliability</code> · 8 sections proposed inline · just now
+                    </div>
+
+                    <div class="bubble-wrap user">
+                        <div class="via">via <code>/plan-cycle</code></div>
+                        <div class="bubble user">Good. Now compare push-reliability vs billing-v2 head-to-head. What's the leadership-deck-ready trade-off summary?</div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="reasoning-pill">▸ Thinking · 9s</div>
+                        <div class="bubble agent">
+                            <p><strong>Push reliability</strong> · evidence 34 · segments enterprise+mid-market · capacity needs: 1 mobile-eng + 1 platform-eng for 6w · upside: closes SRE-handoff gap that was named in 3 enterprise QBRs · risk: APNs cert lifecycle adds ops surface.</p>
+                            <p><strong>Billing v2</strong> · evidence 12 · segment enterprise finance · capacity needs: 2 backend-eng + 1 finance-systems-eng for 6w · upside: unlocks per-seat motion finance has been blocking on · risk: pricing changes are reversible only at quarter boundary.</p>
+                            <p><strong>Recommend push first.</strong> Higher evidence, segment overlap with recent wins, capacity already mobile-shaped. Billing can land cycle 16 with the new pricing-rules engine already drafted.</p>
+                        </div>
+                    </div>
+
+                    <div class="sys-event cross-domain">
+                        Reminder · engineering has 1 stalled handoff: <code>docs-i18n-search</code> · 17d
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Large input -->
+            <div class="input-wrap">
+                <div class="input-inner">
+                    <div class="input-box">
+                        <textarea class="input-area" rows="2" placeholder="Continue the design conversation — drop a /command, @mention an artifact, paste a customer quote…">Lock the recommendation. Move push-reliability to Cycle 15 Now band and notify Aisha + Sarah.</textarea>
+                        <div class="input-toolrow">
+                            <span class="input-tool">
+                                <span class="glyph">/</span>
+                                Commands
+                            </span>
+                            <span class="input-tool">
+                                <span class="glyph">@</span>
+                                Mention
+                            </span>
+                            <span class="input-tool">
+                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M11 5l-5 5a2 2 0 102.8 2.8L14 7.5a3.5 3.5 0 00-5-5L4 7.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                Attach
+                            </span>
+                            <span class="input-tool reasoning on">
+                                <span class="dot"></span>
+                                Extended reasoning
+                            </span>
+                            <span class="input-spacer"></span>
+                            <button class="send-btn-lg">
+                                Send
+                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="input-hint">
+                        <span><span class="kbd-mini">⌘⏎</span> send</span>
+                        <span><span class="kbd-mini">⇧⏎</span> newline</span>
+                        <span><span class="kbd-mini">⌘K</span> command palette</span>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+</body>
+</html>
