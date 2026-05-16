@@ -979,7 +979,7 @@ isn't an open question — it's a Phase 3 entry gate.
     no-op, no-peer-manifest no-op, signal rendering.
 24. `internal/index/index.go` — call into `internal/peering` during
     indexing to regenerate the peer manifest.
-25. `internal/events/log.go` — register new `peer.handoff.*` and
+25. `internal/feed/feed.go` (`ValidTypes`) — register new `peer.handoff.*` and
     `peer.call.*` event kinds.
 26. `internal/integrity/...` (per `spec-status-integrity` spec) —
     treat `handed_off` and `awaiting_peer` as in-flight-elsewhere,
@@ -1156,14 +1156,66 @@ Small enough to discover during delivery, not blocking.
   `peering.ReconcileAwaitingPeer`. No daemon, no fs-watch, no polling
   thread — a side effect of viewing status. Idempotent.
 - **Trail entry format: YAML block list vs. structured prose.**
-  Spec drafts a YAML-ish list; final format chosen during
-  implementation. Constraint: must round-trip parse cleanly.
-- **`hero handoff accept` UX for handed_back specs.** Whether to
-  default the next status to `delivering` or prompt. Likely
-  prompt; lock at Phase 1 polish.
-- **Contract import scanner scope.** Whole repo or just changed
-  files? v1 scans changed files (cheap, signal-rich); revisit if
-  we miss imports living in untouched files.
+  *Resolved in Phase 1.* YAML block under each `-` bullet matching
+  the example in this spec. Round-trips cleanly via
+  `internal/peering/trail.go`.
+- **`hero handoff accept` UX for handed_back specs.** *Resolved in
+  Phase 1.* Prompts for next status (1) delivering / (2) in-review.
+  Non-interactive stdin defaults to `delivering`. See
+  `internal/cli/handoff.go:promptNextStatus`.
+- **Contract import scanner scope.** *Resolved in Phase 3.* Changed
+  files only (cheap, signal-rich), driven by `autoFocus()` which
+  parses `git status --porcelain`. Revisit if we miss imports living
+  in untouched files. See `internal/peering/contract_imports.go`.
+
+### Surfaced during Phase 0–3 — pin before Phase 4
+
+- **Manifest `contracts:` shape authoring path is undefined.**
+  `internal/peering/manifest.go:GenerateManifest` populates
+  `Conventions` from local convention specs but does NOT populate
+  `Shapes`. The manifest header reads "do not hand-edit," yet there
+  is no other authoring path — the section will always be empty
+  in practice today. Pick one before Phase 4 ships:
+  (a) auto-discover from the workspace's `contracts/` package by
+  scanning exported Go types and cross-referencing convention slugs;
+  (b) hand-author via a new `peering.contract_shapes: [...]` array
+  in `hero.json` and merge it into the generated manifest;
+  (c) drop the "do not hand-edit" warning and accept a section the
+  user maintains manually post-`hero index`.
+  Recommendation: (b) — minimal new surface, deterministic, lives in
+  source control.
+- **`peer_surface` vs `surface` field naming is reused, not
+  separated.** Convention frontmatter uses `peer: true` for opt-in
+  (recorded as tag `peer-surface` or `peer` during spec parse). The
+  output manifest's `surface:` field is populated from the
+  convention's `tags` directly — there is no dedicated input
+  `surface:` field. Code comment at `manifest.go:80` notes this is
+  a shortcut: *"tags double as surface labels until we add a
+  dedicated field."* Pin one path:
+  (a) dedicated input field `peer_surface: [http-response, ...]` in
+  convention frontmatter, separate from tags;
+  (b) keep the tag-reuse shortcut and document `surface = tags`
+  explicitly in the convention-writing skill.
+  Recommendation: (a) for Phase 4 — surface labels are semantic
+  classification (HTTP boundary, event payload), tags are free-form
+  labels, conflating them limits both.
+- **Spec-out subagent timeout / partial-write recovery.** The
+  spec-out subagent writes the peer spec from within the subagent
+  process (Option A shell-out). If the subagent times out mid-write
+  or the prompt is cut off, the peer's `.hero/planning/...` may
+  contain a partial spec file, and the originator-side
+  `## Handoff Trail` entry will not have been appended. Define the
+  recovery contract for Phase 4:
+  - Subagent SHALL write the peer spec atomically (temp file +
+    rename) so partial files never appear on disk.
+  - Originator SHALL append its trail entry only after the subagent
+    returns successfully with `result.SpecSlug` populated.
+  - `hero check` SHALL detect orphan peer specs (a spec with
+    `received_from` set but no matching trail entry on the
+    originator) and surface them as recoverable inconsistencies.
+  - On timeout with no `SpecSlug` in the result, the originator's
+    spec status SHALL remain in its pre-call state (no transition
+    to `awaiting_peer`).
 
 ## Phasing
 
