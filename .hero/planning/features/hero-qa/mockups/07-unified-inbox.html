@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<!-- Hero QA Mock: 07-unified-inbox | Singleton view, kind tabs, normalized rows with source decoration preserved -->
+<!-- The unification thesis visible: bugs (Jira/GitHub) + test issues (TestRail/Xray/Native) in one queue, triage from the right rail. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Unified inbox · All · Hero QA</title>
+<style>
+:root {
+    --bg: #ffffff; --bg-secondary: #f7f8fa; --bg-tertiary: #eef0f4; --bg-hover: #f0f2f6;
+    --text: #1a1d23; --text-secondary: #5d646e; --text-muted: #8a929c;
+    --border: #e4e7eb; --border-strong: #d0d4da;
+    --primary: #2a6cb5; --primary-hover: #6cb6ff;
+    --hero-blue-300: #9bc1e6; --hero-blue-500: #6cb6ff; --hero-blue-700: #2a6cb5;
+    --success: #16a249; --warning: #d97706; --danger: #dc2626;
+    --accent-qa-gutter: #0891b2;
+    --accent-qa-ready: #0284c7;
+    --accent-qa-rejected: #d97706;
+    --accent-flaky: #a855f7;
+    --accent-coverage-full: #16a249;
+    --accent-coverage-partial: #d97706;
+    --accent-coverage-none: #dc2626;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased; }
+
+.shell { display: grid; grid-template-rows: 48px 1fr; height: 100vh; }
+.chrome { display: grid; grid-template-columns: 240px 1fr auto; align-items: center; border-bottom: 1px solid var(--border); background: var(--bg); padding: 0 16px 0 0; gap: 16px; }
+.chrome-workspace { display: flex; align-items: center; gap: 8px; padding: 0 12px; height: 100%; border-right: 1px solid var(--border); font-weight: 600; }
+.workspace-logo { width: 22px; height: 22px; display: grid; place-items: center; color: var(--hero-blue-300); }
+.workspace-logo svg { display: block; width: 22px; height: 22px; }
+.domain-pill { margin-left: auto; background: #eaf2fb; color: var(--hero-blue-700); border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+.search { grid-column: 2; display: flex; align-items: center; gap: 8px; max-width: 440px; width: 100%; justify-self: center; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; color: var(--text-muted); }
+.search input { background: transparent; border: 0; outline: 0; flex: 1; font-size: 12px; color: var(--text-secondary); font-family: inherit; }
+.kbd { font-family: ui-monospace, Menlo, monospace; background: var(--bg); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 3px; padding: 0 5px; font-size: 10px; color: var(--text-muted); line-height: 14px; }
+.chrome-right { display: flex; align-items: center; gap: 8px; }
+.preset-chip { display: inline-flex; align-items: center; gap: 6px; background: #eaf2fb; color: var(--hero-blue-700); border: 1px solid #cfe1f4; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.preset-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); }
+.avatar { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, #ffd47e, #f97373); color: white; font-size: 10px; font-weight: 600; display: inline-grid; place-items: center; border: 1px solid var(--border); }
+.avatar.sm { width: 18px; height: 18px; font-size: 9px; }
+.avatar.jamie { background: linear-gradient(135deg, #9bc1e6, #2a6cb5); }
+.avatar.tomas { background: linear-gradient(135deg, #fcc46d, #f97316); }
+.avatar.yuki { background: linear-gradient(135deg, #f4a4ff, #b465ec); }
+.avatar.diego { background: linear-gradient(135deg, #84e1bc, #16a249); }
+.avatar.aisha { background: linear-gradient(135deg, #ff9eb4, #ec4899); }
+.avatar.sarah { background: linear-gradient(135deg, #6ee7b7, #047857); }
+
+.body-grid { display: grid; grid-template-columns: 240px 1fr 360px; height: calc(100vh - 48px); min-height: 0; }
+
+/* Left nav */
+.nav { background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 12px 8px; overflow-y: auto; display: flex; flex-direction: column; }
+.nav-section { margin-bottom: 14px; }
+.nav-label { text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px; font-weight: 600; color: var(--text-muted); padding: 4px 8px; }
+.nav-link { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 4px; color: var(--text-secondary); text-decoration: none; font-size: 12.5px; cursor: pointer; }
+.nav-link:hover { background: var(--bg-hover); color: var(--text); }
+.nav-link.active { background: var(--bg-tertiary); color: var(--text); font-weight: 500; }
+.nav-link .count { margin-left: auto; font-size: 11px; color: var(--text-muted); }
+.nav-link.active .count { background: #eaf2fb; color: var(--hero-blue-700); border-radius: 8px; padding: 0 6px; font-weight: 600; }
+.nav-icon { width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0; }
+.nav-link.active .nav-icon { color: var(--primary); }
+.nav-link.chat-entry { color: var(--hero-blue-700); font-weight: 600; }
+.nav-link.chat-entry .nav-icon { color: var(--hero-blue-300); }
+.nav-link.chat-entry:hover { background: #eaf2fb; }
+.nav-sessions { padding: 3px 8px 3px 26px; font-size: 11.5px; color: var(--text-secondary); border-radius: 4px; display: flex; align-items: center; gap: 6px; }
+.nav-sessions::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--success); }
+.nav-spacer { flex: 1; }
+.nav-user { display: flex; align-items: center; gap: 8px; padding: 8px; border-top: 1px solid var(--border); margin-top: 8px; font-size: 12px; color: var(--text-secondary); }
+
+/* Center pane */
+.center { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.tab-strip { display: flex; align-items: stretch; background: var(--bg-secondary); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.tab { display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; border-right: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-muted); font-size: 12px; cursor: pointer; height: 34px; }
+.tab .tab-type-chip { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 1px 5px; border-radius: 3px; background: var(--bg-tertiary); color: var(--text-muted); }
+.tab.active { background: var(--bg); color: var(--text); font-weight: 500; box-shadow: inset 0 2px 0 var(--hero-blue-700); }
+.tab.active .tab-type-chip { background: #eaf2fb; color: var(--hero-blue-700); }
+.tab.chat-tab .tab-type-chip { background: #eaf2fb; color: var(--hero-blue-700); }
+.tab-strip-spacer { flex: 1; border-right: 0; }
+
+/* Title row, kind tabs, integrations strip */
+.ws-header { padding: 16px 24px 0; display: flex; align-items: baseline; gap: 14px; }
+.ws-title { font-size: 22px; font-weight: 700; margin: 0; letter-spacing: -0.3px; }
+.ws-sub { color: var(--text-muted); font-size: 12px; margin-left: auto; }
+
+/* Integrations strip */
+.integ-strip {
+    margin: 12px 24px 0;
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 12px;
+    background: #f5fbff;
+    border: 1px solid #d4e8f7;
+    border-radius: 6px;
+    font-size: 11.5px; color: var(--text-secondary);
+}
+.integ-strip .integ-icon { color: var(--hero-blue-700); display: grid; place-items: center; }
+.integ-strip strong { color: var(--text); font-weight: 600; }
+.integ-strip .integ-status { display: inline-flex; align-items: center; gap: 4px; }
+.integ-strip .integ-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--success); display: inline-block; }
+.integ-strip .integ-dot.off { background: var(--text-muted); }
+.integ-strip .integ-link { margin-left: auto; color: var(--hero-blue-700); font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+.integ-strip .integ-link:hover { text-decoration: underline; }
+
+/* Kind tabs */
+.kind-tabs { margin: 14px 24px 0; display: flex; align-items: center; gap: 2px; border-bottom: 1px solid var(--border); }
+.kind-tab {
+    padding: 8px 14px;
+    font-size: 13px; font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    display: inline-flex; align-items: center; gap: 6px;
+}
+.kind-tab:hover { color: var(--text); }
+.kind-tab.active { color: var(--hero-blue-700); border-bottom-color: var(--hero-blue-700); font-weight: 600; }
+.kind-tab .kt-count { font-size: 11px; color: var(--text-muted); background: var(--bg-tertiary); padding: 1px 6px; border-radius: 8px; font-weight: 600; }
+.kind-tab.active .kt-count { background: #eaf2fb; color: var(--hero-blue-700); }
+
+/* Filter strip */
+.filter-strip {
+    margin: 10px 24px 12px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+    font-size: 12px;
+}
+.filter-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-muted); margin-right: 4px;
+}
+.filter-divider { width: 1px; height: 18px; background: var(--border); margin: 0 6px; }
+
+.src-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 9px; border-radius: 12px;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+.src-pill .src-dot { width: 6px; height: 6px; border-radius: 50%; }
+.src-pill .src-count { font-size: 10.5px; color: var(--text-muted); font-weight: 600; margin-left: 2px; }
+.src-pill.jira { background: #eef4fd; color: #1d4ed8; border-color: #d8e6fb; }
+.src-pill.jira .src-dot { background: #2563eb; }
+.src-pill.testrail { background: #e9f7ee; color: #047857; border-color: #cdebd9; }
+.src-pill.testrail .src-dot { background: #16a249; }
+.src-pill.xray { background: #f3edfd; color: #6d28d9; border-color: #e0d3fb; }
+.src-pill.xray .src-dot { background: #7c3aed; }
+.src-pill.github { background: var(--bg-tertiary); color: var(--text-secondary); border-color: var(--border); }
+.src-pill.github .src-dot { background: var(--text-muted); }
+.src-pill.native { background: #e6f7fa; color: #0e7490; border-color: #c6e9ef; }
+.src-pill.native .src-dot { background: #0891b2; }
+.src-pill.disabled { opacity: 0.55; }
+
+.filter-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11.5px; font-weight: 500;
+    color: var(--text-secondary);
+    padding: 3px 9px; border-radius: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    cursor: pointer;
+}
+.filter-chip:hover { background: var(--bg-hover); }
+.filter-chip.active { background: #eaf2fb; color: var(--hero-blue-700); border-color: #cfe1f4; font-weight: 600; }
+.filter-chip svg { color: var(--text-muted); }
+
+/* Inbox list */
+.center-scroll { overflow-y: auto; min-height: 0; flex: 1; }
+.inbox-list { padding: 0 12px 24px; }
+.inbox-head {
+    display: grid;
+    grid-template-columns: 24px 90px 1fr 88px 100px 60px 24px;
+    padding: 4px 12px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+}
+.row {
+    display: grid;
+    grid-template-columns: 24px 90px 1fr 88px 100px 60px 24px;
+    align-items: center;
+    padding: 0 12px;
+    height: 38px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    font-size: 12.5px;
+}
+.row:hover { background: var(--bg-secondary); }
+.row.selected { background: #eaf2fb; }
+.row .row-chk {
+    width: 13px; height: 13px;
+    border: 1.4px solid var(--border-strong); border-radius: 3px;
+    display: inline-grid; place-items: center;
+    color: white;
+}
+.row.selected .row-chk { background: var(--primary); border-color: var(--primary); }
+.row-kindcell { display: flex; align-items: center; gap: 5px; min-width: 0; }
+.kind-chip {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+    padding: 2px 5px; border-radius: 3px;
+}
+.kind-chip.bug { background: #fef2f2; color: #b91c1c; }
+.kind-chip.test-issue { background: #e6f7fa; color: #0e7490; }
+.row-titlecell { min-width: 0; display: flex; align-items: center; gap: 8px; overflow: hidden; }
+.row-title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row-title strong { font-weight: 600; font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: var(--text); background: var(--bg-tertiary); padding: 0 5px; border-radius: 3px; margin-right: 6px; }
+.row.selected .row-title strong { background: rgba(255,255,255,0.7); }
+.badge {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+    padding: 1px 5px; border-radius: 3px;
+    flex-shrink: 0;
+}
+.badge.regression { background: #fdf2f2; color: var(--danger); border: 1px solid #f5d0d0; }
+.badge.flake { background: #f4ebfd; color: var(--accent-flaky); border: 1px solid #e0cbf9; }
+.badge.verdict { background: var(--bg-tertiary); color: var(--text-secondary); }
+.row-prio {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11.5px; color: var(--text-secondary);
+}
+.prio-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.prio-dot.high { background: var(--danger); }
+.prio-dot.med { background: var(--warning); }
+.prio-dot.low { background: var(--text-muted); }
+.row-status {
+    font-size: 11px; color: var(--text-secondary);
+    display: inline-flex; align-items: center; gap: 4px;
+}
+.row-status .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--warning); }
+.row-status.in-progress .status-dot { background: var(--hero-blue-500); }
+.row-status.classified .status-dot { background: var(--success); }
+.row-age { font-size: 11px; color: var(--text-muted); text-align: right; }
+.row-assignee { display: flex; justify-content: flex-end; }
+
+/* Right panel */
+.right-panel { border-left: 1px solid var(--border); background: var(--bg); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.right-header { height: 36px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--border); background: var(--bg-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); }
+.right-header .ctx-label { margin-left: auto; text-transform: none; letter-spacing: 0; font-size: 11px; color: var(--text-muted); font-weight: 400; font-family: ui-monospace, Menlo, monospace; }
+.right-scroll { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+
+/* Selected item header in right rail */
+.sel-head {
+    display: flex; flex-direction: column; gap: 6px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--border);
+}
+.sel-head .sel-meta {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.sel-head .sel-title {
+    font-size: 14px; font-weight: 600; line-height: 1.35;
+}
+.sel-head .sel-id { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: var(--text); background: var(--bg-tertiary); padding: 1px 6px; border-radius: 3px; }
+.sel-meta-row { display: flex; gap: 14px; font-size: 11px; color: var(--text-muted); }
+
+/* Triage panel — the brand surface */
+.triage-panel {
+    display: flex; flex-direction: column; gap: 8px;
+}
+.section-label {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+    color: var(--text-muted); margin-bottom: 2px;
+}
+.triage-btn {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit; font-size: 12.5px;
+    text-align: left;
+    color: var(--text);
+}
+.triage-btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+.triage-btn.primary {
+    background: var(--primary); color: white;
+    border-color: var(--primary);
+}
+.triage-btn.primary:hover { background: var(--hero-blue-700); }
+.triage-btn.primary .tb-sub { color: rgba(255,255,255,0.85); }
+.triage-btn .tb-icon {
+    width: 26px; height: 26px;
+    border-radius: 5px;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    display: grid; place-items: center;
+    flex-shrink: 0;
+}
+.triage-btn.primary .tb-icon { background: rgba(255,255,255,0.18); color: white; }
+.triage-btn .tb-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.triage-btn .tb-name { font-weight: 600; }
+.triage-btn .tb-sub { font-size: 10.5px; color: var(--text-muted); }
+
+/* Investigator nudge */
+.nudge {
+    border: 1px dashed var(--hero-blue-500);
+    background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+    border-radius: 7px;
+    padding: 9px 11px;
+    font-size: 12px; line-height: 1.5;
+}
+.nudge .nudge-head {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--hero-blue-700); margin-bottom: 5px;
+}
+.nudge .nudge-head .pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-700); }
+.nudge strong { font-weight: 600; }
+
+/* Cross-kind relationships */
+.rel-card {
+    border: 1px solid var(--border);
+    background: var(--bg);
+    border-radius: 7px;
+    padding: 9px 11px;
+    font-size: 12px;
+    display: flex; flex-direction: column; gap: 4px;
+}
+.rel-card .rel-row { display: flex; align-items: center; gap: 8px; }
+.rel-card .rel-icon { width: 16px; height: 16px; color: var(--text-muted); flex-shrink: 0; }
+.rel-card .rel-link { color: var(--hero-blue-700); font-weight: 600; font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; }
+.rel-card .rel-sub { font-size: 11px; color: var(--text-muted); margin-left: 24px; }
+.rel-card.ambient {
+    background: linear-gradient(180deg, #fdf7ed 0%, var(--bg) 100%);
+    border-color: #f3deb8;
+}
+.rel-card.ambient .rel-head {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--accent-qa-rejected); margin-bottom: 4px;
+}
+.rel-card.ambient .rel-actions { display: flex; gap: 6px; margin-top: 6px; }
+.rel-card.ambient .rel-actions button {
+    border: 0; background: transparent;
+    font-family: inherit; font-size: 11px; font-weight: 600;
+    padding: 3px 9px; border-radius: 4px; cursor: pointer;
+    color: var(--text-secondary);
+}
+.rel-card.ambient .rel-actions button.accept { background: #eaf2fb; color: var(--hero-blue-700); }
+.rel-card.ambient .rel-actions button:hover { background: var(--bg-hover); }
+.rel-card.ambient .rel-actions button.accept:hover { background: #d6e7f8; }
+
+/* From source collapsible */
+.from-source {
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--bg);
+}
+.from-source-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 11px;
+    cursor: pointer;
+    font-size: 12px; font-weight: 600;
+}
+.from-source-head .chev { color: var(--text-muted); transition: transform 0.15s; }
+.from-source.open .chev { transform: rotate(90deg); }
+.from-source-body {
+    padding: 0 11px 10px;
+    display: flex; flex-direction: column; gap: 6px;
+    font-size: 11.5px;
+}
+.from-source.collapsed .from-source-body { display: none; }
+.fs-row { display: flex; gap: 8px; align-items: baseline; }
+.fs-row .fs-key { color: var(--text-muted); width: 90px; flex-shrink: 0; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
+.fs-row .fs-val { color: var(--text); }
+.fs-row .fs-val .fs-pill { font-family: ui-monospace, Menlo, monospace; font-size: 11px; background: var(--bg-tertiary); padding: 1px 5px; border-radius: 3px; }
+.fs-comment {
+    margin-top: 4px;
+    padding: 7px 9px;
+    background: var(--bg-secondary);
+    border-radius: 5px;
+    color: var(--text-secondary);
+    font-size: 11.5px; line-height: 1.5;
+    border-left: 2px solid var(--accent-qa-gutter);
+}
+.fs-comment .fs-comment-meta { font-size: 10.5px; color: var(--text-muted); margin-bottom: 2px; }
+.fs-link {
+    margin-top: 4px;
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11.5px; color: var(--hero-blue-700); font-weight: 600;
+    cursor: pointer; text-decoration: none;
+}
+.fs-link:hover { text-decoration: underline; }
+
+</style>
+</head>
+<body>
+<div class="shell">
+    <header class="chrome">
+        <div class="chrome-workspace">
+            <div class="workspace-logo"><svg viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg></div>
+            <span>Hero</span>
+            <span class="domain-pill">QA <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </div>
+        <div class="search"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><input placeholder="Search inbox or jump to…" /><span class="kbd">⌘K</span></div>
+        <div class="chrome-right">
+            <span class="preset-chip"><span class="dot"></span>Inline gate · Step-by-step · Persistent-link</span>
+            <div class="avatar jamie">JL</div>
+        </div>
+    </header>
+
+    <div class="body-grid">
+        <nav class="nav">
+            <div class="nav-section">
+                <a class="nav-link chat-entry"><svg class="nav-icon" viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>Chat</a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-label">QA</div>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="7" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="11" width="8" height="2" rx="1" fill="currentColor"/></svg>Story queue<span class="count">12</span></a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M3 2.5h7l3 3v8a.5.5 0 01-.5.5h-9.5a.5.5 0 01-.5-.5v-11z" stroke="currentColor" stroke-width="1.3"/><path d="M5 8h6M5 11h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Test plans</a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Test cases<span class="count">142</span></a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M3 5l5 5 5-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 10V2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Regression suites<span class="count">4</span></a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M8 2l1.5 4.5L14 8l-4.5 1.5L8 14l-1.5-4.5L2 8l4.5-1.5L8 2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Flaky tests<span class="count" style="background:#f4ebfd;color:#a855f7;border-radius:8px;padding:0 5px;font-weight:600">8</span></a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M5 5l-3 3 3 3M11 5l3 3-3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Release gates</a>
+                <a class="nav-link active"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 4h12v8H2z" stroke="currentColor" stroke-width="1.3"/><path d="M2 4l6 5 6-5" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Unified inbox<span class="count">47</span></a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="4" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/><circle cx="12" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.3"/></svg>Handoff stream</a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-label">Active sessions</div>
+                <div class="nav-sessions">Sprint 23 coverage</div>
+                <div class="nav-sessions">RC-441 triage</div>
+                <div class="nav-sessions">2026-05-26 release</div>
+            </div>
+            <div class="nav-spacer"></div>
+            <div class="nav-user"><div class="avatar sm jamie">JL</div>Jamie Liu · QA Lead</div>
+        </nav>
+
+        <main class="center">
+            <div class="tab-strip">
+                <div class="tab chat-tab"><span class="tab-type-chip">Chat</span><span>Conversation</span></div>
+                <div class="tab active"><span class="tab-type-chip">Inbox</span><span>Unified inbox</span></div>
+                <div class="tab-strip-spacer"></div>
+            </div>
+
+            <div class="ws-header">
+                <h1 class="ws-title">Unified inbox</h1>
+                <span class="ws-sub">47 items · normalized from 4 sources · last sync 2m ago</span>
+            </div>
+
+            <div class="integ-strip">
+                <span class="integ-icon">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v3.5M8 11v.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                </span>
+                <strong>Integrations:</strong>
+                <span class="integ-status"><span class="integ-dot"></span>TestRail</span>
+                <span class="integ-status"><span class="integ-dot"></span>Xray</span>
+                <span class="integ-status"><span class="integ-dot"></span>Jira</span>
+                <span class="integ-status"><span class="integ-dot off"></span>GitHub not configured</span>
+                <a class="integ-link">Manage integrations <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M4 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a>
+            </div>
+
+            <div class="kind-tabs">
+                <div class="kind-tab active">All <span class="kt-count">47</span></div>
+                <div class="kind-tab">Bugs <span class="kt-count">28</span></div>
+                <div class="kind-tab">Test issues <span class="kt-count">19</span></div>
+            </div>
+
+            <div class="filter-strip">
+                <span class="filter-label">Source</span>
+                <span class="src-pill jira"><span class="src-dot"></span>Jira <span class="src-count">28</span></span>
+                <span class="src-pill testrail"><span class="src-dot"></span>TestRail <span class="src-count">12</span></span>
+                <span class="src-pill xray"><span class="src-dot"></span>Xray <span class="src-count">7</span></span>
+                <span class="src-pill github disabled"><span class="src-dot"></span>GitHub <span class="src-count">0</span></span>
+                <span class="src-pill native disabled"><span class="src-dot"></span>Native <span class="src-count">0</span></span>
+                <span class="filter-divider"></span>
+                <span class="filter-label">Status</span>
+                <span class="filter-chip active">Triage pending <span style="font-weight:700">14</span></span>
+                <span class="filter-chip">In progress</span>
+                <span class="filter-chip">Classified</span>
+                <span class="filter-divider"></span>
+                <span class="filter-label">Priority</span>
+                <span class="filter-chip"><span class="prio-dot high"></span>High</span>
+                <span class="filter-chip"><span class="prio-dot med"></span>Med</span>
+                <span class="filter-chip"><span class="prio-dot low"></span>Low</span>
+                <span class="filter-divider"></span>
+                <span class="filter-chip" style="color:var(--text-muted);"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M3 3h6M5 6h2M5.5 9h1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>More</span>
+            </div>
+
+            <div class="center-scroll">
+                <div class="inbox-list">
+                    <div class="inbox-head">
+                        <div></div>
+                        <div>Kind · source</div>
+                        <div>Title</div>
+                        <div>Priority</div>
+                        <div>Status</div>
+                        <div style="text-align:right">Age</div>
+                        <div></div>
+                    </div>
+
+                    <div class="row selected">
+                        <span class="row-chk"><svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+                        <div class="row-kindcell">
+                            <span class="kind-chip test-issue">Test</span>
+                            <span class="src-pill testrail" style="padding:1px 6px"><span class="src-dot"></span>TestRail</span>
+                        </div>
+                        <div class="row-titlecell">
+                            <span class="row-title"><strong>RC-441</strong>failed on build #1284 — assertion mismatch on third retry attempt</span>
+                        </div>
+                        <div class="row-prio"><span class="prio-dot high"></span>high · sev med</div>
+                        <div class="row-status"><span class="status-dot"></span>Triage pending</div>
+                        <div class="row-age">2h</div>
+                        <div class="row-assignee"></div>
+                    </div>
+
+                    <div class="row">
+                        <span class="row-chk"></span>
+                        <div class="row-kindcell">
+                            <span class="kind-chip bug">Bug</span>
+                            <span class="src-pill jira" style="padding:1px 6px"><span class="src-dot"></span>Jira</span>
+                        </div>
+                        <div class="row-titlecell">
+                            <span class="row-title"><strong>BUG-9912</strong>agent trace span ordering broken under load (>200 concurrent runs)</span>
+                        </div>
+                        <div class="row-prio"><span class="prio-dot high"></span>high · sev high</div>
+                        <div class="row-status in-progress"><span class="status-dot"></span>In progress</div>
+                        <div class="row-age">4h</div>
+                        <div class="row-assignee"><div class="avatar sm diego">DR</div></div>
+                    </div>
+
+                    <div class="row">
+                        <span class="row-chk"></span>
+                        <div class="row-kindcell">
+                            <span class="kind-chip test-issue">Test</span>
+                            <span class="src-pill xray" style="padding:1px 6px"><span class="src-dot"></span>Xray</span>
+                        </div>
+                        <div class="row-titlecell">
+                            <span class="row-title"><strong>XRAY-3382</strong>span queue depth flake</span>
+                            <span class="badge flake">flake</span>
+                            <span class="badge verdict">environment · fix-by 05-20</span>
+                        </div>
+                        <div class="row-prio"><span class="prio-dot med"></span>med · sev low</div>
+                        <div class="row-status classified"><span class="status-dot"></span>Classified</div>
+                        <div class="row-age">6h</div>
+                        <div class="row-assignee"><div class="avatar sm yuki">YT</div></div>
+                    </div>
+
+                    <div class="row">
+                        <span class="row-chk"></span>
+                        <div class="row-kindcell">
+                            <span class="kind-chip bug">Bug</span>
+                            <span class="src-pill jira" style="padding:1px 6px"><span class="src-dot"></span>Jira</span>
+                        </div>
+                        <div class="row-titlecell">
+                            <span class="row-title"><strong>BUG-9889</strong>webhook retries reset on restart</span>
+                            <span class="badge regression">regression</span>
+                        </div>
+                        <div class="row-prio"><span class="prio-dot high"></span>high · sev high</div>
+                        <div class="row-status in-progress"><span class="status-dot"></span>In progress</div>
+                        <div class="row-age">9h</div>
+                        <div class="row-assignee"><div class="avatar sm aisha">AP</div></div>
+                    </div>
+
+                    <div class="row">
+                        <span class="row-chk"></span>
+                        <div class="row-kindcell">
+                            <span class="kind-chip test-issue">Test</span>
+                            <span class="src-pill testrail" style="padding:1px 6px"><span class="src-dot"></span>TestRail</span>
+                        </div>
+                        <div class="row-titlecell">
+                            <span class="row-title"><strong>RC-512</strong>trace span queue depth — intermittent failures on build #1280-1284</span>
+                            <span class="badge flake">flake</span>
+                        </div>
+                        <div class="row-prio"><span class="prio-dot med"></span>med · sev med</div>
+                        <div class="row-status"><span class="status-dot"></span>Triage pending</div>
+                        <div class="row-age">11h</div>
+                        <div class="row-assignee"></div>
+                    </div>
+
+                    <div class="row">
+                        <span class="row-chk"></span>
+                        <div class="row-kindcell">
+                            <span class="kind-chip bug">Bug</span>
+                            <span class="src-pill jira" style="padding:1px 6px"><span class="src-dot"></span>Jira</span>
+                        </div>
+                        <div class="row-titlecell">
+                            <span class="row-title"><strong>BUG-9901</strong>parent-session-id missing on tool-invocation child spans</span>
+                        </div>
+                        <div class="row-prio"><span class="prio-dot med"></span>med · sev med</div>
+                        <div class="row-status"><span class="status-dot"></span>Triage pending</div>
+                        <div class="row-age">14h</div>
+                        <div class="row-assignee"></div>
+                    </div>
+
+                    <div class="row">
+                        <span class="row-chk"></span>
+                        <div class="row-kindcell">
+                            <span class="kind-chip test-issue">Test</span>
+                            <span class="src-pill xray" style="padding:1px 6px"><span class="src-dot"></span>Xray</span>
+                        </div>
+                        <div class="row-titlecell">
+                            <span class="row-title"><strong>XRAY-3401</strong>retry-backoff sequence asserts 1/2/4s but observed 0.5/1/2s</span>
+                        </div>
+                        <div class="row-prio"><span class="prio-dot high"></span>high · sev med</div>
+                        <div class="row-status"><span class="status-dot"></span>Triage pending</div>
+                        <div class="row-age">1d</div>
+                        <div class="row-assignee"></div>
+                    </div>
+
+                    <div class="row">
+                        <span class="row-chk"></span>
+                        <div class="row-kindcell">
+                            <span class="kind-chip bug">Bug</span>
+                            <span class="src-pill jira" style="padding:1px 6px"><span class="src-dot"></span>Jira</span>
+                        </div>
+                        <div class="row-titlecell">
+                            <span class="row-title"><strong>BUG-9876</strong>telemetry exporter drops spans silently when backend returns 429</span>
+                        </div>
+                        <div class="row-prio"><span class="prio-dot high"></span>high · sev high</div>
+                        <div class="row-status in-progress"><span class="status-dot"></span>In progress</div>
+                        <div class="row-age">1d</div>
+                        <div class="row-assignee"><div class="avatar sm diego">DR</div></div>
+                    </div>
+
+                    <div class="row">
+                        <span class="row-chk"></span>
+                        <div class="row-kindcell">
+                            <span class="kind-chip test-issue">Test</span>
+                            <span class="src-pill testrail" style="padding:1px 6px"><span class="src-dot"></span>TestRail</span>
+                        </div>
+                        <div class="row-titlecell">
+                            <span class="row-title"><strong>RC-388</strong>webhook retry timing — assertion drift between staging and CI</span>
+                            <span class="badge flake">flake</span>
+                        </div>
+                        <div class="row-prio"><span class="prio-dot med"></span>med · sev low</div>
+                        <div class="row-status"><span class="status-dot"></span>Triage pending</div>
+                        <div class="row-age">1d</div>
+                        <div class="row-assignee"></div>
+                    </div>
+
+                    <div class="row">
+                        <span class="row-chk"></span>
+                        <div class="row-kindcell">
+                            <span class="kind-chip bug">Bug</span>
+                            <span class="src-pill jira" style="padding:1px 6px"><span class="src-dot"></span>Jira</span>
+                        </div>
+                        <div class="row-titlecell">
+                            <span class="row-title"><strong>BUG-9844</strong>agent runtime hang when span flush endpoint times out twice</span>
+                        </div>
+                        <div class="row-prio"><span class="prio-dot high"></span>high · sev high</div>
+                        <div class="row-status in-progress"><span class="status-dot"></span>In progress</div>
+                        <div class="row-age">2d</div>
+                        <div class="row-assignee"><div class="avatar sm sarah">SC</div></div>
+                    </div>
+
+                    <div class="row">
+                        <span class="row-chk"></span>
+                        <div class="row-kindcell">
+                            <span class="kind-chip test-issue">Test</span>
+                            <span class="src-pill xray" style="padding:1px 6px"><span class="src-dot"></span>Xray</span>
+                        </div>
+                        <div class="row-titlecell">
+                            <span class="row-title"><strong>XRAY-3355</strong>observability dashboard query times out on >10k span window</span>
+                        </div>
+                        <div class="row-prio"><span class="prio-dot low"></span>low · sev low</div>
+                        <div class="row-status classified"><span class="status-dot"></span>Classified · test-issue</div>
+                        <div class="row-age">2d</div>
+                        <div class="row-assignee"><div class="avatar sm tomas">TR</div></div>
+                    </div>
+
+                    <div class="row">
+                        <span class="row-chk"></span>
+                        <div class="row-kindcell">
+                            <span class="kind-chip bug">Bug</span>
+                            <span class="src-pill jira" style="padding:1px 6px"><span class="src-dot"></span>Jira</span>
+                        </div>
+                        <div class="row-titlecell">
+                            <span class="row-title"><strong>BUG-9821</strong>webhook signing key rotation drops in-flight deliveries</span>
+                            <span class="badge regression">regression</span>
+                        </div>
+                        <div class="row-prio"><span class="prio-dot med"></span>med · sev high</div>
+                        <div class="row-status"><span class="status-dot"></span>Triage pending</div>
+                        <div class="row-age">3d</div>
+                        <div class="row-assignee"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <aside class="right-panel">
+            <div class="right-header">
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="2" fill="currentColor"/></svg>
+                Triage
+                <span class="ctx-label">RC-441 · TestRail</span>
+            </div>
+            <div class="right-scroll">
+
+                <div class="sel-head">
+                    <div class="sel-meta">
+                        <span class="kind-chip test-issue">Test issue</span>
+                        <span class="src-pill testrail" style="padding:1px 6px"><span class="src-dot"></span>TestRail</span>
+                        <span class="sel-id">RC-441</span>
+                    </div>
+                    <div class="sel-title">RC-441 failed on build #1284 — assertion mismatch on third retry attempt</div>
+                    <div class="sel-meta-row">
+                        <span><span class="prio-dot high" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>priority high · severity med</span>
+                        <span>age 2h</span>
+                    </div>
+                </div>
+
+                <div class="triage-panel">
+                    <div class="section-label">Triage actions</div>
+
+                    <button class="triage-btn primary">
+                        <span class="tb-icon">
+                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 8l3 3 7-7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12l3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/></svg>
+                        </span>
+                        <span class="tb-body">
+                            <span class="tb-name">Reject linked story</span>
+                            <span class="tb-sub">Open rejection composer against Story-2847</span>
+                        </span>
+                    </button>
+
+                    <button class="triage-btn">
+                        <span class="tb-icon">
+                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        </span>
+                        <span class="tb-body">
+                            <span class="tb-name">Mark as bad test</span>
+                            <span class="tb-sub">Close test issue · flag RC-441 for fix</span>
+                        </span>
+                    </button>
+
+                    <button class="triage-btn">
+                        <span class="tb-icon">
+                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        </span>
+                        <span class="tb-body">
+                            <span class="tb-name">Raise as new bug</span>
+                            <span class="tb-sub">Open /diagnose chain with case context</span>
+                        </span>
+                    </button>
+
+                    <button class="triage-btn">
+                        <span class="tb-icon">
+                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 13V3l5 4 5-4v10" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+                        </span>
+                        <span class="tb-body">
+                            <span class="tb-name">Flag as regression</span>
+                            <span class="tb-sub">Open /diagnose · flag regression suite</span>
+                        </span>
+                    </button>
+                </div>
+
+                <div class="nudge">
+                    <div class="nudge-head"><span class="pulse"></span>qa-investigator · suggestion</div>
+                    Assertion mismatch on third retry attempt — observed backoff <strong>0.5/1/2s</strong>, expected <strong>1/2/4s</strong>. This contradicts <strong>AC#3 of Story-2847</strong> (retry on flush). Suggest <strong>Reject linked story</strong> rather than marking the test bad.
+                </div>
+
+                <div>
+                    <div class="section-label" style="margin-bottom:6px">Cross-kind relationships</div>
+                    <div style="display:flex;flex-direction:column;gap:8px">
+                        <div class="rel-card">
+                            <div class="rel-row">
+                                <svg class="rel-icon" width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                                <span>Linked case <a class="rel-link">RC-441</a></span>
+                            </div>
+                            <div class="rel-sub">opens Test case editor · covers Story-2847 AC#3</div>
+                            <div class="rel-row" style="margin-top:2px">
+                                <svg class="rel-icon" width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 5l5 5 5-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 10V2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                                <span>Suite <a class="rel-link">regression-suite agent-runtime</a></span>
+                            </div>
+                        </div>
+
+                        <div class="rel-card ambient">
+                            <div class="rel-head">Possibly related · graph nudge</div>
+                            <div style="font-size:12px;line-height:1.5">
+                                <a class="rel-link">BUG-9912</a> hit the same build (#1284) in the retry-mechanism area. Link as <span style="font-family:ui-monospace,Menlo,monospace;background:rgba(255,255,255,0.7);padding:1px 5px;border-radius:3px;font-size:11px">raised-bug-from-failure</span>?
+                            </div>
+                            <div class="rel-actions">
+                                <button class="accept">Link</button>
+                                <button>Dismiss</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="from-source open">
+                    <div class="from-source-head">
+                        <span class="src-pill testrail" style="padding:1px 6px"><span class="src-dot"></span>TestRail</span>
+                        <span>From source</span>
+                        <svg class="chev" width="11" height="11" viewBox="0 0 12 12" fill="none" style="margin-left:auto"><path d="M4 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="from-source-body">
+                        <div class="fs-row"><span class="fs-key">TR priority</span><span class="fs-val"><span class="fs-pill">P2</span></span></div>
+                        <div class="fs-row"><span class="fs-key">Custom sev</span><span class="fs-val"><span class="fs-pill">regression</span></span></div>
+                        <div class="fs-row"><span class="fs-key">Suite</span><span class="fs-val">agent-runtime-regression</span></div>
+                        <div class="fs-row"><span class="fs-key">Run</span><span class="fs-val">build #1284 · 2h ago</span></div>
+                        <div class="fs-comment">
+                            <div class="fs-comment-meta">Tomás Reyes · TR comment · 1h ago</div>
+                            Re-ran on build #1284 with verbose timing. Backoff observed 0.5/1/2s consistently — matches BUG-9912 retry-area report. Sending to inbox for Jamie.
+                        </div>
+                        <a class="fs-link">Open in TestRail <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4 2h6v6M10 2L5 7M5 4H3v6h6V7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+    </div>
+</div>
+<script>
+// Minor interactivity: kind tabs, source pills, row selection, source collapsible.
+document.querySelectorAll('.kind-tab').forEach(t => {
+    t.addEventListener('click', () => {
+        document.querySelectorAll('.kind-tab').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+    });
+});
+document.querySelectorAll('.row').forEach(r => {
+    r.addEventListener('click', () => {
+        document.querySelectorAll('.row').forEach(x => x.classList.remove('selected'));
+        r.classList.add('selected');
+    });
+});
+document.querySelector('.from-source-head').addEventListener('click', (e) => {
+    e.currentTarget.parentElement.classList.toggle('open');
+    e.currentTarget.parentElement.classList.toggle('collapsed');
+});
+document.querySelectorAll('.src-pill').forEach(p => {
+    p.addEventListener('click', () => {
+        if (p.classList.contains('disabled')) return;
+        p.classList.toggle('active');
+    });
+});
+</script>
+</body>
+</html>

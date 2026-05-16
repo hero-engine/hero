@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<!-- Hero QA Mock: index | Landing page — eight QA surfaces -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hero QA — Eight Mockup Surfaces · Design Exploration</title>
+<style>
+:root {
+    --bg: #ffffff; --bg-secondary: #f7f8fa; --bg-tertiary: #eef0f4;
+    --text: #1a1d23; --text-secondary: #5d646e; --text-muted: #8a929c;
+    --border: #e4e7eb; --border-strong: #d0d4da;
+    --primary: #2a6cb5; --primary-hover: #6cb6ff;
+    --hero-blue-300: #9bc1e6; --hero-blue-500: #6cb6ff; --hero-blue-700: #2a6cb5; --hero-ink: #14181e;
+    --accent-handoff: #7c3aed; --accent-handoff-bg: #f5f0ff;
+    --accent-coverage-full: #16a249;
+    --accent-coverage-partial: #d97706;
+    --accent-coverage-none: #dc2626;
+    --accent-qa-gutter: #0891b2;
+    --accent-qa-gutter-bg: #ecfeff;
+    --accent-qa-ready: #0284c7;
+    --accent-qa-rejected: #d97706;
+    --accent-flaky: #a855f7;
+    --accent-flaky-bg: #faf5ff;
+    --success: #16a249;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text); background: var(--bg);
+    font-size: 14px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+}
+.page { max-width: 1120px; margin: 0 auto; padding: 56px 32px 80px; }
+
+.header { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+.logo { width: 36px; height: 36px; display: grid; place-items: center; color: var(--hero-blue-300); }
+.logo svg { display: block; width: 36px; height: 36px; }
+.eyebrow { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--hero-blue-700); }
+h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; margin: 4px 0 0; }
+
+.status-strip { display: flex; align-items: center; gap: 12px; margin-top: 18px; font-size: 12.5px; color: var(--text-secondary); flex-wrap: wrap; }
+.status-chip { display: inline-flex; align-items: center; gap: 6px; background: #eaf2fb; color: var(--hero-blue-700); border: 1px solid #cfe1f4; padding: 4px 10px; border-radius: 12px; font-size: 11.5px; font-weight: 600; }
+.status-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); }
+
+.preamble {
+    margin: 32px 0 24px;
+    padding: 28px 32px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    max-width: 880px;
+}
+.preamble p { margin: 0 0 14px; font-size: 14.5px; line-height: 1.65; }
+.preamble p:last-child { margin-bottom: 0; }
+.preamble strong { font-weight: 600; }
+.preamble code { background: var(--bg-tertiary); padding: 1px 6px; border-radius: 3px; font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; }
+.preamble em { color: var(--text); }
+
+.contributions {
+    margin: 12px 0 36px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    max-width: 880px;
+    background: white;
+}
+.contrib-row {
+    display: grid;
+    grid-template-columns: 38px 1fr;
+    align-items: start;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+}
+.contrib-row:last-child { border-bottom: 0; }
+.contrib-row.head {
+    background: var(--bg-secondary);
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-secondary);
+}
+.contrib-row > div { padding: 11px 14px; }
+.contrib-row .num {
+    font-family: ui-monospace, Menlo, monospace;
+    color: var(--text-muted);
+    border-right: 1px solid var(--border);
+    text-align: center;
+}
+.contrib-row .body strong { color: var(--text); font-weight: 600; }
+.contrib-row .body em { color: var(--text-muted); font-style: normal; font-size: 11.5px; font-family: ui-monospace, Menlo, monospace; }
+
+h2 { font-size: 22px; font-weight: 700; margin: 0 0 18px; letter-spacing: -0.2px; }
+h2 .h2sub { font-weight: 500; font-size: 14px; color: var(--text-muted); margin-left: 12px; }
+
+/* Surface-roles table (parallel to PM index) */
+.role-table {
+    margin: 8px 0 36px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    max-width: 880px;
+    background: white;
+}
+.role-row {
+    display: grid;
+    grid-template-columns: 200px 130px 1fr;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+}
+.role-row:last-child { border-bottom: 0; }
+.role-row.head {
+    background: var(--bg-secondary);
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-secondary);
+}
+.role-row > div { padding: 11px 14px; border-right: 1px solid var(--border); }
+.role-row > div:last-child { border-right: 0; }
+.role-row .surface { font-weight: 600; }
+.role-row .word { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: var(--text-secondary); }
+.role-row .word.verb { color: var(--hero-blue-700); }
+.role-row .word.noun { color: var(--accent-handoff); }
+.role-row .word.id { color: var(--text-secondary); }
+.role-row .word.qa { color: var(--accent-qa-gutter); }
+.role-row .desc { color: var(--text-secondary); }
+
+/* Screens grid */
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.tile {
+    display: block; text-decoration: none; color: inherit;
+    background: white;
+    border: 1px solid var(--border); border-radius: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.18s, transform 0.18s, border-color 0.18s;
+    cursor: pointer;
+}
+.tile:hover {
+    box-shadow: 0 12px 32px rgba(0,0,0,0.07);
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+}
+.tile.featured { grid-column: span 2; }
+
+.preview {
+    height: 220px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    position: relative; overflow: hidden;
+}
+.tile.featured .preview { height: 300px; }
+.preview svg { display: block; width: 100%; height: 100%; }
+
+.tile-body { padding: 18px 22px 20px; }
+.tile-num {
+    display: inline-block;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px; color: var(--text-muted);
+    background: var(--bg-tertiary);
+    padding: 2px 8px; border-radius: 4px;
+    margin-bottom: 8px; font-weight: 600;
+    letter-spacing: 0.4px;
+}
+.tile.killer .tile-num { background: var(--accent-qa-gutter-bg); color: var(--accent-qa-gutter); }
+.tile.default-landing .tile-num { background: #eaf2fb; color: var(--hero-blue-700); }
+.tile-title { font-size: 17px; font-weight: 600; margin: 0 0 6px; }
+.tile-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--accent-qa-gutter); color: white;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 2px 7px; border-radius: 3px;
+    margin-left: 8px; vertical-align: middle;
+}
+.tile-tag.brand { background: var(--accent-qa-rejected); }
+.tile-tag.landing { background: var(--hero-blue-700); }
+.tile-blurb { font-size: 13px; color: var(--text-secondary); line-height: 1.55; margin: 0 0 10px; }
+.tile-influences { font-size: 11.5px; color: var(--text-muted); font-family: ui-monospace, Menlo, monospace; }
+
+.footnote {
+    margin-top: 56px; padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--text-muted);
+    display: flex; gap: 16px; flex-wrap: wrap;
+}
+.footnote span strong { color: var(--text-secondary); font-weight: 600; }
+.footnote a { color: var(--primary); text-decoration: none; border-bottom: 1px solid rgba(42,108,181,0.3); }
+</style>
+</head>
+<body>
+<div class="page">
+
+    <div class="header">
+        <div class="logo"><svg viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg></div>
+        <div>
+            <div class="eyebrow">Hero QA Domain Pack</div>
+            <h1>Eight mockup surfaces</h1>
+        </div>
+    </div>
+
+    <div class="status-strip">
+        <span class="status-chip"><span class="dot"></span>Design pack complete · 2026-05-16</span>
+        <span>·</span>
+        <span>Canonical preset: <strong style="color:var(--text)">Inline gate · Step-by-step · Persistent-link</strong></span>
+        <span>·</span>
+        <span>1440×900 ideal viewport</span>
+    </div>
+
+    <section class="preamble">
+        <p>UX exploration for the <strong>Hero QA domain pack</strong> — the quality surface that lives alongside Hero's engineering and PM surfaces in the same workspace. Thesis: <em>Hero QA is the quality spine of the sprint and release, not a TestRail clone with chat.</em> Coverage is a story-completion gate; regression status is a release-readiness signal; AI authors 40-80 test cases per sprint in minutes; defects from TestRail/Xray/Jira/GitHub are unified into one queue by normalization (kept fidelity, no migration).</p>
+
+        <p>The pack reuses PM's locked UX grammar wholesale — left nav · tabbed center pane · artifact header + body · <strong>bottom strip</strong> with state-aware action buttons + chat input · <strong>right panel</strong> with sticky ambient region atop a rolling chat scroll. What's <em>QA-unique</em>: coverage signals in story rows, AC-traceable case rendering, the <strong>three-action rejection composer</strong> on stories in <code>qa-ready</code> (Add AC · Suggest new story · Reject as quality issue — preventing scope-creep through the gate), the <strong>four-action test-issue triage</strong> (bad test · reject story · raise bug · flag regression), the active <strong>flaky backlog</strong> with verdict workflow driving toward zero, and the <strong>release-gate verdict banner</strong> aggregating coverage + regression + blockers into Go/No-Go.</p>
+
+        <p>The <strong>Reject (compose findings)</strong> button on a story in <code>qa-ready</code> is the platform thesis in one click — the QA equivalent of PM's <em>Hand off to /design</em>. It lives inline-prominent in the bottom strip with all three radio actions equally visible. Cyan-teal (<code>#0891b2</code>) is reserved for QA-authored cross-pack content (the collapsible <em>QA Findings</em> block written into PM stories on rejection).</p>
+
+        <p>Eight screens follow. Open them in order: Story queue (default landing) → Story qa-ready rejection (brand interaction) → Test plan editor (coverage matrix) → Test case editor (format-aware) → Unified inbox (normalization across sources) → Release-gate (Go/No-Go) → Flaky backlog (zero-flake drive) → Cross-domain handoff stream (QA-side graph events).</p>
+    </section>
+
+    <h2>Six design-original contributions <span class="h2sub">things that don't appear in any QA tool studied</span></h2>
+
+    <div class="contributions">
+        <div class="contrib-row head"><div class="num">#</div><div class="body">Hero QA design-original</div></div>
+        <div class="contrib-row"><div class="num">1</div><div class="body"><strong>Cross-pack lifecycle overlays.</strong> QA injects <code>qa-ready</code> / <code>qa-rejected</code> states into PM's <code>story</code> type at runtime. No other tool extends another tool's lifecycle. <em>spec L8 / L12 / L16</em></div></div>
+        <div class="contrib-row"><div class="num">2</div><div class="body"><strong>Three-action rejection composer.</strong> Add AC / Suggest new story / Reject as quality issue — the <em>Suggest new story</em> path prevents scope-creep through the QA gate. <em>spec L9 / L18</em></div></div>
+        <div class="contrib-row"><div class="num">3</div><div class="body"><strong>AC-grounded test derivation.</strong> Cases are mechanically derived from EARS-shaped acceptance criteria with full traceability. <em>spec L21 — <code>ears-test-derivation</code> skill</em></div></div>
+        <div class="contrib-row"><div class="num">4</div><div class="body"><strong>Four-action test-issue triage.</strong> Bad-test / reject-linked-story / raise-as-new-bug / flag-as-regression. No tool routes test failures this way. <em>spec L30</em></div></div>
+        <div class="contrib-row"><div class="num">5</div><div class="body"><strong>Coverage-as-story-gate by default.</strong> QA gates story completion via <code>inline</code> gate_style preset — engineer hands off to QA before story can be <code>done</code>. <em>spec L5 / L13</em></div></div>
+        <div class="contrib-row"><div class="num">6</div><div class="body"><strong>Local-first with seamless hybrid escalation.</strong> Unified inbox works without integration; TestRail / Xray / Jira / GitHub are <em>additive decoration</em>, never a prerequisite. <em>spec L3 / L28</em></div></div>
+    </div>
+
+    <h2>Surface roles</h2>
+
+    <div class="role-table">
+        <div class="role-row head">
+            <div>Surface</div>
+            <div>Word type</div>
+            <div>Examples</div>
+        </div>
+        <div class="role-row">
+            <div class="surface">Bottom strip buttons</div>
+            <div class="word verb">Verbs</div>
+            <div class="desc">Author cases · Reject (compose findings) · Approve &amp; mark Complete · Run · Classify · Promote to regression</div>
+        </div>
+        <div class="role-row">
+            <div class="surface">Ambient (sticky chat top)</div>
+            <div class="word noun">Nouns / smarts</div>
+            <div class="desc">Coverage gap card · "AC#3 is failing" · linked engineering feature + delivery state · "qa-flake-curator classification: test-issue (87% confidence)"</div>
+        </div>
+        <div class="role-row">
+            <div class="surface">Artifact header chips</div>
+            <div class="word id">Identity / state</div>
+            <div class="desc">Status (qa-ready · qa-rejected) · owner · priority · stability score · linked story / AC · format · quadrant</div>
+        </div>
+        <div class="role-row">
+            <div class="surface">Artifact body</div>
+            <div class="word id">Content</div>
+            <div class="desc">Test plan coverage matrix · case steps + run history · story AC list · release-gate verdict banner + blockers</div>
+        </div>
+        <div class="role-row">
+            <div class="surface">QA Findings block (in PM stories)</div>
+            <div class="word qa">QA-authored</div>
+            <div class="desc">Collapsible cyan-gutter block appended to story body on rejection. Carries author attribution; folded by default; cross-pack write</div>
+        </div>
+        <div class="role-row">
+            <div class="surface">Chat scroll</div>
+            <div class="word id">Time-ordered</div>
+            <div class="desc">Bubbles · tool calls · system events ("Status: qa-ready → qa-rejected", "Promoted Case-C3 to regression suite")</div>
+        </div>
+    </div>
+
+    <h2>Screens</h2>
+
+    <div class="grid">
+
+        <!-- 01 — STORY QUEUE (featured, default landing) -->
+        <a href="01-story-queue-coverage.html" class="tile default-landing featured">
+            <div class="preview">
+                <svg viewBox="0 0 720 320" preserveAspectRatio="xMidYMid slice">
+                    <rect width="720" height="320" fill="#ffffff"/>
+                    <!-- chrome -->
+                    <rect x="0" y="0" width="720" height="22" fill="#ffffff" stroke="#e4e7eb"/>
+                    <path d="M28 6 L20 16 L26 16 L24 22 L34 14 L28 14 Z" fill="#9bc1e6"/>
+                    <text x="40" y="14" font-size="9" font-weight="700" fill="#1a1d23" font-family="Inter,sans-serif">Hero</text>
+                    <rect x="64" y="6" width="22" height="10" rx="3" fill="#eef0f4"/>
+                    <text x="75" y="14" font-size="7" fill="#5d646e" font-weight="700" text-anchor="middle" font-family="Inter,sans-serif">QA</text>
+
+                    <!-- left nav -->
+                    <rect x="0" y="22" width="140" height="298" fill="#f7f8fa"/>
+                    <text x="12" y="40" font-size="7" fill="#1a1d23" font-weight="700" font-family="Inter,sans-serif">Story queue</text>
+                    <rect x="8" y="32" width="124" height="14" rx="3" fill="#eaf2fb"/>
+                    <text x="12" y="62" font-size="7" fill="#5d646e" font-family="Inter,sans-serif">Test plans</text>
+                    <text x="12" y="78" font-size="7" fill="#5d646e" font-family="Inter,sans-serif">Test cases</text>
+                    <text x="12" y="94" font-size="7" fill="#5d646e" font-family="Inter,sans-serif">Regression suites</text>
+                    <text x="12" y="110" font-size="7" fill="#5d646e" font-family="Inter,sans-serif">Flaky tests</text>
+                    <text x="12" y="126" font-size="7" fill="#5d646e" font-family="Inter,sans-serif">Release gates</text>
+                    <text x="12" y="142" font-size="7" fill="#5d646e" font-family="Inter,sans-serif">Unified inbox</text>
+                    <text x="12" y="158" font-size="7" fill="#5d646e" font-family="Inter,sans-serif">Handoff stream</text>
+
+                    <!-- sprint summary strip -->
+                    <rect x="140" y="22" width="580" height="38" fill="white" stroke="#e4e7eb"/>
+                    <text x="152" y="38" font-size="10" font-weight="700" fill="#1a1d23" font-family="Inter,sans-serif">Sprint 23 · May 13 – May 26</text>
+                    <!-- coverage rollup mini bar -->
+                    <rect x="152" y="44" width="120" height="6" rx="2" fill="#eef0f4"/>
+                    <rect x="152" y="44" width="80" height="6" rx="2" fill="#16a249"/>
+                    <rect x="232" y="44" width="30" height="6" rx="2" fill="#d97706"/>
+                    <rect x="262" y="44" width="10" height="6" rx="2" fill="#dc2626"/>
+                    <text x="280" y="50" font-size="7" fill="#5d646e" font-family="Inter,sans-serif">8 full · 3 partial · 1 uncovered</text>
+                    <rect x="630" y="32" width="78" height="20" rx="5" fill="#2a6cb5"/>
+                    <text x="669" y="45" font-size="8" font-weight="700" fill="white" text-anchor="middle" font-family="Inter,sans-serif">Plan sprint coverage</text>
+
+                    <!-- band headers + rows -->
+                    <text x="152" y="78" font-size="8" font-weight="700" fill="#0284c7" font-family="Inter,sans-serif">IN QA</text>
+                    <rect x="152" y="84" width="430" height="28" rx="4" fill="#eff6ff" stroke="#0284c7" stroke-width="1.5"/>
+                    <rect x="160" y="93" width="36" height="10" rx="5" fill="#dbeafe"/>
+                    <text x="178" y="100" font-size="6" font-weight="700" fill="#0284c7" text-anchor="middle" font-family="Inter,sans-serif">qa-ready</text>
+                    <!-- coverage chip -->
+                    <rect x="202" y="93" width="34" height="10" rx="5" fill="#fef2f2"/>
+                    <text x="219" y="100" font-size="6" font-weight="700" fill="#dc2626" text-anchor="middle" font-family="Inter,sans-serif">! 4/5</text>
+                    <rect x="244" y="93" width="160" height="4" rx="1" fill="#1a1d23"/>
+                    <text x="244" y="108" font-size="6" fill="#5d646e" font-family="Inter,sans-serif">Story-2847 · agent trace spans · Diego · 2h ago</text>
+
+                    <rect x="152" y="116" width="430" height="22" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <rect x="160" y="123" width="44" height="10" rx="5" fill="#fef3c7"/>
+                    <text x="182" y="130" font-size="6" font-weight="700" fill="#d97706" text-anchor="middle" font-family="Inter,sans-serif">qa-rejected</text>
+                    <rect x="210" y="123" width="34" height="10" rx="5" fill="#dcfce7"/>
+                    <text x="227" y="130" font-size="6" font-weight="700" fill="#16a249" text-anchor="middle" font-family="Inter,sans-serif">✓ 6/6</text>
+                    <rect x="252" y="123" width="180" height="4" rx="1" fill="#1a1d23"/>
+
+                    <text x="152" y="156" font-size="8" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">IN FLIGHT</text>
+                    <rect x="152" y="162" width="430" height="20" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <rect x="160" y="168" width="34" height="9" rx="4" fill="#fef3c7"/>
+                    <text x="177" y="175" font-size="6" font-weight="700" fill="#d97706" text-anchor="middle" font-family="Inter,sans-serif">⚠ 3/5</text>
+                    <rect x="200" y="168" width="200" height="4" rx="1" fill="#1a1d23"/>
+                    <rect x="152" y="186" width="430" height="20" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <rect x="160" y="192" width="34" height="9" rx="4" fill="#dcfce7"/>
+                    <text x="177" y="199" font-size="6" font-weight="700" fill="#16a249" text-anchor="middle" font-family="Inter,sans-serif">✓ 5/5</text>
+                    <rect x="200" y="192" width="190" height="4" rx="1" fill="#1a1d23"/>
+                    <rect x="152" y="210" width="430" height="20" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <rect x="160" y="216" width="34" height="9" rx="4" fill="#fef2f2"/>
+                    <text x="177" y="223" font-size="6" font-weight="700" fill="#dc2626" text-anchor="middle" font-family="Inter,sans-serif">! 0/4</text>
+                    <rect x="200" y="216" width="160" height="4" rx="1" fill="#1a1d23"/>
+
+                    <text x="152" y="246" font-size="8" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">READY</text>
+                    <rect x="152" y="252" width="430" height="20" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <rect x="152" y="276" width="430" height="20" rx="4" fill="white" stroke="#e4e7eb"/>
+
+                    <!-- right rail -->
+                    <rect x="592" y="22" width="128" height="298" fill="#f7f8fa" stroke="#e4e7eb"/>
+                    <text x="600" y="40" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">AMBIENT</text>
+                    <rect x="598" y="48" width="116" height="50" rx="6" fill="white" stroke="#e4e7eb"/>
+                    <rect x="606" y="56" width="60" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="606" y="64" width="100" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="606" y="72" width="80" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="606" y="84" width="50" height="10" rx="3" fill="#2a6cb5"/>
+                    <text x="631" y="91" font-size="6" font-weight="700" fill="white" text-anchor="middle" font-family="Inter,sans-serif">Author cases</text>
+                    <rect x="598" y="106" width="116" height="34" rx="6" fill="white" stroke="#e4e7eb"/>
+                    <rect x="598" y="148" width="116" height="34" rx="6" fill="white" stroke="#e4e7eb"/>
+                </svg>
+            </div>
+            <div class="tile-body">
+                <span class="tile-num">01 · DEFAULT LANDING</span>
+                <span class="tile-tag landing">Landing</span>
+                <h3 class="tile-title">Story queue with coverage signals</h3>
+                <p class="tile-blurb">The QA lead's home. Single scrolling list of sprint stories with <strong>coverage signal per row</strong> (✓ green / ⚠ amber / ! red) grouped into bands: <em>In QA</em>, <em>In flight</em>, <em>Ready</em>, <em>Done this sprint</em>. Sprint summary strip with coverage rollup + estimated authoring budget + Plan-sprint-coverage primary action. Right-rail ambient surfaces coverage gaps and quick actions for the selected row.</p>
+                <p class="tile-influences">Pivotal Tracker single-list flow · Linear J/K + density · QA Wolf coverage % · Xray story-test edges</p>
+            </div>
+        </a>
+
+        <!-- 04 — STORY QA-READY REJECTION (featured, BRAND) -->
+        <a href="04-story-qa-ready-rejection.html" class="tile killer featured">
+            <div class="preview">
+                <svg viewBox="0 0 720 320" preserveAspectRatio="xMidYMid slice">
+                    <rect width="720" height="320" fill="#ffffff"/>
+                    <rect x="0" y="0" width="720" height="22" fill="#ffffff" stroke="#e4e7eb"/>
+                    <path d="M28 6 L20 16 L26 16 L24 22 L34 14 L28 14 Z" fill="#9bc1e6"/>
+                    <text x="40" y="14" font-size="9" font-weight="700" fill="#1a1d23" font-family="Inter,sans-serif">Hero</text>
+                    <rect x="64" y="6" width="22" height="10" rx="3" fill="#eef0f4"/>
+                    <text x="75" y="14" font-size="7" fill="#5d646e" font-weight="700" text-anchor="middle" font-family="Inter,sans-serif">QA</text>
+
+                    <!-- left nav with cross-pack indicator -->
+                    <rect x="0" y="22" width="120" height="298" fill="#f7f8fa"/>
+                    <rect x="6" y="30" width="108" height="14" rx="3" fill="#ecfeff" stroke="#0891b2"/>
+                    <text x="12" y="40" font-size="6" font-weight="700" fill="#0891b2" font-family="Inter,sans-serif">QA → Viewing PM story</text>
+
+                    <!-- artifact body -->
+                    <rect x="135" y="36" width="280" height="6" rx="2" fill="#1a1d23"/>
+                    <rect x="135" y="46" width="380" height="9" rx="2" fill="#1a1d23"/>
+                    <rect x="135" y="60" width="320" height="9" rx="2" fill="#1a1d23"/>
+
+                    <!-- qa-ready chip + metadata -->
+                    <rect x="135" y="78" width="56" height="13" rx="6" fill="#dbeafe"/>
+                    <text x="163" y="87" font-size="7" font-weight="700" fill="#0284c7" text-anchor="middle" font-family="Inter,sans-serif">qa-ready</text>
+                    <rect x="197" y="78" width="36" height="13" rx="6" fill="#fef2f2"/>
+                    <text x="215" y="87" font-size="7" font-weight="700" fill="#b91c1c" text-anchor="middle" font-family="Inter,sans-serif">high</text>
+                    <rect x="239" y="78" width="48" height="13" rx="6" fill="#eef0f4"/>
+                    <text x="263" y="87" font-size="7" fill="#5d646e" text-anchor="middle" font-family="Inter,sans-serif">Diego</text>
+
+                    <!-- coverage rail (5 AC × pass-state) -->
+                    <text x="135" y="106" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">COVERAGE</text>
+                    <rect x="135" y="110" width="24" height="14" rx="3" fill="#dcfce7"/>
+                    <text x="147" y="120" font-size="7" font-weight="700" fill="#16a249" text-anchor="middle" font-family="Inter,sans-serif">✓</text>
+                    <rect x="161" y="110" width="24" height="14" rx="3" fill="#dcfce7"/>
+                    <text x="173" y="120" font-size="7" font-weight="700" fill="#16a249" text-anchor="middle" font-family="Inter,sans-serif">✓</text>
+                    <rect x="187" y="110" width="24" height="14" rx="3" fill="#fef2f2"/>
+                    <text x="199" y="120" font-size="7" font-weight="700" fill="#dc2626" text-anchor="middle" font-family="Inter,sans-serif">✗</text>
+                    <rect x="213" y="110" width="24" height="14" rx="3" fill="#dcfce7"/>
+                    <text x="225" y="120" font-size="7" font-weight="700" fill="#16a249" text-anchor="middle" font-family="Inter,sans-serif">✓</text>
+                    <rect x="239" y="110" width="24" height="14" rx="3" fill="#dcfce7"/>
+                    <text x="251" y="120" font-size="7" font-weight="700" fill="#16a249" text-anchor="middle" font-family="Inter,sans-serif">✓</text>
+                    <text x="270" y="120" font-size="7" fill="#dc2626" font-weight="600" font-family="Inter,sans-serif">AC#3 failing — 1 of 2 cases</text>
+
+                    <!-- description block -->
+                    <rect x="135" y="132" width="380" height="4" rx="1" fill="#d0d4da"/>
+                    <rect x="135" y="140" width="360" height="4" rx="1" fill="#d0d4da"/>
+                    <rect x="135" y="148" width="340" height="4" rx="1" fill="#d0d4da"/>
+
+                    <!-- QA Findings (collapsed) block with cyan gutter -->
+                    <rect x="135" y="160" width="380" height="20" rx="5" fill="#ecfeff" stroke="#0891b2"/>
+                    <rect x="135" y="160" width="4" height="20" fill="#0891b2"/>
+                    <text x="146" y="173" font-size="7" font-weight="700" fill="#0891b2" font-family="Inter,sans-serif">▸  QA Findings — Round 2  (collapsed)</text>
+
+                    <!-- THE three-action composer in the bottom strip -->
+                    <rect x="120" y="196" width="450" height="124" fill="white" stroke="#d97706" stroke-width="1.5"/>
+                    <text x="130" y="208" font-size="7" font-weight="700" fill="#d97706" font-family="Inter,sans-serif">COMPOSE FINDING · AC#3 (retry on flush)</text>
+                    <!-- three radios -->
+                    <circle cx="138" cy="222" r="3" fill="white" stroke="#5d646e"/>
+                    <text x="146" y="225" font-size="7" fill="#1a1d23" font-family="Inter,sans-serif">Add AC to this story  (in current scope)</text>
+                    <circle cx="138" cy="236" r="3" fill="white" stroke="#5d646e"/>
+                    <text x="146" y="239" font-size="7" fill="#1a1d23" font-family="Inter,sans-serif">Suggest new story    (out of scope — prevents creep)</text>
+                    <circle cx="138" cy="250" r="3" fill="#d97706"/>
+                    <circle cx="138" cy="250" r="1.5" fill="white"/>
+                    <text x="146" y="253" font-size="7" font-weight="700" fill="#1a1d23" font-family="Inter,sans-serif">Reject as quality issue  ← selected (matches agent nudge)</text>
+                    <!-- textarea -->
+                    <rect x="130" y="262" width="430" height="34" rx="4" fill="#fafbfc" stroke="#e4e7eb"/>
+                    <rect x="138" y="270" width="380" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="138" y="277" width="360" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="138" y="284" width="340" height="3" rx="1" fill="#d0d4da"/>
+                    <!-- buttons -->
+                    <rect x="450" y="302" width="50" height="14" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <text x="475" y="312" font-size="7" fill="#1a1d23" text-anchor="middle" font-family="Inter,sans-serif">Cancel</text>
+                    <rect x="504" y="302" width="60" height="14" rx="4" fill="#d97706"/>
+                    <text x="534" y="312" font-size="7" font-weight="700" fill="white" text-anchor="middle" font-family="Inter,sans-serif">Submit</text>
+
+                    <!-- right rail cross-pack preview -->
+                    <rect x="580" y="22" width="140" height="298" fill="#f7f8fa" stroke="#e4e7eb"/>
+                    <text x="590" y="40" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">CROSS-PACK PREVIEW</text>
+                    <rect x="586" y="48" width="128" height="62" rx="6" fill="white" stroke="#7c3aed" stroke-dasharray="3 2"/>
+                    <text x="594" y="60" font-size="6" font-weight="700" fill="#7c3aed" font-family="Menlo,monospace">Will appear in Diego's session:</text>
+                    <rect x="594" y="66" width="110" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="594" y="74" width="100" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="594" y="82" width="106" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="594" y="90" width="80" height="3" rx="1" fill="#5d646e"/>
+                    <text x="594" y="104" font-size="6" fill="#7c3aed" font-weight="700" font-family="Inter,sans-serif">Open story →</text>
+                    <!-- ambient cards -->
+                    <text x="590" y="128" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">AMBIENT</text>
+                    <rect x="586" y="134" width="128" height="44" rx="6" fill="white" stroke="#e4e7eb"/>
+                    <rect x="594" y="142" width="80" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="594" y="150" width="100" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="594" y="158" width="80" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="586" y="186" width="128" height="44" rx="6" fill="white" stroke="#e4e7eb"/>
+                    <rect x="586" y="238" width="128" height="44" rx="6" fill="white" stroke="#e4e7eb"/>
+                </svg>
+            </div>
+            <div class="tile-body">
+                <span class="tile-num">04 · BRAND INTERACTION</span>
+                <span class="tile-tag brand">Brand</span>
+                <h3 class="tile-title">Story view in <code>qa-ready</code> — three-action rejection composer</h3>
+                <p class="tile-blurb">THE platform thesis in one click. PM story in <code>qa-ready</code> from QA's perspective, with the bottom-strip composer open mid-composition. Three actions equally visible: <strong>Add AC</strong> (in-scope) · <strong>Suggest new story</strong> (anti-goalpost-moving) · <strong>Reject as quality issue</strong> (selected, matches qa-investigator nudge). Right-rail preview shows the cross-pack ambient card that will surface in engineer Diego's session on submit.</p>
+                <p class="tile-influences">Pivotal Reject as state action · Linear right-rail density · Hero design-original on the three-action composer</p>
+            </div>
+        </a>
+
+        <!-- 02 — TEST PLAN EDITOR -->
+        <a href="02-test-plan-editor.html" class="tile">
+            <div class="preview">
+                <svg viewBox="0 0 720 320" preserveAspectRatio="xMidYMid slice">
+                    <rect width="720" height="320" fill="#ffffff"/>
+                    <rect x="0" y="0" width="720" height="22" fill="#ffffff" stroke="#e4e7eb"/>
+                    <rect x="0" y="22" width="120" height="298" fill="#f7f8fa"/>
+                    <text x="135" y="42" font-size="9" font-weight="700" fill="#1a1d23" font-family="Inter,sans-serif">Plan: agent-trace-coverage</text>
+                    <rect x="135" y="50" width="50" height="11" rx="5" fill="#fef3c7"/>
+                    <text x="160" y="58" font-size="7" font-weight="700" fill="#d97706" text-anchor="middle" font-family="Inter,sans-serif">in-flight</text>
+
+                    <!-- coverage matrix 5×5 -->
+                    <text x="135" y="80" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">COVERAGE MATRIX</text>
+                    <!-- column headers -->
+                    <text x="320" y="92" font-size="7" font-weight="700" fill="#5d646e" text-anchor="middle" font-family="Menlo,monospace">C1</text>
+                    <text x="350" y="92" font-size="7" font-weight="700" fill="#5d646e" text-anchor="middle" font-family="Menlo,monospace">C2</text>
+                    <text x="380" y="92" font-size="7" font-weight="700" fill="#5d646e" text-anchor="middle" font-family="Menlo,monospace">C3</text>
+                    <text x="410" y="92" font-size="7" font-weight="700" fill="#5d646e" text-anchor="middle" font-family="Menlo,monospace">C4</text>
+                    <text x="440" y="92" font-size="7" font-weight="700" fill="#5d646e" text-anchor="middle" font-family="Menlo,monospace">C5</text>
+                    <!-- AC rows -->
+                    <text x="135" y="106" font-size="7" fill="#1a1d23" font-family="Inter,sans-serif">AC1 trace span emit</text>
+                    <circle cx="320" cy="103" r="5" fill="#16a249"/>
+                    <text x="320" y="106" font-size="6" font-weight="700" fill="white" text-anchor="middle" font-family="Inter,sans-serif">✓</text>
+                    <circle cx="350" cy="103" r="2" fill="#d0d4da"/>
+                    <circle cx="380" cy="103" r="2" fill="#d0d4da"/>
+                    <circle cx="410" cy="103" r="2" fill="#d0d4da"/>
+                    <circle cx="440" cy="103" r="2" fill="#d0d4da"/>
+
+                    <text x="135" y="122" font-size="7" fill="#1a1d23" font-family="Inter,sans-serif">AC2 child spans / tool</text>
+                    <circle cx="320" cy="119" r="2" fill="#d0d4da"/>
+                    <circle cx="350" cy="119" r="5" fill="#16a249"/>
+                    <text x="350" y="122" font-size="6" font-weight="700" fill="white" text-anchor="middle" font-family="Inter,sans-serif">✓</text>
+                    <circle cx="380" cy="119" r="2" fill="#d0d4da"/>
+                    <circle cx="410" cy="119" r="2" fill="#d0d4da"/>
+                    <circle cx="440" cy="119" r="2" fill="#d0d4da"/>
+
+                    <text x="135" y="138" font-size="7" fill="#1a1d23" font-family="Inter,sans-serif">AC3 retry on flush</text>
+                    <circle cx="320" cy="135" r="2" fill="#d0d4da"/>
+                    <circle cx="350" cy="135" r="2" fill="#d0d4da"/>
+                    <circle cx="380" cy="135" r="5" fill="#16a249"/>
+                    <text x="380" y="138" font-size="6" font-weight="700" fill="white" text-anchor="middle" font-family="Inter,sans-serif">✓</text>
+                    <circle cx="410" cy="135" r="5" fill="#16a249"/>
+                    <text x="410" y="138" font-size="6" font-weight="700" fill="white" text-anchor="middle" font-family="Inter,sans-serif">✓</text>
+                    <circle cx="440" cy="135" r="2" fill="#d0d4da"/>
+
+                    <text x="135" y="154" font-size="7" fill="#1a1d23" font-family="Inter,sans-serif">AC4 parent-session-id</text>
+                    <circle cx="320" cy="151" r="5" fill="#16a249"/>
+                    <circle cx="350" cy="151" r="5" fill="#16a249"/>
+                    <circle cx="380" cy="151" r="2" fill="#d0d4da"/>
+                    <circle cx="410" cy="151" r="2" fill="#d0d4da"/>
+                    <circle cx="440" cy="151" r="2" fill="#d0d4da"/>
+
+                    <text x="135" y="170" font-size="7" fill="#1a1d23" font-family="Inter,sans-serif">AC5 backoff &amp; drop</text>
+                    <circle cx="320" cy="167" r="2" fill="#d0d4da"/>
+                    <circle cx="350" cy="167" r="2" fill="#d0d4da"/>
+                    <circle cx="380" cy="167" r="5" fill="#16a249"/>
+                    <circle cx="410" cy="167" r="2" fill="#d0d4da"/>
+                    <circle cx="440" cy="167" r="5" fill="#16a249"/>
+
+                    <!-- gap callout -->
+                    <rect x="135" y="186" width="370" height="22" rx="5" fill="#fef3c7" stroke="#d97706"/>
+                    <text x="143" y="200" font-size="7" font-weight="700" fill="#d97706" font-family="Inter,sans-serif">⚠ AC#4 partial — happy path only, no negative case</text>
+
+                    <!-- bottom strip -->
+                    <rect x="120" y="252" width="480" height="68" fill="white" stroke="#e4e7eb"/>
+                    <rect x="130" y="264" width="60" height="14" rx="4" fill="#2a6cb5"/>
+                    <text x="160" y="273" font-size="7" font-weight="700" fill="white" text-anchor="middle" font-family="Inter,sans-serif">Run remaining</text>
+                    <rect x="196" y="264" width="70" height="14" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <text x="231" y="273" font-size="7" fill="#1a1d23" text-anchor="middle" font-family="Inter,sans-serif">Show progress</text>
+                    <rect x="272" y="264" width="80" height="14" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <text x="312" y="273" font-size="7" fill="#1a1d23" text-anchor="middle" font-family="Inter,sans-serif">Author missing</text>
+                    <rect x="600" y="22" width="120" height="298" fill="#f7f8fa" stroke="#e4e7eb"/>
+                </svg>
+            </div>
+            <div class="tile-body">
+                <span class="tile-num">02</span>
+                <h3 class="tile-title">Test plan editor — coverage matrix</h3>
+                <p class="tile-blurb">The PRD-equivalent for QA. <strong>Coverage matrix</strong> (5 AC × 5 cases) is the centerpiece — ✓ green cells for covered, gray dots for uncovered. Yellow callout above the matrix when partial. <em>Print as compliance report</em> renders the matrix qTest-style for audit binders. Right rail: regression-curator redundancy suggestion, plan integrity, activity stream.</p>
+                <p class="tile-influences">TestRail plan/case shape · qTest traceability matrix · Xray story-test edges · Functionize NL composer for ad-hoc cases</p>
+            </div>
+        </a>
+
+        <!-- 03 — TEST CASE EDITOR -->
+        <a href="03-test-case-editor.html" class="tile">
+            <div class="preview">
+                <svg viewBox="0 0 720 320" preserveAspectRatio="xMidYMid slice">
+                    <rect width="720" height="320" fill="#ffffff"/>
+                    <rect x="0" y="0" width="720" height="22" fill="#ffffff" stroke="#e4e7eb"/>
+                    <rect x="0" y="22" width="120" height="298" fill="#f7f8fa"/>
+                    <text x="135" y="42" font-size="9" font-weight="700" fill="#1a1d23" font-family="Inter,sans-serif">Case-C3 · Verify retry-with-backoff</text>
+
+                    <!-- format toggle -->
+                    <rect x="135" y="54" width="280" height="20" rx="4" fill="#f7f8fa" stroke="#e4e7eb"/>
+                    <rect x="137" y="56" width="68" height="16" rx="3" fill="white" stroke="#2a6cb5"/>
+                    <text x="171" y="67" font-size="7" font-weight="700" fill="#2a6cb5" text-anchor="middle" font-family="Inter,sans-serif">Step-by-step</text>
+                    <text x="231" y="67" font-size="7" fill="#5d646e" text-anchor="middle" font-family="Inter,sans-serif">Gherkin</text>
+                    <text x="293" y="67" font-size="7" fill="#8a929c" text-anchor="middle" font-family="Inter,sans-serif">Decision-table</text>
+                    <text x="370" y="67" font-size="7" fill="#8a929c" text-anchor="middle" font-family="Inter,sans-serif">Data-driven</text>
+
+                    <!-- steps grid -->
+                    <rect x="135" y="86" width="380" height="14" fill="#f7f8fa" stroke="#e4e7eb"/>
+                    <text x="148" y="96" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">#</text>
+                    <text x="170" y="96" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">Action</text>
+                    <text x="340" y="96" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">Expected</text>
+
+                    <rect x="135" y="100" width="380" height="22" fill="white" stroke="#e4e7eb"/>
+                    <text x="148" y="113" font-size="7" fill="#5d646e" font-family="Menlo,monospace">1</text>
+                    <rect x="170" y="106" width="150" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="170" y="113" width="120" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="340" y="106" width="150" height="3" rx="1" fill="#1a1d23"/>
+
+                    <rect x="135" y="122" width="380" height="22" fill="white" stroke="#e4e7eb"/>
+                    <text x="148" y="135" font-size="7" fill="#5d646e" font-family="Menlo,monospace">2</text>
+                    <rect x="170" y="128" width="140" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="340" y="128" width="160" height="3" rx="1" fill="#1a1d23"/>
+
+                    <rect x="135" y="144" width="380" height="22" fill="white" stroke="#e4e7eb"/>
+                    <rect x="135" y="166" width="380" height="22" fill="white" stroke="#e4e7eb"/>
+
+                    <!-- AC traceability strip -->
+                    <rect x="135" y="194" width="380" height="20" rx="5" fill="#ecfeff" stroke="#0891b2"/>
+                    <rect x="135" y="194" width="3" height="20" fill="#0891b2"/>
+                    <text x="146" y="207" font-size="7" font-weight="700" fill="#0891b2" font-family="Inter,sans-serif">Covers AC#3 of Story-2847: retry on flush</text>
+
+                    <!-- run history -->
+                    <text x="135" y="232" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">RUN HISTORY · stability 94%</text>
+                    <g>
+                        <circle cx="138" cy="246" r="4" fill="#16a249"/>
+                        <circle cx="152" cy="246" r="4" fill="#16a249"/>
+                        <circle cx="166" cy="246" r="4" fill="#16a249"/>
+                        <circle cx="180" cy="246" r="4" fill="#16a249"/>
+                        <circle cx="194" cy="246" r="4" fill="#16a249"/>
+                        <circle cx="208" cy="246" r="4" fill="#dc2626"/>
+                        <circle cx="222" cy="246" r="4" fill="#16a249"/>
+                        <circle cx="236" cy="246" r="4" fill="#16a249"/>
+                        <circle cx="250" cy="246" r="4" fill="#16a249"/>
+                        <circle cx="264" cy="246" r="4" fill="#16a249"/>
+                    </g>
+                    <!-- sparkline -->
+                    <polyline points="285,250 295,248 305,247 315,249 325,246 335,244 345,243 355,244 365,242 375,243 385,242" stroke="#16a249" stroke-width="1.5" fill="none"/>
+
+                    <!-- bottom strip -->
+                    <rect x="120" y="272" width="480" height="48" fill="white" stroke="#e4e7eb"/>
+                    <rect x="130" y="284" width="40" height="14" rx="4" fill="#16a249"/>
+                    <text x="150" y="293" font-size="7" font-weight="700" fill="white" text-anchor="middle" font-family="Inter,sans-serif">Run</text>
+                    <rect x="176" y="284" width="70" height="14" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <text x="211" y="293" font-size="7" fill="#1a1d23" text-anchor="middle" font-family="Inter,sans-serif">Convert format</text>
+                    <rect x="252" y="284" width="70" height="14" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <text x="287" y="293" font-size="7" fill="#1a1d23" text-anchor="middle" font-family="Inter,sans-serif">Request seam</text>
+                    <rect x="600" y="22" width="120" height="298" fill="#f7f8fa" stroke="#e4e7eb"/>
+                </svg>
+            </div>
+            <div class="tile-body">
+                <span class="tile-num">03</span>
+                <h3 class="tile-title">Test case editor — format-aware</h3>
+                <p class="tile-blurb">Case-as-document fidelity. <strong>Format toggle</strong> at the top (Step-by-step active · Gherkin available · Decision-table / Data-driven disabled for this case shape). Steps grid with Action × Expected columns. <strong>AC traceability strip</strong> with cyan gutter — "Covers AC#3 of Story-2847." Run history chips (10 most recent) + stability sparkline (94%). Right-rail ambient explains derivation provenance.</p>
+                <p class="tile-influences">TestRail step grid · Xray Gherkin support · Cucumber/SpecFlow · mabl plain-English steps · Testim stability score</p>
+            </div>
+        </a>
+
+        <!-- 07 — UNIFIED INBOX -->
+        <a href="07-unified-inbox.html" class="tile">
+            <div class="preview">
+                <svg viewBox="0 0 720 320" preserveAspectRatio="xMidYMid slice">
+                    <rect width="720" height="320" fill="#ffffff"/>
+                    <rect x="0" y="0" width="720" height="22" fill="#ffffff" stroke="#e4e7eb"/>
+                    <rect x="0" y="22" width="120" height="298" fill="#f7f8fa"/>
+
+                    <!-- kind tabs -->
+                    <rect x="135" y="32" width="380" height="22" fill="white"/>
+                    <rect x="135" y="32" width="60" height="22" fill="white"/>
+                    <line x1="135" y1="54" x2="195" y2="54" stroke="#2a6cb5" stroke-width="2"/>
+                    <text x="165" y="46" font-size="8" font-weight="700" fill="#2a6cb5" text-anchor="middle" font-family="Inter,sans-serif">All (47)</text>
+                    <text x="225" y="46" font-size="8" fill="#5d646e" text-anchor="middle" font-family="Inter,sans-serif">Bugs (28)</text>
+                    <text x="288" y="46" font-size="8" fill="#5d646e" text-anchor="middle" font-family="Inter,sans-serif">Test issues (19)</text>
+
+                    <!-- source pills row -->
+                    <rect x="135" y="60" width="36" height="11" rx="5" fill="#dbeafe"/>
+                    <text x="153" y="68" font-size="6" font-weight="700" fill="#1d4ed8" text-anchor="middle" font-family="Inter,sans-serif">Jira 28</text>
+                    <rect x="175" y="60" width="58" height="11" rx="5" fill="#dcfce7"/>
+                    <text x="204" y="68" font-size="6" font-weight="700" fill="#16a249" text-anchor="middle" font-family="Inter,sans-serif">TestRail 12</text>
+                    <rect x="237" y="60" width="40" height="11" rx="5" fill="#f5f0ff"/>
+                    <text x="257" y="68" font-size="6" font-weight="700" fill="#7c3aed" text-anchor="middle" font-family="Inter,sans-serif">Xray 7</text>
+
+                    <!-- rows: mix of bug + test-issue -->
+                    <rect x="135" y="78" width="380" height="22" rx="4" fill="#eff6ff" stroke="#0284c7"/>
+                    <rect x="143" y="83" width="48" height="12" rx="3" fill="#dcfce7"/>
+                    <text x="167" y="92" font-size="6" font-weight="700" fill="#16a249" text-anchor="middle" font-family="Inter,sans-serif">test-issue</text>
+                    <rect x="195" y="83" width="42" height="12" rx="3" fill="#dcfce7"/>
+                    <text x="216" y="92" font-size="6" font-weight="700" fill="#16a249" text-anchor="middle" font-family="Inter,sans-serif">TestRail</text>
+                    <rect x="245" y="86" width="240" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="245" y="92" width="180" height="3" rx="1" fill="#5d646e"/>
+
+                    <rect x="135" y="104" width="380" height="22" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <rect x="143" y="109" width="28" height="12" rx="3" fill="#fef2f2"/>
+                    <text x="157" y="118" font-size="6" font-weight="700" fill="#dc2626" text-anchor="middle" font-family="Inter,sans-serif">bug</text>
+                    <rect x="175" y="109" width="32" height="12" rx="3" fill="#dbeafe"/>
+                    <text x="191" y="118" font-size="6" font-weight="700" fill="#1d4ed8" text-anchor="middle" font-family="Inter,sans-serif">Jira</text>
+                    <rect x="213" y="112" width="240" height="3" rx="1" fill="#1a1d23"/>
+
+                    <rect x="135" y="130" width="380" height="22" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <rect x="143" y="135" width="48" height="12" rx="3" fill="#dcfce7"/>
+                    <text x="167" y="144" font-size="6" font-weight="700" fill="#16a249" text-anchor="middle" font-family="Inter,sans-serif">test-issue</text>
+                    <rect x="195" y="135" width="32" height="12" rx="3" fill="#f5f0ff"/>
+                    <text x="211" y="144" font-size="6" font-weight="700" fill="#7c3aed" text-anchor="middle" font-family="Inter,sans-serif">Xray</text>
+                    <rect x="233" y="138" width="200" height="3" rx="1" fill="#1a1d23"/>
+
+                    <rect x="135" y="156" width="380" height="22" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <rect x="143" y="161" width="28" height="12" rx="3" fill="#fef2f2"/>
+                    <text x="157" y="170" font-size="6" font-weight="700" fill="#dc2626" text-anchor="middle" font-family="Inter,sans-serif">bug</text>
+                    <rect x="175" y="161" width="32" height="12" rx="3" fill="#dbeafe"/>
+                    <rect x="213" y="164" width="240" height="3" rx="1" fill="#1a1d23"/>
+
+                    <rect x="135" y="182" width="380" height="22" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <rect x="135" y="208" width="380" height="22" rx="4" fill="white" stroke="#e4e7eb"/>
+
+                    <!-- right rail: triage panel -->
+                    <rect x="525" y="22" width="195" height="298" fill="#f7f8fa" stroke="#e4e7eb"/>
+                    <text x="534" y="40" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">TRIAGE — RC-441</text>
+                    <rect x="532" y="46" width="180" height="20" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <text x="540" y="59" font-size="7" fill="#1a1d23" font-family="Inter,sans-serif">Mark as bad test</text>
+                    <rect x="532" y="70" width="180" height="20" rx="4" fill="#d97706"/>
+                    <text x="540" y="83" font-size="7" font-weight="700" fill="white" font-family="Inter,sans-serif">Reject linked story</text>
+                    <rect x="532" y="94" width="180" height="20" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <text x="540" y="107" font-size="7" fill="#1a1d23" font-family="Inter,sans-serif">Raise as new bug</text>
+                    <rect x="532" y="118" width="180" height="20" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <text x="540" y="131" font-size="7" fill="#1a1d23" font-family="Inter,sans-serif">Flag as regression</text>
+                    <!-- nudge -->
+                    <rect x="532" y="148" width="180" height="42" rx="4" fill="#eff6ff" stroke="#0284c7"/>
+                    <rect x="540" y="156" width="80" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="540" y="164" width="160" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="540" y="172" width="140" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="540" y="180" width="120" height="3" rx="1" fill="#5d646e"/>
+                    <!-- relationships rail -->
+                    <text x="534" y="208" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">RELATED</text>
+                    <rect x="532" y="214" width="180" height="22" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <rect x="532" y="240" width="180" height="22" rx="4" fill="white" stroke="#e4e7eb"/>
+                </svg>
+            </div>
+            <div class="tile-body">
+                <span class="tile-num">07</span>
+                <h3 class="tile-title">Unified inbox — kind tabs</h3>
+                <p class="tile-blurb">Unification thesis made visible. One queue rendering bugs (Jira/GitHub) + test issues (TestRail/Xray) via normalization layer, decorated by source. <strong>Kind tabs</strong> at top filter by kind without forcing separate views. <strong>Four primary triage actions</strong> in the right rail when a test issue is selected. Cross-kind relationships rail surfaces "Possibly related to BUG-9912." Works fully off local specs when no integration configured.</p>
+                <p class="tile-influences">Linear Triage view + command palette · Productboard source-tagged inbox · PractiTest filter-as-URL · Zephyr bulk operations</p>
+            </div>
+        </a>
+
+        <!-- 05 — RELEASE GATE -->
+        <a href="05-release-gate.html" class="tile">
+            <div class="preview">
+                <svg viewBox="0 0 720 320" preserveAspectRatio="xMidYMid slice">
+                    <rect width="720" height="320" fill="#ffffff"/>
+                    <rect x="0" y="0" width="720" height="22" fill="#ffffff" stroke="#e4e7eb"/>
+                    <rect x="0" y="22" width="120" height="298" fill="#f7f8fa"/>
+
+                    <text x="135" y="42" font-size="9" font-weight="700" fill="#1a1d23" font-family="Inter,sans-serif">Release readiness: 2026-05-26</text>
+
+                    <!-- verdict banner -->
+                    <rect x="135" y="56" width="380" height="92" rx="9" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+                    <text x="148" y="78" font-size="14" font-weight="700" fill="#d97706" font-family="Inter,sans-serif">⚠ NO-GO</text>
+                    <text x="195" y="78" font-size="9" font-weight="600" fill="#d97706" font-family="Inter,sans-serif">— 2 blockers, 1 awaiting sign-off</text>
+                    <text x="148" y="98" font-size="8" fill="#1a1d23" font-family="Inter,sans-serif">Coverage:    11 of 12 stories fully covered ✓</text>
+                    <text x="148" y="112" font-size="8" fill="#1a1d23" font-family="Inter,sans-serif">Regression:  142/148 passing (96%)</text>
+                    <text x="148" y="126" font-size="8" fill="#1a1d23" font-family="Inter,sans-serif">Blockers:    2 P0 open, 1 P1 awaiting sign-off</text>
+                    <rect x="148" y="134" width="60" height="11" rx="4" fill="white" stroke="#d97706"/>
+                    <text x="178" y="142" font-size="7" font-weight="700" fill="#d97706" text-anchor="middle" font-family="Inter,sans-serif">Re-aggregate</text>
+
+                    <!-- blockers -->
+                    <text x="135" y="166" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">BLOCKERS</text>
+                    <rect x="135" y="170" width="380" height="22" rx="4" fill="white" stroke="#fef2f2"/>
+                    <rect x="143" y="175" width="22" height="12" rx="3" fill="#fef2f2"/>
+                    <text x="154" y="184" font-size="6" font-weight="700" fill="#b91c1c" text-anchor="middle" font-family="Inter,sans-serif">P0</text>
+                    <rect x="170" y="178" width="240" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="170" y="184" width="160" height="3" rx="1" fill="#5d646e"/>
+
+                    <rect x="135" y="196" width="380" height="22" rx="4" fill="white" stroke="#fef2f2"/>
+                    <rect x="143" y="201" width="22" height="12" rx="3" fill="#fef2f2"/>
+                    <text x="154" y="210" font-size="6" font-weight="700" fill="#b91c1c" text-anchor="middle" font-family="Inter,sans-serif">P0</text>
+                    <rect x="170" y="204" width="240" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="170" y="210" width="160" height="3" rx="1" fill="#5d646e"/>
+
+                    <rect x="135" y="222" width="380" height="22" rx="4" fill="white" stroke="#fef3c7"/>
+                    <rect x="143" y="227" width="22" height="12" rx="3" fill="#fef3c7"/>
+                    <text x="154" y="236" font-size="6" font-weight="700" fill="#d97706" text-anchor="middle" font-family="Inter,sans-serif">P1</text>
+                    <rect x="170" y="230" width="240" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="380" y="227" width="44" height="12" rx="3" fill="#2a6cb5"/>
+                    <text x="402" y="236" font-size="6" font-weight="700" fill="white" text-anchor="middle" font-family="Inter,sans-serif">Sign off →</text>
+
+                    <!-- per-story coverage mini bars -->
+                    <text x="135" y="262" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">PER-STORY COVERAGE</text>
+                    <g transform="translate(135, 268)">
+                        <rect x="0" y="0" width="24" height="6" rx="2" fill="#16a249"/>
+                        <rect x="28" y="0" width="24" height="6" rx="2" fill="#16a249"/>
+                        <rect x="56" y="0" width="24" height="6" rx="2" fill="#16a249"/>
+                        <rect x="84" y="0" width="24" height="6" rx="2" fill="#16a249"/>
+                        <rect x="112" y="0" width="24" height="6" rx="2" fill="#16a249"/>
+                        <rect x="140" y="0" width="24" height="6" rx="2" fill="#16a249"/>
+                        <rect x="168" y="0" width="24" height="6" rx="2" fill="#16a249"/>
+                        <rect x="196" y="0" width="24" height="6" rx="2" fill="#16a249"/>
+                        <rect x="224" y="0" width="24" height="6" rx="2" fill="#16a249"/>
+                        <rect x="252" y="0" width="24" height="6" rx="2" fill="#16a249"/>
+                        <rect x="280" y="0" width="24" height="6" rx="2" fill="#16a249"/>
+                        <rect x="308" y="0" width="24" height="6" rx="2" fill="#dc2626"/>
+                    </g>
+                    <rect x="600" y="22" width="120" height="298" fill="#f7f8fa" stroke="#e4e7eb"/>
+                </svg>
+            </div>
+            <div class="tile-body">
+                <span class="tile-num">05</span>
+                <h3 class="tile-title">Release-gate — Go / No-Go verdict</h3>
+                <p class="tile-blurb">The release-readiness destination. <strong>Verdict banner</strong> dominates the page (amber here — No-Go, recoverable). Named blocker list with priority pills + direct actions (<em>Open bug →</em>, <em>Sign off →</em>). Per-story coverage mini bars (11 green, 1 red). Regression snapshot by suite. Sign-off log. Configurable blocker policy in right rail.</p>
+                <p class="tile-influences">qTest traceability matrix · QA Wolf coverage commitment · TestRail milestone roll-up · Linear cycle aggregation</p>
+            </div>
+        </a>
+
+        <!-- 06 — FLAKY BACKLOG -->
+        <a href="06-flaky-backlog.html" class="tile">
+            <div class="preview">
+                <svg viewBox="0 0 720 320" preserveAspectRatio="xMidYMid slice">
+                    <rect width="720" height="320" fill="#ffffff"/>
+                    <rect x="0" y="0" width="720" height="22" fill="#ffffff" stroke="#e4e7eb"/>
+                    <rect x="0" y="22" width="120" height="298" fill="#f7f8fa"/>
+
+                    <!-- leaderboard -->
+                    <rect x="135" y="32" width="380" height="44" rx="8" fill="#faf5ff" stroke="#a855f7"/>
+                    <text x="148" y="50" font-size="9" font-weight="700" fill="#a855f7" font-family="Inter,sans-serif">Flake count:</text>
+                    <text x="205" y="50" font-size="20" font-weight="800" fill="#a855f7" font-family="Inter,sans-serif">8</text>
+                    <text x="230" y="50" font-size="8" fill="#5d646e" font-family="Inter,sans-serif">(down from 14 last week)</text>
+                    <text x="148" y="66" font-size="7" fill="#5d646e" font-family="Inter,sans-serif">Goal:  0 by end of sprint</text>
+                    <!-- sparkline trending down -->
+                    <polyline points="340,68 355,64 370,60 385,58 400,54 415,52 430,48 445,45 460,42 475,40 490,38" stroke="#a855f7" stroke-width="2" fill="none"/>
+
+                    <!-- view toggle -->
+                    <rect x="135" y="84" width="80" height="20" rx="4" fill="#a855f7"/>
+                    <text x="175" y="97" font-size="7" font-weight="700" fill="white" text-anchor="middle" font-family="Inter,sans-serif">Unclassified (3)</text>
+                    <text x="240" y="97" font-size="7" fill="#5d646e" font-family="Inter,sans-serif">In progress (4)</text>
+                    <text x="320" y="97" font-size="7" fill="#5d646e" font-family="Inter,sans-serif">Resolved this sprint (12)</text>
+
+                    <!-- flaky rows -->
+                    <rect x="135" y="112" width="380" height="26" rx="4" fill="#faf5ff" stroke="#a855f7"/>
+                    <rect x="143" y="120" width="34" height="11" rx="3" fill="#fef2f2"/>
+                    <text x="160" y="128" font-size="6" font-weight="700" fill="#dc2626" text-anchor="middle" font-family="Inter,sans-serif">47%</text>
+                    <rect x="185" y="120" width="120" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="185" y="127" width="80" height="3" rx="1" fill="#5d646e"/>
+                    <!-- last 10 runs -->
+                    <g transform="translate(330, 124)">
+                        <circle cx="0" cy="0" r="3" fill="#16a249"/>
+                        <circle cx="10" cy="0" r="3" fill="#dc2626"/>
+                        <circle cx="20" cy="0" r="3" fill="#16a249"/>
+                        <circle cx="30" cy="0" r="3" fill="#dc2626"/>
+                        <circle cx="40" cy="0" r="3" fill="#dc2626"/>
+                        <circle cx="50" cy="0" r="3" fill="#16a249"/>
+                        <circle cx="60" cy="0" r="3" fill="#16a249"/>
+                        <circle cx="70" cy="0" r="3" fill="#dc2626"/>
+                        <circle cx="80" cy="0" r="3" fill="#16a249"/>
+                        <circle cx="90" cy="0" r="3" fill="#dc2626"/>
+                    </g>
+
+                    <rect x="135" y="142" width="380" height="22" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <rect x="143" y="149" width="34" height="9" rx="3" fill="#fef3c7"/>
+                    <text x="160" y="155" font-size="6" font-weight="700" fill="#d97706" text-anchor="middle" font-family="Inter,sans-serif">71%</text>
+                    <rect x="185" y="151" width="120" height="3" rx="1" fill="#1a1d23"/>
+
+                    <rect x="135" y="168" width="380" height="22" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <rect x="143" y="175" width="34" height="9" rx="3" fill="#fef3c7"/>
+                    <text x="160" y="181" font-size="6" font-weight="700" fill="#d97706" text-anchor="middle" font-family="Inter,sans-serif">58%</text>
+
+                    <!-- bottom strip with Classify split-button -->
+                    <rect x="120" y="252" width="480" height="68" fill="white" stroke="#e4e7eb"/>
+                    <rect x="130" y="266" width="160" height="20" rx="4" fill="#a855f7"/>
+                    <text x="210" y="280" font-size="8" font-weight="700" fill="white" text-anchor="middle" font-family="Inter,sans-serif">Classify  ▾</text>
+                    <!-- verdict chips inline -->
+                    <rect x="130" y="294" width="58" height="14" rx="4" fill="white" stroke="#a855f7"/>
+                    <text x="159" y="304" font-size="7" font-weight="700" fill="#a855f7" text-anchor="middle" font-family="Inter,sans-serif">test-issue</text>
+                    <rect x="194" y="294" width="64" height="14" rx="4" fill="white" stroke="#a855f7"/>
+                    <text x="226" y="304" font-size="7" font-weight="700" fill="#a855f7" text-anchor="middle" font-family="Inter,sans-serif">environment</text>
+                    <rect x="264" y="294" width="56" height="14" rx="4" fill="white" stroke="#a855f7"/>
+                    <text x="292" y="304" font-size="7" font-weight="700" fill="#a855f7" text-anchor="middle" font-family="Inter,sans-serif">true-bug</text>
+                    <rect x="600" y="22" width="120" height="298" fill="#f7f8fa" stroke="#e4e7eb"/>
+                </svg>
+            </div>
+            <div class="tile-body">
+                <span class="tile-num">06</span>
+                <h3 class="tile-title">Flaky tests backlog — active queue</h3>
+                <p class="tile-blurb">Opinionated zero-flake drive. <strong>Leaderboard</strong> at top with current count + goal (zero) + trend sparkline. Three view tabs: <em>Unclassified</em> · <em>In progress</em> · <em>Resolved this sprint</em>. Per-row stability chip + last-10-runs strip. Bottom strip <strong>Classify split-button</strong> with three verdict chips always visible (test-issue / environment / true-bug). No <em>Ignore</em> verdict — <em>Quarantine</em> is the only non-engage path.</p>
+                <p class="tile-influences">mabl flake verdict classification · Testim stability score · GitHub Issues triage UX · Hero design-original on active-backlog framing</p>
+            </div>
+        </a>
+
+        <!-- 08 — HANDOFF STREAM -->
+        <a href="08-handoff-stream-qa.html" class="tile">
+            <div class="preview">
+                <svg viewBox="0 0 720 320" preserveAspectRatio="xMidYMid slice">
+                    <rect width="720" height="320" fill="#ffffff"/>
+                    <rect x="0" y="0" width="720" height="22" fill="#ffffff" stroke="#e4e7eb"/>
+                    <rect x="0" y="22" width="120" height="298" fill="#f7f8fa"/>
+
+                    <!-- histogram -->
+                    <text x="135" y="42" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">LAST 7 DAYS</text>
+                    <g transform="translate(135, 50)">
+                        <rect x="0" y="20" width="42" height="20" fill="#7c3aed"/>
+                        <rect x="0" y="12" width="42" height="8" fill="#dc2626"/>
+                        <rect x="0" y="4" width="42" height="8" fill="#16a249"/>
+                        <rect x="50" y="14" width="42" height="26" fill="#7c3aed"/>
+                        <rect x="50" y="2" width="42" height="12" fill="#dc2626"/>
+                        <rect x="100" y="22" width="42" height="18" fill="#7c3aed"/>
+                        <rect x="100" y="12" width="42" height="10" fill="#16a249"/>
+                        <rect x="150" y="6" width="42" height="34" fill="#7c3aed"/>
+                        <rect x="200" y="18" width="42" height="22" fill="#7c3aed"/>
+                        <rect x="200" y="10" width="42" height="8" fill="#dc2626"/>
+                        <rect x="250" y="14" width="42" height="26" fill="#7c3aed"/>
+                        <rect x="250" y="2" width="42" height="12" fill="#16a249"/>
+                        <rect x="300" y="0" width="42" height="40" fill="#d97706"/>
+                    </g>
+
+                    <!-- event rows -->
+                    <rect x="135" y="106" width="380" height="22" rx="4" fill="#fef3c7" stroke="#d97706"/>
+                    <rect x="143" y="112" width="58" height="11" rx="3" fill="#fef3c7"/>
+                    <text x="172" y="120" font-size="6" font-weight="700" fill="#d97706" text-anchor="middle" font-family="Inter,sans-serif">qa-rejected</text>
+                    <rect x="207" y="115" width="200" height="3" rx="1" fill="#1a1d23"/>
+                    <text x="490" y="120" font-size="7" fill="#5d646e" font-family="Inter,sans-serif">12m</text>
+
+                    <rect x="135" y="132" width="380" height="22" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <rect x="143" y="138" width="106" height="11" rx="3" fill="#fef2f2"/>
+                    <text x="196" y="146" font-size="6" font-weight="700" fill="#dc2626" text-anchor="middle" font-family="Inter,sans-serif">raised-bug-from-failure</text>
+
+                    <rect x="135" y="158" width="380" height="22" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <rect x="143" y="164" width="64" height="11" rx="3" fill="#f5f0ff"/>
+                    <text x="175" y="172" font-size="6" font-weight="700" fill="#7c3aed" text-anchor="middle" font-family="Inter,sans-serif">requires-seam</text>
+
+                    <rect x="135" y="184" width="380" height="22" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <rect x="143" y="190" width="96" height="11" rx="3" fill="#dcfce7"/>
+                    <text x="191" y="198" font-size="6" font-weight="700" fill="#16a249" text-anchor="middle" font-family="Inter,sans-serif">promoted-from-story</text>
+
+                    <rect x="135" y="210" width="380" height="22" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <rect x="143" y="216" width="50" height="11" rx="3" fill="#dcfce7"/>
+                    <text x="168" y="224" font-size="6" font-weight="700" fill="#16a249" text-anchor="middle" font-family="Inter,sans-serif">qa-approved</text>
+
+                    <!-- right rail timeline -->
+                    <rect x="525" y="22" width="195" height="298" fill="#f7f8fa" stroke="#e4e7eb"/>
+                    <text x="534" y="40" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">EDGE TIMELINE</text>
+                    <line x1="546" y1="56" x2="546" y2="240" stroke="#d0d4da" stroke-width="2"/>
+                    <circle cx="546" cy="64" r="4" fill="#0284c7"/>
+                    <text x="558" y="68" font-size="7" fill="#5d646e" font-family="Inter,sans-serif">qa-ready (r1) · 4d ago</text>
+                    <circle cx="546" cy="92" r="4" fill="#d97706"/>
+                    <text x="558" y="96" font-size="7" fill="#5d646e" font-family="Inter,sans-serif">rejected → Add AC</text>
+                    <circle cx="546" cy="120" r="4" fill="#16a249"/>
+                    <text x="558" y="124" font-size="7" fill="#5d646e" font-family="Inter,sans-serif">commit f3a912</text>
+                    <circle cx="546" cy="148" r="4" fill="#0284c7"/>
+                    <text x="558" y="152" font-size="7" fill="#5d646e" font-family="Inter,sans-serif">qa-ready (r2)</text>
+                    <circle cx="546" cy="176" r="5" fill="#d97706" stroke="white" stroke-width="2"/>
+                    <text x="558" y="180" font-size="7" font-weight="700" fill="#d97706" font-family="Inter,sans-serif">rejected → quality (12m)</text>
+                    <circle cx="546" cy="204" r="4" fill="#7c3aed"/>
+                    <text x="558" y="208" font-size="7" fill="#5d646e" font-family="Inter,sans-serif">engineer notified</text>
+                </svg>
+            </div>
+            <div class="tile-body">
+                <span class="tile-num">08</span>
+                <h3 class="tile-title">Cross-domain handoff stream — QA-side</h3>
+                <p class="tile-blurb">Cross-pack visibility play. QA-driven cross-domain events as a graph timeline: rejections sent back to engineering, bugs raised from failures, seam requests, regression promotions, approvals. Time toggle + direction filter. <strong>Edge timeline</strong> in the right rail shows the full lineage of a selected rejection (round 1 → fix → round 2 → engineer notified). Each event carries its edge-type chip — the platform's vocabulary made visible.</p>
+                <p class="tile-influences">Linear cycle view timeline · Kanbanize cycle-time histogram · Hero-shaped graph traversal · Aha strategic-context strip</p>
+            </div>
+        </a>
+
+    </div>
+
+    <div class="footnote">
+        <span><strong>32 locks</strong> · captured in <a href="../spec.md">spec.md</a></span>
+        <span>·</span>
+        <span><strong>23 agents · 26 skills · 18 commands</strong> · <a href="../agent-pack-design.md">agent-pack-design.md</a></span>
+        <span>·</span>
+        <span><strong>12-tool research</strong> · <a href="../research-brief.md">research-brief.md</a></span>
+        <span>·</span>
+        <span><strong>8 screen briefs</strong> · <a href="../mockup-brief.md">mockup-brief.md</a></span>
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<!-- Hero QA Mock: 06-flaky-backlog | Locked layout: workspace singleton with verdict workflow -->
+<!-- Opinionated zero-flake drive surface. Leaderboard + active backlog + verdict classification. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Flaky tests · Hero QA</title>
+<style>
+:root {
+    --bg: #ffffff; --bg-secondary: #f7f8fa; --bg-tertiary: #eef0f4; --bg-hover: #f0f2f6;
+    --text: #1a1d23; --text-secondary: #5d646e; --text-muted: #8a929c;
+    --border: #e4e7eb; --border-strong: #d0d4da;
+    --primary: #2a6cb5; --primary-hover: #6cb6ff;
+    --hero-blue-300: #9bc1e6; --hero-blue-500: #6cb6ff; --hero-blue-700: #2a6cb5;
+    --success: #16a249; --warning: #d97706; --danger: #dc2626;
+    --accent-coverage-full: #16a249;
+    --accent-coverage-partial: #d97706;
+    --accent-coverage-none: #dc2626;
+    --accent-qa-gutter: #0891b2;
+    --accent-qa-ready: #0284c7;
+    --accent-qa-rejected: #d97706;
+    --accent-flaky: #a855f7;
+    --accent-flaky-bg: #f5edff;
+    --accent-flaky-border: #e1ccf7;
+    --accent-pass: #16a249;
+    --accent-fail: #dc2626;
+    --accent-blocked: #6b7280;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased; }
+
+.shell { display: grid; grid-template-rows: 48px 1fr; height: 100vh; }
+.chrome { display: grid; grid-template-columns: 240px 1fr auto; align-items: center; border-bottom: 1px solid var(--border); background: var(--bg); padding: 0 16px 0 0; gap: 16px; }
+.chrome-workspace { display: flex; align-items: center; gap: 8px; padding: 0 12px; height: 100%; border-right: 1px solid var(--border); font-weight: 600; }
+.workspace-logo { width: 22px; height: 22px; display: grid; place-items: center; color: var(--hero-blue-300); }
+.workspace-logo svg { display: block; width: 22px; height: 22px; }
+.domain-pill { margin-left: auto; background: var(--bg-tertiary); color: var(--text-secondary); border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+.search { grid-column: 2; display: flex; align-items: center; gap: 8px; max-width: 440px; width: 100%; justify-self: center; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; color: var(--text-muted); }
+.search input { background: transparent; border: 0; outline: 0; flex: 1; font-size: 12px; color: var(--text-secondary); font-family: inherit; }
+.kbd { font-family: ui-monospace, Menlo, monospace; background: var(--bg); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 3px; padding: 0 5px; font-size: 10px; color: var(--text-muted); line-height: 14px; }
+.chrome-right { display: flex; align-items: center; gap: 8px; }
+.preset-chip { display: inline-flex; align-items: center; gap: 6px; background: #eaf2fb; color: var(--hero-blue-700); border: 1px solid #cfe1f4; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.preset-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); }
+.avatar { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, #ffd47e, #f97373); color: white; font-size: 10px; font-weight: 600; display: inline-grid; place-items: center; border: 1px solid var(--border); }
+.avatar.sm { width: 18px; height: 18px; font-size: 9px; }
+.avatar.jamie { background: linear-gradient(135deg, #6cb6ff, #2a6cb5); }
+.avatar.tomas { background: linear-gradient(135deg, #fcc46d, #f97316); }
+.avatar.yuki { background: linear-gradient(135deg, #84e1bc, #16a249); }
+
+.body-grid { display: grid; grid-template-columns: 240px 1fr 380px; height: calc(100vh - 48px); min-height: 0; }
+
+.nav { background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 12px 8px; overflow-y: auto; display: flex; flex-direction: column; }
+.nav-section { margin-bottom: 14px; }
+.nav-label { text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px; font-weight: 600; color: var(--text-muted); padding: 4px 8px; }
+.nav-link { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 4px; color: var(--text-secondary); text-decoration: none; font-size: 12.5px; cursor: pointer; }
+.nav-link:hover { background: var(--bg-hover); color: var(--text); }
+.nav-link.active { background: var(--bg-tertiary); color: var(--text); font-weight: 500; }
+.nav-link .count { margin-left: auto; font-size: 11px; color: var(--text-muted); }
+.nav-link .count.violet { background: var(--accent-flaky-bg); color: var(--accent-flaky); border-radius: 8px; padding: 0 6px; font-weight: 600; }
+.nav-icon { width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0; }
+.nav-link.active .nav-icon { color: var(--accent-flaky); }
+.nav-link.chat-entry { color: var(--hero-blue-700); font-weight: 600; }
+.nav-link.chat-entry .nav-icon { color: var(--hero-blue-300); }
+.nav-link.chat-entry:hover { background: #eaf2fb; }
+.nav-spacer { flex: 1; }
+.nav-user { display: flex; align-items: center; gap: 8px; padding: 8px; border-top: 1px solid var(--border); margin-top: 8px; font-size: 12px; color: var(--text-secondary); }
+
+.center { display: grid; grid-template-rows: 34px 1fr auto; min-height: 0; overflow: hidden; }
+.tab-strip { display: flex; align-items: stretch; background: var(--bg-secondary); border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tab { display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; border-right: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-muted); font-size: 12px; cursor: pointer; height: 34px; max-width: 240px; }
+.tab .tab-type-chip { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 1px 5px; border-radius: 3px; background: var(--bg-tertiary); color: var(--text-muted); flex-shrink: 0; }
+.tab .tab-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab .tab-close { width: 14px; height: 14px; display: grid; place-items: center; border-radius: 3px; opacity: 0; color: var(--text-muted); flex-shrink: 0; }
+.tab:hover .tab-close { opacity: 1; }
+.tab.active { background: var(--bg); color: var(--text); font-weight: 500; box-shadow: inset 0 2px 0 var(--accent-flaky); }
+.tab.active .tab-type-chip { background: var(--accent-flaky-bg); color: var(--accent-flaky); }
+.tab.active .tab-close { opacity: 0.6; }
+.tab.chat-tab .tab-type-chip { background: #eaf2fb; color: var(--hero-blue-700); }
+.tab-strip-spacer { flex: 1; border-right: 0; }
+
+.center-scroll { overflow-y: auto; min-height: 0; }
+.workspace-padded { padding: 18px 24px 28px; }
+.ws-header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 14px; }
+.ws-title { font-size: 22px; font-weight: 700; margin: 0; letter-spacing: -0.3px; }
+.ws-sub { color: var(--text-muted); font-size: 12px; }
+
+/* Leaderboard strip */
+.leaderboard {
+    background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+    border: 1px solid var(--accent-flaky-border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 24px;
+}
+.lb-headline { display: flex; align-items: baseline; gap: 12px; }
+.lb-count {
+    font-size: 36px; font-weight: 700; color: var(--accent-flaky);
+    line-height: 1; letter-spacing: -1px;
+}
+.lb-trend { display: flex; flex-direction: column; gap: 2px; }
+.lb-trend .label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent-flaky); }
+.lb-trend .delta { font-size: 12px; color: var(--text-secondary); }
+.lb-trend .delta strong { color: var(--success); font-weight: 600; }
+.lb-goal {
+    font-size: 12px; color: var(--text-secondary);
+    border-left: 1px solid var(--accent-flaky-border);
+    padding-left: 18px;
+}
+.lb-goal .goal-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 2px; }
+.lb-goal .target { font-weight: 600; color: var(--text); }
+.lb-goal .target strong { color: var(--accent-flaky); font-size: 14px; }
+.lb-spark {
+    display: flex; align-items: flex-end; gap: 2px;
+    height: 40px;
+}
+.spark-bar { width: 5px; background: var(--accent-flaky); opacity: 0.4; border-radius: 1px; }
+.spark-bar.recent { opacity: 0.8; }
+.spark-bar.now { opacity: 1; background: var(--accent-flaky); }
+.lb-reclassify {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--bg); border: 1px solid var(--accent-flaky-border);
+    color: var(--accent-flaky); font-weight: 600;
+    padding: 7px 14px; border-radius: 8px; cursor: pointer;
+    font-size: 12px; font-family: inherit;
+}
+.lb-reclassify:hover { background: var(--accent-flaky-bg); }
+
+/* View toggle */
+.view-toggle {
+    display: inline-flex; align-items: center; gap: 0;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 2px;
+    margin-bottom: 14px;
+}
+.vt-btn {
+    padding: 5px 12px; border-radius: 6px; font-size: 12px;
+    color: var(--text-secondary); cursor: pointer; font-weight: 500;
+    border: 0; background: transparent; font-family: inherit;
+    display: inline-flex; align-items: center; gap: 6px;
+}
+.vt-btn .vt-count { font-size: 11px; color: var(--text-muted); }
+.vt-btn:hover { color: var(--text); }
+.vt-btn.active { background: var(--bg); color: var(--text); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.vt-btn.active .vt-count { color: var(--accent-flaky); font-weight: 700; }
+
+/* Section header */
+.section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; padding: 0 4px; }
+.section-head .lab { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); }
+.section-head .help { font-size: 11px; color: var(--text-muted); }
+
+/* Flaky row */
+.flake-list { display: flex; flex-direction: column; }
+.f-row {
+    display: grid;
+    grid-template-columns: 56px 1fr auto auto auto 24px;
+    gap: 12px;
+    align-items: center;
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    min-height: 32px;
+}
+.f-row:hover { background: var(--bg-hover); }
+.f-row.selected { background: var(--accent-flaky-bg); border-left: 3px solid var(--accent-flaky); padding-left: 7px; }
+.f-row.selected:hover { background: var(--accent-flaky-bg); }
+.f-row.classified { opacity: 0.95; }
+
+.stability-chip {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 48px; padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 700; font-family: ui-monospace, Menlo, monospace;
+    border: 1px solid;
+}
+.stab-low { background: #fff1f2; color: var(--danger); border-color: #fecaca; }
+.stab-mid { background: #fff7ed; color: var(--warning); border-color: #fed7aa; }
+.stab-high { background: #f0fdf4; color: var(--success); border-color: #bbf7d0; }
+
+.f-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.f-title .case-id { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--accent-flaky); font-weight: 700; background: var(--accent-flaky-bg); padding: 1px 6px; border-radius: 3px; flex-shrink: 0; }
+.f-title .case-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.run-strip {
+    display: inline-flex; gap: 3px; align-items: center;
+    font-family: ui-monospace, Menlo, monospace; font-size: 10px;
+}
+.run-dot {
+    width: 11px; height: 11px; border-radius: 3px;
+    display: inline-grid; place-items: center;
+    font-size: 9px; font-weight: 700; color: white;
+}
+.run-dot.pass { background: var(--success); }
+.run-dot.fail { background: var(--danger); }
+
+.verdict-pending {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--accent-flaky-bg);
+    color: var(--accent-flaky);
+    border: 1px dashed var(--accent-flaky);
+    padding: 1px 8px; border-radius: 10px;
+    font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.3px;
+}
+.verdict-pending::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-flaky); animation: pulse 1.8s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+.verdict-classified {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--bg);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    padding: 1px 8px 1px 4px; border-radius: 10px;
+    font-size: 10.5px; font-weight: 600;
+}
+.verdict-classified .v-kind {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 1px 6px; border-radius: 8px;
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.3px;
+}
+.v-kind.test-issue { background: #fef3c7; color: #92400e; }
+.v-kind.environment { background: #e0f2fe; color: #075985; }
+.v-kind.true-bug { background: #fee2e2; color: #991b1b; }
+.verdict-classified .deadline { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; color: var(--warning); font-weight: 600; }
+.verdict-classified .owner { color: var(--text-muted); }
+
+.suite-chip {
+    font-size: 10.5px; font-family: ui-monospace, Menlo, monospace;
+    color: var(--hero-blue-700);
+    background: #eaf2fb; padding: 1px 6px; border-radius: 6px;
+    font-weight: 600;
+}
+.row-chev {
+    color: var(--text-muted);
+    display: grid; place-items: center;
+}
+.f-row.selected .row-chev { color: var(--accent-flaky); }
+
+/* Section divider */
+.section-divider {
+    padding: 16px 4px 6px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: baseline; gap: 10px;
+}
+.section-divider .lab { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); }
+.section-divider .count { background: var(--bg-tertiary); padding: 1px 7px; border-radius: 9px; font-size: 11px; font-weight: 600; color: var(--text-secondary); }
+.section-divider .meta { color: var(--text-muted); font-size: 11px; margin-left: auto; }
+
+/* Bottom strip */
+.bottom-strip { border-top: 1px solid var(--border); background: var(--bg); padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+.bottom-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bottom-actions-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 700; margin-right: 6px; }
+
+/* Primary split-button: Classify */
+.classify-split {
+    display: inline-flex; align-items: stretch;
+    background: var(--accent-flaky); color: white;
+    border-radius: 16px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(168, 85, 247, 0.3);
+    font-size: 12px; font-weight: 600;
+}
+.classify-split .main {
+    padding: 0 14px; height: 32px;
+    display: inline-flex; align-items: center; gap: 6px;
+    cursor: pointer;
+}
+.classify-split .main:hover { background: rgba(0,0,0,0.08); }
+.classify-split .divider { width: 1px; background: rgba(255,255,255,0.3); }
+.classify-split .options {
+    display: inline-flex; align-items: center; gap: 0;
+    padding: 0 4px;
+}
+.classify-split .opt {
+    padding: 4px 10px; border-radius: 10px;
+    font-size: 11px; font-weight: 600;
+    cursor: pointer; height: 24px;
+    display: inline-flex; align-items: center; gap: 4px;
+    margin: 0 2px;
+}
+.classify-split .opt:hover { background: rgba(255,255,255,0.2); }
+.classify-split .opt .dot { width: 6px; height: 6px; border-radius: 50%; }
+.opt.test-issue .dot { background: #fde68a; }
+.opt.environment .dot { background: #7dd3fc; }
+.opt.true-bug .dot { background: #fca5a5; }
+
+.action-btn { display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 12px; border-radius: 16px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 500; }
+.action-btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+.action-btn svg { color: var(--text-muted); }
+
+.bottom-input { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; background: var(--bg); }
+.bottom-input:focus-within { border-color: var(--accent-flaky); box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.18); }
+.bottom-input input { flex: 1; border: 0; outline: 0; font-family: inherit; font-size: 13px; color: var(--text); background: transparent; }
+.bottom-input input::placeholder { color: var(--text-muted); }
+.bottom-input .tool { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 4px; cursor: pointer; color: var(--text-muted); font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+.model-chip { display: inline-flex; align-items: center; gap: 5px; background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-size: 10.5px; color: var(--text-secondary); font-weight: 600; cursor: pointer; }
+.model-chip .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent-flaky); }
+.send-btn { width: 26px; height: 26px; border-radius: 6px; background: var(--accent-flaky); color: white; border: 0; cursor: pointer; display: grid; place-items: center; }
+
+/* Right panel */
+.right-panel { border-left: 1px solid var(--border); background: var(--bg); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.right-header { height: 36px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--border); background: var(--bg-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); }
+.right-header .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-flaky); }
+.right-header .ctx-label { margin-left: auto; text-transform: none; letter-spacing: 0; font-size: 11px; color: var(--text-muted); font-weight: 400; font-family: ui-monospace, Menlo, monospace; }
+.right-scroll { flex: 1; overflow-y: auto; }
+
+.ambient { padding: 12px 14px 14px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+.ambient-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
+.ambient-card { border: 1px solid var(--border); border-radius: 7px; background: var(--bg); padding: 9px 11px; font-size: 12px; line-height: 1.45; }
+.ambient-card .head { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent-flaky); }
+.ambient-card .head .pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--accent-flaky); }
+.ambient-card strong { font-weight: 600; }
+.ambient-card .body code { font-family: ui-monospace, Menlo, monospace; font-size: 11px; background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; }
+.ambient-card.suggestion { background: linear-gradient(180deg, #faf5ff 0%, var(--bg) 100%); border-color: var(--accent-flaky-border); }
+.ambient-card .actions { display: flex; gap: 6px; margin-top: 7px; }
+.ambient-card .actions button { border: 0; background: transparent; font-family: inherit; font-size: 11px; padding: 3px 8px; border-radius: 4px; cursor: pointer; color: var(--text-secondary); font-weight: 500; }
+.ambient-card .actions button.primary { color: var(--accent-flaky); }
+.ambient-card .actions button:hover { background: var(--bg-hover); }
+.ambient-card .confidence { font-size: 10.5px; color: var(--text-muted); margin-top: 4px; font-family: ui-monospace, Menlo, monospace; }
+.ambient-card .confidence strong { color: var(--accent-flaky); }
+
+/* Case details strip */
+.case-details {
+    padding: 12px 14px; border-bottom: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 10px;
+}
+.cd-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
+.cd-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+.cd-row .k { color: var(--text-muted); font-size: 11px; min-width: 76px; }
+.cd-row .v { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: var(--hero-blue-700); background: #eaf2fb; padding: 1px 6px; border-radius: 4px; font-weight: 600; }
+
+/* Signature group */
+.sig-group { padding: 12px 14px; }
+.sig-head { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); margin-bottom: 8px; }
+.sig-row {
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 8px; align-items: center;
+    padding: 6px 8px; border-radius: 6px;
+    margin-bottom: 4px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+}
+.sig-row:hover { background: var(--bg-hover); }
+.sig-name { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--text); }
+.sig-count { font-size: 11px; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
+.sig-bar {
+    grid-column: 1 / -1;
+    height: 3px; background: var(--bg-tertiary); border-radius: 2px;
+    overflow: hidden; margin-top: 4px;
+}
+.sig-bar-fill { height: 100%; background: var(--accent-flaky); border-radius: 2px; }
+.sig-row.top .sig-name { font-weight: 600; color: var(--danger); }
+</style>
+</head>
+<body>
+<div class="shell">
+    <header class="chrome">
+        <div class="chrome-workspace">
+            <div class="workspace-logo"><svg viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg></div>
+            <span>Hero</span>
+            <span class="domain-pill">QA <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </div>
+        <div class="search"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><input placeholder="Search or jump to…" /><span class="kbd">⌘K</span></div>
+        <div class="chrome-right">
+            <span class="preset-chip"><span class="dot"></span>Inline gate · Step-by-step · Persistent-link</span>
+            <div class="avatar jamie">JL</div>
+        </div>
+    </header>
+
+    <div class="body-grid">
+        <nav class="nav">
+            <div class="nav-section">
+                <a class="nav-link chat-entry"><svg class="nav-icon" viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>Chat</a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-label">QA</div>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="7" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="11" width="8" height="2" rx="1" fill="currentColor"/></svg>Story queue<span class="count">12</span></a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="10" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Test plans<span class="count">8</span></a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Test cases<span class="count">147</span></a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Regression suites<span class="count">3</span></a>
+                <a class="nav-link active"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M8 2v3M8 11v3M2 8h3M11 8h3M4 4l2 2M10 10l2 2M4 12l2-2M10 6l2-2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Flaky tests<span class="count violet">8</span></a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="10" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M2 7h12" stroke="currentColor" stroke-width="1.3"/></svg>Release gates<span class="count">1</span></a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 3h12l-4 6v4l-4-2V9L2 3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Unified inbox<span class="count">47</span></a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="4" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/><circle cx="12" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.3"/></svg>Handoff stream</a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-label">Active sessions</div>
+                <a class="nav-link" style="font-size: 11.5px;"><span style="color: var(--accent-flaky);">●</span>Triage RC-441 verdict</a>
+                <a class="nav-link" style="font-size: 11.5px;"><span style="color: var(--text-muted);">●</span>Author Case-C7 (seam)</a>
+            </div>
+            <div class="nav-spacer"></div>
+            <div class="nav-user"><div class="avatar sm jamie">JL</div>Jamie Liu · QA Lead</div>
+        </nav>
+
+        <main class="center">
+            <div class="tab-strip">
+                <div class="tab chat-tab"><span class="tab-type-chip">Chat</span><span class="tab-label">Conversation</span></div>
+                <div class="tab active">
+                    <span class="tab-type-chip">Flaky</span>
+                    <span class="tab-label">Flaky tests backlog</span>
+                    <span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+                </div>
+                <div class="tab"><span class="tab-type-chip">Case</span><span class="tab-label">RC-441 · span emission</span><span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></div>
+                <div class="tab-strip-spacer"></div>
+            </div>
+
+            <div class="center-scroll">
+                <div class="workspace-padded">
+                    <div class="ws-header">
+                        <h1 class="ws-title">Flaky tests backlog</h1>
+                        <span class="ws-sub">Active queue · verdict-driven · drive to zero</span>
+                    </div>
+
+                    <!-- LEADERBOARD -->
+                    <div class="leaderboard">
+                        <div class="lb-headline">
+                            <div class="lb-count">8</div>
+                            <div class="lb-trend">
+                                <div class="label">Flake count</div>
+                                <div class="delta">
+                                    <strong>↓ 6 from last week</strong> · was 14
+                                </div>
+                            </div>
+                        </div>
+                        <div class="lb-goal">
+                            <div class="goal-label">Sprint 23 goal</div>
+                            <div class="target"><strong>0</strong> by end of sprint (10 days)</div>
+                        </div>
+                        <div class="lb-spark" title="Last 30 days">
+                            <div class="spark-bar" style="height: 60%;"></div>
+                            <div class="spark-bar" style="height: 70%;"></div>
+                            <div class="spark-bar" style="height: 65%;"></div>
+                            <div class="spark-bar" style="height: 80%;"></div>
+                            <div class="spark-bar" style="height: 75%;"></div>
+                            <div class="spark-bar" style="height: 85%;"></div>
+                            <div class="spark-bar" style="height: 90%;"></div>
+                            <div class="spark-bar" style="height: 95%;"></div>
+                            <div class="spark-bar" style="height: 88%;"></div>
+                            <div class="spark-bar" style="height: 100%;"></div>
+                            <div class="spark-bar" style="height: 92%;"></div>
+                            <div class="spark-bar" style="height: 85%;"></div>
+                            <div class="spark-bar recent" style="height: 80%;"></div>
+                            <div class="spark-bar recent" style="height: 75%;"></div>
+                            <div class="spark-bar recent" style="height: 70%;"></div>
+                            <div class="spark-bar recent" style="height: 65%;"></div>
+                            <div class="spark-bar recent" style="height: 60%;"></div>
+                            <div class="spark-bar recent" style="height: 55%;"></div>
+                            <div class="spark-bar recent" style="height: 50%;"></div>
+                            <div class="spark-bar recent" style="height: 48%;"></div>
+                            <div class="spark-bar recent" style="height: 42%;"></div>
+                            <div class="spark-bar recent" style="height: 40%;"></div>
+                            <div class="spark-bar recent" style="height: 35%;"></div>
+                            <div class="spark-bar recent" style="height: 38%;"></div>
+                            <div class="spark-bar recent" style="height: 32%;"></div>
+                            <div class="spark-bar recent" style="height: 28%;"></div>
+                            <div class="spark-bar recent" style="height: 30%;"></div>
+                            <div class="spark-bar recent" style="height: 26%;"></div>
+                            <div class="spark-bar now" style="height: 24%;"></div>
+                            <div class="spark-bar now" style="height: 22%;"></div>
+                        </div>
+                        <button class="lb-reclassify">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M13 5a5 5 0 10-1 7M13 2v3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            Re-classify all
+                        </button>
+                    </div>
+
+                    <!-- VIEW TOGGLE -->
+                    <div class="view-toggle">
+                        <button class="vt-btn active">Unclassified <span class="vt-count">3</span></button>
+                        <button class="vt-btn">In progress <span class="vt-count">4</span></button>
+                        <button class="vt-btn">Resolved this sprint <span class="vt-count">12</span></button>
+                        <button class="vt-btn">All</button>
+                    </div>
+
+                    <div class="section-divider">
+                        <span class="lab">Unclassified — needs verdict</span>
+                        <span class="count">3</span>
+                        <span class="meta">no fix-by deadline until classified</span>
+                    </div>
+
+                    <div class="flake-list">
+                        <!-- ROW 1 — SELECTED -->
+                        <div class="f-row selected">
+                            <span class="stability-chip stab-low">47%</span>
+                            <div class="f-title">
+                                <span class="case-id">RC-441</span>
+                                <span class="case-name">span emission under concurrent runs</span>
+                            </div>
+                            <div class="run-strip" title="Last 10 runs (newest right)">
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot fail">✗</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot fail">✗</span>
+                                <span class="run-dot fail">✗</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot fail">✗</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot fail">✗</span>
+                            </div>
+                            <span class="verdict-pending">Verdict pending</span>
+                            <span class="suite-chip">agent-runtime-regression</span>
+                            <span class="row-chev"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+                        </div>
+
+                        <!-- ROW 2 -->
+                        <div class="f-row">
+                            <span class="stability-chip stab-mid">71%</span>
+                            <div class="f-title">
+                                <span class="case-id">RC-388</span>
+                                <span class="case-name">webhook retry timing</span>
+                            </div>
+                            <div class="run-strip">
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot fail">✗</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot fail">✗</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot fail">✗</span>
+                                <span class="run-dot pass">✓</span>
+                            </div>
+                            <span class="verdict-pending">Verdict pending</span>
+                            <span class="suite-chip">webhooks-regression</span>
+                            <span class="row-chev"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+                        </div>
+
+                        <!-- ROW 3 -->
+                        <div class="f-row">
+                            <span class="stability-chip stab-low">58%</span>
+                            <div class="f-title">
+                                <span class="case-id">RC-512</span>
+                                <span class="case-name">trace span queue depth</span>
+                            </div>
+                            <div class="run-strip">
+                                <span class="run-dot fail">✗</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot fail">✗</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot fail">✗</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot fail">✗</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot pass">✓</span>
+                            </div>
+                            <span class="verdict-pending">Verdict pending</span>
+                            <span class="suite-chip">telemetry-regression</span>
+                            <span class="row-chev"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+                        </div>
+                    </div>
+
+                    <div class="section-divider">
+                        <span class="lab">In progress — classified, fix in flight</span>
+                        <span class="count">2 of 4 shown</span>
+                        <span class="meta">fix-by deadlines visible per row</span>
+                    </div>
+
+                    <div class="flake-list">
+                        <!-- ROW 4 — classified test-issue -->
+                        <div class="f-row classified">
+                            <span class="stability-chip stab-mid">66%</span>
+                            <div class="f-title">
+                                <span class="case-id">RC-219</span>
+                                <span class="case-name">async event handler ordering</span>
+                            </div>
+                            <div class="run-strip">
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot fail">✗</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot fail">✗</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot fail">✗</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot pass">✓</span>
+                            </div>
+                            <span class="verdict-classified">
+                                <span class="v-kind test-issue">test-issue</span>
+                                <span class="deadline">fix-by 2026-05-22</span>
+                                <span class="owner">·</span>
+                                <div class="avatar sm tomas">TR</div>
+                            </span>
+                            <span class="suite-chip">agent-runtime-regression</span>
+                            <span class="row-chev"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+                        </div>
+
+                        <!-- ROW 5 — classified environment -->
+                        <div class="f-row classified">
+                            <span class="stability-chip stab-high">81%</span>
+                            <div class="f-title">
+                                <span class="case-id">RC-401</span>
+                                <span class="case-name">DB connection pool warmup race</span>
+                            </div>
+                            <div class="run-strip">
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot fail">✗</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot fail">✗</span>
+                                <span class="run-dot pass">✓</span>
+                                <span class="run-dot pass">✓</span>
+                            </div>
+                            <span class="verdict-classified">
+                                <span class="v-kind environment">environment</span>
+                                <span class="deadline">fix-by 2026-05-20</span>
+                                <span class="owner">·</span>
+                                <div class="avatar sm yuki">YT</div>
+                            </span>
+                            <span class="suite-chip">telemetry-regression</span>
+                            <span class="row-chev"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTTOM STRIP — verdict-pending actions for RC-441 -->
+            <div class="bottom-strip">
+                <div class="bottom-actions">
+                    <span class="bottom-actions-label">RC-441 · verdict pending</span>
+                    <div class="classify-split">
+                        <span class="main">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 8l3 3 7-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            Classify
+                        </span>
+                        <span class="divider"></span>
+                        <span class="options">
+                            <span class="opt test-issue" title="Locator instability, assertion bug, test code issue"><span class="dot"></span>test-issue</span>
+                            <span class="opt environment" title="Infra, network, CI runner, data fixture"><span class="dot"></span>environment</span>
+                            <span class="opt true-bug" title="Real product defect — routes to /diagnose"><span class="dot"></span>true-bug</span>
+                        </span>
+                    </div>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 3v3l2 2M6 11A5 5 0 116 1a5 5 0 010 10z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        Show run history
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><rect x="2" y="2" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M4 4l4 4M8 4l-4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        Quarantine
+                    </button>
+                </div>
+                <div class="bottom-input">
+                    <span class="model-chip"><span class="dot"></span>qa-flake-curator · Sonnet 4.6</span>
+                    <input placeholder="Ask about RC-441 — failure signatures, build cluster, or classify with reasoning…" />
+                    <span class="tool">/</span><span class="tool">@</span>
+                    <button class="send-btn"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+                </div>
+            </div>
+        </main>
+
+        <!-- RIGHT RAIL -->
+        <aside class="right-panel">
+            <div class="right-header">
+                <span class="status-dot"></span>Flake details
+                <span class="ctx-label">· RC-441</span>
+            </div>
+            <div class="right-scroll">
+                <div class="ambient">
+                    <div class="ambient-label">Ambient · qa-flake-curator</div>
+
+                    <div class="ambient-card suggestion">
+                        <div class="head"><span class="pulse"></span>Suggested verdict · test-issue</div>
+                        <div class="body">
+                            <strong>Locator instability under concurrent runs.</strong> Failure modes show race on span-write — most assertions pass once retried in isolation. Consistent with non-atomic test setup, not a product defect.
+                        </div>
+                        <div class="confidence">Confidence: <strong>87%</strong> · based on 30 failure samples</div>
+                        <div class="actions">
+                            <button class="primary">Accept verdict</button>
+                            <button>Override</button>
+                            <button>Show evidence</button>
+                        </div>
+                    </div>
+
+                    <div class="ambient-card">
+                        <div class="head"><span class="pulse"></span>Cluster · build envelope</div>
+                        <div class="body">
+                            Failures cluster around builds <code>#1280–1284</code>. New CI runner pool deployed May 12 — possible shared resource pressure. Inspect env?
+                        </div>
+                        <div class="actions">
+                            <button class="primary">View run logs →</button>
+                            <button>Compare runner pools</button>
+                        </div>
+                    </div>
+
+                    <div class="ambient-card">
+                        <div class="head"><span class="pulse"></span>If true-bug verdict</div>
+                        <div class="body">
+                            Routes to <code>/diagnose</code> chain. Creates engineering <code>bug</code> linked to RC-441; transitions case to <strong>quarantined</strong> until fix lands. Diego is the likely assignee (owns trace-spans area).
+                        </div>
+                    </div>
+                </div>
+
+                <div class="case-details">
+                    <div class="cd-label">Case details</div>
+                    <div class="cd-row">
+                        <span class="k">Linked AC</span>
+                        <span class="v">Story-2847 · AC#1 (span emit)</span>
+                    </div>
+                    <div class="cd-row">
+                        <span class="k">Linked plan</span>
+                        <span class="v">agent-trace-coverage</span>
+                    </div>
+                    <div class="cd-row">
+                        <span class="k">Suite</span>
+                        <span class="v">agent-runtime-regression</span>
+                    </div>
+                    <div class="cd-row">
+                        <span class="k">Owner (case)</span>
+                        <span class="v" style="background: transparent; color: var(--text-secondary); padding: 0;"><div class="avatar sm tomas" style="display:inline-grid;vertical-align:middle;margin-right:4px;">TR</div>Tomás Reyes</span>
+                    </div>
+                    <div class="cd-row">
+                        <span class="k">Last run</span>
+                        <span class="v" style="background: #fff1f2; color: var(--danger);">build #1284 · failed · 1h ago</span>
+                    </div>
+                </div>
+
+                <div class="sig-group">
+                    <div class="sig-head">Last 30 failures · grouped by signature</div>
+                    <div class="sig-row top">
+                        <span class="sig-name">ConcurrentSpanWriteException</span>
+                        <span class="sig-count">14 occurrences</span>
+                        <div class="sig-bar"><div class="sig-bar-fill" style="width: 100%;"></div></div>
+                    </div>
+                    <div class="sig-row">
+                        <span class="sig-name">Span ID collision</span>
+                        <span class="sig-count">6 occurrences</span>
+                        <div class="sig-bar"><div class="sig-bar-fill" style="width: 43%;"></div></div>
+                    </div>
+                    <div class="sig-row">
+                        <span class="sig-name">Backend timeout (5xx)</span>
+                        <span class="sig-count">3 occurrences</span>
+                        <div class="sig-bar"><div class="sig-bar-fill" style="width: 21%;"></div></div>
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px; padding: 0 4px;">
+                        7 lower-frequency signatures hidden · <a style="color: var(--accent-flaky); text-decoration: none; cursor: pointer; font-weight: 600;">Show all →</a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<script>
+// Minimal interactivity: row selection + view toggle
+document.querySelectorAll('.f-row').forEach(row => {
+    row.addEventListener('click', () => {
+        document.querySelectorAll('.f-row').forEach(r => r.classList.remove('selected'));
+        row.classList.add('selected');
+    });
+});
+document.querySelectorAll('.vt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.vt-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    });
+});
+// Classify split-button options — log selection (mockup-only)
+document.querySelectorAll('.classify-split .opt').forEach(opt => {
+    opt.addEventListener('click', e => {
+        e.stopPropagation();
+        const kind = opt.classList.contains('test-issue') ? 'test-issue'
+                   : opt.classList.contains('environment') ? 'environment'
+                   : 'true-bug';
+        console.log('Classify RC-441 →', kind);
+    });
+});
+</script>
+</body>
+</html>
