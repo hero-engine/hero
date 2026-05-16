@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<!-- Hero QA Mock: 03-test-case-editor | Format-aware test case editor -->
+<!-- Hero QA Mock: 03-test-case-editor | Format-aware test case editor with AI provenance + authoring chat -->
 <!-- Case-as-document fidelity: step-by-step canonical, format toggle, AC traceability, run history + stability -->
+<!-- AI-surface retrofit: provenance chip on case header, authoring-history chat, ambient suggest, inline refine affordance -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -52,7 +53,7 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 .avatar.diego { background: linear-gradient(135deg, #6cb6ff, #4f7cf7); }
 .avatar.sarah { background: linear-gradient(135deg, #84e1bc, #16a249); }
 
-.body-grid { display: grid; grid-template-columns: 224px 1fr 360px; height: calc(100vh - 48px); min-height: 0; }
+.body-grid { display: grid; grid-template-columns: 224px 1fr 380px; height: calc(100vh - 48px); min-height: 0; }
 
 /* Left nav */
 .nav { background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 12px 8px; overflow-y: auto; display: flex; flex-direction: column; }
@@ -99,7 +100,7 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 .context-strip a { color: var(--text-secondary); text-decoration: none; }
 .context-strip a:hover { color: var(--text); }
 
-.title-row { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
+.title-row { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 10px; }
 .case-title { font-size: 24px; font-weight: 700; letter-spacing: -0.3px; margin: 0; line-height: 1.25; flex: 1; }
 
 .format-toggle { display: inline-flex; align-items: center; border: 1px solid var(--border-strong); border-radius: 7px; overflow: hidden; background: var(--bg-secondary); flex-shrink: 0; margin-top: 4px; }
@@ -108,6 +109,30 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 .format-toggle button:hover { background: var(--bg-hover); color: var(--text); }
 .format-toggle button.active { background: var(--bg); color: var(--text); font-weight: 600; box-shadow: inset 0 -2px 0 var(--accent-qa-gutter); }
 .format-toggle button.disabled { color: var(--text-muted); cursor: not-allowed; }
+
+/* AI provenance chip on header */
+.provenance-row { display: flex; margin-bottom: 14px; }
+.proposed-badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 11px; font-weight: 500;
+    color: var(--hero-blue-700);
+    background: linear-gradient(180deg, #f7fbff 0%, #eaf2fb 100%);
+    border: 1px solid #cfe1f4;
+    padding: 4px 10px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    line-height: 1.4;
+}
+.proposed-badge:hover {
+    background: #eaf2fb;
+    border-color: var(--hero-blue-500);
+    transform: translateY(-1px);
+}
+.proposed-badge .dot-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); flex-shrink: 0; }
+.proposed-badge code { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; background: rgba(255,255,255,0.7); padding: 0 4px; border-radius: 3px; color: var(--hero-blue-700); }
+.proposed-badge .audit-link { margin-left: 4px; padding-left: 8px; border-left: 1px solid #cfe1f4; color: var(--hero-blue-700); font-weight: 600; display: inline-flex; align-items: center; gap: 3px; }
+.proposed-badge .audit-link svg { color: var(--hero-blue-700); }
 
 .chip-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 22px; }
 .chip { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 11px; font-size: 11px; font-weight: 500; background: var(--bg-tertiary); color: var(--text-secondary); }
@@ -138,18 +163,39 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 /* Steps grid */
 .steps-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; font-size: 12.5px; }
 .steps-table thead th { background: var(--bg-secondary); color: var(--text-muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; padding: 7px 12px; border-bottom: 1px solid var(--border); }
-.steps-table tbody tr { transition: background 0.1s ease; }
+.steps-table tbody tr { transition: background 0.1s ease; position: relative; }
 .steps-table tbody tr:hover { background: var(--bg-hover); }
 .steps-table tbody tr:hover .drag-handle { opacity: 0.6; }
+.steps-table tbody tr:hover .refine-hint { opacity: 1; }
 .steps-table tbody td { padding: 11px 12px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.55; }
 .steps-table tbody tr:last-child td { border-bottom: 0; }
 .steps-table td.step-num { width: 36px; color: var(--text-muted); font-family: ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 600; position: relative; }
 .steps-table td.step-num .drag-handle { position: absolute; left: -4px; top: 50%; transform: translateY(-50%); width: 8px; opacity: 0; color: var(--text-muted); cursor: grab; }
-.steps-table td.step-action { width: 42%; color: var(--text); }
-.steps-table td.step-expected { width: 42%; color: var(--text-secondary); }
-.steps-table td.step-notes { color: var(--text-muted); font-size: 11.5px; font-style: italic; }
+.steps-table td.step-action { width: 38%; color: var(--text); }
+.steps-table td.step-expected { width: 38%; color: var(--text-secondary); }
+.steps-table td.step-notes { color: var(--text-muted); font-size: 11.5px; font-style: italic; position: relative; }
 .steps-table code { background: var(--bg-tertiary); padding: 1px 5px; border-radius: 3px; font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: var(--text); font-style: normal; }
 .steps-table .note-tag { display: inline-block; padding: 1px 6px; background: #fef3c7; color: #92400e; border-radius: 3px; font-size: 10.5px; font-style: normal; font-weight: 500; margin-right: 4px; }
+
+/* AI refine hint on step hover */
+.refine-hint {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10.5px; font-weight: 500; font-style: normal;
+    color: var(--hero-blue-700);
+    background: #eaf2fb;
+    border: 1px solid #cfe1f4;
+    padding: 2px 7px;
+    border-radius: 10px;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.refine-hint:hover { background: #dceaf7; border-color: var(--hero-blue-500); }
+.refine-hint .sparkle { font-size: 11px; color: var(--hero-blue-700); }
+/* On step 3, show the hint as a steady visible affordance to demo it */
+.steps-table tbody tr.demo-refine .refine-hint { opacity: 0.85; }
+.steps-table tbody tr.demo-refine:hover .refine-hint { opacity: 1; }
 
 /* Gherkin alternate render */
 .gherkin-block { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; line-height: 1.75; color: var(--text); white-space: pre; overflow-x: auto; }
@@ -224,15 +270,16 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 .right-header { height: 36px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--border); background: var(--bg-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); }
 .right-header .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-pass); }
 .right-header .ctx-label { margin-left: auto; text-transform: none; letter-spacing: 0; font-size: 11px; color: var(--text-muted); font-weight: 400; font-family: ui-monospace, Menlo, monospace; }
-.right-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+.right-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-height: 0; }
 
-.ambient { padding: 10px 14px 14px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+/* Ambient section */
+.ambient { padding: 10px 14px 14px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; background: var(--bg); }
 .ambient-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
 .ambient-card { border: 1px solid var(--border); border-radius: 7px; background: var(--bg); padding: 10px 11px; font-size: 12px; line-height: 1.5; }
-.ambient-card.cyan { border-left: 3px solid var(--accent-qa-gutter); background: linear-gradient(180deg, var(--accent-qa-gutter-bg) 0%, var(--bg) 100%); }
-.ambient-card .head { display: flex; align-items: center; gap: 6px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px; }
-.ambient-card .head .who { color: var(--accent-qa-gutter); font-family: ui-monospace, Menlo, monospace; text-transform: none; letter-spacing: 0; }
-.ambient-card.cyan .head .pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--accent-qa-gutter); }
+.ambient-card.relationship { background: var(--bg-secondary); }
+.ambient-card.relationship .head { display: flex; align-items: center; gap: 6px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px; }
+.ambient-card.relationship .head .who { color: var(--accent-qa-gutter); font-family: ui-monospace, Menlo, monospace; text-transform: none; letter-spacing: 0; }
+.ambient-card.relationship .head .pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--accent-qa-gutter); }
 .ambient-card .body { color: var(--text); }
 .ambient-card .body strong { font-weight: 600; }
 .ambient-card .body code { font-family: ui-monospace, Menlo, monospace; font-size: 11px; background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; }
@@ -242,22 +289,55 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 .ambient-card .actions button.primary { color: var(--accent-qa-gutter); font-weight: 600; }
 .ambient-card .actions button:hover { background: var(--bg-hover); }
 
-/* Sidebar metadata */
-.meta-panel { padding: 12px 14px; border-bottom: 1px solid var(--border); }
-.meta-head { display: flex; align-items: center; gap: 6px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); margin-bottom: 8px; cursor: pointer; }
-.meta-head .chev { transition: transform 0.15s; }
-.meta-grid { display: grid; grid-template-columns: 92px 1fr; gap: 7px 10px; font-size: 12px; }
-.meta-grid .k { color: var(--text-muted); font-size: 11.5px; }
-.meta-grid .v { color: var(--text); }
-.meta-grid .v code { font-family: ui-monospace, Menlo, monospace; font-size: 11px; background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; }
+/* Ambient suggestion — dashed blue (matches PM gold-standard) */
+.ambient-suggest {
+    border: 1px dashed var(--hero-blue-500);
+    background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+    border-radius: 7px;
+    padding: 9px 11px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+.ambient-suggest .head { display: flex; align-items: center; gap: 6px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--hero-blue-700); margin-bottom: 5px; }
+.ambient-suggest .head .pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-700); }
+.ambient-suggest .head .who { font-family: ui-monospace, Menlo, monospace; text-transform: none; letter-spacing: 0; color: var(--hero-blue-700); }
+.ambient-suggest .body { color: var(--text); }
+.ambient-suggest .body strong { font-weight: 600; }
+.ambient-suggest .body code { font-family: ui-monospace, Menlo, monospace; font-size: 11px; background: rgba(108, 182, 255, 0.12); padding: 0 4px; border-radius: 3px; }
+.ambient-suggest .body .sub { color: var(--text-muted); font-size: 11px; margin-top: 4px; font-style: italic; }
+.ambient-suggest .actions { display: flex; gap: 4px; margin-top: 8px; align-items: center; }
+.ambient-suggest .actions button {
+    border: 0; background: transparent; font-family: inherit;
+    font-size: 11px; padding: 3px 9px; border-radius: 4px;
+    cursor: pointer; color: var(--text-secondary); font-weight: 500;
+}
+.ambient-suggest .actions button.primary { color: var(--hero-blue-700); font-weight: 600; }
+.ambient-suggest .actions button:hover { background: var(--bg-hover); }
 
-.activity { padding: 12px 14px; }
-.activity-head { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); margin-bottom: 8px; }
-.activity-item { display: flex; gap: 8px; padding: 5px 0; font-size: 11.5px; color: var(--text-secondary); line-height: 1.5; }
-.activity-item .av { flex-shrink: 0; margin-top: 1px; }
-.activity-item .time { color: var(--text-muted); font-size: 10.5px; }
-.activity-item strong { color: var(--text); font-weight: 600; }
-.activity-item code { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; }
+/* Chat scroll — authoring history */
+.chat-scroll { flex: 1; padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 9px; min-height: 0; overflow-y: auto; }
+.bubble-wrap { display: flex; flex-direction: column; gap: 3px; max-width: 100%; }
+.bubble-wrap.user { align-items: flex-end; }
+.bubble-wrap.agent { align-items: flex-start; }
+.via { font-size: 10px; color: var(--text-muted); padding: 0 4px; }
+.via code { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: var(--text-secondary); background: transparent; }
+.bubble { max-width: 290px; padding: 9px 13px; border-radius: 12px; font-size: 12.5px; line-height: 1.55; word-wrap: break-word; }
+.bubble.user { background: rgba(155, 193, 230, 0.22); color: var(--text); }
+.bubble.agent { background: #f4f5f7; color: var(--text); }
+.bubble code { font-family: ui-monospace, Menlo, monospace; font-size: 11px; background: rgba(0,0,0,0.06); padding: 0 4px; border-radius: 3px; }
+.bubble strong { font-weight: 600; }
+
+/* System events — authoring-history breadcrumbs */
+.sys-event { display: flex; align-items: center; gap: 6px; padding: 5px 0; color: var(--text-muted); font-size: 11px; font-style: italic; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); margin: 3px 0; line-height: 1.4; }
+.sys-event::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
+.sys-event code { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; font-style: normal; color: var(--text-secondary); }
+.sys-event.inline-event { color: var(--hero-blue-700); border-color: #cfe1f4; }
+.sys-event.inline-event::before { background: var(--hero-blue-700); }
+.sys-event.inline-event code { background: #eaf2fb; color: var(--hero-blue-700); }
+.sys-event.run-event { color: var(--accent-pass); border-color: #bbf7d0; }
+.sys-event.run-event::before { background: var(--accent-pass); }
+.sys-event.run-event.fail { color: var(--accent-fail); border-color: #fecaca; }
+.sys-event.run-event.fail::before { background: var(--accent-fail); }
 </style>
 </head>
 <body>
@@ -339,6 +419,18 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                         </div>
                     </div>
 
+                    <!-- AI provenance chip — clickable, opens derivation trace -->
+                    <div class="provenance-row">
+                        <span class="proposed-badge" onclick="openDerivation()" title="Click to view derivation trace">
+                            <span class="dot-pulse"></span>
+                            Authored by <code>test-author</code> · accepted by Jamie Liu · 4 days ago · derived from <code>Story-2847 AC#3</code> via boundary-value-analysis + state-transition
+                            <span class="audit-link">
+                                <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l2.5 2.5L10 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 9.5h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/></svg>
+                                Audit trail
+                            </span>
+                        </span>
+                    </div>
+
                     <div class="chip-row">
                         <span class="chip" style="text-transform:uppercase;letter-spacing:0.3px;font-size:10px;font-weight:700">test-case</span>
                         <span class="chip state-ready"><span class="dot"></span>ready</span>
@@ -393,7 +485,9 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                                     </td>
                                     <td class="step-action">Start agent run with id <code>test-run-001</code>.</td>
                                     <td class="step-expected">Trace span emitted with <code>run-id</code> and <code>parent-session-id</code>.</td>
-                                    <td class="step-notes"></td>
+                                    <td class="step-notes">
+                                        <span class="refine-hint" title="Refine this step with test-author"><span class="sparkle">✦</span>Refine with AI</span>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td class="step-num">
@@ -402,16 +496,21 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                                     </td>
                                     <td class="step-action">Inject network fault on span flush endpoint <code>:4317/v1/traces</code>.</td>
                                     <td class="step-expected">Flush returns error; agent enters retry state.</td>
-                                    <td class="step-notes"><span class="note-tag">env</span>Requires <code>HERO_OTLP_FAULT_INJECTOR=1</code></td>
+                                    <td class="step-notes">
+                                        <span class="note-tag">env</span>Requires <code>HERO_OTLP_FAULT_INJECTOR=1</code>
+                                        <div style="margin-top:6px"><span class="refine-hint" title="Refine this step with test-author"><span class="sparkle">✦</span>Refine with AI</span></div>
+                                    </td>
                                 </tr>
-                                <tr>
+                                <tr class="demo-refine">
                                     <td class="step-num">
                                         <svg class="drag-handle" width="6" height="14" viewBox="0 0 6 14" fill="currentColor"><circle cx="2" cy="3" r="1"/><circle cx="2" cy="7" r="1"/><circle cx="2" cy="11" r="1"/><circle cx="5" cy="3" r="1"/><circle cx="5" cy="7" r="1"/><circle cx="5" cy="11" r="1"/></svg>
                                         3
                                     </td>
                                     <td class="step-action">Allow 3 retry cycles to complete.</td>
                                     <td class="step-expected">Retries logged with backoff (1s, 2s, 4s).</td>
-                                    <td class="step-notes"></td>
+                                    <td class="step-notes">
+                                        <span class="refine-hint" title="test-author can sharpen this step — try 'add a step for retry exhaustion'"><span class="sparkle">✦</span>Refine with AI</span>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td class="step-num">
@@ -420,7 +519,9 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                                     </td>
                                     <td class="step-action">Observe span queue after 4th attempt fails.</td>
                                     <td class="step-expected">Span dropped; drop event logged to operational telemetry.</td>
-                                    <td class="step-notes"></td>
+                                    <td class="step-notes">
+                                        <span class="refine-hint" title="Refine this step with test-author"><span class="sparkle">✦</span>Refine with AI</span>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -524,7 +625,7 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                 </div>
             </div>
 
-            <!-- BOTTOM STRIP -->
+            <!-- BOTTOM STRIP — two rows: verbs row + AI input row -->
             <div class="bottom-strip">
                 <div class="bottom-actions">
                     <span class="bottom-actions-label">Case · ready</span>
@@ -538,7 +639,7 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                     </button>
                     <button class="action-btn">
                         <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5M2 6V2.5l3.5-1L9 3v3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        Tag (quadrant / regression / flaky)
+                        Tag
                     </button>
                     <button class="action-btn brand">
                         <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 1.5l2 2.5h-2v3H4v-3H2l2-2.5M6 10.5l-2-2.5h2v-3h2v3h2l-2 2.5" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
@@ -548,29 +649,31 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                 </div>
                 <div class="bottom-input">
                     <span class="model-chip"><span class="dot"></span>Sonnet 4.6</span>
-                    <input placeholder="Ask test-author about this case…" />
-                    <span class="tool">/</span><span class="tool">@</span>
+                    <input placeholder="Refine this case — try &quot;add a step for retry exhaustion&quot;…" />
+                    <span class="tool" title="Slash commands">/</span>
+                    <span class="tool" title="Mention">@</span>
                     <button class="send-btn"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
                 </div>
             </div>
         </main>
 
-        <!-- RIGHT PANEL -->
+        <!-- RIGHT PANEL — ambient (top) + chat-scroll (authoring history) -->
         <aside class="right-panel">
             <div class="right-header">
-                <span class="status-dot"></span>Ambient · Case-C3
-                <span class="ctx-label">· case / retry-with-backoff</span>
+                <span class="status-dot"></span>Chat · Case-C3
+                <span class="ctx-label">· retry-with-backoff</span>
             </div>
             <div class="right-scroll">
 
-                <!-- Ambient -->
+                <!-- AMBIENT: relationship card + suggestion -->
                 <div class="ambient">
-                    <div class="ambient-label">About this case</div>
+                    <div class="ambient-label">Ambient · about Case-C3</div>
 
-                    <div class="ambient-card cyan">
-                        <div class="head"><span class="pulse"></span>Generated by <span class="who">test-author</span></div>
+                    <!-- Existing derivation-trace card, restyled as relationship card -->
+                    <div class="ambient-card relationship">
+                        <div class="head"><span class="pulse"></span>Derived by <span class="who">test-author</span></div>
                         <div class="body">
-                            Derived from <strong>AC#3</strong> on May 12 via <strong>boundary-value-analysis</strong> + <strong>state-transition</strong>.
+                            From <strong>Story-2847 AC#3</strong> on May 12 via <strong>boundary-value-analysis</strong> + <strong>state-transition</strong>.
                             <div class="sub">Trace: AC#3 → derivation skill → step 1-4 · v3 of 3 (last edit by Tomás · 4h ago)</div>
                         </div>
                         <div class="actions">
@@ -579,64 +682,62 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                         </div>
                     </div>
 
-                    <div class="ambient-card">
-                        <div class="head">Regression candidate · <span class="who" style="color:var(--text-secondary)">regression-curator</span></div>
+                    <!-- AMBIENT SUGGEST — dashed-blue, matches PM gold-standard -->
+                    <div class="ambient-suggest">
+                        <div class="head"><span class="pulse"></span>Suggestion · <span class="who">regression-curator</span></div>
                         <div class="body">
-                            Similar case in <code>regression-suite-agent-runtime</code>: <code>RC-441</code>.
-                            <div class="sub">Suggests promotion when stability ≥ 95%. Currently 94% · 1 more clean run unlocks promotion.</div>
+                            Stability at <strong>94%</strong> (1 fail in last 30 runs). Promote to <code>agent-runtime-regression</code> at 95%?
+                            <div class="sub">Worth waiting one more sprint — the single fail was env-injector config (build #1280), not the case under test.</div>
                         </div>
                         <div class="actions">
-                            <button class="primary">Open RC-441</button>
-                            <button>Snooze</button>
+                            <button class="primary">Promote now anyway</button>
+                            <button>Wait one sprint</button>
+                            <button>Show evidence</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Sidebar metadata -->
-                <div class="meta-panel">
-                    <div class="meta-head">
-                        <svg class="chev" width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M3 4l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                        Metadata
-                    </div>
-                    <div class="meta-grid">
-                        <div class="k">Linked plans</div>
-                        <div class="v"><code>agent-trace-coverage</code> (1)</div>
-                        <div class="k">Linked AC</div>
-                        <div class="v"><code>Story-2847 AC#3</code> (1)</div>
-                        <div class="k">Quadrant</div>
-                        <div class="v">Q2 · functional</div>
-                        <div class="k">Format</div>
-                        <div class="v">step</div>
-                        <div class="k">Version</div>
-                        <div class="v">v3 of 3</div>
-                        <div class="k">Owner</div>
-                        <div class="v">Tomás Reyes</div>
-                        <div class="k">Created</div>
-                        <div class="v">May 12 · by <code>test-author</code></div>
-                    </div>
-                </div>
+                <!-- CHAT-SCROLL: authoring history -->
+                <div class="chat-scroll">
 
-                <!-- Activity -->
-                <div class="activity">
-                    <div class="activity-head">Activity</div>
-                    <div class="activity-item">
-                        <div class="avatar sm tomas av">TR</div>
-                        <div><strong>Tomás</strong> refined step 2 notes (env precondition) · <span class="time">4h ago</span></div>
+                    <div class="sys-event inline-event">
+                        Case-C3 authored by <code>test-author</code> from <code>Story-2847 AC#3</code> · 4d ago
                     </div>
-                    <div class="activity-item">
-                        <div class="avatar sm" style="background:linear-gradient(135deg,#9bc1e6,#6cb6ff)">TA</div>
-                        <div><code>test-author</code> regenerated v3 from AC#3 update · <span class="time">May 12</span></div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="avatar sm jamie av">JL</div>
-                        <div><strong>Jamie</strong> ran case against build <code>#1284</code> → <strong style="color:var(--accent-pass)">passed</strong> · <span class="time">1h ago</span></div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="avatar sm" style="background:linear-gradient(135deg,#fca5a5,#dc2626)">!</div>
-                        <div>Build <code>#1280</code> failed (env-injector misconfigured) · <span class="time">3d ago</span></div>
-                    </div>
-                </div>
 
+                    <div class="bubble-wrap user">
+                        <div class="via">via <code>/author-cases</code> · authoring 5 cases for Story-2847</div>
+                        <div class="bubble user">Author cases for AC#3 — focus on retry behavior under failure conditions.</div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            Running <code>test-author</code>. AC#3: <em>"IF flush fails THEN retry with backoff before dropping."</em> Deriving via <strong>boundary-value</strong> (3 retry attempts) + <strong>state-transition</strong> (active → retry → drop). Will propose 2 cases inline.
+                        </div>
+                    </div>
+
+                    <div class="sys-event inline-event">
+                        <code>test-author</code> drafted 2 cases → proposed inline · 4d ago
+                    </div>
+
+                    <div class="sys-event inline-event">
+                        Jamie accepted Case-C3 (retry-with-backoff) · 4d ago
+                    </div>
+
+                    <div class="sys-event inline-event">
+                        Jamie accepted Case-C4 (retry-exhaustion) · 4d ago
+                    </div>
+
+                    <div class="sys-event run-event">
+                        Case-C3 ran 30 times · 1 failure (build <code style="background:rgba(0,0,0,0.06);padding:0 4px;border-radius:3px;font-style:normal">#1280</code>, attributed to environment)
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            <code>regression-curator</code> flagged this case for promotion — stability score plateaued at <strong>94%</strong>. Want to override the 95% threshold, or wait one sprint for a clean run?
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </aside>
     </div>
@@ -702,6 +803,9 @@ document.querySelectorAll('#run-chips .run-chip').forEach(function(chip) {
 
 function openStory() {
     // would navigate to Story-2847 in a real app
+}
+function openDerivation() {
+    // would open the derivation-trace modal showing AC#3 → skill → step mapping
 }
 </script>
 </body>

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<!-- Hero QA Mock: 01-story-queue-coverage | Singleton view: workspace queue with coverage signals -->
-<!-- Pivotal-shaped single list grouped by QA bands (In QA / In flight / Ready / Done) + per-row coverage chip -->
+<!-- Hero QA Mock: 01-story-queue-coverage | AI-surface retrofit -->
+<!-- Singleton view: workspace queue grouped by QA bands with per-row coverage signal -->
+<!-- Demonstrates AI-assisted workflow: Chat-tab nav, bottom verb strip, ambient suggestion rail, chat log, inline proposal in queue row -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -54,10 +55,10 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 .avatar.aisha { background: linear-gradient(135deg, #f4a4ff, #b465ec); }
 .avatar.marcus { background: linear-gradient(135deg, #fcc46d, #f97316); }
 .avatar.priya { background: linear-gradient(135deg, #ff9eb4, #ec4899); }
-/* New QA identities */
-.avatar.jamie { background: linear-gradient(135deg, #67e8f9, #0e9ba8); }    /* Jamie Liu — cyan/teal */
-.avatar.tomas { background: linear-gradient(135deg, #fdba74, #ea580c); }    /* Tomás Reyes — warm orange */
-.avatar.yuki  { background: linear-gradient(135deg, #d8b4fe, #db2777); }    /* Yuki Tanaka — violet/pink */
+/* QA identities */
+.avatar.jamie { background: linear-gradient(135deg, #67e8f9, #0e9ba8); }
+.avatar.tomas { background: linear-gradient(135deg, #fdba74, #ea580c); }
+.avatar.yuki  { background: linear-gradient(135deg, #d8b4fe, #db2777); }
 
 .body-grid { display: grid; grid-template-columns: 240px 1fr 380px; height: calc(100vh - 48px); min-height: 0; }
 
@@ -83,8 +84,8 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 .nav-spacer { flex: 1; }
 .nav-user { display: flex; align-items: center; gap: 8px; padding: 8px; border-top: 1px solid var(--border); margin-top: 8px; font-size: 12px; color: var(--text-secondary); }
 
-/* Center */
-.center { display: grid; grid-template-rows: 34px 1fr; min-height: 0; overflow: hidden; }
+/* Center — three rows: tabs / scroll / bottom strip */
+.center { display: grid; grid-template-rows: 34px 1fr auto; min-height: 0; overflow: hidden; }
 .tab-strip { display: flex; align-items: stretch; background: var(--bg-secondary); border-bottom: 1px solid var(--border); overflow-x: auto; }
 .tab { display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; border-right: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-muted); font-size: 12px; cursor: pointer; height: 34px; max-width: 260px; }
 .tab .tab-type-chip { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 1px 5px; border-radius: 3px; background: var(--bg-tertiary); color: var(--text-muted); flex-shrink: 0; }
@@ -212,7 +213,7 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 .state-ready { background: #ecfdf5; color: #047857; }
 .state-done { background: var(--bg-tertiary); color: var(--text-muted); }
 
-/* Coverage chip — the QA-unique signal */
+/* Coverage chip — QA-unique signal */
 .cov-chip {
     display: inline-flex; align-items: center; gap: 4px;
     font-size: 10.5px; font-weight: 600;
@@ -255,56 +256,136 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 .s-row .tracker-id { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; color: var(--text-muted); }
 .s-row .age { font-size: 10.5px; color: var(--text-muted); font-family: ui-monospace, Menlo, monospace; min-width: 38px; text-align: right; }
 
-/* Right panel */
+/* Inline-propose panel — beneath the selected row */
+.inline-propose-wrap {
+    margin: 4px 0 6px;
+    padding: 4px 8px 0 18px;
+    border-bottom: 1px solid var(--border);
+}
+.proposed-block {
+    border: 1.5px dashed var(--hero-blue-500);
+    background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+    border-radius: 8px;
+    padding: 12px 14px 8px;
+    position: relative;
+    margin-bottom: 8px;
+}
+.proposed-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10.5px; font-weight: 600;
+    color: var(--hero-blue-700);
+    background: white; border: 1px solid #cfe1f4;
+    padding: 2px 8px; border-radius: 10px;
+    position: absolute; top: -10px; left: 12px;
+}
+.proposed-badge .dot-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); animation: pulse 2.4s infinite; }
+.proposed-badge code { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; background: transparent; color: var(--hero-blue-700); }
+.proposed-text {
+    margin-top: 4px;
+    font-size: 12.5px;
+    line-height: 1.55;
+    padding: 4px 0 2px;
+    color: var(--text);
+}
+.proposed-text strong { font-weight: 600; }
+.proposed-text code { background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; font-size: 11.5px; font-family: ui-monospace, Menlo, monospace; }
+.proposed-actions {
+    display: flex; gap: 4px; margin-top: 8px;
+    padding-top: 6px; border-top: 1px dashed var(--hero-blue-300);
+    align-items: center;
+}
+.proposed-actions button {
+    border: 0; background: transparent; font-family: inherit;
+    font-size: 11.5px; padding: 3px 9px; border-radius: 4px;
+    cursor: pointer; color: var(--text-secondary);
+    display: inline-flex; align-items: center; gap: 4px; font-weight: 500;
+}
+.proposed-actions button.accept { color: var(--hero-blue-700); font-weight: 600; }
+.proposed-actions button.secondary { color: var(--text); }
+.proposed-actions button.dismiss { color: var(--text-muted); }
+.proposed-actions button:hover { background: var(--bg-hover); }
+.proposed-actions .hint { margin-left: auto; font-size: 10.5px; color: var(--text-muted); }
+
+/* Bottom strip — two rows: verb buttons + chat input */
+.bottom-strip { border-top: 1px solid var(--border); background: var(--bg); padding: 8px 14px 10px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+.bottom-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.bottom-actions-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; margin-right: 4px; }
+.action-btn { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 11px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 500; }
+.action-btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+.action-btn svg { color: var(--text-muted); }
+.action-btn.warn { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+.action-btn.warn:hover { background: #fef3c7; }
+.action-btn.success { color: var(--success); border-color: #a7e2bc; }
+.action-btn.success:hover { background: #ecfdf5; }
+.bottom-input { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; background: var(--bg); }
+.bottom-input:focus-within { border-color: var(--hero-blue-500); box-shadow: 0 0 0 3px rgba(108, 182, 255, 0.18); }
+.bottom-input input { flex: 1; border: 0; outline: 0; font-family: inherit; font-size: 13px; color: var(--text); background: transparent; }
+.bottom-input input::placeholder { color: var(--text-muted); }
+.bottom-input .tool { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 4px; cursor: pointer; color: var(--text-muted); font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+.bottom-input .tool:hover { background: var(--bg-hover); color: var(--text); }
+.model-chip { display: inline-flex; align-items: center; gap: 5px; background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-size: 10.5px; color: var(--text-secondary); font-weight: 600; cursor: pointer; }
+.model-chip .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-500); animation: pulse 2.4s infinite; }
+.send-btn { width: 26px; height: 26px; border-radius: 6px; background: var(--primary); color: white; border: 0; cursor: pointer; display: grid; place-items: center; }
+.send-btn:hover { background: var(--primary-hover); }
+
+/* Right panel — ambient + chat scroll */
 .right-panel { border-left: 1px solid var(--border); background: var(--bg); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 .right-header { height: 36px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--border); background: var(--bg-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); }
 .right-header .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
 .right-header .ctx-label { margin-left: auto; text-transform: none; letter-spacing: 0; font-size: 11px; color: var(--text-muted); font-weight: 400; font-family: ui-monospace, Menlo, monospace; }
-.right-scroll { flex: 1; overflow-y: auto; }
+.right-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-height: 0; }
 
-.rail-section { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
-.rail-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
-.rail-card {
-    border: 1px solid var(--border); border-radius: 7px; background: var(--bg); padding: 10px 11px; font-size: 12px;
-    line-height: 1.5;
-    display: flex; flex-direction: column; gap: 6px;
-    position: relative;
+/* Ambient block (top, sticky-ish) */
+.ambient {
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg) 88%, rgba(255,255,255,0) 100%);
+    padding: 10px 14px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 8px;
+    flex-shrink: 0;
 }
-.rail-card.cov { border-left: 3px solid var(--accent-qa-gutter); }
-.rail-card .card-head { display: flex; align-items: center; gap: 6px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
-.rail-card .card-head .badge { background: #ecfeff; color: #0e7490; padding: 1px 6px; border-radius: 8px; font-size: 9.5px; font-weight: 700; letter-spacing: 0.3px; }
-.rail-card .body { color: var(--text); }
-.rail-card .body strong { font-weight: 600; }
-.rail-card .meta { color: var(--text-muted); font-size: 11px; }
-.rail-card .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
-.rail-btn { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; font-size: 11.5px; font-family: inherit; font-weight: 500; }
-.rail-btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
-.rail-btn.primary { background: var(--primary); color: white; border-color: var(--primary); }
-.rail-btn.primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
-.rail-btn.warn { background: #fffbeb; color: #92400e; border-color: #fde68a; }
-.rail-btn.warn:hover { background: #fef3c7; }
-.rail-btn.danger { background: var(--bg); color: var(--danger); border-color: #fca5a5; }
-.rail-btn.danger:hover { background: #fee2e2; }
-.rail-btn.success { background: var(--bg); color: var(--success); border-color: #a7e2bc; }
-.rail-btn.success:hover { background: #ecfdf5; }
+.ambient-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
+.ambient-card { border: 1px solid var(--border); border-radius: 7px; background: var(--bg); padding: 8px 10px; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+.ambient-card.relationship { background: var(--bg-secondary); }
+.ambient-card .label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); flex-shrink: 0; }
+.ambient-card .body { flex: 1; min-width: 0; }
+.ambient-card .body strong { font-weight: 600; }
+.ambient-card .body .sub { color: var(--text-muted); font-size: 11px; }
+.ambient-suggest { border: 1px dashed var(--hero-blue-500); background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%); border-radius: 7px; padding: 8px 10px; font-size: 12px; line-height: 1.45; }
+.ambient-suggest .head { display: flex; align-items: center; gap: 6px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--hero-blue-700); margin-bottom: 4px; }
+.ambient-suggest .head .pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-700); animation: pulse 2.4s infinite; }
+.ambient-suggest .head code { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: var(--hero-blue-700); background: transparent; }
+.ambient-suggest .body { color: var(--text); }
+.ambient-suggest .body strong { font-weight: 600; }
+.ambient-suggest .body code { font-family: ui-monospace, Menlo, monospace; font-size: 11px; background: rgba(42, 108, 181, 0.08); padding: 0 4px; border-radius: 3px; color: var(--hero-blue-700); }
+.ambient-suggest .actions { display: flex; gap: 4px; margin-top: 8px; }
+.ambient-suggest .actions button { border: 0; background: transparent; font-family: inherit; font-size: 11px; padding: 3px 9px; border-radius: 4px; cursor: pointer; color: var(--text-secondary); font-weight: 500; }
+.ambient-suggest .actions button.primary { color: var(--hero-blue-700); font-weight: 600; }
+.ambient-suggest .actions button:hover { background: var(--bg-hover); }
 
-/* AC mini list inside coverage card */
-.ac-list { display: flex; flex-direction: column; gap: 3px; padding: 4px 0 2px; }
-.ac-row { display: flex; align-items: center; gap: 8px; font-size: 11.5px; }
-.ac-row .ac-id { font-family: ui-monospace, Menlo, monospace; color: var(--text-muted); font-size: 10.5px; width: 30px; }
-.ac-row .ac-text { flex: 1; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ac-row .ac-state { font-size: 10px; font-weight: 700; }
-.ac-row .ac-state.ok { color: var(--accent-coverage-full); }
-.ac-row .ac-state.miss { color: var(--accent-coverage-none); }
+/* Chat scroll — bottom of right rail */
+.chat-scroll { flex: 1; padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; min-height: 0; }
+.chat-scroll .right-header-inline {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted);
+    display: flex; align-items: center; gap: 6px;
+    padding-bottom: 2px;
+}
+.chat-scroll .right-header-inline .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-500); }
 
-/* Quick actions strip */
-.qa-actions { display: flex; flex-direction: column; gap: 6px; }
-
-/* Activity */
-.activity { display: flex; flex-direction: column; gap: 6px; }
-.activity-row { display: flex; align-items: flex-start; gap: 8px; font-size: 11.5px; color: var(--text-secondary); }
-.activity-row .when { color: var(--text-muted); font-size: 10.5px; font-family: ui-monospace, Menlo, monospace; flex-shrink: 0; }
-.activity-row strong { color: var(--text); font-weight: 600; }
+.bubble-wrap { display: flex; flex-direction: column; gap: 3px; max-width: 100%; }
+.bubble-wrap.user { align-items: flex-end; }
+.bubble-wrap.agent { align-items: flex-start; }
+.via { font-size: 10px; color: var(--text-muted); padding: 0 4px; }
+.via code { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: var(--text-secondary); }
+.bubble { max-width: 300px; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 21px; word-wrap: break-word; }
+.bubble.user { background: rgba(155, 193, 230, 0.22); color: var(--text); }
+.bubble.agent { background: #f4f5f7; color: var(--text); }
+.bubble code { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; background: rgba(0,0,0,0.06); padding: 0 4px; border-radius: 3px; }
+.bubble strong { font-weight: 600; }
+.sys-event { display: flex; align-items: center; gap: 6px; padding: 6px 0; color: var(--text-muted); font-size: 11px; font-style: italic; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); margin: 4px 0; }
+.sys-event::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
+.sys-event code { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; font-style: normal; }
+.sys-event.inline-event { color: var(--hero-blue-700); border-color: #cfe1f4; }
+.sys-event.inline-event::before { background: var(--hero-blue-700); }
 
 </style>
 </head>
@@ -332,7 +413,7 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
     </header>
 
     <div class="body-grid">
-        <!-- Left nav -->
+        <!-- Left nav — Chat tab pinned top, then QA views -->
         <nav class="nav">
             <div class="nav-section">
                 <a class="nav-link chat-entry">
@@ -460,15 +541,15 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                         <a>Sort: priority ▾</a>
                     </div>
 
-                    <!-- BAND 1 · IN QA (brand-relevant) -->
+                    <!-- BAND 1 · IN QA -->
                     <div class="band-head in-qa">
                         <svg class="chev" viewBox="0 0 12 12" fill="none"><path d="M4 4l3 3-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" transform="rotate(90 6 6)"/></svg>
                         <span class="lab">In QA</span>
                         <span class="count">3</span>
-                        <span class="meta">qa-ready or qa-rejected · authoring & verifying</span>
+                        <span class="meta">qa-ready or qa-rejected · authoring &amp; verifying</span>
                     </div>
 
-                    <!-- Selected: Story-2847 (cross-mockup anchor) -->
+                    <!-- Selected: Story-2847 — pre-selected, expanded with inline proposal -->
                     <div class="s-row selected">
                         <span class="drag-handle"><svg width="6" height="12" viewBox="0 0 6 12" fill="currentColor"><circle cx="1.5" cy="2" r="1"/><circle cx="4.5" cy="2" r="1"/><circle cx="1.5" cy="6" r="1"/><circle cx="4.5" cy="6" r="1"/><circle cx="1.5" cy="10" r="1"/><circle cx="4.5" cy="10" r="1"/></svg></span>
                         <span class="type-chip">story</span>
@@ -482,6 +563,34 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                         <span class="avatar xs diego" title="Diego Ramirez — Engineering">DR</span>
                         <span class="tracker-id">STORY-2847</span>
                         <span class="age">2h ago</span>
+                    </div>
+
+                    <!-- Inline-propose panel — agent surfaces a next action in the queue itself -->
+                    <div class="inline-propose-wrap">
+                        <div class="proposed-block">
+                            <span class="proposed-badge">
+                                <span class="dot-pulse"></span>
+                                proposed by <code>qa-investigator</code> · 40s ago
+                            </span>
+                            <div class="proposed-text">
+                                <strong>Suggested next action:</strong> AC#3 is failing on 1 of 2 cases. The contradicting case is <code>C3</code> (last run failed at <code>build #1284</code>, retry-flush assertion). Open story to compose a rejection back to Diego?
+                            </div>
+                            <div class="proposed-actions">
+                                <button class="accept">
+                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                                    Accept (open rejection composer)
+                                </button>
+                                <button class="secondary">
+                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.4"/><path d="M6 4v2.2l1.4 1.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                                    Show case detail
+                                </button>
+                                <button class="dismiss">
+                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                    Dismiss
+                                </button>
+                                <span class="hint">⏎ to accept</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="s-row">
@@ -635,7 +744,7 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                         <span class="age">4d ago</span>
                     </div>
 
-                    <!-- BAND 4 · DONE THIS SPRINT (collapsed) -->
+                    <!-- BAND 4 · DONE (collapsed) -->
                     <div class="band-head collapsed">
                         <svg class="chev" viewBox="0 0 12 12" fill="none"><path d="M4 4l3 3-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" transform="rotate(90 6 6)"/></svg>
                         <span class="lab">Done this sprint</span>
@@ -644,9 +753,42 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                     </div>
                 </div>
             </div>
+
+            <!-- Bottom strip — verb actions + chat input -->
+            <div class="bottom-strip">
+                <div class="bottom-actions">
+                    <span class="bottom-actions-label">Sprint 23 coverage · 1 story needs cases</span>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 6h6M6 3v6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                        Author cases on Story-2853
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6a4 4 0 117 2.7M9 6V3.2H6.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Plan sprint coverage
+                    </button>
+                    <button class="action-btn success">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.5l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                        Approve &amp; mark Complete
+                    </button>
+                    <button class="action-btn warn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M7 3l-3 3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Reject (compose findings)
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="5" cy="5" r="3.2" stroke="currentColor" stroke-width="1.3"/><path d="M7.5 7.5L10 10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        Find similar
+                    </button>
+                </div>
+                <div class="bottom-input">
+                    <span class="model-chip"><span class="dot"></span>Sonnet 4.6</span>
+                    <input placeholder="Ask about Sprint 23 — try &quot;author cases for Story-2853&quot;…" />
+                    <span class="tool" title="Slash commands">/</span><span class="tool" title="Mention">@</span>
+                    <button class="send-btn"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+                </div>
+            </div>
         </main>
 
-        <!-- Right rail -->
+        <!-- Right rail — ambient suggestions (top) + chat log (bottom) -->
         <aside class="right-panel">
             <div class="right-header">
                 <span class="status-dot"></span>QA panel
@@ -654,118 +796,77 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
             </div>
             <div class="right-scroll">
 
-                <!-- Selected story header strip -->
-                <div class="rail-section" style="background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);">
-                    <div class="rail-label">Selected story</div>
-                    <div style="font-weight: 600; font-size: 13px; line-height: 1.4;">Agent runs emit structured trace spans</div>
-                    <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 2px;">
-                        <span class="type-chip">story</span>
-                        <span class="state-chip state-qa-ready">qa-ready</span>
-                        <span style="font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; color: var(--text-muted);">STORY-2847</span>
-                        <span style="font-size: 11px; color: var(--text-muted); margin-left: auto;"><span class="avatar xs diego" style="vertical-align: -3px;">DR</span> Diego Ramirez</span>
-                    </div>
-                </div>
+                <!-- Ambient — relationships + actionable suggestion -->
+                <div class="ambient">
+                    <div class="ambient-label">Ambient · about Story-2847</div>
 
-                <!-- Ambient cards -->
-                <div class="rail-section">
-                    <div class="rail-label">Ambient · about this story</div>
-
-                    <!-- Card 1 · Coverage -->
-                    <div class="rail-card cov">
-                        <div class="card-head"><span class="badge">Coverage</span> 3 of 5 AC covered</div>
+                    <div class="ambient-card relationship">
+                        <span class="label">Hand-off</span>
                         <div class="body">
-                            <strong>5 acceptance criteria</strong>, 3 cases drafted, 2 missing for AC#3 and AC#4.
-                        </div>
-                        <div class="ac-list">
-                            <div class="ac-row"><span class="ac-id">AC#1</span><span class="ac-text">trace span emit + run-id propagation</span><span class="ac-state ok">✓</span></div>
-                            <div class="ac-row"><span class="ac-id">AC#2</span><span class="ac-text">child spans on tool-call boundaries</span><span class="ac-state ok">✓</span></div>
-                            <div class="ac-row"><span class="ac-id">AC#3</span><span class="ac-text">retry on flush w/ backoff sequence</span><span class="ac-state miss">!</span></div>
-                            <div class="ac-row"><span class="ac-id">AC#4</span><span class="ac-text">parent-session-id linkage</span><span class="ac-state miss">!</span></div>
-                            <div class="ac-row"><span class="ac-id">AC#5</span><span class="ac-text">backoff & drop after retries exhausted</span><span class="ac-state ok">✓</span></div>
-                        </div>
-                        <div class="actions">
-                            <button class="rail-btn primary">
-                                <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 6h6M6 3v6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-                                Author missing cases
-                            </button>
-                            <button class="rail-btn">Open test plan</button>
+                            <strong>Engineering hand-off summary:</strong> Diego shipped on branch <code style="font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--bg-tertiary);padding:0 4px;border-radius:3px">agent-trace-spans</code> 2h ago.
+                            <div class="sub">build #1284 green · flipped to qa-ready 11:42 · QA owns next move</div>
                         </div>
                     </div>
 
-                    <!-- Card 2 · Hand-off summary -->
-                    <div class="rail-card">
-                        <div class="card-head"><span class="badge" style="background: #f0fdf4; color: #166534;">Hand-off</span> Engineering → QA</div>
+                    <div class="ambient-card relationship">
+                        <span class="label">Coverage</span>
                         <div class="body">
-                            <strong>Diego shipped on branch <code style="font-family: ui-monospace; font-size: 11px; background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px;">agent-trace-spans</code> 2h ago.</strong> Build #1284 green, retry-mechanism merged.
-                        </div>
-                        <div class="meta">Story flipped to <strong style="color: var(--accent-qa-ready);">qa-ready</strong> at 11:42 — QA owns next move.</div>
-                        <div class="actions">
-                            <button class="rail-btn">
-                                <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                View linked feature
-                            </button>
+                            <strong>3 of 5 AC covered.</strong> AC#3 has 1 failing case (C3 · retry-on-flush). AC#4 (parent-session-id) uncovered.
+                            <div class="sub">5 AC · 3 cases drafted · 2 missing</div>
                         </div>
                     </div>
 
-                    <!-- Card 3 · Similar story -->
-                    <div class="rail-card">
-                        <div class="card-head"><span class="badge" style="background: #fdf4ff; color: #86198f;">Similar</span> Pattern match · 4mo ago</div>
+                    <div class="ambient-suggest">
+                        <div class="head"><span class="pulse"></span>Suggestion · <code>qa-investigator</code></div>
                         <div class="body">
-                            <strong>Story-2691</strong> shipped 8 cases at the time; only <strong>4</strong> still in regression suite today.
+                            <strong>Story-2853</strong> has 4 AC and 0 cases authored. Engineering ETA is tomorrow — author cases now or send back to PM for AC tightening?
                         </div>
-                        <div class="meta">Worth comparing case-set sizing before authoring AC#3 / AC#4?</div>
                         <div class="actions">
-                            <button class="rail-btn">Compare cases</button>
-                            <button class="rail-btn" style="color: var(--text-muted);">Dismiss</button>
+                            <button class="primary">Author 4 cases</button>
+                            <button>Send back</button>
+                            <button>Dismiss</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Quick actions -->
-                <div class="rail-section">
-                    <div class="rail-label">Quick actions · for STORY-2847</div>
-                    <div class="qa-actions">
-                        <button class="rail-btn primary" style="justify-content: center;">
-                            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 6h6M6 3v6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-                            Author cases
-                        </button>
-                        <button class="rail-btn warn" style="justify-content: center;">
-                            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M7 3l-3 3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            Reject (compose findings)
-                        </button>
-                        <button class="rail-btn success" style="justify-content: center;">
-                            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.5l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                            Approve &amp; mark Complete
-                        </button>
-                    </div>
-                    <div class="meta" style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">
-                        Same verbs appear in the bottom strip when you open the story in detail.
-                    </div>
-                </div>
+                <!-- Chat log — realistic agent conversation about the sprint -->
+                <div class="chat-scroll">
+                    <div class="right-header-inline"><span class="dot"></span>Chat · Sprint 23</div>
 
-                <!-- Activity -->
-                <div class="rail-section">
-                    <div class="rail-label">Activity · last 24h</div>
-                    <div class="activity">
-                        <div class="activity-row">
-                            <span class="when">2h</span>
-                            <span><strong>Diego Ramirez</strong> moved story to <span style="color: var(--accent-qa-ready); font-weight: 600;">qa-ready</span> · build #1284</span>
+                    <div class="bubble-wrap user">
+                        <div class="via">via <code>/plan-coverage</code></div>
+                        <div class="bubble user">Plan QA coverage for this sprint.</div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            Running <code>qa-strategist</code>. Budget: <strong>12 cases across 12 stories</strong>, ~35 min authoring time. Want me to start with Story-2853 (the only uncovered one)?
                         </div>
-                        <div class="activity-row">
-                            <span class="when">3h</span>
-                            <span><strong>Tomás Reyes</strong> drafted Case-C1 + C2 for AC#1 / AC#2</span>
-                        </div>
-                        <div class="activity-row">
-                            <span class="when">5h</span>
-                            <span><strong>test-author</strong> proposed 5-case set via boundary-value-analysis</span>
-                        </div>
-                        <div class="activity-row">
-                            <span class="when">1d</span>
-                            <span><strong>Jamie Liu</strong> opened plan <code style="font-family: ui-monospace; font-size: 10.5px; background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px;">agent-trace-coverage</code></span>
-                        </div>
-                        <div class="activity-row">
-                            <span class="when">4d</span>
-                            <span><strong>Jamie Liu</strong> rejected (round 1) → Add AC for retry semantics</span>
+                    </div>
+
+                    <div class="sys-event inline-event">
+                        <code>qa-strategist</code> produced coverage budget · 35m ago
+                    </div>
+
+                    <div class="sys-event inline-event">
+                        Jamie accepted budget · 30m ago
+                    </div>
+
+                    <div class="sys-event inline-event">
+                        <code>test-author</code> drafted 5 cases for Story-2847 → proposed inline · 15m ago
+                    </div>
+
+                    <div class="sys-event inline-event">
+                        Jamie accepted all proposals · 12m ago
+                    </div>
+
+                    <div class="bubble-wrap user">
+                        <div class="bubble user">Story-2847 AC#3 just regressed — case C3 failing. What now?</div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            Investigating with <code>qa-investigator</code>. The C3 assertion contradicts AC#3 wording: AC says "retry on flush failure with exponential backoff" but C3 checks for linear delays. Either the AC needs sharpening or the implementation is wrong. <strong>Surfaced inline on the row</strong> — accept to open a rejection composer.
                         </div>
                     </div>
                 </div>
@@ -776,35 +877,48 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 </div>
 
 <script>
-// Collapse/expand band headers on click
+// Collapse/expand band headers
 document.querySelectorAll('.band-head').forEach(function(h){
     h.addEventListener('click', function(){
         h.classList.toggle('collapsed');
     });
 });
 
-// Click a row to "select" it visually (cosmetic — keeps the mockup feeling live)
+// Click a row to "select" it (the inline-propose panel stays attached to Story-2847 since it's the canonical demo)
 document.querySelectorAll('.s-row').forEach(function(r){
     r.addEventListener('click', function(e){
-        // Don't intercept coverage chip clicks (would open Screen 2)
         if (e.target.closest('.cov-chip')) return;
         document.querySelectorAll('.s-row.selected').forEach(function(s){ s.classList.remove('selected'); });
         r.classList.add('selected');
     });
 });
 
-// Coverage chip click hint (would route to Test plan editor / Screen 2)
+// Coverage chip — would open Test plan editor (Screen 2)
 document.querySelectorAll('.cov-chip').forEach(function(c){
     c.addEventListener('click', function(e){
         e.stopPropagation();
     });
 });
 
-// Segmented view toggle (cosmetic)
+// Segmented view toggle
 document.querySelectorAll('.seg button').forEach(function(b){
     b.addEventListener('click', function(){
         b.parentElement.querySelectorAll('button').forEach(function(x){ x.classList.remove('active'); });
         b.classList.add('active');
+    });
+});
+
+// Proposed-block actions — cosmetic feedback only
+document.querySelectorAll('.proposed-actions button').forEach(function(b){
+    b.addEventListener('click', function(e){
+        e.stopPropagation();
+    });
+});
+
+// Ambient-suggest actions — cosmetic
+document.querySelectorAll('.ambient-suggest .actions button').forEach(function(b){
+    b.addEventListener('click', function(e){
+        e.stopPropagation();
     });
 });
 </script>

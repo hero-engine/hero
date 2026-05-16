@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!-- Hero QA Mock: 06-flaky-backlog | Locked layout: workspace singleton with verdict workflow -->
-<!-- Opinionated zero-flake drive surface. Leaderboard + active backlog + verdict classification. -->
+<!-- Opinionated zero-flake drive surface. Leaderboard + active backlog + AI-proposed verdict classification. -->
+<!-- AI surfaces: chat-tab nav entry, inline-proposed verdict on selected row, ambient-suggest + chat-scroll right rail, two-row bottom strip. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -48,7 +49,7 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 .avatar.tomas { background: linear-gradient(135deg, #fcc46d, #f97316); }
 .avatar.yuki { background: linear-gradient(135deg, #84e1bc, #16a249); }
 
-.body-grid { display: grid; grid-template-columns: 240px 1fr 380px; height: calc(100vh - 48px); min-height: 0; }
+.body-grid { display: grid; grid-template-columns: 240px 1fr 400px; height: calc(100vh - 48px); min-height: 0; }
 
 .nav { background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 12px 8px; overflow-y: auto; display: flex; flex-direction: column; }
 .nav-section { margin-bottom: 14px; }
@@ -167,7 +168,7 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
     min-height: 32px;
 }
 .f-row:hover { background: var(--bg-hover); }
-.f-row.selected { background: var(--accent-flaky-bg); border-left: 3px solid var(--accent-flaky); padding-left: 7px; }
+.f-row.selected { background: var(--accent-flaky-bg); border-left: 3px solid var(--accent-flaky); padding-left: 7px; border-bottom: 0; }
 .f-row.selected:hover { background: var(--accent-flaky-bg); }
 .f-row.classified { opacity: 0.95; }
 
@@ -209,6 +210,19 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 .verdict-pending::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-flaky); animation: pulse 1.8s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
+/* AI proposed verdict pill — distinct from generic pending */
+.verdict-proposed {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+    color: var(--hero-blue-700);
+    border: 1px dashed var(--hero-blue-500);
+    padding: 1px 8px 1px 6px; border-radius: 10px;
+    font-size: 10.5px; font-weight: 700;
+}
+.verdict-proposed::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); animation: pulse 1.8s ease-in-out infinite; }
+.verdict-proposed .v-kind { background: #fef3c7; color: #92400e; padding: 1px 6px; border-radius: 8px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; }
+.verdict-proposed .conf { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: var(--hero-blue-700); opacity: 0.8; }
+
 .verdict-classified {
     display: inline-flex; align-items: center; gap: 6px;
     background: var(--bg);
@@ -240,6 +254,59 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
     display: grid; place-items: center;
 }
 .f-row.selected .row-chev { color: var(--accent-flaky); }
+
+/* Inline proposed-block for the SELECTED row */
+.row-inline-propose {
+    background: var(--accent-flaky-bg);
+    border-left: 3px solid var(--accent-flaky);
+    padding: 4px 14px 14px 11px;
+    border-bottom: 1px solid var(--border);
+}
+.proposed-block {
+    border: 1.5px dashed var(--hero-blue-500);
+    background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+    border-radius: 8px;
+    padding: 14px 16px 8px;
+    position: relative;
+    margin-top: 8px;
+}
+.proposed-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10.5px; font-weight: 600;
+    color: var(--hero-blue-700);
+    background: white; border: 1px solid #cfe1f4;
+    padding: 2px 8px; border-radius: 10px;
+    position: absolute; top: -10px; left: 12px;
+}
+.proposed-badge .dot-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); animation: pulse 1.8s ease-in-out infinite; }
+.proposed-badge code { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; background: transparent; color: var(--hero-blue-700); }
+.proposed-text {
+    margin-top: 4px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    padding: 4px 0 2px;
+    color: var(--text);
+}
+.proposed-text strong { font-weight: 600; }
+.proposed-text code { background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; font-size: 11.5px; font-family: ui-monospace, Menlo, monospace; }
+.proposed-actions {
+    display: flex; gap: 4px; margin-top: 10px;
+    padding-top: 8px; border-top: 1px dashed var(--hero-blue-300);
+    align-items: center;
+}
+.proposed-actions button {
+    border: 0; background: transparent; font-family: inherit;
+    font-size: 11.5px; padding: 4px 10px; border-radius: 5px;
+    cursor: pointer; color: var(--text-secondary);
+    display: inline-flex; align-items: center; gap: 5px; font-weight: 500;
+}
+.proposed-actions button.accept { color: white; background: var(--hero-blue-700); font-weight: 600; }
+.proposed-actions button.accept:hover { background: var(--primary-hover); }
+.proposed-actions button.override { color: var(--text); border: 1px solid var(--border); }
+.proposed-actions button.override:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+.proposed-actions button.evidence { color: var(--hero-blue-700); }
+.proposed-actions button.evidence:hover { background: #eaf2fb; }
+.proposed-actions .hint { margin-left: auto; font-size: 10.5px; color: var(--text-muted); font-family: ui-monospace, Menlo, monospace; }
 
 /* Section divider */
 .section-divider {
@@ -281,9 +348,16 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
     cursor: pointer; height: 24px;
     display: inline-flex; align-items: center; gap: 4px;
     margin: 0 2px;
+    opacity: 0.78;
 }
-.classify-split .opt:hover { background: rgba(255,255,255,0.2); }
+.classify-split .opt:hover { background: rgba(255,255,255,0.2); opacity: 1; }
 .classify-split .opt .dot { width: 6px; height: 6px; border-radius: 50%; }
+.classify-split .opt.suggested {
+    background: rgba(255,255,255,0.28);
+    opacity: 1;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.55);
+}
+.classify-split .opt .ai-conf { font-family: ui-monospace, Menlo, monospace; font-size: 9.5px; opacity: 0.9; margin-left: 2px; }
 .opt.test-issue .dot { background: #fde68a; }
 .opt.environment .dot { background: #7dd3fc; }
 .opt.true-bug .dot { background: #fca5a5; }
@@ -306,54 +380,87 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
 .right-header { height: 36px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--border); background: var(--bg-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); }
 .right-header .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-flaky); }
 .right-header .ctx-label { margin-left: auto; text-transform: none; letter-spacing: 0; font-size: 11px; color: var(--text-muted); font-weight: 400; font-family: ui-monospace, Menlo, monospace; }
-.right-scroll { flex: 1; overflow-y: auto; }
+.right-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-height: 0; }
 
-.ambient { padding: 12px 14px 14px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+.ambient { padding: 10px 14px 12px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; background: linear-gradient(180deg, var(--bg) 0%, var(--bg) 92%, rgba(255,255,255,0) 100%); }
 .ambient-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
-.ambient-card { border: 1px solid var(--border); border-radius: 7px; background: var(--bg); padding: 9px 11px; font-size: 12px; line-height: 1.45; }
-.ambient-card .head { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent-flaky); }
-.ambient-card .head .pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--accent-flaky); }
-.ambient-card strong { font-weight: 600; }
+.ambient-card { border: 1px solid var(--border); border-radius: 7px; background: var(--bg-secondary); padding: 8px 10px; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+.ambient-card .label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); flex-shrink: 0; min-width: 50px; }
+.ambient-card .body { flex: 1; min-width: 0; }
+.ambient-card .body strong { font-weight: 600; }
+.ambient-card .body .sub { color: var(--text-muted); font-size: 11px; }
 .ambient-card .body code { font-family: ui-monospace, Menlo, monospace; font-size: 11px; background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; }
-.ambient-card.suggestion { background: linear-gradient(180deg, #faf5ff 0%, var(--bg) 100%); border-color: var(--accent-flaky-border); }
-.ambient-card .actions { display: flex; gap: 6px; margin-top: 7px; }
-.ambient-card .actions button { border: 0; background: transparent; font-family: inherit; font-size: 11px; padding: 3px 8px; border-radius: 4px; cursor: pointer; color: var(--text-secondary); font-weight: 500; }
-.ambient-card .actions button.primary { color: var(--accent-flaky); }
-.ambient-card .actions button:hover { background: var(--bg-hover); }
-.ambient-card .confidence { font-size: 10.5px; color: var(--text-muted); margin-top: 4px; font-family: ui-monospace, Menlo, monospace; }
-.ambient-card .confidence strong { color: var(--accent-flaky); }
 
-/* Case details strip */
-.case-details {
-    padding: 12px 14px; border-bottom: 1px solid var(--border);
+/* Ambient-suggest — actionable AI proposal */
+.ambient-suggest {
+    border: 1.5px dashed var(--hero-blue-500);
+    background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+    border-radius: 7px; padding: 10px 12px; font-size: 12px; line-height: 1.5;
+}
+.ambient-suggest .head {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--hero-blue-700);
+    margin-bottom: 6px;
+}
+.ambient-suggest .head .pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); animation: pulse 1.8s ease-in-out infinite; }
+.ambient-suggest .head code { font-family: ui-monospace, Menlo, monospace; font-size: 10px; background: transparent; color: var(--hero-blue-700); font-weight: 600; }
+.ambient-suggest .body { color: var(--text); }
+.ambient-suggest .body strong { font-weight: 600; }
+.ambient-suggest .body code { font-family: ui-monospace, Menlo, monospace; font-size: 11px; background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; }
+.ambient-suggest .actions {
+    display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px;
+    padding-top: 7px; border-top: 1px dashed var(--hero-blue-300);
+}
+.ambient-suggest .actions button {
+    border: 0; background: transparent; font-family: inherit;
+    font-size: 11px; padding: 3px 9px; border-radius: 4px;
+    cursor: pointer; color: var(--text-secondary); font-weight: 500;
+}
+.ambient-suggest .actions button.primary { background: var(--hero-blue-700); color: white; font-weight: 600; }
+.ambient-suggest .actions button.primary:hover { background: var(--primary-hover); }
+.ambient-suggest .actions button:not(.primary):hover { background: var(--bg-hover); }
+
+/* Chat scroll — agent conversation in right rail */
+.chat-scroll {
+    flex: 1; min-height: 0; overflow-y: auto;
+    padding: 12px 14px 14px;
     display: flex; flex-direction: column; gap: 10px;
 }
-.cd-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
-.cd-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); }
-.cd-row .k { color: var(--text-muted); font-size: 11px; min-width: 76px; }
-.cd-row .v { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: var(--hero-blue-700); background: #eaf2fb; padding: 1px 6px; border-radius: 4px; font-weight: 600; }
+.chat-scroll .right-header-inline {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-muted); display: flex; align-items: center; gap: 6px;
+    padding-bottom: 4px; border-bottom: 1px dashed var(--border); margin-bottom: 2px;
+}
+.chat-scroll .right-header-inline .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent-flaky); animation: pulse 1.8s ease-in-out infinite; }
+.bubble-wrap { display: flex; flex-direction: column; gap: 3px; max-width: 100%; }
+.bubble-wrap.user { align-items: flex-end; }
+.bubble-wrap.agent { align-items: flex-start; }
+.via { font-size: 10px; color: var(--text-muted); padding: 0 4px; }
+.via code { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: var(--text-secondary); }
+.bubble { max-width: 320px; padding: 9px 13px; border-radius: 12px; font-size: 12.5px; line-height: 1.55; word-wrap: break-word; }
+.bubble.user { background: rgba(155, 193, 230, 0.22); color: var(--text); }
+.bubble.agent { background: #f4f5f7; color: var(--text); }
+.bubble code { font-family: ui-monospace, Menlo, monospace; font-size: 11px; background: rgba(0,0,0,0.06); padding: 0 4px; border-radius: 3px; }
+.bubble strong { font-weight: 600; }
 
-/* Signature group */
-.sig-group { padding: 12px 14px; }
-.sig-head { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); margin-bottom: 8px; }
-.sig-row {
-    display: grid; grid-template-columns: 1fr auto;
-    gap: 8px; align-items: center;
-    padding: 6px 8px; border-radius: 6px;
-    margin-bottom: 4px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
+.sys-event {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 0; color: var(--text-muted);
+    font-size: 10.5px; font-style: italic;
+    border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border);
+    margin: 2px 0;
 }
-.sig-row:hover { background: var(--bg-hover); }
-.sig-name { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--text); }
-.sig-count { font-size: 11px; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
-.sig-bar {
-    grid-column: 1 / -1;
-    height: 3px; background: var(--bg-tertiary); border-radius: 2px;
-    overflow: hidden; margin-top: 4px;
+.sys-event::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); }
+.sys-event code {
+    font-family: ui-monospace, Menlo, monospace; font-size: 10px;
+    background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px;
+    font-style: normal;
 }
-.sig-bar-fill { height: 100%; background: var(--accent-flaky); border-radius: 2px; }
-.sig-row.top .sig-name { font-weight: 600; color: var(--danger); }
+.sys-event.inline-event { color: var(--hero-blue-700); border-color: #cfe1f4; }
+.sys-event.inline-event::before { background: var(--hero-blue-700); }
+.sys-event.inline-event code { color: var(--hero-blue-700); }
 </style>
 </head>
 <body>
@@ -412,7 +519,7 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                 <div class="workspace-padded">
                     <div class="ws-header">
                         <h1 class="ws-title">Flaky tests backlog</h1>
-                        <span class="ws-sub">Active queue · verdict-driven · drive to zero</span>
+                        <span class="ws-sub">Active queue · AI-proposed verdicts · drive to zero</span>
                     </div>
 
                     <!-- LEADERBOARD -->
@@ -479,11 +586,11 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                     <div class="section-divider">
                         <span class="lab">Unclassified — needs verdict</span>
                         <span class="count">3</span>
-                        <span class="meta">no fix-by deadline until classified</span>
+                        <span class="meta"><code style="background:#eaf2fb;color:var(--hero-blue-700);padding:0 5px;border-radius:3px;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;">qa-flake-curator</code> analyzed all 3 · 8m ago</span>
                     </div>
 
                     <div class="flake-list">
-                        <!-- ROW 1 — SELECTED -->
+                        <!-- ROW 1 — SELECTED — RC-441 with AI proposal -->
                         <div class="f-row selected">
                             <span class="stability-chip stab-low">47%</span>
                             <div class="f-title">
@@ -502,12 +609,53 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                                 <span class="run-dot pass">✓</span>
                                 <span class="run-dot fail">✗</span>
                             </div>
-                            <span class="verdict-pending">Verdict pending</span>
+                            <span class="verdict-proposed" title="AI-proposed verdict, awaiting human accept/override">
+                                proposed
+                                <span class="v-kind">test-issue</span>
+                                <span class="conf">87%</span>
+                            </span>
                             <span class="suite-chip">agent-runtime-regression</span>
                             <span class="row-chev"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
                         </div>
 
-                        <!-- ROW 2 -->
+                        <!-- INLINE PROPOSAL for selected RC-441 -->
+                        <div class="row-inline-propose">
+                            <div class="proposed-block">
+                                <span class="proposed-badge">
+                                    <span class="dot-pulse"></span>
+                                    proposed by <code>qa-flake-curator</code> · 8m ago · 87% confidence
+                                </span>
+                                <div class="proposed-text">
+                                    <strong>Suggested verdict: test-issue (locator instability under concurrent runs).</strong>
+                                    Failure pattern: <code>ConcurrentSpanWriteException</code> in <strong>14/14</strong> of last 10 failure events.
+                                    Cluster: builds <code>#1280–1284</code>, all under high-load test profile.
+                                    Recommend assigning <strong>Tomás Reyes</strong>, fix-by <strong>2026-05-22</strong>.
+                                    <br><br>
+                                    Alternatives ranked: <code>environment</code> (8% — load profile is consistent across pools),
+                                    <code>true-bug</code> (5% — fails are concurrency-only, prod retry config caps concurrency at 3).
+                                </div>
+                                <div class="proposed-actions">
+                                    <button class="accept">
+                                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                                        Accept verdict
+                                    </button>
+                                    <button class="override">
+                                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/></svg>
+                                        Override to environment
+                                    </button>
+                                    <button class="override">
+                                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 1l5 9H1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                                        Override to true-bug
+                                    </button>
+                                    <button class="evidence">
+                                        Show full evidence →
+                                    </button>
+                                    <span class="hint">⏎ accept · O override</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ROW 2 — RC-388 with AI proposal -->
                         <div class="f-row">
                             <span class="stability-chip stab-mid">71%</span>
                             <div class="f-title">
@@ -526,12 +674,16 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                                 <span class="run-dot fail">✗</span>
                                 <span class="run-dot pass">✓</span>
                             </div>
-                            <span class="verdict-pending">Verdict pending</span>
+                            <span class="verdict-proposed">
+                                proposed
+                                <span class="v-kind" style="background:#e0f2fe;color:#075985;">environment</span>
+                                <span class="conf">74%</span>
+                            </span>
                             <span class="suite-chip">webhooks-regression</span>
                             <span class="row-chev"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
                         </div>
 
-                        <!-- ROW 3 -->
+                        <!-- ROW 3 — RC-512 with needs-review -->
                         <div class="f-row">
                             <span class="stability-chip stab-low">58%</span>
                             <div class="f-title">
@@ -550,7 +702,7 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                                 <span class="run-dot pass">✓</span>
                                 <span class="run-dot pass">✓</span>
                             </div>
-                            <span class="verdict-pending">Verdict pending</span>
+                            <span class="verdict-pending" title="Mixed signature — agent requests human review">Needs human review</span>
                             <span class="suite-chip">telemetry-regression</span>
                             <span class="row-chev"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
                         </div>
@@ -621,10 +773,16 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                             <span class="row-chev"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
                         </div>
                     </div>
+
+                    <p style="margin-top:18px;font-size:11.5px;color:var(--text-muted);font-style:italic;padding:0 4px;">
+                        Note · verdicts proposed by <code style="background:#eaf2fb;color:var(--hero-blue-700);padding:0 4px;border-radius:3px;font-family:ui-monospace,Menlo,monospace;font-size:11px;font-style:normal;">qa-flake-curator</code> live in this artifact, not the chat.
+                        Accept/override directly on the row — the chat (right rail) only logs the action.
+                    </p>
+
                 </div>
             </div>
 
-            <!-- BOTTOM STRIP — verdict-pending actions for RC-441 -->
+            <!-- BOTTOM STRIP — two-row: actions + input -->
             <div class="bottom-strip">
                 <div class="bottom-actions">
                     <span class="bottom-actions-label">RC-441 · verdict pending</span>
@@ -635,9 +793,9 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                         </span>
                         <span class="divider"></span>
                         <span class="options">
-                            <span class="opt test-issue" title="Locator instability, assertion bug, test code issue"><span class="dot"></span>test-issue</span>
-                            <span class="opt environment" title="Infra, network, CI runner, data fixture"><span class="dot"></span>environment</span>
-                            <span class="opt true-bug" title="Real product defect — routes to /diagnose"><span class="dot"></span>true-bug</span>
+                            <span class="opt test-issue suggested" title="qa-flake-curator suggests test-issue · 87% confidence"><span class="dot"></span>test-issue<span class="ai-conf">·87%</span></span>
+                            <span class="opt environment" title="Override · 8% confidence"><span class="dot"></span>environment</span>
+                            <span class="opt true-bug" title="Override · 5% confidence — routes to /diagnose"><span class="dot"></span>true-bug</span>
                         </span>
                     </div>
                     <button class="action-btn">
@@ -650,99 +808,118 @@ body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, 
                     </button>
                 </div>
                 <div class="bottom-input">
-                    <span class="model-chip"><span class="dot"></span>qa-flake-curator · Sonnet 4.6</span>
-                    <input placeholder="Ask about RC-441 — failure signatures, build cluster, or classify with reasoning…" />
+                    <span class="model-chip"><span class="dot"></span>Sonnet 4.6</span>
+                    <input placeholder="Ask about flakes — try 'reclassify RC-441 with new evidence'…" />
                     <span class="tool">/</span><span class="tool">@</span>
                     <button class="send-btn"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
                 </div>
             </div>
         </main>
 
-        <!-- RIGHT RAIL -->
+        <!-- RIGHT RAIL — ambient + chat -->
         <aside class="right-panel">
             <div class="right-header">
-                <span class="status-dot"></span>Flake details
-                <span class="ctx-label">· RC-441</span>
+                <span class="status-dot"></span>Triage · RC-441
+                <span class="ctx-label">· qa-flake-curator</span>
             </div>
             <div class="right-scroll">
+                <!-- AMBIENT — relationships + actionable AI suggestion -->
                 <div class="ambient">
-                    <div class="ambient-label">Ambient · qa-flake-curator</div>
+                    <div class="ambient-label">Ambient · about RC-441</div>
 
-                    <div class="ambient-card suggestion">
-                        <div class="head"><span class="pulse"></span>Suggested verdict · test-issue</div>
+                    <div class="ambient-card">
+                        <span class="label">Linked AC</span>
                         <div class="body">
-                            <strong>Locator instability under concurrent runs.</strong> Failure modes show race on span-write — most assertions pass once retried in isolation. Consistent with non-atomic test setup, not a product defect.
+                            <strong>Story-2847 · AC#1</strong> (span emit)
+                            <div class="sub">→ ENG <code>agent-trace-spans</code> · delivering</div>
                         </div>
-                        <div class="confidence">Confidence: <strong>87%</strong> · based on 30 failure samples</div>
+                    </div>
+
+                    <div class="ambient-card">
+                        <span class="label">Plan</span>
+                        <div class="body">
+                            <strong>agent-trace-coverage</strong>
+                            <div class="sub">suite <code>agent-runtime-regression</code> · owner Tomás Reyes</div>
+                        </div>
+                    </div>
+
+                    <div class="ambient-card">
+                        <span class="label">Last run</span>
+                        <div class="body">
+                            <strong style="color:var(--danger);">build #1284 · failed</strong>
+                            <div class="sub">1h ago · <code>ConcurrentSpanWriteException</code></div>
+                        </div>
+                    </div>
+
+                    <!-- AI ambient-suggest (the actionable classification proposal) -->
+                    <div class="ambient-suggest">
+                        <div class="head">
+                            <span class="pulse"></span>
+                            Classification · <code>qa-flake-curator</code> · 87% confidence
+                        </div>
+                        <div class="body">
+                            RC-441 failures cluster around concurrent runs. Locator instability under load — <strong>not a real bug</strong>.
+                            Suggest <strong>test-issue</strong> verdict with fix-by 2026-05-22 (assign to <strong>Tomás Reyes</strong>).
+                        </div>
                         <div class="actions">
-                            <button class="primary">Accept verdict</button>
-                            <button>Override</button>
+                            <button class="primary">Accept (set verdict)</button>
+                            <button>Override (true-bug)</button>
+                            <button>Override (environment)</button>
                             <button>Show evidence</button>
                         </div>
                     </div>
-
-                    <div class="ambient-card">
-                        <div class="head"><span class="pulse"></span>Cluster · build envelope</div>
-                        <div class="body">
-                            Failures cluster around builds <code>#1280–1284</code>. New CI runner pool deployed May 12 — possible shared resource pressure. Inspect env?
-                        </div>
-                        <div class="actions">
-                            <button class="primary">View run logs →</button>
-                            <button>Compare runner pools</button>
-                        </div>
-                    </div>
-
-                    <div class="ambient-card">
-                        <div class="head"><span class="pulse"></span>If true-bug verdict</div>
-                        <div class="body">
-                            Routes to <code>/diagnose</code> chain. Creates engineering <code>bug</code> linked to RC-441; transitions case to <strong>quarantined</strong> until fix lands. Diego is the likely assignee (owns trace-spans area).
-                        </div>
-                    </div>
                 </div>
 
-                <div class="case-details">
-                    <div class="cd-label">Case details</div>
-                    <div class="cd-row">
-                        <span class="k">Linked AC</span>
-                        <span class="v">Story-2847 · AC#1 (span emit)</span>
+                <!-- CHAT — agent conversation showing how it analyzed each failure pattern -->
+                <div class="chat-scroll">
+                    <div class="right-header-inline">
+                        <span class="dot"></span>
+                        Chat · RC-441 triage
                     </div>
-                    <div class="cd-row">
-                        <span class="k">Linked plan</span>
-                        <span class="v">agent-trace-coverage</span>
-                    </div>
-                    <div class="cd-row">
-                        <span class="k">Suite</span>
-                        <span class="v">agent-runtime-regression</span>
-                    </div>
-                    <div class="cd-row">
-                        <span class="k">Owner (case)</span>
-                        <span class="v" style="background: transparent; color: var(--text-secondary); padding: 0;"><div class="avatar sm tomas" style="display:inline-grid;vertical-align:middle;margin-right:4px;">TR</div>Tomás Reyes</span>
-                    </div>
-                    <div class="cd-row">
-                        <span class="k">Last run</span>
-                        <span class="v" style="background: #fff1f2; color: var(--danger);">build #1284 · failed · 1h ago</span>
-                    </div>
-                </div>
 
-                <div class="sig-group">
-                    <div class="sig-head">Last 30 failures · grouped by signature</div>
-                    <div class="sig-row top">
-                        <span class="sig-name">ConcurrentSpanWriteException</span>
-                        <span class="sig-count">14 occurrences</span>
-                        <div class="sig-bar"><div class="sig-bar-fill" style="width: 100%;"></div></div>
+                    <div class="bubble-wrap user">
+                        <div class="via">via <code>/triage-flaky</code></div>
+                        <div class="bubble user">Triage the 3 unclassified flakes.</div>
                     </div>
-                    <div class="sig-row">
-                        <span class="sig-name">Span ID collision</span>
-                        <span class="sig-count">6 occurrences</span>
-                        <div class="sig-bar"><div class="sig-bar-fill" style="width: 43%;"></div></div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            Running <code>qa-flake-curator</code>. Analyzing failure signatures across last 10 runs per case.
+                            <br><br>
+                            <strong>RC-441</strong> (47% stability, span emission under concurrent runs): 14 occurrences of <code>ConcurrentSpanWriteException</code> — locator instability pattern. Classifying <strong>test-issue</strong> (87% conf).
+                            <br><br>
+                            <strong>RC-388</strong> (71%, webhook retry timing): timing-variance failures — classifying <strong>environment</strong> (74% conf).
+                            <br><br>
+                            <strong>RC-512</strong> (58%, trace span queue depth): mixed signature — needs human review.
+                        </div>
                     </div>
-                    <div class="sig-row">
-                        <span class="sig-name">Backend timeout (5xx)</span>
-                        <span class="sig-count">3 occurrences</span>
-                        <div class="sig-bar"><div class="sig-bar-fill" style="width: 21%;"></div></div>
+
+                    <div class="sys-event inline-event">
+                        <code>qa-flake-curator</code> analyzed 3 cases · 8m ago
                     </div>
-                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px; padding: 0 4px;">
-                        7 lower-frequency signatures hidden · <a style="color: var(--accent-flaky); text-decoration: none; cursor: pointer; font-weight: 600;">Show all →</a>
+
+                    <div class="sys-event inline-event">
+                        <code>qa-flake-curator</code> proposed verdicts → inline cards · 8m ago
+                    </div>
+
+                    <div class="sys-event inline-event">
+                        Yuki accepted RC-401 verdict · 1h ago (environment, fix-by 2026-05-20)
+                    </div>
+
+                    <div class="sys-event inline-event">
+                        Tomás accepted RC-219 verdict · 30m ago (test-issue, fix-by 2026-05-22)
+                    </div>
+
+                    <div class="bubble-wrap user">
+                        <div class="bubble user">Jamie: For RC-441, is there any chance this is a real bug we should <code>/diagnose</code>?</div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            Possible but unlikely — the failure only manifests under <strong>10+ concurrent runs</strong> which the production retry config caps at <strong>3</strong>. Confidence in <code>test-issue</code> verdict: <strong>87%</strong>.
+                            <br><br>
+                            If you want, I can lower the cap in <code>Concurrent</code> test fixture to reproduce more reliably and re-evaluate.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -772,6 +949,13 @@ document.querySelectorAll('.classify-split .opt').forEach(opt => {
                    : opt.classList.contains('environment') ? 'environment'
                    : 'true-bug';
         console.log('Classify RC-441 →', kind);
+    });
+});
+// Proposed-block actions — log accept/override (mockup-only)
+document.querySelectorAll('.proposed-actions button, .ambient-suggest .actions button').forEach(btn => {
+    btn.addEventListener('click', e => {
+        e.stopPropagation();
+        console.log('Verdict action →', btn.textContent.trim());
     });
 });
 </script>

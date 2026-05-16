@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<!-- Hero QA Mock: 05-release-gate | Release-gate Go/No-Go destination view -->
-<!-- Layout: left nav + verdict banner + blockers list + coverage/regression/sign-off + right rail + bottom strip -->
+<!-- Hero QA Mock: 05-release-gate | AI-surface retrofit -->
+<!-- The No-Go verdict is REASONED BY release-gate-reviewer — reasoning chain is visible -->
+<!-- Layout: nav (with Chat entry) + verdict (inline-proposed reasoning + banner) + blockers/coverage/regression/sign-off + right rail (ambient + chat reasoning) + bottom strip (actions + input) -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -128,7 +129,7 @@ body {
 /* ── Body 3-column ─────────────────────────────────────────────── */
 .body-grid {
     display: grid;
-    grid-template-columns: 240px 1fr 380px;
+    grid-template-columns: 240px 1fr 400px;
     height: calc(100vh - 48px);
     min-height: 0;
 }
@@ -271,6 +272,95 @@ body {
 .chip.priority-p1 { background: #fff7ed; color: #9a3412; font-weight: 700; }
 .chip.priority-p1 .dot { background: var(--warning); }
 
+/* ── INLINE-PROPOSED REASONING BLOCK (above verdict) ───────────── */
+.proposed-list { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 18px; }
+.proposed-block {
+    border: 1.5px dashed var(--hero-blue-500);
+    background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+    border-radius: 8px;
+    padding: 12px 14px 8px;
+    position: relative;
+}
+.proposed-block.collapsed .proposed-body { display: none; }
+.proposed-block.collapsed { padding-bottom: 12px; }
+.proposed-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10.5px; font-weight: 600;
+    color: var(--hero-blue-700);
+    background: white; border: 1px solid #cfe1f4;
+    padding: 2px 8px; border-radius: 10px;
+    position: absolute; top: -10px; left: 12px;
+}
+.proposed-badge .dot-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); }
+.proposed-badge code { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; background: transparent; color: var(--hero-blue-700); }
+.proposed-head {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12.5px; font-weight: 600; color: var(--text);
+    cursor: pointer;
+    user-select: none;
+}
+.proposed-head .label { flex: 1; }
+.proposed-head .label .sub {
+    display: block; font-weight: 400; font-size: 11px; color: var(--text-muted);
+    margin-top: 2px;
+}
+.proposed-head .label .sub code {
+    font-family: ui-monospace, Menlo, monospace; font-size: 10.5px;
+    background: #eaf2fb; color: var(--hero-blue-700);
+    padding: 0 4px; border-radius: 3px;
+}
+.proposed-head .conf {
+    font-size: 10.5px; font-weight: 600;
+    color: var(--hero-blue-700);
+    background: #eaf2fb; border: 1px solid #cfe1f4;
+    padding: 1px 7px; border-radius: 10px;
+}
+.proposed-head .toggle-chev {
+    width: 12px; height: 12px; color: var(--text-muted);
+    transition: transform 0.15s ease;
+}
+.proposed-block.collapsed .toggle-chev { transform: rotate(-90deg); }
+.proposed-body { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--hero-blue-300); }
+.proposed-text {
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--text);
+}
+.proposed-text p { margin: 0 0 8px; }
+.proposed-text p:last-child { margin-bottom: 0; }
+.proposed-text strong { font-weight: 600; }
+.proposed-text code {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11.5px;
+    background: var(--bg-tertiary);
+    padding: 0 4px; border-radius: 3px;
+}
+.proposed-text .policy-tag {
+    display: inline-flex; align-items: center;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 10.5px; font-weight: 700;
+    padding: 0 5px; border-radius: 3px;
+    background: #fef2f2; color: var(--danger);
+    margin-right: 4px;
+}
+.proposed-text .policy-tag.p1 { background: #fff7ed; color: var(--warning); }
+.proposed-actions {
+    display: flex; gap: 4px; margin-top: 10px;
+    padding-top: 8px; border-top: 1px dashed var(--hero-blue-300);
+    align-items: center;
+}
+.proposed-actions button {
+    border: 0; background: transparent; font-family: inherit;
+    font-size: 11.5px; padding: 4px 10px; border-radius: 4px;
+    cursor: pointer; color: var(--text-secondary);
+    display: inline-flex; align-items: center; gap: 5px; font-weight: 500;
+}
+.proposed-actions button.accept { color: var(--success); font-weight: 600; }
+.proposed-actions button.override { color: var(--warning); }
+.proposed-actions button.regen { color: var(--text-muted); }
+.proposed-actions button:hover { background: var(--bg-hover); }
+.proposed-actions .hint { margin-left: auto; font-size: 10.5px; color: var(--text-muted); }
+
 /* ── THE VERDICT BANNER — centerpiece ──────────────────────────── */
 .verdict-banner {
     position: relative;
@@ -293,7 +383,7 @@ body {
 }
 .verdict-head {
     display: flex; align-items: center; gap: 12px;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
 }
 .verdict-icon {
     width: 38px; height: 38px;
@@ -324,6 +414,31 @@ body {
     font-size: 13px; font-weight: 500;
     margin-top: 2px;
 }
+/* Verdict reasoned-by sub-line (.proposed-badge-style) */
+.verdict-reasoned {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 500;
+    color: var(--hero-blue-700);
+    background: white; border: 1px solid #cfe1f4;
+    padding: 3px 9px; border-radius: 10px;
+    margin: 8px 0 14px;
+}
+.verdict-reasoned .pulse {
+    width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-700);
+}
+.verdict-reasoned code {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 10.5px; background: transparent;
+    color: var(--hero-blue-700); font-weight: 600;
+}
+.verdict-reasoned .sep { color: var(--text-muted); font-weight: 400; }
+.verdict-reasoned .meta { color: var(--text-secondary); font-weight: 400; }
+.verdict-reasoned .show-reasoning {
+    color: var(--hero-blue-700); font-weight: 600;
+    cursor: pointer; text-decoration: none;
+    margin-left: 2px;
+}
+.verdict-reasoned .show-reasoning:hover { text-decoration: underline; }
 .verdict-summary {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -759,6 +874,8 @@ body {
     display: flex; flex-direction: column;
 }
 .ambient {
+    position: sticky; top: 0; z-index: 2;
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg) 88%, rgba(255,255,255,0) 100%);
     padding: 10px 14px 14px;
     border-bottom: 1px solid var(--border);
     display: flex; flex-direction: column; gap: 8px;
@@ -775,6 +892,9 @@ body {
     line-height: 1.5;
     display: flex; gap: 9px;
 }
+.ambient-card.warn .ac-icon { background: #fef3c7; color: var(--warning); }
+.ambient-card.info .ac-icon { background: #eaf2fb; color: var(--hero-blue-700); }
+.ambient-card.good .ac-icon { background: #dcfce7; color: var(--success); }
 .ambient-card .ac-icon {
     width: 22px; height: 22px;
     border-radius: 5px;
@@ -782,9 +902,6 @@ body {
     flex-shrink: 0;
     margin-top: 1px;
 }
-.ambient-card.warn .ac-icon { background: #fef3c7; color: var(--warning); }
-.ambient-card.info .ac-icon { background: #eaf2fb; color: var(--hero-blue-700); }
-.ambient-card.good .ac-icon { background: #dcfce7; color: var(--success); }
 .ambient-card .body { flex: 1; min-width: 0; }
 .ambient-card .body strong { font-weight: 600; }
 .ambient-card .body code {
@@ -797,8 +914,99 @@ body {
     color: var(--text-muted); font-size: 11px;
     margin-top: 4px;
 }
-.right-section {
+.ambient-suggest {
+    border: 1px dashed var(--hero-blue-500);
+    background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+    border-radius: 7px;
+    padding: 8px 10px;
+    font-size: 12px; line-height: 1.45;
+}
+.ambient-suggest .head {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 9.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--hero-blue-700);
+    margin-bottom: 4px;
+}
+.ambient-suggest .head .pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-700); }
+.ambient-suggest .head code {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 10px; background: transparent;
+    color: var(--hero-blue-700);
+    text-transform: none; letter-spacing: 0;
+}
+.ambient-suggest .actions { display: flex; gap: 4px; margin-top: 6px; }
+.ambient-suggest .actions button {
+    border: 0; background: transparent; font-family: inherit;
+    font-size: 11px; padding: 3px 9px; border-radius: 4px;
+    cursor: pointer; color: var(--text-secondary); font-weight: 500;
+}
+.ambient-suggest .actions button.primary { color: var(--hero-blue-700); font-weight: 600; }
+.ambient-suggest .actions button:hover { background: var(--bg-hover); }
+
+/* ── Right chat scroll (reasoning thread) ─────────────────────── */
+.chat-scroll {
+    flex: 1; padding: 12px 14px 14px;
+    display: flex; flex-direction: column; gap: 10px;
+}
+.chat-scroll .right-header-inline {
+    font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    padding-bottom: 6px;
     border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+}
+.chat-scroll .right-header-inline .pulse {
+    width: 5px; height: 5px; border-radius: 50%; background: var(--success);
+}
+.chat-scroll .right-header-inline .ctx {
+    margin-left: auto;
+    text-transform: none; letter-spacing: 0; font-weight: 400;
+    color: var(--text-muted);
+    font-family: ui-monospace, Menlo, monospace;
+}
+.bubble-wrap { display: flex; flex-direction: column; gap: 3px; max-width: 100%; }
+.bubble-wrap.user { align-items: flex-end; }
+.bubble-wrap.agent { align-items: flex-start; }
+.via { font-size: 10px; color: var(--text-muted); padding: 0 4px; }
+.via code { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: var(--text-secondary); }
+.bubble {
+    max-width: 320px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 12.5px; line-height: 1.55;
+    word-wrap: break-word;
+}
+.bubble.user { background: rgba(155, 193, 230, 0.22); color: var(--text); }
+.bubble.agent { background: #f4f5f7; color: var(--text); }
+.bubble code {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px; background: rgba(0,0,0,0.06);
+    padding: 0 4px; border-radius: 3px;
+}
+.bubble strong { font-weight: 600; }
+.sys-event {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 0; color: var(--text-muted);
+    font-size: 11px; font-style: italic;
+    border-top: 1px dashed var(--border);
+    border-bottom: 1px dashed var(--border);
+    margin: 4px 0;
+}
+.sys-event::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
+.sys-event code {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 10.5px; background: var(--bg-tertiary);
+    padding: 0 4px; border-radius: 3px; font-style: normal;
+}
+.sys-event.inline-event { color: var(--hero-blue-700); border-color: #cfe1f4; }
+.sys-event.inline-event::before { background: var(--hero-blue-700); }
+
+/* ── Right panel section (policy) ─────────────────────────────── */
+.right-section {
+    border-top: 1px solid var(--border);
 }
 .right-section-head {
     display: flex; align-items: center; gap: 8px;
@@ -984,6 +1192,47 @@ body {
                         <span class="chip tracker">release-2026-05-26 ↗</span>
                     </div>
 
+                    <!-- ── INLINE-PROPOSED VERDICT REASONING (collapsed by default) ── -->
+                    <div class="proposed-list">
+                        <div class="proposed-block collapsed" id="prop-verdict">
+                            <span class="proposed-badge">
+                                <span class="dot-pulse"></span>
+                                proposed by <code>release-gate-reviewer</code> · 4m ago
+                            </span>
+                            <div class="proposed-head" onclick="toggleProposed('prop-verdict')">
+                                <svg class="toggle-chev" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                <div class="label">
+                                    Verdict reasoning
+                                    <span class="sub">Why <code>release-gate-reviewer</code> recommends <strong style="color:var(--verdict-amber-deep)">No-Go</strong> for 2026-05-26 · expand to read full analysis</span>
+                                </div>
+                                <span class="conf">confidence 92%</span>
+                            </div>
+                            <div class="proposed-body">
+                                <div class="proposed-text">
+                                    <p><span class="policy-tag">P0 hold</span><strong>Blocker policy evaluation:</strong> 2 P0 blockers (<code>agent-trace-flush-loops</code>, <code>span-id-collision-under-load</code>) — workspace policy requires hold until both close. Override path exists but requires leadership sign-off + reason capture.</p>
+                                    <p><span class="policy-tag p1">P1 hold</span><strong>Coverage gap:</strong> P1 blocker <code>Story-2853</code> lacks QA sign-off — policy requires hold unless explicit override is recorded against the missing AC. Sarah Chen is the closest available sign-off authority and her session is currently active.</p>
+                                    <p><strong>Regression health:</strong> Suites passing at 96% (142/148) — within tolerance for release if blockers clear. 6 failing cases are scoped to telemetry/webhooks, both touched by B1/B2 — likely resolve together.</p>
+                                    <p><strong>Recommendation:</strong> Maintain <strong style="color:var(--verdict-amber-deep)">No-Go</strong> until P0s close. B3 sign-off can proceed in parallel — pin the request to Sarah now and the gate will flip on B1+B2 close.</p>
+                                </div>
+                                <div class="proposed-actions">
+                                    <button class="accept">
+                                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                        Accept verdict
+                                    </button>
+                                    <button class="override">
+                                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                        Override verdict
+                                    </button>
+                                    <button class="regen">
+                                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6a4 4 0 117 2.7M9 6V3.2H6.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                        Regenerate analysis
+                                    </button>
+                                    <span class="hint">⏎ accept · O override · R regenerate</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- ── THE VERDICT BANNER ──────────────────────── -->
                     <div class="verdict-banner">
                         <div class="verdict-head">
@@ -994,6 +1243,18 @@ body {
                                 <div class="verdict-title"><span class="verdict-word">NO-GO</span></div>
                                 <div class="verdict-sub">2 blockers open, 1 sign-off pending · gate stays closed until resolution</div>
                             </div>
+                        </div>
+
+                        <!-- Reasoned-by sub-line (.proposed-badge-style) -->
+                        <div class="verdict-reasoned">
+                            <span class="pulse"></span>
+                            Verdict reasoned by <code>release-gate-reviewer</code>
+                            <span class="sep">·</span>
+                            <span class="meta">4m ago</span>
+                            <span class="sep">·</span>
+                            <span class="meta">confidence 92%</span>
+                            <span class="sep">·</span>
+                            <a class="show-reasoning" onclick="toggleProposed('prop-verdict')">Show reasoning →</a>
                         </div>
 
                         <div class="verdict-summary">
@@ -1267,7 +1528,7 @@ body {
                 </div>
                 <div class="bottom-input">
                     <span class="model-chip"><span class="dot"></span>Sonnet 4.6</span>
-                    <input placeholder="Ask about release-2026-05-26…" />
+                    <input placeholder="Ask about the gate — try &quot;what would flip this to Go today?&quot;…" />
                     <span class="tool" title="Slash commands">/</span>
                     <span class="tool" title="Mention an artifact">@</span>
                     <span class="tool" title="Attach">
@@ -1290,7 +1551,7 @@ body {
             </div>
             <div class="right-scroll">
 
-                <!-- Ambient -->
+                <!-- Ambient (sticky) — three relationship cards, one is an actionable suggest -->
                 <div class="ambient">
                     <div class="ambient-label">Ambient · about this gate</div>
 
@@ -1305,13 +1566,14 @@ body {
                         </div>
                     </div>
 
-                    <div class="ambient-card info">
-                        <span class="ac-icon">
-                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 4h12v9H2z" stroke="currentColor" stroke-width="1.4"/><path d="M2 6l6 4 6-4" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
-                        </span>
-                        <div class="body">
-                            <strong>Sign-off pending from Sarah</strong> (engineering). Hero's <code>handoff-coordinator</code> is notifying her active session now.
-                            <div class="sub">Sent 8m ago · no read receipt yet</div>
+                    <!-- Actionable suggestion — replaces middle ambient card -->
+                    <div class="ambient-suggest">
+                        <div class="head"><span class="pulse"></span>Suggestion · <code>release-readiness-strategist</code></div>
+                        Pin B3 sign-off to Sarah's session. Will surface in her engineering view so she can complete it without leaving her flow.
+                        <div class="actions">
+                            <button class="primary">Pin sign-off request</button>
+                            <button>Notify Slack instead</button>
+                            <button>Dismiss</button>
                         </div>
                     </div>
 
@@ -1326,7 +1588,50 @@ body {
                     </div>
                 </div>
 
-                <!-- Blocker policy -->
+                <!-- Chat scroll — reasoning thread -->
+                <div class="chat-scroll">
+                    <div class="right-header-inline">
+                        <span class="pulse"></span>
+                        Chat · Release 2026-05-26
+                        <span class="ctx">release-gate-reviewer</span>
+                    </div>
+
+                    <div class="bubble-wrap user">
+                        <div class="via">via <code>/release-gate</code></div>
+                        <div class="bubble user">Are we ready to ship Sprint 23?</div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            Running <code>release-readiness-strategist</code>. Aggregating: 12 stories, 11 fully covered, 1 partial (<code>Story-2853</code> awaiting QA sign-off). Regression: 142/148 passing. Blockers: 2 P0 open (B1, B2), 1 P1 awaiting sign-off (B3). <strong>Verdict: No-Go</strong> — recoverable. B1 + B2 are both retry-mechanism area; same engineer (Diego). ETA from commit cadence: tomorrow likely.
+                        </div>
+                    </div>
+
+                    <div class="sys-event inline-event">
+                        <code>release-gate-reviewer</code> evaluated against blocker policy · 4m ago: No-Go (2 P0 hold)
+                    </div>
+
+                    <div class="sys-event inline-event">
+                        <code>coverage-strategist</code> confirmed 11/12 covered · 4m ago
+                    </div>
+
+                    <div class="sys-event inline-event">
+                        <code>handoff-coordinator</code> notified Sarah for B3 sign-off · 3m ago
+                    </div>
+
+                    <div class="bubble-wrap user">
+                        <div class="via">Jamie</div>
+                        <div class="bubble user">What would flip this to Go today?</div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            If B1 + B2 close before EOD and Sarah signs off on B3 (or you override <code>Story-2853</code> coverage), gate flips. Currently <strong>60% likely</strong> based on commit cadence. Want me to set a re-aggregate trigger when B1/B2 status changes?
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Blocker policy (preserved, collapsible) -->
                 <div class="right-section" id="rsec-policy">
                     <div class="right-section-head" onclick="toggleRightSection('rsec-policy')">
                         Blocker policy
@@ -1350,19 +1655,6 @@ body {
                     </div>
                 </div>
 
-                <!-- Linked release -->
-                <div class="right-section" id="rsec-release">
-                    <div class="right-section-head" onclick="toggleRightSection('rsec-release')">
-                        Linked release
-                        <svg class="chev" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </div>
-                    <div class="right-section-body">
-                        <div style="font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--text);margin-bottom:4px">release-2026-05-26</div>
-                        <div style="font-size:11.5px;color:var(--text-secondary)">Sprint 23 cut · scheduled May 26, 16:00 PT</div>
-                        <div style="font-size:11px;color:var(--text-muted);margin-top:6px">12 stories · 8 bugs fixed · 4 features delivering</div>
-                    </div>
-                </div>
-
             </div>
         </aside>
 
@@ -1378,6 +1670,10 @@ function toggleRightSection(id) {
     var el = document.getElementById(id);
     if (el) el.classList.toggle('collapsed');
 }
+function toggleProposed(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.toggle('collapsed');
+}
 // Override button affordance — show modal trigger hint
 document.querySelectorAll('.verdict-btn.destructive').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
@@ -1385,6 +1681,10 @@ document.querySelectorAll('.verdict-btn.destructive').forEach(function(btn) {
         // Modal trigger — would open reason-capture composer
         // (not rendered in this mockup, but the affordance is here)
     });
+});
+// Show reasoning link should not navigate
+document.querySelectorAll('.verdict-reasoned .show-reasoning').forEach(function(a) {
+    a.addEventListener('click', function(e) { e.preventDefault(); });
 });
 </script>
 </body>
