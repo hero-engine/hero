@@ -1,7 +1,7 @@
 ---
 title: "Hero Cloud Repo Split — Carve hero-cloud Out of the hero Monorepo"
 type: feature
-status: delivering
+status: completed
 priority: high
 tags: [platform, migration, repo-split, contracts, structure]
 created: 2026-05-15
@@ -97,14 +97,16 @@ specs (`contracts-import-discipline.md` here,
 `cross-repo-workflow.md` in hero-cloud) are still pending and
 tracked as a separate follow-on.
 
-**Pick up at:** Phase 2 — deployment cut-over. Update any external
-CI/deployment that targets the cloud binary to build from
-`hero-cloud` instead of `hero`, smoke-test the binary built from the
-new repo, and verify identical behavior to the pre-split build.
-Configure `HERO_REPO_TOKEN` on the hero-cloud repo (see scaffold
-spec) to unblock CI green. Phase 3 (delete `cloud/` and
-`cmd/hero-cloud/` from `hero`) follows after a soak window of at
-least one development week with `hero-cloud` as the source of truth.
+**Completed 2026-05-16.** Phase 2 collapsed to a no-op (no `hero-cloud`
+deployment exists in production yet — nothing to cut over). Phase 3
+landed: cloud trees deleted from `hero`, Makefile pruned of cloud
+targets, `docker-compose.yml` moved to `hero-cloud` alongside a new
+`hero-cloud/Makefile` carrying the dev/setup/build targets. `HERO_REPO_TOKEN`
+configured; hero-cloud CI ran green end-to-end (run `25937347391`) — the
+first real proof of the cross-repo seam under CI conditions. Soak
+window waived given no deployment exists. Both repos now self-contained;
+contract changes flow `hero → hero.ref` bump in `hero-cloud` per the
+`cross-repo-workflow` convention.
 
 → `.hero/planning/initiatives/hero-cloud-split/spec.md`
 
