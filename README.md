@@ -180,6 +180,40 @@ hero blocked
 
 ---
 
+## Cross-Repo Peering
+
+When you run sibling Hero workspaces — backend, web client, desktop
+client — they can work as a tag team. A session in one repo can ask
+another's Hero a question, hand off a spec, or pull peer-surface
+conventions into context. Provenance travels with every operation.
+
+Three interaction modes, plus a passive boundary detector:
+
+| Mode | Writes? | Pick when |
+|---|---|---|
+| Sync peer call — advisory | Nothing | You need a fact from peer B: "does this break you?", "what's your convention for X?" |
+| Sync peer call — spec-out | Spec on B | The work is really B's. B's Hero designs the spec natively; its conventions kick in. |
+| Async handoff | Spec on B (scaffolded) | You already did the investigation; drop it on B's queue. |
+| Convention import (fallback) | Nothing | Work stays in A but must respect B's surface. |
+
+Quick cheat sheet:
+
+```bash
+hero init                                # mints a stable peer_id UUID
+hero repos add app ../app                # register a sibling peer
+hero peer call app --mode=advisory "What's your error envelope?"
+hero handoff order-failure app --reason "Root cause is the API"
+```
+
+V1 runs on a developer laptop with three sibling checkouts and no
+cloud. Full-delivery peer calls, boundary nudges, and cloud transport
+are deferred.
+
+See [CROSS-REPO-PEERING.md](CROSS-REPO-PEERING.md) for setup, the full
+ladder, lifecycle reference, troubleshooting, and the dogfood checklist.
+
+---
+
 ## Current CLI Map
 
 The binary is organized around a few stable groups.
@@ -192,6 +226,7 @@ The binary is organized around a few stable groups.
 | Workspace health | `hero status`, `hero dashboard`, `hero check`, `hero docs check`, `hero smoke`, `hero ci`, `hero anchor`, `hero tripwire` |
 | Graph and retrieval | `hero scan`, `hero graph`, `hero extract`, `hero impact`, `hero why`, `hero blocked` |
 | Tracker and sync | `hero sync connect`, `hero sync import`, `hero sync pull`, `hero sync spec`, `hero sync link`, `hero sync comment`, `hero sync attach`, `hero sync graph` |
+| Cross-repo peering | `hero repos`, `hero peer manifest`, `hero peer list`, `hero peer show`, `hero peer call`, `hero handoff`, `hero handoff status`, `hero handoff accept`, `hero context imports` |
 | Automation and headless work | `hero agent run`, `hero agent jobs`, `hero agent approve`, `hero agent automate`, `hero pipeline`, `hero watch` |
 | Publishing and server | `hero serve`, `hero mcp`, `hero publish wiki`, `hero publish pages`, `hero login`, `hero logout` |
 | Installation | `hero install`, `hero install satellites`, `hero upgrade`, `hero uninstall`, `hero verify-install`, `hero trust`, `hero domain` |
@@ -394,6 +429,7 @@ for the full reference.
 - [Project Structure](web/docs/src/project-structure.md)
 - [MCP Setup](MCP-SETUP.md)
 - [Team Server](TEAM-SERVER.md)
+- [Cross-Repo Peering](CROSS-REPO-PEERING.md)
 
 ---
 
