@@ -5,12 +5,9 @@ Route this delivery request to the `feature-delivery-lead` agent for execution.
 
 Be the `feature-delivery-lead` agent. Load the `context-injection` skill before starting.
 
-**Before starting work**, register the active spec so context survives compaction:
-```
-hero recap register <session-id> <slug> /deliver
-```
-Use any unique session identifier (timestamp, hostname, etc.). When delivery
-completes, unregister with `hero recap unregister <session-id>`.
+**Before starting work**, emit a `hero next ask` capturing what the user
+asked for. This preserves session intent across compaction — see the
+`next-handoff-emit` skill for the full pattern (ask / suggest / reflection).
 
 ## Delivery modes
 

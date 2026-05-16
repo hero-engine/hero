@@ -7,11 +7,9 @@ Route this bug investigation to the `debug-investigator` agent.
 
 Pass the bug report and any spec path or tracker ID to the agent. The `debug-investigator` handles the complete diagnosis workflow: pre-flight status check, investigation, root cause classification, fix planning, spec writing, and tracker posting.
 
-**Before starting work**, register the active spec so context survives compaction:
-```
-hero recap register <session-id> <slug> /diagnose
-```
-When diagnosis completes, unregister with `hero recap unregister <session-id>`.
+**Before starting work**, emit `hero next ask` to capture the bug report
+the user pasted in. This preserves session intent across compaction — see
+the `next-handoff-emit` skill for the full pattern.
 
 **The agent must write all findings into the spec file on disk.** The spec file is the deliverable, not chat output.
 
