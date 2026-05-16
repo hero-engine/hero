@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<!-- Hero PM Mock: 06-handoff-stream | Locked layout: workspace singleton -->
+<!-- Cross-domain handoff timeline. Purple accent on every PM → ENG edge. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Handoff stream · Hero PM</title>
+<style>
+:root {
+    --bg: #ffffff; --bg-secondary: #f7f8fa; --bg-tertiary: #eef0f4; --bg-hover: #f0f2f6;
+    --text: #1a1d23; --text-secondary: #5d646e; --text-muted: #8a929c;
+    --border: #e4e7eb; --border-strong: #d0d4da;
+    --primary: #2a6cb5; --primary-hover: #6cb6ff;
+    --hero-blue-300: #9bc1e6; --hero-blue-500: #6cb6ff; --hero-blue-700: #2a6cb5;
+    --success: #16a249; --warning: #d97706; --danger: #dc2626;
+    --accent-handoff: #7c3aed; --accent-handoff-bg: #f5f0ff;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased; }
+
+.shell { display: grid; grid-template-rows: 48px 1fr; height: 100vh; }
+.chrome { display: grid; grid-template-columns: 240px 1fr auto; align-items: center; border-bottom: 1px solid var(--border); background: var(--bg); padding: 0 16px 0 0; gap: 16px; }
+.chrome-workspace { display: flex; align-items: center; gap: 8px; padding: 0 12px; height: 100%; border-right: 1px solid var(--border); font-weight: 600; }
+.workspace-logo { width: 22px; height: 22px; display: grid; place-items: center; color: var(--hero-blue-300); }
+.workspace-logo svg { display: block; width: 22px; height: 22px; }
+.domain-pill { margin-left: auto; background: var(--bg-tertiary); color: var(--text-secondary); border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+.search { grid-column: 2; display: flex; align-items: center; gap: 8px; max-width: 440px; width: 100%; justify-self: center; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; color: var(--text-muted); }
+.search input { background: transparent; border: 0; outline: 0; flex: 1; font-size: 12px; color: var(--text-secondary); font-family: inherit; }
+.kbd { font-family: ui-monospace, Menlo, monospace; background: var(--bg); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 3px; padding: 0 5px; font-size: 10px; color: var(--text-muted); line-height: 14px; }
+.chrome-right { display: flex; align-items: center; gap: 12px; }
+.preset-chip { display: inline-flex; align-items: center; gap: 6px; background: #eaf2fb; color: var(--hero-blue-700); border: 1px solid #cfe1f4; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.preset-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); }
+.avatar { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, #ffd47e, #f97373); color: white; font-size: 10px; font-weight: 600; display: inline-grid; place-items: center; border: 1px solid var(--border); }
+.avatar.sm { width: 18px; height: 18px; font-size: 9px; }
+.avatar.diego { background: linear-gradient(135deg, #6cb6ff, #4f7cf7); }
+.avatar.sarah { background: linear-gradient(135deg, #84e1bc, #16a249); }
+.avatar.aisha { background: linear-gradient(135deg, #f4a4ff, #b465ec); }
+.avatar.marcus { background: linear-gradient(135deg, #fcc46d, #f97316); }
+.avatar.priya { background: linear-gradient(135deg, #ff9eb4, #ec4899); }
+
+.body-grid { display: grid; grid-template-columns: 240px 1fr 380px; height: calc(100vh - 48px); min-height: 0; }
+
+.nav { background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 12px 8px; overflow-y: auto; display: flex; flex-direction: column; }
+.nav-section { margin-bottom: 14px; }
+.nav-label { text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px; font-weight: 600; color: var(--text-muted); padding: 4px 8px; }
+.nav-link { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 4px; color: var(--text-secondary); text-decoration: none; font-size: 12.5px; cursor: pointer; }
+.nav-link:hover { background: var(--bg-hover); color: var(--text); }
+.nav-link.active { background: var(--bg-tertiary); color: var(--text); font-weight: 500; }
+.nav-link .count { margin-left: auto; font-size: 11px; color: var(--text-muted); }
+.nav-icon { width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0; }
+.nav-link.active .nav-icon { color: var(--primary); }
+.nav-link.chat-entry { color: var(--hero-blue-700); font-weight: 600; }
+.nav-link.chat-entry .nav-icon { color: var(--hero-blue-300); }
+.nav-link.chat-entry:hover { background: #eaf2fb; }
+.nav-saved { padding: 3px 8px 3px 26px; font-size: 12px; color: var(--text-secondary); border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.nav-saved:hover { background: var(--bg-hover); color: var(--text); }
+.nav-saved::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); }
+.nav-spacer { flex: 1; }
+.nav-user { display: flex; align-items: center; gap: 8px; padding: 8px; border-top: 1px solid var(--border); margin-top: 8px; font-size: 12px; color: var(--text-secondary); }
+
+.center { display: grid; grid-template-rows: 34px 1fr auto; min-height: 0; overflow: hidden; }
+.tab-strip { display: flex; align-items: stretch; background: var(--bg-secondary); border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tab { display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; border-right: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-muted); font-size: 12px; cursor: pointer; height: 34px; max-width: 240px; }
+.tab .tab-type-chip { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 1px 5px; border-radius: 3px; background: var(--bg-tertiary); color: var(--text-muted); flex-shrink: 0; }
+.tab .tab-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab .tab-close { width: 14px; height: 14px; display: grid; place-items: center; border-radius: 3px; opacity: 0; color: var(--text-muted); flex-shrink: 0; }
+.tab:hover .tab-close { opacity: 1; }
+.tab.active { background: var(--bg); color: var(--text); font-weight: 500; box-shadow: inset 0 2px 0 var(--hero-blue-700); }
+.tab.active .tab-type-chip { background: #eaf2fb; color: var(--hero-blue-700); }
+.tab.active .tab-close { opacity: 0.6; }
+.tab.chat-tab .tab-type-chip { background: #eaf2fb; color: var(--hero-blue-700); }
+.tab-strip-spacer { flex: 1; border-right: 0; }
+
+.center-scroll { overflow-y: auto; min-height: 0; }
+.workspace-padded { padding: 18px 24px 24px; }
+.ws-header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 14px; }
+.ws-title { font-size: 22px; font-weight: 700; margin: 0; letter-spacing: -0.3px; }
+.ws-sub { color: var(--text-muted); font-size: 12px; margin-left: auto; }
+
+/* Stream rows */
+.stream-cycle-head {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 8px 4px; margin-top: 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-secondary);
+}
+.stream-cycle-head:first-child { margin-top: 0; }
+.stream-cycle-head .count { background: var(--bg-tertiary); color: var(--text-secondary); padding: 1px 7px; border-radius: 9px; font-size: 11px; font-weight: 600; }
+.stream-cycle-head .meta { color: var(--text-muted); font-size: 11px; font-weight: 400; margin-left: auto; text-transform: none; letter-spacing: 0; }
+
+.hf-row {
+    display: grid;
+    grid-template-columns: 1fr 60px 1fr auto;
+    gap: 12px;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+}
+.hf-side {
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg); padding: 10px 12px;
+    min-width: 0;
+}
+.hf-side .domain-line {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-muted); margin-bottom: 4px;
+}
+.hf-side.pm .domain-line { color: var(--hero-blue-700); }
+.hf-side.eng .domain-line { color: var(--accent-handoff); }
+.hf-side .spec {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px; color: var(--text-secondary); font-weight: 600;
+}
+.hf-side .title { font-size: 13px; font-weight: 500; margin-top: 2px; color: var(--text); }
+.hf-side .meta {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    font-size: 11px; color: var(--text-muted); margin-top: 6px;
+}
+.hf-edge {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    position: relative;
+}
+.hf-edge::before {
+    content: ''; position: absolute;
+    top: 50%; left: -10px; right: -10px; height: 2px;
+    background: var(--accent-handoff);
+    z-index: 0;
+}
+.hf-edge .badge {
+    position: relative; z-index: 1;
+    background: var(--accent-handoff); color: white;
+    font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px;
+    padding: 3px 8px; border-radius: 4px;
+}
+.hf-edge .when {
+    position: relative; z-index: 1;
+    background: var(--bg);
+    font-size: 10px; color: var(--text-muted);
+    padding: 0 4px;
+}
+.hf-status {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+    font-size: 11px; color: var(--text-secondary);
+}
+.status-chip {
+    font-size: 10.5px; font-weight: 600;
+    padding: 2px 8px; border-radius: 10px;
+}
+.status-delivering { background: #eff6ff; color: #1d4ed8; }
+.status-shipped { background: #ecfdf5; color: #047857; }
+.status-stalled { background: #fef3c7; color: #92400e; }
+.status-dropped { background: var(--bg-tertiary); color: var(--text-muted); text-decoration: line-through; }
+.cycle-time { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; color: var(--text-muted); }
+
+/* Bottom strip */
+.bottom-strip { border-top: 1px solid var(--border); background: var(--bg); padding: 8px 14px 10px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+.bottom-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.bottom-actions-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; margin-right: 4px; }
+.action-btn { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 11px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 500; }
+.action-btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+.action-btn svg { color: var(--text-muted); }
+.bottom-input { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; background: var(--bg); }
+.bottom-input:focus-within { border-color: var(--hero-blue-500); box-shadow: 0 0 0 3px rgba(108, 182, 255, 0.18); }
+.bottom-input input { flex: 1; border: 0; outline: 0; font-family: inherit; font-size: 13px; color: var(--text); background: transparent; }
+.bottom-input input::placeholder { color: var(--text-muted); }
+.bottom-input .tool { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 4px; cursor: pointer; color: var(--text-muted); font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+.model-chip { display: inline-flex; align-items: center; gap: 5px; background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-size: 10.5px; color: var(--text-secondary); font-weight: 600; cursor: pointer; }
+.model-chip .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-500); }
+.send-btn { width: 26px; height: 26px; border-radius: 6px; background: var(--primary); color: white; border: 0; cursor: pointer; display: grid; place-items: center; }
+
+/* Right panel */
+.right-panel { border-left: 1px solid var(--border); background: var(--bg); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.right-header { height: 36px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--border); background: var(--bg-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); }
+.right-header .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+.right-header .ctx-label { margin-left: auto; text-transform: none; letter-spacing: 0; font-size: 11px; color: var(--text-muted); font-weight: 400; font-family: ui-monospace, Menlo, monospace; }
+.right-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+.ambient { position: sticky; top: 0; z-index: 2; background: linear-gradient(180deg, var(--bg) 0%, var(--bg) 88%, rgba(255,255,255,0) 100%); padding: 10px 14px 14px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+.ambient-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
+.ambient-card { border: 1px solid var(--border); border-radius: 7px; background: var(--bg); padding: 8px 10px; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+.ambient-card.relationship { background: var(--bg-secondary); }
+.ambient-card .label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); flex-shrink: 0; }
+.ambient-card .body { flex: 1; min-width: 0; }
+.ambient-card .body strong { font-weight: 600; }
+.ambient-card .body .sub { color: var(--text-muted); font-size: 11px; }
+.histogram {
+    display: flex; align-items: flex-end; gap: 2px; height: 28px;
+    margin-top: 4px;
+}
+.histogram span {
+    width: 8px; background: var(--hero-blue-300); border-radius: 1px;
+}
+.ambient-suggest { border: 1px dashed var(--hero-blue-500); background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%); border-radius: 7px; padding: 8px 10px; font-size: 12px; line-height: 1.45; }
+.ambient-suggest .head { display: flex; align-items: center; gap: 6px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--hero-blue-700); margin-bottom: 4px; }
+.ambient-suggest .head .pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-700); }
+.ambient-suggest .actions { display: flex; gap: 4px; margin-top: 6px; }
+.ambient-suggest .actions button { border: 0; background: transparent; font-family: inherit; font-size: 11px; padding: 2px 8px; border-radius: 4px; cursor: pointer; color: var(--text-secondary); font-weight: 500; }
+.ambient-suggest .actions button.primary { color: var(--hero-blue-700); }
+.ambient-suggest .actions button:hover { background: var(--bg-hover); }
+.ambient-rollup { display: flex; align-items: center; font-size: 11.5px; color: var(--text-secondary); cursor: pointer; padding: 2px 0; }
+.ambient-rollup .chev { margin-left: 4px; color: var(--text-muted); }
+
+.chat-scroll { flex: 1; padding: 12px 14px 10px; display: flex; flex-direction: column; gap: 10px; }
+.bubble-wrap { display: flex; flex-direction: column; gap: 3px; max-width: 100%; }
+.bubble-wrap.user { align-items: flex-end; }
+.bubble-wrap.agent { align-items: flex-start; }
+.via { font-size: 10px; color: var(--text-muted); padding: 0 4px; }
+.via code { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: var(--text-secondary); }
+.bubble { max-width: 300px; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 21px; word-wrap: break-word; }
+.bubble.user { background: rgba(155, 193, 230, 0.22); color: var(--text); }
+.bubble.agent { background: #f4f5f7; color: var(--text); }
+.bubble code { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; background: rgba(0,0,0,0.06); padding: 0 4px; border-radius: 3px; }
+.bubble strong { font-weight: 600; }
+.sys-event { display: flex; align-items: center; gap: 6px; padding: 6px 0; color: var(--text-muted); font-size: 11px; font-style: italic; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); margin: 4px 0; }
+.sys-event::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); }
+.sys-event.cross-domain { color: var(--accent-handoff); border-color: rgba(124,58,237,0.25); }
+.sys-event.cross-domain::before { background: var(--accent-handoff); }
+.sys-event code { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; font-style: normal; }
+</style>
+</head>
+<body>
+<div class="shell">
+    <header class="chrome">
+        <div class="chrome-workspace">
+            <div class="workspace-logo"><svg viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg></div>
+            <span>Hero</span>
+            <span class="domain-pill">PM <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </div>
+        <div class="search"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><input placeholder="Search or jump to…" /><span class="kbd">⌘K</span></div>
+        <div class="chrome-right"><span class="preset-chip"><span class="dot"></span>Cycle · 6w</span><div class="avatar marcus">MJ</div></div>
+    </header>
+
+    <div class="body-grid">
+        <nav class="nav">
+            <div class="nav-section">
+                <a class="nav-link chat-entry"><svg class="nav-icon" viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>Chat</a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-label">Plan</div>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="3.5" height="10" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="6.5" y="3" width="3.5" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="11" y="3" width="3.5" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>Roadmap</a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="7" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="11" width="8" height="2" rx="1" fill="currentColor"/></svg>Story queue<span class="count">47</span></a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M3 2.5h7l3 3v8a.5.5 0 01-.5.5h-9.5a.5.5 0 01-.5-.5v-11z" stroke="currentColor" stroke-width="1.3"/><path d="M5 8h6M5 11h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>PRDs</a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 3h12l-4 6v4l-4-2V9L2 3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Intake<span class="count" style="background:#fef3c7;color:#92400e;border-radius:8px;padding:0 5px">23</span></a>
+                <a class="nav-link active"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="4" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/><circle cx="12" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.3"/></svg>Handoff stream<span class="count">18</span></a>
+                <div class="nav-saved">By-domain</div>
+                <div class="nav-saved">Stalled</div>
+            </div>
+            <div class="nav-spacer"></div>
+            <div class="nav-user"><div class="avatar sm marcus">MJ</div>Marcus Johnson</div>
+        </nav>
+
+        <main class="center">
+            <div class="tab-strip">
+                <div class="tab chat-tab"><span class="tab-type-chip">Chat</span><span class="tab-label">Conversation</span></div>
+                <div class="tab active"><span class="tab-type-chip">Stream</span><span class="tab-label">Handoff stream</span><span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></div>
+                <div class="tab-strip-spacer"></div>
+            </div>
+
+            <div class="center-scroll">
+                <div class="workspace-padded">
+                    <div class="ws-header">
+                        <h1 class="ws-title">Cross-domain handoff stream</h1>
+                        <div class="ws-sub">18 handoffs · 12 delivering · 4 shipped · 1 stalled · 1 dropped</div>
+                    </div>
+
+                    <!-- Cycle 14 group -->
+                    <div class="stream-cycle-head">
+                        Cycle 14
+                        <span class="count">8</span>
+                        <span class="meta">in flight · week 3 of 6</span>
+                    </div>
+
+                    <div class="hf-row">
+                        <div class="hf-side pm">
+                            <div class="domain-line">PM · Story</div>
+                            <div class="spec">story-2847</div>
+                            <div class="title">Agent runs emit structured trace spans</div>
+                            <div class="meta">
+                                <span class="avatar sm marcus" style="display:inline-grid">MJ</span>
+                                <span>Marcus · ready · cycle 14</span>
+                            </div>
+                        </div>
+                        <div class="hf-edge">
+                            <span class="badge">→ HANDOFF</span>
+                            <span class="when">4d ago</span>
+                        </div>
+                        <div class="hf-side eng">
+                            <div class="domain-line">Engineering · Feature</div>
+                            <div class="spec">feature · agent-trace-spans</div>
+                            <div class="title">Emit OTLP trace spans from agent runtime</div>
+                            <div class="meta">
+                                <span class="avatar sm diego" style="display:inline-grid">DR</span>
+                                <span>Diego · 3/7 AC · b7a91e2 (2h)</span>
+                            </div>
+                        </div>
+                        <div class="hf-status">
+                            <span class="status-chip status-delivering">delivering</span>
+                            <span class="cycle-time">4d in flight</span>
+                        </div>
+                    </div>
+
+                    <div class="hf-row">
+                        <div class="hf-side pm">
+                            <div class="domain-line">PM · Story</div>
+                            <div class="spec">story-2812</div>
+                            <div class="title">SAML cert rotation: device-trust prompt</div>
+                            <div class="meta">
+                                <span class="avatar sm aisha" style="display:inline-grid">AP</span>
+                                <span>Aisha · ready · cycle 14</span>
+                            </div>
+                        </div>
+                        <div class="hf-edge">
+                            <span class="badge">→ HANDOFF</span>
+                            <span class="when">6d ago</span>
+                        </div>
+                        <div class="hf-side eng">
+                            <div class="domain-line">Engineering · Feature</div>
+                            <div class="spec">feature · auth-sso-refresh-101</div>
+                            <div class="title">Refresh SAML certs without workforce downtime</div>
+                            <div class="meta">
+                                <span class="avatar sm sarah" style="display:inline-grid">SC</span>
+                                <span>Sarah · 5/9 AC · 3 commits today</span>
+                            </div>
+                        </div>
+                        <div class="hf-status">
+                            <span class="status-chip status-delivering">delivering</span>
+                            <span class="cycle-time">6d in flight</span>
+                        </div>
+                    </div>
+
+                    <div class="hf-row">
+                        <div class="hf-side pm">
+                            <div class="domain-line">PM · Story</div>
+                            <div class="spec">story-2778</div>
+                            <div class="title">CSV + JSON workspace export</div>
+                            <div class="meta">
+                                <span class="avatar sm sarah" style="display:inline-grid">SC</span>
+                                <span>Sarah · ready · cycle 14</span>
+                            </div>
+                        </div>
+                        <div class="hf-edge">
+                            <span class="badge">→ HANDOFF</span>
+                            <span class="when">9d ago</span>
+                        </div>
+                        <div class="hf-side eng">
+                            <div class="domain-line">Engineering · Feature</div>
+                            <div class="spec">feature · workspace-export-csv</div>
+                            <div class="title">Workspace-level export API + admin UI</div>
+                            <div class="meta">
+                                <span class="avatar sm priya" style="display:inline-grid">PR</span>
+                                <span>Priya · 7/8 AC · ready for review</span>
+                            </div>
+                        </div>
+                        <div class="hf-status">
+                            <span class="status-chip status-delivering">delivering</span>
+                            <span class="cycle-time">9d · in review</span>
+                        </div>
+                    </div>
+
+                    <div class="hf-row">
+                        <div class="hf-side pm">
+                            <div class="domain-line">PM · Story</div>
+                            <div class="spec">story-2693</div>
+                            <div class="title">Multi-language docs search</div>
+                            <div class="meta">
+                                <span class="avatar sm marcus" style="display:inline-grid">MJ</span>
+                                <span>Marcus · ready · cycle 14</span>
+                            </div>
+                        </div>
+                        <div class="hf-edge">
+                            <span class="badge">→ HANDOFF</span>
+                            <span class="when">17d ago</span>
+                        </div>
+                        <div class="hf-side eng">
+                            <div class="domain-line">Engineering · Feature</div>
+                            <div class="spec">feature · docs-i18n-search</div>
+                            <div class="title">Translate-aware docs search index</div>
+                            <div class="meta">
+                                <span class="avatar sm diego" style="display:inline-grid">DR</span>
+                                <span>Diego · 2/9 AC · last commit 4d ago</span>
+                            </div>
+                        </div>
+                        <div class="hf-status">
+                            <span class="status-chip status-stalled">stalled</span>
+                            <span class="cycle-time">17d · no commits in 4d</span>
+                        </div>
+                    </div>
+
+                    <!-- Cycle 13 group -->
+                    <div class="stream-cycle-head">
+                        Cycle 13
+                        <span class="count">9</span>
+                        <span class="meta">cooldown · 4 shipped · 1 dropped</span>
+                    </div>
+
+                    <div class="hf-row">
+                        <div class="hf-side pm">
+                            <div class="domain-line">PM · Story</div>
+                            <div class="spec">story-2611</div>
+                            <div class="title">Per-workspace audit log retention policy</div>
+                            <div class="meta">
+                                <span class="avatar sm aisha" style="display:inline-grid">AP</span>
+                                <span>Aisha · done · cycle 13</span>
+                            </div>
+                        </div>
+                        <div class="hf-edge">
+                            <span class="badge">→ HANDOFF</span>
+                            <span class="when">42d ago</span>
+                        </div>
+                        <div class="hf-side eng">
+                            <div class="domain-line">Engineering · Feature</div>
+                            <div class="spec">feature · audit-retention-config</div>
+                            <div class="title">Configurable audit retention with archiver</div>
+                            <div class="meta">
+                                <span class="avatar sm priya" style="display:inline-grid">PR</span>
+                                <span>Priya · 9/9 AC · shipped v2.14</span>
+                            </div>
+                        </div>
+                        <div class="hf-status">
+                            <span class="status-chip status-shipped">shipped</span>
+                            <span class="cycle-time">cycle time: 31d</span>
+                        </div>
+                    </div>
+
+                    <div class="hf-row">
+                        <div class="hf-side pm">
+                            <div class="domain-line">PM · Story</div>
+                            <div class="spec">story-2598</div>
+                            <div class="title">Slack alert digest for run failures</div>
+                            <div class="meta">
+                                <span class="avatar sm marcus" style="display:inline-grid">MJ</span>
+                                <span>Marcus · done · cycle 13</span>
+                            </div>
+                        </div>
+                        <div class="hf-edge">
+                            <span class="badge">→ HANDOFF</span>
+                            <span class="when">47d ago</span>
+                        </div>
+                        <div class="hf-side eng">
+                            <div class="domain-line">Engineering · Feature</div>
+                            <div class="spec">feature · slack-alert-digest</div>
+                            <div class="title">Hourly digest of failed runs to Slack channel</div>
+                            <div class="meta">
+                                <span class="avatar sm sarah" style="display:inline-grid">SC</span>
+                                <span>Sarah · 6/6 AC · shipped v2.13</span>
+                            </div>
+                        </div>
+                        <div class="hf-status">
+                            <span class="status-chip status-shipped">shipped</span>
+                            <span class="cycle-time">cycle time: 24d</span>
+                        </div>
+                    </div>
+
+                    <div class="hf-row">
+                        <div class="hf-side pm">
+                            <div class="domain-line">PM · Story</div>
+                            <div class="spec">story-2576</div>
+                            <div class="title">Embed Hero widget on customer status page</div>
+                            <div class="meta">
+                                <span class="avatar sm marcus" style="display:inline-grid">MJ</span>
+                                <span>Marcus · dropped</span>
+                            </div>
+                        </div>
+                        <div class="hf-edge">
+                            <span class="badge">→ HANDOFF</span>
+                            <span class="when">51d ago</span>
+                        </div>
+                        <div class="hf-side eng">
+                            <div class="domain-line">Engineering · Feature</div>
+                            <div class="spec">feature · status-page-widget</div>
+                            <div class="title">JS widget for status.io / Atlassian Statuspage</div>
+                            <div class="meta">
+                                <span>scope cut · re-evaluating</span>
+                            </div>
+                        </div>
+                        <div class="hf-status">
+                            <span class="status-chip status-dropped">dropped</span>
+                            <span class="cycle-time">cut after 18d</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-strip">
+                <div class="bottom-actions">
+                    <span class="bottom-actions-label">Handoff stream</span>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M6 4v2l1 1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        Filter stalled
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><rect x="2" y="2" width="4" height="4" stroke="currentColor" stroke-width="1.3"/><rect x="6" y="6" width="4" height="4" stroke="currentColor" stroke-width="1.3"/></svg>
+                        Filter by-domain
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><rect x="2" y="2" width="8" height="8" stroke="currentColor" stroke-width="1.3"/></svg>
+                        Group by cycle
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 2v8l3-2 3 2V2H3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                        Save view
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/></svg>
+                        Discuss
+                    </button>
+                </div>
+                <div class="bottom-input">
+                    <span class="model-chip"><span class="dot"></span>Sonnet 4.6</span>
+                    <input placeholder="Ask about the handoff stream — try &quot;why is docs-i18n stalled?&quot;" />
+                    <span class="tool">/</span><span class="tool">@</span>
+                    <button class="send-btn"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+                </div>
+            </div>
+        </main>
+
+        <aside class="right-panel">
+            <div class="right-header">
+                <span class="status-dot"></span>Chat
+                <span class="ctx-label">· Handoff stream</span>
+            </div>
+            <div class="right-scroll">
+                <div class="ambient">
+                    <div class="ambient-label">Ambient · about this stream</div>
+
+                    <div class="ambient-card relationship">
+                        <span class="label">Stats</span>
+                        <div class="body">
+                            <strong>18 handoffs</strong> · 12 delivering · 4 shipped · 1 stalled · 1 dropped
+                            <div class="sub">Median cycle time: 27d · target &lt;30d</div>
+                        </div>
+                    </div>
+
+                    <div class="ambient-card relationship">
+                        <span class="label">Cycle times</span>
+                        <div class="body">
+                            <span class="sub">Distribution · last 9 shipped</span>
+                            <div class="histogram">
+                                <span style="height:30%"></span>
+                                <span style="height:55%"></span>
+                                <span style="height:90%"></span>
+                                <span style="height:75%"></span>
+                                <span style="height:60%"></span>
+                                <span style="height:40%"></span>
+                                <span style="height:20%"></span>
+                                <span style="height:30%"></span>
+                                <span style="height:15%"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ambient-suggest">
+                        <div class="head"><span class="pulse"></span>Suggestion · pm-investigator</div>
+                        <strong>docs-i18n-search</strong> is stalled (no commits in 4d, 2/9 AC). Diego may be context-switched to <code>agent-trace-spans</code>. Worth a check?
+                        <div class="actions">
+                            <button class="primary">Open story</button>
+                            <button>Ping Diego</button>
+                            <button>Dismiss</button>
+                        </div>
+                    </div>
+
+                    <div class="ambient-suggest">
+                        <div class="head"><span class="pulse"></span>Suggestion · handoff-coordinator</div>
+                        <strong>workspace-export-csv</strong> is ready for review (7/8 AC). Want to schedule a retro link from PM story-2778?
+                        <div class="actions">
+                            <button class="primary">Link retro</button>
+                            <button>Dismiss</button>
+                        </div>
+                    </div>
+
+                    <div class="ambient-rollup">
+                        9 events today across the stream
+                        <svg class="chev" width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4 4l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    </div>
+                </div>
+
+                <div class="chat-scroll">
+                    <div class="sys-event cross-domain">
+                        Engineering · <code>workspace-export-csv</code> opened PR for review · 47m ago
+                    </div>
+
+                    <div class="bubble-wrap user">
+                        <div class="bubble user">Why is docs-i18n-search stalled?</div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            Walking the graph: last commit 4d ago, Diego's most recent commits are on <code>agent-trace-spans</code> (b7a91e2, 2h). Looks like a context-switch. The story PM-side is still in cycle 14, so it's not a scope cut. Want me to ping engineering for an update?
+                        </div>
+                    </div>
+
+                    <div class="bubble-wrap user">
+                        <div class="via">via <code>/standup</code></div>
+                        <div class="bubble user">Yes. Also flag this in the next leadership sync.</div>
+                    </div>
+
+                    <div class="sys-event cross-domain">
+                        <code>handoff-coordinator</code> notified Diego + flagged stale handoff for sync · just now
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+</body>
+</html>

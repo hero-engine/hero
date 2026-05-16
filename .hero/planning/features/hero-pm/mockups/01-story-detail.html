@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<!-- Hero PM Mock: 01-story-detail | Locked layout: housekeeping mode -->
+<!-- Layout: left nav + tabbed center pane + artifact header/body + bottom strip + right panel (sticky ambient + chat scroll) -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Story-2847 — Agent trace spans · Hero PM</title>
+<style>
+:root {
+    --bg: #ffffff;
+    --bg-secondary: #f7f8fa;
+    --bg-tertiary: #eef0f4;
+    --bg-hover: #f0f2f6;
+    --text: #1a1d23;
+    --text-secondary: #5d646e;
+    --text-muted: #8a929c;
+    --border: #e4e7eb;
+    --border-strong: #d0d4da;
+    --primary: #2a6cb5;
+    --primary-hover: #6cb6ff;
+    --hero-blue-300: #9bc1e6;
+    --hero-blue-500: #6cb6ff;
+    --hero-blue-700: #2a6cb5;
+    --hero-ink: #14181e;
+    --success: #16a249;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --info: #0284c7;
+    --accent-handoff: #7c3aed;
+    --accent-handoff-bg: #f5f0ff;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+    font-size: 13px; line-height: 1.45;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text); background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ── App shell ─────────────────────────────────────────────────── */
+.shell { display: grid; grid-template-rows: 48px 1fr; height: 100vh; }
+.chrome {
+    display: grid;
+    grid-template-columns: 240px 1fr auto;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    padding: 0 16px 0 0;
+    gap: 16px;
+}
+.chrome-workspace {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 12px; height: 100%;
+    border-right: 1px solid var(--border);
+    font-weight: 600;
+}
+.workspace-logo { width: 22px; height: 22px; display: grid; place-items: center; color: var(--hero-blue-300); }
+.workspace-logo svg { display: block; width: 22px; height: 22px; }
+.domain-pill {
+    margin-left: auto;
+    background: var(--bg-tertiary); color: var(--text-secondary);
+    border-radius: 4px; padding: 2px 6px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.3px;
+    display: inline-flex; align-items: center; gap: 4px;
+    cursor: pointer;
+}
+.search {
+    grid-column: 2;
+    display: flex; align-items: center; gap: 8px;
+    max-width: 440px; width: 100%; justify-self: center;
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: 6px; padding: 5px 10px;
+    color: var(--text-muted);
+}
+.search input { background: transparent; border: 0; outline: 0; flex: 1; font-size: 12px; color: var(--text-secondary); font-family: inherit; }
+.kbd {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: var(--bg); border: 1px solid var(--border);
+    border-bottom-width: 2px; border-radius: 3px;
+    padding: 0 5px; font-size: 10px; color: var(--text-muted); line-height: 14px;
+}
+.chrome-right { display: flex; align-items: center; gap: 12px; }
+.preset-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #eaf2fb; color: var(--hero-blue-700);
+    border: 1px solid #cfe1f4;
+    padding: 3px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 600;
+}
+.preset-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); }
+.avatar {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: linear-gradient(135deg, #ffd47e, #f97373);
+    color: white; font-size: 10px; font-weight: 600;
+    display: inline-grid; place-items: center;
+    border: 1px solid var(--border);
+}
+.avatar.sm { width: 18px; height: 18px; font-size: 9px; }
+.avatar.diego { background: linear-gradient(135deg, #6cb6ff, #4f7cf7); }
+.avatar.sarah { background: linear-gradient(135deg, #84e1bc, #16a249); }
+.avatar.aisha { background: linear-gradient(135deg, #f4a4ff, #b465ec); }
+.avatar.marcus { background: linear-gradient(135deg, #fcc46d, #f97316); }
+.avatar.priya { background: linear-gradient(135deg, #ff9eb4, #ec4899); }
+
+/* ── Body 3-column ─────────────────────────────────────────────── */
+.body-grid {
+    display: grid;
+    grid-template-columns: 240px 1fr 380px;
+    height: calc(100vh - 48px);
+    min-height: 0;
+}
+
+/* ── Left nav ──────────────────────────────────────────────────── */
+.nav {
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    padding: 12px 8px; overflow-y: auto;
+    display: flex; flex-direction: column;
+}
+.nav-section { margin-bottom: 14px; }
+.nav-label {
+    text-transform: uppercase; letter-spacing: 0.5px;
+    font-size: 10px; font-weight: 600; color: var(--text-muted);
+    padding: 4px 8px;
+}
+.nav-link {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 8px; border-radius: 4px;
+    color: var(--text-secondary); text-decoration: none;
+    font-size: 12.5px; cursor: pointer;
+}
+.nav-link:hover { background: var(--bg-hover); color: var(--text); }
+.nav-link.active { background: var(--bg-tertiary); color: var(--text); font-weight: 500; }
+.nav-link .count { margin-left: auto; font-size: 11px; color: var(--text-muted); }
+.nav-icon { width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0; }
+.nav-link.active .nav-icon { color: var(--primary); }
+.nav-link.chat-entry {
+    color: var(--hero-blue-700); font-weight: 600;
+}
+.nav-link.chat-entry .nav-icon { color: var(--hero-blue-300); }
+.nav-link.chat-entry:hover { background: #eaf2fb; }
+.nav-saved {
+    padding: 3px 8px 3px 26px;
+    font-size: 12px; color: var(--text-secondary);
+    border-radius: 4px; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+}
+.nav-saved:hover { background: var(--bg-hover); color: var(--text); }
+.nav-saved::before {
+    content: ''; width: 4px; height: 4px; border-radius: 50%;
+    background: var(--text-muted); flex-shrink: 0;
+}
+.nav-spacer { flex: 1; }
+.nav-user {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px; border-top: 1px solid var(--border);
+    margin-top: 8px;
+    font-size: 12px; color: var(--text-secondary);
+}
+
+/* ── Center pane ──────────────────────────────────────────────── */
+.center {
+    display: grid;
+    grid-template-rows: 34px 1fr auto;
+    min-height: 0; overflow: hidden;
+}
+
+/* Tab strip */
+.tab-strip {
+    display: flex; align-items: stretch;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+}
+.tab {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 0 12px;
+    border-right: 1px solid var(--border);
+    background: var(--bg-secondary); color: var(--text-muted);
+    font-size: 12px; cursor: pointer;
+    height: 34px; max-width: 240px;
+}
+.tab .tab-type-chip {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.4px; padding: 1px 5px; border-radius: 3px;
+    background: var(--bg-tertiary); color: var(--text-muted);
+    flex-shrink: 0;
+}
+.tab .tab-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab .tab-close {
+    width: 14px; height: 14px; display: grid; place-items: center;
+    border-radius: 3px; opacity: 0; color: var(--text-muted); flex-shrink: 0;
+}
+.tab:hover .tab-close { opacity: 1; }
+.tab.active {
+    background: var(--bg); color: var(--text); font-weight: 500;
+    box-shadow: inset 0 2px 0 var(--hero-blue-700);
+}
+.tab.active .tab-type-chip { background: #eaf2fb; color: var(--hero-blue-700); }
+.tab.active .tab-close { opacity: 0.6; }
+.tab.chat-tab .tab-type-chip { background: #eaf2fb; color: var(--hero-blue-700); }
+.tab-strip-spacer { flex: 1; border-right: 0; }
+
+/* Artifact area (scrollable) */
+.artifact-scroll {
+    overflow-y: auto;
+    min-height: 0;
+}
+.artifact-padded { padding: 22px 32px 28px; max-width: 920px; }
+
+/* Artifact header / chips */
+.context-strip {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11.5px; color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+.context-strip a { color: var(--text-secondary); text-decoration: none; }
+.context-strip a:hover { color: var(--primary); }
+.context-strip .sep { color: var(--text-muted); }
+.context-strip .type-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--bg-tertiary); border-radius: 3px;
+    padding: 1px 6px; font-size: 10.5px; font-weight: 600;
+    color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px;
+}
+.artifact-title {
+    font-size: 22px; line-height: 1.35; font-weight: 600;
+    margin: 0 0 14px; letter-spacing: -0.2px;
+}
+.chip-row {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+    margin-bottom: 22px;
+}
+.chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    height: 22px; padding: 0 8px;
+    border-radius: 11px; font-size: 11px; font-weight: 500;
+    background: var(--bg-tertiary); color: var(--text-secondary);
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+.chip .dot { width: 6px; height: 6px; border-radius: 50%; }
+.chip.status-ready { background: #ecfdf5; color: #047857; }
+.chip.status-ready .dot { background: #16a249; }
+.chip.priority-high { background: #fef2f2; color: #b91c1c; }
+.chip.priority-high .dot { background: #dc2626; }
+.chip.cycle { background: #eaf2fb; color: var(--hero-blue-700); }
+.chip.cycle .dot { background: var(--hero-blue-700); }
+.chip.tag { background: var(--bg-tertiary); color: var(--text-secondary); }
+.chip.tracker { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; }
+.chip.assignee { padding-left: 3px; gap: 6px; }
+
+/* Body content */
+.section-title {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-secondary);
+    margin: 28px 0 10px;
+}
+.body-prose p { margin: 0 0 12px; font-size: 13.5px; line-height: 1.6; }
+.body-prose code {
+    background: var(--bg-tertiary); padding: 1px 5px; border-radius: 3px;
+    font-size: 12px; font-family: ui-monospace, Menlo, monospace;
+}
+
+/* EARS */
+.ears-list { margin: 0; padding: 0; list-style: none; }
+.ears-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 8px 8px 4px;
+    border-bottom: 1px dashed var(--border);
+}
+.ears-check {
+    width: 16px; height: 16px; flex-shrink: 0; margin-top: 1.5px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 4px; background: var(--bg);
+    display: grid; place-items: center;
+    opacity: 0.5;
+}
+.ears-row.checked .ears-check {
+    background: var(--success); border-color: var(--success); opacity: 1;
+}
+.ears-row.checked .ears-check svg { color: white; }
+.ears-text { font-size: 12.5px; font-family: ui-monospace, Menlo, monospace; line-height: 1.55; }
+.ears-text .kw { color: var(--text-secondary); font-weight: 600; }
+.ears-row.checked .ears-text { color: var(--text-secondary); }
+
+/* LINKED ENGINEERING FEATURE — killer inline element */
+.linked-eng-section { margin-top: 28px; }
+.linked-eng-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+}
+.linked-eng-header .title {
+    font-size: 12px; font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+    color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;
+}
+.handoff-edge-icon {
+    width: 32px; height: 18px;
+    background: var(--accent-handoff); border-radius: 4px;
+    color: white; display: inline-grid; place-items: center;
+    font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px;
+}
+.linked-eng-card {
+    border: 1.5px solid var(--accent-handoff);
+    border-radius: 10px;
+    background: linear-gradient(180deg, var(--accent-handoff-bg) 0%, var(--bg) 70%);
+    padding: 16px 18px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 14px;
+    align-items: center;
+}
+.linked-eng-left { min-width: 0; }
+.linked-eng-spec {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11.5px; color: var(--accent-handoff); font-weight: 600;
+}
+.linked-eng-name { font-size: 16px; font-weight: 600; margin: 2px 0 10px; color: var(--text); }
+.linked-eng-meta {
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    font-size: 12px; color: var(--text-secondary);
+}
+.linked-eng-meta .chip { background: white; border: 1px solid var(--border); }
+.eng-progress { display: flex; align-items: center; gap: 6px; }
+.eng-progress-bar {
+    width: 80px; height: 5px; border-radius: 3px;
+    background: var(--bg-tertiary); overflow: hidden;
+}
+.eng-progress-fill { height: 100%; background: var(--accent-handoff); }
+.btn-handoff {
+    background: linear-gradient(135deg, var(--accent-handoff), #6d28d9);
+    border: 0; color: white;
+    height: 40px; padding: 0 18px;
+    border-radius: 8px; font-size: 13.5px; font-weight: 600;
+    box-shadow:
+        0 1px 2px rgba(124,58,237,0.4),
+        0 4px 12px rgba(124,58,237,0.28),
+        inset 0 -1px 0 rgba(0,0,0,0.1);
+    display: inline-flex; align-items: center; gap: 7px;
+    cursor: pointer; font-family: inherit;
+    white-space: nowrap;
+}
+.btn-handoff:hover {
+    box-shadow:
+        0 1px 2px rgba(124,58,237,0.4),
+        0 6px 18px rgba(124,58,237,0.4),
+        inset 0 -1px 0 rgba(0,0,0,0.1);
+    transform: translateY(-0.5px);
+}
+.linked-eng-already {
+    font-size: 11.5px; color: var(--text-muted);
+    margin-top: 8px;
+}
+
+/* ── Bottom strip ──────────────────────────────────────────────── */
+.bottom-strip {
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+    padding: 8px 14px 10px;
+    display: flex; flex-direction: column; gap: 6px;
+    flex-shrink: 0;
+}
+.bottom-actions {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    align-items: center;
+}
+.bottom-actions-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-muted); font-weight: 600;
+    margin-right: 4px;
+}
+.action-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    height: 28px; padding: 0 11px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text); cursor: pointer;
+    font-size: 12px; font-family: inherit;
+    font-weight: 500;
+}
+.action-btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+.action-btn svg { color: var(--text-muted); }
+.action-btn:hover svg { color: var(--text-secondary); }
+.bottom-input {
+    display: flex; align-items: center; gap: 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    background: var(--bg);
+}
+.bottom-input:focus-within {
+    border-color: var(--hero-blue-500);
+    box-shadow: 0 0 0 3px rgba(108, 182, 255, 0.18);
+}
+.bottom-input input {
+    flex: 1; border: 0; outline: 0;
+    font-family: inherit; font-size: 13px;
+    color: var(--text); background: transparent;
+}
+.bottom-input input::placeholder { color: var(--text-muted); }
+.bottom-input .tool {
+    width: 22px; height: 22px;
+    display: grid; place-items: center;
+    border-radius: 4px; cursor: pointer;
+    color: var(--text-muted);
+    font-family: ui-monospace, Menlo, monospace; font-size: 12px;
+}
+.bottom-input .tool:hover { background: var(--bg-hover); color: var(--text); }
+.model-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--bg-tertiary);
+    padding: 2px 8px; border-radius: 4px;
+    font-size: 10.5px; color: var(--text-secondary);
+    font-weight: 600; cursor: pointer;
+}
+.model-chip .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-500); }
+.send-btn {
+    width: 26px; height: 26px; border-radius: 6px;
+    background: var(--primary); color: white;
+    border: 0; cursor: pointer;
+    display: grid; place-items: center;
+}
+.send-btn:hover { background: var(--primary-hover); }
+
+/* ── Right panel (chat + sticky ambient) ───────────────────────── */
+.right-panel {
+    border-left: 1px solid var(--border);
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+.right-header {
+    height: 36px; flex-shrink: 0;
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-secondary);
+}
+.right-header .status-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--success);
+}
+.right-header .ctx-label {
+    margin-left: auto;
+    text-transform: none; letter-spacing: 0;
+    font-size: 11px; color: var(--text-muted); font-weight: 400;
+    font-family: ui-monospace, Menlo, monospace;
+}
+.right-scroll {
+    flex: 1; overflow-y: auto;
+    display: flex; flex-direction: column;
+}
+
+/* Sticky ambient region */
+.ambient {
+    position: sticky; top: 0; z-index: 2;
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg) 88%, rgba(255,255,255,0) 100%);
+    padding: 10px 14px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 8px;
+}
+.ambient-label {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--text-muted);
+}
+.ambient-card {
+    border: 1px solid var(--border); border-radius: 7px;
+    background: var(--bg);
+    padding: 8px 10px;
+    font-size: 12px;
+    display: flex; align-items: center; gap: 8px;
+}
+.ambient-card.relationship { background: var(--bg-secondary); }
+.ambient-card.cross-domain {
+    border-color: rgba(124,58,237,0.35);
+    background: var(--accent-handoff-bg);
+}
+.ambient-card .label {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-muted);
+    flex-shrink: 0;
+}
+.ambient-card.cross-domain .label { color: var(--accent-handoff); }
+.ambient-card .body { flex: 1; min-width: 0; }
+.ambient-card .body strong { font-weight: 600; }
+.ambient-card .body .mono { font-family: ui-monospace, Menlo, monospace; font-size: 11px; }
+.ambient-card .body .sub { color: var(--text-muted); font-size: 11px; }
+.ambient-card .arrow { color: var(--text-muted); flex-shrink: 0; }
+.ambient-suggest {
+    border: 1px dashed var(--hero-blue-500);
+    background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+    border-radius: 7px;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.45;
+}
+.ambient-suggest .head {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--hero-blue-700);
+    margin-bottom: 4px;
+}
+.ambient-suggest .head .pulse {
+    width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-700);
+}
+.ambient-suggest .actions {
+    display: flex; gap: 4px; margin-top: 6px;
+}
+.ambient-suggest .actions button {
+    border: 0; background: transparent; font-family: inherit;
+    font-size: 11px; padding: 2px 8px; border-radius: 4px;
+    cursor: pointer; color: var(--text-secondary);
+    font-weight: 500;
+}
+.ambient-suggest .actions button.primary { color: var(--hero-blue-700); }
+.ambient-suggest .actions button:hover { background: var(--bg-hover); }
+.ambient-rollup {
+    display: flex; align-items: center;
+    font-size: 11.5px; color: var(--text-secondary);
+    cursor: pointer;
+    padding: 2px 0;
+}
+.ambient-rollup:hover { color: var(--text); }
+.ambient-rollup .chev { margin-left: 4px; color: var(--text-muted); }
+
+/* Chat scroll */
+.chat-scroll {
+    flex: 1;
+    padding: 12px 14px 10px;
+    display: flex; flex-direction: column; gap: 10px;
+}
+.bubble-wrap { display: flex; flex-direction: column; gap: 3px; max-width: 100%; }
+.bubble-wrap.user { align-items: flex-end; }
+.bubble-wrap.agent { align-items: flex-start; }
+.via {
+    font-size: 10px; color: var(--text-muted);
+    padding: 0 4px;
+}
+.via code {
+    font-family: ui-monospace, Menlo, monospace; font-size: 10px;
+    color: var(--text-secondary);
+}
+.bubble {
+    max-width: 300px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 13px; line-height: 21px;
+    word-wrap: break-word;
+}
+.bubble.user { background: rgba(155, 193, 230, 0.22); color: var(--text); }
+.bubble.agent { background: #f4f5f7; color: var(--text); }
+.bubble code {
+    font-family: ui-monospace, Menlo, monospace; font-size: 11.5px;
+    background: rgba(0,0,0,0.06); padding: 0 4px; border-radius: 3px;
+}
+.bubble strong { font-weight: 600; }
+.reasoning-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10.5px; color: var(--text-muted);
+    background: var(--bg-secondary); border: 1px dashed var(--border);
+    border-radius: 10px; padding: 2px 8px;
+    font-family: ui-monospace, Menlo, monospace;
+    cursor: pointer;
+    margin-bottom: 3px;
+    align-self: flex-start;
+}
+.toolcall {
+    border: 1px solid var(--border); border-radius: 7px;
+    background: var(--bg); overflow: hidden;
+    max-width: 300px; margin-top: 4px;
+}
+.toolcall-head {
+    background: var(--bg-secondary);
+    padding: 5px 9px;
+    font-size: 11px; color: var(--text-secondary);
+    display: flex; align-items: center; gap: 6px;
+    border-bottom: 1px solid var(--border);
+}
+.toolcall-head code {
+    font-family: ui-monospace, Menlo, monospace; font-size: 10.5px;
+    background: var(--bg-tertiary); padding: 1px 5px; border-radius: 3px; color: var(--text);
+}
+.toolcall-head .chev { margin-left: auto; color: var(--text-muted); }
+.toolcall-body {
+    padding: 7px 9px;
+    font-size: 11.5px; color: var(--text-secondary); line-height: 1.5;
+}
+.toolcall-body .mono { font-family: ui-monospace, Menlo, monospace; font-size: 11px; }
+
+/* System events in chat thread */
+.sys-event {
+    align-self: stretch;
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 0;
+    color: var(--text-muted); font-size: 11px;
+    font-style: italic;
+    border-top: 1px dashed var(--border);
+    border-bottom: 1px dashed var(--border);
+    margin: 4px 0;
+}
+.sys-event::before {
+    content: ''; width: 4px; height: 4px; border-radius: 50%;
+    background: var(--text-muted); flex-shrink: 0;
+}
+.sys-event.cross-domain {
+    color: var(--accent-handoff);
+    border-color: rgba(124,58,237,0.25);
+}
+.sys-event.cross-domain::before { background: var(--accent-handoff); }
+.sys-event code {
+    font-family: ui-monospace, Menlo, monospace; font-size: 10.5px;
+    background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px;
+    font-style: normal;
+}
+
+</style>
+</head>
+<body>
+<div class="shell">
+
+    <!-- Top chrome -->
+    <header class="chrome">
+        <div class="chrome-workspace">
+            <div class="workspace-logo"><svg viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg></div>
+            <span>Hero</span>
+            <span class="domain-pill" title="Switch domain">PM
+                <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+        </div>
+        <div class="search">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <input placeholder="Search or jump to…" />
+            <span class="kbd">⌘K</span>
+        </div>
+        <div class="chrome-right">
+            <span class="preset-chip"><span class="dot"></span>Cycle · 6w</span>
+            <div class="avatar marcus" title="Marcus Johnson">MJ</div>
+        </div>
+    </header>
+
+    <div class="body-grid">
+
+        <!-- ─── LEFT NAV ─────────────────────────────────────────── -->
+        <nav class="nav">
+            <div class="nav-section">
+                <a class="nav-link chat-entry">
+                    <svg class="nav-icon" viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+                    Chat
+                    <span class="count" style="color:var(--hero-blue-700);font-weight:600">●</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-label">Plan</div>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="3.5" height="10" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="6.5" y="3" width="3.5" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="11" y="3" width="3.5" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>
+                    Roadmap
+                </a>
+                <div class="nav-saved">Q3 bets</div>
+                <div class="nav-saved">Now / Next / Later</div>
+                <a class="nav-link active">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="7" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="11" width="8" height="2" rx="1" fill="currentColor"/></svg>
+                    Story queue<span class="count">47</span>
+                </a>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M3 2.5h7l3 3v8a.5.5 0 01-.5.5h-9.5a.5.5 0 01-.5-.5v-11z" stroke="currentColor" stroke-width="1.3"/><path d="M5 8h6M5 11h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                    PRDs
+                </a>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 3h12l-4 6v4l-4-2V9L2 3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                    Intake<span class="count" style="background:#fef3c7;color:#92400e;border-radius:8px;padding:0 5px">23</span>
+                </a>
+                <div class="nav-saved">Mobile bugs</div>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="4" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/><circle cx="12" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.3"/></svg>
+                    Handoff stream
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-label">Workspace</div>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                    Conventions
+                </a>
+                <a class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M8 1.5l6 3v4c0 3-2.5 5.5-6 6.5-3.5-1-6-3.5-6-6.5v-4l6-3z" stroke="currentColor" stroke-width="1.3"/></svg>
+                    Decisions
+                </a>
+            </div>
+            <div class="nav-spacer"></div>
+            <div class="nav-user">
+                <div class="avatar sm marcus">MJ</div>Marcus Johnson
+            </div>
+        </nav>
+
+        <!-- ─── CENTER PANE ───────────────────────────────────────── -->
+        <main class="center">
+
+            <!-- Tab strip -->
+            <div class="tab-strip">
+                <div class="tab chat-tab">
+                    <span class="tab-type-chip">Chat</span>
+                    <span class="tab-label">Conversation</span>
+                </div>
+                <div class="tab active">
+                    <span class="tab-type-chip">Story</span>
+                    <span class="tab-label">2847 · Agent trace spans</span>
+                    <span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+                </div>
+                <div class="tab">
+                    <span class="tab-type-chip">PRD</span>
+                    <span class="tab-label">Agent observability</span>
+                    <span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+                </div>
+                <div class="tab">
+                    <span class="tab-type-chip">Roadmap</span>
+                    <span class="tab-label">Roadmap</span>
+                    <span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+                </div>
+                <div class="tab-strip-spacer"></div>
+            </div>
+
+            <!-- Artifact scroll (header chips + body) -->
+            <div class="artifact-scroll">
+                <div class="artifact-padded">
+
+                    <!-- Context strip -->
+                    <div class="context-strip">
+                        <span class="type-chip">Roadmap</span>
+                        <a>Agent Observability</a>
+                        <span class="sep">›</span>
+                        <span class="type-chip">Epic</span>
+                        <a>Telemetry &amp; traces</a>
+                        <span class="sep">›</span>
+                        <span class="type-chip">Story</span>
+                        <span style="color:var(--text)">2847</span>
+                    </div>
+
+                    <!-- Artifact header / chips -->
+                    <h1 class="artifact-title">As an SRE I need agent runs to emit structured trace spans so I can correlate them with downstream service latency.</h1>
+
+                    <div class="chip-row">
+                        <span class="chip status-ready"><span class="dot"></span>ready</span>
+                        <span class="chip priority-high"><span class="dot"></span>high</span>
+                        <span class="chip cycle"><span class="dot"></span>Cycle 14 · 2w</span>
+                        <span class="chip assignee"><div class="avatar sm marcus">MJ</div>Marcus Johnson</span>
+                        <span class="chip tracker">HERO-2847 ↗</span>
+                        <span class="chip tag">#telemetry</span>
+                        <span class="chip tag">#observability</span>
+                        <span class="chip tag">#sre</span>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="body-prose">
+                        <p>Today, when an agent run misbehaves in production, the on-call SRE has no way to correlate the run with the downstream services it called. We log run-level events, but they don't share an identifier with the HTTP requests, queue messages, or LLM-provider calls the agent triggered downstream.</p>
+                        <p>The fix is OpenTelemetry-compatible trace spans emitted from the agent runtime. Each run becomes a root span; each tool call becomes a child span; each downstream HTTP call inherits the run's trace context. Existing customer APM tools (Datadog, Honeycomb, Grafana Tempo) pick this up for free.</p>
+                        <p><strong>Out of scope for this story:</strong> a Hero-native trace viewer. We'll wire the emitter and document the integration; visualization happens in the customer's existing APM. If demand emerges, a separate roadmap-item will pick that up.</p>
+                    </div>
+
+                    <!-- Acceptance criteria -->
+                    <h3 class="section-title">Acceptance criteria · EARS</h3>
+                    <ul class="ears-list">
+                        <li class="ears-row checked">
+                            <span class="ears-check"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                            <span class="ears-text"><span class="kw">WHEN</span> an agent run starts <span class="kw">THE SYSTEM SHALL</span> emit a trace span with run-id and parent-session-id.</span>
+                        </li>
+                        <li class="ears-row checked">
+                            <span class="ears-check"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                            <span class="ears-text"><span class="kw">WHILE</span> a run is active <span class="kw">THE SYSTEM SHALL</span> emit child spans for each tool call, including tool name and duration.</span>
+                        </li>
+                        <li class="ears-row checked">
+                            <span class="ears-check"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                            <span class="ears-text"><span class="kw">IF</span> a span fails to flush <span class="kw">THEN THE SYSTEM SHALL</span> retry with exponential backoff (max 3 attempts) before dropping.</span>
+                        </li>
+                        <li class="ears-row">
+                            <span class="ears-check"></span>
+                            <span class="ears-text"><span class="kw">WHEN</span> downstream HTTP calls are made <span class="kw">THE SYSTEM SHALL</span> inject W3C traceparent headers automatically.</span>
+                        </li>
+                        <li class="ears-row">
+                            <span class="ears-check"></span>
+                            <span class="ears-text"><span class="kw">IF</span> OTLP endpoint is unreachable for &gt; 60s <span class="kw">THEN THE SYSTEM SHALL</span> log a single degraded-mode warning and buffer up to 10k spans in memory.</span>
+                        </li>
+                    </ul>
+
+                    <!-- LINKED ENGINEERING FEATURE — the killer inline element -->
+                    <div class="linked-eng-section">
+                        <div class="linked-eng-header">
+                            <span class="handoff-edge-icon">PM → ENG</span>
+                            <span class="title">Cross-domain handoff</span>
+                            <span style="font-size:11.5px;color:var(--text-muted);margin-left:auto">already handed off · 4d ago</span>
+                        </div>
+                        <div class="linked-eng-card">
+                            <div class="linked-eng-left">
+                                <div class="linked-eng-spec">feature · agent-trace-spans</div>
+                                <div class="linked-eng-name">Emit OTLP trace spans from agent runtime</div>
+                                <div class="linked-eng-meta">
+                                    <span class="chip" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe"><span class="dot" style="background:#3b82f6"></span>delivering</span>
+                                    <span class="chip assignee"><div class="avatar sm diego">DR</div>Diego Ramirez</span>
+                                    <span class="eng-progress">
+                                        <span style="font-weight:600;color:var(--text)">3 of 7</span>
+                                        <span class="eng-progress-bar"><span class="eng-progress-fill" style="width:43%"></span></span>
+                                        <span style="color:var(--text-muted)">AC</span>
+                                    </span>
+                                    <span style="color:var(--text-muted);font-family:ui-monospace,Menlo,monospace;font-size:11px">b7a91e2 · 2h ago</span>
+                                </div>
+                            </div>
+                            <button class="btn-handoff" title="Already handed off — re-handoff with updated context">
+                                <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M2 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                Re-handoff to /design
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ─── BOTTOM STRIP (verbs row + chat input) ─────────── -->
+            <div class="bottom-strip">
+                <div class="bottom-actions">
+                    <span class="bottom-actions-label">Ready story</span>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6a4 4 0 117 2.7M9 6V3.2H6.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Refine
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        Draft AC
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="5" cy="5" r="3.2" stroke="currentColor" stroke-width="1.3"/><path d="M7.5 7.5L10 10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        Find similar
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 3h6v6H3z M5 9v2 M7 9v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Split
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l2.5 2.5L10 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Audit
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M6 4.5v2 M6 7.5v0.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        Discuss
+                    </button>
+                </div>
+                <div class="bottom-input">
+                    <span class="model-chip"><span class="dot"></span>Sonnet 4.6</span>
+                    <input placeholder="Ask about Story #2847…" />
+                    <span class="tool" title="Slash commands">/</span>
+                    <span class="tool" title="Mention an artifact">@</span>
+                    <span class="tool" title="Attach">
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M11 5l-5 5a2 2 0 102.8 2.8L14 7.5a3.5 3.5 0 00-5-5L4 7.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    <button class="send-btn" title="Send">
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- ─── RIGHT PANEL (sticky ambient + chat scroll) ───────── -->
+        <aside class="right-panel">
+            <div class="right-header">
+                <span class="status-dot"></span>
+                Chat
+                <span class="ctx-label">· Story-2847</span>
+            </div>
+            <div class="right-scroll">
+
+                <!-- Sticky ambient region (CSS-sticky at top of chat scroll) -->
+                <div class="ambient">
+                    <div class="ambient-label">Ambient · about Story-2847</div>
+
+                    <!-- Hard relationship: parent epic -->
+                    <div class="ambient-card relationship">
+                        <span class="label">Parent</span>
+                        <div class="body">
+                            <strong>Telemetry &amp; traces</strong>
+                            <span class="sub">· epic · 8 stories</span>
+                        </div>
+                        <svg class="arrow" width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 6h6M6 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    </div>
+
+                    <!-- Hard relationship: linked engineering feature (cross-domain) -->
+                    <div class="ambient-card cross-domain">
+                        <span class="label">→ ENG</span>
+                        <div class="body">
+                            <span class="mono">agent-trace-spans</span><br>
+                            <span class="sub"><span style="color:#1d4ed8;font-weight:600">delivering</span> · 3/7 AC · Diego</span>
+                        </div>
+                        <svg class="arrow" width="11" height="11" viewBox="0 0 12 12" fill="none" style="color:var(--accent-handoff)"><path d="M3 6h6M6 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    </div>
+
+                    <!-- Dynamic suggestion: similar story -->
+                    <div class="ambient-suggest">
+                        <div class="head"><span class="pulse"></span>Suggestion · duplicate-detector</div>
+                        Looks similar to <strong>Story-2691</strong> (78%) — "Add structured logs to agent runtime" (resolved 4mo ago). Worth comparing?
+                        <div class="actions">
+                            <button class="primary">Compare</button>
+                            <button>Mark unrelated</button>
+                            <button>Dismiss</button>
+                        </div>
+                    </div>
+
+                    <!-- Activity rollup -->
+                    <div class="ambient-rollup">
+                        7 events
+                        <svg class="chev" width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4 4l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    </div>
+                </div>
+
+                <!-- Chat scroll -->
+                <div class="chat-scroll">
+
+                    <!-- System event: handoff -->
+                    <div class="sys-event cross-domain">
+                        <code>handoff-coordinator</code> created engineering feature <code>agent-trace-spans</code> · 4d ago
+                    </div>
+
+                    <div class="bubble-wrap user">
+                        <div class="via">via <code>/refine</code></div>
+                        <div class="bubble user">Tighten AC #4 — make the W3C header injection wording match the OTLP spec.</div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="reasoning-pill">▸ Thinking · 4s</div>
+                        <div class="bubble agent">
+                            Updated AC #4. New wording: <em>"WHEN downstream HTTP calls are made THE SYSTEM SHALL inject W3C <code>traceparent</code> headers conforming to the trace-context spec (v1)."</em> Proposed inline on the AC list. Accept to apply.
+                        </div>
+                    </div>
+
+                    <!-- System event: status flip -->
+                    <div class="sys-event">
+                        Status: <code>refined</code> → <code>ready</code> · Aisha · 2h ago
+                    </div>
+
+                    <div class="bubble-wrap user">
+                        <div class="bubble user">How does this story interact with <code>auth-sso-refresh-101</code>?</div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            Checked the engineering feature — it covers token refresh but not the device-trust prompt. The story's <strong>AC #3</strong> (span retry backoff) is unique to this work.
+                        </div>
+                        <div class="toolcall">
+                            <div class="toolcall-head">
+                                <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style="color:var(--text-muted)"><path d="M3 6h6M6 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                <code>hero why</code>
+                                <span style="color:var(--text-muted);font-size:10.5px">cross-domain walk · 3 hops</span>
+                                <span class="chev"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M4 4l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+                            </div>
+                            <div class="toolcall-body">
+                                <span class="mono">story-2847</span> → epic <span class="mono">telemetry-traces</span> → roadmap-item <span class="mono">agent-observability</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </aside>
+
+    </div>
+</div>
+</body>
+</html>

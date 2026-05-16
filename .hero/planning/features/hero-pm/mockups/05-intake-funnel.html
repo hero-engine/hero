@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<!-- Hero PM Mock: 05-intake-funnel | Locked layout: parameterized-singleton (Intake + Mobile bugs saved view) -->
+<!-- Productboard-influenced triage. Source-tagged inbox + bulk triage. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Intake · Mobile bugs · Hero PM</title>
+<style>
+:root {
+    --bg: #ffffff; --bg-secondary: #f7f8fa; --bg-tertiary: #eef0f4; --bg-hover: #f0f2f6;
+    --text: #1a1d23; --text-secondary: #5d646e; --text-muted: #8a929c;
+    --border: #e4e7eb; --border-strong: #d0d4da;
+    --primary: #2a6cb5; --primary-hover: #6cb6ff;
+    --hero-blue-300: #9bc1e6; --hero-blue-500: #6cb6ff; --hero-blue-700: #2a6cb5;
+    --success: #16a249; --warning: #d97706; --danger: #dc2626;
+    --accent-handoff: #7c3aed; --accent-handoff-bg: #f5f0ff;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased; }
+
+.shell { display: grid; grid-template-rows: 48px 1fr; height: 100vh; }
+.chrome { display: grid; grid-template-columns: 240px 1fr auto; align-items: center; border-bottom: 1px solid var(--border); background: var(--bg); padding: 0 16px 0 0; gap: 16px; }
+.chrome-workspace { display: flex; align-items: center; gap: 8px; padding: 0 12px; height: 100%; border-right: 1px solid var(--border); font-weight: 600; }
+.workspace-logo { width: 22px; height: 22px; display: grid; place-items: center; color: var(--hero-blue-300); }
+.workspace-logo svg { display: block; width: 22px; height: 22px; }
+.domain-pill { margin-left: auto; background: var(--bg-tertiary); color: var(--text-secondary); border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+.search { grid-column: 2; display: flex; align-items: center; gap: 8px; max-width: 440px; width: 100%; justify-self: center; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; color: var(--text-muted); }
+.search input { background: transparent; border: 0; outline: 0; flex: 1; font-size: 12px; color: var(--text-secondary); font-family: inherit; }
+.kbd { font-family: ui-monospace, Menlo, monospace; background: var(--bg); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 3px; padding: 0 5px; font-size: 10px; color: var(--text-muted); line-height: 14px; }
+.chrome-right { display: flex; align-items: center; gap: 12px; }
+.preset-chip { display: inline-flex; align-items: center; gap: 6px; background: #eaf2fb; color: var(--hero-blue-700); border: 1px solid #cfe1f4; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.preset-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); }
+.avatar { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, #ffd47e, #f97373); color: white; font-size: 10px; font-weight: 600; display: inline-grid; place-items: center; border: 1px solid var(--border); }
+.avatar.sm { width: 18px; height: 18px; font-size: 9px; }
+.avatar.sarah { background: linear-gradient(135deg, #84e1bc, #16a249); }
+.avatar.marcus { background: linear-gradient(135deg, #fcc46d, #f97316); }
+.avatar.aisha { background: linear-gradient(135deg, #f4a4ff, #b465ec); }
+.avatar.priya { background: linear-gradient(135deg, #ff9eb4, #ec4899); }
+
+.body-grid { display: grid; grid-template-columns: 240px 1fr 380px; height: calc(100vh - 48px); min-height: 0; }
+
+.nav { background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 12px 8px; overflow-y: auto; display: flex; flex-direction: column; }
+.nav-section { margin-bottom: 14px; }
+.nav-label { text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px; font-weight: 600; color: var(--text-muted); padding: 4px 8px; }
+.nav-link { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 4px; color: var(--text-secondary); text-decoration: none; font-size: 12.5px; cursor: pointer; }
+.nav-link:hover { background: var(--bg-hover); color: var(--text); }
+.nav-link.active { background: var(--bg-tertiary); color: var(--text); font-weight: 500; }
+.nav-link .count { margin-left: auto; font-size: 11px; color: var(--text-muted); }
+.nav-icon { width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0; }
+.nav-link.active .nav-icon { color: var(--primary); }
+.nav-link.chat-entry { color: var(--hero-blue-700); font-weight: 600; }
+.nav-link.chat-entry .nav-icon { color: var(--hero-blue-300); }
+.nav-link.chat-entry:hover { background: #eaf2fb; }
+.nav-saved { padding: 3px 8px 3px 26px; font-size: 12px; color: var(--text-secondary); border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.nav-saved:hover { background: var(--bg-hover); color: var(--text); }
+.nav-saved.active { background: var(--bg-tertiary); color: var(--text); font-weight: 500; }
+.nav-saved::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); }
+.nav-spacer { flex: 1; }
+.nav-user { display: flex; align-items: center; gap: 8px; padding: 8px; border-top: 1px solid var(--border); margin-top: 8px; font-size: 12px; color: var(--text-secondary); }
+
+.center { display: grid; grid-template-rows: 34px 1fr auto; min-height: 0; overflow: hidden; }
+.tab-strip { display: flex; align-items: stretch; background: var(--bg-secondary); border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tab { display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; border-right: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-muted); font-size: 12px; cursor: pointer; height: 34px; max-width: 240px; }
+.tab .tab-type-chip { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 1px 5px; border-radius: 3px; background: var(--bg-tertiary); color: var(--text-muted); flex-shrink: 0; }
+.tab .tab-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab .tab-close { width: 14px; height: 14px; display: grid; place-items: center; border-radius: 3px; opacity: 0; color: var(--text-muted); flex-shrink: 0; }
+.tab:hover .tab-close { opacity: 1; }
+.tab.active { background: var(--bg); color: var(--text); font-weight: 500; box-shadow: inset 0 2px 0 var(--hero-blue-700); }
+.tab.active .tab-type-chip { background: #eaf2fb; color: var(--hero-blue-700); }
+.tab.active .tab-close { opacity: 0.6; }
+.tab.chat-tab .tab-type-chip { background: #eaf2fb; color: var(--hero-blue-700); }
+.tab .tab-param {
+    font-size: 10.5px; color: var(--text-muted);
+    margin-left: 4px;
+    padding: 0 5px;
+    border-radius: 6px;
+    background: var(--bg-tertiary);
+}
+.tab.active .tab-param { background: var(--bg-secondary); color: var(--text-secondary); }
+.tab-strip-spacer { flex: 1; border-right: 0; }
+
+.center-scroll { overflow-y: auto; min-height: 0; }
+.workspace-padded { padding: 18px 24px 24px; }
+.ws-header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 14px; }
+.ws-title { font-size: 22px; font-weight: 700; margin: 0; letter-spacing: -0.3px; }
+.ws-sub { color: var(--text-muted); font-size: 12px; margin-left: auto; }
+.ws-saved-pill {
+    font-size: 11px; color: var(--hero-blue-700); font-weight: 600;
+    background: #eaf2fb; padding: 2px 8px; border-radius: 9px;
+}
+
+/* Intake item rows */
+.intake-list { display: flex; flex-direction: column; gap: 8px; }
+.i-card {
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg); padding: 10px 12px;
+    display: grid; grid-template-columns: 22px 1fr auto;
+    gap: 10px; align-items: flex-start;
+    cursor: pointer;
+}
+.i-card:hover { border-color: var(--border-strong); }
+.i-card.selected { background: #eaf2fb; border-color: #cfe1f4; }
+.i-card .chk { width: 14px; height: 14px; margin-top: 4px; border: 1.4px solid var(--border-strong); border-radius: 3px; display: inline-grid; place-items: center; }
+.i-card.selected .chk { background: var(--primary); border-color: var(--primary); color: white; }
+.i-card .body { min-width: 0; }
+.i-card .title-line {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+.i-card .title { font-size: 13px; font-weight: 500; }
+.src-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 600;
+    padding: 1px 6px; border-radius: 3px;
+    text-transform: uppercase; letter-spacing: 0.3px;
+}
+.src-chip.intercom { background: #eff6ff; color: #1d4ed8; }
+.src-chip.zendesk { background: #ecfdf5; color: #047857; }
+.src-chip.sales { background: #fef3c7; color: #92400e; }
+.src-chip.internal { background: var(--bg-tertiary); color: var(--text-secondary); }
+.src-chip.gh { background: #f5f3ff; color: #6d28d9; }
+.seg-chip {
+    font-size: 10px; font-weight: 600;
+    padding: 1px 6px; border-radius: 3px;
+    background: var(--bg-tertiary); color: var(--text-secondary);
+}
+.i-card .snippet { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.i-card .meta { font-size: 11px; color: var(--text-muted); margin-top: 5px; display: flex; gap: 10px; }
+.i-card .right-action {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+    font-size: 11px; color: var(--text-muted);
+}
+.tag-link {
+    font-size: 10.5px; color: var(--hero-blue-700);
+    background: #eaf2fb; padding: 1px 6px; border-radius: 8px;
+    font-family: ui-monospace, Menlo, monospace; font-weight: 600;
+}
+.tag-link.unlinked { background: var(--bg-tertiary); color: var(--text-muted); }
+
+/* Bottom strip */
+.bottom-strip { border-top: 1px solid var(--border); background: var(--bg); padding: 8px 14px 10px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+.bottom-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.bottom-actions-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; margin-right: 4px; }
+.action-btn { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 11px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 500; }
+.action-btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+.action-btn svg { color: var(--text-muted); }
+.action-btn.has-selection { background: #eaf2fb; border-color: #cfe1f4; color: var(--hero-blue-700); }
+.bottom-input { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; background: var(--bg); }
+.bottom-input:focus-within { border-color: var(--hero-blue-500); box-shadow: 0 0 0 3px rgba(108, 182, 255, 0.18); }
+.bottom-input input { flex: 1; border: 0; outline: 0; font-family: inherit; font-size: 13px; color: var(--text); background: transparent; }
+.bottom-input input::placeholder { color: var(--text-muted); }
+.bottom-input .tool { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 4px; cursor: pointer; color: var(--text-muted); font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+.model-chip { display: inline-flex; align-items: center; gap: 5px; background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-size: 10.5px; color: var(--text-secondary); font-weight: 600; cursor: pointer; }
+.model-chip .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-500); }
+.send-btn { width: 26px; height: 26px; border-radius: 6px; background: var(--primary); color: white; border: 0; cursor: pointer; display: grid; place-items: center; }
+
+/* Right panel */
+.right-panel { border-left: 1px solid var(--border); background: var(--bg); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.right-header { height: 36px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--border); background: var(--bg-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); }
+.right-header .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+.right-header .ctx-label { margin-left: auto; text-transform: none; letter-spacing: 0; font-size: 11px; color: var(--text-muted); font-weight: 400; font-family: ui-monospace, Menlo, monospace; }
+.right-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+.ambient { position: sticky; top: 0; z-index: 2; background: linear-gradient(180deg, var(--bg) 0%, var(--bg) 88%, rgba(255,255,255,0) 100%); padding: 10px 14px 14px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+.ambient-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
+.ambient-card { border: 1px solid var(--border); border-radius: 7px; background: var(--bg); padding: 8px 10px; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+.ambient-card.relationship { background: var(--bg-secondary); }
+.ambient-card .label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); flex-shrink: 0; }
+.ambient-card .body { flex: 1; min-width: 0; }
+.ambient-card .body strong { font-weight: 600; }
+.ambient-card .body .sub { color: var(--text-muted); font-size: 11px; }
+.ambient-suggest { border: 1px dashed var(--hero-blue-500); background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%); border-radius: 7px; padding: 8px 10px; font-size: 12px; line-height: 1.45; }
+.ambient-suggest .head { display: flex; align-items: center; gap: 6px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--hero-blue-700); margin-bottom: 4px; }
+.ambient-suggest .head .pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-700); }
+.ambient-suggest .actions { display: flex; gap: 4px; margin-top: 6px; }
+.ambient-suggest .actions button { border: 0; background: transparent; font-family: inherit; font-size: 11px; padding: 2px 8px; border-radius: 4px; cursor: pointer; color: var(--text-secondary); font-weight: 500; }
+.ambient-suggest .actions button.primary { color: var(--hero-blue-700); }
+.ambient-suggest .actions button:hover { background: var(--bg-hover); }
+.ambient-rollup { display: flex; align-items: center; font-size: 11.5px; color: var(--text-secondary); cursor: pointer; padding: 2px 0; }
+.ambient-rollup .chev { margin-left: 4px; color: var(--text-muted); }
+
+.chat-scroll { flex: 1; padding: 12px 14px 10px; display: flex; flex-direction: column; gap: 10px; }
+.bubble-wrap { display: flex; flex-direction: column; gap: 3px; max-width: 100%; }
+.bubble-wrap.user { align-items: flex-end; }
+.bubble-wrap.agent { align-items: flex-start; }
+.via { font-size: 10px; color: var(--text-muted); padding: 0 4px; }
+.via code { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: var(--text-secondary); }
+.bubble { max-width: 300px; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 21px; word-wrap: break-word; }
+.bubble.user { background: rgba(155, 193, 230, 0.22); color: var(--text); }
+.bubble.agent { background: #f4f5f7; color: var(--text); }
+.bubble code { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; background: rgba(0,0,0,0.06); padding: 0 4px; border-radius: 3px; }
+.bubble strong { font-weight: 600; }
+.sys-event { display: flex; align-items: center; gap: 6px; padding: 6px 0; color: var(--text-muted); font-size: 11px; font-style: italic; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); margin: 4px 0; }
+.sys-event::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); }
+.sys-event code { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; font-style: normal; }
+</style>
+</head>
+<body>
+<div class="shell">
+    <header class="chrome">
+        <div class="chrome-workspace">
+            <div class="workspace-logo"><svg viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg></div>
+            <span>Hero</span>
+            <span class="domain-pill">PM <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </div>
+        <div class="search"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><input placeholder="Search or jump to…" /><span class="kbd">⌘K</span></div>
+        <div class="chrome-right"><span class="preset-chip"><span class="dot"></span>Cycle · 6w</span><div class="avatar marcus">MJ</div></div>
+    </header>
+
+    <div class="body-grid">
+        <nav class="nav">
+            <div class="nav-section">
+                <a class="nav-link chat-entry"><svg class="nav-icon" viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>Chat</a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-label">Plan</div>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="3.5" height="10" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="6.5" y="3" width="3.5" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="11" y="3" width="3.5" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>Roadmap</a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="7" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="11" width="8" height="2" rx="1" fill="currentColor"/></svg>Story queue<span class="count">47</span></a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M3 2.5h7l3 3v8a.5.5 0 01-.5.5h-9.5a.5.5 0 01-.5-.5v-11z" stroke="currentColor" stroke-width="1.3"/><path d="M5 8h6M5 11h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>PRDs</a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 3h12l-4 6v4l-4-2V9L2 3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Intake<span class="count" style="background:#fef3c7;color:#92400e;border-radius:8px;padding:0 5px">23</span></a>
+                <div class="nav-saved active">Mobile bugs</div>
+                <div class="nav-saved">Enterprise asks</div>
+                <div class="nav-saved">New this week</div>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="4" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/><circle cx="12" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.3"/></svg>Handoff stream</a>
+            </div>
+            <div class="nav-spacer"></div>
+            <div class="nav-user"><div class="avatar sm marcus">MJ</div>Marcus Johnson</div>
+        </nav>
+
+        <main class="center">
+            <div class="tab-strip">
+                <div class="tab chat-tab"><span class="tab-type-chip">Chat</span><span class="tab-label">Conversation</span></div>
+                <div class="tab"><span class="tab-type-chip">Intake</span><span class="tab-label">Intake</span><span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></div>
+                <div class="tab active">
+                    <span class="tab-type-chip">Intake</span>
+                    <span class="tab-label">Intake</span>
+                    <span class="tab-param">Mobile bugs</span>
+                    <span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+                </div>
+                <div class="tab-strip-spacer"></div>
+            </div>
+
+            <div class="center-scroll">
+                <div class="workspace-padded">
+                    <div class="ws-header">
+                        <h1 class="ws-title">Intake</h1>
+                        <span class="ws-saved-pill">Saved view · Mobile bugs</span>
+                        <div class="ws-sub">14 items · filtered from 23 · 2 selected</div>
+                    </div>
+
+                    <div class="intake-list">
+                        <div class="i-card selected">
+                            <span class="chk"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+                            <div class="body">
+                                <div class="title-line">
+                                    <span class="src-chip intercom">Intercom</span>
+                                    <span class="seg-chip">enterprise</span>
+                                    <span class="title">Push notifications never arrive on iOS when app is killed</span>
+                                </div>
+                                <div class="snippet">"We rely on critical alerts. If the app is force-quit, notifications silently fail until the user reopens. This breaks our SRE rotation handoff."</div>
+                                <div class="meta">
+                                    <span>Mintwave Ltd · 940 seats</span>
+                                    <span>Priya R. · 3h ago</span>
+                                </div>
+                            </div>
+                            <div class="right-action">
+                                <span class="tag-link unlinked">unlinked</span>
+                                <span>★ 4 mentions</span>
+                            </div>
+                        </div>
+
+                        <div class="i-card selected">
+                            <span class="chk"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+                            <div class="body">
+                                <div class="title-line">
+                                    <span class="src-chip zendesk">Zendesk</span>
+                                    <span class="seg-chip">mid-market</span>
+                                    <span class="title">Android push notifications delayed 5-10min during overnight Doze</span>
+                                </div>
+                                <div class="snippet">"On-call SRE missed an alert at 03:14 because Doze suppressed the notification for 7 minutes. We can't trust pushes for paging anymore."</div>
+                                <div class="meta">
+                                    <span>NorthBank Engineering</span>
+                                    <span>Tomás L. · 11h ago</span>
+                                </div>
+                            </div>
+                            <div class="right-action">
+                                <span class="tag-link unlinked">unlinked</span>
+                                <span>★ 2 mentions</span>
+                            </div>
+                        </div>
+
+                        <div class="i-card">
+                            <span class="chk"></span>
+                            <div class="body">
+                                <div class="title-line">
+                                    <span class="src-chip gh">GitHub</span>
+                                    <span class="seg-chip">community</span>
+                                    <span class="title">Mobile app crashes when run list exceeds 1000 items</span>
+                                </div>
+                                <div class="snippet">"Steps: open Runs tab on a workspace with >1000 runs, scroll quickly. App force-closes. iPhone 14, iOS 17.4."</div>
+                                <div class="meta">
+                                    <span>github.com/.../issues/4421</span>
+                                    <span>yesterday</span>
+                                </div>
+                            </div>
+                            <div class="right-action">
+                                <span class="tag-link">→ Story-2785</span>
+                                <span>★ 11 mentions</span>
+                            </div>
+                        </div>
+
+                        <div class="i-card">
+                            <span class="chk"></span>
+                            <div class="body">
+                                <div class="title-line">
+                                    <span class="src-chip sales">Sales</span>
+                                    <span class="seg-chip">enterprise</span>
+                                    <span class="title">Mobile dark mode requested in 3 enterprise renewal calls</span>
+                                </div>
+                                <div class="snippet">"Three Fortune-500 procurement reviews flagged mobile dark mode as a Q3 deliverable expectation. Loss risk: ~$420K ARR if not committed."</div>
+                                <div class="meta">
+                                    <span>3 renewal calls · combined ACV $1.2M</span>
+                                    <span>Tara F. · 2d ago</span>
+                                </div>
+                            </div>
+                            <div class="right-action">
+                                <span class="tag-link unlinked">unlinked</span>
+                                <span>★ 8 mentions</span>
+                            </div>
+                        </div>
+
+                        <div class="i-card">
+                            <span class="chk"></span>
+                            <div class="body">
+                                <div class="title-line">
+                                    <span class="src-chip intercom">Intercom</span>
+                                    <span class="seg-chip">mid-market</span>
+                                    <span class="title">Pull-to-refresh doesn't trigger on Workspace dashboard</span>
+                                </div>
+                                <div class="snippet">"The standard iOS gesture does nothing. I have to close and reopen the app to see new runs."</div>
+                                <div class="meta">
+                                    <span>BlueRiver Studios</span>
+                                    <span>3d ago</span>
+                                </div>
+                            </div>
+                            <div class="right-action">
+                                <span class="tag-link">→ Story-2807</span>
+                                <span>★ 1 mention</span>
+                            </div>
+                        </div>
+
+                        <div class="i-card">
+                            <span class="chk"></span>
+                            <div class="body">
+                                <div class="title-line">
+                                    <span class="src-chip internal">Internal</span>
+                                    <span class="seg-chip">team</span>
+                                    <span class="title">Mobile bundle size up 22% since last release</span>
+                                </div>
+                                <div class="snippet">"Bundle analyzer shows 4 new vendored deps unused on mobile. Pre-rollout cleanup before next App Store release?"</div>
+                                <div class="meta">
+                                    <span>Diego R. · #mobile-eng</span>
+                                    <span>4d ago</span>
+                                </div>
+                            </div>
+                            <div class="right-action">
+                                <span class="tag-link unlinked">unlinked</span>
+                                <span>—</span>
+                            </div>
+                        </div>
+
+                        <div class="i-card">
+                            <span class="chk"></span>
+                            <div class="body">
+                                <div class="title-line">
+                                    <span class="src-chip zendesk">Zendesk</span>
+                                    <span class="seg-chip">smb</span>
+                                    <span class="title">Mobile sign-in loops on Android when SSO redirect closes browser tab</span>
+                                </div>
+                                <div class="snippet">"User auths in Chrome custom tab, tab closes, app shows login screen again. Have to retry 3-4 times."</div>
+                                <div class="meta">
+                                    <span>Indie devs collective</span>
+                                    <span>6d ago</span>
+                                </div>
+                            </div>
+                            <div class="right-action">
+                                <span class="tag-link">→ Epic auth-refresh</span>
+                                <span>★ 5 mentions</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-strip">
+                <div class="bottom-actions">
+                    <span class="bottom-actions-label">2 selected</span>
+                    <button class="action-btn has-selection">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 6h6M6 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        Promote to roadmap-item
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 4h6M3 6h6M3 8h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        Triage all
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="5" cy="6" r="2.5" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="6" r="2.5" stroke="currentColor" stroke-width="1.3"/></svg>
+                        Merge similar
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 2v8l3-2 3 2V2H3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                        Save view
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/></svg>
+                        Discuss
+                    </button>
+                </div>
+                <div class="bottom-input">
+                    <span class="model-chip"><span class="dot"></span>Sonnet 4.6</span>
+                    <input placeholder="Ask about the intake queue, or run a command on 2 selected…" />
+                    <span class="tool">/</span><span class="tool">@</span>
+                    <button class="send-btn"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+                </div>
+            </div>
+        </main>
+
+        <aside class="right-panel">
+            <div class="right-header">
+                <span class="status-dot"></span>Chat
+                <span class="ctx-label">· Intake / Mobile bugs</span>
+            </div>
+            <div class="right-scroll">
+                <div class="ambient">
+                    <div class="ambient-label">Ambient · about this view</div>
+
+                    <div class="ambient-card relationship">
+                        <span class="label">View</span>
+                        <div class="body">
+                            <strong>Mobile bugs</strong> · 14 of 23 intake
+                            <div class="sub">Filter: tag=mobile · source≠internal-test</div>
+                        </div>
+                    </div>
+
+                    <div class="ambient-card relationship">
+                        <span class="label">Inbox</span>
+                        <div class="body">
+                            <strong>23 untriaged</strong> · 8 enterprise · 11 mid-market · 4 community
+                            <div class="sub">Avg time-to-triage: 4.2 days (target &lt;2)</div>
+                        </div>
+                    </div>
+
+                    <div class="ambient-suggest">
+                        <div class="head"><span class="pulse"></span>Suggestion · duplicate-detector</div>
+                        Top 2 items (Intercom + Zendesk) both describe <strong>push-notification delivery failure</strong>. 92% similarity. Likely same underlying cause.
+                        <div class="actions">
+                            <button class="primary">Merge into one intake-item</button>
+                            <button>Keep separate</button>
+                            <button>Dismiss</button>
+                        </div>
+                    </div>
+
+                    <div class="ambient-suggest">
+                        <div class="head"><span class="pulse"></span>Suggestion · intake-triager</div>
+                        5 likely duplicates detected across this view. Cluster them with <code>/triage --cluster</code>?
+                        <div class="actions">
+                            <button class="primary">Run cluster</button>
+                            <button>Dismiss</button>
+                        </div>
+                    </div>
+
+                    <div class="ambient-suggest">
+                        <div class="head"><span class="pulse"></span>Suggestion · roadmap-curator</div>
+                        Sales item ($420K renewal risk · dark mode) outranks current Next-band candidates on revenue evidence. Promote?
+                        <div class="actions">
+                            <button class="primary">Promote</button>
+                            <button>Show comparison</button>
+                            <button>Dismiss</button>
+                        </div>
+                    </div>
+
+                    <div class="ambient-rollup">
+                        18 new items this week
+                        <svg class="chev" width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4 4l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    </div>
+                </div>
+
+                <div class="chat-scroll">
+                    <div class="sys-event">
+                        18 new intake items synced from Intercom + Zendesk · this morning
+                    </div>
+
+                    <div class="bubble-wrap user">
+                        <div class="bubble user">What's the strongest signal here that we should promote this cycle?</div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            Push-notification delivery: <strong>4 sources, 7 mentions</strong>, enterprise + mid-market. Affects on-call workflows (Mintwave + NorthBank). Likely same root cause. Recommend promoting as one roadmap-item: <em>"Mobile push reliability"</em>.
+                        </div>
+                    </div>
+
+                    <div class="bubble-wrap user">
+                        <div class="via">via <code>/triage</code></div>
+                        <div class="bubble user">Promote the merged item. Tag it customer-led.</div>
+                    </div>
+
+                    <div class="sys-event">
+                        <code>intake-triager</code> merged 2 intake-items → promoted to roadmap-item <code>mobile-push-reliability</code>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            Done. New roadmap-item in Next band with 7 mentions cited as evidence. 2 intake items archived with link.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<!-- Hero PM Mock: 08-inline-proposal | Locked layout: Story detail with inline-proposed AC -->
+<!-- Demonstrates the inline-propose pattern: agent output lands IN the artifact (accept/edit/reject), not the chat -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Story-2849 — Inline-proposed AC · Hero PM</title>
+<style>
+:root {
+    --bg: #ffffff; --bg-secondary: #f7f8fa; --bg-tertiary: #eef0f4; --bg-hover: #f0f2f6;
+    --text: #1a1d23; --text-secondary: #5d646e; --text-muted: #8a929c;
+    --border: #e4e7eb; --border-strong: #d0d4da;
+    --primary: #2a6cb5; --primary-hover: #6cb6ff;
+    --hero-blue-300: #9bc1e6; --hero-blue-500: #6cb6ff; --hero-blue-700: #2a6cb5;
+    --success: #16a249; --warning: #d97706; --danger: #dc2626;
+    --accent-handoff: #7c3aed; --accent-handoff-bg: #f5f0ff;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { font-size: 13px; line-height: 1.45; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased; }
+
+.shell { display: grid; grid-template-rows: 48px 1fr; height: 100vh; }
+.chrome { display: grid; grid-template-columns: 240px 1fr auto; align-items: center; border-bottom: 1px solid var(--border); background: var(--bg); padding: 0 16px 0 0; gap: 16px; }
+.chrome-workspace { display: flex; align-items: center; gap: 8px; padding: 0 12px; height: 100%; border-right: 1px solid var(--border); font-weight: 600; }
+.workspace-logo { width: 22px; height: 22px; display: grid; place-items: center; color: var(--hero-blue-300); }
+.workspace-logo svg { display: block; width: 22px; height: 22px; }
+.domain-pill { margin-left: auto; background: var(--bg-tertiary); color: var(--text-secondary); border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+.search { grid-column: 2; display: flex; align-items: center; gap: 8px; max-width: 440px; width: 100%; justify-self: center; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; color: var(--text-muted); }
+.search input { background: transparent; border: 0; outline: 0; flex: 1; font-size: 12px; color: var(--text-secondary); font-family: inherit; }
+.kbd { font-family: ui-monospace, Menlo, monospace; background: var(--bg); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 3px; padding: 0 5px; font-size: 10px; color: var(--text-muted); line-height: 14px; }
+.chrome-right { display: flex; align-items: center; gap: 12px; }
+.preset-chip { display: inline-flex; align-items: center; gap: 6px; background: #eaf2fb; color: var(--hero-blue-700); border: 1px solid #cfe1f4; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.preset-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); }
+.avatar { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, #ffd47e, #f97373); color: white; font-size: 10px; font-weight: 600; display: inline-grid; place-items: center; border: 1px solid var(--border); }
+.avatar.sm { width: 18px; height: 18px; font-size: 9px; }
+.avatar.marcus { background: linear-gradient(135deg, #fcc46d, #f97316); }
+.avatar.diego { background: linear-gradient(135deg, #6cb6ff, #4f7cf7); }
+
+.body-grid { display: grid; grid-template-columns: 240px 1fr 380px; height: calc(100vh - 48px); min-height: 0; }
+
+.nav { background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 12px 8px; overflow-y: auto; display: flex; flex-direction: column; }
+.nav-section { margin-bottom: 14px; }
+.nav-label { text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px; font-weight: 600; color: var(--text-muted); padding: 4px 8px; }
+.nav-link { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 4px; color: var(--text-secondary); text-decoration: none; font-size: 12.5px; cursor: pointer; }
+.nav-link:hover { background: var(--bg-hover); color: var(--text); }
+.nav-link.active { background: var(--bg-tertiary); color: var(--text); font-weight: 500; }
+.nav-link .count { margin-left: auto; font-size: 11px; color: var(--text-muted); }
+.nav-icon { width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0; }
+.nav-link.active .nav-icon { color: var(--primary); }
+.nav-link.chat-entry { color: var(--hero-blue-700); font-weight: 600; }
+.nav-link.chat-entry .nav-icon { color: var(--hero-blue-300); }
+.nav-link.chat-entry:hover { background: #eaf2fb; }
+.nav-saved { padding: 3px 8px 3px 26px; font-size: 12px; color: var(--text-secondary); border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.nav-saved:hover { background: var(--bg-hover); color: var(--text); }
+.nav-saved::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); }
+.nav-spacer { flex: 1; }
+.nav-user { display: flex; align-items: center; gap: 8px; padding: 8px; border-top: 1px solid var(--border); margin-top: 8px; font-size: 12px; color: var(--text-secondary); }
+
+.center { display: grid; grid-template-rows: 34px 1fr auto; min-height: 0; overflow: hidden; }
+.tab-strip { display: flex; align-items: stretch; background: var(--bg-secondary); border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tab { display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; border-right: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-muted); font-size: 12px; cursor: pointer; height: 34px; max-width: 240px; }
+.tab .tab-type-chip { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 1px 5px; border-radius: 3px; background: var(--bg-tertiary); color: var(--text-muted); flex-shrink: 0; }
+.tab .tab-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab .tab-close { width: 14px; height: 14px; display: grid; place-items: center; border-radius: 3px; opacity: 0; color: var(--text-muted); flex-shrink: 0; }
+.tab:hover .tab-close { opacity: 1; }
+.tab.active { background: var(--bg); color: var(--text); font-weight: 500; box-shadow: inset 0 2px 0 var(--hero-blue-700); }
+.tab.active .tab-type-chip { background: #eaf2fb; color: var(--hero-blue-700); }
+.tab.chat-tab .tab-type-chip { background: #eaf2fb; color: var(--hero-blue-700); }
+.tab-strip-spacer { flex: 1; border-right: 0; }
+
+.artifact-scroll { overflow-y: auto; min-height: 0; }
+.artifact-padded { padding: 22px 32px 28px; max-width: 920px; }
+
+.context-strip { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-secondary); margin-bottom: 12px; }
+.context-strip .type-chip { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-tertiary); border-radius: 3px; padding: 1px 6px; font-size: 10.5px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; }
+.context-strip .sep { color: var(--text-muted); }
+.artifact-title { font-size: 22px; line-height: 1.35; font-weight: 600; margin: 0 0 14px; letter-spacing: -0.2px; }
+.chip-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 22px; }
+.chip { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 11px; font-size: 11px; font-weight: 500; background: var(--bg-tertiary); color: var(--text-secondary); }
+.chip .dot { width: 6px; height: 6px; border-radius: 50%; }
+.chip.status-refined { background: #fef3c7; color: #92400e; }
+.chip.status-refined .dot { background: #d97706; }
+.chip.priority-high { background: #fef2f2; color: #b91c1c; }
+.chip.priority-high .dot { background: #dc2626; }
+.chip.cycle { background: #eaf2fb; color: var(--hero-blue-700); }
+.chip.cycle .dot { background: var(--hero-blue-700); }
+.chip.assignee { padding-left: 3px; gap: 6px; }
+.section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin: 28px 0 10px; }
+.body-prose p { margin: 0 0 12px; font-size: 13.5px; line-height: 1.6; }
+.body-prose code { background: var(--bg-tertiary); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: ui-monospace, Menlo, monospace; }
+
+/* EARS list */
+.ears-list { margin: 0; padding: 0; list-style: none; }
+.ears-row { display: flex; align-items: flex-start; gap: 10px; padding: 8px 8px 8px 4px; border-bottom: 1px dashed var(--border); }
+.ears-check { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1.5px; border: 1.5px solid var(--border-strong); border-radius: 4px; background: var(--bg); display: grid; place-items: center; opacity: 0.5; }
+.ears-row.checked .ears-check { background: var(--success); border-color: var(--success); opacity: 1; }
+.ears-row.checked .ears-check svg { color: white; }
+.ears-text { font-size: 12.5px; font-family: ui-monospace, Menlo, monospace; line-height: 1.55; }
+.ears-text .kw { color: var(--text-secondary); font-weight: 600; }
+.ears-row.checked .ears-text { color: var(--text-secondary); }
+
+/* Proposed AC blocks — the key element of this mockup */
+.proposed-list { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+.proposed-block {
+    border: 1.5px dashed var(--hero-blue-500);
+    background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+    border-radius: 8px;
+    padding: 12px 14px 8px;
+    position: relative;
+}
+.proposed-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10.5px; font-weight: 600;
+    color: var(--hero-blue-700);
+    background: white; border: 1px solid #cfe1f4;
+    padding: 2px 8px; border-radius: 10px;
+    position: absolute; top: -10px; left: 12px;
+}
+.proposed-badge .dot-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); }
+.proposed-badge code { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; background: transparent; color: var(--hero-blue-700); }
+.proposed-text {
+    margin-top: 4px;
+    font-size: 13px;
+    font-family: ui-monospace, Menlo, monospace;
+    line-height: 1.55;
+    padding: 4px 0 2px;
+}
+.proposed-text .kw { color: var(--text-secondary); font-weight: 600; }
+.proposed-text code { background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; font-size: 11.5px; }
+.proposed-actions {
+    display: flex; gap: 4px; margin-top: 8px;
+    padding-top: 6px; border-top: 1px dashed var(--hero-blue-300);
+    align-items: center;
+}
+.proposed-actions button {
+    border: 0; background: transparent; font-family: inherit;
+    font-size: 11.5px; padding: 3px 9px; border-radius: 4px;
+    cursor: pointer; color: var(--text-secondary);
+    display: inline-flex; align-items: center; gap: 4px; font-weight: 500;
+}
+.proposed-actions button.accept { color: var(--success); font-weight: 600; }
+.proposed-actions button.edit { color: var(--text); }
+.proposed-actions button.reject { color: var(--text-muted); }
+.proposed-actions button:hover { background: var(--bg-hover); }
+.proposed-actions .hint { margin-left: auto; font-size: 10.5px; color: var(--text-muted); }
+
+.proposed-block.edited {
+    border-color: var(--warning); background: #fffaf0;
+}
+.proposed-block.edited .proposed-badge { color: var(--warning); border-color: #fed7aa; }
+.proposed-block.edited .proposed-badge .dot-pulse { background: var(--warning); }
+.proposed-block.accepted {
+    border: 1.5px solid var(--success);
+    background: linear-gradient(180deg, #f0fdf4 0%, var(--bg) 100%);
+    opacity: 0.85;
+}
+.proposed-block.accepted .proposed-badge { color: var(--success); border-color: #bbf7d0; }
+.proposed-block.accepted .proposed-badge .dot-pulse { background: var(--success); }
+.proposed-block.accepted .proposed-actions { display: none; }
+
+/* Bottom strip */
+.bottom-strip { border-top: 1px solid var(--border); background: var(--bg); padding: 8px 14px 10px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+.bottom-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.bottom-actions-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; margin-right: 4px; }
+.action-btn { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 11px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 500; }
+.action-btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+.action-btn svg { color: var(--text-muted); }
+.bottom-input { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; background: var(--bg); }
+.bottom-input:focus-within { border-color: var(--hero-blue-500); box-shadow: 0 0 0 3px rgba(108, 182, 255, 0.18); }
+.bottom-input input { flex: 1; border: 0; outline: 0; font-family: inherit; font-size: 13px; color: var(--text); background: transparent; }
+.bottom-input input::placeholder { color: var(--text-muted); }
+.bottom-input .tool { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 4px; cursor: pointer; color: var(--text-muted); font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+.model-chip { display: inline-flex; align-items: center; gap: 5px; background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-size: 10.5px; color: var(--text-secondary); font-weight: 600; cursor: pointer; }
+.model-chip .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-500); }
+.send-btn { width: 26px; height: 26px; border-radius: 6px; background: var(--primary); color: white; border: 0; cursor: pointer; display: grid; place-items: center; }
+
+/* Right panel */
+.right-panel { border-left: 1px solid var(--border); background: var(--bg); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.right-header { height: 36px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--border); background: var(--bg-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); }
+.right-header .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+.right-header .ctx-label { margin-left: auto; text-transform: none; letter-spacing: 0; font-size: 11px; color: var(--text-muted); font-weight: 400; font-family: ui-monospace, Menlo, monospace; }
+.right-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+.ambient { position: sticky; top: 0; z-index: 2; background: linear-gradient(180deg, var(--bg) 0%, var(--bg) 88%, rgba(255,255,255,0) 100%); padding: 10px 14px 14px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+.ambient-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
+.ambient-card { border: 1px solid var(--border); border-radius: 7px; background: var(--bg); padding: 8px 10px; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+.ambient-card.relationship { background: var(--bg-secondary); }
+.ambient-card .label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); flex-shrink: 0; }
+.ambient-card .body { flex: 1; min-width: 0; }
+.ambient-card .body strong { font-weight: 600; }
+.ambient-card .body .sub { color: var(--text-muted); font-size: 11px; }
+.ambient-suggest { border: 1px dashed var(--hero-blue-500); background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%); border-radius: 7px; padding: 8px 10px; font-size: 12px; line-height: 1.45; }
+.ambient-suggest .head { display: flex; align-items: center; gap: 6px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--hero-blue-700); margin-bottom: 4px; }
+.ambient-suggest .head .pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--hero-blue-700); }
+.ambient-suggest .actions { display: flex; gap: 4px; margin-top: 6px; }
+.ambient-suggest .actions button { border: 0; background: transparent; font-family: inherit; font-size: 11px; padding: 2px 8px; border-radius: 4px; cursor: pointer; color: var(--text-secondary); font-weight: 500; }
+.ambient-suggest .actions button.primary { color: var(--hero-blue-700); }
+.ambient-suggest .actions button:hover { background: var(--bg-hover); }
+.ambient-rollup { display: flex; align-items: center; font-size: 11.5px; color: var(--text-secondary); cursor: pointer; padding: 2px 0; }
+.ambient-rollup .chev { margin-left: 4px; color: var(--text-muted); }
+
+.chat-scroll { flex: 1; padding: 12px 14px 10px; display: flex; flex-direction: column; gap: 10px; }
+.bubble-wrap { display: flex; flex-direction: column; gap: 3px; max-width: 100%; }
+.bubble-wrap.user { align-items: flex-end; }
+.bubble-wrap.agent { align-items: flex-start; }
+.via { font-size: 10px; color: var(--text-muted); padding: 0 4px; }
+.via code { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: var(--text-secondary); }
+.bubble { max-width: 300px; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 21px; word-wrap: break-word; }
+.bubble.user { background: rgba(155, 193, 230, 0.22); color: var(--text); }
+.bubble.agent { background: #f4f5f7; color: var(--text); }
+.bubble code { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; background: rgba(0,0,0,0.06); padding: 0 4px; border-radius: 3px; }
+.bubble strong { font-weight: 600; }
+.sys-event { display: flex; align-items: center; gap: 6px; padding: 6px 0; color: var(--text-muted); font-size: 11px; font-style: italic; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); margin: 4px 0; }
+.sys-event::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); }
+.sys-event code { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; background: var(--bg-tertiary); padding: 0 4px; border-radius: 3px; font-style: normal; }
+.sys-event.inline-event { color: var(--hero-blue-700); border-color: #cfe1f4; }
+.sys-event.inline-event::before { background: var(--hero-blue-700); }
+</style>
+</head>
+<body>
+<div class="shell">
+    <header class="chrome">
+        <div class="chrome-workspace">
+            <div class="workspace-logo"><svg viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg></div>
+            <span>Hero</span>
+            <span class="domain-pill">PM <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </div>
+        <div class="search"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><input placeholder="Search or jump to…" /><span class="kbd">⌘K</span></div>
+        <div class="chrome-right"><span class="preset-chip"><span class="dot"></span>Cycle · 6w</span><div class="avatar marcus">MJ</div></div>
+    </header>
+
+    <div class="body-grid">
+        <nav class="nav">
+            <div class="nav-section">
+                <a class="nav-link chat-entry"><svg class="nav-icon" viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>Chat</a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-label">Plan</div>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="3.5" height="10" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="6.5" y="3" width="3.5" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="11" y="3" width="3.5" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>Roadmap</a>
+                <a class="nav-link active"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="7" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="11" width="8" height="2" rx="1" fill="currentColor"/></svg>Story queue<span class="count">47</span></a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M3 2.5h7l3 3v8a.5.5 0 01-.5.5h-9.5a.5.5 0 01-.5-.5v-11z" stroke="currentColor" stroke-width="1.3"/><path d="M5 8h6M5 11h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>PRDs</a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 3h12l-4 6v4l-4-2V9L2 3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Intake<span class="count" style="background:#fef3c7;color:#92400e;border-radius:8px;padding:0 5px">23</span></a>
+                <a class="nav-link"><svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="4" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/><circle cx="12" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.3"/></svg>Handoff stream</a>
+            </div>
+            <div class="nav-spacer"></div>
+            <div class="nav-user"><div class="avatar sm marcus">MJ</div>Marcus Johnson</div>
+        </nav>
+
+        <main class="center">
+            <div class="tab-strip">
+                <div class="tab chat-tab"><span class="tab-type-chip">Chat</span><span class="tab-label">Conversation</span></div>
+                <div class="tab"><span class="tab-type-chip">Queue</span><span class="tab-label">Story queue</span><span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></div>
+                <div class="tab active"><span class="tab-type-chip">Story</span><span class="tab-label">2849 · W3C traceparent</span><span class="tab-close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></div>
+                <div class="tab-strip-spacer"></div>
+            </div>
+
+            <div class="artifact-scroll">
+                <div class="artifact-padded">
+
+                    <div class="context-strip">
+                        <span class="type-chip">Roadmap</span>
+                        <a style="color:var(--text-secondary);text-decoration:none">Agent Observability</a>
+                        <span class="sep">›</span>
+                        <span class="type-chip">Epic</span>
+                        <a style="color:var(--text-secondary);text-decoration:none">Telemetry &amp; traces</a>
+                        <span class="sep">›</span>
+                        <span class="type-chip">Story</span>
+                        <span style="color:var(--text)">2849</span>
+                    </div>
+
+                    <h1 class="artifact-title">As a Hero runtime I need to inject W3C <code style="font-size:18px;background:var(--bg-tertiary);padding:1px 8px;border-radius:4px;font-family:ui-monospace,Menlo,monospace;">traceparent</code> headers into downstream HTTP calls so customer APMs join our spans into their traces.</h1>
+
+                    <div class="chip-row">
+                        <span class="chip status-refined"><span class="dot"></span>refined</span>
+                        <span class="chip priority-high"><span class="dot"></span>high</span>
+                        <span class="chip cycle"><span class="dot"></span>Cycle 14 · 2w</span>
+                        <span class="chip assignee"><div class="avatar sm marcus">MJ</div>Marcus Johnson</span>
+                        <span class="chip" style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px">HERO-2849 ↗</span>
+                        <span class="chip">#telemetry</span>
+                        <span class="chip">#sre</span>
+                    </div>
+
+                    <div class="body-prose">
+                        <p>Downstream services running customer APM (Datadog / Honeycomb / Tempo) accept the W3C trace-context standard. If the agent runtime injects a <code>traceparent</code> header on every outgoing HTTP call, customer's existing trace ingestion picks up the parent-child relationship for free — no Hero-specific integration needed on their side.</p>
+                        <p><strong>Scope:</strong> outgoing HTTP from the agent runtime (HTTP-tool calls, LLM-provider calls, webhook callbacks). Out of scope: outgoing gRPC, message-queue producers, raw socket I/O.</p>
+                    </div>
+
+                    <!-- Existing AC -->
+                    <h3 class="section-title">Acceptance criteria · current</h3>
+                    <ul class="ears-list">
+                        <li class="ears-row checked">
+                            <span class="ears-check"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+                            <span class="ears-text"><span class="kw">WHEN</span> the agent runtime makes an outgoing HTTP request <span class="kw">THE SYSTEM SHALL</span> inject a <code style="background:var(--bg-tertiary);padding:0 4px;border-radius:3px;font-size:11.5px">traceparent</code> header conforming to W3C trace-context v1.</span>
+                        </li>
+                        <li class="ears-row checked">
+                            <span class="ears-check"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+                            <span class="ears-text"><span class="kw">WHEN</span> a tool call already supplies a <code style="background:var(--bg-tertiary);padding:0 4px;border-radius:3px;font-size:11.5px">traceparent</code> <span class="kw">THE SYSTEM SHALL</span> preserve the upstream context and use it as the parent.</span>
+                        </li>
+                    </ul>
+
+                    <!-- INLINE-PROPOSED AC — the key element -->
+                    <h3 class="section-title">
+                        <span style="display:inline-flex;align-items:center;gap:8px">
+                            Proposed by <code style="font-family:ui-monospace,Menlo,monospace;background:#eaf2fb;color:var(--hero-blue-700);padding:1px 6px;border-radius:3px;font-size:11px">story-writer</code> · 3 acceptance criteria · just now
+                        </span>
+                    </h3>
+
+                    <div class="proposed-list">
+                        <div class="proposed-block accepted">
+                            <span class="proposed-badge">
+                                <span class="dot-pulse"></span>
+                                accepted · <code>story-writer</code>
+                            </span>
+                            <div class="proposed-text">
+                                <span class="kw">WHEN</span> an outgoing HTTP request is to a non-HTTPS endpoint
+                                <span class="kw">THE SYSTEM SHALL</span> still inject the <code>traceparent</code> header
+                                (no security restriction — W3C spec applies to all schemes).
+                            </div>
+                        </div>
+
+                        <div class="proposed-block edited">
+                            <span class="proposed-badge">
+                                <span class="dot-pulse"></span>
+                                edited by Marcus · proposed by <code>story-writer</code>
+                            </span>
+                            <div class="proposed-text">
+                                <span class="kw">WHILE</span> the OTLP exporter is unavailable
+                                <span class="kw">THE SYSTEM SHALL</span> continue to inject <code>traceparent</code> headers
+                                <em style="background:rgba(217,119,6,0.12);padding:0 4px;border-radius:2px">using a synthetic root span ID until export resumes</em>
+                                — header injection MUST NOT be coupled to span flush state.
+                            </div>
+                            <div class="proposed-actions">
+                                <button class="accept">
+                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                                    Accept edit
+                                </button>
+                                <button class="edit">
+                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 10l1-3 6-6 2 2-6 6-3 1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                                    Continue editing
+                                </button>
+                                <button class="reject">
+                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                    Revert
+                                </button>
+                                <span class="hint">⏎ to accept · ⌘Z to revert</span>
+                            </div>
+                        </div>
+
+                        <div class="proposed-block">
+                            <span class="proposed-badge">
+                                <span class="dot-pulse"></span>
+                                proposed by <code>story-writer</code> · just now
+                            </span>
+                            <div class="proposed-text">
+                                <span class="kw">IF</span> a downstream service responds with a <code>traceresponse</code> header
+                                <span class="kw">THEN THE SYSTEM SHALL</span> record the returned trace ID as a span attribute
+                                (<code>downstream.trace_id</code>) on the parent span.
+                            </div>
+                            <div class="proposed-actions">
+                                <button class="accept">
+                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                                    Accept
+                                </button>
+                                <button class="edit">
+                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 10l1-3 6-6 2 2-6 6-3 1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                                    Edit
+                                </button>
+                                <button class="reject">
+                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                    Reject
+                                </button>
+                                <span class="hint">⏎ accept · E edit · ⌫ reject</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p style="margin-top:14px;font-size:12px;color:var(--text-muted);font-style:italic">
+                        Note · the proposed AC live <strong style="color:var(--text-secondary)">in the artifact</strong>, not the chat. The chat only logs the action (see right panel). The artifact is source of truth.
+                    </p>
+
+                </div>
+            </div>
+
+            <div class="bottom-strip">
+                <div class="bottom-actions">
+                    <span class="bottom-actions-label">Refined story · 3 proposals pending</span>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Accept all proposals
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6a4 4 0 117 2.7M9 6V3.2H6.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Refine again
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="5" cy="5" r="3.2" stroke="currentColor" stroke-width="1.3"/><path d="M7.5 7.5L10 10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        Find similar
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l2.5 2.5L10 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Audit
+                    </button>
+                    <button class="action-btn">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/></svg>
+                        Discuss
+                    </button>
+                </div>
+                <div class="bottom-input">
+                    <span class="model-chip"><span class="dot"></span>Sonnet 4.6</span>
+                    <input placeholder="Ask about Story #2849 — try &quot;tighten the synthetic-span clause&quot;…" />
+                    <span class="tool">/</span><span class="tool">@</span>
+                    <button class="send-btn"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+                </div>
+            </div>
+        </main>
+
+        <aside class="right-panel">
+            <div class="right-header">
+                <span class="status-dot"></span>Chat
+                <span class="ctx-label">· Story-2849</span>
+            </div>
+            <div class="right-scroll">
+                <div class="ambient">
+                    <div class="ambient-label">Ambient · about Story-2849</div>
+
+                    <div class="ambient-card relationship">
+                        <span class="label">Parent</span>
+                        <div class="body">
+                            <strong>Telemetry &amp; traces</strong>
+                            <div class="sub">epic · 8 stories · 3 ready · 2 in flight</div>
+                        </div>
+                    </div>
+
+                    <div class="ambient-card relationship">
+                        <span class="label">Sibling</span>
+                        <div class="body">
+                            <strong>Story-2847</strong> (Agent trace spans)
+                            <div class="sub">→ ENG <span style="font-family:ui-monospace,Menlo,monospace">agent-trace-spans</span> · delivering</div>
+                        </div>
+                    </div>
+
+                    <div class="ambient-suggest">
+                        <div class="head"><span class="pulse"></span>Suggestion · story-writer</div>
+                        After accepting all proposals: 5 AC total. Story is hand-off-ready for /design.
+                        <div class="actions">
+                            <button class="primary">Accept all + hand off</button>
+                            <button>Dismiss</button>
+                        </div>
+                    </div>
+
+                    <div class="ambient-rollup">
+                        4 events on this story
+                        <svg class="chev" width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4 4l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    </div>
+                </div>
+
+                <div class="chat-scroll">
+                    <div class="bubble-wrap user">
+                        <div class="via">via <code>/refine</code> · "Draft AC"</div>
+                        <div class="bubble user">Draft acceptance criteria for this story. Focus on edge cases the existing 2 AC miss — non-HTTPS, exporter unavailable, downstream response handling.</div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            Running <code>story-writer</code> with <code>--inline-propose</code>. Will propose 3 AC inline in the artifact pane. Accept/edit/reject each one there.
+                        </div>
+                    </div>
+
+                    <!-- KEY: the chat only logs the action; the AC themselves are in the artifact -->
+                    <div class="sys-event inline-event">
+                        <code>story-writer</code> drafted 3 AC → proposed inline in artifact (non-HTTPS · exporter-availability · downstream-traceresponse)
+                    </div>
+
+                    <div class="sys-event inline-event">
+                        Marcus accepted #1 (non-HTTPS) · just now
+                    </div>
+
+                    <div class="sys-event inline-event">
+                        Marcus edited #2 (added synthetic-span fallback wording) · 12s ago
+                    </div>
+
+                    <div class="bubble-wrap user">
+                        <div class="bubble user">Make #2 more precise about what 'synthetic root span ID' means. Reference the W3C spec section if applicable.</div>
+                    </div>
+
+                    <div class="bubble-wrap agent">
+                        <div class="bubble agent">
+                            W3C trace-context §3.2.2.2 describes a randomly-generated <code>trace-id</code> when no upstream context exists. I can update the proposed AC to cite that section explicitly. Revise inline?
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+</body>
+</html>

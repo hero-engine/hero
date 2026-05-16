@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<!-- Hero PM Mock: index | Landing page — locked layout reflected in previews -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hero PM — Eight Mockup Surfaces · Design Exploration</title>
+<style>
+:root {
+    --bg: #ffffff; --bg-secondary: #f7f8fa; --bg-tertiary: #eef0f4;
+    --text: #1a1d23; --text-secondary: #5d646e; --text-muted: #8a929c;
+    --border: #e4e7eb; --border-strong: #d0d4da;
+    --primary: #2a6cb5; --primary-hover: #6cb6ff;
+    --hero-blue-300: #9bc1e6; --hero-blue-500: #6cb6ff; --hero-blue-700: #2a6cb5; --hero-ink: #14181e;
+    --accent-handoff: #7c3aed; --accent-handoff-bg: #f5f0ff;
+    --success: #16a249;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text); background: var(--bg);
+    font-size: 14px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+}
+.page { max-width: 1120px; margin: 0 auto; padding: 56px 32px 80px; }
+
+.header { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+.logo { width: 36px; height: 36px; display: grid; place-items: center; color: var(--hero-blue-300); }
+.logo svg { display: block; width: 36px; height: 36px; }
+.eyebrow { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--hero-blue-700); }
+h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; margin: 4px 0 0; }
+
+.status-strip { display: flex; align-items: center; gap: 12px; margin-top: 18px; font-size: 12.5px; color: var(--text-secondary); }
+.status-chip { display: inline-flex; align-items: center; gap: 6px; background: #eaf2fb; color: var(--hero-blue-700); border: 1px solid #cfe1f4; padding: 4px 10px; border-radius: 12px; font-size: 11.5px; font-weight: 600; }
+.status-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-blue-700); }
+
+.preamble {
+    margin: 32px 0 24px;
+    padding: 28px 32px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    max-width: 880px;
+}
+.preamble p { margin: 0 0 14px; font-size: 14.5px; line-height: 1.65; }
+.preamble p:last-child { margin-bottom: 0; }
+.preamble strong { font-weight: 600; }
+.preamble code { background: var(--bg-tertiary); padding: 1px 6px; border-radius: 3px; font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; }
+.preamble a { color: var(--primary); text-decoration: none; border-bottom: 1px solid rgba(42,108,181,0.3); }
+
+/* Surface-roles table */
+.role-table {
+    margin: 8px 0 36px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    max-width: 880px;
+}
+.role-row {
+    display: grid;
+    grid-template-columns: 200px 120px 1fr;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+}
+.role-row:last-child { border-bottom: 0; }
+.role-row.head {
+    background: var(--bg-secondary);
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-secondary);
+}
+.role-row > div { padding: 11px 14px; border-right: 1px solid var(--border); }
+.role-row > div:last-child { border-right: 0; }
+.role-row .surface { font-weight: 600; }
+.role-row .word { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: var(--text-secondary); }
+.role-row .word.verb { color: var(--hero-blue-700); }
+.role-row .word.noun { color: var(--accent-handoff); }
+.role-row .word.id { color: var(--text-secondary); }
+.role-row .desc { color: var(--text-secondary); }
+
+h2 { font-size: 22px; font-weight: 700; margin: 0 0 18px; letter-spacing: -0.2px; }
+
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+.tile {
+    display: block; text-decoration: none; color: inherit;
+    background: white;
+    border: 1px solid var(--border); border-radius: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.18s, transform 0.18s, border-color 0.18s;
+    cursor: pointer;
+}
+.tile:hover {
+    box-shadow: 0 12px 32px rgba(0,0,0,0.07);
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+}
+.tile.featured { grid-column: span 2; }
+.preview {
+    height: 260px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    position: relative; overflow: hidden;
+}
+.tile.featured .preview { height: 320px; }
+.preview svg { display: block; width: 100%; height: 100%; }
+
+.tile-body { padding: 18px 22px 20px; }
+.tile-num {
+    display: inline-block;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px; color: var(--text-muted);
+    background: var(--bg-tertiary);
+    padding: 2px 8px; border-radius: 4px;
+    margin-bottom: 8px; font-weight: 600;
+    letter-spacing: 0.4px;
+}
+.tile.killer .tile-num { background: var(--accent-handoff-bg); color: var(--accent-handoff); }
+.tile-title { font-size: 17px; font-weight: 600; margin: 0 0 6px; }
+.tile-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--accent-handoff); color: white;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 2px 7px; border-radius: 3px;
+    margin-left: 8px; vertical-align: middle;
+}
+.tile-tag.chat { background: var(--hero-blue-700); }
+.tile-blurb { font-size: 13px; color: var(--text-secondary); line-height: 1.55; margin: 0 0 10px; }
+.tile-influences { font-size: 11.5px; color: var(--text-muted); font-family: ui-monospace, Menlo, monospace; }
+
+.footnote {
+    margin-top: 56px; padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--text-muted);
+    display: flex; gap: 16px; flex-wrap: wrap;
+}
+.footnote span strong { color: var(--text-secondary); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="page">
+
+    <div class="header">
+        <div class="logo"><svg viewBox="0 0 90 90" fill="currentColor"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg></div>
+        <div>
+            <div class="eyebrow">Hero PM Domain Pack</div>
+            <h1>Eight mockup surfaces</h1>
+        </div>
+    </div>
+
+    <div class="status-strip">
+        <span class="status-chip"><span class="dot"></span>Layout locked · 2026-05-16</span>
+        <span>·</span>
+        <span>Canonical preset: <strong style="color:var(--text)">Horizon + Cycle (Shape Up, 6w)</strong></span>
+        <span>·</span>
+        <span>1440×900 ideal viewport</span>
+    </div>
+
+    <section class="preamble">
+        <p>UX exploration for the <strong>Hero PM domain pack</strong> — the product-management surface that lives alongside Hero's engineering surface in the same workspace. Thesis: PMs and engineers work in <em>one</em> tool with two domain skins, joined by a visible cross-domain handoff edge.</p>
+
+        <p>The locked layout reflects two work modes. <strong>Housekeeping</strong> (artifact tabs active): left nav · tabbed center pane · artifact header chips + body · a <strong>bottom strip</strong> with state-aware action buttons + chat input · a <strong>right panel</strong> with <em>sticky pinned ambient region</em> at the top and a rolling chat scroll below. <strong>Design</strong> (Chat tab active): full center pane chat with hero-code chrome (provider/model picker, context fullness, attachments, mentions, slash, reasoning). No bottom strip on the Chat tab — the chat <em>is</em> the surface.</p>
+
+        <p>The bedrock distinction: bottom strip = <strong>verbs</strong> (user actions on the artifact). Sticky ambient = <strong>nouns / smarts</strong> (what the agent surfaces about the artifact). Header chips = <strong>identity / state</strong>. Agent-drafted content lands inline in the artifact with accept/edit/reject; the chat only logs the action.</p>
+
+        <p>The <strong>Hand off to /design</strong> button on Story detail is the platform thesis in one click. It lives inline-prominent in the artifact body next to the linked engineering feature card — not in the bottom strip. Purple (<code>#7c3aed</code>) is reserved exclusively for the cross-domain handoff edge.</p>
+    </section>
+
+    <h2>Surface roles</h2>
+
+    <div class="role-table">
+        <div class="role-row head">
+            <div>Surface</div>
+            <div>Word type</div>
+            <div>Examples</div>
+        </div>
+        <div class="role-row">
+            <div class="surface">Bottom strip buttons</div>
+            <div class="word verb">Verbs</div>
+            <div class="desc">Refine · Draft AC · Split · Find duplicates · Hand off to /design · Discuss</div>
+        </div>
+        <div class="role-row">
+            <div class="surface">Ambient (sticky chat top)</div>
+            <div class="word noun">Nouns / smarts</div>
+            <div class="desc">Parent epic chip · linked engineering feature + delivery state · "Similar to Story #234 (78%) — merge?" · activity rollup</div>
+        </div>
+        <div class="role-row">
+            <div class="surface">Artifact header chips</div>
+            <div class="word id">Identity / state</div>
+            <div class="desc">Status · owner · priority · sprint/cycle · tracker link · tags</div>
+        </div>
+        <div class="role-row">
+            <div class="surface">Artifact body</div>
+            <div class="word id">Content</div>
+            <div class="desc">Story description · AC list · PRD sections · linked-feature card with <em>Hand off to /design</em></div>
+        </div>
+        <div class="role-row">
+            <div class="surface">Chat scroll</div>
+            <div class="word id">Time-ordered</div>
+            <div class="desc">Bubbles · tool calls · reasoning · system events ("Status: drafted → refined", "Linked engineering feature: agent-trace-spans")</div>
+        </div>
+    </div>
+
+    <h2>Screens</h2>
+
+    <div class="grid">
+
+        <!-- 01 — STORY DETAIL (featured, killer) -->
+        <a href="01-story-detail.html" class="tile killer featured">
+            <div class="preview">
+                <svg viewBox="0 0 720 320" preserveAspectRatio="xMidYMid slice">
+                    <rect width="720" height="320" fill="#ffffff"/>
+                    <!-- chrome -->
+                    <rect x="0" y="0" width="720" height="22" fill="#ffffff" stroke="#e4e7eb"/>
+                    <!-- left nav -->
+                    <rect x="0" y="22" width="120" height="298" fill="#f7f8fa"/>
+                    <rect x="12" y="34" width="80" height="14" rx="3" fill="#eaf2fb"/>
+                    <path d="M40 38 L34 45 L38 45 L36 50 L43 43 L40 43 Z" fill="#9bc1e6"/>
+                    <text x="56" y="44" font-size="8" fill="#2a6cb5" font-weight="700" font-family="Inter,sans-serif">Chat</text>
+                    <rect x="12" y="56" width="60" height="4" rx="2" fill="#8a929c"/>
+                    <rect x="12" y="70" width="80" height="4" rx="2" fill="#d0d4da"/>
+                    <rect x="12" y="82" width="80" height="4" rx="2" fill="#eef0f4"/>
+                    <text x="12" y="90" font-size="7" fill="#1a1d23" font-weight="500" font-family="Inter,sans-serif">Story queue</text>
+                    <rect x="12" y="106" width="64" height="3" rx="1" fill="#d0d4da"/>
+                    <rect x="12" y="116" width="64" height="3" rx="1" fill="#d0d4da"/>
+
+                    <!-- tab strip -->
+                    <rect x="120" y="22" width="480" height="20" fill="#f7f8fa" stroke="#e4e7eb"/>
+                    <rect x="128" y="22" width="60" height="20" fill="white"/>
+                    <rect x="132" y="28" width="50" height="8" rx="2" fill="#1a1d23"/>
+                    <line x1="128" y1="22" x2="188" y2="22" stroke="#2a6cb5" stroke-width="2"/>
+
+                    <!-- artifact area -->
+                    <rect x="135" y="56" width="200" height="6" rx="2" fill="#1a1d23"/>
+                    <rect x="135" y="68" width="380" height="9" rx="2" fill="#1a1d23"/>
+                    <rect x="135" y="82" width="280" height="9" rx="2" fill="#1a1d23"/>
+                    <!-- chips -->
+                    <rect x="135" y="100" width="42" height="11" rx="5" fill="#ecfdf5"/>
+                    <text x="142" y="108" font-size="7" fill="#047857" font-weight="700" font-family="Inter,sans-serif">ready</text>
+                    <rect x="183" y="100" width="36" height="11" rx="5" fill="#fef2f2"/>
+                    <text x="190" y="108" font-size="7" fill="#b91c1c" font-weight="700" font-family="Inter,sans-serif">high</text>
+                    <rect x="225" y="100" width="60" height="11" rx="5" fill="#eaf2fb"/>
+                    <text x="232" y="108" font-size="7" fill="#2a6cb5" font-weight="700" font-family="Inter,sans-serif">Cycle 14</text>
+                    <rect x="291" y="100" width="40" height="11" rx="5" fill="#eef0f4"/>
+
+                    <!-- body lines -->
+                    <rect x="135" y="124" width="380" height="3" rx="1" fill="#d0d4da"/>
+                    <rect x="135" y="132" width="360" height="3" rx="1" fill="#d0d4da"/>
+                    <rect x="135" y="140" width="340" height="3" rx="1" fill="#d0d4da"/>
+
+                    <!-- LINKED ENG CARD (killer inline element) with handoff button -->
+                    <rect x="135" y="156" width="450" height="80" rx="9" fill="#f5f0ff" stroke="#7c3aed" stroke-width="2"/>
+                    <text x="145" y="170" font-size="7" font-weight="700" fill="#7c3aed" font-family="Menlo,monospace">PM → ENG · CROSS-DOMAIN HANDOFF</text>
+                    <text x="145" y="184" font-size="8" font-weight="700" fill="#7c3aed" font-family="Menlo,monospace">feature · agent-trace-spans</text>
+                    <rect x="145" y="190" width="200" height="6" rx="2" fill="#1a1d23"/>
+                    <rect x="145" y="206" width="56" height="12" rx="6" fill="#dbeafe"/>
+                    <text x="158" y="214" font-size="7" fill="#1d4ed8" font-weight="700" text-anchor="middle" font-family="Inter,sans-serif">delivering</text>
+                    <rect x="208" y="210" width="80" height="5" rx="2" fill="#eef0f4"/>
+                    <rect x="208" y="210" width="34" height="5" rx="2" fill="#7c3aed"/>
+                    <text x="294" y="215" font-size="7" fill="#5d646e">3 of 7 AC</text>
+                    <!-- THE handoff button -->
+                    <rect x="455" y="178" width="118" height="36" rx="7" fill="#7c3aed"/>
+                    <path d="M467 196 L477 196 M474 192 L479 196 L474 200" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+                    <text x="486" y="200" font-size="9" fill="white" font-weight="700" font-family="Inter,sans-serif">Hand off to /design</text>
+
+                    <!-- bottom strip (action buttons + input) -->
+                    <rect x="120" y="252" width="480" height="68" fill="white" stroke="#e4e7eb"/>
+                    <text x="130" y="266" font-size="6" font-weight="700" fill="#8a929c" font-family="Inter,sans-serif">READY STORY</text>
+                    <rect x="170" y="260" width="46" height="14" rx="7" fill="white" stroke="#e4e7eb"/>
+                    <text x="193" y="269" font-size="7" fill="#1a1d23" text-anchor="middle" font-family="Inter,sans-serif">Refine</text>
+                    <rect x="222" y="260" width="50" height="14" rx="7" fill="white" stroke="#e4e7eb"/>
+                    <text x="247" y="269" font-size="7" fill="#1a1d23" text-anchor="middle" font-family="Inter,sans-serif">Draft AC</text>
+                    <rect x="278" y="260" width="56" height="14" rx="7" fill="white" stroke="#e4e7eb"/>
+                    <text x="306" y="269" font-size="7" fill="#1a1d23" text-anchor="middle" font-family="Inter,sans-serif">Find similar</text>
+                    <rect x="340" y="260" width="40" height="14" rx="7" fill="white" stroke="#e4e7eb"/>
+                    <text x="360" y="269" font-size="7" fill="#1a1d23" text-anchor="middle" font-family="Inter,sans-serif">Split</text>
+                    <rect x="386" y="260" width="48" height="14" rx="7" fill="white" stroke="#e4e7eb"/>
+                    <text x="410" y="269" font-size="7" fill="#1a1d23" text-anchor="middle" font-family="Inter,sans-serif">Discuss</text>
+                    <!-- chat input -->
+                    <rect x="130" y="284" width="450" height="22" rx="6" fill="white" stroke="#e4e7eb"/>
+                    <rect x="138" y="291" width="56" height="8" rx="2" fill="#eef0f4"/>
+                    <text x="200" y="298" font-size="8" fill="#8a929c" font-family="Inter,sans-serif">Ask about Story #2847…</text>
+                    <rect x="552" y="288" width="22" height="14" rx="4" fill="#2a6cb5"/>
+
+                    <!-- RIGHT PANEL with sticky ambient -->
+                    <rect x="600" y="22" width="120" height="298" fill="white" stroke="#e4e7eb"/>
+                    <rect x="600" y="22" width="120" height="18" fill="#f7f8fa"/>
+                    <circle cx="610" cy="31" r="3" fill="#16a249"/>
+                    <text x="618" y="34" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">CHAT</text>
+                    <!-- sticky ambient region -->
+                    <rect x="600" y="40" width="120" height="120" fill="white" stroke="#e4e7eb" stroke-dasharray="2,3"/>
+                    <text x="608" y="50" font-size="6" fill="#8a929c" font-weight="700" font-family="Inter,sans-serif">AMBIENT · ABOUT STORY-2847</text>
+                    <rect x="608" y="56" width="104" height="22" rx="4" fill="#f7f8fa"/>
+                    <text x="614" y="65" font-size="6" font-weight="700" fill="#8a929c" font-family="Inter,sans-serif">PARENT</text>
+                    <rect x="614" y="69" width="80" height="4" rx="1" fill="#1a1d23"/>
+                    <rect x="608" y="82" width="104" height="22" rx="4" fill="#f5f0ff" stroke="#7c3aed" stroke-width="1"/>
+                    <text x="614" y="91" font-size="6" font-weight="700" fill="#7c3aed" font-family="Inter,sans-serif">→ ENG</text>
+                    <rect x="614" y="95" width="76" height="4" rx="1" fill="#7c3aed" opacity="0.7"/>
+                    <rect x="608" y="108" width="104" height="32" rx="4" fill="#f7fbff" stroke="#6cb6ff" stroke-dasharray="2,2"/>
+                    <text x="614" y="118" font-size="6" font-weight="700" fill="#2a6cb5" font-family="Inter,sans-serif">SUGGESTION</text>
+                    <rect x="614" y="122" width="86" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="614" y="128" width="70" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="614" y="133" width="40" height="5" rx="2" fill="#cfe1f4"/>
+
+                    <!-- chat scroll below sticky -->
+                    <rect x="612" y="170" width="80" height="20" rx="6" fill="rgba(155,193,230,0.4)"/>
+                    <rect x="618" y="178" width="64" height="4" rx="1" fill="#1a1d23"/>
+                    <rect x="608" y="198" width="100" height="32" rx="6" fill="#f4f5f7"/>
+                    <rect x="614" y="206" width="80" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="614" y="212" width="86" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="614" y="218" width="60" height="3" rx="1" fill="#1a1d23"/>
+                    <!-- system event in chat -->
+                    <line x1="608" y1="240" x2="712" y2="240" stroke="#e4e7eb" stroke-dasharray="2,2"/>
+                    <text x="610" y="248" font-size="6" fill="#7c3aed" font-style="italic" font-family="Inter,sans-serif">handoff-coordinator linked feature…</text>
+                    <line x1="608" y1="253" x2="712" y2="253" stroke="#e4e7eb" stroke-dasharray="2,2"/>
+                    <rect x="612" y="262" width="80" height="20" rx="6" fill="rgba(155,193,230,0.4)"/>
+                </svg>
+            </div>
+            <div class="tile-body">
+                <span class="tile-num">01 · STORY DETAIL</span>
+                <h3 class="tile-title">Story detail · the killer screen<span class="tile-tag">platform thesis</span></h3>
+                <p class="tile-blurb">Artifact header chips · body with linked engineering feature card carrying the prominent <em>Hand off to /design</em> button · bottom strip (Refine, Draft AC, Find similar, Split, Discuss + chat input) · right panel with sticky ambient (parent epic, → ENG card, duplicate-detector suggestion) and a rolling chat scroll below.</p>
+                <div class="tile-influences">Notion description · Shape Up hill chart · Height ambient in right panel</div>
+            </div>
+        </a>
+
+        <!-- 07 — CHAT TAB (featured, design-mode) -->
+        <a href="07-chat-tab.html" class="tile killer featured">
+            <div class="preview">
+                <svg viewBox="0 0 720 320" preserveAspectRatio="xMidYMid slice">
+                    <rect width="720" height="320" fill="#ffffff"/>
+                    <!-- chrome -->
+                    <rect x="0" y="0" width="720" height="22" fill="#ffffff" stroke="#e4e7eb"/>
+                    <!-- left nav -->
+                    <rect x="0" y="22" width="120" height="298" fill="#f7f8fa"/>
+                    <rect x="12" y="34" width="80" height="14" rx="3" fill="#eaf2fb"/>
+                    <path d="M40 38 L34 45 L38 45 L36 50 L43 43 L40 43 Z" fill="#2a6cb5"/>
+                    <text x="56" y="44" font-size="8" fill="#2a6cb5" font-weight="700" font-family="Inter,sans-serif">Chat</text>
+                    <rect x="12" y="58" width="60" height="3" rx="1" fill="#8a929c"/>
+                    <rect x="12" y="70" width="80" height="4" rx="2" fill="#d0d4da"/>
+                    <rect x="12" y="82" width="80" height="4" rx="2" fill="#d0d4da"/>
+                    <rect x="12" y="94" width="80" height="4" rx="2" fill="#d0d4da"/>
+
+                    <!-- tab strip -->
+                    <rect x="120" y="22" width="600" height="20" fill="#f7f8fa" stroke="#e4e7eb"/>
+                    <rect x="128" y="22" width="76" height="20" fill="white"/>
+                    <line x1="128" y1="22" x2="204" y2="22" stroke="#2a6cb5" stroke-width="2"/>
+                    <rect x="136" y="28" width="18" height="8" rx="2" fill="#eaf2fb"/>
+                    <text x="158" y="34" font-size="7" fill="#1a1d23" font-weight="600" font-family="Inter,sans-serif">Conversation</text>
+
+                    <!-- hero-code chrome bar -->
+                    <rect x="120" y="42" width="600" height="28" fill="#f7f8fa" stroke="#e4e7eb"/>
+                    <rect x="136" y="48" width="124" height="16" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <rect x="142" y="52" width="8" height="8" rx="2" fill="#d97757"/>
+                    <text x="154" y="59" font-size="7" fill="#1a1d23" font-weight="600" font-family="Inter,sans-serif">Anthropic / Claude Sonnet 4.6</text>
+                    <rect x="268" y="48" width="100" height="16" rx="4" fill="white" stroke="#e4e7eb"/>
+                    <text x="274" y="59" font-size="7" fill="#5d646e" font-family="Inter,sans-serif">Context</text>
+                    <rect x="312" y="54" width="42" height="4" rx="2" fill="#eef0f4"/>
+                    <rect x="312" y="54" width="10" height="4" rx="2" fill="#6cb6ff"/>
+                    <text x="358" y="59" font-size="7" fill="#1a1d23" font-weight="700" font-family="Inter,sans-serif">22%</text>
+
+                    <!-- conversation area (centered) -->
+                    <!-- user bubble -->
+                    <rect x="380" y="86" width="280" height="40" rx="12" fill="rgba(155,193,230,0.4)"/>
+                    <rect x="392" y="96" width="252" height="4" rx="1" fill="#1a1d23"/>
+                    <rect x="392" y="104" width="220" height="4" rx="1" fill="#1a1d23"/>
+                    <rect x="392" y="112" width="180" height="4" rx="1" fill="#1a1d23"/>
+
+                    <!-- thinking pill -->
+                    <rect x="180" y="134" width="80" height="14" rx="7" fill="#f7f8fa" stroke="#e4e7eb" stroke-dasharray="2,2"/>
+                    <text x="186" y="143" font-size="7" fill="#5d646e" font-family="Menlo,monospace">▾ Thinking · 14s</text>
+
+                    <!-- reasoning body -->
+                    <rect x="180" y="152" width="380" height="36" fill="#f7f8fa"/>
+                    <rect x="180" y="152" width="3" height="36" fill="#9bc1e6"/>
+                    <rect x="190" y="160" width="280" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="190" y="168" width="300" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="190" y="176" width="240" height="3" rx="1" fill="#5d646e"/>
+
+                    <!-- agent bubble -->
+                    <rect x="180" y="194" width="380" height="48" rx="12" fill="#f4f5f7"/>
+                    <rect x="192" y="204" width="80" height="4" rx="1" fill="#1a1d23"/>
+                    <rect x="192" y="212" width="300" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="192" y="220" width="320" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="192" y="228" width="280" height="3" rx="1" fill="#1a1d23"/>
+
+                    <!-- tool call -->
+                    <rect x="180" y="250" width="380" height="32" rx="7" fill="white" stroke="#e4e7eb"/>
+                    <rect x="180" y="250" width="380" height="12" fill="#f7f8fa"/>
+                    <rect x="190" y="254" width="50" height="6" rx="2" fill="#eef0f4"/>
+                    <text x="246" y="260" font-size="6" fill="#5d646e" font-family="Inter,sans-serif">hero search · 1.2s · 34 results</text>
+                    <rect x="190" y="266" width="280" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="190" y="273" width="220" height="3" rx="1" fill="#5d646e"/>
+
+                    <!-- LARGE input (full-fidelity hero-code) -->
+                    <rect x="180" y="292" width="380" height="22" rx="8" fill="white" stroke="#6cb6ff" stroke-width="1.5"/>
+                    <rect x="192" y="298" width="160" height="4" rx="1" fill="#1a1d23"/>
+                    <rect x="192" y="306" width="120" height="3" rx="1" fill="#8a929c"/>
+                    <rect x="490" y="298" width="46" height="14" rx="6" fill="#2a6cb5"/>
+                    <text x="513" y="307" font-size="8" fill="white" font-weight="700" text-anchor="middle" font-family="Inter,sans-serif">Send</text>
+                </svg>
+            </div>
+            <div class="tile-body">
+                <span class="tile-num">07 · CHAT TAB</span>
+                <h3 class="tile-title">The design-mode surface<span class="tile-tag chat">new</span></h3>
+                <p class="tile-blurb">Chat is the work — full center pane, hero-code chrome (Anthropic / Claude Sonnet 4.6, 22% of 200K context, attachments). Q3 cycle-planning conversation with tool calls, reasoning pill expanded, and the large multi-line input with slash, mention, attach, and extended-reasoning toggle. <strong>No bottom strip</strong> in design mode — the chat IS the surface.</p>
+                <div class="tile-influences">hero-code chrome at full fidelity · single rolling conversation thread</div>
+            </div>
+        </a>
+
+        <!-- 02 — ROADMAP -->
+        <a href="02-roadmap-board.html" class="tile">
+            <div class="preview">
+                <svg viewBox="0 0 360 260" preserveAspectRatio="xMidYMid slice">
+                    <rect width="360" height="260" fill="#ffffff"/>
+                    <rect x="0" y="0" width="60" height="260" fill="#f7f8fa"/>
+                    <rect x="6" y="12" width="40" height="10" rx="2" fill="#eaf2fb"/>
+                    <text x="26" y="20" font-size="6" fill="#2a6cb5" font-weight="700" text-anchor="middle" font-family="Inter,sans-serif">Chat</text>
+                    <rect x="6" y="30" width="48" height="3" rx="1" fill="#d0d4da"/>
+                    <rect x="6" y="40" width="48" height="3" rx="1" fill="#1a1d23"/>
+                    <!-- tab strip -->
+                    <rect x="60" y="0" width="300" height="14" fill="#f7f8fa" stroke="#e4e7eb"/>
+                    <rect x="64" y="0" width="80" height="14" fill="white"/>
+                    <line x1="64" y1="0" x2="144" y2="0" stroke="#2a6cb5" stroke-width="2"/>
+                    <!-- columns -->
+                    <text x="70" y="34" font-size="7" font-weight="700" font-family="Inter,sans-serif">NOW · 5</text>
+                    <text x="170" y="34" font-size="7" font-weight="700" font-family="Inter,sans-serif">NEXT · 6</text>
+                    <text x="270" y="34" font-size="7" font-weight="700" font-family="Inter,sans-serif">LATER · 6</text>
+                    <!-- NOW cards -->
+                    <rect x="68" y="42" width="92" height="38" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="74" y="48" width="70" height="4" rx="1" fill="#1a1d23"/>
+                    <rect x="74" y="56" width="40" height="8" rx="3" fill="#ecfdf5"/>
+                    <rect x="118" y="56" width="28" height="8" rx="3" fill="#fef3c7"/>
+                    <rect x="74" y="68" width="60" height="8" rx="3" fill="#f5f0ff"/>
+                    <rect x="68" y="84" width="92" height="38" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="74" y="90" width="70" height="4" rx="1" fill="#1a1d23"/>
+                    <rect x="74" y="98" width="40" height="8" rx="3" fill="#ecfdf5"/>
+                    <rect x="74" y="110" width="60" height="8" rx="3" fill="#f5f0ff"/>
+                    <rect x="68" y="126" width="92" height="38" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <!-- NEXT cards -->
+                    <rect x="168" y="42" width="92" height="38" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="168" y="84" width="92" height="38" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="168" y="126" width="92" height="38" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <!-- LATER cards -->
+                    <rect x="268" y="42" width="84" height="38" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="268" y="84" width="84" height="38" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="268" y="126" width="84" height="38" rx="5" fill="white" stroke="#e4e7eb"/>
+
+                    <!-- deferred lane -->
+                    <rect x="68" y="172" width="284" height="22" rx="5" fill="#f7f8fa" stroke="#e4e7eb" stroke-dasharray="3,2"/>
+                    <text x="78" y="186" font-size="6" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">DEFERRED · 4</text>
+
+                    <!-- bottom strip -->
+                    <rect x="60" y="200" width="300" height="38" fill="white" stroke="#e4e7eb"/>
+                    <rect x="70" y="206" width="40" height="10" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="116" y="206" width="50" height="10" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="172" y="206" width="44" height="10" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="222" y="206" width="40" height="10" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="70" y="222" width="280" height="12" rx="4" fill="white" stroke="#e4e7eb"/>
+
+                    <!-- right panel slice -->
+                    <rect x="320" y="14" width="40" height="246" fill="white" stroke="#e4e7eb"/>
+                    <rect x="324" y="22" width="32" height="20" rx="3" fill="#f7f8fa"/>
+                    <rect x="324" y="46" width="32" height="36" rx="3" fill="#f7fbff" stroke="#6cb6ff" stroke-dasharray="2,2"/>
+                </svg>
+            </div>
+            <div class="tile-body">
+                <span class="tile-num">02 · ROADMAP</span>
+                <h3 class="tile-title">Now / Next / Later with cross-domain delivery rollups</h3>
+                <p class="tile-blurb">Default landing. Three horizon columns with appetite + cross-domain delivery chips on each card. Deferred lane visible at the bottom (trade-offs principle 3). Bottom strip: Prioritize, Group by, Find stale, Save view, Discover, Discuss.</p>
+                <div class="tile-influences">ProductPlan UX · Shape Up betting table · Productboard evidence counts</div>
+            </div>
+        </a>
+
+        <!-- 03 — STORY QUEUE -->
+        <a href="03-story-queue.html" class="tile">
+            <div class="preview">
+                <svg viewBox="0 0 360 260" preserveAspectRatio="xMidYMid slice">
+                    <rect width="360" height="260" fill="#ffffff"/>
+                    <rect x="0" y="0" width="60" height="260" fill="#f7f8fa"/>
+                    <rect x="6" y="12" width="40" height="10" rx="2" fill="#eaf2fb"/>
+                    <rect x="60" y="0" width="300" height="14" fill="#f7f8fa" stroke="#e4e7eb"/>
+                    <rect x="64" y="0" width="80" height="14" fill="white"/>
+                    <line x1="64" y1="0" x2="144" y2="0" stroke="#2a6cb5" stroke-width="2"/>
+
+                    <!-- Current band -->
+                    <text x="70" y="32" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">CURRENT · 5</text>
+                    <line x1="70" y1="36" x2="350" y2="36" stroke="#e4e7eb"/>
+                    <g font-family="Inter,sans-serif">
+                        <rect x="80" y="42" width="8" height="8" rx="2" fill="white" stroke="#d0d4da"/>
+                        <rect x="94" y="44" width="150" height="4" rx="1" fill="#1a1d23"/>
+                        <rect x="260" y="42" width="36" height="9" rx="4" fill="#f5f0ff"/>
+                        <text x="278" y="48" font-size="6" fill="#6d28d9" font-weight="700" text-anchor="middle">in-flight</text>
+                        <rect x="304" y="42" width="20" height="9" rx="4" fill="#f5f0ff"/>
+
+                        <rect x="80" y="58" width="8" height="8" rx="2" fill="white" stroke="#d0d4da"/>
+                        <rect x="94" y="60" width="160" height="4" rx="1" fill="#1a1d23"/>
+                        <rect x="260" y="58" width="36" height="9" rx="4" fill="#f5f0ff"/>
+                        <rect x="304" y="58" width="20" height="9" rx="4" fill="#f5f0ff"/>
+
+                        <!-- Ready band -->
+                        <text x="70" y="84" font-size="7" font-weight="700" fill="#5d646e">READY · 12</text>
+                        <line x1="70" y1="88" x2="350" y2="88" stroke="#e4e7eb"/>
+
+                        <rect x="80" y="94" width="8" height="8" rx="2" fill="#2a6cb5"/>
+                        <rect x="94" y="96" width="130" height="4" rx="1" fill="#1a1d23"/>
+                        <rect x="260" y="94" width="36" height="9" rx="4" fill="#ecfdf5"/>
+                        <rect x="304" y="94" width="20" height="9" rx="4" fill="#f5f0ff"/>
+
+                        <rect x="80" y="110" width="8" height="8" rx="2" fill="#2a6cb5"/>
+                        <rect x="94" y="112" width="160" height="4" rx="1" fill="#1a1d23"/>
+                        <rect x="260" y="110" width="36" height="9" rx="4" fill="#ecfdf5"/>
+
+                        <rect x="80" y="126" width="8" height="8" rx="2" fill="#2a6cb5"/>
+                        <rect x="94" y="128" width="140" height="4" rx="1" fill="#1a1d23"/>
+                        <rect x="260" y="126" width="36" height="9" rx="4" fill="#ecfdf5"/>
+
+                        <!-- Sprint cut line -->
+                        <line x1="70" y1="148" x2="350" y2="148" stroke="#6cb6ff" stroke-width="1.5" stroke-dasharray="3,2"/>
+                        <rect x="200" y="142" width="120" height="12" rx="6" fill="white" stroke="#6cb6ff"/>
+                        <text x="260" y="150" font-size="6" fill="#2a6cb5" font-weight="700" text-anchor="middle">SPRINT CUT — 12 fit cycle 14</text>
+
+                        <rect x="80" y="160" width="8" height="8" rx="2" fill="white" stroke="#d0d4da"/>
+                        <rect x="94" y="162" width="130" height="4" rx="1" fill="#5d646e"/>
+
+                        <text x="70" y="186" font-size="7" font-weight="700" fill="#5d646e">DRAFTED · 14</text>
+                        <line x1="70" y1="190" x2="350" y2="190" stroke="#e4e7eb"/>
+                    </g>
+
+                    <!-- bottom strip -->
+                    <rect x="60" y="200" width="300" height="38" fill="white" stroke="#e4e7eb"/>
+                    <text x="68" y="214" font-size="6" font-weight="700" fill="#8a929c">3 SELECTED</text>
+                    <rect x="106" y="206" width="62" height="10" rx="5" fill="#eaf2fb"/>
+                    <text x="137" y="213" font-size="6" fill="#2a6cb5" font-weight="700" text-anchor="middle" font-family="Inter,sans-serif">Refine selected</text>
+                    <rect x="174" y="206" width="56" height="10" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="236" y="206" width="56" height="10" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="70" y="222" width="280" height="12" rx="4" fill="white" stroke="#e4e7eb"/>
+
+                    <rect x="320" y="14" width="40" height="246" fill="white" stroke="#e4e7eb"/>
+                    <rect x="324" y="22" width="32" height="42" rx="3" fill="#f7fbff" stroke="#6cb6ff" stroke-dasharray="2,2"/>
+                </svg>
+            </div>
+            <div class="tile-body">
+                <span class="tile-num">03 · STORY QUEUE</span>
+                <h3 class="tile-title">Pivotal-influenced single list with sprint cut</h3>
+                <p class="tile-blurb">Drafted · Ready · Current · Icebox bands. Sprint cut line marks the cycle-14 fit boundary. 3 selected → bottom strip switches to Refine selected, Triage icebox, Bulk-prioritize.</p>
+                <div class="tile-influences">Pivotal Tracker flow · Linear keyboard density</div>
+            </div>
+        </a>
+
+        <!-- 04 — PRD EDITOR -->
+        <a href="04-prd-editor.html" class="tile">
+            <div class="preview">
+                <svg viewBox="0 0 360 260" preserveAspectRatio="xMidYMid slice">
+                    <rect width="360" height="260" fill="#ffffff"/>
+                    <rect x="0" y="0" width="60" height="260" fill="#f7f8fa"/>
+                    <rect x="6" y="12" width="40" height="10" rx="2" fill="#eaf2fb"/>
+                    <rect x="60" y="0" width="300" height="14" fill="#f7f8fa" stroke="#e4e7eb"/>
+                    <rect x="120" y="0" width="80" height="14" fill="white"/>
+                    <line x1="120" y1="0" x2="200" y2="0" stroke="#2a6cb5" stroke-width="2"/>
+
+                    <!-- title -->
+                    <rect x="70" y="28" width="220" height="10" rx="2" fill="#1a1d23"/>
+                    <rect x="70" y="44" width="40" height="10" rx="5" fill="#fef3c7"/>
+                    <rect x="116" y="44" width="40" height="10" rx="5" fill="#fef2f2"/>
+                    <rect x="162" y="44" width="50" height="10" rx="5" fill="#fef3c7"/>
+
+                    <!-- sections -->
+                    <text x="70" y="74" font-size="9" font-weight="700" font-family="Inter,sans-serif">Problem</text>
+                    <rect x="70" y="80" width="220" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="70" y="86" width="200" height="3" rx="1" fill="#5d646e"/>
+                    <!-- customer quote block -->
+                    <rect x="70" y="94" width="220" height="22" fill="#f7f8fa"/>
+                    <rect x="70" y="94" width="3" height="22" fill="#9bc1e6"/>
+                    <rect x="80" y="100" width="180" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="80" y="106" width="160" height="3" rx="1" fill="#5d646e"/>
+
+                    <text x="70" y="132" font-size="9" font-weight="700" font-family="Inter,sans-serif">Appetite</text>
+                    <rect x="70" y="138" width="40" height="9" rx="4" fill="#fef3c7"/>
+                    <text x="90" y="144" font-size="6" fill="#92400e" font-weight="700" text-anchor="middle" font-family="Inter,sans-serif">6w</text>
+                    <rect x="70" y="152" width="220" height="3" rx="1" fill="#5d646e"/>
+
+                    <text x="70" y="170" font-size="9" font-weight="700" font-family="Inter,sans-serif">Rabbit holes</text>
+                    <rect x="74" y="176" width="2" height="2" rx="1" fill="#5d646e"/>
+                    <rect x="80" y="175" width="200" height="3" rx="1" fill="#5d646e"/>
+                    <rect x="74" y="184" width="2" height="2" rx="1" fill="#5d646e"/>
+                    <rect x="80" y="183" width="180" height="3" rx="1" fill="#5d646e"/>
+
+                    <!-- bottom strip -->
+                    <rect x="60" y="200" width="300" height="38" fill="white" stroke="#e4e7eb"/>
+                    <text x="68" y="214" font-size="6" font-weight="700" fill="#8a929c" font-family="Inter,sans-serif">PRD · IN REVIEW</text>
+                    <rect x="116" y="206" width="44" height="10" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="166" y="206" width="48" height="10" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="220" y="206" width="56" height="10" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="282" y="206" width="48" height="10" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="70" y="222" width="280" height="12" rx="4" fill="white" stroke="#e4e7eb"/>
+
+                    <rect x="320" y="14" width="40" height="246" fill="white" stroke="#e4e7eb"/>
+                    <rect x="324" y="22" width="32" height="30" rx="3" fill="#f7f8fa"/>
+                    <rect x="324" y="56" width="32" height="40" rx="3" fill="#f7fbff" stroke="#6cb6ff" stroke-dasharray="2,2"/>
+                </svg>
+            </div>
+            <div class="tile-body">
+                <span class="tile-num">04 · PRD EDITOR</span>
+                <h3 class="tile-title">Markdown with slash · pitch-shaped</h3>
+                <p class="tile-blurb">Notion-fidelity authoring. Pitch sections (Problem, Appetite, Solution, Rabbit holes, No-gos). Customer quote rendered inline. Bottom strip: Add section, Suggest AC, Draft Risks, Find related decisions, Convert to pitch, Discuss.</p>
+                <div class="tile-influences">Notion markdown · Shape Up pitch shape · Aha goal strip</div>
+            </div>
+        </a>
+
+        <!-- 05 — INTAKE FUNNEL -->
+        <a href="05-intake-funnel.html" class="tile">
+            <div class="preview">
+                <svg viewBox="0 0 360 260" preserveAspectRatio="xMidYMid slice">
+                    <rect width="360" height="260" fill="#ffffff"/>
+                    <rect x="0" y="0" width="60" height="260" fill="#f7f8fa"/>
+                    <rect x="6" y="12" width="40" height="10" rx="2" fill="#eaf2fb"/>
+                    <!-- parameterized-singleton: two Intake tabs -->
+                    <rect x="60" y="0" width="300" height="14" fill="#f7f8fa" stroke="#e4e7eb"/>
+                    <rect x="68" y="0" width="60" height="14" fill="white" opacity="0.5"/>
+                    <rect x="130" y="0" width="100" height="14" fill="white"/>
+                    <line x1="130" y1="0" x2="230" y2="0" stroke="#2a6cb5" stroke-width="2"/>
+                    <text x="178" y="9" font-size="6" font-weight="600" fill="#1a1d23" text-anchor="middle" font-family="Inter,sans-serif">Intake · Mobile bugs</text>
+
+                    <text x="70" y="30" font-size="11" font-weight="700" font-family="Inter,sans-serif">Intake</text>
+                    <rect x="116" y="20" width="80" height="12" rx="6" fill="#eaf2fb"/>
+                    <text x="156" y="28" font-size="6" fill="#2a6cb5" font-weight="700" text-anchor="middle" font-family="Inter,sans-serif">Saved · Mobile bugs</text>
+
+                    <!-- intake cards -->
+                    <g font-family="Inter,sans-serif">
+                        <rect x="70" y="40" width="226" height="34" rx="5" fill="#eaf2fb" stroke="#cfe1f4"/>
+                        <rect x="78" y="46" width="22" height="9" rx="2" fill="#dbeafe"/>
+                        <text x="89" y="53" font-size="5" fill="#1d4ed8" font-weight="700" text-anchor="middle">Intercom</text>
+                        <rect x="104" y="46" width="30" height="9" rx="2" fill="#eef0f4"/>
+                        <text x="119" y="53" font-size="5" fill="#5d646e" font-weight="700" text-anchor="middle">enterprise</text>
+                        <rect x="138" y="48" width="100" height="4" rx="1" fill="#1a1d23"/>
+                        <rect x="78" y="60" width="180" height="3" rx="1" fill="#5d646e"/>
+                        <rect x="78" y="66" width="160" height="3" rx="1" fill="#5d646e"/>
+
+                        <rect x="70" y="80" width="226" height="34" rx="5" fill="#eaf2fb" stroke="#cfe1f4"/>
+                        <rect x="78" y="86" width="22" height="9" rx="2" fill="#ecfdf5"/>
+                        <text x="89" y="93" font-size="5" fill="#047857" font-weight="700" text-anchor="middle">Zendesk</text>
+                        <rect x="138" y="88" width="100" height="4" rx="1" fill="#1a1d23"/>
+                        <rect x="78" y="100" width="180" height="3" rx="1" fill="#5d646e"/>
+
+                        <rect x="70" y="120" width="226" height="34" rx="5" fill="white" stroke="#e4e7eb"/>
+                        <rect x="78" y="126" width="22" height="9" rx="2" fill="#f5f3ff"/>
+                        <text x="89" y="133" font-size="5" fill="#6d28d9" font-weight="700" text-anchor="middle">GitHub</text>
+
+                        <rect x="70" y="160" width="226" height="28" rx="5" fill="white" stroke="#e4e7eb"/>
+                        <rect x="78" y="166" width="22" height="9" rx="2" fill="#fef3c7"/>
+                        <text x="89" y="173" font-size="5" fill="#92400e" font-weight="700" text-anchor="middle">Sales</text>
+                    </g>
+
+                    <!-- bottom strip -->
+                    <rect x="60" y="200" width="300" height="38" fill="white" stroke="#e4e7eb"/>
+                    <text x="68" y="214" font-size="6" font-weight="700" fill="#8a929c" font-family="Inter,sans-serif">2 SELECTED</text>
+                    <rect x="110" y="206" width="80" height="10" rx="5" fill="#eaf2fb"/>
+                    <text x="150" y="213" font-size="6" fill="#2a6cb5" font-weight="700" text-anchor="middle" font-family="Inter,sans-serif">Promote to roadmap-item</text>
+                    <rect x="196" y="206" width="42" height="10" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="244" y="206" width="50" height="10" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="70" y="222" width="280" height="12" rx="4" fill="white" stroke="#e4e7eb"/>
+
+                    <rect x="320" y="14" width="40" height="246" fill="white" stroke="#e4e7eb"/>
+                    <rect x="324" y="22" width="32" height="58" rx="3" fill="#f7fbff" stroke="#6cb6ff" stroke-dasharray="2,2"/>
+                </svg>
+            </div>
+            <div class="tile-body">
+                <span class="tile-num">05 · INTAKE FUNNEL</span>
+                <h3 class="tile-title">Productboard-style triage · saved-view singleton</h3>
+                <p class="tile-blurb">Source-tagged inbox: Intercom, Zendesk, GitHub, Sales, Internal. Parameterized-singleton pattern: tab strip shows both <em>Intake</em> (master) and <em>Intake · Mobile bugs</em> (saved view). Bottom strip: Triage all, Merge similar, Promote.</p>
+                <div class="tile-influences">Productboard inbox · Linear Triage · duplicate-detector ambient</div>
+            </div>
+        </a>
+
+        <!-- 06 — HANDOFF STREAM -->
+        <a href="06-handoff-stream.html" class="tile">
+            <div class="preview">
+                <svg viewBox="0 0 360 260" preserveAspectRatio="xMidYMid slice">
+                    <rect width="360" height="260" fill="#ffffff"/>
+                    <rect x="0" y="0" width="60" height="260" fill="#f7f8fa"/>
+                    <rect x="6" y="12" width="40" height="10" rx="2" fill="#eaf2fb"/>
+                    <rect x="60" y="0" width="300" height="14" fill="#f7f8fa" stroke="#e4e7eb"/>
+                    <rect x="64" y="0" width="80" height="14" fill="white"/>
+                    <line x1="64" y1="0" x2="144" y2="0" stroke="#2a6cb5" stroke-width="2"/>
+
+                    <text x="70" y="32" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">CYCLE 14 · 8</text>
+                    <line x1="70" y1="36" x2="350" y2="36" stroke="#e4e7eb"/>
+
+                    <!-- handoff rows -->
+                    <g>
+                        <rect x="70" y="42" width="100" height="32" rx="4" fill="white" stroke="#e4e7eb"/>
+                        <text x="76" y="50" font-size="5" fill="#2a6cb5" font-weight="700" font-family="Inter,sans-serif">PM · STORY</text>
+                        <rect x="76" y="54" width="80" height="3" rx="1" fill="#1a1d23"/>
+                        <rect x="76" y="62" width="64" height="3" rx="1" fill="#5d646e"/>
+
+                        <!-- edge -->
+                        <line x1="170" y1="58" x2="206" y2="58" stroke="#7c3aed" stroke-width="2"/>
+                        <rect x="178" y="51" width="22" height="9" rx="2" fill="#7c3aed"/>
+                        <text x="189" y="58" font-size="5" fill="white" font-weight="700" text-anchor="middle" font-family="Inter,sans-serif">→</text>
+
+                        <rect x="206" y="42" width="100" height="32" rx="4" fill="white" stroke="#e4e7eb"/>
+                        <text x="212" y="50" font-size="5" fill="#7c3aed" font-weight="700" font-family="Inter,sans-serif">ENG · FEATURE</text>
+                        <rect x="212" y="54" width="80" height="3" rx="1" fill="#1a1d23"/>
+                        <rect x="212" y="62" width="64" height="3" rx="1" fill="#5d646e"/>
+
+                        <rect x="312" y="50" width="40" height="10" rx="5" fill="#eff6ff"/>
+                        <text x="332" y="57" font-size="5" fill="#1d4ed8" font-weight="700" text-anchor="middle" font-family="Inter,sans-serif">delivering</text>
+                    </g>
+
+                    <g transform="translate(0,40)">
+                        <rect x="70" y="42" width="100" height="32" rx="4" fill="white" stroke="#e4e7eb"/>
+                        <line x1="170" y1="58" x2="206" y2="58" stroke="#7c3aed" stroke-width="2"/>
+                        <rect x="178" y="51" width="22" height="9" rx="2" fill="#7c3aed"/>
+                        <rect x="206" y="42" width="100" height="32" rx="4" fill="white" stroke="#e4e7eb"/>
+                        <rect x="312" y="50" width="40" height="10" rx="5" fill="#eff6ff"/>
+                    </g>
+
+                    <g transform="translate(0,80)">
+                        <rect x="70" y="42" width="100" height="32" rx="4" fill="white" stroke="#e4e7eb"/>
+                        <line x1="170" y1="58" x2="206" y2="58" stroke="#7c3aed" stroke-width="2"/>
+                        <rect x="178" y="51" width="22" height="9" rx="2" fill="#7c3aed"/>
+                        <rect x="206" y="42" width="100" height="32" rx="4" fill="white" stroke="#e4e7eb"/>
+                        <rect x="312" y="50" width="40" height="10" rx="5" fill="#fef3c7"/>
+                        <text x="332" y="57" font-size="5" fill="#92400e" font-weight="700" text-anchor="middle" font-family="Inter,sans-serif">stalled</text>
+                    </g>
+
+                    <text x="70" y="184" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">CYCLE 13 · 9 · cooldown</text>
+                    <line x1="70" y1="188" x2="350" y2="188" stroke="#e4e7eb"/>
+
+                    <!-- bottom strip -->
+                    <rect x="60" y="200" width="300" height="38" fill="white" stroke="#e4e7eb"/>
+                    <text x="68" y="214" font-size="6" font-weight="700" fill="#8a929c" font-family="Inter,sans-serif">HANDOFF STREAM</text>
+                    <rect x="130" y="206" width="48" height="10" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="184" y="206" width="58" height="10" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="248" y="206" width="56" height="10" rx="5" fill="white" stroke="#e4e7eb"/>
+                    <rect x="70" y="222" width="280" height="12" rx="4" fill="white" stroke="#e4e7eb"/>
+
+                    <rect x="320" y="14" width="40" height="246" fill="white" stroke="#e4e7eb"/>
+                    <rect x="324" y="22" width="32" height="50" rx="3" fill="#f7fbff" stroke="#6cb6ff" stroke-dasharray="2,2"/>
+                </svg>
+            </div>
+            <div class="tile-body">
+                <span class="tile-num">06 · HANDOFF STREAM</span>
+                <h3 class="tile-title">The silo-tear made visible<span class="tile-tag">cross-domain</span></h3>
+                <p class="tile-blurb">Every row is a PM story (left) joined to an engineering feature (right) by a purple <em>HANDOFF</em> edge. Live delivery status pulled across the domain boundary. Stalled detection highlighted in amber. Cycle-time histogram in ambient.</p>
+                <div class="tile-influences">Linear cycle timeline · Kanbanize histogram · Hero-shaped delivery rail</div>
+            </div>
+        </a>
+
+        <!-- 08 — INLINE PROPOSAL -->
+        <a href="08-inline-proposal.html" class="tile">
+            <div class="preview">
+                <svg viewBox="0 0 360 260" preserveAspectRatio="xMidYMid slice">
+                    <rect width="360" height="260" fill="#ffffff"/>
+                    <rect x="0" y="0" width="60" height="260" fill="#f7f8fa"/>
+                    <rect x="6" y="12" width="40" height="10" rx="2" fill="#eaf2fb"/>
+                    <rect x="60" y="0" width="300" height="14" fill="#f7f8fa" stroke="#e4e7eb"/>
+                    <rect x="142" y="0" width="80" height="14" fill="white"/>
+                    <line x1="142" y1="0" x2="222" y2="0" stroke="#2a6cb5" stroke-width="2"/>
+
+                    <rect x="70" y="22" width="220" height="6" rx="2" fill="#1a1d23"/>
+                    <rect x="70" y="32" width="160" height="6" rx="2" fill="#1a1d23"/>
+
+                    <text x="70" y="58" font-size="7" font-weight="700" fill="#5d646e" font-family="Inter,sans-serif">PROPOSED BY story-writer · 3 AC</text>
+
+                    <!-- 3 proposed AC blocks: accepted (green), edited (amber), pending (blue) -->
+                    <rect x="70" y="66" width="226" height="36" rx="6" fill="#f0fdf4" stroke="#16a249" stroke-width="1.5"/>
+                    <rect x="80" y="60" width="60" height="10" rx="5" fill="white" stroke="#16a249"/>
+                    <text x="110" y="68" font-size="5" fill="#16a249" font-weight="700" text-anchor="middle" font-family="Inter,sans-serif">accepted · story-writer</text>
+                    <rect x="78" y="78" width="200" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="78" y="86" width="180" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="78" y="94" width="160" height="3" rx="1" fill="#1a1d23"/>
+
+                    <rect x="70" y="108" width="226" height="50" rx="6" fill="#fffaf0" stroke="#d97706" stroke-width="1.5" stroke-dasharray="3,2"/>
+                    <rect x="80" y="102" width="80" height="10" rx="5" fill="white" stroke="#d97706"/>
+                    <text x="120" y="110" font-size="5" fill="#d97706" font-weight="700" text-anchor="middle" font-family="Inter,sans-serif">edited by Marcus</text>
+                    <rect x="78" y="120" width="200" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="78" y="128" width="180" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="78" y="136" width="60" height="6" rx="2" fill="#fef3c7"/>
+                    <line x1="78" y1="146" x2="288" y2="146" stroke="#fed7aa" stroke-dasharray="2,2"/>
+                    <rect x="80" y="148" width="36" height="8" rx="3" fill="white" stroke="#16a249"/>
+                    <text x="98" y="154" font-size="5" fill="#16a249" font-weight="700" text-anchor="middle" font-family="Inter,sans-serif">Accept</text>
+                    <rect x="120" y="148" width="34" height="8" rx="3" fill="white" stroke="#e4e7eb"/>
+                    <rect x="158" y="148" width="34" height="8" rx="3" fill="white" stroke="#e4e7eb"/>
+
+                    <rect x="70" y="166" width="226" height="40" rx="6" fill="#f7fbff" stroke="#6cb6ff" stroke-width="1.5" stroke-dasharray="3,2"/>
+                    <rect x="80" y="160" width="80" height="10" rx="5" fill="white" stroke="#6cb6ff"/>
+                    <text x="120" y="168" font-size="5" fill="#2a6cb5" font-weight="700" text-anchor="middle" font-family="Inter,sans-serif">proposed · pending</text>
+                    <rect x="78" y="178" width="200" height="3" rx="1" fill="#1a1d23"/>
+                    <rect x="78" y="186" width="160" height="3" rx="1" fill="#1a1d23"/>
+                    <line x1="78" y1="194" x2="288" y2="194" stroke="#cfe1f4" stroke-dasharray="2,2"/>
+                    <rect x="80" y="196" width="36" height="8" rx="3" fill="white" stroke="#16a249"/>
+                    <text x="98" y="202" font-size="5" fill="#16a249" font-weight="700" text-anchor="middle" font-family="Inter,sans-serif">Accept</text>
+
+                    <!-- right panel: chat thread shows log lines, not the proposed content -->
+                    <rect x="320" y="14" width="40" height="246" fill="white" stroke="#e4e7eb"/>
+                    <rect x="324" y="22" width="32" height="22" rx="3" fill="#f7fbff" stroke="#6cb6ff" stroke-dasharray="2,2"/>
+                    <line x1="324" y1="58" x2="356" y2="58" stroke="#e4e7eb" stroke-dasharray="2,2"/>
+                    <text x="326" y="66" font-size="5" fill="#2a6cb5" font-style="italic" font-family="Inter,sans-serif">story-writer</text>
+                    <text x="326" y="72" font-size="5" fill="#2a6cb5" font-style="italic" font-family="Inter,sans-serif">drafted 3 AC</text>
+                    <line x1="324" y1="78" x2="356" y2="78" stroke="#e4e7eb" stroke-dasharray="2,2"/>
+                    <text x="326" y="86" font-size="5" fill="#2a6cb5" font-style="italic" font-family="Inter,sans-serif">Marcus accepted</text>
+                    <text x="326" y="92" font-size="5" fill="#2a6cb5" font-style="italic" font-family="Inter,sans-serif">#1 · just now</text>
+                </svg>
+            </div>
+            <div class="tile-body">
+                <span class="tile-num">08 · INLINE PROPOSAL</span>
+                <h3 class="tile-title">Inline-propose pattern · artifact is the truth</h3>
+                <p class="tile-blurb">3 AC proposed by <code>story-writer</code> via <code>--inline-propose</code>. One accepted (green), one edited (amber), one pending (blue) — each with inline Accept/Edit/Reject. The chat scroll only logs the action: <em>"story-writer drafted 3 AC · Marcus accepted #1"</em>. Artifact = source of truth; chat = trace.</p>
+                <div class="tile-influences">Inline-propose primitive (#4b) · dotted-border accept/edit/reject</div>
+            </div>
+        </a>
+
+    </div>
+
+    <div class="footnote">
+        <span><strong>Brand:</strong> bolt logo · light-blue palette (<code>#9bc1e6 / #6cb6ff / #2a6cb5</code>) · purple <code>#7c3aed</code> reserved for cross-domain edges only</span>
+        <span><strong>Inputs:</strong> spec.md · agent-pack-design.md · handoff-to-hero-code.md</span>
+        <span><strong>Self-contained:</strong> no external CSS or JS; inline SVG previews</span>
+    </div>
+
+</div>
+</body>
+</html>
