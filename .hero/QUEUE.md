@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-15T20:14:50Z · 99 ready specs_
+_Generated: 2026-05-16T13:52:20Z · 99 ready specs_
 
 ## cross-repo-peering — "Cross-Repo Peering — Conventions Travel, Specs Hand Off, Heroes Call Each Other"
 _feature · delivering · horizon: now_
@@ -356,6 +356,22 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
+## hero-pm — Hero PM — Product Management Domain Pack
+_feature · planning · horizon: next_
+
+First non-engineering Hero domain pack. PM-shaped spec types (PRD, story, epic, roadmap-item, intake-item) with methodology-preset overlays, PM agents and workflows, seven dashboard views (Roadmap default + Story queue + PRD editor + Intake funnel + Story detail + Handoff stream + Chat). IDE-style layout: left nav, tabbed center pane, bottom strip (artifact-state actions + chat input), toggleable right panel (chat with sticky ambient smarts at top). Reuses existing tracker integrations (Jira/Linear/GitHub). Killer demo: a Jira epic becomes a Hero story, `/design` on the story produces an engineering `feature` spec, and the handoff edge surfaces in the Handoff stream live.
+
+**Status:** planning — design pass advanced 2026-05-16. Strategic frame locked (layered presets, five PM principles, silo-tearing thesis). Layout grammar locked (design vs housekeeping modes; bottom strip = verbs; ambient = smarts; chat as right panel + Chat tab for design mode). Research brief + mockup brief + agent/skill/command pack design + handoff-to-hero-code written (27 agents, 32 skills, 22 commands; 13 P0 / 9 P1 / 5 P2). Methodology coaching ships as skills, not agents. Still blocked on primitives 1–6; `/design` still required to lock the canonical Changes section.
+
+**Pick up at:** Run `/design hero-pm` to resolve the open questions and produce the canonical Changes section. The research brief, mockup brief, agent-pack design, and handoff-to-hero-code are sibling files — all four must be incorporated by the design pass, not re-derived.
+
+→ `/design hero-pm`
+
+**Files:** .hero/planning/features/hero-pm/spec.md, .hero/planning/features/hero-pm/research-brief.md, .hero/planning/features/hero-pm/mockup-brief.md, .hero/planning/features/hero-pm/agent-pack-design.md, .hero/planning/features/hero-pm/handoff-to-hero-code.md, .hero/planning/initiatives/hero-domains/spec.md
+**Skip:** New tracker integrations in v1 (reuse Jira/Linear/GitHub only). OKRs as a PM spec type (defer to v2; may belong in a separate `strategy` domain). Methodology as a "mode" (not a mode — a layered preset). Forced point estimation.
+
+---
+
 ## domain-plugin-architecture — Domain Plugin Architecture — Refactor Content into Swappable Domain Packs
 _feature · planning · horizon: next_
 
@@ -385,22 +401,6 @@ Second non-engineering Hero domain pack: QA. Test plans, regression suites, bug 
 
 **Files:** .hero/planning/features/hero-qa/spec.md, .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/hero-pm/spec.md
 **Skip:** Generic "supports every test-management tool" integration in v1. Building QA agents before primitives 1–6 ship. Treating QA as a thin variation of engineering — that's the failure mode the parent initiative is trying to avoid.
-
----
-
-## hero-pm — Hero PM — Product Management Domain Pack
-_feature · planning · horizon: next_
-
-First non-engineering Hero domain pack. PM-shaped spec types (PRD, story, epic, roadmap-item), PM agents and workflows, PM dashboard views. Reuses existing tracker integrations (Jira/Linear/GitHub). Killer demo: a Jira epic becomes a Hero story, `/design` turns it into an engineering `feature` spec, and the handoff edge appears in the graph.
-
-**Status:** planning — `/design`-ready brief written 2026-05-15. Implementation blocked on parent initiative's platform primitives (work items 1–5: domain-plugin-architecture, spec-type-registry, domain-routing-and-agents, dashboard-view-registry, scan-pluggability).
-
-**Pick up at:** Either wait for the platform primitives, or run `/design hero-pm` ahead in parallel to resolve the 5 open questions (OKRs in/out, cross-tracker handoff, single- vs multi-domain projects, acceptance-criteria format, roadmap horizon model) so design lands the moment primitives are ready.
-
-→ `/design hero-pm`
-
-**Files:** .hero/planning/features/hero-pm/spec.md, .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/domain-plugin-architecture/spec.md
-**Skip:** New tracker integrations in v1 (reuse Jira/Linear/GitHub only). OKRs as a PM spec type (defer to v2; may belong in a separate `strategy` domain).
 
 ---
 
