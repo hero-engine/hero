@@ -5,7 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/peering"
+	"github.com/hero-engine/hero/internal/spectypes"
 	"github.com/hero-engine/hero/internal/version"
 	"github.com/hero-engine/hero/internal/workspace"
 	"github.com/spf13/cobra"
@@ -56,6 +58,11 @@ func init() {
 		if msg := version.Mismatch(heroDir, binaryVersion); msg != "" {
 			fmt.Fprintf(os.Stderr, "hero: %s\n", msg)
 		}
+
+		// Refresh .hero/cache/spec-types.json so hero-code and other
+		// cross-language consumers always see the current registry.
+		// Best-effort: failures here don't block the user's command.
+		exportSpecTypesCache(projectRoot)
 	}
 
 	rootCmd.AddCommand(initCmd)
@@ -133,6 +140,23 @@ func init() {
 			cmd.RunE = smokeInterceptor(cmd.RunE)
 		}
 	}
+}
+
+// exportSpecTypesCache regenerates .hero/cache/spec-types.json from the
+// embedded core + active domain spec-type records. The cache is the
+// cross-language contract that hero-code (Rust dashboard) and any other
+// downstream tooling consume. Skips silently on any error — the cache is
+// a derived artifact, not a precondition for hero CLI to function.
+func exportSpecTypesCache(projectRoot string) {
+	cfg, err := config.Load(projectRoot)
+	if err != nil {
+		return
+	}
+	reg, err := spectypes.Load(cfg.Domain)
+	if err != nil {
+		return
+	}
+	_ = spectypes.ExportTo(reg, projectRoot)
 }
 
 // findGitRoot finds the git root for the current project without walking into

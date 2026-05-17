@@ -11,6 +11,10 @@ index.db
 .hero/graph.db-wal
 .hero/graph.db-shm
 
+# Cross-language contract caches (regenerated on every hero invocation
+# from core/spec-types/ + domains/<active>/spec-types/)
+.hero/cache/
+
 # Per-machine NEXT state — auto-rewritten every Stop hook + agent scratch.
 # Tracked NEXT.md and .hero/next/<user>.md are project/user-durable;
 # anything ending in .local.md is genuinely local and never tracked.

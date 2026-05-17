@@ -256,18 +256,18 @@ Net critical path: A1 → B2 → B6. Other items run in parallel branches.
 
 ## Sprint completion checklist
 
-- [ ] A1: nine spec-type files at `core/spec-types/`
-- [ ] A2: five methodology profiles at `core/methodologies/`
-- [ ] A3: PM pack content aligned to final canonical names
-- [ ] B1: `domain-plugin-architecture` cutover finished
-- [ ] B2: `internal/spectypes/` Go package; schema 1.1 JSON export verified
+- [x] A1: nine spec-type files at `core/spec-types/`
+- [x] A2: five methodology profiles at `core/methodologies/`
+- [x] A3: PM pack content aligned to final canonical names
+- [x] B1: `domain-plugin-architecture` cutover finished
+- [x] B2: `internal/spectypes/` Go package; schema 1.1 JSON export verified (wired into `cli.PersistentPreRun` so `.hero/cache/spec-types.json` refreshes on every command)
 - [x] B3: `internal/methodology/` Go package; tests green
-- [ ] B4: `internal/tasks/` Go package + `hero task` CLI; AC infrastructure untouched
-- [ ] B5: Inline-propose Go side; envelope contract published to `docs/contracts/inline-propose-v1.md`
+- [x] B4: `internal/tasks/` Go package + `hero task` CLI; AC infrastructure untouched
+- [x] B5: Inline-propose Go side; envelope contract published to `docs/contracts/inline-propose-v1.md` (shipped contract is `1.0` semver; divergences from original design documented in the inline-propose spec)
 - [x] B6: Vocabulary + methodology-aware rendering across CLI / MCP / NEXT.md / agent prompts
-- [ ] Hero-code peer call (advisory) handing over the three stabilized contracts
-- [ ] `hero status` shows active methodology + vocabulary
-- [ ] `go test ./...` clean
-- [ ] Engineering corpus (137 features, 16 bugs, 14 initiatives) unchanged
+- [x] Hero-code peer call (advisory) handing over the three stabilized contracts
+- [x] `hero status` shows active methodology + vocabulary
+- [x] `go test ./...` clean
+- [x] Engineering corpus (137 features, 16 bugs, 14 initiatives) unchanged (registry `TestLintParity` walks 187 specs against the legacy validator — zero drift)
 
 When all checked, sprint is done; hero-code is unblocked; PM ships.

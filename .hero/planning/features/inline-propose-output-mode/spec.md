@@ -1,7 +1,7 @@
 ---
 title: Inline-Propose Output Mode — Agents Propose into the Artifact Pane
 type: feature
-status: designed
+status: delivering
 priority: P0
 tags: [platform, domains, agents, dashboard, ui, registry, contract]
 created: 2026-05-16
@@ -18,6 +18,43 @@ depends-on:
   - dashboard-view-registry
 horizon: next
 smoke: deferred
+---
+
+## Shipped contract (delivery snapshot)
+
+**Authoritative wire contract:** [docs/contracts/inline-propose-v1.md](../../../../docs/contracts/inline-propose-v1.md). The contract document is the source of truth that hero-code consumes; this design spec captures intent and rationale.
+
+**Schema version shipped:** `1.0` (semver, additive within `1.x`). The original design called for `"v1"` string-versioning; the shipped contract uses semver to allow `1.1` / `1.2` additive bumps without renaming the major version.
+
+**Divergences from the original design below** (all intentional; all narrower or simpler, none break the design's goals):
+
+1. **Envelope flattened.** Top-level `agent`, `skill_chain`, `content.{format,body}` instead of nested `origin.{agent,skill_chain,...}` + `proposed_content.{format,kind,body}`. The `proposed_content.kind` field was dropped — anchor + content format already disambiguates rendering hints.
+2. **Anchor model orthogonalized.** Five `anchor.kind` values (`frontmatter | section | heading | list_item | free`) crossed with five `anchor.position` values (`replace | append | prepend | before | after`) instead of seven combined enum values. Equivalent expressive power; less redundancy.
+3. **Cross-domain check deferred.** `target.domain` is not on the envelope; the daemon does not enforce `origin.domain == target.domain` in v1. Multi-domain workspaces are not in scope for the current sprint; the check can be added in a `1.1` bump when needed.
+4. **`persistence` field dropped.** v1 is always transient; the forward-compat hook for `"sidecar"` mode is the schema version bump, not an envelope field.
+5. **SSE event names use snake_case.** `proposal_emitted | proposal_accepted | proposal_edited | proposal_rejected | proposal_dismissed` instead of dot-notation `proposal.emitted | .replaced | .resolved | .batch_resolved | .lifecycle_log`. `proposal_replaced` is implied by a second `proposal_emitted` at the same anchor (the dropped envelope is logged but not separately broadcast); `proposal_batch_resolved` and `proposal_lifecycle_log` are replaced by a single stderr log line the daemon emits when a batch closes.
+6. **Disk write is dashboard-side.** Accept/edit-accept endpoints remove the proposal from the daemon store and emit the lifecycle event, but the actual write to the spec file is performed by the dashboard (hero-code) holding the user-intent context. Daemon manages lifecycle only; this also avoids the file-lock / 409 / anchor-resolution-drift complexity in v1.
+7. **Subcommand renamed.** `hero agent propose-shim` (not `hero agent run` — that subcommand already exists for headless agent execution). The shim is sibling to `agent run`, not a replacement.
+8. **No agent prompt addendum domain-pack override.** Addendum lives at `docs/contracts/inline-propose-agent-addendum.md` as a single canonical source, embedded into `internal/runner/runner.go` as `InlineProposeAddendum`. Domain-specific tweaks can be added later if needed.
+
+**What did NOT change from the design:** schema-versioned envelope; per-anchor replacement scoped to same agent (Decision 2); transient session state (Decision 1); five SSE event types on `/api/events`; bulk endpoints on `batch_id`; `--inline-propose` flag thread-through from slash commands.
+
+**Tests shipped:** 22 unit tests in `internal/propose/`, 14 in `internal/serve/proposals_test.go`, 1 round-trip e2e in `internal/serve/proposals_e2e_test.go`.
+
+**Files:**
+- `docs/contracts/inline-propose-v1.md` — contract for hero-code
+- `docs/contracts/inline-propose-agent-addendum.md` — agent system-prompt addendum
+- `internal/propose/{envelope,store,shim}.go` — package
+- `internal/serve/proposals.go` + `events.go` — REST + SSE
+- `internal/cli/propose_shim.go` — `hero agent propose-shim` subverb
+- `internal/cli/run.go` + `internal/runner/runner.go` — `--inline-propose` flag plumbing
+
+**Open follow-ups (out of scope for v1.0):**
+- Daemon-side disk write (currently dashboard responsibility) — would close the loop on file locking + mtime conflict detection.
+- Cross-domain enforcement (additive `1.1` bump if multi-domain workspaces materialize).
+- Per-anchor replaced event (currently inferred from a second `proposal_emitted` at the same anchor; explicit `proposal_replaced` would help dashboards that don't track anchor state).
+- Domain-overridable agent prompt addendum.
+
 ---
 
 ## Context
