@@ -5,6 +5,7 @@ import (
 
 	hero "github.com/hero-engine/hero"
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/install"
 	"github.com/spf13/cobra"
 )
 
@@ -76,8 +77,8 @@ func runDomainList(cmd *cobra.Command, args []string) error {
 func runDomainSwitch(cmd *cobra.Command, args []string) error {
 	domain := args[0]
 
-	// Validate domain exists
-	if _, err := hero.DomainFS(domain); err != nil {
+	domainFS, err := hero.DomainFS(domain)
+	if err != nil {
 		return err
 	}
 
@@ -93,6 +94,36 @@ func runDomainSwitch(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("Switched to domain: %s\n", domain)
-	fmt.Println("Run 'hero install project . --target <tool>' to reinstall content.")
+
+	// Reinstall content for every harness currently installed in the
+	// project so the new domain's agents/commands/skills materialize
+	// immediately. .hero/ data (specs, knowledge, jobs) is untouched —
+	// only the harness-rendered content layer is replaced.
+	targets := install.DetectInstalledTargets(projectRoot)
+	if len(targets) == 0 {
+		fmt.Println("No installed harness detected — run 'hero install project . --target <tool>' to materialize content.")
+		return nil
+	}
+
+	binaryVersion := rootCmd.Version
+	if binaryVersion == "" {
+		binaryVersion = "dev"
+	}
+
+	for _, target := range targets {
+		fmt.Printf("Reinstalling %s with %s domain...\n", target, domain)
+		opts := install.Options{
+			ContentFS: domainFS,
+			Target:    target,
+			Mode:      install.ModeProject,
+			TargetDir: projectRoot,
+			Force:     true,
+			Version:   binaryVersion,
+			Domain:    domain,
+		}
+		if _, err := install.Run(opts); err != nil {
+			return fmt.Errorf("reinstalling %s: %w", target, err)
+		}
+	}
 	return nil
 }

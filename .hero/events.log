@@ -5,3 +5,5 @@
 {"ts":"2026-05-05T03:08:28.577995Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"next-noop-writes","message":"Delivered next-noop-writes: checkpoint writes now skip unchanged files and preserve updated timestamps for projected NEXT files when semantic content is unchanged."}
 {"ts":"2026-05-05T22:06:37.96339Z","type":"files_modified","agent":"mcp/hero","slug":"docs-scrub","message":"Deep documentation scrub: rewrote README/Getting Started/MCP/team docs and updated stale agent/command references to current CLI groupings."}
 {"ts":"2026-05-15T19:21:07.877837Z","type":"workspace.peer_id_minted","agent":"hero","message":"peer_id minted (migration): 6341a260-0409-4663-9a04-92ff34b01288"}
+{"ts":"2026-05-17T14:36:52.49832Z","type":"peer.call.invoked","agent":"hero","slug":"unified-spec-type-model","message":"peer call advisory mode=advisory target=hero-code call_id=18b06118ed381d48e1cf68277f6af0a2"}
+{"ts":"2026-05-17T14:39:46.022784Z","type":"peer.call.completed","agent":"hero","slug":"unified-spec-type-model","message":"peer call ok mode=advisory target=hero-code kind=findings call_id=18b06118ed381d48e1cf68277f6af0a2"}

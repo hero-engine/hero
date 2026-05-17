@@ -1,0 +1,56 @@
+# Kanban methodology profile — flow-based, WIP-limited, no iterations.
+#
+# Continuous delivery with lane-based states gated by WIP limits.
+# No sprint cadence; release artifact optional. Estimation typically
+# omitted in favor of lead-time / cycle-time measurement.
+
+name: kanban
+display_name: "Kanban"
+description: "Continuous-flow delivery with lane-based states, WIP limits per column, and lead-time / cycle-time rollups. No sprint cadence; estimation typically deferred to flow metrics."
+
+aligned_vocabulary: kanban
+
+lifecycle:
+  feature:
+    states: [backlog, ready, in_progress, in_review, done]
+    transitions:
+      - {from: backlog, to: ready, gate: "AC present; pulled into ready lane"}
+      - {from: ready, to: in_progress, gate: "WIP-limit not exceeded for in_progress"}
+      - {from: in_progress, to: in_review, gate: "WIP-limit not exceeded for in_review"}
+      - {from: in_review, to: done, gate: "AC passing; review approved"}
+  bug:
+    states: [reported, in_progress, in_review, done]
+    transitions:
+      - {from: reported, to: in_progress, gate: "WIP-limit not exceeded; pulled"}
+      - {from: in_progress, to: in_review, gate: "WIP-limit not exceeded for in_review"}
+      - {from: in_review, to: done, gate: "regression test passing"}
+  release:
+    states: [planning, in_progress, shipped]
+    transitions:
+      - {from: planning, to: in_progress, gate: "scope tagged"}
+      - {from: in_progress, to: shipped, gate: "all included work items done"}
+
+time_boxes:
+  - level: release
+    artifact_type: release
+    duration_typical: none
+    required: false
+
+estimation:
+  feature:
+    required_field: none
+  bug:
+    required_field: none
+
+in_flight_tracking: wip_aging
+
+cadence:
+  daily_standup: false
+  weekly_sync: false
+  rituals: []
+
+rollups:
+  - {kind: lead_time, over: last_30_days}
+  - {kind: cycle_time, over: last_30_days}
+  - {kind: throughput, over: last_30_days}
+  - {kind: wip_aging, scope: current_board}

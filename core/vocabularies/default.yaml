@@ -1,0 +1,60 @@
+# Hero's canonical engineering-leaning vocabulary. This is the fall-through
+# preset when no tracker or methodology triggers a more specific choice.
+# Legacy engineering workspaces upgrading from the pre-unification model
+# should feel zero change: spec.feature renders as "Feature", and
+# roadmap-item renders as "Initiative" to match prior Hero usage.
+#
+# No tracker_mappings: workspaces with a tracker connected must opt in
+# by selecting a tracker-shaped vocabulary (jira, linear) or by setting
+# explicit overrides in hero.json.
+
+name: default
+display_name: "Default"
+description: "Hero's canonical engineering-leaning vocabulary. Feature / Bug / Epic / Initiative."
+
+types:
+  spec: Spec
+  epic: Epic
+  roadmap-item: Initiative
+  prd: PRD
+  intake-item: Intake Item
+  decision: Decision
+  convention: Convention
+
+kinds:
+  spec.feature: Feature
+  spec.bug: Bug
+  spec.chore: Chore
+  spec.refactor: Refactor
+  spec.perf: Performance
+  spec.infra: Infra
+  spec.security: Security
+  spec.ux: UX
+  epic.theme: Theme
+  epic.delivery: Delivery Epic
+  epic.bet: Bet
+  epic.milestone: Milestone
+
+sections:
+  acceptance_criteria: "Acceptance Criteria"
+  tasks: "Tasks"
+
+nl_triggers:
+  - phrase: ["feature"]
+    canonical: { type: spec, kind: feature }
+  - phrase: ["bug", "defect"]
+    canonical: { type: spec, kind: bug }
+  - phrase: ["chore"]
+    canonical: { type: spec, kind: chore }
+  - phrase: ["refactor"]
+    canonical: { type: spec, kind: refactor }
+  - phrase: ["epic"]
+    canonical: { type: epic }
+  - phrase: ["initiative", "roadmap item"]
+    canonical: { type: roadmap-item }
+  - phrase: ["prd"]
+    canonical: { type: prd }
+  - phrase: ["decision", "adr"]
+    canonical: { type: decision }
+  - phrase: ["convention"]
+    canonical: { type: convention }

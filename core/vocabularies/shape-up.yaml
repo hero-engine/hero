@@ -1,0 +1,71 @@
+# Pitch / Bet / Cooldown vocabulary from Basecamp's Shape Up methodology.
+# Targeted at teams running 6-week cycles with shaped pitches and
+# appetite-bounded work. Auto-selected when a `cycle` delivery preset
+# is active.
+#
+# Section headings shift: Acceptance Criteria becomes "Done line" — a
+# Shape Up team frames completion as the single line that says when the
+# scope is done, not a checklist of testable criteria. The `prd` type
+# (kind=pitch) gets a Shape Up pitch section structure (Problem /
+# Appetite / Solution / Rabbit Holes / No-Gos).
+
+name: shape-up
+display_name: "Shape Up"
+description: "Pitch / Bet / Cooldown vocabulary from Basecamp's Shape Up methodology."
+
+auto_select:
+  - delivery_preset: cycle
+
+types:
+  spec: Scope
+  epic: Pitch
+  roadmap-item: Bet
+  prd: Pitch
+  intake-item: Idea
+  decision: Decision
+  convention: Convention
+
+kinds:
+  spec.feature: Scope
+  spec.bug: Bug
+  spec.chore: Cleanup
+  spec.refactor: Cleanup
+  spec.perf: Performance Scope
+  spec.infra: Infra Scope
+  spec.security: Security Scope
+  spec.ux: UX Scope
+  epic.theme: Pitch
+  epic.delivery: Pitch
+  epic.bet: Bet
+  epic.milestone: Cycle Milestone
+  intake-item.customer: Customer Idea
+  intake-item.support: Support Idea
+  intake-item.sales: Sales Idea
+  intake-item.internal: Internal Idea
+  intake-item.competitive: Competitive Idea
+
+sections:
+  acceptance_criteria: "Done line"
+  tasks: "Tasks"
+  prd.problem: "Problem"
+  prd.appetite: "Appetite"
+  prd.solution: "Solution"
+  prd.rabbit_holes: "Rabbit Holes"
+  prd.no_gos: "No-Gos"
+
+lifecycle:
+  spec.in-flight: "Cooking"
+
+nl_triggers:
+  - phrase: ["scope"]
+    canonical: { type: spec, kind: feature }
+  - phrase: ["bug"]
+    canonical: { type: spec, kind: bug }
+  - phrase: ["cleanup"]
+    canonical: { type: spec, kind: chore }
+  - phrase: ["pitch"]
+    canonical: { type: prd, kind: pitch }
+  - phrase: ["bet"]
+    canonical: { type: roadmap-item }
+  - phrase: ["idea"]
+    canonical: { type: intake-item }

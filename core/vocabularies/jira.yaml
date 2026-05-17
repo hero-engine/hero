@@ -1,0 +1,74 @@
+# Jira-shaped vocabulary for workspaces with a Jira tracker connected.
+# Mirrors Jira's native issue-type taxonomy: Story, Task, Bug, Epic,
+# Initiative. Auto-selected when a Jira integration is configured and
+# no explicit vocabulary override is set in hero.json.
+#
+# Includes the full tracker_mappings.jira block — the round-trip
+# canonical mapping between Jira issue types and Hero (type, kind)
+# pairs. This block is consulted by internal/tracker/sprint.go when
+# importing issues and by the exporter when round-tripping back.
+
+name: jira
+display_name: "Jira"
+description: "Jira-shaped vocabulary for workspaces tracking work in Jira."
+
+auto_select:
+  - tracker: jira
+
+types:
+  spec: Issue
+  epic: Epic
+  roadmap-item: Initiative
+  prd: PRD
+  intake-item: Request
+  decision: Decision
+  convention: Convention
+
+kinds:
+  spec.feature: Story
+  spec.bug: Bug
+  spec.chore: Task
+  spec.refactor: Task
+  spec.perf: Task
+  spec.infra: Task
+  spec.security: Task
+  spec.ux: Story
+  epic.theme: Epic
+  epic.delivery: Epic
+  epic.bet: Initiative
+  epic.milestone: Epic
+  intake-item.customer: Request
+  intake-item.support: Request
+  intake-item.sales: Request
+  intake-item.internal: Request
+  intake-item.competitive: Request
+
+sections:
+  acceptance_criteria: "Acceptance Criteria"
+  tasks: "Sub-tasks"
+
+nl_triggers:
+  - phrase: ["story", "user story"]
+    canonical: { type: spec, kind: feature }
+  - phrase: ["task"]
+    canonical: { type: spec, kind: chore }
+  - phrase: ["bug"]
+    canonical: { type: spec, kind: bug }
+  - phrase: ["sub-task", "subtask"]
+    canonical: { type: spec, kind: chore }
+  - phrase: ["feature request"]
+    canonical: { type: spec, kind: feature }
+  - phrase: ["epic"]
+    canonical: { type: epic }
+  - phrase: ["initiative"]
+    canonical: { type: roadmap-item }
+
+tracker_mappings:
+  jira:
+    Story: { type: spec, kind: feature }
+    Task: { type: spec, kind: chore }
+    Bug: { type: spec, kind: bug }
+    "Sub-task": { type: spec, kind: chore }
+    "Feature Request": { type: spec, kind: feature }
+    Epic: { type: epic }
+    Initiative: { type: roadmap-item }

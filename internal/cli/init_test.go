@@ -115,6 +115,40 @@ func TestInitCustomFolder(t *testing.T) {
 	}
 }
 
+func TestInitDomainFlag(t *testing.T) {
+	env := newTestEnvEmpty(t)
+
+	if _, err := runCmd("init", "--domain", "engineering"); err != nil {
+		t.Fatalf("init --domain engineering returned error: %v", err)
+	}
+
+	configPath := filepath.Join(env.dir, ".hero", "hero.json")
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		t.Fatalf("hero.json not created: %v", err)
+	}
+	if !strings.Contains(string(data), `"domain": "engineering"`) {
+		t.Errorf("hero.json missing domain field: %s", data)
+	}
+}
+
+func TestInitDomainFlagUnknownDomain(t *testing.T) {
+	env := newTestEnvEmpty(t)
+
+	_, err := runCmd("init", "--domain", "not-a-real-domain")
+	if err == nil {
+		t.Fatal("init --domain not-a-real-domain should error")
+	}
+	if !strings.Contains(err.Error(), "not-a-real-domain") {
+		t.Errorf("error should mention the unknown domain, got: %v", err)
+	}
+
+	// Workspace must not have been created when validation fails.
+	if _, statErr := os.Stat(filepath.Join(env.dir, ".hero")); !os.IsNotExist(statErr) {
+		t.Errorf(".hero/ should not exist after a failed init (stat err=%v)", statErr)
+	}
+}
+
 func TestInitInstallsPreCommitHook(t *testing.T) {
 	env := newTestEnvEmpty(t)
 	if err := exec.Command("git", "init", "-q", env.dir).Run(); err != nil {

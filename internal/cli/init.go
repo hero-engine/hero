@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	hero "github.com/hero-engine/hero"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/peering"
 	"github.com/hero-engine/hero/internal/scan"
@@ -30,6 +31,7 @@ custom config) but will refresh AGENTS.md unless --no-agents is set.`,
 
 var (
 	initFolder       string
+	initDomain       string
 	initNoAgents     bool
 	initInstallHooks bool
 	initNoHooks      bool
@@ -37,6 +39,7 @@ var (
 
 func init() {
 	initCmd.Flags().StringVar(&initFolder, "folder", config.DefaultFolder, "folder name for the hero workspace")
+	initCmd.Flags().StringVar(&initDomain, "domain", "", "domain pack to use (default: engineering); see `hero domain list`")
 	initCmd.Flags().BoolVar(&initNoAgents, "no-agents", false, "skip AGENTS.md generation")
 	initCmd.Flags().BoolVar(&initInstallHooks, "install-hooks", true, "install the pre-commit hook so projected NEXT files travel with commits")
 	initCmd.Flags().BoolVar(&initNoHooks, "no-hooks", false, "skip installing the pre-commit hook")
@@ -48,6 +51,13 @@ func runInit(cmd *cobra.Command, args []string) error {
 	cfg := config.DefaultConfig()
 	cfg.Folder = initFolder
 	cfg.PeerID = peering.MintPeerID()
+
+	if initDomain != "" {
+		if _, err := hero.DomainFS(initDomain); err != nil {
+			return err
+		}
+		cfg.Domain = initDomain
+	}
 
 	heroDir := cfg.HeroDir(projectRoot)
 

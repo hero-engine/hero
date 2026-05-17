@@ -50,6 +50,24 @@ type Config struct {
 	Specs       *SpecsConfig      `json:"specs,omitempty"`
 	Delivery    *DeliveryConfig   `json:"delivery,omitempty"`
 	Environment *EnvironmentConfig `json:"environment,omitempty"`
+	// Vocabulary names the active vocabulary preset (e.g. "default",
+	// "agile-scrum", "shape-up", "kanban", "jira", "linear"). When set,
+	// it wins the precedence chain in internal/vocabulary.Resolve over
+	// tracker- and methodology-inferred defaults. Empty falls through
+	// to inference.
+	Vocabulary string `json:"vocabulary,omitempty"`
+	// VocabularyOverrides applies per-key tweaks on top of the resolved
+	// vocabulary. Supported key shapes:
+	//   types.<type>                  e.g. "types.spec" -> "Story"
+	//   kinds.<type>.<kind>            e.g. "kinds.spec.feature" -> "Story"
+	//   sections.<canonical>           e.g. "sections.acceptance_criteria" -> "Done When"
+	//   lifecycle.<type>.<status>      e.g. "lifecycle.spec.in-flight" -> "Cooking"
+	VocabularyOverrides map[string]string `json:"vocabulary_overrides,omitempty"`
+	// PM holds product-management-specific workspace settings, including
+	// the active methodology presets that influence vocabulary
+	// auto-selection. The shape mirrors hero-pm's design; only the
+	// subset needed for vocabulary resolution is declared here.
+	PM *PMConfig `json:"pm,omitempty"`
 	Repos       map[string]string `json:"repos,omitempty"`
 	// RepoMeta carries peer-discovery metadata for each entry in Repos,
 	// keyed by the same alias. peer_id is the canonical join key for
@@ -120,6 +138,26 @@ type ContentConfig struct {
 	AgentsPath   string `json:"agents_path,omitempty"`
 	CommandsPath string `json:"commands_path,omitempty"`
 	SkillsPath   string `json:"skills_path,omitempty"`
+}
+
+// PMConfig holds product-management workspace settings. Only the
+// subset consumed by vocabulary resolution is declared today; the
+// fuller shape lives in hero-pm and may grow this struct over time.
+type PMConfig struct {
+	// Presets selects the active methodology presets (delivery cadence,
+	// roadmap shape, etc.). The "delivery" value (one of "sprint",
+	// "cycle", "continuous", "flow") influences which vocabulary
+	// preset is auto-selected when no explicit Vocabulary is set.
+	Presets *PMPresets `json:"presets,omitempty"`
+}
+
+// PMPresets selects active methodology presets.
+type PMPresets struct {
+	// Delivery is the active delivery cadence preset. Recognized values
+	// today: "sprint" (auto-selects agile-scrum vocabulary), "cycle"
+	// (auto-selects shape-up), "continuous"/"flow" (auto-selects
+	// kanban). Other values are ignored by vocabulary resolution.
+	Delivery string `json:"delivery,omitempty"`
 }
 
 // EnvironmentConfig holds environment awareness settings.
