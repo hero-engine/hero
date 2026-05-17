@@ -12,11 +12,12 @@ session — fire-and-forget jobs, scheduled automations, approval
 gates for work that needs human oversight before merging.
 
 Subverbs:
-  agent run       run agent work headlessly via Claude/OpenAI API
-  agent jobs      list / inspect / cancel async jobs
-  agent automate  set up event-driven automations
-  agent approve   approve a gated job
-  agent events    log / inspect cross-session events`,
+  agent run            run agent work headlessly via Claude/OpenAI API
+  agent jobs           list / inspect / cancel async jobs
+  agent automate       set up event-driven automations
+  agent approve        approve a gated job
+  agent events         log / inspect cross-session events
+  agent propose-shim   wrap an agent and forward HERO-PROPOSAL: NDJSON to the daemon`,
 }
 
 func init() {

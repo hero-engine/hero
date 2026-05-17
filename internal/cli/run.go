@@ -31,17 +31,18 @@ Examples:
 }
 
 var (
-	runProvider  string
-	runModel     string
-	runAPIKey    string
-	runMaxTurns  int
-	runBudget    float64
-	runDryRun    bool
-	runBulk      bool
-	runFilterType string
-	runFilterTag  string
-	runFilterPri  string
-	runFilterSlug string
+	runProvider       string
+	runModel          string
+	runAPIKey         string
+	runMaxTurns       int
+	runBudget         float64
+	runDryRun         bool
+	runBulk           bool
+	runFilterType     string
+	runFilterTag      string
+	runFilterPri      string
+	runFilterSlug     string
+	runInlinePropose  bool
 )
 
 func init() {
@@ -56,6 +57,7 @@ func init() {
 	heroRunCmd.Flags().StringVar(&runFilterTag, "tag", "", "filter by tag")
 	heroRunCmd.Flags().StringVar(&runFilterPri, "priority", "", "filter by priority (critical, high, medium, low)")
 	heroRunCmd.Flags().StringVar(&runFilterSlug, "match", "", "filter slugs matching this substring")
+	heroRunCmd.Flags().BoolVar(&runInlinePropose, "inline-propose", false, "agent emits HERO-PROPOSAL: NDJSON to stdout instead of writing to disk (see docs/contracts/inline-propose-v1.md)")
 }
 
 func runRun(cmd *cobra.Command, args []string) error {
@@ -104,16 +106,17 @@ func runRun(cmd *cobra.Command, args []string) error {
 	}
 
 	job, err := runner.Run(runner.RunConfig{
-		ProjectRoot: projectRoot,
-		HeroDir:     heroDir,
-		Provider:    runProvider,
-		Model:       runModel,
-		APIKey:      runAPIKey,
-		Command:     command,
-		Args:        runArgs,
-		MaxTurns:    runMaxTurns,
-		Budget:      runBudget,
-		DryRun:      runDryRun,
+		ProjectRoot:   projectRoot,
+		HeroDir:       heroDir,
+		Provider:      runProvider,
+		Model:         runModel,
+		APIKey:        runAPIKey,
+		Command:       command,
+		Args:          runArgs,
+		MaxTurns:      runMaxTurns,
+		Budget:        runBudget,
+		DryRun:        runDryRun,
+		InlinePropose: runInlinePropose,
 	})
 	if err != nil {
 		return err
@@ -193,15 +196,16 @@ func runBulkMode(heroDir, projectRoot, command string, cfg *config.Config) error
 		fmt.Println(strings.Repeat("─", 60))
 
 		job, err := runner.Run(runner.RunConfig{
-			ProjectRoot: projectRoot,
-			HeroDir:     heroDir,
-			Provider:    runProvider,
-			Model:       runModel,
-			APIKey:      runAPIKey,
-			Command:     command,
-			Args:        s.Slug,
-			MaxTurns:    runMaxTurns,
-			Budget:      runBudget,
+			ProjectRoot:   projectRoot,
+			HeroDir:       heroDir,
+			Provider:      runProvider,
+			Model:         runModel,
+			APIKey:        runAPIKey,
+			Command:       command,
+			Args:          s.Slug,
+			MaxTurns:      runMaxTurns,
+			Budget:        runBudget,
+			InlinePropose: runInlinePropose,
 		})
 		if err != nil {
 			fmt.Printf("  FAILED: %v\n", err)
