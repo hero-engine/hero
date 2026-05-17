@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-17T00:13:32Z · 83 ready specs_
+_Generated: 2026-05-17T00:16:42Z · 84 ready specs_
 
 ## cross-repo-peering — "Cross-Repo Peering — Conventions Travel, Specs Hand Off, Heroes Call Each Other"
 _feature · delivering · horizon: now_
@@ -137,6 +137,33 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/e2e-validation/spec.md)_
+
+---
+
+## hero-serve-scope-decision — "Decide `hero serve` Scope After the hero/hero-cloud Split"
+_feature · planning · horizon: now_
+
+Quick architectural decision blocked by lack of explicit scoping.
+After the repo split landed (2026-05-16), 17 cloud-side specs moved
+cleanly to hero-cloud. Three specs were deferred because they
+straddle the line between "CLI convenience local server" and "team
+coordination server (= hero-cloud)."
+
+User note from the moment of deferral: *"hero serve [had] some stuff
+that it might need to still do — and some that it should stop doing
+— but not full blown get rid of hero serve — that was also some UI
+elements for info."*
+
+**Pick up at:** read the three deferred specs (`hero-team-server`,
+`hero-dashboard-v2`, `hero-automations`), have a focused conversation
+about what `hero serve` keeps (info UI, local-only convenience) vs.
+what moves to hero-cloud (multi-dev job queue, approval gates, team
+coordination). Capture the line as a decision spec. Then update the
+three blocked specs accordingly — either split each into "local-side
+in hero" + "server-side in hero-cloud" specs, narrow scope to one
+side, or relocate.
+
+→ `.hero/planning/features/hero-serve-scope-decision/spec.md`
 
 ---
 
