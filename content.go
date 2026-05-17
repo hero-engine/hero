@@ -3,7 +3,7 @@
 // hero install and hero upgrade work without access to the source tree.
 //
 // Content is organized by domain under domains/<name>/. The default domain
-// is "engineering". Other domains (e.g. "sales") provide alternative
+// is "engineering". Other domains (e.g. "pm", "sales") provide alternative
 // agents, commands, and skills for non-engineering workflows.
 package hero
 
@@ -18,6 +18,9 @@ var engineeringContent embed.FS
 
 //go:embed domains/sales/agents domains/sales/commands domains/sales/skills domains/sales/spec-types
 var salesContent embed.FS
+
+//go:embed domains/pm/agents domains/pm/commands domains/pm/skills domains/pm/spec-types
+var pmContent embed.FS
 
 //go:embed core/agents core/commands core/skills
 var coreContent embed.FS
@@ -58,6 +61,9 @@ func DomainFS(domain string) (fs.FS, error) {
 	if domain == "sales" {
 		return fs.Sub(salesContent, "domains/sales")
 	}
+	if domain == "pm" {
+		return fs.Sub(pmContent, "domains/pm")
+	}
 	return nil, fmt.Errorf("domain %q not found — available domains: %v", domain, AvailableDomains())
 }
 
@@ -86,8 +92,9 @@ func CoreVocabulariesFS() fs.FS {
 }
 
 // AvailableDomains returns the list of embedded domain names.
-// Engineering is the canonical, populated vertical. Sales is a
-// scaffold today (mission + structure but no real content yet).
+// Engineering is the canonical, populated vertical. PM is the second
+// populated vertical (intake/PRD/discovery flow). Sales is a scaffold
+// today (mission + structure but no real content yet).
 func AvailableDomains() []string {
-	return []string{"engineering", "sales"}
+	return []string{"engineering", "sales", "pm"}
 }
