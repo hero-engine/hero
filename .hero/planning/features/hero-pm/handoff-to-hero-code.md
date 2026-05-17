@@ -251,24 +251,26 @@ Handoff stream's per-row domain bars).
 Source: `../hero/web/docs/src/assets/logo.svg` and
 `../hero/web/docs/src/stylesheets/brand.css`.
 
-## Open questions you'll need to resolve
+## Open questions — resolved 2026-05-16
 
-### 1. Tracker-fronting decision doc
+### 1. Tracker-fronting decision doc — DONE
 
-The tracker-fronting & local-first principle (above) belongs in a
-dedicated decision doc at `../hero/.hero/knowledge/decisions/tracker-fronting-and-local-first.md`,
-cross-referenced from the parent initiative and `hero-pm/spec.md`.
-Not yet written. Small task — should land before substantial
-implementation work begins so the principle has a canonical home.
+Written as `.hero/knowledge/decisions/tracker-fronting-and-local-first.md`.
+Cross-referenced from `hero-domains/spec.md` (Hero-wide principles
+section) and `hero-pm/spec.md` (Integrations section). The conflict
+policy (Hero wins on content, tracker wins on org-state) is now the
+canonical reference for the spec-type-registry primitive's
+content-vs-org-state field declaration.
 
-### 2. Inline-propose output mode primitive (#4b)
+### 2. Inline-propose output mode primitive (#4b) — DONE
 
-The agent-pack design surfaced a new platform primitive: agents need
-to support `--inline-propose` as a distinct output mode (propose into
-the artifact pane rather than write-to-disk-and-reload), plus a
-view-layer accept / edit / reject control. Should be added as
-primitive #4b under `dashboard-view-registry`. Not yet in the parent
-initiative's children list — needs to be slotted in.
+Spun up as a sibling spec at
+`.hero/planning/features/inline-propose-output-mode/spec.md`. Added
+to the `hero-domains` initiative's children table as #4b and to its
+sequencing section between #4 and #5. Added to `hero-pm`'s
+`depends-on` list. `/design inline-propose-output-mode` will resolve
+the remaining open questions in that spec (storage default,
+idempotency under repeat-propose, edit fidelity).
 
 ## Sequencing — what to build first
 

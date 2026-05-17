@@ -13,6 +13,7 @@ depends-on:
   - spec-type-registry
   - domain-routing-and-agents
   - dashboard-view-registry
+  - inline-propose-output-mode
   - scan-pluggability
   - domain-scoped-knowledge-graph
 horizon: next
@@ -21,12 +22,14 @@ smoke: deferred
 
 > **Status: awaiting platform primitives.** This stub is a `/design`-ready
 > brief, not a complete design. Implementation is blocked on work items
-> 1–5 of the parent `hero-domains` initiative
-> (`domain-plugin-architecture`, `spec-type-registry`,
+> 1–6 of the parent `hero-domains` initiative plus the inline-propose
+> primitive (#4b): `domain-plugin-architecture`, `spec-type-registry`,
 > `domain-routing-and-agents`, `dashboard-view-registry`,
-> `scan-pluggability`). `/design hero-pm` can resolve the open questions
-> below and produce the full design in parallel with primitive delivery,
-> but no code lands until the primitives are in place.
+> `inline-propose-output-mode`, `scan-pluggability`,
+> `domain-scoped-knowledge-graph`. `/design hero-pm` can resolve the
+> open questions below and produce the full design in parallel with
+> primitive delivery, but no code lands until the primitives are in
+> place.
 
 ## Kickoff
 
@@ -314,6 +317,16 @@ integration surface engineering already has, and stress-tests whether
 the `DomainIntegration` interface tolerates two domains sharing one
 provider before we add roadmap-shaped providers (Productboard, Aha) in
 a follow-up.
+
+**Tracker-fronting is local-first.** In tracker-fronted mode the
+working surface is identical to standalone — instant local writes,
+async propagation to the tracker, no syncing spinners. Conflict
+policy: Hero wins for content (PRD body, AC, story description),
+tracker wins for org-state (assignee, sprint, workflow status). PM
+spec-type frontmatter must distinguish content fields from org-state
+fields so the integration layer can apply the right policy on each.
+See
+[tracker-fronting-and-local-first](../../knowledge/decisions/tracker-fronting-and-local-first.md).
 
 ## Dashboard layout
 

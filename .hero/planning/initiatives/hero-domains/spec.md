@@ -208,6 +208,7 @@ hit.
 | 2 | spec-type-registry | Domain-declared spec types and lifecycles | Platform primitive | P0 |
 | 3 | domain-routing-and-agents | Active-domain AGENTS.md and agent loader | Platform primitive | P0 |
 | 4 | dashboard-view-registry | Pluggable dashboard pages per domain | Platform primitive | P0 |
+| 4b | inline-propose-output-mode | Agents propose into artifact pane; accept / edit / reject UI | Platform primitive | P0 |
 | 5 | scan-pluggability | Per-domain scanners | Platform primitive | P0 |
 | 6 | domain-scoped-knowledge-graph | Namespace tags on graph nodes | Platform primitive | P0 |
 | 7 | hero-pm | Product Management domain pack | Domain content pack | P0 |
@@ -292,6 +293,17 @@ the registry-shaped primitives (#2, #3, #4, #5) are in place.
    (Roadmap, Story queue, Intake funnel, Handoff stream). Today pages
    are fixed in the dashboard. Move to a config-driven registry plus
    per-domain `views/` manifest.
+4b. **inline-propose-output-mode** — agent output-mode contract
+   (`--inline-propose`) plus the view-layer accept / edit / reject
+   widget. Required by the locked Hero PM UX pattern — every PM
+   authoring agent (`story-writer`, `prd-author`, `roadmap-curator`,
+   `prioritization-strategist`, etc.) proposes into the artifact
+   pane rather than writing to disk; the user accepts, edits, or
+   rejects each proposal in place. Depends on #3 (the agent loader
+   that surfaces the new output mode) and #4 (the view registry
+   that hosts the shared proposal widget). Slotted between #4 and #5
+   because it attaches to both. Hero-wide primitive — engineering
+   agents (e.g. `pr-reviewer`) inherit the capability.
 5. **scan-pluggability** — PM onboarding needs domain-specific scanning
    (import roadmap docs, tracker epics) instead of code scanning.
    Generalize `hero scan` and reduce the existing engineering scan to a
@@ -304,11 +316,13 @@ the registry-shaped primitives (#2, #3, #4, #5) are in place.
    requires PM and engineering content to coexist in one graph from
    day one — flat-namespace queries would silently mix domains. Adding
    tags later forces a re-index, so land it before PM ships.
-7. **hero-pm** — first non-engineering domain. Depends on #1–#6.
+7. **hero-pm** — first non-engineering domain. Depends on #1–#6 plus
+   #4b (inline-propose).
    Validates the platform end-to-end and is the proving ground for the
    platform narrative. See the child spec for the full artifact-type
    table, workflow list, agent roster, and open questions.
-8. **hero-qa** — second domain. Hard dependency on primitives #1–#6.
+8. **hero-qa** — second domain. Hard dependency on primitives #1–#6
+   plus #4b.
    Soft sequencing behind #7: design can proceed in parallel with PM
    delivery, but `hero-qa` should not ship before `hero-pm` so PM
    lessons (especially around the spec-type registry and dashboard
@@ -348,3 +362,16 @@ the registry-shaped primitives (#2, #3, #4, #5) are in place.
 
 Role and permission shapes (multi-user permissioning per domain) are
 deferred to the `cloud-admin` initiative — not in scope here.
+
+## Hero-wide principles that apply across primitives
+
+- **Tracker fronting is local-first.** Trackers and Hero Cloud are
+  backing stores, not front doors. All three operating modes
+  (standalone, Cloud-backed, tracker-fronted) share one UX; local
+  writes are instant, propagation is async, and the conflict policy
+  is fixed (Hero wins on content, tracker wins on org-state). The
+  `DomainIntegration` interface designed in #1 must support
+  local-first write semantics as a first-class contract; the
+  spec-type registry in #2 must distinguish content fields from
+  org-state fields. See
+  [tracker-fronting-and-local-first](../../knowledge/decisions/tracker-fronting-and-local-first.md).
