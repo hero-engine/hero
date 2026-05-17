@@ -200,7 +200,7 @@ Quick cheat sheet:
 
 ```bash
 hero init                                # mints a stable peer_id UUID
-hero repos add app ../app                # register a sibling peer
+hero admin repos add app ../app          # register a sibling peer
 hero peer call app --mode=advisory "What's your error envelope?"
 hero handoff order-failure app --reason "Root cause is the API"
 ```
@@ -226,7 +226,7 @@ The binary is organized around a few stable groups.
 | Workspace health | `hero status`, `hero dashboard`, `hero check`, `hero docs check`, `hero smoke`, `hero ci`, `hero anchor`, `hero tripwire` |
 | Graph and retrieval | `hero scan`, `hero graph`, `hero extract`, `hero impact`, `hero why`, `hero blocked` |
 | Tracker and sync | `hero sync connect`, `hero sync import`, `hero sync pull`, `hero sync spec`, `hero sync link`, `hero sync comment`, `hero sync attach`, `hero sync graph` |
-| Cross-repo peering | `hero repos`, `hero peer manifest`, `hero peer list`, `hero peer show`, `hero peer call`, `hero handoff`, `hero handoff status`, `hero handoff accept`, `hero context imports` |
+| Cross-repo peering | `hero admin repos`, `hero peer manifest`, `hero peer list`, `hero peer show`, `hero peer call`, `hero handoff`, `hero handoff status`, `hero handoff accept`, `hero context imports` |
 | Automation and headless work | `hero agent run`, `hero agent jobs`, `hero agent approve`, `hero agent automate`, `hero pipeline`, `hero watch` |
 | Publishing and server | `hero serve`, `hero mcp`, `hero publish wiki`, `hero publish pages`, `hero login`, `hero logout` |
 | Installation | `hero install`, `hero install satellites`, `hero upgrade`, `hero uninstall`, `hero verify-install`, `hero trust`, `hero domain` |
