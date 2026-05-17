@@ -1,0 +1,48 @@
+[
+  {
+    "schema_version": "1.0",
+    "proposal_id": "p-d20001",
+    "batch_id": "b-7c1ab9",
+    "session_id": "sess-2026-05-17-a3f",
+    "agent": "story-writer",
+    "skill_chain": ["pm/story-writer", "core/acceptance-criteria"],
+    "target": {
+      "spec_slug": "csv-export",
+      "spec_path": ".hero/planning/features/csv-export/spec.md",
+      "anchor": {
+        "kind": "section",
+        "value": "acceptance_criteria",
+        "position": "append"
+      }
+    },
+    "content": {
+      "format": "markdown",
+      "body": "- THE SYSTEM SHALL reject exports larger than 50,000 rows with a 413 Payload Too Large response."
+    },
+    "rationale": "First draft — picked a conservative ceiling.",
+    "emitted_at": "2026-05-22T09:30:00Z"
+  },
+  {
+    "schema_version": "1.0",
+    "proposal_id": "p-d20002",
+    "batch_id": "b-7c1ab9",
+    "session_id": "sess-2026-05-17-a3f",
+    "agent": "story-writer",
+    "skill_chain": ["pm/story-writer", "core/acceptance-criteria"],
+    "target": {
+      "spec_slug": "csv-export",
+      "spec_path": ".hero/planning/features/csv-export/spec.md",
+      "anchor": {
+        "kind": "section",
+        "value": "acceptance_criteria",
+        "position": "append"
+      }
+    },
+    "content": {
+      "format": "markdown",
+      "body": "- WHEN an export exceeds 1,000,000 rows, THE SYSTEM SHALL return a 202 Accepted with a job handle and deliver the file asynchronously to the requesting user's downloads tab."
+    },
+    "rationale": "Re-draft after talking to the analytics team — synchronous ceiling was too low; async fallback at a higher threshold is what enterprise actually needs. Per Decision 2 this replaces the previous proposal on the same anchor/agent.",
+    "emitted_at": "2026-05-22T09:42:18Z"
+  }
+]
