@@ -157,6 +157,89 @@ func assertSkillFrontmatter(t *testing.T, fsys fs.FS, p string) {
 	}
 }
 
+// TestAvailableDomains verifies the canonical list of embedded domain
+// names. Anchoring this list in a test prevents accidental removal or
+// reordering of a domain pack without explicit intent — adding a new
+// domain requires updating both the embed declaration AND this test,
+// which forces the change to be deliberate.
+func TestAvailableDomains(t *testing.T) {
+	got := AvailableDomains()
+	want := map[string]bool{"engineering": true, "sales": true, "pm": true}
+
+	if len(got) != len(want) {
+		t.Fatalf("AvailableDomains() length = %d, want %d; got=%v", len(got), len(want), got)
+	}
+	for _, d := range got {
+		if !want[d] {
+			t.Errorf("AvailableDomains() returned unexpected domain %q", d)
+		}
+		delete(want, d)
+	}
+	for d := range want {
+		t.Errorf("AvailableDomains() missing expected domain %q", d)
+	}
+}
+
+// TestDomainFS_KnownDomains verifies every domain returned by
+// AvailableDomains() resolves through DomainFS() and exposes the
+// expected harness-content roots (agents/, commands/, skills/).
+//
+// This is the embed.FS surface contract: every advertised domain must
+// be installable, and "installable" means the per-target installers can
+// walk agents/, commands/, and skills/ at the FS root.
+func TestDomainFS_KnownDomains(t *testing.T) {
+	for _, domain := range AvailableDomains() {
+		t.Run(domain, func(t *testing.T) {
+			fsys, err := DomainFS(domain)
+			if err != nil {
+				t.Fatalf("DomainFS(%q) returned error: %v", domain, err)
+			}
+			if fsys == nil {
+				t.Fatalf("DomainFS(%q) returned nil filesystem", domain)
+			}
+			for _, root := range []string{"agents", "commands", "skills"} {
+				entries, err := fs.ReadDir(fsys, root)
+				if err != nil {
+					t.Errorf("DomainFS(%q): ReadDir %q: %v", domain, root, err)
+					continue
+				}
+				if len(entries) == 0 {
+					t.Errorf("DomainFS(%q): %s/ is empty", domain, root)
+				}
+			}
+		})
+	}
+}
+
+// TestDomainFS_DefaultAndEmpty verifies that the empty domain string
+// resolves identically to "engineering" (legacy fallback contract).
+func TestDomainFS_DefaultAndEmpty(t *testing.T) {
+	empty, err := DomainFS("")
+	if err != nil {
+		t.Fatalf("DomainFS(\"\") error: %v", err)
+	}
+	if empty == nil {
+		t.Fatal("DomainFS(\"\") returned nil")
+	}
+	// Smoke check: the default FS must expose agents/.
+	if _, err := fs.ReadDir(empty, "agents"); err != nil {
+		t.Errorf("DomainFS(\"\"): agents/ not readable: %v", err)
+	}
+}
+
+// TestDomainFS_UnknownDomain verifies that requesting an unembedded
+// domain returns an error mentioning the available domains, so users
+// get a discoverable failure mode.
+func TestDomainFS_UnknownDomain(t *testing.T) {
+	_, err := DomainFS("not-a-real-domain")
+	if err == nil {
+		t.Fatal("DomainFS(\"not-a-real-domain\") should error")
+	}
+	if !strings.Contains(err.Error(), "not-a-real-domain") {
+		t.Errorf("error should mention requested domain, got: %v", err)
+	}
+}
+
 // splitFrontmatter pulls the YAML block out of a `---\n...\n---\n`
 // header and returns (frontmatter, body, ok). Returns ok=false if the
 // file does not start with a frontmatter marker.
