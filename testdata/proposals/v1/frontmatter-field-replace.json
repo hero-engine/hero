@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "proposal_id": "p-3e9b21",
+  "batch_id": "b-8f4d10",
+  "session_id": "sess-2026-05-17-b42",
+  "agent": "story-writer",
+  "skill_chain": ["pm/story-writer", "core/prioritization"],
+  "target": {
+    "spec_slug": "csv-export",
+    "spec_path": ".hero/planning/features/csv-export/spec.md",
+    "anchor": {
+      "kind": "frontmatter",
+      "value": "priority",
+      "position": "replace"
+    }
+  },
+  "content": {
+    "format": "yaml",
+    "body": "P1"
+  },
+  "rationale": "Two enterprise accounts blocked at procurement on missing CSV export. Bumping from P2 to P1.",
+  "emitted_at": "2026-05-18T09:14:37Z"
+}

@@ -1,0 +1,94 @@
+[
+  {
+    "schema_version": "1.0",
+    "proposal_id": "p-a10001",
+    "batch_id": "b-bee417",
+    "session_id": "sess-2026-05-17-a3f",
+    "agent": "story-writer",
+    "skill_chain": ["pm/story-writer", "core/acceptance-criteria"],
+    "target": {
+      "spec_slug": "csv-export",
+      "spec_path": ".hero/planning/features/csv-export/spec.md",
+      "anchor": {
+        "kind": "section",
+        "value": "acceptance_criteria",
+        "position": "append"
+      }
+    },
+    "content": {
+      "format": "markdown",
+      "body": "- THE SYSTEM SHALL include a header row listing the canonical column names in the first row of every export."
+    },
+    "rationale": "Header row is table-stakes for CSV consumers.",
+    "emitted_at": "2026-05-21T13:00:01Z"
+  },
+  {
+    "schema_version": "1.0",
+    "proposal_id": "p-a10002",
+    "batch_id": "b-bee417",
+    "session_id": "sess-2026-05-17-a3f",
+    "agent": "story-writer",
+    "skill_chain": ["pm/story-writer", "core/acceptance-criteria"],
+    "target": {
+      "spec_slug": "csv-export",
+      "spec_path": ".hero/planning/features/csv-export/spec.md",
+      "anchor": {
+        "kind": "section",
+        "value": "acceptance_criteria",
+        "position": "append"
+      }
+    },
+    "content": {
+      "format": "markdown",
+      "body": "- THE SYSTEM SHALL escape embedded double quotes by doubling them, per RFC 4180."
+    },
+    "rationale": "Without RFC 4180 quoting, Excel breaks on any cell containing a quote.",
+    "emitted_at": "2026-05-21T13:00:02Z"
+  },
+  {
+    "schema_version": "1.0",
+    "proposal_id": "p-a10003",
+    "batch_id": "b-bee417",
+    "session_id": "sess-2026-05-17-a3f",
+    "agent": "story-writer",
+    "skill_chain": ["pm/story-writer", "core/acceptance-criteria"],
+    "target": {
+      "spec_slug": "csv-export",
+      "spec_path": ".hero/planning/features/csv-export/spec.md",
+      "anchor": {
+        "kind": "section",
+        "value": "acceptance_criteria",
+        "position": "append"
+      }
+    },
+    "content": {
+      "format": "markdown",
+      "body": "- WHEN the export contains a cell with a leading `=`, `+`, `-`, or `@`, THE SYSTEM SHALL prefix the cell with a single quote to neutralize the CSV-injection vector."
+    },
+    "rationale": "CSV injection is a known shortcut into spreadsheet macro execution.",
+    "emitted_at": "2026-05-21T13:00:03Z"
+  },
+  {
+    "schema_version": "1.0",
+    "proposal_id": "p-a10004",
+    "batch_id": "b-bee417",
+    "session_id": "sess-2026-05-17-a3f",
+    "agent": "story-writer",
+    "skill_chain": ["pm/story-writer", "core/acceptance-criteria"],
+    "target": {
+      "spec_slug": "csv-export",
+      "spec_path": ".hero/planning/features/csv-export/spec.md",
+      "anchor": {
+        "kind": "section",
+        "value": "acceptance_criteria",
+        "position": "append"
+      }
+    },
+    "content": {
+      "format": "markdown",
+      "body": "- THE SYSTEM SHALL emit timestamps in RFC3339 with explicit UTC offset (`Z`), regardless of the report's display timezone."
+    },
+    "rationale": "Mixed-locale teams hit ambiguous timestamps weekly; pinning to RFC3339-Z removes the foot-gun.",
+    "emitted_at": "2026-05-21T13:00:04Z"
+  }
+]

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "proposal_id": "p-7c1f9c",
+  "batch_id": "b-abc123",
+  "session_id": "sess-2026-05-17-a3f",
+  "agent": "story-writer",
+  "skill_chain": ["pm/story-writer", "core/acceptance-criteria"],
+  "target": {
+    "spec_slug": "csv-export",
+    "spec_path": ".hero/planning/features/csv-export/spec.md",
+    "anchor": {
+      "kind": "section",
+      "value": "acceptance_criteria",
+      "position": "append"
+    }
+  },
+  "content": {
+    "format": "markdown",
+    "body": "- THE SYSTEM SHALL emit a UTF-8 BOM at the start of the export when the `--bom` flag is passed."
+  },
+  "rationale": "Excel on Windows still defaults to the system codepage when opening a CSV without a BOM, which mangles non-ASCII names.",
+  "emitted_at": "2026-05-17T14:22:09Z"
+}
