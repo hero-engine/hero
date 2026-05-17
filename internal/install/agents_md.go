@@ -47,11 +47,13 @@ func resolveAgentsMdPath(opts Options) string {
 // installAgentsMd writes Hero's managed block into AGENTS.md. See
 // installManagedMarkdown for the shared three-case logic.
 func installAgentsMd(opts Options, result *Result, agentsMdPath string) error {
+	body := generateAgentsMdBody(resolveContentPathsForBody(opts))
+	body += renderActiveDialectBlock(opts)
 	return installManagedMarkdown(opts, result, installManagedSpec{
 		Path:        agentsMdPath,
 		Label:       "AGENTS.md",
 		DefaultH1:   "# AGENTS.md",
-		Body:        generateAgentsMdBody(resolveContentPathsForBody(opts)),
+		Body:        body,
 		AllowSkip:   false,
 		SkipEnabled: false,
 	})

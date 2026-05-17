@@ -76,6 +76,9 @@ func runDashboard(cmd *cobra.Command, args []string) error {
 	// Header
 	fmt.Println("Hero Dashboard")
 	fmt.Println(strings.Repeat("─", 40))
+	if line := dialectLine(&cfg); line != "" {
+		fmt.Println(line)
+	}
 
 	// Status breakdown
 	fmt.Println()

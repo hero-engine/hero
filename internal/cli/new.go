@@ -121,7 +121,15 @@ func runNew(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("writing spec: %w", err)
 	}
 
-	fmt.Printf("Created %s spec: %s\n", specType, specPath)
+	// Render the type name through the active vocabulary so the "Created"
+	// line speaks the workspace dialect (e.g. "Story" under agile-scrum)
+	// while the on-disk frontmatter stays canonical.
+	displayed := displayType(activeVocab(&cfg), specType)
+	if displayed == "" || displayed == specType {
+		fmt.Printf("Created %s spec: %s\n", specType, specPath)
+	} else {
+		fmt.Printf("Created %s spec (type=%s): %s\n", displayed, specType, specPath)
+	}
 	return nil
 }
 

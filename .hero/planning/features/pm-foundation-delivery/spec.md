@@ -264,7 +264,7 @@ Net critical path: A1 → B2 → B6. Other items run in parallel branches.
 - [x] B3: `internal/methodology/` Go package; tests green
 - [ ] B4: `internal/tasks/` Go package + `hero task` CLI; AC infrastructure untouched
 - [ ] B5: Inline-propose Go side; envelope contract published to `docs/contracts/inline-propose-v1.md`
-- [ ] B6: Vocabulary + methodology-aware rendering across CLI / MCP / NEXT.md / agent prompts
+- [x] B6: Vocabulary + methodology-aware rendering across CLI / MCP / NEXT.md / agent prompts
 - [ ] Hero-code peer call (advisory) handing over the three stabilized contracts
 - [ ] `hero status` shows active methodology + vocabulary
 - [ ] `go test ./...` clean

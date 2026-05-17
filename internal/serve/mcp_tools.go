@@ -38,6 +38,7 @@ import (
 	"github.com/hero-engine/hero/internal/spec"
 	"github.com/hero-engine/hero/internal/tracking"
 	"github.com/hero-engine/hero/internal/traversal"
+	"github.com/hero-engine/hero/internal/vocabulary"
 )
 
 // Tool implementations and helpers extracted from mcp.go.
@@ -92,7 +93,9 @@ func (s *MCPServer) toolContext(args map[string]interface{}) (string, error) {
 	if activeBlock != "" {
 		result += activeBlock + "\n\n"
 	}
-	result += formatContextBlock(ctx)
+	cfg, _ := config.Load(s.projectRoot)
+	vocab := activeVocab(&cfg)
+	result += formatContextBlockWithVocab(ctx, vocab)
 	if errorPatternsBlock != "" {
 		result += "\n\n" + errorPatternsBlock
 	}
@@ -1438,6 +1441,14 @@ func (s *MCPServer) enrichCodeStructure(ctx *index.ContextBlock, filePaths []str
 }
 
 func formatContextBlock(ctx *index.ContextBlock) string {
+	return formatContextBlockWithVocab(ctx, nil)
+}
+
+// formatContextBlockWithVocab is the same as formatContextBlock but
+// renders spec type names through the supplied vocabulary. A nil vocab
+// preserves the canonical literal — keeping engineering / legacy
+// workspaces' MCP output identical to today.
+func formatContextBlockWithVocab(ctx *index.ContextBlock, vocab *vocabulary.Vocabulary) string {
 	var sb strings.Builder
 	sb.WriteString("## Relevant context from spec corpus\n\n")
 
@@ -1480,7 +1491,7 @@ func formatContextBlock(ctx *index.ContextBlock) string {
 	if len(ctx.InFlight) > 0 {
 		sb.WriteString("### In-flight specs touching these files\n")
 		for _, s := range ctx.InFlight {
-			sb.WriteString(fmt.Sprintf("- **%s** (%s, %s): %s\n", s.Slug, s.Type, s.Status, s.Title))
+			sb.WriteString(fmt.Sprintf("- **%s** (%s, %s): %s\n", s.Slug, displayType(vocab, string(s.Type)), s.Status, s.Title))
 		}
 		sb.WriteString("\n")
 	}
