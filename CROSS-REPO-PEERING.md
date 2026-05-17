@@ -76,25 +76,25 @@ aliases without breaking peering.
 
 ### 2. Register each sibling as a peer
 
-Run `hero repos add` in each workspace, once per sibling:
+Run `hero admin repos add` in each workspace, once per sibling:
 
 ```bash
 # In the client workspace:
-hero repos add app ../app
-hero repos add desktop ../desktop
+hero admin repos add app ../app
+hero admin repos add desktop ../desktop
 
 # In the app workspace:
-hero repos add client ../client
-hero repos add desktop ../desktop
+hero admin repos add client ../client
+hero admin repos add desktop ../desktop
 
 # And so on.
 ```
 
-`hero repos scan` will auto-discover Hero workspaces in the parent
+`hero admin repos scan` will auto-discover Hero workspaces in the parent
 directory if your sibling layout is conventional:
 
 ```bash
-hero repos scan --auto
+hero admin repos scan --auto
 ```
 
 Both `add` and `scan` read the sibling's `hero.json:peer_id` and record
@@ -373,7 +373,7 @@ hero handoff status <slug>
 ```
 
 `hero peer list` reciprocity check (in `hero peer show`) tells you
-whether the peer lists *you* in its `hero repos` registry. A peer that
+whether the peer lists *you* in its `hero admin repos` registry. A peer that
 hasn't registered you back can still receive handoffs, but its `/resume`
 won't surface your incoming work.
 
@@ -480,8 +480,8 @@ Per-convention `peer: true` frontmatter is the per-file alternative to
 ## Troubleshooting
 
 **`peer X is not configured`**
-The alias isn't in `hero repos`. Run `hero repos add <alias> <path>`
-or `hero repos scan --auto`.
+The alias isn't in `hero admin repos`. Run `hero admin repos add <alias> <path>`
+or `hero admin repos scan --auto`.
 
 **`manifest missing — run hero index in <peer-path>`**
 The peer's `.hero/peer-manifest.yaml` doesn't exist. Switch to the peer
