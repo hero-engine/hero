@@ -7,3 +7,5 @@
 {"ts":"2026-05-15T19:21:07.877837Z","type":"workspace.peer_id_minted","agent":"hero","message":"peer_id minted (migration): 6341a260-0409-4663-9a04-92ff34b01288"}
 {"ts":"2026-05-17T14:36:52.49832Z","type":"peer.call.invoked","agent":"hero","slug":"unified-spec-type-model","message":"peer call advisory mode=advisory target=hero-code call_id=18b06118ed381d48e1cf68277f6af0a2"}
 {"ts":"2026-05-17T14:39:46.022784Z","type":"peer.call.completed","agent":"hero","slug":"unified-spec-type-model","message":"peer call ok mode=advisory target=hero-code kind=findings call_id=18b06118ed381d48e1cf68277f6af0a2"}
+{"ts":"2026-05-17T21:39:39.917066Z","type":"peer.call.invoked","agent":"hero","slug":"pm-foundation-delivery","message":"peer call advisory mode=advisory target=hero-code call_id=18b0782b3d33c6204f79ffb0c2ba0a40"}
+{"ts":"2026-05-17T21:42:55.213429Z","type":"peer.call.completed","agent":"hero","slug":"pm-foundation-delivery","message":"peer call ok mode=advisory target=hero-code kind=findings call_id=18b0782b3d33c6204f79ffb0c2ba0a40"}
