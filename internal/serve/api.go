@@ -20,6 +20,11 @@ type API struct {
 	server    *Server
 	bus       *EventBus
 	uiEnabled bool
+
+	// proposals holds per-project in-memory inline-propose stores.
+	// Lazily initialized on first use; transient per daemon process
+	// (Decision 1 of the inline-propose contract).
+	proposals *proposalStores
 }
 
 // NewAPI creates a new API instance backed by a multi-project server.
@@ -28,6 +33,7 @@ func NewAPI(server *Server, bus *EventBus, uiEnabled bool) *API {
 		server:    server,
 		bus:       bus,
 		uiEnabled: uiEnabled,
+		proposals: newProposalStores(),
 	}
 }
 
@@ -152,6 +158,15 @@ func (a *API) routeProject(w http.ResponseWriter, r *http.Request) {
 		a.handleKnowledge(w, r, pc)
 	case "inventory":
 		a.handleInventory(w, r, pc)
+	case "sessions":
+		// /api/{project}/sessions/{session_id}/proposals[/...]
+		sid, rest := splitFirst(extra, "/")
+		section, rest := splitFirst(rest, "/")
+		if section != "proposals" {
+			writeError(w, http.StatusNotFound, fmt.Sprintf("unknown sessions sub-endpoint: %s", section))
+			return
+		}
+		a.routeProposals(w, r, pc, sid, rest)
 	default:
 		writeError(w, http.StatusNotFound, fmt.Sprintf("unknown endpoint: %s", endpoint))
 	}
@@ -628,6 +643,16 @@ func (a *API) handleInventory(w http.ResponseWriter, r *http.Request, pc *Projec
 		"bugs":  bugs,
 		"count": len(bugs),
 	})
+}
+
+// splitFirst splits s on the first occurrence of sep, returning the
+// head and the remainder (without the separator). If sep is not
+// found, head is s and rest is empty.
+func splitFirst(s, sep string) (head, rest string) {
+	if i := strings.Index(s, sep); i >= 0 {
+		return s[:i], s[i+len(sep):]
+	}
+	return s, ""
 }
 
 // splitTags splits a comma-separated tags string into a slice,
