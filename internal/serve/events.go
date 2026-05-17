@@ -1,6 +1,7 @@
 package serve
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"sync"
@@ -20,16 +21,30 @@ const (
 	EventSpecDeleted  EventType = "spec.deleted"
 	EventIndexRebuilt EventType = "index.rebuilt"
 	EventHealthCheck  EventType = "health.check"
+
+	// Inline-propose lifecycle events. See docs/contracts/inline-propose-v1.md.
+	EventProposalEmitted   EventType = "proposal_emitted"
+	EventProposalAccepted  EventType = "proposal_accepted"
+	EventProposalEdited    EventType = "proposal_edited"
+	EventProposalRejected  EventType = "proposal_rejected"
+	EventProposalDismissed EventType = "proposal_dismissed"
 )
 
 // Event is a single item published to the bus.
+//
+// Payload carries event-specific JSON data when set. Spec watch events
+// leave it nil and rely on the flat fields (slug, path, message);
+// inline-propose events populate it with the envelope or lifecycle
+// record per the v1.0 contract.
 type Event struct {
-	Type      EventType `json:"type"`
-	Project   string    `json:"project,omitempty"`
-	Slug      string    `json:"slug,omitempty"`
-	Path      string    `json:"path,omitempty"`
-	Message   string    `json:"message,omitempty"`
-	Timestamp time.Time `json:"timestamp"`
+	Type      EventType   `json:"type"`
+	Project   string      `json:"project,omitempty"`
+	SessionID string      `json:"session_id,omitempty"`
+	Slug      string      `json:"slug,omitempty"`
+	Path      string      `json:"path,omitempty"`
+	Message   string      `json:"message,omitempty"`
+	Payload   interface{} `json:"payload,omitempty"`
+	Timestamp time.Time   `json:"timestamp"`
 }
 
 // ---------------------------------------------------------------------------
@@ -95,6 +110,21 @@ func (eb *EventBus) Publish(ev Event) {
 	}
 }
 
+// sseFrame is the JSON shape written to each SSE data: line. It is
+// the cross-language contract for dashboard consumers; the field
+// names mirror the Event struct's JSON tags. Empty fields are
+// omitted so spec events stay compact and proposal events carry the
+// payload.
+type sseFrame struct {
+	Project   string      `json:"project,omitempty"`
+	SessionID string      `json:"session_id,omitempty"`
+	Slug      string      `json:"slug,omitempty"`
+	Path      string      `json:"path,omitempty"`
+	Message   string      `json:"message,omitempty"`
+	Payload   interface{} `json:"payload,omitempty"`
+	Timestamp string      `json:"timestamp"`
+}
+
 // SubscriberCount returns the current number of subscribers.
 func (eb *EventBus) SubscriberCount() int {
 	eb.mu.RLock()
@@ -143,8 +173,20 @@ func SSEHandler(bus *EventBus) http.HandlerFunc {
 				if projectFilter != "" && ev.Project != "" && ev.Project != projectFilter {
 					continue
 				}
-				fmt.Fprintf(w, "event: %s\ndata: {\"project\":%q,\"slug\":%q,\"path\":%q,\"message\":%q,\"timestamp\":%q}\n\n",
-					ev.Type, ev.Project, ev.Slug, ev.Path, ev.Message, ev.Timestamp.Format(time.RFC3339))
+				data, err := json.Marshal(sseFrame{
+					Project:   ev.Project,
+					SessionID: ev.SessionID,
+					Slug:      ev.Slug,
+					Path:      ev.Path,
+					Message:   ev.Message,
+					Payload:   ev.Payload,
+					Timestamp: ev.Timestamp.Format(time.RFC3339),
+				})
+				if err != nil {
+					// Fall back to a minimal frame rather than dropping the event.
+					data = []byte(fmt.Sprintf(`{"error":"encode failed: %s"}`, err.Error()))
+				}
+				fmt.Fprintf(w, "event: %s\ndata: %s\n\n", ev.Type, data)
 				flusher.Flush()
 			}
 		}
