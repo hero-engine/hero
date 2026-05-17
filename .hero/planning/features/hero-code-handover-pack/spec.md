@@ -129,3 +129,13 @@ These are followups, not blockers — recorded here so hero-code (and we) can ad
 5. **Methodology `auto_select` schema not exhaustively documented.** The `vocabulary.yaml` auto_select rule shape is referenced but only `delivery_preset` is shown by example. A consumer authoring a new preset will have to crack the Go struct.
 
 6. **`hero.local.json` merge semantics** don't yet forward `vocabulary` / `methodology` fields. Documented in `active-dialect.md` as a planned extension point; the Go code doesn't yet honor it.
+
+## Handoff Trail
+
+- 2026-05-17T22:26:12Z — out → hero-code (peer_id: ad027c2f-7f74-4a09-bf1d-6515cc906074)
+  mode: advisory
+  originating_spec: hero-code-handover-pack
+  at_commit: 2289d89
+  result_ref: 18b07a7fdaa18680c077248207f9c770
+  reason: "Handover pack landed: fixtures, contract index, dialect doc, JSON Schema, sample workspace — ready for PM dashboard work"
+
