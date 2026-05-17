@@ -261,7 +261,7 @@ Net critical path: A1 → B2 → B6. Other items run in parallel branches.
 - [ ] A3: PM pack content aligned to final canonical names
 - [ ] B1: `domain-plugin-architecture` cutover finished
 - [ ] B2: `internal/spectypes/` Go package; schema 1.1 JSON export verified
-- [ ] B3: `internal/methodology/` Go package; tests green
+- [x] B3: `internal/methodology/` Go package; tests green
 - [ ] B4: `internal/tasks/` Go package + `hero task` CLI; AC infrastructure untouched
 - [ ] B5: Inline-propose Go side; envelope contract published to `docs/contracts/inline-propose-v1.md`
 - [ ] B6: Vocabulary + methodology-aware rendering across CLI / MCP / NEXT.md / agent prompts
