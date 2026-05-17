@@ -1,0 +1,28 @@
+{
+  "folder": ".hero",
+  "domain": "pm",
+  "methodology": "scrum",
+  "vocabulary": "agile-scrum",
+  "tracker": {
+    "type": "none",
+    "project": "acme-shop"
+  },
+  "team": {
+    "require_review": false,
+    "stale_days": 14,
+    "auto_context": true,
+    "nudge_level": "gentle"
+  },
+  "conventions": {
+    "enforce": false,
+    "scope_default": "*"
+  },
+  "knowledge": {
+    "auto_capture": false
+  },
+  "pm": {
+    "presets": {
+      "delivery": "sprint"
+    }
+  }
+}
