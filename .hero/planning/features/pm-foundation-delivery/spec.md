@@ -271,3 +271,13 @@ Net critical path: A1 → B2 → B6. Other items run in parallel branches.
 - [x] Engineering corpus (137 features, 16 bugs, 14 initiatives) unchanged (registry `TestLintParity` walks 187 specs against the legacy validator — zero drift)
 
 When all checked, sprint is done; hero-code is unblocked; PM ships.
+
+## Handoff Trail
+
+- 2026-05-17T21:42:55Z — out → hero-code (peer_id: ad027c2f-7f74-4a09-bf1d-6515cc906074)
+  mode: advisory
+  originating_spec: pm-foundation-delivery
+  at_commit: c269b60
+  result_ref: 18b0782b3d33c6204f79ffb0c2ba0a40
+  reason: "PM Foundation sprint complete; three stabilized contracts ready for hero-code consumption"
+
