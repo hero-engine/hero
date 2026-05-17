@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "proposal_id": "p-2f6e88",
+  "batch_id": "b-91ab07",
+  "session_id": "sess-2026-05-17-e30",
+  "agent": "story-writer",
+  "skill_chain": ["pm/story-writer", "core/acceptance-criteria"],
+  "target": {
+    "spec_slug": "csv-export",
+    "spec_path": ".hero/planning/features/csv-export/spec.md",
+    "anchor": {
+      "kind": "list_item",
+      "value": "ac-3",
+      "position": "after"
+    }
+  },
+  "content": {
+    "format": "markdown",
+    "body": "- WHEN the export exceeds 100,000 rows, THE SYSTEM SHALL stream the response with `Transfer-Encoding: chunked` rather than buffering the full payload."
+  },
+  "rationale": "Inserts a streaming-threshold AC right after the row-count AC so the two read together.",
+  "emitted_at": "2026-05-20T10:18:04Z"
+}

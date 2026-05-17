@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "proposal_id": "p-9b0d77",
+  "batch_id": "b-44c1a2",
+  "session_id": "sess-2026-05-17-d15",
+  "agent": "story-writer",
+  "skill_chain": ["pm/story-writer", "core/spec-structure"],
+  "target": {
+    "spec_slug": "csv-export",
+    "spec_path": ".hero/planning/features/csv-export/spec.md",
+    "anchor": {
+      "kind": "heading",
+      "value": "acceptance_criteria",
+      "position": "before"
+    }
+  },
+  "content": {
+    "format": "markdown",
+    "body": "## Context\n\nCSV export is the most-requested missing affordance in the last two quarters of customer feedback. The work below replaces a third-party export plugin that has been deprecated by its maintainer; existing consumers will receive a 30-day deprecation banner before the cutover.\n\n"
+  },
+  "rationale": "AC currently sits without lead-in prose; reviewers asked for the why before the what.",
+  "emitted_at": "2026-05-19T16:42:11Z"
+}
