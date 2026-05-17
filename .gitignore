@@ -64,4 +64,5 @@ tmp/
 .codex/commands
 .codex/skills
 
-.envrc # if not already ignored
+# Local env (direnv) — carries credentials, must not be committed
+.envrc
