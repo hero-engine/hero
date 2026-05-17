@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "proposal_id": "p-c4d572",
+  "batch_id": "b-0e3399",
+  "session_id": "sess-2026-05-17-f5b",
+  "agent": "story-writer",
+  "skill_chain": ["pm/story-writer", "core/notes"],
+  "target": {
+    "spec_slug": "csv-export",
+    "spec_path": ".hero/planning/features/csv-export/spec.md",
+    "anchor": {
+      "kind": "free",
+      "value": "end of file"
+    }
+  },
+  "content": {
+    "format": "markdown",
+    "body": "## Notes\n\n- Field-ordering follows the column order from the source report; do not alphabetize.\n- The `Created At` column is the only timestamp; do not emit a separate `Updated At` unless the source report carries one.\n- Trailing newline is required for POSIX tool compatibility (`wc -l`, shell pipes).\n"
+  },
+  "rationale": "Loose implementation notes that don't belong in AC but should travel with the spec.",
+  "emitted_at": "2026-05-20T15:50:28Z"
+}

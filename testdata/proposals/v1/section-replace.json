@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "proposal_id": "p-5a8c44",
+  "batch_id": "b-2d77ee",
+  "session_id": "sess-2026-05-17-c08",
+  "agent": "story-writer",
+  "skill_chain": ["pm/story-writer", "core/risk-analysis"],
+  "target": {
+    "spec_slug": "csv-export",
+    "spec_path": ".hero/planning/features/csv-export/spec.md",
+    "anchor": {
+      "kind": "section",
+      "value": "risks",
+      "position": "replace"
+    }
+  },
+  "content": {
+    "format": "markdown",
+    "body": "## Risks\n\n**Memory blow-up on large exports.** Streaming a million-row export through an in-memory buffer will OOM the worker. Mitigation: pipe rows through a chunked encoder; budget peak heap to 64 MB regardless of export size.\n\n**Locale-specific number formatting.** European customers expect `;` as the delimiter and `,` as the decimal separator. Defaulting to US-style breaks their downstream pipelines. Mitigation: surface a `--locale` flag and default to the workspace's configured locale.\n\n**PII leakage via filenames.** The default filename embeds the report title verbatim, which has already leaked customer names in support tickets. Mitigation: hash the title fragment in non-interactive flows and require an explicit `--filename` to keep the human-readable form."
+  },
+  "rationale": "Existing Risks section only listed the memory case. Two production incidents this quarter exposed the locale and filename gaps; folding them in.",
+  "emitted_at": "2026-05-19T11:03:52Z"
+}
