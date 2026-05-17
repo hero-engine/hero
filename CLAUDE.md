@@ -31,8 +31,16 @@ When the user describes what they want in natural language, route to the appropr
 | Check, health, validate workspace | `/check` |
 | Sprint, iteration, load sprint | `/sprint` |
 | Import, pull issues, fetch from tracker, sync issues | `/import` |
+| Ask sibling/peer repo a question, check with peer | `hero peer call <alias> --mode=advisory "..."` |
+| Have peer design something, let peer handle design | `hero peer call <alias> --mode=spec-out "..."` |
+| Hand off a spec to a peer repo, drop on peer's queue, transfer to sibling | `hero handoff <spec> <alias>` |
+| Pick up handed-back spec, accept the handoff, peer finished | `hero handoff accept <spec>` |
+| What peers do we have, list siblings, which repos are linked | `hero peer list` |
+| What does peer expose, peer surface, peer conventions, inspect peer | `hero peer show <alias>` |
 
 When routing, pass the user's original context as arguments to the command. If the intent is ambiguous, present the top 2-3 options and ask.
+
+**Cross-repo peering disambiguation.** The session-level `/handoff` slash command (force-refresh NEXT.md) and the cross-repo `hero handoff <spec> <alias>` command share a verb but do different things. Disambiguate by whether the user names a peer alias: if they do, it's cross-repo; if not, it's session handoff. When a user says "ask hero-code about X" or "hand off to hero-cloud," route to the cross-repo command and **compose the prompt yourself** — don't paraphrase the user's words verbatim. A good peer-call prompt names the specific question, references the active spec via `--related-spec <slug>` when one exists, and includes `--reason` explaining why the call is happening. Pick the mode: **advisory** (need a fact, peer writes nothing), **spec-out** (peer designs the fix on its side), or **handoff** (you already did the investigation, dropping it on peer's queue).
 
 ### Key Workflow
 
@@ -50,6 +58,13 @@ These are run in the terminal, not as slash commands:
 - `hero pull <slug>` — sync spec status from tracker
 - `hero note <slug>` — quick note capture
 - `hero check` — health check
+- `hero peer list` — list registered sibling repos with reachability + manifest status
+- `hero peer show <alias>` — inspect one peer (manifest contents, in-flight handoffs)
+- `hero peer call <alias> --mode=advisory "..."` — ask peer's Hero a question (no writes on peer)
+- `hero peer call <alias> --mode=spec-out "..."` — have peer's Hero design a spec natively on its side
+- `hero handoff <spec> <alias>` — async-drop a local spec on peer's queue
+- `hero handoff status` / `hero handoff accept <spec>` — track handoffs across the boundary
+- `hero admin repos add <alias> <path>` — register a sibling repo as a peer (one-time setup)
 
 ### Project Structure
 
