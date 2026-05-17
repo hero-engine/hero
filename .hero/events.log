@@ -9,3 +9,5 @@
 {"ts":"2026-05-17T14:39:46.022784Z","type":"peer.call.completed","agent":"hero","slug":"unified-spec-type-model","message":"peer call ok mode=advisory target=hero-code kind=findings call_id=18b06118ed381d48e1cf68277f6af0a2"}
 {"ts":"2026-05-17T21:39:39.917066Z","type":"peer.call.invoked","agent":"hero","slug":"pm-foundation-delivery","message":"peer call advisory mode=advisory target=hero-code call_id=18b0782b3d33c6204f79ffb0c2ba0a40"}
 {"ts":"2026-05-17T21:42:55.213429Z","type":"peer.call.completed","agent":"hero","slug":"pm-foundation-delivery","message":"peer call ok mode=advisory target=hero-code kind=findings call_id=18b0782b3d33c6204f79ffb0c2ba0a40"}
+{"ts":"2026-05-17T22:22:22.358782Z","type":"peer.call.invoked","agent":"hero","slug":"hero-code-handover-pack","message":"peer call advisory mode=advisory target=hero-code call_id=18b07a7fdaa18680c077248207f9c770"}
+{"ts":"2026-05-17T22:26:12.48535Z","type":"peer.call.completed","agent":"hero","slug":"hero-code-handover-pack","message":"peer call ok mode=advisory target=hero-code kind=findings call_id=18b07a7fdaa18680c077248207f9c770"}
