@@ -63,6 +63,19 @@ type Config struct {
 	//   sections.<canonical>           e.g. "sections.acceptance_criteria" -> "Done When"
 	//   lifecycle.<type>.<status>      e.g. "lifecycle.spec.in-flight" -> "Cooking"
 	VocabularyOverrides map[string]string `json:"vocabulary_overrides,omitempty"`
+	// Methodology names the active methodology profile (e.g. "scrum",
+	// "kanban", "shape-up", "waterfall", "scrumban"). When set, it wins
+	// the precedence chain in internal/methodology.Resolve over
+	// tracker- and delivery-preset-inferred defaults. Empty falls through
+	// to inference.
+	Methodology string `json:"methodology,omitempty"`
+	// MethodologyOverrides applies per-key tweaks on top of the resolved
+	// methodology profile. Supported key shapes:
+	//   time_boxes.<level>.duration_default   e.g. "time_boxes.iteration.duration_default" -> "3w"
+	//   time_boxes.<level>.required           e.g. "time_boxes.iteration.required" -> "false"
+	//   estimation.<type>.required_field       e.g. "estimation.feature.required_field" -> "appetite"
+	//   in_flight_tracking                     e.g. "in_flight_tracking" -> "wip_aging"
+	MethodologyOverrides map[string]string `json:"methodology_overrides,omitempty"`
 	// PM holds product-management-specific workspace settings, including
 	// the active methodology presets that influence vocabulary
 	// auto-selection. The shape mirrors hero-pm's design; only the
