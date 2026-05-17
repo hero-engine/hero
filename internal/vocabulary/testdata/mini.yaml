@@ -1,0 +1,23 @@
+name: mini
+display_name: "Mini"
+description: "Minimal vocab for unit tests."
+
+types:
+  spec: Story
+  epic: Epic
+
+kinds:
+  spec.feature: Story
+  spec.bug: Bug
+
+sections:
+  acceptance_criteria: "Done When"
+
+nl_triggers:
+  - phrase: ["story"]
+    canonical: { type: spec, kind: feature }
+
+tracker_mappings:
+  jira:
+    Story: { type: spec, kind: feature }
+    Epic: { type: epic }

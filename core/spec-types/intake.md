@@ -1,0 +1,112 @@
+---
+title: Intake
+type: intake
+domain: core
+category: work
+bucket: intake
+location: .hero/planning/intake/{slug}/spec.md
+---
+
+# Intake spec-type
+
+An **intake** is an inbound signal — a customer asking for something, a
+support escalation, a sales note, a competitive observation. It's the
+funnel from raw signal to roadmap decision: triaged, then promoted to
+an initiative / epic / feature, merged into another intake, or rejected.
+
+The defining property: **source attribution is the trust signal**. The
+customer's own words, the link back to the ticket, the segment they're
+in — these are what make intake usable for prioritization later.
+Paraphrasing erases trust.
+
+## When to use
+
+- Anything inbound that could shape the roadmap but hasn't been evaluated
+  yet.
+- Customer feedback in any form (ticket, call, NPS comment, sales note).
+- Internal asks from sales, support, leadership, engineering.
+- Competitive signals worth weighing.
+
+## When NOT to use
+
+- A clear, well-scoped customer request that maps obviously to an existing
+  initiative — link it directly via the initiative's evidence section.
+- Bug reports with reproduction steps — those route to `/diagnose` as a
+  bug.
+
+## Lifecycle
+
+States: `new → triaged → linked` (terminal); plus `rejected` (terminal)
+reachable from `new` or `triaged`.
+
+- `new → triaged` — gate: intake-triager classified and clustered (target
+  SLA: 24h).
+- `triaged → linked` — gate: linked to an initiative / epic / feature, or
+  merged into another intake.
+- `triaged → rejected` — gate: rejected with reason.
+- `new → rejected` — gate: obvious reject at intake (spam, off-product,
+  duplicate of recently rejected).
+
+## Kind
+
+Values: `[customer, support, sales, internal, competitive]`
+
+- `customer` — direct customer feedback
+- `support` — support escalation
+- `sales` — sales-originated request or signal
+- `internal` — internal stakeholder ask (leadership, ops, engineering)
+- `competitive` — competitive observation worth weighing
+
+Default: `customer`. Required: false.
+
+## Tasks Schema
+
+- Section heading: `Tasks`
+- Required: false
+- History: bitemporal
+
+Item shape:
+
+- `id` — string, required, format `T-<int>`
+- `text` — string, required
+- `status` — enum [todo, doing, done], default `todo`
+- `kind` — optional string
+- `assignee` — optional string
+- `discovered_against` — optional ref to another spec
+- `started` — optional date
+- `done` — optional date
+
+Tasks on intake items capture triage follow-ups (additional outreach to
+the customer, evidence to gather before linking, internal stakeholders
+to consult).
+
+## Owner
+
+- Values: [pm, engineering, qa, devops, design, docs]
+- Default: `pm`
+- Classification: org-state
+- Lifecycle triggers: none v1. Intake is PM-owned through its life.
+
+## Sections
+
+- Required: `Signal`
+- Optional: `Investigation`, `Tasks`, `Linked decision`, `Notes`
+
+## Accepting Commands
+
+- `/import` — funnel from tracker as intake
+- `/design` — promote intake to a higher-tier artifact
+- `/note` — quick capture as intake
+
+## Default Agents
+
+- authoring: `intake-triager`
+- investigation: `pm-investigator`
+- duplicate-detection: `duplicate-detector`
+
+## Relations
+
+- `links → initiative` (cardinality: zero-or-one)
+- `links → epic` (cardinality: zero-or-one)
+- `links → feature` (cardinality: zero-or-one)
+- `merged-into → intake` (cardinality: zero-or-one)

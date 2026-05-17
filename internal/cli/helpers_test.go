@@ -223,6 +223,10 @@ func resetFlags() {
 
 	// Reset init flags
 	initFolder = config.DefaultFolder
+	initDomain = ""
+	initNoAgents = false
+	initInstallHooks = true
+	initNoHooks = false
 
 	// Reset new flags
 	newSpecType = "feature"

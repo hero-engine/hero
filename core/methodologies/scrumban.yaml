@@ -1,0 +1,80 @@
+# Scrumban methodology profile — hybrid Scrum + Kanban.
+#
+# Optional sprint cadence overlaid on a continuous-flow kanban board.
+# Teams may run lightweight sprint planning while still pulling work
+# under WIP limits. Estimation and rituals are configurable; defaults
+# below favor the Scrum side (sprint optional but planned-for, points
+# permitted, light standup cadence).
+#
+# Aligned vocabulary defaults to agile-scrum since most scrumban teams
+# graduated from scrum and retain the story/epic vocabulary.
+
+name: scrumban
+display_name: "Scrumban"
+description: "Hybrid Scrum + Kanban — optional sprint cadence overlaid on a flow board with WIP limits. Estimation and rituals configurable; defaults lean toward Scrum (sprint planned but not strictly required, light standup, story-point optional)."
+
+aligned_vocabulary: agile-scrum
+
+lifecycle:
+  feature:
+    states: [backlog, ready, in_progress, in_review, done]
+    transitions:
+      - {from: backlog, to: ready, gate: "AC present; pulled into ready lane"}
+      - {from: ready, to: in_progress, gate: "WIP-limit not exceeded; optionally sprint-committed"}
+      - {from: in_progress, to: in_review, gate: "WIP-limit not exceeded for in_review"}
+      - {from: in_review, to: done, gate: "AC passing; review approved"}
+  bug:
+    states: [reported, in_progress, in_review, done]
+    transitions:
+      - {from: reported, to: in_progress, gate: "WIP-limit not exceeded; pulled"}
+      - {from: in_progress, to: in_review, gate: "WIP-limit not exceeded for in_review"}
+      - {from: in_review, to: done, gate: "regression test passing"}
+  sprint:
+    states: [planning, active, completed, retrospected]
+    transitions:
+      - {from: planning, to: active, gate: "sprint goal set (lightweight); WIP limits set"}
+      - {from: active, to: completed, gate: "sprint end date reached or scope drained"}
+      - {from: completed, to: retrospected, gate: "retro held"}
+  release:
+    states: [planning, in_progress, shipped]
+    transitions:
+      - {from: planning, to: in_progress, gate: "scope tagged"}
+      - {from: in_progress, to: shipped, gate: "included work items done"}
+
+time_boxes:
+  - level: release
+    artifact_type: release
+    duration_typical: quarter
+    required: false
+  - level: iteration
+    artifact_type: sprint
+    duration_default: 2w
+    required: false
+    rituals:
+      - {kind: planning, when: start}
+      - {kind: standup, when: daily}
+      - {kind: retro, when: end}
+
+estimation:
+  feature:
+    required_field: points
+    scale: [1, 2, 3, 5, 8, 13, 21]
+    optional: true
+  bug:
+    required_field: none
+
+in_flight_tracking: mixed
+
+cadence:
+  daily_standup: true
+  weekly_sync: false
+  rituals:
+    - {kind: planning, when: sprint_start}
+    - {kind: standup, when: daily}
+    - {kind: retro, when: sprint_end}
+
+rollups:
+  - {kind: velocity, over: last_3_sprints}
+  - {kind: lead_time, over: last_30_days}
+  - {kind: cycle_time, over: last_30_days}
+  - {kind: wip_aging, scope: current_board}

@@ -24,14 +24,38 @@ and closes the loop with engineering in a single session.
 
 Make Hero work for non-engineers — starting with PM, then QA. The core engine stays the same; each domain ships its own agents, commands, spec types, dashboard views, and integrations as a "pack."
 
-**Status:** planning — reshaped from sales-first to PM-first on 2026-05-15; eight-item sequenced roadmap of platform primitives + PM + QA packs is in place. PM design pack complete (spec + research-brief + agent-pack-design + mockup-brief + 9 mockups + handoff-to-hero-code). QA design pack reached parity 2026-05-16 (spec + research-brief + agent-pack-design + mockup-brief; 32 locked decisions; HTML mockups + handoff doc still owed). QA design surfaced two new platform-primitive amendments — lifecycle overlays on primitive #2 (`spec-type-registry`) and cross-pack ambient population on primitive #4 (`dashboard-view-registry`) — both required before either pack can ship.
+**Status:** planning — **design locked 2026-05-17**. After multiple iterations, the architecture settled on a **PM-additive, no-migration** design: nine canonical work-tracking spec types using real industry names (`initiative`, `prd`, `epic`, `feature`, `bug`, `chore`, `intake`, `release`, `sprint`), with two independent adaptation layers (methodology profile for structural variation, vocabulary preset for display). Engineering's existing 137 features / 16 bugs / 14 initiatives stay exactly where they are — canonical type names match what they already declare. AC infrastructure unchanged. Meta / knowledge types (decision, convention, plan, reference, external, note, rule, tripwire, context) out of scope. Hero-code (Rust) peer-notified — zero conflicting committed work.
 
-**Pick up at:** Design the first platform primitive, `domain-plugin-architecture` — refactor existing engineering content into `domains/engineering/` and add `hero init --domain` plumbing. Spec stub already exists.
+**Active sprint — "ship PM additively + unblock hero-code":**
 
-→ `/design domain-plugin-architecture`
+| # | Item | Status |
+|---|---|---|
+| 0 | `unified-spec-type-model` decision spec — locked design | **designed** ✓ |
+| 1 | `spec-type-registry` design — rescoped for nine-type model, no migration | **designed** ✓ |
+| 2 | `inline-propose-output-mode` design | **designed** ✓ |
+| 3 | PM content pack (5 spec-types + 12 agents + 19 skills + 10 commands) | **authored** ✓ |
+| 4 | v1 vocabulary presets (6 files at `core/vocabularies/`) | **authored** ✓ |
+| 5 | `internal/vocabulary/` Go package + loader | **delivered** ✓ |
+| 6 | PM pack content alignment to final names (`roadmap-item` → `initiative`, `intake-item` → `intake`, etc.) | pending — content edits |
+| 7 | Author `core/spec-types/` nine canonical type files | pending — content authoring |
+| 8 | Author `core/methodologies/` five v1 methodology profiles (Scrum / Kanban / Shape Up / Waterfall / Scrumban) | pending — content authoring |
+| 9 | Finish `domain-plugin-architecture` cutover (`domains/pm/` embed + ContentFS migration) | pending — ~80% built in WIP |
+| 10 | `spec-type-registry` Go impl: markdown loader, kind support, schema 1.1 export to `.hero/cache/spec-types.json` | pending — Go work |
+| 11 | `internal/methodology/` Go package (mirrors `internal/vocabulary/`) | pending — Go work |
+| 12 | `internal/tasks/` Go package + `hero task` CLI (additive; AC infrastructure unchanged) | pending — Go work |
+| 13 | Inline-propose Go side delivery (stdout shim + daemon proposal store + SSE + REST) | pending — Go work |
+| 14 | Vocabulary + methodology-aware rendering spread across CLI / MCP / NEXT.md | pending — Go work |
 
-**Files:** .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/domain-plugin-architecture/spec.md, .hero/planning/features/hero-pm/spec.md
-**Skip:** Sales-first sequencing (deferred — high integration cost, low spec-fit). New tracker integrations for PM v1 (reuse Jira/Linear/GitHub).
+After this sprint completes, hero-code (Rust) consumes three independent contracts: `.hero/cache/spec-types.json` (schema 1.1), `core/vocabularies/*.yaml`, `core/methodologies/*.yaml`. A follow-up advisory peer call lands when items 7-11 are done.
+
+**Pick up at:** Item 6 (PM pack content alignment) or item 7 (author core/spec-types/) — start with whichever feels right for the session. Items 6-8 are content authoring and can run in parallel. Items 9-14 are Go implementation and require items 7-8 to complete first.
+
+→ See `.hero/planning/features/pm-foundation-delivery/spec.md` for the sprint plan with kickoff prompts per work item (forthcoming — being authored alongside this update).
+
+→ See `.hero/planning/features/unified-spec-type-model/spec.md` for the binding architectural decisions.
+
+**Files:** .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/unified-spec-type-model/spec.md (authoritative), .hero/planning/features/spec-type-registry/spec.md, .hero/planning/features/inline-propose-output-mode/spec.md, .hero/planning/features/hero-pm/spec.md, .hero/planning/features/domain-plugin-architecture/spec.md, domains/pm/, core/vocabularies/, internal/vocabulary/
+**Skip:** Sales-first sequencing (deferred). New tracker integrations for PM v1 (reuse Jira/Linear/GitHub). Meta / knowledge types refactor (out of scope). Forced migration of existing engineering specs (no migration; aliasing unnecessary; canonical names match existing frontmatter). `internal/acceptance/` rename (AC infra stays). Custom user-defined spec types beyond `kind` sub-typing.
 
 ## Problem
 

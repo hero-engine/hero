@@ -1,0 +1,5 @@
+name: broken
+display_name: "Broken"
+types:
+  spec: [this is not a string]
+kinds: not-a-map

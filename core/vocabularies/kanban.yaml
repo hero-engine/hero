@@ -1,0 +1,61 @@
+# Card-centric vocabulary for kanban-style teams. Flattens the
+# work-unit distinction: every spec.* kind displays as "Card" because
+# kanban teams treat all deliverable work as cards moving across a
+# board. Kind chips remain available as filter chips on the board.
+#
+# Targeted at flow-based teams that emphasize WIP limits, aging, and
+# cycle time over story-pointing or sprint commitments.
+
+name: kanban
+display_name: "Kanban"
+description: "Card-centric vocabulary for flow-based teams emphasizing WIP and cycle time."
+
+auto_select:
+  - delivery_preset: flow
+
+types:
+  spec: Card
+  epic: Swimlane
+  roadmap-item: Lane Group
+  prd: Brief
+  intake-item: Inbox Card
+  decision: Decision
+  convention: Convention
+
+kinds:
+  spec.feature: Card
+  spec.bug: Card
+  spec.chore: Card
+  spec.refactor: Card
+  spec.perf: Card
+  spec.infra: Card
+  spec.security: Card
+  spec.ux: Card
+  epic.theme: Swimlane
+  epic.delivery: Swimlane
+  epic.bet: Swimlane
+  epic.milestone: Swimlane
+  intake-item.customer: Inbox Card
+  intake-item.support: Inbox Card
+  intake-item.sales: Inbox Card
+  intake-item.internal: Inbox Card
+  intake-item.competitive: Inbox Card
+
+sections:
+  acceptance_criteria: "Acceptance Criteria"
+  tasks: "Tasks"
+
+lifecycle:
+  spec.in-flight: "In Progress"
+
+nl_triggers:
+  - phrase: ["card"]
+    canonical: { type: spec, kind: feature }
+  - phrase: ["bug"]
+    canonical: { type: spec, kind: bug }
+  - phrase: ["swimlane", "lane"]
+    canonical: { type: epic }
+  - phrase: ["lane group"]
+    canonical: { type: roadmap-item }
+  - phrase: ["inbox card", "inbox item"]
+    canonical: { type: intake-item }

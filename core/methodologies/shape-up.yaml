@@ -1,0 +1,73 @@
+# Shape Up methodology profile — bets, cycles, appetite, hill chart.
+#
+# Six-week cycles followed by two-week cooldown. Pitches get shaped
+# pre-cycle and selected at the betting table. Appetite (small/big)
+# replaces story points. Hill chart tracks in-flight position.
+# No daily standup.
+
+name: shape-up
+display_name: "Shape Up"
+description: "Basecamp's shape-up methodology — six-week cycles plus two-week cooldown, appetite-based sizing (small/big) instead of points, hill-chart in-flight tracking, and betting-table selection pre-cycle. No daily standup."
+
+aligned_vocabulary: shape-up
+
+lifecycle:
+  feature:
+    states: [unshaped, shaped, bet, building, cooldown, shipped]
+    transitions:
+      - {from: unshaped, to: shaped, gate: "pitch written; appetite set; rabbit holes identified"}
+      - {from: shaped, to: bet, gate: "selected at betting table"}
+      - {from: bet, to: building, gate: "cycle started"}
+      - {from: building, to: cooldown, gate: "scope hammered down or cycle ended"}
+      - {from: cooldown, to: shipped, gate: "shipped to users"}
+  bug:
+    states: [reported, in_cooldown, fixing, shipped]
+    transitions:
+      - {from: reported, to: in_cooldown, gate: "scheduled for cooldown work"}
+      - {from: in_cooldown, to: fixing, gate: "engineer picked up"}
+      - {from: fixing, to: shipped, gate: "fix shipped"}
+  release:
+    states: [shaping, betting, building, cooldown, shipped]
+    transitions:
+      - {from: shaping, to: betting, gate: "pitches shaped"}
+      - {from: betting, to: building, gate: "bets placed at betting table"}
+      - {from: building, to: cooldown, gate: "six-week cycle ended"}
+      - {from: cooldown, to: shipped, gate: "cooldown ended; cycle outputs shipped"}
+
+time_boxes:
+  - level: release
+    artifact_type: release
+    duration_default: 6w
+    required: true
+    rituals:
+      - {kind: betting_table, when: pre_cycle}
+      - {kind: kickoff, when: start}
+      - {kind: ship, when: end}
+  - level: cooldown
+    artifact_type: release
+    duration_default: 2w
+    required: true
+    rituals:
+      - {kind: cleanup, when: during}
+      - {kind: shaping, when: during}
+
+estimation:
+  feature:
+    required_field: appetite
+    scale: [small, big]
+  bug:
+    required_field: none
+
+in_flight_tracking: hill_chart
+
+cadence:
+  daily_standup: false
+  weekly_sync: true
+  rituals:
+    - {kind: betting_table, when: pre_cycle}
+    - {kind: hill_chart_update, when: weekly}
+
+rollups:
+  - {kind: hill_position, scope: current_cycle}
+  - {kind: appetite_burn, scope: current_cycle}
+  - {kind: scope_hammering, scope: current_cycle}

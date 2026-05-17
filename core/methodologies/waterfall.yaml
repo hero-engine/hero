@@ -1,0 +1,70 @@
+# Waterfall methodology profile — phase-gated releases, date-driven estimation.
+#
+# Release is required and represents a phase-gated project. No sprints.
+# Estimation is end-date based per feature. Gantt-style progress tracking.
+# Phase-gate reviews mark transitions between phases.
+#
+# No specific shape-up / kanban / agile-scrum vocabulary applies cleanly;
+# falls through to the `default` vocabulary preset.
+
+name: waterfall
+display_name: "Waterfall"
+description: "Phase-gated project delivery with required release artifact, date-based estimation per feature, gantt-style progress tracking, and phase-gate reviews. No sprint cadence."
+
+aligned_vocabulary: default
+
+lifecycle:
+  feature:
+    states: [requirements, design, implementation, verification, done]
+    transitions:
+      - {from: requirements, to: design, gate: "requirements signed off"}
+      - {from: design, to: implementation, gate: "design review approved"}
+      - {from: implementation, to: verification, gate: "implementation complete; entered test phase"}
+      - {from: verification, to: done, gate: "verification phase passed; sign-off received"}
+  bug:
+    states: [reported, diagnosing, fixing, verifying, done]
+    transitions:
+      - {from: reported, to: diagnosing, gate: "triaged; assigned"}
+      - {from: diagnosing, to: fixing, gate: "root cause identified"}
+      - {from: fixing, to: verifying, gate: "fix implemented"}
+      - {from: verifying, to: done, gate: "regression test passing; sign-off received"}
+  release:
+    states: [requirements, design, implementation, verification, deployment, done]
+    transitions:
+      - {from: requirements, to: design, gate: "requirements phase-gate review passed"}
+      - {from: design, to: implementation, gate: "design phase-gate review passed"}
+      - {from: implementation, to: verification, gate: "implementation phase-gate review passed"}
+      - {from: verification, to: deployment, gate: "verification phase-gate review passed"}
+      - {from: deployment, to: done, gate: "deployment phase-gate review passed; project closed"}
+
+time_boxes:
+  - level: release
+    artifact_type: release
+    duration_typical: project_scoped
+    required: true
+    rituals:
+      - {kind: phase_gate_review, when: phase_boundary}
+      - {kind: kickoff, when: start}
+      - {kind: signoff, when: end}
+
+estimation:
+  feature:
+    required_field: end_date
+  bug:
+    required_field: end_date
+  release:
+    required_field: end_date
+
+in_flight_tracking: gantt
+
+cadence:
+  daily_standup: false
+  weekly_sync: true
+  rituals:
+    - {kind: phase_gate_review, when: phase_boundary}
+    - {kind: status_report, when: weekly}
+
+rollups:
+  - {kind: phase_progress, scope: current_release}
+  - {kind: gantt_completion, scope: current_release}
+  - {kind: schedule_variance, scope: current_release}

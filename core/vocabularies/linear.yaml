@@ -1,0 +1,68 @@
+# Linear-shaped vocabulary for workspaces with a Linear tracker connected.
+# Linear uses "Issue" as the generic work-unit label across feature work,
+# bugs, and tasks; "Project" for mid-tier grouping; and "Initiative" for
+# strategic bets. Auto-selected when a Linear integration is configured
+# and no explicit vocabulary override is set in hero.json.
+#
+# Includes the tracker_mappings.linear block consulted by the importer
+# and exporter for round-trip fidelity.
+
+name: linear
+display_name: "Linear"
+description: "Linear-shaped vocabulary for workspaces tracking work in Linear."
+
+auto_select:
+  - tracker: linear
+
+types:
+  spec: Issue
+  epic: Project
+  roadmap-item: Initiative
+  prd: PRD
+  intake-item: Triage Item
+  decision: Decision
+  convention: Convention
+
+kinds:
+  spec.feature: Issue
+  spec.bug: Bug
+  spec.chore: Issue
+  spec.refactor: Issue
+  spec.perf: Issue
+  spec.infra: Issue
+  spec.security: Issue
+  spec.ux: Issue
+  epic.theme: Project
+  epic.delivery: Project
+  epic.bet: Initiative
+  epic.milestone: Project
+  intake-item.customer: Triage Item
+  intake-item.support: Triage Item
+  intake-item.sales: Triage Item
+  intake-item.internal: Triage Item
+  intake-item.competitive: Triage Item
+
+sections:
+  acceptance_criteria: "Acceptance Criteria"
+  tasks: "Sub-issues"
+
+nl_triggers:
+  - phrase: ["issue"]
+    canonical: { type: spec, kind: feature }
+  - phrase: ["bug"]
+    canonical: { type: spec, kind: bug }
+  - phrase: ["sub-issue", "subissue"]
+    canonical: { type: spec, kind: chore }
+  - phrase: ["project"]
+    canonical: { type: epic }
+  - phrase: ["initiative"]
+    canonical: { type: roadmap-item }
+  - phrase: ["triage item"]
+    canonical: { type: intake-item }
+
+tracker_mappings:
+  linear:
+    Issue: { type: spec, kind: feature }
+    Bug: { type: spec, kind: bug }
+    Project: { type: epic }
+    Initiative: { type: roadmap-item }

@@ -1,0 +1,62 @@
+# Story / Epic / Theme vocabulary common in Scrum and Scrumban teams.
+# Targeted at teams running sprint cadences who refer to deliverable
+# work units as "Stories" and group them into "Epics" under broader
+# "Themes". Auto-selected when a `sprint` delivery preset is active.
+#
+# Section headings stay canonical (Acceptance Criteria, Tasks) — agile
+# teams use those terms unchanged.
+
+name: agile-scrum
+display_name: "Agile / Scrum"
+description: "Story / Epic / Theme vocabulary common in Scrum and Scrumban teams."
+
+auto_select:
+  - delivery_preset: sprint
+
+types:
+  spec: Story
+  epic: Epic
+  roadmap-item: Theme
+  prd: PRD
+  intake-item: Backlog Item
+  decision: Decision
+  convention: Convention
+
+kinds:
+  spec.feature: Story
+  spec.bug: Bug
+  spec.chore: Chore
+  spec.refactor: Tech Debt Story
+  spec.perf: Performance Story
+  spec.infra: Infra Story
+  spec.security: Security Story
+  spec.ux: UX Story
+  epic.theme: Theme Epic
+  epic.delivery: Delivery Epic
+  epic.bet: Strategic Bet
+  epic.milestone: Milestone
+  intake-item.customer: Customer Request
+  intake-item.support: Support Ticket
+  intake-item.sales: Sales Request
+  intake-item.internal: Internal Request
+  intake-item.competitive: Competitive Item
+
+sections:
+  acceptance_criteria: "Acceptance Criteria"
+  tasks: "Tasks"
+
+nl_triggers:
+  - phrase: ["story", "user story"]
+    canonical: { type: spec, kind: feature }
+  - phrase: ["bug", "defect"]
+    canonical: { type: spec, kind: bug }
+  - phrase: ["chore"]
+    canonical: { type: spec, kind: chore }
+  - phrase: ["tech debt", "tech debt story"]
+    canonical: { type: spec, kind: refactor }
+  - phrase: ["epic"]
+    canonical: { type: epic }
+  - phrase: ["theme"]
+    canonical: { type: roadmap-item }
+  - phrase: ["backlog item", "request"]
+    canonical: { type: intake-item }
