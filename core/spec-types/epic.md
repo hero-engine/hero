@@ -5,6 +5,37 @@ domain: core
 category: work
 bucket: epics
 location: .hero/planning/epics/{slug}/spec.md
+lifecycle:
+  states: [planning, refined, ready, delivering, in-review, completed]
+  initial: planning
+  terminal: [completed]
+  transitions:
+    - { from: planning, to: refined, gate: "scope and child features sketched" }
+    - { from: refined, to: ready, gate: "child features drafted" }
+    - { from: ready, to: delivering, gate: "first child feature picked up", owner_flip: { to: engineering } }
+    - { from: delivering, to: in-review, gate: "child features delivering" }
+    - { from: in-review, to: completed, gate: "all children completed" }
+kind:
+  values: [theme, delivery, bet, milestone]
+  default: theme
+  required: false
+owner:
+  values: [pm, engineering, qa, devops, design, docs]
+  default: pm
+  classification: org-state
+sections:
+  required: [Goal]
+  optional: [Scope, Features, Risks, Notes]
+accepting_commands: [/design, /refine, /compose, /handoff]
+default_agents:
+  authoring: spec-writer
+  review: pm-reviewer
+  handoff: handoff-coordinator
+relations:
+  - { kind: parent, target_type: initiative, cardinality: zero-or-one }
+  - { kind: parent, target_type: prd, cardinality: zero-or-one }
+  - { kind: child, target_type: feature, cardinality: many }
+  - { kind: child, target_type: bug, cardinality: many }
 ---
 
 # Epic spec-type

@@ -5,6 +5,54 @@ domain: core
 category: work
 bucket: features
 location: .hero/planning/features/{slug}/spec.md
+lifecycle:
+  states: [planning, refined, ready, delivering, in-review, completed]
+  initial: planning
+  terminal: [completed]
+  transitions:
+    - { from: planning, to: refined, gate: "spec-writer pass with AC drafted" }
+    - { from: refined, to: ready, gate: "pm-reviewer pass; preset-required fields populated" }
+    - { from: ready, to: delivering, gate: "engineering claim", owner_flip: { to: engineering } }
+    - { from: delivering, to: in-review, gate: "implementation complete; PR open" }
+    - { from: in-review, to: completed, gate: "merged + acceptance criteria satisfied" }
+    - { from: ready, to: planning, gate: "engineering hands back", owner_flip: { to: pm } }
+kind:
+  values: [new, refactor, perf, infra, security, ux]
+  default: new
+  required: false
+  description: "Sub-category for feature work; methodology-neutral."
+owner:
+  values: [pm, engineering, qa, devops, design, docs]
+  default: engineering
+  classification: org-state
+tasks_schema:
+  required: false
+  section_heading: Tasks
+  history: bitemporal
+  item_shape:
+    id: { type: string, required: true, format: "T-<int>" }
+    text: { type: string, required: true }
+    status: { type: enum, values: [todo, doing, done], default: todo }
+    kind: { type: enum, values: [feature, bug, chore, refactor, qa-blocker, perf, infra, security, ux], required: false }
+    assignee: { type: string, required: false }
+    discovered_against: { type: ref(spec), required: false }
+    started: { type: date, required: false }
+    done: { type: date, required: false }
+sections:
+  required: [Goal, Acceptance Criteria]
+  optional: [Tasks, Boundaries, Risks, User Value, Out of Scope, Dependencies, Notes]
+accepting_commands: [/refine, /design, /deliver, /diagnose, /handoff]
+default_agents:
+  authoring: story-writer
+  review: pm-reviewer
+  delivery: engineer
+  handoff: handoff-coordinator
+relations:
+  - { kind: parent, target_type: epic, cardinality: zero-or-one }
+  - { kind: parent, target_type: prd, cardinality: zero-or-one }
+  - { kind: parent, target_type: initiative, cardinality: zero-or-one }
+  - { kind: blocks, target_type: feature, cardinality: many }
+  - { kind: blocked_by, target_type: feature, cardinality: many }
 ---
 
 # Feature spec-type

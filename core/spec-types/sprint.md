@@ -5,6 +5,30 @@ domain: core
 category: work
 bucket: sprints
 location: .hero/planning/sprints/{slug}/spec.md
+lifecycle:
+  states: [planning, committed, in-flight, completed]
+  initial: planning
+  terminal: [completed]
+  transitions:
+    - { from: planning, to: committed, gate: "scope chosen" }
+    - { from: committed, to: in-flight, gate: "sprint starts" }
+    - { from: in-flight, to: completed, gate: "sprint ends" }
+owner:
+  values: [pm, engineering, qa, devops, design, docs]
+  default: engineering
+  classification: org-state
+sections:
+  required: [Goal]
+  optional: [Scope, Dates, Risks, Notes]
+accepting_commands: [/sprint, /refine, /handoff]
+default_agents:
+  authoring: spec-writer
+  review: pm-reviewer
+  handoff: handoff-coordinator
+relations:
+  - { kind: parent, target_type: release, cardinality: zero-or-one }
+  - { kind: contains, target_type: feature, cardinality: many }
+  - { kind: contains, target_type: bug, cardinality: many }
 ---
 
 # Sprint spec-type

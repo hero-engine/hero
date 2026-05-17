@@ -13,7 +13,7 @@ import (
 	"io/fs"
 )
 
-//go:embed domains/engineering/agents domains/engineering/commands domains/engineering/skills
+//go:embed domains/engineering/agents domains/engineering/commands domains/engineering/skills domains/engineering/spec-types
 var engineeringContent embed.FS
 
 //go:embed domains/sales/agents domains/sales/commands domains/sales/skills domains/sales/spec-types
@@ -27,6 +27,9 @@ var coreContent embed.FS
 
 //go:embed core/vocabularies
 var coreVocabularies embed.FS
+
+//go:embed core/spec-types
+var coreSpecTypes embed.FS
 
 // legacyContent embeds the root-level agents/, commands/, and skills/
 // directories. Kept as permanent backward-compat: ContentFS() returns
@@ -87,6 +90,49 @@ func CoreVocabulariesFS() fs.FS {
 	sub, err := fs.Sub(coreVocabularies, "core/vocabularies")
 	if err != nil {
 		return coreVocabularies
+	}
+	return sub
+}
+
+// CoreSpecTypesFS returns a read-only filesystem rooted at
+// core/spec-types/ containing the canonical work-tracking spec-type
+// declarations (initiative, prd, epic, feature, bug, chore, intake,
+// release, sprint). Consumed by internal/spectypes at startup.
+func CoreSpecTypesFS() fs.FS {
+	sub, err := fs.Sub(coreSpecTypes, "core/spec-types")
+	if err != nil {
+		return coreSpecTypes
+	}
+	return sub
+}
+
+// DomainSpecTypesFS returns a read-only filesystem rooted at
+// domains/<domain>/spec-types/ for the active domain. Returns nil if
+// the domain has no spec-types extensions. Consumed by
+// internal/spectypes to overlay domain-led types (e.g. engineering's
+// decision and convention) on top of the core nine.
+func DomainSpecTypesFS(domain string) fs.FS {
+	if domain == "" {
+		domain = "engineering"
+	}
+	var src embed.FS
+	switch domain {
+	case "engineering":
+		src = engineeringContent
+	case "pm":
+		src = pmContent
+	case "sales":
+		src = salesContent
+	default:
+		return nil
+	}
+	sub, err := fs.Sub(src, "domains/"+domain+"/spec-types")
+	if err != nil {
+		return nil
+	}
+	// Validate the directory actually exists in the embed.
+	if _, err := fs.ReadDir(sub, "."); err != nil {
+		return nil
 	}
 	return sub
 }

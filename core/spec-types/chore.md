@@ -5,6 +5,39 @@ domain: core
 category: work
 bucket: chores
 location: .hero/planning/chores/{slug}/spec.md
+lifecycle:
+  states: [planning, ready, delivering, completed]
+  initial: planning
+  terminal: [completed]
+  transitions:
+    - { from: planning, to: ready, gate: "scope confirmed" }
+    - { from: ready, to: delivering, gate: "claimed", owner_flip: { to: engineering } }
+    - { from: delivering, to: completed, gate: "done" }
+owner:
+  values: [pm, engineering, qa, devops, design, docs]
+  default: engineering
+  classification: org-state
+tasks_schema:
+  required: false
+  section_heading: Tasks
+  history: bitemporal
+  item_shape:
+    id: { type: string, required: true, format: "T-<int>" }
+    text: { type: string, required: true }
+    status: { type: enum, values: [todo, doing, done], default: todo }
+    assignee: { type: string, required: false }
+    started: { type: date, required: false }
+    done: { type: date, required: false }
+sections:
+  required: [Goal]
+  optional: [Tasks, Notes]
+accepting_commands: [/deliver, /handoff]
+default_agents:
+  authoring: spec-writer
+  delivery: engineer
+  handoff: handoff-coordinator
+relations:
+  - { kind: parent, target_type: epic, cardinality: zero-or-one }
 ---
 
 # Chore spec-type

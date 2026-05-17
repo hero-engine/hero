@@ -5,6 +5,35 @@ domain: core
 category: work
 bucket: intake
 location: .hero/planning/intake/{slug}/spec.md
+lifecycle:
+  states: [planning, triaged, promoted, rejected, merged]
+  initial: planning
+  terminal: [promoted, rejected, merged]
+  transitions:
+    - { from: planning, to: triaged, gate: "intake reviewed" }
+    - { from: triaged, to: promoted, gate: "promoted to feature/epic/bug" }
+    - { from: triaged, to: rejected, gate: "rejected with reason" }
+    - { from: triaged, to: merged, gate: "merged into another intake" }
+kind:
+  values: [customer, support, sales, internal, competitive]
+  default: customer
+  required: false
+owner:
+  values: [pm, engineering, qa, devops, design, docs]
+  default: pm
+  classification: org-state
+sections:
+  required: [Signal]
+  optional: [Source, Notes]
+accepting_commands: [/intake, /refine, /handoff]
+default_agents:
+  authoring: spec-writer
+  review: pm-reviewer
+  handoff: handoff-coordinator
+relations:
+  - { kind: promotes_to, target_type: feature, cardinality: zero-or-one }
+  - { kind: promotes_to, target_type: bug, cardinality: zero-or-one }
+  - { kind: promotes_to, target_type: epic, cardinality: zero-or-one }
 ---
 
 # Intake spec-type

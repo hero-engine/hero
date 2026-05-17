@@ -5,6 +5,30 @@ domain: core
 category: work
 bucket: releases
 location: .hero/planning/releases/{slug}/spec.md
+lifecycle:
+  states: [planning, committed, in-flight, shipped]
+  initial: planning
+  terminal: [shipped]
+  transitions:
+    - { from: planning, to: committed, gate: "scope locked" }
+    - { from: committed, to: in-flight, gate: "release window opens" }
+    - { from: in-flight, to: shipped, gate: "release shipped" }
+owner:
+  values: [pm, engineering, qa, devops, design, docs]
+  default: engineering
+  classification: org-state
+sections:
+  required: [Goal]
+  optional: [Scope, Dates, Risks, Notes]
+accepting_commands: [/release, /refine, /handoff]
+default_agents:
+  authoring: spec-writer
+  review: pm-reviewer
+  handoff: handoff-coordinator
+relations:
+  - { kind: child, target_type: sprint, cardinality: many }
+  - { kind: contains, target_type: feature, cardinality: many }
+  - { kind: contains, target_type: epic, cardinality: many }
 ---
 
 # Release spec-type
