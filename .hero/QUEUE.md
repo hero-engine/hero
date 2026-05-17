@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-16T14:21:29Z · 99 ready specs_
+_Generated: 2026-05-17T00:13:32Z · 83 ready specs_
 
 ## cross-repo-peering — "Cross-Repo Peering — Conventions Travel, Specs Hand Off, Heroes Call Each Other"
 _feature · delivering · horizon: now_
@@ -372,6 +372,54 @@ First non-engineering Hero domain pack. PM-shaped spec types (PRD, story, epic, 
 
 ---
 
+## hero-domains — Hero Domains — Platform Architecture for Non-Engineering Verticals
+_initiative · planning · horizon: next_
+
+Make Hero work for non-engineers — starting with PM, then QA. The core engine stays the same; each domain ships its own agents, commands, spec types, dashboard views, and integrations as a "pack."
+
+**Status:** planning — reshaped from sales-first to PM-first on 2026-05-15; eight-item sequenced roadmap of platform primitives + PM + QA packs is in place. PM design pack complete (spec + research-brief + agent-pack-design + mockup-brief + 9 mockups + handoff-to-hero-code). QA design pack reached parity 2026-05-16 (spec + research-brief + agent-pack-design + mockup-brief; 32 locked decisions; HTML mockups + handoff doc still owed). QA design surfaced two new platform-primitive amendments — lifecycle overlays on primitive #2 (`spec-type-registry`) and cross-pack ambient population on primitive #4 (`dashboard-view-registry`) — both required before either pack can ship.
+
+**Pick up at:** Design the first platform primitive, `domain-plugin-architecture` — refactor existing engineering content into `domains/engineering/` and add `hero init --domain` plumbing. Spec stub already exists.
+
+→ `/design domain-plugin-architecture`
+
+**Files:** .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/domain-plugin-architecture/spec.md, .hero/planning/features/hero-pm/spec.md
+**Skip:** Sales-first sequencing (deferred — high integration cost, low spec-fit). New tracker integrations for PM v1 (reuse Jira/Linear/GitHub).
+
+---
+
+## inline-propose-output-mode — Inline-Propose Output Mode — Agents Propose into the Artifact Pane
+_feature · planning · horizon: next_
+
+Add a new agent output mode — `--inline-propose` — that targets the open artifact pane instead of writing to disk. The view layer renders the proposed content inline on the artifact (dotted/dashed border, "proposed by `<agent>`" badge) with accept / edit / reject affordances. Required by the locked Hero PM UX pattern (mockup `08-inline-proposal.html`); load-bearing for every PM authoring agent (`story-writer`, `prd-author`, `roadmap-curator`, etc.). Slotted as primitive #4b in the `hero-domains` initiative — sequenced after `dashboard-view-registry` but before `hero-pm` can ship.
+
+**Status:** planning — stub written 2026-05-16. Blocked on primitives #1, #3, #4.
+
+**Pick up at:** Run `/design inline-propose-output-mode`. First decision: where the proposed content lives between propose and accept — in the spec file as a marked draft section, in a sidecar file, or in transient view state only. Then the wire shape: what an agent emits when `--inline-propose` is active vs. the default write-to-disk mode.
+
+→ `/design inline-propose-output-mode`
+
+**Files:** .hero/planning/features/inline-propose-output-mode/spec.md, .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/hero-pm/spec.md, .hero/planning/features/hero-pm/mockups/08-inline-proposal.html
+**Skip:** Multi-author concurrent proposals on one artifact (single-author v1). Proposal persistence across sessions when not accepted (transient v1; revisit if PM users want a "saved drafts" tray). Cross-artifact proposals (proposal targets exactly one artifact).
+
+---
+
+## hero-qa — Hero QA — Quality Assurance Domain Pack
+_feature · planning · horizon: next_
+
+Second non-engineering Hero domain pack: QA. The thesis: **Hero QA is the quality spine of the sprint and release, not a TestRail clone with chat.** Coverage is a story-completion gate (engineer hands off to QA in-flow); regression status is a release-readiness signal; defects exist when teams want them but the primary loop is fix-before-ship via story rejection. AI authors 40-80 test cases per sprint in minutes, not days. Integration to TestRail and Xray is seamless write-through so teams never duplicate-enter. Brand interaction: QA Reject augments the story with new acceptance criteria and bounces it back, without spawning orphan defect tickets.
+
+**Status:** planning — design pass advanced 2026-05-16. Three siblings landed in single-day dialog: research-brief (887 lines — 12 tools + agent prior art + methodology grounding + six design-original Hero-QA contributions), agent-pack-design (1,119 lines — 23 agents / 26 skills / 18 commands in eight tiers with P0/P1/P2 priorities and contextual-button inventory per artifact), mockup-brief (1,010 lines — eight killer screens with layout, interactions, anti-patterns, and preset variations). Total QA design depth ~3,670 lines vs PM's ~3,630 — at parity. Implementation gated on platform primitives 1-6 plus two amendments (primitive #2 lifecycle overlays; primitive #4 cross-pack ambient population). HTML mockups + handoff-to-hero-code still owed.
+
+**Pick up at:** Produce the eight HTML mockups under `.hero/mocks/hero-qa/` per `mockup-brief.md` (suggested order: Screen 1 → 4 → 2 → 3 → 7 → 5 → 6 → 8). Then write `handoff-to-hero-code.md` summarizing locked design + sibling docs + primitive amendments for a fresh hero-code session to pick up.
+
+→ `/design hero-qa`
+
+**Files:** .hero/planning/features/hero-qa/spec.md, .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/hero-pm/spec.md, .hero/planning/features/hero-pm/agent-pack-design.md
+**Skip:** Native-only-no-integration v1 (we ship Xray and TestRail). A standalone `defect` type by default (opt-in only). Treating QA as a thin variation of engineering. Letting QA reject stories without distinguishing AC-gap from scope-expansion.
+
+---
+
 ## domain-plugin-architecture — Domain Plugin Architecture — Refactor Content into Swappable Domain Packs
 _feature · planning · horizon: next_
 
@@ -385,38 +433,6 @@ Foundation primitive for `hero-domains`. Pure refactor — move existing enginee
 
 **Files:** .hero/planning/features/domain-plugin-architecture/spec.md, .hero/planning/initiatives/hero-domains/spec.md, embed.go, internal/install/install.go, internal/cli/init.go
 **Skip:** Third-party domain packs loaded from disk (deferred to a future spec). Multi-domain coexistence in one workspace (handled by domain-scoped-knowledge-graph).
-
----
-
-## hero-qa — Hero QA — Quality Assurance Domain Pack
-_feature · planning · horizon: next_
-
-Second non-engineering Hero domain pack: QA. Test plans, regression suites, bug intake, agents for test design and regression curation, dashboard views for coverage and flaky tests. Integrations are explicitly undecided — TestRail, Xray, Zephyr, qTest, and "team's spreadsheet" are all real choices. Bugs from QA already flow into engineering's `/diagnose`; the QA pack makes raising one ergonomic. Parent initiative names this as the proof that Hero is a platform, not "engineering with synonyms."
-
-**Status:** planning — sketch-grade brief written 2026-05-15. Blocked on platform primitives 1–6 and `hero-pm` lessons.
-
-**Pick up at:** Run `/design hero-qa`. Before any artifact-type table, do a real domain discovery pass — pick one or two QA tooling targets (TestRail or Xray most likely), resolve the integration-shape question, and confirm the artifact list with someone who actually runs a QA org. Many unknowns; expect this design to take more passes than `hero-pm`.
-
-→ `/design hero-qa`
-
-**Files:** .hero/planning/features/hero-qa/spec.md, .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/hero-pm/spec.md
-**Skip:** Generic "supports every test-management tool" integration in v1. Building QA agents before primitives 1–6 ship. Treating QA as a thin variation of engineering — that's the failure mode the parent initiative is trying to avoid.
-
----
-
-## hero-domains — Hero Domains — Platform Architecture for Non-Engineering Verticals
-_initiative · planning · horizon: next_
-
-Make Hero work for non-engineers — starting with PM, then QA. The core engine stays the same; each domain ships its own agents, commands, spec types, dashboard views, and integrations as a "pack."
-
-**Status:** planning — reshaped from sales-first to PM-first on 2026-05-15; eight-item sequenced roadmap of platform primitives + PM + QA packs is in place.
-
-**Pick up at:** Design the first platform primitive, `domain-plugin-architecture` — refactor existing engineering content into `domains/engineering/` and add `hero init --domain` plumbing. Spec stub already exists.
-
-→ `/design domain-plugin-architecture`
-
-**Files:** .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/domain-plugin-architecture/spec.md, .hero/planning/features/hero-pm/spec.md
-**Skip:** Sales-first sequencing (deferred — high integration cost, low spec-fit). New tracker integrations for PM v1 (reuse Jira/Linear/GitHub).
 
 ---
 
@@ -528,20 +544,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## client-id-user-scoping — Client ID User Scoping — Fix Conflict False-Positives
-_feature · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/client-id-user-scoping/spec.md)_
-
----
-
-## team-notifications — Team Notifications — Webhook Alerts for Job Events
-_feature · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/team-notifications/spec.md)_
-
----
-
 ## hero-killer-features — Hero Killer Features — Agent Effectiveness, Team Power, Living Specs
 _initiative · planning · horizon: next_
 
@@ -570,24 +572,10 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## cloud-dashboard — Cloud Dashboard — Web UI for Team Visibility
-_feature · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/cloud-dashboard/spec.md)_
-
----
-
 ## project-charter — Project Charter — Mission, Principles, and Auto-Injection
 _feature · planning · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/project-charter/spec.md)_
-
----
-
-## cloud-notifications — Cloud Notifications and Activity Alerts
-_feature · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/cloud-notifications/spec.md)_
 
 ---
 
@@ -605,52 +593,10 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## cloud-mcp — Cloud MCP — Cross-Repo Knowledge Federation
-_feature · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/cloud-mcp/spec.md)_
-
----
-
-## nats-event-bus — "NATS JetStream Event Bus"
-_feature · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/nats-event-bus/spec.md)_
-
----
-
-## team-connect — Team Connect — CLI Registration with Team Server
-_feature · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/team-connect/spec.md)_
-
----
-
-## team-oauth — Team OAuth — GitHub/Google SSO for Team Server Authentication
-_feature · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/team-oauth/spec.md)_
-
----
-
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · planning · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
-
----
-
-## cloud-billing — Cloud Billing and Subscription Management
-_feature · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/cloud-billing/spec.md)_
-
----
-
-## graph-schema-simplification — Graph Schema Simplification — Upsert + History Table
-_feature · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/graph-schema-simplification/spec.md)_
 
 ---
 
@@ -693,13 +639,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · planning · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-positioning/spec.md)_
-
----
-
-## tenant-isolation-rls — Tenant Isolation — Postgres Row-Level Security
-_feature · planning · horizon: someday_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/tenant-isolation-rls/spec.md)_
 
 ---
 
@@ -857,52 +796,10 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## cto-dashboard — "CTO Dashboard — Spec-Driven Project Intelligence"
-_feature · draft · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/cto-dashboard/spec.md)_
-
----
-
-## cross-org-intelligence — "Cross-Org Spec Intelligence"
-_feature · draft · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/cross-org-intelligence/spec.md)_
-
----
-
-## institutional-memory — "Institutional Memory"
-_feature · draft · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/institutional-memory/spec.md)_
-
----
-
 ## multi-domain-core — "Multi-Domain Core Engine"
 _feature · draft · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/multi-domain-core/spec.md)_
-
----
-
-## team-knowledge-flywheel — "Team Knowledge Flywheel"
-_feature · draft · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/team-knowledge-flywheel/spec.md)_
-
----
-
-## cloud-dashboard-ui — "Hero Cloud Dashboard UI"
-_feature · approved · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/cloud-dashboard-ui/spec.md)_
-
----
-
-## hero-cloud — Hero Cloud — Team Visibility and Cross-Repo Knowledge Platform
-_initiative · in-progress · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-cloud/spec.md)_
 
 ---
 
