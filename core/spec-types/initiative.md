@@ -5,6 +5,32 @@ domain: core
 category: work
 bucket: initiatives
 location: .hero/planning/initiatives/{slug}/spec.md
+lifecycle:
+  states: [planning, refined, ready, delivering, in-review, completed]
+  initial: planning
+  terminal: [completed]
+  transitions:
+    - { from: planning, to: refined, gate: "scope and outcome articulated" }
+    - { from: refined, to: ready, gate: "child PRDs/epics drafted" }
+    - { from: ready, to: delivering, gate: "first child feature picked up", owner_flip: { to: engineering } }
+    - { from: delivering, to: in-review, gate: "child work completing" }
+    - { from: in-review, to: completed, gate: "outcome achieved or accepted dropped" }
+owner:
+  values: [pm, engineering, qa, devops, design, docs]
+  default: pm
+  classification: org-state
+sections:
+  required: [Goal]
+  optional: [Outcome, Bets, Risks, Notes]
+accepting_commands: [/design, /refine, /handoff]
+default_agents:
+  authoring: spec-writer
+  review: pm-reviewer
+  handoff: handoff-coordinator
+relations:
+  - { kind: child, target_type: prd, cardinality: many }
+  - { kind: child, target_type: epic, cardinality: many }
+  - { kind: child, target_type: feature, cardinality: many }
 ---
 
 # Initiative spec-type

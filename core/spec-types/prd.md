@@ -5,6 +5,36 @@ domain: core
 category: work
 bucket: prds
 location: .hero/planning/prds/{slug}/spec.md
+lifecycle:
+  states: [planning, refined, ready, delivering, in-review, completed]
+  initial: planning
+  terminal: [completed]
+  transitions:
+    - { from: planning, to: refined, gate: "problem and scope articulated" }
+    - { from: refined, to: ready, gate: "decomposed into features/epics" }
+    - { from: ready, to: delivering, gate: "child work begins", owner_flip: { to: engineering } }
+    - { from: delivering, to: in-review, gate: "child features delivered" }
+    - { from: in-review, to: completed, gate: "PRD accepted" }
+kind:
+  values: [pitch, ten-section, lightweight]
+  default: ten-section
+  required: false
+owner:
+  values: [pm, engineering, qa, devops, design, docs]
+  default: pm
+  classification: org-state
+sections:
+  required: [Problem, Goal]
+  optional: [Background, Users, Scope, Out of Scope, Risks, Notes]
+accepting_commands: [/design, /refine, /handoff]
+default_agents:
+  authoring: spec-writer
+  review: pm-reviewer
+  handoff: handoff-coordinator
+relations:
+  - { kind: parent, target_type: initiative, cardinality: zero-or-one }
+  - { kind: child, target_type: epic, cardinality: many }
+  - { kind: child, target_type: feature, cardinality: many }
 ---
 
 # PRD spec-type

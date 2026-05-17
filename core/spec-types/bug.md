@@ -5,6 +5,54 @@ domain: core
 category: work
 bucket: bugs
 location: .hero/planning/bugs/{slug}/spec.md
+lifecycle:
+  states: [planning, refined, ready, delivering, in-review, completed]
+  initial: planning
+  terminal: [completed]
+  transitions:
+    - { from: planning, to: refined, gate: "diagnosis written; root cause classified" }
+    - { from: refined, to: ready, gate: "reviewer pass; reproduction confirmed" }
+    - { from: ready, to: delivering, gate: "engineering claim", owner_flip: { to: engineering } }
+    - { from: delivering, to: in-review, gate: "fix implemented; PR open" }
+    - { from: in-review, to: completed, gate: "merged + regression test + AC passing" }
+    - { from: ready, to: planning, gate: "engineering hands back; needs more investigation" }
+kind:
+  values: [regression, edge-case, security, data]
+  default: regression
+  required: false
+  description: "Defect sub-category."
+owner:
+  values: [pm, engineering, qa, devops, design, docs]
+  default: engineering
+  classification: org-state
+tasks_schema:
+  required: false
+  section_heading: Tasks
+  history: bitemporal
+  item_shape:
+    id: { type: string, required: true, format: "T-<int>" }
+    text: { type: string, required: true }
+    status: { type: enum, values: [todo, doing, done], default: todo }
+    kind: { type: enum, values: [feature, bug, chore, refactor, qa-blocker, perf, infra, security, ux], required: false }
+    assignee: { type: string, required: false }
+    discovered_against: { type: ref(spec), required: false }
+    started: { type: date, required: false }
+    done: { type: date, required: false }
+sections:
+  required: [Symptoms, Diagnosis, Acceptance Criteria]
+  optional: [Root Cause, Reproduction, Tasks, Risks, Notes]
+accepting_commands: [/diagnose, /challenge, /deliver, /handoff]
+default_agents:
+  authoring: debug-investigator
+  review: engineering-reviewer
+  delivery: engineer
+  handoff: handoff-coordinator
+relations:
+  - { kind: parent, target_type: feature, cardinality: zero-or-one }
+  - { kind: parent, target_type: epic, cardinality: zero-or-one }
+  - { kind: discovered_against, target_type: feature, cardinality: zero-or-one }
+  - { kind: blocks, target_type: feature, cardinality: many }
+  - { kind: blocked_by, target_type: feature, cardinality: many }
 ---
 
 # Bug spec-type
