@@ -1,0 +1,355 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://heroengine.ai/contracts/spec-types/v1.1.json",
+  "title": "Hero spec-types export (v1.1)",
+  "description": "Wire shape of .hero/cache/spec-types.json — the language-neutral export of Hero's spec-type registry. Written on every CLI invocation. Consumed by hero-code (Rust dashboard) and any other peer that needs to know what spec types exist, what frontmatter they accept, what lifecycle states they declare, and which commands route to them. Authoritative source: internal/spectypes/export.go.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "active_domain", "generated_at", "types"],
+  "properties": {
+    "schema_version": {
+      "description": "Schema version of this export. Bumped when the wire shape changes in a non-additive way. Consumers should refuse to parse on mismatch.",
+      "const": "1.1"
+    },
+    "active_domain": {
+      "description": "Name of the domain pack whose extensions were overlaid on the core declarations when this export was generated. Examples: 'engineering', 'pm'. The set of types in `types` reflects core + this domain's overlay.",
+      "type": "string",
+      "minLength": 1
+    },
+    "generated_at": {
+      "description": "RFC 3339 UTC timestamp recording when this export was produced. Regenerated on every CLI invocation; do not rely on byte stability across runs.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "types": {
+      "description": "Ordered list of spec-type records. Order is the registry's deterministic load order (core types first, then domain extensions).",
+      "type": "array",
+      "items": { "$ref": "#/$defs/record" }
+    }
+  },
+  "$defs": {
+    "record": {
+      "description": "A single spec-type declaration — the canonical schema for one kind of spec (feature, bug, prd, etc.). Built by the loader from one core/spec-types/<name>.md or domains/<x>/spec-types/<name>.md file.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "title", "domain", "category", "location", "bucket"],
+      "properties": {
+        "name": {
+          "description": "Canonical type name. Matches the spec's frontmatter `type:` field exactly. Examples: 'feature', 'bug', 'convention'.",
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "description": "Human-readable display label for this type. Used in dashboards, CLI output, and prompts.",
+          "type": "string",
+          "minLength": 1
+        },
+        "domain": {
+          "description": "Origin of this type declaration. 'core' for types shipped in core/spec-types/; otherwise the domain pack name (e.g. 'engineering', 'pm').",
+          "type": "string",
+          "minLength": 1
+        },
+        "category": {
+          "description": "High-level classification: 'work' types are tracked work items with a lifecycle (feature, bug, story); 'knowledge' types are reference content without an owner-driven lifecycle (convention, decision).",
+          "type": "string",
+          "enum": ["work", "knowledge"]
+        },
+        "location": {
+          "description": "Path template for where specs of this type are written on disk. The literal token `{slug}` is substituted with the spec slug. Example: '.hero/planning/features/{slug}/spec.md'.",
+          "type": "string",
+          "minLength": 1
+        },
+        "bucket": {
+          "description": "Folder name under .hero/planning/ and .hero/specs/ that groups specs of this type. Plural by convention. Examples: 'features', 'bugs', 'conventions'.",
+          "type": "string",
+          "minLength": 1
+        },
+        "lifecycle": {
+          "description": "State machine governing this type's status transitions. Omitted for types that do not declare any states (typically knowledge types).",
+          "$ref": "#/$defs/lifecycle"
+        },
+        "kind": {
+          "description": "Optional sub-categorization enum for this type (e.g. bug.kind = regression | edge-case | security | data). Omitted when the type does not declare a kind block.",
+          "$ref": "#/$defs/kind"
+        },
+        "owner": {
+          "description": "Owner enum and classification. Tracks which role/team currently owns a spec of this type. Omitted when the type does not declare an owner block (typically knowledge types).",
+          "$ref": "#/$defs/owner"
+        },
+        "frontmatter": {
+          "description": "Schema for the spec's YAML frontmatter — required and optional fields. Used by `hero spec lint`, the parser, and dashboard form generation. May be null when a type declares no frontmatter schema.",
+          "oneOf": [
+            { "$ref": "#/$defs/frontmatter" },
+            { "type": "null" }
+          ]
+        },
+        "sections": {
+          "description": "Required and optional markdown section headings for the spec body. Used by lint to enforce structure.",
+          "$ref": "#/$defs/sections"
+        },
+        "tasks_schema": {
+          "description": "Schema for the spec's `## Tasks` checklist block — whether it's required, its heading, item shape, and history mode. Omitted when the type does not use checklists.",
+          "$ref": "#/$defs/tasks_schema"
+        },
+        "accepting_commands": {
+          "description": "Slash commands that accept this type. Drives command routing — `/diagnose` accepts 'bug'; `/design` accepts 'feature'. Order is not significant.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "default_agents": {
+          "description": "Map from agent role to default agent name for specs of this type. Example: { \"investigator\": \"debug-investigator\" }. Empty / omitted when no defaults are declared.",
+          "type": "object",
+          "additionalProperties": { "type": "string", "minLength": 1 }
+        },
+        "relations": {
+          "description": "Declared outgoing relations this type can express in its frontmatter (parent, child, blocks, depends-on, etc.) and the target type each one points at.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/relation" }
+        }
+      }
+    },
+    "lifecycle": {
+      "description": "State machine for a record.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["states"],
+      "properties": {
+        "states": {
+          "description": "All declared states, in declaration order. Examples: ['planning', 'refined', 'ready', 'delivering', 'in-review', 'completed'].",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        },
+        "initial": {
+          "description": "The state a newly-created spec of this type enters. Must be one of `states`.",
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal": {
+          "description": "States that represent a finished lifecycle (no further transitions out). All entries must be members of `states`.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "transitions": {
+          "description": "Allowed edges between states. Anything not declared here is rejected by the registry's transition check.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/transition" }
+        }
+      }
+    },
+    "transition": {
+      "description": "One declared state edge.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": {
+        "from": {
+          "description": "Source state. Must be a member of the parent lifecycle's `states`.",
+          "type": "string",
+          "minLength": 1
+        },
+        "to": {
+          "description": "Destination state. Must be a member of the parent lifecycle's `states`.",
+          "type": "string",
+          "minLength": 1
+        },
+        "gate": {
+          "description": "Human-readable description of the entry condition for this transition (e.g. 'diagnosis written; root cause classified'). Surfaced in CLI output and dashboards; not machine-evaluated.",
+          "type": "string"
+        },
+        "owner_flip": {
+          "description": "Set when crossing this edge implies an owner change. The handoff-coordinator agent reads this to know when to flip ownership.",
+          "$ref": "#/$defs/owner_flip"
+        }
+      }
+    },
+    "owner_flip": {
+      "description": "Owner-change marker on a transition.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["to"],
+      "properties": {
+        "to": {
+          "description": "Owner value the spec flips to when this transition is taken. Should be a member of the record's owner.values.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "kind": {
+      "description": "Sub-categorization enum for a record type.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["values", "required"],
+      "properties": {
+        "values": {
+          "description": "Allowed kind values. Example for bug: ['regression', 'edge-case', 'security', 'data']. Open string set per type — consumers must not hardcode.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        },
+        "default": {
+          "description": "Default kind assigned when a spec of this type is created without an explicit kind. Must be a member of `values` when present.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Whether a spec of this type must declare a kind. When false and `default` is set, the default applies; when false and no default, the field is omitted.",
+          "type": "boolean"
+        },
+        "description": {
+          "description": "Human-readable description of what the kind block means for this type. Surfaced in tooltips and prompts.",
+          "type": "string"
+        }
+      }
+    },
+    "owner": {
+      "description": "Owner enum and classification for a record type.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["values"],
+      "properties": {
+        "values": {
+          "description": "Allowed owner values. Example: ['pm', 'engineering', 'qa', 'devops', 'design', 'docs']. Open string set per type — domain packs extend this.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        },
+        "default": {
+          "description": "Default owner assigned when a spec of this type is created without an explicit owner. Should be a member of `values` when present.",
+          "type": "string"
+        },
+        "classification": {
+          "description": "Conflict-policy classification for the owner field. 'content' = Hero-owned (the file is source of truth). 'org-state' = tracker-owned under tracker-fronting policy (the tracker wins on conflict).",
+          "type": "string",
+          "enum": ["content", "org-state"]
+        }
+      }
+    },
+    "sections": {
+      "description": "Markdown section structure for the spec body.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "required": {
+          "description": "Section headings that MUST appear in a spec of this type. Lint emits an error when missing.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "optional": {
+          "description": "Section headings that MAY appear in a spec of this type. Lint does not require them but recognizes them as valid.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "tasks_schema": {
+      "description": "Shape declaration for a spec's `## Tasks` (or similarly named) checklist block.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required"],
+      "properties": {
+        "required": {
+          "description": "Whether a spec of this type must declare a tasks block.",
+          "type": "boolean"
+        },
+        "section_heading": {
+          "description": "Markdown heading text under which the checklist lives. Defaults to 'Tasks' when omitted.",
+          "type": "string"
+        },
+        "history": {
+          "description": "How task status changes are tracked. 'bitemporal' = each flip is persisted in the graph as a node revision (current AC behavior). 'none' = only the latest state is kept.",
+          "type": "string",
+          "enum": ["bitemporal", "none"]
+        },
+        "item_shape": {
+          "description": "Map from field-name to field declaration describing what each checklist item carries (id, assignee, done-date, etc.). Map key matches the field's `name`.",
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/field" }
+        }
+      }
+    },
+    "relation": {
+      "description": "One outgoing relation kind this type can declare.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "target_type"],
+      "properties": {
+        "kind": {
+          "description": "Relation kind. Open string set today; observed values include 'parent', 'child', 'blocks', 'blocked_by', 'depends_on', 'related', 'supersedes', 'contains', 'promotes_to', 'discovered_against'. Consumers should tolerate unknown values.",
+          "type": "string",
+          "minLength": 1
+        },
+        "target_type": {
+          "description": "The spec-type `name` that this relation points at. May be a type registered by another domain pack; consumers should not assume the target exists in the current export.",
+          "type": "string",
+          "minLength": 1
+        },
+        "cardinality": {
+          "description": "Cardinality of the relation from the source spec's perspective. Observed values: 'zero-or-one', 'many'. Open string set; default behavior is 'many' when omitted.",
+          "type": "string"
+        }
+      }
+    },
+    "frontmatter": {
+      "description": "Required vs optional frontmatter fields for a record.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "required": {
+          "description": "Fields that MUST appear in the spec's YAML frontmatter. Lint emits an error when missing.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/field" }
+        },
+        "optional": {
+          "description": "Fields that MAY appear in the spec's YAML frontmatter. Lint does not require them; the parser validates the value shape when present.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/field" }
+        }
+      }
+    },
+    "field": {
+      "description": "One frontmatter or item-shape field declaration.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "description": "Field name as it appears in YAML frontmatter or as a checklist item attribute key.",
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "description": "Value type. Known forms: 'string', 'int', 'bool', 'date', 'enum', 'list[T]' where T is one of the simple types, 'ref(<type>)' to reference another spec type by name. Open string set — consumers should fall back to treating unknown types as opaque strings.",
+          "type": "string",
+          "minLength": 1
+        },
+        "required": {
+          "description": "Whether the field must be present when this declaration appears in a `required` list. Mirrors the parent list's semantics; carried explicitly so consumers can flatten the two lists if convenient.",
+          "type": "boolean"
+        },
+        "default": {
+          "description": "Default value as a string (serialized form). Empty / omitted when the field has no default.",
+          "type": "string"
+        },
+        "values": {
+          "description": "Allowed values when `type` is 'enum'. Empty / omitted for non-enum fields.",
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "format": {
+          "description": "Optional shape hint for string-typed fields, e.g. 'T-<int>'. Surfaced to lint and dashboard input widgets; not machine-validated by the registry itself.",
+          "type": "string"
+        },
+        "classification": {
+          "description": "Conflict-policy classification for this field. 'content' = Hero-owned. 'org-state' = tracker-owned under tracker-fronting policy.",
+          "type": "string",
+          "enum": ["content", "org-state"]
+        },
+        "description": {
+          "description": "Human-readable description of the field's purpose. Surfaced in tooltips and prompts.",
+          "type": "string"
+        }
+      }
+    }
+  }
+}
