@@ -64,3 +64,4 @@ tmp/
 .codex/commands
 .codex/skills
 
+.envrc # if not already ignored
