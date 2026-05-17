@@ -28,6 +28,9 @@ var coreContent embed.FS
 //go:embed core/vocabularies
 var coreVocabularies embed.FS
 
+//go:embed core/methodologies
+var coreMethodologies embed.FS
+
 //go:embed core/spec-types
 var coreSpecTypes embed.FS
 
@@ -90,6 +93,18 @@ func CoreVocabulariesFS() fs.FS {
 	sub, err := fs.Sub(coreVocabularies, "core/vocabularies")
 	if err != nil {
 		return coreVocabularies
+	}
+	return sub
+}
+
+// CoreMethodologiesFS returns a read-only filesystem rooted at
+// core/methodologies/ containing the bundled methodology profile YAML
+// files (scrum, kanban, shape-up, waterfall, scrumban). Consumed by
+// internal/methodology at startup.
+func CoreMethodologiesFS() fs.FS {
+	sub, err := fs.Sub(coreMethodologies, "core/methodologies")
+	if err != nil {
+		return coreMethodologies
 	}
 	return sub
 }
