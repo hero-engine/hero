@@ -255,6 +255,7 @@ func renderSpecsTable(w io.Writer, specs []*spec.Spec) error {
 		fmt.Fprintln(w, "No specs match.")
 		return nil
 	}
+	vocab := activeVocab(loadConfigSilent())
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(tw, "SLUG\tTYPE\tSTATUS\tHORIZON\tPIN\tTITLE")
 	for _, s := range specs {
@@ -263,8 +264,9 @@ func renderSpecsTable(w io.Writer, specs []*spec.Spec) error {
 			pin = "★"
 		}
 		horizon := string(s.EffectiveHorizon())
+		typeStr := displayType(vocab, string(s.Type))
 		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\t%s\n",
-			s.Slug, s.Type, s.Status, horizon, pin, s.Title)
+			s.Slug, typeStr, s.Status, horizon, pin, s.Title)
 	}
 	return tw.Flush()
 }
@@ -274,12 +276,14 @@ func renderSpecText(w io.Writer, specs []*spec.Spec) error {
 		fmt.Fprintln(w, "No specs match.")
 		return nil
 	}
+	vocab := activeVocab(loadConfigSilent())
 	for _, s := range specs {
 		pin := ""
 		if s.Pinned {
 			pin = " ★"
 		}
-		fmt.Fprintf(w, "- %s — %s (%s/%s)%s\n", s.Slug, s.Title, s.Type, s.Status, pin)
+		typeStr := displayType(vocab, string(s.Type))
+		fmt.Fprintf(w, "- %s — %s (%s/%s)%s\n", s.Slug, s.Title, typeStr, s.Status, pin)
 	}
 	return nil
 }
@@ -320,6 +324,7 @@ func renderSpecsKickoff(w io.Writer, specs []*spec.Spec) error {
 		fmt.Fprintln(w, "No specs match.")
 		return nil
 	}
+	vocab := activeVocab(loadConfigSilent())
 	for i, s := range specs {
 		if i > 0 {
 			fmt.Fprintln(w, "\n---")
@@ -330,7 +335,7 @@ func renderSpecsKickoff(w io.Writer, specs []*spec.Spec) error {
 			pin = " ★"
 		}
 		fmt.Fprintf(w, "## %s — %s%s\n", s.Slug, s.Title, pin)
-		fmt.Fprintf(w, "_%s · %s · horizon: %s_\n\n", s.Type, s.Status, s.EffectiveHorizon())
+		fmt.Fprintf(w, "_%s · %s · horizon: %s_\n\n", displayType(vocab, string(s.Type)), s.Status, s.EffectiveHorizon())
 
 		body := strings.TrimSpace(s.Kickoff())
 		if body == "" {

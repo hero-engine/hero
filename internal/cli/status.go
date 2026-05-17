@@ -12,6 +12,7 @@ import (
 	"github.com/hero-engine/hero/internal/peering"
 	"github.com/hero-engine/hero/internal/spec"
 	"github.com/hero-engine/hero/internal/version"
+	"github.com/hero-engine/hero/internal/vocabulary"
 	"github.com/hero-engine/hero/internal/workspace"
 	"github.com/spf13/cobra"
 )
@@ -57,6 +58,14 @@ func runStatus(cmd *cobra.Command, args []string) error {
 	// Surface workspace location and active scope when running from a
 	// satellite or subfolder. Quiet when at root with no scope.
 	printWorkspaceContext(projectRoot, heroDir)
+
+	// Surface active vocabulary / methodology when either is configured
+	// (per Risk mitigation in pm-foundation-delivery spec). Quiet for
+	// engineering / legacy workspaces.
+	if line := dialectLine(&cfg); line != "" {
+		fmt.Println(line)
+		fmt.Println()
+	}
 
 	// Auto-fire peer-side completion: any awaiting_peer spec whose
 	// peer counterpart has reached completed is flipped to handed_back
@@ -133,22 +142,24 @@ func runStatus(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	vocab := activeVocab(&cfg)
+
 	// Surface handed-back work prominently — the peer finished and
 	// the ball is on this side again.
-	printSpecGroup("Handed Back (verify on this side)", handedBack, projectRoot, true)
+	printSpecGroup("Handed Back (verify on this side)", handedBack, projectRoot, true, vocab)
 	// Then normal in-flight work.
-	printSpecGroup("Delivering", delivering, projectRoot, true)
-	printSpecGroup("In Review", inReview, projectRoot, true)
-	printSpecGroup("Planning", planning, projectRoot, true)
+	printSpecGroup("Delivering", delivering, projectRoot, true, vocab)
+	printSpecGroup("In Review", inReview, projectRoot, true, vocab)
+	printSpecGroup("Planning", planning, projectRoot, true, vocab)
 	// Handoffs in flight elsewhere.
-	printSpecGroup("Handed Off / Awaiting Peer", handoffPending, projectRoot, true)
+	printSpecGroup("Handed Off / Awaiting Peer", handoffPending, projectRoot, true, vocab)
 	fmt.Println()
 
 	// Print completed
 	if len(completed) > 0 {
 		fmt.Printf("Specs (%d):\n", len(completed))
 		for _, s := range completed {
-			fmt.Printf("  %-30s  %-10s  %s\n", s.Slug, string(s.Type), s.Title)
+			fmt.Printf("  %-30s  %-10s  %s\n", s.Slug, displayType(vocab, string(s.Type)), s.Title)
 		}
 	} else {
 		fmt.Println("Specs: (none)")
@@ -226,7 +237,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func printSpecGroup(label string, specs []*spec.Spec, projectRoot string, showAge bool) {
+func printSpecGroup(label string, specs []*spec.Spec, projectRoot string, showAge bool, vocab *vocabulary.Vocabulary) {
 	if len(specs) == 0 {
 		return
 	}
@@ -238,7 +249,7 @@ func printSpecGroup(label string, specs []*spec.Spec, projectRoot string, showAg
 		if s.ClaimedBy != "" {
 			claimStr = fmt.Sprintf("  [%s]", s.ClaimedBy)
 		}
-		fmt.Printf("  %-30s  %-10s  %s  %s%s\n", s.Slug, string(s.Type), formatAge(age), relPath, claimStr)
+		fmt.Printf("  %-30s  %-10s  %s  %s%s\n", s.Slug, displayType(vocab, string(s.Type)), formatAge(age), relPath, claimStr)
 	}
 }
 

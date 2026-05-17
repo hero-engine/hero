@@ -55,9 +55,11 @@ func runNextProject(cmd *cobra.Command, args []string) error {
 	defer store.Close()
 
 	opts := projection.NextMDOptions{
-		RepoKey:   filepath.Base(projectRoot),
-		Branch:    gitutil.CurrentBranch(projectRoot),
-		SessionID: nextProjectSession,
+		RepoKey:     filepath.Base(projectRoot),
+		Branch:      gitutil.CurrentBranch(projectRoot),
+		SessionID:   nextProjectSession,
+		Vocab:       activeVocab(&cfg),
+		Methodology: activeMethodology(&cfg),
 	}
 	if opts.SessionID == "" {
 		opts.SessionID = readSessionFromExistingNext(heroDir)

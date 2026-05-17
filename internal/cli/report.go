@@ -57,6 +57,9 @@ type reportData struct {
 	TrackerTotal  int
 	CoverageData  coverageData
 	VelocityData  []velocityMonth
+	// Dialect is "Vocabulary: X · Methodology: Y" when either is set in
+	// hero.json. Empty for engineering / legacy workspaces.
+	Dialect string
 }
 
 type statusCount struct {
@@ -156,11 +159,14 @@ func buildReportData(specs []*spec.Spec, cfg config.Config, projectRoot string) 
 		staleDays = cfg.Team.StaleDays
 	}
 
+	vocab := activeVocab(&cfg)
+
 	data := reportData{
 		ProjectName: filepath.Base(projectRoot),
 		GeneratedAt: time.Now().Format("2006-01-02 15:04"),
 		TotalSpecs:  len(specs),
 		StaleDays:   staleDays,
+		Dialect:     dialectLine(&cfg),
 	}
 
 	// Status counts for work specs
@@ -182,7 +188,7 @@ func buildReportData(specs []*spec.Spec, cfg config.Config, projectRoot string) 
 			rs := reportSpec{
 				Slug:       s.Slug,
 				Title:      s.Title,
-				Type:       string(s.Type),
+				Type:       displayType(vocab, string(s.Type)),
 				Status:     string(s.Status),
 				Age:        formatAge(age),
 				ClaimedBy:  s.ClaimedBy,
@@ -206,7 +212,7 @@ func buildReportData(specs []*spec.Spec, cfg config.Config, projectRoot string) 
 			data.ClaimedSpecs = append(data.ClaimedSpecs, reportSpec{
 				Slug:      s.Slug,
 				Title:     s.Title,
-				Type:      string(s.Type),
+				Type:      displayType(vocab, string(s.Type)),
 				Status:    string(s.Status),
 				ClaimedBy: s.ClaimedBy,
 			})
@@ -311,7 +317,7 @@ func buildReportData(specs []*spec.Spec, cfg config.Config, projectRoot string) 
 		data.RecentSpecs = append(data.RecentSpecs, reportSpec{
 			Slug:   s.Slug,
 			Title:  s.Title,
-			Type:   string(s.Type),
+			Type:   displayType(vocab, string(s.Type)),
 			Status: string(s.Status),
 			Age:    formatAge(time.Since(s.ModifiedAt)),
 		})
@@ -408,7 +414,7 @@ var reportTemplate = `<!DOCTYPE html>
     <div class="container">
         <div class="header">
             <h1>` + "{{.ProjectName}}" + ` — Hero Report</h1>
-            <div class="meta">Generated {{.GeneratedAt}} ` + `{{- if .TrackerType}} | Tracker: {{.TrackerType}}{{end}}</div>
+            <div class="meta">Generated {{.GeneratedAt}} ` + `{{- if .TrackerType}} | Tracker: {{.TrackerType}}{{end}}{{if .Dialect}} | {{.Dialect}}{{end}}</div>
         </div>
 
         <div class="grid">

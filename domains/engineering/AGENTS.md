@@ -33,6 +33,8 @@ When the user describes what they want in natural language, route to the appropr
 
 When routing, pass the user's original context as arguments to the command. If the intent is ambiguous, present the top 2-3 options and ask.
 
+**Vocabulary-aware routing.** When the workspace declares a `vocabulary:` or `methodology:` in `hero.json`, the user may speak in that dialect — "create a story" under `agile-scrum`, "shape a scope" under `shape-up`, "log a card" under `kanban`. Translate display terms back to canonical types before routing: `story` / `scope` / `card` all canonicalize to `feature`, so `hero new feature` is the right call. The on-disk frontmatter stays canonical (`type: feature`) regardless of how the user (or the dashboard) sees it. The active dialect is summarized in the "Active workspace dialect" section of this file when one is configured; engineering / default workspaces see no extra section and the canonical names are the user-facing names.
+
 ## Log significant events
 
 After creating or updating a spec, modifying files, making a notable design

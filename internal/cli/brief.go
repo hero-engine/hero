@@ -560,6 +560,7 @@ func runBlocked(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	defer store.Close()
+	vocab := activeVocab(loadConfigSilent())
 
 	rows, err := store.DB().Query(
 		`SELECT f.key,
@@ -610,7 +611,7 @@ func runBlocked(cmd *cobra.Command, args []string) error {
 			if status == "" {
 				status = "?"
 			}
-			fmt.Printf("    waiting on %s `%s` (%s)\n", c.btype, c.bkey, status)
+			fmt.Printf("    waiting on %s `%s` (%s)\n", displayType(vocab, strings.ToLower(c.btype)), c.bkey, status)
 		}
 		// Add failing-AC chains for this feature, if any.
 		for _, ac := range failingByParent[k] {

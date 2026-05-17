@@ -22,6 +22,8 @@ import (
 	"time"
 
 	"github.com/hero-engine/hero/internal/graph"
+	"github.com/hero-engine/hero/internal/methodology"
+	"github.com/hero-engine/hero/internal/vocabulary"
 )
 
 // NextMDOptions tunes the NEXT.md projection.
@@ -31,6 +33,14 @@ type NextMDOptions struct {
 	SessionID     string // anchors "Tried and failed" to a session
 	JustFinishedN int    // commits to show under "## Just finished" (default 8)
 	NextN         int    // open features to surface under "## Next" (default 1)
+	// Vocab is the active vocabulary preset used to render type / kind
+	// display names (e.g. "feature" → "Story" under agile-scrum). Nil
+	// preserves the canonical literal — engineering / legacy workspaces
+	// render identically to today.
+	Vocab *vocabulary.Vocabulary
+	// Methodology is the active methodology profile. Nil falls through
+	// to the methodology-neutral phrasing used today.
+	Methodology *methodology.Methodology
 }
 
 // NextMD renders the contents of .hero/NEXT.md from the graph. The
@@ -86,8 +96,9 @@ func NextMD(store *graph.Store, opts NextMDOptions) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("next: %w", err)
 	}
+	featurePlural := pluralizeWorkType(opts.Vocab, "feature")
 	if len(openFeatures) == 0 {
-		b.WriteString("No open features in this repo.\n")
+		fmt.Fprintf(&b, "No open %s in this repo.\n", featurePlural)
 	} else {
 		for _, f := range openFeatures {
 			fmt.Fprintf(&b, "- **%s** (`%s`", f.title, f.slug)
@@ -360,3 +371,29 @@ func jsonStr(v any) string {
 
 // _ = sort.Strings — keeps import alive when query helpers expand.
 var _ = sort.Strings
+
+// pluralizeWorkType returns a methodology-aware plural noun for the
+// canonical work type (e.g. "feature" → "features", or "stories" under
+// agile-scrum). When the active vocabulary has no override, falls
+// through to the canonical type literal with a trailing "s". When vocab
+// is nil (engineering / legacy), preserves the canonical phrasing —
+// "features" — exactly as the previous code path emitted.
+func pluralizeWorkType(v *vocabulary.Vocabulary, canonicalType string) string {
+	if v == nil {
+		return canonicalType + "s"
+	}
+	// The canonical engineering type "feature" maps to spec.feature
+	// in the vocabulary kinds table. Try the kind-level mapping first
+	// since it is the most specific.
+	display := v.Display("spec", canonicalType)
+	if display == "" || strings.EqualFold(display, "spec") {
+		return canonicalType + "s"
+	}
+	// Cheap English pluralization. Vocabularies pick clean singular
+	// nouns (Story, Scope, Card) so naive +s is correct in practice;
+	// the special case for words ending in 'y' covers "Story" → "Stories".
+	if strings.HasSuffix(display, "y") && !strings.HasSuffix(display, "ay") && !strings.HasSuffix(display, "ey") && !strings.HasSuffix(display, "oy") && !strings.HasSuffix(display, "uy") {
+		return strings.ToLower(display[:len(display)-1]) + "ies"
+	}
+	return strings.ToLower(display) + "s"
+}
