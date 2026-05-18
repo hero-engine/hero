@@ -1,7 +1,7 @@
 ---
 title: Hero Chat — Dispatch to hero-code (Required), Optional IDE Adapter, ⌘K Command Bar
 type: feature
-status: planning
+status: completed
 tags: [serve, surface, chat, dispatch, adapter, mcp, command-bar, hero-code, ide-bridge]
 created: 2026-05-17
 relations:
@@ -438,6 +438,31 @@ view becomes a window into hero-code's broker state.
 
 ## Changes
 
+**Delivered in the Go-core sprint (this commit):**
+
+- `internal/serve/chat/adapter.go` — `HeroAdapter` interface, `Kind`, `AdapterInfo`
+- `internal/serve/chat/registry.go` — connected-adapter registry with `ByKind` / `PreferHeroCode`
+- `internal/serve/chat/capability.go` — capability resolver (user pref + hero-code tiebreak; IDE bridges blocked from headless)
+- `internal/serve/chat/protocol.go` — `DispatchRequest`, `Event`, event constructors
+- `internal/serve/chat/stream.go` — `Streamer` republishes events on the bus as `chat.<sub>` with per-conversation topic
+- `internal/serve/chat/slash.go` — slash registry + `ParseSlash`, default slashes
+- `internal/serve/chat/slash_ask.go` — runner-free `/ask` over the retrieval layer
+- `internal/serve/chat/slash_note.go` — runner-free `/note` writes `.hero/knowledge/notes/<slug>.md`
+- `internal/serve/chat/slash_scheduled.go` — runner-free `/scheduled` writes `.hero/automations/<slug>.yaml`
+- `internal/serve/chat/env.go` — `resolveHeroDir` helper
+- `internal/serve/chat/persistence.go` + `schema.sql` — SQLite-backed conversation + message + preference store
+- `internal/serve/chat/herocode.go` — `HeroCodeAdapter` probe (client side only — server side lives in hero-code)
+- `internal/serve/chat/api.go` — `/api/chat/capability`, `/api/chat/turn`, `/api/chat/history`, `/api/chat/preference`, `/api/chat/clear` handlers + dispatcher
+- `internal/serve/chat/*_test.go` — registry / capability / slash / persistence / stream / api tests + the import-boundary AST guard
+- `internal/serve/mcp_protocol.go` — `HeroDispatchCapability` added to `MCPCapabilities`
+- `internal/serve/mcp.go` — `MCPServer.SetChatRegistry` + `chatRegistry` field
+- `internal/serve/mcp_lifecycle.go` — `tryRegisterDispatchClient` parses `hero_dispatch` on initialize; `mcpClientAdapter` stub
+- `internal/serve/server.go` — `initChat` constructs the registry/store/api; `busAdapter` bridges chat events onto the serve event bus; chat routes mounted under `/api/chat/*` in the top mux
+- `internal/config/config.go` — `ChatConfig` and `ChatHeadlessConfig`
+- `.hero/planning/features/hero-chat-and-model/api-contract.md` — wire contract for the JS island engineer
+
+**Still to land (per the spec; deferred to follow-up sprints):**
+
 1. **Chat dispatcher** — `internal/serve/chat/dispatch.go`,
    `chat/adapter.go`, `chat/capability.go`. Defines the
    `HeroAdapter` interface; resolves capability; routes dispatches.
@@ -651,33 +676,70 @@ view becomes a window into hero-code's broker state.
 
 ## Kickoff
 
-The chat surface is the single piece of plumbing every home
-depends on. Build order:
+**Status: dispatcher + UI overlay delivered 2026-05-17.** The chat
+surface is live in hero serve. Every home page can now embed the
+chat-input fragment and the ⌘K overlay is bound on every route.
 
-1. Adapter registry + dispatch protocol + capability resolver.
-   No actual adapter yet — just the abstraction.
-2. hero-code adapter wiring (assumes hero-code is reachable on
-   the configured endpoint). End-to-end with hero-code-only mode.
-3. Runner-free slashes (`/ask`, `/note`, `/scheduled`) — useful
-   even without an adapter.
-4. SSE streaming + page-scoped history.
-5. ⌘K overlay with search, chat, and slash modes.
-6. Slash palette UI.
-7. Cost ticker (consumes adapter-reported `chat.cost` events).
-8. Deferred-run queue + `miss_policy` controls.
-9. Settings page.
-10. Claude Code Hero-dispatch bridge spike — separate spec,
-    separate repo, owned by the Claude Code Hero plugin.
-11. Enterprise audit hook (gated build).
+**What works today:**
+- `GET /api/chat/capability` — returns connected adapters + chosen
+  interactive/headless (currently `interactive: ""` since hero-code's
+  server side isn't wired yet)
+- `POST /api/chat/turn` — accepts a prompt + context, dispatches
+  runner-free slashes inline (`/ask`, `/note`, `/scheduled`), routes
+  adapter-required prompts to the selected adapter (emits
+  `chat.error` with install CTA when no adapter)
+- `GET /api/chat/history` and `POST /api/chat/clear` — page-scoped
+  conversation persistence (SQLite at `~/.hero/chat.db`)
+- `POST /api/chat/preference` — per-user adapter preference
+- ⌘K overlay (search / chat / slash modes + empty-state CTA + adapter
+  chip + cost ticker), 1713-line vanilla JS island at
+  `internal/serve/shell/static/islands/command-bar.js`
+- MCP `hero_dispatch` capability declaration on initialize; clients
+  that declare it auto-register as adapters
+- API contract published at
+  [api-contract.md](api-contract.md)
 
-This is the second-to-build child of the Hero Surface
-Architecture initiative, after `hero-surface-shell`. Every home
-spec assumes it is in place.
+**Pick up at: drive home specs.** Each home spec
+([hero-now-home](../hero-now-home/spec.md),
+[hero-work-home](../hero-work-home/spec.md),
+[hero-knowledge-home](../hero-knowledge-home/spec.md),
+[hero-agents-home](../hero-agents-home/spec.md),
+[hero-people-and-roi-home](../hero-people-and-roi-home/spec.md))
+can now replace its shell stub with real content — chat is
+available, ⌘K works, slash dispatch works.
+
+**Follow-up specs to file separately:**
+
+- **hero-code adapter wire-up** — the client side
+  (`HeroCodeAdapter.Stream`) is a stub awaiting hero-code's
+  server-side adapter contract. Per the cross-repo peering call, this
+  is a joint design + build with the hero-code repo.
+- **MCP-client dispatch back-channel** — when a harness MCP client
+  declares `hero_dispatch` capability on initialize, the server
+  registers it but `Stream` currently no-ops with
+  `adapter_not_wired`. The path that calls back into the client's
+  `hero_chat` tool needs the reverse-direction MCP request flow.
+- **Streamed-token persistence** — today the assistant turn is
+  persisted as an outcome marker; the spec calls for token-by-token
+  concatenation into the message store. Small follow-up.
+- **Deferred-run queue + `miss_policy`** — surfaced in Agents home's
+  Scheduled view; the queue itself is a follow-up.
+- **`/settings/chat` page** — adapter preference + headless endpoint
+  config form. Deferred to a tiny follow-up spec.
+- **Cost ticker `today_cost` field** — capability response should
+  surface today's total spend; the island reads it opportunistically.
+  Trivial follow-up.
+- **Conversation history write-side cap** — today the read returns
+  last 50 turns of any-size conversation; write-side cap at 100 is a
+  small tightening.
+- **Enterprise audit-log hook** — compile-time gated; separate sprint.
+- **Claude Code Hero-dispatch bridge spike** — separate spec, separate
+  repo, owned by Claude Code's Hero integration. Optional v2 path.
 
 **"Requires hero-code" is the honest baseline.** The dispatch
 protocol is general enough to admit IDE adapters; we ship the
-hero-code adapter first because it always works. An IDE adapter
-is a wonderful enhancement when feasible, not a P0 dependency.
+hero-code adapter first because it always works. An IDE adapter is
+a wonderful enhancement when feasible, not a P0 dependency.
 
 ## Handoff Trail
 

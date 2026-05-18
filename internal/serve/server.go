@@ -12,7 +12,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/index"
+	"github.com/hero-engine/hero/internal/serve/chat"
 	"github.com/hero-engine/hero/internal/serve/edition"
 	"github.com/hero-engine/hero/internal/serve/session"
 	"github.com/hero-engine/hero/internal/serve/shell"
@@ -47,6 +49,11 @@ type Server struct {
 	projectRoot string
 	autoWatch   bool
 	uiEnabled   bool
+
+	// Chat dispatcher subsystem. Initialized in Run; nil before then.
+	chatRegistry *chat.Registry
+	chatStore    *chat.Store
+	chatAPI      *chat.API
 
 	// Team mode
 	teamMode       bool
@@ -267,6 +274,13 @@ func (s *Server) Run(ctx context.Context) error {
 		fmt.Fprintf(os.Stderr, "hero serve: team mode enabled (%d workers)\n", s.workerPool.count)
 	}
 
+	// Initialize the chat dispatcher. The registry, store, and API
+	// live alongside the rest of the daemon; the MCP server receives
+	// the registry handle so adapter clients can register on
+	// initialize. Store open failures are best-effort: chat falls
+	// back to in-memory conversation ids when persistence is absent.
+	s.initChat()
+
 	// Compose the shell on top of the API handler. The shell owns
 	// /, the five home roots, and /_kitchen-sink; the API owns
 	// /api/*, /health, /auth/* (team mode), and team-mode job mounts.
@@ -274,12 +288,24 @@ func (s *Server) Run(ctx context.Context) error {
 	if s.uiEnabled {
 		shellRouter := s.buildShellRouter()
 		topMux := http.NewServeMux()
+		// Chat endpoints under /api/chat/* must mount BEFORE the
+		// generic /api/ catch-all so the chat-specific handlers win.
+		if s.chatAPI != nil {
+			s.chatAPI.Mount(topMux)
+		}
 		topMux.Handle("/api/", handler)
 		topMux.Handle("/health", handler)
 		topMux.Handle("/auth/", handler)
 		topMux.Handle("/static/shell/", http.StripPrefix("/static/shell/", http.FileServer(http.FS(shell.StaticFS()))))
 		topMux.Handle("/", shellRouter.Handler())
 		handler = topMux
+	} else if s.chatAPI != nil {
+		// UI disabled but chat still needs a mount point — graft
+		// chat routes onto the API handler via a wrapping mux.
+		wrap := http.NewServeMux()
+		s.chatAPI.Mount(wrap)
+		wrap.Handle("/", handler)
+		handler = wrap
 	}
 
 	s.httpServer = &http.Server{
@@ -464,6 +490,69 @@ func (s *Server) reindexSpecs(heroDir, project string, events []watch.Event) {
 func slugFromPath(path string) string {
 	dir := filepath.Dir(path)
 	return filepath.Base(dir)
+}
+
+// initChat constructs the chat registry, store, and API. Called from
+// Run before the HTTP mux is composed. Best-effort: store-open
+// failures log and continue (the API still serves capability + turn,
+// they just don't persist).
+func (s *Server) initChat() {
+	if s.chatRegistry != nil {
+		return
+	}
+	s.chatRegistry = chat.NewRegistry()
+
+	store, err := chat.Open("")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "hero serve: chat store unavailable: %v\n", err)
+		store = nil
+	}
+	s.chatStore = store
+
+	streamer := chat.NewStreamer(&busAdapter{bus: s.bus})
+	s.chatAPI = chat.NewAPI(s.chatRegistry, store, streamer, s.projectRoot)
+
+	// If hero.json configures a hero-code endpoint, probe it now.
+	// Failures are non-fatal — we log once and proceed in
+	// no-adapter mode until hero-code reconnects (or registers via
+	// MCP later).
+	if s.projectRoot != "" {
+		cfg, cerr := config.Load(s.projectRoot)
+		if cerr == nil && cfg.Chat != nil && cfg.Chat.Headless != nil {
+			ep := cfg.Chat.Headless.Endpoint
+			if ep != "" {
+				if adapter, perr := chat.TryConnectHeroCode(ep); perr == nil {
+					if rerr := s.chatRegistry.Register("hero-code-"+ep, adapter); rerr != nil {
+						fmt.Fprintf(os.Stderr, "hero serve: register hero-code adapter: %v\n", rerr)
+					} else {
+						fmt.Fprintf(os.Stderr, "hero serve: hero-code adapter registered (%s)\n", ep)
+					}
+				} else {
+					fmt.Fprintf(os.Stderr, "hero serve: hero-code endpoint configured at %s but unreachable — falling back to no-adapter mode (%v)\n", ep, perr)
+				}
+			}
+		}
+	}
+}
+
+// busAdapter satisfies chat.EventBus by translating BusEvents into
+// serve.Events. The serve event bus is project-scoped via the
+// Project field; chat events leave Project blank and rely on the
+// Type prefix ("chat.") + Topic for routing.
+type busAdapter struct {
+	bus *EventBus
+}
+
+func (a *busAdapter) Publish(ev chat.BusEvent) {
+	if a == nil || a.bus == nil {
+		return
+	}
+	a.bus.Publish(Event{
+		Type:      EventType(ev.Type),
+		Slug:      ev.Topic,
+		Payload:   ev.Payload,
+		Timestamp: ev.Timestamp,
+	})
 }
 
 // buildShellRouter assembles the shell router with the active edition,

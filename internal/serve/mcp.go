@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/hero-engine/hero/internal/refs"
+	"github.com/hero-engine/hero/internal/serve/chat"
 )
 
 // This file is the slim public surface for the Hero MCP server. The
@@ -41,6 +42,12 @@ type MCPServer struct {
 	refsStore    *refs.Store
 	refsRegistry *refs.Registry
 	sessionID    string
+
+	// chatRegistry, when non-nil, receives adapter registrations for
+	// clients that declare a hero_dispatch capability on initialize.
+	// Optional — leaving it nil disables the dispatch surface and
+	// MCP behaves exactly as it did before the chat spec landed.
+	chatRegistry *chat.Registry
 }
 
 // NewMCPServer creates an MCP server for the given hero workspace.
@@ -63,6 +70,13 @@ func NewMCPServerWithFilter(heroDir, projectRoot, version string, filter *ToolFi
 	s := NewMCPServer(heroDir, projectRoot, version)
 	s.filter = filter
 	return s
+}
+
+// SetChatRegistry attaches a chat adapter registry. When set, clients
+// that declare a hero_dispatch capability on initialize are
+// registered as Hero adapters. Pass nil to disable the integration.
+func (s *MCPServer) SetChatRegistry(r *chat.Registry) {
+	s.chatRegistry = r
 }
 
 // SetIO overrides the default stdin/stdout (for testing).
