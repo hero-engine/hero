@@ -9,8 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-
-	"github.com/hero-engine/hero/internal/workspace"
 )
 
 // ApplyOptions controls migration execution.
@@ -353,7 +351,3 @@ func FormatApplyResult(res *ApplyResult, dryRun bool) string {
 	}
 	return sb.String()
 }
-
-// Verify the workspace marker is still intact at root after the apply
-// (called from tests).
-var _ = workspace.HeroDir

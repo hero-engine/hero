@@ -95,16 +95,8 @@ func writeSurfacesTable(b *strings.Builder, s *Snapshot) {
 		if !newest.IsZero() {
 			lastTouched = humanDuration(time.Since(newest)) + " ago"
 		}
-		driver := "—"
-		for _, a := range assignments {
-			if a.Spec != nil && a.Spec.Status == spec.StatusDelivering {
-				driver = a.Spec.Slug
-				break
-			}
-		}
-		_ = driver
 		// Pick driver: in-flight spec preferred; else newest planning.
-		driver = pickDriverSpec(assignments)
+		driver := pickDriverSpec(assignments)
 
 		if s.HasReleaseSignal {
 			rel := renderReleaseCell(assignments)

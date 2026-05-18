@@ -13,15 +13,6 @@ import (
 	"github.com/hero-engine/hero/internal/serve/session"
 )
 
-// stubHandler is a tiny handler that records that it was invoked.
-type stubHandler struct{ hit bool }
-
-func (h *stubHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.hit = true
-	w.WriteHeader(http.StatusOK)
-	io.WriteString(w, "ok")
-}
-
 func newTestRouter(t *testing.T, ed edition.Edition) (*Router, *session.Store) {
 	t.Helper()
 	dbPath := filepath.Join(t.TempDir(), "shell-sessions.db")

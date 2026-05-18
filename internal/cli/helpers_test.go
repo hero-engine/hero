@@ -134,32 +134,6 @@ func (e *testEnv) indexAll() {
 	}
 }
 
-// indexSpec indexes a single spec by path.
-func (e *testEnv) indexSpec(relPath string) {
-	e.t.Helper()
-
-	path := filepath.Join(e.heroDir, relPath)
-	s, err := spec.ParseFile(path)
-	if err != nil {
-		e.t.Fatalf("ParseFile %s: %v", relPath, err)
-	}
-
-	content, err := os.ReadFile(path)
-	if err != nil {
-		e.t.Fatalf("ReadFile %s: %v", relPath, err)
-	}
-
-	idx, err := index.Open(e.heroDir)
-	if err != nil {
-		e.t.Fatalf("Open index: %v", err)
-	}
-	defer idx.Close()
-
-	if err := idx.IndexSpec(s, string(content)); err != nil {
-		e.t.Fatalf("IndexSpec: %v", err)
-	}
-}
-
 // mu protects stdout capture — tests using captureStdout should not run in parallel.
 var mu sync.Mutex
 

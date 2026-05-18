@@ -80,13 +80,11 @@ func detectInstalledTargetDirs(projectDir string, excludeTarget Target) ([]Targe
 			continue
 		}
 		full := filepath.Join(projectDir, c.path)
-		info, err := os.Lstat(full)
-		if err != nil {
-			continue
-		}
 		// Either a dir (most targets) or a regular file (copilot's marker
 		// instructions file) confirms the install.
-		_ = info
+		if _, err := os.Lstat(full); err != nil {
+			continue
+		}
 		found = append(found, c.target)
 	}
 	return found, nil

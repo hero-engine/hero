@@ -28,9 +28,6 @@ var (
 
 	// Grails constraints/mapping blocks (static)
 	groovyStaticBlock = regexp.MustCompile(`^\s+static\s+(\w+)\s*=\s*\{`)
-
-	// Fields: Type name or def name (at class level)
-	groovyField = regexp.MustCompile(`^\s+(?:(?:public|protected|private|static|final)\s+)*(?:def\s+|(?:\w+(?:<[^>]+>)?\s+))(\w+)\s*(?:=|$)`)
 )
 
 func (p *GroovyParser) ParseFile(path string, content []byte) (*FileInfo, error) {

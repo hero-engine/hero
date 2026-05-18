@@ -137,12 +137,10 @@ func Run(cfg RunConfig) (*JobRecord, error) {
 		job.OutputTokens += resp.OutputTokens
 		job.EstCost = estimateCost(providerName, job.InputTokens, job.OutputTokens)
 
-		// Print assistant text
 		if resp.Text != "" {
 			fmt.Printf("[turn %d] %s\n", turn+1, truncateLog(resp.Text, 200))
 		}
 
-		// Check if done
 		if resp.StopReason == "end_turn" || resp.StopReason == "stop" {
 			if len(resp.ToolCalls) == 0 {
 				job.Status = "completed"
@@ -150,9 +148,7 @@ func Run(cfg RunConfig) (*JobRecord, error) {
 			}
 		}
 
-		// Execute tool calls
 		if len(resp.ToolCalls) > 0 {
-			// Add assistant message with tool calls
 			messages = append(messages, Message{Role: "assistant", Content: resp.Text})
 
 			for _, tc := range resp.ToolCalls {

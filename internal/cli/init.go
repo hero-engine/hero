@@ -61,12 +61,10 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 	heroDir := cfg.HeroDir(projectRoot)
 
-	// Check if already initialized
 	if _, err := os.Stat(heroDir); err == nil {
 		return fmt.Errorf("hero workspace already exists at %s", heroDir)
 	}
 
-	// Create directory structure
 	dirs := []string{
 		heroDir,
 		cfg.PlanningDir(projectRoot),
@@ -390,47 +388,6 @@ func inferLintCommand(l scan.Linter) string {
 	default:
 		return ""
 	}
-}
-
-// ensureGitignoreEntry appends entry to the .gitignore file at path if the file
-// exists and does not already contain a line matching the entry. Does nothing if
-// the file does not exist (we only update an existing .gitignore, not create one).
-//
-// Kept for backward compatibility — new entries should go in
-// ensureManagedGitignoreBlock so they live inside the marker-bounded
-// managed block and stay coordinated with future additions.
-func ensureGitignoreEntry(gitignorePath, entry string) error {
-	data, err := os.ReadFile(gitignorePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil // no root .gitignore — skip
-		}
-		return err
-	}
-
-	// Check whether any line already covers this entry
-	for _, line := range strings.Split(string(data), "\n") {
-		line = strings.TrimSpace(line)
-		if line == entry || line == "**/.hero/hero.local.json" || line == "hero.local.json" {
-			return nil // already covered
-		}
-	}
-
-	// Append the entry
-	suffix := "\n"
-	if len(data) > 0 && data[len(data)-1] != '\n' {
-		suffix = "\n\n"
-	} else {
-		suffix = "\n"
-	}
-	addition := suffix + "# Hero per-project local config (tokens, personal preferences)\n" + entry + "\n"
-	f, err := os.OpenFile(gitignorePath, os.O_APPEND|os.O_WRONLY, 0o644)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	_, err = f.WriteString(addition)
-	return err
 }
 
 // gitignoreMarkerStart / gitignoreMarkerEnd delimit the hero-managed

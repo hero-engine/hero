@@ -6,7 +6,6 @@
 package api
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"sync"
@@ -258,6 +257,3 @@ func sectionsForEventType(t string) []string {
 func stringHasPrefix(s, prefix string) bool {
 	return len(s) >= len(prefix) && s[:len(prefix)] == prefix
 }
-
-// _ keeps the context import live for the file regardless of build tags.
-var _ = context.Background

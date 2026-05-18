@@ -210,11 +210,9 @@ func LoadCloudToken() string {
 		return ""
 	}
 
-	// Check if expired
 	if creds.ExpiresAt != "" {
 		exp, err := time.Parse(time.RFC3339, creds.ExpiresAt)
 		if err == nil && time.Now().After(exp) {
-			// Try refresh
 			if refreshed := tryRefresh(creds); refreshed != nil {
 				return refreshed.AccessToken
 			}

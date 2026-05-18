@@ -132,7 +132,7 @@ func removeOneIfHeroAuthored(opts Options, result *Result, full, canonicalKind s
 	if !strings.HasSuffix(e.Name(), ".md") && !strings.HasSuffix(e.Name(), ".toml") {
 		return nil
 	}
-	if canonicalBytesEqualByPath(opts, canonicalKind, e.Name(), full) {
+	if canonicalBytesEqual(opts, canonicalKind, e.Name(), full) {
 		if opts.DryRun {
 			fmt.Fprintf(os.Stderr,"  cleanup %s (would remove Hero-authored file)\n", full)
 			return nil
@@ -146,13 +146,6 @@ func removeOneIfHeroAuthored(opts Options, result *Result, full, canonicalKind s
 	result.Skipped = append(result.Skipped, full+" (not Hero-authored bytes; left in place)")
 	fmt.Fprintf(os.Stderr,"  warning: %s differs from canonical content — left in place\n", full)
 	return nil
-}
-
-// canonicalBytesEqualByPath compares destPath bytes against the
-// canonical embedded source for kind/name. Same shape as the
-// render.go helper but takes the destination by path.
-func canonicalBytesEqualByPath(opts Options, kind, name, destPath string) bool {
-	return canonicalBytesEqual(opts, kind, name, destPath)
 }
 
 // matchesNestedSkillCanonical checks whether a nested skill
@@ -252,70 +245,3 @@ func looksLikeHeroSymlinkTarget(target string) bool {
 		strings.Contains(t, "/.hero")
 }
 
-// dirIsOnlyHeroAuthored reports whether every regular file in dir is
-// detectably Hero-authored (matches canonical embedded source bytes
-// for the same kind+name) AND every entry is either a regular file or
-// a Hero-pointing symlink. Used by linkOrRenderDir to decide whether
-// it's safe to auto-migrate a legacy regular directory into the
-// canonical-symlink layout without --force.
-//
-// canonicalKind names the embedded canonical content kind ("agents",
-// "commands", "skills"). For nested kinds (skills), each subdirectory
-// is checked for a Hero-authored SKILL.md.
-func dirIsOnlyHeroAuthored(opts Options, dir, canonicalKind string) (bool, error) {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return false, err
-	}
-	if len(entries) == 0 {
-		return true, nil // empty dir is safe to remove
-	}
-	for _, e := range entries {
-		full := filepath.Join(dir, e.Name())
-		info, err := e.Info()
-		if err != nil {
-			return false, err
-		}
-		if info.Mode()&os.ModeSymlink != 0 {
-			target, err := os.Readlink(full)
-			if err != nil {
-				return false, nil
-			}
-			if !looksLikeHeroSymlinkTarget(target) {
-				return false, nil
-			}
-			continue
-		}
-		if info.IsDir() {
-			// Nested kind layout: check for SKILL.md.
-			nested := filepath.Join(full, "SKILL.md")
-			if _, err := os.Stat(nested); err == nil {
-				if matchesNestedSkillCanonical(opts, e.Name(), nested) {
-					continue
-				}
-				return false, nil
-			}
-			// Plain subdir without SKILL.md — recurse.
-			ok, err := dirIsOnlyHeroAuthored(opts, full, canonicalKind)
-			if err != nil || !ok {
-				return false, err
-			}
-			continue
-		}
-		// Regular file.
-		if canonicalKind == "" {
-			return false, nil
-		}
-		if canonicalBytesEqualByPath(opts, canonicalKind, e.Name(), full) {
-			continue
-		}
-		// Trusted-checksum path: file's bytes match what a prior Hero
-		// install recorded — treat as Hero-authored even though current
-		// canonical bytes differ.
-		if dstData, err := os.ReadFile(full); err == nil && isTrustedHeroInstalledFile(opts, full, dstData) {
-			continue
-		}
-		return false, nil
-	}
-	return true, nil
-}

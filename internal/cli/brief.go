@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -147,168 +146,6 @@ func contractImportSignalForFocus(projectRoot string, files []string) string {
 		return ""
 	}
 	return peering.RenderContractImportSignal(hits)
-}
-
-// --- graph search (powers the default `hero search`) ---------------------
-//
-// runGraphSearch is invoked from search.go when the user runs
-// `hero search <query>` with no filters and no --specs flag. It walks
-// the unified graph (Features, Decisions, Notes, Attempts, Commits,
-// Symbols, etc.) — strictly more capable than the legacy FTS5
-// spec-only search.
-
-// graphSearchCandidates returns the count of graph nodes that match
-// the search query, without rendering output. Used by runSearch to
-// decide whether to route to graph search or fall back to FTS5.
-func graphSearchCandidates(args []string) (int, error) {
-	topic := strings.Join(args, " ")
-	store, _, err := openRepoStore()
-	if err != nil {
-		return 0, err
-	}
-	defer store.Close()
-	q := strings.ToLower(topic)
-	var n int
-	err = store.DB().QueryRow(
-		`SELECT COUNT(*) FROM nodes
-		  WHERE valid_to IS NULL
-		    AND (lower(key) LIKE '%' || ? || '%'
-		         OR lower(COALESCE(json_extract(props, '$.title'), '')) LIKE '%' || ? || '%'
-		         OR lower(COALESCE(json_extract(props, '$.body'), '')) LIKE '%' || ? || '%'
-		         OR lower(COALESCE(json_extract(props, '$.subject'), '')) LIKE '%' || ? || '%')`,
-		q, q, q, q,
-	).Scan(&n)
-	return n, err
-}
-
-// nodeTypeWeight gives higher scores to high-signal node types so a
-// fresh git import doesn't drown spec / knowledge / code results in a
-// search. Tuned by hand from observing real corpora; revisit if a node
-// type starts producing noisy hits.
-func nodeTypeWeight(t string) float64 {
-	switch t {
-	case "Feature", "Bug", "Initiative", "Decision":
-		return 10
-	case "Convention", "Rule":
-		return 9
-	case "ContextDoc", "Note":
-		return 8
-	case "Symbol", "Package":
-		return 6
-	case "File":
-		return 5
-	case "Issue":
-		return 3
-	case "Commit", "Person":
-		return 1
-	default:
-		return 4
-	}
-}
-
-func runGraphSearch(args []string, budget int, asJSON bool) error {
-	topic := strings.Join(args, " ")
-	store, repoKey, err := openRepoStore()
-	if err != nil {
-		return err
-	}
-	defer store.Close()
-
-	q := strings.ToLower(topic)
-	type cand struct {
-		nodeType, key, title, body, repo string
-		score                            float64
-	}
-	rows, err := store.DB().Query(
-		`SELECT type, key,
-		        COALESCE(json_extract(props, '$.title'), '') AS title,
-		        COALESCE(json_extract(props, '$.body'), '')  AS body,
-		        COALESCE(json_extract(props, '$.subject'), '') AS subject,
-		        COALESCE(repo, '') AS repo,
-		        ingested_at
-		   FROM nodes
-		  WHERE valid_to IS NULL
-		    AND (lower(key) LIKE '%' || ? || '%'
-		         OR lower(COALESCE(json_extract(props, '$.title'), '')) LIKE '%' || ? || '%'
-		         OR lower(COALESCE(json_extract(props, '$.body'), '')) LIKE '%' || ? || '%'
-		         OR lower(COALESCE(json_extract(props, '$.subject'), '')) LIKE '%' || ? || '%')
-		  ORDER BY ingested_at DESC
-		  LIMIT 200`,
-		q, q, q, q,
-	)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	var cands []cand
-	for rows.Next() {
-		var c cand
-		var subject, ingested string
-		if err := rows.Scan(&c.nodeType, &c.key, &c.title, &c.body, &subject, &c.repo, &ingested); err != nil {
-			return err
-		}
-		if c.body == "" && subject != "" {
-			c.body = subject
-		}
-		c.score = nodeTypeWeight(c.nodeType)
-		// Title/key match boosts score above body-only matches.
-		lowKey := strings.ToLower(c.key)
-		lowTitle := strings.ToLower(c.title)
-		if strings.Contains(lowKey, q) || strings.Contains(lowTitle, q) {
-			c.score += 2
-		}
-		cands = append(cands, c)
-	}
-
-	// High-signal types (specs, knowledge, code) beat commits/issues/people.
-	sort.SliceStable(cands, func(i, j int) bool {
-		return cands[i].score > cands[j].score
-	})
-	if len(cands) > 30 {
-		cands = cands[:30]
-	}
-
-	if asJSON {
-		out, _ := json.MarshalIndent(cands, "", "  ")
-		fmt.Println(string(out))
-		return nil
-	}
-
-	if len(cands) == 0 {
-		fmt.Printf("Nothing matching %q in graph for repo %s.\n", topic, repoKey)
-		return nil
-	}
-
-	fmt.Printf("<!-- hero search: %q in %s + siblings, %d matches, budget=%d -->\n\n", topic, repoKey, len(cands), budget)
-	used := 0
-	dropped := 0
-	for _, c := range cands {
-		title := c.title
-		if title == "" {
-			title = c.key
-		}
-		line := fmt.Sprintf("- **%s** _(%s, `%s`)_", oneLineString(title), c.nodeType, c.key)
-		// Show repo origin when it's a different repo than the local one
-		// (federation pull or sibling-repo scan).
-		if c.repo != "" && c.repo != repoKey {
-			line += fmt.Sprintf(" _[%s]_", c.repo)
-		}
-		if c.body != "" {
-			line += " — " + oneLineString(truncStr(c.body, 160))
-		}
-		tok := (len(line) + 3) / 4
-		if used+tok > budget {
-			dropped++
-			continue
-		}
-		fmt.Println(line)
-		used += tok
-	}
-	if dropped > 0 {
-		fmt.Printf("\n_…+%d more — refine query or run `hero search` with `--specs` for FTS5 spec-only results_\n", dropped)
-	}
-	return nil
 }
 
 // --- code-graph impact section (called from hero impact) ----------------
@@ -736,13 +573,6 @@ func oneLineString(s string) string {
 		s = s[:i]
 	}
 	return s
-}
-
-func truncStr(s string, n int) string {
-	if len(s) <= n {
-		return s
-	}
-	return s[:n] + "…"
 }
 
 func shortShaImpact(s string) string {

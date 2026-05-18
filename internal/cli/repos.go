@@ -450,8 +450,3 @@ func runReposCheck(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// printReposJSON outputs repos status as JSON.
-func printReposJSON(statuses map[string]config.RepoStatus) {
-	data, _ := json.MarshalIndent(statuses, "", "  ")
-	fmt.Println(string(data))
-}

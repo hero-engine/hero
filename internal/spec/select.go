@@ -1,6 +1,7 @@
 package spec
 
 import (
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -153,22 +154,22 @@ func IsBlocked(s *Spec, bySlug map[string]*Spec) bool {
 }
 
 func filterMatches(s *Spec, f Filter, bySlug map[string]*Spec, now time.Time) bool {
-	if len(f.Types) > 0 && !containsType(f.Types, s.Type) {
+	if len(f.Types) > 0 && !slices.Contains(f.Types, s.Type) {
 		return false
 	}
 	if len(f.Statuses) > 0 {
-		if !containsStatus(f.Statuses, s.Status) {
+		if !slices.Contains(f.Statuses, s.Status) {
 			return false
 		}
 	} else if f.ExcludeClosedDefault && isClosedStatus(s.Status) {
 		return false
 	}
-	if len(f.Horizons) > 0 && !containsHorizon(f.Horizons, s.EffectiveHorizon()) {
+	if len(f.Horizons) > 0 && !slices.Contains(f.Horizons, s.EffectiveHorizon()) {
 		return false
 	}
 	if len(f.Tags) > 0 {
 		for _, want := range f.Tags {
-			if !containsString(s.Tags, want) {
+			if !slices.Contains(s.Tags, want) {
 				return false
 			}
 		}
@@ -315,41 +316,3 @@ func isHardDependency(kind string) bool {
 	return false
 }
 
-func containsType(in []Type, want Type) bool {
-	for _, t := range in {
-		if t == want {
-			return true
-		}
-	}
-	return false
-}
-
-func containsStatus(in []Status, want Status) bool {
-	for _, s := range in {
-		if s == want {
-			return true
-		}
-	}
-	return false
-}
-
-func containsHorizon(in []Horizon, want Horizon) bool {
-	if want == "" {
-		want = HorizonNow
-	}
-	for _, h := range in {
-		if h == want {
-			return true
-		}
-	}
-	return false
-}
-
-func containsString(in []string, want string) bool {
-	for _, s := range in {
-		if s == want {
-			return true
-		}
-	}
-	return false
-}

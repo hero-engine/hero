@@ -110,7 +110,6 @@ func runVerify(cmd *cobra.Command, args []string) error {
 	if len(target.FilesTouched) > 0 {
 		fmt.Printf("\n  Expected File Changes:\n")
 		for _, f := range target.FilesTouched {
-			// Check if file exists
 			if _, err := os.Stat(f); err == nil {
 				fmt.Printf("    ✓ %s (exists)\n", f)
 			} else {

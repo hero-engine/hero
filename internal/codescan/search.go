@@ -84,7 +84,6 @@ func Search(codeDir string, opts SearchOptions) ([]SearchResult, error) {
 			continue
 		}
 
-		// Check if query matches package name
 		if queryRe != nil && queryRe.MatchString(pkgName) {
 			results = append(results, SearchResult{
 				PackageName: pkgName,

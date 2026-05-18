@@ -4,7 +4,6 @@ package templates
 
 import (
 	"fmt"
-	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -325,7 +324,3 @@ func titleCase(s string) string {
 	return strings.Join(words, " ")
 }
 
-// round1 rounds to 1 decimal place
-func round1(f float64) float64 {
-	return math.Round(f*10) / 10
-}
