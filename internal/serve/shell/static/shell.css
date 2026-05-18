@@ -717,6 +717,101 @@ footer.shell-footer {
 .shell-footer-links a { color: var(--ink-3); }
 
 /* =================================================================
+   Chat input — disabled state
+   ================================================================= */
+.chat-input.chat-input-disabled {
+  background: var(--bg-soft);
+  cursor: not-allowed;
+}
+.chat-input.chat-input-disabled .chat-input-field {
+  background: var(--bg-soft);
+  color: var(--ink-4);
+  cursor: not-allowed;
+}
+.chat-input.chat-input-disabled .chat-input-field::placeholder {
+  color: var(--ink-4);
+}
+.chat-input.chat-input-disabled .chat-input-icon {
+  color: var(--ink-4);
+  opacity: 0.6;
+}
+.chat-input-connect {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: var(--hero-blue-700);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.chat-input-connect:hover { color: var(--hero-blue-900); text-decoration: none; }
+
+/* =================================================================
+   Page breadcrumb (detail-view orientation)
+   ================================================================= */
+.page-breadcrumb {
+  max-width: 1200px;
+  margin: 12px auto 0 auto;
+  padding: 0 32px;
+}
+.page-breadcrumb ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-4);
+  min-height: 28px;
+}
+.page-breadcrumb li { display: inline-flex; align-items: center; }
+.page-breadcrumb li.sep { color: var(--ink-5); padding: 0 2px; }
+.page-breadcrumb a { color: var(--ink-3); }
+.page-breadcrumb a:hover { color: var(--hero-blue-700); text-decoration: none; }
+.page-breadcrumb li[aria-current="page"] { color: var(--hero-ink); font-weight: 500; }
+
+/* =================================================================
+   Rendered markdown bodies (spec detail, knowledge entry detail)
+   Tables, blockquotes, nested lists for mdrender output.
+   ================================================================= */
+.wsd-body table, .kdetail-body table {
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 13px;
+  width: 100%;
+}
+.wsd-body th, .wsd-body td,
+.kdetail-body th, .kdetail-body td {
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+.wsd-body th, .kdetail-body th {
+  background: var(--bg-soft);
+  font-weight: 600;
+  color: var(--hero-ink);
+}
+.wsd-body blockquote, .kdetail-body blockquote {
+  border-left: 3px solid var(--hero-blue-500);
+  padding: 4px 12px;
+  margin: 12px 0;
+  background: var(--bg-soft);
+  color: var(--ink-3);
+}
+.wsd-body blockquote p:first-child,
+.kdetail-body blockquote p:first-child { margin-top: 0; }
+.wsd-body blockquote p:last-child,
+.kdetail-body blockquote p:last-child { margin-bottom: 0; }
+.wsd-body ul ul, .wsd-body ol ol, .wsd-body ul ol, .wsd-body ol ul,
+.kdetail-body ul ul, .kdetail-body ol ol, .kdetail-body ul ol, .kdetail-body ol ul {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+/* =================================================================
    Responsive
    ================================================================= */
 @media (max-width: 900px) {

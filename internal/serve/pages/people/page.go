@@ -42,6 +42,11 @@ type Deps struct {
 	Branch      string
 	UserName    string
 	APISpendUSD func() float64
+	// ChatInteractiveConnected reports whether at least one interactive
+	// chat adapter is currently connected. Nil-safe: nil renders the
+	// inline chat-input in its disabled state. Kept as a function so
+	// this package stays free of chat / runner dependencies.
+	ChatInteractiveConnected func() bool
 }
 
 // Register installs the People home on the shell router. /people defaults
@@ -113,11 +118,27 @@ func (h *handler) chatInputFor(activeSlug string) shell.ChatInput {
 	if activeSlug != "" && activeSlug != "pulse" {
 		chips = append(chips, shell.ChatContextChip{Kind: "view", Label: "view: " + activeSlug})
 	}
-	return shell.ChatInput{
+	in := shell.ChatInput{
 		Variant:     "inline",
 		Placeholder: "Ask Hero about people…",
 		Context:     chips,
 	}
+	if isChatDisabled(h.deps.ChatInteractiveConnected) {
+		in.Disabled = true
+		in.Placeholder = "Connect a chat adapter to enable"
+		in.ConnectHref = "/settings/chat"
+	}
+	return in
+}
+
+// isChatDisabled returns true when no interactive chat adapter is
+// available. Mirrors the helper in the other non-Now home packages.
+// Kept as a func-arg so this package stays free of chat/runner deps.
+func isChatDisabled(probe func() bool) bool {
+	if probe == nil {
+		return true
+	}
+	return !probe()
 }
 
 // renderHeroAndChat writes the page-hero followed by the inline chat-
@@ -142,7 +163,7 @@ func (h *handler) renderPulse(w http.ResponseWriter, req *http.Request) {
 		UserName:    h.deps.UserName,
 	})
 
-	hero := buildPulsePageHero(h.deps, ed, pulse)
+	hero := buildPulsePageHero(h.deps, ed, pulse, "")
 	strip := buildPulseStrip(pulse)
 	subNav := buildSubNav("pulse")
 
@@ -249,6 +270,11 @@ func (h *handler) renderProfileDetail(w http.ResponseWriter, req *http.Request) 
 	}
 	strip := buildPulseStrip(pulse)
 	subNav := buildSubNav("profiles")
+	crumb := &shell.PageBreadcrumb{Crumbs: []shell.BreadcrumbCrumb{
+		{Label: "People", Href: "/people"},
+		{Label: "Profile"},
+		{Label: user, Current: true},
+	}}
 
 	content := func(out io.Writer) error {
 		if err := h.renderHeroAndChat(out, hero, "profile:"+user); err != nil {
@@ -264,7 +290,7 @@ func (h *handler) renderProfileDetail(w http.ResponseWriter, req *http.Request) 
 			Note: "Per-contributor profile lands once the team-coordination subsystem populates the per-user rollup.",
 		})
 	}
-	h.serve(w, req, content, subNav, "People · "+user+" · Hero")
+	h.serveDetail(w, req, content, subNav, crumb, "People · Profile · "+user+" · Hero")
 }
 
 // renderStub renders the home chrome + sub-nav with the shared coming-
@@ -278,7 +304,7 @@ func (h *handler) renderStub(w http.ResponseWriter, req *http.Request, slug, vie
 		UserName:    h.deps.UserName,
 	})
 
-	hero := buildPulsePageHero(h.deps, ed, pulse)
+	hero := buildPulsePageHero(h.deps, ed, pulse, view)
 	strip := buildPulseStrip(pulse)
 	subNav := buildSubNav(slug)
 
@@ -297,10 +323,16 @@ func (h *handler) renderStub(w http.ResponseWriter, req *http.Request, slug, vie
 }
 
 func (h *handler) serve(w http.ResponseWriter, req *http.Request, content func(io.Writer) error, subNav *shell.SubNav, title string) {
+	h.serveDetail(w, req, content, subNav, nil, title)
+}
+
+// serveDetail is the breadcrumb-aware variant used by detail routes.
+func (h *handler) serveDetail(w http.ResponseWriter, req *http.Request, content func(io.Writer) error, subNav *shell.SubNav, crumb *shell.PageBreadcrumb, title string) {
 	page := shell.Page{
 		ActiveHome: "people",
 		PageTitle:  title,
 		SubNav:     subNav,
+		Breadcrumb: crumb,
 		Content:    content,
 		HeadExtra:  template.HTML(peopleStyles + peopleScript),
 	}
@@ -360,12 +392,18 @@ func (h *handler) callSpend() float64 {
 
 // buildPulsePageHero composes the page-hero data for the Pulse view.
 // Subhead reflects presence + activity counts only — no ROI dollars.
-func buildPulsePageHero(deps Deps, ed edition.Edition, p data.Pulse) shell.PageHero {
+// subView, when non-empty, is appended to the title as `People · <Sub>`
+// per polish-v3 Fix 5.
+func buildPulsePageHero(deps Deps, ed edition.Edition, p data.Pulse, subView string) shell.PageHero {
 	eyebrow := fmt.Sprintf("hero · %s · people", firstNonEmpty(deps.Branch, "main"))
 	subhead := template.HTML("Team pulse — who is working, on what, and what just shipped.")
+	title := "People"
+	if subView != "" {
+		title = "People · " + subView
+	}
 	return shell.PageHero{
 		Eyebrow: template.HTML(template.HTMLEscapeString(eyebrow)),
-		Title:   "People",
+		Title:   title,
 		Subhead: subhead,
 		Actions: []shell.PageHeroAction{
 			{Kind: "ghost", Label: "Open ROI Overview", Href: "/people/roi"},
@@ -379,7 +417,8 @@ func buildROIPageHero(deps Deps, ed edition.Edition, overview data.ROIOverview) 
 	eyebrow := fmt.Sprintf("hero · %s · roi", firstNonEmpty(deps.Branch, "main"))
 	return shell.PageHero{
 		Eyebrow: template.HTML(template.HTMLEscapeString(eyebrow)),
-		Title:   "People & ROI",
+		// Per polish-v3 Fix 5: sub-routes show `<Home> · <Sub-view>`.
+		Title:   "People · ROI Overview",
 		Subhead: overview.SubheadHTML,
 		Actions: []shell.PageHeroAction{
 			{Kind: "ghost", Label: overview.WindowLabel, Href: "#"},

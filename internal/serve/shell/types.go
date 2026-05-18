@@ -49,11 +49,33 @@ type Page struct {
 	PageTitle string
 	// SubNav, if non-nil, renders a sub-nav row below the top nav.
 	SubNav *SubNav
+	// Breadcrumb, if non-nil, renders a small page-breadcrumb row
+	// above the page hero (between the sub-nav row and the page
+	// content). Used on detail views to orient the user inside the
+	// hierarchy.
+	Breadcrumb *PageBreadcrumb
 	// Content writes the body of the page into w.
 	Content func(io.Writer) error
 	// HeadExtra is appended inside <head>. Use for home-specific
 	// <link>/<script> tags.
 	HeadExtra template.HTML
+}
+
+// ----- Page breadcrumb (consumed by page-breadcrumb.html) --------------
+
+// PageBreadcrumb is the small breadcrumb trail rendered above the page
+// hero on detail views (e.g. `Knowledge › Hero serve grammar pivot`).
+type PageBreadcrumb struct {
+	Crumbs []BreadcrumbCrumb
+}
+
+// BreadcrumbCrumb is one segment of a page-breadcrumb trail. Href
+// empty marks the segment as non-linked (typically the current page,
+// also flagged with Current=true).
+type BreadcrumbCrumb struct {
+	Label   string
+	Href    string
+	Current bool
 }
 
 // ----- Top-nav chrome (consumed by top-nav.html) -----------------------
@@ -157,10 +179,17 @@ type SubNavTab struct {
 // ChatInput parameterizes the chat-input fragment.
 //
 // Variant: "hero" | "overlay" | "inline"
+// Disabled flips the input to its non-interactive state — used by the
+// four non-Now homes when no chat adapter is connected.
 type ChatInput struct {
 	Variant     string
 	Placeholder string
 	Context     []ChatContextChip
+	Disabled    bool
+	// ConnectHref, when set on a disabled input, renders a small
+	// "Connect adapter →" link beside the input pointing at this URL.
+	// Empty hides the link (the disabled state still applies).
+	ConnectHref string
 }
 
 // ChatContextChip is one chip rendered below the chat input.

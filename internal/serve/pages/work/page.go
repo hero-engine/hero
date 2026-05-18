@@ -35,6 +35,14 @@ type Deps struct {
 	Workspace   string
 	Branch      string
 	UserName    string
+	// ChatInteractiveConnected reports whether at least one interactive
+	// chat adapter is currently connected. The handler uses this to
+	// flip the inline chat-input into its disabled state. Nil-safe:
+	// nil is treated as "no adapter" so the input renders disabled.
+	//
+	// Kept as a function rather than importing chat.* so this package
+	// stays free of chat / runner dependencies (see import_test).
+	ChatInteractiveConnected func() bool
 }
 
 // Register installs the Work home on the shell router using the
@@ -104,11 +112,29 @@ func (h *handler) chatInputFor(activeSlug string) shell.ChatInput {
 	if activeSlug != "" {
 		chips = append(chips, shell.ChatContextChip{Kind: "view", Label: "view: " + activeSlug})
 	}
-	return shell.ChatInput{
+	in := shell.ChatInput{
 		Variant:     "inline",
 		Placeholder: "Ask Hero about work…",
 		Context:     chips,
 	}
+	if isChatDisabled(h.deps.ChatInteractiveConnected) {
+		in.Disabled = true
+		in.Placeholder = "Connect a chat adapter to enable"
+		in.ConnectHref = "/settings/chat"
+	}
+	return in
+}
+
+// isChatDisabled returns true when no interactive chat adapter is
+// available — either the probe is nil (treated as "no adapter") or
+// the probe returns false. The four non-Now homes use this to flip
+// the inline chat-input to its disabled state without importing
+// chat / runner internals (see import_test).
+func isChatDisabled(probe func() bool) bool {
+	if probe == nil {
+		return true
+	}
+	return !probe()
 }
 
 // renderHeroAndChat writes the page-hero followed by the inline chat-
@@ -163,7 +189,7 @@ func (h *handler) buildPage(req *http.Request, ed edition.Edition) shell.Page {
 		Counts:      counts,
 	})
 
-	hero := buildPageHero(h.deps, ed, counts)
+	hero := buildPageHero(h.deps, ed, counts, "")
 	strip := buildMetricStrip(metrics)
 
 	pd := pageData{
@@ -205,7 +231,7 @@ func (h *handler) renderBlocked(w http.ResponseWriter, req *http.Request) {
 		ProjectRoot: h.deps.ProjectRoot, HeroDir: h.deps.HeroDir, Counts: counts,
 	})
 
-	hero := buildPageHero(h.deps, ed, counts)
+	hero := buildPageHero(h.deps, ed, counts, "Blocked")
 	strip := buildMetricStrip(metrics)
 
 	content := func(out io.Writer) error {
@@ -255,7 +281,15 @@ func (h *handler) renderSpecDetail(w http.ResponseWriter, req *http.Request) {
 
 	hero := buildSpecDetailPageHero(h.deps, detail)
 	strip := buildMetricStrip(metrics)
+	crumb := &shell.PageBreadcrumb{Crumbs: []shell.BreadcrumbCrumb{
+		{Label: "Work", Href: "/work"},
+		{Label: "Spec"},
+		{Label: detail.Slug, Current: true},
+	}}
 
+	// Per polish-v3 Fix 2: spec detail skips the in-page view-toggle
+	// row (the user is no longer choosing a view); the breadcrumb
+	// above takes over for orientation.
 	content := func(out io.Writer) error {
 		if err := h.renderHeroAndChat(out, hero, "spec:"+detail.Slug); err != nil {
 			return err
@@ -269,7 +303,8 @@ func (h *handler) renderSpecDetail(w http.ResponseWriter, req *http.Request) {
 	_ = ed
 	page := shell.Page{
 		ActiveHome: "work",
-		PageTitle:  "Work · " + detail.Title + " · Hero",
+		PageTitle:  "Work · Spec · " + detail.Slug + " · Hero",
+		Breadcrumb: crumb,
 		Content:    content,
 		HeadExtra:  template.HTML(workStyles + workScript),
 	}
@@ -279,8 +314,9 @@ func (h *handler) renderSpecDetail(w http.ResponseWriter, req *http.Request) {
 }
 
 // buildSpecDetailPageHero composes the page-hero for the spec detail
-// view. Subhead lists type / status / horizon plus the Goal one-liner
-// when short.
+// view. Title is the spec title (the breadcrumb above shows the
+// `Work › Spec › <slug>` crumb trail per polish-v3 Fix 2). Subhead
+// lists type / status / horizon plus the Goal one-liner when short.
 func buildSpecDetailPageHero(deps Deps, d *data.SpecDetail) shell.PageHero {
 	branch := deps.Branch
 	if branch == "" {
@@ -333,7 +369,7 @@ func (h *handler) renderStub(w http.ResponseWriter, req *http.Request, slug, vie
 		ProjectRoot: h.deps.ProjectRoot, HeroDir: h.deps.HeroDir, Counts: counts,
 	})
 
-	hero := buildPageHero(h.deps, ed, counts)
+	hero := buildPageHero(h.deps, ed, counts, view)
 	strip := buildMetricStrip(metrics)
 
 	content := func(out io.Writer) error {
@@ -423,7 +459,9 @@ type toolbarData struct {
 }
 
 // buildPageHero composes the page-hero data block from current counts.
-func buildPageHero(deps Deps, ed edition.Edition, c data.PageCounts) shell.PageHero {
+// subView, when non-empty, is appended to the title as `Work · <Sub>`
+// per polish-v3 Fix 5.
+func buildPageHero(deps Deps, ed edition.Edition, c data.PageCounts, subView string) shell.PageHero {
 	branch := deps.Branch
 	if branch == "" {
 		branch = "main"
@@ -444,9 +482,13 @@ func buildPageHero(deps Deps, ed edition.Edition, c data.PageCounts) shell.PageH
 
 	_ = ed
 
+	title := "Work"
+	if subView != "" {
+		title = "Work · " + subView
+	}
 	return shell.PageHero{
 		Eyebrow: template.HTML(template.HTMLEscapeString(eyebrow)),
-		Title:   "Work",
+		Title:   title,
 		Subhead: template.HTML(subhead),
 		Actions: []shell.PageHeroAction{
 			{Kind: "primary", Label: "New spec", Href: "#"},

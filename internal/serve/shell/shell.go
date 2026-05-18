@@ -231,6 +231,7 @@ func (r *Router) RenderPage(w http.ResponseWriter, req *http.Request, p Page) er
 		HeadExtra   template.HTML
 		Chrome      Chrome
 		SubNav      *SubNav
+		Breadcrumb  *PageBreadcrumb
 		Footer      Footer
 		ContentHTML template.HTML
 	}{
@@ -238,6 +239,7 @@ func (r *Router) RenderPage(w http.ResponseWriter, req *http.Request, p Page) er
 		HeadExtra:   p.HeadExtra,
 		Chrome:      r.buildChrome(req, p.ActiveHome),
 		SubNav:      p.SubNav,
+		Breadcrumb:  p.Breadcrumb,
 		Footer:      r.buildFooter(),
 		ContentHTML: template.HTML(body.String()),
 	}

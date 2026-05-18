@@ -16,6 +16,9 @@
   {{- with .SubNav }}
   {{ template "sub-nav" . }}
   {{- end }}
+  {{- with .Breadcrumb }}
+  {{ template "page-breadcrumb" . }}
+  {{- end }}
   <main class="page-container">
     {{ .ContentHTML }}
   </main>

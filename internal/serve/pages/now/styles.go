@@ -383,6 +383,48 @@ const nowStyles = `<style>
   font-style: italic;
   padding: 0 8px 8px 8px;
 }
+.now-feed-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+}
+.now-feed-count strong { color: var(--hero-ink); font-weight: 600; }
+.now-feed-expand {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--ink-3);
+  font-size: 10px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 6px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.now-feed-expand:hover {
+  background: var(--bg-soft);
+  color: var(--hero-blue-700);
+  border-color: var(--hero-blue-300);
+}
+.now-feed-expand[aria-expanded="true"] { transform: rotate(180deg); }
+.now-feed-collapsed-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 6px 0 6px 0;
+  padding: 8px 12px;
+  background: var(--bg-soft);
+  border-radius: 6px;
+  font-size: 12px;
+}
+.now-feed-collapsed-row {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 14px;
+  align-items: center;
+  color: var(--ink-3);
+}
 
 /* --- Quick launch --- */
 .now-launch { text-align: center; padding: 16px 0 8px 0; }
@@ -517,6 +559,22 @@ const nowScript = `<script>
     if (!input) return;
     input.value = chip.textContent.trim() + ' ';
     input.focus();
+  });
+
+  // Changes-feed expand/collapse — per polish-v3 Fix 3, count-badge
+  // rows toggle a sibling .now-feed-collapsed-rows div on click.
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.now-feed-expand');
+    if (!btn) return;
+    e.preventDefault();
+    var wrap = btn.closest('[data-feed-collapsed-toggle]');
+    if (!wrap) return;
+    var idx = wrap.getAttribute('data-feed-collapsed-toggle');
+    var rows = document.querySelector('[data-feed-collapsed-rows="' + idx + '"]');
+    if (!rows) return;
+    var open = !rows.hasAttribute('hidden');
+    if (open) { rows.setAttribute('hidden', ''); btn.setAttribute('aria-expanded', 'false'); }
+    else      { rows.removeAttribute('hidden');  btn.setAttribute('aria-expanded', 'true');  }
   });
 
   // Focus the launch input on '/' when no other input is active.
