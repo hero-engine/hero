@@ -158,7 +158,10 @@ func (h *handler) handle(w http.ResponseWriter, req *http.Request) {
 }
 
 // buildPage assembles the Page envelope for the default Horizons view.
-// Reads the query string for filter + pagination state.
+// Reads the query string for filter + pagination state. Per v4 Fix 1,
+// the root view also renders the view-toolbar with Horizons active so
+// the toolbar chrome is consistent across /work, /work/kanban,
+// /work/graph, and /work/blocked.
 func (h *handler) buildPage(req *http.Request, ed edition.Edition) shell.Page {
 	q := req.URL.Query()
 	rmIn := data.RoadmapInputs{
@@ -205,6 +208,9 @@ func (h *handler) buildPage(req *http.Request, ed edition.Edition) shell.Page {
 		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {
 			return err
 		}
+		if err := h.tmpl.ExecuteTemplate(out, "view-toolbar.html", toolbarData{BlockedCount: roadmap.BlockedCount, Active: "horizons"}); err != nil {
+			return err
+		}
 		return h.tmpl.ExecuteTemplate(out, "page.html", pd)
 	}
 
@@ -241,7 +247,7 @@ func (h *handler) renderBlocked(w http.ResponseWriter, req *http.Request) {
 		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {
 			return err
 		}
-		if err := h.tmpl.ExecuteTemplate(out, "view-toolbar.html", toolbarData{BlockedCount: blocked.Total}); err != nil {
+		if err := h.tmpl.ExecuteTemplate(out, "view-toolbar.html", toolbarData{BlockedCount: blocked.Total, Active: "blocked"}); err != nil {
 			return err
 		}
 		return h.tmpl.ExecuteTemplate(out, "blocked.html", blocked)
@@ -300,10 +306,19 @@ func (h *handler) renderSpecDetail(w http.ResponseWriter, req *http.Request) {
 		return h.tmpl.ExecuteTemplate(out, "spec-detail.html", detail)
 	}
 
+	// Per v4 Fix 4: browser <title> includes the display title after
+	// the slug so the tab is searchable by either. Falls back to slug-
+	// only when the loader couldn't parse a title.
+	title := "Work · Spec · " + detail.Slug
+	if strings.TrimSpace(detail.Title) != "" && detail.Title != detail.Slug {
+		title += " — " + detail.Title
+	}
+	title += " · Hero"
+
 	_ = ed
 	page := shell.Page{
 		ActiveHome: "work",
-		PageTitle:  "Work · Spec · " + detail.Slug + " · Hero",
+		PageTitle:  title,
 		Breadcrumb: crumb,
 		Content:    content,
 		HeadExtra:  template.HTML(workStyles + workScript),
@@ -379,7 +394,7 @@ func (h *handler) renderStub(w http.ResponseWriter, req *http.Request, slug, vie
 		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {
 			return err
 		}
-		if err := h.tmpl.ExecuteTemplate(out, "view-toolbar.html", toolbarData{BlockedCount: roadmap.BlockedCount}); err != nil {
+		if err := h.tmpl.ExecuteTemplate(out, "view-toolbar.html", toolbarData{BlockedCount: roadmap.BlockedCount, Active: slug}); err != nil {
 			return err
 		}
 		return h.router.RenderFragment(out, "coming-soon", stubData{
@@ -435,7 +450,11 @@ func (h *handler) renderSection(section string) ([]byte, error) {
 			ProjectRoot: h.deps.ProjectRoot,
 			HeroDir:     h.deps.HeroDir,
 		})
-		payload = toolbarData{BlockedCount: rm.BlockedCount}
+		// SSE fragment refresh — defaults to horizons (root view). Sub-
+		// routes get their own re-render on full page load; the fragment
+		// endpoint is currently only used to refresh the blocked badge,
+		// which is independent of the active-tab indicator.
+		payload = toolbarData{BlockedCount: rm.BlockedCount, Active: "horizons"}
 	default:
 		return nil, fmt.Errorf("unknown section %q", section)
 	}
@@ -456,6 +475,10 @@ type pageData struct {
 
 type toolbarData struct {
 	BlockedCount int
+	// Active is the slug of the currently-active view-tab. Valid values:
+	// "horizons", "kanban", "graph", "blocked". Empty renders no tab as
+	// active (callers should always set it).
+	Active string
 }
 
 // buildPageHero composes the page-hero data block from current counts.

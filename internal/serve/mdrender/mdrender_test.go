@@ -128,6 +128,86 @@ func TestRender_Blockquote(t *testing.T) {
 	}
 }
 
+func TestRender_WrappedBulletItem(t *testing.T) {
+	// A bullet whose body wraps to a second source line (no marker)
+	// should fold the second line into the same <li> joined by a space,
+	// not break out as a sibling <p>. (v4 Fix 2)
+	md := "- top bullet that wraps\n  to a second source line\n- single line\n"
+	out := string(Render(md))
+	if !strings.Contains(out, "<li>top bullet that wraps to a second source line</li>") {
+		t.Errorf("wrapped bullet not joined into single <li>: %q", out)
+	}
+	if !strings.Contains(out, "<li>single line</li>") {
+		t.Errorf("subsequent bullet missing or merged: %q", out)
+	}
+	if strings.Contains(out, "<p>to a second source line</p>") {
+		t.Errorf("continuation rendered as sibling <p>: %q", out)
+	}
+}
+
+func TestRender_WrappedBulletThenNestedList(t *testing.T) {
+	// A wrapped bullet whose next line is a deeper-indented nested
+	// marker should stop continuation at the nested marker and emit
+	// a nested <ul> inside the outer <li>. (v4 Fix 2)
+	md := "- outer wraps here\n  continuation text\n  - nested A\n  - nested B\n"
+	out := string(Render(md))
+	if !strings.Contains(out, "outer wraps here continuation text") {
+		t.Errorf("continuation not folded into outer <li>: %q", out)
+	}
+	if strings.Count(out, "<ul>") < 2 {
+		t.Errorf("nested <ul> missing (got %d <ul> opens): %q", strings.Count(out, "<ul>"), out)
+	}
+	for _, want := range []string{"nested A", "nested B"} {
+		if !strings.Contains(out, "<li>"+want+"</li>") {
+			t.Errorf("nested item %q missing: %q", want, out)
+		}
+	}
+}
+
+func TestRender_WrappedBulletStopsAtBlank(t *testing.T) {
+	// A blank line terminates continuation — a paragraph after the
+	// blank should render as its own <p>, not be folded into the <li>.
+	md := "- one wraps\n  to the next line\n\nA new paragraph after the list.\n"
+	out := string(Render(md))
+	if !strings.Contains(out, "<li>one wraps to the next line</li>") {
+		t.Errorf("wrapped bullet not joined: %q", out)
+	}
+	if !strings.Contains(out, "<p>A new paragraph after the list.</p>") {
+		t.Errorf("post-list paragraph swallowed: %q", out)
+	}
+}
+
+func TestRender_TableEscapedPipe(t *testing.T) {
+	// `\|` inside a cell renders as a literal pipe character and
+	// preserves the column count. (v4 Fix 6)
+	md := "| Cell | Other |\n| --- | --- |\n| a \\| b | c |\n"
+	out := string(Render(md))
+	if !strings.Contains(out, "<table>") {
+		t.Errorf("table missing on escaped-pipe row: %q", out)
+	}
+	if !strings.Contains(out, "<td>a | b</td>") {
+		t.Errorf("escaped pipe not unescaped: %q", out)
+	}
+	if !strings.Contains(out, "<td>c</td>") {
+		t.Errorf("second cell missing: %q", out)
+	}
+}
+
+func TestSplitTableRow_EscapedPipe(t *testing.T) {
+	// Direct unit test on the splitter — `| a \| b | c |` produces
+	// two cells: "a | b" and "c". Outer pipes are stripped.
+	cells := splitTableRow(`| a \| b | c |`)
+	if len(cells) != 2 {
+		t.Fatalf("expected 2 cells, got %d: %v", len(cells), cells)
+	}
+	if strings.TrimSpace(cells[0]) != "a | b" {
+		t.Errorf("cell[0] = %q, want %q", strings.TrimSpace(cells[0]), "a | b")
+	}
+	if strings.TrimSpace(cells[1]) != "c" {
+		t.Errorf("cell[1] = %q, want %q", strings.TrimSpace(cells[1]), "c")
+	}
+}
+
 func TestRender_NestedBulletList(t *testing.T) {
 	md := "- top one\n  - nested A\n  - nested B\n- top two\n"
 	out := string(Render(md))

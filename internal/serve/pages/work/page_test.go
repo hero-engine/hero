@@ -50,31 +50,65 @@ func TestRegister_RendersAllSections(t *testing.T) {
 	}
 	body := string(raw)
 
-	// The page must render the page chrome, metric strip, view toolbar,
-	// and each section's stable id so SSE fragment swaps can locate
-	// them — even on an empty workspace.
+	// The page must render the page chrome, metric strip, view toolbar
+	// (back on root per v4 Fix 1, with Horizons active), and each
+	// section's stable id so SSE fragment swaps can locate them — even
+	// on an empty workspace.
 	mustContain := []string{
 		`<nav class="topnav">`,
-		// view-toolbar is gone from the default /work view (Fix 2 in
-		// hero-surface-polish-v2); rm-filters is the sole filter UI.
 		`class="rm-filters"`,
+		`class="view-toolbar"`,
+		`id="work-toolbar"`,
+		`class="view-tab active">Horizons</a>`,
 		`id="work-roadmap"`,
 		`id="work-blocked"`,
 		`id="work-shipped"`,
 		`class="metric-tab`,
 	}
-	mustNotContain := []string{
-		`class="view-toolbar"`,
-		`id="work-toolbar"`,
-	}
-	for _, bad := range mustNotContain {
-		if strings.Contains(body, bad) {
-			t.Errorf("/work unexpectedly contains %q (view-toolbar removed in polish-v2)", bad)
-		}
-	}
 	for _, want := range mustContain {
 		if !strings.Contains(body, want) {
 			t.Errorf("response missing %q", want)
+		}
+	}
+}
+
+// TestRegister_ViewToolbarActiveStateMatchesRoute asserts the v4 Fix 1
+// contract: each Work sub-route renders the view-toolbar with exactly
+// one matching tab marked `active`. (Pre-v4 the active class was hard-
+// coded to Horizons on every route.)
+func TestRegister_ViewToolbarActiveStateMatchesRoute(t *testing.T) {
+	r := newTestRouter(t)
+	if err := Register(r, Deps{UserName: "test-user"}); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	srv := httptest.NewServer(r.Handler())
+	defer srv.Close()
+
+	cases := []struct {
+		path string
+		want string
+	}{
+		{"/work", `class="view-tab active">Horizons</a>`},
+		{"/work/kanban", `class="view-tab active">Kanban</a>`},
+		{"/work/graph", `class="view-tab active">Graph</a>`},
+		{"/work/blocked", `class="view-tab active">Blocked`},
+	}
+	for _, tc := range cases {
+		resp, err := http.Get(srv.URL + tc.path)
+		if err != nil {
+			t.Errorf("GET %s: %v", tc.path, err)
+			continue
+		}
+		raw, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		body := string(raw)
+		if !strings.Contains(body, tc.want) {
+			t.Errorf("GET %s: missing active marker %q", tc.path, tc.want)
+		}
+		// And no other tab is active on the same page: count the
+		// occurrences of `view-tab active` — must be exactly one.
+		if got := strings.Count(body, `view-tab active`); got != 1 {
+			t.Errorf("GET %s: expected exactly 1 active view-tab, got %d", tc.path, got)
 		}
 	}
 }

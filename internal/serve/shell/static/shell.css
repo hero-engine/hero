@@ -780,7 +780,11 @@ footer.shell-footer {
   border-collapse: collapse;
   margin: 16px 0;
   font-size: 13px;
-  width: 100%;
+  /* v4 Fix 5: size to content so short tables don't stretch edge-to-
+     edge in narrow detail containers; max-width keeps the overflow
+     guard for wide tables. */
+  width: auto;
+  max-width: 100%;
 }
 .wsd-body th, .wsd-body td,
 .kdetail-body th, .kdetail-body td {

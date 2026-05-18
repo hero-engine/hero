@@ -7,10 +7,10 @@
 <section id="work-toolbar">
   <div class="view-toolbar">
     <div class="view-tabs">
-      <a href="/work" class="view-tab active">Horizons</a>
-      <a href="/work/kanban" class="view-tab">Kanban</a>
-      <a href="/work/graph" class="view-tab">Graph</a>
-      <a href="/work/blocked" class="view-tab">Blocked
+      <a href="/work" class="view-tab{{ if eq .Active "horizons" }} active{{ end }}">Horizons</a>
+      <a href="/work/kanban" class="view-tab{{ if eq .Active "kanban" }} active{{ end }}">Kanban</a>
+      <a href="/work/graph" class="view-tab{{ if eq .Active "graph" }} active{{ end }}">Graph</a>
+      <a href="/work/blocked" class="view-tab{{ if eq .Active "blocked" }} active{{ end }}">Blocked
         {{- if gt .BlockedCount 0 }} <span class="badge">{{ .BlockedCount }}</span>{{ end }}
       </a>
     </div>
