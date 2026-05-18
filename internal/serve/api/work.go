@@ -118,10 +118,13 @@ func (h *WorkHandler) handleEvents(w http.ResponseWriter, r *http.Request) {
 
 // handleSection returns an http.HandlerFunc that renders the named
 // section as a standalone HTML fragment. Used by the client-side SSE
-// subscriber to swap a section in place.
+// subscriber to swap a section in place. Per v5 Fix 4, the toolbar
+// section honors `?view=<slug>` so a fragment refresh on a non-root
+// Work sub-route doesn't snap the active tab back to Horizons.
 func (h *WorkHandler) handleSection(section string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		body, err := work.SectionFragment(h.deps, section)
+		view := r.URL.Query().Get("view")
+		body, err := work.SectionFragment(h.deps, section, view)
 		if err != nil {
 			http.Error(w, "render section: "+err.Error(), http.StatusInternalServerError)
 			return

@@ -399,33 +399,60 @@ func renderTable(out *strings.Builder, lines []string, start int) int {
 // splitTableRow splits a `| a | b | c |` row into its inner cells. The
 // outer pipes are tolerated when present.
 //
-// Per v4 Fix 6, an escaped pipe `\|` is treated as a literal `|` inside
-// the current cell and unescaped on return. Other backslash sequences
-// pass through untouched — we don't ship general escape handling yet.
+// Escape handling (v5 Fix 5): the cell walk tracks a real `escaped`
+// state, so:
+//   - `\|`   → literal `|` inside the current cell (unescaped on return)
+//   - `\\|`  → literal `\` in the current cell, then column separator
+//   - `\\`   → literal `\` in the current cell
+//   - dangling trailing `\` is dropped
+//
+// Non-pipe / non-backslash backslash sequences pass through untouched —
+// we don't ship general escape handling yet.
 func splitTableRow(line string) []string {
 	line = strings.TrimSpace(line)
 	if line == "" {
 		return nil
 	}
-	// Trim leading/trailing pipe so split doesn't produce empty edge
-	// cells. We check the raw byte (not an escape-aware position) — a
-	// leading `\|` is impossible at index 0 since there's nothing
-	// before it to escape, and a trailing `\|` is preserved by the
-	// `line[len-2] == '\\'` guard.
+	// Trim leading pipe so split doesn't produce an empty leading edge
+	// cell. A leading `\|` is impossible at index 0 (nothing to escape).
 	if strings.HasPrefix(line, "|") {
 		line = line[1:]
 	}
-	if strings.HasSuffix(line, "|") && !(len(line) >= 2 && line[len(line)-2] == '\\') {
-		line = line[:len(line)-1]
+	// Trim trailing pipe only when it's not part of a literal `\|` or
+	// of a `\\|` sequence. We need an escape-aware look-back: count
+	// trailing backslashes; an odd count means the final pipe is
+	// escaped (literal pipe in cell), an even count (including zero)
+	// means the pipe is a real column separator and we can drop it.
+	if strings.HasSuffix(line, "|") {
+		bs := 0
+		for j := len(line) - 2; j >= 0 && line[j] == '\\'; j-- {
+			bs++
+		}
+		if bs%2 == 0 {
+			line = line[:len(line)-1]
+		}
 	}
 
 	var cells []string
 	var cur strings.Builder
+	escaped := false
 	for i := 0; i < len(line); i++ {
 		c := line[i]
-		if c == '\\' && i+1 < len(line) && line[i+1] == '|' {
-			cur.WriteByte('|')
-			i++
+		if escaped {
+			// Pipe and backslash get unescaped; any other escaped char
+			// keeps the backslash (we don't claim general escape support).
+			switch c {
+			case '|', '\\':
+				cur.WriteByte(c)
+			default:
+				cur.WriteByte('\\')
+				cur.WriteByte(c)
+			}
+			escaped = false
+			continue
+		}
+		if c == '\\' {
+			escaped = true
 			continue
 		}
 		if c == '|' {
@@ -435,6 +462,8 @@ func splitTableRow(line string) []string {
 		}
 		cur.WriteByte(c)
 	}
+	// A dangling trailing `\` (escape state still open) is dropped —
+	// matches the "incomplete escape" behavior of most md renderers.
 	cells = append(cells, cur.String())
 	return cells
 }

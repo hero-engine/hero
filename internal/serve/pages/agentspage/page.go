@@ -457,8 +457,8 @@ func (h *handler) buildSubNav(ed edition.Edition, s data.Sessions, activeSlug st
 
 // buildPageHero composes the page-hero data block from current counts.
 // subView, when non-empty, is appended to the title as `Agents · <Sub>`
-// per polish-v3 Fix 5. Empty leaves the title as "Sessions" (the
-// historical default for the home root view).
+// per polish-v3 Fix 5. Empty renders the home root title as "Agents"
+// (consistent with sibling homes — was "Sessions" pre-v5).
 func (h *handler) buildPageHero(ed edition.Edition, s data.Sessions, subView string) shell.PageHero {
 	branch := h.deps.Branch
 	if branch == "" {
@@ -484,7 +484,7 @@ func (h *handler) buildPageHero(ed edition.Edition, s data.Sessions, subView str
 	}
 	actions = append(actions, shell.PageHeroAction{Kind: "ghost", Label: "Pause my agents", Href: "#"})
 
-	title := "Sessions"
+	title := "Agents"
 	if subView != "" {
 		title = "Agents · " + subView
 	}
