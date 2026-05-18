@@ -2,6 +2,7 @@ package serve
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/serve/chat"
 )
 
 // Run starts the MCP server, reading from input and writing to output.
@@ -92,6 +94,11 @@ func (s *MCPServer) handleInitialize(req *JSONRPCRequest) {
 		}
 	}
 
+	// Parse the client's capabilities; if hero_dispatch is declared
+	// and a chat registry is attached, register the client as an
+	// adapter for the lifetime of this MCP session.
+	s.tryRegisterDispatchClient(req)
+
 	// Build dynamic instructions via auto-prime if configured
 	instructions := "Hero provides spec-driven AI engineering workflow tools. Use these tools to query project knowledge, search specs, check workspace health, and get context-aware nudges."
 
@@ -167,6 +174,77 @@ func (s *MCPServer) send(resp JSONRPCResponse) {
 	}
 	s.logDebug("← %s", string(data))
 	fmt.Fprintf(s.output, "%s\n", data)
+}
+
+// tryRegisterDispatchClient parses the client's hero_dispatch
+// capability (if any) and registers an mcpClientAdapter wrapper in
+// the chat registry. The actual server-initiated dispatch path is
+// stubbed today — Stream returns a "not yet wired" error until
+// hero-code's adapter side ships. This preserves the chat registry as
+// the source of truth for which adapters are present.
+func (s *MCPServer) tryRegisterDispatchClient(req *JSONRPCRequest) {
+	if s.chatRegistry == nil || req.Params == nil {
+		return
+	}
+	var params struct {
+		Capabilities MCPCapabilities `json:"capabilities"`
+	}
+	if err := json.Unmarshal(req.Params, &params); err != nil {
+		return
+	}
+	if params.Capabilities.HeroDispatch == nil {
+		return
+	}
+	declared := params.Capabilities.HeroDispatch
+	if declared.Adapter == "" {
+		return
+	}
+	kinds := make([]chat.Kind, 0, len(declared.Kinds))
+	for _, k := range declared.Kinds {
+		kinds = append(kinds, chat.Kind(k))
+	}
+	id := declared.SessionID
+	if id == "" {
+		id = s.sessionID
+	}
+	adapter := &mcpClientAdapter{
+		name:    declared.Adapter,
+		version: declared.Version,
+		kinds:   kinds,
+	}
+	if err := s.chatRegistry.Register(id, adapter); err != nil {
+		s.logDebug("chat: register adapter %s: %v", id, err)
+	}
+}
+
+// mcpClientAdapter is a placeholder adapter for MCP clients that
+// declared hero_dispatch on initialize. The server-initiated dispatch
+// path that actually calls back into the client's hero_chat tool is
+// still being built on hero-code's side (see the cross-repo peering
+// trail on hero-chat-and-model). Until that lands, this adapter
+// shows up in capability listings but Stream returns an error.
+type mcpClientAdapter struct {
+	name    string
+	version string
+	kinds   []chat.Kind
+}
+
+func (a *mcpClientAdapter) Name() string      { return a.name }
+func (a *mcpClientAdapter) Version() string   { return a.version }
+func (a *mcpClientAdapter) Kinds() []chat.Kind { return a.kinds }
+func (a *mcpClientAdapter) Close() error      { return nil }
+func (a *mcpClientAdapter) Stream(ctx context.Context, req chat.DispatchRequest) (<-chan chat.Event, error) {
+	out := make(chan chat.Event, 2)
+	go func() {
+		defer close(out)
+		out <- chat.ErrorEvent(
+			"adapter_not_wired",
+			fmt.Sprintf("adapter %q registered but server-initiated dispatch is not yet implemented", a.name),
+			"",
+		)
+		out <- chat.DoneEvent(0, nil)
+	}()
+	return out, nil
 }
 
 // logDebug writes a timestamped line to the debug log if enabled.

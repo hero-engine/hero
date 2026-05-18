@@ -88,6 +88,41 @@ type Config struct {
 	// untouched for backward compatibility.
 	RepoMeta map[string]RepoMetaEntry `json:"repo_meta,omitempty"`
 	Content  *ContentConfig           `json:"content,omitempty"`
+	// Chat holds chat-dispatcher settings consumed by
+	// internal/serve/chat (capability resolver, hero-code probe).
+	Chat *ChatConfig `json:"chat,omitempty"`
+}
+
+// ChatConfig holds chat-dispatcher settings.
+//
+// Hero serve never runs inference. The only chat-side configuration
+// is which adapter the user prefers (display tiebreak) and where to
+// reach hero-code if it's not running on the well-known default.
+type ChatConfig struct {
+	// PreferredInteractive names the adapter type (e.g. "hero-code",
+	// "claude-code-bridge") preferred for interactive turns. Empty
+	// falls through to "hero-code first, then first connected".
+	PreferredInteractive string `json:"preferred_interactive,omitempty"`
+
+	// Headless holds endpoint settings for the canonical headless
+	// adapter (hero-code).
+	Headless *ChatHeadlessConfig `json:"headless,omitempty"`
+}
+
+// ChatHeadlessConfig holds endpoint settings for the canonical
+// headless adapter (hero-code).
+type ChatHeadlessConfig struct {
+	// Endpoint is where hero-code listens. Recognized shapes:
+	//   unix:///path/to/socket
+	//   http://host:port
+	//   https://host:port
+	// Empty disables the proactive probe; hero-code can still
+	// register itself by initializing over MCP with a hero_dispatch
+	// capability.
+	Endpoint string `json:"endpoint,omitempty"`
+
+	// FallbackEndpoint is tried when Endpoint is unreachable.
+	FallbackEndpoint string `json:"fallback_endpoint,omitempty"`
 }
 
 // RepoMetaEntry holds peer-discovery metadata about a configured

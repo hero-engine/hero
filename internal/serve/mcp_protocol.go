@@ -48,9 +48,23 @@ type MCPServerInfo struct {
 	Version string `json:"version"`
 }
 
-// MCPCapabilities declares what the server supports.
+// MCPCapabilities declares what the server (or, for client-sent
+// initialize params, the client) supports. The HeroDispatch capability
+// is a Hero extension: clients that can act as Hero adapters declare
+// it on initialize so the chat registry can route dispatches to them.
 type MCPCapabilities struct {
-	Tools *MCPToolsCapability `json:"tools,omitempty"`
+	Tools        *MCPToolsCapability     `json:"tools,omitempty"`
+	HeroDispatch *HeroDispatchCapability `json:"hero_dispatch,omitempty"`
+}
+
+// HeroDispatchCapability is the wire shape an MCP client sends to
+// register as a Hero adapter. See the hero-chat-and-model spec for
+// the contract.
+type HeroDispatchCapability struct {
+	Kinds     []string `json:"kinds"`
+	Adapter   string   `json:"adapter"`
+	Version   string   `json:"version"`
+	SessionID string   `json:"session_id,omitempty"`
 }
 
 // MCPToolsCapability declares tool support.
