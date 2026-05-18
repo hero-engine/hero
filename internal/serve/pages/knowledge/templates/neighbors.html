@@ -1,0 +1,23 @@
+{{- /* neighbors.html — "You might also explore" rows. Empty Rows
+       collapses to a muted notice. */ -}}
+{{ define "neighbors.html" }}
+<section id="knowledge-neighbors" class="kn-section">
+  <div class="kn-section-header">
+    <h2 class="kn-section-title">You might also explore</h2>
+    <a href="/knowledge" class="kn-section-link">Browse all related →</a>
+  </div>
+  {{- if eq (len .Rows) 0 }}
+  <div class="kn-empty">Related entries appear here once the retrieval layer learns this target.</div>
+  {{- else }}
+  <div class="kn-neighbor-list">
+    {{- range .Rows }}
+    <div class="kn-neighbor-row">
+      <span class="kn-kind-chip kn-kind-{{ .Kind }}">{{ .Kind }}</span>
+      <a href="/knowledge/{{ .Slug }}" class="kn-neighbor-slug mono">{{ .Slug }}</a>
+      <span class="kn-neighbor-desc">{{ .Description }}</span>
+    </div>
+    {{- end }}
+  </div>
+  {{- end }}
+</section>
+{{ end }}

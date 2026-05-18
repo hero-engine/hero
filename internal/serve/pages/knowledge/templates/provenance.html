@@ -1,0 +1,53 @@
+{{- /* provenance.html — the Why view's two-column graph + detail
+       centerpiece. Today the section header is rendered live; when the
+       traversal-queries API hasn't shipped (.Available=false) the body
+       falls through to an empty-state notice that points at that spec.
+       The mockup-faithful graph+detail grid lights up once .Available
+       is true. */ -}}
+{{ define "provenance.html" }}
+<section id="knowledge-provenance" class="kn-section">
+  <div class="kn-section-header">
+    <h2 class="kn-section-title">Provenance chain</h2>
+  </div>
+
+  {{- if not .Available }}
+  <div class="kn-empty-block">
+    <strong>Why-traversal needs the traversal-queries spec to ship.</strong>
+    <p>Once the JSON-shaped <code>traversal.Why()</code> over HTTP lands, this section will render the graph and detail panes inline.</p>
+  </div>
+  {{- else }}
+  <div class="kn-traversal-grid">
+    <div class="kn-graph-pane">
+      <div class="kn-graph-head">
+        <span>Tracing upstream from</span>
+        <span class="kn-target-pill mono">{{ .TargetPretty }}</span>
+      </div>
+      <div class="kn-graph-wrap">
+        <em class="kn-empty">Graph renders once the island lands.</em>
+      </div>
+    </div>
+    <aside class="kn-detail-pane">
+      <div class="kn-chain-crumb">
+        {{- range $i, $c := .ChainCrumbs }}
+          {{- if $i }}<span class="arrow">→</span>{{ end }}
+          <span class="step">{{ $c }}</span>
+        {{- end }}
+      </div>
+      <div class="kn-type-row">
+        <span class="kn-type-chip kn-type-{{ .DetailType }}">{{ .DetailType }}</span>
+        {{- with .DetailStatus }}<span class="kn-status-chip">{{ . }}</span>{{ end }}
+        <span class="mono kn-slug-text">{{ .DetailSlug }}</span>
+        {{- with .DetailDate }}<span class="kn-date-text">{{ . }}</span>{{ end }}
+      </div>
+      <h3 class="kn-detail-title">{{ .DetailTitle }}</h3>
+      {{- range .Sections }}
+      <div>
+        <div class="kn-body-h">{{ .Heading }}</div>
+        <div class="kn-body-p">{{ .Body }}</div>
+      </div>
+      {{- end }}
+    </aside>
+  </div>
+  {{- end }}
+</section>
+{{ end }}

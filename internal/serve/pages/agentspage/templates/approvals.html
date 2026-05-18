@@ -1,0 +1,32 @@
+{{- /* approvals.html — Awaiting-your-approval flat list rendered on
+       the sessions view. Not cards — separator lines with a 24px amber
+       dot in the left gutter. */ -}}
+{{ define "approvals.html" }}
+<section id="agents-approvals" class="agents-section">
+  <div class="agents-section-header">
+    <h2 class="agents-section-title">Awaiting your approval <span class="agents-section-meta">{{ .ApprovalsCount }} proposals</span></h2>
+    <a href="/agents/proposals" class="agents-section-link">View all ({{ .ApprovalsCount }}) →</a>
+  </div>
+
+  {{- if .Approvals }}
+  <div class="approval-list">
+    {{- range .Approvals }}
+    <div class="approval-row">
+      <span class="approval-dot"></span>
+      <div class="approval-main">
+        <div class="approval-summary">{{ .Summary }}</div>
+        <div class="approval-meta">{{ .Meta }}</div>
+      </div>
+      <div class="approval-actions">
+        {{- range .Actions }}
+        <a href="{{ .Href }}"{{ with .Variant }} class="{{ . }}"{{ end }}>{{ .Label }}</a>
+        {{- end }}
+      </div>
+    </div>
+    {{- end }}
+  </div>
+  {{- else }}
+  <div class="agents-empty">No pending proposals — your agents have nothing waiting on you right now.</div>
+  {{- end }}
+</section>
+{{ end }}

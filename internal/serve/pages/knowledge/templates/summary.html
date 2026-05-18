@@ -1,0 +1,21 @@
+{{- /* summary.html — plain-English narrator paragraph. When the
+       knowledge-narrator pipeline hasn't landed (.Available=false) the
+       section is hidden so the page doesn't carry an empty header. */ -}}
+{{ define "summary.html" }}
+<section id="knowledge-summary" class="kn-section">
+  <div class="kn-section-header">
+    <h2 class="kn-section-title">Plain-English summary</h2>
+  </div>
+  {{- if not .Available }}
+  <div class="kn-empty">The narrator paragraph appears here once a target is traced.</div>
+  {{- else }}
+  <div class="kn-summary-block">
+    <p>{{ .Paragraph }}</p>
+    <div class="kn-authored-by">
+      <span class="kn-agent-dot">kn</span>
+      Authored by <a href="#" class="mono">{{ .Author }}</a> · regenerated {{ .RegenPretty }}
+    </div>
+  </div>
+  {{- end }}
+</section>
+{{ end }}

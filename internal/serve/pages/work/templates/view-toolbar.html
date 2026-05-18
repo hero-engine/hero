@@ -1,0 +1,27 @@
+{{- /* view-toolbar.html — the view-toggle row + filter chips that sits
+       between the metric strip and the roadmap. Static links today —
+       the kanban / graph / blocked sibling routes land in follow-on
+       work. Wrapped as `<section>` with the work-toolbar id so the
+       roadmap-blocked badge can refresh independently. */ -}}
+{{ define "view-toolbar.html" }}
+<section id="work-toolbar">
+  <div class="view-toolbar">
+    <div class="view-tabs">
+      <a href="/work" class="view-tab active">Horizons</a>
+      <a href="/work/kanban" class="view-tab">Kanban</a>
+      <a href="/work/graph" class="view-tab">Graph</a>
+      <a href="/work/blocked" class="view-tab">Blocked
+        {{- if gt .BlockedCount 0 }} <span class="badge">{{ .BlockedCount }}</span>{{ end }}
+      </a>
+    </div>
+    <div class="filter-chips">
+      <a href="#" class="filter-chip">All types
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+      </a>
+      <a href="#" class="filter-chip">All owners
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+{{ end }}

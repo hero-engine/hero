@@ -1,0 +1,127 @@
+{{- /* overview.html — ROI Overview view. The canonical Money chain
+       tiles render in the shell's tabbed-metric-strip fragment above
+       this template; here we lay out the supplemental sections:
+       methodology footnote, how-time-was-spent, savings list, trend
+       toggle, contributors table, what-changed list. */ -}}
+{{ define "overview.html" }}
+
+<section id="people-methodology" class="people-section">
+  <div class="people-methodology-note">
+    {{ .MethodologyText }}
+  </div>
+</section>
+
+<section id="people-time-spent" class="people-section">
+  <div class="people-section-header">
+    <h2 class="people-section-title">How time was spent</h2>
+  </div>
+  <div class="people-timebar" aria-hidden="true">
+    {{- if gt .TimeSpent.AgentAutonomousPct 0 }}<span class="time-auto" style="width:{{ .TimeSpent.AgentAutonomousPct }}%;">{{ .TimeSpent.AgentAutonomousPct }}% · Agent autonomous</span>{{ end }}
+    {{- if gt .TimeSpent.AgentReviewPct 0 }}<span class="time-review" style="width:{{ .TimeSpent.AgentReviewPct }}%;">{{ .TimeSpent.AgentReviewPct }}% · Agent + review</span>{{ end }}
+    {{- if gt .TimeSpent.HumanPct 0 }}<span class="time-human" style="width:{{ .TimeSpent.HumanPct }}%;">{{ .TimeSpent.HumanPct }}% · Human</span>{{ end }}
+  </div>
+  <p class="people-timebar-caption">{{ .TimeSpent.Caption }}</p>
+</section>
+
+<section id="people-savings" class="people-section">
+  <div class="people-section-header">
+    <h2 class="people-section-title">Where the savings came from</h2>
+  </div>
+  {{- if eq (len .Savings) 0 }}
+  <div class="people-empty">No savings data in this window — counts populate as the propose-lifecycle and context-injection logs accumulate.</div>
+  {{- else }}
+  <div class="people-savings-list">
+    {{- range .Savings }}
+    <div class="people-savings-row">
+      <span class="people-savings-dot" style="background: {{ .Color }};"></span>
+      <div>
+        <div class="people-savings-label">{{ .Label }}</div>
+        <div class="people-savings-pct">{{ .Pct }}% of savings</div>
+      </div>
+      <span class="people-savings-hours">{{ .Hours }}</span>
+      <span class="people-savings-dollars">{{ .Dollars }}</span>
+    </div>
+    {{- end }}
+  </div>
+  {{- end }}
+</section>
+
+<section id="people-trend" class="people-section">
+  <div class="people-section-header">
+    <h2 class="people-section-title">12-week trend</h2>
+    <div class="people-trend-toggle">
+      {{- range .TrendChips }}
+      <button class="people-toggle-chip{{ if .Active }} active{{ end }}" data-trend="{{ .Slug }}">{{ .Label }}</button>
+      {{- end }}
+    </div>
+  </div>
+  <div class="people-trend-placeholder">
+    Trend chart renders when the events.log has at least 12 weeks of history. Current window: {{ .WindowLabel }}.
+  </div>
+</section>
+
+<section id="people-contributors" class="people-section">
+  <div class="people-section-header">
+    <h2 class="people-section-title">Top contributors <span class="people-section-meta">{{ .WindowLabel }}</span></h2>
+  </div>
+  {{- if eq (len .Contributors) 0 }}
+  <div class="people-empty">Per-contributor rollups land when the propose-lifecycle log is wired (separate spec).</div>
+  {{- else }}
+  <table class="people-contrib-table">
+    <thead>
+      <tr>
+        <th>Contributor</th>
+        <th class="num">Specs touched</th>
+        <th class="num">Autonomy %</th>
+        <th class="num">Hours saved</th>
+        <th class="num">$ saved</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{- range .Contributors }}
+      <tr>
+        <td>
+          <div class="people-contrib-name">
+            <span class="people-contrib-avatar {{ .AvatarClass }}">{{ .Initials }}</span>
+            <div class="people-contrib-name-text">
+              <span class="nm">{{ .Name }}</span>
+              <span class="people-contrib-badge {{ if .BadgeAgent }}badge-agent{{ else }}badge-human{{ end }}">{{ if .BadgeAgent }}Agent{{ else }}Human{{ end }}</span>
+            </div>
+          </div>
+        </td>
+        <td class="num-cell">{{ .SpecsTouched }}</td>
+        <td class="num-cell">{{ .AutonomyPct }}%</td>
+        <td class="num-cell">
+          <div class="people-hours-cell">
+            <div class="people-hours-bar"><div class="people-hours-bar-fill" style="width:{{ .HoursBarPct }}%;"></div></div>
+            <span>{{ .HoursSaved }}</span>
+          </div>
+        </td>
+        <td class="num-cell">{{ .DollarsSaved }}</td>
+      </tr>
+      {{- end }}
+    </tbody>
+  </table>
+  {{- end }}
+</section>
+
+<section id="people-changes" class="people-section">
+  <div class="people-section-header">
+    <h2 class="people-section-title">What changed this period</h2>
+  </div>
+  {{- if eq (len .WhatChanged) 0 }}
+  <div class="people-empty">No period-over-period deltas yet — the comparison surfaces once two windows of data exist.</div>
+  {{- else }}
+  <div class="people-changes-list">
+    {{- range .WhatChanged }}
+    <div class="people-changes-row">
+      <span class="people-changes-dot change-{{ .Variant }}"></span>
+      <span class="people-changes-text">{{ .HTML }}</span>
+      <span class="people-changes-when">{{ .When }}</span>
+    </div>
+    {{- end }}
+  </div>
+  {{- end }}
+</section>
+
+{{ end }}

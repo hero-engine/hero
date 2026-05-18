@@ -1,0 +1,14 @@
+{{- /* page.html — outer Work layout. Below the shell-owned page-hero
+       and tabbed-metric-strip fragments, this template renders the
+       view-toolbar, the Horizons roadmap centerpiece, and the two
+       bottom sections. Each section is wrapped in an outer `<section>`
+       with a stable `id="work-<slug>"` so SSE fragment swaps can
+       replace it whole. */ -}}
+{{ define "page.html" }}
+
+{{ template "view-toolbar.html" .Toolbar }}
+{{ template "roadmap.html" .Roadmap }}
+{{ template "blocked.html" .Blocked }}
+{{ template "shipped.html" .Shipped }}
+
+{{ end }}

@@ -346,10 +346,10 @@ func TestStubHomes_AllRender(t *testing.T) {
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
 
-	// "now" is intentionally absent here — the real Now home lives in
-	// internal/serve/pages/now and registers itself separately. The
-	// stub list now covers only the four still-stubbed homes.
-	for _, slug := range []string{"work", "knowledge", "agents", "people"} {
+	// Every top-nav home now has a real package; the stub list is
+	// empty. We keep the test alive so a regression that adds a stub
+	// can verify the placeholder renders end-to-end.
+	for _, slug := range []string{} {
 		resp, err := http.Get(fmt.Sprintf("%s/%s", srv.URL, slug))
 		if err != nil {
 			t.Fatalf("get /%s: %v", slug, err)

@@ -1,0 +1,38 @@
+{{- /* shipped.html — Recently shipped bottom-section partial. Flat
+       timeline of the last handful of shipped specs. Collapses when
+       nothing has shipped in the trailing window. */ -}}
+{{ define "shipped.html" }}
+<section id="work-shipped" class="work-section section-spacious">
+  {{- if eq (len .Rows) 0 }}
+  <div hidden></div>
+  {{- else }}
+  <div class="section-header">
+    <h2 class="section-title">Recently shipped</h2>
+    <a href="/work?status=completed" class="section-link">View all →</a>
+  </div>
+
+  <div class="feed-list">
+    {{- range .Rows }}
+    <div class="feed-row">
+      <span class="feed-time">{{ .Time }}</span>
+      <span class="feed-icon" title="shipped">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--success);">
+          <path d="m9 11 3 3 8-8"/>
+          <path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>
+        </svg>
+      </span>
+      <span class="feed-text">
+        {{- if .HTML }}
+        {{ .HTML }}
+        {{- else }}
+        <a href="/work/spec/{{ .Slug }}" class="feed-mono">{{ .Slug }}</a>
+        {{- with .Title }} — <strong>{{ . }}</strong>{{ end }}
+        {{- with .Actor }} <span class="feed-actor">· {{ . }}</span>{{ end }}
+        {{- end }}
+      </span>
+    </div>
+    {{- end }}
+  </div>
+  {{- end }}
+</section>
+{{ end }}

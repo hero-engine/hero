@@ -1,0 +1,90 @@
+{{- /* roadmap.html — three-column Now/Next/Later centerpiece. Cards
+       are rendered by the shared `spec-card` partial below; initiative
+       cards differ by the `rm-card-initiative` class + the children
+       mini-list. */ -}}
+{{ define "roadmap.html" }}
+<section id="work-roadmap" class="work-section">
+  <div class="roadmap">
+    {{ template "roadmap-col" .Now }}
+    {{ template "roadmap-col" .Next }}
+    {{ template "roadmap-col" .Later }}
+  </div>
+</section>
+{{ end }}
+
+{{ define "roadmap-col" }}
+<div class="roadmap-col">
+  <div class="roadmap-col-head">
+    <div class="roadmap-col-title">
+      {{- if .Pulse }}<span class="pulse"></span>{{ end }}
+      {{ .Label }}
+    </div>
+    <div class="roadmap-col-count">{{ .Count }} spec{{ if ne .Count 1 }}s{{ end }}</div>
+  </div>
+  {{- if eq (len .Cards) 0 }}
+  <div class="work-empty">No specs in this column.</div>
+  {{- else }}
+  {{- range .Cards }}
+  {{ template "spec-card" . }}
+  {{- end }}
+  {{- end }}
+</div>
+{{ end }}
+
+{{ define "spec-card" }}
+<article class="rm-card{{ if .IsInitiative }} rm-card-initiative{{ end }}">
+  <div class="rm-card-head">
+    <a href="/work/spec/{{ .Slug }}" class="rm-slug">{{ .Slug }}</a>
+    <span class="rm-type-chip rm-type-{{ .TypeKey }}">{{ .TypeLabel }}</span>
+  </div>
+  <h3 class="rm-title{{ if .IsInitiative }} rm-title-initiative{{ end }}">{{ .Title }}</h3>
+  <div class="rm-meta">
+    <span class="meta-item"><span class="rm-status-dot rm-status-{{ .StatusKey }}"></span>{{ .StatusLabel }}</span>
+    <span class="meta-item">
+      <span class="rm-avatar-mini{{ if .Owner.Unclaimed }} unclaimed{{ end }}">{{ .Owner.Initials }}</span>{{ .Owner.Name }}
+    </span>
+    {{- with .Methodology }}<span class="meta-item">methodology · {{ . }}</span>{{ end }}
+    {{- if and .IsInitiative (gt (len .Children) 0) }}
+    <span class="meta-item">{{ len .Children }} children</span>
+    {{- end }}
+  </div>
+
+  {{- if gt (len .Bars) 0 }}
+  <div class="rm-bars">
+    {{- range .Bars }}
+    <div class="rm-bar-row">
+      <span class="lbl">{{ .Label }}</span>
+      <div class="rm-bar"><div class="rm-bar-fill{{ if eq .Variant "success" }} success{{ end }}" style="width:{{ .Pct }}%"></div></div>
+      <span class="rm-bar-val">{{ .Value }}</span>
+    </div>
+    {{- end }}
+  </div>
+  {{- end }}
+
+  {{- if gt (len .Signals) 0 }}
+  <div class="rm-signals">
+    {{- range .Signals }}
+    <span class="rm-signal{{ if .Kind }} {{ .Kind }}{{ end }}">
+      {{- if .Live }}<span class="live-dot"></span>{{ end }}
+      {{ .Label }}
+    </span>
+    {{- end }}
+  </div>
+  {{- end }}
+
+  {{- with .QuietNote }}<div class="rm-quiet">{{ . }}</div>{{ end }}
+
+  {{- if and .IsInitiative (gt (len .Children) 0) }}
+  <div class="rm-children">
+    {{- range .Children }}
+    <div class="rm-child">
+      <span class="rm-status-dot rm-status-{{ .StatusKey }}"></span>
+      <span class="child-slug">{{ .Slug }}</span>
+      {{- with .Progress }}<span class="child-progress">{{ . }}</span>{{ end }}
+    </div>
+    {{- end }}
+  </div>
+  <a href="/work/spec/{{ .Slug }}" class="rm-expand">Expand initiative →</a>
+  {{- end }}
+</article>
+{{ end }}

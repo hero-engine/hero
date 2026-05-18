@@ -1,7 +1,7 @@
 ---
 title: Hero Agents Home — Sessions, Proposals, Scheduled, Automations, Health
 type: feature
-status: planning
+status: completed
 tags: [serve, surface, agents, sessions, proposals, scheduled, automations, web-app]
 created: 2026-05-17
 relations:
@@ -527,6 +527,59 @@ edition; data scoping differs (e.g. team-mate sessions appear under
 `team`+ in the Sessions list).
 
 ## Changes
+
+### Delivered (Sprint 1 — Sessions surface + live ledger hook)
+
+The first delivery lands the `/agents` Sessions view on top of the
+shell, exports the canonical `SessionRow` snapshot type that the Now
+home will consume read-only in a follow-up, and wires page-level SSE
++ four section fragment endpoints. Sub-routes (`/agents/session/<id>`,
+`/agents/proposals/<id>`, `/agents/scheduled`, `/agents/automations`,
+`/agents/health`, `/agents/credentials`), the islands (`agent-session.js`,
+`diff-viewer.js`, `automation-builder.js`), the automations engine,
+and the per-session SSE topic are left to subsequent sprints per the
+Kickoff build order.
+
+- `internal/serve/pages/agentspage/page.go` — Agents home registration
+  on the shell router; composes page-hero, sub-nav (six tabs, locked
+  Credentials under local), tabbed metric strip, and the four section
+  partials; exposes `SectionFragment(deps, section)` for SSE fragment
+  swap
+- `internal/serve/pages/agentspage/styles.go` — Agents-home stylesheet
+  (light-grey transcript panel `#f7f8fa`, separator-line session
+  blocks, amber proposal-preview, sub-nav tints, approval/timeline/
+  compact rows) and inline filter-chip + SSE refresh script
+- `internal/serve/pages/agentspage/data/types.go` — exports
+  `SessionRow` (canonical live-session snapshot for cross-home
+  consumption), `Sessions`/`SessionBlock`/`ApprovalRow`/`CompletedRow`/
+  `CompactRow`/`MetricStrip` payload shapes
+- `internal/serve/pages/agentspage/data/sessions.go` — composes the
+  sessions-view payload from injected `LiveSessions` snapshot,
+  builds prominent/compact/amber blocks, assembles the three-tab
+  metric strip
+- `internal/serve/pages/agentspage/data/proposals.go` — flat
+  approval-row builder driven by injected `Proposals` snapshot
+- `internal/serve/pages/agentspage/data/scheduled.go` /
+  `automations.go` — table + preview-row builders, nil-safe
+- `internal/serve/pages/agentspage/data/health.go` — placeholder
+  empty-shape Health payload
+- `internal/serve/pages/agentspage/templates/{page,sessions,session-block,approvals,completed,scheduled-preview}.html`
+  — all four section partials + session-block partial with
+  variant-driven shape (`prominent`/`compact`/`amber`)
+- `internal/serve/pages/agentspage/{import,page}_test.go` — forbids
+  chat / runner imports; asserts each section id + sub-nav render
+- `internal/serve/api/agents.go` — `/api/agents/events` SSE channel
+  + `/api/agents/{sessions,approvals,completed,scheduled-preview}`
+  fragment endpoints, debounced per-section
+- `internal/serve/shell/stubs.go` — drop the `agents` stub entry
+  (real home takes the `/agents` slot)
+- `internal/serve/shell/shell_test.go` — adjust the stub-render test
+  to reflect the now-empty stub list
+- `internal/serve/server.go` — mount the Agents handler before the
+  `/api/` catch-all; register the real Agents home on the shell
+  router; expose `snapshotLiveSessions()` reading the team-mode
+  job-queue session ledger and `snapshotAgentsProposals()` reading
+  the propose store
 
 ### Templates and handlers
 

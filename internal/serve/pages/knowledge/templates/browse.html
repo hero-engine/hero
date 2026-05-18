@@ -1,0 +1,39 @@
+{{- /* browse.html — corpus card grid. Default sub-state for the
+       Knowledge home is Browse; this is the section the user sees
+       first. Empty state collapses to a muted notice pointing at the
+       writer. */ -}}
+{{ define "browse.html" }}
+<section id="knowledge-browse" class="kn-section">
+  <div class="kn-section-header">
+    <h2 class="kn-section-title">Browse the corpus
+      {{- with .TotalEntries }} <span class="kn-section-meta">{{ . }} entr{{ if ne . 1 }}ies{{ else }}y{{ end }}</span>{{ end }}
+    </h2>
+    {{- if gt .TotalEntries 0 }}
+    <a href="/knowledge/write" class="kn-section-link">Write entry →</a>
+    {{- end }}
+  </div>
+
+  {{- if eq (len .Entries) 0 }}
+  <div class="kn-empty">No knowledge entries yet — start one with <code>/note</code> or open the writer.</div>
+  {{- else }}
+  <div class="kn-card-grid">
+    {{- range .Entries }}
+    <article class="kn-card">
+      <div class="kn-card-top">
+        <span class="kn-kind-chip kn-kind-{{ .Kind }}">{{ .Kind }}</span>
+        <span class="kn-card-slug mono">{{ .Slug }}</span>
+      </div>
+      <h3 class="kn-card-title"><a href="/knowledge/{{ .Slug }}">{{ .Title }}</a></h3>
+      {{- with .Description }}
+      <p class="kn-card-desc">{{ . }}</p>
+      {{- end }}
+      <div class="kn-card-foot">
+        <span class="kn-card-domain">{{ .Domain }}</span>
+        <span class="kn-card-age">{{ .UpdatedPretty }}</span>
+      </div>
+    </article>
+    {{- end }}
+  </div>
+  {{- end }}
+</section>
+{{ end }}

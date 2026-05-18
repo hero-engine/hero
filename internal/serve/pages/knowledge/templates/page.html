@@ -1,0 +1,14 @@
+{{- /* page.html — outer Knowledge layout. Below the shell-owned page-
+       hero, sub-nav row, and tabbed-metric-strip fragments, this template
+       lays out the five content sections in the order shown in the
+       mockup. Each section is wrapped in a `<section>` with a stable id
+       so the SSE fragment endpoints can swap them whole. */ -}}
+{{ define "page.html" }}
+
+{{ template "browse.html" .Corpus }}
+{{ template "provenance.html" .Why }}
+{{ template "summary.html" .Summary }}
+{{ template "neighbors.html" .Neighbors }}
+{{ template "staleness.html" .Staleness }}
+
+{{ end }}

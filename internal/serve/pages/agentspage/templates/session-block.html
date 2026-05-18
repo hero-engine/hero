@@ -1,0 +1,83 @@
+{{- /* session-block.html — one rendered session block. Variant drives
+       the inner shape:
+         prominent — head, meta, light-grey transcript, actions, tool strip
+         compact   — head, meta, clipped transcript, minimal actions
+         amber     — head, meta, amber proposal-preview, review actions
+       Indented panels/actions/meta use a 44px left padding to align with
+       the avatar gutter; the CSS owns the offset. */ -}}
+{{ define "session-block.html" }}
+<article class="session-block">
+  <div class="session-head">
+    <div class="agent-avatar{{ with .AgentClass }} {{ . }}{{ end }}">{{ .Initials }}</div>
+    <div class="session-id-block">
+      <span class="agent-name">{{ .Agent }}</span><span class="on"> {{ .OnVerb }} {{ if .Spec }}<a href="{{ .SpecHref }}">{{ .Spec }}</a>{{ else }}—{{ end }}</span>
+    </div>
+    <span class="session-status-tag {{ .StatusClass }}"><span class="live-dot{{ if eq .StatusClass "amber" }} amber{{ end }} sm" aria-hidden="true"></span>{{ .StatusTag }}</span>
+  </div>
+
+  <div class="session-meta">
+    <span class="meta-item">started {{ .StartedAt }}</span>
+    {{- if .Branch }}
+    <span class="sep">·</span>
+    <span class="meta-item">branch <code>{{ .Branch }}</code></span>
+    {{- end }}
+    {{- if .Cost }}
+    <span class="sep">·</span>
+    <span class="meta-item"><span class="cost">{{ .Cost }}</span> so far</span>
+    {{- end }}
+    {{- if .Model }}
+    <span class="sep">·</span>
+    <span class="meta-item"><code>{{ .Model }}</code></span>
+    {{- end }}
+    {{- if .ToolCalls }}
+    <span class="sep">·</span>
+    <span class="meta-item">{{ .ToolCalls }} tool calls</span>
+    {{- end }}
+    {{- with .PendingNotice }}
+    <span class="sep">·</span>
+    <span class="meta-item" style="color:var(--warn);font-weight:500;">{{ . }}</span>
+    {{- end }}
+  </div>
+
+  {{- if eq .Variant "amber" }}
+    {{- if .Proposal }}
+    <div class="proposal-preview">
+      <div class="pp-head">
+        <span>Proposal awaiting review</span>
+        <span class="pp-files">{{ .Proposal.Files }}</span>
+      </div>
+      {{- if .Proposal.Hunks }}
+      <div class="pp-diff">
+        {{- range .Proposal.Hunks }}
+        <span class="{{ .Class }}">{{ .Text }}</span>
+        {{- end }}
+      </div>
+      {{- end }}
+    </div>
+    {{- end }}
+  {{- else }}
+    {{- if .Transcript }}
+    <div class="transcript{{ if eq .Variant "compact" }} compact{{ end }}"{{ if eq .Variant "prominent" }} style="min-height:172px;"{{ end }}>
+      {{- range .Transcript }}
+      <span class="line">{{ .HTML }}</span>
+      {{- end }}
+    </div>
+    {{- end }}
+  {{- end }}
+
+  <div class="session-actions">
+    {{- range .Actions }}
+    <a href="{{ .Href }}"{{ with .Variant }} class="{{ . }}"{{ end }}>{{ .Label }}</a>
+    {{- end }}
+  </div>
+
+  {{- if .Tools }}
+  <div class="tool-strip">
+    <span>Tools</span>
+    {{- range .Tools }}
+    <span class="tool-pill">{{ .Name }} · <span class="n">{{ .Count }}</span></span>
+    {{- end }}
+  </div>
+  {{- end }}
+</article>
+{{ end }}

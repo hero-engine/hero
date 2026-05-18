@@ -42,23 +42,17 @@ type stubSpec struct {
 }
 
 func stubSpecs() []stubSpec {
-	return []stubSpec{
-		// "now" is intentionally absent — the real Now home registered
-		// by internal/serve/pages/now takes the /now slot. Re-adding a
-		// stub here would panic the router on duplicate-pattern check.
-		{slug: "work", label: "Work", href: "/work", title: "Work",
-			specSlug: "hero-work-home",
-			specHref: "/.hero/planning/features/hero-work-home/spec.md"},
-		{slug: "knowledge", label: "Knowledge", href: "/knowledge", title: "Knowledge",
-			specSlug: "hero-knowledge-home",
-			specHref: "/.hero/planning/features/hero-knowledge-home/spec.md"},
-		{slug: "agents", label: "Agents", href: "/agents", title: "Agents",
-			specSlug: "hero-agents-home",
-			specHref: "/.hero/planning/features/hero-agents-home/spec.md"},
-		{slug: "people", label: "People", href: "/people", title: "People",
-			specSlug: "hero-people-and-roi-home",
-			specHref: "/.hero/planning/features/hero-people-and-roi-home/spec.md"},
-	}
+	// Every top-nav home is delivered by a real package:
+	//   /now       → internal/serve/pages/now
+	//   /work      → internal/serve/pages/work
+	//   /knowledge → internal/serve/pages/knowledge
+	//   /agents    → internal/serve/pages/agentspage
+	//   /people    → internal/serve/pages/people
+	// Re-adding a stub for any of them would panic the router on the
+	// duplicate-pattern check. The slice is empty for now; this hook is
+	// kept so a future home can briefly land as a stub before its real
+	// package ships.
+	return nil
 }
 
 func renderStub(r *Router, w http.ResponseWriter, req *http.Request, s stubSpec) {

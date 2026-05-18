@@ -1,0 +1,47 @@
+{{- /* pulse.html — team-pulse landing section (default sub-view).
+       Renders three stacked blocks: the right-now pill, the presence +
+       claims card grid, and the recent activity feed. Empty in local
+       edition. */ -}}
+{{ define "pulse.html" }}
+<section id="people-pulse" class="people-section">
+  <div class="people-section-header">
+    <h2 class="people-section-title">Right now</h2>
+  </div>
+
+  <div class="people-rightnow">{{ .RightNow }}</div>
+
+  {{- if not .EmptyInLocal }}
+  {{- if gt (len .Cards) 0 }}
+  <div class="people-presence-grid">
+    {{- range .Cards }}
+    <div class="people-presence-card">
+      <span class="people-avatar">{{ .Initials }}</span>
+      <div class="people-presence-text">
+        <div class="people-presence-name">{{ .Name }}</div>
+        <div class="people-presence-meta">{{ .ActiveSpec }} · {{ .SessionAge }}</div>
+      </div>
+      {{- if .AgentBadge }}<span class="people-badge agent">Agent attached</span>{{ end }}
+      {{- if .AwaitsYou }}<span class="people-badge awaits">Awaits you</span>{{ end }}
+    </div>
+    {{- end }}
+  </div>
+  {{- end }}
+  {{- end }}
+
+  <div class="people-section-header" style="margin-top:32px;">
+    <h2 class="people-section-title">Recent activity</h2>
+  </div>
+  {{- if eq (len .Feed) 0 }}
+  <div class="people-empty">No recent activity — the feed lights up as you and your agents work.</div>
+  {{- else }}
+  <div class="people-feed-list">
+    {{- range .Feed }}
+    <div class="people-feed-row">
+      <span class="people-feed-time">{{ .Time }}</span>
+      <span class="people-feed-text">{{ .HTML }}</span>
+    </div>
+    {{- end }}
+  </div>
+  {{- end }}
+</section>
+{{ end }}
