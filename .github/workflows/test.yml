@@ -30,3 +30,29 @@ jobs:
 
       - name: go test
         run: go test -race -count=1 ./...
+
+      # AC-12 of next-as-projection: keep the committed .hero/NEXT.md
+      # in lockstep with what `hero next checkpoint` produces against
+      # a freshly-built graph. The graph DB is gitignored, so we
+      # rebuild it via `hero scan` first — same path a clean clone
+      # follows on a contributor's machine after `hero install`. Any
+      # diff after that means either the projector logic changed
+      # without committing the updated NEXT.md, or someone bypassed
+      # the pre-commit hook with a manual edit. Fail at PR time so
+      # the divergence is visible immediately.
+      - name: NEXT.md projection drift gate
+        run: |
+          set -e
+          go build -o ./hero ./cmd/hero
+          # Build a graph from the repo sources so the projection has
+          # real content to project against. Quiet by default to keep
+          # the workflow log focused on the gate's signal.
+          ./hero scan -q || true
+          ./hero next checkpoint --quiet
+          if ! git diff --exit-code -- .hero/NEXT.md; then
+            echo "::error::.hero/NEXT.md drifted from hero next checkpoint output."
+            echo "Run \`hero next checkpoint\` locally and commit the result, or"
+            echo "install the pre-commit hook via \`hero install\` so commits"
+            echo "carry the projection automatically."
+            exit 1
+          fi
