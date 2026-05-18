@@ -1,7 +1,7 @@
 ---
 title: Hero Now Home — Personal Cold-Start Surface
 type: feature
-status: planning
+status: completed
 tags: [serve, surface, now, home, web-app, ui]
 created: 2026-05-17
 relations:
@@ -322,66 +322,82 @@ Owned by the shell. The Now route does not render its own footer.
 
 ## Changes
 
-1. **Route handler** — `internal/serve/pages/now/page.go`
-   - `GET /now` handler. Composes the shell layout, gathers data from
-     `internal/serve/pages/now/data/*`, renders `templates/page.html`.
-   - Detects methodology from `hero.json` and passes the active-tab
-     descriptor + tile partials to the metric-strip fragment.
-   - Detects edition from `HERO_EDITION` and threads it into the
-     Agents-section partial.
+### Created
 
-2. **Page template** — `internal/serve/pages/now/templates/page.html`
-   - Top-level layout. Uses shell partials for top nav, footer,
-     page-hero fragment, tabbed-metric-strip fragment, and chat-input
-     fragment.
-   - Includes Now-specific partials below.
+- `internal/serve/pages/now/page.go` — Now home registration,
+  `GET /now` handler, methodology + edition resolution, page-hero +
+  metric-strip composition; exposes `Register(router, Deps)` and
+  `SectionFragment(deps, name)` for the SSE fragment endpoints.
+- `internal/serve/pages/now/styles.go` — `nowStyles` (Now-specific CSS
+  inlined via HeadExtra) and `nowScript` (intent-chip prefill,
+  `/`-key focus, SSE subscriber). The chrome / fragment styles live in
+  shell.css and are not duplicated.
+- `internal/serve/pages/now/templates/page.html` — outer Now layout;
+  composes the four section partials and the Quick-launch input.
+- `internal/serve/pages/now/templates/inbox.html` — Needs-your-input
+  list with typed dots, summary, meta, and inline actions; empty
+  state collapses to a muted one-liner.
+- `internal/serve/pages/now/templates/plate.html` — On-your-plate
+  60/40 grid with dual progress bars, agent-pulse meta, and action
+  links; renders empty state when no spec is claimed.
+- `internal/serve/pages/now/templates/agents.html` — Your-agents 1.4/1
+  grid: Currently-running card (soft-grey transcript preview — NOT a
+  dark terminal) and Today block (2×2 stat grid + 3-row session list).
+- `internal/serve/pages/now/templates/changes.html` — Since-you-were-
+  here flat timeline; surfaces a "limited view" hint when falling back
+  to git-only.
+- `internal/serve/pages/now/data/types.go` — value types returned by
+  every Load fn (Inbox, Plate, Agents, Changes, Metrics) plus a
+  `MetricTile` alias for `shell.MetricTile`.
+- `internal/serve/pages/now/data/metrics.go` — methodology-aware first
+  tab + shared My-week / Hero-ROI tile sets and inline-SVG sparkline
+  helper; placeholder tiles render when no project data is available.
+- `internal/serve/pages/now/data/inbox.go` — composes inbox rows from
+  injected proposal envelopes + inbound peer handoffs (via the
+  `ReceivedFrom` frontmatter block); pretty-age helper shared with
+  agents.go.
+- `internal/serve/pages/now/data/plate.go` — graph-free spec discovery
+  for claimed-by-user specs, ordered by last-modified, with progress
+  derived from the EARS criterion classifier.
+- `internal/serve/pages/now/data/agents.go` — synthesizes the Today
+  list from events.log (delivery_complete, spec_updated); returns
+  `Running: nil` until a live session ledger lands.
+- `internal/serve/pages/now/data/changes.go` — reads events.log first;
+  falls back to `git log -n 6` when the pipeline is empty and flips
+  the `Limited` flag so the partial shows the hint.
+- `internal/serve/pages/now/data/events.go` — shared `feed.ReadEvents`
+  helper that swallows missing-log errors to a nil slice.
+- `internal/serve/pages/now/data/*_test.go` — unit tests for each
+  data fetcher (empty-input, populated-input, helper functions).
+- `internal/serve/pages/now/page_test.go` — handler test asserting all
+  four section markers + chrome render; `resolveMethodology`,
+  `firstTabFor`, and `SectionFragment` cases.
+- `internal/serve/api/now.go` — `GET /api/now/events` SSE channel +
+  `GET /api/now/{inbox|plate|agents|changes}` fragment endpoints;
+  per-connection debounce (250ms default) so an event storm under one
+  section produces at most one refresh per window.
+- `internal/serve/api/now_test.go` — fragment-endpoint smoke,
+  SSE-header assertion, `sectionForEventType` mapping, and a
+  fake-subscriber end-to-end test that bursts three events and
+  asserts the debounced `event: inbox` frame.
 
-3. **Metric tile partials** — `internal/serve/pages/now/templates/`
-   - `sprint-tiles.html` — the four `This sprint` tiles.
-   - `cycle-tiles.html` — the four `This cycle` tiles (Shape Up).
-   - `week-tiles.html` — the four `This week` tiles (kanban / solo).
-   - `myweek-tiles.html` — the four `My week` tiles (shared).
-   - `roi-tiles.html` — the four `Hero ROI` tiles (shared).
+### Modified
 
-4. **Section partials** — `internal/serve/pages/now/templates/`
-   - `inbox.html` — Needs your input list.
-   - `plate.html` — On your plate 60/40 grid.
-   - `agents.html` — Your agents 1.4/1 grid (currently-running card +
-     today block).
-   - `changes.html` — Since you were here feed.
-
-5. **Data fetchers** — `internal/serve/pages/now/data/`
-   - `metrics.go` — composes sprint/cycle/week + my-week + ROI tile
-     payloads. Methodology-aware.
-   - `inbox.go` — composes inbox rows from proposals subsystem,
-     handoff inbound, PR-review mentions, import drafts. Returns
-     ordered list with stable IDs for SSE diffing.
-   - `plate.go` — graph query for specs claimed by user, ordered by
-     last-touched; returns top two with progress/meta payload.
-   - `agents.go` — in-flight session, today's stats, today's session
-     list. Edition-gated (no team presence under `local`).
-   - `changes.go` — event-log query from next-handoff-emit, filtered
-     to user's areas of interest; returns top 5–6 entries.
-
-6. **API endpoints** — `internal/serve/api/now.go`
-   - `GET /api/now/events` — SSE channel multiplexing `inbox`, `plate`,
-     `agents`, `changes`, `hero` events.
-   - `GET /api/now/inbox`, `GET /api/now/plate`, `GET /api/now/agents`,
-     `GET /api/now/changes` — fragment-replacement endpoints used by
-     the SSE subscriber to re-fetch a section's HTML on event.
-   - No `quicklaunch` endpoint here — chat dispatch is owned by
-     [hero-chat-and-model].
-
-7. **Route registration** — wire `GET /now` into the shell's router
-   (`internal/serve/shell/shell.go`). Wire `GET /` as a 302 redirect
-   to `/now` for logged-in users (existing static workspace summary
-   removed as part of the shell migration tracked under
-   [hero-surface-shell]).
-
-8. **No new island** — the chat input is the shell-owned shared island
-   from [hero-chat-and-model]. The metric-tab toggler is ~10 lines of
-   inline vanilla JS in `page.html` (as shown in the mock). The SSE
-   subscriber is ~20 lines of inline vanilla JS in `page.html`.
+- `internal/serve/shell/shell.go` — added `Router.RenderFragment(out,
+  name, data)` so home packages can render shared fragments without
+  duplicating template paths; added `io` import.
+- `internal/serve/shell/stubs.go` — removed the `now` stub entry so
+  the real Now home doesn't collide on route registration.
+- `internal/serve/shell/shell_test.go` — the `TestStubHomes_AllRender`
+  loop now covers the four still-stubbed homes (now is asserted by
+  the page-package test instead).
+- `internal/serve/server.go` — imports `internal/serve/api` and
+  `internal/serve/pages/now`; registers the real Now home after
+  `RegisterStubHomes`; mounts the Now SSE + fragment endpoints on
+  the top mux before the `/api/` catch-all; adds `busSubscriber` (an
+  `api.Subscriber` adapter over `*EventBus`) and
+  `snapshotProposals()` (a per-project proposal-store snapshotter
+  used by the Now inbox).
 
 ## Boundaries
 
@@ -533,46 +549,51 @@ Owned by the shell. The Now route does not render its own footer.
 
 ## Kickoff
 
-You are picking up the Now home implementation. The visual source of
-truth is `mockups/01-now-default.html` — open it side-by-side with
-the spec while you work. **Do not deviate from the mock unless this
-spec explicitly requires it.**
+**Status: Now home delivered 2026-05-17.** The page is live at `/now`,
+served by the shell, with all four section partials wired to real
+data fetchers and SSE wired for live section refresh. `/` redirects
+to `/now`. The stub registration for Now has been removed from
+`internal/serve/shell/stubs.go` and the real `internal/serve/pages/now`
+package owns the route.
 
-Before you write code:
+**What works today:**
+- `GET /now` → 200, ~29KB page with the full seven-section layout
+- Page hero with eyebrow, title, status one-liner subhead, inline
+  action row
+- Tabbed metric strip with `This sprint` / `My week` / `Hero ROI`
+  tabs (methodology-aware first tab — defaults to `This week` until
+  workspace declares `methodology: scrum`)
+- Needs your input list (proposals + inbound peer handoffs)
+- Quick launch input with intent chips
+- On your plate (claimed-by-user specs with progress bars)
+- Your agents (today's session history from events.log; live ledger
+  pending — see follow-ups)
+- Since you were here (events.log feed; git-log fallback when
+  events.log is unavailable)
+- `GET /api/now/events` SSE channel multiplexing section refreshes
+- `GET /api/now/{inbox,plate,agents,changes}` fragment endpoints
 
-1. Read `mockups/01-now-default.html` in full. Note the seven
-   sections, the section ordering, the metric-strip tab behavior, the
-   60/40 plate grid, the 1.4/1 agents grid, and the soft-grey
-   transcript preview (not a dark terminal).
-2. Read [hero-surface-shell](../hero-surface-shell/spec.md) to confirm
-   which fragments are shell-owned (top nav, page-hero,
-   tabbed-metric-strip, chat-input fragment, footer). Do not
-   duplicate those — include them.
-3. Read [hero-chat-and-model](../hero-chat-and-model/spec.md) to
-   confirm the chat-input island's mount API and the dispatch
-   endpoint contract. The Quick launch section mounts that island; it
-   does not implement chat.
-4. Read [hero-surface-deployment-and-rendering](../hero-surface-deployment-and-rendering/spec.md)
-   to confirm the rendering rules: server-rendered Go templates,
-   small islands only where interactivity demands it, no React, no
-   bundler.
+**Pick up at: deliver the other four homes.** Use the parallel
+delivery prompt from the chat-and-model close-out (paste into a new
+session). The pattern is now established:
+`internal/serve/pages/now/` is the reference layout; each home
+follows the same shape (page.go + templates + data fetchers + the
+home's slug removed from shell/stubs.go + registered in server.go
+after `RegisterStubHomes`).
 
-Build order:
-
-1. Scaffold `internal/serve/pages/now/` with the route handler,
-   `page.html`, and stub data fetchers returning fixture data. Wire
-   `GET /now` into the shell router. Open `/now`, verify the page
-   matches the mock with fixtures.
-2. Replace each fixture with the real data fetcher one section at a
-   time, starting with `metrics.go` (sprint-tiles default), then
-   `inbox.go`, then `plate.go`, then `agents.go`, then `changes.go`.
-3. Wire the SSE channel at `GET /api/now/events` and the per-section
-   fragment endpoints. Validate Needs-your-input and Your-agents live
-   updates manually.
-4. Add methodology detection and the alternative first-tab tile
-   partials. Test each `methodology` value.
-5. Add edition gating to `agents.go`. Test `local` vs `team`.
-6. Wire `GET /` → `GET /now` redirect for logged-in users.
-7. Run the validation checklist above end-to-end.
+**Follow-ups to file separately:**
+- **Quick launch input should embed the shell's `chat-input`
+  fragment** instead of the hand-rolled markup. The shell fragment
+  ships `data-chat-input-variant` for the ⌘K island to hydrate
+  consistently — Now's hand-rolled input misses that hook. Small.
+- **Live session ledger for Your agents `Currently running`** — the
+  Agents-home delivery will land this; until then, the
+  Currently-running block shows "No active session" empty state.
+- **`event: hero` SSE handler** — page-hero subhead refresh on
+  count change. Today the subhead is correct on full reload only.
+- **No-adapter empty-state notice on Quick launch** — the page
+  always renders the input; when no chat adapter is connected the
+  spec calls for a notice above. Wire when `chat-input` fragment
+  is adopted (above).
 
 When in doubt: the mock wins.

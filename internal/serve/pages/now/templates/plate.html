@@ -1,0 +1,66 @@
+{{- /* plate.html — On-your-plate section, 60/40 grid. The primary card
+       carries dual progress bars and the live agent-pulse dot; the
+       secondary card is quieter (transparent background). Empty state
+       points back at /design. */ -}}
+{{ define "plate.html" }}
+<section id="now-plate" class="now-section">
+  <div class="now-section-header">
+    <h2 class="now-section-title">On your plate
+      {{- with .Total }} <span class="now-section-meta">{{ . }} active spec{{ if ne . 1 }}s{{ end }}</span>{{ end }}
+    </h2>
+    <a href="/work" class="now-section-link">All your work →</a>
+  </div>
+
+  {{- if not .Primary }}
+  <div class="now-empty">No spec on your plate yet — start one with <code>/design</code>.</div>
+  {{- else }}
+  <div class="now-plate-grid">
+    {{ template "plate-card" .Primary }}
+    {{- if .Secondary }}
+    {{ template "plate-card" .Secondary }}
+    {{- end }}
+  </div>
+  {{- end }}
+</section>
+{{ end }}
+
+{{ define "plate-card" }}
+<article class="now-plate{{ if .IsSecondary }} now-plate-secondary{{ end }}">
+  <div class="now-plate-top">
+    <h3 class="now-plate-title"><a href="#">{{ .Title }}</a></h3>
+    <span class="now-status-pill now-status-{{ .Status }}">{{ .StatusLabel }}</span>
+  </div>
+  {{- with .Description }}
+  <p class="now-plate-desc">{{ . }}</p>
+  {{- end }}
+
+  <div class="now-progress-row">
+    <div class="now-progress-line">
+      <span class="label">{{ .Criteria.Label }}</span>
+      <div class="now-progress-bar"><div class="now-progress-fill{{ if eq .Criteria.Variant "success" }} success{{ end }}" style="width: {{ .Criteria.Pct }}%"></div></div>
+      <span class="value">{{ .Criteria.Value }}</span>
+    </div>
+    <div class="now-progress-line">
+      <span class="label">{{ .Coverage.Label }}</span>
+      <div class="now-progress-bar"><div class="now-progress-fill{{ if eq .Coverage.Variant "success" }} success{{ end }}" style="width: {{ .Coverage.Pct }}%"></div></div>
+      <span class="value">{{ .Coverage.Value }}</span>
+    </div>
+  </div>
+
+  {{- if .Meta }}
+  <div class="now-plate-meta">
+    {{- range .Meta }}
+    <span class="now-meta-item"><span class="now-meta-dot{{ if .Live }} live{{ end }}"></span>{{ .Label }}</span>
+    {{- end }}
+  </div>
+  {{- end }}
+
+  {{- if .Actions }}
+  <div class="now-plate-actions">
+    {{- range .Actions }}
+    <a href="{{ .Href }}"{{ if .Mono }} class="mono"{{ end }}>{{ .Label }}</a>
+    {{- end }}
+  </div>
+  {{- end }}
+</article>
+{{ end }}

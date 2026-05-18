@@ -1,0 +1,101 @@
+{{- /* agents.html — Your-agents section, 1.4/1 grid. Currently-running
+       card on the left renders a soft-grey transcript preview (NOT a
+       dark terminal). Today block on the right is a 2x2 stat grid plus
+       a 3-row session history. */ -}}
+{{ define "agents.html" }}
+<section id="now-agents" class="now-section">
+  <div class="now-section-header">
+    <h2 class="now-section-title">Your agents</h2>
+    <a href="/agents" class="now-section-link">Open Agents →</a>
+  </div>
+
+  <div class="now-agents-grid">
+    <div>
+      <h3 class="now-agent-block-title">Currently running</h3>
+      {{- if .Running }}
+      <div class="now-agent-card">
+        <div class="now-agent-card-head">
+          <div class="now-agent-avatar">{{ .Running.Initials }}</div>
+          <div>
+            <div class="now-agent-name">{{ .Running.Name }}</div>
+            <div class="now-agent-on">delivering <a href="{{ .Running.SpecHref }}">{{ .Running.SpecSlug }}</a> · session {{ .Running.SessionAge }}</div>
+          </div>
+          <span class="now-live-tag"><span class="now-meta-dot live"></span>Live</span>
+        </div>
+        {{- if .Running.Transcript }}
+        <div class="now-transcript">
+          {{- range .Running.Transcript }}
+          <div>{{ .HTML }}</div>
+          {{- end }}
+        </div>
+        {{- end }}
+        <div class="now-agent-foot">
+          <div><span class="cost">{{ .Running.Cost }}</span> · {{ .Running.ToolCalls }} tool calls · {{ .Running.Tokens }} tokens</div>
+          <div>
+            <a href="{{ .Running.OpenHref }}">Open transcript</a>
+            &nbsp;·&nbsp;
+            <a href="{{ .Running.InterruptHref }}" style="color:var(--danger);">Interrupt</a>
+          </div>
+        </div>
+      </div>
+      {{- else }}
+      <div class="now-agent-card">
+        <div class="now-empty" style="padding:8px 0;">No agent running right now — start one with <code>/deliver &lt;spec&gt;</code> or from the Quick launch input above.</div>
+      </div>
+      {{- end }}
+    </div>
+
+    <div>
+      <h3 class="now-agent-block-title">Today</h3>
+      <div class="now-today-stats">
+        <div class="now-today-stat">
+          <div class="v">{{ .Today.SessionsDone }} <span class="qual">done</span></div>
+          <div class="l">Sessions</div>
+        </div>
+        <div class="now-today-stat">
+          <div class="v">{{ .Today.ProposalsPending }}{{ if gt .Today.ProposalsPending 0 }} <span class="qual warn">pending</span>{{ end }}</div>
+          <div class="l">Proposals</div>
+        </div>
+        <div class="now-today-stat">
+          <div class="v">{{ .Today.Spend }}</div>
+          <div class="l">Spend</div>
+          {{- if .Today.SpendSpark }}
+          <div class="now-sparkline-mini">
+            {{- range .Today.SpendSpark }}<span style="height:{{ . }}px;"></span>{{- end }}
+          </div>
+          {{- end }}
+        </div>
+        <div class="now-today-stat">
+          <div class="v">{{ .Today.Autonomy }}</div>
+          <div class="l">Autonomy</div>
+          {{- if .Today.AutonomySpark }}
+          <div class="now-sparkline-mini">
+            {{- range .Today.AutonomySpark }}<span style="height:{{ . }}px;"></span>{{- end }}
+          </div>
+          {{- end }}
+        </div>
+      </div>
+
+      {{- if .Today.Sessions }}
+      <div class="now-today-list">
+        {{- range .Today.Sessions }}
+        <div class="now-today-row">
+          <span class="status"{{ if eq .Status "warn" }} style="color:var(--warn);"{{ end }}>
+            {{- if eq .Status "warn" }}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/></svg>
+            {{- else }}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5L20 7"/></svg>
+            {{- end }}
+          </span>
+          <span class="spec">{{ .Spec }}{{ if .Subtitle }} — {{ .Subtitle }}{{ end }}</span>
+          <span class="dur">{{ .Duration }}</span>
+        </div>
+        {{- end }}
+      </div>
+      {{- else }}
+      <div class="now-empty">No agent activity today.</div>
+      {{- end }}
+    </div>
+  </div>
+</section>
+{{ end }}

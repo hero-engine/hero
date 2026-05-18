@@ -1,0 +1,36 @@
+{{- /* inbox.html — Needs-your-input section. Renders a flat Linear-style
+       list with typed colored dots, summary, meta, and inline action
+       links. Empty state collapses to a one-line muted notice. */ -}}
+{{ define "inbox.html" }}
+<section id="now-inbox" class="now-section">
+  <div class="now-section-header">
+    <h2 class="now-section-title">Needs your input
+      {{- with .Total }} <span class="now-section-meta">{{ . }} item{{ if ne . 1 }}s{{ end }}</span>{{ end }}
+    </h2>
+    {{- if gt .Total 0 }}
+    <a href="#" class="now-section-link">View all ({{ .Total }}) →</a>
+    {{- end }}
+  </div>
+
+  {{- if eq (len .Rows) 0 }}
+  <div class="now-empty">Nothing waiting on you — when an agent proposes a change or a peer hands work back, it shows up here.</div>
+  {{- else }}
+  <div class="now-inbox-list">
+    {{- range .Rows }}
+    <div class="now-inbox-row">
+      <span class="now-inbox-dot now-dot-{{ .Kind }}" title="{{ .Kind }}"></span>
+      <div class="now-inbox-main">
+        <div class="now-inbox-summary">{{ .Summary }}</div>
+        <div class="now-inbox-meta">{{ .Meta }}</div>
+      </div>
+      <div class="now-inbox-actions">
+        {{- range .Actions }}
+        <a href="{{ .Href }}"{{ if eq .Variant "danger" }} class="danger"{{ else if eq .Variant "muted" }} class="muted"{{ end }}>{{ .Label }}</a>
+        {{- end }}
+      </div>
+    </div>
+    {{- end }}
+  </div>
+  {{- end }}
+</section>
+{{ end }}

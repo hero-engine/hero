@@ -346,7 +346,10 @@ func TestStubHomes_AllRender(t *testing.T) {
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
 
-	for _, slug := range []string{"now", "work", "knowledge", "agents", "people"} {
+	// "now" is intentionally absent here — the real Now home lives in
+	// internal/serve/pages/now and registers itself separately. The
+	// stub list now covers only the four still-stubbed homes.
+	for _, slug := range []string{"work", "knowledge", "agents", "people"} {
 		resp, err := http.Get(fmt.Sprintf("%s/%s", srv.URL, slug))
 		if err != nil {
 			t.Fatalf("get /%s: %v", slug, err)
