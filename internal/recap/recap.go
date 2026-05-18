@@ -148,8 +148,21 @@ func gitCommits(projectRoot string, since time.Time) ([]CommitSummary, error) {
 		"--since="+sinceStr,
 		"--pretty=format:%H\t%s\t%an\t%aI",
 		"--no-merges")
+	// cmd.Stderr stays nil so *exec.ExitError captures stderr for inspection
+	// below. If a future change wires cmd.Stderr to a writer, the empty-repo
+	// substring check will need an alternate stderr source.
 	out, err := cmd.Output()
 	if err != nil {
+		// A freshly-initialized repo with no commits yet is a legitimate
+		// empty result, not an error. git log exits 128 with one of the
+		// known stderr messages below; everything else is a real error.
+		if ee, ok := err.(*exec.ExitError); ok {
+			stderr := string(ee.Stderr)
+			if strings.Contains(stderr, "does not have any commits yet") ||
+				strings.Contains(stderr, "bad default revision 'HEAD'") {
+				return nil, nil
+			}
+		}
 		return nil, err
 	}
 
