@@ -1,7 +1,8 @@
 ---
 title: NEXT.md as a Graph Projection (with project/user/local split)
+slug: next-as-projection
 type: feature
-status: planning
+status: delivering
 priority: P0
 tags: [next-md, projection, graph, handoff, merge-conflicts, v2-recovery]
 created: 2026-04-28
@@ -62,6 +63,60 @@ All three files are total-rewrite from graph on every Stop hook.
 Merge conflicts on the tracked files auto-resolve via a `hero-next`
 git merge driver that ignores both sides and regenerates from the
 local graph.
+
+## Kickoff
+
+Finish making NEXT.md a graph projection — declared in commit
+`2158bd2`, audited 2026-05-18 and found ~95% landed. The three-file
+split (`.hero/NEXT.md`, `.hero/next/<user>.md`, `.hero/next/<user>.local.md`),
+the three graph node types (`UserAsk`, `NextSuggestion`,
+`SessionReflection`), the Stop-hook rewire, the
+`hero next migrate-to-projection` command, the merge driver, and the
+field-grab CLI are all shipped. `hero next checkpoint` remains the
+canonical write command (do **not** rename to `--write` — the hook
+matchers and user-visible strings make a rename pure cost). The
+field-grab writers use positional-arg form
+(`hero next suggest "<text>"`), not `set` subcommands.
+
+**Status:** delivering — closing remaining gaps. Six narrow items
+left: (1) pre-flight migration gate that refuses overwrite of
+unmigrated content, (2) `skills/next-merge-recovery.md`, (3)
+session-start hook wiring `hero next ingest`, (4) CI drift gate,
+(5) E2E cross-machine test, (6) perf budget verification.
+
+→ `.hero/planning/features/next-as-projection/spec.md`
+
+**Files:** `internal/cli/checkpoint.go` (gate),
+`internal/install/claude_hooks.go` + `codex_hooks.go` (session-start
+hook), `skills/next-merge-recovery/` (new),
+`.github/workflows/test.yml` (drift gate), `internal/cli/checkpoint_test.go`
+(E2E + perf).
+
+**Skip:** per-branch user-state separation (out of scope); LLM
+narration of project state (separate Tier-3 work); rename of
+`hero next checkpoint` to `hero next --write` (rejected — see audit
+2026-05-18: command name is matched by install-hook prefix detection
+and baked into NEXT.md's user-visible "auto-written by" string).
+
+## Mission fit
+
+NEXT.md is THE cold-start surface for hero — the first thing a fresh
+session, a new teammate, or a non-CLI viewer reads when they open
+the repo. Today it drifts: the agent-narrative half ages out within
+a session, the mechanical half churns merge conflicts on every
+branch divergence, and cross-machine continuity is a coin flip.
+
+This work answers the mission test — *"Does this make the next agent
+session start smarter than the last one ended, and does it raise the
+floor for everyone, not just the senior dev who already knows what
+to ask?"* — with yes on both counts. By projecting NEXT.md from the
+graph instead of asking the agent to remember to write it, the cold
+start gets the **actual** current state, not a stale narrative. By
+splitting project state from user state, non-CLI viewers (managers,
+new hires, teammates skimming the repo on GitHub) get a clean
+project view without per-user noise. By making `<user>.md` the
+solo-no-Cloud federation medium, the floor rises for the
+canonical hero-on-itself case where Cloud isn't configured.
 
 ## Why this is mission-critical
 
@@ -148,7 +203,12 @@ Why both in one file: discoverability. One place to glance at
 
 ### New graph node types
 
-Three new node types attributed to a `Person` and a `Session`:
+Three new node types attributed to a `Person` and a `Session`.
+Person attribution **MUST** use the existing `nextUserSlug()` helper
+that the current tracking system uses (derived from
+`tracking.defaultAgent` or git `user.name`) — no new identity
+resolution path. This keeps the new nodes interoperable with the
+existing Person identity scheme.
 
 - **`UserAsk`** — paraphrased or verbatim text of the user's most
   recent prompt. Props: `text`, `paraphrased` (bool), `session_id`.
@@ -167,15 +227,21 @@ gives "what was suggested-next on Tuesday at home?" for free.
 
 ### Total-rewrite projection
 
-`hero next --write` regenerates all three files from the graph (and
-from machine state for the local file). No marker preservation in
-NEXT.md or `<user>.md` — projections always win, hand-edits in those
-files are wiped next turn. The `<user>.local.md` file is the
+`hero next checkpoint` regenerates all three files from the graph
+(and from machine state for the local file). No marker preservation
+in NEXT.md or `<user>.md` — projections always win, hand-edits in
+those files are wiped next turn. The `<user>.local.md` file is the
 exception: marker-bounded auto sections rewritten, hand content
 preserved.
 
-`hero next --write` replaces the existing `hero next checkpoint`.
-The Stop hook (and new git hooks) call the new command.
+The Stop hook (and git hooks) call `hero next checkpoint --quiet`.
+The command name is kept rather than renamed to `--write`: it is the
+detection prefix used by `internal/install/claude_hooks.go` and
+`internal/install/codex_hooks.go` to recognise and upgrade existing
+hero-managed entries (`strings.HasPrefix(cmd, "hero next checkpoint")`),
+and it is the user-visible string baked into NEXT.md's "auto-written
+by" footer. A rename would force a deprecation shim, hook-detection
+regex updates, and doc churn with no behavior change.
 
 ### Field-grab CLI
 
@@ -186,24 +252,34 @@ hero next suggest                    # prints just the suggested next prompt
 hero next suggest --copy             # also copies to clipboard
 hero next suggest --json             # structured output for scripting
 hero next suggest --user alice       # someone else's (team mode)
+hero next suggest "..."              # write a NextSuggestion node manually
 
 hero next ask                        # last user ask
+hero next ask "..."                  # record a new user ask
 hero next reflection                 # most recent session reflection
+hero next reflection "..."           # record a new reflection
 hero next blockers                   # current project blockers (one-liner per)
 ```
 
 All read directly from the graph — always current even if the file
-projection hasn't fired yet on this machine.
+projection hasn't fired yet on this machine. The writers use
+positional-arg form (matching `git config user.email "..."`'s
+read/write overload), not a separate `set` subcommand — adding `set`
+would create a redundant third shape and confusing UX. The manual
+writer covers the same need (capturing a suggested-next by hand
+while the emit-as-you-work skill matures) without the extra surface.
 
 ### Round-trip ingest (solo-no-Cloud cross-machine)
 
 Without Cloud, the `<user>.md` file is the federation medium. To
 make it bidirectional:
 
-- `hero next --write` projects user-graph nodes → `<user>.md` file.
+- `hero next checkpoint` projects user-graph nodes → `<user>.md` file.
 - `hero scan` (and a session-start hook) reads `<user>.md` back into
   the graph if entries aren't already present locally. Idempotent —
   re-ingest of the same content produces no new graph edits.
+  Idempotency is enforced via a content-hash dedup keyed on `(node
+  type, session_id, sha256(text))`.
 
 Result: home laptop writes, commits, pushes; office desktop pulls,
 session-start hook ingests `<user>.md` into its local graph, then
@@ -213,10 +289,10 @@ projects it back out. Same content visible on both machines.
 
 | Hook | Trigger | Runs |
 |---|---|---|
-| Stop hook (Claude Code, opencode, etc.) | Every assistant turn ends | `hero next --write` |
-| Pre-commit (git) | Right before `git commit` | `hero next --write`; stage changes |
-| Post-merge (git) | After `git merge` / `git pull` | `hero next --write` |
-| Session-start (Claude Code) | New session opens | `hero next --write` (and round-trip ingest) |
+| Stop hook (Claude Code, opencode, etc.) | Every assistant turn ends | `hero next checkpoint` |
+| Pre-commit (git) | Right before `git commit` | `hero next checkpoint`; stage changes |
+| Post-merge (git) | After `git merge` / `git pull` | `hero next checkpoint` |
+| Session-start (Claude Code) | New session opens | `hero next checkpoint` (and round-trip ingest) |
 
 `hero install` extends to write the git hooks (idempotent, marker-
 delimited so user content is preserved).
@@ -244,13 +320,40 @@ conflict markers ever land in these files for users who've run
 `hero install`.
 
 For clones that haven't run `hero install`, git produces normal
-conflict markers. The next Stop hook regenerates and self-heals;
-agents that see `<<<<<<<` markers in `.hero/NEXT.md` or
-`.hero/next/*.md` should run `hero next --write` immediately.
+conflict markers. A new skill rule, `skills/next-merge-recovery.md`,
+instructs agents to detect `<<<<<<<` markers in `.hero/NEXT.md` or
+`.hero/next/*.md` and run `hero next checkpoint` immediately as a
+self-heal. The existing Stop hook also picks up the markers on the
+next turn.
 
-### Migration
+### Migration as the Phase 1 gate
 
-One-time `hero next migrate-to-projection` command:
+The migration command (`hero next migrate-to-projection`) ships
+**as part of Phase 1**, not later. The first `hero next checkpoint`
+in a repo that still has legacy NEXT.md content would otherwise wipe
+hand-written sections.
+
+**Migration signal: `next.projected` flag in `hero.json`.** The
+single authoritative signal is the `next.projected` boolean in
+`.hero/hero.json`, written by `hero next migrate-to-projection` and
+read by `Config.NextProjected()`. The projection write path
+(`writeProjectedNextMD` in `checkpoint.go`) only fires when the flag
+is true. No file-level sentinel is needed — the config flag is
+simpler, atomic, and already shipping.
+
+**Pre-flight gate.** When `next.projected == false` AND `.hero/NEXT.md`
+contains unmigrated content, `hero next checkpoint` refuses to write
+NEXT.md and exits non-zero with a message directing the user to
+`hero next migrate-to-projection`. Detection signals for legacy
+content:
+
+- `<!-- BEGIN HERO MACHINE STATE -->` markers in `.hero/NEXT.md`
+  (legacy location; new home is `.hero/next/<user>.local.md`).
+- Legacy section headers (`## Just finished`, `## Next`, `## Tried
+  and failed`, `## Context to carry forward`) directly inside
+  `.hero/NEXT.md`.
+
+`hero next migrate-to-projection`:
 
 1. Reads existing `.hero/NEXT.md` content.
 2. Captures durable items as graph nodes:
@@ -261,146 +364,170 @@ One-time `hero next migrate-to-projection` command:
    - "Last user ask" frontmatter / section → `UserAsk` node.
 3. Writes the new three-file structure.
 4. Updates `.gitignore` to add `.hero/next/*.local.md`.
-5. Idempotent — second run is a no-op.
+5. Sets `next.projected = true` in `.hero/hero.json`.
+6. Idempotent — second run is a no-op (detects the flag).
 
-## Acceptance criteria
+## Acceptance Criteria
 
-**AC-1:** Three new graph node types exist (`UserAsk`,
-`NextSuggestion`, `SessionReflection`), can be created, queried by
-attribution to Person+Session, and federate via existing Cloud sync
-machinery (when configured). Verified by graph-level tests in
-`internal/graph/`.
-
-**AC-2:** `hero next --write` produces a `.hero/NEXT.md` containing
-only project-state sections, derived entirely from project-graph
-queries. Hand-edits in the file are wiped on next regen. No
-`<!-- BEGIN HERO MACHINE STATE -->` markers appear in `NEXT.md`.
-
-**AC-3:** `hero next --write` produces `.hero/next/<user>.md` for
-the current user, containing user-state sections derived from the
-user's `UserAsk` / `NextSuggestion` / `SessionReflection` /
-`Attempt` nodes. File is total-rewrite each turn.
-
-**AC-4:** `hero next --write` produces `.hero/next/<user>.local.md`
-with marker-bounded auto sections rewritten in place; any hand-
-written content outside the markers is preserved verbatim across
-regens.
-
-**AC-5:** Field-grab CLI works:
-`hero next suggest` prints the suggested next prompt to stdout (no
-decoration); `--json` emits `{"text": "...", "session_id": "..."}`;
-`--copy` puts it on the clipboard; `--user <name>` fetches another
-person's (or returns "not found"). Same shape for `hero next ask`
-and `hero next reflection`.
-
-**AC-6:** Round-trip ingest works end-to-end. Sequence: machine A
-writes `chet-bellows.md` via `hero next --write`; commit + push; clean
-machine B with empty local graph clones + pulls; machine B's
-`hero scan` (or session-start) ingests `chet-bellows.md` into its local
-graph; subsequent `hero next suggest` on machine B returns the same
-suggested-next text as machine A. Tested by an E2E script in
-`tmp/e2e-cross-machine.sh` (or an area suite in `e2e-area-suites`).
-
-**AC-7:** Stop hook (Claude Code's `~/.claude/settings.json` Stop
-hook) calls `hero next --write` (not the retired `checkpoint`
-command). Verified by `hero install` writing the new command and a
-`hero check` health check that flags repos still wired to the old
-command.
-
-**AC-8:** `hero install` writes `.git/hooks/pre-commit` and
-`.git/hooks/post-merge` that run `hero next --write`. Hooks are
-marker-delimited so they preserve any pre-existing user content.
-Re-running `hero install` is idempotent.
-
-**AC-9:** `.gitattributes` ships with `.hero/NEXT.md merge=hero-next`
-and `.hero/next/*.md merge=hero-next`. `hero install` registers the
-`hero-next` driver in `.git/config` pointing to
-`hero next merge-resolve --output %A`.
-
-**AC-10:** `hero next merge-resolve` ignores `%O` and `%B`, writes
-graph-projected content to `%A`, exits 0. Tested by simulating a
-two-branch merge that touches NEXT.md and asserting no conflict
-markers in the result.
-
-**AC-11:** Cross-machine continuity verified end-to-end: user-state
-written on machine A is queryable on machine B after pull + session
-start, with no Cloud configured. Acceptance is the same E2E as AC-6.
-
-**AC-12:** Non-CLI viewer scenario verified: a fresh clone of the
-repo, *without* running `hero install`, contains a current
-`.hero/NEXT.md` reflecting the project state at the most recent
-commit. Asserted by a CI-time check that diffs the committed
-`NEXT.md` against `hero next --write` output and fails on drift.
-
-**AC-13:** `hero next migrate-to-projection` ingests existing
-NEXT.md content into structured nodes, writes the new three-file
-layout, updates `.gitignore`, and is idempotent. One-shot migration
-verified on the canonical hero repo.
+- **AC-1:** THE SYSTEM SHALL support three new graph node types
+  (`UserAsk`, `NextSuggestion`, `SessionReflection`) that can be
+  created, queried by attribution to Person+Session, and federated
+  via existing Cloud sync machinery (when configured). Verified by
+  graph-level tests in `internal/graph/`. Person attribution MUST
+  use the existing `nextUserSlug()` helper.
+- **AC-2:** `hero next checkpoint` SHALL produce a `.hero/NEXT.md`
+  containing only project-state sections, derived entirely from
+  project-graph queries, with no `<!-- BEGIN HERO MACHINE STATE -->`
+  markers, whenever `next.projected == true` in `.hero/hero.json`.
+  Hand-edits in the file MUST be wiped on next regen.
+- **AC-3:** WHEN `hero next checkpoint` runs THE SYSTEM SHALL
+  produce `.hero/next/<user>.md` for the current user, containing
+  user-state sections derived from the user's `UserAsk` /
+  `NextSuggestion` / `SessionReflection` / `Attempt` nodes, as a
+  total-rewrite each turn.
+- **AC-4:** WHEN `hero next checkpoint` runs THE SYSTEM SHALL
+  produce `.hero/next/<user>.local.md` with marker-bounded auto
+  sections rewritten in place AND SHALL preserve verbatim any
+  hand-written content outside the markers across regens.
+- **AC-5:** `hero next suggest` SHALL print the suggested next
+  prompt to stdout with no decoration; `--json` SHALL emit
+  `{"text": "...", "session_id": "..."}`; `--copy` SHALL place it
+  on the clipboard; `--user <name>` SHALL fetch another person's
+  (or return "not found" and exit non-zero). Same shape for
+  `hero next ask` and `hero next reflection`.
+- **AC-6:** Round-trip ingest MUST work end-to-end. Sequence:
+  machine A writes `chet-bellows.md` via `hero next checkpoint`;
+  commit + push; clean machine B with empty local graph clones +
+  pulls; machine B's `hero next ingest` (or session-start hook)
+  ingests `chet-bellows.md` into its local graph; subsequent
+  `hero next suggest` on machine B SHALL return the same
+  suggested-next text as machine A. Tested by an in-process Go test
+  exercising both ephemeral graph DBs.
+- **AC-7:** WHEN `hero install` runs THE SYSTEM SHALL wire the Stop
+  hook to call `hero next checkpoint --quiet`, AND a session-start
+  hook to call `hero next ingest`. `hero check` SHALL flag repos
+  whose hooks have drifted from this contract.
+- **AC-8:** WHEN `hero install` runs THE SYSTEM SHALL write
+  `.git/hooks/pre-commit` and `.git/hooks/post-merge` that call
+  `hero next checkpoint`, marker-delimited so they preserve any
+  pre-existing user content. Re-running `hero install` SHALL be
+  idempotent.
+- **AC-9:** WHEN `hero install` runs THE SYSTEM SHALL register the
+  `hero-next` merge driver in `.git/config` pointing to
+  `hero next merge-resolve --output %A`, AND the repo SHALL ship a
+  `.gitattributes` containing `.hero/NEXT.md merge=hero-next` and
+  `.hero/next/*.md merge=hero-next`.
+- **AC-10:** WHEN `hero next merge-resolve` runs THE SYSTEM SHALL
+  ignore `%O` and `%B`, write graph-projected content to `%A`, and
+  exit 0. Tested by simulating a two-branch merge that touches
+  NEXT.md and asserting no conflict markers in the result.
+- **AC-11:** Cross-machine continuity SHALL be verified end-to-end:
+  user-state written on machine A MUST be queryable on machine B
+  after pull + session start, with no Cloud configured. Acceptance
+  is the same E2E as AC-6.
+- **AC-12:** CI SHALL keep the committed `.hero/NEXT.md` in
+  lockstep with `hero next checkpoint --quiet` output (where the
+  repo has been migrated), verified by a CI-time check that runs
+  `hero next checkpoint --quiet` and `git diff --exit-code
+  .hero/NEXT.md`, failing the build on any drift.
+- **AC-13:** `hero next migrate-to-projection` SHALL ingest existing
+  NEXT.md content into structured nodes, write the new three-file
+  layout, update `.gitignore`, set `next.projected = true` in
+  `.hero/hero.json`, and MUST be idempotent (second run produces
+  zero file diffs and is a no-op).
+- **AC-14:** `hero next checkpoint` SHALL exit non-zero when run
+  against a repo where `next.projected == false` AND `.hero/NEXT.md`
+  contains legacy markers (`<!-- BEGIN HERO MACHINE STATE -->`) or
+  legacy section headers (`## Just finished`, `## Next`, `## Tried
+  and failed`, `## Context to carry forward`), with a message
+  directing the user to `hero next migrate-to-projection`, and MUST
+  NOT overwrite the existing file in that state.
+- **AC-15:** `hero next suggest "<text>"` (positional-arg writer)
+  SHALL record a new `NextSuggestion` node attributed to the
+  current user, and the text MUST be visible to subsequent
+  `hero next suggest` reads on the same machine and (after commit +
+  push + pull + `hero next ingest`) on a paired machine.
+- **AC-16:** `skills/next-merge-recovery.md` MUST exist and SHALL
+  instruct agents to detect `<<<<<<<` markers in `.hero/NEXT.md`
+  or `.hero/next/*.md` and immediately run `hero next checkpoint`
+  to self-heal.
 
 ACs accrete as edge cases surface during delivery.
 
 ## Approach
 
-**Phase 1 — File restructure + total-rewrite projection** (~1 day):
-- Move existing machine-state out of `NEXT.md` into
-  `.hero/next/<user>.local.md` (marker-bounded zone).
-- Create skeleton `.hero/next/<user>.md` projection (initially
-  carries the agent-narrative content from current NEXT.md).
-- Replace `hero next checkpoint` with `hero next --write`.
-- Update Stop hook wire-up in `internal/install/claude_hooks.go`.
-- Update `.gitignore` for `.hero/next/*.local.md`.
-- Existing `internal/projection/projection.go:NextMD` rewritten or
-  joined by `UserHandoffMD` and `LocalStateMD`.
-- Ships visible benefit: machine state stops churning NEXT.md.
+**Phase 1 — Migration gate + file restructure + total-rewrite
+projection** (~1.5 days) — **SHIPPED**:
+- `hero next migrate-to-projection` ships in `internal/cli/next_migrate.go`.
+- Three-file layout (`.hero/NEXT.md`, `.hero/next/<user>.md`,
+  `.hero/next/<user>.local.md`) lands via `projection.NextMD`,
+  `projection.UserHandoffMD`, plus `buildMachineBlock` /
+  `rebuildLocalState` in `checkpoint.go`.
+- Stop-hook wiring in `internal/install/claude_hooks.go` /
+  `codex_hooks.go` uses `hero next checkpoint --quiet`.
+- `next.projected` flag in `.hero/hero.json` is the authoritative
+  migrated signal (`Config.NextProjected()` in `internal/config`).
+- **Remaining gap:** the pre-flight gate (AC-14) — when
+  `next.projected == false` AND `.hero/NEXT.md` has legacy markers
+  or section headers, `hero next checkpoint` must refuse rather
+  than fall through to the legacy write path.
 
-**Phase 2 — New graph node types** (~½ day):
+**Phase 2 — New graph node types** (~½ day) — **SHIPPED**:
 - Add `UserAsk`, `NextSuggestion`, `SessionReflection` node types
   to graph schema.
 - Migration in `internal/graph/graph.go`.
+- **Use `nextUserSlug()` for Person attribution** — explicit reuse,
+  no new identity resolution.
 - Helper APIs in `internal/handoff/` (new package): `RecordAsk`,
   `RecordSuggestion`, `RecordReflection`, plus query helpers
   `LatestAsk(person, session)` etc.
 - Tests in `internal/handoff/`.
+- Smoke: create a `NextSuggestion` via API, read it via API, confirm
+  it federates through Cloud sync stub.
 
-**Phase 3 — Field-grab CLI** (~½ day):
-- `hero next suggest` / `ask` / `reflection` / `blockers`.
-- `--json` / `--copy` / `--user` flags.
-- Tests using the in-process graph store.
+**Phase 3 — Field-grab CLI (read + write)** (~½ day) — **SHIPPED**:
+- `hero next suggest` / `ask` / `reflection` / `ingest` all land in
+  `internal/cli/next_handoff.go`.
+- Writers use positional-arg form
+  (`hero next suggest "<text>"`); no `set` subcommand.
+- `--json` / `--copy` / `--user` flags on readers.
 
-**Phase 4 — Projection wiring** (~½ day):
-- `projection.NextMD` renders project state only.
-- `projection.UserHandoffMD` renders user durable state from new
-  node types.
-- `projection.LocalStateMD` renders machine state + preserves hand
-  content.
-- `hero next --write` writes all three.
+**Phase 4 — Projection wiring** (~½ day) — **SHIPPED**:
+- `projection.NextMD`, `projection.UserHandoffMD` render project
+  and per-user state.
+- `buildMachineBlock` + `rebuildLocalState` in `checkpoint.go`
+  handle the marker-bounded local file.
+- `hero next checkpoint` writes all three.
+- **Remaining gap:** measure actual wall-clock time on the hero
+  repo's graph and document in spec.
 
-**Phase 5 — Round-trip ingest** (~1 day):
-- `hero scan` reads `.hero/next/<user>.md` if present, ingests
-  entries into graph if not already present locally.
-- Session-start hook for Claude Code calls `hero scan` (or just the
-  ingest portion).
-- E2E test `tmp/e2e-cross-machine.sh` validates two-machine
-  scenario (uses two ephemeral graph DBs simulating two machines).
+**Phase 5 — Round-trip ingest** (~1 day) — **PARTIAL**:
+- `handoff.IngestUserFile` + `hero next ingest` command land in
+  `internal/handoff/ingest.go` + `internal/cli/next_handoff.go`.
+- Idempotency via content-hash dedup.
+- **Remaining gap:** session-start hook wiring in
+  `internal/install/claude_hooks.go` (and `codex_hooks.go`) so the
+  ingest fires automatically at new sessions. E2E cross-machine
+  test using two ephemeral graph DBs.
 
-**Phase 6 — Git hooks + merge driver** (~½ day):
-- `hero install` writes pre-commit, post-merge, session-start hooks.
-- `hero install` registers `hero-next` merge driver in `.git/config`.
-- `.gitattributes` shipped in repo with merge directives.
-- `hero next merge-resolve` command implementation.
+**Phase 6 — Git hooks + merge driver + recovery skill** (~½ day)
+— **PARTIAL**:
+- `hero install` writes pre-commit, post-merge hooks
+  (`internal/cli/next_hooks.go`).
+- `hero-next` merge driver registered in `.git/config`.
+- `.gitattributes` ships with merge directives.
+- `hero next merge-resolve` command implemented.
+- **Remaining gap:** `skills/next-merge-recovery.md` not yet written.
 
-**Phase 7 — Migration command** (~½ day):
-- `hero next migrate-to-projection` ingests existing NEXT.md content
-  into structured graph nodes, writes new layout, updates
-  `.gitignore`. Idempotent.
-
-**Phase 8 — Emit-as-you-work skill (deferred)**:
+**Phase 7 — Emit-as-you-work skill (deferred to follow-up)**:
 - A skill / agent rule that fires `hero next ask "..."` and
   `hero next suggest "..."` at appropriate moments during work, so
   the user-graph nodes accumulate naturally instead of requiring
   the user to invoke commands.
 - Tracked separately because it's behavioral / prompt-engineering
-  work, not codebase plumbing.
+  work, not codebase plumbing. The `hero next suggest set "..."`
+  writer from Phase 3 covers the manual-capture path until this
+  ships.
 
 ## Out of scope
 
@@ -415,26 +542,164 @@ ACs accrete as edge cases surface during delivery.
   branches mid-work, the file reflects the latest. Refinement for
   later if the simple model bites.
 
+## Deferred
+
+These were open questions resolved as "ship v1 as-designed, revisit
+on signal":
+
+- **Hand content inside `<user>.md`.** v1 ships total-rewrite, no
+  marker preservation in `<user>.md`. Revisit if any user reports
+  wanting to keep hand-written content in `<user>.md`; the likely
+  fix is adding an `extras:` frontmatter field or a small
+  marker-bounded zone. The `<user>.local.md` file already supports
+  hand content for users who need a scribble surface today.
+
 ## Open questions
 
-- **Suggested next prompt — how does it get there in the first
-  place?** Phase 8 (emit-as-you-work skill) addresses, but we may
-  want a manual `hero next suggest set "..."` for explicit capture
-  while the skill matures.
-- **Local file marker preservation in `<user>.md`:** the design
-  says `<user>.md` is total-rewrite (no hand content), but a user
-  might reasonably want to scribble in there. Keep total-rewrite
-  for v1; add an `extras:` frontmatter field if demand surfaces.
-- **What to do when `hero install` hasn't run and a real merge
-  conflict lands** — agents should auto-detect markers in NEXT.md
-  and run `hero next --write`, but that's a skill rule we need to
-  ship alongside Phase 6.
-- **Person identity:** today `nextUserSlug()` derives from
-  `tracking.defaultAgent` or git user.name. The new `UserAsk` etc.
-  attribution should match — verify alignment in Phase 2.
-- **Migration timing:** can we ship Phase 1 before Phase 7's
-  migration command? Phase 1's projection will collide with the
-  existing hand-written content on first run. Plan: Phase 1 ships
-  with a pre-flight check that bails if it detects unmigrated
-  content; Phase 7's `migrate-to-projection` is the gate. Or just
-  ship migration as part of Phase 1.
+(All five original open questions resolved during spec finalization;
+list intentionally empty. Re-add if new questions surface during
+delivery.)
+
+## Risks
+
+- **Merge driver doesn't fire for users who haven't run
+  `hero install`.** Clones without the driver get standard conflict
+  markers in `.hero/NEXT.md` / `.hero/next/*.md`. Mitigated by the
+  Phase 6 `skills/next-merge-recovery.md` rule (agents self-heal on
+  marker detection) and by the next Stop-hook firing regenerating
+  the file. The Stop hook is the existing self-heal already in
+  place for the legacy command.
+- **Round-trip ingest produces duplicate nodes if idempotency check
+  is wrong.** A misclassified or hash-bucket-collision case could
+  re-create nodes on every session start. Mitigated by content-hash
+  dedup keyed on `(node type, session_id, sha256(text))`, and by
+  E2E coverage (AC-6 / AC-11) running the ingest twice and
+  asserting no second-run node creation.
+- **Cross-machine race.** Two machines edit `<user>.md` in parallel
+  before either pushes. Mitigated by the merge driver: last
+  writer's local graph wins on the merge, and the loser's content
+  survives via the next round-trip ingest (its graph nodes get
+  ingested from the winner's pushed file). No data lost — last
+  writer's view wins on conflict resolution, both sets of nodes
+  re-converge on the next round-trip.
+- **Phase 1 ships before users have migrated their working repos.**
+  Mitigated by the Phase 1 pre-flight check that refuses to
+  overwrite unmigrated content (AC-14). The check keys on legacy
+  markers and section headers, gated on `next.projected == false`.
+- **Performance: total-rewrite of three files on every Stop hook
+  could feel slow on large graphs.** Documented < 200 ms budget
+  target. If exceeded, switch the local file to marker-bounded
+  partial rewrite (which is already its model anyway) and keep the
+  tracked files as total-rewrite (they're smaller and not on the
+  hot path of every keystroke).
+- **`hero install` itself is a precondition for several mitigations.**
+  Users who skip it lose the merge driver, the git hooks, and the
+  Stop-hook rewire. Mitigated long-term by `hero check` flagging
+  install drift; short-term by ensuring the manual
+  `hero next checkpoint` path still works correctly without any
+  hook installation.
+
+## Validation
+
+End-to-end and per-phase verification:
+
+- **`hero check` health check** confirms the Stop hook points to
+  `hero next checkpoint`, git hooks are installed, and the `hero-next`
+  merge driver is registered. Run after every `hero install`.
+- **CI gate** (AC-12) diffs the committed `.hero/NEXT.md` against
+  `hero next checkpoint` output and fails the build on drift. Catches
+  Stop-hook regressions and reminds contributors to commit
+  projection changes.
+- **E2E cross-machine script** (AC-6 / AC-11): `tmp/e2e-cross-machine.sh`
+  or an area suite in `e2e-area-suites` exercises the full
+  write-on-A → push → pull-on-B → ingest-on-B → read-on-B sequence
+  with two ephemeral graph DBs and no Cloud configured.
+- **Migration smoke**: run `hero next migrate-to-projection` on a
+  freshly-cloned hero repo; confirm `next.projected = true` set,
+  three files exist, second run is a no-op, legacy markers and
+  section headers
+  gone.
+- **Merge-driver smoke**: simulate a two-branch merge touching
+  `.hero/NEXT.md` on both sides; confirm no `<<<<<<<` markers in
+  the resolved file for an `hero install`-ed clone; confirm the
+  `next-merge-recovery` skill catches markers in a non-installed
+  clone.
+- **Performance smoke**: time `hero next checkpoint` against a
+  representative graph; confirm < 200 ms total. Document the budget
+  in the spec; revisit if exceeded.
+- **Per-phase smoke** as enumerated under `## Approach`.
+
+## Changes
+
+Files modified or created during this delivery, in order of commit.
+
+**Already shipped (audit confirmed; no changes needed):**
+
+- `internal/cli/checkpoint.go` — projection write path
+  (`writeProjectedNextMD`, `writeUserHandoffFile`), machine-block
+  rebuild, `next.projected` flag gate.
+- `internal/cli/next_handoff.go` — `suggest` / `ask` / `reflection`
+  / `ingest` commands with positional-arg writers.
+- `internal/cli/next_migrate.go` — `migrate-to-projection` with
+  `next.projected` flag flip.
+- `internal/cli/next_hooks.go` — pre-commit / post-merge / merge
+  driver registration.
+- `internal/projection/projection.go` — `NextMD`.
+- `internal/projection/user_handoff.go` — `UserHandoffMD`.
+- `internal/handoff/handoff.go` — `RecordAsk` / `RecordSuggestion`
+  / `RecordReflection` / `LatestAsk` / `LatestSuggestion` /
+  `RecentReflections`.
+- `internal/handoff/ingest.go` — `IngestUserFile`.
+- `internal/install/claude_hooks.go` — Stop / PreCompact hook
+  wiring via `heroCheckpointCmd`.
+- `internal/install/codex_hooks.go` — Codex Stop hook wiring.
+- `internal/config/config.go` — `NextProjected()` flag accessor.
+- `.gitattributes` — merge driver directives for NEXT.md +
+  `next/*.md`.
+
+**Modified in this delivery:**
+
+1. `internal/cli/checkpoint.go` — add pre-flight migration gate:
+   when `next.projected == false` AND `.hero/NEXT.md` has legacy
+   markers / section headers, exit non-zero with a directive to
+   run `hero next migrate-to-projection`. (AC-14)
+2. `internal/install/claude_hooks.go` — add a `SessionStart` hook
+   firing `hero next ingest` so cross-machine continuity works
+   without a manual command. (AC-7, AC-11)
+3. `internal/install/codex_hooks.go` — mirror the SessionStart
+   hook for the Codex shape (if Codex supports it; otherwise leave
+   a no-op and note in the file). (AC-7)
+4. `.github/workflows/test.yml` — append a drift-gate step that
+   runs `hero next checkpoint --quiet` and
+   `git diff --exit-code .hero/NEXT.md`, failing the build on
+   drift. (AC-12)
+5. `internal/cli/checkpoint_test.go` (or new
+   `internal/cli/cross_machine_test.go`) — Go test simulating two
+   ephemeral graph DBs (machine A + B) with a shared handoff file
+   on disk, verifying `hero next suggest` on B returns A's
+   recorded text after ingest. (AC-6, AC-11)
+
+**Created in this delivery:**
+
+6. `skills/next-merge-recovery/skill.md` — agent rule for
+   `<<<<<<<` marker detection → `hero next checkpoint` self-heal.
+   (AC-16)
+
+## Notes for downstream specs
+
+`project-snapshot` (`.hero/planning/features/project-snapshot/spec.md`)
+depends on this spec and reuses:
+
+- The projector pattern (`projection.NextMD` / `UserHandoffMD` /
+  `LocalStateMD`) — `SnapshotMD` follows the same shape.
+- The Stop-hook integration in `internal/install/claude_hooks.go`.
+- The `.gitattributes` + merge-driver model — `SNAPSHOT.md` is also
+  a graph projection and benefits from `merge=hero-next`.
+- The `hero install` hook-installation flow.
+- The migration-gate pattern (pre-flight check refusing overwrite of
+  unmigrated content) — applicable to any future projector that
+  takes over an existing tracked file.
+
+Any change in this spec to the projector pattern, hook wiring, merge
+driver, or migration approach should be flagged to `project-snapshot`
+before delivery.
