@@ -116,7 +116,7 @@ func TestRegister_ViewToolbarActiveStateMatchesRoute(t *testing.T) {
 func TestSectionFragment_RendersStandalone(t *testing.T) {
 	deps := Deps{UserName: "test-user"}
 	for _, section := range []string{"roadmap", "blocked", "shipped", "toolbar"} {
-		body, err := SectionFragment(deps, section)
+		body, err := SectionFragment(deps, section, "")
 		if err != nil {
 			t.Errorf("SectionFragment(%q): %v", section, err)
 			continue
@@ -128,9 +128,65 @@ func TestSectionFragment_RendersStandalone(t *testing.T) {
 }
 
 func TestSectionFragment_UnknownSection(t *testing.T) {
-	_, err := SectionFragment(Deps{}, "nope")
+	_, err := SectionFragment(Deps{}, "nope", "")
 	if err == nil {
 		t.Errorf("expected error for unknown section, got nil")
+	}
+}
+
+// TestRegister_ViewToolbarEmptyActiveRendersNoActiveTab pins the v5
+// Fix 6 contract for toolbarData.Active's zero value: rendering the
+// view-toolbar fragment with Active="" produces zero `view-tab active`
+// strings. New callers can rely on this "no tab active" fallback
+// instead of accidentally highlighting Horizons.
+func TestRegister_ViewToolbarEmptyActiveRendersNoActiveTab(t *testing.T) {
+	tmpl, err := loadTemplates()
+	if err != nil {
+		t.Fatalf("loadTemplates: %v", err)
+	}
+	var buf strings.Builder
+	if err := tmpl.ExecuteTemplate(&buf, "view-toolbar.html", toolbarData{Active: ""}); err != nil {
+		t.Fatalf("execute view-toolbar.html: %v", err)
+	}
+	out := buf.String()
+	if got := strings.Count(out, "view-tab active"); got != 0 {
+		t.Errorf("toolbarData{Active:\"\"} rendered %d `view-tab active`, want 0\nrendered:\n%s", got, out)
+	}
+	// Sanity: the toolbar itself should still render (tabs present, just
+	// none active).
+	if !strings.Contains(out, "view-toolbar") {
+		t.Errorf("toolbar fragment empty / missing view-toolbar marker:\n%s", out)
+	}
+}
+
+// TestSectionFragment_ToolbarHonorsViewParam pins v5 Fix 4: the toolbar
+// fragment renders with the supplied view as the active tab. Empty
+// view defaults to horizons.
+func TestSectionFragment_ToolbarHonorsViewParam(t *testing.T) {
+	deps := Deps{UserName: "test-user"}
+	cases := []struct {
+		view string
+		want string
+	}{
+		{"", `class="view-tab active">Horizons</a>`},
+		{"horizons", `class="view-tab active">Horizons</a>`},
+		{"kanban", `class="view-tab active">Kanban</a>`},
+		{"graph", `class="view-tab active">Graph</a>`},
+		{"blocked", `class="view-tab active">Blocked`},
+	}
+	for _, tc := range cases {
+		body, err := SectionFragment(deps, "toolbar", tc.view)
+		if err != nil {
+			t.Errorf("SectionFragment(toolbar, %q): %v", tc.view, err)
+			continue
+		}
+		if !strings.Contains(string(body), tc.want) {
+			t.Errorf("view=%q: missing active marker %q\nbody:\n%s", tc.view, tc.want, string(body))
+		}
+		// Exactly one active tab.
+		if got := strings.Count(string(body), "view-tab active"); got != 1 {
+			t.Errorf("view=%q: expected 1 active view-tab, got %d", tc.view, got)
+		}
 	}
 }
 

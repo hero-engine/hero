@@ -67,8 +67,10 @@ func TestRegister_RendersAllSections(t *testing.T) {
 		// Metric strip rendered with the live-now pane active.
 		`class="metric-tab`,
 		`Right now`,
-		// Page-hero subhead reflects empty counts cleanly.
-		`Sessions`,
+		// Per v5 Fix 3: /agents root page-title is "Agents", consistent
+		// with sibling homes. Sub-route titles still render as
+		// "Agents · <Sub>" (covered in TestAgentsSubRouteTitle below).
+		`class="page-title">Agents</h1>`,
 	}
 	for _, want := range mustContain {
 		if !strings.Contains(body, want) {
@@ -95,6 +97,60 @@ func TestSectionFragment_UnknownSection(t *testing.T) {
 	_, err := SectionFragment(Deps{}, "nope")
 	if err == nil {
 		t.Errorf("expected error for unknown section, got nil")
+	}
+}
+
+// TestAgentsRootTitleIsAgents pins the v5 Fix 3 contract: the home root
+// page-title renders "Agents" (was "Sessions" pre-v5) and NOT
+// "Agents · <Sub>". Sub-routes still get the dotted form (separate test).
+func TestAgentsRootTitleIsAgents(t *testing.T) {
+	r := newTestRouter(t)
+	if err := Register(r, Deps{UserName: "test-user"}); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	srv := httptest.NewServer(r.Handler())
+	defer srv.Close()
+
+	resp, err := http.Get(srv.URL + "/agents")
+	if err != nil {
+		t.Fatalf("GET /agents: %v", err)
+	}
+	defer resp.Body.Close()
+	raw, _ := io.ReadAll(resp.Body)
+	body := string(raw)
+
+	if !strings.Contains(body, `class="page-title">Agents</h1>`) {
+		t.Errorf("/agents root missing `<h1>Agents</h1>` page-title")
+	}
+	if strings.Contains(body, `class="page-title">Sessions</h1>`) {
+		t.Errorf("/agents root page-title still says 'Sessions' (v5 Fix 3 regression)")
+	}
+	if strings.Contains(body, `class="page-title">Agents · `) {
+		t.Errorf("/agents root should not render the 'Agents · <Sub>' form")
+	}
+}
+
+// TestAgentsSubRouteTitleStillDotted asserts that the v5 Fix 3 change
+// does NOT regress the sub-route title format. `/agents/proposals`
+// still renders `<h1>Agents · Proposals</h1>`.
+func TestAgentsSubRouteTitleStillDotted(t *testing.T) {
+	r := newTestRouter(t)
+	if err := Register(r, Deps{UserName: "test-user"}); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	srv := httptest.NewServer(r.Handler())
+	defer srv.Close()
+
+	resp, err := http.Get(srv.URL + "/agents/proposals")
+	if err != nil {
+		t.Fatalf("GET /agents/proposals: %v", err)
+	}
+	defer resp.Body.Close()
+	raw, _ := io.ReadAll(resp.Body)
+	body := string(raw)
+
+	if !strings.Contains(body, `Agents · Proposals`) {
+		t.Errorf("/agents/proposals missing `Agents · Proposals` title (v5 Fix 3 regression)")
 	}
 }
 

@@ -42,9 +42,12 @@ type EntryRelation struct {
 }
 
 // LoadEntry resolves a knowledge entry by slug. Walks the
-// `.hero/knowledge/` tree looking for `<slug>.md` in any subdir, plus
-// loose top-level files. Returns nil when the slug doesn't resolve.
-// heroDir empty also returns nil.
+// `.hero/knowledge/` tree via collectKnowledgeFiles, covering three
+// shapes: `<kind>/<slug>.md` (flat), `<kind>/<slug>/spec.md` (dir-style),
+// and `<kind>/<nested>/<slug>.md` (one level deeper). Also handles
+// loose `<slug>.md` files directly under the knowledge/ root for
+// backwards-compatibility with the pre-v5 layout. Returns nil when the
+// slug doesn't resolve. heroDir empty also returns nil.
 func LoadEntry(heroDir, slug string) *Entry {
 	if heroDir == "" || slug == "" {
 		return nil
@@ -55,44 +58,28 @@ func LoadEntry(heroDir, slug string) *Entry {
 		return nil
 	}
 
-	// First pass: typed subdirectories (notes/, conventions/, …) —
-	// these are the canonical locations.
-	subdirs, _ := os.ReadDir(root)
-	for _, sd := range subdirs {
-		if !sd.IsDir() {
-			continue
-		}
-		full := filepath.Join(root, sd.Name(), slug+".md")
-		if st, err := os.Stat(full); err == nil && !st.IsDir() {
-			return readEntry(full, sd.Name(), st.ModTime())
+	// Subdir-scoped lookups (flat, dir-style, nested) via the shared
+	// walk. Flat shape wins on (kind, slug) collisions per collectKnowledgeFiles.
+	for _, ef := range collectKnowledgeFiles(root) {
+		if ef.Slug == slug {
+			return readEntry(ef.Path, ef.Kind, ef.Slug, ef.ModTime)
 		}
 	}
-	// Second pass: loose markdown files directly under knowledge/.
-	for _, sd := range subdirs {
-		if sd.IsDir() {
-			continue
-		}
-		name := sd.Name()
-		if !strings.HasSuffix(name, ".md") {
-			continue
-		}
-		if strings.TrimSuffix(name, ".md") != slug {
-			continue
-		}
-		full := filepath.Join(root, name)
-		st, err := os.Stat(full)
-		if err != nil {
-			continue
-		}
-		return readEntry(full, "", st.ModTime())
+
+	// Backwards-compat: loose markdown files directly under knowledge/.
+	loose := filepath.Join(root, slug+".md")
+	if st, err := os.Stat(loose); err == nil && !st.IsDir() {
+		return readEntry(loose, "", slug, st.ModTime())
 	}
 	return nil
 }
 
 // readEntry parses the file at path into an Entry. dir is the
 // knowledge subdirectory name (e.g. "notes"); empty for loose files at
-// the knowledge/ root.
-func readEntry(path, dir string, modTime time.Time) *Entry {
+// the knowledge/ root. slug is supplied explicitly because dir-style
+// entries (`<kind>/<slug>/spec.md`) need the parent dir name, not the
+// basename, as the slug.
+func readEntry(path, dir, slug string, modTime time.Time) *Entry {
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		return nil
@@ -100,7 +87,9 @@ func readEntry(path, dir string, modTime time.Time) *Entry {
 	text := string(raw)
 	front, body := splitFrontmatter(text)
 	fm := parseFrontmatterFields(front)
-	slug := strings.TrimSuffix(filepath.Base(path), ".md")
+	if slug == "" {
+		slug = strings.TrimSuffix(filepath.Base(path), ".md")
+	}
 
 	e := &Entry{
 		Slug:          slug,

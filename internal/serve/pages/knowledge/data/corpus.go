@@ -57,44 +57,29 @@ func LoadCorpus(in CorpusInputs) Corpus {
 	weekAgo := time.Now().Add(-7 * 24 * time.Hour)
 	newThisWeek := 0
 
-	subdirs, _ := os.ReadDir(root)
-	for _, sd := range subdirs {
-		if !sd.IsDir() {
-			continue
+	// Shared walk covers flat (<kind>/<slug>.md), dir-style
+	// (<kind>/<slug>/spec.md), and nested (<kind>/<nested>/<slug>.md)
+	// shapes, with depth-2 limit. Flat wins on (kind, slug) collisions.
+	for _, ef := range collectKnowledgeFiles(root) {
+		entry := CorpusEntry{
+			Kind:          singularizeKind(ef.Kind),
+			Slug:          ef.Slug,
+			Title:         humanize(ef.Slug),
+			Description:   "",
+			Domain:        ef.Kind,
+			UpdatedAt:     ef.ModTime,
+			UpdatedPretty: prettyAge(ef.ModTime),
 		}
-		kind := singularizeKind(sd.Name())
-		kindDir := filepath.Join(root, sd.Name())
-		files, _ := os.ReadDir(kindDir)
-		for _, f := range files {
-			if f.IsDir() || !strings.HasSuffix(f.Name(), ".md") {
-				continue
+		// Best-effort: pull the first heading or first non-empty line as title.
+		if t, desc := readTitleAndDesc(ef.Path); t != "" {
+			entry.Title = t
+			if desc != "" {
+				entry.Description = desc
 			}
-			full := filepath.Join(kindDir, f.Name())
-			st, err := os.Stat(full)
-			if err != nil {
-				continue
-			}
-			slug := strings.TrimSuffix(f.Name(), ".md")
-			entry := CorpusEntry{
-				Kind:          kind,
-				Slug:          slug,
-				Title:         humanize(slug),
-				Description:   "",
-				Domain:        sd.Name(),
-				UpdatedAt:     st.ModTime(),
-				UpdatedPretty: prettyAge(st.ModTime()),
-			}
-			// Best-effort: pull the first heading or first non-empty line as title.
-			if t, desc := readTitleAndDesc(full); t != "" {
-				entry.Title = t
-				if desc != "" {
-					entry.Description = desc
-				}
-			}
-			entries = append(entries, entry)
-			if st.ModTime().After(weekAgo) {
-				newThisWeek++
-			}
+		}
+		entries = append(entries, entry)
+		if ef.ModTime.After(weekAgo) {
+			newThisWeek++
 		}
 	}
 

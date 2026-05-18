@@ -78,13 +78,17 @@ func Register(r *shell.Router, deps Deps) error {
 }
 
 // SectionFragment returns the rendered HTML for a single Work section.
-func SectionFragment(deps Deps, section string) ([]byte, error) {
+// view, when non-empty and the section is "toolbar", selects which view-
+// tab to mark active in the rendered fragment. Valid values mirror
+// toolbarData.Active: "horizons" | "kanban" | "graph" | "blocked".
+// Empty falls back to "horizons" (the home root view).
+func SectionFragment(deps Deps, section, view string) ([]byte, error) {
 	tmpl, err := loadTemplates()
 	if err != nil {
 		return nil, err
 	}
 	h := &handler{tmpl: tmpl, deps: deps}
-	return h.renderSection(section)
+	return h.renderSection(section, view)
 }
 
 // loadTemplates parses every .html under the embedded templates/
@@ -420,8 +424,10 @@ type stubData struct {
 }
 
 // renderSection produces the standalone HTML fragment for one Work
-// section, for the SSE fragment-replacement endpoints.
-func (h *handler) renderSection(section string) ([]byte, error) {
+// section, for the SSE fragment-replacement endpoints. view selects
+// the active toolbar tab when section is "toolbar"; ignored for other
+// sections. Empty view defaults to "horizons".
+func (h *handler) renderSection(section, view string) ([]byte, error) {
 	var tplName string
 	var payload any
 
@@ -450,11 +456,14 @@ func (h *handler) renderSection(section string) ([]byte, error) {
 			ProjectRoot: h.deps.ProjectRoot,
 			HeroDir:     h.deps.HeroDir,
 		})
-		// SSE fragment refresh — defaults to horizons (root view). Sub-
-		// routes get their own re-render on full page load; the fragment
-		// endpoint is currently only used to refresh the blocked badge,
-		// which is independent of the active-tab indicator.
-		payload = toolbarData{BlockedCount: rm.BlockedCount, Active: "horizons"}
+		// SSE fragment refresh — the active tab is supplied by the
+		// caller via `?view=` (per v5 Fix 4) so a toolbar swap on
+		// `/work/kanban` doesn't snap the active tab back to Horizons.
+		// Empty defaults to horizons (root view).
+		if view == "" {
+			view = "horizons"
+		}
+		payload = toolbarData{BlockedCount: rm.BlockedCount, Active: view}
 	default:
 		return nil, fmt.Errorf("unknown section %q", section)
 	}
@@ -475,9 +484,11 @@ type pageData struct {
 
 type toolbarData struct {
 	BlockedCount int
-	// Active is the slug of the currently-active view-tab. Valid values:
-	// "horizons", "kanban", "graph", "blocked". Empty renders no tab as
-	// active (callers should always set it).
+	// Active is the slug of the currently-active view-tab.
+	// Valid values: "horizons" | "kanban" | "graph" | "blocked".
+	// Empty renders no tab as active (callers should always set it).
+	// This zero-value behavior is documented and tested in
+	// TestRegister_ViewToolbarEmptyActiveRendersNoActiveTab.
 	Active string
 }
 

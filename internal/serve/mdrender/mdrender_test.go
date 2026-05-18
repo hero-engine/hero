@@ -208,6 +208,53 @@ func TestSplitTableRow_EscapedPipe(t *testing.T) {
 	}
 }
 
+// TestSplitTableRow_EscapeStateMachine pins v5 Fix 5: the cell walk
+// tracks a real `escaped bool` so `\\|` and `\|` parse correctly. The
+// two-byte look-back used pre-v5 over-protected `\\|` (treating the
+// backslash-escaped backslash followed by pipe as a single escaped
+// pipe).
+func TestSplitTableRow_EscapeStateMachine(t *testing.T) {
+	cases := []struct {
+		name string
+		row  string
+		want []string // expected cell contents after strings.TrimSpace
+	}{
+		{
+			name: "escaped pipe inside cell yields literal pipe",
+			row:  `| a \| b | c |`,
+			want: []string{"a | b", "c"},
+		},
+		{
+			name: "escaped backslash then column break",
+			row:  `| a \\| b | c |`,
+			want: []string{`a \`, "b", "c"},
+		},
+		{
+			name: "backslash-escaped pipe inside cell",
+			row:  `| a \\\| b | c |`,
+			want: []string{`a \| b`, "c"},
+		},
+		{
+			name: "two backslashes alone",
+			row:  `| a \\ | b |`,
+			want: []string{`a \`, "b"},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cells := splitTableRow(tc.row)
+			if len(cells) != len(tc.want) {
+				t.Fatalf("cell count = %d, want %d (cells=%q)", len(cells), len(tc.want), cells)
+			}
+			for i, w := range tc.want {
+				if got := strings.TrimSpace(cells[i]); got != w {
+					t.Errorf("cell[%d] = %q, want %q", i, got, w)
+				}
+			}
+		})
+	}
+}
+
 func TestRender_NestedBulletList(t *testing.T) {
 	md := "- top one\n  - nested A\n  - nested B\n- top two\n"
 	out := string(Render(md))
