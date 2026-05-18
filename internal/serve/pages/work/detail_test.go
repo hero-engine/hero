@@ -137,7 +137,12 @@ func TestSlugRoute_DoesNotShadowSiblings(t *testing.T) {
 	}
 }
 
-func TestWorkFilterUI_RmFiltersOnlyNoViewToolbar(t *testing.T) {
+func TestWorkFilterUI_RootRendersViewToolbarAndRmFilters(t *testing.T) {
+	// Per v4 Fix 1, /work renders BOTH the view-toolbar (with the
+	// Horizons tab active) and the roadmap's rm-filters row. The
+	// v2-era removal of the view-toolbar from the root was reverted
+	// because sub-routes were rendering it inconsistently — chrome
+	// should match across /work, /work/kanban, /work/graph, /work/blocked.
 	r := newTestRouter(t)
 	if err := Register(r, Deps{HeroDir: t.TempDir(), UserName: "test-user"}); err != nil {
 		t.Fatalf("Register: %v", err)
@@ -155,11 +160,15 @@ func TestWorkFilterUI_RmFiltersOnlyNoViewToolbar(t *testing.T) {
 	if !strings.Contains(s, `class="rm-filters"`) {
 		t.Errorf("/work missing rm-filters row")
 	}
-	if strings.Contains(s, `class="view-toolbar"`) {
-		t.Errorf("/work still rendering legacy view-toolbar — should be gone in polish-v2")
+	if !strings.Contains(s, `class="view-toolbar"`) {
+		t.Errorf("/work missing view-toolbar — v4 Fix 1 adds it back to root")
 	}
-	if strings.Contains(s, `id="work-toolbar"`) {
-		t.Errorf("/work still rendering work-toolbar id — view-toolbar should be removed")
+	if !strings.Contains(s, `id="work-toolbar"`) {
+		t.Errorf("/work missing work-toolbar id")
+	}
+	// Horizons tab must be marked active on the root.
+	if !strings.Contains(s, `class="view-tab active">Horizons</a>`) {
+		t.Errorf("/work missing Horizons-active view-tab; got: %s", s)
 	}
 }
 

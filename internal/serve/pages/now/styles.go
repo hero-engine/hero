@@ -412,10 +412,14 @@ const nowStyles = `<style>
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin: 6px 0 6px 0;
+  /* v4 Fix 7: visually nest under the parent row by clearing the
+     parent's time (56px) + icon (22px) + grid-gap (14px*2) columns
+     and adding a subtle left border as a nesting cue. */
+  margin: 6px 0 6px 92px;
   padding: 8px 12px;
+  border-left: 1px solid var(--border);
   background: var(--bg-soft);
-  border-radius: 6px;
+  border-radius: 0 6px 6px 0;
   font-size: 12px;
 }
 .now-feed-collapsed-row {

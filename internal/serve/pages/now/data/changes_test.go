@@ -92,22 +92,87 @@ func TestDedupeWithinWindow_DifferentGroupsDoNotCollapse(t *testing.T) {
 
 func TestDisplayGroupFor(t *testing.T) {
 	cases := map[string]string{
-		"peer.call.invoked":   "peer-call",
-		"peer.call.completed": "peer-call",
-		"peer.handoff.sent":   "peer-handoff",
-		"spec_created":        "spec-change",
-		"spec_updated":        "spec-change",
-		"spec.status_changed": "spec-change",
-		"decision_made":       "decision",
-		"delivery_complete":   "delivery",
-		"knowledge.captured":  "knowledge",
-		"note.captured":       "knowledge",
-		"random_event":        "",
+		"peer.call.invoked":     "peer-call",
+		"peer.call.completed":   "peer-call",
+		"peer.handoff.sent":     "peer-handoff",
+		"spec_created":          "spec-change",
+		"spec_updated":          "spec-change",
+		"spec.status_changed":   "spec-change",
+		"spec.complete":         "spec-complete",
+		"spec.complete.shipped": "spec-complete",
+		"claim_acquired":        "claim-acquired",
+		"peer_id.minted":        "peer-id-minted",
+		"handoff.dropped":       "handoff",
+		"handoff.accepted":      "handoff",
+		"check.passed":          "check",
+		"check.failed":          "check",
+		"commit":                "commit",
+		"files_modified":        "commit",
+		"decision_made":         "decision",
+		"delivery_complete":     "delivery",
+		"knowledge.captured":    "knowledge",
+		"note.captured":         "knowledge",
+		"random_event":          "",
 	}
 	for in, want := range cases {
 		if got := displayGroupFor(in); got != want {
 			t.Errorf("displayGroupFor(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+func TestGroupLabelFor_NewGroups(t *testing.T) {
+	cases := map[string]string{
+		"spec.complete":   "specs completed",
+		"claim_acquired":  "claims acquired",
+		"peer_id.minted":  "peer ids minted",
+		"handoff.dropped": "handoffs",
+		"check.passed":    "checks",
+		"commit":          "commits",
+	}
+	for in, want := range cases {
+		if got := groupLabelFor(in); got != want {
+			t.Errorf("groupLabelFor(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestDedupeWithinWindow_SpecCompleteCollapses(t *testing.T) {
+	// Three spec.complete events within the dedup window — collapse to
+	// a single row with Count=3.
+	now := time.Date(2026, 5, 18, 12, 0, 0, 0, time.UTC)
+	rows := []ChangeRow{}
+	for i := 0; i < 3; i++ {
+		rows = append(rows, ChangeRow{
+			TimeAt:       now.Add(-time.Duration(i*5) * time.Minute),
+			DisplayGroup: displayGroupFor("spec.complete"),
+			GroupLabel:   groupLabelFor("spec.complete"),
+			Count:        1,
+		})
+	}
+	out := dedupeWithinWindow(rows, time.Hour)
+	if len(out) != 1 {
+		t.Fatalf("expected 1 collapsed row, got %d", len(out))
+	}
+	if out[0].Count != 3 {
+		t.Errorf("expected Count=3, got %d", out[0].Count)
+	}
+	if out[0].GroupLabel != "specs completed" {
+		t.Errorf("expected GroupLabel=%q, got %q", "specs completed", out[0].GroupLabel)
+	}
+}
+
+func TestDedupeWithinWindow_DistinctNewGroupsDoNotCollapse(t *testing.T) {
+	// claim_acquired and peer_id.minted are different display groups —
+	// they should not collapse together.
+	now := time.Date(2026, 5, 18, 12, 0, 0, 0, time.UTC)
+	rows := []ChangeRow{
+		{TimeAt: now, DisplayGroup: displayGroupFor("claim_acquired"), Count: 1},
+		{TimeAt: now.Add(-1 * time.Minute), DisplayGroup: displayGroupFor("peer_id.minted"), Count: 1},
+	}
+	out := dedupeWithinWindow(rows, time.Hour)
+	if len(out) != 2 {
+		t.Errorf("expected 2 rows (different new groups stay separate), got %d", len(out))
 	}
 }
 

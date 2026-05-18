@@ -322,7 +322,16 @@ func (h *handler) renderEntryDetail(w http.ResponseWriter, req *http.Request) {
 		}
 		return h.tmpl.ExecuteTemplate(out, "detail.html", entry)
 	}
-	h.serveDetail(w, req, content, subNav, crumb, "Knowledge · "+entry.Title+" · Hero")
+	// Per v4 Fix 4: browser <title> leads with the slug so bookmark
+	// prefix-matching survives, then appends the display title when
+	// the loader resolved one. Slug-only fallback when title is empty
+	// or matches the slug.
+	title := "Knowledge · " + slug
+	if t := strings.TrimSpace(entry.Title); t != "" && t != slug {
+		title += " — " + entry.Title
+	}
+	title += " · Hero"
+	h.serveDetail(w, req, content, subNav, crumb, title)
 }
 
 // buildEntryPageHero composes the per-entry page-hero. Eyebrow

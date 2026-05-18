@@ -126,12 +126,28 @@ func humanWindowText(d time.Duration) string {
 // Multiple raw types collapse together when they describe variants of
 // the same action (e.g. peer.call.invoked and peer.call.completed are
 // both "peer-call"). Returning "" disables dedup for that type.
+//
+// Per v4 Fix 3, the table covers the event kinds that appear in real
+// /now feeds in clusters: peer.call.*, peer.handoff.*, spec.complete*,
+// claim_acquired, peer_id.minted, handoff.*, commit, check.*, and the
+// older spec_*/decision/delivery/blocker emitters. Unknown kinds fall
+// through to "" so they keep rendering as singletons.
 func displayGroupFor(t string) string {
 	switch {
 	case strings.HasPrefix(t, "peer.call."):
 		return "peer-call"
 	case strings.HasPrefix(t, "peer.handoff."):
 		return "peer-handoff"
+	case strings.HasPrefix(t, "spec.complete"):
+		return "spec-complete"
+	case strings.HasPrefix(t, "handoff."):
+		return "handoff"
+	case strings.HasPrefix(t, "check."):
+		return "check"
+	case t == "claim_acquired":
+		return "claim-acquired"
+	case strings.HasPrefix(t, "peer_id."):
+		return "peer-id-minted"
 	case t == "spec_created", t == "spec_updated", t == "spec.status_changed":
 		return "spec-change"
 	case t == "knowledge.captured", t == "note.captured":
@@ -159,6 +175,16 @@ func groupLabelFor(t string) string {
 		return "peer handoffs"
 	case "spec-change":
 		return "spec updates"
+	case "spec-complete":
+		return "specs completed"
+	case "claim-acquired":
+		return "claims acquired"
+	case "peer-id-minted":
+		return "peer ids minted"
+	case "handoff":
+		return "handoffs"
+	case "check":
+		return "checks"
 	case "knowledge":
 		return "knowledge captures"
 	case "commit":

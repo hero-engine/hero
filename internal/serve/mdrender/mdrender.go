@@ -213,6 +213,12 @@ func isNumbered(line string) bool {
 // renderList emits a list starting at `start`. It walks contiguous
 // list lines, handles 2- or 4-space-indent nesting, and returns the
 // number of lines consumed.
+//
+// Per v4 Fix 2, soft-wrapped continuation lines (non-blank, non-marker,
+// non-block-construct lines immediately following a bullet) are folded
+// into the current <li> with a joining space before inline() runs. The
+// continuation stops at: a blank line, a new list marker, a fenced
+// code block, a blockquote, a heading, or a table-header pair.
 func renderList(out *strings.Builder, lines []string, start int) int {
 	// Detect the base indent + kind from the first line.
 	baseIndent, _, baseOrdered := listMarker(lines[start])
@@ -232,28 +238,47 @@ func renderList(out *strings.Builder, lines []string, start int) int {
 			break
 		}
 		if indent > baseIndent {
-			// Nested list — recurse. Output goes inside the LAST <li>
-			// we wrote, so we put it before the closing </li>. Simpler:
-			// write a fresh nested list as a sibling-after of the last
-			// item by re-opening the <li> chain.
-			// To keep things simple we just emit the nested list as a
-			// child of the most-recent <li>: rewind one closing tag.
-			// We don't have a built buffer to rewind, so write the
-			// nested list as standalone content in place — browsers
-			// tolerate <ul> directly after </li> visually as a sibling.
-			// To get true nesting (ul inside li), we instead inline-
-			// recurse before closing the previous item: implemented by
-			// holding off the </li> close until we know what comes next.
-			//
-			// Simpler approach: track whether we just opened an <li>
-			// without closing. We rebuild with a small per-iteration
-			// pattern below.
-			break // handled by the alternate path below
+			// Nested list — handled below as a recursion after the
+			// previous <li>'s body was written.
+			break
 		}
+		i++
+
+		// Collect continuation lines (soft-wrapped body) into bodyText
+		// before running inline() once. Stops at any block-starter we
+		// recognise, a blank line, or another list marker.
+		bodyText := body
+		for i < len(lines) {
+			next := lines[i]
+			nextTrim := strings.TrimSpace(next)
+			if nextTrim == "" {
+				break
+			}
+			if nextIndent, _, _ := listMarker(next); nextIndent >= 0 {
+				break
+			}
+			if isBlockquote(nextTrim) {
+				break
+			}
+			if strings.HasPrefix(nextTrim, "```") {
+				break
+			}
+			if atxLevel(nextTrim) > 0 {
+				break
+			}
+			if isTableHeader(lines, i) {
+				break
+			}
+			if nextTrim == "---" || nextTrim == "***" {
+				break
+			}
+			bodyText += " " + nextTrim
+			i++
+		}
+
 		// Open the list item; defer the close so nested lists land
 		// inside this <li>.
-		fmt.Fprintf(out, "  <li>%s", inline(body))
-		i++
+		fmt.Fprintf(out, "  <li>%s", inline(bodyText))
 
 		// If the next line is a deeper-indented list item, recurse.
 		if i < len(lines) {
@@ -373,20 +398,45 @@ func renderTable(out *strings.Builder, lines []string, start int) int {
 
 // splitTableRow splits a `| a | b | c |` row into its inner cells. The
 // outer pipes are tolerated when present.
+//
+// Per v4 Fix 6, an escaped pipe `\|` is treated as a literal `|` inside
+// the current cell and unescaped on return. Other backslash sequences
+// pass through untouched — we don't ship general escape handling yet.
 func splitTableRow(line string) []string {
 	line = strings.TrimSpace(line)
 	if line == "" {
 		return nil
 	}
 	// Trim leading/trailing pipe so split doesn't produce empty edge
-	// cells.
+	// cells. We check the raw byte (not an escape-aware position) — a
+	// leading `\|` is impossible at index 0 since there's nothing
+	// before it to escape, and a trailing `\|` is preserved by the
+	// `line[len-2] == '\\'` guard.
 	if strings.HasPrefix(line, "|") {
 		line = line[1:]
 	}
-	if strings.HasSuffix(line, "|") {
+	if strings.HasSuffix(line, "|") && !(len(line) >= 2 && line[len(line)-2] == '\\') {
 		line = line[:len(line)-1]
 	}
-	return strings.Split(line, "|")
+
+	var cells []string
+	var cur strings.Builder
+	for i := 0; i < len(line); i++ {
+		c := line[i]
+		if c == '\\' && i+1 < len(line) && line[i+1] == '|' {
+			cur.WriteByte('|')
+			i++
+			continue
+		}
+		if c == '|' {
+			cells = append(cells, cur.String())
+			cur.Reset()
+			continue
+		}
+		cur.WriteByte(c)
+	}
+	cells = append(cells, cur.String())
+	return cells
 }
 
 // inline transforms inline markdown into HTML on already-escaped text.
