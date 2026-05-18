@@ -1,0 +1,18 @@
+{{- /* footer — quiet text-link row at the end of every page.
+       Param: shell.Footer. */ -}}
+{{ define "footer" }}
+<footer class="shell-footer">
+  <div class="shell-footer-inner">
+    <div class="shell-footer-left">
+      <svg class="bolt-sm" viewBox="0 0 90 90" fill="currentColor" aria-hidden="true"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+      Hero v{{ .Version }} · workspace {{ .Workspace }} · {{ .Edition }} edition
+    </div>
+    <div class="shell-footer-links">
+      <a href="https://heroengine.ai/docs">Docs</a>
+      <a href="https://github.com/hero-engine/hero">GitHub</a>
+      <a href="/health">Status</a>
+      <a href="#" data-command-bar-trigger>⌘K</a>
+    </div>
+  </div>
+</footer>
+{{ end }}

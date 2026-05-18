@@ -1,9 +1,9 @@
 ---
 title: "Decide `hero serve` Scope After the hero/hero-cloud Split"
 type: feature
-status: planning
+status: completed
 priority: high
-tags: [architecture, decision, hero-serve, scope, post-split]
+tags: [architecture, decision, hero-serve, scope, post-split, replaced]
 created: 2026-05-16
 relations:
   - target: hero-cloud-split
@@ -14,8 +14,15 @@ relations:
     kind: blocks
   - target: hero-automations
     kind: blocks
+  - target: hero-surface-architecture
+    kind: superseded-by
+  - target: hero-surface-deployment-and-rendering
+    kind: superseded-by
 horizon: now
 ---
+
+> **Replaced by the [Hero Surface Architecture](../../initiatives/hero-surface-architecture/spec.md) initiative.** The scope question is resolved structurally rather than by adjudication: one binary, one surface, layer-gated features. See [hero-surface-deployment-and-rendering](../hero-surface-deployment-and-rendering/spec.md) for the accepted decision. This spec is preserved for history.
+
 
 # Decide `hero serve` Scope After the hero/hero-cloud Split
 

@@ -1,0 +1,38 @@
+{{- /* top-nav — slim 56px chrome on every shell-rendered page.
+       Param: shell.Chrome.
+*/ -}}
+{{ define "top-nav" }}
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="/" class="brand">
+      <svg class="bolt" viewBox="0 0 90 90" fill="currentColor" aria-hidden="true"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+      Hero
+      {{- with .Workspace }}<span class="workspace">{{ . }}</span>{{ end }}
+    </a>
+
+    <div class="nav-tabs">
+      {{- range .Tabs }}
+      <a href="{{ .Href }}" class="nav-tab{{ if .Active }} active{{ end }}">
+        {{ .Label }}
+        {{- if .HasCount }}<span class="count">{{ .Count }}</span>{{ end }}
+      </a>
+      {{- end }}
+    </div>
+
+    <div class="topnav-right">
+      <span class="adapter-chip" title="Chat adapter: hero-code (connected)">
+        <span class="adapter-dot"></span>via hero-code
+      </span>
+      <a href="#" class="search-pill" data-command-bar-trigger aria-label="Open command bar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        Search specs, code, knowledge…
+        <span class="kbd">⌘K</span>
+      </a>
+      {{- with .Branch }}
+      <span class="workspace-state"><span class="dot"></span>{{ . }}</span>
+      {{- end }}
+      <div class="avatar" title="{{ .UserName }}">{{ .UserInitials }}</div>
+    </div>
+  </div>
+</nav>
+{{ end }}

@@ -1,0 +1,54 @@
+{{- /* tabbed-metric-strip — text-link tabs above a swappable tile row.
+       Param: shell.MetricStrip. */ -}}
+{{ define "tabbed-metric-strip" }}
+<section class="metric-strip-section" aria-label="Metrics">
+  <div class="metric-tabs-row">
+    <div class="metric-tabs" role="tablist">
+      {{- range .Tabs }}
+      <button class="metric-tab{{ if .Active }} active{{ end }}"
+              data-metric-tab="{{ .Slug }}"
+              role="tab"
+              aria-selected="{{ if .Active }}true{{ else }}false{{ end }}">
+        {{ .Label }}
+      </button>
+      {{- end }}
+    </div>
+    {{- with .AllLink }}
+    <a href="{{ . }}" class="metric-all-link">View all metrics →</a>
+    {{- end }}
+  </div>
+
+  {{- range .Tabs }}
+  <div class="metric-pane{{ if .Active }} active{{ end }}" data-metric-pane="{{ .Slug }}"{{ if not .Active }} hidden{{ end }}>
+    {{- range .Tiles }}
+    <div class="metric-tile">
+      <div class="metric-value{{ if eq .Accent "warn" }} warn{{ end }}">{{ .Value }}</div>
+      <div class="metric-label">{{ .Label }}</div>
+      {{- with .Footer }}{{ . }}{{ end }}
+    </div>
+    {{- end }}
+  </div>
+  {{- end }}
+</section>
+
+<script>
+(function () {
+  var tabs = document.querySelectorAll('.metric-tab');
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var target = tab.getAttribute('data-metric-tab');
+      tabs.forEach(function (t) {
+        var on = t === tab;
+        t.classList.toggle('active', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      document.querySelectorAll('.metric-pane').forEach(function (p) {
+        var on = p.getAttribute('data-metric-pane') === target;
+        p.classList.toggle('active', on);
+        if (on) { p.removeAttribute('hidden'); } else { p.setAttribute('hidden', ''); }
+      });
+    });
+  });
+})();
+</script>
+{{ end }}

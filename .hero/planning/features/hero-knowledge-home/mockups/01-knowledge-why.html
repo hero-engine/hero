@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Why does this exist? · Knowledge · Hero</title>
+<style>
+  :root {
+    --hero-blue-300: #9bc1e6;
+    --hero-blue-500: #6cb6ff;
+    --hero-blue-700: #2a6cb5;
+    --hero-blue-900: #1a4a7d;
+    --hero-ink: #14181e;
+    --ink-2: #2a2f37;
+    --ink-3: #5a626d;
+    --ink-4: #8a929c;
+    --ink-5: #b4bac3;
+    --bg: #ffffff;
+    --bg-soft: #fafbfc;
+    --bg-softer: #f5f7fa;
+    --bg-secondary: #f5f7fa;
+    --bg-panel: #f7f8fa;
+    --border: #eef1f5;
+    --border-strong: #e3e7ee;
+    --success: #16a249;
+    --warn: #d97706;
+    --danger: #dc2626;
+    --hero-blue-50: #eff6ff;
+    --purple-500: #8b5cf6;
+    --purple-700: #6d28d9;
+    --purple-50: #f5f3ff;
+    --green-500: #10b981;
+    --green-50: #ecfdf5;
+    --green-700: #047857;
+    --amber-500: #f59e0b;
+    --amber-50: #fffbeb;
+    --amber-700: #b45309;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    color: var(--ink-2);
+    background: var(--bg);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--hero-blue-700); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  button { font-family: inherit; cursor: pointer; }
+  code, .mono { font-family: 'SF Mono', ui-monospace, Menlo, monospace; }
+
+  /* ----- Top nav (same as Now) ----- */
+  .topnav {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    height: 56px;
+  }
+  .topnav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    font-size: 15px;
+    letter-spacing: -0.01em;
+  }
+  .brand .bolt { color: var(--hero-blue-700); width: 18px; height: 18px; }
+  .brand .workspace { color: var(--ink-3); font-weight: 500; margin-left: 2px; }
+  .brand .workspace::before {
+    content: '/';
+    color: var(--ink-5);
+    margin-right: 6px;
+    font-weight: 400;
+  }
+  .nav-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+    height: 100%;
+  }
+  .nav-tab {
+    position: relative;
+    padding: 0 12px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-3);
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .nav-tab:hover { color: var(--hero-ink); text-decoration: none; }
+  .nav-tab.active {
+    color: var(--hero-ink);
+    border-bottom-color: var(--hero-blue-700);
+    font-weight: 600;
+  }
+  .nav-tab .count {
+    font-size: 11px;
+    color: var(--ink-4);
+    background: var(--bg-softer);
+    border-radius: 10px;
+    padding: 1px 7px;
+    font-weight: 500;
+  }
+  .nav-tab.active .count {
+    background: var(--hero-blue-50);
+    color: var(--hero-blue-700);
+  }
+  .topnav-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .search-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--bg-softer);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--ink-4);
+    font-size: 13px;
+    min-width: 220px;
+  }
+  .search-pill:hover { background: var(--bg-soft); border-color: var(--border-strong); text-decoration: none; }
+  .adapter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-softer);
+    color: var(--ink-4);
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background .12s ease, border-color .12s ease;
+  }
+  .adapter-chip:hover { background: var(--bg-soft); border-color: var(--border-strong); }
+  .adapter-chip .adapter-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--hero-blue-500);
+  }
+  .search-pill .kbd {
+    margin-left: auto;
+    font-size: 11px;
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--ink-3);
+    font-family: 'SF Mono', ui-monospace, monospace;
+  }
+  .avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--hero-blue-500), var(--hero-blue-900));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .workspace-state {
+    font-size: 12px;
+    color: var(--ink-4);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .workspace-state .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--success);
+  }
+
+  /* ----- Sub-nav (Knowledge tab text-link tabs) ----- */
+  .subnav {
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .subnav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 42px;
+  }
+  .subnav a {
+    position: relative;
+    padding: 0 12px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-3);
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .subnav a:first-child { padding-left: 0; }
+  .subnav a:hover { color: var(--hero-ink); text-decoration: none; }
+  .subnav a.active {
+    color: var(--hero-ink);
+    border-bottom-color: var(--hero-blue-700);
+    font-weight: 600;
+  }
+  .subnav a .count-sm {
+    font-size: 10px;
+    color: var(--warn);
+    background: #fff7ed;
+    border-radius: 8px;
+    padding: 1px 6px;
+    font-weight: 600;
+  }
+
+  /* ----- Page container ----- */
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  /* ----- Page hero ----- */
+  .page-hero {
+    padding: 40px 0 8px 0;
+  }
+  .eyebrow {
+    font-size: 12px;
+    color: var(--ink-4);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .eyebrow .bolt-sm { width: 10px; height: 10px; color: var(--hero-blue-700); }
+  .eyebrow .crumb-sep { color: var(--ink-5); }
+  .page-title {
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin: 0 0 24px 0;
+  }
+
+  /* ----- Target search input (primary affordance) ----- */
+  .target-input-wrap {
+    position: relative;
+    max-width: 920px;
+    margin-bottom: 18px;
+  }
+  .target-input {
+    width: 100%;
+    height: 60px;
+    border-radius: 14px;
+    border: 1px solid var(--border-strong);
+    background: var(--bg);
+    padding: 0 64px 0 56px;
+    font-size: 15px;
+    color: var(--hero-ink);
+    font-family: 'SF Mono', ui-monospace, Menlo, monospace;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    letter-spacing: -0.005em;
+  }
+  .target-input::placeholder { color: var(--ink-4); font-family: 'Inter', sans-serif; }
+  .target-input:focus {
+    border-color: var(--hero-blue-500);
+    box-shadow: 0 0 0 4px rgba(108, 182, 255, 0.18);
+  }
+  .target-icon {
+    position: absolute;
+    left: 22px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--hero-blue-700);
+    display: flex;
+    align-items: center;
+  }
+  .target-submit {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 42px;
+    width: 42px;
+    border-radius: 10px;
+    background: var(--hero-blue-700);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .target-submit:hover { background: var(--hero-blue-900); }
+
+  /* Preset chips row */
+  .preset-row {
+    max-width: 920px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .preset-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--ink-3);
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .preset-chip:hover { background: var(--bg-softer); color: var(--hero-ink); }
+  .preset-chip .label { color: var(--ink-4); font-weight: 500; }
+  .preset-chip svg { color: var(--ink-4); }
+  .preset-row .spacer { flex: 1; }
+  .preset-row .open-browse {
+    font-size: 13px;
+    color: var(--hero-blue-700);
+    font-weight: 500;
+  }
+
+  /* ----- Section ----- */
+  section { padding: 32px 0; scroll-margin-top: 72px; }
+  section.metric-strip-section { padding: 20px 0 24px 0; }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    gap: 16px;
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    margin: 0;
+    letter-spacing: -0.005em;
+  }
+  .section-meta { color: var(--ink-4); font-size: 13px; font-weight: 400; margin-left: 8px; }
+  .section-link {
+    font-size: 13px;
+    color: var(--hero-blue-700);
+    font-weight: 500;
+  }
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--ink-2);
+    text-decoration: none;
+  }
+  .btn-ghost:hover { background: var(--bg-softer); text-decoration: none; }
+
+  /* ----- Subdued metric strip ----- */
+  .metric-grid-quiet {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  .metric-tile-quiet {
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-height: 80px;
+    justify-content: center;
+  }
+  .metric-tile-quiet .v {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    letter-spacing: -0.015em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .metric-tile-quiet .v .unit { font-size: 13px; color: var(--ink-4); font-weight: 500; margin-left: 3px; }
+  .metric-tile-quiet .l {
+    font-size: 11px;
+    color: var(--ink-4);
+    font-weight: 500;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* ----- Traversal section (graph + detail) ----- */
+  .traversal-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: stretch;
+  }
+  .graph-pane {
+    background: var(--bg-soft);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    min-height: 560px;
+    display: flex;
+    flex-direction: column;
+  }
+  .graph-pane-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: var(--ink-4);
+  }
+  .graph-pane-head .target-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    background: var(--hero-blue-50);
+    border-radius: 6px;
+    color: var(--hero-blue-700);
+    font-family: 'SF Mono', ui-monospace, monospace;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .graph-svg-wrap {
+    flex: 1;
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    background:
+      linear-gradient(var(--bg) 1px, transparent 1px) 0 0 / 28px 28px,
+      linear-gradient(90deg, var(--bg) 1px, transparent 1px) 0 0 / 28px 28px,
+      var(--bg-panel);
+  }
+  .graph-svg-wrap svg.graph { display: block; width: 100%; height: 100%; }
+
+  .graph-legend {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    background: rgba(255,255,255,0.92);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 11px;
+    color: var(--ink-3);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    backdrop-filter: blur(4px);
+  }
+  .graph-legend .row { display: flex; align-items: center; gap: 6px; }
+  .graph-legend .swatch { width: 18px; height: 0; border-top: 1.5px solid var(--ink-3); }
+  .graph-legend .swatch.dashed { border-top-style: dashed; }
+
+  .graph-zoom {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    background: rgba(255,255,255,0.92);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    padding: 2px;
+    backdrop-filter: blur(4px);
+  }
+  .graph-zoom button {
+    background: none;
+    border: none;
+    width: 28px;
+    height: 26px;
+    color: var(--ink-3);
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+  }
+  .graph-zoom button:hover { background: var(--bg-softer); color: var(--hero-ink); }
+  .graph-zoom .sep { width: 1px; height: 16px; background: var(--border); margin: 0 2px; }
+
+  /* ----- Detail pane ----- */
+  .detail-pane {
+    background: var(--bg-soft);
+    border-radius: 12px;
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 560px;
+  }
+  .chain-crumb {
+    font-size: 12px;
+    color: var(--ink-4);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .chain-crumb .step { color: var(--ink-3); }
+  .chain-crumb .step.current {
+    color: var(--hero-blue-700);
+    font-weight: 600;
+  }
+  .chain-crumb .arrow { color: var(--ink-5); }
+
+  .type-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .type-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 9px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .type-chip.decision {
+    background: var(--purple-50);
+    color: var(--purple-700);
+  }
+  .status-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 9px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--green-50);
+    color: var(--green-700);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .slug-text {
+    font-family: 'SF Mono', ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .date-text { font-size: 12px; color: var(--ink-4); margin-left: auto; }
+
+  .detail-title {
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    margin: 0;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+  }
+
+  .body-h {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-4);
+    font-weight: 600;
+    margin: 6px 0 4px 0;
+  }
+  .body-p {
+    font-size: 13px;
+    color: var(--ink-2);
+    line-height: 1.6;
+    margin: 0;
+  }
+  .body-p + .body-p { margin-top: 8px; }
+  .body-p code {
+    font-size: 12px;
+    background: var(--bg-softer);
+    padding: 0 4px;
+    border-radius: 3px;
+  }
+
+  .options-list {
+    margin: 6px 0 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 13px;
+    color: var(--ink-2);
+    line-height: 1.6;
+  }
+  .options-list li {
+    padding: 4px 0 4px 0;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .options-list .opt {
+    color: var(--ink-4);
+    font-weight: 600;
+    min-width: 22px;
+    font-family: 'SF Mono', ui-monospace, monospace;
+    font-size: 12px;
+  }
+  .options-list .opt.chosen {
+    color: var(--green-700);
+  }
+  .options-list .chosen-tag {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 1px 6px;
+    background: var(--green-50);
+    color: var(--green-700);
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .cite-block { margin-top: 4px; }
+  .cite-block .label-inline {
+    font-size: 11px;
+    color: var(--ink-4);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-right: 6px;
+  }
+  .cite-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    font-size: 11px;
+    color: var(--ink-2);
+    font-family: 'SF Mono', ui-monospace, monospace;
+    margin: 0 4px 4px 0;
+  }
+  .cite-chip:hover { border-color: var(--hero-blue-300); color: var(--hero-blue-700); text-decoration: none; }
+
+  .made-by {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--ink-4);
+    padding-top: 4px;
+  }
+  .made-by .av {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #a78bfa, #6366f1);
+    color: white;
+    font-size: 9px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .made-by .name { color: var(--ink-2); font-weight: 500; }
+
+  .detail-actions {
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    font-size: 13px;
+  }
+  .detail-actions a { font-weight: 500; }
+
+  /* ----- Summary block ----- */
+  .summary-block {
+    max-width: 760px;
+    font-size: 15px;
+    color: var(--ink-2);
+    line-height: 1.7;
+  }
+  .summary-block p { margin: 0; }
+  .summary-block code {
+    font-size: 13px;
+    background: var(--bg-softer);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .authored-by {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--ink-4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .authored-by .agent-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #a78bfa, #6366f1);
+    color: white;
+    font-size: 8px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ----- Neighbor rows ----- */
+  .neighbor-list { display: flex; flex-direction: column; }
+  .neighbor-row {
+    display: grid;
+    grid-template-columns: 90px 240px 1fr;
+    gap: 16px;
+    align-items: center;
+    padding: 12px 8px;
+    border-bottom: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+  }
+  .neighbor-row:last-child { border-bottom: none; }
+  .neighbor-row:hover { background: var(--bg-soft); }
+  .kind-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 9px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .kind-chip.decision { background: var(--purple-50); color: var(--purple-700); }
+  .kind-chip.convention { background: var(--green-50); color: var(--green-700); }
+  .kind-chip.spec { background: var(--hero-blue-50); color: var(--hero-blue-700); }
+  .kind-chip.learning { background: var(--amber-50); color: var(--amber-700); }
+  .neighbor-slug {
+    font-family: 'SF Mono', ui-monospace, monospace;
+    font-size: 12.5px;
+    color: var(--hero-ink);
+    font-weight: 500;
+  }
+  .neighbor-slug:hover { color: var(--hero-blue-700); text-decoration: none; }
+  .neighbor-desc { color: var(--ink-3); }
+
+  /* ----- Staleness flag ----- */
+  .stale-block {
+    background: var(--amber-50);
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    max-width: 920px;
+  }
+  .stale-icon {
+    width: 28px;
+    height: 28px;
+    color: var(--amber-700);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+  }
+  .stale-body {
+    flex: 1;
+    font-size: 13px;
+    color: var(--ink-2);
+    line-height: 1.55;
+  }
+  .stale-body strong { color: var(--amber-700); font-weight: 600; }
+  .stale-body code {
+    font-size: 12px;
+    background: rgba(255,255,255,0.6);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .stale-actions {
+    margin-top: 8px;
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+  }
+  .stale-actions a { color: var(--amber-700); font-weight: 500; }
+  .stale-actions a.muted { color: var(--ink-4); font-weight: 500; }
+
+  /* ----- Footer ----- */
+  footer {
+    margin-top: 32px;
+    padding: 32px 0 48px 0;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--ink-4);
+  }
+  .footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .footer-left { display: flex; align-items: center; gap: 10px; }
+  .footer-left .bolt-sm { color: var(--hero-blue-700); width: 12px; height: 12px; }
+  .footer-links { display: flex; align-items: center; gap: 18px; }
+  .footer-links a { color: var(--ink-3); }
+
+  /* ----- Responsive ----- */
+  @media (max-width: 980px) {
+    .traversal-grid { grid-template-columns: 1fr; }
+    .metric-grid-quiet { grid-template-columns: repeat(2, 1fr); }
+    .nav-tabs { display: none; }
+    .search-pill { min-width: 0; }
+    .page-title { font-size: 26px; }
+    .neighbor-row { grid-template-columns: 80px 1fr; }
+    .neighbor-row .neighbor-desc { grid-column: 1 / -1; margin-top: 4px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============== TOP NAV ============== -->
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="#" class="brand">
+      <svg class="bolt" viewBox="0 0 90 90" fill="currentColor" aria-hidden="true"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+      Hero
+      <span class="workspace">hero</span>
+    </a>
+
+    <div class="nav-tabs">
+      <a href="#" class="nav-tab">Now</a>
+      <a href="#" class="nav-tab">Work <span class="count">18</span></a>
+      <a href="#" class="nav-tab active">Knowledge</a>
+      <a href="#" class="nav-tab">Agents <span class="count">1</span></a>
+      <a href="#" class="nav-tab">People</a>
+    </div>
+
+    <div class="topnav-right">
+      <span class="adapter-chip" title="Chat adapter: hero-code (connected)"><span class="adapter-dot"></span>via hero-code</span>
+      <a href="#" class="search-pill">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        Search specs, code, knowledge…
+        <span class="kbd">⌘K</span>
+      </a>
+      <span class="workspace-state"><span class="dot"></span>main</span>
+      <div class="avatar" title="Ben Wheeler">BW</div>
+    </div>
+  </div>
+</nav>
+
+<!-- ============== KNOWLEDGE SUB-NAV ============== -->
+<div class="subnav">
+  <div class="subnav-inner">
+    <a href="#">Browse</a>
+    <a href="#">Search</a>
+    <a href="#" class="active">Why</a>
+    <a href="#">Staleness <span class="count-sm">3</span></a>
+    <a href="#">Recent</a>
+    <a href="#">Write</a>
+  </div>
+</div>
+
+<!-- ============== PAGE HERO ============== -->
+<div class="page">
+  <header class="page-hero">
+    <div class="eyebrow">
+      <svg class="bolt-sm" viewBox="0 0 90 90" fill="currentColor" aria-hidden="true"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+      hero
+      <span class="crumb-sep">·</span>
+      main
+      <span class="crumb-sep">·</span>
+      knowledge
+    </div>
+    <h1 class="page-title">Why does this exist?</h1>
+
+    <div class="target-input-wrap">
+      <span class="target-icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="11" cy="11" r="7"/>
+          <path d="m21 21-4.3-4.3"/>
+        </svg>
+      </span>
+      <input
+        class="target-input"
+        type="text"
+        value="internal/serve/proposals.go :: approveProposal() · line 147"
+        spellcheck="false"
+      />
+      <button class="target-submit" aria-label="Trace provenance">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+
+    <div class="preset-row">
+      <button class="preset-chip" type="button">
+        <span class="label">Depth:</span> 3 hops
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <button class="preset-chip" type="button">
+        <span class="label">Include:</span> specs + decisions + conventions + commits
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <button class="preset-chip" type="button">
+        <span class="label">Direction:</span> upstream
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <span class="spacer"></span>
+      <a href="#" class="open-browse">Open in browse view →</a>
+    </div>
+  </header>
+
+  <!-- ============== TINY METRIC STRIP (subdued) ============== -->
+  <section class="metric-strip-section" aria-label="Corpus orientation">
+    <div class="metric-grid-quiet">
+      <div class="metric-tile-quiet">
+        <div class="v">247</div>
+        <div class="l">corpus entries</div>
+      </div>
+      <div class="metric-tile-quiet">
+        <div class="v" style="color:var(--warn);">3</div>
+        <div class="l">stale flags</div>
+      </div>
+      <div class="metric-tile-quiet">
+        <div class="v">84<span class="unit">%</span></div>
+        <div class="l">reuse rate · 7d</div>
+      </div>
+      <div class="metric-tile-quiet">
+        <div class="v">8</div>
+        <div class="l">new this week</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== PROVENANCE CHAIN — graph + detail ============== -->
+  <section>
+    <div class="section-header">
+      <h2 class="section-title">Provenance chain</h2>
+      <button class="btn-ghost">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy provenance.json
+      </button>
+    </div>
+
+    <div class="traversal-grid">
+      <!-- Graph -->
+      <div class="graph-pane">
+        <div class="graph-pane-head">
+          <span>Tracing upstream from</span>
+          <span class="target-pill">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+            proposals.go :: approveProposal()
+          </span>
+        </div>
+
+        <div class="graph-svg-wrap">
+          <svg class="graph" viewBox="0 0 740 480" preserveAspectRatio="xMidYMid meet" aria-label="Provenance graph">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5"
+                      markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10 z" fill="#8a929c"/>
+              </marker>
+              <marker id="arrow-dashed" viewBox="0 0 10 10" refX="9" refY="5"
+                      markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10 z" fill="#b4bac3"/>
+              </marker>
+              <filter id="selected-glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="4" result="blur"/>
+                <feFlood flood-color="#6cb6ff" flood-opacity="0.55"/>
+                <feComposite in2="blur" operator="in"/>
+                <feMerge>
+                  <feMergeNode/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+
+            <!-- ===== EDGES (drawn first, under nodes) ===== -->
+            <!-- Learning -> Decision (informs) -->
+            <path d="M 210,90 C 260,120 280,150 305,190" stroke="#8a929c" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+            <text x="235" y="148" font-size="10" fill="#5a626d" font-family="Inter, sans-serif">informs</text>
+
+            <!-- Decision -> Spec (selects) -->
+            <path d="M 410,220 C 480,210 540,205 590,200" stroke="#8a929c" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+            <text x="478" y="198" font-size="10" fill="#5a626d" font-family="Inter, sans-serif">selects</text>
+
+            <!-- Spec -> Convention (establishes) -->
+            <path d="M 640,235 C 640,290 600,330 570,348" stroke="#8a929c" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+            <text x="618" y="298" font-size="10" fill="#5a626d" font-family="Inter, sans-serif">establishes</text>
+
+            <!-- Convention -> Target (governs) -->
+            <path d="M 460,365 C 380,380 290,388 220,400" stroke="#8a929c" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+            <text x="320" y="384" font-size="10" fill="#5a626d" font-family="Inter, sans-serif">governs</text>
+
+            <text x="325" y="414" font-size="10" fill="#8a929c" font-family="Inter, sans-serif" font-style="italic">(target obeys)</text>
+
+            <!-- Inferred: Decision -> tripwire-system (dashed) -->
+            <path d="M 320,260 C 290,295 250,315 230,328" stroke="#b4bac3" stroke-width="1.4" fill="none" stroke-dasharray="4,4" marker-end="url(#arrow-dashed)"/>
+
+            <!-- Decision -> agent-contribution-tracking -->
+            <path d="M 388,250 C 450,280 530,290 590,300" stroke="#8a929c" stroke-width="1.4" fill="none" marker-end="url(#arrow)"/>
+
+            <!-- Spec -> inline-propose-output-mode -->
+            <path d="M 660,170 C 695,140 700,115 680,98" stroke="#8a929c" stroke-width="1.4" fill="none" marker-end="url(#arrow)"/>
+
+            <!-- Convention -> hero-team-server (dashed inferred) -->
+            <path d="M 560,370 C 610,400 640,420 660,420" stroke="#b4bac3" stroke-width="1.4" fill="none" stroke-dasharray="4,4" marker-end="url(#arrow-dashed)"/>
+
+            <!-- Commits -> Target -->
+            <path d="M 50,440 C 90,425 130,418 170,412" stroke="#b4bac3" stroke-width="1.2" fill="none"/>
+            <path d="M 90,455 C 120,445 150,420 170,415" stroke="#b4bac3" stroke-width="1.2" fill="none"/>
+            <path d="M 130,460 C 145,450 160,425 175,418" stroke="#b4bac3" stroke-width="1.2" fill="none"/>
+
+            <!-- ===== NODES ===== -->
+
+            <!-- Learning node (top-left) -->
+            <g transform="translate(40, 50)">
+              <rect width="170" height="80" rx="10" fill="#fffbeb" stroke="#fde68a" stroke-width="1.2"/>
+              <text x="14" y="22" font-size="9" font-weight="700" fill="#b45309" font-family="Inter, sans-serif" letter-spacing="0.6">LEARNING</text>
+              <text x="14" y="43" font-size="11.5" font-weight="600" fill="#14181e" font-family="Inter, sans-serif">agent-autonomy-needs-</text>
+              <text x="14" y="57" font-size="11.5" font-weight="600" fill="#14181e" font-family="Inter, sans-serif">approval-gate</text>
+              <text x="14" y="72" font-size="10" fill="#5a626d" font-family="Inter, sans-serif">captured May 2025</text>
+            </g>
+
+            <!-- Decision node (SELECTED, hexagon) -->
+            <g transform="translate(305, 185)" filter="url(#selected-glow)">
+              <path d="M 18 0 L 86 0 L 104 36 L 86 72 L 18 72 L 0 36 Z"
+                    fill="#f5f3ff" stroke="#8b5cf6" stroke-width="2"/>
+              <text x="52" y="20" font-size="9" font-weight="700" fill="#6d28d9" text-anchor="middle" font-family="Inter, sans-serif" letter-spacing="0.6">DECISION</text>
+              <text x="52" y="38" font-size="11" font-weight="700" fill="#14181e" text-anchor="middle" font-family="Inter, sans-serif">inline-propose-</text>
+              <text x="52" y="51" font-size="11" font-weight="700" fill="#14181e" text-anchor="middle" font-family="Inter, sans-serif">approval-model</text>
+              <text x="52" y="65" font-size="9.5" fill="#5a626d" text-anchor="middle" font-family="Inter, sans-serif">accepted · Jul 2025</text>
+            </g>
+            <!-- selected checkmark badge -->
+            <g transform="translate(403, 180)">
+              <circle r="9" fill="#2a6cb5"/>
+              <path d="M -4 0 L -1 3 L 4 -3" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+
+            <!-- Spec node (right of decision) -->
+            <g transform="translate(585, 165)">
+              <rect width="115" height="70" rx="8" fill="#eff6ff" stroke="#d6e7fb" stroke-width="1.2"/>
+              <text x="12" y="20" font-size="9" font-weight="700" fill="#2a6cb5" font-family="Inter, sans-serif" letter-spacing="0.6">SPEC</text>
+              <text x="12" y="38" font-size="11" font-weight="600" fill="#14181e" font-family="Inter, sans-serif">inline-propose</text>
+              <text x="12" y="52" font-size="10" fill="#5a626d" font-family="Inter, sans-serif">feature · delivering</text>
+            </g>
+
+            <!-- Convention node (lower-right area) -->
+            <g transform="translate(450, 340)">
+              <rect width="130" height="58" rx="8" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="1.2"/>
+              <text x="12" y="18" font-size="9" font-weight="700" fill="#047857" font-family="Inter, sans-serif" letter-spacing="0.6">CONVENTION</text>
+              <text x="12" y="34" font-size="10.5" font-weight="600" fill="#14181e" font-family="Inter, sans-serif">idempotent-server-</text>
+              <text x="12" y="47" font-size="10.5" font-weight="600" fill="#14181e" font-family="Inter, sans-serif">mutations</text>
+            </g>
+
+            <!-- Target node (bottom-left, hero-blue filled square) -->
+            <g transform="translate(45, 385)">
+              <rect width="175" height="62" rx="6" fill="#2a6cb5" stroke="#1a4a7d" stroke-width="1.5"/>
+              <text x="14" y="20" font-size="9" font-weight="700" fill="#9bc1e6" font-family="Inter, sans-serif" letter-spacing="0.6">TARGET · CODE</text>
+              <text x="14" y="38" font-size="11" font-weight="700" fill="#ffffff" font-family="SF Mono, ui-monospace, monospace">approveProposal()</text>
+              <text x="14" y="52" font-size="9.5" fill="#9bc1e6" font-family="SF Mono, ui-monospace, monospace">proposals.go:147</text>
+            </g>
+
+            <!-- Related spec: tripwire-system -->
+            <g transform="translate(150, 305)">
+              <rect width="120" height="42" rx="7" fill="#eff6ff" stroke="#d6e7fb" stroke-width="1"/>
+              <text x="10" y="16" font-size="9" font-weight="700" fill="#2a6cb5" font-family="Inter, sans-serif" letter-spacing="0.5">SPEC</text>
+              <text x="10" y="32" font-size="10.5" font-weight="500" fill="#14181e" font-family="Inter, sans-serif">tripwire-system</text>
+            </g>
+
+            <!-- Related spec: agent-contribution-tracking -->
+            <g transform="translate(575, 282)">
+              <rect width="140" height="42" rx="7" fill="#eff6ff" stroke="#d6e7fb" stroke-width="1"/>
+              <text x="10" y="16" font-size="9" font-weight="700" fill="#2a6cb5" font-family="Inter, sans-serif" letter-spacing="0.5">SPEC</text>
+              <text x="10" y="32" font-size="10.5" font-weight="500" fill="#14181e" font-family="Inter, sans-serif">agent-contribution-tracking</text>
+            </g>
+
+            <!-- Related spec: inline-propose-output-mode (top right) -->
+            <g transform="translate(605, 55)">
+              <rect width="125" height="42" rx="7" fill="#eff6ff" stroke="#d6e7fb" stroke-width="1"/>
+              <text x="10" y="16" font-size="9" font-weight="700" fill="#2a6cb5" font-family="Inter, sans-serif" letter-spacing="0.5">SPEC</text>
+              <text x="10" y="32" font-size="10.5" font-weight="500" fill="#14181e" font-family="Inter, sans-serif">inline-propose-output</text>
+            </g>
+
+            <!-- Related spec: hero-team-server (bottom right) -->
+            <g transform="translate(625, 405)">
+              <rect width="105" height="42" rx="7" fill="#eff6ff" stroke="#d6e7fb" stroke-width="1"/>
+              <text x="10" y="16" font-size="9" font-weight="700" fill="#2a6cb5" font-family="Inter, sans-serif" letter-spacing="0.5">SPEC</text>
+              <text x="10" y="32" font-size="10.5" font-weight="500" fill="#14181e" font-family="Inter, sans-serif">hero-team-server</text>
+            </g>
+
+            <!-- Commits (small grey circles, bottom-left) -->
+            <g transform="translate(40, 442)">
+              <circle r="11" fill="#f5f7fa" stroke="#e3e7ee" stroke-width="1"/>
+              <text x="0" y="3" font-size="8.5" fill="#5a626d" text-anchor="middle" font-family="SF Mono, ui-monospace, monospace">47fa3e</text>
+            </g>
+            <g transform="translate(80, 458)">
+              <circle r="11" fill="#f5f7fa" stroke="#e3e7ee" stroke-width="1"/>
+              <text x="0" y="3" font-size="8.5" fill="#5a626d" text-anchor="middle" font-family="SF Mono, ui-monospace, monospace">bf6565</text>
+            </g>
+            <g transform="translate(125, 465)">
+              <circle r="11" fill="#f5f7fa" stroke="#e3e7ee" stroke-width="1"/>
+              <text x="0" y="3" font-size="8.5" fill="#5a626d" text-anchor="middle" font-family="SF Mono, ui-monospace, monospace">d71a47</text>
+            </g>
+          </svg>
+
+          <div class="graph-legend">
+            <div class="row"><span class="swatch"></span>solid · explicit edge</div>
+            <div class="row"><span class="swatch dashed"></span>dashed · inferred</div>
+          </div>
+
+          <div class="graph-zoom">
+            <button title="Zoom out">−</button>
+            <button title="Zoom in">+</button>
+            <span class="sep"></span>
+            <button title="Fit" style="font-size:11px;font-weight:600;">fit</button>
+            <button title="Reset" style="font-size:11px;font-weight:600;">reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail pane -->
+      <aside class="detail-pane">
+        <div class="chain-crumb">
+          <span class="step">Learning</span>
+          <span class="arrow">→</span>
+          <span class="step current">Decision (selected)</span>
+          <span class="arrow">→</span>
+          <span class="step">Spec</span>
+          <span class="arrow">→</span>
+          <span class="step">Convention</span>
+          <span class="arrow">→</span>
+          <span class="step">Target</span>
+        </div>
+
+        <div class="type-row">
+          <span class="type-chip decision">Decision</span>
+          <span class="status-chip">accepted</span>
+          <span class="slug-text">inline-propose-approval-model</span>
+          <span class="date-text">Jul 2025</span>
+        </div>
+
+        <h3 class="detail-title">Approval gate for inline-propose outputs</h3>
+
+        <div>
+          <div class="body-h">Context</div>
+          <p class="body-p">
+            <code>/deliver</code> sessions emit file diffs through the inline-propose
+            shim. Some edits are obviously safe (formatting, comment fixes); others
+            mutate behavior. We need a model for when the daemon applies a proposal
+            automatically and when it pauses for a human gate.
+          </p>
+        </div>
+
+        <div>
+          <div class="body-h">Options considered</div>
+          <ul class="options-list">
+            <li><span class="opt">A</span><span>Always require human approval. Safest but kills the autonomy ratio.</span></li>
+            <li><span class="opt chosen">B</span><span><strong>Tiered gate: auto-apply read-only + scoped writes; gate behavior-affecting edits.</strong><span class="chosen-tag">chosen</span></span></li>
+            <li><span class="opt">C</span><span>Auto-apply everything, snapshot for rollback. Too costly to unwind in shared workspaces.</span></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="body-h">Consequences</div>
+          <p class="body-p">
+            <code>approveProposal()</code> becomes the single chokepoint. The
+            decision establishes the <code>idempotent-server-mutations</code>
+            convention so re-deliveries of the same proposal don't double-apply.
+            Future tiers (silent vs. notify vs. block) plug into the same gate.
+          </p>
+        </div>
+
+        <div class="cite-block">
+          <span class="label-inline">Cited by</span>
+          <a href="#" class="cite-chip">tripwire-system</a>
+          <a href="#" class="cite-chip">agent-contribution-tracking</a>
+          <a href="#" class="cite-chip">inline-propose-output-mode</a>
+        </div>
+        <div class="cite-block" style="margin-top:-4px;">
+          <span class="label-inline">Cites</span>
+          <a href="#" class="cite-chip">d:agent-trust-tiers</a>
+          <a href="#" class="cite-chip">d:write-mediation-model</a>
+          <a href="#" class="cite-chip">l:agent-autonomy-needs-approval-gate</a>
+        </div>
+
+        <div class="made-by">
+          <span class="av">CB</span>
+          <span class="name">chet-bellows</span>
+          <span>·</span>
+          <span>Jul 12 2025</span>
+        </div>
+
+        <div class="detail-actions">
+          <a href="#">Open full</a>
+          <a href="#">Find usages</a>
+          <a href="#">Supersede</a>
+          <a href="#">Edit</a>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============== PLAIN-ENGLISH SUMMARY ============== -->
+  <section>
+    <div class="section-header">
+      <h2 class="section-title">Plain-English summary</h2>
+    </div>
+    <div class="summary-block">
+      <p>
+        This function exists because of a May 2025 learning about agent autonomy
+        needing approval gates, which became a July 2025 decision
+        (<code>inline-propose-approval-model</code>, Option B chosen). The
+        decision's convention <code>idempotent-server-mutations</code> governs
+        how <code>approveProposal()</code> applies edits, and the same decision
+        informs related specs <code>tripwire-system</code> and
+        <code>agent-contribution-tracking</code>. Commits
+        <code>47fa3e1d</code>, <code>bf65598</code>, and <code>d71a47d</code>
+        each touched this code path while honoring the gate.
+      </p>
+      <div class="authored-by">
+        <span class="agent-dot">kn</span>
+        Authored by <a href="#" class="mono">knowledge-narrator</a> · regenerated 4m ago
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== SUGGESTED NEIGHBORS ============== -->
+  <section>
+    <div class="section-header">
+      <h2 class="section-title">You might also explore</h2>
+      <a href="#" class="section-link">Browse all related →</a>
+    </div>
+    <div class="neighbor-list">
+      <div class="neighbor-row">
+        <span class="kind-chip decision">Decision</span>
+        <a href="#" class="neighbor-slug">agent-trust-tiers</a>
+        <span class="neighbor-desc">Three-tier model for what agents may do without a human in the loop.</span>
+      </div>
+      <div class="neighbor-row">
+        <span class="kind-chip convention">Convention</span>
+        <a href="#" class="neighbor-slug">idempotent-server-mutations</a>
+        <span class="neighbor-desc">All server-side mutations must be safe to replay; required for the proposal gate.</span>
+      </div>
+      <div class="neighbor-row">
+        <span class="kind-chip spec">Spec</span>
+        <a href="#" class="neighbor-slug">tripwire-system</a>
+        <span class="neighbor-desc">Forbidden-option guardrails layered on top of the approval gate.</span>
+      </div>
+      <div class="neighbor-row">
+        <span class="kind-chip learning">Learning</span>
+        <a href="#" class="neighbor-slug">silent-apply-bites-in-shared-workspaces</a>
+        <span class="neighbor-desc">Aug 2025 — why Option C (auto-apply + rollback) was reconsidered and re-rejected.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== STALENESS FLAG ============== -->
+  <section>
+    <div class="section-header">
+      <h2 class="section-title">Worth re-checking</h2>
+    </div>
+    <div class="stale-block">
+      <div class="stale-icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M12 9v4"/>
+          <path d="M12 17h.01"/>
+          <path d="M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        </svg>
+      </div>
+      <div class="stale-body">
+        <strong>Partial supersession detected.</strong>
+        The originating learning <code>agent-autonomy-needs-approval-gate</code>
+        (May 2025) was partially superseded by <code>agent-autonomy-tiers</code>
+        (Dec 2025). The decision that hangs off it
+        (<code>inline-propose-approval-model</code>) may need a re-evaluation
+        against the newer tiered model before further changes to
+        <code>approveProposal()</code>.
+        <div class="stale-actions">
+          <a href="#">View supersession →</a>
+          <a href="#">Open re-evaluation draft</a>
+          <a href="#" class="muted">Dismiss</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============== FOOTER ============== -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-left">
+      <svg class="bolt-sm" viewBox="0 0 90 90" fill="currentColor" aria-hidden="true"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+      Hero v0.18.2 · workspace hero · solo edition
+    </div>
+    <div class="footer-links">
+      <a href="#">Docs</a>
+      <a href="#">GitHub</a>
+      <a href="#">Status</a>
+      <a href="#">⌘K</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Focus the target input on '/'
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+      e.preventDefault();
+      const inp = document.querySelector('.target-input');
+      inp.focus();
+      inp.select();
+    }
+  });
+
+  // Preset chips — subtle press feedback (no real menu)
+  document.querySelectorAll('.preset-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.style.background = 'var(--bg-softer)';
+      setTimeout(() => { chip.style.background = ''; }, 180);
+    });
+  });
+
+  // Zoom controls — visual press feedback
+  document.querySelectorAll('.graph-zoom button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.style.background = 'var(--bg-softer)';
+      setTimeout(() => { btn.style.background = ''; }, 150);
+    });
+  });
+</script>
+
+</body>
+</html>

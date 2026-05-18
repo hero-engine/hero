@@ -3,7 +3,6 @@ package serve
 import (
 	"encoding/json"
 	"fmt"
-	"io/fs"
 	"net/http"
 	"os"
 	"strconv"
@@ -16,10 +15,14 @@ import (
 )
 
 // API provides HTTP handlers for the Hero daemon.
+//
+// The API owns /health and /api/* (projects, events, project-scoped
+// endpoints). The web-app shell — top nav, page routing, home content,
+// /-redirect — lives in internal/serve/shell and is composed alongside
+// this handler in Server.Run.
 type API struct {
-	server    *Server
-	bus       *EventBus
-	uiEnabled bool
+	server *Server
+	bus    *EventBus
 
 	// proposals holds per-project in-memory inline-propose stores.
 	// Lazily initialized on first use; transient per daemon process
@@ -28,16 +31,16 @@ type API struct {
 }
 
 // NewAPI creates a new API instance backed by a multi-project server.
-func NewAPI(server *Server, bus *EventBus, uiEnabled bool) *API {
+func NewAPI(server *Server, bus *EventBus) *API {
 	return &API{
 		server:    server,
 		bus:       bus,
-		uiEnabled: uiEnabled,
 		proposals: newProposalStores(),
 	}
 }
 
-// Handler returns a configured http.Handler with all routes.
+// Handler returns a configured http.Handler with the API routes. The
+// shell router is layered on top of this handler in Server.Run.
 func (a *API) Handler() http.Handler {
 	mux := http.NewServeMux()
 
@@ -52,29 +55,6 @@ func (a *API) Handler() http.Handler {
 
 	// Project-namespaced endpoints: /api/{project}/...
 	mux.HandleFunc("/api/", a.routeProject)
-
-	// Embedded dashboard UI
-	if a.uiEnabled {
-		uiSub, err := fs.Sub(uiFS, "ui")
-		if err == nil {
-			fileServer := http.FileServer(http.FS(uiSub))
-			mux.Handle("/ui/", http.StripPrefix("/ui/", fileServer))
-			// Serve index.html at root for SPA
-			mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-				if r.URL.Path != "/" {
-					http.NotFound(w, r)
-					return
-				}
-				data, err := fs.ReadFile(uiFS, "ui/index.html")
-				if err != nil {
-					http.Error(w, "dashboard not available", http.StatusInternalServerError)
-					return
-				}
-				w.Header().Set("Content-Type", "text/html; charset=utf-8")
-				w.Write(data)
-			})
-		}
-	}
 
 	return corsMiddleware(mux)
 }
