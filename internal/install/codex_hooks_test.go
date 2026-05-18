@@ -115,6 +115,35 @@ func TestUnwireCodexHooks_NoFile(t *testing.T) {
 	}
 }
 
+// TestWireCodexHooks_AddsSessionStartIngest pins the new
+// SessionStart hook wiring for next-as-projection AC-7/AC-11: a
+// fresh wire produces both the Stop entry (hero next checkpoint)
+// and the SessionStart entry (hero next ingest --quiet).
+func TestWireCodexHooks_AddsSessionStartIngest(t *testing.T) {
+	dir := t.TempDir()
+	opts := Options{Mode: ModeProject, TargetDir: dir}
+
+	if err := wireCodexHooks(opts, &Result{}); err != nil {
+		t.Fatalf("wireCodexHooks: %v", err)
+	}
+
+	data, _ := os.ReadFile(filepath.Join(dir, ".codex", "hooks.json"))
+	var outer map[string]interface{}
+	if err := json.Unmarshal(data, &outer); err != nil {
+		t.Fatalf("hooks.json invalid JSON: %v", err)
+	}
+	hooks, _ := outer["hooks"].(map[string]interface{})
+	sessionStart, ok := hooks["SessionStart"].([]interface{})
+	if !ok || len(sessionStart) == 0 {
+		t.Fatalf("SessionStart event missing or empty: %v", hooks)
+	}
+	entry := sessionStart[0].(map[string]interface{})
+	inner := entry["hooks"].([]interface{})[0].(map[string]interface{})
+	if cmd, _ := inner["command"].(string); !strings.HasPrefix(cmd, "hero next ingest") {
+		t.Errorf("SessionStart command should be hero next ingest, got %q", cmd)
+	}
+}
+
 func TestWireCodexHooks_NoMatcherField(t *testing.T) {
 	dir := t.TempDir()
 	opts := Options{Mode: ModeProject, TargetDir: dir}

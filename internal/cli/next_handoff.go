@@ -33,6 +33,7 @@ var (
 	handoffJSON  bool
 	handoffCopy  bool
 	handoffUser  string
+	ingestQuiet  bool
 )
 
 var nextSuggestCmd = &cobra.Command{
@@ -87,6 +88,7 @@ func init() {
 		cmd.Flags().BoolVar(&handoffCopy, "copy", false, "also copy result to clipboard")
 		cmd.Flags().StringVar(&handoffUser, "user", "", "fetch another user's value (defaults to you)")
 	}
+	nextIngestCmd.Flags().BoolVarP(&ingestQuiet, "quiet", "q", false, "suppress per-file ingest output (intended for hook invocations)")
 }
 
 func runNextIngest(cmd *cobra.Command, args []string) error {
@@ -125,7 +127,9 @@ func runNextIngest(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(paths) == 0 {
-		fmt.Fprintln(cmd.OutOrStdout(), "(no per-user handoff files to ingest)")
+		if !ingestQuiet {
+			fmt.Fprintln(cmd.OutOrStdout(), "(no per-user handoff files to ingest)")
+		}
 		return nil
 	}
 
@@ -133,7 +137,9 @@ func runNextIngest(cmd *cobra.Command, args []string) error {
 		if err := handoff.IngestUserFile(store, repoKey, p); err != nil {
 			return fmt.Errorf("ingest %s: %w", p, err)
 		}
-		fmt.Fprintf(cmd.OutOrStdout(), "ingested %s\n", filepath.Base(p))
+		if !ingestQuiet {
+			fmt.Fprintf(cmd.OutOrStdout(), "ingested %s\n", filepath.Base(p))
+		}
 	}
 	return nil
 }
