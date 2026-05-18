@@ -406,6 +406,119 @@ func Test_writeCheckpoint_CrossRepoAskDoesNotLeakIntoUserHandoff(t *testing.T) {
 	}
 }
 
+// Test_writeCheckpoint_PreFlightGate_RefusesLegacyMarkers pins AC-14
+// of next-as-projection: when the repo hasn't been migrated and the
+// existing NEXT.md still carries pre-projection markers, the
+// checkpoint write must refuse rather than silently rewrite over
+// hand-authored sections that migration would otherwise ingest as
+// graph nodes.
+func Test_writeCheckpoint_PreFlightGate_RefusesLegacyMarkers(t *testing.T) {
+	env := newTestEnv(t)
+	cfg := config.DefaultConfig()
+	cfg.Tracking = &config.TrackingConfig{DefaultAgent: "human/tester"}
+	// Explicitly do NOT set next.projected — this is the unmigrated state.
+	if err := cfg.Save(env.dir); err != nil {
+		t.Fatalf("save cfg: %v", err)
+	}
+	nextPath := filepath.Join(env.heroDir, "NEXT.md")
+	legacy := `# Where we are
+
+<!-- BEGIN HERO MACHINE STATE -->
+Branch: main
+<!-- END HERO MACHINE STATE -->
+
+Hand-written stuff that mattered.
+`
+	if err := os.WriteFile(nextPath, []byte(legacy), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := writeCheckpoint(); err == nil {
+		t.Fatal("writeCheckpoint should refuse with unmigrated legacy markers present")
+	} else if !strings.Contains(err.Error(), "hero next migrate-to-projection") {
+		t.Errorf("error should direct user to migrate; got: %v", err)
+	}
+
+	// File must be untouched.
+	got, _ := os.ReadFile(nextPath)
+	if string(got) != legacy {
+		t.Errorf("NEXT.md was modified despite gate; got:\n%s", got)
+	}
+}
+
+// Test_writeCheckpoint_PreFlightGate_RefusesLegacyHeaders covers the
+// other unmigrated signal: section headers from the hand-authored
+// era. Same rule applies when next.projected = false.
+func Test_writeCheckpoint_PreFlightGate_RefusesLegacyHeaders(t *testing.T) {
+	env := newTestEnv(t)
+	cfg := config.DefaultConfig()
+	cfg.Tracking = &config.TrackingConfig{DefaultAgent: "human/tester"}
+	if err := cfg.Save(env.dir); err != nil {
+		t.Fatalf("save cfg: %v", err)
+	}
+	nextPath := filepath.Join(env.heroDir, "NEXT.md")
+	legacy := `# Where we are
+
+## Just finished
+
+Big refactor of the projection layer.
+
+## Next
+
+Wire the new gate.
+`
+	if err := os.WriteFile(nextPath, []byte(legacy), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := writeCheckpoint(); err == nil {
+		t.Fatal("writeCheckpoint should refuse with unmigrated legacy headers present")
+	} else if !strings.Contains(err.Error(), "Just finished") {
+		t.Errorf("error should name the offending header; got: %v", err)
+	}
+}
+
+// Test_writeCheckpoint_PreFlightGate_AllowsWhenMigrated confirms the
+// gate stays out of the way once next.projected = true. The
+// projection path owns the file from that point and may legitimately
+// rewrite content the gate's heuristics would otherwise flag.
+func Test_writeCheckpoint_PreFlightGate_AllowsWhenMigrated(t *testing.T) {
+	env := newTestEnv(t)
+	cfg := config.DefaultConfig()
+	cfg.Tracking = &config.TrackingConfig{DefaultAgent: "human/tester"}
+	cfg.Next = &config.NextConfig{Projected: true}
+	if err := cfg.Save(env.dir); err != nil {
+		t.Fatalf("save cfg: %v", err)
+	}
+	nextPath := filepath.Join(env.heroDir, "NEXT.md")
+	// Even content that *looks* legacy is fine once we're migrated —
+	// the projection will replace it.
+	if err := os.WriteFile(nextPath, []byte("## Just finished\nstale\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := writeCheckpoint(); err != nil {
+		t.Fatalf("writeCheckpoint should succeed when migrated: %v", err)
+	}
+}
+
+// Test_writeCheckpoint_PreFlightGate_AllowsCleanUnmigrated covers
+// the fresh-repo case: no NEXT.md or an empty file is not "legacy
+// content," so the gate must let the legacy write path run and
+// produce a placeholder NEXT.md.
+func Test_writeCheckpoint_PreFlightGate_AllowsCleanUnmigrated(t *testing.T) {
+	env := newTestEnv(t)
+	cfg := config.DefaultConfig()
+	cfg.Tracking = &config.TrackingConfig{DefaultAgent: "human/tester"}
+	if err := cfg.Save(env.dir); err != nil {
+		t.Fatalf("save cfg: %v", err)
+	}
+	// No NEXT.md on disk.
+	if _, err := writeCheckpoint(); err != nil {
+		t.Fatalf("writeCheckpoint should succeed when no legacy content: %v", err)
+	}
+}
+
 func mustStatModTime(t *testing.T, path string) time.Time {
 	t.Helper()
 	info, err := os.Stat(path)

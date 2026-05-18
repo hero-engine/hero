@@ -96,6 +96,22 @@ func writeCheckpoint() (string, error) {
 	nextPath := resolveNextPath(heroDir, cfg)
 	localPath := resolveLocalStatePath(heroDir, cfg)
 
+	// Pre-flight migration gate (AC-14 of next-as-projection): refuse
+	// to overwrite NEXT.md when the repo hasn't been migrated to
+	// projection mode AND the existing file carries legacy content.
+	// Without this gate, the legacy write path silently rewrites the
+	// file with a placeholder, losing hand-authored sections that
+	// `hero next migrate-to-projection` would have ingested into the
+	// graph as durable nodes.
+	if !cfg.NextProjected() {
+		if reason := detectUnmigratedNextMD(nextPath); reason != "" {
+			return "", fmt.Errorf(
+				"unmigrated NEXT.md detected (%s) — run `hero next migrate-to-projection` first",
+				reason,
+			)
+		}
+	}
+
 	// Prior checkpoint timestamp drives the activity-since delta.
 	// Prefer the local state file; fall back to NEXT.md for the
 	// one-time migration from the old layout.
@@ -281,6 +297,94 @@ func normalizeUpdatedFrontmatter(content string) string {
 func resolveLocalStatePath(heroDir string, cfg config.Config) string {
 	user := nextUserSlug(cfg)
 	return filepath.Join(heroDir, nextDirName, user+localStateSuffix)
+}
+
+// legacyNextHeaders are the section headers used by hand-written
+// pre-projection NEXT.md drafts. Their presence — combined with
+// `next.projected == false` in hero.json — signals that the repo
+// has unmigrated content that the projection path would silently
+// wipe. The pre-flight gate at the top of writeCheckpoint refuses
+// to write in that state and directs the user to run
+// `hero next migrate-to-projection` first.
+var legacyNextHeaders = []string{
+	"## Just finished",
+	"## Next",
+	"## Tried and failed",
+	"## Context to carry forward",
+}
+
+// detectUnmigratedNextMD returns a short human-readable reason
+// string if NEXT.md at nextPath looks like unmigrated legacy
+// content with substantive hand-written prose under legacy
+// headers. Returns "" when the file is missing, empty, or only
+// carries the agent-fills-this-in placeholder body that
+// nextPlaceholder() emits — that placeholder is the legacy path's
+// own output, not "real" content the user could lose. Callers
+// should only consult this when `next.projected == false`; once
+// migrated, the projection path owns the file and legacy fragments
+// can only appear as transient merge debris (which the merge driver
+// / Stop-hook self-heal already handle).
+func detectUnmigratedNextMD(nextPath string) string {
+	body, err := os.ReadFile(nextPath)
+	if err != nil || len(bytes.TrimSpace(body)) == 0 {
+		return ""
+	}
+	src := string(body)
+	if strings.Contains(src, machineBlockStart) {
+		return "legacy <!-- BEGIN HERO MACHINE STATE --> markers present"
+	}
+	for _, h := range legacyNextHeaders {
+		if sectionHasRealContent(src, h) {
+			return "legacy section header `" + h + "` contains hand-written content"
+		}
+	}
+	return ""
+}
+
+// sectionHasRealContent returns true if the section under header
+// has any non-blank, non-italic-placeholder body line. The italic
+// markers (`_..._` or `*..*`) are the convention nextPlaceholder()
+// uses to mark "the agent fills this in" — those are not real
+// content and must not trigger the migration gate.
+func sectionHasRealContent(src, header string) bool {
+	lines := strings.Split(src, "\n")
+	inSection := false
+	for _, line := range lines {
+		trimmed := strings.TrimRight(line, " \t\r")
+		if !inSection {
+			if trimmed == header {
+				inSection = true
+			}
+			continue
+		}
+		// Next H2 header ends the section.
+		if strings.HasPrefix(trimmed, "## ") {
+			return false
+		}
+		body := strings.TrimSpace(trimmed)
+		if body == "" {
+			continue
+		}
+		// Italic placeholder lines (`_..._` / `*..*`) — and the
+		// "(omit if nothing meaningful)" comment baked into the
+		// header itself — count as empty.
+		if isItalicPlaceholder(body) {
+			continue
+		}
+		return true
+	}
+	return false
+}
+
+// isItalicPlaceholder returns true if line is wrapped in single
+// underscores or asterisks — the markdown convention
+// nextPlaceholder() uses for "fill this in" hints.
+func isItalicPlaceholder(line string) bool {
+	if len(line) < 2 {
+		return false
+	}
+	first, last := line[0], line[len(line)-1]
+	return (first == '_' && last == '_') || (first == '*' && last == '*')
 }
 
 // readPriorCheckpoint reads the "Updated:" timestamp from the local
