@@ -1,7 +1,7 @@
 ---
 title: Hero People + ROI Home — Team Pulse and Hero Value Surface
 type: feature
-status: planning
+status: completed
 tags: [serve, surface, people, roi, team, presence, activity, velocity, metrics, web-app]
 created: 2026-05-17
 relations:

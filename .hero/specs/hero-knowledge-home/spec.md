@@ -1,7 +1,7 @@
 ---
 title: Hero Knowledge Home — The Corpus, Visible
 type: feature
-status: planning
+status: completed
 tags: [serve, surface, knowledge, home, search, traversal, corpus, web-app]
 created: 2026-05-17
 relations:
@@ -379,6 +379,39 @@ all open the same scrolling page per the shell router. The
 `/knowledge/why?target=<spec-slug>`.
 
 ## Changes
+
+**First-pass autopilot delivery** — replicates the Now home pattern
+one-for-one. Browse is the default sub-state. Sections that depend on
+not-yet-shipped substrates (Why-traversal, narrator summary, neighbor
+retrieval) render as empty-state notices per the kickoff instruction.
+Search / Recent / Write / per-entry routes and the two islands
+(`knowledge-why-graph`, `knowledge-writer`) remain on the original
+plan list below — they were not in this delivery's scope.
+
+**Delivered in this pass:**
+- `internal/serve/pages/knowledge/page.go` — Register + handle + buildPage + SectionFragment, mirrors `pages/now/page.go`
+- `internal/serve/pages/knowledge/styles.go` — per-page CSS + JS inlined through HeadExtra, mirrors `pages/now/styles.go`
+- `internal/serve/pages/knowledge/templates/page.html` — outer composition
+- `internal/serve/pages/knowledge/templates/browse.html` — card-grid section (default sub-state)
+- `internal/serve/pages/knowledge/templates/provenance.html` — Why-view two-column scaffold with empty-state fallback
+- `internal/serve/pages/knowledge/templates/summary.html` — narrator paragraph block with empty-state fallback
+- `internal/serve/pages/knowledge/templates/neighbors.html` — "You might also explore" rows
+- `internal/serve/pages/knowledge/templates/staleness.html` — Worth-re-checking amber block with empty-state fallback
+- `internal/serve/pages/knowledge/data/types.go` — value-typed payload structs (Corpus, Why, Summary, Neighbors, Staleness)
+- `internal/serve/pages/knowledge/data/corpus.go` — `.hero/knowledge/<kind>/` walker, returns entries + recency
+- `internal/serve/pages/knowledge/data/staleness.go` — reads `.hero/knowledge/contradictions.json`
+- `internal/serve/pages/knowledge/data/why.go` — stub fetcher (returns Available=false; the spec's empty-state notice covers it)
+- `internal/serve/pages/knowledge/data/summary.go` — stub fetcher (Available=false)
+- `internal/serve/pages/knowledge/data/neighbors.go` — stub fetcher (empty rows)
+- `internal/serve/pages/knowledge/data/events.go` — events.log helper for the "new this week" tile
+- `internal/serve/pages/knowledge/import_test.go` — boundary guard: forbids chat/runner imports
+- `internal/serve/pages/knowledge/page_test.go` — renders all five section ids + sub-nav
+- `internal/serve/api/knowledge.go` — SSE channel + per-section fragment endpoints, mirrors `api/now.go`
+- `internal/serve/shell/stubs.go` — removed the `knowledge` stub entry
+- `internal/serve/shell/shell_test.go` — updated `TestStubHomes_AllRender` to drop the `knowledge` slug
+- `internal/serve/server.go` — added `knowledgepage` import, mounted `KnowledgeHandler` on the top mux, registered the real Knowledge home in `buildShellRouter`
+
+**Still to deliver (not in scope for this autopilot pass):**
 
 All paths under `internal/serve/`. The Knowledge home lives in
 `internal/serve/pages/knowledge/` per the repository's

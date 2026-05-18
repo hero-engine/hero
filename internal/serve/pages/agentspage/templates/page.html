@@ -1,0 +1,12 @@
+{{- /* page.html — outer Agents layout. Renders sections beneath the
+       shell-owned page-hero and tabbed-metric-strip fragments. Each
+       section is wrapped in a stable id so SSE fragment endpoints can
+       swap them whole. The default sub-state is "Sessions". */ -}}
+{{ define "page.html" }}
+
+{{ template "sessions.html" .Sessions }}
+{{ template "approvals.html" .Sessions }}
+{{ template "completed.html" .Sessions }}
+{{ template "scheduled-preview.html" .Sessions }}
+
+{{ end }}

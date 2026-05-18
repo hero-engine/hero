@@ -17,8 +17,13 @@ import (
 	"github.com/hero-engine/hero/internal/serve/api"
 	"github.com/hero-engine/hero/internal/serve/chat"
 	"github.com/hero-engine/hero/internal/serve/edition"
+	agentspage "github.com/hero-engine/hero/internal/serve/pages/agentspage"
+	agentsdata "github.com/hero-engine/hero/internal/serve/pages/agentspage/data"
+	knowledgepage "github.com/hero-engine/hero/internal/serve/pages/knowledge"
 	nowpage "github.com/hero-engine/hero/internal/serve/pages/now"
 	nowdata "github.com/hero-engine/hero/internal/serve/pages/now/data"
+	peoplepage "github.com/hero-engine/hero/internal/serve/pages/people"
+	workpage "github.com/hero-engine/hero/internal/serve/pages/work"
 	"github.com/hero-engine/hero/internal/serve/session"
 	"github.com/hero-engine/hero/internal/serve/shell"
 	"github.com/hero-engine/hero/internal/spec"
@@ -308,6 +313,53 @@ func (s *Server) Run(ctx context.Context) error {
 			Proposals:   s.snapshotProposals,
 		}, busSubscriber{bus: s.bus})
 		nowHandler.Mount(topMux)
+
+		// Knowledge SSE channel + per-section fragment endpoints. Same
+		// mount-before-catch-all reason as the handlers above.
+		knowledgeHandler := api.NewKnowledgeHandler(knowledgepage.Deps{
+			ProjectRoot: s.projectRoot,
+			HeroDir:     s.heroDir,
+			Workspace:   s.shellWorkspaceName(),
+			Branch:      detectGitBranch(s.projectRoot),
+			UserName:    shellUserName(),
+		}, busSubscriber{bus: s.bus})
+		knowledgeHandler.Mount(topMux)
+
+		// Work SSE channel + per-section fragment endpoints. Same
+		// shape as the Now handler block above: registered before the
+		// generic /api/ catch-all so the work-specific routes win.
+		workHandler := api.NewWorkHandler(workpage.Deps{
+			ProjectRoot: s.projectRoot,
+			HeroDir:     s.heroDir,
+			Workspace:   s.shellWorkspaceName(),
+			Branch:      detectGitBranch(s.projectRoot),
+			UserName:    shellUserName(),
+		}, busSubscriber{bus: s.bus})
+		workHandler.Mount(topMux)
+
+		// People & ROI SSE channel + per-section fragment endpoints.
+		// Same mount-before-catch-all reason as the handlers above.
+		peopleHandler := api.NewPeopleHandler(peoplepage.Deps{
+			ProjectRoot: s.projectRoot,
+			HeroDir:     s.heroDir,
+			Workspace:   s.shellWorkspaceName(),
+			Branch:      detectGitBranch(s.projectRoot),
+			UserName:    shellUserName(),
+		}, busSubscriber{bus: s.bus})
+		peopleHandler.Mount(topMux)
+
+		// Agents SSE channel + per-section fragment endpoints. Same
+		// mount-before-catch-all reason as the handlers above.
+		agentsHandler := api.NewAgentsHandler(agentspage.Deps{
+			ProjectRoot:  s.projectRoot,
+			HeroDir:      s.heroDir,
+			Workspace:    s.shellWorkspaceName(),
+			Branch:       detectGitBranch(s.projectRoot),
+			UserName:     shellUserName(),
+			LiveSessions: s.snapshotLiveSessions,
+			Proposals:    s.snapshotAgentsProposals,
+		}, busSubscriber{bus: s.bus})
+		agentsHandler.Mount(topMux)
 
 		topMux.Handle("/api/", handler)
 		topMux.Handle("/health", handler)
@@ -607,6 +659,65 @@ func (s *Server) buildShellRouter() *shell.Router {
 	if err := nowpage.Register(r, nowDeps); err != nil {
 		fmt.Fprintf(os.Stderr, "hero serve: register Now home: %v\n", err)
 	}
+
+	// Register the real Work home in place of its (no-longer-present)
+	// stub. Per-spec: this owns /work; sibling /work/* routes land in
+	// follow-on work.
+	workDeps := workpage.Deps{
+		ProjectRoot: s.projectRoot,
+		HeroDir:     s.heroDir,
+		Workspace:   workspace,
+		Branch:      branch,
+		UserName:    userName,
+	}
+	if err := workpage.Register(r, workDeps); err != nil {
+		fmt.Fprintf(os.Stderr, "hero serve: register Work home: %v\n", err)
+	}
+
+	// Register the real Knowledge home in place of its (no-longer-present)
+	// stub. Deps mirror the Now wiring — no proposal-store hook yet.
+	knowledgeDeps := knowledgepage.Deps{
+		ProjectRoot: s.projectRoot,
+		HeroDir:     s.heroDir,
+		Workspace:   workspace,
+		Branch:      branch,
+		UserName:    userName,
+	}
+	if err := knowledgepage.Register(r, knowledgeDeps); err != nil {
+		fmt.Fprintf(os.Stderr, "hero serve: register Knowledge home: %v\n", err)
+	}
+
+	// Register the real People & ROI home in place of its (no-longer-present)
+	// stub. Deps mirror the other home wiring.
+	peopleDeps := peoplepage.Deps{
+		ProjectRoot: s.projectRoot,
+		HeroDir:     s.heroDir,
+		Workspace:   workspace,
+		Branch:      branch,
+		UserName:    userName,
+	}
+	if err := peoplepage.Register(r, peopleDeps); err != nil {
+		fmt.Fprintf(os.Stderr, "hero serve: register People & ROI home: %v\n", err)
+	}
+
+	// Register the real Agents home in place of its (no-longer-present)
+	// stub. Wired with the live-session snapshot reader (which is the
+	// canonical "live ledger" the Now home will consume in a follow-up)
+	// plus a proposal snapshotter. Scheduled / automation hooks are left
+	// nil until those engines land per the spec's build order; the page
+	// renders empty-state notices when they are.
+	agentsDeps := agentspage.Deps{
+		ProjectRoot:  s.projectRoot,
+		HeroDir:      s.heroDir,
+		Workspace:    workspace,
+		Branch:       branch,
+		UserName:     userName,
+		LiveSessions: s.snapshotLiveSessions,
+		Proposals:    s.snapshotAgentsProposals,
+	}
+	if err := agentspage.Register(r, agentsDeps); err != nil {
+		fmt.Fprintf(os.Stderr, "hero serve: register Agents home: %v\n", err)
+	}
 	return r
 }
 
@@ -632,6 +743,60 @@ func (s *Server) snapshotProposals() []*nowdata.ProposalRow {
 	// when the agents home wires the live session ledger this gains a
 	// real source. Until then return an empty slice so the inbox
 	// renders cleanly.
+	_ = store
+	return nil
+}
+
+// snapshotLiveSessions is the canonical "live session ledger" reader
+// for the Agents home. v1 reads from the team-mode job queue's
+// sessions table (which the runner & MCP server register against);
+// when team mode is not configured the snapshot is empty. The
+// SessionRow shape is the stable contract the Now home will consume
+// in a follow-up to replace its mocked agents card.
+func (s *Server) snapshotLiveSessions() []agentsdata.SessionRow {
+	if s == nil || s.jobQueue == nil {
+		return nil
+	}
+	raw, err := s.jobQueue.ActiveSessions()
+	if err != nil {
+		return nil
+	}
+	out := make([]agentsdata.SessionRow, 0, len(raw))
+	for _, m := range raw {
+		started, _ := time.Parse(time.RFC3339, m["started_at"])
+		lastSeen, _ := time.Parse(time.RFC3339, m["last_seen"])
+		out = append(out, agentsdata.SessionRow{
+			ID:           m["id"],
+			Agent:        m["agent"],
+			Spec:         m["spec_slug"],
+			Command:      m["command"],
+			UserID:       m["user_id"],
+			Status:       "live",
+			StartedAt:    started,
+			LastActiveAt: lastSeen,
+		})
+	}
+	return out
+}
+
+// snapshotAgentsProposals returns the pending proposals for the
+// primary project shaped for the Agents home's approval-row builder.
+// Same data origin and caveat as snapshotProposals: the propose store
+// does not yet expose a global enumerator, so this returns nil until
+// the store gains a list method. Returning nil keeps the page's
+// empty-state rendering correct.
+func (s *Server) snapshotAgentsProposals() []agentsdata.ProposalRow {
+	if s == nil || s.api == nil || s.api.proposals == nil {
+		return nil
+	}
+	slug := filepath.Base(s.projectRoot)
+	if slug == "" || slug == "." {
+		return nil
+	}
+	store := s.api.proposals.get(slug)
+	if store == nil {
+		return nil
+	}
 	_ = store
 	return nil
 }

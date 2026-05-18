@@ -1,7 +1,7 @@
 ---
 title: Hero Work Home — Spec + Delivery Surface
 type: feature
-status: planning
+status: completed
 tags: [serve, surface, work, home, specs, roadmap, kanban, drift, ci, web-app]
 created: 2026-05-17
 relations:

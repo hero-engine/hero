@@ -1,0 +1,42 @@
+{{- /* blocked.html — Blocked bottom-section partial. Capped at 3 rows
+       with a "View all (N) →" link to /work/blocked. Collapses entirely
+       when nothing is blocked. */ -}}
+{{ define "blocked.html" }}
+<section id="work-blocked" class="work-section section-spacious">
+  {{- if eq (len .Rows) 0 }}
+  {{- /* Nothing blocked: render an empty marker so SSE swaps still
+         find the id, but no visible content. */ -}}
+  <div hidden></div>
+  {{- else }}
+  <div class="section-header">
+    <h2 class="section-title">Blocked <span class="section-meta">{{ .Total }} spec{{ if ne .Total 1 }}s{{ end }} can't move</span></h2>
+    <a href="/work/blocked" class="section-link">View all ({{ .Total }}) →</a>
+  </div>
+
+  <div class="blocked-list">
+    {{- range .Rows }}
+    <div class="blocked-row">
+      <span class="blocked-dot{{ if eq .Dot "warn" }} warn{{ end }}"></span>
+      <div class="blocked-main">
+        <div class="blocked-summary">
+          <a href="/work/spec/{{ .Slug }}" class="mono">{{ .Slug }}</a>
+          {{- with .Reason }}<span style="color:var(--ink-4);font-weight:400;font-size:12px;">{{ . }}</span>{{ end }}
+        </div>
+        <div class="blocked-reason">
+          {{- range .Chips }}
+          <span class="reason-chip{{ if .Variant }} {{ .Variant }}{{ end }}">{{ .Label }}</span>
+          {{- end }}
+          {{- with .Age }}<span>· {{ . }}</span>{{ end }}
+        </div>
+      </div>
+      <div class="blocked-actions">
+        {{- range .Actions }}
+        <a href="{{ .Href }}"{{ if .Muted }} class="muted"{{ end }}>{{ .Label }}</a>
+        {{- end }}
+      </div>
+    </div>
+    {{- end }}
+  </div>
+  {{- end }}
+</section>
+{{ end }}

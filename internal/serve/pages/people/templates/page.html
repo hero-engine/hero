@@ -1,0 +1,15 @@
+{{- /* page.html — outer People & ROI layout. The shell-owned page-hero
+       and tabbed-metric-strip render above this; the home composes the
+       sub-sections below. The default landing is "Pulse" (team pulse);
+       the ROI Overview sections render after when ShowROI is true so
+       the canonical metric tiles are reachable on /people without yet
+       splitting routes (matches the mockup which co-renders them). */ -}}
+{{ define "page.html" }}
+
+{{ template "pulse.html" .Pulse }}
+
+{{ if .ShowROI }}
+{{ template "overview.html" .ROI }}
+{{ end }}
+
+{{ end }}

@@ -1,0 +1,34 @@
+{{- /* staleness.html — Worth re-checking block. Available=false hides
+       the amber block and renders an empty-state inline. */ -}}
+{{ define "staleness.html" }}
+<section id="knowledge-staleness" class="kn-section">
+  <div class="kn-section-header">
+    <h2 class="kn-section-title">Worth re-checking
+      {{- if and .Available (gt .Total 0) }} <span class="kn-section-meta">{{ .Total }} flag{{ if ne .Total 1 }}s{{ end }}</span>{{ end }}
+    </h2>
+  </div>
+
+  {{- if not .Available }}
+  <div class="kn-empty">No contradictions file detected. The contradiction-detection spec writes <code>.hero/knowledge/contradictions.json</code> when it lands.</div>
+  {{- else if eq .Total 0 }}
+  <div class="kn-empty">No contradictions flagged — the corpus is consistent.</div>
+  {{- else }}
+  <div class="kn-stale-block">
+    <div class="kn-stale-icon" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+    </div>
+    <div class="kn-stale-body">
+      {{ .Headline }}
+      {{- with .Detail }}<p>{{ . }}</p>{{ end }}
+      {{- if .Actions }}
+      <div class="kn-stale-actions">
+        {{- range .Actions }}
+        <a href="{{ .Href }}"{{ if eq .Variant "muted" }} class="muted"{{ end }}>{{ .Label }}</a>
+        {{- end }}
+      </div>
+      {{- end }}
+    </div>
+  </div>
+  {{- end }}
+</section>
+{{ end }}

@@ -1,0 +1,60 @@
+{{- /* scheduled-preview.html — Two-column split rendering the
+       "Next 3 scheduled runs" and "Top 3 active automations" preview
+       lists on the sessions view. */ -}}
+{{ define "scheduled-preview.html" }}
+<section id="agents-scheduled-preview" class="agents-section">
+  <div class="agents-section-header">
+    <h2 class="agents-section-title">Scheduled &amp; automations</h2>
+    <div class="section-actions">
+      <a href="/agents/scheduled" class="agents-section-link">Open Scheduled →</a>
+      <a href="/agents/automations" class="agents-section-link">Open Automations →</a>
+    </div>
+  </div>
+
+  <div class="split-grid">
+    <div class="split-block">
+      <div class="split-head">
+        <span class="split-title">Next 3 scheduled runs</span>
+        <span class="agents-section-meta">{{ .ScheduledTotal }} total</span>
+      </div>
+      {{- if .NextScheduled }}
+      <div class="compact-list">
+        {{- range .NextScheduled }}
+        <div class="compact-row">
+          <div class="main">
+            <div class="name">{{ .Name }}</div>
+            <div class="sub">{{ .Sub }}</div>
+          </div>
+          <div class="when">{{ .When }}{{ if .WhenSub }}<br/><span class="when-sub">{{ .WhenSub }}</span>{{ end }}</div>
+        </div>
+        {{- end }}
+      </div>
+      {{- else }}
+      <div class="agents-empty">No scheduled runs configured yet.</div>
+      {{- end }}
+    </div>
+
+    <div class="split-block">
+      <div class="split-head">
+        <span class="split-title">Top 3 active automations</span>
+        <span class="agents-section-meta">{{ .AutomationTotal }} total</span>
+      </div>
+      {{- if .TopAutomations }}
+      <div class="compact-list">
+        {{- range .TopAutomations }}
+        <div class="compact-row">
+          <div class="main">
+            <div class="name">{{ .Name }}</div>
+            <div class="sub">{{ .Sub }}</div>
+          </div>
+          <div class="when">{{ .When }}{{ if .WhenSub }}<br/><span class="when-sub">{{ .WhenSub }}</span>{{ end }}</div>
+        </div>
+        {{- end }}
+      </div>
+      {{- else }}
+      <div class="agents-empty">No automation rules configured yet.</div>
+      {{- end }}
+    </div>
+  </div>
+</section>
+{{ end }}

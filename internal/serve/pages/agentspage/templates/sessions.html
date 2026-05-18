@@ -1,0 +1,26 @@
+{{- /* sessions.html — Live sessions list. Vertical list of separator-
+       line session-blocks (NOT cards). Empty state renders a soft
+       notice when no sessions are in flight. */ -}}
+{{ define "sessions.html" }}
+<section id="agents-sessions" class="agents-section">
+  <div class="agents-section-header">
+    <h2 class="agents-section-title">Live sessions <span class="agents-section-meta">{{ .LiveCount }} running</span></h2>
+    <div class="filter-chips" role="tablist" aria-label="Session filter">
+      <button class="filter-chip active" data-filter="all">All</button>
+      <button class="filter-chip" data-filter="mine">Mine</button>
+      <button class="filter-chip" data-filter="team">Team</button>
+      <button class="filter-chip" data-filter="scheduled">Scheduled</button>
+    </div>
+  </div>
+
+  {{- if .Live }}
+  <div class="sessions-list">
+    {{- range .Live }}
+    {{ template "session-block.html" . }}
+    {{- end }}
+  </div>
+  {{- else }}
+  <div class="agents-empty">No agent sessions in flight. Start one with <code>/deliver &lt;spec&gt;</code> or from the chat input above.</div>
+  {{- end }}
+</section>
+{{ end }}
