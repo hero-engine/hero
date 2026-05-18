@@ -2,7 +2,7 @@
 title: "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 slug: agent-outposts
 type: feature
-status: planning
+status: delivering
 priority: medium
 horizon: next
 tags: [agent-runtime, credentials, audit, knowledge-corpus]

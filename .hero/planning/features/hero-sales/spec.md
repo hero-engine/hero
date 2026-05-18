@@ -2,7 +2,7 @@
 title: Hero Sales — AI-Powered Sales Workflow for Revenue Teams
 slug: hero-sales
 type: feature
-status: planning
+status: delivering
 priority: P0
 tags: [sales, domain, crm, salesforce, pipeline, forecast]
 created: 2026-04-25
