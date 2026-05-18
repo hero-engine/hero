@@ -10,13 +10,15 @@ import (
 )
 
 // TestNoForbiddenImports asserts that the Now home package does NOT
-// depend on chat dispatch or agent-runner internals. Chat dispatch is
-// owned by hero-chat-and-model and reached via the shell's shared
-// chat-input fragment; the runner is owned by hero-agents-home. See
-// the hero-now-home spec's "Constraints" section.
+// depend on agent-runner internals. The runner is owned by
+// hero-agents-home. See the hero-now-home spec's "Constraints" section.
+//
+// Chat is no longer forbidden — hero-now-home-followups added
+// capability detection that calls chat.Resolve to decide whether to
+// render the empty-state notice above the Quick launch input. The
+// page still owns NO chat dispatch; it only reads adapter availability.
 func TestNoForbiddenImports(t *testing.T) {
 	forbidden := []string{
-		"github.com/hero-engine/hero/internal/serve/chat",
 		"github.com/hero-engine/hero/internal/runner",
 	}
 

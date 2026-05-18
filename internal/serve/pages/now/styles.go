@@ -532,8 +532,10 @@ const nowScript = `<script>
 
   // SSE subscriber — re-fetches the named section fragment on each
   // event. The server publishes 'inbox', 'plate', 'agents', 'changes',
-  // and 'hero' event names; we re-render the four sections in place.
-  // 'hero' updates are handled by replacing the subhead only.
+  // 'hero', and 'capability' event names. Section names map to a fetch
+  // + outerHTML swap; 'hero' swaps the page-hero subhead text in place
+  // (no fetch); 'capability' refetches the Quick launch section so the
+  // empty-state notice flips on adapter connect/disconnect.
   if (typeof EventSource === 'undefined') return;
   var es;
   try {
@@ -541,19 +543,28 @@ const nowScript = `<script>
   } catch (err) {
     return; // SSE not available
   }
-  function refresh(section) {
-    fetch('/api/now/' + section, { headers: { 'Accept': 'text/html' } })
+  function refresh(path, targetId) {
+    fetch(path, { headers: { 'Accept': 'text/html' } })
       .then(function (r) { return r.ok ? r.text() : null; })
       .then(function (html) {
         if (html == null) return;
-        var target = document.getElementById('now-' + section);
+        var target = document.getElementById(targetId);
         if (!target) return;
         target.outerHTML = html;
       })
       .catch(function () { /* swallow */ });
   }
   ['inbox', 'plate', 'agents', 'changes'].forEach(function (s) {
-    es.addEventListener(s, function () { refresh(s); });
+    es.addEventListener(s, function () {
+      refresh('/api/now/' + s, 'now-' + s);
+    });
+  });
+  es.addEventListener('hero', function (e) {
+    var el = document.querySelector('[data-page-hero-subhead]');
+    if (el) el.textContent = e.data;
+  });
+  es.addEventListener('capability', function () {
+    refresh('/api/now/quicklaunch', 'now-quicklaunch');
   });
   window.addEventListener('beforeunload', function () { try { es.close(); } catch (e) {} });
 })();

@@ -12,6 +12,7 @@
 package now
 
 import (
+	"bytes"
 	"embed"
 	"fmt"
 	"html/template"
@@ -21,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/serve/chat"
 	"github.com/hero-engine/hero/internal/serve/edition"
 	"github.com/hero-engine/hero/internal/serve/pages/now/data"
 	"github.com/hero-engine/hero/internal/serve/shell"
@@ -63,6 +65,19 @@ type Deps struct {
 	// against the same template set the handler uses, so SSE clients
 	// fetch HTML identical to the initial render. Nil-safe.
 	RegisterFragment func(section string, render func(w http.ResponseWriter, r *http.Request))
+
+	// ChatRegistry is the connected-adapter registry used to resolve
+	// the chat capability for the page. Nil disables capability
+	// detection — the page renders as if no adapter is connected,
+	// which is the safe default for offline / unit-test environments.
+	ChatRegistry *chat.Registry
+
+	// LiveSessions returns the canonical live-session snapshot the
+	// Currently-running block populates from. Nil is safe — the
+	// agents loader renders the existing empty state in that case.
+	// Shape matches the Agents home's session ledger so both pages
+	// surface the same source of truth.
+	LiveSessions func() []data.SessionRow
 }
 
 // Register installs the Now home on the shell router using the
@@ -70,7 +85,7 @@ type Deps struct {
 // the placeholder registered by shell.RegisterStubHomes must be
 // dropped first by the caller (we do not double-register).
 func Register(r *shell.Router, deps Deps) error {
-	tmpl, err := loadTemplates()
+	tmpl, err := loadTemplatesFor(r)
 	if err != nil {
 		return fmt.Errorf("now: load templates: %w", err)
 	}
@@ -93,7 +108,7 @@ func Register(r *shell.Router, deps Deps) error {
 // The output is exactly what the initial /now render produces for that
 // section, so client-side replacement preserves layout.
 func SectionFragment(deps Deps, section string) ([]byte, error) {
-	tmpl, err := loadTemplates()
+	tmpl, err := loadTemplatesFor(nil)
 	if err != nil {
 		return nil, err
 	}
@@ -101,14 +116,75 @@ func SectionFragment(deps Deps, section string) ([]byte, error) {
 	return h.renderSection(section)
 }
 
-// loadTemplates parses every .html under the embedded templates/
-// directory into a single template set.
-func loadTemplates() (*template.Template, error) {
+// QuickLaunchFragment returns the rendered Quick launch section HTML.
+// Used by the /api/now/quicklaunch SSE-driven fragment endpoint so
+// adapter connect / disconnect events can re-swap the section without a
+// full page reload.
+func QuickLaunchFragment(deps Deps) ([]byte, error) {
+	tmpl, err := loadTemplatesFor(nil)
+	if err != nil {
+		return nil, err
+	}
+	h := &handler{tmpl: tmpl, deps: deps}
+	return h.renderQuickLaunch()
+}
+
+// SubheadText returns the plain-text page-hero subhead for the current
+// inbox / agent / activity state. Exposed for the `event: hero` SSE
+// payload so the client can swap [data-page-hero-subhead] in place
+// without re-fetching the whole hero block.
+func SubheadText(deps Deps) string {
+	ed := edition.Resolve()
+	inbox := data.LoadInbox(data.InboxInputs{
+		ProjectRoot: deps.ProjectRoot,
+		HeroDir:     deps.HeroDir,
+		Edition:     string(ed),
+		Proposals:   callProposals(deps),
+	})
+	agents := data.LoadAgents(data.AgentsInputs{
+		ProjectRoot:  deps.ProjectRoot,
+		HeroDir:      deps.HeroDir,
+		Edition:      string(ed),
+		LiveSessions: deps.LiveSessions,
+	})
+	return subheadPlainText(len(inbox.Rows), agents.RunningCount, agents.LastActivePretty)
+}
+
+// loadTemplatesFor parses every .html under the embedded templates/
+// directory into a single template set. When router is non-nil the
+// resulting set carries `chatInput` and `emptyStateNotice` template
+// funcs that render the corresponding shell-owned fragments inline.
+// router may be nil when the template set is being used outside the
+// shell (e.g. unit tests, the SectionFragment helper) — in that case
+// the helpers return empty HTML so templates still execute.
+func loadTemplatesFor(router *shell.Router) (*template.Template, error) {
 	sub, err := fs.Sub(templatesFS, "templates")
 	if err != nil {
 		return nil, fmt.Errorf("templates subdir: %w", err)
 	}
-	return template.ParseFS(sub, "*.html")
+	funcs := template.FuncMap{
+		"chatInput": func(in shell.ChatInput) template.HTML {
+			return renderShellFragment(router, "chat-input", in)
+		},
+		"emptyStateNotice": func(in shell.EmptyState) template.HTML {
+			return renderShellFragment(router, "empty-state-notice", in)
+		},
+	}
+	return template.New("").Funcs(funcs).ParseFS(sub, "*.html")
+}
+
+// renderShellFragment evaluates a shell-owned fragment and returns its
+// HTML. Errors are swallowed and rendered as an HTML comment so a
+// template execution never fails because of a missing shell template.
+func renderShellFragment(router *shell.Router, name string, data any) template.HTML {
+	if router == nil {
+		return ""
+	}
+	var buf bytes.Buffer
+	if err := router.RenderFragment(&buf, name, data); err != nil {
+		return template.HTML(fmt.Sprintf("<!-- now: render %s: %s -->", name, template.HTMLEscapeString(err.Error())))
+	}
+	return template.HTML(buf.String())
 }
 
 type handler struct {
@@ -145,9 +221,10 @@ func (h *handler) buildPage(req *http.Request, cfg config.Config, ed edition.Edi
 		UserName:    h.deps.UserName,
 	})
 	agents := data.LoadAgents(data.AgentsInputs{
-		ProjectRoot: h.deps.ProjectRoot,
-		HeroDir:     h.deps.HeroDir,
-		Edition:     string(ed),
+		ProjectRoot:  h.deps.ProjectRoot,
+		HeroDir:      h.deps.HeroDir,
+		Edition:      string(ed),
+		LiveSessions: h.deps.LiveSessions,
 	})
 	changes := data.LoadChanges(data.ChangesInputs{
 		ProjectRoot: h.deps.ProjectRoot,
@@ -162,6 +239,7 @@ func (h *handler) buildPage(req *http.Request, cfg config.Config, ed edition.Edi
 
 	hero := buildPageHero(h.deps, ed, len(inbox.Rows), agents.RunningCount, agents.LastActivePretty)
 	strip := buildMetricStrip(methodology, metrics)
+	noAdapter, emptyState := resolveAdapterState(h.deps)
 
 	pd := pageData{
 		ChatPlaceholder: "Describe what you want to work on, ask a question, or paste an error…",
@@ -172,6 +250,17 @@ func (h *handler) buildPage(req *http.Request, cfg config.Config, ed edition.Edi
 			{Label: "finish per-feature-smoke-coverage", Href: "#"},
 			{Label: "why is scan enrichment looping?", Href: "#"},
 			{Label: "design rate-limited peer calls", Href: "#"},
+		},
+		QuickLaunch: quickLaunchData{
+			IntentChips: []string{"/design", "/diagnose", "/deliver", "/review", "/ask"},
+			TryPrompts: []data.TryPrompt{
+				{Label: "finish per-feature-smoke-coverage", Href: "#"},
+				{Label: "why is scan enrichment looping?", Href: "#"},
+				{Label: "design rate-limited peer calls", Href: "#"},
+			},
+			ChatInput:  buildChatInput(),
+			NoAdapter:  noAdapter,
+			EmptyState: emptyState,
 		},
 		Inbox:   inbox,
 		Plate:   plate,
@@ -225,9 +314,10 @@ func (h *handler) renderSection(section string) ([]byte, error) {
 	case "agents":
 		tplName = "agents.html"
 		payload = data.LoadAgents(data.AgentsInputs{
-			ProjectRoot: h.deps.ProjectRoot,
-			HeroDir:     h.deps.HeroDir,
-			Edition:     string(ed),
+			ProjectRoot:  h.deps.ProjectRoot,
+			HeroDir:      h.deps.HeroDir,
+			Edition:      string(ed),
+			LiveSessions: h.deps.LiveSessions,
 		})
 	case "changes":
 		tplName = "changes.html"
@@ -248,10 +338,18 @@ func (h *handler) renderSection(section string) ([]byte, error) {
 }
 
 func (h *handler) callProposals() []*data.ProposalRow {
-	if h.deps.Proposals == nil {
+	return callProposals(h.deps)
+}
+
+// callProposals is the package-level helper backing handler.callProposals.
+// Exposed as a free function so SectionFragment / SubheadText /
+// QuickLaunchFragment can share the same nil-safe pull without
+// constructing a handler value.
+func callProposals(deps Deps) []*data.ProposalRow {
+	if deps.Proposals == nil {
 		return nil
 	}
-	return h.deps.Proposals()
+	return deps.Proposals()
 }
 
 // pageData is the outer-template input.
@@ -259,10 +357,116 @@ type pageData struct {
 	ChatPlaceholder string
 	IntentChips     []string
 	TryPrompts      []data.TryPrompt
-	Inbox           data.Inbox
-	Plate           data.Plate
-	Agents          data.Agents
-	Changes         data.Changes
+	// QuickLaunch carries the per-section data the Quick launch template
+	// renders (chat-input params, no-adapter state, empty-state copy,
+	// intent chips, try-prompts). Owned here so /api/now/quicklaunch
+	// can re-render the same struct out-of-band.
+	QuickLaunch quickLaunchData
+	Inbox       data.Inbox
+	Plate       data.Plate
+	Agents      data.Agents
+	Changes     data.Changes
+}
+
+// quickLaunchData is the input passed to the Quick launch section
+// template when rendered standalone via /api/now/quicklaunch. Mirrors
+// the subset of pageData the section actually reads.
+type quickLaunchData struct {
+	IntentChips []string
+	TryPrompts  []data.TryPrompt
+	ChatInput   shell.ChatInput
+	NoAdapter   bool
+	EmptyState  shell.EmptyState
+}
+
+// buildChatInput composes the Quick launch chat-input fragment params.
+// Variant "hero" picks the 64px-tall styling; Context attaches the
+// page identity so the chat island dispatches with /now in scope.
+func buildChatInput() shell.ChatInput {
+	return shell.ChatInput{
+		Variant:     "hero",
+		Placeholder: "Tell Hero what to do next…",
+		Context: []shell.ChatContextChip{
+			{Kind: "page", Label: "page: /now"},
+		},
+	}
+}
+
+// resolveAdapterState returns (noAdapter, emptyState) for the current
+// chat capability snapshot. noAdapter is true when chat.Resolve picks
+// nothing for the interactive kind; emptyState carries the standard
+// install/settings CTA copy from the hero-now-home-followups spec.
+//
+// A nil ChatRegistry on Deps is treated as "no adapter connected" —
+// matches the offline / unit-test default.
+func resolveAdapterState(deps Deps) (bool, shell.EmptyState) {
+	var interactive string
+	if deps.ChatRegistry != nil {
+		cap := chat.Resolve(deps.ChatRegistry, "")
+		interactive = cap.Interactive
+	}
+	if interactive != "" {
+		return false, shell.EmptyState{}
+	}
+	return true, shell.EmptyState{
+		Headline:      "Hero needs hero-code (or a Hero IDE adapter) to run agent work.",
+		Body:          template.HTML("<code>/ask</code> and <code>/note</code> still work right here."),
+		PrimaryAction: shell.EmptyStateAction{Label: "Install hero-code", Href: "https://heroengine.ai/install/hero-code"},
+		GhostAction:   shell.EmptyStateAction{Label: "Already running it elsewhere →", Href: "/settings/chat"},
+		FootNote:      "Using Claude Code, Cursor, or Codex with the Hero IDE adapter? Make sure it's running and connected.",
+	}
+}
+
+// subheadPlainText renders the page-hero subhead as the plain-text
+// payload published on the `event: hero` SSE channel. Mirrors the
+// HTML composition in buildPageHero but strips markup so the client
+// can drop the string straight into textContent.
+func subheadPlainText(inboxCount, runningCount int, lastActive string) string {
+	parts := []string{}
+	switch inboxCount {
+	case 0:
+		// Skip — empty inbox tells its own story in the section below.
+	case 1:
+		parts = append(parts, "1 needs your input")
+	default:
+		parts = append(parts, fmt.Sprintf("%d need your input", inboxCount))
+	}
+	switch runningCount {
+	case 0:
+		parts = append(parts, "no agent running")
+	case 1:
+		parts = append(parts, "1 agent running")
+	default:
+		parts = append(parts, fmt.Sprintf("%d agents running", runningCount))
+	}
+	if lastActive != "" {
+		parts = append(parts, "since "+lastActive)
+	}
+	return strings.Join(parts, " · ")
+}
+
+// renderQuickLaunch produces the standalone Quick launch section HTML
+// used by /api/now/quicklaunch. Pulls capability + chat-input data via
+// the same helpers buildPage uses so the swap-in fragment is byte-for-
+// byte identical to the initial render.
+func (h *handler) renderQuickLaunch() ([]byte, error) {
+	noAdapter, emptyState := resolveAdapterState(h.deps)
+	qd := quickLaunchData{
+		IntentChips: []string{"/design", "/diagnose", "/deliver", "/review", "/ask"},
+		TryPrompts: []data.TryPrompt{
+			{Label: "finish per-feature-smoke-coverage", Href: "#"},
+			{Label: "why is scan enrichment looping?", Href: "#"},
+			{Label: "design rate-limited peer calls", Href: "#"},
+		},
+		ChatInput:  buildChatInput(),
+		NoAdapter:  noAdapter,
+		EmptyState: emptyState,
+	}
+	var buf strings.Builder
+	if err := h.tmpl.ExecuteTemplate(&buf, "quicklaunch.html", qd); err != nil {
+		return nil, err
+	}
+	return []byte(buf.String()), nil
 }
 
 // resolveMethodology returns the active methodology, defaulting to

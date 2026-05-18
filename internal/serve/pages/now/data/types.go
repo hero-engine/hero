@@ -9,6 +9,7 @@ import (
 	"html/template"
 	"time"
 
+	agentsdata "github.com/hero-engine/hero/internal/serve/pages/agentspage/data"
 	"github.com/hero-engine/hero/internal/serve/shell"
 )
 
@@ -17,6 +18,17 @@ import (
 // so the page handler can pass them straight into the shared
 // tabbed-metric-strip fragment with no conversion.
 type MetricTile = shell.MetricTile
+
+// SessionRow re-exports the canonical live-session snapshot shape from
+// the Agents home so the Now home consumes the same source of truth.
+// Picked Option B (direct import) over extracting a neutral shared
+// package — agentspage/data/sessions.go's row shape is already neutral
+// (no agentspage-specific shaping baked into the struct) and lifting it
+// into a new package would churn ~3 files without adding clarity.
+//
+// TODO: if a third consumer appears, promote SessionRow to a neutral
+// internal/serve/sessions package and have agentspage re-export it.
+type SessionRow = agentsdata.SessionRow
 
 // TryPrompt is one "Try: …" suggestion under the quick-launch input.
 type TryPrompt struct {
