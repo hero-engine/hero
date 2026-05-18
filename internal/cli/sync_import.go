@@ -1240,6 +1240,13 @@ func generateImportedSpec(issue tracker.Issue, specType, trackerName, slug strin
 		fmt.Fprintf(&body, "> %s\n\n", desc)
 	}
 
+	// Kickoff placeholder — every work spec needs a `## Kickoff`
+	// before /deliver will accept it. Imported specs land kickoff-less
+	// by default, so we scaffold an explicit TODO that fails loudly
+	// against the kickoff gate until a real prompt replaces it.
+	body.WriteString("## Kickoff\n\n")
+	body.WriteString("_TODO: write a paste-ready cold-start prompt — see skills/kickoff-prompt/SKILL.md_\n\n")
+
 	// Template sections
 	switch specType {
 	case "bug":

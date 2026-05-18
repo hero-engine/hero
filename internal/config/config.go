@@ -248,6 +248,11 @@ type DeliveryConfig struct {
 	AutopilotHaltOn []string `json:"autopilot_halt_on,omitempty"`
 	// DryRunWritesPlan controls whether dry-run writes plan.md. Default: true.
 	DryRunWritesPlan *bool `json:"dry_run_writes_plan,omitempty"`
+	// WIPWarningThreshold is the number of in-flight (status: delivering)
+	// specs at which `hero deliver` prints a soft advisory recommending
+	// the operator finish one before starting another. 0 or unset → 5.
+	// Never a hard block — it warns to stderr and continues.
+	WIPWarningThreshold int `json:"wip_warning_threshold,omitempty"`
 }
 
 // NextConfig holds handoff briefing settings.

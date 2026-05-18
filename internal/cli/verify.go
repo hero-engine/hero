@@ -170,6 +170,20 @@ func runVerify(cmd *cobra.Command, args []string) error {
 	fmt.Print(prompt.String())
 	fmt.Println()
 
+	// Auto-archive when the spec is already at status: completed. This
+	// closes the manual /deliver loop: the model flips status to
+	// completed during delivery, runs `hero verify` for the AC report,
+	// and the verify call moves the spec under specs/ without anyone
+	// having to remember `hero spec complete`. No-op when status hasn't
+	// flipped yet, so calling verify mid-delivery is still safe.
+	moved, err := autoArchiveIfCompleted(target.Path, heroDir)
+	if err != nil {
+		return fmt.Errorf("auto-archive: %w", err)
+	}
+	if moved {
+		fmt.Printf("Auto-archived: spec moved to specs/%s/\n", target.Slug)
+	}
+
 	return nil
 }
 

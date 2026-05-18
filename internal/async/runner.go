@@ -168,6 +168,26 @@ func (r *Runner) runDeliver(jobID string, job *Job) error {
 
 	log("Agent delivery completed")
 
+	// 2b. Auto-archive the spec when the agent left it at status: completed.
+	// /deliver's contract ends with "status: completed" in the spec
+	// frontmatter — without this hook the spec strands under planning/
+	// and the user has to remember `hero spec complete`. We invoke the
+	// CLI verb so the move + reindex stay in one place (complete.go).
+	// `spec complete` is idempotent (a non-completed status no-ops).
+	// Run this *before* the commit so the archive move travels with
+	// the agent's delivery PR rather than dangling on disk.
+	if exe, err := os.Executable(); err == nil {
+		archiveCmd := exec.Command(exe, "spec", "complete", job.SpecPath)
+		archiveCmd.Dir = r.projectDir
+		archiveCmd.Stdout = logFile
+		archiveCmd.Stderr = logFile
+		if err := archiveCmd.Run(); err != nil {
+			log("Auto-archive failed: %v", err)
+		} else {
+			log("Auto-archived spec %s", job.Slug)
+		}
+	}
+
 	// 3. Check for changes
 	statusOut, err := r.gitOutput("status", "--porcelain")
 	if err != nil {

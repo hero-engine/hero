@@ -109,6 +109,39 @@ func runComplete(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// autoArchiveIfCompleted is the auto-archive hook used by deliver
+// success paths. When the spec at specPath has status: completed,
+// it ensures the file lives under specs/<slug>/ and re-indexes.
+// Idempotent — safe to call when status isn't completed or when
+// the spec is already under specs/. Returns whether a move occurred.
+//
+// The caller is the model-driven /deliver flow finishing up — we
+// don't want a manual `hero spec complete` step. moveToSpecs handles
+// the file move; we only invoke it when status is actually completed
+// so a not-yet-finished spec isn't archived prematurely.
+func autoArchiveIfCompleted(specPath, heroDir string) (bool, error) {
+	s, err := spec.ParseFile(specPath)
+	if err != nil {
+		return false, fmt.Errorf("parsing spec: %w", err)
+	}
+	if s.Status != spec.StatusCompleted {
+		return false, nil
+	}
+	if isAlreadyInSpecsDir(specPath, heroDir) {
+		return false, nil
+	}
+	_, moved, err := moveToSpecs(specPath, heroDir)
+	if err != nil {
+		return false, fmt.Errorf("moving spec: %w", err)
+	}
+	if moved {
+		if _, err := index.Rebuild(heroDir); err != nil {
+			return true, fmt.Errorf("rebuilding index: %w", err)
+		}
+	}
+	return moved, nil
+}
+
 // updateFrontmatterStatus rewrites the spec file with an updated status field.
 func updateFrontmatterStatus(path, newStatus string) error {
 	data, err := os.ReadFile(path)

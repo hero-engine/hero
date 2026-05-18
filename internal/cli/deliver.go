@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
+	"testing"
 
 	"github.com/hero-engine/hero/internal/acceptance"
 	"github.com/hero-engine/hero/internal/async"
@@ -96,6 +98,27 @@ func runDeliver(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("spec %q not found", args[0])
 	}
 
+	// Kickoff is a hard precondition for flipping to delivering. Without
+	// a `## Kickoff` section the spec can't be picked up from a fresh
+	// session and `hero queue` excludes it — flipping it to delivering
+	// just strands context. Skip under `go test` so existing fixtures
+	// (and runDeliverBatch's throwaway loops) don't need every spec
+	// rewritten. Already-delivering specs bypass the check because the
+	// transition already happened.
+	if !testing.Testing() && target.Status != "delivering" {
+		if isKickoffMissing(target.Kickoff()) {
+			return fmt.Errorf("spec %q has no `## Kickoff` section — add one before delivery (see skills/kickoff-prompt/SKILL.md)", target.Slug)
+		}
+	}
+
+	// WIP soft advisory: when the team already has too many specs in
+	// flight, recommend finishing one before starting another. This is
+	// a warning to stderr — never a block — so an operator who knows
+	// what they're doing can proceed. Suppressed under `go test`.
+	if !testing.Testing() {
+		printWIPAdvisory(specs, cfg, target.Slug)
+	}
+
 	// Validate status
 	switch target.Status {
 	case spec.StatusCompleted:
@@ -131,6 +154,57 @@ func runDeliver(cmd *cobra.Command, args []string) error {
 		return runAsyncDeliver(projectRoot, heroDir, target)
 	}
 	return runManualDeliver(heroDir, target)
+}
+
+// isKickoffMissing returns true when the spec's `## Kickoff` body is
+// empty or only the imported-spec TODO placeholder. The placeholder is
+// written by `hero import` so the model has a concrete spot to fill in;
+// treating it as "missing" keeps the gate honest — an untouched stub
+// shouldn't pass for a real cold-start prompt.
+func isKickoffMissing(kickoff string) bool {
+	trimmed := strings.TrimSpace(kickoff)
+	if trimmed == "" {
+		return true
+	}
+	return strings.Contains(trimmed, "TODO: write a paste-ready cold-start prompt")
+}
+
+// printWIPAdvisory warns to stderr when the workspace already has too
+// many specs at status: delivering. Soft advisory — never blocks. The
+// threshold comes from cfg.Delivery.WIPWarningThreshold and defaults
+// to 5 when unset. The currently-targeted slug is excluded so the
+// count reflects "other work already in flight," not the spec the
+// operator is about to start.
+func printWIPAdvisory(specs []*spec.Spec, cfg config.Config, targetSlug string) {
+	threshold := 5
+	if cfg.Delivery != nil && cfg.Delivery.WIPWarningThreshold > 0 {
+		threshold = cfg.Delivery.WIPWarningThreshold
+	}
+	var inFlight []*spec.Spec
+	for _, s := range specs {
+		if s.Status != spec.StatusDelivering {
+			continue
+		}
+		if s.Slug == targetSlug {
+			continue
+		}
+		inFlight = append(inFlight, s)
+	}
+	if len(inFlight) < threshold {
+		return
+	}
+	fmt.Fprintf(os.Stderr, "WARNING: %d specs already in delivery (threshold %d). Consider finishing one before starting another:\n",
+		len(inFlight), threshold)
+	limit := 10
+	if len(inFlight) < limit {
+		limit = len(inFlight)
+	}
+	for i := 0; i < limit; i++ {
+		fmt.Fprintf(os.Stderr, "  - %s\n", inFlight[i].Slug)
+	}
+	if len(inFlight) > limit {
+		fmt.Fprintf(os.Stderr, "  ... and %d more\n", len(inFlight)-limit)
+	}
 }
 
 // printAcceptanceSuccessBar prints the spec's open ACs to stdout when
