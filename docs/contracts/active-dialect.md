@@ -27,7 +27,14 @@ Authoritative source: `hero.json` at the workspace root. Relevant fields on the 
 | `pm.presets.delivery` | `string` | Inference fallback: `sprint` → agile-scrum/scrum, `cycle` → shape-up, `flow`/`continuous` → kanban. |
 | `domain` | `string` | Active domain pack (`engineering`, `pm`, `sales`, …). Affects which spec-types overlay loads — orthogonal to vocabulary/methodology selection. |
 
-Read order: load `hero.json`, then merge `hero.local.json` on top (per-user overrides — tokens, etc.; does not currently override vocabulary/methodology but is a planned extension point).
+Read order: load `hero.json`, then merge `hero.local.json` on top. `hero.local.json` is a per-user, gitignored file that overrides any field on the top-level `Config` — including the four dialect fields. Override semantics for the dialect layer:
+
+- `vocabulary` (scalar) — non-empty local value replaces the base value.
+- `methodology` (scalar) — non-empty local value replaces the base value.
+- `vocabulary_overrides` (map) — entry-by-entry merge: local entries replace base entries on key collision; non-colliding base keys are preserved.
+- `methodology_overrides` (map) — entry-by-entry merge with the same semantics as `vocabulary_overrides`.
+
+An absent or empty `hero.local.json`, or one that omits these fields, leaves the base `hero.json` values untouched. The merge is implemented in `internal/config/config.go::MergeLocal`; consumers reading these files directly must replicate the same precedence (local wins on scalars; entry-by-entry merge with local-wins-on-collision for the override maps) to stay compatible.
 
 The preset corpora live under `core/vocabularies/<name>.yaml` and `core/methodologies/<name>.yaml`. These ship embedded in the Hero binary (`vocabulary.CoreFS()`, `methodology.CoreFS()`); a consumer reading the YAML directly from a Hero checkout gets the same content.
 
