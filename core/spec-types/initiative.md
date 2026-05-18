@@ -31,6 +31,21 @@ relations:
   - { kind: child, target_type: prd, cardinality: many }
   - { kind: child, target_type: epic, cardinality: many }
   - { kind: child, target_type: feature, cardinality: many }
+frontmatter:
+  required:
+    - { name: title, type: string, required: true, classification: content, description: "One-line human title for the initiative." }
+    - { name: type, type: enum, required: true, values: [initiative], default: initiative, classification: content, description: "Spec type discriminator; always 'initiative'." }
+    - { name: status, type: enum, required: true, values: [planning, refined, ready, delivering, in-review, completed], default: planning, classification: org-state, description: "Lifecycle position." }
+  optional:
+    - { name: created, type: date, format: "YYYY-MM-DD", classification: content, description: "Authoring date." }
+    - { name: priority, type: enum, values: [P0, P1, P2, P3], classification: org-state, description: "Hero-level priority." }
+    - { name: horizon, type: enum, values: [now, next, someday, parking], default: now, classification: content, description: "Temporal segmentation per spec-prioritization. Initiatives commonly use 'next' or 'someday' for roadmap items." }
+    - { name: tags, type: "list[string]", classification: content, description: "Free-form labels for grouping and search." }
+    - { name: claimed_by, type: string, classification: org-state, description: "Who is actively shaping this initiative." }
+    - { name: tracker_id, type: string, classification: org-state, description: "External tracker issue ID (e.g. PROJ-123)." }
+    - { name: owner, type: enum, values: [pm, engineering, qa, devops, design, docs], default: pm, classification: org-state, description: "Current owning role; defaults to PM since initiatives are scope-side artifacts." }
+    - { name: relations, type: "list[relation]", classification: content, description: "Child PRDs/epics/features that decompose this initiative." }
+    - { name: smoke, type: "object|enum", values: [deferred, none], classification: content, description: "Smoke-test wiring; usually 'deferred' for initiatives since delivery lives on children." }
 ---
 
 # Initiative spec-type
