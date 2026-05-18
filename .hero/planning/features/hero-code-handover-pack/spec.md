@@ -116,19 +116,18 @@ Once C1–C5 land, fire a `hero peer call hero-code --mode=advisory` referencing
 
 ## Open contract gaps surfaced during the sprint
 
-These are followups, not blockers — recorded here so hero-code (and we) can address them in their own specs:
+Each gap is filed as its own tracked spec. Five real fixes shipped as bug/feature specs; the sixth is deferred until hero-code reports actual typing pain.
 
-1. **`vocabulary.Resolve` doesn't fold in methodology-derived auto-derivation.** Every in-tree caller (`internal/cli/vocab.go::activeVocab`, `internal/serve/vocab.go`, `internal/install/dialect.go`) wraps it and injects `DeriveVocabularyName` first. The contract in `active-dialect.md` documents the effective precedence chain consumers see, but the bare function name is misleading. Either fold the derivation into `Resolve` or rename to `ResolveBare` / `ResolveWithMethodology`.
+| # | Gap | Spec | Type |
+|---|---|---|---|
+| 1 | `vocabulary.Resolve` doesn't fold methodology-derived auto-derivation | [vocabulary-resolve-misses-methodology-derivation](../../bugs/vocabulary-resolve-misses-methodology-derivation/spec.md) | bug (P1) |
+| 2 | `spec-types.json` records emit `frontmatter: null` — loader never populates | [spec-types-cache-frontmatter-empty](../../bugs/spec-types-cache-frontmatter-empty/spec.md) | bug (P1) |
+| 3 | `anchor.value` shape varies per `anchor.kind`, prose-only | **deferred** until hero-code's Rust serde typing actually hurts; 1.1 additive `anchor.value_shape` discriminator if needed | feature (deferred) |
+| 4 | `initiative` required-sections YAML disagrees with prose | [initiative-required-sections-drift](../../bugs/initiative-required-sections-drift/spec.md) | bug (P2) |
+| 5 | Vocabulary `auto_select` schema not exhaustively documented | [document-vocabulary-auto-select-schema](../document-vocabulary-auto-select-schema/spec.md) | feature (P2) |
+| 6 | `hero.local.json` merge doesn't forward `vocabulary` / `methodology` fields | [hero-local-merge-missing-dialect-fields](../../bugs/hero-local-merge-missing-dialect-fields/spec.md) | bug (P1) |
 
-2. **`frontmatter` field on `spec-types.json` records is always `null` today.** The loader doesn't yet populate it from the markdown source. Schema declares it `oneOf: [object, null]` so consumers handle both today's reality and tomorrow's populated shape without a contract bump. Worth filing as a registry-loader bug.
-
-3. **Some envelope semantics are prose-only.** `anchor.value` carries different shapes per `anchor.kind` (frontmatter field name vs section slug vs list-item id vs free-form hint). hero-code may want a typed sum-type with `value` shape per variant. Worth considering a 1.1 additive `anchor.value_shape` discriminator if downstream typing pain materializes.
-
-4. **`initiative` required-sections disagrees with prose.** `core/spec-types/initiative.md` YAML says `required: [Goal]`, prose says `[Bet, Evidence, Tradeoffs]`. Trivial fix.
-
-5. **Methodology `auto_select` schema not exhaustively documented.** The `vocabulary.yaml` auto_select rule shape is referenced but only `delivery_preset` is shown by example. A consumer authoring a new preset will have to crack the Go struct.
-
-6. **`hero.local.json` merge semantics** don't yet forward `vocabulary` / `methodology` fields. Documented in `active-dialect.md` as a planned extension point; the Go code doesn't yet honor it.
+Each spec carries its own AC, root-cause analysis, fix sketch, and a paste-ready kickoff prompt. Gap #3 stays as a watching brief — if hero-code reports the prose-typed `anchor.value` makes Rust deserialization painful, file the spec then with their concrete pain points; speculating now risks designing the wrong fix.
 
 ## Handoff Trail
 
