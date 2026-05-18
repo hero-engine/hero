@@ -103,6 +103,7 @@ Multiple AI tools, drifted copies, post-upgrade resets:
 
 ```bash
 hero install --migrate          # reconcile drifted copies across harnesses
+<!-- drift-test:ignore (follow-up: `hero verify-install` was never registered as a real command) -->
 hero verify-install             # audit install state
 ```
 

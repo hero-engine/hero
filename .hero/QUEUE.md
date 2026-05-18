@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-18T22:51:15Z · 99 ready specs_
+_Generated: 2026-05-18T23:07:10Z · 98 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -260,22 +260,6 @@ Replaces the two independently-written "hero managed" blocks in AGENTS.md / CLAU
 
 **Files:** `internal/install/managed_region.go`, `internal/install/agents_md.go:120`, `internal/snapshot/pointers.go`, `internal/snapshot/projector.go:118`
 **Skip:** adding a section contributor for `hero peer` or any other subsystem that doesn't write to AGENTS.md today — keep scope to the two current writers plus the orchestrator.
-
----
-
-## cli-invocation-drift-test-markdown — CLI Invocation Drift Test for Markdown Surfaces
-_feature · planning · horizon: now_
-
-Catches stale or phantom `hero <command>` invocations referenced in any markdown shipped or installed by Hero (slash commands, skills, agents, READMEs, web docs, and the rendered AGENTS.md template).
-
-**Status:** planning — spec just landed, no code yet.
-
-**Pick up at:** start with the shared extractor + validator in `internal/cli/markdown_invocations.go`: a function that takes markdown bytes, returns `[]invocation` with `{file, line, args}`, and a validator that resolves each against `rootCmd.Traverse` and flag lookup. Wire the Go test (`internal/cli/markdown_drift_test.go`) first — that's the CI gate. Layer `--invocations` onto `hero docs check` after.
-
-→ `.hero/planning/features/cli-invocation-drift-test-markdown/spec.md`
-
-**Files:** `internal/cli/hints.go`, `internal/cli/hints_test.go`, `internal/cli/docs_check.go`, `internal/install/agents_md.go:210`
-**Skip:** building a separate top-level `hero lint` command — extend `hero docs check` instead.
 
 ---
 

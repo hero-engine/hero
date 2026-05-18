@@ -116,12 +116,14 @@ spec body and trim.
 ```markdown
 ## Kickoff
 
+<!-- drift-test:ignore (illustrative: this kickoff documents a phantom-command bug — `hero nudge` is intentionally stale) -->
 Renames stale docs from `hero nudge` to `hero relevant` so file-aware
 context examples match the current CLI.
 
 **Status:** delivering — CLI examples are fixed; MCP docs still need a
 note that the tool remains named `hero_nudge`.
 
+<!-- drift-test:ignore (illustrative: same kickoff example as above) -->
 **Pick up at:** sweep docs for `hero nudge` and replace user-facing CLI
 examples with `hero relevant`, while leaving MCP tool names intact.
 

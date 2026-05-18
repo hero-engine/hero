@@ -207,6 +207,21 @@ func (o Options) heroVersion() string {
 // exist sends it hunting through the workspace from first principles
 // and is the most common reason a non-Claude-Code harness wanders
 // after `hero scan`.
+// RenderAgentsMdBodyForDriftTest exposes generateAgentsMdBody under default
+// content paths so callers outside the install package (notably the markdown
+// invocation drift test in internal/cli) can scan the rendered output for
+// stale `hero <command>` references. Kept narrow on purpose: the function
+// is pure, takes no arguments, and uses the standard <harness>/<kind>/
+// placeholder paths. Production install code continues to call the
+// lowercased generateAgentsMdBody directly.
+func RenderAgentsMdBodyForDriftTest() []byte {
+	return []byte(generateAgentsMdBody(contentPathsForBody{
+		Agents:   "<harness>/agents/",
+		Commands: "<harness>/commands/",
+		Skills:   "<harness>/skills/",
+	}))
+}
+
 func generateAgentsMdBody(paths contentPathsForBody) string {
 	var sb strings.Builder
 
