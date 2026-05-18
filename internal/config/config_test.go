@@ -711,3 +711,173 @@ func TestLoad_AppliesLocalOverride(t *testing.T) {
 		t.Errorf("Type = %q, want %q", cfg.Tracker.Type, "github")
 	}
 }
+
+// --- MergeLocal: dialect fields (vocabulary + methodology) ---
+
+func TestMergeLocal_MethodologyOverridesScalar(t *testing.T) {
+	base := DefaultConfig()
+	base.Methodology = "scrum"
+	base.Vocabulary = "agile-scrum"
+
+	local := Config{Methodology: "shape-up"}
+	merged := MergeLocal(base, local)
+
+	if merged.Methodology != "shape-up" {
+		t.Errorf("Methodology = %q, want %q", merged.Methodology, "shape-up")
+	}
+	// Vocabulary not touched
+	if merged.Vocabulary != "agile-scrum" {
+		t.Errorf("Vocabulary = %q, want %q (untouched)", merged.Vocabulary, "agile-scrum")
+	}
+}
+
+func TestMergeLocal_VocabularyOverridesScalar(t *testing.T) {
+	base := DefaultConfig()
+	base.Vocabulary = "agile-scrum"
+
+	local := Config{Vocabulary: "shape-up"}
+	merged := MergeLocal(base, local)
+
+	if merged.Vocabulary != "shape-up" {
+		t.Errorf("Vocabulary = %q, want %q", merged.Vocabulary, "shape-up")
+	}
+}
+
+func TestMergeLocal_BothDialectScalars(t *testing.T) {
+	base := DefaultConfig()
+	base.Methodology = "scrum"
+	base.Vocabulary = "agile-scrum"
+
+	local := Config{Methodology: "shape-up", Vocabulary: "shape-up"}
+	merged := MergeLocal(base, local)
+
+	if merged.Methodology != "shape-up" {
+		t.Errorf("Methodology = %q, want %q", merged.Methodology, "shape-up")
+	}
+	if merged.Vocabulary != "shape-up" {
+		t.Errorf("Vocabulary = %q, want %q", merged.Vocabulary, "shape-up")
+	}
+}
+
+func TestMergeLocal_VocabularyOverridesMapMerge(t *testing.T) {
+	base := DefaultConfig()
+	base.VocabularyOverrides = map[string]string{
+		"types.spec":        "BaseStory",
+		"sections.criteria": "BaseCriteria",
+	}
+
+	local := Config{
+		VocabularyOverrides: map[string]string{
+			"types.spec":      "LocalStory", // collision: local wins
+			"types.epic":      "LocalEpic",  // new key
+		},
+	}
+
+	merged := MergeLocal(base, local)
+
+	if got := merged.VocabularyOverrides["types.spec"]; got != "LocalStory" {
+		t.Errorf("types.spec = %q, want %q (local should win on collision)", got, "LocalStory")
+	}
+	if got := merged.VocabularyOverrides["types.epic"]; got != "LocalEpic" {
+		t.Errorf("types.epic = %q, want %q (new local key)", got, "LocalEpic")
+	}
+	if got := merged.VocabularyOverrides["sections.criteria"]; got != "BaseCriteria" {
+		t.Errorf("sections.criteria = %q, want %q (non-colliding base preserved)", got, "BaseCriteria")
+	}
+}
+
+func TestMergeLocal_MethodologyOverridesMapMerge(t *testing.T) {
+	base := DefaultConfig()
+	base.MethodologyOverrides = map[string]string{
+		"time_boxes.iteration.duration_default": "2w",
+		"in_flight_tracking":                    "wip_aging",
+	}
+
+	local := Config{
+		MethodologyOverrides: map[string]string{
+			"time_boxes.iteration.duration_default": "3w",        // collision: local wins
+			"estimation.feature.required_field":     "appetite",  // new key
+		},
+	}
+
+	merged := MergeLocal(base, local)
+
+	if got := merged.MethodologyOverrides["time_boxes.iteration.duration_default"]; got != "3w" {
+		t.Errorf("duration_default = %q, want %q (local should win)", got, "3w")
+	}
+	if got := merged.MethodologyOverrides["estimation.feature.required_field"]; got != "appetite" {
+		t.Errorf("required_field = %q, want %q (new local key)", got, "appetite")
+	}
+	if got := merged.MethodologyOverrides["in_flight_tracking"]; got != "wip_aging" {
+		t.Errorf("in_flight_tracking = %q, want %q (non-colliding base preserved)", got, "wip_aging")
+	}
+}
+
+func TestMergeLocal_VocabularyOverridesIntoNilBase(t *testing.T) {
+	base := DefaultConfig()
+	// base.VocabularyOverrides intentionally nil
+
+	local := Config{
+		VocabularyOverrides: map[string]string{"types.spec": "LocalStory"},
+	}
+
+	merged := MergeLocal(base, local)
+	if got := merged.VocabularyOverrides["types.spec"]; got != "LocalStory" {
+		t.Errorf("types.spec = %q, want %q (should populate from nil base)", got, "LocalStory")
+	}
+}
+
+func TestMergeLocal_EmptyLocalLeavesDialectUntouched(t *testing.T) {
+	base := DefaultConfig()
+	base.Methodology = "scrum"
+	base.Vocabulary = "agile-scrum"
+	base.VocabularyOverrides = map[string]string{"types.spec": "Story"}
+	base.MethodologyOverrides = map[string]string{"in_flight_tracking": "wip_aging"}
+
+	merged := MergeLocal(base, Config{})
+
+	if merged.Methodology != "scrum" {
+		t.Errorf("Methodology = %q, want %q (no change expected)", merged.Methodology, "scrum")
+	}
+	if merged.Vocabulary != "agile-scrum" {
+		t.Errorf("Vocabulary = %q, want %q (no change expected)", merged.Vocabulary, "agile-scrum")
+	}
+	if got := merged.VocabularyOverrides["types.spec"]; got != "Story" {
+		t.Errorf("VocabularyOverrides[types.spec] = %q, want %q (no change)", got, "Story")
+	}
+	if got := merged.MethodologyOverrides["in_flight_tracking"]; got != "wip_aging" {
+		t.Errorf("MethodologyOverrides[in_flight_tracking] = %q, want %q (no change)", got, "wip_aging")
+	}
+}
+
+func TestLoad_AppliesLocalDialectOverride(t *testing.T) {
+	tmpDir := t.TempDir()
+	heroDir := filepath.Join(tmpDir, DefaultFolder)
+	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+
+	// Team workspace: scrum + agile-scrum.
+	baseJSON := `{"methodology":"scrum","vocabulary":"agile-scrum"}`
+	if err := os.WriteFile(filepath.Join(heroDir, ConfigFileName), []byte(baseJSON), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	// Developer override: shape-up.
+	localJSON := `{"methodology":"shape-up","vocabulary":"shape-up"}`
+	if err := os.WriteFile(filepath.Join(heroDir, LocalConfigFileName), []byte(localJSON), 0o600); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	cfg, err := Load(tmpDir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	if cfg.Methodology != "shape-up" {
+		t.Errorf("Methodology = %q, want %q (local override should win)", cfg.Methodology, "shape-up")
+	}
+	if cfg.Vocabulary != "shape-up" {
+		t.Errorf("Vocabulary = %q, want %q (local override should win)", cfg.Vocabulary, "shape-up")
+	}
+}
