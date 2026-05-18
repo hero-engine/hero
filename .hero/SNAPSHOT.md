@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-05-18T23:07:10Z · projected from 241 source nodes_
+_Last refreshed: 2026-05-18T23:30:13Z · projected from 241 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | <1m ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 8m ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | building | domains/engineering/ | 1h ago | spec-types-cache-frontmatter-empty |
@@ -16,7 +16,7 @@ _Last refreshed: 2026-05-18T23:07:10Z · projected from 241 source nodes_
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 4h ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 16m ago | vocabulary-resolve-misses-methodology-derivation |
+| serve | building | internal/serve/ | 39m ago | vocabulary-resolve-misses-methodology-derivation |
 | (unassigned) | — | — | — | 108 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -45,8 +45,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Recently completed (last 14 days)
 
 - **(unassigned)** — hero-import-docs-page, recap-unregister-stale-and-empty-repo, project-snapshot, prime-command
-- **core** — cli-invocation-drift-test-markdown, context-files-flag-drift, index-extensions, context-injection, conventions-and-decisions
-- **serve** — hero-serve-routes-inventory, hero-serve-daemon, version-tracking-upgrade
+- **core** — agents-md-managed-region-consolidation, cli-invocation-drift-test-markdown, context-files-flag-drift, index-extensions, context-injection, conventions-and-decisions
+- **serve** — hero-serve-routes-inventory, hero-serve-daemon
 
 ## Next up across surfaces
 
