@@ -1,6 +1,6 @@
 ---
 type: feature
-status: planning
+status: completed
 severity: medium-high
 tags: [install, snapshot, agents-md, managed-region, refactor, drift]
 relates-to: [snapshot-architecture, next-as-projection-architecture, cli-invocation-drift-test-markdown, next-noop-writes]
@@ -47,16 +47,20 @@ whatever shape those land on. Treat their slugs as forward references in
 
 ## Kickoff
 
-Replaces the two independently-written "hero managed" blocks in AGENTS.md / CLAUDE.md / NEXT.md with one orchestrated region, plus a one-shot migration that consolidates existing two-block files into the new layout.
+Delivered. AGENTS.md / CLAUDE.md / NEXT.md now carry exactly one Hero-managed region, populated by an ordered list of `SectionContributor`s. Legacy two-block files migrate automatically on the next install or snapshot projection.
 
-**Status:** planning — spec just landed, no code yet.
+**Status:** completed.
 
-**Pick up at:** start with the orchestrator types in `internal/managed/region.go` — `SectionContributor` interface, ordered `ManagedRegion` aggregator, render-and-write entry point reusing `install.InsertManagedRegion`. Then refactor the install body emitter and the snapshot pointer to implement `SectionContributor`. Migration logic and tests come after the types are nailed down.
+**Where it landed:**
+- New package `internal/managed/` owns the marker primitives (moved down from `internal/install`) plus the `Writer` orchestrator and inline `stripLegacySnapshotBlock` migration.
+- `internal/install/managed_region.go` is now a thin re-export shim — public Go API (`install.RenderManagedRegion`, `install.InsertManagedRegion`, `install.FindManagedRegion`, `install.IsLegacyHeroStub`, `install.ManagedRegion`) preserved for in-package callers.
+- `internal/install/agents_md.go` and `claude_md.go` route through `installManagedMarkdown` which now calls `managed.Writer{Sections: defaultSections(...)}.Write(...)`. Install body and snapshot pointer compose as two `SectionContributor`s.
+- `internal/snapshot/pointers.go` exposes `NewPointerSection` and routes `EnsurePointer` through `managed.Writer` (single-contributor case for NEXT.md, fallback for AGENTS.md when install hasn't run).
+- `internal/install/agents_md.go`'s `RenderAgentsMdBodyForDriftTest()` now returns the orchestrator-rendered body so the markdown drift test reflects production output.
 
-→ `.hero/planning/features/agents-md-managed-region-consolidation/spec.md`
+**Pointer location change:** the snapshot pointer used to live at the *bottom* of AGENTS.md in its own marker pair. Post-consolidation it lives inside the single managed region under an H2 `## Project snapshot` heading.
 
-**Files:** `internal/install/managed_region.go`, `internal/install/agents_md.go:120`, `internal/snapshot/pointers.go`, `internal/snapshot/projector.go:118`
-**Skip:** adding a section contributor for `hero peer` or any other subsystem that doesn't write to AGENTS.md today — keep scope to the two current writers plus the orchestrator.
+**Skip:** adding a section contributor for `hero peer` or any other subsystem that doesn't write to AGENTS.md today.
 
 ## Goal
 
@@ -190,6 +194,37 @@ write is a normal regenerate.
 The legacy single-marker form (`<!-- hero:managed -->`) is already handled
 by `install.FindManagedRegion` and does not need separate handling here.
 
+### Design note: dependency direction (chosen during delivery)
+
+**Decision:** Option A from the Risks section — move the marker primitives
+(`FindManagedRegion`, `RenderManagedRegion`, `InsertManagedRegion`,
+`IsLegacyHeroStub`, plus the `ManagedRegion` struct and marker constants)
+down from `internal/install/managed_region.go` into the new
+`internal/managed/` package. `internal/install` then depends on
+`internal/managed`; `internal/managed` depends on neither install nor
+snapshot.
+
+**Why A over B/C:**
+- Audit shows only 5 call sites for these primitives — all inside
+  `internal/install` itself. The blast radius of the move is small.
+- The orchestrator MUST be able to render and insert managed regions.
+  Option B (orchestrator lives in `install`) re-creates the
+  "install package owns more than install" problem this spec exists to
+  fix.
+- Option C (third package) is unnecessary indirection: only one consumer
+  (the orchestrator) sits between the primitives and the install/snapshot
+  use sites. The primitives and the orchestrator belong together as the
+  "managed-region engine."
+- `IsLegacyHeroStub` is install-specific in intent ("is this a Hero stub
+  CLAUDE.md we can replace?") but mechanically it's a pure function over
+  the marker primitives — moves cleanly without breaking the abstraction.
+
+**Net dependency edges after move:**
+- `internal/managed` → no internal deps
+- `internal/install` → `internal/managed` + `internal/snapshot` (the
+  latter exists indirectly via the snapshot section contributor wiring)
+- `internal/snapshot` → `internal/managed`
+
 ### Marker convention
 
 Keep the existing install markers (`<!-- hero:managed-start v=X -->` /
@@ -273,9 +308,12 @@ last.
      outside both old pairs is preserved byte-for-byte).
    - `internal/managed/migrate_test.go` — focused tests on the
      legacy-detection + strip helpers using fixture strings.
-   - `internal/install/managed_region_test.go` — existing tests remain;
-     adjust any that constructed bodies directly to go through the
-     orchestrator.
+   - `internal/managed/marker_test.go` — the primitive-level tests
+     (formerly inside `internal/install`) now live here as part of the
+     primitive-down move (Option A in the dependency-direction design
+     note). Renamed `ManagedRegion` references to `Region` to match the
+     package's parse-struct name. Tests assert the same behavior as
+     before.
    - `internal/snapshot/pointers_test.go` — update expectations: writes
      now produce the consolidated-region layout, not a standalone pointer
      block. Add a regression test for "AGENTS.md with both old blocks →
@@ -312,6 +350,17 @@ last.
 
 ## Risks
 
+- **Behavior change: hand-authored pointer outside the managed region.**
+  Pre-consolidation, `EnsurePointer` would skip writing if the user had
+  manually inserted the canonical `PointerLine` text anywhere in the
+  file. Post-consolidation, the orchestrator always emits the pointer
+  inside the managed region; a user-authored copy outside the region
+  would coexist (duplicate pointer line in the rendered file). This
+  matches the broader "Hero owns content inside markers; user owns
+  content outside" contract — a hand-authored copy outside the region
+  is no longer treated as a sentinel that suppresses Hero's own
+  emission. Rare in practice; if a user runs into duplication they can
+  delete their hand-authored line.
 - **Files-in-the-wild upgrade risk.** Users on v0.10.0 have AGENTS.md with
   the two-block layout. The migration only fires when `installAgentsMd` /
   `EnsurePointer` next runs. Acceptable for `hero install` / `hero init`

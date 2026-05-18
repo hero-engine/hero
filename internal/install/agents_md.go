@@ -5,6 +5,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/hero-engine/hero/internal/managed"
+	"github.com/hero-engine/hero/internal/snapshot"
 )
 
 // agents_md.go — AGENTS.md as the single canonical root instruction file
@@ -47,16 +50,35 @@ func resolveAgentsMdPath(opts Options) string {
 // installAgentsMd writes Hero's managed block into AGENTS.md. See
 // installManagedMarkdown for the shared three-case logic.
 func installAgentsMd(opts Options, result *Result, agentsMdPath string) error {
-	body := generateAgentsMdBody(resolveContentPathsForBody(opts))
-	body += renderActiveDialectBlock(opts)
 	return installManagedMarkdown(opts, result, installManagedSpec{
 		Path:        agentsMdPath,
 		Label:       "AGENTS.md",
 		DefaultH1:   "# AGENTS.md",
-		Body:        body,
+		Sections:    defaultSections(opts, agentsMdPath),
 		AllowSkip:   false,
 		SkipEnabled: false,
 	})
+}
+
+// defaultSections returns the canonical section contributor order for
+// the consolidated managed region: install body first, snapshot pointer
+// last. All callers (AGENTS.md, CLAUDE.md) use this same ordering so
+// the managed block is identical across files.
+func defaultSections(opts Options, filePath string) []managed.SectionContributor {
+	return []managed.SectionContributor{
+		newAgentsMdBodySection(opts),
+		snapshot.NewPointerSection(filePath, snapshotPointerRelativePath(opts, filePath)),
+	}
+}
+
+// snapshotPointerRelativePath computes the SNAPSHOT.md path relative to
+// the file being rendered. AGENTS.md and CLAUDE.md live at project root,
+// so the canonical relative path is .hero/SNAPSHOT.md. NEXT.md lives in
+// .hero/, so the relative path is just SNAPSHOT.md — but NEXT.md is
+// written from the snapshot projector, not from here, so this helper
+// only needs the root-file case.
+func snapshotPointerRelativePath(opts Options, filePath string) string {
+	return ".hero/SNAPSHOT.md"
 }
 
 // contentPathsForBody holds project-relative content paths to embed in
@@ -91,8 +113,9 @@ type installManagedSpec struct {
 	// DefaultH1 is the top line written when creating a fresh file (e.g.
 	// "# AGENTS.md"). Empty to omit.
 	DefaultH1 string
-	// Body is the content that goes inside the managed-region markers.
-	Body string
+	// Sections are the contributors composing the managed region body,
+	// in canonical order.
+	Sections []managed.SectionContributor
 	// AllowSkip indicates a per-file skip flag exists (e.g. NoTouchClaudeMd).
 	AllowSkip bool
 	// SkipEnabled is the value of that skip flag for this run.
@@ -122,16 +145,22 @@ func installManagedMarkdown(opts Options, result *Result, spec installManagedSpe
 		return nil
 	}
 
-	region := RenderManagedRegion(opts.heroVersion(), spec.Body)
-
-	existing := ""
-	wasNew := true
-	if data, err := os.ReadFile(spec.Path); err == nil {
-		existing = string(data)
-		wasNew = false
+	writer := managed.Writer{
+		File:      spec.Path,
+		Sections:  spec.Sections,
+		DefaultH1: spec.DefaultH1,
+	}
+	ctx := managed.Context{
+		File:        spec.Path,
+		HeroVersion: opts.heroVersion(),
+		ProjectDir:  opts.projectRoot(),
 	}
 
-	newContent := computeManagedContent(existing, region, spec.DefaultH1)
+	existing, newContent, exists, err := writer.PlanContent(ctx)
+	if err != nil {
+		return err
+	}
+	wasNew := !exists
 
 	if opts.DryRun {
 		if wasNew {
@@ -144,7 +173,6 @@ func installManagedMarkdown(opts Options, result *Result, spec installManagedSpe
 		return nil
 	}
 
-	// True idempotency: don't rewrite the file when content is unchanged.
 	if !wasNew && newContent == existing {
 		return nil
 	}
@@ -167,20 +195,13 @@ func installManagedMarkdown(opts Options, result *Result, spec installManagedSpe
 	return nil
 }
 
-// computeManagedContent produces the new file content given existing
-// content, the rendered managed region, and an optional default H1 to use
-// when creating a fresh file.
-func computeManagedContent(existing, region, defaultH1 string) string {
-	if existing == "" {
-		var sb strings.Builder
-		if defaultH1 != "" {
-			sb.WriteString(defaultH1)
-			sb.WriteString("\n\n")
-		}
-		sb.WriteString(region)
-		return sb.String()
+// projectRoot returns opts.ProjectRoot or opts.TargetDir, in that order.
+// Used to populate managed.Context.ProjectDir for section contributors.
+func (o Options) projectRoot() string {
+	if o.ProjectRoot != "" {
+		return o.ProjectRoot
 	}
-	return InsertManagedRegion(existing, region)
+	return o.TargetDir
 }
 
 // heroVersion returns opts.Version or "dev" if empty — used to stamp the
@@ -207,25 +228,53 @@ func (o Options) heroVersion() string {
 // exist sends it hunting through the workspace from first principles
 // and is the most common reason a non-Claude-Code harness wanders
 // after `hero scan`.
-// RenderAgentsMdBodyForDriftTest exposes generateAgentsMdBody under default
-// content paths so callers outside the install package (notably the markdown
-// invocation drift test in internal/cli) can scan the rendered output for
-// stale `hero <command>` references. Kept narrow on purpose: the function
-// is pure, takes no arguments, and uses the standard <harness>/<kind>/
-// placeholder paths. Production install code continues to call the
-// lowercased generateAgentsMdBody directly.
+// RenderAgentsMdBodyForDriftTest exposes the rendered managed-region
+// body (orchestrator output, contributors stitched together) for the
+// markdown invocation drift test in internal/cli. The shape is what
+// install would write inside the managed markers for AGENTS.md /
+// CLAUDE.md given default content paths and the renderable section
+// contributors. Kept narrow on purpose: the function takes no
+// arguments and produces deterministic output suitable for grep-style
+// invocation extraction.
 func RenderAgentsMdBodyForDriftTest() []byte {
-	return []byte(generateAgentsMdBody(contentPathsForBody{
-		Agents:   "<harness>/agents/",
-		Commands: "<harness>/commands/",
-		Skills:   "<harness>/skills/",
-	}))
+	writer := managed.Writer{
+		File:     "AGENTS.md",
+		Sections: []managed.SectionContributor{newAgentsMdBodySection(Options{})},
+	}
+	body, err := writer.RenderBody(managed.Context{File: "AGENTS.md"})
+	if err != nil {
+		return nil
+	}
+	return []byte(body)
+}
+
+// agentsMdBodySection adapts the install-side AGENTS.md body content
+// (the Hero CLI/skill guide) to managed.SectionContributor. The
+// section's H2 ("Hero — Spec-Driven AI Engineering") is rendered by
+// the orchestrator from SectionTitle; the body returned by Render
+// starts at H3 ("Session Title").
+type agentsMdBodySection struct {
+	opts Options
+}
+
+func newAgentsMdBodySection(opts Options) agentsMdBodySection {
+	return agentsMdBodySection{opts: opts}
+}
+
+func (s agentsMdBodySection) SectionID() string    { return "install:agents-md-body" }
+func (s agentsMdBodySection) SectionTitle() string { return "Hero — Spec-Driven AI Engineering" }
+
+func (s agentsMdBodySection) Render(_ managed.Context) (string, error) {
+	body := generateAgentsMdBody(resolveContentPathsForBody(s.opts))
+	body += renderActiveDialectBlock(s.opts)
+	return body, nil
 }
 
 func generateAgentsMdBody(paths contentPathsForBody) string {
 	var sb strings.Builder
 
-	sb.WriteString("## Hero — Spec-Driven AI Engineering\n\n")
+	// The H2 heading is owned by the orchestrator (managed.Writer
+	// emits it from SectionTitle). Body starts at the H3 subsection.
 	sb.WriteString("This project uses **Hero** for spec-driven engineering workflows. ")
 	sb.WriteString("Hero manages specs, integrates with work trackers (Jira, GitHub, Linear), ")
 	sb.WriteString("and provides structured workflows via slash commands.\n\n")

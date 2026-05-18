@@ -84,7 +84,7 @@ func installClaudeMd(opts Options, result *Result, claudeMdPath string) error {
 		Path:        claudeMdPath,
 		Label:       "CLAUDE.md",
 		DefaultH1:   "# CLAUDE.md",
-		Body:        generateAgentsMdBody(resolveContentPathsForBody(opts)) + renderActiveDialectBlock(opts),
+		Sections:    defaultSections(opts, claudeMdPath),
 		AllowSkip:   true,
 		SkipEnabled: opts.NoTouchClaudeMd,
 	})
