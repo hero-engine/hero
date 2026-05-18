@@ -1,25 +1,29 @@
 {{- /* roadmap.html — three-column Now/Next/Later centerpiece. Cards
        are rendered by the shared `spec-card` partial below; initiative
        cards differ by the `rm-card-initiative` class + the children
-       mini-list. A small filter row sits above the grid; each column
-       caps at 10 by default with a `Show all` link, or paginates at 50
-       per page under ?all=1. */ -}}
+       mini-list.
+
+       The `rm-filters` row above the grid drives the data fetcher via
+       query params (?type=…&age=…). Active state styled with the
+       hero-blue underline idiom shared with the metric strip and sub-
+       nav. Each column caps at 10 by default with a `Show all` link,
+       or paginates at 50 per page under ?all=1. */ -}}
 {{ define "roadmap.html" }}
 <section id="work-roadmap" class="work-section">
-  <div class="roadmap-filter-row" style="display:flex; gap:24px; padding:8px 0 12px 0; font-size:13px;">
-    <div class="rf-group">
-      <span class="rf-lbl" style="color:var(--ink-4); margin-right:8px;">Type:</span>
+  <div class="rm-filters">
+    <div class="rm-filter-group">
+      <span class="rm-filter-label">Type:</span>
       {{- $tf := .Filters.Type -}}
-      <a href="/work" class="rf-tab{{ if eq $tf "all" }} active{{ end }}" style="margin-right:8px;{{ if eq $tf "all" }}font-weight:600;{{ end }}">All</a>
-      <a href="/work?type=feature" class="rf-tab{{ if eq $tf "feature" }} active{{ end }}" style="margin-right:8px;{{ if eq $tf "feature" }}font-weight:600;{{ end }}">Features</a>
-      <a href="/work?type=bug" class="rf-tab{{ if eq $tf "bug" }} active{{ end }}" style="margin-right:8px;{{ if eq $tf "bug" }}font-weight:600;{{ end }}">Bugs</a>
-      <a href="/work?type=initiative" class="rf-tab{{ if eq $tf "initiative" }} active{{ end }}" style="{{ if eq $tf "initiative" }}font-weight:600;{{ end }}">Initiatives</a>
+      <a href="/work" class="rm-filter-tab{{ if eq $tf "all" }} active{{ end }}">All</a>
+      <a href="/work?type=feature" class="rm-filter-tab{{ if eq $tf "feature" }} active{{ end }}">Features</a>
+      <a href="/work?type=bug" class="rm-filter-tab{{ if eq $tf "bug" }} active{{ end }}">Bugs</a>
+      <a href="/work?type=initiative" class="rm-filter-tab{{ if eq $tf "initiative" }} active{{ end }}">Initiatives</a>
     </div>
-    <div class="rf-group">
-      <span class="rf-lbl" style="color:var(--ink-4); margin-right:8px;">Age:</span>
+    <div class="rm-filter-group">
+      <span class="rm-filter-label">Age:</span>
       {{- $af := .Filters.Age -}}
-      <a href="/work" class="rf-tab{{ if eq $af "all" }} active{{ end }}" style="margin-right:8px;{{ if eq $af "all" }}font-weight:600;{{ end }}">All ages</a>
-      <a href="/work?age=active-7d" class="rf-tab{{ if eq $af "active-7d" }} active{{ end }}" style="{{ if eq $af "active-7d" }}font-weight:600;{{ end }}">Active this week</a>
+      <a href="/work" class="rm-filter-tab{{ if eq $af "all" }} active{{ end }}">All ages</a>
+      <a href="/work?age=active-7d" class="rm-filter-tab{{ if eq $af "active-7d" }} active{{ end }}">Active this week</a>
     </div>
   </div>
   <div class="roadmap">

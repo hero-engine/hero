@@ -99,6 +99,9 @@ func Register(r *shell.Router, deps Deps) error {
 			{Pattern: "GET /agents/automations", Render: h.renderAutomations},
 			{Pattern: "GET /agents/health", Render: h.renderHealth},
 			{Pattern: "GET /agents/credentials", Render: h.renderCredentials},
+			// Per-session detail. No live session ledger yet — renders
+			// a clearly-marked coming-soon stub with the requested id.
+			{Pattern: "GET /agents/session/{id}", Render: h.renderSessionDetail},
 		},
 	})
 }
@@ -132,6 +135,33 @@ type handler struct {
 	deps   Deps
 }
 
+// chatInputFor returns the inline chat-input config for the Agents
+// home. Variant is "inline" — ambient, never the primary affordance
+// (that role stays on Now). Per polish-v2 Fix 5, the empty-state
+// notice is NOT paired here.
+func (h *handler) chatInputFor(activeSlug string) shell.ChatInput {
+	chips := []shell.ChatContextChip{{Kind: "page", Label: "page: /agents"}}
+	if activeSlug != "" && activeSlug != "sessions" {
+		chips = append(chips, shell.ChatContextChip{Kind: "view", Label: "view: " + activeSlug})
+	}
+	return shell.ChatInput{
+		Variant:     "inline",
+		Placeholder: "Ask Hero about agents…",
+		Context:     chips,
+	}
+}
+
+// renderHeroAndChat writes the page-hero followed by the inline chat-
+// input fragment, in that order, into w. Centralizes the Fix-5
+// placement contract: chat-input renders immediately below the hero
+// on every Agents view.
+func (h *handler) renderHeroAndChat(out io.Writer, hero shell.PageHero, activeSlug string) error {
+	if err := h.router.RenderFragment(out, "page-hero", hero); err != nil {
+		return err
+	}
+	return h.router.RenderFragment(out, "chat-input", h.chatInputFor(activeSlug))
+}
+
 func (h *handler) handle(w http.ResponseWriter, req *http.Request) {
 	ed := edition.Resolve()
 	sessions := h.loadSessions(ed)
@@ -158,7 +188,7 @@ func (h *handler) buildPageWith(req *http.Request, ed edition.Edition, sessions 
 	subNav := h.buildSubNav(ed, sessions, activeSlug)
 
 	content := func(out io.Writer) error {
-		if err := h.router.RenderFragment(out, "page-hero", hero); err != nil {
+		if err := h.renderHeroAndChat(out, hero, activeSlug); err != nil {
 			return err
 		}
 		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {
@@ -215,6 +245,57 @@ func (h *handler) renderHealth(w http.ResponseWriter, req *http.Request) {
 func (h *handler) renderCredentials(w http.ResponseWriter, req *http.Request) {
 	h.renderStub(w, req, "credentials", "Credentials",
 		"Credentials management is a team / cloud / enterprise feature; the local edition surfaces a locked state.")
+}
+
+// renderSessionDetail handles GET /agents/session/{id}. The workspace
+// has no live session ledger yet, so the detail page renders the
+// shared coming-soon stub with the requested id visible in the title
+// + subhead. When the ledger lands the stub flips to a real session
+// transcript view.
+func (h *handler) renderSessionDetail(w http.ResponseWriter, req *http.Request) {
+	id := req.PathValue("id")
+	if id == "" {
+		http.NotFound(w, req)
+		return
+	}
+	ed := edition.Resolve()
+	sessions := h.loadSessions(ed)
+
+	hero := shell.PageHero{
+		Eyebrow: template.HTML(htmlEscape(fmt.Sprintf("hero · %s · agents", firstNonEmpty(h.deps.Branch, "main")))),
+		Title:   "Session " + id,
+		Subhead: template.HTML("No live session store connected &mdash; sessions render here once hero-code emits live events."),
+		Actions: []shell.PageHeroAction{
+			{Kind: "ghost", Label: "Back to Sessions", Href: "/agents"},
+		},
+	}
+	strip := h.buildMetricStrip(sessions)
+	subNav := h.buildSubNav(ed, sessions, "sessions")
+
+	content := func(out io.Writer) error {
+		if err := h.renderHeroAndChat(out, hero, "session:"+id); err != nil {
+			return err
+		}
+		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {
+			return err
+		}
+		return h.router.RenderFragment(out, "coming-soon", stubData{
+			Home: "agents",
+			Slug: "session-" + id,
+			View: "Session " + id,
+			Note: "This view will render live transcript, tool calls, and cost ticker once the runner emits live events.",
+		})
+	}
+	page := shell.Page{
+		ActiveHome: "agents",
+		PageTitle:  "Agents · Session " + id + " · Hero",
+		SubNav:     subNav,
+		Content:    content,
+		HeadExtra:  template.HTML(agentsStyles + agentsScript),
+	}
+	if err := h.router.RenderPage(w, req, page); err != nil {
+		http.Error(w, "agentspage: render page: "+err.Error(), http.StatusInternalServerError)
+	}
 }
 
 // renderStub renders the home chrome + sub-nav with the shared coming-
@@ -410,6 +491,16 @@ func badgeStr(n int) string {
 func amberIf(cond bool) string {
 	if cond {
 		return "amber"
+	}
+	return ""
+}
+
+// firstNonEmpty returns the first non-empty string from the args, or "".
+func firstNonEmpty(s ...string) string {
+	for _, v := range s {
+		if strings.TrimSpace(v) != "" {
+			return v
+		}
 	}
 	return ""
 }

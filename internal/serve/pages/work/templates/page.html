@@ -1,12 +1,18 @@
 {{- /* page.html — outer Work layout. Below the shell-owned page-hero
        and tabbed-metric-strip fragments, this template renders the
-       view-toolbar, the Horizons roadmap centerpiece, and the two
-       bottom sections. Each section is wrapped in an outer `<section>`
-       with a stable `id="work-<slug>"` so SSE fragment swaps can
-       replace it whole. */ -}}
+       Horizons roadmap centerpiece (whose own filter row sits above
+       its grid) and the two bottom sections. The legacy `view-toolbar`
+       was removed in hero-surface-polish-v2 — the only filter UI on
+       /work now lives inside roadmap.html as the `rm-filters` row,
+       which directly drives the data fetcher. Other view tabs
+       (Kanban / Graph / Blocked) are reachable via the page-hero
+       actions or sub-route links; they each render their own
+       `view-toolbar.html` so the chrome stays consistent inside those
+       routes. Each section is wrapped in an outer `<section>` with a
+       stable `id="work-<slug>"` so SSE fragment swaps can replace it
+       whole. */ -}}
 {{ define "page.html" }}
 
-{{ template "view-toolbar.html" .Toolbar }}
 {{ template "roadmap.html" .Roadmap }}
 {{ template "blocked.html" .Blocked }}
 {{ template "shipped.html" .Shipped }}

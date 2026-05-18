@@ -55,12 +55,22 @@ func TestRegister_RendersAllSections(t *testing.T) {
 	// them — even on an empty workspace.
 	mustContain := []string{
 		`<nav class="topnav">`,
-		`id="work-toolbar"`,
+		// view-toolbar is gone from the default /work view (Fix 2 in
+		// hero-surface-polish-v2); rm-filters is the sole filter UI.
+		`class="rm-filters"`,
 		`id="work-roadmap"`,
 		`id="work-blocked"`,
 		`id="work-shipped"`,
 		`class="metric-tab`,
-		`Horizons`,
+	}
+	mustNotContain := []string{
+		`class="view-toolbar"`,
+		`id="work-toolbar"`,
+	}
+	for _, bad := range mustNotContain {
+		if strings.Contains(body, bad) {
+			t.Errorf("/work unexpectedly contains %q (view-toolbar removed in polish-v2)", bad)
+		}
 	}
 	for _, want := range mustContain {
 		if !strings.Contains(body, want) {

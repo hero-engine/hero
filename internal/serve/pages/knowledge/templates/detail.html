@@ -1,0 +1,32 @@
+{{- /* detail.html — Knowledge entry detail body. Renders the entry's
+       page-hero (composed in Go), an inline action row, the rendered
+       markdown body, and a relations footer of linked chips. Wrapped
+       in `<section id="knowledge-entry-detail">` so SSE fragment
+       endpoints can target it if/when they wire up. */ -}}
+{{ define "detail.html" }}
+<section id="knowledge-entry-detail" class="knowledge-section knowledge-detail">
+  <div class="kdetail-actions">
+    <a href="#" class="btn btn-ghost">Edit &#x2197;</a>
+    <a href="/knowledge/why?target={{ .Slug }}" class="btn btn-ghost">Open Why &rarr;</a>
+    <a href="#" class="btn btn-ghost" data-copy-ref="{{ .Slug }}">Copy reference</a>
+  </div>
+
+  <article class="kdetail-body">
+    {{ .BodyHTML }}
+  </article>
+
+  {{- if .Relations }}
+  <footer class="kdetail-relations">
+    <h3 class="kdetail-relations-title">Relations</h3>
+    <ul class="kdetail-relations-list">
+      {{- range .Relations }}
+      <li>
+        <span class="kdetail-rel-kind">{{ .Kind }}</span>
+        <a class="kdetail-rel-target" href="/knowledge/{{ .Target }}">{{ .Target }}</a>
+      </li>
+      {{- end }}
+    </ul>
+  </footer>
+  {{- end }}
+</section>
+{{ end }}

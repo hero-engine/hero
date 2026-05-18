@@ -89,6 +89,11 @@ func Register(r *shell.Router, deps Deps) error {
 			{Pattern: "GET /knowledge/search", Render: h.renderSearch},
 			{Pattern: "GET /knowledge/recent", Render: h.renderRecent},
 			{Pattern: "GET /knowledge/write", Render: h.renderWrite},
+			// Wildcard slug — Go 1.22 ServeMux gives precedence to the
+			// specifically-registered patterns above, so /knowledge/why
+			// etc. still route to their own handlers; this only fires
+			// on unrecognized slugs.
+			{Pattern: "GET /knowledge/{slug}", Render: h.renderEntryDetail},
 		},
 	})
 }
@@ -123,6 +128,34 @@ type handler struct {
 	deps   Deps
 }
 
+// chatInputFor returns the inline chat-input config for the
+// Knowledge home. Variant is "inline" (40px tall, ambient — never the
+// primary affordance on a non-Now home). Per polish-v2 Fix 5, the
+// empty-state notice is NOT paired here — that stays Now-only; this
+// input renders as-is regardless of adapter state.
+func (h *handler) chatInputFor(activeSlug string) shell.ChatInput {
+	chips := []shell.ChatContextChip{{Kind: "page", Label: "page: /knowledge"}}
+	if activeSlug != "" && activeSlug != "browse" {
+		chips = append(chips, shell.ChatContextChip{Kind: "view", Label: "view: " + activeSlug})
+	}
+	return shell.ChatInput{
+		Variant:     "inline",
+		Placeholder: "Ask Hero about knowledge…",
+		Context:     chips,
+	}
+}
+
+// renderHeroAndChat writes the page-hero followed by the inline chat-
+// input fragment, in that order, into w. Centralizes the Fix-5
+// placement contract: chat-input renders immediately below the hero
+// on every Knowledge view.
+func (h *handler) renderHeroAndChat(out io.Writer, hero shell.PageHero, activeSlug string) error {
+	if err := h.router.RenderFragment(out, "page-hero", hero); err != nil {
+		return err
+	}
+	return h.router.RenderFragment(out, "chat-input", h.chatInputFor(activeSlug))
+}
+
 // renderBrowse handles GET /knowledge — the default Browse view (corpus
 // listing + facet filters).
 func (h *handler) renderBrowse(w http.ResponseWriter, req *http.Request) {
@@ -139,7 +172,7 @@ func (h *handler) renderBrowse(w http.ResponseWriter, req *http.Request) {
 	subNav := buildSubNav(staleness, "browse")
 
 	content := func(out io.Writer) error {
-		if err := h.router.RenderFragment(out, "page-hero", hero); err != nil {
+		if err := h.renderHeroAndChat(out, hero, "browse"); err != nil {
 			return err
 		}
 		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {
@@ -168,7 +201,7 @@ func (h *handler) renderWhy(w http.ResponseWriter, req *http.Request) {
 	subNav := buildSubNav(staleness, "why")
 
 	content := func(out io.Writer) error {
-		if err := h.router.RenderFragment(out, "page-hero", hero); err != nil {
+		if err := h.renderHeroAndChat(out, hero, "why"); err != nil {
 			return err
 		}
 		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {
@@ -200,7 +233,7 @@ func (h *handler) renderStaleness(w http.ResponseWriter, req *http.Request) {
 	subNav := buildSubNav(staleness, "staleness")
 
 	content := func(out io.Writer) error {
-		if err := h.router.RenderFragment(out, "page-hero", hero); err != nil {
+		if err := h.renderHeroAndChat(out, hero, "staleness"); err != nil {
 			return err
 		}
 		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {
@@ -228,6 +261,80 @@ func (h *handler) renderWrite(w http.ResponseWriter, req *http.Request) {
 		"Writer surface — capture via /note from chat for now.")
 }
 
+// renderEntryDetail handles GET /knowledge/{slug}. Loads the entry
+// from .hero/knowledge/ and renders its title, metadata, rendered
+// markdown body, and relations footer. Returns 404 (the shell's
+// default not-found page) when the slug doesn't resolve.
+func (h *handler) renderEntryDetail(w http.ResponseWriter, req *http.Request) {
+	slug := req.PathValue("slug")
+	entry := data.LoadEntry(h.deps.HeroDir, slug)
+	if entry == nil {
+		http.NotFound(w, req)
+		return
+	}
+
+	ed := edition.Resolve()
+	corpus := data.LoadCorpus(data.CorpusInputs{HeroDir: h.deps.HeroDir})
+	staleness := data.LoadStaleness(data.StalenessInputs{HeroDir: h.deps.HeroDir})
+	newThisWeek := corpus.NewThisWeek
+	if newThisWeek == 0 {
+		newThisWeek = data.CountCorpusEventsLastWeek(h.deps.HeroDir)
+	}
+
+	hero := buildEntryPageHero(h.deps, ed, entry)
+	strip := buildMetricStrip(corpus, staleness, newThisWeek)
+	// No sub-nav tab matches a detail; pass "" so nothing renders
+	// active, but keep the row in place for navigation.
+	subNav := buildSubNav(staleness, "")
+
+	content := func(out io.Writer) error {
+		if err := h.renderHeroAndChat(out, hero, ""); err != nil {
+			return err
+		}
+		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {
+			return err
+		}
+		return h.tmpl.ExecuteTemplate(out, "detail.html", entry)
+	}
+	h.serve(w, req, content, subNav)
+}
+
+// buildEntryPageHero composes the per-entry page-hero. Eyebrow
+// repeats the canonical breadcrumb; title is the entry title; subhead
+// lists kind / status / created / last-touched.
+func buildEntryPageHero(deps Deps, ed edition.Edition, e *data.Entry) shell.PageHero {
+	eyebrow := fmt.Sprintf("hero · %s · knowledge", firstNonEmpty(deps.Branch, "main"))
+
+	var subParts []string
+	if e.Kind != "" {
+		subParts = append(subParts, template.HTMLEscapeString(e.Kind))
+	}
+	if e.Type != "" && e.Type != e.Kind {
+		subParts = append(subParts, template.HTMLEscapeString(e.Type))
+	}
+	if e.Status != "" {
+		subParts = append(subParts, template.HTMLEscapeString(e.Status))
+	}
+	if e.CreatedPretty != "" {
+		subParts = append(subParts, "created "+template.HTMLEscapeString(e.CreatedPretty))
+	}
+	if e.UpdatedPretty != "" {
+		subParts = append(subParts, "last touched "+template.HTMLEscapeString(e.UpdatedPretty))
+	}
+	subhead := strings.Join(subParts, `<span class="dot-sep">·</span>`)
+
+	_ = ed
+	return shell.PageHero{
+		Eyebrow: template.HTML(template.HTMLEscapeString(eyebrow)),
+		Title:   e.Title,
+		Subhead: template.HTML(subhead),
+		Actions: []shell.PageHeroAction{
+			{Kind: "ghost", Label: "Back to Browse", Href: "/knowledge"},
+			{Kind: "chip", Label: "knowledge", Chip: "knowledge"},
+		},
+	}
+}
+
 // renderStub renders the home chrome + sub-nav with the standard coming-
 // soon shell card in the body.
 func (h *handler) renderStub(w http.ResponseWriter, req *http.Request, slug, view, note string) {
@@ -244,7 +351,7 @@ func (h *handler) renderStub(w http.ResponseWriter, req *http.Request, slug, vie
 	subNav := buildSubNav(staleness, slug)
 
 	content := func(out io.Writer) error {
-		if err := h.router.RenderFragment(out, "page-hero", hero); err != nil {
+		if err := h.renderHeroAndChat(out, hero, slug); err != nil {
 			return err
 		}
 		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {

@@ -97,7 +97,9 @@ func TestShortenEventType(t *testing.T) {
 		"spec_created":          "created",
 		"spec_updated":          "updated",
 		"delivery_complete":     "delivered",
-		"spec.complete":         "delivered",
+		// spec.complete falls through to its raw form — it was a draft
+		// verb that never landed (see polish-v2 Fix 4).
+		"spec.complete":         "spec.complete",
 		"delivery_start":        "delivering",
 		"agent_session_started": "started",
 		"agent_session_ended":   "ended",

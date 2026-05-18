@@ -198,7 +198,9 @@ func shortenEventType(t string) string {
 		return "updated"
 	case "spec.status_changed":
 		return "status"
-	case "delivery_complete", "spec.complete":
+	// canonical completion verb is delivery_complete; spec.complete
+	// was a draft that never landed.
+	case "delivery_complete":
 		return "delivered"
 	case "delivery_start":
 		return "delivering"
