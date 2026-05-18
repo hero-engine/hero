@@ -117,11 +117,13 @@ func myWeekTiles(in MetricsInputs) []MetricTile {
 		shipped = countCompletedSince(in.HeroDir, 7*24*time.Hour)
 	}
 	if in.ProjectRoot != "" {
+		// Note: no sprint required — `git log` is always available.
 		commits, _ = gitCountCommitsSince(in.ProjectRoot, "7 days ago", in.UserName)
 	}
 
 	shippedVal := template.HTML(strconv.Itoa(shipped))
 	commitsVal := template.HTML(strconv.Itoa(commits))
+	assist := agentAssistTile(in.HeroDir)
 
 	return []MetricTile{
 		{
@@ -134,16 +136,51 @@ func myWeekTiles(in MetricsInputs) []MetricTile {
 			Label:  "commits authored",
 			Footer: template.HTML(`<div class="metric-sub">last 7 days</div>`),
 		},
-		{
-			Value:  template.HTML(`—<span class="unit">%</span>`),
-			Label:  "agent assist on your work",
-			Footer: template.HTML(`<div class="metric-sub">propose-store still warming up</div>`),
-		},
+		assist,
 		{
 			Value:  template.HTML("—<span class=\"unit\"> sessions</span>"),
 			Label:  "Hero-active time",
 			Footer: template.HTML(`<div class="metric-sub">session ledger pending</div>`),
 		},
+	}
+}
+
+// agentAssistTile computes the "agent assist on your work" ratio:
+// delivery-completion events authored by an agent / total delivery-
+// completion events in the trailing 7-day window. Renders "—" when
+// the denominator is zero.
+func agentAssistTile(heroDir string) MetricTile {
+	if heroDir == "" {
+		return MetricTile{
+			Value:  template.HTML(`—<span class="unit">%</span>`),
+			Label:  "agent assist on your work",
+			Footer: template.HTML(`<div class="metric-sub">no events log</div>`),
+		}
+	}
+	events := readEventsBest(heroDir, time.Now().Add(-7*24*time.Hour), 0)
+	total := 0
+	agent := 0
+	for _, e := range events {
+		if !isDeliveryCompleteEvent(e.Type) {
+			continue
+		}
+		total++
+		if isAgentAuthored(e.Agent) {
+			agent++
+		}
+	}
+	if total == 0 {
+		return MetricTile{
+			Value:  template.HTML(`—<span class="unit">%</span>`),
+			Label:  "agent assist on your work",
+			Footer: template.HTML(`<div class="metric-sub">no delivery events in window</div>`),
+		}
+	}
+	pct := agent * 100 / total
+	return MetricTile{
+		Value:  template.HTML(strconv.Itoa(pct) + `<span class="unit">%</span>`),
+		Label:  "agent assist on your work",
+		Footer: template.HTML(`<div class="metric-sub">last 7 days</div>`),
 	}
 }
 
@@ -240,9 +277,15 @@ func gitCountCommitsSince(projectRoot, since, user string) (int, error) {
 	return count, nil
 }
 
-// countCompletedSince scans .hero/events.log for delivery_complete
-// events newer than the given duration. Returns 0 when the log is
-// missing or unreadable.
+// countCompletedSince scans .hero/events.log for delivery_complete OR
+// spec.complete events newer than the given duration. Both verbs count
+// equally — `hero spec complete` and `hero deliver` both signal a
+// finished spec and the workspace uses them interchangeably. Returns
+// 0 when the log is missing or unreadable.
+//
+// Note: the count is NOT filtered by claimed_by. Many specs in this
+// workspace are never claimed; filtering by claim makes the tile read 0
+// even after multiple specs shipped today (the original bug).
 func countCompletedSince(heroDir string, since time.Duration) int {
 	if heroDir == "" {
 		return 0
@@ -250,9 +293,54 @@ func countCompletedSince(heroDir string, since time.Duration) int {
 	events := readEventsBest(heroDir, time.Now().Add(-since), 0)
 	count := 0
 	for _, e := range events {
-		if e.Type == "delivery_complete" {
+		if isDeliveryCompleteEvent(e.Type) {
 			count++
 		}
 	}
 	return count
+}
+
+// isDeliveryCompleteEvent reports whether an event type signals a
+// finished spec. Centralized so metrics + agents + changes all classify
+// the same way.
+func isDeliveryCompleteEvent(t string) bool {
+	switch t {
+	case "delivery_complete", "spec.complete":
+		return true
+	}
+	return false
+}
+
+// isDeliveryEvent reports whether an event type is anywhere in the
+// delivery lifecycle (start, complete, session begin/end). Used by the
+// agents.go session-count tile so an in-flight session still bumps the
+// counter even if it hasn't shipped yet.
+func isDeliveryEvent(t string) bool {
+	switch t {
+	case "delivery_start", "delivery_complete", "spec.complete",
+		"agent_session_started", "agent_session_ended":
+		return true
+	}
+	return false
+}
+
+// isAgentAuthored reports whether an agent label looks like an LLM /
+// AI agent (vs a human). Used to compute "agent assist" ratios in the
+// metrics strip. Conservative — anything we don't recognize counts as
+// human so the ratio doesn't over-report.
+func isAgentAuthored(agent string) bool {
+	a := strings.ToLower(strings.TrimSpace(agent))
+	if a == "" {
+		return false
+	}
+	switch {
+	case strings.HasPrefix(a, "claude-"),
+		strings.HasPrefix(a, "gpt-"),
+		strings.HasPrefix(a, "ai/"),
+		strings.HasPrefix(a, "engineer"),
+		strings.HasPrefix(a, "agent/"),
+		strings.HasPrefix(a, "mcp/"):
+		return true
+	}
+	return false
 }

@@ -1,0 +1,23 @@
+{{- /* coming-soon.html — shared stub card. Used by each home for sub-
+       routes whose substrate exists but whose content rendering is
+       tracked as a follow-up in hero-surface-polish-v1. Input: a struct
+       with `Home` (e.g. "knowledge"), `View` (e.g. "Search"), and
+       optional `Note` (one-line extra context). */ -}}
+{{ define "coming-soon" }}
+<section id="{{ .Home }}-{{ .Slug }}-stub" class="coming-soon" style="margin:32px 0;">
+  <div class="coming-soon-card" style="border:1px solid var(--rule); border-radius:8px; padding:24px; background:var(--bg-card, #fff);">
+    <div class="coming-soon-head" style="display:flex; align-items:baseline; gap:12px; margin-bottom:8px;">
+      <h2 style="margin:0; font-size:16px; font-weight:600;">{{ .View }} &mdash; coming soon</h2>
+      <span style="font-size:12px; color:var(--ink-4);">substrate ready · UI pending</span>
+    </div>
+    <p style="margin:0 0 12px 0; color:var(--ink-3); font-size:13px; line-height:1.5;">
+      The substrate exists; this view&rsquo;s content is tracked in
+      <code>hero-surface-polish-v1</code>. A follow-up pass will land it.
+    </p>
+    {{- with .Note }}
+    <p style="margin:0 0 12px 0; color:var(--ink-4); font-size:12px; line-height:1.5;">{{ . }}</p>
+    {{- end }}
+    <a href="/work/spec/hero-surface-polish-v1" style="font-size:12px;">Why this is a stub &rarr;</a>
+  </div>
+</section>
+{{ end }}

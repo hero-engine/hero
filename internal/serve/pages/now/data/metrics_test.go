@@ -1,8 +1,11 @@
 package data
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestLoadMetrics_ReturnsFourTilesPerTab(t *testing.T) {
@@ -26,6 +29,54 @@ func TestLoadMetrics_PlaceholdersWhenNoProject(t *testing.T) {
 	first := string(got.FirstTabTiles[0].Value)
 	if !strings.Contains(first, "—") {
 		t.Errorf("first-tab tile value = %q, want placeholder dash", first)
+	}
+}
+
+// writeEventLog appends a single newline-delimited JSON event to
+// .hero/events.log under dir. Each event is the minimal subset the
+// feed reader needs.
+func writeEventLog(t *testing.T, dir string, lines ...string) {
+	t.Helper()
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	path := filepath.Join(dir, "events.log")
+	body := strings.Join(lines, "\n") + "\n"
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatalf("write events.log: %v", err)
+	}
+}
+
+func TestCountCompletedSince_CountsSpecComplete(t *testing.T) {
+	dir := t.TempDir()
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	writeEventLog(t, dir,
+		`{"ts":"`+now+`","type":"delivery_complete","slug":"a","message":""}`,
+		`{"ts":"`+now+`","type":"spec.complete","slug":"b","message":""}`,
+		`{"ts":"`+now+`","type":"decision_made","slug":"c","message":""}`,
+	)
+	got := countCompletedSince(dir, 7*24*time.Hour)
+	if got != 2 {
+		t.Errorf("countCompletedSince = %d, want 2 (delivery_complete + spec.complete)", got)
+	}
+}
+
+func TestIsAgentAuthored(t *testing.T) {
+	cases := map[string]bool{
+		"claude-sonnet-4":   true,
+		"gpt-4":             true,
+		"ai/codex":          true,
+		"engineer-1":        true,
+		"agent/foo":         true,
+		"mcp/hero":          true,
+		"human/chet":        false,
+		"":                  false,
+		"some-random-tool":  false,
+	}
+	for in, want := range cases {
+		if got := isAgentAuthored(in); got != want {
+			t.Errorf("isAgentAuthored(%q) = %v, want %v", in, got, want)
+		}
 	}
 }
 

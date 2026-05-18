@@ -70,21 +70,33 @@ func commitsOnly(projectRoot string) Changes {
 	return Changes{Rows: rows, Limited: true}
 }
 
-// kindFromEventType maps a feed event type to a feed-icon kind.
+// kindFromEventType maps a feed event type to a feed-icon kind. The
+// mapping drives the colored dot / icon in the Since-you-were-here
+// feed. Default fallback is `pulse` (a neutral dot) — we deliberately
+// avoid `convention` as a catch-all because nearly every workspace
+// event was rendering with the convention icon (the original bug).
 func kindFromEventType(t string) string {
 	switch {
 	case strings.HasPrefix(t, "peer."):
-		return "convention"
+		return "handoff"
+	case t == "decision_made":
+		return "decision"
+	case t == "delivery_complete", t == "spec.complete":
+		return "check"
+	case t == "spec.status_changed":
+		return "spec"
 	case t == "spec_created", t == "spec_updated":
 		return "spec"
-	case t == "delivery_complete":
-		return "spec"
-	case t == "decision_made":
+	case t == "knowledge.captured", t == "note.captured":
 		return "knowledge"
 	case t == "blocker_hit":
 		return "drift"
-	default:
+	case t == "files_modified":
 		return "commit"
+	case t == "commit":
+		return "commit"
+	default:
+		return "pulse"
 	}
 }
 
@@ -94,12 +106,22 @@ func renderEventText(typ, slug, msg, agent string) template.HTML {
 	msgSafe := template.HTMLEscapeString(msg)
 	agentSafe := template.HTMLEscapeString(agent)
 	switch typ {
-	case "delivery_complete":
+	case "delivery_complete", "spec.complete":
 		return template.HTML(fmt.Sprintf(`Spec <a href="#">%s</a> <strong>completed</strong> <span class="now-feed-actor">· %s</span>`, slugSafe, agentSafe))
 	case "spec_updated":
 		return template.HTML(fmt.Sprintf(`Spec <a href="#">%s</a> updated <span class="now-feed-actor">· %s</span>`, slugSafe, agentSafe))
 	case "spec_created":
 		return template.HTML(fmt.Sprintf(`Spec <a href="#">%s</a> created <span class="now-feed-actor">· %s</span>`, slugSafe, agentSafe))
+	case "spec.status_changed":
+		return template.HTML(fmt.Sprintf(`Spec <a href="#">%s</a> status changed <span class="now-feed-actor">· %s</span>`, slugSafe, agentSafe))
+	case "decision_made":
+		return template.HTML(fmt.Sprintf(`Decision recorded on <a href="#">%s</a> <span class="now-feed-actor">· %s</span>`, slugSafe, agentSafe))
+	case "peer.call.invoked":
+		return template.HTML(fmt.Sprintf(`Peer call invoked on <a href="#">%s</a> <span class="now-feed-actor">· %s</span>`, slugSafe, agentSafe))
+	case "peer.call.completed":
+		return template.HTML(fmt.Sprintf(`Peer call completed on <a href="#">%s</a> <span class="now-feed-actor">· %s</span>`, slugSafe, agentSafe))
+	case "knowledge.captured", "note.captured":
+		return template.HTML(fmt.Sprintf(`Knowledge captured <a href="#">%s</a> <span class="now-feed-actor">· %s</span>`, slugSafe, agentSafe))
 	default:
 		if msg == "" {
 			msg = typ

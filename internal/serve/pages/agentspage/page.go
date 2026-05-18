@@ -93,6 +93,13 @@ func Register(r *shell.Router, deps Deps) error {
 		Label:  "Agents",
 		Href:   "/agents",
 		Render: h.handle,
+		Items: []shell.ItemRoute{
+			{Pattern: "GET /agents/proposals", Render: h.renderProposals},
+			{Pattern: "GET /agents/scheduled", Render: h.renderScheduled},
+			{Pattern: "GET /agents/automations", Render: h.renderAutomations},
+			{Pattern: "GET /agents/health", Render: h.renderHealth},
+			{Pattern: "GET /agents/credentials", Render: h.renderCredentials},
+		},
 	})
 }
 
@@ -129,19 +136,26 @@ func (h *handler) handle(w http.ResponseWriter, req *http.Request) {
 	ed := edition.Resolve()
 	sessions := h.loadSessions(ed)
 
-	page := h.buildPage(req, ed, sessions)
+	page := h.buildPage(req, ed, sessions, "sessions")
 	if err := h.router.RenderPage(w, req, page); err != nil {
 		http.Error(w, "agentspage: render page: "+err.Error(), http.StatusInternalServerError)
 	}
 }
 
-// buildPage assembles the Page envelope passed to shell.Router.RenderPage.
-// All data-fetcher invocations live here so the handler stays a thin
-// composition point.
-func (h *handler) buildPage(req *http.Request, ed edition.Edition, sessions data.Sessions) shell.Page {
+// buildPage assembles the Page envelope. inner is the body content
+// renderer (the page-hero + metric-strip are always layered above).
+func (h *handler) buildPage(req *http.Request, ed edition.Edition, sessions data.Sessions, activeSlug string) shell.Page {
+	return h.buildPageWith(req, ed, sessions, activeSlug, func(out io.Writer) error {
+		return h.tmpl.ExecuteTemplate(out, "page.html", pageData{Sessions: sessions})
+	})
+}
+
+// buildPageWith is the shared compositor used by every Agents route.
+// Each sub-route swaps `inner` for the body that view should render.
+func (h *handler) buildPageWith(req *http.Request, ed edition.Edition, sessions data.Sessions, activeSlug string, inner func(io.Writer) error) shell.Page {
 	hero := h.buildPageHero(ed, sessions)
 	strip := h.buildMetricStrip(sessions)
-	subNav := h.buildSubNav(ed, sessions)
+	subNav := h.buildSubNav(ed, sessions, activeSlug)
 
 	content := func(out io.Writer) error {
 		if err := h.router.RenderFragment(out, "page-hero", hero); err != nil {
@@ -150,7 +164,7 @@ func (h *handler) buildPage(req *http.Request, ed edition.Edition, sessions data
 		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {
 			return err
 		}
-		return h.tmpl.ExecuteTemplate(out, "page.html", pageData{Sessions: sessions})
+		return inner(out)
 	}
 
 	return shell.Page{
@@ -160,6 +174,69 @@ func (h *handler) buildPage(req *http.Request, ed edition.Edition, sessions data
 		HeadExtra:  template.HTML(agentsStyles + agentsScript),
 		SubNav:     subNav,
 	}
+}
+
+// renderProposals handles GET /agents/proposals — full approvals view
+// using the existing approvals.html partial.
+func (h *handler) renderProposals(w http.ResponseWriter, req *http.Request) {
+	ed := edition.Resolve()
+	sessions := h.loadSessions(ed)
+	page := h.buildPageWith(req, ed, sessions, "proposals", func(out io.Writer) error {
+		return h.tmpl.ExecuteTemplate(out, "approvals.html", sessions)
+	})
+	if err := h.router.RenderPage(w, req, page); err != nil {
+		http.Error(w, "agentspage: render page: "+err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// renderScheduled handles GET /agents/scheduled — uses the existing
+// scheduled-preview partial as the section body.
+func (h *handler) renderScheduled(w http.ResponseWriter, req *http.Request) {
+	ed := edition.Resolve()
+	sessions := h.loadSessions(ed)
+	page := h.buildPageWith(req, ed, sessions, "scheduled", func(out io.Writer) error {
+		return h.tmpl.ExecuteTemplate(out, "scheduled-preview.html", sessions)
+	})
+	if err := h.router.RenderPage(w, req, page); err != nil {
+		http.Error(w, "agentspage: render page: "+err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (h *handler) renderAutomations(w http.ResponseWriter, req *http.Request) {
+	h.renderStub(w, req, "automations", "Automations",
+		"Automation rule listing + edit lands once the rules pipeline exposes its config over HTTP.")
+}
+
+func (h *handler) renderHealth(w http.ResponseWriter, req *http.Request) {
+	h.renderStub(w, req, "health", "Health",
+		"Adapter health + rate-limit / quota status surfaces once adapters report their state.")
+}
+
+func (h *handler) renderCredentials(w http.ResponseWriter, req *http.Request) {
+	h.renderStub(w, req, "credentials", "Credentials",
+		"Credentials management is a team / cloud / enterprise feature; the local edition surfaces a locked state.")
+}
+
+// renderStub renders the home chrome + sub-nav with the shared coming-
+// soon shell card in the body.
+func (h *handler) renderStub(w http.ResponseWriter, req *http.Request, slug, view, note string) {
+	ed := edition.Resolve()
+	sessions := h.loadSessions(ed)
+	page := h.buildPageWith(req, ed, sessions, slug, func(out io.Writer) error {
+		return h.router.RenderFragment(out, "coming-soon", stubData{
+			Home: "agents", Slug: slug, View: view, Note: note,
+		})
+	})
+	if err := h.router.RenderPage(w, req, page); err != nil {
+		http.Error(w, "agentspage: render page: "+err.Error(), http.StatusInternalServerError)
+	}
+}
+
+type stubData struct {
+	Home string
+	Slug string
+	View string
+	Note string
 }
 
 // loadSessions composes the sessions-view payload, wiring approvals
@@ -239,9 +316,11 @@ type pageData struct {
 	Sessions data.Sessions
 }
 
-// buildSubNav composes the six-tab sub-nav row. `Credentials` renders
-// locked under the local edition with the "team server only" meta.
-func (h *handler) buildSubNav(ed edition.Edition, s data.Sessions) *shell.SubNav {
+// buildSubNav composes the six-tab sub-nav row. activeSlug picks the
+// active tab; valid slugs are sessions|proposals|scheduled|automations|
+// health|credentials. `Credentials` renders locked under the local
+// edition with the "team server only" meta.
+func (h *handler) buildSubNav(ed edition.Edition, s data.Sessions, activeSlug string) *shell.SubNav {
 	credVariant := ""
 	credMeta := ""
 	if ed == edition.Local {
@@ -249,12 +328,12 @@ func (h *handler) buildSubNav(ed edition.Edition, s data.Sessions) *shell.SubNav
 		credMeta = "Visible on team, cloud, enterprise editions"
 	}
 	tabs := []shell.SubNavTab{
-		{Label: "Sessions", Href: "/agents", Active: true, Badge: badgeStr(s.LiveCount)},
-		{Label: "Proposals", Href: "/agents/proposals", Badge: badgeStr(s.ApprovalsCount), Variant: amberIf(s.ApprovalsCount > 0)},
-		{Label: "Scheduled", Href: "/agents/scheduled", Badge: badgeStr(s.ScheduledTotal)},
-		{Label: "Automations", Href: "/agents/automations", Badge: badgeStr(s.AutomationTotal)},
-		{Label: "Health", Href: "/agents/health"},
-		{Label: "Credentials", Href: "/agents/credentials", Variant: credVariant, LockMeta: credMeta},
+		{Label: "Sessions", Href: "/agents", Active: activeSlug == "sessions", Badge: badgeStr(s.LiveCount)},
+		{Label: "Proposals", Href: "/agents/proposals", Active: activeSlug == "proposals", Badge: badgeStr(s.ApprovalsCount), Variant: amberIf(s.ApprovalsCount > 0)},
+		{Label: "Scheduled", Href: "/agents/scheduled", Active: activeSlug == "scheduled", Badge: badgeStr(s.ScheduledTotal)},
+		{Label: "Automations", Href: "/agents/automations", Active: activeSlug == "automations", Badge: badgeStr(s.AutomationTotal)},
+		{Label: "Health", Href: "/agents/health", Active: activeSlug == "health"},
+		{Label: "Credentials", Href: "/agents/credentials", Active: activeSlug == "credentials", Variant: credVariant, LockMeta: credMeta},
 	}
 	return &shell.SubNav{Tabs: tabs}
 }

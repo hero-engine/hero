@@ -7,6 +7,7 @@ package data
 
 import (
 	"html/template"
+	"time"
 
 	"github.com/hero-engine/hero/internal/serve/shell"
 )
@@ -40,14 +41,43 @@ type Roadmap struct {
 	// BlockedCount feeds the view-toolbar "Blocked (n)" badge so the
 	// roadmap and blocked sections stay in sync without a second pass.
 	BlockedCount int
+	// Filters reflects the active filter row (type + age). Rendered
+	// above the column grid; "all" / "" mean no filter.
+	Filters RoadmapFilters
+	// ShowAll is true when ?all=1 — columns render every card instead
+	// of the 10-card cap.
+	ShowAll bool
+	// Page is the 1-indexed page for the ?all=1 expanded view; 1 by
+	// default. Pagination caps each column at 50 per page.
+	Page int
+}
+
+// RoadmapFilters is the active state of the filter row.
+type RoadmapFilters struct {
+	Type string // "all" | "feature" | "bug" | "initiative"
+	Age  string // "all" | "active-7d"
 }
 
 // RoadmapColumn is one of the three horizon columns.
 type RoadmapColumn struct {
 	Label string // "Now" | "Next" | "Later"
-	Count int
-	Pulse bool // true on the Now column
+	Count int    // total cards in the column (post-filter, pre-cap)
+	Pulse bool   // true on the Now column
 	Cards []SpecCard
+	// Capped is true when the column was clipped by the default 10-card
+	// cap; ShowAllHref is the link target that expands it.
+	Capped       bool
+	ShowAllHref  string
+	// PageInfo carries prev/next links when ?all=1 paginates.
+	PageInfo *ColumnPage
+}
+
+// ColumnPage carries pagination state for one column under ?all=1.
+type ColumnPage struct {
+	Page     int
+	Pages    int
+	PrevHref string
+	NextHref string
 }
 
 // SpecCard is one card in a roadmap column. Initiative cards differ
@@ -71,6 +101,9 @@ type SpecCard struct {
 	// Initiative-only fields:
 	IsInitiative bool
 	Children     []ChildRow
+	// LastTouched is the spec's file mtime, used to sort/cap horizon
+	// columns. Not rendered directly.
+	LastTouched time.Time
 }
 
 // CardOwner is the avatar+name shown in the meta row. Unclaimed=true

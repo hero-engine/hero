@@ -94,13 +94,36 @@ func TestLoadAgents_LedgerFiltersDoneAndFailed(t *testing.T) {
 
 func TestShortenEventType(t *testing.T) {
 	cases := map[string]string{
-		"spec_created":      "created",
-		"spec_updated":      "updated",
-		"delivery_complete": "delivery_complete", // fall-through default
+		"spec_created":          "created",
+		"spec_updated":          "updated",
+		"delivery_complete":     "delivered",
+		"spec.complete":         "delivered",
+		"delivery_start":        "delivering",
+		"agent_session_started": "started",
+		"agent_session_ended":   "ended",
+		"spec.status_changed":   "status",
+		"random_event":          "random_event", // fall-through default
 	}
 	for in, want := range cases {
 		if got := shortenEventType(in); got != want {
 			t.Errorf("shortenEventType(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+func TestLoadAgents_CountsExpandedVocabulary(t *testing.T) {
+	dir := t.TempDir()
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	writeEventLog(t, dir,
+		`{"ts":"`+now+`","type":"delivery_complete","slug":"a"}`,
+		`{"ts":"`+now+`","type":"delivery_start","slug":"b"}`,
+		`{"ts":"`+now+`","type":"agent_session_started","slug":"c"}`,
+		`{"ts":"`+now+`","type":"agent_session_ended","slug":"d"}`,
+		`{"ts":"`+now+`","type":"peer.call.completed","slug":"e"}`,
+		`{"ts":"`+now+`","type":"workspace.peer_id_minted"}`, // not counted
+	)
+	got := LoadAgents(AgentsInputs{HeroDir: dir})
+	if got.Today.SessionsDone != 5 {
+		t.Errorf("SessionsDone = %d, want 5 (4 delivery + 1 peer.call.completed)", got.Today.SessionsDone)
 	}
 }
