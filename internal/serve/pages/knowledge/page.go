@@ -63,6 +63,11 @@ type Deps struct {
 // "knowledge" slug — the placeholder registered by
 // shell.RegisterStubHomes must be dropped from stubs.go first by the
 // caller (we do not double-register).
+//
+// The home root renders the Browse view; the Why / Staleness / Search /
+// Recent / Write sub-views each register their own item route so the
+// sub-nav anchors never 404. Stubbed views render the shared
+// `coming-soon` shell card.
 func Register(r *shell.Router, deps Deps) error {
 	tmpl, err := loadTemplates()
 	if err != nil {
@@ -77,7 +82,14 @@ func Register(r *shell.Router, deps Deps) error {
 		Slug:   "knowledge",
 		Label:  "Knowledge",
 		Href:   "/knowledge",
-		Render: h.handle,
+		Render: h.renderBrowse,
+		Items: []shell.ItemRoute{
+			{Pattern: "GET /knowledge/why", Render: h.renderWhy},
+			{Pattern: "GET /knowledge/staleness", Render: h.renderStaleness},
+			{Pattern: "GET /knowledge/search", Render: h.renderSearch},
+			{Pattern: "GET /knowledge/recent", Render: h.renderRecent},
+			{Pattern: "GET /knowledge/write", Render: h.renderWrite},
+		},
 	})
 }
 
@@ -111,25 +123,12 @@ type handler struct {
 	deps   Deps
 }
 
-func (h *handler) handle(w http.ResponseWriter, req *http.Request) {
+// renderBrowse handles GET /knowledge — the default Browse view (corpus
+// listing + facet filters).
+func (h *handler) renderBrowse(w http.ResponseWriter, req *http.Request) {
 	ed := edition.Resolve()
-	page := h.buildPage(req, ed)
-	if err := h.router.RenderPage(w, req, page); err != nil {
-		http.Error(w, "knowledge: render page: "+err.Error(), http.StatusInternalServerError)
-	}
-}
-
-// buildPage assembles the Page envelope passed to shell.Router.RenderPage.
-// All data-fetcher invocations live here so the handler stays a thin
-// composition point.
-func (h *handler) buildPage(req *http.Request, ed edition.Edition) shell.Page {
 	corpus := data.LoadCorpus(data.CorpusInputs{HeroDir: h.deps.HeroDir})
 	staleness := data.LoadStaleness(data.StalenessInputs{HeroDir: h.deps.HeroDir})
-	why := data.LoadWhy(data.WhyInputs{HeroDir: h.deps.HeroDir})
-	summary := data.LoadSummary(data.SummaryInputs{HeroDir: h.deps.HeroDir})
-	neighbors := data.LoadNeighbors(data.NeighborsInputs{HeroDir: h.deps.HeroDir})
-
-	// Capture-event count for the "new this week" tile.
 	newThisWeek := corpus.NewThisWeek
 	if newThisWeek == 0 {
 		newThisWeek = data.CountCorpusEventsLastWeek(h.deps.HeroDir)
@@ -137,15 +136,7 @@ func (h *handler) buildPage(req *http.Request, ed edition.Edition) shell.Page {
 
 	hero := buildPageHero(h.deps, ed, corpus.TotalEntries)
 	strip := buildMetricStrip(corpus, staleness, newThisWeek)
-	subNav := buildSubNav(staleness)
-
-	pd := pageData{
-		Corpus:    corpus,
-		Why:       why,
-		Summary:   summary,
-		Neighbors: neighbors,
-		Staleness: staleness,
-	}
+	subNav := buildSubNav(staleness, "browse")
 
 	content := func(out io.Writer) error {
 		if err := h.router.RenderFragment(out, "page-hero", hero); err != nil {
@@ -154,16 +145,138 @@ func (h *handler) buildPage(req *http.Request, ed edition.Edition) shell.Page {
 		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {
 			return err
 		}
-		return h.tmpl.ExecuteTemplate(out, "page.html", pd)
+		return h.tmpl.ExecuteTemplate(out, "browse.html", corpus)
+	}
+	h.serve(w, req, content, subNav)
+}
+
+// renderWhy handles GET /knowledge/why — the provenance chain view.
+func (h *handler) renderWhy(w http.ResponseWriter, req *http.Request) {
+	ed := edition.Resolve()
+	corpus := data.LoadCorpus(data.CorpusInputs{HeroDir: h.deps.HeroDir})
+	staleness := data.LoadStaleness(data.StalenessInputs{HeroDir: h.deps.HeroDir})
+	why := data.LoadWhy(data.WhyInputs{HeroDir: h.deps.HeroDir})
+	summary := data.LoadSummary(data.SummaryInputs{HeroDir: h.deps.HeroDir})
+	neighbors := data.LoadNeighbors(data.NeighborsInputs{HeroDir: h.deps.HeroDir})
+	newThisWeek := corpus.NewThisWeek
+	if newThisWeek == 0 {
+		newThisWeek = data.CountCorpusEventsLastWeek(h.deps.HeroDir)
 	}
 
-	return shell.Page{
+	hero := buildPageHero(h.deps, ed, corpus.TotalEntries)
+	strip := buildMetricStrip(corpus, staleness, newThisWeek)
+	subNav := buildSubNav(staleness, "why")
+
+	content := func(out io.Writer) error {
+		if err := h.router.RenderFragment(out, "page-hero", hero); err != nil {
+			return err
+		}
+		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {
+			return err
+		}
+		if err := h.tmpl.ExecuteTemplate(out, "provenance.html", why); err != nil {
+			return err
+		}
+		if err := h.tmpl.ExecuteTemplate(out, "summary.html", summary); err != nil {
+			return err
+		}
+		return h.tmpl.ExecuteTemplate(out, "neighbors.html", neighbors)
+	}
+	h.serve(w, req, content, subNav)
+}
+
+// renderStaleness handles GET /knowledge/staleness.
+func (h *handler) renderStaleness(w http.ResponseWriter, req *http.Request) {
+	ed := edition.Resolve()
+	corpus := data.LoadCorpus(data.CorpusInputs{HeroDir: h.deps.HeroDir})
+	staleness := data.LoadStaleness(data.StalenessInputs{HeroDir: h.deps.HeroDir})
+	newThisWeek := corpus.NewThisWeek
+	if newThisWeek == 0 {
+		newThisWeek = data.CountCorpusEventsLastWeek(h.deps.HeroDir)
+	}
+
+	hero := buildPageHero(h.deps, ed, corpus.TotalEntries)
+	strip := buildMetricStrip(corpus, staleness, newThisWeek)
+	subNav := buildSubNav(staleness, "staleness")
+
+	content := func(out io.Writer) error {
+		if err := h.router.RenderFragment(out, "page-hero", hero); err != nil {
+			return err
+		}
+		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {
+			return err
+		}
+		return h.tmpl.ExecuteTemplate(out, "staleness.html", staleness)
+	}
+	h.serve(w, req, content, subNav)
+}
+
+// renderSearch / renderRecent / renderWrite — substrate-pending stubs.
+
+func (h *handler) renderSearch(w http.ResponseWriter, req *http.Request) {
+	h.renderStub(w, req, "search", "Search",
+		"Search will route into the unified retrieval layer once that pipeline is exposed via HTTP.")
+}
+
+func (h *handler) renderRecent(w http.ResponseWriter, req *http.Request) {
+	h.renderStub(w, req, "recent", "Recent",
+		"Recent knowledge captures are available in .hero/knowledge/ — the UI listing lands in a follow-up.")
+}
+
+func (h *handler) renderWrite(w http.ResponseWriter, req *http.Request) {
+	h.renderStub(w, req, "write", "Write",
+		"Writer surface — capture via /note from chat for now.")
+}
+
+// renderStub renders the home chrome + sub-nav with the standard coming-
+// soon shell card in the body.
+func (h *handler) renderStub(w http.ResponseWriter, req *http.Request, slug, view, note string) {
+	ed := edition.Resolve()
+	corpus := data.LoadCorpus(data.CorpusInputs{HeroDir: h.deps.HeroDir})
+	staleness := data.LoadStaleness(data.StalenessInputs{HeroDir: h.deps.HeroDir})
+	newThisWeek := corpus.NewThisWeek
+	if newThisWeek == 0 {
+		newThisWeek = data.CountCorpusEventsLastWeek(h.deps.HeroDir)
+	}
+
+	hero := buildPageHero(h.deps, ed, corpus.TotalEntries)
+	strip := buildMetricStrip(corpus, staleness, newThisWeek)
+	subNav := buildSubNav(staleness, slug)
+
+	content := func(out io.Writer) error {
+		if err := h.router.RenderFragment(out, "page-hero", hero); err != nil {
+			return err
+		}
+		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {
+			return err
+		}
+		return h.router.RenderFragment(out, "coming-soon", stubData{
+			Home: "knowledge", Slug: slug, View: view, Note: note,
+		})
+	}
+	h.serve(w, req, content, subNav)
+}
+
+// serve is the thin compositor that delegates to the shell.
+func (h *handler) serve(w http.ResponseWriter, req *http.Request, content func(io.Writer) error, subNav *shell.SubNav) {
+	page := shell.Page{
 		ActiveHome: "knowledge",
 		PageTitle:  "Knowledge · Hero",
 		SubNav:     subNav,
 		Content:    content,
 		HeadExtra:  template.HTML(knowledgeStyles + knowledgeScript),
 	}
+	if err := h.router.RenderPage(w, req, page); err != nil {
+		http.Error(w, "knowledge: render page: "+err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// stubData is the input bundle for the shared `coming-soon` template.
+type stubData struct {
+	Home string
+	Slug string
+	View string
+	Note string
 }
 
 // renderSection produces the standalone HTML fragment for one section,
@@ -198,15 +311,6 @@ func (h *handler) renderSection(section string) ([]byte, error) {
 	return []byte(buf.String()), nil
 }
 
-// pageData is the outer-template input.
-type pageData struct {
-	Corpus    data.Corpus
-	Why       data.Why
-	Summary   data.Summary
-	Neighbors data.Neighbors
-	Staleness data.Staleness
-}
-
 // buildPageHero composes the page-hero data block from corpus state.
 func buildPageHero(deps Deps, ed edition.Edition, totalEntries int) shell.PageHero {
 	eyebrow := fmt.Sprintf("hero · %s · knowledge", firstNonEmpty(deps.Branch, "main"))
@@ -239,9 +343,7 @@ func buildPageHero(deps Deps, ed edition.Edition, totalEntries int) shell.PageHe
 
 // buildMetricStrip composes the orientation strip matching the four
 // quiet tiles from the mockup: corpus entries · stale flags · reuse
-// rate · new this week. Today the strip has a single tab — the
-// shell's tabbed-metric-strip fragment still requires the slice
-// envelope.
+// rate · new this week.
 func buildMetricStrip(corpus data.Corpus, staleness data.Staleness, newThisWeek int) shell.MetricStrip {
 	stale := template.HTML("—")
 	if staleness.Available {
@@ -266,22 +368,22 @@ func buildMetricStrip(corpus data.Corpus, staleness data.Staleness, newThisWeek 
 	}
 }
 
-// buildSubNav returns the six-tab Knowledge sub-nav row matching the
-// mockup. Browse is the active default. When the staleness pipeline is
-// live the `Staleness` tab carries a count badge.
-func buildSubNav(s data.Staleness) *shell.SubNav {
+// buildSubNav returns the six-tab Knowledge sub-nav row. activeSlug
+// picks the active tab; valid slugs are browse|search|why|staleness|
+// recent|write.
+func buildSubNav(s data.Staleness, activeSlug string) *shell.SubNav {
 	badge := ""
 	if s.Available && s.Total > 0 {
 		badge = strconv.Itoa(s.Total)
 	}
 	return &shell.SubNav{
 		Tabs: []shell.SubNavTab{
-			{Label: "Browse", Href: "/knowledge", Active: true},
-			{Label: "Search", Href: "/knowledge/search"},
-			{Label: "Why", Href: "/knowledge/why"},
-			{Label: "Staleness", Href: "/knowledge/staleness", Badge: badge},
-			{Label: "Recent", Href: "/knowledge/recent"},
-			{Label: "Write", Href: "/knowledge/write"},
+			{Label: "Browse", Href: "/knowledge", Active: activeSlug == "browse"},
+			{Label: "Search", Href: "/knowledge/search", Active: activeSlug == "search"},
+			{Label: "Why", Href: "/knowledge/why", Active: activeSlug == "why"},
+			{Label: "Staleness", Href: "/knowledge/staleness", Active: activeSlug == "staleness", Badge: badge},
+			{Label: "Recent", Href: "/knowledge/recent", Active: activeSlug == "recent"},
+			{Label: "Write", Href: "/knowledge/write", Active: activeSlug == "write"},
 		},
 	}
 }

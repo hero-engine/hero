@@ -28,13 +28,21 @@ func TestPrettyAgeShort(t *testing.T) {
 
 func TestKindFromEventType(t *testing.T) {
 	cases := map[string]string{
-		"spec_created":         "spec",
-		"spec_updated":         "spec",
-		"delivery_complete":    "spec",
-		"decision_made":        "knowledge",
-		"blocker_hit":          "drift",
-		"peer.handoff.sent":    "convention",
-		"random_event":         "commit",
+		"spec_created":          "spec",
+		"spec_updated":          "spec",
+		"spec.status_changed":   "spec",
+		"delivery_complete":     "check",
+		"spec.complete":         "check",
+		"decision_made":         "decision",
+		"blocker_hit":           "drift",
+		"peer.handoff.sent":     "handoff",
+		"peer.call.invoked":     "handoff",
+		"peer.call.completed":   "handoff",
+		"knowledge.captured":    "knowledge",
+		"note.captured":         "knowledge",
+		"files_modified":        "commit",
+		"commit":                "commit",
+		"random_event":          "pulse",
 	}
 	for in, want := range cases {
 		if got := kindFromEventType(in); got != want {

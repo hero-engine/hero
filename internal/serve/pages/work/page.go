@@ -17,6 +17,7 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/hero-engine/hero/internal/serve/edition"
@@ -28,33 +29,18 @@ import (
 var templatesFS embed.FS
 
 // Deps is the small, injectable bundle of state the Work handler reads.
-// Keeping this an interface-free struct lets the server wire whatever
-// concrete dependencies it already owns (project root, hero dir, user
-// name, …) without dragging the serve package into pages/work.
 type Deps struct {
-	// ProjectRoot is the absolute path to the project being served.
-	// Empty disables data fetchers that need filesystem access.
 	ProjectRoot string
-
-	// HeroDir is the absolute path to .hero/ inside ProjectRoot. Empty
-	// disables data fetchers that read specs / events.log.
-	HeroDir string
-
-	// Workspace is the human label shown in the eyebrow / footer chrome.
-	Workspace string
-
-	// Branch is the current git branch ("" when not in a git checkout).
-	Branch string
-
-	// UserName is the display name used in the eyebrow / personalization
-	// strings.
-	UserName string
+	HeroDir     string
+	Workspace   string
+	Branch      string
+	UserName    string
 }
 
 // Register installs the Work home on the shell router using the
-// provided dependency bundle. The Work home occupies the "work" slug —
-// the placeholder registered by shell.RegisterStubHomes must be
-// dropped first by the caller (we do not double-register).
+// provided dependency bundle. The Work home occupies the "work" slug.
+// The Horizons view is the default; Kanban / Graph / Blocked each
+// register their own item route so the view-toolbar links never 404.
 func Register(r *shell.Router, deps Deps) error {
 	tmpl, err := loadTemplates()
 	if err != nil {
@@ -71,13 +57,15 @@ func Register(r *shell.Router, deps Deps) error {
 		Label:  "Work",
 		Href:   "/work",
 		Render: h.handle,
+		Items: []shell.ItemRoute{
+			{Pattern: "GET /work/kanban", Render: h.renderKanban},
+			{Pattern: "GET /work/graph", Render: h.renderGraph},
+			{Pattern: "GET /work/blocked", Render: h.renderBlocked},
+		},
 	})
 }
 
 // SectionFragment returns the rendered HTML for a single Work section.
-// Exposed for use by the SSE fragment endpoints in internal/serve/api.
-// The output is exactly what the initial /work render produces for
-// that section, so client-side replacement preserves layout.
 func SectionFragment(deps Deps, section string) ([]byte, error) {
 	tmpl, err := loadTemplates()
 	if err != nil {
@@ -112,18 +100,24 @@ func (h *handler) handle(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// buildPage assembles the Page envelope passed to shell.Router.RenderPage.
-// All data-fetcher invocations live here so the handler stays a thin
-// composition point.
+// buildPage assembles the Page envelope for the default Horizons view.
+// Reads the query string for filter + pagination state.
 func (h *handler) buildPage(req *http.Request, ed edition.Edition) shell.Page {
+	q := req.URL.Query()
+	rmIn := data.RoadmapInputs{
+		ProjectRoot: h.deps.ProjectRoot,
+		HeroDir:     h.deps.HeroDir,
+		TypeFilter:  q.Get("type"),
+		AgeFilter:   q.Get("age"),
+		ShowAll:     q.Get("all") == "1",
+		Page:        parsePage(q.Get("page")),
+	}
+
 	counts := data.LoadCounts(data.CountsInputs{
 		ProjectRoot: h.deps.ProjectRoot,
 		HeroDir:     h.deps.HeroDir,
 	})
-	roadmap := data.LoadRoadmap(data.RoadmapInputs{
-		ProjectRoot: h.deps.ProjectRoot,
-		HeroDir:     h.deps.HeroDir,
-	})
+	roadmap := data.LoadRoadmap(rmIn)
 	blocked := data.LoadBlocked(data.BlockedInputs{
 		ProjectRoot: h.deps.ProjectRoot,
 		HeroDir:     h.deps.HeroDir,
@@ -166,9 +160,108 @@ func (h *handler) buildPage(req *http.Request, ed edition.Edition) shell.Page {
 	}
 }
 
+// renderBlocked handles GET /work/blocked — full blocked list (the
+// existing blocked.html partial renders the section). The view-toolbar
+// is rendered above with the Blocked tab active.
+func (h *handler) renderBlocked(w http.ResponseWriter, req *http.Request) {
+	ed := edition.Resolve()
+	counts := data.LoadCounts(data.CountsInputs{
+		ProjectRoot: h.deps.ProjectRoot, HeroDir: h.deps.HeroDir,
+	})
+	blocked := data.LoadBlocked(data.BlockedInputs{
+		ProjectRoot: h.deps.ProjectRoot, HeroDir: h.deps.HeroDir,
+	})
+	metrics := data.LoadMetrics(data.MetricsInputs{
+		ProjectRoot: h.deps.ProjectRoot, HeroDir: h.deps.HeroDir, Counts: counts,
+	})
+
+	hero := buildPageHero(h.deps, ed, counts)
+	strip := buildMetricStrip(metrics)
+
+	content := func(out io.Writer) error {
+		if err := h.router.RenderFragment(out, "page-hero", hero); err != nil {
+			return err
+		}
+		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {
+			return err
+		}
+		if err := h.tmpl.ExecuteTemplate(out, "view-toolbar.html", toolbarData{BlockedCount: blocked.Total}); err != nil {
+			return err
+		}
+		return h.tmpl.ExecuteTemplate(out, "blocked.html", blocked)
+	}
+
+	page := shell.Page{
+		ActiveHome: "work",
+		PageTitle:  "Work · Blocked · Hero",
+		Content:    content,
+		HeadExtra:  template.HTML(workStyles + workScript),
+	}
+	if err := h.router.RenderPage(w, req, page); err != nil {
+		http.Error(w, "work: render page: "+err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// renderKanban / renderGraph — substrate-pending stubs.
+func (h *handler) renderKanban(w http.ResponseWriter, req *http.Request) {
+	h.renderStub(w, req, "kanban", "Kanban",
+		"Kanban projection of the horizons (status columns by claimed agent) lands in a follow-up.")
+}
+
+func (h *handler) renderGraph(w http.ResponseWriter, req *http.Request) {
+	h.renderStub(w, req, "graph", "Graph",
+		"Spec graph view (relations as nodes/edges) lands once traversal-queries exposes its JSON over HTTP.")
+}
+
+func (h *handler) renderStub(w http.ResponseWriter, req *http.Request, slug, view, note string) {
+	ed := edition.Resolve()
+	counts := data.LoadCounts(data.CountsInputs{
+		ProjectRoot: h.deps.ProjectRoot, HeroDir: h.deps.HeroDir,
+	})
+	roadmap := data.LoadRoadmap(data.RoadmapInputs{
+		ProjectRoot: h.deps.ProjectRoot, HeroDir: h.deps.HeroDir,
+	})
+	metrics := data.LoadMetrics(data.MetricsInputs{
+		ProjectRoot: h.deps.ProjectRoot, HeroDir: h.deps.HeroDir, Counts: counts,
+	})
+
+	hero := buildPageHero(h.deps, ed, counts)
+	strip := buildMetricStrip(metrics)
+
+	content := func(out io.Writer) error {
+		if err := h.router.RenderFragment(out, "page-hero", hero); err != nil {
+			return err
+		}
+		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {
+			return err
+		}
+		if err := h.tmpl.ExecuteTemplate(out, "view-toolbar.html", toolbarData{BlockedCount: roadmap.BlockedCount}); err != nil {
+			return err
+		}
+		return h.router.RenderFragment(out, "coming-soon", stubData{
+			Home: "work", Slug: slug, View: view, Note: note,
+		})
+	}
+	page := shell.Page{
+		ActiveHome: "work",
+		PageTitle:  "Work · " + view + " · Hero",
+		Content:    content,
+		HeadExtra:  template.HTML(workStyles + workScript),
+	}
+	if err := h.router.RenderPage(w, req, page); err != nil {
+		http.Error(w, "work: render page: "+err.Error(), http.StatusInternalServerError)
+	}
+}
+
+type stubData struct {
+	Home string
+	Slug string
+	View string
+	Note string
+}
+
 // renderSection produces the standalone HTML fragment for one Work
-// section, for the SSE fragment-replacement endpoints. Returns an
-// error for unknown section names so callers can 404 cleanly.
+// section, for the SSE fragment-replacement endpoints.
 func (h *handler) renderSection(section string) ([]byte, error) {
 	var tplName string
 	var payload any
@@ -223,8 +316,6 @@ type toolbarData struct {
 }
 
 // buildPageHero composes the page-hero data block from current counts.
-// Subhead format: `<n> specs · <n> delivering · <n> blocked · <sprint
-// status>`. Blocked count is colored warn when ≥ 1.
 func buildPageHero(deps Deps, ed edition.Edition, c data.PageCounts) shell.PageHero {
 	branch := deps.Branch
 	if branch == "" {
@@ -244,7 +335,7 @@ func buildPageHero(deps Deps, ed edition.Edition, c data.PageCounts) shell.PageH
 	parts = append(parts, template.HTMLEscapeString(c.SprintState))
 	subhead := strings.Join(parts, `<span class="dot-sep">·</span>`)
 
-	_ = ed // edition gating for actions lands later
+	_ = ed
 
 	return shell.PageHero{
 		Eyebrow: template.HTML(template.HTMLEscapeString(eyebrow)),
@@ -258,8 +349,7 @@ func buildPageHero(deps Deps, ed edition.Edition, c data.PageCounts) shell.PageH
 	}
 }
 
-// buildMetricStrip composes the three-tab Work metric strip. The first
-// tab is active by default.
+// buildMetricStrip composes the three-tab Work metric strip.
 func buildMetricStrip(m data.Metrics) shell.MetricStrip {
 	return shell.MetricStrip{
 		AllLink: "#",
@@ -276,4 +366,15 @@ func plural(n int) string {
 		return ""
 	}
 	return "s"
+}
+
+func parsePage(s string) int {
+	if s == "" {
+		return 1
+	}
+	n, err := strconv.Atoi(s)
+	if err != nil || n < 1 {
+		return 1
+	}
+	return n
 }

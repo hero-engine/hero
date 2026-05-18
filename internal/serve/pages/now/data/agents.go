@@ -37,35 +37,52 @@ func LoadAgents(in AgentsInputs) Agents {
 	}
 
 	// In solo mode there is no live session store yet. Surface today's
-	// recent delivery/diagnose events as the session-history list, and
-	// leave Running == nil so the partial renders the empty state.
+	// recent delivery / session / outbound-peer-call events as the
+	// session-history list, and leave Running == nil so the partial
+	// renders the empty state when no live ledger is wired.
+	//
+	// Today's session count includes any delivery-lifecycle event AND
+	// outbound peer.call.completed events, regardless of claimed_by —
+	// many specs in this workspace ship without an explicit claim.
 	events := readEventsBest(in.HeroDir, time.Now().Add(-24*time.Hour), 200)
 
 	doneCount := 0
 	for _, e := range events {
-		switch e.Type {
-		case "delivery_complete":
+		isDelivery := isDeliveryEvent(e.Type)
+		isOutboundPeer := e.Type == "peer.call.completed"
+		isSpecLifecycle := e.Type == "spec_updated" || e.Type == "spec_created" || e.Type == "spec.status_changed"
+
+		if isDelivery || isOutboundPeer {
 			doneCount++
-			if len(out.Today.Sessions) < 3 {
-				out.Today.Sessions = append(out.Today.Sessions, TodaySession{
-					Spec:     e.Slug,
-					Subtitle: "delivered",
-					Duration: prettyAge(e.Timestamp),
-					Status:   "ok",
-				})
-			}
-		case "spec_updated", "spec_created":
-			if len(out.Today.Sessions) < 3 {
-				out.Today.Sessions = append(out.Today.Sessions, TodaySession{
-					Spec:     e.Slug,
-					Subtitle: shortenEventType(e.Type),
-					Duration: prettyAge(e.Timestamp),
-					Status:   "ok",
-				})
-			}
+		}
+
+		if isDelivery && len(out.Today.Sessions) < 3 {
+			subtitle := shortenEventType(e.Type)
+			out.Today.Sessions = append(out.Today.Sessions, TodaySession{
+				Spec:     e.Slug,
+				Subtitle: subtitle,
+				Duration: prettyAge(e.Timestamp),
+				Status:   "ok",
+			})
+		} else if isOutboundPeer && len(out.Today.Sessions) < 3 {
+			out.Today.Sessions = append(out.Today.Sessions, TodaySession{
+				Spec:     e.Slug,
+				Subtitle: "peer call",
+				Duration: prettyAge(e.Timestamp),
+				Status:   "ok",
+			})
+		} else if isSpecLifecycle && len(out.Today.Sessions) < 3 {
+			out.Today.Sessions = append(out.Today.Sessions, TodaySession{
+				Spec:     e.Slug,
+				Subtitle: shortenEventType(e.Type),
+				Duration: prettyAge(e.Timestamp),
+				Status:   "ok",
+			})
 		}
 	}
 	out.Today.SessionsDone = doneCount
+	// Spend stays "—" until adapters report cost. Placeholder kept so the
+	// tile renders consistently.
 	out.Today.Spend = "—"
 	out.Today.Autonomy = "—"
 
@@ -179,6 +196,16 @@ func shortenEventType(t string) string {
 		return "created"
 	case "spec_updated":
 		return "updated"
+	case "spec.status_changed":
+		return "status"
+	case "delivery_complete", "spec.complete":
+		return "delivered"
+	case "delivery_start":
+		return "delivering"
+	case "agent_session_started":
+		return "started"
+	case "agent_session_ended":
+		return "ended"
 	default:
 		return t
 	}

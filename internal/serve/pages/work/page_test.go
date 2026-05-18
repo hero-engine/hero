@@ -89,3 +89,38 @@ func TestSectionFragment_UnknownSection(t *testing.T) {
 		t.Errorf("expected error for unknown section, got nil")
 	}
 }
+
+func TestSubRoutes_ReturnTwoHundred(t *testing.T) {
+	r := newTestRouter(t)
+	if err := Register(r, Deps{UserName: "test-user"}); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	srv := httptest.NewServer(r.Handler())
+	defer srv.Close()
+
+	cases := []struct {
+		path     string
+		mustHave string
+	}{
+		{"/work/blocked", `id="work-toolbar"`},
+		{"/work/kanban", `coming soon`},
+		{"/work/graph", `coming soon`},
+	}
+	for _, tc := range cases {
+		resp, err := http.Get(srv.URL + tc.path)
+		if err != nil {
+			t.Errorf("GET %s: %v", tc.path, err)
+			continue
+		}
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("GET %s: status = %d, want 200", tc.path, resp.StatusCode)
+			resp.Body.Close()
+			continue
+		}
+		raw, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if !strings.Contains(string(raw), tc.mustHave) {
+			t.Errorf("GET %s: missing %q", tc.path, tc.mustHave)
+		}
+	}
+}

@@ -1,10 +1,19 @@
 package data
 
 import (
+	"fmt"
+	"net/url"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/hero-engine/hero/internal/spec"
+)
+
+// Default column cap and per-page size for the expanded ?all=1 view.
+const (
+	defaultColumnCap = 10
+	pageSize         = 50
 )
 
 // RoadmapInputs is the per-request input bundle for the Horizons
@@ -12,21 +21,40 @@ import (
 type RoadmapInputs struct {
 	ProjectRoot string
 	HeroDir     string
+	// Filters / pagination — populated from the request query string.
+	TypeFilter string // "all" | "feature" | "bug" | "initiative" | ""
+	AgeFilter  string // "all" | "active-7d" | ""
+	ShowAll    bool   // ?all=1
+	Page       int    // 1-indexed; defaults to 1
 }
 
 // LoadRoadmap composes the Horizons centerpiece by walking the specs
 // index and grouping by `horizon`. Initiatives nest their child specs
-// inside the parent card's mini list; children with the same horizon
-// as their parent do not also render standalone. Never returns nil —
-// empty columns are fine.
+// inside the parent card's mini list; children that appear as a child
+// of ANY initiative are deduped from the top-level card list so they
+// don't render twice. Honors the type/age filter row and the ?all=1 +
+// page=N query params per spec. Never returns nil — empty columns are
+// fine.
 func LoadRoadmap(in RoadmapInputs) Roadmap {
+	typeF := normalizeTypeFilter(in.TypeFilter)
+	ageF := normalizeAgeFilter(in.AgeFilter)
+	page := in.Page
+	if page < 1 {
+		page = 1
+	}
+
+	rm := Roadmap{
+		Now:     RoadmapColumn{Label: "Now", Pulse: true},
+		Next:    RoadmapColumn{Label: "Next"},
+		Later:   RoadmapColumn{Label: "Later"},
+		Filters: RoadmapFilters{Type: typeF, Age: ageF},
+		ShowAll: in.ShowAll,
+		Page:    page,
+	}
+
 	specs := loadSpecsBest(in.HeroDir)
 	if len(specs) == 0 {
-		return Roadmap{
-			Now:   RoadmapColumn{Label: "Now", Pulse: true},
-			Next:  RoadmapColumn{Label: "Next"},
-			Later: RoadmapColumn{Label: "Later"},
-		}
+		return rm
 	}
 
 	// Build parent → children map keyed by parent slug. A child here is
@@ -40,9 +68,6 @@ func LoadRoadmap(in RoadmapInputs) Roadmap {
 	for _, s := range specs {
 		for _, rel := range s.Relations {
 			if rel.Kind == "parent" || rel.Kind == "child" {
-				// "parent" relation: this spec belongs to <target> as a
-				// child. "child" relation: this spec OWNS <target> as
-				// a child. Normalize both directions.
 				if rel.Kind == "parent" {
 					childrenOf[rel.Target] = append(childrenOf[rel.Target], s)
 				} else {
@@ -51,8 +76,6 @@ func LoadRoadmap(in RoadmapInputs) Roadmap {
 			}
 		}
 	}
-
-	// Drop nil entries that snuck in via unresolved targets.
 	for k, kids := range childrenOf {
 		filtered := kids[:0]
 		for _, c := range kids {
@@ -63,58 +86,58 @@ func LoadRoadmap(in RoadmapInputs) Roadmap {
 		childrenOf[k] = filtered
 	}
 
-	// Track which child slugs are already rendered inside an initiative
-	// card so we don't double-render them at the column root.
+	// Build the dedupe set: any spec slug that appears as a child of an
+	// initiative (regardless of horizon) is dropped from the top-level
+	// card list. It renders only as a child row inside the parent's
+	// initiative card. Spec calls this out as "initiative-child dedupe."
 	nested := map[string]bool{}
+	for _, s := range specs {
+		if s.Type != spec.TypeInitiative {
+			continue
+		}
+		for _, c := range childrenOf[s.Slug] {
+			if c != nil {
+				nested[c.Slug] = true
+			}
+		}
+	}
+
 	var initiativeSlugs []string
 	for _, s := range specs {
 		if s.Type == spec.TypeInitiative && len(childrenOf[s.Slug]) > 0 {
 			initiativeSlugs = append(initiativeSlugs, s.Slug)
 		}
 	}
-	// Stable order so a fixed workspace produces fixed output.
 	sort.Strings(initiativeSlugs)
 
-	rm := Roadmap{
-		Now:   RoadmapColumn{Label: "Now", Pulse: true},
-		Next:  RoadmapColumn{Label: "Next"},
-		Later: RoadmapColumn{Label: "Later"},
-	}
-
+	// Render initiative cards into their horizon columns.
 	for _, parentSlug := range initiativeSlugs {
 		p := bySlug[parentSlug]
 		if p == nil {
 			continue
 		}
+		if !passesFilter(p, typeF, ageF) {
+			continue
+		}
 		col := columnFor(horizonOf(p))
 		card := initiativeCard(p, childrenOf[parentSlug])
-		// Only nest children that share the parent's horizon.
-		parentH := horizonOf(p)
-		for _, c := range childrenOf[parentSlug] {
-			if horizonOf(c) == parentH {
-				nested[c.Slug] = true
-			}
-		}
 		appendToRoadmap(&rm, col, card)
 	}
 
 	// Regular specs (non-initiative, non-nested).
-	sortedSpecs := append([]*spec.Spec(nil), specs...)
-	sort.SliceStable(sortedSpecs, func(i, j int) bool {
-		return sortedSpecs[i].Slug < sortedSpecs[j].Slug
-	})
-	for _, s := range sortedSpecs {
+	for _, s := range specs {
 		if s.Type == spec.TypeInitiative {
 			continue
 		}
 		if nested[s.Slug] {
 			continue
 		}
-		// Skip context / note / external — they don't belong on the
-		// roadmap. Conventions / rules / tripwires also stay off.
 		switch s.Type {
 		case spec.TypeContext, spec.TypeNote, spec.TypeExternal,
 			spec.TypeConvention, spec.TypeRule, spec.TypeTripwire:
+			continue
+		}
+		if !passesFilter(s, typeF, ageF) {
 			continue
 		}
 		col := columnFor(horizonOf(s))
@@ -122,12 +145,22 @@ func LoadRoadmap(in RoadmapInputs) Roadmap {
 		appendToRoadmap(&rm, col, card)
 	}
 
+	// Sort each column by LastTouched desc (most recently touched first),
+	// then cap or paginate per the query params.
+	sortByLastTouchedDesc(&rm.Now)
+	sortByLastTouchedDesc(&rm.Next)
+	sortByLastTouchedDesc(&rm.Later)
+
 	rm.Now.Count = len(rm.Now.Cards)
 	rm.Next.Count = len(rm.Next.Cards)
 	rm.Later.Count = len(rm.Later.Cards)
 
+	applyCapOrPaginate(&rm.Now, in, typeF, ageF, "now")
+	applyCapOrPaginate(&rm.Next, in, typeF, ageF, "next")
+	applyCapOrPaginate(&rm.Later, in, typeF, ageF, "later")
+
 	// Compute blocked-count for the view toolbar badge while we have
-	// the specs loaded.
+	// the specs loaded — unfiltered (the badge always shows total).
 	for _, s := range specs {
 		if isBlocked(s) {
 			rm.BlockedCount++
@@ -135,6 +168,124 @@ func LoadRoadmap(in RoadmapInputs) Roadmap {
 	}
 
 	return rm
+}
+
+// normalizeTypeFilter maps an unknown / empty filter value to "all".
+func normalizeTypeFilter(s string) string {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "feature":
+		return "feature"
+	case "bug":
+		return "bug"
+	case "initiative":
+		return "initiative"
+	}
+	return "all"
+}
+
+// normalizeAgeFilter maps an unknown / empty filter value to "all".
+func normalizeAgeFilter(s string) string {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "active-7d", "7d", "active":
+		return "active-7d"
+	}
+	return "all"
+}
+
+// passesFilter returns true when a spec passes both the type and age
+// filters. Empty / "all" filters pass everything.
+func passesFilter(s *spec.Spec, typeF, ageF string) bool {
+	if s == nil {
+		return false
+	}
+	if typeF != "all" {
+		if typeKey(s) != typeF {
+			return false
+		}
+	}
+	if ageF == "active-7d" {
+		if s.ModifiedAt.IsZero() || time.Since(s.ModifiedAt) > 7*24*time.Hour {
+			return false
+		}
+	}
+	return true
+}
+
+// sortByLastTouchedDesc orders a column's cards by LastTouched descending,
+// then by slug for stable tie-breaking.
+func sortByLastTouchedDesc(col *RoadmapColumn) {
+	sort.SliceStable(col.Cards, func(i, j int) bool {
+		ti, tj := col.Cards[i].LastTouched, col.Cards[j].LastTouched
+		if ti.Equal(tj) {
+			return col.Cards[i].Slug < col.Cards[j].Slug
+		}
+		return ti.After(tj)
+	})
+}
+
+// applyCapOrPaginate trims the column to the default cap (when
+// !ShowAll) or slices it into a pageSize page (when ShowAll). Sets the
+// Capped / ShowAllHref / PageInfo fields accordingly.
+func applyCapOrPaginate(col *RoadmapColumn, in RoadmapInputs, typeF, ageF string, _ string) {
+	total := len(col.Cards)
+	if !in.ShowAll {
+		if total > defaultColumnCap {
+			col.Cards = col.Cards[:defaultColumnCap]
+			col.Capped = true
+			col.ShowAllHref = buildHref(typeF, ageF, true, 1)
+		}
+		return
+	}
+
+	// ?all=1 — paginate at pageSize per column.
+	page := in.Page
+	if page < 1 {
+		page = 1
+	}
+	pages := 1
+	if total > 0 {
+		pages = (total + pageSize - 1) / pageSize
+	}
+	if page > pages {
+		page = pages
+	}
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if end > total {
+		end = total
+	}
+	if start < total {
+		col.Cards = col.Cards[start:end]
+	}
+	col.PageInfo = &ColumnPage{Page: page, Pages: pages}
+	if page > 1 {
+		col.PageInfo.PrevHref = buildHref(typeF, ageF, true, page-1)
+	}
+	if page < pages {
+		col.PageInfo.NextHref = buildHref(typeF, ageF, true, page+1)
+	}
+}
+
+// buildHref constructs a /work URL preserving the active filter +
+// pagination state.
+func buildHref(typeF, ageF string, all bool, page int) string {
+	q := url.Values{}
+	if typeF != "" && typeF != "all" {
+		q.Set("type", typeF)
+	}
+	if ageF != "" && ageF != "all" {
+		q.Set("age", ageF)
+	}
+	if all {
+		q.Set("all", "1")
+	}
+	if page > 1 {
+		q.Set("page", fmt.Sprintf("%d", page))
+	}
+	if len(q) == 0 {
+		return "/work"
+	}
+	return "/work?" + q.Encode()
 }
 
 // columnFor returns "now" | "next" | "later" for a spec horizon.
@@ -185,6 +336,7 @@ func standardCard(s *spec.Spec) SpecCard {
 		StatusKey:   statusKey,
 		StatusLabel: statusLabel,
 		Owner:       ownerOf(s),
+		LastTouched: s.ModifiedAt,
 	}
 	if s.Status == spec.StatusDelivering || s.Status == spec.StatusInReview {
 		// Real coverage/criteria joins are deferred to signals.go in a
@@ -210,6 +362,7 @@ func initiativeCard(s *spec.Spec, kids []*spec.Spec) SpecCard {
 		StatusLabel:  statusLabel,
 		Owner:        ownerOf(s),
 		IsInitiative: true,
+		LastTouched:  s.ModifiedAt,
 	}
 	for _, c := range kids {
 		if c == nil {

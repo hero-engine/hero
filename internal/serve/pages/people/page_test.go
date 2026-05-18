@@ -50,21 +50,96 @@ func TestRegister_RendersAllSections(t *testing.T) {
 	}
 	body := string(raw)
 
+	// /people defaults to the Pulse view ONLY — ROI sections live at
+	// /people/roi.
 	mustContain := []string{
 		`<nav class="topnav">`,
 		`class="subnav"`,
 		`id="people-pulse"`,
-		`id="people-methodology"`,
-		`id="people-time-spent"`,
-		`id="people-savings"`,
-		`id="people-trend"`,
-		`id="people-contributors"`,
-		`id="people-changes"`,
 		`class="metric-tab`,
 	}
 	for _, want := range mustContain {
 		if !strings.Contains(body, want) {
 			t.Errorf("response missing %q", want)
+		}
+	}
+	mustNotContain := []string{
+		`id="people-time-spent"`,
+		`id="people-savings"`,
+		`id="people-trend"`,
+		`id="people-contributors"`,
+		`id="people-changes"`,
+	}
+	for _, bad := range mustNotContain {
+		if strings.Contains(body, bad) {
+			t.Errorf("/people unexpectedly contains %q (should only render on /people/roi)", bad)
+		}
+	}
+}
+
+func TestROIOverviewRoute_RendersFullROI(t *testing.T) {
+	r := newTestRouter(t)
+	if err := Register(r, Deps{UserName: "test-user"}); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	srv := httptest.NewServer(r.Handler())
+	defer srv.Close()
+
+	resp, err := http.Get(srv.URL + "/people/roi")
+	if err != nil {
+		t.Fatalf("GET /people/roi: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status = %d, want 200", resp.StatusCode)
+	}
+	raw, _ := io.ReadAll(resp.Body)
+	body := string(raw)
+	for _, want := range []string{
+		`id="people-time-spent"`,
+		`id="people-savings"`,
+		`id="people-trend"`,
+		`id="people-contributors"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("/people/roi missing %q", want)
+		}
+	}
+}
+
+func TestSubRoutes_ReturnTwoHundred(t *testing.T) {
+	r := newTestRouter(t)
+	if err := Register(r, Deps{UserName: "test-user"}); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	srv := httptest.NewServer(r.Handler())
+	defer srv.Close()
+
+	paths := []string{
+		"/people/activity",
+		"/people/handoffs",
+		"/people/profiles",
+		"/people/roi/velocity",
+		"/people/roi/autonomy",
+		"/people/roi/knowledge",
+		"/people/roi/individual",
+		"/people/roi/export",
+	}
+	for _, p := range paths {
+		resp, err := http.Get(srv.URL + p)
+		if err != nil {
+			t.Errorf("GET %s: %v", p, err)
+			continue
+		}
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("GET %s: status = %d, want 200", p, resp.StatusCode)
+			resp.Body.Close()
+			continue
+		}
+		raw, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if !strings.Contains(string(raw), `coming soon`) {
+			t.Errorf("GET %s: missing stub marker", p)
 		}
 	}
 }
