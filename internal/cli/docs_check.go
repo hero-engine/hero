@@ -2,12 +2,15 @@ package cli
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	"github.com/hero-engine/hero/internal/install"
 )
 
 var docsCmd = &cobra.Command{
@@ -20,11 +23,21 @@ var docsCheckCmd = &cobra.Command{
 	Short: "Validate documentation freshness against actual file counts",
 	Long: `Compares numeric claims in README.md (e.g. "22 commands", "33 specialist agents",
 "37 skills") against the actual .md files in agents/, commands/, and skills/ directories.
-Also checks that each agent, command, and skill filename is mentioned in the README.`,
+Also checks that each agent, command, and skill filename is mentioned in the README.
+
+With --invocations, additionally scans markdown surfaces (commands/, skills/,
+agents/, web/docs/src/, top-level docs, and the rendered AGENTS.md template)
+for ` + "`hero <command>`" + ` invocations and verifies each resolves against
+the cobra command tree. Lines marked with <!-- drift-test:ignore --> are
+skipped; .hero/specs/ and .hero/planning/ are excluded entirely.`,
 	RunE: runDocsCheck,
 }
 
+var docsCheckInvocations bool
+
 func init() {
+	docsCheckCmd.Flags().BoolVar(&docsCheckInvocations, "invocations", false,
+		"also scan markdown surfaces for stale `hero <command>` invocations")
 	docsCmd.AddCommand(docsCheckCmd)
 }
 
@@ -118,6 +131,21 @@ func runDocsCheck(cmd *cobra.Command, args []string) error {
 		fmt.Println()
 	}
 
+	if docsCheckInvocations {
+		fmt.Println("--- CLI invocation drift ---")
+		fmt.Println()
+		failures := scanInvocationDrift(projectRoot)
+		if len(failures) == 0 {
+			fmt.Println("  All `hero <command>` references in markdown resolve cleanly.")
+		} else {
+			for _, f := range failures {
+				fmt.Printf("  %s:%d  `%s`  →  %s\n", f.File, f.Line, f.Raw, f.err)
+			}
+			issues += len(failures)
+		}
+		fmt.Println()
+	}
+
 	if issues == 0 {
 		fmt.Println("No issues found.")
 		return nil
@@ -126,6 +154,75 @@ func runDocsCheck(cmd *cobra.Command, args []string) error {
 	fmt.Printf("%d issue(s) found.\n", issues)
 	os.Exit(1)
 	return nil
+}
+
+// invocationFailure is a single drift hit reported by --invocations.
+type invocationFailure struct {
+	Invocation
+	err error
+}
+
+// scanInvocationDrift walks every markdown surface (mirrors the surface
+// set in markdown_drift_test.go) and returns one entry per invocation
+// that fails to resolve against rootCmd.
+func scanInvocationDrift(projectRoot string) []invocationFailure {
+	var invs []Invocation
+	for _, d := range []string{"commands", "skills", "agents", "web/docs/src"} {
+		invs = append(invs, walkMarkdownDirForInvocations(projectRoot, d)...)
+	}
+	for _, f := range []string{"README.md", "AGENTS.md", "GETTING-STARTED.md"} {
+		abs := filepath.Join(projectRoot, f)
+		data, err := os.ReadFile(abs)
+		if err != nil {
+			continue
+		}
+		invs = append(invs, ExtractInvocations(f, data)...)
+	}
+	rendered := install.RenderAgentsMdBodyForDriftTest()
+	invs = append(invs, ExtractInvocations("<rendered:internal/install/agents_md.go>", rendered)...)
+
+	var failures []invocationFailure
+	for _, inv := range invs {
+		if err := ValidateInvocation(rootCmd, inv); err != nil {
+			failures = append(failures, invocationFailure{Invocation: inv, err: err})
+		}
+	}
+	return failures
+}
+
+// walkMarkdownDirForInvocations recursively reads .md files under
+// projectRoot/dir (skipping excluded paths) and extracts invocations.
+// Errors are swallowed silently — this is a best-effort CLI scan.
+func walkMarkdownDirForInvocations(projectRoot, dir string) []Invocation {
+	abs := filepath.Join(projectRoot, dir)
+	info, err := os.Stat(abs)
+	if err != nil || !info.IsDir() {
+		return nil
+	}
+	var out []Invocation
+	_ = filepath.WalkDir(abs, func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if d.IsDir() || !strings.HasSuffix(d.Name(), ".md") {
+			return nil
+		}
+		rel, relErr := filepath.Rel(projectRoot, path)
+		if relErr != nil {
+			rel = path
+		}
+		relSlash := filepath.ToSlash(rel)
+		if isExcludedDir(relSlash) {
+			return nil
+		}
+		data, readErr := os.ReadFile(path)
+		if readErr != nil {
+			return nil
+		}
+		out = append(out, ExtractInvocations(relSlash, data)...)
+		return nil
+	})
+	return out
 }
 
 // countMDFiles returns the number of .md files in a directory (non-recursive).

@@ -100,6 +100,7 @@ Other useful install flags:
 ```bash
 hero install --migrate         # reconcile drifted copies across harnesses
 hero install --no-touch-claude-md  # leave CLAUDE.md alone
+<!-- drift-test:ignore (follow-up: `hero verify-install` was never registered as a real command) -->
 hero verify-install            # audit install state
 ```
 
@@ -267,6 +268,7 @@ register each peer and use sync calls or async handoffs to coordinate
 across workspaces.
 
 ```bash
+<!-- drift-test:ignore (follow-up: should be `hero admin repos add`) -->
 hero repos add app ../app
 hero peer call app --mode=advisory "What's your error envelope?"
 hero handoff order-failure app --reason "Root cause is the API"

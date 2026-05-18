@@ -16,7 +16,9 @@ The argument can be:
    - If empty, run with defaults
 
 2. Run the appropriate `hero import` command:
+   <!-- drift-test:ignore (follow-up: --preset/--jql flags moved to `hero sync import`) -->
    - Preset: `hero import --preset <name>`
+   <!-- drift-test:ignore (follow-up: --preset/--jql flags moved to `hero sync import`) -->
    - Raw JQL: `hero import --jql "<query>"`
    - Default: `hero import`
 

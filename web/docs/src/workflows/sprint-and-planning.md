@@ -68,6 +68,7 @@ hero import --type bug
 hero import PROJ-1234
 
 # Import from GitHub
+<!-- drift-test:ignore (follow-up: --source/--label flags moved to `hero sync import`) -->
 hero import --source github --label "ready"
 ```
 

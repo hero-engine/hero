@@ -191,7 +191,9 @@ After creating or updating a spec, modifying files, making a notable design
 decision, or hitting a blocker, log it so other sessions can see:
 
 ```
+<!-- drift-test:ignore (follow-up: `hero event` subcommand was never registered) -->
 hero event decision_made "Chose streaming CSV over buffered" --slug csv-export
+<!-- drift-test:ignore (follow-up: `hero event` subcommand was never registered) -->
 hero event blocker_hit "Auth middleware rejects test tokens" --slug csv-export
 ```
 

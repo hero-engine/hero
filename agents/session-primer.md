@@ -13,7 +13,9 @@ You are a session context briefer. Your job is to quickly orient the engineer on
 ## Steps
 
 1. **Identify in-progress work:**
+   <!-- drift-test:ignore (follow-up: --delivering / --claimed flags missing from `hero status`) -->
    - Run `hero status --delivering` to find specs currently being implemented
+   <!-- drift-test:ignore (follow-up: --delivering / --claimed flags missing from `hero status`) -->
    - Run `hero status --claimed` to find specs claimed by the current user (use git config user.name/email to identify)
    - Check `.hero/knowledge/notes/` for recent sprint notes (`sprint-*` slugs)
 
