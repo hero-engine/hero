@@ -70,3 +70,4 @@ tmp/
 
 # Local env (direnv) — carries credentials, must not be committed
 .envrc
+.claude/scheduled_tasks.lock
