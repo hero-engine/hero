@@ -127,3 +127,13 @@ engineering.
 - Does **not** migrate specs between domains (types are domain-specific)
 - Does **not** change the core engine or internal packages
 - Does **not** support running multiple domains in one workspace
+
+## Decision — ContentFS legacy fallback retained (B1, 2026-05-17)
+
+`ContentFS()` continues to return `legacyContent` (root-level `agents/`, `commands/`, `skills/`) rather than being cut over to `domains/engineering/`. Reasons:
+
+1. The root-level dirs are still the actively-maintained engineering source; `domains/engineering/` is a scaffolded mirror per the existing `legacyContent` comment.
+2. A clean cutover requires first syncing root → `domains/engineering/` so the two surfaces match bit-for-bit. That sync is out of B1 scope (B1 is the embed.FS cutover for PM, not an engineering content migration).
+3. `DomainFS("engineering")` already returns `legacyContent`, so the domain-pack interface is consistent — callers that go through `DomainFS` get the same content regardless of how the root is wired.
+
+Removing the legacy fallback is deferred to a follow-up that (a) reconciles root vs `domains/engineering/`, (b) switches the `legacyContent` embed to `domains/engineering/...`, and (c) drops the root-level dirs (or makes them generated artifacts of the install step). Until then, both surfaces are kept in lockstep by the engineering vertical being the single source of truth for both.
