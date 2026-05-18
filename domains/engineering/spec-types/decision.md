@@ -26,6 +26,17 @@ default_agents:
 relations:
   - { kind: supersedes, target_type: decision, cardinality: zero-or-one }
   - { kind: related, target_type: feature, cardinality: many }
+frontmatter:
+  required:
+    - { name: title, type: string, required: true, classification: content, description: "One-line human title for the decision." }
+    - { name: type, type: enum, required: true, values: [decision], default: decision, classification: content, description: "Spec type discriminator; always 'decision'." }
+    - { name: status, type: enum, required: true, values: [proposed, accepted, superseded], default: proposed, classification: org-state, description: "Lifecycle position." }
+  optional:
+    - { name: created, type: date, format: "YYYY-MM-DD", classification: content, description: "Authoring date." }
+    - { name: tags, type: "list[string]", classification: content, description: "Free-form labels." }
+    - { name: subproject, type: string, classification: content, description: "Monorepo subproject scope identifier; empty = workspace root." }
+    - { name: owner, type: enum, values: [pm, engineering, qa, devops, design, docs], default: engineering, classification: org-state, description: "Current owning role." }
+    - { name: relations, type: "list[relation]", classification: content, description: "Supersedes/related edges." }
 ---
 
 # Decision spec-type
