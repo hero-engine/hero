@@ -1,5 +1,6 @@
 ---
 title: "Spec Quality Scoring"
+slug: spec-quality-scoring
 type: feature
 status: completed
 priority: high

@@ -1,5 +1,6 @@
 ---
 title: Document vocabulary auto_select rule schema — fields, allowed values, and authoring guide
+slug: document-vocabulary-auto-select-schema
 type: feature
 status: planning
 priority: P2

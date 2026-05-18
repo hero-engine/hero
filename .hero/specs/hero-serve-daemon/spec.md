@@ -1,5 +1,6 @@
 ---
 title: "hero serve — Local Daemon with MCP Server, File Watcher, and HTTP API"
+slug: hero-serve-daemon
 type: feature
 status: completed
 tags: [mcp, daemon, api, watch, serve]
@@ -30,7 +31,7 @@ Exposes Hero's knowledge base as MCP tools that any AI agent can call during rea
 
 | Tool | Description | Maps to |
 |---|---|---|
-| `hero_context` | Get conventions, rules, past work, decisions for given files | `hero context --files` |
+| `hero_context` | Get conventions, rules, past work, decisions for given files | `hero context imports --files` |
 | `hero_search` | Full-text search across all specs and knowledge | `hero search` |
 | `hero_check` | Run workspace health check | `hero check` |
 | `hero_nudge` | Get nudge for files being worked on | `hero nudge --files` |

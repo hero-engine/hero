@@ -1,5 +1,6 @@
 ---
 title: "Cross-Repo Peering — Conventions Travel, Specs Hand Off, Heroes Call Each Other"
+slug: cross-repo-peering
 type: feature
 status: delivering
 priority: high

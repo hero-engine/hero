@@ -1,5 +1,6 @@
 ---
 title: "Single-Source Install P3 — hero install --migrate for legacy multi-harness installs"
+slug: single-source-install-p3-migrate
 type: feature
 status: completed
 status_verified: "2026-05-12 by go test ./internal/install/... -count=1 — 5 new TestMigrate_* tests pass + full install suite. Dogfooded on example codebase: 32 drifted agent files + 22 commands + 44 skill conflicts (mix of flat .md and nested SKILL.md layouts) all reconciled cleanly. Newest mtime wins (Claude versions, more recently re-installed). Result: example codebase goes from `.claude/skills`/44 + `.opencode/skills`/79 (mixed flat+nested duplicates) → single canonical `.hero/skills`/44 with both `.claude/skills` and `.opencode/skills` as symlinks pointing at it. 28KB user-authored AGENTS.md fully preserved with Hero managed block inserted."

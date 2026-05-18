@@ -1,5 +1,6 @@
 ---
 title: Second Model Review — Automated Design Critique via Independent Model
+slug: second-model-review
 type: feature
 status: completed
 milestone: v0.2

@@ -1,5 +1,6 @@
 ---
 title: "Effort Estimation — Complexity-Based Cost Prediction"
+slug: effort-estimation
 type: feature
 status: completed
 tags: [cli, analytics, estimation]

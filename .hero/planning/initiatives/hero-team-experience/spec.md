@@ -1,5 +1,6 @@
 ---
 title: Hero Team Experience — Complete Multi-Developer Workflow
+slug: hero-team-experience
 type: initiative
 status: planning
 tags: [team, coordination, server, dashboard, workflow]

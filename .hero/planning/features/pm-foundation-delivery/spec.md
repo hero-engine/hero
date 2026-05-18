@@ -1,5 +1,6 @@
 ---
 title: PM Foundation Delivery — Ship PM Pack Additively + Unblock hero-code
+slug: pm-foundation-delivery
 type: feature
 status: planning
 priority: P0

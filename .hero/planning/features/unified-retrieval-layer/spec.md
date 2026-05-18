@@ -1,5 +1,6 @@
 ---
 title: Unified Retrieval Layer — Cross-Type Ranking via Faceted Search Index
+slug: unified-retrieval-layer
 type: feature
 status: delivering
 status_verified: 2026-04-29

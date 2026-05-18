@@ -1,5 +1,6 @@
 ---
 title: Second Model Design Review — Automated Second Set of Eyes
+slug: second-model-design-review
 type: note
 created: 2026-04-12
 milestone: v0.2

@@ -1,5 +1,6 @@
 ---
 title: Spec Prioritization — Now / Next / Someday / Parking-Lot
+slug: spec-prioritization
 type: feature
 status: planning
 priority: P0

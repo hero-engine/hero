@@ -1,5 +1,6 @@
 ---
 title: Active Context Management — Design Constraints and Layering Rationale
+slug: active-context-management-design
 type: note
 created: 2026-05-01
 tags: [context, curator, harness, claude-code, mcp, breadcrumbs, cache, architecture]

@@ -141,6 +141,19 @@ type Spec struct {
 	Description     string // short description (2-3 sentences) from tracker
 	RawContent      string // full file content including frontmatter
 	ThreeFile       bool   // true if loaded from three-file layout
+
+	// Surface is the project-shape facet a work spec belongs to,
+	// inferred from repo structure by internal/snapshot or set
+	// explicitly via the `surface:` frontmatter field. Empty means
+	// the spec did not declare a surface; the snapshot projector may
+	// still infer one from the spec's FilesTouched.
+	Surface string
+
+	// ReleaseTarget is the project-snapshot release-rollup label
+	// (e.g. "v1", "v1.0.0"). Optional on both spec and initiative
+	// frontmatter; cascades from parent initiative when unset on a
+	// child. Read by internal/snapshot/release.go's resolver.
+	ReleaseTarget string
 }
 
 // ReceivedFromBlock mirrors contracts/peering.ReceivedFrom for use in
@@ -417,6 +430,10 @@ func (s *Spec) parseFrontmatter(content string) string {
 			s.Scope = parseList(val)
 		case "subproject":
 			s.Subproject = val
+		case "surface":
+			s.Surface = val
+		case "release_target":
+			s.ReleaseTarget = val
 		case "triggers":
 			s.Triggers = parseList(val)
 		case "relates-to", "depends-on", "supersedes", "parent", "child":
@@ -867,6 +884,14 @@ func Discover(heroDir string) ([]*Spec, error) {
 		if info.IsDir() {
 			base := info.Name()
 			if base == ".git" {
+				return filepath.SkipDir
+			}
+			// Skip the snapshot archive directory entirely — those files
+			// are historical trajectory data, deliberately isolated from
+			// default discovery per the project-snapshot containment
+			// invariants. Reachable only via explicit history-query
+			// surfaces (hero snapshot history|show|diff).
+			if base == "snapshots" && filepath.Dir(path) == heroDir {
 				return filepath.SkipDir
 			}
 			// Check for three-file layout: requirements.md in the directory

@@ -1,5 +1,6 @@
 ---
 title: Core / Vertical Triangulation — Full Classification of Existing Artifacts
+slug: core-vertical-triangulation
 type: note
 status: active
 tags: [triangulation, core, vertical, classification, layering, refactor-prep]

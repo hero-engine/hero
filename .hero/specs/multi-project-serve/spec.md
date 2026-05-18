@@ -1,5 +1,6 @@
 ---
 title: "Multi-Project Serve — Single Daemon for All Local Projects"
+slug: multi-project-serve
 type: feature
 status: completed
 tags: [serve, daemon, multi-project, mcp]

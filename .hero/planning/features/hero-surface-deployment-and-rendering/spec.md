@@ -1,5 +1,6 @@
 ---
 title: Hero Surface — Deployment Layers and Rendering Model
+slug: hero-surface-deployment-and-rendering
 type: decision
 status: accepted
 tags: [serve, surface, deployment, edition, rendering, decision]

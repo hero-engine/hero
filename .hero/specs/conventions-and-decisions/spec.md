@@ -1,5 +1,6 @@
 ---
 title: Conventions and Decisions — Knowledge Specs for How and Why
+slug: conventions-and-decisions
 type: feature
 status: completed
 tags: [conventions, decisions, knowledge, context]
@@ -24,7 +25,7 @@ Introduce conventions and decisions as first-class spec types. Conventions docum
 
 **`/decide` command** — `architecture-reviewer` records architectural decisions in ADR format.
 
-**Convention scope matching** — `hero context --files` finds conventions whose scope globs match the files being worked on.
+**Convention scope matching** — `hero context imports --files` finds conventions whose scope globs match the files being worked on.
 
 **`convention-writing` skill** — loaded by `convention-author` to produce well-structured conventions.
 

@@ -1,5 +1,6 @@
 ---
 title: E2E Area Suites — Per-Area Tests with AC-Backed Verification
+slug: e2e-area-suites
 type: feature
 status: planning
 priority: P0

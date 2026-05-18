@@ -1,5 +1,6 @@
 ---
 title: Unified Search — Merge Federation Graph and On-Disk Spec Index
+slug: unified-search
 type: feature
 status: delivering
 priority: P1

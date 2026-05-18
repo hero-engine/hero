@@ -1,5 +1,6 @@
 ---
 title: "Single-Source Install P5 — JSON ops API for programmatic consumers"
+slug: single-source-install-p5-json-api
 type: feature
 status: completed
 status_verified: "2026-05-12 by go test ./internal/install/... — JSON-output round-trip stability tests pass. Dogfooded: hero install/install --migrate/verify-install all emit clean structured JSON (no stdout leaks even from deep helpers — silenceStdout belt-and-suspenders covers it)."

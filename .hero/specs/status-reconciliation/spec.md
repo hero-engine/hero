@@ -1,5 +1,6 @@
 ---
 title: "Git-Derived Status Reconciliation"
+slug: status-reconciliation
 type: feature
 status: completed
 created: 2026-04-13

@@ -1,5 +1,6 @@
 ---
 title: Three-File Spec Layout — Optional requirements/design/tasks Split
+slug: spec-three-file-split
 type: feature
 status: completed
 tags: [specs, structure, parser, backwards-compat]

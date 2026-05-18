@@ -1,5 +1,6 @@
 ---
 title: Hero Demo Content — GIFs, Screencast, Asciinema, Social Cards
+slug: hero-demo-content
 type: feature
 status: planning
 priority: P0

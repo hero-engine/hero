@@ -1,5 +1,6 @@
 ---
 title: Hero Landing Page — Public Homepage with Install CTA
+slug: hero-landing-page
 type: feature
 status: delivering
 priority: P0

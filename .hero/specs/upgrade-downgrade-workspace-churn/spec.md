@@ -1,5 +1,6 @@
 ---
 title: Upgrade should not downgrade workspace version
+slug: upgrade-downgrade-workspace-churn
 type: bug
 status: completed
 priority: P0

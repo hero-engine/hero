@@ -1,5 +1,6 @@
 ---
 title: Hero Platform — Headless Execution, Team Automation, and Shared Visibility
+slug: hero-platform
 type: initiative
 status: planning
 tags: [platform, runner, automations, team, cloud]

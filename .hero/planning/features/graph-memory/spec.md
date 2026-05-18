@@ -1,5 +1,6 @@
 ---
 title: Graph Memory — Unified Substrate for Hero's Knowledge Corpus
+slug: graph-memory
 type: feature
 status: planning
 priority: P0

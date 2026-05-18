@@ -1,5 +1,6 @@
 ---
 title: Hero Docs Site — Public, Searchable, Self-Serve Reference
+slug: hero-docs-site
 type: feature
 status: planning
 priority: P0

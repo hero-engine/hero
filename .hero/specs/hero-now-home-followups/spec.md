@@ -1,5 +1,6 @@
 ---
 title: Hero Now Home — Polish Follow-ups
+slug: hero-now-home-followups
 type: feature
 status: completed
 tags: [serve, surface, now, home, polish, web-app]

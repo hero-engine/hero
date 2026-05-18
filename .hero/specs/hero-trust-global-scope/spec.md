@@ -1,5 +1,6 @@
 ---
 title: Hero Trust Global Scope — Apply Hero Allowlist to User-Level Claude Settings
+slug: hero-trust-global-scope
 type: feature
 status: completed
 priority: medium

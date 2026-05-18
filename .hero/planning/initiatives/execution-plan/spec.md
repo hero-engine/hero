@@ -1,5 +1,6 @@
 ---
 title: "Execution Plan — Local Finish + Cloud Launch"
+slug: execution-plan
 type: plan
 status: active
 created: 2026-04-19

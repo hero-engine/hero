@@ -150,6 +150,13 @@ func runNextMergeResolve(cmd *cobra.Command, args []string) error {
 		return os.WriteFile(nextMergeResolveOutput, []byte(content), 0o644)
 	}
 
+	// SNAPSHOT.md is regenerated from the graph + repo shape by the
+	// project-snapshot projector. Same merge-driver pattern as
+	// NEXT.md: ignore both sides, write a fresh projection.
+	if isSnapshotOutputPath(nextMergeResolveOutput) {
+		return runSnapshotMergeResolve(projectRoot, heroDir, cfg)
+	}
+
 	user := userFromOutputPath(nextMergeResolveOutput)
 	if user == "" {
 		// Unknown projected path — leave file as-is (current side
@@ -175,6 +182,67 @@ func runNextMergeResolve(cmd *cobra.Command, args []string) error {
 // names the QUEUE.md snapshot.
 func isQueueOutputPath(path string) bool {
 	return filepath.Base(path) == QueueFileName
+}
+
+// isSnapshotOutputPath reports whether the merge driver's --output
+// path names the project SNAPSHOT.md.
+func isSnapshotOutputPath(path string) bool {
+	return filepath.Base(path) == "SNAPSHOT.md"
+}
+
+// runSnapshotMergeResolve regenerates .hero/SNAPSHOT.md from the
+// local graph and writes the result to --output. Used by the
+// hero-next merge driver when git asks it to resolve a conflict on
+// the snapshot file. Mirrors the strategy used for NEXT.md and
+// QUEUE.md: ignore both sides, project fresh.
+func runSnapshotMergeResolve(projectRoot, heroDir string, cfg config.Config) error {
+	// Snapshot projection is implemented in internal/snapshot. We
+	// invoke it directly here via the same options the checkpoint
+	// command uses; the only difference is that we redirect the
+	// rendered bytes to --output rather than letting the projector
+	// write to .hero/SNAPSHOT.md.
+	missionPath := filepath.Join(heroDir, "mission.md")
+	mission := readMissionOneLiner(missionPath)
+	projectName := filepath.Base(projectRoot)
+
+	// Run the projector at HeroDir; capture rendered bytes after the
+	// write by reading the written file.
+	archive := cfg.SnapshotArchive()
+	_, err := snapshotProject(snapshotProjectArgs{
+		ProjectRoot:  projectRoot,
+		HeroDir:      heroDir,
+		ProjectName:  projectName,
+		Mission:      mission,
+		ArchiveCfg:   archive,
+		Milestones:   cfg.SnapshotMilestonesEnabled(),
+	})
+	if err != nil {
+		return fmt.Errorf("snapshot projection: %w", err)
+	}
+	rendered, err := os.ReadFile(filepath.Join(heroDir, "SNAPSHOT.md"))
+	if err != nil {
+		return fmt.Errorf("read regenerated snapshot: %w", err)
+	}
+	return os.WriteFile(nextMergeResolveOutput, rendered, 0o644)
+}
+
+// snapshotProjectArgs is the merge-driver glue type so we don't
+// pull internal/snapshot into the import-graph of every CLI file.
+type snapshotProjectArgs struct {
+	ProjectRoot string
+	HeroDir     string
+	ProjectName string
+	Mission     string
+	ArchiveCfg  config.SnapshotArchiveConfig
+	Milestones  bool
+}
+
+// snapshotProject is filled in by checkpoint.go (which already
+// imports internal/snapshot) to keep this file free of the
+// dependency. The indirection lets the merge driver reuse the
+// projection without bloating package boundaries.
+var snapshotProject = func(args snapshotProjectArgs) (any, error) {
+	return nil, fmt.Errorf("snapshot projection unavailable in this build")
 }
 
 // userFromOutputPath extracts <user> from .../next/<user>.md. Returns

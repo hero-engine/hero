@@ -228,7 +228,7 @@ func runSyncImport(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("creating directory: %w", err)
 		}
 
-		content := generateImportedSpec(issue, specType, t.Name())
+		content := generateImportedSpec(issue, specType, t.Name(), slug)
 		if err := os.WriteFile(specPath, []byte(content), 0o644); err != nil {
 			return fmt.Errorf("writing spec: %w", err)
 		}
@@ -1173,7 +1173,7 @@ func specFieldsFromIssue(issue tracker.Issue, trackerName string) map[string]str
 // trackerName is the tracker type (e.g. "jira", "github", "linear") used to
 // prefix tracker-specific fields in the frontmatter, keeping them visually
 // distinct from Hero's own fields.
-func generateImportedSpec(issue tracker.Issue, specType, trackerName string) string {
+func generateImportedSpec(issue tracker.Issue, specType, trackerName, slug string) string {
 	title := issue.Title
 	// Strip hero-added prefixes for cleaner titles
 	for _, prefix := range []string{"[feature] ", "[bug] ", "[Feature] ", "[Bug] "} {
@@ -1194,6 +1194,7 @@ func generateImportedSpec(issue tracker.Issue, specType, trackerName string) str
 	fm.WriteString("---\n")
 	fm.WriteString("# Hero\n")
 	fmt.Fprintf(&fm, "title: %q\n", title)
+	fmt.Fprintf(&fm, "slug: %s\n", slug)
 	fmt.Fprintf(&fm, "type: %s\n", specType)
 	fm.WriteString("status: planning\n")
 	fmt.Fprintf(&fm, "tracker_id: %s\n", issue.ID)

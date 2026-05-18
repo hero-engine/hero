@@ -1,5 +1,6 @@
 ---
 title: Domain-Scoped Knowledge Graph — Namespace Tags on Graph Nodes
+slug: domain-scoped-knowledge-graph
 type: feature
 status: planning
 priority: P0

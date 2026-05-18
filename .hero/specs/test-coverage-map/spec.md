@@ -1,5 +1,6 @@
 ---
 title: Test Coverage Map — Criterion-to-Test Traceability
+slug: test-coverage-map
 type: feature
 status: completed
 priority: P1

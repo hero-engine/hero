@@ -293,7 +293,9 @@ func resetFlags() {
 	importLabel = ""
 	importLimit = 0
 	syncImportDryRun = false
-	importType = "feature"
+	importType = "context"
+	importTag = ""
+	importMaxBytes = defaultMaxIngestFileBytes
 
 	// Reset replay flags
 	replayBase = "HEAD"

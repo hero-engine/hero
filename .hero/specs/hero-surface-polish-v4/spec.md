@@ -1,5 +1,6 @@
 ---
 title: Hero Surface Polish v4 — Work View-Tab Active, mdrender Wrapped List Items, Dedup Group Coverage, Detail Title Alignment, Table CSS Width
+slug: hero-surface-polish-v4
 type: feature
 status: completed
 tags: [serve, surface, polish, ui, mdrender, web-app]

@@ -1,5 +1,6 @@
 ---
 title: "Root Cause Classification — Structured Diagnosis Taxonomy"
+slug: root-cause-classification
 type: feature
 status: completed
 tags: [agent, diagnosis]

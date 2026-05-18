@@ -1,5 +1,6 @@
 ---
 title: Hero Domains — Platform Architecture for Non-Engineering Verticals
+slug: hero-domains
 type: initiative
 status: planning
 tags: [platform, domains, product-management, qa, roadmap, vertical]

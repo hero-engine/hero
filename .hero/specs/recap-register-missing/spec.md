@@ -1,5 +1,6 @@
 ---
 title: "`hero recap register/unregister` referenced in slash commands but never implemented"
+slug: recap-register-missing
 type: bug
 status: completed
 severity: medium

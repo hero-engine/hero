@@ -1,5 +1,6 @@
 ---
 title: Tracker-ID-Shaped Search Falls Through to FTS, Returning Unrelated Specs
+slug: bug-tracker-id-search-falls-through-to-fts
 type: bug
 status: completed
 tags: [index, search, tracker-id, fts, relevance]

@@ -1,5 +1,6 @@
 ---
 title: Get Back on Track — Mission-First V2 Recovery
+slug: get-back-on-track
 type: initiative
 status: planning
 priority: P0

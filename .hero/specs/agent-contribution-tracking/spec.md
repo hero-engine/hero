@@ -1,5 +1,6 @@
 ---
 title: Agent Contribution Tracking — claimed_by Slug and Velocity Metrics
+slug: agent-contribution-tracking
 type: feature
 status: completed
 milestone: v0.3

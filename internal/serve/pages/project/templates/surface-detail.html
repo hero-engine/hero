@@ -1,0 +1,25 @@
+{{ define "surface-detail" }}
+<section class="page-section">
+  <h2>{{ .Surface.ID }}</h2>
+  {{ with .Surface.Intent }}<p>{{ . }}</p>{{ end }}
+  <dl class="surface-meta">
+    <dt>Stage</dt><dd>{{ .Surface.Stage }}{{ if .Surface.StagePinned }} <span class="pill pinned">pinned</span>{{ end }}</dd>
+    <dt>Paths</dt><dd><code>{{ join .Surface.Paths ", " }}</code></dd>
+    <dt>Source</dt><dd>{{ .Surface.Source }} (confidence {{ printf "%.2f" .Surface.Confidence }})</dd>
+    {{ with .Surface.Owner }}<dt>Owner</dt><dd>{{ . }}</dd>{{ end }}
+  </dl>
+</section>
+
+<section class="page-section">
+  <h2>Specs on this surface ({{ len .Specs }})</h2>
+  {{ if .Specs }}
+    <ul class="surface-specs">
+      {{ range .Specs }}
+      <li><code>{{ .Slug }}</code> — {{ .Title }} ({{ .Type }}, {{ .Status }})</li>
+      {{ end }}
+    </ul>
+  {{ else }}
+    <p><em>No specs declare this surface.</em></p>
+  {{ end }}
+</section>
+{{ end }}

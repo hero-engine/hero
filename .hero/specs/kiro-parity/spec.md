@@ -1,5 +1,6 @@
 ---
 title: Competitor Parity — Borrow the Best Ideas from Competing Tools
+slug: kiro-parity
 type: initiative
 status: completed
 tags: [specs, drift, hooks, ears, parity, competitor]

@@ -1,0 +1,16 @@
+{{ define "archive" }}
+<section class="page-section archive-readonly" data-readonly="true">
+  <p class="archive-banner">
+    Historical archive — this is point-in-time data, not current state.
+    For the live view, return to <a href="/project">/project</a>.
+  </p>
+  <dl class="archive-meta">
+    <dt>Snapshot date</dt><dd>{{ .Archive.Date }}</dd>
+    <dt>Trigger</dt><dd>{{ .Archive.Trigger }}</dd>
+    {{ with .Archive.Label }}<dt>Label</dt><dd>{{ . }}</dd>{{ end }}
+    {{ with .Archive.GitCommit }}<dt>Git commit</dt><dd><code>{{ . }}</code></dd>{{ end }}
+    <dt>Filename</dt><dd><code>{{ .Filename }}</code></dd>
+  </dl>
+  <pre class="archive-body">{{ .Body }}</pre>
+</section>
+{{ end }}

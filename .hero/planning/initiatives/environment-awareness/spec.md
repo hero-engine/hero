@@ -1,5 +1,6 @@
 ---
 title: Environment Awareness — CI/Deployment/Runtime Visibility
+slug: environment-awareness
 type: initiative
 status: planning
 tags: [ci, deployment, runtime, observability, agents, provider]

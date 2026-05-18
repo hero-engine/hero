@@ -1,5 +1,6 @@
 ---
 title: "Post-mortem Replay — Compare Plan vs Actual Outcome"
+slug: post-mortem-replay
 type: feature
 status: completed
 tags: [cli, analytics]

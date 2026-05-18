@@ -237,28 +237,38 @@ func ensureNextMDMergeDirective(projectRoot string) error {
 	existing, _ := os.ReadFile(path)
 	src := string(existing)
 
-	directive := ".hero/NEXT.md merge=" + mergeDriverName
+	directives := []string{
+		".hero/NEXT.md merge=" + mergeDriverName,
+		".hero/SNAPSHOT.md merge=" + mergeDriverName,
+	}
 
 	startIdx := strings.Index(src, gaMarkerStart)
 	if startIdx < 0 {
-		// No existing block — create one with both directives.
+		// No existing block — create one with all directives.
 		block := fmt.Sprintf(`%s
 .hero/NEXT.md merge=%s
 .hero/next/*.md merge=%s
-%s`, gaMarkerStart, mergeDriverName, mergeDriverName, gaMarkerEnd)
+.hero/SNAPSHOT.md merge=%s
+%s`, gaMarkerStart, mergeDriverName, mergeDriverName, mergeDriverName, gaMarkerEnd)
 		body := mergeMarkerBlock(src, gaMarkerStart, gaMarkerEnd, block)
 		return os.WriteFile(path, []byte(body), 0o644)
 	}
-	// Existing block — splice in the NEXT.md line if missing.
-	if strings.Contains(src, directive) {
-		return nil // idempotent
+	// Existing block — splice in any missing directive.
+	body := src
+	for _, directive := range directives {
+		if strings.Contains(body, directive) {
+			continue
+		}
+		endIdx := strings.Index(body, gaMarkerEnd)
+		if endIdx < 0 {
+			return fmt.Errorf("malformed .gitattributes: missing %q", gaMarkerEnd)
+		}
+		insertAt := strings.LastIndex(body[:endIdx], "\n") + 1
+		body = body[:insertAt] + directive + "\n" + body[insertAt:]
 	}
-	endIdx := strings.Index(src, gaMarkerEnd)
-	if endIdx < 0 {
-		return fmt.Errorf("malformed .gitattributes: missing %q", gaMarkerEnd)
+	if body == src {
+		return nil
 	}
-	insertAt := strings.LastIndex(src[:endIdx], "\n") + 1
-	body := src[:insertAt] + directive + "\n" + src[insertAt:]
 	return os.WriteFile(path, []byte(body), 0o644)
 }
 

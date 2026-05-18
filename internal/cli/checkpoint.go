@@ -19,6 +19,7 @@ import (
 	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/projection"
+	"github.com/hero-engine/hero/internal/snapshot"
 	"github.com/spf13/cobra"
 )
 
@@ -57,6 +58,25 @@ automated tool touches.`,
 
 func init() {
 	nextCheckpointCmd.Flags().BoolVarP(&checkpointQuiet, "quiet", "q", false, "suppress success output")
+
+	// Wire snapshot projection for the hero-next merge driver. The
+	// indirection lives in next_hooks.go so merge resolution doesn't
+	// require importing internal/snapshot directly.
+	snapshotProject = func(args snapshotProjectArgs) (any, error) {
+		return snapshot.Project(snapshot.ProjectOptions{
+			ProjectRoot: args.ProjectRoot,
+			HeroDir:     args.HeroDir,
+			ProjectName: args.ProjectName,
+			Mission:     args.Mission,
+			ArchiveConfig: snapshot.ArchiveConfig{
+				StalenessCutoff:   args.ArchiveCfg.StalenessCutoff,
+				MilestonesEnabled: args.Milestones,
+				ReleaseTagPattern: args.ArchiveCfg.ReleaseTagPattern,
+				Retention:         args.ArchiveCfg.Retention,
+				RetentionCount:    args.ArchiveCfg.RetentionCount,
+			},
+		})
+	}
 }
 
 func runNextCheckpoint(cmd *cobra.Command, args []string) error {
@@ -174,7 +194,91 @@ local:
 		fmt.Fprintf(os.Stderr, "warning: user handoff projection failed: %v\n", err)
 	}
 
+	// Project the project-shape snapshot (SNAPSHOT.md) and refresh
+	// the SNAPSHOT pointer in NEXT.md / AGENTS.md. Non-fatal: the
+	// snapshot projector logs and continues on every error so the
+	// checkpoint never fails because of snapshot-side issues.
+	projectSnapshot(projectRoot, heroDir, cfg, nextPath)
+
 	return nextPath, nil
+}
+
+// projectSnapshot refreshes .hero/SNAPSHOT.md and the pointer line
+// inside NEXT.md / AGENTS.md. Best-effort: errors are logged to
+// stderr and do not propagate. The archive evaluator runs inside
+// the same call.
+func projectSnapshot(projectRoot, heroDir string, cfg config.Config, nextPath string) {
+	missionPath := filepath.Join(heroDir, "mission.md")
+	mission := readMissionOneLiner(missionPath)
+	projectName := filepath.Base(projectRoot)
+
+	agentsMD := filepath.Join(projectRoot, "AGENTS.md")
+	// Only update AGENTS.md when it already exists — never create one
+	// just to drop the pointer. The discovery story is "if AGENTS.md
+	// is here, we add a single-line pointer to it"; not "we manage
+	// AGENTS.md".
+	if _, err := os.Stat(agentsMD); err != nil {
+		agentsMD = ""
+	}
+
+	archiveCfg := cfg.SnapshotArchive()
+	_, err := snapshot.Project(snapshot.ProjectOptions{
+		ProjectRoot:  projectRoot,
+		HeroDir:      heroDir,
+		ProjectName:  projectName,
+		Mission:      mission,
+		NextMDPath:   nextPath,
+		AgentsMDPath: agentsMD,
+		ArchiveConfig: snapshot.ArchiveConfig{
+			StalenessCutoff:   archiveCfg.StalenessCutoff,
+			MilestonesEnabled: cfg.SnapshotMilestonesEnabled(),
+			ReleaseTagPattern: archiveCfg.ReleaseTagPattern,
+			Retention:         archiveCfg.Retention,
+			RetentionCount:    archiveCfg.RetentionCount,
+		},
+	})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: snapshot projection failed: %v\n", err)
+	}
+}
+
+// readMissionOneLiner extracts the first non-empty, non-heading line
+// of .hero/mission.md body (after frontmatter) to use as the
+// snapshot's mission strap-line. Returns empty when the file is
+// missing.
+func readMissionOneLiner(path string) string {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	src := string(data)
+	// Strip a leading frontmatter block --- ... --- so the strap-line
+	// we surface is body content, not a `title:` field.
+	if strings.HasPrefix(src, "---") {
+		rest := strings.TrimPrefix(src, "---")
+		if i := strings.Index(rest, "\n---"); i >= 0 {
+			src = rest[i+len("\n---"):]
+		}
+	}
+	inMission := false
+	for _, line := range strings.Split(src, "\n") {
+		t := strings.TrimSpace(line)
+		if strings.HasPrefix(t, "## Mission") {
+			inMission = true
+			continue
+		}
+		if t == "" || strings.HasPrefix(t, "#") || strings.HasPrefix(t, "---") || strings.HasPrefix(t, ">") {
+			continue
+		}
+		if inMission || strings.HasPrefix(t, "**") {
+			// Strip leading bold markers.
+			t = strings.Trim(t, "*_ ")
+			if t != "" {
+				return t
+			}
+		}
+	}
+	return ""
 }
 
 // writeProjectedNextMD overwrites NEXT.md with a fresh project-state

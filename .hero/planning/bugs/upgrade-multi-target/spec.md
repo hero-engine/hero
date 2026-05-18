@@ -1,5 +1,6 @@
 ---
 title: hero upgrade only touches one tool when multiple are installed
+slug: upgrade-multi-target
 type: bug
 status: completed
 priority: P1

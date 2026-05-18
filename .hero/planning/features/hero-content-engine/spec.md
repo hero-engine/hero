@@ -1,5 +1,6 @@
 ---
 title: Hero Content Engine — Ongoing Blog, Dev Posts, Case Studies
+slug: hero-content-engine
 type: feature
 status: planning
 priority: P1

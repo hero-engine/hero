@@ -1,5 +1,6 @@
 ---
 title: Hero Knowledge Home — The Corpus, Visible
+slug: hero-knowledge-home
 type: feature
 status: completed
 tags: [serve, surface, knowledge, home, search, traversal, corpus, web-app]

@@ -1,5 +1,6 @@
 ---
 title: Hero Surface Polish v1 — Sub-route 404s, Now Data, Work Firehose, Default Views
+slug: hero-surface-polish-v1
 type: feature
 status: completed
 tags: [serve, surface, polish, bug, routing, data, web-app]

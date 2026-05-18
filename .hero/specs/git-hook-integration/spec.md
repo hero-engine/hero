@@ -1,5 +1,6 @@
 ---
 title: Git Hook Integration — Branch Creation Drives Spec Status Changes
+slug: git-hook-integration
 type: feature
 status: completed
 milestone: v0.3

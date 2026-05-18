@@ -1,5 +1,6 @@
 ---
 title: Hero QA — Quality Assurance Domain Pack
+slug: hero-qa
 type: feature
 status: planning
 priority: P1

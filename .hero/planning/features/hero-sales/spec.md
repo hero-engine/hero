@@ -1,5 +1,6 @@
 ---
 title: Hero Sales — AI-Powered Sales Workflow for Revenue Teams
+slug: hero-sales
 type: feature
 status: planning
 priority: P0

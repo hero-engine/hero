@@ -23,6 +23,7 @@ import (
 	nowpage "github.com/hero-engine/hero/internal/serve/pages/now"
 	nowdata "github.com/hero-engine/hero/internal/serve/pages/now/data"
 	peoplepage "github.com/hero-engine/hero/internal/serve/pages/people"
+	projectpage "github.com/hero-engine/hero/internal/serve/pages/project"
 	workpage "github.com/hero-engine/hero/internal/serve/pages/work"
 	"github.com/hero-engine/hero/internal/serve/session"
 	"github.com/hero-engine/hero/internal/serve/shell"
@@ -725,6 +726,21 @@ func (s *Server) buildShellRouter() *shell.Router {
 	}
 	if err := agentspage.Register(r, agentsDeps); err != nil {
 		fmt.Fprintf(os.Stderr, "hero serve: register Agents home: %v\n", err)
+	}
+
+	// Register the Project home — surfaces table, initiatives, archives
+	// timeline. Owned by the project-snapshot spec. Archive bodies
+	// render ONLY at /project/snapshots/<date>; the home itself shows
+	// metadata only, per the isolation invariants.
+	projectDeps := projectpage.Deps{
+		ProjectRoot: s.projectRoot,
+		HeroDir:     s.heroDir,
+		Workspace:   workspace,
+		Branch:      branch,
+		UserName:    userName,
+	}
+	if err := projectpage.Register(r, projectDeps); err != nil {
+		fmt.Fprintf(os.Stderr, "hero serve: register Project home: %v\n", err)
 	}
 	return r
 }

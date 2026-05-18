@@ -1,5 +1,6 @@
 ---
 title: Hero Agents Home — Sessions, Proposals, Scheduled, Automations, Health
+slug: hero-agents-home
 type: feature
 status: completed
 tags: [serve, surface, agents, sessions, proposals, scheduled, automations, web-app]

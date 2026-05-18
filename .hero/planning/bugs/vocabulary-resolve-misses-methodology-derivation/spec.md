@@ -1,5 +1,6 @@
 ---
 title: vocabulary.Resolve doesn't fold methodology-derived auto-derivation
+slug: vocabulary-resolve-misses-methodology-derivation
 type: bug
 status: delivering
 severity: medium

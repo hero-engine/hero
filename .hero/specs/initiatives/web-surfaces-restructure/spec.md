@@ -1,5 +1,6 @@
 ---
 title: Web Surfaces Restructure — Make Docs and Landing Peers Under web/
+slug: web-surfaces-restructure
 type: initiative
 status: completed
 priority: P1

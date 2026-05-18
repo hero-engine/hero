@@ -1,5 +1,6 @@
 ---
 title: v2 Agents and Skills — New Specialists and Capabilities
+slug: v2-agents-and-skills
 type: feature
 status: completed
 tags: [agents, skills, specialists]

@@ -1,5 +1,6 @@
 ---
 title: /scan post-scan enrichment loop is unbounded
+slug: scan-enrichment-unbounded-loop
 type: bug
 status: planning
 severity: high

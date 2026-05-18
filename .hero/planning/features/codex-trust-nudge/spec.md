@@ -1,5 +1,6 @@
 ---
 title: Codex Trust Nudge — One-Time Hero CLI Approval Guidance
+slug: codex-trust-nudge
 type: feature
 status: completed
 priority: P1

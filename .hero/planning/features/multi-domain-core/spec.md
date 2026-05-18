@@ -1,5 +1,6 @@
 ---
 title: "Multi-Domain Core Engine"
+slug: multi-domain-core
 type: feature
 status: draft
 priority: low

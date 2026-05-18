@@ -1,5 +1,6 @@
 ---
 title: Hero Marketing — Positioning, Distribution, and Launch
+slug: hero-marketing
 type: initiative
 status: planning
 tags: [marketing, launch, distribution, docs, growth]

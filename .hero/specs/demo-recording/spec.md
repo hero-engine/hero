@@ -1,5 +1,6 @@
 ---
 title: Demo Recording — Playwright Video Capture for Delivered Specs
+slug: demo-recording
 type: feature
 status: completed
 milestone: v0.5

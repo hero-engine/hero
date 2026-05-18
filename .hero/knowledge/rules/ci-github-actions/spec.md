@@ -1,5 +1,6 @@
 ---
 title: CI Must Pass (GitHub Actions)
+slug: ci-github-actions
 type: rule
 status: active
 created: 2026-04-29

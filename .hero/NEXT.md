@@ -1,5 +1,5 @@
 ---
-updated: 2026-05-12T21:54:49Z
+updated: 2026-05-18T19:05:23Z
 repo: hero-engine/hero
 branch: main
 ---
@@ -24,3 +24,6 @@ Nothing this session.
 
 Nothing pinned.
 
+<!-- >>> hero snapshot pointer (managed) >>> -->
+Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
+<!-- <<< hero snapshot pointer (managed) <<< -->

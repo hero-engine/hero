@@ -1,5 +1,6 @@
 ---
 title: hero pulse — AI Narrative Summary of Sprint and Week State
+slug: hero-pulse
 type: feature
 status: completed
 milestone: v0.4

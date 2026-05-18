@@ -2,7 +2,7 @@
 title: "hero next checkpoint accumulates cross-repo narrative sections in .local.md and bleeds user-graph reads across repos"
 slug: next-checkpoint-cross-repo-pollution
 type: bug
-status: delivering
+status: completed
 severity: high
 priority: P1
 created: 2026-05-18
@@ -187,13 +187,19 @@ Two coordinated changes, plus a cleanup migration:
 ## Kickoff
 
 > Pick up at: **verify and ship**. Implementation is complete on this branch — `rebuildLocalState` is total-rewrite, `backupHandContentIfNeeded` writes a single hash-deduped `.bak.<RFC3339>` next to `.local.md` with a stderr notice, the three handoff reads (`LatestAsk`, `LatestSuggestion`, `RecentReflections`) take `repoKey` and are repo-scoped at the SQL layer, all callers thread `repoKey`, the placeholder template no longer emits "(omit if clear)" / "(omit if N/A)" headers, and both skill docs document `.local.md` as machine-state-only. Tests added: `Test_rebuildLocalState_DiscardsHandContent`, `Test_writeCheckpoint_BacksUpPreExistingHandContent`, `Test_writeCheckpoint_NoBackupWhenAlreadyClean`, `Test_writeCheckpoint_BackupIdempotentOnRerun`, `Test_writeCheckpoint_CrossRepoAskDoesNotLeakIntoUserHandoff`, `TestRecordAsk_PerRepoIsolation`, `TestRecordSuggestion_PerRepoIsolation`, `TestRecentReflections_PerRepoIsolation`, `TestUserHandoffMD_DoesNotLeakCrossRepoAsk`. `go build ./...` and `go test ./...` are clean. Manual repro per §Validation in `/tmp/herotest-checkpoint` confirmed: backup written on first run, no second backup on rerun, `.local.md` contains only the marker block. To ship: review the diff (status: `delivering`), run `hero spec complete next-checkpoint-cross-repo-pollution`, then commit. The `repo: ''` empty-key behavior in non-git contexts (Risks bullet) is unchanged — out of scope; key-shape migration to `(user, repoKey)` deferred per Boundaries.
-
 ## Handoff Trail
 
 - 2026-05-18T13:57:54Z — in ← hero-code (peer_id: ad027c2f-7f74-4a09-bf1d-6515cc906074)
   mode: spec-out
   originating_spec: hero-context-layer2-optimize (on hero-code)
   peer_spec: next-checkpoint-cross-repo-pollution (this spec)
-  call_id: 18b0ad8d3cd1c3c0adf6bdd5cad5a716
-  at_commit: "6835176"
+  at_commit: 6835176
   reason: "Per-user NEXT file accumulating stale narrative sections from unrelated repos, polluting Layer 2 context that hero-context-layer2-optimize is preparing to lean on."
+
+- 2026-05-18T18:13:21Z — out → hero-code (peer_id: ad027c2f-7f74-4a09-bf1d-6515cc906074)
+  mode: advisory
+  originating_spec: next-checkpoint-cross-repo-pollution
+  at_commit: 9f988e5
+  result_ref: 18b0bb7358d24f88e1a3eb58a7d6f86d
+  reason: "Notify peer that the cross-repo pollution bug they handed off is fixed, so their Layer-2 optimization work can proceed leaning on .hero/next/<user>.md as a trusted context source."
+

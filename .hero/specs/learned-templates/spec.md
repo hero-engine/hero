@@ -1,5 +1,6 @@
 ---
 title: Learned Spec Templates — Templates from Delivery Patterns
+slug: learned-templates
 type: feature
 status: completed
 tags: [specs, templates, patterns, knowledge, dx]

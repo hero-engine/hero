@@ -1,5 +1,6 @@
 ---
 title: Graph Memory Phase 7c — Live Multi-Dev Sync Test
+slug: graph-memory-7c-live-test
 type: feature
 status: planning
 priority: P0

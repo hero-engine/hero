@@ -1,5 +1,6 @@
 ---
 title: Unified Spec-Type Model — Nine Real-Named Types, Methodology + Vocabulary Adaptation
+slug: unified-spec-type-model
 type: feature
 status: designed
 priority: P0

@@ -1,5 +1,6 @@
 ---
 title: Pre-Commit Auto-Stage — Projected NEXT Files Travel With Every Commit
+slug: pre-commit-auto-stage-next
 type: feature
 status: completed
 milestone: v0.4

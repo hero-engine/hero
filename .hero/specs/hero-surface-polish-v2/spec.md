@@ -1,5 +1,6 @@
 ---
 title: Hero Surface Polish v2 — Per-Item Detail Routes, Filter Reconcile, CSS + Verb Cleanup
+slug: hero-surface-polish-v2
 type: feature
 status: completed
 tags: [serve, surface, polish, bug, routing, detail, web-app]

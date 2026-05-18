@@ -1,5 +1,6 @@
 ---
 title: Hero Launch Playbook — Show HN, Reddit, X, Podcast Outreach
+slug: hero-launch-playbook
 type: feature
 status: planning
 priority: P0

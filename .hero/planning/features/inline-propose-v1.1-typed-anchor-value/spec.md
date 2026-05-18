@@ -1,5 +1,6 @@
 ---
 title: Inline-propose v1.1 — typed anchor.value discriminator (gated on hero-code feedback)
+slug: inline-propose-v1.1-typed-anchor-value
 type: feature
 status: planning
 priority: P3

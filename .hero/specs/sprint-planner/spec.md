@@ -1,5 +1,6 @@
 ---
 title: "Sprint Planner — Agent-Driven Sprint Planning from Backlog"
+slug: sprint-planner
 type: feature
 status: completed
 tags: [agent, planning]

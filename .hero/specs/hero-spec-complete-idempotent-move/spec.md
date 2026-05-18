@@ -1,5 +1,6 @@
 ---
 title: "`hero spec complete` Idempotent Move — Don't Strand Specs Whose Status Was Already Flipped"
+slug: hero-spec-complete-idempotent-move
 type: bug
 status: completed
 severity: high

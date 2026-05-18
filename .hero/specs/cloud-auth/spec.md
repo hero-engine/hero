@@ -1,5 +1,6 @@
 ---
 title: Cloud Authentication and Org Management
+slug: cloud-auth
 type: feature
 status: completed
 tags: [cloud, auth, foundation]

@@ -1,5 +1,6 @@
 ---
 title: v2 Commands — /compose, /convention, /decide, /retro, /check
+slug: v2-commands
 type: feature
 status: completed
 tags: [commands, workflow, retro, compose, check]

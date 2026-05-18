@@ -1,5 +1,6 @@
 ---
 title: spec-types.json records emit frontmatter as null — loader never populates it
+slug: spec-types-cache-frontmatter-empty
 type: bug
 status: delivering
 severity: medium

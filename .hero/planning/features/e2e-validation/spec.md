@@ -1,5 +1,6 @@
 ---
 title: E2E Validation — Repeatable Take-It-For-A-Spin Smoke Test
+slug: e2e-validation
 type: feature
 status: delivering
 priority: P1

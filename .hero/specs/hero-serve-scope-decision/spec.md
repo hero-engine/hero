@@ -1,5 +1,6 @@
 ---
 title: "Decide `hero serve` Scope After the hero/hero-cloud Split"
+slug: hero-serve-scope-decision
 type: feature
 status: completed
 priority: high

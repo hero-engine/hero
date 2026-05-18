@@ -1,5 +1,6 @@
 ---
 title: "Architectural Drift Detection"
+slug: architectural-drift-detection
 type: feature
 status: draft
 priority: high

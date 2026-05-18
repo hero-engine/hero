@@ -1,5 +1,6 @@
 ---
 title: "Version Tracking & Project Upgrade"
+slug: version-tracking-upgrade
 type: feature
 status: completed
 created: 2026-04-13

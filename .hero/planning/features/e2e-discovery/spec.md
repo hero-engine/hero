@@ -1,5 +1,6 @@
 ---
 title: E2E Discovery Suite — The Model Can Find What's There
+slug: e2e-discovery
 type: feature
 status: delivering
 priority: P0

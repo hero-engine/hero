@@ -213,10 +213,11 @@ func TestGenerateImportedSpec_Feature(t *testing.T) {
 		CreatedAt: "2025-03-15T10:00:00Z",
 	}
 
-	content := generateImportedSpec(issue, "feature", "github")
+	content := generateImportedSpec(issue, "feature", "github", "add-dark-mode")
 
 	checks := []string{
 		`title: "Add dark mode"`,
+		"slug: add-dark-mode",
 		"type: feature",
 		"status: planning",
 		"tracker_id: 42",
@@ -252,10 +253,11 @@ func TestGenerateImportedSpec_Bug(t *testing.T) {
 		IssueType: "Bug",
 	}
 
-	content := generateImportedSpec(issue, "bug", "jira")
+	content := generateImportedSpec(issue, "bug", "jira", "login-broken")
 
 	checks := []string{
 		`title: "Login broken"`,
+		"slug: login-broken",
 		"type: bug",
 		"severity: critical",
 		"# Jira",

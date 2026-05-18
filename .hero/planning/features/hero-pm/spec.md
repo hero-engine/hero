@@ -1,5 +1,6 @@
 ---
 title: Hero PM — Product Management Domain Pack
+slug: hero-pm
 type: feature
 status: planning
 priority: P0

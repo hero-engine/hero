@@ -1,5 +1,6 @@
 ---
 title: Configurable Workspace Location — Hero Dir Anywhere
+slug: configurable-workspace-location
 type: feature
 status: planning
 horizon: someday

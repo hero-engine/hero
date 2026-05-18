@@ -1,5 +1,6 @@
 ---
 title: "Cost/Effort Calibration \u2014 Estimated vs Actual Effort Tracking"
+slug: cost-calibration
 type: feature
 status: completed
 priority: P2

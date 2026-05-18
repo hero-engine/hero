@@ -1,5 +1,6 @@
 ---
 title: Multi-Harness Install Collision — Second Target Refuses Identical Canonical Content
+slug: multi-harness-install-collision
 type: bug
 status: completed
 severity: medium

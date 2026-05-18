@@ -1,5 +1,6 @@
 ---
 title: Memory Tools, Community Patterns, and Where Hero Stands
+slug: memory-tools-and-community-patterns
 type: note
 created: 2026-04-12
 milestone: v0.2

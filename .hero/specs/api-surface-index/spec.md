@@ -1,5 +1,6 @@
 ---
 title: API Surface Index — Endpoint-to-Handler Mapping
+slug: api-surface-index
 type: feature
 status: completed
 priority: low

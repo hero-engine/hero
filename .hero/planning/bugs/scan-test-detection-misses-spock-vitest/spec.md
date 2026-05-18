@@ -1,5 +1,6 @@
 ---
 title: hero scan misses Spock, dependency-only Vitest/Playwright, and Playwright .js/.mts configs
+slug: scan-test-detection-misses-spock-vitest
 type: bug
 status: planning
 severity: medium

@@ -1,5 +1,6 @@
 ---
 title: Index Extensions — Relations, Tags, Type Filtering, Graph Queries
+slug: index-extensions
 type: feature
 status: completed
 tags: [index, search, sqlite, graph, relations]
@@ -27,7 +28,7 @@ Extend the SQLite index to support spec relationships, claims, convention scope 
 
 **`hero graph <slug>`** — shows spec relationships: parent initiative, related specs, superseded decisions, child specs.
 
-**`hero context --files`** — uses `convention_scopes` for glob matching, queries `specs.files_touched` for past work in the same files.
+**`hero context imports --files`** — uses `convention_scopes` for glob matching, queries `specs.files_touched` for past work in the same files.
 
 **`hero conflicts`** — queries for in-flight specs with overlapping `files_touched`.
 

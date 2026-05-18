@@ -1,5 +1,6 @@
 ---
 title: Model Role Config — Loose Role-Based Model Assignment
+slug: model-role-config
 type: feature
 status: completed
 milestone: v0.2

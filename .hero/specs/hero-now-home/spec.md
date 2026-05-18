@@ -1,5 +1,6 @@
 ---
 title: Hero Now Home — Personal Cold-Start Surface
+slug: hero-now-home
 type: feature
 status: completed
 tags: [serve, surface, now, home, web-app, ui]

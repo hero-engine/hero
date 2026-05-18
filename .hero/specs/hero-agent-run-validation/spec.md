@@ -1,5 +1,6 @@
 ---
 title: Hero Agent Run Validation — First-Use Smoke Test for Headless Delivery
+slug: hero-agent-run-validation
 type: feature
 status: planning
 tags: [validation, smoke, agent-run, async-delivery, dogfood]

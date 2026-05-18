@@ -1,5 +1,6 @@
 ---
 title: Project Overview
+slug: project-overview
 type: context
 status: active
 created: 2026-04-29

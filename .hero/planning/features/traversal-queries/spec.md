@@ -1,5 +1,6 @@
 ---
 title: Traversal Queries — `hero why` and `hero blocked`
+slug: traversal-queries
 type: feature
 status: delivering
 priority: P0

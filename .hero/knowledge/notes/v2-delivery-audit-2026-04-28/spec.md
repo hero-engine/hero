@@ -1,5 +1,6 @@
 ---
 title: V2 Delivery Audit — 2026-04-28
+slug: v2-delivery-audit-2026-04-28
 type: note
 status: active
 tags: [audit, v2, delivery-gaps, evidence, recovery]

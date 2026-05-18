@@ -1,5 +1,6 @@
 ---
 title: Confluence Wiki Sync — Publish Hero Knowledge to Confluence
+slug: confluence-wiki-sync
 type: feature
 status: completed
 milestone: v0.2

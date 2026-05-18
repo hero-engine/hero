@@ -1,5 +1,6 @@
 ---
 title: CLI Output Drift — Nudge, Conflicts, and Graph Behavior Diverged from Tests
+slug: bug-cli-output-drift-nudge-conflicts-graph
 type: bug
 status: completed
 tags: [cli, output, regression, nudge, conflicts, graph]

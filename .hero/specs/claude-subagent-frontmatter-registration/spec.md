@@ -1,5 +1,6 @@
 ---
 title: Claude Subagent Frontmatter Registration — Hero Agents Invisible to Task Tool
+slug: claude-subagent-frontmatter-registration
 type: bug
 status: completed
 severity: high

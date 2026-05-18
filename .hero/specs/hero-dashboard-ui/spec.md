@@ -1,5 +1,6 @@
 ---
 title: "Local Dashboard UI for Hero Serve"
+slug: hero-dashboard-ui
 type: feature
 status: completed
 created: 2026-04-13

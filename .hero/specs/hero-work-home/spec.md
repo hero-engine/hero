@@ -1,5 +1,6 @@
 ---
 title: Hero Work Home — Spec + Delivery Surface
+slug: hero-work-home
 type: feature
 status: completed
 tags: [serve, surface, work, home, specs, roadmap, kanban, drift, ci, web-app]

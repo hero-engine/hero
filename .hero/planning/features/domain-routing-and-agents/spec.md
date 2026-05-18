@@ -1,5 +1,6 @@
 ---
 title: Domain Routing and Agents — Active-Pack AGENTS.md and Agent Loader
+slug: domain-routing-and-agents
 type: feature
 status: planning
 priority: P0

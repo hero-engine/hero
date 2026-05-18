@@ -1,5 +1,6 @@
 ---
 title: Error Pattern Catalog — Stack-Specific Error Knowledge Base
+slug: error-pattern-catalog
 type: feature
 status: completed
 priority: medium

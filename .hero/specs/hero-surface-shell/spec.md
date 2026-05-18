@@ -1,5 +1,6 @@
 ---
 title: Hero Surface Shell — Slim Top Nav, Page Routing, Shared Fragments
+slug: hero-surface-shell
 type: feature
 status: completed
 tags: [serve, surface, shell, chrome, routing, ui, web-app]

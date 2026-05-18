@@ -1,5 +1,6 @@
 ---
 title: "Satellite Walkthrough UX — Vendor-Pattern Detection and Exclude-Parent Shortcut"
+slug: satellite-walkthrough-ux
 type: feature
 status: planning
 priority: medium

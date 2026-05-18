@@ -1,5 +1,6 @@
 ---
 title: Inline-Propose Output Mode — Agents Propose into the Artifact Pane
+slug: inline-propose-output-mode
 type: feature
 status: delivering
 priority: P0

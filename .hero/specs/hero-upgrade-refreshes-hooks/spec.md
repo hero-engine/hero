@@ -1,5 +1,6 @@
 ---
 title: "`hero upgrade` Refreshes Git Hooks on New Releases"
+slug: hero-upgrade-refreshes-hooks
 type: feature
 status: completed
 tags: [upgrade, hooks, git, refresh, install]
