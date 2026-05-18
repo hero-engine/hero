@@ -347,7 +347,11 @@ func TestAPI_Inventory(t *testing.T) {
 	}
 }
 
-func TestAPI_DashboardUI(t *testing.T) {
+// The v1 dashboard at `/` has been replaced by the shell router (see
+// internal/serve/shell). The API handler no longer serves HTML at `/`;
+// it returns 404 there. Shell behavior is covered by
+// internal/serve/shell/shell_test.go.
+func TestAPI_RootNotHandledByAPI(t *testing.T) {
 	heroDir, projectRoot := setupTestWorkspace(t)
 	srv := NewServer(ServerConfig{
 		HeroDir:     heroDir,
@@ -362,32 +366,7 @@ func TestAPI_DashboardUI(t *testing.T) {
 	rr := httptest.NewRecorder()
 	srv.api.Handler().ServeHTTP(rr, req)
 
-	if rr.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200; body: %s", rr.Code, rr.Body.String())
-	}
-
-	ct := rr.Header().Get("Content-Type")
-	if !strings.Contains(ct, "text/html") {
-		t.Errorf("Content-Type = %q, want text/html", ct)
-	}
-}
-
-func TestAPI_DashboardUI_Disabled(t *testing.T) {
-	heroDir, projectRoot := setupTestWorkspace(t)
-	srv := NewServer(ServerConfig{
-		HeroDir:     heroDir,
-		ProjectRoot: projectRoot,
-		Version:     "test",
-		Port:        0,
-		AutoWatch:   false,
-		UIEnabled:   false,
-	})
-
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	rr := httptest.NewRecorder()
-	srv.api.Handler().ServeHTTP(rr, req)
-
 	if rr.Code == http.StatusOK {
-		t.Fatalf("expected non-200 status when UI is disabled, got %d", rr.Code)
+		t.Fatalf("expected non-200 from API handler at /, got %d (shell composes /)", rr.Code)
 	}
 }

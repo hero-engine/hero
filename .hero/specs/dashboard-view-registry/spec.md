@@ -1,18 +1,25 @@
 ---
 title: Dashboard View Registry — Pluggable Dashboard Pages per Domain
 type: feature
-status: planning
+status: completed
 priority: P0
-tags: [platform, domains, dashboard, ui, registry, refactor]
+tags: [platform, domains, dashboard, ui, registry, refactor, replaced]
 created: 2026-05-15
 relations:
   - target: hero-domains
     kind: parent
+  - target: hero-surface-shell
+    kind: superseded-by
+  - target: hero-surface-architecture
+    kind: superseded-by
 depends-on:
   - domain-plugin-architecture
 horizon: next
 smoke: deferred
 ---
+
+> **Absorbed by [hero-surface-shell](../hero-surface-shell/spec.md) under the [Hero Surface Architecture](../../initiatives/hero-surface-architecture/spec.md) initiative.** The view registry primitive is retained as the shell's pluggability mechanism; the cross-domain router risk flagged here is treated as a first-class concern in the shell spec. This spec is preserved for history.
+
 
 > **Status: awaiting `domain-plugin-architecture`.** This stub is a
 > `/design`-ready brief, not a complete design. The work cannot land

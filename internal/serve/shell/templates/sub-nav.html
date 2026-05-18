@@ -1,0 +1,17 @@
+{{- /* sub-nav — secondary row of text-link tabs used by Knowledge /
+       Agents / People. Param: *shell.SubNav (caller wraps in `with`). */ -}}
+{{ define "sub-nav" }}
+<nav class="subnav" aria-label="Section navigation">
+  <div class="subnav-inner">
+    {{- range .Tabs }}
+    <a href="{{ .Href }}"
+       class="subnav-tab{{ if .Active }} active{{ end }}{{ if eq .Variant "amber" }} amber{{ end }}{{ if eq .Variant "locked" }} locked{{ end }}"
+       {{- if and (eq .Variant "locked") .LockMeta }} title="{{ .LockMeta }}"{{ end }}>
+      {{ .Label }}
+      {{- if eq .Variant "locked" }}<span class="lock-icon" aria-hidden="true">🔒</span>{{ end }}
+      {{- with .Badge }}<span class="badge">{{ . }}</span>{{ end }}
+    </a>
+    {{- end }}
+  </div>
+</nav>
+{{ end }}

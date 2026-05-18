@@ -1,0 +1,25 @@
+{{- /* page-layout — outer wrapper for every shell-rendered page. */ -}}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ .PageTitle }}</title>
+  <link rel="icon" type="image/svg+xml" href="/static/shell/favicon.svg" />
+  <link rel="stylesheet" href="/static/shell/shell.css" />
+  {{- with .HeadExtra }}
+  {{ . }}
+  {{- end }}
+</head>
+<body>
+  {{ template "top-nav" .Chrome }}
+  {{- with .SubNav }}
+  {{ template "sub-nav" . }}
+  {{- end }}
+  <main class="page-container">
+    {{ .ContentHTML }}
+  </main>
+  {{ template "footer" .Footer }}
+  <script type="module" src="/static/shell/islands/command-bar.js" defer></script>
+</body>
+</html>

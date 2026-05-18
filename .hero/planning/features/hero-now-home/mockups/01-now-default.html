@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Now · Hero</title>
+<style>
+  :root {
+    --hero-blue-300: #9bc1e6;
+    --hero-blue-500: #6cb6ff;
+    --hero-blue-700: #2a6cb5;
+    --hero-blue-900: #1a4a7d;
+    --hero-ink: #14181e;
+    --ink-2: #2a2f37;
+    --ink-3: #5a626d;
+    --ink-4: #8a929c;
+    --ink-5: #b4bac3;
+    --bg: #ffffff;
+    --bg-soft: #fafbfc;
+    --bg-softer: #f5f7fa;
+    --bg-secondary: #f5f7fa;
+    --bg-panel: #f7f8fa;
+    --border: #eef1f5;
+    --border-strong: #e3e7ee;
+    --success: #16a249;
+    --warn: #d97706;
+    --danger: #dc2626;
+    --hero-blue-50: #eff6ff;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    color: var(--ink-2);
+    background: var(--bg);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--hero-blue-700); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  button { font-family: inherit; cursor: pointer; }
+  code, .mono { font-family: 'SF Mono', ui-monospace, Menlo, monospace; }
+
+  /* ----- Top nav ----- */
+  .topnav {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    height: 56px;
+  }
+  .topnav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    font-size: 15px;
+    letter-spacing: -0.01em;
+  }
+  .brand .bolt { color: var(--hero-blue-700); width: 18px; height: 18px; }
+  .brand .workspace {
+    color: var(--ink-3);
+    font-weight: 500;
+    margin-left: 2px;
+  }
+  .brand .workspace::before {
+    content: '/';
+    color: var(--ink-5);
+    margin-right: 6px;
+    font-weight: 400;
+  }
+  .nav-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+    height: 100%;
+  }
+  .nav-tab {
+    position: relative;
+    padding: 0 12px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-3);
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .nav-tab:hover { color: var(--hero-ink); text-decoration: none; }
+  .nav-tab.active {
+    color: var(--hero-ink);
+    border-bottom-color: var(--hero-blue-700);
+    font-weight: 600;
+  }
+  .nav-tab .count {
+    font-size: 11px;
+    color: var(--ink-4);
+    background: var(--bg-softer);
+    border-radius: 10px;
+    padding: 1px 7px;
+    font-weight: 500;
+  }
+  .nav-tab.active .count {
+    background: var(--hero-blue-50);
+    color: var(--hero-blue-700);
+  }
+  .topnav-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .search-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--bg-softer);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--ink-4);
+    font-size: 13px;
+    min-width: 220px;
+  }
+  .search-pill:hover { background: var(--bg-soft); border-color: var(--border-strong); text-decoration: none; }
+  .adapter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-softer);
+    color: var(--ink-4);
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background .12s ease, border-color .12s ease;
+  }
+  .adapter-chip:hover { background: var(--bg-soft); border-color: var(--border-strong); }
+  .adapter-chip .adapter-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--hero-blue-500);
+  }
+  .search-pill .kbd {
+    margin-left: auto;
+    font-size: 11px;
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--ink-3);
+    font-family: 'SF Mono', ui-monospace, monospace;
+  }
+  .avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--hero-blue-500), var(--hero-blue-900));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .workspace-state {
+    font-size: 12px;
+    color: var(--ink-4);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .workspace-state .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--success);
+  }
+
+  /* ----- Page container ----- */
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  /* ----- Page hero ----- */
+  .page-hero {
+    padding: 40px 0 8px 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .page-hero-text { flex: 1 1 auto; min-width: 0; }
+  .eyebrow {
+    font-size: 12px;
+    color: var(--ink-4);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .eyebrow .bolt-sm { width: 10px; height: 10px; color: var(--hero-blue-700); }
+  .page-title {
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px 0;
+  }
+  .page-sub {
+    font-size: 15px;
+    color: var(--ink-3);
+    margin: 0;
+  }
+  .page-sub strong { color: var(--hero-ink); font-weight: 600; }
+  .page-sub .dot-sep { color: var(--ink-5); margin: 0 8px; }
+  .page-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 6px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--ink-2);
+    transition: background 0.12s ease, border-color 0.12s ease;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--hero-blue-700);
+    color: white;
+    border-color: var(--hero-blue-700);
+  }
+  .btn-primary:hover { background: var(--hero-blue-900); border-color: var(--hero-blue-900); text-decoration: none; }
+  .btn-ghost { color: var(--ink-2); }
+  .btn-ghost:hover { background: var(--bg-softer); }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    background: var(--bg-softer);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--ink-3);
+    font-weight: 500;
+  }
+  .chip-solo {
+    background: var(--hero-blue-50);
+    border-color: #d6e7fb;
+    color: var(--hero-blue-700);
+  }
+
+  /* ----- Section ----- */
+  section { padding: 28px 0; scroll-margin-top: 72px; }
+  section.metric-strip-section { padding: 24px 0 28px 0; }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    gap: 16px;
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    margin: 0;
+    letter-spacing: -0.005em;
+  }
+  .section-meta { color: var(--ink-4); font-size: 13px; font-weight: 400; margin-left: 8px; }
+  .section-link {
+    font-size: 13px;
+    color: var(--hero-blue-700);
+    font-weight: 500;
+  }
+
+  /* ----- Metric strip ----- */
+  .metric-tabs-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+    gap: 16px;
+  }
+  .metric-tabs {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .metric-tab {
+    position: relative;
+    padding: 8px 12px 10px 12px;
+    color: var(--ink-4);
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    cursor: pointer;
+  }
+  .metric-tab:first-child { padding-left: 0; }
+  .metric-tab:hover { color: var(--hero-ink); }
+  .metric-tab.active {
+    color: var(--hero-ink);
+    border-bottom-color: var(--hero-blue-700);
+    font-weight: 600;
+  }
+  .metric-all-link {
+    font-size: 13px;
+    color: var(--hero-blue-700);
+    font-weight: 500;
+  }
+
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+  .metric-pane { display: none; }
+  .metric-pane.active { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+
+  .metric-tile {
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 124px;
+    position: relative;
+  }
+  .metric-value {
+    font-size: 30px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .metric-value .unit { font-size: 15px; color: var(--ink-4); font-weight: 500; }
+  .metric-value .icon-clock {
+    width: 16px;
+    height: 16px;
+    color: var(--ink-4);
+    align-self: center;
+    margin-left: 2px;
+  }
+  .metric-label {
+    font-size: 12px;
+    color: var(--ink-4);
+    font-weight: 500;
+    margin-top: 2px;
+  }
+  .metric-sub {
+    font-size: 11px;
+    color: var(--ink-4);
+    margin-top: auto;
+  }
+  .metric-sub.mono {
+    font-family: 'SF Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--ink-3);
+    line-height: 1.5;
+  }
+  .metric-sparkline {
+    margin-top: auto;
+    align-self: flex-end;
+  }
+  .metric-progress {
+    margin-top: 8px;
+    height: 5px;
+    background: rgba(0,0,0,0.06);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .metric-progress-fill {
+    height: 100%;
+    background: var(--hero-blue-500);
+    border-radius: 3px;
+  }
+  /* Segmented bar */
+  .seg-bar {
+    margin-top: 10px;
+    display: flex;
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    background: rgba(0,0,0,0.06);
+  }
+  .seg-bar span { display: block; height: 100%; }
+  .seg-done { background: var(--success); }
+  .seg-review { background: var(--hero-blue-500); }
+  .seg-risk { background: var(--warn); }
+  .seg-todo { background: var(--ink-5); }
+  .seg-legend {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    font-size: 10px;
+    color: var(--ink-4);
+    flex-wrap: wrap;
+  }
+  .seg-legend .lg { display: inline-flex; align-items: center; gap: 4px; }
+  .seg-legend .sw {
+    width: 7px;
+    height: 7px;
+    border-radius: 2px;
+    display: inline-block;
+  }
+
+  /* ----- On your plate ----- */
+  .plate-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 24px;
+  }
+  .plate {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 24px;
+  }
+  .plate-secondary {
+    background: transparent;
+    border-color: var(--border);
+  }
+  .plate-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .plate-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    margin: 0;
+    letter-spacing: -0.005em;
+  }
+  .plate-title a { color: var(--hero-ink); }
+  .plate-title a:hover { color: var(--hero-blue-700); text-decoration: none; }
+  .plate-desc {
+    color: var(--ink-3);
+    font-size: 13px;
+    margin: 4px 0 16px 0;
+  }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 9px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .status-delivering {
+    background: var(--hero-blue-50);
+    color: var(--hero-blue-700);
+  }
+  .status-review {
+    background: #fff7ed;
+    color: var(--warn);
+  }
+  .status-planning {
+    background: var(--bg-softer);
+    color: var(--ink-3);
+  }
+  .progress-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .progress-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .progress-line .label { min-width: 130px; color: var(--ink-3); }
+  .progress-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--hero-blue-500);
+    border-radius: 3px;
+  }
+  .progress-fill.success { background: var(--success); }
+  .progress-line .value { color: var(--hero-ink); font-weight: 600; font-variant-numeric: tabular-nums; min-width: 56px; text-align: right; }
+  .plate-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--ink-4);
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+  }
+  .meta-item { display: flex; align-items: center; gap: 6px; }
+  .meta-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ink-5);
+  }
+  .meta-dot.live {
+    background: var(--hero-blue-500);
+    box-shadow: 0 0 0 0 rgba(108, 182, 255, 0.7);
+    animation: pulse 1.8s ease-out infinite;
+  }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(108, 182, 255, 0.45); }
+    70%  { box-shadow: 0 0 0 6px rgba(108, 182, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(108, 182, 255, 0); }
+  }
+  .plate-actions {
+    margin-top: 14px;
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    font-size: 13px;
+  }
+  .plate-actions a { font-weight: 500; }
+
+  /* ----- Inbox ----- */
+  .inbox-list { display: flex; flex-direction: column; }
+  .inbox-row {
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    gap: 14px;
+    align-items: center;
+    padding: 14px 8px;
+    border-bottom: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .inbox-row:last-child { border-bottom: none; }
+  .inbox-row:hover { background: var(--bg-soft); }
+  .inbox-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin: 0 auto;
+  }
+  .dot-proposal { background: var(--hero-blue-500); }
+  .dot-handoff { background: #a855f7; }
+  .dot-import { background: var(--warn); }
+  .dot-review { background: var(--success); }
+  .inbox-main { min-width: 0; }
+  .inbox-summary {
+    font-size: 14px;
+    color: var(--hero-ink);
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .inbox-summary a { color: var(--hero-ink); }
+  .inbox-summary a:hover { color: var(--hero-blue-700); text-decoration: none; }
+  .inbox-meta {
+    font-size: 12px;
+    color: var(--ink-4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .inbox-meta .sep { color: var(--ink-5); }
+  .inbox-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .inbox-actions .danger { color: var(--danger); }
+  .inbox-actions .muted { color: var(--ink-4); }
+
+  /* ----- Feed ----- */
+  .feed-list { display: flex; flex-direction: column; }
+  .feed-row {
+    display: grid;
+    grid-template-columns: 56px 22px 1fr;
+    gap: 14px;
+    align-items: center;
+    padding: 10px 8px;
+    font-size: 13px;
+    border-radius: 6px;
+  }
+  .feed-row:hover { background: var(--bg-soft); }
+  .feed-time {
+    font-size: 12px;
+    color: var(--ink-4);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .feed-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--ink-4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .feed-text { color: var(--ink-2); }
+  .feed-text strong, .feed-text a { color: var(--hero-ink); font-weight: 500; }
+  .feed-text a:hover { color: var(--hero-blue-700); text-decoration: none; }
+  .feed-actor { color: var(--ink-4); }
+  .feed-mono { font-family: 'SF Mono', ui-monospace, monospace; font-size: 12px; }
+
+  /* ----- Agents ----- */
+  .agents-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 28px;
+  }
+  .agent-block-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    color: var(--ink-4);
+    margin: 0 0 12px 0;
+  }
+  .agent-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    background: var(--bg);
+  }
+  .agent-card-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .agent-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #a78bfa, #6366f1);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .agent-name { font-size: 14px; font-weight: 600; color: var(--hero-ink); }
+  .agent-on { font-size: 12px; color: var(--ink-3); }
+  .agent-on a { font-weight: 500; }
+  .live-tag {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--hero-blue-700);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .transcript {
+    background: var(--bg-panel);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: 'SF Mono', ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--ink-2);
+    margin: 12px 0 14px 0;
+  }
+  .transcript .role { color: var(--ink-4); font-weight: 600; margin-right: 6px; }
+  .transcript .role.assistant { color: var(--hero-blue-700); }
+  .transcript .tool { color: var(--ink-4); }
+  .transcript .ok { color: var(--success); }
+  .transcript .pending { color: var(--ink-4); font-style: italic; }
+  .agent-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--ink-4);
+  }
+  .agent-foot .cost { color: var(--hero-ink); font-weight: 600; }
+  .agent-foot a { font-weight: 500; }
+  .today-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .today-stat {
+    background: var(--bg-soft);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .today-stat .v {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+  }
+  .today-stat .v .qual { font-size: 13px; color: var(--ink-4); font-weight: 500; margin-left: 2px; }
+  .today-stat .v .qual.warn { color: var(--warn); }
+  .today-stat .l {
+    font-size: 11px;
+    color: var(--ink-4);
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 500;
+  }
+  .today-list { display: flex; flex-direction: column; }
+  .today-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    font-size: 13px;
+    color: var(--ink-2);
+    border-top: 1px solid var(--border);
+  }
+  .today-row:first-child { border-top: none; }
+  .today-row .status {
+    width: 14px;
+    color: var(--success);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .today-row .spec { color: var(--hero-ink); font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .today-row .dur { font-size: 12px; color: var(--ink-4); font-variant-numeric: tabular-nums; }
+
+  .sparkline-mini {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 16px;
+    margin-top: 8px;
+  }
+  .sparkline-mini span {
+    width: 4px;
+    background: var(--hero-blue-300);
+    border-radius: 1px;
+  }
+
+  /* ----- Quick launch ----- */
+  .launch {
+    text-align: center;
+    padding: 16px 0 8px 0;
+  }
+  .launch-title-wrap { text-align: center; margin-bottom: 22px; }
+  .launch-input-wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .launch-input {
+    width: 100%;
+    height: 64px;
+    border-radius: 14px;
+    border: 1px solid var(--border-strong);
+    background: var(--bg);
+    padding: 0 64px 0 56px;
+    font-size: 15px;
+    color: var(--hero-ink);
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .launch-input::placeholder { color: var(--ink-4); }
+  .launch-input:focus {
+    border-color: var(--hero-blue-500);
+    box-shadow: 0 0 0 4px rgba(108, 182, 255, 0.18);
+  }
+  .launch-icon {
+    position: absolute;
+    left: 22px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--hero-blue-700);
+  }
+  .launch-submit {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 44px;
+    width: 44px;
+    border-radius: 10px;
+    background: var(--hero-blue-700);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .launch-submit:hover { background: var(--hero-blue-900); }
+  .intent-chips {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+  }
+  .intent-chip {
+    font-family: 'SF Mono', ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--ink-3);
+    background: var(--bg-softer);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px 12px;
+  }
+  .intent-chip:hover {
+    color: var(--hero-blue-700);
+    border-color: var(--hero-blue-300);
+    background: var(--hero-blue-50);
+    text-decoration: none;
+  }
+  .launch-try {
+    margin-top: 18px;
+    font-size: 13px;
+    color: var(--ink-4);
+  }
+  .launch-try a { margin: 0 4px; }
+
+  /* ----- Footer ----- */
+  footer {
+    margin-top: 32px;
+    padding: 32px 0 48px 0;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--ink-4);
+  }
+  .footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .footer-left { display: flex; align-items: center; gap: 10px; }
+  .footer-left .bolt-sm { color: var(--hero-blue-700); width: 12px; height: 12px; }
+  .footer-links { display: flex; align-items: center; gap: 18px; }
+  .footer-links a { color: var(--ink-3); }
+
+  /* ----- Responsive ----- */
+  @media (max-width: 900px) {
+    .plate-grid, .agents-grid { grid-template-columns: 1fr; }
+    .metric-grid, .metric-pane.active { grid-template-columns: repeat(2, 1fr); }
+    .nav-tabs { display: none; }
+    .search-pill { min-width: 0; }
+    .page-title { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============== TOP NAV ============== -->
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="#" class="brand">
+      <svg class="bolt" viewBox="0 0 90 90" fill="currentColor" aria-hidden="true"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+      Hero
+      <span class="workspace">hero</span>
+    </a>
+
+    <div class="nav-tabs">
+      <a href="#" class="nav-tab active">Now</a>
+      <a href="#" class="nav-tab">Work <span class="count">18</span></a>
+      <a href="#" class="nav-tab">Knowledge</a>
+      <a href="#" class="nav-tab">Agents <span class="count">1</span></a>
+      <a href="#" class="nav-tab">People</a>
+    </div>
+
+    <div class="topnav-right">
+      <span class="adapter-chip" title="Chat adapter: hero-code (connected)"><span class="adapter-dot"></span>via hero-code</span>
+      <a href="#" class="search-pill">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        Search specs, code, knowledge…
+        <span class="kbd">⌘K</span>
+      </a>
+      <span class="workspace-state"><span class="dot"></span>main</span>
+      <div class="avatar" title="Ben Wheeler">BW</div>
+    </div>
+  </div>
+</nav>
+
+<!-- ============== PAGE HERO ============== -->
+<div class="page">
+  <header class="page-hero">
+    <div class="page-hero-text">
+      <div class="eyebrow">
+        <svg class="bolt-sm" viewBox="0 0 90 90" fill="currentColor" aria-hidden="true"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+        hero · main · solo edition
+      </div>
+      <h1 class="page-title">Now</h1>
+      <p class="page-sub"><strong>2 need your input</strong><span class="dot-sep">·</span><strong>1 agent running</strong><span class="dot-sep">·</span>since Fri 4:12pm</p>
+    </div>
+    <div class="page-hero-actions">
+      <a href="#inbox" class="btn btn-primary">
+        Open Inbox
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+      <button class="btn btn-ghost">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+        What changed since Friday
+      </button>
+      <span class="chip chip-solo">Solo</span>
+    </div>
+  </header>
+
+  <!-- ============== SECTION 2 — Tabbed metric strip ============== -->
+  <section class="metric-strip-section" aria-label="Metrics">
+    <div class="metric-tabs-row">
+      <div class="metric-tabs" role="tablist">
+        <button class="metric-tab active" data-tab="sprint" role="tab" aria-selected="true">This sprint</button>
+        <button class="metric-tab" data-tab="week" role="tab" aria-selected="false">My week</button>
+        <button class="metric-tab" data-tab="roi" role="tab" aria-selected="false">Hero ROI</button>
+      </div>
+      <a href="#" class="metric-all-link">View all metrics →</a>
+    </div>
+
+    <!-- Pane: This sprint -->
+    <div class="metric-pane active" data-pane="sprint">
+      <div class="metric-tile">
+        <div class="metric-value">9<span class="unit">/ 14</span></div>
+        <div class="metric-label">specs done · Sprint 17</div>
+        <div class="seg-bar" aria-hidden="true">
+          <span class="seg-done" style="width:64.3%"></span>
+          <span class="seg-review" style="width:21.4%"></span>
+          <span class="seg-risk" style="width:14.3%"></span>
+        </div>
+        <div class="seg-legend">
+          <span class="lg"><span class="sw seg-done"></span>9 done</span>
+          <span class="lg"><span class="sw seg-review"></span>3 in-review</span>
+          <span class="lg"><span class="sw seg-risk"></span>2 at risk</span>
+        </div>
+      </div>
+
+      <div class="metric-tile">
+        <div class="metric-value">
+          2
+          <svg class="icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>
+        </div>
+        <div class="metric-label">days remaining</div>
+        <div class="metric-sub">ends Wed May 20</div>
+      </div>
+
+      <div class="metric-tile">
+        <div class="metric-value" style="color:var(--warn);">2</div>
+        <div class="metric-label">specs flagged at risk</div>
+        <div class="metric-sub mono">tripwire-system<br/>graph-conflict-detection</div>
+      </div>
+
+      <div class="metric-tile">
+        <div class="metric-value">3<span class="unit">/ 4</span></div>
+        <div class="metric-label">your committed specs</div>
+        <div class="metric-progress"><div class="metric-progress-fill" style="width:75%"></div></div>
+        <div class="metric-sub" style="margin-top:8px;">1 in-review</div>
+      </div>
+    </div>
+
+    <!-- Pane: My week (hidden) -->
+    <div class="metric-pane" data-pane="week">
+      <div class="metric-tile">
+        <div class="metric-value">5</div>
+        <div class="metric-label">specs shipped this week</div>
+        <svg class="metric-sparkline" width="80" height="22" viewBox="0 0 80 22" fill="none">
+          <polyline points="2,16 14,14 26,15 38,10 50,8 62,5 78,3" stroke="#2a6cb5" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-value">47</div>
+        <div class="metric-label">commits authored</div>
+        <div class="metric-sub">+1.2K / −340 lines</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-value">84<span class="unit">%</span></div>
+        <div class="metric-label">agent assist on your work</div>
+        <svg class="metric-sparkline" width="80" height="22" viewBox="0 0 80 22" fill="none">
+          <polyline points="2,12 14,13 26,10 38,11 50,8 62,7 78,5" stroke="#2a6cb5" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-value">22<span class="unit"> sessions</span></div>
+        <div class="metric-label">≈18h Hero-active</div>
+        <svg class="metric-sparkline" width="80" height="22" viewBox="0 0 80 22" fill="none">
+          <polyline points="2,15 14,9 26,11 38,7 50,12 62,5 78,8" stroke="#2a6cb5" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Pane: Hero ROI (hidden) -->
+    <div class="metric-pane" data-pane="roi">
+      <div class="metric-tile">
+        <div class="metric-value">71<span class="unit">%</span></div>
+        <div class="metric-label">autonomy ratio (7d)</div>
+        <svg class="metric-sparkline" width="80" height="22" viewBox="0 0 80 22" fill="none">
+          <polyline points="2,16 14,12 26,14 38,9 50,10 62,5 78,4" stroke="#2a6cb5" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-value">~12<span class="unit">h</span></div>
+        <div class="metric-label">hours saved this week</div>
+        <svg class="metric-sparkline" width="80" height="22" viewBox="0 0 80 22" fill="none">
+          <polyline points="2,18 14,14 26,15 38,9 50,11 62,6 78,3" stroke="#2a6cb5" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-value">84<span class="unit">%</span></div>
+        <div class="metric-label">spec coverage (7d)</div>
+        <svg class="metric-sparkline" width="80" height="22" viewBox="0 0 80 22" fill="none">
+          <polyline points="2,11 14,10 26,9 38,8 50,7 62,6 78,5" stroke="#2a6cb5" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-value">4.1<span class="unit">d</span></div>
+        <div class="metric-label">cycle time</div>
+        <svg class="metric-sparkline" width="80" height="22" viewBox="0 0 80 22" fill="none">
+          <polyline points="2,8 14,10 26,9 38,12 50,11 62,13 78,15" stroke="#2a6cb5" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== SECTION 3 — Needs your input ============== -->
+  <section id="inbox">
+    <div class="section-header">
+      <h2 class="section-title">Needs your input <span class="section-meta">4 items</span></h2>
+      <a href="#" class="section-link">View all (4) →</a>
+    </div>
+
+    <div class="inbox-list">
+      <div class="inbox-row">
+        <span class="inbox-dot dot-proposal" title="Proposal"></span>
+        <div class="inbox-main">
+          <div class="inbox-summary"><a href="#">claude-opus proposes change to <code style="font-size:13px;">internal/tasks/runner.go</code></a></div>
+          <div class="inbox-meta">
+            Proposal <span class="sep">·</span> 3 files · +84 / −12 <span class="sep">·</span> 14m ago <span class="sep">·</span> from /deliver session on per-feature-smoke-coverage
+          </div>
+        </div>
+        <div class="inbox-actions">
+          <a href="#">Approve</a>
+          <a href="#">View diff</a>
+          <a href="#" class="danger">Reject</a>
+        </div>
+      </div>
+
+      <div class="inbox-row">
+        <span class="inbox-dot dot-handoff" title="Handoff"></span>
+        <div class="inbox-main">
+          <div class="inbox-summary"><a href="#">hero-cloud handed back <code style="font-size:13px;">edge-worker-deploy-pipeline</code></a></div>
+          <div class="inbox-meta">
+            Handoff <span class="sep">·</span> 1 spec + 4 commits <span class="sep">·</span> 2h ago <span class="sep">·</span> peer: hero-cloud
+          </div>
+        </div>
+        <div class="inbox-actions">
+          <a href="#">Accept handoff</a>
+          <a href="#">Open</a>
+        </div>
+      </div>
+
+      <div class="inbox-row">
+        <span class="inbox-dot dot-review" title="Review"></span>
+        <div class="inbox-main">
+          <div class="inbox-summary"><a href="#">PR #421 — cross-repo-peering needs your review</a></div>
+          <div class="inbox-meta">
+            Review <span class="sep">·</span> 23 files · +1.2k / −340 <span class="sep">·</span> 6h ago <span class="sep">·</span> by chet-bellows
+          </div>
+        </div>
+        <div class="inbox-actions">
+          <a href="#">Review</a>
+          <a href="#" class="muted">Snooze</a>
+        </div>
+      </div>
+
+      <div class="inbox-row">
+        <span class="inbox-dot dot-import" title="Import"></span>
+        <div class="inbox-main">
+          <div class="inbox-summary"><a href="#">7 new issues imported from Linear — confirm scaffolds</a></div>
+          <div class="inbox-meta">
+            Import <span class="sep">·</span> 7 spec drafts <span class="sep">·</span> 1d ago <span class="sep">·</span> source: linear · team: Hero
+          </div>
+        </div>
+        <div class="inbox-actions">
+          <a href="#">Triage</a>
+          <a href="#" class="muted">Dismiss</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== SECTION 4 — Quick launch ============== -->
+  <section>
+    <div class="launch-title-wrap">
+      <h2 class="section-title" style="display:inline-block;">Tell Hero what to do next</h2>
+    </div>
+
+    <div class="launch">
+      <div class="launch-input-wrap">
+        <span class="launch-icon">
+          <svg width="20" height="20" viewBox="0 0 90 90" fill="currentColor" aria-hidden="true"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+        </span>
+        <input class="launch-input" type="text" placeholder="Describe what you want to work on, ask a question, or paste an error…" />
+        <button class="launch-submit" aria-label="Send">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+
+      <div class="intent-chips">
+        <a href="#" class="intent-chip">/design</a>
+        <a href="#" class="intent-chip">/diagnose</a>
+        <a href="#" class="intent-chip">/deliver</a>
+        <a href="#" class="intent-chip">/review</a>
+        <a href="#" class="intent-chip">/ask</a>
+      </div>
+
+      <div class="launch-try">
+        Try: <a href="#">finish per-feature-smoke-coverage</a> · <a href="#">why is scan enrichment looping?</a> · <a href="#">design rate-limited peer calls</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== SECTION 5 — On your plate ============== -->
+  <section>
+    <div class="section-header">
+      <h2 class="section-title">On your plate <span class="section-meta">2 active specs</span></h2>
+      <a href="#" class="section-link">All your work →</a>
+    </div>
+
+    <div class="plate-grid">
+      <!-- Primary active spec -->
+      <article class="plate">
+        <div class="plate-top">
+          <h3 class="plate-title"><a href="#">per-feature-smoke-coverage</a></h3>
+          <span class="status-pill status-delivering">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>
+            Delivering
+          </span>
+        </div>
+        <p class="plate-desc">Continuous real-world verification — every feature spec gets a smoke test that runs against a fresh hero workspace on each commit.</p>
+
+        <div class="progress-row">
+          <div class="progress-line">
+            <span class="label">Acceptance criteria</span>
+            <div class="progress-bar"><div class="progress-fill" style="width: 71%"></div></div>
+            <span class="value">10 / 14</span>
+          </div>
+          <div class="progress-line">
+            <span class="label">Contract coverage</span>
+            <div class="progress-bar"><div class="progress-fill success" style="width: 88%"></div></div>
+            <span class="value">88%</span>
+          </div>
+        </div>
+
+        <div class="plate-meta">
+          <span class="meta-item"><span class="meta-dot live"></span>claude-opus running</span>
+          <span class="meta-item">claimed by you</span>
+          <span class="meta-item">branch <code style="font-size:12px;">feat/smoke-coverage</code></span>
+          <span class="meta-item">last activity 4m ago</span>
+        </div>
+
+        <div class="plate-actions">
+          <a href="#">Open spec</a>
+          <a href="#">Continue session</a>
+          <a href="#" class="mono">/deliver</a>
+          <a href="#">View graph</a>
+        </div>
+      </article>
+
+      <!-- Secondary recent spec -->
+      <article class="plate plate-secondary">
+        <div class="plate-top">
+          <h3 class="plate-title"><a href="#">cross-repo-peering</a></h3>
+          <span class="status-pill status-review">In review</span>
+        </div>
+        <p class="plate-desc">Conventions travel, specs hand off, heroes call each other. Last touched Friday afternoon.</p>
+
+        <div class="progress-row">
+          <div class="progress-line">
+            <span class="label">Acceptance criteria</span>
+            <div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
+            <span class="value">9 / 9</span>
+          </div>
+          <div class="progress-line">
+            <span class="label">Contract coverage</span>
+            <div class="progress-bar"><div class="progress-fill success" style="width: 96%"></div></div>
+            <span class="value">96%</span>
+          </div>
+        </div>
+
+        <div class="plate-meta">
+          <span class="meta-item">PR #421 open</span>
+          <span class="meta-item">1 review pending</span>
+        </div>
+
+        <div class="plate-actions">
+          <a href="#">Open spec</a>
+          <a href="#">View PR →</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============== SECTION 6 — Your agents ============== -->
+  <section>
+    <div class="section-header">
+      <h2 class="section-title">Your agents</h2>
+      <a href="#" class="section-link">Open Agents →</a>
+    </div>
+
+    <div class="agents-grid">
+      <!-- Currently running -->
+      <div>
+        <h3 class="agent-block-title">Currently running</h3>
+        <div class="agent-card">
+          <div class="agent-card-head">
+            <div class="agent-avatar">co</div>
+            <div>
+              <div class="agent-name">claude-opus</div>
+              <div class="agent-on">delivering <a href="#">per-feature-smoke-coverage</a> · session 4m</div>
+            </div>
+            <span class="live-tag"><span class="meta-dot live"></span>Live</span>
+          </div>
+
+          <div class="transcript">
+            <div><span class="role assistant">assistant</span>Reading <span class="tool">internal/tasks/runner.go</span> to understand the existing run loop before adding smoke-test hooks…</div>
+            <div><span class="role">tool</span><span class="tool">Read</span> internal/tasks/runner.go <span class="ok">✓ 312 lines</span></div>
+            <div><span class="role">tool</span><span class="tool">Grep</span> "RunFeatureSmoke" <span class="ok">✓ 3 matches in 2 files</span></div>
+            <div><span class="role assistant">assistant</span>Found the extension point at <span class="tool">runner.go:147</span>. Drafting the per-feature wrapper now…</div>
+            <div><span class="role">tool</span><span class="tool">Edit</span> internal/tasks/runner.go <span class="pending">awaiting your approval</span></div>
+          </div>
+
+          <div class="agent-foot">
+            <div><span class="cost">$0.32</span> · 18 tool calls · 47k tokens</div>
+            <div>
+              <a href="#">Open transcript</a>
+              &nbsp;·&nbsp;
+              <a href="#" style="color:var(--danger);">Interrupt</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today -->
+      <div>
+        <h3 class="agent-block-title">Today</h3>
+
+        <div class="today-stats">
+          <div class="today-stat">
+            <div class="v">2 <span class="qual">done</span></div>
+            <div class="l">Sessions</div>
+          </div>
+          <div class="today-stat">
+            <div class="v">1 <span class="qual warn">pending</span></div>
+            <div class="l">Proposals</div>
+          </div>
+          <div class="today-stat">
+            <div class="v">$0.74</div>
+            <div class="l">Spend</div>
+            <div class="sparkline-mini">
+              <span style="height:6px;"></span>
+              <span style="height:10px;"></span>
+              <span style="height:4px;"></span>
+              <span style="height:13px;"></span>
+              <span style="height:9px;"></span>
+              <span style="height:14px;"></span>
+              <span style="height:11px;"></span>
+            </div>
+          </div>
+          <div class="today-stat">
+            <div class="v">71%</div>
+            <div class="l">Autonomy</div>
+            <div class="sparkline-mini">
+              <span style="height:8px;"></span>
+              <span style="height:11px;"></span>
+              <span style="height:9px;"></span>
+              <span style="height:13px;"></span>
+              <span style="height:12px;"></span>
+              <span style="height:14px;"></span>
+              <span style="height:14px;"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="today-list">
+          <div class="today-row">
+            <span class="status">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5L20 7"/></svg>
+            </span>
+            <span class="spec">graph-conflict-detection — kickoff</span>
+            <span class="dur">28m</span>
+          </div>
+          <div class="today-row">
+            <span class="status">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5L20 7"/></svg>
+            </span>
+            <span class="spec">scan-enrichment-unbounded-loop — diagnose</span>
+            <span class="dur">14m</span>
+          </div>
+          <div class="today-row">
+            <span class="status" style="color:var(--warn);">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/></svg>
+            </span>
+            <span class="spec">per-feature-smoke-coverage — proposal pending</span>
+            <span class="dur">4m</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== SECTION 7 — Since you were here ============== -->
+  <section>
+    <div class="section-header">
+      <h2 class="section-title">Since you were here</h2>
+      <a href="#" class="section-link">Show more →</a>
+    </div>
+
+    <div class="feed-list">
+      <div class="feed-row">
+        <span class="feed-time">2h</span>
+        <span class="feed-icon" title="commit">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M3 12h6M15 12h6"/></svg>
+        </span>
+        <span class="feed-text">
+          <a href="#" class="feed-mono">d71a47d</a> <strong>feat(rendering): vocabulary + methodology-aware rendering spread</strong> on <code class="feed-mono">main</code> <span class="feed-actor">· chet-bellows</span>
+        </span>
+      </div>
+
+      <div class="feed-row">
+        <span class="feed-time">4h</span>
+        <span class="feed-icon" title="spec">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
+        </span>
+        <span class="feed-text">
+          Spec <a href="#">graph-conflict-detection</a> moved <strong>planning → delivering</strong> <span class="feed-actor">· auto · /deliver kickoff</span>
+        </span>
+      </div>
+
+      <div class="feed-row">
+        <span class="feed-time">5h</span>
+        <span class="feed-icon" title="knowledge">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </span>
+        <span class="feed-text">
+          New knowledge note <a href="#">tripwire-system-prevents-stale-flags</a> captured from <a href="#">claude-opus</a> session <span class="feed-actor">· auto</span>
+        </span>
+      </div>
+
+      <div class="feed-row">
+        <span class="feed-time">8h</span>
+        <span class="feed-icon" title="drift">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--warn);"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+        </span>
+        <span class="feed-text">
+          Drift detected: <a href="#">spec-status-integrity</a> claims complete but smoke test fails <span class="feed-actor">· hero check</span>
+        </span>
+      </div>
+
+      <div class="feed-row">
+        <span class="feed-time">1d</span>
+        <span class="feed-icon" title="convention">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m9 11 3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>
+        </span>
+        <span class="feed-text">
+          Convention <a href="#">peer-call-prompt-composition</a> promoted from draft after 3 successful uses <span class="feed-actor">· knowledge-flywheel</span>
+        </span>
+      </div>
+
+      <div class="feed-row">
+        <span class="feed-time">1d</span>
+        <span class="feed-icon" title="commit">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M3 12h6M15 12h6"/></svg>
+        </span>
+        <span class="feed-text">
+          <a href="#" class="feed-mono">47f08d8</a> <strong>feat(propose): inline-propose Go side — shim, daemon store, REST/SSE</strong> <span class="feed-actor">· chet-bellows</span>
+        </span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============== FOOTER ============== -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-left">
+      <svg class="bolt-sm" viewBox="0 0 90 90" fill="currentColor" aria-hidden="true"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+      Hero v0.18.2 · workspace hero · solo edition
+    </div>
+    <div class="footer-links">
+      <a href="#">Docs</a>
+      <a href="#">GitHub</a>
+      <a href="#">Status</a>
+      <a href="#">⌘K</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Focus the launch input on '/'
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+      e.preventDefault();
+      document.querySelector('.launch-input').focus();
+    }
+  });
+
+  // Intent chips populate the launch input
+  document.querySelectorAll('.intent-chip').forEach(chip => {
+    chip.addEventListener('click', (e) => {
+      e.preventDefault();
+      const input = document.querySelector('.launch-input');
+      input.value = chip.textContent + ' ';
+      input.focus();
+    });
+  });
+
+  // Metric tabs
+  document.querySelectorAll('.metric-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.tab;
+      document.querySelectorAll('.metric-tab').forEach(t => {
+        const on = t === tab;
+        t.classList.toggle('active', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      document.querySelectorAll('.metric-pane').forEach(p => {
+        p.classList.toggle('active', p.dataset.pane === target);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>

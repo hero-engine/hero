@@ -1,0 +1,19 @@
+{{- /* empty-state-notice — soft notice with hero-blue left accent.
+       Param: shell.EmptyState. */ -}}
+{{ define "empty-state-notice" }}
+<div class="empty-state-notice">
+  <h3 class="headline">{{ .Headline }}</h3>
+  {{- with .Body }}<p class="body">{{ . }}</p>{{ end }}
+  {{- if or .PrimaryAction.Label .GhostAction.Label }}
+  <div class="actions">
+    {{- with .PrimaryAction }}
+      {{- if .Label }}<a href="{{ .Href }}" class="btn btn-primary">{{ .Label }}</a>{{ end }}
+    {{- end }}
+    {{- with .GhostAction }}
+      {{- if .Label }}<a href="{{ .Href }}" class="btn btn-ghost">{{ .Label }}</a>{{ end }}
+    {{- end }}
+  </div>
+  {{- end }}
+  {{- with .FootNote }}<div class="footnote">{{ . }}</div>{{ end }}
+</div>
+{{ end }}

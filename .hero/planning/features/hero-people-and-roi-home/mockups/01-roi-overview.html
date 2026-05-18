@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ROI Overview · People · Hero</title>
+<style>
+  :root {
+    --hero-blue-300: #9bc1e6;
+    --hero-blue-500: #6cb6ff;
+    --hero-blue-700: #2a6cb5;
+    --hero-blue-900: #1a4a7d;
+    --hero-ink: #14181e;
+    --ink-2: #2a2f37;
+    --ink-3: #5a626d;
+    --ink-4: #8a929c;
+    --ink-5: #b4bac3;
+    --bg: #ffffff;
+    --bg-soft: #fafbfc;
+    --bg-softer: #f5f7fa;
+    --bg-secondary: #f5f7fa;
+    --bg-panel: #f7f8fa;
+    --border: #eef1f5;
+    --border-strong: #e3e7ee;
+    --success: #16a249;
+    --warn: #d97706;
+    --danger: #dc2626;
+    --hero-blue-50: #eff6ff;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    color: var(--ink-2);
+    background: var(--bg);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--hero-blue-700); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  button { font-family: inherit; cursor: pointer; }
+  code, .mono { font-family: 'SF Mono', ui-monospace, Menlo, monospace; }
+
+  /* ----- Top nav ----- */
+  .topnav {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    height: 56px;
+  }
+  .topnav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    font-size: 15px;
+    letter-spacing: -0.01em;
+  }
+  .brand .bolt { color: var(--hero-blue-700); width: 18px; height: 18px; }
+  .brand .workspace { color: var(--ink-3); font-weight: 500; margin-left: 2px; }
+  .brand .workspace::before {
+    content: '/';
+    color: var(--ink-5);
+    margin-right: 6px;
+    font-weight: 400;
+  }
+  .nav-tabs { display: flex; align-items: center; gap: 4px; margin-left: 8px; height: 100%; }
+  .nav-tab {
+    position: relative;
+    padding: 0 12px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-3);
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .nav-tab:hover { color: var(--hero-ink); text-decoration: none; }
+  .nav-tab.active {
+    color: var(--hero-ink);
+    border-bottom-color: var(--hero-blue-700);
+    font-weight: 600;
+  }
+  .nav-tab .count {
+    font-size: 11px;
+    color: var(--ink-4);
+    background: var(--bg-softer);
+    border-radius: 10px;
+    padding: 1px 7px;
+    font-weight: 500;
+  }
+  .topnav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .search-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--bg-softer);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--ink-4);
+    font-size: 13px;
+    min-width: 220px;
+  }
+  .search-pill:hover { background: var(--bg-soft); border-color: var(--border-strong); text-decoration: none; }
+  .adapter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-softer);
+    color: var(--ink-4);
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background .12s ease, border-color .12s ease;
+  }
+  .adapter-chip:hover { background: var(--bg-soft); border-color: var(--border-strong); }
+  .adapter-chip .adapter-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--hero-blue-500);
+  }
+  .search-pill .kbd {
+    margin-left: auto;
+    font-size: 11px;
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--ink-3);
+    font-family: 'SF Mono', ui-monospace, monospace;
+  }
+  .avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--hero-blue-500), var(--hero-blue-900));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .workspace-state { font-size: 12px; color: var(--ink-4); display: flex; align-items: center; gap: 6px; }
+  .workspace-state .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+
+  /* ----- Sub-nav (People + ROI tabs) ----- */
+  .subnav {
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .subnav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    overflow-x: auto;
+  }
+  .subnav-tab {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--ink-3);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .subnav-tab:hover { background: var(--bg-softer); color: var(--hero-ink); text-decoration: none; }
+  .subnav-tab.active {
+    color: var(--hero-blue-700);
+    background: var(--hero-blue-50);
+    font-weight: 600;
+  }
+  .subnav-divider {
+    width: 1px;
+    height: 18px;
+    background: var(--border-strong);
+    margin: 0 8px;
+  }
+  .subnav-tab.faded {
+    color: var(--ink-4);
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .subnav-tab.faded .ent-badge {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--ink-4);
+    background: var(--bg-softer);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  /* ----- Page ----- */
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  /* ----- Page hero ----- */
+  .page-hero {
+    padding: 56px 0 12px 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .page-hero-text { flex: 1 1 auto; min-width: 0; max-width: 820px; }
+  .eyebrow {
+    font-size: 12px;
+    color: var(--ink-4);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .eyebrow .bolt-sm { width: 10px; height: 10px; color: var(--hero-blue-700); }
+  .page-title {
+    font-size: 34px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin: 0 0 10px 0;
+  }
+  .page-sub {
+    font-size: 15px;
+    color: var(--ink-3);
+    margin: 0;
+  }
+  .page-sub strong { color: var(--hero-ink); font-weight: 600; }
+  .page-sub .headline {
+    color: var(--hero-ink);
+    font-weight: 700;
+  }
+  .page-sub .dot-sep { color: var(--ink-5); margin: 0 8px; }
+  .page-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 8px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 13px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid var(--border-strong);
+    background: var(--bg);
+    color: var(--ink-2);
+    transition: background 0.12s ease, border-color 0.12s ease;
+    text-decoration: none;
+  }
+  .btn:hover { background: var(--bg-softer); border-color: var(--ink-5); }
+  .btn-ghost { border-color: transparent; background: transparent; }
+  .btn-ghost:hover { background: var(--bg-softer); border-color: transparent; }
+  .btn.faded {
+    color: var(--ink-4);
+    border-color: var(--border);
+    background: var(--bg-softer);
+  }
+  .btn.faded:hover { color: var(--ink-3); }
+  .btn .ent-badge {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--ink-4);
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    padding: 1px 5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  /* ----- Sections ----- */
+  section { padding: 32px 0; scroll-margin-top: 72px; }
+  section.metric-strip-section { padding: 24px 0 4px 0; }
+  section.has-spacing { padding: 56px 0; }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    gap: 16px;
+  }
+  .section-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .section-meta { color: var(--ink-4); font-size: 13px; font-weight: 400; margin-left: 8px; }
+
+  /* ----- Metric tabs strip ----- */
+  .metric-tabs-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 22px;
+    gap: 16px;
+  }
+  .metric-tabs { display: flex; align-items: center; gap: 2px; }
+  .metric-tab {
+    position: relative;
+    padding: 10px 14px 12px 14px;
+    color: var(--ink-4);
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    cursor: pointer;
+  }
+  .metric-tab:first-child { padding-left: 0; }
+  .metric-tab:hover { color: var(--hero-ink); }
+  .metric-tab.active {
+    color: var(--hero-ink);
+    border-bottom-color: var(--hero-blue-700);
+    font-weight: 600;
+  }
+  .metric-tabs-meta { font-size: 12px; color: var(--ink-4); }
+  .metric-tabs-meta strong { color: var(--ink-3); font-weight: 500; }
+
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+  .metric-pane { display: none; }
+  .metric-pane.active { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+
+  .metric-tile {
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    padding: 22px 22px 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 168px;
+    position: relative;
+  }
+  .metric-tile-head {
+    font-size: 12px;
+    color: var(--ink-4);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+  .metric-value {
+    font-size: 30px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+  .metric-value .approx { font-size: 22px; color: var(--ink-3); margin-right: 2px; font-weight: 500; }
+  .metric-value .unit { font-size: 16px; color: var(--ink-4); font-weight: 500; margin-left: 2px; }
+  .metric-value .multi { font-size: 18px; color: var(--ink-4); font-weight: 500; margin-left: 1px; }
+  .metric-sub {
+    font-size: 12px;
+    color: var(--ink-3);
+    line-height: 1.45;
+  }
+  .metric-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--success);
+    background: #e8f6ec;
+    border-radius: 999px;
+    padding: 2px 8px;
+    margin-top: 6px;
+    align-self: flex-start;
+    letter-spacing: 0.01em;
+  }
+  .metric-trend.flat { color: var(--ink-3); background: var(--bg-softer); }
+  .metric-trend .arrow { font-size: 10px; line-height: 1; }
+  .metric-spark { margin-top: auto; align-self: stretch; }
+  .metric-segbar {
+    margin-top: auto;
+    height: 8px;
+    display: flex;
+    border-radius: 4px;
+    overflow: hidden;
+    background: rgba(0,0,0,0.04);
+  }
+  .metric-segbar span { display: block; height: 100%; }
+  .seg-saved { background: var(--hero-blue-500); }
+  .seg-spend { background: var(--ink-5); }
+  .metric-segbar-legend {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--ink-4);
+  }
+  .metric-segbar-legend .lg { display: inline-flex; align-items: center; gap: 5px; }
+  .metric-segbar-legend .sw {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    display: inline-block;
+  }
+
+  /* ----- Methodology footnote ----- */
+  .methodology-note {
+    max-width: 720px;
+    margin: 24px auto 0 auto;
+    padding: 14px 18px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 12.5px;
+    color: var(--ink-3);
+    line-height: 1.6;
+    text-align: center;
+  }
+  .methodology-note strong { color: var(--ink-2); font-weight: 600; }
+  .methodology-note a { font-weight: 500; margin: 0 4px; }
+  .methodology-note .ico {
+    width: 11px;
+    height: 11px;
+    color: var(--ink-4);
+    vertical-align: -1px;
+    margin-right: 4px;
+  }
+
+  /* ----- How time was spent ----- */
+  .timebar {
+    width: 100%;
+    height: 56px;
+    display: flex;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg-softer);
+  }
+  .timebar span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  .time-auto { background: var(--hero-blue-700); }
+  .time-review { background: var(--hero-blue-500); }
+  .time-human { background: var(--ink-5); color: var(--hero-ink); font-weight: 600; }
+  .timebar-legend {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--ink-3);
+    flex-wrap: wrap;
+  }
+  .timebar-legend .lg { display: inline-flex; align-items: center; gap: 8px; }
+  .timebar-legend .sw {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    display: inline-block;
+  }
+  .timebar-legend strong { color: var(--hero-ink); font-weight: 600; }
+  .timebar-caption {
+    max-width: 720px;
+    margin: 18px 0 0 0;
+    font-size: 14px;
+    color: var(--ink-3);
+    line-height: 1.55;
+  }
+  .timebar-caption strong { color: var(--hero-ink); font-weight: 600; }
+
+  /* ----- Where savings came from ----- */
+  .savings-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 56px;
+    align-items: center;
+  }
+  .donut-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .savings-list { display: flex; flex-direction: column; gap: 0; }
+  .savings-row {
+    display: grid;
+    grid-template-columns: 14px 1fr auto auto;
+    gap: 14px;
+    align-items: center;
+    font-size: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .savings-row:last-child { border-bottom: none; }
+  .savings-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .savings-label { color: var(--ink-2); font-weight: 500; }
+  .savings-pct { color: var(--ink-4); font-size: 12px; margin-top: 2px; }
+  .savings-hours {
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+    text-align: right;
+  }
+  .savings-dollars {
+    color: var(--hero-ink);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    text-align: right;
+    min-width: 84px;
+  }
+
+  /* ----- 12-week trend ----- */
+  .trend-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .toggle-chip {
+    font-size: 12px;
+    color: var(--ink-3);
+    background: var(--bg-softer);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px 12px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .toggle-chip:hover { color: var(--hero-blue-700); border-color: var(--hero-blue-300); background: var(--hero-blue-50); }
+  .toggle-chip.active {
+    color: var(--hero-blue-700);
+    background: var(--hero-blue-50);
+    border-color: var(--hero-blue-300);
+    font-weight: 600;
+  }
+  .trend-chart-wrap { width: 100%; overflow-x: auto; }
+  .trend-legend {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--ink-3);
+    flex-wrap: wrap;
+  }
+  .trend-legend .lg { display: inline-flex; align-items: center; gap: 7px; }
+  .trend-legend .line-sw {
+    width: 18px;
+    height: 0;
+    border-top: 2px solid var(--hero-blue-700);
+  }
+  .trend-legend .line-sw.dashed-blue { border-top: 2px dashed var(--hero-blue-500); }
+  .trend-legend .line-sw.dashed-grey { border-top: 2px dashed var(--ink-5); }
+
+  /* ----- Top contributors table ----- */
+  .contrib-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .contrib-table thead th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-4);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0 12px 12px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .contrib-table thead th.num { text-align: right; }
+  .contrib-table tbody td {
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .contrib-table tbody tr:last-child td { border-bottom: none; }
+  .contrib-table tbody tr:hover { background: var(--bg-soft); }
+  .contrib-name {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .contrib-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+    flex-shrink: 0;
+  }
+  .av-h1 { background: linear-gradient(135deg, #2a6cb5, #1a4a7d); }
+  .av-h2 { background: linear-gradient(135deg, #16a249, #0e7a36); }
+  .av-h3 { background: linear-gradient(135deg, #d97706, #a35605); }
+  .av-h4 { background: linear-gradient(135deg, #a855f7, #7e22ce); }
+  .av-h5 { background: linear-gradient(135deg, #ec4899, #be185d); }
+  .av-a1 { background: linear-gradient(135deg, #6cb6ff, #2a6cb5); }
+  .av-a2 { background: linear-gradient(135deg, #94a3b8, #475569); }
+  .contrib-name-text { display: flex; flex-direction: column; }
+  .contrib-name-text .nm { color: var(--hero-ink); font-weight: 500; font-size: 14px; }
+  .contrib-badge {
+    display: inline-block;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-top: 2px;
+    align-self: flex-start;
+  }
+  .badge-human { background: var(--bg-softer); color: var(--ink-3); border: 1px solid var(--border-strong); }
+  .badge-agent { background: var(--hero-blue-50); color: var(--hero-blue-700); border: 1px solid #d6e7fb; }
+  .num-cell {
+    text-align: right;
+    color: var(--hero-ink);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+  }
+  .num-cell.muted { color: var(--ink-3); font-weight: 400; }
+  .hours-cell {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  .hours-bar {
+    width: 80px;
+    height: 5px;
+    background: var(--bg-softer);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .hours-bar-fill {
+    height: 100%;
+    background: var(--hero-blue-500);
+    border-radius: 3px;
+  }
+
+  /* ----- What changed list ----- */
+  .changes-list { display: flex; flex-direction: column; }
+  .changes-row {
+    display: grid;
+    grid-template-columns: 18px 1fr auto;
+    gap: 14px;
+    align-items: center;
+    padding: 14px 4px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .changes-row:last-child { border-bottom: none; }
+  .changes-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin: 0 auto;
+  }
+  .change-good { background: var(--success); }
+  .change-warn { background: var(--warn); }
+  .changes-text { color: var(--ink-2); }
+  .changes-text strong, .changes-text a { color: var(--hero-ink); font-weight: 500; }
+  .changes-when { color: var(--ink-4); font-size: 12px; }
+
+  /* ----- Footer ----- */
+  footer {
+    margin-top: 32px;
+    padding: 32px 0 48px 0;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--ink-4);
+  }
+  .footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .footer-left { display: flex; align-items: center; gap: 10px; }
+  .footer-left .bolt-sm { color: var(--hero-blue-700); width: 12px; height: 12px; }
+  .footer-links { display: flex; align-items: center; gap: 18px; }
+  .footer-links a { color: var(--ink-3); }
+
+  /* ----- Responsive ----- */
+  @media (max-width: 1000px) {
+    .savings-grid { grid-template-columns: 1fr; gap: 32px; }
+    .metric-grid, .metric-pane.active { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 720px) {
+    .nav-tabs { display: none; }
+    .search-pill { min-width: 0; }
+    .page-title { font-size: 26px; }
+    .metric-grid, .metric-pane.active { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============== TOP NAV ============== -->
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="#" class="brand">
+      <svg class="bolt" viewBox="0 0 90 90" fill="currentColor" aria-hidden="true"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+      Hero
+      <span class="workspace">hero</span>
+    </a>
+
+    <div class="nav-tabs">
+      <a href="#" class="nav-tab">Now</a>
+      <a href="#" class="nav-tab">Work <span class="count">18</span></a>
+      <a href="#" class="nav-tab">Knowledge</a>
+      <a href="#" class="nav-tab">Agents <span class="count">1</span></a>
+      <a href="#" class="nav-tab active">People</a>
+    </div>
+
+    <div class="topnav-right">
+      <span class="adapter-chip" title="Chat adapter: hero-code (connected)"><span class="adapter-dot"></span>via hero-code</span>
+      <a href="#" class="search-pill">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        Search specs, code, knowledge…
+        <span class="kbd">⌘K</span>
+      </a>
+      <span class="workspace-state"><span class="dot"></span>main</span>
+      <div class="avatar" title="Ben Wheeler">BW</div>
+    </div>
+  </div>
+</nav>
+
+<!-- ============== SUB-NAV ============== -->
+<div class="subnav">
+  <div class="subnav-inner">
+    <a href="#" class="subnav-tab">Pulse</a>
+    <a href="#" class="subnav-tab">Activity</a>
+    <a href="#" class="subnav-tab">Handoffs</a>
+    <a href="#" class="subnav-tab">Profiles</a>
+    <span class="subnav-divider"></span>
+    <a href="#" class="subnav-tab active">ROI Overview</a>
+    <a href="#" class="subnav-tab">Velocity</a>
+    <a href="#" class="subnav-tab">Autonomy</a>
+    <a href="#" class="subnav-tab">Knowledge reuse</a>
+    <a href="#" class="subnav-tab">My productivity</a>
+    <a href="#" class="subnav-tab faded">Export <span class="ent-badge">Enterprise</span></a>
+  </div>
+</div>
+
+<!-- ============== PAGE HERO ============== -->
+<div class="page">
+  <header class="page-hero">
+    <div class="page-hero-text">
+      <div class="eyebrow">
+        <svg class="bolt-sm" viewBox="0 0 90 90" fill="currentColor" aria-hidden="true"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+        hero · main · roi
+      </div>
+      <h1 class="page-title">ROI Overview</h1>
+      <p class="page-sub">
+        Last 4 weeks
+        <span class="dot-sep">·</span> 10 engineers
+        <span class="dot-sep">·</span> 1 repo
+        <span class="dot-sep">·</span> 142 specs delivered
+        <span class="dot-sep">·</span> <span class="headline">~$49.9K net value · 44× ROI</span>
+      </p>
+    </div>
+    <div class="page-hero-actions">
+      <button class="btn btn-ghost">
+        Last 4 weeks
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <button class="btn btn-ghost">Compare prior 4w</button>
+      <button class="btn btn-ghost">Schedule weekly report</button>
+      <button class="btn faded">
+        Export PDF
+        <span class="ent-badge">Enterprise</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ============== METRIC STRIP ============== -->
+  <section class="metric-strip-section" aria-label="ROI metrics">
+    <div class="metric-tabs-row">
+      <div class="metric-tabs" role="tablist">
+        <button class="metric-tab active" data-tab="money" role="tab" aria-selected="true">Money</button>
+        <button class="metric-tab" data-tab="throughput" role="tab" aria-selected="false">Throughput</button>
+        <button class="metric-tab" data-tab="quality" role="tab" aria-selected="false">Quality</button>
+      </div>
+      <div class="metric-tabs-meta"><strong>Window:</strong> Apr 19 – May 17, 2026</div>
+    </div>
+
+    <!-- Money pane (active) -->
+    <div class="metric-pane active" data-pane="money">
+      <!-- Tile A: Hours saved -->
+      <div class="metric-tile">
+        <div class="metric-tile-head">Hours saved</div>
+        <div class="metric-value"><span class="approx">~</span>340<span class="unit">h</span></div>
+        <div class="metric-sub">vs unassisted baseline</div>
+        <span class="metric-trend"><span class="arrow">▲</span> +22% vs prior 4w</span>
+        <svg class="metric-spark" width="100%" height="36" viewBox="0 0 200 36" preserveAspectRatio="none" fill="none">
+          <defs>
+            <linearGradient id="sparkFillA" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#6cb6ff" stop-opacity="0.22"/>
+              <stop offset="100%" stop-color="#6cb6ff" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M2,28 L17,26 L32,27 L47,23 L62,24 L77,20 L92,21 L107,17 L122,18 L137,13 L152,14 L167,9 L182,11 L198,6"
+                stroke="#2a6cb5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2,28 L17,26 L32,27 L47,23 L62,24 L77,20 L92,21 L107,17 L122,18 L137,13 L152,14 L167,9 L182,11 L198,6 L198,36 L2,36 Z"
+                fill="url(#sparkFillA)"/>
+        </svg>
+      </div>
+
+      <!-- Tile B: Dollars saved -->
+      <div class="metric-tile">
+        <div class="metric-tile-head">Dollars saved</div>
+        <div class="metric-value"><span class="approx">~</span>$51K</div>
+        <div class="metric-sub">≈340h × $150/hr loaded</div>
+        <span class="metric-trend"><span class="arrow">▲</span> +22% vs prior 4w</span>
+        <svg class="metric-spark" width="100%" height="36" viewBox="0 0 200 36" preserveAspectRatio="none" fill="none">
+          <defs>
+            <linearGradient id="sparkFillB" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#6cb6ff" stop-opacity="0.22"/>
+              <stop offset="100%" stop-color="#6cb6ff" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M2,28 L17,26 L32,27 L47,23 L62,24 L77,20 L92,21 L107,17 L122,18 L137,13 L152,14 L167,9 L182,11 L198,6"
+                stroke="#2a6cb5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2,28 L17,26 L32,27 L47,23 L62,24 L77,20 L92,21 L107,17 L122,18 L137,13 L152,14 L167,9 L182,11 L198,6 L198,36 L2,36 Z"
+                fill="url(#sparkFillB)"/>
+        </svg>
+      </div>
+
+      <!-- Tile C: Net value -->
+      <div class="metric-tile">
+        <div class="metric-tile-head">Net value</div>
+        <div class="metric-value">$49.9K</div>
+        <div class="metric-sub">$51K saved − $1.14K Hero API spend</div>
+        <span class="metric-trend"><span class="arrow">▲</span> +24% vs prior 4w</span>
+        <div class="metric-segbar" aria-hidden="true">
+          <span class="seg-saved" style="width:97.8%;"></span>
+          <span class="seg-spend" style="width:2.2%;"></span>
+        </div>
+        <div class="metric-segbar-legend">
+          <span class="lg"><span class="sw seg-saved"></span>$51K saved</span>
+          <span class="lg"><span class="sw seg-spend"></span>$1.14K spend</span>
+        </div>
+      </div>
+
+      <!-- Tile D: ROI multiple -->
+      <div class="metric-tile">
+        <div class="metric-tile-head">ROI multiple</div>
+        <div class="metric-value">44<span class="multi">×</span></div>
+        <div class="metric-sub">net value ÷ API spend</div>
+        <span class="metric-trend"><span class="arrow">▲</span> +3.2× vs prior 4w</span>
+        <svg class="metric-spark" width="100%" height="36" viewBox="0 0 200 36" preserveAspectRatio="none" fill="none">
+          <defs>
+            <linearGradient id="sparkFillD" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#6cb6ff" stop-opacity="0.22"/>
+              <stop offset="100%" stop-color="#6cb6ff" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M2,30 L17,29 L32,27 L47,28 L62,24 L77,22 L92,23 L107,19 L122,17 L137,15 L152,13 L167,11 L182,8 L198,5"
+                stroke="#2a6cb5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2,30 L17,29 L32,27 L47,28 L62,24 L77,22 L92,23 L107,19 L122,17 L137,15 L152,13 L167,11 L182,8 L198,5 L198,36 L2,36 Z"
+                fill="url(#sparkFillD)"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Throughput pane (hidden) -->
+    <div class="metric-pane" data-pane="throughput" aria-hidden="true"></div>
+    <!-- Quality pane (hidden) -->
+    <div class="metric-pane" data-pane="quality" aria-hidden="true"></div>
+
+    <!-- Methodology footnote -->
+    <div class="methodology-note">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+      Numbers use configurable coefficients
+      (<strong>loaded hourly cost: $150</strong> · time-per-edit: 4min · auto-import time saved: 12min · …).
+      <a href="#">View methodology →</a>
+      <a href="#">Tune coefficients →</a>
+    </div>
+  </section>
+
+  <!-- ============== HOW TIME WAS SPENT ============== -->
+  <section class="has-spacing">
+    <div class="section-header">
+      <h2 class="section-title">How time was spent</h2>
+    </div>
+
+    <div class="timebar" role="img" aria-label="61% agent autonomous, 24% agent + review, 15% human authored">
+      <span class="time-auto" style="width:61%;">61% · Agent autonomous</span>
+      <span class="time-review" style="width:24%;">24% · Agent + human review</span>
+      <span class="time-human" style="width:15%;">15% · Human authored</span>
+    </div>
+
+    <div class="timebar-legend">
+      <span class="lg"><span class="sw time-auto"></span><strong>61%</strong> Agent autonomous</span>
+      <span class="lg"><span class="sw time-review"></span><strong>24%</strong> Agent + human review</span>
+      <span class="lg"><span class="sw time-human"></span><strong>15%</strong> Human authored</span>
+    </div>
+
+    <p class="timebar-caption">
+      Agents wrote <strong>61% of merged work fully autonomously</strong> this period — up from 53% in the prior 4-week window.
+    </p>
+  </section>
+
+  <!-- ============== WHERE THE SAVINGS CAME FROM ============== -->
+  <section class="has-spacing">
+    <div class="section-header">
+      <h2 class="section-title">Where the savings came from</h2>
+    </div>
+
+    <div class="savings-grid">
+      <!-- Donut (inline SVG). Slices, in order (CSS conic anchored at top, but we use stroke-dasharray on a circle rotated -90deg).
+           Circumference at r=100: 2 * pi * 100 = 628.3185
+           41% = 257.61
+           22% = 138.23
+           18% = 113.10
+           11% = 69.12
+            8% = 50.27
+           Sum: 628.33 -->
+      <div class="donut-wrap">
+        <svg width="280" height="280" viewBox="0 0 280 280" role="img" aria-label="Savings breakdown donut chart, slices sum to 100 percent">
+          <g transform="translate(140,140) rotate(-90)">
+            <circle r="100" cx="0" cy="0" fill="none" stroke="#eef1f5" stroke-width="36"/>
+            <circle r="100" cx="0" cy="0" fill="none"
+                    stroke="#2a6cb5" stroke-width="36"
+                    stroke-dasharray="257.61 628.32" stroke-dashoffset="0"/>
+            <circle r="100" cx="0" cy="0" fill="none"
+                    stroke="#6cb6ff" stroke-width="36"
+                    stroke-dasharray="138.23 628.32" stroke-dashoffset="-257.61"/>
+            <circle r="100" cx="0" cy="0" fill="none"
+                    stroke="#9bc1e6" stroke-width="36"
+                    stroke-dasharray="113.10 628.32" stroke-dashoffset="-395.84"/>
+            <circle r="100" cx="0" cy="0" fill="none"
+                    stroke="#d97706" stroke-width="36"
+                    stroke-dasharray="69.12 628.32" stroke-dashoffset="-508.94"/>
+            <circle r="100" cx="0" cy="0" fill="none"
+                    stroke="#16a249" stroke-width="36"
+                    stroke-dasharray="50.27 628.32" stroke-dashoffset="-578.06"/>
+          </g>
+          <g transform="translate(140,140)">
+            <text text-anchor="middle" y="-6" font-family="Inter, sans-serif" font-size="12" fill="#8a929c">Total saved</text>
+            <text text-anchor="middle" y="20" font-family="Inter, sans-serif" font-size="26" font-weight="600" fill="#14181e" letter-spacing="-0.5">~$51K</text>
+            <text text-anchor="middle" y="38" font-family="Inter, sans-serif" font-size="11" fill="#8a929c">≈340h</text>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Breakdown list. Rows ordered to match the donut visually (largest slice first). -->
+      <div class="savings-list">
+        <div class="savings-row">
+          <span class="savings-dot" style="background:#2a6cb5;"></span>
+          <div>
+            <div class="savings-label">Agent-authored proposals merged without edits</div>
+            <div class="savings-pct">41% of savings</div>
+          </div>
+          <span class="savings-hours">~140h saved</span>
+          <span class="savings-dollars">~$21.0K</span>
+        </div>
+
+        <div class="savings-row">
+          <span class="savings-dot" style="background:#6cb6ff;"></span>
+          <div>
+            <div class="savings-label">Auto-imported &amp; triaged specs</div>
+            <div class="savings-pct">22% of savings</div>
+          </div>
+          <span class="savings-hours">~75h saved</span>
+          <span class="savings-dollars">~$11.2K</span>
+        </div>
+
+        <div class="savings-row">
+          <span class="savings-dot" style="background:#9bc1e6;"></span>
+          <div>
+            <div class="savings-label">Knowledge re-injection into agent context</div>
+            <div class="savings-pct">18% of savings</div>
+          </div>
+          <span class="savings-hours">~61h saved</span>
+          <span class="savings-dollars">~$9.2K</span>
+        </div>
+
+        <div class="savings-row">
+          <span class="savings-dot" style="background:#d97706;"></span>
+          <div>
+            <div class="savings-label">Cross-spec drift catches</div>
+            <div class="savings-pct">11% of savings</div>
+          </div>
+          <span class="savings-hours">~37h saved</span>
+          <span class="savings-dollars">~$5.6K</span>
+        </div>
+
+        <div class="savings-row">
+          <span class="savings-dot" style="background:#16a249;"></span>
+          <div>
+            <div class="savings-label">Automated reviews</div>
+            <div class="savings-pct">8% of savings</div>
+          </div>
+          <span class="savings-hours">~27h saved</span>
+          <span class="savings-dollars">~$4.0K</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== 12-WEEK TREND ============== -->
+  <section class="has-spacing">
+    <div class="section-header">
+      <h2 class="section-title">12-week trend</h2>
+      <div class="trend-toggle">
+        <button class="toggle-chip active" data-trend="net">Net value</button>
+        <button class="toggle-chip" data-trend="hours">Hours saved</button>
+        <button class="toggle-chip" data-trend="autonomy">Autonomy ratio</button>
+        <button class="toggle-chip" data-trend="specs">Specs delivered</button>
+      </div>
+    </div>
+
+    <div class="trend-chart-wrap">
+      <svg width="100%" height="300" viewBox="0 0 960 300" preserveAspectRatio="none" role="img" aria-label="12-week trend chart for net value">
+        <defs>
+          <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#6cb6ff" stop-opacity="0.18"/>
+            <stop offset="100%" stop-color="#6cb6ff" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Grid -->
+        <g stroke="#eef1f5" stroke-width="1">
+          <line x1="60" y1="40" x2="940" y2="40"/>
+          <line x1="60" y1="100" x2="940" y2="100"/>
+          <line x1="60" y1="160" x2="940" y2="160"/>
+          <line x1="60" y1="220" x2="940" y2="220"/>
+          <line x1="60" y1="260" x2="940" y2="260"/>
+        </g>
+
+        <!-- Y-axis labels (in $K) -->
+        <g font-family="Inter, sans-serif" font-size="11" fill="#8a929c" text-anchor="end">
+          <text x="50" y="44">$60K</text>
+          <text x="50" y="104">$45K</text>
+          <text x="50" y="164">$30K</text>
+          <text x="50" y="224">$15K</text>
+          <text x="50" y="264">$0</text>
+        </g>
+
+        <!-- X-axis week labels -->
+        <g font-family="Inter, sans-serif" font-size="11" fill="#8a929c" text-anchor="middle">
+          <text x="95" y="284">Feb 23</text>
+          <text x="168" y="284">Mar 2</text>
+          <text x="241" y="284">Mar 9</text>
+          <text x="314" y="284">Mar 16</text>
+          <text x="387" y="284">Mar 23</text>
+          <text x="460" y="284">Mar 30</text>
+          <text x="533" y="284">Apr 6</text>
+          <text x="606" y="284">Apr 13</text>
+          <text x="679" y="284">Apr 20</text>
+          <text x="752" y="284">Apr 27</text>
+          <text x="825" y="284">May 4</text>
+          <text x="898" y="284">May 11</text>
+        </g>
+
+        <!-- Total area + line (net value over 12 weeks).
+             Y scale: y=260 -> $0, y=40 -> $60K (220px / 60 = 3.667 px per $1K).
+             Weekly net values $K: 18, 22, 25, 24, 28, 31, 30, 34, 38, 42, 49.9, 52. -->
+        <path d="M95,194 L168,179 L241,168 L314,172 L387,157 L460,146 L533,150 L606,135 L679,121 L752,106 L825,77 L898,69 L898,260 L95,260 Z"
+              fill="url(#trendFill)"/>
+        <path d="M95,194 L168,179 L241,168 L314,172 L387,157 L460,146 L533,150 L606,135 L679,121 L752,106 L825,77 L898,69"
+              stroke="#2a6cb5" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <!-- Agent autonomous line -->
+        <path d="M95,210 L168,200 L241,189 L314,193 L387,178 L460,170 L533,172 L606,158 L679,144 L752,128 L825,98 L898,90"
+              stroke="#6cb6ff" stroke-width="1.6" fill="none" stroke-dasharray="4 3" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <!-- Agent + human review line -->
+        <path d="M95,232 L168,224 L241,218 L314,219 L387,212 L460,206 L533,209 L606,200 L679,192 L752,184 L825,168 L898,162"
+              stroke="#b4bac3" stroke-width="1.6" fill="none" stroke-dasharray="2 3" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <!-- Data points on the total line -->
+        <g fill="#ffffff" stroke="#2a6cb5" stroke-width="2">
+          <circle cx="95" cy="194" r="3"/>
+          <circle cx="168" cy="179" r="3"/>
+          <circle cx="241" cy="168" r="3"/>
+          <circle cx="314" cy="172" r="3"/>
+          <circle cx="387" cy="157" r="3"/>
+          <circle cx="460" cy="146" r="3"/>
+          <circle cx="533" cy="150" r="3"/>
+          <circle cx="606" cy="135" r="3"/>
+          <circle cx="679" cy="121" r="3"/>
+          <circle cx="752" cy="106" r="3"/>
+          <circle cx="898" cy="69" r="3"/>
+        </g>
+
+        <!-- Highlighted point: week of May 4, annotated "propose-shim landed" -->
+        <g>
+          <circle cx="825" cy="77" r="5" fill="#2a6cb5" stroke="#ffffff" stroke-width="2"/>
+          <line x1="825" y1="77" x2="825" y2="40" stroke="#2a6cb5" stroke-width="1" stroke-dasharray="3 2"/>
+          <g transform="translate(700,8)">
+            <rect width="230" height="56" rx="6" fill="#14181e"/>
+            <text x="14" y="22" font-family="Inter, sans-serif" font-size="11" fill="#9bc1e6">Week of May 4</text>
+            <text x="14" y="40" font-family="Inter, sans-serif" font-size="13" font-weight="600" fill="#ffffff">$49.9K net value</text>
+            <text x="14" y="54" font-family="Inter, sans-serif" font-size="11" fill="#b4bac3">propose-shim landed</text>
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <div class="trend-legend">
+      <span class="lg"><span class="line-sw"></span>Total net value</span>
+      <span class="lg"><span class="line-sw dashed-blue"></span>Agent autonomous</span>
+      <span class="lg"><span class="line-sw dashed-grey"></span>Agent + human review</span>
+    </div>
+  </section>
+
+  <!-- ============== TOP CONTRIBUTORS ============== -->
+  <section class="has-spacing">
+    <div class="section-header">
+      <h2 class="section-title">Top contributors <span class="section-meta">last 4 weeks</span></h2>
+    </div>
+
+    <table class="contrib-table">
+      <thead>
+        <tr>
+          <th>Contributor</th>
+          <th class="num">Specs touched</th>
+          <th class="num">Autonomy %</th>
+          <th class="num">Hours saved</th>
+          <th class="num">$ saved</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="contrib-name">
+              <span class="contrib-avatar av-a1">co</span>
+              <div class="contrib-name-text">
+                <span class="nm">claude-opus-4-7</span>
+                <span class="contrib-badge badge-agent">Agent</span>
+              </div>
+            </div>
+          </td>
+          <td class="num-cell">38</td>
+          <td class="num-cell">82%</td>
+          <td class="num-cell">
+            <div class="hours-cell">
+              <div class="hours-bar"><div class="hours-bar-fill" style="width:100%;"></div></div>
+              <span>112h</span>
+            </div>
+          </td>
+          <td class="num-cell">$16.8K</td>
+        </tr>
+
+        <tr>
+          <td>
+            <div class="contrib-name">
+              <span class="contrib-avatar av-h1">BW</span>
+              <div class="contrib-name-text">
+                <span class="nm">Brian W.</span>
+                <span class="contrib-badge badge-human">Human</span>
+              </div>
+            </div>
+          </td>
+          <td class="num-cell">29</td>
+          <td class="num-cell">74%</td>
+          <td class="num-cell">
+            <div class="hours-cell">
+              <div class="hours-bar"><div class="hours-bar-fill" style="width:60%;"></div></div>
+              <span>67h</span>
+            </div>
+          </td>
+          <td class="num-cell">$10.1K</td>
+        </tr>
+
+        <tr>
+          <td>
+            <div class="contrib-name">
+              <span class="contrib-avatar av-a2">es</span>
+              <div class="contrib-name-text">
+                <span class="nm">engineer subagent</span>
+                <span class="contrib-badge badge-agent">Agent</span>
+              </div>
+            </div>
+          </td>
+          <td class="num-cell">22</td>
+          <td class="num-cell">79%</td>
+          <td class="num-cell">
+            <div class="hours-cell">
+              <div class="hours-bar"><div class="hours-bar-fill" style="width:47%;"></div></div>
+              <span>53h</span>
+            </div>
+          </td>
+          <td class="num-cell">$8.0K</td>
+        </tr>
+
+        <tr>
+          <td>
+            <div class="contrib-name">
+              <span class="contrib-avatar av-h2">DM</span>
+              <div class="contrib-name-text">
+                <span class="nm">Diego M.</span>
+                <span class="contrib-badge badge-human">Human</span>
+              </div>
+            </div>
+          </td>
+          <td class="num-cell">19</td>
+          <td class="num-cell">71%</td>
+          <td class="num-cell">
+            <div class="hours-cell">
+              <div class="hours-bar"><div class="hours-bar-fill" style="width:39%;"></div></div>
+              <span>44h</span>
+            </div>
+          </td>
+          <td class="num-cell">$6.6K</td>
+        </tr>
+
+        <tr>
+          <td>
+            <div class="contrib-name">
+              <span class="contrib-avatar av-h3">SK</span>
+              <div class="contrib-name-text">
+                <span class="nm">Sarah K.</span>
+                <span class="contrib-badge badge-human">Human</span>
+              </div>
+            </div>
+          </td>
+          <td class="num-cell">14</td>
+          <td class="num-cell">66%</td>
+          <td class="num-cell">
+            <div class="hours-cell">
+              <div class="hours-bar"><div class="hours-bar-fill" style="width:30%;"></div></div>
+              <span>34h</span>
+            </div>
+          </td>
+          <td class="num-cell">$5.1K</td>
+        </tr>
+
+        <tr>
+          <td>
+            <div class="contrib-name">
+              <span class="contrib-avatar av-h4">AP</span>
+              <div class="contrib-name-text">
+                <span class="nm">Aisha P.</span>
+                <span class="contrib-badge badge-human">Human</span>
+              </div>
+            </div>
+          </td>
+          <td class="num-cell">11</td>
+          <td class="num-cell">63%</td>
+          <td class="num-cell">
+            <div class="hours-cell">
+              <div class="hours-bar"><div class="hours-bar-fill" style="width:23%;"></div></div>
+              <span>21h</span>
+            </div>
+          </td>
+          <td class="num-cell">$3.2K</td>
+        </tr>
+
+        <tr>
+          <td>
+            <div class="contrib-name">
+              <span class="contrib-avatar av-h5">PR</span>
+              <div class="contrib-name-text">
+                <span class="nm">Priya R.</span>
+                <span class="contrib-badge badge-human">Human</span>
+              </div>
+            </div>
+          </td>
+          <td class="num-cell">9</td>
+          <td class="num-cell">58%</td>
+          <td class="num-cell">
+            <div class="hours-cell">
+              <div class="hours-bar"><div class="hours-bar-fill" style="width:8%;"></div></div>
+              <span>9h</span>
+            </div>
+          </td>
+          <td class="num-cell">$1.4K</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ============== WHAT CHANGED THIS PERIOD ============== -->
+  <section class="has-spacing">
+    <div class="section-header">
+      <h2 class="section-title">What changed this period</h2>
+    </div>
+
+    <div class="changes-list">
+      <div class="changes-row">
+        <span class="changes-dot change-good"></span>
+        <span class="changes-text">
+          <strong>Autonomy ratio crossed 70%</strong> for the first time (week of May 5) — <a href="#">propose-shim</a> landed.
+        </span>
+        <span class="changes-when">May 5</span>
+      </div>
+
+      <div class="changes-row">
+        <span class="changes-dot change-good"></span>
+        <span class="changes-text">
+          Hero API spend held flat at <strong>~$1.14K</strong> while dollars saved grew <strong>+22%</strong> — ROI multiple jumped from 41× to 44×.
+        </span>
+        <span class="changes-when">last 4w</span>
+      </div>
+
+      <div class="changes-row">
+        <span class="changes-dot change-good"></span>
+        <span class="changes-text">
+          11 cross-spec drift catches saved an estimated <strong>~37h</strong> of debugging — most from <a href="#">spec-status-integrity</a>.
+        </span>
+        <span class="changes-when">last 4w</span>
+      </div>
+
+      <div class="changes-row">
+        <span class="changes-dot change-warn"></span>
+        <span class="changes-text">
+          Re-review rate ticked up to <strong>3.1%</strong> (from 2.4%) — concentrated in <a href="#">graph-conflict-detection</a> and 2 sibling specs.
+        </span>
+        <span class="changes-when">last 4w</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============== FOOTER ============== -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-left">
+      <svg class="bolt-sm" viewBox="0 0 90 90" fill="currentColor" aria-hidden="true"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+      Hero v0.18.2 · workspace hero · team edition
+    </div>
+    <div class="footer-links">
+      <a href="#">Docs</a>
+      <a href="#">GitHub</a>
+      <a href="#">Status</a>
+      <a href="#">⌘K</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Money / Throughput / Quality tabs — only Money has content; others are intentionally blank.
+  document.querySelectorAll('.metric-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.tab;
+      document.querySelectorAll('.metric-tab').forEach(t => {
+        const on = t === tab;
+        t.classList.toggle('active', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      document.querySelectorAll('.metric-pane').forEach(p => {
+        p.classList.toggle('active', p.dataset.pane === target);
+      });
+    });
+  });
+
+  // 12-week trend toggle chips (visual-only — chart data does not swap in the mock).
+  document.querySelectorAll('.toggle-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.toggle-chip').forEach(c => c.classList.toggle('active', c === chip));
+    });
+  });
+</script>
+
+</body>
+</html>

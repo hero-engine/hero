@@ -1,18 +1,25 @@
 ---
 title: Hero Automations — Event-Driven Trigger-to-Action Engine
 type: feature
-status: planning
+status: completed
 priority: P1
-tags: [automations, triggers, events, platform, jira, github]
+tags: [automations, triggers, events, platform, jira, github, replaced]
 created: 2026-04-23
 relations:
   - target: hero-platform
     kind: parent
   - target: hero-runner
     kind: depends-on
+  - target: hero-agents-home
+    kind: superseded-by
+  - target: hero-surface-architecture
+    kind: superseded-by
 horizon: next
 smoke: deferred
 ---
+
+> **Absorbed by [hero-agents-home](../hero-agents-home/spec.md) under the [Hero Surface Architecture](../../initiatives/hero-surface-architecture/spec.md) initiative.** The trigger→action engine, rule storage, execution log, dry-run, and approval gates are owned by the Agents home spec. The headless execution model now routes via hero-code through the [hero-chat-and-model](../hero-chat-and-model/spec.md) dispatcher; the CLI surface from this spec is preserved. This spec is preserved for history.
+
 
 ## Goal
 

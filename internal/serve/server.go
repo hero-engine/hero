@@ -6,11 +6,16 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/hero-engine/hero/internal/index"
+	"github.com/hero-engine/hero/internal/serve/edition"
+	"github.com/hero-engine/hero/internal/serve/session"
+	"github.com/hero-engine/hero/internal/serve/shell"
 	"github.com/hero-engine/hero/internal/spec"
 	"github.com/hero-engine/hero/internal/watch"
 )
@@ -41,6 +46,7 @@ type Server struct {
 	heroDir     string
 	projectRoot string
 	autoWatch   bool
+	uiEnabled   bool
 
 	// Team mode
 	teamMode       bool
@@ -76,6 +82,7 @@ func NewServer(cfg ServerConfig) *Server {
 		port:        cfg.Port,
 		bus:         bus,
 		autoWatch:   cfg.AutoWatch,
+		uiEnabled:   cfg.UIEnabled,
 	}
 
 	if s.port == 0 {
@@ -102,8 +109,9 @@ func NewServer(cfg ServerConfig) *Server {
 		}
 	}
 
-	// Create the API with multi-project support
-	s.api = NewAPI(s, bus, cfg.UIEnabled)
+	// Create the API with multi-project support. The shell (top-nav
+	// home routing, /-redirect) is composed in Run.
+	s.api = NewAPI(s, bus)
 
 	// Team mode setup
 	if cfg.TeamMode {
@@ -257,6 +265,21 @@ func (s *Server) Run(ctx context.Context) error {
 		s.scheduledTasks.Start()
 
 		fmt.Fprintf(os.Stderr, "hero serve: team mode enabled (%d workers)\n", s.workerPool.count)
+	}
+
+	// Compose the shell on top of the API handler. The shell owns
+	// /, the five home roots, and /_kitchen-sink; the API owns
+	// /api/*, /health, /auth/* (team mode), and team-mode job mounts.
+	// Static shell assets are served from /static/shell/.
+	if s.uiEnabled {
+		shellRouter := s.buildShellRouter()
+		topMux := http.NewServeMux()
+		topMux.Handle("/api/", handler)
+		topMux.Handle("/health", handler)
+		topMux.Handle("/auth/", handler)
+		topMux.Handle("/static/shell/", http.StripPrefix("/static/shell/", http.FileServer(http.FS(shell.StaticFS()))))
+		topMux.Handle("/", shellRouter.Handler())
+		handler = topMux
 	}
 
 	s.httpServer = &http.Server{
@@ -441,4 +464,66 @@ func (s *Server) reindexSpecs(heroDir, project string, events []watch.Event) {
 func slugFromPath(path string) string {
 	dir := filepath.Dir(path)
 	return filepath.Base(dir)
+}
+
+// buildShellRouter assembles the shell router with the active edition,
+// session store, identifying chrome strings, and the five stub home
+// registrations. Each home spec replaces its stub when it lands.
+func (s *Server) buildShellRouter() *shell.Router {
+	ed := edition.Resolve()
+
+	// Session store is best-effort. A nil store still serves pages
+	// (the shell silently skips writes) — the / redirect just falls
+	// back to /now.
+	store, err := session.Open("")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "hero serve: shell session store unavailable: %v\n", err)
+		store = nil
+	}
+
+	workspace := s.shellWorkspaceName()
+	branch := detectGitBranch(s.projectRoot)
+	userName := shellUserName()
+
+	r := shell.New(ed, store, workspace, branch, userName, s.version)
+	shell.RegisterStubHomes(r)
+	return r
+}
+
+// shellWorkspaceName picks a workspace label for the top-nav. Prefers
+// the project root's basename; falls back to "hero" when running
+// without a primary project.
+func (s *Server) shellWorkspaceName() string {
+	if s.projectRoot != "" {
+		return filepath.Base(s.projectRoot)
+	}
+	return "hero"
+}
+
+// shellUserName returns a display name for the avatar. Reads the
+// standard OS env vars; "you" when nothing is set.
+func shellUserName() string {
+	if v := os.Getenv("USER"); v != "" {
+		return v
+	}
+	if v := os.Getenv("USERNAME"); v != "" {
+		return v
+	}
+	return "you"
+}
+
+// detectGitBranch returns the current git branch for the given project
+// root, or "" when not in a git checkout. Best-effort — used only for
+// display in the top-nav workspace-state chip.
+func detectGitBranch(projectRoot string) string {
+	if projectRoot == "" {
+		return ""
+	}
+	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	cmd.Dir = projectRoot
+	out, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
 }

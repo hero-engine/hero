@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>⌘K Command Bar · Hero</title>
+<style>
+  :root {
+    --hero-blue-300: #9bc1e6;
+    --hero-blue-500: #6cb6ff;
+    --hero-blue-700: #2a6cb5;
+    --hero-blue-900: #1a4a7d;
+    --hero-ink: #14181e;
+    --ink-2: #2a2f37;
+    --ink-3: #5a626d;
+    --ink-4: #8a929c;
+    --ink-5: #b4bac3;
+    --bg: #ffffff;
+    --bg-soft: #fafbfc;
+    --bg-softer: #f5f7fa;
+    --bg-secondary: #f5f7fa;
+    --bg-panel: #f7f8fa;
+    --border: #eef1f5;
+    --border-strong: #e3e7ee;
+    --success: #16a249;
+    --warn: #d97706;
+    --danger: #dc2626;
+    --hero-blue-50: #eff6ff;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    color: var(--ink-2);
+    background: var(--bg);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  a { color: var(--hero-blue-700); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  button { font-family: inherit; cursor: pointer; }
+  code, .mono { font-family: 'SF Mono', ui-monospace, Menlo, monospace; }
+
+  /* ====== Background page (dimmed) ====== */
+  .bg-page {
+    position: relative;
+    min-height: 100vh;
+  }
+
+  /* Top nav (mirrors 01-now-default) */
+  .topnav {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    height: 56px;
+  }
+  .topnav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    font-size: 15px;
+    letter-spacing: -0.01em;
+  }
+  .brand .bolt { color: var(--hero-blue-700); width: 18px; height: 18px; }
+  .brand .workspace { color: var(--ink-3); font-weight: 500; margin-left: 2px; }
+  .brand .workspace::before {
+    content: '/';
+    color: var(--ink-5);
+    margin-right: 6px;
+    font-weight: 400;
+  }
+  .nav-tabs { display: flex; align-items: center; gap: 4px; margin-left: 8px; height: 100%; }
+  .nav-tab {
+    position: relative;
+    padding: 0 12px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-3);
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .nav-tab.active {
+    color: var(--hero-ink);
+    border-bottom-color: var(--hero-blue-700);
+    font-weight: 600;
+  }
+  .nav-tab .count {
+    font-size: 11px;
+    color: var(--ink-4);
+    background: var(--bg-softer);
+    border-radius: 10px;
+    padding: 1px 7px;
+    font-weight: 500;
+  }
+  .nav-tab.active .count { background: var(--hero-blue-50); color: var(--hero-blue-700); }
+  .topnav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .search-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--bg-softer);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--ink-4);
+    font-size: 13px;
+    min-width: 220px;
+  }
+  .search-pill .kbd {
+    margin-left: auto;
+    font-size: 11px;
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--ink-3);
+    font-family: 'SF Mono', ui-monospace, monospace;
+  }
+  .avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--hero-blue-500), var(--hero-blue-900));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .workspace-state { font-size: 12px; color: var(--ink-4); display: flex; align-items: center; gap: 6px; }
+  .workspace-state .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+
+  /* Page hero (simplified) */
+  .page { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+  .page-hero { padding: 40px 0 8px 0; }
+  .eyebrow {
+    font-size: 12px;
+    color: var(--ink-4);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .eyebrow .bolt-sm { width: 10px; height: 10px; color: var(--hero-blue-700); }
+  .page-title {
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px 0;
+  }
+  .page-sub { font-size: 15px; color: var(--ink-3); margin: 0; }
+  .page-sub strong { color: var(--hero-ink); font-weight: 600; }
+  .page-sub .dot-sep { color: var(--ink-5); margin: 0 8px; }
+
+  /* Simplified sections in background */
+  section { padding: 28px 0; }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    gap: 16px;
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    margin: 0;
+    letter-spacing: -0.005em;
+  }
+  .section-meta { color: var(--ink-4); font-size: 13px; font-weight: 400; margin-left: 8px; }
+  .section-link { font-size: 13px; color: var(--hero-blue-700); font-weight: 500; }
+
+  .inbox-list { display: flex; flex-direction: column; }
+  .inbox-row {
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    gap: 14px;
+    align-items: center;
+    padding: 14px 8px;
+    border-bottom: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .inbox-row:last-child { border-bottom: none; }
+  .inbox-dot { width: 8px; height: 8px; border-radius: 50%; margin: 0 auto; }
+  .dot-proposal { background: var(--hero-blue-500); }
+  .dot-handoff { background: #a855f7; }
+  .dot-review { background: var(--success); }
+  .inbox-summary { font-size: 14px; color: var(--hero-ink); font-weight: 500; margin-bottom: 2px; }
+  .inbox-meta { font-size: 12px; color: var(--ink-4); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .inbox-meta .sep { color: var(--ink-5); }
+  .inbox-actions { display: flex; align-items: center; gap: 14px; font-size: 13px; font-weight: 500; }
+  .inbox-actions .danger { color: var(--danger); }
+
+  .plate-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; }
+  .plate {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 24px;
+  }
+  .plate-secondary { background: transparent; }
+  .plate-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .plate-title { font-size: 16px; font-weight: 600; color: var(--hero-ink); margin: 0; letter-spacing: -0.005em; }
+  .plate-desc { color: var(--ink-3); font-size: 13px; margin: 4px 0 16px 0; }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 9px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .status-delivering { background: var(--hero-blue-50); color: var(--hero-blue-700); }
+  .status-review { background: #fff7ed; color: var(--warn); }
+
+  /* The dim layer covering the background page */
+  .scrim {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 24, 30, 0.18);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 50;
+    pointer-events: none;
+  }
+
+  /* ====== Overlays container ====== */
+  .overlay-stack {
+    position: relative;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 56px;
+    padding: 140px 24px 96px 24px;
+    margin-top: -100vh; /* lift to overlap the background page */
+  }
+
+  /* The overlay frame */
+  .cmd {
+    width: 640px;
+    max-width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 16px 48px rgba(20, 24, 30, 0.16);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cmd-tag {
+    align-self: flex-start;
+    margin-bottom: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-4);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(4px);
+    border: 1px solid var(--border-strong);
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+  .cmd-wrap {
+    width: 640px;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Input row */
+  .cmd-input-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border);
+    min-height: 64px;
+  }
+  .cmd-kind-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--ink-4);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cmd-kind-icon.bolt { color: var(--hero-blue-700); }
+  .cmd-kind-icon.slash { color: var(--hero-blue-700); font-family: 'SF Mono', ui-monospace, monospace; font-size: 18px; font-weight: 600; }
+  .cmd-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 18px;
+    color: var(--hero-ink);
+    padding: 0;
+    min-width: 0;
+  }
+  .cmd-input::placeholder { color: var(--ink-4); }
+  .cmd-esc {
+    font-size: 11px;
+    background: var(--bg-softer);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    padding: 2px 7px;
+    color: var(--ink-3);
+    font-family: 'SF Mono', ui-monospace, monospace;
+    flex-shrink: 0;
+  }
+
+  /* Context chip row */
+  .cmd-context-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-soft);
+  }
+  .ctx-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px 3px 8px;
+    background: var(--hero-blue-50);
+    border: 1px solid #d6e7fb;
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--hero-blue-700);
+    font-weight: 500;
+  }
+  .ctx-chip .ctx-icon { font-size: 11px; }
+  .ctx-chip code { font-family: 'SF Mono', ui-monospace, monospace; font-size: 11px; color: var(--hero-blue-900); }
+  .ctx-chip .ctx-x {
+    margin-left: 4px;
+    color: var(--ink-4);
+    font-size: 11px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 2px;
+  }
+  .ctx-chip .ctx-x:hover { color: var(--ink-2); }
+
+  /* Mode body */
+  .cmd-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .mode-divider {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px 8px 18px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+    background: var(--bg-softer);
+    border-bottom: 1px solid var(--border);
+  }
+  .mode-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+    margin-left: 6px;
+  }
+
+  /* Search mode */
+  .group-label {
+    padding: 12px 18px 4px 18px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+  }
+  .result-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    padding: 8px 18px 8px 22px;
+    position: relative;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+  }
+  .result-row:hover { background: var(--bg-soft); }
+  .result-row.active {
+    background: var(--hero-blue-50);
+    border-left-color: var(--hero-blue-700);
+  }
+  .result-title {
+    font-size: 13px;
+    color: var(--hero-ink);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+  }
+  .result-title .mono { color: var(--hero-ink); }
+  .result-title em {
+    background: rgba(108, 182, 255, 0.25);
+    color: var(--hero-blue-900);
+    font-style: normal;
+    border-radius: 2px;
+    padding: 0 2px;
+    font-weight: 600;
+  }
+  .result-sub {
+    font-size: 12px;
+    color: var(--ink-4);
+  }
+  .result-sub .mono { font-family: 'SF Mono', ui-monospace, monospace; font-size: 11px; }
+
+  /* Chat mode */
+  .chat-area {
+    padding: 14px 18px 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .chat-user {
+    align-self: flex-end;
+    max-width: 88%;
+    font-size: 12px;
+    color: var(--ink-3);
+    background: var(--bg-softer);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px 10px;
+    line-height: 1.5;
+  }
+  .tool-line {
+    font-family: 'SF Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--ink-4);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tool-line .arrow { color: var(--hero-blue-700); font-weight: 600; }
+  .tool-line .ok { color: var(--success); }
+  .assistant-stream {
+    font-size: 13px;
+    color: var(--ink-2);
+    line-height: 1.6;
+  }
+  .assistant-stream .cursor {
+    display: inline-block;
+    width: 7px;
+    height: 14px;
+    margin-left: 2px;
+    background: var(--hero-blue-700);
+    vertical-align: -2px;
+    animation: blink 1s steps(2) infinite;
+  }
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    50.01%, 100% { opacity: 0; }
+  }
+
+  /* Slash mode */
+  .slash-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 14px;
+    align-items: center;
+    padding: 10px 18px 10px 22px;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+  }
+  .slash-row:hover { background: var(--bg-soft); }
+  .slash-row.active {
+    background: var(--hero-blue-50);
+    border-left-color: var(--hero-blue-700);
+  }
+  .slash-name {
+    font-family: 'SF Mono', ui-monospace, monospace;
+    font-size: 13px;
+    color: var(--hero-blue-700);
+    font-weight: 600;
+  }
+  .slash-name em {
+    background: rgba(108, 182, 255, 0.25);
+    color: var(--hero-blue-900);
+    font-style: normal;
+    border-radius: 2px;
+    padding: 0 1px;
+  }
+  .slash-desc { font-size: 12px; color: var(--ink-3); }
+  .slash-arg {
+    font-family: 'SF Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--ink-4);
+    background: var(--bg-softer);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+  }
+
+  /* Footer hint */
+  .mode-hint {
+    padding: 8px 18px 10px 18px;
+    font-size: 11px;
+    color: var(--ink-4);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .mode-hint .kbd {
+    font-family: 'SF Mono', ui-monospace, monospace;
+    font-size: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: var(--ink-3);
+  }
+  .mode-hint .sep { color: var(--ink-5); margin: 0 2px; }
+
+  /* Footer strip */
+  .cmd-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    height: 44px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-soft);
+    flex-shrink: 0;
+  }
+  .adapter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--ink-2);
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    position: relative;
+  }
+  .adapter-chip:hover { background: var(--bg-softer); }
+  .adapter-chip .ad-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--hero-blue-500);
+    box-shadow: 0 0 0 0 rgba(108, 182, 255, 0.7);
+    animation: pulse 1.8s ease-out infinite;
+  }
+  .adapter-chip.muted { color: var(--ink-4); }
+  .adapter-chip.muted .ad-dot {
+    background: var(--ink-5);
+    box-shadow: none;
+    animation: none;
+  }
+  .adapter-chip .ad-ver { color: var(--ink-4); font-family: 'SF Mono', ui-monospace, monospace; font-size: 11px; }
+  .adapter-chip:hover .tip { opacity: 1; transform: translateY(0); }
+  .adapter-chip .tip {
+    position: absolute;
+    left: 0;
+    bottom: 100%;
+    margin-bottom: 6px;
+    font-size: 11px;
+    color: var(--ink-3);
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    box-shadow: 0 4px 12px rgba(20, 24, 30, 0.06);
+    border-radius: 6px;
+    padding: 4px 8px;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.12s, transform 0.12s;
+    pointer-events: none;
+    font-weight: 500;
+    color: var(--ink-2);
+  }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(108, 182, 255, 0.45); }
+    70%  { box-shadow: 0 0 0 6px rgba(108, 182, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(108, 182, 255, 0); }
+  }
+  .cost-ticker {
+    font-size: 12px;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+  .cost-ticker strong { color: var(--hero-ink); font-weight: 600; }
+  .cost-ticker .sep { color: var(--ink-5); margin: 0 4px; }
+
+  /* Empty-state notice */
+  .empty-notice {
+    padding: 28px 24px 22px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
+  }
+  .empty-notice .lead {
+    font-size: 14px;
+    color: var(--ink-2);
+    max-width: 380px;
+    line-height: 1.55;
+  }
+  .empty-notice .lead strong { color: var(--hero-ink); font-weight: 600; }
+  .empty-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--ink-2);
+    text-decoration: none;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .btn-primary {
+    background: var(--hero-blue-700);
+    color: white;
+    border-color: var(--hero-blue-700);
+  }
+  .btn-primary:hover { background: var(--hero-blue-900); border-color: var(--hero-blue-900); text-decoration: none; }
+  .btn-ghost {
+    background: var(--bg);
+    border-color: var(--border-strong);
+    color: var(--ink-2);
+  }
+  .btn-ghost:hover { background: var(--bg-softer); text-decoration: none; }
+  .empty-foot {
+    font-size: 12px;
+    color: var(--ink-4);
+    max-width: 420px;
+    line-height: 1.5;
+    margin-top: 2px;
+  }
+
+  /* Muted input for empty state */
+  .cmd-input-row.muted .cmd-kind-icon { color: var(--ink-5); }
+  .cmd-input-row.muted .cmd-input::placeholder { color: var(--ink-5); }
+
+  /* Kind chips inside search results */
+  .kind-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-family: 'Inter', sans-serif;
+    flex-shrink: 0;
+  }
+  .kind-spec { background: var(--hero-blue-50); color: var(--hero-blue-700); }
+  .kind-knowledge { background: #f3e8ff; color: #7c3aed; }
+  .kind-code { background: #ecfdf5; color: var(--success); }
+  .kind-commit { background: #fff7ed; color: var(--warn); }
+
+</style>
+</head>
+<body>
+
+<!-- ============== BACKGROUND PAGE (DIMMED) ============== -->
+<div class="bg-page">
+  <nav class="topnav">
+    <div class="topnav-inner">
+      <a href="#" class="brand">
+        <svg class="bolt" viewBox="0 0 90 90" fill="currentColor" aria-hidden="true"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+        Hero
+        <span class="workspace">hero</span>
+      </a>
+      <div class="nav-tabs">
+        <a href="#" class="nav-tab active">Now</a>
+        <a href="#" class="nav-tab">Work <span class="count">18</span></a>
+        <a href="#" class="nav-tab">Knowledge</a>
+        <a href="#" class="nav-tab">Agents <span class="count">1</span></a>
+        <a href="#" class="nav-tab">People</a>
+      </div>
+      <div class="topnav-right">
+        <a href="#" class="search-pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          Search specs, code, knowledge…
+          <span class="kbd">⌘K</span>
+        </a>
+        <span class="workspace-state"><span class="dot"></span>main</span>
+        <div class="avatar" title="Ben Wheeler">BW</div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page">
+    <header class="page-hero">
+      <div class="eyebrow">
+        <svg class="bolt-sm" viewBox="0 0 90 90" fill="currentColor" aria-hidden="true"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+        hero · main · solo edition
+      </div>
+      <h1 class="page-title">Today, Sunday May 17</h1>
+      <p class="page-sub"><strong>2 need your input</strong><span class="dot-sep">·</span><strong>1 agent running</strong><span class="dot-sep">·</span>since Fri 4:12pm</p>
+    </header>
+
+    <section>
+      <div class="section-header">
+        <h2 class="section-title">Needs your input <span class="section-meta">4 items</span></h2>
+        <a href="#" class="section-link">View all (4) →</a>
+      </div>
+      <div class="inbox-list">
+        <div class="inbox-row">
+          <span class="inbox-dot dot-proposal"></span>
+          <div>
+            <div class="inbox-summary">claude-opus proposes change to <code style="font-size:13px;">internal/tasks/runner.go</code></div>
+            <div class="inbox-meta">Proposal <span class="sep">·</span> 3 files · +84 / −12 <span class="sep">·</span> 14m ago <span class="sep">·</span> from /deliver session on per-feature-smoke-coverage</div>
+          </div>
+          <div class="inbox-actions">
+            <a href="#">Approve</a>
+            <a href="#">View diff</a>
+            <a href="#" class="danger">Reject</a>
+          </div>
+        </div>
+        <div class="inbox-row">
+          <span class="inbox-dot dot-handoff"></span>
+          <div>
+            <div class="inbox-summary">hero-cloud handed back <code style="font-size:13px;">edge-worker-deploy-pipeline</code></div>
+            <div class="inbox-meta">Handoff <span class="sep">·</span> 1 spec + 4 commits <span class="sep">·</span> 2h ago <span class="sep">·</span> peer: hero-cloud</div>
+          </div>
+          <div class="inbox-actions">
+            <a href="#">Accept handoff</a>
+            <a href="#">Open</a>
+          </div>
+        </div>
+        <div class="inbox-row">
+          <span class="inbox-dot dot-review"></span>
+          <div>
+            <div class="inbox-summary">PR #421 — cross-repo-peering needs your review</div>
+            <div class="inbox-meta">Review <span class="sep">·</span> 23 files · +1.2k / −340 <span class="sep">·</span> 6h ago <span class="sep">·</span> by chet-bellows</div>
+          </div>
+          <div class="inbox-actions">
+            <a href="#">Review</a>
+            <a href="#" style="color:var(--ink-4);">Snooze</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-header">
+        <h2 class="section-title">On your plate <span class="section-meta">2 active specs</span></h2>
+        <a href="#" class="section-link">All your work →</a>
+      </div>
+      <div class="plate-grid">
+        <article class="plate">
+          <div class="plate-top">
+            <h3 class="plate-title">per-feature-smoke-coverage</h3>
+            <span class="status-pill status-delivering">
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>
+              Delivering
+            </span>
+          </div>
+          <p class="plate-desc">Continuous real-world verification — every feature spec gets a smoke test that runs against a fresh hero workspace on each commit.</p>
+        </article>
+        <article class="plate plate-secondary">
+          <div class="plate-top">
+            <h3 class="plate-title">cross-repo-peering</h3>
+            <span class="status-pill status-review">In review</span>
+          </div>
+          <p class="plate-desc">Conventions travel, specs hand off, heroes call each other.</p>
+        </article>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ============== SCRIM ============== -->
+<div class="scrim"></div>
+
+<!-- ============== OVERLAYS ============== -->
+<div class="overlay-stack">
+
+  <!-- ===== OVERLAY 1 — Connected, all three modes ===== -->
+  <div class="cmd-wrap">
+    <div class="cmd-tag">Connected — adapter active · showing all 3 modes</div>
+    <div class="cmd">
+
+      <!-- Input row -->
+      <div class="cmd-input-row">
+        <span class="cmd-kind-icon" aria-label="search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        </span>
+        <input class="cmd-input" type="text" value="proposal" />
+        <span class="cmd-esc">ESC</span>
+      </div>
+
+      <!-- Context chip row -->
+      <div class="cmd-context-row">
+        <span class="ctx-chip">
+          <span class="ctx-icon">📎</span>
+          Context: Spec · <code>per-feature-smoke-coverage</code>
+          <span class="ctx-x" aria-label="remove">✕</span>
+        </span>
+      </div>
+
+      <!-- ============ MIDDLE: all three modes stacked ============ -->
+      <div class="cmd-body">
+
+        <!-- ===== SEARCH MODE ===== -->
+        <div class="mode-divider">Search mode</div>
+
+        <div class="group-label">Specs</div>
+        <div class="result-row active">
+          <div class="result-title">
+            <span class="kind-chip kind-spec">Spec</span>
+            inline-<em>propos</em>e-output-mode — Agents propose into the artifact pane
+          </div>
+          <div class="result-sub">feature · delivering · last touched 4h ago</div>
+        </div>
+        <div class="result-row">
+          <div class="result-title">
+            <span class="kind-chip kind-spec">Spec</span>
+            <em>proposal</em>-approval-flow — convention
+          </div>
+          <div class="result-sub">convention · published · how approvals work for inline proposals</div>
+        </div>
+
+        <div class="group-label">Knowledge</div>
+        <div class="result-row">
+          <div class="result-title">
+            <span class="kind-chip kind-knowledge">Note</span>
+            agent-autonomy-needs-approval-gate
+          </div>
+          <div class="result-sub">learning · May 2025 · …agents that auto-commit erode trust; <em>proposal</em> gate restores it…</div>
+        </div>
+
+        <div class="group-label">Code</div>
+        <div class="result-row">
+          <div class="result-title">
+            <span class="kind-chip kind-code">Code</span>
+            <span class="mono">internal/serve/<em>proposal</em>s.go :: approveProposal()</span>
+          </div>
+          <div class="result-sub">Go · 47 lines · idempotency guard added 3d ago</div>
+        </div>
+
+        <div class="group-label">Commits</div>
+        <div class="result-row">
+          <div class="result-title">
+            <span class="kind-chip kind-commit">Commit</span>
+            <span class="mono">47fa3e1d</span> · add idempotency guard to approve<em>Proposal</em>
+          </div>
+          <div class="result-sub">3d ago · chet-bellows · 1 file +12 −3</div>
+        </div>
+
+        <div class="mode-hint">
+          <span class="kbd">↑</span><span class="kbd">↓</span> navigate
+          <span class="sep">·</span>
+          <span class="kbd">↵</span> open
+          <span class="sep">·</span>
+          <span class="kbd">→</span> "Ask Hero about your query…"
+        </div>
+
+        <!-- ===== CHAT MODE ===== -->
+        <div class="mode-divider">Chat mode</div>
+
+        <div class="chat-area">
+          <div class="chat-user">Why did approveProposal end up with an idempotency guard?</div>
+
+          <div class="tool-line">
+            <span class="arrow">→</span> Reading <span style="color:var(--ink-3);">internal/serve/proposals.go</span>
+          </div>
+          <div class="tool-line">
+            <span class="arrow">←</span> 1 hunk, lines 145–152 <span class="ok">✓</span>
+          </div>
+
+          <div class="assistant-stream">
+            The guard landed in commit <span class="mono" style="color:var(--hero-blue-700);">47fa3e1d</span> after a duplicate-approval bug in early May. Two Hero sessions raced on the same proposal because the SSE retry resent the click event — the second call double-applied the patch.<br/>
+            The fix keys on <span class="mono" style="background:var(--bg-softer);padding:1px 4px;border-radius:3px;">(conversation_id, proposal_id)</span> with an upsert on first-write-wins<span class="cursor"></span>
+          </div>
+        </div>
+
+        <div class="mode-hint">
+          <span class="kbd">↵</span> send
+          <span class="sep">·</span>
+          <span class="kbd">⇧↵</span> new line
+          <span class="sep">·</span>
+          <span class="kbd">ESC</span> close
+        </div>
+
+        <!-- ===== SLASH MODE ===== -->
+        <div class="mode-divider">Slash mode · input: /de</div>
+
+        <div class="slash-row active">
+          <span class="slash-name">/<em>de</em>sign</span>
+          <span class="slash-desc">Produce a spec for a feature, enhancement, or platform change</span>
+          <span class="slash-arg">&lt;thing&gt;</span>
+        </div>
+        <div class="slash-row">
+          <span class="slash-name">/<em>de</em>liver</span>
+          <span class="slash-desc">Execute a spec — implement, validate, complete the work item</span>
+          <span class="slash-arg">&lt;slug&gt;</span>
+        </div>
+        <div class="slash-row">
+          <span class="slash-name">/<em>de</em>cide</span>
+          <span class="slash-desc">Evaluate an architectural decision and produce a decision spec</span>
+          <span class="slash-arg">&lt;topic&gt;</span>
+        </div>
+
+        <div class="mode-hint" style="padding-bottom:14px;">
+          <span class="kbd">↑</span><span class="kbd">↓</span> navigate
+          <span class="sep">·</span>
+          <span class="kbd">↵</span> select
+          <span class="sep">·</span>
+          <span class="kbd">ESC</span> close
+        </div>
+      </div>
+
+      <!-- Footer strip -->
+      <div class="cmd-footer">
+        <div class="adapter-chip" tabindex="0">
+          <span class="ad-dot"></span>
+          via hero-code
+          <span class="ad-ver">· 0.4.1</span>
+          <span class="tip">click to switch adapter</span>
+        </div>
+        <div class="cost-ticker">
+          <strong>$0.04</strong> this conversation
+          <span class="sep">·</span>
+          <strong>$0.42</strong> today
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== OVERLAY 2 — Empty state ===== -->
+  <div class="cmd-wrap">
+    <div class="cmd-tag">Empty state — no adapter connected</div>
+    <div class="cmd">
+
+      <div class="cmd-input-row muted">
+        <span class="cmd-kind-icon bolt" style="color:var(--ink-5);">
+          <svg width="16" height="16" viewBox="0 0 90 90" fill="currentColor" aria-hidden="true"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+        </span>
+        <input class="cmd-input" type="text" placeholder="Search, ask Hero, or type / for commands…" />
+        <span class="cmd-esc">ESC</span>
+      </div>
+
+      <div class="empty-notice">
+        <p class="lead"><strong>No runner connected.</strong> <code style="font-family:'SF Mono',ui-monospace,monospace; font-size:13px; color:var(--hero-blue-700);">/ask</code> and <code style="font-family:'SF Mono',ui-monospace,monospace; font-size:13px; color:var(--hero-blue-700);">/note</code> still work here.</p>
+
+        <div class="empty-buttons">
+          <a href="#" class="btn btn-primary">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            Install hero-code
+          </a>
+          <a href="#" class="btn btn-ghost">
+            Connect your IDE
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </div>
+
+        <p class="empty-foot">Using Claude Code, Cursor, or Codex with the Hero IDE adapter? Make sure it's running — it'll appear here automatically.</p>
+      </div>
+
+      <div class="cmd-footer">
+        <div class="adapter-chip muted">
+          <span class="ad-dot"></span>
+          no adapter
+        </div>
+        <div class="cost-ticker" style="color:var(--ink-4);">
+          <span style="color:var(--ink-4);">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ESC closes (visual demo only — page just logs)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      // no-op for mock; real overlay would close
+    }
+  });
+  // Context chip remove
+  document.querySelectorAll('.ctx-x').forEach(x => {
+    x.addEventListener('click', (e) => {
+      e.preventDefault();
+      const chip = x.closest('.ctx-chip');
+      if (chip) chip.style.display = 'none';
+    });
+  });
+</script>
+
+</body>
+</html>

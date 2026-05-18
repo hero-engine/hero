@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Agents · Sessions · Hero</title>
+<style>
+  :root {
+    --hero-blue-300: #9bc1e6;
+    --hero-blue-500: #6cb6ff;
+    --hero-blue-700: #2a6cb5;
+    --hero-blue-900: #1a4a7d;
+    --hero-ink: #14181e;
+    --ink-2: #2a2f37;
+    --ink-3: #5a626d;
+    --ink-4: #8a929c;
+    --ink-5: #b4bac3;
+    --bg: #ffffff;
+    --bg-soft: #fafbfc;
+    --bg-softer: #f5f7fa;
+    --bg-secondary: #f5f7fa;
+    --bg-panel: #f7f8fa;
+    --border: #eef1f5;
+    --border-strong: #e3e7ee;
+    --success: #16a249;
+    --warn: #d97706;
+    --warn-bg: #fff7ed;
+    --warn-border: #fde3c2;
+    --danger: #dc2626;
+    --hero-blue-50: #eff6ff;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    color: var(--ink-2);
+    background: var(--bg);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--hero-blue-700); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  button { font-family: inherit; cursor: pointer; }
+  code, .mono { font-family: 'SF Mono', ui-monospace, Menlo, monospace; }
+
+  /* ----- Top nav ----- */
+  .topnav {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    height: 56px;
+  }
+  .topnav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    font-size: 15px;
+    letter-spacing: -0.01em;
+  }
+  .brand .bolt { color: var(--hero-blue-700); width: 18px; height: 18px; }
+  .brand .workspace {
+    color: var(--ink-3);
+    font-weight: 500;
+    margin-left: 2px;
+  }
+  .brand .workspace::before {
+    content: '/';
+    color: var(--ink-5);
+    margin-right: 6px;
+    font-weight: 400;
+  }
+  .nav-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+    height: 100%;
+  }
+  .nav-tab {
+    position: relative;
+    padding: 0 12px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-3);
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .nav-tab:hover { color: var(--hero-ink); text-decoration: none; }
+  .nav-tab.active {
+    color: var(--hero-ink);
+    border-bottom-color: var(--hero-blue-700);
+    font-weight: 600;
+  }
+  .nav-tab .count {
+    font-size: 11px;
+    color: var(--ink-4);
+    background: var(--bg-softer);
+    border-radius: 10px;
+    padding: 1px 7px;
+    font-weight: 500;
+  }
+  .nav-tab.active .count {
+    background: var(--hero-blue-50);
+    color: var(--hero-blue-700);
+  }
+  .topnav-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .search-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--bg-softer);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--ink-4);
+    font-size: 13px;
+    min-width: 220px;
+  }
+  .search-pill:hover { background: var(--bg-soft); border-color: var(--border-strong); text-decoration: none; }
+  .adapter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-softer);
+    color: var(--ink-4);
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background .12s ease, border-color .12s ease;
+  }
+  .adapter-chip:hover { background: var(--bg-soft); border-color: var(--border-strong); }
+  .adapter-chip .adapter-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--hero-blue-500);
+  }
+  .search-pill .kbd {
+    margin-left: auto;
+    font-size: 11px;
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--ink-3);
+    font-family: 'SF Mono', ui-monospace, monospace;
+  }
+  .avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--hero-blue-500), var(--hero-blue-900));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .workspace-state {
+    font-size: 12px;
+    color: var(--ink-4);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .workspace-state .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--success);
+  }
+
+  /* ----- Sub-nav (Agents) ----- */
+  .subnav {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .subnav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .subnav-tab {
+    position: relative;
+    padding: 0 12px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-3);
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .subnav-tab:hover { color: var(--hero-ink); text-decoration: none; }
+  .subnav-tab.active {
+    color: var(--hero-ink);
+    border-bottom-color: var(--hero-blue-700);
+    font-weight: 600;
+  }
+  .subnav-tab .badge {
+    font-size: 11px;
+    color: var(--ink-4);
+    background: var(--bg-softer);
+    border-radius: 10px;
+    padding: 1px 7px;
+    font-weight: 500;
+  }
+  .subnav-tab.active .badge {
+    background: var(--hero-blue-50);
+    color: var(--hero-blue-700);
+  }
+  .subnav-tab.amber .badge {
+    background: var(--warn-bg);
+    color: var(--warn);
+  }
+  .subnav-tab.locked {
+    color: var(--ink-5);
+  }
+  .subnav-tab.locked .lock {
+    width: 11px;
+    height: 11px;
+    color: var(--ink-5);
+  }
+  .subnav-tab.locked .lock-meta {
+    font-size: 11px;
+    color: var(--ink-5);
+    font-weight: 400;
+    margin-left: 2px;
+  }
+
+  /* ----- Page container ----- */
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  /* ----- Page hero ----- */
+  .page-hero {
+    padding: 40px 0 8px 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .page-hero-text { flex: 1 1 auto; min-width: 0; }
+  .eyebrow {
+    font-size: 12px;
+    color: var(--ink-4);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .eyebrow .bolt-sm { width: 10px; height: 10px; color: var(--hero-blue-700); }
+  .page-title {
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px 0;
+  }
+  .page-sub {
+    font-size: 15px;
+    color: var(--ink-3);
+    margin: 0;
+  }
+  .page-sub strong { color: var(--hero-ink); font-weight: 600; }
+  .page-sub .dot-sep { color: var(--ink-5); margin: 0 8px; }
+  .page-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 6px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--ink-2);
+    transition: background 0.12s ease, border-color 0.12s ease;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--hero-blue-700);
+    color: white;
+    border-color: var(--hero-blue-700);
+  }
+  .btn-primary:hover { background: var(--hero-blue-900); border-color: var(--hero-blue-900); text-decoration: none; }
+  .btn-ghost { color: var(--ink-2); }
+  .btn-ghost:hover { background: var(--bg-softer); }
+  .ghost-link {
+    font-size: 13px;
+    color: var(--hero-blue-700);
+    font-weight: 500;
+  }
+  .ghost-link.muted { color: var(--ink-3); }
+
+  /* ----- Section ----- */
+  section { padding: 28px 0; scroll-margin-top: 72px; }
+  section.metric-strip-section { padding: 24px 0 28px 0; }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    gap: 16px;
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    margin: 0;
+    letter-spacing: -0.005em;
+  }
+  .section-meta { color: var(--ink-4); font-size: 13px; font-weight: 400; margin-left: 8px; }
+  .section-link {
+    font-size: 13px;
+    color: var(--hero-blue-700);
+    font-weight: 500;
+  }
+  .section-actions {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  /* ----- Metric strip ----- */
+  .metric-tabs-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+    gap: 16px;
+  }
+  .metric-tabs {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .metric-tab {
+    position: relative;
+    padding: 8px 12px 10px 12px;
+    color: var(--ink-4);
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    cursor: pointer;
+  }
+  .metric-tab:first-child { padding-left: 0; }
+  .metric-tab:hover { color: var(--hero-ink); }
+  .metric-tab.active {
+    color: var(--hero-ink);
+    border-bottom-color: var(--hero-blue-700);
+    font-weight: 600;
+  }
+  .metric-all-link {
+    font-size: 13px;
+    color: var(--hero-blue-700);
+    font-weight: 500;
+  }
+
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+  .metric-pane { display: none; }
+  .metric-pane.active { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+
+  .metric-tile {
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 128px;
+    position: relative;
+  }
+  .metric-value {
+    font-size: 30px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .metric-value .unit { font-size: 15px; color: var(--ink-4); font-weight: 500; }
+  .metric-label {
+    font-size: 12px;
+    color: var(--ink-4);
+    font-weight: 500;
+    margin-top: 2px;
+  }
+  .metric-sub {
+    font-size: 11px;
+    color: var(--ink-4);
+    margin-top: auto;
+  }
+  .metric-sub.mono {
+    font-family: 'SF Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--ink-3);
+    line-height: 1.5;
+  }
+  .metric-progress {
+    margin-top: 8px;
+    height: 5px;
+    background: rgba(0,0,0,0.06);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .metric-progress-fill {
+    height: 100%;
+    background: var(--hero-blue-500);
+    border-radius: 3px;
+  }
+  .metric-sparkline { margin-top: auto; align-self: flex-end; }
+
+  /* Pulsing live dot — bigger version used inside metric tile */
+  .live-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--hero-blue-500);
+    box-shadow: 0 0 0 0 rgba(108, 182, 255, 0.7);
+    animation: pulse 1.2s ease-out infinite;
+  }
+  .live-dot.amber {
+    background: var(--warn);
+    box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.7);
+    animation: pulse-amber 1.2s ease-out infinite;
+  }
+  .live-dot.sm { width: 7px; height: 7px; }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(108, 182, 255, 0.45); }
+    70%  { box-shadow: 0 0 0 6px rgba(108, 182, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(108, 182, 255, 0); }
+  }
+  @keyframes pulse-amber {
+    0%   { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.45); }
+    70%  { box-shadow: 0 0 0 6px rgba(217, 119, 6, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0); }
+  }
+
+  /* ----- Filter chips ----- */
+  .filter-chips {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .filter-chip {
+    font-size: 12px;
+    color: var(--ink-3);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 4px 11px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .filter-chip:hover { background: var(--bg-softer); color: var(--hero-ink); }
+  .filter-chip.active {
+    background: var(--hero-blue-50);
+    color: var(--hero-blue-700);
+    border-color: #d6e7fb;
+  }
+
+  /* ----- Sessions blocks ----- */
+  .sessions-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .session-block {
+    padding: 22px 0;
+    border-top: 1px solid var(--border);
+  }
+  .session-block:first-child { border-top: none; padding-top: 4px; }
+
+  .session-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .agent-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .agent-avatar.opus { background: linear-gradient(135deg, #a78bfa, #6366f1); }
+  .agent-avatar.sonnet { background: linear-gradient(135deg, #60a5fa, #2a6cb5); }
+  .agent-avatar.engineer { background: linear-gradient(135deg, #f59e0b, #b45309); }
+  .agent-avatar.debug { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+  .session-id-block { min-width: 0; flex: 1; }
+  .session-id-block .agent-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    display: inline;
+  }
+  .session-id-block .on {
+    font-size: 14px;
+    color: var(--ink-3);
+    margin-left: 2px;
+  }
+  .session-id-block .on a { color: var(--hero-ink); font-weight: 500; }
+  .session-id-block .on a:hover { color: var(--hero-blue-700); text-decoration: none; }
+  .session-status-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 4px;
+  }
+  .session-status-tag.live {
+    color: var(--hero-blue-700);
+    background: var(--hero-blue-50);
+  }
+  .session-status-tag.amber {
+    color: var(--warn);
+    background: var(--warn-bg);
+  }
+
+  .session-meta {
+    font-size: 12px;
+    color: var(--ink-4);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+    margin-bottom: 14px;
+    padding-left: 44px;
+  }
+  .session-meta .meta-item { display: inline-flex; align-items: center; gap: 4px; }
+  .session-meta .sep {
+    color: var(--ink-5);
+    margin: 0 8px;
+  }
+  .session-meta .cost { color: var(--hero-ink); font-weight: 600; }
+  .session-meta code {
+    font-size: 11px;
+    color: var(--ink-3);
+    background: var(--bg-softer);
+    border-radius: 4px;
+    padding: 1px 6px;
+  }
+
+  /* ----- Transcript preview (LIGHT) ----- */
+  .transcript {
+    margin-left: 44px;
+    background: var(--bg-panel);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-family: 'SF Mono', ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    line-height: 1.75;
+    color: var(--ink-2);
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .transcript .line { display: block; }
+  .transcript .role { color: var(--ink-4); font-weight: 600; margin-right: 6px; }
+  .transcript .role.assistant { color: var(--hero-blue-700); }
+  .transcript .tool { color: var(--ink-4); }
+  .transcript .ok { color: var(--success); }
+  .transcript .pending { color: var(--warn); font-style: italic; }
+  .transcript .danger { color: var(--danger); }
+  .transcript .dim { color: var(--ink-4); }
+  .transcript .streaming::after {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 13px;
+    background: var(--hero-blue-700);
+    margin-left: 3px;
+    vertical-align: text-bottom;
+    animation: blink 0.95s steps(2, start) infinite;
+  }
+  @keyframes blink { to { visibility: hidden; } }
+  .transcript.compact {
+    line-height: 1.6;
+    padding: 12px 16px;
+  }
+
+  /* Awaiting-approval proposal preview block */
+  .proposal-preview {
+    margin-left: 44px;
+    margin-bottom: 14px;
+    border: 1px solid var(--warn-border);
+    background: #fffaf2;
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .proposal-preview .pp-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--warn);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .proposal-preview .pp-files {
+    color: var(--ink-3);
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 12px;
+  }
+  .proposal-preview .pp-files code {
+    color: var(--ink-3);
+    background: var(--bg-softer);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 11px;
+  }
+  .proposal-preview .pp-diff {
+    font-family: 'SF Mono', ui-monospace, Menlo, monospace;
+    font-size: 11.5px;
+    line-height: 1.7;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    color: var(--ink-2);
+    overflow: hidden;
+  }
+  .pp-diff .diff-add { background: #e7f7ec; color: #0a6b2c; display: block; padding-left: 6px; }
+  .pp-diff .diff-rem { background: #fdecec; color: #9b1c1c; display: block; padding-left: 6px; }
+  .pp-diff .diff-ctx { color: var(--ink-3); display: block; padding-left: 6px; }
+
+  /* Inline session actions */
+  .session-actions {
+    padding-left: 44px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    font-size: 13px;
+    font-weight: 500;
+    flex-wrap: wrap;
+  }
+  .session-actions .primary { color: var(--hero-blue-700); }
+  .session-actions .danger { color: var(--danger); }
+  .session-actions .muted { color: var(--ink-4); }
+
+  /* Tool inventory strip */
+  .tool-strip {
+    padding-left: 44px;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 11px;
+    color: var(--ink-4);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+  }
+  .tool-strip .tool-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bg-softer);
+    border-radius: 4px;
+    padding: 3px 8px;
+    color: var(--ink-3);
+    font-family: 'SF Mono', ui-monospace, Menlo, monospace;
+    font-size: 11px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .tool-strip .tool-pill .n { color: var(--hero-ink); font-weight: 600; }
+
+  /* ----- Inbox-style approval list ----- */
+  .approval-list { display: flex; flex-direction: column; }
+  .approval-row {
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    gap: 14px;
+    align-items: center;
+    padding: 14px 8px;
+    border-bottom: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .approval-row:last-child { border-bottom: none; }
+  .approval-row:hover { background: var(--bg-soft); }
+  .approval-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin: 0 auto;
+    background: var(--warn);
+  }
+  .approval-main { min-width: 0; }
+  .approval-summary {
+    font-size: 14px;
+    color: var(--hero-ink);
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .approval-summary a { color: var(--hero-ink); }
+  .approval-summary a:hover { color: var(--hero-blue-700); text-decoration: none; }
+  .approval-meta {
+    font-size: 12px;
+    color: var(--ink-4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .approval-meta .sep { color: var(--ink-5); }
+  .approval-meta .add { color: var(--success); font-weight: 600; }
+  .approval-meta .rem { color: var(--danger); font-weight: 600; }
+  .approval-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .approval-actions .danger { color: var(--danger); }
+
+  /* ----- Completed today timeline ----- */
+  .timeline-list { display: flex; flex-direction: column; }
+  .timeline-row {
+    display: grid;
+    grid-template-columns: 56px 22px 1fr auto;
+    gap: 14px;
+    align-items: center;
+    padding: 10px 8px;
+    font-size: 13px;
+    border-radius: 6px;
+  }
+  .timeline-row:hover { background: var(--bg-soft); }
+  .timeline-time {
+    font-size: 12px;
+    color: var(--ink-4);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .timeline-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .timeline-icon.ok { color: var(--success); }
+  .timeline-icon.warn { color: var(--warn); }
+  .timeline-icon.review { color: var(--hero-blue-700); }
+  .timeline-text { color: var(--ink-2); min-width: 0; }
+  .timeline-text .agent { color: var(--ink-3); }
+  .timeline-text a { color: var(--hero-ink); font-weight: 500; }
+  .timeline-text a:hover { color: var(--hero-blue-700); text-decoration: none; }
+  .timeline-text .outcome { color: var(--ink-3); font-size: 12px; }
+  .timeline-text .outcome.merged { color: var(--success); font-weight: 500; }
+  .timeline-text .outcome.warn { color: var(--warn); font-weight: 500; }
+  .timeline-text .outcome.review { color: var(--hero-blue-700); font-weight: 500; }
+  .timeline-meta {
+    font-size: 12px;
+    color: var(--ink-4);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* ----- Scheduled / automations preview ----- */
+  .split-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+  }
+  .split-block .split-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .split-block .split-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--hero-ink);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .compact-list { display: flex; flex-direction: column; }
+  .compact-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 8px;
+    border-top: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .compact-row:first-child { border-top: none; }
+  .compact-row:hover { background: var(--bg-soft); }
+  .compact-row .main { flex: 1; min-width: 0; }
+  .compact-row .name { font-size: 14px; color: var(--hero-ink); font-weight: 500; }
+  .compact-row .sub { font-size: 12px; color: var(--ink-4); }
+  .compact-row .sub code {
+    font-size: 11px;
+    background: var(--bg-softer);
+    color: var(--ink-3);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  .compact-row .when {
+    font-size: 12px;
+    color: var(--ink-3);
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .compact-row .when .when-sub {
+    color: var(--ink-4);
+    font-size: 11px;
+  }
+
+  /* ----- Footer ----- */
+  footer {
+    margin-top: 32px;
+    padding: 32px 0 48px 0;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--ink-4);
+  }
+  .footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .footer-left { display: flex; align-items: center; gap: 10px; }
+  .footer-left .bolt-sm { color: var(--hero-blue-700); width: 12px; height: 12px; }
+  .footer-links { display: flex; align-items: center; gap: 18px; }
+  .footer-links a { color: var(--ink-3); }
+
+  /* ----- Responsive ----- */
+  @media (max-width: 900px) {
+    .split-grid { grid-template-columns: 1fr; }
+    .metric-grid, .metric-pane.active { grid-template-columns: repeat(2, 1fr); }
+    .nav-tabs { display: none; }
+    .search-pill { min-width: 0; }
+    .page-title { font-size: 26px; }
+    .session-meta, .session-actions, .tool-strip, .transcript, .proposal-preview { padding-left: 0; margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============== TOP NAV ============== -->
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="#" class="brand">
+      <svg class="bolt" viewBox="0 0 90 90" fill="currentColor" aria-hidden="true"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+      Hero
+      <span class="workspace">hero</span>
+    </a>
+
+    <div class="nav-tabs">
+      <a href="#" class="nav-tab">Now</a>
+      <a href="#" class="nav-tab">Work <span class="count">14</span></a>
+      <a href="#" class="nav-tab">Knowledge</a>
+      <a href="#" class="nav-tab active">Agents <span class="count">3</span></a>
+      <a href="#" class="nav-tab">People</a>
+    </div>
+
+    <div class="topnav-right">
+      <span class="adapter-chip" title="Chat adapter: hero-code 0.4.1 (connected)"><span class="adapter-dot"></span>via hero-code · 0.4.1</span>
+      <a href="#" class="search-pill">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        Search sessions, agents, automations…
+        <span class="kbd">⌘K</span>
+      </a>
+      <span class="workspace-state"><span class="dot"></span>main</span>
+      <div class="avatar" title="Ben Wheeler">BW</div>
+    </div>
+  </div>
+</nav>
+
+<!-- ============== SUB-NAV ============== -->
+<div class="subnav">
+  <div class="subnav-inner">
+    <a href="#" class="subnav-tab active">Sessions <span class="badge">3</span></a>
+    <a href="#" class="subnav-tab amber">Proposals <span class="badge">2</span></a>
+    <a href="#" class="subnav-tab">Scheduled <span class="badge">7</span></a>
+    <a href="#" class="subnav-tab">Automations <span class="badge">5</span></a>
+    <a href="#" class="subnav-tab">Health</a>
+    <a href="#" class="subnav-tab locked" title="Visible on team, cloud, enterprise editions">
+      <svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="1.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      Credentials
+      <span class="lock-meta">· team server only</span>
+    </a>
+  </div>
+</div>
+
+<!-- ============== PAGE HERO ============== -->
+<div class="page">
+  <header class="page-hero">
+    <div class="page-hero-text">
+      <div class="eyebrow">
+        <svg class="bolt-sm" viewBox="0 0 90 90" fill="currentColor" aria-hidden="true"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+        hero · main · agents
+      </div>
+      <h1 class="page-title">Sessions</h1>
+      <p class="page-sub"><strong>3 live</strong><span class="dot-sep">·</span>12 today<span class="dot-sep">·</span><strong>$4.27</strong> spent today<span class="dot-sep">·</span><strong>2 awaiting your approval</strong></p>
+    </div>
+    <div class="page-hero-actions">
+      <a href="#" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5v14"/></svg>
+        Start session
+      </a>
+      <a href="#approval" class="ghost-link">Approve all pending (2)</a>
+      <a href="#" class="ghost-link muted">Pause my agents</a>
+    </div>
+  </header>
+
+  <!-- ============== SECTION — Tabbed metric strip ============== -->
+  <section class="metric-strip-section" aria-label="Metrics">
+    <div class="metric-tabs-row">
+      <div class="metric-tabs" role="tablist">
+        <button class="metric-tab active" data-tab="now" role="tab" aria-selected="true">Right now</button>
+        <button class="metric-tab" data-tab="today" role="tab" aria-selected="false">Today</button>
+        <button class="metric-tab" data-tab="health" role="tab" aria-selected="false">Health (7d)</button>
+      </div>
+      <a href="#" class="metric-all-link">View all metrics →</a>
+    </div>
+
+    <!-- Pane: Right now -->
+    <div class="metric-pane active" data-pane="now">
+      <div class="metric-tile">
+        <div class="metric-value"><span class="live-dot" aria-hidden="true"></span>3</div>
+        <div class="metric-label">live sessions</div>
+        <div class="metric-sub">opus · sonnet · engineer (paused)</div>
+      </div>
+
+      <div class="metric-tile">
+        <div class="metric-value" style="color:var(--warn);"><span class="live-dot amber" aria-hidden="true"></span>2</div>
+        <div class="metric-label">awaiting your approval</div>
+        <div class="metric-sub mono">tripwire-system<br/>per-feature-smoke-coverage</div>
+      </div>
+
+      <div class="metric-tile">
+        <div class="metric-value">0</div>
+        <div class="metric-label">queue depth</div>
+        <div class="metric-sub">no jobs queued</div>
+      </div>
+
+      <div class="metric-tile">
+        <div class="metric-value">$4.27</div>
+        <div class="metric-label">spend today · budget $20.00</div>
+        <div class="metric-progress"><div class="metric-progress-fill" style="width:21.3%"></div></div>
+      </div>
+    </div>
+
+    <!-- Pane: Today (hidden) -->
+    <div class="metric-pane" data-pane="today">
+      <div class="metric-tile">
+        <div class="metric-value">12</div>
+        <div class="metric-label">sessions completed</div>
+        <div class="metric-sub">8 merged · 3 review · 1 interrupted</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-value">84<span class="unit">%</span></div>
+        <div class="metric-label">autonomy today</div>
+        <svg class="metric-sparkline" width="80" height="22" viewBox="0 0 80 22" fill="none">
+          <polyline points="2,14 14,12 26,11 38,9 50,10 62,7 78,5" stroke="#2a6cb5" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-value">Edit</div>
+        <div class="metric-label">top tool · 142 calls</div>
+        <div class="metric-sub">Read 198 · Bash 64 · Grep 41</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-value">$4.27</div>
+        <div class="metric-label">total cost today</div>
+        <svg class="metric-sparkline" width="80" height="22" viewBox="0 0 80 22" fill="none">
+          <polyline points="2,18 14,15 26,16 38,12 50,9 62,7 78,4" stroke="#2a6cb5" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Pane: Health 7d (hidden) -->
+    <div class="metric-pane" data-pane="health">
+      <div class="metric-tile">
+        <div class="metric-value">12<span class="unit">%</span></div>
+        <div class="metric-label">interrupt rate</div>
+        <div class="metric-sub">8 of 67 sessions</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-value">84<span class="unit">%</span></div>
+        <div class="metric-label">approval rate</div>
+        <div class="metric-sub">42 of 50 proposals merged</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-value">3.1<span class="unit">%</span></div>
+        <div class="metric-label">failure rate</div>
+        <div class="metric-sub">2 of 65 completed</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-value">$0.34</div>
+        <div class="metric-label">cost per merged proposal</div>
+        <svg class="metric-sparkline" width="80" height="22" viewBox="0 0 80 22" fill="none">
+          <polyline points="2,8 14,10 26,9 38,12 50,11 62,13 78,15" stroke="#2a6cb5" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== SECTION — Live sessions ============== -->
+  <section id="live">
+    <div class="section-header">
+      <h2 class="section-title">Live sessions <span class="section-meta">3 running</span></h2>
+      <div class="filter-chips" role="tablist" aria-label="Session filter">
+        <button class="filter-chip active">All</button>
+        <button class="filter-chip">Mine</button>
+        <button class="filter-chip">Team</button>
+        <button class="filter-chip">Scheduled</button>
+      </div>
+    </div>
+
+    <div class="sessions-list">
+
+      <!-- ====== BLOCK 1 — prominent live ====== -->
+      <article class="session-block">
+        <div class="session-head">
+          <div class="agent-avatar opus">co</div>
+          <div class="session-id-block">
+            <span class="agent-name">claude-opus</span><span class="on"> delivering <a href="#">per-feature-smoke-coverage</a></span>
+          </div>
+          <span class="session-status-tag live"><span class="live-dot sm" aria-hidden="true"></span>Live</span>
+        </div>
+
+        <div class="session-meta">
+          <span class="meta-item">started 12m ago</span>
+          <span class="sep">·</span>
+          <span class="meta-item">branch <code>feat/smoke-coverage</code></span>
+          <span class="sep">·</span>
+          <span class="meta-item"><span class="cost">$0.42</span> so far</span>
+          <span class="sep">·</span>
+          <span class="meta-item"><code>opus-4.7-1m</code></span>
+          <span class="sep">·</span>
+          <span class="meta-item">14 tool calls</span>
+          <span class="sep">·</span>
+          <span class="meta-item" style="color:var(--warn);font-weight:500;">1 proposal pending</span>
+        </div>
+
+        <div class="transcript" style="min-height:172px;">
+          <span class="line"><span class="role assistant">assistant</span>Reading <span class="tool">internal/tasks/runner.go</span> to understand the existing run loop before adding the per-feature smoke wrapper…</span>
+          <span class="line"><span class="role">tool</span><span class="tool">Read</span> internal/tasks/runner.go <span class="ok">✓ 312 lines</span></span>
+          <span class="line"><span class="role">tool</span><span class="tool">Grep</span> "RunFeatureSmoke" in internal/ <span class="ok">✓ 3 matches in 2 files</span></span>
+          <span class="line"><span class="role assistant">assistant</span>Found the extension point at <span class="tool">runner.go:147</span>. The existing <span class="tool">Run()</span> already exposes a per-task hook — I can layer the smoke pass on top without restructuring the loop.</span>
+          <span class="line"><span class="role">tool</span><span class="tool">Read</span> internal/tasks/types.go <span class="ok">✓ 88 lines</span></span>
+          <span class="line"><span class="role">tool</span><span class="tool">Edit</span> internal/tasks/runner.go <span class="pending">awaiting your approval · 1 proposal</span></span>
+          <span class="line"><span class="role assistant">assistant</span>Drafting tests for the smoke wrapper now. I'll cover the green-path completion, the failure-mode short-circuit, and the budget-exceeded interrupt before I move on to wiring the CLI flag.</span>
+          <span class="line"><span class="role">tool</span><span class="tool">Read</span> internal/tasks/runner_test.go <span class="ok">✓ 214 lines</span></span>
+          <span class="line"><span class="role">tool</span><span class="tool">Edit</span> internal/tasks/runner_test.go <span class="dim">+ 84 / − 0</span></span>
+          <span class="line"><span class="role">tool</span><span class="tool">Bash</span> go test ./internal/tasks/... <span class="ok">✓ pass · 0.62s</span></span>
+          <span class="line"><span class="role assistant">assistant</span>Tests pass. Wiring up the <span class="streaming">CLI flag now</span></span>
+        </div>
+
+        <div class="session-actions">
+          <a href="#" class="primary">Open transcript</a>
+          <a href="#">Open spec</a>
+          <a href="#" class="primary">Approve all (1)</a>
+          <a href="#">Reject all</a>
+          <a href="#" class="danger">Interrupt</a>
+        </div>
+
+        <div class="tool-strip">
+          <span>Tools</span>
+          <span class="tool-pill">Read · <span class="n">67</span></span>
+          <span class="tool-pill">Edit · <span class="n">14</span></span>
+          <span class="tool-pill">Bash · <span class="n">6</span></span>
+          <span class="tool-pill">Grep · <span class="n">9</span></span>
+        </div>
+      </article>
+
+      <!-- ====== BLOCK 2 — compact live ====== -->
+      <article class="session-block">
+        <div class="session-head">
+          <div class="agent-avatar sonnet">cs</div>
+          <div class="session-id-block">
+            <span class="agent-name">claude-sonnet</span><span class="on"> diagnosing <a href="#">scan-enrichment-unbounded-loop</a></span>
+          </div>
+          <span class="session-status-tag live"><span class="live-dot sm" aria-hidden="true"></span>Live</span>
+        </div>
+
+        <div class="session-meta">
+          <span class="meta-item">started 6m ago</span>
+          <span class="sep">·</span>
+          <span class="meta-item">branch <code>fix/scan-loop</code></span>
+          <span class="sep">·</span>
+          <span class="meta-item"><span class="cost">$0.18</span> so far</span>
+          <span class="sep">·</span>
+          <span class="meta-item"><code>sonnet-4.7</code></span>
+          <span class="sep">·</span>
+          <span class="meta-item">8 tool calls</span>
+        </div>
+
+        <div class="transcript compact">
+          <span class="line"><span class="role assistant">assistant</span>Reproducing the unbounded loop: running <span class="tool">hero scan</span> against the e2e fixture workspace with <span class="tool">--enrich</span> on…</span>
+          <span class="line"><span class="role">tool</span><span class="tool">Bash</span> hero scan --enrich .test/fixtures/e2e-multi-stack <span class="ok">✓ exited 124 (timeout)</span></span>
+          <span class="line"><span class="role assistant">assistant</span>Reproduced. Enrichment never converges on the second pass because <span class="tool">internal/scan/enrich.go:87</span> requeues stale checksums without a visit-set guard.</span>
+          <span class="line"><span class="role">tool</span><span class="tool">Read</span> internal/scan/enrich.go <span class="ok">✓ 245 lines</span><span class="streaming"></span></span>
+        </div>
+
+        <div class="session-actions">
+          <a href="#" class="primary">Open transcript</a>
+          <a href="#" class="danger">Interrupt</a>
+        </div>
+      </article>
+
+      <!-- ====== BLOCK 3 — amber, awaiting approval ====== -->
+      <article class="session-block">
+        <div class="session-head">
+          <div class="agent-avatar engineer">en</div>
+          <div class="session-id-block">
+            <span class="agent-name">engineer</span> <span style="font-size:11px;color:var(--ink-4);font-weight:500;text-transform:uppercase;letter-spacing:0.04em;">· subagent</span><span class="on"> paused on <a href="#">tripwire-system</a></span>
+          </div>
+          <span class="session-status-tag amber"><span class="live-dot amber sm" aria-hidden="true"></span>Awaiting your approval</span>
+        </div>
+
+        <div class="session-meta">
+          <span class="meta-item">paused 4m ago · spawned from claude-opus</span>
+          <span class="sep">·</span>
+          <span class="meta-item">branch <code>feat/tripwires</code></span>
+          <span class="sep">·</span>
+          <span class="meta-item"><span class="cost">$0.21</span> so far</span>
+          <span class="sep">·</span>
+          <span class="meta-item"><code>sonnet-4.7</code></span>
+          <span class="sep">·</span>
+          <span class="meta-item" style="color:var(--warn);font-weight:500;">1 proposal pending</span>
+        </div>
+
+        <div class="proposal-preview">
+          <div class="pp-head">
+            <span>Proposal awaiting review</span>
+            <span class="pp-files">2 files · <code>internal/tripwires/registry.go</code>, <code>internal/tripwires/registry_test.go</code> · +47 / −0</span>
+          </div>
+          <div class="pp-diff">
+            <span class="diff-ctx">@@ internal/tripwires/registry.go @@</span>
+            <span class="diff-ctx"> // Register adds a tripwire to the active set.</span>
+            <span class="diff-ctx"> func Register(t Tripwire) error {</span>
+            <span class="diff-add">+    if _, exists := registry[t.ID]; exists {</span>
+            <span class="diff-add">+        return fmt.Errorf("tripwire %q already registered", t.ID)</span>
+            <span class="diff-add">+    }</span>
+            <span class="diff-ctx">     registry[t.ID] = t</span>
+            <span class="diff-ctx">     return nil</span>
+            <span class="diff-ctx"> }</span>
+          </div>
+        </div>
+
+        <div class="session-actions">
+          <a href="#" class="primary">Review proposal</a>
+          <a href="#">Resume</a>
+          <a href="#">Open transcript</a>
+          <a href="#" class="danger">Stop</a>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ============== SECTION — Awaiting your approval ============== -->
+  <section id="approval">
+    <div class="section-header">
+      <h2 class="section-title">Awaiting your approval <span class="section-meta">2 proposals</span></h2>
+      <a href="#" class="section-link">View all (2) →</a>
+    </div>
+
+    <div class="approval-list">
+      <div class="approval-row">
+        <span class="approval-dot"></span>
+        <div class="approval-main">
+          <div class="approval-summary"><a href="#">engineer proposes guard in <code style="font-size:13px;">internal/tripwires/registry.go</code></a></div>
+          <div class="approval-meta">
+            <span>2 files</span><span class="sep">·</span><span class="add">+47</span> / <span class="rem">−0</span><span class="sep">·</span><span>4m ago</span><span class="sep">·</span><span>from /deliver on tripwire-system</span>
+          </div>
+        </div>
+        <div class="approval-actions">
+          <a href="#">Approve</a>
+          <a href="#">View diff</a>
+          <a href="#" class="danger">Reject</a>
+        </div>
+      </div>
+
+      <div class="approval-row">
+        <span class="approval-dot"></span>
+        <div class="approval-main">
+          <div class="approval-summary"><a href="#">claude-opus proposes change to <code style="font-size:13px;">internal/tasks/runner.go</code></a></div>
+          <div class="approval-meta">
+            <span>3 files</span><span class="sep">·</span><span class="add">+84</span> / <span class="rem">−12</span><span class="sep">·</span><span>12m ago</span><span class="sep">·</span><span>from /deliver on per-feature-smoke-coverage</span>
+          </div>
+        </div>
+        <div class="approval-actions">
+          <a href="#">Approve</a>
+          <a href="#">View diff</a>
+          <a href="#" class="danger">Reject</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== SECTION — Completed today ============== -->
+  <section id="completed">
+    <div class="section-header">
+      <h2 class="section-title">Completed today <span class="section-meta">12 sessions</span></h2>
+      <a href="#" class="section-link">View all (12) →</a>
+    </div>
+
+    <div class="timeline-list">
+      <div class="timeline-row">
+        <span class="timeline-time">1h ago</span>
+        <span class="timeline-icon ok"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5L20 7"/></svg></span>
+        <span class="timeline-text">
+          <span class="agent">claude-opus on</span> <a href="#">spec-type-registry</a> <span class="agent">·</span> <span class="outcome merged">merged: 1 proposal</span>
+        </span>
+        <span class="timeline-meta">42m · $0.61</span>
+      </div>
+
+      <div class="timeline-row">
+        <span class="timeline-time">2h ago</span>
+        <span class="timeline-icon ok"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5L20 7"/></svg></span>
+        <span class="timeline-text">
+          <span class="agent">engineer on</span> <a href="#">e2e-traversal</a> <span class="agent">·</span> <span class="outcome merged">merged: 3 proposals</span>
+        </span>
+        <span class="timeline-meta">28m · $0.34</span>
+      </div>
+
+      <div class="timeline-row">
+        <span class="timeline-time">3h ago</span>
+        <span class="timeline-icon review"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></span>
+        <span class="timeline-text">
+          <span class="agent">debug-investigator on</span> <a href="#">install-target-emits-both</a> <span class="agent">·</span> <span class="outcome review">awaiting review</span>
+        </span>
+        <span class="timeline-meta">19m · $0.22</span>
+      </div>
+
+      <div class="timeline-row">
+        <span class="timeline-time">5h ago</span>
+        <span class="timeline-icon warn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg></span>
+        <span class="timeline-text">
+          <span class="agent">debug-investigator on</span> <a href="#">scan-test-detection-misses-junit</a> <span class="agent">·</span> <span class="outcome warn">interrupted by user</span>
+        </span>
+        <span class="timeline-meta">8m · $0.09</span>
+      </div>
+
+      <div class="timeline-row">
+        <span class="timeline-time">8h ago</span>
+        <span class="timeline-icon" style="color:var(--ink-4);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+        <span class="timeline-text">
+          <span class="agent">scheduled · </span><a href="#">daily-executive-report</a> <span class="agent">·</span> <span class="outcome">posted to #hero-status</span>
+        </span>
+        <span class="timeline-meta">3m · $0.04</span>
+      </div>
+
+      <div class="timeline-row">
+        <span class="timeline-time">9h ago</span>
+        <span class="timeline-icon ok"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5L20 7"/></svg></span>
+        <span class="timeline-text">
+          <span class="agent">claude-sonnet on</span> <a href="#">unified-search</a> <span class="agent">·</span> <span class="outcome merged">merged: 2 proposals</span>
+        </span>
+        <span class="timeline-meta">31m · $0.41</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== SECTION — Scheduled & automations preview ============== -->
+  <section id="auto">
+    <div class="section-header">
+      <h2 class="section-title">Scheduled & automations</h2>
+      <div class="section-actions">
+        <a href="#" class="section-link">Open Scheduled →</a>
+        <a href="#" class="section-link">Open Automations →</a>
+      </div>
+    </div>
+
+    <div class="split-grid">
+      <div class="split-block">
+        <div class="split-head">
+          <span class="split-title">Next 3 scheduled runs</span>
+          <span class="section-meta">7 total</span>
+        </div>
+        <div class="compact-list">
+          <div class="compact-row">
+            <div class="main">
+              <div class="name">daily-executive-report</div>
+              <div class="sub"><code>0 9 * * 1-5</code> · weekdays 9am</div>
+            </div>
+            <div class="when">in 14h 22m<br/><span class="when-sub">Mon 9:00am</span></div>
+          </div>
+          <div class="compact-row">
+            <div class="main">
+              <div class="name">tracker-import-sync</div>
+              <div class="sub"><code>*/15 * * * *</code> · every 15 minutes</div>
+            </div>
+            <div class="when">in 8m<br/><span class="when-sub">Sun 6:45pm</span></div>
+          </div>
+          <div class="compact-row">
+            <div class="main">
+              <div class="name">weekly-knowledge-flywheel</div>
+              <div class="sub"><code>0 10 * * 1</code> · Mondays 10am</div>
+            </div>
+            <div class="when">in 15h 22m<br/><span class="when-sub">Mon 10:00am</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="split-block">
+        <div class="split-head">
+          <span class="split-title">Top 3 active automations</span>
+          <span class="section-meta">5 total</span>
+        </div>
+        <div class="compact-list">
+          <div class="compact-row">
+            <div class="main">
+              <div class="name">P1 bug → /diagnose</div>
+              <div class="sub">linear: priority:p1 + label:bug · gated</div>
+            </div>
+            <div class="when">fired 2h ago<br/><span class="when-sub">12 runs / 7d</span></div>
+          </div>
+          <div class="compact-row">
+            <div class="main">
+              <div class="name">PR opened → /review</div>
+              <div class="sub">github: pull_request:opened · autopilot</div>
+            </div>
+            <div class="when">fired 6h ago<br/><span class="when-sub">8 runs / 7d</span></div>
+          </div>
+          <div class="compact-row">
+            <div class="main">
+              <div class="name">Convention drift → notify</div>
+              <div class="sub">feed: drift.detected · gated</div>
+            </div>
+            <div class="when">fired 1d ago<br/><span class="when-sub">3 runs / 7d</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============== FOOTER ============== -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-left">
+      <svg class="bolt-sm" viewBox="0 0 90 90" fill="currentColor" aria-hidden="true"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+      Hero v0.18.2 · workspace hero · solo edition
+    </div>
+    <div class="footer-links">
+      <a href="#">Docs</a>
+      <a href="#">GitHub</a>
+      <a href="#">Status</a>
+      <a href="#">⌘K</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Metric tabs
+  document.querySelectorAll('.metric-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.tab;
+      document.querySelectorAll('.metric-tab').forEach(t => {
+        const on = t === tab;
+        t.classList.toggle('active', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      document.querySelectorAll('.metric-pane').forEach(p => {
+        p.classList.toggle('active', p.dataset.pane === target);
+      });
+    });
+  });
+
+  // Filter chips (visual toggle only)
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.parentElement.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>

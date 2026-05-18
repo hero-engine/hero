@@ -1,0 +1,31 @@
+{{- /* page-hero — eyebrow + title + subhead + action row.
+       Param: shell.PageHero. */ -}}
+{{ define "page-hero" }}
+<header class="page-hero">
+  <div class="page-hero-text">
+    {{- with .Eyebrow }}
+    <div class="eyebrow">
+      <svg class="bolt-sm" viewBox="0 0 90 90" fill="currentColor" aria-hidden="true"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+      {{ . }}
+    </div>
+    {{- end }}
+    <h1 class="page-title">{{ .Title }}</h1>
+    {{- with .Subhead }}
+    <p class="page-sub">{{ . }}</p>
+    {{- end }}
+  </div>
+  {{- if .Actions }}
+  <div class="page-hero-actions">
+    {{- range .Actions }}
+      {{- if eq .Kind "primary" }}
+      <a href="{{ .Href }}" class="btn btn-primary">{{ .Label }}{{ with .Icon }} {{ . }}{{ end }}</a>
+      {{- else if eq .Kind "ghost" }}
+      <a href="{{ .Href }}" class="btn btn-ghost">{{ with .Icon }}{{ . }} {{ end }}{{ .Label }}</a>
+      {{- else if eq .Kind "chip" }}
+      <span class="chip{{ if eq .Chip "Solo" }} chip-solo{{ end }}">{{ .Label }}</span>
+      {{- end }}
+    {{- end }}
+  </div>
+  {{- end }}
+</header>
+{{ end }}
