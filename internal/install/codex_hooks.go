@@ -12,16 +12,37 @@ import (
 //
 //	{
 //	  "hooks": {
-//	    "Stop": [ {"hooks": [ {"type": "command", "command": "..."} ]} ]
+//	    "Stop":         [ {"hooks": [ {"type": "command", "command": "..."} ]} ],
+//	    "SessionStart": [ {"hooks": [ {"type": "command", "command": "..."} ]} ]
 //	  }
 //	}
 //
 // Unlike Claude Code, Codex hook entries have no "matcher" field.
-// Hero-managed entries are identified by the command string starting
-// with "hero next checkpoint".
+// Hero-managed entries are identified by the command string matching
+// one of the heroCmdPrefixes (defined in claude_hooks.go) — same set
+// applies on both targets, so the SessionStart round-trip-ingest hook
+// stays in sync across both surfaces.
 
-// wireCodexHooks merges a hero-managed Stop hook into .codex/hooks.json.
-// Idempotent: existing hero entries are replaced before writing new ones.
+// codexHookEvents is the parallel of claudeHookEvents for Codex.
+// Codex documents support for both Stop and SessionStart in its
+// hook schema; if a Codex client ignores SessionStart, the entry is
+// harmlessly inert.
+var codexHookEvents = []string{"Stop", "SessionStart"}
+
+// codexHookCommandFor returns the canonical hero command for a
+// Codex hook event. Mirror of claudeHookCommandFor.
+func codexHookCommandFor(event string) string {
+	switch event {
+	case "SessionStart":
+		return heroIngestCmd
+	default:
+		return heroCheckpointCmd
+	}
+}
+
+// wireCodexHooks merges hero-managed Stop and SessionStart hooks
+// into .codex/hooks.json. Idempotent: existing hero entries are
+// replaced before writing new ones.
 func wireCodexHooks(opts Options, result *Result) error {
 	hooksPath, err := codexHooksPath(opts)
 	if err != nil {
@@ -29,7 +50,7 @@ func wireCodexHooks(opts Options, result *Result) error {
 	}
 
 	if opts.DryRun {
-		progressf(opts, "  hooks.json -> %s (wire Stop hook)\n", hooksPath)
+		progressf(opts, "  hooks.json -> %s (wire Stop + SessionStart hooks)\n", hooksPath)
 		return nil
 	}
 
@@ -45,7 +66,9 @@ func wireCodexHooks(opts Options, result *Result) error {
 		return fmt.Errorf("reading %s: %w", hooksPath, readErr)
 	}
 
-	hooks["Stop"] = upsertCodexHeroEntry(hooks["Stop"])
+	for _, event := range codexHookEvents {
+		hooks[event] = upsertCodexHeroEntry(hooks[event], codexHookCommandFor(event))
+	}
 
 	out, err := json.MarshalIndent(map[string]interface{}{"hooks": hooks}, "", "  ")
 	if err != nil {
@@ -89,12 +112,14 @@ func UnwireCodexHooks(opts Options) error {
 		return nil
 	}
 
-	entries, _ := hooks["Stop"].([]interface{})
-	stripped := stripCodexHeroEntries(entries)
-	if len(stripped) == 0 {
-		delete(hooks, "Stop")
-	} else {
-		hooks["Stop"] = stripped
+	for _, event := range codexHookEvents {
+		entries, _ := hooks[event].([]interface{})
+		stripped := stripCodexHeroEntries(entries)
+		if len(stripped) == 0 {
+			delete(hooks, event)
+		} else {
+			hooks[event] = stripped
+		}
 	}
 
 	if len(hooks) == 0 {
@@ -113,14 +138,14 @@ func UnwireCodexHooks(opts Options) error {
 
 // upsertCodexHeroEntry returns a fresh entry list: existing hero entries removed,
 // one fresh entry prepended. User entries are preserved.
-func upsertCodexHeroEntry(existing interface{}) []interface{} {
+func upsertCodexHeroEntry(existing interface{}, command string) []interface{} {
 	entries, _ := existing.([]interface{})
 	stripped := stripCodexHeroEntries(entries)
 	hero := map[string]interface{}{
 		"hooks": []interface{}{
 			map[string]interface{}{
 				"type":    "command",
-				"command": heroCheckpointCmd,
+				"command": command,
 			},
 		},
 	}
@@ -128,7 +153,7 @@ func upsertCodexHeroEntry(existing interface{}) []interface{} {
 }
 
 // stripCodexHeroEntries removes entries whose inner hooks contain a
-// "hero next checkpoint" command.
+// hero-managed command (matched by heroCmdPrefixes).
 func stripCodexHeroEntries(entries []interface{}) []interface{} {
 	var out []interface{}
 	for _, e := range entries {
@@ -153,8 +178,10 @@ func codexEntryIsHero(entry map[string]interface{}) bool {
 			continue
 		}
 		cmd, _ := hm["command"].(string)
-		if strings.HasPrefix(cmd, "hero next checkpoint") {
-			return true
+		for _, prefix := range heroCmdPrefixes {
+			if strings.HasPrefix(cmd, prefix) {
+				return true
+			}
 		}
 	}
 	return false

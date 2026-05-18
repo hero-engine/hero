@@ -10,7 +10,7 @@ import (
 
 // TestWireClaudeHooks_CreatesSettingsFromScratch verifies that wiring
 // against a project with no existing settings.json creates one with
-// our hero-managed Stop and PreCompact entries.
+// our hero-managed Stop, PreCompact, and SessionStart entries.
 func TestWireClaudeHooks_CreatesSettingsFromScratch(t *testing.T) {
 	dir := t.TempDir()
 	opts := Options{Mode: ModeProject, TargetDir: dir}
@@ -34,8 +34,19 @@ func TestWireClaudeHooks_CreatesSettingsFromScratch(t *testing.T) {
 		entry := entries[0].(map[string]interface{})
 		inner := entry["hooks"].([]interface{})[0].(map[string]interface{})
 		if !strings.HasPrefix(inner["command"].(string), "hero next checkpoint") {
-			t.Errorf("%s: expected hero command, got %v", ev, inner["command"])
+			t.Errorf("%s: expected hero next checkpoint, got %v", ev, inner["command"])
 		}
+	}
+
+	// SessionStart fires `hero next ingest` for cross-machine
+	// round-trip continuity (next-as-projection AC-7/AC-11).
+	sessionStart, ok := hooks["SessionStart"].([]interface{})
+	if !ok || len(sessionStart) != 1 {
+		t.Fatalf("missing or wrong-count SessionStart entries: %v", hooks["SessionStart"])
+	}
+	ssInner := sessionStart[0].(map[string]interface{})["hooks"].([]interface{})[0].(map[string]interface{})
+	if !strings.HasPrefix(ssInner["command"].(string), "hero next ingest") {
+		t.Errorf("SessionStart: expected hero next ingest, got %v", ssInner["command"])
 	}
 }
 
@@ -54,7 +65,7 @@ func TestWireClaudeHooks_Idempotent(t *testing.T) {
 	settings := readSettings(t, dir)
 	hooks := settings["hooks"].(map[string]interface{})
 
-	for _, ev := range []string{"Stop", "PreCompact"} {
+	for _, ev := range []string{"Stop", "PreCompact", "SessionStart"} {
 		entries := hooks[ev].([]interface{})
 		heroCount := 0
 		for _, e := range entries {

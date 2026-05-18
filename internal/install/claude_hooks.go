@@ -12,21 +12,54 @@ import (
 //
 //   {
 //     "hooks": {
-//       "Stop":       [ {"matcher": "", "hooks": [ {"type": "command", "command": "..."} ]} ],
-//       "PreCompact": [ {"matcher": "", "hooks": [ {"type": "command", "command": "..."} ]} ]
+//       "Stop":         [ {"matcher": "", "hooks": [ {"type": "command", "command": "..."} ]} ],
+//       "PreCompact":   [ {"matcher": "", "hooks": [ {"type": "command", "command": "..."} ]} ],
+//       "SessionStart": [ {"matcher": "", "hooks": [ {"type": "command", "command": "..."} ]} ]
 //     }
 //   }
 //
 // We identify hero-managed hook entries by the command string itself —
-// any inner hook whose command begins with `hero next checkpoint` is
-// considered hero-managed and gets stripped on re-install / uninstall.
-const heroCheckpointCmd = "hero next checkpoint --quiet"
+// any inner hook whose command begins with one of the heroCmdPrefixes
+// is considered hero-managed and gets stripped on re-install / uninstall.
+const (
+	heroCheckpointCmd = "hero next checkpoint --quiet"
+	heroIngestCmd     = "hero next ingest --quiet"
+)
 
-// claudeHookEvents are the host-tool events we wire `hero next checkpoint` into.
+// heroCmdPrefixes is the set of command-string prefixes we consider
+// hero-managed for the purposes of strip-and-replace on re-install.
+// The Stop / PreCompact entries use `hero next checkpoint`; the
+// SessionStart entry uses `hero next ingest` (round-trip ingest of
+// any per-user handoff files committed from another machine). Both
+// prefixes match exactly the leading bytes of the command, so a user
+// hook named e.g. `hero next checkpointer-custom` would also be
+// caught — that's deliberate: we want any drift toward variant hero
+// commands to converge on the canonical wiring.
+var heroCmdPrefixes = []string{"hero next checkpoint", "hero next ingest"}
+
+// claudeHookEvents are the host-tool events we wire hero commands into.
 //
-//   Stop       — fires after every assistant turn ends; keeps NEXT.md fresh continuously
-//   PreCompact — fires before context compaction; the most dangerous moment for losing state
-var claudeHookEvents = []string{"Stop", "PreCompact"}
+//   Stop         — fires after every assistant turn ends; keeps NEXT.md fresh continuously
+//                  (hero next checkpoint)
+//   PreCompact   — fires before context compaction; the most dangerous moment for losing state
+//                  (hero next checkpoint)
+//   SessionStart — fires when a new Claude Code session opens; round-trip ingests any
+//                  `.hero/next/<user>.md` content committed from another machine back
+//                  into this machine's local graph so the cross-machine continuity loop
+//                  closes without a manual `hero next ingest` (hero next ingest)
+var claudeHookEvents = []string{"Stop", "PreCompact", "SessionStart"}
+
+// claudeHookCommandFor returns the canonical hero command for a given
+// Claude Code hook event. Centralised so adding new events stays a
+// single-line change.
+func claudeHookCommandFor(event string) string {
+	switch event {
+	case "SessionStart":
+		return heroIngestCmd
+	default:
+		return heroCheckpointCmd
+	}
+}
 
 // heroAllowlistEntry is the permissions.allow entry that tells Claude
 // Code to auto-approve any Bash tool call starting with `hero`. Without
@@ -64,7 +97,7 @@ func wireClaudeHooks(opts Options, result *Result) error {
 	}
 
 	for _, event := range claudeHookEvents {
-		hooks[event] = upsertHeroEntry(hooks[event])
+		hooks[event] = upsertHeroEntry(hooks[event], claudeHookCommandFor(event))
 	}
 	settings["hooks"] = hooks
 
@@ -224,8 +257,9 @@ func UnwireClaudeHooks(opts Options) error {
 
 // upsertHeroEntry returns a fresh entry list with any prior hero entries
 // removed and one fresh hero entry appended at the front. Other entries
-// (user's own hooks) are preserved untouched.
-func upsertHeroEntry(existing interface{}) []interface{} {
+// (user's own hooks) are preserved untouched. The command argument is
+// the canonical hero command for the target hook event.
+func upsertHeroEntry(existing interface{}, command string) []interface{} {
 	entries, _ := existing.([]interface{})
 	stripped := stripHeroEntries(entries)
 	hero := map[string]interface{}{
@@ -233,7 +267,7 @@ func upsertHeroEntry(existing interface{}) []interface{} {
 		"hooks": []interface{}{
 			map[string]interface{}{
 				"type":    "command",
-				"command": heroCheckpointCmd,
+				"command": command,
 			},
 		},
 	}
@@ -241,8 +275,8 @@ func upsertHeroEntry(existing interface{}) []interface{} {
 }
 
 // stripHeroEntries removes any entry whose inner hooks contain a
-// `hero next checkpoint` command. Returns the remaining (user-owned)
-// entries, in original order.
+// hero-managed command (matched by heroCmdPrefixes). Returns the
+// remaining (user-owned) entries, in original order.
 func stripHeroEntries(entries []interface{}) []interface{} {
 	var out []interface{}
 	for _, e := range entries {
@@ -267,8 +301,10 @@ func entryIsHero(entry map[string]interface{}) bool {
 			continue
 		}
 		cmd, _ := hm["command"].(string)
-		if strings.HasPrefix(cmd, "hero next checkpoint") {
-			return true
+		for _, prefix := range heroCmdPrefixes {
+			if strings.HasPrefix(cmd, prefix) {
+				return true
+			}
 		}
 	}
 	return false
