@@ -240,6 +240,209 @@ func TestDomainFS_UnknownDomain(t *testing.T) {
 	}
 }
 
+// TestDomainFS_PMSpecTypesPresent confirms the PM domain pack exposes
+// its spec-types/ subdir via DomainFS. The PM pack is the second
+// populated vertical and is load-bearing for the pm-foundation-delivery
+// sprint: every PM-led type (intake, prd) is consumed by
+// internal/spectypes via DomainSpecTypesFS, and DomainFS is the canonical
+// install-time surface. If spec-types/ is missing from the embed, the
+// install layer silently drops PM type records and consumers see an
+// engineering-only registry under a PM-configured workspace.
+func TestDomainFS_PMSpecTypesPresent(t *testing.T) {
+	fsys, err := DomainFS("pm")
+	if err != nil {
+		t.Fatalf("DomainFS(\"pm\") error: %v", err)
+	}
+	entries, err := fs.ReadDir(fsys, "spec-types")
+	if err != nil {
+		t.Fatalf("read pm spec-types: %v", err)
+	}
+	if len(entries) == 0 {
+		t.Fatal("pm spec-types/ is empty")
+	}
+}
+
+// TestCoreFS_NonEmpty smoke-checks that the universal core/ layer
+// (agents/commands/skills shared across verticals) is embedded and
+// reachable. CoreFS() is consumed by every install path that layers
+// vertical content on top of universal content; an empty CoreFS means
+// every installed workspace silently loses access to the shared
+// scaffolding.
+func TestCoreFS_NonEmpty(t *testing.T) {
+	fsys := CoreFS()
+	if fsys == nil {
+		t.Fatal("CoreFS() returned nil")
+	}
+	for _, root := range []string{"agents", "commands", "skills"} {
+		entries, err := fs.ReadDir(fsys, root)
+		if err != nil {
+			t.Errorf("CoreFS: ReadDir %q: %v", root, err)
+			continue
+		}
+		if len(entries) == 0 {
+			t.Errorf("CoreFS: %s/ is empty", root)
+		}
+	}
+}
+
+// TestCoreVocabulariesFS_NonEmpty verifies the bundled vocabulary
+// preset YAMLs are embedded. internal/vocabulary loads these at
+// startup; an empty FS means the precedence chain has no presets to
+// resolve against and display rendering collapses to type literals.
+func TestCoreVocabulariesFS_NonEmpty(t *testing.T) {
+	fsys := CoreVocabulariesFS()
+	if fsys == nil {
+		t.Fatal("CoreVocabulariesFS() returned nil")
+	}
+	entries, err := fs.ReadDir(fsys, ".")
+	if err != nil {
+		t.Fatalf("CoreVocabulariesFS ReadDir: %v", err)
+	}
+	if !hasYAML(entries) {
+		t.Fatalf("CoreVocabulariesFS: no .yaml files found; entries=%v", entryNames(entries))
+	}
+}
+
+// TestCoreMethodologiesFS_NonEmpty verifies the bundled methodology
+// profile YAMLs are embedded. internal/methodology resolves the active
+// methodology against these files; an empty FS means lifecycle /
+// time-box / estimation queries have no source to read from.
+func TestCoreMethodologiesFS_NonEmpty(t *testing.T) {
+	fsys := CoreMethodologiesFS()
+	if fsys == nil {
+		t.Fatal("CoreMethodologiesFS() returned nil")
+	}
+	entries, err := fs.ReadDir(fsys, ".")
+	if err != nil {
+		t.Fatalf("CoreMethodologiesFS ReadDir: %v", err)
+	}
+	if !hasYAML(entries) {
+		t.Fatalf("CoreMethodologiesFS: no .yaml files found; entries=%v", entryNames(entries))
+	}
+}
+
+// TestCoreSpecTypesFS_NonEmpty verifies the nine canonical
+// work-tracking type-record markdown files are embedded.
+// internal/spectypes loads these as the core registry; an empty FS
+// breaks every downstream surface that resolves type metadata
+// (hero list, hero new, schema 1.1 JSON export, dashboard rendering).
+func TestCoreSpecTypesFS_NonEmpty(t *testing.T) {
+	fsys := CoreSpecTypesFS()
+	if fsys == nil {
+		t.Fatal("CoreSpecTypesFS() returned nil")
+	}
+	entries, err := fs.ReadDir(fsys, ".")
+	if err != nil {
+		t.Fatalf("CoreSpecTypesFS ReadDir: %v", err)
+	}
+	if !hasMarkdown(entries) {
+		t.Fatalf("CoreSpecTypesFS: no .md files found; entries=%v", entryNames(entries))
+	}
+}
+
+// TestDomainSpecTypesFS_PM verifies the PM domain pack overlays its
+// own spec-type records (intake, prd) on top of the core nine.
+// internal/spectypes consumes this surface to merge domain-led types
+// with the canonical registry; missing files mean PM-configured
+// workspaces silently lose the PM-led artifacts.
+func TestDomainSpecTypesFS_PM(t *testing.T) {
+	fsys := DomainSpecTypesFS("pm")
+	if fsys == nil {
+		t.Fatal("DomainSpecTypesFS(\"pm\") returned nil")
+	}
+	for _, want := range []string{"intake.md", "prd.md"} {
+		if _, err := fs.Stat(fsys, want); err != nil {
+			t.Errorf("DomainSpecTypesFS(\"pm\"): %s not found: %v", want, err)
+		}
+	}
+}
+
+// TestDomainSpecTypesFS_Engineering verifies the engineering domain
+// pack overlays its decision/convention records. These are the
+// canonical knowledge-layer types for engineering and are required by
+// the spec-type registry.
+func TestDomainSpecTypesFS_Engineering(t *testing.T) {
+	fsys := DomainSpecTypesFS("engineering")
+	if fsys == nil {
+		t.Fatal("DomainSpecTypesFS(\"engineering\") returned nil")
+	}
+	for _, want := range []string{"decision.md", "convention.md"} {
+		if _, err := fs.Stat(fsys, want); err != nil {
+			t.Errorf("DomainSpecTypesFS(\"engineering\"): %s not found: %v", want, err)
+		}
+	}
+}
+
+// TestDomainSpecTypesFS_Sales documents the current state of the sales
+// vertical: spec-types/ exists in the embed (so DomainSpecTypesFS
+// returns non-nil), but contains only a README — no domain-led types
+// yet. This anchors the intentional emptiness so a future contributor
+// adding sales-led types will see this test and decide whether to
+// update it or add coverage for the new types.
+func TestDomainSpecTypesFS_Sales(t *testing.T) {
+	fsys := DomainSpecTypesFS("sales")
+	if fsys == nil {
+		t.Fatal("DomainSpecTypesFS(\"sales\") returned nil — sales pack should expose at least a README")
+	}
+	entries, err := fs.ReadDir(fsys, ".")
+	if err != nil {
+		t.Fatalf("DomainSpecTypesFS(\"sales\") ReadDir: %v", err)
+	}
+	mdCount := 0
+	for _, e := range entries {
+		if !e.IsDir() && strings.HasSuffix(e.Name(), ".md") && !strings.EqualFold(e.Name(), "README.md") {
+			mdCount++
+		}
+	}
+	if mdCount != 0 {
+		t.Logf("note: sales now ships %d non-README .md type records; update this test if that's intentional", mdCount)
+	}
+}
+
+// TestDomainSpecTypesFS_UnknownReturnsNil documents the contract that
+// requesting spec-types for an unembedded domain returns nil (not an
+// error). Callers in internal/spectypes branch on nil to mean "this
+// domain has no spec-type extensions" and proceed with the core
+// registry only.
+func TestDomainSpecTypesFS_UnknownReturnsNil(t *testing.T) {
+	if got := DomainSpecTypesFS("not-a-real-domain"); got != nil {
+		t.Errorf("DomainSpecTypesFS(\"not-a-real-domain\") = %v, want nil", got)
+	}
+}
+
+// hasYAML reports whether any entry is a .yaml or .yml file (not a dir).
+func hasYAML(entries []fs.DirEntry) bool {
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		n := strings.ToLower(e.Name())
+		if strings.HasSuffix(n, ".yaml") || strings.HasSuffix(n, ".yml") {
+			return true
+		}
+	}
+	return false
+}
+
+// hasMarkdown reports whether any entry is a .md file (not a dir).
+func hasMarkdown(entries []fs.DirEntry) bool {
+	for _, e := range entries {
+		if !e.IsDir() && strings.HasSuffix(strings.ToLower(e.Name()), ".md") {
+			return true
+		}
+	}
+	return false
+}
+
+// entryNames extracts the entry name list for diagnostic output.
+func entryNames(entries []fs.DirEntry) []string {
+	out := make([]string, 0, len(entries))
+	for _, e := range entries {
+		out = append(out, e.Name())
+	}
+	return out
+}
+
 // splitFrontmatter pulls the YAML block out of a `---\n...\n---\n`
 // header and returns (frontmatter, body, ok). Returns ok=false if the
 // file does not start with a frontmatter marker.

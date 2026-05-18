@@ -40,9 +40,15 @@ var coreSpecTypes embed.FS
 // (and any project whose hero.json has no "domain" key) keep getting
 // content. The root dirs also remain the actively-maintained source
 // for the engineering vertical today — domains/engineering/ is a
-// scaffolded mirror that is allowed to be incomplete. Removing this
-// embed is deferred to a follow-up that syncs root → domains/engineering/
-// and switches the engineering default over.
+// scaffolded mirror that is allowed to be incomplete.
+//
+// B1 decision (2026-05-17, pm-foundation-delivery sprint): leave this
+// legacy fallback in place rather than cutting ContentFS() over to
+// domains/engineering/. The cutover requires first syncing root →
+// domains/engineering/ bit-for-bit, which is out of B1 scope (B1 wires
+// PM into the embed surface; it does not migrate engineering content).
+// See .hero/planning/features/domain-plugin-architecture/spec.md for
+// the full decision record.
 //
 //go:embed agents commands skills
 var legacyContent embed.FS
