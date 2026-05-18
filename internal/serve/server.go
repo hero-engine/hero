@@ -305,12 +305,14 @@ func (s *Server) Run(ctx context.Context) error {
 		// before the generic /api/ catch-all for the same reason as
 		// chat above.
 		nowHandler := api.NewNowHandler(nowpage.Deps{
-			ProjectRoot: s.projectRoot,
-			HeroDir:     s.heroDir,
-			Workspace:   s.shellWorkspaceName(),
-			Branch:      detectGitBranch(s.projectRoot),
-			UserName:    shellUserName(),
-			Proposals:   s.snapshotProposals,
+			ProjectRoot:  s.projectRoot,
+			HeroDir:      s.heroDir,
+			Workspace:    s.shellWorkspaceName(),
+			Branch:       detectGitBranch(s.projectRoot),
+			UserName:     shellUserName(),
+			Proposals:    s.snapshotProposals,
+			ChatRegistry: s.chatRegistry,
+			LiveSessions: s.snapshotLiveSessions,
 		}, busSubscriber{bus: s.bus})
 		nowHandler.Mount(topMux)
 
@@ -649,12 +651,14 @@ func (s *Server) buildShellRouter() *shell.Router {
 	// stub. Wired with a per-project proposal-store snapshotter that
 	// surfaces pending proposals in the Needs-your-input section.
 	nowDeps := nowpage.Deps{
-		ProjectRoot: s.projectRoot,
-		HeroDir:     s.heroDir,
-		Workspace:   workspace,
-		Branch:      branch,
-		UserName:    userName,
-		Proposals:   s.snapshotProposals,
+		ProjectRoot:  s.projectRoot,
+		HeroDir:      s.heroDir,
+		Workspace:    workspace,
+		Branch:       branch,
+		UserName:     userName,
+		Proposals:    s.snapshotProposals,
+		ChatRegistry: s.chatRegistry,
+		LiveSessions: s.snapshotLiveSessions,
 	}
 	if err := nowpage.Register(r, nowDeps); err != nil {
 		fmt.Fprintf(os.Stderr, "hero serve: register Now home: %v\n", err)

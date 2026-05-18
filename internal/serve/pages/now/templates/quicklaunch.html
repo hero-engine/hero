@@ -1,0 +1,33 @@
+{{- /* quicklaunch.html — Quick launch section. Mounts the shell-owned
+       chat-input fragment (replacing the hand-rolled input that shipped
+       in hero-now-home v1) and conditionally renders the empty-state
+       notice above it when no chat adapter is connected. Intent chips
+       and the "Try:" recent-prompts line stay in this template — they
+       are page content, not chrome. */ -}}
+{{ define "quicklaunch.html" }}
+<section id="now-quicklaunch" class="now-section">
+  <div class="now-launch-title-wrap">
+    <h2 class="now-section-title" style="display:inline-block;">Tell Hero what to do next</h2>
+  </div>
+  <div class="now-launch">
+    {{- if .NoAdapter }}
+    {{ emptyStateNotice .EmptyState }}
+    {{- end }}
+    {{ chatInput .ChatInput }}
+    <div class="now-intent-chips">
+      {{- range .IntentChips }}
+      <a href="#" class="now-intent-chip">{{ . }}</a>
+      {{- end }}
+    </div>
+    {{- with .TryPrompts }}
+    <div class="now-launch-try">
+      Try:
+      {{- range $i, $p := . }}
+        {{ if $i }}·{{ end }}
+        <a href="{{ $p.Href }}">{{ $p.Label }}</a>
+      {{- end }}
+    </div>
+    {{- end }}
+  </div>
+</section>
+{{ end }}

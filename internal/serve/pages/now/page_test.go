@@ -1,6 +1,7 @@
 package now
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -8,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/serve/chat"
 	"github.com/hero-engine/hero/internal/serve/edition"
 	"github.com/hero-engine/hero/internal/serve/session"
 	"github.com/hero-engine/hero/internal/serve/shell"
@@ -57,15 +59,75 @@ func TestRegister_RendersAllSections(t *testing.T) {
 		`id="now-plate"`,
 		`id="now-agents"`,
 		`id="now-changes"`,
+		`id="now-quicklaunch"`,
 		`class="metric-tab`,
 		`Tell Hero what to do next`,
-		`now-launch-input`,
+		// hero-now-home-followups Fix 1: Quick launch mounts the shell-
+		// owned chat-input fragment instead of the hand-rolled <input>.
+		`data-chat-input-variant="hero"`,
+		// Fix 2: with no chat adapter wired (default in this test) the
+		// empty-state notice renders above the chat input.
+		`empty-state-notice`,
+		`Hero needs hero-code`,
+		// Fix 3: the page-hero subhead is wrapped in a stable DOM hook
+		// so the `event: hero` SSE channel can swap it in place.
+		`data-page-hero-subhead`,
 	}
 	for _, want := range mustContain {
 		if !strings.Contains(body, want) {
 			t.Errorf("response missing %q", want)
 		}
 	}
+}
+
+func TestRegister_NoEmptyStateWhenAdapterConnected(t *testing.T) {
+	r := newTestRouter(t)
+	reg := chat.NewRegistry()
+	if err := reg.Register("test-adapter", &fakeAdapter{}); err != nil {
+		t.Fatalf("register adapter: %v", err)
+	}
+	if err := Register(r, Deps{
+		Workspace:    "hero",
+		Branch:       "main",
+		UserName:     "test-user",
+		ChatRegistry: reg,
+	}); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+
+	srv := httptest.NewServer(r.Handler())
+	defer srv.Close()
+
+	resp, err := http.Get(srv.URL + "/now")
+	if err != nil {
+		t.Fatalf("GET /now: %v", err)
+	}
+	defer resp.Body.Close()
+	raw, _ := io.ReadAll(resp.Body)
+	body := string(raw)
+
+	// The chat-input fragment must still be present, but the no-adapter
+	// empty-state notice must not.
+	if !strings.Contains(body, `data-chat-input-variant="hero"`) {
+		t.Errorf("chat-input fragment missing when adapter connected")
+	}
+	if strings.Contains(body, `Hero needs hero-code`) {
+		t.Errorf("empty-state notice rendered even though adapter is connected")
+	}
+}
+
+// fakeAdapter is a minimal chat.HeroAdapter implementation for tests.
+// Reports interactive capability so chat.Resolve picks it.
+type fakeAdapter struct{}
+
+func (fakeAdapter) Name() string       { return "fake" }
+func (fakeAdapter) Version() string    { return "0.0.0" }
+func (fakeAdapter) Kinds() []chat.Kind { return []chat.Kind{chat.KindInteractive} }
+func (fakeAdapter) Close() error       { return nil }
+func (fakeAdapter) Stream(ctx context.Context, req chat.DispatchRequest) (<-chan chat.Event, error) {
+	ch := make(chan chat.Event)
+	close(ch)
+	return ch, nil
 }
 
 func TestResolveMethodology(t *testing.T) {
