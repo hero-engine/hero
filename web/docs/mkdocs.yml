@@ -93,6 +93,7 @@ nav:
     - Spec Management: cli/spec-management.md
     - Search & Context: cli/search-and-context.md
     - Tracker Integration: cli/tracker-integration.md
+    - Cross-Repo Peering: cli/peering.md
     - Testing & Demos: cli/testing-and-demos.md
     - Server & MCP: cli/server-and-mcp.md
   - Commands Reference: commands/index.md

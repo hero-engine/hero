@@ -15,6 +15,7 @@ This creates the `.hero/` directory structure:
 ├── mission.md      # project charter and first principles
 ├── NEXT.md         # shared projected handoff (solo mode)
 ├── QUEUE.md        # ready-work queue for cold starts
+├── SNAPSHOT.md     # project-shape rollup (managed by `hero snapshot --project`)
 ├── planning/       # active specs (features/, bugs/, initiatives/)
 ├── specs/          # completed specs (archive)
 ├── knowledge/      # conventions, decisions, rules, context, notes, templates
@@ -134,7 +135,7 @@ Commit everything under `.hero/` **except**:
 | `.hero/planning/` | Yes |
 | `.hero/specs/` | Yes |
 | `.hero/knowledge/` | Yes |
-| `.hero/mission.md`, `NEXT.md`, `QUEUE.md` | Yes |
+| `.hero/mission.md`, `NEXT.md`, `QUEUE.md`, `SNAPSHOT.md` | Yes |
 | `.hero/hero.json` | Yes |
 | `.hero/index.db`, `.hero/graph.db` | No — generated, rebuilt automatically |
 | `.hero/events.log` | No — local activity feed |

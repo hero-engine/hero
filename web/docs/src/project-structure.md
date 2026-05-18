@@ -48,6 +48,9 @@ source split that newer install/upgrade paths use.
 ├── mission.md                 # project charter and first principles
 ├── NEXT.md                    # shared projected handoff in solo mode
 ├── QUEUE.md                   # ready-work queue snapshot
+├── SNAPSHOT.md                # project-shape rollup (managed by `hero snapshot --project`)
+├── snapshots/                 # timestamped snapshot archives
+├── peer-manifest.yaml         # cross-repo peering manifest
 ├── planning/
 │   ├── features/
 │   ├── bugs/

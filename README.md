@@ -124,10 +124,10 @@ Current installed content counts:
 
 | Surface | Count |
 |---|---:|
-| Slash command definitions | 27 |
+| Slash command definitions | 28 |
 | Agent definitions | 34 |
 | Skill definitions | 45 |
-| MCP tools | 41 |
+| MCP tools | 42 |
 
 Run `hero docs check` to validate these counts against the repo.
 
@@ -224,7 +224,7 @@ The binary is organized around a few stable groups.
 | Spec lifecycle | `hero spec new`, `hero spec deliver`, `hero spec verify`, `hero spec complete`, `hero spec claim`, `hero spec plan`, `hero diff`, `hero drift`, `hero list`, `hero queue`, `hero suggest` |
 | Acceptance criteria | `hero ac list`, `hero ac record`, `hero ac status`, `hero ac history`, `hero coverage`, `hero spec contract` |
 | Workspace health | `hero status`, `hero dashboard`, `hero check`, `hero docs check`, `hero smoke`, `hero ci`, `hero anchor`, `hero tripwire` |
-| Graph and retrieval | `hero scan`, `hero graph`, `hero extract`, `hero impact`, `hero why`, `hero blocked` |
+| Graph and retrieval | `hero scan`, `hero graph`, `hero extract`, `hero impact`, `hero why`, `hero blocked`, `hero snapshot` |
 | Tracker and sync | `hero sync connect`, `hero sync import`, `hero sync pull`, `hero sync spec`, `hero sync link`, `hero sync comment`, `hero sync attach`, `hero sync graph` |
 | Cross-repo peering | `hero admin repos`, `hero peer manifest`, `hero peer list`, `hero peer show`, `hero peer call`, `hero handoff`, `hero handoff status`, `hero handoff accept`, `hero context imports` |
 | Automation and headless work | `hero agent run`, `hero agent jobs`, `hero agent approve`, `hero agent automate`, `hero pipeline`, `hero watch` |
@@ -276,7 +276,7 @@ tool set is:
 `hero_insights`, `hero_contract`, `hero_plan`, `hero_impact`,
 `hero_recap`, `hero_drift`, `hero_ci`, `hero_feed`, `hero_event`,
 `hero_active`, `hero_coverage`, `hero_why`, `hero_blocked`,
-`hero_expand`.
+`hero_expand`, `hero_snapshot`.
 
 Most tools are read-only. Tools that intentionally mutate local state
 include claim/event/plan/enrich/test/demo helpers.
@@ -290,6 +290,7 @@ include claim/event/plan/enrich/test/demo helpers.
 ├── mission.md                  # project charter and first principles
 ├── NEXT.md                     # shared projected handoff in solo mode
 ├── QUEUE.md                    # ready-work queue for cold starts
+├── SNAPSHOT.md                 # project-shape rollup (managed by `hero snapshot --project`)
 ├── planning/
 │   ├── features/
 │   ├── bugs/
@@ -362,9 +363,9 @@ Slash commands:
 
 `blocked`, `capture`, `challenge`, `check`, `compose`, `convention`,
 `decide`, `deliver`, `design`, `diagnose`, `discover`, `docs`,
-`handoff`, `hero`, `import`, `mock`, `note`, `prime`, `release`,
-`resume`, `retro`, `review`, `scan`, `scrub`, `split`, `sprint`,
-`why`.
+`handoff`, `hero`, `import`, `mock`, `note`, `peer`, `prime`,
+`release`, `resume`, `retro`, `review`, `scan`, `scrub`, `split`,
+`sprint`, `why`.
 
 Skills:
 

@@ -53,6 +53,39 @@ hero next team
 `hero resume` is the session warm-up command. `hero recap` groups recent
 activity by spec. `hero next` renders the current handoff projection.
 
+When `next.projected` is enabled in `hero.json`, NEXT.md is regenerated
+from graph events rather than hand-written. Per-machine state lands in
+`.hero/next/<user>.local.md` (gitignored); the shared handoff lives in
+`.hero/NEXT.md` (solo mode) or `.hero/next/<user>.md` (team mode). A
+SessionStart hook fires `hero next ingest` so context from other
+machines flows into the local projection on every fresh session. The
+pre-flight migration gate on `hero next checkpoint` keeps legacy
+hand-written NEXT files from being silently overwritten — run
+`hero next migrate-to-projection` once to opt in.
+
+## Project Snapshot
+
+```bash
+hero snapshot                           # markdown rollup to stdout
+hero snapshot --json                    # structured JSON
+hero snapshot --section surfaces        # surfaces | initiatives | recent | next | risks | all
+hero snapshot --project                 # rewrite .hero/SNAPSHOT.md + NEXT/AGENTS pointers
+hero snapshot detect                    # show inferred surfaces with rationale
+hero snapshot assign                    # walk unassigned specs and prompt for a surface
+hero snapshot archive                   # write a timestamped archive into .hero/snapshots/
+hero snapshot history                   # list archived snapshots newest-first
+hero snapshot show <archive>            # render one archived snapshot
+hero snapshot diff <a> <b>              # text diff between two archives (or vs `live`)
+```
+
+`hero snapshot` renders the project-shape rollup — surfaces, lifecycle
+stages, initiatives, recent activity, next moves, and risks — from the
+live graph. Surfaces are inferred from repo shape; an optional
+`.hero/surfaces.yaml` overrides detection. The snapshot is discoverable
+through a one-line pointer that lives in NEXT.md and AGENTS.md; it is
+never auto-injected into a session. Archives are excluded from default
+search and cold-start bundles.
+
 ## Graph Traversal
 
 ```bash

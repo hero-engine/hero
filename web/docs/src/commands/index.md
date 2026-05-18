@@ -4,7 +4,7 @@ Hero installs slash command definitions into the user's harness. The
 commands route natural-language work into repeatable workflows and
 delegate to the appropriate agents and skills.
 
-Current installed command definitions: **27**.
+Current installed command definitions: **28**.
 
 ```text
 /design auth flow for OAuth2 providers
@@ -22,6 +22,7 @@ plain natural-language asks are routed to these same workflows.
 | `/resume` | Load a graph-backed session brief: mission, active work, recent changes, blockers, and dead ends. |
 | `/handoff` | Refresh NEXT state before switching tools or hitting context limits. |
 | `/hero` | Route a natural-language request to the right workflow. |
+| `/peer` | Cross-repo peering — list, inspect, call, or hand off to a sibling Hero workspace. |
 | `/why <target>` | Trace where a spec, AC, file, or commit came from. |
 | `/blocked` | List open features blocked by dependencies or failing criteria. |
 

@@ -54,8 +54,9 @@ When routing, pass the user's original context as arguments to the command. If t
 These are run in the terminal, not as slash commands:
 - `hero status` — workspace state and active specs
 - `hero search <query>` — find specs by keyword
-- `hero import` — import issues from tracker as spec scaffolds
-- `hero pull <slug>` — sync spec status from tracker
+- `hero snapshot` — render the project-shape rollup (surfaces, stages, recent activity, risks)
+- `hero sync import` — import issues from tracker as spec scaffolds
+- `hero sync pull <slug>` — sync spec status from tracker
 - `hero note <slug>` — quick note capture
 - `hero check` — health check
 - `hero peer list` — list registered sibling repos with reachability + manifest status
@@ -87,7 +88,7 @@ These are run in the terminal, not as slash commands:
 - **Verify before reporting done.** Define clear success criteria for every task. Run tests or validation scripts and iterate until the criteria are met before reporting completion.
 - **Local specs first.** When asked to work on bugs, features, or any tracked items, ALWAYS check what's already imported locally before querying the tracker. Use `hero search --list --type <type>` to find local specs. Only go to the tracker if the local search comes up empty. When working on multiple items (e.g. "diagnose 10 bugs"), select from locally imported specs — never bulk-query the tracker to pick work items.
 - Always check spec status before doing work — don't investigate closed bugs or deliver completed specs
-- When a tracker is configured, sync status with `hero pull` before starting work
+- When a tracker is configured, sync status with `hero sync pull` before starting work
 - Capture novel learnings to `.hero/knowledge/` at the end of major workflows
 - Specs use YAML frontmatter with fields: title, type, status, tracker_id, priority, severity
 - Imported specs include tracker-prefixed fields (e.g. jira_status, jira_priority, jira_assignee) under a # Jira/GitHub/Linear comment header
