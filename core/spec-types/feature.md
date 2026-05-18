@@ -53,6 +53,25 @@ relations:
   - { kind: parent, target_type: initiative, cardinality: zero-or-one }
   - { kind: blocks, target_type: feature, cardinality: many }
   - { kind: blocked_by, target_type: feature, cardinality: many }
+frontmatter:
+  required:
+    - { name: title, type: string, required: true, classification: content, description: "One-line human title for the feature." }
+    - { name: type, type: enum, required: true, values: [feature], default: feature, classification: content, description: "Spec type discriminator; always 'feature'." }
+    - { name: status, type: enum, required: true, values: [planning, refined, ready, delivering, in-review, completed], default: planning, classification: org-state, description: "Lifecycle position." }
+  optional:
+    - { name: created, type: date, format: "YYYY-MM-DD", classification: content, description: "Authoring date." }
+    - { name: priority, type: enum, values: [P0, P1, P2, P3], classification: org-state, description: "Hero-level priority." }
+    - { name: severity, type: enum, values: [critical, high, medium, low], classification: org-state, description: "Hero-level severity (rare on features; use bug)." }
+    - { name: horizon, type: enum, values: [now, next, someday, parking], default: now, classification: content, description: "Temporal segmentation per spec-prioritization." }
+    - { name: pinned, type: bool, default: "false", classification: content, description: "Float to top of `hero queue` regardless of ranking." }
+    - { name: tags, type: "list[string]", classification: content, description: "Free-form labels for grouping and search." }
+    - { name: claimed_by, type: string, classification: org-state, description: "Who is actively working this spec." }
+    - { name: delivery_method, type: enum, values: [agent, manual], classification: content, description: "How delivery is being executed." }
+    - { name: tracker_id, type: string, classification: org-state, description: "External tracker issue ID (e.g. PROJ-123)." }
+    - { name: kind, type: enum, values: [new, refactor, perf, infra, security, ux], default: new, classification: content, description: "Sub-category for feature work." }
+    - { name: owner, type: enum, values: [pm, engineering, qa, devops, design, docs], default: engineering, classification: org-state, description: "Current owning role." }
+    - { name: relations, type: "list[relation]", classification: content, description: "Parent/child/blocks edges to other specs." }
+    - { name: smoke, type: "object|enum", values: [deferred, none], classification: content, description: "Smoke-test wiring or escape-hatch sentinel." }
 ---
 
 # Feature spec-type

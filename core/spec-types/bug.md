@@ -53,6 +53,25 @@ relations:
   - { kind: discovered_against, target_type: feature, cardinality: zero-or-one }
   - { kind: blocks, target_type: feature, cardinality: many }
   - { kind: blocked_by, target_type: feature, cardinality: many }
+frontmatter:
+  required:
+    - { name: title, type: string, required: true, classification: content, description: "One-line human title for the bug." }
+    - { name: type, type: enum, required: true, values: [bug], default: bug, classification: content, description: "Spec type discriminator; always 'bug'." }
+    - { name: status, type: enum, required: true, values: [planning, refined, ready, delivering, in-review, completed], default: planning, classification: org-state, description: "Lifecycle position." }
+    - { name: severity, type: enum, required: true, values: [critical, high, medium, low], classification: org-state, description: "Defect impact." }
+  optional:
+    - { name: created, type: date, format: "YYYY-MM-DD", classification: content, description: "Authoring date." }
+    - { name: priority, type: enum, values: [P0, P1, P2, P3], classification: org-state, description: "Hero-level priority." }
+    - { name: horizon, type: enum, values: [now, next, someday, parking], default: now, classification: content, description: "Temporal segmentation." }
+    - { name: pinned, type: bool, default: "false", classification: content, description: "Float to top of `hero queue`." }
+    - { name: tags, type: "list[string]", classification: content, description: "Free-form labels." }
+    - { name: claimed_by, type: string, classification: org-state, description: "Who is actively working this spec." }
+    - { name: delivery_method, type: enum, values: [agent, manual], classification: content, description: "How delivery is executed." }
+    - { name: tracker_id, type: string, classification: org-state, description: "External tracker issue ID." }
+    - { name: kind, type: enum, values: [regression, edge-case, security, data], default: regression, classification: content, description: "Defect sub-category." }
+    - { name: owner, type: enum, values: [pm, engineering, qa, devops, design, docs], default: engineering, classification: org-state, description: "Current owning role." }
+    - { name: relations, type: "list[relation]", classification: content, description: "Parent/child/blocks edges." }
+    - { name: smoke, type: "object|enum", values: [deferred, none], classification: content, description: "Smoke-test wiring." }
 ---
 
 # Bug spec-type

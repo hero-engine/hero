@@ -29,6 +29,18 @@ relations:
   - { kind: parent, target_type: release, cardinality: zero-or-one }
   - { kind: contains, target_type: feature, cardinality: many }
   - { kind: contains, target_type: bug, cardinality: many }
+frontmatter:
+  required:
+    - { name: title, type: string, required: true, classification: content, description: "One-line human title for the sprint." }
+    - { name: type, type: enum, required: true, values: [sprint], default: sprint, classification: content, description: "Spec type discriminator; always 'sprint'." }
+    - { name: status, type: enum, required: true, values: [planning, committed, in-flight, completed], default: planning, classification: org-state, description: "Lifecycle position." }
+  optional:
+    - { name: created, type: date, format: "YYYY-MM-DD", classification: content, description: "Authoring date." }
+    - { name: priority, type: enum, values: [P0, P1, P2, P3], classification: org-state, description: "Hero-level priority." }
+    - { name: tags, type: "list[string]", classification: content, description: "Free-form labels." }
+    - { name: tracker_id, type: string, classification: org-state, description: "External tracker issue ID." }
+    - { name: owner, type: enum, values: [pm, engineering, qa, devops, design, docs], default: engineering, classification: org-state, description: "Current owning role." }
+    - { name: relations, type: "list[relation]", classification: content, description: "Parent/contains edges." }
 ---
 
 # Sprint spec-type

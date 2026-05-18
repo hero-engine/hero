@@ -29,6 +29,18 @@ relations:
   - { kind: child, target_type: sprint, cardinality: many }
   - { kind: contains, target_type: feature, cardinality: many }
   - { kind: contains, target_type: epic, cardinality: many }
+frontmatter:
+  required:
+    - { name: title, type: string, required: true, classification: content, description: "One-line human title for the release." }
+    - { name: type, type: enum, required: true, values: [release], default: release, classification: content, description: "Spec type discriminator; always 'release'." }
+    - { name: status, type: enum, required: true, values: [planning, committed, in-flight, shipped], default: planning, classification: org-state, description: "Lifecycle position." }
+  optional:
+    - { name: created, type: date, format: "YYYY-MM-DD", classification: content, description: "Authoring date." }
+    - { name: priority, type: enum, values: [P0, P1, P2, P3], classification: org-state, description: "Hero-level priority." }
+    - { name: tags, type: "list[string]", classification: content, description: "Free-form labels." }
+    - { name: tracker_id, type: string, classification: org-state, description: "External tracker issue ID." }
+    - { name: owner, type: enum, values: [pm, engineering, qa, devops, design, docs], default: engineering, classification: org-state, description: "Current owning role." }
+    - { name: relations, type: "list[relation]", classification: content, description: "Contains/child edges." }
 ---
 
 # Release spec-type
