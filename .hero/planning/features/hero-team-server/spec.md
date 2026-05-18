@@ -2,7 +2,7 @@
 title: Hero Team Server — Shared Job Queue, Approval Gates, and Team Coordination
 slug: hero-team-server
 type: feature
-status: planning
+status: delivering
 priority: P1
 tags: [team, server, jobs, approval, coordination, platform]
 created: 2026-04-23

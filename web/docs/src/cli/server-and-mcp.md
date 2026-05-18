@@ -60,6 +60,9 @@ hero serve --list
 
 Default address: `http://localhost:7437`.
 
+See also: [Web UI Homes](../serve/homes.md) for the route inventory of
+the top-level pages `hero serve` exposes in the browser.
+
 Useful endpoints:
 
 | Method | Path |

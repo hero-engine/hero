@@ -97,6 +97,8 @@ nav:
     - Cross-Repo Peering: cli/peering.md
     - Testing & Demos: cli/testing-and-demos.md
     - Server & MCP: cli/server-and-mcp.md
+  - Serve:
+    - Homes: serve/homes.md
   - Commands Reference: commands/index.md
   - Agents Reference: agents/index.md
   - Configuration:

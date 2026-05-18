@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-18T22:48:07Z · 100 ready specs_
+_Generated: 2026-05-18T22:51:15Z · 99 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -244,35 +244,6 @@ stub the agent-prompt integration as a follow-up.
 
 **Files:** .hero/planning/features/inline-propose-output-mode/spec.md, docs/contracts/inline-propose-v1.md (new), internal/proposals/ (new), internal/serve/proposals_routes.go (new), internal/cli/agent_run.go (new), domains/_platform/agent-prompts/inline-propose-addendum.md (new), testdata/proposals/v1/ (new), .hero/planning/features/hero-pm/spec.md (consumer), .hero/planning/features/hero-pm/mockups/08-inline-proposal.html (visual source of truth)
 **Skip:** sidecar persistence (v2), cross-domain proposals (v2), multi-author concurrent proposals (Hero Cloud), proposals on arbitrary source files (out of scope), inline-propose for `/deliver` and `/diagnose` (continue write-to-disk).
-
----
-
-## hero-serve-routes-inventory — `hero serve` routes inventory — one-paragraph map of the homes
-_feature · planning · horizon: now_
-
-A minimal inventory page that names every web-UI home `hero serve`
-exposes — `/now`, `/project`, `/work`, `/knowledge`, `/agents`, `/people`,
-plus the ⌘K overlay and chat dispatcher — with one paragraph each. No
-UX walkthroughs, no behavior contracts, no component docs. Those land in
-a follow-up spec once the homes stop polish-pass churning.
-
-**Status:** planning — spec just landed, no docs yet.
-
-**Pick up at:** verify each route in `internal/serve/server.go` and the
-per-page `Register(...)` calls under `internal/serve/pages/<home>/page.go`
-before writing prose. Then scaffold `web/docs/src/serve/homes.md`, wire
-it into `mkdocs.yml`, and add a "see also" line to
-`cli/server-and-mcp.md`.
-
-→ `.hero/planning/features/hero-serve-routes-inventory/spec.md`
-
-**Files:** `internal/serve/server.go`,
-`internal/serve/pages/{now,work,knowledge,agentspage,people,project}/page.go`,
-`internal/serve/shell/static/islands/command-bar.js`,
-`web/docs/mkdocs.yml`, `web/docs/src/cli/server-and-mcp.md`.
-**Skip:** documenting per-home sub-routes, view-tab semantics, SSE
-channel shapes, or chat-dispatcher protocol — all flagged as still
-settling.
 
 ---
 

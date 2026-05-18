@@ -1,7 +1,7 @@
 ---
 title: `hero serve` routes inventory — one-paragraph map of the homes
 type: feature
-status: planning
+status: completed
 severity: low
 tags: [docs, serve, web-ui]
 created: 2026-05-18
@@ -13,27 +13,24 @@ created: 2026-05-18
 
 A minimal inventory page that names every web-UI home `hero serve`
 exposes — `/now`, `/project`, `/work`, `/knowledge`, `/agents`, `/people`,
-plus the ⌘K overlay and chat dispatcher — with one paragraph each. No
-UX walkthroughs, no behavior contracts, no component docs. Those land in
-a follow-up spec once the homes stop polish-pass churning.
+plus the ⌘K overlay and chat dispatcher — with one paragraph each.
 
-**Status:** planning — spec just landed, no docs yet.
+**Status:** completed — `web/docs/src/serve/homes.md` landed with one
+paragraph per home plus a "Global chrome" section flagging the ⌘K
+overlay and chat dispatcher as still settling. Each route heading was
+verified against the `RegisterHome(...)` call in the per-page source
+before writing prose.
 
-**Pick up at:** verify each route in `internal/serve/server.go` and the
-per-page `Register(...)` calls under `internal/serve/pages/<home>/page.go`
-before writing prose. Then scaffold `web/docs/src/serve/homes.md`, wire
-it into `mkdocs.yml`, and add a "see also" line to
-`cli/server-and-mcp.md`.
+**Pick up at:** if the homes stop polish-pass churning, a follow-up
+spec layers in detailed UI walkthroughs (view tabs, sub-routes,
+SSE channel shapes, chat-dispatcher protocol) — all explicitly
+deferred here.
 
 → `.hero/planning/features/hero-serve-routes-inventory/spec.md`
 
-**Files:** `internal/serve/server.go`,
-`internal/serve/pages/{now,work,knowledge,agentspage,people,project}/page.go`,
-`internal/serve/shell/static/islands/command-bar.js`,
-`web/docs/mkdocs.yml`, `web/docs/src/cli/server-and-mcp.md`.
-**Skip:** documenting per-home sub-routes, view-tab semantics, SSE
-channel shapes, or chat-dispatcher protocol — all flagged as still
-settling.
+**Files touched:** `web/docs/src/serve/homes.md` (new),
+`web/docs/mkdocs.yml` (nav: `Serve → Homes`),
+`web/docs/src/cli/server-and-mcp.md` ("See also" pointer).
 
 ## Context
 

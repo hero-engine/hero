@@ -2,7 +2,7 @@
 title: Domain Plugin Architecture — Refactor Content into Swappable Domain Packs
 slug: domain-plugin-architecture
 type: feature
-status: planning
+status: delivering
 priority: P0
 tags: [platform, domains, architecture, refactor]
 created: 2026-04-25
