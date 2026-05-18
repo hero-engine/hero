@@ -3,7 +3,6 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/hero-engine/hero/internal/config"
@@ -189,6 +188,3 @@ func findNLHook(heroDir, name string) (*hooks.Hook, error) {
 	}
 	return nil, fmt.Errorf("hook %q not found in .hero/hooks/", name)
 }
-
-// Ensure nlhookFile doesn't shadow hookFile if it exists
-var _ = os.Getenv // ensure os is used

@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/hero-engine/hero/internal/index"
-	"github.com/hero-engine/hero/internal/spec"
 	"github.com/spf13/cobra"
 )
 
@@ -105,6 +104,3 @@ func runTripwireCheck(cmd *cobra.Command, args []string) error {
 	os.Exit(1)
 	return nil
 }
-
-// Ensure tripwire specs can be discovered from the knowledge directory.
-var _ = spec.TypeTripwire

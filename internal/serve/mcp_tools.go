@@ -1440,10 +1440,6 @@ func (s *MCPServer) enrichCodeStructure(ctx *index.ContextBlock, filePaths []str
 	}
 }
 
-func formatContextBlock(ctx *index.ContextBlock) string {
-	return formatContextBlockWithVocab(ctx, nil)
-}
-
 // formatContextBlockWithVocab is the same as formatContextBlock but
 // renders spec type names through the supplied vocabulary. A nil vocab
 // preserves the canonical literal — keeping engineering / legacy

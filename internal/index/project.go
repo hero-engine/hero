@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+
+	"github.com/hero-engine/hero/internal/graph"
 )
 
 // ProjectGraphNodes reads all current (valid_to IS NULL) nodes from the graph
@@ -68,20 +70,20 @@ func (idx *DB) ProjectGraphNodes(graphDB *sql.DB) (int, error) {
 			props = map[string]any{}
 		}
 
-		title := propString(props, "title")
+		title := graph.StringProp(props, "title")
 		if title == "" {
-			title = propString(props, "subject")
+			title = graph.StringProp(props, "subject")
 		}
 		if title == "" {
 			title = key
 		}
 
-		body := propString(props, "body")
+		body := graph.StringProp(props, "body")
 		if body == "" {
-			body = propString(props, "description")
+			body = graph.StringProp(props, "description")
 		}
 		if body == "" {
-			body = propString(props, "content")
+			body = graph.StringProp(props, "content")
 		}
 
 		if _, err := insertFTS.Exec(rowID, title, body); err != nil {
@@ -106,14 +108,3 @@ func (idx *DB) ProjectGraphNodes(graphDB *sql.DB) (int, error) {
 	return count, nil
 }
 
-func propString(props map[string]any, key string) string {
-	v, ok := props[key]
-	if !ok {
-		return ""
-	}
-	s, ok := v.(string)
-	if !ok {
-		return ""
-	}
-	return s
-}

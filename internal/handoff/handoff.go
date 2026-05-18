@@ -272,8 +272,8 @@ func askFromNode(n *graph.Node) *UserAsk {
 	}
 	return &UserAsk{
 		User:      n.Key,
-		Text:      stringProp(n.Props, "text"),
-		SessionID: stringProp(n.Props, "session_id"),
+		Text:      graph.StringProp(n.Props, "text"),
+		SessionID: graph.StringProp(n.Props, "session_id"),
 		UpdatedAt: n.ValidFrom,
 	}
 }
@@ -284,9 +284,9 @@ func suggestionFromNode(n *graph.Node) *NextSuggestion {
 	}
 	return &NextSuggestion{
 		User:      n.Key,
-		Text:      stringProp(n.Props, "text"),
-		Rationale: stringProp(n.Props, "rationale"),
-		SessionID: stringProp(n.Props, "session_id"),
+		Text:      graph.StringProp(n.Props, "text"),
+		Rationale: graph.StringProp(n.Props, "rationale"),
+		SessionID: graph.StringProp(n.Props, "session_id"),
 		UpdatedAt: n.ValidFrom,
 	}
 }
@@ -298,19 +298,11 @@ func reflectionFromNode(n *graph.Node) *SessionReflection {
 	user, _, _ := strings.Cut(n.Key, ":")
 	return &SessionReflection{
 		User:      user,
-		Text:      stringProp(n.Props, "text"),
+		Text:      graph.StringProp(n.Props, "text"),
 		Tags:      stringSliceProp(n.Props, "tags"),
-		SessionID: stringProp(n.Props, "session_id"),
+		SessionID: graph.StringProp(n.Props, "session_id"),
 		UpdatedAt: n.ValidFrom,
 	}
-}
-
-func stringProp(m map[string]any, k string) string {
-	if m == nil {
-		return ""
-	}
-	v, _ := m[k].(string)
-	return v
 }
 
 func stringSliceProp(m map[string]any, k string) []string {

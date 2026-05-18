@@ -97,7 +97,7 @@ func Record(results []RunResult, repoKey string, store *graph.Store) (*RecordSum
 			continue
 		}
 
-		newProps := cloneStringAnyMap(existing.Props)
+		newProps := graph.CloneProps(existing.Props)
 		newProps["status"] = newStatus
 		newProps["last_run_at"] = orNow(r.Timestamp)
 		if newStatus == "passing" {
@@ -249,14 +249,6 @@ func orNow(ts string) string {
 		return ts
 	}
 	return time.Now().UTC().Format(time.RFC3339)
-}
-
-func cloneStringAnyMap(m map[string]any) map[string]any {
-	out := make(map[string]any, len(m))
-	for k, v := range m {
-		out[k] = v
-	}
-	return out
 }
 
 func statementOf(props map[string]any) string {

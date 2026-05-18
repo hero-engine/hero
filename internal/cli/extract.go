@@ -24,7 +24,6 @@ import (
 // caching.
 
 var (
-	extractTarget   string // "notes" | "specs" | "all"
 	extractProvider string // "anthropic" | "openai" | "azure"
 	extractModel    string // override default extraction model
 	extractDryRun   bool

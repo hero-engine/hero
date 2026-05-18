@@ -122,8 +122,7 @@ func GetUnenrichedSymbols(codeDir string, limit int) ([]UnenrichedSymbol, error)
 			continue
 		}
 
-		pkgName, pkgPath, _ := parsePackageHeader(string(content))
-		_ = pkgName
+		_, pkgPath, _ := parsePackageHeader(string(content))
 
 		lines := strings.Split(string(content), "\n")
 		var currentKind string

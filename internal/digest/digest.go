@@ -347,7 +347,7 @@ func sprintSection(store *graph.Store, opts Options, budget int) (BriefSection, 
 		rowsBuf = append(rowsBuf, r)
 	}
 	for _, r := range rowsBuf {
-		line := fmt.Sprintf("- `%s` %s — _%s_", r.key, oneLineString(r.title), r.status)
+		line := fmt.Sprintf("- `%s` %s — _%s_", r.key, oneLine(r.title), r.status)
 		if opts.AuthorEmail != "" && strings.EqualFold(r.assignee, opts.AuthorEmail) {
 			line += " ← yours"
 		}
@@ -355,15 +355,6 @@ func sprintSection(store *graph.Store, opts Options, budget int) (BriefSection, 
 	}
 	sec.Truncated = trimToBudget(&sec, budget)
 	return sec, nil
-}
-
-// oneLineString trims and collapses to a single line for safe rendering.
-func oneLineString(s string) string {
-	s = strings.TrimSpace(s)
-	if i := strings.IndexAny(s, "\r\n"); i >= 0 {
-		s = s[:i]
-	}
-	return s
 }
 
 func inFlightSection(store *graph.Store, opts Options, budget int) (BriefSection, error) {

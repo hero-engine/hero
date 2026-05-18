@@ -485,11 +485,11 @@ func toEntityRow(n *graph.Node, typ string) entityRow {
 	// small SQL trip; alternative is unmarshalling the node's props.
 	// Both work; this stays consistent with the helpers above.
 	r.Title = n.Key
-	if title := propString(n.Props, "title"); title != "" {
+	if title := graph.StringProp(n.Props, "title"); title != "" {
 		r.Title = title
 	}
-	r.Status = propString(n.Props, "status")
-	r.Priority = propString(n.Props, "priority")
+	r.Status = graph.StringProp(n.Props, "status")
+	r.Priority = graph.StringProp(n.Props, "priority")
 	return r
 }
 
@@ -497,26 +497,11 @@ func bodyOf(n *graph.Node) string {
 	// Notes have body in props; specs have rationale; we surface
 	// whatever is most useful per-type.
 	for _, k := range []string{"body", "rationale", "doc", "description"} {
-		if v := propString(n.Props, k); v != "" {
+		if v := graph.StringProp(n.Props, k); v != "" {
 			return v
 		}
 	}
 	return ""
-}
-
-func propString(p map[string]any, key string) string {
-	if p == nil {
-		return ""
-	}
-	v, ok := p[key]
-	if !ok {
-		return ""
-	}
-	s, ok := v.(string)
-	if !ok {
-		return ""
-	}
-	return s
 }
 
 func (g *Generator) renderTo(tmpl *template.Template, name, path string, data any) error {

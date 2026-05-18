@@ -775,7 +775,6 @@ func addTag(content, tag string) string {
 			break
 		}
 		if strings.HasPrefix(strings.TrimSpace(lines[i]), "tags:") {
-			// Check if tag already exists
 			if strings.Contains(lines[i], tag) {
 				return content
 			}

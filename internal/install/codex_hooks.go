@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 // Codex CLI hooks.json schema for the Stop event:
@@ -162,29 +161,12 @@ func stripCodexHeroEntries(entries []interface{}) []interface{} {
 			out = append(out, e)
 			continue
 		}
-		if codexEntryIsHero(em) {
+		if entryIsHero(em) {
 			continue
 		}
 		out = append(out, e)
 	}
 	return out
-}
-
-func codexEntryIsHero(entry map[string]interface{}) bool {
-	inner, _ := entry["hooks"].([]interface{})
-	for _, h := range inner {
-		hm, ok := h.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		cmd, _ := hm["command"].(string)
-		for _, prefix := range heroCmdPrefixes {
-			if strings.HasPrefix(cmd, prefix) {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 // codexHooksPath returns the path to .codex/hooks.json based on install mode.

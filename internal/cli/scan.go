@@ -636,7 +636,6 @@ func writeWorkSubgraph(cfg config.Config, projectRoot, heroDir string, store *gr
 // resolveParser returns the actual parser backend that will be used.
 func resolveParser(parser string) string {
 	if parser == "auto" || parser == "treesitter" {
-		// Check if tree-sitter CLI is available
 		if _, err := exec.LookPath("tree-sitter"); err == nil {
 			return "treesitter"
 		}

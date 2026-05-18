@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -106,25 +105,6 @@ func ResolveArgs(template string, payload map[string]string) string {
 	return result
 }
 
-// Log appends an entry to the automation log.
-func (e *Engine) Log(entry LogEntry) error {
-	if err := os.MkdirAll(filepath.Dir(e.logPath), 0o755); err != nil {
-		return err
-	}
-	f, err := os.OpenFile(e.logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	data, err := json.Marshal(entry)
-	if err != nil {
-		return err
-	}
-	_, err = fmt.Fprintf(f, "%s\n", data)
-	return err
-}
-
 // ReadLog returns recent log entries.
 func (e *Engine) ReadLog(limit int) ([]LogEntry, error) {
 	data, err := os.ReadFile(e.logPath)
@@ -183,17 +163,6 @@ func (e *Engine) Test(name string, payload map[string]string) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("automation %q not found", name)
-}
-
-// MarkFired updates the last-fired timestamp for an automation.
-func (e *Engine) MarkFired(name string) {
-	for i := range e.automations {
-		if e.automations[i].Config.Name == name {
-			e.automations[i].LastFired = time.Now()
-			e.automations[i].FireCount++
-			return
-		}
-	}
 }
 
 func matchesFilter(filter map[string]string, payload map[string]string) bool {

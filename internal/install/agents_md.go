@@ -81,22 +81,6 @@ func resolveContentPathsForBody(opts Options) contentPathsForBody {
 	}
 }
 
-// relForBody returns absPath as a project-relative slash-prefixed string
-// with a trailing slash (matching the human-readable convention used in
-// the Project Structure section). Falls back to fallback on any Rel
-// error.
-func relForBody(projectRoot, absPath, fallback string) string {
-	rel, err := filepath.Rel(projectRoot, absPath)
-	if err != nil || rel == "" || rel == "." {
-		return fallback
-	}
-	rel = filepath.ToSlash(rel)
-	if !strings.HasSuffix(rel, "/") {
-		rel += "/"
-	}
-	return rel
-}
-
 // installManagedSpec describes how installManagedMarkdown should handle a
 // single file.
 type installManagedSpec struct {

@@ -23,20 +23,6 @@ func setupAPITestEnv(t *testing.T) *API {
 	return srv.api
 }
 
-// projectSlug returns the slug for the test workspace (derived from temp dir name).
-func projectSlug(t *testing.T, projectRoot string) string {
-	t.Helper()
-	srv := NewServer(ServerConfig{
-		HeroDir:     projectRoot + "/.hero",
-		ProjectRoot: projectRoot,
-	})
-	slugs := srv.Projects()
-	if len(slugs) == 0 {
-		t.Fatal("no projects registered")
-	}
-	return slugs[0]
-}
-
 func TestAPI_Health(t *testing.T) {
 	api := setupAPITestEnv(t)
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)

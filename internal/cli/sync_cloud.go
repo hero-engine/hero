@@ -184,7 +184,6 @@ func runSyncCloud(cmd *cobra.Command, args []string) error {
 // resolveCloudTarget determines the org_id and repo_id for sync.
 // It checks cloud config in hero.json first, then falls back to listing orgs.
 func resolveCloudTarget(cfg config.Config, token, cloudURL string) (string, string, error) {
-	// Check if hero.json has cloud config
 	if cfg.Cloud != nil && cfg.Cloud.OrgID != "" && cfg.Cloud.RepoID != "" {
 		return cfg.Cloud.OrgID, cfg.Cloud.RepoID, nil
 	}

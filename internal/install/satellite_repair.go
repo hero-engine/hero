@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -169,7 +170,7 @@ func Repair(opts RepairOptions) (*RepairResult, error) {
 
 		// 6. New target at root since this satellite was created?
 		for _, t := range rootTargets {
-			if !containsTarget(entryTargets, t) {
+			if !slices.Contains(entryTargets, t) {
 				layout := LayoutFor(t)
 				if layout == nil {
 					continue
@@ -260,11 +261,3 @@ func stringsToTargets(s []string) []Target {
 	return out
 }
 
-func containsTarget(ts []Target, t Target) bool {
-	for _, x := range ts {
-		if x == t {
-			return true
-		}
-	}
-	return false
-}

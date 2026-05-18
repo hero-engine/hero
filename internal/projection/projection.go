@@ -15,9 +15,7 @@ package projection
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
-	"sort"
 	"strings"
 	"time"
 
@@ -362,15 +360,6 @@ func oneLine(s string) string {
 	}
 	return s
 }
-
-// jsonStr is a small helper for tests to compare props.
-func jsonStr(v any) string {
-	b, _ := json.Marshal(v)
-	return string(b)
-}
-
-// _ = sort.Strings — keeps import alive when query helpers expand.
-var _ = sort.Strings
 
 // pluralizeWorkType returns a methodology-aware plural noun for the
 // canonical work type (e.g. "feature" → "features", or "stories" under

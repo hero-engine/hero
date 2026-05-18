@@ -21,11 +21,6 @@ func CalcVelocity(events []ClaimEvent, since time.Time) []AgentVelocity {
 		slug  string
 		agent string
 	}
-	type specTimes struct {
-		claimedAt time.Time
-		doneAt    time.Time
-		done      bool
-	}
 
 	// Build map of claim times per (slug, agent)
 	claimTimes := make(map[specKey]time.Time)

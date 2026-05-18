@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -257,15 +256,3 @@ func FormatHistory(cal *Calibration) string {
 
 	return b.String()
 }
-
-// FormatJSON returns calibration data as JSON.
-func FormatJSON(cal *Calibration) (string, error) {
-	data, err := json.MarshalIndent(cal, "", "  ")
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
-}
-
-// needed to avoid unused import in some builds
-var _ = strconv.Atoi

@@ -191,10 +191,10 @@ func (s *Store) ApplyPull(nodes []Node, edges []Edge) (nodesApplied, edgesApplie
 	// resolution doesn't depend on shared row ids.
 	for i := range edges {
 		e := edges[i]
-		fromKey := stringProp(e.Props, "_from_key")
-		fromType := stringProp(e.Props, "_from_type")
-		toKey := stringProp(e.Props, "_to_key")
-		toType := stringProp(e.Props, "_to_type")
+		fromKey := StringProp(e.Props, "_from_key")
+		fromType := StringProp(e.Props, "_from_type")
+		toKey := StringProp(e.Props, "_to_key")
+		toType := StringProp(e.Props, "_to_type")
 
 		fromID, err := s.GetNodeID(fromType, fromKey)
 		if err != nil {
@@ -208,7 +208,7 @@ func (s *Store) ApplyPull(nodes []Node, edges []Edge) (nodesApplied, edgesApplie
 		}
 		// Strip the routing keys before inserting so they don't
 		// pollute on-disk props.
-		clean := cloneProps(e.Props)
+		clean := CloneProps(e.Props)
 		delete(clean, "_from_key")
 		delete(clean, "_from_type")
 		delete(clean, "_to_key")
@@ -246,7 +246,7 @@ func (s *Store) Push(c *SyncClient) (*PushResponse, error) {
 		if err != nil {
 			continue
 		}
-		props := cloneProps(e.Props)
+		props := CloneProps(e.Props)
 		props["_from_type"] = from.Type
 		props["_from_key"] = from.Key
 		props["_to_type"] = to.Type
@@ -429,7 +429,10 @@ func (s *Store) nodeByID(id int64) (*Node, error) {
 	return scanNode(row)
 }
 
-func cloneProps(p map[string]any) map[string]any {
+// CloneProps returns a shallow copy of a property bag. Useful when
+// callers need to mutate props for an upsert without aliasing the
+// original map.
+func CloneProps(p map[string]any) map[string]any {
 	out := make(map[string]any, len(p)+4)
 	for k, v := range p {
 		out[k] = v
@@ -437,7 +440,10 @@ func cloneProps(p map[string]any) map[string]any {
 	return out
 }
 
-func stringProp(p map[string]any, key string) string {
+// StringProp safely reads a string-typed entry from a property bag.
+// Returns "" when the key is absent or the value is not a string.
+// This is the canonical helper for reading graph node/edge Props.
+func StringProp(p map[string]any, key string) string {
 	v, ok := p[key]
 	if !ok {
 		return ""

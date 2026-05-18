@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"slices"
 	"strings"
 	"time"
 
@@ -95,7 +96,7 @@ func Build(heroDir, projectRoot string, since time.Time) (*Recap, error) {
 					}
 					specMap[slug] = sa
 				}
-				if !containsFile(sa.FilesTouched, f) {
+				if !slices.Contains(sa.FilesTouched, f) {
 					sa.FilesTouched = append(sa.FilesTouched, f)
 				}
 				if !containsCommit(sa.Commits, c.Hash) {
@@ -207,15 +208,6 @@ func isKnowledgePath(f string) bool {
 		strings.Contains(f, "/conventions/") ||
 		strings.Contains(f, "/context/") ||
 		strings.Contains(f, "/knowledge/"))
-}
-
-func containsFile(files []string, f string) bool {
-	for _, x := range files {
-		if x == f {
-			return true
-		}
-	}
-	return false
 }
 
 func containsCommit(commits []CommitSummary, hash string) bool {

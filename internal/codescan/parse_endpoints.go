@@ -114,8 +114,6 @@ func extractGoEndpoints(path string, lines []string) []Endpoint {
 var (
 	// app.get('/path', handler) — Express, Fastify, Hono
 	jsRouterMethodRe = regexp.MustCompile(`\.\s*(get|post|put|delete|patch|head|options|all)\s*\(\s*['"]([^'"]+)['"]`)
-	// router.route('/path')
-	jsRouteRe = regexp.MustCompile(`\.route\s*\(\s*['"]([^'"]+)['"]`)
 	// @Get('/path'), @Post('/path') — NestJS decorators
 	jsDecoratorRe = regexp.MustCompile(`@(Get|Post|Put|Delete|Patch|Head|Options|All)\s*\(\s*['"]?([^'")]*?)['"]?\s*\)`)
 	// export async function GET/POST — Next.js App Router

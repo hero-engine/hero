@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-18T21:50:57Z · 95 ready specs_
+_Generated: 2026-05-18T22:28:48Z · 100 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -244,6 +244,92 @@ stub the agent-prompt integration as a follow-up.
 
 **Files:** .hero/planning/features/inline-propose-output-mode/spec.md, docs/contracts/inline-propose-v1.md (new), internal/proposals/ (new), internal/serve/proposals_routes.go (new), internal/cli/agent_run.go (new), domains/_platform/agent-prompts/inline-propose-addendum.md (new), testdata/proposals/v1/ (new), .hero/planning/features/hero-pm/spec.md (consumer), .hero/planning/features/hero-pm/mockups/08-inline-proposal.html (visual source of truth)
 **Skip:** sidecar persistence (v2), cross-domain proposals (v2), multi-author concurrent proposals (Hero Cloud), proposals on arbitrary source files (out of scope), inline-propose for `/deliver` and `/diagnose` (continue write-to-disk).
+
+---
+
+## hero-serve-routes-inventory — `hero serve` routes inventory — one-paragraph map of the homes
+_feature · planning · horizon: now_
+
+A minimal inventory page that names every web-UI home `hero serve`
+exposes — `/now`, `/project`, `/work`, `/knowledge`, `/agents`, `/people`,
+plus the ⌘K overlay and chat dispatcher — with one paragraph each. No
+UX walkthroughs, no behavior contracts, no component docs. Those land in
+a follow-up spec once the homes stop polish-pass churning.
+
+**Status:** planning — spec just landed, no docs yet.
+
+**Pick up at:** verify each route in `internal/serve/server.go` and the
+per-page `Register(...)` calls under `internal/serve/pages/<home>/page.go`
+before writing prose. Then scaffold `web/docs/src/serve/homes.md`, wire
+it into `mkdocs.yml`, and add a "see also" line to
+`cli/server-and-mcp.md`.
+
+→ `.hero/planning/features/hero-serve-routes-inventory/spec.md`
+
+**Files:** `internal/serve/server.go`,
+`internal/serve/pages/{now,work,knowledge,agentspage,people,project}/page.go`,
+`internal/serve/shell/static/islands/command-bar.js`,
+`web/docs/mkdocs.yml`, `web/docs/src/cli/server-and-mcp.md`.
+**Skip:** documenting per-home sub-routes, view-tab semantics, SSE
+channel shapes, or chat-dispatcher protocol — all flagged as still
+settling.
+
+---
+
+## agents-md-managed-region-consolidation — AGENTS.md Managed-Region Consolidation
+_feature · planning · horizon: now_
+
+Replaces the two independently-written "hero managed" blocks in AGENTS.md / CLAUDE.md / NEXT.md with one orchestrated region, plus a one-shot migration that consolidates existing two-block files into the new layout.
+
+**Status:** planning — spec just landed, no code yet.
+
+**Pick up at:** start with the orchestrator types in `internal/managed/region.go` — `SectionContributor` interface, ordered `ManagedRegion` aggregator, render-and-write entry point reusing `install.InsertManagedRegion`. Then refactor the install body emitter and the snapshot pointer to implement `SectionContributor`. Migration logic and tests come after the types are nailed down.
+
+→ `.hero/planning/features/agents-md-managed-region-consolidation/spec.md`
+
+**Files:** `internal/install/managed_region.go`, `internal/install/agents_md.go:120`, `internal/snapshot/pointers.go`, `internal/snapshot/projector.go:118`
+**Skip:** adding a section contributor for `hero peer` or any other subsystem that doesn't write to AGENTS.md today — keep scope to the two current writers plus the orchestrator.
+
+---
+
+## hero-import-docs-page — Document `hero import` — URL, file, and directory ingest
+_feature · planning · horizon: now_
+
+Adds a dedicated CLI Reference page for `hero import` so users can discover
+the URL / single-file / directory input shapes plus the `--max-bytes`,
+`--tag`, and `--type` flags without grepping the binary.
+
+**Status:** planning — directory ingest shipped in v0.10 via
+`hero-import-directory-unsupported`; docs never caught up.
+
+**Pick up at:** scaffold `web/docs/src/cli/import.md` from the
+`internal/cli/import.go` source. Cover the three input shapes (URL, file,
+directory), each flag, and one worked directory example. Then wire it into
+`mkdocs.yml` and add a row to `cli/overview.md`.
+
+→ `.hero/planning/features/hero-import-docs-page/spec.md`
+
+**Files:** `internal/cli/import.go`, `internal/cli/import_test.go`,
+`.hero/specs/hero-import-directory-unsupported/spec.md`,
+`web/docs/mkdocs.yml`, `web/docs/src/cli/overview.md`.
+**Skip:** documenting the underlying knowledge-entry stub format — that's
+covered in the existing Knowledge Base concepts page.
+
+---
+
+## cli-invocation-drift-test-markdown — CLI Invocation Drift Test for Markdown Surfaces
+_feature · planning · horizon: now_
+
+Catches stale or phantom `hero <command>` invocations referenced in any markdown shipped or installed by Hero (slash commands, skills, agents, READMEs, web docs, and the rendered AGENTS.md template).
+
+**Status:** planning — spec just landed, no code yet.
+
+**Pick up at:** start with the shared extractor + validator in `internal/cli/markdown_invocations.go`: a function that takes markdown bytes, returns `[]invocation` with `{file, line, args}`, and a validator that resolves each against `rootCmd.Traverse` and flag lookup. Wire the Go test (`internal/cli/markdown_drift_test.go`) first — that's the CI gate. Layer `--invocations` onto `hero docs check` after.
+
+→ `.hero/planning/features/cli-invocation-drift-test-markdown/spec.md`
+
+**Files:** `internal/cli/hints.go`, `internal/cli/hints_test.go`, `internal/cli/docs_check.go`, `internal/install/agents_md.go:210`
+**Skip:** building a separate top-level `hero lint` command — extend `hero docs check` instead.
 
 ---
 
@@ -789,6 +875,42 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · planning · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/configurable-workspace-location/spec.md)_
+
+---
+
+## snapshot-architecture — Snapshot Architecture — Projector, Surfaces, Lifecycle, Archives, Pointer Discovery
+_decision · accepted · horizon: now_
+
+Post-hoc decision record for `hero snapshot` (v0.10.0). Captures *why*
+the snapshot subsystem is shaped the way it is — projector framework,
+inferred surfaces with override layer, six-stage lifecycle, three-trigger
+archive model, discoverable pointer (never auto-injected), and strict
+archive isolation. The original delivery spec
+(`.hero/specs/project-snapshot/spec.md`, 1,759 lines) carries the full
+design narrative; this record exists so a future maintainer extending or
+modifying the subsystem doesn't have to reverse-engineer the choices.
+
+**Status:** accepted — design shipped in commit `5110b1a` on 2026-05-18.
+
+**Pick up at:** read this record before adding a new surface-detection
+signal, a new archive trigger, a new lifecycle stage, or any change that
+would push snapshot content into session context automatically. Cross-
+check the original delivery spec for full rationale on individual
+sub-decisions.
+
+→ `.hero/planning/decisions/snapshot-architecture/spec.md`
+
+**Files:** `internal/snapshot/projector.go`,
+`internal/snapshot/detect.go`, `internal/snapshot/surfaces.go`,
+`internal/snapshot/stage.go`, `internal/snapshot/archive.go`,
+`internal/snapshot/pointers.go`, `internal/cli/snapshot.go`,
+`.hero/specs/project-snapshot/spec.md`
+
+**Skip:** treating archives as searchable peers of specs/knowledge,
+auto-injecting snapshot bytes into `/resume` or `/prime` by default,
+adding a fixed-interval archive trigger (replaced by staleness cutoff),
+demanding a single `release_target:` field (resolution chain handles
+heterogeneous projects).
 
 ---
 

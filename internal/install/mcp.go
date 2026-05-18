@@ -151,7 +151,6 @@ func upsertMCPConfig(configPath, heroPath string, dryRun bool, projectRoot strin
 	}
 	config["mcpServers"] = servers
 
-	// Write back
 	if err := os.MkdirAll(filepath.Dir(configPath), 0o755); err != nil {
 		return err
 	}
@@ -205,7 +204,6 @@ func upsertOpenCodeMCPConfig(configPath, heroPath string, dryRun bool, projectRo
 	// Clean up legacy mcpServers key if present (from older hero installs)
 	delete(config, "mcpServers")
 
-	// Write back
 	if err := os.MkdirAll(filepath.Dir(configPath), 0o755); err != nil {
 		return err
 	}
@@ -332,7 +330,6 @@ func RegisterProject(projectDir string, dryRun bool) error {
 
 	slug := filepath.Base(absPath)
 
-	// Check if already registered with same path
 	if existing, ok := projects[slug]; ok {
 		if entry, ok := existing.(map[string]interface{}); ok {
 			if entry["path"] == absPath {
