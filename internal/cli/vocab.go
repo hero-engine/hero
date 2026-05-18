@@ -16,13 +16,8 @@ import (
 // to the canonical type literal — preserving engineering's rendering
 // bit-for-bit when no vocab/methodology layer is opted in.
 //
-// Precedence (per B6 spec):
-//  1. cfg.Vocabulary (explicit)
-//  2. methodology-derived (cfg.Methodology → aligned_vocabulary)
-//  3. tracker-inferred
-//  4. default
-//
-// When the workspace has neither vocab nor methodology, returns nil to
+// Precedence is owned by vocabulary.Resolve (see its doc comment). When
+// the workspace has neither vocab nor methodology, returns nil to
 // signal "no rendering layer active" — distinct from the resolver's
 // internal "default" fallback.
 func activeVocab(cfg *config.Config) *vocabulary.Vocabulary {
@@ -39,23 +34,8 @@ func activeVocab(cfg *config.Config) *vocabulary.Vocabulary {
 		return nil
 	}
 
-	// If methodology is set without an explicit vocabulary, derive the
-	// aligned vocabulary name and inject it on a temporary config copy
-	// so vocabulary.Resolve picks it up at the top of its chain. This
-	// implements step 2 of the B6 precedence rule above.
-	merged := *cfg
-	if merged.Vocabulary == "" && merged.Methodology != "" {
-		methodologies, mErr := loadMethodologiesCached()
-		if mErr == nil && len(methodologies) > 0 {
-			if m, ok := methodologies[merged.Methodology]; ok && m != nil {
-				if derived := methodology.DeriveVocabularyName(&merged, m); derived != "" {
-					merged.Vocabulary = derived
-				}
-			}
-		}
-	}
-
-	v, err := vocabulary.Resolve(&merged, vocabs)
+	methodologies, _ := loadMethodologiesCached()
+	v, err := vocabulary.Resolve(cfg, vocabs, methodologies)
 	if err != nil {
 		return nil
 	}

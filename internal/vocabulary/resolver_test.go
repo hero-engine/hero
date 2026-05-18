@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/methodology"
 )
 
 func mustLoad(t *testing.T) map[string]*Vocabulary {
@@ -17,7 +18,7 @@ func mustLoad(t *testing.T) map[string]*Vocabulary {
 
 func TestResolve_EmptyConfigDefault(t *testing.T) {
 	vocabs := mustLoad(t)
-	v, err := Resolve(&config.Config{}, vocabs)
+	v, err := Resolve(&config.Config{}, vocabs, nil)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
@@ -28,7 +29,7 @@ func TestResolve_EmptyConfigDefault(t *testing.T) {
 
 func TestResolve_NilConfigDefault(t *testing.T) {
 	vocabs := mustLoad(t)
-	v, err := Resolve(nil, vocabs)
+	v, err := Resolve(nil, vocabs, nil)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
@@ -40,7 +41,7 @@ func TestResolve_NilConfigDefault(t *testing.T) {
 func TestResolve_ExplicitVocabularyWins(t *testing.T) {
 	vocabs := mustLoad(t)
 	cfg := &config.Config{Vocabulary: "jira"}
-	v, err := Resolve(cfg, vocabs)
+	v, err := Resolve(cfg, vocabs, nil)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
@@ -52,7 +53,7 @@ func TestResolve_ExplicitVocabularyWins(t *testing.T) {
 func TestResolve_TrackerInfersJira(t *testing.T) {
 	vocabs := mustLoad(t)
 	cfg := &config.Config{Tracker: &config.TrackerConfig{Type: "jira"}}
-	v, err := Resolve(cfg, vocabs)
+	v, err := Resolve(cfg, vocabs, nil)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
@@ -64,7 +65,7 @@ func TestResolve_TrackerInfersJira(t *testing.T) {
 func TestResolve_TrackerInfersLinear(t *testing.T) {
 	vocabs := mustLoad(t)
 	cfg := &config.Config{Tracker: &config.TrackerConfig{Type: "linear"}}
-	v, err := Resolve(cfg, vocabs)
+	v, err := Resolve(cfg, vocabs, nil)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
@@ -78,7 +79,7 @@ func TestResolve_DeliveryCycleInfersShapeUp(t *testing.T) {
 	cfg := &config.Config{
 		PM: &config.PMConfig{Presets: &config.PMPresets{Delivery: "cycle"}},
 	}
-	v, err := Resolve(cfg, vocabs)
+	v, err := Resolve(cfg, vocabs, nil)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
@@ -92,7 +93,7 @@ func TestResolve_DeliverySprintInfersAgileScrum(t *testing.T) {
 	cfg := &config.Config{
 		PM: &config.PMConfig{Presets: &config.PMPresets{Delivery: "sprint"}},
 	}
-	v, err := Resolve(cfg, vocabs)
+	v, err := Resolve(cfg, vocabs, nil)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
@@ -106,7 +107,7 @@ func TestResolve_DeliveryFlowInfersKanban(t *testing.T) {
 	cfg := &config.Config{
 		PM: &config.PMConfig{Presets: &config.PMPresets{Delivery: "flow"}},
 	}
-	v, err := Resolve(cfg, vocabs)
+	v, err := Resolve(cfg, vocabs, nil)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
@@ -121,7 +122,7 @@ func TestResolve_ExplicitBeatsTracker(t *testing.T) {
 		Vocabulary: "default",
 		Tracker:    &config.TrackerConfig{Type: "jira"},
 	}
-	v, err := Resolve(cfg, vocabs)
+	v, err := Resolve(cfg, vocabs, nil)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
@@ -142,7 +143,7 @@ func TestResolve_OverridesApplied(t *testing.T) {
 			"malformed-key":                "should be ignored",
 		},
 	}
-	v, err := Resolve(cfg, vocabs)
+	v, err := Resolve(cfg, vocabs, nil)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
@@ -163,12 +164,146 @@ func TestResolve_OverridesApplied(t *testing.T) {
 func TestResolve_UnknownVocabularyFallsBackToDefault(t *testing.T) {
 	vocabs := mustLoad(t)
 	cfg := &config.Config{Vocabulary: "does-not-exist"}
-	v, err := Resolve(cfg, vocabs)
+	v, err := Resolve(cfg, vocabs, nil)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
 	if v.Name != "default" {
 		t.Errorf("Resolve unknown name got %q, want default fallback", v.Name)
+	}
+}
+
+func mustLoadMethodologies(t *testing.T) map[string]*methodology.Methodology {
+	t.Helper()
+	methodologies, err := methodology.Load(methodology.CoreFS(), nil)
+	if err != nil {
+		t.Fatalf("methodology.Load: %v", err)
+	}
+	return methodologies
+}
+
+func TestResolve_MethodologyScrumDerivesAgileScrum(t *testing.T) {
+	vocabs := mustLoad(t)
+	methodologies := mustLoadMethodologies(t)
+	cfg := &config.Config{Methodology: "scrum"}
+	v, err := Resolve(cfg, vocabs, methodologies)
+	if err != nil {
+		t.Fatalf("Resolve: %v", err)
+	}
+	if v.Name != "agile-scrum" {
+		t.Errorf("Resolve methodology=scrum got %q, want agile-scrum", v.Name)
+	}
+}
+
+func TestResolve_MethodologyShapeUpDerivesShapeUp(t *testing.T) {
+	vocabs := mustLoad(t)
+	methodologies := mustLoadMethodologies(t)
+	cfg := &config.Config{Methodology: "shape-up"}
+	v, err := Resolve(cfg, vocabs, methodologies)
+	if err != nil {
+		t.Fatalf("Resolve: %v", err)
+	}
+	if v.Name != "shape-up" {
+		t.Errorf("Resolve methodology=shape-up got %q, want shape-up", v.Name)
+	}
+}
+
+func TestResolve_MethodologyKanbanDerivesKanban(t *testing.T) {
+	vocabs := mustLoad(t)
+	methodologies := mustLoadMethodologies(t)
+	cfg := &config.Config{Methodology: "kanban"}
+	v, err := Resolve(cfg, vocabs, methodologies)
+	if err != nil {
+		t.Fatalf("Resolve: %v", err)
+	}
+	if v.Name != "kanban" {
+		t.Errorf("Resolve methodology=kanban got %q, want kanban", v.Name)
+	}
+}
+
+func TestResolve_MethodologyWaterfallDerivesDefault(t *testing.T) {
+	vocabs := mustLoad(t)
+	methodologies := mustLoadMethodologies(t)
+	cfg := &config.Config{Methodology: "waterfall"}
+	v, err := Resolve(cfg, vocabs, methodologies)
+	if err != nil {
+		t.Fatalf("Resolve: %v", err)
+	}
+	if v.Name != "default" {
+		t.Errorf("Resolve methodology=waterfall got %q, want default", v.Name)
+	}
+}
+
+func TestResolve_ExplicitVocabularyBeatsMethodologyDerived(t *testing.T) {
+	vocabs := mustLoad(t)
+	methodologies := mustLoadMethodologies(t)
+	cfg := &config.Config{
+		Vocabulary:  "default",
+		Methodology: "scrum",
+	}
+	v, err := Resolve(cfg, vocabs, methodologies)
+	if err != nil {
+		t.Fatalf("Resolve: %v", err)
+	}
+	if v.Name != "default" {
+		t.Errorf("Resolve explicit-over-methodology got %q, want default", v.Name)
+	}
+}
+
+func TestResolve_TrackerFallbackWhenNoMethodologyOrVocab(t *testing.T) {
+	vocabs := mustLoad(t)
+	methodologies := mustLoadMethodologies(t)
+	cfg := &config.Config{Tracker: &config.TrackerConfig{Type: "jira"}}
+	v, err := Resolve(cfg, vocabs, methodologies)
+	if err != nil {
+		t.Fatalf("Resolve: %v", err)
+	}
+	if v.Name != "jira" {
+		t.Errorf("Resolve tracker=jira (no methodology) got %q, want jira", v.Name)
+	}
+}
+
+func TestResolve_MethodologyDerivedBeatsTracker(t *testing.T) {
+	vocabs := mustLoad(t)
+	methodologies := mustLoadMethodologies(t)
+	cfg := &config.Config{
+		Methodology: "kanban",
+		Tracker:     &config.TrackerConfig{Type: "jira"},
+	}
+	v, err := Resolve(cfg, vocabs, methodologies)
+	if err != nil {
+		t.Fatalf("Resolve: %v", err)
+	}
+	if v.Name != "kanban" {
+		t.Errorf("Resolve methodology=kanban,tracker=jira got %q, want kanban", v.Name)
+	}
+}
+
+func TestResolve_NilMethodologiesSkipsDerivation(t *testing.T) {
+	vocabs := mustLoad(t)
+	cfg := &config.Config{Methodology: "scrum"}
+	v, err := Resolve(cfg, vocabs, nil)
+	if err != nil {
+		t.Fatalf("Resolve: %v", err)
+	}
+	if v.Name != "default" {
+		t.Errorf("Resolve methodology=scrum,methodologies=nil got %q, want default fallback", v.Name)
+	}
+}
+
+func TestResolve_UnknownMethodologyFallsThrough(t *testing.T) {
+	vocabs := mustLoad(t)
+	methodologies := mustLoadMethodologies(t)
+	cfg := &config.Config{
+		Methodology: "does-not-exist",
+		Tracker:     &config.TrackerConfig{Type: "linear"},
+	}
+	v, err := Resolve(cfg, vocabs, methodologies)
+	if err != nil {
+		t.Fatalf("Resolve: %v", err)
+	}
+	if v.Name != "linear" {
+		t.Errorf("Resolve unknown-methodology got %q, want linear (tracker fallback)", v.Name)
 	}
 }
 
@@ -181,7 +316,7 @@ func TestResolve_DoesNotMutateBase(t *testing.T) {
 			"types.epic": "Mutant",
 		},
 	}
-	if _, err := Resolve(cfg, vocabs); err != nil {
+	if _, err := Resolve(cfg, vocabs, nil); err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
 	if got := vocabs["default"].DisplayType("epic"); got != before {
