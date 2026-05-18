@@ -1,4 +1,4 @@
-package install
+package managed
 
 import (
 	"strings"
@@ -9,39 +9,39 @@ func TestFindManagedRegion(t *testing.T) {
 	cases := []struct {
 		name     string
 		input    string
-		want     ManagedRegion
+		want     Region
 		wantBody string
 	}{
 		{
 			name:  "no markers",
 			input: "# Hello\n\nJust user content.\n",
-			want:  ManagedRegion{Present: false},
+			want:  Region{Present: false},
 		},
 		{
 			name: "versioned pair",
 			input: "# Project\n\n" +
 				"<!-- hero:managed-start v=0.7.1 -->\nHero says hi.\n<!-- hero:managed-end -->\n\n" +
 				"User text.\n",
-			want:     ManagedRegion{Present: true, Version: "0.7.1"},
+			want:     Region{Present: true, Version: "0.7.1"},
 			wantBody: "Hero says hi.",
 		},
 		{
 			name: "versioned without end marker — treated as to-EOF",
 			input: "<!-- hero:managed-start v=0.7.1 -->\nbody only, no end.\n",
-			want:     ManagedRegion{Present: true, Version: "0.7.1"},
+			want:     Region{Present: true, Version: "0.7.1"},
 			wantBody: "body only, no end.",
 		},
 		{
 			name: "legacy pair",
 			input: "# Project\n\n" +
 				legacyMarker + "\n# Hero — Spec-Driven\n...\n" + legacyMarker + "\n\nUser tail.\n",
-			want:     ManagedRegion{Present: true, Legacy: true},
+			want:     Region{Present: true, Legacy: true},
 			wantBody: "# Hero — Spec-Driven\n...",
 		},
 		{
 			name:  "legacy single marker — treats rest of file as region",
 			input: legacyMarker + "\nblob without closing marker\n",
-			want:     ManagedRegion{Present: true, Legacy: true},
+			want:     Region{Present: true, Legacy: true},
 			wantBody: "blob without closing marker",
 		},
 	}

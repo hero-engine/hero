@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-18T23:07:10Z · 98 ready specs_
+_Generated: 2026-05-18T23:22:59Z · 97 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -244,22 +244,6 @@ stub the agent-prompt integration as a follow-up.
 
 **Files:** .hero/planning/features/inline-propose-output-mode/spec.md, docs/contracts/inline-propose-v1.md (new), internal/proposals/ (new), internal/serve/proposals_routes.go (new), internal/cli/agent_run.go (new), domains/_platform/agent-prompts/inline-propose-addendum.md (new), testdata/proposals/v1/ (new), .hero/planning/features/hero-pm/spec.md (consumer), .hero/planning/features/hero-pm/mockups/08-inline-proposal.html (visual source of truth)
 **Skip:** sidecar persistence (v2), cross-domain proposals (v2), multi-author concurrent proposals (Hero Cloud), proposals on arbitrary source files (out of scope), inline-propose for `/deliver` and `/diagnose` (continue write-to-disk).
-
----
-
-## agents-md-managed-region-consolidation — AGENTS.md Managed-Region Consolidation
-_feature · planning · horizon: now_
-
-Replaces the two independently-written "hero managed" blocks in AGENTS.md / CLAUDE.md / NEXT.md with one orchestrated region, plus a one-shot migration that consolidates existing two-block files into the new layout.
-
-**Status:** planning — spec just landed, no code yet.
-
-**Pick up at:** start with the orchestrator types in `internal/managed/region.go` — `SectionContributor` interface, ordered `ManagedRegion` aggregator, render-and-write entry point reusing `install.InsertManagedRegion`. Then refactor the install body emitter and the snapshot pointer to implement `SectionContributor`. Migration logic and tests come after the types are nailed down.
-
-→ `.hero/planning/features/agents-md-managed-region-consolidation/spec.md`
-
-**Files:** `internal/install/managed_region.go`, `internal/install/agents_md.go:120`, `internal/snapshot/pointers.go`, `internal/snapshot/projector.go:118`
-**Skip:** adding a section contributor for `hero peer` or any other subsystem that doesn't write to AGENTS.md today — keep scope to the two current writers plus the orchestrator.
 
 ---
 
