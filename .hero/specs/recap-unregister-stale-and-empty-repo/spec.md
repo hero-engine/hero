@@ -1,7 +1,7 @@
 ---
 title: "`hero recap unregister` references linger after removal; `hero recap` errors hard on a fresh repo with no commits"
 type: bug
-status: planning
+status: completed
 severity: medium
 root_cause_class: process  # Defect A — cleanup process missed surfaces; Defect B is `code`
 tags: [recap, slash-commands, install, dx, fresh-repo]
@@ -13,15 +13,19 @@ created: 2026-05-18
 
 ## Kickoff
 
-Two related papercuts: the `/diagnose` and `/deliver` slash commands still tell agents to run the removed `hero recap register` / `hero recap unregister` subcommands (the previous cleanup missed `.claude/commands/`), and `hero recap` exits non-zero on a brand-new repo with no commits instead of returning an empty recap.
+Two `hero recap`-adjacent papercuts, both delivered: the stale `/diagnose` and `/deliver` slash commands in `.claude/commands/` no longer instruct agents to run the removed `hero recap register/unregister` subcommands, and `hero recap` on a freshly-initialized repo with no commits now exits 0 with "No activity in this window." instead of error-128'ing.
 
-**Status:** planning — root cause confirmed for both defects; fix is mechanical.
+**Status:** completed — both defects fixed, tests pass, manual sanity confirmed.
 
-**Pick up at:** rewrite `.claude/commands/diagnose.md` lines 10–14 and `.claude/commands/deliver.md` lines 8–13 to mirror the already-cleaned `commands/diagnose.md` / `commands/deliver.md` ("emit `hero next ask`" wording). Then patch `internal/recap/recap.go:gitCommits` to swallow the "does not have any commits yet" error path and return an empty slice.
+**Pick up at:** nothing — this spec is done. If you're here looking for the follow-up `hero check` rule for known-removed CLI surfaces in markdown / installed copies, that's listed under "Related concerns" in this spec but was deliberately deferred. Start a new spec for it.
 
-→ `.hero/planning/bugs/recap-unregister-stale-and-empty-repo/spec.md`
+→ `.hero/specs/bugs/recap-unregister-stale-and-empty-repo/spec.md` (post-archive)
 
-**Files:** `.claude/commands/diagnose.md`, `.claude/commands/deliver.md`, `internal/recap/recap.go:145`, `internal/recap/recap_test.go`, `commands/diagnose.md` (reference — already correct)
+**Files changed:**
+- `.claude/commands/diagnose.md` — replaced `recap register/unregister` instruction with `hero next ask` wording (mirrors source `commands/diagnose.md`).
+- `.claude/commands/deliver.md` — same fix.
+- `internal/recap/recap.go` — `gitCommits` now distinguishes "no commits yet" (returns nil slice, nil error) from genuine git failures; captures stderr via `*exec.ExitError`.
+- `internal/recap/recap_test.go` — added `TestBuild_EmptyRepo` and `TestBuild_NotAGitRepo` covering both branches.
 
 **Skip:** implementing `recap register/unregister` for real — superseded by `hero next ask/suggest/reflection` per `.hero/specs/recap-register-missing/spec.md`.
 
