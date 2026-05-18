@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-18T22:28:48Z · 100 ready specs_
+_Generated: 2026-05-18T22:44:57Z · 101 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -875,6 +875,52 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · planning · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/configurable-workspace-location/spec.md)_
+
+---
+
+## next-as-projection-architecture — NEXT-as-Projection Architecture — Three-File Split, Merge Driver, Migration Gate, Drift CI
+_decision · accepted · horizon: now_
+
+Post-hoc decision record for the v0.10.0 NEXT.md cutover from
+hand-maintained handoff document to graph projection. Captures *why* the
+subsystem is shaped the way it is — three-file split
+(project / per-user durable / per-machine local), Stop-hook total
+rewrite, merge driver, migration gate, SessionStart ingest hook, CI
+drift gate. The original delivery spec
+(`.hero/specs/next-as-projection/spec.md`) carries the full design
+narrative; this record exists so a future maintainer extending or
+modifying the handoff plumbing doesn't have to reverse-engineer the
+choices.
+
+**Status:** accepted — design shipped across the v0.9.2→v0.10.0 commit
+window, completed 2026-05-18 (commit `ae6da6f`).
+
+**Pick up at:** read this record before touching the projector entry
+points, the merge driver, the SessionStart hook, the CI drift gate, or
+the three-file file-shape contract. Cross-check the original delivery
+spec for sub-decision rationale (e.g. why `checkpoint` was kept as the
+command name, why writers stay positional vs `set` subcommands).
+
+→ `.hero/planning/decisions/next-as-projection-architecture/spec.md`
+
+**Files:** `internal/cli/checkpoint.go`,
+`internal/cli/next.go`,
+`internal/handoff/handoff.go`,
+`internal/install/claude_hooks.go`,
+`internal/install/codex_hooks.go`,
+`.gitattributes`,
+`.github/workflows/test.yml` (drift gate step),
+`skills/next-merge-recovery/SKILL.md`,
+`.hero/specs/next-as-projection/spec.md`
+
+**Skip:** per-branch user-state separation (out of scope by design); LLM
+narration of project state (separate Tier-3 work); a `set` subcommand
+form for the field-grab writers (positional form wins by symmetry with
+`git config user.email "..."`); renaming `hero next checkpoint` to
+`--write` (install-hook prefix matchers and the user-visible
+"auto-written by" string would all break for zero behavior gain);
+marker-preservation inside `.hero/next/<user>.md` (total-rewrite stays
+v1; revisit only on user request).
 
 ---
 
