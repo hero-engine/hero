@@ -205,8 +205,7 @@ hero sync pull <slug>
 Or refresh all imported specs:
 
 ```bash
-<!-- drift-test:ignore (follow-up: --refresh flag moved to `hero sync import --refresh`) -->
-hero import --refresh
+hero sync import --refresh
 ```
 
 With `auto_refresh: true`, Hero refreshes specs in the background at the configured interval.

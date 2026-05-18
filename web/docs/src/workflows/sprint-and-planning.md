@@ -67,9 +67,8 @@ hero import --type bug
 # Import a specific issue
 hero import PROJ-1234
 
-# Import from GitHub
-<!-- drift-test:ignore (follow-up: --source/--label flags moved to `hero sync import`) -->
-hero import --source github --label "ready"
+# Import issues tagged with a specific label (source is set via `hero sync connect`)
+hero sync import --label "ready"
 ```
 
 Imported specs are scaffolds — they contain the tracker metadata and

@@ -115,8 +115,8 @@ hero domain
 `hero install` copies the active domain's command, agent, and skill
 files into the target harness format and registers `hero mcp` so the
 tool can call Hero directly. Use `--migrate` to reconcile drifted
-copies across multiple harnesses, and <!-- drift-test:ignore (follow-up: `hero verify-install` was never registered as a real command) --> `hero verify-install` to audit
-install state. The Hero-managed sections inside `AGENTS.md`/`CLAUDE.md`
+copies across multiple harnesses, and `hero check` to audit workspace
+and install state. The Hero-managed sections inside `AGENTS.md`/`CLAUDE.md`
 are regenerated in place on every install — the markers signal that
 the content between them is owned by Hero.
 
