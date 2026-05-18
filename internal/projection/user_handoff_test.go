@@ -1,6 +1,7 @@
 package projection
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -77,6 +78,31 @@ func TestPickUserSuggestion_FallsBackToInitiativeWhenNoFeatures(t *testing.T) {
 	}
 	if text != "pick the next phase of Rebuild Everything" {
 		t.Errorf("text = %q", text)
+	}
+}
+
+// TestUserHandoffMD_DoesNotLeakCrossRepoAsk pins the projection's
+// repo-scoping contract: a UserAsk recorded in repo A must never
+// render in the rendered <user>.md when the projection runs scoped
+// to repo B. Same regression class as the handoff-level isolation
+// tests, but exercised through the projection consumer.
+func TestUserHandoffMD_DoesNotLeakCrossRepoAsk(t *testing.T) {
+	store := openTestStore(t)
+	if err := handoff.RecordAsk(store, "repo-a", handoff.UserAsk{
+		User: "alice", Text: "A-private-context",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	body, err := UserHandoffMD(store, UserHandoffOptions{
+		User:    "alice",
+		RepoKey: "repo-b",
+	})
+	if err != nil {
+		t.Fatalf("UserHandoffMD: %v", err)
+	}
+	if strings.Contains(body, "A-private-context") {
+		t.Errorf("repo-b projection leaked repo-a ask:\n%s", body)
 	}
 }
 

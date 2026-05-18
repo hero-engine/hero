@@ -115,7 +115,7 @@ func TestIngestUserFile_RoundTripsAcrossMachines(t *testing.T) {
 		t.Fatalf("IngestUserFile: %v", err)
 	}
 
-	got, err := LatestSuggestion(storeB, "alice")
+	got, err := LatestSuggestion(storeB, "alice", "repo-x")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,12 +126,12 @@ func TestIngestUserFile_RoundTripsAcrossMachines(t *testing.T) {
 		t.Errorf("Suggestion.Text = %q after round-trip", got.Text)
 	}
 
-	ask, _ := LatestAsk(storeB, "alice")
+	ask, _ := LatestAsk(storeB, "alice", "repo-x")
 	if ask == nil || ask.Text != "where did we leave off on the auth bug?" {
 		t.Errorf("Ask round-trip lost: %+v", ask)
 	}
 
-	refs, _ := RecentReflections(storeB, "alice", 10)
+	refs, _ := RecentReflections(storeB, "alice", "repo-x", 10)
 	if len(refs) != 2 {
 		t.Errorf("Reflections len after ingest = %d, want 2", len(refs))
 	}
@@ -148,13 +148,13 @@ func TestIngestUserFile_IdempotentOnReingest(t *testing.T) {
 	if err := IngestUserFile(store, "repo-x", path); err != nil {
 		t.Fatal(err)
 	}
-	first, _ := RecentReflections(store, "alice", 10)
+	first, _ := RecentReflections(store, "alice", "repo-x", 10)
 
 	// Re-ingest the same file. Reflections shouldn't double up.
 	if err := IngestUserFile(store, "repo-x", path); err != nil {
 		t.Fatal(err)
 	}
-	second, _ := RecentReflections(store, "alice", 10)
+	second, _ := RecentReflections(store, "alice", "repo-x", 10)
 
 	if len(first) != len(second) {
 		t.Errorf("reflections grew on re-ingest: %d → %d", len(first), len(second))
@@ -204,7 +204,7 @@ _(none yet)_
 	if err := IngestUserFile(store, "repo-x", path); err != nil {
 		t.Fatal(err)
 	}
-	got, _ := LatestSuggestion(store, "alice")
+	got, _ := LatestSuggestion(store, "alice", "repo-x")
 	if got != nil {
 		t.Errorf("LatestSuggestion = %+v, want nil (auto-derived should not round-trip)", got)
 	}

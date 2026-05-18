@@ -213,7 +213,7 @@ func runNextAsk(cmd *cobra.Command, args []string) error {
 			Text: text,
 		})
 	}
-	ask, err := handoff.LatestAsk(store, user)
+	ask, err := handoff.LatestAsk(store, user, repoKey)
 	if err != nil {
 		return err
 	}
@@ -234,7 +234,7 @@ func runNextReflection(cmd *cobra.Command, args []string) error {
 			Text: text,
 		})
 	}
-	refs, err := handoff.RecentReflections(store, user, 5)
+	refs, err := handoff.RecentReflections(store, user, repoKey, 5)
 	if err != nil {
 		return err
 	}

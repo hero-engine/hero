@@ -167,46 +167,76 @@ func RecordReflection(store *graph.Store, repoKey string, ref SessionReflection)
 	return err
 }
 
-// LatestAsk returns the current UserAsk for the user, or nil if
-// none. Returns (nil, nil) on a clean miss.
-func LatestAsk(store *graph.Store, user string) (*UserAsk, error) {
-	n, err := store.GetNode(NodeUserAsk, user)
+// LatestAsk returns the current UserAsk for the user in the given
+// repo, or nil if none. Returns (nil, nil) on a clean miss. The
+// repoKey filter is what keeps an ask recorded in repo A from
+// surfacing in repo B's handoff projection.
+func LatestAsk(store *graph.Store, user, repoKey string) (*UserAsk, error) {
+	if store == nil {
+		return nil, fmt.Errorf("handoff: nil store")
+	}
+	n, err := scanLatestSingleton(store, NodeUserAsk, user, repoKey)
 	if err != nil {
-		if err == graph.ErrNotFound {
-			return nil, nil
-		}
 		return nil, err
+	}
+	if n == nil {
+		return nil, nil
 	}
 	return askFromNode(n), nil
 }
 
-// LatestSuggestion returns the current NextSuggestion for the user,
-// or nil if none.
-func LatestSuggestion(store *graph.Store, user string) (*NextSuggestion, error) {
-	n, err := store.GetNode(NodeNextSuggestion, user)
+// LatestSuggestion returns the current NextSuggestion for the user
+// in the given repo, or nil if none.
+func LatestSuggestion(store *graph.Store, user, repoKey string) (*NextSuggestion, error) {
+	if store == nil {
+		return nil, fmt.Errorf("handoff: nil store")
+	}
+	n, err := scanLatestSingleton(store, NodeNextSuggestion, user, repoKey)
 	if err != nil {
-		if err == graph.ErrNotFound {
-			return nil, nil
-		}
 		return nil, err
+	}
+	if n == nil {
+		return nil, nil
 	}
 	return suggestionFromNode(n), nil
 }
 
 // RecentReflections returns up to limit most-recent reflections for
-// the user, newest first. Pass limit <= 0 to return all.
-func RecentReflections(store *graph.Store, user string, limit int) ([]SessionReflection, error) {
-	all, err := store.ListNodesByType(NodeSessionReflection)
+// the user in the given repo, newest first. Pass limit <= 0 to
+// return all.
+func RecentReflections(store *graph.Store, user, repoKey string, limit int) ([]SessionReflection, error) {
+	if store == nil {
+		return nil, fmt.Errorf("handoff: nil store")
+	}
+	prefix := user + ":"
+	rows, err := store.DB().Query(
+		`SELECT id, type, key, props, scope, repo, unit, content_hash, source,
+		        valid_from, valid_to, ingested_at
+		   FROM nodes
+		  WHERE type = ? AND repo = ? AND valid_to IS NULL AND key LIKE ?
+		  ORDER BY valid_from DESC`,
+		NodeSessionReflection, repoKey, prefix+"%",
+	)
 	if err != nil {
 		return nil, err
 	}
-	prefix := user + ":"
+	defer rows.Close()
 	var out []SessionReflection
-	for _, n := range all {
+	for rows.Next() {
+		n, err := graph.ScanNode(rows)
+		if err != nil {
+			return nil, err
+		}
+		// Defensive: the LIKE prefix matches "user:..." but also any
+		// key whose prefix happens to share the same leading bytes.
+		// Re-check the exact "user:" prefix in Go.
 		if !strings.HasPrefix(n.Key, prefix) {
 			continue
 		}
 		out = append(out, *reflectionFromNode(n))
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	sort.SliceStable(out, func(i, j int) bool {
 		return out[i].UpdatedAt > out[j].UpdatedAt
@@ -215,6 +245,25 @@ func RecentReflections(store *graph.Store, user string, limit int) ([]SessionRef
 		out = out[:limit]
 	}
 	return out, nil
+}
+
+// scanLatestSingleton returns the current (valid_to IS NULL) row for
+// (type, key, repo) — used by LatestAsk and LatestSuggestion. Returns
+// (nil, nil) when no row matches so callers can treat absence as a
+// clean miss rather than an error.
+func scanLatestSingleton(store *graph.Store, typ, key, repoKey string) (*graph.Node, error) {
+	row := store.DB().QueryRow(
+		`SELECT id, type, key, props, scope, repo, unit, content_hash, source,
+		        valid_from, valid_to, ingested_at
+		   FROM nodes
+		  WHERE type = ? AND key = ? AND repo = ? AND valid_to IS NULL`,
+		typ, key, repoKey,
+	)
+	n, err := graph.ScanNode(row)
+	if err == graph.ErrNotFound {
+		return nil, nil
+	}
+	return n, err
 }
 
 func askFromNode(n *graph.Node) *UserAsk {
