@@ -40,24 +40,15 @@ func renderActiveDialectBlock(opts Options) string {
 		return ""
 	}
 
-	merged := cfg
-	if merged.Vocabulary == "" && merged.Methodology != "" && mErr == nil {
-		if m, ok := methodologies[merged.Methodology]; ok && m != nil {
-			if derived := methodology.DeriveVocabularyName(&merged, m); derived != "" {
-				merged.Vocabulary = derived
-			}
-		}
-	}
-
 	var vocab *vocabulary.Vocabulary
 	if vErr == nil {
-		if v, rErr := vocabulary.Resolve(&merged, vocabs); rErr == nil {
+		if v, rErr := vocabulary.Resolve(&cfg, vocabs, methodologies); rErr == nil {
 			vocab = v
 		}
 	}
 	var method *methodology.Methodology
-	if mErr == nil && merged.Methodology != "" {
-		if m, rErr := methodology.Resolve(&merged, methodologies); rErr == nil {
+	if mErr == nil && cfg.Methodology != "" {
+		if m, rErr := methodology.Resolve(&cfg, methodologies); rErr == nil {
 			method = m
 		}
 	}
