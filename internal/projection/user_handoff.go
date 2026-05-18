@@ -61,7 +61,7 @@ func UserHandoffMD(store *graph.Store, opts UserHandoffOptions) (string, error) 
 	// voice from project state), but we do flag staleness inline so
 	// the reader can judge whether to act on it or wait for a refresh.
 	b.WriteString("## Last user ask\n\n")
-	if ask, _ := handoff.LatestAsk(store, opts.User); ask != nil && ask.Text != "" {
+	if ask, _ := handoff.LatestAsk(store, opts.User, opts.RepoKey); ask != nil && ask.Text != "" {
 		fmt.Fprintf(&b, "> %s\n", indentQuote(ask.Text))
 		if note := stalenessNote(store, opts.RepoKey, ask.UpdatedAt); note != "" {
 			fmt.Fprintf(&b, "\n_%s_\n", note)
@@ -92,7 +92,7 @@ func UserHandoffMD(store *graph.Store, opts UserHandoffOptions) (string, error) 
 
 	// Recent reflections
 	b.WriteString("## Recent reflections\n\n")
-	if refs, _ := handoff.RecentReflections(store, opts.User, opts.ReflectionN); len(refs) > 0 {
+	if refs, _ := handoff.RecentReflections(store, opts.User, opts.RepoKey, opts.ReflectionN); len(refs) > 0 {
 		for _, r := range refs {
 			fmt.Fprintf(&b, "- %s\n", oneLine(r.Text))
 		}
@@ -163,7 +163,7 @@ func PickUserSuggestion(store *graph.Store, user, repoKey string) (text, rationa
 	if store == nil {
 		return "", "", ""
 	}
-	sug, _ := handoff.LatestSuggestion(store, user)
+	sug, _ := handoff.LatestSuggestion(store, user, repoKey)
 	if sug != nil && sug.Text != "" && !suggestionStale(store, repoKey, sug.UpdatedAt) {
 		return sug.Text, sug.Rationale, SuggestionFromAgent
 	}

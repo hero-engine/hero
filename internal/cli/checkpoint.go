@@ -2,12 +2,15 @@ package cli
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -43,9 +46,12 @@ Designed to be invoked from a host-tool Stop hook so machine-derived
 context stays fresh without polluting NEXT.md with per-turn churn or
 creating merge conflicts on a tracked file.
 
-Hand-written content in <user>.local.md outside the marker block is
-preserved across regens — drop reminders, scratch notes, anything
-ad-hoc into that file and it survives every checkpoint.`,
+<user>.local.md is fully rebuilt every checkpoint — do not hand-edit
+it. Anything you write outside the marker block is wiped on the next
+run (a one-time backup is written alongside the file the first time
+non-empty hand-content is detected). For preserved per-machine notes,
+use a separately-named file like .hero/notes/<user>.md that no
+automated tool touches.`,
 	RunE: runNextCheckpoint,
 }
 
@@ -70,10 +76,12 @@ func runNextCheckpoint(cmd *cobra.Command, args []string) error {
 //     content only. Any embedded machine block is stripped on first
 //     run after migration. This file no longer churns per-turn.
 //
-//   - .hero/next/<user>.local.md: gitignored. Contains the marker-
-//     bounded machine block (branch, recent commits, working-tree,
-//     hot files, activity-since-last-checkpoint) at the top, with any
-//     hand-written content preserved verbatim outside the markers.
+//   - .hero/next/<user>.local.md: gitignored. Contains only the
+//     marker-bounded machine block (branch, recent commits, working-
+//     tree, hot files, activity-since-last-checkpoint). Total
+//     rewrite — any content outside the markers is discarded on each
+//     run, with a one-time backup written when non-empty hand-content
+//     is detected.
 //
 // Returns the NEXT.md path so the user-facing success message points
 // at the file they think of as "their handoff."
@@ -124,10 +132,16 @@ func writeCheckpoint() (string, error) {
 
 local:
 
-	// Local state file: marker-bounded machine block at the top,
-	// any pre-existing hand-written content preserved below.
+	// Local state file: marker-bounded machine block only. Total
+	// rewrite each turn. Before discarding pre-existing hand-content,
+	// back it up once so an accidental loss is recoverable.
 	machineBlock := buildMachineBlock(projectRoot, heroDir, priorCheckpoint)
 	localExisting, _ := os.ReadFile(localPath)
+	if backupPath, ok, err := backupHandContentIfNeeded(localPath, string(localExisting)); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: backing up prior .local.md hand-content: %v\n", err)
+	} else if ok {
+		fmt.Fprintf(os.Stderr, "notice: pre-existing hand-content in %s backed up to %s before discard\n", localPath, backupPath)
+	}
 	localBody := rebuildLocalState(string(localExisting), machineBlock)
 	if _, err := writeFileIfChanged(localPath, []byte(localBody), 0o644); err != nil {
 		return "", fmt.Errorf("writing %s: %w", localPath, err)
@@ -285,18 +299,85 @@ func readPriorCheckpoint(nextPath, localPath string) time.Time {
 }
 
 // rebuildLocalState produces fresh local-state file contents. The
-// machine block goes at the top; hand-written content from outside
-// the prior block is preserved below. Idempotent: if existing is
-// empty, returns just the block.
+// file is machine-state-only — total rewrite every turn. Any
+// content the caller supplies in `existing` is discarded; callers
+// should back it up first via backupHandContentIfNeeded.
 func rebuildLocalState(existing, machineBlock string) string {
+	_ = existing
+	return machineBlock + "\n"
+}
+
+// backupHandContentIfNeeded inspects existing .local.md content. If
+// there is non-trivial content outside the marker block, it writes
+// that content to <localPath>.bak.<UTC-RFC3339-timestamp> and returns
+// (path, true, nil). When the hand-content matches the most-recent
+// existing backup byte-for-byte, the write is skipped (idempotent
+// across reruns with the same drift). Returns ("", false, nil) when
+// there's nothing to back up.
+func backupHandContentIfNeeded(localPath, existing string) (string, bool, error) {
 	if strings.TrimSpace(existing) == "" {
-		return machineBlock + "\n"
+		return "", false, nil
 	}
 	hand := strings.TrimSpace(stripMachineBlock(existing))
 	if hand == "" {
-		return machineBlock + "\n"
+		return "", false, nil
 	}
-	return machineBlock + "\n\n" + hand + "\n"
+	handBytes := []byte(hand + "\n")
+	handSum := sha256.Sum256(handBytes)
+	handHex := hex.EncodeToString(handSum[:])
+
+	// Idempotent: if the most-recent existing backup in the same
+	// dir matches this hand-content, skip the write.
+	if prior, ok := mostRecentBackup(localPath); ok {
+		if data, err := os.ReadFile(prior); err == nil {
+			priorSum := sha256.Sum256(data)
+			if hex.EncodeToString(priorSum[:]) == handHex {
+				return "", false, nil
+			}
+		}
+	}
+
+	stamp := time.Now().UTC().Format(time.RFC3339)
+	// Colons in RFC3339 are file-name safe on POSIX but awkward;
+	// keep them — the spec explicitly says RFC3339 timestamps.
+	backupPath := localPath + ".bak." + stamp
+	if err := os.MkdirAll(filepath.Dir(backupPath), 0o755); err != nil {
+		return "", false, err
+	}
+	if err := os.WriteFile(backupPath, handBytes, 0o644); err != nil {
+		return "", false, err
+	}
+	return backupPath, true, nil
+}
+
+// mostRecentBackup returns the path to the most recently-written
+// .bak.* file alongside localPath, if any.
+func mostRecentBackup(localPath string) (string, bool) {
+	dir := filepath.Dir(localPath)
+	base := filepath.Base(localPath) + ".bak."
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return "", false
+	}
+	var matches []os.DirEntry
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		if !strings.HasPrefix(e.Name(), base) {
+			continue
+		}
+		matches = append(matches, e)
+	}
+	if len(matches) == 0 {
+		return "", false
+	}
+	sort.Slice(matches, func(i, j int) bool {
+		ii, _ := matches[i].Info()
+		jj, _ := matches[j].Info()
+		return ii.ModTime().After(jj.ModTime())
+	})
+	return filepath.Join(dir, matches[0].Name()), true
 }
 
 // priorCheckpointPattern reads "- **Updated:** YYYY-MM-DD HH:MM UTC"
@@ -542,10 +623,6 @@ _The agent fills this in after meaningful work._
 
 ## Next
 _The concrete next step. Include a runnable pointer: `+"`/deliver <slug>`"+` or a spec path._
-
-## Blocked on (omit if clear)
-
-## Tried and failed (omit if N/A)
 
 ## Context to carry forward (omit if nothing meaningful)
 `,

@@ -127,6 +127,12 @@ than five vague ones.
   captures (commits, AC status, blockers).
 - Don't write to `.hero/NEXT.md` directly when projection is on —
   it'll be wiped next turn. Use the commands.
+- **Don't write scratch into `.hero/next/<user>.local.md`.** That
+  file is machine-state-only and rebuilt wholesale on every
+  checkpoint — anything outside the marker block is discarded (with
+  a one-time backup to `.local.md.bak.<timestamp>` the first time
+  hand-content is detected). For preserved per-machine notes the
+  agent doesn't touch, use a path like `.hero/notes/<user>.md`.
 
 ## Reading state
 

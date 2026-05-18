@@ -259,6 +259,20 @@ func (s *Store) ListNodesByType(typ string) ([]*Node, error) {
 	return out, rows.Err()
 }
 
+// ScanNode reads a row in the nodes column order into a *Node.
+// Exported so callers that need to filter rows beyond what the
+// built-in helpers offer (e.g. handoff's repo-scoped singleton and
+// reflection queries) can run a custom SELECT against Store.DB()
+// and reuse the canonical column shape and decode logic.
+//
+// Column order required: id, type, key, props, scope, repo, unit,
+// content_hash, source, valid_from, valid_to, ingested_at.
+func ScanNode(r interface {
+	Scan(...any) error
+}) (*Node, error) {
+	return scanNode(r)
+}
+
 // scanNode reads a row in the nodes column order into a *Node.
 func scanNode(r interface {
 	Scan(...any) error

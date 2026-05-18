@@ -8,6 +8,9 @@ import (
 	"time"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/graph"
+	"github.com/hero-engine/hero/internal/handoff"
+	"github.com/hero-engine/hero/internal/projection"
 )
 
 func TestWriteFileIfChangedSkipsIdenticalContent(t *testing.T) {
@@ -201,6 +204,205 @@ func TestNextCheckpointQuietIsSilent(t *testing.T) {
 	}
 	if out != "" {
 		t.Fatalf("quiet checkpoint should not print stdout, got %q", out)
+	}
+}
+
+// Test_rebuildLocalState_DiscardsHandContent pins the primary fix:
+// even when the existing .local.md content contains a stale narrative
+// section outside the marker block, rebuildLocalState must return
+// only the fresh machine block — total rewrite, no preservation.
+func Test_rebuildLocalState_DiscardsHandContent(t *testing.T) {
+	existing := `<!-- BEGIN HERO MACHINE STATE -->
+## Machine state
+old machine state
+<!-- END HERO MACHINE STATE -->
+
+## Just finished
+something from another repo entirely
+
+## Next
+do another thing
+`
+	fresh := "<!-- BEGIN HERO MACHINE STATE -->\nfresh\n<!-- END HERO MACHINE STATE -->"
+	out := rebuildLocalState(existing, fresh)
+
+	if !strings.Contains(out, "fresh") {
+		t.Errorf("output missing fresh machine block: %q", out)
+	}
+	if strings.Contains(out, "Just finished") {
+		t.Errorf("output preserved hand-content section %q (full output: %q)", "Just finished", out)
+	}
+	if strings.Contains(out, "another repo") {
+		t.Errorf("output preserved cross-repo narrative: %q", out)
+	}
+	if strings.Contains(out, "old machine state") {
+		t.Errorf("output preserved old machine state: %q", out)
+	}
+}
+
+func Test_writeCheckpoint_BacksUpPreExistingHandContent(t *testing.T) {
+	env := newTestEnv(t)
+	cfg := config.DefaultConfig()
+	cfg.Tracking = &config.TrackingConfig{DefaultAgent: "human/tester"}
+	if err := cfg.Save(env.dir); err != nil {
+		t.Fatalf("save cfg: %v", err)
+	}
+	localPath := filepath.Join(env.heroDir, nextDirName, "tester"+localStateSuffix)
+	if err := os.MkdirAll(filepath.Dir(localPath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	prePopulated := `<!-- BEGIN HERO MACHINE STATE -->
+old machine
+<!-- END HERO MACHINE STATE -->
+
+## Just finished
+cross-repo narrative pollution
+
+## Next
+go elsewhere
+`
+	if err := os.WriteFile(localPath, []byte(prePopulated), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := writeCheckpoint(); err != nil {
+		t.Fatalf("writeCheckpoint: %v", err)
+	}
+
+	// Rebuilt file: marker block only, no leaked narrative.
+	got, err := os.ReadFile(localPath)
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	if strings.Contains(string(got), "Just finished") || strings.Contains(string(got), "cross-repo narrative") {
+		t.Errorf("rebuilt .local.md still contains hand-content:\n%s", got)
+	}
+	if !strings.Contains(string(got), "BEGIN HERO MACHINE STATE") {
+		t.Errorf("rebuilt .local.md missing machine block:\n%s", got)
+	}
+
+	// Backup file present alongside.
+	entries, _ := os.ReadDir(filepath.Dir(localPath))
+	foundBackup := ""
+	for _, e := range entries {
+		if strings.HasPrefix(e.Name(), filepath.Base(localPath)+".bak.") {
+			foundBackup = e.Name()
+			break
+		}
+	}
+	if foundBackup == "" {
+		t.Fatalf("no .bak.<ts> file written. entries=%v", entries)
+	}
+	backupBytes, _ := os.ReadFile(filepath.Join(filepath.Dir(localPath), foundBackup))
+	if !strings.Contains(string(backupBytes), "cross-repo narrative") {
+		t.Errorf("backup missing hand-content: %s", backupBytes)
+	}
+	if strings.Contains(string(backupBytes), "BEGIN HERO MACHINE STATE") {
+		t.Errorf("backup should not contain machine block: %s", backupBytes)
+	}
+}
+
+func Test_writeCheckpoint_NoBackupWhenAlreadyClean(t *testing.T) {
+	env := newTestEnv(t)
+	cfg := config.DefaultConfig()
+	cfg.Tracking = &config.TrackingConfig{DefaultAgent: "human/tester"}
+	if err := cfg.Save(env.dir); err != nil {
+		t.Fatalf("save cfg: %v", err)
+	}
+
+	// First run: no existing .local.md → no backup.
+	if _, err := writeCheckpoint(); err != nil {
+		t.Fatalf("writeCheckpoint #1: %v", err)
+	}
+	// Second run: existing .local.md is machine-only → no backup.
+	if _, err := writeCheckpoint(); err != nil {
+		t.Fatalf("writeCheckpoint #2: %v", err)
+	}
+
+	localPath := filepath.Join(env.heroDir, nextDirName, "tester"+localStateSuffix)
+	entries, _ := os.ReadDir(filepath.Dir(localPath))
+	for _, e := range entries {
+		if strings.HasPrefix(e.Name(), filepath.Base(localPath)+".bak.") {
+			t.Errorf("unexpected backup file written when content was already clean: %s", e.Name())
+		}
+	}
+}
+
+// Test_writeCheckpoint_BackupIdempotentOnRerun pins the
+// idempotency contract: if a polluted .local.md is left in place
+// (e.g. a script keeps re-writing it), the second checkpoint must
+// not create a duplicate backup with identical content.
+func Test_writeCheckpoint_BackupIdempotentOnRerun(t *testing.T) {
+	env := newTestEnv(t)
+	cfg := config.DefaultConfig()
+	cfg.Tracking = &config.TrackingConfig{DefaultAgent: "human/tester"}
+	if err := cfg.Save(env.dir); err != nil {
+		t.Fatalf("save cfg: %v", err)
+	}
+	localPath := filepath.Join(env.heroDir, nextDirName, "tester"+localStateSuffix)
+	if err := os.MkdirAll(filepath.Dir(localPath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	body := "<!-- BEGIN HERO MACHINE STATE -->\nx\n<!-- END HERO MACHINE STATE -->\n\n## Just finished\nstale\n"
+	if err := os.WriteFile(localPath, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := writeCheckpoint(); err != nil {
+		t.Fatalf("checkpoint #1: %v", err)
+	}
+	// Re-pollute with identical content and rerun.
+	if err := os.WriteFile(localPath, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := writeCheckpoint(); err != nil {
+		t.Fatalf("checkpoint #2: %v", err)
+	}
+
+	entries, _ := os.ReadDir(filepath.Dir(localPath))
+	count := 0
+	for _, e := range entries {
+		if strings.HasPrefix(e.Name(), filepath.Base(localPath)+".bak.") {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Errorf("expected exactly one backup, got %d", count)
+	}
+}
+
+// Test_writeCheckpoint_CrossRepoAskDoesNotLeakIntoUserHandoff is the
+// end-to-end pin: record an ask against repo A's graph, then run
+// the user-handoff projection scoped to repo B, and verify the
+// rendered <user>.md does not contain the repo-A ask.
+//
+// The checkpoint command itself reads RepoKey from gitutil and the
+// test environment isn't a git repo, so we drive the projection
+// directly with explicit repo keys — same code path that
+// writeUserHandoffFile calls.
+func Test_writeCheckpoint_CrossRepoAskDoesNotLeakIntoUserHandoff(t *testing.T) {
+	env := newTestEnv(t)
+	store, err := graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+
+	if err := handoff.RecordAsk(store, "repo-a", handoff.UserAsk{
+		User: "tester", Text: "A-context-secret",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	body, err := projection.UserHandoffMD(store, projection.UserHandoffOptions{
+		User:    "tester",
+		RepoKey: "repo-b",
+	})
+	if err != nil {
+		t.Fatalf("UserHandoffMD repo-b: %v", err)
+	}
+	if strings.Contains(body, "A-context-secret") {
+		t.Errorf("repo-b handoff leaked repo-a ask:\n%s", body)
 	}
 }
 

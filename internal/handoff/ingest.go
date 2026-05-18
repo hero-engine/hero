@@ -59,7 +59,7 @@ func IngestUserFile(store *graph.Store, repoKey, path string) error {
 		}
 	}
 	if len(parsed.Reflections) > 0 {
-		existing, _ := RecentReflections(store, parsed.User, 100)
+		existing, _ := RecentReflections(store, parsed.User, repoKey, 100)
 		seen := make(map[string]struct{}, len(existing))
 		for _, e := range existing {
 			seen[strings.TrimSpace(e.Text)] = struct{}{}
