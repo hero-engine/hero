@@ -49,8 +49,22 @@ but day to day, conversation is the interface.
 - **The harness stays the brain** — Hero feeds OpenCode, Cursor, Claude
   Code, Codex, Copilot, and MCP-capable tools with the right context.
 
-Current installed surfaces: 27 slash commands, 34 agents, 45 skills, and
-41 MCP tools.
+Current installed surfaces: 28 slash commands, 34 agents, 47 skills, and
+42 MCP tools.
+
+!!! tip "What's new in v0.10"
+    - **`hero snapshot`** — project-shape rollup (surfaces, lifecycle
+      stages, recent activity, risks) with archive/diff/history.
+      See [Search & Context → Project Snapshot](cli/search-and-context.md#project-snapshot).
+    - **Cross-repo peering** — sibling Hero workspaces can advise each
+      other, design specs natively on a peer's side, or async-drop a
+      handoff. See [Cross-Repo Peering](cli/peering.md).
+    - **Cross-machine NEXT projection** — NEXT.md is projected from
+      graph events, per-machine `.local.md` stays out of git, and a
+      SessionStart hook keeps a fresh session warm. See
+      [Search & Context → Resume and Recap](cli/search-and-context.md#resume-and-recap).
+    - **Tracker subcommands are canonical** — use `hero sync import`
+      and `hero sync pull <slug>` (top-level `hero pull` is gone).
 
 ## Quick Start
 

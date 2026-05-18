@@ -28,7 +28,7 @@ Current MCP tools: `hero_context`, `hero_search`, `hero_status`,
 `hero_insights`, `hero_contract`, `hero_plan`, `hero_impact`,
 `hero_recap`, `hero_drift`, `hero_ci`, `hero_feed`, `hero_event`,
 `hero_active`, `hero_coverage`, `hero_why`, `hero_blocked`,
-`hero_expand`.
+`hero_expand`, `hero_snapshot`.
 
 ## Install MCP Config
 

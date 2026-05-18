@@ -17,8 +17,9 @@ install scripts and Windows (Scoop / PowerShell) options.
 | Group | Purpose | Commands |
 |---|---|---|
 | [Spec Management](spec-management.md) | Create, verify, complete, and visualize specs | `spec new`, `spec complete`, `diff`, `drift`, `spec claim`, `graph`, `spec contract`, `spec plan` |
-| [Search & Context](search-and-context.md) | Query the corpus and generate context for agents | `index`, `search`, `ask`, `relevant`, `resume`, `status`, `dashboard`, `check`, `impact`, `recap`, `suggest` |
+| [Search & Context](search-and-context.md) | Query the corpus and generate context for agents | `index`, `search`, `ask`, `relevant`, `resume`, `status`, `dashboard`, `check`, `impact`, `recap`, `suggest`, `snapshot` |
 | [Tracker Integration](tracker-integration.md) | Sync specs with GitHub Issues, Jira, and Linear | `sync connect`, `sync import`, `sync spec`, `sync link`, `sync pull`, `sprint load` |
+| [Cross-Repo Peering](peering.md) | Talk to sibling Hero workspaces — advisory, spec-out, async handoff | `peer list`, `peer show`, `peer call`, `handoff`, `handoff status`, `handoff accept`, `context imports` |
 | [Testing & Demos](testing-and-demos.md) | Generate acceptance tests and record demos from specs | `test generate`, `test run`, `test list`, `spec demo`, `coverage`, `smoke` |
 | [Server & MCP](server-and-mcp.md) | Run the MCP server, HTTP daemon, and manage installations | `mcp`, `serve`, `install`, `upgrade`, `uninstall`, `agent run`, `agent jobs` |
 
