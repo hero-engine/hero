@@ -1,7 +1,7 @@
 ---
 title: spec-types.json records emit frontmatter as null — loader never populates it
 type: bug
-status: planning
+status: delivering
 severity: medium
 priority: P1
 created: 2026-05-17
@@ -81,6 +81,23 @@ Add `frontmatter` parsing to `internal/spectypes/loader.go::parseRecord`:
 - Update `TestExportTo_WritesCacheFile` to assert at least one record in the exported cache has a non-null `frontmatter` block.
 - Run the JSON Schema validation against the regenerated cache (the existing Python `jsonschema` check should still pass — the schema accepts both shapes).
 - `go build ./...` and `go test ./...` clean.
+
+## Changes
+
+- `core/spec-types/feature.md` — authored `frontmatter:` block (3 required, 13 optional fields).
+- `core/spec-types/bug.md` — authored `frontmatter:` block (4 required, 12 optional fields; severity required for bugs).
+- `core/spec-types/chore.md` — authored `frontmatter:` block (3 required, 8 optional fields; chore lifecycle).
+- `core/spec-types/epic.md` — authored `frontmatter:` block (3 required, 9 optional fields; kind=[theme, delivery, bet, milestone]).
+- `core/spec-types/intake.md` — authored `frontmatter:` block (3 required, 7 optional fields; intake lifecycle).
+- `core/spec-types/prd.md` — authored `frontmatter:` block (3 required, 9 optional fields; kind=[pitch, ten-section, lightweight]).
+- `core/spec-types/release.md` — authored `frontmatter:` block (3 required, 6 optional fields; release lifecycle).
+- `core/spec-types/sprint.md` — authored `frontmatter:` block (3 required, 6 optional fields; sprint lifecycle).
+- `domains/engineering/spec-types/convention.md` — authored `frontmatter:` block (3 required, 6 optional fields; draft/active/superseded lifecycle).
+- `domains/engineering/spec-types/decision.md` — authored `frontmatter:` block (3 required, 5 optional fields; proposed/accepted/superseded lifecycle).
+- `internal/spectypes/loader_test.go` — added `TestLoad_FrontmatterSchema_PopulatedForCoreAndEngineering`, `TestLoad_FrontmatterFieldShape_FeatureStatus`; extended `TestExportTo_WritesCacheFile` to assert at least one record carries a populated frontmatter block.
+- `.hero/cache/spec-types.json` — regenerated; 10 of 11 types now carry `frontmatter` blocks of 8-16 fields; `initiative` remains `null` (owned by parallel fix).
+
+Loader-side parser was already in place — the gap was purely missing `frontmatter:` blocks in the source markdown.
 
 ## Kickoff
 

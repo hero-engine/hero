@@ -270,4 +270,113 @@ func TestExportTo_WritesCacheFile(t *testing.T) {
 	if _, err := os.Stat(out); err != nil {
 		t.Errorf("expected cache file at %s: %v", out, err)
 	}
+
+	// Acceptance: at least one record in the exported cache carries a
+	// non-null frontmatter block. Regression pin for the loader gap
+	// where the parser populated FrontmatterSchema but no source file
+	// declared a `frontmatter:` block.
+	raw, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("read cache: %v", err)
+	}
+	var parsed struct {
+		Types []struct {
+			Name        string `json:"name"`
+			Frontmatter *struct {
+				Required []map[string]any `json:"required,omitempty"`
+				Optional []map[string]any `json:"optional,omitempty"`
+			} `json:"frontmatter,omitempty"`
+		} `json:"types"`
+	}
+	if err := json.Unmarshal(raw, &parsed); err != nil {
+		t.Fatalf("unmarshal cache: %v", err)
+	}
+	var populated int
+	for _, ty := range parsed.Types {
+		if ty.Frontmatter != nil && (len(ty.Frontmatter.Required) > 0 || len(ty.Frontmatter.Optional) > 0) {
+			populated++
+		}
+	}
+	if populated == 0 {
+		t.Error("exported cache has zero records with a non-null frontmatter block; loader gap regression")
+	}
+}
+
+// TestLoad_FrontmatterSchema_PopulatedForCoreAndEngineering pins the
+// canonical work types and engineering knowledge types to a non-empty
+// frontmatter schema. Surfaces the spec-types-cache-frontmatter-empty
+// bug if any of these types regress to a null/empty schema.
+func TestLoad_FrontmatterSchema_PopulatedForCoreAndEngineering(t *testing.T) {
+	reg, err := Load("engineering")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	// All nine core work types ship a frontmatter schema. `initiative`
+	// is owned by a parallel fix on the same file — verify it lands by
+	// asserting non-empty here once that work merges; for now this fix
+	// covers the other eight.
+	requirePopulated := []string{
+		"feature", "bug", "chore", "epic", "intake",
+		"prd", "release", "sprint",
+		// engineering domain overlay
+		"convention", "decision",
+	}
+	for _, name := range requirePopulated {
+		rec, ok := reg.Lookup(name)
+		if !ok {
+			t.Errorf("missing type %q", name)
+			continue
+		}
+		if len(rec.Frontmatter.Required) == 0 && len(rec.Frontmatter.Optional) == 0 {
+			t.Errorf("type %q: FrontmatterSchema is empty (required=%d, optional=%d)",
+				name, len(rec.Frontmatter.Required), len(rec.Frontmatter.Optional))
+			continue
+		}
+		// Every populated record must declare `title`, `type`, `status`
+		// as required fields — the minimum contract per spec.
+		gotRequired := map[string]bool{}
+		for _, f := range rec.Frontmatter.Required {
+			gotRequired[f.Name] = true
+		}
+		for _, want := range []string{"title", "type", "status"} {
+			if !gotRequired[want] {
+				t.Errorf("type %q: required field %q missing from frontmatter schema", name, want)
+			}
+		}
+	}
+}
+
+// TestLoad_FrontmatterFieldShape_FeatureStatus pins one representative
+// field's full shape so changes to FieldDecl serialization are caught.
+func TestLoad_FrontmatterFieldShape_FeatureStatus(t *testing.T) {
+	reg, err := Load("engineering")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	rec, ok := reg.Lookup("feature")
+	if !ok {
+		t.Fatal("missing feature")
+	}
+	var status FieldDecl
+	for _, f := range rec.Frontmatter.Required {
+		if f.Name == "status" {
+			status = f
+			break
+		}
+	}
+	if status.Name == "" {
+		t.Fatal("feature.frontmatter.required.status not declared")
+	}
+	if status.Type != "enum" {
+		t.Errorf("status.type = %q, want enum", status.Type)
+	}
+	if !status.Required {
+		t.Error("status.required should be true")
+	}
+	if len(status.Values) == 0 {
+		t.Error("status.values should enumerate lifecycle states")
+	}
+	if status.Classification != ClassificationOrgState {
+		t.Errorf("status.classification = %q, want org-state", status.Classification)
+	}
 }

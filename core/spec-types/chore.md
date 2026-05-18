@@ -38,6 +38,20 @@ default_agents:
   handoff: handoff-coordinator
 relations:
   - { kind: parent, target_type: epic, cardinality: zero-or-one }
+frontmatter:
+  required:
+    - { name: title, type: string, required: true, classification: content, description: "One-line human title for the chore." }
+    - { name: type, type: enum, required: true, values: [chore], default: chore, classification: content, description: "Spec type discriminator; always 'chore'." }
+    - { name: status, type: enum, required: true, values: [planning, ready, delivering, completed], default: planning, classification: org-state, description: "Lifecycle position." }
+  optional:
+    - { name: created, type: date, format: "YYYY-MM-DD", classification: content, description: "Authoring date." }
+    - { name: priority, type: enum, values: [P0, P1, P2, P3], classification: org-state, description: "Hero-level priority." }
+    - { name: horizon, type: enum, values: [now, next, someday, parking], default: now, classification: content, description: "Temporal segmentation." }
+    - { name: tags, type: "list[string]", classification: content, description: "Free-form labels." }
+    - { name: claimed_by, type: string, classification: org-state, description: "Who is actively working this spec." }
+    - { name: tracker_id, type: string, classification: org-state, description: "External tracker issue ID." }
+    - { name: owner, type: enum, values: [pm, engineering, qa, devops, design, docs], default: engineering, classification: org-state, description: "Current owning role." }
+    - { name: relations, type: "list[relation]", classification: content, description: "Parent/child edges to other specs." }
 ---
 
 # Chore spec-type
