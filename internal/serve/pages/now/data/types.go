@@ -182,10 +182,22 @@ type Changes struct {
 }
 
 // ChangeRow is one entry in the timeline feed.
+//
+// When the feed runs through dedupeWithinWindow, consecutive same-
+// display-group rows within a 1-hour window collapse: the first row
+// keeps its TimeAt + HTML (the most recent in the run); Count holds
+// the run length; CollapsedRows holds the original rows so the UI can
+// expand them inline. A Count of 0 or 1 renders identically to today.
 type ChangeRow struct {
-	Time string // relative-time chip
-	Kind string // commit | spec | knowledge | drift | convention
-	HTML template.HTML
+	Time          string        // relative-time chip
+	Kind          string        // commit | spec | knowledge | drift | convention
+	HTML          template.HTML
+	TimeAt        time.Time     // absolute event timestamp (zero when unknown)
+	DisplayGroup  string        // dedup key (e.g. "peer-call"); empty falls back to Kind
+	GroupLabel    string        // human label for the count badge, e.g. "peer calls"
+	Count         int           // 1 = single row; >1 = collapsed group
+	WindowText    string        // human window text, e.g. "within the last 13h"
+	CollapsedRows []ChangeRow   // original rows for an expand affordance (Count > 1)
 }
 
 // ---- Metrics -------------------------------------------------------------

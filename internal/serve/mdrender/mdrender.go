@@ -5,8 +5,10 @@
 //
 // What it handles:
 //   - ATX headings (`# … `, `## …`, up to h6)
-//   - Bulleted lists (`- …` / `* …`)
-//   - Numbered lists (`1. …`)
+//   - Bulleted lists (`- …` / `* …`), with 2- or 4-space-indent nesting
+//   - Numbered lists (`1. …`), with 2- or 4-space-indent nesting
+//   - Pipe-style tables (`| A | B |` with `| --- | --- |` separator row)
+//   - Blockquotes (`> …` lines, consecutive grouped)
 //   - Fenced code blocks (```…```), preserving language for the class
 //   - Inline code (backticks)
 //   - Bold (`**…**`) and italic (`*…*` / `_…_`)
@@ -15,8 +17,7 @@
 //   - Horizontal rules (`---` on its own line)
 //
 // What it intentionally does NOT handle (yet):
-//   - Tables, blockquotes, nested lists, images, raw HTML pass-through,
-//     reference-style links, footnotes.
+//   - Images, raw HTML pass-through, reference-style links, footnotes.
 //
 // Output is HTML-escaped before any inline transforms run, so the
 // renderer is safe to feed untrusted markdown — there is no path that
@@ -79,6 +80,46 @@ func Render(md string) template.HTML {
 			continue
 		}
 
+		// Pipe-style table — needs a header row followed by a separator
+		// row of `| --- | --- |`. When the shape doesn't match we fall
+		// through to paragraph rendering so malformed tables degrade
+		// gracefully.
+		if isTableHeader(lines, i) {
+			consumed := renderTable(&out, lines, i)
+			if consumed > 0 {
+				i += consumed
+				continue
+			}
+		}
+
+		// Blockquote — group consecutive `>`-prefixed lines.
+		if isBlockquote(trimmed) {
+			var quoted []string
+			for i < len(lines) {
+				t := lines[i]
+				ts := strings.TrimSpace(t)
+				if !isBlockquote(ts) {
+					break
+				}
+				quoted = append(quoted, stripQuotePrefix(ts))
+				i++
+			}
+			out.WriteString("<blockquote>")
+			// Render the inner content recursively so nested constructs
+			// (paragraphs, lists, inline markdown) work.
+			inner := string(Render(strings.Join(quoted, "\n")))
+			out.WriteString(strings.TrimRight(inner, "\n"))
+			out.WriteString("</blockquote>\n")
+			continue
+		}
+
+		// Horizontal rule.
+		if trimmed == "---" || trimmed == "***" {
+			out.WriteString("<hr/>\n")
+			i++
+			continue
+		}
+
 		// Heading (ATX). Up to h6.
 		if level := atxLevel(trimmed); level > 0 {
 			text := strings.TrimSpace(trimmed[level:])
@@ -87,36 +128,12 @@ func Render(md string) template.HTML {
 			continue
 		}
 
-		// Bulleted list.
-		if isBullet(trimmed) {
-			out.WriteString("<ul>\n")
-			for i < len(lines) {
-				t := strings.TrimSpace(lines[i])
-				if !isBullet(t) {
-					break
-				}
-				item := strings.TrimSpace(t[2:])
-				fmt.Fprintf(&out, "  <li>%s</li>\n", inline(item))
-				i++
-			}
-			out.WriteString("</ul>\n")
-			continue
-		}
-
-		// Numbered list.
-		if isNumbered(trimmed) {
-			out.WriteString("<ol>\n")
-			for i < len(lines) {
-				t := strings.TrimSpace(lines[i])
-				if !isNumbered(t) {
-					break
-				}
-				dot := strings.Index(t, ".")
-				item := strings.TrimSpace(t[dot+1:])
-				fmt.Fprintf(&out, "  <li>%s</li>\n", inline(item))
-				i++
-			}
-			out.WriteString("</ol>\n")
+		// List (bulleted or numbered) — supports 2- or 4-space-indent
+		// nesting. The list reader returns the number of lines it
+		// consumed.
+		if isBullet(line) || isNumbered(line) {
+			consumed := renderList(&out, lines, i)
+			i += consumed
 			continue
 		}
 
@@ -124,8 +141,8 @@ func Render(md string) template.HTML {
 		var para []string
 		for i < len(lines) {
 			t := strings.TrimSpace(lines[i])
-			if t == "" || atxLevel(t) > 0 || isBullet(t) || isNumbered(t) ||
-				strings.HasPrefix(t, "```") || t == "---" {
+			if t == "" || atxLevel(t) > 0 || isBullet(lines[i]) || isNumbered(lines[i]) ||
+				strings.HasPrefix(t, "```") || t == "---" || isBlockquote(t) {
 				break
 			}
 			para = append(para, t)
@@ -150,21 +167,226 @@ func atxLevel(trimmed string) int {
 	return level
 }
 
-func isBullet(t string) bool {
-	return strings.HasPrefix(t, "- ") || strings.HasPrefix(t, "* ")
+// listMarker returns the indent-spaces count and the body text after
+// the marker, plus an "ordered" flag, when the line is a list item.
+// (-1, "", false) means the line isn't a list item.
+func listMarker(line string) (indent int, body string, ordered bool) {
+	indent = 0
+	for indent < len(line) && line[indent] == ' ' {
+		indent++
+	}
+	rest := line[indent:]
+	if strings.HasPrefix(rest, "- ") || strings.HasPrefix(rest, "* ") {
+		return indent, strings.TrimSpace(rest[2:]), false
+	}
+	// Numbered: digits + "." + " "
+	dot := strings.Index(rest, ".")
+	if dot > 0 && dot+1 < len(rest) && rest[dot+1] == ' ' {
+		allDigits := true
+		for j := 0; j < dot; j++ {
+			if rest[j] < '0' || rest[j] > '9' {
+				allDigits = false
+				break
+			}
+		}
+		if allDigits {
+			return indent, strings.TrimSpace(rest[dot+2:]), true
+		}
+	}
+	return -1, "", false
 }
 
-func isNumbered(t string) bool {
-	dot := strings.Index(t, ".")
-	if dot <= 0 || dot >= len(t)-1 || t[dot+1] != ' ' {
+// isBullet reports whether the line (possibly indented) is a bulleted
+// list item.
+func isBullet(line string) bool {
+	indent, _, ordered := listMarker(line)
+	return indent >= 0 && !ordered
+}
+
+// isNumbered reports whether the line (possibly indented) is a
+// numbered list item.
+func isNumbered(line string) bool {
+	indent, _, ordered := listMarker(line)
+	return indent >= 0 && ordered
+}
+
+// renderList emits a list starting at `start`. It walks contiguous
+// list lines, handles 2- or 4-space-indent nesting, and returns the
+// number of lines consumed.
+func renderList(out *strings.Builder, lines []string, start int) int {
+	// Detect the base indent + kind from the first line.
+	baseIndent, _, baseOrdered := listMarker(lines[start])
+	if baseIndent < 0 {
+		return 1
+	}
+	openTag, closeTag := "<ul>", "</ul>"
+	if baseOrdered {
+		openTag, closeTag = "<ol>", "</ol>"
+	}
+	out.WriteString(openTag + "\n")
+
+	i := start
+	for i < len(lines) {
+		indent, body, ordered := listMarker(lines[i])
+		if indent < 0 || indent < baseIndent || (indent == baseIndent && ordered != baseOrdered) {
+			break
+		}
+		if indent > baseIndent {
+			// Nested list — recurse. Output goes inside the LAST <li>
+			// we wrote, so we put it before the closing </li>. Simpler:
+			// write a fresh nested list as a sibling-after of the last
+			// item by re-opening the <li> chain.
+			// To keep things simple we just emit the nested list as a
+			// child of the most-recent <li>: rewind one closing tag.
+			// We don't have a built buffer to rewind, so write the
+			// nested list as standalone content in place — browsers
+			// tolerate <ul> directly after </li> visually as a sibling.
+			// To get true nesting (ul inside li), we instead inline-
+			// recurse before closing the previous item: implemented by
+			// holding off the </li> close until we know what comes next.
+			//
+			// Simpler approach: track whether we just opened an <li>
+			// without closing. We rebuild with a small per-iteration
+			// pattern below.
+			break // handled by the alternate path below
+		}
+		// Open the list item; defer the close so nested lists land
+		// inside this <li>.
+		fmt.Fprintf(out, "  <li>%s", inline(body))
+		i++
+
+		// If the next line is a deeper-indented list item, recurse.
+		if i < len(lines) {
+			nextIndent, _, _ := listMarker(lines[i])
+			if nextIndent > baseIndent {
+				out.WriteString("\n")
+				consumed := renderList(out, lines, i)
+				i += consumed
+			}
+		}
+		out.WriteString("</li>\n")
+	}
+	out.WriteString(closeTag + "\n")
+	return i - start
+}
+
+// isBlockquote reports whether a trimmed line begins a blockquote.
+func isBlockquote(t string) bool {
+	return strings.HasPrefix(t, "> ") || t == ">" || strings.HasPrefix(t, ">")
+}
+
+// stripQuotePrefix removes the leading `>` (and optional space) so the
+// inner content can be re-rendered.
+func stripQuotePrefix(t string) string {
+	if t == ">" {
+		return ""
+	}
+	if strings.HasPrefix(t, "> ") {
+		return t[2:]
+	}
+	if strings.HasPrefix(t, ">") {
+		return t[1:]
+	}
+	return t
+}
+
+// isTableHeader peeks at lines[i] and lines[i+1] and returns true when
+// they form a pipe-style table header + separator pair.
+func isTableHeader(lines []string, i int) bool {
+	if i+1 >= len(lines) {
 		return false
 	}
-	for j := 0; j < dot; j++ {
-		if t[j] < '0' || t[j] > '9' {
+	header := strings.TrimSpace(lines[i])
+	sep := strings.TrimSpace(lines[i+1])
+	if !strings.Contains(header, "|") || !strings.Contains(sep, "|") {
+		return false
+	}
+	// Separator row: cells must be all `-` (and optional `:`).
+	cells := splitTableRow(sep)
+	if len(cells) == 0 {
+		return false
+	}
+	for _, c := range cells {
+		c = strings.TrimSpace(c)
+		if c == "" {
 			return false
+		}
+		// Strip alignment markers (we ignore alignment in v3).
+		c = strings.Trim(c, ":")
+		if c == "" {
+			return false
+		}
+		for _, r := range c {
+			if r != '-' {
+				return false
+			}
 		}
 	}
 	return true
+}
+
+// renderTable emits an HTML table starting at lines[i]. Returns the
+// number of lines consumed. Returns 0 if the shape turns out invalid
+// (col-count mismatch) — caller falls back to paragraph rendering.
+func renderTable(out *strings.Builder, lines []string, start int) int {
+	header := splitTableRow(lines[start])
+	// Already verified by isTableHeader; build header.
+	cols := len(header)
+	if cols == 0 {
+		return 0
+	}
+	var body strings.Builder
+	body.WriteString("<table>\n<thead>\n<tr>")
+	for _, c := range header {
+		fmt.Fprintf(&body, "<th>%s</th>", inline(strings.TrimSpace(c)))
+	}
+	body.WriteString("</tr>\n</thead>\n<tbody>\n")
+
+	i := start + 2 // skip header + separator
+	bodyRows := 0
+	for i < len(lines) {
+		t := strings.TrimSpace(lines[i])
+		if t == "" || !strings.Contains(t, "|") {
+			break
+		}
+		cells := splitTableRow(lines[i])
+		if len(cells) != cols {
+			// Col count mismatch — treat the table as malformed; bail
+			// out and let caller render as paragraphs.
+			return 0
+		}
+		body.WriteString("<tr>")
+		for _, c := range cells {
+			fmt.Fprintf(&body, "<td>%s</td>", inline(strings.TrimSpace(c)))
+		}
+		body.WriteString("</tr>\n")
+		bodyRows++
+		i++
+	}
+	body.WriteString("</tbody>\n</table>\n")
+	if bodyRows == 0 {
+		// Header-only table is suspicious; still render it.
+	}
+	out.WriteString(body.String())
+	return i - start
+}
+
+// splitTableRow splits a `| a | b | c |` row into its inner cells. The
+// outer pipes are tolerated when present.
+func splitTableRow(line string) []string {
+	line = strings.TrimSpace(line)
+	if line == "" {
+		return nil
+	}
+	// Trim leading/trailing pipe so split doesn't produce empty edge
+	// cells.
+	if strings.HasPrefix(line, "|") {
+		line = line[1:]
+	}
+	if strings.HasSuffix(line, "|") {
+		line = line[:len(line)-1]
+	}
+	return strings.Split(line, "|")
 }
 
 // inline transforms inline markdown into HTML on already-escaped text.

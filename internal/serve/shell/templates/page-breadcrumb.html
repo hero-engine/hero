@@ -1,0 +1,21 @@
+{{- /* page-breadcrumb — small trail rendered above the page hero on
+       detail views. Param: shell.PageBreadcrumb. Renders nothing when
+       Crumbs is empty. */ -}}
+{{ define "page-breadcrumb" }}
+{{- if .Crumbs }}
+<nav aria-label="Breadcrumb" class="page-breadcrumb">
+  <ol>
+    {{- range $i, $c := .Crumbs }}
+      {{- if $i }}<li class="sep" aria-hidden="true">&rsaquo;</li>{{ end }}
+      <li {{ if $c.Current }}aria-current="page"{{ end }}>
+        {{- if $c.Href -}}
+          <a href="{{ $c.Href }}">{{ $c.Label }}</a>
+        {{- else -}}
+          {{ $c.Label }}
+        {{- end -}}
+      </li>
+    {{- end }}
+  </ol>
+</nav>
+{{- end }}
+{{ end }}

@@ -76,6 +76,12 @@ type Deps struct {
 	// against the same template set the handler uses, so SSE clients
 	// fetch HTML identical to the initial render. Nil-safe.
 	RegisterFragment func(section string, render func(w http.ResponseWriter, r *http.Request))
+
+	// ChatInteractiveConnected reports whether at least one interactive
+	// chat adapter is currently connected. Nil-safe: nil renders the
+	// inline chat-input in its disabled state. Kept as a function so
+	// this package stays free of chat / runner dependencies.
+	ChatInteractiveConnected func() bool
 }
 
 // Register installs the Agents home on the shell router using the
@@ -144,11 +150,27 @@ func (h *handler) chatInputFor(activeSlug string) shell.ChatInput {
 	if activeSlug != "" && activeSlug != "sessions" {
 		chips = append(chips, shell.ChatContextChip{Kind: "view", Label: "view: " + activeSlug})
 	}
-	return shell.ChatInput{
+	in := shell.ChatInput{
 		Variant:     "inline",
 		Placeholder: "Ask Hero about agents…",
 		Context:     chips,
 	}
+	if isChatDisabled(h.deps.ChatInteractiveConnected) {
+		in.Disabled = true
+		in.Placeholder = "Connect a chat adapter to enable"
+		in.ConnectHref = "/settings/chat"
+	}
+	return in
+}
+
+// isChatDisabled returns true when no interactive chat adapter is
+// available. Mirrors the helper in the other non-Now home packages.
+// Kept as a func-arg so this package stays free of chat/runner deps.
+func isChatDisabled(probe func() bool) bool {
+	if probe == nil {
+		return true
+	}
+	return !probe()
 }
 
 // renderHeroAndChat writes the page-hero followed by the inline chat-
@@ -175,15 +197,19 @@ func (h *handler) handle(w http.ResponseWriter, req *http.Request) {
 // buildPage assembles the Page envelope. inner is the body content
 // renderer (the page-hero + metric-strip are always layered above).
 func (h *handler) buildPage(req *http.Request, ed edition.Edition, sessions data.Sessions, activeSlug string) shell.Page {
-	return h.buildPageWith(req, ed, sessions, activeSlug, func(out io.Writer) error {
+	// Root /agents view — no sub-view label.
+	return h.buildPageWith(req, ed, sessions, activeSlug, "", func(out io.Writer) error {
 		return h.tmpl.ExecuteTemplate(out, "page.html", pageData{Sessions: sessions})
 	})
 }
 
 // buildPageWith is the shared compositor used by every Agents route.
 // Each sub-route swaps `inner` for the body that view should render.
-func (h *handler) buildPageWith(req *http.Request, ed edition.Edition, sessions data.Sessions, activeSlug string, inner func(io.Writer) error) shell.Page {
-	hero := h.buildPageHero(ed, sessions)
+// subViewLabel is the human label appended to the page-hero title and
+// browser <title> per polish-v3 Fix 5 (e.g. "Proposals"). Empty leaves
+// the title as the home root ("Agents").
+func (h *handler) buildPageWith(req *http.Request, ed edition.Edition, sessions data.Sessions, activeSlug, subViewLabel string, inner func(io.Writer) error) shell.Page {
+	hero := h.buildPageHero(ed, sessions, subViewLabel)
 	strip := h.buildMetricStrip(sessions)
 	subNav := h.buildSubNav(ed, sessions, activeSlug)
 
@@ -197,9 +223,13 @@ func (h *handler) buildPageWith(req *http.Request, ed edition.Edition, sessions 
 		return inner(out)
 	}
 
+	title := "Agents · Hero"
+	if subViewLabel != "" {
+		title = "Agents · " + subViewLabel + " · Hero"
+	}
 	return shell.Page{
 		ActiveHome: "agents",
-		PageTitle:  "Agents · Hero",
+		PageTitle:  title,
 		Content:    content,
 		HeadExtra:  template.HTML(agentsStyles + agentsScript),
 		SubNav:     subNav,
@@ -211,7 +241,7 @@ func (h *handler) buildPageWith(req *http.Request, ed edition.Edition, sessions 
 func (h *handler) renderProposals(w http.ResponseWriter, req *http.Request) {
 	ed := edition.Resolve()
 	sessions := h.loadSessions(ed)
-	page := h.buildPageWith(req, ed, sessions, "proposals", func(out io.Writer) error {
+	page := h.buildPageWith(req, ed, sessions, "proposals", "Proposals", func(out io.Writer) error {
 		return h.tmpl.ExecuteTemplate(out, "approvals.html", sessions)
 	})
 	if err := h.router.RenderPage(w, req, page); err != nil {
@@ -224,7 +254,7 @@ func (h *handler) renderProposals(w http.ResponseWriter, req *http.Request) {
 func (h *handler) renderScheduled(w http.ResponseWriter, req *http.Request) {
 	ed := edition.Resolve()
 	sessions := h.loadSessions(ed)
-	page := h.buildPageWith(req, ed, sessions, "scheduled", func(out io.Writer) error {
+	page := h.buildPageWith(req, ed, sessions, "scheduled", "Scheduled", func(out io.Writer) error {
 		return h.tmpl.ExecuteTemplate(out, "scheduled-preview.html", sessions)
 	})
 	if err := h.router.RenderPage(w, req, page); err != nil {
@@ -271,6 +301,11 @@ func (h *handler) renderSessionDetail(w http.ResponseWriter, req *http.Request) 
 	}
 	strip := h.buildMetricStrip(sessions)
 	subNav := h.buildSubNav(ed, sessions, "sessions")
+	crumb := &shell.PageBreadcrumb{Crumbs: []shell.BreadcrumbCrumb{
+		{Label: "Agents", Href: "/agents"},
+		{Label: "Session"},
+		{Label: id, Current: true},
+	}}
 
 	content := func(out io.Writer) error {
 		if err := h.renderHeroAndChat(out, hero, "session:"+id); err != nil {
@@ -288,8 +323,9 @@ func (h *handler) renderSessionDetail(w http.ResponseWriter, req *http.Request) 
 	}
 	page := shell.Page{
 		ActiveHome: "agents",
-		PageTitle:  "Agents · Session " + id + " · Hero",
+		PageTitle:  "Agents · Session · " + id + " · Hero",
 		SubNav:     subNav,
+		Breadcrumb: crumb,
 		Content:    content,
 		HeadExtra:  template.HTML(agentsStyles + agentsScript),
 	}
@@ -303,7 +339,7 @@ func (h *handler) renderSessionDetail(w http.ResponseWriter, req *http.Request) 
 func (h *handler) renderStub(w http.ResponseWriter, req *http.Request, slug, view, note string) {
 	ed := edition.Resolve()
 	sessions := h.loadSessions(ed)
-	page := h.buildPageWith(req, ed, sessions, slug, func(out io.Writer) error {
+	page := h.buildPageWith(req, ed, sessions, slug, view, func(out io.Writer) error {
 		return h.router.RenderFragment(out, "coming-soon", stubData{
 			Home: "agents", Slug: slug, View: view, Note: note,
 		})
@@ -420,7 +456,10 @@ func (h *handler) buildSubNav(ed edition.Edition, s data.Sessions, activeSlug st
 }
 
 // buildPageHero composes the page-hero data block from current counts.
-func (h *handler) buildPageHero(ed edition.Edition, s data.Sessions) shell.PageHero {
+// subView, when non-empty, is appended to the title as `Agents · <Sub>`
+// per polish-v3 Fix 5. Empty leaves the title as "Sessions" (the
+// historical default for the home root view).
+func (h *handler) buildPageHero(ed edition.Edition, s data.Sessions, subView string) shell.PageHero {
 	branch := h.deps.Branch
 	if branch == "" {
 		branch = "main"
@@ -445,10 +484,15 @@ func (h *handler) buildPageHero(ed edition.Edition, s data.Sessions) shell.PageH
 	}
 	actions = append(actions, shell.PageHeroAction{Kind: "ghost", Label: "Pause my agents", Href: "#"})
 
+	title := "Sessions"
+	if subView != "" {
+		title = "Agents · " + subView
+	}
+
 	_ = ed
 	return shell.PageHero{
 		Eyebrow: template.HTML(htmlEscape(eyebrow)),
-		Title:   "Sessions",
+		Title:   title,
 		Subhead: template.HTML(subhead),
 		Actions: actions,
 	}

@@ -56,6 +56,12 @@ type Deps struct {
 	// against the same template set the handler uses, so SSE clients
 	// fetch HTML identical to the initial render. Nil-safe.
 	RegisterFragment func(section string, render func(w http.ResponseWriter, r *http.Request))
+
+	// ChatInteractiveConnected reports whether at least one interactive
+	// chat adapter is currently connected. Nil-safe: nil renders the
+	// inline chat-input in its disabled state. Kept as a function so
+	// this package stays free of chat / runner dependencies.
+	ChatInteractiveConnected func() bool
 }
 
 // Register installs the Knowledge home on the shell router using the
@@ -138,11 +144,27 @@ func (h *handler) chatInputFor(activeSlug string) shell.ChatInput {
 	if activeSlug != "" && activeSlug != "browse" {
 		chips = append(chips, shell.ChatContextChip{Kind: "view", Label: "view: " + activeSlug})
 	}
-	return shell.ChatInput{
+	in := shell.ChatInput{
 		Variant:     "inline",
 		Placeholder: "Ask Hero about knowledge…",
 		Context:     chips,
 	}
+	if isChatDisabled(h.deps.ChatInteractiveConnected) {
+		in.Disabled = true
+		in.Placeholder = "Connect a chat adapter to enable"
+		in.ConnectHref = "/settings/chat"
+	}
+	return in
+}
+
+// isChatDisabled returns true when no interactive chat adapter is
+// available. Mirrors the helper in the other non-Now home packages.
+// Kept as a func-arg so this package stays free of chat/runner deps.
+func isChatDisabled(probe func() bool) bool {
+	if probe == nil {
+		return true
+	}
+	return !probe()
 }
 
 // renderHeroAndChat writes the page-hero followed by the inline chat-
@@ -167,7 +189,7 @@ func (h *handler) renderBrowse(w http.ResponseWriter, req *http.Request) {
 		newThisWeek = data.CountCorpusEventsLastWeek(h.deps.HeroDir)
 	}
 
-	hero := buildPageHero(h.deps, ed, corpus.TotalEntries)
+	hero := buildPageHero(h.deps, ed, corpus.TotalEntries, "")
 	strip := buildMetricStrip(corpus, staleness, newThisWeek)
 	subNav := buildSubNav(staleness, "browse")
 
@@ -180,7 +202,7 @@ func (h *handler) renderBrowse(w http.ResponseWriter, req *http.Request) {
 		}
 		return h.tmpl.ExecuteTemplate(out, "browse.html", corpus)
 	}
-	h.serve(w, req, content, subNav)
+	h.serve(w, req, content, subNav, "Knowledge · Hero")
 }
 
 // renderWhy handles GET /knowledge/why — the provenance chain view.
@@ -196,7 +218,7 @@ func (h *handler) renderWhy(w http.ResponseWriter, req *http.Request) {
 		newThisWeek = data.CountCorpusEventsLastWeek(h.deps.HeroDir)
 	}
 
-	hero := buildPageHero(h.deps, ed, corpus.TotalEntries)
+	hero := buildPageHero(h.deps, ed, corpus.TotalEntries, "Why")
 	strip := buildMetricStrip(corpus, staleness, newThisWeek)
 	subNav := buildSubNav(staleness, "why")
 
@@ -215,7 +237,7 @@ func (h *handler) renderWhy(w http.ResponseWriter, req *http.Request) {
 		}
 		return h.tmpl.ExecuteTemplate(out, "neighbors.html", neighbors)
 	}
-	h.serve(w, req, content, subNav)
+	h.serve(w, req, content, subNav, "Knowledge · Why · Hero")
 }
 
 // renderStaleness handles GET /knowledge/staleness.
@@ -228,7 +250,7 @@ func (h *handler) renderStaleness(w http.ResponseWriter, req *http.Request) {
 		newThisWeek = data.CountCorpusEventsLastWeek(h.deps.HeroDir)
 	}
 
-	hero := buildPageHero(h.deps, ed, corpus.TotalEntries)
+	hero := buildPageHero(h.deps, ed, corpus.TotalEntries, "Staleness")
 	strip := buildMetricStrip(corpus, staleness, newThisWeek)
 	subNav := buildSubNav(staleness, "staleness")
 
@@ -241,7 +263,7 @@ func (h *handler) renderStaleness(w http.ResponseWriter, req *http.Request) {
 		}
 		return h.tmpl.ExecuteTemplate(out, "staleness.html", staleness)
 	}
-	h.serve(w, req, content, subNav)
+	h.serve(w, req, content, subNav, "Knowledge · Staleness · Hero")
 }
 
 // renderSearch / renderRecent / renderWrite — substrate-pending stubs.
@@ -283,9 +305,13 @@ func (h *handler) renderEntryDetail(w http.ResponseWriter, req *http.Request) {
 
 	hero := buildEntryPageHero(h.deps, ed, entry)
 	strip := buildMetricStrip(corpus, staleness, newThisWeek)
-	// No sub-nav tab matches a detail; pass "" so nothing renders
-	// active, but keep the row in place for navigation.
-	subNav := buildSubNav(staleness, "")
+	// Per polish-v3 Fix 2: highlight the Browse tab (the entry was
+	// reached from Browse) so the detail view shows where it lives.
+	subNav := buildSubNav(staleness, "browse")
+	crumb := &shell.PageBreadcrumb{Crumbs: []shell.BreadcrumbCrumb{
+		{Label: "Knowledge", Href: "/knowledge"},
+		{Label: entry.Title, Current: true},
+	}}
 
 	content := func(out io.Writer) error {
 		if err := h.renderHeroAndChat(out, hero, ""); err != nil {
@@ -296,7 +322,7 @@ func (h *handler) renderEntryDetail(w http.ResponseWriter, req *http.Request) {
 		}
 		return h.tmpl.ExecuteTemplate(out, "detail.html", entry)
 	}
-	h.serve(w, req, content, subNav)
+	h.serveDetail(w, req, content, subNav, crumb, "Knowledge · "+entry.Title+" · Hero")
 }
 
 // buildEntryPageHero composes the per-entry page-hero. Eyebrow
@@ -346,7 +372,7 @@ func (h *handler) renderStub(w http.ResponseWriter, req *http.Request, slug, vie
 		newThisWeek = data.CountCorpusEventsLastWeek(h.deps.HeroDir)
 	}
 
-	hero := buildPageHero(h.deps, ed, corpus.TotalEntries)
+	hero := buildPageHero(h.deps, ed, corpus.TotalEntries, view)
 	strip := buildMetricStrip(corpus, staleness, newThisWeek)
 	subNav := buildSubNav(staleness, slug)
 
@@ -361,15 +387,24 @@ func (h *handler) renderStub(w http.ResponseWriter, req *http.Request, slug, vie
 			Home: "knowledge", Slug: slug, View: view, Note: note,
 		})
 	}
-	h.serve(w, req, content, subNav)
+	h.serve(w, req, content, subNav, "Knowledge · "+view+" · Hero")
 }
 
-// serve is the thin compositor that delegates to the shell.
-func (h *handler) serve(w http.ResponseWriter, req *http.Request, content func(io.Writer) error, subNav *shell.SubNav) {
+// serve is the thin compositor that delegates to the shell. Title is
+// the browser <title>; per polish-v3 Fix 5, sub-routes include the
+// sub-view name (e.g. "Knowledge · Staleness · Hero").
+func (h *handler) serve(w http.ResponseWriter, req *http.Request, content func(io.Writer) error, subNav *shell.SubNav, title string) {
+	h.serveDetail(w, req, content, subNav, nil, title)
+}
+
+// serveDetail is the full compositor — same as serve plus an optional
+// breadcrumb row above the page hero. Used by detail routes.
+func (h *handler) serveDetail(w http.ResponseWriter, req *http.Request, content func(io.Writer) error, subNav *shell.SubNav, crumb *shell.PageBreadcrumb, title string) {
 	page := shell.Page{
 		ActiveHome: "knowledge",
-		PageTitle:  "Knowledge · Hero",
+		PageTitle:  title,
 		SubNav:     subNav,
+		Breadcrumb: crumb,
 		Content:    content,
 		HeadExtra:  template.HTML(knowledgeStyles + knowledgeScript),
 	}
@@ -419,7 +454,10 @@ func (h *handler) renderSection(section string) ([]byte, error) {
 }
 
 // buildPageHero composes the page-hero data block from corpus state.
-func buildPageHero(deps Deps, ed edition.Edition, totalEntries int) shell.PageHero {
+// subView is the active sub-view label (e.g. "Staleness", "Why"); when
+// non-empty it's appended to the page-hero title as `Knowledge · <Sub>`
+// per polish-v3 Fix 5.
+func buildPageHero(deps Deps, ed edition.Edition, totalEntries int, subView string) shell.PageHero {
 	eyebrow := fmt.Sprintf("hero · %s · knowledge", firstNonEmpty(deps.Branch, "main"))
 	subhead := ""
 	switch totalEntries {
@@ -436,9 +474,14 @@ func buildPageHero(deps Deps, ed edition.Edition, totalEntries int) shell.PageHe
 		editionLabel = strings.Title(string(ed)) //nolint:staticcheck // single-byte upper is fine here
 	}
 
+	title := "Knowledge"
+	if subView != "" {
+		title = "Knowledge · " + subView
+	}
+
 	return shell.PageHero{
 		Eyebrow: template.HTML(template.HTMLEscapeString(eyebrow)),
-		Title:   "Knowledge",
+		Title:   title,
 		Subhead: template.HTML(subhead),
 		Actions: []shell.PageHeroAction{
 			{Kind: "primary", Label: "Write entry", Href: "/knowledge/write"},

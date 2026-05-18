@@ -1,7 +1,12 @@
 {{- /* changes.html — Since-you-were-here timeline. Flat row layout —
        time chip (56px) · kind icon (22px) · sentence-form text. Falls
        back to git commits when the event log is empty (and surfaces a
-       "limited view" hint). */ -}}
+       "limited view" hint).
+
+       Per polish-v3 Fix 3: rows with Count > 1 render a count badge
+       in place of the sentence and an expand chevron that reveals
+       the collapsed originals inline below. Toggle wired in
+       nowScript (see styles.go). */ -}}
 {{ define "changes.html" }}
 <section id="now-changes" class="now-section">
   <div class="now-section-header">
@@ -17,8 +22,8 @@
   <div class="now-empty">No recent activity — the feed lights up as you and your agents make changes.</div>
   {{- else }}
   <div class="now-feed-list">
-    {{- range .Rows }}
-    <div class="now-feed-row">
+    {{- range $idx, $row := .Rows }}
+    <div class="now-feed-row" data-feed-row-idx="{{ $idx }}">
       <span class="now-feed-time">{{ .Time }}</span>
       <span class="now-feed-icon" title="{{ .Kind }}">
         {{- if eq .Kind "commit" }}
@@ -33,7 +38,25 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m9 11 3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>
         {{- end }}
       </span>
-      <span class="now-feed-text">{{ .HTML }}</span>
+      <span class="now-feed-text">
+        {{- if gt .Count 1 -}}
+          <span class="now-feed-count" data-feed-collapsed-toggle="{{ $idx }}">
+            <strong>{{ .Count }} {{ .GroupLabel }}</strong>
+            {{- if .WindowText }} <span class="now-feed-actor">· {{ .WindowText }}</span>{{ end -}}
+            <button type="button" class="now-feed-expand" aria-expanded="false" aria-label="Expand collapsed rows">&#9662;</button>
+          </span>
+          <div class="now-feed-collapsed-rows" data-feed-collapsed-rows="{{ $idx }}" hidden>
+            {{- range .CollapsedRows }}
+            <div class="now-feed-collapsed-row">
+              <span class="now-feed-time">{{ .Time }}</span>
+              <span class="now-feed-text">{{ .HTML }}</span>
+            </div>
+            {{- end }}
+          </div>
+        {{- else -}}
+          {{ .HTML }}
+        {{- end -}}
+      </span>
     </div>
     {{- end }}
   </div>

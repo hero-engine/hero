@@ -668,11 +668,12 @@ func (s *Server) buildShellRouter() *shell.Router {
 	// stub. Per-spec: this owns /work; sibling /work/* routes land in
 	// follow-on work.
 	workDeps := workpage.Deps{
-		ProjectRoot: s.projectRoot,
-		HeroDir:     s.heroDir,
-		Workspace:   workspace,
-		Branch:      branch,
-		UserName:    userName,
+		ProjectRoot:              s.projectRoot,
+		HeroDir:                  s.heroDir,
+		Workspace:                workspace,
+		Branch:                   branch,
+		UserName:                 userName,
+		ChatInteractiveConnected: s.chatInteractiveConnected,
 	}
 	if err := workpage.Register(r, workDeps); err != nil {
 		fmt.Fprintf(os.Stderr, "hero serve: register Work home: %v\n", err)
@@ -681,11 +682,12 @@ func (s *Server) buildShellRouter() *shell.Router {
 	// Register the real Knowledge home in place of its (no-longer-present)
 	// stub. Deps mirror the Now wiring — no proposal-store hook yet.
 	knowledgeDeps := knowledgepage.Deps{
-		ProjectRoot: s.projectRoot,
-		HeroDir:     s.heroDir,
-		Workspace:   workspace,
-		Branch:      branch,
-		UserName:    userName,
+		ProjectRoot:              s.projectRoot,
+		HeroDir:                  s.heroDir,
+		Workspace:                workspace,
+		Branch:                   branch,
+		UserName:                 userName,
+		ChatInteractiveConnected: s.chatInteractiveConnected,
 	}
 	if err := knowledgepage.Register(r, knowledgeDeps); err != nil {
 		fmt.Fprintf(os.Stderr, "hero serve: register Knowledge home: %v\n", err)
@@ -694,11 +696,12 @@ func (s *Server) buildShellRouter() *shell.Router {
 	// Register the real People & ROI home in place of its (no-longer-present)
 	// stub. Deps mirror the other home wiring.
 	peopleDeps := peoplepage.Deps{
-		ProjectRoot: s.projectRoot,
-		HeroDir:     s.heroDir,
-		Workspace:   workspace,
-		Branch:      branch,
-		UserName:    userName,
+		ProjectRoot:              s.projectRoot,
+		HeroDir:                  s.heroDir,
+		Workspace:                workspace,
+		Branch:                   branch,
+		UserName:                 userName,
+		ChatInteractiveConnected: s.chatInteractiveConnected,
 	}
 	if err := peoplepage.Register(r, peopleDeps); err != nil {
 		fmt.Fprintf(os.Stderr, "hero serve: register People & ROI home: %v\n", err)
@@ -711,13 +714,14 @@ func (s *Server) buildShellRouter() *shell.Router {
 	// nil until those engines land per the spec's build order; the page
 	// renders empty-state notices when they are.
 	agentsDeps := agentspage.Deps{
-		ProjectRoot:  s.projectRoot,
-		HeroDir:      s.heroDir,
-		Workspace:    workspace,
-		Branch:       branch,
-		UserName:     userName,
-		LiveSessions: s.snapshotLiveSessions,
-		Proposals:    s.snapshotAgentsProposals,
+		ProjectRoot:              s.projectRoot,
+		HeroDir:                  s.heroDir,
+		Workspace:                workspace,
+		Branch:                   branch,
+		UserName:                 userName,
+		LiveSessions:             s.snapshotLiveSessions,
+		Proposals:                s.snapshotAgentsProposals,
+		ChatInteractiveConnected: s.chatInteractiveConnected,
 	}
 	if err := agentspage.Register(r, agentsDeps); err != nil {
 		fmt.Fprintf(os.Stderr, "hero serve: register Agents home: %v\n", err)
@@ -749,6 +753,20 @@ func (s *Server) snapshotProposals() []*nowdata.ProposalRow {
 	// renders cleanly.
 	_ = store
 	return nil
+}
+
+// chatInteractiveConnected probes the chat-adapter registry and
+// returns true when at least one adapter advertises the Interactive
+// kind. Used by the four non-Now homes to flip their inline chat-
+// input into its disabled state. Passing a probe (rather than the
+// registry itself) keeps those packages free of chat / runner
+// dependencies — see internal/serve/pages/{work,knowledge,
+// agentspage,people}/import_test.go.
+func (s *Server) chatInteractiveConnected() bool {
+	if s == nil || s.chatRegistry == nil {
+		return false
+	}
+	return chat.Resolve(s.chatRegistry, "").Interactive != ""
 }
 
 // snapshotLiveSessions is the canonical "live session ledger" reader

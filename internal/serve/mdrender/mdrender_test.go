@@ -72,3 +72,77 @@ func TestRender_Autolink(t *testing.T) {
 		t.Errorf("autolink missing: %q", out)
 	}
 }
+
+func TestRender_Table(t *testing.T) {
+	md := "| Col A | Col B |\n| ----- | ----- |\n| v1    | v2    |\n| v3    | v4    |\n"
+	out := string(Render(md))
+	for _, want := range []string{
+		"<table>",
+		"<thead>",
+		"<th>Col A</th>",
+		"<th>Col B</th>",
+		"<tbody>",
+		"<td>v1</td>",
+		"<td>v4</td>",
+		"</table>",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("table render missing %q in %q", want, out)
+		}
+	}
+}
+
+func TestRender_TableMalformedFallsBack(t *testing.T) {
+	// Separator row missing — should NOT render as a table; should
+	// instead render the two lines as paragraph text without panic.
+	md := "| Col A | Col B |\n| v1    | v2    |\n"
+	out := string(Render(md))
+	if strings.Contains(out, "<table>") {
+		t.Errorf("malformed table should not render <table>: %q", out)
+	}
+	if strings.Contains(out, "<th>") {
+		t.Errorf("malformed table should not render <th>: %q", out)
+	}
+}
+
+func TestRender_TableColCountMismatchFallsBack(t *testing.T) {
+	// Header has 2 cols, body has 3 cols — should bail out.
+	md := "| A | B |\n| --- | --- |\n| 1 | 2 | 3 |\n"
+	out := string(Render(md))
+	if strings.Contains(out, "<table>") {
+		t.Errorf("col-count mismatch should not render <table>: %q", out)
+	}
+}
+
+func TestRender_Blockquote(t *testing.T) {
+	md := "> Status: delivered\n> Second line of the quote.\n> Third line here.\n"
+	out := string(Render(md))
+	if !strings.Contains(out, "<blockquote>") {
+		t.Errorf("blockquote missing: %q", out)
+	}
+	if !strings.Contains(out, "Status: delivered") {
+		t.Errorf("blockquote body missing: %q", out)
+	}
+	if !strings.Contains(out, "</blockquote>") {
+		t.Errorf("blockquote close missing: %q", out)
+	}
+}
+
+func TestRender_NestedBulletList(t *testing.T) {
+	md := "- top one\n  - nested A\n  - nested B\n- top two\n"
+	out := string(Render(md))
+	// Expect outer <ul>, an inner <ul> within an <li>, both nested
+	// items present, and the second top item present.
+	if !strings.Contains(out, "<ul>") {
+		t.Errorf("outer <ul> missing: %q", out)
+	}
+	// There should be at least two <ul> opens (outer + nested).
+	if strings.Count(out, "<ul>") < 2 {
+		t.Errorf("nested <ul> missing (got %d <ul> opens) in %q", strings.Count(out, "<ul>"), out)
+	}
+	for _, want := range []string{"top one", "nested A", "nested B", "top two"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("item %q missing: %q", want, out)
+		}
+	}
+}
