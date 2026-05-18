@@ -406,6 +406,118 @@ func Test_writeCheckpoint_CrossRepoAskDoesNotLeakIntoUserHandoff(t *testing.T) {
 	}
 }
 
+// Test_CrossMachineRoundTrip_FullLoop pins next-as-projection AC-6
+// and AC-11. The full sequence:
+//
+//   1. Machine A's graph records a NextSuggestion via the field-grab
+//      CLI's underlying handoff.RecordSuggestion.
+//   2. projection.UserHandoffMD renders A's user-graph into a
+//      .hero/next/<user>.md markdown file (the cross-machine medium).
+//   3. The file travels via git (here, just written to disk).
+//   4. Machine B (a fresh, empty graph) calls handoff.IngestUserFile
+//      on the same file — this is what the SessionStart hook fires
+//      on a new session opening after `git pull`.
+//   5. Machine B's queries return A's recorded suggestion verbatim.
+//
+// Two ephemeral graph DBs in one test process simulate the
+// two-machine boundary cleanly without spinning up actual git or
+// separate filesystems.
+func Test_CrossMachineRoundTrip_FullLoop(t *testing.T) {
+	user := "alice"
+	repoKey := "repo-x"
+	suggestion := "let's tackle the phase-6 git hooks tomorrow"
+	rationale := "phase 5 ingest lands today, hooks are the next contiguous chunk"
+	ask := "where did we leave off on next-as-projection?"
+	reflection := "the merge-driver is registered by hero install, not by the repo"
+
+	// --- Machine A: write to local graph + project to handoff file ---
+
+	storeA, err := graph.Open(t.TempDir())
+	if err != nil {
+		t.Fatalf("graph.Open A: %v", err)
+	}
+	defer storeA.Close()
+
+	if err := handoff.RecordSuggestion(storeA, repoKey, handoff.NextSuggestion{
+		User:      user,
+		Text:      suggestion,
+		Rationale: rationale,
+	}); err != nil {
+		t.Fatalf("RecordSuggestion A: %v", err)
+	}
+	if err := handoff.RecordAsk(storeA, repoKey, handoff.UserAsk{
+		User: user,
+		Text: ask,
+	}); err != nil {
+		t.Fatalf("RecordAsk A: %v", err)
+	}
+	if err := handoff.RecordReflection(storeA, repoKey, handoff.SessionReflection{
+		User: user,
+		Text: reflection,
+	}); err != nil {
+		t.Fatalf("RecordReflection A: %v", err)
+	}
+
+	body, err := projection.UserHandoffMD(storeA, projection.UserHandoffOptions{
+		User:    user,
+		RepoKey: repoKey,
+	})
+	if err != nil {
+		t.Fatalf("UserHandoffMD A: %v", err)
+	}
+
+	// --- The "git boundary": file lands on disk, no other state crosses. ---
+
+	handoffPath := filepath.Join(t.TempDir(), "alice.md")
+	if err := os.WriteFile(handoffPath, []byte(body), 0o644); err != nil {
+		t.Fatalf("write handoff file: %v", err)
+	}
+
+	// --- Machine B: clean graph, run ingest, query. ---
+
+	storeB, err := graph.Open(t.TempDir())
+	if err != nil {
+		t.Fatalf("graph.Open B: %v", err)
+	}
+	defer storeB.Close()
+
+	// Pre-condition: B's graph has no record of any of A's fields.
+	if got, _ := handoff.LatestSuggestion(storeB, user, repoKey); got != nil {
+		t.Fatalf("machine B has stale suggestion before ingest: %+v", got)
+	}
+
+	if err := handoff.IngestUserFile(storeB, repoKey, handoffPath); err != nil {
+		t.Fatalf("IngestUserFile B: %v", err)
+	}
+
+	// Post-condition: B sees A's text verbatim across all three fields.
+	gotSug, err := handoff.LatestSuggestion(storeB, user, repoKey)
+	if err != nil {
+		t.Fatalf("LatestSuggestion B: %v", err)
+	}
+	if gotSug == nil || gotSug.Text != suggestion {
+		t.Errorf("Suggestion did not round-trip: got=%+v want=%q", gotSug, suggestion)
+	}
+	gotAsk, _ := handoff.LatestAsk(storeB, user, repoKey)
+	if gotAsk == nil || gotAsk.Text != ask {
+		t.Errorf("Ask did not round-trip: got=%+v want=%q", gotAsk, ask)
+	}
+	gotRefs, _ := handoff.RecentReflections(storeB, user, repoKey, 10)
+	if len(gotRefs) == 0 || gotRefs[0].Text != reflection {
+		t.Errorf("Reflection did not round-trip: got=%+v want=%q", gotRefs, reflection)
+	}
+
+	// --- Idempotency: a second SessionStart ingest must not duplicate. ---
+
+	if err := handoff.IngestUserFile(storeB, repoKey, handoffPath); err != nil {
+		t.Fatalf("second IngestUserFile B: %v", err)
+	}
+	refsAfter, _ := handoff.RecentReflections(storeB, user, repoKey, 10)
+	if len(refsAfter) != len(gotRefs) {
+		t.Errorf("re-ingest duplicated reflections: %d → %d", len(gotRefs), len(refsAfter))
+	}
+}
+
 // Test_writeCheckpoint_PreFlightGate_RefusesLegacyMarkers pins AC-14
 // of next-as-projection: when the repo hasn't been migrated and the
 // existing NEXT.md still carries pre-projection markers, the
