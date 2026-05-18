@@ -1,7 +1,7 @@
 ---
 title: Document `hero import` — URL, file, and directory ingest
 type: feature
-status: planning
+status: completed
 severity: low
 tags: [docs, cli, import, knowledge]
 created: 2026-05-18
@@ -12,25 +12,25 @@ relates-to: [hero-import-directory-unsupported]
 
 ## Kickoff
 
-Adds a dedicated CLI Reference page for `hero import` so users can discover
-the URL / single-file / directory input shapes plus the `--max-bytes`,
-`--tag`, and `--type` flags without grepping the binary.
+Delivered. `web/docs/src/cli/import.md` now documents the three input
+shapes (URL, single file, directory), the directory walker rules
+(slug scheme, group tag, extension allowlist, hidden filter,
+skip-if-exists, size cap, summary line), and the `--tag`, `--type`,
+`--max-bytes` flags. Nav wired in `web/docs/mkdocs.yml` under
+`CLI Reference → Import`; `web/docs/src/cli/overview.md` Command Groups
+table now has an Import row.
 
-**Status:** planning — directory ingest shipped in v0.10 via
-`hero-import-directory-unsupported`; docs never caught up.
+**Status:** completed — pure docs change, no source code touched.
 
-**Pick up at:** scaffold `web/docs/src/cli/import.md` from the
-`internal/cli/import.go` source. Cover the three input shapes (URL, file,
-directory), each flag, and one worked directory example. Then wire it into
-`mkdocs.yml` and add a row to `cli/overview.md`.
+**Files changed:**
+`web/docs/src/cli/import.md` (new),
+`web/docs/mkdocs.yml`,
+`web/docs/src/cli/overview.md`.
 
-→ `.hero/planning/features/hero-import-docs-page/spec.md`
-
-**Files:** `internal/cli/import.go`, `internal/cli/import_test.go`,
-`.hero/specs/hero-import-directory-unsupported/spec.md`,
-`web/docs/mkdocs.yml`, `web/docs/src/cli/overview.md`.
-**Skip:** documenting the underlying knowledge-entry stub format — that's
-covered in the existing Knowledge Base concepts page.
+**Verify against source:** flag table and extension allowlist mirror
+`internal/cli/import.go` exactly. If `isTextExt` or the cobra `Flags()`
+registrations change, the page goes stale — the
+`cli-examples-smoke-test` follow-up is the long-term fix.
 
 ## Context
 
