@@ -36,6 +36,21 @@ relations:
   - { kind: parent, target_type: prd, cardinality: zero-or-one }
   - { kind: child, target_type: feature, cardinality: many }
   - { kind: child, target_type: bug, cardinality: many }
+frontmatter:
+  required:
+    - { name: title, type: string, required: true, classification: content, description: "One-line human title for the epic." }
+    - { name: type, type: enum, required: true, values: [epic], default: epic, classification: content, description: "Spec type discriminator; always 'epic'." }
+    - { name: status, type: enum, required: true, values: [planning, refined, ready, delivering, in-review, completed], default: planning, classification: org-state, description: "Lifecycle position." }
+  optional:
+    - { name: created, type: date, format: "YYYY-MM-DD", classification: content, description: "Authoring date." }
+    - { name: priority, type: enum, values: [P0, P1, P2, P3], classification: org-state, description: "Hero-level priority." }
+    - { name: horizon, type: enum, values: [now, next, someday, parking], default: now, classification: content, description: "Temporal segmentation." }
+    - { name: tags, type: "list[string]", classification: content, description: "Free-form labels." }
+    - { name: claimed_by, type: string, classification: org-state, description: "Who is actively working this spec." }
+    - { name: tracker_id, type: string, classification: org-state, description: "External tracker issue ID." }
+    - { name: kind, type: enum, values: [theme, delivery, bet, milestone], default: theme, classification: content, description: "Epic sub-category." }
+    - { name: owner, type: enum, values: [pm, engineering, qa, devops, design, docs], default: pm, classification: org-state, description: "Current owning role." }
+    - { name: relations, type: "list[relation]", classification: content, description: "Parent/child edges to other specs." }
 ---
 
 # Epic spec-type

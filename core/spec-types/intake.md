@@ -34,6 +34,19 @@ relations:
   - { kind: promotes_to, target_type: feature, cardinality: zero-or-one }
   - { kind: promotes_to, target_type: bug, cardinality: zero-or-one }
   - { kind: promotes_to, target_type: epic, cardinality: zero-or-one }
+frontmatter:
+  required:
+    - { name: title, type: string, required: true, classification: content, description: "One-line human title for the intake." }
+    - { name: type, type: enum, required: true, values: [intake], default: intake, classification: content, description: "Spec type discriminator; always 'intake'." }
+    - { name: status, type: enum, required: true, values: [planning, triaged, promoted, rejected, merged], default: planning, classification: org-state, description: "Lifecycle position." }
+  optional:
+    - { name: created, type: date, format: "YYYY-MM-DD", classification: content, description: "Authoring date." }
+    - { name: priority, type: enum, values: [P0, P1, P2, P3], classification: org-state, description: "Hero-level priority." }
+    - { name: tags, type: "list[string]", classification: content, description: "Free-form labels." }
+    - { name: tracker_id, type: string, classification: org-state, description: "External tracker issue ID." }
+    - { name: kind, type: enum, values: [customer, support, sales, internal, competitive], default: customer, classification: content, description: "Intake source category." }
+    - { name: owner, type: enum, values: [pm, engineering, qa, devops, design, docs], default: pm, classification: org-state, description: "Current owning role." }
+    - { name: relations, type: "list[relation]", classification: content, description: "Promotes-to edges into work specs." }
 ---
 
 # Intake spec-type
