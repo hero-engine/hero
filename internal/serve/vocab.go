@@ -30,19 +30,9 @@ func activeVocab(cfg *config.Config) *vocabulary.Vocabulary {
 		return nil
 	}
 
-	merged := *cfg
-	if merged.Vocabulary == "" && merged.Methodology != "" {
-		methodologies, mErr := methodology.Load(methodology.CoreFS(), nil)
-		if mErr == nil && len(methodologies) > 0 {
-			if m, ok := methodologies[merged.Methodology]; ok && m != nil {
-				if derived := methodology.DeriveVocabularyName(&merged, m); derived != "" {
-					merged.Vocabulary = derived
-				}
-			}
-		}
-	}
+	methodologies, _ := methodology.Load(methodology.CoreFS(), nil)
 
-	v, err := vocabulary.Resolve(&merged, vocabs)
+	v, err := vocabulary.Resolve(cfg, vocabs, methodologies)
 	if err != nil {
 		return nil
 	}

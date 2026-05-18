@@ -1,7 +1,7 @@
 ---
 title: vocabulary.Resolve doesn't fold methodology-derived auto-derivation
 type: bug
-status: planning
+status: delivering
 severity: medium
 priority: P1
 created: 2026-05-17
@@ -95,6 +95,14 @@ Keep current behavior; rename to `ResolveBare` (and/or add a `ResolveWithMethodo
 - Unit test asserting explicit `cfg.Vocabulary` still beats methodology-derived.
 - Verify the three call-site shims have been removed by greping for `DeriveVocabularyName` — should only appear in the resolver itself and its tests after the fix.
 - `go build ./...` and `go test ./...` clean.
+
+## Changes
+
+- `internal/vocabulary/resolver.go` — `Resolve` / `pickName` now take `methodologies map[string]*methodology.Methodology`; methodology-derived step inserted between explicit and tracker-inferred; doc comment updated to the full 5-step chain.
+- `internal/cli/vocab.go` — removed methodology-derivation shim; calls new `Resolve(cfg, vocabs, methodologies)` directly.
+- `internal/serve/vocab.go` — same shim removal.
+- `internal/install/dialect.go` — same shim removal.
+- `internal/vocabulary/resolver_test.go` — added 9 tests covering methodology-derived precedence (scrum/shape-up/kanban/waterfall), explicit-beats-methodology, methodology-beats-tracker, nil-methodologies fallback, unknown-methodology fallthrough, and tracker fallback when neither set.
 
 ## Kickoff
 

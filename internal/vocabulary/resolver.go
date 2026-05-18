@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/methodology"
 )
 
 // DefaultName is the fall-through vocabulary name when no explicit
@@ -18,14 +19,20 @@ const DefaultName = "default"
 const OverrideWarnThreshold = 10
 
 // Resolve returns the active vocabulary for a workspace. It applies
-// the precedence chain from Decision 5 of unified-spec-type-model:
+// the precedence chain documented in docs/contracts/active-dialect.md §3
+// and Decisions 5–6 of unified-spec-type-model:
 //
 //  1. Explicit cfg.Vocabulary (highest priority).
-//  2. Tracker-inferred — a configured tracker whose type matches a
+//  2. Methodology-derived — cfg.Methodology names a methodology whose
+//     aligned_vocabulary field points at a loaded vocabulary.
+//  3. Tracker-inferred — a configured tracker whose type matches a
 //     vocabulary's auto_select { tracker: <name> } rule.
-//  3. Methodology-preset-inferred — cfg.PM.Presets.Delivery matches a
+//  4. Delivery-preset-inferred — cfg.PM.Presets.Delivery matches a
 //     vocabulary's auto_select { delivery_preset: <value> } rule.
-//  4. DefaultName.
+//  5. DefaultName.
+//
+// methodologies may be nil or empty; when so, step 2 is skipped and the
+// chain falls through to tracker/delivery/default.
 //
 // On top of the chosen base vocabulary, Resolve applies any
 // cfg.VocabularyOverrides per-key. The returned vocabulary is a deep
@@ -34,12 +41,12 @@ const OverrideWarnThreshold = 10
 //
 // Resolve returns an error only when no candidate vocabulary exists in
 // vocabs (including the default fallback).
-func Resolve(cfg *config.Config, vocabs map[string]*Vocabulary) (*Vocabulary, error) {
+func Resolve(cfg *config.Config, vocabs map[string]*Vocabulary, methodologies map[string]*methodology.Methodology) (*Vocabulary, error) {
 	if len(vocabs) == 0 {
 		return nil, fmt.Errorf("no vocabularies loaded")
 	}
 
-	name := pickName(cfg, vocabs)
+	name := pickName(cfg, vocabs, methodologies)
 	base, ok := vocabs[name]
 	if !ok {
 		// Picked name does not exist — fall back to default.
@@ -60,19 +67,34 @@ func Resolve(cfg *config.Config, vocabs map[string]*Vocabulary) (*Vocabulary, er
 	return merged, nil
 }
 
-func pickName(cfg *config.Config, vocabs map[string]*Vocabulary) string {
+func pickName(cfg *config.Config, vocabs map[string]*Vocabulary, methodologies map[string]*methodology.Methodology) string {
 	if cfg != nil && cfg.Vocabulary != "" {
 		return cfg.Vocabulary
 	}
 
-	// 2. Tracker-inferred.
+	// 2. Methodology-derived. If the workspace named a methodology and
+	// that methodology declares an aligned_vocabulary, prefer it over
+	// tracker/delivery inference — the methodology has already encoded
+	// the desired vocab pairing (Decision 6 step 3 of
+	// unified-spec-type-model).
+	if cfg != nil && cfg.Methodology != "" && len(methodologies) > 0 {
+		if m, ok := methodologies[cfg.Methodology]; ok {
+			if derived := methodology.DeriveVocabularyName(cfg, m); derived != "" {
+				if _, present := vocabs[derived]; present {
+					return derived
+				}
+			}
+		}
+	}
+
+	// 3. Tracker-inferred.
 	if cfg != nil && cfg.Tracker != nil && cfg.Tracker.Type != "" && cfg.Tracker.Type != "none" {
 		if name := findAutoSelect(vocabs, "tracker", cfg.Tracker.Type); name != "" {
 			return name
 		}
 	}
 
-	// 3. Methodology-preset-inferred. We map the configured delivery
+	// 4. Delivery-preset-inferred. We map the configured delivery
 	// preset onto the vocabulary's declared auto_select rule. Hero-pm
 	// uses "sprint" / "cycle" / "continuous" / "flow"; vocabularies
 	// declare the matching value verbatim.
