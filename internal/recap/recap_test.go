@@ -1,6 +1,9 @@
 package recap
 
 import (
+	"os"
+	"os/exec"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -148,6 +151,56 @@ func TestIsKnowledgePath(t *testing.T) {
 		if got != tt.want {
 			t.Errorf("isKnowledgePath(%q) = %v, want %v", tt.path, got, tt.want)
 		}
+	}
+}
+
+// TestBuild_EmptyRepo verifies that hero recap against a freshly-initialized
+// git repo with no commits returns an empty recap (not an error). Regression
+// guard for the "your current branch 'main' does not have any commits yet"
+// path that previously bubbled up as `building recap: reading git log: exit
+// status 128`.
+func TestBuild_EmptyRepo(t *testing.T) {
+	dir := t.TempDir()
+	if out, err := exec.Command("git", "-C", dir, "init", "-q").CombinedOutput(); err != nil {
+		t.Fatalf("git init failed: %v: %s", err, out)
+	}
+	heroDir := filepath.Join(dir, ".hero")
+	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+		t.Fatalf("mkdir heroDir: %v", err)
+	}
+
+	r, err := Build(heroDir, dir, time.Now().Add(-24*time.Hour))
+	if err != nil {
+		t.Fatalf("Build on empty repo returned error: %v", err)
+	}
+	if r == nil {
+		t.Fatal("expected non-nil Recap")
+	}
+	if len(r.Specs) != 0 || len(r.Knowledge) != 0 || len(r.Unmatched) != 0 {
+		t.Errorf("expected empty recap, got specs=%d knowledge=%d unmatched=%d",
+			len(r.Specs), len(r.Knowledge), len(r.Unmatched))
+	}
+	// And the human render should fall through to "No activity in this window."
+	if out := RenderText(r); !contains(out, "No activity") {
+		t.Errorf("expected 'No activity' in render, got: %q", out)
+	}
+}
+
+// TestBuild_NotAGitRepo confirms we still surface real git failures rather
+// than swallowing them along with the empty-repo case.
+func TestBuild_NotAGitRepo(t *testing.T) {
+	dir := t.TempDir()
+	heroDir := filepath.Join(dir, ".hero")
+	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+		t.Fatalf("mkdir heroDir: %v", err)
+	}
+
+	_, err := Build(heroDir, dir, time.Now().Add(-24*time.Hour))
+	if err == nil {
+		t.Fatal("expected error for non-git directory, got nil")
+	}
+	if !contains(err.Error(), "reading git log") {
+		t.Errorf("expected 'reading git log' in error, got: %v", err)
 	}
 }
 
