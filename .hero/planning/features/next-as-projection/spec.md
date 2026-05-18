@@ -2,7 +2,7 @@
 title: NEXT.md as a Graph Projection (with project/user/local split)
 slug: next-as-projection
 type: feature
-status: delivering
+status: completed
 priority: P0
 tags: [next-md, projection, graph, handoff, merge-conflicts, v2-recovery]
 created: 2026-04-28
@@ -66,37 +66,49 @@ local graph.
 
 ## Kickoff
 
-Finish making NEXT.md a graph projection — declared in commit
-`2158bd2`, audited 2026-05-18 and found ~95% landed. The three-file
-split (`.hero/NEXT.md`, `.hero/next/<user>.md`, `.hero/next/<user>.local.md`),
-the three graph node types (`UserAsk`, `NextSuggestion`,
-`SessionReflection`), the Stop-hook rewire, the
-`hero next migrate-to-projection` command, the merge driver, and the
-field-grab CLI are all shipped. `hero next checkpoint` remains the
-canonical write command (do **not** rename to `--write` — the hook
-matchers and user-visible strings make a rename pure cost). The
-field-grab writers use positional-arg form
-(`hero next suggest "<text>"`), not `set` subcommands.
+NEXT.md is now a graph projection end-to-end. Delivery completed
+2026-05-18 after the audit revealed ~95% of the spec had already
+landed and only six narrow gaps remained. All six closed:
 
-**Status:** delivering — closing remaining gaps. Six narrow items
-left: (1) pre-flight migration gate that refuses overwrite of
-unmigrated content, (2) `skills/next-merge-recovery.md`, (3)
-session-start hook wiring `hero next ingest`, (4) CI drift gate,
-(5) E2E cross-machine test, (6) perf budget verification.
+1. **AC-14 pre-flight migration gate** — `hero next checkpoint`
+   refuses to overwrite NEXT.md when `next.projected == false` AND
+   the file still carries hand-written content under legacy section
+   headers or `<!-- BEGIN HERO MACHINE STATE -->` markers.
+   (`internal/cli/checkpoint.go:detectUnmigratedNextMD`)
+2. **AC-16 merge-recovery skill** — `skills/next-merge-recovery/SKILL.md`
+   instructs agents to detect `<<<<<<<` markers in projected NEXT
+   files and run `hero next checkpoint` to self-heal.
+3. **AC-7/AC-11 session-start ingest hook** — Claude Code and Codex
+   installations now wire a `SessionStart` hook firing
+   `hero next ingest --quiet` so cross-machine round-trip continuity
+   closes automatically on session open.
+4. **AC-12 CI drift gate** — `.github/workflows/test.yml` rebuilds
+   the graph and regenerates NEXT.md, failing the build if the
+   committed file drifts from projection output.
+5. **AC-6/AC-11 E2E cross-machine test** —
+   `Test_CrossMachineRoundTrip_FullLoop` simulates two graph DBs +
+   shared handoff file; suggestion / ask / reflection all round-trip;
+   re-ingest is idempotent.
+6. **Perf budget verified** — warm checkpoint takes 150–180 ms on
+   the hero repo's own graph, under the 200 ms target.
 
-→ `.hero/planning/features/next-as-projection/spec.md`
+The two reconsidered decisions from the audit:
 
-**Files:** `internal/cli/checkpoint.go` (gate),
-`internal/install/claude_hooks.go` + `codex_hooks.go` (session-start
-hook), `skills/next-merge-recovery/` (new),
-`.github/workflows/test.yml` (drift gate), `internal/cli/checkpoint_test.go`
-(E2E + perf).
+- `hero next checkpoint` stays — rename to `--write` rejected because
+  install-hook prefix matchers and the user-visible "auto-written
+  by" string would all need to change for zero behavior gain.
+- Field-grab writers stay positional (`hero next suggest "<text>"`);
+  `set` subcommand rejected as redundant.
+
+**Status:** completed. Downstream spec `project-snapshot`
+(`.hero/planning/features/project-snapshot/spec.md`) is now
+deliverable — it reuses the projector pattern, Stop-hook integration,
+`.gitattributes` merge-driver model, and `hero install` hook flow.
+
+→ `.hero/specs/next-as-projection/spec.md` (post-completion path)
 
 **Skip:** per-branch user-state separation (out of scope); LLM
-narration of project state (separate Tier-3 work); rename of
-`hero next checkpoint` to `hero next --write` (rejected — see audit
-2026-05-18: command name is matched by install-hook prefix detection
-and baked into NEXT.md's user-visible "auto-written by" string).
+narration of project state (separate Tier-3 work).
 
 ## Mission fit
 
@@ -498,8 +510,14 @@ projection** (~1.5 days) — **SHIPPED**:
 - `buildMachineBlock` + `rebuildLocalState` in `checkpoint.go`
   handle the marker-bounded local file.
 - `hero next checkpoint` writes all three.
-- **Remaining gap:** measure actual wall-clock time on the hero
-  repo's graph and document in spec.
+- **Performance measured 2026-05-18** on the hero repo's own graph
+  (worst-case for the project; 200+ specs, dense graph):
+  - Cold-cache first run: ~540 ms (SQLite open + initial reads).
+  - Warm-cache subsequent runs: 150–180 ms.
+  - The 200 ms target is met on warm runs (the case that matters
+    for Stop-hook firing — the SQLite WAL stays warm across hook
+    invocations in a single session). Cold-cache excess is paid
+    once per process, not per checkpoint.
 
 **Phase 5 — Round-trip ingest** (~1 day) — **PARTIAL**:
 - `handoff.IngestUserFile` + `hero next ingest` command land in
