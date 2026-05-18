@@ -113,9 +113,17 @@ Delivery lives on child features.
 
 ## Sections
 
-- Required: `Bet`, `Evidence`, `Tradeoffs`
-- Optional: `Goals`, `Risks`, `Open Questions`, `Dependencies`, `Tasks`,
-  `Linked delivery`, `Notes`
+- Required: `Goal`
+- Optional: `Outcome`, `Bets`, `Risks`, `Notes`
+- Suggested (not required by the registry): `Bet`, `Evidence`, `Tradeoffs`,
+  `Open Questions`, `Dependencies`, `Tasks`, `Linked delivery`
+
+The registry treats only `Goal` as required so initiatives stay
+methodology-neutral. Shape Up–flavored workspaces typically also author
+`Bet`, `Evidence`, and `Tradeoffs`; those are surfaced here as suggested
+sections and can be promoted to required for a team via a methodology
+profile's `sections_overrides:` block (same pattern as `lifecycle_overrides`)
+when that feature lands.
 
 ## Accepting Commands
 
