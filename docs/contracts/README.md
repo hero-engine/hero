@@ -15,6 +15,7 @@ the shapes that have to stay stable across language boundaries.
 |---|---|---|---|---|
 | Spec-type registry | `.hero/cache/spec-types.json` (regenerated) | `1.1` | Hero (Go) | Additive in `1.x`; breaking → `2.0` |
 | Vocabularies | `core/vocabularies/*.yaml` (static) | preset v1 | Hero (Go) | Presets additive; rename = breaking |
+| Vocabulary auto-select | `docs/contracts/vocabulary-auto-select.md` | preset v1 | Hero (Go) | Recognized keys additive; rename = breaking |
 | Methodologies | `core/methodologies/*.yaml` (static) | profile v1 | Hero (Go) | Profile names stable; fields additive |
 | Inline-propose wire | `docs/contracts/inline-propose-v1.md` | `1.0` | Hero (Go) | Additive in `1.x`; breaking → `2.0` |
 
@@ -117,6 +118,10 @@ precedence chain (explicit → methodology-derived → tracker-inferred
 - [`active-dialect.md`](./active-dialect.md) — how `hero.json` plus
   the resolver pick an active vocabulary and methodology for a
   workspace, with a worked example.
+- [`vocabulary-auto-select.md`](./vocabulary-auto-select.md) —
+  authoring guide for a vocabulary preset's `auto_select:` block:
+  recognized keys, allowed values, match semantics, and a worked
+  example.
 - [`spec-types-v1.1.schema.json`](./spec-types-v1.1.schema.json) —
   JSON Schema (draft 2020-12) validating
   `.hero/cache/spec-types.json`; usable with `quicktype` / `schemafy`

@@ -57,6 +57,8 @@ The vocabulary resolver itself implements three steps; methodology-derivation ha
 4. **Delivery-preset-inferred** — match `pm.presets.delivery` against each vocabulary's `auto_select: [{delivery_preset: <value>}]` rule.
 5. **Default** — the `default` preset.
 
+For the full `auto_select` schema — allowed keys and values, match semantics within and across presets, and an authoring example — see [`vocabulary-auto-select.md`](./vocabulary-auto-select.md).
+
 After picking, `vocabulary_overrides` (and `methodology_overrides`) are merged onto a clone of the chosen base. The resolver warns when overrides exceed 10 keys — a signal the workspace should author its own preset instead.
 
 **Important implementation note.** The bare `vocabulary.Resolve(cfg, vocabs)` call alone does **not** perform step 2 (methodology derivation). It runs steps 1, 3, 4, 5 only. Internal CLI/serve/install paths inject the derived name onto a `cfg` copy before calling `Resolve` — that is what produces the documented end-to-end chain. A consumer calling Hero in-process must use the same wrapping pattern, or call `methodology.DeriveVocabularyName` explicitly and set `cfg.Vocabulary` before invoking the vocabulary resolver. A consumer reading from disk independently must implement step 2 themselves.
