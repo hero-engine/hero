@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-18T19:05:22Z · 95 ready specs_
+_Generated: 2026-05-18T21:50:57Z · 95 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -161,6 +161,29 @@ _bug · delivering · horizon: now_
 
 ---
 
+## domain-plugin-architecture — Domain Plugin Architecture — Refactor Content into Swappable Domain Packs
+_feature · delivering · horizon: next_
+
+Foundation primitive for `hero-domains`. Pure refactor — move existing engineering content into `domains/engineering/` and add `hero init --domain` / `hero domain switch` plumbing. Zero new behavior, but unblocks every other primitive and every future domain pack (PM, QA, design, etc).
+
+**Status:** planning — design exists from 2026-04-25; reframed as the foundation for the PM-first roadmap on 2026-05-15. No code written yet.
+
+**Pick up at:** `/deliver` this spec. Examples below have been updated from sales-first to PM-first to reflect the current sequencing, but the actual refactor is content-agnostic — PM-specific pack content lives in the separate `hero-pm` spec.
+
+→ `/deliver domain-plugin-architecture`
+
+**Files:** .hero/planning/features/domain-plugin-architecture/spec.md, .hero/planning/initiatives/hero-domains/spec.md, embed.go, internal/install/install.go, internal/cli/init.go
+**Skip:** Third-party domain packs loaded from disk (deferred to a future spec). Multi-domain coexistence in one workspace (handled by domain-scoped-knowledge-graph).
+
+---
+
+## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
+_feature · delivering · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
+
+---
+
 ## spec-type-registry — Spec Type Registry — Nine-Type Registry With Kind, Tasks, Owner, and Methodology Profile Hook
 _feature · delivering · horizon: next_
 
@@ -221,6 +244,13 @@ stub the agent-prompt integration as a follow-up.
 
 **Files:** .hero/planning/features/inline-propose-output-mode/spec.md, docs/contracts/inline-propose-v1.md (new), internal/proposals/ (new), internal/serve/proposals_routes.go (new), internal/cli/agent_run.go (new), domains/_platform/agent-prompts/inline-propose-addendum.md (new), testdata/proposals/v1/ (new), .hero/planning/features/hero-pm/spec.md (consumer), .hero/planning/features/hero-pm/mockups/08-inline-proposal.html (visual source of truth)
 **Skip:** sidecar persistence (v2), cross-domain proposals (v2), multi-author concurrent proposals (Hero Cloud), proposals on arbitrary source files (out of scope), inline-propose for `/deliver` and `/diagnose` (continue write-to-disk).
+
+---
+
+## spec-lifecycle-hygiene-breakdown — Spec lifecycle hygiene breakdown — five concurrent failures of Hero's own contracts
+_bug · planning · horizon: now_
+
+You are picking up a meta-bug: Hero is failing to enforce its own spec-lifecycle contracts. Five symptoms surfaced together in `hero check` on 2026-05-18 (120 issues total): 11 completed-but-not-moved specs, 43 kickoff-missing specs (12 of them currently delivering), 19 specs simultaneously in `delivering` (no WIP limit anywhere), 0/125 status-truthfulness verifications (the verifier ships but no specs have AC graph nodes), and `hero next install-hooks` is run by `hero init` but not by `hero install` or `hero scan`. Open this spec, then read `internal/cli/check.go:55-265`, `internal/cli/complete.go`, `internal/cli/deliver.go:99-134`, `internal/integrity/status.go`, `internal/cli/next_hooks.go:262-372`, and `commands/deliver.md:114`. Pick up at: classify each symptom, then propose child fix-specs in `## Proposed Child Specs` — do NOT create the child specs.
 
 ---
 
@@ -509,25 +539,6 @@ Resume work on the AGENTS.md project-structure regression. Read this spec, the v
 
 ---
 
-## recap-unregister-stale-and-empty-repo — "`hero recap unregister` references linger after removal; `hero recap` errors hard on a fresh repo with no commits"
-_bug · planning · horizon: now_
-
-Two related papercuts: the `/diagnose` and `/deliver` slash commands still tell agents to run the removed `hero recap register` / `hero recap unregister` subcommands (the previous cleanup missed `.claude/commands/`), and `hero recap` exits non-zero on a brand-new repo with no commits instead of returning an empty recap.
-
-**Status:** planning — root cause confirmed for both defects; fix is mechanical.
-
-**Pick up at:** rewrite `.claude/commands/diagnose.md` lines 10–14 and `.claude/commands/deliver.md` lines 8–13 to mirror the already-cleaned `commands/diagnose.md` / `commands/deliver.md` ("emit `hero next ask`" wording). Then patch `internal/recap/recap.go:gitCommits` to swallow the "does not have any commits yet" error path and return an empty slice.
-
-→ `.hero/planning/bugs/recap-unregister-stale-and-empty-repo/spec.md`
-
-**Files:** `.claude/commands/diagnose.md`, `.claude/commands/deliver.md`, `internal/recap/recap.go:145`, `internal/recap/recap_test.go`, `commands/diagnose.md` (reference — already correct)
-
-**Skip:** implementing `recap register/unregister` for real — superseded by `hero next ask/suggest/reflection` per `.hero/specs/recap-register-missing/spec.md`.
-
----
-
----
-
 ## hero-platform — Hero Platform — Headless Execution, Team Automation, and Shared Visibility
 _initiative · planning · horizon: next_
 
@@ -729,29 +740,6 @@ Make agent routing and discovery domain-aware. Today `AGENTS.md` and the routing
 
 **Files:** .hero/planning/features/domain-routing-and-agents/spec.md, .hero/planning/initiatives/hero-domains/spec.md, AGENTS.md, CLAUDE.md
 **Skip:** Multi-domain coexistence in a single workspace v1 — `domain-scoped-knowledge-graph` (item #6) handles that. Build single-active-domain routing first.
-
----
-
-## domain-plugin-architecture — Domain Plugin Architecture — Refactor Content into Swappable Domain Packs
-_feature · planning · horizon: next_
-
-Foundation primitive for `hero-domains`. Pure refactor — move existing engineering content into `domains/engineering/` and add `hero init --domain` / `hero domain switch` plumbing. Zero new behavior, but unblocks every other primitive and every future domain pack (PM, QA, design, etc).
-
-**Status:** planning — design exists from 2026-04-25; reframed as the foundation for the PM-first roadmap on 2026-05-15. No code written yet.
-
-**Pick up at:** `/deliver` this spec. Examples below have been updated from sales-first to PM-first to reflect the current sequencing, but the actual refactor is content-agnostic — PM-specific pack content lives in the separate `hero-pm` spec.
-
-→ `/deliver domain-plugin-architecture`
-
-**Files:** .hero/planning/features/domain-plugin-architecture/spec.md, .hero/planning/initiatives/hero-domains/spec.md, embed.go, internal/install/install.go, internal/cli/init.go
-**Skip:** Third-party domain packs loaded from disk (deferred to a future spec). Multi-domain coexistence in one workspace (handled by domain-scoped-knowledge-graph).
-
----
-
-## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
-_feature · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
 
 ---
 

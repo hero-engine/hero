@@ -268,6 +268,27 @@ func preCommitHookInstalled(projectRoot string) bool {
 	return err == nil
 }
 
+// hookInstallOptedOut reports whether the user has explicitly opted
+// out of automatic hook self-install. Used by `hero install`'s
+// self-heal path to distinguish "never installed" (install away)
+// from "user removed the markers and doesn't want them back".
+//
+// The opt-out signal is a `.no-hooks` sentinel inside the hero
+// workspace (e.g. `.hero/.no-hooks`). `hero init`-style flows treat
+// marker-absence as "fresh setup" and install; `hero install` is
+// re-runnable, so it needs a durable opt-out that survives across
+// invocations. Users opt out by either (a) passing `--no-hooks` to
+// the install command or (b) `touch .hero/.no-hooks`.
+func hookInstallOptedOut(projectRoot string) bool {
+	cfg, err := config.Load(projectRoot)
+	if err != nil {
+		return false
+	}
+	sentinel := filepath.Join(cfg.HeroDir(projectRoot), ".no-hooks")
+	_, err = os.Stat(sentinel)
+	return err == nil
+}
+
 // currentPreCommitManagedBlock returns the contents of the
 // hero-managed block (start marker through end marker) inside the
 // installed `.git/hooks/pre-commit` file. Returns an error when the

@@ -213,6 +213,7 @@ func resetFlags() {
 	installTarget = ""
 	installForce = false
 	installDryRun = false
+	installNoHooks = false
 
 	// Reset nudge flags
 	relevantFiles = nil

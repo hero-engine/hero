@@ -61,7 +61,7 @@ If the user asks to fix/deliver multiple specs (e.g. "fix the researched bugs", 
    - Implement the fix
    - Run tests / build to verify
    - Commit with a message referencing the spec slug and tracker ID
-   - Run `hero spec complete <spec-path>` to mark done and move to specs/
+   - Set the spec's `status: completed` in the frontmatter; `hero verify` or the async runner will auto-archive it to specs/
    - Post results to tracker if configured
 5. **One commit per fix** — each fix is atomic and independently revertable
 6. If a fix fails tests or creates problems, skip it, note the issue in the spec, and move to the next one
@@ -111,7 +111,11 @@ At the end of the delivery loop:
    you're not committing right away, run `hero queue write -q` to
    refresh the snapshot manually.
 
-When delivery is complete and verified, run `hero spec complete <spec-path>` to archive the spec.
+When delivery is complete and verified, set the spec's `status: completed`
+in the frontmatter and run `hero verify <slug>` — verify auto-archives a
+completed spec to `.hero/specs/<slug>/`, so you don't need a separate
+`hero spec complete` step. The async runner does the same auto-archive
+at the tail of every successful agent delivery.
 
 ### Spec-to-PR linking
 

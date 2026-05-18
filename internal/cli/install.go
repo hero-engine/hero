@@ -79,6 +79,7 @@ var (
 	installNoTouchClaudeMd bool
 	installMigrate         bool
 	installJSON            bool
+	installNoHooks         bool
 )
 
 func init() {
@@ -93,6 +94,7 @@ func init() {
 	installCmd.Flags().BoolVar(&installNoTouchClaudeMd, "no-touch-claude-md", false, "skip CLAUDE.md handling entirely (Claude Code won't see Hero content via CLAUDE.md, but other harnesses still get it via AGENTS.md)")
 	installCmd.Flags().BoolVar(&installMigrate, "migrate", false, "auto-detect installed harness targets, reconcile drifted copies (newest mtime wins), promote to canonical, and re-install each target as symlinks pointing at canonical")
 	installCmd.Flags().BoolVar(&installJSON, "json", false, "emit a single JSON result object on stdout instead of human-readable progress output (for programmatic consumers like a Hero-native client)")
+	installCmd.Flags().BoolVar(&installNoHooks, "no-hooks", false, "skip installing the pre-commit hook (the hook is otherwise self-installed on first install when no managed block exists)")
 }
 
 func runInstall(cmd *cobra.Command, args []string) error {
@@ -250,6 +252,29 @@ func runInstall(cmd *cobra.Command, args []string) error {
 		}
 		fmt.Println()
 		printHandoffHint(target)
+	}
+
+	// Self-heal pre-commit hook install on first run when no managed
+	// block exists and the user hasn't opted out. Mirrors the pattern
+	// in `hero init` — `hero install` is the more-discoverable setup
+	// path for teammates who clone an existing repo. Skips silently
+	// outside project mode, in dry-run, when --no-hooks is set, when
+	// the managed block is already present, when the user has placed
+	// a `.hero/.no-hooks` opt-out sentinel, or when the target dir
+	// isn't a git repo. Best-effort: a failure doesn't fail the
+	// install.
+	if mode == install.ModeProject && !installDryRun && !installNoHooks && targetDir != "" {
+		if !preCommitHookInstalled(targetDir) && !hookInstallOptedOut(targetDir) {
+			if _, gerr := resolveGitDir(targetDir); gerr == nil {
+				if herr := installNextHooksQuiet(targetDir); herr != nil {
+					fmt.Fprintf(os.Stderr, "  warning: pre-commit hook install failed: %v\n", herr)
+				} else {
+					fmt.Println()
+					fmt.Println("  Installed pre-commit hook (projected NEXT files will travel with commits).")
+					fmt.Println("  Pass --no-hooks next time to skip; to opt out permanently, `touch .hero/.no-hooks`.")
+				}
+			}
+		}
 	}
 
 	// After a successful root project install, offer subproject walkthrough.
