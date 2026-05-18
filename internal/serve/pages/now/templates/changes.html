@@ -1,0 +1,42 @@
+{{- /* changes.html — Since-you-were-here timeline. Flat row layout —
+       time chip (56px) · kind icon (22px) · sentence-form text. Falls
+       back to git commits when the event log is empty (and surfaces a
+       "limited view" hint). */ -}}
+{{ define "changes.html" }}
+<section id="now-changes" class="now-section">
+  <div class="now-section-header">
+    <h2 class="now-section-title">Since you were here</h2>
+    <a href="#" class="now-section-link">Show more →</a>
+  </div>
+
+  {{- if .Limited }}
+  <div class="now-feed-limited-hint">Limited view — showing recent commits only (the event pipeline is unavailable).</div>
+  {{- end }}
+
+  {{- if eq (len .Rows) 0 }}
+  <div class="now-empty">No recent activity — the feed lights up as you and your agents make changes.</div>
+  {{- else }}
+  <div class="now-feed-list">
+    {{- range .Rows }}
+    <div class="now-feed-row">
+      <span class="now-feed-time">{{ .Time }}</span>
+      <span class="now-feed-icon" title="{{ .Kind }}">
+        {{- if eq .Kind "commit" }}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M3 12h6M15 12h6"/></svg>
+        {{- else if eq .Kind "spec" }}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
+        {{- else if eq .Kind "knowledge" }}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        {{- else if eq .Kind "drift" }}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--warn);"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+        {{- else }}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m9 11 3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>
+        {{- end }}
+      </span>
+      <span class="now-feed-text">{{ .HTML }}</span>
+    </div>
+    {{- end }}
+  </div>
+  {{- end }}
+</section>
+{{ end }}

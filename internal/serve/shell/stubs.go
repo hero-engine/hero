@@ -43,9 +43,9 @@ type stubSpec struct {
 
 func stubSpecs() []stubSpec {
 	return []stubSpec{
-		{slug: "now", label: "Now", href: "/now", title: "Now",
-			specSlug: "hero-now-home",
-			specHref: "/.hero/planning/features/hero-now-home/spec.md"},
+		// "now" is intentionally absent — the real Now home registered
+		// by internal/serve/pages/now takes the /now slot. Re-adding a
+		// stub here would panic the router on duplicate-pattern check.
 		{slug: "work", label: "Work", href: "/work", title: "Work",
 			specSlug: "hero-work-home",
 			specHref: "/.hero/planning/features/hero-work-home/spec.md"},

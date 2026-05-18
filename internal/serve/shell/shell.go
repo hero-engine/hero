@@ -15,6 +15,7 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -197,6 +198,18 @@ func (r *Router) wrapHomeRoot(h Home) http.HandlerFunc {
 			}
 		}
 	}
+}
+
+// RenderFragment writes a shell-owned shared fragment (e.g.
+// "page-hero", "tabbed-metric-strip", "chat-input",
+// "empty-state-notice") into w using the supplied data. Homes use this
+// to compose their own page bodies without duplicating the fragment
+// markup.
+func (r *Router) RenderFragment(w io.Writer, name string, data any) error {
+	if r == nil || r.tmpl == nil {
+		return fmt.Errorf("shell: router not initialized")
+	}
+	return r.tmpl.ExecuteTemplate(w, name, data)
 }
 
 // RenderPage writes the full HTML document for a home page. Homes

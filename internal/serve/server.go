@@ -14,8 +14,11 @@ import (
 
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/index"
+	"github.com/hero-engine/hero/internal/serve/api"
 	"github.com/hero-engine/hero/internal/serve/chat"
 	"github.com/hero-engine/hero/internal/serve/edition"
+	nowpage "github.com/hero-engine/hero/internal/serve/pages/now"
+	nowdata "github.com/hero-engine/hero/internal/serve/pages/now/data"
 	"github.com/hero-engine/hero/internal/serve/session"
 	"github.com/hero-engine/hero/internal/serve/shell"
 	"github.com/hero-engine/hero/internal/spec"
@@ -293,6 +296,19 @@ func (s *Server) Run(ctx context.Context) error {
 		if s.chatAPI != nil {
 			s.chatAPI.Mount(topMux)
 		}
+		// Now SSE channel + per-section fragment endpoints. Mounted
+		// before the generic /api/ catch-all for the same reason as
+		// chat above.
+		nowHandler := api.NewNowHandler(nowpage.Deps{
+			ProjectRoot: s.projectRoot,
+			HeroDir:     s.heroDir,
+			Workspace:   s.shellWorkspaceName(),
+			Branch:      detectGitBranch(s.projectRoot),
+			UserName:    shellUserName(),
+			Proposals:   s.snapshotProposals,
+		}, busSubscriber{bus: s.bus})
+		nowHandler.Mount(topMux)
+
 		topMux.Handle("/api/", handler)
 		topMux.Handle("/health", handler)
 		topMux.Handle("/auth/", handler)
@@ -576,7 +592,48 @@ func (s *Server) buildShellRouter() *shell.Router {
 
 	r := shell.New(ed, store, workspace, branch, userName, s.version)
 	shell.RegisterStubHomes(r)
+
+	// Register the real Now home in place of its (no-longer-present)
+	// stub. Wired with a per-project proposal-store snapshotter that
+	// surfaces pending proposals in the Needs-your-input section.
+	nowDeps := nowpage.Deps{
+		ProjectRoot: s.projectRoot,
+		HeroDir:     s.heroDir,
+		Workspace:   workspace,
+		Branch:      branch,
+		UserName:    userName,
+		Proposals:   s.snapshotProposals,
+	}
+	if err := nowpage.Register(r, nowDeps); err != nil {
+		fmt.Fprintf(os.Stderr, "hero serve: register Now home: %v\n", err)
+	}
 	return r
+}
+
+// snapshotProposals returns the pending proposals across every session
+// for the primary project, formatted for the Now inbox renderer. Solo
+// mode collapses everything into one workspace; team / cloud editions
+// are handled by their own home spec.
+func (s *Server) snapshotProposals() []*nowdata.ProposalRow {
+	if s == nil || s.api == nil || s.api.proposals == nil {
+		return nil
+	}
+	slug := filepath.Base(s.projectRoot)
+	if slug == "" || slug == "." {
+		return nil
+	}
+	store := s.api.proposals.get(slug)
+	if store == nil {
+		return nil
+	}
+	// The store is keyed by session; we don't track active sessions
+	// from here, so we have no list of sessions to iterate. The propose
+	// store does not expose a global "all sessions" enumerator yet —
+	// when the agents home wires the live session ledger this gains a
+	// real source. Until then return an empty slice so the inbox
+	// renders cleanly.
+	_ = store
+	return nil
 }
 
 // shellWorkspaceName picks a workspace label for the top-nav. Prefers
@@ -599,6 +656,33 @@ func shellUserName() string {
 		return v
 	}
 	return "you"
+}
+
+// busSubscriber adapts *EventBus to api.Subscriber by stripping the
+// internal Event shape down to just the Type field that the Now SSE
+// channel inspects. The channel is wrapped so the bus's strongly
+// typed Event flows are translated lazily without holding the bus
+// goroutine.
+type busSubscriber struct{ bus *EventBus }
+
+func (b busSubscriber) Subscribe(bufSize int) (uint64, <-chan api.Event) {
+	id, src := b.bus.Subscribe(bufSize)
+	dst := make(chan api.Event, bufSize)
+	go func() {
+		defer close(dst)
+		for ev := range src {
+			select {
+			case dst <- api.Event{Type: string(ev.Type)}:
+			default:
+				// drop on slow consumer — matches bus semantics
+			}
+		}
+	}()
+	return id, dst
+}
+
+func (b busSubscriber) Unsubscribe(id uint64) {
+	b.bus.Unsubscribe(id)
 }
 
 // detectGitBranch returns the current git branch for the given project
