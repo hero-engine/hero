@@ -1,5 +1,6 @@
 ---
 title: Jira Deep Integration — Bidirectional Sync Beyond Import
+slug: jira-deep-integration
 type: feature
 status: completed
 milestone: v0.2

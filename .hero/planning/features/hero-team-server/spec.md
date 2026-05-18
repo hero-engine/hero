@@ -1,5 +1,6 @@
 ---
 title: Hero Team Server — Shared Job Queue, Approval Gates, and Team Coordination
+slug: hero-team-server
 type: feature
 status: planning
 priority: P1

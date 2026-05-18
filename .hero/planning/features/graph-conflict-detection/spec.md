@@ -1,5 +1,6 @@
 ---
 title: Graph Conflict Detection — Detect and Surface Concurrent Node Divergence
+slug: graph-conflict-detection
 type: feature
 status: delivering
 priority: P1

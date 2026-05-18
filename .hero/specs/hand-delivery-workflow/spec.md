@@ -1,5 +1,6 @@
 ---
 title: "Hand Delivery Workflow — Developer Autonomy"
+slug: hand-delivery-workflow
 type: feature
 status: completed
 priority: high

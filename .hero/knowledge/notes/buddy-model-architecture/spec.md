@@ -1,5 +1,6 @@
 ---
 title: Buddy Model Architecture — Two-Model Tag Team Vision
+slug: buddy-model-architecture
 type: note
 status: active
 tags: [architecture, ai-models, hero-cloud, vision]
@@ -32,7 +33,7 @@ That IS a workaround for the inability to learn a project natively.
 Retrieval-augmented generation — index the knowledge, retrieve relevant chunks at query time — is what Hero actually implements. FTS5 index, convention scopes, context builder: that's RAG without a vector database.
 
 ### MCP/tool-calling is the closest "side by side" mechanism today
-The model calling tools mid-reasoning IS the buddy interaction pattern, just implemented as tool calls against a structured corpus rather than a second neural network. When the model calls `hero context --files src/auth.go`, it's asking the project knowledge base "what do I need to know?"
+The model calling tools mid-reasoning IS the buddy interaction pattern, just implemented as tool calls against a structured corpus rather than a second neural network. When the model calls `hero context imports --files src/auth.go`, it's asking the project knowledge base "what do I need to know?"
 
 ### The gap: continuous vs. one-shot
 Today context injection happens primarily at the start of a session. The ideal is continuous querying during reasoning — at every decision point, not just the first one. This is technically possible with MCP. Hero could expose an MCP server queried mid-reasoning:

@@ -1,5 +1,6 @@
 ---
 title: Hero Automations — Event-Driven Trigger-to-Action Engine
+slug: hero-automations
 type: feature
 status: completed
 priority: P1

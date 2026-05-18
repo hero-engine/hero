@@ -1,5 +1,6 @@
 ---
 title: E2E Onboarding Suite — Fresh Repo to Productive Workspace
+slug: e2e-onboarding
 type: feature
 status: planning
 priority: P0

@@ -1,5 +1,6 @@
 ---
 title: "Async Delivery"
+slug: async-delivery
 type: feature
 status: completed
 priority: high

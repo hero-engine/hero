@@ -1,5 +1,6 @@
 ---
 title: Hero Dashboard V2 — Visual Interface for Jobs, Automations, and Team State
+slug: hero-dashboard-v2
 type: feature
 status: completed
 priority: P1

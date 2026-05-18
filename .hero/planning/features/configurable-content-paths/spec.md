@@ -1,5 +1,6 @@
 ---
 title: "Configurable Content Paths — point at existing dirs instead of rendering copies"
+slug: configurable-content-paths
 type: feature
 status: completed
 status_verified: "2026-05-11 by go test ./internal/install/... -count=1 — TestConfigurableContentPaths_* (4 cases) pass plus full install suite. Dogfooded on hero's own repo: hero.json content block points at agents/commands/skills at root; install produces .claude/{agents,commands,skills} symlinks directly to source dirs with ZERO rendering into .hero/. Second-run install: 'Installed 0 files'. Source skills migrated to <name>/SKILL.md nested layout (89 dirs across skills/, domains/engineering/skills/, core/skills/) so direct symlink works without flat-to-nested conversion."

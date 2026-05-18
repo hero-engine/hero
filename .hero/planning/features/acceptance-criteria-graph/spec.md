@@ -1,5 +1,6 @@
 ---
 title: Acceptance Criteria as Graph Nodes
+slug: acceptance-criteria-graph
 type: feature
 status: completed
 status_verified: "2026-04-29 by hero ac record: 7/7 ACs passing"

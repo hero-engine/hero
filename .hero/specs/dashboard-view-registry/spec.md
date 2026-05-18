@@ -1,5 +1,6 @@
 ---
 title: Dashboard View Registry — Pluggable Dashboard Pages per Domain
+slug: dashboard-view-registry
 type: feature
 status: completed
 priority: P0

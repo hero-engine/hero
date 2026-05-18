@@ -1,5 +1,6 @@
 ---
 title: Recent Activity Digest — Smart Recap for Session Start
+slug: activity-digest
 type: feature
 status: completed
 tags: [recap, agents, cold-start, git, mcp, dx]

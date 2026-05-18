@@ -1,5 +1,6 @@
 ---
 title: Cloud REST API
+slug: cloud-api
 type: feature
 status: completed
 tags: [cloud, api, foundation]

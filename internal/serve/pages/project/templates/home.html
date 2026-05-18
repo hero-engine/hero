@@ -1,0 +1,100 @@
+{{ define "project-home" }}
+<section class="page-section">
+  <h2>Surfaces</h2>
+  <table class="project-surfaces">
+    <thead>
+      <tr>
+        <th>Surface</th>
+        <th>Stage</th>
+        <th>Paths</th>
+        {{ if .Snapshot.HasReleaseSignal }}<th>Initial release</th>{{ end }}
+        <th>Driver spec</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range .Snapshot.Surfaces }}
+      <tr>
+        <td><a href="/project/surface/{{ .ID }}">{{ .ID }}</a></td>
+        <td>{{ .Stage }}{{ if .StagePinned }} <span class="pill pinned">pinned</span>{{ end }}</td>
+        <td><code>{{ join .Paths ", " }}</code></td>
+        {{ if $.Snapshot.HasReleaseSignal }}<td>—</td>{{ end }}
+        <td>—</td>
+      </tr>
+      {{ end }}
+      {{ if gt .Snapshot.UnassignedCount 0 }}
+      <tr class="unassigned">
+        <td>(unassigned)</td>
+        <td>—</td>
+        <td>—</td>
+        {{ if .Snapshot.HasReleaseSignal }}<td>—</td>{{ end }}
+        <td>{{ .Snapshot.UnassignedCount }} specs without surface</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+  {{ if not .Snapshot.HasReleaseSignal }}
+    <p class="footnote">No release model declared. Add <code>release_target:</code> to a spec or initiative, or configure tracker integration, to enable the initial-release rollup column.</p>
+  {{ end }}
+</section>
+
+<section class="page-section">
+  <h2>Active initiatives</h2>
+  {{ if .Snapshot.Initiatives }}
+    <ul class="project-initiatives">
+      {{ range .Snapshot.Initiatives }}
+      <li><strong>{{ .Title }}</strong> ({{ .Done }}/{{ .Total }} done){{ if .Surfaces }} — surfaces: {{ join .Surfaces ", " }}{{ end }}</li>
+      {{ end }}
+    </ul>
+  {{ else }}
+    <p><em>No initiatives.</em></p>
+  {{ end }}
+</section>
+
+<section class="page-section">
+  <h2>Next up across surfaces</h2>
+  {{ if .Snapshot.NextUp }}
+    <ol class="project-next">
+      {{ range .Snapshot.NextUp }}
+      <li><strong>{{ .SurfaceID }}</strong> — <code>{{ .Slug }}</code> ({{ .Priority }}, {{ .Status }})</li>
+      {{ end }}
+    </ol>
+  {{ else }}
+    <p><em>Nothing queued.</em></p>
+  {{ end }}
+</section>
+
+<section class="page-section">
+  <h2>Open risks &amp; blockers</h2>
+  {{ if or .Snapshot.Blockers .Snapshot.StaleInFlight .Snapshot.AgedBugs }}
+    <ul class="project-risks">
+      {{ range .Snapshot.Blockers }}
+      <li><strong>blocked:</strong> <code>{{ .Slug }}</code> — waits on {{ join .WaitsOn ", " }}</li>
+      {{ end }}
+      {{ range .Snapshot.StaleInFlight }}
+      <li><strong>stale:</strong> <code>{{ .Slug }}</code> — no commit in {{ .StaleDays }}d</li>
+      {{ end }}
+      {{ range .Snapshot.AgedBugs }}
+      <li><strong>aged bug:</strong> <code>{{ .Slug }}</code> — open {{ .AgeDays }}d</li>
+      {{ end }}
+    </ul>
+  {{ else }}
+    <p><em>None.</em></p>
+  {{ end }}
+</section>
+
+{{ if .HasArchive }}
+<section class="page-section">
+  <h2>Archive timeline</h2>
+  <p class="footnote">Read-only point-in-time snapshots. Bodies render only at the dedicated archive route, never inline.</p>
+  <ul class="project-archives">
+    {{ range .Archives }}
+    <li>
+      <a href="/project/snapshots/{{ .Date }}{{ if .Label }}--{{ .Label }}{{ end }}">{{ .Date }}</a>
+      <span class="pill {{ .Trigger }}">{{ .Trigger }}</span>
+      {{ if .Label }}<span class="label">{{ .Label }}</span>{{ end }}
+    </li>
+    {{ end }}
+  </ul>
+</section>
+{{ end }}
+{{ end }}

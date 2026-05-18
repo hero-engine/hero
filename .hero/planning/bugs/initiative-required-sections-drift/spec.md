@@ -1,5 +1,6 @@
 ---
 title: initiative spec-type's required-sections YAML disagrees with its prose docs
+slug: initiative-required-sections-drift
 type: bug
 status: planning
 severity: low

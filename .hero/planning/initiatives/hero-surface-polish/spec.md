@@ -1,5 +1,6 @@
 ---
 title: Hero Surface Polish — Ongoing Quality Pass on the Web Companion
+slug: hero-surface-polish
 type: initiative
 status: planning
 tags: [serve, surface, polish, ongoing]

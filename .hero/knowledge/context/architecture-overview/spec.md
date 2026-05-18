@@ -1,5 +1,6 @@
 ---
 title: Architecture Overview
+slug: architecture-overview
 type: context
 status: active
 created: 2026-04-29

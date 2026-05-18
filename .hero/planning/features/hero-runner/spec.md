@@ -1,5 +1,6 @@
 ---
 title: Hero Runner — Headless Agent Execution via Claude API
+slug: hero-runner
 type: feature
 status: planning
 priority: P0

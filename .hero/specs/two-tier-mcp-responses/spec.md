@@ -1,5 +1,6 @@
 ---
 title: Two-Tier MCP Responses — Compact Summaries with `hero_expand` for Full Content
+slug: two-tier-mcp-responses
 type: feature
 status: completed
 tags: [mcp, context, breadcrumbs, tokens, hero-expand, response-shape]

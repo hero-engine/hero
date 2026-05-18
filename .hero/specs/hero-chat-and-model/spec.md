@@ -1,5 +1,6 @@
 ---
 title: Hero Chat — Dispatch to hero-code (Required), Optional IDE Adapter, ⌘K Command Bar
+slug: hero-chat-and-model
 type: feature
 status: completed
 tags: [serve, surface, chat, dispatch, adapter, mcp, command-bar, hero-code, ide-bridge]

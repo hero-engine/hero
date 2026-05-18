@@ -1,5 +1,6 @@
 ---
 title: Core / Vertical Layering — Make the Conceptual Split Physical
+slug: core-vertical-layering
 type: feature
 status: planning
 priority: P0

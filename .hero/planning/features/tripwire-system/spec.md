@@ -1,5 +1,6 @@
 ---
 title: "Tripwire System — Forbidden-Option Guardrails for Model Sessions"
+slug: tripwire-system
 type: feature
 status: delivering
 priority: high

@@ -1,5 +1,6 @@
 ---
 title: Recovery Strategy Conversation — 2026-04-28
+slug: recovery-strategy-conversation
 type: note
 status: active
 tags: [strategy, recovery, mission, principles, v2-audit, meta]

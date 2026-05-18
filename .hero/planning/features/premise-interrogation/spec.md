@@ -1,5 +1,6 @@
 ---
 title: "Premise Interrogation — Force-Question the Framing Before Designing"
+slug: premise-interrogation
 type: feature
 status: planning
 priority: medium

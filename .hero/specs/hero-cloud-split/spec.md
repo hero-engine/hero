@@ -1,5 +1,6 @@
 ---
 title: "Hero Cloud Repo Split — Carve hero-cloud Out of the hero Monorepo"
+slug: hero-cloud-split
 type: feature
 status: completed
 priority: high

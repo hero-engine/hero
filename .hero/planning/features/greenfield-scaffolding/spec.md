@@ -1,5 +1,6 @@
 ---
 title: "Greenfield Scaffolding"
+slug: greenfield-scaffolding
 type: feature
 status: draft
 priority: medium

@@ -168,6 +168,7 @@ func generateSpecTemplate(slug, specType string) string {
 	case "feature":
 		return fmt.Sprintf(`---
 title: %s
+slug: %s
 type: feature
 status: planning
 created: %s
@@ -194,11 +195,12 @@ tags: []
 ## Acceptance Criteria
 
 <!-- How do we know this is done? -->
-`, title, date, title)
+`, title, slug, date, title)
 
 	case "bug":
 		return fmt.Sprintf(`---
 title: %s
+slug: %s
 type: bug
 status: planning
 created: %s
@@ -229,11 +231,12 @@ tags: []
 ## Changes
 
 <!-- Files and areas of the codebase that will be modified. -->
-`, title, date, title)
+`, title, slug, date, title)
 
 	case "initiative":
 		return fmt.Sprintf(`---
 title: %s
+slug: %s
 type: initiative
 status: planning
 created: %s
@@ -256,11 +259,12 @@ tags: []
 ## Success Criteria
 
 <!-- How do we measure success? -->
-`, title, date, title)
+`, title, slug, date, title)
 
 	case "convention":
 		return fmt.Sprintf(`---
 title: %s
+slug: %s
 type: convention
 status: draft
 created: %s
@@ -284,11 +288,12 @@ tags: []
 ## Exceptions
 
 <!-- When is it acceptable to deviate? -->
-`, title, date, title)
+`, title, slug, date, title)
 
 	case "decision":
 		return fmt.Sprintf(`---
 title: %s
+slug: %s
 type: decision
 status: proposed
 created: %s
@@ -311,11 +316,12 @@ tags: []
 ## Consequences
 
 <!-- What are the implications of this decision? -->
-`, title, date, title)
+`, title, slug, date, title)
 
 	case "rule":
 		return fmt.Sprintf(`---
 title: %s
+slug: %s
 type: rule
 status: active
 created: %s
@@ -339,11 +345,12 @@ tags: []
 ## Exceptions
 
 <!-- Under what circumstances can this rule be waived, and who approves? -->
-`, title, date, title)
+`, title, slug, date, title)
 
 	case "external":
 		return fmt.Sprintf(`---
 title: %s
+slug: %s
 type: external
 status: active
 created: %s
@@ -364,11 +371,12 @@ tags: []
 ## Key Sections
 
 <!-- Important areas within this resource. -->
-`, title, date, title)
+`, title, slug, date, title)
 
 	case "context":
 		return fmt.Sprintf(`---
 title: %s
+slug: %s
 type: context
 status: active
 created: %s
@@ -387,11 +395,12 @@ tags: []
 ## References
 
 <!-- Links or paths to related resources. -->
-`, title, date, title)
+`, title, slug, date, title)
 
 	case "note":
 		return fmt.Sprintf(`---
 title: %s
+slug: %s
 type: note
 created: %s
 tags: []
@@ -399,11 +408,11 @@ tags: []
 # %s
 
 <!-- Brainstorm, conversation capture, stream-of-consciousness — no structure required. -->
-`, title, date, title)
+`, title, slug, date, title)
 
 	default:
 		// Should not reach here due to validation, but be safe
-		return fmt.Sprintf("---\ntitle: %s\ntype: %s\nstatus: planning\ncreated: %s\n---\n# %s\n", title, specType, date, title)
+		return fmt.Sprintf("---\ntitle: %s\nslug: %s\ntype: %s\nstatus: planning\ncreated: %s\n---\n# %s\n", title, slug, specType, date, title)
 	}
 }
 
@@ -487,6 +496,7 @@ func generateSpecTemplateInteractive(slug, specType string, inputs *interactiveI
 	var fm strings.Builder
 	fm.WriteString("---\n")
 	fm.WriteString(fmt.Sprintf("title: %s\n", title))
+	fm.WriteString(fmt.Sprintf("slug: %s\n", slug))
 	fm.WriteString(fmt.Sprintf("type: %s\n", specType))
 
 	// Set initial status based on type
@@ -722,7 +732,7 @@ func generateSpecFromCustom(slug, specType, customBody string) string {
 	title := slugToTitle(slug)
 	date := time.Now().Format("2006-01-02")
 
-	fm := buildFrontmatter(title, specType, date, "", "[]")
+	fm := buildFrontmatter(title, slug, specType, date, "", "[]")
 	body := applyTemplatePlaceholders(customBody, title, date)
 
 	return fm + body
@@ -742,17 +752,18 @@ func generateSpecFromCustomInteractive(slug, specType string, inputs *interactiv
 		tagsStr = "[" + strings.Join(inputs.tags, ", ") + "]"
 	}
 
-	fm := buildFrontmatter(title, specType, date, inputs.claimedBy, tagsStr)
+	fm := buildFrontmatter(title, slug, specType, date, inputs.claimedBy, tagsStr)
 	body := applyTemplatePlaceholders(customBody, title, date)
 
 	return fm + body
 }
 
 // buildFrontmatter generates the YAML frontmatter for a spec.
-func buildFrontmatter(title, specType, date, claimedBy, tagsStr string) string {
+func buildFrontmatter(title, slug, specType, date, claimedBy, tagsStr string) string {
 	var fm strings.Builder
 	fm.WriteString("---\n")
 	fm.WriteString(fmt.Sprintf("title: %s\n", title))
+	fm.WriteString(fmt.Sprintf("slug: %s\n", slug))
 	fm.WriteString(fmt.Sprintf("type: %s\n", specType))
 
 	switch specType {

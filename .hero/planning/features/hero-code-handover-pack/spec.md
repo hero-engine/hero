@@ -1,5 +1,6 @@
 ---
 title: Hero-Code Handover Pack — Make the PM Foundation Consumable
+slug: hero-code-handover-pack
 type: feature
 status: planning
 priority: P0

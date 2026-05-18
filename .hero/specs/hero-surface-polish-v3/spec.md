@@ -1,5 +1,6 @@
 ---
 title: Hero Surface Polish v3 — Disabled Chat States, Detail Sub-nav, Feed Dedup, mdrender Tables, Sub-route Titles
+slug: hero-surface-polish-v3
 type: feature
 status: completed
 tags: [serve, surface, polish, ui, mdrender, web-app]

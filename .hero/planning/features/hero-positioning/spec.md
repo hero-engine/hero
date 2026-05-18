@@ -1,5 +1,6 @@
 ---
 title: Hero Positioning — Narrative, ICP, Messaging, Comparison
+slug: hero-positioning
 type: feature
 status: planning
 priority: P0

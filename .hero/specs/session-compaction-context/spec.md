@@ -1,5 +1,6 @@
 ---
 title: Session Compaction Context — Active Spec Survival After Context Loss
+slug: session-compaction-context
 type: feature
 status: completed
 priority: P0

@@ -1,5 +1,6 @@
 ---
 title: Domain Plugin Architecture — Refactor Content into Swappable Domain Packs
+slug: domain-plugin-architecture
 type: feature
 status: planning
 priority: P0

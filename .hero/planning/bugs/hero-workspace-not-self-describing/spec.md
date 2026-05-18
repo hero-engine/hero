@@ -1,5 +1,6 @@
 ---
 title: AGENTS.md Project Structure section lies about content-path locations
+slug: hero-workspace-not-self-describing
 type: bug
 status: planning
 severity: high

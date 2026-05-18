@@ -34,6 +34,22 @@ func (s *MCPServer) toolDefinitions() []ToolDefinition {
 			},
 		},
 		{
+			Name:        "hero_snapshot",
+			Description: "Project-shape rollup — surfaces (with stages), active initiatives, recently-completed work, what's next, and open risks across the whole project. Reads .hero/SNAPSHOT.md when fresh; otherwise builds from the live graph. Pass `at: <YYYY-MM-DD>` to read an archived snapshot, `history: true` to list archived snapshots, or `archive: true` to write a manual archive. Snapshot archives are isolated from default discovery — they only surface here.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]PropSchema{
+					"compact": {Type: "boolean", Description: "Return summary + ref_id (call hero_expand for the full body). Default: false."},
+					"section": {Type: "string", Description: "Limit to one section: surfaces, initiatives, recent, next, risks, health. Default: all."},
+					"surface": {Type: "string", Description: "Restrict the rollup to one surface id."},
+					"at":      {Type: "string", Description: "Read a specific archived snapshot. Accepts YYYY-MM-DD or YYYY-MM-DD--<label>. Default: latest (live snapshot)."},
+					"history": {Type: "boolean", Description: "Return the enumerated archive list ({date, trigger, label, git_commit, path}). Mutually exclusive with at."},
+					"archive": {Type: "boolean", Description: "Write a manual archive of the current snapshot and return the new archive record."},
+					"label":   {Type: "string", Description: "Optional label slug attached to a manual archive (only used when archive: true)."},
+				},
+			},
+		},
+		{
 			Name:        "hero_status",
 			Description: "Get the current workspace status showing all specs grouped by status (delivering, in-review, planning, completed) and knowledge base entries.",
 			InputSchema: InputSchema{

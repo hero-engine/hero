@@ -1,5 +1,6 @@
 ---
 title: Hero Distribution — Homebrew, Install Script, GitHub Releases
+slug: hero-distribution
 type: feature
 status: planning
 priority: P0

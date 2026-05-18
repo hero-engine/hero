@@ -1,5 +1,6 @@
 ---
 title: Spec-as-Living-Contract — Continuous Criteria Validation
+slug: living-contract
 type: feature
 status: completed
 priority: P0

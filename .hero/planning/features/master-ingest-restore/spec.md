@@ -1,5 +1,6 @@
 ---
 title: Master Ingest Restore — `hero scan` Returns to Its V2 Promise
+slug: master-ingest-restore
 type: feature
 status: delivering
 priority: P0

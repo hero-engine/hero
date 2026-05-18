@@ -1,5 +1,6 @@
 ---
 title: Retrieval Contradiction Detection — Surface Stale Facts at Read Time
+slug: retrieval-contradiction-detection
 type: feature
 status: planning
 tags: [retrieval, graph, temporal, context, quality]

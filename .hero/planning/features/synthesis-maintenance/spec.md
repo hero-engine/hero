@@ -1,5 +1,6 @@
 ---
 title: "Synthesis Maintenance — Write-Through Coherence for the Hero Graph"
+slug: synthesis-maintenance
 type: feature
 status: planning
 priority: medium

@@ -229,7 +229,7 @@ func printGentleNudge(result *index.NudgeResult) {
 	}
 
 	fmt.Println()
-	fmt.Println("Run `hero context --files <paths>` for full context, or use `/design` to create a spec for this work.")
+	fmt.Printf("Run `%s <paths>` for full context, or use `/design` to create a spec for this work.\n", cliHintByID("context-imports-files"))
 	fmt.Println("---")
 }
 

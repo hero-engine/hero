@@ -1,5 +1,6 @@
 ---
 title: Knowledge Contradiction Detection — Surface Conflicts in the Knowledge Base
+slug: knowledge-contradiction-detection
 type: feature
 status: completed
 milestone: v0.2

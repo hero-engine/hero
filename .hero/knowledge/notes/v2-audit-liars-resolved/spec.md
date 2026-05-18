@@ -1,5 +1,6 @@
 ---
 title: V2 Delivery Audit Liars — Resolution Status
+slug: v2-audit-liars-resolved
 type: note
 status: active
 tags: [audit, integrity, recovery, dogfood]

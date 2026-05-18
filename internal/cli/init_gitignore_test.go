@@ -24,8 +24,14 @@ func TestEnsureManagedGitignoreBlock_CreatesWhenMissing(t *testing.T) {
 		gitignoreMarkerEnd,
 		".hero/hero.local.json",
 		".hero/graph.db",
+		".hero/graph.db-wal",
+		".hero/graph.db-shm",
+		".hero/index.db",
+		".hero/index.db-wal",
+		".hero/index.db-shm",
 		".hero/next/*.local.md",
 		".hero/knowledge/code/",
+		".hero/satellites.local.json",
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("missing %q in:\n%s", want, body)

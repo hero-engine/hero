@@ -1,5 +1,6 @@
 ---
 title: Hero People + ROI Home — Team Pulse and Hero Value Surface
+slug: hero-people-and-roi-home
 type: feature
 status: completed
 tags: [serve, surface, people, roi, team, presence, activity, velocity, metrics, web-app]

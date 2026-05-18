@@ -1,5 +1,6 @@
 ---
 title: Spec Types and Lifecycle — Expanded Type System and Status States
+slug: spec-types-lifecycle
 type: feature
 status: completed
 tags: [spec, types, lifecycle, index]

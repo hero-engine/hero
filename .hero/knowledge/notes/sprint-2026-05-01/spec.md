@@ -1,5 +1,6 @@
 ---
 title: Sprint Plan — 2026-05-01 → 2026-05-14
+slug: sprint-2026-05-01
 type: note
 status: active
 tags: [sprint, planning, delivery]

@@ -1,5 +1,6 @@
 ---
 title: Tree-sitter CLI Parser Backend
+slug: treesitter-parser-backend
 type: feature
 status: completed
 priority: low

@@ -1,5 +1,6 @@
 ---
 title: Multi-Repo Spec Awareness — Cross-Repository References and Drift
+slug: multi-repo-specs
 type: feature
 status: completed
 tags: [specs, drift, multi-repo, config, context]

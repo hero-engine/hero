@@ -1,5 +1,6 @@
 ---
 title: Active Context Management — Hero-Native Curator for Lean, Sharp Sessions
+slug: active-context-management
 type: feature
 status: planning
 tags: [context, curator, mcp, hooks, breadcrumbs, sub-agents, cache, measurement]

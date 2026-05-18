@@ -1,5 +1,6 @@
 ---
 title: Coverage Heuristic Fix — Rust Discovery and Test-Name Matching
+slug: coverage-heuristic-fix
 type: feature
 status: completed
 status_verified: "2026-05-10 by go test ./internal/coverage/... — all 11 tests pass; smoke-checked against test-coverage-map (7/7 strong) and self (4 strong/5 weak)"

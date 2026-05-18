@@ -1,5 +1,6 @@
 ---
 title: "Single-Source Install P2 — Canonical .hero Tree, Mode-Aware Harness Install"
+slug: single-source-install-p2-canonical-tree
 type: feature
 status: completed
 status_verified: "2026-05-11 by go test ./internal/install/... -count=1 — all 30+ tests pass; dogfooded on hero's own repo (`make bootstrap`): .hero/{agents,commands,skills}/ materialized, .claude/{agents,commands,skills} symlinks created, install-state.json records mode=symlink, idempotent re-run produces no log lines, multi-target test verifies all harnesses share single canonical tree."

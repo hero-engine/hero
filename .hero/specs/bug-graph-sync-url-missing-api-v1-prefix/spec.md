@@ -1,5 +1,6 @@
 ---
 title: Graph Sync Client URL Missing `/api/v1` Prefix
+slug: bug-graph-sync-url-missing-api-v1-prefix
 type: bug
 status: completed
 tags: [graph, sync, cloud, urls, contract-drift]

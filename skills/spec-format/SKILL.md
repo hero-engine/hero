@@ -211,6 +211,8 @@ All spec types use YAML frontmatter. The following fields are supported:
 
 | Field | Required | Applies to | Description |
 |-------|----------|------------|-------------|
+| `title` | Yes | All | Human-readable title. |
+| `slug` | Yes | All | Short kebab-case identifier matching the spec's directory name. Stamp this in frontmatter so it's easy to copy when linking the spec from another session or prompt. |
 | `type` | Yes | All | Spec type: `feature`, `bug`, `convention`, `decision`, `initiative` |
 | `status` | Yes | All | Lifecycle state. Work specs: `planning`, `in-review`, `delivering`, `completed`. Conventions: `draft`, `active`. Decisions: `proposed`, `accepted`. Any type can be `superseded`. |
 | `scope` | Yes (conventions) | Convention | Array of glob patterns identifying which files this convention applies to. Used by `hero relevant` to inject relevant conventions. |

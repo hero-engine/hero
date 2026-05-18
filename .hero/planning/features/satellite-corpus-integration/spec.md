@@ -1,5 +1,6 @@
 ---
 title: "Satellite Corpus Integration — Scope as a First-Class Facet"
+slug: satellite-corpus-integration
 type: feature
 status: planning
 priority: high

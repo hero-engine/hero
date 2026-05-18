@@ -323,3 +323,7 @@ and available to the next agent that picks up the work. It also lets
 **When NOT to capture:**
 - Trivial plans ("read file, edit line, commit") — not worth persisting
 - Plans for purely conversational tasks
+
+<!-- >>> hero snapshot pointer (managed) >>> -->
+Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
+<!-- <<< hero snapshot pointer (managed) <<< -->

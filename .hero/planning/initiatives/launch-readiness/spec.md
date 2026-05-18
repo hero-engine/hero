@@ -1,5 +1,6 @@
 ---
 title: Launch Readiness — Telemetry, Deploy, and Public-Use Polish
+slug: launch-readiness
 type: initiative
 status: planning
 priority: P1

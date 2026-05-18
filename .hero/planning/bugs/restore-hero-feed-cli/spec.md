@@ -1,5 +1,6 @@
 ---
 title: Restore Hero Feed CLI — Activity Feed Reader Regression
+slug: restore-hero-feed-cli
 type: bug
 status: completed
 priority: P1

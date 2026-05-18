@@ -1,5 +1,6 @@
 ---
 title: Spec Status Integrity — Graph-Verified Delivery Claims
+slug: spec-status-integrity
 type: feature
 status: delivering
 status_verified: "2026-04-29 by hero ac record: 4/6 ACs passing (AC-5 pre-commit hook + AC-6 auto-downgrade-on-regression deferred to a follow-on phase)"

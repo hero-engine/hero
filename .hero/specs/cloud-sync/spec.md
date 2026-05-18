@@ -1,5 +1,6 @@
 ---
 title: Cloud Spec Sync
+slug: cloud-sync
 type: feature
 status: completed
 tags: [cloud, sync, cli]

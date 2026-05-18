@@ -1,5 +1,6 @@
 ---
 title: Temporal Supersession Pattern — Detecting Stale Facts at Read Time
+slug: temporal-supersession-pattern
 type: context
 status: active
 created: 2026-05-06

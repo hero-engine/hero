@@ -1,5 +1,6 @@
 ---
 title: hero ask — Semantic Query Against Knowledge and Specs
+slug: hero-ask
 type: feature
 status: completed
 milestone: v0.3

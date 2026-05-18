@@ -1,5 +1,6 @@
 ---
 title: Render-Direct Install — Drop the .hero Canonical Mirror and Symlinks
+slug: render-direct-install
 type: feature
 status: completed
 priority: P0

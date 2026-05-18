@@ -1,5 +1,6 @@
 ---
 title: Hero Surface Architecture — One Surface, Every Layer, Every Role
+slug: hero-surface-architecture
 type: initiative
 status: planning
 tags: [serve, dashboard, surface, ui, layers, automation, roles, pm, qa, engineering]

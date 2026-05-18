@@ -1,5 +1,6 @@
 ---
 title: Graph Memory Federation — Multi-Repo, Multi-Team, Cross-Unit Topology
+slug: graph-memory-federation
 type: feature
 status: planning
 priority: P0

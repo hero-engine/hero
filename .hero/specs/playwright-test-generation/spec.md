@@ -1,5 +1,6 @@
 ---
 title: Pluggable Test Generation — Playwright-First Spec Validation
+slug: playwright-test-generation
 type: feature
 status: completed
 milestone: v0.5

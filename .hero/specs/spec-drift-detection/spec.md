@@ -1,5 +1,6 @@
 ---
 title: Spec Drift Detection — Flag When Code Diverges From Its Spec
+slug: spec-drift-detection
 type: feature
 status: completed
 tags: [specs, drift, validation, retro, mcp]

@@ -1,5 +1,6 @@
 ---
 title: Per-Feature Smoke Coverage — Continuous Real-World Verification
+slug: per-feature-smoke-coverage
 type: feature
 status: delivering
 priority: P0

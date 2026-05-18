@@ -1,5 +1,6 @@
 ---
 title: Hero Community — Discord/Discussions, Contributor Guide, Issue Templates
+slug: hero-community
 type: feature
 status: planning
 priority: P1

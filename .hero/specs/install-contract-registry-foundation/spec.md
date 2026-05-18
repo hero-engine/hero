@@ -1,5 +1,6 @@
 ---
 title: Install Contract Registry Foundation — Per-Target Validators for Installed Output
+slug: install-contract-registry-foundation
 type: feature
 status: completed
 priority: P0

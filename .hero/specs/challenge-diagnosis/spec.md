@@ -1,5 +1,6 @@
 ---
 title: Challenge/Revise a Bug Diagnosis — Engineer Feedback Loop
+slug: challenge-diagnosis
 type: feature
 status: completed
 priority: P1

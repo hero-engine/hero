@@ -1,5 +1,6 @@
 ---
 title: hero.local.json merge doesn't forward vocabulary / methodology fields
+slug: hero-local-merge-missing-dialect-fields
 type: bug
 status: delivering
 severity: medium

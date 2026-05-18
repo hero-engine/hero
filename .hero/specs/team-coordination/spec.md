@@ -1,5 +1,6 @@
 ---
 title: Team Coordination — Claiming, Conflict Detection, and Spec Review
+slug: team-coordination
 type: feature
 status: completed
 tags: [team, claiming, conflicts, review, coordination]

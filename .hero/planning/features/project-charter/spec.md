@@ -1,5 +1,6 @@
 ---
 title: Project Charter — Mission, Principles, and Auto-Injection
+slug: project-charter
 type: feature
 status: planning
 priority: P0

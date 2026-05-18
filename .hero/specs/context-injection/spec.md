@@ -1,5 +1,6 @@
 ---
 title: Context Injection — Relevant Conventions and Decisions Before Every Delivery
+slug: context-injection
 type: feature
 status: completed
 tags: [context, conventions, delivery, agents]
@@ -18,7 +19,7 @@ Before an agent writes code, Hero searches the spec corpus and injects relevant 
 
 **`hero context` CLI** — given a spec path or list of files, produces a structured context block: matching conventions, past specs in those files, applicable decisions, known risks.
 
-**`hero context --files`** — file-based lookup without a spec. Used by delivery leads before delegating to the engineer agent.
+**`hero context imports --files`** — file-based lookup without a spec. Used by delivery leads before delegating to the engineer agent.
 
 **`context-injection` skill** — loaded by delivery leads, documents how to use `hero context` output and feed it into specialist agent instructions.
 

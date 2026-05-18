@@ -1,5 +1,6 @@
 ---
 title: /prime Command — Explicit Session-Start Context Loading
+slug: prime-command
 type: feature
 status: completed
 milestone: v0.2
@@ -21,7 +22,7 @@ This is one of the most commonly missing commands in community Claude/Cursor set
 
 ## Context
 
-The community pattern research (awesome-claude-code, 38k stars) showed `/prime` or `/context` as the most commonly requested missing session-start command. The gap is real: `hero context --files` injects context for specific files, but there's no "load me up for this session" command. `/prime` is that command.
+The community pattern research (awesome-claude-code, 38k stars) showed `/prime` or `/context` as the most commonly requested missing session-start command. The gap is real: `hero context imports --files` injects context for specific files, but there's no "load me up for this session" command. `/prime` is that command.
 
 `hero serve` (MCP daemon) eventually makes `/prime` less critical by providing continuous context injection — but the MCP server is a larger effort, and `/prime` is simple and immediately valuable.
 
@@ -119,7 +120,7 @@ Load session context for the current work.
 
 1. Run `hero status --delivering` to find in-progress specs
 2. Run `hero status --claimed` to find specs assigned to the current user
-3. Run `hero context --files <recent-git-files>` for conventions and decisions
+3. Run `hero context imports --files <recent-git-files>` for conventions and decisions
 4. If a specific spec or sprint is mentioned, run `hero context --spec <slug>`
 5. Synthesize into a session brief covering: what's in progress, active decisions,
    relevant conventions, recent context, and things to watch for

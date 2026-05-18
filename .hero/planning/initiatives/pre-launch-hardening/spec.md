@@ -1,5 +1,6 @@
 ---
 title: Pre-Launch Hardening — Federation Polish, Security, Observability
+slug: pre-launch-hardening
 type: initiative
 status: delivered
 priority: P0

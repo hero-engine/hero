@@ -1,5 +1,6 @@
 ---
 title: Natural-Language Event Hooks — File-Level Triggers in Host Tool
+slug: nl-event-hooks
 type: feature
 status: completed
 tags: [hooks, claude-code, opencode, cursor, automation]

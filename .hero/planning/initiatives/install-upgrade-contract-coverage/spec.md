@@ -1,5 +1,6 @@
 ---
 title: Install + Upgrade Contract Coverage — Prove Every Target Works Every Time
+slug: install-upgrade-contract-coverage
 type: initiative
 status: planning
 priority: P0

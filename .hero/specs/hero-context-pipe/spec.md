@@ -1,5 +1,6 @@
 ---
 title: hero context Pipe — Explicit Tool-Aware Output Format for AI Tools
+slug: hero-context-pipe
 type: feature
 status: completed
 milestone: v0.3

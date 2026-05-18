@@ -1,5 +1,6 @@
 ---
 title: Spec Type Registry — Nine-Type Registry With Kind, Tasks, Owner, and Methodology Profile Hook
+slug: spec-type-registry
 type: feature
 status: delivering
 priority: P0

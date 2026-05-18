@@ -1,5 +1,6 @@
 ---
 title: Spec Kickoff Prompts and Ranked Work Queue — Cold-Session Productivity for Parallel Work
+slug: kickoff-prompts-queue
 type: feature
 status: completed
 tags: [agents, cold-start, kickoff, queue, next, spec-format, mcp]

@@ -6,82 +6,68 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-18T14:54:39Z · 97 ready specs_
+_Generated: 2026-05-18T19:05:22Z · 95 ready specs_
 
-## hero-surface-polish-v2 — Hero Surface Polish v2 — Per-Item Detail Routes, Filter Reconcile, CSS + Verb Cleanup
+## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
 
-**Status: delivered 2026-05-18.** All five fix classes shipped.
-
-**What works today (verified live on port 7457):**
-- Per-item detail routes return **200** for real slugs:
-  `/knowledge/<slug>`, `/work/spec/<slug>`, `/agents/session/<id>`,
-  `/people/profiles/<user>`. Unknown knowledge/spec slugs return
-  **404**. Sessions/profiles always render a coming-soon stub with
-  the requested id/user.
-- Named sub-routes win over the `{slug}` capture (all 12 verified
-  — `/knowledge/search`, `/work/kanban`, `/agents/proposals`, etc.
-  still invoke the named handlers).
-- Knowledge detail renders real markdown (loader + new
-  `internal/serve/mdrender` package).
-- Spec detail renders real markdown sourced from `.hero/specs/`
-  first, then `.hero/planning/{features,bugs,initiatives}/`.
-- Work filter UI is the new `rm-filters` row (9 markers); the
-  `view-toolbar` markup is removed.
-- `coming-soon` stubs render with **0 inline styles** (extracted
-  to `.cs-*` CSS rules in shell.css).
-- `spec.complete` is gone from all consumer code paths.
-- Inline chat-input fragment now embedded on all 5 homes (Go-level
-  injection via `chatInputFor` / `renderHeroAndChat` helpers so
-  every sub-route + detail route gets it consistently).
-
-**Pick up at: file v3 follow-ups** in
-[hero-surface-polish](../../initiatives/hero-surface-polish/spec.md)
-as they're discovered. Known carry-overs from this delivery:
-
-- Inline chat-input on the four non-Now homes has no visual disabled
-  state when no adapter is connected — looks identical regardless.
-  v3 could thin-style it muted when `ChatRegistry` is unset.
-- `internal/serve/mdrender` doesn't handle markdown tables,
-  blockquotes, or nested lists. Expand or switch to goldmark when
-  we hit a spec/note that needs them.
-- Detail views (`/knowledge/{slug}`, `/work/spec/{slug}`) render no
-  active sub-nav tab — there's no tab corresponding to "an
-  individual entry/spec." Consider a breadcrumb or "Detail"
-  pseudo-tab in v3.
-- Dead CSS rule `.view-toolbar { … }` remains in `shell.css` after
-  the markup was removed. Cosmetic; one-line cleanup.
-
-The detail-route tests must include the slug-vs-named-route
-collision case; easy to mis-register patterns.
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/unified-search/spec.md)_
 
 ---
 
-## next-checkpoint-cross-repo-pollution — "hero next checkpoint accumulates cross-repo narrative sections in .local.md and bleeds user-graph reads across repos"
-_bug · delivering · horizon: now_
+## tripwire-system — "Tripwire System — Forbidden-Option Guardrails for Model Sessions"
+_feature · delivering · horizon: now_
 
-> Pick up at: **verify and ship**. Implementation is complete on this branch — `rebuildLocalState` is total-rewrite, `backupHandContentIfNeeded` writes a single hash-deduped `.bak.<RFC3339>` next to `.local.md` with a stderr notice, the three handoff reads (`LatestAsk`, `LatestSuggestion`, `RecentReflections`) take `repoKey` and are repo-scoped at the SQL layer, all callers thread `repoKey`, the placeholder template no longer emits "(omit if clear)" / "(omit if N/A)" headers, and both skill docs document `.local.md` as machine-state-only. Tests added: `Test_rebuildLocalState_DiscardsHandContent`, `Test_writeCheckpoint_BacksUpPreExistingHandContent`, `Test_writeCheckpoint_NoBackupWhenAlreadyClean`, `Test_writeCheckpoint_BackupIdempotentOnRerun`, `Test_writeCheckpoint_CrossRepoAskDoesNotLeakIntoUserHandoff`, `TestRecordAsk_PerRepoIsolation`, `TestRecordSuggestion_PerRepoIsolation`, `TestRecentReflections_PerRepoIsolation`, `TestUserHandoffMD_DoesNotLeakCrossRepoAsk`. `go build ./...` and `go test ./...` are clean. Manual repro per §Validation in `/tmp/herotest-checkpoint` confirmed: backup written on first run, no second backup on rerun, `.local.md` contains only the marker block. To ship: review the diff (status: `delivering`), run `hero spec complete next-checkpoint-cross-repo-pollution`, then commit. The `repo: ''` empty-key behavior in non-git contexts (Risks bullet) is unchanged — out of scope; key-shape migration to `(user, repoKey)` deferred per Boundaries.
-
----
-
-## hero-local-merge-missing-dialect-fields — hero.local.json merge doesn't forward vocabulary / methodology fields
-_bug · delivering · horizon: now_
-
-> Read `.hero/planning/bugs/hero-local-merge-missing-dialect-fields/spec.md` (this file), `internal/config/config.go::MergeLocal` (or whatever the local-merge function is named there — `grep -n "MergeLocal\|LoadLocal\|merge" internal/config/config.go`), and one neighboring already-merged nested block (e.g. `Tracker`) for the merge pattern to copy. Extend the merger to forward the four dialect fields per the Fix section. Add unit tests per the Acceptance Criteria. Update `docs/contracts/active-dialect.md` §2 to make the `hero.local.json` override behavior normative (replacing the "planned extension point" note). Run `go build ./...` and `go test ./...` clean. Report what shipped, the exact functions touched, and any open questions under 300 words.
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/tripwire-system/spec.md)_
 
 ---
 
-## spec-types-cache-frontmatter-empty — spec-types.json records emit frontmatter as null — loader never populates it
-_bug · delivering · horizon: now_
+## spec-status-integrity — Spec Status Integrity — Graph-Verified Delivery Claims
+_feature · delivering · horizon: now_
 
-> Read `.hero/planning/bugs/spec-types-cache-frontmatter-empty/spec.md` (this file). Inspect `internal/spectypes/loader.go::parseRecord` (the existing per-block parsing pattern), `internal/spectypes/registry.go::FrontmatterSchema` (the target shape), `internal/spectypes/export.go::exportRecord` (the export wiring — confirm the `Frontmatter` field is already serialized), and one canonical source file like `core/spec-types/feature.md` (verify the `frontmatter:` block is present in YAML; if not, author it from the legacy lint validator's field set in `internal/triage/`). Implement the loader-side parser per the Fix section. Add unit tests per the Acceptance Criteria. Regenerate `.hero/cache/spec-types.json` and confirm `jq '.types[].frontmatter | length' .hero/cache/spec-types.json | sort -u` returns positive numbers (not `null`). Run `go build ./...` and `go test ./...` clean. Report what shipped, any type files that needed a frontmatter block authored, and any open questions under 400 words.
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/spec-status-integrity/spec.md)_
 
 ---
 
-## vocabulary-resolve-misses-methodology-derivation — vocabulary.Resolve doesn't fold methodology-derived auto-derivation
-_bug · delivering · horizon: now_
+## per-feature-smoke-coverage — Per-Feature Smoke Coverage — Continuous Real-World Verification
+_feature · delivering · horizon: now_
 
-> Read `.hero/planning/bugs/vocabulary-resolve-misses-methodology-derivation/spec.md` (this file), `internal/vocabulary/resolver.go`, `internal/methodology/resolver.go::DeriveVocabularyName`, and the three wrapper call sites: `internal/cli/vocab.go`, `internal/serve/vocab.go`, `internal/install/dialect.go`. Implement Option A: extend `vocabulary.Resolve` to take a `methodologies map[string]*methodology.Methodology` (or accept a pre-resolved `*methodology.Methodology` — pick whichever has lower blast radius) and fold the methodology-derived step into the precedence chain between explicit and tracker-inferred. Remove the three wrapper shims and route them through the new bare `Resolve`. Add unit tests per the Acceptance Criteria. Run `go build ./...` and `go test ./...` clean. Report what shipped, the chosen signature, and any open questions under 300 words.
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/per-feature-smoke-coverage/spec.md)_
+
+---
+
+## monorepo-satellite-installs — "Monorepo Satellite Installs — One Workspace, Many Subfolder Entry Points"
+_feature · delivering · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/monorepo-satellite-installs/spec.md)_
+
+---
+
+## master-ingest-restore — Master Ingest Restore — `hero scan` Returns to Its V2 Promise
+_feature · delivering · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/master-ingest-restore/spec.md)_
+
+---
+
+## graph-conflict-detection — Graph Conflict Detection — Detect and Surface Concurrent Node Divergence
+_feature · delivering · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/graph-conflict-detection/spec.md)_
+
+---
+
+## e2e-validation — E2E Validation — Repeatable Take-It-For-A-Spin Smoke Test
+_feature · delivering · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/e2e-validation/spec.md)_
+
+---
+
+## e2e-discovery — E2E Discovery Suite — The Model Can Find What's There
+_feature · delivering · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/e2e-discovery/spec.md)_
 
 ---
 
@@ -154,86 +140,24 @@ boundary nudges, full-delivery sync peer call — all v4+.
 
 ---
 
-## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
-_feature · delivering · horizon: now_
+## vocabulary-resolve-misses-methodology-derivation — vocabulary.Resolve doesn't fold methodology-derived auto-derivation
+_bug · delivering · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/unified-search/spec.md)_
-
----
-
-## monorepo-satellite-installs — "Monorepo Satellite Installs — One Workspace, Many Subfolder Entry Points"
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/monorepo-satellite-installs/spec.md)_
+> Read `.hero/planning/bugs/vocabulary-resolve-misses-methodology-derivation/spec.md` (this file), `internal/vocabulary/resolver.go`, `internal/methodology/resolver.go::DeriveVocabularyName`, and the three wrapper call sites: `internal/cli/vocab.go`, `internal/serve/vocab.go`, `internal/install/dialect.go`. Implement Option A: extend `vocabulary.Resolve` to take a `methodologies map[string]*methodology.Methodology` (or accept a pre-resolved `*methodology.Methodology` — pick whichever has lower blast radius) and fold the methodology-derived step into the precedence chain between explicit and tracker-inferred. Remove the three wrapper shims and route them through the new bare `Resolve`. Add unit tests per the Acceptance Criteria. Run `go build ./...` and `go test ./...` clean. Report what shipped, the chosen signature, and any open questions under 300 words.
 
 ---
 
-## tripwire-system — "Tripwire System — Forbidden-Option Guardrails for Model Sessions"
-_feature · delivering · horizon: now_
+## spec-types-cache-frontmatter-empty — spec-types.json records emit frontmatter as null — loader never populates it
+_bug · delivering · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/tripwire-system/spec.md)_
-
----
-
-## per-feature-smoke-coverage — Per-Feature Smoke Coverage — Continuous Real-World Verification
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/per-feature-smoke-coverage/spec.md)_
+> Read `.hero/planning/bugs/spec-types-cache-frontmatter-empty/spec.md` (this file). Inspect `internal/spectypes/loader.go::parseRecord` (the existing per-block parsing pattern), `internal/spectypes/registry.go::FrontmatterSchema` (the target shape), `internal/spectypes/export.go::exportRecord` (the export wiring — confirm the `Frontmatter` field is already serialized), and one canonical source file like `core/spec-types/feature.md` (verify the `frontmatter:` block is present in YAML; if not, author it from the legacy lint validator's field set in `internal/triage/`). Implement the loader-side parser per the Fix section. Add unit tests per the Acceptance Criteria. Regenerate `.hero/cache/spec-types.json` and confirm `jq '.types[].frontmatter | length' .hero/cache/spec-types.json | sort -u` returns positive numbers (not `null`). Run `go build ./...` and `go test ./...` clean. Report what shipped, any type files that needed a frontmatter block authored, and any open questions under 400 words.
 
 ---
 
-## spec-status-integrity — Spec Status Integrity — Graph-Verified Delivery Claims
-_feature · delivering · horizon: now_
+## hero-local-merge-missing-dialect-fields — hero.local.json merge doesn't forward vocabulary / methodology fields
+_bug · delivering · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/spec-status-integrity/spec.md)_
-
----
-
-## e2e-discovery — E2E Discovery Suite — The Model Can Find What's There
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/e2e-discovery/spec.md)_
-
----
-
-## graph-conflict-detection — Graph Conflict Detection — Detect and Surface Concurrent Node Divergence
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/graph-conflict-detection/spec.md)_
-
----
-
-## master-ingest-restore — Master Ingest Restore — `hero scan` Returns to Its V2 Promise
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/master-ingest-restore/spec.md)_
-
----
-
-## e2e-validation — E2E Validation — Repeatable Take-It-For-A-Spin Smoke Test
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/e2e-validation/spec.md)_
-
----
-
-## inline-propose-output-mode — Inline-Propose Output Mode — Agents Propose into the Artifact Pane
-_feature · delivering · horizon: next_
-
-Run `/deliver inline-propose-output-mode`. Confirm the three
-dependency primitives (`domain-plugin-architecture`,
-`domain-routing-and-agents`, `dashboard-view-registry`) are in a
-state where their integration points are accessible — at minimum,
-`domains/_platform/` exists for the agent prompt addendum and the
-agent loader has the hook for env-conditional prompt augmentation.
-If those primitives haven't landed, deliver the daemon-side pieces
-(envelope, store, routes, lifecycle log, shim) standalone first and
-stub the agent-prompt integration as a follow-up.
-
-→ `/deliver inline-propose-output-mode`
-
-**Files:** .hero/planning/features/inline-propose-output-mode/spec.md, docs/contracts/inline-propose-v1.md (new), internal/proposals/ (new), internal/serve/proposals_routes.go (new), internal/cli/agent_run.go (new), domains/_platform/agent-prompts/inline-propose-addendum.md (new), testdata/proposals/v1/ (new), .hero/planning/features/hero-pm/spec.md (consumer), .hero/planning/features/hero-pm/mockups/08-inline-proposal.html (visual source of truth)
-**Skip:** sidecar persistence (v2), cross-domain proposals (v2), multi-author concurrent proposals (Hero Cloud), proposals on arbitrary source files (out of scope), inline-propose for `/deliver` and `/diagnose` (continue write-to-disk).
+> Read `.hero/planning/bugs/hero-local-merge-missing-dialect-fields/spec.md` (this file), `internal/config/config.go::MergeLocal` (or whatever the local-merge function is named there — `grep -n "MergeLocal\|LoadLocal\|merge" internal/config/config.go`), and one neighboring already-merged nested block (e.g. `Tracker`) for the merge pattern to copy. Extend the merger to forward the four dialect fields per the Fix section. Add unit tests per the Acceptance Criteria. Update `docs/contracts/active-dialect.md` §2 to make the `hero.local.json` override behavior normative (replacing the "planned extension point" note). Run `go build ./...` and `go test ./...` clean. Report what shipped, the exact functions touched, and any open questions under 300 words.
 
 ---
 
@@ -280,287 +204,30 @@ workspace. Per-spec inline custom types.
 
 ---
 
-## project-snapshot — Project Snapshot — Always-Fresh "Where Are We Across the Board" Surface
+## inline-propose-output-mode — Inline-Propose Output Mode — Agents Propose into the Artifact Pane
+_feature · delivering · horizon: next_
+
+Run `/deliver inline-propose-output-mode`. Confirm the three
+dependency primitives (`domain-plugin-architecture`,
+`domain-routing-and-agents`, `dashboard-view-registry`) are in a
+state where their integration points are accessible — at minimum,
+`domains/_platform/` exists for the agent prompt addendum and the
+agent loader has the hook for env-conditional prompt augmentation.
+If those primitives haven't landed, deliver the daemon-side pieces
+(envelope, store, routes, lifecycle log, shim) standalone first and
+stub the agent-prompt integration as a follow-up.
+
+→ `/deliver inline-propose-output-mode`
+
+**Files:** .hero/planning/features/inline-propose-output-mode/spec.md, docs/contracts/inline-propose-v1.md (new), internal/proposals/ (new), internal/serve/proposals_routes.go (new), internal/cli/agent_run.go (new), domains/_platform/agent-prompts/inline-propose-addendum.md (new), testdata/proposals/v1/ (new), .hero/planning/features/hero-pm/spec.md (consumer), .hero/planning/features/hero-pm/mockups/08-inline-proposal.html (visual source of truth)
+**Skip:** sidecar persistence (v2), cross-domain proposals (v2), multi-author concurrent proposals (Hero Cloud), proposals on arbitrary source files (out of scope), inline-propose for `/deliver` and `/diagnose` (continue write-to-disk).
+
+---
+
+## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
 _feature · planning · horizon: now_
 
-Project-shape rollup with time-snapped trajectory:
-`.hero/SNAPSHOT.md` (live, projected) plus
-`.hero/snapshots/YYYY-MM-DD.md` (immutable archives, opt-in
-interval / milestone / manual triggers). Matching MCP / CLI /
-serve / opt-in auto-inject. Surfaces declared in
-`.hero/surfaces.yaml`; everything else projects from the
-existing graph using the proven NEXT.md projection pattern.
-
-**Status:** planning — spec just landed; no code yet.
-
-**Pick up at:** scaffold `internal/snapshot/` with the
-six-stage taxonomy in `stage.go` first (pure functions, easy
-to unit-test); then `surfaces.go` loader for the YAML; then
-markdown rendering; then wire the Stop-hook projector mirroring
-`internal/handoff/`. CLI / MCP / serve all land downstream. The
-archive subsystem (`archive.go`, `archive_triggers.go`,
-`retention.go`) plugs into the projector after the live render
-lands; archives default off so they can ship behind the live
-mirror without changing default behavior.
-
-→ `.hero/planning/features/project-snapshot/spec.md`
-
-**Files:** `internal/snapshot/`,
-`internal/handoff/handoff.go` (pattern reference),
-`internal/cli/checkpoint.go` (Stop-hook integration point),
-`.hero/surfaces.yaml` (new), `.hero/snapshots/` (new dir for
-archives), `internal/spec/spec.go` (add `Surface` +
-`ReleaseTarget` fields), `internal/serve/pages/now/`
-(template parallel for `/project`).
-
-**Skip:** registering `surface` as a new spec type in
-`spec-type-registry` — surfaces are a peer YAML file, not a
-spec. Auto-injecting Snapshot into every session by default —
-opt-in only in v1. Auto-inferring surfaces from directory scan
-in v1 — user declares; inference is a follow-up. Cross-repo
-surface rollup — owned by `cross-repo-peering`. Burndown
-visualizations — owned by `hero pulse`. Default-on archive
-triggers — opt-in only in v1; defaults flip in v2 once disk
-shape is observed. Compressed archive storage, structured
-shape-diff renderer, and inline serve "diff vs N weeks ago"
-view — all v2-deferred.
-
----
-
-## hero-surface-polish — Hero Surface Polish — Ongoing Quality Pass on the Web Companion
-_initiative · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-surface-polish/spec.md)_
-
----
-
-## hero-code-handover-pack — Hero-Code Handover Pack — Make the PM Foundation Consumable
-_feature · planning · horizon: now_
-
-The PM Foundation Delivery sprint shipped the four cross-language contracts (`spec-types.json`, `vocabularies/*.yaml`, `methodologies/*.yaml`, `inline-propose-v1.md`) but left a handful of consumer-affordance gaps. This sprint closes them so hero-code can implement the first PM dashboard against real fixtures, a single discovery index, and a documented read path for active workspace dialect.
-
-**Sprint completes when:**
-- `testdata/proposals/v1/` carries a fixture envelope per anchor variant + batch + replacement scenarios — hero-code's Rust widget tests consume them
-- `docs/contracts/README.md` indexes the four contracts with location, schema version, owner, and stability promise
-- `docs/contracts/active-dialect.md` documents the resolver precedence chain and the on-disk read path from `hero.json` to display map
-- `docs/contracts/spec-types-v1.1.schema.json` validates `.hero/cache/spec-types.json` and can generate Rust types via `serde`
-- `examples/scrum-workspace/` ships a working hero.json + 4 specs across lifecycle states for hero-code to develop against
-- Hero-code peer call (advisory) hands over the handover pack with pointers to all five artifacts
-
----
-
-## document-vocabulary-auto-select-schema — Document vocabulary auto_select rule schema — fields, allowed values, and authoring guide
-_feature · planning · horizon: now_
-
-> Read `.hero/planning/features/document-vocabulary-auto-select-schema/spec.md` (this file). Inspect `internal/vocabulary/vocabulary.go` and `internal/vocabulary/resolver.go` for the auto_select rule struct shape, allowed-value set, and match semantics — these are the authoritative source. Check existing presets: `core/vocabularies/agile-scrum.yaml`, `core/vocabularies/kanban.yaml`, `core/vocabularies/shape-up.yaml`, `core/vocabularies/default.yaml`, `core/vocabularies/jira.yaml`, `core/vocabularies/linear.yaml` for what auto_select blocks already exist. Author `docs/contracts/vocabulary-auto-select.md` per the six sections in this spec's Design. Update `docs/contracts/active-dialect.md` §3 with a cross-link and add a row to `docs/contracts/README.md`'s table. Keep the doc under 250 lines. Run `go build ./...` (should be unchanged). Report what shipped, the auto_select rule fields you documented, and any code-vs-prose discrepancies you spotted, under 250 words.
-
----
-
-## initiative-required-sections-drift — initiative spec-type's required-sections YAML disagrees with its prose docs
-_bug · planning · horizon: now_
-
-> Read `.hero/planning/bugs/initiative-required-sections-drift/spec.md` (this file) and `core/spec-types/initiative.md`. Update the prose body to describe `Goal` as the sole required section; demote `Bet`, `Evidence`, `Tradeoffs` to suggested/optional with a Shape Up reference. Walk `.hero/planning/initiatives/*/spec.md` and confirm each has a `## Goal` section (likely all do — verify, don't assume). Run `go test ./internal/spectypes/...` clean (no Go changes expected). Report what shipped and whether any existing initiatives needed a `Goal` section added, under 200 words.
-
----
-
-## hero-surface-architecture — Hero Surface Architecture — One Surface, Every Layer, Every Role
-_initiative · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-surface-architecture/spec.md)_
-
----
-
-## pm-foundation-delivery — PM Foundation Delivery — Ship PM Pack Additively + Unblock hero-code
-_feature · planning · horizon: now_
-
-This is the **delivery sprint** for the work-tracking refactor designed across `unified-spec-type-model`, `spec-type-registry`, and `inline-propose-output-mode`. Goal: ship PM as an additive Hero domain pack, with engineering unchanged, and unblock hero-code (Rust dashboard) to start building PM and QA UI against stable contracts.
-
-The sprint is composed of **nine work items** organized into three tracks (content authoring, Go implementation, content alignment). Items can be picked up in fresh sessions independently where dependencies allow.
-
-**Sprint completes when:**
-- All nine canonical work-tracking spec types are registered (`initiative`, `prd`, `epic`, `feature`, `bug`, `chore`, `intake`, `release`, `sprint`)
-- Five methodology profiles are authored (Scrum, Kanban, Shape Up, Waterfall, Scrumban)
-- `internal/vocabulary/`, `internal/methodology/`, `internal/tasks/` Go packages are delivered and tested
-- `spec-type-registry` Go implementation exports schema 1.1 to `.hero/cache/spec-types.json`
-- `hero task` CLI surface ships (additive, AC infrastructure unchanged)
-- Inline-propose Go side ships
-- PM pack content is aligned to final canonical names
-- `domain-plugin-architecture` finishing touches are in
-- hero-code consumes the three stable contracts (registry / vocabulary / methodology)
-
-→ Each work item below has a paste-ready kickoff prompt for a fresh session.
-
-**Files:** `.hero/planning/features/pm-foundation-delivery/spec.md`, `.hero/planning/features/unified-spec-type-model/spec.md` (authoritative design), `.hero/planning/features/spec-type-registry/spec.md`, `.hero/planning/features/inline-propose-output-mode/spec.md`, `.hero/planning/features/hero-pm/spec.md`, `.hero/planning/features/domain-plugin-architecture/spec.md`, `domains/pm/`, `core/vocabularies/`, `internal/vocabulary/`
-
-**Skip:** Anything outside the work-tracking refactor scope (knowledge graph, meta types, dashboard UI implementation, new tracker providers, migration of any kind).
-
----
-
-## install-target-emits-both-claude-and-agents-md — "`hero install --target claude` emits both CLAUDE.md and AGENTS.md"
-_bug · planning · horizon: now_
-
-Reproduce: cd into a clean repo with no `CLAUDE.md` or `AGENTS.md`, run `hero install --target claude`. Expected: only `CLAUDE.md` lands. Observed: both `CLAUDE.md` and `AGENTS.md` are emitted with the same managed-block content. Fix likely lives in the install target dispatch in the hero CLI — read the install command source, find where both files get written, and gate `AGENTS.md` emission on the target not being `claude` (or on a generic/fallback target). Update tests to cover each target's expected file set.
-
----
-
-## hero-governance — "Hero Governance — Classification, Policy-Filtered Retrieval, Agent Identity, Audit-by-Construction"
-_feature · planning · horizon: now_
-
-Foundational governance model for Hero — classifications, subjects, policies,
-agent identity, and a single retrieval filter — split between the OSS
-contracts package (vocabulary + API shape) and the paid enforcement engine.
-
-**Status:** planning — spec just landed; this is the foundation for the
-hero-cloud repo split and the Community Edition packaging specs.
-
-**Pick up at:** lock the contracts-package surface first: write the Go
-interfaces for `Classification`, `Subject`, `Principal`, `Scope`,
-`PolicyNode`, `AuditEvent`, and the `Retriever` signature. Land those in
-a new `contracts/governance/` directory before any enforcement work.
-
-→ `.hero/planning/features/hero-governance/spec.md`
-
-**Files:** `contracts/governance/` (new), `internal/graph/node.go`,
-`internal/retrieval/`, `.hero/planning/features/agent-outposts/spec.md`,
-`.hero/planning/features/tenant-isolation-rls/spec.md`
-**Skip:** designing the admin UI, SSO/SAML wiring, specific PII regex
-catalogs, and LLM-call wrapping mechanics — all are out of scope here.
-
----
-
-## scan-test-detection-misses-spock-vitest — hero scan misses Spock, dependency-only Vitest/Playwright, and Playwright .js/.mts configs
-_bug · planning · horizon: now_
-
-Resume work on the test-framework detector miss. Read this spec and `internal/scan/scan.go` (the `detectFromMarkers`, `detectTestFromPackageJSON`, and `detectJVMTestFrameworks` functions). Fix is in place. Outstanding work to consider: (a) unit tests covering Spock + Vitest + Playwright detection paths (currently verified live, no unit coverage added); (b) frame detection for less-common JVM frameworks (Spek for Kotlin, ScalaTest); (c) consider parsing `package.json`'s `"scripts"` section for `test`/`e2e` patterns when no framework dep is declared.
-
----
-
-## scan-enrichment-unbounded-loop — /scan post-scan enrichment loop is unbounded
-_bug · planning · horizon: now_
-
-Resume work on the `/scan` enrichment-loop fix. Read this spec and `commands/scan.md`. The fix is in place; remaining work is to validate the new step 4 wording in real opencode/codex sessions (does the model actually stop after 5 entries? does it still reach for `.hero/knowledge/code/` files?) and, if needed, tighten the language further. Consider also extending the same bounded-enrichment pattern to other "read N things and enrich each" command surfaces.
-
----
-
-## hero-workspace-not-self-describing — AGENTS.md Project Structure section lies about content-path locations
-_bug · planning · horizon: now_
-
-Resume work on the AGENTS.md project-structure regression. Read this spec, the v0.8 install refactor commits (`git log --oneline | head -20`), and `internal/install/agents_md.go`. The fix is already in place; remaining work is (a) optional unit test pinning the resolved paths against fresh-install output, (b) follow-up for non-AGENTS.md surfaces that may carry the same hardcoded layout description (search for `commands/. — Slash` and similar wording across the repo).
-
----
-
-## install-upgrade-contract-coverage — Install + Upgrade Contract Coverage — Prove Every Target Works Every Time
-_initiative · planning · horizon: now_
-
-Foundation initiative for proving install + upgrade work on every
-target, every release.
-
-**Status:** planning — ready to design child #1.
-
-**Pick up at:**
-1. Run `/design install-contract-registry-foundation` to produce
-   the foundation child spec. That spec defines the
-   `HarnessContract` shape, the `Contracts()` method per target,
-   and the `mustSatisfyContract` harness primitive. Lands Claude ×
-   commands + Claude × skills as the first consumers.
-2. While #1 is in design, optionally `/design install-ci-gate-policy`
-   in parallel — independent and small.
-3. After #1 lands, fan out: `/design install-smoke-coverage-codex-copilot-generic`
-   and `/design install-contract-coverage-opencode-cursor` in
-   parallel.
-4. Then `/design install-upgrade-path-coverage`.
-5. Defer #6 (real-harness validation) until #1-#5 have landed and
-   it's clear how much investment it warrants.
-
-**Why this matters now:** the
-`claude-subagent-frontmatter-registration` fix today closed one
-cell of an 18-cell coverage matrix. The remaining 17 cells are
-the same class of latent bug — install ships, files land, the
-consuming tool silently rejects them, the user gets degraded
-behavior with no error to report. This is the worst surface to
-ship bugs on, and the matrix won't close itself one-spec-at-a-time
-without the contract registry primitive in #1.
-
-**Coordination:** check in with `monorepo-satellite-installs`
-before #4 so satellite-aware upgrade tests reuse the contract
-primitive rather than building a parallel one.
-
----
-
-## single-source-install — Single-Source Install — One Canonical Tree, Every Harness Reads It
-_initiative · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/single-source-install/spec.md)_
-
----
-
-## satellite-harness-coverage — "Satellite Harness Coverage — Per-Target Markers for OpenCode, Cursor, Generic"
-_feature · planning · horizon: now_
-
-Resume by reading the spec at `.hero/planning/features/satellite-harness-coverage/spec.md`. Closes the per-harness coverage gap from the satellite arc. Mostly a registry edit (`targetLayouts`) plus a small refactor of `perTargetMarker` to accept multiple targets and a written-paths dedup in `Materialize`. Parent spec: monorepo-satellite-installs. Verified gap during example codebase migration (OpenCode+Claude both installed at root, only Claude got the marker).
-
----
-
-## satellite-scope-extras — "Satellite Scope Extras — Why Traversal, Spec Move, Cloud Filtering"
-_feature · planning · horizon: now_
-
-Resume by reading `.hero/planning/features/satellite-scope-extras/spec.md`. Phases 1 (`hero why` annotation) and 2 (`hero spec move`) are local-CLI work; Phase 3 (cloud) touches `cloud/store`, `cloud/api`, and `cloud/web/app.js`. Parent specs that already shipped: [monorepo-satellite-installs](../monorepo-satellite-installs/spec.md) (foundation) and [satellite-corpus-integration](../satellite-corpus-integration/spec.md) (scope flows through corpus).
-
----
-
-## satellite-corpus-integration — "Satellite Corpus Integration — Scope as a First-Class Facet"
-_feature · planning · horizon: now_
-
-Resume by reading `.hero/planning/features/satellite-corpus-integration/spec.md` for the full design, then continue Phase 2 (index + filter surfaces) — Phase 1 (slash-command scope injection) and Phase 3 (migration execution) are also pending. The parent spec [monorepo-satellite-installs](../monorepo-satellite-installs/spec.md) shipped in commits f279f42 and 48a379c. Phase 2 is the highest-leverage next step because it's what makes scope queryable from the existing read surfaces (`list`, `search`, `recap`, `feed`).
-
----
-
-## satellite-walkthrough-ux — "Satellite Walkthrough UX — Vendor-Pattern Detection and Exclude-Parent Shortcut"
-_feature · planning · horizon: now_
-
-Resume by reading `.hero/planning/features/satellite-walkthrough-ux/spec.md`. Two small UX fixes for the satellite install walkthrough surfaced during the example codebase migration: auto-noise `*-vendor` / `vendor-*` / `vendored` directory names in the candidate detector, and add capital `X` as an "exclude parent" walkthrough option that drops all remaining candidates under the parent. Parent spec: monorepo-satellite-installs.
-
----
-
-## single-source-install-p1-agents-md — "Single-Source Install P1 — AGENTS.md as the Only Root Instruction File"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/single-source-install-p1-agents-md/spec.md)_
-
----
-
-## premise-interrogation — "Premise Interrogation — Force-Question the Framing Before Designing"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/premise-interrogation/spec.md)_
-
----
-
-## version-mismatch-severity — Version mismatch severity
-_feature · planning · horizon: now_
-
-Change `Mismatch()` in `internal/version/version.go` to return a `MismatchResult` struct with `Severity` (none/warning/error) and `Message` fields instead of a bare string. Severity is `error` when the major version component differs, `warning` when only minor/patch differ, and `none` when versions match or checks are skipped. Update `PersistentPreRun` in `internal/cli/root.go` to exit non-zero on error severity (keeping the existing exempt-command list: init, install, trust, upgrade, mcp, version, help, scan). Update all tests in `internal/version/version_test.go` to assert on `MismatchResult.Severity` and `MismatchResult.Message`. Dev builds ("dev") and empty versions continue to skip all checks.
-
----
-
-## get-back-on-track — Get Back on Track — Mission-First V2 Recovery
-_initiative · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/get-back-on-track/spec.md)_
-
----
-
-## synthesis-maintenance — "Synthesis Maintenance — Write-Through Coherence for the Hero Graph"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/synthesis-maintenance/spec.md)_
-
----
-
-## satellite-scope-finishers — "Satellite Scope Finishers — Queue Default and MCP Subproject Param"
-_feature · planning · horizon: now_
-
-Resume by reading the spec at `.hero/planning/features/satellite-scope-finishers/spec.md`. Two surface additions: `hero queue --subproject` flag (mirrors `hero list`), and `subproject` parameter on five MCP tools (`hero_list`, `hero_queue`, `hero_search`, `hero_recap`, `hero_feed`) with consistent description telling the model when to pass it. Parent specs in the satellite arc: monorepo-satellite-installs, satellite-corpus-integration, satellite-scope-extras — all shipped.
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/specs/retrieval-contradiction-detection/spec.md)_
 
 ---
 
@@ -605,33 +272,273 @@ Build a Hero-native system that actively manages session context — not just *i
 
 ---
 
-## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
+## single-source-install — Single-Source Install — One Canonical Tree, Every Harness Reads It
+_initiative · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/single-source-install/spec.md)_
+
+---
+
+## install-upgrade-contract-coverage — Install + Upgrade Contract Coverage — Prove Every Target Works Every Time
+_initiative · planning · horizon: now_
+
+Foundation initiative for proving install + upgrade work on every
+target, every release.
+
+**Status:** planning — ready to design child #1.
+
+**Pick up at:**
+1. Run `/design install-contract-registry-foundation` to produce
+   the foundation child spec. That spec defines the
+   `HarnessContract` shape, the `Contracts()` method per target,
+   and the `mustSatisfyContract` harness primitive. Lands Claude ×
+   commands + Claude × skills as the first consumers.
+2. While #1 is in design, optionally `/design install-ci-gate-policy`
+   in parallel — independent and small.
+3. After #1 lands, fan out: `/design install-smoke-coverage-codex-copilot-generic`
+   and `/design install-contract-coverage-opencode-cursor` in
+   parallel.
+4. Then `/design install-upgrade-path-coverage`.
+5. Defer #6 (real-harness validation) until #1-#5 have landed and
+   it's clear how much investment it warrants.
+
+**Why this matters now:** the
+`claude-subagent-frontmatter-registration` fix today closed one
+cell of an 18-cell coverage matrix. The remaining 17 cells are
+the same class of latent bug — install ships, files land, the
+consuming tool silently rejects them, the user gets degraded
+behavior with no error to report. This is the worst surface to
+ship bugs on, and the matrix won't close itself one-spec-at-a-time
+without the contract registry primitive in #1.
+
+**Coordination:** check in with `monorepo-satellite-installs`
+before #4 so satellite-aware upgrade tests reuse the contract
+primitive rather than building a parallel one.
+
+---
+
+## hero-surface-polish — Hero Surface Polish — Ongoing Quality Pass on the Web Companion
+_initiative · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-surface-polish/spec.md)_
+
+---
+
+## hero-surface-architecture — Hero Surface Architecture — One Surface, Every Layer, Every Role
+_initiative · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-surface-architecture/spec.md)_
+
+---
+
+## get-back-on-track — Get Back on Track — Mission-First V2 Recovery
+_initiative · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/get-back-on-track/spec.md)_
+
+---
+
+## version-mismatch-severity — Version mismatch severity
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/specs/retrieval-contradiction-detection/spec.md)_
+Change `Mismatch()` in `internal/version/version.go` to return a `MismatchResult` struct with `Severity` (none/warning/error) and `Message` fields instead of a bare string. Severity is `error` when the major version component differs, `warning` when only minor/patch differ, and `none` when versions match or checks are skipped. Update `PersistentPreRun` in `internal/cli/root.go` to exit non-zero on error severity (keeping the existing exempt-command list: init, install, trust, upgrade, mcp, version, help, scan). Update all tests in `internal/version/version_test.go` to assert on `MismatchResult.Severity` and `MismatchResult.Message`. Dev builds ("dev") and empty versions continue to skip all checks.
 
 ---
 
-## domain-plugin-architecture — Domain Plugin Architecture — Refactor Content into Swappable Domain Packs
-_feature · planning · horizon: next_
+## synthesis-maintenance — "Synthesis Maintenance — Write-Through Coherence for the Hero Graph"
+_feature · planning · horizon: now_
 
-Foundation primitive for `hero-domains`. Pure refactor — move existing engineering content into `domains/engineering/` and add `hero init --domain` / `hero domain switch` plumbing. Zero new behavior, but unblocks every other primitive and every future domain pack (PM, QA, design, etc).
-
-**Status:** planning — design exists from 2026-04-25; reframed as the foundation for the PM-first roadmap on 2026-05-15. No code written yet.
-
-**Pick up at:** `/deliver` this spec. Examples below have been updated from sales-first to PM-first to reflect the current sequencing, but the actual refactor is content-agnostic — PM-specific pack content lives in the separate `hero-pm` spec.
-
-→ `/deliver domain-plugin-architecture`
-
-**Files:** .hero/planning/features/domain-plugin-architecture/spec.md, .hero/planning/initiatives/hero-domains/spec.md, embed.go, internal/install/install.go, internal/cli/init.go
-**Skip:** Third-party domain packs loaded from disk (deferred to a future spec). Multi-domain coexistence in one workspace (handled by domain-scoped-knowledge-graph).
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/synthesis-maintenance/spec.md)_
 
 ---
 
-## inline-propose-v1.1-typed-anchor-value — Inline-propose v1.1 — typed anchor.value discriminator (gated on hero-code feedback)
-_feature · planning · horizon: next_
+## single-source-install-p1-agents-md — "Single-Source Install P1 — AGENTS.md as the Only Root Instruction File"
+_feature · planning · horizon: now_
 
-> **Do not pick this up without evidence first.** Confirm hero-code has filed a peer call (or equivalent advisory) describing concrete typing pain on `anchor.value` in the v1.0 envelope. Read the evidence. Then re-read this spec's Design section — A/B/C are sketches, not commitments; pick the option that addresses the specific pain hero-code surfaced, not the one that sounds cleanest in the abstract. Update this spec with the chosen design (replace the Design section with a single locked option, retain A/B/C as "Rejected" subsections), then deliver per the Acceptance Criteria. If hero-code's pain is rendering-side rather than typing-side, push back — this spec is for typed-shape friction only.
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/single-source-install-p1-agents-md/spec.md)_
+
+---
+
+## satellite-walkthrough-ux — "Satellite Walkthrough UX — Vendor-Pattern Detection and Exclude-Parent Shortcut"
+_feature · planning · horizon: now_
+
+Resume by reading `.hero/planning/features/satellite-walkthrough-ux/spec.md`. Two small UX fixes for the satellite install walkthrough surfaced during the example codebase migration: auto-noise `*-vendor` / `vendor-*` / `vendored` directory names in the candidate detector, and add capital `X` as an "exclude parent" walkthrough option that drops all remaining candidates under the parent. Parent spec: monorepo-satellite-installs.
+
+---
+
+## satellite-scope-finishers — "Satellite Scope Finishers — Queue Default and MCP Subproject Param"
+_feature · planning · horizon: now_
+
+Resume by reading the spec at `.hero/planning/features/satellite-scope-finishers/spec.md`. Two surface additions: `hero queue --subproject` flag (mirrors `hero list`), and `subproject` parameter on five MCP tools (`hero_list`, `hero_queue`, `hero_search`, `hero_recap`, `hero_feed`) with consistent description telling the model when to pass it. Parent specs in the satellite arc: monorepo-satellite-installs, satellite-corpus-integration, satellite-scope-extras — all shipped.
+
+---
+
+## satellite-scope-extras — "Satellite Scope Extras — Why Traversal, Spec Move, Cloud Filtering"
+_feature · planning · horizon: now_
+
+Resume by reading `.hero/planning/features/satellite-scope-extras/spec.md`. Phases 1 (`hero why` annotation) and 2 (`hero spec move`) are local-CLI work; Phase 3 (cloud) touches `cloud/store`, `cloud/api`, and `cloud/web/app.js`. Parent specs that already shipped: [monorepo-satellite-installs](../monorepo-satellite-installs/spec.md) (foundation) and [satellite-corpus-integration](../satellite-corpus-integration/spec.md) (scope flows through corpus).
+
+---
+
+## satellite-harness-coverage — "Satellite Harness Coverage — Per-Target Markers for OpenCode, Cursor, Generic"
+_feature · planning · horizon: now_
+
+Resume by reading the spec at `.hero/planning/features/satellite-harness-coverage/spec.md`. Closes the per-harness coverage gap from the satellite arc. Mostly a registry edit (`targetLayouts`) plus a small refactor of `perTargetMarker` to accept multiple targets and a written-paths dedup in `Materialize`. Parent spec: monorepo-satellite-installs. Verified gap during example codebase migration (OpenCode+Claude both installed at root, only Claude got the marker).
+
+---
+
+## satellite-corpus-integration — "Satellite Corpus Integration — Scope as a First-Class Facet"
+_feature · planning · horizon: now_
+
+Resume by reading `.hero/planning/features/satellite-corpus-integration/spec.md` for the full design, then continue Phase 2 (index + filter surfaces) — Phase 1 (slash-command scope injection) and Phase 3 (migration execution) are also pending. The parent spec [monorepo-satellite-installs](../monorepo-satellite-installs/spec.md) shipped in commits f279f42 and 48a379c. Phase 2 is the highest-leverage next step because it's what makes scope queryable from the existing read surfaces (`list`, `search`, `recap`, `feed`).
+
+---
+
+## premise-interrogation — "Premise Interrogation — Force-Question the Framing Before Designing"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/premise-interrogation/spec.md)_
+
+---
+
+## pm-foundation-delivery — PM Foundation Delivery — Ship PM Pack Additively + Unblock hero-code
+_feature · planning · horizon: now_
+
+This is the **delivery sprint** for the work-tracking refactor designed across `unified-spec-type-model`, `spec-type-registry`, and `inline-propose-output-mode`. Goal: ship PM as an additive Hero domain pack, with engineering unchanged, and unblock hero-code (Rust dashboard) to start building PM and QA UI against stable contracts.
+
+The sprint is composed of **nine work items** organized into three tracks (content authoring, Go implementation, content alignment). Items can be picked up in fresh sessions independently where dependencies allow.
+
+**Sprint completes when:**
+- All nine canonical work-tracking spec types are registered (`initiative`, `prd`, `epic`, `feature`, `bug`, `chore`, `intake`, `release`, `sprint`)
+- Five methodology profiles are authored (Scrum, Kanban, Shape Up, Waterfall, Scrumban)
+- `internal/vocabulary/`, `internal/methodology/`, `internal/tasks/` Go packages are delivered and tested
+- `spec-type-registry` Go implementation exports schema 1.1 to `.hero/cache/spec-types.json`
+- `hero task` CLI surface ships (additive, AC infrastructure unchanged)
+- Inline-propose Go side ships
+- PM pack content is aligned to final canonical names
+- `domain-plugin-architecture` finishing touches are in
+- hero-code consumes the three stable contracts (registry / vocabulary / methodology)
+
+→ Each work item below has a paste-ready kickoff prompt for a fresh session.
+
+**Files:** `.hero/planning/features/pm-foundation-delivery/spec.md`, `.hero/planning/features/unified-spec-type-model/spec.md` (authoritative design), `.hero/planning/features/spec-type-registry/spec.md`, `.hero/planning/features/inline-propose-output-mode/spec.md`, `.hero/planning/features/hero-pm/spec.md`, `.hero/planning/features/domain-plugin-architecture/spec.md`, `domains/pm/`, `core/vocabularies/`, `internal/vocabulary/`
+
+**Skip:** Anything outside the work-tracking refactor scope (knowledge graph, meta types, dashboard UI implementation, new tracker providers, migration of any kind).
+
+---
+
+## hero-governance — "Hero Governance — Classification, Policy-Filtered Retrieval, Agent Identity, Audit-by-Construction"
+_feature · planning · horizon: now_
+
+Foundational governance model for Hero — classifications, subjects, policies,
+agent identity, and a single retrieval filter — split between the OSS
+contracts package (vocabulary + API shape) and the paid enforcement engine.
+
+**Status:** planning — spec just landed; this is the foundation for the
+hero-cloud repo split and the Community Edition packaging specs.
+
+**Pick up at:** lock the contracts-package surface first: write the Go
+interfaces for `Classification`, `Subject`, `Principal`, `Scope`,
+`PolicyNode`, `AuditEvent`, and the `Retriever` signature. Land those in
+a new `contracts/governance/` directory before any enforcement work.
+
+→ `.hero/planning/features/hero-governance/spec.md`
+
+**Files:** `contracts/governance/` (new), `internal/graph/node.go`,
+`internal/retrieval/`, `.hero/planning/features/agent-outposts/spec.md`,
+`.hero/planning/features/tenant-isolation-rls/spec.md`
+**Skip:** designing the admin UI, SSO/SAML wiring, specific PII regex
+catalogs, and LLM-call wrapping mechanics — all are out of scope here.
+
+---
+
+## hero-code-handover-pack — Hero-Code Handover Pack — Make the PM Foundation Consumable
+_feature · planning · horizon: now_
+
+The PM Foundation Delivery sprint shipped the four cross-language contracts (`spec-types.json`, `vocabularies/*.yaml`, `methodologies/*.yaml`, `inline-propose-v1.md`) but left a handful of consumer-affordance gaps. This sprint closes them so hero-code can implement the first PM dashboard against real fixtures, a single discovery index, and a documented read path for active workspace dialect.
+
+**Sprint completes when:**
+- `testdata/proposals/v1/` carries a fixture envelope per anchor variant + batch + replacement scenarios — hero-code's Rust widget tests consume them
+- `docs/contracts/README.md` indexes the four contracts with location, schema version, owner, and stability promise
+- `docs/contracts/active-dialect.md` documents the resolver precedence chain and the on-disk read path from `hero.json` to display map
+- `docs/contracts/spec-types-v1.1.schema.json` validates `.hero/cache/spec-types.json` and can generate Rust types via `serde`
+- `examples/scrum-workspace/` ships a working hero.json + 4 specs across lifecycle states for hero-code to develop against
+- Hero-code peer call (advisory) hands over the handover pack with pointers to all five artifacts
+
+---
+
+## document-vocabulary-auto-select-schema — Document vocabulary auto_select rule schema — fields, allowed values, and authoring guide
+_feature · planning · horizon: now_
+
+> Read `.hero/planning/features/document-vocabulary-auto-select-schema/spec.md` (this file). Inspect `internal/vocabulary/vocabulary.go` and `internal/vocabulary/resolver.go` for the auto_select rule struct shape, allowed-value set, and match semantics — these are the authoritative source. Check existing presets: `core/vocabularies/agile-scrum.yaml`, `core/vocabularies/kanban.yaml`, `core/vocabularies/shape-up.yaml`, `core/vocabularies/default.yaml`, `core/vocabularies/jira.yaml`, `core/vocabularies/linear.yaml` for what auto_select blocks already exist. Author `docs/contracts/vocabulary-auto-select.md` per the six sections in this spec's Design. Update `docs/contracts/active-dialect.md` §3 with a cross-link and add a row to `docs/contracts/README.md`'s table. Keep the doc under 250 lines. Run `go build ./...` (should be unchanged). Report what shipped, the auto_select rule fields you documented, and any code-vs-prose discrepancies you spotted, under 250 words.
+
+---
+
+## scan-test-detection-misses-spock-vitest — hero scan misses Spock, dependency-only Vitest/Playwright, and Playwright .js/.mts configs
+_bug · planning · horizon: now_
+
+Resume work on the test-framework detector miss. Read this spec and `internal/scan/scan.go` (the `detectFromMarkers`, `detectTestFromPackageJSON`, and `detectJVMTestFrameworks` functions). Fix is in place. Outstanding work to consider: (a) unit tests covering Spock + Vitest + Playwright detection paths (currently verified live, no unit coverage added); (b) frame detection for less-common JVM frameworks (Spek for Kotlin, ScalaTest); (c) consider parsing `package.json`'s `"scripts"` section for `test`/`e2e` patterns when no framework dep is declared.
+
+---
+
+## scan-enrichment-unbounded-loop — /scan post-scan enrichment loop is unbounded
+_bug · planning · horizon: now_
+
+Resume work on the `/scan` enrichment-loop fix. Read this spec and `commands/scan.md`. The fix is in place; remaining work is to validate the new step 4 wording in real opencode/codex sessions (does the model actually stop after 5 entries? does it still reach for `.hero/knowledge/code/` files?) and, if needed, tighten the language further. Consider also extending the same bounded-enrichment pattern to other "read N things and enrich each" command surfaces.
+
+---
+
+## install-target-emits-both-claude-and-agents-md — "`hero install --target claude` emits both CLAUDE.md and AGENTS.md"
+_bug · planning · horizon: now_
+
+Reproduce: cd into a clean repo with no `CLAUDE.md` or `AGENTS.md`, run `hero install --target claude`. Expected: only `CLAUDE.md` lands. Observed: both `CLAUDE.md` and `AGENTS.md` are emitted with the same managed-block content. Fix likely lives in the install target dispatch in the hero CLI — read the install command source, find where both files get written, and gate `AGENTS.md` emission on the target not being `claude` (or on a generic/fallback target). Update tests to cover each target's expected file set.
+
+---
+
+## initiative-required-sections-drift — initiative spec-type's required-sections YAML disagrees with its prose docs
+_bug · planning · horizon: now_
+
+> Read `.hero/planning/bugs/initiative-required-sections-drift/spec.md` (this file) and `core/spec-types/initiative.md`. Update the prose body to describe `Goal` as the sole required section; demote `Bet`, `Evidence`, `Tradeoffs` to suggested/optional with a Shape Up reference. Walk `.hero/planning/initiatives/*/spec.md` and confirm each has a `## Goal` section (likely all do — verify, don't assume). Run `go test ./internal/spectypes/...` clean (no Go changes expected). Report what shipped and whether any existing initiatives needed a `Goal` section added, under 200 words.
+
+---
+
+## hero-workspace-not-self-describing — AGENTS.md Project Structure section lies about content-path locations
+_bug · planning · horizon: now_
+
+Resume work on the AGENTS.md project-structure regression. Read this spec, the v0.8 install refactor commits (`git log --oneline | head -20`), and `internal/install/agents_md.go`. The fix is already in place; remaining work is (a) optional unit test pinning the resolved paths against fresh-install output, (b) follow-up for non-AGENTS.md surfaces that may carry the same hardcoded layout description (search for `commands/. — Slash` and similar wording across the repo).
+
+---
+
+## recap-unregister-stale-and-empty-repo — "`hero recap unregister` references linger after removal; `hero recap` errors hard on a fresh repo with no commits"
+_bug · planning · horizon: now_
+
+Two related papercuts: the `/diagnose` and `/deliver` slash commands still tell agents to run the removed `hero recap register` / `hero recap unregister` subcommands (the previous cleanup missed `.claude/commands/`), and `hero recap` exits non-zero on a brand-new repo with no commits instead of returning an empty recap.
+
+**Status:** planning — root cause confirmed for both defects; fix is mechanical.
+
+**Pick up at:** rewrite `.claude/commands/diagnose.md` lines 10–14 and `.claude/commands/deliver.md` lines 8–13 to mirror the already-cleaned `commands/diagnose.md` / `commands/deliver.md` ("emit `hero next ask`" wording). Then patch `internal/recap/recap.go:gitCommits` to swallow the "does not have any commits yet" error path and return an empty slice.
+
+→ `.hero/planning/bugs/recap-unregister-stale-and-empty-repo/spec.md`
+
+**Files:** `.claude/commands/diagnose.md`, `.claude/commands/deliver.md`, `internal/recap/recap.go:145`, `internal/recap/recap_test.go`, `commands/diagnose.md` (reference — already correct)
+
+**Skip:** implementing `recap register/unregister` for real — superseded by `hero next ask/suggest/reflection` per `.hero/specs/recap-register-missing/spec.md`.
+
+---
+
+---
+
+## hero-platform — Hero Platform — Headless Execution, Team Automation, and Shared Visibility
+_initiative · planning · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-platform/spec.md)_
+
+---
+
+## hero-killer-features — Hero Killer Features — Agent Effectiveness, Team Power, Living Specs
+_initiative · planning · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-killer-features/spec.md)_
 
 ---
 
@@ -675,51 +582,17 @@ After this sprint completes, hero-code (Rust) consumes three independent contrac
 
 ---
 
-## hero-pm — Hero PM — Product Management Domain Pack
-_feature · planning · horizon: next_
+## environment-awareness — Environment Awareness — CI/Deployment/Runtime Visibility
+_initiative · planning · horizon: next_
 
-First non-engineering Hero domain pack. PM-shaped spec types (PRD, story, epic, roadmap-item, intake-item) with methodology-preset overlays, PM agents and workflows, seven dashboard views (Roadmap default + Story queue + PRD editor + Intake funnel + Story detail + Handoff stream + Chat). IDE-style layout: left nav, tabbed center pane, bottom strip (artifact-state actions + chat input), toggleable right panel (chat with sticky ambient smarts at top). Reuses existing tracker integrations (Jira/Linear/GitHub). Killer demo: a Jira epic becomes a Hero story, `/design` on the story produces an engineering `feature` spec, and the handoff edge surfaces in the Handoff stream live.
-
-**Status:** planning — design pass advanced 2026-05-16. Strategic frame locked (layered presets, five PM principles, silo-tearing thesis). Layout grammar locked (design vs housekeeping modes; bottom strip = verbs; ambient = smarts; chat as right panel + Chat tab for design mode). Research brief + mockup brief + agent/skill/command pack design + handoff-to-hero-code written (27 agents, 32 skills, 22 commands; 13 P0 / 9 P1 / 5 P2). Methodology coaching ships as skills, not agents. Still blocked on primitives 1–6; `/design` still required to lock the canonical Changes section.
-
-**Pick up at:** Run `/design hero-pm` to resolve the open questions and produce the canonical Changes section. The research brief, mockup brief, agent-pack design, and handoff-to-hero-code are sibling files — all four must be incorporated by the design pass, not re-derived.
-
-→ `/design hero-pm`
-
-**Files:** .hero/planning/features/hero-pm/spec.md, .hero/planning/features/hero-pm/research-brief.md, .hero/planning/features/hero-pm/mockup-brief.md, .hero/planning/features/hero-pm/agent-pack-design.md, .hero/planning/features/hero-pm/handoff-to-hero-code.md, .hero/planning/initiatives/hero-domains/spec.md
-**Skip:** New tracker integrations in v1 (reuse Jira/Linear/GitHub only). OKRs as a PM spec type (defer to v2; may belong in a separate `strategy` domain). Methodology as a "mode" (not a mode — a layered preset). Forced point estimation.
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/environment-awareness/spec.md)_
 
 ---
 
-## hero-qa — Hero QA — Quality Assurance Domain Pack
+## spec-prioritization — Spec Prioritization — Now / Next / Someday / Parking-Lot
 _feature · planning · horizon: next_
 
-Second non-engineering Hero domain pack: QA. The thesis: **Hero QA is the quality spine of the sprint and release, not a TestRail clone with chat.** Coverage is a story-completion gate (engineer hands off to QA in-flow); regression status is a release-readiness signal; defects exist when teams want them but the primary loop is fix-before-ship via story rejection. AI authors 40-80 test cases per sprint in minutes, not days. Integration to TestRail and Xray is seamless write-through so teams never duplicate-enter. Brand interaction: QA Reject augments the story with new acceptance criteria and bounces it back, without spawning orphan defect tickets.
-
-**Status:** planning — design pass advanced 2026-05-16. Three siblings landed in single-day dialog: research-brief (887 lines — 12 tools + agent prior art + methodology grounding + six design-original Hero-QA contributions), agent-pack-design (1,119 lines — 23 agents / 26 skills / 18 commands in eight tiers with P0/P1/P2 priorities and contextual-button inventory per artifact), mockup-brief (1,010 lines — eight killer screens with layout, interactions, anti-patterns, and preset variations). Total QA design depth ~3,670 lines vs PM's ~3,630 — at parity. Implementation gated on platform primitives 1-6 plus two amendments (primitive #2 lifecycle overlays; primitive #4 cross-pack ambient population). HTML mockups + handoff-to-hero-code still owed.
-
-**Pick up at:** Produce the eight HTML mockups under `.hero/mocks/hero-qa/` per `mockup-brief.md` (suggested order: Screen 1 → 4 → 2 → 3 → 7 → 5 → 6 → 8). Then write `handoff-to-hero-code.md` summarizing locked design + sibling docs + primitive amendments for a fresh hero-code session to pick up.
-
-→ `/design hero-qa`
-
-**Files:** .hero/planning/features/hero-qa/spec.md, .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/hero-pm/spec.md, .hero/planning/features/hero-pm/agent-pack-design.md
-**Skip:** Native-only-no-integration v1 (we ship Xray and TestRail). A standalone `defect` type by default (opt-in only). Treating QA as a thin variation of engineering. Letting QA reject stories without distinguishing AC-gap from scope-expansion.
-
----
-
-## domain-scoped-knowledge-graph — Domain-Scoped Knowledge Graph — Namespace Tags on Graph Nodes
-_feature · planning · horizon: next_
-
-Add domain namespace tags to every knowledge graph node and edge. Today the graph is flat: a `Spec`, a `Component`, a `Decision` lives in one undifferentiated namespace. When PM and engineering coexist (later), PM stories and engineering features collide unless the graph knows which domain a node belongs to. Tag every node now; teach queries (`hero why`, `hero blocked`, `hero search`) to filter by active domain or render the boundary.
-
-**Status:** planning — stub written 2026-05-15. Blocked on `domain-plugin-architecture`.
-
-**Pick up at:** Run `/design domain-scoped-knowledge-graph`. First decision: edge semantics for cross-domain handoff (`story → feature` from `/design`) — does this need a new edge kind, or is it a regular edge that crosses a namespace boundary? Then audit every query path that touches the graph and decide its v1 stance on filtering.
-
-→ `/design domain-scoped-knowledge-graph`
-
-**Files:** .hero/planning/features/domain-scoped-knowledge-graph/spec.md, .hero/planning/initiatives/hero-domains/spec.md, internal/index/, internal/graph/
-**Skip:** Full multi-active-domain runtime in v1 — single-active-domain is enough. Namespace tags now so v2 can flip the switch without re-indexing.
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/spec-prioritization/spec.md)_
 
 ---
 
@@ -739,6 +612,110 @@ Make `hero scan` domain-aware. Today scan is a code scanner: detect languages, f
 
 ---
 
+## project-charter — Project Charter — Mission, Principles, and Auto-Injection
+_feature · planning · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/project-charter/spec.md)_
+
+---
+
+## lean-agent-profile — Lean Agent Profile — Opt-In Trim for Top-Tier Models
+_feature · planning · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/lean-agent-profile/spec.md)_
+
+---
+
+## inline-propose-v1.1-typed-anchor-value — Inline-propose v1.1 — typed anchor.value discriminator (gated on hero-code feedback)
+_feature · planning · horizon: next_
+
+> **Do not pick this up without evidence first.** Confirm hero-code has filed a peer call (or equivalent advisory) describing concrete typing pain on `anchor.value` in the v1.0 envelope. Read the evidence. Then re-read this spec's Design section — A/B/C are sketches, not commitments; pick the option that addresses the specific pain hero-code surfaced, not the one that sounds cleanest in the abstract. Update this spec with the chosen design (replace the Design section with a single locked option, retain A/B/C as "Rejected" subsections), then deliver per the Acceptance Criteria. If hero-code's pain is rendering-side rather than typing-side, push back — this spec is for typed-shape friction only.
+
+---
+
+## hero-runner — Hero Runner — Headless Agent Execution via Claude API
+_feature · planning · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-runner/spec.md)_
+
+---
+
+## hero-qa — Hero QA — Quality Assurance Domain Pack
+_feature · planning · horizon: next_
+
+Second non-engineering Hero domain pack: QA. The thesis: **Hero QA is the quality spine of the sprint and release, not a TestRail clone with chat.** Coverage is a story-completion gate (engineer hands off to QA in-flow); regression status is a release-readiness signal; defects exist when teams want them but the primary loop is fix-before-ship via story rejection. AI authors 40-80 test cases per sprint in minutes, not days. Integration to TestRail and Xray is seamless write-through so teams never duplicate-enter. Brand interaction: QA Reject augments the story with new acceptance criteria and bounces it back, without spawning orphan defect tickets.
+
+**Status:** planning — design pass advanced 2026-05-16. Three siblings landed in single-day dialog: research-brief (887 lines — 12 tools + agent prior art + methodology grounding + six design-original Hero-QA contributions), agent-pack-design (1,119 lines — 23 agents / 26 skills / 18 commands in eight tiers with P0/P1/P2 priorities and contextual-button inventory per artifact), mockup-brief (1,010 lines — eight killer screens with layout, interactions, anti-patterns, and preset variations). Total QA design depth ~3,670 lines vs PM's ~3,630 — at parity. Implementation gated on platform primitives 1-6 plus two amendments (primitive #2 lifecycle overlays; primitive #4 cross-pack ambient population). HTML mockups + handoff-to-hero-code still owed.
+
+**Pick up at:** Produce the eight HTML mockups under `.hero/mocks/hero-qa/` per `mockup-brief.md` (suggested order: Screen 1 → 4 → 2 → 3 → 7 → 5 → 6 → 8). Then write `handoff-to-hero-code.md` summarizing locked design + sibling docs + primitive amendments for a fresh hero-code session to pick up.
+
+→ `/design hero-qa`
+
+**Files:** .hero/planning/features/hero-qa/spec.md, .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/hero-pm/spec.md, .hero/planning/features/hero-pm/agent-pack-design.md
+**Skip:** Native-only-no-integration v1 (we ship Xray and TestRail). A standalone `defect` type by default (opt-in only). Treating QA as a thin variation of engineering. Letting QA reject stories without distinguishing AC-gap from scope-expansion.
+
+---
+
+## hero-pm — Hero PM — Product Management Domain Pack
+_feature · planning · horizon: next_
+
+First non-engineering Hero domain pack. PM-shaped spec types (PRD, story, epic, roadmap-item, intake-item) with methodology-preset overlays, PM agents and workflows, seven dashboard views (Roadmap default + Story queue + PRD editor + Intake funnel + Story detail + Handoff stream + Chat). IDE-style layout: left nav, tabbed center pane, bottom strip (artifact-state actions + chat input), toggleable right panel (chat with sticky ambient smarts at top). Reuses existing tracker integrations (Jira/Linear/GitHub). Killer demo: a Jira epic becomes a Hero story, `/design` on the story produces an engineering `feature` spec, and the handoff edge surfaces in the Handoff stream live.
+
+**Status:** planning — design pass advanced 2026-05-16. Strategic frame locked (layered presets, five PM principles, silo-tearing thesis). Layout grammar locked (design vs housekeeping modes; bottom strip = verbs; ambient = smarts; chat as right panel + Chat tab for design mode). Research brief + mockup brief + agent/skill/command pack design + handoff-to-hero-code written (27 agents, 32 skills, 22 commands; 13 P0 / 9 P1 / 5 P2). Methodology coaching ships as skills, not agents. Still blocked on primitives 1–6; `/design` still required to lock the canonical Changes section.
+
+**Pick up at:** Run `/design hero-pm` to resolve the open questions and produce the canonical Changes section. The research brief, mockup brief, agent-pack design, and handoff-to-hero-code are sibling files — all four must be incorporated by the design pass, not re-derived.
+
+→ `/design hero-pm`
+
+**Files:** .hero/planning/features/hero-pm/spec.md, .hero/planning/features/hero-pm/research-brief.md, .hero/planning/features/hero-pm/mockup-brief.md, .hero/planning/features/hero-pm/agent-pack-design.md, .hero/planning/features/hero-pm/handoff-to-hero-code.md, .hero/planning/initiatives/hero-domains/spec.md
+**Skip:** New tracker integrations in v1 (reuse Jira/Linear/GitHub only). OKRs as a PM spec type (defer to v2; may belong in a separate `strategy` domain). Methodology as a "mode" (not a mode — a layered preset). Forced point estimation.
+
+---
+
+## graph-memory — Graph Memory — Unified Substrate for Hero's Knowledge Corpus
+_feature · planning · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/graph-memory/spec.md)_
+
+---
+
+## graph-memory-federation — Graph Memory Federation — Multi-Repo, Multi-Team, Cross-Unit Topology
+_feature · planning · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/graph-memory-federation/spec.md)_
+
+---
+
+## graph-memory-7c-live-test — Graph Memory Phase 7c — Live Multi-Dev Sync Test
+_feature · planning · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/graph-memory-7c-live-test/spec.md)_
+
+---
+
+## e2e-onboarding — E2E Onboarding Suite — Fresh Repo to Productive Workspace
+_feature · planning · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/e2e-onboarding/spec.md)_
+
+---
+
+## domain-scoped-knowledge-graph — Domain-Scoped Knowledge Graph — Namespace Tags on Graph Nodes
+_feature · planning · horizon: next_
+
+Add domain namespace tags to every knowledge graph node and edge. Today the graph is flat: a `Spec`, a `Component`, a `Decision` lives in one undifferentiated namespace. When PM and engineering coexist (later), PM stories and engineering features collide unless the graph knows which domain a node belongs to. Tag every node now; teach queries (`hero why`, `hero blocked`, `hero search`) to filter by active domain or render the boundary.
+
+**Status:** planning — stub written 2026-05-15. Blocked on `domain-plugin-architecture`.
+
+**Pick up at:** Run `/design domain-scoped-knowledge-graph`. First decision: edge semantics for cross-domain handoff (`story → feature` from `/design`) — does this need a new edge kind, or is it a regular edge that crosses a namespace boundary? Then audit every query path that touches the graph and decide its v1 stance on filtering.
+
+→ `/design domain-scoped-knowledge-graph`
+
+**Files:** .hero/planning/features/domain-scoped-knowledge-graph/spec.md, .hero/planning/initiatives/hero-domains/spec.md, internal/index/, internal/graph/
+**Skip:** Full multi-active-domain runtime in v1 — single-active-domain is enough. Namespace tags now so v2 can flip the switch without re-indexing.
+
+---
+
 ## domain-routing-and-agents — Domain Routing and Agents — Active-Pack AGENTS.md and Agent Loader
 _feature · planning · horizon: next_
 
@@ -755,80 +732,19 @@ Make agent routing and discovery domain-aware. Today `AGENTS.md` and the routing
 
 ---
 
-## e2e-onboarding — E2E Onboarding Suite — Fresh Repo to Productive Workspace
+## domain-plugin-architecture — Domain Plugin Architecture — Refactor Content into Swappable Domain Packs
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/e2e-onboarding/spec.md)_
+Foundation primitive for `hero-domains`. Pure refactor — move existing engineering content into `domains/engineering/` and add `hero init --domain` / `hero domain switch` plumbing. Zero new behavior, but unblocks every other primitive and every future domain pack (PM, QA, design, etc).
 
----
+**Status:** planning — design exists from 2026-04-25; reframed as the foundation for the PM-first roadmap on 2026-05-15. No code written yet.
 
-## graph-memory — Graph Memory — Unified Substrate for Hero's Knowledge Corpus
-_feature · planning · horizon: next_
+**Pick up at:** `/deliver` this spec. Examples below have been updated from sales-first to PM-first to reflect the current sequencing, but the actual refactor is content-agnostic — PM-specific pack content lives in the separate `hero-pm` spec.
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/graph-memory/spec.md)_
+→ `/deliver domain-plugin-architecture`
 
----
-
-## graph-memory-7c-live-test — Graph Memory Phase 7c — Live Multi-Dev Sync Test
-_feature · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/graph-memory-7c-live-test/spec.md)_
-
----
-
-## hero-runner — Hero Runner — Headless Agent Execution via Claude API
-_feature · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-runner/spec.md)_
-
----
-
-## hero-killer-features — Hero Killer Features — Agent Effectiveness, Team Power, Living Specs
-_initiative · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-killer-features/spec.md)_
-
----
-
-## environment-awareness — Environment Awareness — CI/Deployment/Runtime Visibility
-_initiative · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/environment-awareness/spec.md)_
-
----
-
-## hero-platform — Hero Platform — Headless Execution, Team Automation, and Shared Visibility
-_initiative · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-platform/spec.md)_
-
----
-
-## spec-prioritization — Spec Prioritization — Now / Next / Someday / Parking-Lot
-_feature · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/spec-prioritization/spec.md)_
-
----
-
-## project-charter — Project Charter — Mission, Principles, and Auto-Injection
-_feature · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/project-charter/spec.md)_
-
----
-
-## lean-agent-profile — Lean Agent Profile — Opt-In Trim for Top-Tier Models
-_feature · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/lean-agent-profile/spec.md)_
-
----
-
-## graph-memory-federation — Graph Memory Federation — Multi-Repo, Multi-Team, Cross-Unit Topology
-_feature · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/graph-memory-federation/spec.md)_
+**Files:** .hero/planning/features/domain-plugin-architecture/spec.md, .hero/planning/initiatives/hero-domains/spec.md, embed.go, internal/install/install.go, internal/cli/init.go
+**Skip:** Third-party domain packs loaded from disk (deferred to a future spec). Multi-domain coexistence in one workspace (handled by domain-scoped-knowledge-graph).
 
 ---
 
@@ -853,17 +769,17 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## hero-community — Hero Community — Discord/Discussions, Contributor Guide, Issue Templates
-_feature · planning · horizon: someday_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-community/spec.md)_
-
----
-
 ## hero-telemetry — Hero Telemetry — Opt-In Usage Analytics + Feedback Channel
 _feature · planning · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-telemetry/spec.md)_
+
+---
+
+## hero-positioning — Hero Positioning — Narrative, ICP, Messaging, Comparison
+_feature · planning · horizon: someday_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-positioning/spec.md)_
 
 ---
 
@@ -874,10 +790,10 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## hero-positioning — Hero Positioning — Narrative, ICP, Messaging, Comparison
+## hero-community — Hero Community — Discord/Discussions, Contributor Guide, Issue Templates
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-positioning/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-community/spec.md)_
 
 ---
 
@@ -895,17 +811,10 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## sprint-2026-05-01 — Sprint Plan — 2026-05-01 → 2026-05-14
-_note · active · horizon: now_
+## project-rules — Project Rules
+_rule · active · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/notes/sprint-2026-05-01/spec.md)_
-
----
-
-## dev-workflow — Development Workflow & Commands
-_context · active · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/context/dev-workflow/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/rules/project-rules/spec.md)_
 
 ---
 
@@ -916,24 +825,10 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## project-rules — Project Rules
-_rule · active · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/rules/project-rules/spec.md)_
-
----
-
 ## v2-delivery-audit-2026-04-28 — V2 Delivery Audit — 2026-04-28
 _note · active · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/notes/v2-delivery-audit-2026-04-28/spec.md)_
-
----
-
-## recovery-strategy-conversation — Recovery Strategy Conversation — 2026-04-28
-_note · active · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/notes/recovery-strategy-conversation/spec.md)_
 
 ---
 
@@ -944,6 +839,20 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
+## sprint-2026-05-01 — Sprint Plan — 2026-05-01 → 2026-05-14
+_note · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/notes/sprint-2026-05-01/spec.md)_
+
+---
+
+## recovery-strategy-conversation — Recovery Strategy Conversation — 2026-04-28
+_note · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/notes/recovery-strategy-conversation/spec.md)_
+
+---
+
 ## active-context-management-design — Active Context Management — Design Constraints and Layering Rationale
 _note · active · horizon: now_
 
@@ -951,17 +860,10 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## index — Code Structure Index
+## temporal-supersession-pattern — Temporal Supersession Pattern — Detecting Stale Facts at Read Time
 _context · active · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/code/index/spec.md)_
-
----
-
-## architecture-overview — Architecture Overview
-_context · active · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/context/architecture-overview/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/context/temporal-supersession-pattern/spec.md)_
 
 ---
 
@@ -972,10 +874,31 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## temporal-supersession-pattern — Temporal Supersession Pattern — Detecting Stale Facts at Read Time
+## dev-workflow — Development Workflow & Commands
 _context · active · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/context/temporal-supersession-pattern/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/context/dev-workflow/spec.md)_
+
+---
+
+## architecture-overview — Architecture Overview
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/context/architecture-overview/spec.md)_
+
+---
+
+## index — Code Structure Index
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/code/index/spec.md)_
+
+---
+
+## buddy-model-architecture — Buddy Model Architecture — Two-Model Tag Team Vision
+_note · active · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/notes/buddy-model-architecture/spec.md)_
 
 ---
 
@@ -1000,13 +923,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## buddy-model-architecture — Buddy Model Architecture — Two-Model Tag Team Vision
-_note · active · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/notes/buddy-model-architecture/spec.md)_
-
----
-
 ## core-vertical-triangulation — Core / Vertical Triangulation — Full Classification of Existing Artifacts
 _note · active · horizon: next_
 
@@ -1021,10 +937,10 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## architectural-drift-detection — "Architectural Drift Detection"
+## multi-domain-core — "Multi-Domain Core Engine"
 _feature · draft · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/architectural-drift-detection/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/multi-domain-core/spec.md)_
 
 ---
 
@@ -1042,10 +958,10 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## multi-domain-core — "Multi-Domain Core Engine"
+## architectural-drift-detection — "Architectural Drift Detection"
 _feature · draft · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/multi-domain-core/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/architectural-drift-detection/spec.md)_
 
 ---
 

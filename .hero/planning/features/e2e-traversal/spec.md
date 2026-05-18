@@ -1,5 +1,6 @@
 ---
 title: E2E Traversal Suite — Graph Queries Beat Grep
+slug: e2e-traversal
 type: feature
 status: delivering
 priority: P0

@@ -1,5 +1,6 @@
 ---
 title: Hero v2 — System Design Initiative
+slug: hero-v2-system-design
 type: initiative
 status: completed
 tags: [v2, initiative, architecture]

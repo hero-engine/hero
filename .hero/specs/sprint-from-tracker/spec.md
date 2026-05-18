@@ -1,5 +1,6 @@
 ---
 title: Sprint from Tracker — Load a Live Sprint into Hero Specs
+slug: sprint-from-tracker
 type: feature
 status: completed
 milestone: v0.2

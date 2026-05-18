@@ -1,5 +1,6 @@
 ---
 title: "Single-Source Install P4 — hero verify-install for ongoing drift detection"
+slug: single-source-install-p4-verify
 type: feature
 status: completed
 status_verified: "2026-05-12 by go test ./internal/install/... -count=1 — 6 new TestVerify_* tests pass. Dogfooded on hero (caught .opencode/ rendered drift before P3 ran on it) + example codebase (post-migrate: ✓ no issues found)."

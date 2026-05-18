@@ -285,7 +285,7 @@ func generateAgentsMD(projectRoot, outputPath string) error {
 	sb.WriteString("## Hero workspace\n\n")
 	sb.WriteString("This project uses [Hero](https://github.com/hero-engine/hero) for spec-driven development.\n")
 	sb.WriteString("Specs live in `.hero/`. Use `/design` to create feature specs, `/diagnose` for bugs,\n")
-	sb.WriteString("and `/deliver` to implement against a spec. Run `hero context --files <paths>` to see\n")
+	sb.WriteString(fmt.Sprintf("and `/deliver` to implement against a spec. Run `%s <paths>` to see\n", cliHintByID("context-imports-files")))
 	sb.WriteString("relevant conventions and past work for the files you're touching.\n")
 
 	return os.WriteFile(outputPath, []byte(sb.String()), 0o644)
@@ -453,6 +453,11 @@ var managedGitignoreEntries = []string{
 	".hero/graph.db",
 	".hero/graph.db-wal",
 	".hero/graph.db-shm",
+	"",
+	"# Search index cache (regenerable via `hero index`)",
+	".hero/index.db",
+	".hero/index.db-wal",
+	".hero/index.db-shm",
 	"",
 	"# Per-machine NEXT state (rewritten every Stop hook + agent scratch)",
 	".hero/next/*.local.md",

@@ -1,5 +1,6 @@
 ---
 title: Reasoning Log Per Session — Structured Agent Decision Trail
+slug: reasoning-log
 type: feature
 status: completed
 milestone: v0.4

@@ -1,5 +1,6 @@
 ---
 title: Delivery Mode Flags — Autopilot, Supervised, and Dry-Run
+slug: delivery-mode-flags
 type: feature
 status: completed
 tags: [deliver, modes, ux, claims, dx]

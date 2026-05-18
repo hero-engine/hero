@@ -1,5 +1,6 @@
 ---
 title: Agent End-of-Turn Recap and Spin-Off Suggestions — Consistent Closing Behavior, Scope-Scaled
+slug: agent-end-of-turn-recap
 type: feature
 status: planning
 tags: [agents, agents-md, recap, handoff, behavior, spin-off]

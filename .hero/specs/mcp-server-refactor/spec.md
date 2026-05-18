@@ -1,5 +1,6 @@
 ---
 title: MCP Server Refactor — Split the 3774-Line Monolith into Domain Files with Table-Driven Dispatch
+slug: mcp-server-refactor
 type: feature
 status: completed
 tags: [mcp, refactor, quality, internal, no-behavior-change, testing]

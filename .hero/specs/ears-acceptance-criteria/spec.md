@@ -1,5 +1,6 @@
 ---
 title: EARS Acceptance Criteria — Structured Grammar for Spec Validation
+slug: ears-acceptance-criteria
 type: feature
 status: completed
 tags: [specs, ears, testing, parser, validation]

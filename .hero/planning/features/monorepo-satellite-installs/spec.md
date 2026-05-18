@@ -1,5 +1,6 @@
 ---
 title: "Monorepo Satellite Installs — One Workspace, Many Subfolder Entry Points"
+slug: monorepo-satellite-installs
 type: feature
 status: delivering
 priority: high

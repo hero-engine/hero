@@ -1,5 +1,6 @@
 ---
 title: "Spec Decomposition — Split Large Specs into Child Specs"
+slug: spec-decomposition
 type: feature
 status: completed
 tags: [agent, planning]

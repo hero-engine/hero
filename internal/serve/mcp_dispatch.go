@@ -48,6 +48,7 @@ func (s *MCPServer) toolHandlers() map[string]toolHandler {
 		"hero_why":       s.toolWhy,
 		"hero_blocked":   s.toolBlocked,
 		"hero_expand":    s.toolExpand,
+		"hero_snapshot":  s.toolSnapshot,
 
 		// mutate
 		"hero_event":         s.toolEvent,

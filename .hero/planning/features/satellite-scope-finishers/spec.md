@@ -1,5 +1,6 @@
 ---
 title: "Satellite Scope Finishers — Queue Default and MCP Subproject Param"
+slug: satellite-scope-finishers
 type: feature
 status: planning
 priority: medium

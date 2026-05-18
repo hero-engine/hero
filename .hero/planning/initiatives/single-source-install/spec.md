@@ -1,5 +1,6 @@
 ---
 title: Single-Source Install — One Canonical Tree, Every Harness Reads It
+slug: single-source-install
 type: initiative
 status: planning
 priority: P0

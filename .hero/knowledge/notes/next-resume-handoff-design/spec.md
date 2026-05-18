@@ -1,5 +1,6 @@
 ---
 title: hero next vs hero resume vs hero handoff — Design and History
+slug: next-resume-handoff-design
 type: note
 status: active
 tags: [next-md, resume, handoff, briefing, session-design, design-decisions]

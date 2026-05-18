@@ -1,5 +1,6 @@
 ---
 title: Skills as Git-Native Reusable Commands — hero skill save / run
+slug: skills-git-native
 type: feature
 status: completed
 milestone: v0.3

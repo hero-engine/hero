@@ -1,5 +1,6 @@
 ---
 title: Claude Trust Permission Allowlist — Stop Per-Command Prompt Fatigue
+slug: claude-trust-permission-allowlist
 type: bug
 status: completed
 severity: medium

@@ -1,5 +1,6 @@
 ---
 title: "Hero Governance — Classification, Policy-Filtered Retrieval, Agent Identity, Audit-by-Construction"
+slug: hero-governance
 type: feature
 status: planning
 priority: P0

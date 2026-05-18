@@ -1,5 +1,6 @@
 ---
 title: "Cross-Spec Awareness"
+slug: cross-spec-awareness
 type: feature
 status: draft
 priority: medium

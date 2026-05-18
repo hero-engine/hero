@@ -1,5 +1,6 @@
 ---
 title: "HTML Reports — Self-Contained Project Report Generation"
+slug: html-report
 type: feature
 status: completed
 tags: [cli, reporting]

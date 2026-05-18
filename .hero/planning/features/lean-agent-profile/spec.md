@@ -1,5 +1,6 @@
 ---
 title: Lean Agent Profile — Opt-In Trim for Top-Tier Models
+slug: lean-agent-profile
 type: feature
 status: planning
 tags: [agents, mcp, profile, dx, future]

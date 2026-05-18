@@ -135,7 +135,7 @@ func runNote(cmd *cobra.Command, args []string) error {
 	scope := resolveActiveScope(projectRoot, heroDir)
 
 	// Generate note content
-	content := generateNoteContent(title, date, body, scope)
+	content := generateNoteContent(title, slug, date, body, scope)
 
 	if err := os.WriteFile(specPath, []byte(content), 0o644); err != nil {
 		return fmt.Errorf("writing note: %w", err)
@@ -172,10 +172,11 @@ func resolveActiveScope(projectRoot, heroDir string) string {
 // generateNoteContent creates the note markdown with minimal frontmatter.
 // If scope is non-empty, it is stamped into a `subproject:` field so the
 // note carries its monorepo scope through to the graph and surfaces.
-func generateNoteContent(title, date, body, scope string) string {
+func generateNoteContent(title, slug, date, body, scope string) string {
 	var sb strings.Builder
 	sb.WriteString("---\n")
 	sb.WriteString(fmt.Sprintf("title: %s\n", title))
+	sb.WriteString(fmt.Sprintf("slug: %s\n", slug))
 	sb.WriteString("type: note\n")
 	sb.WriteString(fmt.Sprintf("created: %s\n", date))
 	if scope != "" {

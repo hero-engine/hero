@@ -1,5 +1,6 @@
 ---
 title: "Timely Briefs — Scheduled Synthesis Surfaces Over the Hero Graph"
+slug: timely-briefs
 type: feature
 status: planning
 priority: medium

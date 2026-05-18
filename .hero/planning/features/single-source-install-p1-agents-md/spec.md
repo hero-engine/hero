@@ -1,5 +1,6 @@
 ---
 title: "Single-Source Install P1 — AGENTS.md as the Only Root Instruction File"
+slug: single-source-install-p1-agents-md
 type: feature
 status: planning
 priority: P0

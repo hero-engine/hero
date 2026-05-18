@@ -1,5 +1,6 @@
 ---
 title: Deep Mode — LLM-Enhanced Symbol Descriptions
+slug: deep-mode-llm-descriptions
 type: feature
 status: completed
 priority: medium

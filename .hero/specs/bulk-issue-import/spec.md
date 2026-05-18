@@ -1,5 +1,6 @@
 ---
 title: "Bulk Issue Import — Pull Issues from GitHub, Jira, and Linear"
+slug: bulk-issue-import
 type: feature
 status: completed
 tags: [cli, tracker, import]

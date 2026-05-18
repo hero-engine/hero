@@ -1,5 +1,6 @@
 ---
 title: MCP Tool Filtering — Route and Control Which Tools Agents Can Use
+slug: mcp-tool-filtering
 type: feature
 status: completed
 milestone: v0.2

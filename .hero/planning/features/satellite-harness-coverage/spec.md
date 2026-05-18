@@ -1,5 +1,6 @@
 ---
 title: "Satellite Harness Coverage — Per-Target Markers for OpenCode, Cursor, Generic"
+slug: satellite-harness-coverage
 type: feature
 status: planning
 priority: medium

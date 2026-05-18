@@ -1,5 +1,6 @@
 ---
 title: Hero Killer Features — Agent Effectiveness, Team Power, Living Specs
+slug: hero-killer-features
 type: initiative
 status: planning
 tags: [agent-effectiveness, team, intelligence, dx]

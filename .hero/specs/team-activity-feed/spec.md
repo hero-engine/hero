@@ -1,5 +1,6 @@
 ---
 title: Team Activity Feed — Cross-Session Event Log
+slug: team-activity-feed
 type: feature
 status: completed
 priority: P1

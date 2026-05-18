@@ -1,5 +1,6 @@
 ---
 title: "AI Governance Layer"
+slug: ai-governance-layer
 type: feature
 status: completed
 priority: high

@@ -1,5 +1,6 @@
 ---
 title: Development Workflow & Commands
+slug: dev-workflow
 type: context
 status: active
 created: 2026-04-29

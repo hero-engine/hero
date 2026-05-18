@@ -1,5 +1,6 @@
 ---
 title: Impact Analysis — What Breaks If I Touch This?
+slug: impact-analysis
 type: feature
 status: completed
 priority: P0

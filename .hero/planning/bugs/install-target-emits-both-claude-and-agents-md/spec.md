@@ -1,5 +1,6 @@
 ---
 title: "`hero install --target claude` emits both CLAUDE.md and AGENTS.md"
+slug: install-target-emits-both-claude-and-agents-md
 type: bug
 status: planning
 priority: medium

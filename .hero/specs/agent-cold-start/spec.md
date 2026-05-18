@@ -1,5 +1,6 @@
 ---
 title: Agent Cold-Start — `.hero/NEXT.md` Briefing for Fresh Sessions
+slug: agent-cold-start
 type: feature
 status: completed
 tags: [agents, prime, cold-start, dx, skill]

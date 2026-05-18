@@ -1,5 +1,6 @@
 ---
 title: "Design Mockups — Visual Prototyping from Specs"
+slug: design-mockups
 type: feature
 status: completed
 tags: [mock, design, ux, html, prototype]

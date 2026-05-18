@@ -1,5 +1,6 @@
 ---
 title: Index Staleness Auto-Refresh — Specs Created Outside the Workflow Always Surface
+slug: index-staleness-auto-refresh
 type: feature
 status: completed
 priority: high

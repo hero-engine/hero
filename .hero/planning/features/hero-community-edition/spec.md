@@ -1,5 +1,6 @@
 ---
 title: "Hero Community Edition — Self-Host Team Build that Demonstrates the Power without Eroding the Moat"
+slug: hero-community-edition
 type: feature
 status: planning
 priority: medium

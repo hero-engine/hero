@@ -1,5 +1,6 @@
 ---
 title: Scan output cleanup — three first-five-minutes papercuts
+slug: scan-output-cleanup
 type: bug
 status: completed
 severity: low

@@ -1,5 +1,6 @@
 ---
 title: Spec Triage on Import — Duplicate Detection and Convention Conflict Check
+slug: spec-triage
 type: feature
 status: completed
 milestone: v0.3

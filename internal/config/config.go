@@ -47,6 +47,7 @@ type Config struct {
 	Score       *ScoreConfig      `json:"score,omitempty"`
 	Cloud       *CloudConfig      `json:"cloud,omitempty"`
 	Next        *NextConfig       `json:"next,omitempty"`
+	Snapshot    *SnapshotConfig   `json:"snapshot,omitempty"`
 	Specs       *SpecsConfig      `json:"specs,omitempty"`
 	Delivery    *DeliveryConfig   `json:"delivery,omitempty"`
 	Environment *EnvironmentConfig `json:"environment,omitempty"`
@@ -263,6 +264,35 @@ type NextConfig struct {
 	// fields. Defaults false so legacy repos keep working unchanged
 	// until the user explicitly opts in.
 	Projected bool `json:"projected,omitempty"`
+}
+
+// SnapshotConfig holds settings for the project-snapshot projector
+// and its archive subsystem. See the project-snapshot spec for the
+// full design — archives are written by the projector after the live
+// SNAPSHOT.md is rendered, governed by the trigger model defined here.
+type SnapshotConfig struct {
+	// Archive carries the archive-related sub-settings. Nil-safe:
+	// readers should call accessor methods that supply defaults.
+	Archive *SnapshotArchiveConfig `json:"archive,omitempty"`
+}
+
+// SnapshotArchiveConfig controls when archives are written and how
+// many are retained on disk. Defaults follow the spec: monthly
+// staleness cutoff, milestones on, retention=all.
+type SnapshotArchiveConfig struct {
+	// StalenessCutoff: weekly | biweekly | monthly | quarterly | off.
+	// Empty → "monthly".
+	StalenessCutoff string `json:"staleness_cutoff,omitempty"`
+	// Milestones enables release-tag / initiative-completion auto
+	// archiving. Default true.
+	Milestones *bool `json:"milestones,omitempty"`
+	// ReleaseTagPattern is a regex tested against new git tag names.
+	// Empty → "v[0-9].*".
+	ReleaseTagPattern string `json:"release_tag_pattern,omitempty"`
+	// Retention: all | last-N | none. Empty → "all".
+	Retention string `json:"retention,omitempty"`
+	// RetentionCount is the N for "last-N".
+	RetentionCount int `json:"retention_count,omitempty"`
 }
 
 // CloudConfig holds Hero Cloud sync settings.
@@ -1379,4 +1409,33 @@ func (c Config) NextProjected() bool {
 // MocksDir returns the path to the mocks directory.
 func (c Config) MocksDir(projectRoot string) string {
 	return filepath.Join(c.HeroDir(projectRoot), "mocks")
+}
+
+// SnapshotArchive returns the resolved archive config with documented
+// defaults filled in. Always returns a non-nil pointer so callers can
+// read fields without nil-checking.
+func (c Config) SnapshotArchive() SnapshotArchiveConfig {
+	out := SnapshotArchiveConfig{}
+	if c.Snapshot != nil && c.Snapshot.Archive != nil {
+		out = *c.Snapshot.Archive
+	}
+	if out.StalenessCutoff == "" {
+		out.StalenessCutoff = "monthly"
+	}
+	if out.ReleaseTagPattern == "" {
+		out.ReleaseTagPattern = "v[0-9].*"
+	}
+	if out.Retention == "" {
+		out.Retention = "all"
+	}
+	return out
+}
+
+// SnapshotMilestonesEnabled reports whether milestone-triggered
+// archives should fire. Defaults to true when unset.
+func (c Config) SnapshotMilestonesEnabled() bool {
+	if c.Snapshot == nil || c.Snapshot.Archive == nil || c.Snapshot.Archive.Milestones == nil {
+		return true
+	}
+	return *c.Snapshot.Archive.Milestones
 }

@@ -1,5 +1,6 @@
 ---
 title: Version mismatch severity
+slug: version-mismatch-severity
 type: feature
 status: planning
 priority: P1

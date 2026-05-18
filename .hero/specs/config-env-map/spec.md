@@ -1,5 +1,6 @@
 ---
 title: Config/Env Map — Environment Variable and Configuration Index
+slug: config-env-map
 type: feature
 status: completed
 priority: low

@@ -1,5 +1,6 @@
 ---
 title: NEXT No-Op Writes — Avoid Timestamp-Only Handoff Churn
+slug: next-noop-writes
 type: feature
 status: completed
 priority: P1

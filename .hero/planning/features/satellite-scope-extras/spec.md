@@ -1,5 +1,6 @@
 ---
 title: "Satellite Scope Extras — Why Traversal, Spec Move, Cloud Filtering"
+slug: satellite-scope-extras
 type: feature
 status: planning
 priority: medium

@@ -1,5 +1,6 @@
 ---
 title: Harness Install Paths — Land Files Where Each Tool Actually Loads Them
+slug: harness-install-paths-match-loaders
 type: feature
 status: completed
 priority: P0

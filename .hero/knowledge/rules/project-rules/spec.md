@@ -1,5 +1,6 @@
 ---
 title: Project Rules
+slug: project-rules
 type: rule
 status: active
 created: 2026-04-29

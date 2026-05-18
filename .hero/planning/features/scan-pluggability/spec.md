@@ -1,5 +1,6 @@
 ---
 title: Scan Pluggability — Per-Domain `hero scan` Implementations
+slug: scan-pluggability
 type: feature
 status: planning
 priority: P0

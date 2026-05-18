@@ -1,5 +1,6 @@
 ---
 title: Hero Telemetry — Opt-In Usage Analytics + Feedback Channel
+slug: hero-telemetry
 type: feature
 status: planning
 priority: P1
