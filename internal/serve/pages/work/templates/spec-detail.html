@@ -1,0 +1,30 @@
+{{- /* spec-detail.html — Work spec detail body. Renders the spec
+       page-hero (composed in Go), an inline action row, the rendered
+       markdown body, and a relations footer. Wrapped in
+       `<section id="work-spec-detail">` for stable targeting. */ -}}
+{{ define "spec-detail.html" }}
+<section id="work-spec-detail" class="work-section work-spec-detail">
+  <div class="wsd-actions">
+    <a href="#" class="btn btn-ghost">Edit &#x2197;</a>
+    <a href="#" class="btn btn-ghost">Open file &#x2197;</a>
+  </div>
+
+  <article class="wsd-body">
+    {{ .BodyHTML }}
+  </article>
+
+  {{- if .Relations }}
+  <footer class="wsd-relations">
+    <h3 class="wsd-relations-title">Relations</h3>
+    <ul class="wsd-relations-list">
+      {{- range .Relations }}
+      <li>
+        <span class="wsd-rel-kind">{{ .Kind }}</span>
+        <a class="wsd-rel-target" href="/work/spec/{{ .Target }}">{{ .Target }}</a>
+      </li>
+      {{- end }}
+    </ul>
+  </footer>
+  {{- end }}
+</section>
+{{ end }}

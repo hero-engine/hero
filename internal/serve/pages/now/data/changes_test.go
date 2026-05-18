@@ -32,7 +32,9 @@ func TestKindFromEventType(t *testing.T) {
 		"spec_updated":          "spec",
 		"spec.status_changed":   "spec",
 		"delivery_complete":     "check",
-		"spec.complete":         "check",
+		// spec.complete falls through to the "pulse" default — it was
+		// a draft verb that never landed (see polish-v2 Fix 4).
+		"spec.complete":         "pulse",
 		"decision_made":         "decision",
 		"blocker_hit":           "drift",
 		"peer.handoff.sent":     "handoff",

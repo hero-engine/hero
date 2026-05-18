@@ -47,17 +47,21 @@ func writeEventLog(t *testing.T, dir string, lines ...string) {
 	}
 }
 
-func TestCountCompletedSince_CountsSpecComplete(t *testing.T) {
+func TestCountCompletedSince_CountsDeliveryComplete(t *testing.T) {
 	dir := t.TempDir()
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	writeEventLog(t, dir,
 		`{"ts":"`+now+`","type":"delivery_complete","slug":"a","message":""}`,
-		`{"ts":"`+now+`","type":"spec.complete","slug":"b","message":""}`,
+		`{"ts":"`+now+`","type":"delivery_complete","slug":"b","message":""}`,
 		`{"ts":"`+now+`","type":"decision_made","slug":"c","message":""}`,
+		// spec.complete is intentionally NOT counted — it was a draft
+		// verb that never had an emitter. Only delivery_complete
+		// signals a finished spec (see polish-v2 Fix 4).
+		`{"ts":"`+now+`","type":"spec.complete","slug":"d","message":""}`,
 	)
 	got := countCompletedSince(dir, 7*24*time.Hour)
 	if got != 2 {
-		t.Errorf("countCompletedSince = %d, want 2 (delivery_complete + spec.complete)", got)
+		t.Errorf("countCompletedSince = %d, want 2 (delivery_complete only)", got)
 	}
 }
 

@@ -616,6 +616,82 @@ section.metric-strip-section { padding: 24px 0 28px 0; }
 }
 
 /* =================================================================
+   Roadmap filter row (Work home)
+   ================================================================= */
+.rm-filters {
+  display: flex;
+  gap: 24px;
+  padding: 8px 0 12px 0;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.rm-filter-group {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.rm-filter-label {
+  color: var(--ink-4);
+  margin-right: 8px;
+}
+.rm-filter-tab {
+  position: relative;
+  padding: 6px 10px;
+  color: var(--ink-3);
+  font-size: 13px;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.rm-filter-tab:hover { color: var(--hero-ink); text-decoration: none; }
+.rm-filter-tab.active {
+  color: var(--hero-ink);
+  border-bottom-color: var(--hero-blue-700);
+  font-weight: 600;
+}
+
+/* =================================================================
+   Coming-soon stub (shared shell fragment)
+   ================================================================= */
+.coming-soon { margin: 32px 0; }
+.cs-card {
+  border: 1px solid var(--rule, var(--border));
+  border-radius: 8px;
+  padding: 24px;
+  background: var(--bg-card, var(--bg));
+}
+.cs-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.cs-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--hero-ink);
+}
+.cs-meta {
+  font-size: 12px;
+  color: var(--ink-4);
+}
+.cs-body {
+  margin: 0 0 12px 0;
+  color: var(--ink-3);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.cs-note {
+  margin: 0 0 12px 0;
+  color: var(--ink-4);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.cs-link { font-size: 12px; }
+
+/* =================================================================
    Footer
    ================================================================= */
 footer.shell-footer {

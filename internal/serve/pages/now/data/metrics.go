@@ -277,11 +277,9 @@ func gitCountCommitsSince(projectRoot, since, user string) (int, error) {
 	return count, nil
 }
 
-// countCompletedSince scans .hero/events.log for delivery_complete OR
-// spec.complete events newer than the given duration. Both verbs count
-// equally — `hero spec complete` and `hero deliver` both signal a
-// finished spec and the workspace uses them interchangeably. Returns
-// 0 when the log is missing or unreadable.
+// countCompletedSince scans .hero/events.log for delivery_complete
+// events newer than the given duration. Returns 0 when the log is
+// missing or unreadable.
 //
 // Note: the count is NOT filtered by claimed_by. Many specs in this
 // workspace are never claimed; filtering by claim makes the tile read 0
@@ -303,21 +301,23 @@ func countCompletedSince(heroDir string, since time.Duration) int {
 // isDeliveryCompleteEvent reports whether an event type signals a
 // finished spec. Centralized so metrics + agents + changes all classify
 // the same way.
+//
+// canonical completion verb is delivery_complete; spec.complete was a
+// draft that never landed (no emitter ships it — see polish-v2 Fix 4).
 func isDeliveryCompleteEvent(t string) bool {
-	switch t {
-	case "delivery_complete", "spec.complete":
-		return true
-	}
-	return false
+	return t == "delivery_complete"
 }
 
 // isDeliveryEvent reports whether an event type is anywhere in the
 // delivery lifecycle (start, complete, session begin/end). Used by the
 // agents.go session-count tile so an in-flight session still bumps the
 // counter even if it hasn't shipped yet.
+//
+// canonical completion verb is delivery_complete; spec.complete was a
+// draft that never landed.
 func isDeliveryEvent(t string) bool {
 	switch t {
-	case "delivery_start", "delivery_complete", "spec.complete",
+	case "delivery_start", "delivery_complete",
 		"agent_session_started", "agent_session_ended":
 		return true
 	}

@@ -81,7 +81,9 @@ func kindFromEventType(t string) string {
 		return "handoff"
 	case t == "decision_made":
 		return "decision"
-	case t == "delivery_complete", t == "spec.complete":
+	// canonical completion verb is delivery_complete; spec.complete
+	// was a draft that never landed.
+	case t == "delivery_complete":
 		return "check"
 	case t == "spec.status_changed":
 		return "spec"
@@ -106,7 +108,9 @@ func renderEventText(typ, slug, msg, agent string) template.HTML {
 	msgSafe := template.HTMLEscapeString(msg)
 	agentSafe := template.HTMLEscapeString(agent)
 	switch typ {
-	case "delivery_complete", "spec.complete":
+	// canonical completion verb is delivery_complete; spec.complete
+	// was a draft that never landed.
+	case "delivery_complete":
 		return template.HTML(fmt.Sprintf(`Spec <a href="#">%s</a> <strong>completed</strong> <span class="now-feed-actor">· %s</span>`, slugSafe, agentSafe))
 	case "spec_updated":
 		return template.HTML(fmt.Sprintf(`Spec <a href="#">%s</a> updated <span class="now-feed-actor">· %s</span>`, slugSafe, agentSafe))

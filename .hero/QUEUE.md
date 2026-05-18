@@ -6,7 +6,84 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-17T02:07:05Z · 84 ready specs_
+_Generated: 2026-05-18T14:54:39Z · 97 ready specs_
+
+## hero-surface-polish-v2 — Hero Surface Polish v2 — Per-Item Detail Routes, Filter Reconcile, CSS + Verb Cleanup
+_feature · delivering · horizon: now_
+
+**Status: delivered 2026-05-18.** All five fix classes shipped.
+
+**What works today (verified live on port 7457):**
+- Per-item detail routes return **200** for real slugs:
+  `/knowledge/<slug>`, `/work/spec/<slug>`, `/agents/session/<id>`,
+  `/people/profiles/<user>`. Unknown knowledge/spec slugs return
+  **404**. Sessions/profiles always render a coming-soon stub with
+  the requested id/user.
+- Named sub-routes win over the `{slug}` capture (all 12 verified
+  — `/knowledge/search`, `/work/kanban`, `/agents/proposals`, etc.
+  still invoke the named handlers).
+- Knowledge detail renders real markdown (loader + new
+  `internal/serve/mdrender` package).
+- Spec detail renders real markdown sourced from `.hero/specs/`
+  first, then `.hero/planning/{features,bugs,initiatives}/`.
+- Work filter UI is the new `rm-filters` row (9 markers); the
+  `view-toolbar` markup is removed.
+- `coming-soon` stubs render with **0 inline styles** (extracted
+  to `.cs-*` CSS rules in shell.css).
+- `spec.complete` is gone from all consumer code paths.
+- Inline chat-input fragment now embedded on all 5 homes (Go-level
+  injection via `chatInputFor` / `renderHeroAndChat` helpers so
+  every sub-route + detail route gets it consistently).
+
+**Pick up at: file v3 follow-ups** in
+[hero-surface-polish](../../initiatives/hero-surface-polish/spec.md)
+as they're discovered. Known carry-overs from this delivery:
+
+- Inline chat-input on the four non-Now homes has no visual disabled
+  state when no adapter is connected — looks identical regardless.
+  v3 could thin-style it muted when `ChatRegistry` is unset.
+- `internal/serve/mdrender` doesn't handle markdown tables,
+  blockquotes, or nested lists. Expand or switch to goldmark when
+  we hit a spec/note that needs them.
+- Detail views (`/knowledge/{slug}`, `/work/spec/{slug}`) render no
+  active sub-nav tab — there's no tab corresponding to "an
+  individual entry/spec." Consider a breadcrumb or "Detail"
+  pseudo-tab in v3.
+- Dead CSS rule `.view-toolbar { … }` remains in `shell.css` after
+  the markup was removed. Cosmetic; one-line cleanup.
+
+The detail-route tests must include the slug-vs-named-route
+collision case; easy to mis-register patterns.
+
+---
+
+## next-checkpoint-cross-repo-pollution — "hero next checkpoint accumulates cross-repo narrative sections in .local.md and bleeds user-graph reads across repos"
+_bug · delivering · horizon: now_
+
+> Pick up at: **verify and ship**. Implementation is complete on this branch — `rebuildLocalState` is total-rewrite, `backupHandContentIfNeeded` writes a single hash-deduped `.bak.<RFC3339>` next to `.local.md` with a stderr notice, the three handoff reads (`LatestAsk`, `LatestSuggestion`, `RecentReflections`) take `repoKey` and are repo-scoped at the SQL layer, all callers thread `repoKey`, the placeholder template no longer emits "(omit if clear)" / "(omit if N/A)" headers, and both skill docs document `.local.md` as machine-state-only. Tests added: `Test_rebuildLocalState_DiscardsHandContent`, `Test_writeCheckpoint_BacksUpPreExistingHandContent`, `Test_writeCheckpoint_NoBackupWhenAlreadyClean`, `Test_writeCheckpoint_BackupIdempotentOnRerun`, `Test_writeCheckpoint_CrossRepoAskDoesNotLeakIntoUserHandoff`, `TestRecordAsk_PerRepoIsolation`, `TestRecordSuggestion_PerRepoIsolation`, `TestRecentReflections_PerRepoIsolation`, `TestUserHandoffMD_DoesNotLeakCrossRepoAsk`. `go build ./...` and `go test ./...` are clean. Manual repro per §Validation in `/tmp/herotest-checkpoint` confirmed: backup written on first run, no second backup on rerun, `.local.md` contains only the marker block. To ship: review the diff (status: `delivering`), run `hero spec complete next-checkpoint-cross-repo-pollution`, then commit. The `repo: ''` empty-key behavior in non-git contexts (Risks bullet) is unchanged — out of scope; key-shape migration to `(user, repoKey)` deferred per Boundaries.
+
+---
+
+## hero-local-merge-missing-dialect-fields — hero.local.json merge doesn't forward vocabulary / methodology fields
+_bug · delivering · horizon: now_
+
+> Read `.hero/planning/bugs/hero-local-merge-missing-dialect-fields/spec.md` (this file), `internal/config/config.go::MergeLocal` (or whatever the local-merge function is named there — `grep -n "MergeLocal\|LoadLocal\|merge" internal/config/config.go`), and one neighboring already-merged nested block (e.g. `Tracker`) for the merge pattern to copy. Extend the merger to forward the four dialect fields per the Fix section. Add unit tests per the Acceptance Criteria. Update `docs/contracts/active-dialect.md` §2 to make the `hero.local.json` override behavior normative (replacing the "planned extension point" note). Run `go build ./...` and `go test ./...` clean. Report what shipped, the exact functions touched, and any open questions under 300 words.
+
+---
+
+## spec-types-cache-frontmatter-empty — spec-types.json records emit frontmatter as null — loader never populates it
+_bug · delivering · horizon: now_
+
+> Read `.hero/planning/bugs/spec-types-cache-frontmatter-empty/spec.md` (this file). Inspect `internal/spectypes/loader.go::parseRecord` (the existing per-block parsing pattern), `internal/spectypes/registry.go::FrontmatterSchema` (the target shape), `internal/spectypes/export.go::exportRecord` (the export wiring — confirm the `Frontmatter` field is already serialized), and one canonical source file like `core/spec-types/feature.md` (verify the `frontmatter:` block is present in YAML; if not, author it from the legacy lint validator's field set in `internal/triage/`). Implement the loader-side parser per the Fix section. Add unit tests per the Acceptance Criteria. Regenerate `.hero/cache/spec-types.json` and confirm `jq '.types[].frontmatter | length' .hero/cache/spec-types.json | sort -u` returns positive numbers (not `null`). Run `go build ./...` and `go test ./...` clean. Report what shipped, any type files that needed a frontmatter block authored, and any open questions under 400 words.
+
+---
+
+## vocabulary-resolve-misses-methodology-derivation — vocabulary.Resolve doesn't fold methodology-derived auto-derivation
+_bug · delivering · horizon: now_
+
+> Read `.hero/planning/bugs/vocabulary-resolve-misses-methodology-derivation/spec.md` (this file), `internal/vocabulary/resolver.go`, `internal/methodology/resolver.go::DeriveVocabularyName`, and the three wrapper call sites: `internal/cli/vocab.go`, `internal/serve/vocab.go`, `internal/install/dialect.go`. Implement Option A: extend `vocabulary.Resolve` to take a `methodologies map[string]*methodology.Methodology` (or accept a pre-resolved `*methodology.Methodology` — pick whichever has lower blast radius) and fold the methodology-derived step into the precedence chain between explicit and tracker-inferred. Remove the three wrapper shims and route them through the new bare `Resolve`. Add unit tests per the Acceptance Criteria. Run `go build ./...` and `go test ./...` clean. Report what shipped, the chosen signature, and any open questions under 300 words.
+
+---
 
 ## cross-repo-peering — "Cross-Repo Peering — Conventions Travel, Specs Hand Off, Heroes Call Each Other"
 _feature · delivering · horizon: now_
@@ -140,30 +217,182 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## hero-serve-scope-decision — "Decide `hero serve` Scope After the hero/hero-cloud Split"
+## inline-propose-output-mode — Inline-Propose Output Mode — Agents Propose into the Artifact Pane
+_feature · delivering · horizon: next_
+
+Run `/deliver inline-propose-output-mode`. Confirm the three
+dependency primitives (`domain-plugin-architecture`,
+`domain-routing-and-agents`, `dashboard-view-registry`) are in a
+state where their integration points are accessible — at minimum,
+`domains/_platform/` exists for the agent prompt addendum and the
+agent loader has the hook for env-conditional prompt augmentation.
+If those primitives haven't landed, deliver the daemon-side pieces
+(envelope, store, routes, lifecycle log, shim) standalone first and
+stub the agent-prompt integration as a follow-up.
+
+→ `/deliver inline-propose-output-mode`
+
+**Files:** .hero/planning/features/inline-propose-output-mode/spec.md, docs/contracts/inline-propose-v1.md (new), internal/proposals/ (new), internal/serve/proposals_routes.go (new), internal/cli/agent_run.go (new), domains/_platform/agent-prompts/inline-propose-addendum.md (new), testdata/proposals/v1/ (new), .hero/planning/features/hero-pm/spec.md (consumer), .hero/planning/features/hero-pm/mockups/08-inline-proposal.html (visual source of truth)
+**Skip:** sidecar persistence (v2), cross-domain proposals (v2), multi-author concurrent proposals (Hero Cloud), proposals on arbitrary source files (out of scope), inline-propose for `/deliver` and `/diagnose` (continue write-to-disk).
+
+---
+
+## spec-type-registry — Spec Type Registry — Nine-Type Registry With Kind, Tasks, Owner, and Methodology Profile Hook
+_feature · delivering · horizon: next_
+
+`/deliver spec-type-registry` — but **not before** the migration
+script (delegated under `unified-spec-type-model`) is ready to
+run alongside. First implementation step is the loader + JSON
+export + parity tests, with engineering's reference registration
+and core's shared five spec-type files authored together. Do not
+modify any existing call site until both `TestLintParity` and
+`TestACParity` are green. Then migrate `internal/triage/
+structural.go` first (centralizes the existing behavior), then
+the importer (highest external surface — and the one that
+consumes the vocabulary's `tracker_mappings`), then CLI
+scaffolding, then dashboard and knowledge surfaces.
+
+The vocabulary system (loader, resolver, six v1 files,
+override merging) lands in parallel under the parent spec's
+spread plan. The registry validates vocabulary `tracker_mappings`
+against itself at startup but otherwise treats vocabulary as an
+opaque external service.
+
+**Files:** .hero/planning/features/spec-type-registry/spec.md,
+.hero/planning/features/unified-spec-type-model/spec.md,
+.hero/planning/features/hero-pm/spec.md,
+.hero/planning/initiatives/hero-domains/spec.md,
+core/ (target for new spec-types/),
+domains/pm/spec-types/ (collapsing into core),
+domains/engineering/ (target for new spec-types/),
+internal/spec/spec.go, internal/triage/structural.go,
+internal/cli/new.go, internal/cli/sync_import.go,
+internal/tracker/sprint.go, internal/serve/mcp_tools.go,
+internal/acceptance/ (renaming to internal/checklists/),
+content.go.
+
+**Skip:** Authoring the vocabulary preset system (parent spec's
+spread plan). Writing the migration script (delegated to
+`migration-engineer`). Rewriting `handoff-coordinator` (PM-pack
+revision). Removing `Type*` Go constants (follow-up cleanup PR).
+Runtime registry reload. Multi-domain coexistence in one
+workspace. Per-spec inline custom types.
+
+---
+
+## project-snapshot — Project Snapshot — Always-Fresh "Where Are We Across the Board" Surface
 _feature · planning · horizon: now_
 
-Quick architectural decision blocked by lack of explicit scoping.
-After the repo split landed (2026-05-16), 17 cloud-side specs moved
-cleanly to hero-cloud. Three specs were deferred because they
-straddle the line between "CLI convenience local server" and "team
-coordination server (= hero-cloud)."
+Project-shape rollup with time-snapped trajectory:
+`.hero/SNAPSHOT.md` (live, projected) plus
+`.hero/snapshots/YYYY-MM-DD.md` (immutable archives, opt-in
+interval / milestone / manual triggers). Matching MCP / CLI /
+serve / opt-in auto-inject. Surfaces declared in
+`.hero/surfaces.yaml`; everything else projects from the
+existing graph using the proven NEXT.md projection pattern.
 
-User note from the moment of deferral: *"hero serve [had] some stuff
-that it might need to still do — and some that it should stop doing
-— but not full blown get rid of hero serve — that was also some UI
-elements for info."*
+**Status:** planning — spec just landed; no code yet.
 
-**Pick up at:** read the three deferred specs (`hero-team-server`,
-`hero-dashboard-v2`, `hero-automations`), have a focused conversation
-about what `hero serve` keeps (info UI, local-only convenience) vs.
-what moves to hero-cloud (multi-dev job queue, approval gates, team
-coordination). Capture the line as a decision spec. Then update the
-three blocked specs accordingly — either split each into "local-side
-in hero" + "server-side in hero-cloud" specs, narrow scope to one
-side, or relocate.
+**Pick up at:** scaffold `internal/snapshot/` with the
+six-stage taxonomy in `stage.go` first (pure functions, easy
+to unit-test); then `surfaces.go` loader for the YAML; then
+markdown rendering; then wire the Stop-hook projector mirroring
+`internal/handoff/`. CLI / MCP / serve all land downstream. The
+archive subsystem (`archive.go`, `archive_triggers.go`,
+`retention.go`) plugs into the projector after the live render
+lands; archives default off so they can ship behind the live
+mirror without changing default behavior.
 
-→ `.hero/planning/features/hero-serve-scope-decision/spec.md`
+→ `.hero/planning/features/project-snapshot/spec.md`
+
+**Files:** `internal/snapshot/`,
+`internal/handoff/handoff.go` (pattern reference),
+`internal/cli/checkpoint.go` (Stop-hook integration point),
+`.hero/surfaces.yaml` (new), `.hero/snapshots/` (new dir for
+archives), `internal/spec/spec.go` (add `Surface` +
+`ReleaseTarget` fields), `internal/serve/pages/now/`
+(template parallel for `/project`).
+
+**Skip:** registering `surface` as a new spec type in
+`spec-type-registry` — surfaces are a peer YAML file, not a
+spec. Auto-injecting Snapshot into every session by default —
+opt-in only in v1. Auto-inferring surfaces from directory scan
+in v1 — user declares; inference is a follow-up. Cross-repo
+surface rollup — owned by `cross-repo-peering`. Burndown
+visualizations — owned by `hero pulse`. Default-on archive
+triggers — opt-in only in v1; defaults flip in v2 once disk
+shape is observed. Compressed archive storage, structured
+shape-diff renderer, and inline serve "diff vs N weeks ago"
+view — all v2-deferred.
+
+---
+
+## hero-surface-polish — Hero Surface Polish — Ongoing Quality Pass on the Web Companion
+_initiative · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-surface-polish/spec.md)_
+
+---
+
+## hero-code-handover-pack — Hero-Code Handover Pack — Make the PM Foundation Consumable
+_feature · planning · horizon: now_
+
+The PM Foundation Delivery sprint shipped the four cross-language contracts (`spec-types.json`, `vocabularies/*.yaml`, `methodologies/*.yaml`, `inline-propose-v1.md`) but left a handful of consumer-affordance gaps. This sprint closes them so hero-code can implement the first PM dashboard against real fixtures, a single discovery index, and a documented read path for active workspace dialect.
+
+**Sprint completes when:**
+- `testdata/proposals/v1/` carries a fixture envelope per anchor variant + batch + replacement scenarios — hero-code's Rust widget tests consume them
+- `docs/contracts/README.md` indexes the four contracts with location, schema version, owner, and stability promise
+- `docs/contracts/active-dialect.md` documents the resolver precedence chain and the on-disk read path from `hero.json` to display map
+- `docs/contracts/spec-types-v1.1.schema.json` validates `.hero/cache/spec-types.json` and can generate Rust types via `serde`
+- `examples/scrum-workspace/` ships a working hero.json + 4 specs across lifecycle states for hero-code to develop against
+- Hero-code peer call (advisory) hands over the handover pack with pointers to all five artifacts
+
+---
+
+## document-vocabulary-auto-select-schema — Document vocabulary auto_select rule schema — fields, allowed values, and authoring guide
+_feature · planning · horizon: now_
+
+> Read `.hero/planning/features/document-vocabulary-auto-select-schema/spec.md` (this file). Inspect `internal/vocabulary/vocabulary.go` and `internal/vocabulary/resolver.go` for the auto_select rule struct shape, allowed-value set, and match semantics — these are the authoritative source. Check existing presets: `core/vocabularies/agile-scrum.yaml`, `core/vocabularies/kanban.yaml`, `core/vocabularies/shape-up.yaml`, `core/vocabularies/default.yaml`, `core/vocabularies/jira.yaml`, `core/vocabularies/linear.yaml` for what auto_select blocks already exist. Author `docs/contracts/vocabulary-auto-select.md` per the six sections in this spec's Design. Update `docs/contracts/active-dialect.md` §3 with a cross-link and add a row to `docs/contracts/README.md`'s table. Keep the doc under 250 lines. Run `go build ./...` (should be unchanged). Report what shipped, the auto_select rule fields you documented, and any code-vs-prose discrepancies you spotted, under 250 words.
+
+---
+
+## initiative-required-sections-drift — initiative spec-type's required-sections YAML disagrees with its prose docs
+_bug · planning · horizon: now_
+
+> Read `.hero/planning/bugs/initiative-required-sections-drift/spec.md` (this file) and `core/spec-types/initiative.md`. Update the prose body to describe `Goal` as the sole required section; demote `Bet`, `Evidence`, `Tradeoffs` to suggested/optional with a Shape Up reference. Walk `.hero/planning/initiatives/*/spec.md` and confirm each has a `## Goal` section (likely all do — verify, don't assume). Run `go test ./internal/spectypes/...` clean (no Go changes expected). Report what shipped and whether any existing initiatives needed a `Goal` section added, under 200 words.
+
+---
+
+## hero-surface-architecture — Hero Surface Architecture — One Surface, Every Layer, Every Role
+_initiative · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-surface-architecture/spec.md)_
+
+---
+
+## pm-foundation-delivery — PM Foundation Delivery — Ship PM Pack Additively + Unblock hero-code
+_feature · planning · horizon: now_
+
+This is the **delivery sprint** for the work-tracking refactor designed across `unified-spec-type-model`, `spec-type-registry`, and `inline-propose-output-mode`. Goal: ship PM as an additive Hero domain pack, with engineering unchanged, and unblock hero-code (Rust dashboard) to start building PM and QA UI against stable contracts.
+
+The sprint is composed of **nine work items** organized into three tracks (content authoring, Go implementation, content alignment). Items can be picked up in fresh sessions independently where dependencies allow.
+
+**Sprint completes when:**
+- All nine canonical work-tracking spec types are registered (`initiative`, `prd`, `epic`, `feature`, `bug`, `chore`, `intake`, `release`, `sprint`)
+- Five methodology profiles are authored (Scrum, Kanban, Shape Up, Waterfall, Scrumban)
+- `internal/vocabulary/`, `internal/methodology/`, `internal/tasks/` Go packages are delivered and tested
+- `spec-type-registry` Go implementation exports schema 1.1 to `.hero/cache/spec-types.json`
+- `hero task` CLI surface ships (additive, AC infrastructure unchanged)
+- Inline-propose Go side ships
+- PM pack content is aligned to final canonical names
+- `domain-plugin-architecture` finishing touches are in
+- hero-code consumes the three stable contracts (registry / vocabulary / methodology)
+
+→ Each work item below has a paste-ready kickoff prompt for a fresh session.
+
+**Files:** `.hero/planning/features/pm-foundation-delivery/spec.md`, `.hero/planning/features/unified-spec-type-model/spec.md` (authoritative design), `.hero/planning/features/spec-type-registry/spec.md`, `.hero/planning/features/inline-propose-output-mode/spec.md`, `.hero/planning/features/hero-pm/spec.md`, `.hero/planning/features/domain-plugin-architecture/spec.md`, `domains/pm/`, `core/vocabularies/`, `internal/vocabulary/`
+
+**Skip:** Anything outside the work-tracking refactor scope (knowledge graph, meta types, dashboard UI implementation, new tracker providers, migration of any kind).
 
 ---
 
@@ -383,6 +612,69 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
+## domain-plugin-architecture — Domain Plugin Architecture — Refactor Content into Swappable Domain Packs
+_feature · planning · horizon: next_
+
+Foundation primitive for `hero-domains`. Pure refactor — move existing engineering content into `domains/engineering/` and add `hero init --domain` / `hero domain switch` plumbing. Zero new behavior, but unblocks every other primitive and every future domain pack (PM, QA, design, etc).
+
+**Status:** planning — design exists from 2026-04-25; reframed as the foundation for the PM-first roadmap on 2026-05-15. No code written yet.
+
+**Pick up at:** `/deliver` this spec. Examples below have been updated from sales-first to PM-first to reflect the current sequencing, but the actual refactor is content-agnostic — PM-specific pack content lives in the separate `hero-pm` spec.
+
+→ `/deliver domain-plugin-architecture`
+
+**Files:** .hero/planning/features/domain-plugin-architecture/spec.md, .hero/planning/initiatives/hero-domains/spec.md, embed.go, internal/install/install.go, internal/cli/init.go
+**Skip:** Third-party domain packs loaded from disk (deferred to a future spec). Multi-domain coexistence in one workspace (handled by domain-scoped-knowledge-graph).
+
+---
+
+## inline-propose-v1.1-typed-anchor-value — Inline-propose v1.1 — typed anchor.value discriminator (gated on hero-code feedback)
+_feature · planning · horizon: next_
+
+> **Do not pick this up without evidence first.** Confirm hero-code has filed a peer call (or equivalent advisory) describing concrete typing pain on `anchor.value` in the v1.0 envelope. Read the evidence. Then re-read this spec's Design section — A/B/C are sketches, not commitments; pick the option that addresses the specific pain hero-code surfaced, not the one that sounds cleanest in the abstract. Update this spec with the chosen design (replace the Design section with a single locked option, retain A/B/C as "Rejected" subsections), then deliver per the Acceptance Criteria. If hero-code's pain is rendering-side rather than typing-side, push back — this spec is for typed-shape friction only.
+
+---
+
+## hero-domains — Hero Domains — Platform Architecture for Non-Engineering Verticals
+_initiative · planning · horizon: next_
+
+Make Hero work for non-engineers — starting with PM, then QA. The core engine stays the same; each domain ships its own agents, commands, spec types, dashboard views, and integrations as a "pack."
+
+**Status:** planning — **design locked 2026-05-17**. After multiple iterations, the architecture settled on a **PM-additive, no-migration** design: nine canonical work-tracking spec types using real industry names (`initiative`, `prd`, `epic`, `feature`, `bug`, `chore`, `intake`, `release`, `sprint`), with two independent adaptation layers (methodology profile for structural variation, vocabulary preset for display). Engineering's existing 137 features / 16 bugs / 14 initiatives stay exactly where they are — canonical type names match what they already declare. AC infrastructure unchanged. Meta / knowledge types (decision, convention, plan, reference, external, note, rule, tripwire, context) out of scope. Hero-code (Rust) peer-notified — zero conflicting committed work.
+
+**Active sprint — "ship PM additively + unblock hero-code":**
+
+| # | Item | Status |
+|---|---|---|
+| 0 | `unified-spec-type-model` decision spec — locked design | **designed** ✓ |
+| 1 | `spec-type-registry` design — rescoped for nine-type model, no migration | **designed** ✓ |
+| 2 | `inline-propose-output-mode` design | **designed** ✓ |
+| 3 | PM content pack (5 spec-types + 12 agents + 19 skills + 10 commands) | **authored** ✓ |
+| 4 | v1 vocabulary presets (6 files at `core/vocabularies/`) | **authored** ✓ |
+| 5 | `internal/vocabulary/` Go package + loader | **delivered** ✓ |
+| 6 | PM pack content alignment to final names (`roadmap-item` → `initiative`, `intake-item` → `intake`, etc.) | pending — content edits |
+| 7 | Author `core/spec-types/` nine canonical type files | pending — content authoring |
+| 8 | Author `core/methodologies/` five v1 methodology profiles (Scrum / Kanban / Shape Up / Waterfall / Scrumban) | pending — content authoring |
+| 9 | Finish `domain-plugin-architecture` cutover (`domains/pm/` embed + ContentFS migration) | pending — ~80% built in WIP |
+| 10 | `spec-type-registry` Go impl: markdown loader, kind support, schema 1.1 export to `.hero/cache/spec-types.json` | pending — Go work |
+| 11 | `internal/methodology/` Go package (mirrors `internal/vocabulary/`) | pending — Go work |
+| 12 | `internal/tasks/` Go package + `hero task` CLI (additive; AC infrastructure unchanged) | pending — Go work |
+| 13 | Inline-propose Go side delivery (stdout shim + daemon proposal store + SSE + REST) | pending — Go work |
+| 14 | Vocabulary + methodology-aware rendering spread across CLI / MCP / NEXT.md | pending — Go work |
+
+After this sprint completes, hero-code (Rust) consumes three independent contracts: `.hero/cache/spec-types.json` (schema 1.1), `core/vocabularies/*.yaml`, `core/methodologies/*.yaml`. A follow-up advisory peer call lands when items 7-11 are done.
+
+**Pick up at:** Item 6 (PM pack content alignment) or item 7 (author core/spec-types/) — start with whichever feels right for the session. Items 6-8 are content authoring and can run in parallel. Items 9-14 are Go implementation and require items 7-8 to complete first.
+
+→ See `.hero/planning/features/pm-foundation-delivery/spec.md` for the sprint plan with kickoff prompts per work item (forthcoming — being authored alongside this update).
+
+→ See `.hero/planning/features/unified-spec-type-model/spec.md` for the binding architectural decisions.
+
+**Files:** .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/unified-spec-type-model/spec.md (authoritative), .hero/planning/features/spec-type-registry/spec.md, .hero/planning/features/inline-propose-output-mode/spec.md, .hero/planning/features/hero-pm/spec.md, .hero/planning/features/domain-plugin-architecture/spec.md, domains/pm/, core/vocabularies/, internal/vocabulary/
+**Skip:** Sales-first sequencing (deferred). New tracker integrations for PM v1 (reuse Jira/Linear/GitHub). Meta / knowledge types refactor (out of scope). Forced migration of existing engineering specs (no migration; aliasing unnecessary; canonical names match existing frontmatter). `internal/acceptance/` rename (AC infra stays). Custom user-defined spec types beyond `kind` sub-typing.
+
+---
+
 ## hero-pm — Hero PM — Product Management Domain Pack
 _feature · planning · horizon: next_
 
@@ -399,38 +691,6 @@ First non-engineering Hero domain pack. PM-shaped spec types (PRD, story, epic, 
 
 ---
 
-## hero-domains — Hero Domains — Platform Architecture for Non-Engineering Verticals
-_initiative · planning · horizon: next_
-
-Make Hero work for non-engineers — starting with PM, then QA. The core engine stays the same; each domain ships its own agents, commands, spec types, dashboard views, and integrations as a "pack."
-
-**Status:** planning — reshaped from sales-first to PM-first on 2026-05-15; eight-item sequenced roadmap of platform primitives + PM + QA packs is in place. PM design pack complete (spec + research-brief + agent-pack-design + mockup-brief + 9 mockups + handoff-to-hero-code). QA design pack reached parity 2026-05-16 (spec + research-brief + agent-pack-design + mockup-brief; 32 locked decisions; HTML mockups + handoff doc still owed). QA design surfaced two new platform-primitive amendments — lifecycle overlays on primitive #2 (`spec-type-registry`) and cross-pack ambient population on primitive #4 (`dashboard-view-registry`) — both required before either pack can ship.
-
-**Pick up at:** Design the first platform primitive, `domain-plugin-architecture` — refactor existing engineering content into `domains/engineering/` and add `hero init --domain` plumbing. Spec stub already exists.
-
-→ `/design domain-plugin-architecture`
-
-**Files:** .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/domain-plugin-architecture/spec.md, .hero/planning/features/hero-pm/spec.md
-**Skip:** Sales-first sequencing (deferred — high integration cost, low spec-fit). New tracker integrations for PM v1 (reuse Jira/Linear/GitHub).
-
----
-
-## inline-propose-output-mode — Inline-Propose Output Mode — Agents Propose into the Artifact Pane
-_feature · planning · horizon: next_
-
-Add a new agent output mode — `--inline-propose` — that targets the open artifact pane instead of writing to disk. The view layer renders the proposed content inline on the artifact (dotted/dashed border, "proposed by `<agent>`" badge) with accept / edit / reject affordances. Required by the locked Hero PM UX pattern (mockup `08-inline-proposal.html`); load-bearing for every PM authoring agent (`story-writer`, `prd-author`, `roadmap-curator`, etc.). Slotted as primitive #4b in the `hero-domains` initiative — sequenced after `dashboard-view-registry` but before `hero-pm` can ship.
-
-**Status:** planning — stub written 2026-05-16. Blocked on primitives #1, #3, #4.
-
-**Pick up at:** Run `/design inline-propose-output-mode`. First decision: where the proposed content lives between propose and accept — in the spec file as a marked draft section, in a sidecar file, or in transient view state only. Then the wire shape: what an agent emits when `--inline-propose` is active vs. the default write-to-disk mode.
-
-→ `/design inline-propose-output-mode`
-
-**Files:** .hero/planning/features/inline-propose-output-mode/spec.md, .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/hero-pm/spec.md, .hero/planning/features/hero-pm/mockups/08-inline-proposal.html
-**Skip:** Multi-author concurrent proposals on one artifact (single-author v1). Proposal persistence across sessions when not accepted (transient v1; revisit if PM users want a "saved drafts" tray). Cross-artifact proposals (proposal targets exactly one artifact).
-
----
-
 ## hero-qa — Hero QA — Quality Assurance Domain Pack
 _feature · planning · horizon: next_
 
@@ -444,22 +704,6 @@ Second non-engineering Hero domain pack: QA. The thesis: **Hero QA is the qualit
 
 **Files:** .hero/planning/features/hero-qa/spec.md, .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/hero-pm/spec.md, .hero/planning/features/hero-pm/agent-pack-design.md
 **Skip:** Native-only-no-integration v1 (we ship Xray and TestRail). A standalone `defect` type by default (opt-in only). Treating QA as a thin variation of engineering. Letting QA reject stories without distinguishing AC-gap from scope-expansion.
-
----
-
-## domain-plugin-architecture — Domain Plugin Architecture — Refactor Content into Swappable Domain Packs
-_feature · planning · horizon: next_
-
-Foundation primitive for `hero-domains`. Pure refactor — move existing engineering content into `domains/engineering/` and add `hero init --domain` / `hero domain switch` plumbing. Zero new behavior, but unblocks every other primitive and every future domain pack (PM, QA, design, etc).
-
-**Status:** planning — design exists from 2026-04-25; reframed as the foundation for the PM-first roadmap on 2026-05-15. No code written yet.
-
-**Pick up at:** `/deliver` this spec. Examples below have been updated from sales-first to PM-first to reflect the current sequencing, but the actual refactor is content-agnostic — PM-specific pack content lives in the separate `hero-pm` spec.
-
-→ `/deliver domain-plugin-architecture`
-
-**Files:** .hero/planning/features/domain-plugin-architecture/spec.md, .hero/planning/initiatives/hero-domains/spec.md, embed.go, internal/install/install.go, internal/cli/init.go
-**Skip:** Third-party domain packs loaded from disk (deferred to a future spec). Multi-domain coexistence in one workspace (handled by domain-scoped-knowledge-graph).
 
 ---
 
@@ -495,22 +739,6 @@ Make `hero scan` domain-aware. Today scan is a code scanner: detect languages, f
 
 ---
 
-## dashboard-view-registry — Dashboard View Registry — Pluggable Dashboard Pages per Domain
-_feature · planning · horizon: next_
-
-Make dashboard pages pluggable per domain. Today every page (spec kanban, drift, velocity, CI status) is fixed in the dashboard code. Move to a config-driven page registry where each domain pack ships its own `views/` manifest. Engineering's existing pages become the reference registration under `domains/engineering/views/`. PM ships Roadmap, Story queue, Intake funnel, Handoff stream.
-
-**Status:** planning — stub written 2026-05-15. Blocked on `domain-plugin-architecture`.
-
-**Pick up at:** Run `/design dashboard-view-registry`. First decision: server-rendered registration (Go code in the pack) vs client-side registration (manifest + a known view-component catalog). Then design the domain router — cross-domain navigation is first-class, not bolted on.
-
-→ `/design dashboard-view-registry`
-
-**Files:** .hero/planning/features/dashboard-view-registry/spec.md, .hero/planning/initiatives/hero-domains/spec.md, internal/serve/
-**Skip:** A generic "drop your React app here" plugin system. Views register declaratively with a fixed component catalog; full custom HTML is out of v1 scope.
-
----
-
 ## domain-routing-and-agents — Domain Routing and Agents — Active-Pack AGENTS.md and Agent Loader
 _feature · planning · horizon: next_
 
@@ -524,22 +752,6 @@ Make agent routing and discovery domain-aware. Today `AGENTS.md` and the routing
 
 **Files:** .hero/planning/features/domain-routing-and-agents/spec.md, .hero/planning/initiatives/hero-domains/spec.md, AGENTS.md, CLAUDE.md
 **Skip:** Multi-domain coexistence in a single workspace v1 — `domain-scoped-knowledge-graph` (item #6) handles that. Build single-active-domain routing first.
-
----
-
-## spec-type-registry — Spec Type Registry — Domain-Declared Spec Types and Lifecycles
-_feature · planning · horizon: next_
-
-Make spec types pluggable per domain. Today `feature`, `bug`, `convention`, `decision` are hardcoded across the parser, lint, status filters, importers, dashboard, and command routing. Each domain pack should declare its own spec types, lifecycle states, frontmatter schema, and which commands accept them. Blocking for `hero-pm` (PRD, story, epic, roadmap-item don't exist yet).
-
-**Status:** planning — stub written 2026-05-15. Blocked on `domain-plugin-architecture`.
-
-**Pick up at:** Run `/design spec-type-registry`. First job is the audit — grep `internal/spec/`, `internal/lint/`, importers, and dashboard for hardcoded type literals to size the surface area honestly. Then resolve open question #1: registry declared in Go code, manifest file, or both.
-
-→ `/design spec-type-registry`
-
-**Files:** .hero/planning/features/spec-type-registry/spec.md, .hero/planning/initiatives/hero-domains/spec.md, internal/spec/, internal/lint/
-**Skip:** Adding PM spec types here — those live in `hero-pm`. This spec only ships the registry mechanism plus engineering's reference declaration.
 
 ---
 
@@ -673,6 +885,13 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · planning · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/configurable-workspace-location/spec.md)_
+
+---
+
+## hero-surface-deployment-and-rendering — Hero Surface — Deployment Layers and Rendering Model
+_decision · accepted · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-surface-deployment-and-rendering/spec.md)_
 
 ---
 
@@ -827,6 +1046,15 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · draft · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/multi-domain-core/spec.md)_
+
+---
+
+## unified-spec-type-model — Unified Spec-Type Model — Nine Real-Named Types, Methodology + Vocabulary Adaptation
+_feature · designed · horizon: now_
+
+Lock the work-tracking foundation for Hero so PM ships as an additive domain pack and engineering keeps doing what it's doing. **Nine canonical types using names every tool already uses** (`initiative`, `prd`, `epic`, `feature`, `bug`, `chore`, `intake`, `release`, `sprint`). Sub-typing via `kind`. Two independent adaptation layers — methodology profile (lifecycle, time-box, estimation, rituals, rollups) and vocabulary preset (display names, tracker mappings). **No migration**: existing engineering specs and folders unchanged; the registry registers what's already there plus the new PM-led and time-box types. AC infrastructure untouched. Tasks ships additively with its own package. Cross-domain handoff is an owner flip on the same artifact, not a separate spec creation.
+
+→ Drives `spec-type-registry`, the PM pack delivery, the new `core/methodologies/` system, and Phase A of the `hero-domains` initiative.
 
 ---
 

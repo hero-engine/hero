@@ -73,6 +73,9 @@ func Register(r *shell.Router, deps Deps) error {
 			{Pattern: "GET /people/roi/knowledge", Render: h.renderKnowledge},
 			{Pattern: "GET /people/roi/individual", Render: h.renderIndividual},
 			{Pattern: "GET /people/roi/export", Render: h.renderExport},
+			// Per-profile detail. No team identity store yet — renders
+			// a clearly-marked coming-soon stub with the requested user.
+			{Pattern: "GET /people/profiles/{user}", Render: h.renderProfileDetail},
 		},
 	})
 }
@@ -101,6 +104,33 @@ type handler struct {
 	deps   Deps
 }
 
+// chatInputFor returns the inline chat-input config for the People
+// home. Variant is "inline" — ambient, never the primary affordance
+// (that role stays on Now). Per polish-v2 Fix 5, the empty-state
+// notice is NOT paired here.
+func (h *handler) chatInputFor(activeSlug string) shell.ChatInput {
+	chips := []shell.ChatContextChip{{Kind: "page", Label: "page: /people"}}
+	if activeSlug != "" && activeSlug != "pulse" {
+		chips = append(chips, shell.ChatContextChip{Kind: "view", Label: "view: " + activeSlug})
+	}
+	return shell.ChatInput{
+		Variant:     "inline",
+		Placeholder: "Ask Hero about people…",
+		Context:     chips,
+	}
+}
+
+// renderHeroAndChat writes the page-hero followed by the inline chat-
+// input fragment, in that order, into w. Centralizes the Fix-5
+// placement contract: chat-input renders immediately below the hero
+// on every People view.
+func (h *handler) renderHeroAndChat(out io.Writer, hero shell.PageHero, activeSlug string) error {
+	if err := h.router.RenderFragment(out, "page-hero", hero); err != nil {
+		return err
+	}
+	return h.router.RenderFragment(out, "chat-input", h.chatInputFor(activeSlug))
+}
+
 // renderPulse handles GET /people — the default Pulse view (presence +
 // recent activity feed only; no ROI sections).
 func (h *handler) renderPulse(w http.ResponseWriter, req *http.Request) {
@@ -117,7 +147,7 @@ func (h *handler) renderPulse(w http.ResponseWriter, req *http.Request) {
 	subNav := buildSubNav("pulse")
 
 	content := func(out io.Writer) error {
-		if err := h.router.RenderFragment(out, "page-hero", hero); err != nil {
+		if err := h.renderHeroAndChat(out, hero, "pulse"); err != nil {
 			return err
 		}
 		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {
@@ -146,7 +176,7 @@ func (h *handler) renderROIOverview(w http.ResponseWriter, req *http.Request) {
 	subNav := buildSubNav("roi-overview")
 
 	content := func(out io.Writer) error {
-		if err := h.router.RenderFragment(out, "page-hero", hero); err != nil {
+		if err := h.renderHeroAndChat(out, hero, "roi-overview"); err != nil {
 			return err
 		}
 		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {
@@ -190,6 +220,53 @@ func (h *handler) renderExport(w http.ResponseWriter, req *http.Request) {
 		"Export is an enterprise feature.")
 }
 
+// renderProfileDetail handles GET /people/profiles/{user}. The
+// workspace typically has no team identity store, so the detail page
+// renders the shared coming-soon stub with the requested user in the
+// title + subhead. Once the team-coordination subsystem is configured
+// this view flips to a real per-contributor profile.
+func (h *handler) renderProfileDetail(w http.ResponseWriter, req *http.Request) {
+	user := req.PathValue("user")
+	if user == "" {
+		http.NotFound(w, req)
+		return
+	}
+	ed := edition.Resolve()
+	pulse := data.LoadPulse(data.PulseInputs{
+		ProjectRoot: h.deps.ProjectRoot,
+		HeroDir:     h.deps.HeroDir,
+		Edition:     string(ed),
+		UserName:    h.deps.UserName,
+	})
+
+	hero := shell.PageHero{
+		Eyebrow: template.HTML(template.HTMLEscapeString(fmt.Sprintf("hero · %s · people", firstNonEmpty(h.deps.Branch, "main")))),
+		Title:   user,
+		Subhead: template.HTML("No team identity store connected."),
+		Actions: []shell.PageHeroAction{
+			{Kind: "ghost", Label: "Back to Profiles", Href: "/people/profiles"},
+		},
+	}
+	strip := buildPulseStrip(pulse)
+	subNav := buildSubNav("profiles")
+
+	content := func(out io.Writer) error {
+		if err := h.renderHeroAndChat(out, hero, "profile:"+user); err != nil {
+			return err
+		}
+		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {
+			return err
+		}
+		return h.router.RenderFragment(out, "coming-soon", stubData{
+			Home: "people",
+			Slug: "profile-" + user,
+			View: user,
+			Note: "Per-contributor profile lands once the team-coordination subsystem populates the per-user rollup.",
+		})
+	}
+	h.serve(w, req, content, subNav, "People · "+user+" · Hero")
+}
+
 // renderStub renders the home chrome + sub-nav with the shared coming-
 // soon shell card in the body.
 func (h *handler) renderStub(w http.ResponseWriter, req *http.Request, slug, view, note string) {
@@ -206,7 +283,7 @@ func (h *handler) renderStub(w http.ResponseWriter, req *http.Request, slug, vie
 	subNav := buildSubNav(slug)
 
 	content := func(out io.Writer) error {
-		if err := h.router.RenderFragment(out, "page-hero", hero); err != nil {
+		if err := h.renderHeroAndChat(out, hero, slug); err != nil {
 			return err
 		}
 		if err := h.router.RenderFragment(out, "tabbed-metric-strip", strip); err != nil {

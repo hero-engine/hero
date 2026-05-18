@@ -2,22 +2,24 @@
        routes whose substrate exists but whose content rendering is
        tracked as a follow-up in hero-surface-polish-v1. Input: a struct
        with `Home` (e.g. "knowledge"), `View` (e.g. "Search"), and
-       optional `Note` (one-line extra context). */ -}}
+       optional `Note` (one-line extra context). Styling lives in
+       shell.css under the `.cs-*` rules — no inline styles, so the
+       stub respects future theme changes. */ -}}
 {{ define "coming-soon" }}
-<section id="{{ .Home }}-{{ .Slug }}-stub" class="coming-soon" style="margin:32px 0;">
-  <div class="coming-soon-card" style="border:1px solid var(--rule); border-radius:8px; padding:24px; background:var(--bg-card, #fff);">
-    <div class="coming-soon-head" style="display:flex; align-items:baseline; gap:12px; margin-bottom:8px;">
-      <h2 style="margin:0; font-size:16px; font-weight:600;">{{ .View }} &mdash; coming soon</h2>
-      <span style="font-size:12px; color:var(--ink-4);">substrate ready · UI pending</span>
+<section id="{{ .Home }}-{{ .Slug }}-stub" class="coming-soon">
+  <div class="cs-card">
+    <div class="cs-header">
+      <h2 class="cs-title">{{ .View }} &mdash; coming soon</h2>
+      <span class="cs-meta">substrate ready &middot; UI pending</span>
     </div>
-    <p style="margin:0 0 12px 0; color:var(--ink-3); font-size:13px; line-height:1.5;">
+    <p class="cs-body">
       The substrate exists; this view&rsquo;s content is tracked in
       <code>hero-surface-polish-v1</code>. A follow-up pass will land it.
     </p>
     {{- with .Note }}
-    <p style="margin:0 0 12px 0; color:var(--ink-4); font-size:12px; line-height:1.5;">{{ . }}</p>
+    <p class="cs-note">{{ . }}</p>
     {{- end }}
-    <a href="/work/spec/hero-surface-polish-v1" style="font-size:12px;">Why this is a stub &rarr;</a>
+    <a href="/work/spec/hero-surface-polish-v1" class="cs-link">Why this is a stub &rarr;</a>
   </div>
 </section>
 {{ end }}
