@@ -1177,6 +1177,32 @@ func MergeLocal(base, local Config) Config {
 		}
 	}
 
+	// Dialect fields (vocabulary + methodology). Scalars: local non-empty
+	// wins. Override maps: entry-by-entry merge, local entries replace
+	// base entries on key collision; non-colliding base keys preserved.
+	if local.Vocabulary != "" {
+		base.Vocabulary = local.Vocabulary
+	}
+	if len(local.VocabularyOverrides) > 0 {
+		if base.VocabularyOverrides == nil {
+			base.VocabularyOverrides = make(map[string]string)
+		}
+		for k, v := range local.VocabularyOverrides {
+			base.VocabularyOverrides[k] = v
+		}
+	}
+	if local.Methodology != "" {
+		base.Methodology = local.Methodology
+	}
+	if len(local.MethodologyOverrides) > 0 {
+		if base.MethodologyOverrides == nil {
+			base.MethodologyOverrides = make(map[string]string)
+		}
+		for k, v := range local.MethodologyOverrides {
+			base.MethodologyOverrides[k] = v
+		}
+	}
+
 	return base
 }
 

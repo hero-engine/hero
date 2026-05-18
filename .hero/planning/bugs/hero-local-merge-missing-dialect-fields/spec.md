@@ -1,7 +1,7 @@
 ---
 title: hero.local.json merge doesn't forward vocabulary / methodology fields
 type: bug
-status: planning
+status: delivering
 severity: medium
 priority: P1
 created: 2026-05-17
@@ -84,3 +84,10 @@ The merge semantics mirror how the function already handles the `Tracker` block 
 ## Kickoff
 
 > Read `.hero/planning/bugs/hero-local-merge-missing-dialect-fields/spec.md` (this file), `internal/config/config.go::MergeLocal` (or whatever the local-merge function is named there — `grep -n "MergeLocal\|LoadLocal\|merge" internal/config/config.go`), and one neighboring already-merged nested block (e.g. `Tracker`) for the merge pattern to copy. Extend the merger to forward the four dialect fields per the Fix section. Add unit tests per the Acceptance Criteria. Update `docs/contracts/active-dialect.md` §2 to make the `hero.local.json` override behavior normative (replacing the "planned extension point" note). Run `go build ./...` and `go test ./...` clean. Report what shipped, the exact functions touched, and any open questions under 300 words.
+
+## Changes
+
+- `internal/config/config.go` — extend `MergeLocal` to forward the four dialect fields from local: `Vocabulary` and `Methodology` as scalar local-wins overrides; `VocabularyOverrides` and `MethodologyOverrides` as entry-by-entry map merges (local entries replace base on key collision; non-colliding base keys preserved).
+- `internal/config/config_test.go` — add seven dialect-merge tests (`TestMergeLocal_MethodologyOverridesScalar`, `TestMergeLocal_VocabularyOverridesScalar`, `TestMergeLocal_BothDialectScalars`, `TestMergeLocal_VocabularyOverridesMapMerge`, `TestMergeLocal_MethodologyOverridesMapMerge`, `TestMergeLocal_VocabularyOverridesIntoNilBase`, `TestMergeLocal_EmptyLocalLeavesDialectUntouched`) plus a `Load`-path test (`TestLoad_AppliesLocalDialectOverride`).
+- `internal/cli/vocab_test.go` — add `TestDialectLine_LocalOverrideEndToEnd` integration test: write team `hero.json` (scrum + agile-scrum), drop `hero.local.json` declaring shape-up, run `config.Load`, assert `dialectLine` reports shape-up with no team-dialect leakage.
+- `docs/contracts/active-dialect.md` — replace §2 "planned extension point" hedge with normative override semantics (scalar local-wins, map entry-by-entry merge with local-wins-on-collision), referencing `internal/config/config.go::MergeLocal`.

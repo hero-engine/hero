@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -129,6 +131,54 @@ func TestDialectLine(t *testing.T) {
 	gotBoth := dialectLine(&config.Config{Vocabulary: "agile-scrum", Methodology: "scrum"})
 	if !strings.Contains(gotBoth, "agile-scrum") || !strings.Contains(gotBoth, "scrum") {
 		t.Errorf("dialectLine(both) = %q, want both names", gotBoth)
+	}
+}
+
+// TestDialectLine_LocalOverrideEndToEnd is an integration-style check
+// that exercises the full hero.json + hero.local.json load + merge path
+// and confirms the rendered dialect header reflects the local override.
+// Regression guard for hero-local-merge-missing-dialect-fields: prior to
+// the fix, MergeLocal silently dropped Vocabulary/Methodology fields
+// from hero.local.json, so the rendered header would still show the
+// team-tracked dialect.
+func TestDialectLine_LocalOverrideEndToEnd(t *testing.T) {
+	resetVocabCacheForTesting()
+	t.Cleanup(resetVocabCacheForTesting)
+
+	tmpDir := t.TempDir()
+	heroDir := filepath.Join(tmpDir, config.DefaultFolder)
+	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+
+	// Team workspace: scrum.
+	baseJSON := `{"methodology":"scrum","vocabulary":"agile-scrum"}`
+	if err := os.WriteFile(filepath.Join(heroDir, config.ConfigFileName), []byte(baseJSON), 0o644); err != nil {
+		t.Fatalf("WriteFile base: %v", err)
+	}
+
+	// Developer's local override: shape-up.
+	localJSON := `{"methodology":"shape-up","vocabulary":"shape-up"}`
+	if err := os.WriteFile(filepath.Join(heroDir, config.LocalConfigFileName), []byte(localJSON), 0o600); err != nil {
+		t.Fatalf("WriteFile local: %v", err)
+	}
+
+	cfg, err := config.Load(tmpDir)
+	if err != nil {
+		t.Fatalf("config.Load: %v", err)
+	}
+
+	line := dialectLine(&cfg)
+	if !strings.Contains(line, "shape-up") {
+		t.Errorf("dialectLine after local override = %q, want it to contain %q", line, "shape-up")
+	}
+	// The team-tracked dialect ("scrum" / "agile-scrum") must not leak
+	// through. We strip "shape-up" first because "shape-up" itself
+	// doesn't contain "scrum" or "agile-scrum".
+	residual := strings.ReplaceAll(line, "shape-up", "")
+	if strings.Contains(residual, "scrum") {
+		t.Errorf("dialectLine = %q, residual %q still contains team-tracked %q after local override",
+			line, residual, "scrum")
 	}
 }
 
