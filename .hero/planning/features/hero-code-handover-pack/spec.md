@@ -122,7 +122,7 @@ Each gap is filed as its own tracked spec. Five real fixes shipped as bug/featur
 |---|---|---|---|
 | 1 | `vocabulary.Resolve` doesn't fold methodology-derived auto-derivation | [vocabulary-resolve-misses-methodology-derivation](../../bugs/vocabulary-resolve-misses-methodology-derivation/spec.md) | bug (P1) |
 | 2 | `spec-types.json` records emit `frontmatter: null` — loader never populates | [spec-types-cache-frontmatter-empty](../../bugs/spec-types-cache-frontmatter-empty/spec.md) | bug (P1) |
-| 3 | `anchor.value` shape varies per `anchor.kind`, prose-only | **deferred** until hero-code's Rust serde typing actually hurts; 1.1 additive `anchor.value_shape` discriminator if needed | feature (deferred) |
+| 3 | `anchor.value` shape varies per `anchor.kind`, prose-only | [inline-propose-v1.1-typed-anchor-value](../inline-propose-v1.1-typed-anchor-value/spec.md) — filed; **gated on hero-code evidence**, do not start delivery without it | feature (P3, gated) |
 | 4 | `initiative` required-sections YAML disagrees with prose | [initiative-required-sections-drift](../../bugs/initiative-required-sections-drift/spec.md) | bug (P2) |
 | 5 | Vocabulary `auto_select` schema not exhaustively documented | [document-vocabulary-auto-select-schema](../document-vocabulary-auto-select-schema/spec.md) | feature (P2) |
 | 6 | `hero.local.json` merge doesn't forward `vocabulary` / `methodology` fields | [hero-local-merge-missing-dialect-fields](../../bugs/hero-local-merge-missing-dialect-fields/spec.md) | bug (P1) |
