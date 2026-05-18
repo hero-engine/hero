@@ -10,8 +10,7 @@ conventions into context. Provenance travels with every operation.
 ```bash
 hero init                                # mints a stable peer_id UUID
 hero admin repos add app ../app          # register a sibling peer
-<!-- drift-test:ignore (follow-up: --alias flag missing on `hero admin repos add`) -->
-hero admin repos add web ../web --alias web
+hero admin repos add web ../web --local  # register only for this machine (writes to hero.local.json)
 hero peer manifest                       # regenerate this workspace's peer-manifest.yaml
 ```
 

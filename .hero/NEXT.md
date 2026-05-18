@@ -1,5 +1,5 @@
 ---
-updated: 2026-05-18T23:22:59Z
+updated: 2026-05-18T23:30:13Z
 repo: hero-engine/hero
 branch: main
 ---
