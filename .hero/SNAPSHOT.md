@@ -2,22 +2,22 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-05-18T23:30:13Z · projected from 241 source nodes_
+_Last refreshed: 2026-05-19T13:48:15Z · projected from 251 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 8m ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 14h ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | building | domains/engineering/ | 1h ago | spec-types-cache-frontmatter-empty |
-| domains/pm | concept | domains/pm/ | 4h ago | — |
+| domains/engineering | building | domains/engineering/ | 43m ago | spec-types-cache-frontmatter-empty |
+| domains/pm | concept | domains/pm/ | 18h ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
-| landing | building | web/landing/ | 4h ago | hero-landing-page |
+| landing | building | web/landing/ | 18h ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 39m ago | vocabulary-resolve-misses-methodology-derivation |
-| (unassigned) | — | — | — | 108 specs without surface |
+| serve | building | internal/serve/ | 1m ago | vocabulary-resolve-misses-methodology-derivation |
+| (unassigned) | — | — | — | 115 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
 
@@ -27,7 +27,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
 - **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 3/11 specs done; in flight: master-ingest-restore, per-feature-smoke-coverage, spec-status-integrity, traversal-queries
-- **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: domains/engineering, domains/pm, serve) — 1/12 specs done; in flight: domain-plugin-architecture, hero-sales, inline-propose-output-mode, spec-type-registry
+- **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: domains/engineering, domains/pm, serve) — 2/14 specs done; in flight: hero-sales, inline-propose-output-mode, spec-type-registry
 - **Hero Killer Features — Agent Effectiveness, Team Power, Living Specs** (surface: core, serve) — 10/11 specs done
 - **Hero Marketing — Positioning, Distribution, and Launch** (surface: landing) — 0/9 specs done; in flight: hero-landing-page
 - **Hero Platform — Headless Execution, Team Automation, and Shared Visibility** (surface: core, serve) — 2/7 specs done; in flight: hero-team-server
@@ -45,25 +45,26 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Recently completed (last 14 days)
 
 - **(unassigned)** — hero-import-docs-page, recap-unregister-stale-and-empty-repo, project-snapshot, prime-command
-- **core** — agents-md-managed-region-consolidation, cli-invocation-drift-test-markdown, context-files-flag-drift, index-extensions, context-injection, conventions-and-decisions
+- **core** — agents-md-managed-region-consolidation, cli-invocation-drift-test-markdown, context-files-flag-drift, index-extensions, context-injection
+- **domains/engineering** — domain-plugin-architecture
 - **serve** — hero-serve-routes-inventory, hero-serve-daemon
 
 ## Next up across surfaces
 
-1. **domains/engineering** — `domain-plugin-architecture` (P0, delivering)
-2. **(unassigned)** — `e2e-discovery` (P0, delivering)
-3. **(unassigned)** — `e2e-traversal` (P0, delivering)
-4. **landing** — `hero-landing-page` (P0, delivering)
-5. **serve** — `hero-sales` (P0, delivering)
+1. **(unassigned)** — `e2e-discovery` (P0, delivering)
+2. **(unassigned)** — `e2e-traversal` (P0, delivering)
+3. **landing** — `hero-landing-page` (P0, delivering)
+4. **serve** — `hero-sales` (P0, delivering)
+5. **(unassigned)** — `inline-propose-output-mode` (P0, delivering)
 
 ## Open risks & blockers
 
-- **Blocked specs (14):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `e2e-traversal` (waits on traversal-queries); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-sales` (waits on domain-plugin-architecture); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection); `traversal-queries` (waits on master-ingest-restore); `unified-retrieval-layer` (waits on master-ingest-restore).
-- **Unassigned specs (108) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
+- **Blocked specs (13):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `e2e-traversal` (waits on traversal-queries); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection); `traversal-queries` (waits on master-ingest-restore); `unified-retrieval-layer` (waits on master-ingest-restore).
+- **Unassigned specs (115) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 113/221 (51%)
-- Projection generation: 0ms · Source nodes: 241
+- Specs covered: 116/231 (50%)
+- Projection generation: 0ms · Source nodes: 251
 
