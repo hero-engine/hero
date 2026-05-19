@@ -53,6 +53,7 @@ func WriteSprintGraph(items []SprintItem, info *SprintInfo, repoKey string, stor
 		}
 		id, err := store.UpsertNode(&graph.Node{
 			Type:        "Sprint",
+			Domain:      "engineering",
 			Key:         info.ID,
 			Props:       props,
 			ContentHash: hashFields("sprint", info.ID, info.Name, info.State, info.Start, info.End),
@@ -102,6 +103,7 @@ func WriteSprintGraph(items []SprintItem, info *SprintInfo, repoKey string, stor
 
 		issueID, err := store.UpsertNode(&graph.Node{
 			Type:        "Issue",
+			Domain:      "engineering",
 			Key:         item.ID,
 			Props:       issueProps,
 			ContentHash: hashIssue(item),
@@ -163,6 +165,7 @@ func WriteSprintGraph(items []SprintItem, info *SprintInfo, repoKey string, stor
 				// reconcile when epic is loaded separately.
 				epicID, err := store.UpsertNode(&graph.Node{
 					Type: "Issue", Key: item.EpicID,
+					Domain:      "engineering",
 					Props: map[string]any{
 						"key":     item.EpicID,
 						"title":   item.EpicTitle,
@@ -263,6 +266,7 @@ func WriteIssuesGraph(issues []Issue, repoKey string, store *graph.Store) (*Grap
 
 		issueID, err := store.UpsertNode(&graph.Node{
 			Type:        "Issue",
+			Domain:      "engineering",
 			Key:         item.ID,
 			Props:       issueProps,
 			ContentHash: hashIssueRecord(item),

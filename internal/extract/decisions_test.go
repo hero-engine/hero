@@ -70,6 +70,7 @@ func TestExtractFromSource_HappyPath(t *testing.T) {
 	store := openTestStore(t)
 	if _, err := store.UpsertNode(&graph.Node{
 		Type: "Note", Key: "buddy-model", Repo: "test", ContentHash: "h",
+		Domain:      "engineering",
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -108,7 +109,7 @@ func TestExtractFromSource_HappyPath(t *testing.T) {
 
 func TestExtractFromSource_AsksForCachedSystem(t *testing.T) {
 	store := openTestStore(t)
-	store.UpsertNode(&graph.Node{Type: "Note", Key: "x", ContentHash: "h"})
+	store.UpsertNode(&graph.Node{Type: "Note", Domain: "engineering", Key: "x", ContentHash: "h"})
 
 	llm := &fakeLLM{reply: sampleDecisionsJSON}
 	x := &DecisionExtractor{Client: NewClient(llm, "")}
@@ -123,7 +124,7 @@ func TestExtractFromSource_AsksForCachedSystem(t *testing.T) {
 
 func TestExtractFromSource_SkipsOnUnchangedHash(t *testing.T) {
 	store := openTestStore(t)
-	store.UpsertNode(&graph.Node{Type: "Note", Key: "x", ContentHash: "h"})
+	store.UpsertNode(&graph.Node{Type: "Note", Domain: "engineering", Key: "x", ContentHash: "h"})
 
 	llm := &fakeLLM{reply: sampleDecisionsJSON}
 	x := &DecisionExtractor{Client: NewClient(llm, "")}
@@ -150,7 +151,7 @@ func TestExtractFromSource_SkipsOnUnchangedHash(t *testing.T) {
 
 func TestExtractFromSource_RerunsOnChangedContent(t *testing.T) {
 	store := openTestStore(t)
-	store.UpsertNode(&graph.Node{Type: "Note", Key: "x", ContentHash: "h"})
+	store.UpsertNode(&graph.Node{Type: "Note", Domain: "engineering", Key: "x", ContentHash: "h"})
 
 	llm := &fakeLLM{reply: sampleDecisionsJSON}
 	x := &DecisionExtractor{Client: NewClient(llm, "")}
@@ -168,7 +169,7 @@ func TestExtractFromSource_RerunsOnChangedContent(t *testing.T) {
 
 func TestExtractFromSource_NoProviderFailsOpen(t *testing.T) {
 	store := openTestStore(t)
-	store.UpsertNode(&graph.Node{Type: "Note", Key: "x", ContentHash: "h"})
+	store.UpsertNode(&graph.Node{Type: "Note", Domain: "engineering", Key: "x", ContentHash: "h"})
 
 	c := &Client{provider: nil} // simulate no key
 	x := &DecisionExtractor{Client: c}

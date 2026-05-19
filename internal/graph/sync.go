@@ -367,7 +367,7 @@ func (s *Store) installID() (string, error) {
 // is push-eligible (team, unit, public — never local).
 func (s *Store) nodesSince(since string) ([]Node, error) {
 	args := []any{}
-	q := `SELECT id, type, key, props, scope, repo, unit, content_hash, source,
+	q := `SELECT id, type, key, props, scope, repo, unit, domain, content_hash, source,
 	             valid_from, valid_to, ingested_at
 	        FROM nodes
 	       WHERE scope IN ('team','unit','public')`
@@ -394,7 +394,7 @@ func (s *Store) nodesSince(since string) ([]Node, error) {
 
 func (s *Store) edgesSince(since string) ([]Edge, error) {
 	args := []any{}
-	q := `SELECT id, from_id, to_id, type, props, scope, repo, unit, source,
+	q := `SELECT id, from_id, to_id, type, props, scope, repo, unit, domain, source,
 	             valid_from, valid_to, ingested_at
 	        FROM edges
 	       WHERE scope IN ('team','unit','public')`
@@ -421,7 +421,7 @@ func (s *Store) edgesSince(since string) ([]Edge, error) {
 
 func (s *Store) nodeByID(id int64) (*Node, error) {
 	row := s.db.QueryRow(
-		`SELECT id, type, key, props, scope, repo, unit, content_hash, source,
+		`SELECT id, type, key, props, scope, repo, unit, domain, content_hash, source,
 		        valid_from, valid_to, ingested_at
 		   FROM nodes WHERE id = ?`,
 		id,

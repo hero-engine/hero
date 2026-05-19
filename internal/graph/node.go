@@ -16,8 +16,9 @@ type Node struct {
 	Key         string         `json:"key"`
 	Props       map[string]any `json:"props"`
 	Scope       Scope          `json:"scope"`
-	Repo        string         `json:"repo,omitempty"` // partition key — repo this node belongs to
-	Unit        string         `json:"unit,omitempty"` // partition key — business unit / product line
+	Repo        string         `json:"repo,omitempty"`   // partition key — repo this node belongs to
+	Unit        string         `json:"unit,omitempty"`   // partition key — business unit / product line
+	Domain      string         `json:"domain,omitempty"` // namespace tag — empty = global (Mission, Person, etc.)
 	ContentHash string         `json:"content_hash,omitempty"`
 	Source      map[string]any `json:"source"`
 	ValidFrom   string         `json:"valid_from"`
@@ -27,6 +28,36 @@ type Node struct {
 
 // ErrNotFound is returned when a lookup matches no current row.
 var ErrNotFound = errors.New("graph: not found")
+
+// ErrDomainRequired is returned by UpsertNode when Domain is empty AND
+// the node type is not in globalNodeTypes. Catches ingest paths that
+// forgot to stamp the namespace partition.
+var ErrDomainRequired = errors.New("graph: domain required (node type not in global allow-list)")
+
+// ErrDomainMutation is returned by UpsertNode when an existing
+// (type, key) row has a different domain than the incoming write.
+// First write wins; relocating a node across domains is a v2 retag
+// concern, not an ingest concern.
+var ErrDomainMutation = errors.New("graph: cannot change a node's domain via upsert")
+
+// globalNodeTypes is the allow-list of node types whose Domain may be
+// "" (workspace-wide / federation-wide rather than per-domain). Adding
+// a type here is a deliberate decision — most node types belong to
+// exactly one domain.
+var globalNodeTypes = map[string]struct{}{
+	"Mission": {}, // workspace-wide brief; no domain
+	"Person":  {}, // people are shared across domains in v1
+	"Org":     {}, // federation partition, not domain partition
+	"Repo":    {}, // federation partition, not domain partition
+	"Unit":    {}, // federation partition, not domain partition
+}
+
+// IsGlobalNodeType reports whether the type is exempt from the domain
+// invariant — i.e. Domain == "" is permitted on upsert.
+func IsGlobalNodeType(typ string) bool {
+	_, ok := globalNodeTypes[typ]
+	return ok
+}
 
 // UpsertNode inserts or updates the current row for (type, key).
 //
@@ -43,6 +74,9 @@ var ErrNotFound = errors.New("graph: not found")
 func (s *Store) UpsertNode(n *Node) (int64, error) {
 	if n.Type == "" || n.Key == "" {
 		return 0, fmt.Errorf("graph: node requires type and key")
+	}
+	if n.Domain == "" && !IsGlobalNodeType(n.Type) {
+		return 0, fmt.Errorf("%w: type=%q key=%q", ErrDomainRequired, n.Type, n.Key)
 	}
 	if n.Scope == "" {
 		n.Scope = ScopeTeam
@@ -71,18 +105,19 @@ func (s *Store) UpsertNode(n *Node) (int64, error) {
 
 	// Look up the current row, if any.
 	var (
-		existingID    int64
-		existingHash  sql.NullString
-		existingProps string
-		existingRepo  string
-		existingUnit  string
+		existingID     int64
+		existingHash   sql.NullString
+		existingProps  string
+		existingRepo   string
+		existingUnit   string
+		existingDomain string
 	)
 	err = tx.QueryRow(
-		`SELECT id, content_hash, props, repo, unit
+		`SELECT id, content_hash, props, repo, unit, domain
 		   FROM nodes
 		  WHERE type = ? AND key = ? AND valid_to IS NULL`,
 		n.Type, n.Key,
-	).Scan(&existingID, &existingHash, &existingProps, &existingRepo, &existingUnit)
+	).Scan(&existingID, &existingHash, &existingProps, &existingRepo, &existingUnit, &existingDomain)
 
 	switch {
 	case err == sql.ErrNoRows:
@@ -90,12 +125,23 @@ func (s *Store) UpsertNode(n *Node) (int64, error) {
 	case err != nil:
 		return 0, fmt.Errorf("selecting current: %w", err)
 	default:
+		// First write wins on domain: relocating a node across domains
+		// is a v2 retag concern, not an upsert concern. Catch the trap
+		// at the write site rather than silently flipping the tag.
+		if existingDomain != n.Domain {
+			return 0, fmt.Errorf("%w: type=%q key=%q existing=%q new=%q",
+				ErrDomainMutation, n.Type, n.Key, existingDomain, n.Domain)
+		}
 		// Partition columns must match for an upsert to be a no-op,
 		// even if content is otherwise unchanged. This makes the v1→v2
 		// backfill idempotent: existing rows with empty repo/unit get
 		// invalidated and replaced when the ingest path now stamps
-		// them.
-		partitionUnchanged := existingRepo == n.Repo && existingUnit == n.Unit
+		// them. Domain is included in the partition check for
+		// consistency, though ErrDomainMutation above means it always
+		// matches when we get here.
+		partitionUnchanged := existingRepo == n.Repo &&
+			existingUnit == n.Unit &&
+			existingDomain == n.Domain
 
 		if partitionUnchanged && n.ContentHash != "" && existingHash.Valid && existingHash.String == n.ContentHash {
 			if err := tx.Commit(); err != nil {
@@ -129,10 +175,10 @@ func (s *Store) UpsertNode(n *Node) (int64, error) {
 
 	res, err := tx.Exec(
 		`INSERT INTO nodes
-		 (type, key, props, scope, repo, unit, content_hash, source, valid_from, valid_to, ingested_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)`,
+		 (type, key, props, scope, repo, unit, domain, content_hash, source, valid_from, valid_to, ingested_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)`,
 		n.Type, n.Key, propsJSON, string(n.Scope),
-		n.Repo, n.Unit,
+		n.Repo, n.Unit, n.Domain,
 		nullableString(n.ContentHash), sourceJSON,
 		n.ValidFrom, n.IngestedAt,
 	)
@@ -160,7 +206,7 @@ func (s *Store) UpsertNode(n *Node) (int64, error) {
 // recorded with bitemporal correctness.
 func (s *Store) GetNodeAt(typ, key, at string) (*Node, error) {
 	row := s.db.QueryRow(
-		`SELECT id, type, key, props, scope, repo, unit, content_hash, source,
+		`SELECT id, type, key, props, scope, repo, unit, domain, content_hash, source,
 		        valid_from, valid_to, ingested_at
 		   FROM nodes
 		  WHERE type = ? AND key = ?
@@ -176,7 +222,7 @@ func (s *Store) GetNodeAt(typ, key, at string) (*Node, error) {
 // GetNode returns the current row for (type, key), or ErrNotFound.
 func (s *Store) GetNode(typ, key string) (*Node, error) {
 	row := s.db.QueryRow(
-		`SELECT id, type, key, props, scope, repo, unit, content_hash, source,
+		`SELECT id, type, key, props, scope, repo, unit, domain, content_hash, source,
 		        valid_from, valid_to, ingested_at
 		   FROM nodes
 		  WHERE type = ? AND key = ? AND valid_to IS NULL`,
@@ -227,7 +273,7 @@ func (s *Store) ListNodesByType(typ string) ([]*Node, error) {
 	)
 	if typ == "" {
 		rows, err = s.db.Query(
-			`SELECT id, type, key, props, scope, repo, unit, content_hash, source,
+			`SELECT id, type, key, props, scope, repo, unit, domain, content_hash, source,
 			        valid_from, valid_to, ingested_at
 			   FROM nodes
 			  WHERE valid_to IS NULL
@@ -235,7 +281,7 @@ func (s *Store) ListNodesByType(typ string) ([]*Node, error) {
 		)
 	} else {
 		rows, err = s.db.Query(
-			`SELECT id, type, key, props, scope, repo, unit, content_hash, source,
+			`SELECT id, type, key, props, scope, repo, unit, domain, content_hash, source,
 			        valid_from, valid_to, ingested_at
 			   FROM nodes
 			  WHERE type = ? AND valid_to IS NULL
@@ -266,7 +312,7 @@ func (s *Store) ListNodesByType(typ string) ([]*Node, error) {
 // and reuse the canonical column shape and decode logic.
 //
 // Column order required: id, type, key, props, scope, repo, unit,
-// content_hash, source, valid_from, valid_to, ingested_at.
+// domain, content_hash, source, valid_from, valid_to, ingested_at.
 func ScanNode(r interface {
 	Scan(...any) error
 }) (*Node, error) {
@@ -287,7 +333,7 @@ func scanNode(r interface {
 	)
 	err := r.Scan(
 		&n.ID, &n.Type, &n.Key, &propsJSON, &scopeStr,
-		&n.Repo, &n.Unit,
+		&n.Repo, &n.Unit, &n.Domain,
 		&contentHash, &sourceJSON,
 		&n.ValidFrom, &validToNS, &n.IngestedAt,
 	)

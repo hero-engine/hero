@@ -76,6 +76,7 @@ func WriteRawGraph(heroDir, repoKey string, store *graph.Store) (*RawGraphSummar
 
 		if _, err := store.UpsertNode(&graph.Node{
 			Type:        "Document",
+			Domain:      "engineering",
 			Key:         hash,
 			Props:       props,
 			Repo:        repoKey,

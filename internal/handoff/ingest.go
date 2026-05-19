@@ -26,7 +26,7 @@ type ParsedHandoff struct {
 // edits when the content hasn't changed (UpsertNode skips no-op
 // writes). Reflections are deduped by text match against existing
 // entries since their timestamps are not preserved through markdown.
-func IngestUserFile(store *graph.Store, repoKey, path string) error {
+func IngestUserFile(store *graph.Store, repoKey, domain, path string) error {
 	if store == nil {
 		return fmt.Errorf("handoff: nil store")
 	}
@@ -48,18 +48,20 @@ func IngestUserFile(store *graph.Store, repoKey, path string) error {
 
 	if parsed.Ask != nil && parsed.Ask.Text != "" {
 		parsed.Ask.User = parsed.User
+		parsed.Ask.Domain = domain
 		if err := RecordAsk(store, repoKey, *parsed.Ask); err != nil {
 			return fmt.Errorf("ingest ask: %w", err)
 		}
 	}
 	if parsed.Suggestion != nil && parsed.Suggestion.Text != "" {
 		parsed.Suggestion.User = parsed.User
+		parsed.Suggestion.Domain = domain
 		if err := RecordSuggestion(store, repoKey, *parsed.Suggestion); err != nil {
 			return fmt.Errorf("ingest suggestion: %w", err)
 		}
 	}
 	if len(parsed.Reflections) > 0 {
-		existing, _ := RecentReflections(store, parsed.User, repoKey, 100)
+		existing, _ := RecentReflections(store, parsed.User, repoKey, domain, 100)
 		seen := make(map[string]struct{}, len(existing))
 		for _, e := range existing {
 			seen[strings.TrimSpace(e.Text)] = struct{}{}
@@ -73,6 +75,7 @@ func IngestUserFile(store *graph.Store, repoKey, path string) error {
 				continue
 			}
 			ref.User = parsed.User
+			ref.Domain = domain
 			ref.Text = text
 			if err := RecordReflection(store, repoKey, ref); err != nil {
 				return fmt.Errorf("ingest reflection: %w", err)

@@ -28,6 +28,12 @@ func WriteGraph(result *Result, store *graph.Store) (*GraphWriteSummary, error) 
 	repoKey := repoKeyFor(result.ProjectRoot)
 	source := map[string]any{"kind": "codescan"}
 
+	// Code is intrinsically engineering content — see DSKG spec write-path
+	// rules. Repo is in globalNodeTypes so its Domain stays empty; every
+	// other node codescan writes (Package, File, Symbol) carries the
+	// engineering tag, and edges inherit from the from-node.
+	const codeDomain = "engineering"
+
 	summary := &GraphWriteSummary{}
 
 	repoID, err := store.UpsertNode(&graph.Node{
@@ -63,6 +69,7 @@ func WriteGraph(result *Result, store *graph.Store) (*GraphWriteSummary, error) 
 
 		pkgID, err := store.UpsertNode(&graph.Node{
 			Type:        "Package",
+			Domain:      codeDomain,
 			Key:         pkgKey,
 			Props:       pkgProps,
 			Repo:        repoKey,
@@ -88,6 +95,7 @@ func WriteGraph(result *Result, store *graph.Store) (*GraphWriteSummary, error) 
 			fileKey := nodeKey(repoKey, fp)
 			fileID, err := store.UpsertNode(&graph.Node{
 				Type:        "File",
+				Domain:      codeDomain,
 				Key:         fileKey,
 				Props:       map[string]any{"path": fp, "language": pkg.Language},
 				Repo:        repoKey,
@@ -132,6 +140,7 @@ func WriteGraph(result *Result, store *graph.Store) (*GraphWriteSummary, error) 
 
 			symID, err := store.UpsertNode(&graph.Node{
 				Type:        "Symbol",
+				Domain:      codeDomain,
 				Key:         symKey,
 				Props:       symProps,
 				Repo:        repoKey,

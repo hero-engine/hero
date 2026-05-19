@@ -18,7 +18,7 @@ func TestPickUserSuggestion_AgentWinsWhenFresh(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	text, _, source := PickUserSuggestion(store, "alice", "repo-x")
+	text, _, source := PickUserSuggestion(store, "alice", "repo-x", "engineering")
 	if text != "ship phase 8" {
 		t.Errorf("text = %q, want agent text", text)
 	}
@@ -43,7 +43,7 @@ func TestPickUserSuggestion_StaleWhenCommitLandsAfter(t *testing.T) {
 	// Need an open Feature for the fallback to have something to point at.
 	seedFeature(t, store, "repo-x", "next-thing", "Next Thing", "P1", "planning")
 
-	text, _, source := PickUserSuggestion(store, "alice", "repo-x")
+	text, _, source := PickUserSuggestion(store, "alice", "repo-x", "engineering")
 	if source == SuggestionFromAgent {
 		t.Errorf("source = agent, want auto-derived after commit landed")
 	}
@@ -59,7 +59,7 @@ func TestPickUserSuggestion_DerivesFromOpenFeatureWhenNoAgentSuggestion(t *testi
 	store := openTestStore(t)
 	seedFeature(t, store, "repo-x", "auth-bug", "Fix the auth bug", "P0", "planning")
 
-	text, _, source := PickUserSuggestion(store, "alice", "repo-x")
+	text, _, source := PickUserSuggestion(store, "alice", "repo-x", "engineering")
 	if source != SuggestionFromOpenFeature {
 		t.Errorf("source = %q, want %q", source, SuggestionFromOpenFeature)
 	}
@@ -72,7 +72,7 @@ func TestPickUserSuggestion_FallsBackToInitiativeWhenNoFeatures(t *testing.T) {
 	store := openTestStore(t)
 	seedInitiative(t, store, "repo-x", "rebuild", "Rebuild Everything", "planning")
 
-	text, _, source := PickUserSuggestion(store, "alice", "repo-x")
+	text, _, source := PickUserSuggestion(store, "alice", "repo-x", "engineering")
 	if source != SuggestionFromInitiative {
 		t.Errorf("source = %q", source)
 	}
@@ -108,7 +108,7 @@ func TestUserHandoffMD_DoesNotLeakCrossRepoAsk(t *testing.T) {
 
 func TestPickUserSuggestion_EmptyWhenNothingToSuggest(t *testing.T) {
 	store := openTestStore(t)
-	text, _, source := PickUserSuggestion(store, "alice", "repo-x")
+	text, _, source := PickUserSuggestion(store, "alice", "repo-x", "engineering")
 	if text != "" || source != "" {
 		t.Errorf("expected empty, got text=%q source=%q", text, source)
 	}
@@ -161,6 +161,7 @@ func seedCommit(t *testing.T, store *graph.Store, repoKey, sha, subject, date st
 	t.Helper()
 	if _, err := store.UpsertNode(&graph.Node{
 		Type: "Commit",
+		Domain:      "engineering",
 		Key:  sha,
 		Repo: repoKey,
 		Props: map[string]any{
@@ -178,6 +179,7 @@ func seedFeature(t *testing.T, store *graph.Store, repoKey, slug, title, priorit
 	t.Helper()
 	if _, err := store.UpsertNode(&graph.Node{
 		Type: "Feature",
+		Domain:      "engineering",
 		Key:  slug,
 		Repo: repoKey,
 		Props: map[string]any{
@@ -195,6 +197,7 @@ func seedInitiative(t *testing.T, store *graph.Store, repoKey, slug, title, stat
 	t.Helper()
 	if _, err := store.UpsertNode(&graph.Node{
 		Type: "Initiative",
+		Domain:      "engineering",
 		Key:  slug,
 		Repo: repoKey,
 		Props: map[string]any{

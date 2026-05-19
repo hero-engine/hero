@@ -40,6 +40,7 @@ func seedRepo(t *testing.T, store *graph.Store) {
 		date := now.Add(time.Duration(-i) * time.Hour).Format(time.RFC3339)
 		if _, err := store.UpsertNode(&graph.Node{
 			Type: "Commit", Key: c.sha, Repo: "test-repo",
+			Domain:      "engineering",
 			Props: map[string]any{
 				"sha": c.sha, "subject": c.subj, "date": date,
 			},
@@ -56,6 +57,7 @@ func seedRepo(t *testing.T, store *graph.Store) {
 	} {
 		if _, err := store.UpsertNode(&graph.Node{
 			Type: "Feature", Key: f.slug, Repo: "test-repo",
+			Domain:      "engineering",
 			Props: map[string]any{
 				"title": f.title, "status": f.status, "priority": f.prio,
 			},
@@ -67,6 +69,7 @@ func seedRepo(t *testing.T, store *graph.Store) {
 	// A completed feature (must NOT appear under "Next")
 	if _, err := store.UpsertNode(&graph.Node{
 		Type: "Feature", Key: "graph-memory", Repo: "test-repo",
+		Domain:      "engineering",
 		Props: map[string]any{
 			"title": "Graph memory", "status": "completed", "priority": "P0",
 		},
@@ -197,9 +200,11 @@ func TestNextMD_AttemptsLinkedToSession(t *testing.T) {
 
 	sessID, _ := store.UpsertNode(&graph.Node{
 		Type: "Session", Key: "session-1", Repo: "test-repo", ContentHash: "h-sess",
+		Domain:      "engineering",
 	})
 	a, _ := store.UpsertNode(&graph.Node{
 		Type: "Attempt", Key: "session-1:abc",
+		Domain:      "engineering",
 		Repo:        "test-repo",
 		Props:       map[string]any{"body": "tried bcrypt rounds=12 — too slow", "outcome": "failed"},
 		ContentHash: "h-attempt",

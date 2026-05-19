@@ -138,6 +138,7 @@ func seedFailingCriterion(t *testing.T, store *graph.Store, key, statement, pare
 	t.Helper()
 	if _, err := store.UpsertNode(&graph.Node{
 		Type: "Criterion",
+		Domain:      "engineering",
 		Key:  key,
 		Props: map[string]any{
 			"ac_id":     key,

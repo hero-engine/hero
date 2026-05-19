@@ -12,6 +12,7 @@ func TestSprintSection_RendersWhenActiveSprintExists(t *testing.T) {
 	// Active sprint
 	sprintID, _ := store.UpsertNode(&graph.Node{
 		Type: "Sprint", Key: "10042",
+		Domain:      "engineering",
 		Props: map[string]any{
 			"name": "Sprint 42", "state": "active",
 			"start": "2026-04-14", "end": "2026-04-28",
@@ -22,6 +23,7 @@ func TestSprintSection_RendersWhenActiveSprintExists(t *testing.T) {
 	// Two issues in it
 	issueA, _ := store.UpsertNode(&graph.Node{
 		Type: "Issue", Key: "PROJ-101",
+		Domain:      "engineering",
 		Props: map[string]any{
 			"key": "PROJ-101", "title": "OAuth login endpoint",
 			"status": "In Progress", "assignee": "alice@example.com",
@@ -30,6 +32,7 @@ func TestSprintSection_RendersWhenActiveSprintExists(t *testing.T) {
 	})
 	issueB, _ := store.UpsertNode(&graph.Node{
 		Type: "Issue", Key: "PROJ-102",
+		Domain:      "engineering",
 		Props: map[string]any{
 			"key": "PROJ-102", "title": "Frontend OAuth", "status": "Open",
 		},
@@ -61,6 +64,7 @@ func TestSprintSection_OmittedWhenNoActiveSprint(t *testing.T) {
 	// Closed sprint — should NOT render.
 	store.UpsertNode(&graph.Node{
 		Type: "Sprint", Key: "10000",
+		Domain:      "engineering",
 		Props:       map[string]any{"name": "Sprint 0", "state": "closed"},
 		ContentHash: "h",
 	})

@@ -64,6 +64,7 @@ func WriteGraph(heroDir, repoKey string, store *graph.Store) (*Summary, error) {
 		props["from_next_md"] = true
 		id, err := store.UpsertNode(&graph.Node{
 			Type:        "Session",
+			Domain:      "engineering",
 			Key:         parsed.session,
 			Props:       props,
 			Repo:        repoKey,
@@ -81,6 +82,7 @@ func WriteGraph(heroDir, repoKey string, store *graph.Store) (*Summary, error) {
 		key := parsed.session + ":" + shortHash("attempt", body)
 		id, err := store.UpsertNode(&graph.Node{
 			Type:        "Attempt",
+			Domain:      "engineering",
 			Key:         key,
 			Props:       map[string]any{"body": body, "outcome": "failed"},
 			Repo:        repoKey,

@@ -130,6 +130,7 @@ func captureNextSnapshot(store *graph.Store, repoKey string, body []byte) error 
 	}
 	_, err := store.UpsertNode(&graph.Node{
 		Type:   "Note",
+		Domain:      "engineering",
 		Key:    key,
 		Props:  props,
 		Repo:   repoKey,

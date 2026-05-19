@@ -133,8 +133,9 @@ func runNextIngest(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
+	domain := graph.DomainFor(cfg, graph.IntrinsicActive)
 	for _, p := range paths {
-		if err := handoff.IngestUserFile(store, repoKey, p); err != nil {
+		if err := handoff.IngestUserFile(store, repoKey, domain, p); err != nil {
 			return fmt.Errorf("ingest %s: %w", p, err)
 		}
 		if !ingestQuiet {
@@ -154,24 +155,25 @@ func resolveHandoffUser(cfg config.Config) string {
 
 // openHandoffStore is the boilerplate every handoff command needs:
 // load config, open the graph, derive repoKey + user.
-func openHandoffStore() (*graph.Store, string, string, func(), error) {
+func openHandoffStore() (*graph.Store, string, string, string, func(), error) {
 	projectRoot := findProjectRoot()
 	cfg, err := config.Load(projectRoot)
 	if err != nil {
-		return nil, "", "", nil, fmt.Errorf("loading config: %w", err)
+		return nil, "", "", "", nil, fmt.Errorf("loading config: %w", err)
 	}
 	heroDir := cfg.HeroDir(projectRoot)
 	store, err := graph.Open(heroDir)
 	if err != nil {
-		return nil, "", "", nil, fmt.Errorf("opening graph: %w", err)
+		return nil, "", "", "", nil, fmt.Errorf("opening graph: %w", err)
 	}
 	user := resolveHandoffUser(cfg)
 	repoKey := gitutil.RepoKey(projectRoot)
-	return store, user, repoKey, func() { store.Close() }, nil
+	domain := graph.DomainFor(cfg, graph.IntrinsicActive)
+	return store, user, repoKey, domain, func() { store.Close() }, nil
 }
 
 func runNextSuggest(cmd *cobra.Command, args []string) error {
-	store, user, repoKey, cleanup, err := openHandoffStore()
+	store, user, repoKey, domain, cleanup, err := openHandoffStore()
 	if err != nil {
 		return err
 	}
@@ -180,14 +182,15 @@ func runNextSuggest(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		text := strings.Join(args, " ")
 		return handoff.RecordSuggestion(store, repoKey, handoff.NextSuggestion{
-			User: user,
-			Text: text,
+			User:   user,
+			Domain: domain,
+			Text:   text,
 		})
 	}
 	// Read path: ask the projection for the staleness-aware answer
 	// so this command always agrees with .hero/next/<user>.md and
 	// the user can never see a suggestion superseded by commits.
-	text, rationale, source := projection.PickUserSuggestion(store, user, repoKey)
+	text, rationale, source := projection.PickUserSuggestion(store, user, repoKey, domain)
 	if text == "" {
 		return emitField(cmd.OutOrStdout(), (*handoff.NextSuggestion)(nil), "no suggested next prompt and no open feature to derive from")
 	}
@@ -206,7 +209,7 @@ func runNextSuggest(cmd *cobra.Command, args []string) error {
 }
 
 func runNextAsk(cmd *cobra.Command, args []string) error {
-	store, user, repoKey, cleanup, err := openHandoffStore()
+	store, user, repoKey, domain, cleanup, err := openHandoffStore()
 	if err != nil {
 		return err
 	}
@@ -215,11 +218,12 @@ func runNextAsk(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		text := strings.Join(args, " ")
 		return handoff.RecordAsk(store, repoKey, handoff.UserAsk{
-			User: user,
-			Text: text,
+			User:   user,
+			Domain: domain,
+			Text:   text,
 		})
 	}
-	ask, err := handoff.LatestAsk(store, user, repoKey)
+	ask, err := handoff.LatestAsk(store, user, repoKey, domain)
 	if err != nil {
 		return err
 	}
@@ -227,7 +231,7 @@ func runNextAsk(cmd *cobra.Command, args []string) error {
 }
 
 func runNextReflection(cmd *cobra.Command, args []string) error {
-	store, user, repoKey, cleanup, err := openHandoffStore()
+	store, user, repoKey, domain, cleanup, err := openHandoffStore()
 	if err != nil {
 		return err
 	}
@@ -236,11 +240,12 @@ func runNextReflection(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		text := strings.Join(args, " ")
 		return handoff.RecordReflection(store, repoKey, handoff.SessionReflection{
-			User: user,
-			Text: text,
+			User:   user,
+			Domain: domain,
+			Text:   text,
 		})
 	}
-	refs, err := handoff.RecentReflections(store, user, repoKey, 5)
+	refs, err := handoff.RecentReflections(store, user, repoKey, domain, 5)
 	if err != nil {
 		return err
 	}

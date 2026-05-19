@@ -111,11 +111,11 @@ func TestIngestUserFile_RoundTripsAcrossMachines(t *testing.T) {
 	}
 
 	storeB := openTestStore(t)
-	if err := IngestUserFile(storeB, "repo-x", path); err != nil {
+	if err := IngestUserFile(storeB, "repo-x", "engineering", path); err != nil {
 		t.Fatalf("IngestUserFile: %v", err)
 	}
 
-	got, err := LatestSuggestion(storeB, "alice", "repo-x")
+	got, err := LatestSuggestion(storeB, "alice", "repo-x", "engineering")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,12 +126,12 @@ func TestIngestUserFile_RoundTripsAcrossMachines(t *testing.T) {
 		t.Errorf("Suggestion.Text = %q after round-trip", got.Text)
 	}
 
-	ask, _ := LatestAsk(storeB, "alice", "repo-x")
+	ask, _ := LatestAsk(storeB, "alice", "repo-x", "engineering")
 	if ask == nil || ask.Text != "where did we leave off on the auth bug?" {
 		t.Errorf("Ask round-trip lost: %+v", ask)
 	}
 
-	refs, _ := RecentReflections(storeB, "alice", "repo-x", 10)
+	refs, _ := RecentReflections(storeB, "alice", "repo-x", "engineering", 10)
 	if len(refs) != 2 {
 		t.Errorf("Reflections len after ingest = %d, want 2", len(refs))
 	}
@@ -145,16 +145,16 @@ func TestIngestUserFile_IdempotentOnReingest(t *testing.T) {
 	}
 	store := openTestStore(t)
 
-	if err := IngestUserFile(store, "repo-x", path); err != nil {
+	if err := IngestUserFile(store, "repo-x", "engineering", path); err != nil {
 		t.Fatal(err)
 	}
-	first, _ := RecentReflections(store, "alice", "repo-x", 10)
+	first, _ := RecentReflections(store, "alice", "repo-x", "engineering", 10)
 
 	// Re-ingest the same file. Reflections shouldn't double up.
-	if err := IngestUserFile(store, "repo-x", path); err != nil {
+	if err := IngestUserFile(store, "repo-x", "engineering", path); err != nil {
 		t.Fatal(err)
 	}
-	second, _ := RecentReflections(store, "alice", "repo-x", 10)
+	second, _ := RecentReflections(store, "alice", "repo-x", "engineering", 10)
 
 	if len(first) != len(second) {
 		t.Errorf("reflections grew on re-ingest: %d → %d", len(first), len(second))
@@ -163,7 +163,7 @@ func TestIngestUserFile_IdempotentOnReingest(t *testing.T) {
 
 func TestIngestUserFile_MissingFileIsNoOp(t *testing.T) {
 	store := openTestStore(t)
-	err := IngestUserFile(store, "repo-x", "/no/such/path.md")
+	err := IngestUserFile(store, "repo-x", "engineering", "/no/such/path.md")
 	if err != nil {
 		t.Errorf("missing file should be no-op, got %v", err)
 	}
@@ -201,10 +201,10 @@ _(none yet)_
 		t.Fatal(err)
 	}
 	store := openTestStore(t)
-	if err := IngestUserFile(store, "repo-x", path); err != nil {
+	if err := IngestUserFile(store, "repo-x", "engineering", path); err != nil {
 		t.Fatal(err)
 	}
-	got, _ := LatestSuggestion(store, "alice", "repo-x")
+	got, _ := LatestSuggestion(store, "alice", "repo-x", "engineering")
 	if got != nil {
 		t.Errorf("LatestSuggestion = %+v, want nil (auto-derived should not round-trip)", got)
 	}

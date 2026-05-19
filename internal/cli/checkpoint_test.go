@@ -482,37 +482,37 @@ func Test_CrossMachineRoundTrip_FullLoop(t *testing.T) {
 	defer storeB.Close()
 
 	// Pre-condition: B's graph has no record of any of A's fields.
-	if got, _ := handoff.LatestSuggestion(storeB, user, repoKey); got != nil {
+	if got, _ := handoff.LatestSuggestion(storeB, user, repoKey, "engineering"); got != nil {
 		t.Fatalf("machine B has stale suggestion before ingest: %+v", got)
 	}
 
-	if err := handoff.IngestUserFile(storeB, repoKey, handoffPath); err != nil {
+	if err := handoff.IngestUserFile(storeB, repoKey, "engineering", handoffPath); err != nil {
 		t.Fatalf("IngestUserFile B: %v", err)
 	}
 
 	// Post-condition: B sees A's text verbatim across all three fields.
-	gotSug, err := handoff.LatestSuggestion(storeB, user, repoKey)
+	gotSug, err := handoff.LatestSuggestion(storeB, user, repoKey, "engineering")
 	if err != nil {
 		t.Fatalf("LatestSuggestion B: %v", err)
 	}
 	if gotSug == nil || gotSug.Text != suggestion {
 		t.Errorf("Suggestion did not round-trip: got=%+v want=%q", gotSug, suggestion)
 	}
-	gotAsk, _ := handoff.LatestAsk(storeB, user, repoKey)
+	gotAsk, _ := handoff.LatestAsk(storeB, user, repoKey, "engineering")
 	if gotAsk == nil || gotAsk.Text != ask {
 		t.Errorf("Ask did not round-trip: got=%+v want=%q", gotAsk, ask)
 	}
-	gotRefs, _ := handoff.RecentReflections(storeB, user, repoKey, 10)
+	gotRefs, _ := handoff.RecentReflections(storeB, user, repoKey, "engineering", 10)
 	if len(gotRefs) == 0 || gotRefs[0].Text != reflection {
 		t.Errorf("Reflection did not round-trip: got=%+v want=%q", gotRefs, reflection)
 	}
 
 	// --- Idempotency: a second SessionStart ingest must not duplicate. ---
 
-	if err := handoff.IngestUserFile(storeB, repoKey, handoffPath); err != nil {
+	if err := handoff.IngestUserFile(storeB, repoKey, "engineering", handoffPath); err != nil {
 		t.Fatalf("second IngestUserFile B: %v", err)
 	}
-	refsAfter, _ := handoff.RecentReflections(storeB, user, repoKey, 10)
+	refsAfter, _ := handoff.RecentReflections(storeB, user, repoKey, "engineering", 10)
 	if len(refsAfter) != len(gotRefs) {
 		t.Errorf("re-ingest duplicated reflections: %d → %d", len(gotRefs), len(refsAfter))
 	}

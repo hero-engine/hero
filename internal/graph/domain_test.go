@@ -35,6 +35,7 @@ func TestSchemaV3DefaultsToEngineering(t *testing.T) {
 	_, err := s.UpsertNode(&Node{
 		Type:        "Package",
 		Key:         "internal/cli",
+		Domain:      "engineering",
 		Props:       map[string]any{"language": "go"},
 		ContentHash: "h1",
 		Source:      map[string]any{"kind": "codescan"},
@@ -135,7 +136,7 @@ func TestNonEngineeringRowCount(t *testing.T) {
 	// inserted directly to skip the future write-path guards (which
 	// land in Phase 2).
 	if _, err := s.UpsertNode(&Node{
-		Type: "Package", Key: "internal/cli",
+		Type: "Package", Key: "internal/cli", Domain: "engineering",
 		ContentHash: "h1",
 		Source:      map[string]any{"kind": "codescan"},
 	}); err != nil {

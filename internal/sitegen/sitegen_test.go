@@ -24,6 +24,7 @@ func seed(t *testing.T, s *graph.Store) {
 	// One open feature
 	if _, err := s.UpsertNode(&graph.Node{
 		Type: "Feature", Key: "shipping-rewrite", Repo: "test",
+		Domain:      "engineering",
 		Props: map[string]any{
 			"title": "Shipping rewrite", "status": "planning",
 			"priority": "P0",
@@ -35,6 +36,7 @@ func seed(t *testing.T, s *graph.Store) {
 	// One initiative
 	if _, err := s.UpsertNode(&graph.Node{
 		Type: "Initiative", Key: "platform", Repo: "test",
+		Domain:      "engineering",
 		Props:       map[string]any{"title": "Platform 2.0", "status": "active"},
 		ContentHash: "h2",
 	}); err != nil {
@@ -43,6 +45,7 @@ func seed(t *testing.T, s *graph.Store) {
 	// One decision
 	if _, err := s.UpsertNode(&graph.Node{
 		Type: "Decision", Key: "use-sqlite", Repo: "test",
+		Domain:      "engineering",
 		Props:       map[string]any{"title": "Use SQLite for graph", "rationale": "Embedded, simple."},
 		ContentHash: "h3",
 	}); err != nil {
@@ -51,6 +54,7 @@ func seed(t *testing.T, s *graph.Store) {
 	// One note
 	if _, err := s.UpsertNode(&graph.Node{
 		Type: "Note", Key: "buddy-model", Repo: "test",
+		Domain:      "engineering",
 		Props:       map[string]any{"title": "Buddy model", "body": "Some prose"},
 		ContentHash: "h4",
 	}); err != nil {
@@ -59,6 +63,7 @@ func seed(t *testing.T, s *graph.Store) {
 	// A commit
 	if _, err := s.UpsertNode(&graph.Node{
 		Type: "Commit", Key: "abc1234567", Repo: "test",
+		Domain:      "engineering",
 		Props: map[string]any{
 			"sha": "abc1234567", "subject": "feat: ship",
 			"date": "2026-04-26T10:00:00Z", "author_name": "Alice",

@@ -523,7 +523,7 @@ func writeWorkSubgraph(cfg config.Config, projectRoot, heroDir string, store *gr
 				continue
 			}
 			path := filepath.Join(heroDir, "next", name)
-			if err := handoff.IngestUserFile(store, repoKey, path); err != nil {
+			if err := handoff.IngestUserFile(store, repoKey, graph.DomainFor(cfg, graph.IntrinsicActive), path); err != nil {
 				handoffStep.failed = true
 				handoffStep.err = err
 				break

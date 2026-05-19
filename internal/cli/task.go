@@ -409,8 +409,9 @@ func resolveSpecGraphID(store *graph.Store, s *spec.Spec) (int64, bool) {
 	// shape tight (just title + status) avoids racing the full scan's
 	// content hash — when scan runs next, its richer hash supersedes.
 	id, err := store.UpsertNode(&graph.Node{
-		Type: nodeType,
-		Key:  s.Slug,
+		Type:   nodeType,
+		Domain: "engineering",
+		Key:    s.Slug,
 		Props: map[string]any{
 			"title":  s.Title,
 			"status": string(s.Status),

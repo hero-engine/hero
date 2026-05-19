@@ -4,7 +4,7 @@ import "testing"
 
 func TestResolveAliasReturnsSelfWhenNoAlias(t *testing.T) {
 	s := openTestStore(t)
-	id, err := s.UpsertNode(&Node{Type: "Feature", Key: "x", ContentHash: "h"})
+	id, err := s.UpsertNode(&Node{Type: "Feature", Key: "x", Domain: "engineering", ContentHash: "h"})
 	if err != nil {
 		t.Fatalf("UpsertNode: %v", err)
 	}
@@ -19,10 +19,10 @@ func TestResolveAliasReturnsSelfWhenNoAlias(t *testing.T) {
 
 func TestMakeAliasAndResolve(t *testing.T) {
 	s := openTestStore(t)
-	if _, err := s.UpsertNode(&Node{Type: "Feature", Key: "old-name", ContentHash: "h1"}); err != nil {
+	if _, err := s.UpsertNode(&Node{Type: "Feature", Key: "old-name", Domain: "engineering", ContentHash: "h1"}); err != nil {
 		t.Fatal(err)
 	}
-	canonical, err := s.UpsertNode(&Node{Type: "Feature", Key: "new-name", ContentHash: "h2"})
+	canonical, err := s.UpsertNode(&Node{Type: "Feature", Key: "new-name", Domain: "engineering", ContentHash: "h2"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,10 +42,10 @@ func TestMakeAliasAndResolve(t *testing.T) {
 
 func TestResolveAliasFollowsChain(t *testing.T) {
 	s := openTestStore(t)
-	a, _ := s.UpsertNode(&Node{Type: "Feature", Key: "a", ContentHash: "h"})
+	a, _ := s.UpsertNode(&Node{Type: "Feature", Key: "a", Domain: "engineering", ContentHash: "h"})
 	_ = a
-	_, _ = s.UpsertNode(&Node{Type: "Feature", Key: "b", ContentHash: "h"})
-	c, _ := s.UpsertNode(&Node{Type: "Feature", Key: "c", ContentHash: "h"})
+	_, _ = s.UpsertNode(&Node{Type: "Feature", Key: "b", Domain: "engineering", ContentHash: "h"})
+	c, _ := s.UpsertNode(&Node{Type: "Feature", Key: "c", Domain: "engineering", ContentHash: "h"})
 
 	if err := s.MakeAlias("Feature", "a", "Feature", "b"); err != nil {
 		t.Fatal(err)
@@ -65,8 +65,8 @@ func TestResolveAliasFollowsChain(t *testing.T) {
 
 func TestResolveAliasHandlesCycleGracefully(t *testing.T) {
 	s := openTestStore(t)
-	a, _ := s.UpsertNode(&Node{Type: "Feature", Key: "a", ContentHash: "h"})
-	b, _ := s.UpsertNode(&Node{Type: "Feature", Key: "b", ContentHash: "h"})
+	a, _ := s.UpsertNode(&Node{Type: "Feature", Key: "a", Domain: "engineering", ContentHash: "h"})
+	b, _ := s.UpsertNode(&Node{Type: "Feature", Key: "b", Domain: "engineering", ContentHash: "h"})
 	_ = a
 	_ = b
 	if err := s.MakeAlias("Feature", "a", "Feature", "b"); err != nil {
