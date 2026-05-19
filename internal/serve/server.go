@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -60,6 +61,10 @@ type Server struct {
 	projectRoot string
 	autoWatch   bool
 	uiEnabled   bool
+
+	// projectRouters caches one shell.Router per project slug for the
+	// /p/<slug>/<page> routes. Lazily initialized on first /p/ request.
+	projectRouters *projectRouterCache
 
 	// Chat dispatcher subsystem. Initialized in Run; nil before then.
 	chatRegistry *chat.Registry
@@ -370,6 +375,35 @@ func (s *Server) Run(ctx context.Context) error {
 		topMux.Handle("/health", handler)
 		topMux.Handle("/auth/", handler)
 		topMux.Handle("/static/shell/", http.StripPrefix("/static/shell/", http.FileServer(http.FS(shell.StaticFS()))))
+
+		// Multi-project routing: /p/<slug>/<page> resolves to a per-
+		// project shell router. /p/all/<page> renders cross-project
+		// stubs (items 7 and 8 fill in the per-page aggregate views).
+		topMux.Handle("/p/", s.projectHandler())
+
+		// Legacy redirects: bookmarks to /now, /work, etc. land on the
+		// default project's namespaced URL. Registered explicitly so
+		// they take precedence over the catch-all "/" below.
+		for _, legacy := range legacyPagePaths {
+			lp := legacy
+			topMux.HandleFunc(lp, func(w http.ResponseWriter, r *http.Request) {
+				// Only rewrite the exact path — sub-paths under /work
+				// (e.g. /work/spec/<slug>) still resolve via the
+				// catch-all to the primary-project shell router
+				// behavior for backwards compat.
+				if r.URL.Path != lp {
+					shellRouter.Handler().ServeHTTP(w, r)
+					return
+				}
+				slug := s.resolveDefaultProjectSlug(r)
+				if slug == "" {
+					shellRouter.Handler().ServeHTTP(w, r)
+					return
+				}
+				http.Redirect(w, r, "/p/"+slug+lp, http.StatusFound)
+			})
+		}
+
 		topMux.Handle("/", shellRouter.Handler())
 		handler = topMux
 	} else if s.chatAPI != nil {
@@ -687,10 +721,29 @@ func (a *busAdapter) Publish(ev chat.BusEvent) {
 	})
 }
 
-// buildShellRouter assembles the shell router with the active edition,
-// session store, identifying chrome strings, and the five stub home
-// registrations. Each home spec replaces its stub when it lands.
+// buildShellRouter assembles the shell router for the daemon's primary
+// project — the project the daemon was launched from. Per-project
+// routers for the /p/<slug>/... routes are built by
+// buildShellRouterFor below.
 func (s *Server) buildShellRouter() *shell.Router {
+	pc := &ProjectContext{
+		Slug:    filepath.Base(s.projectRoot),
+		Path:    s.projectRoot,
+		HeroDir: s.heroDir,
+	}
+	return s.buildShellRouterFor(pc)
+}
+
+// buildShellRouterFor assembles a shell router scoped to a single
+// project. Each page's Deps capture the project's ProjectRoot / HeroDir
+// via closures, so routers must be one-per-project and cached by slug
+// (see projectRouterCache).
+//
+// Hooks that are inherently daemon-global (chat registry, live-session
+// snapshots, chrome workspace label) pull from the Server. Hooks that
+// are inherently per-project (proposal snapshots, project root paths)
+// pull from the ProjectContext.
+func (s *Server) buildShellRouterFor(pc *ProjectContext) *shell.Router {
 	ed := edition.Resolve()
 
 	// Session store is best-effort. A nil store still serves pages
@@ -702,72 +755,76 @@ func (s *Server) buildShellRouter() *shell.Router {
 		store = nil
 	}
 
-	workspace := s.shellWorkspaceName()
-	branch := detectGitBranch(s.projectRoot)
+	workspace := filepath.Base(pc.Path)
+	if workspace == "" {
+		workspace = "hero"
+	}
+	branch := detectGitBranch(pc.Path)
 	userName := shellUserName()
 
 	r := shell.New(ed, store, workspace, branch, userName, s.version)
 	r.SetAdapterProbe(s.shellAdapterState)
+	r.SetProjectSelectorProbe(s.projectSelectorFor(pc.Slug))
 	shell.RegisterStubHomes(r)
 
 	// Register the real Now home in place of its (no-longer-present)
 	// stub. Wired with a per-project proposal-store snapshotter that
 	// surfaces pending proposals in the Needs-your-input section.
 	nowDeps := nowpage.Deps{
-		ProjectRoot:  s.projectRoot,
-		HeroDir:      s.heroDir,
+		ProjectRoot:  pc.Path,
+		HeroDir:      pc.HeroDir,
 		Workspace:    workspace,
 		Branch:       branch,
 		UserName:     userName,
-		Proposals:    s.snapshotProposals,
+		Proposals:    s.proposalsForProject(pc.Slug),
 		ChatRegistry: s.chatRegistry,
 		LiveSessions: s.snapshotLiveSessions,
 	}
 	if err := nowpage.Register(r, nowDeps); err != nil {
-		fmt.Fprintf(os.Stderr, "hero serve: register Now home: %v\n", err)
+		fmt.Fprintf(os.Stderr, "hero serve: register Now home for %s: %v\n", pc.Slug, err)
 	}
 
 	// Register the real Work home in place of its (no-longer-present)
 	// stub. Per-spec: this owns /work; sibling /work/* routes land in
 	// follow-on work.
 	workDeps := workpage.Deps{
-		ProjectRoot:              s.projectRoot,
-		HeroDir:                  s.heroDir,
+		ProjectRoot:              pc.Path,
+		HeroDir:                  pc.HeroDir,
 		Workspace:                workspace,
 		Branch:                   branch,
 		UserName:                 userName,
 		ChatInteractiveConnected: s.chatInteractiveConnected,
 	}
 	if err := workpage.Register(r, workDeps); err != nil {
-		fmt.Fprintf(os.Stderr, "hero serve: register Work home: %v\n", err)
+		fmt.Fprintf(os.Stderr, "hero serve: register Work home for %s: %v\n", pc.Slug, err)
 	}
 
 	// Register the real Knowledge home in place of its (no-longer-present)
 	// stub. Deps mirror the Now wiring — no proposal-store hook yet.
 	knowledgeDeps := knowledgepage.Deps{
-		ProjectRoot:              s.projectRoot,
-		HeroDir:                  s.heroDir,
+		ProjectRoot:              pc.Path,
+		HeroDir:                  pc.HeroDir,
 		Workspace:                workspace,
 		Branch:                   branch,
 		UserName:                 userName,
 		ChatInteractiveConnected: s.chatInteractiveConnected,
 	}
 	if err := knowledgepage.Register(r, knowledgeDeps); err != nil {
-		fmt.Fprintf(os.Stderr, "hero serve: register Knowledge home: %v\n", err)
+		fmt.Fprintf(os.Stderr, "hero serve: register Knowledge home for %s: %v\n", pc.Slug, err)
 	}
 
 	// Register the real People & ROI home in place of its (no-longer-present)
 	// stub. Deps mirror the other home wiring.
 	peopleDeps := peoplepage.Deps{
-		ProjectRoot:              s.projectRoot,
-		HeroDir:                  s.heroDir,
+		ProjectRoot:              pc.Path,
+		HeroDir:                  pc.HeroDir,
 		Workspace:                workspace,
 		Branch:                   branch,
 		UserName:                 userName,
 		ChatInteractiveConnected: s.chatInteractiveConnected,
 	}
 	if err := peoplepage.Register(r, peopleDeps); err != nil {
-		fmt.Fprintf(os.Stderr, "hero serve: register People & ROI home: %v\n", err)
+		fmt.Fprintf(os.Stderr, "hero serve: register People & ROI home for %s: %v\n", pc.Slug, err)
 	}
 
 	// Register the real Agents home in place of its (no-longer-present)
@@ -777,17 +834,17 @@ func (s *Server) buildShellRouter() *shell.Router {
 	// nil until those engines land per the spec's build order; the page
 	// renders empty-state notices when they are.
 	agentsDeps := agentspage.Deps{
-		ProjectRoot:              s.projectRoot,
-		HeroDir:                  s.heroDir,
+		ProjectRoot:              pc.Path,
+		HeroDir:                  pc.HeroDir,
 		Workspace:                workspace,
 		Branch:                   branch,
 		UserName:                 userName,
 		LiveSessions:             s.snapshotLiveSessions,
-		Proposals:                s.snapshotAgentsProposals,
+		Proposals:                s.agentsProposalsForProject(pc.Slug),
 		ChatInteractiveConnected: s.chatInteractiveConnected,
 	}
 	if err := agentspage.Register(r, agentsDeps); err != nil {
-		fmt.Fprintf(os.Stderr, "hero serve: register Agents home: %v\n", err)
+		fmt.Fprintf(os.Stderr, "hero serve: register Agents home for %s: %v\n", pc.Slug, err)
 	}
 
 	// Register the Project home — surfaces table, initiatives, archives
@@ -795,16 +852,152 @@ func (s *Server) buildShellRouter() *shell.Router {
 	// render ONLY at /project/snapshots/<date>; the home itself shows
 	// metadata only, per the isolation invariants.
 	projectDeps := projectpage.Deps{
-		ProjectRoot: s.projectRoot,
-		HeroDir:     s.heroDir,
+		ProjectRoot: pc.Path,
+		HeroDir:     pc.HeroDir,
 		Workspace:   workspace,
 		Branch:      branch,
 		UserName:    userName,
 	}
 	if err := projectpage.Register(r, projectDeps); err != nil {
-		fmt.Fprintf(os.Stderr, "hero serve: register Project home: %v\n", err)
+		fmt.Fprintf(os.Stderr, "hero serve: register Project home for %s: %v\n", pc.Slug, err)
 	}
 	return r
+}
+
+// proposalsForProject returns a per-project proposals-snapshotter that
+// the Now home reads via Deps. Factored out of snapshotProposals so
+// the per-project shell router can scope to the right slug.
+func (s *Server) proposalsForProject(slug string) func() []*nowdata.ProposalRow {
+	return func() []*nowdata.ProposalRow {
+		if s == nil || s.api == nil || s.api.proposals == nil || slug == "" {
+			return nil
+		}
+		envs := s.api.proposals.snapshotProject(slug)
+		if len(envs) == 0 {
+			return nil
+		}
+		rows := make([]*nowdata.ProposalRow, 0, len(envs))
+		for _, e := range envs {
+			if e == nil {
+				continue
+			}
+			rows = append(rows, &nowdata.ProposalRow{
+				ProposalID:  e.ProposalID,
+				SessionID:   e.SessionID,
+				SpecSlug:    e.Target.SpecSlug,
+				Agent:       e.Agent,
+				AnchorValue: e.Target.Anchor.Value,
+				EmittedAt:   e.EmittedAt,
+				BatchID:     e.BatchID,
+			})
+		}
+		return rows
+	}
+}
+
+// agentsProposalsForProject is the Agents-home equivalent of
+// proposalsForProject. The propose store doesn't yet expose a global
+// enumerator, so this returns nil today; the seam is in place for the
+// follow-up to fill it.
+func (s *Server) agentsProposalsForProject(slug string) func() []agentsdata.ProposalRow {
+	return func() []agentsdata.ProposalRow {
+		if s == nil || s.api == nil || s.api.proposals == nil || slug == "" {
+			return nil
+		}
+		store := s.api.proposals.get(slug)
+		if store == nil {
+			return nil
+		}
+		_ = store
+		return nil
+	}
+}
+
+// projectRouterCacheRouter returns (and lazily builds) the per-project
+// shell router for pc. Wired by Server.Run after the primary shell
+// router is constructed.
+func (s *Server) projectRouterCacheRouter(pc *ProjectContext) *shell.Router {
+	if s.projectRouters == nil {
+		s.projectRouters = newProjectRouterCache(s.buildShellRouterFor)
+	}
+	return s.projectRouters.get(pc)
+}
+
+// projectSelectorFor returns the probe a project-scoped shell router
+// uses to populate the top-nav dropdown on every page render. The
+// activeSlug is baked into the closure so each per-project router
+// reports the right "active" entry without re-reading the URL.
+func (s *Server) projectSelectorFor(activeSlug string) func(*http.Request) shell.ProjectSelector {
+	return func(req *http.Request) shell.ProjectSelector {
+		slugs := s.Projects()
+		sort.Strings(slugs)
+
+		options := make([]shell.ProjectSelectorOption, 0, len(slugs)+1)
+		// "All projects" first.
+		options = append(options, shell.ProjectSelectorOption{
+			Slug:  AllProjectsSlug,
+			Label: "All projects",
+		})
+		for _, sl := range slugs {
+			options = append(options, shell.ProjectSelectorOption{
+				Slug:  sl,
+				Label: sl,
+			})
+		}
+
+		// Derive the current page (the part after /p/<slug>/) from the
+		// request URL so the dropdown's navigation preserves which
+		// page the user is on. Legacy URLs (/now etc.) supply the
+		// page directly.
+		currentPage := currentPageFromRequest(req, activeSlug)
+
+		label := activeSlug
+		if activeSlug == AllProjectsSlug {
+			label = "All projects"
+		}
+
+		return shell.ProjectSelector{
+			Active:      activeSlug,
+			ActiveLabel: label,
+			CurrentPage: currentPage,
+			Options:     options,
+		}
+	}
+}
+
+// currentPageFromRequest extracts the inner page slug from a request,
+// handling both /p/<slug>/<page> and legacy /<page> URLs. Returns "now"
+// when the path can't be parsed — the safest landing page.
+func currentPageFromRequest(req *http.Request, activeSlug string) string {
+	if req == nil || req.URL == nil {
+		return "now"
+	}
+	p := strings.TrimPrefix(req.URL.Path, "/")
+	if p == "" {
+		return "now"
+	}
+	// /p/<slug>/<page>/... — explicit project-namespaced path. After
+	// path rewriting in projectHandler we usually see only the inner
+	// path, so this branch only matches the legacy / pre-rewrite URLs.
+	if strings.HasPrefix(p, "p/") || p == "p" {
+		rest := strings.TrimPrefix(p, "p/")
+		// /p/<slug> with no trailing path → default page "now".
+		if !strings.Contains(rest, "/") {
+			return "now"
+		}
+		_, after := splitFirst(rest, "/")
+		page, _ := splitFirst(after, "/")
+		if page == "" {
+			return "now"
+		}
+		return page
+	}
+	// /<page>/... — first segment is the page.
+	page, _ := splitFirst(p, "/")
+	if page == "" {
+		return "now"
+	}
+	return page
 }
 
 // snapshotProposals returns the pending proposals across every session

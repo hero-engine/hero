@@ -830,3 +830,62 @@ footer.shell-footer {
   .search-pill { min-width: 0; }
   .page-title { font-size: 26px; }
 }
+
+/* =================================================================
+   Project selector (top-nav dropdown for multi-project switching)
+   ================================================================= */
+.project-selector {
+  position: relative;
+}
+.project-selector-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  background: var(--bg-softer);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--hero-ink);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.project-selector-trigger:hover {
+  background: var(--bg-soft);
+  border-color: var(--border-strong);
+}
+.project-selector-trigger svg {
+  color: var(--ink-4);
+}
+.project-selector-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 220px;
+  max-height: 320px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  z-index: 50;
+}
+.project-selector-menu li {
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--hero-ink);
+  cursor: pointer;
+  user-select: none;
+}
+.project-selector-menu li:hover,
+.project-selector-menu li.active {
+  background: var(--bg-softer);
+}
+.project-selector-menu li.active {
+  font-weight: 600;
+}

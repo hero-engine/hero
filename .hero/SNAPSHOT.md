@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-05-19T22:38:48Z · projected from 255 source nodes_
+_Last refreshed: 2026-05-19T22:47:06Z · projected from 255 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 5h ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 6h ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | building | domains/engineering/ | 5h ago | spec-types-cache-frontmatter-empty |
@@ -16,7 +16,7 @@ _Last refreshed: 2026-05-19T22:38:48Z · projected from 255 source nodes_
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 1d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 4m ago | vocabulary-resolve-misses-methodology-derivation |
+| serve | building | internal/serve/ | 13m ago | vocabulary-resolve-misses-methodology-derivation |
 | (unassigned) | — | — | — | 110 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -27,7 +27,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
 - **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 3/11 specs done; in flight: master-ingest-restore, per-feature-smoke-coverage, spec-status-integrity, traversal-queries
-- **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, serve) — 8/16 specs done; in flight: hero-sales
+- **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, serve) — 9/16 specs done; in flight: hero-sales
 - **Hero Killer Features — Agent Effectiveness, Team Power, Living Specs** (surface: core, serve) — 10/11 specs done
 - **Hero Marketing — Positioning, Distribution, and Launch** (surface: landing) — 0/9 specs done; in flight: hero-landing-page
 - **Hero Platform — Headless Execution, Team Automation, and Shared Visibility** (surface: core, serve) — 2/7 specs done; in flight: hero-team-server
@@ -44,9 +44,9 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — domain-routing-and-agents, domain-scoped-knowledge-graph, inline-propose-output-mode
+- **(unassigned)** — scan-pluggability, domain-routing-and-agents, domain-scoped-knowledge-graph, inline-propose-output-mode
 - **core** — install-core-domain-merge
-- **domains/engineering** — contentfs-legacy-fallback-removal, spec-type-registry, domain-plugin-architecture
+- **domains/engineering** — contentfs-legacy-fallback-removal, spec-type-registry
 - **serve** — dashboard-now-headline-misleading-when-empty, dashboard-inbox-misses-most-activity-sources, dashboard-adapter-state-hardcoded, dashboard-delivery-events-never-emitted, dashboard-user-identity-os-env-mismatch
 
 ## Next up across surfaces

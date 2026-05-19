@@ -2,7 +2,7 @@
 title: Hero-Code Handover Pack — Make the PM Foundation Consumable
 slug: hero-code-handover-pack
 type: feature
-status: planning
+status: completed
 priority: P0
 tags: [sprint, delivery, pm, contracts, hero-code, handoff]
 created: 2026-05-17

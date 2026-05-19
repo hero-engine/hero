@@ -10,6 +10,27 @@
       {{- with .Workspace }}<span class="workspace">{{ . }}</span>{{ end }}
     </a>
 
+    {{- if .ProjectSelector.Options }}
+    <div class="project-selector" data-project-selector
+         data-active-slug="{{ .ProjectSelector.Active }}"
+         data-current-page="{{ .ProjectSelector.CurrentPage }}">
+      <button type="button" class="project-selector-trigger" data-project-selector-trigger aria-haspopup="listbox" aria-expanded="false">
+        <span class="project-selector-label">{{ .ProjectSelector.ActiveLabel }}</span>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 4 L5 7 L8 4"/></svg>
+      </button>
+      <ul class="project-selector-menu" data-project-selector-menu role="listbox" hidden>
+        {{- range .ProjectSelector.Options }}
+        <li role="option"
+            data-project-selector-option
+            data-slug="{{ .Slug }}"
+            {{- if eq .Slug $.ProjectSelector.Active }} aria-selected="true" class="active"{{ end }}>
+          {{ .Label }}
+        </li>
+        {{- end }}
+      </ul>
+    </div>
+    {{- end }}
+
     <div class="nav-tabs">
       {{- range .Tabs }}
       <a href="{{ .Href }}" class="nav-tab{{ if .Active }} active{{ end }}">
