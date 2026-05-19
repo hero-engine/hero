@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-19T03:39:49Z · 97 ready specs_
+_Generated: 2026-05-19T14:09:09Z · 107 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -161,22 +161,6 @@ _bug · delivering · horizon: now_
 
 ---
 
-## domain-plugin-architecture — Domain Plugin Architecture — Refactor Content into Swappable Domain Packs
-_feature · delivering · horizon: next_
-
-Foundation primitive for `hero-domains`. Pure refactor — move existing engineering content into `domains/engineering/` and add `hero init --domain` / `hero domain switch` plumbing. Zero new behavior, but unblocks every other primitive and every future domain pack (PM, QA, design, etc).
-
-**Status:** planning — design exists from 2026-04-25; reframed as the foundation for the PM-first roadmap on 2026-05-15. No code written yet.
-
-**Pick up at:** `/deliver` this spec. Examples below have been updated from sales-first to PM-first to reflect the current sequencing, but the actual refactor is content-agnostic — PM-specific pack content lives in the separate `hero-pm` spec.
-
-→ `/deliver domain-plugin-architecture`
-
-**Files:** .hero/planning/features/domain-plugin-architecture/spec.md, .hero/planning/initiatives/hero-domains/spec.md, embed.go, internal/install/install.go, internal/cli/init.go
-**Skip:** Third-party domain packs loaded from disk (deferred to a future spec). Multi-domain coexistence in one workspace (handled by domain-scoped-knowledge-graph).
-
----
-
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
 
@@ -244,6 +228,153 @@ stub the agent-prompt integration as a follow-up.
 
 **Files:** .hero/planning/features/inline-propose-output-mode/spec.md, docs/contracts/inline-propose-v1.md (new), internal/proposals/ (new), internal/serve/proposals_routes.go (new), internal/cli/agent_run.go (new), domains/_platform/agent-prompts/inline-propose-addendum.md (new), testdata/proposals/v1/ (new), .hero/planning/features/hero-pm/spec.md (consumer), .hero/planning/features/hero-pm/mockups/08-inline-proposal.html (visual source of truth)
 **Skip:** sidecar persistence (v2), cross-domain proposals (v2), multi-author concurrent proposals (Hero Cloud), proposals on arbitrary source files (out of scope), inline-propose for `/deliver` and `/diagnose` (continue write-to-disk).
+
+---
+
+## hero-sales — Hero Sales — AI-Powered Sales Workflow for Revenue Teams
+_feature · delivering · horizon: someday_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-sales/spec.md)_
+
+---
+
+## dashboard-inbox-misses-most-activity-sources — Needs-your-input inbox only sources from proposals + inbound handoffs — and proposals are hardcoded nil
+_bug · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/dashboard-inbox-misses-most-activity-sources/spec.md)_
+
+---
+
+## hero-serve-project-section — `hero serve` Project Section — Per-Project Info, Utilities, and Operations Page
+_feature · planning · horizon: now_
+
+A per-project home page in `hero serve` — identity, health, conventions,
+peers, registry membership, lifecycle ops, danger zone — plus an
+`/p/all/project` cross-project rollup with daemon-ops.
+
+**Status:** planning — spec just landed; routing dependency
+(`hero-serve-multi-project`) still delivering.
+
+**Pick up at:** wait for `/p/<slug>/<page>` routing + per-page `Deps`
+seam to land in `hero-serve-multi-project`, then scaffold a
+`projectpage.Deps`, register `/p/{slug}/project` + `/p/all/project`
+handlers in `internal/serve/server.go`, and create
+`internal/serve/shell/templates/project.html` with collapsible sections.
+
+→ `.hero/planning/features/hero-serve-project-section/spec.md`
+
+**Files:** `internal/serve/server.go:308-370`, `internal/serve/api.go:51-132`,
+`internal/serve/registry.go:44`, `internal/serve/shell/templates/page-layout.html`,
+`.hero/planning/features/hero-serve-multi-project/spec.md`
+
+**Skip:** in-browser `hero.json` editing (read-only + edit-in-editor link);
+project creation wizard (separate spec); auth/multi-user (deferred to
+`hero-team-server`).
+
+---
+
+## dashboard-now-headline-misleading-when-empty — Now headline reads "no agent running · since 19h ago" — composes two empty signals into a false story
+_bug · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/dashboard-now-headline-misleading-when-empty/spec.md)_
+
+---
+
+## dashboard-delivery-events-never-emitted — hero spec complete never emits delivery_complete event — shipped-spec counts always understated
+_bug · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/dashboard-delivery-events-never-emitted/spec.md)_
+
+---
+
+## dashboard-user-identity-os-env-mismatch — Dashboard "you" identity uses $USER instead of git config — author-filtered metrics always read 0
+_bug · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/dashboard-user-identity-os-env-mismatch/spec.md)_
+
+---
+
+## pm-platform-delivery — PM Platform Delivery — Ship the Designed Primitives So hero-code Can Build hero-pm
+_feature · planning · horizon: now_
+
+The design phase is complete. As of 2026-05-19, every spec hero-pm depends on is at `status: designed` or beyond:
+
+| Spec | Status | Design landed |
+|---|---|---|
+| `domain-plugin-architecture` | `delivering` | already in flight; needs closeout |
+| `spec-type-registry` | `delivering` | shipped via `pm-foundation-delivery`; frontmatter stale |
+| `inline-propose-output-mode` | `delivering` | shipped via `pm-foundation-delivery`; frontmatter stale |
+| `dashboard-view-registry` | `completed` | already archived at `.hero/specs/dashboard-view-registry/` |
+| `domain-routing-and-agents` | **`designed` 2026-05-19** | this session — pack-AGENTS.md splice + agent filtering by domain frontmatter |
+| `scan-pluggability` | **`designed` 2026-05-19** | this session — uniform graph schema + domain tag, manifest+dispatcher map shape |
+| `domain-scoped-knowledge-graph` | **`designed` 2026-05-19** | full four-phase migration plan + 30-call-site audit table |
+| `hero-pm` | **`designed` 2026-05-19** | this session — 5 spec types, 27 agents, 7 dashboard views, killer demo locked |
+| `hero-code-handover-pack` | `planning` | delivery-shaped already (5 concrete artifacts); no design pass needed |
+
+This sprint walks through delivery for every primitive hero-pm consumes, in dependency order. It supersedes `pm-platform-unblock` (Tracks A design passes done — superseded sprint's checklist marks W1/W2/W3 as ✅).
+
+**Sprint completes when:**
+- All seven primitives are `status: completed` and archived under `.hero/specs/`
+- `hero-code-handover-pack` artifacts are shipped and proven consumable by hero-code's Rust widget tests
+- A fresh peer call to hero-code (advisory) supersedes the 2026-05-17 handoff and tells them they can `/deliver hero-pm` end-to-end in the hero-code repo
+- `go test ./...` clean across all touched packages; `hero check` clean
+
+→ `/deliver pm-platform-delivery` — or pick a single work item: `/deliver pm-platform-delivery#D5`
+
+**Files:** `.hero/planning/features/pm-platform-delivery/spec.md`, `.hero/planning/features/pm-platform-unblock/spec.md` (superseded), `.hero/planning/features/domain-plugin-architecture/spec.md`, `.hero/planning/features/spec-type-registry/spec.md`, `.hero/planning/features/inline-propose-output-mode/spec.md`, `.hero/planning/features/domain-routing-and-agents/spec.md`, `.hero/planning/features/scan-pluggability/spec.md`, `.hero/planning/features/domain-scoped-knowledge-graph/spec.md`, `.hero/planning/features/hero-code-handover-pack/spec.md`, `.hero/planning/features/hero-pm/spec.md`
+
+**Skip:** Implementing `hero-pm` itself — delivery happens in the hero-code repo. Building `hero-qa` or any second domain pack. Multi-active-domain workspaces (single-active is locked in DSKG v1; cross-domain reads are boundary-aware but the workspace has one active domain at a time). Renaming or reshaping the four contracts shipped by `pm-foundation-delivery`. Designing or implementing PM-specific scanners — they live in `hero-pm`.
+
+---
+
+## dashboard-adapter-state-hardcoded — Dashboard adapter state is hardcoded — "via hero-code" chip lies, panels disagree
+_bug · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/dashboard-adapter-state-hardcoded/spec.md)_
+
+---
+
+## hero-serve-dashboard-redesign — hero serve dashboard redesign — Now and Work pages
+_feature · planning · horizon: now_
+
+Replaces the empty-tile / sprint-headline Now and Work pages with an
+activity-feed-led layout and rolling windows so a heavy-activity day
+looks heavy, not empty.
+
+**Status:** planning — spec just landed, no code yet.
+
+**Pick up at:** start with the Now page activity feed since it carries
+the biggest visible win. Add `internal/serve/pages/now/data/activity.go`
+that reads recent graph events (spec status transitions, decisions,
+notes, conventions, peer calls, commits, agent sessions) and a matching
+`activity.html` fragment. Wire it into `page.html` as the new first
+section, above the in-flight strip.
+
+→ `.hero/planning/features/hero-serve-dashboard-redesign/spec.md`
+
+**Files:** `internal/serve/pages/now/templates/page.html`, `internal/serve/pages/now/data/metrics.go`, `internal/serve/pages/work/templates/page.html`, `internal/serve/pages/work/data/metrics.go`, `internal/serve/shell/templates/tabbed-metric-strip.html`
+**Skip:** redesigning Knowledge / People / Agents pages, fixing the data bugs (0 commits / 2 shipped / empty inbox / install panel state) — those land separately.
+
+---
+
+## hero-serve-multi-project — hero serve — multi-project lifecycle and dashboard awareness
+_feature · planning · horizon: now_
+
+Adds `hero serve stop`, `--force`, `hero serve status`, and a working project
+selector in the dashboard so the global daemon stops pretending it only serves
+one project.
+
+**Status:** planning — spec just landed, no code yet.
+
+**Pick up at:** start with Phase 1 (lifecycle) since it's self-contained.
+Write the PID file at daemon start in `internal/serve/server.go` near the
+`net.Listen` site (line 387), then add the `stop` and `status` subcommands in
+`internal/cli/serve.go`. Phase 2 (dashboard) lands after Phase 1 ships.
+
+→ `.hero/planning/features/hero-serve-multi-project/spec.md`
+
+**Files:** `internal/cli/serve.go`, `internal/serve/server.go:300-400`, `internal/serve/api.go:40-60`, `internal/serve/registry.go:25-50`, `internal/serve/shell/templates/top-nav.html`
+**Skip:** per-project daemons or port-per-project — global daemon is intentional; team-server work is a separate spec.
 
 ---
 
@@ -607,22 +738,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## scan-pluggability — Scan Pluggability — Per-Domain `hero scan` Implementations
-_feature · planning · horizon: next_
-
-Make `hero scan` domain-aware. Today scan is a code scanner: detect languages, frameworks, test runners, write engineering-shaped knowledge. PM needs a totally different scan: import a roadmap doc, parse tracker epics, ingest OKRs. Generalize `hero scan` to dispatch to the active pack's scanner; engineering's code scan becomes the reference impl under `domains/engineering/scan/`. PM-specific scanners ship in `hero-pm`, not here.
-
-**Status:** planning — stub written 2026-05-15. Blocked on `domain-plugin-architecture` and `spec-type-registry`.
-
-**Pick up at:** Run `/design scan-pluggability`. First decision: scan output schema — do all domains emit the same node/edge types into the graph, or domain-typed nodes? Then design the dispatch surface (`hero scan` reads active pack and runs its scanner).
-
-→ `/design scan-pluggability`
-
-**Files:** .hero/planning/features/scan-pluggability/spec.md, .hero/planning/initiatives/hero-domains/spec.md, internal/scan/, internal/index/
-**Skip:** Designing PM scanners (roadmap-doc parser, tracker-epic ingester) — those live in `hero-pm`. This spec only ships the dispatch shape and engineering's reference scanner.
-
----
-
 ## project-charter — Project Charter — Mission, Principles, and Auto-Injection
 _feature · planning · horizon: next_
 
@@ -667,22 +782,6 @@ Second non-engineering Hero domain pack: QA. The thesis: **Hero QA is the qualit
 
 ---
 
-## hero-pm — Hero PM — Product Management Domain Pack
-_feature · planning · horizon: next_
-
-First non-engineering Hero domain pack. PM-shaped spec types (PRD, story, epic, roadmap-item, intake-item) with methodology-preset overlays, PM agents and workflows, seven dashboard views (Roadmap default + Story queue + PRD editor + Intake funnel + Story detail + Handoff stream + Chat). IDE-style layout: left nav, tabbed center pane, bottom strip (artifact-state actions + chat input), toggleable right panel (chat with sticky ambient smarts at top). Reuses existing tracker integrations (Jira/Linear/GitHub). Killer demo: a Jira epic becomes a Hero story, `/design` on the story produces an engineering `feature` spec, and the handoff edge surfaces in the Handoff stream live.
-
-**Status:** planning — design pass advanced 2026-05-16. Strategic frame locked (layered presets, five PM principles, silo-tearing thesis). Layout grammar locked (design vs housekeeping modes; bottom strip = verbs; ambient = smarts; chat as right panel + Chat tab for design mode). Research brief + mockup brief + agent/skill/command pack design + handoff-to-hero-code written (27 agents, 32 skills, 22 commands; 13 P0 / 9 P1 / 5 P2). Methodology coaching ships as skills, not agents. Still blocked on primitives 1–6; `/design` still required to lock the canonical Changes section.
-
-**Pick up at:** Run `/design hero-pm` to resolve the open questions and produce the canonical Changes section. The research brief, mockup brief, agent-pack design, and handoff-to-hero-code are sibling files — all four must be incorporated by the design pass, not re-derived.
-
-→ `/design hero-pm`
-
-**Files:** .hero/planning/features/hero-pm/spec.md, .hero/planning/features/hero-pm/research-brief.md, .hero/planning/features/hero-pm/mockup-brief.md, .hero/planning/features/hero-pm/agent-pack-design.md, .hero/planning/features/hero-pm/handoff-to-hero-code.md, .hero/planning/initiatives/hero-domains/spec.md
-**Skip:** New tracker integrations in v1 (reuse Jira/Linear/GitHub only). OKRs as a PM spec type (defer to v2; may belong in a separate `strategy` domain). Methodology as a "mode" (not a mode — a layered preset). Forced point estimation.
-
----
-
 ## graph-memory — Graph Memory — Unified Substrate for Hero's Knowledge Corpus
 _feature · planning · horizon: next_
 
@@ -708,38 +807,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · planning · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/e2e-onboarding/spec.md)_
-
----
-
-## domain-scoped-knowledge-graph — Domain-Scoped Knowledge Graph — Namespace Tags on Graph Nodes
-_feature · planning · horizon: next_
-
-Add domain namespace tags to every knowledge graph node and edge. Today the graph is flat: a `Spec`, a `Component`, a `Decision` lives in one undifferentiated namespace. When PM and engineering coexist (later), PM stories and engineering features collide unless the graph knows which domain a node belongs to. Tag every node now; teach queries (`hero why`, `hero blocked`, `hero search`) to filter by active domain or render the boundary.
-
-**Status:** planning — stub written 2026-05-15. Blocked on `domain-plugin-architecture`.
-
-**Pick up at:** Run `/design domain-scoped-knowledge-graph`. First decision: edge semantics for cross-domain handoff (`story → feature` from `/design`) — does this need a new edge kind, or is it a regular edge that crosses a namespace boundary? Then audit every query path that touches the graph and decide its v1 stance on filtering.
-
-→ `/design domain-scoped-knowledge-graph`
-
-**Files:** .hero/planning/features/domain-scoped-knowledge-graph/spec.md, .hero/planning/initiatives/hero-domains/spec.md, internal/index/, internal/graph/
-**Skip:** Full multi-active-domain runtime in v1 — single-active-domain is enough. Namespace tags now so v2 can flip the switch without re-indexing.
-
----
-
-## domain-routing-and-agents — Domain Routing and Agents — Active-Pack AGENTS.md and Agent Loader
-_feature · planning · horizon: next_
-
-Make agent routing and discovery domain-aware. Today `AGENTS.md` and the routing table in `CLAUDE.md` are engineering-shaped, hardcoded at the repo root. Move them into the active domain pack so a PM project routes to PM agents, not engineering ones. `feature-delivery-lead` should not be findable in a PM-only project.
-
-**Status:** planning — stub written 2026-05-15. Blocked on `domain-plugin-architecture`.
-
-**Pick up at:** Run `/design domain-routing-and-agents`. First job is to map every place the model consults `AGENTS.md` or the natural-language routing table today, then design the loader that selects the active pack's table. Resolve open question #1 (multi-domain loader behavior) by deferring most of it to `domain-scoped-knowledge-graph` (item #6) — but pick a v1 stance now.
-
-→ `/design domain-routing-and-agents`
-
-**Files:** .hero/planning/features/domain-routing-and-agents/spec.md, .hero/planning/initiatives/hero-domains/spec.md, AGENTS.md, CLAUDE.md
-**Skip:** Multi-domain coexistence in a single workspace v1 — `domain-scoped-knowledge-graph` (item #6) handles that. Build single-active-domain routing first.
 
 ---
 
@@ -789,6 +856,21 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · planning · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/configurable-workspace-location/spec.md)_
+
+---
+
+## sprint-2026-05-19 — Sprint Plan — dashboard-fix-and-rebuild (2026-05-19)
+_note · active · horizon: now_
+
+The user will explicitly kick off delivery on item 1
+(`dashboard-user-identity-os-env-mismatch`) after this plan is saved. Do
+not auto-start `/deliver` from the sprint plan.
+
+When ready, the kickoff command is:
+
+```
+/deliver dashboard-user-identity-os-env-mismatch
+```
 
 ---
 
@@ -1041,6 +1123,160 @@ _feature · designed · horizon: now_
 Lock the work-tracking foundation for Hero so PM ships as an additive domain pack and engineering keeps doing what it's doing. **Nine canonical types using names every tool already uses** (`initiative`, `prd`, `epic`, `feature`, `bug`, `chore`, `intake`, `release`, `sprint`). Sub-typing via `kind`. Two independent adaptation layers — methodology profile (lifecycle, time-box, estimation, rituals, rollups) and vocabulary preset (display names, tracker mappings). **No migration**: existing engineering specs and folders unchanged; the registry registers what's already there plus the new PM-led and time-box types. AC infrastructure untouched. Tasks ships additively with its own package. Cross-domain handoff is an owner flip on the same artifact, not a separate spec creation.
 
 → Drives `spec-type-registry`, the PM pack delivery, the new `core/methodologies/` system, and Phase A of the `hero-domains` initiative.
+
+---
+
+## hero-pm — Hero PM — Product Management Domain Pack
+_feature · designed · horizon: next_
+
+First non-engineering Hero domain pack. PM-shaped spec types (PRD, story, epic, roadmap-item, intake-item) with methodology-preset overlays, PM agents and workflows, seven dashboard views (Roadmap default + Story queue + PRD editor + Intake funnel + Story detail + Handoff stream + Chat). IDE-style layout: left nav, tabbed center pane, bottom strip (artifact-state actions + chat input), toggleable right panel (chat with sticky ambient smarts at top). Reuses existing tracker integrations (Jira/Linear/GitHub). Killer demo: a Jira epic becomes a Hero story, `/design` on the story produces an engineering `feature` spec, and the handoff edge surfaces in the Handoff stream live.
+
+**Status:** designed — 2026-05-19. Open questions resolved (see *Resolved open questions* below). Spec-type declarations locked against the registry (5 PM types). Agent / skill / command pack locked (27 / 32 / 22 with a 13 / 9 / 5 P-tier split). Seven dashboard views locked with slot assignments. Routing table locked. Scanner contract locked. Cross-domain edge contract locked against the DSKG `handoff` / `derived_from` / `realizes` kinds. Tracker integration locked to existing adapters with content-vs-org-state conflict policy per `tracker-fronting-and-local-first` decision.
+
+**Pick up at:** `/deliver hero-pm` in the **`hero-code`** repository. This spec is canonical here; delivery happens there because the dashboards/widgets are Rust. The `handoff-to-hero-code.md` sibling is the implementation guide. Within `hero` the only outstanding work is the PM-pack content under `domains/pm/` — agent prompts, skill bodies, command shims, and the four still-stub spec-type files (`story.md`, `epic.md`, `roadmap-item.md` + AGENTS routing additions).
+
+→ `/deliver hero-pm` *(runs in `hero-code`)*
+
+**Files:** `.hero/planning/features/hero-pm/spec.md`, `.hero/planning/features/hero-pm/research-brief.md`, `.hero/planning/features/hero-pm/mockup-brief.md`, `.hero/planning/features/hero-pm/agent-pack-design.md`, `.hero/planning/features/hero-pm/handoff-to-hero-code.md`, `.hero/planning/features/hero-pm/mockups/*.html`, `.hero/planning/initiatives/hero-domains/spec.md`, `.hero/planning/features/pm-platform-unblock/spec.md`, `.hero/planning/features/domain-scoped-knowledge-graph/spec.md`, `domains/pm/` *(existing scaffold; canonical content lands at delivery)*.
+
+**Skip:** New tracker integrations in v1 (reuse Jira/Linear/GitHub only). OKRs as a PM spec type (deferred to v2 / a future `strategy` domain). Methodology as a "mode" (not a mode — a layered preset). Forced point estimation. Cross-tracker handoff (Jira-PM → Linear-eng). Multi-active-domain workspaces. Roadmap-shaped providers (Productboard, Aha). PM-only Hero binary. Cross-domain reporting (combined PM/eng dashboards). Product analytics, experiment results, metrics pipelines.
+
+---
+
+## scan-pluggability — Scan Pluggability — Per-Domain `hero scan` Implementations
+_feature · designed · horizon: next_
+
+Make `hero scan` domain-aware. Today scan is a code scanner — it detects
+languages, frameworks, test runners, generates engineering-shaped
+knowledge stubs, and ingests symbols/packages/files into the graph. PM
+needs a totally different scan: import a roadmap doc, parse tracker
+epics, ingest OKRs. This spec generalizes `hero scan` to dispatch to
+the active pack's scanner. Engineering's code scan becomes the
+reference implementation under `domains/engineering/scan/`. PM-specific
+scanners (roadmap-doc parser, tracker-epic ingester, OKR ingester)
+ship in `hero-pm`, not here.
+
+**Status:** designed — 2026-05-19. Locks (a) the **uniform graph-node
+schema with a `domain` tag** for scan output (defer domain-typed
+specializations to the registry's `kind` facet and the DSKG namespace);
+(b) the **manifest + in-tree dispatcher** shape for scanner
+declaration; (c) the **fixed sub-command set with per-pack opt-in**;
+(d) the **wire-through `Config.Domain` at dispatch time** rule for
+stamping; (e) that `internal/scan/` becomes the dispatch shell while
+the code-specific detection logic moves into
+`domains/engineering/scan/` as the reference impl.
+
+**Pick up at:** `/deliver scan-pluggability`. Land the dispatch
+interface + manifest loader first (single PR), then the engineering
+reference relocation (golden-output parity test gates merge), then
+wire `Config.Domain` through to `WriteGraph` so codescan ingest
+stamps `engineering` per the DSKG contract.
+
+→ `/deliver scan-pluggability`
+
+**Files:** .hero/planning/features/scan-pluggability/spec.md,
+.hero/planning/initiatives/hero-domains/spec.md,
+.hero/planning/features/domain-scoped-knowledge-graph/spec.md,
+internal/scan/, internal/codescan/, internal/cli/scan.go,
+internal/cli/init.go, internal/index/, domains/engineering/scan/,
+domains/engineering/scan-manifest.yaml.
+
+**Skip:** Designing PM scanners (roadmap-doc parser, tracker-epic
+ingester, OKR ingester) — those live in `hero-pm`. Cross-domain scan
+in a single workspace (multi-active-domain is deferred per DSKG).
+Third-party / out-of-tree scanners loaded from disk. Changing scan
+triggering (CLI command shape, post-init hook). Changing the
+knowledge-graph storage backend.
+
+---
+
+## domain-routing-and-agents — Domain Routing and Agents — Active-Pack AGENTS.md and Agent Loader
+_feature · designed · horizon: next_
+
+Make agent routing and agent discovery domain-aware. The natural-language
+routing table and the agent roster live in the **active domain pack**, not
+hardcoded in `internal/install/agents_md.go`. A PM project routes "ship
+this" → `/handoff` (PM canonical) instead of `/deliver` (engineering), and
+`feature-delivery-lead` does not get materialized into `.claude/agents/`
+when a PM project runs `hero install`.
+
+**Status:** designed — 2026-05-19. Loader resolution order locked. The
+routing table moves from Go-string-builder code into the pack's
+`AGENTS.md` body as the source of truth; `internal/install/agents_md.go`
+becomes a loader that splices that body into the managed region rather
+than synthesizing it. Engineering content already exists at
+`domains/engineering/AGENTS.md` on disk (committed) — the same file
+becomes load-bearing.
+
+**Pick up at:** `/deliver domain-routing-and-agents`. Phase 1 is the
+loader cutover (engineering only; behavior bit-identical to today).
+Phase 2 wires PM through the same loader. Phase 3 narrows the agent
+materialization so packs don't leak engineering agents into PM
+workspaces.
+
+→ `/deliver domain-routing-and-agents`
+
+**Files:** .hero/planning/features/domain-routing-and-agents/spec.md,
+.hero/planning/initiatives/hero-domains/spec.md, content.go,
+domains/engineering/AGENTS.md, domains/pm/AGENTS.md,
+domains/sales/AGENTS.md, internal/install/agents_md.go,
+internal/install/claude_md.go, internal/install/content.go,
+internal/install/dialect.go, internal/install/install.go,
+internal/install/target_claude.go, internal/install/target_codex.go,
+internal/install/target_copilot.go, internal/install/target_cursor.go,
+internal/install/target_generic.go,
+internal/install/target_opencode.go, internal/cli/install.go,
+internal/cli/domain.go.
+
+**Skip:** Multi-active-domain coexistence in a single workspace
+(handled by `domain-scoped-knowledge-graph`). Third-party domain packs
+loaded from disk. Per-user agent overrides. Cross-pack agent sharing
+beyond the universal `core/agents/` layer that already exists.
+
+---
+
+## domain-scoped-knowledge-graph — Domain-Scoped Knowledge Graph — Namespace Tags on Graph Nodes
+_feature · designed · horizon: next_
+
+Add domain namespace tags to every knowledge graph node and edge so that
+PM and engineering content can coexist in one workspace without queries
+silently mixing them. Tag at write time; filter or render the boundary
+at read time. The killer demo this unblocks: `hero-pm-ui`'s **Hand off to
+/design** button writes a cross-domain `story → feature` edge whose kind
+is `handoff`, and downstream surfaces (`handoff_card.rs`, the Handoff
+stream view, the linked-feature card on Story detail) read it back via
+cross-domain graph queries.
+
+**Status:** designed — 2026-05-19. Cross-domain edge schema, query-shape
+audit, active-domain resolution, and migration plan all locked. Awaiting
+`domain-plugin-architecture` cutover for write-side `Config.Domain` to
+become non-default; the read-side and schema work can land first.
+
+**Pick up at:** `/deliver domain-scoped-knowledge-graph`. Phase 1
+(schema v3 migration) is one PR; Phase 2 (write-path stamping) is a
+narrow patch across ingest packages; Phase 3 (read-path filtering) is
+the long pole — one helper plus a call-site sweep keyed off the audit
+table below.
+
+→ `/deliver domain-scoped-knowledge-graph`
+
+**Files:** .hero/planning/features/domain-scoped-knowledge-graph/spec.md,
+internal/graph/graph.go, internal/graph/node.go, internal/graph/edge.go,
+internal/traversal/why.go, internal/retrieval/retrieval.go,
+internal/cli/brief.go, internal/serve/mcp_tools.go,
+internal/handoff/handoff.go, internal/spec/graph_ingest.go,
+internal/tracker/graph_ingest.go, internal/sessions/graph_ingest.go,
+internal/codescan/graph_ingest.go, internal/memory/graph_ingest.go,
+internal/nextdoc/graph_ingest.go, internal/knowledge/graph_ingest.go,
+internal/gitutil/graph_ingest.go, internal/mission/mission.go,
+internal/extract/decisions.go, internal/tasks/record.go,
+internal/acceptance/record.go, internal/config/config.go.
+
+**Skip:** Full multi-active-domain workspaces in v1 — the substrate
+supports it, but `hero domain switch` remains a re-install rather than a
+per-query domain swap. Third-party domain packs loaded from disk
+(deferred). Cross-domain reporting / combined dashboards (separate spec
+after PM ships).
 
 ---
 

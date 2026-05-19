@@ -93,5 +93,20 @@
     "agents_path": "agents",
     "commands_path": "commands",
     "skills_path": "skills"
+  },
+  "sprint": {
+    "name": "dashboard-fix-and-rebuild",
+    "goal": "Fix the dashboard data/UI bugs so the existing pages tell the truth, then land the multi-project foundation so the redesign work can begin.",
+    "started_at": "2026-05-19",
+    "specs": [
+      "dashboard-user-identity-os-env-mismatch",
+      "dashboard-delivery-events-never-emitted",
+      "dashboard-adapter-state-hardcoded",
+      "dashboard-inbox-misses-most-activity-sources",
+      "dashboard-now-headline-misleading-when-empty",
+      "hero-serve-multi-project",
+      "hero-serve-dashboard-redesign",
+      "hero-serve-project-section"
+    ]
   }
 }
