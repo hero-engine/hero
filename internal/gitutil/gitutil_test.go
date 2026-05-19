@@ -184,6 +184,132 @@ func TestNormalizeFilePath(t *testing.T) {
 	}
 }
 
+// withCWD changes process CWD for the duration of the test and
+// restores it on cleanup. UserName resolves `git config user.name` in
+// the process CWD (matching the writer-side call shape), so identity
+// tests must chdir into the fixture repo.
+func withCWD(t *testing.T, dir string) {
+	t.Helper()
+	prev, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("chdir %s: %v", dir, err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(prev) })
+}
+
+// withEnv sets an env var for the duration of the test and restores
+// the prior value on cleanup. Empty value clears the var.
+func withEnv(t *testing.T, key, value string) {
+	t.Helper()
+	prev, hadPrev := os.LookupEnv(key)
+	if value == "" {
+		_ = os.Unsetenv(key)
+	} else {
+		_ = os.Setenv(key, value)
+	}
+	t.Cleanup(func() {
+		if hadPrev {
+			_ = os.Setenv(key, prev)
+		} else {
+			_ = os.Unsetenv(key)
+		}
+	})
+}
+
+// isolateGitConfig points git's global/system config lookups at /dev/null
+// for the duration of the test so UserName resolution observes only
+// the per-test fixture. Without this the developer's ~/.gitconfig
+// would leak into "no git config" test cases.
+func isolateGitConfig(t *testing.T) {
+	t.Helper()
+	withEnv(t, "GIT_CONFIG_GLOBAL", "/dev/null")
+	withEnv(t, "GIT_CONFIG_SYSTEM", "/dev/null")
+}
+
+// TestUserName_GitConfigWinsOverUser pins the canonical behavior: when
+// git config user.name and $USER disagree (the live repro on a normal
+// developer machine), UserName returns the git value. Regression guard
+// for the dashboard-user-identity-os-env-mismatch bug.
+func TestUserName_GitConfigWinsOverUser(t *testing.T) {
+	isolateGitConfig(t)
+	dir := initGitRepo(t)
+	run(t, dir, "config", "user.name", "chet-bellows")
+	withCWD(t, dir)
+	withEnv(t, "USER", "bwheeler")
+	withEnv(t, "USERNAME", "")
+
+	got := UserName()
+	if got != "chet-bellows" {
+		t.Errorf("UserName() = %q, want chet-bellows (git config must win over $USER)", got)
+	}
+}
+
+// TestUserName_FallsBackToUserWhenGitUnset covers the fresh-checkout /
+// non-git-context fallback to the OS env var.
+func TestUserName_FallsBackToUserWhenGitUnset(t *testing.T) {
+	isolateGitConfig(t)
+	dir := t.TempDir() // not a git repo
+	withCWD(t, dir)
+	withEnv(t, "USER", "bwheeler")
+	withEnv(t, "USERNAME", "")
+
+	got := UserName()
+	if got != "bwheeler" {
+		t.Errorf("UserName() = %q, want bwheeler (should fall back to $USER)", got)
+	}
+}
+
+// TestUserName_FallsBackToUsernameWhenUserUnset covers Windows-style
+// envs where $USER is unset but $USERNAME is populated.
+func TestUserName_FallsBackToUsernameWhenUserUnset(t *testing.T) {
+	isolateGitConfig(t)
+	dir := t.TempDir() // not a git repo
+	withCWD(t, dir)
+	withEnv(t, "USER", "")
+	withEnv(t, "USERNAME", "WinUser")
+
+	got := UserName()
+	if got != "winuser" {
+		t.Errorf("UserName() = %q, want winuser (lowercase normalized)", got)
+	}
+}
+
+// TestUserName_UnknownWhenAllSourcesEmpty covers the last-resort
+// fallback. Pages should still render (no panic) and the literal
+// "unknown" must not silently match real claim data.
+func TestUserName_UnknownWhenAllSourcesEmpty(t *testing.T) {
+	isolateGitConfig(t)
+	dir := t.TempDir() // not a git repo
+	withCWD(t, dir)
+	withEnv(t, "USER", "")
+	withEnv(t, "USERNAME", "")
+
+	got := UserName()
+	if got != "unknown" {
+		t.Errorf("UserName() = %q, want unknown", got)
+	}
+}
+
+// TestUserName_NormalizesSpacesAndCase mirrors the writer-side
+// transform so claims written as `human/brian-wheeler` round-trip
+// when git config user.name is "Brian Wheeler".
+func TestUserName_NormalizesSpacesAndCase(t *testing.T) {
+	isolateGitConfig(t)
+	dir := initGitRepo(t)
+	run(t, dir, "config", "user.name", "Brian Wheeler")
+	withCWD(t, dir)
+	withEnv(t, "USER", "")
+	withEnv(t, "USERNAME", "")
+
+	got := UserName()
+	if got != "brian-wheeler" {
+		t.Errorf("UserName() = %q, want brian-wheeler", got)
+	}
+}
+
 func TestIsRepo_NonGitDir(t *testing.T) {
 	dir := t.TempDir()
 	if IsRepo(dir) {
