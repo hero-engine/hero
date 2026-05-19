@@ -104,6 +104,9 @@ func runDomainSwitch(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	// Overlay domain on universal core so reinstall renders core +
+	// domain merged. Domain wins on collisions.
+	mergedFS := hero.OverlayFS(domainFS, hero.CoreFS())
 
 	projectRoot := findProjectRoot()
 	cfg, err := config.Load(projectRoot)
@@ -136,7 +139,7 @@ func runDomainSwitch(cmd *cobra.Command, args []string) error {
 	for _, target := range targets {
 		fmt.Printf("Reinstalling %s with %s domain...\n", target, domain)
 		opts := install.Options{
-			ContentFS: domainFS,
+			ContentFS: mergedFS,
 			Target:    target,
 			Mode:      install.ModeProject,
 			TargetDir: projectRoot,

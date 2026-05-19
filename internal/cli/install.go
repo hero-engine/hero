@@ -185,14 +185,19 @@ func runInstall(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	contentFS := hero.ContentFS()
-	if domain != "" {
-		domainFS, domainErr := hero.DomainFS(domain)
-		if domainErr != nil {
-			return domainErr
-		}
-		contentFS = domainFS
+	// Resolve the domain FS (defaulting to engineering) and overlay it
+	// on top of the universal core layer. Domain wins on file-level
+	// path conflicts. Mirrors the precedence in
+	// internal/spectypes/loader.go: core first, domain overrides.
+	resolvedDomain := domain
+	if resolvedDomain == "" {
+		resolvedDomain = "engineering"
 	}
+	domainFS, domainErr := hero.DomainFS(resolvedDomain)
+	if domainErr != nil {
+		return domainErr
+	}
+	contentFS := hero.OverlayFS(domainFS, hero.CoreFS())
 
 	opts := install.Options{
 		ContentFS:          contentFS,

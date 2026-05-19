@@ -89,10 +89,24 @@ func runUpgrade(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Upgrading workspace from v%s to v%s\n\n", fromVersion, binaryVersion)
 
-	// Use the embedded content filesystem (overridable for tests)
+	// Use the embedded content filesystem (overridable for tests).
+	// When no override is provided, build the merged core + active-domain
+	// FS so upgrade renders the same content shape that install does.
+	// Existing workspaces installed before this change gain core files
+	// on first upgrade; the trust map (built from result.Copied below)
+	// records them so subsequent upgrades manage them rather than
+	// treating them as user-authored.
 	contentFS := upgradeContentFS
 	if contentFS == nil {
-		contentFS = hero.ContentFS()
+		activeDomain := cfg.Domain
+		if activeDomain == "" {
+			activeDomain = "engineering"
+		}
+		domainFS, domainErr := hero.DomainFS(activeDomain)
+		if domainErr != nil {
+			return fmt.Errorf("resolving domain %q: %w", activeDomain, domainErr)
+		}
+		contentFS = hero.OverlayFS(domainFS, hero.CoreFS())
 	}
 
 	// Resolve which targets to upgrade. Filesystem probe finds every
