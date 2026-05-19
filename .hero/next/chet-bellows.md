@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-05-19T22:31:30Z
+updated: 2026-05-19T23:05:23Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver hero-serve-multi-project — PID file + daemon lifecycle (stop/status/--force) + /p/<slug>/ URL routing + project selector. Sprint item 6 of 8 in dashboard-fix-and-rebuild; foundation that unblocks items 7 and 8.
+> Deliver hero-serve-dashboard-redesign — activity-feed Now, rolling-windows Work (sprint as opt-in), Hero-noticed themes. Sprint item 7 of 8 in dashboard-fix-and-rebuild.
 
 ## Suggested next prompt
 
