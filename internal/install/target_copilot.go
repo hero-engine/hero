@@ -59,7 +59,7 @@ func runCopilot(opts Options) (*Result, error) {
 	legacyBase := filepath.Join(opts.TargetDir, ".github", "copilot")
 	for _, kindDir := range []string{"agents", "commands", "skills"} {
 		legacyPath := filepath.Join(legacyBase, kindDir)
-		if err := removeIfHeroAuthored(opts, result, legacyPath, kindDir); err != nil {
+		if err := removeIfHeroAuthored(opts, result, legacyPath, kindDir, false); err != nil {
 			return nil, fmt.Errorf("cleanup %s: %w", legacyPath, err)
 		}
 	}
