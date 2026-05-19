@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-19T14:50:33Z · 103 ready specs_
+_Generated: 2026-05-19T14:52:53Z · 102 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -244,13 +244,6 @@ section, above the in-flight strip.
 
 **Files:** `internal/serve/pages/now/templates/page.html`, `internal/serve/pages/now/data/metrics.go`, `internal/serve/pages/work/templates/page.html`, `internal/serve/pages/work/data/metrics.go`, `internal/serve/shell/templates/tabbed-metric-strip.html`
 **Skip:** redesigning Knowledge / People / Agents pages, fixing the data bugs (0 commits / 2 shipped / empty inbox / install panel state) — those land separately.
-
----
-
-## dashboard-now-headline-misleading-when-empty — Now headline reads "no agent running · since 19h ago" — composes two empty signals into a false story
-_bug · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/dashboard-now-headline-misleading-when-empty/spec.md)_
 
 ---
 

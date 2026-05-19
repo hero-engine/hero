@@ -116,6 +116,66 @@ func TestRegister_NoEmptyStateWhenAdapterConnected(t *testing.T) {
 	}
 }
 
+// Spec dashboard-now-headline-misleading-when-empty: the subhead
+// composition no longer joins "no agent running" with "since X ago"
+// — that pairing implied a quiet workspace even when sparse events
+// just reflected the underemission bug.
+func TestSubheadPlainText_Cases(t *testing.T) {
+	cases := []struct {
+		name         string
+		inboxCount   int
+		runningCount int
+		lastActive   string
+		want         string
+	}{
+		// AC3: everything empty → single truthful chip, no false "since"
+		{"all-empty", 0, 0, "", "no live activity right now"},
+		// AC1: empty + stale event → must NOT compose "no agent · since"
+		{"no-agent-stale-event", 0, 0, "19h ago", "no live activity right now"},
+		// AC2 (negative side): no agent + inbox → since clause omitted
+		{"inbox-only", 3, 0, "19h ago", "3 need your input · no agent running"},
+		// AC2 (positive side): running agent → since clause keeps
+		{"running-with-since", 0, 1, "5m ago", "1 agent running · since 5m ago"},
+		{"running-without-since", 0, 1, "", "1 agent running"},
+		// Mixed: inbox + running + lastActive → fully composed
+		{"all-three", 2, 1, "12m ago", "2 need your input · 1 agent running · since 12m ago"},
+		// One inbox item — singular phrasing
+		{"single-inbox-running", 1, 1, "1m ago", "1 needs your input · 1 agent running · since 1m ago"},
+	}
+	for _, c := range cases {
+		got := subheadPlainText(c.inboxCount, c.runningCount, c.lastActive)
+		if got != c.want {
+			t.Errorf("%s: subheadPlainText(%d,%d,%q) = %q, want %q",
+				c.name, c.inboxCount, c.runningCount, c.lastActive, got, c.want)
+		}
+	}
+}
+
+// buildPageHero must apply the same rule as subheadPlainText so the
+// SSE refresh and the initial render never disagree.
+func TestBuildPageHero_NoMisleadingSinceClause(t *testing.T) {
+	hero := buildPageHero(Deps{}, edition.Local, 0, 0, "19h ago")
+	subhead := string(hero.Subhead)
+	if strings.Contains(subhead, "since") {
+		t.Errorf("empty workspace subhead should not include 'since': %q", subhead)
+	}
+	if !strings.Contains(subhead, "no live activity right now") {
+		t.Errorf("expected fallback subhead, got: %q", subhead)
+	}
+
+	hero = buildPageHero(Deps{}, edition.Local, 0, 1, "5m ago")
+	subhead = string(hero.Subhead)
+	if !strings.Contains(subhead, "since 5m ago") {
+		t.Errorf("running-agent subhead should include 'since': %q", subhead)
+	}
+
+	hero = buildPageHero(Deps{}, edition.Local, 2, 0, "19h ago")
+	subhead = string(hero.Subhead)
+	if strings.Contains(subhead, "since") {
+		t.Errorf("no-running subhead should not include 'since' even with inbox: %q", subhead)
+	}
+}
+
 // Spec dashboard-adapter-state-hardcoded: Now's chat input must honor
 // the same adapter probe as the four other homes. Previously
 // buildChatInput always returned Disabled:false, so the install banner

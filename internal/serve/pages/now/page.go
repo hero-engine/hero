@@ -432,14 +432,21 @@ func resolveAdapterState(deps Deps) (bool, shell.EmptyState) {
 // payload published on the `event: hero` SSE channel. Mirrors the
 // HTML composition in buildPageHero but strips markup so the client
 // can drop the string straight into textContent.
+//
+// Spec: dashboard-now-headline-misleading-when-empty. The previous
+// composition appended "since X ago" whenever lastActive was non-empty,
+// which read as a quiet-workspace claim when paired with "no agent
+// running" — even though X reflected only the most recent emitted
+// event. "since X ago" now renders only alongside an actually-running
+// session.
 func subheadPlainText(inboxCount, runningCount int, lastActive string) string {
+	if inboxCount == 0 && runningCount == 0 {
+		return "no live activity right now"
+	}
 	parts := []string{}
-	switch inboxCount {
-	case 0:
-		// Skip — empty inbox tells its own story in the section below.
-	case 1:
+	if inboxCount == 1 {
 		parts = append(parts, "1 needs your input")
-	default:
+	} else if inboxCount > 1 {
 		parts = append(parts, fmt.Sprintf("%d need your input", inboxCount))
 	}
 	switch runningCount {
@@ -450,7 +457,7 @@ func subheadPlainText(inboxCount, runningCount int, lastActive string) string {
 	default:
 		parts = append(parts, fmt.Sprintf("%d agents running", runningCount))
 	}
-	if lastActive != "" {
+	if runningCount > 0 && lastActive != "" {
 		parts = append(parts, "since "+lastActive)
 	}
 	return strings.Join(parts, " · ")
@@ -510,30 +517,37 @@ func firstTabFor(methodology string) (slug, label string) {
 }
 
 // buildPageHero composes the page-hero data block from current counts.
+//
+// Spec: dashboard-now-headline-misleading-when-empty. "since X ago" no
+// longer renders unless an agent is actually running; when nothing is
+// happening at all the subhead collapses to "no live activity right
+// now" instead of composing two empty signals into a false story.
 func buildPageHero(deps Deps, ed edition.Edition, inboxCount, runningCount int, lastActive string) shell.PageHero {
 	eyebrow := fmt.Sprintf("hero · %s · %s edition", firstNonEmpty(deps.Branch, "main"), string(ed))
 
-	parts := []string{}
-	switch inboxCount {
-	case 0:
-		// Skip — empty inbox tells its own story in the section below.
-	case 1:
-		parts = append(parts, "<strong>1 needs your input</strong>")
-	default:
-		parts = append(parts, fmt.Sprintf("<strong>%d need your input</strong>", inboxCount))
+	var subhead string
+	if inboxCount == 0 && runningCount == 0 {
+		subhead = "<strong>no live activity right now</strong>"
+	} else {
+		parts := []string{}
+		if inboxCount == 1 {
+			parts = append(parts, "<strong>1 needs your input</strong>")
+		} else if inboxCount > 1 {
+			parts = append(parts, fmt.Sprintf("<strong>%d need your input</strong>", inboxCount))
+		}
+		switch runningCount {
+		case 0:
+			parts = append(parts, "<strong>no agent running</strong>")
+		case 1:
+			parts = append(parts, "<strong>1 agent running</strong>")
+		default:
+			parts = append(parts, fmt.Sprintf("<strong>%d agents running</strong>", runningCount))
+		}
+		if runningCount > 0 && lastActive != "" {
+			parts = append(parts, "since "+template.HTMLEscapeString(lastActive))
+		}
+		subhead = strings.Join(parts, `<span class="dot-sep">·</span>`)
 	}
-	switch runningCount {
-	case 0:
-		parts = append(parts, "<strong>no agent running</strong>")
-	case 1:
-		parts = append(parts, "<strong>1 agent running</strong>")
-	default:
-		parts = append(parts, fmt.Sprintf("<strong>%d agents running</strong>", runningCount))
-	}
-	if lastActive != "" {
-		parts = append(parts, "since "+template.HTMLEscapeString(lastActive))
-	}
-	subhead := strings.Join(parts, `<span class="dot-sep">·</span>`)
 
 	editionLabel := "Solo"
 	if ed != edition.Local {
