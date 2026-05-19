@@ -13,7 +13,7 @@
   </div>
 
   {{- if eq (len .Rows) 0 }}
-  <div class="now-empty">Nothing waiting on you — when an agent proposes a change or a peer hands work back, it shows up here.</div>
+  <div class="now-empty">Nothing waiting on you — proposals, blockers, peer findings, pending reviews, and inbound handoffs land here when they need a decision.</div>
   {{- else }}
   <div class="now-inbox-list">
     {{- range .Rows }}
