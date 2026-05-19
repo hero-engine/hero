@@ -37,7 +37,7 @@ import (
 //     .agents/skills/ (preferred) AND .codex/skills/ (back-compat).
 //   - Does NOT install commands at any scope (no loader exists).
 //   - Cleans up dead bytes from prior installs at .codex/agents/*.md
-//     and .codex/commands/* — only when detectably Hero-authored.
+//     and .codex/commands/*.
 
 func runCodex(opts Options) (*Result, error) {
 	destBase, err := resolveCodexPaths(opts)
@@ -48,12 +48,13 @@ func runCodex(opts Options) (*Result, error) {
 	result := &Result{}
 
 	// Cleanup of dead bytes from prior install layouts.
-	// .codex/agents/*.md (Codex requires .toml — markdown is dead)
-	// .codex/commands/* (no loader at any scope)
-	if err := removeIfHeroAuthored(opts, result, filepath.Join(destBase, "agents"), "agents", false); err != nil {
+	// .codex/agents/*.md (Codex requires .toml — markdown is dead;
+	// the dir is repopulated by renderToFile below with .toml).
+	// .codex/commands/* (no loader at any scope; nothing repopulates).
+	if err := removeLegacyDir(opts, filepath.Join(destBase, "agents")); err != nil {
 		return nil, fmt.Errorf("cleanup .codex/agents: %w", err)
 	}
-	if err := removeIfHeroAuthored(opts, result, filepath.Join(destBase, "commands"), "commands", false); err != nil {
+	if err := removeLegacyDir(opts, filepath.Join(destBase, "commands")); err != nil {
 		return nil, fmt.Errorf("cleanup .codex/commands: %w", err)
 	}
 

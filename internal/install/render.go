@@ -189,22 +189,3 @@ func renderCopilotPromptFile(entry canonicalEntry) (string, []byte, error) {
 	return entry.Name + ".prompt.md", out.Bytes(), nil
 }
 
-// canonicalBytesEqual compares destination bytes against the
-// canonical embedded source for a (kind, name). Returns true iff
-// equal. Used by the cleanup helper to safely remove only files Hero
-// itself authored.
-func canonicalBytesEqual(opts Options, kind, name string, destPath string) bool {
-	srcFS := opts.sourceFS()
-	if srcFS == nil {
-		return false
-	}
-	src, err := fs.ReadFile(srcFS, path.Join(kind, name))
-	if err != nil {
-		return false
-	}
-	dst, err := os.ReadFile(destPath)
-	if err != nil {
-		return false
-	}
-	return bytes.Equal(src, dst)
-}
