@@ -101,7 +101,14 @@ func (s *Store) DB() *sql.DB { return s.db }
 // v2: federation contracts — adds `repo` and `unit` partition columns
 //     to nodes and edges so per-repo / per-unit sync filtering is
 //     possible without scanning the props blob.
-const schemaVersion = "2"
+// v3: domain-scoped knowledge graph — adds the `domain` namespace
+//     column on nodes and edges so PM / engineering / future packs
+//     can coexist without silently mixing in shared queries. The
+//     DEFAULT 'engineering' clause backfills every existing row in
+//     place at ALTER time (SQLite renders the literal default at
+//     read time), so the migration is invisible to engineering-only
+//     workspaces.
+const schemaVersion = "3"
 
 // migration is one ordered, idempotent step in the schema timeline.
 // version is the resulting schema_version after the step applies.
@@ -178,6 +185,20 @@ var migrations = []migration{
 			`CREATE INDEX IF NOT EXISTS idx_nodes_unit ON nodes(unit)`,
 			`CREATE INDEX IF NOT EXISTS idx_edges_repo ON edges(repo)`,
 			`CREATE INDEX IF NOT EXISTS idx_edges_unit ON edges(unit)`,
+		},
+	},
+	{
+		// Domain-scoped knowledge graph. Adds the `domain` namespace
+		// column so PM / engineering / future packs can coexist without
+		// silently mixing in shared queries. Default 'engineering'
+		// backfills existing rows in place; engineering-only workspaces
+		// see no behavior change.
+		version: "3",
+		statements: []string{
+			`ALTER TABLE nodes ADD COLUMN domain TEXT NOT NULL DEFAULT 'engineering'`,
+			`ALTER TABLE edges ADD COLUMN domain TEXT NOT NULL DEFAULT 'engineering'`,
+			`CREATE INDEX IF NOT EXISTS idx_nodes_domain ON nodes(domain)`,
+			`CREATE INDEX IF NOT EXISTS idx_edges_domain ON edges(domain)`,
 		},
 	},
 }
