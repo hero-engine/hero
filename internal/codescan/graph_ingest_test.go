@@ -50,7 +50,7 @@ func sampleResult() *Result {
 
 func TestWriteGraphPopulatesAllNodeAndEdgeTypes(t *testing.T) {
 	store := newTestStore(t)
-	summary, err := WriteGraph(sampleResult(), store)
+	summary, err := WriteGraph(sampleResult(), store, "engineering")
 	if err != nil {
 		t.Fatalf("WriteGraph: %v", err)
 	}
@@ -98,12 +98,12 @@ func TestWriteGraphPopulatesAllNodeAndEdgeTypes(t *testing.T) {
 
 func TestWriteGraphIsIdempotent(t *testing.T) {
 	store := newTestStore(t)
-	if _, err := WriteGraph(sampleResult(), store); err != nil {
+	if _, err := WriteGraph(sampleResult(), store, "engineering"); err != nil {
 		t.Fatalf("first WriteGraph: %v", err)
 	}
 	beforeStats, _ := store.Stats()
 
-	if _, err := WriteGraph(sampleResult(), store); err != nil {
+	if _, err := WriteGraph(sampleResult(), store, "engineering"); err != nil {
 		t.Fatalf("second WriteGraph: %v", err)
 	}
 	afterStats, _ := store.Stats()
@@ -120,7 +120,7 @@ func TestWriteGraphIsIdempotent(t *testing.T) {
 
 func TestWriteGraphChangedPackageInvalidatesPriorRow(t *testing.T) {
 	store := newTestStore(t)
-	if _, err := WriteGraph(sampleResult(), store); err != nil {
+	if _, err := WriteGraph(sampleResult(), store, "engineering"); err != nil {
 		t.Fatalf("first WriteGraph: %v", err)
 	}
 
@@ -129,7 +129,7 @@ func TestWriteGraphChangedPackageInvalidatesPriorRow(t *testing.T) {
 	r.Packages[0].Symbols = append(r.Packages[0].Symbols,
 		Symbol{Name: "NewThing", Kind: SymFunc, Exported: true, File: "internal/cli/root.go", Line: 200})
 
-	if _, err := WriteGraph(r, store); err != nil {
+	if _, err := WriteGraph(r, store, "engineering"); err != nil {
 		t.Fatalf("second WriteGraph: %v", err)
 	}
 
@@ -146,7 +146,7 @@ func TestWriteGraphChangedPackageInvalidatesPriorRow(t *testing.T) {
 
 func TestImportsEdgeResolvesPackageIDs(t *testing.T) {
 	store := newTestStore(t)
-	if _, err := WriteGraph(sampleResult(), store); err != nil {
+	if _, err := WriteGraph(sampleResult(), store, "engineering"); err != nil {
 		t.Fatalf("WriteGraph: %v", err)
 	}
 	cliID, err := store.GetNodeID("Package", "example-repo:internal/cli")

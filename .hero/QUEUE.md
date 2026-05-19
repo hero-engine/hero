@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-19T22:38:48Z · 99 ready specs_
+_Generated: 2026-05-19T22:47:06Z · 98 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -1060,53 +1060,6 @@ First non-engineering Hero domain pack. PM-shaped spec types (PRD, story, epic, 
 **Files:** `.hero/planning/features/hero-pm/spec.md`, `.hero/planning/features/hero-pm/research-brief.md`, `.hero/planning/features/hero-pm/mockup-brief.md`, `.hero/planning/features/hero-pm/agent-pack-design.md`, `.hero/planning/features/hero-pm/handoff-to-hero-code.md`, `.hero/planning/features/hero-pm/mockups/*.html`, `.hero/planning/initiatives/hero-domains/spec.md`, `.hero/planning/features/pm-platform-unblock/spec.md`, `.hero/planning/features/domain-scoped-knowledge-graph/spec.md`, `domains/pm/` *(existing scaffold; canonical content lands at delivery)*.
 
 **Skip:** New tracker integrations in v1 (reuse Jira/Linear/GitHub only). OKRs as a PM spec type (deferred to v2 / a future `strategy` domain). Methodology as a "mode" (not a mode — a layered preset). Forced point estimation. Cross-tracker handoff (Jira-PM → Linear-eng). Multi-active-domain workspaces. Roadmap-shaped providers (Productboard, Aha). PM-only Hero binary. Cross-domain reporting (combined PM/eng dashboards). Product analytics, experiment results, metrics pipelines.
-
----
-
-## scan-pluggability — Scan Pluggability — Per-Domain `hero scan` Implementations
-_feature · designed · horizon: next_
-
-Make `hero scan` domain-aware. Today scan is a code scanner — it detects
-languages, frameworks, test runners, generates engineering-shaped
-knowledge stubs, and ingests symbols/packages/files into the graph. PM
-needs a totally different scan: import a roadmap doc, parse tracker
-epics, ingest OKRs. This spec generalizes `hero scan` to dispatch to
-the active pack's scanner. Engineering's code scan becomes the
-reference implementation under `domains/engineering/scan/`. PM-specific
-scanners (roadmap-doc parser, tracker-epic ingester, OKR ingester)
-ship in `hero-pm`, not here.
-
-**Status:** designed — 2026-05-19. Locks (a) the **uniform graph-node
-schema with a `domain` tag** for scan output (defer domain-typed
-specializations to the registry's `kind` facet and the DSKG namespace);
-(b) the **manifest + in-tree dispatcher** shape for scanner
-declaration; (c) the **fixed sub-command set with per-pack opt-in**;
-(d) the **wire-through `Config.Domain` at dispatch time** rule for
-stamping; (e) that `internal/scan/` becomes the dispatch shell while
-the code-specific detection logic moves into
-`domains/engineering/scan/` as the reference impl.
-
-**Pick up at:** `/deliver scan-pluggability`. Land the dispatch
-interface + manifest loader first (single PR), then the engineering
-reference relocation (golden-output parity test gates merge), then
-wire `Config.Domain` through to `WriteGraph` so codescan ingest
-stamps `engineering` per the DSKG contract.
-
-→ `/deliver scan-pluggability`
-
-**Files:** .hero/planning/features/scan-pluggability/spec.md,
-.hero/planning/initiatives/hero-domains/spec.md,
-.hero/planning/features/domain-scoped-knowledge-graph/spec.md,
-internal/scan/, internal/codescan/, internal/cli/scan.go,
-internal/cli/init.go, internal/index/, domains/engineering/scan/,
-domains/engineering/scan-manifest.yaml.
-
-**Skip:** Designing PM scanners (roadmap-doc parser, tracker-epic
-ingester, OKR ingester) — those live in `hero-pm`. Cross-domain scan
-in a single workspace (multi-active-domain is deferred per DSKG).
-Third-party / out-of-tree scanners loaded from disk. Changing scan
-triggering (CLI command shape, post-init hook). Changing the
-knowledge-graph storage backend.
 
 ---
 
