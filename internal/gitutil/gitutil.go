@@ -4,10 +4,52 @@
 package gitutil
 
 import (
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 )
+
+// UserName resolves the canonical "you" identity for this workspace using
+// the following precedence:
+//
+//  1. `git config user.name` (matches what every event/claim writer uses)
+//  2. `$USER` env (fallback when git config is unset, e.g. fresh checkout)
+//  3. `"unknown"` literal (last-resort fallback)
+//
+// The result is lowercased and has spaces replaced with hyphens so writer
+// and reader sides see the same handle (CLI writers historically applied
+// this transform; readers must do the same to round-trip cleanly).
+//
+// Empty strings at any stage fall through to the next source.
+func UserName() string {
+	if out, err := exec.Command("git", "config", "user.name").Output(); err == nil {
+		if name := normalizeIdentity(string(out)); name != "" {
+			return name
+		}
+	}
+	if v := os.Getenv("USER"); v != "" {
+		if name := normalizeIdentity(v); name != "" {
+			return name
+		}
+	}
+	if v := os.Getenv("USERNAME"); v != "" {
+		if name := normalizeIdentity(v); name != "" {
+			return name
+		}
+	}
+	return "unknown"
+}
+
+// normalizeIdentity trims whitespace, lowercases, and replaces spaces
+// with hyphens — the canonical transform applied by every identity
+// writer in the codebase.
+func normalizeIdentity(s string) string {
+	s = strings.TrimSpace(s)
+	s = strings.ToLower(s)
+	s = strings.ReplaceAll(s, " ", "-")
+	return s
+}
 
 // IsRepo returns true if dir is inside a git working tree.
 func IsRepo(dir string) bool {

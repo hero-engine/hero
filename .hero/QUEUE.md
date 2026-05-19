@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-19T14:11:08Z · 105 ready specs_
+_Generated: 2026-05-19T14:16:21Z · 105 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -254,13 +254,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _bug · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/dashboard-delivery-events-never-emitted/spec.md)_
-
----
-
-## dashboard-user-identity-os-env-mismatch — Dashboard "you" identity uses $USER instead of git config — author-filtered metrics always read 0
-_bug · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/dashboard-user-identity-os-env-mismatch/spec.md)_
 
 ---
 
@@ -604,6 +597,36 @@ _bug · planning · horizon: now_
 _bug · planning · horizon: now_
 
 Resume work on the AGENTS.md project-structure regression. Read this spec, the v0.8 install refactor commits (`git log --oneline | head -20`), and `internal/install/agents_md.go`. The fix is already in place; remaining work is (a) optional unit test pinning the resolved paths against fresh-install output, (b) follow-up for non-AGENTS.md surfaces that may carry the same hardcoded layout description (search for `commands/. — Slash` and similar wording across the repo).
+
+---
+
+## contentfs-legacy-fallback-removal — ContentFS Legacy Fallback Removal — Cut Engineering Over to domains/engineering/
+_feature · planning · horizon: next_
+
+Follow-up to the now-completed `domain-plugin-architecture` spec
+(`.hero/specs/domain-plugin-architecture/spec.md`). That spec's B1
+delivery deliberately left `ContentFS()` wired to `legacyContent` (the
+root-level `agents/`, `commands/`, `skills/` embed) instead of cutting
+over to `domains/engineering/`. The decision is recorded in
+[content.go:37-54](content.go:37) and in the parent spec's "Decision —
+ContentFS legacy fallback retained (B1, 2026-05-17)" section.
+
+This spec finishes that cutover: reconcile the two surfaces, drop the
+legacy fallback, and make engineering go through the same domain-pack
+path as `pm` and `sales`.
+
+**Status:** planning — no code written yet. Parent spec is completed
+and archived; do not edit it.
+
+**Pick up at:** `/deliver contentfs-legacy-fallback-removal`
+
+**Files:** content.go (lines 16-54 and 59-80), domains/engineering/**,
+agents/**, commands/**, skills/**, internal/install/install.go (root
+asset wiring), AGENTS.md.
+
+**Skip:** Any changes to the `pm` or `sales` domain packs. Any change
+to `CoreFS()` / `CoreVocabulariesFS()` / `CoreMethodologiesFS()` /
+`CoreSpecTypesFS()` — those already go through the domain-pack model.
 
 ---
 

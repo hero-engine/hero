@@ -3,10 +3,10 @@ package cli
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/sessions"
 	"github.com/spf13/cobra"
 )
@@ -317,19 +317,12 @@ func resolveSessionAgent(agentFlag string, cfg config.Config) string {
 	return "human/" + gitUserName()
 }
 
-// gitUserName returns the git user.name, lowercased with spaces replaced by hyphens.
+// gitUserName returns the canonical workspace identity — see
+// gitutil.UserName for the resolution ladder
+// (git config → $USER → "unknown"). Kept as a thin wrapper because
+// dozens of call sites already reference the legacy name.
 func gitUserName() string {
-	out, err := exec.Command("git", "config", "user.name").Output()
-	if err != nil {
-		return "unknown"
-	}
-	name := strings.TrimSpace(string(out))
-	name = strings.ToLower(name)
-	name = strings.ReplaceAll(name, " ", "-")
-	if name == "" {
-		return "unknown"
-	}
-	return name
+	return gitutil.UserName()
 }
 
 // truncate shortens s to max chars, adding "…" if truncated.

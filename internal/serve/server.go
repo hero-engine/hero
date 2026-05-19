@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/index"
 	"github.com/hero-engine/hero/internal/serve/api"
 	"github.com/hero-engine/hero/internal/serve/chat"
@@ -849,16 +850,36 @@ func (s *Server) shellWorkspaceName() string {
 	return "hero"
 }
 
-// shellUserName returns a display name for the avatar. Reads the
-// standard OS env vars; "you" when nothing is set.
+// shellUserName returns the canonical workspace identity for the
+// dashboard "you" surfaces (avatar, plate, author-filtered metrics).
+//
+// Resolution lives in gitutil.UserName and prefers
+// `git config user.name` — the same source every event/claim writer
+// uses — so the reader and writer namespaces stay reconciled. Falls
+// back to `$USER` then `"unknown"` when git config is unavailable
+// (fresh checkouts, CI containers).
+//
+// Logs a single diagnostic on first call when git config is unset so
+// operators can spot misconfigured workspaces without per-request
+// noise.
 func shellUserName() string {
-	if v := os.Getenv("USER"); v != "" {
-		return v
+	name := gitutil.UserName()
+	logIdentityFallbackOnce(name)
+	return name
+}
+
+var identityFallbackLogged sync.Once
+
+// logIdentityFallbackOnce emits one diagnostic line if the resolved
+// identity fell back past `git config user.name`. Quiet otherwise.
+func logIdentityFallbackOnce(resolved string) {
+	if resolved == "" || resolved == "unknown" {
+		identityFallbackLogged.Do(func() {
+			fmt.Fprintf(os.Stderr,
+				"hero serve: git config user.name unset; dashboard \"you\" identity falling back to %q\n",
+				resolved)
+		})
 	}
-	if v := os.Getenv("USERNAME"); v != "" {
-		return v
-	}
-	return "you"
 }
 
 // busSubscriber adapts *EventBus to api.Subscriber by stripping the
