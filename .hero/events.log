@@ -34,3 +34,5 @@
 {"ts":"2026-05-19T22:37:46.945046Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"domain-routing-and-agents","message":"status -\u003e completed"}
 {"ts":"2026-05-19T22:46:31.511893Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"scan-pluggability","message":"Scan Pluggability — Per-Domain `hero scan` Implementations"}
 {"ts":"2026-05-19T22:46:31.511986Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"scan-pluggability","message":"status -\u003e completed"}
+{"ts":"2026-05-19T22:48:00.067202Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-code-handover-pack","message":"Hero-Code Handover Pack — Make the PM Foundation Consumable"}
+{"ts":"2026-05-19T22:48:00.067282Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-code-handover-pack","message":"status -\u003e completed"}

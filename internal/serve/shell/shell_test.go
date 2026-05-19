@@ -398,3 +398,51 @@ func min(a, b int) int {
 	}
 	return b
 }
+
+// TestBuildChrome_ProjectSelectorRewritesTabs verifies that when a
+// project selector is active, top-nav tab hrefs are rewritten to
+// /p/<slug>/<page> so navigation stays inside the active project.
+func TestBuildChrome_ProjectSelectorRewritesTabs(t *testing.T) {
+	r, _ := newTestRouter(t, edition.Local)
+	req := httptest.NewRequest("GET", "/p/foo/now", nil)
+
+	// No probe → tabs keep their original hrefs.
+	chrome := r.buildChrome(req, "now")
+	for _, tab := range chrome.Tabs {
+		if tab.Href == "" {
+			continue
+		}
+		if tab.Href[:3] == "/p/" {
+			t.Errorf("without probe, tab href should not be /p/-prefixed: %q", tab.Href)
+		}
+	}
+
+	// Probe sets active=foo → tabs are rewritten to /p/foo/<page>.
+	r.SetProjectSelectorProbe(func(*http.Request) ProjectSelector {
+		return ProjectSelector{
+			Active:      "foo",
+			ActiveLabel: "foo",
+			CurrentPage: "now",
+			Options: []ProjectSelectorOption{
+				{Slug: "all", Label: "All projects"},
+				{Slug: "foo", Label: "foo"},
+				{Slug: "bar", Label: "bar"},
+			},
+		}
+	})
+	chrome = r.buildChrome(req, "now")
+	if chrome.ProjectSelector.Active != "foo" {
+		t.Errorf("selector active = %q, want foo", chrome.ProjectSelector.Active)
+	}
+	if len(chrome.ProjectSelector.Options) != 3 {
+		t.Errorf("selector options len = %d, want 3", len(chrome.ProjectSelector.Options))
+	}
+	for _, tab := range chrome.Tabs {
+		if tab.Href == "" {
+			continue
+		}
+		if len(tab.Href) < 7 || tab.Href[:7] != "/p/foo/" {
+			t.Errorf("tab href = %q, want /p/foo/-prefixed", tab.Href)
+		}
+	}
+}

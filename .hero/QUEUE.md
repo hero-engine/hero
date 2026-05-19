@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-19T22:47:06Z · 98 ready specs_
+_Generated: 2026-05-19T22:48:12Z · 97 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -530,21 +530,6 @@ a new `contracts/governance/` directory before any enforcement work.
 `.hero/planning/features/tenant-isolation-rls/spec.md`
 **Skip:** designing the admin UI, SSO/SAML wiring, specific PII regex
 catalogs, and LLM-call wrapping mechanics — all are out of scope here.
-
----
-
-## hero-code-handover-pack — Hero-Code Handover Pack — Make the PM Foundation Consumable
-_feature · planning · horizon: now_
-
-The PM Foundation Delivery sprint shipped the four cross-language contracts (`spec-types.json`, `vocabularies/*.yaml`, `methodologies/*.yaml`, `inline-propose-v1.md`) but left a handful of consumer-affordance gaps. This sprint closes them so hero-code can implement the first PM dashboard against real fixtures, a single discovery index, and a documented read path for active workspace dialect.
-
-**Sprint completes when:**
-- `testdata/proposals/v1/` carries a fixture envelope per anchor variant + batch + replacement scenarios — hero-code's Rust widget tests consume them
-- `docs/contracts/README.md` indexes the four contracts with location, schema version, owner, and stability promise
-- `docs/contracts/active-dialect.md` documents the resolver precedence chain and the on-disk read path from `hero.json` to display map
-- `docs/contracts/spec-types-v1.1.schema.json` validates `.hero/cache/spec-types.json` and can generate Rust types via `serde`
-- `examples/scrum-workspace/` ships a working hero.json + 4 specs across lifecycle states for hero-code to develop against
-- Hero-code peer call (advisory) hands over the handover pack with pointers to all five artifacts
 
 ---
 

@@ -43,6 +43,10 @@ type Router struct {
 	mu           sync.RWMutex
 	homes        []Home // in registration order
 	adapterProbe func() AdapterState
+	// projectSelectorProbe returns the dropdown data for a given
+	// request. nil hides the selector. The probe runs on every page
+	// render — keep it cheap (registry read, no I/O).
+	projectSelectorProbe func(*http.Request) ProjectSelector
 }
 
 // New constructs a Router for the active edition. store may be nil —
@@ -276,7 +280,7 @@ func (r *Router) buildChrome(req *http.Request, activeSlug string) Chrome {
 		tabs = append(tabs, tab)
 	}
 
-	return Chrome{
+	chrome := Chrome{
 		Workspace:    r.workspace,
 		Branch:       r.branch,
 		UserName:     r.userName,
@@ -284,6 +288,37 @@ func (r *Router) buildChrome(req *http.Request, activeSlug string) Chrome {
 		Tabs:         tabs,
 		Adapter:      r.resolveAdapter(),
 	}
+	r.mu.RLock()
+	probe := r.projectSelectorProbe
+	r.mu.RUnlock()
+	if probe != nil {
+		chrome.ProjectSelector = probe(req)
+		// Rewrite tab hrefs to /p/<slug>/<page> so navigation stays
+		// inside the active project. Without this, clicking a tab
+		// would jump back to the legacy /<page> route and bounce
+		// through the default-project redirect on every click.
+		if chrome.ProjectSelector.Active != "" {
+			prefix := "/p/" + chrome.ProjectSelector.Active
+			for i, t := range chrome.Tabs {
+				if strings.HasPrefix(t.Href, "/") && !strings.HasPrefix(t.Href, "/p/") {
+					chrome.Tabs[i].Href = prefix + t.Href
+				}
+			}
+		}
+	}
+	return chrome
+}
+
+// SetProjectSelectorProbe wires the per-request project-selector data
+// provider into the router. Setting nil hides the selector. Safe to
+// call before or after RegisterHome.
+func (r *Router) SetProjectSelectorProbe(probe func(*http.Request) ProjectSelector) {
+	if r == nil {
+		return
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.projectSelectorProbe = probe
 }
 
 // SetAdapterProbe wires a live chat-adapter probe into the router. The

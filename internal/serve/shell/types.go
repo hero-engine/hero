@@ -93,6 +93,28 @@ type Chrome struct {
 	// widgets (install panel, disabled chat-input) read the same source,
 	// so chrome and content can no longer disagree on adapter state.
 	Adapter AdapterState
+	// ProjectSelector drives the top-nav project dropdown. Zero value
+	// (no Options) hides the selector — used by single-project test
+	// fixtures and any future surface that doesn't want it.
+	ProjectSelector ProjectSelector
+}
+
+// ProjectSelector populates the top-nav project dropdown. The Active
+// field is the slug currently in view (used to highlight the entry and
+// label the dropdown trigger). CurrentPage is the inner page path (the
+// part after /p/<slug>/) so the dropdown can rewrite the URL to the
+// new project's equivalent page on selection.
+type ProjectSelector struct {
+	Active      string
+	ActiveLabel string
+	CurrentPage string
+	Options     []ProjectSelectorOption
+}
+
+// ProjectSelectorOption is one entry in the project dropdown.
+type ProjectSelectorOption struct {
+	Slug  string
+	Label string
 }
 
 // AdapterState describes whether an interactive chat adapter is wired
