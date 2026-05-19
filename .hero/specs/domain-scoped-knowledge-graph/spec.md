@@ -2,7 +2,7 @@
 title: Domain-Scoped Knowledge Graph — Namespace Tags on Graph Nodes
 slug: domain-scoped-knowledge-graph
 type: feature
-status: designed
+status: completed
 priority: P0
 tags: [platform, domains, graph, knowledge, namespacing]
 created: 2026-05-15

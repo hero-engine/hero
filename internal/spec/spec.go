@@ -149,6 +149,14 @@ type Spec struct {
 	// still infer one from the spec's FilesTouched.
 	Surface string
 
+	// Domain is the DSKG namespace partition this spec belongs to
+	// (engineering / pm / future packs). Set by `/design` and
+	// `/diagnose` at scaffolding time from the active workspace
+	// domain; legacy specs without the field load with Domain
+	// empty and the loader/ingest layer treats that as
+	// "engineering" by convention.
+	Domain string
+
 	// ReleaseTarget is the project-snapshot release-rollup label
 	// (e.g. "v1", "v1.0.0"). Optional on both spec and initiative
 	// frontmatter; cascades from parent initiative when unset on a
@@ -432,6 +440,8 @@ func (s *Spec) parseFrontmatter(content string) string {
 			s.Subproject = val
 		case "surface":
 			s.Surface = val
+		case "domain":
+			s.Domain = val
 		case "release_target":
 			s.ReleaseTarget = val
 		case "triggers":

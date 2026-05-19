@@ -3,6 +3,8 @@ description: Produce a spec for a feature, enhancement, or platform change.
 ---
 **Before creating any file**, check whether the user is working in a sub-folder workspace. If so, preserve that workspace's `subproject:` frontmatter and write the spec under the workspace's `.hero/` root; otherwise write under the project `.hero/` root.
 
+**Stamp the active domain in frontmatter.** New specs MUST emit a `domain:` field reflecting the workspace's active domain — run `hero domain` (or read the `domain` key from `.hero/hero.json`; empty means engineering) and write that value. This lands the spec under the correct DSKG namespace partition so PM and engineering content stay queryable without leaking. Skip the field on legacy-style additions to specs that predate the partition.
+
 Route this feature or enhancement request to the appropriate delivery lead for design.
 
 Determine whether this is product feature work or platform/migration work:

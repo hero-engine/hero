@@ -155,7 +155,7 @@ func runGraphReingest(cmd *cobra.Command, args []string) error {
 		}
 	}
 	if subgraph == "work" || subgraph == "all" {
-		if err := reingestWork(projectRoot, heroDir, store); err != nil {
+		if err := reingestWork(cfg, projectRoot, heroDir, store); err != nil {
 			return err
 		}
 	}
@@ -186,14 +186,14 @@ func reingestCode(cfg config.Config, projectRoot string, store *graph.Store) err
 // order: specs first (so sessions can resolve mentions edges), then
 // sessions, then git log (so touches edges can resolve File targets
 // already created by codescan).
-func reingestWork(projectRoot, heroDir string, store *graph.Store) error {
+func reingestWork(cfg config.Config, projectRoot, heroDir string, store *graph.Store) error {
 	repoKey := filepath.Base(projectRoot)
 
 	specs, err := spec.Discover(heroDir)
 	if err != nil {
 		return fmt.Errorf("discovering specs: %w", err)
 	}
-	specSummary, err := spec.WriteGraph(specs, repoKey, store)
+	specSummary, err := spec.WriteGraph(specs, repoKey, graph.DomainFor(cfg, graph.IntrinsicActive), store)
 	if err != nil {
 		return fmt.Errorf("writing spec subgraph: %w", err)
 	}

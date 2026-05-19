@@ -417,7 +417,7 @@ func writeSiblingSubgraphs(cfg config.Config, projectRoot string, store *graph.S
 		if len(specs) == 0 {
 			continue
 		}
-		summary, err := spec.WriteGraph(specs, siblingKey, store)
+		summary, err := spec.WriteGraph(specs, siblingKey, graph.DomainFor(cfg, graph.IntrinsicActive), store)
 		if err != nil {
 			report.add(stepResult{name: "sibling " + alias, failed: true, err: err})
 			continue
@@ -437,7 +437,7 @@ func writeWorkSubgraph(cfg config.Config, projectRoot, heroDir string, store *gr
 	specs, err := spec.Discover(heroDir)
 	if err != nil {
 		report.add(stepResult{name: "planning", failed: true, err: err})
-	} else if specSummary, err := spec.WriteGraph(specs, repoKey, store); err != nil {
+	} else if specSummary, err := spec.WriteGraph(specs, repoKey, graph.DomainFor(cfg, graph.IntrinsicActive), store); err != nil {
 		report.add(stepResult{name: "planning", failed: true, err: err})
 	} else {
 		report.add(stepResult{

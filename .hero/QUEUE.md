@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-19T16:59:22Z · 101 ready specs_
+_Generated: 2026-05-19T21:52:46Z · 100 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -1152,51 +1152,6 @@ internal/cli/domain.go.
 (handled by `domain-scoped-knowledge-graph`). Third-party domain packs
 loaded from disk. Per-user agent overrides. Cross-pack agent sharing
 beyond the universal `core/agents/` layer that already exists.
-
----
-
-## domain-scoped-knowledge-graph — Domain-Scoped Knowledge Graph — Namespace Tags on Graph Nodes
-_feature · designed · horizon: next_
-
-Add domain namespace tags to every knowledge graph node and edge so that
-PM and engineering content can coexist in one workspace without queries
-silently mixing them. Tag at write time; filter or render the boundary
-at read time. The killer demo this unblocks: `hero-pm-ui`'s **Hand off to
-/design** button writes a cross-domain `story → feature` edge whose kind
-is `handoff`, and downstream surfaces (`handoff_card.rs`, the Handoff
-stream view, the linked-feature card on Story detail) read it back via
-cross-domain graph queries.
-
-**Status:** designed — 2026-05-19. Cross-domain edge schema, query-shape
-audit, active-domain resolution, and migration plan all locked. Awaiting
-`domain-plugin-architecture` cutover for write-side `Config.Domain` to
-become non-default; the read-side and schema work can land first.
-
-**Pick up at:** `/deliver domain-scoped-knowledge-graph`. Phase 1
-(schema v3 migration) is one PR; Phase 2 (write-path stamping) is a
-narrow patch across ingest packages; Phase 3 (read-path filtering) is
-the long pole — one helper plus a call-site sweep keyed off the audit
-table below.
-
-→ `/deliver domain-scoped-knowledge-graph`
-
-**Files:** .hero/planning/features/domain-scoped-knowledge-graph/spec.md,
-internal/graph/graph.go, internal/graph/node.go, internal/graph/edge.go,
-internal/traversal/why.go, internal/retrieval/retrieval.go,
-internal/cli/brief.go, internal/serve/mcp_tools.go,
-internal/handoff/handoff.go, internal/spec/graph_ingest.go,
-internal/tracker/graph_ingest.go, internal/sessions/graph_ingest.go,
-internal/codescan/graph_ingest.go, internal/memory/graph_ingest.go,
-internal/nextdoc/graph_ingest.go, internal/knowledge/graph_ingest.go,
-internal/gitutil/graph_ingest.go, internal/mission/mission.go,
-internal/extract/decisions.go, internal/tasks/record.go,
-internal/acceptance/record.go, internal/config/config.go.
-
-**Skip:** Full multi-active-domain workspaces in v1 — the substrate
-supports it, but `hero domain switch` remains a re-install rather than a
-per-query domain swap. Third-party domain packs loaded from disk
-(deferred). Cross-domain reporting / combined dashboards (separate spec
-after PM ships).
 
 ---
 

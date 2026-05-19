@@ -51,9 +51,52 @@ func sampleSpecs() []*Spec {
 	}
 }
 
+// TestSpecWriteGraph_PerSpecDomainOverridesFallback verifies the DSKG
+// Phase 4 contract: a spec whose frontmatter declares `domain: pm`
+// lands under the pm partition even when the workspace fallback is
+// engineering. Legacy specs without the field inherit the fallback.
+func TestSpecWriteGraph_PerSpecDomainOverridesFallback(t *testing.T) {
+	store := openSpecTestStore(t)
+	now := time.Now().UTC()
+	specs := []*Spec{
+		{
+			Slug: "pm-story", Title: "PM story",
+			Type: TypeFeature, Status: StatusPlanning,
+			Domain:     "pm", // frontmatter-declared
+			Path:       "/repo/.hero/planning/features/pm-story/spec.md",
+			ModifiedAt: now,
+		},
+		{
+			Slug: "legacy-eng", Title: "Legacy engineering",
+			Type: TypeFeature, Status: StatusPlanning,
+			// Domain unset — should fall back to "engineering"
+			Path:       "/repo/.hero/planning/features/legacy-eng/spec.md",
+			ModifiedAt: now,
+		},
+	}
+	if _, err := WriteGraph(specs, "test-repo", "engineering", store); err != nil {
+		t.Fatalf("WriteGraph: %v", err)
+	}
+	pm, _ := store.GetNode("Feature", "pm-story")
+	if pm == nil || pm.Domain != "pm" {
+		t.Errorf("pm-story.Domain = %q, want pm", domainOrEmpty(pm))
+	}
+	legacy, _ := store.GetNode("Feature", "legacy-eng")
+	if legacy == nil || legacy.Domain != "engineering" {
+		t.Errorf("legacy-eng.Domain = %q, want engineering (fallback)", domainOrEmpty(legacy))
+	}
+}
+
+func domainOrEmpty(n *graph.Node) string {
+	if n == nil {
+		return "<nil>"
+	}
+	return n.Domain
+}
+
 func TestSpecWriteGraphInsertsNodesAndEdges(t *testing.T) {
 	store := openSpecTestStore(t)
-	summary, err := WriteGraph(sampleSpecs(), "test-repo", store)
+	summary, err := WriteGraph(sampleSpecs(), "test-repo", "engineering", store)
 	if err != nil {
 		t.Fatalf("WriteGraph: %v", err)
 	}
@@ -82,11 +125,11 @@ func TestSpecWriteGraphInsertsNodesAndEdges(t *testing.T) {
 
 func TestSpecWriteGraphIsIdempotent(t *testing.T) {
 	store := openSpecTestStore(t)
-	if _, err := WriteGraph(sampleSpecs(), "test-repo", store); err != nil {
+	if _, err := WriteGraph(sampleSpecs(), "test-repo", "engineering", store); err != nil {
 		t.Fatalf("first WriteGraph: %v", err)
 	}
 	before, _ := store.Stats()
-	if _, err := WriteGraph(sampleSpecs(), "test-repo", store); err != nil {
+	if _, err := WriteGraph(sampleSpecs(), "test-repo", "engineering", store); err != nil {
 		t.Fatalf("second WriteGraph: %v", err)
 	}
 	after, _ := store.Stats()
@@ -116,7 +159,7 @@ func TestSpecWriteGraphChildRelationNotEmittedAsEdge(t *testing.T) {
 			},
 		},
 	}
-	if _, err := WriteGraph(specs, "test-repo", store); err != nil {
+	if _, err := WriteGraph(specs, "test-repo", "engineering", store); err != nil {
 		t.Fatalf("WriteGraph: %v", err)
 	}
 	stats, _ := store.Stats()
@@ -134,7 +177,7 @@ func TestSpecWriteGraphSkipsUnknownRelationTarget(t *testing.T) {
 			Relations:  []Relation{{Target: "does-not-exist", Kind: "depends-on"}},
 		},
 	}
-	summary, err := WriteGraph(specs, "test-repo", store)
+	summary, err := WriteGraph(specs, "test-repo", "engineering", store)
 	if err != nil {
 		t.Fatalf("WriteGraph: %v", err)
 	}
