@@ -356,3 +356,57 @@ func TestAPI_RootNotHandledByAPI(t *testing.T) {
 		t.Fatalf("expected non-200 from API handler at /, got %d (shell composes /)", rr.Code)
 	}
 }
+
+func TestAPI_DaemonStatus(t *testing.T) {
+	heroDir, projectRoot := setupTestWorkspace(t)
+	srv := NewServer(ServerConfig{
+		HeroDir:     heroDir,
+		ProjectRoot: projectRoot,
+		Version:     "test-vN",
+		Port:        7437,
+		AutoWatch:   false,
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/status", nil)
+	rr := httptest.NewRecorder()
+	srv.api.Handler().ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body=%s", rr.Code, rr.Body.String())
+	}
+
+	var resp DaemonStatusResponse
+	if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("unmarshal: %v; body=%s", err, rr.Body.String())
+	}
+	if !resp.Running {
+		t.Errorf("running = false, want true")
+	}
+	if resp.Version != "test-vN" {
+		t.Errorf("version = %q, want test-vN", resp.Version)
+	}
+	if resp.Port != 7437 {
+		t.Errorf("port = %d, want 7437", resp.Port)
+	}
+	if resp.ProjectCount < 1 {
+		t.Errorf("project_count = %d, want >= 1", resp.ProjectCount)
+	}
+	if len(resp.Projects) != resp.ProjectCount {
+		t.Errorf("projects len = %d, project_count = %d", len(resp.Projects), resp.ProjectCount)
+	}
+	for _, p := range resp.Projects {
+		if p.Slug == "" || p.Path == "" {
+			t.Errorf("project missing slug/path: %+v", p)
+		}
+	}
+}
+
+func TestAPI_DaemonStatus_MethodNotAllowed(t *testing.T) {
+	api := setupAPITestEnv(t)
+	req := httptest.NewRequest(http.MethodPost, "/api/status", nil)
+	rr := httptest.NewRecorder()
+	api.Handler().ServeHTTP(rr, req)
+	if rr.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("status = %d, want 405", rr.Code)
+	}
+}

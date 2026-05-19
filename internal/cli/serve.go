@@ -72,6 +72,7 @@ func init() {
 	serveCmd.Flags().BoolVar(&serveTeam, "team", false, "enable team mode (job queue, workers, auth)")
 	serveCmd.Flags().IntVar(&serveWorkers, "workers", 1, "number of job execution workers (team mode)")
 	serveCmd.Flags().StringVar(&serveAuthToken, "auth-token", "", "require this token for API access (team mode)")
+	serveCmd.Flags().BoolVar(&serveForce, "force", false, "stop any existing daemon on the target port before starting")
 }
 
 func runServe(cmd *cobra.Command, args []string) error {
@@ -106,6 +107,15 @@ func runServe(cmd *cobra.Command, args []string) error {
 			port = cfg.Serve.Port
 		} else {
 			port = 7437
+		}
+	}
+
+	// --force: stop any existing daemon on this port before starting.
+	// Errors stopping the running daemon are surfaced but non-fatal —
+	// the bind step that follows will report the real outcome.
+	if serveForce {
+		if err := stopDaemon(port, os.Stderr); err != nil {
+			fmt.Fprintf(os.Stderr, "hero serve --force: stop failed: %v (proceeding to start anyway)\n", err)
 		}
 	}
 
