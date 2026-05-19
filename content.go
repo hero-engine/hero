@@ -11,6 +11,7 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
+	"sort"
 )
 
 //go:embed domains/engineering/agents domains/engineering/commands domains/engineering/skills domains/engineering/spec-types
@@ -156,6 +157,115 @@ func DomainSpecTypesFS(domain string) fs.FS {
 		return nil
 	}
 	return sub
+}
+
+// OverlayFS returns an fs.FS where lookups try top first and fall back
+// to bottom. ReadDir merges entries from both, with top's entry winning
+// on name collisions. Used by the install pipeline to layer the active
+// domain over the universal core: every install renders core +
+// active-domain merged, with the domain overriding core on file-level
+// path conflicts.
+//
+// The returned FS implements fs.FS, fs.ReadDirFS, fs.StatFS, and
+// fs.ReadFileFS. Either input may be nil; nil is treated as an empty
+// FS. The semantics mirror internal/spectypes/loader.go's "core first,
+// domain overlays" precedence — diverging only in how the overlay
+// happens (FS overlay here vs registry overlay there).
+func OverlayFS(top, bottom fs.FS) fs.FS {
+	return &overlayFS{top: top, bottom: bottom}
+}
+
+type overlayFS struct {
+	top    fs.FS
+	bottom fs.FS
+}
+
+func (o *overlayFS) Open(name string) (fs.File, error) {
+	if o.top != nil {
+		if f, err := o.top.Open(name); err == nil {
+			return f, nil
+		}
+	}
+	if o.bottom != nil {
+		return o.bottom.Open(name)
+	}
+	return nil, &fs.PathError{Op: "open", Path: name, Err: fs.ErrNotExist}
+}
+
+func (o *overlayFS) Stat(name string) (fs.FileInfo, error) {
+	if o.top != nil {
+		if fi, err := fs.Stat(o.top, name); err == nil {
+			return fi, nil
+		}
+	}
+	if o.bottom != nil {
+		return fs.Stat(o.bottom, name)
+	}
+	return nil, &fs.PathError{Op: "stat", Path: name, Err: fs.ErrNotExist}
+}
+
+func (o *overlayFS) ReadFile(name string) ([]byte, error) {
+	if o.top != nil {
+		if data, err := fs.ReadFile(o.top, name); err == nil {
+			return data, nil
+		}
+	}
+	if o.bottom != nil {
+		return fs.ReadFile(o.bottom, name)
+	}
+	return nil, &fs.PathError{Op: "open", Path: name, Err: fs.ErrNotExist}
+}
+
+func (o *overlayFS) ReadDir(name string) ([]fs.DirEntry, error) {
+	var topEntries, bottomEntries []fs.DirEntry
+	var topErr, bottomErr error
+
+	if o.top != nil {
+		topEntries, topErr = fs.ReadDir(o.top, name)
+	} else {
+		topErr = fs.ErrNotExist
+	}
+	if o.bottom != nil {
+		bottomEntries, bottomErr = fs.ReadDir(o.bottom, name)
+	} else {
+		bottomErr = fs.ErrNotExist
+	}
+
+	// If both sides missing, return an error.
+	if topErr != nil && bottomErr != nil {
+		// Prefer top's error so callers see the upper-layer reason.
+		return nil, topErr
+	}
+
+	seen := make(map[string]bool, len(topEntries)+len(bottomEntries))
+	out := make([]fs.DirEntry, 0, len(topEntries)+len(bottomEntries))
+	for _, e := range topEntries {
+		if seen[e.Name()] {
+			continue
+		}
+		seen[e.Name()] = true
+		out = append(out, e)
+	}
+	for _, e := range bottomEntries {
+		if seen[e.Name()] {
+			continue
+		}
+		seen[e.Name()] = true
+		out = append(out, e)
+	}
+	// Stable order: sort alphabetically so ReadDir output is deterministic
+	// across runs regardless of which side contributed which entries.
+	sortDirEntries(out)
+	return out, nil
+}
+
+// sortDirEntries sorts fs.DirEntry slices by name in ascending order.
+// Stable, alphabetical order keeps install diffs deterministic across
+// runs regardless of which overlay side contributed which entries.
+func sortDirEntries(entries []fs.DirEntry) {
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].Name() < entries[j].Name()
+	})
 }
 
 // AvailableDomains returns the list of embedded domain names.
