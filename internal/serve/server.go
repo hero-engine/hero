@@ -49,6 +49,7 @@ type Server struct {
 	projects   map[string]*ProjectContext
 	version    string
 	port       int
+	startedAt  time.Time
 	bus        *EventBus
 	api        *API
 	httpServer *http.Server
@@ -387,7 +388,17 @@ func (s *Server) Run(ctx context.Context) error {
 
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
-		return fmt.Errorf("listen %s: %w", addr, err)
+		return s.diagnoseBindError(err)
+	}
+
+	// Record start time and write PID file. Failure to write the PID
+	// file is non-fatal — log and continue (lifecycle commands will
+	// still work via the fallback HTTP probe).
+	s.startedAt = time.Now().UTC()
+	if pidPath, perr := WritePIDFile(s.port, s.version); perr != nil {
+		fmt.Fprintf(os.Stderr, "hero serve: could not write pid file: %v\n", perr)
+	} else {
+		fmt.Fprintf(os.Stderr, "hero serve: pid file %s\n", pidPath)
 	}
 
 	// Server started
@@ -472,10 +483,59 @@ func (s *Server) shutdown() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	// Remove the PID file last. Tolerates missing file (already cleaned
+	// by a concurrent stop, etc.).
+	defer func() {
+		if err := RemovePIDFile(s.port); err != nil {
+			fmt.Fprintf(os.Stderr, "hero serve: could not remove pid file: %v\n", err)
+		}
+	}()
+
 	if s.httpServer != nil {
 		return s.httpServer.Shutdown(ctx)
 	}
 	return nil
+}
+
+// StartedAt returns the wall-clock time this server began listening.
+// Zero value before Run is called.
+func (s *Server) StartedAt() time.Time {
+	return s.startedAt
+}
+
+// Version returns the daemon version string.
+func (s *Server) Version() string {
+	return s.version
+}
+
+// Port returns the port the daemon is listening on.
+func (s *Server) Port() int {
+	return s.port
+}
+
+// diagnoseBindError turns a net.Listen failure into actionable output.
+// When the port is held by a hero daemon (probe of /api/status
+// succeeds), the message names the running PID and points the user at
+// hero serve stop / --force. Foreign holders get a different message.
+func (s *Server) diagnoseBindError(listenErr error) error {
+	if !isAddrInUse(listenErr) {
+		return fmt.Errorf("listen 127.0.0.1:%d: %w", s.port, listenErr)
+	}
+
+	info := probeHeroDaemon(s.port)
+	if info != nil {
+		return fmt.Errorf(
+			"a hero daemon is already running on 127.0.0.1:%d (PID %d) and serves all your projects — "+
+				"you don't need a second one. Use `hero serve status` to inspect, or "+
+				"`hero serve stop` (or `hero serve --force`) to terminate.",
+			s.port, info.PID,
+		)
+	}
+	return fmt.Errorf(
+		"port %d is in use by another process (not a hero daemon). "+
+			"Try `hero serve --port <other>` or free the port.",
+		s.port,
+	)
 }
 
 func (s *Server) startProjectWatcher(pc *ProjectContext) {

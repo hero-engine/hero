@@ -47,6 +47,11 @@ func (a *API) Handler() http.Handler {
 	// Health endpoint (daemon-level, no project)
 	mux.HandleFunc("/health", a.handleHealth)
 
+	// Daemon-level status — pid, port, uptime, version, project list.
+	// Distinct from /health (lightweight liveness) and from the
+	// per-project /api/{slug}/status.
+	mux.HandleFunc("/api/status", a.handleDaemonStatus)
+
 	// Project listing
 	mux.HandleFunc("/api/projects", a.handleProjects)
 
@@ -91,7 +96,7 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 func (a *API) routeProject(w http.ResponseWriter, r *http.Request) {
 	// Parse: /api/{project}/{endpoint}[/{extra}]
 	path := strings.TrimPrefix(r.URL.Path, "/api/")
-	if path == "" || path == "projects" || path == "events" {
+	if path == "" || path == "projects" || path == "events" || path == "status" {
 		// Already handled by specific routes
 		writeError(w, http.StatusNotFound, "not found")
 		return
@@ -166,6 +171,45 @@ func (a *API) handleHealth(w http.ResponseWriter, r *http.Request) {
 		"version":  a.server.version,
 		"projects": a.server.ProjectCount(),
 	})
+}
+
+// handleDaemonStatus returns the daemon-level status: pid, port,
+// uptime, version, and the list of served projects. Used by the CLI
+// `hero serve status` command and by the bind-collision probe.
+func (a *API) handleDaemonStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	started := a.server.StartedAt()
+	var uptime int64
+	if !started.IsZero() {
+		uptime = int64(time.Since(started).Seconds())
+	}
+
+	projects := make([]DaemonStatusPC, 0)
+	a.server.mu.RLock()
+	for slug, pc := range a.server.projects {
+		projects = append(projects, DaemonStatusPC{
+			Slug: slug,
+			Name: slug,
+			Path: pc.Path,
+		})
+	}
+	a.server.mu.RUnlock()
+
+	resp := DaemonStatusResponse{
+		Running:       true,
+		PID:           os.Getpid(),
+		Port:          a.server.Port(),
+		StartedAt:     started,
+		UptimeSeconds: uptime,
+		Version:       a.server.Version(),
+		ProjectCount:  len(projects),
+		Projects:      projects,
+	}
+	writeJSON(w, http.StatusOK, resp)
 }
 
 func (a *API) handleProjects(w http.ResponseWriter, r *http.Request) {
