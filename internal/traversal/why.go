@@ -30,6 +30,8 @@ type Hop struct {
 	EdgeType   string // edge that pointed *to* this node from the previous hop
 	ValidFrom  string // for chronological ordering when needed
 	Subproject string // monorepo subproject scope (extracted from the spec node's props.subproject)
+	Domain     string // domain partition of this hop's node (DSKG)
+	FromDomain string // the previous hop's domain — set when edge crosses a boundary
 }
 
 // Trace is the result of one `hero why` resolution: the target node
@@ -60,6 +62,8 @@ var originEdgeTypes = []string{
 	"originated_in",
 	"closes",
 	"fixes",
+	"handoff",  // DSKG: PM Story → engineering Feature (the killer demo)
+	"realizes", // DSKG: engineering Feature → PM PRD
 }
 
 // DefaultDepth is the recursion bound applied when the caller doesn't
@@ -106,7 +110,8 @@ func resolveTarget(store *graph.Store, repoKey, target string) (Hop, int64, erro
 		`SELECT id, type, key,
 		        COALESCE(json_extract(props, '$.title'), key) AS title,
 		        valid_from,
-		        COALESCE(json_extract(props, '$.subproject'), '') AS subproject
+		        COALESCE(json_extract(props, '$.subproject'), '') AS subproject,
+		        domain
 		   FROM nodes
 		  WHERE key = ? AND valid_to IS NULL AND (repo = ? OR COALESCE(repo,'') = '')
 		  ORDER BY (repo = ?) DESC, ingested_at DESC
@@ -115,7 +120,7 @@ func resolveTarget(store *graph.Store, repoKey, target string) (Hop, int64, erro
 	)
 	var h Hop
 	var id int64
-	if err := row.Scan(&id, &h.NodeType, &h.NodeKey, &h.NodeTitle, &h.ValidFrom, &h.Subproject); err != nil {
+	if err := row.Scan(&id, &h.NodeType, &h.NodeKey, &h.NodeTitle, &h.ValidFrom, &h.Subproject, &h.Domain); err != nil {
 		if err == sql.ErrNoRows {
 			return h, 0, fmt.Errorf("no node with key %q in repo %s", target, repoKey)
 		}
@@ -146,12 +151,15 @@ func walkOrigins(store *graph.Store, rootID int64, maxDepth int) ([]Hop, error) 
 	}
 	args = append(args, maxDepth)
 
-	q := `WITH RECURSIVE chain(id, depth, edge_type) AS (
-	    SELECT ?, 0, NULL
+	// chain carries the from-node's domain too so we can detect when
+	// an edge crosses a boundary. DSKG boundary-aware contract.
+	q := `WITH RECURSIVE chain(id, depth, edge_type, from_domain) AS (
+	    SELECT ?, 0, NULL, NULL
 	  UNION ALL
-	    SELECT e.to_id, c.depth + 1, e.type
+	    SELECT e.to_id, c.depth + 1, e.type, f.domain
 	      FROM edges e
 	      JOIN chain c ON c.id = e.from_id
+	      JOIN nodes f ON f.id = e.from_id AND f.valid_to IS NULL
 	     WHERE e.valid_to IS NULL
 	       AND e.type IN (` + strings.Join(placeholders, ",") + `)
 	       AND c.depth < ?
@@ -160,7 +168,9 @@ func walkOrigins(store *graph.Store, rootID int64, maxDepth int) ([]Hop, error) 
 	         n.type, n.key,
 	         COALESCE(json_extract(n.props, '$.title'), n.key) AS title,
 	         n.valid_from,
-	         COALESCE(json_extract(n.props, '$.subproject'), '') AS subproject
+	         COALESCE(json_extract(n.props, '$.subproject'), '') AS subproject,
+	         n.domain,
+	         COALESCE(chain.from_domain, '')
 	    FROM chain
 	    JOIN nodes n ON n.id = chain.id AND n.valid_to IS NULL
 	   WHERE chain.depth > 0
@@ -175,7 +185,7 @@ func walkOrigins(store *graph.Store, rootID int64, maxDepth int) ([]Hop, error) 
 	var out []Hop
 	for rows.Next() {
 		var h Hop
-		if err := rows.Scan(&h.Depth, &h.EdgeType, &h.NodeType, &h.NodeKey, &h.NodeTitle, &h.ValidFrom, &h.Subproject); err != nil {
+		if err := rows.Scan(&h.Depth, &h.EdgeType, &h.NodeType, &h.NodeKey, &h.NodeTitle, &h.ValidFrom, &h.Subproject, &h.Domain, &h.FromDomain); err != nil {
 			return nil, err
 		}
 		out = append(out, h)
@@ -223,8 +233,12 @@ func (t *Trace) MarkdownScoped(activeScope string) string {
 	for _, h := range t.Chains {
 		indent := strings.Repeat("  ", h.Depth-1)
 		hopMark, hopScopeTag := scopeBits(h.Subproject, activeScope)
+		edgeLabel := h.EdgeType
+		if h.FromDomain != "" && h.Domain != "" && h.FromDomain != h.Domain {
+			edgeLabel = fmt.Sprintf("%s (cross-domain %s → %s)", h.EdgeType, h.FromDomain, h.Domain)
+		}
 		fmt.Fprintf(&b, "%s%s← _%s_ %s `%s` (%s)%s\n",
-			indent, hopMark, h.EdgeType, h.NodeTitle, h.NodeKey, h.NodeType, hopScopeTag)
+			indent, hopMark, edgeLabel, h.NodeTitle, h.NodeKey, h.NodeType, hopScopeTag)
 	}
 	return b.String()
 }

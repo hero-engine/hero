@@ -185,3 +185,77 @@ func seedEdge(t *testing.T, store *graph.Store, from, to int64, typ string) {
 		t.Fatalf("seed edge: %v", err)
 	}
 }
+
+// TestWhy_BoundaryAwareHandoff verifies AC #6: a `hero why` trace
+// across a `handoff` edge with endpoints in different domains
+// includes the cross-domain hop AND renders the boundary inline as
+// `← _handoff (cross-domain pm → engineering)_`.
+func TestWhy_BoundaryAwareHandoff(t *testing.T) {
+	store := openStore(t)
+	// PM story → engineering feature via handoff. We walk from the
+	// engineering feature backward (target = engineering feature;
+	// the edge feature → story carries the cross-domain marker).
+	storyID := seedDomainNode(t, store, "Feature", "checkout-pain", "Checkout pain", "repo-x", "pm")
+	featID := seedDomainNode(t, store, "Feature", "checkout-fix", "Checkout fix", "repo-x", "engineering")
+	// derived_from points feature → story (eng → pm); walked by why
+	// because derived_from is in originEdgeTypes.
+	seedEdgeWithDomain(t, store, featID, storyID, "derived_from", "engineering")
+	_ = storyID
+
+	trace, err := Why(store, "repo-x", "checkout-fix", DefaultDepth)
+	if err != nil {
+		t.Fatalf("Why: %v", err)
+	}
+	if len(trace.Chains) != 1 {
+		t.Fatalf("hops = %d, want 1: %#v", len(trace.Chains), trace.Chains)
+	}
+	hop := trace.Chains[0]
+	if hop.NodeKey != "checkout-pain" {
+		t.Errorf("hop key = %q, want checkout-pain", hop.NodeKey)
+	}
+	if hop.Domain != "pm" {
+		t.Errorf("hop domain = %q, want pm", hop.Domain)
+	}
+	if hop.FromDomain != "engineering" {
+		t.Errorf("hop FromDomain = %q, want engineering", hop.FromDomain)
+	}
+
+	md := trace.Markdown()
+	if !contains(md, "derived_from (cross-domain engineering → pm)") {
+		t.Errorf("Markdown missing boundary label:\n%s", md)
+	}
+}
+
+func seedDomainNode(t *testing.T, store *graph.Store, typ, key, title, repo, domain string) int64 {
+	t.Helper()
+	id, err := store.UpsertNode(&graph.Node{
+		Type:        typ,
+		Domain:      domain,
+		Key:         key,
+		Props:       map[string]any{"title": title},
+		Repo:        repo,
+		ContentHash: typ + "|" + key,
+	})
+	if err != nil {
+		t.Fatalf("seed domain node %s/%s: %v", typ, key, err)
+	}
+	return id
+}
+
+func seedEdgeWithDomain(t *testing.T, store *graph.Store, from, to int64, typ, domain string) {
+	t.Helper()
+	if _, err := store.UpsertEdge(&graph.Edge{
+		FromID: from, ToID: to, Type: typ, Repo: "repo-x", Domain: domain,
+	}); err != nil {
+		t.Fatalf("seed edge: %v", err)
+	}
+}
+
+func contains(s, sub string) bool {
+	for i := 0; i+len(sub) <= len(s); i++ {
+		if s[i:i+len(sub)] == sub {
+			return true
+		}
+	}
+	return false
+}

@@ -385,10 +385,24 @@ func runWhyEdges(store *graph.Store, repoKey, target string) error {
 
 // --- blocked -------------------------------------------------------------
 
+var (
+	blockedAllDomains bool
+	blockedDomain     string
+)
+
 var blockedCmd = &cobra.Command{
 	Use:   "blocked",
 	Short: "Show every open Feature that's waiting on something incomplete",
-	RunE:  runBlocked,
+	Long: `Filters by the active domain by default — a PM workspace
+sees PM blockers, an engineering workspace sees engineering ones.
+Pass --all-domains to surface cross-domain blockers (e.g. an
+engineering Feature waiting on a PM PRD) tagged with their domain.`,
+	RunE: runBlocked,
+}
+
+func init() {
+	blockedCmd.Flags().BoolVar(&blockedAllDomains, "all-domains", false, "include blockers from any domain; cross-domain entries are tagged inline")
+	blockedCmd.Flags().StringVar(&blockedDomain, "domain", "", "override the active domain filter (\"*\" = all)")
 }
 
 func runBlocked(cmd *cobra.Command, args []string) error {
@@ -397,30 +411,56 @@ func runBlocked(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	defer store.Close()
-	vocab := activeVocab(loadConfigSilent())
+	cfg := loadConfigSilent()
+	vocab := activeVocab(cfg)
+	override := blockedDomain
+	if blockedAllDomains {
+		override = "*"
+	}
+	var cfgVal config.Config
+	if cfg != nil {
+		cfgVal = *cfg
+	}
+	scope := graph.ResolveDomain(cfgVal, override)
 
-	rows, err := store.DB().Query(
-		`SELECT f.key,
-		        COALESCE(json_extract(f.props, '$.title'), f.key),
-		        b.type, b.key,
-		        COALESCE(json_extract(b.props, '$.status'), '')
-		   FROM nodes f
-		   JOIN edges e ON e.from_id = f.id AND e.type IN ('depends_on','blocks') AND e.valid_to IS NULL
-		   JOIN nodes b ON e.to_id = b.id AND b.valid_to IS NULL
-		  WHERE f.type = 'Feature' AND f.repo = ? AND f.valid_to IS NULL
-		    AND COALESCE(json_extract(f.props, '$.status'), '') NOT IN ('completed','superseded')
-		    AND COALESCE(json_extract(b.props, '$.status'), '') NOT IN ('completed','accepted')
-		  ORDER BY f.key`, repoKey)
+	// f.domain = scope is the active filter on the Feature row; we
+	// always JOIN both endpoints so cross-domain rows can be rendered
+	// with a [domain: …] tag in --all-domains mode.
+	q := `SELECT f.key,
+	             COALESCE(json_extract(f.props, '$.title'), f.key),
+	             b.type, b.key,
+	             COALESCE(json_extract(b.props, '$.status'), ''),
+	             f.domain, b.domain
+	        FROM nodes f
+	        JOIN edges e ON e.from_id = f.id AND e.type IN ('depends_on','blocks') AND e.valid_to IS NULL
+	        JOIN nodes b ON e.to_id = b.id AND b.valid_to IS NULL
+	       WHERE f.type = 'Feature' AND f.repo = ? AND f.valid_to IS NULL
+	         AND COALESCE(json_extract(f.props, '$.status'), '') NOT IN ('completed','superseded')
+	         AND COALESCE(json_extract(b.props, '$.status'), '') NOT IN ('completed','accepted')`
+	args2 := []any{repoKey}
+	if frag, fragArgs := scope.Where("f"); frag != "" {
+		// Default scope: feature AND blocker both in the active
+		// domain. Cross-domain blockers only surface with --all-domains.
+		q += ` AND ` + frag
+		args2 = append(args2, fragArgs...)
+		bfrag, bfragArgs := scope.Where("b")
+		q += ` AND ` + bfrag
+		args2 = append(args2, bfragArgs...)
+	}
+	q += ` ORDER BY f.key`
+	rows, err := store.DB().Query(q, args2...)
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
 
-	type chain struct{ ftitle, fkey, btype, bkey, bstatus string }
+	type chain struct {
+		ftitle, fkey, btype, bkey, bstatus, fdomain, bdomain string
+	}
 	byFeature := map[string][]chain{}
 	for rows.Next() {
 		var c chain
-		if err := rows.Scan(&c.fkey, &c.ftitle, &c.btype, &c.bkey, &c.bstatus); err != nil {
+		if err := rows.Scan(&c.fkey, &c.ftitle, &c.btype, &c.bkey, &c.bstatus, &c.fdomain, &c.bdomain); err != nil {
 			return err
 		}
 		byFeature[c.fkey] = append(byFeature[c.fkey], c)
@@ -448,7 +488,13 @@ func runBlocked(cmd *cobra.Command, args []string) error {
 			if status == "" {
 				status = "?"
 			}
-			fmt.Printf("    waiting on %s `%s` (%s)\n", displayType(vocab, strings.ToLower(c.btype)), c.bkey, status)
+			domainTag := ""
+			if c.fdomain != c.bdomain && c.bdomain != "" {
+				// Cross-domain blocker; tag the blocker's domain so
+				// the reader sees the boundary explicitly.
+				domainTag = fmt.Sprintf(" [domain: %s]", c.bdomain)
+			}
+			fmt.Printf("    waiting on %s `%s` (%s)%s\n", displayType(vocab, strings.ToLower(c.btype)), c.bkey, status, domainTag)
 		}
 		// Add failing-AC chains for this feature, if any.
 		for _, ac := range failingByParent[k] {

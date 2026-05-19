@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-19T15:02:27Z · 102 ready specs_
+_Generated: 2026-05-19T16:12:50Z · 102 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -205,6 +205,46 @@ This sprint walks through delivery for every primitive hero-pm consumes, in depe
 **Files:** `.hero/planning/features/pm-platform-delivery/spec.md`, `.hero/planning/features/pm-platform-unblock/spec.md` (superseded), `.hero/planning/features/domain-plugin-architecture/spec.md`, `.hero/planning/features/spec-type-registry/spec.md`, `.hero/planning/features/inline-propose-output-mode/spec.md`, `.hero/planning/features/domain-routing-and-agents/spec.md`, `.hero/planning/features/scan-pluggability/spec.md`, `.hero/planning/features/domain-scoped-knowledge-graph/spec.md`, `.hero/planning/features/hero-code-handover-pack/spec.md`, `.hero/planning/features/hero-pm/spec.md`
 
 **Skip:** Implementing `hero-pm` itself — delivery happens in the hero-code repo. Building `hero-qa` or any second domain pack. Multi-active-domain workspaces (single-active is locked in DSKG v1; cross-domain reads are boundary-aware but the workspace has one active domain at a time). Renaming or reshaping the four contracts shipped by `pm-foundation-delivery`. Designing or implementing PM-specific scanners — they live in `hero-pm`.
+
+---
+
+## install-core-domain-merge — Install Core + Domain Merge — Layer Universal Core onto Every Install
+_feature · planning · horizon: now_
+
+`hero.CoreFS()` exists and embeds `core/agents/`, `core/commands/`,
+`core/skills/` into the binary, but **no install path consumes it**.
+Every `hero install`, `hero domain switch`, and `hero upgrade` today
+passes a single FS (either `hero.ContentFS()` or `hero.DomainFS(domain)`)
+to `install.Options.ContentFS`, and the install renders from that one
+FS only ([install.go:100-108](internal/install/install.go:100)). The
+universal core layer is dead weight in every binary we ship.
+
+Fix: render every install from `core` + active `domain` merged
+together, with the domain overlaying core on path conflicts. Matches
+the precedent already set for spec-types by
+[internal/spectypes/loader.go:32-44](internal/spectypes/loader.go:32).
+
+This **blocks** `contentfs-legacy-fallback-removal`. That spec's
+acceptance criterion "post-install file tree of explicit
+`--domain engineering` matches the legacy default byte-for-byte"
+is honest only once core is being merged consistently. Doing the
+cutover first would freeze a buggy install shape into the
+"consistent" target.
+
+**Status:** planning — no code yet. Today's omission is a real
+behavior gap, not just a refactor target.
+
+**Pick up at:** `/deliver install-core-domain-merge`
+
+**Files:** content.go (CoreFS, DomainFS), internal/install/install.go
+(Options + sourceFS), internal/install/content.go, internal/install/render.go,
+internal/install/target_*.go (six harness targets), internal/cli/install.go,
+internal/cli/domain.go, internal/cli/upgrade.go,
+internal/spectypes/loader.go (precedent reference only).
+
+**Skip:** Domain-specific content authoring — this is wiring only.
+Third-party / on-disk packs. The legacy-fallback removal (separate
+spec; runs after this).
 
 ---
 
@@ -587,36 +627,6 @@ _bug · planning · horizon: now_
 _bug · planning · horizon: now_
 
 Resume work on the AGENTS.md project-structure regression. Read this spec, the v0.8 install refactor commits (`git log --oneline | head -20`), and `internal/install/agents_md.go`. The fix is already in place; remaining work is (a) optional unit test pinning the resolved paths against fresh-install output, (b) follow-up for non-AGENTS.md surfaces that may carry the same hardcoded layout description (search for `commands/. — Slash` and similar wording across the repo).
-
----
-
-## contentfs-legacy-fallback-removal — ContentFS Legacy Fallback Removal — Cut Engineering Over to domains/engineering/
-_feature · planning · horizon: next_
-
-Follow-up to the now-completed `domain-plugin-architecture` spec
-(`.hero/specs/domain-plugin-architecture/spec.md`). That spec's B1
-delivery deliberately left `ContentFS()` wired to `legacyContent` (the
-root-level `agents/`, `commands/`, `skills/` embed) instead of cutting
-over to `domains/engineering/`. The decision is recorded in
-[content.go:37-54](content.go:37) and in the parent spec's "Decision —
-ContentFS legacy fallback retained (B1, 2026-05-17)" section.
-
-This spec finishes that cutover: reconcile the two surfaces, drop the
-legacy fallback, and make engineering go through the same domain-pack
-path as `pm` and `sales`.
-
-**Status:** planning — no code written yet. Parent spec is completed
-and archived; do not edit it.
-
-**Pick up at:** `/deliver contentfs-legacy-fallback-removal`
-
-**Files:** content.go (lines 16-54 and 59-80), domains/engineering/**,
-agents/**, commands/**, skills/**, internal/install/install.go (root
-asset wiring), AGENTS.md.
-
-**Skip:** Any changes to the `pm` or `sales` domain packs. Any change
-to `CoreFS()` / `CoreVocabulariesFS()` / `CoreMethodologiesFS()` /
-`CoreSpecTypesFS()` — those already go through the domain-pack model.
 
 ---
 

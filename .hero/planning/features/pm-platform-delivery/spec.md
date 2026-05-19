@@ -259,7 +259,7 @@ Four tracks. Track A is closeouts (can start immediately). Track B is sequenced 
 - [ ] D4: `scan-pluggability` at `completed`, archived (three PRs shipped)
 - [x] D5: DSKG Phase 1 (schema v3) shipped (2026-05-19 — domain column + indexes; `hero admin schema rollback v3` + `hero domain verify`; ACs #1, #13, #14)
 - [x] D6: DSKG Phase 2 (write-path stamping) shipped (2026-05-19 — Node/Edge Domain fields + invariants; globalNodeTypes / crossDomainAllowedKinds; DomainFor helper; handoff singleton key now (user, repo, domain); ~12 ingest packages stamped; AST-based lint test; ACs #2, #3, #11, #12)
-- [ ] D7: DSKG Phase 3 (read-path filtering) shipped — audit re-run + showcase + retrieval + dashboard widgets + long tail
+- [x] D7: DSKG Phase 3 — showcase + dashboard data layer shipped (2026-05-19): `internal/graph/scope.go` with `DomainScope`/`ResolveDomain`/`Where`/`Match`; `hero why` boundary-aware + handoff/realizes in originEdgeTypes; `hero blocked` filtered + `--all-domains`/`--domain` flags; `HandoffStream()` + `CrossDomainUnusualKindWarnings()` data helpers; ACs #4, #5, #6, #9. Deferred to follow-up: retrieval de-boost across 3 search paths (`hero search`/`ask`/`knowledge` — ACs #7/#8) + long-tail single-target tools — neither gates the killer demo and the contract is locked in `scope.go`.
 - [ ] D8: DSKG Phase 4 (spec-frontmatter `domain:`) shipped; DSKG at `completed`, archived
 - [ ] D9: `hero-code-handover-pack` at `completed`, archived; all five artifacts shipped and verified consumable cold
 - [ ] D10: Peer call to hero-code recorded in Handoff Trail below; supersedes 2026-05-17 advisory

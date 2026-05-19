@@ -153,6 +153,119 @@ func (s *Store) NonEngineeringRowCount() (nodes int, edges int, err error) {
 	return nodes, edges, nil
 }
 
+// HandoffEdge is one row in the cross-domain handoff stream view.
+// Carries both endpoint domains so the dashboard widget can render
+// the boundary label without an extra round-trip.
+type HandoffEdge struct {
+	EdgeID     int64  `json:"edge_id"`
+	Kind       string `json:"kind"`
+	FromType   string `json:"from_type"`
+	FromKey    string `json:"from_key"`
+	FromTitle  string `json:"from_title"`
+	FromDomain string `json:"from_domain"`
+	ToType     string `json:"to_type"`
+	ToKey      string `json:"to_key"`
+	ToTitle    string `json:"to_title"`
+	ToDomain   string `json:"to_domain"`
+	ValidFrom  string `json:"valid_from"`
+}
+
+// HandoffStream returns every current `handoff`-kind edge regardless
+// of the workspace's active domain. The DSKG spec's audit table marks
+// the Handoff stream dashboard widget as boundary-aware (always) —
+// this is the data contract hero-code consumes for the brand-demo
+// widget.
+//
+// onlyCrossDomain narrows to edges whose endpoints differ in domain.
+// Pass false to include same-domain handoffs (rare but valid — a PM
+// story handed off to another PM agent, for example).
+func (s *Store) HandoffStream(onlyCrossDomain bool) ([]HandoffEdge, error) {
+	q := `SELECT e.id, e.type,
+	             f.type, f.key,
+	             COALESCE(json_extract(f.props, '$.title'), f.key),
+	             f.domain,
+	             t.type, t.key,
+	             COALESCE(json_extract(t.props, '$.title'), t.key),
+	             t.domain,
+	             e.valid_from
+	        FROM edges e
+	        JOIN nodes f ON f.id = e.from_id AND f.valid_to IS NULL
+	        JOIN nodes t ON t.id = e.to_id   AND t.valid_to IS NULL
+	       WHERE e.valid_to IS NULL
+	         AND e.type = 'handoff'`
+	if onlyCrossDomain {
+		q += ` AND f.domain != t.domain`
+	}
+	q += ` ORDER BY e.valid_from DESC`
+
+	rows, err := s.db.Query(q)
+	if err != nil {
+		return nil, fmt.Errorf("handoff stream: %w", err)
+	}
+	defer rows.Close()
+	var out []HandoffEdge
+	for rows.Next() {
+		var h HandoffEdge
+		if err := rows.Scan(
+			&h.EdgeID, &h.Kind,
+			&h.FromType, &h.FromKey, &h.FromTitle, &h.FromDomain,
+			&h.ToType, &h.ToKey, &h.ToTitle, &h.ToDomain,
+			&h.ValidFrom,
+		); err != nil {
+			return nil, err
+		}
+		out = append(out, h)
+	}
+	return out, rows.Err()
+}
+
+// CrossDomainUnusualKindWarning is one entry in the
+// cross_domain_unusual_kind warning surfaced by `hero warnings`. The
+// DSKG design treats edges with mismatched endpoint domains as valid
+// when the kind is in crossDomainAllowedKinds; otherwise they get
+// flagged so the contract evolves visibly rather than silently.
+type CrossDomainUnusualKindWarning struct {
+	EdgeID     int64  `json:"edge_id"`
+	Kind       string `json:"kind"`
+	FromKey    string `json:"from_key"`
+	FromType   string `json:"from_type"`
+	FromDomain string `json:"from_domain"`
+	ToKey      string `json:"to_key"`
+	ToType     string `json:"to_type"`
+	ToDomain   string `json:"to_domain"`
+}
+
+// CrossDomainUnusualKindWarnings scans current edges, joins both
+// endpoints, and returns any cross-domain edges whose kind is not in
+// crossDomainAllowedKinds. Computed on demand — there is no separate
+// warnings table; the warning is a property of live graph state.
+func (s *Store) CrossDomainUnusualKindWarnings() ([]CrossDomainUnusualKindWarning, error) {
+	rows, err := s.db.Query(
+		`SELECT e.id, e.type, f.key, f.type, f.domain, t.key, t.type, t.domain
+		   FROM edges e
+		   JOIN nodes f ON f.id = e.from_id AND f.valid_to IS NULL
+		   JOIN nodes t ON t.id = e.to_id   AND t.valid_to IS NULL
+		  WHERE e.valid_to IS NULL
+		    AND f.domain != t.domain
+		    AND f.domain != '' AND t.domain != ''`)
+	if err != nil {
+		return nil, fmt.Errorf("cross-domain warnings: %w", err)
+	}
+	defer rows.Close()
+	var out []CrossDomainUnusualKindWarning
+	for rows.Next() {
+		var w CrossDomainUnusualKindWarning
+		if err := rows.Scan(&w.EdgeID, &w.Kind, &w.FromKey, &w.FromType, &w.FromDomain, &w.ToKey, &w.ToType, &w.ToDomain); err != nil {
+			return nil, err
+		}
+		if IsCrossDomainAllowedKind(w.Kind) {
+			continue
+		}
+		out = append(out, w)
+	}
+	return out, rows.Err()
+}
+
 // RollbackV3 reverts the schema-v3 migration: drops the `domain`
 // indexes and columns and resets `meta.schema_version` to "2". SQLite
 // 3.35+ supports `ALTER TABLE ... DROP COLUMN` without rewriting the
