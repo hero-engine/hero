@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-19T21:52:46Z · 100 ready specs_
+_Generated: 2026-05-19T22:38:14Z · 99 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -1107,51 +1107,6 @@ in a single workspace (multi-active-domain is deferred per DSKG).
 Third-party / out-of-tree scanners loaded from disk. Changing scan
 triggering (CLI command shape, post-init hook). Changing the
 knowledge-graph storage backend.
-
----
-
-## domain-routing-and-agents — Domain Routing and Agents — Active-Pack AGENTS.md and Agent Loader
-_feature · designed · horizon: next_
-
-Make agent routing and agent discovery domain-aware. The natural-language
-routing table and the agent roster live in the **active domain pack**, not
-hardcoded in `internal/install/agents_md.go`. A PM project routes "ship
-this" → `/handoff` (PM canonical) instead of `/deliver` (engineering), and
-`feature-delivery-lead` does not get materialized into `.claude/agents/`
-when a PM project runs `hero install`.
-
-**Status:** designed — 2026-05-19. Loader resolution order locked. The
-routing table moves from Go-string-builder code into the pack's
-`AGENTS.md` body as the source of truth; `internal/install/agents_md.go`
-becomes a loader that splices that body into the managed region rather
-than synthesizing it. Engineering content already exists at
-`domains/engineering/AGENTS.md` on disk (committed) — the same file
-becomes load-bearing.
-
-**Pick up at:** `/deliver domain-routing-and-agents`. Phase 1 is the
-loader cutover (engineering only; behavior bit-identical to today).
-Phase 2 wires PM through the same loader. Phase 3 narrows the agent
-materialization so packs don't leak engineering agents into PM
-workspaces.
-
-→ `/deliver domain-routing-and-agents`
-
-**Files:** .hero/planning/features/domain-routing-and-agents/spec.md,
-.hero/planning/initiatives/hero-domains/spec.md, content.go,
-domains/engineering/AGENTS.md, domains/pm/AGENTS.md,
-domains/sales/AGENTS.md, internal/install/agents_md.go,
-internal/install/claude_md.go, internal/install/content.go,
-internal/install/dialect.go, internal/install/install.go,
-internal/install/target_claude.go, internal/install/target_codex.go,
-internal/install/target_copilot.go, internal/install/target_cursor.go,
-internal/install/target_generic.go,
-internal/install/target_opencode.go, internal/cli/install.go,
-internal/cli/domain.go.
-
-**Skip:** Multi-active-domain coexistence in a single workspace
-(handled by `domain-scoped-knowledge-graph`). Third-party domain packs
-loaded from disk. Per-user agent overrides. Cross-pack agent sharing
-beyond the universal `core/agents/` layer that already exists.
 
 ---
 

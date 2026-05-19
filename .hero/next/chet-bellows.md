@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-05-19T14:08:57Z
+updated: 2026-05-19T22:31:30Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver dashboard-user-identity-os-env-mismatch — fix the $USER vs git-config user-name identity split so all per-user dashboard surfaces populate correctly. Sprint item 1 of 8 in dashboard-fix-and-rebuild.
+> Deliver hero-serve-multi-project — PID file + daemon lifecycle (stop/status/--force) + /p/<slug>/ URL routing + project selector. Sprint item 6 of 8 in dashboard-fix-and-rebuild; foundation that unblocks items 7 and 8.
 
 ## Suggested next prompt
 

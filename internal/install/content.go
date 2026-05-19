@@ -1,6 +1,7 @@
 package install
 
 import (
+	"bufio"
 	"fmt"
 	"io/fs"
 	"os"
@@ -33,11 +34,32 @@ func installFlat(opts Options, result *Result, kind, destDir string) error {
 		return err
 	}
 
+	activeDomain := opts.Domain
+	if activeDomain == "" {
+		activeDomain = "engineering"
+	}
+
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
 			continue
 		}
 		srcPath := kind + "/" + entry.Name()
+
+		// Agents may declare a `domains:` frontmatter field that
+		// restricts which active-domain workspaces they're materialized
+		// into. Absent field means "all domains" (today's default). The
+		// universal core + pack overlay merges happen at the FS level
+		// upstream of this loop (OverlayFS in internal/cli/install.go),
+		// so the filter is applied uniformly to whatever the merged FS
+		// surfaces — pack files shadowing core files inherit the pack's
+		// frontmatter, not the core file's.
+		if kind == "agents" {
+			data, readErr := fs.ReadFile(srcFS, srcPath)
+			if readErr == nil && !agentMatchesActiveDomain(data, activeDomain) {
+				continue
+			}
+		}
+
 		dst := filepath.Join(destDir, entry.Name())
 
 		if err := copyFileFromFS(opts, result, srcFS, srcPath, dst); err != nil {
@@ -46,6 +68,84 @@ func installFlat(opts Options, result *Result, kind, destDir string) error {
 	}
 
 	return nil
+}
+
+// agentMatchesActiveDomain returns true if the agent file's frontmatter
+// has no `domains:` field, or the field includes the active domain or
+// the `*` wildcard. The check is a deliberately small parser that reads
+// only the leading `---` YAML block — no full YAML dependency for one
+// list field.
+func agentMatchesActiveDomain(content []byte, activeDomain string) bool {
+	domains, ok := readAgentDomainsFrontmatter(content)
+	if !ok {
+		return true
+	}
+	for _, d := range domains {
+		if d == "*" || d == activeDomain {
+			return true
+		}
+	}
+	return false
+}
+
+// readAgentDomainsFrontmatter parses the leading `---` YAML frontmatter
+// block (if any) and returns the parsed `domains:` list. ok == false
+// means the field is absent — caller should treat as "all domains".
+//
+// Supports two shapes:
+//
+//	domains: [engineering, pm]
+//	domains:
+//	  - engineering
+//	  - pm
+func readAgentDomainsFrontmatter(content []byte) (domains []string, ok bool) {
+	s := bufio.NewScanner(strings.NewReader(string(content)))
+	s.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+
+	if !s.Scan() {
+		return nil, false
+	}
+	if strings.TrimSpace(s.Text()) != "---" {
+		return nil, false
+	}
+
+	var inList bool
+	for s.Scan() {
+		line := s.Text()
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "---" {
+			return domains, ok
+		}
+		if inList {
+			if strings.HasPrefix(strings.TrimLeft(line, " \t"), "- ") {
+				item := strings.TrimSpace(strings.TrimPrefix(strings.TrimLeft(line, " \t"), "-"))
+				item = strings.Trim(item, `"'`)
+				domains = append(domains, item)
+				continue
+			}
+			inList = false
+		}
+		if !strings.HasPrefix(line, "domains:") && !strings.HasPrefix(line, "domains :") {
+			continue
+		}
+		ok = true
+		value := strings.TrimSpace(strings.TrimPrefix(line, "domains:"))
+		if value == "" {
+			inList = true
+			continue
+		}
+		if strings.HasPrefix(value, "[") && strings.HasSuffix(value, "]") {
+			inner := strings.TrimSuffix(strings.TrimPrefix(value, "["), "]")
+			for _, item := range strings.Split(inner, ",") {
+				item = strings.TrimSpace(item)
+				item = strings.Trim(item, `"'`)
+				if item != "" {
+					domains = append(domains, item)
+				}
+			}
+		}
+	}
+	return domains, ok
 }
 
 func installSkillsNested(opts Options, result *Result, destDir string) error {

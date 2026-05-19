@@ -2,7 +2,7 @@
 title: Domain Routing and Agents — Active-Pack AGENTS.md and Agent Loader
 slug: domain-routing-and-agents
 type: feature
-status: designed
+status: completed
 priority: P0
 tags: [platform, domains, routing, agents, refactor]
 created: 2026-05-15
