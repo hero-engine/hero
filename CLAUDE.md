@@ -69,9 +69,10 @@ These are run in the terminal, not as slash commands:
 
 ### Project Structure
 
-- `commands/` — Slash command definitions (workflows like /design, /deliver, /diagnose)
-- `agents/` — Specialized agent roles (feature-delivery-lead, debug-investigator, etc.)
-- `skills/` — Domain-specific knowledge and patterns
+- `domains/engineering/commands/` — Slash command definitions (workflows like /design, /deliver, /diagnose)
+- `domains/engineering/agents/` — Specialized agent roles (feature-delivery-lead, debug-investigator, etc.)
+- `domains/engineering/skills/` — Domain-specific knowledge and patterns
+- `core/{agents,commands,skills}/` — Universal layer overlaid by every install regardless of domain
 - `.hero/planning/` — Active specs being worked on
 - `.hero/specs/` — Completed specs (archive)
 - `.hero/knowledge/` — Project knowledge base (conventions, decisions, context)

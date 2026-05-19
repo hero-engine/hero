@@ -327,19 +327,18 @@ internal/graph/           SQLite graph substrate and traversal support
 internal/retrieval/       BM25/TF-IDF retrieval layer
 internal/scan/            master ingest and codebase scanning
 internal/traversal/       why/blocked graph queries
-agents/                   installed engineering agent definitions
-commands/                 installed slash command definitions
-skills/                   installed skills
-core/                     core domain pack content
-domains/engineering/      Hero Code domain pack
+core/                     universal core pack (agents, commands, skills, vocabularies)
+domains/engineering/      Hero Code engineering domain pack
+domains/pm/               Hero PM domain pack
 domains/sales/            scaffolded Hero Sales domain pack
 web/                      public web surfaces (docs, landing)
 cloud/                    team server and cloud backend
 ```
 
-The top-level `agents/`, `commands/`, and `skills/` directories are the
-currently installed engineering pack. `core/` and `domains/` hold the
-domain-pack source split that newer installs and upgrades use.
+Engineering agents, commands, and skills live under
+`domains/engineering/`. The install pipeline overlays the active domain
+pack on top of the universal `core/` layer; domain wins on file
+conflicts.
 
 ---
 
