@@ -14,13 +14,13 @@ import (
 	"sort"
 )
 
-//go:embed domains/engineering/agents domains/engineering/commands domains/engineering/skills domains/engineering/spec-types
+//go:embed domains/engineering/agents domains/engineering/commands domains/engineering/skills domains/engineering/spec-types domains/engineering/AGENTS.md
 var engineeringContent embed.FS
 
-//go:embed domains/sales/agents domains/sales/commands domains/sales/skills domains/sales/spec-types
+//go:embed domains/sales/agents domains/sales/commands domains/sales/skills domains/sales/spec-types domains/sales/AGENTS.md
 var salesContent embed.FS
 
-//go:embed domains/pm/agents domains/pm/commands domains/pm/skills domains/pm/spec-types
+//go:embed domains/pm/agents domains/pm/commands domains/pm/skills domains/pm/spec-types domains/pm/AGENTS.md
 var pmContent embed.FS
 
 //go:embed core/agents core/commands core/skills

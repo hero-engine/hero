@@ -2,6 +2,7 @@ package install
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -69,6 +70,63 @@ func defaultSections(opts Options, filePath string) []managed.SectionContributor
 		newAgentsMdBodySection(opts),
 		snapshot.NewPointerSection(filePath, snapshotPointerRelativePath(opts, filePath)),
 	}
+}
+
+// loadPackAgentsMdBody resolves the active pack's AGENTS.md body through
+// the fixed chain documented in domain-routing-and-agents:
+//
+//  1. Explicit override (opts.AgentsMdBodyOverride) — test seam + future
+//     third-party-pack seam. Skips all FS lookups.
+//  2. Active pack on disk: AGENTS.md at the root of opts.sourceFS()
+//     (the install pipeline points this at OverlayFS(domainFS, coreFS),
+//     where domainFS is rooted at domains/<domain>/).
+//  3. Engineering Go fallback (generateEngineeringAgentsMdBody) — last-
+//     resort floor when the pack's AGENTS.md is missing or unreadable.
+//
+// Returns the body (everything after the leading H1 line) and the title
+// (the H1 text, minus the leading "# "). When the chain falls through
+// to the Go fallback, title is empty and the caller renders the legacy
+// "Hero — Spec-Driven AI Engineering" H2.
+func loadPackAgentsMdBody(opts Options) (body, title string, fellBack bool) {
+	if len(opts.AgentsMdBodyOverride) > 0 {
+		raw := string(opts.AgentsMdBodyOverride)
+		b, t := splitPackAgentsMd(raw)
+		return b, t, false
+	}
+
+	srcFS := opts.sourceFS()
+	if srcFS != nil {
+		if data, err := fs.ReadFile(srcFS, "AGENTS.md"); err == nil && len(data) > 0 {
+			b, t := splitPackAgentsMd(string(data))
+			return b, t, false
+		}
+	}
+
+	if opts.Domain != "" && opts.Domain != "engineering" {
+		fmt.Fprintf(os.Stderr, "warning: domain %q has no AGENTS.md — falling back to engineering routing table\n", opts.Domain)
+	}
+	return generateEngineeringAgentsMdBody(resolveContentPathsForBody(opts)), "", true
+}
+
+// splitPackAgentsMd separates the leading H1 line from the rest of the
+// pack's AGENTS.md content. The first non-blank line beginning with "# "
+// becomes the title; everything after that line (with one leading blank
+// line stripped) is the body. Files without an H1 yield an empty title
+// and the whole content as the body — the loader will then emit the
+// legacy H2 from the section contributor.
+func splitPackAgentsMd(content string) (body, title string) {
+	content = strings.TrimLeft(content, "\n")
+	if !strings.HasPrefix(content, "# ") {
+		return strings.TrimRight(content, "\n"), ""
+	}
+	nl := strings.IndexByte(content, '\n')
+	if nl < 0 {
+		return "", strings.TrimSpace(strings.TrimPrefix(content, "# "))
+	}
+	title = strings.TrimSpace(strings.TrimPrefix(content[:nl], "# "))
+	rest := content[nl+1:]
+	rest = strings.TrimLeft(rest, "\n")
+	return strings.TrimRight(rest, "\n"), title
 }
 
 // snapshotPointerRelativePath computes the SNAPSHOT.md path relative to
@@ -236,41 +294,55 @@ func (o Options) heroVersion() string {
 // contributors. Kept narrow on purpose: the function takes no
 // arguments and produces deterministic output suitable for grep-style
 // invocation extraction.
+//
+// Forces the Go fallback path (override = empty, no sourceFS) so the
+// drift test sees the legacy body shape regardless of how the active
+// pack's AGENTS.md happens to phrase its CLI references.
 func RenderAgentsMdBodyForDriftTest() []byte {
-	writer := managed.Writer{
-		File:     "AGENTS.md",
-		Sections: []managed.SectionContributor{newAgentsMdBodySection(Options{})},
-	}
-	body, err := writer.RenderBody(managed.Context{File: "AGENTS.md"})
-	if err != nil {
-		return nil
-	}
+	body := generateEngineeringAgentsMdBody(resolveContentPathsForBody(Options{}))
 	return []byte(body)
 }
 
-// agentsMdBodySection adapts the install-side AGENTS.md body content
-// (the Hero CLI/skill guide) to managed.SectionContributor. The
-// section's H2 ("Hero — Spec-Driven AI Engineering") is rendered by
-// the orchestrator from SectionTitle; the body returned by Render
-// starts at H3 ("Session Title").
+// agentsMdBodySection adapts the active pack's AGENTS.md body to
+// managed.SectionContributor. The section's H2 ("Hero — Spec-Driven AI
+// Engineering" for engineering, "Hero PM — ..." for PM) is rendered by
+// the orchestrator from SectionTitle; the body returned by Render is
+// everything after the pack file's H1.
+//
+// The body and title are loaded eagerly at construction time so
+// SectionTitle() can return the pack-sourced H2 without re-reading the
+// FS on every call.
 type agentsMdBodySection struct {
-	opts Options
+	opts  Options
+	body  string
+	title string
 }
 
 func newAgentsMdBodySection(opts Options) agentsMdBodySection {
-	return agentsMdBodySection{opts: opts}
+	body, title, _ := loadPackAgentsMdBody(opts)
+	return agentsMdBodySection{opts: opts, body: body, title: title}
 }
 
-func (s agentsMdBodySection) SectionID() string    { return "install:agents-md-body" }
-func (s agentsMdBodySection) SectionTitle() string { return "Hero — Spec-Driven AI Engineering" }
+func (s agentsMdBodySection) SectionID() string { return "install:agents-md-body" }
+func (s agentsMdBodySection) SectionTitle() string {
+	if s.title != "" {
+		return s.title
+	}
+	return "Hero — Spec-Driven AI Engineering"
+}
 
 func (s agentsMdBodySection) Render(_ managed.Context) (string, error) {
-	body := generateAgentsMdBody(resolveContentPathsForBody(s.opts))
-	body += renderActiveDialectBlock(s.opts)
-	return body, nil
+	return s.body + renderActiveDialectBlock(s.opts), nil
 }
 
-func generateAgentsMdBody(paths contentPathsForBody) string {
+// generateEngineeringAgentsMdBody renders the engineering pack body
+// inline as a last-resort fallback when the loader can't find a pack
+// AGENTS.md on disk. Kept content-identical to the canonical
+// domains/engineering/AGENTS.md (enforced by
+// TestEngineeringPackBodyMatchesGoFallback) until a release window
+// passes with no fallback-path bug reports and the function can be
+// removed.
+func generateEngineeringAgentsMdBody(paths contentPathsForBody) string {
 	var sb strings.Builder
 
 	// The H2 heading is owned by the orchestrator (managed.Writer

@@ -30,3 +30,5 @@
 {"ts":"2026-05-19T14:39:33.848399Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"dashboard-delivery-events-never-emitted","message":"status -\u003e completed"}
 {"ts":"2026-05-19T14:44:57.5354Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"dashboard-adapter-state-hardcoded","message":"Dashboard adapter state is hardcoded — \"via hero-code\" chip lies, panels disagree"}
 {"ts":"2026-05-19T14:44:57.535508Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"dashboard-adapter-state-hardcoded","message":"status -\u003e completed"}
+{"ts":"2026-05-19T22:37:46.944959Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"domain-routing-and-agents","message":"Domain Routing and Agents — Active-Pack AGENTS.md and Agent Loader"}
+{"ts":"2026-05-19T22:37:46.945046Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"domain-routing-and-agents","message":"status -\u003e completed"}

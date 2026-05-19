@@ -86,6 +86,12 @@ type Options struct {
 	// destination drift is preserved).
 	TrustedChecksums map[string]string
 
+	// AgentsMdBodyOverride, when non-empty, short-circuits the AGENTS.md
+	// pack-body loader chain (see loadPackAgentsMdBody). Used by tests
+	// and the future third-party-pack loader to inject a known body
+	// without touching the embedded or on-disk pack files.
+	AgentsMdBodyOverride []byte
+
 	// AutoSyncTargets, when true, makes `hero install --target X` also
 	// refresh any other installed harness targets detected in the same
 	// project. Prevents drift between harnesses when the binary version
