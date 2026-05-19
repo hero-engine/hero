@@ -90,7 +90,7 @@ func TestWriteGitLogGraphTouchesEdgesWhenFileNodeExists(t *testing.T) {
 	store := openGitTestStore(t)
 	// Pre-seed a File node so touches edges have a target.
 	if _, err := store.UpsertNode(&graph.Node{
-		Type: "File", Key: "test-repo:a.txt", ContentHash: "h",
+		Type: "File", Key: "test-repo:a.txt", Domain: "engineering", ContentHash: "h",
 	}); err != nil {
 		t.Fatalf("seed File: %v", err)
 	}

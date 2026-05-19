@@ -124,6 +124,7 @@ func mustUpsertNode(t *testing.T, store *graph.Store, typ, key string, props map
 	t.Helper()
 	id, err := store.UpsertNode(&graph.Node{
 		Type:   typ,
+		Domain: domainForTestType(typ),
 		Key:    key,
 		Props:  props,
 		Repo:   repo,
@@ -143,4 +144,15 @@ func mustUpsertEdge(t *testing.T, store *graph.Store, from, to int64, typ, repo 
 	}); err != nil {
 		t.Fatalf("upsert edge %d-%s->%d: %v", from, typ, to, err)
 	}
+}
+
+// domainForTestType returns the test-default Domain for a node type:
+// "" for the global allow-list (Mission/Person/Org/Repo/Unit) and
+// "engineering" otherwise. Lets test seed helpers stamp non-global
+// nodes without forcing every test to write Domain at every call site.
+func domainForTestType(typ string) string {
+	if graph.IsGlobalNodeType(typ) {
+		return ""
+	}
+	return "engineering"
 }

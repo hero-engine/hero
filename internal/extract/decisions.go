@@ -135,6 +135,7 @@ func (x *DecisionExtractor) ExtractFromSource(
 
 		decisionID, err := store.UpsertNode(&graph.Node{
 			Type:        "Decision",
+			Domain:      "engineering",
 			Key:         decisionKey,
 			Props:       props,
 			Repo:        repoKey,
@@ -164,6 +165,7 @@ func (x *DecisionExtractor) ExtractFromSource(
 			}
 			conceptID, err := store.UpsertNode(&graph.Node{
 				Type:        "Concept",
+				Domain:      "engineering",
 				Key:         term,
 				Props:       map[string]any{"term": term},
 				ContentHash: contentHash("concept:" + term),

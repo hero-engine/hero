@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-05-19T14:16:21Z · projected from 253 source nodes_
+_Last refreshed: 2026-05-19T14:52:52Z · projected from 254 source nodes_
 
 ## Surfaces
 
@@ -11,13 +11,13 @@ _Last refreshed: 2026-05-19T14:16:21Z · projected from 253 source nodes_
 | core | building | cmd/, internal/ | 3m ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | building | domains/engineering/ | 5m ago | spec-types-cache-frontmatter-empty |
-| domains/pm | concept | domains/pm/ | 19h ago | — |
+| domains/engineering | building | domains/engineering/ | 42m ago | spec-types-cache-frontmatter-empty |
+| domains/pm | concept | domains/pm/ | 20h ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
-| landing | building | web/landing/ | 19h ago | hero-landing-page |
+| landing | building | web/landing/ | 20h ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
 | serve | building | internal/serve/ | <1m ago | vocabulary-resolve-misses-methodology-derivation |
-| (unassigned) | — | — | — | 114 specs without surface |
+| (unassigned) | — | — | — | 110 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
 
@@ -44,10 +44,10 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — inline-propose-output-mode, hero-import-docs-page, recap-unregister-stale-and-empty-repo, project-snapshot
-- **core** — agents-md-managed-region-consolidation, cli-invocation-drift-test-markdown, context-files-flag-drift
+- **(unassigned)** — inline-propose-output-mode, hero-import-docs-page
+- **core** — agents-md-managed-region-consolidation, cli-invocation-drift-test-markdown
 - **domains/engineering** — spec-type-registry, domain-plugin-architecture
-- **serve** — dashboard-user-identity-os-env-mismatch, hero-serve-routes-inventory, hero-serve-daemon
+- **serve** — dashboard-now-headline-misleading-when-empty, dashboard-inbox-misses-most-activity-sources, dashboard-adapter-state-hardcoded, dashboard-delivery-events-never-emitted, dashboard-user-identity-os-env-mismatch, hero-serve-routes-inventory
 
 ## Next up across surfaces
 
@@ -60,11 +60,11 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Open risks & blockers
 
 - **Blocked specs (13):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `e2e-traversal` (waits on traversal-queries); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection); `traversal-queries` (waits on master-ingest-restore); `unified-retrieval-layer` (waits on master-ingest-restore).
-- **Unassigned specs (114) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
+- **Unassigned specs (110) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 118/232 (50%)
-- Projection generation: 0ms · Source nodes: 253
+- Specs covered: 123/233 (52%)
+- Projection generation: 0ms · Source nodes: 254
 

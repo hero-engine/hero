@@ -33,6 +33,7 @@ func seed(t *testing.T, s *graph.Store) {
 	}
 	if _, err := s.UpsertNode(&graph.Node{
 		Type: "Feature", Key: "shipping-rewrite", Repo: "test",
+		Domain:      "engineering",
 		Props: map[string]any{
 			"title": "Shipping rewrite", "status": "delivering",
 			"priority": "P0", "claimed_by": "alice@example.com",
@@ -43,6 +44,7 @@ func seed(t *testing.T, s *graph.Store) {
 	}
 	if _, err := s.UpsertNode(&graph.Node{
 		Type: "Feature", Key: "billing-revamp", Repo: "test",
+		Domain:      "engineering",
 		Props: map[string]any{
 			"title": "Billing revamp", "status": "planning", "priority": "P1",
 		},
@@ -53,6 +55,7 @@ func seed(t *testing.T, s *graph.Store) {
 	// A commit
 	if _, err := s.UpsertNode(&graph.Node{
 		Type: "Commit", Key: "abc123def456", Repo: "test",
+		Domain:      "engineering",
 		Props: map[string]any{
 			"sha": "abc123def456", "subject": "feat: ship something",
 			"author_name": "Alice", "date": now.Format(time.RFC3339),
@@ -137,6 +140,7 @@ func TestGenerate_SoftBudgetAllowsExcessForHighSignal(t *testing.T) {
 		key := "a" + string(rune('A'+i%26))
 		if _, err := store.UpsertNode(&graph.Node{
 			Type: "Attempt", Key: key, Repo: "test",
+			Domain:      "engineering",
 			Props: map[string]any{
 				"body":    "tried something silly that didn't work, attempt " + key,
 				"outcome": "failed",

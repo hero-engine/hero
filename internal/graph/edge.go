@@ -3,6 +3,7 @@ package graph
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 )
 
@@ -16,12 +17,39 @@ type Edge struct {
 	Type       string         `json:"type"`
 	Props      map[string]any `json:"props"`
 	Scope      Scope          `json:"scope"`
-	Repo       string         `json:"repo,omitempty"` // partition key — set when both endpoints are repo-bounded
-	Unit       string         `json:"unit,omitempty"` // partition key — set when edge is unit-scope
+	Repo       string         `json:"repo,omitempty"`   // partition key — set when both endpoints are repo-bounded
+	Unit       string         `json:"unit,omitempty"`   // partition key — set when edge is unit-scope
+	Domain     string         `json:"domain,omitempty"` // namespace partition; inherits from-node's domain when unset at write
 	Source     map[string]any `json:"source"`
 	ValidFrom  string         `json:"valid_from"`
 	ValidTo    string         `json:"valid_to,omitempty"`
 	IngestedAt string         `json:"ingested_at"`
+}
+
+// ErrEdgeDomainRequired is returned by UpsertEdge when the from-node
+// is a global node type (Domain == "") and the edge writer did not
+// pass an explicit Edge.Domain. Catches the "Mission has an edge
+// into PM, but the edge is now silently global" trap.
+var ErrEdgeDomainRequired = errors.New("graph: edge.Domain required (from-node is global; cannot inherit)")
+
+// crossDomainAllowedKinds is the v1 set of edge kinds explicitly
+// sanctioned to cross domain boundaries. Adding a kind here is a
+// deliberate one-line append.
+//
+// Cross-domain edges of other kinds still write (the contract is
+// permissive on intent), but `hero warnings` surfaces them via
+// `cross_domain_unusual_kind` so the contract evolves visibly.
+var crossDomainAllowedKinds = map[string]struct{}{
+	"handoff":      {}, // PM Story → engineering Feature
+	"derived_from": {}, // engineering Feature → PM Story (reverse pointer)
+	"realizes":     {}, // engineering Feature → PM PRD (no story-level handoff)
+}
+
+// IsCrossDomainAllowedKind reports whether an edge kind is in the
+// v1 sanctioned cross-domain set. Read-side warnings consume this.
+func IsCrossDomainAllowedKind(kind string) bool {
+	_, ok := crossDomainAllowedKinds[kind]
+	return ok
 }
 
 // UpsertEdge inserts or refreshes the (from, type, to) edge.
@@ -29,6 +57,13 @@ type Edge struct {
 // Idempotent: if a current row exists with equal props, it is left
 // untouched. If props differ, the prior row is invalidated and a new
 // current row is inserted.
+//
+// Domain inheritance: if e.Domain is "" at call time, the edge
+// inherits the from-node's domain via a lookup. If the from-node is
+// a global node type (its Domain is also ""), the caller MUST pass
+// e.Domain explicitly — otherwise we return ErrEdgeDomainRequired
+// to catch the trap where a global node's outgoing edge would
+// silently land outside any per-domain query.
 func (s *Store) UpsertEdge(e *Edge) (int64, error) {
 	if e.FromID == 0 || e.ToID == 0 || e.Type == "" {
 		return 0, fmt.Errorf("graph: edge requires from_id, to_id, type")
@@ -41,6 +76,26 @@ func (s *Store) UpsertEdge(e *Edge) (int64, error) {
 	}
 	if e.IngestedAt == "" {
 		e.IngestedAt = nowRFC3339()
+	}
+
+	// Inherit Domain from the from-node when the caller did not set it.
+	// If the from-node itself is global (Domain == ""), the caller has
+	// to pass an explicit value — see ErrEdgeDomainRequired.
+	if e.Domain == "" {
+		var fromDomain string
+		fromType := ""
+		err := s.db.QueryRow(
+			`SELECT type, domain FROM nodes WHERE id = ? AND valid_to IS NULL`,
+			e.FromID,
+		).Scan(&fromType, &fromDomain)
+		if err != nil {
+			return 0, fmt.Errorf("looking up from-node domain: %w", err)
+		}
+		if fromDomain == "" {
+			return 0, fmt.Errorf("%w: from_id=%d type=%q kind=%q",
+				ErrEdgeDomainRequired, e.FromID, fromType, e.Type)
+		}
+		e.Domain = fromDomain
 	}
 
 	propsJSON, err := jsonOrEmpty(e.Props, "{}")
@@ -59,16 +114,17 @@ func (s *Store) UpsertEdge(e *Edge) (int64, error) {
 	defer tx.Rollback()
 
 	var (
-		existingID    int64
-		existingProps string
-		existingRepo  string
-		existingUnit  string
+		existingID     int64
+		existingProps  string
+		existingRepo   string
+		existingUnit   string
+		existingDomain string
 	)
 	err = tx.QueryRow(
-		`SELECT id, props, repo, unit FROM edges
+		`SELECT id, props, repo, unit, domain FROM edges
 		  WHERE from_id = ? AND type = ? AND to_id = ? AND valid_to IS NULL`,
 		e.FromID, e.Type, e.ToID,
-	).Scan(&existingID, &existingProps, &existingRepo, &existingUnit)
+	).Scan(&existingID, &existingProps, &existingRepo, &existingUnit, &existingDomain)
 
 	switch {
 	case err == sql.ErrNoRows:
@@ -76,7 +132,9 @@ func (s *Store) UpsertEdge(e *Edge) (int64, error) {
 	case err != nil:
 		return 0, fmt.Errorf("selecting current edge: %w", err)
 	default:
-		partitionUnchanged := existingRepo == e.Repo && existingUnit == e.Unit
+		partitionUnchanged := existingRepo == e.Repo &&
+			existingUnit == e.Unit &&
+			existingDomain == e.Domain
 		if partitionUnchanged && propsEqual(existingProps, propsJSON) {
 			if err := tx.Commit(); err != nil {
 				return 0, fmt.Errorf("commit (no-op): %w", err)
@@ -93,10 +151,10 @@ func (s *Store) UpsertEdge(e *Edge) (int64, error) {
 
 	res, err := tx.Exec(
 		`INSERT INTO edges
-		 (from_id, to_id, type, props, scope, repo, unit, source, valid_from, valid_to, ingested_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)`,
+		 (from_id, to_id, type, props, scope, repo, unit, domain, source, valid_from, valid_to, ingested_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)`,
 		e.FromID, e.ToID, e.Type, propsJSON, string(e.Scope),
-		e.Repo, e.Unit,
+		e.Repo, e.Unit, e.Domain,
 		sourceJSON, e.ValidFrom, e.IngestedAt,
 	)
 	if err != nil {
@@ -139,7 +197,7 @@ func typeFilter(typ string) string {
 }
 
 func (s *Store) queryEdges(where string, idArg int64, typ string) ([]*Edge, error) {
-	q := `SELECT id, from_id, to_id, type, props, scope, repo, unit, source,
+	q := `SELECT id, from_id, to_id, type, props, scope, repo, unit, domain, source,
 	             valid_from, valid_to, ingested_at
 	        FROM edges
 	       WHERE valid_to IS NULL AND ` + where +
@@ -180,7 +238,7 @@ func scanEdge(r interface{ Scan(...any) error }) (*Edge, error) {
 	)
 	err := r.Scan(
 		&e.ID, &e.FromID, &e.ToID, &e.Type, &propsJSON, &scopeStr,
-		&e.Repo, &e.Unit,
+		&e.Repo, &e.Unit, &e.Domain,
 		&sourceJSON, &e.ValidFrom, &validToNS, &e.IngestedAt,
 	)
 	if err != nil {

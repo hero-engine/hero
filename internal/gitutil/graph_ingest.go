@@ -107,6 +107,8 @@ func WriteGitLogGraph(repoDir, repoKey string, limit int, store *graph.Store) (*
 		var authorID int64
 		if authorEmail != "" {
 			id, err := store.UpsertNode(&graph.Node{
+				// Person is in globalNodeTypes — Domain stays empty
+				// so the same identity resolves cross-domain.
 				Type: "Person",
 				Key:  strings.ToLower(authorEmail),
 				Props: map[string]any{
@@ -125,9 +127,12 @@ func WriteGitLogGraph(repoDir, repoKey string, limit int, store *graph.Store) (*
 
 		// Commit node. SHAs are globally unique across repos but each
 		// commit belongs to a specific repo, so we stamp Repo here.
+		// Commits are intrinsically engineering content per the DSKG
+		// write-path rules.
 		commitID, err := store.UpsertNode(&graph.Node{
-			Type: "Commit",
-			Key:  sha,
+			Type:   "Commit",
+			Domain: "engineering",
+			Key:    sha,
 			Props: map[string]any{
 				"sha":          sha,
 				"subject":      subject,
@@ -181,7 +186,14 @@ func WriteGitLogGraph(repoDir, repoKey string, limit int, store *graph.Store) (*
 		// fleshes out props later without losing this commit linkage.
 		for _, ref := range parseIssueRefs(subject) {
 			issueID, err := store.UpsertNode(&graph.Node{
-				Type:        "Issue",
+				Type: "Issue",
+				// Stub Issue created from a commit subject is
+				// engineering-default. Tracker ingest (active-domain)
+				// claims authoritative ownership when it lands; first
+				// writer wins per DSKG invariant. In a PM workspace
+				// the tracker would ingest before scan runs, so the
+				// PM stamp arrives first.
+				Domain:      "engineering",
 				Key:         ref.key,
 				Props:       map[string]any{"key": ref.key, "tracker": ref.tracker},
 				ContentHash: shortHash("issue-stub", ref.key),

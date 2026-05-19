@@ -258,7 +258,7 @@ Four tracks. Track A is closeouts (can start immediately). Track B is sequenced 
 - [ ] D3: `domain-routing-and-agents` at `completed`, archived
 - [ ] D4: `scan-pluggability` at `completed`, archived (three PRs shipped)
 - [x] D5: DSKG Phase 1 (schema v3) shipped (2026-05-19 — domain column + indexes; `hero admin schema rollback v3` + `hero domain verify`; ACs #1, #13, #14)
-- [ ] D6: DSKG Phase 2 (write-path stamping) shipped
+- [x] D6: DSKG Phase 2 (write-path stamping) shipped (2026-05-19 — Node/Edge Domain fields + invariants; globalNodeTypes / crossDomainAllowedKinds; DomainFor helper; handoff singleton key now (user, repo, domain); ~12 ingest packages stamped; AST-based lint test; ACs #2, #3, #11, #12)
 - [ ] D7: DSKG Phase 3 (read-path filtering) shipped — audit re-run + showcase + retrieval + dashboard widgets + long tail
 - [ ] D8: DSKG Phase 4 (spec-frontmatter `domain:`) shipped; DSKG at `completed`, archived
 - [ ] D9: `hero-code-handover-pack` at `completed`, archived; all five artifacts shipped and verified consumable cold

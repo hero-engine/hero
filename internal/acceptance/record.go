@@ -113,6 +113,7 @@ func Record(results []RunResult, repoKey string, store *graph.Store) (*RecordSum
 		// one — exactly the contract per the spec.
 		critID, err := store.UpsertNode(&graph.Node{
 			Type:        "Criterion",
+			Domain:      "engineering",
 			Key:         key,
 			Props:       newProps,
 			Repo:        existing.Repo,
@@ -225,6 +226,7 @@ func resolveOrStubCommit(store *graph.Store, sha string) (int64, error) {
 	}
 	return store.UpsertNode(&graph.Node{
 		Type: "Commit", Key: sha,
+		Domain:      "engineering",
 		Props:       map[string]any{"sha": sha, "stub": true},
 		ContentHash: "stub-" + sha,
 		Source:      map[string]any{"kind": "run-result-stub"},

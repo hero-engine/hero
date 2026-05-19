@@ -41,6 +41,7 @@ func WriteGraph(specs []*Spec, repoKey string, store *graph.Store) (*GraphWriteS
 
 		id, err := store.UpsertNode(&graph.Node{
 			Type:        nodeType,
+			Domain:      "engineering",
 			Key:         s.Slug,
 			Props:       props,
 			Repo:        repoKey,
@@ -88,6 +89,7 @@ func WriteGraph(specs []*Spec, repoKey string, store *graph.Store) (*GraphWriteS
 
 			critID, err := store.UpsertNode(&graph.Node{
 				Type: "Criterion",
+				Domain:      "engineering",
 				Key:  critKey,
 				Props: map[string]any{
 					"ac_id":     ac.ID,

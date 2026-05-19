@@ -80,6 +80,7 @@ func Write(parentType, parentSlug string, parentID int64, parsed []Task, repoKey
 
 		taskID, err := store.UpsertNode(&graph.Node{
 			Type:        "Task",
+			Domain:      "engineering",
 			Key:         key,
 			Props:       props,
 			Repo:        repoKey,
@@ -176,6 +177,7 @@ func upsertPerson(store *graph.Store, assignee, repoKey string) (int64, error) {
 		return id, nil
 	}
 	return store.UpsertNode(&graph.Node{
+		// Person is in globalNodeTypes — Domain stays empty.
 		Type:        "Person",
 		Key:         assignee,
 		Props:       map[string]any{"name": assignee},

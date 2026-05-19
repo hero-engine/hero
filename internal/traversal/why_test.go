@@ -158,8 +158,13 @@ func openStore(t *testing.T) *graph.Store {
 
 func seedNode(t *testing.T, store *graph.Store, typ, key, title, repo string) int64 {
 	t.Helper()
+	domain := "engineering"
+	if graph.IsGlobalNodeType(typ) {
+		domain = ""
+	}
 	id, err := store.UpsertNode(&graph.Node{
 		Type:        typ,
+		Domain:      domain,
 		Key:         key,
 		Props:       map[string]any{"title": title},
 		Repo:        repo,

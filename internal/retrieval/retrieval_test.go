@@ -57,11 +57,16 @@ func addGraphNode(t *testing.T, heroDir, nodeType, key string, props map[string]
 	}
 	defer gstore.Close()
 
+	domain := "engineering"
+	if graph.IsGlobalNodeType(nodeType) {
+		domain = ""
+	}
 	_, err = gstore.UpsertNode(&graph.Node{
-		Type:  nodeType,
-		Key:   key,
-		Props: props,
-		Scope: graph.ScopeTeam,
+		Type:   nodeType,
+		Domain: domain,
+		Key:    key,
+		Props:  props,
+		Scope:  graph.ScopeTeam,
 		Source: map[string]any{"_test": true},
 	})
 	if err != nil {

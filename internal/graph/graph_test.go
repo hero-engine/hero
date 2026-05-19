@@ -40,6 +40,7 @@ func TestUpsertNodeInsertAndIdempotency(t *testing.T) {
 		Key:         "internal/cli",
 		Props:       map[string]any{"language": "go", "files": 85},
 		Scope:       ScopeTeam,
+		Domain:      "engineering",
 		ContentHash: "hash-1",
 		Source:      map[string]any{"kind": "codescan"},
 	}
@@ -50,7 +51,7 @@ func TestUpsertNodeInsertAndIdempotency(t *testing.T) {
 
 	// Same content_hash → no-op, same id back, history depth = 1
 	id2, err := s.UpsertNode(&Node{
-		Type: "Package", Key: "internal/cli",
+		Type: "Package", Key: "internal/cli", Domain: "engineering",
 		Props: map[string]any{"language": "go", "files": 85},
 		ContentHash: "hash-1",
 		Source: map[string]any{"kind": "codescan"},
@@ -70,11 +71,11 @@ func TestUpsertNodeInsertAndIdempotency(t *testing.T) {
 func TestUpsertNodeInvalidatesAndAppends(t *testing.T) {
 	s := openTestStore(t)
 	first, _ := s.UpsertNode(&Node{
-		Type: "Package", Key: "internal/cli",
+		Type: "Package", Key: "internal/cli", Domain: "engineering",
 		Props: map[string]any{"files": 85}, ContentHash: "h1",
 	})
 	second, err := s.UpsertNode(&Node{
-		Type: "Package", Key: "internal/cli",
+		Type: "Package", Key: "internal/cli", Domain: "engineering",
 		Props: map[string]any{"files": 90}, ContentHash: "h2",
 	})
 	if err != nil {
@@ -106,9 +107,9 @@ func TestUpsertNodeInvalidatesAndAppends(t *testing.T) {
 
 func TestUpsertEdgeAndQueries(t *testing.T) {
 	s := openTestStore(t)
-	cliID, _ := s.UpsertNode(&Node{Type: "Package", Key: "internal/cli", ContentHash: "h"})
-	cfgID, _ := s.UpsertNode(&Node{Type: "Package", Key: "internal/config", ContentHash: "h"})
-	idxID, _ := s.UpsertNode(&Node{Type: "Package", Key: "internal/index", ContentHash: "h"})
+	cliID, _ := s.UpsertNode(&Node{Type: "Package", Key: "internal/cli", Domain: "engineering", ContentHash: "h"})
+	cfgID, _ := s.UpsertNode(&Node{Type: "Package", Key: "internal/config", Domain: "engineering", ContentHash: "h"})
+	idxID, _ := s.UpsertNode(&Node{Type: "Package", Key: "internal/index", Domain: "engineering", ContentHash: "h"})
 
 	if _, err := s.UpsertEdge(&Edge{FromID: cliID, ToID: cfgID, Type: "imports"}); err != nil {
 		t.Fatalf("UpsertEdge cli→config: %v", err)
@@ -140,13 +141,13 @@ func TestUpsertEdgeAndQueries(t *testing.T) {
 
 func TestNodeUpdateInvalidatesEdges(t *testing.T) {
 	s := openTestStore(t)
-	a, _ := s.UpsertNode(&Node{Type: "Package", Key: "a", ContentHash: "h1"})
-	b, _ := s.UpsertNode(&Node{Type: "Package", Key: "b", ContentHash: "h"})
+	a, _ := s.UpsertNode(&Node{Type: "Package", Key: "a", Domain: "engineering", ContentHash: "h1"})
+	b, _ := s.UpsertNode(&Node{Type: "Package", Key: "b", Domain: "engineering", ContentHash: "h"})
 	if _, err := s.UpsertEdge(&Edge{FromID: a, ToID: b, Type: "imports"}); err != nil {
 		t.Fatalf("UpsertEdge: %v", err)
 	}
 	// Update node a → invalidates the prior a's edges
-	if _, err := s.UpsertNode(&Node{Type: "Package", Key: "a", ContentHash: "h2"}); err != nil {
+	if _, err := s.UpsertNode(&Node{Type: "Package", Key: "a", Domain: "engineering", ContentHash: "h2"}); err != nil {
 		t.Fatalf("UpsertNode (update): %v", err)
 	}
 	// Current edges from old a id should now be 0
@@ -166,7 +167,7 @@ func TestGetNodeNotFound(t *testing.T) {
 
 func TestInvalidateNode(t *testing.T) {
 	s := openTestStore(t)
-	if _, err := s.UpsertNode(&Node{Type: "Feature", Key: "x", ContentHash: "h"}); err != nil {
+	if _, err := s.UpsertNode(&Node{Type: "Feature", Key: "x", Domain: "engineering", ContentHash: "h"}); err != nil {
 		t.Fatalf("UpsertNode: %v", err)
 	}
 	if err := s.InvalidateNode("Feature", "x"); err != nil {
@@ -182,9 +183,9 @@ func TestInvalidateNode(t *testing.T) {
 
 func TestListNodesByType(t *testing.T) {
 	s := openTestStore(t)
-	s.UpsertNode(&Node{Type: "Package", Key: "a", ContentHash: "h"})
-	s.UpsertNode(&Node{Type: "Package", Key: "b", ContentHash: "h"})
-	s.UpsertNode(&Node{Type: "Feature", Key: "f", ContentHash: "h"})
+	s.UpsertNode(&Node{Type: "Package", Key: "a", Domain: "engineering", ContentHash: "h"})
+	s.UpsertNode(&Node{Type: "Package", Key: "b", Domain: "engineering", ContentHash: "h"})
+	s.UpsertNode(&Node{Type: "Feature", Key: "f", Domain: "engineering", ContentHash: "h"})
 
 	pkgs, err := s.ListNodesByType("Package")
 	if err != nil {

@@ -114,6 +114,7 @@ func TestWrite_StatusFlipBitemporal(t *testing.T) {
 	past := time.Now().UTC().Add(-2 * time.Hour).Format(time.RFC3339)
 	if _, err := store.UpsertNode(&graph.Node{
 		Type: "Task",
+		Domain:      "engineering",
 		Key:  "feat-a:T-1",
 		Props: map[string]any{
 			"task_id": "T-1", "text": "x", "status": StatusTodo, "parent": "feat-a",
@@ -276,6 +277,7 @@ func seedFeature(t *testing.T, store *graph.Store, slug string) int64 {
 	t.Helper()
 	id, err := store.UpsertNode(&graph.Node{
 		Type:        "Feature",
+		Domain:      "engineering",
 		Key:         slug,
 		Props:       map[string]any{"title": slug, "status": "delivering"},
 		Repo:        "repo-x",

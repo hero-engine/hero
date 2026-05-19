@@ -45,6 +45,7 @@ func TestSessionWriteGraphLinksToSpecWhenPresent(t *testing.T) {
 	// Pre-create a Feature node so the session edge has a target.
 	if _, err := store.UpsertNode(&graph.Node{
 		Type: "Feature", Key: "graph-memory", ContentHash: "h",
+		Domain:      "engineering",
 	}); err != nil {
 		t.Fatalf("seed Feature: %v", err)
 	}

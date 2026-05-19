@@ -71,13 +71,13 @@ func TestPush_SendsTeamScopeNodesAndEdges(t *testing.T) {
 	s := openTestStore(t)
 	// One team-scope node, one local-scope node — only team should be sent.
 	if _, err := s.UpsertNode(&Node{
-		Type: "Feature", Key: "shipping",
+		Type: "Feature", Key: "shipping", Domain: "engineering",
 		Scope: ScopeTeam, ContentHash: "h-team",
 	}); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := s.UpsertNode(&Node{
-		Type: "Note", Key: "private",
+		Type: "Note", Key: "private", Domain: "engineering",
 		Scope: ScopeLocal, ContentHash: "h-local",
 	}); err != nil {
 		t.Fatal(err)
@@ -103,7 +103,7 @@ func TestPush_SendsTeamScopeNodesAndEdges(t *testing.T) {
 func TestPush_IsIdempotentViaSyncState(t *testing.T) {
 	s := openTestStore(t)
 	if _, err := s.UpsertNode(&Node{
-		Type: "Feature", Key: "x", Scope: ScopeTeam, ContentHash: "h",
+		Type: "Feature", Key: "x", Domain: "engineering", Scope: ScopeTeam, ContentHash: "h",
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -128,8 +128,8 @@ func TestPush_IsIdempotentViaSyncState(t *testing.T) {
 func TestPullAndApply_RoundTripsWithEdges(t *testing.T) {
 	// Source store with two linked features
 	src := openTestStore(t)
-	a, _ := src.UpsertNode(&Node{Type: "Feature", Key: "a", Scope: ScopeTeam, ContentHash: "h-a"})
-	b, _ := src.UpsertNode(&Node{Type: "Feature", Key: "b", Scope: ScopeTeam, ContentHash: "h-b"})
+	a, _ := src.UpsertNode(&Node{Type: "Feature", Key: "a", Domain: "engineering", Scope: ScopeTeam, ContentHash: "h-a"})
+	b, _ := src.UpsertNode(&Node{Type: "Feature", Key: "b", Domain: "engineering", Scope: ScopeTeam, ContentHash: "h-b"})
 	if _, err := src.UpsertEdge(&Edge{
 		FromID: a, ToID: b, Type: "depends_on", Scope: ScopeTeam,
 	}); err != nil {
@@ -187,7 +187,7 @@ func TestPullAndApply_RoundTripsWithEdges(t *testing.T) {
 func TestPush_ServerErrorReturnsErr(t *testing.T) {
 	s := openTestStore(t)
 	if _, err := s.UpsertNode(&Node{
-		Type: "Feature", Key: "x", Scope: ScopeTeam, ContentHash: "h",
+		Type: "Feature", Key: "x", Domain: "engineering", Scope: ScopeTeam, ContentHash: "h",
 	}); err != nil {
 		t.Fatal(err)
 	}

@@ -98,6 +98,7 @@ func WriteGraph(memoryDir, repoKey string, store *graph.Store) (*Summary, error)
 
 		if _, err := store.UpsertNode(&graph.Node{
 			Type:        "Memory",
+			Domain:      "engineering",
 			Key:         key,
 			Props:       props,
 			Scope:       graph.ScopeLocal,

@@ -142,6 +142,7 @@ func seedAC(t *testing.T, store *graph.Store, key, statement, status string) {
 	}
 	if _, err := store.UpsertNode(&graph.Node{
 		Type: "Criterion",
+		Domain:      "engineering",
 		Key:  key,
 		Props: map[string]any{
 			"ac_id":     key,

@@ -61,6 +61,7 @@ func TestHistory_ReturnsAllRowsOldestFirst(t *testing.T) {
 	// Same key, status flip — bitemporal: invalidate prior + insert new.
 	if _, err := store.UpsertNode(&graph.Node{
 		Type: "Criterion",
+		Domain:      "engineering",
 		Key:  "feat-a:AC-1",
 		Props: map[string]any{
 			"ac_id":     "AC-1",
@@ -122,6 +123,7 @@ func seedCriterionForParent(t *testing.T, store *graph.Store, key, statement, st
 	t.Helper()
 	if _, err := store.UpsertNode(&graph.Node{
 		Type: "Criterion",
+		Domain:      "engineering",
 		Key:  key,
 		Props: map[string]any{
 			"ac_id":     key,

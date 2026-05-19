@@ -159,8 +159,9 @@ func seedCriterion(t *testing.T, store *graph.Store, key, statement, status stri
 func seedCriterionAt(t *testing.T, store *graph.Store, key, statement, status, validFrom string) {
 	t.Helper()
 	n := &graph.Node{
-		Type: "Criterion",
-		Key:  key,
+		Type:   "Criterion",
+		Domain: "engineering",
+		Key:    key,
 		Props: map[string]any{
 			"ac_id":     key,
 			"statement": statement,

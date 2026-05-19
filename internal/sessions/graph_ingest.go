@@ -55,6 +55,7 @@ func WriteGraph(sess []*Session, repoKey string, store *graph.Store) (*GraphWrit
 		hash := hashSession(s)
 		sessID, err := store.UpsertNode(&graph.Node{
 			Type:        "Session",
+			Domain:      "engineering",
 			Key:         s.ID,
 			Props:       props,
 			Repo:        repoKey,

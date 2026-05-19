@@ -44,19 +44,25 @@ const (
 )
 
 // UserAsk is the most recent prompt the user sent to the agent in
-// this user's working session. Singleton per user — each new ask
-// supersedes the prior via bitemporal valid_to.
+// this user's working session. Singleton per (user, repo, domain) —
+// each new ask within that triple supersedes the prior via bitemporal
+// valid_to. Different active domains in the same workspace keep their
+// own singletons so a PM agent's ask and an engineering agent's ask
+// don't overwrite each other.
 type UserAsk struct {
 	User      string // user slug — same shape as nextUserSlug() returns
+	Domain    string // domain partition; "" defaults to "engineering"
 	Text      string // verbatim or paraphrased prompt
 	SessionID string // optional — links to a Session node when known
 	UpdatedAt string // RFC3339; populated by Record on write
 }
 
 // NextSuggestion is the agent's recommended next prompt for this
-// user. Singleton per user — each new suggestion supersedes prior.
+// user. Singleton per (user, repo, domain) — each new suggestion
+// within that triple supersedes prior.
 type NextSuggestion struct {
 	User      string
+	Domain    string // domain partition; "" defaults to "engineering"
 	Text      string // suggested prompt (one paragraph, agent's voice)
 	Rationale string // optional — why this is the right next move
 	SessionID string
@@ -65,13 +71,31 @@ type NextSuggestion struct {
 
 // SessionReflection is a mid-session lesson worth surfacing in the
 // next handoff but not yet promoted to a durable Note. Multiple co-
-// existing rows per user; query latest N within a session.
+// existing rows per (user, repo, domain); query latest N within a
+// session.
 type SessionReflection struct {
 	User      string
+	Domain    string // domain partition; "" defaults to "engineering"
 	Text      string
 	Tags      []string
 	SessionID string
 	UpdatedAt string
+}
+
+// resolveDomain provides the "engineering" fallback for handoff
+// records that don't carry an explicit domain. Mirrors the same
+// rule as graph.DomainFor's IntrinsicActive branch.
+func resolveDomain(d string) string {
+	if d == "" {
+		return "engineering"
+	}
+	return d
+}
+
+// singletonKey builds the per-(user, domain) singleton key for the
+// UserAsk and NextSuggestion node types per DSKG AC #11.
+func singletonKey(user, domain string) string {
+	return user + ":" + resolveDomain(domain)
 }
 
 // RecordAsk upserts the UserAsk singleton for the given user. Empty
@@ -84,9 +108,11 @@ func RecordAsk(store *graph.Store, repoKey string, ask UserAsk) error {
 		return fmt.Errorf("handoff: UserAsk requires User")
 	}
 	ask.Text = strings.TrimSpace(ask.Text)
+	domain := resolveDomain(ask.Domain)
+	key := singletonKey(ask.User, domain)
 	if ask.Text == "" {
 		// Clearing the ask: invalidate the current row if any.
-		return store.InvalidateNode(NodeUserAsk, ask.User)
+		return store.InvalidateNode(NodeUserAsk, key)
 	}
 	props := map[string]any{
 		"text":       ask.Text,
@@ -94,7 +120,8 @@ func RecordAsk(store *graph.Store, repoKey string, ask UserAsk) error {
 	}
 	_, err := store.UpsertNode(&graph.Node{
 		Type:        NodeUserAsk,
-		Key:         ask.User,
+		Domain:      domain,
+		Key:         key,
 		Props:       props,
 		Repo:        repoKey,
 		ContentHash: hashFields(ask.Text, ask.SessionID),
@@ -113,8 +140,10 @@ func RecordSuggestion(store *graph.Store, repoKey string, sug NextSuggestion) er
 		return fmt.Errorf("handoff: NextSuggestion requires User")
 	}
 	sug.Text = strings.TrimSpace(sug.Text)
+	domain := resolveDomain(sug.Domain)
+	key := singletonKey(sug.User, domain)
 	if sug.Text == "" {
-		return store.InvalidateNode(NodeNextSuggestion, sug.User)
+		return store.InvalidateNode(NodeNextSuggestion, key)
 	}
 	props := map[string]any{
 		"text":       sug.Text,
@@ -123,7 +152,8 @@ func RecordSuggestion(store *graph.Store, repoKey string, sug NextSuggestion) er
 	}
 	_, err := store.UpsertNode(&graph.Node{
 		Type:        NodeNextSuggestion,
-		Key:         sug.User,
+		Domain:      domain,
+		Key:         key,
 		Props:       props,
 		Repo:        repoKey,
 		ContentHash: hashFields(sug.Text, sug.Rationale, sug.SessionID),
@@ -150,7 +180,8 @@ func RecordReflection(store *graph.Store, repoKey string, ref SessionReflection)
 	// reflections are recorded in the same second (e.g. during a
 	// round-trip ingest of an existing handoff file).
 	stamp := time.Now().UTC().Format("20060102T150405.000000000")
-	key := ref.User + ":" + stamp
+	domain := resolveDomain(ref.Domain)
+	key := ref.User + ":" + domain + ":" + stamp
 	props := map[string]any{
 		"text":       ref.Text,
 		"tags":       ref.Tags,
@@ -158,6 +189,7 @@ func RecordReflection(store *graph.Store, repoKey string, ref SessionReflection)
 	}
 	_, err := store.UpsertNode(&graph.Node{
 		Type:        NodeSessionReflection,
+		Domain:      domain,
 		Key:         key,
 		Props:       props,
 		Repo:        repoKey,
@@ -167,15 +199,19 @@ func RecordReflection(store *graph.Store, repoKey string, ref SessionReflection)
 	return err
 }
 
-// LatestAsk returns the current UserAsk for the user in the given
-// repo, or nil if none. Returns (nil, nil) on a clean miss. The
+// LatestAsk returns the current UserAsk for the (user, repo, domain)
+// triple, or nil if none. Returns (nil, nil) on a clean miss. The
 // repoKey filter is what keeps an ask recorded in repo A from
-// surfacing in repo B's handoff projection.
-func LatestAsk(store *graph.Store, user, repoKey string) (*UserAsk, error) {
+// surfacing in repo B's handoff projection; the domain filter keeps
+// PM and engineering singletons distinct.
+//
+// An empty `domain` arg resolves to "engineering" — pre-domain
+// callers see no behavior change.
+func LatestAsk(store *graph.Store, user, repoKey, domain string) (*UserAsk, error) {
 	if store == nil {
 		return nil, fmt.Errorf("handoff: nil store")
 	}
-	n, err := scanLatestSingleton(store, NodeUserAsk, user, repoKey)
+	n, err := scanLatestSingleton(store, NodeUserAsk, singletonKey(user, domain), repoKey)
 	if err != nil {
 		return nil, err
 	}
@@ -185,13 +221,13 @@ func LatestAsk(store *graph.Store, user, repoKey string) (*UserAsk, error) {
 	return askFromNode(n), nil
 }
 
-// LatestSuggestion returns the current NextSuggestion for the user
-// in the given repo, or nil if none.
-func LatestSuggestion(store *graph.Store, user, repoKey string) (*NextSuggestion, error) {
+// LatestSuggestion returns the current NextSuggestion for the
+// (user, repo, domain) triple, or nil if none.
+func LatestSuggestion(store *graph.Store, user, repoKey, domain string) (*NextSuggestion, error) {
 	if store == nil {
 		return nil, fmt.Errorf("handoff: nil store")
 	}
-	n, err := scanLatestSingleton(store, NodeNextSuggestion, user, repoKey)
+	n, err := scanLatestSingleton(store, NodeNextSuggestion, singletonKey(user, domain), repoKey)
 	if err != nil {
 		return nil, err
 	}
@@ -202,15 +238,17 @@ func LatestSuggestion(store *graph.Store, user, repoKey string) (*NextSuggestion
 }
 
 // RecentReflections returns up to limit most-recent reflections for
-// the user in the given repo, newest first. Pass limit <= 0 to
+// the (user, repo, domain) triple, newest first. Pass limit <= 0 to
 // return all.
-func RecentReflections(store *graph.Store, user, repoKey string, limit int) ([]SessionReflection, error) {
+//
+// An empty `domain` arg resolves to "engineering".
+func RecentReflections(store *graph.Store, user, repoKey, domain string, limit int) ([]SessionReflection, error) {
 	if store == nil {
 		return nil, fmt.Errorf("handoff: nil store")
 	}
-	prefix := user + ":"
+	prefix := user + ":" + resolveDomain(domain) + ":"
 	rows, err := store.DB().Query(
-		`SELECT id, type, key, props, scope, repo, unit, content_hash, source,
+		`SELECT id, type, key, props, scope, repo, unit, domain, content_hash, source,
 		        valid_from, valid_to, ingested_at
 		   FROM nodes
 		  WHERE type = ? AND repo = ? AND valid_to IS NULL AND key LIKE ?
@@ -253,7 +291,7 @@ func RecentReflections(store *graph.Store, user, repoKey string, limit int) ([]S
 // clean miss rather than an error.
 func scanLatestSingleton(store *graph.Store, typ, key, repoKey string) (*graph.Node, error) {
 	row := store.DB().QueryRow(
-		`SELECT id, type, key, props, scope, repo, unit, content_hash, source,
+		`SELECT id, type, key, props, scope, repo, unit, domain, content_hash, source,
 		        valid_from, valid_to, ingested_at
 		   FROM nodes
 		  WHERE type = ? AND key = ? AND repo = ? AND valid_to IS NULL`,
@@ -270,8 +308,10 @@ func askFromNode(n *graph.Node) *UserAsk {
 	if n == nil {
 		return nil
 	}
+	user, _, _ := strings.Cut(n.Key, ":")
 	return &UserAsk{
-		User:      n.Key,
+		User:      user,
+		Domain:    n.Domain,
 		Text:      graph.StringProp(n.Props, "text"),
 		SessionID: graph.StringProp(n.Props, "session_id"),
 		UpdatedAt: n.ValidFrom,
@@ -282,8 +322,10 @@ func suggestionFromNode(n *graph.Node) *NextSuggestion {
 	if n == nil {
 		return nil
 	}
+	user, _, _ := strings.Cut(n.Key, ":")
 	return &NextSuggestion{
-		User:      n.Key,
+		User:      user,
+		Domain:    n.Domain,
 		Text:      graph.StringProp(n.Props, "text"),
 		Rationale: graph.StringProp(n.Props, "rationale"),
 		SessionID: graph.StringProp(n.Props, "session_id"),
@@ -298,6 +340,7 @@ func reflectionFromNode(n *graph.Node) *SessionReflection {
 	user, _, _ := strings.Cut(n.Key, ":")
 	return &SessionReflection{
 		User:      user,
+		Domain:    n.Domain,
 		Text:      graph.StringProp(n.Props, "text"),
 		Tags:      stringSliceProp(n.Props, "tags"),
 		SessionID: graph.StringProp(n.Props, "session_id"),

@@ -317,7 +317,7 @@ func (g *Generator) base() baseCtx {
 
 func (g *Generator) listByType(typ string) ([]*graph.Node, error) {
 	rows, err := g.Store.DB().Query(
-		`SELECT id, type, key, props, scope, repo, unit, content_hash, source,
+		`SELECT id, type, key, props, scope, repo, unit, domain, content_hash, source,
 		        valid_from, valid_to, ingested_at
 		   FROM nodes
 		  WHERE type = ? AND repo = ? AND valid_to IS NULL
@@ -353,7 +353,7 @@ func scanNodeRows(rows *sql.Rows) (*graph.Node, error) {
 	)
 	if err := rows.Scan(
 		&n.ID, &n.Type, &n.Key, &propsJSON, &scopeStr,
-		&n.Repo, &n.Unit, &contentHash, &sourceJSON,
+		&n.Repo, &n.Unit, &n.Domain, &contentHash, &sourceJSON,
 		&n.ValidFrom, &validToNS, &n.IngestedAt,
 	); err != nil {
 		return nil, err

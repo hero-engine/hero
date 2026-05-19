@@ -14,6 +14,7 @@ import (
 type UserHandoffOptions struct {
 	User        string // user slug — required
 	RepoKey     string // partition for "your recent activity" filtering
+	Domain      string // handoff singleton domain partition; "" = engineering
 	SessionID   string // anchors session-scoped sections
 	ReflectionN int    // most recent reflections (default 5)
 	CommitsN    int    // your recent commits (default 6)
@@ -61,7 +62,7 @@ func UserHandoffMD(store *graph.Store, opts UserHandoffOptions) (string, error) 
 	// voice from project state), but we do flag staleness inline so
 	// the reader can judge whether to act on it or wait for a refresh.
 	b.WriteString("## Last user ask\n\n")
-	if ask, _ := handoff.LatestAsk(store, opts.User, opts.RepoKey); ask != nil && ask.Text != "" {
+	if ask, _ := handoff.LatestAsk(store, opts.User, opts.RepoKey, opts.Domain); ask != nil && ask.Text != "" {
 		fmt.Fprintf(&b, "> %s\n", indentQuote(ask.Text))
 		if note := stalenessNote(store, opts.RepoKey, ask.UpdatedAt); note != "" {
 			fmt.Fprintf(&b, "\n_%s_\n", note)
@@ -76,7 +77,7 @@ func UserHandoffMD(store *graph.Store, opts UserHandoffOptions) (string, error) 
 	// renders something current; never shows a suggestion superseded
 	// by commits the agent didn't refresh against.
 	b.WriteString("## Suggested next prompt\n\n")
-	text, rationale, source := PickUserSuggestion(store, opts.User, opts.RepoKey)
+	text, rationale, source := PickUserSuggestion(store, opts.User, opts.RepoKey, opts.Domain)
 	if text != "" {
 		fmt.Fprintf(&b, "> %s\n", indentQuote(text))
 		if rationale != "" {
@@ -92,7 +93,7 @@ func UserHandoffMD(store *graph.Store, opts UserHandoffOptions) (string, error) 
 
 	// Recent reflections
 	b.WriteString("## Recent reflections\n\n")
-	if refs, _ := handoff.RecentReflections(store, opts.User, opts.RepoKey, opts.ReflectionN); len(refs) > 0 {
+	if refs, _ := handoff.RecentReflections(store, opts.User, opts.RepoKey, opts.Domain, opts.ReflectionN); len(refs) > 0 {
 		for _, r := range refs {
 			fmt.Fprintf(&b, "- %s\n", oneLine(r.Text))
 		}
@@ -159,11 +160,11 @@ const (
 // useful can be derived. The CLI and the projection both call this
 // so `hero next suggest` and the rendered .hero/next/<user>.md
 // always show the same answer.
-func PickUserSuggestion(store *graph.Store, user, repoKey string) (text, rationale string, source SuggestionSource) {
+func PickUserSuggestion(store *graph.Store, user, repoKey, domain string) (text, rationale string, source SuggestionSource) {
 	if store == nil {
 		return "", "", ""
 	}
-	sug, _ := handoff.LatestSuggestion(store, user, repoKey)
+	sug, _ := handoff.LatestSuggestion(store, user, repoKey, domain)
 	if sug != nil && sug.Text != "" && !suggestionStale(store, repoKey, sug.UpdatedAt) {
 		return sug.Text, sug.Rationale, SuggestionFromAgent
 	}
