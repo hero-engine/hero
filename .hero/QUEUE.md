@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-19T22:48:12Z · 97 ready specs_
+_Generated: 2026-05-19T22:50:12Z · 96 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -233,27 +233,6 @@ handlers in `internal/serve/server.go`, and create
 **Skip:** in-browser `hero.json` editing (read-only + edit-in-editor link);
 project creation wizard (separate spec); auth/multi-user (deferred to
 `hero-team-server`).
-
----
-
-## hero-serve-multi-project — hero serve — multi-project lifecycle and dashboard awareness
-_feature · planning · horizon: now_
-
-Adds `hero serve stop`, `--force`, `hero serve status`, and a working project
-selector in the dashboard so the global daemon stops pretending it only serves
-one project.
-
-**Status:** planning — spec just landed, no code yet.
-
-**Pick up at:** start with Phase 1 (lifecycle) since it's self-contained.
-Write the PID file at daemon start in `internal/serve/server.go` near the
-`net.Listen` site (line 387), then add the `stop` and `status` subcommands in
-`internal/cli/serve.go`. Phase 2 (dashboard) lands after Phase 1 ships.
-
-→ `.hero/planning/features/hero-serve-multi-project/spec.md`
-
-**Files:** `internal/cli/serve.go`, `internal/serve/server.go:300-400`, `internal/serve/api.go:40-60`, `internal/serve/registry.go:25-50`, `internal/serve/shell/templates/top-nav.html`
-**Skip:** per-project daemons or port-per-project — global daemon is intentional; team-server work is a separate spec.
 
 ---
 
