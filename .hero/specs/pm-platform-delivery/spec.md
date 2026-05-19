@@ -284,3 +284,10 @@ When all checked, hero-code is genuinely unblocked. The killer demo path (Jira e
   result_ref: 18b11924773a44a8c51c03755cc4ab5b
   reason: "PM platform groundwork delivered; hero-pm is designed and consumable; safe to /deliver hero-pm in hero-code repo"
 
+- 2026-05-19T23:32:03Z — out → hero-code (peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
+  mode: advisory
+  originating_spec: pm-platform-delivery
+  at_commit: 75172fe
+  result_ref: 18b11b5f44e886081f9859721c81ae07
+  reason: "Follow-up: address path/scope confusion + ship concrete PM scanner plug-in shape"
+
