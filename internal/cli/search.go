@@ -206,7 +206,13 @@ func runSearchFTS(heroDir string, cfg config.Config, projectRoot string, args []
 		if r.ClaimedBy != "" {
 			claimStr = fmt.Sprintf("  [%s]", r.ClaimedBy)
 		}
-		fmt.Printf("%-30s  %-10s  %-10s  %s%s\n", r.Slug, r.Type, r.Status, r.Title, claimStr)
+		domainStr := ""
+		if r.Domain != "" && r.Domain != "engineering" {
+			// Only surface non-engineering tags so engineering-only
+			// workspaces see no visual change.
+			domainStr = fmt.Sprintf("  {%s}", r.Domain)
+		}
+		fmt.Printf("%-30s  %-10s  %-10s  %s%s%s\n", r.Slug, r.Type, r.Status, r.Title, domainStr, claimStr)
 		if r.Snippet != "" {
 			fmt.Printf("  %s\n", r.Snippet)
 		}

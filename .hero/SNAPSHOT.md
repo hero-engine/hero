@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-05-19T15:02:43Z · projected from 254 source nodes_
+_Last refreshed: 2026-05-19T16:59:22Z · projected from 255 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 7m ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 17m ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | building | domains/engineering/ | 52m ago | spec-types-cache-frontmatter-empty |
-| domains/pm | concept | domains/pm/ | 20h ago | — |
+| domains/engineering | building | domains/engineering/ | <1m ago | spec-types-cache-frontmatter-empty |
+| domains/pm | concept | domains/pm/ | 22h ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
-| landing | building | web/landing/ | 20h ago | hero-landing-page |
+| landing | building | web/landing/ | 22h ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 10m ago | vocabulary-resolve-misses-methodology-derivation |
+| serve | building | internal/serve/ | 2h ago | vocabulary-resolve-misses-methodology-derivation |
 | (unassigned) | — | — | — | 110 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -27,7 +27,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
 - **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 3/11 specs done; in flight: master-ingest-restore, per-feature-smoke-coverage, spec-status-integrity, traversal-queries
-- **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, serve) — 4/15 specs done; in flight: hero-sales
+- **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, serve) — 6/16 specs done; in flight: hero-sales
 - **Hero Killer Features — Agent Effectiveness, Team Power, Living Specs** (surface: core, serve) — 10/11 specs done
 - **Hero Marketing — Positioning, Distribution, and Launch** (surface: landing) — 0/9 specs done; in flight: hero-landing-page
 - **Hero Platform — Headless Execution, Team Automation, and Shared Visibility** (surface: core, serve) — 2/7 specs done; in flight: hero-team-server
@@ -44,10 +44,10 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — inline-propose-output-mode, hero-import-docs-page
-- **core** — agents-md-managed-region-consolidation, cli-invocation-drift-test-markdown
-- **domains/engineering** — spec-type-registry, domain-plugin-architecture
-- **serve** — dashboard-now-headline-misleading-when-empty, dashboard-inbox-misses-most-activity-sources, dashboard-adapter-state-hardcoded, dashboard-delivery-events-never-emitted, dashboard-user-identity-os-env-mismatch, hero-serve-routes-inventory
+- **(unassigned)** — inline-propose-output-mode
+- **core** — install-core-domain-merge, agents-md-managed-region-consolidation, cli-invocation-drift-test-markdown
+- **domains/engineering** — contentfs-legacy-fallback-removal, spec-type-registry, domain-plugin-architecture
+- **serve** — dashboard-now-headline-misleading-when-empty, dashboard-inbox-misses-most-activity-sources, dashboard-adapter-state-hardcoded, dashboard-delivery-events-never-emitted, dashboard-user-identity-os-env-mismatch
 
 ## Next up across surfaces
 
@@ -65,6 +65,6 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 123/233 (52%)
-- Projection generation: 0ms · Source nodes: 254
+- Specs covered: 124/234 (52%)
+- Projection generation: 0ms · Source nodes: 255
 

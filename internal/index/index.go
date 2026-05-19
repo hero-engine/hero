@@ -217,6 +217,8 @@ func (idx *DB) migrate() error {
 		`ALTER TABLE specs ADD COLUMN tracker_id TEXT NOT NULL DEFAULT ''`,
 		`ALTER TABLE specs ADD COLUMN subproject TEXT NOT NULL DEFAULT ''`,
 		`CREATE INDEX IF NOT EXISTS idx_specs_subproject ON specs(subproject) WHERE subproject != ''`,
+		`ALTER TABLE specs ADD COLUMN domain TEXT NOT NULL DEFAULT ''`,
+		`CREATE INDEX IF NOT EXISTS idx_specs_domain ON specs(domain) WHERE domain != ''`,
 	}
 	for _, stmt := range evolve {
 		_, _ = idx.db.Exec(stmt) // ignore "duplicate column" errors
@@ -237,8 +239,8 @@ func (idx *DB) IndexSpec(s *spec.Spec, fullContent string) error {
 
 	// Upsert spec
 	_, err = tx.Exec(`
-		INSERT INTO specs (slug, title, type, status, path, claimed_by, tags, tracker_id, subproject, created_at, modified_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO specs (slug, title, type, status, path, claimed_by, tags, tracker_id, subproject, domain, created_at, modified_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(slug) DO UPDATE SET
 			title=excluded.title,
 			type=excluded.type,
@@ -248,9 +250,10 @@ func (idx *DB) IndexSpec(s *spec.Spec, fullContent string) error {
 			tags=excluded.tags,
 			tracker_id=excluded.tracker_id,
 			subproject=excluded.subproject,
+			domain=excluded.domain,
 			modified_at=excluded.modified_at
 	`, s.Slug, s.Title, string(s.Type), string(s.Status), s.Path,
-		s.ClaimedBy, tagsStr, s.TrackerID, s.Subproject,
+		s.ClaimedBy, tagsStr, s.TrackerID, s.Subproject, s.Domain,
 		s.CreatedAt.Format(time.RFC3339), s.ModifiedAt.Format(time.RFC3339))
 	if err != nil {
 		return fmt.Errorf("upserting spec: %w", err)
@@ -360,6 +363,7 @@ type SearchResult struct {
 	Snippet   string
 	ClaimedBy string
 	Tags      string
+	Domain    string
 }
 
 // looksLikeTrackerID returns true if the query looks like a tracker issue ID
@@ -390,7 +394,7 @@ func (idx *DB) Search(query string) ([]SearchResult, error) {
 	if looksLikeTrackerID(query) {
 		rows, err := idx.db.Query(`
 			SELECT s.slug, s.title, s.type, s.status, s.path,
-				'' as snippet, s.claimed_by, s.tags
+				'' as snippet, s.claimed_by, s.tags, s.domain
 			FROM specs s
 			WHERE UPPER(s.tracker_id) = UPPER(?)
 			LIMIT 5
@@ -412,7 +416,7 @@ func (idx *DB) Search(query string) ([]SearchResult, error) {
 	rows, err := idx.db.Query(`
 		SELECT f.slug, s.title, s.type, s.status, s.path,
 			snippet(fts_specs, 2, '>>>', '<<<', '...', 32) as snippet,
-			s.claimed_by, s.tags
+			s.claimed_by, s.tags, s.domain
 		FROM fts_specs f
 		JOIN specs s ON s.slug = f.slug
 		WHERE fts_specs MATCH ?
@@ -450,7 +454,7 @@ func (idx *DB) searchFilteredImpl(query, specType, status, tag, since, subprojec
 	baseQuery := `
 		SELECT f.slug, s.title, s.type, s.status, s.path,
 			snippet(fts_specs, 2, '>>>', '<<<', '...', 32) as snippet,
-			s.claimed_by, s.tags
+			s.claimed_by, s.tags, s.domain
 		FROM fts_specs f
 		JOIN specs s ON s.slug = f.slug
 		WHERE fts_specs MATCH ?`
@@ -506,7 +510,7 @@ func (idx *DB) listFilteredImpl(specType, status, tag, since, subproject string)
 	var conditions []string
 	var args []interface{}
 
-	baseQuery := `SELECT slug, title, type, status, path, '' as snippet, claimed_by, tags FROM specs WHERE 1=1`
+	baseQuery := `SELECT slug, title, type, status, path, '' as snippet, claimed_by, tags, domain FROM specs WHERE 1=1`
 
 	if specType != "" {
 		conditions = append(conditions, "type = ?")
@@ -549,7 +553,7 @@ func (idx *DB) SearchByFile(filePath string) ([]SearchResult, error) {
 
 	rows, err := idx.db.Query(`
 		SELECT DISTINCT s.slug, s.title, s.type, s.status, s.path,
-			'' as snippet, s.claimed_by, s.tags
+			'' as snippet, s.claimed_by, s.tags, s.domain
 		FROM files_touched ft
 		JOIN specs s ON s.slug = ft.spec_slug
 		WHERE ft.file_path LIKE ?
@@ -572,7 +576,7 @@ func (idx *DB) FindConventionsForFiles(filePaths []string) ([]SearchResult, erro
 
 	// Get all active convention scopes
 	rows, err := idx.db.Query(`
-		SELECT cs.scope_glob, s.slug, s.title, s.type, s.status, s.path, s.claimed_by, s.tags
+		SELECT cs.scope_glob, s.slug, s.title, s.type, s.status, s.path, s.claimed_by, s.tags, s.domain
 		FROM convention_scopes cs
 		JOIN specs s ON s.slug = cs.spec_slug
 		WHERE s.type = 'convention' AND (s.status = 'active' OR s.status = 'draft')
@@ -590,7 +594,7 @@ func (idx *DB) FindConventionsForFiles(filePaths []string) ([]SearchResult, erro
 		var glob string
 		var r SearchResult
 		var specType, status string
-		if err := rows.Scan(&glob, &r.Slug, &r.Title, &specType, &status, &r.Path, &r.ClaimedBy, &r.Tags); err != nil {
+		if err := rows.Scan(&glob, &r.Slug, &r.Title, &specType, &status, &r.Path, &r.ClaimedBy, &r.Tags, &r.Domain); err != nil {
 			return nil, err
 		}
 
@@ -656,7 +660,7 @@ func (idx *DB) FindRulesForFiles(filePaths []string) ([]SearchResult, error) {
 	}
 
 	rows, err := idx.db.Query(`
-		SELECT cs.scope_glob, s.slug, s.title, s.type, s.status, s.path, s.claimed_by, s.tags
+		SELECT cs.scope_glob, s.slug, s.title, s.type, s.status, s.path, s.claimed_by, s.tags, s.domain
 		FROM convention_scopes cs
 		JOIN specs s ON s.slug = cs.spec_slug
 		WHERE s.type = 'rule' AND (s.status = 'active' OR s.status = 'draft')
@@ -674,7 +678,7 @@ func (idx *DB) FindRulesForFiles(filePaths []string) ([]SearchResult, error) {
 		var glob string
 		var r SearchResult
 		var specType, status string
-		if err := rows.Scan(&glob, &r.Slug, &r.Title, &specType, &status, &r.Path, &r.ClaimedBy, &r.Tags); err != nil {
+		if err := rows.Scan(&glob, &r.Slug, &r.Title, &specType, &status, &r.Path, &r.ClaimedBy, &r.Tags, &r.Domain); err != nil {
 			return nil, err
 		}
 
@@ -734,7 +738,7 @@ func (idx *DB) FindTripwiresForFiles(filePaths []string) ([]SearchResult, error)
 	}
 
 	rows, err := idx.db.Query(`
-		SELECT cs.scope_glob, s.slug, s.title, s.type, s.status, s.path, s.claimed_by, s.tags
+		SELECT cs.scope_glob, s.slug, s.title, s.type, s.status, s.path, s.claimed_by, s.tags, s.domain
 		FROM convention_scopes cs
 		JOIN specs s ON s.slug = cs.spec_slug
 		WHERE s.type = 'tripwire' AND s.status = 'active'
@@ -752,7 +756,7 @@ func (idx *DB) FindTripwiresForFiles(filePaths []string) ([]SearchResult, error)
 		var glob string
 		var r SearchResult
 		var specType, status string
-		if err := rows.Scan(&glob, &r.Slug, &r.Title, &specType, &status, &r.Path, &r.ClaimedBy, &r.Tags); err != nil {
+		if err := rows.Scan(&glob, &r.Slug, &r.Title, &specType, &status, &r.Path, &r.ClaimedBy, &r.Tags, &r.Domain); err != nil {
 			return nil, err
 		}
 
@@ -1177,7 +1181,7 @@ func (idx *DB) GetStats() (Stats, error) {
 // AllSpecs returns all specs in the index.
 func (idx *DB) AllSpecs() ([]SearchResult, error) {
 	rows, err := idx.db.Query(`
-		SELECT slug, title, type, status, path, '' as snippet, claimed_by, tags
+		SELECT slug, title, type, status, path, '' as snippet, claimed_by, tags, domain
 		FROM specs
 		ORDER BY modified_at DESC
 	`)
@@ -1373,7 +1377,7 @@ func (idx *DB) CheckStale(staleDays int) ([]SearchResult, error) {
 	cutoff := time.Now().AddDate(0, 0, -staleDays).Format(time.RFC3339)
 
 	rows, err := idx.db.Query(`
-		SELECT slug, title, type, status, path, '' as snippet, claimed_by, tags
+		SELECT slug, title, type, status, path, '' as snippet, claimed_by, tags, domain
 		FROM specs
 		WHERE status IN ('planning', 'in-review')
 		AND modified_at < ?
@@ -1390,7 +1394,7 @@ func (idx *DB) CheckStale(staleDays int) ([]SearchResult, error) {
 // CheckUnclaimed finds planning/in-review specs that are not claimed.
 func (idx *DB) CheckUnclaimed() ([]SearchResult, error) {
 	rows, err := idx.db.Query(`
-		SELECT s.slug, s.title, s.type, s.status, s.path, '' as snippet, s.claimed_by, s.tags
+		SELECT s.slug, s.title, s.type, s.status, s.path, '' as snippet, s.claimed_by, s.tags, s.domain
 		FROM specs s
 		LEFT JOIN claims c ON s.slug = c.spec_slug
 		WHERE s.status IN ('planning', 'in-review')
@@ -1410,7 +1414,7 @@ func scanSearchResults(rows *sql.Rows) ([]SearchResult, error) {
 	for rows.Next() {
 		var r SearchResult
 		var specType, status string
-		if err := rows.Scan(&r.Slug, &r.Title, &specType, &status, &r.Path, &r.Snippet, &r.ClaimedBy, &r.Tags); err != nil {
+		if err := rows.Scan(&r.Slug, &r.Title, &specType, &status, &r.Path, &r.Snippet, &r.ClaimedBy, &r.Tags, &r.Domain); err != nil {
 			return nil, err
 		}
 		r.Type = spec.Type(specType)
@@ -1554,7 +1558,7 @@ func (idx *DB) BuildContext(filePaths []string) (*ContextBlock, error) {
 
 	// Find decisions
 	decRows, err := idx.db.Query(`
-		SELECT slug, title, type, status, path, '' as snippet, claimed_by, tags
+		SELECT slug, title, type, status, path, '' as snippet, claimed_by, tags, domain
 		FROM specs WHERE type = 'decision' AND status = 'accepted'
 		ORDER BY modified_at DESC
 	`)
@@ -1606,7 +1610,7 @@ func (idx *DB) BuildContext(filePaths []string) (*ContextBlock, error) {
 
 	// Find external knowledge entries (reference docs, runbooks)
 	extRows, err := idx.db.Query(`
-		SELECT slug, title, type, status, path, '' as snippet, claimed_by, tags
+		SELECT slug, title, type, status, path, '' as snippet, claimed_by, tags, domain
 		FROM specs WHERE type = 'external'
 		ORDER BY modified_at DESC
 	`)

@@ -19,11 +19,21 @@ import (
 // repoKey stamps the partition column on every node and edge written
 // (federation contract — see graph-memory-federation/spec.md).
 //
+// fallbackDomain is the workspace-level domain (typically from
+// cfg.Domain via graph.DomainFor) used when a spec's frontmatter
+// does not declare its own `domain:` field. Per-spec frontmatter
+// wins when set; empty falls back to fallbackDomain; empty
+// fallbackDomain falls back to "engineering" to keep pre-migration
+// workspaces a no-op (DSKG Phase 4 contract).
+//
 // Idempotent: re-running on unchanged specs produces no new history.
 // Updates to a spec invalidate the prior row and reassert its edges.
-func WriteGraph(specs []*Spec, repoKey string, store *graph.Store) (*GraphWriteSummary, error) {
+func WriteGraph(specs []*Spec, repoKey, fallbackDomain string, store *graph.Store) (*GraphWriteSummary, error) {
 	if store == nil {
 		return nil, fmt.Errorf("spec: WriteGraph requires non-nil Store")
+	}
+	if fallbackDomain == "" {
+		fallbackDomain = "engineering"
 	}
 
 	source := map[string]any{"kind": "spec"}
@@ -38,10 +48,14 @@ func WriteGraph(specs []*Spec, repoKey string, store *graph.Store) (*GraphWriteS
 		}
 		props := specProps(s)
 		hash := hashSpec(s)
+		domain := s.Domain
+		if domain == "" {
+			domain = fallbackDomain
+		}
 
 		id, err := store.UpsertNode(&graph.Node{
 			Type:        nodeType,
-			Domain:      "engineering",
+			Domain:      domain,
 			Key:         s.Slug,
 			Props:       props,
 			Repo:        repoKey,
@@ -72,6 +86,10 @@ func WriteGraph(specs []*Spec, repoKey string, store *graph.Store) (*GraphWriteS
 		if !ok {
 			continue
 		}
+		critDomain := sp.Domain
+		if critDomain == "" {
+			critDomain = fallbackDomain
+		}
 		for _, ac := range sp.ParseAcceptanceCriteria() {
 			critKey := sp.Slug + ":" + ac.ID
 
@@ -88,9 +106,9 @@ func WriteGraph(specs []*Spec, repoKey string, store *graph.Store) (*GraphWriteS
 			}
 
 			critID, err := store.UpsertNode(&graph.Node{
-				Type: "Criterion",
-				Domain:      "engineering",
-				Key:  critKey,
+				Type:        "Criterion",
+				Domain:      critDomain,
+				Key:         critKey,
 				Props: map[string]any{
 					"ac_id":     ac.ID,
 					"statement": ac.Statement,

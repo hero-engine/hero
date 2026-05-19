@@ -224,6 +224,7 @@ All spec types use YAML frontmatter. The following fields are supported:
 | `supersedes` | No | All | Slug of the spec this one replaces. The superseded spec should have its status set to `superseded`. |
 | `parent` | No | Work specs | Slug of the initiative this spec belongs to. |
 | `child` | No | Initiatives | Array of spec slugs that are part of this initiative. |
+| `domain` | No | All | DSKG namespace partition (`engineering`, `pm`, future packs). New specs scaffolded by `/design` and `/diagnose` emit this from the active workspace domain. Legacy specs without the field resolve to the workspace default (`engineering` if no `domain:` is set in `hero.json`). |
 
 ### Status transitions
 
