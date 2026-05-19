@@ -36,3 +36,10 @@
 {"ts":"2026-05-19T22:46:31.511986Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"scan-pluggability","message":"status -\u003e completed"}
 {"ts":"2026-05-19T22:48:00.067202Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-code-handover-pack","message":"Hero-Code Handover Pack — Make the PM Foundation Consumable"}
 {"ts":"2026-05-19T22:48:00.067282Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-code-handover-pack","message":"status -\u003e completed"}
+{"ts":"2026-05-19T22:49:28.116392Z","type":"peer.call.invoked","agent":"hero","slug":"pm-platform-delivery","message":"peer call advisory mode=advisory target=hero-code call_id=18b1192383f3d368b16ac54c40ec7859"}
+{"ts":"2026-05-19T22:49:32.197873Z","type":"peer.call.invoked","agent":"hero","slug":"pm-platform-delivery","message":"peer call advisory mode=advisory target=hero-code call_id=18b11924773a44a8c51c03755cc4ab5b"}
+{"ts":"2026-05-19T22:49:55.993117Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-serve-multi-project","message":"hero serve — multi-project lifecycle and dashboard awareness"}
+{"ts":"2026-05-19T22:49:55.993209Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-serve-multi-project","message":"status -\u003e completed"}
+{"ts":"2026-05-19T22:52:08.544896Z","type":"peer.call.completed","agent":"hero","slug":"pm-platform-delivery","message":"peer call ok mode=advisory target=hero-code kind=findings call_id=18b11924773a44a8c51c03755cc4ab5b"}
+{"ts":"2026-05-19T22:53:19.074347Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"pm-platform-delivery","message":"PM Platform Delivery — Ship the Designed Primitives So hero-code Can Build hero-pm"}
+{"ts":"2026-05-19T22:53:19.074496Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"pm-platform-delivery","message":"status -\u003e completed"}

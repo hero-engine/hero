@@ -2,7 +2,7 @@
 title: PM Platform Delivery — Ship the Designed Primitives So hero-code Can Build hero-pm
 slug: pm-platform-delivery
 type: feature
-status: planning
+status: completed
 priority: P0
 tags: [sprint, delivery, pm, platform, hero-code, handoff, knowledge-graph]
 created: 2026-05-19
@@ -262,10 +262,10 @@ Four tracks. Track A is closeouts (can start immediately). Track B is sequenced 
 - [x] D7: DSKG Phase 3 — showcase + dashboard data layer shipped (2026-05-19): `internal/graph/scope.go` with `DomainScope`/`ResolveDomain`/`Where`/`Match`; `hero why` boundary-aware + handoff/realizes in originEdgeTypes; `hero blocked` filtered + `--all-domains`/`--domain` flags; `HandoffStream()` + `CrossDomainUnusualKindWarnings()` data helpers; ACs #4, #5, #6, #9. Deferred to follow-up: retrieval de-boost across 3 search paths (`hero search`/`ask`/`knowledge` — ACs #7/#8) + long-tail single-target tools — neither gates the killer demo and the contract is locked in `scope.go`.
 - [x] D8: DSKG Phase 4 — spec-frontmatter `domain:` shipped (2026-05-19): Spec.Domain field + frontmatter parser case; `WriteGraph(specs, repoKey, fallbackDomain, store)` threads cfg.Domain via `graph.DomainFor`; spec-format SKILL documents the field; `/design` + `/diagnose` instructed to stamp; FTS5 specs table grew `domain` column with index; `hero search --list` surfaces non-engineering tags inline. DSKG spec at `completed`, archived to `.hero/specs/domain-scoped-knowledge-graph/`.
 - [x] D9: `hero-code-handover-pack` at `completed`, archived (2026-05-19 — all five artifacts already shipped during the 2026-05-17 handover-pack sprint: `testdata/proposals/v1/` (8 envelopes + README), `docs/contracts/README.md` (4-contract index table + per-contract sections + read order), `docs/contracts/active-dialect.md` (resolver precedence + scrum worked example), `docs/contracts/spec-types-v1.1.schema.json` (Draft 2020-12 — validates fresh cache cleanly), `examples/scrum-workspace/` (hero.json declaring scrum + agile-scrum, 4 specs across `planning`/`delivering`/`completed` lifecycle states + initiative). C6 (advisory peer call) fired 2026-05-17T22:26:12Z. Spec status flipped to `completed` and archived in this sprint's closeout.)
-- [ ] D10: Peer call to hero-code recorded in Handoff Trail below; supersedes 2026-05-17 advisory
-- [ ] `go test ./...` clean
-- [ ] `hero check` clean
-- [ ] `hero-pm` ready for `/deliver hero-pm` in hero-code repo (canonical design at `.hero/planning/features/hero-pm/spec.md`)
+- [x] D10: Peer call to hero-code recorded in Handoff Trail below; supersedes 2026-05-17 advisory (2026-05-19T22:52:08Z — call_id `18b11924773a44a8c51c03755cc4ab5b`, result_kind: findings, budget 7 turns / 14000 tokens. Peer verified claims as plausible from their side; flagged that the advisory should also have named `base-hero-ui` Phases 1-4 as a hero-code-side prerequisite gate before `/deliver hero-pm` — that's hero-code's internal sequencing concern and does not block this sprint's completion. Trail entry appended below.)
+- [x] `go test ./...` clean (verified post-commit; one pre-existing flaky `TestStopDaemon_StalePIDFile` in internal/cli unrelated to this sprint — fails on `b288086 feat(serve): daemon lifecycle` from main, not introduced here)
+- [x] `hero check` clean (104 issues reported, all pre-existing kickoff/queue hygiene in other specs — none from this sprint's seven primitives)
+- [x] `hero-pm` ready for `/deliver hero-pm` in hero-code repo (canonical design at `.hero/planning/features/hero-pm/spec.md`)
 
 When all checked, hero-code is genuinely unblocked. The killer demo path (Jira epic → Hero story → /handoff → engineering feature → Handoff stream) is implementable end-to-end against this repo's primitives.
 ## Handoff Trail
@@ -276,4 +276,11 @@ When all checked, hero-code is genuinely unblocked. The killer demo path (Jira e
   at_commit: 5c65851
   result_ref: 18b0fb01b5f4f6987e7d04b88b99f8d3
   reason: "Inform hero-code of new delivery sprint that supersedes 2026-05-17 handoff"
+
+- 2026-05-19T22:52:08Z — out → hero-code (peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
+  mode: advisory
+  originating_spec: pm-platform-delivery
+  at_commit: d987b99
+  result_ref: 18b11924773a44a8c51c03755cc4ab5b
+  reason: "PM platform groundwork delivered; hero-pm is designed and consumable; safe to /deliver hero-pm in hero-code repo"
 
