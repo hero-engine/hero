@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-19T16:57:53Z · 102 ready specs_
+_Generated: 2026-05-19T16:59:22Z · 101 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -587,46 +587,6 @@ _bug · planning · horizon: now_
 _bug · planning · horizon: now_
 
 Resume work on the AGENTS.md project-structure regression. Read this spec, the v0.8 install refactor commits (`git log --oneline | head -20`), and `internal/install/agents_md.go`. The fix is already in place; remaining work is (a) optional unit test pinning the resolved paths against fresh-install output, (b) follow-up for non-AGENTS.md surfaces that may carry the same hardcoded layout description (search for `commands/. — Slash` and similar wording across the repo).
-
----
-
-## contentfs-legacy-fallback-removal — ContentFS Legacy Fallback Removal — Cut Engineering Over to domains/engineering/
-_feature · planning · horizon: next_
-
-Follow-up to the now-completed `domain-plugin-architecture` spec
-(`.hero/specs/domain-plugin-architecture/spec.md`). That spec's B1
-delivery deliberately left `ContentFS()` wired to `legacyContent` (the
-root-level `agents/`, `commands/`, `skills/` embed) instead of cutting
-over to `domains/engineering/`. The decision is recorded in
-[content.go:37-54](content.go:37) and in the parent spec's "Decision —
-ContentFS legacy fallback retained (B1, 2026-05-17)" section.
-
-This spec finishes that cutover: reconcile the two surfaces, drop the
-legacy fallback, and make engineering go through the same domain-pack
-path as `pm` and `sales`.
-
-**Blocked on:** `install-core-domain-merge`. That spec fixes the real
-behavior gap underneath (today's install pipeline reads only one FS
-and never merges `hero.CoreFS()` with the active domain, so the
-universal `core/agents`, `core/commands`, `core/skills` layer is
-embedded but never installed). Doing the cutover before the core-merge
-ships would freeze a buggy install shape — engineering and other
-domains would still be missing core content — into the "consistent"
-target this spec defines. Land core-merge first; then this becomes a
-clean wiring refactor.
-
-**Status:** planning — no code written yet. Parent spec is completed
-and archived; do not edit it.
-
-**Pick up at:** `/deliver contentfs-legacy-fallback-removal`
-
-**Files:** content.go (lines 16-54 and 59-80), domains/engineering/**,
-agents/**, commands/**, skills/**, internal/install/install.go (root
-asset wiring), AGENTS.md.
-
-**Skip:** Any changes to the `pm` or `sales` domain packs. Any change
-to `CoreFS()` / `CoreVocabulariesFS()` / `CoreMethodologiesFS()` /
-`CoreSpecTypesFS()` — those already go through the domain-pack model.
 
 ---
 
