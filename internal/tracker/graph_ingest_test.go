@@ -131,6 +131,7 @@ func TestWriteSprintGraph_MergesWithCommitStubIssue(t *testing.T) {
 	// Commit-ref parser creates a thin stub first.
 	if _, err := store.UpsertNode(&graph.Node{
 		Type:        "Issue",
+		Domain:      "engineering",
 		Key:         "PROJ-101",
 		Props:       map[string]any{"key": "PROJ-101"},
 		ContentHash: "stub",
