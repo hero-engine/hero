@@ -367,15 +367,15 @@ func runPeerCall(cmd *cobra.Command, args []string) error {
 	fmt.Fprintf(w, "Peer call ok  mode=%s  alias=%s  call_id=%s\n", mode, alias, res.CallID)
 	fmt.Fprintf(w, "  peer_id: %s\n", res.PeerID)
 	fmt.Fprintf(w, "  result_kind: %s\n", res.Result.Kind)
+	if res.ArtifactPath != "" {
+		fmt.Fprintf(w, "  artifact: %s\n", res.ArtifactPath)
+	}
 	if res.Result.SpecSlug != "" {
 		fmt.Fprintf(w, "  peer_spec: %s/%s (status=%s)\n", alias, res.Result.SpecSlug, res.Result.PeerStatus)
 	}
 	if res.Result.Findings != "" && !peerCallDryRun {
-		preview := res.Result.Findings
-		if len(preview) > 400 {
-			preview = preview[:400] + "..."
-		}
-		fmt.Fprintf(w, "  findings:\n    %s\n", strings.ReplaceAll(preview, "\n", "\n    "))
+		findings := strings.TrimRight(res.Result.Findings, "\n")
+		fmt.Fprintf(w, "  findings:\n    %s\n", strings.ReplaceAll(findings, "\n", "\n    "))
 	}
 	if res.Result.BudgetConsumed.Turns != 0 || res.Result.BudgetConsumed.Tokens != 0 {
 		fmt.Fprintf(w, "  budget_consumed: %d turns / %d tokens\n",

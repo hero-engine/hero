@@ -47,3 +47,5 @@
 {"ts":"2026-05-19T23:32:03.800333Z","type":"peer.call.completed","agent":"hero","slug":"pm-platform-delivery","message":"peer call ok mode=advisory target=hero-code kind=findings call_id=18b11b5f44e886081f9859721c81ae07"}
 {"ts":"2026-05-19T23:46:02.891855Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"peer-call-result-yaml-int-strict-parse","message":"\"peer call result fails YAML unmarshal when subagent emits tilde-approximated ints (e.g. tokens: ~22000)\""}
 {"ts":"2026-05-19T23:46:02.891943Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"peer-call-result-yaml-int-strict-parse","message":"status -\u003e completed"}
+{"ts":"2026-05-19T23:50:32.909926Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"peer-call-findings-truncation-and-persistence","message":"hero peer call truncates advisory findings at 400 chars and persists nothing retrievable"}
+{"ts":"2026-05-19T23:50:32.910031Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"peer-call-findings-truncation-and-persistence","message":"status -\u003e completed"}
