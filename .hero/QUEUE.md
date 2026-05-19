@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-19T14:45:10Z · 104 ready specs_
+_Generated: 2026-05-19T14:50:33Z · 103 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -175,6 +175,85 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
+## hero-serve-project-section — `hero serve` Project Section — Per-Project Info, Utilities, and Operations Page
+_feature · planning · horizon: now_
+
+A per-project home page in `hero serve` — identity, health, conventions,
+peers, registry membership, lifecycle ops, danger zone — plus an
+`/p/all/project` cross-project rollup with daemon-ops.
+
+**Status:** planning — spec just landed; routing dependency
+(`hero-serve-multi-project`) still delivering.
+
+**Pick up at:** wait for `/p/<slug>/<page>` routing + per-page `Deps`
+seam to land in `hero-serve-multi-project`, then scaffold a
+`projectpage.Deps`, register `/p/{slug}/project` + `/p/all/project`
+handlers in `internal/serve/server.go`, and create
+`internal/serve/shell/templates/project.html` with collapsible sections.
+
+→ `.hero/planning/features/hero-serve-project-section/spec.md`
+
+**Files:** `internal/serve/server.go:308-370`, `internal/serve/api.go:51-132`,
+`internal/serve/registry.go:44`, `internal/serve/shell/templates/page-layout.html`,
+`.hero/planning/features/hero-serve-multi-project/spec.md`
+
+**Skip:** in-browser `hero.json` editing (read-only + edit-in-editor link);
+project creation wizard (separate spec); auth/multi-user (deferred to
+`hero-team-server`).
+
+---
+
+## hero-serve-multi-project — hero serve — multi-project lifecycle and dashboard awareness
+_feature · planning · horizon: now_
+
+Adds `hero serve stop`, `--force`, `hero serve status`, and a working project
+selector in the dashboard so the global daemon stops pretending it only serves
+one project.
+
+**Status:** planning — spec just landed, no code yet.
+
+**Pick up at:** start with Phase 1 (lifecycle) since it's self-contained.
+Write the PID file at daemon start in `internal/serve/server.go` near the
+`net.Listen` site (line 387), then add the `stop` and `status` subcommands in
+`internal/cli/serve.go`. Phase 2 (dashboard) lands after Phase 1 ships.
+
+→ `.hero/planning/features/hero-serve-multi-project/spec.md`
+
+**Files:** `internal/cli/serve.go`, `internal/serve/server.go:300-400`, `internal/serve/api.go:40-60`, `internal/serve/registry.go:25-50`, `internal/serve/shell/templates/top-nav.html`
+**Skip:** per-project daemons or port-per-project — global daemon is intentional; team-server work is a separate spec.
+
+---
+
+## hero-serve-dashboard-redesign — hero serve dashboard redesign — Now and Work pages
+_feature · planning · horizon: now_
+
+Replaces the empty-tile / sprint-headline Now and Work pages with an
+activity-feed-led layout and rolling windows so a heavy-activity day
+looks heavy, not empty.
+
+**Status:** planning — spec just landed, no code yet.
+
+**Pick up at:** start with the Now page activity feed since it carries
+the biggest visible win. Add `internal/serve/pages/now/data/activity.go`
+that reads recent graph events (spec status transitions, decisions,
+notes, conventions, peer calls, commits, agent sessions) and a matching
+`activity.html` fragment. Wire it into `page.html` as the new first
+section, above the in-flight strip.
+
+→ `.hero/planning/features/hero-serve-dashboard-redesign/spec.md`
+
+**Files:** `internal/serve/pages/now/templates/page.html`, `internal/serve/pages/now/data/metrics.go`, `internal/serve/pages/work/templates/page.html`, `internal/serve/pages/work/data/metrics.go`, `internal/serve/shell/templates/tabbed-metric-strip.html`
+**Skip:** redesigning Knowledge / People / Agents pages, fixing the data bugs (0 commits / 2 shipped / empty inbox / install panel state) — those land separately.
+
+---
+
+## dashboard-now-headline-misleading-when-empty — Now headline reads "no agent running · since 19h ago" — composes two empty signals into a false story
+_bug · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/dashboard-now-headline-misleading-when-empty/spec.md)_
+
+---
+
 ## claim-matches-sentinel-collision — claimedByMatches "you"/"me" sentinels collide with real git identities
 _bug · planning · horizon: now_
 
@@ -223,92 +302,6 @@ This sprint walks through delivery for every primitive hero-pm consumes, in depe
 **Files:** `.hero/planning/features/pm-platform-delivery/spec.md`, `.hero/planning/features/pm-platform-unblock/spec.md` (superseded), `.hero/planning/features/domain-plugin-architecture/spec.md`, `.hero/planning/features/spec-type-registry/spec.md`, `.hero/planning/features/inline-propose-output-mode/spec.md`, `.hero/planning/features/domain-routing-and-agents/spec.md`, `.hero/planning/features/scan-pluggability/spec.md`, `.hero/planning/features/domain-scoped-knowledge-graph/spec.md`, `.hero/planning/features/hero-code-handover-pack/spec.md`, `.hero/planning/features/hero-pm/spec.md`
 
 **Skip:** Implementing `hero-pm` itself — delivery happens in the hero-code repo. Building `hero-qa` or any second domain pack. Multi-active-domain workspaces (single-active is locked in DSKG v1; cross-domain reads are boundary-aware but the workspace has one active domain at a time). Renaming or reshaping the four contracts shipped by `pm-foundation-delivery`. Designing or implementing PM-specific scanners — they live in `hero-pm`.
-
----
-
-## dashboard-inbox-misses-most-activity-sources — Needs-your-input inbox only sources from proposals + inbound handoffs — and proposals are hardcoded nil
-_bug · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/dashboard-inbox-misses-most-activity-sources/spec.md)_
-
----
-
-## hero-serve-project-section — `hero serve` Project Section — Per-Project Info, Utilities, and Operations Page
-_feature · planning · horizon: now_
-
-A per-project home page in `hero serve` — identity, health, conventions,
-peers, registry membership, lifecycle ops, danger zone — plus an
-`/p/all/project` cross-project rollup with daemon-ops.
-
-**Status:** planning — spec just landed; routing dependency
-(`hero-serve-multi-project`) still delivering.
-
-**Pick up at:** wait for `/p/<slug>/<page>` routing + per-page `Deps`
-seam to land in `hero-serve-multi-project`, then scaffold a
-`projectpage.Deps`, register `/p/{slug}/project` + `/p/all/project`
-handlers in `internal/serve/server.go`, and create
-`internal/serve/shell/templates/project.html` with collapsible sections.
-
-→ `.hero/planning/features/hero-serve-project-section/spec.md`
-
-**Files:** `internal/serve/server.go:308-370`, `internal/serve/api.go:51-132`,
-`internal/serve/registry.go:44`, `internal/serve/shell/templates/page-layout.html`,
-`.hero/planning/features/hero-serve-multi-project/spec.md`
-
-**Skip:** in-browser `hero.json` editing (read-only + edit-in-editor link);
-project creation wizard (separate spec); auth/multi-user (deferred to
-`hero-team-server`).
-
----
-
-## dashboard-now-headline-misleading-when-empty — Now headline reads "no agent running · since 19h ago" — composes two empty signals into a false story
-_bug · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/dashboard-now-headline-misleading-when-empty/spec.md)_
-
----
-
-## hero-serve-dashboard-redesign — hero serve dashboard redesign — Now and Work pages
-_feature · planning · horizon: now_
-
-Replaces the empty-tile / sprint-headline Now and Work pages with an
-activity-feed-led layout and rolling windows so a heavy-activity day
-looks heavy, not empty.
-
-**Status:** planning — spec just landed, no code yet.
-
-**Pick up at:** start with the Now page activity feed since it carries
-the biggest visible win. Add `internal/serve/pages/now/data/activity.go`
-that reads recent graph events (spec status transitions, decisions,
-notes, conventions, peer calls, commits, agent sessions) and a matching
-`activity.html` fragment. Wire it into `page.html` as the new first
-section, above the in-flight strip.
-
-→ `.hero/planning/features/hero-serve-dashboard-redesign/spec.md`
-
-**Files:** `internal/serve/pages/now/templates/page.html`, `internal/serve/pages/now/data/metrics.go`, `internal/serve/pages/work/templates/page.html`, `internal/serve/pages/work/data/metrics.go`, `internal/serve/shell/templates/tabbed-metric-strip.html`
-**Skip:** redesigning Knowledge / People / Agents pages, fixing the data bugs (0 commits / 2 shipped / empty inbox / install panel state) — those land separately.
-
----
-
-## hero-serve-multi-project — hero serve — multi-project lifecycle and dashboard awareness
-_feature · planning · horizon: now_
-
-Adds `hero serve stop`, `--force`, `hero serve status`, and a working project
-selector in the dashboard so the global daemon stops pretending it only serves
-one project.
-
-**Status:** planning — spec just landed, no code yet.
-
-**Pick up at:** start with Phase 1 (lifecycle) since it's self-contained.
-Write the PID file at daemon start in `internal/serve/server.go` near the
-`net.Listen` site (line 387), then add the `stop` and `status` subcommands in
-`internal/cli/serve.go`. Phase 2 (dashboard) lands after Phase 1 ships.
-
-→ `.hero/planning/features/hero-serve-multi-project/spec.md`
-
-**Files:** `internal/cli/serve.go`, `internal/serve/server.go:300-400`, `internal/serve/api.go:40-60`, `internal/serve/registry.go:25-50`, `internal/serve/shell/templates/top-nav.html`
-**Skip:** per-project daemons or port-per-project — global daemon is intentional; team-server work is a separate spec.
 
 ---
 

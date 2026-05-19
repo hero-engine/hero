@@ -312,3 +312,19 @@ func (s *Store) PendingCount(sessionID string) int {
 	defer s.mu.RUnlock()
 	return len(s.pending[sessionID])
 }
+
+// SnapshotAll returns every pending envelope across every session in
+// the store. Used by the Now dashboard's inbox to surface all open
+// proposals without needing a separate session enumerator. Order is
+// stable within a session but not across sessions (map iteration).
+func (s *Store) SnapshotAll() []*Envelope {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	var out []*Envelope
+	for _, sess := range s.pending {
+		for _, e := range sess {
+			out = append(out, e)
+		}
+	}
+	return out
+}

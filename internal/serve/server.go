@@ -759,18 +759,26 @@ func (s *Server) snapshotProposals() []*nowdata.ProposalRow {
 	if slug == "" || slug == "." {
 		return nil
 	}
-	store := s.api.proposals.get(slug)
-	if store == nil {
+	envs := s.api.proposals.snapshotProject(slug)
+	if len(envs) == 0 {
 		return nil
 	}
-	// The store is keyed by session; we don't track active sessions
-	// from here, so we have no list of sessions to iterate. The propose
-	// store does not expose a global "all sessions" enumerator yet —
-	// when the agents home wires the live session ledger this gains a
-	// real source. Until then return an empty slice so the inbox
-	// renders cleanly.
-	_ = store
-	return nil
+	rows := make([]*nowdata.ProposalRow, 0, len(envs))
+	for _, e := range envs {
+		if e == nil {
+			continue
+		}
+		rows = append(rows, &nowdata.ProposalRow{
+			ProposalID:  e.ProposalID,
+			SessionID:   e.SessionID,
+			SpecSlug:    e.Target.SpecSlug,
+			Agent:       e.Agent,
+			AnchorValue: e.Target.Anchor.Value,
+			EmittedAt:   e.EmittedAt,
+			BatchID:     e.BatchID,
+		})
+	}
+	return rows
 }
 
 // chatInteractiveConnected probes the chat-adapter registry and

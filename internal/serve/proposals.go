@@ -37,6 +37,23 @@ func (p *proposalStores) get(project string) *propose.Store {
 	return st
 }
 
+// snapshotProject returns every pending proposal envelope in the named
+// project's store across all sessions. Returns nil when no store is
+// registered for the project (no proposals have ever ingested). Used
+// by Server.snapshotProposals to feed the Now-home inbox.
+func (p *proposalStores) snapshotProject(project string) []*propose.Envelope {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.stores == nil {
+		return nil
+	}
+	st, ok := p.stores[project]
+	if !ok {
+		return nil
+	}
+	return st.SnapshotAll()
+}
+
 // routeProposals dispatches /sessions/{session_id}/proposals[/...]
 // requests. The caller has already trimmed the prefix to leave
 // `extra` as either "" (list), "ingest", "bulk/<action>", or
