@@ -2,7 +2,7 @@
 title: Spec Type Registry — Nine-Type Registry With Kind, Tasks, Owner, and Methodology Profile Hook
 slug: spec-type-registry
 type: feature
-status: delivering
+status: completed
 priority: P0
 tags: [platform, domains, spec-types, registry, refactor]
 created: 2026-05-15

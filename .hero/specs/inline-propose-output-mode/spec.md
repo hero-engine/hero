@@ -2,7 +2,7 @@
 title: Inline-Propose Output Mode — Agents Propose into the Artifact Pane
 slug: inline-propose-output-mode
 type: feature
-status: delivering
+status: completed
 priority: P0
 tags: [platform, domains, agents, dashboard, ui, registry, contract]
 created: 2026-05-16
