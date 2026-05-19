@@ -40,8 +40,9 @@ type Router struct {
 
 	tmpl *template.Template
 
-	mu    sync.RWMutex
-	homes []Home // in registration order
+	mu           sync.RWMutex
+	homes        []Home // in registration order
+	adapterProbe func() AdapterState
 }
 
 // New constructs a Router for the active edition. store may be nil —
@@ -281,7 +282,38 @@ func (r *Router) buildChrome(req *http.Request, activeSlug string) Chrome {
 		UserName:     r.userName,
 		UserInitials: initials(r.userName),
 		Tabs:         tabs,
+		Adapter:      r.resolveAdapter(),
 	}
+}
+
+// SetAdapterProbe wires a live chat-adapter probe into the router. The
+// returned AdapterState drives the top-nav adapter chip on every page
+// render. Setting nil reverts the chip to the muted "no adapter"
+// default. Safe to call before or after RegisterHome.
+//
+// The probe runs synchronously on every request; keep it cheap (a
+// registry lookup, no I/O). Tests can inject a static probe.
+func (r *Router) SetAdapterProbe(probe func() AdapterState) {
+	if r == nil {
+		return
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.adapterProbe = probe
+}
+
+// resolveAdapter calls the registered probe (if any) and returns the
+// current adapter state. Returns a zero AdapterState (disconnected,
+// empty DisplayName) when no probe is registered — the original
+// "muted no-adapter chip" default.
+func (r *Router) resolveAdapter() AdapterState {
+	r.mu.RLock()
+	probe := r.adapterProbe
+	r.mu.RUnlock()
+	if probe == nil {
+		return AdapterState{}
+	}
+	return probe()
 }
 
 // buildFooter assembles the footer data.

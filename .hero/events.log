@@ -28,3 +28,5 @@
 {"ts":"2026-05-19T13:39:16.841756Z","type":"peer.call.completed","agent":"hero","slug":"pm-platform-delivery","message":"peer call ok mode=advisory target=hero-code kind=findings call_id=18b0fb01b5f4f6987e7d04b88b99f8d3"}
 {"ts":"2026-05-19T14:39:33.848204Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"dashboard-delivery-events-never-emitted","message":"hero spec complete never emits delivery_complete event — shipped-spec counts always understated"}
 {"ts":"2026-05-19T14:39:33.848399Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"dashboard-delivery-events-never-emitted","message":"status -\u003e completed"}
+{"ts":"2026-05-19T14:44:57.5354Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"dashboard-adapter-state-hardcoded","message":"Dashboard adapter state is hardcoded — \"via hero-code\" chip lies, panels disagree"}
+{"ts":"2026-05-19T14:44:57.535508Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"dashboard-adapter-state-hardcoded","message":"status -\u003e completed"}

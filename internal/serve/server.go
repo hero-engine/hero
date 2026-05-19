@@ -647,6 +647,7 @@ func (s *Server) buildShellRouter() *shell.Router {
 	userName := shellUserName()
 
 	r := shell.New(ed, store, workspace, branch, userName, s.version)
+	r.SetAdapterProbe(s.shellAdapterState)
 	shell.RegisterStubHomes(r)
 
 	// Register the real Now home in place of its (no-longer-present)
@@ -784,6 +785,37 @@ func (s *Server) chatInteractiveConnected() bool {
 		return false
 	}
 	return chat.Resolve(s.chatRegistry, "").Interactive != ""
+}
+
+// shellAdapterState is the probe the top-nav adapter chip reads on
+// every request. Returns Connected=true with the adapter type name
+// (e.g. "hero-code") when chat.Resolve picks an interactive adapter,
+// otherwise Connected=false with empty DisplayName (chip renders muted
+// "no adapter"). Same source of truth as chatInteractiveConnected and
+// the Now install-panel — chrome and body widgets agree by construction.
+func (s *Server) shellAdapterState() shell.AdapterState {
+	if s == nil || s.chatRegistry == nil {
+		return shell.AdapterState{}
+	}
+	cap := chat.Resolve(s.chatRegistry, "")
+	if cap.Interactive == "" {
+		return shell.AdapterState{}
+	}
+	display := lookupAdapterDisplayName(cap.Adapters, cap.Interactive)
+	return shell.AdapterState{Connected: true, DisplayName: display}
+}
+
+// lookupAdapterDisplayName returns the adapter TYPE (e.g. "hero-code")
+// for the given connection id. Falls back to the connection id when no
+// match is found — keeps the chip text non-empty even on unexpected
+// registry shapes.
+func lookupAdapterDisplayName(adapters []chat.AdapterInfo, id string) string {
+	for _, a := range adapters {
+		if a.ID == id {
+			return a.Adapter
+		}
+	}
+	return id
 }
 
 // snapshotLiveSessions is the canonical "live session ledger" reader

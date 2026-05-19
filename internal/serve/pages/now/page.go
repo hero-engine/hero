@@ -258,7 +258,7 @@ func (h *handler) buildPage(req *http.Request, cfg config.Config, ed edition.Edi
 				{Label: "why is scan enrichment looping?", Href: "#"},
 				{Label: "design rate-limited peer calls", Href: "#"},
 			},
-			ChatInput:  buildChatInput(),
+			ChatInput:  buildChatInput(noAdapter),
 			NoAdapter:  noAdapter,
 			EmptyState: emptyState,
 		},
@@ -382,14 +382,25 @@ type quickLaunchData struct {
 // buildChatInput composes the Quick launch chat-input fragment params.
 // Variant "hero" picks the 64px-tall styling; Context attaches the
 // page identity so the chat island dispatches with /now in scope.
-func buildChatInput() shell.ChatInput {
-	return shell.ChatInput{
+//
+// When noAdapter is true the input flips into its disabled state with
+// the same "Connect a chat adapter to enable" copy the four non-Now
+// homes use — restores Now-vs-rest symmetry that previously diverged
+// (spec dashboard-adapter-state-hardcoded).
+func buildChatInput(noAdapter bool) shell.ChatInput {
+	in := shell.ChatInput{
 		Variant:     "hero",
 		Placeholder: "Tell Hero what to do next…",
 		Context: []shell.ChatContextChip{
 			{Kind: "page", Label: "page: /now"},
 		},
 	}
+	if noAdapter {
+		in.Disabled = true
+		in.Placeholder = "Connect a chat adapter to enable"
+		in.ConnectHref = "/settings/chat"
+	}
+	return in
 }
 
 // resolveAdapterState returns (noAdapter, emptyState) for the current
@@ -458,7 +469,7 @@ func (h *handler) renderQuickLaunch() ([]byte, error) {
 			{Label: "why is scan enrichment looping?", Href: "#"},
 			{Label: "design rate-limited peer calls", Href: "#"},
 		},
-		ChatInput:  buildChatInput(),
+		ChatInput:  buildChatInput(noAdapter),
 		NoAdapter:  noAdapter,
 		EmptyState: emptyState,
 	}

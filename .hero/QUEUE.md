@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-19T14:40:04Z · 105 ready specs_
+_Generated: 2026-05-19T14:45:10Z · 104 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -265,13 +265,6 @@ project creation wizard (separate spec); auth/multi-user (deferred to
 _bug · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/dashboard-now-headline-misleading-when-empty/spec.md)_
-
----
-
-## dashboard-adapter-state-hardcoded — Dashboard adapter state is hardcoded — "via hero-code" chip lies, panels disagree
-_bug · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/dashboard-adapter-state-hardcoded/spec.md)_
 
 ---
 

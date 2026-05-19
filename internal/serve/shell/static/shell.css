@@ -196,6 +196,12 @@ code, .mono { font-family: 'SF Mono', ui-monospace, Menlo, monospace; }
   border-radius: 50%;
   background: var(--hero-blue-500);
 }
+.adapter-chip.muted {
+  color: var(--ink-4);
+}
+.adapter-chip.muted .adapter-dot {
+  background: var(--ink-5, #b4bac3);
+}
 .avatar {
   width: 28px;
   height: 28px;

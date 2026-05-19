@@ -116,6 +116,36 @@ func TestRegister_NoEmptyStateWhenAdapterConnected(t *testing.T) {
 	}
 }
 
+// Spec dashboard-adapter-state-hardcoded: Now's chat input must honor
+// the same adapter probe as the four other homes. Previously
+// buildChatInput always returned Disabled:false, so the install banner
+// could render alongside a chat input that looked usable.
+func TestBuildChatInput_DisablesWhenNoAdapter(t *testing.T) {
+	got := buildChatInput(true)
+	if !got.Disabled {
+		t.Error("chat input should be Disabled when noAdapter=true")
+	}
+	if got.ConnectHref == "" {
+		t.Error("disabled chat input should carry a ConnectHref")
+	}
+	if !strings.Contains(got.Placeholder, "Connect a chat adapter") {
+		t.Errorf("placeholder = %q, want disabled-state copy", got.Placeholder)
+	}
+}
+
+func TestBuildChatInput_EnabledWhenAdapterConnected(t *testing.T) {
+	got := buildChatInput(false)
+	if got.Disabled {
+		t.Error("chat input should not be Disabled when noAdapter=false")
+	}
+	if got.ConnectHref != "" {
+		t.Errorf("enabled input should not set ConnectHref, got %q", got.ConnectHref)
+	}
+	if got.Placeholder == "" {
+		t.Error("enabled input should keep its default placeholder")
+	}
+}
+
 // fakeAdapter is a minimal chat.HeroAdapter implementation for tests.
 // Reports interactive capability so chat.Resolve picks it.
 type fakeAdapter struct{}
