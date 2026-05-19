@@ -18,14 +18,18 @@ import (
 //
 // Surfaces scanned (all project-relative):
 //
-//   - commands/*.md                  (slash command definitions)
-//   - skills/**/*.md                 (skill content)
-//   - agents/*.md                    (agent role definitions)
-//   - web/docs/src/**/*.md           (public docs site sources)
-//   - README.md, AGENTS.md,
-//     GETTING-STARTED.md             (top-level docs)
-//   - rendered AGENTS.md template    (in-memory; the bytes installed
+//   - domains/engineering/commands/*.md        (slash command definitions)
+//   - domains/engineering/skills/**/*.md       (skill content)
+//   - domains/engineering/agents/*.md          (agent role definitions)
+//   - domains/engineering/AGENTS.md            (engineering harness instructions)
+//   - web/docs/src/**/*.md                     (public docs site sources)
+//   - README.md, GETTING-STARTED.md            (top-level docs)
+//   - rendered AGENTS.md template              (in-memory; the bytes installed
 //     into downstream projects via internal/install)
+//
+// Other domain packs (core/, domains/pm/, domains/sales/) are not
+// scanned here — adding them would surface pre-existing drift those
+// packs already carry. See `hero check` for cross-pack drift coverage.
 //
 // .hero/specs/ and .hero/planning/ are excluded by default — they
 // intentionally describe broken/phantom invocations as part of bug
@@ -51,17 +55,17 @@ func TestMarkdownInvocationsResolveAgainstRootCmd(t *testing.T) {
 	surfaces := []surface{
 		{
 			label:      "commands",
-			dirs:       []string{"commands"},
+			dirs:       []string{"domains/engineering/commands"},
 			requireAny: true,
 		},
 		{
 			label:      "skills",
-			dirs:       []string{"skills"},
+			dirs:       []string{"domains/engineering/skills"},
 			requireAny: true,
 		},
 		{
 			label:      "agents",
-			dirs:       []string{"agents"},
+			dirs:       []string{"domains/engineering/agents"},
 			requireAny: false, // agents/ may not contain CLI invocations
 		},
 		{
@@ -71,7 +75,7 @@ func TestMarkdownInvocationsResolveAgainstRootCmd(t *testing.T) {
 		},
 		{
 			label:      "top-level",
-			files:      []string{"README.md", "AGENTS.md", "GETTING-STARTED.md"},
+			files:      []string{"README.md", "GETTING-STARTED.md", "domains/engineering/AGENTS.md"},
 			requireAny: true,
 		},
 		{

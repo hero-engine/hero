@@ -1,6 +1,24 @@
 # Hero — Spec-Driven AI Engineering
 
+<!-- hero:managed-start v=dev -->
+## Project snapshot
+
+Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
+<!-- hero:managed-end -->
+
 This project uses **Hero** for spec-driven engineering workflows. Hero manages specs, integrates with work trackers (Jira, GitHub, Linear), and provides structured workflows via slash commands.
+
+## ⚡ Read these FIRST every session (until `project-charter` ships auto-injection)
+
+The mission and current recovery state are not yet auto-injected into your context. Until `project-charter` lands (see `.hero/planning/features/project-charter/spec.md`), the **first thing you do every session in this repo** is read these in order:
+
+1. **[`.hero/mission.md`](.hero/mission.md)** — Hero's locked charter. *Sidekick brain for AI-augmented knowledge work.* Three modes, five principles, locked vocabulary, six anti-patterns, mission-fit test. **Highest-priority context.**
+2. **[`.hero/NEXT.md`](.hero/NEXT.md)** — what's open right now, what's next, what we tried, what's blocked. The persistent cross-session briefing.
+3. **[`.hero/knowledge/notes/recovery-strategy-conversation/spec.md`](.hero/knowledge/notes/recovery-strategy-conversation/spec.md)** — captures all 14 strategic moves from the 2026-04-28 recovery session in user's voice. **Read this before the initiative spec** — the meta-reasoning isn't in the strict-form artifacts.
+4. **[`.hero/planning/initiatives/get-back-on-track/spec.md`](.hero/planning/initiatives/get-back-on-track/spec.md)** — the active recovery initiative coordinating 9 child features.
+5. *Optional but useful:* [`.hero/knowledge/notes/v2-delivery-audit-2026-04-28/spec.md`](.hero/knowledge/notes/v2-delivery-audit-2026-04-28/spec.md) (audit findings — verify against code; the audit got several things wrong, corrections noted in NEXT.md).
+
+If you skip these, you will re-derive the work and probably drift. The whole mission of Hero (especially principle #3 — *sessions start omniscient*) is making this read unnecessary in the future. Until then, it is the load-bearing manual step.
 
 ## Session Title
 
@@ -25,15 +43,62 @@ When the user describes what they want in natural language, route to the appropr
 | Release, deploy, version, ship | `/release` |
 | Retro, postmortem, lessons learned | `/retro` |
 | Note, capture, remember, save thought | `/note` |
+| Handoff, checkpoint, save session, save state, switching tools, force refresh NEXT | `/handoff` |
+| Resume, pick up where we left off, pickup where we left off, continue, let's continue, load NEXT | `/resume` |
 | Scan, detect, onboard, stack analysis | `/scan` |
 | Scrub, clean, dead code, duplication, weak types, slop | `/scrub` |
 | Check, health, validate workspace | `/check` |
 | Sprint, iteration, load sprint | `/sprint` |
 | Import, pull issues, fetch from tracker, sync issues | `/import` |
+| Why does X exist, where did Y come from, history of Z, origin chain, traceback | `/why <target>` |
+| What's blocked, what's stuck, what's open and waiting, dependency chain, failing ACs | `/blocked` |
 
 When routing, pass the user's original context as arguments to the command. If the intent is ambiguous, present the top 2-3 options and ask.
 
-**Vocabulary-aware routing.** When the workspace declares a `vocabulary:` or `methodology:` in `hero.json`, the user may speak in that dialect — "create a story" under `agile-scrum`, "shape a scope" under `shape-up`, "log a card" under `kanban`. Translate display terms back to canonical types before routing: `story` / `scope` / `card` all canonicalize to `feature`, so `hero new feature` is the right call. The on-disk frontmatter stays canonical (`type: feature`) regardless of how the user (or the dashboard) sees it. The active dialect is summarized in the "Active workspace dialect" section of this file when one is configured; engineering / default workspaces see no extra section and the canonical names are the user-facing names.
+## Capture handoff state as you work
+
+If `next.projected` is enabled in `.hero/hero.json` (run
+`hero next migrate-to-projection` to opt in), the agent half of
+NEXT.md is no longer hand-written — it's projected from graph
+events. See [skills/next-handoff-emit.md](skills/next-handoff-emit.md)
+for the cadence. Three commands carry the load:
+
+```
+hero next ask "<verbatim or one-sentence paraphrase of user's prompt>"
+hero next suggest "<paste-ready next prompt, in user's voice>"
+hero next reflection "<one-line lesson worth carrying forward>"
+```
+
+Fire `ask` when the user directs new work, `suggest` at the end of a
+meaningful work unit, `reflection` when a non-obvious lesson surfaces.
+Skip when nothing meaningful happened. Reads: `hero next suggest`,
+`hero next ask`, `hero next reflection` (no args).
+
+## Cold-start prompts and the ready queue
+
+Every spec carries a `## Kickoff` section — a paste-ready cold-start
+prompt for picking that work back up in a fresh session. Format and
+quality bar are in [skills/kickoff-prompt.md](skills/kickoff-prompt.md).
+Authors: `/design` writes the kickoff at scaffold time; `/deliver` and
+`/diagnose` rewrite it at status flips. Hand-edit anytime — the spec
+is source of truth.
+
+When the user asks **"give me a prompt for a new session"** or
+**"what should I work on?"**:
+
+- For a specific spec → call `hero_kickoff <slug>` (MCP) or
+  `hero list <slug> --format kickoff` (CLI).
+- For the ranked ready queue → call `hero_queue` (MCP) or read
+  `.hero/QUEUE.md` (the pre-rendered snapshot the pre-commit hook
+  keeps current). `.hero/QUEUE.md` is the surface for harnesses that
+  can't pop a terminal at session start (Claude Code).
+- Only hand-author a kickoff if no spec covers the request — and if
+  you do, drop it as a new spec via `/design` so it joins the queue.
+
+`hero queue` is curated (ready specs, priority sort, kickoff format).
+`hero list` is the power-user query (filter by type/status/horizon/
+tag/ready/blocked/pinned/mine/stale, sort by recency/status/alpha/
+priority, format text/json/table/kickoff).
 
 ## Log significant events
 
@@ -41,8 +106,8 @@ After creating or updating a spec, modifying files, making a notable design
 decision, or hitting a blocker, log it so other sessions can see:
 
 ```
-hero event decision_made "Chose streaming CSV over buffered" --slug csv-export
-hero event blocker_hit "Auth middleware rejects test tokens" --slug csv-export
+hero agent events decision_made "Chose streaming CSV over buffered" --slug csv-export
+hero agent events blocker_hit "Auth middleware rejects test tokens" --slug csv-export
 ```
 
 Before starting work, check what other agents have done recently:
@@ -102,48 +167,53 @@ These are run in the terminal, not as slash commands:
 - Specs use YAML frontmatter with fields: title, type, status, tracker_id, priority, severity
 - Imported specs include tracker-prefixed fields (e.g. jira_status, jira_priority, jira_assignee) under a `# Jira` / `# Github` / `# Linear` comment header in frontmatter
 
-## Keep handoff briefings current
+## Keep NEXT.md current
 
-Run `hero next path` to find the file you should write to. This resolves
-based on the project's mode:
+NEXT.md is the single living artifact that lets a fresh session pick up
+where the last one left off. It has two halves:
 
-- **Solo mode** (default): `.hero/NEXT.md` — single shared briefing.
-- **Team mode** (`next.mode: "team"` in hero.json): `.hero/next/<user>.md` —
-  your personal briefing. Also update the one-liner for your name in the
-  shared `.hero/NEXT.md` so teammates see what you're working on at a glance.
+- **Machine half** — auto-written every turn by `hero next checkpoint`
+  (run from a host-tool Stop hook). Branch, recent commits, dirty files,
+  hot files. You don't write this; ignore the `<!-- BEGIN HERO MACHINE
+  STATE -->` block.
+- **Agent half** — Last user ask, Just finished, Next, Blocked on, Tried
+  and failed, Context. *You* write this.
 
-**At session start:** read your handoff file (via `hero next path`) before
-doing anything else and surface the contents to the user. In team mode,
-also check `.hero/NEXT.md` for team updates.
+Run `hero next path` to find the file. Solo mode → `.hero/NEXT.md`.
+Team mode → `.hero/next/<user>.md`.
 
-**At end of a turn where meaningful work happened** — finished a spec section,
-landed a code change, made a design decision, or chose what to do next —
-overwrite your handoff file with a fresh briefing. Always overwrite, never
-append. Skip when the turn was purely conversational or exploratory.
+**At session start:** read your NEXT file and surface it to the user.
 
-In team mode, also update your one-liner in `.hero/NEXT.md` and optionally
-add a team update entry if the work affects others.
+**Update the agent half when** (and only when):
 
-See the `next-md` skill for the full format, quality bar, and shared-file
-conventions.
+1. The user said something the next session needs to know — quote it
+   verbatim into the **Last user ask** section
+2. The intent shifted — what we're trying to do changed
+3. An approach was tried and failed — record it under **Tried and failed**
+4. You're about to switch tools or context feels close to full — force a
+   full refresh (the `/handoff` slash command does exactly this)
+
+You do **not** need to update the agent half just because files were
+edited or a commit was made — the machine half captures that. Skip
+conversational turns entirely.
+
+**Always overwrite, never append.** Hard cap 60 lines for the agent half.
+
+See the `next-md` skill for the full format and quality bar.
 
 ## Survive context compaction
 
-When you sense the conversation is getting long or the host tool warns about
-context limits, take these steps to preserve continuity:
+When the conversation is getting long or the host tool warns about
+context limits:
 
-1. **Update your handoff briefing immediately** — don't wait for end-of-turn.
-   Write the current state to your NEXT file so a post-compaction session
-   can resume.
-2. **Register active specs** — run `hero active register <session-id> <slug>`
-   for any spec you're mid-delivery on. After compaction, the active session
-   registry tells you what you were working on.
-3. **Write partial progress** — if you're mid-implementation, commit what you
-   have (even WIP) and note the stopping point in the handoff briefing.
+1. **Run `/handoff`** — force-refresh both halves of NEXT.md now. The
+   Stop hook normally handles the machine half, but `/handoff` runs it
+   immediately and reminds you to refresh the agent half too.
+2. **Commit WIP** — if mid-implementation, commit what you have so the
+   next session sees it in `git log`.
 
-After compaction, the host tool will reload AGENTS.md. Your first action
-should be: read your handoff file, check `hero active list`, and run
-`hero recap --since 1h` to rebuild context.
+After compaction, the host tool reloads AGENTS.md. First action: read
+NEXT.md, then `hero recap --since 1h` to rebuild context.
 
 ## Capture execution plans
 
