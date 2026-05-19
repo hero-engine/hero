@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/hero-engine/hero/internal/spec"
 )
 
 // MetricsInputs is the per-request input bundle for the metric strip.
@@ -284,6 +286,13 @@ func gitCountCommitsSince(projectRoot, since, user string) (int, error) {
 // Note: the count is NOT filtered by claimed_by. Many specs in this
 // workspace are never claimed; filtering by claim makes the tile read 0
 // even after multiple specs shipped today (the original bug).
+//
+// Falls back to counting completed-status specs under .hero/specs/ with
+// recent file mtime when the event log returns 0 — covers workspaces
+// that completed specs before the lifecycle emitted delivery_complete
+// events (spec dashboard-delivery-events-never-emitted). The event log
+// takes precedence when it has anything; the fallback only fires on a
+// pure-zero event count.
 func countCompletedSince(heroDir string, since time.Duration) int {
 	if heroDir == "" {
 		return 0
@@ -294,6 +303,39 @@ func countCompletedSince(heroDir string, since time.Duration) int {
 		if isDeliveryCompleteEvent(e.Type) {
 			count++
 		}
+	}
+	if count > 0 {
+		return count
+	}
+	return countCompletedSpecsByMtime(heroDir, since)
+}
+
+// countCompletedSpecsByMtime is the file-mtime fallback for shipped-spec
+// counting. Returns the number of specs under .hero/specs/ whose
+// frontmatter status is completed and whose file mtime is within the
+// trailing window. Only called when the event log has no
+// delivery_complete entries in the window — historical workspaces.
+func countCompletedSpecsByMtime(heroDir string, since time.Duration) int {
+	if heroDir == "" {
+		return 0
+	}
+	cutoff := time.Now().Add(-since)
+	specs, err := spec.Discover(heroDir)
+	if err != nil {
+		return 0
+	}
+	count := 0
+	for _, s := range specs {
+		if s == nil {
+			continue
+		}
+		if s.Status != spec.StatusCompleted {
+			continue
+		}
+		if s.ModifiedAt.Before(cutoff) {
+			continue
+		}
+		count++
 	}
 	return count
 }

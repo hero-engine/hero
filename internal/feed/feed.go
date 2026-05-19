@@ -22,6 +22,7 @@ import (
 var ValidTypes = []string{
 	"spec_created",
 	"spec_updated",
+	"spec.status_changed",
 	"files_modified",
 	"decision_made",
 	"blocker_hit",
@@ -212,6 +213,8 @@ func shortType(t string) string {
 		return "spec"
 	case "spec_updated":
 		return "updated"
+	case "spec.status_changed":
+		return "status"
 	case "files_modified":
 		return "files"
 	case "decision_made":

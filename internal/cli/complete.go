@@ -6,8 +6,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/feed"
 	"github.com/hero-engine/hero/internal/index"
 	"github.com/hero-engine/hero/internal/spec"
 	"github.com/hero-engine/hero/internal/tracker"
@@ -61,6 +63,10 @@ func runComplete(cmd *cobra.Command, args []string) error {
 	alreadyCompleted := s.Status == spec.StatusCompleted
 	alreadyMoved := isAlreadyInSpecsDir(specPath, heroDir)
 	if alreadyCompleted && alreadyMoved {
+		// Still ensure the dashboard sees this completion — emitCompletionEvents
+		// is idempotent and will skip if a delivery_complete event already
+		// exists for this slug within the last 24h.
+		emitCompletionEvents(heroDir, s.Slug, s.Title)
 		fmt.Printf("Spec %s is already completed and lives under specs/ — nothing to do.\n", s.Slug)
 		return nil
 	}
@@ -105,8 +111,75 @@ func runComplete(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Step 5: Emit lifecycle events so the dashboard's shipped-spec
+	// counters (which read .hero/events.log) reflect this completion.
+	// Idempotent — a re-run within 24h skips the duplicate.
+	emitCompletionEvents(heroDir, s.Slug, s.Title)
+
 	fmt.Printf("Completed spec: %s\n", s.Slug)
 	return nil
+}
+
+// emitCompletionEvents writes the delivery_complete + spec.status_changed
+// events that the dashboard reads to count shipped specs. Idempotent: if
+// a delivery_complete event for the same slug already exists in the last
+// 24h, this is a no-op. Errors are swallowed (best-effort emission must
+// not fail the completion path).
+//
+// Called from runComplete and autoArchiveIfCompleted — both paths that
+// finalize a spec's completed status. Without this, the dashboard's
+// "specs shipped this week" tile chronically read near-zero because no
+// emitter wrote to the event log on the human-driven completion path.
+func emitCompletionEvents(heroDir, slug, title string) {
+	if heroDir == "" || slug == "" {
+		return
+	}
+	logPath := filepath.Join(heroDir, "events.log")
+
+	if hasRecentDeliveryComplete(logPath, slug, 24*time.Hour) {
+		return
+	}
+
+	agent := os.Getenv("HERO_AGENT")
+	if agent == "" {
+		agent = "human/" + gitUserName()
+	}
+
+	message := title
+	if message == "" {
+		message = fmt.Sprintf("Completed %s", slug)
+	}
+
+	completeEvt := feed.FeedEvent{
+		Type:    "delivery_complete",
+		Agent:   agent,
+		Slug:    slug,
+		Message: message,
+	}
+	_ = feed.AppendEvent(logPath, completeEvt)
+
+	statusEvt := feed.FeedEvent{
+		Type:    "spec.status_changed",
+		Agent:   agent,
+		Slug:    slug,
+		Message: "status -> completed",
+	}
+	_ = feed.AppendEvent(logPath, statusEvt)
+}
+
+// hasRecentDeliveryComplete reports whether the event log already
+// contains a delivery_complete event for slug within the trailing
+// window. Used to dedup emission across re-runs of hero spec complete.
+func hasRecentDeliveryComplete(logPath, slug string, window time.Duration) bool {
+	events, err := feed.ReadEvents(logPath, feed.Filter{
+		Since: time.Now().Add(-window),
+		Type:  "delivery_complete",
+		Slug:  slug,
+	})
+	if err != nil {
+		return false
+	}
+	return len(events) > 0
 }
 
 // autoArchiveIfCompleted is the auto-archive hook used by deliver
@@ -128,6 +201,10 @@ func autoArchiveIfCompleted(specPath, heroDir string) (bool, error) {
 		return false, nil
 	}
 	if isAlreadyInSpecsDir(specPath, heroDir) {
+		// Emit anyway when status is completed — covers the case where
+		// the spec was already under specs/ but the event was missed on
+		// a prior run. Idempotent inside emitCompletionEvents.
+		emitCompletionEvents(heroDir, s.Slug, s.Title)
 		return false, nil
 	}
 	_, moved, err := moveToSpecs(specPath, heroDir)
@@ -139,6 +216,7 @@ func autoArchiveIfCompleted(specPath, heroDir string) (bool, error) {
 			return true, fmt.Errorf("rebuilding index: %w", err)
 		}
 	}
+	emitCompletionEvents(heroDir, s.Slug, s.Title)
 	return moved, nil
 }
 
