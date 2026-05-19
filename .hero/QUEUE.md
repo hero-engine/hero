@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-19T23:32:21Z · 95 ready specs_
+_Generated: 2026-05-19T23:46:42Z · 96 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -172,6 +172,13 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · delivering · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-sales/spec.md)_
+
+---
+
+## peer-call-findings-truncation-and-persistence — hero peer call truncates advisory findings at 400 chars and persists nothing retrievable
+_bug · planning · horizon: now_
+
+> Read `.hero/planning/bugs/peer-call-findings-truncation-and-persistence/spec.md` (this file) end-to-end before touching code. Then inspect `internal/cli/peer.go:333-391` (`runPeerCall` — the 400-char truncation site) and `internal/peering/peercall.go:127-498` (`Call` + `recordOriginatorSide` — where the artifact write needs to be added and where the trail entry's `result_ref` needs to be redirected). Confirm the `CallResult` struct lives in `internal/peering/peercall.go` (not in `contracts/`) so adding `ArtifactPath` is an internal-only change. Implement the fix per the "Suggested Fix Approach" section: (1) add a `writePeerCallArtifact` helper that writes `.hero/peer-calls/<call_id>.md` with frontmatter + Prompt + Findings sections; (2) call it from `Call` after `parseResultBlock` succeeds, before `recordOriginatorSide`; (3) pass the resulting relative path into `recordOriginatorSide` and use it as the trail entry's `ResultRef` when non-empty; (4) drop the 400-char cap in `runPeerCall` and add an `artifact:` line to stdout. Keep dry-run unchanged — the existing `if opts.DryRun` early return at peercall.go:219 already skips the new artifact write. Add the six tests listed in the "Test Plan" section under `internal/peering/peercall_test.go` (and one CLI test if the package has a harness). Run `go build ./...` and `go test ./...` clean. Decide whether `.hero/peer-calls/` should be tracked by default (recommendation in spec: yes) and update `.gitignore` accordingly — document the decision in the spec's Changes section. Manual-smoke a real `hero peer call hero --mode=advisory "<multi-paragraph prompt>"` against a sibling repo and confirm the artifact exists, the trail entry (when `--related-spec` is set) points at it, and the full findings appear on stdout. Report what shipped, the .gitignore decision, and any deviations from the proposed approach in under 400 words.
 
 ---
 

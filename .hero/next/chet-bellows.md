@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-05-19T23:05:23Z
+updated: 2026-05-19T23:46:42Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver hero-serve-dashboard-redesign — activity-feed Now, rolling-windows Work (sprint as opt-in), Hero-noticed themes. Sprint item 7 of 8 in dashboard-fix-and-rebuild.
+> Deliver both peer-call bug fixes sequentially: (1) peer-call-result-yaml-int-strict-parse — new ApproxInt tolerant type in contracts/peering, version bump 1→2, swap 4 budget fields; (2) peer-call-findings-truncation-and-persistence — drop 400-char cap, write .hero/peer-calls/<call_id>.md artifact, point Trail result_ref at it. Both touch internal/cli/peer.go so deliver sequentially, smaller-foundation first.
 
 ## Suggested next prompt
 

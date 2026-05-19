@@ -1,6 +1,99 @@
 package peering
 
-import "time"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
+	"gopkg.in/yaml.v3"
+)
+
+// ApproxInt is a non-negative integer field that tolerates a few
+// approximation forms peers (especially LLM subagents) naturally emit
+// when reporting estimates:
+//
+//   - plain int:        22000        -> 22000
+//   - tilde-prefix:     ~22000       -> 22000   (the "~" is dropped)
+//   - float form:       22000.0      -> 22000   (truncated, not rounded)
+//   - string forms of any of the above
+//   - empty / missing -> 0
+//
+// Round-trips back to a plain integer; the tilde is an input
+// tolerance, not an output format. Wire shape is `int` for both YAML
+// and JSON. Negative values are rejected at unmarshal time to keep
+// "budget consumed" semantics honest.
+type ApproxInt int
+
+// Int returns the underlying integer value.
+func (a ApproxInt) Int() int { return int(a) }
+
+func parseApproxIntString(raw string) (ApproxInt, error) {
+	s := strings.TrimSpace(raw)
+	s = strings.Trim(s, `"'`)
+	s = strings.TrimPrefix(s, "~")
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return 0, nil
+	}
+	if n, err := strconv.Atoi(s); err == nil {
+		if n < 0 {
+			return 0, fmt.Errorf("approxint: negative value %d", n)
+		}
+		return ApproxInt(n), nil
+	}
+	if f, err := strconv.ParseFloat(s, 64); err == nil {
+		if f < 0 {
+			return 0, fmt.Errorf("approxint: negative value %g", f)
+		}
+		return ApproxInt(int(f)), nil
+	}
+	return 0, fmt.Errorf("approxint: cannot parse %q as integer", raw)
+}
+
+// UnmarshalYAML accepts !!int, !!float, and !!str scalars whose
+// string form parses as a (possibly tilde-prefixed) non-negative
+// integer.
+func (a *ApproxInt) UnmarshalYAML(node *yaml.Node) error {
+	if node == nil {
+		*a = 0
+		return nil
+	}
+	if node.Kind != yaml.ScalarNode {
+		return fmt.Errorf("approxint: expected scalar, got kind=%d", node.Kind)
+	}
+	v, err := parseApproxIntString(node.Value)
+	if err != nil {
+		return err
+	}
+	*a = v
+	return nil
+}
+
+// MarshalYAML emits a plain integer.
+func (a ApproxInt) MarshalYAML() (any, error) { return int(a), nil }
+
+// UnmarshalJSON applies the same tolerance as YAML so symmetric
+// transports stay honest. Accepts JSON numbers, JSON strings of the
+// same shape, and null -> 0.
+func (a *ApproxInt) UnmarshalJSON(data []byte) error {
+	s := strings.TrimSpace(string(data))
+	if s == "" || s == "null" {
+		*a = 0
+		return nil
+	}
+	v, err := parseApproxIntString(s)
+	if err != nil {
+		return err
+	}
+	*a = v
+	return nil
+}
+
+// MarshalJSON emits a canonical integer.
+func (a ApproxInt) MarshalJSON() ([]byte, error) {
+	return []byte(strconv.Itoa(int(a))), nil
+}
 
 // PeerCallMode classifies a sync peer call by its allowed effects.
 type PeerCallMode string
@@ -21,14 +114,14 @@ const (
 
 // BudgetSpec caps how much work a peer call may consume.
 type BudgetSpec struct {
-	Turns  int `yaml:"turns,omitempty" json:"turns,omitempty"`
-	Tokens int `yaml:"tokens,omitempty" json:"tokens,omitempty"`
+	Turns  ApproxInt `yaml:"turns,omitempty" json:"turns,omitempty"`
+	Tokens ApproxInt `yaml:"tokens,omitempty" json:"tokens,omitempty"`
 }
 
 // BudgetConsumed records actual consumption after the call returns.
 type BudgetConsumed struct {
-	Turns  int `yaml:"turns" json:"turns"`
-	Tokens int `yaml:"tokens" json:"tokens"`
+	Turns  ApproxInt `yaml:"turns" json:"turns"`
+	Tokens ApproxInt `yaml:"tokens" json:"tokens"`
 }
 
 // PeerCallRequest is the envelope a caller in A sends to B's
