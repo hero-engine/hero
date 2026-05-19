@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-05-19T23:40:05Z · projected from 257 source nodes_
+_Last refreshed: 2026-05-19T23:46:42Z · projected from 257 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 6h ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 7h ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | building | domains/engineering/ | 6h ago | spec-types-cache-frontmatter-empty |
@@ -16,7 +16,7 @@ _Last refreshed: 2026-05-19T23:40:05Z · projected from 257 source nodes_
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 1d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 50m ago | vocabulary-resolve-misses-methodology-derivation |
+| serve | building | internal/serve/ | 56m ago | vocabulary-resolve-misses-methodology-derivation |
 | (unassigned) | — | — | — | 112 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -44,10 +44,10 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — pm-platform-delivery, hero-code-handover-pack, scan-pluggability, domain-routing-and-agents, domain-scoped-knowledge-graph
+- **(unassigned)** — peer-call-result-yaml-int-strict-parse, pm-platform-delivery, hero-code-handover-pack, scan-pluggability, domain-routing-and-agents, domain-scoped-knowledge-graph
 - **core** — install-core-domain-merge
 - **domains/engineering** — contentfs-legacy-fallback-removal
-- **serve** — hero-serve-multi-project, dashboard-now-headline-misleading-when-empty, dashboard-inbox-misses-most-activity-sources, dashboard-adapter-state-hardcoded, dashboard-delivery-events-never-emitted
+- **serve** — hero-serve-multi-project, dashboard-now-headline-misleading-when-empty, dashboard-inbox-misses-most-activity-sources, dashboard-adapter-state-hardcoded
 
 ## Next up across surfaces
 

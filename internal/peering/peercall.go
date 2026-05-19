@@ -104,6 +104,12 @@ type CallResult struct {
 	// Stdout is the full raw stdout from the subagent. Captured for
 	// debug — the structured Result is what callers should consume.
 	Stdout string
+
+	// ArtifactPath is the project-relative path of the per-call
+	// markdown artifact (.hero/peer-calls/<call_id>.md). Empty for
+	// dry-run calls or when the artifact write failed; the in-memory
+	// Result still contains the full findings either way.
+	ArtifactPath string
 }
 
 // Call performs a sync peer call: prepare envelope, spawn subagent in
@@ -276,8 +282,23 @@ func Call(projectRoot string, opts CallOptions) (*CallResult, error) {
 	}
 	out.Result = result
 
-	// Persist trail + status on the originator side.
-	if err := recordOriginatorSide(projectRoot, cfg, opts, req, result, peerPeerID, atCommit); err != nil {
+	// Write per-call artifact best-effort. The in-memory Result still
+	// carries the full findings if this fails; we just lose durability.
+	artifactRel, artifactErr := writePeerCallArtifact(projectRoot, heroDir, opts.PeerAlias, req, result)
+	if artifactErr != nil {
+		_ = feed.AppendEvent(filepath.Join(heroDir, "events.log"), feed.FeedEvent{
+			Timestamp: now().UTC(),
+			Type:      string(contractpeering.EventCallCompleted),
+			Agent:     "hero",
+			Slug:      opts.RelatedSpec,
+			Message:   fmt.Sprintf("peer call ok but artifact write failed: %v (call_id %s)", artifactErr, callID),
+		})
+	}
+	out.ArtifactPath = artifactRel
+
+	// Persist trail + status on the originator side. Trail entry's
+	// result_ref now points at the artifact when one was written.
+	if err := recordOriginatorSide(projectRoot, cfg, opts, req, result, peerPeerID, atCommit, artifactRel); err != nil {
 		// We have a successful peer call but couldn't update local
 		// state. Surface to the caller; the events.log still has the
 		// invoked entry.
@@ -291,13 +312,17 @@ func Call(projectRoot string, opts CallOptions) (*CallResult, error) {
 		return out, fmt.Errorf("record originator side: %w", err)
 	}
 
+	completedMsg := fmt.Sprintf("peer call ok mode=%s target=%s kind=%s call_id=%s",
+		opts.Mode, opts.PeerAlias, result.Kind, callID)
+	if artifactRel != "" {
+		completedMsg += " artifact=" + artifactRel
+	}
 	_ = feed.AppendEvent(filepath.Join(heroDir, "events.log"), feed.FeedEvent{
 		Timestamp: result.At,
 		Type:      string(contractpeering.EventCallCompleted),
 		Agent:     "hero",
 		Slug:      opts.RelatedSpec,
-		Message: fmt.Sprintf("peer call ok mode=%s target=%s kind=%s call_id=%s",
-			opts.Mode, opts.PeerAlias, result.Kind, callID),
+		Message:   completedMsg,
 	})
 
 	return out, nil
@@ -401,6 +426,79 @@ func runSubagent(peerPath string, sub config.SubagentConfig, envelope string, bu
 	return stdout.String(), nil
 }
 
+// writePeerCallArtifact writes a per-call markdown artifact under
+// .hero/peer-calls/<call_id>.md capturing the request envelope and the
+// full result. Returns the path relative to projectRoot so callers can
+// embed it in trail entries portably.
+//
+// Best-effort: callers should treat a non-nil error as "lost
+// durability" — the in-memory result is still returned to the caller.
+func writePeerCallArtifact(
+	projectRoot string,
+	heroDir string,
+	peerAlias string,
+	req contractpeering.PeerCallRequest,
+	result contractpeering.PeerCallResult,
+) (string, error) {
+	dir := filepath.Join(heroDir, "peer-calls")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return "", fmt.Errorf("mkdir peer-calls: %w", err)
+	}
+	path := filepath.Join(dir, req.CallID+".md")
+	var b bytes.Buffer
+	b.WriteString("---\n")
+	fmt.Fprintf(&b, "call_id: %s\n", req.CallID)
+	fmt.Fprintf(&b, "mode: %s\n", req.Mode)
+	fmt.Fprintf(&b, "peer_alias: %s\n", peerAlias)
+	fmt.Fprintf(&b, "origin_peer_id: %s\n", req.OriginPeerID)
+	fmt.Fprintf(&b, "target_peer_id: %s\n", req.TargetPeerID)
+	fmt.Fprintf(&b, "at: %s\n", req.At.UTC().Format(time.RFC3339Nano))
+	if req.RelatedSpec != "" {
+		fmt.Fprintf(&b, "related_spec: %s\n", req.RelatedSpec)
+	}
+	if req.Reason != "" {
+		fmt.Fprintf(&b, "reason: %q\n", req.Reason)
+	}
+	fmt.Fprintf(&b, "result_kind: %s\n", result.Kind)
+	if result.SpecSlug != "" {
+		fmt.Fprintf(&b, "peer_spec: %s/%s\n", peerAlias, result.SpecSlug)
+		if result.PeerStatus != "" {
+			fmt.Fprintf(&b, "peer_status: %s\n", result.PeerStatus)
+		}
+	}
+	if result.BudgetConsumed.Turns != 0 || result.BudgetConsumed.Tokens != 0 {
+		b.WriteString("budget_consumed:\n")
+		fmt.Fprintf(&b, "  turns: %d\n", result.BudgetConsumed.Turns)
+		fmt.Fprintf(&b, "  tokens: %d\n", result.BudgetConsumed.Tokens)
+	}
+	b.WriteString("---\n\n")
+	fmt.Fprintf(&b, "# Peer call %s\n\n", req.CallID)
+	b.WriteString("## Prompt\n\n```\n")
+	b.WriteString(strings.TrimRight(req.Prompt, "\n"))
+	b.WriteString("\n```\n\n")
+	switch result.Kind {
+	case contractpeering.ResultSpecRef:
+		fmt.Fprintf(&b, "## Spec produced\n\n- spec_slug: %s\n- peer_status: %s\n",
+			result.SpecSlug, result.PeerStatus)
+		if result.Findings != "" {
+			fmt.Fprintf(&b, "\n## Notes\n\n%s\n", result.Findings)
+		}
+	default:
+		fmt.Fprintf(&b, "## Findings\n\n%s\n", result.Findings)
+	}
+	if result.Error != "" {
+		fmt.Fprintf(&b, "\n## Error\n\n```\n%s\n```\n", result.Error)
+	}
+	if err := os.WriteFile(path, b.Bytes(), 0o644); err != nil {
+		return "", fmt.Errorf("write artifact: %w", err)
+	}
+	rel, err := filepath.Rel(projectRoot, path)
+	if err != nil {
+		return path, nil
+	}
+	return rel, nil
+}
+
 // parseResultBlock locates the <peer-call-result>...</peer-call-result>
 // fence in subagent stdout and YAML-unmarshals the body into a
 // PeerCallResult. Returns a clear error when the fence is missing or
@@ -433,6 +531,7 @@ func recordOriginatorSide(
 	result contractpeering.PeerCallResult,
 	peerPeerID string,
 	atCommit string,
+	artifactRel string,
 ) error {
 	if opts.RelatedSpec == "" {
 		return nil
@@ -465,6 +564,10 @@ func recordOriginatorSide(
 		peerSpec = opts.PeerAlias + "/" + result.SpecSlug
 	}
 
+	resultRef := result.CallID
+	if artifactRel != "" {
+		resultRef = artifactRel
+	}
 	entry := contractpeering.TrailEntry{
 		At:               result.At,
 		Direction:        contractpeering.DirectionOut,
@@ -475,7 +578,7 @@ func recordOriginatorSide(
 		PeerSpec:         peerSpec,
 		PeerStatus:       result.PeerStatus,
 		AtCommit:         atCommit,
-		ResultRef:        result.CallID,
+		ResultRef:        resultRef,
 		Reason:           opts.Reason,
 	}
 
