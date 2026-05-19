@@ -35,8 +35,14 @@ import (
 // Pass empty string to skip content-equality removal (only
 // symlinks-to-.hero/ get cleaned up).
 //
+// When force is true, the byte-equality gate on regular files and
+// SKILL.md dirs is skipped — everything in legacyDir is removed
+// unconditionally (symlinks still require a Hero-managed target).
+// Use for paths Hero no longer writes or reads, where preserving
+// "user edits" has no current consumer to protect.
+//
 // Honors opts.DryRun.
-func removeIfHeroAuthored(opts Options, result *Result, legacyDir, canonicalKind string) error {
+func removeIfHeroAuthored(opts Options, result *Result, legacyDir, canonicalKind string, force bool) error {
 	info, err := os.Lstat(legacyDir)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -53,7 +59,7 @@ func removeIfHeroAuthored(opts Options, result *Result, legacyDir, canonicalKind
 	}
 	for _, e := range entries {
 		full := filepath.Join(legacyDir, e.Name())
-		if err := removeOneIfHeroAuthored(opts, result, full, canonicalKind, e); err != nil {
+		if err := removeOneIfHeroAuthored(opts, result, full, canonicalKind, e, force); err != nil {
 			return err
 		}
 	}
@@ -75,7 +81,7 @@ func removeIfHeroAuthored(opts Options, result *Result, legacyDir, canonicalKind
 	return nil
 }
 
-func removeOneIfHeroAuthored(opts Options, result *Result, full, canonicalKind string, e fs.DirEntry) error {
+func removeOneIfHeroAuthored(opts Options, result *Result, full, canonicalKind string, e fs.DirEntry, force bool) error {
 	info, err := e.Info()
 	if err != nil {
 		return err
@@ -106,7 +112,7 @@ func removeOneIfHeroAuthored(opts Options, result *Result, full, canonicalKind s
 		// Try to clean up the nested SKILL.md if this looks like a skill dir.
 		nested := filepath.Join(full, "SKILL.md")
 		if _, err := os.Stat(nested); err == nil {
-			if matchesNestedSkillCanonical(opts, filepath.Base(full), nested) {
+			if force || matchesNestedSkillCanonical(opts, filepath.Base(full), nested) {
 				if opts.DryRun {
 					fmt.Fprintf(os.Stderr,"  cleanup %s (would remove Hero-authored skill dir)\n", full)
 					return nil
@@ -122,17 +128,18 @@ func removeOneIfHeroAuthored(opts Options, result *Result, full, canonicalKind s
 			return nil
 		}
 		// Plain dir without SKILL.md — recurse and clean up Hero-authored files inside.
-		return removeIfHeroAuthored(opts, result, full, canonicalKind)
+		return removeIfHeroAuthored(opts, result, full, canonicalKind, force)
 	}
-	// Regular file → check bytes against canonical.
-	if canonicalKind == "" {
+	// Regular file → remove unconditionally under force, otherwise
+	// require byte equality with canonical embedded source.
+	if !force && canonicalKind == "" {
 		// No canonical kind to verify against → leave in place.
 		return nil
 	}
 	if !strings.HasSuffix(e.Name(), ".md") && !strings.HasSuffix(e.Name(), ".toml") {
 		return nil
 	}
-	if canonicalBytesEqual(opts, canonicalKind, e.Name(), full) {
+	if force || canonicalBytesEqual(opts, canonicalKind, e.Name(), full) {
 		if opts.DryRun {
 			fmt.Fprintf(os.Stderr,"  cleanup %s (would remove Hero-authored file)\n", full)
 			return nil
@@ -221,11 +228,15 @@ func cleanupLegacyCanonicalSymlinks(opts Options, projectDir string) error {
 	}
 
 	// 2) Remove the canonical mirror dirs at .hero/{agents,commands,skills}/
-	//    when the content matches embedded bytes (Hero-authored).
+	//    unconditionally. Under render-direct, Hero no longer writes or
+	//    reads these paths — they exist purely as orphans from the P2
+	//    single-source-install layout. There is no current consumer to
+	//    protect, so byte-equality protection only manifests as recurring
+	//    "differs from canonical" noise on upgrade.
 	result := &Result{}
 	for _, kind := range []string{"agents", "commands", "skills"} {
 		dir := filepath.Join(projectDir, ".hero", kind)
-		if err := removeIfHeroAuthored(opts, result, dir, kind); err != nil {
+		if err := removeIfHeroAuthored(opts, result, dir, kind, true); err != nil {
 			fmt.Printf("  warning: cleanup %s: %v\n", dir, err)
 		}
 	}

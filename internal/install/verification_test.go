@@ -220,7 +220,8 @@ func TestVerify_AutoSync_RefreshesSiblings(t *testing.T) {
 // TestVerify_LegacyCleanup_RemovesCanonicalMirrorAndSymlinks confirms
 // the upgrade-from-P2 path: a fixture with `.hero/{agents,commands,skills}/`
 // + harness symlinks pointing at them gets cleaned up automatically on
-// the next install. User-edited content is preserved.
+// the next install. The legacy mirror dirs are removed unconditionally —
+// no current consumer reads from them under render-direct.
 func TestVerify_LegacyCleanup_RemovesCanonicalMirrorAndSymlinks(t *testing.T) {
 	h := newInstallHarness(t)
 	heroDir := filepath.Join(h.TargetDir, ".hero")
@@ -255,6 +256,36 @@ func TestVerify_LegacyCleanup_RemovesCanonicalMirrorAndSymlinks(t *testing.T) {
 	// Legacy canonical mirror at .hero/agents must be gone.
 	if _, err := os.Stat(filepath.Join(heroDir, "agents")); err == nil {
 		t.Error(".hero/agents canonical mirror should have been cleaned up")
+	}
+}
+
+// TestVerify_LegacyCleanup_RemovesDriftedMirrorContent confirms that
+// drifted (non-canonical-byte) content in `.hero/{agents,commands,skills}/`
+// is also removed on upgrade. Under render-direct, those paths have no
+// loader — preserving "user edits" there only manifests as recurring
+// "differs from canonical" warnings every upgrade.
+func TestVerify_LegacyCleanup_RemovesDriftedMirrorContent(t *testing.T) {
+	h := newInstallHarness(t)
+	heroDir := filepath.Join(h.TargetDir, ".hero")
+	if err := os.MkdirAll(filepath.Join(heroDir, "agents"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// Seed a file that does NOT match canonical bytes (simulates a stale
+	// agent file from a prior Hero release, or a user-edited override).
+	drifted := filepath.Join(heroDir, "agents", "engineer.md")
+	if err := os.WriteFile(drifted, []byte("# drifted content from prior release\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	h.Run(TargetClaude, nil)
+
+	// Drifted file must be gone — nothing reads .hero/agents/ anymore.
+	if _, err := os.Stat(drifted); err == nil {
+		t.Error(".hero/agents/engineer.md (drifted bytes) should have been removed under render-direct")
+	}
+	// And the parent dir should be gone too once emptied.
+	if _, err := os.Stat(filepath.Join(heroDir, "agents")); err == nil {
+		t.Error(".hero/agents/ should have been removed after force cleanup")
 	}
 }
 

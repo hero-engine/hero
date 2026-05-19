@@ -50,10 +50,10 @@ func runCodex(opts Options) (*Result, error) {
 	// Cleanup of dead bytes from prior install layouts.
 	// .codex/agents/*.md (Codex requires .toml — markdown is dead)
 	// .codex/commands/* (no loader at any scope)
-	if err := removeIfHeroAuthored(opts, result, filepath.Join(destBase, "agents"), "agents"); err != nil {
+	if err := removeIfHeroAuthored(opts, result, filepath.Join(destBase, "agents"), "agents", false); err != nil {
 		return nil, fmt.Errorf("cleanup .codex/agents: %w", err)
 	}
-	if err := removeIfHeroAuthored(opts, result, filepath.Join(destBase, "commands"), "commands"); err != nil {
+	if err := removeIfHeroAuthored(opts, result, filepath.Join(destBase, "commands"), "commands", false); err != nil {
 		return nil, fmt.Errorf("cleanup .codex/commands: %w", err)
 	}
 

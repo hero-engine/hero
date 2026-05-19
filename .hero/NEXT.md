@@ -1,5 +1,11 @@
+<!-- hero:managed-start v=dev -->
+## Project snapshot
+
+Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
+<!-- hero:managed-end -->
+
 ---
-updated: 2026-05-18T23:31:57Z
+updated: 2026-05-19T03:01:27Z
 repo: hero-engine/hero
 branch: main
 ---
@@ -24,6 +30,3 @@ Nothing this session.
 
 Nothing pinned.
 
-<!-- >>> hero snapshot pointer (managed) >>> -->
-Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
-<!-- <<< hero snapshot pointer (managed) <<< -->
