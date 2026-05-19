@@ -14,7 +14,7 @@ import (
 	"sort"
 )
 
-//go:embed domains/engineering/agents domains/engineering/commands domains/engineering/skills domains/engineering/spec-types domains/engineering/AGENTS.md
+//go:embed domains/engineering/agents domains/engineering/commands domains/engineering/skills domains/engineering/spec-types domains/engineering/AGENTS.md domains/engineering/scan-manifest.yaml
 var engineeringContent embed.FS
 
 //go:embed domains/sales/agents domains/sales/commands domains/sales/skills domains/sales/spec-types domains/sales/AGENTS.md

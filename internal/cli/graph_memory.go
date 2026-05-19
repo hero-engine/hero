@@ -173,7 +173,7 @@ func reingestCode(cfg config.Config, projectRoot string, store *graph.Store) err
 	if err != nil {
 		return fmt.Errorf("scanning: %w", err)
 	}
-	summary, err := codescan.WriteGraph(result, store)
+	summary, err := codescan.WriteGraph(result, store, activeDomain(cfg))
 	if err != nil {
 		return fmt.Errorf("writing code subgraph: %w", err)
 	}

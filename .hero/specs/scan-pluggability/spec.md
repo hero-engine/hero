@@ -2,7 +2,7 @@
 title: Scan Pluggability — Per-Domain `hero scan` Implementations
 slug: scan-pluggability
 type: feature
-status: designed
+status: completed
 priority: P0
 tags: [platform, domains, scan, ingestion, refactor]
 created: 2026-05-15

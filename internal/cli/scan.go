@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -22,6 +23,12 @@ import (
 	"github.com/hero-engine/hero/internal/mission"
 	"github.com/hero-engine/hero/internal/nextdoc"
 	"github.com/hero-engine/hero/internal/scan"
+	// Anchor engineering scanner registration so `hero scan` finds the
+	// active pack via Dispatch when running under test harnesses
+	// (cmd/hero/main.go's blank import only covers the production
+	// binary). Future packs may follow the same pattern from their
+	// own cli entry points.
+	_ "github.com/hero-engine/hero/domains/engineering/scan"
 	"github.com/hero-engine/hero/internal/sessions"
 	"github.com/hero-engine/hero/internal/spec"
 	"github.com/hero-engine/hero/internal/tracker"
@@ -34,6 +41,17 @@ var (
 	scanCodeOnly bool
 	scanNoHooks  bool
 )
+
+// activeDomain returns the workspace's active domain pack, defaulting
+// to engineering when unset. Used at graph-write call sites that need
+// to stamp DSKG domain tags through the wire-through path described in
+// scan-pluggability spec §5.
+func activeDomain(cfg config.Config) string {
+	if cfg.Domain == "" {
+		return "engineering"
+	}
+	return cfg.Domain
+}
 
 var scanCmd = &cobra.Command{
 	Use:   "scan",
@@ -91,6 +109,40 @@ func runScan(cmd *cobra.Command, args []string) error {
 	// scan-output-cleanup). `--no-hooks` is preserved as a no-op flag
 	// for backwards compatibility with existing scripts.
 	_ = scanNoHooks
+
+	// Domain-aware dispatch (scan-pluggability spec §2):
+	//   - If the active pack ships no scanner manifest, print the
+	//     friendly skip and exit 0.
+	//   - --code is an engineering-only flag — reject it for any
+	//     non-engineering active pack.
+	//   - Otherwise let the active pack route. The engineering
+	//     scanner's Scan() is a no-op stub at this milestone (see
+	//     domains/engineering/scan/scanner.go); the legacy direct
+	//     call path below continues to drive the actual engineering
+	//     scan until scan-pluggability §8 PR 2 (relocation) lands.
+	domain := activeDomain(cfg)
+	if scanCodeOnly && domain != "engineering" {
+		return fmt.Errorf("hero scan --code is engineering-only; current active domain is %q", domain)
+	}
+	scanOpts := scan.ScanOpts{
+		ProjectRoot: projectRoot,
+		HeroDir:     heroDir,
+		Config:      cfg,
+		Flags:       map[string]any{"code": scanCodeOnly, "dry-run": scanDryRun, "force": scanForce},
+		DryRun:      scanDryRun,
+		Force:       scanForce,
+		Reporter:    scan.StdoutReporter(os.Stdout),
+	}
+	if _, err := scan.Dispatch("scan", scanOpts); err != nil {
+		if errors.Is(err, scan.ErrScannerNotFound) {
+			fmt.Printf("%s pack does not ship a scanner; nothing to do.\n", domain)
+			return nil
+		}
+		if errors.Is(err, scan.ErrSubcommandUnsupported) {
+			return fmt.Errorf("%s pack does not implement 'scan': %w", domain, err)
+		}
+		return fmt.Errorf("dispatch scan: %w", err)
+	}
 
 	// Code-only mode
 	if scanCodeOnly {
@@ -300,7 +352,7 @@ func writeCodeSubgraph(cfg config.Config, result *codescan.Result, projectRoot, 
 
 	report := &ingestReport{}
 
-	codeSummary, err := codescan.WriteGraph(result, store)
+	codeSummary, err := codescan.WriteGraph(result, store, activeDomain(cfg))
 	if err != nil {
 		report.add(stepResult{name: "code", failed: true, err: err})
 	} else {

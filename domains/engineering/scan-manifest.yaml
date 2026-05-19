@@ -1,0 +1,16 @@
+manifest_version: "1"
+scanner_id: engineering-code-scan
+display_name: Engineering Code Scan
+subcommands:
+  - id: scan
+    description: Full project scan — stack detection, knowledge generation, and code intelligence
+    flags:
+      - { name: code,    type: bool, default: false, description: "code intelligence only" }
+      - { name: dry-run, type: bool, default: false, description: "preview without writing" }
+      - { name: force,   type: bool, default: false, description: "overwrite customized entries" }
+emits:
+  node_types: [Repo, Package, File, Symbol, Spec, Convention, Rule]
+  edge_kinds: [belongs_to, defines, imports, mentions]
+config_keys:
+  - code_scan.depth
+  - code_scan.parser

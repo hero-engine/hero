@@ -20,7 +20,17 @@ import (
 //
 // Node types written: Repo, Package, File, Symbol.
 // Edge types written: belongs_to, defines, imports.
-func WriteGraph(result *Result, store *graph.Store) (*GraphWriteSummary, error) {
+//
+// The activeDomain parameter is accepted for future code-aware packs
+// (data-analytics scanning SQL, qa scanning test files) that may want
+// to attribute code intelligence to a non-engineering namespace.
+// In v1 the parameter is ignored: per DSKG spec §Phase 2, code is
+// intrinsically engineering content and Repo/Package/File/Symbol nodes
+// always stamp `engineering` regardless of what the caller passes. The
+// parameter exists so future scanners can pass their own domain without
+// a signature break — and so the call sites under
+// scan-pluggability §5 read uniformly.
+func WriteGraph(result *Result, store *graph.Store, activeDomain string) (*GraphWriteSummary, error) {
 	if result == nil || store == nil {
 		return nil, fmt.Errorf("codescan: WriteGraph requires non-nil Result and Store")
 	}
@@ -31,7 +41,10 @@ func WriteGraph(result *Result, store *graph.Store) (*GraphWriteSummary, error) 
 	// Code is intrinsically engineering content — see DSKG spec write-path
 	// rules. Repo is in globalNodeTypes so its Domain stays empty; every
 	// other node codescan writes (Package, File, Symbol) carries the
-	// engineering tag, and edges inherit from the from-node.
+	// engineering tag, and edges inherit from the from-node. The
+	// activeDomain parameter is deliberately ignored for these intrinsic
+	// nodes — see func doc.
+	_ = activeDomain
 	const codeDomain = "engineering"
 
 	summary := &GraphWriteSummary{}
