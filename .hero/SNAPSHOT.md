@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-05-19T22:47:06Z · projected from 255 source nodes_
+_Last refreshed: 2026-05-19T22:52:27Z · projected from 255 source nodes_
 
 ## Surfaces
 
@@ -16,7 +16,7 @@ _Last refreshed: 2026-05-19T22:47:06Z · projected from 255 source nodes_
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 1d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 13m ago | vocabulary-resolve-misses-methodology-derivation |
+| serve | building | internal/serve/ | 2m ago | vocabulary-resolve-misses-methodology-derivation |
 | (unassigned) | — | — | — | 110 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -44,10 +44,10 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — scan-pluggability, domain-routing-and-agents, domain-scoped-knowledge-graph, inline-propose-output-mode
+- **(unassigned)** — hero-code-handover-pack, scan-pluggability, domain-routing-and-agents, domain-scoped-knowledge-graph
 - **core** — install-core-domain-merge
-- **domains/engineering** — contentfs-legacy-fallback-removal, spec-type-registry
-- **serve** — dashboard-now-headline-misleading-when-empty, dashboard-inbox-misses-most-activity-sources, dashboard-adapter-state-hardcoded, dashboard-delivery-events-never-emitted, dashboard-user-identity-os-env-mismatch
+- **domains/engineering** — contentfs-legacy-fallback-removal
+- **serve** — hero-serve-multi-project, dashboard-now-headline-misleading-when-empty, dashboard-inbox-misses-most-activity-sources, dashboard-adapter-state-hardcoded, dashboard-delivery-events-never-emitted, dashboard-user-identity-os-env-mismatch
 
 ## Next up across surfaces
 

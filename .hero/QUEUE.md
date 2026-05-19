@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-19T22:50:12Z · 96 ready specs_
+_Generated: 2026-05-19T22:53:34Z · 95 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -172,39 +172,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-sales/spec.md)_
-
----
-
-## pm-platform-delivery — PM Platform Delivery — Ship the Designed Primitives So hero-code Can Build hero-pm
-_feature · planning · horizon: now_
-
-The design phase is complete. As of 2026-05-19, every spec hero-pm depends on is at `status: designed` or beyond:
-
-| Spec | Status | Design landed |
-|---|---|---|
-| `domain-plugin-architecture` | `delivering` | already in flight; needs closeout |
-| `spec-type-registry` | `delivering` | shipped via `pm-foundation-delivery`; frontmatter stale |
-| `inline-propose-output-mode` | `delivering` | shipped via `pm-foundation-delivery`; frontmatter stale |
-| `dashboard-view-registry` | `completed` | already archived at `.hero/specs/dashboard-view-registry/` |
-| `domain-routing-and-agents` | **`designed` 2026-05-19** | this session — pack-AGENTS.md splice + agent filtering by domain frontmatter |
-| `scan-pluggability` | **`designed` 2026-05-19** | this session — uniform graph schema + domain tag, manifest+dispatcher map shape |
-| `domain-scoped-knowledge-graph` | **`designed` 2026-05-19** | full four-phase migration plan + 30-call-site audit table |
-| `hero-pm` | **`designed` 2026-05-19** | this session — 5 spec types, 27 agents, 7 dashboard views, killer demo locked |
-| `hero-code-handover-pack` | `planning` | delivery-shaped already (5 concrete artifacts); no design pass needed |
-
-This sprint walks through delivery for every primitive hero-pm consumes, in dependency order. It supersedes `pm-platform-unblock` (Tracks A design passes done — superseded sprint's checklist marks W1/W2/W3 as ✅).
-
-**Sprint completes when:**
-- All seven primitives are `status: completed` and archived under `.hero/specs/`
-- `hero-code-handover-pack` artifacts are shipped and proven consumable by hero-code's Rust widget tests
-- A fresh peer call to hero-code (advisory) supersedes the 2026-05-17 handoff and tells them they can `/deliver hero-pm` end-to-end in the hero-code repo
-- `go test ./...` clean across all touched packages; `hero check` clean
-
-→ `/deliver pm-platform-delivery` — or pick a single work item: `/deliver pm-platform-delivery#D5`
-
-**Files:** `.hero/planning/features/pm-platform-delivery/spec.md`, `.hero/planning/features/pm-platform-unblock/spec.md` (superseded), `.hero/planning/features/domain-plugin-architecture/spec.md`, `.hero/planning/features/spec-type-registry/spec.md`, `.hero/planning/features/inline-propose-output-mode/spec.md`, `.hero/planning/features/domain-routing-and-agents/spec.md`, `.hero/planning/features/scan-pluggability/spec.md`, `.hero/planning/features/domain-scoped-knowledge-graph/spec.md`, `.hero/planning/features/hero-code-handover-pack/spec.md`, `.hero/planning/features/hero-pm/spec.md`
-
-**Skip:** Implementing `hero-pm` itself — delivery happens in the hero-code repo. Building `hero-qa` or any second domain pack. Multi-active-domain workspaces (single-active is locked in DSKG v1; cross-domain reads are boundary-aware but the workspace has one active domain at a time). Renaming or reshaping the four contracts shipped by `pm-foundation-delivery`. Designing or implementing PM-specific scanners — they live in `hero-pm`.
 
 ---
 
