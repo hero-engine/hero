@@ -1,10 +1,14 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"sort"
 
 	hero "github.com/hero-engine/hero"
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/install"
 	"github.com/spf13/cobra"
 )
@@ -34,9 +38,28 @@ var domainSwitchCmd = &cobra.Command{
 	RunE:  runDomainSwitch,
 }
 
+var domainVerifyJSON bool
+
+var domainVerifyCmd = &cobra.Command{
+	Use:   "verify",
+	Short: "Report graph row counts grouped by the `domain` partition",
+	Long: `Reports node and edge counts grouped by the domain namespace
+column. Cross-domain edges (where endpoint domains differ) are
+listed with their edge kind so the operator can audit boundary
+crossings.
+
+Use this after a schema-v3 migration to confirm every row landed
+under 'engineering' (the migration default) and that no domain
+leakage occurred. Pair with 'hero admin schema rollback v3
+--dry-run' to see the non-engineering row count before reverting.`,
+	RunE: runDomainVerify,
+}
+
 func init() {
 	domainCmd.AddCommand(domainListCmd)
 	domainCmd.AddCommand(domainSwitchCmd)
+	domainCmd.AddCommand(domainVerifyCmd)
+	domainVerifyCmd.Flags().BoolVar(&domainVerifyJSON, "json", false, "emit raw JSON instead of a human-readable summary")
 }
 
 func runDomainShow(cmd *cobra.Command, args []string) error {
@@ -126,4 +149,67 @@ func runDomainSwitch(cmd *cobra.Command, args []string) error {
 		}
 	}
 	return nil
+}
+
+func runDomainVerify(cmd *cobra.Command, args []string) error {
+	projectRoot := findProjectRoot()
+	cfg, err := config.Load(projectRoot)
+	if err != nil {
+		return fmt.Errorf("loading config: %w", err)
+	}
+	heroDir := cfg.HeroDir(projectRoot)
+	if _, err := os.Stat(heroDir); os.IsNotExist(err) {
+		return fmt.Errorf("no hero workspace found (run 'hero init' first)")
+	}
+
+	store, err := graph.Open(heroDir)
+	if err != nil {
+		return fmt.Errorf("opening graph: %w", err)
+	}
+	defer store.Close()
+
+	stats, err := store.DomainStats()
+	if err != nil {
+		return fmt.Errorf("computing domain stats: %w", err)
+	}
+
+	if domainVerifyJSON {
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(stats)
+	}
+
+	fmt.Println("Nodes by domain:")
+	printCountMap(stats.NodesByDomain)
+	fmt.Println()
+	fmt.Println("Edges by domain:")
+	printCountMap(stats.EdgesByDomain)
+
+	if len(stats.CrossDomainEdges) > 0 {
+		fmt.Println()
+		fmt.Println("Cross-domain edges (from → to, by kind):")
+		for _, g := range stats.CrossDomainEdges {
+			fmt.Printf("  %s → %s  %s: %d\n", g.FromDomain, g.ToDomain, g.Kind, g.Count)
+		}
+	}
+	return nil
+}
+
+func printCountMap(m map[string]int) {
+	if len(m) == 0 {
+		fmt.Println("  (none)")
+		return
+	}
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		label := k
+		if label == "" {
+			label = "(global)"
+		}
+		fmt.Printf("  %-20s %d\n", label, m[k])
+	}
 }
