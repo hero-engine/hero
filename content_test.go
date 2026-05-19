@@ -28,7 +28,6 @@ func TestEmbeddedAgents_HaveRequiredFrontmatter(t *testing.T) {
 		fsys fs.FS
 		root string
 	}{
-		{"legacy/root", legacyContent, "agents"},
 		{"core", coreContent, "core/agents"},
 		{"engineering", engineeringContent, "domains/engineering/agents"},
 	}
@@ -70,7 +69,6 @@ func TestEmbeddedSkills_HaveRequiredFrontmatter(t *testing.T) {
 		fsys fs.FS
 		root string
 	}{
-		{"legacy/root", legacyContent, "skills"},
 		{"core", coreContent, "core/skills"},
 		{"engineering", engineeringContent, "domains/engineering/skills"},
 	}
@@ -212,7 +210,8 @@ func TestDomainFS_KnownDomains(t *testing.T) {
 }
 
 // TestDomainFS_DefaultAndEmpty verifies that the empty domain string
-// resolves identically to "engineering" (legacy fallback contract).
+// resolves identically to "engineering" through the same domain-pack
+// path used by pm and sales.
 func TestDomainFS_DefaultAndEmpty(t *testing.T) {
 	empty, err := DomainFS("")
 	if err != nil {

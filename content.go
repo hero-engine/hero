@@ -35,46 +35,34 @@ var coreMethodologies embed.FS
 //go:embed core/spec-types
 var coreSpecTypes embed.FS
 
-// legacyContent embeds the root-level agents/, commands/, and skills/
-// directories. Kept as permanent backward-compat: ContentFS() returns
-// this filesystem so callers that pre-date the domain-pack architecture
-// (and any project whose hero.json has no "domain" key) keep getting
-// content. The root dirs also remain the actively-maintained source
-// for the engineering vertical today — domains/engineering/ is a
-// scaffolded mirror that is allowed to be incomplete.
-//
-// B1 decision (2026-05-17, pm-foundation-delivery sprint): leave this
-// legacy fallback in place rather than cutting ContentFS() over to
-// domains/engineering/. The cutover requires first syncing root →
-// domains/engineering/ bit-for-bit, which is out of B1 scope (B1 wires
-// PM into the embed surface; it does not migrate engineering content).
-// See .hero/planning/features/domain-plugin-architecture/spec.md for
-// the full decision record.
-//
-//go:embed agents commands skills
-var legacyContent embed.FS
-
 // ContentFS returns a read-only filesystem for the default (engineering)
-// vertical. Returns the legacy root-level agents/commands/skills — see
-// the legacyContent comment for why that's still the canonical source.
+// vertical, rooted at domains/engineering/. Equivalent to
+// DomainFS("engineering"). Callers that pre-date the domain-pack
+// architecture (or any project whose hero.json has no "domain" key)
+// continue to receive engineering content through this entry point.
 func ContentFS() fs.FS {
-	return legacyContent
+	fsys, err := DomainFS("engineering")
+	if err != nil {
+		// Engineering is always embedded; if Sub ever fails, the embed
+		// itself is the safest fallback so the binary keeps working.
+		return engineeringContent
+	}
+	return fsys
 }
 
 // DomainFS returns a read-only filesystem for the specified domain.
 // The returned FS has agents/, commands/, and skills/ at its root.
-//
-// For "engineering" (and the empty default), legacyContent is the
-// canonical source today; the domains/engineering/ embed is reserved
-// for the eventual switchover but isn't authoritative yet.
+// An empty domain string resolves to "engineering".
 func DomainFS(domain string) (fs.FS, error) {
-	if domain == "" || domain == "engineering" {
-		return legacyContent, nil
+	if domain == "" {
+		domain = "engineering"
 	}
-	if domain == "sales" {
+	switch domain {
+	case "engineering":
+		return fs.Sub(engineeringContent, "domains/engineering")
+	case "sales":
 		return fs.Sub(salesContent, "domains/sales")
-	}
-	if domain == "pm" {
+	case "pm":
 		return fs.Sub(pmContent, "domains/pm")
 	}
 	return nil, fmt.Errorf("domain %q not found — available domains: %v", domain, AvailableDomains())
