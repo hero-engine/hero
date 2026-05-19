@@ -352,8 +352,8 @@ func runPeerCall(cmd *cobra.Command, args []string) error {
 		Mode:      mode,
 		Prompt:    prompt,
 		Budget: contractpeering.BudgetSpec{
-			Turns:  peerCallBudgetTurns,
-			Tokens: peerCallBudgetTokens,
+			Turns:  contractpeering.ApproxInt(peerCallBudgetTurns),
+			Tokens: contractpeering.ApproxInt(peerCallBudgetTokens),
 		},
 		RelatedSpec: peerCallRelatedSpec,
 		Reason:      peerCallReason,

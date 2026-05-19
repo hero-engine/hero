@@ -21,4 +21,4 @@ package peering
 // cadence (handoff trail format, peer manifest schema) without
 // requiring a main-contracts bump, and main-contracts bumps don't
 // force peer manifests to be regenerated.
-const PeeringContractsVersion = 1
+const PeeringContractsVersion = 2

@@ -108,7 +108,7 @@ findings: |
   message, details map.
 budget_consumed:
   turns: 4
-  tokens: 1842
+  tokens: ~1842
 </peer-call-result>
 
 Trailing chatter ignored.
@@ -125,6 +125,42 @@ Trailing chatter ignored.
 		}
 		if r.BudgetConsumed.Turns != 4 || r.BudgetConsumed.Tokens != 1842 {
 			t.Errorf("budget: %+v", r.BudgetConsumed)
+		}
+	})
+
+	t.Run("tolerant budget forms", func(t *testing.T) {
+		cases := []struct {
+			name   string
+			line   string
+			wantOK bool
+			want   contractpeering.ApproxInt
+		}{
+			{"plain int", "tokens: 22000", true, 22000},
+			{"tilde-prefixed", "tokens: ~22000", true, 22000},
+			{"float", "tokens: 22000.0", true, 22000},
+			{"float truncates", "tokens: 22000.7", true, 22000},
+			{"quoted int", `tokens: "22000"`, true, 22000},
+			{"quoted tilde", `tokens: "~22000"`, true, 22000},
+			{"zero", "tokens: 0", true, 0},
+			{"missing key", "", true, 0},
+			{"negative rejected", "tokens: -1", false, 0},
+			{"garbage rejected", "tokens: lots", false, 0},
+		}
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				stdout := "<peer-call-result>\nkind: findings\nbudget_consumed:\n  turns: 1\n  " + tc.line + "\n</peer-call-result>\n"
+				r, err := parseResultBlock(stdout)
+				if tc.wantOK {
+					if err != nil {
+						t.Fatalf("parse: %v", err)
+					}
+					if r.BudgetConsumed.Tokens != tc.want {
+						t.Errorf("tokens: got %d, want %d", r.BudgetConsumed.Tokens, tc.want)
+					}
+				} else if err == nil {
+					t.Fatalf("expected parse error, got tokens=%d", r.BudgetConsumed.Tokens)
+				}
+			})
 		}
 	})
 

@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-05-19T23:30:31Z · projected from 255 source nodes_
+_Last refreshed: 2026-05-19T23:40:05Z · projected from 257 source nodes_
 
 ## Surfaces
 
@@ -16,8 +16,8 @@ _Last refreshed: 2026-05-19T23:30:31Z · projected from 255 source nodes_
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 1d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 40m ago | vocabulary-resolve-misses-methodology-derivation |
-| (unassigned) | — | — | — | 110 specs without surface |
+| serve | building | internal/serve/ | 50m ago | vocabulary-resolve-misses-methodology-derivation |
+| (unassigned) | — | — | — | 112 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
 
@@ -60,11 +60,11 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Open risks & blockers
 
 - **Blocked specs (13):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `e2e-traversal` (waits on traversal-queries); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection); `traversal-queries` (waits on master-ingest-restore); `unified-retrieval-layer` (waits on master-ingest-restore).
-- **Unassigned specs (110) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
+- **Unassigned specs (112) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 124/234 (52%)
-- Projection generation: 0ms · Source nodes: 255
+- Specs covered: 124/236 (52%)
+- Projection generation: 0ms · Source nodes: 257
 

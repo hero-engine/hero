@@ -45,3 +45,5 @@
 {"ts":"2026-05-19T22:53:19.074496Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"pm-platform-delivery","message":"status -\u003e completed"}
 {"ts":"2026-05-19T23:30:23.779964Z","type":"peer.call.invoked","agent":"hero","slug":"pm-platform-delivery","message":"peer call advisory mode=advisory target=hero-code call_id=18b11b5f44e886081f9859721c81ae07"}
 {"ts":"2026-05-19T23:32:03.800333Z","type":"peer.call.completed","agent":"hero","slug":"pm-platform-delivery","message":"peer call ok mode=advisory target=hero-code kind=findings call_id=18b11b5f44e886081f9859721c81ae07"}
+{"ts":"2026-05-19T23:46:02.891855Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"peer-call-result-yaml-int-strict-parse","message":"\"peer call result fails YAML unmarshal when subagent emits tilde-approximated ints (e.g. tokens: ~22000)\""}
+{"ts":"2026-05-19T23:46:02.891943Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"peer-call-result-yaml-int-strict-parse","message":"status -\u003e completed"}
