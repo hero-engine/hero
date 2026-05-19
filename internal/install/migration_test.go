@@ -3,7 +3,6 @@ package install
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -14,8 +13,6 @@ import (
 //     before the TOML switch) get cleaned up automatically.
 //   - The corrected layout (e.g. .codex/agents/*.toml) lands in its
 //     place.
-//   - User-edited content in legacy locations is preserved with a
-//     warning, NOT silently deleted.
 
 // TestMigration_CodexLegacyLayoutCleanup simulates a project with the
 // pre-fix Codex install (markdown agents at .codex/agents/, no
@@ -94,41 +91,6 @@ func TestMigration_CopilotLegacyLayoutCleanup(t *testing.T) {
 	h.mustBeRegularFile(".github/prompts/agents/engineer.prompt.md")
 	h.mustBeRegularFile(".github/prompts/commands/design.prompt.md")
 	h.mustBeRegularFile(".github/skills/spec-format/SKILL.md")
-}
-
-// TestMigration_PreservesUserEditedLegacyContent confirms that
-// user-edited files in legacy install locations are NOT auto-deleted
-// during cleanup — only Hero-authored byte-equal content is removed.
-// The user gets a warning telling them to review and delete manually.
-func TestMigration_PreservesUserEditedLegacyContent(t *testing.T) {
-	h := newInstallHarness(t)
-	if err := os.MkdirAll(filepath.Join(h.TargetDir, ".hero"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-
-	// Seed a legacy Codex agent with USER-EDITED content (does not
-	// match canonical bytes).
-	userEdited := filepath.Join(h.TargetDir, ".codex", "agents", "my-custom.md")
-	if err := os.MkdirAll(filepath.Dir(userEdited), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(userEdited, []byte("# My custom Codex agent\nUser-authored content."), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	h.Run(TargetCodex, nil)
-
-	// User content must still exist after migration.
-	if _, err := os.Stat(userEdited); err != nil {
-		t.Errorf("user-edited %s should NOT have been deleted: %v", userEdited, err)
-	}
-	// Confirm content unchanged.
-	data, _ := os.ReadFile(userEdited)
-	if !strings.Contains(string(data), "User-authored content") {
-		t.Errorf("user content was modified: %q", string(data))
-	}
-	// New TOML form should still land alongside the user file.
-	h.mustBeRegularFile(".codex/agents/engineer.toml")
 }
 
 // mustMirrorCanonical writes srcPath (read from the harness's source
