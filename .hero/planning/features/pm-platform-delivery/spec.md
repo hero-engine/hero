@@ -254,7 +254,7 @@ Four tracks. Track A is closeouts (can start immediately). Track B is sequenced 
 ## Sprint completion checklist
 
 - [x] D1: `domain-plugin-architecture` at `completed`, archived (2026-05-19 — all 7 ACs verified; auto-archived during session via projection pipeline)
-- [ ] D2: `spec-type-registry` + `inline-propose-output-mode` reconciled (both at `completed` and archived, or residual work folded in and shipped)
+- [x] D2: `spec-type-registry` + `inline-propose-output-mode` reconciled (2026-05-19 — both at `completed` and archived; parity tests pass, propose pkg + serve propose tests pass, all delivery artifacts verified)
 - [ ] D3: `domain-routing-and-agents` at `completed`, archived
 - [ ] D4: `scan-pluggability` at `completed`, archived (three PRs shipped)
 - [ ] D5: DSKG Phase 1 (schema v3) shipped

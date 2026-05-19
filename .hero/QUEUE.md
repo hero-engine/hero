@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-19T14:09:09Z · 107 ready specs_
+_Generated: 2026-05-19T14:11:08Z · 105 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -168,73 +168,43 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## spec-type-registry — Spec Type Registry — Nine-Type Registry With Kind, Tasks, Owner, and Methodology Profile Hook
-_feature · delivering · horizon: next_
-
-`/deliver spec-type-registry` — but **not before** the migration
-script (delegated under `unified-spec-type-model`) is ready to
-run alongside. First implementation step is the loader + JSON
-export + parity tests, with engineering's reference registration
-and core's shared five spec-type files authored together. Do not
-modify any existing call site until both `TestLintParity` and
-`TestACParity` are green. Then migrate `internal/triage/
-structural.go` first (centralizes the existing behavior), then
-the importer (highest external surface — and the one that
-consumes the vocabulary's `tracker_mappings`), then CLI
-scaffolding, then dashboard and knowledge surfaces.
-
-The vocabulary system (loader, resolver, six v1 files,
-override merging) lands in parallel under the parent spec's
-spread plan. The registry validates vocabulary `tracker_mappings`
-against itself at startup but otherwise treats vocabulary as an
-opaque external service.
-
-**Files:** .hero/planning/features/spec-type-registry/spec.md,
-.hero/planning/features/unified-spec-type-model/spec.md,
-.hero/planning/features/hero-pm/spec.md,
-.hero/planning/initiatives/hero-domains/spec.md,
-core/ (target for new spec-types/),
-domains/pm/spec-types/ (collapsing into core),
-domains/engineering/ (target for new spec-types/),
-internal/spec/spec.go, internal/triage/structural.go,
-internal/cli/new.go, internal/cli/sync_import.go,
-internal/tracker/sprint.go, internal/serve/mcp_tools.go,
-internal/acceptance/ (renaming to internal/checklists/),
-content.go.
-
-**Skip:** Authoring the vocabulary preset system (parent spec's
-spread plan). Writing the migration script (delegated to
-`migration-engineer`). Rewriting `handoff-coordinator` (PM-pack
-revision). Removing `Type*` Go constants (follow-up cleanup PR).
-Runtime registry reload. Multi-domain coexistence in one
-workspace. Per-spec inline custom types.
-
----
-
-## inline-propose-output-mode — Inline-Propose Output Mode — Agents Propose into the Artifact Pane
-_feature · delivering · horizon: next_
-
-Run `/deliver inline-propose-output-mode`. Confirm the three
-dependency primitives (`domain-plugin-architecture`,
-`domain-routing-and-agents`, `dashboard-view-registry`) are in a
-state where their integration points are accessible — at minimum,
-`domains/_platform/` exists for the agent prompt addendum and the
-agent loader has the hook for env-conditional prompt augmentation.
-If those primitives haven't landed, deliver the daemon-side pieces
-(envelope, store, routes, lifecycle log, shim) standalone first and
-stub the agent-prompt integration as a follow-up.
-
-→ `/deliver inline-propose-output-mode`
-
-**Files:** .hero/planning/features/inline-propose-output-mode/spec.md, docs/contracts/inline-propose-v1.md (new), internal/proposals/ (new), internal/serve/proposals_routes.go (new), internal/cli/agent_run.go (new), domains/_platform/agent-prompts/inline-propose-addendum.md (new), testdata/proposals/v1/ (new), .hero/planning/features/hero-pm/spec.md (consumer), .hero/planning/features/hero-pm/mockups/08-inline-proposal.html (visual source of truth)
-**Skip:** sidecar persistence (v2), cross-domain proposals (v2), multi-author concurrent proposals (Hero Cloud), proposals on arbitrary source files (out of scope), inline-propose for `/deliver` and `/diagnose` (continue write-to-disk).
-
----
-
 ## hero-sales — Hero Sales — AI-Powered Sales Workflow for Revenue Teams
 _feature · delivering · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-sales/spec.md)_
+
+---
+
+## pm-platform-delivery — PM Platform Delivery — Ship the Designed Primitives So hero-code Can Build hero-pm
+_feature · planning · horizon: now_
+
+The design phase is complete. As of 2026-05-19, every spec hero-pm depends on is at `status: designed` or beyond:
+
+| Spec | Status | Design landed |
+|---|---|---|
+| `domain-plugin-architecture` | `delivering` | already in flight; needs closeout |
+| `spec-type-registry` | `delivering` | shipped via `pm-foundation-delivery`; frontmatter stale |
+| `inline-propose-output-mode` | `delivering` | shipped via `pm-foundation-delivery`; frontmatter stale |
+| `dashboard-view-registry` | `completed` | already archived at `.hero/specs/dashboard-view-registry/` |
+| `domain-routing-and-agents` | **`designed` 2026-05-19** | this session — pack-AGENTS.md splice + agent filtering by domain frontmatter |
+| `scan-pluggability` | **`designed` 2026-05-19** | this session — uniform graph schema + domain tag, manifest+dispatcher map shape |
+| `domain-scoped-knowledge-graph` | **`designed` 2026-05-19** | full four-phase migration plan + 30-call-site audit table |
+| `hero-pm` | **`designed` 2026-05-19** | this session — 5 spec types, 27 agents, 7 dashboard views, killer demo locked |
+| `hero-code-handover-pack` | `planning` | delivery-shaped already (5 concrete artifacts); no design pass needed |
+
+This sprint walks through delivery for every primitive hero-pm consumes, in dependency order. It supersedes `pm-platform-unblock` (Tracks A design passes done — superseded sprint's checklist marks W1/W2/W3 as ✅).
+
+**Sprint completes when:**
+- All seven primitives are `status: completed` and archived under `.hero/specs/`
+- `hero-code-handover-pack` artifacts are shipped and proven consumable by hero-code's Rust widget tests
+- A fresh peer call to hero-code (advisory) supersedes the 2026-05-17 handoff and tells them they can `/deliver hero-pm` end-to-end in the hero-code repo
+- `go test ./...` clean across all touched packages; `hero check` clean
+
+→ `/deliver pm-platform-delivery` — or pick a single work item: `/deliver pm-platform-delivery#D5`
+
+**Files:** `.hero/planning/features/pm-platform-delivery/spec.md`, `.hero/planning/features/pm-platform-unblock/spec.md` (superseded), `.hero/planning/features/domain-plugin-architecture/spec.md`, `.hero/planning/features/spec-type-registry/spec.md`, `.hero/planning/features/inline-propose-output-mode/spec.md`, `.hero/planning/features/domain-routing-and-agents/spec.md`, `.hero/planning/features/scan-pluggability/spec.md`, `.hero/planning/features/domain-scoped-knowledge-graph/spec.md`, `.hero/planning/features/hero-code-handover-pack/spec.md`, `.hero/planning/features/hero-pm/spec.md`
+
+**Skip:** Implementing `hero-pm` itself — delivery happens in the hero-code repo. Building `hero-qa` or any second domain pack. Multi-active-domain workspaces (single-active is locked in DSKG v1; cross-domain reads are boundary-aware but the workspace has one active domain at a time). Renaming or reshaping the four contracts shipped by `pm-foundation-delivery`. Designing or implementing PM-specific scanners — they live in `hero-pm`.
 
 ---
 
@@ -291,39 +261,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _bug · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/dashboard-user-identity-os-env-mismatch/spec.md)_
-
----
-
-## pm-platform-delivery — PM Platform Delivery — Ship the Designed Primitives So hero-code Can Build hero-pm
-_feature · planning · horizon: now_
-
-The design phase is complete. As of 2026-05-19, every spec hero-pm depends on is at `status: designed` or beyond:
-
-| Spec | Status | Design landed |
-|---|---|---|
-| `domain-plugin-architecture` | `delivering` | already in flight; needs closeout |
-| `spec-type-registry` | `delivering` | shipped via `pm-foundation-delivery`; frontmatter stale |
-| `inline-propose-output-mode` | `delivering` | shipped via `pm-foundation-delivery`; frontmatter stale |
-| `dashboard-view-registry` | `completed` | already archived at `.hero/specs/dashboard-view-registry/` |
-| `domain-routing-and-agents` | **`designed` 2026-05-19** | this session — pack-AGENTS.md splice + agent filtering by domain frontmatter |
-| `scan-pluggability` | **`designed` 2026-05-19** | this session — uniform graph schema + domain tag, manifest+dispatcher map shape |
-| `domain-scoped-knowledge-graph` | **`designed` 2026-05-19** | full four-phase migration plan + 30-call-site audit table |
-| `hero-pm` | **`designed` 2026-05-19** | this session — 5 spec types, 27 agents, 7 dashboard views, killer demo locked |
-| `hero-code-handover-pack` | `planning` | delivery-shaped already (5 concrete artifacts); no design pass needed |
-
-This sprint walks through delivery for every primitive hero-pm consumes, in dependency order. It supersedes `pm-platform-unblock` (Tracks A design passes done — superseded sprint's checklist marks W1/W2/W3 as ✅).
-
-**Sprint completes when:**
-- All seven primitives are `status: completed` and archived under `.hero/specs/`
-- `hero-code-handover-pack` artifacts are shipped and proven consumable by hero-code's Rust widget tests
-- A fresh peer call to hero-code (advisory) supersedes the 2026-05-17 handoff and tells them they can `/deliver hero-pm` end-to-end in the hero-code repo
-- `go test ./...` clean across all touched packages; `hero check` clean
-
-→ `/deliver pm-platform-delivery` — or pick a single work item: `/deliver pm-platform-delivery#D5`
-
-**Files:** `.hero/planning/features/pm-platform-delivery/spec.md`, `.hero/planning/features/pm-platform-unblock/spec.md` (superseded), `.hero/planning/features/domain-plugin-architecture/spec.md`, `.hero/planning/features/spec-type-registry/spec.md`, `.hero/planning/features/inline-propose-output-mode/spec.md`, `.hero/planning/features/domain-routing-and-agents/spec.md`, `.hero/planning/features/scan-pluggability/spec.md`, `.hero/planning/features/domain-scoped-knowledge-graph/spec.md`, `.hero/planning/features/hero-code-handover-pack/spec.md`, `.hero/planning/features/hero-pm/spec.md`
-
-**Skip:** Implementing `hero-pm` itself — delivery happens in the hero-code repo. Building `hero-qa` or any second domain pack. Multi-active-domain workspaces (single-active is locked in DSKG v1; cross-domain reads are boundary-aware but the workspace has one active domain at a time). Renaming or reshaping the four contracts shipped by `pm-foundation-delivery`. Designing or implementing PM-specific scanners — they live in `hero-pm`.
 
 ---
 
