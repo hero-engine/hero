@@ -115,6 +115,42 @@ func TestTabActivation_MatchesPrefix(t *testing.T) {
 	}
 }
 
+// Spec dashboard-adapter-state-hardcoded: Chrome.Adapter reflects the
+// probe wired via SetAdapterProbe. Without a probe, AdapterState is
+// zero (disconnected, empty name) — the muted-chip default.
+func TestBuildChrome_AdapterProbe(t *testing.T) {
+	r, _ := newTestRouter(t, edition.Local)
+	req := httptest.NewRequest("GET", "/now", nil)
+
+	// No probe → disconnected by default.
+	chrome := r.buildChrome(req, "")
+	if chrome.Adapter.Connected {
+		t.Error("adapter should be disconnected when no probe is registered")
+	}
+	if chrome.Adapter.DisplayName != "" {
+		t.Errorf("adapter display name = %q, want empty", chrome.Adapter.DisplayName)
+	}
+
+	// Probe returns connected → chip surfaces the display name.
+	r.SetAdapterProbe(func() AdapterState {
+		return AdapterState{Connected: true, DisplayName: "hero-code"}
+	})
+	chrome = r.buildChrome(req, "")
+	if !chrome.Adapter.Connected {
+		t.Error("adapter should be connected via probe")
+	}
+	if chrome.Adapter.DisplayName != "hero-code" {
+		t.Errorf("adapter display name = %q, want hero-code", chrome.Adapter.DisplayName)
+	}
+
+	// Reverting to nil restores the disconnected default.
+	r.SetAdapterProbe(nil)
+	chrome = r.buildChrome(req, "")
+	if chrome.Adapter.Connected {
+		t.Error("nil probe should reset to disconnected")
+	}
+}
+
 func TestRootRedirect_FallsBackToNow(t *testing.T) {
 	r, _ := newTestRouter(t, edition.Local)
 	if err := r.RegisterHome(Home{

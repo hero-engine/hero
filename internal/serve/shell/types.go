@@ -88,6 +88,19 @@ type Chrome struct {
 	UserName     string
 	UserInitials string
 	Tabs         []ChromeTab
+	// Adapter is the live chat-adapter probe result. The top-nav chip
+	// renders from this field, NOT from hardcoded HTML — the body
+	// widgets (install panel, disabled chat-input) read the same source,
+	// so chrome and content can no longer disagree on adapter state.
+	Adapter AdapterState
+}
+
+// AdapterState describes whether an interactive chat adapter is wired
+// up, plus the display name to surface in the top-nav chip. Empty
+// DisplayName falls back to a muted "no adapter" rendering.
+type AdapterState struct {
+	Connected   bool
+	DisplayName string
 }
 
 // ChromeTab is one top-nav tab.

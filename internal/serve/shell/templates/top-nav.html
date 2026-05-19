@@ -20,9 +20,15 @@
     </div>
 
     <div class="topnav-right">
-      <span class="adapter-chip" title="Chat adapter: hero-code (connected)">
-        <span class="adapter-dot"></span>via hero-code
+      {{- if .Adapter.Connected }}
+      <span class="adapter-chip" title="Chat adapter: {{ .Adapter.DisplayName }} (connected)">
+        <span class="adapter-dot"></span>via {{ .Adapter.DisplayName }}
       </span>
+      {{- else }}
+      <span class="adapter-chip muted" title="No chat adapter connected">
+        <span class="adapter-dot"></span>no adapter
+      </span>
+      {{- end }}
       <a href="#" class="search-pill" data-command-bar-trigger aria-label="Open command bar">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
         Search specs, code, knowledge…

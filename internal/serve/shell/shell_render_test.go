@@ -165,6 +165,51 @@ func TestRender_EmptyStateNotice(t *testing.T) {
 	}
 }
 
+// Spec dashboard-adapter-state-hardcoded: chip text drives from
+// AdapterState, no longer hardcoded. Disconnected probe renders the
+// muted "no adapter" chip.
+func TestRender_TopNav_AdapterDisconnected(t *testing.T) {
+	out := fragmentRender(t, "top-nav", Chrome{
+		Workspace: "hero",
+		Tabs:      []ChromeTab{{Slug: "now", Label: "Now", Href: "/now", Active: true}},
+		Adapter:   AdapterState{},
+	})
+	for _, want := range []string{
+		`class="adapter-chip muted"`,
+		`title="No chat adapter connected"`,
+		`>no adapter`,
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("disconnected chip missing %q in:\n%s", want, out)
+		}
+	}
+	if strings.Contains(out, "via hero-code") {
+		t.Errorf("disconnected chip should not say 'via hero-code', got:\n%s", out)
+	}
+}
+
+// Spec dashboard-adapter-state-hardcoded: connected probe with a
+// display name renders "via <name>" with the connected tooltip.
+func TestRender_TopNav_AdapterConnected(t *testing.T) {
+	out := fragmentRender(t, "top-nav", Chrome{
+		Workspace: "hero",
+		Tabs:      []ChromeTab{{Slug: "now", Label: "Now", Href: "/now", Active: true}},
+		Adapter:   AdapterState{Connected: true, DisplayName: "hero-code"},
+	})
+	for _, want := range []string{
+		`class="adapter-chip"`,
+		`title="Chat adapter: hero-code (connected)"`,
+		`via hero-code`,
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("connected chip missing %q in:\n%s", want, out)
+		}
+	}
+	if strings.Contains(out, `class="adapter-chip muted"`) {
+		t.Errorf("connected chip should not have muted class, got:\n%s", out)
+	}
+}
+
 func TestRender_TopNav(t *testing.T) {
 	out := fragmentRender(t, "top-nav", Chrome{
 		Workspace:    "hero",
