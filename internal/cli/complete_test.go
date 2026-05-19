@@ -5,6 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/hero-engine/hero/internal/feed"
 )
 
 func TestComplete_RequiresArg(t *testing.T) {
@@ -379,6 +382,155 @@ status: planning
 	if _, err := os.Stat(slugDir); !os.IsNotExist(err) {
 		t.Errorf("empty slug directory should be cleaned up: %s", slugDir)
 	}
+}
+
+// --- delivery_complete event emission tests (spec: dashboard-delivery-events-never-emitted) ---
+
+// runComplete must emit a delivery_complete event so the dashboard's
+// "specs shipped this week" tile reflects this completion. The original
+// bug: hero spec complete moved the file + flipped status but never
+// touched events.log, so the dashboard counter stayed at zero.
+func TestComplete_EmitsDeliveryCompleteEvent(t *testing.T) {
+	env := newTestEnv(t)
+
+	env.addSpec("planning/features/csv-export/spec.md", `---
+title: CSV Export
+type: feature
+status: planning
+---
+# CSV Export
+`)
+
+	specPath := filepath.Join(env.heroDir, "planning/features/csv-export/spec.md")
+	if _, err := runCmd("spec", "complete", specPath); err != nil {
+		t.Fatalf("complete: %v", err)
+	}
+
+	events := readDeliveryCompleteEvents(t, env.heroDir, "csv-export")
+	if len(events) != 1 {
+		t.Fatalf("expected 1 delivery_complete event, got %d", len(events))
+	}
+	if events[0].Slug != "csv-export" {
+		t.Errorf("event slug = %q, want csv-export", events[0].Slug)
+	}
+	if events[0].Agent == "" {
+		t.Error("event agent should not be empty")
+	}
+
+	// And a companion spec.status_changed event lands.
+	statusEvts := readEventsByType(t, env.heroDir, "spec.status_changed", "csv-export")
+	if len(statusEvts) != 1 {
+		t.Errorf("expected 1 spec.status_changed event, got %d", len(statusEvts))
+	}
+}
+
+// Re-running hero spec complete on an already-completed spec must not
+// duplicate the event (24h dedup window).
+func TestComplete_IdempotentEventEmission(t *testing.T) {
+	env := newTestEnv(t)
+
+	env.addSpec("planning/features/csv-export/spec.md", `---
+title: CSV Export
+type: feature
+status: planning
+---
+# CSV Export
+`)
+
+	specPath := filepath.Join(env.heroDir, "planning/features/csv-export/spec.md")
+	if _, err := runCmd("spec", "complete", specPath); err != nil {
+		t.Fatalf("first complete: %v", err)
+	}
+
+	// Second run on the already-completed-and-moved spec.
+	destPath := filepath.Join(env.heroDir, "specs", "csv-export", "spec.md")
+	if _, err := runCmd("spec", "complete", destPath); err != nil {
+		t.Fatalf("second complete: %v", err)
+	}
+
+	events := readDeliveryCompleteEvents(t, env.heroDir, "csv-export")
+	if len(events) != 1 {
+		t.Errorf("expected exactly 1 delivery_complete event after re-run, got %d", len(events))
+	}
+}
+
+// When the spec was already completed and already moved (the
+// "nothing-to-do" branch), the command should still backfill the event
+// so a workspace that completed specs before the emitter landed catches
+// up on the next run.
+func TestComplete_BackfillsEventForAlreadyComplete(t *testing.T) {
+	env := newTestEnv(t)
+
+	env.addSpec("specs/csv-export/spec.md", `---
+title: CSV Export
+type: feature
+status: completed
+---
+# CSV Export
+`)
+
+	specPath := filepath.Join(env.heroDir, "specs/csv-export/spec.md")
+	if _, err := runCmd("spec", "complete", specPath); err != nil {
+		t.Fatalf("complete: %v", err)
+	}
+
+	events := readDeliveryCompleteEvents(t, env.heroDir, "csv-export")
+	if len(events) != 1 {
+		t.Errorf("expected 1 delivery_complete event for backfill, got %d", len(events))
+	}
+}
+
+// HERO_AGENT environment variable should propagate to the event's agent
+// field, mirroring the existing hero event CLI behavior.
+func TestComplete_EmitsAgentFromEnv(t *testing.T) {
+	env := newTestEnv(t)
+
+	t.Setenv("HERO_AGENT", "mcp/hero")
+
+	env.addSpec("planning/features/csv-export/spec.md", `---
+title: CSV Export
+type: feature
+status: planning
+---
+# CSV Export
+`)
+
+	specPath := filepath.Join(env.heroDir, "planning/features/csv-export/spec.md")
+	if _, err := runCmd("spec", "complete", specPath); err != nil {
+		t.Fatalf("complete: %v", err)
+	}
+
+	events := readDeliveryCompleteEvents(t, env.heroDir, "csv-export")
+	if len(events) != 1 {
+		t.Fatalf("expected 1 delivery_complete event, got %d", len(events))
+	}
+	if events[0].Agent != "mcp/hero" {
+		t.Errorf("event agent = %q, want mcp/hero", events[0].Agent)
+	}
+}
+
+// helpers ---
+
+func readDeliveryCompleteEvents(t *testing.T, heroDir, slug string) []feed.FeedEvent {
+	t.Helper()
+	return readEventsByType(t, heroDir, "delivery_complete", slug)
+}
+
+func readEventsByType(t *testing.T, heroDir, eventType, slug string) []feed.FeedEvent {
+	t.Helper()
+	logPath := filepath.Join(heroDir, "events.log")
+	if _, err := os.Stat(logPath); os.IsNotExist(err) {
+		return nil
+	}
+	evts, err := feed.ReadEvents(logPath, feed.Filter{
+		Since: time.Now().Add(-24 * time.Hour),
+		Type:  eventType,
+		Slug:  slug,
+	})
+	if err != nil {
+		t.Fatalf("reading events: %v", err)
+	}
+	return evts
 }
 
 // --- updateFrontmatterStatus tests ---

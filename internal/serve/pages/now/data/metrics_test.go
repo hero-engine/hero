@@ -65,6 +65,85 @@ func TestCountCompletedSince_CountsDeliveryComplete(t *testing.T) {
 	}
 }
 
+// When the event log has no delivery_complete entries in the window,
+// the count falls back to specs/ files with status: completed and recent
+// mtime. This keeps historical workspaces (completed before the
+// delivery_complete emitter shipped) from reading zero forever.
+// Spec: dashboard-delivery-events-never-emitted.
+func TestCountCompletedSince_MtimeFallback(t *testing.T) {
+	tmp := t.TempDir()
+	heroDir := filepath.Join(tmp, ".hero")
+	specsDir := filepath.Join(heroDir, "specs")
+	if err := os.MkdirAll(specsDir, 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	writeCompletedSpec(t, specsDir, "alpha", `---
+title: Alpha
+slug: alpha
+type: feature
+status: completed
+---
+# Alpha
+`)
+	writeCompletedSpec(t, specsDir, "beta", `---
+title: Beta
+slug: beta
+type: feature
+status: completed
+---
+# Beta
+`)
+	// No events.log at all — pure fallback path.
+	got := countCompletedSince(heroDir, 7*24*time.Hour)
+	if got != 2 {
+		t.Errorf("countCompletedSince (mtime fallback) = %d, want 2", got)
+	}
+}
+
+// Event-log precedence: when the log has delivery_complete entries in
+// the window, the file-mtime fallback is NOT consulted. Prevents
+// double-counting once the emitter is live.
+func TestCountCompletedSince_EventLogTakesPrecedence(t *testing.T) {
+	tmp := t.TempDir()
+	heroDir := filepath.Join(tmp, ".hero")
+	specsDir := filepath.Join(heroDir, "specs")
+	if err := os.MkdirAll(specsDir, 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	// Five completed specs on disk but only one event — the event count
+	// wins.
+	for _, slug := range []string{"a", "b", "c", "d", "e"} {
+		writeCompletedSpec(t, specsDir, slug, `---
+title: `+slug+`
+slug: `+slug+`
+type: feature
+status: completed
+---
+# `+slug+`
+`)
+	}
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	writeEventLog(t, heroDir,
+		`{"ts":"`+now+`","type":"delivery_complete","slug":"a","message":""}`,
+	)
+	got := countCompletedSince(heroDir, 7*24*time.Hour)
+	if got != 1 {
+		t.Errorf("countCompletedSince = %d, want 1 (event log wins)", got)
+	}
+}
+
+func writeCompletedSpec(t *testing.T, specsDir, slug, content string) {
+	t.Helper()
+	dir := filepath.Join(specsDir, slug)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	path := filepath.Join(dir, "spec.md")
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatalf("write spec: %v", err)
+	}
+}
+
 func TestIsAgentAuthored(t *testing.T) {
 	cases := map[string]bool{
 		"claude-sonnet-4":   true,

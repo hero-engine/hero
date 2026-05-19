@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-19T14:18:58Z · 105 ready specs_
+_Generated: 2026-05-19T14:40:04Z · 105 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -175,6 +175,24 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
+## claim-matches-sentinel-collision — claimedByMatches "you"/"me" sentinels collide with real git identities
+_bug · planning · horizon: now_
+
+A tiny matcher in the dashboard's plate treats the literal strings `"you"`
+and `"me"` as "match the current viewer" regardless of identity. Now that
+identity comes from `git config user.name`, a user whose git name is
+literally `you` or `me` would cross-match other people's claims.
+
+**Status:** planning — backlog spec carved out of `dashboard-user-identity-os-env-mismatch`. No code yet.
+
+**Pick up at:** confirm there are no in-repo writers emitting `claimed_by: you` or `claimed_by: me` (only matcher-side sentinels exist today), then implement **Option C** — reject `you`/`me` as identity inputs in `gitutil.UserName()` normalization, and delete the `cb == "you" || cb == "me"` arm from `claimedByMatches`.
+
+→ `internal/serve/pages/now/data/plate.go:60-70`
+
+**Files:** `internal/serve/pages/now/data/plate.go`, `internal/gitutil/gitutil.go`, `internal/serve/pages/now/data/plate_test.go`
+
+---
+
 ## pm-platform-delivery — PM Platform Delivery — Ship the Designed Primitives So hero-code Can Build hero-pm
 _feature · planning · horizon: now_
 
@@ -247,13 +265,6 @@ project creation wizard (separate spec); auth/multi-user (deferred to
 _bug · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/dashboard-now-headline-misleading-when-empty/spec.md)_
-
----
-
-## dashboard-delivery-events-never-emitted — hero spec complete never emits delivery_complete event — shipped-spec counts always understated
-_bug · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/dashboard-delivery-events-never-emitted/spec.md)_
 
 ---
 
