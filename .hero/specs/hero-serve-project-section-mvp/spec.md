@@ -2,7 +2,7 @@
 title: hero serve Project Section — Phase 1 MVP (Read-Only Per-Project Page)
 slug: hero-serve-project-section-mvp
 type: feature
-status: planning
+status: completed
 priority: P1
 tags: [hero-serve, dashboard, ui, project, mvp]
 created: 2026-05-19
@@ -37,27 +37,24 @@ this seam without re-architecting it.
 
 ## Kickoff
 
-Skeleton + read-only per-project page in `hero serve`. Lands the
-`projectpage` package, the per-project handler at `/p/<slug>/project`
-(plus a `/project` fallback), and 8 read-only sections.
+**Status:** delivered — `internal/serve/projectpage/` package shipped, eight read-only sections render, single-project `/project` fallback and multi-project `/p/<slug>/project` both wired, top-nav active-state pins Project on both routes.
 
-**Status:** planning — first phase of a 5-phase initiative; routing
-dependency (`hero-serve-multi-project`) still delivering.
+**Shipped:**
+- `internal/serve/projectpage/` package with `deps.go`, `handler.go`, `handler_test.go`, plus 8 section data loaders (identity / health / stack / registry / peers / trackers / knowledge / config) each with happy-path + missing-input unit tests.
+- Templates under `internal/serve/projectpage/templates/` (one per section + composing `page.html`) — diverges from the spec's `shell/templates/project/` path to match the established `pages/now/templates/` convention, keeping `//go:embed` co-located with the package.
+- `internal/serve/projectpage/static/project.js` — collapse/expand toggle with `localStorage` persistence keyed by `<slug>:<section>`. No SSE, no fetch.
+- Rollup rename: `internal/serve/pages/project/` → `internal/serve/pages/rollup/`. Package, slug, label, template, breadcrumbs, and tests all moved. Top-nav order now: Now · Work · Knowledge · People · Agents · Project · Rollup.
+- Server wiring in `internal/serve/server.go`: per-project `/p/{slug}/project` registration plus a single-project `/project` fallback. Both routes pass top-nav active-state tests.
+- New `RegistryEntry` projection in the projectpage package and a `projectpageRegistryEntry` server adapter that surfaces the daemon-side `ProjectEntry` shape.
 
-**Pick up at:** scaffold `internal/serve/projectpage/` with `deps.go`,
-`handler.go`, and section data loaders under `data/`. Register
-`/p/{slug}/project` + `/project` fallback in
-`internal/serve/server.go` shell-page handler block.
+**Decisions called out during delivery:**
+- **Stack detection** — no persistent producer yet. Implemented a lightweight marker-file probe (go.mod / package.json / Cargo.toml / …) that's cheap enough for per-request render. Richer detection is a follow-up Phase 2 (cached scan artifact) — flagged but not in scope.
+- **Health artifact schema** — Phase 5 owns producing it; defined a tiny on-disk JSON shape (`captured_at` + `rows[name, status, message]`) at `.hero/cache/health.json` so the loader has something concrete to read. Phase 5 can override the path via the package-level `healthArtifactPath` var.
+- **Template path** — `internal/serve/projectpage/templates/` instead of `internal/serve/shell/templates/project/` (the spec's suggestion). Matches the Now/Work convention exactly.
 
-→ `.hero/planning/features/hero-serve-project-section-mvp/spec.md`
+**Verified:** `go build ./...`, `go test ./...`, `go vet ./...` all clean. All new section loaders covered by tests. Handler integration test exercises every section against a fixture project with deliberately-missing inputs.
 
-**Files:** `internal/serve/server.go:308-370`, `internal/serve/api.go:51-132`,
-`internal/serve/registry.go:44`, `internal/serve/pages/now/data/`,
-`internal/serve/shell/templates/page-layout.html`
-
-**Skip:** live `hero check` runs (Phase 5); peer probes (Phase 5); ops
-dispatch (Phase 3); registry removal / Danger Zone (Phase 4); aggregate
-view (Phase 2).
+**Pick up at:** done — archive with `hero spec complete`. Phase 2 (`hero-serve-project-section-aggregate`) is the next phase.
 
 ## Goal
 
@@ -229,11 +226,39 @@ calls (real refresh wiring lands in Phase 5).
 
 ## Changes (files touched on completion)
 
-- `internal/serve/projectpage/deps.go` (new)
-- `internal/serve/projectpage/handler.go` (new)
-- `internal/serve/projectpage/data/*.go` (new, 8 loaders + tests)
-- `internal/serve/shell/templates/project.html` (new)
-- `internal/serve/shell/templates/project/*.html` (new, 8 partials)
-- `internal/serve/shell/static/js/project.js` (new)
-- `internal/serve/server.go` (handler registration)
-- `internal/serve/shell/templates/top-nav.html` (active-state branch)
+Rollup rename (chunk a):
+- `internal/serve/pages/rollup/` (renamed from `pages/project/`, `git mv`) — package, route, slug, label, breadcrumbs, template name all updated to "rollup"
+- `internal/serve/server.go` — import + register call switched to `rolluppage`; new `/rollup` slot
+
+Project section page (chunk b):
+- `internal/serve/projectpage/deps.go` (new) — `Deps` + nil-tolerant `RegistryEntry`
+- `internal/serve/projectpage/handler.go` (new) — `Handler`, page composition, inline collapse JS
+- `internal/serve/projectpage/data/identity.go` + `_test.go` (new)
+- `internal/serve/projectpage/data/health.go` + `_test.go` (new) — reads cached artifact only
+- `internal/serve/projectpage/data/stack.go` + `_test.go` (new) — lightweight marker-file probe
+- `internal/serve/projectpage/data/registry.go` + `_test.go` (new)
+- `internal/serve/projectpage/data/peers.go` + `_test.go` (new) — reads `cfg.Repos`, never probes
+- `internal/serve/projectpage/data/trackers.go` + `_test.go` (new)
+- `internal/serve/projectpage/data/knowledge.go` + `_test.go` (new)
+- `internal/serve/projectpage/data/config.go` + `_test.go` (new) — read-only `hero.json` dump
+- `internal/serve/projectpage/templates/page.html` + 8 section partials (new)
+- `internal/serve/projectpage/static/project.js` (new, reference copy; live JS is inlined by handler)
+- `internal/serve/projectpage/handler_test.go` (new) — renders-all-sections, single-project fallback, top-nav active-state, 404
+
+Wiring (chunk c):
+- `internal/serve/server.go` — register `projectpage` at `/project` (per-project shell router) before `rolluppage`
+- `internal/serve/routing.go` — `legacyPagePaths` now includes both `/project` and `/rollup`
+
+Validation:
+- `go build ./...` clean
+- `go test ./...` clean (every package passes)
+- `go vet ./...` clean
+
+## Deferred to follow-up phases (per spec boundaries)
+
+- Live `hero check` runs (Phase 5)
+- Live peer probes / `peer-manifest.yaml` reachability (Phase 5)
+- Operations section / ops dispatch (Phase 3) — section omitted entirely in Phase 1, preferred per spec
+- Registry removal + Danger Zone (Phase 4)
+- Aggregate `/p/all/project` view (Phase 2)
+- SSE section-refresh + extracted static JS asset (Phase 5)

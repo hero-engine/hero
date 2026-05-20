@@ -51,3 +51,5 @@
 {"ts":"2026-05-19T23:50:32.910031Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"peer-call-findings-truncation-and-persistence","message":"status -\u003e completed"}
 {"ts":"2026-05-20T00:18:20.415896Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-serve-dashboard-redesign","message":"hero serve dashboard redesign — Now and Work pages"}
 {"ts":"2026-05-20T00:18:20.41599Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-serve-dashboard-redesign","message":"status -\u003e completed"}
+{"ts":"2026-05-20T01:13:20.074005Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-serve-project-section-mvp","message":"hero serve Project Section — Phase 1 MVP (Read-Only Per-Project Page)"}
+{"ts":"2026-05-20T01:13:20.074091Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-serve-project-section-mvp","message":"status -\u003e completed"}
