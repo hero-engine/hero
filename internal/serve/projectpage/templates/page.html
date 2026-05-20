@@ -1,0 +1,18 @@
+{{- /* page.html — outer Project section page layout. Phase 1 of
+       hero-serve-project-section.
+
+       Sections render in fixed order: Identity, Health, Stack, Registry,
+       Peers, Trackers, Knowledge, Config. Each section is wrapped in a
+       <section data-section="..."> with a header carrying
+       data-default-collapsed so the page-level JS can read collapse
+       defaults on first paint. */ -}}
+{{ define "page.html" }}
+{{ template "identity.html" .Identity }}
+{{ template "health.html" .Health }}
+{{ template "stack.html" .Stack }}
+{{ template "registry.html" .Registry }}
+{{ template "peers.html" .Peers }}
+{{ template "trackers.html" .Trackers }}
+{{ template "knowledge.html" .Knowledge }}
+{{ template "config.html" .Config }}
+{{ end }}

@@ -1,0 +1,26 @@
+{{ define "stack.html" }}
+<section class="project-section" data-section="stack">
+  <header class="project-section-head" data-default-collapsed="false">
+    <h2>Stack &amp; Conventions</h2>
+    <span class="project-section-meta">{{ .ActiveConventions }} convention{{ if ne .ActiveConventions 1 }}s{{ end }}</span>
+    <button class="project-section-toggle" type="button" aria-expanded="true">collapse</button>
+  </header>
+  <div class="project-section-body">
+    {{ if .Detected }}
+      <p class="project-stack-languages">
+        Detected: {{ range $i, $l := .Languages }}{{ if $i }}, {{ end }}<code>{{ $l }}</code>{{ end }}
+      </p>
+    {{ else }}
+      <p class="project-empty">No stack detected.</p>
+    {{ end }}
+    {{ if .RecentConventions }}
+      <p>Recent conventions:</p>
+      <ul class="project-stack-conventions">
+        {{ range .RecentConventions }}
+        <li><code>{{ .Slug }}</code> — {{ .Title }}</li>
+        {{ end }}
+      </ul>
+    {{ end }}
+  </div>
+</section>
+{{ end }}

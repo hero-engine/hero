@@ -34,7 +34,7 @@ const AllProjectsSlug = "all"
 // /p/<slug>/<page> rewrite. Requests at these exact paths redirect to
 // the default project's namespaced URL so existing bookmarks keep
 // working.
-var legacyPagePaths = []string{"/now", "/work", "/knowledge", "/people", "/agents", "/project"}
+var legacyPagePaths = []string{"/now", "/work", "/knowledge", "/people", "/agents", "/project", "/rollup"}
 
 // ActiveProjectCookie is the cookie name client JS writes when the user
 // switches projects via the top-nav dropdown. Server-side fallbacks for

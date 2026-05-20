@@ -25,8 +25,9 @@ import (
 	nowpage "github.com/hero-engine/hero/internal/serve/pages/now"
 	nowdata "github.com/hero-engine/hero/internal/serve/pages/now/data"
 	peoplepage "github.com/hero-engine/hero/internal/serve/pages/people"
-	projectpage "github.com/hero-engine/hero/internal/serve/pages/project"
+	rolluppage "github.com/hero-engine/hero/internal/serve/pages/rollup"
 	workpage "github.com/hero-engine/hero/internal/serve/pages/work"
+	projectpage "github.com/hero-engine/hero/internal/serve/projectpage"
 	"github.com/hero-engine/hero/internal/serve/session"
 	"github.com/hero-engine/hero/internal/serve/shell"
 	"github.com/hero-engine/hero/internal/spec"
@@ -848,21 +849,58 @@ func (s *Server) buildShellRouterFor(pc *ProjectContext) *shell.Router {
 		fmt.Fprintf(os.Stderr, "hero serve: register Agents home for %s: %v\n", pc.Slug, err)
 	}
 
-	// Register the Project home — surfaces table, initiatives, archives
-	// timeline. Owned by the project-snapshot spec. Archive bodies
-	// render ONLY at /project/snapshots/<date>; the home itself shows
-	// metadata only, per the isolation invariants.
+	// Register the Project section page at /project — read-only
+	// per-project home with eight stacked sections (identity, health,
+	// stack, registry, peers, trackers, knowledge, config). Phase 1 of
+	// hero-serve-project-section. Registered BEFORE Rollup so it
+	// appears ahead of Rollup in the top-nav tab order — Project is the
+	// primary per-project surface; Rollup is the legacy project-shape
+	// rollup retained for discoverability.
 	projectDeps := projectpage.Deps{
+		ProjectRoot:   pc.Path,
+		HeroDir:       pc.HeroDir,
+		Slug:          pc.Slug,
+		RegistryEntry: s.projectpageRegistryEntry(pc.Slug),
+	}
+	if err := projectpage.Register(r, projectDeps); err != nil {
+		fmt.Fprintf(os.Stderr, "hero serve: register Project section page for %s: %v\n", pc.Slug, err)
+	}
+
+	// Register the Rollup home — surfaces table, initiatives, archives
+	// timeline. Owned by the project-snapshot spec, mounted at /rollup
+	// (previously /project; renamed when the per-project section page
+	// took over that slot — see hero-serve-project-section). Archive
+	// bodies render ONLY at /rollup/snapshots/<date>; the home itself
+	// shows metadata only, per the isolation invariants.
+	rollupDeps := rolluppage.Deps{
 		ProjectRoot: pc.Path,
 		HeroDir:     pc.HeroDir,
 		Workspace:   workspace,
 		Branch:      branch,
 		UserName:    userName,
 	}
-	if err := projectpage.Register(r, projectDeps); err != nil {
-		fmt.Fprintf(os.Stderr, "hero serve: register Project home for %s: %v\n", pc.Slug, err)
+	if err := rolluppage.Register(r, rollupDeps); err != nil {
+		fmt.Fprintf(os.Stderr, "hero serve: register Rollup home for %s: %v\n", pc.Slug, err)
 	}
 	return r
+}
+
+// projectpageRegistryEntry adapts the daemon-side ProjectEntry into the
+// projectpage's read-only view. Returns nil when the project isn't in
+// the global registry — projectpage renders the "not registered"
+// empty state in that case.
+func (s *Server) projectpageRegistryEntry(slug string) *projectpage.RegistryEntry {
+	if s == nil || s.registry == nil || slug == "" {
+		return nil
+	}
+	entry := s.registry.Get(slug)
+	if entry == nil {
+		return nil
+	}
+	return &projectpage.RegistryEntry{
+		Path:         entry.Path,
+		RegisteredAt: entry.Registered,
+	}
 }
 
 // proposalsForProject returns a per-project proposals-snapshotter that

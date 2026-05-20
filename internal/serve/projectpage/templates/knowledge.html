@@ -1,0 +1,21 @@
+{{ define "knowledge.html" }}
+<section class="project-section" data-section="knowledge">
+  <header class="project-section-head" data-default-collapsed="true">
+    <h2>Knowledge Stats</h2>
+    <a class="project-section-link" href="{{ .KnowledgeHref }}">Open Knowledge →</a>
+    <button class="project-section-toggle" type="button" aria-expanded="false">expand</button>
+  </header>
+  <div class="project-section-body" hidden>
+    <dl class="project-meta">
+      <dt>Decisions</dt><dd>{{ .Decisions }}</dd>
+      <dt>Conventions</dt><dd>{{ .Conventions }}</dd>
+      <dt>Notes</dt><dd>{{ .Notes }}</dd>
+      <dt>Captures</dt><dd>{{ .Captures }}</dd>
+      {{ if not .LastCapturedAt.IsZero }}
+      <dt>Last captured</dt>
+      <dd>{{ .LastCapturedAtPretty }} — <code>{{ .LastCapturedSlug }}</code> ({{ .LastCapturedKind }})</dd>
+      {{ end }}
+    </dl>
+  </div>
+</section>
+{{ end }}

@@ -1,0 +1,35 @@
+{{ define "peers.html" }}
+<section class="project-section" data-section="peers">
+  <header class="project-section-head" data-default-collapsed="false">
+    <h2>Peers</h2>
+    <span class="project-section-meta">{{ len .Rows }} configured</span>
+    <button class="project-section-toggle" type="button" aria-expanded="true">collapse</button>
+  </header>
+  <div class="project-section-body">
+    {{ if .Rows }}
+      <table class="project-peers">
+        <thead>
+          <tr>
+            <th>Alias</th>
+            <th>Path</th>
+            <th>Reachable</th>
+            <th>Last scan</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{ range .Rows }}
+          <tr>
+            <td><code>{{ .Alias }}</code></td>
+            <td><code>{{ .Path }}</code></td>
+            <td>{{ if .Reachable }}yes{{ else }}<span class="muted">unknown</span>{{ end }}</td>
+            <td>{{ if .HasScan }}{{ .ScannedAtPretty }}{{ else }}<span class="muted">as of: never</span>{{ end }}</td>
+          </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    {{ else }}
+      <p class="project-empty">No peers registered.</p>
+    {{ end }}
+  </div>
+</section>
+{{ end }}

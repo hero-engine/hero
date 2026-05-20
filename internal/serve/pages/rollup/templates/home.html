@@ -1,4 +1,4 @@
-{{ define "project-home" }}
+{{ define "rollup-home" }}
 <section class="page-section">
   <h2>Surfaces</h2>
   <table class="project-surfaces">
@@ -14,7 +14,7 @@
     <tbody>
       {{ range .Snapshot.Surfaces }}
       <tr>
-        <td><a href="/project/surface/{{ .ID }}">{{ .ID }}</a></td>
+        <td><a href="/rollup/surface/{{ .ID }}">{{ .ID }}</a></td>
         <td>{{ .Stage }}{{ if .StagePinned }} <span class="pill pinned">pinned</span>{{ end }}</td>
         <td><code>{{ join .Paths ", " }}</code></td>
         {{ if $.Snapshot.HasReleaseSignal }}<td>—</td>{{ end }}
@@ -89,7 +89,7 @@
   <ul class="project-archives">
     {{ range .Archives }}
     <li>
-      <a href="/project/snapshots/{{ .Date }}{{ if .Label }}--{{ .Label }}{{ end }}">{{ .Date }}</a>
+      <a href="/rollup/snapshots/{{ .Date }}{{ if .Label }}--{{ .Label }}{{ end }}">{{ .Date }}</a>
       <span class="pill {{ .Trigger }}">{{ .Trigger }}</span>
       {{ if .Label }}<span class="label">{{ .Label }}</span>{{ end }}
     </li>
