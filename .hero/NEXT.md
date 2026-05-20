@@ -5,7 +5,7 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-05-20T02:41:43Z
+updated: 2026-05-20T04:47:23Z
 repo: hero-engine/hero
 branch: main
 ---
