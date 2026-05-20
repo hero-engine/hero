@@ -196,9 +196,11 @@ type ShippedRow struct {
 
 // ---- Metrics -------------------------------------------------------------
 
-// Metrics is the Work-home metric strip payload. Three tile sets:
-// This sprint (default), Throughput, Quality.
+// Metrics is the Work-home metric strip payload. WeekTiles is the
+// rolling-window default tab; SprintTiles only renders when the
+// workspace has opted into sprint UI via SprintConfig.
 type Metrics struct {
+	WeekTiles       []MetricTile
 	SprintTiles     []MetricTile
 	ThroughputTiles []MetricTile
 	QualityTiles    []MetricTile

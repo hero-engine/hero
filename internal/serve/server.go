@@ -794,6 +794,7 @@ func (s *Server) buildShellRouterFor(pc *ProjectContext) *shell.Router {
 		Branch:                   branch,
 		UserName:                 userName,
 		ChatInteractiveConnected: s.chatInteractiveConnected,
+		HasSprintConfig:          hasSprintConfig(pc.Path),
 	}
 	if err := workpage.Register(r, workDeps); err != nil {
 		fmt.Fprintf(os.Stderr, "hero serve: register Work home for %s: %v\n", pc.Slug, err)
@@ -982,6 +983,10 @@ func (s *Server) buildAggregateShellRouter(pc *ProjectContext) *shell.Router {
 		UserName:                 userName,
 		ChatInteractiveConnected: s.chatInteractiveConnected,
 		MultiProject:             toWorkProjects(mp),
+		// Aggregate view: sprint UI never makes sense across multiple
+		// projects (each has its own sprint config), so the gate stays
+		// off regardless of any single project's setting.
+		HasSprintConfig: false,
 	}
 	if err := workpage.Register(r, workDeps); err != nil {
 		fmt.Fprintf(os.Stderr, "hero serve: register aggregate Work home: %v\n", err)
@@ -1265,6 +1270,18 @@ var identityFallbackLogged sync.Once
 
 // logIdentityFallbackOnce emits one diagnostic line if the resolved
 // identity fell back past `git config user.name`. Quiet otherwise.
+// hasSprintConfig reads the project's hero.json and reports whether
+// the workspace has opted into sprint UI. A load error or absent
+// sprint block both fall back to false — the rolling-window-only
+// default the dashboard redesign assumes.
+func hasSprintConfig(projectRoot string) bool {
+	cfg, err := config.Load(projectRoot)
+	if err != nil {
+		return false
+	}
+	return cfg.HasSprintConfig()
+}
+
 func logIdentityFallbackOnce(resolved string) {
 	if resolved == "" || resolved == "unknown" {
 		identityFallbackLogged.Do(func() {
