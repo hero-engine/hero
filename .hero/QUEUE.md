@@ -6,58 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-20T02:41:34Z · 97 ready specs_
-
-## hero-serve-project-section-aggregate — hero serve Project Section — Phase 2 Aggregate (/p/all/project)
-_feature · delivering · horizon: now_
-
-Aggregate cross-project view at `/p/all/project`. Reads the project
-registry, the existing `/api/status` daemon-status source, and the
-Phase 1 data loaders fanned out across every registered project.
-
-**Status:** delivered — Phase 2 of 5. Phase 1's `projectpage` package
-extended with an aggregate sibling; the existing /p/all/<page> routing
-slot now dispatches /p/all/project through a project-aware aggregate
-router.
-
-**Shipped:**
-
-- `internal/serve/projectpage/aggregate.go` — `RegisterAggregate` +
-  aggregate handler with per-loader panic isolation.
-- Four new aggregate-only loaders under
-  `internal/serve/projectpage/data/`: `directory.go`,
-  `health_rollup.go`, `peers_map.go`, `daemon_ops.go` (each with
-  `_test.go`). Health-rollup color rule documented at the top of
-  `health_rollup.go`.
-- Page-local templates at `internal/serve/projectpage/templates/`:
-  `page_all.html`, `directory.html`, `daemon_ops.html`,
-  `health_rollup.html`, `peers_map.html`.
-- `internal/serve/projectpage/static/project_all.js` — embedded into
-  the page via `//go:embed` (no /static/projectpage route added).
-- `internal/serve/server.go` — extended `buildAggregateShellRouter` to
-  also register the Project aggregate; added
-  `aggregateProjectpageProjects()` + `daemonOpsSnapshot()` helpers that
-  feed the new loaders directly (no HTTP round-trip).
-- `internal/serve/routing.go` — `allProjectsHandler` now dispatches
-  "project" through the same aggregate router as "now" / "work".
-- `internal/serve/api.go` — `POST /api/daemon/registry/refresh`
-  (re-reads `~/.hero/projects.json` and re-syncs `server.projects`).
-  GET form returns current state without reloading.
-
-**Deferred:** the "Stop daemon" button (Phase 4); live `hero check`
-refresh on the rollup (Phase 5); a graph visualization library for the
-peers map (table is sufficient for v1); JSON-side row hot-swap (the
-refresh button currently does a full page reload after the POST
-succeeds — adequate for the read-only operator surface).
-
-**Validation:** `go build ./...` clean; `go test ./...` clean;
-`go vet ./...` clean. Aggregate route handler test renders all four
-sections against a three-project fixture including one deliberately-
-broken project (page returns 200, broken row carries the degraded
-indicator). Registry-refresh endpoint test verifies POST returns JSON
-with the current project list.
-
----
+_Generated: 2026-05-20T02:41:43Z · 96 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_

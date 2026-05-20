@@ -2,7 +2,7 @@
 title: hero serve Project Section — Phase 2 Aggregate (/p/all/project)
 slug: hero-serve-project-section-aggregate
 type: feature
-status: planning
+status: completed
 priority: P2
 tags: [hero-serve, dashboard, ui, project, aggregate, daemon]
 created: 2026-05-19
@@ -34,28 +34,50 @@ routing slot.
 ## Kickoff
 
 Aggregate cross-project view at `/p/all/project`. Reads the project
-registry, the daemon-status endpoint, and the same data loaders Phase 1
-landed, fanned out across every registered project.
+registry, the existing `/api/status` daemon-status source, and the
+Phase 1 data loaders fanned out across every registered project.
 
-**Status:** planning — Phase 2 of 5; gated on Phase 1's `projectpage`
-package landing and on `hero-serve-multi-project` `/p/all/<page>`
-routing.
+**Status:** delivered — Phase 2 of 5. Phase 1's `projectpage` package
+extended with an aggregate sibling; the existing /p/all/<page> routing
+slot now dispatches /p/all/project through a project-aware aggregate
+router.
 
-**Pick up at:** add `aggregate.go` to `internal/serve/projectpage/`
-with an `AggregateHandler` for `/p/all/project`. Fan out the registry,
-reuse the Phase 1 data loaders per project, render the new
-`project_all.html` template.
+**Shipped:**
 
-→ `.hero/planning/features/hero-serve-project-section-aggregate/spec.md`
+- `internal/serve/projectpage/aggregate.go` — `RegisterAggregate` +
+  aggregate handler with per-loader panic isolation.
+- Four new aggregate-only loaders under
+  `internal/serve/projectpage/data/`: `directory.go`,
+  `health_rollup.go`, `peers_map.go`, `daemon_ops.go` (each with
+  `_test.go`). Health-rollup color rule documented at the top of
+  `health_rollup.go`.
+- Page-local templates at `internal/serve/projectpage/templates/`:
+  `page_all.html`, `directory.html`, `daemon_ops.html`,
+  `health_rollup.html`, `peers_map.html`.
+- `internal/serve/projectpage/static/project_all.js` — embedded into
+  the page via `//go:embed` (no /static/projectpage route added).
+- `internal/serve/server.go` — extended `buildAggregateShellRouter` to
+  also register the Project aggregate; added
+  `aggregateProjectpageProjects()` + `daemonOpsSnapshot()` helpers that
+  feed the new loaders directly (no HTTP round-trip).
+- `internal/serve/routing.go` — `allProjectsHandler` now dispatches
+  "project" through the same aggregate router as "now" / "work".
+- `internal/serve/api.go` — `POST /api/daemon/registry/refresh`
+  (re-reads `~/.hero/projects.json` and re-syncs `server.projects`).
+  GET form returns current state without reloading.
 
-**Files:** `internal/serve/projectpage/handler.go`,
-`internal/serve/projectpage/data/`, `internal/serve/server.go`,
-`internal/serve/registry.go:44`,
-`internal/serve/shell/templates/project.html`
-
-**Skip:** the "Stop daemon" button (Phase 4); live `hero check`
+**Deferred:** the "Stop daemon" button (Phase 4); live `hero check`
 refresh on the rollup (Phase 5); a graph visualization library for the
-peers map — a table is fine for v1.
+peers map (table is sufficient for v1); JSON-side row hot-swap (the
+refresh button currently does a full page reload after the POST
+succeeds — adequate for the read-only operator surface).
+
+**Validation:** `go build ./...` clean; `go test ./...` clean;
+`go vet ./...` clean. Aggregate route handler test renders all four
+sections against a three-project fixture including one deliberately-
+broken project (page returns 200, broken row carries the degraded
+indicator). Registry-refresh endpoint test verifies POST returns JSON
+with the current project list.
 
 ## Goal
 
@@ -226,14 +248,34 @@ Add a new `/api/daemon/registry/refresh` endpoint that re-reads
 
 ## Changes (files touched on completion)
 
-- `internal/serve/projectpage/aggregate.go` (new)
-- `internal/serve/projectpage/data/directory.go` (new)
-- `internal/serve/projectpage/data/health_rollup.go` (new)
-- `internal/serve/projectpage/data/peers_map.go` (new)
-- `internal/serve/projectpage/data/daemon_ops.go` (new)
-- `internal/serve/shell/templates/project_all.html` (new)
-- `internal/serve/shell/templates/project_all/*.html` (new)
-- `internal/serve/shell/static/js/project_all.js` (new)
-- `internal/serve/server.go` (handler + API endpoint registration)
-- `internal/serve/api.go` (`/api/daemon/registry/refresh`)
-- `internal/serve/shell/templates/top-nav.html` (active-state branch)
+- `internal/serve/projectpage/aggregate.go` — new; `RegisterAggregate`
+  + `aggregateHandler`; per-loader panic isolation; embeds
+  `static/project_all.js` directly.
+- `internal/serve/projectpage/data/directory.go` (+ `_test.go`) — new;
+  Project Directory rows with per-row degraded indicator.
+- `internal/serve/projectpage/data/health_rollup.go` (+ `_test.go`) —
+  new; cross-project health rollup with the canonical color rule
+  (Green / Yellow / Red) documented at file top.
+- `internal/serve/projectpage/data/peers_map.go` (+ `_test.go`) — new;
+  cross-project peering table with path-based peer-project resolution.
+- `internal/serve/projectpage/data/daemon_ops.go` (+ `_test.go`) — new;
+  wraps the daemon snapshot into a view struct (formatUptime helper).
+- `internal/serve/projectpage/templates/page_all.html` — new; outer
+  composition for the aggregate page.
+- `internal/serve/projectpage/templates/directory.html`,
+  `daemon_ops.html`, `health_rollup.html`, `peers_map.html` — new;
+  page-local section partials following the Phase 1 partial style.
+- `internal/serve/projectpage/static/project_all.js` — new;
+  client-side sort + filter + Refresh-registry POST.
+- `internal/serve/server.go` — extended `buildAggregateShellRouter` to
+  register the project aggregate; added
+  `aggregateProjectpageProjects()` and `daemonOpsSnapshot()` so the
+  loader pulls from the in-process server without an HTTP round-trip.
+- `internal/serve/routing.go` — `allProjectsHandler` switch extended
+  to dispatch "project" through the aggregate router.
+- `internal/serve/api.go` — added
+  `POST/GET /api/daemon/registry/refresh` handler.
+- `internal/serve/projectpage_aggregate_test.go` — new; handler
+  integration tests for `/p/all/project` (multi-project + broken
+  project), top-nav active-state on the aggregate, and the
+  registry-refresh endpoint.
