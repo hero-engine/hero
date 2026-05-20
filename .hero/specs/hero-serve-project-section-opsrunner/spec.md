@@ -2,7 +2,7 @@
 title: hero serve Project Section — Phase 3 Operations Runner
 slug: hero-serve-project-section-opsrunner
 type: feature
-status: planning
+status: completed
 priority: P2
 tags: [hero-serve, dashboard, ui, project, operations, sse]
 created: 2026-05-19
@@ -33,28 +33,23 @@ deduplicated.
 
 ## Kickoff
 
-`opsrunner` package + Operations section wiring. Lets the user run
-`hero check`, `hero index`, `hero scan`, etc. from the Project page
-with SSE progress.
+**Status:** delivered — `internal/serve/opsrunner/` package shipped with allowlist + registry + runner; Operations section on `/p/<slug>/project` dispatches all seven verbs with SSE progress; the same runner is now available for Phase 4's "Stop daemon" wiring.
 
-**Status:** planning — Phase 3 of 5; gated on Phase 1's `projectpage`
-package landing.
+**Shipped:**
+- `internal/serve/opsrunner/allowlist.go` — fixed verb→args map for the seven allowed verbs (re-scan / re-index / run-check / refresh-queue / capture-knowledge / snapshot / export). `IsAllowed` gate used by the API handler. `hero` binary resolved via `os.Executable()`.
+- `internal/serve/opsrunner/registry.go` — `Job` struct + thread-safe `Registry` keyed by `<slug>:<verb>`. Rolling 200-byte stderr tail and an output ring buffer for late-subscriber backfill.
+- `internal/serve/opsrunner/runner.go` — `New(ctx)`, `Start` with dedup (concurrent calls return the same job ID), `Stream` (writes SSE backfill + live events, exits on subprocess Done or client disconnect, emits a final `exit` event with code), `Lookup`, 15s keepalive comment lines for reverse-proxy compatibility. Subprocess outlives client disconnect; the runner's own context is the kill signal.
+- API endpoints in `internal/serve/api.go`: `POST /api/{slug}/ops/{verb}` (allowlist-gated, dedup-aware) and `GET /api/{slug}/ops/{job_id}/stream`.
+- Section wiring in `internal/serve/projectpage/`: `data/operations.go` loader, `templates/operations.html` partial (mounted between Health and Stack in `page.html`), `static/operations.js` client (POST + EventSource + on-load auto-reopen for in-flight verbs).
+- Server wiring: `Server.opsRunner` constructed in `NewServer`, `api.SetOpsRunner` called, runner threaded into `projectpage.Deps.OpsRunner` for every per-project Register. Aggregate `/p/all/project` does NOT render Operations.
 
-**Pick up at:** scaffold `internal/serve/opsrunner/` with the verb
-allowlist map, in-memory job registry keyed by `slug+verb`, subprocess
-launcher, and SSE writer. Register `POST /api/{slug}/ops/{verb}` and
-`GET /api/{slug}/ops/{job_id}/stream` in `internal/serve/api.go`.
+**Verified:** `go build ./...`, `go test ./...`, `go vet ./...` all clean. opsrunner has unit tests for allowlist completeness, dedup behavior, SSE termination on subprocess exit, and client-disconnect-doesn't-kill-subprocess.
 
-→ `.hero/planning/features/hero-serve-project-section-opsrunner/spec.md`
+**Decisions called out during delivery:**
+- Operations section placed between Health and Stack — typical operator scan order is "is anything wrong → can I fix it → what's the project shape."
+- `OpsRunner` field on `Deps` typed as `data.OpsLookup` interface (not concrete `*opsrunner.Runner`) so the data package stays free of opsrunner imports. `*opsrunner.Runner` satisfies the interface via its `Lookup` method.
 
-**Files:** `internal/serve/projectpage/data/operations.go` (new),
-`internal/serve/api.go:51-132`,
-`internal/serve/shell/templates/project/operations.html` (new),
-`internal/serve/shell/static/js/project.js` (extend with SSE wiring)
-
-**Skip:** verbs outside the fixed allowlist; "Stop daemon" wiring
-(Phase 4 plumbs through this runner); persistence of job history across
-daemon restarts (in-memory is fine for v1).
+**Pick up at:** done — archive with `hero spec complete`. Phase 4 (`hero-serve-project-section-destructive`) is next — registry remove + Danger Zone + Stop-daemon button, dispatching through this runner.
 
 ## Goal
 
