@@ -7,6 +7,18 @@
        data-default-collapsed so the page-level JS can read collapse
        defaults on first paint. */ -}}
 {{ define "page.html" }}
+{{ if .MissingPath }}
+<div class="project-missing-path-banner" role="alert">
+  <strong>Project path missing.</strong>
+  This project's root path no longer exists on disk.
+  <button type="button"
+          class="project-registry-remove"
+          data-slug="{{ .Slug }}"
+          data-banner="missing-path">
+    Deregister
+  </button>
+</div>
+{{ end }}
 {{ template "identity.html" .Identity }}
 {{ template "health.html" .Health }}
 {{ template "operations.html" .Operations }}
@@ -16,4 +28,5 @@
 {{ template "trackers.html" .Trackers }}
 {{ template "knowledge.html" .Knowledge }}
 {{ template "config.html" .Config }}
+{{ template "danger.html" .Danger }}
 {{ end }}

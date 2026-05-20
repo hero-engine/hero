@@ -77,6 +77,46 @@ func TestProjectHandler_TopNavActive_OnAggregate(t *testing.T) {
 	}
 }
 
+// TestProjectHandler_StopDaemonButton_OnAggregate confirms the Stop
+// daemon button is rendered on /p/all/project (Phase 4 of
+// hero-serve-project-section).
+func TestProjectHandler_StopDaemonButton_OnAggregate(t *testing.T) {
+	srv := newMultiProjectServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/p/all/project", nil)
+	rr := httptest.NewRecorder()
+	srv.projectHandler().ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body=%s", rr.Code, rr.Body.String())
+	}
+	body := rr.Body.String()
+	if !strings.Contains(body, "project-stop-daemon-btn") {
+		t.Errorf("aggregate page missing Stop-daemon button id")
+	}
+	if !strings.Contains(body, "Stop daemon") {
+		t.Errorf("aggregate page missing Stop daemon label")
+	}
+}
+
+// TestProjectHandler_StopDaemonButton_AbsentOnPerProject confirms the
+// per-project /p/<slug>/project URL does NOT render the Stop daemon
+// button — that surface is aggregate-only.
+func TestProjectHandler_StopDaemonButton_AbsentOnPerProject(t *testing.T) {
+	srv := newMultiProjectServer(t)
+	slugs := srv.Projects()
+	if len(slugs) == 0 {
+		t.Fatal("no projects")
+	}
+	req := httptest.NewRequest(http.MethodGet, "/p/"+slugs[0]+"/project", nil)
+	rr := httptest.NewRecorder()
+	srv.projectHandler().ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body=%s", rr.Code, rr.Body.String())
+	}
+	if strings.Contains(rr.Body.String(), "project-stop-daemon-btn") {
+		t.Errorf("per-project page must not render Stop-daemon button")
+	}
+}
+
 // TestRegistryRefreshEndpoint verifies POST /api/daemon/registry/refresh
 // returns JSON with the current project list.
 func TestRegistryRefreshEndpoint(t *testing.T) {

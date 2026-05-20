@@ -20,6 +20,21 @@
     {{ else }}
       <p class="project-empty">Daemon status unavailable.</p>
     {{ end }}
+
+    <details class="project-stop-daemon">
+      <summary>Stop daemon</summary>
+      <div class="project-stop-daemon-body">
+        <p>
+          Stopping the daemon ends this dashboard session immediately.
+          You will need to relaunch the dashboard with
+          <code>hero serve</code> before reloading any page.
+        </p>
+        <button type="button" id="project-stop-daemon-btn">
+          Stop daemon now
+        </button>
+        <span class="project-stop-daemon-status muted" id="project-stop-daemon-status"></span>
+      </div>
+    </details>
   </div>
 </section>
 {{ end }}

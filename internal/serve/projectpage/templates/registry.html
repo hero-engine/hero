@@ -12,6 +12,16 @@
         {{ with .RegisteredAtPretty }}<dt>Registered at</dt><dd>{{ . }}</dd>{{ end }}
         <dt>Default project</dt><dd>{{ if .IsDefaultProject }}yes{{ else }}no{{ end }}</dd>
       </dl>
+      {{ if .CanRemove }}
+        <p class="project-registry-actions">
+          <button type="button" class="project-registry-remove" data-slug="{{ .Slug }}">
+            Remove from registry
+          </button>
+          <span class="project-registry-remove-hint muted">
+            5-second undo window before the removal commits.
+          </span>
+        </p>
+      {{ end }}
     {{ else }}
       <p class="project-empty">Project not registered in <code>~/.hero/projects.json</code>.</p>
     {{ end }}

@@ -1,7 +1,6 @@
 package opsrunner
 
 import (
-	"sort"
 	"testing"
 )
 
@@ -14,6 +13,7 @@ func TestVerbs_AllowlistCompleteness(t *testing.T) {
 		"capture-knowledge",
 		"snapshot",
 		"export",
+		"stop",
 	}
 	if len(Verbs) != len(want) {
 		t.Fatalf("Verbs len = %d, want %d", len(Verbs), len(want))
@@ -31,8 +31,10 @@ func TestVerbs_AllowlistCompleteness(t *testing.T) {
 }
 
 func TestVerbs_NoSurpriseEntries(t *testing.T) {
-	// Belt to the suspenders: AllVerbs() and Verbs must agree on
-	// membership. Anyone adding to one and not the other gets caught.
+	// Per-project AllVerbs() lists the operations surfaced on every
+	// per-project Operations card; daemon-scoped verbs (currently just
+	// `stop`) live in Verbs but are deliberately omitted from AllVerbs.
+	daemonScoped := map[string]bool{"stop": true}
 	allMap := make(map[string]bool, len(Verbs))
 	for k := range Verbs {
 		allMap[k] = true
@@ -43,13 +45,10 @@ func TestVerbs_NoSurpriseEntries(t *testing.T) {
 		}
 		delete(allMap, v)
 	}
-	if len(allMap) != 0 {
-		leftover := make([]string, 0, len(allMap))
-		for k := range allMap {
-			leftover = append(leftover, k)
+	for k := range allMap {
+		if !daemonScoped[k] {
+			t.Errorf("Verbs has non-daemon-scoped entry %q not in AllVerbs", k)
 		}
-		sort.Strings(leftover)
-		t.Errorf("Verbs has entries not in AllVerbs: %v", leftover)
 	}
 }
 

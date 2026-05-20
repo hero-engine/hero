@@ -72,6 +72,11 @@ func (a *API) Handler() http.Handler {
 	// button. Phase 2 of hero-serve-project-section.
 	mux.HandleFunc("/api/daemon/registry/refresh", a.handleRegistryRefresh)
 
+	// Daemon-scoped ops dispatch (Phase 4 of hero-serve-project-section).
+	// /api/daemon/ops/stop launches `hero serve stop` via the opsrunner.
+	// Mounted before the generic /api/ catch-all so it wins routing.
+	mux.HandleFunc("/api/daemon/ops/", a.handleDaemonOps)
+
 	// Project listing
 	mux.HandleFunc("/api/projects", a.handleProjects)
 
@@ -176,6 +181,11 @@ func (a *API) routeProject(w http.ResponseWriter, r *http.Request) {
 		// /api/{slug}/ops/{verb}                      — POST: start
 		// /api/{slug}/ops/{job_id}/stream             — GET:  SSE
 		a.routeOps(w, r, pc, extra)
+	case "registry":
+		// /api/{slug}/registry/remove              — POST: enqueue
+		// /api/{slug}/registry/remove/undo         — POST: cancel
+		// Phase 4 of hero-serve-project-section.
+		a.routeRegistry(w, r, pc, extra)
 	default:
 		writeError(w, http.StatusNotFound, fmt.Sprintf("unknown endpoint: %s", endpoint))
 	}
@@ -833,6 +843,136 @@ func (a *API) handleOpsStream(w http.ResponseWriter, r *http.Request, pc *Projec
 		// a JSON envelope here. We have not yet emitted any SSE bytes,
 		// so changing status is still valid.
 		http.Error(w, err.Error(), http.StatusNotFound)
+	}
+}
+
+// pendingRemoveGraceWindow is the 5-second undo window for registry
+// removals. Phase 4 of hero-serve-project-section — UX-tested at 5s in
+// the parent spec.
+const pendingRemoveGraceWindow = 5 * time.Second
+
+// routeRegistry dispatches /api/{slug}/registry/... endpoints. Today
+// this is just remove + remove/undo (Phase 4); future destructive
+// operations on the registry slot for a project land here.
+func (a *API) routeRegistry(w http.ResponseWriter, r *http.Request, pc *ProjectContext, extra string) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	switch extra {
+	case "remove":
+		a.handleRegistryRemove(w, r, pc)
+	case "remove/undo":
+		a.handleRegistryRemoveUndo(w, r, pc)
+	default:
+		writeError(w, http.StatusNotFound, fmt.Sprintf("unknown registry endpoint: %s", extra))
+	}
+}
+
+// handleRegistryRemove enqueues a pending-remove for pc.Slug, returning
+// the absolute deadline so the client can render its undo countdown.
+// onCommit invokes Server.RemoveProject (which both removes the project
+// from the in-memory map and persists the registry to disk).
+//
+// Re-posting before the deadline elapses resets the timer — the existing
+// entry is cancelled and a fresh one is enqueued. That keeps the API
+// idempotent under double-clicks.
+func (a *API) handleRegistryRemove(w http.ResponseWriter, r *http.Request, pc *ProjectContext) {
+	if a.server == nil || a.server.pendingRemove == nil {
+		writeError(w, http.StatusServiceUnavailable, "pending-remove queue not configured")
+		return
+	}
+	slug := pc.Slug
+	deadline := a.server.pendingRemove.Enqueue(slug, pendingRemoveGraceWindow, func() error {
+		if err := a.server.RemoveProject(slug); err != nil {
+			fmt.Fprintf(os.Stderr, "hero serve: pending remove %s: %v\n", slug, err)
+			return err
+		}
+		return nil
+	})
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"slug":     slug,
+		"deadline": deadline.UTC().Format(time.RFC3339Nano),
+	})
+}
+
+// handleRegistryRemoveUndo cancels any pending-remove for pc.Slug.
+// Always returns 200 — idempotent by design so a double-click on Undo
+// (or an Undo after the window has already elapsed) doesn't surface a
+// confusing error to the user.
+func (a *API) handleRegistryRemoveUndo(w http.ResponseWriter, r *http.Request, pc *ProjectContext) {
+	cancelled := false
+	if a.server != nil && a.server.pendingRemove != nil {
+		cancelled = a.server.pendingRemove.Cancel(pc.Slug)
+	}
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"slug":      pc.Slug,
+		"cancelled": cancelled,
+	})
+}
+
+// handleDaemonOps dispatches /api/daemon/ops/<verb> through the same
+// opsrunner that backs the per-project ops endpoints, using the
+// daemon-scoped slug. Today the only supported verb is `stop` (Phase 4
+// of hero-serve-project-section); other verbs are rejected.
+//
+// The SSE stream for a daemon op uses the same per-project URL shape
+// — /api/_daemon/ops/{job_id}/stream — which is reachable via the
+// generic project-router because we treat the special slug as just
+// another project (it has no ProjectContext, so the router must accept
+// it explicitly).
+func (a *API) handleDaemonOps(w http.ResponseWriter, r *http.Request) {
+	if a.opsRunner == nil {
+		writeError(w, http.StatusServiceUnavailable, "ops runner not configured")
+		return
+	}
+	tail := strings.TrimPrefix(r.URL.Path, "/api/daemon/ops/")
+	head, rest := splitFirst(tail, "/")
+	if head == "" {
+		writeError(w, http.StatusNotFound, "daemon ops endpoint missing verb or job id")
+		return
+	}
+	switch r.Method {
+	case http.MethodPost:
+		if rest != "" {
+			writeError(w, http.StatusNotFound, "POST to /api/daemon/ops/{verb} only")
+			return
+		}
+		if head != "stop" {
+			writeError(w, http.StatusBadRequest, fmt.Sprintf("verb %q not allowed on daemon ops endpoint", head))
+			return
+		}
+		if !opsrunner.IsAllowed(head) {
+			writeError(w, http.StatusBadRequest, fmt.Sprintf("verb %q not in allowlist", head))
+			return
+		}
+		jobID, started, err := a.opsRunner.Start(r.Context(), opsrunner.DaemonScopedSlug, "", head)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		resp := map[string]interface{}{"job_id": jobID}
+		if !started {
+			resp["already_running"] = true
+		}
+		writeJSON(w, http.StatusOK, resp)
+	case http.MethodGet:
+		if rest != "stream" {
+			writeError(w, http.StatusNotFound, "GET requires /api/daemon/ops/{job_id}/stream")
+			return
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+		if _, ok := w.(http.Flusher); !ok {
+			http.Error(w, "streaming not supported", http.StatusInternalServerError)
+			return
+		}
+		if err := a.opsRunner.Stream(r.Context(), opsrunner.DaemonScopedSlug, head, w); err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+		}
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
