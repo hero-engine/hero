@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-20T00:18:35Z · 94 ready specs_
+_Generated: 2026-05-20T00:31:49Z · 95 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -175,31 +175,37 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## hero-serve-project-section — `hero serve` Project Section — Per-Project Info, Utilities, and Operations Page
+## hero-serve-project-section-mvp — hero serve Project Section — Phase 1 MVP (Read-Only Per-Project Page)
 _feature · planning · horizon: now_
 
-A per-project home page in `hero serve` — identity, health, conventions,
-peers, registry membership, lifecycle ops, danger zone — plus an
-`/p/all/project` cross-project rollup with daemon-ops.
+Skeleton + read-only per-project page in `hero serve`. Lands the
+`projectpage` package, the per-project handler at `/p/<slug>/project`
+(plus a `/project` fallback), and 8 read-only sections.
 
-**Status:** planning — spec just landed; routing dependency
-(`hero-serve-multi-project`) still delivering.
+**Status:** planning — first phase of a 5-phase initiative; routing
+dependency (`hero-serve-multi-project`) still delivering.
 
-**Pick up at:** wait for `/p/<slug>/<page>` routing + per-page `Deps`
-seam to land in `hero-serve-multi-project`, then scaffold a
-`projectpage.Deps`, register `/p/{slug}/project` + `/p/all/project`
-handlers in `internal/serve/server.go`, and create
-`internal/serve/shell/templates/project.html` with collapsible sections.
+**Pick up at:** scaffold `internal/serve/projectpage/` with `deps.go`,
+`handler.go`, and section data loaders under `data/`. Register
+`/p/{slug}/project` + `/project` fallback in
+`internal/serve/server.go` shell-page handler block.
 
-→ `.hero/planning/features/hero-serve-project-section/spec.md`
+→ `.hero/planning/features/hero-serve-project-section-mvp/spec.md`
 
 **Files:** `internal/serve/server.go:308-370`, `internal/serve/api.go:51-132`,
-`internal/serve/registry.go:44`, `internal/serve/shell/templates/page-layout.html`,
-`.hero/planning/features/hero-serve-multi-project/spec.md`
+`internal/serve/registry.go:44`, `internal/serve/pages/now/data/`,
+`internal/serve/shell/templates/page-layout.html`
 
-**Skip:** in-browser `hero.json` editing (read-only + edit-in-editor link);
-project creation wizard (separate spec); auth/multi-user (deferred to
-`hero-team-server`).
+**Skip:** live `hero check` runs (Phase 5); peer probes (Phase 5); ops
+dispatch (Phase 3); registry removal / Danger Zone (Phase 4); aggregate
+view (Phase 2).
+
+---
+
+## hero-serve-project-section — hero serve Project Section — Per-Project Info, Utilities, and Operations Page
+_initiative · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-serve-project-section/spec.md)_
 
 ---
 
