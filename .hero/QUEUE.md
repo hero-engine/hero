@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-20T00:17:47Z · 95 ready specs_
+_Generated: 2026-05-20T00:18:35Z · 94 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -200,29 +200,6 @@ handlers in `internal/serve/server.go`, and create
 **Skip:** in-browser `hero.json` editing (read-only + edit-in-editor link);
 project creation wizard (separate spec); auth/multi-user (deferred to
 `hero-team-server`).
-
----
-
-## hero-serve-dashboard-redesign — hero serve dashboard redesign — Now and Work pages
-_feature · planning · horizon: now_
-
-Replaces the empty-tile / sprint-headline Now and Work pages with an
-activity-feed-led layout and rolling windows so a heavy-activity day
-looks heavy, not empty.
-
-**Status:** planning — spec just landed, no code yet.
-
-**Pick up at:** start with the Now page activity feed since it carries
-the biggest visible win. Add `internal/serve/pages/now/data/activity.go`
-that reads recent graph events (spec status transitions, decisions,
-notes, conventions, peer calls, commits, agent sessions) and a matching
-`activity.html` fragment. Wire it into `page.html` as the new first
-section, above the in-flight strip.
-
-→ `.hero/planning/features/hero-serve-dashboard-redesign/spec.md`
-
-**Files:** `internal/serve/pages/now/templates/page.html`, `internal/serve/pages/now/data/metrics.go`, `internal/serve/pages/work/templates/page.html`, `internal/serve/pages/work/data/metrics.go`, `internal/serve/shell/templates/tabbed-metric-strip.html`
-**Skip:** redesigning Knowledge / People / Agents pages, fixing the data bugs (0 commits / 2 shipped / empty inbox / install panel state) — those land separately.
 
 ---
 

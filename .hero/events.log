@@ -49,3 +49,5 @@
 {"ts":"2026-05-19T23:46:02.891943Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"peer-call-result-yaml-int-strict-parse","message":"status -\u003e completed"}
 {"ts":"2026-05-19T23:50:32.909926Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"peer-call-findings-truncation-and-persistence","message":"hero peer call truncates advisory findings at 400 chars and persists nothing retrievable"}
 {"ts":"2026-05-19T23:50:32.910031Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"peer-call-findings-truncation-and-persistence","message":"status -\u003e completed"}
+{"ts":"2026-05-20T00:18:20.415896Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-serve-dashboard-redesign","message":"hero serve dashboard redesign — Now and Work pages"}
+{"ts":"2026-05-20T00:18:20.41599Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-serve-dashboard-redesign","message":"status -\u003e completed"}

@@ -1,6 +1,6 @@
 ---
 type: feature
-status: planning
+status: completed
 tags: [serve, dashboard, ui, now-page, work-page, activity-feed, themes]
 relates-to: [hero-serve-multi-project, knowledge-flywheel]
 created: 2026-05-19
@@ -65,23 +65,33 @@ instead of dragging old empty-state UX through the routing migration.
 
 ## Kickoff
 
-Replaces the empty-tile / sprint-headline Now and Work pages with an
-activity-feed-led layout and rolling windows so a heavy-activity day
-looks heavy, not empty.
+**Status:** delivered — Now and Work pages redesigned with activity-led layout, rolling windows, and Sprint UI gated on opt-in.
 
-**Status:** planning — spec just landed, no code yet.
+**Shipped on Now:**
+- Section order: Since (you-last-looked diff) → Activity → In-flight → Themes → Inbox → ... → QuickLaunch (bottom-anchored).
+- New data layers under `pages/now/data/`: `activity.go`, `inflight.go`, `themes.go`, `since.go` — each tested. `internal/clusters/` package powers themes.
+- Quicklaunch shrunk to a single-row bottom-anchored widget; install panel renders only when no adapter is connected.
+- Metric strip first-tab tiles now show four real rolling-window counts (touched / shipped / decisions / notes captured), each clickable to filter the activity feed.
 
-**Pick up at:** start with the Now page activity feed since it carries
-the biggest visible win. Add `internal/serve/pages/now/data/activity.go`
-that reads recent graph events (spec status transitions, decisions,
-notes, conventions, peer calls, commits, agent sessions) and a matching
-`activity.html` fragment. Wire it into `page.html` as the new first
-section, above the in-flight strip.
+**Shipped on Work:**
+- Default tab is "This week" — four rolling-window tiles: Touched / Shipped / Started this week, Stale (>14d). Tile clicks dispatch query-param filters on the spec list below.
+- "This sprint" tab and "Plan sprint" page-hero action only render when `cfg.HasSprintConfig()` is true. Subhead drops the "No active sprint" phrase when no sprint config.
+- New Hero-noticed themes row mounted between metric strip and Roadmap.
+- New `SprintConfig` block in `internal/config/config.go`; threaded into Work Deps via `hasSprintConfig(projectRoot)` server helper. Aggregate `/p/all/work` view forces HasSprintConfig=false.
 
-→ `.hero/planning/features/hero-serve-dashboard-redesign/spec.md`
+**Cross-cutting:**
+- Multi-project routing live: `/p/<slug>/<page>` per project, `/p/all/<page>` aggregate. Aggregate router rebuilds the project slice every render.
+- Last-looked cookie (`hero_last_looked`, RFC3339) backs the Since section; falls back to a 24h window when missing.
+- `shell.MetricTile` got an optional `Href` field; the strip template wraps tiles as links when set.
 
-**Files:** `internal/serve/pages/now/templates/page.html`, `internal/serve/pages/now/data/metrics.go`, `internal/serve/pages/work/templates/page.html`, `internal/serve/pages/work/data/metrics.go`, `internal/serve/shell/templates/tabbed-metric-strip.html`
-**Skip:** redesigning Knowledge / People / Agents pages, fixing the data bugs (0 commits / 2 shipped / empty inbox / install panel state) — those land separately.
+**Deferred to follow-up specs:**
+- "Decisions awaiting confirmation" as an inbox source — no producer for this signal exists yet; would need its own spec defining the producer/reconciler side. The inbox already sources five real signals (proposals, inbound handoffs, blockers, peer findings, in-review specs).
+- Aggregate-merged Work spec lists across projects — the `MultiProject` Deps seam is wired but the Roadmap loader doesn't yet merge across projects. Forward-compat seam shipped; full aggregate render is a separate delivery.
+- Sub-route handlers (`/work/kanban`, `/work/graph`) remain stubs per existing convention.
+
+**Tests:** unit tests for every new data loader + page-level tests for `TestRegister_DefaultTabIsThisWeek` / `TestRegister_SprintConfigGatesSprintUI`. `go build ./...`, `go test ./...`, `go vet ./...` all clean.
+
+**Pick up at:** done — archive with `hero spec complete`.
 
 ## Goal
 
