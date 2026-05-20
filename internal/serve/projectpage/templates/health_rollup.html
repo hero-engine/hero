@@ -1,0 +1,52 @@
+{{ define "health_rollup.html" }}
+<section class="project-section" data-section="health_rollup">
+  <header class="project-section-head" data-default-collapsed="false">
+    <h2>Health Rollup</h2>
+    <span class="project-section-meta">
+      <span class="health-dot health-{{ .OverallColor }}" title="{{ .OverallColor }}">●</span>
+      {{ if .AllClear }}all clear{{ else }}{{ .OverallColor }}{{ end }}
+    </span>
+    <button class="project-section-toggle" type="button" aria-expanded="true">collapse</button>
+  </header>
+  <div class="project-section-body">
+    <dl class="project-meta">
+      <dt>Stale specs</dt><dd>{{ .StaleSpecs }}</dd>
+      <dt>Missing kickoffs</dt><dd>{{ .MissingKickoffs }}</dd>
+      <dt>Broken manifests</dt><dd>{{ .BrokenManifests }}</dd>
+      <dt>Orphan files</dt><dd>{{ .OrphanFiles }}</dd>
+      <dt>Drift</dt><dd>{{ .Drift }}</dd>
+    </dl>
+    {{ if .PerProject }}
+      <details class="project-health-drill">
+        <summary>Per-project breakdown</summary>
+        <table class="project-peers">
+          <thead>
+            <tr>
+              <th>Project</th>
+              <th>Health</th>
+              <th>Stale</th>
+              <th>Kickoffs</th>
+              <th>Manifests</th>
+              <th>Orphans</th>
+              <th>Drift</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{ range .PerProject }}
+            <tr>
+              <td><a href="/p/{{ .Slug }}/project"><code>{{ .Slug }}</code></a></td>
+              <td><span class="health-dot health-{{ .Color }}">●</span> {{ .Color }}</td>
+              <td>{{ .StaleSpecs }}</td>
+              <td>{{ .MissingKickoffs }}</td>
+              <td>{{ .BrokenManifests }}</td>
+              <td>{{ .OrphanFiles }}</td>
+              <td>{{ .Drift }}</td>
+            </tr>
+            {{ end }}
+          </tbody>
+        </table>
+      </details>
+    {{ end }}
+  </div>
+</section>
+{{ end }}

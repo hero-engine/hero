@@ -28,6 +28,7 @@ import (
 	rolluppage "github.com/hero-engine/hero/internal/serve/pages/rollup"
 	workpage "github.com/hero-engine/hero/internal/serve/pages/work"
 	projectpage "github.com/hero-engine/hero/internal/serve/projectpage"
+	projectpagedata "github.com/hero-engine/hero/internal/serve/projectpage/data"
 	"github.com/hero-engine/hero/internal/serve/session"
 	"github.com/hero-engine/hero/internal/serve/shell"
 	"github.com/hero-engine/hero/internal/spec"
@@ -1029,7 +1030,69 @@ func (s *Server) buildAggregateShellRouter(pc *ProjectContext) *shell.Router {
 	if err := workpage.Register(r, workDeps); err != nil {
 		fmt.Fprintf(os.Stderr, "hero serve: register aggregate Work home: %v\n", err)
 	}
+
+	// Register the aggregate Project section page at /project (served
+	// under /p/all/project after the routing rewrite). Phase 2 of
+	// hero-serve-project-section — cross-project directory + daemon ops
+	// + health rollup + peers map.
+	projectDeps := projectpage.AggregateDeps{
+		Projects:       s.aggregateProjectpageProjects(),
+		DaemonSnapshot: s.daemonOpsSnapshot,
+	}
+	if err := projectpage.RegisterAggregate(r, projectDeps); err != nil {
+		fmt.Fprintf(os.Stderr, "hero serve: register aggregate Project home: %v\n", err)
+	}
 	return r
+}
+
+// aggregateProjectpageProjects snapshots the current project registry
+// into the shape the projectpage aggregate loaders consume. Built per
+// request so a project added/removed at runtime reflects on the next
+// page load.
+func (s *Server) aggregateProjectpageProjects() []projectpagedata.DirectoryProject {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := make([]projectpagedata.DirectoryProject, 0, len(s.projects))
+	for slug, pc := range s.projects {
+		if pc == nil {
+			continue
+		}
+		dp := projectpagedata.DirectoryProject{
+			Slug:        slug,
+			ProjectRoot: pc.Path,
+			HeroDir:     pc.HeroDir,
+		}
+		if s.registry != nil {
+			if entry := s.registry.Get(slug); entry != nil {
+				dp.RegisteredAt = entry.Registered
+			}
+		}
+		out = append(out, dp)
+	}
+	sort.SliceStable(out, func(i, j int) bool { return out[i].Slug < out[j].Slug })
+	return out
+}
+
+// daemonOpsSnapshot is the in-process snapshot the projectpage Daemon
+// Ops section consumes. Same source of truth as /api/status — no HTTP
+// round-trip, no network.
+func (s *Server) daemonOpsSnapshot() *projectpagedata.DaemonOpsSnapshot {
+	if s == nil {
+		return nil
+	}
+	started := s.StartedAt()
+	var uptime int64
+	if !started.IsZero() {
+		uptime = int64(time.Since(started).Seconds())
+	}
+	return &projectpagedata.DaemonOpsSnapshot{
+		PID:           os.Getpid(),
+		Port:          s.Port(),
+		Version:       s.Version(),
+		StartedAt:     started,
+		UptimeSeconds: uptime,
+		ProjectCount:  s.ProjectCount(),
+	}
 }
 
 // aggregateProjects snapshots the current project registry into the

@@ -180,10 +180,12 @@ func (s *Server) allProjectsHandler(w http.ResponseWriter, r *http.Request, rest
 	page, _ := splitFirst(rest, "/")
 
 	switch page {
-	case "now", "work":
+	case "now", "work", "project":
 		// Rewrite the request so the aggregate router sees just /now or
-		// /work. The aggregate router itself is built with MultiProject
-		// populated so the page-data loaders fan out across projects.
+		// /work or /project. The aggregate router itself is built with
+		// MultiProject populated so the page-data loaders fan out across
+		// projects; the project aggregate uses its own DirectoryProject
+		// snapshot wired in buildAggregateShellRouter.
 		router := s.aggregateRouter()
 		if router == nil {
 			break

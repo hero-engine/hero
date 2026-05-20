@@ -1,0 +1,25 @@
+{{ define "daemon_ops.html" }}
+<section class="project-section" data-section="daemon_ops">
+  <header class="project-section-head" data-default-collapsed="false">
+    <h2>Daemon Ops</h2>
+    <span class="project-section-meta">
+      {{ if .HasSnapshot }}PID {{ .PID }} · port {{ .Port }}{{ else }}<span class="muted">snapshot unavailable</span>{{ end }}
+    </span>
+    <button class="project-section-toggle" type="button" aria-expanded="true">collapse</button>
+  </header>
+  <div class="project-section-body">
+    {{ if .HasSnapshot }}
+      <dl class="project-meta">
+        <dt>PID</dt><dd>{{ .PID }}</dd>
+        <dt>Port</dt><dd>{{ .Port }}</dd>
+        <dt>Version</dt><dd>{{ .Version }}</dd>
+        <dt>Started</dt><dd>{{ .StartedAtPretty }}</dd>
+        <dt>Uptime</dt><dd>{{ .UptimePretty }}</dd>
+        <dt>Projects served</dt><dd>{{ .ProjectCount }}</dd>
+      </dl>
+    {{ else }}
+      <p class="project-empty">Daemon status unavailable.</p>
+    {{ end }}
+  </div>
+</section>
+{{ end }}

@@ -1,0 +1,41 @@
+{{ define "peers_map.html" }}
+<section class="project-section" data-section="peers_map">
+  <header class="project-section-head" data-default-collapsed="false">
+    <h2>Peers Map</h2>
+    <span class="project-section-meta">{{ len .Rows }} edges</span>
+    <button class="project-section-toggle" type="button" aria-expanded="true">collapse</button>
+  </header>
+  <div class="project-section-body">
+    {{ if .Rows }}
+      <table class="project-peers">
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>Alias</th>
+            <th>Peer project</th>
+            <th>Path</th>
+            <th>Reachable</th>
+            <th>Last call</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{ range .Rows }}
+          <tr>
+            <td><a href="/p/{{ .SourceProject }}/project"><code>{{ .SourceProject }}</code></a></td>
+            <td><code>{{ .PeerAlias }}</code></td>
+            <td>
+              {{ if .PeerProject }}<a href="/p/{{ .PeerProject }}/project"><code>{{ .PeerProject }}</code></a>{{ else }}<span class="muted">unregistered</span>{{ end }}
+            </td>
+            <td><code>{{ .PeerPath }}</code></td>
+            <td>{{ if .Reachable }}yes{{ else }}<span class="muted">no</span>{{ end }}</td>
+            <td>{{ if .LastCallPretty }}{{ .LastCallPretty }}{{ else }}<span class="muted">as of: never</span>{{ end }}</td>
+          </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    {{ else }}
+      <p class="project-empty">No cross-project peering.</p>
+    {{ end }}
+  </div>
+</section>
+{{ end }}

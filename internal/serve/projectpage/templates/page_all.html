@@ -1,0 +1,9 @@
+{{- /* page_all.html — outer layout for the cross-project /p/all/project
+       page. Phase 2 of hero-serve-project-section. Four sections in
+       fixed order: Directory, Daemon Ops, Health Rollup, Peers Map. */ -}}
+{{ define "page_all.html" }}
+{{ template "directory.html" .Directory }}
+{{ template "daemon_ops.html" .DaemonOps }}
+{{ template "health_rollup.html" .HealthRollup }}
+{{ template "peers_map.html" .PeersMap }}
+{{ end }}
