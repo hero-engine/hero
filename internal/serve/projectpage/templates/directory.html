@@ -1,0 +1,52 @@
+{{ define "directory.html" }}
+<section class="project-section" data-section="directory">
+  <header class="project-section-head" data-default-collapsed="false">
+    <h2>Project Directory</h2>
+    <span class="project-section-meta">{{ len .Rows }} registered</span>
+    <div class="project-section-link">
+      <button id="project-all-refresh" type="button" class="project-section-toggle">Refresh registry</button>
+    </div>
+    <button class="project-section-toggle" type="button" aria-expanded="true">collapse</button>
+  </header>
+  <div class="project-section-body">
+    {{ if .Rows }}
+      <div class="project-directory-controls">
+        <input id="project-directory-filter" type="search" placeholder="filter projects…" class="project-directory-filter" />
+      </div>
+      <table class="project-peers project-directory" id="project-directory-table">
+        <thead>
+          <tr>
+            <th data-sort-key="slug">Slug</th>
+            <th data-sort-key="name">Name</th>
+            <th data-sort-key="path">Path</th>
+            <th data-sort-key="last">Last touched</th>
+            <th data-sort-key="health">Health</th>
+            <th data-sort-key="specs">Specs</th>
+            <th data-sort-key="peers">Peers</th>
+            <th data-sort-key="tracker">Tracker</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{ range .Rows }}
+          <tr data-slug="{{ .Slug }}" data-health="{{ .Health }}" {{ if .Degraded }}class="project-directory-degraded"{{ end }}>
+            <td><a href="/p/{{ .Slug }}/project"><code>{{ .Slug }}</code></a></td>
+            <td>{{ .Name }}</td>
+            <td><code>{{ .Path }}</code></td>
+            <td data-sort-value="{{ .LastTouchedAt.Unix }}">{{ if .LastTouchedPretty }}{{ .LastTouchedPretty }}{{ else }}<span class="muted">—</span>{{ end }}</td>
+            <td>
+              <span class="health-dot health-{{ .Health }}" title="{{ .Health }}">●</span>
+              {{ if .Degraded }}<span class="muted" title="{{ .DegradedReason }}">degraded</span>{{ end }}
+            </td>
+            <td data-sort-value="{{ .SpecCount }}">{{ .SpecCount }}</td>
+            <td data-sort-value="{{ .PeerCount }}">{{ .PeerCount }}</td>
+            <td>{{ if .Tracker }}{{ .Tracker }}{{ else }}<span class="muted">—</span>{{ end }}</td>
+          </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    {{ else }}
+      <p class="project-empty">No projects registered.</p>
+    {{ end }}
+  </div>
+</section>
+{{ end }}

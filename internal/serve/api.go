@@ -52,6 +52,11 @@ func (a *API) Handler() http.Handler {
 	// per-project /api/{slug}/status.
 	mux.HandleFunc("/api/status", a.handleDaemonStatus)
 
+	// Re-read ~/.hero/projects.json and surface the refreshed list as
+	// JSON. POST-only; used by the /p/all/project "Refresh registry"
+	// button. Phase 2 of hero-serve-project-section.
+	mux.HandleFunc("/api/daemon/registry/refresh", a.handleRegistryRefresh)
+
 	// Project listing
 	mux.HandleFunc("/api/projects", a.handleProjects)
 
@@ -209,6 +214,70 @@ func (a *API) handleDaemonStatus(w http.ResponseWriter, r *http.Request) {
 		ProjectCount:  len(projects),
 		Projects:      projects,
 	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// handleRegistryRefresh re-reads ~/.hero/projects.json (or the
+// configured registry path) and returns the refreshed list as JSON.
+//
+// Behaviour:
+//   - POST: reload registry from disk, ensure server.projects reflects
+//     newly-added entries, return the current list.
+//   - GET:  return the current list without re-reading disk (cheap
+//     "show me the current state" probe).
+//
+// The endpoint is best-effort — a reload error is logged and the
+// current in-memory list is still returned (degraded operation
+// surface). Phase 2 of hero-serve-project-section.
+func (a *API) handleRegistryRefresh(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost && r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	type entryView struct {
+		Slug         string    `json:"slug"`
+		Path         string    `json:"path"`
+		RegisteredAt time.Time `json:"registered_at,omitempty"`
+	}
+
+	resp := struct {
+		Reloaded bool        `json:"reloaded"`
+		Count    int         `json:"count"`
+		Projects []entryView `json:"projects"`
+		Error    string      `json:"error,omitempty"`
+	}{}
+
+	if r.Method == http.MethodPost {
+		if a.server.registry != nil {
+			reloaded, rerr := LoadRegistryFrom(a.server.registry.path)
+			if rerr != nil {
+				resp.Error = rerr.Error()
+			} else {
+				a.server.mu.Lock()
+				a.server.registry = reloaded
+				a.server.mu.Unlock()
+				a.server.loadRegistryProjects()
+				resp.Reloaded = true
+			}
+		}
+	}
+
+	a.server.mu.RLock()
+	for slug, pc := range a.server.projects {
+		if pc == nil {
+			continue
+		}
+		view := entryView{Slug: slug, Path: pc.Path}
+		if a.server.registry != nil {
+			if entry := a.server.registry.Get(slug); entry != nil {
+				view.RegisteredAt = entry.Registered
+			}
+		}
+		resp.Projects = append(resp.Projects, view)
+	}
+	a.server.mu.RUnlock()
+	resp.Count = len(resp.Projects)
 	writeJSON(w, http.StatusOK, resp)
 }
 
