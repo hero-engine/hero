@@ -71,43 +71,70 @@ func cycleTilesPlaceholder() []MetricTile {
 	}
 }
 
-// weekTiles is the kanban / solo first tab — real numbers from git +
-// the events log. Returns placeholder tiles when no project root is
-// available.
+// weekTiles is the kanban / solo first tab — per
+// hero-serve-dashboard-redesign step 7, four rolling-window counts
+// computed from the events log: specs touched, specs shipped,
+// decisions captured, notes captured. Each tile is clickable and
+// filters the activity feed below to the matching kind.
 func weekTiles(in MetricsInputs) []MetricTile {
-	if in.ProjectRoot == "" {
+	if in.HeroDir == "" {
 		return []MetricTile{
+			{Value: template.HTML("—"), Label: "specs touched this week"},
 			{Value: template.HTML("—"), Label: "specs shipped this week"},
-			{Value: template.HTML("—"), Label: "commits authored"},
-			{Value: template.HTML("—"), Label: "longest open spec"},
-			{Value: template.HTML("—"), Label: "your committed specs"},
+			{Value: template.HTML("—"), Label: "decisions captured"},
+			{Value: template.HTML("—"), Label: "notes captured"},
 		}
 	}
+	touched, decisions, notes := weekActivityCounts(in.HeroDir, 7*24*time.Hour)
 	shipped := countCompletedSince(in.HeroDir, 7*24*time.Hour)
-	commits, _ := gitCountCommitsSince(in.ProjectRoot, "7 days ago", in.UserName)
 
 	return []MetricTile{
+		{
+			Value: template.HTML(strconv.Itoa(touched)),
+			Label: "specs touched this week",
+			Href:  "/now?window=week",
+		},
 		{
 			Value:  template.HTML(strconv.Itoa(shipped)),
 			Label:  "specs shipped this week",
 			Footer: sparklineSVG([]int{1, 0, 1, 2, 0, 1, shipped}),
+			Href:   "/now?window=week&kind=spec",
 		},
 		{
-			Value:  template.HTML(strconv.Itoa(commits)),
-			Label:  "commits authored",
-			Footer: template.HTML(`<div class="metric-sub">last 7 days</div>`),
+			Value: template.HTML(strconv.Itoa(decisions)),
+			Label: "decisions captured",
+			Href:  "/now?window=week&kind=decision",
 		},
 		{
-			Value: template.HTML("—"),
-			Label: "longest open spec",
-			Footer: template.HTML(`<div class="metric-sub">computed nightly</div>`),
-		},
-		{
-			Value: template.HTML("—"),
-			Label: "your committed specs",
-			Footer: template.HTML(`<div class="metric-sub">no claim yet</div>`),
+			Value: template.HTML(strconv.Itoa(notes)),
+			Label: "notes captured",
+			Href:  "/now?window=week&kind=knowledge",
 		},
 	}
+}
+
+// weekActivityCounts walks the events log once and tallies unique
+// touched-spec count, decisions-captured count, notes-captured count.
+// "Touched" counts unique slugs so a single active spec doesn't
+// dominate the headline number.
+func weekActivityCounts(heroDir string, since time.Duration) (touched, decisions, notes int) {
+	events := readEventsBest(heroDir, time.Now().Add(-since), 0)
+	seen := make(map[string]struct{})
+	for _, e := range events {
+		if e.Slug != "" {
+			if _, ok := seen[e.Slug]; !ok {
+				seen[e.Slug] = struct{}{}
+				touched++
+			}
+		}
+		switch e.Type {
+		case "decision_made":
+			decisions++
+		case "knowledge.captured", "note.captured":
+			notes++
+		}
+	}
+	return touched, decisions, notes
 }
 
 // myWeekTiles is the cross-methodology "My week" tab. Sparklines use
