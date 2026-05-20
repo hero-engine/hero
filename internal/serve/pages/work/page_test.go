@@ -76,6 +76,86 @@ func TestRegister_RendersAllSections(t *testing.T) {
 // contract: each Work sub-route renders the view-toolbar with exactly
 // one matching tab marked `active`. (Pre-v4 the active class was hard-
 // coded to Horizons on every route.)
+// TestRegister_DefaultTabIsThisWeek locks the dashboard-redesign
+// step 8 contract: "This week" is the default-active metric tab on
+// the Work page. Sprint UI is opt-in via HasSprintConfig — when
+// false, no "This sprint" tab and no "Plan sprint" hero action
+// appear on the page.
+func TestRegister_DefaultTabIsThisWeek(t *testing.T) {
+	r := newTestRouter(t)
+	if err := Register(r, Deps{
+		Workspace: "hero",
+		Branch:    "main",
+		UserName:  "test-user",
+		// HasSprintConfig left false — solo continuous-flow default.
+	}); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	srv := httptest.NewServer(r.Handler())
+	defer srv.Close()
+	resp, err := http.Get(srv.URL + "/work")
+	if err != nil {
+		t.Fatalf("GET /work: %v", err)
+	}
+	defer resp.Body.Close()
+	raw, _ := io.ReadAll(resp.Body)
+	body := string(raw)
+
+	// "This week" appears as a tab AND is marked active.
+	if !strings.Contains(body, `data-metric-tab="week"`) {
+		t.Errorf("missing week tab")
+	}
+	if !strings.Contains(body, `class="metric-tab active"`+"\n              data-metric-tab=\"week\"") &&
+		!strings.Contains(body, `<button class="metric-tab active"
+              data-metric-tab="week"`) {
+		// Match either compact or expanded form
+		if !strings.Contains(body, `metric-tab active`) || !strings.Contains(body, `data-metric-tab="week"`) {
+			t.Errorf("expected week tab to be the active default tab")
+		}
+	}
+
+	// Sprint UI MUST be absent when HasSprintConfig is false.
+	if strings.Contains(body, `data-metric-tab="sprint"`) {
+		t.Errorf("sprint tab should be hidden without HasSprintConfig")
+	}
+	if strings.Contains(body, "Plan sprint") {
+		t.Errorf("Plan sprint action should be hidden without HasSprintConfig")
+	}
+	if strings.Contains(body, "No active sprint") {
+		t.Errorf("sprint-state subhead should be hidden without HasSprintConfig")
+	}
+}
+
+// TestRegister_SprintConfigGatesSprintUI verifies the opposite: when
+// HasSprintConfig is true the Sprint tab + Plan-sprint action appear.
+func TestRegister_SprintConfigGatesSprintUI(t *testing.T) {
+	r := newTestRouter(t)
+	if err := Register(r, Deps{
+		Workspace:       "hero",
+		Branch:          "main",
+		UserName:        "test-user",
+		HasSprintConfig: true,
+	}); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	srv := httptest.NewServer(r.Handler())
+	defer srv.Close()
+	resp, err := http.Get(srv.URL + "/work")
+	if err != nil {
+		t.Fatalf("GET /work: %v", err)
+	}
+	defer resp.Body.Close()
+	raw, _ := io.ReadAll(resp.Body)
+	body := string(raw)
+
+	if !strings.Contains(body, `data-metric-tab="sprint"`) {
+		t.Errorf("expected sprint tab when HasSprintConfig is true")
+	}
+	if !strings.Contains(body, "Plan sprint") {
+		t.Errorf("expected Plan sprint action when HasSprintConfig is true")
+	}
+}
+
 func TestRegister_ViewToolbarActiveStateMatchesRoute(t *testing.T) {
 	r := newTestRouter(t)
 	if err := Register(r, Deps{UserName: "test-user"}); err != nil {

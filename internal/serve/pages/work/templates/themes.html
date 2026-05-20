@@ -1,0 +1,33 @@
+{{- /* themes.html — Hero-noticed work clusters on the Work page,
+       scoped to the active metric-tab window. Omitted entirely when
+       no cluster reaches the confidence threshold (≥3 items) — bad
+       clusters are worse than no clusters. */ -}}
+{{ define "themes.html" }}
+{{- if gt (len .Clusters) 0 }}
+<section id="work-themes" class="work-section">
+  <div class="work-section-header">
+    <h2 class="work-section-title">Hero noticed</h2>
+    <span class="work-section-meta">{{ len .Clusters }} theme{{ if ne (len .Clusters) 1 }}s{{ end }}</span>
+  </div>
+  <div class="work-themes-list">
+    {{- range .Clusters }}
+    <div class="work-theme-card" data-theme-kind="{{ .Kind }}">
+      <div class="work-theme-header">
+        <span class="work-theme-label">{{ .Label }}</span>
+        <span class="work-theme-count">{{ .ItemCount }} item{{ if ne .ItemCount 1 }}s{{ end }}</span>
+        {{- if .Project }} <span class="work-project-chip">{{ .Project }}</span>{{ end }}
+      </div>
+      <div class="work-theme-why">{{ .Why }}</div>
+      {{- if gt (len .Items) 0 }}
+      <ul class="work-theme-items">
+        {{- range .Items }}
+        <li><a href="{{ .Href }}">{{ .Title }}</a>{{ if .Project }} <span class="work-project-chip">{{ .Project }}</span>{{ end }}</li>
+        {{- end }}
+      </ul>
+      {{- end }}
+    </div>
+    {{- end }}
+  </div>
+</section>
+{{- end }}
+{{ end }}

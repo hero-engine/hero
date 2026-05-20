@@ -49,6 +49,13 @@ type Deps struct {
 	// row with the project slug; rolling-window tiles aggregate
 	// counts. Set by /p/all/work; empty for single-project mode.
 	MultiProject []AggregateProject
+
+	// HasSprintConfig reports whether the workspace has opted into
+	// the planned-sprint UI surfaces (Sprint tab on the metric strip,
+	// "Plan sprint" page-hero action). When false — the solo
+	// continuous-flow default — the page renders only rolling-window
+	// metric tabs and never offers sprint-shaped affordances.
+	HasSprintConfig bool
 }
 
 // AggregateProject is one project contributing to a /p/all/ aggregate
@@ -58,6 +65,20 @@ type AggregateProject struct {
 	Slug    string
 	Path    string
 	HeroDir string
+}
+
+// toThemesProjects converts the page-level AggregateProject slice
+// into the data-package ThemesProject shape. Nil/empty in → nil out
+// so the themes loader sees the single-project default.
+func toThemesProjects(in []AggregateProject) []data.ThemesProject {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make([]data.ThemesProject, 0, len(in))
+	for _, p := range in {
+		out = append(out, data.ThemesProject{Slug: p.Slug, Path: p.Path, HeroDir: p.HeroDir})
+	}
+	return out
 }
 
 // Register installs the Work home on the shell router using the
@@ -210,11 +231,16 @@ func (h *handler) buildPage(req *http.Request, ed edition.Edition) shell.Page {
 		HeroDir:     h.deps.HeroDir,
 		Counts:      counts,
 	})
+	themes := data.LoadThemes(data.ThemesInputs{
+		HeroDir:   h.deps.HeroDir,
+		Aggregate: toThemesProjects(h.deps.MultiProject),
+	})
 
 	hero := buildPageHero(h.deps, ed, counts, "")
-	strip := buildMetricStrip(metrics)
+	strip := buildMetricStrip(metrics, h.deps.HasSprintConfig)
 
 	pd := pageData{
+		Themes:  themes,
 		Roadmap: roadmap,
 		Blocked: blocked,
 		Shipped: shipped,
@@ -257,7 +283,7 @@ func (h *handler) renderBlocked(w http.ResponseWriter, req *http.Request) {
 	})
 
 	hero := buildPageHero(h.deps, ed, counts, "Blocked")
-	strip := buildMetricStrip(metrics)
+	strip := buildMetricStrip(metrics, h.deps.HasSprintConfig)
 
 	content := func(out io.Writer) error {
 		if err := h.renderHeroAndChat(out, hero, "blocked"); err != nil {
@@ -305,7 +331,7 @@ func (h *handler) renderSpecDetail(w http.ResponseWriter, req *http.Request) {
 	})
 
 	hero := buildSpecDetailPageHero(h.deps, detail)
-	strip := buildMetricStrip(metrics)
+	strip := buildMetricStrip(metrics, h.deps.HasSprintConfig)
 	crumb := &shell.PageBreadcrumb{Crumbs: []shell.BreadcrumbCrumb{
 		{Label: "Work", Href: "/work"},
 		{Label: "Spec"},
@@ -404,7 +430,7 @@ func (h *handler) renderStub(w http.ResponseWriter, req *http.Request, slug, vie
 	})
 
 	hero := buildPageHero(h.deps, ed, counts, view)
-	strip := buildMetricStrip(metrics)
+	strip := buildMetricStrip(metrics, h.deps.HasSprintConfig)
 
 	content := func(out io.Writer) error {
 		if err := h.renderHeroAndChat(out, hero, slug); err != nil {
@@ -492,6 +518,7 @@ func (h *handler) renderSection(section, view string) ([]byte, error) {
 
 // pageData is the outer-template input.
 type pageData struct {
+	Themes  data.Themes
 	Roadmap data.Roadmap
 	Blocked data.Blocked
 	Shipped data.RecentlyShipped
@@ -526,7 +553,12 @@ func buildPageHero(deps Deps, ed edition.Edition, c data.PageCounts, subView str
 	} else {
 		parts = append(parts, "<strong>0 blocked</strong>")
 	}
-	parts = append(parts, template.HTMLEscapeString(c.SprintState))
+	// SprintState only appears when sprint UI is opted into. Without
+	// sprint config the trailing "No active sprint" phrase is noise
+	// per hero-serve-dashboard-redesign.
+	if deps.HasSprintConfig && c.SprintState != "" {
+		parts = append(parts, template.HTMLEscapeString(c.SprintState))
+	}
 	subhead := strings.Join(parts, `<span class="dot-sep">·</span>`)
 
 	_ = ed
@@ -535,27 +567,43 @@ func buildPageHero(deps Deps, ed edition.Edition, c data.PageCounts, subView str
 	if subView != "" {
 		title = "Work · " + subView
 	}
+	actions := []shell.PageHeroAction{
+		{Kind: "primary", Label: "New spec", Href: "#"},
+		{Kind: "ghost", Label: "Import from tracker", Href: "#"},
+	}
+	// "Plan sprint" only renders for workspaces that have opted into
+	// sprint UI. Per hero-serve-dashboard-redesign step 11: solo
+	// continuous-flow operators never see it as a primary CTA.
+	if deps.HasSprintConfig {
+		actions = append(actions, shell.PageHeroAction{Kind: "ghost", Label: "Plan sprint", Href: "#"})
+	}
 	return shell.PageHero{
 		Eyebrow: template.HTML(template.HTMLEscapeString(eyebrow)),
 		Title:   title,
 		Subhead: template.HTML(subhead),
-		Actions: []shell.PageHeroAction{
-			{Kind: "primary", Label: "New spec", Href: "#"},
-			{Kind: "ghost", Label: "Import from tracker", Href: "#"},
-			{Kind: "ghost", Label: "Plan sprint", Href: "#"},
-		},
+		Actions: actions,
 	}
 }
 
-// buildMetricStrip composes the three-tab Work metric strip.
-func buildMetricStrip(m data.Metrics) shell.MetricStrip {
+// buildMetricStrip composes the Work metric strip. "This week"
+// (rolling-window) is the default active tab. "This sprint" only
+// surfaces when the workspace has opted into sprint UI; otherwise the
+// tab list is week / throughput / quality so users without a sprint
+// config never see sprint-shaped affordances.
+func buildMetricStrip(m data.Metrics, hasSprint bool) shell.MetricStrip {
+	tabs := []shell.MetricTab{
+		{Slug: "week", Label: "This week", Active: true, Tiles: m.WeekTiles},
+	}
+	if hasSprint {
+		tabs = append(tabs, shell.MetricTab{Slug: "sprint", Label: "This sprint", Tiles: m.SprintTiles})
+	}
+	tabs = append(tabs,
+		shell.MetricTab{Slug: "throughput", Label: "Throughput", Tiles: m.ThroughputTiles},
+		shell.MetricTab{Slug: "quality", Label: "Quality", Tiles: m.QualityTiles},
+	)
 	return shell.MetricStrip{
 		AllLink: "#",
-		Tabs: []shell.MetricTab{
-			{Slug: "sprint", Label: "This sprint", Active: true, Tiles: m.SprintTiles},
-			{Slug: "throughput", Label: "Throughput", Tiles: m.ThroughputTiles},
-			{Slug: "quality", Label: "Quality", Tiles: m.QualityTiles},
-		},
+		Tabs:    tabs,
 	}
 }
 

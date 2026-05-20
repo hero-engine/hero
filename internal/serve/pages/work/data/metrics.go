@@ -13,13 +13,14 @@ type MetricsInputs struct {
 	Counts      PageCounts
 }
 
-// LoadMetrics composes the three Work metric tabs. Today the tiles are
-// real workspace counts where cheap (delivering / blocked) and quiet
-// em-dash placeholders where the upstream subsystem (sprint planner,
-// drift detector, CI ingest, throughput calc) does not yet feed the
-// page. The strip never blanks the page.
+// LoadMetrics composes the Work metric tabs. "This week" is the always-
+// present rolling-window default. Sprint tiles only render when the
+// workspace has opted into sprint UI (caller gates by HasSprintConfig);
+// LoadMetrics always computes them so the caller can choose to include
+// the tab without a second pass.
 func LoadMetrics(in MetricsInputs) Metrics {
 	return Metrics{
+		WeekTiles:       LoadWeek(WeekInputs{ProjectRoot: in.ProjectRoot, HeroDir: in.HeroDir}),
 		SprintTiles:     sprintTiles(in),
 		ThroughputTiles: throughputTiles(),
 		QualityTiles:    qualityTiles(),
