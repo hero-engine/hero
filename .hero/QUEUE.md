@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-20T04:47:23Z · 96 ready specs_
+_Generated: 2026-05-20T04:48:02Z · 96 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -203,31 +203,33 @@ real graph viz for peers (parent Boundary).
 
 ---
 
-## hero-serve-project-section-opsrunner — hero serve Project Section — Phase 3 Operations Runner
+## hero-serve-project-section-destructive — hero serve Project Section — Phase 4 Destructive Operations (Registry, Danger Zone, Stop Daemon)
 _feature · planning · horizon: now_
 
-`opsrunner` package + Operations section wiring. Lets the user run
-`hero check`, `hero index`, `hero scan`, etc. from the Project page
-with SSE progress.
+Destructive affordances on the Project surface: registry-remove with
+undo, Danger Zone with typed confirm, missing-path banner, aggregate-
+only Stop-daemon button.
 
-**Status:** planning — Phase 3 of 5; gated on Phase 1's `projectpage`
-package landing.
+**Status:** planning — Phase 4 of 5; gated on Phase 1 (page), Phase 2
+(aggregate view for Stop-daemon placement), and Phase 3 (ops runner
+for Stop-daemon dispatch).
 
-**Pick up at:** scaffold `internal/serve/opsrunner/` with the verb
-allowlist map, in-memory job registry keyed by `slug+verb`, subprocess
-launcher, and SSE writer. Register `POST /api/{slug}/ops/{verb}` and
-`GET /api/{slug}/ops/{job_id}/stream` in `internal/serve/api.go`.
+**Pick up at:** add `POST /api/{slug}/registry/remove` and
+`POST /api/{slug}/registry/remove/undo` to `internal/serve/api.go`,
+backed by a pending-remove queue with a 5-second timer. Wire the
+"Remove from registry" button on the Phase 1 Registry section.
 
-→ `.hero/planning/features/hero-serve-project-section-opsrunner/spec.md`
+→ `.hero/planning/features/hero-serve-project-section-destructive/spec.md`
 
-**Files:** `internal/serve/projectpage/data/operations.go` (new),
+**Files:** `internal/serve/server.go:200` (`RemoveProject`),
 `internal/serve/api.go:51-132`,
-`internal/serve/shell/templates/project/operations.html` (new),
-`internal/serve/shell/static/js/project.js` (extend with SSE wiring)
+`internal/serve/projectpage/data/registry.go`,
+`internal/serve/projectpage/data/danger.go` (new),
+`internal/serve/shell/static/js/project.js`
 
-**Skip:** verbs outside the fixed allowlist; "Stop daemon" wiring
-(Phase 4 plumbs through this runner); persistence of job history across
-daemon restarts (in-memory is fine for v1).
+**Skip:** undo windows longer than 5 seconds (UX-tested at 5s in the
+parent spec); admin/multi-user permission gates (deferred to
+`hero-team-server`); restart-daemon (Stop only for v1).
 
 ---
 
