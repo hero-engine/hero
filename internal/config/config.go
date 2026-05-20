@@ -92,6 +92,44 @@ type Config struct {
 	// Chat holds chat-dispatcher settings consumed by
 	// internal/serve/chat (capability resolver, hero-code probe).
 	Chat *ChatConfig `json:"chat,omitempty"`
+
+	// Sprint, when present, opts the workspace into the planned-sprint
+	// UI surfaces (the Sprint tab on the Work page, sprint-shaped
+	// metric tiles). Absent/empty workspaces never see sprint UI —
+	// they run on rolling activity windows instead. Per the
+	// hero-serve-dashboard-redesign spec.
+	Sprint *SprintConfig `json:"sprint,omitempty"`
+}
+
+// SprintConfig opts a workspace into planned-sprint UI. Presence is
+// the gate; the fields below are display sugar for the Sprint tab.
+type SprintConfig struct {
+	// Name is the human label shown on the Sprint tab.
+	Name string `json:"name,omitempty"`
+	// Goal is a one-line statement of what this sprint is trying to
+	// achieve.
+	Goal string `json:"goal,omitempty"`
+	// StartedAt is an ISO-8601 date string (e.g. "2026-05-19"). Used to
+	// compute the day-counter on the Sprint tab.
+	StartedAt string `json:"started_at,omitempty"`
+	// Specs is the list of spec slugs scoped to this sprint. When
+	// non-empty, the Sprint tab filters its tile counts to this set.
+	Specs []string `json:"specs,omitempty"`
+}
+
+// HasSprintConfig reports whether a workspace has opted into the
+// planned-sprint UI by setting `sprint:` in hero.json. Empty Sprint
+// blocks (e.g. `"sprint": {}`) are treated as no sprint — the user has
+// to set at least a Name for the tab to surface, mirroring how a real
+// agile tracker would model "no current iteration."
+func (c Config) HasSprintConfig() bool {
+	if c.Sprint == nil {
+		return false
+	}
+	if c.Sprint.Name == "" && c.Sprint.Goal == "" && len(c.Sprint.Specs) == 0 {
+		return false
+	}
+	return true
 }
 
 // ChatConfig holds chat-dispatcher settings.
