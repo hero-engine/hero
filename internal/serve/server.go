@@ -19,6 +19,7 @@ import (
 	"github.com/hero-engine/hero/internal/serve/api"
 	"github.com/hero-engine/hero/internal/serve/chat"
 	"github.com/hero-engine/hero/internal/serve/edition"
+	"github.com/hero-engine/hero/internal/serve/opsrunner"
 	agentspage "github.com/hero-engine/hero/internal/serve/pages/agentspage"
 	agentsdata "github.com/hero-engine/hero/internal/serve/pages/agentspage/data"
 	knowledgepage "github.com/hero-engine/hero/internal/serve/pages/knowledge"
@@ -72,6 +73,13 @@ type Server struct {
 	chatRegistry *chat.Registry
 	chatStore    *chat.Store
 	chatAPI      *chat.API
+
+	// opsRunner backs the /api/{slug}/ops/{verb} endpoints and the
+	// Operations section on /p/<slug>/project. Constructed once in
+	// NewServer and threaded into both the API and the per-project
+	// projectpage Deps so the same runner serves the section render
+	// (via Lookup) and the API dispatch.
+	opsRunner *opsrunner.Runner
 
 	// Team mode
 	teamMode       bool
@@ -137,6 +145,12 @@ func NewServer(cfg ServerConfig) *Server {
 	// Create the API with multi-project support. The shell (top-nav
 	// home routing, /-redirect) is composed in Run.
 	s.api = NewAPI(s, bus)
+
+	// OpsRunner backs the lifecycle-ops buttons on the Project page.
+	// Constructed before per-project Deps are built so both the API
+	// handler and the projectpage renderer share one registry.
+	s.opsRunner = opsrunner.New(context.Background())
+	s.api.SetOpsRunner(s.opsRunner)
 
 	// Team mode setup
 	if cfg.TeamMode {
@@ -862,6 +876,7 @@ func (s *Server) buildShellRouterFor(pc *ProjectContext) *shell.Router {
 		HeroDir:       pc.HeroDir,
 		Slug:          pc.Slug,
 		RegistryEntry: s.projectpageRegistryEntry(pc.Slug),
+		OpsRunner:     s.opsRunner,
 	}
 	if err := projectpage.Register(r, projectDeps); err != nil {
 		fmt.Fprintf(os.Stderr, "hero serve: register Project section page for %s: %v\n", pc.Slug, err)

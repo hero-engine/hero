@@ -58,14 +58,15 @@ func loadTemplates() (*template.Template, error) {
 // pageData composes every section's typed result into the outer
 // template input. Each field aligns with the partial it feeds.
 type pageData struct {
-	Identity  data.Identity
-	Health    data.Health
-	Stack     data.Stack
-	Registry  data.Registry
-	Peers     data.Peers
-	Trackers  data.Trackers
-	Knowledge data.Knowledge
-	Config    data.Config
+	Identity   data.Identity
+	Health     data.Health
+	Operations data.Operations
+	Stack      data.Stack
+	Registry   data.Registry
+	Peers      data.Peers
+	Trackers   data.Trackers
+	Knowledge  data.Knowledge
+	Config     data.Config
 }
 
 func (h *handler) handle(w http.ResponseWriter, req *http.Request) {
@@ -122,6 +123,11 @@ func (h *handler) buildPageData(d Deps) pageData {
 			ProjectRoot: d.ProjectRoot, HeroDir: d.HeroDir, Slug: d.Slug,
 		}),
 		Health: data.LoadHealth(data.HealthInputs{HeroDir: d.HeroDir}),
+		Operations: data.LoadOperations(data.OperationsInputs{
+			Slug:      d.Slug,
+			Lookup:    d.OpsRunner,
+			Available: d.OpsRunner != nil,
+		}),
 		Stack: data.LoadStack(data.StackInputs{
 			ProjectRoot: d.ProjectRoot, HeroDir: d.HeroDir,
 		}),

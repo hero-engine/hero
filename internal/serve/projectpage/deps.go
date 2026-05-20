@@ -13,7 +13,11 @@
 // internal/serve/pages/rollup and now mounts at /rollup.
 package projectpage
 
-import "time"
+import (
+	"time"
+
+	"github.com/hero-engine/hero/internal/serve/projectpage/data"
+)
 
 // Deps is the per-request bundle a Project page render needs. It is
 // rebuilt per request from the URL slug — never captured at startup —
@@ -53,6 +57,14 @@ type Deps struct {
 	// section. Phase 1 always renders false; the wiring point is here
 	// for a future default-project mechanism.
 	IsDefaultProject bool
+
+	// OpsRunner is the runner probe surfaced to the Operations section
+	// at page-render time. Nil-tolerant: when nil the Operations section
+	// renders an "unavailable" empty state (defensive; never actually
+	// nil once Phase 3 is wired). The concrete *opsrunner.Runner
+	// satisfies the data.OpsLookup interface, so this field is typed at
+	// that boundary to keep deps.go free of opsrunner imports.
+	OpsRunner data.OpsLookup
 }
 
 // RegistryEntry is the minimal registry shape the project page reads.

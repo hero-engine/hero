@@ -11,6 +11,7 @@ import (
 
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/index"
+	"github.com/hero-engine/hero/internal/serve/opsrunner"
 	"github.com/hero-engine/hero/internal/spec"
 )
 
@@ -28,6 +29,12 @@ type API struct {
 	// Lazily initialized on first use; transient per daemon process
 	// (Decision 1 of the inline-propose contract).
 	proposals *proposalStores
+
+	// opsRunner spawns + tracks the Operations-section subprocesses for
+	// every project. Nil-tolerant: when nil, /api/{slug}/ops/* returns 503.
+	// Set via Server.NewServer during construction; shared across all
+	// per-project + aggregate handlers.
+	opsRunner *opsrunner.Runner
 }
 
 // NewAPI creates a new API instance backed by a multi-project server.
@@ -38,6 +45,14 @@ func NewAPI(server *Server, bus *EventBus) *API {
 		proposals: newProposalStores(),
 	}
 }
+
+// SetOpsRunner wires the ops runner into the API. Called by
+// Server.NewServer after the runner is constructed.
+func (a *API) SetOpsRunner(r *opsrunner.Runner) { a.opsRunner = r }
+
+// OpsRunner returns the wired ops runner, or nil if not configured.
+// Used by Server to inject the same runner into projectpage.Deps.
+func (a *API) OpsRunner() *opsrunner.Runner { return a.opsRunner }
 
 // Handler returns a configured http.Handler with the API routes. The
 // shell router is layered on top of this handler in Server.Run.
@@ -157,6 +172,10 @@ func (a *API) routeProject(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		a.routeProposals(w, r, pc, sid, rest)
+	case "ops":
+		// /api/{slug}/ops/{verb}                      — POST: start
+		// /api/{slug}/ops/{job_id}/stream             — GET:  SSE
+		a.routeOps(w, r, pc, extra)
 	default:
 		writeError(w, http.StatusNotFound, fmt.Sprintf("unknown endpoint: %s", endpoint))
 	}
@@ -746,6 +765,75 @@ func splitFirst(s, sep string) (head, rest string) {
 		return s[:i], s[i+len(sep):]
 	}
 	return s, ""
+}
+
+// routeOps dispatches the /api/{slug}/ops/... namespace.
+//
+//	POST /api/{slug}/ops/{verb}                  — start a job for verb
+//	GET  /api/{slug}/ops/{job_id}/stream         — SSE progress stream
+//
+// Anything else under /ops/ returns 404. Allowlist enforcement happens
+// inside opsrunner.Start (the API layer just trusts the runner — same
+// 400 surface).
+func (a *API) routeOps(w http.ResponseWriter, r *http.Request, pc *ProjectContext, extra string) {
+	if a.opsRunner == nil {
+		writeError(w, http.StatusServiceUnavailable, "ops runner not configured")
+		return
+	}
+	head, rest := splitFirst(extra, "/")
+	if head == "" {
+		writeError(w, http.StatusNotFound, "ops endpoint missing verb or job id")
+		return
+	}
+	switch r.Method {
+	case http.MethodPost:
+		if rest != "" {
+			writeError(w, http.StatusNotFound, "POST to /ops/{verb} only")
+			return
+		}
+		a.handleOpsStart(w, r, pc, head)
+	case http.MethodGet:
+		if rest != "stream" {
+			writeError(w, http.StatusNotFound, "GET requires /ops/{job_id}/stream")
+			return
+		}
+		a.handleOpsStream(w, r, pc, head)
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
+func (a *API) handleOpsStart(w http.ResponseWriter, r *http.Request, pc *ProjectContext, verb string) {
+	if !opsrunner.IsAllowed(verb) {
+		writeError(w, http.StatusBadRequest, fmt.Sprintf("verb %q not in allowlist", verb))
+		return
+	}
+	jobID, started, err := a.opsRunner.Start(r.Context(), pc.Slug, pc.Path, verb)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	resp := map[string]interface{}{"job_id": jobID}
+	if !started {
+		resp["already_running"] = true
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (a *API) handleOpsStream(w http.ResponseWriter, r *http.Request, pc *ProjectContext, jobID string) {
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	if _, ok := w.(http.Flusher); !ok {
+		http.Error(w, "streaming not supported", http.StatusInternalServerError)
+		return
+	}
+	if err := a.opsRunner.Stream(r.Context(), pc.Slug, jobID, w); err != nil {
+		// Stream sets no body on its own when the job is missing — write
+		// a JSON envelope here. We have not yet emitted any SSE bytes,
+		// so changing status is still valid.
+		http.Error(w, err.Error(), http.StatusNotFound)
+	}
 }
 
 // splitTags splits a comma-separated tags string into a slice,

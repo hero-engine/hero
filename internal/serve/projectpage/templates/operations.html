@@ -1,0 +1,39 @@
+{{ define "operations.html" }}
+<section class="project-section" data-section="operations" data-project-slug="{{ .Slug }}">
+  <header class="project-section-head" data-default-collapsed="false">
+    <h2>Operations</h2>
+    {{ if .Available }}
+      <span class="project-section-meta">click to run a maintenance command in this project</span>
+    {{ else }}
+      <span class="project-section-meta muted">unavailable</span>
+    {{ end }}
+    <button class="project-section-toggle" type="button" aria-expanded="true">collapse</button>
+  </header>
+  <div class="project-section-body">
+    {{ if not .Available }}
+      <p class="project-empty">Operations require a project-aware build of <code>hero serve</code>.</p>
+    {{ else }}
+      <ul class="project-ops">
+        {{ range .Verbs }}
+        <li class="project-op{{ if .InFlight }} op-in-flight{{ end }}"
+            data-verb="{{ .Verb }}"
+            data-active-job="{{ .ActiveJobID }}">
+          <div class="project-op-head">
+            <button class="project-op-run" type="button"
+                    data-verb="{{ .Verb }}"
+                    {{ if .InFlight }}disabled aria-busy="true"{{ end }}>
+              {{ .Label }}
+            </button>
+            <span class="project-op-desc">{{ .Description }}</span>
+            <span class="project-op-status">
+              {{ if .InFlight }}running…{{ end }}
+            </span>
+          </div>
+          <pre class="project-op-output" hidden></pre>
+        </li>
+        {{ end }}
+      </ul>
+    {{ end }}
+  </div>
+</section>
+{{ end }}
