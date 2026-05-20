@@ -1,4 +1,4 @@
-package project
+package rollup
 
 import (
 	"net/http/httptest"
@@ -24,12 +24,12 @@ func newTestRouter(t *testing.T, root string) *shell.Router {
 		Branch:      "main",
 		UserName:    "tester",
 	}); err != nil {
-		t.Fatalf("register project: %v", err)
+		t.Fatalf("register rollup: %v", err)
 	}
 	return r
 }
 
-func TestProjectHome_Returns200(t *testing.T) {
+func TestRollupHome_Returns200(t *testing.T) {
 	dir := t.TempDir()
 	mustWrite(t, filepath.Join(dir, "go.mod"), "module example.com/foo\n")
 	mustWrite(t, filepath.Join(dir, "cmd", "x", "main.go"), "package main\n")
@@ -39,7 +39,7 @@ func TestProjectHome_Returns200(t *testing.T) {
 	r := newTestRouter(t, dir)
 	handler := r.Handler()
 
-	req := httptest.NewRequest("GET", "/project", nil)
+	req := httptest.NewRequest("GET", "/rollup", nil)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	if rec.Code != 200 {
@@ -50,7 +50,7 @@ func TestProjectHome_Returns200(t *testing.T) {
 	}
 }
 
-func TestProjectSurfaceDetail_404OnUnknown(t *testing.T) {
+func TestRollupSurfaceDetail_404OnUnknown(t *testing.T) {
 	dir := t.TempDir()
 	mustWrite(t, filepath.Join(dir, "go.mod"), "module example.com/foo\n")
 	mustMkdir(t, filepath.Join(dir, "internal"))
@@ -59,7 +59,7 @@ func TestProjectSurfaceDetail_404OnUnknown(t *testing.T) {
 	r := newTestRouter(t, dir)
 	handler := r.Handler()
 
-	req := httptest.NewRequest("GET", "/project/surface/nope-not-a-surface", nil)
+	req := httptest.NewRequest("GET", "/rollup/surface/nope-not-a-surface", nil)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	if rec.Code != 404 {
@@ -67,7 +67,7 @@ func TestProjectSurfaceDetail_404OnUnknown(t *testing.T) {
 	}
 }
 
-func TestProjectArchive_404OnMissing(t *testing.T) {
+func TestRollupArchive_404OnMissing(t *testing.T) {
 	dir := t.TempDir()
 	mustWrite(t, filepath.Join(dir, "go.mod"), "module example.com/foo\n")
 	mustMkdir(t, filepath.Join(dir, ".hero"))
@@ -75,7 +75,7 @@ func TestProjectArchive_404OnMissing(t *testing.T) {
 	r := newTestRouter(t, dir)
 	handler := r.Handler()
 
-	req := httptest.NewRequest("GET", "/project/snapshots/2099-01-01", nil)
+	req := httptest.NewRequest("GET", "/rollup/snapshots/2099-01-01", nil)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	if rec.Code != 404 {

@@ -1,0 +1,20 @@
+{{ define "registry.html" }}
+<section class="project-section" data-section="registry">
+  <header class="project-section-head" data-default-collapsed="false">
+    <h2>Registry Membership</h2>
+    <button class="project-section-toggle" type="button" aria-expanded="true">collapse</button>
+  </header>
+  <div class="project-section-body">
+    {{ if .Registered }}
+      <dl class="project-meta">
+        <dt>Slug</dt><dd><code>{{ .Slug }}</code></dd>
+        <dt>Registered path</dt><dd><code>{{ .Path }}</code></dd>
+        {{ with .RegisteredAtPretty }}<dt>Registered at</dt><dd>{{ . }}</dd>{{ end }}
+        <dt>Default project</dt><dd>{{ if .IsDefaultProject }}yes{{ else }}no{{ end }}</dd>
+      </dl>
+    {{ else }}
+      <p class="project-empty">Project not registered in <code>~/.hero/projects.json</code>.</p>
+    {{ end }}
+  </div>
+</section>
+{{ end }}

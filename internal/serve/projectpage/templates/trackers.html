@@ -1,0 +1,24 @@
+{{ define "trackers.html" }}
+<section class="project-section" data-section="trackers">
+  <header class="project-section-head" data-default-collapsed="false">
+    <h2>Trackers &amp; Integrations</h2>
+    <button class="project-section-toggle" type="button" aria-expanded="true">collapse</button>
+  </header>
+  <div class="project-section-body">
+    {{ if .Configured }}
+      <dl class="project-meta">
+        <dt>Tracker</dt><dd><code>{{ .Type }}</code></dd>
+        {{ with .Project }}<dt>Project</dt><dd><code>{{ . }}</code></dd>{{ end }}
+        {{ if not .LastSyncAt.IsZero }}<dt>Last sync</dt><dd>{{ .LastSyncAtPretty }}</dd>{{ else }}<dt>Last sync</dt><dd><span class="muted">as of: never</span></dd>{{ end }}
+        {{ if .QueuedImports }}<dt>Queued imports</dt><dd>{{ .QueuedImports }}</dd>{{ end }}
+        {{ with .LastError }}<dt>Last error</dt><dd class="warn">{{ . }}</dd>{{ end }}
+      </dl>
+    {{ else }}
+      <div class="project-tracker-optin">
+        <p class="project-empty">No tracker configured.</p>
+        <p><a href="https://heroengine.ai/docs/trackers">Configure a tracker →</a></p>
+      </div>
+    {{ end }}
+  </div>
+</section>
+{{ end }}

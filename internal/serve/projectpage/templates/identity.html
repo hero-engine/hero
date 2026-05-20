@@ -1,0 +1,27 @@
+{{ define "identity.html" }}
+<section class="project-section" data-section="identity">
+  <header class="project-section-head" data-default-collapsed="false">
+    <h2>Identity</h2>
+    <button class="project-section-toggle" type="button" aria-expanded="true">collapse</button>
+  </header>
+  <div class="project-section-body">
+    {{ if .HasProject }}
+    <dl class="project-meta">
+      <dt>Name</dt><dd>{{ .Name }}</dd>
+      <dt>Slug</dt><dd><code>{{ .Slug }}</code></dd>
+      <dt>Project root</dt><dd><a href="{{ .ProjectRootURL }}"><code>{{ .ProjectRoot }}</code></a></dd>
+      {{ with .GitRemote }}<dt>Git remote</dt><dd><code>{{ . }}</code></dd>{{ end }}
+      {{ with .DefaultBranch }}<dt>Default branch</dt><dd><code>{{ . }}</code></dd>{{ end }}
+      {{ if not .LastTouchedAt.IsZero }}<dt>Last touched</dt><dd>{{ .LastTouchedAt.Format "2006-01-02 15:04" }}</dd>{{ end }}
+      <dt>Specs</dt><dd>{{ .SpecCount }}</dd>
+      <dt>Notes</dt><dd>{{ .NoteCount }}</dd>
+      <dt>Decisions</dt><dd>{{ .DecisionCount }}</dd>
+      <dt>Conventions</dt><dd>{{ .ConventionCount }}</dd>
+      <dt>Peers</dt><dd>{{ .PeerCount }}</dd>
+    </dl>
+    {{ else }}
+    <p class="project-empty">No project loaded.</p>
+    {{ end }}
+  </div>
+</section>
+{{ end }}

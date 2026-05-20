@@ -1,13 +1,18 @@
-// Package project hosts the Project home — the project-shape rollup
-// at GET /project. The home renders the surfaces table, active
-// initiatives, recently-completed work, what's next, open risks,
-// and (when archives exist) a timeline strip of dated archives.
+// Package rollup hosts the Rollup home — the project-shape rollup at
+// GET /rollup. The home renders the surfaces table, active initiatives,
+// recently-completed work, what's next, open risks, and (when archives
+// exist) a timeline strip of dated archives.
 //
 // Per the project-snapshot spec, archive bodies render ONLY at the
-// dedicated /project/snapshots/<date> route. The timeline strip on
-// /project shows date + trigger + label only — never archive body
+// dedicated /rollup/snapshots/<date> route. The timeline strip on
+// /rollup shows date + trigger + label only — never archive body
 // content. See snapshot.archive containment invariants.
-package project
+//
+// History: this surface was previously mounted at /project. The
+// /project slot is now owned by the per-project section page in
+// internal/serve/projectpage; the rollup moved to /rollup with no
+// content changes.
+package rollup
 
 import (
 	"embed"
@@ -27,7 +32,7 @@ import (
 //go:embed templates/*.html
 var templatesFS embed.FS
 
-// Deps is the small, injectable bundle of state the Project handler
+// Deps is the small, injectable bundle of state the Rollup handler
 // reads. Mirrors the other home Deps shapes so wiring stays
 // symmetric.
 type Deps struct {
@@ -43,14 +48,14 @@ type Deps struct {
 	UserName string
 }
 
-// Register installs the Project home on the shell router. The
-// archive view (/project/snapshots/<date>) lives under this home as
-// an item route so the surface containment story is "one home, one
-// place archives can render."
+// Register installs the Rollup home on the shell router. The archive
+// view (/rollup/snapshots/<date>) lives under this home as an item
+// route so the surface containment story is "one home, one place
+// archives can render."
 func Register(r *shell.Router, deps Deps) error {
 	tmpl, err := loadTemplates()
 	if err != nil {
-		return fmt.Errorf("project: load templates: %w", err)
+		return fmt.Errorf("rollup: load templates: %w", err)
 	}
 	h := &handler{
 		router: r,
@@ -58,13 +63,13 @@ func Register(r *shell.Router, deps Deps) error {
 		deps:   deps,
 	}
 	return r.RegisterHome(shell.Home{
-		Slug:   "project",
-		Label:  "Project",
-		Href:   "/project",
+		Slug:   "rollup",
+		Label:  "Rollup",
+		Href:   "/rollup",
 		Render: h.renderHome,
 		Items: []shell.ItemRoute{
-			{Pattern: "GET /project/surface/{id...}", Render: h.renderSurface},
-			{Pattern: "GET /project/snapshots/{date}", Render: h.renderArchive},
+			{Pattern: "GET /rollup/surface/{id...}", Render: h.renderSurface},
+			{Pattern: "GET /rollup/snapshots/{date}", Render: h.renderArchive},
 		},
 	})
 }
@@ -89,7 +94,7 @@ func funcMap() template.FuncMap {
 	}
 }
 
-// pageData is the top-level rendering context for /project.
+// pageData is the top-level rendering context for /rollup.
 type pageData struct {
 	Snapshot   *snapshot.Snapshot
 	Archives   []snapshot.ArchiveRecord
@@ -99,14 +104,14 @@ type pageData struct {
 func (h *handler) renderHome(w http.ResponseWriter, req *http.Request) {
 	snap, err := h.buildSnapshot()
 	if err != nil {
-		http.Error(w, "project snapshot: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "rollup snapshot: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	archives, _ := snapshot.List(h.deps.HeroDir)
 
 	hero := shell.PageHero{
 		Eyebrow: template.HTML("Project shape · projected from graph"),
-		Title:   "Project",
+		Title:   "Rollup",
 		Subhead: template.HTML(fmt.Sprintf("%d surfaces · %d specs · %s",
 			len(snap.Surfaces), snap.SourceNodes, snap.GeneratedAt.Format("2006-01-02 15:04"))),
 	}
@@ -115,7 +120,7 @@ func (h *handler) renderHome(w http.ResponseWriter, req *http.Request) {
 		if err := h.router.RenderFragment(out, "page-hero", hero); err != nil {
 			return err
 		}
-		return h.tmpl.ExecuteTemplate(out, "project-home", pageData{
+		return h.tmpl.ExecuteTemplate(out, "rollup-home", pageData{
 			Snapshot:   snap,
 			Archives:   archives,
 			HasArchive: len(archives) > 0,
@@ -123,12 +128,12 @@ func (h *handler) renderHome(w http.ResponseWriter, req *http.Request) {
 	}
 
 	page := shell.Page{
-		ActiveHome: "project",
-		PageTitle:  "Project · Hero",
+		ActiveHome: "rollup",
+		PageTitle:  "Rollup · Hero",
 		Content:    content,
 	}
 	if err := h.router.RenderPage(w, req, page); err != nil {
-		http.Error(w, "render project home: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "render rollup home: "+err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -179,12 +184,12 @@ func (h *handler) renderSurface(w http.ResponseWriter, req *http.Request) {
 	}
 
 	page := shell.Page{
-		ActiveHome: "project",
-		PageTitle:  id + " · Project · Hero",
+		ActiveHome: "rollup",
+		PageTitle:  id + " · Rollup · Hero",
 		Content:    content,
 		Breadcrumb: &shell.PageBreadcrumb{
 			Crumbs: []shell.BreadcrumbCrumb{
-				{Label: "Project", Href: "/project"},
+				{Label: "Rollup", Href: "/rollup"},
 				{Label: id, Current: true},
 			},
 		},
@@ -196,7 +201,7 @@ func (h *handler) renderSurface(w http.ResponseWriter, req *http.Request) {
 
 // renderArchive serves the dedicated archive read view. This is the
 // ONLY route that exposes archive body content; the timeline strip
-// on /project (and every other listing) renders only metadata.
+// on /rollup (and every other listing) renders only metadata.
 func (h *handler) renderArchive(w http.ResponseWriter, req *http.Request) {
 	date := req.PathValue("date")
 	if date == "" {
@@ -230,13 +235,13 @@ func (h *handler) renderArchive(w http.ResponseWriter, req *http.Request) {
 	}
 
 	page := shell.Page{
-		ActiveHome: "project",
-		PageTitle:  rec.Date + " · Archive · Project · Hero",
+		ActiveHome: "rollup",
+		PageTitle:  rec.Date + " · Archive · Rollup · Hero",
 		Content:    content,
 		Breadcrumb: &shell.PageBreadcrumb{
 			Crumbs: []shell.BreadcrumbCrumb{
-				{Label: "Project", Href: "/project"},
-				{Label: "Archives", Href: "/project"},
+				{Label: "Rollup", Href: "/rollup"},
+				{Label: "Archives", Href: "/rollup"},
 				{Label: rec.Date, Current: true},
 			},
 		},

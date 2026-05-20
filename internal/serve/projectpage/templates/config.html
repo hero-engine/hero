@@ -1,0 +1,22 @@
+{{ define "config.html" }}
+<section class="project-section" data-section="config">
+  <header class="project-section-head" data-default-collapsed="true">
+    <h2>Config</h2>
+    {{ if .HeroJSONExists }}
+      <a class="project-section-link" href="{{ .OpenInEditorURL }}">Open in editor →</a>
+    {{ end }}
+    <button class="project-section-toggle" type="button" aria-expanded="false">expand</button>
+  </header>
+  <div class="project-section-body" hidden>
+    {{ if .HeroJSONExists }}
+      <p class="project-config-paths">
+        <code>{{ .HeroJSONPath }}</code>
+        {{ if .HeroLocalJSONExists }}<span class="muted">+ hero.local.json present (body hidden)</span>{{ end }}
+      </p>
+      <pre class="project-config-body">{{ .PrettyJSON }}</pre>
+    {{ else }}
+      <p class="project-empty">No <code>hero.json</code> found at <code>{{ .HeroJSONPath }}</code>.</p>
+    {{ end }}
+  </div>
+</section>
+{{ end }}

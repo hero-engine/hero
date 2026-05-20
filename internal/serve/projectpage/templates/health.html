@@ -1,0 +1,30 @@
+{{ define "health.html" }}
+<section class="project-section" data-section="health">
+  <header class="project-section-head" data-default-collapsed="false">
+    <h2>Health</h2>
+    {{ if .HasArtifact }}
+      <span class="project-section-meta">as of {{ .CapturedAtPretty }}</span>
+    {{ else }}
+      <span class="project-section-meta muted">as of: never</span>
+    {{ end }}
+    <button class="project-section-toggle" type="button" aria-expanded="true">collapse</button>
+  </header>
+  <div class="project-section-body">
+    {{ if not .HasArtifact }}
+      <p class="project-empty">No cached health artifact yet. Run <code>hero check</code> in this project to populate.</p>
+    {{ else if .AllClear }}
+      <p class="project-health-clear">All clear.</p>
+    {{ else }}
+      <ul class="project-health-rows">
+        {{ range .Rows }}
+        <li class="project-health-row status-{{ .Status }}">
+          <strong>{{ .Name }}</strong>
+          <span class="status">{{ .Status }}</span>
+          {{ with .Message }}<span class="message">{{ . }}</span>{{ end }}
+        </li>
+        {{ end }}
+      </ul>
+    {{ end }}
+  </div>
+</section>
+{{ end }}
