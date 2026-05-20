@@ -182,12 +182,17 @@ type MetricTab struct {
 	Tiles  []MetricTile
 }
 
-// MetricTile is one tile in a tab's pane.
+// MetricTile is one tile in a tab's pane. When Href is set, the tile
+// renders as a link wrapping the value and label — the strip template
+// uses this to dispatch tile-click filtering (e.g. "Touched this week"
+// → "/work?age=touched-7d"). Empty Href renders as a plain non-clickable
+// tile.
 type MetricTile struct {
 	Value  template.HTML
 	Label  string
 	Footer template.HTML
 	Accent string // "" | "warn"
+	Href   string
 }
 
 // ----- Sub-nav (consumed by sub-nav.html) ------------------------------

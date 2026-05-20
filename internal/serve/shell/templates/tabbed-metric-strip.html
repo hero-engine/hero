@@ -21,11 +21,19 @@
   {{- range .Tabs }}
   <div class="metric-pane{{ if .Active }} active{{ end }}" data-metric-pane="{{ .Slug }}"{{ if not .Active }} hidden{{ end }}>
     {{- range .Tiles }}
+    {{- if .Href }}
+    <a class="metric-tile metric-tile-link" href="{{ .Href }}">
+      <div class="metric-value{{ if eq .Accent "warn" }} warn{{ end }}">{{ .Value }}</div>
+      <div class="metric-label">{{ .Label }}</div>
+      {{- with .Footer }}{{ . }}{{ end }}
+    </a>
+    {{- else }}
     <div class="metric-tile">
       <div class="metric-value{{ if eq .Accent "warn" }} warn{{ end }}">{{ .Value }}</div>
       <div class="metric-label">{{ .Label }}</div>
       {{- with .Footer }}{{ . }}{{ end }}
     </div>
+    {{- end }}
     {{- end }}
   </div>
   {{- end }}
