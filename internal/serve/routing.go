@@ -167,21 +167,39 @@ func (s *Server) renderUnknownProject(w http.ResponseWriter, r *http.Request, ba
 	}
 }
 
-// allProjectsHandler is the stub for the cross-project aggregate
-// views. Routing accepts /p/all/<page> and renders a placeholder so
-// items 7 and 8 can fill in per-page aggregate renderers without
-// touching this file. The shape of MultiProject Deps is the seam those
-// items consume.
+// allProjectsHandler dispatches /p/all/<page> requests. For Now and
+// Work it renders the aggregate view by routing through a dedicated
+// per-server shell router whose page Deps carry the MultiProject slice
+// (set by Server.aggregateRouter). Other pages still render a plain-
+// text stub until they grow aggregate renderers.
 func (s *Server) allProjectsHandler(w http.ResponseWriter, r *http.Request, rest string) {
 	if rest == "" {
 		http.Redirect(w, r, "/p/all/now", http.StatusFound)
 		return
 	}
 	page, _ := splitFirst(rest, "/")
+
+	switch page {
+	case "now", "work":
+		// Rewrite the request so the aggregate router sees just /now or
+		// /work. The aggregate router itself is built with MultiProject
+		// populated so the page-data loaders fan out across projects.
+		router := s.aggregateRouter()
+		if router == nil {
+			break
+		}
+		r2 := r.Clone(r.Context())
+		newURL := *r.URL
+		newURL.Path = "/" + rest
+		newURL.RawPath = ""
+		r2.URL = &newURL
+		router.Handler().ServeHTTP(w, r2)
+		return
+	}
+
 	// People aggregate is intentionally absent — the spec calls for an
 	// empty-state prompt because team membership semantics aren't
-	// settled. Items 7/8 wire this through the page's existing empty-
-	// state renderer; for now we render plain text.
+	// settled. Knowledge / Agents / Project lag the redesign for now.
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if page == "people" {
 		fmt.Fprintf(w, `<!doctype html><meta charset=utf-8><title>All projects · People</title>`+
