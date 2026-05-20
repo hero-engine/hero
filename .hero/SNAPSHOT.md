@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-05-20T05:04:12Z · projected from 262 source nodes_
+_Last refreshed: 2026-05-20T05:28:25Z · projected from 262 source nodes_
 
 ## Surfaces
 
@@ -31,7 +31,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Hero Killer Features — Agent Effectiveness, Team Power, Living Specs** (surface: core, serve) — 10/11 specs done
 - **Hero Marketing — Positioning, Distribution, and Launch** (surface: landing) — 0/9 specs done; in flight: hero-landing-page
 - **Hero Platform — Headless Execution, Team Automation, and Shared Visibility** (surface: core, serve) — 2/7 specs done; in flight: hero-team-server
-- **hero serve Project Section — Per-Project Info, Utilities, and Operations Page** (surface: serve) — 3/5 specs done; in flight: hero-serve-project-section-destructive
+- **hero serve Project Section — Per-Project Info, Utilities, and Operations Page** (surface: serve) — 4/5 specs done; in flight: hero-serve-project-section-healthcache
 - **Hero Surface Architecture — One Surface, Every Layer, Every Role** (surface: serve) — 7/9 specs done
 - **Hero Surface Polish — Ongoing Quality Pass on the Web Companion** (surface: serve) — 5/5 specs done
 - **Hero Team Experience — Complete Multi-Developer Workflow** (surface: —) — 0/0 specs done
@@ -45,8 +45,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — peer-call-findings-truncation-and-persistence, peer-call-result-yaml-int-strict-parse, pm-platform-delivery, hero-code-handover-pack, scan-pluggability, domain-routing-and-agents, domain-scoped-knowledge-graph
-- **serve** — hero-serve-project-section-opsrunner, hero-serve-project-section-aggregate, hero-serve-project-section-mvp, hero-serve-dashboard-redesign, hero-serve-multi-project
+- **(unassigned)** — peer-call-findings-truncation-and-persistence, peer-call-result-yaml-int-strict-parse, pm-platform-delivery, hero-code-handover-pack, scan-pluggability, domain-routing-and-agents
+- **serve** — hero-serve-project-section-destructive, hero-serve-project-section-opsrunner, hero-serve-project-section-aggregate, hero-serve-project-section-mvp, hero-serve-dashboard-redesign, hero-serve-multi-project
 
 ## Next up across surfaces
 

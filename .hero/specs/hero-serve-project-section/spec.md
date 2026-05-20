@@ -2,7 +2,7 @@
 title: hero serve Project Section — Per-Project Info, Utilities, and Operations Page
 slug: hero-serve-project-section
 type: initiative
-status: planning
+status: completed
 tags: [hero-serve, dashboard, ui, project, operations, daemon, registry, peers]
 created: 2026-05-19
 relations:
@@ -193,17 +193,15 @@ and SSE progress streaming. Verb allowlist:
 
 ## Child Specs
 
-Deliver in strict sequence. Each phase is independently shippable
-(1–2 days of work). Phases 2–5 each depend on Phase 1 having landed
-the `projectpage` package and the per-project page handler.
+All five phases shipped. Initiative complete.
 
-| Order | Spec | Purpose |
+| Order | Spec | Status |
 |---|---|---|
-| Phase 1 | [hero-serve-project-section-mvp](../../features/hero-serve-project-section-mvp/spec.md) | Read-only per-project page: 8 sections, single-project `/project` fallback plus `/p/<slug>/project`. No live `hero check`, no probes, no ops, no destructive actions. **Recommended resume point.** |
-| Phase 2 | [hero-serve-project-section-aggregate](../../features/hero-serve-project-section-aggregate/spec.md) | `/p/all/project` aggregate: Project Directory, Daemon Ops, Cross-Project Health Rollup, Cross-Project Peers Map. Depends on Phase 1's `projectpage` package. |
-| Phase 3 | [hero-serve-project-section-opsrunner](../../features/hero-serve-project-section-opsrunner/spec.md) | `opsrunner` package with verb allowlist, SSE progress, dedup. Wires the Operations section live. Depends on Phase 1's project page rendering. |
-| Phase 4 | [hero-serve-project-section-destructive](../../features/hero-serve-project-section-destructive/spec.md) | Registry-removal grace window, Danger Zone typed-confirmation, missing-path detection, aggregate-only "Stop daemon" button. Depends on Phase 2 (aggregate view) and Phase 3 (opsrunner for stop-daemon). |
-| Phase 5 | [hero-serve-project-section-healthcache](../../features/hero-serve-project-section-healthcache/spec.md) | `healthcache` package with TTL, peer-probe cache, live `/api/{slug}/health` and `/api/{slug}/peers/{alias}/probe` endpoints. Replaces Phase 1's static cached-output rendering with live cache + refresh. |
+| Phase 1 | [hero-serve-project-section-mvp](../../specs/hero-serve-project-section-mvp/spec.md) | ✅ delivered |
+| Phase 2 | [hero-serve-project-section-aggregate](../../specs/hero-serve-project-section-aggregate/spec.md) | ✅ delivered |
+| Phase 3 | [hero-serve-project-section-opsrunner](../../specs/hero-serve-project-section-opsrunner/spec.md) | ✅ delivered |
+| Phase 4 | [hero-serve-project-section-destructive](../../specs/hero-serve-project-section-destructive/spec.md) | ✅ delivered |
+| Phase 5 | [hero-serve-project-section-healthcache](../../specs/hero-serve-project-section-healthcache/spec.md) | ✅ delivered |
 
 ### Sequencing rationale
 
