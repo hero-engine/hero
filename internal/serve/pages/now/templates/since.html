@@ -1,0 +1,20 @@
+{{- /* since.html — "Since you last looked" callout. Single-row strip
+       above the activity feed when the user has been away long enough
+       for something to have moved. Renders nothing when .Show is false
+       so a fresh-load on a quiet workspace doesn't flash a zero-state
+       header. */ -}}
+{{ define "since.html" }}
+{{- if .Show }}
+<section id="now-since" class="now-section now-since-callout">
+  <div class="now-since-row">
+    <span class="now-since-headline">{{ .Headline }}:</span>
+    <span class="now-since-summary">{{ .Summary }}</span>
+    <span class="now-since-chips">
+      {{- if gt .SpecsTouched 0 }}<span class="now-since-chip" data-kind="specs">{{ .SpecsTouched }} spec{{ if ne .SpecsTouched 1 }}s{{ end }}</span>{{ end -}}
+      {{- if gt .Decisions 0 }}<span class="now-since-chip" data-kind="decisions">{{ .Decisions }} decision{{ if ne .Decisions 1 }}s{{ end }}</span>{{ end -}}
+      {{- if gt .Handoffs 0 }}<span class="now-since-chip" data-kind="handoffs">{{ .Handoffs }} handoff{{ if ne .Handoffs 1 }}s{{ end }}</span>{{ end -}}
+    </span>
+  </div>
+</section>
+{{- end }}
+{{ end }}

@@ -1,20 +1,25 @@
-{{- /* page.html — outer Now layout. Below the shell-owned page-hero
-       and tabbed-metric-strip fragments, this template lays out the
-       five content sections in their canonical order. Each section is
-       wrapped in an outer `<section>` with a stable id so the SSE
-       fragment endpoints can swap them whole.
+{{- /* page.html — outer Now layout. Per hero-serve-dashboard-redesign:
+       the page leads with activity, then in-flight, then themes, then
+       inbox. The plate / agents / changes blocks survive below for
+       continuity. The quicklaunch chat input is bottom-anchored as a
+       shrunken row. Install panel renders only when no adapter is
+       connected — gated by .ShowInstallPanel.
 
-       Quick launch lives in quicklaunch.html and mounts the shell-
-       owned chat-input fragment plus the empty-state notice when no
-       chat adapter is connected — see hero-now-home-followups. */ -}}
+       Each section is wrapped in an outer `<section>` with a stable id
+       so the SSE fragment endpoints can swap them whole. */ -}}
 {{ define "page.html" }}
 
-{{ template "inbox.html" .Inbox }}
+{{ template "since.html" .Since }}
+{{ template "activity.html" .Activity }}
+{{ template "inflight.html" .Inflight }}
+{{ template "themes.html" .Themes }}
 
-{{ template "quicklaunch.html" .QuickLaunch }}
+{{ template "inbox.html" .Inbox }}
 
 {{ template "plate.html" .Plate }}
 {{ template "agents.html" .Agents }}
 {{ template "changes.html" .Changes }}
+
+{{ template "quicklaunch.html" .QuickLaunch }}
 
 {{ end }}
