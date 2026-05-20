@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-05-20T00:17:47Z · projected from 257 source nodes_
+_Last refreshed: 2026-05-20T00:18:54Z · projected from 257 source nodes_
 
 ## Surfaces
 
@@ -16,7 +16,7 @@ _Last refreshed: 2026-05-20T00:17:47Z · projected from 257 source nodes_
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 1d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 1h ago | vocabulary-resolve-misses-methodology-derivation |
+| serve | building | internal/serve/ | <1m ago | vocabulary-resolve-misses-methodology-derivation |
 | (unassigned) | — | — | — | 112 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -47,7 +47,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **(unassigned)** — peer-call-findings-truncation-and-persistence, peer-call-result-yaml-int-strict-parse, pm-platform-delivery, hero-code-handover-pack, scan-pluggability, domain-routing-and-agents, domain-scoped-knowledge-graph
 - **core** — install-core-domain-merge
 - **domains/engineering** — contentfs-legacy-fallback-removal
-- **serve** — hero-serve-multi-project, dashboard-now-headline-misleading-when-empty, dashboard-inbox-misses-most-activity-sources
+- **serve** — hero-serve-dashboard-redesign, hero-serve-multi-project, dashboard-now-headline-misleading-when-empty
 
 ## Next up across surfaces
 
