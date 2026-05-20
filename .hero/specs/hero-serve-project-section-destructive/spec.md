@@ -2,7 +2,7 @@
 title: hero serve Project Section — Phase 4 Destructive Operations (Registry, Danger Zone, Stop Daemon)
 slug: hero-serve-project-section-destructive
 type: feature
-status: planning
+status: completed
 priority: P2
 tags: [hero-serve, dashboard, ui, project, destructive, registry, danger]
 created: 2026-05-19
@@ -42,30 +42,33 @@ safety net: nothing irreversible happens in those 5 seconds.
 
 ## Kickoff
 
-Destructive affordances on the Project surface: registry-remove with
-undo, Danger Zone with typed confirm, missing-path banner, aggregate-
-only Stop-daemon button.
+Destructive affordances on the Project surface delivered: registry-
+remove with 5-second undo toast, Danger Zone (deregister only) with
+typed-confirm gate, missing-path banner, and aggregate-only Stop-
+daemon button dispatched through Phase 3's opsrunner.
 
-**Status:** planning — Phase 4 of 5; gated on Phase 1 (page), Phase 2
-(aggregate view for Stop-daemon placement), and Phase 3 (ops runner
-for Stop-daemon dispatch).
+**Status:** delivered — implementation complete, tests passing (`go build ./...`, `go test ./...`, `go vet ./...` all clean), committed in feature commit.
 
-**Pick up at:** add `POST /api/{slug}/registry/remove` and
-`POST /api/{slug}/registry/remove/undo` to `internal/serve/api.go`,
-backed by a pending-remove queue with a 5-second timer. Wire the
-"Remove from registry" button on the Phase 1 Registry section.
+**Done:**
+- `internal/serve/pending_remove.go` (queue + race-safe goroutine)
+- `internal/serve/api.go` (registry/remove + remove/undo +
+  /api/daemon/ops/stop)
+- `internal/serve/server.go` (`RemoveProject` now persists registry
+  to disk; primary shell router flagged as fallback)
+- `internal/serve/opsrunner/allowlist.go` (`stop` verb +
+  `DaemonScopedSlug` constant)
+- `internal/serve/projectpage/data/{registry,danger}.go` and
+  templates (`registry.html`, `danger.html`, `page.html`,
+  `daemon_ops.html`)
+- `internal/serve/projectpage/handler.go` (Deps.IsFallbackProject,
+  MissingPath, inline JS for remove + danger gate)
+- `internal/serve/projectpage/static/project_all.js` (Stop-daemon
+  client behaviour)
 
-→ `.hero/planning/features/hero-serve-project-section-destructive/spec.md`
-
-**Files:** `internal/serve/server.go:200` (`RemoveProject`),
-`internal/serve/api.go:51-132`,
-`internal/serve/projectpage/data/registry.go`,
-`internal/serve/projectpage/data/danger.go` (new),
-`internal/serve/shell/static/js/project.js`
-
-**Skip:** undo windows longer than 5 seconds (UX-tested at 5s in the
-parent spec); admin/multi-user permission gates (deferred to
-`hero-team-server`); restart-daemon (Stop only for v1).
+**Skip:** undo windows longer than 5 seconds; admin/multi-user
+permission gates; restart-daemon; archive verb (no top-level
+`hero archive` exists — Snapshot has its own subcommand and is out
+of scope for Danger Zone today).
 
 ## Goal
 
@@ -292,24 +295,37 @@ add the shutdown endpoint as well.)
 
 ## Changes (files touched on completion)
 
-- `internal/serve/registry/pending.go` (new)
-- `internal/serve/projectpage/data/danger.go` (new)
-- `internal/serve/projectpage/data/registry.go` (`CanRemove` field)
-- `internal/serve/projectpage/handler.go` (`MissingPath` flag)
-- `internal/serve/shell/templates/project/registry.html`
-  (Remove button)
-- `internal/serve/shell/templates/project/danger.html` (new)
-- `internal/serve/shell/templates/project.html` (Danger Zone include
-  + missing-path banner)
-- `internal/serve/shell/templates/project_all/daemon_ops.html`
-  (Stop-daemon button)
-- `internal/serve/shell/static/js/project.js` (undo toast, Danger
-  Zone gate, missing-path handler)
-- `internal/serve/shell/static/js/project_all.js` (Stop confirmation)
-- `internal/serve/api.go` (registry remove/undo + daemon stop
-  endpoints)
-- `internal/serve/server.go` (`RemoveProject` call site, shutdown
-  wiring if needed)
-- `internal/serve/opsrunner/allowlist.go` (`_daemon`/`stop`
-  entry if added)
-- `cmd/hero/serve_stop.go` (optional, if CLI verb is missing)
+- `internal/serve/pending_remove.go` (new) — pending-remove queue +
+  race-safe goroutine + tests in `pending_remove_test.go`
+- `internal/serve/projectpage/data/danger.go` (new) + `danger_test.go`
+- `internal/serve/projectpage/data/registry.go` — added `CanRemove`
+- `internal/serve/projectpage/handler.go` — `pageData.MissingPath` +
+  `Slug`, `Deps.IsFallbackProject` honoured, inline JS extended
+  for undo toast and Danger Zone gate, banner styles added
+- `internal/serve/projectpage/deps.go` — `IsFallbackProject` field
+- `internal/serve/projectpage/templates/registry.html` — Remove
+  button gated by `{{ if .CanRemove }}`
+- `internal/serve/projectpage/templates/danger.html` (new)
+- `internal/serve/projectpage/templates/page.html` — Danger Zone
+  include + top-of-page missing-path banner
+- `internal/serve/projectpage/templates/daemon_ops.html` — Stop-
+  daemon `<details>` block with confirmation copy
+- `internal/serve/projectpage/static/project_all.js` — Stop-daemon
+  POST + inline "Daemon stopped" landing on connection loss
+- `internal/serve/projectpage/destructive_test.go` (new) — missing-
+  path banner present/absent + Danger Zone presence/visibility +
+  Remove button presence/visibility
+- `internal/serve/projectpage_aggregate_test.go` — Stop-daemon
+  presence assertion on aggregate, absence assertion on per-project
+- `internal/serve/api.go` — `/api/{slug}/registry/remove`,
+  `/api/{slug}/registry/remove/undo`, `/api/daemon/ops/stop`,
+  `/api/daemon/ops/{job}/stream`
+- `internal/serve/registry_remove_api_test.go` (new) — undo within
+  window, commit after window, GET-not-allowed, daemon-ops verb
+  rejection
+- `internal/serve/server.go` — `RemoveProject` persists registry to
+  disk (`reg.Remove` + `reg.Save`); `pendingRemove` field; primary
+  shell router built with `IsFallbackProject=true`
+- `internal/serve/opsrunner/allowlist.go` — added `stop` verb,
+  `DaemonScopedSlug` const, `VerbLabel("stop")` label;
+  `allowlist_test.go` updated to whitelist the daemon-scoped entry
