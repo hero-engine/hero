@@ -6,34 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-20T01:12:51Z · 95 ready specs_
-
-## hero-serve-project-section-mvp — hero serve Project Section — Phase 1 MVP (Read-Only Per-Project Page)
-_feature · delivering · horizon: now_
-
-Skeleton + read-only per-project page in `hero serve`. Lands the
-`projectpage` package, the per-project handler at `/p/<slug>/project`
-(plus a `/project` fallback), and 8 read-only sections.
-
-**Status:** planning — first phase of a 5-phase initiative; routing
-dependency (`hero-serve-multi-project`) still delivering.
-
-**Pick up at:** scaffold `internal/serve/projectpage/` with `deps.go`,
-`handler.go`, and section data loaders under `data/`. Register
-`/p/{slug}/project` + `/project` fallback in
-`internal/serve/server.go` shell-page handler block.
-
-→ `.hero/planning/features/hero-serve-project-section-mvp/spec.md`
-
-**Files:** `internal/serve/server.go:308-370`, `internal/serve/api.go:51-132`,
-`internal/serve/registry.go:44`, `internal/serve/pages/now/data/`,
-`internal/serve/shell/templates/page-layout.html`
-
-**Skip:** live `hero check` runs (Phase 5); peer probes (Phase 5); ops
-dispatch (Phase 3); registry removal / Danger Zone (Phase 4); aggregate
-view (Phase 2).
-
----
+_Generated: 2026-05-20T01:13:27Z · 97 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -199,6 +172,91 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-sales/spec.md)_
+
+---
+
+## hero-serve-project-section-healthcache — hero serve Project Section — Phase 5 Health Cache and Peer Probes
+_feature · planning · horizon: now_
+
+Live health + peer caches. Replaces Phase 1's "read whatever's on
+disk" with a per-project TTL cache and explicit refresh affordances.
+
+**Status:** planning — Phase 5 of 5; gated on Phase 1 having landed
+the `projectpage` package and the Health/Peers section partials.
+
+**Pick up at:** scaffold `internal/serve/healthcache/` with a per-
+project TTL cache keyed by `slug` for `hero check` output and by
+`slug+peer-alias` for peer reachability. Wire `GET /api/{slug}/health`,
+`POST /api/{slug}/health/refresh`, and
+`POST /api/{slug}/peers/{alias}/probe`.
+
+→ `.hero/planning/features/hero-serve-project-section-healthcache/spec.md`
+
+**Files:** `internal/serve/projectpage/data/health.go`,
+`internal/serve/projectpage/data/peers.go`,
+`internal/serve/projectpage/deps.go`, `internal/serve/api.go:51-132`,
+`internal/serve/shell/static/js/project.js`
+
+**Skip:** persistent cache across daemon restarts (in-process is
+fine); team-shared cache (deferred to `hero-team-server`); a
+real graph viz for peers (parent Boundary).
+
+---
+
+## hero-serve-project-section-opsrunner — hero serve Project Section — Phase 3 Operations Runner
+_feature · planning · horizon: now_
+
+`opsrunner` package + Operations section wiring. Lets the user run
+`hero check`, `hero index`, `hero scan`, etc. from the Project page
+with SSE progress.
+
+**Status:** planning — Phase 3 of 5; gated on Phase 1's `projectpage`
+package landing.
+
+**Pick up at:** scaffold `internal/serve/opsrunner/` with the verb
+allowlist map, in-memory job registry keyed by `slug+verb`, subprocess
+launcher, and SSE writer. Register `POST /api/{slug}/ops/{verb}` and
+`GET /api/{slug}/ops/{job_id}/stream` in `internal/serve/api.go`.
+
+→ `.hero/planning/features/hero-serve-project-section-opsrunner/spec.md`
+
+**Files:** `internal/serve/projectpage/data/operations.go` (new),
+`internal/serve/api.go:51-132`,
+`internal/serve/shell/templates/project/operations.html` (new),
+`internal/serve/shell/static/js/project.js` (extend with SSE wiring)
+
+**Skip:** verbs outside the fixed allowlist; "Stop daemon" wiring
+(Phase 4 plumbs through this runner); persistence of job history across
+daemon restarts (in-memory is fine for v1).
+
+---
+
+## hero-serve-project-section-aggregate — hero serve Project Section — Phase 2 Aggregate (/p/all/project)
+_feature · planning · horizon: now_
+
+Aggregate cross-project view at `/p/all/project`. Reads the project
+registry, the daemon-status endpoint, and the same data loaders Phase 1
+landed, fanned out across every registered project.
+
+**Status:** planning — Phase 2 of 5; gated on Phase 1's `projectpage`
+package landing and on `hero-serve-multi-project` `/p/all/<page>`
+routing.
+
+**Pick up at:** add `aggregate.go` to `internal/serve/projectpage/`
+with an `AggregateHandler` for `/p/all/project`. Fan out the registry,
+reuse the Phase 1 data loaders per project, render the new
+`project_all.html` template.
+
+→ `.hero/planning/features/hero-serve-project-section-aggregate/spec.md`
+
+**Files:** `internal/serve/projectpage/handler.go`,
+`internal/serve/projectpage/data/`, `internal/serve/server.go`,
+`internal/serve/registry.go:44`,
+`internal/serve/shell/templates/project.html`
+
+**Skip:** the "Stop daemon" button (Phase 4); live `hero check`
+refresh on the rollup (Phase 5); a graph visualization library for the
+peers map — a table is fine for v1.
 
 ---
 
