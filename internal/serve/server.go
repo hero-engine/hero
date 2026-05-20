@@ -19,6 +19,7 @@ import (
 	"github.com/hero-engine/hero/internal/serve/api"
 	"github.com/hero-engine/hero/internal/serve/chat"
 	"github.com/hero-engine/hero/internal/serve/edition"
+	"github.com/hero-engine/hero/internal/serve/healthcache"
 	"github.com/hero-engine/hero/internal/serve/opsrunner"
 	agentspage "github.com/hero-engine/hero/internal/serve/pages/agentspage"
 	agentsdata "github.com/hero-engine/hero/internal/serve/pages/agentspage/data"
@@ -80,6 +81,12 @@ type Server struct {
 	// projectpage Deps so the same runner serves the section render
 	// (via Lookup) and the API dispatch.
 	opsRunner *opsrunner.Runner
+
+	// healthCache is the per-project TTL cache of `hero check` results
+	// + peer reachability probes that backs the /p/<slug>/project
+	// Health and Peers sections. Phase 5 of hero-serve-project-section.
+	// One instance per daemon, shared across all per-project handlers.
+	healthCache *healthcache.Cache
 
 	// pendingRemove tracks registry-remove operations inside their
 	// 5-second grace window. Phase 4 of hero-serve-project-section —
@@ -156,6 +163,19 @@ func NewServer(cfg ServerConfig) *Server {
 	// handler and the projectpage renderer share one registry.
 	s.opsRunner = opsrunner.New(context.Background())
 	s.api.SetOpsRunner(s.opsRunner)
+
+	// Health cache: TTL sourced from hero.json's serve.health_ttl (with
+	// 5-minute default). Read here rather than per-request because
+	// re-parsing the config string per page render is wasteful and the
+	// TTL is daemon-lifetime config — the operator restarts to change it.
+	healthTTL := 5 * time.Minute
+	if cfg.ProjectRoot != "" {
+		if loaded, err := config.Load(cfg.ProjectRoot); err == nil {
+			healthTTL = loaded.Serve.HealthTTLDuration()
+		}
+	}
+	s.healthCache = healthcache.New(healthTTL, healthcache.Options{Ops: s.opsRunner})
+	s.api.SetHealthCache(s.healthCache)
 
 	// Pending-remove queue backs the 5-second grace window for the
 	// registry Remove button. Phase 4 of hero-serve-project-section.
@@ -914,6 +934,8 @@ func (s *Server) buildShellRouterForOpts(pc *ProjectContext, isFallback bool) *s
 		RegistryEntry:     s.projectpageRegistryEntry(pc.Slug),
 		OpsRunner:         s.opsRunner,
 		IsFallbackProject: isFallback,
+		HealthCache:       healthCacheAdapter{cache: s.healthCache},
+		PeerCache:         peerCacheAdapter{cache: s.healthCache},
 	}
 	if err := projectpage.Register(r, projectDeps); err != nil {
 		fmt.Fprintf(os.Stderr, "hero serve: register Project section page for %s: %v\n", pc.Slug, err)
@@ -936,6 +958,52 @@ func (s *Server) buildShellRouterForOpts(pc *ProjectContext, isFallback bool) *s
 		fmt.Fprintf(os.Stderr, "hero serve: register Rollup home for %s: %v\n", pc.Slug, err)
 	}
 	return r
+}
+
+// healthCacheAdapter bridges the projectpage data loader's interface
+// shape (which uses data.CachedHealth, declared in the data package to
+// avoid a circular import) to the concrete healthcache.Cache.
+type healthCacheAdapter struct{ cache *healthcache.Cache }
+
+func (a healthCacheAdapter) Health(slug string) (projectpagedata.CachedHealth, bool) {
+	if a.cache == nil {
+		return projectpagedata.CachedHealth{}, false
+	}
+	r, ok := a.cache.Health(slug)
+	if !ok {
+		return projectpagedata.CachedHealth{}, false
+	}
+	rows := make([]projectpagedata.HealthRow, len(r.Rows))
+	for i, row := range r.Rows {
+		rows[i] = projectpagedata.HealthRow(row)
+	}
+	return projectpagedata.CachedHealth{
+		Captured:  r.Captured,
+		Rows:      rows,
+		FromDisk:  r.FromDisk,
+		Timestamp: r.Timestamp,
+		TTL:       r.TTL,
+	}, true
+}
+
+// peerCacheAdapter mirrors healthCacheAdapter for peer probes.
+type peerCacheAdapter struct{ cache *healthcache.Cache }
+
+func (a peerCacheAdapter) Peer(slug, alias string) (projectpagedata.CachedPeer, bool) {
+	if a.cache == nil {
+		return projectpagedata.CachedPeer{}, false
+	}
+	r, ok := a.cache.Peer(slug, alias)
+	if !ok {
+		return projectpagedata.CachedPeer{}, false
+	}
+	return projectpagedata.CachedPeer{
+		Reachable: r.Reachable,
+		LastOK:    r.LastOK,
+		LastError: r.LastError,
+		Timestamp: r.Timestamp,
+		TTL:       r.TTL,
+	}, true
 }
 
 // projectpageRegistryEntry adapts the daemon-side ProjectEntry into the

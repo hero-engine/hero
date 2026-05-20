@@ -9,6 +9,7 @@ func TestVerbs_AllowlistCompleteness(t *testing.T) {
 		"re-scan",
 		"re-index",
 		"run-check",
+		"run-check-json",
 		"refresh-queue",
 		"capture-knowledge",
 		"snapshot",
@@ -34,7 +35,10 @@ func TestVerbs_NoSurpriseEntries(t *testing.T) {
 	// Per-project AllVerbs() lists the operations surfaced on every
 	// per-project Operations card; daemon-scoped verbs (currently just
 	// `stop`) live in Verbs but are deliberately omitted from AllVerbs.
-	daemonScoped := map[string]bool{"stop": true}
+	// "stop" is daemon-scoped; "run-check-json" is the internal verb
+	// the healthcache dispatches and is intentionally not surfaced as
+	// an Operations-card button.
+	daemonScoped := map[string]bool{"stop": true, "run-check-json": true}
 	allMap := make(map[string]bool, len(Verbs))
 	for k := range Verbs {
 		allMap[k] = true

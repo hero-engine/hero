@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -38,11 +39,13 @@ and general corpus statistics.`,
 var checkStaleDays int
 var checkReconcile bool
 var checkKnowledge bool
+var checkJSON bool
 
 func init() {
 	checkCmd.Flags().IntVar(&checkStaleDays, "stale-days", 14, "number of days before a planning spec is considered stale")
 	checkCmd.Flags().BoolVar(&checkReconcile, "reconcile", false, "auto-fix status drift (promotes planning → delivering when git evidence is clear)")
 	checkCmd.Flags().BoolVar(&checkKnowledge, "knowledge", false, "lint knowledge base for stale references, orphans, and pending enrichment")
+	checkCmd.Flags().BoolVar(&checkJSON, "json", false, "in addition to human output, write a categorized JSON summary to <heroDir>/cache/health.json (consumed by the serve dashboard health cache)")
 
 	// Subverbs migrated from top-level commands. `hero check` alone
 	// runs the default health check; subverbs target specific
@@ -50,6 +53,43 @@ func init() {
 	checkCmd.AddCommand(validateCmd) // hero check validate (was hero validate)
 	checkCmd.AddCommand(triageCmd)   // hero check triage   (was hero triage)
 	checkCmd.AddCommand(conflictsCmd) // hero check conflicts (was hero conflicts)
+}
+
+// healthJSONRow mirrors the on-disk schema consumed by
+// internal/serve/projectpage/data/health.go and the in-process
+// healthcache. Status is "pass" | "warn" | "fail" — see
+// .hero/cache/health.json contract.
+type healthJSONRow struct {
+	Name    string `json:"name"`
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+type healthJSONFile struct {
+	CapturedAt time.Time       `json:"captured_at"`
+	Rows       []healthJSONRow `json:"rows"`
+}
+
+// writeHealthJSON persists the categorized check result for downstream
+// consumers (the serve dashboard's health cache). Failures are non-fatal
+// — the CLI's human output stays the source of truth.
+func writeHealthJSON(heroDir string, rows []healthJSONRow) error {
+	path := filepath.Join(heroDir, "cache", "health.json")
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return fmt.Errorf("mkdir cache dir: %w", err)
+	}
+	payload := healthJSONFile{
+		CapturedAt: time.Now().UTC(),
+		Rows:       rows,
+	}
+	data, err := json.MarshalIndent(payload, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal: %w", err)
+	}
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		return fmt.Errorf("write %s: %w", path, err)
+	}
+	return nil
 }
 
 func runCheck(cmd *cobra.Command, args []string) error {
@@ -62,6 +102,14 @@ func runCheck(cmd *cobra.Command, args []string) error {
 	heroDir := cfg.HeroDir(projectRoot)
 	if _, err := os.Stat(heroDir); os.IsNotExist(err) {
 		return fmt.Errorf("no hero workspace found (run 'hero init' first)")
+	}
+
+	// jsonRows accumulates one row per check category for --json output.
+	// Status is "pass" / "warn" / "fail". Categories that find no issues
+	// emit a "pass" row so the dashboard can show "all clear" per row.
+	var jsonRows []healthJSONRow
+	addRow := func(name, status, message string) {
+		jsonRows = append(jsonRows, healthJSONRow{Name: name, Status: status, Message: message})
 	}
 
 	// Use stale-days from config if set
@@ -107,6 +155,9 @@ func runCheck(cmd *cobra.Command, args []string) error {
 			fmt.Printf("  %-30s  %-10s  %-10s  %s\n", s.Slug, s.Type, s.Status, s.Title)
 		}
 		fmt.Println()
+		addRow("stale-specs", "warn", fmt.Sprintf("%d spec(s) older than %d days in planning/in-review", len(stale), staleDays))
+	} else {
+		addRow("stale-specs", "pass", "no stale specs")
 	}
 
 	// Check unclaimed specs
@@ -118,6 +169,9 @@ func runCheck(cmd *cobra.Command, args []string) error {
 			fmt.Printf("  %-30s  %-10s  %-10s  %s\n", s.Slug, s.Type, s.Status, s.Title)
 		}
 		fmt.Println()
+		addRow("unclaimed-specs", "warn", fmt.Sprintf("%d unclaimed spec(s) in planning/in-review", len(unclaimed)))
+	} else {
+		addRow("unclaimed-specs", "pass", "no unclaimed specs")
 	}
 
 	// In-flight summary
@@ -133,6 +187,11 @@ func runCheck(cmd *cobra.Command, args []string) error {
 
 	// Status drift (git-derived reconciliation)
 	findings := reconcile.Reconcile(heroDir, projectRoot)
+	if len(findings) == 0 {
+		addRow("status-drift", "pass", "no git-derived status drift")
+	} else {
+		addRow("status-drift", "warn", fmt.Sprintf("%d spec(s) out of sync with git evidence", len(findings)))
+	}
 	if len(findings) > 0 {
 		fixed := 0
 		fmt.Printf("Status drift (%d spec(s) out of sync with git):\n", len(findings))
@@ -182,6 +241,11 @@ func runCheck(cmd *cobra.Command, args []string) error {
 	if checkKnowledge {
 		knowledgeIssues := runKnowledgeLint(heroDir, projectRoot)
 		issues += knowledgeIssues
+		if knowledgeIssues == 0 {
+			addRow("knowledge", "pass", "knowledge base clean")
+		} else {
+			addRow("knowledge", "warn", fmt.Sprintf("%d knowledge-lint finding(s)", knowledgeIssues))
+		}
 	}
 
 	// Pre-commit hook installation — without it, projected NEXT files
@@ -198,6 +262,7 @@ func runCheck(cmd *cobra.Command, args []string) error {
 			fmt.Println("  state will strand on this machine. Run 'hero next install-hooks'")
 			fmt.Println("  to fix.")
 			fmt.Println()
+			addRow("pre-commit-hook", "warn", "pre-commit hook not installed; run 'hero next install-hooks'")
 		default:
 			// Hook installed — check whether its managed block content
 			// matches the current binary's hookScript() output. Drift
@@ -210,6 +275,9 @@ func runCheck(cmd *cobra.Command, args []string) error {
 				fmt.Println("  binary's hook script. Run 'hero upgrade' (or")
 				fmt.Println("  'hero next install-hooks') to refresh.")
 				fmt.Println()
+				addRow("pre-commit-hook", "warn", "pre-commit hook is stale; run 'hero next install-hooks'")
+			} else {
+				addRow("pre-commit-hook", "pass", "pre-commit hook installed and current")
 			}
 		}
 	}
@@ -220,6 +288,7 @@ func runCheck(cmd *cobra.Command, args []string) error {
 	// Spec: kickoff-prompts-queue.
 	if missing, err := missingKickoffSpecs(heroDir); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: kickoff coverage check failed: %v\n", err)
+		addRow("kickoff-coverage", "warn", fmt.Sprintf("kickoff audit failed: %v", err))
 	} else if len(missing) > 0 {
 		issues += len(missing)
 		fmt.Printf("Specs missing `## Kickoff` section (%d):\n", len(missing))
@@ -229,6 +298,9 @@ func runCheck(cmd *cobra.Command, args []string) error {
 		fmt.Println("  These specs are excluded from `hero queue`. Run /design or")
 		fmt.Println("  /deliver on each, or hand-edit per skills/kickoff-prompt.md.")
 		fmt.Println()
+		addRow("kickoff-coverage", "warn", fmt.Sprintf("%d spec(s) missing ## Kickoff section", len(missing)))
+	} else {
+		addRow("kickoff-coverage", "pass", "all work specs carry ## Kickoff sections")
 	}
 
 	// Status truthfulness — one-line summary plus an issue count
@@ -236,29 +308,49 @@ func runCheck(cmd *cobra.Command, args []string) error {
 	// status` for the full breakdown.
 	if line, lyingPartial, err := statusTruthfulnessSummary(); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: status truthfulness audit failed: %v\n", err)
+		addRow("status-truthfulness", "warn", fmt.Sprintf("audit failed: %v", err))
 	} else if line != "" {
 		fmt.Println(line)
 		if lyingPartial > 0 {
 			fmt.Println("  Run 'hero check status' for the full breakdown.")
 			issues += lyingPartial
+			addRow("status-truthfulness", "fail", fmt.Sprintf("%d spec(s) lying or partial; run 'hero check status'", lyingPartial))
+		} else {
+			addRow("status-truthfulness", "pass", "completed specs match git evidence")
 		}
 		fmt.Println()
 	}
 
 	// Satellite drift — dry-run repair to surface findings.
-	if satIssues := reportSatelliteDrift(projectRoot, heroDir); satIssues > 0 {
+	satIssues := reportSatelliteDrift(projectRoot, heroDir)
+	if satIssues > 0 {
 		issues += satIssues
+		addRow("satellite-drift", "warn", fmt.Sprintf("%d satellite drift finding(s); run 'hero install --repair'", satIssues))
+	} else {
+		addRow("satellite-drift", "pass", "no satellite drift")
 	}
 
 	// Snapshot containment + override health.
-	if snapIssues := reportSnapshotHealth(heroDir); snapIssues > 0 {
+	snapIssues := reportSnapshotHealth(heroDir)
+	if snapIssues > 0 {
 		issues += snapIssues
+		addRow("snapshot-health", "warn", fmt.Sprintf("%d snapshot containment issue(s)", snapIssues))
+	} else {
+		addRow("snapshot-health", "pass", "snapshot archives healthy")
 	}
 
 	if issues == 0 {
 		fmt.Println("No issues found.")
 	} else {
 		fmt.Printf("%d issue(s) found.\n", issues)
+	}
+
+	if checkJSON {
+		if err := writeHealthJSON(heroDir, jsonRows); err != nil {
+			// Don't fail the command on JSON write errors — the human
+			// output is already printed and is the source of truth.
+			fmt.Fprintf(os.Stderr, "Warning: write health.json: %v\n", err)
+		}
 	}
 
 	return nil

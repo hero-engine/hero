@@ -1,15 +1,20 @@
 {{ define "health.html" }}
-<section class="project-section" data-section="health">
+<section class="project-section" data-section="health" data-project-slug="{{ .Slug }}">
   <header class="project-section-head" data-default-collapsed="false">
     <h2>Health</h2>
     {{ if .HasArtifact }}
-      <span class="project-section-meta">as of {{ .CapturedAtPretty }}</span>
+      <span class="project-section-meta" title="{{ .CapturedAtPretty }}">as of {{ if .CapturedRelative }}{{ .CapturedRelative }}{{ else }}{{ .CapturedAtPretty }}{{ end }}</span>
+      {{ if .Stale }}<span class="project-health-stale">stale</span>{{ end }}
     {{ else }}
       <span class="project-section-meta muted">as of: never</span>
+    {{ end }}
+    {{ if .RefreshAvailable }}
+      <button class="project-health-refresh" type="button" data-action="refresh-health">Refresh now</button>
     {{ end }}
     <button class="project-section-toggle" type="button" aria-expanded="true">collapse</button>
   </header>
   <div class="project-section-body">
+    <pre class="project-health-output" hidden></pre>
     {{ if not .HasArtifact }}
       <p class="project-empty">No cached health artifact yet. Run <code>hero check</code> in this project to populate.</p>
     {{ else if .AllClear }}

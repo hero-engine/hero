@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 const (
@@ -729,9 +730,36 @@ type ServeConfig struct {
 	AutoWatch bool  `json:"auto_watch"`   // auto-watch for file changes (default: true)
 	UI        *bool `json:"ui,omitempty"` // serve the embedded dashboard UI (default: true)
 
+	// HealthTTL controls how long the /p/<slug>/project Health section
+	// trusts a cached `hero check` result before rendering it as
+	// "stale". Phase 5 of hero-serve-project-section. Format accepts
+	// any time.Duration string ("5m", "30s", "1h"). Empty or invalid
+	// values fall back to defaultHealthTTL (5 minutes).
+	HealthTTL string `json:"health_ttl,omitempty"`
+
 	// ToolFilter controls which MCP tools are exposed to clients.
 	// If empty, all tools are exposed.
 	ToolFilter *MCPToolFilter `json:"tool_filter,omitempty"`
+}
+
+// defaultHealthTTL is the fallback TTL when serve.health_ttl is absent
+// or malformed. Picked to match the parent spec's "5-minute" default.
+const defaultHealthTTL = 5 * time.Minute
+
+// HealthTTLDuration returns the parsed health TTL, falling back to the
+// 5-minute default for empty or invalid values. Never returns an error —
+// a bad config string should not crash the daemon (the dashboard just
+// uses the default and the operator sees the cached "stale" chip
+// according to that schedule).
+func (c *ServeConfig) HealthTTLDuration() time.Duration {
+	if c == nil || c.HealthTTL == "" {
+		return defaultHealthTTL
+	}
+	d, err := time.ParseDuration(c.HealthTTL)
+	if err != nil || d <= 0 {
+		return defaultHealthTTL
+	}
+	return d
 }
 
 // UIEnabled returns whether the dashboard UI should be served.
@@ -1265,6 +1293,9 @@ func MergeLocal(base, local Config) Config {
 		}
 		if local.Serve.Port != 0 {
 			base.Serve.Port = local.Serve.Port
+		}
+		if local.Serve.HealthTTL != "" {
+			base.Serve.HealthTTL = local.Serve.HealthTTL
 		}
 	}
 

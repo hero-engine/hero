@@ -74,6 +74,17 @@ type Deps struct {
 	// missing-path banner on the fallback URL — the fallback's
 	// ProjectRoot is the daemon's cwd and banner-on-cwd is bad UX.
 	IsFallbackProject bool
+
+	// HealthCache is the shared in-process per-project cache of
+	// `hero check` results. Phase 5 of hero-serve-project-section.
+	// Nil-tolerant: when nil the Health loader falls back to reading
+	// .hero/cache/health.json directly (Phase 1 behaviour) and the
+	// "Refresh now" affordance is suppressed.
+	HealthCache data.HealthLookup
+
+	// PeerCache is the shared peer reachability cache. Phase 5. Nil
+	// renders the Phase 1 manifest-stat fallback.
+	PeerCache data.PeerLookup
 }
 
 // RegistryEntry is the minimal registry shape the project page reads.
