@@ -1,6 +1,7 @@
 package serve
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/index"
+	"github.com/hero-engine/hero/internal/serve/healthcache"
 	"github.com/hero-engine/hero/internal/serve/opsrunner"
 	"github.com/hero-engine/hero/internal/spec"
 )
@@ -35,6 +37,12 @@ type API struct {
 	// Set via Server.NewServer during construction; shared across all
 	// per-project + aggregate handlers.
 	opsRunner *opsrunner.Runner
+
+	// healthCache backs the /api/{slug}/health, /health/refresh, and
+	// /peers/{alias}/probe endpoints. Phase 5 of
+	// hero-serve-project-section. Nil-tolerant — endpoints return 503
+	// when unset.
+	healthCache *healthcache.Cache
 }
 
 // NewAPI creates a new API instance backed by a multi-project server.
@@ -53,6 +61,10 @@ func (a *API) SetOpsRunner(r *opsrunner.Runner) { a.opsRunner = r }
 // OpsRunner returns the wired ops runner, or nil if not configured.
 // Used by Server to inject the same runner into projectpage.Deps.
 func (a *API) OpsRunner() *opsrunner.Runner { return a.opsRunner }
+
+// SetHealthCache wires the in-process health/peer cache into the API.
+// Called by Server.NewServer after the cache is constructed.
+func (a *API) SetHealthCache(c *healthcache.Cache) { a.healthCache = c }
 
 // Handler returns a configured http.Handler with the API routes. The
 // shell router is layered on top of this handler in Server.Run.
@@ -186,6 +198,15 @@ func (a *API) routeProject(w http.ResponseWriter, r *http.Request) {
 		// /api/{slug}/registry/remove/undo         — POST: cancel
 		// Phase 4 of hero-serve-project-section.
 		a.routeRegistry(w, r, pc, extra)
+	case "health":
+		// /api/{slug}/health           — GET: cached health snapshot
+		// /api/{slug}/health/refresh   — POST: kick a refresh
+		// Phase 5 of hero-serve-project-section.
+		a.routeHealthCache(w, r, pc, extra)
+	case "peers":
+		// /api/{slug}/peers/{alias}/probe — POST: refresh peer reachability
+		// Phase 5 of hero-serve-project-section.
+		a.routePeerProbe(w, r, pc, extra)
 	default:
 		writeError(w, http.StatusNotFound, fmt.Sprintf("unknown endpoint: %s", endpoint))
 	}
@@ -974,6 +995,159 @@ func (a *API) handleDaemonOps(w http.ResponseWriter, r *http.Request) {
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
+}
+
+// healthSnapshotResponse is the JSON shape returned by
+// GET /api/{slug}/health. Mirrors the on-disk schema with the addition
+// of age_seconds + stale, computed at request time.
+type healthSnapshotResponse struct {
+	Slug        string                 `json:"slug"`
+	CapturedAt  *time.Time             `json:"captured_at,omitempty"`
+	Rows        []healthcache.HealthRow `json:"rows"`
+	FromDisk    bool                   `json:"from_disk"`
+	AgeSeconds  *int64                 `json:"age_seconds,omitempty"`
+	Stale       bool                   `json:"stale"`
+	TTLSeconds  int64                  `json:"ttl_seconds"`
+}
+
+// routeHealthCache dispatches /api/{slug}/health and
+// /api/{slug}/health/refresh.
+func (a *API) routeHealthCache(w http.ResponseWriter, r *http.Request, pc *ProjectContext, extra string) {
+	if a.healthCache == nil {
+		writeError(w, http.StatusServiceUnavailable, "health cache not configured")
+		return
+	}
+	switch extra {
+	case "":
+		if r.Method != http.MethodGet {
+			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			return
+		}
+		a.handleHealthGet(w, r, pc)
+	case "refresh":
+		if r.Method != http.MethodPost {
+			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			return
+		}
+		a.handleHealthRefresh(w, r, pc)
+	default:
+		writeError(w, http.StatusNotFound, "unknown health endpoint")
+	}
+}
+
+func (a *API) handleHealthGet(w http.ResponseWriter, _ *http.Request, pc *ProjectContext) {
+	resp := healthSnapshotResponse{
+		Slug:       pc.Slug,
+		Rows:       []healthcache.HealthRow{},
+		TTLSeconds: int64(a.healthCache.TTL().Seconds()),
+	}
+	if cached, ok := a.healthCache.Health(pc.Slug); ok {
+		resp.Rows = cached.Rows
+		resp.FromDisk = cached.FromDisk
+		if !cached.Captured.IsZero() {
+			t := cached.Captured
+			resp.CapturedAt = &t
+		}
+		if !cached.Timestamp.IsZero() {
+			age := int64(time.Since(cached.Timestamp).Seconds())
+			resp.AgeSeconds = &age
+			if cached.TTL > 0 && time.Since(cached.Timestamp) > cached.TTL {
+				resp.Stale = true
+			}
+		}
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// handleHealthRefresh dispatches a `hero check --json` subprocess
+// through the opsrunner and returns the job id immediately. The client
+// subscribes to /api/{slug}/ops/{job_id}/stream for progress; once it
+// receives the exit event it should re-fetch GET /api/{slug}/health to
+// pick up the new cached result.
+//
+// The cache update itself happens in a background goroutine that
+// blocks on the runner's Wait and then reads the on-disk artifact.
+// This decouples the HTTP response from the (potentially slow)
+// subprocess and matches the existing /ops/ UX.
+func (a *API) handleHealthRefresh(w http.ResponseWriter, r *http.Request, pc *ProjectContext) {
+	if a.opsRunner == nil {
+		writeError(w, http.StatusServiceUnavailable, "ops runner not configured")
+		return
+	}
+	jobID, _, err := a.opsRunner.Start(r.Context(), pc.Slug, pc.Path, "run-check-json")
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	// Update the cache in the background once the job completes. We
+	// intentionally drop the cache.RefreshHealth path here because the
+	// runner already started the subprocess — re-dispatching would
+	// just dedupe to the same job. Instead, wait on the existing job
+	// and pull the artifact off disk ourselves.
+	go func(slug, projectRoot, id string) {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+		defer cancel()
+		if _, werr := a.opsRunner.Wait(ctx, slug, id); werr != nil {
+			fmt.Fprintf(os.Stderr, "hero serve: health refresh wait %s: %v\n", slug, werr)
+			return
+		}
+		if _, rerr := a.healthCache.RefreshFromDisk(slug, projectRoot); rerr != nil {
+			fmt.Fprintf(os.Stderr, "hero serve: health refresh read %s: %v\n", slug, rerr)
+		}
+	}(pc.Slug, pc.Path, jobID)
+	writeJSON(w, http.StatusAccepted, map[string]string{
+		"job_id":      jobID,
+		"stream_url":  fmt.Sprintf("/api/%s/ops/%s/stream", pc.Slug, jobID),
+		"refresh_url": fmt.Sprintf("/api/%s/health", pc.Slug),
+	})
+}
+
+// routePeerProbe dispatches /api/{slug}/peers/{alias}/probe.
+func (a *API) routePeerProbe(w http.ResponseWriter, r *http.Request, pc *ProjectContext, extra string) {
+	if a.healthCache == nil {
+		writeError(w, http.StatusServiceUnavailable, "health cache not configured")
+		return
+	}
+	alias, rest := splitFirst(extra, "/")
+	if alias == "" || rest != "probe" {
+		writeError(w, http.StatusNotFound, "expected /peers/{alias}/probe")
+		return
+	}
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	// Resolve the peer alias against the project's hero.json. Empty
+	// path means the peer isn't configured — pass through anyway so
+	// the prober records an "unreachable" entry; the client sees a
+	// useful row update either way.
+	var peerPath string
+	if cfg, err := config.Load(pc.Path); err == nil {
+		if p, ok := cfg.Repos[alias]; ok {
+			peerPath = p
+		}
+	}
+	result, err := a.healthCache.ProbePeer(r.Context(), pc.Slug, alias, peerPath)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	type peerProbeResponse struct {
+		Slug      string    `json:"slug"`
+		Alias     string    `json:"alias"`
+		Reachable bool      `json:"reachable"`
+		LastOK    time.Time `json:"last_ok,omitempty"`
+		LastError string    `json:"last_error,omitempty"`
+		Timestamp time.Time `json:"timestamp"`
+	}
+	writeJSON(w, http.StatusOK, peerProbeResponse{
+		Slug:      result.Slug,
+		Alias:     result.Alias,
+		Reachable: result.Reachable,
+		LastOK:    result.LastOK,
+		LastError: result.LastError,
+		Timestamp: result.Timestamp,
+	})
 }
 
 // splitTags splits a comma-separated tags string into a slice,

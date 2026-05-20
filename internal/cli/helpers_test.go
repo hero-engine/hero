@@ -195,6 +195,8 @@ func resetFlags() {
 	// Reset check flags
 	checkStaleDays = 14
 	checkReconcile = false
+	checkJSON = false
+	checkKnowledge = false
 
 	// Reset init flags
 	initFolder = config.DefaultFolder

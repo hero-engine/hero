@@ -6,7 +6,36 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-20T05:04:39Z · 95 ready specs_
+_Generated: 2026-05-20T05:28:25Z · 95 ready specs_
+
+## hero-serve-project-section-healthcache — hero serve Project Section — Phase 5 Health Cache and Peer Probes
+_feature · delivering · horizon: now_
+
+Live health + peer caches landed. Phase 1's "read whatever's on disk"
+is now backed by a per-project TTL cache (default 5m, configurable via
+`serve.health_ttl`) with explicit "Refresh now" + per-peer "Probe"
+affordances. Implementation closed the structural gap by adding a
+`hero check --json` flag and a `run-check-json` opsrunner verb rather
+than refactoring `internal/cli/check.go` into a library.
+
+**Status:** delivering — Phase 5 of 5 implementation complete; pending
+sign-off + commit + spec archival by the lead.
+
+**Pick up at:** review the cache implementation in
+`internal/serve/healthcache/cache.go`, the three API endpoints in
+`internal/serve/api.go`, and the refresh/probe client wiring inlined
+into `internal/serve/projectpage/handler.go`. Manual smoke: start the
+daemon, open `/p/<slug>/project`, click "Refresh now" on Health and
+"Probe" on a peer row.
+
+→ `.hero/planning/features/hero-serve-project-section-healthcache/spec.md`
+
+**Skip:** persistent cache across daemon restarts (in-process is
+fine); team-shared cache (deferred to `hero-team-server`); a
+real graph viz for peers (parent Boundary); pre-emptive background
+refresh (user-driven only).
+
+---
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -172,34 +201,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-sales/spec.md)_
-
----
-
-## hero-serve-project-section-healthcache — hero serve Project Section — Phase 5 Health Cache and Peer Probes
-_feature · planning · horizon: now_
-
-Live health + peer caches. Replaces Phase 1's "read whatever's on
-disk" with a per-project TTL cache and explicit refresh affordances.
-
-**Status:** planning — Phase 5 of 5; gated on Phase 1 having landed
-the `projectpage` package and the Health/Peers section partials.
-
-**Pick up at:** scaffold `internal/serve/healthcache/` with a per-
-project TTL cache keyed by `slug` for `hero check` output and by
-`slug+peer-alias` for peer reachability. Wire `GET /api/{slug}/health`,
-`POST /api/{slug}/health/refresh`, and
-`POST /api/{slug}/peers/{alias}/probe`.
-
-→ `.hero/planning/features/hero-serve-project-section-healthcache/spec.md`
-
-**Files:** `internal/serve/projectpage/data/health.go`,
-`internal/serve/projectpage/data/peers.go`,
-`internal/serve/projectpage/deps.go`, `internal/serve/api.go:51-132`,
-`internal/serve/shell/static/js/project.js`
-
-**Skip:** persistent cache across daemon restarts (in-process is
-fine); team-shared cache (deferred to `hero-team-server`); a
-real graph viz for peers (parent Boundary).
 
 ---
 

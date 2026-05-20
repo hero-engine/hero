@@ -30,6 +30,7 @@ var Verbs = map[string][]string{
 	"re-scan":           {"scan"},
 	"re-index":          {"index"},
 	"run-check":         {"check"},
+	"run-check-json":    {"check", "--json"},
 	"refresh-queue":     {"queue", "write"},
 	"capture-knowledge": {"capture"},
 	"snapshot":          {"snapshot"},

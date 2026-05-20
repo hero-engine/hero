@@ -79,6 +79,13 @@ func LoadHealthRollup(in HealthRollupInputs) HealthRollup {
 	for _, p := range in.Projects {
 		proj := HealthRollupProject{Slug: p.Slug, Color: "unknown"}
 		if p.HeroDir != "" {
+			// Aggregate rollup reads the on-disk artifact directly
+			// rather than going through the in-memory cache. Both
+			// produce the same data (Phase 5's refresh flow writes the
+			// JSON via the `hero check --json` subprocess before
+			// populating the in-memory layer), and skipping the cache
+			// here keeps the rollup symmetric with cold-daemon-start
+			// behaviour where the in-memory layer is empty.
 			h := LoadHealth(HealthInputs{HeroDir: p.HeroDir})
 			proj.HasArtifact = h.HasArtifact
 			peers := LoadPeers(PeersInputs{ProjectRoot: p.ProjectRoot, HeroDir: p.HeroDir})

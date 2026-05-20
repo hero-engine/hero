@@ -140,7 +140,7 @@ func (h *handler) buildPageData(d Deps, req *http.Request) pageData {
 		Identity: data.LoadIdentity(data.IdentityInputs{
 			ProjectRoot: d.ProjectRoot, HeroDir: d.HeroDir, Slug: d.Slug,
 		}),
-		Health: data.LoadHealth(data.HealthInputs{HeroDir: d.HeroDir}),
+		Health: data.LoadHealth(data.HealthInputs{HeroDir: d.HeroDir, Slug: d.Slug, Cache: d.HealthCache}),
 		Operations: data.LoadOperations(data.OperationsInputs{
 			Slug:      d.Slug,
 			Lookup:    d.OpsRunner,
@@ -151,7 +151,7 @@ func (h *handler) buildPageData(d Deps, req *http.Request) pageData {
 		}),
 		Registry: registry,
 		Peers: data.LoadPeers(data.PeersInputs{
-			ProjectRoot: d.ProjectRoot, HeroDir: d.HeroDir,
+			ProjectRoot: d.ProjectRoot, HeroDir: d.HeroDir, Slug: d.Slug, Cache: d.PeerCache,
 		}),
 		Trackers: data.LoadTrackers(data.TrackersInputs{
 			ProjectRoot: d.ProjectRoot, HeroDir: d.HeroDir,
@@ -250,6 +250,10 @@ const projectStyles = `<style>
 .project-danger-submit[disabled] { opacity: 0.5; cursor: not-allowed; }
 .hero-undo-toast { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); background: var(--bg-soft); border: 1px solid var(--border); border-radius: 4px; padding: 8px 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000; display: flex; align-items: center; gap: 10px; }
 .hero-undo-btn { background: none; border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px; cursor: pointer; }
+.project-health-stale { background: var(--bg-soft); color: var(--warn); font-size: 0.75rem; border: 1px solid var(--warn); border-radius: 4px; padding: 1px 6px; margin-left: 6px; }
+.project-health-refresh, .project-peer-probe { background: none; border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-size: 0.8rem; cursor: pointer; margin-left: 8px; }
+.project-health-refresh[aria-busy="true"], .project-peer-probe[aria-busy="true"] { opacity: 0.6; cursor: progress; }
+.project-health-output { background: var(--bg-soft); padding: 8px; border-radius: 4px; font-size: 0.8rem; max-height: 240px; overflow: auto; margin: 0 0 10px 0; }
 </style>`
 
 // projectScript renders the inline collapse-toggle JS with the slug
@@ -359,6 +363,123 @@ func projectScript(slug string) string {
   Array.prototype.forEach.call(
     document.querySelectorAll('.project-registry-remove'),
     bindRemoveButton
+  );
+
+  // ---- Phase 5: Health "Refresh now" + Peers "Probe" wiring ----
+  function fetchAndReplaceHealth(){
+    return fetch('/api/'+encodeURIComponent(slug)+'/health',{headers:{'Accept':'application/json'}})
+      .then(function(resp){return resp.ok?resp.json():null;})
+      .then(function(payload){if(!payload) return; renderHealthSummary(payload);});
+  }
+  function renderHealthSummary(payload){
+    var section=document.querySelector('section[data-section="health"]');
+    if(!section) return;
+    var meta=section.querySelector('.project-section-head .project-section-meta');
+    if(meta){
+      if(payload.captured_at){
+        meta.textContent='as of '+payload.captured_at;
+        meta.classList.remove('muted');
+        meta.title=payload.captured_at;
+      }
+    }
+    // Toggle stale chip.
+    var head=section.querySelector('.project-section-head');
+    if(head){
+      var existing=head.querySelector('.project-health-stale');
+      if(payload.stale){
+        if(!existing){
+          var chip=document.createElement('span');
+          chip.className='project-health-stale';
+          chip.textContent='stale';
+          if(meta) meta.insertAdjacentElement('afterend',chip);
+        }
+      } else if(existing){
+        existing.parentNode.removeChild(existing);
+      }
+    }
+  }
+  Array.prototype.forEach.call(
+    document.querySelectorAll('[data-action="refresh-health"]'),
+    function(btn){
+      btn.addEventListener('click',function(){
+        if(btn.hasAttribute('disabled')) return;
+        btn.setAttribute('disabled','');
+        btn.setAttribute('aria-busy','true');
+        var section=btn.closest('section[data-section="health"]');
+        var out=section?section.querySelector('.project-health-output'):null;
+        if(out){out.textContent='';out.removeAttribute('hidden');}
+        fetch('/api/'+encodeURIComponent(slug)+'/health/refresh',{method:'POST'})
+          .then(function(resp){
+            if(!resp.ok) throw new Error('refresh failed: '+resp.status);
+            return resp.json();
+          })
+          .then(function(body){
+            if(!body||!body.job_id) throw new Error('missing job_id');
+            var es=new EventSource('/api/'+encodeURIComponent(slug)+'/ops/'+encodeURIComponent(body.job_id)+'/stream');
+            es.addEventListener('progress',function(ev){
+              if(!out) return;
+              try{var f=JSON.parse(ev.data); if(f&&f.text){out.textContent+=f.text+'\n'; out.scrollTop=out.scrollHeight;}}catch(e){}
+            });
+            es.addEventListener('exit',function(){
+              es.close();
+              // Tiny grace window so the background-goroutine cache
+              // update lands before we re-read /health.
+              setTimeout(function(){
+                fetchAndReplaceHealth().finally(function(){
+                  btn.removeAttribute('disabled');
+                  btn.removeAttribute('aria-busy');
+                });
+              },150);
+            });
+            es.addEventListener('error',function(){
+              if(es.readyState===EventSource.CLOSED){
+                btn.removeAttribute('disabled');
+                btn.removeAttribute('aria-busy');
+              }
+            });
+          })
+          .catch(function(err){
+            console.error('health refresh failed',err);
+            btn.removeAttribute('disabled');
+            btn.removeAttribute('aria-busy');
+          });
+      });
+    }
+  );
+
+  Array.prototype.forEach.call(
+    document.querySelectorAll('[data-action="probe-peer"]'),
+    function(btn){
+      btn.addEventListener('click',function(){
+        if(btn.hasAttribute('disabled')) return;
+        var alias=btn.getAttribute('data-alias')||'';
+        if(!alias) return;
+        btn.setAttribute('disabled','');
+        btn.setAttribute('aria-busy','true');
+        fetch('/api/'+encodeURIComponent(slug)+'/peers/'+encodeURIComponent(alias)+'/probe',{method:'POST'})
+          .then(function(resp){
+            if(!resp.ok) throw new Error('probe failed: '+resp.status);
+            return resp.json();
+          })
+          .then(function(payload){
+            var row=btn.closest('tr');
+            if(!row) return;
+            var reachCell=row.querySelector('.cell-reachable');
+            if(reachCell) reachCell.textContent=payload.reachable?'yes':'no';
+            var probeCell=row.querySelector('.cell-probe');
+            if(probeCell){
+              var when=new Date(payload.timestamp);
+              probeCell.textContent='just now';
+              probeCell.setAttribute('title',when.toLocaleString());
+            }
+          })
+          .catch(function(err){console.error('peer probe failed',err);})
+          .finally(function(){
+            btn.removeAttribute('disabled');
+            btn.removeAttribute('aria-busy');
+          });
+      });
+    }
   );
 
   // ---- Phase 4: Danger Zone typed-confirm gate ----

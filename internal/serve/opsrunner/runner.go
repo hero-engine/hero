@@ -173,6 +173,30 @@ func (r *Runner) Start(ctx context.Context, slug, projectRoot, verb string) (job
 	return job.ID, true, nil
 }
 
+// Wait blocks until the job identified by slug+jobID has exited (or
+// the supplied ctx is cancelled), then returns its exit code. Used by
+// the healthcache to chain a cache update onto a `hero check --json`
+// subprocess that the existing opsrunner dispatched.
+//
+// Returns -1 + ctx.Err() when ctx is cancelled before the job finishes.
+// Returns an error when the job id is unknown (most likely because the
+// caller passed a stale id after the registry slot was reused).
+func (r *Runner) Wait(ctx context.Context, slug, jobID string) (int, error) {
+	if r == nil {
+		return -1, errors.New("opsrunner: nil runner")
+	}
+	job := r.registry.findByID(slug, jobID)
+	if job == nil {
+		return -1, fmt.Errorf("opsrunner: job %q not found", jobID)
+	}
+	select {
+	case <-job.done:
+		return job.ExitCode(), nil
+	case <-ctx.Done():
+		return -1, ctx.Err()
+	}
+}
+
 // Lookup reports the in-flight job id for slug+verb. Used by the
 // operations-section loader at page render so the template can mark
 // the verb's button as already-in-flight.

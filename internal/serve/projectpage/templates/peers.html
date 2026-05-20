@@ -1,5 +1,5 @@
 {{ define "peers.html" }}
-<section class="project-section" data-section="peers">
+<section class="project-section" data-section="peers" data-project-slug="{{ .Slug }}">
   <header class="project-section-head" data-default-collapsed="false">
     <h2>Peers</h2>
     <span class="project-section-meta">{{ len .Rows }} configured</span>
@@ -13,16 +13,29 @@
             <th>Alias</th>
             <th>Path</th>
             <th>Reachable</th>
+            <th>Last probe</th>
             <th>Last scan</th>
+            {{ if $.ProbeAvailable }}<th></th>{{ end }}
           </tr>
         </thead>
         <tbody>
           {{ range .Rows }}
-          <tr>
+          <tr data-peer-alias="{{ .Alias }}">
             <td><code>{{ .Alias }}</code></td>
             <td><code>{{ .Path }}</code></td>
-            <td>{{ if .Reachable }}yes{{ else }}<span class="muted">unknown</span>{{ end }}</td>
+            <td class="cell-reachable">
+              {{ if .Reachable }}yes{{ else if .HasCache }}<span class="muted">no</span>{{ else }}<span class="muted">unknown</span>{{ end }}
+              {{ if .CacheStale }}<span class="project-health-stale">stale</span>{{ end }}
+            </td>
+            <td class="cell-probe">
+              {{ if .HasCache }}<span title="{{ .CacheAt.Format "2006-01-02 15:04:05" }}">{{ if .CacheAgo }}{{ .CacheAgo }}{{ else }}—{{ end }}</span>{{ else }}<span class="muted">never</span>{{ end }}
+            </td>
             <td>{{ if .HasScan }}{{ .ScannedAtPretty }}{{ else }}<span class="muted">as of: never</span>{{ end }}</td>
+            {{ if $.ProbeAvailable }}
+            <td class="cell-actions">
+              <button class="project-peer-probe" type="button" data-action="probe-peer" data-alias="{{ .Alias }}">Probe</button>
+            </td>
+            {{ end }}
           </tr>
           {{ end }}
         </tbody>
