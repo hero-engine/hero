@@ -1,33 +1,23 @@
-{{- /* quicklaunch.html — Quick launch section. Mounts the shell-owned
-       chat-input fragment (replacing the hand-rolled input that shipped
-       in hero-now-home v1) and conditionally renders the empty-state
-       notice above it when no chat adapter is connected. Intent chips
-       and the "Try:" recent-prompts line stay in this template — they
-       are page content, not chrome. */ -}}
+{{- /* quicklaunch.html — single-row chat input + inline intent chips.
+       Bottom-anchored after the redesign: roughly 10% of viewport,
+       not 70%. The empty-state notice still composes in the same
+       slot when no adapter is connected — the chat-input swaps for
+       the install prompt without any layout overlap. */ -}}
 {{ define "quicklaunch.html" }}
-<section id="now-quicklaunch" class="now-section">
-  <div class="now-launch-title-wrap">
-    <h2 class="now-section-title" style="display:inline-block;">Tell Hero what to do next</h2>
-  </div>
-  <div class="now-launch">
-    {{- if .NoAdapter }}
+<section id="now-quicklaunch" class="now-section now-quicklaunch-compact">
+  {{- if .NoAdapter }}
+  <div class="now-quicklaunch-empty">
     {{ emptyStateNotice .EmptyState }}
-    {{- end }}
-    {{ chatInput .ChatInput }}
-    <div class="now-intent-chips">
+  </div>
+  {{- else }}
+  <div class="now-quicklaunch-row">
+    <div class="now-quicklaunch-input">{{ chatInput .ChatInput }}</div>
+    <div class="now-quicklaunch-chips">
       {{- range .IntentChips }}
       <a href="#" class="now-intent-chip">{{ . }}</a>
       {{- end }}
     </div>
-    {{- with .TryPrompts }}
-    <div class="now-launch-try">
-      Try:
-      {{- range $i, $p := . }}
-        {{ if $i }}·{{ end }}
-        <a href="{{ $p.Href }}">{{ $p.Label }}</a>
-      {{- end }}
-    </div>
-    {{- end }}
   </div>
+  {{- end }}
 </section>
 {{ end }}

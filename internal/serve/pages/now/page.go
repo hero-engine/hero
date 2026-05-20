@@ -20,6 +20,7 @@ import (
 	"io/fs"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/serve/chat"
@@ -27,6 +28,29 @@ import (
 	"github.com/hero-engine/hero/internal/serve/pages/now/data"
 	"github.com/hero-engine/hero/internal/serve/shell"
 )
+
+// HeroLastLookedCookie is the cookie name client JS writes whenever
+// the user returns to /now. The "Since you last looked" callout reads
+// this on the next page render to compute the diff window.
+const HeroLastLookedCookie = "hero_last_looked"
+
+// lastLookedFromCookie parses the hero_last_looked cookie as an
+// RFC3339 timestamp. Missing / malformed cookies return zero time so
+// LoadSince falls back to its default 24h window.
+func lastLookedFromCookie(req *http.Request) time.Time {
+	if req == nil {
+		return time.Time{}
+	}
+	c, err := req.Cookie(HeroLastLookedCookie)
+	if err != nil {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC3339, c.Value)
+	if err != nil {
+		return time.Time{}
+	}
+	return t
+}
 
 //go:embed templates/*.html
 var templatesFS embed.FS
@@ -78,6 +102,12 @@ type Deps struct {
 	// Shape matches the Agents home's session ledger so both pages
 	// surface the same source of truth.
 	LiveSessions func() []data.SessionRow
+
+	// MultiProject, when non-empty, switches the page into aggregate
+	// mode. Activity feed, in-flight strip, and themes fan out across
+	// the listed projects and tag rows with their project slug. Set by
+	// the /p/all/now handler; empty for single-project mode.
+	MultiProject []data.ActivityProject
 }
 
 // Register installs the Now home on the shell router using the
@@ -237,6 +267,32 @@ func (h *handler) buildPage(req *http.Request, cfg config.Config, ed edition.Edi
 		Methodology: methodology,
 	})
 
+	// Activity-feed-led dashboard sections — per
+	// hero-serve-dashboard-redesign. Window comes off the query string
+	// (today / week / month / all); empty → default WindowWeek.
+	window := data.WindowFromString(req.URL.Query().Get("window"))
+	activity := data.LoadActivity(data.ActivityInputs{
+		ProjectRoot: h.deps.ProjectRoot,
+		HeroDir:     h.deps.HeroDir,
+		UserName:    h.deps.UserName,
+		Window:      window,
+		Aggregate:   h.deps.MultiProject,
+	})
+	inflight := data.LoadInflight(data.InflightInputs{
+		ProjectRoot: h.deps.ProjectRoot,
+		HeroDir:     h.deps.HeroDir,
+		Aggregate:   h.deps.MultiProject,
+	})
+	themes := data.LoadThemes(data.ThemesInputs{
+		HeroDir:   h.deps.HeroDir,
+		Aggregate: h.deps.MultiProject,
+		Window:    window,
+	})
+	since := data.LoadSince(data.SinceInputs{
+		HeroDir:      h.deps.HeroDir,
+		LastLookedAt: lastLookedFromCookie(req),
+	})
+
 	hero := buildPageHero(h.deps, ed, len(inbox.Rows), agents.RunningCount, agents.LastActivePretty)
 	strip := buildMetricStrip(methodology, metrics)
 	noAdapter, emptyState := resolveAdapterState(h.deps)
@@ -262,10 +318,20 @@ func (h *handler) buildPage(req *http.Request, cfg config.Config, ed edition.Edi
 			NoAdapter:  noAdapter,
 			EmptyState: emptyState,
 		},
-		Inbox:   inbox,
-		Plate:   plate,
-		Agents:  agents,
-		Changes: changes,
+		Inbox:    inbox,
+		Plate:    plate,
+		Agents:   agents,
+		Changes:  changes,
+		Activity: activity,
+		Inflight: inflight,
+		Themes:   themes,
+		Since:    since,
+		// Install panel renders only when the adapter probe says no
+		// adapter is connected (matches the in-place QuickLaunch
+		// empty-state behavior). We surface a boolean on the outer
+		// pageData so page.html can suppress the install slot when an
+		// adapter IS connected without re-running the probe.
+		ShowInstallPanel: noAdapter,
 	}
 
 	content := func(out io.Writer) error {
@@ -366,6 +432,16 @@ type pageData struct {
 	Plate       data.Plate
 	Agents      data.Agents
 	Changes     data.Changes
+	// Activity-feed-led sections per hero-serve-dashboard-redesign.
+	Activity data.Activity
+	Inflight data.Inflight
+	Themes   data.Themes
+	Since    data.SinceCallout
+	// ShowInstallPanel mirrors the adapter probe — when an adapter is
+	// connected the install panel is suppressed (it lives inside the
+	// quicklaunch section's no-adapter branch, but the page-level flag
+	// is what page.html consults to keep the structural ordering clean).
+	ShowInstallPanel bool
 }
 
 // quickLaunchData is the input passed to the Quick launch section

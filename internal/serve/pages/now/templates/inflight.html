@@ -1,0 +1,27 @@
+{{- /* inflight.html — strip of currently-active specs (planning,
+       delivering, in-review). One card per spec, ordered newest-
+       touched first. Click to resume. Omitted entirely when no
+       in-flight specs exist. */ -}}
+{{ define "inflight.html" }}
+{{- if gt .Total 0 }}
+<section id="now-inflight" class="now-section">
+  <div class="now-section-header">
+    <h2 class="now-section-title">In flight
+      <span class="now-section-meta">{{ .Total }} active</span>
+    </h2>
+  </div>
+  <div class="now-inflight-strip">
+    {{- range .Rows }}
+    <a href="{{ .Href }}" class="now-inflight-card" data-status="{{ .Status }}">
+      <div class="now-inflight-status">{{ .StatusLabel }}</div>
+      <div class="now-inflight-title">{{ .Title }}</div>
+      <div class="now-inflight-meta">
+        {{- if .Project }}<span class="now-feed-project">{{ .Project }}</span> · {{ end -}}
+        <span class="now-inflight-touched">{{ .LastTouched }}</span>
+      </div>
+    </a>
+    {{- end }}
+  </div>
+</section>
+{{- end }}
+{{ end }}

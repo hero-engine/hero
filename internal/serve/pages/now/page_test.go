@@ -55,28 +55,69 @@ func TestRegister_RendersAllSections(t *testing.T) {
 
 	mustContain := []string{
 		`<nav class="topnav">`,
+		// Activity-feed-led layout per hero-serve-dashboard-redesign:
+		// activity / inflight / themes precede the inbox; quicklaunch
+		// is bottom-anchored as a single shrunken row.
+		`id="now-activity"`,
 		`id="now-inbox"`,
 		`id="now-plate"`,
 		`id="now-agents"`,
 		`id="now-changes"`,
 		`id="now-quicklaunch"`,
 		`class="metric-tab`,
-		`Tell Hero what to do next`,
-		// hero-now-home-followups Fix 1: Quick launch mounts the shell-
-		// owned chat-input fragment instead of the hand-rolled <input>.
-		`data-chat-input-variant="hero"`,
-		// Fix 2: with no chat adapter wired (default in this test) the
-		// empty-state notice renders above the chat input.
+		// With no chat adapter wired (default in this test) the
+		// empty-state notice renders inside the quicklaunch slot in
+		// place of the chat input — the redesign keeps the install
+		// panel state-aware (spec dashboard-adapter-state-hardcoded).
 		`empty-state-notice`,
 		`Hero needs hero-code`,
-		// Fix 3: the page-hero subhead is wrapped in a stable DOM hook
-		// so the `event: hero` SSE channel can swap it in place.
+		// The page-hero subhead is wrapped in a stable DOM hook so
+		// the `event: hero` SSE channel can swap it in place.
 		`data-page-hero-subhead`,
 	}
 	for _, want := range mustContain {
 		if !strings.Contains(body, want) {
 			t.Errorf("response missing %q", want)
 		}
+	}
+}
+
+// TestRegister_RendersNewSectionsConditionally pins the
+// hero-serve-dashboard-redesign contract: when the workspace has no
+// recent activity, the activity feed renders an honest empty-state row
+// rather than disappearing; inflight + themes + since omit themselves
+// entirely below threshold. The shell still composes the section
+// scaffolding via the outer template.
+func TestRegister_RendersNewSectionsConditionally(t *testing.T) {
+	r := newTestRouter(t)
+	if err := Register(r, Deps{UserName: "test-user"}); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	srv := httptest.NewServer(r.Handler())
+	defer srv.Close()
+
+	resp, err := http.Get(srv.URL + "/now")
+	if err != nil {
+		t.Fatalf("GET /now: %v", err)
+	}
+	defer resp.Body.Close()
+	raw, _ := io.ReadAll(resp.Body)
+	body := string(raw)
+
+	// Activity feed renders even when empty — it's the lead section.
+	if !strings.Contains(body, `id="now-activity"`) {
+		t.Errorf("activity section missing from response")
+	}
+	// In-flight / themes / since omit themselves below threshold —
+	// expected to be absent on a fresh empty workspace.
+	if strings.Contains(body, `id="now-inflight"`) {
+		t.Errorf("in-flight section rendered on empty workspace; should omit")
+	}
+	if strings.Contains(body, `id="now-themes"`) {
+		t.Errorf("themes section rendered on empty workspace; should omit")
+	}
+	if strings.Contains(body, `id="now-since"`) {
+		t.Errorf("since callout rendered on empty workspace; should omit")
 	}
 }
 
