@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
+	"os"
 	"path/filepath"
 
 	"github.com/hero-engine/hero/internal/serve/projectpage/data"
@@ -67,11 +68,24 @@ type pageData struct {
 	Trackers   data.Trackers
 	Knowledge  data.Knowledge
 	Config     data.Config
+	Danger     data.Danger
+
+	// MissingPath is true when the project's registered root does not
+	// exist on disk at render time. Drives the top-of-page deregister
+	// banner. Only set on /p/<slug>/project URLs — the single-project
+	// /project fallback (whose path is the daemon's cwd) never sets
+	// this, so the banner doesn't fire for the daemon's home project
+	// just because cwd changed. Phase 4 of hero-serve-project-section.
+	MissingPath bool
+
+	// Slug is the project slug, surfaced into the missing-path banner
+	// markup so the deregister button can post to the right URL.
+	Slug string
 }
 
 func (h *handler) handle(w http.ResponseWriter, req *http.Request) {
 	d := h.resolveDeps(req)
-	pd := h.buildPageData(d)
+	pd := h.buildPageData(d, req)
 
 	subhead := h.composeSubhead(d, pd)
 	hero := shell.PageHero{
@@ -110,7 +124,7 @@ func (h *handler) resolveDeps(_ *http.Request) Deps {
 	return d
 }
 
-func (h *handler) buildPageData(d Deps) pageData {
+func (h *handler) buildPageData(d Deps, req *http.Request) pageData {
 	var regView *data.RegistryEntryView
 	if d.RegistryEntry != nil {
 		regView = &data.RegistryEntryView{
@@ -118,7 +132,11 @@ func (h *handler) buildPageData(d Deps) pageData {
 			RegisteredAt: d.RegistryEntry.RegisteredAt,
 		}
 	}
-	return pageData{
+	registry := data.LoadRegistry(data.RegistryInputs{
+		Slug: d.Slug, Entry: regView, IsDefaultProject: d.IsDefaultProject,
+	})
+	pd := pageData{
+		Slug: d.Slug,
 		Identity: data.LoadIdentity(data.IdentityInputs{
 			ProjectRoot: d.ProjectRoot, HeroDir: d.HeroDir, Slug: d.Slug,
 		}),
@@ -131,9 +149,7 @@ func (h *handler) buildPageData(d Deps) pageData {
 		Stack: data.LoadStack(data.StackInputs{
 			ProjectRoot: d.ProjectRoot, HeroDir: d.HeroDir,
 		}),
-		Registry: data.LoadRegistry(data.RegistryInputs{
-			Slug: d.Slug, Entry: regView, IsDefaultProject: d.IsDefaultProject,
-		}),
+		Registry: registry,
 		Peers: data.LoadPeers(data.PeersInputs{
 			ProjectRoot: d.ProjectRoot, HeroDir: d.HeroDir,
 		}),
@@ -144,7 +160,33 @@ func (h *handler) buildPageData(d Deps) pageData {
 		Config: data.LoadConfig(data.ConfigInputs{
 			ProjectRoot: d.ProjectRoot, HeroDir: d.HeroDir,
 		}),
+		Danger: data.LoadDanger(data.DangerInputs{
+			Slug:       d.Slug,
+			Registered: registry.Registered,
+		}),
 	}
+	pd.MissingPath = h.shouldShowMissingPathBanner(d, req)
+	return pd
+}
+
+// shouldShowMissingPathBanner reports whether the missing-path banner
+// should fire for this request. The banner renders only when the
+// project is being served through a per-project route AND its
+// registered root no longer exists on disk. The bare /project fallback
+// (daemon's cwd) is intentionally exempt — banner-on-cwd is bad UX.
+func (h *handler) shouldShowMissingPathBanner(d Deps, _ *http.Request) bool {
+	if d.IsFallbackProject {
+		return false
+	}
+	if d.ProjectRoot == "" {
+		return false
+	}
+	if _, err := os.Stat(d.ProjectRoot); err != nil {
+		if os.IsNotExist(err) {
+			return true
+		}
+	}
+	return false
 }
 
 // composeSubhead builds the small page-hero subhead summarising the
@@ -191,6 +233,23 @@ const projectStyles = `<style>
 .project-config-paths .muted { margin-left: 8px; }
 .project-config-body { background: var(--bg-soft); padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 0.85rem; }
 .project-tracker-optin p { margin: 4px 0; }
+.project-missing-path-banner { background: var(--bg-soft); border: 1px solid var(--danger); border-radius: 4px; padding: 10px 14px; margin: 12px 0; display: flex; align-items: center; gap: 12px; }
+.project-missing-path-banner button { margin-left: auto; }
+.project-registry-actions { margin: 12px 0 0 0; display: flex; align-items: center; gap: 12px; }
+.project-registry-remove { background: var(--bg-soft); border: 1px solid var(--danger); color: var(--danger); padding: 4px 10px; border-radius: 4px; cursor: pointer; }
+.project-registry-remove[disabled] { opacity: 0.5; cursor: not-allowed; }
+.project-section-danger .project-section-head { background: var(--bg-soft); }
+.project-danger-verbs { list-style: none; padding: 0; margin: 0; }
+.project-danger-verb { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.project-danger-verb:last-child { border-bottom: none; }
+.project-danger-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; }
+.project-danger-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.project-danger-form label { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; }
+.project-danger-confirm { padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-family: monospace; min-width: 220px; }
+.project-danger-submit { padding: 4px 10px; border: 1px solid var(--danger); background: var(--bg-soft); color: var(--danger); border-radius: 4px; cursor: pointer; }
+.project-danger-submit[disabled] { opacity: 0.5; cursor: not-allowed; }
+.hero-undo-toast { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); background: var(--bg-soft); border: 1px solid var(--border); border-radius: 4px; padding: 8px 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000; display: flex; align-items: center; gap: 10px; }
+.hero-undo-btn { background: none; border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px; cursor: pointer; }
 </style>`
 
 // projectScript renders the inline collapse-toggle JS with the slug
@@ -198,6 +257,10 @@ const projectStyles = `<style>
 // internal/serve/projectpage/static/project.js for editing convenience
 // but is inlined here so we don't fan out a /static/projectpage/
 // route in Phase 1.
+//
+// Phase 4 of hero-serve-project-section appended the destructive-ops
+// wiring: registry-remove with undo toast, Danger Zone typed-confirm
+// gate, and missing-path banner deregister.
 func projectScript(slug string) string {
 	safeSlug := template.JSEscapeString(slug)
 	return `<script>(function(){
@@ -228,6 +291,102 @@ func projectScript(slug string) string {
       if(btn){btn.setAttribute('aria-expanded', collapsed?'false':'true');btn.textContent=collapsed?'expand':'collapse';}
     }
   });
+
+  // ---- Phase 4: registry-remove with 5-second undo toast ----
+  function postJSON(url){
+    return fetch(url,{method:'POST',headers:{'Accept':'application/json'}});
+  }
+  function showUndoToast(slugVal){
+    // Remove any prior toast.
+    var existing=document.getElementById('hero-undo-toast');
+    if(existing) existing.parentNode.removeChild(existing);
+    var toast=document.createElement('div');
+    toast.id='hero-undo-toast';
+    toast.setAttribute('role','status');
+    toast.className='hero-undo-toast';
+    var msg=document.createElement('span');
+    msg.textContent='Removing '+slugVal+' in ';
+    var counter=document.createElement('strong');
+    counter.textContent='5';
+    var undoBtn=document.createElement('button');
+    undoBtn.type='button';
+    undoBtn.className='hero-undo-btn';
+    undoBtn.textContent='Undo';
+    msg.appendChild(counter);
+    msg.appendChild(document.createTextNode('s. '));
+    toast.appendChild(msg);
+    toast.appendChild(undoBtn);
+    document.body.appendChild(toast);
+    var remaining=5;
+    var cancelled=false;
+    var timer=setInterval(function(){
+      remaining-=1;
+      if(remaining<=0){
+        clearInterval(timer);
+        if(!cancelled){
+          toast.textContent=slugVal+' removed.';
+          setTimeout(function(){window.location.reload();},400);
+        }
+        return;
+      }
+      counter.textContent=String(remaining);
+    },1000);
+    undoBtn.addEventListener('click',function(){
+      cancelled=true;
+      clearInterval(timer);
+      postJSON('/api/'+encodeURIComponent(slugVal)+'/registry/remove/undo').finally(function(){
+        toast.textContent='Cancelled.';
+        setTimeout(function(){if(toast.parentNode) toast.parentNode.removeChild(toast);},800);
+      });
+    });
+  }
+  function bindRemoveButton(btn){
+    if(!btn||btn.dataset.removeBound==='1') return;
+    btn.dataset.removeBound='1';
+    btn.addEventListener('click',function(ev){
+      ev.preventDefault();
+      var slugVal=btn.getAttribute('data-slug')||slug;
+      btn.disabled=true;
+      postJSON('/api/'+encodeURIComponent(slugVal)+'/registry/remove').then(function(resp){
+        if(!resp.ok) throw new Error('remove failed: '+resp.status);
+        showUndoToast(slugVal);
+      }).catch(function(err){
+        btn.disabled=false;
+        console.error('registry remove failed',err);
+      });
+    });
+  }
+  Array.prototype.forEach.call(
+    document.querySelectorAll('.project-registry-remove'),
+    bindRemoveButton
+  );
+
+  // ---- Phase 4: Danger Zone typed-confirm gate ----
+  Array.prototype.forEach.call(
+    document.querySelectorAll('.project-danger-form'),
+    function(form){
+      var input=form.querySelector('.project-danger-confirm');
+      var btn=form.querySelector('.project-danger-submit');
+      var target=form.getAttribute('data-slug')||'';
+      var endpoint=form.getAttribute('data-endpoint')||'';
+      if(!input||!btn) return;
+      input.addEventListener('input',function(){
+        btn.disabled=(input.value!==target);
+      });
+      btn.addEventListener('click',function(ev){
+        ev.preventDefault();
+        if(input.value!==target) return;
+        btn.disabled=true;
+        postJSON(endpoint).then(function(resp){
+          if(!resp.ok) throw new Error('action failed: '+resp.status);
+          showUndoToast(target);
+        }).catch(function(err){
+          btn.disabled=false;
+          console.error('danger action failed',err);
+        });
+      });
+    }
+  );
 })();</script>`
 }
 

@@ -101,4 +101,54 @@
         });
     });
   }
+
+  // ---- Phase 4: Stop daemon (aggregate-only) ----
+  //
+  // Behavior: POST /api/daemon/ops/stop, then replace the page body
+  // with a "Daemon stopped — relaunch with `hero serve`" inline message.
+  // The daemon will die mid-request so the fetch usually errors with
+  // a connection failure; we treat that as success and render the same
+  // landing message. This is the "inline message" branch flagged back
+  // to the spec author.
+  var stopBtn = document.getElementById('project-stop-daemon-btn');
+  var stopStatus = document.getElementById('project-stop-daemon-status');
+  if (stopBtn) {
+    stopBtn.addEventListener('click', function () {
+      stopBtn.disabled = true;
+      if (stopStatus) stopStatus.textContent = 'stopping…';
+      function renderStopped() {
+        document.body.innerHTML =
+          '<main class="hero-stopped-landing" style="padding:48px 32px;font-family:system-ui,sans-serif;">' +
+          '<h1>Daemon stopped</h1>' +
+          '<p>The hero daemon is no longer running. Relaunch with <code>hero serve</code> and reload this page to continue.</p>' +
+          '</main>';
+      }
+      fetch('/api/daemon/ops/stop', { method: 'POST' })
+        .then(function (resp) {
+          // Success path: daemon accepted the dispatch and the subprocess
+          // is signalling. Poll briefly until the daemon stops responding.
+          if (!resp.ok) throw new Error('http ' + resp.status);
+          var attempts = 0;
+          var probe = setInterval(function () {
+            attempts += 1;
+            fetch('/health')
+              .then(function () {
+                if (attempts >= 10) {
+                  clearInterval(probe);
+                  renderStopped();
+                }
+              })
+              .catch(function () {
+                clearInterval(probe);
+                renderStopped();
+              });
+          }, 500);
+        })
+        .catch(function () {
+          // Connection lost mid-request: daemon already died. Render
+          // the stopped landing immediately.
+          renderStopped();
+        });
+    });
+  }
 })();

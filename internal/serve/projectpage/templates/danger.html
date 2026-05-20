@@ -1,0 +1,49 @@
+{{ define "danger.html" }}
+{{ if .Visible }}
+<section class="project-section project-section-danger" data-section="danger">
+  <header class="project-section-head" data-default-collapsed="true">
+    <h2>Danger Zone</h2>
+    <span class="project-section-meta muted">destructive operations · expand to view</span>
+    <button class="project-section-toggle" type="button" aria-expanded="false">expand</button>
+  </header>
+  <div class="project-section-body" hidden>
+    <p class="project-empty">
+      The actions below modify or remove this project's registration.
+      Type the project slug into each confirmation field to enable the
+      button. Removal has a 5-second undo window.
+    </p>
+    <ul class="project-danger-verbs">
+      {{ range .Verbs }}
+        <li class="project-danger-verb" data-verb="{{ .Verb }}">
+          <div class="project-danger-head">
+            <strong>{{ .Label }}</strong>
+            <span class="project-danger-desc muted">{{ .Description }}</span>
+          </div>
+          <form class="project-danger-form"
+                data-verb="{{ .Verb }}"
+                data-slug="{{ $.Slug }}"
+                data-endpoint="{{ .Endpoint }}"
+                onsubmit="return false;">
+            <label>
+              Type the project slug to confirm:
+              <code class="project-danger-slug">{{ $.Slug }}</code>
+              <input type="text"
+                     class="project-danger-confirm"
+                     autocomplete="off"
+                     spellcheck="false"
+                     placeholder="{{ $.Slug }}">
+            </label>
+            <button type="submit"
+                    class="project-danger-submit"
+                    data-verb="{{ .Verb }}"
+                    disabled>
+              {{ .Label }}
+            </button>
+          </form>
+        </li>
+      {{ end }}
+    </ul>
+  </div>
+</section>
+{{ end }}
+{{ end }}

@@ -81,6 +81,11 @@ type Server struct {
 	// (via Lookup) and the API dispatch.
 	opsRunner *opsrunner.Runner
 
+	// pendingRemove tracks registry-remove operations inside their
+	// 5-second grace window. Phase 4 of hero-serve-project-section —
+	// entries do NOT survive a daemon restart (intentional safety).
+	pendingRemove *pendingRemoveQueue
+
 	// Team mode
 	teamMode       bool
 	jobQueue       *JobQueue
@@ -152,6 +157,10 @@ func NewServer(cfg ServerConfig) *Server {
 	s.opsRunner = opsrunner.New(context.Background())
 	s.api.SetOpsRunner(s.opsRunner)
 
+	// Pending-remove queue backs the 5-second grace window for the
+	// registry Remove button. Phase 4 of hero-serve-project-section.
+	s.pendingRemove = newPendingRemoveQueue()
+
 	// Team mode setup
 	if cfg.TeamMode {
 		s.teamMode = true
@@ -221,12 +230,17 @@ func (s *Server) AddProject(slug, projectRoot, heroDir string, autoWatch bool) e
 }
 
 // RemoveProject stops and removes a project from the running daemon.
+//
+// When the daemon was started with a registry, this also unregisters
+// the slug from ~/.hero/projects.json and persists the change. The
+// in-memory removal happens first; registry persistence is best-effort
+// and surfaces an error on failure, but the in-memory removal is not
+// rolled back.
 func (s *Server) RemoveProject(slug string) error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	pc, ok := s.projects[slug]
 	if !ok {
+		s.mu.Unlock()
 		return fmt.Errorf("project %q not found", slug)
 	}
 
@@ -238,6 +252,21 @@ func (s *Server) RemoveProject(slug string) error {
 	}
 
 	delete(s.projects, slug)
+	reg := s.registry
+	s.mu.Unlock()
+
+	// Persist the registry change to disk. Skip when no registry is
+	// wired (single-project mode launched without a registry path).
+	if reg != nil {
+		if reg.HasProject(slug) {
+			if err := reg.Remove(slug); err != nil {
+				return fmt.Errorf("remove %s from registry: %w", slug, err)
+			}
+			if err := reg.Save(); err != nil {
+				return fmt.Errorf("persist registry after removing %s: %w", slug, err)
+			}
+		}
+	}
 	return nil
 }
 
@@ -747,7 +776,7 @@ func (s *Server) buildShellRouter() *shell.Router {
 		Path:    s.projectRoot,
 		HeroDir: s.heroDir,
 	}
-	return s.buildShellRouterFor(pc)
+	return s.buildShellRouterForOpts(pc, true)
 }
 
 // buildShellRouterFor assembles a shell router scoped to a single
@@ -760,6 +789,13 @@ func (s *Server) buildShellRouter() *shell.Router {
 // are inherently per-project (proposal snapshots, project root paths)
 // pull from the ProjectContext.
 func (s *Server) buildShellRouterFor(pc *ProjectContext) *shell.Router {
+	return s.buildShellRouterForOpts(pc, false)
+}
+
+// buildShellRouterForOpts is the variant that lets callers mark a
+// router as the daemon's single-project fallback. Only Phase 4 of
+// hero-serve-project-section uses the flag — see Deps.IsFallbackProject.
+func (s *Server) buildShellRouterForOpts(pc *ProjectContext, isFallback bool) *shell.Router {
 	ed := edition.Resolve()
 
 	// Session store is best-effort. A nil store still serves pages
@@ -872,11 +908,12 @@ func (s *Server) buildShellRouterFor(pc *ProjectContext) *shell.Router {
 	// primary per-project surface; Rollup is the legacy project-shape
 	// rollup retained for discoverability.
 	projectDeps := projectpage.Deps{
-		ProjectRoot:   pc.Path,
-		HeroDir:       pc.HeroDir,
-		Slug:          pc.Slug,
-		RegistryEntry: s.projectpageRegistryEntry(pc.Slug),
-		OpsRunner:     s.opsRunner,
+		ProjectRoot:       pc.Path,
+		HeroDir:           pc.HeroDir,
+		Slug:              pc.Slug,
+		RegistryEntry:     s.projectpageRegistryEntry(pc.Slug),
+		OpsRunner:         s.opsRunner,
+		IsFallbackProject: isFallback,
 	}
 	if err := projectpage.Register(r, projectDeps); err != nil {
 		fmt.Fprintf(os.Stderr, "hero serve: register Project section page for %s: %v\n", pc.Slug, err)

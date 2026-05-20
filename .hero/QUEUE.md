@@ -6,7 +6,41 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-20T04:48:02Z · 96 ready specs_
+_Generated: 2026-05-20T05:04:12Z · 96 ready specs_
+
+## hero-serve-project-section-destructive — hero serve Project Section — Phase 4 Destructive Operations (Registry, Danger Zone, Stop Daemon)
+_feature · delivering · horizon: now_
+
+Destructive affordances on the Project surface delivered: registry-
+remove with 5-second undo toast, Danger Zone (deregister only) with
+typed-confirm gate, missing-path banner, and aggregate-only Stop-
+daemon button dispatched through Phase 3's opsrunner.
+
+**Status:** delivering — implementation complete; awaiting review and
+`hero spec complete`.
+
+**Done:**
+- `internal/serve/pending_remove.go` (queue + race-safe goroutine)
+- `internal/serve/api.go` (registry/remove + remove/undo +
+  /api/daemon/ops/stop)
+- `internal/serve/server.go` (`RemoveProject` now persists registry
+  to disk; primary shell router flagged as fallback)
+- `internal/serve/opsrunner/allowlist.go` (`stop` verb +
+  `DaemonScopedSlug` constant)
+- `internal/serve/projectpage/data/{registry,danger}.go` and
+  templates (`registry.html`, `danger.html`, `page.html`,
+  `daemon_ops.html`)
+- `internal/serve/projectpage/handler.go` (Deps.IsFallbackProject,
+  MissingPath, inline JS for remove + danger gate)
+- `internal/serve/projectpage/static/project_all.js` (Stop-daemon
+  client behaviour)
+
+**Skip:** undo windows longer than 5 seconds; admin/multi-user
+permission gates; restart-daemon; archive verb (no top-level
+`hero archive` exists — Snapshot has its own subcommand and is out
+of scope for Danger Zone today).
+
+---
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -200,36 +234,6 @@ project TTL cache keyed by `slug` for `hero check` output and by
 **Skip:** persistent cache across daemon restarts (in-process is
 fine); team-shared cache (deferred to `hero-team-server`); a
 real graph viz for peers (parent Boundary).
-
----
-
-## hero-serve-project-section-destructive — hero serve Project Section — Phase 4 Destructive Operations (Registry, Danger Zone, Stop Daemon)
-_feature · planning · horizon: now_
-
-Destructive affordances on the Project surface: registry-remove with
-undo, Danger Zone with typed confirm, missing-path banner, aggregate-
-only Stop-daemon button.
-
-**Status:** planning — Phase 4 of 5; gated on Phase 1 (page), Phase 2
-(aggregate view for Stop-daemon placement), and Phase 3 (ops runner
-for Stop-daemon dispatch).
-
-**Pick up at:** add `POST /api/{slug}/registry/remove` and
-`POST /api/{slug}/registry/remove/undo` to `internal/serve/api.go`,
-backed by a pending-remove queue with a 5-second timer. Wire the
-"Remove from registry" button on the Phase 1 Registry section.
-
-→ `.hero/planning/features/hero-serve-project-section-destructive/spec.md`
-
-**Files:** `internal/serve/server.go:200` (`RemoveProject`),
-`internal/serve/api.go:51-132`,
-`internal/serve/projectpage/data/registry.go`,
-`internal/serve/projectpage/data/danger.go` (new),
-`internal/serve/shell/static/js/project.js`
-
-**Skip:** undo windows longer than 5 seconds (UX-tested at 5s in the
-parent spec); admin/multi-user permission gates (deferred to
-`hero-team-server`); restart-daemon (Stop only for v1).
 
 ---
 

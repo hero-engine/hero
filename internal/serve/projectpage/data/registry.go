@@ -19,14 +19,17 @@ type RegistryEntryView struct {
 }
 
 // Registry is what the partial renders. Registered=false means the
-// project isn't in ~/.hero/projects.json.
+// project isn't in ~/.hero/projects.json. CanRemove gates the Phase 4
+// "Remove from registry" button — true only when the project IS in
+// the registry (no point offering Remove on an unregistered project).
 type Registry struct {
-	Registered            bool
-	Slug                  string
-	Path                  string
-	RegisteredAt          time.Time
-	RegisteredAtPretty    string
-	IsDefaultProject      bool
+	Registered         bool
+	Slug               string
+	Path               string
+	RegisteredAt       time.Time
+	RegisteredAtPretty string
+	IsDefaultProject   bool
+	CanRemove          bool
 }
 
 // LoadRegistry shapes the registry-membership data for the partial.
@@ -40,6 +43,7 @@ func LoadRegistry(in RegistryInputs) Registry {
 		return out
 	}
 	out.Registered = true
+	out.CanRemove = in.Slug != ""
 	out.Path = in.Entry.Path
 	out.RegisteredAt = in.Entry.RegisteredAt
 	if !in.Entry.RegisteredAt.IsZero() {

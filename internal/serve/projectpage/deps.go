@@ -65,6 +65,15 @@ type Deps struct {
 	// satisfies the data.OpsLookup interface, so this field is typed at
 	// that boundary to keep deps.go free of opsrunner imports.
 	OpsRunner data.OpsLookup
+
+	// IsFallbackProject is true when this handler is wired into the
+	// daemon's single-project /project fallback (i.e. the daemon's
+	// home project, served at bare /project). False when registered
+	// under the multi-project /p/<slug>/project route. Phase 4 of
+	// hero-serve-project-section uses this to suppress the
+	// missing-path banner on the fallback URL — the fallback's
+	// ProjectRoot is the daemon's cwd and banner-on-cwd is bad UX.
+	IsFallbackProject bool
 }
 
 // RegistryEntry is the minimal registry shape the project page reads.
