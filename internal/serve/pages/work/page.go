@@ -43,6 +43,21 @@ type Deps struct {
 	// Kept as a function rather than importing chat.* so this package
 	// stays free of chat / runner dependencies (see import_test).
 	ChatInteractiveConnected func() bool
+
+	// MultiProject, when non-empty, switches the Work page into
+	// aggregate mode. Spec lists merge across projects and tag each
+	// row with the project slug; rolling-window tiles aggregate
+	// counts. Set by /p/all/work; empty for single-project mode.
+	MultiProject []AggregateProject
+}
+
+// AggregateProject is one project contributing to a /p/all/ aggregate
+// render. Kept here (rather than reusing a sibling package's type) so
+// the work page stays leaf-free per the import_test contract.
+type AggregateProject struct {
+	Slug    string
+	Path    string
+	HeroDir string
 }
 
 // Register installs the Work home on the shell router using the

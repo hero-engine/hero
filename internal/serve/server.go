@@ -923,6 +923,106 @@ func (s *Server) projectRouterCacheRouter(pc *ProjectContext) *shell.Router {
 	return s.projectRouters.get(pc)
 }
 
+// aggregateRouter returns (and lazily builds) the cross-project
+// aggregate shell router used by /p/all/<page>. Each render rebuilds
+// the underlying MultiProject slice from the current project registry,
+// so a project added or removed at runtime is reflected on the next
+// request. Returns nil when no projects are registered.
+func (s *Server) aggregateRouter() *shell.Router {
+	pc := &ProjectContext{
+		Slug:    AllProjectsSlug,
+		Path:    s.projectRoot,
+		HeroDir: s.heroDir,
+	}
+	r := s.buildAggregateShellRouter(pc)
+	return r
+}
+
+// buildAggregateShellRouter assembles a shell router for the
+// cross-project /p/all/ aggregate view. The Now and Work homes are
+// registered with MultiProject populated from the live project
+// registry, so the page-data loaders fan out across every project.
+func (s *Server) buildAggregateShellRouter(pc *ProjectContext) *shell.Router {
+	ed := edition.Resolve()
+	store, err := session.Open("")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "hero serve: shell session store unavailable (aggregate): %v\n", err)
+		store = nil
+	}
+	workspace := "All projects"
+	branch := ""
+	userName := shellUserName()
+
+	r := shell.New(ed, store, workspace, branch, userName, s.version)
+	r.SetAdapterProbe(s.shellAdapterState)
+	r.SetProjectSelectorProbe(s.projectSelectorFor(AllProjectsSlug))
+	shell.RegisterStubHomes(r)
+
+	mp := s.aggregateProjects()
+
+	nowDeps := nowpage.Deps{
+		ProjectRoot:  pc.Path,
+		HeroDir:      pc.HeroDir,
+		Workspace:    workspace,
+		Branch:       branch,
+		UserName:     userName,
+		ChatRegistry: s.chatRegistry,
+		LiveSessions: s.snapshotLiveSessions,
+		MultiProject: mp,
+	}
+	if err := nowpage.Register(r, nowDeps); err != nil {
+		fmt.Fprintf(os.Stderr, "hero serve: register aggregate Now home: %v\n", err)
+	}
+
+	workDeps := workpage.Deps{
+		ProjectRoot:              pc.Path,
+		HeroDir:                  pc.HeroDir,
+		Workspace:                workspace,
+		Branch:                   branch,
+		UserName:                 userName,
+		ChatInteractiveConnected: s.chatInteractiveConnected,
+		MultiProject:             toWorkProjects(mp),
+	}
+	if err := workpage.Register(r, workDeps); err != nil {
+		fmt.Fprintf(os.Stderr, "hero serve: register aggregate Work home: %v\n", err)
+	}
+	return r
+}
+
+// aggregateProjects snapshots the current project registry into the
+// shape the page data loaders consume.
+func (s *Server) aggregateProjects() []nowdata.ActivityProject {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := make([]nowdata.ActivityProject, 0, len(s.projects))
+	for slug, pc := range s.projects {
+		if pc == nil {
+			continue
+		}
+		out = append(out, nowdata.ActivityProject{
+			Slug:    slug,
+			Path:    pc.Path,
+			HeroDir: pc.HeroDir,
+		})
+	}
+	sort.SliceStable(out, func(i, j int) bool { return out[i].Slug < out[j].Slug })
+	return out
+}
+
+// toWorkProjects shifts the now-data shape into the work-data shape so
+// the two packages stay leaf-free of each other.
+func toWorkProjects(in []nowdata.ActivityProject) []workpage.AggregateProject {
+	out := make([]workpage.AggregateProject, 0, len(in))
+	for _, p := range in {
+		out = append(out, workpage.AggregateProject{
+			Slug:    p.Slug,
+			Path:    p.Path,
+			HeroDir: p.HeroDir,
+		})
+	}
+	return out
+}
+
 // projectSelectorFor returns the probe a project-scoped shell router
 // uses to populate the top-nav dropdown on every page render. The
 // activeSlug is baked into the closure so each per-project router
