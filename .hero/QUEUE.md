@@ -6,41 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-20T05:04:12Z · 96 ready specs_
-
-## hero-serve-project-section-destructive — hero serve Project Section — Phase 4 Destructive Operations (Registry, Danger Zone, Stop Daemon)
-_feature · delivering · horizon: now_
-
-Destructive affordances on the Project surface delivered: registry-
-remove with 5-second undo toast, Danger Zone (deregister only) with
-typed-confirm gate, missing-path banner, and aggregate-only Stop-
-daemon button dispatched through Phase 3's opsrunner.
-
-**Status:** delivering — implementation complete; awaiting review and
-`hero spec complete`.
-
-**Done:**
-- `internal/serve/pending_remove.go` (queue + race-safe goroutine)
-- `internal/serve/api.go` (registry/remove + remove/undo +
-  /api/daemon/ops/stop)
-- `internal/serve/server.go` (`RemoveProject` now persists registry
-  to disk; primary shell router flagged as fallback)
-- `internal/serve/opsrunner/allowlist.go` (`stop` verb +
-  `DaemonScopedSlug` constant)
-- `internal/serve/projectpage/data/{registry,danger}.go` and
-  templates (`registry.html`, `danger.html`, `page.html`,
-  `daemon_ops.html`)
-- `internal/serve/projectpage/handler.go` (Deps.IsFallbackProject,
-  MissingPath, inline JS for remove + danger gate)
-- `internal/serve/projectpage/static/project_all.js` (Stop-daemon
-  client behaviour)
-
-**Skip:** undo windows longer than 5 seconds; admin/multi-user
-permission gates; restart-daemon; archive verb (no top-level
-`hero archive` exists — Snapshot has its own subcommand and is out
-of scope for Danger Zone today).
-
----
+_Generated: 2026-05-20T05:04:39Z · 95 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
