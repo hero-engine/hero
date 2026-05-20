@@ -2,7 +2,7 @@
 title: hero serve Project Section — Phase 5 Health Cache and Peer Probes
 slug: hero-serve-project-section-healthcache
 type: feature
-status: planning
+status: completed
 priority: P2
 tags: [hero-serve, dashboard, project, cache, peers, performance]
 created: 2026-05-19
@@ -36,28 +36,28 @@ minimally.
 
 ## Kickoff
 
-Live health + peer caches. Replaces Phase 1's "read whatever's on
-disk" with a per-project TTL cache and explicit refresh affordances.
+Live health + peer caches landed. Phase 1's "read whatever's on disk"
+is now backed by a per-project TTL cache (default 5m, configurable via
+`serve.health_ttl`) with explicit "Refresh now" + per-peer "Probe"
+affordances. Implementation closed the structural gap by adding a
+`hero check --json` flag and a `run-check-json` opsrunner verb rather
+than refactoring `internal/cli/check.go` into a library.
 
-**Status:** planning — Phase 5 of 5; gated on Phase 1 having landed
-the `projectpage` package and the Health/Peers section partials.
+**Status:** delivered — Phase 5 of 5 (final phase) shipped, build/test/vet clean. The hero-serve-project-section initiative is complete.
 
-**Pick up at:** scaffold `internal/serve/healthcache/` with a per-
-project TTL cache keyed by `slug` for `hero check` output and by
-`slug+peer-alias` for peer reachability. Wire `GET /api/{slug}/health`,
-`POST /api/{slug}/health/refresh`, and
-`POST /api/{slug}/peers/{alias}/probe`.
+**Pick up at:** review the cache implementation in
+`internal/serve/healthcache/cache.go`, the three API endpoints in
+`internal/serve/api.go`, and the refresh/probe client wiring inlined
+into `internal/serve/projectpage/handler.go`. Manual smoke: start the
+daemon, open `/p/<slug>/project`, click "Refresh now" on Health and
+"Probe" on a peer row.
 
 → `.hero/planning/features/hero-serve-project-section-healthcache/spec.md`
 
-**Files:** `internal/serve/projectpage/data/health.go`,
-`internal/serve/projectpage/data/peers.go`,
-`internal/serve/projectpage/deps.go`, `internal/serve/api.go:51-132`,
-`internal/serve/shell/static/js/project.js`
-
 **Skip:** persistent cache across daemon restarts (in-process is
 fine); team-shared cache (deferred to `hero-team-server`); a
-real graph viz for peers (parent Boundary).
+real graph viz for peers (parent Boundary); pre-emptive background
+refresh (user-driven only).
 
 ## Goal
 
@@ -285,16 +285,58 @@ the page.
 
 ## Changes (files touched on completion)
 
-- `internal/serve/healthcache/cache.go` (new)
-- `internal/serve/healthcache/entry.go` (new)
-- `internal/serve/healthcache/*_test.go` (new)
-- `internal/serve/projectpage/deps.go` (fill `HealthCache` field)
-- `internal/serve/projectpage/data/health.go` (read from cache)
-- `internal/serve/projectpage/data/peers.go` (read from cache)
-- `internal/serve/api.go` (`/api/{slug}/health`,
-  `/health/refresh`, `/peers/{alias}/probe`)
-- `internal/serve/server.go` (cache construction + injection)
-- `internal/serve/shell/static/js/project.js` (refresh + probe
-  client wiring)
-- `internal/config/config.go` (`serve.health_ttl` field)
-- `docs/cli/serve.md` (document new config field)
+- `internal/serve/healthcache/cache.go` — new package; `Cache`
+  with `Health`/`Peer`/`RefreshHealth`/`ProbePeer`/`RefreshFromDisk`,
+  `OpsDispatcher` interface, default manifest-stat peer prober.
+- `internal/serve/healthcache/entry.go` — per-entry refresh-wave
+  bookkeeping for coalescing concurrent refresh callers.
+- `internal/serve/healthcache/cache_test.go` — TTL default, refresh
+  populates, coalescing under N concurrent callers, per-slug+alias
+  key isolation, exit-non-zero-with-artifact, missing-dispatcher.
+- `internal/serve/opsrunner/allowlist.go` — add `run-check-json`
+  verb mapping to `["check", "--json"]`.
+- `internal/serve/opsrunner/allowlist_test.go` — bump count + mark
+  `run-check-json` as daemon-internal (not on Operations card).
+- `internal/serve/opsrunner/runner.go` — add `Wait(ctx, slug, jobID)`
+  so healthcache can block on subprocess completion.
+- `internal/cli/check.go` — `--json` flag; categorizes existing
+  output into pass/warn/fail rows; writes
+  `<heroDir>/cache/health.json` after the human output prints.
+- `internal/cli/check_json_test.go` — integration: `hero check --json`
+  on a fresh workspace produces a parseable artifact with
+  pass/warn/fail rows.
+- `internal/cli/helpers_test.go` — reset `checkJSON` / `checkKnowledge`
+  between cobra invocations.
+- `internal/config/config.go` — `ServeConfig.HealthTTL` field +
+  `HealthTTLDuration()` with 5-minute default; merge in
+  `hero.local.json`.
+- `internal/config/serve_health_ttl_test.go` — default, parses
+  ("15m" / "30s" / "1h" / "2h30m"), invalid falls back to default.
+- `internal/serve/projectpage/deps.go` — add `HealthCache` +
+  `PeerCache` fields typed against `data.HealthLookup` /
+  `data.PeerLookup`.
+- `internal/serve/projectpage/data/health.go` — read from cache
+  first; mark `Stale` when age exceeds TTL; expose relative-time
+  "as of" + `RefreshAvailable` for the template.
+- `internal/serve/projectpage/data/peers.go` — read peer cache for
+  each row; surface per-row `CacheStale` + last-probe-ago; expose
+  `ProbeAvailable` for the template.
+- `internal/serve/projectpage/data/health_rollup.go` — annotate
+  why aggregate rollup deliberately reads disk (not the in-memory
+  cache).
+- `internal/serve/projectpage/handler.go` — pass cache through
+  loaders; new "Refresh now" + "Probe" client JS; CSS chips for
+  stale / refresh / probe.
+- `internal/serve/projectpage/templates/health.html` — "as of"
+  relative time, stale chip, Refresh-now button, live-output pre.
+- `internal/serve/projectpage/templates/peers.html` — per-row
+  Probe column, cache-age column, reachable cell reflects cache
+  result.
+- `internal/serve/api.go` — `GET /api/{slug}/health`,
+  `POST /api/{slug}/health/refresh`,
+  `POST /api/{slug}/peers/{alias}/probe`; `SetHealthCache`.
+- `internal/serve/api_healthcache_test.go` — cold-cache GET,
+  populated GET (with `from_disk: true`), peer probe round-trip,
+  wrong-method rejection.
+- `internal/serve/server.go` — construct one `*healthcache.Cache`
+  in `NewServer`; thread adapters into `projectpage.Deps`.
