@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-21T05:17:42Z · 93 ready specs_
+_Generated: 2026-05-21T14:12:06Z · 97 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -158,6 +158,32 @@ _bug · delivering · horizon: now_
 _bug · delivering · horizon: now_
 
 > Read `.hero/planning/bugs/hero-local-merge-missing-dialect-fields/spec.md` (this file), `internal/config/config.go::MergeLocal` (or whatever the local-merge function is named there — `grep -n "MergeLocal\|LoadLocal\|merge" internal/config/config.go`), and one neighboring already-merged nested block (e.g. `Tracker`) for the merge pattern to copy. Extend the merger to forward the four dialect fields per the Fix section. Add unit tests per the Acceptance Criteria. Update `docs/contracts/active-dialect.md` §2 to make the `hero.local.json` override behavior normative (replacing the "planned extension point" note). Run `go build ./...` and `go test ./...` clean. Report what shipped, the exact functions touched, and any open questions under 300 words.
+
+---
+
+## next-compact-handoff — "Compact Handoff — Session-Scoped Resume Context at Compaction Time"
+_feature · delivering · horizon: next_
+
+Build the deterministic compact-handoff MVP: a new `hero next compact-handoff --json` subcommand that reads a SessionStart{compact} hook payload from stdin, queries the existing `internal/active` registry + graph projection scoped to that session_id, and returns the `additionalContext` JSON envelope. Plus a `--host=claude|codex|all` extension to the existing `hero hooks install` that writes the SessionStart hook entry into `.claude/settings.json` (and Codex's equivalent).
+
+Start by reading:
+- This spec and [compact-handoff-summarizer/spec.md](../compact-handoff-summarizer/spec.md) for context on what's intentionally deferred.
+- [internal/cli/checkpoint.go](../../../../internal/cli/checkpoint.go) — existing graph projection for per-user handoff (the queries to narrow).
+- [internal/active/active.go](../../../../internal/active/active.go) — session-id registry already in place.
+- [internal/cli/next_hooks.go](../../../../internal/cli/next_hooks.go) — marker-block install pattern to mirror for JSON settings files.
+- [internal/cli/hooks.go](../../../../internal/cli/hooks.go) — existing `hero hooks` parent command to extend.
+- [.claude/settings.json](../../../../.claude/settings.json) — current hook entries to coexist with.
+
+Then implement in order:
+
+1. `hero next compact-handoff --json` reading stdin, with the deterministic content assembly. Test against a hand-crafted SessionStart payload.
+2. Session-filtered graph projection helper (`internal/projection/compact_handoff.go`).
+3. `internal/hooks/claude_settings.go` — JSON read/write with idempotent marker entries; `--host=claude` flag wiring.
+4. `internal/hooks/codex_settings.go` — same for Codex.
+5. `hero hooks status` extension to report host-tool hook state.
+6. `hero init` calls `hooks install --host=all` by default.
+
+The MVP is reviewable in ~400–600 LOC and ships meaningful behavior the day it lands: today's compaction produces *no* injected handoff; after this lands, every Claude Code compaction injects a session-scoped, deterministic resume packet with the active spec, recent decisions, and next action. The LLM-curated middle section comes later via [compact-handoff-summarizer](../compact-handoff-summarizer/spec.md).
 
 ---
 
@@ -889,6 +915,45 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
+## prior-art-nudge — "Prior-Art Nudge — Anchor Diagnosis and Design on Working In-Tree Examples"
+_feature · draft · horizon: now_
+
+Add a single behavioral rule — "Prior-art check" — to two skills:
+
+1. `domains/engineering/skills/agent-reliability/SKILL.md` (new bullet under *Honesty and hallucination prevention*)
+2. `domains/engineering/skills/debugging-investigation/SKILL.md` (new bullet at the top of *Practical guidance*, before "trace the complete end-to-end code flow")
+
+Same exact wording in both places. The rule names shape triggers (plugin, provider, integration, form, migration, adapter, command), requires reading 2–3 working in-tree examples end-to-end before proposing a diagnosis or design, and includes a deviation-is-the-first-hypothesis-to-disprove clause. No new skill, no new command, no command-level edits — just two bullets. Verify by re-reading the diff. Done when both files contain the rule and `hero check` is clean.
+
+---
+
+## embeddings-index — "Embeddings Index — Semantic Retrieval Over Hero's Project Corpus"
+_feature · draft · horizon: next_
+
+Build the embeddings index as foundational infrastructure for Hero's "knows your project" features. Start with specs + knowledge + events + conventions; code-symbol corpus comes when master-ingest-restore lands. Use `bge-small-en-v1.5` via the simplest runtime that installs cleanly across macOS/Linux. SQLite + sqlite-vec for storage. Reciprocal-rank fusion for hybrid ranking.
+
+Read first:
+- This spec end-to-end.
+- [master-ingest-restore](../master-ingest-restore/spec.md) for the code-symbol corpus dependency.
+- [compact-handoff-summarizer](../compact-handoff-summarizer/spec.md) — the concrete first consumer.
+- `internal/graph/` for SQLite patterns already in use.
+- `internal/cli/search.go` (current `hero search`) to understand the existing BM25 path.
+
+Implement in order:
+
+1. Decide ONNX-Runtime vs. pure-Go inference. Bench both with `bge-small` on a representative chunk count; pick the one that installs cleanly across platforms.
+2. `internal/embeddings/storage.go` — sqlite-vec schema + insert/upsert/prune. Test with synthetic vectors first; no model dependency yet.
+3. Chunk extractors per corpus (specs, knowledge, events, conventions). Test independently.
+4. `hero embeddings init/refresh/status/query` CLI; manual smoke against this Hero repo's own corpus.
+5. `retrieval.Retriever` interface + RRF hybrid ranking; unit-test ranking with synthetic dual rankings.
+6. `hero search --semantic/--hybrid` flag wiring.
+7. Pre-commit hook addition for `--if-stale` refresh.
+8. Wire the first consumer (compact handoff summarizer prompt augmentation) once that spec ships.
+
+The win is cumulative: every downstream feature that retrieves project context gets sharper. The MVP delivery is ~600–900 LOC plus the model-loading infrastructure (likely the trickiest piece). Start small — get the seam right, then bolt features onto it.
+
+---
+
 ## multi-domain-core — "Multi-Domain Core Engine"
 _feature · draft · horizon: next_
 
@@ -914,6 +979,19 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · draft · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/architectural-drift-detection/spec.md)_
+
+---
+
+## local-project-model — "Local Project Model — Hero-Bundled Tiny Model Continuously Trained on Project Corpus"
+_feature · draft · horizon: someday_
+
+This is an exploratory spec. The deliverable is **a decision**, not a feature.
+
+Start with Phase 0 only. Do not build anything. Read [next-compact-handoff/spec.md](../next-compact-handoff/spec.md) for the task this is meant to accelerate. Survey current state-of-the-art for small-model fine-tuning on code-and-text-comprehension tasks (Qwen2.5-3B, Llama-3.2-3B, Phi-4-mini class), continuous-learning strategies, and realistic hardware floors for Hero's user base.
+
+Output a written assessment with a clear recommendation: proceed to Phase 1 prototype, or close as "not worth it" with the analysis preserved so future revisits don't re-litigate.
+
+Time budget: ~2 days of focused research, no implementation. If the assessment can't be reached in that budget, the answer is probably no.
 
 ---
 

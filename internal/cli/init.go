@@ -8,6 +8,7 @@ import (
 
 	hero "github.com/hero-engine/hero"
 	"github.com/hero-engine/hero/internal/config"
+	hookspkg "github.com/hero-engine/hero/internal/hooks"
 	"github.com/hero-engine/hero/internal/peering"
 	"github.com/hero-engine/hero/internal/scan"
 	"github.com/hero-engine/hero/internal/version"
@@ -158,6 +159,18 @@ func runInit(cmd *cobra.Command, args []string) error {
 				fmt.Println("  Installed pre-commit hook (projected NEXT files will travel with commits).")
 				fmt.Println("  Pass --no-hooks next time to skip; to remove, delete the marker block in .git/hooks/pre-commit.")
 			}
+		}
+	}
+
+	// Install the host-tool SessionStart{compact} hook so post-
+	// compaction Claude Code sessions receive a session-scoped
+	// resume packet. Best-effort: a failure here is non-fatal
+	// and the rest of init still succeeds.
+	if initInstallHooks && !initNoHooks {
+		if installed, herr := hookspkg.InstallClaudeCompactHandoff(projectRoot); herr != nil {
+			fmt.Fprintf(os.Stderr, "  warning: claude SessionStart{compact} install failed: %v\n", herr)
+		} else if installed {
+			fmt.Println("  Installed claude SessionStart{compact} hook (post-compaction resume packet).")
 		}
 	}
 
