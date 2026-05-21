@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-05-19T23:46:42Z
+updated: 2026-05-21T05:13:41Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver both peer-call bug fixes sequentially: (1) peer-call-result-yaml-int-strict-parse — new ApproxInt tolerant type in contracts/peering, version bump 1→2, swap 4 budget fields; (2) peer-call-findings-truncation-and-persistence — drop 400-char cap, write .hero/peer-calls/<call_id>.md artifact, point Trail result_ref at it. Both touch internal/cli/peer.go so deliver sequentially, smaller-foundation first.
+> Deliver mockups-link-back-to-specs: wire /mock to write a ## Mockups section back to the originating spec, and have /deliver auto-surface .hero/mocks/{slug}/ paths in the engineer kickoff context. Five markdown files, no code.
 
 ## Suggested next prompt
 

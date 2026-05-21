@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-05-20T05:29:41Z · projected from 262 source nodes_
+_Last refreshed: 2026-05-21T05:14:04Z · projected from 263 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 12h ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 1d ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | building | domains/engineering/ | 12h ago | spec-types-cache-frontmatter-empty |
-| domains/pm | concept | domains/pm/ | 1d ago | — |
+| domains/engineering | building | domains/engineering/ | <1m ago | spec-types-cache-frontmatter-empty |
+| domains/pm | concept | domains/pm/ | 2d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
-| landing | building | web/landing/ | 1d ago | hero-landing-page |
+| landing | building | web/landing/ | 2d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 1m ago | vocabulary-resolve-misses-methodology-derivation |
+| serve | building | internal/serve/ | 23h ago | vocabulary-resolve-misses-methodology-derivation |
 | (unassigned) | — | — | — | 113 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -44,7 +44,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — hero-serve-project-section, peer-call-findings-truncation-and-persistence, peer-call-result-yaml-int-strict-parse, pm-platform-delivery, hero-code-handover-pack
+- **(unassigned)** — hero-serve-project-section, peer-call-findings-truncation-and-persistence, peer-call-result-yaml-int-strict-parse, pm-platform-delivery
+- **domains/engineering** — mockups-link-back-to-specs
 - **serve** — hero-serve-project-section-healthcache, hero-serve-project-section-destructive, hero-serve-project-section-opsrunner, hero-serve-project-section-aggregate, hero-serve-project-section-mvp, hero-serve-dashboard-redesign, hero-serve-multi-project
 
 ## Next up across surfaces
@@ -63,6 +64,6 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 128/241 (53%)
-- Projection generation: 0ms · Source nodes: 262
+- Specs covered: 129/242 (53%)
+- Projection generation: 0ms · Source nodes: 263
 

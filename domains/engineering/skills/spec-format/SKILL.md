@@ -63,6 +63,12 @@ without additional context.
    - {specific detail}
 3. ...
 
+## Mockups
+Optional. Visual mockups produced for this spec. Auto-populated by `/mock`
+against the spec slug. Omit this section if no mockup was produced.
+
+- [Mockup name](.hero/mocks/{slug}/index.html) — YYYY-MM-DD — what the mockup shows
+
 ## Boundaries
 What is NOT in scope. Adjacent work to explicitly avoid.
 Things that look related but should be separate work items.
@@ -112,6 +118,12 @@ naming specific files and components.
    - {specific detail}
 3. ...
 
+## Mockups
+Optional. Visual mockups produced for this fix, if any. Auto-populated by
+`/mock` against the spec slug. Omit this section if no mockup was produced.
+
+- [Mockup name](.hero/mocks/{slug}/index.html) — YYYY-MM-DD — what the mockup shows
+
 ## Boundaries
 What this fix does NOT attempt to address.
 Related issues that should be separate work items.
@@ -124,6 +136,39 @@ Areas that need careful testing.
 How to verify the fix works. Regression test expectations.
 How to confirm the original issue no longer reproduces.
 ```
+
+## Mockups section
+
+When `/mock` produces a visual prototype against a spec slug, it appends
+(or updates, on `--iterate`) a `## Mockups` section in the spec body listing
+each mockup. This makes the artifact discoverable to humans reading the spec
+and to delivery agents reading the spec for context.
+
+**Format.** One entry per mockup, in a top-level `## Mockups` section placed
+between `## Changes` and `## Boundaries`:
+
+```markdown
+## Mockups
+
+- [Hero landing page](.hero/mocks/hero-landing-page/index.html) — 2026-05-20 — public homepage with install CTA and feature grid
+- [Hero landing page — dense variant](.hero/mocks/hero-landing-page/dense.html) — 2026-05-22 — compressed-density alternative for above-the-fold
+```
+
+**Rules:**
+
+- The section is optional — omit it entirely if no mockup was produced.
+- Path is relative to the repo root so the link works in markdown renderers.
+- Date is ISO format (`YYYY-MM-DD`).
+- Description is one line — what's shown, not why.
+- Multiple mockups per spec are supported as additional list items.
+- `/mock --iterate` updates the matching entry's date in place rather than
+  appending a duplicate when the path is unchanged.
+- Free-text `/mock` calls (no spec slug) do not write back — those mockups
+  land under `.hero/mocks/_adhoc/` and are not linked to any spec.
+
+`/deliver` reads `.hero/mocks/{slug}/` directly as a pre-flight step, so
+mockups generated before this section was introduced (or dropped in by
+hand) are still surfaced to the engineer.
 
 ## Convention spec template
 
