@@ -77,6 +77,7 @@ func init() {
 	nextCmd.AddCommand(nextPathCmd)
 	nextCmd.AddCommand(nextMigrateCmd)
 	nextCmd.AddCommand(nextCheckpointCmd)
+	nextCmd.AddCommand(nextCompactHandoffCmd)
 	nextCmd.AddCommand(nextSuggestCmd)
 	nextCmd.AddCommand(nextAskCmd)
 	nextCmd.AddCommand(nextReflectionCmd)
