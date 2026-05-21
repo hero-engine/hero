@@ -2,7 +2,7 @@
 title: "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 slug: compact-handoff-test-coverage
 type: feature
-status: planning
+status: delivering
 priority: medium
 horizon: now
 tags: [tests, quality, compact-handoff, regression-prevention]
@@ -181,13 +181,12 @@ Add a `make test-coverage` target (or extend the existing one if present) that e
 
 ## Changes
 
-- `internal/cli/next_compact_handoff_test.go` — extend with 9 new tests
-- `internal/cli/host_hooks_test.go` — new file, 4 tests
-- `internal/cli/init_compact_hook_test.go` — new file, 3 tests
-- `internal/hooks/claude_settings_test.go` — extend with 6 new tests
-- `internal/projection/compact_handoff_test.go` — extend with 3 new tests
-- Shared test helper: `internal/cli/compact_handoff_fixture_test.go` (or co-located helpers, whichever pattern matches the existing test style) for the integration fixture
-- `Makefile` — extend `test-coverage` target if missing; no behavior changes to existing targets
+- `internal/cli/next_compact_handoff_test.go` — extended with 9 new tests (integration fixture co-located here per existing test style; no separate fixture file)
+- `internal/cli/host_hooks_test.go` — new file, 4 tests covering `--host=all`, `--host=codex` stub, status, uninstall
+- `internal/cli/init_compact_hook_test.go` — new file, 3 tests covering `hero init` auto-install path
+- `internal/hooks/claude_settings_test.go` — extended with 6 new tests covering settings-file edge cases
+- `internal/projection/compact_handoff_test.go` — extended with 3 new tests covering spec-anchored carryover bidirectionality and file dedup
+- Makefile `test-coverage` target deferred — not needed to land the gap closures; can be added later as a small follow-up
 
 ## Kickoff
 
