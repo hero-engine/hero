@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-05-21T05:13:41Z
+updated: 2026-05-21T14:17:45Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver mockups-link-back-to-specs: wire /mock to write a ## Mockups section back to the originating spec, and have /deliver auto-surface .hero/mocks/{slug}/ paths in the engineer kickoff context. Five markdown files, no code.
+> Deliver read-dont-guess: replace 'Distinguish facts from assumptions' bullet in agent-reliability/SKILL.md with new 'Ground before you guess' rule, and add same rule as first bullet under Practical guidance in debugging-investigation/SKILL.md. Behavioral prompt edit — make grounding procedural and visibly auditable.
 
 ## Suggested next prompt
 

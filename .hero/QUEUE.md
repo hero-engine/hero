@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-21T14:12:06Z · 97 ready specs_
+_Generated: 2026-05-21T14:24:00Z · 97 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_
@@ -198,6 +198,32 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · delivering · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-sales/spec.md)_
+
+---
+
+## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
+_feature · planning · horizon: now_
+
+Add the test coverage that the MVP shipped without. The most consequential additions are: (1) the full-assembly integration test that exercises a populated session end-to-end, and (2) the panic-recovery + always-exit-0 safety tests for the hook command.
+
+Read first:
+- [next-compact-handoff](../next-compact-handoff/spec.md) for the full content shape and truncation order being verified.
+- `internal/cli/next_compact_handoff.go` to understand the assembly path being exercised.
+- `internal/projection/compact_handoff.go` for the graph query.
+- `internal/hooks/claude_settings.go` for the settings-file mutation surface.
+
+Then build in roughly this order:
+
+1. Shared test fixture helper for populated graph + active session registry + fixture spec on disk. Keep it small and reusable.
+2. `TestAssembleFullHandoff_PopulatedSession` — the integration test. This will surface any small assembly bugs that the unit tests missed; expect to iterate once before it passes.
+3. Truncation cascade (5 + invariant test).
+4. Panic recovery + bad-stdin safety contract tests.
+5. Settings-file edge cases (six tests).
+6. Init flow (three tests).
+7. Codex stub + `--host=all` tests.
+8. Projection-side spec-anchored carryover bidirectionality.
+
+Run `go test -cover ./internal/cli/... ./internal/projection/... ./internal/hooks/...` before and after to confirm the coverage move. Do not gate on the percentage; gate on the gap list above being closed.
 
 ---
 
@@ -912,18 +938,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _note · active · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/notes/memory-tools-and-community-patterns/spec.md)_
-
----
-
-## prior-art-nudge — "Prior-Art Nudge — Anchor Diagnosis and Design on Working In-Tree Examples"
-_feature · draft · horizon: now_
-
-Add a single behavioral rule — "Prior-art check" — to two skills:
-
-1. `domains/engineering/skills/agent-reliability/SKILL.md` (new bullet under *Honesty and hallucination prevention*)
-2. `domains/engineering/skills/debugging-investigation/SKILL.md` (new bullet at the top of *Practical guidance*, before "trace the complete end-to-end code flow")
-
-Same exact wording in both places. The rule names shape triggers (plugin, provider, integration, form, migration, adapter, command), requires reading 2–3 working in-tree examples end-to-end before proposing a diagnosis or design, and includes a deviation-is-the-first-hypothesis-to-disprove clause. No new skill, no new command, no command-level edits — just two bullets. Verify by re-reading the diff. Done when both files contain the rule and `hero check` is clean.
 
 ---
 
