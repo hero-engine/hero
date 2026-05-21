@@ -63,3 +63,5 @@
 {"ts":"2026-05-20T05:28:41.25841Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-serve-project-section-healthcache","message":"status -\u003e completed"}
 {"ts":"2026-05-20T05:29:12.034768Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-serve-project-section","message":"hero serve Project Section — Per-Project Info, Utilities, and Operations Page"}
 {"ts":"2026-05-20T05:29:12.034858Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-serve-project-section","message":"status -\u003e completed"}
+{"ts":"2026-05-21T05:13:29.253507Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"mockups-link-back-to-specs","message":"Mockups link back to specs"}
+{"ts":"2026-05-21T05:13:29.253597Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"mockups-link-back-to-specs","message":"status -\u003e completed"}

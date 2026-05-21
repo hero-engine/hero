@@ -87,6 +87,8 @@ provides a list of slugs with `--autopilot`:
 
 For a single spec delivery, follow the standard pre-flight and delivery workflow as the `feature-delivery-lead` agent.
 
+**Pre-flight — check for mockups.** Before delegating to the engineer, check whether `.hero/mocks/{slug}/` exists for the spec being delivered. If it does, list the file paths inside it in the kickoff context handed to the engineer (e.g. "Mockups available for this spec: `.hero/mocks/{slug}/index.html` — read if a visual reference helps."). Don't render or quote the HTML; let the engineer open it if useful. The same check applies in batch and queue modes — surface mockup paths in the kickoff for each spec.
+
 At the end of the delivery loop:
 
 1. **Check for drift** — verify the implementation matches the spec. Address
