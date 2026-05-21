@@ -218,6 +218,225 @@ func TestClaudeCompactHandoffStatus(t *testing.T) {
 	}
 }
 
+// TestInstall_MissingSettingsFile_CreatesIt — install on a fresh root
+// with no .claude/ at all should create the file (and its directory)
+// from scratch. The first existing test already covers this implicitly;
+// this one asserts the directory was newly created.
+func TestInstall_MissingSettingsFile_CreatesIt(t *testing.T) {
+	root := t.TempDir()
+	if _, err := os.Stat(filepath.Join(root, ".claude")); !os.IsNotExist(err) {
+		t.Fatalf("precondition: .claude should not yet exist (err=%v)", err)
+	}
+	installed, err := InstallClaudeCompactHandoff(root)
+	if err != nil {
+		t.Fatalf("install: %v", err)
+	}
+	if !installed {
+		t.Fatal("expected installed=true on missing-file path")
+	}
+	if _, err := os.Stat(filepath.Join(root, ".claude", "settings.json")); err != nil {
+		t.Fatalf("settings.json not created: %v", err)
+	}
+	settings := readSettings(t, root)
+	entries := settings["hooks"].(map[string]any)["SessionStart"].([]any)
+	if len(entries) != 1 {
+		t.Errorf("expected 1 SessionStart entry; got %d", len(entries))
+	}
+}
+
+// TestInstall_InvalidJSON_ErrorsCleanlyNoMutate — when settings.json
+// exists but isn't valid JSON, install returns an error and leaves the
+// file unchanged. We must not silently overwrite a user's broken file.
+func TestInstall_InvalidJSON_ErrorsCleanlyNoMutate(t *testing.T) {
+	root := t.TempDir()
+	original := "{ this is not valid json"
+	writeSettings(t, root, original)
+
+	installed, err := InstallClaudeCompactHandoff(root)
+	if err == nil {
+		t.Fatal("expected install to error on invalid JSON")
+	}
+	if installed {
+		t.Error("expected installed=false on parse error")
+	}
+	data, readErr := os.ReadFile(filepath.Join(root, ".claude", "settings.json"))
+	if readErr != nil {
+		t.Fatalf("read settings.json: %v", readErr)
+	}
+	if string(data) != original {
+		t.Errorf("settings.json was mutated despite parse error:\ngot:  %q\nwant: %q", string(data), original)
+	}
+}
+
+// TestInstall_SessionStartArrayExistsNoCompact_AddsCompactEntry — when
+// hooks.SessionStart already contains a user entry with a different
+// matcher (e.g. "startup"), our compact entry must be appended without
+// touching the existing one.
+func TestInstall_SessionStartArrayExistsNoCompact_AddsCompactEntry(t *testing.T) {
+	root := t.TempDir()
+	seed := `{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [{"type": "command", "command": "echo hi"}]
+      }
+    ]
+  }
+}
+`
+	writeSettings(t, root, seed)
+	installed, err := InstallClaudeCompactHandoff(root)
+	if err != nil {
+		t.Fatalf("install: %v", err)
+	}
+	if !installed {
+		t.Fatal("expected installed=true")
+	}
+	settings := readSettings(t, root)
+	entries := settings["hooks"].(map[string]any)["SessionStart"].([]any)
+	if len(entries) != 2 {
+		t.Fatalf("expected 2 SessionStart entries (startup + compact); got %d: %+v", len(entries), entries)
+	}
+	// Order is not contractually required; just assert both matchers present.
+	matchers := map[string]bool{}
+	for _, e := range entries {
+		matchers[e.(map[string]any)["matcher"].(string)] = true
+	}
+	if !matchers["startup"] {
+		t.Error("user-authored startup entry was dropped")
+	}
+	if !matchers["compact"] {
+		t.Error("hero compact entry was not added")
+	}
+}
+
+// TestInstall_CompactMatcherHasUserEntry_HeroEntryAddedAlongside — when
+// a user has already authored a SessionStart{matcher:"compact"} entry
+// with a *different* command, Hero's install adds its own entry
+// alongside without merging or overwriting the user's.
+func TestInstall_CompactMatcherHasUserEntry_HeroEntryAddedAlongside(t *testing.T) {
+	root := t.TempDir()
+	seed := `{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [{"type": "command", "command": "my-custom-compact-tool"}]
+      }
+    ]
+  }
+}
+`
+	writeSettings(t, root, seed)
+	installed, err := InstallClaudeCompactHandoff(root)
+	if err != nil {
+		t.Fatalf("install: %v", err)
+	}
+	if !installed {
+		t.Fatal("expected installed=true")
+	}
+	entries := readSettings(t, root)["hooks"].(map[string]any)["SessionStart"].([]any)
+	if len(entries) != 2 {
+		t.Fatalf("expected 2 compact entries (user + hero); got %d: %+v", len(entries), entries)
+	}
+	// Find the user-authored entry and verify it survives unmodified.
+	foundUser, foundHero := false, false
+	for _, e := range entries {
+		em := e.(map[string]any)
+		inner := em["hooks"].([]any)
+		cmd := inner[0].(map[string]any)["command"].(string)
+		if cmd == "my-custom-compact-tool" {
+			foundUser = true
+			if _, marked := em[HeroMarkerField]; marked {
+				t.Error("user entry must not carry hero marker")
+			}
+		}
+		if cmd == "hero next compact-handoff --json" {
+			foundHero = true
+			if em[HeroMarkerField] != true {
+				t.Error("hero entry must carry added_by_hero=true")
+			}
+		}
+	}
+	if !foundUser {
+		t.Error("user's custom-compact-tool entry was lost")
+	}
+	if !foundHero {
+		t.Error("hero entry was not added alongside user's")
+	}
+}
+
+// TestUninstall_NoHeroEntries_IsNoOp — when no Hero-marked entries
+// exist, uninstall reports (false, nil) and the file is unmodified.
+func TestUninstall_NoHeroEntries_IsNoOp(t *testing.T) {
+	root := t.TempDir()
+	// Seed with a non-Hero SessionStart entry.
+	seed := `{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [{"type": "command", "command": "user-only-tool"}]
+      }
+    ]
+  }
+}
+`
+	writeSettings(t, root, seed)
+	original, _ := os.ReadFile(filepath.Join(root, ".claude", "settings.json"))
+
+	removed, err := UninstallClaudeCompactHandoff(root)
+	if err != nil {
+		t.Fatalf("uninstall: %v", err)
+	}
+	if removed {
+		t.Error("expected removed=false when nothing to remove")
+	}
+	after, _ := os.ReadFile(filepath.Join(root, ".claude", "settings.json"))
+	if string(after) != string(original) {
+		t.Errorf("file was mutated by a no-op uninstall:\nbefore: %s\nafter:  %s", original, after)
+	}
+}
+
+// TestRemoveThenReinstall_PreservesIdempotency — install → uninstall →
+// install should land at the same single-entry state as a single
+// install. Tests that the marker convention survives a removal cycle.
+func TestRemoveThenReinstall_PreservesIdempotency(t *testing.T) {
+	root := t.TempDir()
+
+	if _, err := InstallClaudeCompactHandoff(root); err != nil {
+		t.Fatalf("install#1: %v", err)
+	}
+	removed, err := UninstallClaudeCompactHandoff(root)
+	if err != nil {
+		t.Fatalf("uninstall: %v", err)
+	}
+	if !removed {
+		t.Fatal("uninstall: expected removed=true")
+	}
+	installed, err := InstallClaudeCompactHandoff(root)
+	if err != nil {
+		t.Fatalf("install#2: %v", err)
+	}
+	if !installed {
+		t.Fatal("second install should treat as fresh (installed=true after uninstall)")
+	}
+	// Re-running install once more is a no-op.
+	again, err := InstallClaudeCompactHandoff(root)
+	if err != nil {
+		t.Fatalf("install#3: %v", err)
+	}
+	if again {
+		t.Error("third install should be a no-op")
+	}
+	// Exactly one entry survives.
+	entries := readSettings(t, root)["hooks"].(map[string]any)["SessionStart"].([]any)
+	if len(entries) != 1 {
+		t.Errorf("expected 1 SessionStart entry after cycle; got %d", len(entries))
+	}
+}
+
 func TestSettingsRemainValidJSONAfterInstall(t *testing.T) {
 	root := t.TempDir()
 	writeSettings(t, root, preExistingSettings)
