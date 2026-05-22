@@ -508,6 +508,218 @@ func registerMergeDriver(projectRoot string) error {
 	return nil
 }
 
+// uninstallNextHooks strips the hero-next managed blocks from
+// .git/hooks/pre-commit, .git/hooks/post-merge, and .gitattributes,
+// and unregisters the hero-next merge driver from .git/config.
+// Idempotent — running it twice or against a never-installed repo is
+// a no-op. Returns the list of paths actually modified (or that had
+// their driver registration cleared), suitable for caller print-out.
+func uninstallNextHooks(projectRoot string) (removed []string, err error) {
+	gitDir, gerr := resolveGitDir(projectRoot)
+	if gerr != nil {
+		// Not a git repo — nothing to uninstall.
+		return nil, nil
+	}
+
+	// Hook files: pre-commit, post-merge.
+	for _, name := range []string{"pre-commit", "post-merge"} {
+		path := filepath.Join(gitDir, "hooks", name)
+		changed, rerr := stripManagedBlockFromHook(path)
+		if rerr != nil {
+			return removed, fmt.Errorf("strip %s: %w", name, rerr)
+		}
+		if changed {
+			removed = append(removed, path)
+		}
+	}
+
+	// .gitattributes: strip block; remove file when empty after strip.
+	gaPath := filepath.Join(projectRoot, ".gitattributes")
+	changed, rerr := stripGitAttributesBlock(gaPath)
+	if rerr != nil {
+		return removed, fmt.Errorf("strip .gitattributes: %w", rerr)
+	}
+	if changed {
+		removed = append(removed, gaPath)
+	}
+
+	// .git/config: unset merge driver entries. Best-effort — ignore
+	// "key not found" errors so a never-installed repo doesn't fail.
+	driverCleared := false
+	for _, key := range []string{
+		"merge." + mergeDriverName + ".driver",
+		"merge." + mergeDriverName + ".name",
+	} {
+		cmd := exec.Command("git", "-C", projectRoot, "config", "--unset-all", key)
+		if out, cerr := cmd.CombinedOutput(); cerr != nil {
+			// git config returns exit 5 when the section/key doesn't
+			// exist. Treat that as a successful no-op; bubble anything
+			// else with the output for debugging.
+			if !isGitConfigKeyMissing(cerr, out) {
+				return removed, fmt.Errorf("git config --unset-all %s: %w\n%s", key, cerr, out)
+			}
+			continue
+		}
+		driverCleared = true
+	}
+	if driverCleared {
+		removed = append(removed, filepath.Join(gitDir, "config"))
+	}
+	return removed, nil
+}
+
+// isGitConfigKeyMissing identifies the "key not found" exit from
+// `git config --unset-all`. git uses exit 5 for that condition; any
+// other non-zero exit indicates a real error.
+func isGitConfigKeyMissing(err error, _ []byte) bool {
+	if ee, ok := err.(*exec.ExitError); ok {
+		return ee.ExitCode() == 5
+	}
+	return false
+}
+
+// stripManagedBlockFromHook removes the hero-next managed block from
+// the hook file at path. If the resulting body is just the
+// "#!/usr/bin/env bash\nset -e" shebang we wrote at install time (or
+// is otherwise empty), the file is removed. Returns (changed, error)
+// where changed is true if anything was modified.
+func stripManagedBlockFromHook(path string) (bool, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	src := string(data)
+	startIdx := strings.Index(src, hookMarkerStart)
+	if startIdx < 0 {
+		// No managed block here — nothing to do.
+		return false, nil
+	}
+	endIdx := strings.Index(src, hookMarkerEnd)
+	var stripped string
+	if endIdx < 0 {
+		// Truncated previous block — drop from start to EOF; better
+		// than leaving the open marker dangling.
+		stripped = strings.TrimRight(src[:startIdx], "\n")
+	} else {
+		endIdx += len(hookMarkerEnd)
+		prefix := strings.TrimRight(src[:startIdx], "\n")
+		suffix := strings.TrimLeft(src[endIdx:], "\n")
+		switch {
+		case prefix == "" && suffix == "":
+			stripped = ""
+		case prefix == "":
+			stripped = suffix
+		case suffix == "":
+			stripped = prefix
+		default:
+			stripped = prefix + "\n\n" + suffix
+		}
+	}
+	stripped = strings.TrimRight(stripped, "\n")
+
+	// If the remaining body is just the install-time shebang / set -e
+	// with no user content, remove the file entirely so we don't leave
+	// behind a dead hook stub.
+	if isHookStubOnly(stripped) {
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			return false, err
+		}
+		return true, nil
+	}
+	// Preserve a trailing newline for tidiness.
+	if stripped != "" {
+		stripped += "\n"
+	}
+	if err := os.WriteFile(path, []byte(stripped), 0o755); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// isHookStubOnly reports whether the post-strip hook body is just the
+// shebang and an optional `set -e` we installed at write time. Such a
+// stub serves no purpose and is removed so uninstall leaves no trace.
+func isHookStubOnly(body string) bool {
+	lines := strings.Split(strings.TrimSpace(body), "\n")
+	for _, l := range lines {
+		l = strings.TrimSpace(l)
+		if l == "" {
+			continue
+		}
+		if strings.HasPrefix(l, "#!") {
+			continue
+		}
+		if l == "set -e" {
+			continue
+		}
+		return false
+	}
+	return true
+}
+
+// stripGitAttributesBlock removes the hero-next merge-driver block from
+// the .gitattributes file at path. If the resulting file is empty, the
+// file is removed entirely (preserving user-content files intact).
+// Returns (changed, error).
+func stripGitAttributesBlock(path string) (bool, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	src := string(data)
+	startIdx := strings.Index(src, gaMarkerStart)
+	if startIdx < 0 {
+		return false, nil
+	}
+	endIdx := strings.Index(src, gaMarkerEnd)
+	var stripped string
+	if endIdx < 0 {
+		stripped = strings.TrimRight(src[:startIdx], "\n")
+	} else {
+		endIdx += len(gaMarkerEnd)
+		prefix := strings.TrimRight(src[:startIdx], "\n")
+		suffix := strings.TrimLeft(src[endIdx:], "\n")
+		switch {
+		case prefix == "" && suffix == "":
+			stripped = ""
+		case prefix == "":
+			stripped = suffix
+		case suffix == "":
+			stripped = prefix
+		default:
+			stripped = prefix + "\n\n" + suffix
+		}
+	}
+	stripped = strings.TrimRight(stripped, "\n")
+	if stripped == "" {
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			return false, err
+		}
+		return true, nil
+	}
+	stripped += "\n"
+	if err := os.WriteFile(path, []byte(stripped), 0o644); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// nextMergeDriverRegistered reports whether the hero-next merge driver
+// is currently registered in .git/config. Used by `hero hooks status`.
+func nextMergeDriverRegistered(projectRoot string) bool {
+	cmd := exec.Command("git", "-C", projectRoot, "config", "--get", "merge."+mergeDriverName+".driver")
+	if err := cmd.Run(); err != nil {
+		return false
+	}
+	return true
+}
+
 // updateGitAttributes ensures .gitattributes contains the marker-
 // bounded merge directive. Idempotent.
 func updateGitAttributes(projectRoot string) error {

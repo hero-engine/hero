@@ -331,7 +331,7 @@ func TestAssembleFullHandoff_PopulatedSession(t *testing.T) {
 		t.Fatalf("config.Load: %v", err)
 	}
 
-	md := buildHandoff(&cobra.Command{}, f.sessionID)
+	md := buildHandoff(&cobra.Command{}, payloadContext{SessionID: f.sessionID})
 	if md == "" {
 		t.Fatal("buildHandoff returned empty markdown")
 	}
@@ -782,7 +782,7 @@ status: planning
 	if err != nil {
 		t.Fatalf("ParseFile: %v", err)
 	}
-	parts := buildHandoffParts(f.env.dir, f.env.heroDir, f.sessionID, f.sessStart, s, nil)
+	parts := buildHandoffParts(f.env.dir, f.env.heroDir, f.sessionID, "", f.sessStart, s, nil)
 	if !strings.Contains(parts.activeSpecBody, "truncated — read full at") {
 		t.Errorf("expected read-full suffix on oversize spec body; got:\n%s", parts.activeSpecBody)
 	}
@@ -792,15 +792,10 @@ status: planning
 }
 
 // TestKickoffFromTranscript_WhenNoUserAsk — when no UserAsk is present
-// in the graph for this session, firstUserAskForSession returns "" and
-// the assembled handoff renders the documented "no kickoff recorded"
-// fallback instead of erroring.
-//
-// Note: the spec also mentions a transcript_path fallback. That code
-// path is not yet implemented in next_compact_handoff.go (the in-graph
-// lookup degrades to "" without reading transcript_path). This test
-// verifies the deterministic fallback that ships today; the transcript
-// read is tracked separately.
+// in the graph for this session but a transcript_path is available
+// from the SessionStart payload, kickoffForSession falls back to the
+// first user record in the JSONL transcript. The assembled handoff
+// then renders the recovered prompt instead of the empty placeholder.
 func TestKickoffFromTranscript_WhenNoUserAsk(t *testing.T) {
 	env := newTestEnv(t)
 	if err := exec.Command("git", "init", "-q", env.dir).Run(); err != nil {
@@ -818,9 +813,21 @@ func TestKickoffFromTranscript_WhenNoUserAsk(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	md := buildHandoff(&cobra.Command{}, sessionID)
-	if !strings.Contains(md, "_No kickoff recorded for this session._") {
-		t.Errorf("expected no-kickoff fallback; got:\n%s", md)
+	// Write a fake Claude Code transcript with a first user message.
+	tp := filepath.Join(env.dir, "transcript.jsonl")
+	const kickoffText = "fix the kickoff fallback"
+	jsonl := `{"type":"user","message":{"role":"user","content":"` + kickoffText + `"}}` + "\n" +
+		`{"type":"assistant","message":{"role":"assistant","content":"sure"}}` + "\n"
+	if err := os.WriteFile(tp, []byte(jsonl), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	md := buildHandoff(&cobra.Command{}, payloadContext{SessionID: sessionID, TranscriptPath: tp})
+	if !strings.Contains(md, kickoffText) {
+		t.Errorf("expected kickoff text recovered from transcript; got:\n%s", md)
+	}
+	if strings.Contains(md, "_No kickoff recorded for this session._") {
+		t.Errorf("placeholder should not appear when transcript supplied a kickoff; got:\n%s", md)
 	}
 }
 
@@ -849,6 +856,152 @@ func excerpt(s string, start, end int) string {
 		start = 0
 	}
 	return s[start:end]
+}
+
+// --- kickoffForSession transcript-fallback tests --------------------------
+
+// writeTranscript writes a JSONL transcript and returns its path. Used
+// by the kickoff-fallback tests below.
+func writeTranscript(t *testing.T, dir, body string) string {
+	t.Helper()
+	p := filepath.Join(dir, "transcript.jsonl")
+	if err := os.WriteFile(p, []byte(body), 0o644); err != nil {
+		t.Fatalf("write transcript: %v", err)
+	}
+	return p
+}
+
+// TestKickoffForSession_FallbackToTranscript — graph empty, transcript
+// has a user record → returns the text.
+func TestKickoffForSession_FallbackToTranscript(t *testing.T) {
+	env := newTestEnv(t)
+	tp := writeTranscript(t, env.dir,
+		`{"type":"user","message":{"role":"user","content":"do the thing"}}`+"\n")
+	got := kickoffForSession(env.heroDir, "sess-A", tp)
+	if got != "do the thing" {
+		t.Errorf("got %q; want %q", got, "do the thing")
+	}
+}
+
+// TestKickoffForSession_TranscriptStringContent — `content` is a plain
+// string at the top level (no nested message).
+func TestKickoffForSession_TranscriptStringContent(t *testing.T) {
+	env := newTestEnv(t)
+	tp := writeTranscript(t, env.dir,
+		`{"type":"user","content":"plain string content"}`+"\n")
+	got := kickoffForSession(env.heroDir, "sess-A", tp)
+	if got != "plain string content" {
+		t.Errorf("got %q; want %q", got, "plain string content")
+	}
+}
+
+// TestKickoffForSession_TranscriptContentBlocks — `content` is an array
+// of content blocks; the first text block's text wins.
+func TestKickoffForSession_TranscriptContentBlocks(t *testing.T) {
+	env := newTestEnv(t)
+	tp := writeTranscript(t, env.dir,
+		`{"type":"user","message":{"role":"user","content":[{"type":"text","text":"block-one"},{"type":"text","text":"block-two"}]}}`+"\n")
+	got := kickoffForSession(env.heroDir, "sess-A", tp)
+	if got != "block-one" {
+		t.Errorf("got %q; want %q", got, "block-one")
+	}
+}
+
+// TestKickoffForSession_MalformedTranscriptReturnsEmpty — invalid JSONL
+// at the head of the file does not crash; the loop simply skips broken
+// lines and returns empty when no valid user record is found.
+func TestKickoffForSession_MalformedTranscriptReturnsEmpty(t *testing.T) {
+	env := newTestEnv(t)
+	tp := writeTranscript(t, env.dir,
+		"this is not json\nneither is this\n{ partial\n")
+	got := kickoffForSession(env.heroDir, "sess-A", tp)
+	if got != "" {
+		t.Errorf("expected empty on malformed transcript; got %q", got)
+	}
+}
+
+// TestKickoffForSession_MissingTranscriptReturnsEmpty — transcript_path
+// set but file missing → empty, no crash.
+func TestKickoffForSession_MissingTranscriptReturnsEmpty(t *testing.T) {
+	env := newTestEnv(t)
+	got := kickoffForSession(env.heroDir, "sess-A", filepath.Join(env.dir, "does-not-exist.jsonl"))
+	if got != "" {
+		t.Errorf("expected empty on missing transcript; got %q", got)
+	}
+}
+
+// TestKickoffForSession_GraphHitWinsOverTranscript — when a UserAsk
+// node exists in the graph for the session, the transcript is not
+// consulted.
+func TestKickoffForSession_GraphHitWinsOverTranscript(t *testing.T) {
+	env := newTestEnv(t)
+	const sessionID = "graph-wins-session"
+	store, err := graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatalf("graph.Open: %v", err)
+	}
+	if _, err := store.UpsertNode(&graph.Node{
+		Type: handoff.NodeUserAsk, Key: "ask-graph", Repo: "test-repo", Domain: "engineering",
+		ContentHash: "h-ask-graph",
+		Props: map[string]any{
+			"text":       "from the graph",
+			"session_id": sessionID,
+		},
+	}); err != nil {
+		t.Fatalf("UpsertNode UserAsk: %v", err)
+	}
+	store.Close()
+
+	// Transcript has a different prompt. Should NOT be read.
+	tp := writeTranscript(t, env.dir,
+		`{"type":"user","message":{"role":"user","content":"from the transcript"}}`+"\n")
+
+	got := kickoffForSession(env.heroDir, sessionID, tp)
+	if got != "from the graph" {
+		t.Errorf("graph hit should win; got %q", got)
+	}
+}
+
+// TestKickoffForSession_SkipsAssistantBeforeUser — the loop must walk
+// past non-user records (system / assistant) and return the first user
+// message it finds, not the first record overall.
+func TestKickoffForSession_SkipsAssistantBeforeUser(t *testing.T) {
+	env := newTestEnv(t)
+	tp := writeTranscript(t, env.dir,
+		`{"type":"system","content":"session init"}`+"\n"+
+			`{"type":"assistant","message":{"role":"assistant","content":"warmup"}}`+"\n"+
+			`{"type":"user","message":{"role":"user","content":"actual user prompt"}}`+"\n")
+	got := kickoffForSession(env.heroDir, "sess-A", tp)
+	if got != "actual user prompt" {
+		t.Errorf("got %q; want %q", got, "actual user prompt")
+	}
+}
+
+// TestKickoffForSession_TruncatesAtCap — the transcript-derived text is
+// truncated at compactHandoffKickoffCap exactly like the graph path.
+func TestKickoffForSession_TruncatesAtCap(t *testing.T) {
+	env := newTestEnv(t)
+	long := strings.Repeat("x", compactHandoffKickoffCap+50)
+	tp := writeTranscript(t, env.dir,
+		`{"type":"user","message":{"role":"user","content":"`+long+`"}}`+"\n")
+	got := kickoffForSession(env.heroDir, "sess-A", tp)
+	if !strings.HasSuffix(got, "…") {
+		t.Errorf("expected ellipsis suffix on truncated text; got len=%d", len(got))
+	}
+	// length: cap + 1 rune for the ellipsis (3 bytes in UTF-8)
+	if len(got) > compactHandoffKickoffCap+4 {
+		t.Errorf("over cap: len=%d cap=%d", len(got), compactHandoffKickoffCap)
+	}
+}
+
+// TestKickoffForSession_EmptyTranscriptPath — no transcript path → empty,
+// regardless of file existence.
+func TestKickoffForSession_EmptyTranscriptPath(t *testing.T) {
+	env := newTestEnv(t)
+	got := kickoffForSession(env.heroDir, "sess-A", "")
+	if got != "" {
+		t.Errorf("expected empty on no transcript path; got %q", got)
+	}
 }
 
 
