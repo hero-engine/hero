@@ -98,7 +98,8 @@ func runNextCompactHandoff(cmd *cobra.Command, args []string) error {
 	if compactHandoffJSON {
 		return emitJSONEnvelope(cmd)
 	}
-	md := buildHandoff(cmd, resolveSessionID(cmd.InOrStdin(), compactHandoffSessionID))
+	ctx := resolveSessionContext(cmd.InOrStdin(), compactHandoffSessionID)
+	md := buildHandoff(cmd, ctx)
 	fmt.Fprint(cmd.OutOrStdout(), md)
 	return nil
 }
@@ -115,8 +116,8 @@ func emitJSONEnvelope(cmd *cobra.Command) (retErr error) {
 		}
 	}()
 
-	sessionID := resolveSessionID(cmd.InOrStdin(), compactHandoffSessionID)
-	md := buildHandoff(cmd, sessionID)
+	ctx := resolveSessionContext(cmd.InOrStdin(), compactHandoffSessionID)
+	md := buildHandoff(cmd, ctx)
 	writeEnvelope(w, md)
 	return nil
 }
@@ -154,17 +155,36 @@ type sessionStartPayload struct {
 	HookEventName  string `json:"hook_event_name"`
 }
 
-// resolveSessionID picks the session id to use. Priority:
+// payloadContext is the small bundle of session-scoped fields extracted
+// from the SessionStart hook payload. We thread this through so the
+// kickoff fallback can read the transcript when no UserAsk is in the
+// graph for this session.
+type payloadContext struct {
+	SessionID      string
+	TranscriptPath string
+}
+
+// resolveSessionID is a thin wrapper around resolveSessionContext that
+// returns only the session id. Kept so existing tests and callers that
+// only care about the id stay short.
+func resolveSessionID(stdin io.Reader, override string) string {
+	return resolveSessionContext(stdin, override).SessionID
+}
+
+// resolveSessionContext picks the session id and transcript path to use.
+// Priority for session id:
 //
 //  1. --session flag (debugging override).
 //  2. session_id from stdin JSON payload (Claude Code's normal path).
 //  3. Most-recently-started session in the active registry within
 //     compactHandoffSessionStartLookbackHours.
 //  4. Empty string — caller renders the "no active session" fallback.
-func resolveSessionID(stdin io.Reader, override string) string {
-	if override != "" {
-		return override
-	}
+//
+// TranscriptPath is populated only when stdin carries the SessionStart
+// payload; the registry-lookback path can't recover it and leaves it
+// empty (the kickoff fallback then just doesn't fire).
+func resolveSessionContext(stdin io.Reader, override string) payloadContext {
+	ctx := payloadContext{}
 	if stdin != nil {
 		// Bounded read so a malformed/blocking stdin can't hang the
 		// hook. 64 KiB is far more than any SessionStart payload.
@@ -172,21 +192,31 @@ func resolveSessionID(stdin io.Reader, override string) string {
 		n, _ := stdin.Read(buf)
 		if n > 0 {
 			var payload sessionStartPayload
-			if err := json.Unmarshal(buf[:n], &payload); err == nil && payload.SessionID != "" {
-				return payload.SessionID
+			if err := json.Unmarshal(buf[:n], &payload); err == nil {
+				ctx.TranscriptPath = payload.TranscriptPath
+				if payload.SessionID != "" {
+					ctx.SessionID = payload.SessionID
+				}
 			}
 		}
+	}
+	if override != "" {
+		ctx.SessionID = override
+		return ctx
+	}
+	if ctx.SessionID != "" {
+		return ctx
 	}
 	// Lookback fallback: most-recent registry entry within the window.
 	projectRoot := findProjectRoot()
 	cfg, err := config.Load(projectRoot)
 	if err != nil {
-		return ""
+		return ctx
 	}
 	heroDir := cfg.HeroDir(projectRoot)
 	reg := active.Load(heroDir)
 	if reg == nil || len(reg.Sessions) == 0 {
-		return ""
+		return ctx
 	}
 	cutoff := time.Now().UTC().Add(-time.Duration(compactHandoffSessionStartLookbackHours) * time.Hour)
 	var newest string
@@ -200,14 +230,17 @@ func resolveSessionID(stdin io.Reader, override string) string {
 			newestStart = s.Started
 		}
 	}
-	return newest
+	ctx.SessionID = newest
+	return ctx
 }
 
 // buildHandoff assembles the markdown blob the spec describes. Every
 // step is defensive: a single missing data source degrades the
 // corresponding section rather than aborting the whole render. The
 // result is always token-capped before return.
-func buildHandoff(cmd *cobra.Command, sessionID string) string {
+func buildHandoff(cmd *cobra.Command, ctx payloadContext) string {
+	sessionID := ctx.SessionID
+	transcriptPath := ctx.TranscriptPath
 	projectRoot := findProjectRoot()
 	cfg, err := config.Load(projectRoot)
 	if err != nil {
@@ -254,7 +287,7 @@ func buildHandoff(cmd *cobra.Command, sessionID string) string {
 		_ = store
 	}
 
-	parts := buildHandoffParts(projectRoot, heroDir, sessionID, sessStart, activeSpec, events)
+	parts := buildHandoffParts(projectRoot, heroDir, sessionID, transcriptPath, sessStart, activeSpec, events)
 
 	md := assembleFullHandoff(parts)
 	return enforceTokenCap(md, parts)
@@ -277,7 +310,7 @@ type handoffParts struct {
 	activeSpecType string
 }
 
-func buildHandoffParts(projectRoot, heroDir, sessionID string, sessStart time.Time, activeSpec *spec.Spec, events *projection.SessionEvents) handoffParts {
+func buildHandoffParts(projectRoot, heroDir, sessionID, transcriptPath string, sessStart time.Time, activeSpec *spec.Spec, events *projection.SessionEvents) handoffParts {
 	p := handoffParts{}
 
 	// Header.
@@ -306,8 +339,9 @@ func buildHandoffParts(projectRoot, heroDir, sessionID string, sessStart time.Ti
 	}
 
 	// Original kickoff — best-effort: latest UserAsk node matching
-	// this session_id, falling back to the user-singleton ask.
-	p.kickoff = firstUserAskForSession(heroDir, sessionID)
+	// this session_id, falling back to the SessionStart payload's
+	// transcript_path when no UserAsk is in the graph yet.
+	p.kickoff = kickoffForSession(heroDir, sessionID, transcriptPath)
 
 	if events != nil {
 		p.filesTouched = events.FilesTouched
@@ -495,6 +529,136 @@ func firstUserAskForSession(heroDir, sessionID string) string {
 			text = text[:compactHandoffKickoffCap] + "…"
 		}
 		return text
+	}
+	return ""
+}
+
+// kickoffForSession returns the first user prompt for this session. It
+// tries the graph first (latest UserAsk node carrying session_id); if
+// that yields empty AND a non-empty transcriptPath points at a readable
+// JSONL file, it falls back to parsing the transcript's first user
+// record.
+//
+// Errors anywhere on the transcript path return empty string — the
+// caller renders the "no kickoff recorded" placeholder. This keeps the
+// always-exit-0 contract intact even when the harness writes a hostile
+// or partial transcript.
+func kickoffForSession(heroDir, sessionID, transcriptPath string) string {
+	if got := firstUserAskForSession(heroDir, sessionID); got != "" {
+		return got
+	}
+	if transcriptPath == "" {
+		return ""
+	}
+	return firstUserAskFromTranscript(transcriptPath)
+}
+
+const (
+	// transcriptReadByteCap bounds how much of the transcript we'll read.
+	// Matches the safety cap used on stdin in resolveSessionContext.
+	transcriptReadByteCap = 64 * 1024
+	// transcriptReadLineCap bounds how many JSONL lines we'll scan.
+	// Whichever cap trips first wins.
+	transcriptReadLineCap = 1000
+)
+
+// transcriptMessage is the subset of the Claude Code transcript JSONL
+// record shape we need. Both top-level `type` and nested
+// `message.role` are checked so we tolerate slight harness variation.
+type transcriptMessage struct {
+	Type    string          `json:"type"`
+	Content json.RawMessage `json:"content"`
+	Message *struct {
+		Role    string          `json:"role"`
+		Content json.RawMessage `json:"content"`
+	} `json:"message"`
+}
+
+// firstUserAskFromTranscript opens transcriptPath (bounded read) and
+// returns the text of the first user record. Any parse / IO error
+// short-circuits to empty string.
+func firstUserAskFromTranscript(transcriptPath string) string {
+	f, err := os.Open(transcriptPath)
+	if err != nil {
+		return ""
+	}
+	defer f.Close()
+
+	// Bounded read so a multi-megabyte transcript doesn't balloon
+	// memory. We read up to transcriptReadByteCap bytes and scan
+	// at most transcriptReadLineCap lines of what we read.
+	buf := make([]byte, transcriptReadByteCap)
+	n, _ := io.ReadFull(f, buf)
+	if n == 0 {
+		return ""
+	}
+	data := buf[:n]
+
+	// Split on newlines and walk up to transcriptReadLineCap lines.
+	// The last line in the slice may be a partial record (because we
+	// truncated mid-line); the JSON decoder will reject it and we
+	// skip it — that's fine.
+	lines := strings.Split(string(data), "\n")
+	if len(lines) > transcriptReadLineCap {
+		lines = lines[:transcriptReadLineCap]
+	}
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		var rec transcriptMessage
+		if err := json.Unmarshal([]byte(line), &rec); err != nil {
+			continue
+		}
+		isUser := rec.Type == "user"
+		if !isUser && rec.Message != nil && rec.Message.Role == "user" {
+			isUser = true
+		}
+		if !isUser {
+			continue
+		}
+		raw := rec.Content
+		if len(raw) == 0 && rec.Message != nil {
+			raw = rec.Message.Content
+		}
+		text := extractTranscriptText(raw)
+		text = strings.TrimSpace(text)
+		if text == "" {
+			continue
+		}
+		if len(text) > compactHandoffKickoffCap {
+			text = text[:compactHandoffKickoffCap] + "…"
+		}
+		return text
+	}
+	return ""
+}
+
+// extractTranscriptText pulls the user-visible text out of a Claude Code
+// `content` field. The field may be either a plain string ("hello") or
+// an array of content blocks ([{"type":"text","text":"…"}, …]). We
+// take the first text block when it's an array.
+func extractTranscriptText(raw json.RawMessage) string {
+	if len(raw) == 0 {
+		return ""
+	}
+	// Plain string.
+	var s string
+	if err := json.Unmarshal(raw, &s); err == nil {
+		return s
+	}
+	// Array of content blocks.
+	var blocks []struct {
+		Type string `json:"type"`
+		Text string `json:"text"`
+	}
+	if err := json.Unmarshal(raw, &blocks); err == nil {
+		for _, b := range blocks {
+			if b.Type == "text" && b.Text != "" {
+				return b.Text
+			}
+		}
 	}
 	return ""
 }

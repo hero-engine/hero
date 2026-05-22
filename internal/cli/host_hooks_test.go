@@ -116,12 +116,11 @@ func TestHostHooksStatus_ReportsPerHostState(t *testing.T) {
 }
 
 // TestHostHooksUninstall_AllRemovesGitAndClaude — `hooks uninstall
-// --host=all` should remove both the git-hook side (Hero-managed
-// `# Hero git hook` blocks installed by `hero hooks install`) and the
-// Claude SessionStart{compact} entry. Note: this is independent of the
-// `# >>> hero next hooks (managed) >>>` block that `hero init` installs;
-// that's a different feature (next-projection pre-commit). This test
-// covers the `hero hooks install` ↔ `hero hooks uninstall` symmetry.
+// --host=all` should remove the git-hook side (Hero-managed
+// `# Hero git hook` blocks installed by `hero hooks install`), the
+// `# >>> hero next hooks (managed) >>>` block installed by `hero init` /
+// `hero next install-hooks`, AND the Claude SessionStart{compact} entry.
+// All three installer paths must be cleared by one uninstall call.
 func TestHostHooksUninstall_AllRemovesGitAndClaude(t *testing.T) {
 	env := newTestEnvEmpty(t)
 	if err := exec.Command("git", "init", "-q", env.dir).Run(); err != nil {
@@ -135,6 +134,11 @@ func TestHostHooksUninstall_AllRemovesGitAndClaude(t *testing.T) {
 	// Install both via --host=all.
 	if _, err := runCmd("hooks", "install", "--host=all"); err != nil {
 		t.Fatalf("install --host=all: %v", err)
+	}
+	// Also install the hero-next projection-hook block so we can verify
+	// the uninstall picks it up alongside the general hooks + claude.
+	if err := installNextHooksQuiet(env.dir); err != nil {
+		t.Fatalf("installNextHooksQuiet: %v", err)
 	}
 	// Sanity: claude installed.
 	ok, _ := hooks.ClaudeCompactHandoffStatus(env.dir)
@@ -155,6 +159,10 @@ func TestHostHooksUninstall_AllRemovesGitAndClaude(t *testing.T) {
 	}
 	if !gitInstalled {
 		t.Fatal("precondition: at least one git hook should have a Hero block")
+	}
+	// Sanity: hero-next merge driver registered.
+	if !nextMergeDriverRegistered(env.dir) {
+		t.Fatal("precondition: hero-next merge driver should be registered")
 	}
 
 	if _, err := runCmd("hooks", "uninstall", "--host=all"); err != nil {
@@ -178,5 +186,16 @@ func TestHostHooksUninstall_AllRemovesGitAndClaude(t *testing.T) {
 	}
 	if ok {
 		t.Error("expected claude status=false after uninstall --host=all")
+	}
+	// hero-next merge driver unregistered.
+	if nextMergeDriverRegistered(env.dir) {
+		t.Error("hero-next merge driver should be unregistered after uninstall --host=all")
+	}
+	// pre-commit no longer carries the hero-next managed block.
+	preCommit := filepath.Join(env.dir, ".git", "hooks", "pre-commit")
+	if data, rerr := os.ReadFile(preCommit); rerr == nil {
+		if strings.Contains(string(data), hookMarkerStart) {
+			t.Errorf("pre-commit still contains hero-next block:\n%s", data)
+		}
 	}
 }

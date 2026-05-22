@@ -22,7 +22,7 @@ var hooksInstallCmd = &cobra.Command{
 
 var hooksUninstallCmd = &cobra.Command{
 	Use:   "uninstall",
-	Short: "Remove Hero git hooks from .git/hooks/",
+	Short: "Remove all Hero git hooks (tracker hooks, hero-next projection hooks, merge driver) from .git/hooks/ and .gitattributes.",
 	RunE:  runHooksUninstall,
 }
 
@@ -129,10 +129,23 @@ func runHooksUninstall(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if removed == 0 {
+	// Also remove the hero-next projection-hook block, .gitattributes
+	// entries, and merge-driver registration. Idempotent — a no-op
+	// when hero next install-hooks was never run.
+	projectRoot := findProjectRoot()
+	nextRemoved, nerr := uninstallNextHooks(projectRoot)
+	if nerr != nil {
+		return fmt.Errorf("uninstalling next hooks: %w", nerr)
+	}
+	for _, p := range nextRemoved {
+		fmt.Printf("  removed  %s (hero-next)\n", p)
+	}
+
+	total := removed + len(nextRemoved)
+	if total == 0 {
 		fmt.Println("No Hero hooks were installed.")
 	} else {
-		fmt.Printf("Removed Hero from %d hook(s).\n", removed)
+		fmt.Printf("Removed Hero from %d hook(s).\n", total)
 	}
 
 	return nil
@@ -164,6 +177,21 @@ func runHooksStatus(cmd *cobra.Command, args []string) error {
 		}
 		fmt.Printf("%-22s  %-10s  %-14s\n", h.Name, installed, heroManaged)
 	}
+
+	// Report hero-next projection-hook state alongside the general
+	// installer's per-hook table. Two state lines: the pre-commit
+	// managed block, and the merge-driver registration in .git/config.
+	projectRoot := findProjectRoot()
+	preCommitState := "no"
+	if preCommitHookInstalled(projectRoot) {
+		preCommitState = "yes"
+	}
+	driverState := "no"
+	if nextMergeDriverRegistered(projectRoot) {
+		driverState = "yes"
+	}
+	fmt.Printf("\n  hero next pre-commit block: %s\n", preCommitState)
+	fmt.Printf("  hero-next merge driver:     %s\n", driverState)
 
 	return nil
 }
