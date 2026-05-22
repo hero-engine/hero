@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-05-22T00:25:40Z · projected from 271 source nodes_
+_Last refreshed: 2026-05-22T02:00:45Z · projected from 271 source nodes_
 
 ## Surfaces
 
@@ -11,7 +11,7 @@ _Last refreshed: 2026-05-22T00:25:40Z · projected from 271 source nodes_
 | core | building | cmd/, internal/ | 1m ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | building | domains/engineering/ | 19h ago | spec-types-cache-frontmatter-empty |
+| domains/engineering | building | domains/engineering/ | 20h ago | spec-types-cache-frontmatter-empty |
 | domains/pm | concept | domains/pm/ | 3d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 3d ago | hero-landing-page |
@@ -44,8 +44,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — read-dont-guess, hero-serve-project-section, peer-call-findings-truncation-and-persistence
-- **core** — hero-hooks-uninstall-misses-next-block, compact-handoff-transcript-kickoff-missing
+- **(unassigned)** — read-dont-guess, hero-serve-project-section
+- **core** — next-compact-handoff, hero-hooks-uninstall-misses-next-block, compact-handoff-transcript-kickoff-missing
 - **domains/engineering** — mockups-link-back-to-specs
 - **serve** — hero-serve-project-section-healthcache, hero-serve-project-section-destructive, hero-serve-project-section-opsrunner, hero-serve-project-section-aggregate, hero-serve-project-section-mvp, hero-serve-dashboard-redesign
 
@@ -59,7 +59,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Open risks & blockers
 
-- **Blocked specs (14):** `compact-handoff-summarizer` (waits on next-compact-handoff); `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `e2e-traversal` (waits on traversal-queries); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection); `traversal-queries` (waits on master-ingest-restore); `unified-retrieval-layer` (waits on master-ingest-restore).
+- **Blocked specs (13):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `e2e-traversal` (waits on traversal-queries); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection); `traversal-queries` (waits on master-ingest-restore); `unified-retrieval-layer` (waits on master-ingest-restore).
 - **Unassigned specs (115) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
