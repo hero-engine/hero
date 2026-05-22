@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-22T00:25:28Z · 97 ready specs_
+_Generated: 2026-05-22T02:00:29Z · 97 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -184,32 +184,6 @@ _bug · delivering · horizon: now_
 _bug · delivering · horizon: now_
 
 > Read `.hero/planning/bugs/hero-local-merge-missing-dialect-fields/spec.md` (this file), `internal/config/config.go::MergeLocal` (or whatever the local-merge function is named there — `grep -n "MergeLocal\|LoadLocal\|merge" internal/config/config.go`), and one neighboring already-merged nested block (e.g. `Tracker`) for the merge pattern to copy. Extend the merger to forward the four dialect fields per the Fix section. Add unit tests per the Acceptance Criteria. Update `docs/contracts/active-dialect.md` §2 to make the `hero.local.json` override behavior normative (replacing the "planned extension point" note). Run `go build ./...` and `go test ./...` clean. Report what shipped, the exact functions touched, and any open questions under 300 words.
-
----
-
-## next-compact-handoff — "Compact Handoff — Session-Scoped Resume Context at Compaction Time"
-_feature · delivering · horizon: next_
-
-Build the deterministic compact-handoff MVP: a new `hero next compact-handoff --json` subcommand that reads a SessionStart{compact} hook payload from stdin, queries the existing `internal/active` registry + graph projection scoped to that session_id, and returns the `additionalContext` JSON envelope. Plus a `--host=claude|codex|all` extension to the existing `hero hooks install` that writes the SessionStart hook entry into `.claude/settings.json` (and Codex's equivalent).
-
-Start by reading:
-- This spec and [compact-handoff-summarizer/spec.md](../compact-handoff-summarizer/spec.md) for context on what's intentionally deferred.
-- [internal/cli/checkpoint.go](../../../../internal/cli/checkpoint.go) — existing graph projection for per-user handoff (the queries to narrow).
-- [internal/active/active.go](../../../../internal/active/active.go) — session-id registry already in place.
-- [internal/cli/next_hooks.go](../../../../internal/cli/next_hooks.go) — marker-block install pattern to mirror for JSON settings files.
-- [internal/cli/hooks.go](../../../../internal/cli/hooks.go) — existing `hero hooks` parent command to extend.
-- [.claude/settings.json](../../../../.claude/settings.json) — current hook entries to coexist with.
-
-Then implement in order:
-
-1. `hero next compact-handoff --json` reading stdin, with the deterministic content assembly. Test against a hand-crafted SessionStart payload.
-2. Session-filtered graph projection helper (`internal/projection/compact_handoff.go`).
-3. `internal/hooks/claude_settings.go` — JSON read/write with idempotent marker entries; `--host=claude` flag wiring.
-4. `internal/hooks/codex_settings.go` — same for Codex.
-5. `hero hooks status` extension to report host-tool hook state.
-6. `hero init` calls `hooks install --host=all` by default.
-
-The MVP is reviewable in ~400–600 LOC and ships meaningful behavior the day it lands: today's compaction produces *no* injected handoff; after this lands, every Claude Code compaction injects a session-scoped, deterministic resume packet with the active spec, recent decisions, and next action. The LLM-curated middle section comes later via [compact-handoff-summarizer](../compact-handoff-summarizer/spec.md).
 
 ---
 
@@ -965,6 +939,29 @@ Implement in order:
 8. Wire the first consumer (compact handoff summarizer prompt augmentation) once that spec ships.
 
 The win is cumulative: every downstream feature that retrieves project context gets sharper. The MVP delivery is ~600–900 LOC plus the model-loading infrastructure (likely the trickiest piece). Start small — get the seam right, then bolt features onto it.
+
+---
+
+## compact-handoff-summarizer — "Compact Handoff Summarizer — LLM-Curated Middle Section for Resume Context"
+_feature · draft · horizon: next_
+
+Ship the AIServices seam and add an LLM-curated middle to the compact handoff. Start with the `direct` (Anthropic) backend so the feature is usable today; add `hero-cloud` once that endpoint exists.
+
+Read first:
+- [next-compact-handoff](../next-compact-handoff/spec.md) — the MVP this extends.
+- The current hero-cloud peer manifest (`.hero/peer-manifest.yaml`) to learn what hero-cloud already exposes vs. what needs to be built.
+- This spec's "Dependencies" section to understand what must be true before each backend can ship.
+
+Then implement in order:
+
+1. `internal/aiservices/` package skeleton — `Summarizer` interface, config loading, provider-selection precedence.
+2. `direct` provider for Anthropic (Haiku). Manual smoke-test against a real transcript.
+3. `hero next compact-summarize` subcommand exposing the provider directly (testable in isolation).
+4. Splice into `hero next compact-handoff` with the 5s timeout + skeleton fallback.
+5. `hero-cloud` provider — gated on the endpoint existing. If it doesn't, document the contract in this spec and ship the rest.
+6. Privacy-disclosure surface in `hero hooks install --host=claude` when hero-cloud becomes the default.
+
+The deliverable is reviewable in two cuts: (a) the seam + direct backend (smaller change, immediately useful for users with API keys), and (b) the hero-cloud backend (bigger surface, depends on infra availability). Land (a) standalone if (b) isn't ready.
 
 ---
 

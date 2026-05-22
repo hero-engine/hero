@@ -2,7 +2,7 @@
 title: "Compact Handoff — Session-Scoped Resume Context at Compaction Time"
 slug: next-compact-handoff
 type: feature
-status: delivering
+status: completed
 priority: medium
 horizon: next
 tags: [next, harness-integration, compaction, hooks]
@@ -87,7 +87,10 @@ The hook entry in `.claude/settings.json`:
 
 Claude Code passes the session payload to the hook on stdin as JSON (`session_id`, `transcript_path`, `cwd`, `source`, `hook_event_name`). The CLI reads stdin, extracts `session_id`, and resolves everything else from local state. (We don't take `--session` as a flag — reading stdin matches how the existing checkpoint hook works and avoids a shell-quoting failure mode.)
 
-**Codex parity.** Codex's `SessionStartSource::Compact` is implemented (`codex-rs/hooks/src/events/session_start.rs`) but undocumented on the public hooks page as of 2026-05. The host-tool installer adds the same matcher for Codex's hooks config; field name `additionalContext` is identical. A comment in the install script notes the doc gap so the discrepancy isn't surprising on read.
+**Codex parity (implemented).** Codex's `SessionStartSource::Compact` is shipped (`codex-rs/hooks/src/events/session_start.rs`) and the JSON shape of `<projectRoot>/.codex/hooks.json` mirrors Claude Code's hooks block plus an optional per-command `timeout` field. The Hero installer writes the same `SessionStart{matcher:"compact"}` entry with `command: "hero next compact-handoff --json"`, `timeout: 30`, and the `added_by_hero: true` marker. Two operator-side prerequisites are surfaced (we do not mutate either):
+
+1. Codex hooks are off by default — user must add `codex_hooks = true` under `[features]` in `~/.codex/config.toml`. The installer reads (line-scan) the global config and prints a warning when the flag is absent; the install itself still succeeds.
+2. Codex prompts to "trust" project-local config on first run. Installer prints an informational note.
 
 **Other harnesses** (Cursor, Continue, Cline, Roo, Zed) have no equivalent post-compaction context-injection mechanism. They are out of scope. Hero behaves as today in those environments.
 
@@ -232,7 +235,8 @@ The marker convention matches the existing git-hook installer's pattern (`# >>> 
 
 ## Risks
 
-- **Codex `source: "compact"` is undocumented.** The matcher is in Codex's shipped source code but not on the public hooks docs page as of 2026-05. If OpenAI changes the value before documenting it, the hook silently stops matching in Codex. Mitigation: `hero check` includes a probe that warns when no SessionStart{compact} firing has been recorded recently in a Codex environment. Re-verify the matcher value on each Codex release until documented.
+- **Codex `source: "compact"` is undocumented.** The matcher is in Codex's shipped source code but not on the public hooks docs page as of 2026-05. If OpenAI changes the value before documenting it, the hook silently stops matching in Codex. Mitigation (deferred — see follow-ups below): `hero check` to probe for "no SessionStart{compact} firing recorded recently in a Codex environment." Re-verify the matcher value on each Codex release until documented.
+- **Codex hooks bootstrapping is fragile.** Two operator gates (global `codex_hooks = true` feature flag + per-project trust prompt) must be satisfied for the installed hook to actually fire. The installer surfaces both as warnings/notes but cannot fix them. Open Codex regressions around hooks tracked upstream as issues #17532 and #19199 — if either lands, the installed hook may produce no observable injection until the upstream regression is resolved.
 - **Active-spec resolution miss.** Sessions that never called `hero active register` (most do not, today — the registration is opt-in) will land in the "no active spec" path. Mitigation: `/deliver` and `/diagnose` slash commands should call `hero active register` at start; this is a small ergonomic upgrade with an outsized payoff for the handoff quality.
 - **Session-id absent from stdin.** If a harness invokes the hook without `session_id` in the JSON payload (older Claude Code versions, edge cases), the handoff falls back to "any session in the registry whose `Started` falls within the last hour, or none." Skeleton degrades gracefully.
 - **Token cap truncates the active spec.** Long specs (4000+ chars) will get body-truncated. Mitigation: the spec slug + path is always preserved in the header, so the model can `Read` it explicitly when needed.
@@ -250,7 +254,7 @@ The marker convention matches the existing git-hook installer's pattern (`# >>> 
 - [ ] When no active spec is registered, the handoff renders `Active spec: none (exploratory session)` without inventing one.
 - [ ] Token cap enforced; truncation order matches the spec when over budget. Header + Active spec slug/title + Next concrete action always preserved.
 - [ ] `hero hooks install --host=claude` writes the SessionStart{compact} entry into `.claude/settings.json` with an `added_by_hero: true` marker. Idempotent. Preserves other entries.
-- [ ] `hero hooks install --host=codex` writes the equivalent entry into Codex's hooks config.
+- [x] `hero hooks install --host=codex` writes the equivalent entry into Codex's hooks config (`<projectRoot>/.codex/hooks.json`) with `added_by_hero: true` marker and `timeout: 30`. Idempotent. Surfaces warning when `codex_hooks` feature flag is not enabled and an informational note about Codex's trust prompt on first run.
 - [ ] `hero hooks uninstall --host=claude` removes only Hero-marked entries; user-authored hooks intact.
 - [ ] `hero hooks status` reports host-tool hook installation state per harness alongside git hook state.
 - [ ] Defer-panic + always-exit-0 contract for `compact-handoff --json`. Crash on bad stdin → return minimal valid envelope.
@@ -263,11 +267,14 @@ The marker convention matches the existing git-hook installer's pattern (`# >>> 
 - `internal/cli/host_hooks.go` (new) — `--host=claude|codex|all` flag plumbing for `hero hooks install/uninstall/status`.
 - `internal/cli/init.go` — call `hooks.InstallClaudeCompactHandoff` by default unless `--no-hooks`.
 - `internal/hooks/claude_settings.go` (new) — read/write `.claude/settings.json` with `added_by_hero` marker preservation.
-- `internal/hooks/codex_settings.go` (new) — Codex installer stub (returns "unsupported" until Codex docs land; called sites print informational skip).
+- `internal/hooks/codex_settings.go` — Codex installer implementation (`<projectRoot>/.codex/hooks.json`). Identical marker / preservation contract as Claude installer; adds `timeout: 30` per command and a `CodexFeatureFlagEnabled` line-scan of `~/.codex/config.toml`.
+- `internal/cli/host_hooks.go` — Codex install/uninstall/status now exercise the real installer; warning + trust-note printed on install when applicable.
 - `internal/projection/compact_handoff.go` (new) — graph queries filtered to session_id + active-spec carryover, plus path-token extraction for "files touched" tally.
 - Tests:
   - `internal/cli/next_compact_handoff_test.go` (new) — stdin parsing, JSON envelope shape, token cap truncation order, kickoff/next-action edge cases.
   - `internal/hooks/claude_settings_test.go` (new) — fresh install, idempotency, preservation of pre-existing PreCompact/Stop/permissions entries, uninstall surgical removal, status, post-install JSON validity.
+  - `internal/hooks/codex_settings_test.go` (new) — same matrix as Claude, plus feature-flag detection (present / absent / commented / explicit false / missing config), user-entry-in-shared-matcher preservation through uninstall, and full-cleanup file removal after uninstall.
+  - `internal/cli/host_hooks_test.go` — repurposed `TestHostHooksInstall_CodexPrintsUnsupportedAndExitsZero` → `TestHostHooksInstall_CodexInstallsToProjectFile`; extended `TestHostHooksInstall_AllInstallsGitAndClaude` and `TestHostHooksUninstall_AllRemovesGitAndClaude` to also assert Codex install/uninstall side-effects.
   - `internal/projection/compact_handoff_test.go` (new) — session-tagged decisions, other-session exclusion, spec-anchored carryover, files-touched tally from Attempt/Reflection bodies, empty-session safety.
 
 ## Kickoff

@@ -23,6 +23,7 @@ func resetHostHookFlag() {
 // SessionStart{compact} entry. Both side-effects must land in one call.
 func TestHostHooksInstall_AllInstallsGitAndClaude(t *testing.T) {
 	env := newTestEnvEmpty(t)
+	t.Setenv("HOME", t.TempDir())
 	if err := exec.Command("git", "init", "-q", env.dir).Run(); err != nil {
 		t.Fatalf("git init: %v", err)
 	}
@@ -35,6 +36,10 @@ func TestHostHooksInstall_AllInstallsGitAndClaude(t *testing.T) {
 	// a clean state for this test.
 	if _, err := hooks.UninstallClaudeCompactHandoff(env.dir); err != nil {
 		t.Fatalf("uninstall before scenario: %v", err)
+	}
+	// Same for Codex — clean slate.
+	if _, err := hooks.UninstallCodexCompactHandoff(env.dir); err != nil {
+		t.Fatalf("uninstall codex before scenario: %v", err)
 	}
 	// Also remove the git pre-commit hook installed by init so we can
 	// assert it gets re-installed below.
@@ -57,17 +62,31 @@ func TestHostHooksInstall_AllInstallsGitAndClaude(t *testing.T) {
 	if !ok {
 		t.Error("expected ClaudeCompactHandoffStatus=true after --host=all install")
 	}
+	// Codex SessionStart{compact} installed.
+	codexOK, err := hooks.CodexCompactHandoffStatus(env.dir)
+	if err != nil {
+		t.Fatalf("codex status: %v", err)
+	}
+	if !codexOK {
+		t.Error("expected CodexCompactHandoffStatus=true after --host=all install")
+	}
 	if !strings.Contains(out, "claude SessionStart{compact}") {
 		t.Errorf("output should mention claude SessionStart{compact}; got: %q", out)
 	}
+	if !strings.Contains(out, "codex SessionStart{compact}") {
+		t.Errorf("output should mention codex SessionStart{compact}; got: %q", out)
+	}
 }
 
-// TestHostHooksInstall_CodexPrintsUnsupportedAndExitsZero — the codex
-// installer stub must print the documented "not yet wired" message and
-// exit 0 (no error). When that installer ships for real, this test will
-// need to be updated.
-func TestHostHooksInstall_CodexPrintsUnsupportedAndExitsZero(t *testing.T) {
+// TestHostHooksInstall_CodexInstallsToProjectFile — `hero hooks install
+// --host=codex` writes the SessionStart{compact} entry into
+// <projectRoot>/.codex/hooks.json and emits the install confirmation
+// plus the trust-prompt note. (Was previously a stub-check test —
+// retained-and-repurposed for the real installer.)
+func TestHostHooksInstall_CodexInstallsToProjectFile(t *testing.T) {
 	env := newTestEnvEmpty(t)
+	// Isolate HOME so the feature-flag warning behavior is deterministic.
+	t.Setenv("HOME", t.TempDir())
 	if err := exec.Command("git", "init", "-q", env.dir).Run(); err != nil {
 		t.Fatalf("git init: %v", err)
 	}
@@ -80,12 +99,27 @@ func TestHostHooksInstall_CodexPrintsUnsupportedAndExitsZero(t *testing.T) {
 	if err != nil {
 		t.Fatalf("hooks install --host=codex returned error: %v", err)
 	}
-	if !strings.Contains(out, "codex") {
-		t.Errorf("expected codex message in output; got: %q", out)
+	if !strings.Contains(out, "codex SessionStart{compact}") {
+		t.Errorf("expected codex install confirmation; got: %q", out)
 	}
-	if !strings.Contains(strings.ToLower(out), "not yet wired") &&
-		!strings.Contains(strings.ToLower(out), "unsupported") {
-		t.Errorf("expected unsupported/not-yet-wired notice; got: %q", out)
+	// File was actually written.
+	if _, err := os.Stat(filepath.Join(env.dir, ".codex", "hooks.json")); err != nil {
+		t.Errorf("expected .codex/hooks.json to exist after install; stat err=%v", err)
+	}
+	ok, err := hooks.CodexCompactHandoffStatus(env.dir)
+	if err != nil {
+		t.Fatalf("status: %v", err)
+	}
+	if !ok {
+		t.Error("expected CodexCompactHandoffStatus=true after install")
+	}
+	// Trust-prompt note surfaced (informational).
+	if !strings.Contains(strings.ToLower(out), "trust") {
+		t.Errorf("expected trust-prompt note; got: %q", out)
+	}
+	// HOME is empty → feature flag absent → warning surfaced.
+	if !strings.Contains(strings.ToLower(out), "codex_hooks") {
+		t.Errorf("expected codex_hooks feature-flag warning; got: %q", out)
 	}
 }
 
@@ -123,6 +157,7 @@ func TestHostHooksStatus_ReportsPerHostState(t *testing.T) {
 // All three installer paths must be cleared by one uninstall call.
 func TestHostHooksUninstall_AllRemovesGitAndClaude(t *testing.T) {
 	env := newTestEnvEmpty(t)
+	t.Setenv("HOME", t.TempDir())
 	if err := exec.Command("git", "init", "-q", env.dir).Run(); err != nil {
 		t.Fatalf("git init: %v", err)
 	}
@@ -144,6 +179,11 @@ func TestHostHooksUninstall_AllRemovesGitAndClaude(t *testing.T) {
 	ok, _ := hooks.ClaudeCompactHandoffStatus(env.dir)
 	if !ok {
 		t.Fatal("precondition: claude hook should be installed after --host=all install")
+	}
+	// Sanity: codex installed.
+	codexOK, _ := hooks.CodexCompactHandoffStatus(env.dir)
+	if !codexOK {
+		t.Fatal("precondition: codex hook should be installed after --host=all install")
 	}
 	// Sanity: at least one git hook now carries the Hero marker.
 	hookStatuses, err := hooks.Status(filepath.Join(env.dir, ".git"))
@@ -186,6 +226,14 @@ func TestHostHooksUninstall_AllRemovesGitAndClaude(t *testing.T) {
 	}
 	if ok {
 		t.Error("expected claude status=false after uninstall --host=all")
+	}
+	// Codex entry removed.
+	codexOK, err = hooks.CodexCompactHandoffStatus(env.dir)
+	if err != nil {
+		t.Fatalf("codex status: %v", err)
+	}
+	if codexOK {
+		t.Error("expected codex status=false after uninstall --host=all")
 	}
 	// hero-next merge driver unregistered.
 	if nextMergeDriverRegistered(env.dir) {

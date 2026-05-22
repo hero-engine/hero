@@ -62,6 +62,7 @@ func wrapWithHostHook(gitRun, hostRun func(*cobra.Command, []string) error) func
 
 func runHostHooksInstall(cmd *cobra.Command, args []string) error {
 	projectRoot := findProjectRoot()
+	w := cmd.OutOrStdout()
 	switch hostHookHostFlag {
 	case hostFlagClaude, hostFlagAll:
 		installed, err := hooks.InstallClaudeCompactHandoff(projectRoot)
@@ -69,28 +70,37 @@ func runHostHooksInstall(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("claude: %w", err)
 		}
 		if installed {
-			fmt.Fprintf(cmd.OutOrStdout(), "  installed  claude SessionStart{compact}\n")
+			fmt.Fprintf(w, "  installed  claude SessionStart{compact}\n")
 		} else {
-			fmt.Fprintf(cmd.OutOrStdout(), "  skipped    claude SessionStart{compact} (already installed)\n")
+			fmt.Fprintf(w, "  skipped    claude SessionStart{compact} (already installed)\n")
 		}
 		if hostHookHostFlag != hostFlagAll {
 			return nil
 		}
 		fallthrough
 	case hostFlagCodex:
-		if !hooks.CodexCompactHandoffSupported() {
-			fmt.Fprintf(cmd.OutOrStdout(),
-				"  skipped    codex SessionStart{compact} (codex installer not yet wired; tracked in compact-handoff spec)\n")
-			return nil
+		installed, err := hooks.InstallCodexCompactHandoff(projectRoot)
+		if err != nil {
+			return fmt.Errorf("codex: %w", err)
 		}
-		_, err := hooks.InstallCodexCompactHandoff(projectRoot)
-		return err
+		if installed {
+			fmt.Fprintf(w, "  installed  codex SessionStart{compact}\n")
+		} else {
+			fmt.Fprintf(w, "  skipped    codex SessionStart{compact} (already installed)\n")
+		}
+		if !hooks.CodexFeatureFlagEnabled() {
+			fmt.Fprintf(w,
+				"  warning    codex hooks are off by default — add `codex_hooks = true` under [features] in ~/.codex/config.toml to enable\n")
+		}
+		fmt.Fprintf(w,
+			"  note       codex will prompt you to trust this project's .codex/ config on first run\n")
 	}
 	return nil
 }
 
 func runHostHooksUninstall(cmd *cobra.Command, args []string) error {
 	projectRoot := findProjectRoot()
+	w := cmd.OutOrStdout()
 	switch hostHookHostFlag {
 	case hostFlagClaude, hostFlagAll:
 		removed, err := hooks.UninstallClaudeCompactHandoff(projectRoot)
@@ -98,20 +108,24 @@ func runHostHooksUninstall(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("claude: %w", err)
 		}
 		if removed {
-			fmt.Fprintf(cmd.OutOrStdout(), "  removed    claude SessionStart{compact}\n")
+			fmt.Fprintf(w, "  removed    claude SessionStart{compact}\n")
 		} else {
-			fmt.Fprintf(cmd.OutOrStdout(), "  skipped    claude SessionStart{compact} (not installed)\n")
+			fmt.Fprintf(w, "  skipped    claude SessionStart{compact} (not installed)\n")
 		}
 		if hostHookHostFlag != hostFlagAll {
 			return nil
 		}
 		fallthrough
 	case hostFlagCodex:
-		if !hooks.CodexCompactHandoffSupported() {
-			return nil
+		removed, err := hooks.UninstallCodexCompactHandoff(projectRoot)
+		if err != nil {
+			return fmt.Errorf("codex: %w", err)
 		}
-		_, err := hooks.UninstallCodexCompactHandoff(projectRoot)
-		return err
+		if removed {
+			fmt.Fprintf(w, "  removed    codex SessionStart{compact}\n")
+		} else {
+			fmt.Fprintf(w, "  skipped    codex SessionStart{compact} (not installed)\n")
+		}
 	}
 	return nil
 }
@@ -135,10 +149,6 @@ func runHostHooksStatus(cmd *cobra.Command, args []string) error {
 		}
 		fallthrough
 	case hostFlagCodex:
-		if !hooks.CodexCompactHandoffSupported() {
-			fmt.Fprintf(w, "  codex  SessionStart{compact}: unsupported (installer not yet wired)\n")
-			return nil
-		}
 		ok, err := hooks.CodexCompactHandoffStatus(projectRoot)
 		if err != nil {
 			return fmt.Errorf("codex: %w", err)
@@ -147,7 +157,11 @@ func runHostHooksStatus(cmd *cobra.Command, args []string) error {
 		if ok {
 			state = "yes"
 		}
-		fmt.Fprintf(w, "  codex SessionStart{compact}: %s\n", state)
+		fmt.Fprintf(w, "  codex SessionStart{compact}: %s", state)
+		if ok && !hooks.CodexFeatureFlagEnabled() {
+			fmt.Fprintf(w, " (warning: codex_hooks feature flag not enabled in ~/.codex/config.toml)")
+		}
+		fmt.Fprintln(w)
 	}
 	return nil
 }
