@@ -215,6 +215,14 @@ func resetFlags() {
 	// Reset graph flags
 	graphFormat = "text"
 
+	// Reset graph edge add flags
+	graphEdgeFrom = ""
+	graphEdgeTo = ""
+	graphEdgeKind = ""
+	graphEdgeFromDomain = ""
+	graphEdgeToDomain = ""
+	graphEdgeJSON = false
+
 	// Reset feed flags
 	feedSince = ""
 	feedType = ""
