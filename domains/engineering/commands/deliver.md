@@ -17,15 +17,23 @@ to **supervised**.
 | Flag | Behavior |
 |---|---|
 | `--supervised` (default) | Pause at handoffs, surface decisions, ask before destructive actions. Current behavior. |
-| `--autopilot` | Run to completion without intermediate confirmations. Stop only on test failure, drift warning, or boundary violation. |
+| `--autopilot` | Run to completion without intermediate confirmations. Stop only on test failure, drift warning, boundary violation, or any non-`DONE` Completion Ledger item (PARTIAL, SKIPPED, BLOCKED). |
 | `--dry-run` | Run analysis and planning. Produce a delivery plan (file list, agent assignments, estimated changes) but write NO code. |
 
 ### Autopilot mode
 
 Suppress confirmation prompts during the delivery loop. Check `hero drift`
-after implementation, run tests if a runner is configured, and halt only
-on failures. If `--halt-on` is provided (comma-separated: `drift`, `test`,
-`boundary`, `lint`), only halt on those specific conditions.
+after implementation, run tests if a runner is configured, validate the
+engineer's **Completion Ledger** against the spec, and halt on any of:
+test failure, drift warning, boundary violation, or any non-`DONE` ledger
+item (PARTIAL, SKIPPED, BLOCKED). If `--halt-on` is provided
+(comma-separated: `drift`, `test`, `boundary`, `lint`, `ledger`), only halt
+on those specific conditions.
+
+Persistence rule (`agent-reliability` — "Persistence on continuous tasks")
+applies: do not yield between phases unless a true blocker fires. A
+non-`DONE` ledger row IS a true blocker — halt and surface it. "This is
+taking a while" is NOT.
 
 ### Dry-run mode
 
@@ -60,8 +68,9 @@ If the user asks to fix/deliver multiple specs (e.g. "fix the researched bugs", 
    - Read the spec and its fix plan
    - Implement the fix
    - Run tests / build to verify
+   - Require a **Completion Ledger** from the engineer covering every acceptance criterion and Changes item (see `engineer.md` — "Closing output"). Validate it against the spec.
    - Commit with a message referencing the spec slug and tracker ID
-   - Set the spec's `status: completed` in the frontmatter; `hero spec verify` or the async runner will auto-archive it to specs/
+   - Only set `status: completed` if the ledger is fully `DONE`. If any row is PARTIAL / SKIPPED / BLOCKED, halt and surface — do not flip status without sign-off. `hero spec verify` or the async runner will auto-archive completed specs to specs/.
    - Post results to tracker if configured
 5. **One commit per fix** — each fix is atomic and independently revertable
 6. If a fix fails tests or creates problems, skip it, note the issue in the spec, and move to the next one
@@ -77,11 +86,15 @@ provides a list of slugs with `--autopilot`:
 1. Validate all specs are ready (have Changes section, pass quality gate)
 2. Sort by dependency order using `hero_sequence`
 3. Show the queue and get one confirmation: "Will deliver N specs in order:
-   [list]. Mode: autopilot. I'll halt on test failures or boundary violations."
+   [list]. Mode: autopilot. I'll halt on test failures, boundary violations,
+   or non-`DONE` Completion Ledger items."
 4. Execute sequentially using the autopilot flow for each
-5. Between each spec: run `hero drift`, run tests, commit atomically
-6. If one fails: log the failure, skip it, continue with the next
-7. At the end: summary of delivered, skipped, and any issues
+5. Between each spec: run `hero drift`, run tests, validate the Completion
+   Ledger, commit atomically
+6. If one fails or its ledger has non-`DONE` rows: log the failure / open
+   items, skip the spec (do NOT flip to `completed`), continue with the next
+7. At the end: summary of delivered (fully `DONE`), partially delivered
+   (with non-`DONE` ledger rows for follow-up), and skipped (with reasons)
 
 ## Single spec mode
 
@@ -103,7 +116,19 @@ At the end of the delivery loop:
    tests you just wrote and any existing tests for the affected area.
 4. **Link tests to criteria** — connect each new test back to the
    acceptance criterion it verifies so regressions are traceable.
-5. **Refresh the kickoff** — when status flips (planning → delivering,
+5. **Validate the Completion Ledger** — the engineer's closing artifact
+   (see `engineer.md` — "Closing output") enumerates every acceptance
+   criterion and every `## Changes` item with a `DONE` / `PARTIAL` /
+   `SKIPPED` / `BLOCKED` status. Before flipping spec status:
+   - Confirm every acceptance criterion and every Changes item has a row.
+   - Cross-check each `DONE` against actual code and test evidence on disk.
+     Challenge performative `DONE` marks; downgrade rows that lack evidence.
+   - For user-visible behavior, confirm the Exercise-the-feature check is
+     populated — unit tests alone are not sufficient evidence.
+   - **If any row is `PARTIAL` / `SKIPPED` / `BLOCKED`, do NOT flip to
+     `completed`** without explicit user sign-off. In autopilot mode this
+     halts the run; in supervised mode, surface the open rows and ask.
+6. **Refresh the kickoff** — when status flips (planning → delivering,
    delivering → completed) or after meaningful chunks land, rewrite the
    spec's `## Kickoff` section so "Pick up at:" reflects *now*, not
    "two commits ago." Follow the `kickoff-prompt` skill. After mutating
@@ -113,11 +138,16 @@ At the end of the delivery loop:
    you're not committing right away, run `hero queue write -q` to
    refresh the snapshot manually.
 
-When delivery is complete and verified, set the spec's `status: completed`
-in the frontmatter and run `hero spec verify <slug>` — verify auto-archives a
-completed spec to `.hero/specs/<slug>/`, so you don't need a separate
-`hero spec complete` step. The async runner does the same auto-archive
-at the tail of every successful agent delivery.
+When delivery is complete and the Completion Ledger is fully `DONE` (or
+non-`DONE` rows have explicit user sign-off), set the spec's
+`status: completed` in the frontmatter and run `hero spec verify <slug>` —
+verify auto-archives a completed spec to `.hero/specs/<slug>/`, so you
+don't need a separate `hero spec complete` step. The async runner does the
+same auto-archive at the tail of every successful agent delivery.
+
+The Completion Ledger replaces the older "implementation summary" pattern.
+Soft prose summaries that gloss skipped or partial work are explicitly
+out — the ledger is the artifact of record.
 
 ### Spec-to-PR linking
 

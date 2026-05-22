@@ -69,3 +69,5 @@
 {"ts":"2026-05-21T14:18:37.982074Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"read-dont-guess","message":"status -\u003e completed"}
 {"ts":"2026-05-22T03:58:20.276737Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"next-compact-handoff","message":"\"Compact Handoff — Session-Scoped Resume Context at Compaction Time\""}
 {"ts":"2026-05-22T03:58:20.276825Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-compact-handoff","message":"status -\u003e completed"}
+{"ts":"2026-05-22T19:02:56.217703Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"delivery-completion-discipline","message":"\"Delivery Completion Discipline — Stop Agents from Silently Narrowing Scope, Punting Hard Items, or Yielding Early\""}
+{"ts":"2026-05-22T19:02:56.217859Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"delivery-completion-discipline","message":"status -\u003e completed"}

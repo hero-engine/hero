@@ -76,7 +76,7 @@ Load the `spec-format` skill before writing any spec.
 
 When invoked for `/deliver`:
 
-Load the `context-injection` skill before starting delivery.
+Load the `context-injection` skill **and the `agent-reliability` skill** before starting delivery. The reliability skill carries the Persistence rule — you must not yield between delivery phases unless a true blocker fires (see "Persistence on continuous tasks").
 
 ### Mode detection
 
@@ -85,7 +85,8 @@ Check the invocation for a mode flag. If none is specified, use **supervised**.
 - **`--supervised`** (default) — pause at specialist handoffs, surface
   decisions, ask before destructive actions. This is the current behavior.
 - **`--autopilot`** — run to completion without intermediate confirmations.
-  Halt only on test failure, drift warning, or boundary violation. If
+  Halt only on test failure, drift warning, boundary violation, or **any
+  non-`DONE` Completion Ledger item** (PARTIAL, SKIPPED, or BLOCKED). If
   `--halt-on` is specified, only halt on those conditions.
 - **`--dry-run`** — produce a delivery plan at
   `.hero/planning/features/<slug>/plan.md` but write NO source code. The
@@ -117,8 +118,14 @@ Check the invocation for a mode flag. If none is specified, use **supervised**.
     - Look at the code you touched and the code adjacent to it. If a function you modified, a module you integrated with, or a code path you changed lacks test coverage, add tests. Don't just cover the spec — cover the blast radius.
     - Run the full test suite for affected packages and fix anything that broke.
     - For high-impact changes, involve the `functional-qa-engineer` to assess edge cases and regression risk.
-17. On completion, move the spec from `planning/` to `specs/` and update its status to `completed`
-18. If a tracker is configured, update the issue
+17. **Validate the engineer's Completion Ledger.** The engineer's closing artifact is a structured Completion Ledger (see `engineer.md` — "Closing output"). Before flipping spec status, you must:
+    - Confirm the ledger enumerates **every** acceptance criterion AND **every** `## Changes` item from the spec. Missing rows are a defect — request a corrected ledger.
+    - Cross-check each `DONE` row against actual evidence: code on disk, test files, exercise notes. Performative `DONE` marks (rows without corresponding code or test changes) must be challenged and downgraded.
+    - For user-visible behavior, confirm the Exercise-the-feature check is filled. Unit-tests-only is not sufficient evidence for a user-visible `DONE`.
+    - **Refuse to set `status: completed` if any ledger item is `PARTIAL`, `SKIPPED`, or `BLOCKED`** without explicit user sign-off. In autopilot mode, this is a halt condition — surface the non-`DONE` rows and stop.
+    - If the ledger is honest about non-`DONE` items, that is a *success* of the system, not a failure of the engineer. Treat it that way when surfacing to the user.
+18. On completion (ledger fully `DONE` or non-`DONE` items signed off), move the spec from `planning/` to `specs/` and update its status to `completed`
+19. If a tracker is configured, update the issue
 
 ### Delivery phasing
 
