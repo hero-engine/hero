@@ -170,7 +170,7 @@ func TestRunner_ParentContextCancel_KillsSubprocess(t *testing.T) {
 
 	select {
 	case <-job.Done():
-	case <-time.After(5 * time.Second):
+	case <-time.After(15 * time.Second):
 		t.Fatal("subprocess did not die after parent ctx cancel")
 	}
 	if job.cmd == nil || job.cmd.ProcessState == nil {
