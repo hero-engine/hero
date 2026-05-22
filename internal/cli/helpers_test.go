@@ -223,6 +223,13 @@ func resetFlags() {
 	graphEdgeToDomain = ""
 	graphEdgeJSON = false
 
+	// Reset graph node add flags
+	graphNodeType = ""
+	graphNodeKey = ""
+	graphNodeDomain = ""
+	graphNodeTitle = ""
+	graphNodeJSON = false
+
 	// Reset feed flags
 	feedSince = ""
 	feedType = ""
