@@ -67,3 +67,5 @@
 {"ts":"2026-05-21T05:13:29.253597Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"mockups-link-back-to-specs","message":"status -\u003e completed"}
 {"ts":"2026-05-21T14:18:37.981969Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"read-dont-guess","message":"\"Read Don't Guess — Force Agents to Ground Claims in Code Before Proposing\""}
 {"ts":"2026-05-21T14:18:37.982074Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"read-dont-guess","message":"status -\u003e completed"}
+{"ts":"2026-05-22T03:58:20.276737Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"next-compact-handoff","message":"\"Compact Handoff — Session-Scoped Resume Context at Compaction Time\""}
+{"ts":"2026-05-22T03:58:20.276825Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-compact-handoff","message":"status -\u003e completed"}
