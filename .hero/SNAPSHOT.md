@@ -2,22 +2,22 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-05-22T19:20:40Z · projected from 272 source nodes_
+_Last refreshed: 2026-05-24T23:50:27Z · projected from 274 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 17h ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 2d ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | building | domains/engineering/ | 1d ago | spec-types-cache-frontmatter-empty |
-| domains/pm | concept | domains/pm/ | 4d ago | — |
+| domains/engineering | building | domains/engineering/ | 3d ago | spec-types-cache-frontmatter-empty |
+| domains/pm | concept | domains/pm/ | 6d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
-| landing | building | web/landing/ | 4d ago | hero-landing-page |
+| landing | building | web/landing/ | 6d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 2d ago | vocabulary-resolve-misses-methodology-derivation |
-| (unassigned) | — | — | — | 116 specs without surface |
+| serve | building | internal/serve/ | 4d ago | vocabulary-resolve-misses-methodology-derivation |
+| (unassigned) | — | — | — | 118 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
 
@@ -60,11 +60,11 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Open risks & blockers
 
 - **Blocked specs (13):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `e2e-traversal` (waits on traversal-queries); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection); `traversal-queries` (waits on master-ingest-restore); `unified-retrieval-layer` (waits on master-ingest-restore).
-- **Unassigned specs (116) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
+- **Unassigned specs (118) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 135/251 (53%)
-- Projection generation: 0ms · Source nodes: 272
+- Specs covered: 135/253 (53%)
+- Projection generation: 0ms · Source nodes: 274
 
