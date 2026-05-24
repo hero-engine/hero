@@ -76,6 +76,25 @@ These are run in the terminal, not as slash commands:
 
 Your harness may expose the agent/command/skill directories under its own prefix (`.claude/`, `.opencode/`, `.cursor/`, etc.) as symlinks back to the canonical paths above. Edit only the canonical files — harness directories are views.
 
+### Internal Lookups — Tool Routing
+
+When **you** need to look something up mid-task (as opposed to running a slash command for the user), pick the tool that matches the *shape* of the question, not the one that feels exhaustive:
+
+| Shape of question | Tool |
+|---|---|
+| "Does spec/knowledge entry X exist? Has this been discussed?" | `mcp__hero__hero_search` with `compact: true` — single-line count, no excerpt noise |
+| "What's the status / frontmatter of spec X?" | `mcp__hero__hero_read_spec` |
+| "What's in flight / ready / blocked / mine?" | `mcp__hero__hero_list`, `hero_queue`, `hero_blocked` |
+| "Where did this come from? What chain of decisions led here?" | `mcp__hero__hero_why` — graph traversal beats grep on relations |
+| Literal string `foo_bar_baz` across code | `rg` / `grep` |
+| Known file at a known path | `Read` |
+| Recent commits / git history | `git log` |
+| Broad exploration across many files | `Explore` agent (context-protective) |
+
+**Rule of thumb:** graph- or spec-shaped questions → Hero MCP tools. String-shaped → grep. File-shaped → Read. Don't reach for `grep` on `.hero/` to answer "does spec X exist?" — substring search only finds *literal matches*, not *semantically related* specs (e.g. a spec slugged `domain-routing-and-agents` is the same concept as "domain swap" but won't match either word as a phrase).
+
+Deferred-tool friction (the one-time `ToolSearch` schema load for `mcp__hero__*`) is real but cheap — one round-trip, then the tool stays loaded. The cost of reading 20 verbose CLI excerpts to answer a binary "exists?" question is higher.
+
 ### Important Rules
 
 - **Don't assume.** Surface tradeoffs and ask questions if anything is unclear. Present multiple interpretations instead of picking one silently.
