@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -176,5 +177,170 @@ func TestSearchRequiresQueryOrList(t *testing.T) {
 	_, err := runCmd("search")
 	if err == nil {
 		t.Fatal("search without query or --list should fail")
+	}
+}
+
+// TestSearchJSONFTS5Path asserts --json emits valid JSON on the FTS5 path
+// (filter flags engage FTS5). Regression test for
+// hero-search-json-flag-silently-ignored.
+func TestSearchJSONFTS5Path(t *testing.T) {
+	env := newTestEnv(t)
+
+	env.addSpec("planning/features/json-out/spec.md", `---
+title: JSON Output Test
+type: feature
+status: planning
+---
+# JSON Output Test
+`)
+
+	env.indexAll()
+
+	// --type forces the FTS5 routing path.
+	output, err := runCmd("search", "JSON", "--type", "feature", "--json")
+	if err != nil {
+		t.Fatalf("search --json returned error: %v", err)
+	}
+
+	// Strip any non-JSON prefix lines (e.g. scope hints written to stderr
+	// shouldn't appear, but the harness may capture stderr too).
+	out := strings.TrimSpace(output)
+	idx := strings.Index(out, "[")
+	if idx < 0 {
+		t.Fatalf("expected JSON array in output, got: %q", output)
+	}
+	out = out[idx:]
+
+	var parsed []map[string]any
+	if err := json.Unmarshal([]byte(out), &parsed); err != nil {
+		t.Fatalf("output is not valid JSON: %v\noutput: %q", err, output)
+	}
+	if len(parsed) == 0 {
+		t.Fatalf("expected at least one result, got empty array: %q", output)
+	}
+	got := parsed[0]
+	for _, k := range []string{"type", "key", "title", "status"} {
+		if _, ok := got[k]; !ok {
+			t.Errorf("result missing key %q: %+v", k, got)
+		}
+	}
+	if got["key"] != "json-out" {
+		t.Errorf("expected key=json-out, got %v", got["key"])
+	}
+}
+
+// TestSearchJSONListMode asserts --list --json emits a JSON array on the
+// runSearchFTS path.
+func TestSearchJSONListMode(t *testing.T) {
+	env := newTestEnv(t)
+
+	env.addSpec("planning/features/list-json-a/spec.md", `---
+title: List JSON A
+type: feature
+status: planning
+---
+# List JSON A
+`)
+	env.addSpec("planning/bugs/list-json-b/spec.md", `---
+title: List JSON B
+type: bug
+status: planning
+---
+# List JSON B
+`)
+
+	env.indexAll()
+
+	output, err := runCmd("search", "--list", "--json")
+	if err != nil {
+		t.Fatalf("search --list --json returned error: %v", err)
+	}
+
+	out := strings.TrimSpace(output)
+	idx := strings.Index(out, "[")
+	if idx < 0 {
+		t.Fatalf("expected JSON array, got: %q", output)
+	}
+	out = out[idx:]
+
+	var parsed []map[string]any
+	if err := json.Unmarshal([]byte(out), &parsed); err != nil {
+		t.Fatalf("output is not valid JSON: %v\noutput: %q", err, output)
+	}
+	if len(parsed) < 2 {
+		t.Errorf("expected at least 2 results, got %d: %q", len(parsed), output)
+	}
+}
+
+// TestSearchJSONFileMode asserts --file --json emits a JSON array on the
+// runSearchFTS path.
+func TestSearchJSONFileMode(t *testing.T) {
+	env := newTestEnv(t)
+
+	env.addSpec("planning/features/file-json/spec.md", `---
+title: File JSON Search
+type: feature
+status: delivering
+---
+# File JSON Search
+
+## Changes
+- Update `+"`src/foo/bar.go`"+`
+`)
+
+	env.indexAll()
+
+	output, err := runCmd("search", "--file", "src/foo/bar.go", "--json")
+	if err != nil {
+		t.Fatalf("search --file --json returned error: %v", err)
+	}
+
+	out := strings.TrimSpace(output)
+	idx := strings.Index(out, "[")
+	if idx < 0 {
+		t.Fatalf("expected JSON array, got: %q", output)
+	}
+	out = out[idx:]
+
+	var parsed []map[string]any
+	if err := json.Unmarshal([]byte(out), &parsed); err != nil {
+		t.Fatalf("output is not valid JSON: %v\noutput: %q", err, output)
+	}
+	if len(parsed) == 0 {
+		t.Fatalf("expected at least 1 result, got empty array: %q", output)
+	}
+	if parsed[0]["key"] != "file-json" {
+		t.Errorf("expected key=file-json, got %v", parsed[0]["key"])
+	}
+}
+
+// TestSearchJSONNoResults asserts --json emits `[]` on the no-results path
+// rather than the human "No results found." string.
+func TestSearchJSONNoResults(t *testing.T) {
+	env := newTestEnv(t)
+
+	env.addSpec("planning/features/unrelated2/spec.md", `---
+title: Unrelated Two
+type: feature
+status: planning
+---
+# Unrelated Two
+`)
+
+	env.indexAll()
+
+	output, err := runCmd("search", "zzzyyyxxx", "--json")
+	if err != nil {
+		t.Fatalf("search --json returned error: %v", err)
+	}
+
+	out := strings.TrimSpace(output)
+	if out != "[]" {
+		t.Errorf("expected `[]`, got: %q", output)
+	}
+
+	var parsed []any
+	if err := json.Unmarshal([]byte(out), &parsed); err != nil {
+		t.Errorf("output should be valid JSON empty array: %v", err)
 	}
 }

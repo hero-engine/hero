@@ -134,6 +134,10 @@ func runSearch(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(results) == 0 {
+		if searchJSON {
+			fmt.Println("[]")
+			return nil
+		}
 		fmt.Println("No results found.")
 		return nil
 	}
@@ -143,7 +147,7 @@ func runSearch(cmd *cobra.Command, args []string) error {
 	if results[0].Source == "graph" {
 		return printGraphResults(results, strings.Join(args, " "), searchBudget, searchJSON)
 	}
-	return printFTSResults(results)
+	return printFTSResults(results, searchJSON)
 }
 
 // runSearchFTS handles the FTS5-specific modes: --file, --list, --cross-repo.
@@ -197,7 +201,24 @@ func runSearchFTS(heroDir string, cfg config.Config, projectRoot string, args []
 	}
 
 	if len(results) == 0 {
+		if searchJSON {
+			fmt.Println("[]")
+			return nil
+		}
 		fmt.Println("No results found.")
+		return nil
+	}
+
+	if searchJSON {
+		fmt.Print("[")
+		for i, r := range results {
+			if i > 0 {
+				fmt.Print(",")
+			}
+			fmt.Printf(`{"type":%q,"key":%q,"title":%q,"status":%q,"snippet":%q}`,
+				r.Type, r.Slug, r.Title, r.Status, r.Snippet)
+		}
+		fmt.Println("]")
 		return nil
 	}
 
@@ -221,8 +242,22 @@ func runSearchFTS(heroDir string, cfg config.Config, projectRoot string, args []
 	return nil
 }
 
-// printFTSResults formats FTS5-sourced retrieval.Results in the tabular layout.
-func printFTSResults(results []retrieval.Result) error {
+// printFTSResults formats FTS5-sourced retrieval.Results in the tabular layout,
+// or emits a JSON array when asJSON is true.
+func printFTSResults(results []retrieval.Result, asJSON bool) error {
+	if asJSON {
+		fmt.Print("[")
+		for i, r := range results {
+			if i > 0 {
+				fmt.Print(",")
+			}
+			fmt.Printf(`{"type":%q,"key":%q,"title":%q,"status":%q,"snippet":%q}`,
+				r.Type, r.Key, r.Title, r.Status, r.Snippet)
+		}
+		fmt.Println("]")
+		return nil
+	}
+
 	for _, r := range results {
 		claimStr := ""
 		if r.ClaimedBy != "" {
