@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -224,6 +225,9 @@ func (s *Store) migrate() error {
 		}
 		for _, stmt := range m.statements {
 			if _, err := s.db.Exec(stmt); err != nil {
+				if isColumnAlreadyExists(err) {
+					continue
+				}
 				return fmt.Errorf("migration v%s: %w", m.version, err)
 			}
 		}
@@ -251,6 +255,13 @@ func (s *Store) migrate() error {
 		return fmt.Errorf("graph schema version mismatch: db=%s binary=%s", currentVersion, schemaVersion)
 	}
 	return nil
+}
+
+// isColumnAlreadyExists returns true if err is SQLite's "duplicate
+// column name" error, which happens when ALTER TABLE ADD COLUMN retries
+// after a partially-applied migration.
+func isColumnAlreadyExists(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "duplicate column name")
 }
 
 // nowRFC3339 returns the current UTC time formatted for graph timestamps.
