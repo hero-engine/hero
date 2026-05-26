@@ -199,3 +199,44 @@ func TestListNodesByType(t *testing.T) {
 		t.Errorf("got %d total, want 3", len(all))
 	}
 }
+
+// TestPartialMigrationRecovery simulates a v3 migration that partially
+// applied (domain column on nodes but not edges) and verifies that
+// re-opening the database recovers instead of permanently bricking.
+func TestPartialMigrationRecovery(t *testing.T) {
+	dir := t.TempDir()
+	heroDir := filepath.Join(dir, "hero")
+
+	// Create a fresh v3 database, then simulate a partial v3 state:
+	// roll back to v2, manually add the domain column to nodes only
+	// (simulating a crash mid-migration).
+	s, err := Open(heroDir)
+	if err != nil {
+		t.Fatalf("initial Open: %v", err)
+	}
+	if err := s.RollbackV3(); err != nil {
+		t.Fatalf("RollbackV3: %v", err)
+	}
+	// Add domain column to nodes only — edges still missing it.
+	if _, err := s.DB().Exec(`ALTER TABLE nodes ADD COLUMN domain TEXT NOT NULL DEFAULT 'engineering'`); err != nil {
+		t.Fatalf("partial add column: %v", err)
+	}
+	s.Close()
+
+	// Re-open: the migration runner sees schema_version=2, retries v3.
+	// The ALTER for nodes.domain will hit "duplicate column name" — this
+	// must be tolerated so the edges.domain ALTER can proceed.
+	s2, err := Open(heroDir)
+	if err != nil {
+		t.Fatalf("re-open after partial migration should recover: %v", err)
+	}
+	defer s2.Close()
+
+	st, err := s2.Stats()
+	if err != nil {
+		t.Fatalf("Stats: %v", err)
+	}
+	if st.SchemaVersion != "3" {
+		t.Errorf("schema_version = %q, want %q", st.SchemaVersion, "3")
+	}
+}
