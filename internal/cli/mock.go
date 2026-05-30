@@ -53,9 +53,10 @@ func runMock(cmd *cobra.Command, args []string) error {
 }
 
 type mockEntry struct {
-	slug    string
-	path    string
-	modTime time.Time
+	slug     string
+	path     string
+	modTime  time.Time
+	isNative bool
 }
 
 func discoverMocks(mocksDir string) ([]mockEntry, error) {
@@ -77,10 +78,14 @@ func discoverMocks(mocksDir string) ([]mockEntry, error) {
 		if err != nil {
 			continue // no index.html, skip
 		}
+		// Detect native mocks by the presence of screenshot.png
+		screenshotPath := filepath.Join(mocksDir, e.Name(), "screenshot.png")
+		_, hasScreenshot := os.Stat(screenshotPath)
 		mocks = append(mocks, mockEntry{
-			slug:    e.Name(),
-			path:    indexPath,
-			modTime: info.ModTime(),
+			slug:     e.Name(),
+			path:     indexPath,
+			modTime:  info.ModTime(),
+			isNative: hasScreenshot == nil,
 		})
 	}
 
@@ -114,7 +119,11 @@ func runMockList() error {
 	fmt.Println(strings.Repeat("─", 60))
 	for _, m := range mocks {
 		age := formatMockAge(m.modTime)
-		fmt.Printf("  %-30s  %s  %s\n", m.slug, age, m.path)
+		tag := "[html]"
+		if m.isNative {
+			tag = "[native]"
+		}
+		fmt.Printf("  %-30s  %-8s  %s  %s\n", m.slug, tag, age, m.path)
 	}
 	fmt.Printf("\n%d mockup(s)\n", len(mocks))
 	return nil
