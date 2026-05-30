@@ -102,12 +102,21 @@ func (h *NowHandler) handleEvents(w http.ResponseWriter, r *http.Request) {
 	// and "capability" are treated as virtual section names so the
 	// same debounce + emit path covers the page-hero subhead refresh
 	// and the adapter-availability fragment refresh.
+	//
+	// Timer callbacks fire on separate goroutines and may race with the
+	// handler returning (at which point the server reclaims the writer).
+	// A mutex + done flag ensures we never write after the handler exits.
+	var mu sync.Mutex
+	done := false
 	pending := map[string]*time.Timer{}
 	emit := func(section string) {
+		mu.Lock()
+		defer mu.Unlock()
+		if done {
+			return
+		}
 		switch section {
 		case "hero":
-			// Plain-text subhead payload; client drops it into the
-			// [data-page-hero-subhead] span's textContent.
 			fmt.Fprintf(w, "event: hero\ndata: %s\n\n", escapeSSEData(now.SubheadText(h.deps)))
 		default:
 			fmt.Fprintf(w, "event: %s\ndata: \n\n", section)
@@ -129,12 +138,18 @@ func (h *NowHandler) handleEvents(w http.ResponseWriter, r *http.Request) {
 	for {
 		select {
 		case <-ctx.Done():
+			mu.Lock()
+			done = true
 			for _, t := range pending {
 				t.Stop()
 			}
+			mu.Unlock()
 			return
 		case ev, ok := <-ch:
 			if !ok {
+				mu.Lock()
+				done = true
+				mu.Unlock()
 				return
 			}
 			for _, section := range sectionsForEventType(ev.Type) {

@@ -218,7 +218,8 @@ func TestRunner_Keepalive(t *testing.T) {
 	prevInterval := keepaliveInterval
 	prevNow := nowFn
 	keepaliveInterval = 50 * time.Millisecond
-	t.Cleanup(func() { keepaliveInterval = prevInterval; nowFn = prevNow })
+	// Restore globals AFTER the job finishes — pump() reads nowFn
+	// from its goroutine, so t.Cleanup races if the job is still running.
 
 	withFakeBinary(t, `sleep 1; exit 0`)
 	r := New(context.Background())
@@ -245,11 +246,16 @@ func TestRunner_Keepalive(t *testing.T) {
 	if !strings.Contains(body, ": keepalive") {
 		t.Errorf("expected keepalive frame; body:\n%s", body)
 	}
-	// Cleanup — wait for the job to finish so test doesn't leak goroutines.
+	// Wait for the job to finish BEFORE restoring globals — pump()
+	// goroutine reads nowFn, and restoring it while pump runs is a
+	// data race. This was the source of the CI-only flake.
 	select {
 	case <-job.Done():
-	case <-time.After(3 * time.Second):
+	case <-time.After(5 * time.Second):
+		t.Log("warning: job did not finish within 5s")
 	}
+	keepaliveInterval = prevInterval
+	nowFn = prevNow
 }
 
 func TestRunner_FinishedJob_LookupAndFindByID(t *testing.T) {
