@@ -13,6 +13,7 @@ import (
 	"github.com/hero-engine/hero/internal/acceptance"
 	"github.com/hero-engine/hero/internal/codescan"
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/embeddings"
 	"github.com/hero-engine/hero/internal/extract"
 	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/graph"
@@ -389,6 +390,30 @@ func writeCodeSubgraph(cfg config.Config, result *codescan.Result, projectRoot, 
 				detail: fmt.Sprintf("%d nodes projected into search index", n)})
 		}
 		idx.Close()
+	}
+
+	// Refresh semantic embeddings index.
+	if cfg.IsEmbeddingsEnabled() {
+		embModel, embErr := embeddings.LoadModelFromConfig(cfg.EmbeddingsModel())
+		if embErr != nil {
+			report.add(stepResult{name: "embeddings", failed: true, err: embErr})
+		} else if embModel != nil {
+			embIdx, embIdxErr := index.Open(heroDir)
+			if embIdxErr != nil {
+				report.add(stepResult{name: "embeddings", failed: true, err: embIdxErr})
+			} else {
+				embStats, refreshErr := embeddings.Refresh(heroDir, embModel, embIdx.RawDB(), store.DB(), cfg.EmbeddingsScope())
+				embIdx.Close()
+				if refreshErr != nil {
+					report.add(stepResult{name: "embeddings", failed: true, err: refreshErr})
+				} else {
+					report.add(stepResult{name: "embeddings", ok: true,
+						detail: fmt.Sprintf("embeddings %s", embStats)})
+				}
+			}
+		} else {
+			report.add(stepResult{name: "embeddings", skipped: true, reason: "no embedding model available"})
+		}
 	}
 
 	report.print()

@@ -32,6 +32,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/embeddings"
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/index"
 )
@@ -60,16 +62,21 @@ type Result struct {
 	Path      string // on-disk path when Source=="fts5"; empty for graph nodes
 }
 
-// Retriever wraps the graph store and FTS5 index. Instantiate with New; call
-// Close when done.
+// Retriever wraps the graph store, FTS5 index, and optional embedding model.
+// Instantiate with New; call Close when done.
 type Retriever struct {
-	store *graph.Store // nil when graph DB is absent or failed to open
-	fts   *index.DB
+	store    *graph.Store        // nil when graph DB is absent or failed to open
+	fts      *index.DB
+	embModel *embeddings.Model   // nil when embeddings unavailable
+	embStore *embeddings.Storage // nil when embeddings unavailable
 }
 
 // New opens the FTS5 index (required) and the graph store (optional — silently
 // absent in environments without a populated graph, e.g. fresh workspaces or
 // test environments that only initialise the FTS5 index).
+//
+// Embeddings are loaded best-effort: if no model is installed or the vector
+// storage can't be opened, the Retriever works without semantic search.
 func New(heroDir string) (*Retriever, error) {
 	fts, err := index.Open(heroDir)
 	if err != nil {
@@ -79,7 +86,47 @@ func New(heroDir string) (*Retriever, error) {
 	if store, err := graph.Open(heroDir); err == nil {
 		r.store = store
 	}
+
+	// Best-effort: load embeddings for hybrid search.
+	embModel, embStore, _ := LoadEmbeddings(heroDir, fts.RawDB())
+	r.embModel = embModel
+	r.embStore = embStore
+
 	return r, nil
+}
+
+// LoadEmbeddings attempts to load the embedding model and open vector storage.
+// Returns nil, nil, nil if embeddings are not available (no model, no index,
+// or disabled via config). A non-nil error indicates a real failure (e.g.
+// corrupt model files) rather than absence.
+func LoadEmbeddings(heroDir string, indexDB *sql.DB) (*embeddings.Model, *embeddings.Storage, error) {
+	if indexDB == nil {
+		return nil, nil, nil
+	}
+
+	// Determine model name from config (best-effort — default if config unavailable).
+	modelName := "hero-embed-v1"
+	projectRoot := strings.TrimSuffix(heroDir, "/.hero")
+	if projectRoot != heroDir {
+		if cfg, err := config.Load(projectRoot); err == nil {
+			modelName = cfg.EmbeddingsModel()
+		}
+	}
+
+	model, err := embeddings.LoadModelFromConfig(modelName)
+	if err != nil {
+		return nil, nil, err
+	}
+	if model == nil {
+		return nil, nil, nil // no model installed
+	}
+
+	store, err := embeddings.OpenStorage(indexDB)
+	if err != nil {
+		return nil, nil, fmt.Errorf("opening embedding storage: %w", err)
+	}
+
+	return model, store, nil
 }
 
 // Close releases both underlying handles.
@@ -97,8 +144,11 @@ func (r *Retriever) Retrieve(q Query) ([]Result, error) {
 		limit = 20
 	}
 
-	// SemanticOK stub: vector search is not yet implemented (Phase C).
-	// Fall through to graph/FTS5.
+	// Hybrid search: when SemanticOK is set and an embedding model is loaded,
+	// run lexical retrieval then fuse with vector results via RRF.
+	if q.SemanticOK && r.embModel != nil && r.embStore != nil {
+		return r.retrieveHybrid(q, limit)
+	}
 
 	// Filters or explicit type constraints → FTS5 spec-corpus path.
 	if len(q.Filters) > 0 || len(q.Types) > 0 {
@@ -413,6 +463,137 @@ func (r *Retriever) retrieveViaFTS(q Query, limit int) ([]Result, error) {
 		}
 	}
 	return results, nil
+}
+
+// ---------------------------------------------------------------------------
+// Hybrid search (Phase C — BM25 + vector via RRF)
+// ---------------------------------------------------------------------------
+
+// retrieveHybrid runs the normal lexical path and a vector similarity query,
+// then fuses results via Reciprocal Rank Fusion.
+func (r *Retriever) retrieveHybrid(q Query, limit int) ([]Result, error) {
+	// Run the lexical path (graph/FTS5) with SemanticOK=false to avoid recursion.
+	lexicalQ := q
+	lexicalQ.SemanticOK = false
+	lexical, err := r.Retrieve(lexicalQ)
+	if err != nil {
+		return nil, err
+	}
+
+	// Embed the query and retrieve similar chunks.
+	queryVec := r.embModel.Embed(q.Text)
+	vectorHits, err := r.embStore.QuerySimilar(queryVec, limit*2, nil)
+	if err != nil {
+		// Vector search failed — fall back to lexical-only.
+		return lexical, nil
+	}
+
+	return fuseRRF(lexical, vectorHits, 60, limit), nil
+}
+
+// fuseRRF merges lexical and vector result sets using Reciprocal Rank Fusion.
+// k=60 per Cormack et al. For each result, the RRF score is the sum of
+// 1/(k+rank) across the rankings it appears in.
+//
+// Matching logic:
+//   - Vector chunks with corpus "spec" match on ScoredChunk.SourceID == Result.Key
+//   - Other corpora match on ScoredChunk.ID == Result.Key
+//   - Results appearing in both rankings get Source "hybrid"
+//   - Results in only one ranking keep their original Source
+func fuseRRF(lexical []Result, vector []embeddings.ScoredChunk, k int, limit int) []Result {
+	type fused struct {
+		result   Result
+		rrfScore float64
+		inBoth   bool
+	}
+
+	// Index by a canonical key.
+	byKey := make(map[string]*fused)
+
+	// Score lexical results.
+	for rank, r := range lexical {
+		score := 1.0 / float64(k+rank+1) // rank is 0-indexed; +1 to make 1-indexed
+		byKey[r.Key] = &fused{
+			result:   r,
+			rrfScore: score,
+		}
+	}
+
+	// Score vector results and merge.
+	for rank, vc := range vector {
+		score := 1.0 / float64(k+rank+1)
+
+		// Determine the matching key for this vector chunk.
+		matchKey := vc.ID
+		if vc.Corpus == "spec" {
+			matchKey = vc.SourceID
+		}
+
+		if existing, ok := byKey[matchKey]; ok {
+			// Already seen from lexical — add vector score.
+			existing.rrfScore += score
+			existing.inBoth = true
+		} else {
+			// Vector-only result. Build a Result from the chunk metadata.
+			byKey[matchKey] = &fused{
+				result: Result{
+					Type:    corpusToNodeType(vc.Corpus),
+					Key:     matchKey,
+					Title:   matchKey,
+					Snippet: truncateSnippet(vc.Section, 160),
+					Score:   score,
+					Source:  "vector",
+				},
+				rrfScore: score,
+			}
+		}
+	}
+
+	// Collect and sort by RRF score descending.
+	results := make([]Result, 0, len(byKey))
+	for _, f := range byKey {
+		f.result.Score = f.rrfScore
+		if f.inBoth {
+			f.result.Source = "hybrid"
+		}
+		results = append(results, f.result)
+	}
+
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Score > results[j].Score
+	})
+
+	if len(results) > limit {
+		results = results[:limit]
+	}
+	return results
+}
+
+// corpusToNodeType maps an embedding corpus name to the closest graph node
+// type for display purposes.
+func corpusToNodeType(corpus string) string {
+	switch corpus {
+	case "spec":
+		return "Feature"
+	case "knowledge":
+		return "ContextDoc"
+	case "convention":
+		return "Convention"
+	case "event":
+		return "Note"
+	case "code":
+		return "Symbol"
+	default:
+		return "Unknown"
+	}
+}
+
+// truncateSnippet trims s to maxLen characters, appending an ellipsis if truncated.
+func truncateSnippet(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen] + "..."
 }
 
 // ---------------------------------------------------------------------------

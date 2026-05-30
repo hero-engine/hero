@@ -2,11 +2,14 @@
 title: "Embeddings Index — Semantic Retrieval Over Hero's Project Corpus"
 slug: embeddings-index
 type: feature
-status: draft
+status: superseded
 priority: medium
 horizon: next
 tags: [retrieval, semantic-search, embeddings, ai-services, foundational]
+superseded_by: embedded-inference
 relations:
+  - target: embedded-inference
+    kind: superseded-by
   - target: next-compact-handoff
     kind: related
   - target: compact-handoff-summarizer

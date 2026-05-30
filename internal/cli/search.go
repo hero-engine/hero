@@ -43,6 +43,8 @@ var (
 	searchBudget     int
 	searchJSON       bool
 	searchSubproject string
+	searchSemantic   bool
+	searchHybrid     bool
 )
 
 func init() {
@@ -57,6 +59,8 @@ func init() {
 	searchCmd.Flags().IntVar(&searchBudget, "budget", 800, "token budget for graph search results")
 	searchCmd.Flags().BoolVar(&searchJSON, "json", false, "emit JSON (graph search only)")
 	searchCmd.Flags().StringVar(&searchSubproject, "subproject", "", "filter by subproject scope (e.g. engines/mlx); 'all' disables. Default: active scope from cwd")
+	searchCmd.Flags().BoolVar(&searchSemantic, "semantic", false, "vector-only semantic search (requires embedding model)")
+	searchCmd.Flags().BoolVar(&searchHybrid, "hybrid", false, "hybrid BM25+vector search (default when embeddings available)")
 }
 
 func runSearch(cmd *cobra.Command, args []string) error {
@@ -89,8 +93,9 @@ func runSearch(cmd *cobra.Command, args []string) error {
 	//   - Filters or Types present → FTS5
 	//   - Plain text, no filters   → graph-first, FTS5 fallback
 	q := retrieval.Query{
-		Text:  strings.Join(args, " "),
-		Limit: searchBudget,
+		Text:       strings.Join(args, " "),
+		Limit:      searchBudget,
+		SemanticOK: searchSemantic || searchHybrid,
 	}
 	if searchSpecsOnly || hasFilters() {
 		q.Types = nil
@@ -142,12 +147,14 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	// Graph results use the compact markdown format; FTS5 results use the
-	// tabular format. Source is homogeneous within a single Retrieve call.
-	if results[0].Source == "graph" {
+	// Graph/hybrid/vector results use the compact markdown format; FTS5
+	// results use the tabular format.
+	switch results[0].Source {
+	case "graph", "hybrid", "vector":
 		return printGraphResults(results, strings.Join(args, " "), searchBudget, searchJSON)
+	default:
+		return printFTSResults(results, searchJSON)
 	}
-	return printFTSResults(results, searchJSON)
 }
 
 // runSearchFTS handles the FTS5-specific modes: --file, --list, --cross-repo.

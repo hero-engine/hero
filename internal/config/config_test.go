@@ -278,6 +278,74 @@ func TestLoadInvalidJSON(t *testing.T) {
 	}
 }
 
+// --- EmbeddingsConfig ---
+
+func TestIsEmbeddingsEnabled_Default(t *testing.T) {
+	cfg := Config{}
+	if !cfg.IsEmbeddingsEnabled() {
+		t.Error("expected embeddings enabled by default (nil config)")
+	}
+}
+
+func TestIsEmbeddingsEnabled_NilEnabled(t *testing.T) {
+	cfg := Config{Embeddings: &EmbeddingsConfig{}}
+	if !cfg.IsEmbeddingsEnabled() {
+		t.Error("expected embeddings enabled when Enabled is nil")
+	}
+}
+
+func TestIsEmbeddingsEnabled_True(t *testing.T) {
+	enabled := true
+	cfg := Config{Embeddings: &EmbeddingsConfig{Enabled: &enabled}}
+	if !cfg.IsEmbeddingsEnabled() {
+		t.Error("expected embeddings enabled when set to true")
+	}
+}
+
+func TestIsEmbeddingsEnabled_False(t *testing.T) {
+	disabled := false
+	cfg := Config{Embeddings: &EmbeddingsConfig{Enabled: &disabled}}
+	if cfg.IsEmbeddingsEnabled() {
+		t.Error("expected embeddings disabled when set to false")
+	}
+}
+
+func TestEmbeddingsScope_Default(t *testing.T) {
+	cfg := Config{}
+	scope := cfg.EmbeddingsScope()
+	want := []string{"spec", "knowledge", "convention", "event", "code"}
+	if len(scope) != len(want) {
+		t.Fatalf("scope length = %d, want %d", len(scope), len(want))
+	}
+	for i, s := range scope {
+		if s != want[i] {
+			t.Errorf("scope[%d] = %q, want %q", i, s, want[i])
+		}
+	}
+}
+
+func TestEmbeddingsScope_Custom(t *testing.T) {
+	cfg := Config{Embeddings: &EmbeddingsConfig{Scope: []string{"spec", "knowledge"}}}
+	scope := cfg.EmbeddingsScope()
+	if len(scope) != 2 || scope[0] != "spec" || scope[1] != "knowledge" {
+		t.Errorf("expected custom scope [spec knowledge], got %v", scope)
+	}
+}
+
+func TestEmbeddingsModel_Default(t *testing.T) {
+	cfg := Config{}
+	if cfg.EmbeddingsModel() != "hero-embed-v1" {
+		t.Errorf("EmbeddingsModel() = %q, want %q", cfg.EmbeddingsModel(), "hero-embed-v1")
+	}
+}
+
+func TestEmbeddingsModel_Custom(t *testing.T) {
+	cfg := Config{Embeddings: &EmbeddingsConfig{Model: "custom-model"}}
+	if cfg.EmbeddingsModel() != "custom-model" {
+		t.Errorf("EmbeddingsModel() = %q, want %q", cfg.EmbeddingsModel(), "custom-model")
+	}
+}
+
 // --- ImportConfig.InventoryEnabled ---
 
 func TestInventoryEnabled_NilConfig(t *testing.T) {
