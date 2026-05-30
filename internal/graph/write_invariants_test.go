@@ -43,6 +43,57 @@ func TestUpsertNodeRejectsDomainMutation(t *testing.T) {
 	}
 }
 
+// TestUpsertNodeSelfHealsGlobalDomain verifies that a global node type
+// (Person, Repo) originally created with a non-empty domain can be
+// corrected to domain="" on subsequent upsert. This handles nodes that
+// were written before their type was added to the global allow-list.
+func TestUpsertNodeSelfHealsGlobalDomain(t *testing.T) {
+	s := openTestStore(t)
+
+	// Simulate a Repo node created before it was a global type.
+	_, err := s.UpsertNode(&Node{Type: "Repo", Key: "acme/app", Domain: "engineering", ContentHash: "h1"})
+	if err != nil {
+		t.Fatalf("initial upsert with domain: %v", err)
+	}
+
+	// Now upsert with the correct empty domain — should self-heal.
+	id2, err := s.UpsertNode(&Node{Type: "Repo", Key: "acme/app", Domain: "", ContentHash: "h2"})
+	if err != nil {
+		t.Fatalf("self-healing upsert: %v", err)
+	}
+	if id2 == 0 {
+		t.Fatal("expected non-zero ID after self-healing upsert")
+	}
+
+	// Verify the current node has empty domain.
+	node, err := s.GetNode("Repo", "acme/app")
+	if err != nil {
+		t.Fatalf("GetCurrentNode: %v", err)
+	}
+	if node.Domain != "" {
+		t.Errorf("domain after self-heal = %q, want empty", node.Domain)
+	}
+}
+
+// TestUpsertNodeSelfHealOnlyForGlobalTypes verifies that the self-heal
+// path only applies to global node types. A non-global type changing
+// domain still errors.
+func TestUpsertNodeSelfHealOnlyForGlobalTypes(t *testing.T) {
+	s := openTestStore(t)
+
+	// Create a Feature with domain "engineering".
+	_, err := s.UpsertNode(&Node{Type: "Feature", Key: "x", Domain: "engineering", ContentHash: "h1"})
+	if err != nil {
+		t.Fatalf("initial: %v", err)
+	}
+
+	// Attempt to change domain to "pm" — should still be rejected.
+	_, err = s.UpsertNode(&Node{Type: "Feature", Key: "x", Domain: "pm", ContentHash: "h2"})
+	if !errors.Is(err, ErrDomainMutation) {
+		t.Errorf("got %v, want ErrDomainMutation for non-global type domain change", err)
+	}
+}
+
 // TestEdgeInheritsFromNodeDomain verifies AC #3: when the caller does
 // not set Edge.Domain, the edge inherits from the from-node's domain.
 func TestEdgeInheritsFromNodeDomain(t *testing.T) {
