@@ -6,7 +6,14 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-26T03:11:12Z · 99 ready specs_
+_Generated: 2026-05-30T15:54:43Z · 99 ready specs_
+
+## native-mockup-rendering — "Native Mockup Rendering — Real Platform UI from /mock"
+_feature · delivering · horizon: now_
+
+Verify native-mockup-rendering delivery. All files are implemented: `swiftui-mockup-renderer` skill (domain + .claude overlay), mock command updated with renderer dispatch, ui-designer agent updated with SwiftUI pipeline, stack-detection has Swift markers, `mock.go` shows `[native]`/`[html]` tags with passing tests. Pick up at: end-to-end test in a real Swift project to confirm the full `swiftc` → `ImageRenderer` → PNG pipeline works. Spec at `.hero/planning/features/native-mockup-rendering/spec.md`.
+
+---
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -926,33 +933,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _note · active · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/knowledge/notes/memory-tools-and-community-patterns/spec.md)_
-
----
-
-## embeddings-index — "Embeddings Index — Semantic Retrieval Over Hero's Project Corpus"
-_feature · draft · horizon: next_
-
-Build the embeddings index as foundational infrastructure for Hero's "knows your project" features. Start with specs + knowledge + events + conventions; code-symbol corpus comes when master-ingest-restore lands. Use `bge-small-en-v1.5` via the simplest runtime that installs cleanly across macOS/Linux. SQLite + sqlite-vec for storage. Reciprocal-rank fusion for hybrid ranking.
-
-Read first:
-- This spec end-to-end.
-- [master-ingest-restore](../master-ingest-restore/spec.md) for the code-symbol corpus dependency.
-- [compact-handoff-summarizer](../compact-handoff-summarizer/spec.md) — the concrete first consumer.
-- `internal/graph/` for SQLite patterns already in use.
-- `internal/cli/search.go` (current `hero search`) to understand the existing BM25 path.
-
-Implement in order:
-
-1. Decide ONNX-Runtime vs. pure-Go inference. Bench both with `bge-small` on a representative chunk count; pick the one that installs cleanly across platforms.
-2. `internal/embeddings/storage.go` — sqlite-vec schema + insert/upsert/prune. Test with synthetic vectors first; no model dependency yet.
-3. Chunk extractors per corpus (specs, knowledge, events, conventions). Test independently.
-4. `hero embeddings init/refresh/status/query` CLI; manual smoke against this Hero repo's own corpus.
-5. `retrieval.Retriever` interface + RRF hybrid ranking; unit-test ranking with synthetic dual rankings.
-6. `hero search --semantic/--hybrid` flag wiring.
-7. Pre-commit hook addition for `--if-stale` refresh.
-8. Wire the first consumer (compact handoff summarizer prompt augmentation) once that spec ships.
-
-The win is cumulative: every downstream feature that retrieves project context gets sharper. The MVP delivery is ~600–900 LOC plus the model-loading infrastructure (likely the trickiest piece). Start small — get the seam right, then bolt features onto it.
 
 ---
 

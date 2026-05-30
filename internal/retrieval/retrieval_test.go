@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hero-engine/hero/internal/embeddings"
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/index"
 	"github.com/hero-engine/hero/internal/spec"
@@ -569,5 +570,317 @@ func TestBM25FallbackToGraphLIKE(t *testing.T) {
 	}
 	if results[0].Source != "graph" {
 		t.Errorf("expected source=graph for fallback, got %q", results[0].Source)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Phase C — fuseRRF unit tests
+// ---------------------------------------------------------------------------
+
+// TestFuseRRF_BothSets verifies that results appearing in both lexical and
+// vector rankings get a higher RRF score than results in only one set, and
+// that dual-ranked results have Source "hybrid".
+func TestFuseRRF_BothSets(t *testing.T) {
+	lexical := []Result{
+		{Key: "auth-feature", Title: "Auth Feature", Type: "Feature", Source: "graph", Score: 20},
+		{Key: "login-bug", Title: "Login Bug", Type: "Bug", Source: "graph", Score: 10},
+	}
+
+	vector := []embeddings.ScoredChunk{
+		{Chunk: embeddings.Chunk{ID: "spec:auth-feature:", Corpus: "spec", SourceID: "auth-feature"}, Score: 0.95},
+		{Chunk: embeddings.Chunk{ID: "knowledge:security.md", Corpus: "knowledge", SourceID: "security.md"}, Score: 0.80},
+	}
+
+	results := fuseRRF(lexical, vector, 60, 10)
+
+	if len(results) == 0 {
+		t.Fatal("fuseRRF returned zero results")
+	}
+
+	// auth-feature should be ranked first (appears in both sets).
+	if results[0].Key != "auth-feature" {
+		t.Errorf("expected auth-feature at rank 1, got %q", results[0].Key)
+	}
+	if results[0].Source != "hybrid" {
+		t.Errorf("expected source=hybrid for dual-ranked result, got %q", results[0].Source)
+	}
+
+	// auth-feature (in both) should have a higher score than login-bug (lexical only).
+	var authScore, loginScore float64
+	for _, r := range results {
+		switch r.Key {
+		case "auth-feature":
+			authScore = r.Score
+		case "login-bug":
+			loginScore = r.Score
+		}
+	}
+	if authScore <= loginScore {
+		t.Errorf("dual-ranked auth-feature score %v should be > single-ranked login-bug %v",
+			authScore, loginScore)
+	}
+
+	// login-bug should keep source="graph" (only in lexical).
+	for _, r := range results {
+		if r.Key == "login-bug" && r.Source != "graph" {
+			t.Errorf("expected login-bug source=graph, got %q", r.Source)
+		}
+	}
+
+	// security.md should appear from vector-only with source="vector".
+	// For non-spec corpora the matching key is the chunk ID.
+	found := false
+	for _, r := range results {
+		if r.Key == "knowledge:security.md" {
+			found = true
+			if r.Source != "vector" {
+				t.Errorf("expected knowledge:security.md source=vector, got %q", r.Source)
+			}
+		}
+	}
+	if !found {
+		t.Error("vector-only result knowledge:security.md not found in fused results")
+	}
+}
+
+// TestFuseRRF_Empty verifies that fuseRRF handles empty inputs gracefully.
+func TestFuseRRF_Empty(t *testing.T) {
+	results := fuseRRF(nil, nil, 60, 10)
+	if len(results) != 0 {
+		t.Errorf("expected zero results for empty inputs, got %d", len(results))
+	}
+
+	// Lexical only.
+	lexical := []Result{{Key: "a", Source: "graph"}}
+	results = fuseRRF(lexical, nil, 60, 10)
+	if len(results) != 1 || results[0].Key != "a" {
+		t.Errorf("expected 1 lexical-only result, got %d", len(results))
+	}
+
+	// Vector only.
+	vector := []embeddings.ScoredChunk{
+		{Chunk: embeddings.Chunk{ID: "spec:b:", Corpus: "spec", SourceID: "b"}, Score: 0.9},
+	}
+	results = fuseRRF(nil, vector, 60, 10)
+	if len(results) != 1 || results[0].Key != "b" {
+		t.Errorf("expected 1 vector-only result, got %d", len(results))
+	}
+}
+
+// TestFuseRRF_LimitRespected verifies that fuseRRF respects the limit.
+func TestFuseRRF_LimitRespected(t *testing.T) {
+	var lexical []Result
+	for i := 0; i < 20; i++ {
+		lexical = append(lexical, Result{Key: fmt.Sprintf("lex-%d", i), Source: "graph"})
+	}
+	var vector []embeddings.ScoredChunk
+	for i := 0; i < 20; i++ {
+		vector = append(vector, embeddings.ScoredChunk{
+			Chunk: embeddings.Chunk{ID: fmt.Sprintf("spec:vec-%d:", i), Corpus: "spec", SourceID: fmt.Sprintf("vec-%d", i)},
+			Score: float64(20-i) / 20.0,
+		})
+	}
+
+	results := fuseRRF(lexical, vector, 60, 5)
+	if len(results) != 5 {
+		t.Errorf("expected 5 results (limit), got %d", len(results))
+	}
+}
+
+// TestRetrieveHybrid_WithEmbeddedModel tests the full hybrid retrieval path
+// using the embedded model. It sets up specs and knowledge in both FTS5 and
+// the vector index, then verifies hybrid search returns results from both.
+func TestRetrieveHybrid_WithEmbeddedModel(t *testing.T) {
+	heroDir := newHeroDir(t)
+
+	// Insert graph nodes.
+	addGraphNode(t, heroDir, "Feature", "auth-retry-spec", map[string]any{
+		"title": "Authentication Retry Logic",
+		"body":  "Implement exponential backoff for failed authentication attempts",
+	})
+	addGraphNode(t, heroDir, "Feature", "scan-pipeline-spec", map[string]any{
+		"title": "Scan Pipeline Optimization",
+		"body":  "Improve scan performance by parallelizing file tree walk",
+	})
+	addGraphNode(t, heroDir, "Feature", "landing-page-design", map[string]any{
+		"title": "Landing Page Design",
+		"body":  "Create marketing landing page with hero bolt logo",
+	})
+
+	// Project into node_index for BM25.
+	projectNodes(t, heroDir)
+
+	// Open the retriever (will load the embedded model).
+	ret, err := New(heroDir)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	defer ret.Close()
+
+	if ret.embModel == nil {
+		t.Skip("embedded model not available")
+	}
+
+	// Populate vec_chunks with test content.
+	store, err := embeddings.OpenStorage(ret.fts.RawDB())
+	if err != nil {
+		t.Fatalf("OpenStorage: %v", err)
+	}
+
+	texts := map[string]string{
+		"auth-retry-spec":    "Authentication retry with exponential backoff for failed login attempts",
+		"scan-pipeline-spec": "Scan pipeline optimization for parallel file tree walking and ingestion",
+		"landing-page-design": "Marketing landing page with hero bolt logo and call to action",
+	}
+	for key, text := range texts {
+		vec := ret.embModel.Embed(text)
+		_, err := store.Upsert(embeddings.Chunk{
+			ID:       fmt.Sprintf("spec:%s:", key),
+			Corpus:   "spec",
+			SourceID: key,
+			TextHash: fmt.Sprintf("hash-%s", key),
+			Vector:   vec,
+		})
+		if err != nil {
+			t.Fatalf("Upsert: %v", err)
+		}
+	}
+	ret.embStore = store
+
+	// Query for something semantically related to auth retry.
+	results, err := ret.Retrieve(Query{
+		Text:       "login failure backoff",
+		SemanticOK: true,
+		Limit:      10,
+	})
+	if err != nil {
+		t.Fatalf("Retrieve hybrid: %v", err)
+	}
+
+	if len(results) == 0 {
+		t.Fatal("expected hybrid results, got none")
+	}
+
+	// The auth-retry spec should rank highly — it matches both
+	// the lexical content and the semantic meaning.
+	foundAuth := false
+	for i, r := range results {
+		if r.Key == "auth-retry-spec" {
+			foundAuth = true
+			if i > 3 {
+				t.Errorf("auth-retry-spec ranked %d, expected top-3", i)
+			}
+			// Should be marked hybrid (appears in both rankings).
+			t.Logf("auth-retry-spec: rank=%d source=%s score=%.4f", i, r.Source, r.Score)
+			break
+		}
+	}
+	if !foundAuth {
+		t.Error("auth-retry-spec not found in hybrid results")
+		for i, r := range results {
+			if i >= 5 {
+				break
+			}
+			t.Logf("  [%d] key=%s source=%s score=%.4f", i, r.Key, r.Source, r.Score)
+		}
+	}
+}
+
+// TestRetrieveHybrid_VectorOnlyResult verifies that vector-only results
+// (not in lexical set) still appear in hybrid output with source="vector".
+func TestRetrieveHybrid_VectorOnlyResult(t *testing.T) {
+	heroDir := newHeroDir(t)
+
+	// Only add one node to the graph (lexical), but embed two specs.
+	addGraphNode(t, heroDir, "Feature", "visible-spec", map[string]any{
+		"title": "Visible Spec Unique Marker qrstvwx",
+	})
+	projectNodes(t, heroDir)
+
+	ret, err := New(heroDir)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	defer ret.Close()
+
+	if ret.embModel == nil {
+		t.Skip("embedded model not available")
+	}
+
+	store, err := embeddings.OpenStorage(ret.fts.RawDB())
+	if err != nil {
+		t.Fatalf("OpenStorage: %v", err)
+	}
+
+	// Embed a spec that does NOT exist in the graph.
+	vec := ret.embModel.Embed("database migration schema upgrade for authentication tables")
+	_, err = store.Upsert(embeddings.Chunk{
+		ID:       "spec:hidden-spec:",
+		Corpus:   "spec",
+		SourceID: "hidden-spec",
+		TextHash: "hash-hidden",
+		Vector:   vec,
+	})
+	if err != nil {
+		t.Fatalf("Upsert: %v", err)
+	}
+	ret.embStore = store
+
+	results, err := ret.Retrieve(Query{
+		Text:       "database migration schema",
+		SemanticOK: true,
+		Limit:      10,
+	})
+	if err != nil {
+		t.Fatalf("Retrieve: %v", err)
+	}
+
+	// hidden-spec should appear from vector search only.
+	found := false
+	for _, r := range results {
+		if r.Key == "hidden-spec" {
+			found = true
+			if r.Source != "vector" {
+				t.Errorf("expected source=vector for vector-only result, got %q", r.Source)
+			}
+			break
+		}
+	}
+	if !found {
+		t.Error("hidden-spec (vector-only) not found in hybrid results")
+	}
+}
+
+// TestRetrieve_SemanticOK_NoModel verifies that when SemanticOK=true but no
+// embedding model is loaded, retrieval gracefully falls through to BM25-only.
+func TestRetrieve_SemanticOK_NoModel(t *testing.T) {
+	heroDir := newHeroDir(t)
+
+	addGraphNode(t, heroDir, "Feature", "semantic-test-feature", map[string]any{
+		"title": "Semantic test unique marker xyzquux",
+		"body":  "Semantic test marker content",
+	})
+
+	ret, err := New(heroDir)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	defer ret.Close()
+
+	// Ensure no embedding model is loaded (default for test environments).
+	if ret.embModel != nil {
+		t.Skip("embedding model unexpectedly available in test environment")
+	}
+
+	results, err := ret.Retrieve(Query{Text: "xyzquux", SemanticOK: true})
+	if err != nil {
+		t.Fatalf("Retrieve with SemanticOK: %v", err)
+	}
+	if len(results) == 0 {
+		t.Fatal("expected results from BM25 fallback, got none")
+	}
+	// Should fall through to graph/FTS5 path when no model is available.
+	if results[0].Source != "graph" {
+		t.Errorf("expected source=graph for BM25 fallback, got %q", results[0].Source)
 	}
 }

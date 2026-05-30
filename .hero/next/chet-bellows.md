@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-05-21T14:17:45Z
+updated: 2026-05-30T06:12:52Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver read-dont-guess: replace 'Distinguish facts from assumptions' bullet in agent-reliability/SKILL.md with new 'Ground before you guess' rule, and add same rule as first bullet under Practical guidance in debugging-investigation/SKILL.md. Behavioral prompt edit — make grounding procedural and visibly auditable.
+> Deliver embedded-inference: implement pure Go Model2Vec static embeddings engine, vector storage in index.db, hybrid RRF ranking in Retriever, and CLI surface. Phase 1-4 from the spec.
 
 ## Suggested next prompt
 

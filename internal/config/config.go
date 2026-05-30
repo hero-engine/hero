@@ -94,6 +94,11 @@ type Config struct {
 	// internal/serve/chat (capability resolver, hero-code probe).
 	Chat *ChatConfig `json:"chat,omitempty"`
 
+	// Embeddings controls the semantic embedding layer used for vector
+	// search over project content (specs, knowledge, conventions, events,
+	// code). Nil means defaults apply (enabled, all corpora, hero-embed-v1).
+	Embeddings *EmbeddingsConfig `json:"embeddings,omitempty"`
+
 	// Sprint, when present, opts the workspace into the planned-sprint
 	// UI surfaces (the Sprint tab on the Work page, sprint-shaped
 	// metric tiles). Absent/empty workspaces never see sprint UI —
@@ -131,6 +136,41 @@ func (c Config) HasSprintConfig() bool {
 		return false
 	}
 	return true
+}
+
+// EmbeddingsConfig controls the semantic embedding layer.
+type EmbeddingsConfig struct {
+	// Enabled turns semantic embeddings on/off. Default: true when model is available.
+	Enabled *bool `json:"enabled,omitempty"`
+	// Scope lists which corpora to embed. Default: ["spec", "knowledge", "convention", "event", "code"]
+	Scope []string `json:"scope,omitempty"`
+	// Model names the Model2Vec model to use. Default: "hero-embed-v1"
+	Model string `json:"model,omitempty"`
+}
+
+// IsEmbeddingsEnabled returns true if embeddings are enabled.
+// Default: true (if not explicitly disabled).
+func (c Config) IsEmbeddingsEnabled() bool {
+	if c.Embeddings == nil || c.Embeddings.Enabled == nil {
+		return true
+	}
+	return *c.Embeddings.Enabled
+}
+
+// EmbeddingsScope returns the list of corpora to embed.
+func (c Config) EmbeddingsScope() []string {
+	if c.Embeddings == nil || len(c.Embeddings.Scope) == 0 {
+		return []string{"spec", "knowledge", "convention", "event", "code"}
+	}
+	return c.Embeddings.Scope
+}
+
+// EmbeddingsModel returns the configured model name or the default.
+func (c Config) EmbeddingsModel() string {
+	if c.Embeddings == nil || c.Embeddings.Model == "" {
+		return "hero-embed-v1"
+	}
+	return c.Embeddings.Model
 }
 
 // ChatConfig holds chat-dispatcher settings.
