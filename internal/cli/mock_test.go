@@ -49,6 +49,51 @@ func TestMockCmd_ListWithMocks(t *testing.T) {
 	if !strings.Contains(out, "3 mockup(s)") {
 		t.Errorf("expected count line, got: %s", out)
 	}
+	// All HTML-only mocks should show [html] tag
+	if !strings.Contains(out, "[html]") {
+		t.Errorf("expected [html] tag in output, got: %s", out)
+	}
+}
+
+func TestMockCmd_ListNativeTag(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Create an HTML-only mock
+	htmlDir := filepath.Join(env.heroDir, "mocks", "web-page")
+	if err := os.MkdirAll(htmlDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(htmlDir, "index.html"), []byte("<html></html>"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a native mock (has screenshot.png alongside index.html)
+	nativeDir := filepath.Join(env.heroDir, "mocks", "settings-screen")
+	if err := os.MkdirAll(nativeDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(nativeDir, "index.html"), []byte("<html></html>"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(nativeDir, "screenshot.png"), []byte("fake-png"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := runCmd("spec", "mock", "--list")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// The native mock should show [native]
+	if !strings.Contains(out, "[native]") {
+		t.Errorf("expected [native] tag for settings-screen, got: %s", out)
+	}
+	// The HTML mock should show [html]
+	if !strings.Contains(out, "[html]") {
+		t.Errorf("expected [html] tag for web-page, got: %s", out)
+	}
+	if !strings.Contains(out, "2 mockup(s)") {
+		t.Errorf("expected 2 mockup count, got: %s", out)
+	}
 }
 
 func TestMockCmd_ListSkipsNonDirs(t *testing.T) {
