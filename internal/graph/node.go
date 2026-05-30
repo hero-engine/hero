@@ -128,9 +128,18 @@ func (s *Store) UpsertNode(n *Node) (int64, error) {
 		// First write wins on domain: relocating a node across domains
 		// is a v2 retag concern, not an upsert concern. Catch the trap
 		// at the write site rather than silently flipping the tag.
+		//
+		// Exception: global node types (Person, Repo, etc.) may have been
+		// created with a domain before they were added to the global
+		// allow-list. Allow the upsert to correct them to domain="".
 		if existingDomain != n.Domain {
-			return 0, fmt.Errorf("%w: type=%q key=%q existing=%q new=%q",
-				ErrDomainMutation, n.Type, n.Key, existingDomain, n.Domain)
+			if IsGlobalNodeType(n.Type) && n.Domain == "" {
+				// Self-healing: let the global node type shed its stale
+				// domain tag. The invalidate-and-reinsert below handles it.
+			} else {
+				return 0, fmt.Errorf("%w: type=%q key=%q existing=%q new=%q",
+					ErrDomainMutation, n.Type, n.Key, existingDomain, n.Domain)
+			}
 		}
 		// Partition columns must match for an upsert to be a no-op,
 		// even if content is otherwise unchanged. This makes the v1→v2
