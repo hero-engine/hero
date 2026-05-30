@@ -99,6 +99,12 @@ Hero is configured through a `hero.json` file at the root of your project (or in
 
   "demos": {},
 
+  "embeddings": {
+    "enabled": true,
+    "scope": ["spec", "knowledge", "convention", "event", "code"],
+    "model": "hero-embed-v1"
+  },
+
   "serve": {
     "tool_filter": {
       "allow": ["hero_context", "hero_search", "hero_status"],
@@ -279,6 +285,23 @@ Test runner configuration used by delivery and QA agents.
 | `test_dir` | `string` | Directory containing tests |
 | `runner_command` | `string` | Command to run tests |
 | `base_url` | `string` | Base URL for integration/e2e tests |
+
+---
+
+### `embeddings`
+
+Semantic embedding engine for hybrid search. The embedding model ships
+inside the binary — no download or external tooling required.
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | `bool` | `true` | Enable semantic embeddings. Set to `false` to use BM25-only search |
+| `scope` | `string[]` | `["spec", "knowledge", "convention", "event", "code"]` | Which corpora to embed. Remove entries to reduce index size |
+| `model` | `string` | `"hero-embed-v1"` | Model name. Override to use a custom model from `~/.hero/models/embeddings/<name>/` |
+
+The embedding index lives inside `index.db` (the `vec_chunks` table) and
+is rebuilt incrementally on every `hero scan`. Use `hero embeddings status`
+to inspect the index and `hero embeddings rebuild` to force a full re-embed.
 
 ---
 

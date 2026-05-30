@@ -173,6 +173,7 @@ Ask the corpus:
 ```bash
 hero ask "what is our error response format?"
 hero search "OAuth session handling"
+hero search --hybrid "retry logic for failed logins"
 hero relevant src/auth/session.go src/auth/middleware.go
 hero why csv-export
 hero blocked
@@ -224,7 +225,7 @@ The binary is organized around a few stable groups.
 | Spec lifecycle | `hero spec new`, `hero spec deliver`, `hero spec verify`, `hero spec complete`, `hero spec claim`, `hero spec plan`, `hero diff`, `hero drift`, `hero list`, `hero queue`, `hero suggest` |
 | Acceptance criteria | `hero ac list`, `hero ac record`, `hero ac status`, `hero ac history`, `hero coverage`, `hero spec contract` |
 | Workspace health | `hero status`, `hero dashboard`, `hero check`, `hero docs check`, `hero smoke`, `hero ci`, `hero anchor`, `hero tripwire` |
-| Graph and retrieval | `hero scan`, `hero graph`, `hero extract`, `hero impact`, `hero why`, `hero blocked`, `hero snapshot` |
+| Graph and retrieval | `hero scan`, `hero graph`, `hero extract`, `hero impact`, `hero why`, `hero blocked`, `hero snapshot`, `hero embeddings` |
 | Tracker and sync | `hero sync connect`, `hero sync import`, `hero sync pull`, `hero sync spec`, `hero sync link`, `hero sync comment`, `hero sync attach`, `hero sync graph` |
 | Cross-repo peering | `hero admin repos`, `hero peer manifest`, `hero peer list`, `hero peer show`, `hero peer call`, `hero handoff`, `hero handoff status`, `hero handoff accept`, `hero context imports` |
 | Automation and headless work | `hero agent run`, `hero agent jobs`, `hero agent approve`, `hero agent automate`, `hero pipeline`, `hero watch` |
@@ -308,7 +309,7 @@ include claim/event/plan/enrich/test/demo helpers.
 ├── smoke/                      # per-feature smoke metadata
 ├── events.log                  # cross-session activity feed source
 ├── graph.db                    # generated graph store
-├── index.db                    # generated search index
+├── index.db                    # generated search index (BM25 + vec_chunks)
 └── hero.json                   # project config
 ```
 
@@ -324,7 +325,8 @@ cmd/hero/                 CLI entrypoint
 internal/                 Go implementation packages
 internal/serve/           HTTP daemon and MCP server
 internal/graph/           SQLite graph substrate and traversal support
-internal/retrieval/       BM25/TF-IDF retrieval layer
+internal/retrieval/       hybrid retrieval layer (BM25 + semantic vector search)
+internal/embeddings/      pure-Go embedding engine and vector storage
 internal/scan/            master ingest and codebase scanning
 internal/traversal/       why/blocked graph queries
 core/                     universal core pack (agents, commands, skills, vocabularies)
@@ -410,6 +412,10 @@ Common `.hero/hero.json` fields:
     "framework": "playwright",
     "mode": "autonomous",
     "test_dir": "e2e"
+  },
+  "embeddings": {
+    "enabled": true,
+    "scope": ["spec", "knowledge", "convention", "event", "code"]
   }
 }
 ```

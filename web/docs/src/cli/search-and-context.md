@@ -11,10 +11,53 @@ hero search "payment retry"
 hero search --type bug "timeout"
 hero search --file src/payments.go
 hero search --list --type feature
+hero search --hybrid "retry logic for failed logins"
+hero search --semantic "error handling conventions"
 ```
 
 `hero search` searches the unified corpus: specs, knowledge entries, and
 code intelligence populated by `hero scan`.
+
+By default, search uses BM25/TF-IDF ranking. Two additional modes leverage
+the built-in semantic embedding engine:
+
+| Flag | Behavior |
+|---|---|
+| *(none)* | BM25 lexical search over the full-text index. |
+| `--hybrid` | Fuses BM25 results with vector similarity via Reciprocal Rank Fusion. Best for natural-language queries where exact keyword matches may miss semantically related content. |
+| `--semantic` | Vector-only search. Finds content by meaning, not keywords. |
+
+Hybrid search is the recommended mode for exploratory queries. It
+surfaces results that BM25 alone would miss (e.g., searching "login
+failure backoff" finds a spec titled "Authentication Retry Logic").
+
+## Embeddings
+
+The embedding engine is built into the `hero` binary — no external model
+download, no Python, no CGo. It runs in-process in microseconds.
+
+```bash
+hero embeddings status       # chunk counts, model info, index size
+hero embeddings rebuild      # wipe and rebuild the vector index from scratch
+```
+
+`hero scan` automatically refreshes the embedding index alongside the
+full-text index. Only chunks whose content changed are re-embedded
+(content-hash invalidation). A refresh on an unchanged project completes
+in under 100ms.
+
+The embedding index covers five corpora: specs, knowledge, conventions,
+graph events, and code symbols. Configure which corpora to embed via
+`hero.json`:
+
+```json
+{
+  "embeddings": {
+    "enabled": true,
+    "scope": ["spec", "knowledge", "convention", "event", "code"]
+  }
+}
+```
 
 ## Ask
 
@@ -23,8 +66,8 @@ hero ask "How does the retry logic work?"
 hero ask "What conventions exist for error handling?"
 ```
 
-`hero ask` is extractive Q&A over the corpus using BM25/TF-IDF ranking.
-It does not call an LLM.
+`hero ask` is extractive Q&A over the corpus. It uses BM25/TF-IDF
+ranking and does not call an LLM.
 
 ## Relevant
 
