@@ -41,9 +41,10 @@ but day to day, conversation is the interface.
   acceptance criteria before implementation.
 - **Diagnosis before fixes** — `/diagnose` investigates root cause and
   creates a fix spec instead of guessing.
-- **Context compounds** — `/resume`, `hero search`, `hero ask`,
+- **Context compounds** — `/resume`, `hero search --hybrid`, `hero ask`,
   `hero relevant`, and MCP tools make prior work available to the next
-  session.
+  session. A built-in semantic embedding engine finds related content
+  even without exact keyword matches.
 - **Knowledge becomes structure** — the graph backs `hero why`,
   `hero blocked`, AC status, drift checks, and session handoff.
 - **The harness stays the brain** — Hero feeds OpenCode, Cursor, Claude

@@ -23,7 +23,7 @@ This creates the `.hero/` directory structure:
 ├── smoke/          # per-feature smoke metadata
 ├── events.log      # cross-session activity feed
 ├── graph.db        # generated graph store
-├── index.db        # generated search index
+├── index.db        # generated search index (FTS5 + semantic vectors)
 └── hero.json       # project configuration
 ```
 

@@ -92,10 +92,11 @@ read and commit to git:
 - **History** — what work has been started, finished, abandoned;
   who's working on what; what acceptance criteria passed
 
-Hero also maintains a local graph and search index over all of this,
-so it can answer questions like "why does this file exist," "what's
-blocked," and "what conventions apply to the code I'm editing right
-now."
+Hero also maintains a local graph, full-text index, and semantic
+embedding index over all of this, so it can answer questions like "why
+does this file exist," "what's blocked," and "what conventions apply to
+the code I'm editing right now." The embedding engine ships inside the
+binary — no external model download or service required.
 
 ## Coding Is the First Vertical, Not the Only One
 

@@ -19,7 +19,8 @@ hero/
 │   ├── cli/                  # Cobra command wiring
 │   ├── serve/                # HTTP daemon + MCP stdio server
 │   ├── graph/                # SQLite graph substrate
-│   ├── retrieval/            # BM25/TF-IDF retrieval
+│   ├── retrieval/            # hybrid retrieval (BM25 + semantic)
+│   ├── embeddings/           # pure-Go embedding engine + vector storage
 │   ├── scan/                 # master ingest and stack detection
 │   ├── traversal/            # why/blocked queries
 │   ├── spec/                 # spec parsing and lifecycle
@@ -64,7 +65,7 @@ source split that newer install/upgrade paths use.
 ├── smoke/                     # per-feature smoke metadata
 ├── events.log                 # cross-session activity feed source
 ├── graph.db                   # generated graph store
-├── index.db                   # generated search index
+├── index.db                   # generated search index (FTS5 + vec_chunks)
 └── hero.json                  # project config
 ```
 

@@ -42,13 +42,18 @@ When `knowledge.auto_capture` is enabled in `hero.json`, agents silently persist
 
 ## Querying
 
-Use `hero ask` to search the knowledge base:
+Use `hero ask` or `hero search` to query the knowledge base:
 
 ```bash
 hero ask "how do we handle authentication"
+hero search --hybrid "retry logic for failed requests"
 ```
 
-Search uses **BM25/TF-IDF** ranking — no LLM involved. It's fast, deterministic, and works offline.
+Search uses **BM25/TF-IDF** ranking by default. With `--hybrid`, Hero
+fuses lexical results with semantic vector similarity — so a query about
+"login failure backoff" finds a spec titled "Authentication Retry Logic"
+even without keyword overlap. The embedding model ships inside the `hero`
+binary; no download, no external service, no LLM call.
 
 ## Context Injection
 

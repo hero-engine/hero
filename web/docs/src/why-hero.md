@@ -80,7 +80,7 @@ Hero stores project context as a structured corpus under `.hero/`:
 │   └── notes/
 ├── events.log       cross-session activity feed
 ├── graph.db         generated dependency/relationship graph
-└── index.db         generated full-text search index
+└── index.db         generated search index (full-text + semantic vectors)
 ```
 
 Everything in `planning/`, `specs/`, and `knowledge/` is plain
@@ -139,8 +139,9 @@ nobody remembers to use.
 ### 4. A Graph and a Retrieval Layer
 
 Markdown alone isn't enough. Hero builds a graph over the corpus
-(specs, files, decisions, conventions, AC results, tracker links) and
-a full-text index over the content. That makes possible:
+(specs, files, decisions, conventions, AC results, tracker links),
+a full-text index, and a semantic embedding index over the content.
+That makes possible:
 
 - `hero relevant src/auth/session.go` — given the files you're
   editing right now, what specs/decisions/conventions/notes apply?
