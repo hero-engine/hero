@@ -2,7 +2,7 @@
 title: Hero binary upgrades silently strand installations in stale layout
 slug: upgrade-strands-install-layout
 type: bug
-status: planning
+status: completed
 severity: high
 root_cause_class: design
 created: 2026-05-31
@@ -328,6 +328,31 @@ D. `internal/version/version.go:Mismatch` — the suggested remediation
 | `internal/version/version.go` | 192-223 | `Mismatch` — fix the remediation string. |
 
 ---
+
+## Delivery Status
+
+| Step | Description | Shipped in | Status |
+|------|-------------|------------|--------|
+| §0 | Add `.codex/{agents,commands}` to cleanup list; hoist to `legacyHarnessKindPaths()` | v0.14.2 | ✅ shipped |
+| §1 | `DetectLegacyDrift` read-only probe in cleanup.go | v0.14.3 | ✅ shipped |
+| §2 | `install-drift` row in `hero check` | v0.14.3 | ✅ shipped |
+| §3 | Preamble warning in `PersistentPreRun` | v0.14.3 | ✅ shipped |
+| §4 | Fix `version.Mismatch` remediation text | v0.14.3 | ✅ shipped |
+| §5 | Enumeration test over `legacyHarnessKindPaths` | v0.14.2 | ✅ shipped |
+| §6 | Derive cleanup list from target metadata | — | deferred — structural improvement, no user-visible bug |
+| §7 | `hero status` header note | — | deferred — redundant with §3 preamble |
+
+**Correction to the original Code Flow analysis:** step 8 of the
+"How the bug manifests" walkthrough claimed `hero upgrade` does not
+invoke `cleanupLegacyCanonicalSymlinks`. That was wrong — `upgradeTarget`
+calls `install.Run` ([internal/cli/upgrade.go:249](internal/cli/upgrade.go#L249))
+which fires cleanup unconditionally for project-mode installs. The
+real residual gap (now closed by §3) was "user upgrades binary and
+never runs any `hero` command in the project at all" — between the
+binary swap and the first `hero ...` invocation, the harness would
+silently fail to load skills. The preamble probe in §3 means the
+strand is announced loudly the first time the user runs any hero
+command.
 
 ## Suggested Fix Approach
 

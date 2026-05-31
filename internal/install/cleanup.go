@@ -184,6 +184,83 @@ func cleanupLegacyCanonicalSymlinks(opts Options, projectDir string) error {
 	return nil
 }
 
+// LegacyDriftFinding describes one stale install artifact on disk
+// that the next `hero install` (or `hero upgrade`) would clean up.
+type LegacyDriftFinding struct {
+	// Path is the absolute filesystem path of the artifact.
+	Path string
+	// Kind is "broken_symlink" (dangling harness-dir symlink pointing
+	// at .hero/) or "legacy_canonical_dir" (leftover .hero/agents/,
+	// .hero/commands/, or .hero/skills/ mirror directory).
+	Kind string
+	// Target is the symlink target (empty for legacy_canonical_dir).
+	Target string
+}
+
+// DetectLegacyDrift returns the set of dangling harness-dir symlinks
+// and stranded `.hero/{agents,commands,skills}/` mirror directories
+// at projectDir. Read-only — does not mutate the filesystem.
+//
+// Shape parallels what cleanupLegacyCanonicalSymlinks would act on,
+// but without performing the cleanup. Used by `hero check` and the
+// root command preamble to surface drift loudly before the user
+// hits the silent failure mode (Claude Code session with no Hero
+// skills/agents loaded).
+//
+// Returns an empty slice on a clean install. Safe to call on any
+// project, including ones that never had Hero installed.
+func DetectLegacyDrift(projectDir string) []LegacyDriftFinding {
+	var out []LegacyDriftFinding
+
+	for _, hp := range legacyHarnessKindPaths(projectDir) {
+		info, err := os.Lstat(hp)
+		if err != nil || info.Mode()&os.ModeSymlink == 0 {
+			continue
+		}
+		target, _ := os.Readlink(hp)
+		// Only flag symlinks plausibly written by Hero (target points
+		// into .hero/). User-authored symlinks at managed paths are
+		// still removed by the mutating cleanup per the unconditional-
+		// removal policy, but for *detection* we want to avoid false
+		// positives that would scream "Hero is broken" at users who
+		// hand-crafted their own layout.
+		if !looksLikeHeroSymlinkTarget(target) {
+			continue
+		}
+		// Resolve and check existence — symlinks that point at real
+		// .hero/<kind>/ dirs are not drift, just legacy-but-functional.
+		resolved := target
+		if !filepath.IsAbs(resolved) {
+			resolved = filepath.Join(filepath.Dir(hp), target)
+		}
+		if _, err := os.Stat(resolved); err == nil {
+			// Symlink resolves cleanly to an existing dir. Still legacy
+			// — flag as legacy_canonical_dir below — but not a
+			// broken_symlink that breaks harness loading right now.
+			continue
+		}
+		out = append(out, LegacyDriftFinding{
+			Path:   hp,
+			Kind:   "broken_symlink",
+			Target: target,
+		})
+	}
+
+	for _, kind := range []string{"agents", "commands", "skills"} {
+		dir := filepath.Join(projectDir, ".hero", kind)
+		info, err := os.Lstat(dir)
+		if err != nil || !info.IsDir() {
+			continue
+		}
+		out = append(out, LegacyDriftFinding{
+			Path: dir,
+			Kind: "legacy_canonical_dir",
+		})
+	}
+
+	return out
+}
+
 // looksLikeHeroSymlinkTarget reports whether a symlink target string
 // is one Hero would have created — i.e. points into a `.hero/` tree
 // or into the canonical `.hero/{agents,commands,skills}/` layout.

@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-31T16:10:42Z · 100 ready specs_
+_Generated: 2026-05-31T16:17:40Z · 99 ready specs_
 
 ## native-mockup-rendering — "Native Mockup Rendering — Real Platform UI from /mock"
 _feature · delivering · horizon: now_
@@ -205,35 +205,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-sales/spec.md)_
-
----
-
-## upgrade-strands-install-layout — Hero binary upgrades silently strand installations in stale layout
-_bug · planning · horizon: now_
-
-Restores Hero's "every session starts smart" promise after a binary
-upgrade by detecting stranded P2 install layout (dangling harness
-symlinks + leftover `.hero/{agents,commands,skills}/`) and surfacing
-it loudly instead of letting Claude Code sessions silently break.
-
-**Status:** planning — diagnosis complete; no code changes yet.
-
-**Pick up at:** add `install.DetectLegacyDrift(projectDir)` in
-`internal/install/cleanup.go` (reuse `harnessKindPaths`, return
-`[]LegacyDriftFinding`). Then wire one call in `runCheck`
-(`internal/cli/check.go`) and one in `PersistentPreRun`
-(`internal/cli/root.go:37-66`), and fix `version.Mismatch`'s
-remediation string at `internal/version/version.go:215-222`.
-
-→ `.hero/planning/bugs/upgrade-strands-install-layout/spec.md`
-
-**Files:** `internal/install/cleanup.go:114`,
-`internal/cli/check.go:325`, `internal/cli/root.go:57`,
-`internal/version/version.go:215`, `internal/install/satellite_repair.go:19`
-**Skip:** auto-running cleanup from `PersistentPreRun` (option 3) —
-nag-and-let-user-decide first; revisit once detection has shipped.
-Also skip routing `hero upgrade` through cleanup in this spec — that's
-a follow-up.
 
 ---
 

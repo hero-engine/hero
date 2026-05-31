@@ -83,6 +83,141 @@ func TestCleanupLegacy_RemovesAnySymlinkAtHarnessPath(t *testing.T) {
 	}
 }
 
+// TestDetectLegacyDrift_BrokenSymlink confirms a dangling harness-dir
+// symlink pointing into .hero/ is reported as broken_symlink drift.
+func TestDetectLegacyDrift_BrokenSymlink(t *testing.T) {
+	tmp := t.TempDir()
+	hp := filepath.Join(tmp, ".claude", "agents")
+	if err := os.MkdirAll(filepath.Dir(hp), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// Target does NOT exist on disk.
+	if err := os.Symlink("../.hero/agents", hp); err != nil {
+		t.Fatal(err)
+	}
+
+	findings := DetectLegacyDrift(tmp)
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %+v", len(findings), findings)
+	}
+	if findings[0].Kind != "broken_symlink" {
+		t.Errorf("kind = %q, want broken_symlink", findings[0].Kind)
+	}
+	if findings[0].Path != hp {
+		t.Errorf("path = %q, want %q", findings[0].Path, hp)
+	}
+}
+
+// TestDetectLegacyDrift_ResolvedSymlinkNotReportedAsBroken: a symlink
+// that points at an existing .hero/ dir is still legacy but not broken;
+// it should not appear as broken_symlink (the legacy_canonical_dir
+// finding for the target dir is still reported).
+func TestDetectLegacyDrift_ResolvedSymlinkNotReportedAsBroken(t *testing.T) {
+	tmp := t.TempDir()
+	hp := filepath.Join(tmp, ".claude", "agents")
+	if err := os.MkdirAll(filepath.Dir(hp), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// Make the symlink AND its target exist.
+	if err := os.MkdirAll(filepath.Join(tmp, ".hero", "agents"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("../.hero/agents", hp); err != nil {
+		t.Fatal(err)
+	}
+
+	findings := DetectLegacyDrift(tmp)
+	for _, f := range findings {
+		if f.Kind == "broken_symlink" {
+			t.Errorf("resolved symlink should not be flagged as broken: %+v", f)
+		}
+	}
+	// But the legacy_canonical_dir should be flagged.
+	var sawCanonical bool
+	for _, f := range findings {
+		if f.Kind == "legacy_canonical_dir" {
+			sawCanonical = true
+		}
+	}
+	if !sawCanonical {
+		t.Errorf("expected legacy_canonical_dir finding for .hero/agents, got: %+v", findings)
+	}
+}
+
+// TestDetectLegacyDrift_NonHeroSymlinkIgnored confirms user-authored
+// symlinks at managed paths are NOT flagged as drift. (Mutating cleanup
+// still removes them per the documented aggressive policy, but the
+// detector is conservative to avoid false-positive "Hero is broken"
+// warnings on hand-crafted layouts.)
+func TestDetectLegacyDrift_NonHeroSymlinkIgnored(t *testing.T) {
+	tmp := t.TempDir()
+	hp := filepath.Join(tmp, ".claude", "agents")
+	if err := os.MkdirAll(filepath.Dir(hp), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("/tmp/users-own-agents", hp); err != nil {
+		t.Fatal(err)
+	}
+
+	findings := DetectLegacyDrift(tmp)
+	for _, f := range findings {
+		if f.Path == hp {
+			t.Errorf("non-Hero symlink should be ignored, got finding: %+v", f)
+		}
+	}
+}
+
+// TestDetectLegacyDrift_CleanProjectIsEmpty confirms a fresh
+// render-direct install (no symlinks, no .hero mirror dirs) returns no
+// findings.
+func TestDetectLegacyDrift_CleanProjectIsEmpty(t *testing.T) {
+	tmp := t.TempDir()
+	// Create real harness dirs (what render-direct install produces).
+	for _, p := range []string{".claude/agents", ".claude/commands", ".claude/skills"} {
+		if err := os.MkdirAll(filepath.Join(tmp, p), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	findings := DetectLegacyDrift(tmp)
+	if len(findings) != 0 {
+		t.Errorf("clean project should have no drift, got %d findings: %+v", len(findings), findings)
+	}
+}
+
+// TestDetectLegacyDrift_ReportsEveryHarnessPath asserts that the
+// detector picks up dangling symlinks at every path in the cleanup list
+// — the readonly-detection cousin of
+// TestCleanupLegacy_RemovesEveryKnownHarnessPath.
+func TestDetectLegacyDrift_ReportsEveryHarnessPath(t *testing.T) {
+	for _, absPath := range legacyHarnessKindPaths(".") {
+		name := strings.TrimPrefix(absPath, "./")
+		t.Run(name, func(t *testing.T) {
+			tmp := t.TempDir()
+			hp := filepath.Join(tmp, name)
+			if err := os.MkdirAll(filepath.Dir(hp), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			target := "../.hero/" + filepath.Base(hp)
+			if err := os.Symlink(target, hp); err != nil {
+				t.Fatal(err)
+			}
+
+			findings := DetectLegacyDrift(tmp)
+			var found bool
+			for _, f := range findings {
+				if f.Path == hp && f.Kind == "broken_symlink" {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("expected broken_symlink finding for %s, got: %+v", hp, findings)
+			}
+		})
+	}
+}
+
 // TestCleanupLegacy_RemovesCanonicalMirrorDirs confirms the .hero/{agents,
 // commands,skills}/ mirror directories from the P2 era are removed.
 func TestCleanupLegacy_RemovesCanonicalMirrorDirs(t *testing.T) {
