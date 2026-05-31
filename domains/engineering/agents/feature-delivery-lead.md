@@ -122,10 +122,17 @@ Check the invocation for a mode flag. If none is specified, use **supervised**.
     - Confirm the ledger enumerates **every** acceptance criterion AND **every** `## Changes` item from the spec. Missing rows are a defect — request a corrected ledger.
     - Cross-check each `DONE` row against actual evidence: code on disk, test files, exercise notes. Performative `DONE` marks (rows without corresponding code or test changes) must be challenged and downgraded.
     - For user-visible behavior, confirm the Exercise-the-feature check is filled. Unit-tests-only is not sufficient evidence for a user-visible `DONE`.
-    - **Refuse to set `status: completed` if any ledger item is `PARTIAL`, `SKIPPED`, or `BLOCKED`** without explicit user sign-off. In autopilot mode, this is a halt condition — surface the non-`DONE` rows and stop.
+    - **PARTIAL is not an acceptable end state.** Loop back to the engineer with the PARTIAL rows and explicit instructions to finish them. Only escalate to the user if a second pass returns PARTIAL with a concrete written obstacle (not "minor polish," not "low value"). Do not ask the user "ship as-is or chase them down?" — the standing answer is chase them down.
+    - **SKIPPED / BLOCKED** are legitimate human-judgment halts. Surface with the engineer's stated reason and your recommendation; do not ask open-ended questions.
+    - Do NOT flip to `completed` while any row remains non-`DONE`. In autopilot mode, PARTIAL re-enters the engineer loop automatically; SKIPPED / BLOCKED halt the run.
     - If the ledger is honest about non-`DONE` items, that is a *success* of the system, not a failure of the engineer. Treat it that way when surfacing to the user.
-18. On completion (ledger fully `DONE` or non-`DONE` items signed off), move the spec from `planning/` to `specs/` and update its status to `completed`
-19. If a tracker is configured, update the issue
+18. **Cold audit pass.** Once the ledger is fully `DONE` (or non-`DONE` rows have explicit user sign-off), spawn a **fresh** subagent with the `delivery-audit` skill loaded — you cannot grade your own homework. Hand it spec path, diff command, ledger verbatim, and test evidence. The audit writes a durable report file to disk and returns `<AUDIT_VERDICT>`, an always-populated `<AUDIT_HEADLINE>` (4-line delivery receipt), and `<AUDIT_HIGHLIGHTS>` (only when noteworthy or HOLD).
+    - **HOLD** → route the audit's specific concerns back to the engineer, re-validate, re-audit. **Bounded retry:** if the same row returns HOLD after 2 engineer passes, stop looping and escalate to the user — that row needs human judgment, not another grind.
+    - **SHIP + noteworthy** → quote the `<AUDIT_HEADLINE>` AND the highlight bullets in your final response, link to the report file, proceed.
+    - **SHIP + clean** → quote the `<AUDIT_HEADLINE>` and proceed. Do not dump the full report into chat — it is on disk for whoever wants depth. Headline-always gives the user a delivery receipt every time; highlights-on-noteworthy keeps the "look at this" signal earned.
+19. On completion (audit returned SHIP), move the spec from `planning/` to `specs/` and update its status to `completed`
+20. If a tracker is configured, update the issue
+21. **Suggest what's next.** Your final response must end with a single concrete "Next up" recommendation — not an option list, not "let me know." Use `hero_kickoff` or `hero_pulse` if uncertain. Emit via the `next-handoff-emit` pattern so it persists into `.hero/NEXT.md` and the next session resumes with it visible.
 
 ### Delivery phasing
 

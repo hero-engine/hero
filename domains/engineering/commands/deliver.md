@@ -152,7 +152,58 @@ At the end of the delivery loop:
    - Do NOT flip to `completed` while any row remains non-`DONE`. In
      autopilot mode, PARTIAL re-enters the engineer loop automatically;
      SKIPPED / BLOCKED halt the run.
-6. **Refresh the kickoff** — when status flips (planning → delivering,
+6. **Cold audit pass** — once the ledger is fully `DONE` (or non-`DONE`
+   rows have explicit user sign-off), spawn a **fresh** subagent to audit
+   the delivery before you flip status. This is the second set of eyes
+   the lead cannot be, because the lead watched the work happen.
+
+   Invoke a general-purpose subagent with the `delivery-audit` skill
+   loaded. Hand it ONLY artifacts on disk — no commentary, no framing,
+   no "this looks good to me":
+   - Spec path (absolute)
+   - Diff command (`git diff <base>...HEAD` or equivalent)
+   - The engineer's Completion Ledger, verbatim
+   - Test evidence (paths to test output, exercise notes)
+
+   The audit writes a durable report file to disk and returns three
+   blocks:
+   - `<AUDIT_VERDICT>` — verdict (SHIP/HOLD), surface (noteworthy/clean),
+     confidence, report_path
+   - `<AUDIT_HEADLINE>` — **always populated**, 4-line summary you quote
+     verbatim in your final response on every verdict
+   - `<AUDIT_HIGHLIGHTS>` — populated when surface=noteworthy or
+     verdict=HOLD; 1–5 bullets naming specific concerns
+
+   Route based on the verdict:
+
+   - **HOLD** → do NOT flip to `completed`. Read the highlights and the
+     report file, route the specific concerns back to the engineer to
+     address, re-validate the ledger, re-run the audit.
+     **Bounded retry:** if the same row returns HOLD after 2 engineer
+     passes, stop looping and escalate to the user with the auditor's
+     concerns and a concrete recommendation. Do not grind indefinitely —
+     a row that resists two focused passes usually needs human judgment
+     (the spec was wrong, the approach was wrong, or a dependency is
+     missing). Surface that, don't paper over it.
+   - **SHIP + noteworthy** → quote the `<AUDIT_HEADLINE>` AND the
+     `<AUDIT_HIGHLIGHTS>` bullets in your final response. Link to the
+     full report at `report_path`. Proceed to step 7.
+   - **SHIP + clean** → quote the `<AUDIT_HEADLINE>` in your final
+     response (it's already short and useful — AC count, files, verdict,
+     report link). Do NOT quote the full report; it is on disk for the
+     user when they want depth. Proceed to step 7.
+
+   **Why headline-always + highlights-when-noteworthy:** the user always
+   wants to see *what landed* — that's earned signal, every delivery.
+   What they don't want is a wall of evidence on clean deliveries that
+   trains them to skim. Headline = the always-show "delivery receipt."
+   Highlights = the conditional "you should look at this" callout. Full
+   report on disk = the deep dive when they want it.
+
+   Do not skip this step in supervised mode. The cost is one subagent
+   call; the value is catching performative `DONE` rows AND producing a
+   durable delivery record.
+7. **Refresh the kickoff** — when status flips (planning → delivering,
    delivering → completed) or after meaningful chunks land, rewrite the
    spec's `## Kickoff` section so "Pick up at:" reflects *now*, not
    "two commits ago." Follow the `kickoff-prompt` skill. After mutating
@@ -161,6 +212,25 @@ At the end of the delivery loop:
    The pre-commit hook will refresh `.hero/QUEUE.md` automatically; if
    you're not committing right away, run `hero queue write -q` to
    refresh the snapshot manually.
+8. **Suggest what's next** — your final response to the user must end
+   with a concrete "Next up" suggestion. Not a list of options to choose
+   from, not "let me know what you want to do" — a single recommended
+   next move, named specifically. Examples:
+
+   - "Next up: deliver `<dep-slug>` — it's the only remaining blocker on
+     `<parent-slug>`."
+   - "Next up: open the PR for this branch (`gh pr create`) and request
+     review from the team."
+   - "Next up: run `/diagnose <bug-slug>` — it's the highest-severity bug
+     in the queue and touches code adjacent to what we just changed."
+   - "Next up: take a break — the active spec list is empty and the
+     queue is healthy."
+
+   Use `hero_kickoff` or `hero_pulse` to inform the suggestion if you're
+   uncertain. Always emit the suggestion via the `next-handoff-emit`
+   pattern so it lands in `.hero/NEXT.md` and the per-user handoff file
+   — that way the next session resumes with the same recommendation
+   visible from the first prompt.
 
 When delivery is complete and the Completion Ledger is fully `DONE` (or
 non-`DONE` rows have explicit user sign-off), set the spec's
