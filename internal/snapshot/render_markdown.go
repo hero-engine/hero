@@ -177,6 +177,9 @@ func writeInitiativesSection(b *strings.Builder, s *Snapshot) {
 		b.WriteString("_None._\n\n")
 		return
 	}
+	if len(active) == 0 {
+		b.WriteString("_None._\n\n")
+	}
 	for _, init := range active {
 		surfaces := "—"
 		if len(init.Surfaces) > 0 {
@@ -199,6 +202,7 @@ func writeInitiativesSection(b *strings.Builder, s *Snapshot) {
 		if len(completed) < max {
 			max = len(completed)
 		}
+		b.WriteString("\n### Recently completed initiatives\n\n")
 		for _, init := range completed[:max] {
 			surfaces := "—"
 			if len(init.Surfaces) > 0 {
