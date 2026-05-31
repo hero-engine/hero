@@ -278,7 +278,7 @@ rm -f MockApp
 
 ### Step 6: Generate viewer HTML
 
-Create an `index.html` that displays both screenshots with a light/dark toggle and a collapsible source view. This ensures `hero mock --open` and `hero mock --serve` keep working.
+Create an `index.html` that displays both screenshots with a light/dark toggle and a collapsible source view. This ensures `hero spec mock --open` and `hero spec mock --serve` keep working.
 
 ```html
 <!DOCTYPE html>
