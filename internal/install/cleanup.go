@@ -111,9 +111,19 @@ func removeLegacyEntry(opts Options, full string, e fs.DirEntry) error {
 //
 // Idempotent: a project already migrated to the render-direct layout
 // has none of these legacy artifacts, so the helper is a no-op.
-func cleanupLegacyCanonicalSymlinks(opts Options, projectDir string) error {
-	// 1) Remove harness-dir symlinks that point into .hero/.
-	harnessKindPaths := []string{
+// legacyHarnessKindPaths returns the absolute paths under projectDir that
+// the P2→render-direct migration removes if present as symlinks pointing
+// at .hero/. Single source of truth for "where the legacy layout left
+// artifacts"; consumed by cleanupLegacyCanonicalSymlinks (mutating) and
+// by the enumeration test that guards against new targets being added
+// to install without being added here.
+//
+// Every harness Hero has ever materialized agents/commands/skills under
+// must be listed exhaustively — a missing entry means dangling symlinks
+// survive both `hero install` and `hero install --migrate`. See bug
+// `upgrade-strands-install-layout`.
+func legacyHarnessKindPaths(projectDir string) []string {
+	return []string{
 		filepath.Join(projectDir, ".claude", "agents"),
 		filepath.Join(projectDir, ".claude", "commands"),
 		filepath.Join(projectDir, ".claude", "skills"),
@@ -123,6 +133,8 @@ func cleanupLegacyCanonicalSymlinks(opts Options, projectDir string) error {
 		filepath.Join(projectDir, ".cursor", "rules", "agents"),
 		filepath.Join(projectDir, ".cursor", "rules", "commands"),
 		filepath.Join(projectDir, ".cursor", "rules", "skills"),
+		filepath.Join(projectDir, ".codex", "agents"),
+		filepath.Join(projectDir, ".codex", "commands"),
 		filepath.Join(projectDir, ".codex", "skills"),
 		filepath.Join(projectDir, ".ai", "agents"),
 		filepath.Join(projectDir, ".ai", "commands"),
@@ -131,7 +143,11 @@ func cleanupLegacyCanonicalSymlinks(opts Options, projectDir string) error {
 		filepath.Join(projectDir, ".github", "skills"),
 		filepath.Join(projectDir, ".agents", "skills"),
 	}
-	for _, hp := range harnessKindPaths {
+}
+
+func cleanupLegacyCanonicalSymlinks(opts Options, projectDir string) error {
+	// 1) Remove harness-dir symlinks that point into .hero/.
+	for _, hp := range legacyHarnessKindPaths(projectDir) {
 		info, err := os.Lstat(hp)
 		if err != nil {
 			continue
