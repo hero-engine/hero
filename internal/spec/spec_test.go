@@ -921,6 +921,86 @@ x
 	}
 }
 
+// TestParseSupersededBy covers the new authoritative genealogy field
+// added by spec superseded-specs-soft-archive.
+func TestParseSupersededBy(t *testing.T) {
+	content := `---
+title: V1 surface polish
+type: feature
+status: completed
+superseded_by: hero-surface-polish-v2
+---
+## Goal
+old
+`
+	s, err := Parse(content, "/p/.hero/specs/hero-surface-polish-v1/spec.md", time.Now())
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if s.SupersededBy != "hero-surface-polish-v2" {
+		t.Errorf("SupersededBy = %q, want hero-surface-polish-v2", s.SupersededBy)
+	}
+	// Lifecycle stays orthogonal: status remains completed.
+	if s.Status != StatusCompleted {
+		t.Errorf("Status = %q, want completed (genealogy is orthogonal to lifecycle)", s.Status)
+	}
+	if !s.IsSuperseded() {
+		t.Error("IsSuperseded() = false, want true (superseded_by is set)")
+	}
+}
+
+// TestIsSuperseded_LegacyStatus exercises the back-compat path where a
+// spec carries the legacy `status: superseded` enum value without the
+// new authoritative field.
+func TestIsSuperseded_LegacyStatus(t *testing.T) {
+	content := `---
+title: Old
+type: feature
+status: superseded
+---
+## Goal
+x
+`
+	s, err := Parse(content, "/p/.hero/specs/old/spec.md", time.Now())
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if s.SupersededBy != "" {
+		t.Errorf("SupersededBy = %q, want empty", s.SupersededBy)
+	}
+	if !s.IsSuperseded() {
+		t.Error("IsSuperseded() = false, want true (status enum still counts)")
+	}
+}
+
+// TestRenderSpecBody_SupersededBanner verifies the render-time banner
+// is prepended for superseded specs without mutating the on-disk body.
+func TestRenderSpecBody_SupersededBanner(t *testing.T) {
+	body := "# Title\n\nbody text\n"
+	s := &Spec{SupersededBy: "new-spec"}
+	got := RenderSpecBody(s, body)
+	if !strings.HasPrefix(got, "> **SUPERSEDED by new-spec**") {
+		t.Errorf("rendered body missing banner; got:\n%s", got)
+	}
+	if !strings.Contains(got, "# Title") {
+		t.Error("rendered body lost the original content")
+	}
+
+	// Non-superseded spec is returned unchanged.
+	plain := &Spec{}
+	if got := RenderSpecBody(plain, body); got != body {
+		t.Error("non-superseded spec should be returned unchanged")
+	}
+
+	// status: superseded without a replacement slug gets an
+	// "unknown" banner so the ambiguity is visible.
+	legacy := &Spec{Status: StatusSuperseded}
+	gotLegacy := RenderSpecBody(legacy, body)
+	if !strings.Contains(gotLegacy, "replacement unknown") {
+		t.Errorf("legacy banner missing 'replacement unknown'; got:\n%s", gotLegacy)
+	}
+}
+
 func TestTripwireTypeFromPath(t *testing.T) {
 	tp := typeFromPath("/project/.hero/knowledge/tripwires/no-pyo3/spec.md")
 	if tp != TypeTripwire {

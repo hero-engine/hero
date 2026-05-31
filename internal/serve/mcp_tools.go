@@ -702,20 +702,29 @@ func (s *MCPServer) toolReadSpec(args map[string]interface{}) (string, error) {
 		return "", fmt.Errorf("reading spec file: %w", err)
 	}
 
+	// Prepend the SUPERSEDED banner when applicable — the on-disk file
+	// stays clean; the banner is a render-time concern so readers see
+	// the redirect without git churn on the source. See spec
+	// superseded-specs-soft-archive.
+	rendered := string(content)
+	if parsed, perr := spec.Parse(rendered, specPath, time.Now()); perr == nil {
+		rendered = spec.RenderSpecBody(parsed, rendered)
+	}
+
 	if argCompact(args) {
-		summary := buildSpecSummary(specTitle, specType, specStatus, string(content))
+		summary := buildSpecSummary(specTitle, specType, specStatus, rendered)
 		fingerprint := fingerprintFile(specPath)
 		envText, err := s.registerRef(refs.KindSpec, slug, "full",
 			map[string]any{"slug": slug},
-			string(content), fingerprint, summary)
+			rendered, fingerprint, summary)
 		if err != nil {
 			// Ref store unavailable — fall back to legacy shape.
-			return string(content), nil
+			return rendered, nil
 		}
 		return envText, nil
 	}
 
-	return string(content), nil
+	return rendered, nil
 }
 
 // ---------------------------------------------------------------------------

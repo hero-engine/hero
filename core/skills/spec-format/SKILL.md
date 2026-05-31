@@ -219,7 +219,8 @@ All spec types use YAML frontmatter. The following fields are supported:
 | `created` | No | All | ISO 8601 date when the spec was created. |
 | `relates-to` | No | All | Array of spec slugs that are related but not dependent. |
 | `depends-on` | No | All | Array of spec slugs that must be completed before this spec can proceed. |
-| `supersedes` | No | All | Slug of the spec this one replaces. The superseded spec should have its status set to `superseded`. |
+| `supersedes` | No | All | Slug of the spec this one replaces. Computed automatically when you use `hero supersede` — the inverse view of `superseded_by` on the older spec. |
+| `superseded_by` | No | All | Slug of the spec that replaces this one. Authoritative genealogy signal: when set, retrieval de-weights this spec and context-injection annotates it with a redirect marker. Set via `hero supersede <old> --by <new>`, not hand-editing. Orthogonal to `status:` — a spec can be `completed` and superseded. |
 | `parent` | No | Work specs | Slug of the initiative this spec belongs to. |
 | `child` | No | Initiatives | Array of spec slugs that are part of this initiative. |
 | `domain` | No | All | DSKG namespace partition (`engineering`, `pm`, future packs). New specs scaffolded by `/design` and `/diagnose` emit this from the active workspace domain. Legacy specs without the field resolve to the workspace default (`engineering` if no `domain:` is set in `hero.json`). |
@@ -233,6 +234,18 @@ Conventions start as `draft` while being authored and reviewed. They move to `ac
 Decisions start as `proposed` during discussion. They move to `accepted` when the decision is finalized.
 
 Any spec can be set to `superseded` when a newer spec replaces it. Always set the `supersedes` field on the replacement spec to maintain traceability.
+
+### Superseding a spec
+
+When a new spec replaces an older one, run `hero supersede <old> --by <new>` rather than hand-editing frontmatter. The command:
+
+1. Sets `superseded_by: <new>` on the old spec.
+2. Adds the inverse `supersedes: <old>` relation to the new spec.
+3. Reindexes so retrieval immediately de-weights the old spec (0.3× score) and context-injection annotates it.
+
+`superseded_by` is the authoritative signal — lifecycle (`status:`) stays orthogonal. A `completed` spec can be superseded; the `status: superseded` enum value is legacy and not required for new work.
+
+To find candidate supersede pairs in an existing corpus, run `hero supersede --scan`; it writes `.hero/reports/supersede-candidates.md` and never mutates a spec.
 
 ## Acceptance Criteria and EARS
 

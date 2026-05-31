@@ -133,6 +133,7 @@ func init() {
 	rootCmd.AddCommand(peerCmd)    // cross-repo peer manifest / list / show / call
 	rootCmd.AddCommand(snapshotCmd)    // project-shape rollup + archive trail
 	rootCmd.AddCommand(embeddingsCmd)  // embeddings status / rebuild
+	rootCmd.AddCommand(supersedeCmd)   // mark a spec superseded by another (genealogy + retrieval de-weight)
 
 	// Wrap every direct subcommand that has a RunE with the smoke interceptor.
 	// Must come after all AddCommand calls so the full command set is present.

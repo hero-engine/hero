@@ -642,6 +642,69 @@ func TestBuildNudge(t *testing.T) {
 	}
 }
 
+// TestBuildNudge_SurfacesSupersededWithMarker — superseded specs are
+// kept in RelatedSpecs (not filtered out) and carry their replacement
+// slug in SupersededBy so renderers can add the redirect annotation.
+// Covers ACs:
+//   - "WHEN BuildNudge is called for a file touched by a superseded
+//     spec THE SYSTEM SHALL include that spec in RelatedSpecs with
+//     SupersededBy populated."
+func TestBuildNudge_SurfacesSupersededWithMarker(t *testing.T) {
+	idx, _ := setupTestDB(t)
+
+	old := makeSpec("surface-polish-v1", "V1", spec.TypeFeature, spec.StatusCompleted)
+	old.FilesTouched = []string{"src/main.go"}
+	old.SupersededBy = "surface-polish-v2"
+	if err := idx.IndexSpec(old, "# V1"); err != nil {
+		t.Fatalf("IndexSpec: %v", err)
+	}
+
+	result, err := idx.BuildNudge([]string{"src/main.go"})
+	if err != nil {
+		t.Fatalf("BuildNudge: %v", err)
+	}
+	if len(result.RelatedSpecs) != 1 {
+		t.Fatalf("RelatedSpecs = %d, want 1 (superseded spec must surface, not be filtered)", len(result.RelatedSpecs))
+	}
+	got := result.RelatedSpecs[0]
+	if got.Slug != "surface-polish-v1" {
+		t.Errorf("got slug %q, want surface-polish-v1", got.Slug)
+	}
+	if got.SupersededBy != "surface-polish-v2" {
+		t.Errorf("got SupersededBy = %q, want surface-polish-v2", got.SupersededBy)
+	}
+}
+
+// TestUpsertSpec_PersistsSupersededBy — round-trip the field through
+// the specs table. Covers the AC: "THE SYSTEM SHALL persist superseded_by
+// in the spec index and include it in every SearchResult projection."
+func TestUpsertSpec_PersistsSupersededBy(t *testing.T) {
+	idx, _ := setupTestDB(t)
+
+	s := makeSpec("old", "Old", spec.TypeFeature, spec.StatusCompleted)
+	s.SupersededBy = "new"
+	if err := idx.IndexSpec(s, "# Old"); err != nil {
+		t.Fatalf("IndexSpec: %v", err)
+	}
+
+	all, err := idx.AllSpecs()
+	if err != nil {
+		t.Fatalf("AllSpecs: %v", err)
+	}
+	var found bool
+	for _, r := range all {
+		if r.Slug == "old" {
+			found = true
+			if r.SupersededBy != "new" {
+				t.Errorf("SupersededBy = %q, want new", r.SupersededBy)
+			}
+		}
+	}
+	if !found {
+		t.Fatal("inserted spec not found in AllSpecs")
+	}
+}
+
 func TestBuildNudgeEmpty(t *testing.T) {
 	idx, _ := setupTestDB(t)
 

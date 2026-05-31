@@ -115,6 +115,13 @@ type Spec struct {
 	Severity     string    // hero-level severity (e.g. "critical", "high", "medium", "low")
 	Horizon      Horizon   // when: now / next / someday / parking. Empty = unset (treated as now in default views).
 	Pinned       bool      // floats this spec to the top of `hero queue` regardless of other ranking signals
+	// SupersededBy is the slug of the spec that replaces this one. When set,
+	// search retrieval de-weights this spec and context-injection annotates
+	// it with a redirect marker so agents follow the replacement instead.
+	// Lifecycle (Status) is orthogonal: a spec can be `completed` and
+	// superseded, or `active` and superseded. See spec
+	// superseded-specs-soft-archive for the design rationale.
+	SupersededBy string
 	ClaimedBy      string    // who is working on this
 	DeliveryMethod string    // "agent", "manual", or "" (unset)
 	TrackerID    string    // external tracker issue ID (e.g. "#42", "PROJ-123", "LIN-abc")
@@ -420,6 +427,8 @@ func (s *Spec) parseFrontmatter(content string) string {
 			s.Horizon = Horizon(val)
 		case "pinned":
 			s.Pinned = parseBool(val)
+		case "superseded_by":
+			s.SupersededBy = val
 		case "url":
 			s.URL = val
 		case "local_path":
@@ -1133,6 +1142,37 @@ func (s *Spec) EffectiveHorizon() Horizon {
 func (s *Spec) IsActiveHorizon() bool {
 	h := s.EffectiveHorizon()
 	return h == HorizonNow || h == HorizonNext
+}
+
+// IsSuperseded reports whether the spec is marked as replaced — either
+// via the authoritative `superseded_by:` frontmatter field, or via the
+// legacy `status: superseded` enum value. Callers that need to know
+// only "is there a replacement slug" should check SupersededBy directly.
+func (s *Spec) IsSuperseded() bool {
+	return s.SupersededBy != "" || s.Status == StatusSuperseded
+}
+
+// RenderSpecBody returns the spec body with a SUPERSEDED banner prepended
+// when the spec is superseded. The on-disk file is never modified —
+// the banner is a render-time concern so `git blame` stays stable and
+// re-marking a spec doesn't churn its body. Callers that emit a spec
+// to a human reader (read-spec, MCP read_spec, web view) should pipe
+// the body through this helper.
+//
+// When superseded_by is set, the banner names the replacement slug.
+// When status is `superseded` but no replacement slug is recorded, the
+// banner says "replacement unknown" so the ambiguity is visible.
+func RenderSpecBody(s *Spec, body string) string {
+	if s == nil || !s.IsSuperseded() {
+		return body
+	}
+	var banner string
+	if s.SupersededBy != "" {
+		banner = fmt.Sprintf("> **SUPERSEDED by %s**\n> This spec is kept for genealogy. Follow the replacement for current direction.\n\n", s.SupersededBy)
+	} else {
+		banner = "> **SUPERSEDED — replacement unknown**\n> This spec carries `status: superseded` but no `superseded_by:` field. Set one with `hero supersede <this-slug> --by <new-slug>`.\n\n"
+	}
+	return banner + body
 }
 
 // SetFrontmatterField sets or updates a key-value pair in YAML frontmatter.

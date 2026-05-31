@@ -43,8 +43,9 @@ var (
 	searchBudget     int
 	searchJSON       bool
 	searchSubproject string
-	searchSemantic   bool
-	searchHybrid     bool
+	searchSemantic        bool
+	searchHybrid          bool
+	searchIncludeSuperseded bool
 )
 
 func init() {
@@ -61,6 +62,7 @@ func init() {
 	searchCmd.Flags().StringVar(&searchSubproject, "subproject", "", "filter by subproject scope (e.g. engines/mlx); 'all' disables. Default: active scope from cwd")
 	searchCmd.Flags().BoolVar(&searchSemantic, "semantic", false, "vector-only semantic search (requires embedding model)")
 	searchCmd.Flags().BoolVar(&searchHybrid, "hybrid", false, "hybrid BM25+vector search (default when embeddings available)")
+	searchCmd.Flags().BoolVar(&searchIncludeSuperseded, "include-superseded", false, "skip the rank de-weight on specs carrying superseded_by (the [SUPERSEDED → slug] marker is shown either way)")
 }
 
 func runSearch(cmd *cobra.Command, args []string) error {
@@ -93,9 +95,10 @@ func runSearch(cmd *cobra.Command, args []string) error {
 	//   - Filters or Types present → FTS5
 	//   - Plain text, no filters   → graph-first, FTS5 fallback
 	q := retrieval.Query{
-		Text:       strings.Join(args, " "),
-		Limit:      searchBudget,
-		SemanticOK: searchSemantic || searchHybrid,
+		Text:              strings.Join(args, " "),
+		Limit:             searchBudget,
+		SemanticOK:        searchSemantic || searchHybrid,
+		IncludeSuperseded: searchIncludeSuperseded,
 	}
 	if searchSpecsOnly || hasFilters() {
 		q.Types = nil
