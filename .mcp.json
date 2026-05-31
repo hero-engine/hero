@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "hero": {
-      "command": "hero",
+      "command": "/Users/developer/go/bin/hero",
       "args": [
         "mcp"
       ]

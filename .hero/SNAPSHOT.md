@@ -2,19 +2,19 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-05-31T18:11:13Z · projected from 279 source nodes_
+_Last refreshed: 2026-05-31T18:51:39Z · projected from 279 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 16h ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 17h ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | building | domains/engineering/ | 2d ago | spec-types-cache-frontmatter-empty |
-| domains/pm | concept | domains/pm/ | 12d ago | — |
+| domains/engineering | building | domains/engineering/ | 3d ago | spec-types-cache-frontmatter-empty |
+| domains/pm | concept | domains/pm/ | 13d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
-| landing | building | web/landing/ | 12d ago | hero-landing-page |
+| landing | building | web/landing/ | 13d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
 | serve | building | internal/serve/ | 17h ago | vocabulary-resolve-misses-methodology-derivation |
 | (unassigned) | — | — | — | 119 specs without surface |
@@ -38,6 +38,9 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Launch Readiness — Telemetry, Deploy, and Public-Use Polish** (surface: —) — 0/0 specs done
 - **Pre-Launch Hardening — Federation Polish, Security, Observability** (surface: —) — 0/0 specs done
 - **Single-Source Install — One Canonical Tree, Every Harness Reads It** (surface: core) — 5/6 specs done
+
+### Recently completed initiatives
+
 - **hero serve Project Section — Per-Project Info, Utilities, and Operations Page** (surface: serve) — 5/5 specs done · COMPLETED 2026-05-20
 - **Competitor Parity — Borrow the Best Ideas from Competing Tools** (surface: —) — 0/0 specs done · COMPLETED 2026-05-18
 - **Web Surfaces Restructure — Make Docs and Landing Peers Under web/** (surface: —) — 0/0 specs done · COMPLETED 2026-05-18
@@ -66,5 +69,5 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
 - Specs covered: 139/258 (53%)
-- Projection generation: 1ms · Source nodes: 279
+- Projection generation: 0ms · Source nodes: 279
 

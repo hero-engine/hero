@@ -460,3 +460,81 @@ func TestUpgradeRejectsDowngrade(t *testing.T) {
 		t.Errorf("version should remain 1.0.0, got %s", info.HeroVersion)
 	}
 }
+
+// TestUpgradeForceOverridesAlreadyAt verifies that --force re-runs the
+// install pipeline even when fromVersion == binaryVersion. Without this,
+// a workspace stamped with a buggy or partial prior upgrade has no
+// recovery path short of hand-editing version.json.
+func TestUpgradeForceOverridesAlreadyAt(t *testing.T) {
+	env := newTestEnv(t)
+
+	upgradeContentFS = testContentFS()
+	defer func() { upgradeContentFS = nil }()
+
+	// Workspace and binary at the same version.
+	if err := version.StampInit(env.heroDir, "1.0.0"); err != nil {
+		t.Fatalf("StampInit: %v", err)
+	}
+	rootCmd.Version = "1.0.0"
+	defer func() { rootCmd.Version = "" }()
+
+	// Without --force, upgrade short-circuits.
+	output, err := runCmd("upgrade")
+	if err != nil {
+		t.Fatalf("upgrade returned error: %v", err)
+	}
+	if !strings.Contains(output, "already at") {
+		t.Errorf("plain upgrade should short-circuit, got: %q", output)
+	}
+
+	// With --force, upgrade proceeds past the short-circuit.
+	output, err = runCmd("upgrade", "--force")
+	if err != nil {
+		t.Fatalf("upgrade --force returned error: %v", err)
+	}
+	if strings.Contains(output, "already at") {
+		t.Errorf("--force should bypass the already-at check, got: %q", output)
+	}
+}
+
+// TestUpgradePartialFailureDoesNotStampVersion verifies that when a
+// target install errors, HeroVersion is NOT rolled forward. Otherwise
+// the next upgrade short-circuits on "already at" and the user has to
+// hand-edit version.json to recover (the bug that surfaced in v0.14.4
+// when --force collided with an existing customized file).
+func TestUpgradePartialFailureDoesNotStampVersion(t *testing.T) {
+	env := newTestEnv(t)
+
+	upgradeContentFS = testContentFS()
+	defer func() { upgradeContentFS = nil }()
+
+	// Pre-create a customized opencode agent file without recording its
+	// checksum in version.json — install.Run will refuse to overwrite
+	// it without --force, producing the partial-failure condition.
+	agentRelPath := filepath.Join(".opencode", "agents", "hero.md")
+	agentDestPath := filepath.Join(env.dir, agentRelPath)
+	if err := os.MkdirAll(filepath.Dir(agentDestPath), 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	if err := os.WriteFile(agentDestPath, []byte("# Customized\n"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	if err := version.StampInit(env.heroDir, "0.9.0"); err != nil {
+		t.Fatalf("StampInit: %v", err)
+	}
+	rootCmd.Version = "1.0.0"
+	defer func() { rootCmd.Version = "" }()
+
+	// Upgrade should run, hit the refuse-to-overwrite error, and
+	// leave HeroVersion at 0.9.0 so a follow-up --force retry works.
+	_, _ = runCmd("upgrade")
+
+	info, err := version.Read(env.heroDir)
+	if err != nil {
+		t.Fatalf("Read version: %v", err)
+	}
+	if info.HeroVersion != "0.9.0" {
+		t.Errorf("HeroVersion should remain 0.9.0 after partial failure, got: %s", info.HeroVersion)
+	}
+}
