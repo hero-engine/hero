@@ -6,6 +6,19 @@ description: Guidelines for generating self-contained HTML mockups that look pro
 
 Guidelines for generating self-contained HTML mockups that look professional and are easy to iterate on.
 
+## Return contract (read first)
+
+When this skill runs inside a subagent (the usual case via `ui-designer` or `/mock`), the subagent's narrative return text is **not shown directly to the user** — the orchestrator surfaces a parseable file list. The last thing the subagent emits MUST be a `<MOCKUP_FILES>` block listing every file written:
+
+```
+<MOCKUP_FILES>
+.hero/mocks/{slug}/index.html|{Mockup name}|primary
+.hero/planning/features/{slug}/spec.md|Spec (Mockups section updated)|spec
+</MOCKUP_FILES>
+```
+
+One file per line, pipe-separated `path|label|kind`. Include every variant when generating multiple options in one run. Skip this block and the user sees no links. See the `ui-designer` agent definition for full rules.
+
 ## File Structure
 
 ```html

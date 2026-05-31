@@ -6,6 +6,22 @@ description: Generate native SwiftUI mockups, compile them, and capture real scr
 
 Generates native SwiftUI source, compiles it with `swiftc`, renders headlessly via `ImageRenderer`, and captures PNG screenshots in both light and dark mode. The output is pixel-accurate platform UI — real system controls, SF Pro typography, correct spacing, vibrancy, and blur.
 
+## Return contract (read first)
+
+When this skill runs inside a subagent (the usual case via `ui-designer` or `/mock`), the subagent's narrative return text is **not shown directly to the user** — the orchestrator surfaces a parseable file list. The last thing the subagent emits MUST be a `<MOCKUP_FILES>` block listing every file written:
+
+```
+<MOCKUP_FILES>
+.hero/mocks/{slug}/screenshot.png|Screenshot — light|image
+.hero/mocks/{slug}/screenshot-dark.png|Screenshot — dark|image
+.hero/mocks/{slug}/MockView.swift|SwiftUI source|source
+.hero/mocks/{slug}/index.html|Viewer page|primary
+.hero/planning/features/{slug}/spec.md|Spec (Mockups section updated)|spec
+</MOCKUP_FILES>
+```
+
+One file per line, pipe-separated `path|label|kind`. Include both light and dark PNGs even if only one was requested. Skip this block and the user sees no links. See the `ui-designer` agent definition for full rules.
+
 ## When to use
 
 This renderer is selected automatically when the project stack includes Swift (`.swift` files, `Package.swift`, `*.xcodeproj`, `*.xcworkspace`). It can also be forced with `--renderer=swiftui`.
