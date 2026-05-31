@@ -51,6 +51,15 @@ type Query struct {
 	// annotation is still added to the snippet — de-weight is the rank
 	// effect; the marker is the visibility effect. Default false.
 	IncludeSuperseded bool
+
+	// skipSupersedeDeweight is an internal flag set by retrieveHybrid
+	// when it invokes the lexical sub-path. It tells retrieveViaFTS /
+	// retrieveViaNodeIndex to keep emitting the [SUPERSEDED → <slug>]
+	// annotation but skip their own score multiplier, so the de-weight
+	// is applied exactly once — by fuseRRF — against the post-fusion
+	// RRF score. See spec embeddings-superseded-respect, Decision 5.
+	// Do not set this from external callers.
+	skipSupersedeDeweight bool
 }
 
 // supersededDeweight is the score multiplier applied to results whose
@@ -82,6 +91,11 @@ type Retriever struct {
 	fts      *index.DB
 	embModel *embeddings.Model   // nil when embeddings unavailable
 	embStore *embeddings.Storage // nil when embeddings unavailable
+	// supersedeRespect mirrors config.RetrievalSupersedeRespect — when
+	// false, the hybrid path skips the supersede overlay entirely
+	// (fuseRRF runs unchanged). Defaults to true; loaded from project
+	// config in New and harmlessly true in environments without config.
+	supersedeRespect bool
 }
 
 // New opens the FTS5 index (required) and the graph store (optional — silently
@@ -95,9 +109,19 @@ func New(heroDir string) (*Retriever, error) {
 	if err != nil {
 		return nil, fmt.Errorf("opening FTS index: %w", err)
 	}
-	r := &Retriever{fts: fts}
+	r := &Retriever{fts: fts, supersedeRespect: true}
 	if store, err := graph.Open(heroDir); err == nil {
 		r.store = store
+	}
+
+	// Read the supersede-respect knob from project config. Failures
+	// fall back to the default (true) — the flag is for rollback in
+	// production, not a load-bearing prerequisite for retrieval.
+	projectRoot := strings.TrimSuffix(heroDir, "/.hero")
+	if projectRoot != heroDir {
+		if cfg, err := config.Load(projectRoot); err == nil {
+			r.supersedeRespect = cfg.RetrievalSupersedeRespect()
+		}
 	}
 
 	// Best-effort: load embeddings for hybrid search.
@@ -252,7 +276,10 @@ func (r *Retriever) retrieveViaNodeIndex(q Query, limit int) ([]Result, error) {
 		}
 		// FTS5 rank is negative (more negative = better). Score = -rank * typeBoost.
 		c.score = -c.bm25Rank * typeBoost(c.nodeType)
-		if c.supersededBy != "" && !q.IncludeSuperseded {
+		// Skip the per-path de-weight when called as the lexical sub-step
+		// of retrieveHybrid — fuseRRF applies it once against the fused
+		// RRF score to avoid double-penalty. Annotation still fires below.
+		if c.supersededBy != "" && !q.IncludeSuperseded && !q.skipSupersedeDeweight {
 			c.score *= supersededDeweight
 		}
 		cands = append(cands, c)
@@ -480,7 +507,10 @@ func (r *Retriever) retrieveViaFTS(q Query, limit int) ([]Result, error) {
 			// snippet needs. De-weight is the rank effect, opt-out via
 			// IncludeSuperseded.
 			snippet = "[SUPERSEDED → " + h.SupersededBy + "] " + snippet
-			if !q.IncludeSuperseded {
+			// Skip de-weight when invoked as the lexical sub-step of
+			// retrieveHybrid; fuseRRF applies it once against the fused
+			// RRF score (spec embeddings-superseded-respect, Decision 5).
+			if !q.IncludeSuperseded && !q.skipSupersedeDeweight {
 				score *= supersededDeweight
 			}
 		}
@@ -516,10 +546,35 @@ func (r *Retriever) retrieveViaFTS(q Query, limit int) ([]Result, error) {
 
 // retrieveHybrid runs the normal lexical path and a vector similarity query,
 // then fuses results via Reciprocal Rank Fusion.
+//
+// Supersede de-weighting in this path is applied exactly once, in fuseRRF,
+// against the post-fusion RRF score (spec embeddings-superseded-respect,
+// Decision 5). The lexical sub-call is told to skip its own multiplier via
+// the internal skipSupersedeDeweight flag, but it still emits the
+// [SUPERSEDED → <slug>] annotation. The vector path produces no annotation
+// of its own; fuseRRF stamps the marker on any superseded fused result so
+// vector-only hits also carry the redirect.
 func (r *Retriever) retrieveHybrid(q Query, limit int) ([]Result, error) {
-	// Run the lexical path (graph/FTS5) with SemanticOK=false to avoid recursion.
+	// Build the supersede overlay once per query from the specs table
+	// when respect is enabled. Cheap (small map, indexed query) and
+	// avoids re-embedding on supersede. Empty when no specs carry
+	// superseded_by or when the operator has rolled the feature back
+	// via the RetrievalSupersedeRespect config knob.
+	var overlay map[string]string
+	if r.supersedeRespect {
+		overlay, _ = loadSupersededOverlay(r.fts.RawDB())
+	} else {
+		overlay = map[string]string{}
+	}
+
+	// Run the lexical path (graph/FTS5) with SemanticOK=false to avoid
+	// recursion. When the overlay is active, set skipSupersedeDeweight
+	// so the sub-call keeps the annotation but defers the multiplier to
+	// fuseRRF. When respect is off, the sub-call behaves exactly as a
+	// non-hybrid lexical caller — parent-spec behavior, untouched.
 	lexicalQ := q
 	lexicalQ.SemanticOK = false
+	lexicalQ.skipSupersedeDeweight = r.supersedeRespect
 	lexical, err := r.Retrieve(lexicalQ)
 	if err != nil {
 		return nil, err
@@ -529,11 +584,71 @@ func (r *Retriever) retrieveHybrid(q Query, limit int) ([]Result, error) {
 	queryVec := r.embModel.Embed(q.Text)
 	vectorHits, err := r.embStore.QuerySimilar(queryVec, limit*2, nil)
 	if err != nil {
-		// Vector search failed — fall back to lexical-only.
+		// Vector search failed — fall back to lexical-only. Re-apply
+		// the supersede de-weight that the sub-call skipped, since
+		// fuseRRF won't run.
+		if r.supersedeRespect && !q.IncludeSuperseded {
+			applySupersedeDeweight(lexical, overlay)
+		}
 		return lexical, nil
 	}
 
-	return fuseRRF(lexical, vectorHits, 60, limit), nil
+	return fuseRRF(lexical, vectorHits, overlay, q.IncludeSuperseded, 60, limit), nil
+}
+
+// loadSupersededOverlay returns a map of {superseded-slug → replacement-slug}
+// built from the specs table. Used by retrieveHybrid to apply the supersede
+// de-weight + annotation in fuseRRF without re-embedding any chunk.
+//
+// Returns an empty map (and nil error) when no specs carry superseded_by or
+// when the table is absent (older index schemas). The overlay is read once
+// per Retrieve call; cardinality is small and the query hits an index.
+func loadSupersededOverlay(db *sql.DB) (map[string]string, error) {
+	out := map[string]string{}
+	if db == nil {
+		return out, nil
+	}
+	rows, err := db.Query(`SELECT slug, superseded_by FROM specs WHERE superseded_by != ''`)
+	if err != nil {
+		return out, nil // graceful: table or column may be absent
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var slug, by string
+		if err := rows.Scan(&slug, &by); err != nil {
+			continue
+		}
+		out[slug] = by
+	}
+	return out, nil
+}
+
+// applySupersedeDeweight multiplies the score and prefixes the snippet of
+// every result whose Key is in the overlay. Used by the lexical-only
+// fallback path in retrieveHybrid when QuerySimilar fails — fuseRRF
+// normally owns this in the hybrid path.
+func applySupersedeDeweight(results []Result, overlay map[string]string) {
+	if len(overlay) == 0 {
+		return
+	}
+	for i := range results {
+		by, ok := overlay[results[i].Key]
+		if !ok {
+			continue
+		}
+		results[i].Score *= supersededDeweight
+		results[i].Snippet = annotateSuperseded(results[i].Snippet, by)
+	}
+}
+
+// annotateSuperseded prefixes snippet with [SUPERSEDED → <by>] unless the
+// marker is already present (idempotency: the lexical sub-call may have
+// stamped it before handing the result up to fuseRRF).
+func annotateSuperseded(snippet, by string) string {
+	if strings.HasPrefix(snippet, "[SUPERSEDED → ") {
+		return snippet
+	}
+	return "[SUPERSEDED → " + by + "] " + snippet
 }
 
 // fuseRRF merges lexical and vector result sets using Reciprocal Rank Fusion.
@@ -545,7 +660,23 @@ func (r *Retriever) retrieveHybrid(q Query, limit int) ([]Result, error) {
 //   - Other corpora match on ScoredChunk.ID == Result.Key
 //   - Results appearing in both rankings get Source "hybrid"
 //   - Results in only one ranking keep their original Source
-func fuseRRF(lexical []Result, vector []embeddings.ScoredChunk, k int, limit int) []Result {
+//
+// Supersede overlay (spec embeddings-superseded-respect):
+//   - After fusion, every result whose Key appears in supersededBy has its
+//     fused RRF score multiplied by supersededDeweight (when includeSuperseded
+//     is false) and its Snippet prefixed with [SUPERSEDED → <slug>].
+//   - The annotation is applied regardless of includeSuperseded — the marker
+//     is the visibility cue; the multiplier is the rank effect.
+//   - Annotation is idempotent: if the lexical sub-path already stamped the
+//     marker, fuseRRF does not stamp it again.
+//   - For non-spec corpora the overlay never matches (it only contains spec
+//     slugs), so vector hits on knowledge/convention/code/event pass through
+//     unchanged.
+//   - The de-weight is applied exactly once per fused result regardless of
+//     whether it came from lexical, vector, or both — the lexical sub-call
+//     in retrieveHybrid runs with skipSupersedeDeweight=true, so its score
+//     is not yet de-weighted when it arrives here.
+func fuseRRF(lexical []Result, vector []embeddings.ScoredChunk, supersededBy map[string]string, includeSuperseded bool, k int, limit int) []Result {
 	type fused struct {
 		result   Result
 		rrfScore float64
@@ -594,12 +725,21 @@ func fuseRRF(lexical []Result, vector []embeddings.ScoredChunk, k int, limit int
 		}
 	}
 
-	// Collect and sort by RRF score descending.
+	// Collect, apply the supersede overlay (de-weight + annotation), and
+	// sort by RRF score descending. Overlay is applied to the fused score
+	// so each result is penalized exactly once regardless of which sub-
+	// path(s) surfaced it.
 	results := make([]Result, 0, len(byKey))
 	for _, f := range byKey {
 		f.result.Score = f.rrfScore
 		if f.inBoth {
 			f.result.Source = "hybrid"
+		}
+		if by, ok := supersededBy[f.result.Key]; ok {
+			if !includeSuperseded {
+				f.result.Score *= supersededDeweight
+			}
+			f.result.Snippet = annotateSuperseded(f.result.Snippet, by)
 		}
 		results = append(results, f.result)
 	}

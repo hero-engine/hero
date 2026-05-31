@@ -146,6 +146,13 @@ type EmbeddingsConfig struct {
 	Scope []string `json:"scope,omitempty"`
 	// Model names the Model2Vec model to use. Default: "hero-embed-v1"
 	Model string `json:"model,omitempty"`
+	// RetrievalSupersedeRespect, when false, skips the vector-path
+	// supersede overlay in retrieveHybrid. The lexical path still
+	// de-weights superseded specs (parent spec behavior); only the
+	// hybrid post-fusion overlay is bypassed. Default: true. Use
+	// when score calibration in production looks wrong and a quick
+	// rollback is needed; see spec embeddings-superseded-respect.
+	RetrievalSupersedeRespect *bool `json:"retrieval_supersede_respect,omitempty"`
 }
 
 // IsEmbeddingsEnabled returns true if embeddings are enabled.
@@ -171,6 +178,16 @@ func (c Config) EmbeddingsModel() string {
 		return "hero-embed-v1"
 	}
 	return c.Embeddings.Model
+}
+
+// RetrievalSupersedeRespect reports whether the hybrid retrieval path
+// should apply the supersede overlay (de-weight + annotation on the post-
+// fusion RRF score). Default: true. See spec embeddings-superseded-respect.
+func (c Config) RetrievalSupersedeRespect() bool {
+	if c.Embeddings == nil || c.Embeddings.RetrievalSupersedeRespect == nil {
+		return true
+	}
+	return *c.Embeddings.RetrievalSupersedeRespect
 }
 
 // ChatConfig holds chat-dispatcher settings.
