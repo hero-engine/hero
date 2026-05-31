@@ -2,7 +2,7 @@
 title: Embeddings & Vector Retrieval Respect `superseded_by`
 slug: embeddings-superseded-respect
 type: feature
-status: planning
+status: completed
 priority: high
 tags: [retrieval, embeddings, vector-search, hybrid, supersede, context-injection]
 created: 2026-05-30
@@ -190,6 +190,12 @@ Wrap the entire vector-path overlay (load + apply in `fuseRRF`) in a check of `c
 - **`IncludeSuperseded=true` ambiguity in hybrid.** Parent spec defines `IncludeSuperseded` as "skip de-weight, keep annotation." This spec applies the same rule in `fuseRRF`. The risk is the user expects "include" to mean "show me even the dropped ones" — but parent already chose annotate-don't-drop. We match parent's choice exactly. If parent revisits, this spec follows.
 - **RRF score interpretation drift.** `fuseRRF` currently writes the RRF score into `Result.Score` (line 555). After this spec, the post-fusion score is "RRF score × supersede multiplier" — still dimensionless, still rank-meaningful. Callers that print scores see a smaller number for superseded entries, which matches intent. Test that compares numeric scores before/after.
 - **Score-distribution surprise for `--semantic` without lexical hits.** If the lexical path returns zero results and only vector hits make it to `fuseRRF`, the overlay still de-weights superseded entries. A workspace where every match is via vector still gets supersede-aware ranking. This is the desired behavior, but it means a user typing a query that only matches semantically will see superseded specs ranked below their replacements even when the replacement only weakly matches. Tested explicitly.
+
+## Changes
+
+- `internal/retrieval/retrieval.go` — add `skipSupersedeDeweight` internal `Query` field; add `Retriever.supersedeRespect` knob loaded from config in `New`; add `loadSupersededOverlay`, `applySupersedeDeweight`, `annotateSuperseded` helpers; gate the per-path de-weight in `retrieveViaNodeIndex` and `retrieveViaFTS` on the new flag (annotation always fires); rewrite `retrieveHybrid` to load the overlay once per query and pass it (plus `IncludeSuperseded`) into `fuseRRF`; extend `fuseRRF` signature to accept the overlay + include flag and apply de-weight + annotation exactly once after merging.
+- `internal/config/config.go` — add `EmbeddingsConfig.RetrievalSupersedeRespect *bool` rollback knob + `Config.RetrievalSupersedeRespect()` accessor (default `true`).
+- `internal/retrieval/retrieval_test.go` — update existing `fuseRRF` call sites for the new signature; add `TestFuseRRF_SupersedeVectorOnlyHit`, `TestFuseRRF_SupersedeBothPathsNoDoubleAnnotation`, `TestFuseRRF_IncludeSupersededSkipsDeweightKeepsAnnotation`, `TestFuseRRF_NonSpecCorpusUnaffected`, `TestFuseRRF_EmptyOverlayNoMutation`, `TestLoadSupersededOverlay_ReadsFromSpecsTable`, `TestLoadSupersededOverlay_NilDB`, `TestRetrieveHybrid_VectorPathSupersedeAware`, `TestRetrieveHybrid_SupersedeRespectDisabled`.
 
 ## Out of Scope
 

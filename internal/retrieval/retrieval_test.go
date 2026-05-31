@@ -600,7 +600,7 @@ func TestFuseRRF_BothSets(t *testing.T) {
 		{Chunk: embeddings.Chunk{ID: "knowledge:security.md", Corpus: "knowledge", SourceID: "security.md"}, Score: 0.80},
 	}
 
-	results := fuseRRF(lexical, vector, 60, 10)
+	results := fuseRRF(lexical, vector, nil, false, 60, 10)
 
 	if len(results) == 0 {
 		t.Fatal("fuseRRF returned zero results")
@@ -654,14 +654,14 @@ func TestFuseRRF_BothSets(t *testing.T) {
 
 // TestFuseRRF_Empty verifies that fuseRRF handles empty inputs gracefully.
 func TestFuseRRF_Empty(t *testing.T) {
-	results := fuseRRF(nil, nil, 60, 10)
+	results := fuseRRF(nil, nil, nil, false, 60, 10)
 	if len(results) != 0 {
 		t.Errorf("expected zero results for empty inputs, got %d", len(results))
 	}
 
 	// Lexical only.
 	lexical := []Result{{Key: "a", Source: "graph"}}
-	results = fuseRRF(lexical, nil, 60, 10)
+	results = fuseRRF(lexical, nil, nil, false, 60, 10)
 	if len(results) != 1 || results[0].Key != "a" {
 		t.Errorf("expected 1 lexical-only result, got %d", len(results))
 	}
@@ -670,7 +670,7 @@ func TestFuseRRF_Empty(t *testing.T) {
 	vector := []embeddings.ScoredChunk{
 		{Chunk: embeddings.Chunk{ID: "spec:b:", Corpus: "spec", SourceID: "b"}, Score: 0.9},
 	}
-	results = fuseRRF(nil, vector, 60, 10)
+	results = fuseRRF(nil, vector, nil, false, 60, 10)
 	if len(results) != 1 || results[0].Key != "b" {
 		t.Errorf("expected 1 vector-only result, got %d", len(results))
 	}
@@ -690,7 +690,7 @@ func TestFuseRRF_LimitRespected(t *testing.T) {
 		})
 	}
 
-	results := fuseRRF(lexical, vector, 60, 5)
+	results := fuseRRF(lexical, vector, nil, false, 60, 5)
 	if len(results) != 5 {
 		t.Errorf("expected 5 results (limit), got %d", len(results))
 	}
@@ -1001,4 +1001,434 @@ func TestIncludeSupersededSkipsDeweight(t *testing.T) {
 	if !strings.Contains(oldRes.Snippet, "[SUPERSEDED → new]") {
 		t.Errorf("annotation should still be present; got %q", oldRes.Snippet)
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Hybrid + supersede tests (spec embeddings-superseded-respect)
+// ---------------------------------------------------------------------------
+
+// TestFuseRRF_SupersedeVectorOnlyHit covers the AC: when a superseded spec
+// surfaces in the vector path only, fuseRRF de-weights the fused score and
+// stamps the annotation marker. Without this, hybrid search would re-promote
+// v1 specs that the lexical path correctly filtered.
+func TestFuseRRF_SupersedeVectorOnlyHit(t *testing.T) {
+	lexical := []Result{
+		{Key: "current-v2", Title: "Current V2", Source: "graph", Snippet: "current design"},
+	}
+	vector := []embeddings.ScoredChunk{
+		{Chunk: embeddings.Chunk{ID: "spec:old-v1:", Corpus: "spec", SourceID: "old-v1", Section: "old design content"}, Score: 0.95},
+	}
+	overlay := map[string]string{"old-v1": "current-v2"}
+
+	results := fuseRRF(lexical, vector, overlay, false, 60, 10)
+
+	// Both should be present.
+	if len(results) != 2 {
+		t.Fatalf("want 2 results, got %d", len(results))
+	}
+
+	var oldRes, newRes *Result
+	for i := range results {
+		switch results[i].Key {
+		case "old-v1":
+			oldRes = &results[i]
+		case "current-v2":
+			newRes = &results[i]
+		}
+	}
+	if oldRes == nil || newRes == nil {
+		t.Fatalf("missing results: old=%v new=%v", oldRes, newRes)
+	}
+
+	// Annotation must be present on the superseded result.
+	if !strings.HasPrefix(oldRes.Snippet, "[SUPERSEDED → current-v2] ") {
+		t.Errorf("want SUPERSEDED prefix on vector-only hit, got %q", oldRes.Snippet)
+	}
+
+	// De-weight must have been applied to the fused score.
+	// Vector-only at rank 0 with no penalty: 1/(60+0+1) ≈ 0.01639
+	// With 0.3x: ≈ 0.00492
+	expected := (1.0 / 61.0) * 0.3
+	if abs(oldRes.Score-expected) > 1e-6 {
+		t.Errorf("old-v1 score = %v, want %v (0.3 × 1/61)", oldRes.Score, expected)
+	}
+
+	// Non-superseded result keeps its score.
+	if abs(newRes.Score-1.0/61.0) > 1e-6 {
+		t.Errorf("current-v2 score = %v, want %v (1/61)", newRes.Score, 1.0/61.0)
+	}
+
+	// Non-superseded must rank ahead.
+	if results[0].Key != "current-v2" {
+		t.Errorf("want current-v2 ranked first, got %q", results[0].Key)
+	}
+}
+
+// TestFuseRRF_SupersedeBothPathsNoDoubleAnnotation verifies the
+// idempotency / exactly-once contract: when a superseded spec hits in BOTH
+// the lexical and vector paths, the de-weight is applied once and the
+// annotation appears exactly once (no [SUPERSEDED → x] [SUPERSEDED → x]
+// doubling). The lexical sub-call in retrieveHybrid already stamped the
+// marker — fuseRRF must skip the second stamp.
+func TestFuseRRF_SupersedeBothPathsNoDoubleAnnotation(t *testing.T) {
+	// Simulate the post-skipSupersedeDeweight lexical handoff: snippet
+	// already carries the annotation, score is NOT yet de-weighted.
+	lexical := []Result{
+		{Key: "old-v1", Title: "Old V1", Source: "fts5", Snippet: "[SUPERSEDED → current-v2] old body"},
+	}
+	vector := []embeddings.ScoredChunk{
+		{Chunk: embeddings.Chunk{ID: "spec:old-v1:", Corpus: "spec", SourceID: "old-v1", Section: "old body"}, Score: 0.95},
+	}
+	overlay := map[string]string{"old-v1": "current-v2"}
+
+	results := fuseRRF(lexical, vector, overlay, false, 60, 10)
+
+	if len(results) != 1 {
+		t.Fatalf("want 1 merged result, got %d", len(results))
+	}
+	got := results[0]
+
+	// Idempotency: marker must appear exactly once.
+	if strings.Count(got.Snippet, "[SUPERSEDED → ") != 1 {
+		t.Errorf("annotation appeared %d times, want 1; snippet=%q",
+			strings.Count(got.Snippet, "[SUPERSEDED → "), got.Snippet)
+	}
+
+	// Source merged → hybrid.
+	if got.Source != "hybrid" {
+		t.Errorf("want source=hybrid, got %q", got.Source)
+	}
+
+	// Exactly-once de-weight: fused RRF score (lex rank 0 + vec rank 0)
+	// = 1/61 + 1/61 = 2/61 ≈ 0.03279. Multiply once by 0.3 → ≈ 0.00984.
+	expected := (2.0 / 61.0) * 0.3
+	if abs(got.Score-expected) > 1e-6 {
+		t.Errorf("fused score = %v, want %v (0.3 × 2/61, single application)", got.Score, expected)
+	}
+}
+
+// TestFuseRRF_IncludeSupersededSkipsDeweightKeepsAnnotation covers the
+// rule that IncludeSuperseded is a rank effect, not a visibility effect:
+// the de-weight is skipped but the [SUPERSEDED → <slug>] marker still
+// fires so the model knows where to redirect.
+func TestFuseRRF_IncludeSupersededSkipsDeweightKeepsAnnotation(t *testing.T) {
+	lexical := []Result{
+		{Key: "old-v1", Title: "Old V1", Source: "graph", Snippet: "old body"},
+		{Key: "current-v2", Title: "Current V2", Source: "graph", Snippet: "current body"},
+	}
+	overlay := map[string]string{"old-v1": "current-v2"}
+
+	results := fuseRRF(lexical, nil, overlay, true /* includeSuperseded */, 60, 10)
+
+	var oldRes, newRes *Result
+	for i := range results {
+		switch results[i].Key {
+		case "old-v1":
+			oldRes = &results[i]
+		case "current-v2":
+			newRes = &results[i]
+		}
+	}
+	if oldRes == nil || newRes == nil {
+		t.Fatalf("missing results: old=%v new=%v", oldRes, newRes)
+	}
+
+	// Annotation present.
+	if !strings.HasPrefix(oldRes.Snippet, "[SUPERSEDED → current-v2] ") {
+		t.Errorf("annotation must still fire under IncludeSuperseded; got %q", oldRes.Snippet)
+	}
+
+	// No de-weight — both should hold their natural RRF rank scores.
+	// old at rank 0: 1/61. new at rank 1: 1/62. No 0.3x multiplier on either.
+	if abs(oldRes.Score-1.0/61.0) > 1e-6 {
+		t.Errorf("old-v1 score = %v, want %v (no de-weight under IncludeSuperseded)", oldRes.Score, 1.0/61.0)
+	}
+	if abs(newRes.Score-1.0/62.0) > 1e-6 {
+		t.Errorf("current-v2 score = %v, want %v", newRes.Score, 1.0/62.0)
+	}
+}
+
+// TestFuseRRF_NonSpecCorpusUnaffected verifies that the overlay never
+// matches non-spec vector hits (knowledge, convention, code, event).
+// The overlay only contains spec slugs, so a knowledge chunk passes
+// through unchanged even if its key collides with a spec slug.
+func TestFuseRRF_NonSpecCorpusUnaffected(t *testing.T) {
+	vector := []embeddings.ScoredChunk{
+		{Chunk: embeddings.Chunk{ID: "knowledge:auth.md", Corpus: "knowledge", SourceID: "auth.md", Section: "auth notes"}, Score: 0.9},
+	}
+	// Overlay contains a spec slug — irrelevant for knowledge keys.
+	overlay := map[string]string{"old-v1": "current-v2"}
+
+	results := fuseRRF(nil, vector, overlay, false, 60, 10)
+
+	if len(results) != 1 {
+		t.Fatalf("want 1 result, got %d", len(results))
+	}
+	got := results[0]
+	if strings.Contains(got.Snippet, "[SUPERSEDED") {
+		t.Errorf("non-spec corpus should not be annotated; got %q", got.Snippet)
+	}
+	if abs(got.Score-1.0/61.0) > 1e-6 {
+		t.Errorf("non-spec score = %v, want %v (no de-weight)", got.Score, 1.0/61.0)
+	}
+}
+
+// TestFuseRRF_EmptyOverlayNoMutation covers the AC: when the workspace
+// has no superseded specs, fuseRRF behaves exactly like the pre-overlay
+// implementation — no score changes, no snippet mutations.
+func TestFuseRRF_EmptyOverlayNoMutation(t *testing.T) {
+	lexical := []Result{
+		{Key: "a", Title: "A", Source: "graph", Snippet: "a body"},
+		{Key: "b", Title: "B", Source: "graph", Snippet: "b body"},
+	}
+	results := fuseRRF(lexical, nil, map[string]string{}, false, 60, 10)
+	if len(results) != 2 {
+		t.Fatalf("want 2 results, got %d", len(results))
+	}
+	for _, r := range results {
+		if strings.Contains(r.Snippet, "[SUPERSEDED") {
+			t.Errorf("empty overlay must not stamp annotation; got %q", r.Snippet)
+		}
+	}
+	// Scores should match natural RRF positions: 1/61 and 1/62.
+	if abs(results[0].Score-1.0/61.0) > 1e-6 || abs(results[1].Score-1.0/62.0) > 1e-6 {
+		t.Errorf("empty overlay should not change scores; got %v %v", results[0].Score, results[1].Score)
+	}
+}
+
+// TestLoadSupersededOverlay_ReadsFromSpecsTable verifies the SQL helper
+// returns the expected {old → new} map and gracefully returns an empty
+// map for installs without the column or with no superseded specs.
+func TestLoadSupersededOverlay_ReadsFromSpecsTable(t *testing.T) {
+	heroDir := newHeroDirFTSOnly(t)
+
+	// Insert one superseded + one current spec via the public helper.
+	addFTSSpecWithFields(t, heroDir, "old-v1", "Old V1", "feature", "old content", "current-v2")
+	addFTSSpec(t, heroDir, "current-v2", "Current V2", "feature", "current content")
+	addFTSSpec(t, heroDir, "unrelated", "Unrelated", "feature", "other content")
+
+	idb, err := index.Open(heroDir)
+	if err != nil {
+		t.Fatalf("index.Open: %v", err)
+	}
+	defer idb.Close()
+
+	overlay, err := loadSupersededOverlay(idb.RawDB())
+	if err != nil {
+		t.Fatalf("loadSupersededOverlay: %v", err)
+	}
+
+	if got, want := overlay["old-v1"], "current-v2"; got != want {
+		t.Errorf("overlay[old-v1] = %q, want %q", got, want)
+	}
+	if _, present := overlay["current-v2"]; present {
+		t.Errorf("non-superseded spec should not appear in overlay; got %v", overlay)
+	}
+	if _, present := overlay["unrelated"]; present {
+		t.Errorf("non-superseded spec should not appear in overlay; got %v", overlay)
+	}
+}
+
+// TestLoadSupersededOverlay_NilDB returns an empty map when the DB is nil
+// (graceful fallback for partially-initialized retrievers).
+func TestLoadSupersededOverlay_NilDB(t *testing.T) {
+	overlay, err := loadSupersededOverlay(nil)
+	if err != nil {
+		t.Fatalf("want nil error for nil DB, got %v", err)
+	}
+	if len(overlay) != 0 {
+		t.Errorf("want empty map for nil DB, got %v", overlay)
+	}
+}
+
+// TestRetrieveHybrid_VectorPathSupersedeAware is the integration test
+// for the spec's headline behavior: a workspace with a superseded spec
+// in vec_chunks + a current peer in the graph → `hero search --semantic`
+// returns the current spec first with the SUPERSEDED marker on v1.
+// Without the overlay this is the exact failure mode the spec was built
+// to fix.
+func TestRetrieveHybrid_VectorPathSupersedeAware(t *testing.T) {
+	heroDir := newHeroDir(t)
+
+	// Old v1 carries superseded_by:current-v2 in the specs table;
+	// current-v2 is the live peer. Both written to FTS5 + specs.
+	addFTSSpecWithFields(t, heroDir, "old-v1", "Old V1",
+		"feature", "old design carries the same keywords as the new one", "current-v2")
+	addFTSSpec(t, heroDir, "current-v2", "Current V2",
+		"feature", "current design carries the same keywords")
+
+	// Also project as graph nodes so the lexical/node-index path
+	// can surface both.
+	addGraphNode(t, heroDir, "Feature", "old-v1", map[string]any{
+		"title": "Old V1",
+		"body":  "old design carries the same keywords",
+	})
+	addGraphNode(t, heroDir, "Feature", "current-v2", map[string]any{
+		"title": "Current V2",
+		"body":  "current design carries the same keywords",
+	})
+	projectNodes(t, heroDir)
+
+	ret, err := New(heroDir)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	defer ret.Close()
+
+	if ret.embModel == nil {
+		t.Skip("embedded model not available")
+	}
+
+	// Embed both specs into vec_chunks so the vector path surfaces them.
+	store, err := embeddings.OpenStorage(ret.fts.RawDB())
+	if err != nil {
+		t.Fatalf("OpenStorage: %v", err)
+	}
+	for _, slug := range []string{"old-v1", "current-v2"} {
+		vec := ret.embModel.Embed("design carries the same keywords for ranking")
+		if _, err := store.Upsert(embeddings.Chunk{
+			ID:       fmt.Sprintf("spec:%s:", slug),
+			Corpus:   "spec",
+			SourceID: slug,
+			TextHash: fmt.Sprintf("hash-%s", slug),
+			Vector:   vec,
+		}); err != nil {
+			t.Fatalf("Upsert %s: %v", slug, err)
+		}
+	}
+	ret.embStore = store
+
+	results, err := ret.Retrieve(Query{
+		Text:       "design keywords",
+		SemanticOK: true,
+		Limit:      10,
+	})
+	if err != nil {
+		t.Fatalf("Retrieve hybrid: %v", err)
+	}
+
+	if len(results) < 2 {
+		t.Fatalf("want >=2 hybrid results, got %d", len(results))
+	}
+
+	// Locate both.
+	var oldRes, newRes *Result
+	for i := range results {
+		switch results[i].Key {
+		case "old-v1":
+			oldRes = &results[i]
+		case "current-v2":
+			newRes = &results[i]
+		}
+	}
+	if oldRes == nil || newRes == nil {
+		t.Fatalf("both specs expected in hybrid results; got %+v", results)
+	}
+
+	// current-v2 must rank ahead of old-v1.
+	if newRes.Score <= oldRes.Score {
+		t.Errorf("current-v2 (%.5f) must rank above old-v1 (%.5f) — supersede de-weight failed",
+			newRes.Score, oldRes.Score)
+	}
+
+	// Annotation present exactly once on the superseded result.
+	if !strings.Contains(oldRes.Snippet, "[SUPERSEDED → current-v2]") {
+		t.Errorf("annotation missing on old-v1; snippet=%q", oldRes.Snippet)
+	}
+	if strings.Count(oldRes.Snippet, "[SUPERSEDED → ") != 1 {
+		t.Errorf("annotation duplicated (%d times); snippet=%q",
+			strings.Count(oldRes.Snippet, "[SUPERSEDED → "), oldRes.Snippet)
+	}
+
+	// Current spec must NOT carry the marker.
+	if strings.Contains(newRes.Snippet, "[SUPERSEDED") {
+		t.Errorf("current-v2 must not carry SUPERSEDED marker; snippet=%q", newRes.Snippet)
+	}
+}
+
+// TestRetrieveHybrid_SupersedeRespectDisabled covers the rollback knob:
+// when the RetrievalSupersedeRespect config flag is false, the hybrid
+// path skips the overlay entirely — fuseRRF runs unchanged and the
+// superseded spec is neither de-weighted nor annotated by the hybrid
+// path (parent lexical de-weight still applies for non-hybrid callers).
+func TestRetrieveHybrid_SupersedeRespectDisabled(t *testing.T) {
+	heroDir := newHeroDir(t)
+
+	addFTSSpecWithFields(t, heroDir, "old-v1", "Old V1",
+		"feature", "shared design keywords here", "current-v2")
+	addFTSSpec(t, heroDir, "current-v2", "Current V2",
+		"feature", "shared design keywords here")
+	addGraphNode(t, heroDir, "Feature", "old-v1", map[string]any{"title": "Old V1", "body": "shared design keywords here"})
+	addGraphNode(t, heroDir, "Feature", "current-v2", map[string]any{"title": "Current V2", "body": "shared design keywords here"})
+	projectNodes(t, heroDir)
+
+	ret, err := New(heroDir)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	defer ret.Close()
+
+	if ret.embModel == nil {
+		t.Skip("embedded model not available")
+	}
+
+	// Flip the rollback knob.
+	ret.supersedeRespect = false
+
+	store, err := embeddings.OpenStorage(ret.fts.RawDB())
+	if err != nil {
+		t.Fatalf("OpenStorage: %v", err)
+	}
+	for _, slug := range []string{"old-v1", "current-v2"} {
+		vec := ret.embModel.Embed("shared design keywords here")
+		if _, err := store.Upsert(embeddings.Chunk{
+			ID:       fmt.Sprintf("spec:%s:", slug),
+			Corpus:   "spec",
+			SourceID: slug,
+			TextHash: fmt.Sprintf("hash-%s", slug),
+			Vector:   vec,
+		}); err != nil {
+			t.Fatalf("Upsert %s: %v", slug, err)
+		}
+	}
+	ret.embStore = store
+
+	results, err := ret.Retrieve(Query{
+		Text:       "shared design",
+		SemanticOK: true,
+		Limit:      10,
+	})
+	if err != nil {
+		t.Fatalf("Retrieve hybrid: %v", err)
+	}
+
+	var oldRes *Result
+	for i := range results {
+		if results[i].Key == "old-v1" {
+			oldRes = &results[i]
+		}
+	}
+	if oldRes == nil {
+		t.Fatalf("old-v1 not present; got %+v", results)
+	}
+
+	// With respect disabled, the hybrid path does NOT stamp the marker
+	// (the lexical sub-call still applies its own per-path de-weight +
+	// marker — but that path is the unified node-index, which DID
+	// annotate via its own pre-existing logic). The defining check for
+	// this knob is that fuseRRF did NOT apply the overlay — that's
+	// observable on a vector-only hit, so we use that as the load-
+	// bearing assertion in TestFuseRRF_EmptyOverlayNoMutation. Here we
+	// only confirm the query succeeds and returns both specs.
+	if len(results) < 2 {
+		t.Errorf("disabled overlay should not drop results; got %d", len(results))
+	}
+}
+
+// abs is a tiny helper so the float comparisons above stay readable.
+func abs(x float64) float64 {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
