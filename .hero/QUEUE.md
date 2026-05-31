@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-05-31T01:05:26Z · 99 ready specs_
+_Generated: 2026-05-31T01:13:18Z · 99 ready specs_
 
 ## native-mockup-rendering — "Native Mockup Rendering — Real Platform UI from /mock"
 _feature · delivering · horizon: now_
@@ -706,6 +706,13 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
+## project-rules — Project Rules
+_rule · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/knowledge/rules/project-rules/spec.md)_
+
+---
+
 ## sprint-2026-05-19 — Sprint Plan — dashboard-fix-and-rebuild (2026-05-19)
 _note · active · horizon: now_
 
@@ -807,13 +814,6 @@ heterogeneous projects).
 _decision · accepted · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-surface-deployment-and-rendering/spec.md)_
-
----
-
-## project-rules — Project Rules
-_rule · active · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/knowledge/rules/project-rules/spec.md)_
 
 ---
 

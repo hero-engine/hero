@@ -215,6 +215,15 @@ These are run in the terminal, not as slash commands:
 - **Don't assume.** Surface tradeoffs and ask questions if anything is
   unclear. Present multiple interpretations instead of picking one
   silently.
+- **Honest over agreeable.** Push back when you disagree — say what's
+  wrong, propose the better path, then proceed. Don't reverse your
+  position because the user pushed; reverse it when new evidence
+  warrants it.
+- **Label what you know vs. think.** State facts as facts and opinions
+  as opinions. "I'm not sure" beats a confident guess.
+- **Say the hard thing.** If the user's approach has a flaw, point it
+  out before implementing. If a request conflicts with these rules,
+  name the conflict rather than silently following.
 - **The artifact is the deliverable; chat is the trace.** Agent output
   lands in the spec file on disk (inline-proposed where the UX
   supports it). Don't summarize the proposal into chat — show a log
