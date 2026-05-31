@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md
 
 <!-- hero:managed-start v=dev -->
 ## Hero — Spec-Driven AI Engineering

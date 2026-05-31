@@ -74,8 +74,8 @@ func runUpgrade(cmd *cobra.Command, args []string) error {
 		fromVersion = info.HeroVersion
 	}
 
-	if fromVersion == binaryVersion && fromVersion != "dev" {
-		fmt.Printf("Workspace is already at v%s — nothing to upgrade.\n", binaryVersion)
+	if fromVersion == binaryVersion && fromVersion != "dev" && !upgradeForce {
+		fmt.Printf("Workspace is already at %s — nothing to upgrade.\n", displayVersion(binaryVersion))
 		return nil
 	}
 
@@ -83,11 +83,11 @@ func runUpgrade(cmd *cobra.Command, args []string) error {
 	if binaryVersion != "dev" && fromVersion != "unknown" && fromVersion != "dev" {
 		cmp := version.CompareVersions(binaryVersion, fromVersion)
 		if cmp < 0 {
-			return fmt.Errorf("cannot downgrade workspace from v%s to v%s — use a newer hero binary or run 'hero init' to create a fresh workspace", fromVersion, binaryVersion)
+			return fmt.Errorf("cannot downgrade workspace from %s to %s — use a newer hero binary or run 'hero init' to create a fresh workspace", displayVersion(fromVersion), displayVersion(binaryVersion))
 		}
 	}
 
-	fmt.Printf("Upgrading workspace from v%s to v%s\n\n", fromVersion, binaryVersion)
+	fmt.Printf("Upgrading workspace from %s to %s\n\n", displayVersion(fromVersion), displayVersion(binaryVersion))
 
 	// Use the embedded content filesystem (overridable for tests).
 	// When no override is provided, build the merged core + active-domain
@@ -122,7 +122,7 @@ func runUpgrade(cmd *cobra.Command, args []string) error {
 				return fmt.Errorf("writing version stamp: %w", err)
 			}
 		}
-		fmt.Printf("\nWorkspace version updated to v%s\n", binaryVersion)
+		fmt.Printf("\nWorkspace version updated to %s\n", displayVersion(binaryVersion))
 		if !upgradeNoHooks {
 			if err := refreshHooksIfPresent(projectRoot, upgradeDryRun, cmd.OutOrStdout()); err != nil {
 				fmt.Fprintf(os.Stderr, "Warning: hook refresh failed: %v\n", err)
@@ -143,6 +143,7 @@ func runUpgrade(cmd *cobra.Command, args []string) error {
 
 	totalUpdated := 0
 	totalSkipped := 0
+	failedTargets := 0
 	allChecksums := make(map[string]string)
 
 	for i, target := range targets {
@@ -152,13 +153,24 @@ func runUpgrade(cmd *cobra.Command, args []string) error {
 			}
 			fmt.Printf("--- %s ---\n", target)
 		}
-		updated, skipped, checksums := upgradeTarget(projectRoot, target, contentFS, info)
+		updated, skipped, checksums, targetErr := upgradeTarget(projectRoot, target, contentFS, info)
+		if targetErr != nil {
+			failedTargets++
+		}
 		totalUpdated += updated
 		totalSkipped += skipped
 		for k, v := range checksums {
 			allChecksums[k] = v
 		}
 	}
+
+	// Only stamp the new binary version once every target installed
+	// cleanly. Stamping after a partial failure lies to the next
+	// upgrade — it'll short-circuit on "already at" and the user
+	// has to hand-edit version.json to recover. Checksums of the
+	// files that DID install still get recorded so future upgrades
+	// treat them as Hero-managed rather than user-edited.
+	stampVersion := failedTargets == 0
 
 	if !upgradeDryRun {
 		// Update installed file checksums
@@ -172,11 +184,18 @@ func runUpgrade(cmd *cobra.Command, args []string) error {
 			info.InstalledFiles[k] = v
 		}
 
-		if err := version.StampUpgrade(heroDir, fromVersion, binaryVersion, totalUpdated, totalSkipped); err != nil {
+		// Record checksums for files that did install regardless of
+		// failure — they ARE Hero-managed now, even in a partial run.
+		// But only roll HeroVersion forward when every target finished
+		// cleanly, so retry sees the real prior version.
+		stampedVersion := fromVersion
+		if stampVersion {
+			stampedVersion = binaryVersion
+		}
+		if err := version.StampUpgrade(heroDir, fromVersion, stampedVersion, totalUpdated, totalSkipped); err != nil {
 			return fmt.Errorf("writing version stamp: %w", err)
 		}
-		// Also write the updated checksums
-		info.HeroVersion = binaryVersion
+		info.HeroVersion = stampedVersion
 		version.Write(heroDir, info)
 	}
 
@@ -202,6 +221,27 @@ func runUpgrade(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+// displayVersion normalizes a version string for user-facing output so
+// the visible form always carries exactly one leading "v". Versions
+// coming from `git describe` already include the "v" prefix; values
+// stamped via tests or older code paths may not. Without normalization
+// the upgrade banner printed "vv0.14.3" or, worse, dropped the prefix
+// inconsistently between code paths.
+//
+// Special markers ("unknown", "dev", empty) pass through unchanged so
+// they read naturally in messages like "Upgrading workspace from
+// unknown to v0.14.4".
+func displayVersion(v string) string {
+	switch v {
+	case "", "unknown", "dev":
+		return v
+	}
+	if strings.HasPrefix(v, "v") {
+		return v
+	}
+	return "v" + v
 }
 
 // trustedChecksumsFromInfo returns the project-relative-path → SHA256
@@ -234,7 +274,7 @@ func trustedChecksumsFromInfo(info *version.Info) map[string]string {
 // User-customized files survive: the install pipeline's
 // copyFileFromFS refuses to overwrite drifted destinations unless
 // Force is set (multi-harness-install-collision contract).
-func upgradeTarget(projectRoot string, target install.Target, contentFS fs.FS, info *version.Info) (int, int, map[string]string) {
+func upgradeTarget(projectRoot string, target install.Target, contentFS fs.FS, info *version.Info) (int, int, map[string]string, error) {
 	checksums := make(map[string]string)
 
 	opts := install.Options{
@@ -249,7 +289,7 @@ func upgradeTarget(projectRoot string, target install.Target, contentFS fs.FS, i
 	result, err := install.Run(opts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "  error   %s: %v\n", target, err)
-		return 0, 0, checksums
+		return 0, 0, checksums, err
 	}
 
 	updated := len(result.Copied)
@@ -306,7 +346,7 @@ func upgradeTarget(projectRoot string, target install.Target, contentFS fs.FS, i
 		}
 	}
 
-	return updated, skipped, checksums
+	return updated, skipped, checksums, nil
 }
 
 // resolveUpgradeTargets returns the list of install.Target values to

@@ -189,6 +189,12 @@ func resetFlags() {
 	installDryRun = false
 	installNoHooks = false
 
+	// Reset upgrade flags
+	upgradeDryRun = false
+	upgradeForce = false
+	upgradeNoHooks = false
+	upgradeTargets = nil
+
 	// Reset nudge flags
 	relevantFiles = nil
 

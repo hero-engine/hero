@@ -11,6 +11,17 @@
         "matcher": ""
       }
     ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "hero next ingest --quiet",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
     "Stop": [
       {
         "hooks": [
