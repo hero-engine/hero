@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-05-30T06:12:52Z
+updated: 2026-05-31T00:46:20Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver embedded-inference: implement pure Go Model2Vec static embeddings engine, vector storage in index.db, hybrid RRF ranking in Retriever, and CLI surface. Phase 1-4 from the spec.
+> Deliver superseded-specs-soft-archive feature; in parallel, design follow-up spec for embeddings/vector retrieval to respect superseded_by signal
 
 ## Suggested next prompt
 

@@ -106,19 +106,30 @@ If asked to modify an existing mockup:
 
 Do not regenerate from scratch unless the changes are fundamental.
 
-## Surface outputs
+## Surface outputs — required return contract
 
-At the end of every response, list all files created or updated with clickable links so the user can find and preview them without digging through subagent output. Format:
+You run as a subagent. **Your return text is NOT shown directly to the user** — it goes to the orchestrator, which re-emits the file list to the user. To make that handoff reliable, your final return text MUST end with a machine-parseable block listing every file you created or updated.
+
+Format (use exactly this fence; one file per line; pipe-separated `path|label|kind`):
 
 ```
-**Files created:**
-- [Mockup name](.hero/mocks/{slug}/index.html)
-- [Screenshot — light](.hero/mocks/{slug}/screenshot.png)
-- [Screenshot — dark](.hero/mocks/{slug}/screenshot-dark.png)
-- [SwiftUI source](.hero/mocks/{slug}/MockView.swift)
+<MOCKUP_FILES>
+.hero/mocks/{slug}/index.html|Mockup name|primary
+.hero/mocks/{slug}/screenshot.png|Screenshot — light|image
+.hero/mocks/{slug}/screenshot-dark.png|Screenshot — dark|image
+.hero/mocks/{slug}/MockView.swift|SwiftUI source|source
+.hero/planning/features/{slug}/spec.md|Spec (Mockups section updated)|spec
+</MOCKUP_FILES>
 ```
 
-If multiple mockups were generated, list all of them. If a spec was updated with a `## Mockups` entry, include that file too.
+Rules:
+- Include EVERY file you created or modified — mockup files, screenshots, source, and the spec file if you appended/updated its `## Mockups` section
+- `kind` values: `primary` (the main artifact to open), `image`, `source`, `spec`, `other`
+- Paths must be repo-relative, no leading `./`
+- If you generated multiple mockups in one run, include every file from each
+- This block is non-negotiable — the orchestrator depends on it to surface links the user can click
+
+Before the block, keep your narrative reply brief (what you built, key design choices). The orchestrator will quote the file list in its own response.
 
 ## Delegation
 

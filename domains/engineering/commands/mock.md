@@ -46,14 +46,35 @@ If the user provides `--iterate` feedback, read the existing mockup first and mo
 - Both light and dark mode screenshots captured
 - Viewer `index.html` wrapping the PNGs with light/dark toggle
 
-**Surface outputs:** At the end of your response, always list every file created or updated with clickable links so the user can find and preview them immediately. Format:
+**Surface outputs — orchestrator responsibility (READ THIS):**
+
+The `ui-designer` runs as a subagent. **The subagent's return value is NOT visible to the user.** When the Agent tool completes, you (the orchestrator running this command) MUST emit a clickable file inventory in your *own* user-facing text response — do not assume the subagent's links reach the user.
+
+To make this reliable, instruct the `ui-designer` (in the prompt you send it) to terminate its return text with a machine-parseable block:
 
 ```
-**Files created:**
-- [Mockup name](.hero/mocks/{slug}/index.html)
+<MOCKUP_FILES>
+.hero/mocks/{slug}/index.html|Mockup name|primary
+.hero/mocks/{slug}/screenshot.png|Screenshot — light|image
+.hero/mocks/{slug}/screenshot-dark.png|Screenshot — dark|image
+.hero/mocks/{slug}/MockView.swift|SwiftUI source|source
+.hero/planning/features/{slug}/spec.md|Spec (Mockups section updated)|spec
+</MOCKUP_FILES>
+```
+
+Parse that block from the tool result and re-emit it in your final response as a markdown list of clickable links:
+
+```
+**Mockups generated:**
+- [Mockup name](.hero/mocks/{slug}/index.html) — primary
 - [Screenshot — light](.hero/mocks/{slug}/screenshot.png)
 - [Screenshot — dark](.hero/mocks/{slug}/screenshot-dark.png)
 - [SwiftUI source](.hero/mocks/{slug}/MockView.swift)
+- [Spec updated](.hero/planning/features/{slug}/spec.md) — `## Mockups` entry appended
 ```
+
+If the subagent did not return a `<MOCKUP_FILES>` block, fall back to scanning its response text for `.hero/mocks/...` paths and listing those. Either way, the inventory must appear in YOUR response, not just the subagent's.
+
+**Spec write-back check:** If a spec slug was provided, verify the subagent updated the spec's `## Mockups` section. If the inventory does not include the spec path, read the spec file yourself and append the entry before finishing.
 
 Request: $ARGUMENTS

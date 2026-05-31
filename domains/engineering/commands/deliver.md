@@ -24,16 +24,20 @@ to **supervised**.
 
 Suppress confirmation prompts during the delivery loop. Check `hero drift`
 after implementation, run tests if a runner is configured, validate the
-engineer's **Completion Ledger** against the spec, and halt on any of:
-test failure, drift warning, boundary violation, or any non-`DONE` ledger
-item (PARTIAL, SKIPPED, BLOCKED). If `--halt-on` is provided
-(comma-separated: `drift`, `test`, `boundary`, `lint`, `ledger`), only halt
-on those specific conditions.
+engineer's **Completion Ledger** against the spec, and:
+- **PARTIAL rows:** loop back to the engineer with instructions to finish
+  them. Do not halt. Only escalate if a second pass returns PARTIAL on the
+  same row with a specific written obstacle.
+- **SKIPPED / BLOCKED rows:** halt and surface — these need user judgment.
+- **Test failure / drift warning / boundary violation:** halt and surface.
+
+If `--halt-on` is provided (comma-separated: `drift`, `test`, `boundary`,
+`lint`, `ledger`), only halt on those specific conditions.
 
 Persistence rule (`agent-reliability` — "Persistence on continuous tasks")
-applies: do not yield between phases unless a true blocker fires. A
-non-`DONE` ledger row IS a true blocker — halt and surface it. "This is
-taking a while" is NOT.
+applies: do not yield between phases unless a true blocker fires. PARTIAL
+is NOT a blocker — finish the work. SKIPPED and BLOCKED ARE blockers —
+halt and surface. "This is taking a while" is NOT.
 
 ### Dry-run mode
 
@@ -70,7 +74,7 @@ If the user asks to fix/deliver multiple specs (e.g. "fix the researched bugs", 
    - Run tests / build to verify
    - Require a **Completion Ledger** from the engineer covering every acceptance criterion and Changes item (see `engineer.md` — "Closing output"). Validate it against the spec.
    - Commit with a message referencing the spec slug and tracker ID
-   - Only set `status: completed` if the ledger is fully `DONE`. If any row is PARTIAL / SKIPPED / BLOCKED, halt and surface — do not flip status without sign-off. `hero spec verify` or the async runner will auto-archive completed specs to specs/.
+   - Only set `status: completed` if the ledger is fully `DONE`. PARTIAL rows are sent back to the engineer to finish (see "Validate the Completion Ledger" above); SKIPPED / BLOCKED rows halt and surface — do not flip status without sign-off. `hero spec verify` or the async runner will auto-archive completed specs to specs/.
    - Post results to tracker if configured
 5. **One commit per fix** — each fix is atomic and independently revertable
 6. If a fix fails tests or creates problems, skip it, note the issue in the spec, and move to the next one
@@ -91,10 +95,15 @@ provides a list of slugs with `--autopilot`:
 4. Execute sequentially using the autopilot flow for each
 5. Between each spec: run `hero drift`, run tests, validate the Completion
    Ledger, commit atomically
-6. If one fails or its ledger has non-`DONE` rows: log the failure / open
-   items, skip the spec (do NOT flip to `completed`), continue with the next
-7. At the end: summary of delivered (fully `DONE`), partially delivered
-   (with non-`DONE` ledger rows for follow-up), and skipped (with reasons)
+6. If a spec returns PARTIAL rows: loop the engineer to finish them before
+   moving on — do not move to the next spec with PARTIAL rows unhandled.
+   If a spec returns SKIPPED / BLOCKED rows or a test/drift failure: log
+   the failure, skip the spec (do NOT flip to `completed`), continue with
+   the next.
+7. At the end: summary of delivered (fully `DONE`), halted (with SKIPPED /
+   BLOCKED rows for user judgment), and failed (with reasons). PARTIAL
+   should not appear in the final summary — it should have been resolved
+   in step 6.
 
 ## Single spec mode
 
@@ -125,9 +134,24 @@ At the end of the delivery loop:
      Challenge performative `DONE` marks; downgrade rows that lack evidence.
    - For user-visible behavior, confirm the Exercise-the-feature check is
      populated — unit tests alone are not sufficient evidence.
-   - **If any row is `PARTIAL` / `SKIPPED` / `BLOCKED`, do NOT flip to
-     `completed`** without explicit user sign-off. In autopilot mode this
-     halts the run; in supervised mode, surface the open rows and ask.
+   - **PARTIAL is not an acceptable end state — finish the work.** PARTIAL
+     means the engineer ran out of time, energy, or attention, not that the
+     work is intrinsically un-doable. Do NOT ask the user "ship as-is or
+     chase these down?" — the standing answer is *chase them down*. Send
+     the ledger back to the engineer with the PARTIAL rows and explicit
+     instructions to complete them, then re-validate. Only after a second
+     pass *still* returns PARTIAL on the same row — with a written reason
+     that names a specific obstacle (not "minor polish," not "low value")
+     — may you surface it to the user. The bar: would a careful engineer
+     reading this spec next week consider the work finished? If no, keep
+     working.
+   - **SKIPPED and BLOCKED** are legitimate human-judgment escalations.
+     SKIPPED needs the user's call on scope; BLOCKED names a real external
+     obstacle. Surface these with the specific row, the engineer's stated
+     reason, and a concrete recommendation — not an open-ended question.
+   - Do NOT flip to `completed` while any row remains non-`DONE`. In
+     autopilot mode, PARTIAL re-enters the engineer loop automatically;
+     SKIPPED / BLOCKED halt the run.
 6. **Refresh the kickoff** — when status flips (planning → delivering,
    delivering → completed) or after meaningful chunks land, rewrite the
    spec's `## Kickoff` section so "Pick up at:" reflects *now*, not
