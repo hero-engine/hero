@@ -214,7 +214,11 @@ func Mismatch(heroDir, binaryVersion string) string {
 
 	cmp := CompareVersions(binaryVersion, info.HeroVersion)
 	if cmp > 0 {
-		return fmt.Sprintf("workspace was created with v%s, binary is v%s — run 'hero upgrade' to update",
+		// Recommend `hero upgrade` (which delegates to install.Run and so
+		// fires the legacy-layout cleanup) over the older `hero install`
+		// suggestion — both work, but `hero upgrade` is the verb users
+		// expect after a binary bump.
+		return fmt.Sprintf("workspace was created with v%s, binary is v%s — run 'hero upgrade' (re-renders content and clears legacy install layout)",
 			wsVer, binVer)
 	}
 

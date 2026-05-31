@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/install"
 	"github.com/hero-engine/hero/internal/peering"
 	"github.com/hero-engine/hero/internal/spectypes"
 	"github.com/hero-engine/hero/internal/version"
@@ -57,6 +58,22 @@ func init() {
 		binaryVersion := rootCmd.Version
 		if msg := version.Mismatch(heroDir, binaryVersion); msg != "" {
 			fmt.Fprintf(os.Stderr, "hero: %s\n", msg)
+		}
+
+		// Cheap broken-symlink probe: lstat + readlink against a small
+		// hardcoded path list (~18 entries). When the user upgrades the
+		// binary across a layout-contract change (P2 → render-direct),
+		// dangling symlinks survive at .codex/agents, .claude/agents,
+		// etc., and every Claude/Codex/Cursor session in the project
+		// silently fails to load Hero skills/agents until cleanup runs.
+		// Warning loudly here means the next `hero ...` invocation in
+		// the project is sufficient to discover the strand, even if
+		// `version.Mismatch` is silent (e.g. dev builds).
+		if findings := install.DetectLegacyDrift(projectRoot); len(findings) > 0 {
+			fmt.Fprintf(os.Stderr,
+				"hero: %d legacy install artifact(s) detected — Claude Code / Codex / Cursor will silently fail to load Hero skills and agents.\n"+
+					"hero: run 'hero upgrade' (or 'hero install <mode> .') to clean up.\n",
+				len(findings))
 		}
 
 		// Refresh .hero/cache/spec-types.json so hero-code and other

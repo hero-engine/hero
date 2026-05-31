@@ -330,6 +330,30 @@ func runCheck(cmd *cobra.Command, args []string) error {
 		addRow("satellite-drift", "pass", "no satellite drift")
 	}
 
+	// Legacy install-layout drift — dangling harness-dir symlinks from
+	// the P2→render-direct migration and stranded canonical mirror dirs.
+	// A non-empty result means harness sessions in this project are
+	// silently failing to load Hero skills/agents.
+	driftFindings := install.DetectLegacyDrift(projectRoot)
+	if len(driftFindings) > 0 {
+		issues += len(driftFindings)
+		fmt.Printf("Legacy install drift (%d):\n", len(driftFindings))
+		for _, f := range driftFindings {
+			switch f.Kind {
+			case "broken_symlink":
+				fmt.Printf("  [broken_symlink]       %s → %s (target missing)\n", f.Path, f.Target)
+			case "legacy_canonical_dir":
+				fmt.Printf("  [legacy_canonical_dir] %s\n", f.Path)
+			}
+		}
+		fmt.Println("  Run 'hero upgrade' (or 'hero install <mode> .') to clean up.")
+		fmt.Println()
+		addRow("install-drift", "fail",
+			fmt.Sprintf("%d legacy install artifact(s); run 'hero upgrade'", len(driftFindings)))
+	} else {
+		addRow("install-drift", "pass", "no legacy install drift")
+	}
+
 	// Snapshot containment + override health.
 	snapIssues := reportSnapshotHealth(heroDir)
 	if snapIssues > 0 {

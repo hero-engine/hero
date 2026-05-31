@@ -136,6 +136,13 @@ func TestMismatch_Different(t *testing.T) {
 	if !contains(msg, "hero upgrade") {
 		t.Errorf("warning should mention 'hero upgrade', got %q", msg)
 	}
+	// Regression for upgrade-strands-install-layout — make sure the
+	// warning surfaces that the recommended action clears legacy layout,
+	// so users grasp that ignoring it leaves Claude/Codex sessions in
+	// a silently-broken state.
+	if !contains(msg, "legacy install layout") {
+		t.Errorf("warning should explain cleanup behaviour, got %q", msg)
+	}
 }
 
 func TestMismatch_DevBuild(t *testing.T) {
