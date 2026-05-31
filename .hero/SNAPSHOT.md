@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-05-31T16:12:17Z · projected from 279 source nodes_
+_Last refreshed: 2026-05-31T16:21:06Z · projected from 279 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 14h ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 15h ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | building | domains/engineering/ | 2d ago | spec-types-cache-frontmatter-empty |
@@ -44,10 +44,10 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — delivery-completion-discipline, read-dont-guess, hero-serve-project-section
+- **(unassigned)** — upgrade-strands-install-layout, delivery-completion-discipline, read-dont-guess, hero-serve-project-section
 - **core** — embeddings-superseded-respect, next-compact-handoff, hero-hooks-uninstall-misses-next-block, compact-handoff-transcript-kickoff-missing
 - **domains/engineering** — mockups-link-back-to-specs
-- **serve** — superseded-specs-soft-archive, hero-serve-project-section-healthcache, hero-serve-project-section-destructive, hero-serve-project-section-opsrunner
+- **serve** — superseded-specs-soft-archive, hero-serve-project-section-healthcache, hero-serve-project-section-destructive
 
 ## Next up across surfaces
 
