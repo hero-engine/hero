@@ -266,13 +266,21 @@ func upsertCodexConfig(configPath, heroPath string, dryRun bool, projectRoot str
 		existing = string(data)
 	}
 
+	// First, strip any pre-existing unmanaged [mcp_servers.hero] table that
+	// would collide with the managed block. TOML treats two `[mcp_servers.hero]`
+	// tables in the same file as a duplicate-key error, so leaving an old
+	// hand-written entry next to our managed block silently breaks codex.
+	// Only strips tables OUTSIDE the managed markers — the managed block
+	// itself is handled by the marker replacement below.
+	existing = stripUnmanagedCodexHeroTable(existing)
+
 	var newContent string
 	startIdx := strings.Index(existing, codexMCPMarker)
 	endIdx := strings.Index(existing, codexMCPEndMarker)
 	if startIdx >= 0 && endIdx > startIdx {
 		// Replace existing hero block
 		newContent = existing[:startIdx] + heroBlock + existing[endIdx+len(codexMCPEndMarker):]
-	} else if existing == "" {
+	} else if strings.TrimSpace(existing) == "" {
 		newContent = heroBlock + "\n"
 	} else {
 		// Append hero block
@@ -283,6 +291,73 @@ func upsertCodexConfig(configPath, heroPath string, dryRun bool, projectRoot str
 		return err
 	}
 	return os.WriteFile(configPath, []byte(newContent), 0o644)
+}
+
+// stripUnmanagedCodexHeroTable removes any `[mcp_servers.hero]` TOML table
+// that sits OUTSIDE the hero:managed marker block, including its
+// immediately-following key/value lines (up to the next table header,
+// the managed marker, or EOF).
+//
+// Pre-v0.14.2 installs (and any hand-written codex configs) could leave
+// an unmanaged `[mcp_servers.hero]` table in place; the subsequent install
+// would add the managed block alongside it, producing duplicate-key TOML
+// that codex rejects. This is the dedup step that makes the managed block
+// authoritative on every write.
+func stripUnmanagedCodexHeroTable(s string) string {
+	const tableHeader = "[mcp_servers.hero]"
+	lines := strings.Split(s, "\n")
+	var out []string
+
+	inManaged := false
+	skipping := false
+
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+
+		// Track whether we're inside the managed block — the managed
+		// block's own [mcp_servers.hero] is fine and must be preserved.
+		if !inManaged && trimmed == codexMCPMarker {
+			inManaged = true
+			out = append(out, line)
+			continue
+		}
+		if inManaged && trimmed == codexMCPEndMarker {
+			inManaged = false
+			out = append(out, line)
+			continue
+		}
+		if inManaged {
+			out = append(out, line)
+			continue
+		}
+
+		if skipping {
+			// Stop skipping at the next TOML table header or at the
+			// managed marker. The skipped region included everything
+			// from `[mcp_servers.hero]` up to (but not including) this
+			// terminator.
+			if strings.HasPrefix(trimmed, "[") || trimmed == codexMCPMarker {
+				skipping = false
+				out = append(out, line)
+			}
+			// Else: still inside the unmanaged hero table — drop it.
+			continue
+		}
+
+		if trimmed == tableHeader {
+			// Start dropping. Do not emit this line; remove any trailing
+			// blank line that immediately preceded it for cleanliness.
+			for len(out) > 0 && strings.TrimSpace(out[len(out)-1]) == "" {
+				out = out[:len(out)-1]
+			}
+			skipping = true
+			continue
+		}
+
+		out = append(out, line)
+	}
+
+	return strings.Join(out, "\n")
 }
 
 // RegisterProject registers a project directory in the global daemon registry

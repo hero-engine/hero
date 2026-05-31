@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-05-31T00:46:20Z
+updated: 2026-05-31T14:58:08Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver superseded-specs-soft-archive feature; in parallel, design follow-up spec for embeddings/vector retrieval to respect superseded_by signal
+> Diagnose why hero binary upgrades silently strand installations in the previous version's layout — paperboy had broken legacy symlinks because cleanup only runs on hero install and binary was upgraded without re-install. Surface the version drift loudly.
 
 ## Suggested next prompt
 
