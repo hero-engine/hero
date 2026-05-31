@@ -46,7 +46,20 @@ type Query struct {
 	Filters    map[string]string // key-value filters (status, tag, since); non-empty → FTS5 path
 	Limit      int               // 0 → default (20)
 	SemanticOK bool              // future: enable vector search when available (Phase C)
+	// IncludeSuperseded skips the de-weight applied to specs whose
+	// `superseded_by:` field is set. The `[SUPERSEDED → <slug>]`
+	// annotation is still added to the snippet — de-weight is the rank
+	// effect; the marker is the visibility effect. Default false.
+	IncludeSuperseded bool
 }
+
+// supersededDeweight is the score multiplier applied to results whose
+// `superseded_by:` frontmatter field is set. Calibrated so a strong
+// text match on a superseded spec can still beat a weak match on a
+// non-superseded peer — superseded specs aren't hidden, they're moved
+// down the list. Mirrors the typeBoost shape (multiplicative) so the
+// scoring axis stays consistent.
+const supersededDeweight = 0.3
 
 // Result is a single ranked retrieval hit.
 type Result struct {
@@ -193,13 +206,19 @@ func (r *Retriever) retrieveViaNodeIndex(q Query, limit int) ([]Result, error) {
 		return nil, nil
 	}
 
+	// LEFT JOIN specs by slug so we can pull `superseded_by` for spec-
+	// backed nodes (Feature/Bug/Initiative/...) without a second query.
+	// Non-spec nodes (Commit, Symbol, ...) have no specs row and the
+	// joined column comes back as NULL → empty string after scan.
 	rows, err := indexDB.Query(`
 		SELECT ni.node_type, ni.key, ni.path,
 		       snippet(fts_nodes, 0, '>>>', '<<<', '...', 24) AS title_snip,
 		       snippet(fts_nodes, 1, '>>>', '<<<', '...', 32) AS body_snip,
-		       fts_nodes.rank AS bm25_rank
+		       fts_nodes.rank AS bm25_rank,
+		       COALESCE(s.superseded_by, '') AS superseded_by
 		  FROM fts_nodes
 		  JOIN node_index ni ON ni.rowid = fts_nodes.rowid
+		  LEFT JOIN specs s ON s.slug = ni.key
 		 WHERE fts_nodes MATCH ?
 		 ORDER BY fts_nodes.rank
 		 LIMIT ?`,
@@ -211,20 +230,21 @@ func (r *Retriever) retrieveViaNodeIndex(q Query, limit int) ([]Result, error) {
 	defer rows.Close()
 
 	type cand struct {
-		nodeType  string
-		key       string
-		path      string
-		titleSnip string
-		bodySnip  string
-		bm25Rank  float64
-		score     float64
+		nodeType     string
+		key          string
+		path         string
+		titleSnip    string
+		bodySnip     string
+		bm25Rank     float64
+		score        float64
+		supersededBy string
 	}
 	var cands []cand
 
 	for rows.Next() {
 		var c cand
 		var rank sql.NullFloat64
-		if err := rows.Scan(&c.nodeType, &c.key, &c.path, &c.titleSnip, &c.bodySnip, &rank); err != nil {
+		if err := rows.Scan(&c.nodeType, &c.key, &c.path, &c.titleSnip, &c.bodySnip, &rank, &c.supersededBy); err != nil {
 			continue
 		}
 		if rank.Valid {
@@ -232,6 +252,9 @@ func (r *Retriever) retrieveViaNodeIndex(q Query, limit int) ([]Result, error) {
 		}
 		// FTS5 rank is negative (more negative = better). Score = -rank * typeBoost.
 		c.score = -c.bm25Rank * typeBoost(c.nodeType)
+		if c.supersededBy != "" && !q.IncludeSuperseded {
+			c.score *= supersededDeweight
+		}
 		cands = append(cands, c)
 	}
 
@@ -255,6 +278,9 @@ func (r *Retriever) retrieveViaNodeIndex(q Query, limit int) ([]Result, error) {
 		snippet := c.bodySnip
 		if snippet == "" {
 			snippet = c.titleSnip
+		}
+		if c.supersededBy != "" {
+			snippet = "[SUPERSEDED → " + c.supersededBy + "] " + snippet
 		}
 		results[i] = Result{
 			Type:    c.nodeType,
@@ -444,23 +470,42 @@ func (r *Retriever) retrieveViaFTS(q Query, limit int) ([]Result, error) {
 		return nil, err
 	}
 
-	if limit > 0 && len(hits) > limit {
-		hits = hits[:limit]
-	}
-
 	results := make([]Result, len(hits))
 	for i, h := range hits {
+		score := fts5TypeBoost(string(h.Type))
+		snippet := h.Snippet
+		if h.SupersededBy != "" {
+			// Annotation goes on regardless of IncludeSuperseded — the
+			// marker is the visibility cue any caller printing the
+			// snippet needs. De-weight is the rank effect, opt-out via
+			// IncludeSuperseded.
+			snippet = "[SUPERSEDED → " + h.SupersededBy + "] " + snippet
+			if !q.IncludeSuperseded {
+				score *= supersededDeweight
+			}
+		}
 		results[i] = Result{
 			Type:      string(h.Type),
 			Key:       h.Slug,
 			Title:     h.Title,
-			Snippet:   h.Snippet,
-			Score:     fts5TypeBoost(string(h.Type)),
+			Snippet:   snippet,
+			Score:     score,
 			Source:    "fts5",
 			Status:    string(h.Status),
 			ClaimedBy: h.ClaimedBy,
 			Path:      h.Path,
 		}
+	}
+
+	// Re-sort by score so de-weighted superseded specs fall below
+	// non-superseded peers regardless of original rank order. Stable
+	// sort preserves FTS rank tie-breaks within each tier.
+	sort.SliceStable(results, func(i, j int) bool {
+		return results[i].Score > results[j].Score
+	})
+
+	if limit > 0 && len(results) > limit {
+		results = results[:limit]
 	}
 	return results, nil
 }

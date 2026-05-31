@@ -106,6 +106,14 @@ Use known risks to:
 - Avoid patterns that previously caused failures
 - Include regression tests for known failure modes
 
+### Handling superseded specs
+
+Past-work and related-spec entries marked `[SUPERSEDED by <slug> — follow <slug> instead]` are intentionally surfaced so the agent learns both the prior direction and where the current direction now lives. Do not read or follow the superseded spec — open the replacement instead. The marker is the redirect; treat the superseded entry as historical context only.
+
+If a search hit comes back with a `[SUPERSEDED → <slug>]` prefix in its snippet, the same rule applies: the result is shown so the genealogy is discoverable, but the current spec is the one named after the arrow.
+
+When you mark a spec as superseded yourself, run `hero supersede <old> --by <new>` rather than hand-editing frontmatter — it sets the field, records the inverse `supersedes` relation, and reindexes atomically.
+
 ## Incorporating context into engineer instructions
 
 When delegating to an engineer agent, structure the handoff as:

@@ -219,6 +219,12 @@ func (idx *DB) migrate() error {
 		`CREATE INDEX IF NOT EXISTS idx_specs_subproject ON specs(subproject) WHERE subproject != ''`,
 		`ALTER TABLE specs ADD COLUMN domain TEXT NOT NULL DEFAULT ''`,
 		`CREATE INDEX IF NOT EXISTS idx_specs_domain ON specs(domain) WHERE domain != ''`,
+		// superseded-specs-soft-archive: frontmatter-driven genealogy.
+		// Empty string means "not superseded" — non-empty carries the
+		// replacement slug. The index queries de-weight (in retrieval)
+		// and the context layer annotate based on this column alone.
+		`ALTER TABLE specs ADD COLUMN superseded_by TEXT NOT NULL DEFAULT ''`,
+		`CREATE INDEX IF NOT EXISTS idx_specs_superseded ON specs(superseded_by) WHERE superseded_by != ''`,
 	}
 	for _, stmt := range evolve {
 		_, _ = idx.db.Exec(stmt) // ignore "duplicate column" errors
@@ -239,8 +245,8 @@ func (idx *DB) IndexSpec(s *spec.Spec, fullContent string) error {
 
 	// Upsert spec
 	_, err = tx.Exec(`
-		INSERT INTO specs (slug, title, type, status, path, claimed_by, tags, tracker_id, subproject, domain, created_at, modified_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO specs (slug, title, type, status, path, claimed_by, tags, tracker_id, subproject, domain, superseded_by, created_at, modified_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(slug) DO UPDATE SET
 			title=excluded.title,
 			type=excluded.type,
@@ -251,9 +257,10 @@ func (idx *DB) IndexSpec(s *spec.Spec, fullContent string) error {
 			tracker_id=excluded.tracker_id,
 			subproject=excluded.subproject,
 			domain=excluded.domain,
+			superseded_by=excluded.superseded_by,
 			modified_at=excluded.modified_at
 	`, s.Slug, s.Title, string(s.Type), string(s.Status), s.Path,
-		s.ClaimedBy, tagsStr, s.TrackerID, s.Subproject, s.Domain,
+		s.ClaimedBy, tagsStr, s.TrackerID, s.Subproject, s.Domain, s.SupersededBy,
 		s.CreatedAt.Format(time.RFC3339), s.ModifiedAt.Format(time.RFC3339))
 	if err != nil {
 		return fmt.Errorf("upserting spec: %w", err)
@@ -364,6 +371,10 @@ type SearchResult struct {
 	ClaimedBy string
 	Tags      string
 	Domain    string
+	// SupersededBy is non-empty when this spec carries a `superseded_by:`
+	// frontmatter field. Retrieval de-weights such results and rendering
+	// layers prefix the snippet with a redirect marker.
+	SupersededBy string
 }
 
 // looksLikeTrackerID returns true if the query looks like a tracker issue ID
@@ -394,7 +405,7 @@ func (idx *DB) Search(query string) ([]SearchResult, error) {
 	if looksLikeTrackerID(query) {
 		rows, err := idx.db.Query(`
 			SELECT s.slug, s.title, s.type, s.status, s.path,
-				'' as snippet, s.claimed_by, s.tags, s.domain
+				'' as snippet, s.claimed_by, s.tags, s.domain, s.superseded_by
 			FROM specs s
 			WHERE UPPER(s.tracker_id) = UPPER(?)
 			LIMIT 5
@@ -416,7 +427,7 @@ func (idx *DB) Search(query string) ([]SearchResult, error) {
 	rows, err := idx.db.Query(`
 		SELECT f.slug, s.title, s.type, s.status, s.path,
 			snippet(fts_specs, 2, '>>>', '<<<', '...', 32) as snippet,
-			s.claimed_by, s.tags, s.domain
+			s.claimed_by, s.tags, s.domain, s.superseded_by
 		FROM fts_specs f
 		JOIN specs s ON s.slug = f.slug
 		WHERE fts_specs MATCH ?
@@ -454,7 +465,7 @@ func (idx *DB) searchFilteredImpl(query, specType, status, tag, since, subprojec
 	baseQuery := `
 		SELECT f.slug, s.title, s.type, s.status, s.path,
 			snippet(fts_specs, 2, '>>>', '<<<', '...', 32) as snippet,
-			s.claimed_by, s.tags, s.domain
+			s.claimed_by, s.tags, s.domain, s.superseded_by
 		FROM fts_specs f
 		JOIN specs s ON s.slug = f.slug
 		WHERE fts_specs MATCH ?`
@@ -510,7 +521,7 @@ func (idx *DB) listFilteredImpl(specType, status, tag, since, subproject string)
 	var conditions []string
 	var args []interface{}
 
-	baseQuery := `SELECT slug, title, type, status, path, '' as snippet, claimed_by, tags, domain FROM specs WHERE 1=1`
+	baseQuery := `SELECT slug, title, type, status, path, '' as snippet, claimed_by, tags, domain, superseded_by FROM specs WHERE 1=1`
 
 	if specType != "" {
 		conditions = append(conditions, "type = ?")
@@ -553,7 +564,7 @@ func (idx *DB) SearchByFile(filePath string) ([]SearchResult, error) {
 
 	rows, err := idx.db.Query(`
 		SELECT DISTINCT s.slug, s.title, s.type, s.status, s.path,
-			'' as snippet, s.claimed_by, s.tags, s.domain
+			'' as snippet, s.claimed_by, s.tags, s.domain, s.superseded_by
 		FROM files_touched ft
 		JOIN specs s ON s.slug = ft.spec_slug
 		WHERE ft.file_path LIKE ?
@@ -1181,7 +1192,7 @@ func (idx *DB) GetStats() (Stats, error) {
 // AllSpecs returns all specs in the index.
 func (idx *DB) AllSpecs() ([]SearchResult, error) {
 	rows, err := idx.db.Query(`
-		SELECT slug, title, type, status, path, '' as snippet, claimed_by, tags, domain
+		SELECT slug, title, type, status, path, '' as snippet, claimed_by, tags, domain, superseded_by
 		FROM specs
 		ORDER BY modified_at DESC
 	`)
@@ -1377,7 +1388,7 @@ func (idx *DB) CheckStale(staleDays int) ([]SearchResult, error) {
 	cutoff := time.Now().AddDate(0, 0, -staleDays).Format(time.RFC3339)
 
 	rows, err := idx.db.Query(`
-		SELECT slug, title, type, status, path, '' as snippet, claimed_by, tags, domain
+		SELECT slug, title, type, status, path, '' as snippet, claimed_by, tags, domain, superseded_by
 		FROM specs
 		WHERE status IN ('planning', 'in-review')
 		AND modified_at < ?
@@ -1394,7 +1405,7 @@ func (idx *DB) CheckStale(staleDays int) ([]SearchResult, error) {
 // CheckUnclaimed finds planning/in-review specs that are not claimed.
 func (idx *DB) CheckUnclaimed() ([]SearchResult, error) {
 	rows, err := idx.db.Query(`
-		SELECT s.slug, s.title, s.type, s.status, s.path, '' as snippet, s.claimed_by, s.tags, s.domain
+		SELECT s.slug, s.title, s.type, s.status, s.path, '' as snippet, s.claimed_by, s.tags, s.domain, s.superseded_by
 		FROM specs s
 		LEFT JOIN claims c ON s.slug = c.spec_slug
 		WHERE s.status IN ('planning', 'in-review')
@@ -1414,7 +1425,7 @@ func scanSearchResults(rows *sql.Rows) ([]SearchResult, error) {
 	for rows.Next() {
 		var r SearchResult
 		var specType, status string
-		if err := rows.Scan(&r.Slug, &r.Title, &specType, &status, &r.Path, &r.Snippet, &r.ClaimedBy, &r.Tags, &r.Domain); err != nil {
+		if err := rows.Scan(&r.Slug, &r.Title, &specType, &status, &r.Path, &r.Snippet, &r.ClaimedBy, &r.Tags, &r.Domain, &r.SupersededBy); err != nil {
 			return nil, err
 		}
 		r.Type = spec.Type(specType)
@@ -1540,12 +1551,13 @@ func (idx *DB) BuildContext(filePaths []string) (*ContextBlock, error) {
 				continue
 			}
 			entry := ContextEntry{
-				Slug:    r.Slug,
-				Title:   r.Title,
-				Type:    r.Type,
-				Status:  r.Status,
-				Path:    r.Path,
-				Summary: r.Snippet,
+				Slug:         r.Slug,
+				Title:        r.Title,
+				Type:         r.Type,
+				Status:       r.Status,
+				Path:         r.Path,
+				Summary:      r.Snippet,
+				SupersededBy: r.SupersededBy,
 			}
 			if r.Status == spec.StatusDelivering || r.Status == spec.StatusPlanning || r.Status == spec.StatusInReview {
 				ctx.InFlight = append(ctx.InFlight, entry)
@@ -1558,7 +1570,7 @@ func (idx *DB) BuildContext(filePaths []string) (*ContextBlock, error) {
 
 	// Find decisions
 	decRows, err := idx.db.Query(`
-		SELECT slug, title, type, status, path, '' as snippet, claimed_by, tags, domain
+		SELECT slug, title, type, status, path, '' as snippet, claimed_by, tags, domain, superseded_by
 		FROM specs WHERE type = 'decision' AND status = 'accepted'
 		ORDER BY modified_at DESC
 	`)
@@ -1610,7 +1622,7 @@ func (idx *DB) BuildContext(filePaths []string) (*ContextBlock, error) {
 
 	// Find external knowledge entries (reference docs, runbooks)
 	extRows, err := idx.db.Query(`
-		SELECT slug, title, type, status, path, '' as snippet, claimed_by, tags, domain
+		SELECT slug, title, type, status, path, '' as snippet, claimed_by, tags, domain, superseded_by
 		FROM specs WHERE type = 'external'
 		ORDER BY modified_at DESC
 	`)
@@ -1773,6 +1785,10 @@ type ContextEntry struct {
 	Status  spec.Status
 	Path    string
 	Summary string
+	// SupersededBy carries the replacement slug when this entry refers
+	// to a spec that's been superseded. Renderers add a redirect marker
+	// in the output so agents follow the replacement, not this entry.
+	SupersededBy string
 }
 
 // CodeContextEntry holds code structure info for a package relevant to the queried files.
@@ -1844,12 +1860,18 @@ func (idx *DB) BuildNudge(filePaths []string) (*NudgeResult, error) {
 			continue
 		}
 		for _, r := range results {
-			if !seen[r.Slug] && r.Status == spec.StatusCompleted {
+			// Surface completed specs and superseded specs. Superseded
+			// entries are kept (not filtered) so the agent learns
+			// "this is the old answer, follow <new-slug>" instead of
+			// silently losing the lineage. Renderers add the redirect
+			// marker from SupersededBy.
+			if !seen[r.Slug] && (r.Status == spec.StatusCompleted || r.SupersededBy != "" || r.Status == spec.StatusSuperseded) {
 				result.RelatedSpecs = append(result.RelatedSpecs, ContextEntry{
-					Slug:   r.Slug,
-					Title:  r.Title,
-					Type:   r.Type,
-					Status: r.Status,
+					Slug:         r.Slug,
+					Title:        r.Title,
+					Type:         r.Type,
+					Status:       r.Status,
+					SupersededBy: r.SupersededBy,
 				})
 				seen[r.Slug] = true
 			}

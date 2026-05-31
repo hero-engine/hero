@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-05-31T00:46:31Z · projected from 276 source nodes_
+_Last refreshed: 2026-05-31T01:04:21Z · projected from 277 source nodes_
 
 ## Surfaces
 
@@ -16,7 +16,7 @@ _Last refreshed: 2026-05-31T00:46:31Z · projected from 276 source nodes_
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 12d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 10d ago | vocabulary-resolve-misses-methodology-derivation |
+| serve | building | internal/serve/ | <1m ago | vocabulary-resolve-misses-methodology-derivation |
 | (unassigned) | — | — | — | 118 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -65,6 +65,6 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 137/255 (53%)
-- Projection generation: 0ms · Source nodes: 276
+- Specs covered: 138/256 (53%)
+- Projection generation: 1ms · Source nodes: 277
 

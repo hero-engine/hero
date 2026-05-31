@@ -259,3 +259,37 @@ func contains(s, sub string) bool {
 	}
 	return false
 }
+
+// TestWhy_WalksSupersedesEdge proves the genealogy guarantee from
+// spec superseded-specs-soft-archive: marking a spec superseded
+// must keep the upstream history walkable via `hero why <replacement>`.
+//
+// Covers AC: "WHEN hero why <replacement-slug> is run on a spec that
+// supersedes another THE SYSTEM SHALL surface the superseded spec as
+// an upstream hop via the supersedes edge."
+func TestWhy_WalksSupersedesEdge(t *testing.T) {
+	store := openStore(t)
+	v1 := seedNode(t, store, "Feature", "polish-v1", "Polish V1", "repo-x")
+	v2 := seedNode(t, store, "Feature", "polish-v2", "Polish V2", "repo-x")
+	// Edge points FROM the replacement TO the predecessor; `hero why`
+	// walks reverse from the target, so calling Why on v2 should hop
+	// to v1 via the supersedes edge.
+	seedEdge(t, store, v2, v1, "supersedes")
+
+	trace, err := Why(store, "repo-x", "polish-v2", DefaultDepth)
+	if err != nil {
+		t.Fatalf("Why: %v", err)
+	}
+	if len(trace.Chains) == 0 {
+		t.Fatal("expected supersedes hop, got 0 chains")
+	}
+	found := false
+	for _, hop := range trace.Chains {
+		if hop.NodeKey == "polish-v1" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("polish-v1 not surfaced via supersedes walk; chains=%+v", trace.Chains)
+	}
+}

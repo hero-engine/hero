@@ -39,15 +39,17 @@ so users know it succeeded.`,
 }
 
 var (
-	relevantFiles    []string
-	relevantPeers    []string
-	relevantSurface  string
+	relevantFiles            []string
+	relevantPeers            []string
+	relevantSurface          string
+	relevantExcludeSuperseded bool
 )
 
 func init() {
 	relevantCmd.Flags().StringSliceVar(&relevantFiles, "files", nil, "file paths to check for context (alternative to positional args)")
 	relevantCmd.Flags().StringSliceVar(&relevantPeers, "peer", nil, "include peer-surface conventions from this peer alias (repeatable)")
 	relevantCmd.Flags().StringVar(&relevantSurface, "surface", "", "filter peer conventions to those tagged with this surface (e.g. http-response)")
+	relevantCmd.Flags().BoolVar(&relevantExcludeSuperseded, "exclude-superseded", false, "omit superseded specs from the nudge (default: surface them with a redirect marker)")
 }
 
 func runRelevant(cmd *cobra.Command, args []string) error {
@@ -93,6 +95,20 @@ func runRelevant(cmd *cobra.Command, args []string) error {
 				result = r
 			}
 		}
+	}
+
+	// --exclude-superseded drops superseded entries from RelatedSpecs
+	// entirely. Default keeps them with a redirect annotation so the
+	// agent learns "this is the old answer; follow <slug>."
+	if relevantExcludeSuperseded && result != nil {
+		filtered := result.RelatedSpecs[:0]
+		for _, r := range result.RelatedSpecs {
+			if r.SupersededBy == "" {
+				filtered = append(filtered, r)
+			}
+		}
+		result.RelatedSpecs = filtered
+		result.HasPastWork = len(result.RelatedSpecs) > 0
 	}
 
 	localEmpty := result == nil || result.IsEmpty()
@@ -255,7 +271,13 @@ func printAssertiveNudge(result *index.NudgeResult) {
 	if result.HasPastWork {
 		fmt.Println("### Past work in this area")
 		for _, r := range result.RelatedSpecs {
-			fmt.Printf("- **%s**: %s\n", r.Slug, r.Title)
+			line := fmt.Sprintf("- **%s**: %s", r.Slug, r.Title)
+			if r.SupersededBy != "" {
+				line += fmt.Sprintf(" [SUPERSEDED by %s — follow %s instead]", r.SupersededBy, r.SupersededBy)
+			} else if r.Status == "superseded" {
+				line += " [SUPERSEDED — replacement unknown]"
+			}
+			fmt.Println(line)
 		}
 		fmt.Println()
 		fmt.Println("Review past specs to understand design rationale and avoid undoing previous work.")

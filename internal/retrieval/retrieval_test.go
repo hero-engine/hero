@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -78,6 +79,13 @@ func addGraphNode(t *testing.T, heroDir, nodeType, key string, props map[string]
 // addFTSSpec creates a spec on disk and indexes it into the FTS5 index.
 func addFTSSpec(t *testing.T, heroDir, slug, title, specType, content string) {
 	t.Helper()
+	addFTSSpecWithFields(t, heroDir, slug, title, specType, content, "")
+}
+
+// addFTSSpecWithFields extends addFTSSpec with an explicit
+// superseded_by value. Used by the de-weight tests.
+func addFTSSpecWithFields(t *testing.T, heroDir, slug, title, specType, content, supersededBy string) {
+	t.Helper()
 
 	path := filepath.Join(heroDir, slug+".md")
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
@@ -86,13 +94,14 @@ func addFTSSpec(t *testing.T, heroDir, slug, title, specType, content string) {
 
 	now := time.Now()
 	sp := &spec.Spec{
-		Slug:       slug,
-		Title:      title,
-		Type:       spec.Type(specType),
-		Status:     spec.StatusPlanning,
-		Path:       path,
-		CreatedAt:  now,
-		ModifiedAt: now,
+		Slug:         slug,
+		Title:        title,
+		Type:         spec.Type(specType),
+		Status:       spec.StatusPlanning,
+		Path:         path,
+		CreatedAt:    now,
+		ModifiedAt:   now,
+		SupersededBy: supersededBy,
 	}
 
 	idb, err := index.Open(heroDir)
@@ -882,5 +891,114 @@ func TestRetrieve_SemanticOK_NoModel(t *testing.T) {
 	// Should fall through to graph/FTS5 path when no model is available.
 	if results[0].Source != "graph" {
 		t.Errorf("expected source=graph for BM25 fallback, got %q", results[0].Source)
+	}
+}
+
+// TestSupersededDeweightRanksAfterPeers covers the core soft-archive
+// retrieval contract: when two specs match the same query and one is
+// superseded, the non-superseded peer ranks higher. Spec:
+// superseded-specs-soft-archive.
+//
+// Covers ACs:
+//   - "WHEN a search query returns a spec whose superseded_by is
+//     non-empty THE SYSTEM SHALL multiply that result's score by the
+//     de-weight factor (default 0.3) so non-superseded peers rank ahead
+//     of it."
+//   - "WHEN a search query returns a superseded spec THE SYSTEM SHALL
+//     prefix the result's snippet with [SUPERSEDED → <slug>]."
+func TestSupersededDeweightRanksAfterPeers(t *testing.T) {
+	heroDir := newHeroDirFTSOnly(t)
+	addFTSSpecWithFields(t, heroDir, "surface-polish-v1", "Surface Polish",
+		"feature", "surface polish design that did the thing", "surface-polish-v2")
+	addFTSSpec(t, heroDir, "surface-polish-v2", "Surface Polish v2",
+		"feature", "surface polish current design")
+
+	ret, err := New(heroDir)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	defer ret.Close()
+
+	results, err := ret.Retrieve(Query{
+		Text:    "surface polish",
+		Filters: map[string]string{"status": "planning"}, // force FTS path
+	})
+	if err != nil {
+		t.Fatalf("Retrieve: %v", err)
+	}
+	if len(results) < 2 {
+		t.Fatalf("want >=2 results, got %d", len(results))
+	}
+
+	// First result must be the v2 (non-superseded) — de-weight pushes
+	// v1 below it even though both match the text equally.
+	if results[0].Key != "surface-polish-v2" {
+		t.Errorf("first result = %q, want surface-polish-v2 (de-weight should rank superseded below)", results[0].Key)
+	}
+
+	// Find the v1 result and verify the annotation marker is on it.
+	var v1 *Result
+	for i := range results {
+		if results[i].Key == "surface-polish-v1" {
+			v1 = &results[i]
+		}
+	}
+	if v1 == nil {
+		t.Fatal("superseded v1 not in results — must be visible, just de-weighted")
+	}
+	if !strings.Contains(v1.Snippet, "[SUPERSEDED → surface-polish-v2]") {
+		t.Errorf("v1 snippet missing redirect marker; got %q", v1.Snippet)
+	}
+}
+
+// TestIncludeSupersededSkipsDeweight verifies the opt-out flag:
+// --include-superseded keeps the annotation but skips the rank
+// penalty.
+//
+// Covers AC: "WHEN hero search --include-superseded is passed THE
+// SYSTEM SHALL skip the de-weight multiplier but still emit the
+// [SUPERSEDED → <slug>] annotation."
+func TestIncludeSupersededSkipsDeweight(t *testing.T) {
+	heroDir := newHeroDirFTSOnly(t)
+	addFTSSpecWithFields(t, heroDir, "old", "Old Spec",
+		"feature", "shared keyword content", "new")
+	addFTSSpec(t, heroDir, "new", "New Spec",
+		"feature", "shared keyword content")
+
+	ret, err := New(heroDir)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	defer ret.Close()
+
+	results, err := ret.Retrieve(Query{
+		Text:              "shared",
+		Filters:           map[string]string{"status": "planning"},
+		IncludeSuperseded: true,
+	})
+	if err != nil {
+		t.Fatalf("Retrieve: %v", err)
+	}
+
+	// Locate both results — with IncludeSuperseded, scores should be
+	// equal (same type boost, no penalty), and the annotation marker
+	// stays on the superseded one.
+	var oldRes, newRes *Result
+	for i := range results {
+		switch results[i].Key {
+		case "old":
+			oldRes = &results[i]
+		case "new":
+			newRes = &results[i]
+		}
+	}
+	if oldRes == nil || newRes == nil {
+		t.Fatalf("missing expected results: old=%v new=%v", oldRes, newRes)
+	}
+	if oldRes.Score != newRes.Score {
+		t.Errorf("scores differ under IncludeSuperseded: old=%v new=%v (want equal)", oldRes.Score, newRes.Score)
+	}
+	if !strings.Contains(oldRes.Snippet, "[SUPERSEDED → new]") {
+		t.Errorf("annotation should still be present; got %q", oldRes.Snippet)
 	}
 }

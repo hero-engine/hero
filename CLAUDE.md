@@ -88,6 +88,7 @@ These are run in the terminal, not as slash commands:
 - **Surgical changes.** Touch only what is strictly required. Do not "improve" nearby code or refactor unrelated sections. Match the existing style perfectly.
 - **Verify before reporting done.** Define clear success criteria for every task. Run tests or validation scripts and iterate until the criteria are met before reporting completion.
 - **Local specs first.** When asked to work on bugs, features, or any tracked items, ALWAYS check what's already imported locally before querying the tracker. Use `hero search --list --type <type>` to find local specs. Only go to the tracker if the local search comes up empty. When working on multiple items (e.g. "diagnose 10 bugs"), select from locally imported specs — never bulk-query the tracker to pick work items.
+- **Follow the replacement, not the archive.** When two specs cover the same topic and one carries `superseded_by:`, always follow the spec it points to. Treat the superseded one as historical context only. Mark the supersede relationship with `hero supersede <old> --by <new>` rather than hand-editing frontmatter.
 - Always check spec status before doing work — don't investigate closed bugs or deliver completed specs
 - When a tracker is configured, sync status with `hero sync pull` before starting work
 - Capture novel learnings to `.hero/knowledge/` at the end of major workflows
