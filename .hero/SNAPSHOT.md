@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-05-31T01:14:34Z · projected from 277 source nodes_
+_Last refreshed: 2026-05-31T01:18:55Z · projected from 278 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 9m ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | <1m ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | building | domains/engineering/ | 2d ago | spec-types-cache-frontmatter-empty |
@@ -16,7 +16,7 @@ _Last refreshed: 2026-05-31T01:14:34Z · projected from 277 source nodes_
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 12d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 10m ago | vocabulary-resolve-misses-methodology-derivation |
+| serve | building | internal/serve/ | 14m ago | vocabulary-resolve-misses-methodology-derivation |
 | (unassigned) | — | — | — | 118 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -45,9 +45,9 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Recently completed (last 14 days)
 
 - **(unassigned)** — delivery-completion-discipline, read-dont-guess, hero-serve-project-section
-- **core** — next-compact-handoff, hero-hooks-uninstall-misses-next-block, compact-handoff-transcript-kickoff-missing
+- **core** — embeddings-superseded-respect, next-compact-handoff, hero-hooks-uninstall-misses-next-block, compact-handoff-transcript-kickoff-missing
 - **domains/engineering** — mockups-link-back-to-specs
-- **serve** — superseded-specs-soft-archive, hero-serve-project-section-healthcache, hero-serve-project-section-destructive, hero-serve-project-section-opsrunner, hero-serve-project-section-aggregate
+- **serve** — superseded-specs-soft-archive, hero-serve-project-section-healthcache, hero-serve-project-section-destructive, hero-serve-project-section-opsrunner
 
 ## Next up across surfaces
 
@@ -65,6 +65,6 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 138/256 (53%)
-- Projection generation: 0ms · Source nodes: 277
+- Specs covered: 139/257 (54%)
+- Projection generation: 0ms · Source nodes: 278
 

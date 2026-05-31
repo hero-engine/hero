@@ -74,3 +74,5 @@
 {"event":"claimed","slug":"embedded-inference","agent":"mcp-agent","at":"2026-05-29T23:48:12.34573-06:00"}
 {"ts":"2026-05-31T01:04:22.459978Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"superseded-specs-soft-archive","message":"Superseded Specs — Frontmatter-Based Soft Archive"}
 {"ts":"2026-05-31T01:04:22.460048Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"superseded-specs-soft-archive","message":"status -\u003e completed"}
+{"ts":"2026-05-31T01:18:22.728091Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"embeddings-superseded-respect","message":"Embeddings \u0026 Vector Retrieval Respect `superseded_by`"}
+{"ts":"2026-05-31T01:18:22.728207Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"embeddings-superseded-respect","message":"status -\u003e completed"}

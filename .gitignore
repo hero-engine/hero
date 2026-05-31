@@ -1,7 +1,11 @@
 # Build output
 /hero
 /hero-cloud
+bin/
 dist/
+
+# Per-session state (refs.db, scratch) — local only
+.hero/sessions/
 
 # SQLite index
 index.db
