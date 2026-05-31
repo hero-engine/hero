@@ -85,7 +85,9 @@ func TestLocateSatelliteMarker(t *testing.T) {
 
 func TestLocateNoWorkspace(t *testing.T) {
 	dir := t.TempDir()
-	if _, err := Locate(dir); err == nil {
+	// Bound the walk-up at dir so a stray .hero/ in a shared ancestor
+	// (e.g. /tmp/.hero left by another tool) can't satisfy the lookup.
+	if _, err := Locate(dir, WithStopAt(dir)); err == nil {
 		t.Errorf("expected error, got nil")
 	}
 }

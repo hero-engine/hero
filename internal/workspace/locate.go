@@ -52,6 +52,23 @@ type Workspace struct {
 	MarkerScope string
 }
 
+// LocateOption configures Locate behavior.
+type LocateOption func(*locateOptions)
+
+type locateOptions struct {
+	stopAt string
+}
+
+// WithStopAt bounds the parent walk so Locate will not ascend above the
+// given directory. The boundary directory itself is still checked; its
+// parent is not. Useful in tests to isolate the walk from stray .hero/
+// directories that may exist in shared ancestors like /tmp.
+func WithStopAt(dir string) LocateOption {
+	return func(o *locateOptions) {
+		o.stopAt = dir
+	}
+}
+
 // Locate resolves the workspace from the given starting directory.
 //
 // Resolution order:
@@ -65,10 +82,23 @@ type Workspace struct {
 //     distant ancestor.
 //
 // Returns an error if no workspace can be located.
-func Locate(startDir string) (*Workspace, error) {
+func Locate(startDir string, opts ...LocateOption) (*Workspace, error) {
+	var cfg locateOptions
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+
 	abs, err := filepath.Abs(startDir)
 	if err != nil {
 		return nil, fmt.Errorf("resolve start dir: %w", err)
+	}
+
+	var stopAt string
+	if cfg.stopAt != "" {
+		stopAt, err = filepath.Abs(cfg.stopAt)
+		if err != nil {
+			return nil, fmt.Errorf("resolve stop-at dir: %w", err)
+		}
 	}
 
 	// Direct workspace check at startDir.
@@ -112,6 +142,9 @@ func Locate(startDir string) (*Workspace, error) {
 			}, nil
 		}
 
+		if stopAt != "" && dir == stopAt {
+			break
+		}
 		parent := filepath.Dir(dir)
 		if parent == dir {
 			break
