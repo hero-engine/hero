@@ -290,6 +290,18 @@ func inferSurfaceFromPaths(s *spec.Spec, surfaces []Surface) string {
 	return bestSurface
 }
 
+// normalizeParentTarget converts a parent reference to a slug.
+// Handles both slug format ("hero-cli") and relative-path format
+// ("../../initiatives/hero-cli/spec.md").
+func normalizeParentTarget(target string) string {
+	if !strings.Contains(target, "/") {
+		return target
+	}
+	// Path format — extract the directory name containing spec.md.
+	dir := filepath.Dir(target)
+	return filepath.Base(dir)
+}
+
 func rollupInitiatives(allSpecs []*spec.Spec, assignments []SpecAssignment) []Initiative {
 	// Build a map of initiative-slug → child specs.
 	parentTo := map[string][]*spec.Spec{}
@@ -299,7 +311,8 @@ func rollupInitiatives(allSpecs []*spec.Spec, assignments []SpecAssignment) []In
 		}
 		for _, rel := range s.Relations {
 			if rel.Kind == "parent" || rel.Kind == "child-of" {
-				parentTo[rel.Target] = append(parentTo[rel.Target], s)
+				target := normalizeParentTarget(rel.Target)
+				parentTo[target] = append(parentTo[target], s)
 			}
 		}
 	}

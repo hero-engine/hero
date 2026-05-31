@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/hero-engine/hero/internal/graph"
@@ -235,6 +236,21 @@ func graphEdgeForRelation(kind string) string {
 	}
 }
 
+// normalizeRelTarget converts a relation target to a slug.
+// Relative paths like "../../initiatives/hero-cli/spec.md" become "hero-cli".
+// Cross-repo qualifiers like "remote-org/feature" become "feature".
+// Plain slugs pass through unchanged.
+func normalizeRelTarget(target string) string {
+	if !strings.Contains(target, "/") {
+		return target
+	}
+	if strings.HasSuffix(target, ".md") {
+		return filepath.Base(filepath.Dir(target))
+	}
+	// Cross-repo qualifier: keep the segment after the last slash.
+	return target[strings.LastIndex(target, "/")+1:]
+}
+
 // resolveTargetID looks up a relation target slug across all spec
 // types, since relations carry only the slug.
 func resolveTargetID(target string, idByTypeKey map[string]int64) (int64, bool) {
@@ -242,10 +258,7 @@ func resolveTargetID(target string, idByTypeKey map[string]int64) (int64, bool) 
 	if target == "" {
 		return 0, false
 	}
-	// Strip cross-repo qualifier if present (e.g. "remote-org/feature").
-	if idx := strings.LastIndex(target, "/"); idx > 0 {
-		target = target[idx+1:]
-	}
+	target = normalizeRelTarget(target)
 	for _, t := range []string{
 		"Feature", "Initiative", "Bug", "Convention", "Decision",
 		"Rule", "ContextDoc", "Note", "External", "Criterion",
