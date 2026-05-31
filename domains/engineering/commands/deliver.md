@@ -169,8 +169,10 @@ At the end of the delivery loop:
    blocks:
    - `<AUDIT_VERDICT>` — verdict (SHIP/HOLD), surface (noteworthy/clean),
      confidence, report_path
-   - `<AUDIT_HEADLINE>` — **always populated**, 4-line summary you quote
-     verbatim in your final response on every verdict
+   - `<AUDIT_HEADLINE>` — **always populated**, the delivery receipt:
+     AC count, audit verdict, report path, then a **New files** table,
+     a **Modified files** table (each with a one-line description of
+     what each file does or what changed), and a **Tests** summary
    - `<AUDIT_HIGHLIGHTS>` — populated when surface=noteworthy or
      verdict=HOLD; 1–5 bullets naming specific concerns
 
@@ -185,20 +187,31 @@ At the end of the delivery loop:
      a row that resists two focused passes usually needs human judgment
      (the spec was wrong, the approach was wrong, or a dependency is
      missing). Surface that, don't paper over it.
-   - **SHIP + noteworthy** → quote the `<AUDIT_HEADLINE>` AND the
-     `<AUDIT_HIGHLIGHTS>` bullets in your final response. Link to the
-     full report at `report_path`. Proceed to step 7.
-   - **SHIP + clean** → quote the `<AUDIT_HEADLINE>` in your final
-     response (it's already short and useful — AC count, files, verdict,
-     report link). Do NOT quote the full report; it is on disk for the
-     user when they want depth. Proceed to step 7.
+   - **SHIP + noteworthy** → quote the full `<AUDIT_HEADLINE>` (file
+     tables and all) AND the `<AUDIT_HIGHLIGHTS>` bullets in your final
+     response. Link to the full report at `report_path`. Proceed to
+     step 7.
+   - **SHIP + clean** → quote the full `<AUDIT_HEADLINE>` (file tables
+     and all) in your final response. The receipt is earned signal on
+     every delivery — do NOT collapse it to a one-liner. What you skip
+     on a clean SHIP is the highlights block (because there's nothing
+     to flag), not the inventory. Proceed to step 7.
 
-   **Why headline-always + highlights-when-noteworthy:** the user always
-   wants to see *what landed* — that's earned signal, every delivery.
-   What they don't want is a wall of evidence on clean deliveries that
-   trains them to skim. Headline = the always-show "delivery receipt."
-   Highlights = the conditional "you should look at this" callout. Full
-   report on disk = the deep dive when they want it.
+   **What's always shown vs. conditional:**
+   - **Always:** the full headline — what landed, file-by-file, plus
+     test summary. This is the durable delivery receipt the user reads
+     on every delivery; it's the only scannable record of what changed
+     without diving into the diff.
+   - **Conditional (only when noteworthy or HOLD):** highlights —
+     downgrades, soft skips, concerns the auditor wants the user's eyes
+     on.
+   - **Always written to disk, linked from chat:** the full report file
+     for when the user wants depth (evidence, line numbers, full
+     reasoning).
+
+   The signal-preservation rule is: make **highlights** conditional, not
+   the inventory. A clean SHIP still gets the full file table — that's
+   the point of running the audit.
 
    Do not skip this step in supervised mode. The cost is one subagent
    call; the value is catching performative `DONE` rows AND producing a

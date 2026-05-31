@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-05-31T01:19:22Z · projected from 278 source nodes_
+_Last refreshed: 2026-05-31T01:25:16Z · projected from 278 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 1m ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 6m ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | building | domains/engineering/ | 2d ago | spec-types-cache-frontmatter-empty |
@@ -16,7 +16,7 @@ _Last refreshed: 2026-05-31T01:19:22Z · projected from 278 source nodes_
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 12d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 15m ago | vocabulary-resolve-misses-methodology-derivation |
+| serve | building | internal/serve/ | 20m ago | vocabulary-resolve-misses-methodology-derivation |
 | (unassigned) | — | — | — | 118 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -66,5 +66,5 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
 - Specs covered: 139/257 (54%)
-- Projection generation: 0ms · Source nodes: 278
+- Projection generation: 1ms · Source nodes: 278
 

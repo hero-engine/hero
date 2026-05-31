@@ -114,9 +114,21 @@ report_path: .hero/.../delivery-audit.md
 
 <AUDIT_HEADLINE>
 **Delivered:** {spec-slug} — {N}/{M} acceptance criteria
-**Files:** {2–4 most significant paths, comma-separated; omit test files unless they're the main artifact}
 **Audit:** clean | noteworthy ({N} item(s)) | HOLD ({N} blocker(s))
 **Report:** {report_path}
+
+### New files
+- `{path}` — {one-line description of what it does}
+- ...
+
+### Modified files
+- `{path}` — {one-line description of what changed}
+- ...
+
+### Tests
+{One short paragraph or 1–3 bullets: what tests ran, how many passed,
+whether the build is clean. If no tests ran or no test evidence was
+provided, say so plainly: "No test evidence provided."}
 </AUDIT_HEADLINE>
 
 <AUDIT_HIGHLIGHTS>
@@ -132,7 +144,14 @@ When surface=clean and verdict=SHIP, this block is empty — write
 </AUDIT_HIGHLIGHTS>
 ```
 
-The `<AUDIT_HEADLINE>` block is **always** populated, on every verdict. It's the durable summary the orchestrator quotes in chat regardless of surface level — even on clean deliveries the user gets a scannable record of what landed. The split is: headline = always shown, highlights = only when there's something specific to flag.
+The `<AUDIT_HEADLINE>` block is **always** populated, on every verdict — including clean SHIPs. It's the delivery receipt: a scannable inventory of what landed (new files + modified files + tests) that the user reads on every delivery. The split is:
+
+- **Headline (always shown):** what shipped — files, descriptions, test summary. This is earned signal every time. Even on a clean SHIP, the user wants to see this — it's the only durable record of what changed without diving into the diff.
+- **Highlights (conditional):** what to look at — downgrades, soft skips, concerns. Only populated when there's something specific to flag.
+
+Do NOT collapse the file inventory into a one-liner on clean deliveries. The whole point of the headline is the receipt. The signal-preservation trick is making the *highlights* conditional, not making the inventory conditional.
+
+For file descriptions: be specific and concrete. "Updated handler logic" is useless. "Added renderer dispatch — auto-detects Swift, --renderer override, hero.json config" tells the reader what actually changed in one line. Read the diff before describing; do not paraphrase the commit message.
 
 ### Surface decision rules
 
