@@ -1,6 +1,10 @@
 package cli
 
 import (
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -280,4 +284,189 @@ func writeTrackerConfig(env *testEnv, trackerType, project string) {
 	if err := os.WriteFile(configPath, []byte(configJSON), 0o644); err != nil {
 		env.t.Fatalf("WriteFile: %v", err)
 	}
+}
+
+// writeTrackerConfigWithBaseURL overwrites hero.json with a tracker
+// config that targets a custom base URL (used to point at httptest
+// servers). The shape mirrors writeTrackerConfig.
+func writeTrackerConfigWithBaseURL(env *testEnv, trackerType, project, baseURL string) {
+	env.t.Helper()
+
+	configJSON := `{
+  "folder": ".hero",
+  "tracker": {
+    "type": "` + trackerType + `",
+    "project": "` + project + `",
+    "base_url": "` + baseURL + `",
+    "token_env": "HERO_TEST_TOKEN"
+  }
+}`
+	configPath := filepath.Join(env.heroDir, "hero.json")
+	if err := os.WriteFile(configPath, []byte(configJSON), 0o644); err != nil {
+		env.t.Fatalf("WriteFile: %v", err)
+	}
+}
+
+// --- Size push: runSync → UpdateSize wiring ---
+
+// TestRunSync_CleanPush_CallsUpdateSize verifies the SizeSyncPushToTracker
+// branch in runSync invokes the adapter's UpdateSize. Drives a real
+// runSync end-to-end against a stubbed GitHub server: GET returns an
+// issue with no size label, PATCH replaces labels including the new
+// size/large. Asserts (a) UpdateSize ran (PATCH captured), (b) the
+// merged label set is correct, (c) UpdateStatus also ran (sync
+// completes), and (d) success line printed on stdout.
+func TestRunSync_CleanPush_CallsUpdateSize(t *testing.T) {
+	var sawPatch bool
+	var patchLabels []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == "GET" && strings.HasSuffix(r.URL.Path, "/issues/42"):
+			// GetIssue + the size-update GET both hit this; return
+			// labels with no existing size label so PlanSizePush ⇒
+			// SizeSyncPushToTracker.
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+				"number":   42,
+				"title":    "test",
+				"state":    "open",
+				"html_url": "x",
+				"labels": []map[string]string{
+					{"name": "bug"},
+					{"name": "hero:active"},
+				},
+			})
+		case r.Method == "PATCH" && strings.HasSuffix(r.URL.Path, "/issues/42"):
+			sawPatch = true
+			var payload map[string]interface{}
+			_ = json.NewDecoder(r.Body).Decode(&payload)
+			if raw, ok := payload["labels"].([]interface{}); ok {
+				for _, l := range raw {
+					if s, ok := l.(string); ok {
+						patchLabels = append(patchLabels, s)
+					}
+				}
+			}
+			w.WriteHeader(http.StatusOK)
+			_, _ = io.WriteString(w, `{}`)
+		case r.Method == "POST" && strings.Contains(r.URL.Path, "/comments"):
+			// UpdateStatus path posts a comment.
+			w.WriteHeader(http.StatusCreated)
+			_, _ = io.WriteString(w, `{}`)
+		default:
+			t.Logf("unhandled: %s %s", r.Method, r.URL.Path)
+			w.WriteHeader(http.StatusOK)
+			_, _ = io.WriteString(w, `{}`)
+		}
+	}))
+	defer srv.Close()
+
+	env := newTestEnv(t)
+	writeTrackerConfigWithBaseURL(env, "github", "acme/widgets", srv.URL)
+	t.Setenv("HERO_TEST_TOKEN", "fake-token")
+
+	env.addSpec("planning/features/csv-export/spec.md", `---
+title: CSV Export
+type: feature
+status: planning
+tracker_id: 42
+size: large
+---
+# CSV Export
+
+## Goal
+
+Export data.
+`)
+
+	specPath := filepath.Join(env.heroDir, "planning/features/csv-export/spec.md")
+	out, err := runCmd("sync", "spec", specPath)
+	if err != nil {
+		t.Fatalf("runCmd: %v\noutput: %s", err, out)
+	}
+
+	if !sawPatch {
+		t.Fatal("expected PATCH to be captured (UpdateSize call)")
+	}
+	want := []string{"bug", "hero:active", "size/large"}
+	if !sameLabelSetSync(patchLabels, want) {
+		t.Errorf("PATCH labels = %v, want set %v", patchLabels, want)
+	}
+	if !strings.Contains(out, "Updated github size for issue 42 → large") {
+		t.Errorf("stdout missing UpdateSize success line; got:\n%s", out)
+	}
+}
+
+// TestRunSync_Conflict_DoesNotCallUpdateSize verifies the
+// non-destructive contract: on SizeSyncConflict the warn-only branch
+// runs and UpdateSize is NOT invoked. Drives a stub where the tracker
+// has size/small but spec declares large.
+func TestRunSync_Conflict_DoesNotCallUpdateSize(t *testing.T) {
+	var sawPatch bool
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == "GET" && strings.HasSuffix(r.URL.Path, "/issues/42"):
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+				"number":   42,
+				"title":    "test",
+				"state":    "open",
+				"html_url": "x",
+				"labels": []map[string]string{
+					{"name": "bug"},
+					{"name": "size/small"}, // conflicts with spec's "large"
+				},
+			})
+		case r.Method == "PATCH":
+			sawPatch = true
+			w.WriteHeader(http.StatusOK)
+			_, _ = io.WriteString(w, `{}`)
+		case r.Method == "POST" && strings.Contains(r.URL.Path, "/comments"):
+			w.WriteHeader(http.StatusCreated)
+			_, _ = io.WriteString(w, `{}`)
+		default:
+			w.WriteHeader(http.StatusOK)
+			_, _ = io.WriteString(w, `{}`)
+		}
+	}))
+	defer srv.Close()
+
+	env := newTestEnv(t)
+	writeTrackerConfigWithBaseURL(env, "github", "acme/widgets", srv.URL)
+	t.Setenv("HERO_TEST_TOKEN", "fake-token")
+
+	env.addSpec("planning/features/csv-export/spec.md", `---
+title: CSV Export
+type: feature
+status: planning
+tracker_id: 42
+size: large
+---
+# CSV Export
+`)
+
+	specPath := filepath.Join(env.heroDir, "planning/features/csv-export/spec.md")
+	if _, err := runCmd("sync", "spec", specPath); err != nil {
+		t.Fatalf("runCmd: %v", err)
+	}
+
+	if sawPatch {
+		t.Error("expected NO PATCH on conflict — non-destructive contract violated")
+	}
+}
+
+// sameLabelSetSync is a local copy to avoid cross-package coupling
+// with internal/tracker test helpers.
+func sameLabelSetSync(got, want []string) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	gotMap := map[string]bool{}
+	for _, l := range got {
+		gotMap[l] = true
+	}
+	for _, w := range want {
+		if !gotMap[w] {
+			return false
+		}
+	}
+	return true
 }

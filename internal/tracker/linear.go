@@ -124,6 +124,79 @@ func (l *linear) CreateIssue(s *spec.Spec) (string, error) {
 	return identifier, nil
 }
 
+// UpdateSize writes the mapped estimate to a Linear issue. Linear's
+// `estimate` field is only present when the team has estimation
+// enabled; if the mutation rejects with that case we log a warning
+// and return nil (soft failure, per spec). Real network / auth /
+// other GraphQL errors propagate.
+func (l *linear) UpdateSize(issueID, localTier string) error {
+	v, err := l.MapSize(localTier)
+	if err != nil {
+		return fmt.Errorf("mapping size %q: %w", localTier, err)
+	}
+	if v == "" {
+		return fmt.Errorf("size %q maps to empty value", localTier)
+	}
+	estimate, err := strconv.ParseFloat(v, 64)
+	if err != nil {
+		return fmt.Errorf("parsing mapped size %q as number: %w", v, err)
+	}
+
+	internalID, err := l.resolveIssueID(issueID)
+	if err != nil {
+		return err
+	}
+
+	query := `mutation IssueUpdate($id: String!, $estimate: Float!) {
+		issueUpdate(id: $id, input: { estimate: $estimate }) {
+			success
+		}
+	}`
+	variables := map[string]interface{}{
+		"id":       internalID,
+		"estimate": estimate,
+	}
+
+	result, err := l.graphql(query, variables)
+	if err != nil {
+		// Linear surfaces estimation-disabled as a GraphQL error
+		// message. We don't have a stable error code, so substring
+		// match on the message. Soft-fail in that case; everything
+		// else propagates.
+		if isLinearEstimationDisabled(err) {
+			fmt.Fprintf(os.Stderr, "Warning: Linear team has estimation disabled; skipping size update for %s\n", issueID)
+			return nil
+		}
+		return fmt.Errorf("updating size: %w", err)
+	}
+
+	data, ok := result["issueUpdate"].(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("unexpected response shape from Linear")
+	}
+	if success, _ := data["success"].(bool); !success {
+		return fmt.Errorf("linear issueUpdate returned success=false")
+	}
+	return nil
+}
+
+// isLinearEstimationDisabled reports whether a GraphQL error from
+// Linear indicates the team has estimation turned off. Substring
+// match against the surfaced message; updated if Linear ever ships a
+// stable error code we can key on.
+func isLinearEstimationDisabled(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	if !strings.Contains(msg, "estimat") {
+		return false
+	}
+	return strings.Contains(msg, "not enabled") ||
+		strings.Contains(msg, "disabled") ||
+		strings.Contains(msg, "not allowed")
+}
+
 // UpdateStatus adds a comment to the Linear issue with the new status.
 func (l *linear) UpdateStatus(issueID string, status spec.Status) error {
 	// First, find the issue's internal ID from its identifier

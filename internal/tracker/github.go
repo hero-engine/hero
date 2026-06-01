@@ -106,6 +106,81 @@ func (g *gitHub) CreateIssue(s *spec.Spec) (string, error) {
 	return fmt.Sprintf("%d", result.Number), nil
 }
 
+// UpdateSize rotates the size/<tier> label on a GitHub issue. Because
+// GitHub PATCH on /issues replaces the whole label set, we do a
+// read-then-write: fetch current labels, strip any label whose name
+// starts with the configured size prefix, append the mapped
+// <prefix><tier> label, and PATCH the merged set. All non-size labels
+// — including hero:* labels — are preserved verbatim.
+//
+// One extra GET round-trip per push is the cost of safely preserving
+// labels we don't own.
+func (g *gitHub) UpdateSize(issueID, localTier string) error {
+	newLabel, err := g.MapSize(localTier)
+	if err != nil {
+		return fmt.Errorf("mapping size %q: %w", localTier, err)
+	}
+	if newLabel == "" {
+		return fmt.Errorf("size %q maps to empty label", localTier)
+	}
+	prefix := g.sizeMapping().Field // e.g. "size/"
+
+	// Fetch current labels.
+	getURL := fmt.Sprintf("%s/repos/%s/%s/issues/%s", g.baseURL, g.owner, g.repo, issueID)
+	getReq, err := http.NewRequest("GET", getURL, nil)
+	if err != nil {
+		return fmt.Errorf("creating GET request: %w", err)
+	}
+	g.setHeaders(getReq)
+	getResp, err := g.client.Do(getReq)
+	if err != nil {
+		return fmt.Errorf("fetching issue labels: %w", err)
+	}
+	defer getResp.Body.Close()
+	if getResp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(getResp.Body)
+		return fmt.Errorf("github API returned %d on GET: %s", getResp.StatusCode, string(respBody))
+	}
+	var current struct {
+		Labels []struct {
+			Name string `json:"name"`
+		} `json:"labels"`
+	}
+	if err := json.NewDecoder(getResp.Body).Decode(&current); err != nil {
+		return fmt.Errorf("decoding labels: %w", err)
+	}
+
+	// Build merged set: keep non-size labels, append the new size label.
+	merged := make([]string, 0, len(current.Labels)+1)
+	for _, l := range current.Labels {
+		if !strings.HasPrefix(l.Name, prefix) {
+			merged = append(merged, l.Name)
+		}
+	}
+	merged = append(merged, newLabel)
+
+	payload := map[string]interface{}{"labels": merged}
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("marshaling labels: %w", err)
+	}
+	patchReq, err := http.NewRequest("PATCH", getURL, bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("creating PATCH request: %w", err)
+	}
+	g.setHeaders(patchReq)
+	patchResp, err := g.client.Do(patchReq)
+	if err != nil {
+		return fmt.Errorf("updating labels: %w", err)
+	}
+	defer patchResp.Body.Close()
+	if patchResp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(patchResp.Body)
+		return fmt.Errorf("github API returned %d on PATCH: %s", patchResp.StatusCode, string(respBody))
+	}
+	return nil
+}
+
 // UpdateStatus adds a comment to the issue and optionally closes/reopens it.
 func (g *gitHub) UpdateStatus(issueID string, status spec.Status) error {
 	// Add a status comment
@@ -163,9 +238,17 @@ func (g *gitHub) GetIssue(issueID string) (*Issue, error) {
 		Title  string `json:"title"`
 		State  string `json:"state"`
 		URL    string `json:"html_url"`
+		Labels []struct {
+			Name string `json:"name"`
+		} `json:"labels"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("decoding response: %w", err)
+	}
+
+	labels := make([]string, 0, len(result.Labels))
+	for _, l := range result.Labels {
+		labels = append(labels, l.Name)
 	}
 
 	return &Issue{
@@ -173,6 +256,7 @@ func (g *gitHub) GetIssue(issueID string) (*Issue, error) {
 		Title:  result.Title,
 		Status: result.State,
 		URL:    result.URL,
+		Labels: labels,
 	}, nil
 }
 

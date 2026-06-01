@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-01T14:31:40Z · projected from 282 source nodes_
+_Last refreshed: 2026-06-01T14:32:02Z · projected from 282 source nodes_
 
 ## Surfaces
 
@@ -49,7 +49,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - **(unassigned)** — spec-size-and-promotion-nudge, deliver-stamps-completed-at, upgrade-strands-install-layout, delivery-completion-discipline, read-dont-guess
 - **core** — embeddings-superseded-respect, next-compact-handoff, hero-hooks-uninstall-misses-next-block, compact-handoff-transcript-kickoff-missing
-- **domains/engineering** — native-mockup-rendering, mockup-renderer-selection-swiftui-bias
+- **domains/engineering** — mockup-renderer-selection-swiftui-bias, native-mockup-rendering
 - **serve** — superseded-specs-soft-archive
 
 ## Next up across surfaces
@@ -69,5 +69,5 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
 - Specs covered: 140/261 (53%)
-- Projection generation: 1ms · Source nodes: 282
+- Projection generation: 0ms · Source nodes: 282
 

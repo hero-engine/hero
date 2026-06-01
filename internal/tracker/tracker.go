@@ -4,12 +4,20 @@
 package tracker
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/spec"
 )
+
+// ErrSizeUpdateNotSupported is returned by adapters that don't write
+// size values back to the tracker. Real adapters (jira/linear/github)
+// never return this; it exists so future stub trackers can degrade
+// gracefully and so callers (notably runSync) can distinguish "this
+// adapter just doesn't write sizes" from real network/auth errors.
+var ErrSizeUpdateNotSupported = errors.New("tracker: UpdateSize not supported by this adapter")
 
 // Issue represents an issue in an external tracker.
 type Issue struct {
@@ -70,6 +78,19 @@ type Tracker interface {
 
 	// UpdateStatus updates the status of an existing issue to reflect spec lifecycle changes.
 	UpdateStatus(issueID string, status spec.Status) error
+
+	// UpdateSize writes the mapped size value to the tracker for an
+	// existing issue. The local tier is mapped via MapSize and emitted
+	// in the adapter's native shape (Jira numeric custom field, Linear
+	// `estimate`, GitHub `size/<tier>` label). Adapters without a real
+	// implementation return ErrSizeUpdateNotSupported so callers can
+	// degrade gracefully. Real network / auth / 4xx-5xx errors are
+	// returned as-is, not swallowed.
+	//
+	// Callers (notably runSync) gate this behind PlanSizePush so the
+	// non-destructive contract holds: never call UpdateSize on a
+	// SizeSyncConflict.
+	UpdateSize(issueID, localTier string) error
 
 	// GetIssue retrieves current issue info from the tracker.
 	GetIssue(issueID string) (*Issue, error)
