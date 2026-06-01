@@ -109,4 +109,23 @@ Child.
 	if !strings.Contains(out, "init-drifted") {
 		t.Errorf("expected init-drifted slug in MCP output:\n%s", out)
 	}
+	// Spec size-drift-actionable-output:
+	// - Tier substitution: no literal <tier> placeholder may survive.
+	// - Each drift entry that has an alternative action carries it as
+	//   a second clause routed via " or ".
+	if strings.Contains(out, "<tier>") {
+		t.Errorf("expected computed/rollup tier substituted, found literal <tier>:\n%s", out)
+	}
+	// Leaf entry's alternative for an "up" drift is the "grown beyond
+	// intent" clause; the primary is the paste-ready hero size command.
+	if !strings.Contains(out, "'hero size leaf-drifted ") {
+		t.Errorf("expected leaf primary 'hero size leaf-drifted <tier>' with substituted tier:\n%s", out)
+	}
+	if !strings.Contains(out, "grown beyond intent") {
+		t.Errorf("expected leaf-up alternative ('grown beyond intent') in MCP output:\n%s", out)
+	}
+	// Container entry's alternative routes to /compose.
+	if !strings.Contains(out, "'/compose init-drifted'") {
+		t.Errorf("expected container alternative '/compose init-drifted' in MCP output:\n%s", out)
+	}
 }

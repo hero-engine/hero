@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-01T19:50:49Z · 102 ready specs_
+_Generated: 2026-06-01T21:12:38Z · 101 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -1019,28 +1019,6 @@ leads and the design command, plus the "see also" line in
 `domains/engineering/commands/design.md`,
 `domains/engineering/skills/spec-sizing/SKILL.md`
 **Skip:** retroactive cluster detection (sibling #1's job), `/compose` UX changes, new trigger heuristics beyond the three any-of triggers.
-
----
-
-## size-drift-actionable-output — Size-Drift Actionable Output — Inline Next-Step and Dedupe Duplicate Error
-_feature · ready · horizon: now_
-
-Two surgical changes: inline a paste-ready next-step line under each
-`hero size --check` drift row, and silence cobra's duplicate error
-print on this command.
-
-**Status:** ready — design done; no code yet.
-
-**Pick up at:** add `sizing.SuggestedAction(declared, computed, kind)`
-returning `(primary, alternative string)`, wire it into `runSizeCheck`
-print loop (two lines per row), flip `sizeCmd.SilenceErrors = true`,
-add the `/roadmap-review` footer, then extend the `hero_warnings`
-entries in `mcp_tools.go` to include the alternative pointer.
-
-→ `/deliver size-drift-actionable-output`
-
-**Files:** `internal/cli/size.go:33,165-187`, `internal/sizing/sizing.go`, `internal/serve/mcp_tools.go:2588-2614`
-**Skip:** new check categories, restructuring `--check` schema, JSON-output changes beyond adding the alternative-action field.
 
 ---
 

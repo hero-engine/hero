@@ -230,6 +230,134 @@ Declared trivial but reality is much larger.
 	if !strings.Contains(out, "trivial") {
 		t.Errorf("expected declared 'trivial' in output, got: %q", out)
 	}
+	// Inline next-step hint with paste-ready slug substitution.
+	if !strings.Contains(out, "→") {
+		t.Errorf("expected inline '→' hint under drift row, got:\n%s", out)
+	}
+	if !strings.Contains(out, "'hero size drifted ") {
+		t.Errorf("expected paste-ready 'hero size drifted <tier>' in inline hint, got:\n%s", out)
+	}
+	// Footer hint to /roadmap-review.
+	if !strings.Contains(out, "Run '/roadmap-review' to triage interactively.") {
+		t.Errorf("expected '/roadmap-review' footer hint, got:\n%s", out)
+	}
+	// No template placeholders may survive in output.
+	for _, bad := range []string{"<slug>", "<tier>", "%s"} {
+		if strings.Contains(out, bad) {
+			t.Errorf("output still contains placeholder %q:\n%s", bad, out)
+		}
+	}
+}
+
+// TestSize_Check_NoDrift_QuietFooter confirms the /roadmap-review
+// footer line stays quiet when no drift is found — it's a triage
+// pointer, not unconditional noise.
+func TestSize_Check_NoDrift_QuietFooter(t *testing.T) {
+	env := newTestEnv(t)
+
+	env.addSpec("planning/features/no-decl-2/spec.md", `---
+title: No Declaration 2
+type: feature
+status: planning
+---
+
+## Goal
+Unset size.
+
+## Changes
+- internal/foo.go
+`)
+
+	out, err := runCmd("size", "--check")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if strings.Contains(out, "/roadmap-review") {
+		t.Errorf("expected no /roadmap-review hint when no drift, got:\n%s", out)
+	}
+}
+
+// TestSize_Check_LeafDownEmitsSplitHint confirms that when declared
+// size overstates computed (declared > computed), the alternative
+// pointer routes to /split rather than "scope grew."
+func TestSize_Check_LeafDownEmitsSplitHint(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Single-file, tiny spec declared giant — computed will be trivial.
+	env.addSpec("planning/features/oversold/spec.md", `---
+title: Oversold
+type: feature
+status: planning
+size: giant
+---
+
+## Goal
+One file, declared giant.
+
+## Changes
+- internal/x.go
+`)
+
+	out, err := runCmd("size", "--check")
+	if err == nil {
+		t.Fatal("expected non-zero exit when drift is found")
+	}
+	if !strings.Contains(out, "'/split oversold'") {
+		t.Errorf("expected '/split oversold' alternative for leaf-down drift, got:\n%s", out)
+	}
+}
+
+// TestSize_Check_ErrorPrintsOnce regression-tests the duplicate-error
+// fix from spec size-drift-actionable-output: with SilenceErrors=true
+// on sizeCmd, cobra no longer prints "Error: <msg>" on top of main.go's
+// print. The CLI test harness only sees the returned error (main.go's
+// print path), so this asserts the error returns non-nil with the
+// exact "size drift found in N spec(s)" message — and that the
+// captured stdout does NOT contain a cobra-style duplicate.
+func TestSize_Check_ErrorPrintsOnce(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Drifted leaf so --check fails.
+	bigBody := strings.Repeat("This spec has a lot of content. ", 100)
+	env.addSpec("planning/features/dup-check/spec.md", `---
+title: Dup Check
+type: feature
+status: planning
+size: trivial
+---
+
+## Goal
+`+bigBody+`
+
+## Changes
+- internal/a.go
+- internal/b.go
+- internal/c.go
+- internal/d.go
+- internal/e.go
+- internal/f.go
+- internal/g.go
+- internal/h.go
+- internal/i.go
+- internal/j.go
+`)
+
+	out, err := runCmd("size", "--check")
+	if err == nil {
+		t.Fatal("expected non-zero exit when drift is found")
+	}
+	if !strings.Contains(err.Error(), "size drift found in") {
+		t.Errorf("expected 'size drift found in N spec(s)' error, got: %v", err)
+	}
+	// Cobra's auto-print prefixes errors with "Error: " on stderr.
+	// runCmd captures stdout only — but if SilenceErrors were false,
+	// cobra writes to stderr through cmd.ErrOrStderr() which defaults
+	// to os.Stderr. We assert the captured stdout has no "Error: "
+	// prefix as a belt-and-suspenders check; the real proof is the
+	// SilenceErrors=true flag flip on sizeCmd.
+	if strings.Contains(out, "Error: size drift") {
+		t.Errorf("expected no duplicate cobra 'Error:' print in stdout, got:\n%s", out)
+	}
 }
 
 func TestSize_Check_SkipsContainerSpecs(t *testing.T) {
@@ -264,6 +392,160 @@ Container drift is out of scope for slice 2.
 	}
 	if !strings.Contains(out, "No size drift") {
 		t.Errorf("expected 'No size drift' when only initiative present, got: %q", out)
+	}
+}
+
+func TestSize_Ack_NewField(t *testing.T) {
+	env := newTestEnv(t)
+
+	specPath := "planning/features/big-deliberate/spec.md"
+	env.addSpec(specPath, `---
+title: Big Deliberate
+type: feature
+status: planning
+size: giant
+---
+
+## Goal
+Intentional giant — acknowledge it.
+`)
+
+	_, err := runCmd("size", "--ack", "giant", "big-deliberate")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join(env.heroDir, specPath))
+	if err != nil {
+		t.Fatalf("reading spec: %v", err)
+	}
+	content := string(data)
+	if !strings.Contains(content, "size_ack: giant") {
+		t.Errorf("expected 'size_ack: giant' in frontmatter, got:\n%s", content)
+	}
+	// The original `size:` must still be present.
+	if !strings.Contains(content, "size: giant") {
+		t.Errorf("expected original 'size: giant' to be preserved, got:\n%s", content)
+	}
+}
+
+func TestSize_Ack_PreservesOtherFrontmatter(t *testing.T) {
+	env := newTestEnv(t)
+
+	specPath := "planning/features/preserve/spec.md"
+	env.addSpec(specPath, `---
+title: Preserve
+type: feature
+status: planning
+size: giant
+priority: P1
+---
+
+## Goal
+Other frontmatter must survive the ack.
+`)
+
+	if _, err := runCmd("size", "--ack", "giant", "preserve"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join(env.heroDir, specPath))
+	if err != nil {
+		t.Fatalf("reading spec: %v", err)
+	}
+	content := string(data)
+	for _, want := range []string{"title: Preserve", "priority: P1", "size: giant", "size_ack: giant"} {
+		if !strings.Contains(content, want) {
+			t.Errorf("expected %q to be present, got:\n%s", want, content)
+		}
+	}
+}
+
+func TestSize_Ack_Idempotent(t *testing.T) {
+	env := newTestEnv(t)
+
+	specPath := "planning/features/already-acked/spec.md"
+	env.addSpec(specPath, `---
+title: Already Acked
+type: feature
+status: planning
+size: giant
+size_ack: giant
+---
+
+## Goal
+Re-acking should be a no-op write of the same value.
+`)
+
+	if _, err := runCmd("size", "--ack", "giant", "already-acked"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join(env.heroDir, specPath))
+	if err != nil {
+		t.Fatalf("reading spec: %v", err)
+	}
+	// Exactly one size_ack line.
+	if got := strings.Count(string(data), "size_ack:"); got != 1 {
+		t.Errorf("expected exactly one size_ack line after re-ack, got %d:\n%s", got, string(data))
+	}
+}
+
+func TestSize_Ack_RejectsInvalidTier(t *testing.T) {
+	env := newTestEnv(t)
+
+	env.addSpec("planning/features/some-spec/spec.md", `---
+title: Some Spec
+type: feature
+status: planning
+---
+
+## Goal
+Invalid ack tier should be rejected.
+`)
+
+	_, err := runCmd("size", "--ack", "enormous", "some-spec")
+	if err == nil {
+		t.Fatal("expected error for invalid ack tier")
+	}
+	if !strings.Contains(err.Error(), "invalid size") {
+		t.Errorf("expected 'invalid size' error, got: %v", err)
+	}
+}
+
+func TestSize_Ack_RequiresSlug(t *testing.T) {
+	_ = newTestEnv(t)
+
+	_, err := runCmd("size", "--ack", "giant")
+	if err == nil {
+		t.Fatal("expected error when --ack is given without a slug")
+	}
+	if !strings.Contains(err.Error(), "--ack") {
+		t.Errorf("expected usage error mentioning --ack, got: %v", err)
+	}
+}
+
+func TestSize_Ack_SpecNotFound(t *testing.T) {
+	_ = newTestEnv(t)
+
+	_, err := runCmd("size", "--ack", "giant", "no-such-spec")
+	if err == nil {
+		t.Fatal("expected error for missing spec")
+	}
+	if !strings.Contains(err.Error(), "not found") {
+		t.Errorf("expected 'not found' error, got: %v", err)
+	}
+}
+
+func TestSize_Ack_ConflictsWithCheck(t *testing.T) {
+	_ = newTestEnv(t)
+
+	_, err := runCmd("size", "--check", "--ack", "giant", "any")
+	if err == nil {
+		t.Fatal("expected error when --check and --ack are both set")
+	}
+	if !strings.Contains(err.Error(), "mutually exclusive") {
+		t.Errorf("expected 'mutually exclusive' error, got: %v", err)
 	}
 }
 

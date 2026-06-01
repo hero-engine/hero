@@ -3,8 +3,8 @@ title: Size-Drift Actionable Output — Inline Next-Step and Dedupe Duplicate Er
 slug: size-drift-actionable-output
 type: feature
 domain: engineering
-status: ready
-size: trivial
+status: completed
+size: small
 priority: P2
 tags: [size, drift, cli, polish]
 created: 2026-06-01
@@ -24,6 +24,15 @@ A closing pointer at `/roadmap-review` is added to the footer for
 ambient triage. The `hero_warnings` MCP entries gain the same
 alternative-action pointer (`/compose` or `/split`) so the model has
 the same two paths the human sees.
+
+Also lands the `hero size --ack <tier> <slug>` flag — the canonical CLI
+the `roadmap-reviewer` agent calls on the Acknowledge resolution. The
+agent had a documented fallback (direct frontmatter edit) when this flag
+didn't exist; with `--ack` shipped, the fallback is no longer needed and
+the agent's resolution becomes a single clean CLI invocation. Scope grew
+during delivery (engineer recognized the natural fit and went past the
+original trivial framing); spec retroactively expanded from `trivial` →
+`small` to reflect what actually landed.
 
 ## Context
 
@@ -52,22 +61,18 @@ back into cobra's print. See **Approach** for the rationale.
 
 ## Kickoff
 
-Two surgical changes: inline a paste-ready next-step line under each
-`hero size --check` drift row, and silence cobra's duplicate error
-print on this command.
-
-**Status:** ready — design done; no code yet.
-
-**Pick up at:** add `sizing.SuggestedAction(declared, computed, kind)`
-returning `(primary, alternative string)`, wire it into `runSizeCheck`
-print loop (two lines per row), flip `sizeCmd.SilenceErrors = true`,
-add the `/roadmap-review` footer, then extend the `hero_warnings`
-entries in `mcp_tools.go` to include the alternative pointer.
-
-→ `/deliver size-drift-actionable-output`
-
-**Files:** `internal/cli/size.go:33,165-187`, `internal/sizing/sizing.go`, `internal/serve/mcp_tools.go:2588-2614`
-**Skip:** new check categories, restructuring `--check` schema, JSON-output changes beyond adding the alternative-action field.
+`size-drift-actionable-output` — DELIVERED. 16 ACs DONE; SHIP /
+noteworthy audit (scope grew to absorb `hero size --ack` flag, owner
+chose to keep it together rather than carve out). Landed:
+`sizing.SuggestedAction` shared helper feeds both CLI inline hints and
+`hero_warnings` MCP entries; `sizeCmd.SilenceErrors = true` collapses
+the duplicate error print; `/roadmap-review` footer hint added; full
+`--ack <tier> <slug>` flag with `runSizeAck` and 6 tests. Now the
+`roadmap-reviewer` agent's Acknowledge resolution is a single
+`hero size --ack giant <slug>` call — the documented frontmatter-edit
+fallback is no longer needed (still kept as a comment for posterity).
+Live workspace exercise: 16 drifts surface with inline hints, single
+stderr line, exit 1; clean workspace shows the quiet path with exit 0.
 
 ## Approach
 
@@ -184,45 +189,65 @@ requirement from the stub.
 
 ## Changes
 
-1. **Add `SuggestedAction` helper in `internal/sizing/sizing.go`.**
-   - New `DriftKind` int type + four constants
-     (`DriftLeafUp`, `DriftLeafDown`, `DriftContainerUnset`,
-     `DriftContainerLow`).
-   - New `SuggestedAction(slug, declared, computed string, kind DriftKind) (primary, alternative string)`.
-   - Slug substituted directly into returned strings; no `%s` left for
-     callers. Strings match the mapping table in **Approach**.
-   - Add a small helper `classifyLeafDrift(declared, computed string) DriftKind`
-     that returns `DriftLeafUp` when computed > declared on the ladder,
-     `DriftLeafDown` otherwise. (Container kinds are picked by the
-     call site since they need to distinguish unset from low.)
+1. **`internal/sizing/sizing.go`** — added `DriftKind` int type with
+   four constants (`DriftKindLeafUp`, `DriftKindLeafDown`,
+   `DriftKindContainerUnset`, `DriftKindContainerLow`), the
+   `driftSizeTierOrder` ladder map (mirrors
+   `snapshot.sizeTierOrder`), the `ClassifyLeafDriftKind` helper
+   (exported so the CLI and MCP surfaces share one classifier), and
+   the `SuggestedAction(slug, declared, computed string, kind DriftKind) (primary, alternative string)`
+   helper. Returned strings are paste-ready — slug substituted in,
+   no `%s` / `<slug>` / `<tier>` placeholders survive.
 
-2. **Wire helper into `runSizeCheck` print loop (`internal/cli/size.go`).**
-   - After each `[leaf]` row print, classify and emit the indented
-     `→ 'primary', or alternative` line.
-   - After each `[container]` row print, same — distinguish
-     `DriftContainerUnset` (declared empty) from `DriftContainerLow`
-     (declared non-empty but below rollup) at the call site.
-   - Skip the second-line print for indeterminate container rows
-     (`d.Indeterminate == true`) — no actionable suggestion fits
-     "we don't know the rollup."
-   - After the existing total-summary line, print one more line:
-     `Run '/roadmap-review' to triage interactively.`
+2. **`internal/cli/size.go`** — wired `SuggestedAction` into the
+   `runSizeCheck` print loop. Each `[leaf]` and non-indeterminate
+   `[container]` row now prints a second indented line:
+   `  → <primary>  or  <alternative>`. Container indeterminate rows
+   stay single-line. Footer line `Run '/roadmap-review' to triage
+   interactively.` prints after the count summary when drift was
+   found (quiet on clean workspaces). Flipped `sizeCmd.SilenceErrors`
+   from `false` → `true` to dedupe the cobra/main.go duplicate error
+   print. Documented the choice with an inline comment citing
+   spec Option C.
 
-3. **Silence cobra's duplicate error print (`internal/cli/size.go`).**
-   - On `sizeCmd`, change `SilenceErrors: false` → `SilenceErrors: true`.
-   - No other change. `main.go` already prints the error and exits
-     non-zero — that single path becomes the only one users see.
+3. **`internal/serve/mcp_tools.go`** — extended the
+   `Size drift (leaf)` and non-indeterminate `Size drift (container)`
+   `hero_warnings` entries to include both the primary and
+   alternative clauses from `SuggestedAction`. The literal `<tier>`
+   placeholder is now substituted with the computed/rollup tier.
+   Indeterminate-container entries keep the existing single-clause
+   form. No new MCP fields — additive markdown only.
 
-4. **Extend MCP warnings entries (`internal/serve/mcp_tools.go`).**
-   - In the `Size drift (leaf)` block (~line 2595–2599): replace the
-     `<tier>` placeholder with the computed bucket, and append the
-     alternative clause from `SuggestedAction`.
-   - In the `Size drift (container)` non-indeterminate block
-     (~line 2611–2613): append the alternative clause (`/compose <slug>`).
-   - Indeterminate-container block stays as-is (no actionable
-     alternative when rollup is unknown).
-   - The format change is additive — no new fields, no schema break;
-     `hero_warnings` consumers continue to see flat markdown strings.
+4. **`internal/cli/size.go` (additional, scope absorbed)** — added
+   `--ack <tier>` flag and `runSizeAck` function. `hero size --ack
+   giant <slug>` writes `size_ack: giant` to the spec's frontmatter
+   non-destructively via the existing `SetFrontmatterField` helper.
+   Tier validated against the same 6-tier ladder `validateSize` uses.
+   Updated `Use` / `Short` / `Long` help text to document the flag.
+   This was originally scoped as a separate trivial follow-up (chip
+   spawned during `roadmap-review` delivery) — engineer recognized
+   the natural fit during this delivery and shipped it together;
+   spec absorbed retroactively rather than carve it back out.
+
+5. **Tests** —
+   - `internal/sizing/sizing_test.go` — added
+     `TestSuggestedAction_Mapping` (table-driven across all four
+     `DriftKind` values, asserts slug substitution and exact returned
+     strings) and `TestClassifyLeafDriftKind` (up/down/equal/unknown).
+   - `internal/cli/size_test.go` — extended `TestSize_Check_FindsDrift`
+     to assert the inline `→` hint, footer hint, and no-template
+     output; added `TestSize_Check_NoDrift_QuietFooter`,
+     `TestSize_Check_LeafDownEmitsSplitHint`, and
+     `TestSize_Check_ErrorPrintsOnce` (regression test for the
+     duplicate-error dedupe). Plus six `TestSize_Ack_*` tests covering
+     the new `--ack` flag (happy path, invalid tier, missing spec,
+     write-through correctness, no `size:` clobber, idempotent
+     re-ack).
+   - `internal/cli/helpers_test.go` — `sizeAck` added to `resetFlags`
+     so each test starts clean.
+   - `internal/serve/mcp_size_drift_test.go` — asserts the
+     substituted tier (no literal `<tier>`), the leaf-up "grown
+     beyond intent" alternative, and the container `/compose` pointer.
 
 ## Acceptance Criteria
 
@@ -239,6 +264,9 @@ requirement from the stub.
 - IF a container drift entry is indeterminate THEN THE SYSTEM SHALL keep the existing single-clause form (no alternative action) and not print a second line in CLI.
 - THE SYSTEM SHALL preserve the existing tracker-capability header line at the top of `--check` output unchanged.
 - THE SYSTEM SHALL preserve the `--check` JSON contract for any external consumer (no key renames or shape changes).
+- WHEN `hero size --ack <tier> <slug>` runs THE SYSTEM SHALL write `size_ack: <tier>` to the spec's frontmatter non-destructively, preserving the rest of the file.
+- IF `hero size --ack <tier> <slug>` is invoked with a tier outside the 6-tier ladder THEN THE SYSTEM SHALL reject with a clear error naming the field and allowed values.
+- WHEN `hero size --ack <tier> <slug>` runs against a spec that already has `size_ack: <tier>` THE SYSTEM SHALL be idempotent (no-op or equivalent write).
 
 ## Boundaries
 
