@@ -76,3 +76,7 @@
 {"ts":"2026-05-31T01:04:22.460048Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"superseded-specs-soft-archive","message":"status -\u003e completed"}
 {"ts":"2026-05-31T01:18:22.728091Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"embeddings-superseded-respect","message":"Embeddings \u0026 Vector Retrieval Respect `superseded_by`"}
 {"ts":"2026-05-31T01:18:22.728207Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"embeddings-superseded-respect","message":"status -\u003e completed"}
+{"ts":"2026-06-01T03:07:26.969991Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"mockup-renderer-selection-swiftui-bias","message":"Mockup renderer selection biases to HTML on Swift projects"}
+{"ts":"2026-06-01T03:07:26.970077Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"mockup-renderer-selection-swiftui-bias","message":"status -\u003e completed"}
+{"ts":"2026-06-01T03:07:27.647249Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"native-mockup-rendering","message":"\"Native Mockup Rendering — Real Platform UI from /mock\""}
+{"ts":"2026-06-01T03:07:27.647352Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"native-mockup-rendering","message":"status -\u003e completed"}

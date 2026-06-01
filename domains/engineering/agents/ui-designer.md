@@ -30,12 +30,29 @@ This block is the contract. Skip it and the user sees no links. Everything below
 
 ## Renderer selection
 
-Before generating anything, determine which renderer to use. The `/mock` command will tell you which renderer was selected — follow its instruction. If called directly without a renderer hint:
+**You do not pick the renderer.** The CLI does it. The `/mock` command runs `hero spec mock detect` and tells you the result; trust that value and use it verbatim. Do not re-derive the choice from Swift signals — the algorithm lives in Go for exactly this reason.
 
-1. Check for `--renderer=html` or `--renderer=swiftui` in the request
-2. Check the project root for Swift signals (`.swift`, `Package.swift`, `*.xcodeproj`, `*.xcworkspace`)
-3. If Swift project detected, verify `swiftc` is available: run `which swiftc`
-4. Default to HTML if no native stack detected or toolchain unavailable
+If you are called directly (outside `/mock`) and you do not have a renderer hint from the caller, run the CLI yourself:
+
+```
+hero spec mock detect [--renderer=<flag-if-user-passed-one>]
+```
+
+Read the single-line JSON. Use the `renderer` field verbatim. If `conflict` is non-null, **halt** and surface the conflict message before generating — same protocol as `/mock`:
+
+```
+Renderer choice conflict.
+{conflict message from detect output}
+Confirm one:
+  [keep flag]    use {explicit_flag} as requested
+  [use detected] override my flag and use the auto-detected renderer
+```
+
+Before generating anything, emit a one-line announce so the choice is visible to the user in-turn:
+
+```
+Renderer: {renderer} — reason: {reason} — swiftc: {toolchain_path or "unavailable"}
+```
 
 Load the appropriate skill:
 - **HTML:** `html-mockup-generation`

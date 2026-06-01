@@ -19,6 +19,10 @@ When this skill runs inside a subagent (the usual case via `ui-designer` or `/mo
 
 One file per line, pipe-separated `path|label|kind`. Include every variant when generating multiple options in one run. Skip this block and the user sees no links. See the `ui-designer` agent definition for full rules.
 
+## When to use
+
+Selection is now driven by `hero spec mock detect` (see `hero spec mock detect --help`). The agent does not decide — the CLI does. This skill is loaded whenever the detect output's `renderer` field is `"html"`, which fires when no Swift signals are detected, when `--renderer=html` was explicit, when `hero.json` `mockups.renderer: "html"` overrides auto-detect, or as a fallback when Swift signals are present but `swiftc` is missing.
+
 ## File Structure
 
 ```html

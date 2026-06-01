@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-05-31T14:58:08Z
+updated: 2026-06-01T03:09:16Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Diagnose why hero binary upgrades silently strand installations in the previous version's layout — paperboy had broken legacy symlinks because cleanup only runs on hero install and binary was upgraded without re-install. Surface the version drift loudly.
+> Both specs completed and archived. Next move = open PR for this branch (it bundles two related deliveries plus the v0.14.5 upgrade fixes already on main).
 
 ## Suggested next prompt
 

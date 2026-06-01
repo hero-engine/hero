@@ -1,5 +1,5 @@
 {
-  "hero_version": "v0.14.4-dirty",
+  "hero_version": "v0.14.5-dirty",
   "initialized_at": "0001-01-01T00:00:00Z",
   "installed_files": {
     ".claude/agents/api-engineer.md": "sha256:6d1f57fd3f89e269413ec2c1319408937309566911d26586e7ad17796b3e8efb",
