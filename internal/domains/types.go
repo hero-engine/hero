@@ -74,15 +74,76 @@ type RendererOverride struct {
 	Renderer      RendererRef   `json:"renderer"`
 }
 
+// AgentSourceKind tags how an agent pack is loaded.
+//
+// Phase 2 v1 supports "builtin" (compiled into the binary) and
+// "project" (scanned from the workspace's .claude/agents/ tree).
+// "plugin" and "remote" are declared so the contract is stable but
+// are not yet resolvable — the Swift-side resolver surfaces them as
+// unsupported_source warnings.
+type AgentSourceKind string
+
+const (
+	AgentSourceBuiltin AgentSourceKind = "builtin"
+	AgentSourceProject AgentSourceKind = "project"
+	AgentSourcePlugin  AgentSourceKind = "plugin"
+	AgentSourceRemote  AgentSourceKind = "remote"
+)
+
+// AgentSource is the tagged source qualifier for an AgentRef. The JSON
+// shape matches the Rust serde representation:
+//
+//	{"kind": "builtin"}
+//	{"kind": "project"}
+//	{"kind": "plugin", "value": "<plugin-name>"}
+//	{"kind": "remote", "value": "<url>"}
+type AgentSource struct {
+	Kind  AgentSourceKind `json:"kind"`
+	Value string          `json:"value,omitempty"`
+}
+
+// SkillSourceKind tags how a skill pack is loaded. Same shape as
+// AgentSourceKind for now; kept separate so skills can diverge later.
+type SkillSourceKind string
+
+const (
+	SkillSourceBuiltin SkillSourceKind = "builtin"
+	SkillSourceProject SkillSourceKind = "project"
+	SkillSourcePlugin  SkillSourceKind = "plugin"
+	SkillSourceRemote  SkillSourceKind = "remote"
+)
+
+// SkillSource is the tagged source qualifier for a SkillRef.
+type SkillSource struct {
+	Kind  SkillSourceKind `json:"kind"`
+	Value string          `json:"value,omitempty"`
+}
+
 // AgentRef points at an agent pack. Full semantics in the agent/skill
-// pack contract spec (D2); this is the shape the manifest needs.
+// pack contract spec (D2). Discovery and loading are owned by a
+// follow-up spec — this is the contract a manifest uses to declare
+// its refs.
 type AgentRef struct {
+	// ID is the stable agent id ("feature-delivery-lead").
 	ID string `json:"id"`
+	// Source records where the pack is loaded from. Defaults to
+	// builtin when omitted from JSON.
+	Source AgentSource `json:"source"`
+	// VersionConstraint is an optional semver-ish hint; empty means
+	// latest-wins.
+	VersionConstraint string `json:"version_constraint,omitempty"`
 }
 
 // SkillRef points at a skill pack. Full semantics in D2.
 type SkillRef struct {
+	// ID is the stable skill id ("go-stack").
 	ID string `json:"id"`
+	// Source records where the pack is loaded from. Defaults to
+	// builtin when omitted from JSON.
+	Source SkillSource `json:"source"`
+	// VersionConstraint is an optional semver-ish hint; empty means
+	// latest-wins.
+	VersionConstraint string `json:"version_constraint,omitempty"`
 }
 
 // ───────────────────────────────────────────────────────────────────
