@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-01T21:12:39Z · 101 ready specs_
+_Generated: 2026-06-01T21:21:30Z · 100 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -990,35 +990,6 @@ Start with Phase 0 only. Do not build anything. Read [next-compact-handoff/spec.
 Output a written assessment with a clear recommendation: proceed to Phase 1 prototype, or close as "not worth it" with the analysis preserved so future revisits don't re-litigate.
 
 Time budget: ~2 days of focused research, no implementation. If the assessment can't be reached in that budget, the answer is probably no.
-
----
-
-## multi-spec-design-routing — Multi-Spec Design Routing — Nudge from /design ×N to /compose
-_feature · ready · horizon: now_
-
-Routing nudge child of `roadmap-shape`. When `/design` surfaces ≥ 2
-related deliverables (explicit phrasing, lead-identified
-sub-deliverables, or rolled-up size ≥ `large`), the lead quotes the
-`spec-composition` routing nudge and recommends `/compose` before
-scaffolding flat siblings. Advisory, not blocking.
-
-**Status:** ready — design complete; ready for `/deliver` after
-sibling #1 (`roadmap-review`) lands the `spec-composition` skill.
-
-**Pick up at:** verify whether `spec-composition/SKILL.md` already
-carries a `## Triggers` section (from #1). If yes, extend it; if no,
-author it. Then wire the one-line skill load into both delivery
-leads and the design command, plus the "see also" line in
-`spec-sizing`.
-
-→ `/deliver multi-spec-design-routing`
-
-**Files:** `domains/engineering/skills/spec-composition/SKILL.md`,
-`domains/engineering/agents/feature-delivery-lead.md`,
-`domains/engineering/agents/platform-delivery-lead.md`,
-`domains/engineering/commands/design.md`,
-`domains/engineering/skills/spec-sizing/SKILL.md`
-**Skip:** retroactive cluster detection (sibling #1's job), `/compose` UX changes, new trigger heuristics beyond the three any-of triggers.
 
 ---
 

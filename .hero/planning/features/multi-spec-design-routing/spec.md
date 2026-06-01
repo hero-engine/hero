@@ -3,7 +3,7 @@ title: Multi-Spec Design Routing — Nudge from /design ×N to /compose
 slug: multi-spec-design-routing
 type: feature
 domain: engineering
-status: ready
+status: completed
 size: small
 priority: P2
 tags: [design, compose, routing, ambient-context]
@@ -446,26 +446,16 @@ Explicitly out of scope:
 
 ## Kickoff
 
-Routing nudge child of `roadmap-shape`. When `/design` surfaces ≥ 2
-related deliverables (explicit phrasing, lead-identified
-sub-deliverables, or rolled-up size ≥ `large`), the lead quotes the
-`spec-composition` routing nudge and recommends `/compose` before
-scaffolding flat siblings. Advisory, not blocking.
+`multi-spec-design-routing` — DELIVERED. 15 ACs DONE; SHIP / clean
+audit. `spec-composition` skill extended cooperatively (Goal +
+Canonical phrasing from #1 intact; Triggers placeholder replaced with
+the real 3 any-of triggers; Stance consolidated in-place to avoid
+duplication; Precedence + Suppression sections added). Both delivery
+leads load `spec-composition` at design phase and fire the routing
+nudge before writing any individual spec; `/design` command carries
+the matching paragraph. `spec-sizing`'s "see also" entry refined to
+document the precedence rule explicitly from the sizing side. Both
+skills now agree word-for-word on routing-first / sizing-per-child.
+Closes the prevention half of the roadmap-shape initiative.
 
-**Status:** ready — design complete; ready for `/deliver` after
-sibling #1 (`roadmap-review`) lands the `spec-composition` skill.
-
-**Pick up at:** verify whether `spec-composition/SKILL.md` already
-carries a `## Triggers` section (from #1). If yes, extend it; if no,
-author it. Then wire the one-line skill load into both delivery
-leads and the design command, plus the "see also" line in
-`spec-sizing`.
-
-→ `/deliver multi-spec-design-routing`
-
-**Files:** `domains/engineering/skills/spec-composition/SKILL.md`,
-`domains/engineering/agents/feature-delivery-lead.md`,
-`domains/engineering/agents/platform-delivery-lead.md`,
-`domains/engineering/commands/design.md`,
-`domains/engineering/skills/spec-sizing/SKILL.md`
-**Skip:** retroactive cluster detection (sibling #1's job), `/compose` UX changes, new trigger heuristics beyond the three any-of triggers.
+→ Next: `/deliver roadmap-review-ambient-surfacing` — only #2 left.

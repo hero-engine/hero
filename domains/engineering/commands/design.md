@@ -7,6 +7,8 @@ description: Produce a spec for a feature, enhancement, or platform change.
 
 **Stamp `size:` in frontmatter.** New specs of a sized type (`feature`, `bug`, `enhancement`, `epic`, `initiative`) MUST emit a `size:` field on the shared 6-tier ladder (`trivial | small | medium | large | x-large | giant`). The designer picks the tier from the design conversation using the per-type band as a guide; default to `medium` only when truly undetermined. Load the `spec-sizing` skill for the ladder, bands, and the design-time nudge phrasing — if the conversation lands at `large` or higher, fire the nudge from the skill before saving the spec so the user can `/split` or `/compose` first.
 
+**Check for multi-spec routing.** If the design request would naturally produce 2+ related specs (user names multiple deliverables, you spot independent sub-deliverables during clarification, or the rolled-up scope would be ≥ `large`), load the `spec-composition` skill and surface its routing nudge **before writing the individual spec**. The user picks: `/compose` for initiative-first phasing, or proceed with N siblings here. Routing nudge precedes the sizing nudge when both would apply on the same request — see the Precedence section of `spec-composition`.
+
 Route this feature or enhancement request to the appropriate delivery lead for design.
 
 Determine whether this is product feature work or platform/migration work:
