@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"os"
@@ -37,6 +38,7 @@ historical data is available.`,
 var (
 	costAll     bool
 	costHistory bool
+	costJSON    bool
 )
 
 var costCalibrateCmd = &cobra.Command{
@@ -48,16 +50,23 @@ var costCalibrateCmd = &cobra.Command{
 func init() {
 	costCmd.Flags().BoolVar(&costAll, "all", false, "estimate all specs, not just in-flight")
 	costCmd.Flags().BoolVar(&costHistory, "history", false, "show calibration summary")
+	costCmd.Flags().BoolVar(&costJSON, "json", false, "emit machine-readable JSON (single-spec mode)")
 	costCmd.AddCommand(costCalibrateCmd)
 }
 
-// effort buckets
+// effort buckets — the canonical 6-tier ladder shared with the
+// declared `size:` frontmatter field. Strings are load-bearing:
+// the calibration cache (.hero/knowledge/cost-history.json) and
+// hero_velocity history persist these values literally, so they
+// MUST NOT be renamed. New tiers append; they do not rebadge.
+// See spec spec-size-and-promotion-nudge.
 const (
 	effortTrivial = "trivial" // < 2 points
 	effortSmall   = "small"   // 2-4 points
 	effortMedium  = "medium"  // 5-9 points
 	effortLarge   = "large"   // 10-19 points
-	effortXLarge  = "x-large" // 20+ points
+	effortXLarge  = "x-large" // 20-39 points
+	effortGiant   = "giant"   // 40+ points (~2x x-large threshold; see spec Risks)
 )
 
 // costEstimate holds the result for a single spec
@@ -68,10 +77,29 @@ type costEstimate struct {
 	Status       spec.Status
 	Points       float64
 	Bucket       string
+	Declared     string // declared `size:` from spec frontmatter ("" = unset)
+	Drift        bool   // true when Declared != "" and Declared != Bucket
 	FileCount    int
 	SectionCount int
 	DependsCount int
 	WordCount    int
+}
+
+// LeafDrift compares a spec's declared `size:` against its computed
+// bucket. Returns the drifted estimate when they differ (and a
+// declared value is present), or nil otherwise. Container drift
+// (declared vs aggregated child rollup) ships in a later slice.
+func LeafDrift(s *spec.Spec, est costEstimate) *costEstimate {
+	if s.Size == "" {
+		return nil
+	}
+	if s.Size == est.Bucket {
+		return nil
+	}
+	out := est
+	out.Declared = s.Size
+	out.Drift = true
+	return &out
 }
 
 func runCostCalibrate(cmd *cobra.Command, args []string) error {
@@ -151,6 +179,9 @@ func runCost(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("spec %q not found", slug)
 		}
 		est := estimateSpec(target, calibration)
+		if costJSON {
+			return printSingleEstimateJSON(est)
+		}
 		printSingleEstimate(est, calibration)
 		return nil
 	}
@@ -287,10 +318,22 @@ func estimateSpec(s *spec.Spec, cal calibrationData) costEstimate {
 	est.Points = math.Round(raw*10) / 10
 	est.Bucket = bucketFromPoints(est.Points)
 
+	// Declared-vs-computed drift. Empty declared is a normal state
+	// (not an error) — only flag drift when the spec carries a
+	// declared `size:` and it disagrees with the computed bucket.
+	est.Declared = s.Size
+	if est.Declared != "" && est.Declared != est.Bucket {
+		est.Drift = true
+	}
+
 	return est
 }
 
 func bucketFromPoints(points float64) string {
+	// Tier thresholds. `giant` lands at ~2x the x-large floor so
+	// existing x-large specs don't all rebucket on rollout — see
+	// spec spec-size-and-promotion-nudge, Risks: "Estimate
+	// calibration shift when `giant` is introduced".
 	switch {
 	case points < 2:
 		return effortTrivial
@@ -300,8 +343,10 @@ func bucketFromPoints(points float64) string {
 		return effortMedium
 	case points < 20:
 		return effortLarge
-	default:
+	case points < 40:
 		return effortXLarge
+	default:
+		return effortGiant
 	}
 }
 
@@ -326,7 +371,20 @@ func printSingleEstimate(est costEstimate, cal calibrationData) {
 	fmt.Printf("Status: %s\n", est.Status)
 	fmt.Println(strings.Repeat("─", 50))
 
-	fmt.Printf("\nEffort: %s (%.1f points)\n", est.Bucket, est.Points)
+	// Declared vs computed — surface intent vs measurement side by
+	// side and flag drift. Empty declared renders as "(unset)" and
+	// is treated as a normal state (no drift flag).
+	declaredLabel := est.Declared
+	if declaredLabel == "" {
+		declaredLabel = "(unset)"
+	}
+	if est.Drift {
+		fmt.Printf("\nSize:   declared: %s  computed: %s  (drift)\n", declaredLabel, est.Bucket)
+		fmt.Printf("hint:   run 'hero size %s <tier>' to update declared, or check whether the spec has grown\n", est.Slug)
+	} else {
+		fmt.Printf("\nSize:   declared: %s  computed: %s\n", declaredLabel, est.Bucket)
+	}
+	fmt.Printf("Effort: %s (%.1f points)\n", est.Bucket, est.Points)
 
 	fmt.Println("\nSignals:")
 	fmt.Printf("  Files in Changes:  %d\n", est.FileCount)
@@ -341,15 +399,46 @@ func printSingleEstimate(est costEstimate, cal calibrationData) {
 	}
 }
 
+// printSingleEstimateJSON emits the single-spec estimate as JSON.
+// Field names align with the CLI presentation: declared, computed,
+// drift, points, plus a signals object.
+func printSingleEstimateJSON(est costEstimate) error {
+	payload := map[string]any{
+		"slug":     est.Slug,
+		"title":    est.Title,
+		"type":     string(est.Type),
+		"status":   string(est.Status),
+		"declared": est.Declared,
+		"computed": est.Bucket,
+		"drift":    est.Drift,
+		"points":   est.Points,
+		"signals": map[string]int{
+			"files":        est.FileCount,
+			"sections":     est.SectionCount,
+			"dependencies": est.DependsCount,
+			"words":        est.WordCount,
+		},
+	}
+	b, err := json.MarshalIndent(payload, "", "  ")
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(b))
+	return nil
+}
+
 func printEstimateTable(estimates []costEstimate, cal calibrationData) {
 	if cal.HasHistory {
 		fmt.Printf("Calibrated against %d completed specs\n", cal.CompletedCount)
 	}
 	fmt.Println()
 
-	// Header
-	fmt.Printf("%-8s  %-6s  %-30s  %s\n", "EFFORT", "POINTS", "SPEC", "FILES")
-	fmt.Println(strings.Repeat("─", 65))
+	// Header — DECLARED + DRIFT columns surface declared-vs-computed
+	// alignment at the table level. DRIFT is blank when declared is
+	// unset or matches computed; "drift" marker otherwise.
+	fmt.Printf("%-8s  %-8s  %-5s  %-6s  %-30s  %s\n",
+		"COMPUTED", "DECLARED", "DRIFT", "POINTS", "SPEC", "FILES")
+	fmt.Println(strings.Repeat("─", 80))
 
 	totalPoints := 0.0
 	for _, est := range estimates {
@@ -361,10 +450,20 @@ func printEstimateTable(estimates []costEstimate, cal calibrationData) {
 		if len(label) > 30 {
 			label = label[:27] + "..."
 		}
-		fmt.Printf("%-8s  %5.1f   %-30s  %d\n", est.Bucket, est.Points, label, est.FileCount)
+		declared := est.Declared
+		if declared == "" {
+			declared = "—"
+		}
+		drift := ""
+		if est.Drift {
+			drift = "drift"
+		}
+		fmt.Printf("%-8s  %-8s  %-5s  %5.1f   %-30s  %d\n",
+			est.Bucket, declared, drift, est.Points, label, est.FileCount)
 		totalPoints += est.Points
 	}
 
-	fmt.Println(strings.Repeat("─", 65))
-	fmt.Printf("%-8s  %5.1f   %d specs\n", "TOTAL", totalPoints, len(estimates))
+	fmt.Println(strings.Repeat("─", 80))
+	fmt.Printf("%-8s  %-8s  %-5s  %5.1f   %d specs\n",
+		"TOTAL", "", "", totalPoints, len(estimates))
 }

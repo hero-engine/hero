@@ -146,11 +146,12 @@ func init() {
 	rootCmd.AddCommand(adminCmd)   // admin team / users / domain / repos
 	rootCmd.AddCommand(tripwireCmd)
 	rootCmd.AddCommand(anchorCmd)
-	rootCmd.AddCommand(handoffCmd) // cross-repo async handoff
-	rootCmd.AddCommand(peerCmd)    // cross-repo peer manifest / list / show / call
-	rootCmd.AddCommand(snapshotCmd)    // project-shape rollup + archive trail
-	rootCmd.AddCommand(embeddingsCmd)  // embeddings status / rebuild
-	rootCmd.AddCommand(supersedeCmd)   // mark a spec superseded by another (genealogy + retrieval de-weight)
+	rootCmd.AddCommand(handoffCmd)    // cross-repo async handoff
+	rootCmd.AddCommand(peerCmd)       // cross-repo peer manifest / list / show / call
+	rootCmd.AddCommand(snapshotCmd)   // project-shape rollup + archive trail
+	rootCmd.AddCommand(embeddingsCmd) // embeddings status / rebuild
+	rootCmd.AddCommand(supersedeCmd)  // mark a spec superseded by another (genealogy + retrieval de-weight)
+	rootCmd.AddCommand(sizeCmd)       // get/set declared `size:` and scan for declared-vs-computed drift
 
 	// Wrap every direct subcommand that has a RunE with the smoke interceptor.
 	// Must come after all AddCommand calls so the full command set is present.

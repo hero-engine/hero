@@ -301,6 +301,11 @@ func resetFlags() {
 
 	// Reset cost flags
 	costAll = false
+	costHistory = false
+	costJSON = false
+
+	// Reset size flags
+	sizeCheck = false
 
 	// Reset upgrade flags
 	upgradeDryRun = false
