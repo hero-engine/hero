@@ -9,6 +9,7 @@ priority: medium
 tags: [hooks, install, uninstall, next, dx]
 created: 2026-05-21
 relates-to: [next-compact-handoff, compact-handoff-test-coverage]
+completed_at: 2026-05-22T00:25:27Z
 ---
 
 # `hero hooks uninstall --host=all` leaves `hero next` managed block in pre-commit

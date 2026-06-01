@@ -124,6 +124,7 @@ func UpdateSpecFrontmatter(specPath, action, agent string, claimedAt time.Time) 
 		content = removeFrontmatterField(content, "claimed_at")
 	case "complete":
 		content = spec.SetFrontmatterField(content, "status", "completed")
+		content = spec.StampCompletedAt(content)
 		content = removeFrontmatterField(content, "claimed_by")
 		content = removeFrontmatterField(content, "claimed_at")
 	default:

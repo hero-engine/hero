@@ -6,6 +6,7 @@ status: completed
 tags: [cli, output, regression, nudge, conflicts, graph]
 created: 2026-05-01
 horizon: now
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 ## Symptom

@@ -25,6 +25,7 @@ relations:
   - target: impact-analysis
     kind: relates-to
 horizon: now
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 ## Context

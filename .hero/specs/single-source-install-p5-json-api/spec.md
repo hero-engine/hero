@@ -15,6 +15,7 @@ relations:
   - target: bundle-hero-binary
     kind: enables
 horizon: now
+completed_at: 2026-05-18T21:50:57Z
 ---
 
 ## Goal

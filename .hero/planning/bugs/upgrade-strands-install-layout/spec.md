@@ -7,6 +7,7 @@ severity: high
 root_cause_class: design
 created: 2026-05-31
 tags: [install, upgrade, ux, drift]
+completed_at: 2026-05-31T16:17:40Z
 ---
 # Hero binary upgrades silently strand installations in stale layout
 

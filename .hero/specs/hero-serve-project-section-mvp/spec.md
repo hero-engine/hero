@@ -12,6 +12,7 @@ relations:
   - target: hero-serve-multi-project
     kind: depends-on
 horizon: now
+completed_at: 2026-05-20T01:13:26Z
 ---
 
 # `hero serve` Project Section — Phase 1 MVP (Read-Only Per-Project Page)

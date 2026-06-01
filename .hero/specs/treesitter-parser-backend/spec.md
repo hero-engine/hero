@@ -7,6 +7,7 @@ priority: low
 tags: [code-intelligence, codescan, treesitter, parsing]
 created: 2026-04-18
 horizon: now
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 ## Goal

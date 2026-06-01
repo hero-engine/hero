@@ -8,6 +8,7 @@ root_cause_class: design
 priority: high
 tags: [dashboard, events, lifecycle, metrics, spec-lifecycle]
 created: 2026-05-19
+completed_at: 2026-05-19T14:40:04Z
 ---
 
 # hero spec complete never emits delivery_complete event — shipped-spec counts always understated

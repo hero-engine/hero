@@ -11,6 +11,7 @@ relations:
     kind: parent
 horizon: next
 smoke: deferred
+completed_at: 2026-05-19T14:09:09Z
 ---
 
 ## Goal

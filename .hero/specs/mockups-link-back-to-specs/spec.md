@@ -6,6 +6,7 @@ status: completed
 tags: [mockups, deliver, spec-format, workflow]
 created: 2026-05-20
 domain: engineering
+completed_at: 2026-05-21T05:17:42Z
 ---
 # Mockups link back to specs
 

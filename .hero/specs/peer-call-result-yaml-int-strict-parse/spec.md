@@ -11,6 +11,7 @@ root_cause_class: design
 relations:
   - target: cross-repo-peering
     kind: child-of
+completed_at: 2026-05-19T23:46:42Z
 ---
 
 # peer call result fails YAML unmarshal when subagent emits tilde-approximated ints (e.g. `tokens: ~22000`)

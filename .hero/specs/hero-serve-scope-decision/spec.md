@@ -20,6 +20,7 @@ relations:
   - target: hero-surface-deployment-and-rendering
     kind: superseded-by
 horizon: now
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 > **Replaced by the [Hero Surface Architecture](../../initiatives/hero-surface-architecture/spec.md) initiative.** The scope question is resolved structurally rather than by adjudication: one binary, one surface, layer-gated features. See [hero-surface-deployment-and-rendering](../hero-surface-deployment-and-rendering/spec.md) for the accepted decision. This spec is preserved for history.

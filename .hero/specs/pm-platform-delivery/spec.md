@@ -27,6 +27,7 @@ relations:
     kind: unblocks
 horizon: now
 smoke: deferred
+completed_at: 2026-05-19T23:32:21Z
 ---
 
 ## Kickoff

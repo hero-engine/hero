@@ -7,6 +7,7 @@ severity: low
 priority: medium
 tags: [scan, cli, ux, onboarding]
 created: 2026-05-12
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 # Scan output cleanup — three first-five-minutes papercuts

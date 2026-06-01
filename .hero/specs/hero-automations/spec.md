@@ -17,6 +17,7 @@ relations:
     kind: superseded-by
 horizon: next
 smoke: deferred
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 > **Absorbed by [hero-agents-home](../hero-agents-home/spec.md) under the [Hero Surface Architecture](../../initiatives/hero-surface-architecture/spec.md) initiative.** The trigger→action engine, rule storage, execution log, dry-run, and approval gates are owned by the Agents home spec. The headless execution model now routes via hero-code through the [hero-chat-and-model](../hero-chat-and-model/spec.md) dispatcher; the CLI surface from this spec is preserved. This spec is preserved for history.

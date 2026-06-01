@@ -196,6 +196,10 @@ func mapTrackerStatusForRefresh(trackerStatus, trackerType string) string {
 }
 
 // updateSpecFrontmatterField is a lightweight wrapper for use in the server package.
+// When the field being set is the status transition into "completed", also stamps
+// completed_at: in the same write so the peer contract (every Go writer that
+// flips status to completed produces a parseable completed_at in the same write)
+// holds at this site too — the tracker auto-resolve path flows through here.
 func updateSpecFrontmatterField(path, key, value string) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -203,6 +207,9 @@ func updateSpecFrontmatterField(path, key, value string) {
 	}
 	content := string(data)
 	updated := spec.SetFrontmatterField(content, key, value)
+	if key == "status" && value == "completed" {
+		updated = spec.StampCompletedAt(updated)
+	}
 	_ = os.WriteFile(path, []byte(updated), 0o644)
 }
 

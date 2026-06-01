@@ -15,6 +15,7 @@ depends-on:
   - spec-type-registry
 horizon: next
 smoke: deferred
+completed_at: 2026-05-19T22:47:06Z
 ---
 
 ## Kickoff

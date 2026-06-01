@@ -13,6 +13,7 @@ relations:
     kind: blocks
 horizon: now
 smoke: deferred
+completed_at: 2026-05-19T16:43:10Z
 ---
 
 ## Kickoff

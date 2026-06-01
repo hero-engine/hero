@@ -17,6 +17,7 @@ relations:
   - target: async-delivery
     kind: related
 horizon: now
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 ## Kickoff

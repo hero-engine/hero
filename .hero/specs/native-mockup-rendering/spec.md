@@ -1,8 +1,9 @@
 ---
 title: "Native Mockup Rendering — Real Platform UI from /mock"
 type: feature
-status: delivering
+status: completed
 priority: p2
+completed_at: 2026-06-01T03:09:16Z
 ---
 
 ## Goal
@@ -11,7 +12,18 @@ When `/mock` targets a native app (SwiftUI, Compose, Flutter, etc.), generate ac
 
 ## Kickoff
 
-Verify native-mockup-rendering delivery. All files are implemented: `swiftui-mockup-renderer` skill (domain + .claude overlay), mock command updated with renderer dispatch, ui-designer agent updated with SwiftUI pipeline, stack-detection has Swift markers, `mock.go` shows `[native]`/`[html]` tags with passing tests. Pick up at: end-to-end test in a real Swift project to confirm the full `swiftc` → `ImageRenderer` → PNG pipeline works. Spec at `.hero/planning/features/native-mockup-rendering/spec.md`.
+Completed. All 6 acceptance criteria verified on disk against the post-`mockup-renderer-selection-swiftui-bias` codebase:
+
+- AC1 (dark mode) — `swiftui-mockup-renderer/SKILL.md:68-94` (--dark arg, colorScheme env, screenshot-dark.png output) + `ui-designer.md:128` invokes `./MockApp --dark`.
+- AC2 (compile fail → retry → HTML fallback) — `ui-designer.md:119` + `swiftui-mockup-renderer/SKILL.md:280, :404`.
+- AC3 (index.html viewer per mock dir) — `swiftui-mockup-renderer/SKILL.md:301` (light/dark toggle + collapsible source).
+- AC4 (--list [native]/[html] tag) — `mock.go:65, :94, :129` with test at `mock_test.go:88`.
+- AC5 (file links surfaced) — `<MOCKUP_FILES>` contract in agent + both skills (strengthened in v0.14.4).
+- AC6 (pluggable renderer arch) — dispatch via `hero spec mock detect` + named skill load; new renderers only need a SKILL.md + signal extension to detect.
+
+The selection-layer gap that this spec's kickoff flagged ("end-to-end test in a real Swift project") was opened as `mockup-renderer-selection-swiftui-bias` and shipped first — see that spec for the structural fix.
+
+**Pick up at:** nothing. Future work is the 4 carved-out follow-ups (iPhone-on-Mac sizing, iOS-only colors, silent compile-failure fallback, target-platform detection) — track them as separate specs if/when prioritized.
 
 ## Problem
 

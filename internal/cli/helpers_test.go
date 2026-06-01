@@ -354,6 +354,10 @@ func resetFlags() {
 	syncCloudFull = false
 	syncCloudStatus = false
 
+	// Reset backfill-completed-at flags
+	backfillCompletedAtDryRun = false
+	backfillCompletedAtQuiet = false
+
 	// Note: upgradeContentFS is intentionally NOT reset here — it's a test
 	// injection point, not a CLI flag.
 }

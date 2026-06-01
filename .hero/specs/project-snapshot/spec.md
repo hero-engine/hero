@@ -63,6 +63,7 @@ principles_check: |
   both — Now is the personal surface, Pulse is the narrative
   weekly, Snapshot is the project-shape rollup. Three distinct
   audiences, three distinct artifacts, one shared graph.
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 ## Goal

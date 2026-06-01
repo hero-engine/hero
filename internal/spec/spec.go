@@ -107,6 +107,7 @@ type Spec struct {
 	Path         string    // absolute path to spec.md
 	CreatedAt    time.Time // from frontmatter or file mtime
 	ModifiedAt   time.Time // file modification time
+	CompletedAt  time.Time // when status flipped to completed; zero if never completed
 	Tags         []string  // from frontmatter
 	Scope        []string  // glob patterns (conventions/rules/tripwires only)
 	Subproject   string    // monorepo subproject scope identifier (forward-slash path relative to root, e.g. "engines/mlx"); empty = workspace root
@@ -440,6 +441,12 @@ func (s *Spec) parseFrontmatter(content string) string {
 				s.CreatedAt = t
 			} else if t, err := time.Parse(time.RFC3339, val); err == nil {
 				s.CreatedAt = t
+			}
+		case "completed_at", "completedAt":
+			if t, err := time.Parse(time.RFC3339, val); err == nil {
+				s.CompletedAt = t
+			} else if t, err := time.Parse("2006-01-02", val); err == nil {
+				s.CompletedAt = t
 			}
 		case "tags":
 			s.Tags = parseList(val)
@@ -1173,6 +1180,66 @@ func RenderSpecBody(s *Spec, body string) string {
 		banner = "> **SUPERSEDED — replacement unknown**\n> This spec carries `status: superseded` but no `superseded_by:` field. Set one with `hero supersede <this-slug> --by <new-slug>`.\n\n"
 	}
 	return banner + body
+}
+
+// nowFn is the time source used by StampCompletedAt. Tests override
+// this via SwapNowFnForTest to make stamped timestamps deterministic.
+var nowFn = func() time.Time { return time.Now().UTC() }
+
+// SwapNowFnForTest replaces the package-level time source used by
+// StampCompletedAt and returns the previous value. Intended only for
+// tests in other packages (e.g. internal/cli, internal/tracking) that
+// exercise stamping end-to-end and need deterministic timestamps. The
+// caller is responsible for restoring the previous function via a
+// defer or t.Cleanup.
+func SwapNowFnForTest(fn func() time.Time) func() time.Time {
+	prev := nowFn
+	nowFn = fn
+	return prev
+}
+
+// StampCompletedAt sets the canonical `completed_at:` frontmatter field
+// to the current time when missing. The write is idempotent — if the
+// content already has either `completed_at:` or `completedAt:`, it is
+// returned unchanged. The timestamp is RFC 3339 with no fractional
+// seconds so frontmatter diffs stay clean.
+func StampCompletedAt(content string) string {
+	if frontmatterHasField(content, "completed_at") ||
+		frontmatterHasField(content, "completedAt") {
+		return content
+	}
+	return SetFrontmatterField(content, "completed_at",
+		nowFn().Format(time.RFC3339))
+}
+
+// frontmatterHasField reports whether the YAML frontmatter at the head
+// of content contains a top-level key named key. Walks only the
+// frontmatter range (between the opening and closing `---`) so body
+// content that mentions the key is ignored. Returns false when content
+// has no frontmatter block.
+func frontmatterHasField(content, key string) bool {
+	lines := strings.Split(content, "\n")
+	if len(lines) == 0 || strings.TrimSpace(lines[0]) != "---" {
+		return false
+	}
+	closeIdx := -1
+	for i := 1; i < len(lines); i++ {
+		if strings.TrimSpace(lines[i]) == "---" {
+			closeIdx = i
+			break
+		}
+	}
+	if closeIdx < 0 {
+		return false
+	}
+	prefix := key + ":"
+	for j := 1; j < closeIdx; j++ {
+		trimmed := strings.TrimSpace(lines[j])
+		if strings.HasPrefix(trimmed, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 // SetFrontmatterField sets or updates a key-value pair in YAML frontmatter.

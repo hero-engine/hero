@@ -16,6 +16,7 @@ relations:
   - target: agent-outposts
     kind: related
 horizon: now
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 # Hero Cloud Repo Split — Carve hero-cloud Out of the hero Monorepo

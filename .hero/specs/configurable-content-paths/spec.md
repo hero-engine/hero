@@ -34,6 +34,7 @@ principles_check: |
   becomes another confusing decision; mitigated by sensible defaults
   (today's behavior unchanged when the new fields are absent) and by
   hero-on-hero being the only common case for non-default values.
+completed_at: 2026-05-18T21:50:57Z
 ---
 
 ## Goal

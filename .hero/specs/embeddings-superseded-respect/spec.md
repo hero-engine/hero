@@ -9,6 +9,7 @@ created: 2026-05-30
 related:
   - kind: follows
     target: superseded-specs-soft-archive
+completed_at: 2026-05-31T01:18:49Z
 ---
 
 # Embeddings & Vector Retrieval Respect `superseded_by`

@@ -13,6 +13,7 @@ relations:
   - target: single-source-install-p3-migrate
     kind: follows
 horizon: now
+completed_at: 2026-05-18T21:50:57Z
 ---
 
 ## Goal

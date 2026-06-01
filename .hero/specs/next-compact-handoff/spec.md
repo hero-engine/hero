@@ -17,6 +17,7 @@ relations:
     kind: related
   - target: compact-handoff-summarizer
     kind: followed-by
+completed_at: 2026-05-22T03:58:34Z
 ---
 
 # Compact Handoff — Session-Scoped Resume Context at Compaction Time

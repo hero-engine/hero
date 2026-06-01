@@ -8,6 +8,7 @@ created: 2026-04-12
 parent: hero-cloud
 depends-on: [cloud-api, cloud-auth]
 horizon: now
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 ## Goal

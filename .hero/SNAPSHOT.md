@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-01T03:04:17Z · projected from 281 source nodes_
+_Last refreshed: 2026-06-01T03:16:02Z · projected from 281 source nodes_
 
 ## Surfaces
 
@@ -11,7 +11,7 @@ _Last refreshed: 2026-06-01T03:04:17Z · projected from 281 source nodes_
 | core | building | cmd/, internal/ | 1d ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | building | domains/engineering/ | 4m ago | mockup-renderer-selection-swiftui-bias |
+| domains/engineering | building | domains/engineering/ | 8m ago | spec-types-cache-frontmatter-empty |
 | domains/pm | concept | domains/pm/ | 13d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 13d ago | hero-landing-page |
@@ -49,8 +49,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - **(unassigned)** — upgrade-strands-install-layout, delivery-completion-discipline, read-dont-guess, hero-serve-project-section
 - **core** — embeddings-superseded-respect, next-compact-handoff, hero-hooks-uninstall-misses-next-block, compact-handoff-transcript-kickoff-missing
-- **domains/engineering** — mockups-link-back-to-specs
-- **serve** — superseded-specs-soft-archive, hero-serve-project-section-healthcache, hero-serve-project-section-destructive
+- **domains/engineering** — native-mockup-rendering, mockup-renderer-selection-swiftui-bias, mockups-link-back-to-specs
+- **serve** — superseded-specs-soft-archive
 
 ## Next up across surfaces
 

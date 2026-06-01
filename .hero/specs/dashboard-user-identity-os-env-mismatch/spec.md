@@ -8,6 +8,7 @@ root_cause_class: code
 priority: high
 tags: [dashboard, serve, identity, metrics, attribution]
 created: 2026-05-19
+completed_at: 2026-05-19T14:16:21Z
 ---
 
 # Dashboard "you" identity uses $USER instead of git config — author-filtered metrics always read 0

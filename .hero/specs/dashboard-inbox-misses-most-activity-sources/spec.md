@@ -8,6 +8,7 @@ root_cause_class: code
 priority: medium
 tags: [dashboard, inbox, proposals, ux, serve]
 created: 2026-05-19
+completed_at: 2026-05-19T14:50:33Z
 ---
 
 # Needs-your-input inbox only sources from proposals + inbound handoffs — and proposals are hardcoded nil

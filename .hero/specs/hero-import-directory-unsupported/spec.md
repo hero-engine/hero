@@ -7,6 +7,7 @@ root_cause_class: design
 tags: [cli, import, knowledge, help-drift]
 created: 2026-05-18
 relates-to: [context-files-flag-drift, recap-unregister-stale-and-empty-repo]
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 # `hero import <directory>` fails with "is a directory" despite `--help` advertising directory imports

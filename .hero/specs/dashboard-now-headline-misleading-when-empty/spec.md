@@ -8,6 +8,7 @@ root_cause_class: design
 priority: medium
 tags: [dashboard, ux, now-page, empty-state, headline]
 created: 2026-05-19
+completed_at: 2026-05-19T14:52:52Z
 ---
 
 # Now headline reads "no agent running · since 19h ago" — composes two empty signals into a false story

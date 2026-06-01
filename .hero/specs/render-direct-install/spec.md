@@ -17,6 +17,7 @@ relations:
     kind: supersedes
   - target: multi-harness-install-collision
     kind: builds-on
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 # Render-Direct Install — Drop the .hero Canonical Mirror and Symlinks

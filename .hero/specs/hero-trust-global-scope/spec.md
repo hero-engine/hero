@@ -8,6 +8,7 @@ tags: [cli, trust, claude, permissions, install]
 created: 2026-05-14
 completed: 2026-05-15
 relates-to: [claude-trust-permission-allowlist]
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 ## Goal

@@ -6,6 +6,7 @@ status: completed
 priority: high
 tags: [retrieval, search, context-injection, knowledge-graph, drift, v1-v2]
 created: 2026-05-30
+completed_at: 2026-05-31T01:05:26Z
 ---
 
 # Superseded Specs — Frontmatter-Based Soft Archive

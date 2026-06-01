@@ -8,6 +8,7 @@ root_cause_class: code
 priority: high
 tags: [dashboard, serve, chat-adapter, ui-state]
 created: 2026-05-19
+completed_at: 2026-05-19T14:45:10Z
 ---
 
 # Dashboard adapter state is hardcoded — "via hero-code" chip lies, panels disagree

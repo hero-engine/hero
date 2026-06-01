@@ -7,6 +7,7 @@ tags: [serve, daemon, multi-project, mcp]
 created: 2026-04-12
 parent: hero-serve-daemon
 horizon: now
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 ## Progress

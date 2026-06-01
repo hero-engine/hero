@@ -17,6 +17,7 @@ relations:
     kind: builds-on
   - target: multi-harness-install-collision
     kind: builds-on
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 # Harness Install Paths — Land Files Where Each Tool Actually Loads Them

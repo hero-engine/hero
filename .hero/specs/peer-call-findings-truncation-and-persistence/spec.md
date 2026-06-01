@@ -13,6 +13,7 @@ relations:
     kind: regression-of
   - target: peer-call-result-yaml-int-strict-parse
     kind: sibling
+completed_at: 2026-05-19T23:50:58Z
 ---
 
 # hero peer call truncates advisory findings at 400 chars and persists nothing retrievable
