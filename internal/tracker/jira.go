@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -358,21 +359,33 @@ func (j *jira) sampleIssueFieldIDs() map[string]bool {
 func (j *jira) CreateIssue(s *spec.Spec) (string, error) {
 	issueType := jiraIssueType(s.Type)
 
-	payload := map[string]interface{}{
-		"fields": map[string]interface{}{
-			"project": map[string]string{
-				"key": j.projectKey,
-			},
-			"summary":     fmt.Sprintf("[%s] %s", s.Type, s.Title),
-			"description": textToADF(IssueBody(s)),
-			"issuetype": map[string]string{
-				"name": issueType,
-			},
-			"labels": []string{
-				fmt.Sprintf("hero-%s", s.Type),
-			},
+	fields := map[string]interface{}{
+		"project": map[string]string{
+			"key": j.projectKey,
+		},
+		"summary":     fmt.Sprintf("[%s] %s", s.Type, s.Title),
+		"description": textToADF(IssueBody(s)),
+		"issuetype": map[string]string{
+			"name": issueType,
+		},
+		"labels": []string{
+			fmt.Sprintf("hero-%s", s.Type),
 		},
 	}
+	// Non-destructive size write on create: if the spec carries a
+	// declared size and the mapping resolves it cleanly to a numeric
+	// value, set it on the resolved story-points custom field. Jira
+	// numeric fields expect a number, not a string — parse before
+	// emitting. CreateIssue has nothing to overwrite, so the planner
+	// isn't invoked.
+	if s.Size != "" {
+		if v, err := j.MapSize(s.Size); err == nil && v != "" {
+			if n, perr := strconv.ParseFloat(v, 64); perr == nil {
+				fields[j.storyPointsField()] = n
+			}
+		}
+	}
+	payload := map[string]interface{}{"fields": fields}
 
 	body, err := json.Marshal(payload)
 	if err != nil {

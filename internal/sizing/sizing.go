@@ -1,7 +1,7 @@
 // Package sizing computes effort estimates and detects size drift on
 // specs. It is the shared backend for:
 //
-//   - `hero estimate` / `hero size --check` (internal/cli)
+//   - `hero sprint estimate` / `hero size --check` (internal/cli)
 //   - `hero check` size-drift summary lines (internal/cli)
 //   - `hero_warnings` MCP tool size-drift entries (internal/serve)
 //
