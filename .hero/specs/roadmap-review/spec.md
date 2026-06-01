@@ -11,6 +11,7 @@ created: 2026-06-01
 relations:
   - target: roadmap-shape
     kind: parent
+completed_at: 2026-06-01T19:50:49Z
 ---
 
 ## Goal
