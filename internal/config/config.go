@@ -37,6 +37,7 @@ type Config struct {
 	Jira        *JiraConfig       `json:"jira,omitempty"`
 	Confluence  *ConfluenceConfig `json:"confluence,omitempty"`
 	Models      *ModelConfig      `json:"models,omitempty"`
+	Mockups     *MockupsConfig    `json:"mockups,omitempty"`
 	Prime       *PrimeConfig      `json:"prime,omitempty"`
 	Hooks       *HooksConfig      `json:"hooks,omitempty"`
 	Tracking    *TrackingConfig   `json:"tracking,omitempty"`
@@ -1063,6 +1064,16 @@ func (c *ConfluenceConfig) ResolveToken() (string, error) {
 		return "", fmt.Errorf("environment variable %q is not set", c.TokenEnv)
 	}
 	return token, nil
+}
+
+// MockupsConfig holds renderer-selection settings for `/mock`. Read by
+// `hero mock detect`; overrides auto-detect but not an explicit
+// `--renderer` flag. Empty Renderer means "no override".
+type MockupsConfig struct {
+	// Renderer pins the renderer used by `/mock` regardless of stack
+	// auto-detection. Valid values: "html", "swiftui". Empty/unset is
+	// treated as "no override" — auto-detect runs.
+	Renderer string `json:"renderer,omitempty"`
 }
 
 // ModelConfig holds model role configuration for the Hero workflow.

@@ -282,6 +282,7 @@ func resetFlags() {
 	mockList = false
 	mockOpen = ""
 	mockServe = false
+	mockDetectRenderer = ""
 
 	// Reset report flags
 	reportOutput = ""

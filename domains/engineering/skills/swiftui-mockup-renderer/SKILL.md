@@ -24,9 +24,13 @@ One file per line, pipe-separated `path|label|kind`. Include both light and dark
 
 ## When to use
 
-This renderer is selected automatically when the project stack includes Swift (`.swift` files, `Package.swift`, `*.xcodeproj`, `*.xcworkspace`). It can also be forced with `--renderer=swiftui`.
+Selection is now driven by `hero spec mock detect` (see `hero spec mock detect --help`). The agent does not decide — the CLI does. This skill is loaded whenever the detect output's `renderer` field is `"swiftui"`. Selection drivers (any of):
 
-**Prerequisites:** macOS with Xcode command-line tools installed (`swiftc` available on PATH). If unavailable, fall back to `html-mockup-generation` and note why.
+- Swift stack signals (`.swift`, `Package.swift`, `*.xcodeproj`, `*.xcworkspace`) anywhere `hero spec mock detect` walks
+- Explicit `--renderer=swiftui`
+- `hero.json` `mockups.renderer: "swiftui"`
+
+**Prerequisites:** macOS with Xcode command-line tools installed (`swiftc` available on PATH). The CLI gates on this and falls back to HTML (with explicit announce) when `swiftc` is missing.
 
 ## Source Generation
 

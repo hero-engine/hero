@@ -918,6 +918,77 @@ func TestMergeLocal_EmptyLocalLeavesDialectUntouched(t *testing.T) {
 	}
 }
 
+// --- MockupsConfig ---
+
+func TestMockupsConfig_RoundTripSwiftUI(t *testing.T) {
+	tmpDir := t.TempDir()
+	heroDir := filepath.Join(tmpDir, DefaultFolder)
+	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+
+	configJSON := `{"folder":".hero","mockups":{"renderer":"swiftui"}}`
+	if err := os.WriteFile(filepath.Join(heroDir, ConfigFileName), []byte(configJSON), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	cfg, err := Load(tmpDir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.Mockups == nil {
+		t.Fatal("Mockups should be populated, got nil")
+	}
+	if cfg.Mockups.Renderer != "swiftui" {
+		t.Errorf("Mockups.Renderer = %q, want %q", cfg.Mockups.Renderer, "swiftui")
+	}
+}
+
+func TestMockupsConfig_RoundTripHTML(t *testing.T) {
+	tmpDir := t.TempDir()
+	heroDir := filepath.Join(tmpDir, DefaultFolder)
+	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+
+	configJSON := `{"folder":".hero","mockups":{"renderer":"html"}}`
+	if err := os.WriteFile(filepath.Join(heroDir, ConfigFileName), []byte(configJSON), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	cfg, err := Load(tmpDir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.Mockups == nil {
+		t.Fatal("Mockups should be populated, got nil")
+	}
+	if cfg.Mockups.Renderer != "html" {
+		t.Errorf("Mockups.Renderer = %q, want %q", cfg.Mockups.Renderer, "html")
+	}
+}
+
+func TestMockupsConfig_UnsetMeansNil(t *testing.T) {
+	tmpDir := t.TempDir()
+	heroDir := filepath.Join(tmpDir, DefaultFolder)
+	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+
+	configJSON := `{"folder":".hero"}`
+	if err := os.WriteFile(filepath.Join(heroDir, ConfigFileName), []byte(configJSON), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	cfg, err := Load(tmpDir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.Mockups != nil {
+		t.Errorf("Mockups should be nil when unset, got %+v", cfg.Mockups)
+	}
+}
+
 func TestLoad_AppliesLocalDialectOverride(t *testing.T) {
 	tmpDir := t.TempDir()
 	heroDir := filepath.Join(tmpDir, DefaultFolder)

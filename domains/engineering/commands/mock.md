@@ -5,14 +5,48 @@ Route this mockup request to the `ui-designer` agent.
 
 ## Renderer Selection
 
-Before routing, determine which renderer to use:
+**Do not derive the renderer yourself.** The CLI does it. Run:
 
-1. **Explicit override wins:** If the user passed `--renderer=html` or `--renderer=swiftui`, use that renderer.
-2. **Auto-detect from stack:** Check the project root for stack signals:
-   - `.swift` files, `Package.swift`, `*.xcodeproj`, `*.xcworkspace` → **SwiftUI renderer**
-   - Everything else → **HTML renderer**
-3. **Toolchain gate:** If SwiftUI is selected, verify `swiftc` is available. If not, fall back to HTML and note: "SwiftUI renderer unavailable (swiftc not found), using HTML."
-4. **Config override:** Check `hero.json` → `mockups.renderer` — if set to `"html"` or `"swiftui"`, that overrides auto-detection (but not explicit `--renderer` flags).
+```
+hero spec mock detect [--renderer=<flag-if-user-passed-one>]
+```
+
+Read the single line of JSON it prints. Fields:
+- `renderer` — `"html"` or `"swiftui"`. **Use this value verbatim** — pass it to `ui-designer` as the chosen renderer.
+- `reason` — one-sentence rationale for the announce step below.
+- `signals` — what fired (e.g. `"Package.swift"`, `"MyApp.xcodeproj"`, `"12 .swift files at root"`).
+- `toolchain_ok` / `toolchain_path` — whether `swiftc` was found.
+- `config_override` — set when `hero.json` `mockups.renderer` won.
+- `explicit_flag` — echoed back when the user passed `--renderer=...`.
+- `conflict` — non-null when the choice is suspicious (e.g. `--renderer=html` on a Swift project, or `--renderer=swiftui` with no `swiftc`).
+
+If `conflict` is non-null, **halt** — do not proceed to generation. Surface the conflict message to the user and ask them to confirm:
+
+```
+Renderer choice conflict.
+{conflict message from detect output}
+Confirm one:
+  [keep flag]    use {explicit_flag} as requested
+  [use detected] override my flag and use the auto-detected renderer
+```
+
+Only proceed once the user picks.
+
+## Announce step (mandatory, before any generation)
+
+Before delegating to `ui-designer`, emit this one-line announcement as user-visible output:
+
+```
+Renderer: {renderer} — reason: {reason} — swiftc: {toolchain_path or "unavailable"}
+```
+
+This is the gate that catches wrong picks in-turn — the user sees the choice before any files are written. Skipping it is the bug this command was designed to fix.
+
+For fallback cases (Swift signals present but no `swiftc`), the announce becomes:
+
+```
+Renderer: HTML (SwiftUI unavailable — swiftc not found)
+```
 
 Tell the ui-designer which renderer to use and which skill to load:
 - **HTML:** Load `html-mockup-generation` skill. Output: `.hero/mocks/{slug}/index.html`
