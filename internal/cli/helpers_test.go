@@ -306,6 +306,7 @@ func resetFlags() {
 
 	// Reset size flags
 	sizeCheck = false
+	sizeAck = ""
 
 	// Reset upgrade flags
 	upgradeDryRun = false

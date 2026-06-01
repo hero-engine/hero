@@ -1,6 +1,7 @@
 package sizing
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/hero-engine/hero/internal/spec"
@@ -114,6 +115,121 @@ func largeishLeaf(slug, parentSlug string) *spec.Spec {
 		},
 		Relations: []spec.Relation{{Kind: "parent", Target: parentSlug}},
 	}
+}
+
+// TestSuggestedAction_Mapping covers all four DriftKind cases and
+// asserts the returned strings are paste-ready: slug is substituted,
+// no template placeholders survive, and the alternative carries the
+// expected /split or /compose pointer where applicable.
+func TestSuggestedAction_Mapping(t *testing.T) {
+	tests := []struct {
+		name          string
+		slug          string
+		declared      string
+		computed      string
+		kind          DriftKind
+		wantPrimary   string
+		wantAlt       string
+		altMustContain string // optional: stronger assertion on alt
+	}{
+		{
+			name:        "leaf-up — declared trivial, computed large",
+			slug:        "drifted-leaf",
+			declared:    "trivial",
+			computed:    "large",
+			kind:        DriftKindLeafUp,
+			wantPrimary: "'hero size drifted-leaf large' to bump declared",
+			wantAlt:     "check whether the spec has grown beyond intent",
+		},
+		{
+			name:           "leaf-down — declared giant, computed small",
+			slug:           "shrunk-leaf",
+			declared:       "giant",
+			computed:       "small",
+			kind:           DriftKindLeafDown,
+			wantPrimary:    "'hero size shrunk-leaf small' to relax declared",
+			wantAlt:        "'/split shrunk-leaf' if the spec is doing two things",
+			altMustContain: "/split",
+		},
+		{
+			name:           "container-unset — declared empty, rollup giant",
+			slug:           "roadmap-shape",
+			declared:       "",
+			computed:       "giant",
+			kind:           DriftKindContainerUnset,
+			wantPrimary:    "'hero size roadmap-shape giant' to acknowledge",
+			wantAlt:        "'/compose roadmap-shape' to phase",
+			altMustContain: "/compose",
+		},
+		{
+			name:           "container-low — declared small, rollup x-large",
+			slug:           "init-1",
+			declared:       "small",
+			computed:       "x-large",
+			kind:           DriftKindContainerLow,
+			wantPrimary:    "'hero size init-1 x-large' to bump declared",
+			wantAlt:        "'/compose init-1' to phase children",
+			altMustContain: "/compose",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			primary, alt := SuggestedAction(tt.slug, tt.declared, tt.computed, tt.kind)
+			if primary != tt.wantPrimary {
+				t.Errorf("primary = %q, want %q", primary, tt.wantPrimary)
+			}
+			if alt != tt.wantAlt {
+				t.Errorf("alternative = %q, want %q", alt, tt.wantAlt)
+			}
+			// No template placeholders may survive in either clause.
+			for _, bad := range []string{"<slug>", "%s", "<tier>"} {
+				if contains(primary, bad) {
+					t.Errorf("primary still contains placeholder %q: %q", bad, primary)
+				}
+				if contains(alt, bad) {
+					t.Errorf("alternative still contains placeholder %q: %q", bad, alt)
+				}
+			}
+			// Slug substitution sanity check.
+			if !contains(primary, tt.slug) {
+				t.Errorf("primary missing slug %q: %q", tt.slug, primary)
+			}
+			if tt.altMustContain != "" && !contains(alt, tt.altMustContain) {
+				t.Errorf("alternative missing %q: %q", tt.altMustContain, alt)
+			}
+		})
+	}
+}
+
+// TestClassifyLeafDriftKind covers the up/down classification across
+// the ladder including the unknown-tier safe-default.
+func TestClassifyLeafDriftKind(t *testing.T) {
+	tests := []struct {
+		declared string
+		computed string
+		want     DriftKind
+	}{
+		{"trivial", "large", DriftKindLeafUp},
+		{"small", "x-large", DriftKindLeafUp},
+		{"giant", "small", DriftKindLeafDown},
+		{"large", "medium", DriftKindLeafDown},
+		// Equal — not real drift, but safe-default to LeafUp.
+		{"medium", "medium", DriftKindLeafUp},
+		// Unknown tiers — safe-default to LeafUp.
+		{"huge", "large", DriftKindLeafUp},
+	}
+	for _, tt := range tests {
+		got := ClassifyLeafDriftKind(tt.declared, tt.computed)
+		if got != tt.want {
+			t.Errorf("ClassifyLeafDriftKind(%q, %q) = %d, want %d",
+				tt.declared, tt.computed, got, tt.want)
+		}
+	}
+}
+
+func contains(haystack, needle string) bool {
+	return strings.Contains(haystack, needle)
 }
 
 // TestCollectDrift_UnsetDeclaredLeafIgnored confirms that the leaf

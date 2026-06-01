@@ -2593,9 +2593,11 @@ func (s *MCPServer) toolWarnings(args map[string]interface{}) (string, error) {
 	specs, _ := spec.Discover(s.heroDir)
 	leafDrift, containerDrift := sizing.CollectDrift(specs)
 	for _, d := range leafDrift {
+		kind := sizing.ClassifyLeafDriftKind(d.Declared, d.Bucket)
+		primary, alternative := sizing.SuggestedAction(d.Slug, d.Declared, d.Bucket, kind)
 		warnings = append(warnings, fmt.Sprintf(
-			"**Size drift (leaf)** `%s`: declared `%s`, computed `%s`. Run `hero size %s <tier>` to update or check whether scope grew.",
-			d.Slug, d.Declared, d.Bucket, d.Slug))
+			"**Size drift (leaf)** `%s`: declared `%s`, computed `%s`. Run %s, or %s.",
+			d.Slug, d.Declared, d.Bucket, primary, alternative))
 	}
 	for _, d := range containerDrift {
 		declared := d.Declared
@@ -2603,14 +2605,21 @@ func (s *MCPServer) toolWarnings(args map[string]interface{}) (string, error) {
 			declared = "(unset)"
 		}
 		if d.Indeterminate {
+			// Indeterminate rollups carry no actionable alternative —
+			// keep the existing single-clause form.
 			warnings = append(warnings, fmt.Sprintf(
 				"**Size drift (container)** `%s`: rollup indeterminate (%d child(ren) missing both declared and computable size). Declared: `%s`.",
 				d.Slug, d.ChildCount, declared))
 			continue
 		}
+		kind := sizing.DriftKindContainerLow
+		if d.Declared == "" {
+			kind = sizing.DriftKindContainerUnset
+		}
+		primary, alternative := sizing.SuggestedAction(d.Slug, d.Declared, d.Rollup, kind)
 		warnings = append(warnings, fmt.Sprintf(
-			"**Size drift (container)** `%s`: declared `%s` < child rollup `%s` (%d child(ren)). Bump declared via `hero size %s %s`.",
-			d.Slug, declared, d.Rollup, d.ChildCount, d.Slug, d.Rollup))
+			"**Size drift (container)** `%s`: declared `%s`, rollup `%s` (%d child(ren)). Run %s, or %s.",
+			d.Slug, declared, d.Rollup, d.ChildCount, primary, alternative))
 	}
 
 	if len(warnings) == 0 {

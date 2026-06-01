@@ -10,6 +10,7 @@
 package sizing
 
 import (
+	"fmt"
 	"math"
 	"strings"
 
@@ -224,6 +225,89 @@ func (c TrackerCapability) NudgeRegime() string {
 		return "most-aggressive"
 	}
 	return "less-aggressive"
+}
+
+// DriftKind classifies a drift row for action suggestion. The four
+// kinds map 1:1 to the actionable phrasing in SuggestedAction; the
+// split between container-unset and container-low matters because the
+// primary action language differs ("acknowledge" vs "bump declared").
+type DriftKind int
+
+const (
+	// DriftKindLeafUp — leaf spec where declared < computed (the spec
+	// has grown beyond its declared scope).
+	DriftKindLeafUp DriftKind = iota
+	// DriftKindLeafDown — leaf spec where declared > computed (the
+	// declared size overstates actual scope; possibly two specs).
+	DriftKindLeafDown
+	// DriftKindContainerUnset — container with no declared size but a
+	// non-empty child rollup.
+	DriftKindContainerUnset
+	// DriftKindContainerLow — container with declared size strictly
+	// below the child rollup.
+	DriftKindContainerLow
+)
+
+// driftSizeTierOrder mirrors snapshot.sizeTierOrder; kept private here
+// so the sizing package can classify leaf-up vs leaf-down without
+// reaching into the snapshot package's unexported state. The two
+// copies MUST stay in sync — both are derived from the canonical
+// 6-tier ladder.
+var driftSizeTierOrder = map[string]int{
+	EffortTrivial: 0,
+	EffortSmall:   1,
+	EffortMedium:  2,
+	EffortLarge:   3,
+	EffortXLarge:  4,
+	EffortGiant:   5,
+}
+
+// ClassifyLeafDriftKind picks between DriftKindLeafUp (declared < computed)
+// and DriftKindLeafDown (declared > computed) using the ladder index.
+// Equal tiers are not drift; callers should not reach this with equal
+// tiers, but if they do the function returns DriftKindLeafUp as a safe
+// default ("bump declared" is harmless).
+func ClassifyLeafDriftKind(declared, computed string) DriftKind {
+	declaredOrder, declaredKnown := driftSizeTierOrder[declared]
+	computedOrder, computedKnown := driftSizeTierOrder[computed]
+	if !declaredKnown || !computedKnown {
+		return DriftKindLeafUp
+	}
+	if declaredOrder > computedOrder {
+		return DriftKindLeafDown
+	}
+	return DriftKindLeafUp
+}
+
+// SuggestedAction returns the paste-ready primary and alternative
+// next-step clauses for a drift row. The slug is substituted directly
+// into the returned strings (no `%s`, `<slug>`, or other placeholder
+// remains) — callers print them verbatim.
+//
+// The `computed` argument carries the computed/rollup tier (whichever
+// is relevant to the drift kind). For DriftKindContainerUnset the
+// rollup tier still drives the primary action's tier ("hero size
+// <slug> <rollup> to acknowledge").
+//
+// `declared` is accepted for symmetry with future kinds that may need
+// it; today only the kind drives the phrasing.
+func SuggestedAction(slug, declared, computed string, kind DriftKind) (primary, alternative string) {
+	_ = declared
+	switch kind {
+	case DriftKindLeafUp:
+		primary = fmt.Sprintf("'hero size %s %s' to bump declared", slug, computed)
+		alternative = "check whether the spec has grown beyond intent"
+	case DriftKindLeafDown:
+		primary = fmt.Sprintf("'hero size %s %s' to relax declared", slug, computed)
+		alternative = fmt.Sprintf("'/split %s' if the spec is doing two things", slug)
+	case DriftKindContainerUnset:
+		primary = fmt.Sprintf("'hero size %s %s' to acknowledge", slug, computed)
+		alternative = fmt.Sprintf("'/compose %s' to phase", slug)
+	case DriftKindContainerLow:
+		primary = fmt.Sprintf("'hero size %s %s' to bump declared", slug, computed)
+		alternative = fmt.Sprintf("'/compose %s' to phase children", slug)
+	}
+	return primary, alternative
 }
 
 func countDependencies(s *spec.Spec) int {
