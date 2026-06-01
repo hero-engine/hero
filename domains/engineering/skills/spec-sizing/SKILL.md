@@ -261,6 +261,12 @@ The nudge is a loud linter warning, not a gate. Treat it that way.
   this skill detects. `hero size --check` reports drift; `/roadmap-review`
   walks it one item at a time and executes the resolution CLI on confirm.
 - **`spec-composition`** — owns the canonical "multiple related specs"
-  phrasing. When the situation is a cluster of orphaned related specs
-  rather than a sizing issue, defer to that skill instead of stretching
-  the size ladder to cover it.
+  phrasing and the multi-spec routing nudge. When a `/design` request
+  would produce N related specs (user names multiple deliverables, or
+  the rolled-up scope reaches `large`), the routing nudge from
+  `spec-composition` fires **first** — the sizing nudge stands down
+  for that moment per the precedence rule documented in that skill.
+  Sizing nudges resurface per-child after the user either pivots to
+  `/compose` (each child gets sized when its `/design` runs) or
+  declines and proceeds with siblings (each sibling gets sized when
+  written). One nudge per moment; never both at once.

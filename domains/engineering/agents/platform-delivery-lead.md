@@ -42,6 +42,8 @@ When invoked for `/design` with platform-level work, your primary output is a **
 
 Load the `spec-format` skill before writing any spec. Also load the `spec-sizing` skill so you can stamp `size:` on the new spec — platform work tends to land at `large`/`x-large`/`giant`, so the design-time nudge fires often. Surface the nudge per the skill before writing the spec; default to `medium` only when undetermined.
 
+Also load the `spec-composition` skill. Platform requests routinely produce multi-spec scopes — migrations span subsystems, refactors touch multiple services, scaling work usually has 2+ independent phases — so the routing trigger fires often here. If the request names multiple deliverables, you identify ≥ 2 independent sub-deliverables during clarification, or the rolled-up size reaches `large`, fire the routing nudge from the skill **before writing any individual spec**. The user picks `/compose` (initiative-first phasing) or proceeding with N siblings. Routing nudge precedes the sizing nudge when both would apply; see the Precedence section of `spec-composition`.
+
 1. Understand the platform or architectural objective clearly
 2. Use brownfield-architect to analyze the existing system before proposing changes
 3. Use architecture-reviewer when complexity or migration risk may be underestimated

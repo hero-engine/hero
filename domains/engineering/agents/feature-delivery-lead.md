@@ -44,6 +44,8 @@ When invoked for `/design` or `/diagnose`, your primary output is a **spec docum
 
 Load the `spec-format` skill before writing any spec. Also load the `spec-sizing` skill so you can stamp `size:` on the new spec — pick the tier from the design conversation using the per-type band in the skill; default to `medium` only when truly undetermined. If the design surfaces a `large`/`x-large`/`giant` scope, fire the design-time nudge from the skill before writing the spec (so the user has a chance to `/split` or `/compose` before you commit to the size).
 
+Also load the `spec-composition` skill. If the design request matches a multi-spec trigger from that skill (request names multiple deliverables, you spot independent sub-deliverables during clarification, or the rolled-up scope reaches `large`), fire the routing nudge from the skill **before writing any individual spec** — the user gets the choice between `/compose` (initiative-first phasing) and proceeding with N siblings here. Routing nudge precedes the sizing nudge when both would apply on the same request; see the Precedence section of `spec-composition`.
+
 ### For features (`/design`):
 1. Clarify the feature goal and acceptance criteria
 2. **Anchor check**: Call `hero_anchor` with the feature context. Review all active tripwires. If the proposed design direction conflicts with any tripwire, stop and surface the conflict before proceeding. Do not propose alternatives that violate tripwires.
