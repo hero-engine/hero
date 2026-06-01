@@ -51,6 +51,8 @@ frontmatter:
     - { name: kind, type: enum, values: [theme, delivery, bet, milestone], default: theme, classification: content, description: "Epic sub-category." }
     - { name: owner, type: enum, values: [pm, engineering, qa, devops, design, docs], default: pm, classification: org-state, description: "Current owning role." }
     - { name: relations, type: "list[relation]", classification: content, description: "Parent/child edges to other specs." }
+    - { name: size, type: enum, values: [trivial, small, medium, large, x-large, giant], classification: content, description: "Declared effort tier (shared 6-tier ladder). Comfortable band for epics: small..x-large; giant recommends `/compose` into phases or promotion to an initiative. Declared size SHOULD be >= the rollup of child sizes." }
+    - { name: size_ack, type: string, classification: content, description: "Free-string acknowledgement suppressing the design-time promotion nudge. Only `giant` is consumed today; reserved for future ladder tiers." }
 ---
 
 # Epic spec-type

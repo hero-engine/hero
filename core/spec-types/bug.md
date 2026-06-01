@@ -72,6 +72,7 @@ frontmatter:
     - { name: owner, type: enum, values: [pm, engineering, qa, devops, design, docs], default: engineering, classification: org-state, description: "Current owning role." }
     - { name: relations, type: "list[relation]", classification: content, description: "Parent/child/blocks edges." }
     - { name: smoke, type: "object|enum", values: [deferred, none], classification: content, description: "Smoke-test wiring." }
+    - { name: size, type: enum, values: [trivial, small, medium, large, x-large, giant], classification: content, description: "Declared effort tier (shared 6-tier ladder). Comfortable band for bugs: trivial..medium; large triggers a soft promotion nudge, x-large/giant recommend `/split` or promotion to an initiative." }
 ---
 
 # Bug spec-type

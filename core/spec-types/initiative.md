@@ -46,6 +46,8 @@ frontmatter:
     - { name: owner, type: enum, values: [pm, engineering, qa, devops, design, docs], default: pm, classification: org-state, description: "Current owning role; defaults to PM since initiatives are scope-side artifacts." }
     - { name: relations, type: "list[relation]", classification: content, description: "Child PRDs/epics/features that decompose this initiative." }
     - { name: smoke, type: "object|enum", values: [deferred, none], classification: content, description: "Smoke-test wiring; usually 'deferred' for initiatives since delivery lives on children." }
+    - { name: size, type: enum, values: [trivial, small, medium, large, x-large, giant], classification: content, description: "Declared effort tier (shared 6-tier ladder). Comfortable band for initiatives: small..x-large; giant initiatives should be `/compose`-d into phases. Declared size SHOULD be >= the rollup of child sizes." }
+    - { name: size_ack, type: string, classification: content, description: "Free-string acknowledgement suppressing the design-time promotion nudge. Only `giant` is consumed today; reserved for future ladder tiers." }
 ---
 
 # Initiative spec-type

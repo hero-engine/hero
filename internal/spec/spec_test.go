@@ -686,6 +686,110 @@ tracker_id: PROJ-99
 	}
 }
 
+func TestParseSize(t *testing.T) {
+	content := `---
+title: Some Feature
+type: feature
+status: planning
+size: medium
+---
+# Some Feature
+`
+	s, err := Parse(content, "/project/.hero/planning/features/some-feature/spec.md", time.Now())
+	if err != nil {
+		t.Fatalf("Parse failed: %v", err)
+	}
+	if s.Size != "medium" {
+		t.Errorf("Size = %q, want %q", s.Size, "medium")
+	}
+}
+
+func TestParseSize_AbsentLeavesUnset(t *testing.T) {
+	content := `---
+title: Some Feature
+type: feature
+status: planning
+---
+# Some Feature
+`
+	s, err := Parse(content, "/project/.hero/planning/features/some-feature/spec.md", time.Now())
+	if err != nil {
+		t.Fatalf("Parse failed: %v", err)
+	}
+	if s.Size != "" {
+		t.Errorf("Size = %q, want empty (unset has no default)", s.Size)
+	}
+}
+
+func TestParseSize_AllValidValuesRoundTrip(t *testing.T) {
+	tiers := []string{"trivial", "small", "medium", "large", "x-large", "giant"}
+	for _, tier := range tiers {
+		t.Run(tier, func(t *testing.T) {
+			content := `---
+title: Some Feature
+type: feature
+status: planning
+size: ` + tier + `
+---
+# Some Feature
+`
+			s, err := Parse(content, "/project/.hero/planning/features/some-feature/spec.md", time.Now())
+			if err != nil {
+				t.Fatalf("Parse failed for size %q: %v", tier, err)
+			}
+			if s.Size != tier {
+				t.Errorf("Size = %q, want %q", s.Size, tier)
+			}
+		})
+	}
+}
+
+func TestParseSize_InvalidValueErrors(t *testing.T) {
+	content := `---
+title: Some Feature
+type: feature
+status: planning
+size: bogus
+---
+# Some Feature
+`
+	_, err := Parse(content, "/project/.hero/planning/features/some-feature/spec.md", time.Now())
+	if err == nil {
+		t.Fatal("Parse succeeded with size: bogus, want error")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "size") {
+		t.Errorf("error %q does not mention the field name 'size'", msg)
+	}
+	if !strings.Contains(msg, "bogus") {
+		t.Errorf("error %q does not echo the bad value", msg)
+	}
+	for _, tier := range []string{"trivial", "small", "medium", "large", "x-large", "giant"} {
+		if !strings.Contains(msg, tier) {
+			t.Errorf("error %q does not list allowed value %q", msg, tier)
+		}
+	}
+}
+
+func TestParseSizeAck(t *testing.T) {
+	content := `---
+title: Big Initiative
+type: initiative
+status: planning
+size: giant
+size_ack: giant
+---
+# Big Initiative
+`
+	s, err := Parse(content, "/project/.hero/planning/initiatives/big-initiative/spec.md", time.Now())
+	if err != nil {
+		t.Fatalf("Parse failed: %v", err)
+	}
+	if s.SizeAck != "giant" {
+		t.Errorf("SizeAck = %q, want %q", s.SizeAck, "giant")
+	}
+}
+
 func TestParseSmoke_Deferred(t *testing.T) {
 	content := `---
 title: Some Feature
