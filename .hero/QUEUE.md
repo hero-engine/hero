@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-01T14:30:58Z · 99 ready specs_
+_Generated: 2026-06-01T14:31:40Z · 98 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -990,29 +990,6 @@ Start with Phase 0 only. Do not build anything. Read [next-compact-handoff/spec.
 Output a written assessment with a clear recommendation: proceed to Phase 1 prototype, or close as "not worth it" with the analysis preserved so future revisits don't re-litigate.
 
 Time budget: ~2 days of focused research, no implementation. If the assessment can't be reached in that budget, the answer is probably no.
-
----
-
-## spec-size-and-promotion-nudge — "Spec Size Field and Promotion Nudge — A Living `size:` That Raises the Floor"
-_feature · ready · horizon: now_
-
-```
-Pick up spec spec-size-and-promotion-nudge. Living `size:` frontmatter
-(trivial/small/medium/large/x-large/giant) on feature/bug/enhancement/
-epic/initiative. Shared ladder, per-type bands documented in core/
-spec-types/*.md. Wire validator (internal/spec/spec.go), augment `hero
-estimate` to show declared vs computed (internal/cli/cost.go: existing
-buckets already cover 5 of 6 — add `giant`). Add `hero size <slug>` CLI
-to set/get. Drift detection: leaf = declared vs computed; container =
-declared vs aggregated child rollup (internal/snapshot/rollup.go).
-Surface via `hero check` and `hero_warnings`. Bidirectional tracker
-sync mapping in hero.json (`tracker.size_mapping`) — never silently
-overwrite. New skill .claude/skills/spec-sizing/SKILL.md loaded by both
-delivery leads. Nudge intensity scales with tier AND tracker
-capability (no tracker = aggressive; strong-hierarchy tracker =
-higher threshold, offers to create parent in tracker too). Read this
-spec; then start with the schema + validator slice.
-```
 
 ---
 
