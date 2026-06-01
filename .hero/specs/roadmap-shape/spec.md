@@ -19,6 +19,7 @@ relations:
     kind: child
   - target: spec-size-and-promotion-nudge
     kind: derived-from
+completed_at: 2026-06-01T23:44:09Z
 ---
 
 ## Goal
