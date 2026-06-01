@@ -14,6 +14,7 @@ tags: [spec-types, agent-guidance, sizing, promotion, drift, tracker-mapping]
 relations:
   - { kind: relates-to, target: spec-status-integrity }
   - { kind: relates-to, target: master-ingest-restore }
+completed_at: 2026-06-01T14:31:40Z
 ---
 
 # Spec Size Field and Promotion Nudge
