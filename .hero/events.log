@@ -82,3 +82,6 @@
 {"ts":"2026-06-01T03:07:27.647352Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"native-mockup-rendering","message":"status -\u003e completed"}
 {"ts":"2026-06-01T03:37:40.464153Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"deliver-stamps-completed-at","message":"\"Stamp completed_at into spec frontmatter on status transition\""}
 {"ts":"2026-06-01T03:37:40.464233Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"deliver-stamps-completed-at","message":"status -\u003e completed"}
+{"ts":"2026-06-01T03:41:23.88498Z","type":"peer.call.invoked","agent":"hero","slug":"deliver-stamps-completed-at","message":"peer call advisory mode=advisory target=hero-code call_id=18b4d80888d267a859a6b9e12a7c4000"}
+{"ts":"2026-06-01T03:41:44.132698Z","type":"peer.call.invoked","agent":"hero","slug":"deliver-stamps-completed-at","message":"peer call advisory mode=advisory target=hero-code call_id=18b4d80d3fadb640c7ec6e9c1ea5d992"}
+{"ts":"2026-06-01T03:42:53.110162Z","type":"peer.call.completed","agent":"hero","slug":"deliver-stamps-completed-at","message":"peer call ok mode=advisory target=hero-code kind=findings call_id=18b4d80d3fadb640c7ec6e9c1ea5d992 artifact=private-peer-result-excluded"}

@@ -456,3 +456,13 @@ writer sites: `complete.go`, `tracking.go`, the auto-archive safety
 net, and `refresh.go`). Model-driven `/deliver` is covered by the
 auto-archive post-condition. Idempotent on re-runs (proven via clock-
 advance test). Reader-tolerant of `completedAt` camelCase.
+
+## Handoff Trail
+
+- 2026-06-01T03:42:53Z — out → hero-code (peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
+  mode: advisory
+  originating_spec: deliver-stamps-completed-at
+  at_commit: 9ea7bf2
+  result_ref: private-peer-result-excluded
+  reason: "Notify peer that the spec they spec-out'd is delivered so they can retire the desktop Sprint Dashboard's git-log fallback."
+
