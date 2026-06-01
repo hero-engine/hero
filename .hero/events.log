@@ -98,3 +98,5 @@
 {"ts":"2026-06-01T21:12:39.290076Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"size-drift-actionable-output","message":"status -\u003e completed"}
 {"ts":"2026-06-01T21:21:30.788361Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"multi-spec-design-routing","message":"Multi-Spec Design Routing — Nudge from /design ×N to /compose"}
 {"ts":"2026-06-01T21:21:30.78845Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"multi-spec-design-routing","message":"status -\u003e completed"}
+{"ts":"2026-06-01T23:43:44.060248Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"roadmap-review-ambient-surfacing","message":"Roadmap-Review Ambient Surfacing — NEXT.md, Pulse, and Pre-Flight Hooks"}
+{"ts":"2026-06-01T23:43:44.060341Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"roadmap-review-ambient-surfacing","message":"status -\u003e completed"}

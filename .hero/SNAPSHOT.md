@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-01T23:39:38Z · projected from 288 source nodes_
+_Last refreshed: 2026-06-01T23:43:43Z · projected from 288 source nodes_
 
 ## Surfaces
 
@@ -37,7 +37,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Install + Upgrade Contract Coverage — Prove Every Target Works Every Time** (surface: —) — 0/0 specs done
 - **Launch Readiness — Telemetry, Deploy, and Public-Use Polish** (surface: —) — 0/0 specs done
 - **Pre-Launch Hardening — Federation Polish, Security, Observability** (surface: —) — 0/0 specs done
-- **Roadmap Shape — Detect, Surface, and Resolve Spec-Shape Drift** (surface: serve) — 3/4 specs done; in flight: roadmap-review-ambient-surfacing
+- **Roadmap Shape — Detect, Surface, and Resolve Spec-Shape Drift** (surface: serve) — 4/4 specs done
 - **Single-Source Install — One Canonical Tree, Every Harness Reads It** (surface: core) — 5/6 specs done
 
 ### Recently completed initiatives
@@ -48,7 +48,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — multi-spec-design-routing, roadmap-review, spec-size-and-promotion-nudge, deliver-stamps-completed-at, upgrade-strands-install-layout, delivery-completion-discipline
+- **(unassigned)** — roadmap-review-ambient-surfacing, multi-spec-design-routing, roadmap-review, spec-size-and-promotion-nudge, deliver-stamps-completed-at, upgrade-strands-install-layout
 - **core** — tracker-update-size, embeddings-superseded-respect
 - **domains/engineering** — native-mockup-rendering, mockup-renderer-selection-swiftui-bias
 - **serve** — size-drift-actionable-output, superseded-specs-soft-archive
