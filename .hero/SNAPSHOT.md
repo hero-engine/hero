@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-01T03:16:02Z · projected from 281 source nodes_
+_Last refreshed: 2026-06-01T03:43:28Z · projected from 281 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 1d ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 4m ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | building | domains/engineering/ | 8m ago | spec-types-cache-frontmatter-empty |
+| domains/engineering | building | domains/engineering/ | 4m ago | spec-types-cache-frontmatter-empty |
 | domains/pm | concept | domains/pm/ | 13d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
-| landing | building | web/landing/ | 13d ago | hero-landing-page |
+| landing | building | web/landing/ | 4m ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 1d ago | vocabulary-resolve-misses-methodology-derivation |
+| serve | building | internal/serve/ | 4m ago | vocabulary-resolve-misses-methodology-derivation |
 | (unassigned) | — | — | — | 120 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -42,14 +42,14 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ### Recently completed initiatives
 
 - **hero serve Project Section — Per-Project Info, Utilities, and Operations Page** (surface: serve) — 5/5 specs done · COMPLETED 2026-05-20
+- **Hero v2 — System Design Initiative** (surface: core, serve) — 8/8 specs done · COMPLETED 2026-05-18
 - **Competitor Parity — Borrow the Best Ideas from Competing Tools** (surface: —) — 0/0 specs done · COMPLETED 2026-05-18
-- **Web Surfaces Restructure — Make Docs and Landing Peers Under web/** (surface: —) — 0/0 specs done · COMPLETED 2026-05-18
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — upgrade-strands-install-layout, delivery-completion-discipline, read-dont-guess, hero-serve-project-section
+- **(unassigned)** — deliver-stamps-completed-at, upgrade-strands-install-layout, delivery-completion-discipline, read-dont-guess
 - **core** — embeddings-superseded-respect, next-compact-handoff, hero-hooks-uninstall-misses-next-block, compact-handoff-transcript-kickoff-missing
-- **domains/engineering** — native-mockup-rendering, mockup-renderer-selection-swiftui-bias, mockups-link-back-to-specs
+- **domains/engineering** — mockup-renderer-selection-swiftui-bias, native-mockup-rendering, mockups-link-back-to-specs
 - **serve** — superseded-specs-soft-archive
 
 ## Next up across surfaces
