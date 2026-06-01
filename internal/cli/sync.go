@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -116,9 +117,18 @@ func runSync(cmd *cobra.Command, args []string) error {
 			sizePlan := tracker.PlanSizePush(t, issue, s.Size)
 			switch sizePlan.Action {
 			case tracker.SizeSyncConflict:
+				// Non-destructive contract: never write on conflict.
 				fmt.Fprintf(os.Stderr, "Warning: %s\n", sizePlan.Message)
 			case tracker.SizeSyncPushToTracker:
-				fmt.Printf("Note: %s (manual push required — sync spec does not write size fields)\n", sizePlan.Message)
+				if uerr := t.UpdateSize(s.TrackerID, s.Size); uerr != nil {
+					if errors.Is(uerr, tracker.ErrSizeUpdateNotSupported) {
+						fmt.Fprintf(os.Stderr, "Note: %s tracker does not support size updates; skipping.\n", t.Name())
+					} else {
+						return fmt.Errorf("updating size on %s: %w", s.TrackerID, uerr)
+					}
+				} else {
+					fmt.Printf("Updated %s size for issue %s → %s\n", t.Name(), s.TrackerID, s.Size)
+				}
 			}
 		}
 		if err := t.UpdateStatus(s.TrackerID, s.Status); err != nil {

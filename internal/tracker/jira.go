@@ -420,6 +420,59 @@ func (j *jira) CreateIssue(s *spec.Spec) (string, error) {
 	return result.Key, nil
 }
 
+// UpdateSize writes the mapped story-points value to a Jira issue.
+// Resolves the field name from the configured size mapping (mirrors
+// CreateIssue's storyPointsField()/MapSize() flow) and emits a PUT
+// against the issue endpoint. The numeric value is sent as a JSON
+// number — not a string — matching the create-path shape.
+//
+// Returns the response body on non-2xx so users see Jira's error
+// (e.g. "Field 'customfield_xxx' does not exist") verbatim rather
+// than a generic wrap.
+func (j *jira) UpdateSize(issueID, localTier string) error {
+	v, err := j.MapSize(localTier)
+	if err != nil {
+		return fmt.Errorf("mapping size %q: %w", localTier, err)
+	}
+	if v == "" {
+		return fmt.Errorf("size %q maps to empty value", localTier)
+	}
+	n, err := strconv.ParseFloat(v, 64)
+	if err != nil {
+		return fmt.Errorf("parsing mapped size %q as number: %w", v, err)
+	}
+
+	payload := map[string]interface{}{
+		"fields": map[string]interface{}{
+			j.storyPointsField(): n,
+		},
+	}
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("marshaling update: %w", err)
+	}
+
+	url := fmt.Sprintf("%s/rest/api/3/issue/%s", j.baseURL, issueID)
+	req, err := http.NewRequest("PUT", url, bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("creating request: %w", err)
+	}
+	j.setHeaders(req)
+
+	resp, err := j.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("updating size: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Jira returns 204 No Content on successful issue updates.
+	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("jira API returned %d: %s", resp.StatusCode, string(respBody))
+	}
+	return nil
+}
+
 // UpdateStatus updates the Jira issue status. If PushStatusTransitions is configured
 // and contains a transition ID for the new status, a Jira workflow transition is
 // performed. Otherwise falls back to adding a comment.
