@@ -87,6 +87,28 @@ const (
 	HorizonParking Horizon = "parking"
 )
 
+// validSizes lists the canonical 6-tier size ladder shared across
+// feature / bug / enhancement / epic / initiative specs. Empty
+// string is "unset" and intentionally absent from this slice;
+// validateSize accepts empty as valid.
+var validSizes = []string{"trivial", "small", "medium", "large", "x-large", "giant"}
+
+// validateSize reports whether v is a valid declared size: either
+// empty (unset) or one of the six ladder tiers. Returns an error
+// naming the field and allowed values when v is non-empty and
+// outside the ladder.
+func validateSize(v string) error {
+	if v == "" {
+		return nil
+	}
+	for _, s := range validSizes {
+		if v == s {
+			return nil
+		}
+	}
+	return fmt.Errorf("invalid size %q: must be one of %v", v, validSizes)
+}
+
 // IsValidHorizon reports whether h is one of the four canonical
 // values. Empty string is treated as "unset" — callers default to
 // HorizonNow when convenient.
@@ -100,38 +122,48 @@ func IsValidHorizon(h Horizon) bool {
 
 // Spec represents a parsed spec document with extracted metadata.
 type Spec struct {
-	Slug         string
-	Title        string
-	Type         Type
-	Status       Status
-	Path         string    // absolute path to spec.md
-	CreatedAt    time.Time // from frontmatter or file mtime
-	ModifiedAt   time.Time // file modification time
-	CompletedAt  time.Time // when status flipped to completed; zero if never completed
-	Tags         []string  // from frontmatter
-	Scope        []string  // glob patterns (conventions/rules/tripwires only)
-	Subproject   string    // monorepo subproject scope identifier (forward-slash path relative to root, e.g. "engines/mlx"); empty = workspace root
-	Triggers     []string  // keywords that activate this tripwire in retrieval
-	Priority     string    // hero-level priority (e.g. "critical", "high", "medium", "low")
-	Severity     string    // hero-level severity (e.g. "critical", "high", "medium", "low")
-	Horizon      Horizon   // when: now / next / someday / parking. Empty = unset (treated as now in default views).
-	Pinned       bool      // floats this spec to the top of `hero queue` regardless of other ranking signals
+	Slug        string
+	Title       string
+	Type        Type
+	Status      Status
+	Path        string    // absolute path to spec.md
+	CreatedAt   time.Time // from frontmatter or file mtime
+	ModifiedAt  time.Time // file modification time
+	CompletedAt time.Time // when status flipped to completed; zero if never completed
+	Tags        []string  // from frontmatter
+	Scope       []string  // glob patterns (conventions/rules/tripwires only)
+	Subproject  string    // monorepo subproject scope identifier (forward-slash path relative to root, e.g. "engines/mlx"); empty = workspace root
+	Triggers    []string  // keywords that activate this tripwire in retrieval
+	Priority    string    // hero-level priority (e.g. "critical", "high", "medium", "low")
+	Severity    string    // hero-level severity (e.g. "critical", "high", "medium", "low")
+	// Size is the declared effort tier (shared 6-tier ladder:
+	// trivial / small / medium / large / x-large / giant). Empty
+	// string means unset. See spec-size-and-promotion-nudge for the
+	// per-type comfortable bands and the promotion-nudge schedule.
+	Size string
+	// SizeAck is the free-string acknowledgement that suppresses the
+	// design-time promotion nudge at the top tier. Only `giant` is
+	// consumed today; the field is kept free-string so future tiers
+	// can opt in without a schema change.
+	SizeAck string
+	Horizon Horizon // when: now / next / someday / parking. Empty = unset (treated as now in default views).
+	Pinned  bool    // floats this spec to the top of `hero queue` regardless of other ranking signals
 	// SupersededBy is the slug of the spec that replaces this one. When set,
 	// search retrieval de-weights this spec and context-injection annotates
 	// it with a redirect marker so agents follow the replacement instead.
 	// Lifecycle (Status) is orthogonal: a spec can be `completed` and
 	// superseded, or `active` and superseded. See spec
 	// superseded-specs-soft-archive for the design rationale.
-	SupersededBy string
-	ClaimedBy      string    // who is working on this
-	DeliveryMethod string    // "agent", "manual", or "" (unset)
-	TrackerID    string    // external tracker issue ID (e.g. "#42", "PROJ-123", "LIN-abc")
-	URL          string    // external knowledge URL
-	LocalPath    string    // local path to external docs
-	Relations    []Relation
-	Smoke        *SmokeConfig      // nil if no smoke: frontmatter field
-	Sections     map[string]string // section name (lowercase) -> content
-	FilesTouched []string          // extracted from Changes section
+	SupersededBy   string
+	ClaimedBy      string // who is working on this
+	DeliveryMethod string // "agent", "manual", or "" (unset)
+	TrackerID      string // external tracker issue ID (e.g. "#42", "PROJ-123", "LIN-abc")
+	URL            string // external knowledge URL
+	LocalPath      string // local path to external docs
+	Relations      []Relation
+	Smoke          *SmokeConfig      // nil if no smoke: frontmatter field
+	Sections       map[string]string // section name (lowercase) -> content
+	FilesTouched   []string          // extracted from Changes section
 
 	// ReceivedFrom is populated when this spec was scaffolded by a
 	// cross-repo handoff or spec-out peer call. peer_id is the
@@ -352,6 +384,13 @@ func Parse(content, path string, modTime time.Time) (*Spec, error) {
 		s.FilesTouched = extractFilePaths(changes)
 	}
 
+	// Validate enum-typed frontmatter fields. Empty values are
+	// always accepted (treated as unset); only non-empty out-of-ladder
+	// values produce a load-time error.
+	if err := validateSize(s.Size); err != nil {
+		return nil, err
+	}
+
 	return s, nil
 }
 
@@ -424,6 +463,12 @@ func (s *Spec) parseFrontmatter(content string) string {
 			s.Priority = val
 		case "severity":
 			s.Severity = val
+		case "size":
+			s.Size = val
+		case "size_ack":
+			// Free string today; only `giant` is consumed by the
+			// promotion-nudge layer (see spec-size-and-promotion-nudge).
+			s.SizeAck = val
 		case "horizon":
 			s.Horizon = Horizon(val)
 		case "pinned":
