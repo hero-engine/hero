@@ -7,6 +7,7 @@ status: completed
 size: small
 relates-to: [spec-size-and-promotion-nudge]
 tags: [tracker, sync, size]
+completed_at: 2026-06-01T15:43:51Z
 ---
 
 # Tracker UpdateSize — close the size push loop
