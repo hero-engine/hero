@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-01T17:05:26Z · 102 ready specs_
+_Generated: 2026-06-01T19:50:48Z · 102 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -1044,26 +1044,27 @@ entries in `mcp_tools.go` to include the alternative pointer.
 
 ---
 
-## roadmap-review — Roadmap Review — Command, Agent, and Skill for On-Demand Shape Detection
+## roadmap-review-ambient-surfacing — Roadmap-Review Ambient Surfacing — NEXT.md, Pulse, and Pre-Flight Hooks
 _feature · ready · horizon: now_
 
-`/roadmap-review` command + `roadmap-reviewer` agent + `roadmap-review`
-and `spec-composition` skills. Interactive triage that walks sizing
-drift one item at a time and executes resolutions on confirm.
+Wires size drift into NEXT.md, `hero_pulse` / `hero_kickoff`, and
+delivery-lead pre-flight via one shared `sizing.AmbientDrift` helper
+— count-only, lens-agnostic, with a noise filter and 24h
+stop-nagging window so users aren't pinged after they just triaged.
 
-**Status:** ready — design complete; ready for `/deliver`.
+**Status:** ready — design complete; ready for `/deliver` once
+sibling `roadmap-review` lands the command name and session-record
+directory.
 
-**Pick up at:** start with the two skill files
-(`roadmap-review` + `spec-composition`) since the agent's behavior
-quotes from them. Then the agent, then the command.
+**Pick up at:** start with `internal/sizing/ambient.go` + tests —
+the helper is the contract every surface depends on. Then wire
+NEXT.md, then the two MCP tools, then the two delivery-lead prompts
+last.
 
-→ `/deliver roadmap-review`
+→ `/deliver roadmap-review-ambient-surfacing`
 
-**Files:** `domains/engineering/skills/roadmap-review/SKILL.md`,
-`domains/engineering/skills/spec-composition/SKILL.md`,
-`domains/engineering/agents/roadmap-reviewer.md`,
-`domains/engineering/commands/roadmap-review.md`
-**Skip:** building horizons/releases/sprint-shape lens behavior — placeholders only; the agent refuses with a scaffolded phrase.
+**Files:** `internal/sizing/ambient.go`, `internal/projection/projection.go`, `internal/serve/mcp_tools.go`, `internal/pulse/render.go`, `domains/engineering/agents/feature-delivery-lead.md`
+**Skip:** wiring into `/prime`, `/resume`, `hero status`, the status bar; row excerpts in any surface; new MCP tools.
 
 ---
 

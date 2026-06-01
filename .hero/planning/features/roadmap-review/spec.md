@@ -3,7 +3,7 @@ title: Roadmap Review — Command, Agent, and Skill for On-Demand Shape Detectio
 slug: roadmap-review
 type: feature
 domain: engineering
-status: ready
+status: completed
 size: medium
 priority: P1
 tags: [roadmap, sizing, command, agent, skill]
@@ -493,20 +493,19 @@ updates are out of scope for this spec.
 
 ## Kickoff
 
-`/roadmap-review` command + `roadmap-reviewer` agent + `roadmap-review`
-and `spec-composition` skills. Interactive triage that walks sizing
-drift one item at a time and executes resolutions on confirm.
-
-**Status:** ready — design complete; ready for `/deliver`.
-
-**Pick up at:** start with the two skill files
-(`roadmap-review` + `spec-composition`) since the agent's behavior
-quotes from them. Then the agent, then the command.
-
-→ `/deliver roadmap-review`
-
-**Files:** `domains/engineering/skills/roadmap-review/SKILL.md`,
-`domains/engineering/skills/spec-composition/SKILL.md`,
+`roadmap-review` — DELIVERED. All 17 ACs DONE; clean SHIP audit. Four
+files landed at canonical paths: `domains/engineering/skills/{roadmap-review,spec-composition}/SKILL.md`,
 `domains/engineering/agents/roadmap-reviewer.md`,
-`domains/engineering/commands/roadmap-review.md`
-**Skip:** building horizons/releases/sprint-shape lens behavior — placeholders only; the agent refuses with a scaffolded phrase.
+`domains/engineering/commands/roadmap-review.md`. Sizing-only lens in
+v1; horizons/releases/sprint-shape are scaffolded placeholders with
+the agent's refusal phrase. Session record format established with
+`drift_count_at_exit:` frontmatter (sibling #2 reads it for the
+24h stop-nagging rule). One residual: `hero size --ack <tier> <slug>`
+CLI flag doesn't exist — agent uses direct frontmatter edit as
+fallback per the spec's documented Risk. To pick up the residual:
+add `--ack` flag to `internal/cli/size.go`, mirroring the `<slug> <tier>`
+positional form, writing `size_ack:` not `size:`.
+
+→ Next: `/deliver size-drift-actionable-output` (trivial, independent)
+or `/deliver multi-spec-design-routing` (extends `spec-composition`
+with Triggers/Phrasing).
