@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-01T21:05:35Z · projected from 288 source nodes_
+_Last refreshed: 2026-06-01T21:12:38Z · projected from 288 source nodes_
 
 ## Surfaces
 
@@ -16,7 +16,7 @@ _Last refreshed: 2026-06-01T21:05:35Z · projected from 288 source nodes_
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 17h ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 5m ago | vocabulary-resolve-misses-methodology-derivation |
+| serve | building | internal/serve/ | <1m ago | vocabulary-resolve-misses-methodology-derivation |
 | (unassigned) | — | — | — | 125 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -37,7 +37,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Install + Upgrade Contract Coverage — Prove Every Target Works Every Time** (surface: —) — 0/0 specs done
 - **Launch Readiness — Telemetry, Deploy, and Public-Use Polish** (surface: —) — 0/0 specs done
 - **Pre-Launch Hardening — Federation Polish, Security, Observability** (surface: —) — 0/0 specs done
-- **Roadmap Shape — Detect, Surface, and Resolve Spec-Shape Drift** (surface: serve) — 1/4 specs done; in flight: size-drift-actionable-output
+- **Roadmap Shape — Detect, Surface, and Resolve Spec-Shape Drift** (surface: serve) — 2/4 specs done
 - **Single-Source Install — One Canonical Tree, Every Harness Reads It** (surface: core) — 5/6 specs done
 
 ### Recently completed initiatives
@@ -49,9 +49,9 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Recently completed (last 14 days)
 
 - **(unassigned)** — roadmap-review, spec-size-and-promotion-nudge, deliver-stamps-completed-at, upgrade-strands-install-layout, delivery-completion-discipline
-- **core** — tracker-update-size, embeddings-superseded-respect, next-compact-handoff, compact-handoff-transcript-kickoff-missing
+- **core** — tracker-update-size, embeddings-superseded-respect, next-compact-handoff
 - **domains/engineering** — native-mockup-rendering, mockup-renderer-selection-swiftui-bias
-- **serve** — superseded-specs-soft-archive
+- **serve** — size-drift-actionable-output, superseded-specs-soft-archive
 
 ## Next up across surfaces
 
@@ -71,5 +71,5 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
 - Specs covered: 142/267 (53%)
-- Projection generation: 0ms · Source nodes: 288
+- Projection generation: 1ms · Source nodes: 288
 
