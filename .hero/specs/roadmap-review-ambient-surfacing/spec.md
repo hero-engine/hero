@@ -13,6 +13,7 @@ relations:
     kind: parent
   - target: roadmap-review
     kind: depends-on
+completed_at: 2026-06-01T23:43:43Z
 ---
 
 ## Goal
