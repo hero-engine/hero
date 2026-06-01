@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-01T15:43:51Z · projected from 283 source nodes_
+_Last refreshed: 2026-06-01T16:17:44Z · projected from 283 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | <1m ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 33m ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | building | domains/engineering/ | 12h ago | spec-types-cache-frontmatter-empty |
@@ -48,7 +48,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Recently completed (last 14 days)
 
 - **(unassigned)** — spec-size-and-promotion-nudge, deliver-stamps-completed-at, upgrade-strands-install-layout, delivery-completion-discipline
-- **core** — tracker-update-size, embeddings-superseded-respect, next-compact-handoff, hero-hooks-uninstall-misses-next-block, compact-handoff-transcript-kickoff-missing
+- **core** — tracker-update-size, embeddings-superseded-respect, next-compact-handoff, compact-handoff-transcript-kickoff-missing, hero-hooks-uninstall-misses-next-block
 - **domains/engineering** — mockup-renderer-selection-swiftui-bias, native-mockup-rendering
 - **serve** — superseded-specs-soft-archive
 
