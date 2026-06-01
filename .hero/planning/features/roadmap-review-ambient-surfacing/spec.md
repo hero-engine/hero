@@ -3,7 +3,7 @@ title: Roadmap-Review Ambient Surfacing — NEXT.md, Pulse, and Pre-Flight Hooks
 slug: roadmap-review-ambient-surfacing
 type: feature
 domain: engineering
-status: ready
+status: completed
 size: small
 priority: P1
 tags: [roadmap, ambient-context, next-md, pulse, delivery-lead]
@@ -586,21 +586,21 @@ from `hero size --check` row format choices.
 
 ## Kickoff
 
-Wires size drift into NEXT.md, `hero_pulse` / `hero_kickoff`, and
-delivery-lead pre-flight via one shared `sizing.AmbientDrift` helper
-— count-only, lens-agnostic, with a noise filter and 24h
-stop-nagging window so users aren't pinged after they just triaged.
+`roadmap-review-ambient-surfacing` — DELIVERED. 18 ACs DONE; SHIP /
+noteworthy audit. `sizing.AmbientDrift` helper feeds three surfaces:
+NEXT.md (`## Roadmap shape` section between Next and Blocked on),
+`hero_pulse`/`hero_kickoff` (`size_drift` field), and delivery-lead
+pre-flight. Live exercise on this workspace shows "12 specs have
+size drift — run /roadmap-review to triage" in NEXT.md after a
+checkpoint. Stop-nagging suppression and count-grew exception both
+verified against fake session records. Two notes:
 
-**Status:** ready — design complete; ready for `/deliver` once
-sibling `roadmap-review` lands the command name and session-record
-directory.
+1. Hint phrasing dropped the spec's `⚠` prefix per CLAUDE.md's
+   no-emojis rule. Shipped phrasing is the canonical form going
+   forward (no emoji); spec text out-of-date but not load-bearing.
+2. Scope absorbed `hero size --check --summary` flag — gave the
+   delivery leads a CLI alternative to the MCP `size_drift` read.
+   Small isolated addition, called out in commit and ledger.
 
-**Pick up at:** start with `internal/sizing/ambient.go` + tests —
-the helper is the contract every surface depends on. Then wire
-NEXT.md, then the two MCP tools, then the two delivery-lead prompts
-last.
-
-→ `/deliver roadmap-review-ambient-surfacing`
-
-**Files:** `internal/sizing/ambient.go`, `internal/projection/projection.go`, `internal/serve/mcp_tools.go`, `internal/pulse/render.go`, `domains/engineering/agents/feature-delivery-lead.md`
-**Skip:** wiring into `/prime`, `/resume`, `hero status`, the status bar; row excerpts in any surface; new MCP tools.
+Closes the `roadmap-shape` initiative — all four children
+delivered.

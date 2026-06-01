@@ -932,6 +932,150 @@ func TestMCP_ToolCall_List_RichFilters(t *testing.T) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// hero_pulse / hero_kickoff ambient size-drift surface
+// (roadmap-review-ambient-surfacing)
+// ---------------------------------------------------------------------------
+
+// writeDriftedLeafSpec writes a minimal feature spec under
+// .hero/planning/features/<slug>/ whose declared `size: trivial` will
+// not match its computed bucket (lots of files), triggering leaf drift.
+func writeDriftedLeafSpec(t *testing.T, heroDir, slug string) {
+	t.Helper()
+	dir := filepath.Join(heroDir, "planning", "features", slug)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	files := make([]string, 10)
+	for i := range files {
+		files[i] = fmt.Sprintf("    - `path/to/file_%d.go`", i)
+	}
+	body := "---\ntitle: Drifted\ntype: feature\nstatus: planning\nsize: trivial\n---\n\n## Kickoff\n\nKick off content.\n\n## Changes\n\n" + strings.Join(files, "\n") + "\n"
+	if err := os.WriteFile(filepath.Join(dir, "spec.md"), []byte(body), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+}
+
+// TestMCP_ToolCall_Pulse_SizeDrift_PresentWhenActive covers the
+// non-quiet path: with a drifted spec under planning/, the pulse JSON
+// response includes a top-level `size_drift` object with count + hint.
+// We force the active-spec rule by calling toolKickoff first against
+// the drifted slug — but pulse itself doesn't accept an active-spec
+// arg, so we rely on rule 3 (initiative without size) instead.
+func TestMCP_ToolCall_Pulse_SizeDrift_PresentWhenInitiativeUnsized(t *testing.T) {
+	heroDir, _ := setupTestWorkspace(t)
+	// Initiative with horizon=now and no declared size, plus a sized
+	// child so the container rollup is determinate.
+	initDir := filepath.Join(heroDir, "planning", "initiatives", "big-thing")
+	if err := os.MkdirAll(initDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	initBody := "---\ntitle: Big thing\ntype: initiative\nstatus: planning\nhorizon: now\n---\n\n## Goal\n\nBig.\n"
+	if err := os.WriteFile(filepath.Join(initDir, "spec.md"), []byte(initBody), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	childDir := filepath.Join(heroDir, "planning", "features", "child-a")
+	if err := os.MkdirAll(childDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	files := make([]string, 8)
+	for i := range files {
+		files[i] = fmt.Sprintf("    - `child/file_%d.go`", i)
+	}
+	childBody := "---\ntitle: Child A\ntype: feature\nstatus: planning\nsize: medium\nparent: big-thing\n---\n\n## Changes\n\n" + strings.Join(files, "\n") + "\n"
+	if err := os.WriteFile(filepath.Join(childDir, "spec.md"), []byte(childBody), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	srv := NewMCPServer(heroDir, filepath.Dir(heroDir), "1.0.0")
+	result := callTool(t, srv, "hero_pulse", map[string]interface{}{
+		"format": "json",
+	})
+	if result.IsError {
+		t.Fatalf("hero_pulse error: %s", result.Content[0].Text)
+	}
+	text := result.Content[0].Text
+	if !strings.Contains(text, `"size_drift"`) {
+		t.Errorf("expected size_drift field in JSON response, got:\n%s", text)
+	}
+	if !strings.Contains(text, "/roadmap-review") {
+		t.Errorf("expected /roadmap-review CTA in size_drift hint, got:\n%s", text)
+	}
+}
+
+// TestMCP_ToolCall_Pulse_SizeDrift_AbsentWhenQuiet covers the quiet
+// path: with no drift, the JSON response omits the size_drift field
+// (`omitempty`). The auth-login spec from setupTestWorkspace has no
+// declared size, so no leaf drift fires; no initiatives present.
+func TestMCP_ToolCall_Pulse_SizeDrift_AbsentWhenQuiet(t *testing.T) {
+	heroDir, _ := setupTestWorkspace(t)
+	srv := NewMCPServer(heroDir, filepath.Dir(heroDir), "1.0.0")
+	result := callTool(t, srv, "hero_pulse", map[string]interface{}{
+		"format": "json",
+	})
+	if result.IsError {
+		t.Fatalf("hero_pulse error: %s", result.Content[0].Text)
+	}
+	text := result.Content[0].Text
+	if strings.Contains(text, `"size_drift"`) {
+		t.Errorf("expected no size_drift field when quiet, got:\n%s", text)
+	}
+}
+
+// TestMCP_ToolCall_Kickoff_SizeDriftPrefix covers the active-spec rule
+// in hero_kickoff: a drifted spec passed as the slug triggers the
+// ambient hint as a leading line above the kickoff body.
+func TestMCP_ToolCall_Kickoff_SizeDriftPrefix(t *testing.T) {
+	heroDir, _ := setupTestWorkspace(t)
+	writeDriftedLeafSpec(t, heroDir, "drifted-feature")
+
+	srv := NewMCPServer(heroDir, filepath.Dir(heroDir), "1.0.0")
+	result := callTool(t, srv, "hero_kickoff", map[string]interface{}{
+		"slug": "drifted-feature",
+	})
+	if result.IsError {
+		t.Fatalf("hero_kickoff error: %s", result.Content[0].Text)
+	}
+	text := result.Content[0].Text
+	if !strings.Contains(text, "size drift") {
+		t.Errorf("expected ambient size-drift hint in kickoff output, got:\n%s", text)
+	}
+	if !strings.Contains(text, "/roadmap-review") {
+		t.Errorf("expected /roadmap-review CTA, got:\n%s", text)
+	}
+	if !strings.Contains(text, "Kick off content.") {
+		t.Errorf("expected kickoff body to follow, got:\n%s", text)
+	}
+	// Ordering: hint appears BEFORE the kickoff header.
+	hintIdx := strings.Index(text, "size drift")
+	headerIdx := strings.Index(text, "## drifted-feature")
+	if hintIdx < 0 || headerIdx < 0 || hintIdx > headerIdx {
+		t.Errorf("expected ambient hint before kickoff header (hint=%d header=%d), got:\n%s", hintIdx, headerIdx, text)
+	}
+}
+
+// TestMCP_ToolCall_Kickoff_NoPrefixWhenQuiet covers the kickoff path
+// when no ambient drift surfaces — the body is unchanged.
+func TestMCP_ToolCall_Kickoff_NoPrefixWhenQuiet(t *testing.T) {
+	heroDir, _ := setupTestWorkspace(t)
+	addKickoffSpec(t, heroDir, "clean-spec", "Clean", "Clean kickoff body.", spec.StatusPlanning, false)
+
+	srv := NewMCPServer(heroDir, filepath.Dir(heroDir), "1.0.0")
+	result := callTool(t, srv, "hero_kickoff", map[string]interface{}{
+		"slug": "clean-spec",
+	})
+	if result.IsError {
+		t.Fatalf("hero_kickoff error: %s", result.Content[0].Text)
+	}
+	text := result.Content[0].Text
+	if strings.Contains(text, "size drift") {
+		t.Errorf("expected no size-drift line when quiet, got:\n%s", text)
+	}
+	if !strings.Contains(text, "Clean kickoff body.") {
+		t.Errorf("expected kickoff body in output, got:\n%s", text)
+	}
+}
+
 func TestMCP_ToolCall_List_ReadyAndBlockedExclusive(t *testing.T) {
 	heroDir, _ := setupTestWorkspace(t)
 	srv := NewMCPServer(heroDir, filepath.Dir(heroDir), "1.0.0")

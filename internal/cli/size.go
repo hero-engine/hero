@@ -27,8 +27,9 @@ var sizeLadder = []string{
 }
 
 var (
-	sizeCheck bool
-	sizeAck   string
+	sizeCheck   bool
+	sizeAck     string
+	sizeSummary bool
 )
 
 var sizeCmd = &cobra.Command{
@@ -75,6 +76,7 @@ Modes:
 func init() {
 	sizeCmd.Flags().BoolVar(&sizeCheck, "check", false, "scan all specs for declared-vs-computed drift; exit non-zero if any found")
 	sizeCmd.Flags().StringVar(&sizeAck, "ack", "", "stamp `size_ack: <tier>` on <slug> (acknowledges an oversized spec; suppresses the design-time nudge)")
+	sizeCmd.Flags().BoolVar(&sizeSummary, "summary", false, "with --check, emit only the workspace-wide AmbientDrift count + hint (one line) instead of per-spec rows; intended for delivery-lead pre-flight surfaces")
 }
 
 func runSize(cmd *cobra.Command, args []string) error {
@@ -91,6 +93,9 @@ func runSize(cmd *cobra.Command, args []string) error {
 
 	if sizeCheck && sizeAck != "" {
 		return fmt.Errorf("--check and --ack are mutually exclusive")
+	}
+	if sizeSummary && !sizeCheck {
+		return fmt.Errorf("--summary requires --check")
 	}
 	if sizeCheck {
 		if len(args) > 0 {
@@ -192,6 +197,24 @@ func runSizeAck(heroDir, slug, tier string) error {
 // two flavors are visually distinct. Exits non-zero when any drift
 // is found so CI can gate on it.
 func runSizeCheck(heroDir string, cfg *config.Config) error {
+	// --summary path: emit only the AmbientDrift count + hint as a
+	// single line, suitable for delivery-lead pre-flight surfaces.
+	// Quiet → emit nothing and exit 0. Non-empty → emit the hint and
+	// exit 0 (no CI gate on the ambient summary; that's --check's job).
+	if sizeSummary {
+		projectRoot := findProjectRoot()
+		ambientOpts := sizing.AmbientDriftOpts{}
+		if cfg != nil && cfg.Roadmap != nil {
+			ambientOpts.RecencyDays = cfg.Roadmap.AmbientRecencyDaysOrDefault()
+			ambientOpts.StopNaggingHours = cfg.Roadmap.StopNaggingHoursOrDefault()
+		}
+		rep := sizing.AmbientDrift(heroDir, projectRoot, ambientOpts)
+		if !rep.Quiet && rep.Count > 0 {
+			fmt.Println(rep.Hint)
+		}
+		return nil
+	}
+
 	specs, err := spec.Discover(heroDir)
 	if err != nil {
 		return fmt.Errorf("discovering specs: %w", err)

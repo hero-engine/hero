@@ -1,6 +1,8 @@
 package projection
 
 import (
+	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -191,6 +193,105 @@ func TestNextMD_Blockers(t *testing.T) {
 	}
 	if !strings.Contains(out, "phase-6-jira") || !strings.Contains(out, "phase-5-queries") {
 		t.Errorf("expected blocker chain in Blocked on: %s", out)
+	}
+}
+
+// TestNextMD_RoadmapShape_Emits covers the ambient size-drift surface:
+// when AmbientDrift returns a non-quiet non-zero report, NextMD emits
+// the `## Roadmap shape` section between `## Next` and `## Blocked on`.
+func TestNextMD_RoadmapShape_Emits(t *testing.T) {
+	store := openTestStore(t)
+	seedRepo(t, store)
+
+	tmp := t.TempDir()
+	heroDir := filepath.Join(tmp, ".hero")
+	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// Drifted leaf — declared size doesn't match computed (lots of files
+	// against declared trivial). ActiveSpec match fires rule 1.
+	specDir := filepath.Join(heroDir, "planning", "features", "drifted-leaf")
+	if err := os.MkdirAll(specDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	files := make([]string, 10)
+	for i := range files {
+		files[i] = fmt.Sprintf("    - `path/to/file_%d.go`", i)
+	}
+	body := "---\ntitle: Drifted\ntype: feature\nstatus: planning\nsize: trivial\n---\n\n## Changes\n\n" + strings.Join(files, "\n") + "\n"
+	if err := os.WriteFile(filepath.Join(specDir, "spec.md"), []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := NextMD(store, NextMDOptions{
+		RepoKey:     "test-repo",
+		HeroDir:     heroDir,
+		ProjectRoot: tmp,
+		ActiveSpec:  "drifted-leaf",
+	})
+	if err != nil {
+		t.Fatalf("NextMD: %v", err)
+	}
+
+	if !strings.Contains(out, "## Roadmap shape") {
+		t.Errorf("expected '## Roadmap shape' section, got:\n%s", out)
+	}
+	if !strings.Contains(out, "size drift") {
+		t.Errorf("expected lens-agnostic 'size drift' phrasing, got:\n%s", out)
+	}
+	if !strings.Contains(out, "/roadmap-review") {
+		t.Errorf("expected '/roadmap-review' CTA, got:\n%s", out)
+	}
+
+	// Placement check: `## Roadmap shape` must sit between `## Next`
+	// and `## Blocked on`.
+	idxNext := strings.Index(out, "## Next")
+	idxRoadmap := strings.Index(out, "## Roadmap shape")
+	idxBlocked := strings.Index(out, "## Blocked on")
+	if !(idxNext < idxRoadmap && idxRoadmap < idxBlocked) {
+		t.Errorf("placement wrong: next=%d roadmap=%d blocked=%d", idxNext, idxRoadmap, idxBlocked)
+	}
+}
+
+// TestNextMD_RoadmapShape_OmittedWhenQuiet covers the quiet path:
+// no drift → no `## Roadmap shape` header in the output at all.
+func TestNextMD_RoadmapShape_OmittedWhenQuiet(t *testing.T) {
+	store := openTestStore(t)
+	seedRepo(t, store)
+
+	tmp := t.TempDir()
+	heroDir := filepath.Join(tmp, ".hero")
+	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// Empty hero workspace → no drift → quiet.
+
+	out, err := NextMD(store, NextMDOptions{
+		RepoKey:     "test-repo",
+		HeroDir:     heroDir,
+		ProjectRoot: tmp,
+	})
+	if err != nil {
+		t.Fatalf("NextMD: %v", err)
+	}
+	if strings.Contains(out, "## Roadmap shape") {
+		t.Errorf("expected no '## Roadmap shape' section when quiet, got:\n%s", out)
+	}
+}
+
+// TestNextMD_RoadmapShape_NoHeroDir covers the legacy-caller path:
+// when HeroDir/ProjectRoot aren't set, the section is omitted (no
+// regression for existing NextMD callers that haven't been updated).
+func TestNextMD_RoadmapShape_NoHeroDir(t *testing.T) {
+	store := openTestStore(t)
+	seedRepo(t, store)
+
+	out, err := NextMD(store, NextMDOptions{RepoKey: "test-repo"})
+	if err != nil {
+		t.Fatalf("NextMD: %v", err)
+	}
+	if strings.Contains(out, "## Roadmap shape") {
+		t.Errorf("expected no '## Roadmap shape' section when HeroDir unset, got:\n%s", out)
 	}
 }
 
