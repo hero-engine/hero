@@ -3,7 +3,7 @@ title: Roadmap Shape — Detect, Surface, and Resolve Spec-Shape Drift
 slug: roadmap-shape
 type: initiative
 domain: engineering
-status: ready
+status: completed
 size: large
 priority: P1
 tags: [roadmap, sizing, composition, ambient-context, dogfood]

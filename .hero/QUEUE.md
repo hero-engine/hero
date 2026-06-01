@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-01T23:43:44Z · 99 ready specs_
+_Generated: 2026-06-01T23:44:09Z · 98 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -990,27 +990,6 @@ Start with Phase 0 only. Do not build anything. Read [next-compact-handoff/spec.
 Output a written assessment with a clear recommendation: proceed to Phase 1 prototype, or close as "not worth it" with the analysis preserved so future revisits don't re-litigate.
 
 Time budget: ~2 days of focused research, no implementation. If the assessment can't be reached in that budget, the answer is probably no.
-
----
-
-## roadmap-shape — Roadmap Shape — Detect, Surface, and Resolve Spec-Shape Drift
-_initiative · ready · horizon: now_
-
-Initiative that makes Hero detect and resolve roadmap-shape drift
-(oversized specs, related-but-orphaned features, unfinished
-composition) instead of leaving it to the user to notice.
-
-**Status:** ready — four child stubs scaffolded, ready for individual `/design` passes.
-
-**Pick up at:** run `/design roadmap-review` first — it locks the
-command name and Lenses scaffolding the other three reference. Then
-`/design size-drift-actionable-output` and `/design multi-spec-design-routing`
-in parallel. `/design roadmap-review-ambient-surfacing` ships last.
-
-→ `.hero/planning/initiatives/roadmap-shape/spec.md`
-
-**Files:** `.hero/planning/features/roadmap-review/spec.md`, `.hero/planning/features/roadmap-review-ambient-surfacing/spec.md`, `.hero/planning/features/size-drift-actionable-output/spec.md`, `.hero/planning/features/multi-spec-design-routing/spec.md`
-**Skip:** designing all four in parallel — #2 depends on #1's locked command/agent names.
 
 ---
 
