@@ -94,3 +94,5 @@
 {"ts":"2026-06-01T15:43:51.93548Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"tracker-update-size","message":"status -\u003e completed"}
 {"ts":"2026-06-01T19:50:49.58875Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"roadmap-review","message":"Roadmap Review — Command, Agent, and Skill for On-Demand Shape Detection"}
 {"ts":"2026-06-01T19:50:49.588826Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"roadmap-review","message":"status -\u003e completed"}
+{"ts":"2026-06-01T21:12:39.289947Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"size-drift-actionable-output","message":"Size-Drift Actionable Output — Inline Next-Step and Dedupe Duplicate Error"}
+{"ts":"2026-06-01T21:12:39.290076Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"size-drift-actionable-output","message":"status -\u003e completed"}
