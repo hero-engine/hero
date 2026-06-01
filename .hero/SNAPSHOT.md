@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-01T23:43:43Z · projected from 288 source nodes_
+_Last refreshed: 2026-06-01T23:44:09Z · projected from 288 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 7h ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 8h ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | building | domains/engineering/ | 20h ago | spec-types-cache-frontmatter-empty |
@@ -37,21 +37,20 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Install + Upgrade Contract Coverage — Prove Every Target Works Every Time** (surface: —) — 0/0 specs done
 - **Launch Readiness — Telemetry, Deploy, and Public-Use Polish** (surface: —) — 0/0 specs done
 - **Pre-Launch Hardening — Federation Polish, Security, Observability** (surface: —) — 0/0 specs done
-- **Roadmap Shape — Detect, Surface, and Resolve Spec-Shape Drift** (surface: serve) — 4/4 specs done
 - **Single-Source Install — One Canonical Tree, Every Harness Reads It** (surface: core) — 5/6 specs done
 
 ### Recently completed initiatives
 
+- **Roadmap Shape — Detect, Surface, and Resolve Spec-Shape Drift** (surface: serve) — 4/4 specs done · COMPLETED 2026-06-01
 - **hero serve Project Section — Per-Project Info, Utilities, and Operations Page** (surface: serve) — 5/5 specs done · COMPLETED 2026-05-20
 - **Hero v2 — System Design Initiative** (surface: core, serve) — 8/8 specs done · COMPLETED 2026-05-18
-- **Competitor Parity — Borrow the Best Ideas from Competing Tools** (surface: —) — 0/0 specs done · COMPLETED 2026-05-18
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — roadmap-review-ambient-surfacing, multi-spec-design-routing, roadmap-review, spec-size-and-promotion-nudge, deliver-stamps-completed-at, upgrade-strands-install-layout
+- **(unassigned)** — roadmap-shape, roadmap-review-ambient-surfacing, multi-spec-design-routing, roadmap-review, spec-size-and-promotion-nudge, deliver-stamps-completed-at, upgrade-strands-install-layout
 - **core** — tracker-update-size, embeddings-superseded-respect
 - **domains/engineering** — native-mockup-rendering, mockup-renderer-selection-swiftui-bias
-- **serve** — size-drift-actionable-output, superseded-specs-soft-archive
+- **serve** — size-drift-actionable-output
 
 ## Next up across surfaces
 
