@@ -2,22 +2,22 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-01T16:17:44Z · projected from 283 source nodes_
+_Last refreshed: 2026-06-01T16:52:32Z · projected from 288 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 33m ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 1h ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | building | domains/engineering/ | 12h ago | spec-types-cache-frontmatter-empty |
+| domains/engineering | building | domains/engineering/ | 13h ago | spec-types-cache-frontmatter-empty |
 | domains/pm | concept | domains/pm/ | 13d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
-| landing | building | web/landing/ | 12h ago | hero-landing-page |
+| landing | building | web/landing/ | 13h ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 12h ago | vocabulary-resolve-misses-methodology-derivation |
-| (unassigned) | — | — | — | 121 specs without surface |
+| serve | building | internal/serve/ | 13h ago | vocabulary-resolve-misses-methodology-derivation |
+| (unassigned) | — | — | — | 126 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
 
@@ -37,6 +37,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Install + Upgrade Contract Coverage — Prove Every Target Works Every Time** (surface: —) — 0/0 specs done
 - **Launch Readiness — Telemetry, Deploy, and Public-Use Polish** (surface: —) — 0/0 specs done
 - **Pre-Launch Hardening — Federation Polish, Security, Observability** (surface: —) — 0/0 specs done
+- **Roadmap Shape — Detect, Surface, and Resolve Spec-Shape Drift** (surface: —) — 0/4 specs done
 - **Single-Source Install — One Canonical Tree, Every Harness Reads It** (surface: core) — 5/6 specs done
 
 ### Recently completed initiatives
@@ -62,12 +63,12 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Open risks & blockers
 
-- **Blocked specs (14):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `e2e-traversal` (waits on traversal-queries); `embedded-inference` (waits on master-ingest-restore); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection); `traversal-queries` (waits on master-ingest-restore); `unified-retrieval-layer` (waits on master-ingest-restore).
-- **Unassigned specs (121) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
+- **Blocked specs (15):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `e2e-traversal` (waits on traversal-queries); `embedded-inference` (waits on master-ingest-restore); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `roadmap-review-ambient-surfacing` (waits on roadmap-review); `timely-briefs` (waits on retrieval-contradiction-detection); `traversal-queries` (waits on master-ingest-restore); `unified-retrieval-layer` (waits on master-ingest-restore).
+- **Unassigned specs (126) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 141/262 (53%)
-- Projection generation: 0ms · Source nodes: 283
+- Specs covered: 141/267 (52%)
+- Projection generation: 0ms · Source nodes: 288
 
