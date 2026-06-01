@@ -188,6 +188,29 @@ ambient-surfacing reads it to decide whether to suppress the next 24h
 nudge. If the field is missing, the ambient reader treats it as "count
 unchanged" — forward-compatible, but write the field every time.
 
+## Ambient surfaces
+
+When this skill's interactive triage isn't actively running, three
+ambient surfaces carry the same paste-ready hint pointing here:
+
+- **NEXT.md projection** — a `## Roadmap shape` section appears
+  between `## Next` and `## Blocked on` when drift surfaces.
+- **`hero_pulse` / `hero_kickoff` MCP tools** — both responses
+  populate a `size_drift` field (count + hint) when drift surfaces.
+- **Delivery-lead pre-flight** — `feature-delivery-lead` and
+  `platform-delivery-lead` quote the hint verbatim in their handoff
+  output when the workspace-wide count is non-empty.
+
+All three quote the canonical hint from `internal/sizing/ambient.go` —
+they do not compose the string themselves. The noise threshold (active
+spec union 7d recency union horizon:now unsized initiatives) and the
+24h stop-nagging rule (suppress while a recent
+`.hero/knowledge/roadmap-review-sessions/` record's
+`drift_count_at_exit:` is still ahead of the current filtered count)
+keep the channel from going noisy. Tune via
+`hero.json: roadmap.ambient_recency_days` and
+`roadmap.stop_nagging_hours`.
+
 ## Cross-skill references
 
 - **`spec-sizing`** — the size ladder, per-type bands, design-time

@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-01T21:21:31Z · 100 ready specs_
+_Generated: 2026-06-01T23:43:43Z · 99 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -990,30 +990,6 @@ Start with Phase 0 only. Do not build anything. Read [next-compact-handoff/spec.
 Output a written assessment with a clear recommendation: proceed to Phase 1 prototype, or close as "not worth it" with the analysis preserved so future revisits don't re-litigate.
 
 Time budget: ~2 days of focused research, no implementation. If the assessment can't be reached in that budget, the answer is probably no.
-
----
-
-## roadmap-review-ambient-surfacing — Roadmap-Review Ambient Surfacing — NEXT.md, Pulse, and Pre-Flight Hooks
-_feature · ready · horizon: now_
-
-Wires size drift into NEXT.md, `hero_pulse` / `hero_kickoff`, and
-delivery-lead pre-flight via one shared `sizing.AmbientDrift` helper
-— count-only, lens-agnostic, with a noise filter and 24h
-stop-nagging window so users aren't pinged after they just triaged.
-
-**Status:** ready — design complete; ready for `/deliver` once
-sibling `roadmap-review` lands the command name and session-record
-directory.
-
-**Pick up at:** start with `internal/sizing/ambient.go` + tests —
-the helper is the contract every surface depends on. Then wire
-NEXT.md, then the two MCP tools, then the two delivery-lead prompts
-last.
-
-→ `/deliver roadmap-review-ambient-surfacing`
-
-**Files:** `internal/sizing/ambient.go`, `internal/projection/projection.go`, `internal/serve/mcp_tools.go`, `internal/pulse/render.go`, `domains/engineering/agents/feature-delivery-lead.md`
-**Skip:** wiring into `/prime`, `/resume`, `hero status`, the status bar; row excerpts in any surface; new MCP tools.
 
 ---
 

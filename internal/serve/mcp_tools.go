@@ -415,15 +415,32 @@ func (s *MCPServer) toolKickoff(args map[string]interface{}) (string, error) {
 		return "", fmt.Errorf("discovering specs: %w", err)
 	}
 
+	// Ambient size-drift hint (prepended above the kickoff body when
+	// non-quiet/non-zero). Passing the slug as ActiveSpec naturally
+	// lights up rule 1 of the noise filter when the user is kicking
+	// off a spec that has drift on it. See spec
+	// roadmap-review-ambient-surfacing.
+	cfg, _ := config.Load(s.projectRoot)
+	ambientOpts := sizing.AmbientDriftOpts{ActiveSpec: slug}
+	if cfg.Roadmap != nil {
+		ambientOpts.RecencyDays = cfg.Roadmap.AmbientRecencyDaysOrDefault()
+		ambientOpts.StopNaggingHours = cfg.Roadmap.StopNaggingHoursOrDefault()
+	}
+	ambient := sizing.AmbientDrift(s.heroDir, s.projectRoot, ambientOpts)
+	driftPrefix := ""
+	if !ambient.Quiet && ambient.Count > 0 {
+		driftPrefix = ambient.Hint + "\n\n"
+	}
+
 	for _, sp := range specs {
 		if sp.Slug != slug {
 			continue
 		}
 		body := strings.TrimSpace(sp.Kickoff())
 		if body == "" {
-			return fmt.Sprintf("Spec %q exists but has no `## Kickoff` section. Run /design or /deliver to author one, or hand-edit %s.", slug, sp.Path), nil
+			return driftPrefix + fmt.Sprintf("Spec %q exists but has no `## Kickoff` section. Run /design or /deliver to author one, or hand-edit %s.", slug, sp.Path), nil
 		}
-		return fmt.Sprintf("## %s — %s\n_%s · %s · horizon: %s_\n\n%s\n",
+		return driftPrefix + fmt.Sprintf("## %s — %s\n_%s · %s · horizon: %s_\n\n%s\n",
 			sp.Slug, sp.Title, sp.Type, sp.Status, sp.EffectiveHorizon(), body), nil
 	}
 
@@ -959,6 +976,22 @@ func (s *MCPServer) toolPulse(args map[string]interface{}) (string, error) {
 		})
 	}
 	pulse.PopulateDrift(p, driftEntries)
+
+	// Ambient size-drift surface (workspace-wide; count + hint only).
+	// Quiet/zero → leave SizeDrift nil so the renderers and JSON output
+	// omit the field entirely. See spec roadmap-review-ambient-surfacing.
+	ambientOpts := sizing.AmbientDriftOpts{}
+	if cfg.Roadmap != nil {
+		ambientOpts.RecencyDays = cfg.Roadmap.AmbientRecencyDaysOrDefault()
+		ambientOpts.StopNaggingHours = cfg.Roadmap.StopNaggingHoursOrDefault()
+	}
+	ambient := sizing.AmbientDrift(s.heroDir, s.projectRoot, ambientOpts)
+	if !ambient.Quiet && ambient.Count > 0 {
+		p.SizeDrift = &pulse.AmbientSizeDrift{
+			Count: ambient.Count,
+			Hint:  ambient.Hint,
+		}
+	}
 
 	switch format {
 	case "json":

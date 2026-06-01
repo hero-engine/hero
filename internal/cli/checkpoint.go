@@ -295,10 +295,14 @@ func writeProjectedNextMD(nextPath, projectRoot, heroDir string) error {
 	repoKey := gitutil.RepoKey(projectRoot)
 	cfg, _ := config.Load(projectRoot)
 	content, err := projection.NextMD(store, projection.NextMDOptions{
-		RepoKey:     repoKey,
-		Branch:      currentBranch(projectRoot),
-		Vocab:       activeVocab(&cfg),
-		Methodology: activeMethodology(&cfg),
+		RepoKey:                 repoKey,
+		Branch:                  currentBranch(projectRoot),
+		Vocab:                   activeVocab(&cfg),
+		Methodology:             activeMethodology(&cfg),
+		HeroDir:                 heroDir,
+		ProjectRoot:             projectRoot,
+		RoadmapRecencyDays:      cfg.Roadmap.AmbientRecencyDaysOrDefault(),
+		RoadmapStopNaggingHours: cfg.Roadmap.StopNaggingHoursOrDefault(),
 	})
 	if err != nil {
 		return fmt.Errorf("project NEXT.md: %w", err)

@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-01T21:21:30Z · projected from 288 source nodes_
+_Last refreshed: 2026-06-01T23:39:38Z · projected from 288 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 5h ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 7h ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | building | domains/engineering/ | 17h ago | spec-types-cache-frontmatter-empty |
+| domains/engineering | building | domains/engineering/ | 20h ago | spec-types-cache-frontmatter-empty |
 | domains/pm | concept | domains/pm/ | 14d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
-| landing | building | web/landing/ | 17h ago | hero-landing-page |
+| landing | building | web/landing/ | 20h ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 8m ago | vocabulary-resolve-misses-methodology-derivation |
+| serve | building | internal/serve/ | 2h ago | vocabulary-resolve-misses-methodology-derivation |
 | (unassigned) | — | — | — | 125 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -37,7 +37,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Install + Upgrade Contract Coverage — Prove Every Target Works Every Time** (surface: —) — 0/0 specs done
 - **Launch Readiness — Telemetry, Deploy, and Public-Use Polish** (surface: —) — 0/0 specs done
 - **Pre-Launch Hardening — Federation Polish, Security, Observability** (surface: —) — 0/0 specs done
-- **Roadmap Shape — Detect, Surface, and Resolve Spec-Shape Drift** (surface: serve) — 3/4 specs done
+- **Roadmap Shape — Detect, Surface, and Resolve Spec-Shape Drift** (surface: serve) — 3/4 specs done; in flight: roadmap-review-ambient-surfacing
 - **Single-Source Install — One Canonical Tree, Every Harness Reads It** (surface: core) — 5/6 specs done
 
 ### Recently completed initiatives
@@ -64,7 +64,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Open risks & blockers
 
 - **Blocked specs (14):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `e2e-traversal` (waits on traversal-queries); `embedded-inference` (waits on master-ingest-restore); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection); `traversal-queries` (waits on master-ingest-restore); `unified-retrieval-layer` (waits on master-ingest-restore).
-- **Stale-in-flight (17):** `hero-local-merge-missing-dialect-fields` (14d), `spec-types-cache-frontmatter-empty` (14d), `vocabulary-resolve-misses-methodology-derivation` (14d), `cross-repo-peering` (14d), `e2e-discovery` (14d), `e2e-traversal` (14d), `e2e-validation` (14d), `graph-conflict-detection` (14d), `hero-landing-page` (14d), `master-ingest-restore` (14d), `monorepo-satellite-installs` (14d), `per-feature-smoke-coverage` (14d), `spec-status-integrity` (14d), `traversal-queries` (14d), `tripwire-system` (14d), `unified-retrieval-layer` (14d), `unified-search` (14d).
+- **Stale-in-flight (20):** `hero-local-merge-missing-dialect-fields` (14d), `spec-types-cache-frontmatter-empty` (14d), `vocabulary-resolve-misses-methodology-derivation` (14d), `agent-outposts` (14d), `cross-repo-peering` (14d), `e2e-discovery` (14d), `e2e-traversal` (14d), `e2e-validation` (14d), `graph-conflict-detection` (14d), `hero-landing-page` (14d), `hero-sales` (14d), `hero-team-server` (14d), `master-ingest-restore` (14d), `monorepo-satellite-installs` (14d), `per-feature-smoke-coverage` (14d), `spec-status-integrity` (14d), `traversal-queries` (14d), `tripwire-system` (14d), `unified-retrieval-layer` (14d), `unified-search` (14d).
 - **Unassigned specs (125) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health

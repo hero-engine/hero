@@ -42,6 +42,16 @@ type DriftEntry struct {
 	HasViolation bool
 }
 
+// AmbientSizeDrift is the count+hint summary emitted by
+// sizing.AmbientDrift, mirrored into the pulse response shape so MCP
+// clients (and renderers) consume it without reaching into the sizing
+// package. Nil → no drift to surface (the quiet state). See spec
+// roadmap-review-ambient-surfacing.
+type AmbientSizeDrift struct {
+	Count int    `json:"count"`
+	Hint  string `json:"hint"`
+}
+
 // PulseData is the complete pulse report for a period.
 type PulseData struct {
 	Period           Period
@@ -51,6 +61,11 @@ type PulseData struct {
 	Drift            []DriftEntry
 	KnowledgeUpdates []KnowledgeUpdate
 	Blockers         []string
+	// SizeDrift carries the workspace-wide ambient size-drift summary
+	// (count + hint). Nil when the AmbientDrift helper reports Quiet
+	// (no drift, or stop-nagging window active). Surfaces are
+	// instructed to emit count+hint only — never per-spec rows.
+	SizeDrift *AmbientSizeDrift
 }
 
 // CalcPeriod returns the period based on flags.

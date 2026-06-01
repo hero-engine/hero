@@ -51,6 +51,14 @@ func RenderText(p *PulseData) string {
 	}
 	sb.WriteString("\n")
 
+	// Ambient size-drift (count + hint only). Rendered before the
+	// existing detailed `Drift detected` block so the workspace-wide
+	// summary shows first; the per-spec list still follows when the
+	// warning pipeline has flagged individual specs.
+	if p.SizeDrift != nil {
+		fmt.Fprintf(&sb, "Size drift: %s\n\n", p.SizeDrift.Hint)
+	}
+
 	// Drift
 	if len(p.Drift) > 0 {
 		fmt.Fprintf(&sb, "Drift detected (%d):\n", len(p.Drift))
@@ -141,6 +149,11 @@ func RenderMarkdown(p *PulseData) string {
 		sb.WriteString("\n")
 	}
 
+	// Ambient size-drift (workspace-wide, count + hint only).
+	if p.SizeDrift != nil {
+		fmt.Fprintf(&sb, "## Size drift\n\n%s\n\n", p.SizeDrift.Hint)
+	}
+
 	// Drift
 	if len(p.Drift) > 0 {
 		fmt.Fprintf(&sb, "## Drift detected (%d)\n\n", len(p.Drift))
@@ -204,12 +217,17 @@ func RenderJSON(p *PulseData) (string, error) {
 		Warnings     int    `json:"warnings"`
 		HasViolation bool   `json:"has_violation"`
 	}
+	type jsonSizeDrift struct {
+		Count int    `json:"count"`
+		Hint  string `json:"hint"`
+	}
 	type jsonOutput struct {
 		Period           jsonPeriod      `json:"period"`
 		Done             []jsonSpec      `json:"done"`
 		InFlight         []jsonSpec      `json:"in_flight"`
 		AtRisk           []jsonSpec      `json:"at_risk"`
 		Drift            []jsonDrift     `json:"drift,omitempty"`
+		SizeDrift        *jsonSizeDrift  `json:"size_drift,omitempty"`
 		KnowledgeUpdates []jsonKnowledge `json:"knowledge_updates"`
 		Blockers         []string        `json:"blockers"`
 	}
@@ -261,6 +279,12 @@ func RenderJSON(p *PulseData) (string, error) {
 			Warnings:     d.Warnings,
 			HasViolation: d.HasViolation,
 		})
+	}
+	if p.SizeDrift != nil {
+		out.SizeDrift = &jsonSizeDrift{
+			Count: p.SizeDrift.Count,
+			Hint:  p.SizeDrift.Hint,
+		}
 	}
 	for _, u := range p.KnowledgeUpdates {
 		out.KnowledgeUpdates = append(out.KnowledgeUpdates, jsonKnowledge{

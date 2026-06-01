@@ -21,6 +21,7 @@ import (
 
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/methodology"
+	"github.com/hero-engine/hero/internal/sizing"
 	"github.com/hero-engine/hero/internal/vocabulary"
 )
 
@@ -39,6 +40,29 @@ type NextMDOptions struct {
 	// Methodology is the active methodology profile. Nil falls through
 	// to the methodology-neutral phrasing used today.
 	Methodology *methodology.Methodology
+
+	// HeroDir is the absolute path to `.hero/`. Required to surface the
+	// ambient `## Roadmap shape` section (the helper reads specs and
+	// the session-record directory under HeroDir). Empty disables the
+	// surfacing — the section is omitted entirely. Older callers
+	// that haven't been updated stay quiet by default.
+	HeroDir string
+	// ProjectRoot is the absolute project root. Required alongside
+	// HeroDir for the ambient surfacing (used for git-mtime lookups).
+	// Empty disables the surfacing.
+	ProjectRoot string
+	// ActiveSpec is the slug the session is currently touching, when
+	// known. Empty (the commit-time path) skips the active-spec rule
+	// of the noise filter — rule 2 (recency) and rule 3 (high-impact)
+	// still apply.
+	ActiveSpec string
+	// RoadmapRecencyDays overrides the default 7-day recency window
+	// for the ambient noise filter. <=0 → use the helper default.
+	RoadmapRecencyDays int
+	// RoadmapStopNaggingHours overrides the default 24-hour
+	// suppression window after a `/roadmap-review` session record.
+	// <=0 → use the helper default.
+	RoadmapStopNaggingHours int
 }
 
 // NextMD renders the contents of .hero/NEXT.md from the graph. The
@@ -111,6 +135,21 @@ func NextMD(store *graph.Store, opts NextMDOptions) (string, error) {
 		fmt.Fprintf(&b, "\n→ `/deliver %s`\n", openFeatures[0].slug)
 	}
 	b.WriteString("\n")
+
+	// Roadmap shape — ambient size-drift surfacing. Omitted entirely
+	// when quiet (no header, no placeholder line). See spec
+	// roadmap-review-ambient-surfacing.
+	if opts.HeroDir != "" && opts.ProjectRoot != "" {
+		rep := sizing.AmbientDrift(opts.HeroDir, opts.ProjectRoot, sizing.AmbientDriftOpts{
+			ActiveSpec:       opts.ActiveSpec,
+			RecencyDays:      opts.RoadmapRecencyDays,
+			StopNaggingHours: opts.RoadmapStopNaggingHours,
+		})
+		if !rep.Quiet && rep.Count > 0 {
+			b.WriteString("## Roadmap shape\n\n")
+			fmt.Fprintf(&b, "%s\n\n", rep.Hint)
+		}
+	}
 
 	// Blocked on
 	b.WriteString("## Blocked on\n\n")

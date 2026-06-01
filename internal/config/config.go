@@ -106,6 +106,46 @@ type Config struct {
 	// they run on rolling activity windows instead. Per the
 	// hero-serve-dashboard-redesign spec.
 	Sprint *SprintConfig `json:"sprint,omitempty"`
+
+	// Roadmap holds settings for ambient roadmap-shape surfacing
+	// (NEXT.md, hero_pulse/hero_kickoff, delivery-lead pre-flight).
+	// Nil/empty → documented defaults apply.
+	// See spec roadmap-review-ambient-surfacing.
+	Roadmap *RoadmapConfig `json:"roadmap,omitempty"`
+}
+
+// RoadmapConfig tunes the ambient roadmap-shape surfacing helper.
+// Both fields are optional; zero falls back to the documented default.
+// Negative values are rejected at load time so a typo doesn't silently
+// disable the surfacing.
+type RoadmapConfig struct {
+	// AmbientRecencyDays is the recency window (in days) used by the
+	// noise threshold in sizing.AmbientDrift. Specs whose `spec.md`
+	// file was committed within this window contribute to the surfaced
+	// drift count regardless of horizon. Default: 7.
+	AmbientRecencyDays int `json:"ambient_recency_days,omitempty"`
+	// StopNaggingHours is the suppression window (in hours) after a
+	// `/roadmap-review` session record lands under
+	// `.hero/knowledge/roadmap-review-sessions/`. Within this window
+	// the ambient surfaces stay quiet unless the filtered drift count
+	// has grown above the recorded `drift_count_at_exit`. Default: 24.
+	StopNaggingHours int `json:"stop_nagging_hours,omitempty"`
+}
+
+// AmbientRecencyDaysOrDefault returns AmbientRecencyDays or 7 if unset.
+func (r *RoadmapConfig) AmbientRecencyDaysOrDefault() int {
+	if r == nil || r.AmbientRecencyDays <= 0 {
+		return 7
+	}
+	return r.AmbientRecencyDays
+}
+
+// StopNaggingHoursOrDefault returns StopNaggingHours or 24 if unset.
+func (r *RoadmapConfig) StopNaggingHoursOrDefault() int {
+	if r == nil || r.StopNaggingHours <= 0 {
+		return 24
+	}
+	return r.StopNaggingHours
 }
 
 // SprintConfig opts a workspace into planned-sprint UI. Presence is
@@ -1264,6 +1304,18 @@ func Load(projectRoot string) (Config, error) {
 		}
 		if len(cfg.CodeScan.Exclude) == 0 {
 			cfg.CodeScan.Exclude = defaults.Exclude
+		}
+	}
+
+	// Validate roadmap ambient-surfacing config: reject negative values
+	// so a typo doesn't silently disable the surfacing. Zero/unset is
+	// fine — defaults apply.
+	if cfg.Roadmap != nil {
+		if cfg.Roadmap.AmbientRecencyDays < 0 {
+			return cfg, fmt.Errorf("parsing %s: roadmap.ambient_recency_days must be >= 0", configPath)
+		}
+		if cfg.Roadmap.StopNaggingHours < 0 {
+			return cfg, fmt.Errorf("parsing %s: roadmap.stop_nagging_hours must be >= 0", configPath)
 		}
 	}
 
