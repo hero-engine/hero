@@ -359,13 +359,22 @@ that.
   the per-type bands, the nudge intensities, the acknowledgement
   protocol, and how delivery leads should phrase the nudge. Both
   feature-delivery-lead and platform-delivery-lead load this skill.
+  **(slice 4: landed; ~259 lines; paste-ready phrasing per tier and
+  tracker regime.)**
 - `.claude/agents/feature-delivery-lead.md` — add a step in the
   delivery loop: "load spec-sizing, check declared size + drift,
-  surface nudge per schedule."
-- `.claude/agents/platform-delivery-lead.md` — same.
+  surface nudge per schedule." **(slice 4: added step 4d in delivery
+  loop and design-time skill-load in the design phase.)**
+- `.claude/agents/platform-delivery-lead.md` — same. **(slice 4:
+  added step 3b in delivery loop and design-time skill-load.)**
 - `.claude/skills/spec-format/SKILL.md` — document `size:` as a
   living field alongside `status:`; show an example; explain when
-  the spec writer is expected to bump it.
+  the spec writer is expected to bump it. **(slice 4: added `size`
+  and `size_ack` frontmatter rows, a "living field" subsection, and
+  a brief example; cross-references `spec-sizing` for the ladder.)**
+- `.claude/commands/design.md` — **(slice 4)** add design-time
+  `size:` stamping instruction alongside the `domain:` stamping
+  paragraph; references `spec-sizing`.
 
 ## Implementation Notes
 

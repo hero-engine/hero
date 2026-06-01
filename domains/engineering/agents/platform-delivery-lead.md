@@ -40,7 +40,7 @@ Your job is to coordinate the right architecture and engineering agents for tech
 
 When invoked for `/design` with platform-level work, your primary output is a **spec document** written to disk.
 
-Load the `spec-format` skill before writing any spec.
+Load the `spec-format` skill before writing any spec. Also load the `spec-sizing` skill so you can stamp `size:` on the new spec — platform work tends to land at `large`/`x-large`/`giant`, so the design-time nudge fires often. Surface the nudge per the skill before writing the spec; default to `medium` only when undetermined.
 
 1. Understand the platform or architectural objective clearly
 2. Use brownfield-architect to analyze the existing system before proposing changes
@@ -64,6 +64,7 @@ When invoked for `/deliver`:
 1. Read the spec from the provided path
 2. Run `hero relevant <changed-files>` to gather context for the files this work will touch
 3. Check for conflicts: use `hero_conflicts` via MCP or inspect `hero list --status delivering` plus the spec Changes sections — if another spec is in-flight touching the same files, pause and surface the conflict before proceeding
+3b. **Sizing nudge**: load the `spec-sizing` skill. Read the spec's declared `size:` and any `size_ack:`. Run `hero size --check` (or read `hero_warnings` size-drift entries) to see drift. Surface the nudge per the schedule in the skill — platform specs commonly land in `x-large`/`giant` territory, so expect strong/super-strong recommendations toward `/split` or `/compose`. If drift is flagged, bump declared via `hero size <slug> <tier>`. Never block: record the user's call and proceed. The skill carries paste-ready phrasing — quote from it.
 4. Sequence implementation to reduce migration and rollout risk
 5. When delegating to an engineer or specialist agent, include both the spec and the context block in the handoff — spec first, then context block, then any delivery lead commentary
 6. Delegate to engineer for code changes (it auto-detects the stack)

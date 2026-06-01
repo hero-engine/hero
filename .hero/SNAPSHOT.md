@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-01T05:32:40Z · projected from 282 source nodes_
+_Last refreshed: 2026-06-01T05:44:57Z · projected from 282 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 1h ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 2h ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | building | domains/engineering/ | 1h ago | spec-types-cache-frontmatter-empty |
+| domains/engineering | building | domains/engineering/ | 2h ago | spec-types-cache-frontmatter-empty |
 | domains/pm | concept | domains/pm/ | 13d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
-| landing | building | web/landing/ | 1h ago | hero-landing-page |
+| landing | building | web/landing/ | 2h ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 1h ago | vocabulary-resolve-misses-methodology-derivation |
+| serve | building | internal/serve/ | 2h ago | vocabulary-resolve-misses-methodology-derivation |
 | (unassigned) | — | — | — | 121 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._

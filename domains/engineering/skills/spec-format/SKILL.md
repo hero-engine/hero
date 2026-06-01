@@ -271,6 +271,32 @@ All spec types use YAML frontmatter. The following fields are supported:
 | `parent` | No | Work specs | Slug of the initiative this spec belongs to. |
 | `child` | No | Initiatives | Array of spec slugs that are part of this initiative. |
 | `domain` | No | All | DSKG namespace partition (`engineering`, `pm`, future packs). New specs scaffolded by `/design` and `/diagnose` emit this from the active workspace domain. Legacy specs without the field resolve to the workspace default (`engineering` if no `domain:` is set in `hero.json`). |
+| `size` | No | Sized work specs (`feature`, `bug`, `enhancement`, `epic`, `initiative`) | Declared effort tier on the shared 6-tier ladder: `trivial`, `small`, `medium`, `large`, `x-large`, `giant`. Living field — set at design, updated on scope changes (authoring and mid-delivery). See the `spec-sizing` skill for the ladder, per-type bands, and the nudge protocol. |
+| `size_ack` | No | Sized work specs | One-shot acknowledgement that suppresses the design-time nudge when a spec stays at a high tier deliberately. Only `giant` is consumed today. See the `spec-sizing` skill. |
+
+### `size:` — a living field
+
+Treat `size:` like `status:` — agents are expected to keep it accurate.
+Updates happen at design time (`/design` stamps it from the design
+conversation), during authoring/refinement (the spec writer bumps it
+if scope grows), and mid-delivery (the delivery lead bumps it if
+reality outruns the declared tier).
+
+Brief frontmatter example:
+
+```yaml
+---
+title: "Add CSV export"
+type: feature
+status: planning
+size: medium
+---
+```
+
+Don't re-explain the ladder here — the canonical reference is the
+`spec-sizing` skill. It carries the 6-tier descriptions, per-type
+bands, nudge schedule, and the `size_ack: giant` acknowledgement
+protocol.
 
 ### Status transitions
 

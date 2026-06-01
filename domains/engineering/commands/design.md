@@ -5,6 +5,8 @@ description: Produce a spec for a feature, enhancement, or platform change.
 
 **Stamp the active domain in frontmatter.** New specs MUST emit a `domain:` field reflecting the workspace's active domain — run `hero domain` (or read the `domain` key from `.hero/hero.json`; empty means engineering) and write that value. This lands the spec under the correct DSKG namespace partition so PM and engineering content stay queryable without leaking. Skip the field on legacy-style additions to specs that predate the partition.
 
+**Stamp `size:` in frontmatter.** New specs of a sized type (`feature`, `bug`, `enhancement`, `epic`, `initiative`) MUST emit a `size:` field on the shared 6-tier ladder (`trivial | small | medium | large | x-large | giant`). The designer picks the tier from the design conversation using the per-type band as a guide; default to `medium` only when truly undetermined. Load the `spec-sizing` skill for the ladder, bands, and the design-time nudge phrasing — if the conversation lands at `large` or higher, fire the nudge from the skill before saving the spec so the user can `/split` or `/compose` first.
+
 Route this feature or enhancement request to the appropriate delivery lead for design.
 
 Determine whether this is product feature work or platform/migration work:
