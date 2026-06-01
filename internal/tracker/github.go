@@ -52,13 +52,24 @@ func (g *gitHub) Name() string { return "github" }
 
 // CreateIssue creates a GitHub issue from a spec. Returns the issue number as a string.
 func (g *gitHub) CreateIssue(s *spec.Spec) (string, error) {
+	labels := []string{
+		fmt.Sprintf("hero:%s", s.Type),
+		fmt.Sprintf("hero:%s", StatusLabel(s.Status)),
+	}
+	// Non-destructive size write on create: if the spec carries a
+	// declared size and the mapping (configured or shipped default)
+	// resolves it cleanly, append the mapped label. CreateIssue has
+	// nothing to overwrite, so the planner isn't invoked — the
+	// overwrite-safety check only matters on update.
+	if s.Size != "" {
+		if v, err := g.MapSize(s.Size); err == nil && v != "" {
+			labels = append(labels, v)
+		}
+	}
 	payload := map[string]interface{}{
-		"title": fmt.Sprintf("[%s] %s", s.Type, s.Title),
-		"body":  IssueBody(s),
-		"labels": []string{
-			fmt.Sprintf("hero:%s", s.Type),
-			fmt.Sprintf("hero:%s", StatusLabel(s.Status)),
-		},
+		"title":  fmt.Sprintf("[%s] %s", s.Type, s.Title),
+		"body":   IssueBody(s),
+		"labels": labels,
 	}
 
 	body, err := json.Marshal(payload)

@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -49,21 +50,49 @@ func (l *linear) Name() string { return "linear" }
 
 // CreateIssue creates a Linear issue from a spec. Returns the issue identifier.
 func (l *linear) CreateIssue(s *spec.Spec) (string, error) {
-	query := `mutation CreateIssue($teamId: String!, $title: String!, $description: String!) {
-		issueCreate(input: { teamId: $teamId, title: $title, description: $description }) {
-			success
-			issue {
-				id
-				identifier
-				url
+	// Non-destructive size write on create: if the spec carries a
+	// declared size and the mapping resolves it cleanly to a numeric
+	// estimate, include it in the mutation. CreateIssue has nothing to
+	// overwrite, so the planner isn't invoked — the overwrite-safety
+	// check only matters on update.
+	var sizeEstimate *float64
+	if s.Size != "" {
+		if v, err := l.MapSize(s.Size); err == nil && v != "" {
+			if n, perr := strconv.ParseFloat(v, 64); perr == nil {
+				sizeEstimate = &n
 			}
 		}
-	}`
+	}
 
+	var query string
 	variables := map[string]interface{}{
 		"teamId":      l.teamKey,
 		"title":       fmt.Sprintf("[%s] %s", s.Type, s.Title),
 		"description": IssueBody(s),
+	}
+	if sizeEstimate != nil {
+		query = `mutation CreateIssue($teamId: String!, $title: String!, $description: String!, $estimate: Float) {
+			issueCreate(input: { teamId: $teamId, title: $title, description: $description, estimate: $estimate }) {
+				success
+				issue {
+					id
+					identifier
+					url
+				}
+			}
+		}`
+		variables["estimate"] = *sizeEstimate
+	} else {
+		query = `mutation CreateIssue($teamId: String!, $title: String!, $description: String!) {
+			issueCreate(input: { teamId: $teamId, title: $title, description: $description }) {
+				success
+				issue {
+					id
+					identifier
+					url
+				}
+			}
+		}`
 	}
 
 	result, err := l.graphql(query, variables)

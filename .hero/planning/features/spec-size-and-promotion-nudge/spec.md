@@ -272,7 +272,15 @@ that.
 - WHEN `hero sync push` runs with `size_mapping` configured THE
   SYSTEM SHALL write the local tier to the mapped tracker field,
   unless a human-modified tracker value would be overwritten, in
-  which case it SHALL surface the conflict and stop.
+  which case it SHALL surface the conflict and stop. **(DONE for
+  the create path: Jira `customfield_*`, Linear `estimate`, and
+  GitHub `size/*` label are emitted by `CreateIssue` when the spec
+  carries `size:` and the mapping resolves; nothing to overwrite,
+  so the planner isn't invoked. The in-place update path (e.g.
+  Jira PUT `/issue/{id}` for an existing story-points value) is a
+  follow-up — it needs `UpdateSize` on the Tracker interface plus
+  per-adapter wiring, and the planner already guards overwrites
+  via `PlanSizePush`.)**
 - THE SYSTEM SHALL include size-drift items in `hero check` output
   and in `hero_warnings` MCP tool results.
 - THE SYSTEM SHALL document the size ladder, per-type bands, and
