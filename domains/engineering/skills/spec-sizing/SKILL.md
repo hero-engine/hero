@@ -257,3 +257,10 @@ The nudge is a loud linter warning, not a gate. Treat it that way.
   user's call, proceed.
 - **`kickoff-prompt`** — when rewriting a spec's `## Kickoff` after a
   size change, reflect the new tier (and the ack state if `giant`).
+- **`roadmap-review`** — the interactive triage surface for the drift
+  this skill detects. `hero size --check` reports drift; `/roadmap-review`
+  walks it one item at a time and executes the resolution CLI on confirm.
+- **`spec-composition`** — owns the canonical "multiple related specs"
+  phrasing. When the situation is a cluster of orphaned related specs
+  rather than a sizing issue, defer to that skill instead of stretching
+  the size ladder to cover it.
