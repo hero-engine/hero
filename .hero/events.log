@@ -90,3 +90,5 @@
 {"ts":"2026-06-01T03:56:53.63639Z","type":"peer.call.completed","agent":"hero","slug":"deliver-stamps-completed-at","message":"peer call ok mode=advisory target=hero-code kind=findings call_id=18b4d8da1254fb90233fc02645fc71df artifact=private-peer-result-excluded"}
 {"ts":"2026-06-01T14:31:40.797728Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"spec-size-and-promotion-nudge","message":"\"Spec Size Field and Promotion Nudge — A Living `size:` That Raises the Floor\""}
 {"ts":"2026-06-01T14:31:40.797841Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"spec-size-and-promotion-nudge","message":"status -\u003e completed"}
+{"ts":"2026-06-01T15:43:51.935395Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"tracker-update-size","message":"\"Tracker UpdateSize — close the size push loop\""}
+{"ts":"2026-06-01T15:43:51.93548Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"tracker-update-size","message":"status -\u003e completed"}
