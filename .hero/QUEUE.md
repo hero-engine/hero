@@ -6,25 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-01T15:43:26Z · 99 ready specs_
-
-## tracker-update-size — "Tracker UpdateSize — close the size push loop"
-_feature · delivering · horizon: now_
-
-You're picking up `tracker-update-size`. Parent spec is archived at
-`.hero/specs/spec-size-and-promotion-nudge/spec.md`; read its slice-5
-Approach for context. The planner (`PlanSizePush` in
-`internal/tracker/size_mapping.go`) is done and tested — your job is to
-consume it. Add `UpdateSize` to the `Tracker` interface, implement it on
-Jira / Linear / GitHub (mirror each adapter's existing `CreateIssue`
-size-write shape), and replace the warn-only branch in
-`internal/cli/sync.go` (lines 115–123) with a real call. Reuse the
-httptest harness from `internal/tracker/create_issue_size_test.go` for
-per-adapter tests. The tricky bit is GitHub label rotation — preserve
-non-size labels including `hero:*`. Linear estimation-disabled is a
-soft warning, not a hard error.
-
----
+_Generated: 2026-06-01T15:43:51Z · 98 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_

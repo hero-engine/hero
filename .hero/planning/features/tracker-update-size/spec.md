@@ -3,7 +3,7 @@ title: "Tracker UpdateSize — close the size push loop"
 slug: tracker-update-size
 type: feature
 domain: engineering
-status: delivering
+status: completed
 size: small
 relates-to: [spec-size-and-promotion-nudge]
 tags: [tracker, sync, size]
