@@ -354,6 +354,36 @@ func runCheck(cmd *cobra.Command, args []string) error {
 		addRow("install-drift", "pass", "no legacy install drift")
 	}
 
+	// Size drift — rate-limited. Per spec Implementation Notes, dump
+	// at most two summary lines (one for leaf, one for container)
+	// with counts and a hint pointing at `hero size --check` for the
+	// per-spec breakdown. Avoids drowning the health summary in
+	// dozens of per-spec rows.
+	sizeLeaf, sizeContainer := reportSizeDriftSummary(heroDir)
+	if sizeLeaf > 0 || sizeContainer > 0 {
+		if sizeLeaf > 0 {
+			fmt.Printf("Size drift (leaf): %d spec(s) with declared size out of sync with computed bucket. Run 'hero size --check' for detail.\n",
+				sizeLeaf)
+			addRow("size-drift-leaf", "warn",
+				fmt.Sprintf("%d spec(s) with leaf size drift; run 'hero size --check'", sizeLeaf))
+		} else {
+			addRow("size-drift-leaf", "pass", "no leaf size drift")
+		}
+		if sizeContainer > 0 {
+			fmt.Printf("Size drift (container): %d initiative(s) with declared size below child rollup. Run 'hero size --check' for detail.\n",
+				sizeContainer)
+			addRow("size-drift-container", "warn",
+				fmt.Sprintf("%d container(s) with size drift; run 'hero size --check'", sizeContainer))
+		} else {
+			addRow("size-drift-container", "pass", "no container size drift")
+		}
+		issues += sizeLeaf + sizeContainer
+		fmt.Println()
+	} else {
+		addRow("size-drift-leaf", "pass", "no leaf size drift")
+		addRow("size-drift-container", "pass", "no container size drift")
+	}
+
 	// Snapshot containment + override health.
 	snapIssues := reportSnapshotHealth(heroDir)
 	if snapIssues > 0 {

@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/sizing"
 	"github.com/hero-engine/hero/internal/spec"
 	"github.com/spf13/cobra"
 )
@@ -131,58 +132,64 @@ func runSizeSet(heroDir, slug, tier string) error {
 	return nil
 }
 
-// runSizeCheck walks all specs and reports leaf drift. Container
-// drift (declared vs aggregated child rollup) is intentionally not
-// implemented here — it ships in slice 3 alongside the rollup work.
-// Exits non-zero when any drift is found so CI can gate on it.
+// runSizeCheck walks all specs and reports both leaf drift
+// (declared vs computed bucket on feature/bug/enhancement specs) and
+// container drift (declared vs aggregated child rollup on
+// initiatives). Output rows are prefixed with the drift kind so the
+// two flavors are visually distinct. Exits non-zero when any drift
+// is found so CI can gate on it.
 func runSizeCheck(heroDir string) error {
 	specs, err := spec.Discover(heroDir)
 	if err != nil {
 		return fmt.Errorf("discovering specs: %w", err)
 	}
 
-	calibration := calibrate(specs)
+	leafDrifts, containerDrifts := sizing.CollectDrift(specs)
 
-	type drifted struct {
-		slug     string
-		declared string
-		computed string
-	}
-	var drifts []drifted
-
-	for _, s := range specs {
-		// Only check specs that carry a declared size.
-		if s.Size == "" {
-			continue
-		}
-		// Skip container types — their drift signal is declared
-		// vs aggregated child rollup, deferred to slice 3. Epic is
-		// referenced in the spec but not yet a registered Type; if
-		// it lands later, extend this guard.
-		if s.Type == spec.TypeInitiative {
-			continue
-		}
-		est := estimateSpec(s, calibration)
-		if est.Drift {
-			drifts = append(drifts, drifted{
-				slug:     s.Slug,
-				declared: s.Size,
-				computed: est.Bucket,
-			})
-		}
-	}
-
-	if len(drifts) == 0 {
+	if len(leafDrifts) == 0 && len(containerDrifts) == 0 {
 		fmt.Println("No size drift detected.")
 		return nil
 	}
 
-	sort.Slice(drifts, func(i, j int) bool { return drifts[i].slug < drifts[j].slug })
-	for _, d := range drifts {
-		fmt.Printf("%s  declared: %s  computed: %s\n", d.slug, d.declared, d.computed)
+	sort.Slice(leafDrifts, func(i, j int) bool { return leafDrifts[i].Slug < leafDrifts[j].Slug })
+	sort.Slice(containerDrifts, func(i, j int) bool { return containerDrifts[i].Slug < containerDrifts[j].Slug })
+
+	for _, d := range leafDrifts {
+		fmt.Printf("[leaf]      %s  declared: %s  computed: %s\n",
+			d.Slug, d.Declared, d.Bucket)
 	}
-	fmt.Printf("\n%d spec(s) with size drift.\n", len(drifts))
-	return fmt.Errorf("size drift found in %d spec(s)", len(drifts))
+	for _, d := range containerDrifts {
+		declared := d.Declared
+		if declared == "" {
+			declared = "(unset)"
+		}
+		if d.Indeterminate {
+			fmt.Printf("[container] %s  declared: %s  rollup: (indeterminate, %d child(ren) missing size)\n",
+				d.Slug, declared, d.ChildCount)
+			continue
+		}
+		fmt.Printf("[container] %s  declared: %s  rollup: %s  (%d child(ren))\n",
+			d.Slug, declared, d.Rollup, d.ChildCount)
+	}
+
+	total := len(leafDrifts) + len(containerDrifts)
+	fmt.Printf("\n%d spec(s) with size drift  (%d leaf, %d container).\n",
+		total, len(leafDrifts), len(containerDrifts))
+	return fmt.Errorf("size drift found in %d spec(s)", total)
+}
+
+// reportSizeDriftSummary is the helper consumed by `hero check`. It
+// runs the same collector as `hero size --check` but returns only the
+// counts — callers print their own rate-limited summary lines rather
+// than dumping per-spec rows into the health output. Errors during
+// discovery are non-fatal: the caller skips the rows.
+func reportSizeDriftSummary(heroDir string) (leafCount, containerCount int) {
+	specs, err := spec.Discover(heroDir)
+	if err != nil {
+		return 0, 0
+	}
+	leaf, container := sizing.CollectDrift(specs)
+	return len(leaf), len(container)
 }
 
 // validateSizeTier mirrors the spec package's validateSize but for

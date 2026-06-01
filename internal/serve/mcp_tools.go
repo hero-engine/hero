@@ -34,6 +34,7 @@ import (
 	"github.com/hero-engine/hero/internal/retrieval"
 	"github.com/hero-engine/hero/internal/score"
 	"github.com/hero-engine/hero/internal/search"
+	"github.com/hero-engine/hero/internal/sizing"
 	"github.com/hero-engine/hero/internal/skills"
 	"github.com/hero-engine/hero/internal/spec"
 	"github.com/hero-engine/hero/internal/tracking"
@@ -2582,6 +2583,34 @@ func (s *MCPServer) toolWarnings(args map[string]interface{}) (string, error) {
 	}
 	if conflictPairs > 0 {
 		warnings = append(warnings, fmt.Sprintf("**%d file conflict pair(s)** detected among in-flight specs. Run `hero_conflicts` for details.", conflictPairs))
+	}
+
+	// Size drift — emit one warning per drifted spec, individually
+	// actionable. Unlike `hero check` (which rate-limits to two
+	// summary lines for human readability), MCP consumers benefit
+	// from per-spec entries: a model can route each one to the right
+	// next action. Spec: spec-size-and-promotion-nudge.
+	specs, _ := spec.Discover(s.heroDir)
+	leafDrift, containerDrift := sizing.CollectDrift(specs)
+	for _, d := range leafDrift {
+		warnings = append(warnings, fmt.Sprintf(
+			"**Size drift (leaf)** `%s`: declared `%s`, computed `%s`. Run `hero size %s <tier>` to update or check whether scope grew.",
+			d.Slug, d.Declared, d.Bucket, d.Slug))
+	}
+	for _, d := range containerDrift {
+		declared := d.Declared
+		if declared == "" {
+			declared = "(unset)"
+		}
+		if d.Indeterminate {
+			warnings = append(warnings, fmt.Sprintf(
+				"**Size drift (container)** `%s`: rollup indeterminate (%d child(ren) missing both declared and computable size). Declared: `%s`.",
+				d.Slug, d.ChildCount, declared))
+			continue
+		}
+		warnings = append(warnings, fmt.Sprintf(
+			"**Size drift (container)** `%s`: declared `%s` < child rollup `%s` (%d child(ren)). Bump declared via `hero size %s %s`.",
+			d.Slug, declared, d.Rollup, d.ChildCount, d.Slug, d.Rollup))
 	}
 
 	if len(warnings) == 0 {
