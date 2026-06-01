@@ -3,7 +3,7 @@ title: "Spec Size Field and Promotion Nudge — A Living `size:` That Raises the
 slug: spec-size-and-promotion-nudge
 type: feature
 domain: engineering
-status: ready
+status: completed
 size: large
 created: 2026-05-31
 horizon: now
@@ -37,21 +37,20 @@ reality have drifted apart.
 ## Kickoff
 
 ```
-Pick up spec spec-size-and-promotion-nudge. Living `size:` frontmatter
-(trivial/small/medium/large/x-large/giant) on feature/bug/enhancement/
-epic/initiative. Shared ladder, per-type bands documented in core/
-spec-types/*.md. Wire validator (internal/spec/spec.go), augment `hero
-estimate` to show declared vs computed (internal/cli/cost.go: existing
-buckets already cover 5 of 6 — add `giant`). Add `hero size <slug>` CLI
-to set/get. Drift detection: leaf = declared vs computed; container =
-declared vs aggregated child rollup (internal/snapshot/rollup.go).
-Surface via `hero check` and `hero_warnings`. Bidirectional tracker
-sync mapping in hero.json (`tracker.size_mapping`) — never silently
-overwrite. New skill .claude/skills/spec-sizing/SKILL.md loaded by both
-delivery leads. Nudge intensity scales with tier AND tracker
-capability (no tracker = aggressive; strong-hierarchy tracker =
-higher threshold, offers to create parent in tracker too). Read this
-spec; then start with the schema + validator slice.
+spec-size-and-promotion-nudge — DELIVERED across 5 slices + AC#16
+follow-through (commits fc982e7, 985e95d, 705130f, 7d5dc1a, 3d0b942,
+3753bdf). Living `size:` field + size_ack lands on feature/bug/epic/
+initiative; `hero size` CLI + drift detection in `hero check` /
+`hero_warnings`; `spec-sizing` skill drives delivery-lead nudges per
+tier; tracker mapping wired bidirectionally with non-destructive
+CreateIssue payload writes on Jira/Linear/GitHub. One residual:
+in-place tracker UpdateSize (Jira PUT, Linear issueUpdate, GitHub
+label rotation) needs a new interface method + per-adapter handlers
+— spawned as a follow-up. To pick that up: extend Tracker interface
+with UpdateSize(issueID, localTier), wire into runSync replacing the
+warn-only PlanSizePush hint, add the conflict gate via the existing
+PlanSizePush logic. Audit report at
+.hero/planning/features/spec-size-and-promotion-nudge/delivery-audit.md.
 ```
 
 ## Problem
