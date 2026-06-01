@@ -142,8 +142,14 @@ many files and require careful coordination.
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if !strings.Contains(out, "EFFORT") {
-		t.Error("expected table header")
+	if !strings.Contains(out, "COMPUTED") {
+		t.Error("expected COMPUTED column header")
+	}
+	if !strings.Contains(out, "DECLARED") {
+		t.Error("expected DECLARED column header")
+	}
+	if !strings.Contains(out, "DRIFT") {
+		t.Error("expected DRIFT column header")
 	}
 	if !strings.Contains(out, "TOTAL") {
 		t.Error("expected total row")
@@ -287,8 +293,15 @@ func TestBucketFromPoints(t *testing.T) {
 		{9.9, effortMedium},
 		{10.0, effortLarge},
 		{19.9, effortLarge},
+		// x-large floor is the same as before (regression guard for
+		// existing calibration cache + hero_velocity history).
 		{20.0, effortXLarge},
-		{100.0, effortXLarge},
+		{39.9, effortXLarge},
+		// `giant` lands at ~2x x-large so existing x-large specs
+		// don't all rebucket on rollout. See spec
+		// spec-size-and-promotion-nudge, Risks.
+		{40.0, effortGiant},
+		{100.0, effortGiant},
 	}
 
 	for _, tt := range tests {
@@ -296,6 +309,45 @@ func TestBucketFromPoints(t *testing.T) {
 		if result != tt.bucket {
 			t.Errorf("bucketFromPoints(%.1f) = %q, want %q", tt.points, result, tt.bucket)
 		}
+	}
+}
+
+// TestLeafDrift_DriftSignals covers the declared-vs-computed
+// detection logic at the unit level: matching → no drift; differing
+// → drift; unset declared → no drift signal.
+func TestLeafDrift_DriftSignals(t *testing.T) {
+	cases := []struct {
+		name      string
+		declared  string
+		bucket    string
+		wantDrift bool
+	}{
+		{"match-medium", "medium", "medium", false},
+		{"differ-small-vs-large", "small", "large", true},
+		{"differ-large-vs-x-large", "large", "x-large", true},
+		{"unset-no-drift", "", "large", false},
+		{"unset-no-drift-trivial", "", "trivial", false},
+		{"match-giant", "giant", "giant", false},
+		{"differ-x-large-vs-giant", "x-large", "giant", true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			s := &spec.Spec{Size: c.declared}
+			est := costEstimate{Bucket: c.bucket}
+			got := LeafDrift(s, est)
+			if c.wantDrift && got == nil {
+				t.Fatalf("expected drift, got nil")
+			}
+			if !c.wantDrift && got != nil {
+				t.Fatalf("expected no drift, got %+v", got)
+			}
+			if c.wantDrift && got != nil {
+				if got.Declared != c.declared || got.Bucket != c.bucket || !got.Drift {
+					t.Errorf("drift fields wrong: declared=%q bucket=%q drift=%v",
+						got.Declared, got.Bucket, got.Drift)
+				}
+			}
+		})
 	}
 }
 
