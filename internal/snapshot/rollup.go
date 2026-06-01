@@ -536,6 +536,225 @@ func rollupStale(assignments []SpecAssignment, now time.Time, cutoff time.Durati
 	return out
 }
 
+// --- Size rollup + container drift ---------------------------------
+//
+// Container drift compares an initiative's declared `size:` against
+// the aggregated rollup of its children's sizes. Each child contributes
+// its own declared `size:` if present, otherwise the computed bucket
+// (caller-supplied via SizeProvider). Children with neither are
+// "indeterminate" — they make the whole rollup indeterminate rather
+// than silently understated.
+//
+// See spec spec-size-and-promotion-nudge:
+//   - Approach §"Drift detection" — declared ≥ rollup is the rule
+//   - Risks §"Container-rollup correctness on partial initiatives" —
+//     missing-both must not be treated as zero.
+
+// SizeProvider returns the computed-effort bucket for a spec, or "" if
+// no estimate is available (e.g. spec couldn't be analyzed). The CLI
+// wires this to estimateSpec; tests can stub it.
+type SizeProvider func(*spec.Spec) string
+
+// sizeTierMidpoints maps each tier on the shared 6-tier ladder to a
+// representative point value used when summing child contributions to
+// produce a container-level tier. Values are intentionally roughly
+// log-spaced — they sit near the midpoint of each tier's range in
+// bucketFromPoints (internal/cli/cost.go) so re-bucketing the sum
+// lands back at the corresponding tier when one child carries the
+// container, and naturally promotes when many smaller children
+// accumulate.
+//
+//	trivial < 2 → 1
+//	small   2-4 → 3
+//	medium  5-9 → 7
+//	large   10-19 → 14
+//	x-large 20-39 → 28
+//	giant   40+   → 60
+var sizeTierMidpoints = map[string]float64{
+	"trivial": 1,
+	"small":   3,
+	"medium":  7,
+	"large":   14,
+	"x-large": 28,
+	"giant":   60,
+}
+
+// sizeTierOrder is the canonical ordering of the 6-tier ladder. The
+// index doubles as the comparison key: declared ≥ rollup iff
+// order[declared] ≥ order[rollup].
+var sizeTierOrder = map[string]int{
+	"trivial": 0,
+	"small":   1,
+	"medium":  2,
+	"large":   3,
+	"x-large": 4,
+	"giant":   5,
+}
+
+// containerBucketFromPoints mirrors internal/cli/cost.go's
+// bucketFromPoints. It lives here rather than imported so the snapshot
+// package does not pull in the CLI; the thresholds must stay in sync.
+// If cost.go's thresholds change, update this too.
+func containerBucketFromPoints(points float64) string {
+	switch {
+	case points < 2:
+		return "trivial"
+	case points < 5:
+		return "small"
+	case points < 10:
+		return "medium"
+	case points < 20:
+		return "large"
+	case points < 40:
+		return "x-large"
+	default:
+		return "giant"
+	}
+}
+
+// ContainerRollup is the output of aggregating a container's children
+// into a single tier. Indeterminate is true when at least one child
+// had neither a declared size nor a computable estimate — the rollup
+// cannot honestly be reported as smaller than reality in that case.
+type ContainerRollup struct {
+	Tier          string // "" when Indeterminate or no children
+	Points        float64
+	ChildCount    int
+	Indeterminate bool
+}
+
+// RollupChildSizes sums child sizes into a container tier. Each child
+// contributes its declared `size:` (preferred) or its computed bucket
+// from sizeFn. If both are missing, the rollup is flagged
+// Indeterminate. Empty children list returns the zero ContainerRollup
+// (no drift possible).
+func RollupChildSizes(children []*spec.Spec, sizeFn SizeProvider) ContainerRollup {
+	var out ContainerRollup
+	if len(children) == 0 {
+		return out
+	}
+	for _, c := range children {
+		if c == nil {
+			continue
+		}
+		out.ChildCount++
+		tier := c.Size
+		if tier == "" && sizeFn != nil {
+			tier = sizeFn(c)
+		}
+		if tier == "" {
+			// No declared, no computed — refuse to silently understate.
+			out.Indeterminate = true
+			continue
+		}
+		pts, ok := sizeTierMidpoints[tier]
+		if !ok {
+			// Unknown tier string — shouldn't happen post-validation,
+			// but treat as indeterminate rather than zero.
+			out.Indeterminate = true
+			continue
+		}
+		out.Points += pts
+	}
+	if out.Indeterminate {
+		return out
+	}
+	if out.ChildCount == 0 {
+		return out
+	}
+	out.Tier = containerBucketFromPoints(out.Points)
+	return out
+}
+
+// ContainerDriftReport names a drift between a container spec's
+// declared size and its child rollup. Drift fires only when the
+// rollup is determinate and the declared tier is strictly less than
+// the rollup tier (rule: declared ≥ rollup).
+type ContainerDriftReport struct {
+	Slug          string
+	Declared      string // may be ""
+	Rollup        string // computed container tier
+	ChildCount    int
+	Indeterminate bool // rollup couldn't be computed; declared not flagged
+}
+
+// ContainerDrift checks whether a container spec's declared size has
+// fallen behind its child rollup. Returns nil when:
+//   - no children (empty rollup; can't drift)
+//   - rollup is indeterminate (can't honestly compare; skip)
+//   - declared ≥ rollup
+//
+// Returns a drift report when declared < rollup, or when declared is
+// unset AND rollup is non-trivial (the container has real scope and
+// should declare something).
+func ContainerDrift(s *spec.Spec, children []*spec.Spec, sizeFn SizeProvider) *ContainerDriftReport {
+	if s == nil {
+		return nil
+	}
+	rollup := RollupChildSizes(children, sizeFn)
+	if rollup.ChildCount == 0 {
+		return nil
+	}
+	if rollup.Indeterminate {
+		// Per spec Risks: don't silently understate. We surface this as
+		// a drift report with Indeterminate=true so callers can flag
+		// "rollup indeterminate" rather than dropping the signal — but
+		// only when the container itself carries no declared size to
+		// anchor on. If declared is set, trust the user's declaration.
+		if s.Size == "" {
+			return &ContainerDriftReport{
+				Slug:          s.Slug,
+				Declared:      "",
+				Rollup:        "",
+				ChildCount:    rollup.ChildCount,
+				Indeterminate: true,
+			}
+		}
+		return nil
+	}
+	declaredOrder, declaredKnown := sizeTierOrder[s.Size]
+	rollupOrder := sizeTierOrder[rollup.Tier]
+	if !declaredKnown {
+		// declared unset — flag as drift so the user is prompted to
+		// stamp it (container has real, determinable scope).
+		return &ContainerDriftReport{
+			Slug:       s.Slug,
+			Declared:   "",
+			Rollup:     rollup.Tier,
+			ChildCount: rollup.ChildCount,
+		}
+	}
+	if declaredOrder >= rollupOrder {
+		return nil
+	}
+	return &ContainerDriftReport{
+		Slug:       s.Slug,
+		Declared:   s.Size,
+		Rollup:     rollup.Tier,
+		ChildCount: rollup.ChildCount,
+	}
+}
+
+// BuildParentMap reconstructs the initiative→children map used by
+// rollupInitiatives, exposed for container-drift consumers (CLI,
+// MCP) that need to walk the same hierarchy without re-implementing
+// the relation-kind logic.
+func BuildParentMap(allSpecs []*spec.Spec) map[string][]*spec.Spec {
+	parentTo := map[string][]*spec.Spec{}
+	for _, s := range allSpecs {
+		if s == nil {
+			continue
+		}
+		for _, rel := range s.Relations {
+			if rel.Kind == "parent" || rel.Kind == "child-of" {
+				target := normalizeParentTarget(rel.Target)
+				parentTo[target] = append(parentTo[target], s)
+			}
+		}
+	}
+	return parentTo
+}
+
 func rollupAgedBugs(allSpecs []*spec.Spec, now time.Time, cutoff time.Duration) []AgedBug {
 	var out []AgedBug
 	for _, s := range allSpecs {

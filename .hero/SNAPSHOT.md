@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-01T05:23:17Z · projected from 282 source nodes_
+_Last refreshed: 2026-06-01T05:32:40Z · projected from 282 source nodes_
 
 ## Surfaces
 

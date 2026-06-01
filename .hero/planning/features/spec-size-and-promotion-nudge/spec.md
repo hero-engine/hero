@@ -322,9 +322,18 @@ that.
 
 - `internal/snapshot/rollup.go` — extend the existing
   initiative→children rollup to aggregate child `size:` values into a
-  computed container size; expose for the drift check.
+  computed container size; expose for the drift check. **(slice 3:
+  added `RollupChildSizes`, `ContainerDrift`, `BuildParentMap`, and
+  the tier→midpoint sum-and-rebucket aggregation per spec rules.)**
 - `internal/cli/cost.go` (drift helpers) — `LeafDrift(spec) *Drift`
-  and `ContainerDrift(spec, rollup) *Drift`.
+  and `ContainerDrift(spec, rollup) *Drift`. **(slice 2: `LeafDrift`;
+  slice 3: `ContainerDrift` lives in `internal/snapshot` to keep the
+  snapshot package callable from MCP without an import cycle.)**
+- `internal/sizing/sizing.go` (new, slice 3) — shared backend so the
+  CLI and MCP surfaces compute drift identically. Holds
+  `CollectDrift`, `EstimateSpec`, `BucketFromPoints`, and the effort-
+  tier constants previously duplicated between cli/cost.go and the
+  CLI-only `costEstimate` struct.
 
 ### MCP surface
 
