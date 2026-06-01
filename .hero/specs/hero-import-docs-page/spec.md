@@ -6,6 +6,7 @@ severity: low
 tags: [docs, cli, import, knowledge]
 created: 2026-05-18
 relates-to: [hero-import-directory-unsupported]
+completed_at: 2026-05-18T22:48:07Z
 ---
 
 # Document `hero import` — URL, file, and directory ingest

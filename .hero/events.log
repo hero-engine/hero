@@ -80,3 +80,5 @@
 {"ts":"2026-06-01T03:07:26.970077Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"mockup-renderer-selection-swiftui-bias","message":"status -\u003e completed"}
 {"ts":"2026-06-01T03:07:27.647249Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"native-mockup-rendering","message":"\"Native Mockup Rendering — Real Platform UI from /mock\""}
 {"ts":"2026-06-01T03:07:27.647352Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"native-mockup-rendering","message":"status -\u003e completed"}
+{"ts":"2026-06-01T03:37:40.464153Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"deliver-stamps-completed-at","message":"\"Stamp completed_at into spec frontmatter on status transition\""}
+{"ts":"2026-06-01T03:37:40.464233Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"deliver-stamps-completed-at","message":"status -\u003e completed"}

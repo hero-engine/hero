@@ -5,6 +5,7 @@ type: feature
 status: completed
 priority: high
 horizon: now
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 # Async Delivery

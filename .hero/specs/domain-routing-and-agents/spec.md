@@ -14,6 +14,7 @@ depends-on:
   - domain-plugin-architecture
 horizon: next
 smoke: deferred
+completed_at: 2026-05-19T22:38:13Z
 ---
 
 ## Kickoff

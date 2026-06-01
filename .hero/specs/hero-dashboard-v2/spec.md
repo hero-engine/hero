@@ -19,6 +19,7 @@ relations:
     kind: superseded-by
 horizon: next
 smoke: deferred
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 > **Replaced by the [Hero Surface Architecture](../../initiatives/hero-surface-architecture/spec.md) initiative.** The v2 page catalog is split across the five new homes: Jobs/Automations → [hero-agents-home](../hero-agents-home/spec.md), Specs/Bugs → [hero-work-home](../hero-work-home/spec.md), Team/Velocity → [hero-people-and-roi-home](../hero-people-and-roi-home/spec.md), Knowledge → [hero-knowledge-home](../hero-knowledge-home/spec.md), Overview → [hero-now-home](../hero-now-home/spec.md). Visual grammar reframed as a web app (top nav + scrolling content, not a desktop dashboard). This spec is preserved for history.

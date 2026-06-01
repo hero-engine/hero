@@ -7,6 +7,7 @@ severity: medium
 priority: high
 tags: [install, trust, claude, permissions, onboarding]
 created: 2026-05-12
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 ## Kickoff

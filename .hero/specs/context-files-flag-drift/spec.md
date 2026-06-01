@@ -6,6 +6,7 @@ severity: medium
 root_cause_class: code
 tags: [cli, drift, docs, context, peering]
 relates-to: [recap-register-missing]
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 # `hero context --files` advertised in CLI output and docs but the flag lives on `imports`

@@ -6,6 +6,7 @@ status: completed
 tags: [cli, analytics, estimation]
 created: 2026-04-12
 horizon: now
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 ## Goal

@@ -27,6 +27,7 @@ relations:
   - target: sprint-planner
     kind: child
 horizon: now
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 ## Goal

@@ -4,6 +4,7 @@ status: completed
 tags: [serve, daemon, dashboard, multi-project, lifecycle]
 relates-to: [hero-team-server, monorepo-satellite-installs]
 created: 2026-05-19
+completed_at: 2026-05-19T22:50:11Z
 ---
 # hero serve — multi-project lifecycle and dashboard awareness
 

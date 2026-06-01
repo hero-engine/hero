@@ -12,6 +12,7 @@ relations:
   - target: hero-serve-project-section-mvp
     kind: depends-on
 horizon: now
+completed_at: 2026-05-20T05:29:22Z
 ---
 
 # `hero serve` Project Section — Phase 5 Health Cache and Peer Probes

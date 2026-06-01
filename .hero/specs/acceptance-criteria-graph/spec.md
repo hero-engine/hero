@@ -39,6 +39,7 @@ smoke:
   script: scripts/smoke/acceptance-criteria-graph.sh
   expects: [acceptance-criteria-graph:AC-1, acceptance-criteria-graph:AC-2, acceptance-criteria-graph:AC-3, acceptance-criteria-graph:AC-4, acceptance-criteria-graph:AC-6]
   runs_on: [commit-touches:internal/spec/acceptance*.go, commit-touches:internal/cli/ac*.go, nightly]
+completed_at: 2026-05-18T21:50:57Z
 ---
 
 ## Goal

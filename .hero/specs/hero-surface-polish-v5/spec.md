@@ -11,6 +11,7 @@ relations:
   - target: hero-surface-polish-v4
     kind: relates-to
 horizon: now
+completed_at: 2026-05-18T17:57:21Z
 ---
 
 ## Context

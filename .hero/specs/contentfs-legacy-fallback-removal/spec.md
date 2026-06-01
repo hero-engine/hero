@@ -15,6 +15,7 @@ relations:
     kind: depends_on
 horizon: next
 smoke: deferred
+completed_at: 2026-05-19T16:59:21Z
 ---
 
 ## Kickoff

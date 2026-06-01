@@ -66,8 +66,11 @@ func shippedFromSpecs(heroDir string) []ShippedRow {
 			completed = append(completed, s)
 		}
 	}
+	// Prefer the frontmatter-stamped completion time for both sort
+	// order and the relative-age chip. Fall back to ModifiedAt (file
+	// mtime) for legacy specs that pre-date the stamp.
 	sort.SliceStable(completed, func(i, j int) bool {
-		return completed[i].ModifiedAt.After(completed[j].ModifiedAt)
+		return shippedCompletionTime(completed[i]).After(shippedCompletionTime(completed[j]))
 	})
 	if len(completed) > 6 {
 		completed = completed[:6]
@@ -75,12 +78,26 @@ func shippedFromSpecs(heroDir string) []ShippedRow {
 	rows := make([]ShippedRow, 0, len(completed))
 	for _, s := range completed {
 		rows = append(rows, ShippedRow{
-			Time:  prettyAgeSince(s.ModifiedAt),
+			Time:  prettyAgeSince(shippedCompletionTime(s)),
 			Slug:  s.Slug,
 			Title: fallbackTitle(s),
 		})
 	}
 	return rows
+}
+
+// shippedCompletionTime returns the canonical completion timestamp for
+// a completed spec: the frontmatter-stamped `completed_at:` when
+// present, otherwise the file modification time. Centralized so the
+// fallback rule stays in lockstep between sort order and rendered age.
+func shippedCompletionTime(s *spec.Spec) time.Time {
+	if s == nil {
+		return time.Time{}
+	}
+	if !s.CompletedAt.IsZero() {
+		return s.CompletedAt
+	}
+	return s.ModifiedAt
 }
 
 // prettyAge mirrors the Now-home idiom for the events.feed input shape.

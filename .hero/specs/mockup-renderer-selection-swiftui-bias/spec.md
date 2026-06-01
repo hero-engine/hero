@@ -8,6 +8,7 @@ severity: major
 domain: engineering
 tags: [mockups, /mock, ui-designer, swiftui, agent-discipline]
 created: 2026-05-31
+completed_at: 2026-06-01T03:09:16Z
 ---
 
 # Mockup renderer selection biases to HTML on Swift projects

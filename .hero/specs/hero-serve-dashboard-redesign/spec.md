@@ -4,6 +4,7 @@ status: completed
 tags: [serve, dashboard, ui, now-page, work-page, activity-feed, themes]
 relates-to: [hero-serve-multi-project, knowledge-flywheel]
 created: 2026-05-19
+completed_at: 2026-05-20T00:18:35Z
 ---
 # hero serve dashboard redesign — Now and Work pages
 

@@ -12,6 +12,7 @@ relations:
   - target: hero-serve-project-section-mvp
     kind: depends-on
 horizon: now
+completed_at: 2026-05-20T04:48:02Z
 ---
 
 # `hero serve` Project Section — Phase 3 Operations Runner

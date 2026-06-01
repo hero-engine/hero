@@ -23,6 +23,7 @@ depends-on:
   - unified-spec-type-model
 horizon: next
 smoke: deferred
+completed_at: 2026-05-19T14:11:08Z
 ---
 
 ## Goal

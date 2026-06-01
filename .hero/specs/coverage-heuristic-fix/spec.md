@@ -26,6 +26,7 @@ principles_check: |
   too strict and starts under-reporting; mitigated by keeping the
   one-keyword fallback when test-name extraction yields nothing, plus
   surfacing matched test names so the agent can sanity-check.
+completed_at: 2026-05-18T21:50:57Z
 ---
 
 ## Goal

@@ -7,6 +7,7 @@ severity: medium
 root_cause_class: design
 tags: [cli, recap, slash-commands, documentation, compaction, domain-pack]
 created: 2026-05-15
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 # `hero recap register/unregister` referenced in slash commands but never implemented

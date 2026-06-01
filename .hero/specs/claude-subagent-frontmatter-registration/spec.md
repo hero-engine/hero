@@ -8,6 +8,7 @@ priority: high
 created: 2026-05-12
 completed: 2026-05-12
 tags: [install, claude, subagents, agents, registration, frontmatter, testing-gap]
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 # Claude Subagent Frontmatter Registration — Hero Agents Invisible to Task Tool

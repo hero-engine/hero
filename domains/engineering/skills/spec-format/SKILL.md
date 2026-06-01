@@ -263,6 +263,7 @@ All spec types use YAML frontmatter. The following fields are supported:
 | `scope` | Yes (conventions) | Convention | Array of glob patterns identifying which files this convention applies to. Used by `hero relevant` to inject relevant conventions. |
 | `tags` | No | All | Array of tags for search and filtering. Use lowercase, hyphenated terms. |
 | `claimed_by` | No | Work specs | Who is currently working on this spec. Set via `hero spec claim`. |
+| `completed_at` | No | Work specs | RFC 3339 UTC timestamp recording when `status` flipped to `completed`. Hero writes this automatically at status-transition time — agents and humans should not hand-write it. The reader also accepts `completedAt:` for tolerance, but only `completed_at:` is ever produced. Historical specs without the field can be backfilled from git history via `hero admin backfill-completed-at`. |
 | `created` | No | All | ISO 8601 date when the spec was created. |
 | `relates-to` | No | All | Array of spec slugs that are related but not dependent. |
 | `depends-on` | No | All | Array of spec slugs that must be completed before this spec can proceed. |

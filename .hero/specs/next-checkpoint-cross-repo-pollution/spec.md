@@ -19,6 +19,7 @@ received_from:
 relations:
   - target: hero-context-layer2-optimize
     kind: surfaced-by
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 # hero next checkpoint accumulates cross-repo narrative sections in .local.md and bleeds user-graph reads across repos

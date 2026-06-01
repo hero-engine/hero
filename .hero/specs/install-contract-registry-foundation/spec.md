@@ -13,6 +13,7 @@ relations:
     kind: child
   - target: claude-subagent-frontmatter-registration
     kind: builds-on
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 # Install Contract Registry Foundation — Per-Target Validators for Installed Output

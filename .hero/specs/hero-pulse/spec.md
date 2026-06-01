@@ -14,6 +14,7 @@ relations:
   - target: git-hook-integration
     kind: related
 horizon: now
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 ## Goal

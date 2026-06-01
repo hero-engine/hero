@@ -13,6 +13,7 @@ relations:
   - target: hero-team-server
     kind: related
 horizon: now
+completed_at: 2026-05-20T05:29:22Z
 ---
 
 # `hero serve` Project Section — Per-Project Info, Utilities, and Operations Page

@@ -252,6 +252,11 @@ verify auto-archives a completed spec to `.hero/specs/<slug>/`, so you
 don't need a separate `hero spec complete` step. The async runner does the
 same auto-archive at the tail of every successful agent delivery.
 
+Do not hand-write `completed_at:` when you flip the status — `hero spec
+verify` stamps the canonical timestamp automatically (RFC 3339 UTC) so
+downstream consumers like the Sprint Dashboard read an authoritative
+value. Hand-writing the field is harmless (idempotent) but unnecessary.
+
 The Completion Ledger replaces the older "implementation summary" pattern.
 Soft prose summaries that gloss skipped or partial work are explicitly
 out — the ledger is the artifact of record.

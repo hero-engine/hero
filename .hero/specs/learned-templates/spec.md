@@ -10,6 +10,7 @@ relations:
   - target: hero-killer-features
     kind: parent
 horizon: now
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 ## Goal

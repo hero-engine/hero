@@ -200,6 +200,14 @@ func autoArchiveIfCompleted(specPath, heroDir string) (bool, error) {
 	if s.Status != spec.StatusCompleted {
 		return false, nil
 	}
+	// Safety net for the model-driven /deliver path: the agent rewrites
+	// frontmatter directly with its file edit tool, then runs `hero spec
+	// verify` — which lands here. If the agent (or a human hand-edit)
+	// didn't add `completed_at:`, stamp it now so no completed spec ever
+	// ends up under .hero/specs/ without the field. Best-effort: a write
+	// failure logs to stderr and continues, matching the rest of this
+	// function's error stance.
+	stampCompletedAtFile(specPath)
 	if isAlreadyInSpecsDir(specPath, heroDir) {
 		// Emit anyway when status is completed — covers the case where
 		// the spec was already under specs/ but the event was missed on
@@ -220,7 +228,32 @@ func autoArchiveIfCompleted(specPath, heroDir string) (bool, error) {
 	return moved, nil
 }
 
+// stampCompletedAtFile re-reads the spec file at specPath and, when
+// `completed_at:` is missing, writes back the same content with the
+// canonical stamp added. Best-effort: any error is logged to stderr
+// and swallowed, matching autoArchiveIfCompleted's non-fatal stance
+// on auxiliary work.
+func stampCompletedAtFile(specPath string) {
+	data, err := os.ReadFile(specPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not read spec for completed_at stamp: %v\n", err)
+		return
+	}
+	original := string(data)
+	stamped := spec.StampCompletedAt(original)
+	if stamped == original {
+		return
+	}
+	if err := os.WriteFile(specPath, []byte(stamped), 0o644); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not stamp completed_at: %v\n", err)
+	}
+}
+
 // updateFrontmatterStatus rewrites the spec file with an updated status field.
+// When the new status is `completed`, the canonical `completed_at:` stamp
+// is also written on the same buffer so the field lands in the same write
+// as the status change (no second pass needed). The stamp is idempotent —
+// rerunning on an already-stamped spec preserves the original value.
 func updateFrontmatterStatus(path, newStatus string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -229,6 +262,9 @@ func updateFrontmatterStatus(path, newStatus string) error {
 
 	content := string(data)
 	updated := spec.SetFrontmatterField(content, "status", newStatus)
+	if newStatus == "completed" {
+		updated = spec.StampCompletedAt(updated)
+	}
 	return os.WriteFile(path, []byte(updated), 0o644)
 }
 

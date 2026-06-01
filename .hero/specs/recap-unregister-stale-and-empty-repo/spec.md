@@ -7,6 +7,7 @@ root_cause_class: process  # Defect A — cleanup process missed surfaces; Defec
 tags: [recap, slash-commands, install, dx, fresh-repo]
 relates-to: [recap-register-missing, context-files-flag-drift]
 created: 2026-05-18
+completed_at: 2026-05-18T19:28:42Z
 ---
 
 # `hero recap unregister` references linger after removal; `hero recap` errors hard on a fresh repo with no commits

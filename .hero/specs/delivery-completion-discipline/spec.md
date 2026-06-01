@@ -8,6 +8,7 @@ created: 2026-05-22
 domain: engineering
 tags: [agent-reliability, deliver, engineer, instructions, completion]
 relates-to: [premise-interrogation, agent-reliability, next-as-projection]
+completed_at: 2026-05-22T19:19:31Z
 ---
 
 # Delivery Completion Discipline — Stop Agents from Silently Narrowing Scope, Punting Hard Items, or Yielding Early

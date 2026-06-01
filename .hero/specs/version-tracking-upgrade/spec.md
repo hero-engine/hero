@@ -7,6 +7,7 @@ created: 2026-04-13
 milestone: v0.2
 tags: [init, install, upgrade, versioning]
 horizon: now
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 # Version Tracking & Project Upgrade

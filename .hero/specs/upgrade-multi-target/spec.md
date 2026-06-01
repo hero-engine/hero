@@ -12,6 +12,7 @@ relations:
     kind: parent
 horizon: now
 smoke: deferred
+completed_at: 2026-05-18T21:50:57Z
 ---
 
 ## Captured

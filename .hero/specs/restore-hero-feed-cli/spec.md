@@ -22,6 +22,7 @@ principles_check: |
   surgical: restore the reader that was deleted before its claimed recap
   replacement existed.
 horizon: now
+completed_at: 2026-05-18T21:50:57Z
 ---
 
 ## Symptom

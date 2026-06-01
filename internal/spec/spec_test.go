@@ -1012,3 +1012,117 @@ func TestTripwireTypeFromPath(t *testing.T) {
 		t.Errorf("statusFromPath = %q, want %q", st, StatusActive)
 	}
 }
+
+// withNowFn swaps the package-level nowFn for the duration of the test
+// and restores the original on cleanup. Tests use this to make the
+// `completed_at:` stamp deterministic.
+func withNowFn(t *testing.T, fixed time.Time) {
+	t.Helper()
+	prev := nowFn
+	nowFn = func() time.Time { return fixed }
+	t.Cleanup(func() { nowFn = prev })
+}
+
+func TestStampCompletedAt_Idempotent(t *testing.T) {
+	fixed := time.Date(2026, 5, 31, 19, 42, 8, 0, time.UTC)
+	withNowFn(t, fixed)
+
+	in := "---\ntitle: x\nstatus: completed\n---\nbody\n"
+	first := StampCompletedAt(in)
+	if !strings.Contains(first, "completed_at: 2026-05-31T19:42:08Z") {
+		t.Fatalf("first stamp did not add expected completed_at: %q", first)
+	}
+
+	// Move the clock forward; second call must be a no-op.
+	nowFn = func() time.Time { return fixed.Add(time.Hour) }
+	second := StampCompletedAt(first)
+	if second != first {
+		t.Fatalf("second stamp mutated content:\nfirst:\n%s\nsecond:\n%s", first, second)
+	}
+}
+
+func TestStampCompletedAt_RespectsCamelCase(t *testing.T) {
+	fixed := time.Date(2026, 5, 31, 19, 42, 8, 0, time.UTC)
+	withNowFn(t, fixed)
+
+	in := "---\ntitle: x\nstatus: completed\ncompletedAt: 2025-01-02T03:04:05Z\n---\nbody\n"
+	out := StampCompletedAt(in)
+	if out != in {
+		t.Fatalf("camelCase completedAt should be left alone, got:\n%s", out)
+	}
+	if strings.Contains(out, "completed_at:") {
+		t.Fatalf("camelCase content gained snake_case completed_at:\n%s", out)
+	}
+}
+
+func TestParseFrontmatter_CompletedAt_RFC3339(t *testing.T) {
+	content := `---
+title: t
+type: feature
+status: completed
+completed_at: 2026-05-31T19:42:08Z
+---
+body
+`
+	tmpDir := t.TempDir()
+	path := filepath.Join(tmpDir, "spec.md")
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	s, err := ParseFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := time.Date(2026, 5, 31, 19, 42, 8, 0, time.UTC)
+	if !s.CompletedAt.Equal(want) {
+		t.Errorf("CompletedAt = %v, want %v", s.CompletedAt, want)
+	}
+}
+
+func TestParseFrontmatter_CompletedAt_DateOnly(t *testing.T) {
+	content := `---
+title: t
+type: feature
+status: completed
+completed_at: 2026-05-31
+---
+body
+`
+	tmpDir := t.TempDir()
+	path := filepath.Join(tmpDir, "spec.md")
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	s, err := ParseFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := time.Date(2026, 5, 31, 0, 0, 0, 0, time.UTC)
+	if !s.CompletedAt.Equal(want) {
+		t.Errorf("CompletedAt = %v, want %v", s.CompletedAt, want)
+	}
+}
+
+func TestParseFrontmatter_CompletedAt_CamelCase(t *testing.T) {
+	content := `---
+title: t
+type: feature
+status: completed
+completedAt: 2026-05-31T19:42:08Z
+---
+body
+`
+	tmpDir := t.TempDir()
+	path := filepath.Join(tmpDir, "spec.md")
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	s, err := ParseFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := time.Date(2026, 5, 31, 19, 42, 8, 0, time.UTC)
+	if !s.CompletedAt.Equal(want) {
+		t.Errorf("CompletedAt = %v, want %v", s.CompletedAt, want)
+	}
+}

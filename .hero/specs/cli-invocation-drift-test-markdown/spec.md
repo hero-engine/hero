@@ -4,6 +4,7 @@ status: completed
 severity: medium
 tags: [drift, testing, ci, docs, cli]
 relates-to: [context-files-flag-drift, recap-unregister-stale-and-empty-repo, gitignore-missing-index-db, architectural-drift-detection]
+completed_at: 2026-05-18T23:07:10Z
 ---
 # CLI Invocation Drift Test for Markdown Surfaces
 

@@ -13,6 +13,7 @@ relations:
     kind: cross-repo-consumer
 horizon: now
 smoke: deferred
+completed_at: 2026-05-19T22:48:12Z
 ---
 
 ## Kickoff

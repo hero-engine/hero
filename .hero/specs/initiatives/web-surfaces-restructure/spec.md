@@ -6,6 +6,7 @@ status: completed
 priority: P1
 horizon: now
 updated: 2026-05-15
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 # Web Surfaces Restructure — Make Docs and Landing Peers Under web/

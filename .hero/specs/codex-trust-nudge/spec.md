@@ -18,6 +18,7 @@ principles_check: |
   escape hatch) by giving the exact prompt a user can give Codex. Avoids
   pretending Hero can mutate Codex's permission store directly.
 horizon: now
+completed_at: 2026-05-18T21:50:57Z
 ---
 
 ## Goal

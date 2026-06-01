@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-01T03:09:16Z · 99 ready specs_
+_Generated: 2026-06-01T03:40:39Z · 98 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -198,53 +198,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · delivering · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-sales/spec.md)_
-
----
-
-## deliver-stamps-completed-at — "Stamp completed_at into spec frontmatter on status transition"
-_feature · planning · horizon: now_
-
-You're picking up a backend feature spec in the Hero repo. The
-caller (peer workspace `hero-code`) is building a Sprint Dashboard
-that needs an authoritative completion timestamp on every spec.
-Today they fall back to `git log -1 --format=%aI`; we're going to
-make that unnecessary by stamping `completed_at:` into the
-frontmatter at status-transition time.
-
-The implementation is straightforward but touches several writer
-sites. Read these first, in order, before writing code:
-
-1. `.hero/planning/features/deliver-stamps-completed-at/spec.md`
-   (this spec) — the full design.
-2. `internal/spec/spec.go` — see `SetFrontmatterField` (line 1180)
-   and the `parseFrontmatter` switch (line 407). The new
-   `StampCompletedAt` helper and the `CompletedAt` field both
-   live here.
-3. `internal/cli/complete.go` — both `updateFrontmatterStatus`
-   (line 224) and `autoArchiveIfCompleted` (line 195) need the
-   stamp.
-4. `internal/tracking/tracking.go` — the `case "complete"` branch
-   at line 125.
-
-Then layer in the backfill subverb under `hero admin` and wire
-the new field into the snapshot JSON and the Recently Shipped
-tile.
-
-Tests live alongside each touched package; the spec lists every
-test that must exist. Use the `nowFn` override pattern (see other
-timestamp call sites in this codebase like
-`internal/integrity/autofix.go` for prior art) so tests are
-deterministic.
-
-When status flips to `delivering`, refresh this Kickoff so the
-next session starts with "currently mid-implementation, here's
-what's left" instead of cold-start instructions.
-
-Acceptance bar: every code path Hero owns that ends with a spec
-at `status: completed` produces a parseable `completed_at:` in
-the same write, and the backfill cleans up the historical
-inventory. After delivery, hand back to `hero-code` so they can
-retire the git fallback in the desktop app.
 
 ---
 

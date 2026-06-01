@@ -355,7 +355,14 @@ func rollupInitiatives(allSpecs []*spec.Spec, assignments []SpecAssignment) []In
 		sort.Strings(init.Surfaces)
 		sort.Strings(init.InFlight)
 		if s.Status == spec.StatusCompleted {
-			init.CompletedAt = s.ModifiedAt
+			// Prefer the canonical frontmatter stamp; fall back to file
+			// mtime for legacy completed initiatives that pre-date
+			// `hero admin backfill-completed-at`.
+			if !s.CompletedAt.IsZero() {
+				init.CompletedAt = s.CompletedAt
+			} else {
+				init.CompletedAt = s.ModifiedAt
+			}
 		}
 		out = append(out, init)
 	}
@@ -378,14 +385,21 @@ func rollupRecent(assignments []SpecAssignment, now time.Time, cutoff time.Durat
 		if a.Spec == nil || a.Spec.Status != spec.StatusCompleted {
 			continue
 		}
-		if a.Spec.ModifiedAt.Before(threshold) {
+		// Prefer the frontmatter-stamped completion time. Fall back to
+		// ModifiedAt (file mtime) for legacy specs that pre-date
+		// `hero admin backfill-completed-at`.
+		completedAt := a.Spec.CompletedAt
+		if completedAt.IsZero() {
+			completedAt = a.Spec.ModifiedAt
+		}
+		if completedAt.Before(threshold) {
 			continue
 		}
 		items = append(items, RecentItem{
 			SurfaceID:   a.SurfaceID,
 			Slug:        a.Spec.Slug,
 			Title:       a.Spec.Title,
-			CompletedAt: a.Spec.ModifiedAt,
+			CompletedAt: completedAt,
 			Type:        a.Spec.Type,
 		})
 	}

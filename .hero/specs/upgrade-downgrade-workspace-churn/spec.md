@@ -11,6 +11,7 @@ relations: []
 horizon: now
 smoke: deferred
 root_cause_class: code
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 ## Captured

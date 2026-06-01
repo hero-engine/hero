@@ -41,6 +41,7 @@ principles_check: |
   field-grab CLI for those who'd rather not scroll.
 horizon: now
 smoke: deferred
+completed_at: 2026-05-18T18:28:09Z
 ---
 
 ## Goal

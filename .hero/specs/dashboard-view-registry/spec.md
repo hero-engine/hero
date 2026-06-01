@@ -17,6 +17,7 @@ depends-on:
   - domain-plugin-architecture
 horizon: next
 smoke: deferred
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 > **Absorbed by [hero-surface-shell](../hero-surface-shell/spec.md) under the [Hero Surface Architecture](../../initiatives/hero-surface-architecture/spec.md) initiative.** The view registry primitive is retained as the shell's pluggability mechanism; the cross-domain router risk flagged here is treated as a first-class concern in the shell spec. This spec is preserved for history.

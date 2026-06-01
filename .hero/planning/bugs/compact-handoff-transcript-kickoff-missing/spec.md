@@ -9,6 +9,7 @@ priority: medium
 tags: [next, compact-handoff, kickoff, transcript]
 created: 2026-05-21
 relates-to: [next-compact-handoff, compact-handoff-test-coverage]
+completed_at: 2026-05-22T00:25:27Z
 ---
 
 # Compact handoff kickoff never reads `transcript_path` — silent fallback to placeholder

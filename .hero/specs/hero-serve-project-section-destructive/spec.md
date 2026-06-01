@@ -16,6 +16,7 @@ relations:
   - target: hero-serve-project-section-opsrunner
     kind: depends-on
 horizon: now
+completed_at: 2026-05-20T05:04:38Z
 ---
 
 # `hero serve` Project Section — Phase 4 Destructive Operations

@@ -14,6 +14,7 @@ relations:
   - target: hero-serve-multi-project
     kind: depends-on
 horizon: now
+completed_at: 2026-05-20T02:41:43Z
 ---
 
 # `hero serve` Project Section — Phase 2 Aggregate (`/p/all/project`)

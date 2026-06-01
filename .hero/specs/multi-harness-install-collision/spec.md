@@ -7,6 +7,7 @@ severity: medium
 priority: high
 created: 2026-05-12
 tags: [install, canonical, idempotency, onboarding]
+completed_at: 2026-05-18T19:25:38Z
 ---
 
 # Multi-Harness Install Collision — Second Target Refuses Identical Canonical Content

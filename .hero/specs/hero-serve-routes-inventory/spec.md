@@ -5,6 +5,7 @@ status: completed
 severity: low
 tags: [docs, serve, web-ui]
 created: 2026-05-18
+completed_at: 2026-05-18T22:51:14Z
 ---
 
 # `hero serve` routes inventory — one-paragraph map of the homes

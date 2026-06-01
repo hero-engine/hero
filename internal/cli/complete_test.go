@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/hero-engine/hero/internal/feed"
+	"github.com/hero-engine/hero/internal/spec"
 )
 
 func TestComplete_RequiresArg(t *testing.T) {
@@ -599,3 +600,142 @@ func TestMoveToSpecs_DestinationExists(t *testing.T) {
 		t.Errorf("error = %q, want 'destination already exists'", err.Error())
 	}
 }
+
+// withSpecNowFn overrides the spec package's nowFn for the duration of
+// the test so stamping is deterministic. Mirrors the test helper inside
+// internal/spec but accessible from the cli test package.
+func withSpecNowFn(t *testing.T, fixed time.Time) {
+	t.Helper()
+	prev := spec.SwapNowFnForTest(func() time.Time { return fixed })
+	t.Cleanup(func() { spec.SwapNowFnForTest(prev) })
+}
+
+func TestRunComplete_StampsCompletedAt(t *testing.T) {
+	env := newTestEnv(t)
+	fixed := time.Date(2026, 5, 31, 19, 42, 8, 0, time.UTC)
+	withSpecNowFn(t, fixed)
+
+	env.addSpec("planning/features/csv-export/spec.md", `---
+title: CSV Export
+type: feature
+status: in-review
+---
+# CSV Export
+`)
+	src := filepath.Join(env.heroDir, "planning/features/csv-export/spec.md")
+
+	if _, err := runCmd("spec", "complete", src); err != nil {
+		t.Fatalf("runComplete failed: %v", err)
+	}
+
+	dest := filepath.Join(env.heroDir, "specs/csv-export/spec.md")
+	data, err := os.ReadFile(dest)
+	if err != nil {
+		t.Fatalf("reading destination: %v", err)
+	}
+	body := string(data)
+	if !strings.Contains(body, "status: completed") {
+		t.Errorf("missing status: completed\n%s", body)
+	}
+	if !strings.Contains(body, "completed_at: 2026-05-31T19:42:08Z") {
+		t.Errorf("missing completed_at stamp\n%s", body)
+	}
+}
+
+func TestRunComplete_IdempotentCompletedAt(t *testing.T) {
+	env := newTestEnv(t)
+	first := time.Date(2026, 5, 31, 19, 42, 8, 0, time.UTC)
+	withSpecNowFn(t, first)
+
+	env.addSpec("planning/features/csv-export/spec.md", `---
+title: CSV Export
+type: feature
+status: in-review
+---
+# CSV Export
+`)
+	src := filepath.Join(env.heroDir, "planning/features/csv-export/spec.md")
+	if _, err := runCmd("spec", "complete", src); err != nil {
+		t.Fatalf("first runComplete failed: %v", err)
+	}
+
+	dest := filepath.Join(env.heroDir, "specs/csv-export/spec.md")
+	// Re-run; jump the clock to detect any overwrite.
+	later := first.Add(48 * time.Hour)
+	spec.SwapNowFnForTest(func() time.Time { return later })
+
+	if _, err := runCmd("spec", "complete", dest); err != nil {
+		t.Fatalf("second runComplete failed: %v", err)
+	}
+
+	data, err := os.ReadFile(dest)
+	if err != nil {
+		t.Fatalf("reading destination: %v", err)
+	}
+	body := string(data)
+	if !strings.Contains(body, "completed_at: 2026-05-31T19:42:08Z") {
+		t.Errorf("original completed_at lost on re-run\n%s", body)
+	}
+	if strings.Contains(body, later.Format(time.RFC3339)) {
+		t.Errorf("re-run overwrote completed_at with new time\n%s", body)
+	}
+}
+
+func TestAutoArchiveIfCompleted_StampsWhenMissing(t *testing.T) {
+	env := newTestEnv(t)
+	fixed := time.Date(2026, 5, 31, 19, 42, 8, 0, time.UTC)
+	withSpecNowFn(t, fixed)
+
+	env.addSpec("planning/features/csv-export/spec.md", `---
+title: CSV Export
+type: feature
+status: completed
+---
+# CSV Export
+`)
+	src := filepath.Join(env.heroDir, "planning/features/csv-export/spec.md")
+
+	if _, err := autoArchiveIfCompleted(src, env.heroDir); err != nil {
+		t.Fatalf("autoArchive failed: %v", err)
+	}
+
+	dest := filepath.Join(env.heroDir, "specs/csv-export/spec.md")
+	data, err := os.ReadFile(dest)
+	if err != nil {
+		t.Fatalf("reading destination: %v", err)
+	}
+	if !strings.Contains(string(data), "completed_at: 2026-05-31T19:42:08Z") {
+		t.Errorf("stamp not applied by autoArchive:\n%s", string(data))
+	}
+}
+
+func TestAutoArchiveIfCompleted_LeavesExistingStamp(t *testing.T) {
+	env := newTestEnv(t)
+	withSpecNowFn(t, time.Date(2026, 11, 11, 11, 11, 11, 0, time.UTC))
+
+	original := `---
+title: CSV Export
+type: feature
+status: completed
+completed_at: 2025-01-15T08:00:00Z
+---
+# CSV Export
+`
+	env.addSpec("planning/features/csv-export/spec.md", original)
+	src := filepath.Join(env.heroDir, "planning/features/csv-export/spec.md")
+
+	if _, err := autoArchiveIfCompleted(src, env.heroDir); err != nil {
+		t.Fatalf("autoArchive failed: %v", err)
+	}
+
+	dest := filepath.Join(env.heroDir, "specs/csv-export/spec.md")
+	data, err := os.ReadFile(dest)
+	if err != nil {
+		t.Fatalf("reading destination: %v", err)
+	}
+	body := string(data)
+	if !strings.Contains(body, "completed_at: 2025-01-15T08:00:00Z") {
+		t.Errorf("existing stamp was modified:\n%s", body)
+	}
+}
+
