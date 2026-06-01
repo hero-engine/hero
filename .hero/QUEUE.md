@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-01T16:52:33Z · 102 ready specs_
+_Generated: 2026-06-01T17:05:26Z · 102 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -198,65 +198,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · delivering · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-sales/spec.md)_
-
----
-
-## multi-spec-design-routing — Multi-Spec Design Routing — Nudge from /design ×N to /compose
-_feature · planning · horizon: now_
-
-When the user fires `/design` and 2+ related specs are already in
-the session, nudge them toward `/compose` instead of scaffolding
-another flat feature.
-
-**Status:** planning — stub only; needs full `/design` pass.
-
-**Pick up at:** run `/design multi-spec-design-routing` once the
-"multiple related specs" phrasing is locked in `roadmap-review`'s
-skill. The nudge text quotes from that canonical sentence.
-
-→ `/design multi-spec-design-routing`
-
-**Files:** `.claude/commands/design.md`, `.claude/agents/feature-delivery-lead.md`
-**Skip:** /compose UX redesign, new heuristics beyond the 2+ related-specs trigger.
-
----
-
-## size-drift-actionable-output — Size-Drift Actionable Output — Inline Next-Step and Dedupe Duplicate Error
-_feature · planning · horizon: now_
-
-Tiny polish: inline the fix command on `hero size --check` drift rows
-and dedupe the duplicate `hero_warnings` error.
-
-**Status:** planning — stub only; needs full `/design` pass.
-
-**Pick up at:** run `/design size-drift-actionable-output` to produce
-the full spec. Two surgical changes; no schema work.
-
-→ `/design size-drift-actionable-output`
-
-**Files:** `internal/cli/size.go`, `internal/mcp/warnings.go`
-**Skip:** new check categories, restructuring `--check` output schema.
-
----
-
-## roadmap-review — Roadmap Review — Command, Agent, and Skill for On-Demand Shape Detection
-_feature · planning · horizon: now_
-
-`/roadmap-review` command + `roadmap-reviewer` agent + skill that
-detects sizing drift across the planning corpus and emits a triage
-list. Sizing-only lens in v1; Lenses scaffolding for the rest.
-
-**Status:** planning — stub only; needs full `/design` pass.
-
-**Pick up at:** run `/design roadmap-review` to flesh out acceptance
-criteria, agent prompt, skill layout, and the Lenses scaffolding model.
-Lock the command name and agent name first — three sibling specs
-depend on them.
-
-→ `/design roadmap-review`
-
-**Files:** `.claude/commands/`, `.claude/agents/`, `.claude/skills/spec-sizing/SKILL.md`, `internal/cli/size.go`
-**Skip:** implementing horizons / releases / sprint-shape lenses in v1 — they're named placeholders, not behavior.
 
 ---
 
@@ -1049,6 +990,80 @@ Start with Phase 0 only. Do not build anything. Read [next-compact-handoff/spec.
 Output a written assessment with a clear recommendation: proceed to Phase 1 prototype, or close as "not worth it" with the analysis preserved so future revisits don't re-litigate.
 
 Time budget: ~2 days of focused research, no implementation. If the assessment can't be reached in that budget, the answer is probably no.
+
+---
+
+## multi-spec-design-routing — Multi-Spec Design Routing — Nudge from /design ×N to /compose
+_feature · ready · horizon: now_
+
+Routing nudge child of `roadmap-shape`. When `/design` surfaces ≥ 2
+related deliverables (explicit phrasing, lead-identified
+sub-deliverables, or rolled-up size ≥ `large`), the lead quotes the
+`spec-composition` routing nudge and recommends `/compose` before
+scaffolding flat siblings. Advisory, not blocking.
+
+**Status:** ready — design complete; ready for `/deliver` after
+sibling #1 (`roadmap-review`) lands the `spec-composition` skill.
+
+**Pick up at:** verify whether `spec-composition/SKILL.md` already
+carries a `## Triggers` section (from #1). If yes, extend it; if no,
+author it. Then wire the one-line skill load into both delivery
+leads and the design command, plus the "see also" line in
+`spec-sizing`.
+
+→ `/deliver multi-spec-design-routing`
+
+**Files:** `domains/engineering/skills/spec-composition/SKILL.md`,
+`domains/engineering/agents/feature-delivery-lead.md`,
+`domains/engineering/agents/platform-delivery-lead.md`,
+`domains/engineering/commands/design.md`,
+`domains/engineering/skills/spec-sizing/SKILL.md`
+**Skip:** retroactive cluster detection (sibling #1's job), `/compose` UX changes, new trigger heuristics beyond the three any-of triggers.
+
+---
+
+## size-drift-actionable-output — Size-Drift Actionable Output — Inline Next-Step and Dedupe Duplicate Error
+_feature · ready · horizon: now_
+
+Two surgical changes: inline a paste-ready next-step line under each
+`hero size --check` drift row, and silence cobra's duplicate error
+print on this command.
+
+**Status:** ready — design done; no code yet.
+
+**Pick up at:** add `sizing.SuggestedAction(declared, computed, kind)`
+returning `(primary, alternative string)`, wire it into `runSizeCheck`
+print loop (two lines per row), flip `sizeCmd.SilenceErrors = true`,
+add the `/roadmap-review` footer, then extend the `hero_warnings`
+entries in `mcp_tools.go` to include the alternative pointer.
+
+→ `/deliver size-drift-actionable-output`
+
+**Files:** `internal/cli/size.go:33,165-187`, `internal/sizing/sizing.go`, `internal/serve/mcp_tools.go:2588-2614`
+**Skip:** new check categories, restructuring `--check` schema, JSON-output changes beyond adding the alternative-action field.
+
+---
+
+## roadmap-review — Roadmap Review — Command, Agent, and Skill for On-Demand Shape Detection
+_feature · ready · horizon: now_
+
+`/roadmap-review` command + `roadmap-reviewer` agent + `roadmap-review`
+and `spec-composition` skills. Interactive triage that walks sizing
+drift one item at a time and executes resolutions on confirm.
+
+**Status:** ready — design complete; ready for `/deliver`.
+
+**Pick up at:** start with the two skill files
+(`roadmap-review` + `spec-composition`) since the agent's behavior
+quotes from them. Then the agent, then the command.
+
+→ `/deliver roadmap-review`
+
+**Files:** `domains/engineering/skills/roadmap-review/SKILL.md`,
+`domains/engineering/skills/spec-composition/SKILL.md`,
+`domains/engineering/agents/roadmap-reviewer.md`,
+`domains/engineering/commands/roadmap-review.md`
+**Skip:** building horizons/releases/sprint-shape lens behavior — placeholders only; the agent refuses with a scaffolded phrase.
 
 ---
 
