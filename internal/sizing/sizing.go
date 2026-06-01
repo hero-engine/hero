@@ -193,6 +193,39 @@ func CollectDrift(specs []*spec.Spec) (leaf []Estimate, container []snapshot.Con
 	return leaf, container
 }
 
+// TrackerCapability is the small projection of tracker state that the
+// spec-sizing skill needs to pick a nudge intensity. The skill
+// regimes are:
+//
+//   - tracker not configured                           — most aggressive
+//   - tracker configured, hierarchy unsupported        — most aggressive
+//   - tracker configured, hierarchy supported          — less aggressive
+//
+// See domains/engineering/skills/spec-sizing/SKILL.md "Tracker-aware
+// tuning" for the full table.
+type TrackerCapability struct {
+	// Configured reports whether a tracker is wired up at all
+	// (`hero.json: tracker.type != "none"`).
+	Configured bool
+	// Type is the configured tracker type ("jira", "linear",
+	// "github", "none"). Empty when Configured is false.
+	Type string
+	// SupportsHierarchy mirrors the adapter's SupportsHierarchy()
+	// method. Always false when Configured is false.
+	SupportsHierarchy bool
+}
+
+// NudgeRegime returns the short label the skill uses to describe the
+// current intensity ("most-aggressive" / "less-aggressive"). Keeping
+// it as a string rather than an enum keeps the surface humane for
+// CLI output.
+func (c TrackerCapability) NudgeRegime() string {
+	if !c.Configured || !c.SupportsHierarchy {
+		return "most-aggressive"
+	}
+	return "less-aggressive"
+}
+
 func countDependencies(s *spec.Spec) int {
 	count := 0
 	for _, r := range s.Relations {

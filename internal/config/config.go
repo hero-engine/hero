@@ -860,6 +860,63 @@ type TrackerConfig struct {
 	UserEmail     string `json:"user_email"`      // user email for services requiring basic auth (e.g. Jira Cloud, Confluence Cloud)
 	PostOnDesign  bool   `json:"post_on_design"`  // create issue when spec enters design
 	PostOnDeliver bool   `json:"post_on_deliver"`
+	// SizeMapping configures bidirectional sync between Hero's declared
+	// `size:` frontmatter (6-tier ladder) and a tracker-side field
+	// (e.g. Jira story_points, GitHub size/* label). Absent → no
+	// mapping; sync push/pull leave size alone. See the
+	// spec-size-and-promotion-nudge spec for the contract.
+	SizeMapping *SizeMappingConfig `json:"size_mapping,omitempty"`
+}
+
+// SizeMappingConfig declares how Hero's local size tier maps to a
+// tracker-side field. Non-destructive by design — the configured field
+// is read and written, but conflicts are surfaced rather than silently
+// overwritten.
+type SizeMappingConfig struct {
+	// Field is the tracker-side field name that carries leaf-tier size
+	// (e.g. "story_points" for Jira, "estimate" for Linear, or a label
+	// prefix like "size/" for GitHub). Required when SizeMapping is set.
+	Field string `json:"field"`
+	// Thresholds maps Hero tier names to inclusive numeric bands
+	// [min, max] for numeric fields. A nil upper bound means
+	// "unbounded". For label-style fields (GitHub size/*) the band is
+	// not consulted on the way out — the tier name is used directly —
+	// but inverse-mapping (label → tier) still reads it for sanity.
+	// Tier keys must be drawn from the 6-tier ladder:
+	//   trivial / small / medium / large / x-large / giant
+	Thresholds map[string][]*float64 `json:"thresholds,omitempty"`
+	// ContainerField is the tracker-side field carrying epic/initiative
+	// container size (e.g. Jira epic label, Linear project field).
+	// Optional — empty means container size is local-only.
+	ContainerField string `json:"container_field,omitempty"`
+}
+
+// Validate checks the SizeMappingConfig for the obvious structural
+// errors at load time. Empty SizeMapping is fine (see TrackerConfig
+// docs); callers should nil-check first.
+func (s *SizeMappingConfig) Validate() error {
+	if s == nil {
+		return nil
+	}
+	if s.Field == "" {
+		return fmt.Errorf("tracker.size_mapping.field is required")
+	}
+	if len(s.Thresholds) == 0 {
+		return fmt.Errorf("tracker.size_mapping.thresholds must cover at least one tier")
+	}
+	validTiers := map[string]struct{}{
+		"trivial": {}, "small": {}, "medium": {},
+		"large": {}, "x-large": {}, "giant": {},
+	}
+	for tier, band := range s.Thresholds {
+		if _, ok := validTiers[tier]; !ok {
+			return fmt.Errorf("tracker.size_mapping.thresholds: unknown tier %q (valid: trivial small medium large x-large giant)", tier)
+		}
+		if len(band) != 2 {
+			return fmt.Errorf("tracker.size_mapping.thresholds[%q]: band must be [min, max] (max may be null for unbounded)", tier)
+		}
+	}
+	return nil
 }
 
 // ResolveToken returns the API token for this tracker.
@@ -1207,6 +1264,16 @@ func Load(projectRoot string) (Config, error) {
 		}
 		if len(cfg.CodeScan.Exclude) == 0 {
 			cfg.CodeScan.Exclude = defaults.Exclude
+		}
+	}
+
+	// Validate the size_mapping block when a tracker is configured.
+	// Absent block is fine (most workspaces); when present, the shape
+	// must be sane or we surface the error at load time so a typo
+	// doesn't silently disable size sync.
+	if cfg.Tracker != nil && cfg.Tracker.Type != "" && cfg.Tracker.Type != "none" && cfg.Tracker.SizeMapping != nil {
+		if err := cfg.Tracker.SizeMapping.Validate(); err != nil {
+			return cfg, fmt.Errorf("parsing %s: %w", configPath, err)
 		}
 	}
 

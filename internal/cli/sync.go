@@ -103,6 +103,24 @@ func runSync(cmd *cobra.Command, args []string) error {
 	}
 
 	if s.TrackerID != "" {
+		// Size-mapping push check (local → tracker). Non-destructive:
+		// we only inspect the current tracker value and warn on
+		// conflict; we never silently overwrite a value a human set.
+		// When size_mapping is absent or local size is unset, the
+		// plan is a clean noop and stays silent. When the planned
+		// write would be a clean push (tracker empty), we surface
+		// the plan as a hint — actually writing the value back is
+		// part of the existing per-tracker push paths (e.g.
+		// hero sync jira) and out of scope for this command.
+		if issue, gerr := t.GetIssue(s.TrackerID); gerr == nil {
+			sizePlan := tracker.PlanSizePush(t, issue, s.Size)
+			switch sizePlan.Action {
+			case tracker.SizeSyncConflict:
+				fmt.Fprintf(os.Stderr, "Warning: %s\n", sizePlan.Message)
+			case tracker.SizeSyncPushToTracker:
+				fmt.Printf("Note: %s (manual push required — sync spec does not write size fields)\n", sizePlan.Message)
+			}
+		}
 		if err := t.UpdateStatus(s.TrackerID, s.Status); err != nil {
 			return fmt.Errorf("updating issue %s: %w", s.TrackerID, err)
 		}

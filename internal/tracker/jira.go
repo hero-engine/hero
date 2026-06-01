@@ -26,6 +26,10 @@ type jira struct {
 	trackerKnowledgeDir string             // path to .hero/knowledge/tracker/ for field cache
 	resolvedCustom      map[string]string  // resolved custom fields: lowercase name → field ID
 	fieldDiscoveryDone  bool               // true once we've tried to discover fields
+	// configuredSizeMapping is the workspace-configured size mapping
+	// (hero.json: tracker.size_mapping). Nil → use the shipped default.
+	// See internal/tracker/size_mapping.go.
+	configuredSizeMapping *config.SizeMappingConfig
 }
 
 func newJira(project, token, userEmail, baseURL string) (*jira, error) {

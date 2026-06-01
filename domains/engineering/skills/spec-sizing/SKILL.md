@@ -20,7 +20,7 @@ Two jobs:
    nudge fires consistently across sessions, agents, and trackers.
 
 This skill is **the source of truth**. The delivery leads reference it;
-the CLI (`hero size`, `hero estimate`, `hero check`, `hero_warnings`)
+the CLI (`hero size`, `hero sprint estimate`, `hero check`, `hero_warnings`)
 implements the mechanics. The nudge text below is paste-ready — leads
 quote it directly so wording stays consistent.
 
@@ -127,7 +127,7 @@ drift between declared and computed size, the lead does **not**
 ignore it. Two flavors:
 
 - **Leaf drift** (feature/bug/enhancement): declared `size:` differs
-  from `hero estimate` bucket. Bump declared via
+  from `hero sprint estimate` bucket. Bump declared via
   `hero size <slug> <tier>` to reflect what the spec actually is, then
   re-fire the nudge for the new tier.
 - **Container drift** (epic/initiative): declared `size:` is smaller

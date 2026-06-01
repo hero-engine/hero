@@ -1020,3 +1020,148 @@ func TestLoad_AppliesLocalDialectOverride(t *testing.T) {
 		t.Errorf("Vocabulary = %q, want %q (local override should win)", cfg.Vocabulary, "shape-up")
 	}
 }
+
+// --- SizeMappingConfig validation ---
+// Slice 5 of spec-size-and-promotion-nudge: hero.json may carry a
+// `tracker.size_mapping` block describing how Hero's local size tier
+// maps to a tracker-side field. Absent block is fine; present block
+// must validate at load time so a typo doesn't silently disable size
+// sync.
+
+func TestSizeMappingConfig_AbsentIsNoop(t *testing.T) {
+	tmpDir := t.TempDir()
+	heroDir := filepath.Join(tmpDir, ".hero")
+	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	// Tracker with no size_mapping should load fine.
+	json := `{
+  "tracker": {"type": "jira", "project": "PROJ", "base_url": "https://example.atlassian.net", "token_env": "EX"}
+}`
+	if err := os.WriteFile(filepath.Join(heroDir, ConfigFileName), []byte(json), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	cfg, err := Load(tmpDir)
+	if err != nil {
+		t.Fatalf("Load failed: %v", err)
+	}
+	if cfg.Tracker == nil || cfg.Tracker.SizeMapping != nil {
+		t.Errorf("expected nil SizeMapping, got %+v", cfg.Tracker.SizeMapping)
+	}
+}
+
+func TestSizeMappingConfig_ValidLoads(t *testing.T) {
+	tmpDir := t.TempDir()
+	heroDir := filepath.Join(tmpDir, ".hero")
+	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	json := `{
+  "tracker": {
+    "type": "jira", "project": "PROJ", "base_url": "https://example.atlassian.net", "token_env": "EX",
+    "size_mapping": {
+      "field": "story_points",
+      "thresholds": {
+        "trivial": [0, 1],
+        "small": [2, 2],
+        "medium": [3, 5],
+        "large": [8, 8],
+        "x-large": [13, 13],
+        "giant": [20, null]
+      },
+      "container_field": "epic_label"
+    }
+  }
+}`
+	if err := os.WriteFile(filepath.Join(heroDir, ConfigFileName), []byte(json), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	cfg, err := Load(tmpDir)
+	if err != nil {
+		t.Fatalf("Load failed: %v", err)
+	}
+	if cfg.Tracker.SizeMapping == nil {
+		t.Fatal("SizeMapping is nil")
+	}
+	if cfg.Tracker.SizeMapping.Field != "story_points" {
+		t.Errorf("Field = %q, want story_points", cfg.Tracker.SizeMapping.Field)
+	}
+	if cfg.Tracker.SizeMapping.ContainerField != "epic_label" {
+		t.Errorf("ContainerField = %q, want epic_label", cfg.Tracker.SizeMapping.ContainerField)
+	}
+	if len(cfg.Tracker.SizeMapping.Thresholds) != 6 {
+		t.Errorf("got %d thresholds, want 6", len(cfg.Tracker.SizeMapping.Thresholds))
+	}
+	if band := cfg.Tracker.SizeMapping.Thresholds["giant"]; len(band) != 2 || band[0] == nil || *band[0] != 20 || band[1] != nil {
+		t.Errorf("giant band = %+v, want [20, nil]", band)
+	}
+}
+
+func TestSizeMappingConfig_MissingFieldRejected(t *testing.T) {
+	tmpDir := t.TempDir()
+	heroDir := filepath.Join(tmpDir, ".hero")
+	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	json := `{
+  "tracker": {
+    "type": "jira", "project": "PROJ", "base_url": "https://example.atlassian.net", "token_env": "EX",
+    "size_mapping": {
+      "thresholds": {"small": [1, 2]}
+    }
+  }
+}`
+	if err := os.WriteFile(filepath.Join(heroDir, ConfigFileName), []byte(json), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	_, err := Load(tmpDir)
+	if err == nil {
+		t.Fatal("expected Load error for missing field")
+	}
+}
+
+func TestSizeMappingConfig_UnknownTierRejected(t *testing.T) {
+	tmpDir := t.TempDir()
+	heroDir := filepath.Join(tmpDir, ".hero")
+	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	json := `{
+  "tracker": {
+    "type": "jira", "project": "PROJ", "base_url": "https://example.atlassian.net", "token_env": "EX",
+    "size_mapping": {
+      "field": "story_points",
+      "thresholds": {"enormous": [1, 2]}
+    }
+  }
+}`
+	if err := os.WriteFile(filepath.Join(heroDir, ConfigFileName), []byte(json), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	_, err := Load(tmpDir)
+	if err == nil {
+		t.Fatal("expected Load error for unknown tier")
+	}
+}
+
+func TestSizeMappingConfig_NoneTrackerSkipsValidation(t *testing.T) {
+	// `tracker.type: "none"` (the slice-5 workspace default) should
+	// never fail validation even if a stale size_mapping block exists.
+	tmpDir := t.TempDir()
+	heroDir := filepath.Join(tmpDir, ".hero")
+	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	json := `{
+  "tracker": {
+    "type": "none",
+    "size_mapping": {"field": ""}
+  }
+}`
+	if err := os.WriteFile(filepath.Join(heroDir, ConfigFileName), []byte(json), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	if _, err := Load(tmpDir); err != nil {
+		t.Errorf("Load should not error on tracker.type=none: %v", err)
+	}
+}
