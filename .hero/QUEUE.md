@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-01T15:43:52Z · 98 ready specs_
+_Generated: 2026-06-01T16:24:05Z · 102 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -198,6 +198,65 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · delivering · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-sales/spec.md)_
+
+---
+
+## multi-spec-design-routing — Multi-Spec Design Routing — Nudge from /design ×N to /compose
+_feature · planning · horizon: now_
+
+When the user fires `/design` and 2+ related specs are already in
+the session, nudge them toward `/compose` instead of scaffolding
+another flat feature.
+
+**Status:** planning — stub only; needs full `/design` pass.
+
+**Pick up at:** run `/design multi-spec-design-routing` once the
+"multiple related specs" phrasing is locked in `roadmap-review`'s
+skill. The nudge text quotes from that canonical sentence.
+
+→ `/design multi-spec-design-routing`
+
+**Files:** `.claude/commands/design.md`, `.claude/agents/feature-delivery-lead.md`
+**Skip:** /compose UX redesign, new heuristics beyond the 2+ related-specs trigger.
+
+---
+
+## size-drift-actionable-output — Size-Drift Actionable Output — Inline Next-Step and Dedupe Duplicate Error
+_feature · planning · horizon: now_
+
+Tiny polish: inline the fix command on `hero size --check` drift rows
+and dedupe the duplicate `hero_warnings` error.
+
+**Status:** planning — stub only; needs full `/design` pass.
+
+**Pick up at:** run `/design size-drift-actionable-output` to produce
+the full spec. Two surgical changes; no schema work.
+
+→ `/design size-drift-actionable-output`
+
+**Files:** `internal/cli/size.go`, `internal/mcp/warnings.go`
+**Skip:** new check categories, restructuring `--check` output schema.
+
+---
+
+## roadmap-review — Roadmap Review — Command, Agent, and Skill for On-Demand Shape Detection
+_feature · planning · horizon: now_
+
+`/roadmap-review` command + `roadmap-reviewer` agent + skill that
+detects sizing drift across the planning corpus and emits a triage
+list. Sizing-only lens in v1; Lenses scaffolding for the rest.
+
+**Status:** planning — stub only; needs full `/design` pass.
+
+**Pick up at:** run `/design roadmap-review` to flesh out acceptance
+criteria, agent prompt, skill layout, and the Lenses scaffolding model.
+Lock the command name and agent name first — three sibling specs
+depend on them.
+
+→ `/design roadmap-review`
+
+**Files:** `.claude/commands/`, `.claude/agents/`, `.claude/skills/spec-sizing/SKILL.md`, `internal/cli/size.go`
+**Skip:** implementing horizons / releases / sprint-shape lenses in v1 — they're named placeholders, not behavior.
 
 ---
 
@@ -990,6 +1049,27 @@ Start with Phase 0 only. Do not build anything. Read [next-compact-handoff/spec.
 Output a written assessment with a clear recommendation: proceed to Phase 1 prototype, or close as "not worth it" with the analysis preserved so future revisits don't re-litigate.
 
 Time budget: ~2 days of focused research, no implementation. If the assessment can't be reached in that budget, the answer is probably no.
+
+---
+
+## roadmap-shape — Roadmap Shape — Detect, Surface, and Resolve Spec-Shape Drift
+_initiative · ready · horizon: now_
+
+Initiative that makes Hero detect and resolve roadmap-shape drift
+(oversized specs, related-but-orphaned features, unfinished
+composition) instead of leaving it to the user to notice.
+
+**Status:** ready — four child stubs scaffolded, ready for individual `/design` passes.
+
+**Pick up at:** run `/design roadmap-review` first — it locks the
+command name and Lenses scaffolding the other three reference. Then
+`/design size-drift-actionable-output` and `/design multi-spec-design-routing`
+in parallel. `/design roadmap-review-ambient-surfacing` ships last.
+
+→ `.hero/planning/initiatives/roadmap-shape/spec.md`
+
+**Files:** `.hero/planning/features/roadmap-review/spec.md`, `.hero/planning/features/roadmap-review-ambient-surfacing/spec.md`, `.hero/planning/features/size-drift-actionable-output/spec.md`, `.hero/planning/features/multi-spec-design-routing/spec.md`
+**Skip:** designing all four in parallel — #2 depends on #1's locked command/agent names.
 
 ---
 
