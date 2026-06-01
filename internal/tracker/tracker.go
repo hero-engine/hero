@@ -92,6 +92,29 @@ type Tracker interface {
 
 	// Name returns the tracker type name (e.g. "github", "jira", "linear").
 	Name() string
+
+	// SupportsHierarchy reports whether the tracker natively models
+	// parent/child relationships (Jira epics, Linear projects, GitHub
+	// sub-issues). The spec-sizing skill reads this flag to choose how
+	// aggressively to nudge: trackers with strong hierarchy raise the
+	// promotion threshold; flat trackers (and `tracker.type: "none"`)
+	// nudge more aggressively. See domains/engineering/skills/spec-sizing.
+	SupportsHierarchy() bool
+
+	// MapSize translates a Hero local-tier name (one of the 6-tier
+	// ladder: trivial / small / medium / large / x-large / giant) to
+	// the corresponding tracker-side value (e.g. story points for Jira,
+	// the `size/<tier>` label for GitHub). Returns ("", err) when no
+	// size_mapping is configured (and no default applies) or the tier
+	// is unknown — callers surface that as a conflict rather than
+	// silently writing.
+	MapSize(localTier string) (string, error)
+
+	// ReverseMapSize translates a tracker-side value back to a local
+	// tier. Inverse of MapSize: numeric values are matched against the
+	// configured threshold bands; label-style values strip the
+	// configured prefix and match against the ladder.
+	ReverseMapSize(trackerValue string) (string, error)
 }
 
 // New creates a Tracker from the given config. Returns an error if the tracker
@@ -108,11 +131,26 @@ func New(cfg *config.TrackerConfig) (Tracker, error) {
 
 	switch cfg.Type {
 	case "github":
-		return newGitHub(cfg.Project, token, cfg.BaseURL)
+		g, err := newGitHub(cfg.Project, token, cfg.BaseURL)
+		if err != nil {
+			return nil, err
+		}
+		g.configuredSizeMapping = cfg.SizeMapping
+		return g, nil
 	case "jira":
-		return newJira(cfg.Project, token, cfg.UserEmail, cfg.BaseURL)
+		j, err := newJira(cfg.Project, token, cfg.UserEmail, cfg.BaseURL)
+		if err != nil {
+			return nil, err
+		}
+		j.configuredSizeMapping = cfg.SizeMapping
+		return j, nil
 	case "linear":
-		return newLinear(cfg.Project, token, cfg.BaseURL)
+		l, err := newLinear(cfg.Project, token, cfg.BaseURL)
+		if err != nil {
+			return nil, err
+		}
+		l.configuredSizeMapping = cfg.SizeMapping
+		return l, nil
 	default:
 		return nil, fmt.Errorf("unknown tracker type: %q", cfg.Type)
 	}
@@ -132,7 +170,12 @@ func NewWithJiraConfig(cfg *config.TrackerConfig, jiraCfg *config.JiraConfig, tr
 	}
 
 	if cfg.Type == "jira" {
-		return newJiraWithConfig(cfg.Project, token, cfg.UserEmail, cfg.BaseURL, jiraCfg, trackerKnowledgeDir)
+		j, err := newJiraWithConfig(cfg.Project, token, cfg.UserEmail, cfg.BaseURL, jiraCfg, trackerKnowledgeDir)
+		if err != nil {
+			return nil, err
+		}
+		j.configuredSizeMapping = cfg.SizeMapping
+		return j, nil
 	}
 	return New(cfg)
 }

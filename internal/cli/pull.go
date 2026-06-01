@@ -64,6 +64,24 @@ func runPull(cmd *cobra.Command, args []string) error {
 	fmt.Printf("  Tracker status: %s\n", issue.Status)
 	fmt.Printf("  Spec status:    %s\n", s.Status)
 
+	// Size mapping sync (tracker → local). Non-destructive: seeds
+	// local `size:` only when local is unset; surfaces conflicts as
+	// warnings without auto-resolving. No-op when size_mapping is
+	// absent (no tracker mapping → never touched).
+	sizePlan := tracker.PlanSizePull(t, issue, s.Size)
+	switch sizePlan.Action {
+	case tracker.SizeSyncSeedLocal:
+		content := readSpecContent(specPath)
+		content = spec.SetFrontmatterField(content, "size", sizePlan.WriteValue)
+		if err := os.WriteFile(specPath, []byte(content), 0o644); err != nil {
+			fmt.Fprintf(os.Stderr, "  Warning: could not seed local size: %v\n", err)
+		} else {
+			fmt.Printf("  size: (unset) → %s  (seeded from tracker value %q)\n", sizePlan.WriteValue, sizePlan.TrackerValue)
+		}
+	case tracker.SizeSyncConflict:
+		fmt.Fprintf(os.Stderr, "  Warning: %s\n", sizePlan.Message)
+	}
+
 	// Update tracker-prefixed fields if the spec uses them
 	if prefix := detectTrackerPrefix(readSpecContent(specPath)); prefix != "" {
 		content := readSpecContent(specPath)

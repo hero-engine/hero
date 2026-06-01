@@ -343,15 +343,40 @@ that.
 
 ### Tracker mapping
 
-- `.hero/hero.json` schema — add `tracker.size_mapping` block
-  (field, thresholds, container_field). Validate in config loader.
-- Tracker adapters (Jira / Linear / GitHub) — add
-  `SupportsHierarchy() bool` and `MapSize(...) (string, error)` /
-  `ReverseMapSize(...) (Tier, error)` methods. Ship sensible
-  defaults per adapter.
-- `hero sync pull` / `hero sync push` paths — wire size mapping in
-  both directions with the non-destructive rules from the Approach
-  section.
+- `internal/config/config.go` — **(slice 5)** added
+  `TrackerConfig.SizeMapping` + `SizeMappingConfig{Field, Thresholds,
+  ContainerField}` struct; load-time validation rejects bad mappings
+  when `tracker.type != "none"`.
+- `internal/tracker/tracker.go` — **(slice 5)** extended `Tracker`
+  interface with `SupportsHierarchy()`, `MapSize`, `ReverseMapSize`;
+  threaded `SizeMapping` through `New` / `NewWithJiraConfig`.
+- `internal/tracker/size_mapping.go` — **(slice 5, new)** per-adapter
+  defaults (Jira `story_points`, Linear `estimate`, GitHub `size/*`
+  labels); `mapSizeWith` / `reverseMapSizeWith` core; `ExtractTrackerSize`
+  for issue inspection; `PlanSizePull` / `PlanSizePush` for the
+  non-destructive sync planner; `TypeSupportsHierarchy` token-free
+  capability lookup.
+- `internal/tracker/jira.go` / `linear.go` / `github.go` —
+  **(slice 5)** added `configuredSizeMapping` field; `SupportsHierarchy`,
+  `MapSize`, `ReverseMapSize`, `sizeMapping` methods (delegating to
+  shared helpers).
+- `internal/cli/pull.go` — **(slice 5)** wires `PlanSizePull` into
+  `runPull`; seeds local `size:` when absent; surfaces conflicts as
+  warnings; never overwrites.
+- `internal/cli/sync.go` — **(slice 5)** wires `PlanSizePush` into
+  `runSync` for the `sync spec` path; warns on conflict; surfaces a
+  hint when a clean push would apply (write itself is the per-tracker
+  push path's job, not this command).
+- `internal/cli/size.go` — **(slice 5)** prints the tracker-capability
+  header in `hero size --check` (Option B from the spec); exports
+  `WorkspaceTrackerCapability` for the agent surface.
+- `internal/sizing/sizing.go` — **(slice 5)** added
+  `TrackerCapability` struct + `NudgeRegime()` so the spec-sizing
+  skill and CLI surface report the same regime label.
+- `domains/engineering/skills/spec-sizing/SKILL.md` — **(slice 5)**
+  fixed two stale `hero estimate` references to the actual
+  `hero sprint estimate` subcommand (caught by the markdown drift
+  test once slice 4 landed; opportunistic fix).
 
 ### Agent guidance
 

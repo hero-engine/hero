@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/spec"
 )
 
@@ -22,6 +23,10 @@ type gitHub struct {
 	token   string
 	baseURL string
 	client  *http.Client
+	// configuredSizeMapping is the workspace-configured size mapping
+	// (hero.json: tracker.size_mapping). Nil → use the shipped default.
+	// See internal/tracker/size_mapping.go.
+	configuredSizeMapping *config.SizeMappingConfig
 }
 
 func newGitHub(project, token, baseURL string) (*gitHub, error) {

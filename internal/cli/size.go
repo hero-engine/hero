@@ -8,6 +8,7 @@ import (
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/sizing"
 	"github.com/hero-engine/hero/internal/spec"
+	"github.com/hero-engine/hero/internal/tracker"
 	"github.com/spf13/cobra"
 )
 
@@ -76,7 +77,7 @@ func runSize(cmd *cobra.Command, args []string) error {
 	}
 
 	if sizeCheck {
-		return runSizeCheck(heroDir)
+		return runSizeCheck(heroDir, &cfg)
 	}
 
 	switch len(args) {
@@ -138,11 +139,18 @@ func runSizeSet(heroDir, slug, tier string) error {
 // initiatives). Output rows are prefixed with the drift kind so the
 // two flavors are visually distinct. Exits non-zero when any drift
 // is found so CI can gate on it.
-func runSizeCheck(heroDir string) error {
+func runSizeCheck(heroDir string, cfg *config.Config) error {
 	specs, err := spec.Discover(heroDir)
 	if err != nil {
 		return fmt.Errorf("discovering specs: %w", err)
 	}
+
+	// Print the tracker-capability header so the operator (and the
+	// spec-sizing skill, when run by an agent) knows which nudge
+	// regime applies before they read drift rows. One line, no
+	// special casing — keeps the output cheap on no-tracker
+	// workspaces.
+	printTrackerCapability(cfg)
 
 	leafDrifts, containerDrifts := sizing.CollectDrift(specs)
 
@@ -176,6 +184,35 @@ func runSizeCheck(heroDir string) error {
 	fmt.Printf("\n%d spec(s) with size drift  (%d leaf, %d container).\n",
 		total, len(leafDrifts), len(containerDrifts))
 	return fmt.Errorf("size drift found in %d spec(s)", total)
+}
+
+// printTrackerCapability emits the one-line tracker-regime header at
+// the top of `hero size --check` output. Mirrors the projection
+// returned by sizing.TrackerCapability so the agent-side surface and
+// CLI surface read identically.
+func printTrackerCapability(cfg *config.Config) {
+	cap := WorkspaceTrackerCapability(cfg)
+	if !cap.Configured {
+		fmt.Printf("tracker: none — nudge regime: %s\n", cap.NudgeRegime())
+		return
+	}
+	fmt.Printf("tracker: %s (supports_hierarchy: %t) — nudge regime: %s\n",
+		cap.Type, cap.SupportsHierarchy, cap.NudgeRegime())
+}
+
+// WorkspaceTrackerCapability projects the configured tracker into the
+// sizing.TrackerCapability shape. Exported so callers outside this
+// file (and tests) can reuse the projection without re-implementing
+// the "tracker.type != none" check.
+func WorkspaceTrackerCapability(cfg *config.Config) sizing.TrackerCapability {
+	cap := sizing.TrackerCapability{}
+	if cfg == nil || cfg.Tracker == nil || cfg.Tracker.Type == "" || cfg.Tracker.Type == "none" {
+		return cap
+	}
+	cap.Configured = true
+	cap.Type = cfg.Tracker.Type
+	cap.SupportsHierarchy = tracker.TypeSupportsHierarchy(cfg.Tracker.Type)
+	return cap
 }
 
 // reportSizeDriftSummary is the helper consumed by `hero check`. It
