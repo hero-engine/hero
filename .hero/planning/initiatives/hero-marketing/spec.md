@@ -11,6 +11,7 @@ relations:
   - target: hero-domains
     kind: related
 horizon: someday
+size: giant
 ---
 
 ## Goal

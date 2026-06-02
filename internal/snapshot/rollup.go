@@ -727,6 +727,13 @@ func ContainerDrift(s *spec.Spec, children []*spec.Spec, sizeFn SizeProvider) *C
 	if declaredOrder >= rollupOrder {
 		return nil
 	}
+	// Inspector-wins rule: when `size_ack:` matches the declared size,
+	// the human/agent inspected the actual scope and confirmed the
+	// declared tier despite the rollup pushing higher. Suppress drift.
+	// Stale ack (mismatch against current declared) is ignored.
+	if s.SizeAck != "" && s.SizeAck == s.Size {
+		return nil
+	}
 	return &ContainerDriftReport{
 		Slug:       s.Slug,
 		Declared:   s.Size,

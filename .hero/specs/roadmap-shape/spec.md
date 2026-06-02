@@ -4,7 +4,7 @@ slug: roadmap-shape
 type: initiative
 domain: engineering
 status: completed
-size: large
+size: x-large
 priority: P1
 tags: [roadmap, sizing, composition, ambient-context, dogfood]
 created: 2026-06-01

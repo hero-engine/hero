@@ -96,9 +96,11 @@ until then default to "no tracker" behavior).
 
 ## The acknowledgement protocol
 
-`size_ack:` is the escape hatch. The only value that matters today is
-`giant`. Future tiers might join — design as a free string but only
-consume `giant` for now.
+`size_ack:` has two jobs. Both come down to the same principle: when
+someone inspected the actual work and concluded the declared tier is
+right, the system should stop arguing.
+
+### Job 1 — suppress the `giant` design-time nudge
 
 ```yaml
 ---
@@ -109,16 +111,54 @@ size_ack: giant
 ---
 ```
 
-Rules:
+`size_ack: giant` says "yes, I know it's giant, I'm shipping it as
+one spec anyway." Suppresses the super-strong design-time
+recommendation to `/compose`. **Does not** suppress mid-delivery
+surfacing — every delivery session on a `giant` spec still gets the
+strong rec, because that's where the size is being felt.
 
-- `size_ack: giant` **only suppresses the design-time nudge**. It does
-  **not** suppress mid-delivery surfacing — every delivery session
-  on a `giant` spec still gets a strong recommendation, because that's
-  where the size is being felt.
-- The user, not the agent, decides to set `size_ack`. The lead asks;
-  the lead does not auto-stamp.
-- If the spec is split or scope shrinks below `giant`, drop the
-  `size_ack` field — it's stale.
+### Job 2 — inspector wins over the computed heuristic
+
+```yaml
+---
+title: ...
+type: feature
+size: medium
+size_ack: medium
+---
+```
+
+When `size_ack:` matches the declared `size:`, the drift detector
+treats it as "the work was inspected; declared stands." Suppresses
+the drift warning even when `hero estimate`'s computed bucket
+disagrees. This is the **inspector-wins rule**: the person who
+looked at the actual implementation outranks a word-count heuristic
+that only inspected the spec body.
+
+When to use it:
+- A `/roadmap-review` session walked the drift and the user/agent
+  confirmed declared is right (prose-dense specs that compute high,
+  structured-data-dense specs that compute low)
+- A delivery-lead audit confirmed the spec scope matches declared
+  after delivery — agent acks before flipping `status: completed`
+
+When NOT to use it:
+- Just to silence drift you haven't actually inspected. Acking
+  without thinking is the same anti-pattern as marking a ticket
+  `won't-fix` to clear a queue.
+
+### Rules
+
+- The user, or an agent that just inspected the work, decides to
+  set `size_ack`. The lead asks; the lead does not auto-stamp
+  on a spec it hasn't read.
+- **Stale acks are ignored.** If you bump declared (`size: medium →
+  large`) but the ack stays at the old value (`size_ack: medium`),
+  the drift detector treats the ack as stale and re-fires. Update
+  the ack or drop it.
+- If the spec is split or scope shrinks, drop the `size_ack` field.
+- The `roadmap-reviewer` agent should ack every "keep declared as-is"
+  decision in its session — that's the durable record of inspection.
 
 ## Drift handling
 

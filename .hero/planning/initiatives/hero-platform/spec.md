@@ -9,6 +9,7 @@ relations:
   - target: hero-cloud
     kind: related
 horizon: next
+size: giant
 ---
 
 ## Goal
