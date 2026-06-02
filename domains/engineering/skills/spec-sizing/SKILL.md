@@ -130,7 +130,7 @@ size_ack: medium
 
 When `size_ack:` matches the declared `size:`, the drift detector
 treats it as "the work was inspected; declared stands." Suppresses
-the drift warning even when `hero estimate`'s computed bucket
+the drift warning even when `hero sprint estimate`'s computed bucket
 disagrees. This is the **inspector-wins rule**: the person who
 looked at the actual implementation outranks a word-count heuristic
 that only inspected the spec body.
