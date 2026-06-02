@@ -300,6 +300,15 @@ rm -f MockApp
 
 Create an `index.html` that displays both screenshots with a light/dark toggle and a collapsible source view. This ensures `hero spec mock --open` and `hero spec mock --serve` keep working.
 
+**The viewer MUST be a single self-contained file.** Do not reference the PNGs by relative path (`<img src="screenshot.png">`) — a relative path only resolves when the file is served with its own directory as the web root (`--open` / `--serve`), and breaks in embedded preview panes that load the HTML detached from its siblings (via `srcdoc`, a blob URL, or a different web root). Embed both PNGs as base64 `data:image/png;base64,…` URIs so there is no path to resolve. This mirrors the `html-mockup-generation` rule: no external resources, ever.
+
+First, base64-encode both screenshots:
+```bash
+LIGHT_B64=$(base64 < screenshot.png | tr -d '\n')
+DARK_B64=$(base64 < screenshot-dark.png | tr -d '\n')
+```
+Then substitute the values into the template's `data:image/png;base64,{LIGHT_B64}` / `{DARK_B64}` slots. (If `swiftui.capture_dark_mode` is off, embed only the light image and drop the toggle.)
+
 ```html
 <!DOCTYPE html>
 <!-- Hero Mock: {slug} | Generated: {date} | Renderer: swiftui -->
@@ -332,7 +341,11 @@ Create an `index.html` that displays both screenshots with a light/dark toggle a
         <button class="toggle-btn" onclick="showMode('dark')">Dark</button>
     </div>
     <div class="screenshot-frame">
-        <img id="screenshot" src="screenshot.png" alt="Mock screenshot">
+        <img id="screenshot"
+             src="data:image/png;base64,{LIGHT_B64}"
+             data-light="data:image/png;base64,{LIGHT_B64}"
+             data-dark="data:image/png;base64,{DARK_B64}"
+             alt="Mock screenshot">
     </div>
     <div class="source-toggle" onclick="toggleSource()">&#9654; View SwiftUI source</div>
     <div class="source-block" id="source">
@@ -340,7 +353,8 @@ Create an `index.html` that displays both screenshots with a light/dark toggle a
     </div>
     <script>
         function showMode(mode) {
-            document.getElementById('screenshot').src = mode === 'dark' ? 'screenshot-dark.png' : 'screenshot.png';
+            const img = document.getElementById('screenshot');
+            img.src = mode === 'dark' ? img.dataset.dark : img.dataset.light;
             document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
         }
