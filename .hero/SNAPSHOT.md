@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-02T00:49:02Z · projected from 288 source nodes_
+_Last refreshed: 2026-06-02T14:44:17Z · projected from 288 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | <1m ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 13h ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | building | domains/engineering/ | 21h ago | spec-types-cache-frontmatter-empty |
+| domains/engineering | building | domains/engineering/ | 1d ago | spec-types-cache-frontmatter-empty |
 | domains/pm | concept | domains/pm/ | 14d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
-| landing | building | web/landing/ | 21h ago | hero-landing-page |
+| landing | building | web/landing/ | 1d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | <1m ago | vocabulary-resolve-misses-methodology-derivation |
+| serve | building | internal/serve/ | 13h ago | vocabulary-resolve-misses-methodology-derivation |
 | (unassigned) | — | — | — | 125 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -49,7 +49,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - **(unassigned)** — roadmap-shape, roadmap-review-ambient-surfacing, multi-spec-design-routing, roadmap-review, spec-size-and-promotion-nudge, deliver-stamps-completed-at, upgrade-strands-install-layout
 - **core** — tracker-update-size, embeddings-superseded-respect
-- **domains/engineering** — mockup-renderer-selection-swiftui-bias, native-mockup-rendering
+- **domains/engineering** — native-mockup-rendering, mockup-renderer-selection-swiftui-bias
 - **serve** — size-drift-actionable-output
 
 ## Next up across surfaces
@@ -71,5 +71,5 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
 - Specs covered: 142/267 (53%)
-- Projection generation: 0ms · Source nodes: 288
+- Projection generation: 1ms · Source nodes: 288
 
