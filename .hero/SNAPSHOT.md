@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-02T00:46:44Z · projected from 288 source nodes_
+_Last refreshed: 2026-06-02T00:49:02Z · projected from 288 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 4m ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | <1m ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | building | domains/engineering/ | 21h ago | spec-types-cache-frontmatter-empty |
@@ -16,7 +16,7 @@ _Last refreshed: 2026-06-02T00:46:44Z · projected from 288 source nodes_
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 21h ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 4m ago | vocabulary-resolve-misses-methodology-derivation |
+| serve | building | internal/serve/ | <1m ago | vocabulary-resolve-misses-methodology-derivation |
 | (unassigned) | — | — | — | 125 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
