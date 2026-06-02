@@ -32,6 +32,7 @@ relations:
   - target: e2e-validation
     kind: supersedes-scope
 horizon: now
+size: giant
 ---
 
 ## Mission alignment

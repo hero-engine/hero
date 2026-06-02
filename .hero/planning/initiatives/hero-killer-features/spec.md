@@ -6,6 +6,7 @@ status: planning
 tags: [agent-effectiveness, team, intelligence, dx]
 created: 2026-04-22
 horizon: next
+size: giant
 ---
 
 ## Goal

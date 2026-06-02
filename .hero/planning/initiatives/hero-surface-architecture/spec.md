@@ -15,6 +15,7 @@ relations:
   - target: hero-qa
     kind: relates-to
 horizon: now
+size: giant
 ---
 
 ## Vision

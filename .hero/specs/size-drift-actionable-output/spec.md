@@ -4,7 +4,7 @@ slug: size-drift-actionable-output
 type: feature
 domain: engineering
 status: completed
-size: small
+size: medium
 priority: P2
 tags: [size, drift, cli, polish]
 created: 2026-06-01
@@ -12,6 +12,7 @@ relations:
   - target: roadmap-shape
     kind: parent
 completed_at: 2026-06-01T21:12:38Z
+size_ack: medium
 ---
 
 ## Goal

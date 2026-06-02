@@ -4,10 +4,11 @@ slug: tracker-update-size
 type: feature
 domain: engineering
 status: completed
-size: small
+size: medium
 relates-to: [spec-size-and-promotion-nudge]
 tags: [tracker, sync, size]
 completed_at: 2026-06-01T15:43:51Z
+size_ack: medium
 ---
 
 # Tracker UpdateSize — close the size push loop

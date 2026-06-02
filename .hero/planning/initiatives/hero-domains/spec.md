@@ -9,6 +9,7 @@ relations:
   - target: hero-platform
     kind: related
 horizon: next
+size: giant
 ---
 
 ## Goal

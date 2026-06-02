@@ -14,6 +14,7 @@ relations:
     kind: related
 horizon: now
 completed_at: 2026-05-20T05:29:22Z
+size: giant
 ---
 
 # `hero serve` Project Section — Per-Project Info, Utilities, and Operations Page

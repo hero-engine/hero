@@ -12,6 +12,7 @@ relations:
   - target: roadmap-shape
     kind: parent
 completed_at: 2026-06-01T19:50:49Z
+size_ack: medium
 ---
 
 ## Goal

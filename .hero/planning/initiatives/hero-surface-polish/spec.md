@@ -9,6 +9,7 @@ relations:
   - target: hero-surface-architecture
     kind: parent
 horizon: now
+size: giant
 ---
 
 ## Vision

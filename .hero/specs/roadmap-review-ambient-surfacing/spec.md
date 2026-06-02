@@ -4,7 +4,7 @@ slug: roadmap-review-ambient-surfacing
 type: feature
 domain: engineering
 status: completed
-size: small
+size: large
 priority: P1
 tags: [roadmap, ambient-context, next-md, pulse, delivery-lead]
 created: 2026-06-01

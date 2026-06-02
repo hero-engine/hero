@@ -32,6 +32,7 @@ principles_check: |
   Phase 3's idempotent `--migrate` with verification + dry-run. Risks
   cross-platform portability via symlinks; mitigated by Phase 4's
   rendered-copy fallback with `hero verify-install` drift detection.
+size: giant
 ---
 
 ## Goal

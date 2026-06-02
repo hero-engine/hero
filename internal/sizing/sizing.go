@@ -188,6 +188,14 @@ func CollectDrift(specs []*spec.Spec) (leaf []Estimate, container []snapshot.Con
 		}
 		est := EstimateSpec(s, calibration)
 		if est.Drift {
+			// Inspector-wins rule: when `size_ack:` matches the declared
+			// size, the human (or agent) inspected the actual work and
+			// confirmed the declared tier is right despite the computed
+			// heuristic disagreeing. Suppress drift in that case. A stale
+			// ack (mismatch against current declared) is ignored.
+			if s.SizeAck != "" && s.SizeAck == s.Size {
+				continue
+			}
 			leaf = append(leaf, est)
 		}
 	}
