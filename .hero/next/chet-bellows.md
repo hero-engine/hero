@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-01T03:09:16Z
+updated: 2026-06-03T03:39:55Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Both specs completed and archived. Next move = open PR for this branch (it bundles two related deliveries plus the v0.14.5 upgrade fixes already on main).
+> Deliver hero-mcp-orphan-no-parent-liveness: parent-liveness watchdog in mcp stdio Run() to reap orphaned hero mcp processes.
 
 ## Suggested next prompt
 

@@ -30,6 +30,19 @@ func (s *MCPServer) Run() error {
 		}
 	}
 
+	// Parent-liveness backstop. Stdin EOF is the fast, correct shutdown
+	// path, but the client controls EOF and may die without closing the
+	// pipe (crash, SIGKILL, fd handed to a survivor), leaving us blocked
+	// in Scan() forever and reparented to launchd/init. The watchdog
+	// notices the reparent and exits. Gated to real stdio mode so tests
+	// that drive Run() with a bytes.Buffer never start it. Stopped when
+	// Run() returns via the done channel.
+	if s.input == os.Stdin {
+		done := make(chan struct{})
+		defer close(done)
+		startParentWatchdog(done)
+	}
+
 	scanner := bufio.NewScanner(s.input)
 	// Allow large messages (1MB)
 	scanner.Buffer(make([]byte, 1024*1024), 1024*1024)
