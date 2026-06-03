@@ -5,7 +5,7 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-06-03T03:40:35Z
+updated: 2026-06-03T05:32:18Z
 repo: hero-engine/hero
 branch: fix/mcp-orphan-parent-liveness
 ---
