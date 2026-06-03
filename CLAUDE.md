@@ -113,6 +113,7 @@ Deferred-tool friction (the one-time `ToolSearch` schema load for `mcp__hero__*`
 - **Local specs first.** When asked to work on bugs, features, or any tracked items, ALWAYS check what's already imported locally before querying the tracker. Use `hero search --list --type <type>` to find local specs. Only go to the tracker if the local search comes up empty. When working on multiple items (e.g. "diagnose 10 bugs"), select from locally imported specs — never bulk-query the tracker to pick work items.
 - Always check spec status before doing work — don't investigate closed bugs or deliver completed specs
 - When a tracker is configured, sync status with `hero sync pull` before starting work
+- **Hero handoff travels with commits.** When committing, stage any modified `.hero/NEXT.md` and `.hero/next/*.md` alongside your code changes. These are projected handoff files — if they don't travel with the commit, the next session (possibly on another machine) starts cold. `hero next install-hooks` installs a pre-commit hook that automates this; the rule is your backstop when the hook isn't installed.
 - Capture novel learnings to `.hero/knowledge/` at the end of major workflows
 - Specs use YAML frontmatter with fields: title, type, status, tracker_id, priority, severity
 - Imported specs include tracker-prefixed fields (e.g. jira_status, jira_priority, jira_assignee) under a # Jira/GitHub/Linear comment header
