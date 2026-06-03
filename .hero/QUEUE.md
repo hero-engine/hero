@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-03T05:32:18Z · 98 ready specs_
+_Generated: 2026-06-03T20:39:40Z · 98 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_

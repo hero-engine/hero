@@ -368,6 +368,7 @@ func generateEngineeringAgentsMdBody(paths contentPathsForBody) string {
 	sb.WriteString("| Convention, pattern, standard, style | `/convention` |\n")
 	sb.WriteString("| Decision, tradeoff, compare, choose, ADR | `/decide` |\n")
 	sb.WriteString("| Explore, brainstorm, roadmap, ideate | `/discover` |\n")
+	sb.WriteString("| Mockup, mock, wireframe, prototype, visualize a screen, \"what would X look like\", \"is that a swift mock?\" | `/mock` |\n")
 	sb.WriteString("| Document, docs, explain, write docs | `/docs` |\n")
 	sb.WriteString("| Release, deploy, version, ship | `/release` |\n")
 	sb.WriteString("| Retro, postmortem, lessons learned | `/retro` |\n")
@@ -385,6 +386,8 @@ func generateEngineeringAgentsMdBody(paths contentPathsForBody) string {
 
 	sb.WriteString("When routing, pass the user's original context as arguments to the command. ")
 	sb.WriteString("If the intent is ambiguous, present the top 2-3 options and ask.\n\n")
+
+	sb.WriteString("**Mockup routing.** Any request to mock, wireframe, prototype, or visualize a screen — including casual questions like \"what would this look like?\" or \"is that a swift mock?\" — routes to `/mock`. **Never hand-generate a mockup outside that command, and never pick the format yourself.** `/mock` runs `hero spec mock detect`, which chooses the renderer (HTML vs. native SwiftUI) deterministically from the repo's stack and announces it before generating. There is **no \"HTML-first, then port to SwiftUI\" workflow** — that is a confabulation, not a real Hero pattern. In a native app you produce a native SwiftUI mockup directly (compiled, with real screenshots); in a web app you produce HTML. Do **not** generate an HTML approximation \"to iterate faster\" on a native project. Always end your response with the clickable file inventory `/mock` surfaces — never make the user ask for the links.\n\n")
 
 	sb.WriteString("**Cross-repo peering disambiguation.** The session-level `/handoff` slash command (force-refresh NEXT.md) and the cross-repo `hero handoff <spec> <alias>` command share a verb but do different things. Disambiguate by whether the user names a peer alias: if they do, it's cross-repo; if not, it's session handoff. When a user says \"ask hero-code about X\" or \"hand off to hero-cloud,\" route to the cross-repo command and **compose the prompt yourself** — don't paraphrase the user's words verbatim. A good peer-call prompt names the specific question, references the active spec via `--related-spec <slug>` when one exists, and includes `--reason` explaining why the call is happening. Pick the mode: **advisory** (need a fact, peer writes nothing), **spec-out** (peer designs the fix on its side), or **handoff** (you already did the investigation, dropping it on peer's queue).\n\n")
 
