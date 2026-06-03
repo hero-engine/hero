@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-03T03:39:55Z
+updated: 2026-06-03T03:40:35Z
 repo: hero-engine/hero
 ---
 
@@ -12,7 +12,7 @@ repo: hero-engine/hero
 
 ## Suggested next prompt
 
-_(none — `hero next suggest "..."` to set, or open a Feature to derive one)_
+> Open a PR for branch fix/mcp-orphan-parent-liveness (mcp orphan watchdog), then add the e2e reparent->exit smoke test to the e2e-validation suite — the one deferred coverage gap.
 
 ## Recent reflections
 

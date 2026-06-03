@@ -8,6 +8,7 @@ domain: engineering
 root_cause_class: design
 tags: [mcp, stdio, process-lifecycle, orphan, watchdog, serve]
 created: 2026-06-02
+completed_at: 2026-06-03T03:39:55Z
 ---
 
 # hero mcp stdio servers orphan and accumulate — no parent-liveness backstop

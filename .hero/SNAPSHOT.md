@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-03T03:14:03Z · projected from 288 source nodes_
+_Last refreshed: 2026-06-03T03:39:55Z · projected from 289 source nodes_
 
 ## Surfaces
 
@@ -11,13 +11,13 @@ _Last refreshed: 2026-06-03T03:14:03Z · projected from 288 source nodes_
 | core | building | cmd/, internal/ | 1d ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | building | domains/engineering/ | 1d ago | spec-types-cache-frontmatter-empty |
+| domains/engineering | building | domains/engineering/ | 2d ago | spec-types-cache-frontmatter-empty |
 | domains/pm | concept | domains/pm/ | 15d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
-| landing | building | web/landing/ | 1d ago | hero-landing-page |
+| landing | building | web/landing/ | 2d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
 | serve | building | internal/serve/ | 1d ago | vocabulary-resolve-misses-methodology-derivation |
-| (unassigned) | — | — | — | 125 specs without surface |
+| (unassigned) | — | — | — | 126 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
 
@@ -47,8 +47,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — roadmap-shape, roadmap-review-ambient-surfacing, multi-spec-design-routing, roadmap-review, spec-size-and-promotion-nudge, deliver-stamps-completed-at, upgrade-strands-install-layout
-- **core** — tracker-update-size, embeddings-superseded-respect
+- **(unassigned)** — hero-mcp-orphan-no-parent-liveness, roadmap-shape, roadmap-review-ambient-surfacing, multi-spec-design-routing, roadmap-review, spec-size-and-promotion-nudge, deliver-stamps-completed-at, upgrade-strands-install-layout
+- **core** — tracker-update-size
 - **domains/engineering** — native-mockup-rendering, mockup-renderer-selection-swiftui-bias
 - **serve** — size-drift-actionable-output
 
@@ -65,11 +65,11 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Blocked specs (14):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `e2e-traversal` (waits on traversal-queries); `embedded-inference` (waits on master-ingest-restore); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection); `traversal-queries` (waits on master-ingest-restore); `unified-retrieval-layer` (waits on master-ingest-restore).
 - **Stale-in-flight (20):** `hero-local-merge-missing-dialect-fields` (15d), `spec-types-cache-frontmatter-empty` (15d), `vocabulary-resolve-misses-methodology-derivation` (15d), `agent-outposts` (15d), `cross-repo-peering` (15d), `e2e-discovery` (15d), `e2e-traversal` (15d), `e2e-validation` (15d), `graph-conflict-detection` (15d), `hero-landing-page` (15d), `hero-sales` (15d), `hero-team-server` (15d), `master-ingest-restore` (15d), `monorepo-satellite-installs` (15d), `per-feature-smoke-coverage` (15d), `spec-status-integrity` (15d), `traversal-queries` (15d), `tripwire-system` (15d), `unified-retrieval-layer` (15d), `unified-search` (15d).
 - **Aged open bugs (3):** `hero-workspace-not-self-describing` (open 22d), `scan-enrichment-unbounded-loop` (open 22d), `scan-test-detection-misses-spock-vitest` (open 22d).
-- **Unassigned specs (125) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
+- **Unassigned specs (126) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 142/267 (53%)
-- Projection generation: 1ms · Source nodes: 288
+- Specs covered: 142/268 (52%)
+- Projection generation: 1ms · Source nodes: 289
 
