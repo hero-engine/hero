@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-04T14:08:25Z · 103 ready specs_
+_Generated: 2026-06-04T14:42:37Z · 102 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -201,30 +201,23 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## resume-brief-surfaces-handoff — Resume Brief Surfaces Handoff — Close the Load Half of the Magic
+## handoff-one-call-simplification — Handoff Simplification — One Persist, One Load, Fewest Files
 _feature · planning · horizon: now_
 
-Closes the *load* half of the handoff magic: make `hero resume` actually show the last user ask /
-suggested-next / reflections that auto-emit now captures and staging now ships. Today the
-`digest` brief structurally can't — `digest.Options` doesn't even carry the user/domain the
-handoff nodes are keyed by.
+You're picking up the umbrella simplification of Hero's handoff subsystem. Read this spec, then
+the two Phase-1 children. The thesis: the whole subsystem is "persist at end of turn, load at
+start of turn, travel via git," and it accreted into ~18 moving parts and 9 files where ~2 files
+and one persist/one load call would do. The two things the maintainer actually feels — drift and
+"not in my commit" — are **Phase 1** and are pure re-wires of existing code.
 
-**Status:** planning — diagnosis complete, read against source. No code yet.
+**Pick up at:** deliver [next-auto-emit-user-ask](next-auto-emit-user-ask) and
+[next-unconditional-commit-staging](next-unconditional-commit-staging) — both are diagnosed,
+delivery-ready, and independent. Auto-emit reuses `resolveSessionContext` /
+`firstUserAskFromTranscript` from `internal/cli/next_compact_handoff.go`; staging consolidates
+the two installers in `internal/hooks/install.go` + `internal/cli/next_hooks.go`. After Phase 1,
+revisit Phase 2 (drop SNAPSHOT/QUEUE/local files) with fresh per-file specs.
 
-**Pick up at:** (1) add `User`/`Domain` to `digest.Options` (`internal/digest/digest.go:31`);
-(2) populate them in `hero resume` (`internal/cli/brief.go:93`) via `nextUserSlug(cfg)` +
-`graph.DomainFor(cfg, graph.IntrinsicActive)` — mirror `autoEmitUserAsk` in `checkpoint.go`;
-(3) add `handoffSection` beside the other section builders, reading `handoff.LatestAsk` /
-`LatestSuggestion` / `RecentReflections`, omitted when `User==""` or empty, best-effort on error;
-(4) place it just after Who-you-are and before In-flight, inside the budget machinery; (5)
-extend the continuity guardrail to assert B's brief now contains A's ask/suggestion.
-
-→ `internal/digest/digest.go:31` (Options), `internal/digest/digest.go:97` (Generate/section order),
-`internal/cli/brief.go:93` (resume Options), `internal/handoff/handoff.go:210` (read funcs),
-`internal/cli/handoff_continuity_test.go` (guardrail extension)
-
-**Skip:** model-synthesized suggested-next (keep recorded value + optional mechanical floor);
-SNAPSHOT/QUEUE; budget redesign.
+→ `internal/cli/checkpoint.go`, `internal/cli/next_compact_handoff.go`, `internal/cli/next_hooks.go`, `internal/hooks/install.go`, `internal/projection/user_handoff.go`
 
 ---
 
@@ -247,26 +240,6 @@ worktree. That closes the live clobbering bug and proves the primitives.
 
 **Files:** `internal/gitutil/gitutil.go`, `internal/async/runner.go:142`, `internal/async/jobs.go:38`, `internal/workspace/locate.go:85`, `internal/cli/claim.go:72`
 **Skip:** reusing graph-conflict-detection for content conflicts (wrong layer — use `hero conflicts`); `/release` owning the integration target (net-new state, prefer a `hero target set` verb); auto-managing per-worktree build state in v1.
-
----
-
-## handoff-one-call-simplification — Handoff Simplification — One Persist, One Load, Fewest Files
-_feature · planning · horizon: now_
-
-You're picking up the umbrella simplification of Hero's handoff subsystem. Read this spec, then
-the two Phase-1 children. The thesis: the whole subsystem is "persist at end of turn, load at
-start of turn, travel via git," and it accreted into ~18 moving parts and 9 files where ~2 files
-and one persist/one load call would do. The two things the maintainer actually feels — drift and
-"not in my commit" — are **Phase 1** and are pure re-wires of existing code.
-
-**Pick up at:** deliver [next-auto-emit-user-ask](next-auto-emit-user-ask) and
-[next-unconditional-commit-staging](next-unconditional-commit-staging) — both are diagnosed,
-delivery-ready, and independent. Auto-emit reuses `resolveSessionContext` /
-`firstUserAskFromTranscript` from `internal/cli/next_compact_handoff.go`; staging consolidates
-the two installers in `internal/hooks/install.go` + `internal/cli/next_hooks.go`. After Phase 1,
-revisit Phase 2 (drop SNAPSHOT/QUEUE/local files) with fresh per-file specs.
-
-→ `internal/cli/checkpoint.go`, `internal/cli/next_compact_handoff.go`, `internal/cli/next_hooks.go`, `internal/hooks/install.go`, `internal/projection/user_handoff.go`
 
 ---
 

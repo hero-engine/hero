@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-04T12:59:56Z
+updated: 2026-06-04T14:42:37Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver next-unconditional-commit-staging: make handoff-file staging an invariant of one default hook installer so projected files always travel. Last Phase-1 item.
+> Deliver resume-brief-surfaces-handoff: add a handoffSection to the digest brief so hero resume surfaces last ask / suggested-next / reflections. Thread user+domain into digest.Options. Closes the load half of the magic.
 
 ## Suggested next prompt
 
