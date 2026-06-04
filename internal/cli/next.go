@@ -80,6 +80,7 @@ func init() {
 	nextCmd.AddCommand(nextCompactHandoffCmd)
 	nextCmd.AddCommand(nextSuggestCmd)
 	nextCmd.AddCommand(nextAskCmd)
+	nextCmd.AddCommand(nextGoalCmd)
 	nextCmd.AddCommand(nextReflectionCmd)
 	nextCmd.AddCommand(nextIngestCmd)
 	nextCmd.AddCommand(nextInstallHooksCmd)

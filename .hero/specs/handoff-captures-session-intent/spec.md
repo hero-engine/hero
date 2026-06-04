@@ -2,7 +2,7 @@
 title: "Handoff captures session intent, not just the last message"
 slug: handoff-captures-session-intent
 type: feature
-status: planning
+status: completed
 priority: high
 domain: engineering
 created: 2026-06-04
@@ -14,6 +14,7 @@ relates-to:
   - handoff-one-call-simplification
 depends-on:
   - cross-machine-handoff-slug-mismatch
+completed_at: 2026-06-04T19:06:55Z
 ---
 
 # Handoff captures session intent, not just the last message
@@ -410,6 +411,32 @@ counts) before leaning on it.
 
 ## Approach / Changes
 
+> **Delivered (2026-06-04).** Files actually changed (four-source ladder,
+> levels 0/2/3 + config knob; embed level 1 left as a seam):
+> - `internal/handoff/handoff.go` — `NodeSessionGoal`, `SessionGoal` struct,
+>   `GoalSource*` consts, `goalSourcePriority`, `RecordGoal` (priority guard),
+>   `LatestGoal`, `goalFromNode`.
+> - `internal/handoff/ingest.go` — parse `## Session goal` (source recovered
+>   from the soft-prefix framing) + `RecordGoal` in the round-trip ingest.
+> - `internal/cli/checkpoint.go` — `autoEmitSessionGoal` (window floor +
+>   marker), wired into `autoEmitUserAsk`; embed seam marker.
+> - `internal/cli/next_compact_handoff.go` — `openingWindowGoalFromTranscript`,
+>   `userOpenersFromTranscript`, `isTrivialOpener`/`hasGoalSubstanceSignal`,
+>   `goalMarkerFromTranscript`, trivia/verb word sets, marker regexp.
+> - `internal/cli/next_handoff.go` + `internal/cli/next.go` — `hero next goal`
+>   subcommand (set manual / read) + `emitField` SessionGoal case.
+> - `internal/config/config.go` — `NextConfig.GoalCapture` field + `NextGoalCapture()`.
+> - `internal/projection/user_handoff.go` — `## Session goal` section above
+>   `## Last user ask`, source framing, omit-when-equal/empty.
+> - `internal/digest/digest.go` — `Goal:` line above `Last ask:` in
+>   `handoffSection`, `goalLine` framing, omit-when-equal/empty.
+> - Tests: `internal/handoff/goal_test.go`, `internal/cli/goal_capture_test.go`,
+>   `internal/projection/user_goal_test.go`, `internal/digest/handoff_goal_test.go`,
+>   `internal/config/config_test.go` (default), and a new
+>   `Test_HandoffContinuity_CrossMachine_GoalAutoEmit` continuity guardrail.
+> - Skill: `core/skills/next-handoff-emit/SKILL.md` +
+>   `domains/engineering/skills/next-handoff-emit/SKILL.md` (marker + `hero next goal`).
+>
 > **Note (2026-06-04):** the step-by-step below predates the converged design and
 > still describes the simpler `auto-first` + `manual` two-source model. The
 > authoritative contract is the **Recommended Design** (window+filter floor,

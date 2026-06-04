@@ -138,6 +138,71 @@ func autoEmitUserAsk(stdin io.Reader) {
 	}); err != nil {
 		fmt.Fprintf(os.Stderr, "warning: auto-emit user ask: record: %v\n", err)
 	}
+
+	// Capture the session GOAL alongside the last ask — a separate
+	// SessionGoal singleton so the durable intent and the volatile
+	// latest message coexist instead of clobbering each other. Every
+	// rung is best-effort and obeys RecordGoal's priority guard, so an
+	// absent marker leaves the always-on window floor in place and a
+	// pre-existing manual goal is never overwritten by an auto pass.
+	autoEmitSessionGoal(store, repoKey, user, domain, ctx, cfg)
+}
+
+// autoEmitSessionGoal records the per-(user, repo, domain) SessionGoal
+// from the transcript. It runs the priority ladder's automatic rungs:
+//
+//   - Floor (auto-window, priority 0, always on): the opening window of
+//     substantial user messages, trivial greeting openers skipped.
+//   - Marker (priority 2, default-on, best-effort): the LAST
+//     `<!-- hero:goal: … -->` emitted by the agent, which the priority
+//     guard lets override the window goal but not a manual one.
+//
+// Embed (auto-embed, priority 1) is opt-in via next.goal_capture:"embed"
+// and not implemented in this delivery; when configured it behaves as
+// floor for now. Each RecordGoal call is best-effort: a warning to
+// stderr on error, never a failed Stop hook.
+func autoEmitSessionGoal(store *graph.Store, repoKey, user, domain string, ctx payloadContext, cfg config.Config) {
+	if ctx.TranscriptPath == "" {
+		return
+	}
+
+	// Floor: opening-window goal. Always runs; never empties when at
+	// least one user message exists.
+	if window := openingWindowGoalFromTranscript(ctx.TranscriptPath); window != "" {
+		if err := handoff.RecordGoal(store, repoKey, handoff.SessionGoal{
+			User:      user,
+			Domain:    domain,
+			Text:      window,
+			Source:    handoff.GoalSourceAutoWindow,
+			SessionID: ctx.SessionID,
+		}); err != nil {
+			fmt.Fprintf(os.Stderr, "warning: auto-emit session goal (window): %v\n", err)
+		}
+	}
+
+	// SEAM(handoff-goal-embed-selector): when next.goal_capture == "embed"
+	// AND the local hero-embed-v1 model is available, the confidence-gated
+	// embeddings selector slots in here at priority auto-embed (1) — it
+	// would pick a window candidate by similarity to the session centroid
+	// and RecordGoal it as GoalSourceAutoEmbed, abstaining when no
+	// candidate is both on-theme and a clear winner. Not implemented this
+	// delivery; "embed" degrades to floor.
+	_ = cfg.NextGoalCapture()
+
+	// Marker override: the LAST agent-emitted goal marker, if any. The
+	// priority guard makes it override the window goal but not a manual
+	// one.
+	if marker := goalMarkerFromTranscript(ctx.TranscriptPath); marker != "" {
+		if err := handoff.RecordGoal(store, repoKey, handoff.SessionGoal{
+			User:      user,
+			Domain:    domain,
+			Text:      marker,
+			Source:    handoff.GoalSourceMarker,
+			SessionID: ctx.SessionID,
+		}); err != nil {
+			fmt.Fprintf(os.Stderr, "warning: auto-emit session goal (marker): %v\n", err)
+		}
+	}
 }
 
 // writeCheckpoint writes two files:

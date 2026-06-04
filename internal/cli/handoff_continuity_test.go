@@ -528,8 +528,17 @@ func Test_HandoffContinuity_CrossMachine_AutoEmit(t *testing.T) {
 	if !strings.Contains(string(committed), autoAsk) {
 		t.Fatalf("auto-emit did not feed A's committed file (same-turn render failed):\n%s", committed)
 	}
-	if strings.Contains(string(committed), "earlier ask that must NOT win") {
-		t.Fatalf("A's file carries the FIRST user message, not the LAST:\n%s", committed)
+	// The LAST user ask line must be the LAST message, not the first.
+	// Scope the assertion to the `## Last user ask` section: the first
+	// message now legitimately appears in `## Session goal` (the opening-
+	// window goal), so a whole-file Contains check would be a false
+	// positive. The goal section is a separate, intentional surface.
+	lastAskSection := h2SectionBody(string(committed), "## Last user ask")
+	if strings.Contains(lastAskSection, "earlier ask that must NOT win") {
+		t.Fatalf("A's Last-user-ask carries the FIRST user message, not the LAST:\n%s", committed)
+	}
+	if !strings.Contains(lastAskSection, autoAsk) {
+		t.Fatalf("A's Last-user-ask section missing the auto-emitted ask:\n%s", committed)
 	}
 
 	// --- Machine B: brand-new workspace, own empty graph, only the file.
@@ -614,6 +623,121 @@ func Test_HandoffContinuity_CrossMachine_AutoEmit(t *testing.T) {
 	}
 	if !strings.Contains(briefB.Markdown(), autoAsk) {
 		t.Errorf("B's resume brief missing the auto-emitted ask:\n%s", briefB.Markdown())
+	}
+}
+
+// Test_HandoffContinuity_CrossMachine_GoalAutoEmit is the goal-travels
+// guardrail mandated by handoff-captures-session-intent. It mirrors the
+// AutoEmit ask variant: on machine A a real Stop checkpoint with a
+// transcript captures the session GOAL (the opening-window goal AND a
+// later `<!-- hero:goal: … -->` marker that overrides it). The committed
+// `.hero/next/alice.md` travels to a born-empty machine B; after the real
+// ingest, B reconstructs the goal through the real query surface, the
+// re-projected briefing, AND the resume brief — proving the goal rides
+// the same file→graph→brief path the ask does.
+func Test_HandoffContinuity_CrossMachine_GoalAutoEmit(t *testing.T) {
+	const markerGoal = "MACHINE_A_GOAL stop credential-stuffing on the login endpoint"
+	const lastAsk = "cap it at 5 a minute and make sure it does not blow up under load"
+
+	// --- Machine A: real checkpoint with a transcript carrying an opener,
+	// an assistant goal marker, and a tail refinement.
+	cfgA := teamCfg()
+	envA := newTestEnv(t)
+	if err := cfgA.Save(envA.dir); err != nil {
+		t.Fatalf("save A cfg: %v", err)
+	}
+
+	tp := writeTranscript(t, envA.dir,
+		`{"type":"user","message":{"role":"user","content":"add rate limiting to the login endpoint"}}`+"\n"+
+			`{"type":"assistant","message":{"role":"assistant","content":"Got it. <!-- hero:goal: `+markerGoal+` -->"}}`+"\n"+
+			`{"type":"user","message":{"role":"user","content":"`+lastAsk+`"}}`+"\n")
+	payload := `{"session_id":"sess-A-goal","transcript_path":"` + tp + `"}`
+
+	checkpointQuiet = true
+	cmdA := &cobra.Command{RunE: runNextCheckpoint}
+	cmdA.SetIn(strings.NewReader(payload))
+	cmdA.SetOut(io.Discard)
+	cmdA.SetErr(io.Discard)
+	if err := cmdA.Execute(); err != nil {
+		t.Fatalf("machine-A checkpoint: %v", err)
+	}
+
+	aUserPath := filepath.Join(envA.heroDir, nextDirName, "alice.md")
+	committed, err := os.ReadFile(aUserPath)
+	if err != nil {
+		t.Fatalf("read A committed handoff file: %v", err)
+	}
+	// The marker goal (priority 2) must win over the window goal, and it
+	// renders asserted ("Goal:" / bare blockquote) in the Session goal
+	// section.
+	goalSection := h2SectionBody(string(committed), "## Session goal")
+	if !strings.Contains(goalSection, markerGoal) {
+		t.Fatalf("A's Session goal did not capture the marker goal:\n%s", committed)
+	}
+	if strings.Contains(goalSection, "Session opened with —") {
+		t.Fatalf("marker goal rendered with soft auto framing; should be asserted:\n%s", goalSection)
+	}
+
+	// --- Machine B: brand-new workspace, own empty graph, only the file.
+	cfgB := teamCfg()
+	envB := newTestEnv(t)
+	if err := cfgB.Save(envB.dir); err != nil {
+		t.Fatalf("save B cfg: %v", err)
+	}
+	bUserPath := filepath.Join(envB.heroDir, nextDirName, "alice.md")
+	if err := os.MkdirAll(filepath.Dir(bUserPath), 0o755); err != nil {
+		t.Fatalf("mkdir B next dir: %v", err)
+	}
+	if err := os.WriteFile(bUserPath, committed, 0o644); err != nil {
+		t.Fatalf("drop committed file on B: %v", err)
+	}
+
+	repoKeyB := gitutil.RepoKey(envB.dir)
+	domainB := graph.DomainFor(cfgB, graph.IntrinsicActive)
+
+	storeB, err := graph.Open(envB.heroDir)
+	if err != nil {
+		t.Fatalf("open B graph: %v", err)
+	}
+	if goal, _ := handoff.LatestGoal(storeB, "alice", repoKeyB, domainB); goal != nil && goal.Text != "" {
+		storeB.Close()
+		t.Fatalf("B graph not empty before ingest: found goal %q", goal.Text)
+	}
+	if err := handoff.IngestUserFile(storeB, repoKeyB, domainB, bUserPath, "", true); err != nil {
+		storeB.Close()
+		t.Fatalf("ingest on B: %v", err)
+	}
+	storeB.Close()
+
+	// B reconstructs the goal through the real query surface.
+	storeB, err = graph.Open(envB.heroDir)
+	if err != nil {
+		t.Fatalf("reopen B graph: %v", err)
+	}
+	goal, err := handoff.LatestGoal(storeB, "alice", repoKeyB, domainB)
+	if err != nil {
+		storeB.Close()
+		t.Fatalf("LatestGoal on B: %v", err)
+	}
+	if goal == nil || !strings.Contains(goal.Text, markerGoal) {
+		storeB.Close()
+		t.Fatalf("B did not reconstruct the session goal: got %+v, want contains %q", goal, markerGoal)
+	}
+
+	// And the resume brief carries it as a Goal line.
+	briefB, err := digest.Generate(storeB, digest.Options{
+		RepoKey:     repoKeyB,
+		Branch:      gitutil.CurrentBranch(envB.dir),
+		AuthorEmail: "alice@example.com",
+		User:        "alice",
+		Domain:      domainB,
+	})
+	storeB.Close()
+	if err != nil {
+		t.Fatalf("digest.Generate on B: %v", err)
+	}
+	if !strings.Contains(briefB.Markdown(), "Goal: "+markerGoal) {
+		t.Errorf("B's resume brief missing the reconstructed Goal line:\n%s", briefB.Markdown())
 	}
 }
 
@@ -1124,6 +1248,32 @@ func Test_IngestUserFile_MultiFile_NoAlias(t *testing.T) {
 			t.Errorf("%s's own reflection missing under their slug: %+v", slug, refs)
 		}
 	}
+}
+
+// h2SectionBody returns the body of the `## <header>` section in a
+// rendered handoff markdown doc — everything between the header line and
+// the next `## ` header (or EOF). Used to scope content assertions to a
+// single section so unrelated sections (e.g. the new `## Session goal`)
+// don't produce false positives. (The compact-handoff tests have their
+// own H3-oriented sectionBody; this one is H2-scoped for user-handoff
+// docs.)
+func h2SectionBody(doc, header string) string {
+	lines := strings.Split(doc, "\n")
+	var out []string
+	in := false
+	for _, line := range lines {
+		if strings.TrimRight(line, " \t\r") == header {
+			in = true
+			continue
+		}
+		if in && strings.HasPrefix(line, "## ") {
+			break
+		}
+		if in {
+			out = append(out, line)
+		}
+	}
+	return strings.Join(out, "\n")
 }
 
 // --- AC-3 helpers ---------------------------------------------------

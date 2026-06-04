@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-04T17:56:11Z
+updated: 2026-06-04T19:07:12Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver cross-machine-handoff-slug-mismatch then resume-brief-missing-project-context, in order, on the handoff branch.
+> Deliver handoff-captures-session-intent on main: SessionGoal node, window+filter floor + marker override + manual, priority ladder, source-labeled rendering, per-user scoping, next.goal_capture config knob (only 'floor' implemented).
 
 ## Suggested next prompt
 

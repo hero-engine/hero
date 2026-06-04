@@ -60,6 +60,25 @@ var nextAskCmd = &cobra.Command{
 	RunE:  runNextAsk,
 }
 
+var nextGoalCmd = &cobra.Command{
+	Use:   "goal [text]",
+	Short: "Show or set the session goal (durable intent)",
+	Long: `Without args, prints the current session goal for you (or
+--user <slug>) — the durable intent behind the work, captured
+automatically from the session's opening messages. With args, records a
+MANUAL goal that supersedes any auto-derived or marker goal.
+
+The goal is captured automatically every checkpoint, so this override is
+optional — fire it only to correct a wrong auto-derived opener. Use the
+last-ask command (` + "`hero next ask`" + `) for the latest prompt; the
+goal is the session's WHY, not the most recent refinement.
+
+Examples:
+  hero next goal                                  # print current goal
+  hero next goal "add rate limiting to the login endpoint"`,
+	RunE: runNextGoal,
+}
+
 var nextReflectionCmd = &cobra.Command{
 	Use:   "reflection [text]",
 	Short: "Show recent session reflections, or record a new one",
@@ -85,7 +104,7 @@ for all known users in one call.`,
 }
 
 func init() {
-	for _, cmd := range []*cobra.Command{nextSuggestCmd, nextAskCmd, nextReflectionCmd} {
+	for _, cmd := range []*cobra.Command{nextSuggestCmd, nextAskCmd, nextGoalCmd, nextReflectionCmd} {
 		cmd.Flags().BoolVar(&handoffJSON, "json", false, "emit JSON instead of plain text")
 		cmd.Flags().BoolVar(&handoffCopy, "copy", false, "also copy result to clipboard")
 		cmd.Flags().StringVar(&handoffUser, "user", "", "fetch another user's value (defaults to you)")
@@ -321,6 +340,29 @@ func runNextAsk(cmd *cobra.Command, args []string) error {
 	return emitField(cmd.OutOrStdout(), ask, "no recorded user ask yet")
 }
 
+func runNextGoal(cmd *cobra.Command, args []string) error {
+	store, user, repoKey, domain, cleanup, err := openHandoffStore()
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	if len(args) > 0 {
+		text := strings.Join(args, " ")
+		return handoff.RecordGoal(store, repoKey, handoff.SessionGoal{
+			User:   user,
+			Domain: domain,
+			Text:   text,
+			Source: handoff.GoalSourceManual,
+		})
+	}
+	goal, err := handoff.LatestGoal(store, user, repoKey, domain)
+	if err != nil {
+		return err
+	}
+	return emitField(cmd.OutOrStdout(), goal, "no session goal recorded yet")
+}
+
 func runNextReflection(cmd *cobra.Command, args []string) error {
 	store, user, repoKey, domain, cleanup, err := openHandoffStore()
 	if err != nil {
@@ -392,6 +434,11 @@ func fieldText(val any) string {
 			return ""
 		}
 		return v.Text
+	case *handoff.SessionGoal:
+		if v == nil {
+			return ""
+		}
+		return v.Text
 	}
 	return ""
 }
@@ -401,6 +448,8 @@ func isNilPointer(val any) bool {
 	case *handoff.UserAsk:
 		return v == nil
 	case *handoff.NextSuggestion:
+		return v == nil
+	case *handoff.SessionGoal:
 		return v == nil
 	}
 	return val == nil

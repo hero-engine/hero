@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-04T17:56:11Z · projected from 305 source nodes_
+_Last refreshed: 2026-06-04T18:18:02Z · projected from 305 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 11h ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | <1m ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | building | domains/engineering/ | 3d ago | spec-types-cache-frontmatter-empty |
@@ -48,7 +48,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — cross-machine-handoff-slug-mismatch, resume-brief-surfaces-handoff, next-unconditional-commit-staging, e2e-handoff-continuity, next-snapshot-file-missing-merge-attribute, next-merge-driver-not-portable, next-projection-gate-punts-migration-to-user, next-team-mode-per-user-handoff-unmaintained, hero-mcp-orphan-no-parent-liveness, roadmap-shape, roadmap-review-ambient-surfacing
+- **(unassigned)** — resume-brief-missing-project-context, cross-machine-handoff-slug-mismatch, resume-brief-surfaces-handoff, next-unconditional-commit-staging, e2e-handoff-continuity, next-snapshot-file-missing-merge-attribute, next-merge-driver-not-portable, next-projection-gate-punts-migration-to-user, next-team-mode-per-user-handoff-unmaintained, hero-mcp-orphan-no-parent-liveness, roadmap-shape
 - **core** — next-auto-emit-user-ask
 
 ## Next up across surfaces

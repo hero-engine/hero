@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -656,6 +657,285 @@ func scanUserAskFromTranscript(transcriptPath string, wantLast bool) string {
 			return text
 		}
 		last = text
+	}
+	return last
+}
+
+// goalWindowSize is the number of substantial opening user messages
+// the floor goal collects into its window. ~3 is enough for the reading
+// model to recover the session's intent from the opening exchange
+// without dragging in mid-session refinements.
+const goalWindowSize = 3
+
+// goalMarkerPattern matches the agent-emitted goal marker
+// `<!-- hero:goal: <text> -->` in an assistant message. The capture
+// group is the goal text; surrounding whitespace is trimmed by the
+// caller. Non-greedy so multiple markers on one line each match.
+var goalMarkerPattern = regexp.MustCompile(`(?s)<!--\s*hero:goal:\s*(.*?)\s*-->`)
+
+// openingWindowGoalFromTranscript walks the transcript's user messages
+// from the start, skips trivial greeting/ack openers, and joins the
+// first goalWindowSize SUBSTANTIAL messages into a single goal candidate
+// (truncated at compactHandoffKickoffCap). If every opener is trivial it
+// falls back to the raw first user message so the floor never produces
+// an empty goal. Any IO/parse error yields "" — the best-effort,
+// never-fail-the-hook contract.
+//
+// It does NOT reuse firstUserAskFromTranscript's single-record return
+// (that stays unchanged for compact-handoff); it shares the same bounded
+// read and parse loop but keeps the full ordered list of opener texts.
+func openingWindowGoalFromTranscript(transcriptPath string) string {
+	openers := userOpenersFromTranscript(transcriptPath)
+	if len(openers) == 0 {
+		return ""
+	}
+
+	var window []string
+	for _, msg := range openers {
+		if isTrivialOpener(msg) {
+			continue
+		}
+		window = append(window, msg)
+		if len(window) >= goalWindowSize {
+			break
+		}
+	}
+	// Fall back to the raw first message when every opener was trivial —
+	// the floor never empties.
+	if len(window) == 0 {
+		window = append(window, openers[0])
+	}
+
+	joined := strings.TrimSpace(strings.Join(window, "\n"))
+	if len(joined) > compactHandoffKickoffCap {
+		joined = joined[:compactHandoffKickoffCap] + "…"
+	}
+	return joined
+}
+
+// userOpenersFromTranscript returns the ordered user-message texts from
+// the bounded head of the transcript (same 64 KiB / 1000-line window as
+// scanUserAskFromTranscript). Each text is NOT individually truncated —
+// the window joiner truncates the assembled result instead. Returns nil
+// on any IO/parse error.
+func userOpenersFromTranscript(transcriptPath string) []string {
+	f, err := os.Open(transcriptPath)
+	if err != nil {
+		return nil
+	}
+	defer f.Close()
+
+	buf := make([]byte, transcriptReadByteCap)
+	n, _ := io.ReadFull(f, buf)
+	if n == 0 {
+		return nil
+	}
+	lines := strings.Split(string(buf[:n]), "\n")
+	if len(lines) > transcriptReadLineCap {
+		lines = lines[:transcriptReadLineCap]
+	}
+
+	var out []string
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		var rec transcriptMessage
+		if err := json.Unmarshal([]byte(line), &rec); err != nil {
+			continue
+		}
+		isUser := rec.Type == "user"
+		if !isUser && rec.Message != nil && rec.Message.Role == "user" {
+			isUser = true
+		}
+		if !isUser {
+			continue
+		}
+		raw := rec.Content
+		if len(raw) == 0 && rec.Message != nil {
+			raw = rec.Message.Content
+		}
+		text := strings.TrimSpace(extractTranscriptText(raw))
+		if text == "" {
+			continue
+		}
+		out = append(out, text)
+		// Stop once we have enough candidates to fill the window even if
+		// every one survives the triviality filter — bounds the scan.
+		if len(out) >= goalWindowSize*4 {
+			break
+		}
+	}
+	return out
+}
+
+// goalTriviaWords are the greeting/ack tokens that, when a message is
+// essentially nothing but these, mark it as a trivial opener to skip.
+var goalTriviaWords = map[string]bool{
+	"hi": true, "hey": true, "hello": true, "yo": true, "sup": true,
+	"thanks": true, "thank": true, "thankyou": true, "ty": true,
+	"ok": true, "okay": true, "k": true, "kk": true,
+	"yes": true, "yep": true, "yeah": true, "yup": true, "sure": true,
+	"no": true, "nope": true,
+	"go": true, "continue": true, "proceed": true, "lgtm": true,
+	"cool": true, "nice": true, "perfect": true, "great": true,
+	"awesome": true, "good": true, "please": true, "ahead": true,
+	// Conversational filler that, on its own, carries no intent — so a
+	// throat-clearing opener like "hey can you help" classifies as
+	// trivial. A real request word (an imperative verb, a noun phrase
+	// with substance) breaks the all-filler match and keeps the message.
+	"can": true, "could": true, "would": true, "you": true, "u": true,
+	"me": true, "we": true, "help": true, "with": true, "a": true,
+	"the": true, "this": true, "that": true, "it": true, "to": true,
+	"for": true, "just": true, "quick": true, "question": true,
+	"i": true, "have": true, "got": true, "lets": true, "let": true,
+}
+
+// goalSubstanceVerbs are imperative request verbs that keep an opener
+// even when it is short — a strong intent signal.
+var goalSubstanceVerbs = map[string]bool{
+	"add": true, "fix": true, "build": true, "make": true, "change": true,
+	"remove": true, "delete": true, "why": true, "how": true, "what": true,
+	"refactor": true, "implement": true, "create": true, "update": true,
+	"write": true, "design": true, "debug": true, "investigate": true,
+	"diagnose": true, "review": true, "test": true, "rename": true,
+	"move": true, "fixup": true, "wire": true, "handle": true, "support": true,
+}
+
+// isTrivialOpener reports whether a whole user message is essentially
+// just greeting/ack noise, so the opening-window goal should skip it.
+//
+// The match is WHOLE-MESSAGE, not prefix: "ok now do X" is NOT trivial
+// because it carries a real request after the ack. A message is trivial
+// only when, after lowercasing and stripping punctuation, it is made up
+// solely of greeting/ack tokens, OR it is very short (<= 3 words) AND
+// carries no substance signal. A substance signal — a '?', a code
+// fence/backtick, a file path or .ext, an error-looking token, an
+// imperative verb, or >= 6 words — always keeps the message.
+func isTrivialOpener(msg string) bool {
+	trimmed := strings.TrimSpace(msg)
+	if trimmed == "" {
+		return true
+	}
+	// Substance signals that keep any message regardless of length.
+	if hasGoalSubstanceSignal(trimmed) {
+		return false
+	}
+
+	fields := strings.Fields(strings.ToLower(trimmed))
+	if len(fields) >= 6 {
+		// Long enough to carry intent even without an explicit signal.
+		return false
+	}
+
+	// Tokenize to bare words (strip surrounding punctuation) and test
+	// whether every token is a greeting/ack word.
+	allTrivia := true
+	wordCount := 0
+	for _, f := range fields {
+		w := strings.Trim(f, ".,!?;:\"'`()[]{}…-")
+		if w == "" {
+			continue
+		}
+		wordCount++
+		if goalTriviaWords[w] {
+			continue
+		}
+		allTrivia = false
+	}
+	if wordCount == 0 {
+		return true
+	}
+	if allTrivia {
+		return true
+	}
+	// Not pure trivia, but very short with no substance signal → skip.
+	return wordCount <= 3
+}
+
+// hasGoalSubstanceSignal reports whether a message carries an explicit
+// intent signal that should always keep it in the opening window.
+func hasGoalSubstanceSignal(msg string) bool {
+	if strings.ContainsAny(msg, "?`") {
+		return true
+	}
+	lower := strings.ToLower(msg)
+	// File path / extension or error-looking tokens.
+	if strings.Contains(msg, "/") && strings.Contains(msg, ".") {
+		return true
+	}
+	for _, marker := range []string{".go", ".ts", ".js", ".py", ".md", ".json", ".yaml", ".yml", ".rs", ".java",
+		"error", "panic", "exception", "fail", "traceback", "stack trace"} {
+		if strings.Contains(lower, marker) {
+			return true
+		}
+	}
+	// Imperative request verb anywhere in the message.
+	for _, f := range strings.Fields(lower) {
+		w := strings.Trim(f, ".,!?;:\"'`()[]{}…-")
+		if goalSubstanceVerbs[w] {
+			return true
+		}
+	}
+	return false
+}
+
+// goalMarkerFromTranscript greps the transcript's ASSISTANT messages for
+// `<!-- hero:goal: <text> -->` markers and returns the LAST one's text
+// (most recent wins — a later marker reflects refined understanding).
+// Returns "" when no marker is present or on any IO/parse error. The
+// result is truncated at compactHandoffKickoffCap to match the window.
+func goalMarkerFromTranscript(transcriptPath string) string {
+	f, err := os.Open(transcriptPath)
+	if err != nil {
+		return ""
+	}
+	defer f.Close()
+
+	buf := make([]byte, transcriptReadByteCap)
+	n, _ := io.ReadFull(f, buf)
+	if n == 0 {
+		return ""
+	}
+	lines := strings.Split(string(buf[:n]), "\n")
+	if len(lines) > transcriptReadLineCap {
+		lines = lines[:transcriptReadLineCap]
+	}
+
+	var last string
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		var rec transcriptMessage
+		if err := json.Unmarshal([]byte(line), &rec); err != nil {
+			continue
+		}
+		isAssistant := rec.Type == "assistant"
+		if !isAssistant && rec.Message != nil && rec.Message.Role == "assistant" {
+			isAssistant = true
+		}
+		if !isAssistant {
+			continue
+		}
+		raw := rec.Content
+		if len(raw) == 0 && rec.Message != nil {
+			raw = rec.Message.Content
+		}
+		text := extractTranscriptText(raw)
+		if text == "" {
+			continue
+		}
+		for _, m := range goalMarkerPattern.FindAllStringSubmatch(text, -1) {
+			if g := strings.TrimSpace(m[1]); g != "" {
+				last = g
+			}
+		}
+	}
+	if len(last) > compactHandoffKickoffCap {
+		last = last[:compactHandoffKickoffCap] + "…"
 	}
 	return last
 }

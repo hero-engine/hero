@@ -320,11 +320,39 @@ func handoffSection(store *graph.Store, opts Options, budget int) (BriefSection,
 		fmt.Fprintf(os.Stderr, "warning: digest handoff section: %s: %v\n", what, err)
 	}
 
+	// Read the last ask first so the goal line above it can suppress
+	// itself when goal == latest (single-message sessions).
+	askText := ""
 	if ask, err := handoff.LatestAsk(store, opts.User, opts.RepoKey, opts.Domain); err != nil {
 		logSkip("last ask", err)
 		return BriefSection{Title: sec.Title}, nil
-	} else if ask != nil && ask.Text != "" {
-		sec.Lines = append(sec.Lines, "Last ask: "+oneLine(ask.Text))
+	} else if ask != nil {
+		askText = strings.TrimSpace(ask.Text)
+	}
+
+	// Session goal — the durable intent, rendered ABOVE the latest ask.
+	// Auto sources are framed softly; marker/manual assert. Omitted when
+	// empty or equal to the latest ask.
+	goalShown := false
+	if goal, err := handoff.LatestGoal(store, opts.User, opts.RepoKey, opts.Domain); err != nil {
+		logSkip("session goal", err)
+		return BriefSection{Title: sec.Title}, nil
+	} else if goal != nil {
+		goalText := strings.TrimSpace(goal.Text)
+		if goalText != "" && goalText != askText {
+			sec.Lines = append(sec.Lines, goalLine(goal.Source, oneLine(goalText)))
+			goalShown = true
+		}
+	}
+
+	if askText != "" {
+		// When a goal sits above it, the ask reads as the refinement
+		// ("Goal: … / Latest: …"); standalone it stays "Last ask:".
+		label := "Last ask: "
+		if goalShown {
+			label = "Latest: "
+		}
+		sec.Lines = append(sec.Lines, label+oneLine(askText))
 	}
 
 	if sug, err := handoff.LatestSuggestion(store, opts.User, opts.RepoKey, opts.Domain); err != nil {
@@ -912,6 +940,20 @@ func (b *Brief) JSON() ([]byte, error) {
 }
 
 // --- helpers ---------------------------------------------------------------
+
+// goalLine frames the session-goal line for the resume brief. Marker and
+// manual sources are asserted ("Goal: …"); auto sources are softly framed
+// so a noisy opener isn't presented as a definitive goal.
+func goalLine(source, text string) string {
+	switch source {
+	case handoff.GoalSourceMarker, handoff.GoalSourceManual:
+		return "Goal: " + text
+	case handoff.GoalSourceAutoEmbed:
+		return "Goal (likely): " + text
+	default:
+		return "Goal (session opened with): " + text
+	}
+}
 
 func oneLine(s string) string {
 	s = strings.TrimSpace(s)
