@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -44,8 +45,20 @@ func runNextMigrateProjection(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)
 	}
-	out := cmd.OutOrStdout()
+	return migrateToProjection(projectRoot, cfg, cmd.OutOrStdout())
+}
 
+// migrateToProjection performs the one-time legacy→projection
+// transition: it captures the current NEXT.md body as a durable Note,
+// extracts structured fields into UserAsk/NextSuggestion nodes, updates
+// .gitattributes, and flips next.projected = true.
+//
+// It is idempotent — a no-op when cfg.NextProjected() is already true —
+// and content-preserving: captureNextSnapshot runs FIRST so nothing is
+// lost before the flag flips. Callable both from the CLI command and
+// automatically from the checkpoint gate and the upgrade flow; pass
+// io.Discard as `out` for a silent migration.
+func migrateToProjection(projectRoot string, cfg config.Config, out io.Writer) error {
 	if cfg.NextProjected() {
 		fmt.Fprintln(out, "Already migrated. next.projected is true in hero.json.")
 		return nil

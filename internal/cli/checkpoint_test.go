@@ -748,13 +748,13 @@ func Test_CrossMachineRoundTrip_FullLoop(t *testing.T) {
 	}
 }
 
-// Test_writeCheckpoint_PreFlightGate_RefusesLegacyMarkers pins AC-14
-// of next-as-projection: when the repo hasn't been migrated and the
-// existing NEXT.md still carries pre-projection markers, the
-// checkpoint write must refuse rather than silently rewrite over
-// hand-authored sections that migration would otherwise ingest as
-// graph nodes.
-func Test_writeCheckpoint_PreFlightGate_RefusesLegacyMarkers(t *testing.T) {
+// Test_writeCheckpoint_PreFlightGate_AutoMigratesLegacyMarkers pins
+// the revised AC-14 / AC-B1: when the repo hasn't been migrated and
+// the existing NEXT.md still carries pre-projection markers, the
+// checkpoint auto-migrates (capture → ingest → flip) rather than
+// refusing. The legacy body is preserved as a durable Note and the
+// repo comes out projected.
+func Test_writeCheckpoint_PreFlightGate_AutoMigratesLegacyMarkers(t *testing.T) {
 	env := newTestEnv(t)
 	cfg := config.DefaultConfig()
 	cfg.Tracking = &config.TrackingConfig{DefaultAgent: "human/tester"}
@@ -775,23 +775,33 @@ Hand-written stuff that mattered.
 		t.Fatal(err)
 	}
 
-	if _, err := writeCheckpoint(); err == nil {
-		t.Fatal("writeCheckpoint should refuse with unmigrated legacy markers present")
-	} else if !strings.Contains(err.Error(), "hero next migrate-to-projection") {
-		t.Errorf("error should direct user to migrate; got: %v", err)
+	if _, err := writeCheckpoint(); err != nil {
+		t.Fatalf("writeCheckpoint should auto-migrate, not refuse; got: %v", err)
 	}
 
-	// File must be untouched.
+	// next.projected must have flipped true.
+	reloaded, err := config.Load(env.dir)
+	if err != nil {
+		t.Fatalf("reload config: %v", err)
+	}
+	if !reloaded.NextProjected() {
+		t.Error("next.projected should be true after auto-migration")
+	}
+
+	// The legacy body must survive as a durable Note in the graph.
+	assertMigrationSnapshotCaptured(t, env, "Hand-written stuff that mattered.")
+
+	// NEXT.md is now a graph projection — not the original hand text.
 	got, _ := os.ReadFile(nextPath)
-	if string(got) != legacy {
-		t.Errorf("NEXT.md was modified despite gate; got:\n%s", got)
+	if strings.Contains(string(got), "Hand-written stuff that mattered.") {
+		t.Errorf("NEXT.md still contains verbatim hand text after projection:\n%s", got)
 	}
 }
 
-// Test_writeCheckpoint_PreFlightGate_RefusesLegacyHeaders covers the
-// other unmigrated signal: section headers from the hand-authored
-// era. Same rule applies when next.projected = false.
-func Test_writeCheckpoint_PreFlightGate_RefusesLegacyHeaders(t *testing.T) {
+// Test_writeCheckpoint_PreFlightGate_AutoMigratesLegacyHeaders covers
+// the other unmigrated signal: section headers from the hand-authored
+// era. Same auto-migration rule applies when next.projected = false.
+func Test_writeCheckpoint_PreFlightGate_AutoMigratesLegacyHeaders(t *testing.T) {
 	env := newTestEnv(t)
 	cfg := config.DefaultConfig()
 	cfg.Tracking = &config.TrackingConfig{DefaultAgent: "human/tester"}
@@ -813,11 +823,43 @@ Wire the new gate.
 		t.Fatal(err)
 	}
 
-	if _, err := writeCheckpoint(); err == nil {
-		t.Fatal("writeCheckpoint should refuse with unmigrated legacy headers present")
-	} else if !strings.Contains(err.Error(), "Just finished") {
-		t.Errorf("error should name the offending header; got: %v", err)
+	if _, err := writeCheckpoint(); err != nil {
+		t.Fatalf("writeCheckpoint should auto-migrate, not refuse; got: %v", err)
 	}
+
+	reloaded, err := config.Load(env.dir)
+	if err != nil {
+		t.Fatalf("reload config: %v", err)
+	}
+	if !reloaded.NextProjected() {
+		t.Error("next.projected should be true after auto-migration")
+	}
+	assertMigrationSnapshotCaptured(t, env, "Big refactor of the projection layer.")
+}
+
+// assertMigrationSnapshotCaptured asserts a Note node carrying the
+// migration-snapshot reason exists in the graph and that its captured
+// body contains the given fragment of the pre-projection NEXT.md.
+func assertMigrationSnapshotCaptured(t *testing.T, env *testEnv, bodyFragment string) {
+	t.Helper()
+	store, err := graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatalf("open graph: %v", err)
+	}
+	defer store.Close()
+	notes, err := store.ListNodesByType("Note")
+	if err != nil {
+		t.Fatalf("list Note nodes: %v", err)
+	}
+	const wantReason = "next-as-projection migration; preserving pre-projection content"
+	for _, n := range notes {
+		if reason, _ := n.Props["reason"].(string); reason == wantReason {
+			if body, _ := n.Props["body"].(string); strings.Contains(body, bodyFragment) {
+				return
+			}
+		}
+	}
+	t.Errorf("no migration-snapshot Note (reason=%q) capturing %q found; notes=%d", wantReason, bodyFragment, len(notes))
 }
 
 // Test_writeCheckpoint_PreFlightGate_AllowsWhenMigrated confirms the
@@ -858,6 +900,140 @@ func Test_writeCheckpoint_PreFlightGate_AllowsCleanUnmigrated(t *testing.T) {
 	// No NEXT.md on disk.
 	if _, err := writeCheckpoint(); err != nil {
 		t.Fatalf("writeCheckpoint should succeed when no legacy content: %v", err)
+	}
+}
+
+// Test_writeCheckpoint_AutoMigration_IsSilent pins AC-B1's byte-
+// silence guarantee: a --quiet checkpoint that triggers auto-migration
+// emits nothing to stdout (the auto path passes io.Discard to
+// migrateToProjection, so no migration-progress lines leak).
+func Test_writeCheckpoint_AutoMigration_IsSilent(t *testing.T) {
+	env := newTestEnv(t)
+	nextPath := filepath.Join(env.heroDir, "NEXT.md")
+	legacy := "# Where we are\n\n## Just finished\n\nReal hand-authored content.\n"
+	if err := os.WriteFile(nextPath, []byte(legacy), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := runCmd("next", "checkpoint", "-q")
+	if err != nil {
+		t.Fatalf("quiet checkpoint returned error: %v", err)
+	}
+	if out != "" {
+		t.Fatalf("quiet checkpoint that auto-migrates should be byte-silent, got %q", out)
+	}
+
+	// Sanity: it actually migrated (otherwise the silence is vacuous).
+	reloaded, _ := config.Load(env.dir)
+	if !reloaded.NextProjected() {
+		t.Error("auto-migration did not run during the silent checkpoint")
+	}
+}
+
+// Test_writeCheckpoint_AutoMigration_FailurePreservesContent pins
+// AC-B2 / the failure-mode contract: when auto-migration fails, the
+// checkpoint returns an actionable human error (NOT the bare "run hero
+// next migrate-to-projection first" incantation, NOT a placeholder
+// overwrite), NEXT.md is byte-for-byte unchanged, and next.projected
+// stays false.
+//
+// The failure is forced by making the flag-flip step fail: hero.json's
+// parent directory is made read-only so setNextProjected's os.WriteFile
+// cannot replace the file. The earlier capture step writes only to the
+// graph DB (a different path), so the migration gets far enough to
+// attempt the flip and then fails there.
+func Test_writeCheckpoint_AutoMigration_FailurePreservesContent(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("read-only directory enforcement does not apply to root")
+	}
+	env := newTestEnv(t)
+	cfg := config.DefaultConfig()
+	cfg.Tracking = &config.TrackingConfig{DefaultAgent: "human/tester"}
+	if err := cfg.Save(env.dir); err != nil {
+		t.Fatalf("save cfg: %v", err)
+	}
+	nextPath := filepath.Join(env.heroDir, "NEXT.md")
+	legacy := "# Where we are\n\n## Just finished\n\nIrreplaceable hand content.\n"
+	if err := os.WriteFile(nextPath, []byte(legacy), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Make .hero read-only so setNextProjected's write to hero.json
+	// fails. Restore perms on cleanup so t.TempDir can remove it.
+	if err := os.Chmod(env.heroDir, 0o555); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(env.heroDir, 0o755) })
+
+	_, err := writeCheckpoint()
+	if err == nil {
+		t.Fatal("writeCheckpoint should surface the migration failure")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "automatic NEXT.md migration failed") {
+		t.Errorf("error should be the actionable auto-migration message; got: %v", err)
+	}
+	if !strings.Contains(msg, "left untouched") {
+		t.Errorf("error should state NEXT.md was left untouched; got: %v", err)
+	}
+
+	// NEXT.md must be byte-for-byte unchanged (never the placeholder).
+	got, _ := os.ReadFile(nextPath)
+	if string(got) != legacy {
+		t.Errorf("NEXT.md was modified on migration failure; got:\n%s", got)
+	}
+
+	// next.projected must still be false. Restore perms first so Load
+	// reads the on-disk hero.json.
+	if err := os.Chmod(env.heroDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	reloaded, lerr := config.Load(env.dir)
+	if lerr != nil {
+		t.Fatalf("reload config: %v", lerr)
+	}
+	if reloaded.NextProjected() {
+		t.Error("next.projected should remain false after a failed migration")
+	}
+}
+
+// Test_writeCheckpoint_AutoMigration_Idempotent pins AC-B3: two
+// checkpoints on a freshly-unmigrated repo migrate exactly once — the
+// second run takes the already-projected path with no second snapshot
+// capture.
+func Test_writeCheckpoint_AutoMigration_Idempotent(t *testing.T) {
+	env := newTestEnv(t)
+	nextPath := filepath.Join(env.heroDir, "NEXT.md")
+	legacy := "# Where we are\n\n## Just finished\n\nContent to capture once.\n"
+	if err := os.WriteFile(nextPath, []byte(legacy), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := writeCheckpoint(); err != nil {
+		t.Fatalf("checkpoint #1: %v", err)
+	}
+	if _, err := writeCheckpoint(); err != nil {
+		t.Fatalf("checkpoint #2: %v", err)
+	}
+
+	store, err := graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatalf("open graph: %v", err)
+	}
+	defer store.Close()
+	notes, err := store.ListNodesByType("Note")
+	if err != nil {
+		t.Fatalf("list Note nodes: %v", err)
+	}
+	const wantReason = "next-as-projection migration; preserving pre-projection content"
+	count := 0
+	for _, n := range notes {
+		if reason, _ := n.Props["reason"].(string); reason == wantReason {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Errorf("expected exactly one migration snapshot Note across two checkpoints, got %d", count)
 	}
 }
 

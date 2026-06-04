@@ -448,13 +448,22 @@ content:
   layout, update `.gitignore`, set `next.projected = true` in
   `.hero/hero.json`, and MUST be idempotent (second run produces
   zero file diffs and is a no-op).
-- **AC-14:** `hero next checkpoint` SHALL exit non-zero when run
-  against a repo where `next.projected == false` AND `.hero/NEXT.md`
-  contains legacy markers (`<!-- BEGIN HERO MACHINE STATE -->`) or
-  legacy section headers (`## Just finished`, `## Next`, `## Tried
-  and failed`, `## Context to carry forward`), with a message
-  directing the user to `hero next migrate-to-projection`, and MUST
-  NOT overwrite the existing file in that state.
+- **AC-14 (REVISED by `next-projection-gate-punts-migration-to-user`):**
+  When `hero next checkpoint` runs against a repo where
+  `next.projected == false` AND `.hero/NEXT.md` contains legacy markers
+  (`<!-- BEGIN HERO MACHINE STATE -->`) or legacy section headers
+  (`## Just finished`, `## Next`, `## Tried and failed`, `## Context to
+  carry forward`), it SHALL **auto-migrate silently** — run the
+  content-preserving `migrateToProjection` transition (capture → ingest
+  → flip `next.projected`) and continue the checkpoint as a migrated
+  repo. No user-facing instruction is emitted on the success path.
+  ONLY on migration FAILURE does it surface an actionable, human error,
+  and in that case it MUST leave `.hero/NEXT.md` byte-for-byte untouched
+  (never the placeholder overwrite) and leave `next.projected == false`.
+  *(The original AC-14 specified refuse-and-direct-the-user; that
+  conflated "silently wipe content" with "silently migrate content."
+  Auto-migration preserves content via a durable Note, so there is no
+  product reason to punt the transition back onto the user.)*
 - **AC-15:** `hero next suggest "<text>"` (positional-arg writer)
   SHALL record a new `NextSuggestion` node attributed to the
   current user, and the text MUST be visible to subsequent

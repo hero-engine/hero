@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-04T03:03:56Z · 103 ready specs_
+_Generated: 2026-06-04T03:20:34Z · 102 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -211,29 +211,6 @@ You're fixing a one-line omission in Hero's NEXT/projection merge wiring. Read t
 **The fix:** add the `.hero/SNAPSHOT.md` line to the `updateGitAttributes` managed block, using the SAME merge strategy as the other three projected files. **Check the sibling spec `next-merge-driver-not-portable` first** — if it has moved (or is moving) the block to built-in `merge=union`, use `union` here too; do not leave a mix. Add the three tests in the Test Plan (attribute emitted, handler reachable, strategy consistency). Note in the delivery that existing installs must re-run `hero next install-hooks` to pick up the new line.
 
 **Do NOT** also fix the inverse `.hero/NEXT.md` dispatch gap here — that's owned by `next-project-file-conflict-not-regenerated`.
-
----
-
----
-
-## next-projection-gate-punts-migration-to-user — NEXT-projection migration gate punts migration to the user instead of doing it automatically
-_bug · planning · horizon: now_
-
-You're picking up a fix for a confirmed `design` bug in Hero's NEXT-projection subsystem. The diagnosis is complete and lives in `.hero/planning/bugs/next-projection-gate-punts-migration-to-user/spec.md` — read it first.
-
-**The bug:** in an unmigrated repo (`next.projected == false` with legacy NEXT.md content), `hero next checkpoint` refuses every Stop hook with `unmigrated NEXT.md detected (...) — run `hero next migrate-to-projection` first`. The pre-flight gate at `internal/cli/checkpoint.go:126-133` punts a safe, non-interactive migration back onto the user instead of doing it. This violates Hero's mission (inject context automatically, without anyone asking).
-
-**The fix (do NOT just delete the gate):**
-1. Factor the migration body out of `runNextMigrateProjection` (`internal/cli/next_migrate.go:41`) into a reusable `migrateToProjection(projectRoot, cfg, out io.Writer)` — keep the cobra command as a thin wrapper. Confirm it stays idempotent and that `captureNextSnapshot` still runs first (content preservation).
-2. In `writeCheckpoint` (`checkpoint.go:126`), replace the `return "", fmt.Errorf(...)` with: call `migrateToProjection(projectRoot, cfg, io.Discard)`; on success reload config so the projection path runs; on failure return an *actionable human* error and leave NEXT.md untouched (never the placeholder write). The failure contract is spelled out in the spec's "Failure-mode contract" — honor all three points.
-3. Resolve the team-mode path mismatch (Secondary Defect 1): the gate checks `resolveNextPath` (per-user in team mode) but the migration hardcodes `.hero/NEXT.md`. Decide between passing the gate's path in vs. solo-only scoping — see Change 3.
-4. Also wire `migrateToProjection` into `hero upgrade` (`internal/cli/upgrade.go:runUpgrade`) guarded by `!cfg.NextProjected()` for proactive transition of version-skewed workspaces.
-
-**Tests:** invert `Test_writeCheckpoint_PreFlightGate_Refuses*` (they assert refusal today — `checkpoint_test.go:527,564`), keep the `Allows*` tests, and add the six new tests listed in the spec's Test Plan — especially the migration-failure-preserves-content test (point 4) and the silence test.
-
-**Do NOT** tighten `sectionHasRealContent` detection — the auto-migration approach moots the over-eager detection concern; it's flagged as out-of-scope follow-up only.
-
-When done, update AC-14 in `.hero/specs/next-as-projection/spec.md:451-457` and §5 + the "What this locks in" bullet in `.hero/specs/decisions/next-as-projection-architecture/spec.md` to reflect "auto-migrate, don't refuse" — the old text says the gate must keep firing forever, which this fix supersedes.
 
 ---
 
@@ -794,28 +771,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## project-rules — Project Rules
-_rule · active · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/rules/project-rules/spec.md)_
-
----
-
-## sprint-2026-05-19 — Sprint Plan — dashboard-fix-and-rebuild (2026-05-19)
-_note · active · horizon: now_
-
-The user will explicitly kick off delivery on item 1
-(`dashboard-user-identity-os-env-mismatch`) after this plan is saved. Do
-not auto-start `/deliver` from the sprint plan.
-
-When ready, the kickoff command is:
-
-```
-/deliver dashboard-user-identity-os-env-mismatch
-```
-
----
-
 ## next-as-projection-architecture — NEXT-as-Projection Architecture — Three-File Split, Merge Driver, Migration Gate, Drift CI
 _decision · accepted · horizon: now_
 
@@ -859,6 +814,28 @@ form for the field-grab writers (positional form wins by symmetry with
 "auto-written by" string would all break for zero behavior gain);
 marker-preservation inside `.hero/next/<user>.md` (total-rewrite stays
 v1; revisit only on user request).
+
+---
+
+## project-rules — Project Rules
+_rule · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/rules/project-rules/spec.md)_
+
+---
+
+## sprint-2026-05-19 — Sprint Plan — dashboard-fix-and-rebuild (2026-05-19)
+_note · active · horizon: now_
+
+The user will explicitly kick off delivery on item 1
+(`dashboard-user-identity-os-env-mismatch`) after this plan is saved. Do
+not auto-start `/deliver` from the sprint plan.
+
+When ready, the kickoff command is:
+
+```
+/deliver dashboard-user-identity-os-env-mismatch
+```
 
 ---
 
