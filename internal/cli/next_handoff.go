@@ -15,6 +15,8 @@ import (
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/handoff"
 	"github.com/hero-engine/hero/internal/projection"
+	"github.com/hero-engine/hero/internal/sessions"
+	"github.com/hero-engine/hero/internal/spec"
 	"github.com/spf13/cobra"
 )
 
@@ -30,10 +32,10 @@ import (
 // accumulation (reflections).
 
 var (
-	handoffJSON  bool
-	handoffCopy  bool
-	handoffUser  string
-	ingestQuiet  bool
+	handoffJSON bool
+	handoffCopy bool
+	handoffUser string
+	ingestQuiet bool
 )
 
 var nextSuggestCmd = &cobra.Command{
@@ -105,6 +107,20 @@ func runNextIngest(cmd *cobra.Command, args []string) error {
 	defer store.Close()
 	repoKey := gitutil.RepoKey(projectRoot)
 
+	// Cold-clone rebuild (resume-brief-missing-project-context, Change
+	// 2a): graph.db is a gitignored, rebuildable local cache, so a fresh
+	// clone lands with an EMPTY project graph — the handoff ingest below
+	// only rehydrates handoff singletons, never the project-context nodes
+	// the resume brief reads (Commit / Feature / Bug). On a cold graph,
+	// rebuild project context from the clone's LOCAL authoritative sources
+	// (git log + committed specs) so the first resume isn't an empty map.
+	// Runs BEFORE the handoff-file loop so it fires even when a cold clone
+	// has no per-user handoff files yet (the loop early-returns on an empty
+	// path set). Gated on an empty/near-empty graph so warm machines never
+	// pay the reingest cost. Best-effort: a rebuild error warns and is
+	// swallowed — it must never fail SessionStart ingest.
+	rebuildProjectContextIfCold(cfg, projectRoot, heroDir, store, repoKey)
+
 	var paths []string
 	if len(args) > 0 {
 		paths = args
@@ -134,8 +150,22 @@ func runNextIngest(cmd *cobra.Command, args []string) error {
 	}
 
 	domain := graph.DomainFor(cfg, graph.IntrinsicActive)
+	// localSlug is the identity the local reader (hero resume,
+	// hero next ask/suggest) derives. Threaded into ingest so the
+	// rehydrated singletons are mirrored under it when the file's
+	// recorded user differs — closing the cross-machine slug-divergence
+	// gap (see internal/handoff.IngestUserFile).
+	localSlug := nextUserSlug(cfg)
+	// singleTravelFile gates the cross-machine alias mirror: it may only
+	// fire when exactly ONE distinct travel-eligible identity exists on
+	// disk, so a brand-new teammate (empty graph, zero handoff nodes)
+	// never has another user's handoff mirrored onto their slug. We count
+	// distinct frontmatter `user:` values across .hero/next/*.md (the same
+	// authoritative count resolveHandoffIdentity reads), not len(paths),
+	// so an explicit-args invocation can't widen the gate.
+	singleTravelFile := len(nextFileUserSlugs(heroDir)) == 1
 	for _, p := range paths {
-		if err := handoff.IngestUserFile(store, repoKey, domain, p); err != nil {
+		if err := handoff.IngestUserFile(store, repoKey, domain, p, localSlug, singleTravelFile); err != nil {
 			return fmt.Errorf("ingest %s: %w", p, err)
 		}
 		if !ingestQuiet {
@@ -143,6 +173,67 @@ func runNextIngest(cmd *cobra.Command, args []string) error {
 		}
 	}
 	return nil
+}
+
+// rebuildProjectContextIfCold rebuilds the project-context subgraph
+// (specs + sessions + recent commits) from local authoritative sources
+// when the graph has no project-context nodes for this repo — the
+// cold-clone case. It is a no-op on a warm graph (the common per-session
+// path) so it only pays the cost once, on a fresh clone.
+//
+// Repo partition uses gitutil.RepoKey(projectRoot) — the SAME key the
+// digest's justChangedSection/in-flight readers filter on — so the
+// rebuilt nodes are visible to `hero resume`. (reingestWork keys on
+// filepath.Base, which can diverge from RepoKey when an origin remote is
+// set; we deliberately do not reuse it here for that reason.)
+//
+// Best-effort by contract: every error warns to stderr and returns. It
+// must never fail the SessionStart ingest path.
+func rebuildProjectContextIfCold(cfg config.Config, projectRoot, heroDir string, store *graph.Store, repoKey string) {
+	if !projectGraphCold(store, repoKey) {
+		return
+	}
+
+	domain := graph.DomainFor(cfg, graph.IntrinsicActive)
+
+	specs, err := spec.Discover(heroDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: cold-clone rebuild: discovering specs: %v\n", err)
+	} else if _, err := spec.WriteGraph(specs, repoKey, domain, store); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: cold-clone rebuild: writing spec subgraph: %v\n", err)
+	}
+
+	sessList, err := sessions.List(heroDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: cold-clone rebuild: listing sessions: %v\n", err)
+	} else if _, err := sessions.WriteGraph(sessList, repoKey, store); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: cold-clone rebuild: writing sessions subgraph: %v\n", err)
+	}
+
+	if _, err := gitutil.WriteGitLogGraph(projectRoot, repoKey, 0, store); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: cold-clone rebuild: writing git-log subgraph: %v\n", err)
+	}
+}
+
+// projectGraphCold reports whether the repo's project-context subgraph
+// is empty/near-empty — no live Commit, Feature, or Bug nodes for this
+// repo. These are the node types the resume brief's project-context
+// sections read; if none exist, the graph is a fresh clone's cold cache
+// (or a brand-new workspace) and warrants a rebuild. Errors are treated
+// as "not cold" so a probe failure never triggers an unnecessary
+// reingest.
+func projectGraphCold(store *graph.Store, repoKey string) bool {
+	var n int
+	err := store.DB().QueryRow(
+		`SELECT COUNT(*) FROM nodes
+		  WHERE repo = ? AND valid_to IS NULL
+		    AND type IN ('Commit','Feature','Bug')`,
+		repoKey,
+	).Scan(&n)
+	if err != nil {
+		return false
+	}
+	return n == 0
 }
 
 // resolveHandoffUser returns the requested user or the current user.

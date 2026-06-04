@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -18,6 +20,7 @@ import (
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/graph"
+	"github.com/hero-engine/hero/internal/handoff"
 	"github.com/hero-engine/hero/internal/projection"
 	"github.com/hero-engine/hero/internal/snapshot"
 	"github.com/spf13/cobra"
@@ -58,28 +61,17 @@ automated tool touches.`,
 
 func init() {
 	nextCheckpointCmd.Flags().BoolVarP(&checkpointQuiet, "quiet", "q", false, "suppress success output")
-
-	// Wire snapshot projection for the hero-next merge driver. The
-	// indirection lives in next_hooks.go so merge resolution doesn't
-	// require importing internal/snapshot directly.
-	snapshotProject = func(args snapshotProjectArgs) (any, error) {
-		return snapshot.Project(snapshot.ProjectOptions{
-			ProjectRoot: args.ProjectRoot,
-			HeroDir:     args.HeroDir,
-			ProjectName: args.ProjectName,
-			Mission:     args.Mission,
-			ArchiveConfig: snapshot.ArchiveConfig{
-				StalenessCutoff:   args.ArchiveCfg.StalenessCutoff,
-				MilestonesEnabled: args.Milestones,
-				ReleaseTagPattern: args.ArchiveCfg.ReleaseTagPattern,
-				Retention:         args.ArchiveCfg.Retention,
-				RetentionCount:    args.ArchiveCfg.RetentionCount,
-			},
-		})
-	}
 }
 
 func runNextCheckpoint(cmd *cobra.Command, args []string) error {
+	// Auto-emit the user's last ask from the Stop-hook transcript
+	// payload BEFORE projecting, so the just-recorded UserAsk renders
+	// into .hero/next/<user>.md in this same checkpoint pass. Reads
+	// stdin exactly once (via resolveSessionContext); writeCheckpoint
+	// never touches stdin, so there is no double-consume. Entirely
+	// best-effort — it never fails or hangs the Stop hook.
+	autoEmitUserAsk(cmd.InOrStdin())
+
 	path, err := writeCheckpoint()
 	if err != nil {
 		return err
@@ -88,6 +80,64 @@ func runNextCheckpoint(cmd *cobra.Command, args []string) error {
 		fmt.Printf("checkpoint written → %s\n", path)
 	}
 	return nil
+}
+
+// autoEmitUserAsk records the user's last transcript message as a
+// UserAsk graph node so the projected handoff stops depending on the
+// agent remembering to run `hero next ask`. It mirrors the manual
+// command's (user, repo, domain) derivation exactly so the recorded
+// node lands on the same singleton the projection reads.
+//
+// Contract: this is the end-of-turn Stop hook, which must NEVER fail or
+// hang. Every error path is a no-op that logs to stderr and returns —
+// same best-effort contract as writeUserHandoffFile / projectSnapshot.
+//
+//   - No stdin payload (other harnesses, the git post-commit fallback):
+//     resolveSessionContext returns an empty TranscriptPath → return.
+//   - Transcript missing / unreadable / malformed: lastUserAskFromTranscript
+//     returns "" → return, leaving any existing UserAsk untouched.
+//   - The transcript read is bounded (64 KiB / 1000 lines) so an
+//     oversized or blocking transcript can't hang the hook.
+func autoEmitUserAsk(stdin io.Reader) {
+	ctx := resolveSessionContext(stdin, "")
+	if ctx.TranscriptPath == "" {
+		return
+	}
+	last := lastUserAskFromTranscript(ctx.TranscriptPath)
+	if last == "" {
+		return
+	}
+
+	projectRoot := findProjectRoot()
+	cfg, err := config.Load(projectRoot)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: auto-emit user ask: loading config: %v\n", err)
+		return
+	}
+	heroDir := cfg.HeroDir(projectRoot)
+
+	store, err := graph.Open(heroDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: auto-emit user ask: open graph: %v\n", err)
+		return
+	}
+	defer store.Close()
+
+	user := nextUserSlug(cfg)
+	if user == "" {
+		return
+	}
+	repoKey := gitutil.RepoKey(projectRoot)
+	domain := graph.DomainFor(cfg, graph.IntrinsicActive)
+
+	if err := handoff.RecordAsk(store, repoKey, handoff.UserAsk{
+		User:      user,
+		Domain:    domain,
+		Text:      last,
+		SessionID: ctx.SessionID,
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: auto-emit user ask: record: %v\n", err)
+	}
 }
 
 // writeCheckpoint writes two files:
@@ -112,23 +162,59 @@ func writeCheckpoint() (string, error) {
 		return "", fmt.Errorf("loading config: %w", err)
 	}
 
+	// A-1 stabilizer (cross-machine-handoff-slug-mismatch): pin the
+	// current machine's derived identity into the COMMITTED hero.json so
+	// every clone derives the same handoff slug regardless of local git
+	// config. Best-effort and one-time — only fires when defaultAgent is
+	// unset (so the slug is currently coming from volatile git/$USER).
+	if persisted := persistDefaultAgentIfUnset(projectRoot, cfg); persisted != nil {
+		cfg = *persisted
+	}
+
 	heroDir := cfg.HeroDir(projectRoot)
 	nextPath := resolveNextPath(heroDir, cfg)
 	localPath := resolveLocalStatePath(heroDir, cfg)
 
-	// Pre-flight migration gate (AC-14 of next-as-projection): refuse
-	// to overwrite NEXT.md when the repo hasn't been migrated to
-	// projection mode AND the existing file carries legacy content.
-	// Without this gate, the legacy write path silently rewrites the
-	// file with a placeholder, losing hand-authored sections that
-	// `hero next migrate-to-projection` would have ingested into the
-	// graph as durable nodes.
+	// sharedNextPath is the project-shape NEXT.md the snapshot pointer
+	// and the project projection target. In solo mode it equals
+	// nextPath (resolveNextPath returns .hero/NEXT.md). In team mode
+	// resolveNextPath returns the per-user .hero/next/<user>.md, which
+	// is owned by writeUserHandoffFile (personal-briefing render) — so
+	// the project-shape NEXT.md write must target the shared file
+	// instead, otherwise both writers race for the per-user path and
+	// the per-user file flips between project-shape and personal-
+	// briefing content within a single checkpoint.
+	sharedNextPath := filepath.Join(heroDir, nextFileName)
+
+	// Pre-flight migration gate (revises AC-14 of next-as-projection):
+	// when the repo hasn't been migrated to projection mode AND the
+	// existing file carries legacy hand-authored content, auto-migrate
+	// silently rather than refusing. The migration captures the legacy
+	// body as a durable Note, ingests structured fields into the graph,
+	// and flips next.projected — there is no human judgment required, so
+	// Hero does the transition itself instead of punting a CLI
+	// incantation back to the user.
+	//
+	// On migration FAILURE we keep the exact no-clobber safety the
+	// original gate protected: NEXT.md is left byte-for-byte untouched
+	// (never the nextPlaceholder overwrite), next.projected stays false,
+	// and the user gets an actionable, human message.
 	if !cfg.NextProjected() {
 		if reason := detectUnmigratedNextMD(nextPath); reason != "" {
-			return "", fmt.Errorf(
-				"unmigrated NEXT.md detected (%s) — run `hero next migrate-to-projection` first",
-				reason,
-			)
+			if err := migrateToProjection(projectRoot, cfg, io.Discard); err != nil {
+				return "", fmt.Errorf(
+					"automatic NEXT.md migration failed (%s): %w — your NEXT.md was left untouched; "+
+						"run `hero next migrate-to-projection` to retry or inspect the error",
+					reason, err,
+				)
+			}
+			// Reload config so the rest of writeCheckpoint sees
+			// next.projected == true and takes the projection path
+			// (which regenerates NEXT.md from the graph, now including
+			// the just-ingested content).
+			if reloaded, lerr := config.Load(projectRoot); lerr == nil {
+				cfg = reloaded
+			}
 		}
 	}
 
@@ -145,7 +231,7 @@ func writeCheckpoint() (string, error) {
 	//   content; just strip any embedded machine block from prior
 	//   layouts so it doesn't drift back in.
 	if cfg.NextProjected() {
-		if err := writeProjectedNextMD(nextPath, projectRoot, heroDir); err != nil {
+		if err := writeProjectedNextMD(sharedNextPath, projectRoot, heroDir); err != nil {
 			fmt.Fprintf(os.Stderr, "warning: NEXT.md projection failed: %v\n", err)
 			// Fall through to the legacy path so we still produce
 			// a current file rather than nothing.
@@ -154,15 +240,15 @@ func writeCheckpoint() (string, error) {
 		}
 	}
 	{
-		nextExisting, _ := os.ReadFile(nextPath)
+		nextExisting, _ := os.ReadFile(sharedNextPath)
 		nextBody := stripMachineBlock(string(nextExisting))
 		if strings.TrimSpace(nextBody) == "" {
 			nextBody = nextPlaceholder(projectRoot)
 		}
 		nextBody = strings.TrimRight(nextBody, "\n") + "\n"
 
-		if _, err := writeFileIfChanged(nextPath, []byte(nextBody), 0o644); err != nil {
-			return "", fmt.Errorf("writing %s: %w", nextPath, err)
+		if _, err := writeFileIfChanged(sharedNextPath, []byte(nextBody), 0o644); err != nil {
+			return "", fmt.Errorf("writing %s: %w", sharedNextPath, err)
 		}
 	}
 
@@ -198,9 +284,40 @@ local:
 	// the SNAPSHOT pointer in NEXT.md / AGENTS.md. Non-fatal: the
 	// snapshot projector logs and continues on every error so the
 	// checkpoint never fails because of snapshot-side issues.
-	projectSnapshot(projectRoot, heroDir, cfg, nextPath)
+	projectSnapshot(projectRoot, heroDir, cfg, sharedNextPath)
+
+	// Keep the project graph's Commit nodes current so the next
+	// `hero resume`'s "Just changed" reflects commits made this session
+	// — including ones made outside the git post-commit hook, since this
+	// runs on every Stop/PreCompact checkpoint too. `Commit` nodes are
+	// otherwise only written by `hero scan`/`graph reingest`, neither of
+	// which runs on commit or session start (resume-brief-missing-
+	// project-context). Bounded limit keeps `git log` cheap on the hot
+	// path; WriteGitLogGraph is idempotent so repeated checkpoints never
+	// duplicate nodes. Best-effort by the same contract as the rest of
+	// the checkpoint: a graph/ingest error warns to stderr and is
+	// swallowed — it must never fail the Stop hook.
+	ingestRecentCommits(projectRoot, heroDir)
 
 	return nextPath, nil
+}
+
+// ingestRecentCommits upserts the most recent commits into the graph as
+// Commit nodes, keyed by gitutil.RepoKey(projectRoot) so the writer and
+// the digest's justChangedSection reader agree on the repo partition.
+// Bounded, idempotent, and entirely best-effort: every error path warns
+// to stderr and returns, so the Stop-hook checkpoint never fails.
+func ingestRecentCommits(projectRoot, heroDir string) {
+	store, err := graph.Open(heroDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: commit graph ingest: open graph: %v\n", err)
+		return
+	}
+	defer store.Close()
+	repoKey := gitutil.RepoKey(projectRoot)
+	if _, err := gitutil.WriteGitLogGraph(projectRoot, repoKey, 50, store); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: commit graph ingest failed: %v\n", err)
+	}
 }
 
 // projectSnapshot refreshes .hero/SNAPSHOT.md and the pointer line
@@ -311,17 +428,14 @@ func writeProjectedNextMD(nextPath, projectRoot, heroDir string) error {
 	return err
 }
 
-// writeUserHandoffFile renders .hero/next/<user>.md from the graph.
-//
-// In team mode, .hero/next/<user>.md is the primary handoff file
-// (resolveNextPath returns it) and currently holds agent-authored
-// content. To avoid clobbering that during the projection rollout,
-// this function is a no-op in team mode — the migration command
-// (Phase 7) handles the team-mode switchover deliberately.
+// writeUserHandoffFile renders .hero/next/<user>.md from the graph in
+// BOTH solo and team mode. In team mode this file is the primary
+// handoff (resolveNextPath returns it); in solo mode it is the
+// per-user companion to the shared NEXT.md. The render is total-
+// rewrite from the user-graph nodes (UserAsk / NextSuggestion /
+// SessionReflection) — projections always win, and the semantic-
+// change guard below suppresses updated-only churn.
 func writeUserHandoffFile(projectRoot, heroDir string, cfg config.Config) error {
-	if cfg.NextMode() == "team" {
-		return nil
-	}
 	user := nextUserSlug(cfg)
 	if user == "" {
 		return nil
@@ -347,6 +461,81 @@ func writeUserHandoffFile(projectRoot, heroDir string, cfg config.Config) error 
 		return fmt.Errorf("write %s: %w", userPath, err)
 	}
 	return nil
+}
+
+// persistDefaultAgentIfUnset is the A-1 stabilizer for
+// cross-machine-handoff-slug-mismatch. When the merged config has no
+// tracking.defaultAgent, the handoff slug is being derived from
+// volatile local git/$USER config and will diverge across machines.
+// This pins the current machine's derived slug into the COMMITTED
+// hero.json (never hero.local.json) so every clone derives the same
+// identity and the handoff keys line up.
+//
+// It is deliberately surgical: it reads the committed hero.json on its
+// own (NOT the local-merged cfg), so a defaultAgent already set in
+// hero.local.json does not suppress the committed write, and local-only
+// secrets are never round-tripped into the committed file. Best-effort:
+// any error is logged and skipped — a checkpoint must never fail on it.
+//
+// Returns the updated config when it wrote (so the caller can keep
+// using the freshly-pinned slug this turn), or nil when it did nothing.
+func persistDefaultAgentIfUnset(projectRoot string, merged config.Config) *config.Config {
+	// Only act when the EFFECTIVE identity is unpinned. If the merged
+	// config already has a defaultAgent (from committed or local config),
+	// identity is already stable enough — don't churn the committed file.
+	if merged.Tracking != nil && merged.Tracking.DefaultAgent != "" {
+		return nil
+	}
+
+	slug := gitUserName()
+	if slug == "" || slug == "unknown" {
+		// Nothing stable to pin — leave the file alone rather than
+		// committing a useless "unknown" identity.
+		return nil
+	}
+
+	heroDir := filepath.Join(projectRoot, merged.Folder)
+	configPath := filepath.Join(heroDir, config.ConfigFileName)
+
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		// No committed hero.json (uninitialized workspace) → nothing to
+		// pin into. Skip silently; A-1 only stabilizes existing repos.
+		return nil
+	}
+
+	// Read the COMMITTED file on its own — no local merge, no default
+	// fill — so we write back exactly what was there plus the new field.
+	var committed config.Config
+	if err := json.Unmarshal(data, &committed); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: A-1 defaultAgent persist: parse hero.json: %v\n", err)
+		return nil
+	}
+	if committed.Tracking != nil && committed.Tracking.DefaultAgent != "" {
+		// Committed file already pins it (merged check missed it only if
+		// local cleared it, which it can't). Nothing to do.
+		return nil
+	}
+	if committed.Folder == "" {
+		committed.Folder = merged.Folder
+	}
+	if committed.Tracking == nil {
+		committed.Tracking = &config.TrackingConfig{}
+	}
+	committed.Tracking.DefaultAgent = slug
+
+	if err := committed.Save(projectRoot); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: A-1 defaultAgent persist: write hero.json: %v\n", err)
+		return nil
+	}
+
+	// Reflect the pin in the in-memory config the rest of this checkpoint
+	// uses, so the slug is consistent within the turn.
+	if merged.Tracking == nil {
+		merged.Tracking = &config.TrackingConfig{}
+	}
+	merged.Tracking.DefaultAgent = slug
+	return &merged
 }
 
 func writeFileIfChanged(path string, content []byte, mode fs.FileMode) (bool, error) {

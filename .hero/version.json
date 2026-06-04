@@ -96,7 +96,6 @@
     ".claude/skills/migration-safety/SKILL.md": "sha256:212a31dbd57b6edf727cac3ed1418cbd31b5e1b24ce2f7fbff6858ad8af35aeb",
     ".claude/skills/next-handoff-emit/SKILL.md": "sha256:b877182b14954588738733145e2d1f939a58d3a5f39c3bedf80dcb5776d7101d",
     ".claude/skills/next-md/SKILL.md": "sha256:ddec606951648d6732f0cb148356a0a7ef8ec03fe22d514de9af821baa879109",
-    ".claude/skills/next-merge-recovery/SKILL.md": "sha256:85cd70bd39caef4f5a466a6aeb89d8087e3f551a98ff793dbf16aa915615c566",
     ".claude/skills/note-capture/SKILL.md": "sha256:749ddd3a6fbd5d8d4278270a2e73bfc28233c649dfcda51182de1d67394c3997",
     ".claude/skills/nudge-awareness/SKILL.md": "sha256:4c7407480ebc462fd93e73573cf0ede0db230deaf82bac80cfd53877f44b96f7",
     ".claude/skills/performance-optimization/SKILL.md": "sha256:1c29d828ca3b60ea3b53873615853a61b476931a65ef82bf96b207fb60f84053",

@@ -104,3 +104,23 @@
 {"ts":"2026-06-01T23:44:10.01605Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"roadmap-shape","message":"status -\u003e completed"}
 {"ts":"2026-06-03T03:39:56.592839Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-mcp-orphan-no-parent-liveness","message":"\"hero mcp stdio servers orphan and accumulate — no parent-liveness backstop\""}
 {"ts":"2026-06-03T03:39:56.592954Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-mcp-orphan-no-parent-liveness","message":"status -\u003e completed"}
+{"ts":"2026-06-04T03:02:47.381911Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"next-team-mode-per-user-handoff-unmaintained","message":"Team-mode NEXT handoff is half-built — per-user .hero/next/\u003cuser\u003e.md is neither projected nor migrated"}
+{"ts":"2026-06-04T03:02:47.382014Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-team-mode-per-user-handoff-unmaintained","message":"status -\u003e completed"}
+{"ts":"2026-06-04T03:19:55.635525Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"next-projection-gate-punts-migration-to-user","message":"NEXT-projection migration gate punts migration to the user instead of doing it automatically"}
+{"ts":"2026-06-04T03:19:55.635645Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-projection-gate-punts-migration-to-user","message":"status -\u003e completed"}
+{"ts":"2026-06-04T04:34:25.156314Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"next-merge-driver-not-portable","message":"\"hero-next merge driver isn't portable — fresh clones get raw conflict markers in projected NEXT files\""}
+{"ts":"2026-06-04T04:34:25.157226Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-merge-driver-not-portable","message":"status -\u003e completed"}
+{"ts":"2026-06-04T04:34:26.462554Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"next-snapshot-file-missing-merge-attribute","message":"SNAPSHOT.md is missing its merge-driver attribute — its merge-resolve handler is dead code and the file gets raw conflict markers"}
+{"ts":"2026-06-04T04:34:26.462687Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-snapshot-file-missing-merge-attribute","message":"status -\u003e completed"}
+{"ts":"2026-06-04T06:04:09.041419Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"e2e-handoff-continuity","message":"E2E Handoff Continuity — The Magic Guardrail"}
+{"ts":"2026-06-04T06:04:09.041512Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"e2e-handoff-continuity","message":"status -\u003e completed"}
+{"ts":"2026-06-04T06:28:46.984076Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"next-auto-emit-user-ask","message":"\"Auto-Emit UserAsk on End-of-Turn Checkpoint\""}
+{"ts":"2026-06-04T06:28:46.984174Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-auto-emit-user-ask","message":"status -\u003e completed"}
+{"ts":"2026-06-04T13:05:08.00161Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"next-unconditional-commit-staging","message":"\"Handoff-file staging is opt-in and lives in only one of two hook installers\""}
+{"ts":"2026-06-04T13:05:08.001709Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-unconditional-commit-staging","message":"status -\u003e completed"}
+{"ts":"2026-06-04T14:42:26.08602Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"resume-brief-surfaces-handoff","message":"Resume Brief Surfaces Handoff — Close the Load Half of the Magic"}
+{"ts":"2026-06-04T14:42:26.086109Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"resume-brief-surfaces-handoff","message":"status -\u003e completed"}
+{"ts":"2026-06-04T17:55:56.619728Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"cross-machine-handoff-slug-mismatch","message":"\"Cross-machine handoff loads empty when the local user slug differs between machines\""}
+{"ts":"2026-06-04T17:55:56.619833Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"cross-machine-handoff-slug-mismatch","message":"status -\u003e completed"}
+{"ts":"2026-06-04T18:09:07.558052Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"resume-brief-missing-project-context","message":"\"Resume brief's project-context sections come up empty — commits never become graph nodes, and a fresh clone has no project graph at all\""}
+{"ts":"2026-06-04T18:09:07.558147Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"resume-brief-missing-project-context","message":"status -\u003e completed"}

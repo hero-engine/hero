@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-03T03:40:35Z
+updated: 2026-06-04T17:56:11Z
 repo: hero-engine/hero
 ---
 
@@ -8,11 +8,11 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver hero-mcp-orphan-no-parent-liveness: parent-liveness watchdog in mcp stdio Run() to reap orphaned hero mcp processes.
+> Deliver cross-machine-handoff-slug-mismatch then resume-brief-missing-project-context, in order, on the handoff branch.
 
 ## Suggested next prompt
 
-> Open a PR for branch fix/mcp-orphan-parent-liveness (mcp orphan watchdog), then add the e2e reparent->exit smoke test to the e2e-validation suite — the one deferred coverage gap.
+> Deliver next-projection-gate-punts-migration-to-user — now unblocked. The team-mode fix made next_migrate.go:55 mode-aware (resolveNextPath), which was the gate spec's deferred Secondary Defect 1. The gate spec's auto-migration helper should call into that mode-aware path. This is the original user-facing bug (the 'run hero next migrate-to-projection first' warning).
 
 ## Recent reflections
 

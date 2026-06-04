@@ -232,22 +232,42 @@ func TestUninstallNextHooks_RemovesGitAttributesBlock(t *testing.T) {
 	}
 }
 
-// TestUninstallNextHooks_UnregistersMergeDriver — after uninstall,
-// `git config --get merge.hero-next.driver` must return non-zero.
-func TestUninstallNextHooks_UnregistersMergeDriver(t *testing.T) {
+// TestUninstallNextHooks_ClearsLegacyMergeDriver — Hero no longer
+// registers a custom merge driver (projected files use the built-in
+// merge=union), but older installs left a merge.hero-next.* stanza in
+// .git/config. Uninstall must idempotently clear that orphaned entry so
+// upgraded clones don't carry it forever.
+func TestUninstallNextHooks_ClearsLegacyMergeDriver(t *testing.T) {
 	dir := initGitRepoForUninstall(t)
-	if err := installNextHooksQuiet(dir); err != nil {
-		t.Fatalf("install: %v", err)
+	// Install no longer registers the driver — simulate a legacy
+	// install by writing the orphaned stanza directly.
+	if err := exec.Command("git", "-C", dir, "config",
+		"merge.hero-next.driver", "hero next merge-resolve --output %A").Run(); err != nil {
+		t.Fatalf("seed legacy driver: %v", err)
 	}
 	if !nextMergeDriverRegistered(dir) {
-		t.Fatal("precondition: hero-next merge driver should be registered after install")
+		t.Fatal("precondition: legacy merge driver should be present after seeding")
 	}
 
 	if _, err := uninstallNextHooks(dir); err != nil {
 		t.Fatalf("uninstallNextHooks: %v", err)
 	}
 	if nextMergeDriverRegistered(dir) {
-		t.Error("expected hero-next merge driver to be unregistered after uninstall")
+		t.Error("expected legacy merge.hero-next.* stanza to be cleared after uninstall")
+	}
+}
+
+// TestInstallNextHooks_DoesNotRegisterMergeDriver guards the core
+// simplification: install must NOT write a custom merge driver to
+// .git/config (the whole point of switching to built-in merge=union is
+// that nothing per-clone is required).
+func TestInstallNextHooks_DoesNotRegisterMergeDriver(t *testing.T) {
+	dir := initGitRepoForUninstall(t)
+	if err := installNextHooksQuiet(dir); err != nil {
+		t.Fatalf("install: %v", err)
+	}
+	if nextMergeDriverRegistered(dir) {
+		t.Error("install must not register a custom .git/config merge driver")
 	}
 }
 

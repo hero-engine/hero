@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -163,11 +164,11 @@ func TestPickNextAction_NoSessionNoSpec(t *testing.T) {
 // calls buildHandoff and asserts every section's content.
 
 type compactHandoffFixture struct {
-	env         *testEnv
-	sessionID   string
-	specSlug    string
-	specPath    string
-	sessStart   time.Time
+	env       *testEnv
+	sessionID string
+	specSlug  string
+	specPath  string
+	sessStart time.Time
 }
 
 // setupCompactHandoffFixture stands up the full fixture and returns a
@@ -1004,4 +1005,121 @@ func TestKickoffForSession_EmptyTranscriptPath(t *testing.T) {
 	}
 }
 
+// --- lastUserAskFromTranscript tests --------------------------------------
+//
+// These mirror the firstUserAskFromTranscript coverage but assert the
+// auto-emit path's invariant: the LAST user message wins. They share the
+// scanUserAskFromTranscript bounded-read machinery, so the malformed /
+// missing / oversized / truncation guarantees must hold identically.
 
+// Test_lastUserAskFromTranscript_ReturnsLast — a multi-user-message
+// transcript returns the LAST user record, and that differs from what
+// firstUserAskFromTranscript returns on the same fixture.
+func Test_lastUserAskFromTranscript_ReturnsLast(t *testing.T) {
+	env := newTestEnv(t)
+	tp := writeTranscript(t, env.dir,
+		`{"type":"user","message":{"role":"user","content":"first ask"}}`+"\n"+
+			`{"type":"assistant","message":{"role":"assistant","content":"some reply"}}`+"\n"+
+			`{"type":"user","message":{"role":"user","content":"middle ask"}}`+"\n"+
+			`{"type":"assistant","message":{"role":"assistant","content":"another reply"}}`+"\n"+
+			`{"type":"user","message":{"role":"user","content":"final ask"}}`+"\n")
+
+	last := lastUserAskFromTranscript(tp)
+	if last != "final ask" {
+		t.Errorf("lastUserAskFromTranscript = %q; want %q", last, "final ask")
+	}
+	first := firstUserAskFromTranscript(tp)
+	if first != "first ask" {
+		t.Errorf("firstUserAskFromTranscript = %q; want %q (regression: first must be unchanged)", first, "first ask")
+	}
+	if last == first {
+		t.Errorf("last and first must differ on a multi-message transcript; both were %q", last)
+	}
+}
+
+// Test_lastUserAskFromTranscript_MalformedReturnsEmpty — invalid JSONL
+// does not panic; with no valid user record the result is empty.
+func Test_lastUserAskFromTranscript_MalformedReturnsEmpty(t *testing.T) {
+	env := newTestEnv(t)
+	tp := writeTranscript(t, env.dir,
+		"this is not json\nneither is this\n{ partial\n")
+	if got := lastUserAskFromTranscript(tp); got != "" {
+		t.Errorf("expected empty on malformed transcript; got %q", got)
+	}
+}
+
+// Test_lastUserAskFromTranscript_MissingReturnsEmpty — a missing file
+// path yields empty, no crash.
+func Test_lastUserAskFromTranscript_MissingReturnsEmpty(t *testing.T) {
+	env := newTestEnv(t)
+	got := lastUserAskFromTranscript(filepath.Join(env.dir, "does-not-exist.jsonl"))
+	if got != "" {
+		t.Errorf("expected empty on missing transcript; got %q", got)
+	}
+}
+
+// Test_lastUserAskFromTranscript_EmptyPathReturnsEmpty — an empty path
+// yields empty (the no-payload shape autoEmitUserAsk short-circuits on,
+// but the scanner itself must also be safe).
+func Test_lastUserAskFromTranscript_EmptyPathReturnsEmpty(t *testing.T) {
+	if got := lastUserAskFromTranscript(""); got != "" {
+		t.Errorf("expected empty on empty path; got %q", got)
+	}
+}
+
+// Test_lastUserAskFromTranscript_BoundedNoHang — an oversized transcript
+// (well past the 64 KiB / 1000-line caps) returns within bounds and does
+// not hang. The last user record falls OUTSIDE the scanned window, so the
+// returned value must be a record from WITHIN the window — proving the
+// read is bounded rather than reading the whole file.
+func Test_lastUserAskFromTranscript_BoundedNoHang(t *testing.T) {
+	env := newTestEnv(t)
+
+	var b strings.Builder
+	// >1000 lines and >64 KiB of in-window user records, each uniquely
+	// numbered so we can prove which one we landed on.
+	const inWindowLines = 2000
+	for i := 0; i < inWindowLines; i++ {
+		// ~70 bytes/line * 2000 ≈ 140 KiB, comfortably past 64 KiB.
+		fmt.Fprintf(&b, `{"type":"user","message":{"role":"user","content":"win-%05d padding padding padding"}}`+"\n", i)
+	}
+	// The TRUE last user message — far beyond both caps. It must NOT be
+	// what we return, or the read wasn't bounded.
+	b.WriteString(`{"type":"user","message":{"role":"user","content":"BEYOND_THE_WINDOW"}}` + "\n")
+	tp := writeTranscript(t, env.dir, b.String())
+
+	done := make(chan string, 1)
+	go func() { done <- lastUserAskFromTranscript(tp) }()
+	select {
+	case got := <-done:
+		if got == "" {
+			t.Fatalf("bounded read returned empty; expected an in-window user record")
+		}
+		if strings.Contains(got, "BEYOND_THE_WINDOW") {
+			t.Errorf("read was NOT bounded: returned the post-cap record %q", got)
+		}
+		if !strings.HasPrefix(got, "win-") {
+			t.Errorf("expected an in-window win-NNNNN record; got %q", got)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("lastUserAskFromTranscript hung on an oversized transcript")
+	}
+}
+
+// Test_lastUserAskFromTranscript_TruncatesAtCap — a last message longer
+// than compactHandoffKickoffCap is truncated with the … marker, exactly
+// like the first-message path.
+func Test_lastUserAskFromTranscript_TruncatesAtCap(t *testing.T) {
+	env := newTestEnv(t)
+	long := strings.Repeat("y", compactHandoffKickoffCap+50)
+	tp := writeTranscript(t, env.dir,
+		`{"type":"user","message":{"role":"user","content":"short first"}}`+"\n"+
+			`{"type":"user","message":{"role":"user","content":"`+long+`"}}`+"\n")
+	got := lastUserAskFromTranscript(tp)
+	if !strings.HasSuffix(got, "…") {
+		t.Errorf("expected ellipsis suffix on truncated last text; got len=%d", len(got))
+	}
+	if len(got) > compactHandoffKickoffCap+4 {
+		t.Errorf("over cap: len=%d cap=%d", len(got), compactHandoffKickoffCap)
+	}
+}
