@@ -179,19 +179,20 @@ func runHooksStatus(cmd *cobra.Command, args []string) error {
 	}
 
 	// Report hero-next projection-hook state alongside the general
-	// installer's per-hook table. Two state lines: the pre-commit
-	// managed block, and the merge-driver registration in .git/config.
+	// installer's per-hook table. Projected files now use git's built-in
+	// merge=union (declared in .gitattributes, no per-clone driver), so
+	// the only .git/config state worth surfacing is a legacy
+	// merge.hero-next.* stanza lingering from an older install — and only
+	// when one is actually present, since `hero hooks uninstall` clears it.
 	projectRoot := findProjectRoot()
 	preCommitState := "no"
 	if preCommitHookInstalled(projectRoot) {
 		preCommitState = "yes"
 	}
-	driverState := "no"
-	if nextMergeDriverRegistered(projectRoot) {
-		driverState = "yes"
-	}
 	fmt.Printf("\n  hero next pre-commit block: %s\n", preCommitState)
-	fmt.Printf("  hero-next merge driver:     %s\n", driverState)
+	if nextMergeDriverRegistered(projectRoot) {
+		fmt.Printf("  legacy hero-next merge driver in .git/config: present (run 'hero hooks uninstall' to clear)\n")
+	}
 
 	return nil
 }

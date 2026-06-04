@@ -6,7 +6,20 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-04T03:20:34Z · 102 ready specs_
+_Generated: 2026-06-04T04:33:50Z · 102 ready specs_
+
+## next-merge-driver-not-portable — "hero-next merge driver isn't portable — fresh clones get raw conflict markers in projected NEXT files"
+_bug · delivering · horizon: now_
+
+Cold-start prompt for a fresh delivery session:
+
+> Deliver the bug fix spec at `.hero/planning/bugs/next-merge-driver-not-portable/spec.md`. The `hero-next` git merge driver isn't portable: its binding lives only in per-clone `.git/config` (written by `registerMergeDriver` at `internal/cli/next_hooks.go:497`), while `.gitattributes` (tracked, written by `updateGitAttributes` at `:725`) names `merge=hero-next` — so fresh clones / CI / not-yet-installed teammates fall back to git's default text merge and get raw conflict markers in `.hero/NEXT.md`, `.hero/next/*.md`, `.hero/QUEUE.md`.
+>
+> Fix: point the `.gitattributes` managed block at git's **built-in** `merge=union` driver (needs no `.git/config` registration, travels with the repo). Edit `updateGitAttributes` (`next_hooks.go:723-737`) to emit `merge=union` for `.hero/next/*.md`, `.hero/NEXT.md`, `.hero/QUEUE.md`, **and** add `.hero/SNAPSHOT.md` (currently missing an attribute entirely — secondary defect). Also update the tracked `.gitattributes` file directly so existing clones benefit without re-running install. The union output is transiently concatenated but the next `hero next checkpoint` total-overwrites it from the graph (`checkpoint.go:284-312` / `:369-378` confirm the render never trusts existing file content) — so it's fully recoverable.
+>
+> Keep `registerMergeDriver` / the custom driver in place (inert but harmless — surgical fix). Update `domains/engineering/skills/next-merge-recovery/SKILL.md` so it no longer frames `hero install` as the cure for markers. Add tests per the Test Plan: assert `.gitattributes` carries `merge=union` for all four paths and not `hero-next`; assert a no-driver-registered merge of two branches editing `.hero/NEXT.md` leaves zero conflict markers; assert `hero next checkpoint` after a union merge yields a file byte-identical to a fresh `projection.NextMD` render. Run `go test ./internal/cli/...` and confirm green before completing.
+
+---
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -213,19 +226,6 @@ You're fixing a one-line omission in Hero's NEXT/projection merge wiring. Read t
 **Do NOT** also fix the inverse `.hero/NEXT.md` dispatch gap here — that's owned by `next-project-file-conflict-not-regenerated`.
 
 ---
-
----
-
-## next-merge-driver-not-portable — "hero-next merge driver isn't portable — fresh clones get raw conflict markers in projected NEXT files"
-_bug · planning · horizon: now_
-
-Cold-start prompt for a fresh delivery session:
-
-> Deliver the bug fix spec at `.hero/planning/bugs/next-merge-driver-not-portable/spec.md`. The `hero-next` git merge driver isn't portable: its binding lives only in per-clone `.git/config` (written by `registerMergeDriver` at `internal/cli/next_hooks.go:497`), while `.gitattributes` (tracked, written by `updateGitAttributes` at `:725`) names `merge=hero-next` — so fresh clones / CI / not-yet-installed teammates fall back to git's default text merge and get raw conflict markers in `.hero/NEXT.md`, `.hero/next/*.md`, `.hero/QUEUE.md`.
->
-> Fix: point the `.gitattributes` managed block at git's **built-in** `merge=union` driver (needs no `.git/config` registration, travels with the repo). Edit `updateGitAttributes` (`next_hooks.go:723-737`) to emit `merge=union` for `.hero/next/*.md`, `.hero/NEXT.md`, `.hero/QUEUE.md`, **and** add `.hero/SNAPSHOT.md` (currently missing an attribute entirely — secondary defect). Also update the tracked `.gitattributes` file directly so existing clones benefit without re-running install. The union output is transiently concatenated but the next `hero next checkpoint` total-overwrites it from the graph (`checkpoint.go:284-312` / `:369-378` confirm the render never trusts existing file content) — so it's fully recoverable.
->
-> Keep `registerMergeDriver` / the custom driver in place (inert but harmless — surgical fix). Update `domains/engineering/skills/next-merge-recovery/SKILL.md` so it no longer frames `hero install` as the cure for markers. Add tests per the Test Plan: assert `.gitattributes` carries `merge=union` for all four paths and not `hero-next`; assert a no-driver-registered merge of two branches editing `.hero/NEXT.md` leaves zero conflict markers; assert `hero next checkpoint` after a union merge yields a file byte-identical to a fresh `projection.NextMD` render. Run `go test ./internal/cli/...` and confirm green before completing.
 
 ---
 

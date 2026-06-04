@@ -83,7 +83,6 @@ func init() {
 	nextCmd.AddCommand(nextReflectionCmd)
 	nextCmd.AddCommand(nextIngestCmd)
 	nextCmd.AddCommand(nextInstallHooksCmd)
-	nextCmd.AddCommand(nextMergeResolveCmd)
 	nextCmd.AddCommand(nextMigrateProjectionCmd)
 }
 

@@ -2,7 +2,7 @@
 title: "hero-next merge driver isn't portable — fresh clones get raw conflict markers in projected NEXT files"
 slug: next-merge-driver-not-portable
 type: bug
-status: planning
+status: delivering
 severity: medium
 priority: medium
 size: small
@@ -308,6 +308,27 @@ Reframe so the skill no longer presents `hero install` as the cure for markers (
 - **Tracked-file edit must be committed**: Change 2 edits a tracked file; it must travel with the fix commit (per the project's "handoff travels with commits" rule, and here doubly so since the whole bug is about a file that must travel).
 
 ---
+
+## Delivery Note (2026-06-03)
+
+Delivered on branch `fix/next-team-mode-per-user-handoff`. The delivery
+lead directed the **remove** variant of Change 3 (delete the custom-driver
+subsystem) rather than the spec's recommended **keep** — the bug fix and a
+simplification landed together. Net diff is **−279 lines** (code + deleted
+skill + `.gitattributes`).
+
+Files changed:
+- `.gitattributes` — managed block flipped to `merge=union` for all four projected files (added the missing `.hero/SNAPSHOT.md` line).
+- `internal/cli/next_hooks.go` — `updateGitAttributes` now emits `merge=union` for all four paths; deleted `runNextMergeResolve`, `nextMergeResolveCmd`, `nextMergeResolveOutput`, `registerMergeDriver`, `isQueueOutputPath`, `isSnapshotOutputPath`, `runSnapshotMergeResolve`, `userFromOutputPath`, `snapshotProjectArgs`/`snapshotProject`. Kept `nextMergeDriverRegistered` + uninstall's `.git/config` cleanup, now scoped to clearing a **legacy** orphaned `merge.hero-next.*` stanza. Pre-commit / post-merge hooks kept.
+- `internal/cli/next.go` — dropped `nextCmd.AddCommand(nextMergeResolveCmd)`.
+- `internal/cli/checkpoint.go` — removed the dead `snapshotProject` indirection wiring (only consumer was the deleted merge driver).
+- `internal/cli/next_migrate.go` — `ensureNextMDMergeDirective` now delegates to `updateGitAttributes` (single source of truth for the union block); doc/output strings updated.
+- `internal/cli/hooks.go` — `hooks status` line reworded to surface only a *legacy* orphaned driver when present.
+- `internal/cli/queue.go` — doc string updated (QUEUE.md is now merge=union, not hero-next).
+- `domains/engineering/skills/next-merge-recovery/SKILL.md` — **deleted** (markers can no longer appear with `merge=union`; the skill's detect-and-heal premise is moot). `.claude/` mirror + `.hero/version.json` checksum entry removed.
+- Tests: deleted `TestUserFromOutputPath` / `TestIsQueueOutputPath` (tested deleted code); added `TestUpdateGitAttributes_BindsAllFourPathsToUnion`, `TestUpdateGitAttributes_Idempotent`, `TestInstallNextHooks_DoesNotRegisterMergeDriver`; repurposed the merge-driver uninstall tests to seed + clear a legacy stanza.
+
+Verified: `go build ./...`, `go vet ./internal/cli/...`, `gofmt -l` (touched files) clean; `go test ./...` green; real `git merge` on a clone with only `.gitattributes` (no driver) produces exit 0 and zero conflict markers.
 
 ## Kickoff
 
