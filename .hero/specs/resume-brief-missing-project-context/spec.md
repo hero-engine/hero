@@ -2,7 +2,7 @@
 title: "Resume brief's project-context sections come up empty — commits never become graph nodes, and a fresh clone has no project graph at all"
 slug: resume-brief-missing-project-context
 type: bug
-status: planning
+status: completed
 severity: medium
 priority: medium
 domain: engineering
@@ -14,6 +14,7 @@ relates-to:
   - e2e-handoff-continuity
   - next-as-projection
   - handoff-one-call-simplification
+completed_at: 2026-06-04T18:09:06Z
 ---
 
 # Resume brief's project-context sections come up empty
@@ -275,6 +276,13 @@ if projectGraphEmpty(store, repoKey) {
 - Do NOT attempt to rebuild `Commit` nodes from `events.log` — the `post-commit` line is `{event,sha}` only and cannot reconstruct subject/author/date. Rebuild from `git log`.
 - Do NOT commit `graph.db` to make it travel — it's gitignored on purpose (merge-conflict avoidance); the rebuild-from-local-sources path is the intended design.
 - Do NOT add an author/email filter to `justChangedSection` — it deliberately shows all authors' recent commits.
+
+### Delivered (files changed)
+
+- `internal/cli/checkpoint.go` — Change 1: `writeCheckpoint` now calls `ingestRecentCommits(projectRoot, heroDir)` after the snapshot projection; new helper opens the graph and runs `gitutil.WriteGitLogGraph(projectRoot, gitutil.RepoKey(projectRoot), 50, store)` (bounded, idempotent, errors swallowed to stderr).
+- `internal/cli/next_handoff.go` — Change 2a: `runNextIngest` calls `rebuildProjectContextIfCold(...)` BEFORE the handoff-file loop (so it fires even on a cold clone with no per-user files). New helpers `rebuildProjectContextIfCold` (specs + sessions + git-log rebuild, keyed on `gitutil.RepoKey` to match the digest reader) and `projectGraphCold` (repo-scoped count of `Commit`/`Feature`/`Bug` nodes).
+- `internal/cli/brief.go` — Change 2b: `runResume` prints a one-line `hero scan` nudge to stderr when `projectGraphCold` is true, so a cold graph never renders a silent empty map.
+- `internal/cli/resume_project_context_test.go` (new) — same-machine commit-in-graph, idempotence, cross-machine cold rebuild, and cold-graph nudge tests.
 
 ## Test Plan
 

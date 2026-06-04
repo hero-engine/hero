@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-04T17:56:11Z · 104 ready specs_
+_Generated: 2026-06-04T18:09:07Z · 103 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -219,22 +219,6 @@ come after the capture+store path is green.
 
 **Files:** `internal/handoff/handoff.go`, `internal/cli/checkpoint.go:100`, `internal/cli/next_compact_handoff.go:580`, `internal/projection/user_handoff.go:64`, `internal/digest/digest.go:313`
 **Skip:** model-distilled goal as the default (stays optional via `hero next goal`); last-N-window (Option 4 — doesn't surface the goal); reusing the `UserAsk` singleton (goal and latest must not clobber each other).
-
----
-
-## resume-brief-missing-project-context — "Resume brief's project-context sections come up empty — commits never become graph nodes, and a fresh clone has no project graph at all"
-_bug · planning · horizon: now_
-
-Fixes `hero resume`'s empty project-context sections — commits never become graph `Commit` nodes on a normal commit, and a fresh clone's graph is empty (graph.db is gitignored, never rebuilt).
-
-**Status:** planning — root-caused to one mechanism, two surfaces: `WriteGitLogGraph` is the only creator of `Commit` nodes and runs only on `hero scan`/`graph reingest`, never on commit or session start.
-
-**Pick up at:** start with Change 1 (same-machine) — wire a bounded, idempotent `gitutil.WriteGitLogGraph(projectRoot, repoKey, 50, store)` into `writeCheckpoint` so the just-made commit becomes a node before the next resume. Then Change 2 (cross-machine cold rebuild or `hero scan` nudge).
-
-→ `.hero/planning/bugs/resume-brief-missing-project-context/spec.md`
-
-**Files:** `internal/cli/checkpoint.go:157`, `internal/gitutil/graph_ingest.go:28`, `internal/digest/digest.go:488`, `internal/cli/next_handoff.go:94`, `internal/cli/brief.go:77`
-**Skip:** rebuilding Commit nodes from `events.log` (too thin — `{event,sha}` only); committing graph.db; adding an author filter to `justChangedSection`.
 
 ---
 
