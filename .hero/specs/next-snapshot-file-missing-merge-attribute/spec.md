@@ -2,7 +2,7 @@
 title: SNAPSHOT.md is missing its merge-driver attribute — its merge-resolve handler is dead code and the file gets raw conflict markers
 slug: next-snapshot-file-missing-merge-attribute
 type: bug
-status: planning
+status: completed
 severity: medium
 priority: P2
 domain: engineering
@@ -17,6 +17,7 @@ relations:
     kind: relates-to
   - target: next-as-projection
     kind: regression-of
+completed_at: 2026-06-04T04:34:25Z
 ---
 
 # SNAPSHOT.md is missing its merge-driver attribute — handler is dead code, file gets raw conflict markers
