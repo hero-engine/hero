@@ -34,14 +34,45 @@ import (
 // CLI, and round-trip ingest can reference them without re-typing
 // the strings.
 const (
-	NodeUserAsk            = "UserAsk"
-	NodeNextSuggestion     = "NextSuggestion"
-	NodeSessionReflection  = "SessionReflection"
+	NodeUserAsk           = "UserAsk"
+	NodeNextSuggestion    = "NextSuggestion"
+	NodeSessionReflection = "SessionReflection"
+	NodeSessionGoal       = "SessionGoal"
 
 	// SourceKind tags the Source.kind field on every node this
 	// package emits, so ingest paths can recognise round-trip data.
 	SourceKind = "handoff"
 )
+
+// Goal source identifiers. They form a strict priority ladder
+// (auto-window < auto-embed < marker < manual): an incoming write only
+// overwrites the current goal when its priority is >= the existing
+// one, so an automatic pass refreshes a lower/equal source but never
+// clobbers a deliberately-set higher one.
+const (
+	GoalSourceAutoWindow = "auto-window"
+	GoalSourceAutoEmbed  = "auto-embed"
+	GoalSourceMarker     = "marker"
+	GoalSourceManual     = "manual"
+)
+
+// goalSourcePriority maps a goal source to its rung on the priority
+// ladder. Unknown sources sort as auto-window (the lowest rung) so a
+// malformed write can never clobber a real marker/manual goal.
+func goalSourcePriority(source string) int {
+	switch source {
+	case GoalSourceManual:
+		return 3
+	case GoalSourceMarker:
+		return 2
+	case GoalSourceAutoEmbed:
+		return 1
+	case GoalSourceAutoWindow:
+		return 0
+	default:
+		return 0
+	}
+}
 
 // UserAsk is the most recent prompt the user sent to the agent in
 // this user's working session. Singleton per (user, repo, domain) —
@@ -78,6 +109,24 @@ type SessionReflection struct {
 	Domain    string // domain partition; "" defaults to "engineering"
 	Text      string
 	Tags      []string
+	SessionID string
+	UpdatedAt string
+}
+
+// SessionGoal is the session's durable intent — the WHY the work is
+// happening — captured automatically from the transcript's opening
+// window and refined by optional better signals (marker, manual).
+// Singleton per (user, repo, domain), same class as UserAsk: a distinct
+// node so the goal and the volatile last-ask can coexist instead of
+// clobbering each other on one singleton. Source records which rung of
+// the priority ladder set the current value, and drives both the render
+// framing (soft for guesses, asserted for statements) and the priority
+// guard in RecordGoal.
+type SessionGoal struct {
+	User      string
+	Domain    string // domain partition; "" defaults to "engineering"
+	Text      string // verbatim/window goal candidate (truncated)
+	Source    string // one of GoalSource* — drives priority + framing
 	SessionID string
 	UpdatedAt string
 }
@@ -126,6 +175,61 @@ func RecordAsk(store *graph.Store, repoKey string, ask UserAsk) error {
 		Repo:        repoKey,
 		ContentHash: hashFields(ask.Text, ask.SessionID),
 		Source:      map[string]any{"kind": SourceKind, "type": NodeUserAsk},
+	})
+	return err
+}
+
+// RecordGoal upserts the SessionGoal singleton for the given user,
+// enforcing the priority ladder. Empty text clears the prior goal.
+//
+// Priority guard — the one rule that implements the whole ladder: read
+// the current row; write only when priority(incoming) >= priority(existing)
+// (or no row exists). So an auto-window pass refreshes a window goal but
+// never clobbers a marker/manual one; a marker overrides window/embed but
+// not manual; manual wins over all. A same-source rewrite with identical
+// content is a no-op via the content hash (UpsertNode skips no-op writes),
+// so repeated checkpoints don't churn.
+func RecordGoal(store *graph.Store, repoKey string, goal SessionGoal) error {
+	if store == nil {
+		return fmt.Errorf("handoff: nil store")
+	}
+	if goal.User == "" {
+		return fmt.Errorf("handoff: SessionGoal requires User")
+	}
+	goal.Text = strings.TrimSpace(goal.Text)
+	domain := resolveDomain(goal.Domain)
+	key := singletonKey(goal.User, domain)
+	if goal.Text == "" {
+		// Clearing the goal: invalidate the current row if any.
+		return store.InvalidateNode(NodeSessionGoal, key)
+	}
+	if goal.Source == "" {
+		goal.Source = GoalSourceAutoWindow
+	}
+
+	// Priority guard: never let a lower-priority source clobber a
+	// higher one. Same priority is allowed through so an equal-source
+	// refresh (and the content-hash no-op) works as expected.
+	if existing, err := scanLatestSingleton(store, NodeSessionGoal, key, repoKey); err == nil && existing != nil {
+		existingSource := graph.StringProp(existing.Props, "source")
+		if goalSourcePriority(goal.Source) < goalSourcePriority(existingSource) {
+			return nil
+		}
+	}
+
+	props := map[string]any{
+		"text":       goal.Text,
+		"source":     goal.Source,
+		"session_id": goal.SessionID,
+	}
+	_, err := store.UpsertNode(&graph.Node{
+		Type:        NodeSessionGoal,
+		Domain:      domain,
+		Key:         key,
+		Props:       props,
+		Repo:        repoKey,
+		ContentHash: hashFields(goal.Text, goal.Source, goal.SessionID),
+		Source:      map[string]any{"kind": SourceKind, "type": NodeSessionGoal},
 	})
 	return err
 }
@@ -221,6 +325,23 @@ func LatestAsk(store *graph.Store, user, repoKey, domain string) (*UserAsk, erro
 	return askFromNode(n), nil
 }
 
+// LatestGoal returns the current SessionGoal for the (user, repo,
+// domain) triple, or nil if none. Mirrors LatestAsk; returns the text
+// plus the source so renderers can pick soft-vs-asserted framing.
+func LatestGoal(store *graph.Store, user, repoKey, domain string) (*SessionGoal, error) {
+	if store == nil {
+		return nil, fmt.Errorf("handoff: nil store")
+	}
+	n, err := scanLatestSingleton(store, NodeSessionGoal, singletonKey(user, domain), repoKey)
+	if err != nil {
+		return nil, err
+	}
+	if n == nil {
+		return nil, nil
+	}
+	return goalFromNode(n), nil
+}
+
 // LatestSuggestion returns the current NextSuggestion for the
 // (user, repo, domain) triple, or nil if none.
 func LatestSuggestion(store *graph.Store, user, repoKey, domain string) (*NextSuggestion, error) {
@@ -313,6 +434,25 @@ func askFromNode(n *graph.Node) *UserAsk {
 		User:      user,
 		Domain:    n.Domain,
 		Text:      graph.StringProp(n.Props, "text"),
+		SessionID: graph.StringProp(n.Props, "session_id"),
+		UpdatedAt: n.ValidFrom,
+	}
+}
+
+func goalFromNode(n *graph.Node) *SessionGoal {
+	if n == nil {
+		return nil
+	}
+	user, _, _ := strings.Cut(n.Key, ":")
+	source := graph.StringProp(n.Props, "source")
+	if source == "" {
+		source = GoalSourceAutoWindow
+	}
+	return &SessionGoal{
+		User:      user,
+		Domain:    n.Domain,
+		Text:      graph.StringProp(n.Props, "text"),
+		Source:    source,
 		SessionID: graph.StringProp(n.Props, "session_id"),
 		UpdatedAt: n.ValidFrom,
 	}

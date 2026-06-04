@@ -124,3 +124,5 @@
 {"ts":"2026-06-04T17:55:56.619833Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"cross-machine-handoff-slug-mismatch","message":"status -\u003e completed"}
 {"ts":"2026-06-04T18:09:07.558052Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"resume-brief-missing-project-context","message":"\"Resume brief's project-context sections come up empty — commits never become graph nodes, and a fresh clone has no project graph at all\""}
 {"ts":"2026-06-04T18:09:07.558147Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"resume-brief-missing-project-context","message":"status -\u003e completed"}
+{"ts":"2026-06-04T19:06:56.189396Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"handoff-captures-session-intent","message":"\"Handoff captures session intent, not just the last message\""}
+{"ts":"2026-06-04T19:06:56.189563Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"handoff-captures-session-intent","message":"status -\u003e completed"}

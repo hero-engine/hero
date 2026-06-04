@@ -836,8 +836,8 @@ func TestMergeLocal_VocabularyOverridesMapMerge(t *testing.T) {
 
 	local := Config{
 		VocabularyOverrides: map[string]string{
-			"types.spec":      "LocalStory", // collision: local wins
-			"types.epic":      "LocalEpic",  // new key
+			"types.spec": "LocalStory", // collision: local wins
+			"types.epic": "LocalEpic",  // new key
 		},
 	}
 
@@ -863,8 +863,8 @@ func TestMergeLocal_MethodologyOverridesMapMerge(t *testing.T) {
 
 	local := Config{
 		MethodologyOverrides: map[string]string{
-			"time_boxes.iteration.duration_default": "3w",        // collision: local wins
-			"estimation.feature.required_field":     "appetite",  // new key
+			"time_boxes.iteration.duration_default": "3w",       // collision: local wins
+			"estimation.feature.required_field":     "appetite", // new key
 		},
 	}
 
@@ -1163,5 +1163,30 @@ func TestSizeMappingConfig_NoneTrackerSkipsValidation(t *testing.T) {
 	}
 	if _, err := Load(tmpDir); err != nil {
 		t.Errorf("Load should not error on tracker.type=none: %v", err)
+	}
+}
+
+// TestNextGoalCapture_DefaultsToFloor pins the default and the typo-safe
+// fallback for the SessionGoal capture knob.
+func TestNextGoalCapture_DefaultsToFloor(t *testing.T) {
+	// No Next config → "floor".
+	if got := DefaultConfig().NextGoalCapture(); got != "floor" {
+		t.Errorf("default NextGoalCapture = %q, want %q", got, "floor")
+	}
+	// Empty Next block → "floor".
+	cfg := DefaultConfig()
+	cfg.Next = &NextConfig{}
+	if got := cfg.NextGoalCapture(); got != "floor" {
+		t.Errorf("empty Next NextGoalCapture = %q, want %q", got, "floor")
+	}
+	// Explicit "embed" → "embed".
+	cfg.Next = &NextConfig{GoalCapture: "embed"}
+	if got := cfg.NextGoalCapture(); got != "embed" {
+		t.Errorf("embed NextGoalCapture = %q, want %q", got, "embed")
+	}
+	// Unrecognized → "floor" (never silently disable capture).
+	cfg.Next = &NextConfig{GoalCapture: "bogus"}
+	if got := cfg.NextGoalCapture(); got != "floor" {
+		t.Errorf("unrecognized NextGoalCapture = %q, want fallback %q", got, "floor")
 	}
 }

@@ -406,6 +406,15 @@ type NextConfig struct {
 	// fields. Defaults false so legacy repos keep working unchanged
 	// until the user explicitly opts in.
 	Projected bool `json:"projected,omitempty"`
+
+	// GoalCapture selects which rungs of the SessionGoal priority ladder
+	// run at checkpoint time. "floor" (default) runs the always-on
+	// opening-window goal plus the best-effort marker grep and the
+	// manual override. "embed" additionally inserts the confidence-gated
+	// hero-embed-v1 selector between window and marker. The field is
+	// introduced ahead of the embed implementation so enabling it later
+	// is a config flip, not a schema change. Empty → "floor".
+	GoalCapture string `json:"goal_capture,omitempty"`
 }
 
 // SnapshotConfig holds settings for the project-snapshot projector
@@ -1665,6 +1674,17 @@ func (c Config) NextMode() string {
 // (false, default). Flipped by `hero next migrate-to-projection`.
 func (c Config) NextProjected() bool {
 	return c.Next != nil && c.Next.Projected
+}
+
+// NextGoalCapture returns the configured SessionGoal capture mode —
+// "floor" (default: window + marker + manual) or "embed" (also runs the
+// confidence-gated embeddings selector). Any unrecognized value falls
+// back to "floor" so a typo can never silently disable goal capture.
+func (c Config) NextGoalCapture() string {
+	if c.Next != nil && c.Next.GoalCapture == "embed" {
+		return "embed"
+	}
+	return "floor"
 }
 
 // MocksDir returns the path to the mocks directory.

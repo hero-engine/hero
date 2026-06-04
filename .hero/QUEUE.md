@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-04T18:09:07Z · 103 ready specs_
+_Generated: 2026-06-04T19:07:13Z · 102 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -198,27 +198,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-sales/spec.md)_
-
----
-
-## handoff-captures-session-intent — "Handoff captures session intent, not just the last message"
-_feature · planning · horizon: now_
-
-Captures the session's GOAL (first user message) alongside the latest ask, so
-a fresh session knows the *why*, not just the last refinement.
-
-**Status:** planning — spec just landed, no code yet.
-
-**Pick up at:** start in `internal/handoff/handoff.go` — add the `SessionGoal`
-node type (`RecordGoal`/`LatestGoal`, singleton per user/repo/domain) with the
-auto-first-never-clobbers-manual guard. Then wire `firstUserAskFromTranscript`
-into `autoEmitUserAsk` (`checkpoint.go`). Surfaces (digest + user_handoff)
-come after the capture+store path is green.
-
-→ `.hero/planning/features/handoff-captures-session-intent/spec.md`
-
-**Files:** `internal/handoff/handoff.go`, `internal/cli/checkpoint.go:100`, `internal/cli/next_compact_handoff.go:580`, `internal/projection/user_handoff.go:64`, `internal/digest/digest.go:313`
-**Skip:** model-distilled goal as the default (stays optional via `hero next goal`); last-N-window (Option 4 — doesn't surface the goal); reusing the `UserAsk` singleton (goal and latest must not clobber each other).
 
 ---
 
@@ -784,13 +763,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## handoff-over-engineering-nexthandoff-subsystem-got-over-buil — handoff-over-engineering NEXT/handoff subsystem got over-built: ~18 moving pa...
-_note · active · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/knowledge/notes/handoff-over-engineering-nexthandoff-subsystem-got-over-buil/spec.md)_
-
----
-
 ## next-as-projection-architecture — NEXT-as-Projection Architecture — Three-File Split, Merge Driver, Migration Gate, Drift CI
 _decision · accepted · horizon: now_
 
@@ -834,6 +806,13 @@ form for the field-grab writers (positional form wins by symmetry with
 "auto-written by" string would all break for zero behavior gain);
 marker-preservation inside `.hero/next/<user>.md` (total-rewrite stays
 v1; revisit only on user request).
+
+---
+
+## handoff-over-engineering-nexthandoff-subsystem-got-over-buil — handoff-over-engineering NEXT/handoff subsystem got over-built: ~18 moving pa...
+_note · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/knowledge/notes/handoff-over-engineering-nexthandoff-subsystem-got-over-buil/spec.md)_
 
 ---
 

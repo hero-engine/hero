@@ -66,6 +66,49 @@ hero next ask "Why does the test fail intermittently on the auth middleware?"
 hero next ask "Let's try a different approach — instead of refactoring, just delete the dead branch"
 ```
 
+### The session goal — emit `<!-- hero:goal: <one-line goal> -->`
+
+The handoff also captures the session's **goal** (the durable intent —
+*why* the work is happening) as a separate `SessionGoal` node, distinct
+from the volatile last-ask. The goal is captured **automatically** every
+checkpoint from the transcript's opening messages — no command required.
+
+You can sharpen it for free: **once you understand the goal, emit it as a
+one-line HTML comment in your response —**
+
+```
+<!-- hero:goal: add rate limiting to the login endpoint to stop credential-stuffing -->
+```
+
+The Stop-hook checkpoint greps your assistant messages for the **last**
+such marker and records it as the session goal (priority `marker`, which
+overrides the auto-derived opening-window goal but not a manual override).
+It is invisible in rendered markdown, costs no extra call (it rides the
+response you're already writing), and gives the next session model-quality
+intent. Emit it once when the goal crystallizes, and again only if the
+goal genuinely changes mid-session.
+
+The marker is **optional upside** on top of the always-on window goal — if
+you never emit one, the floor still captures a reasonable goal from the
+opening exchange. Use it when the real intent isn't obvious from the first
+few messages (a session that opened with throat-clearing, or pivoted).
+
+#### `hero next goal "<text>"` — the manual override
+
+For the rare case where even the marker is wrong, `hero next goal "<text>"`
+records a **manual** goal that supersedes every auto/marker goal. With no
+argument it prints the current goal. This is a quality ceiling, not a
+requirement — fire it only to correct a wrong auto-derived opener.
+
+```bash
+hero next goal                                              # print current goal
+hero next goal "stop credential-stuffing on the login endpoint"
+```
+
+Do **not** use `hero next goal` for the latest prompt — that is what
+`hero next ask` owns. The goal is the session's durable WHY; the ask is
+the most recent refinement.
+
 ### `hero next suggest "<text>"`
 
 Records a `NextSuggestion` node. Singleton per user. The projection
@@ -118,6 +161,7 @@ A normal session looks like:
 | Event | Action |
 |---|---|
 | User sends a prompt that directs new work | `hero next ask "..."` |
+| The session's real goal crystallizes | emit `<!-- hero:goal: ... -->` (once) |
 | Phase / commit / meaningful unit lands | `hero next suggest "..."` |
 | Surprise / lesson / gotcha surfaces | `hero next reflection "..."` |
 | Conversation, clarification, or small question | nothing — let it pass |
@@ -145,6 +189,7 @@ To check what's currently recorded:
 ```bash
 hero next suggest                   # print suggested next prompt
 hero next ask                       # print last user ask
+hero next goal                      # print the session goal (durable intent)
 hero next reflection                # print recent reflections
 hero next                           # full handoff (project + user + machine)
 ```

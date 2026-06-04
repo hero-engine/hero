@@ -56,14 +56,45 @@ func UserHandoffMD(store *graph.Store, opts UserHandoffOptions) (string, error) 
 
 	fmt.Fprintf(&b, "# %s's handoff\n\n", opts.User)
 
+	// Last user ask. Read it first so the session-goal section above can
+	// suppress itself when the goal text equals the latest ask (single-
+	// message sessions render the same line twice otherwise).
+	ask, _ := handoff.LatestAsk(store, opts.User, opts.RepoKey, opts.Domain)
+	askText := ""
+	if ask != nil {
+		askText = strings.TrimSpace(ask.Text)
+	}
+
+	// Session goal — the durable intent (WHY the work is happening),
+	// rendered ABOVE the last ask. Auto-derived sources (window/embed)
+	// get soft framing so a noisy opener is never asserted as fact;
+	// marker/manual are asserted. Omitted when empty or equal to the
+	// latest ask. Per-user state only — never rendered in the project
+	// NEXT.md.
+	if goal, _ := handoff.LatestGoal(store, opts.User, opts.RepoKey, opts.Domain); goal != nil {
+		goalText := strings.TrimSpace(goal.Text)
+		if goalText != "" && goalText != askText {
+			b.WriteString("## Session goal\n\n")
+			if goalSourceAsserted(goal.Source) {
+				fmt.Fprintf(&b, "> %s\n", indentQuote(goalText))
+			} else {
+				fmt.Fprintf(&b, "> %s %s\n", goalSourceSoftPrefix(goal.Source), indentQuote(goalText))
+			}
+			if note := stalenessNote(store, opts.RepoKey, goal.UpdatedAt); note != "" {
+				fmt.Fprintf(&b, "\n_%s_\n", note)
+			}
+			b.WriteString("\n")
+		}
+	}
+
 	// Last user ask. Same staleness model as NextSuggestion: a commit
 	// landing after the ask suggests the ask's premise has shifted.
 	// We don't auto-derive a fallback (you can't synthesize a user's
 	// voice from project state), but we do flag staleness inline so
 	// the reader can judge whether to act on it or wait for a refresh.
 	b.WriteString("## Last user ask\n\n")
-	if ask, _ := handoff.LatestAsk(store, opts.User, opts.RepoKey, opts.Domain); ask != nil && ask.Text != "" {
-		fmt.Fprintf(&b, "> %s\n", indentQuote(ask.Text))
+	if askText != "" {
+		fmt.Fprintf(&b, "> %s\n", indentQuote(askText))
 		if note := stalenessNote(store, opts.RepoKey, ask.UpdatedAt); note != "" {
 			fmt.Fprintf(&b, "\n_%s_\n", note)
 		}
@@ -347,6 +378,24 @@ func userRecentCommits(store *graph.Store, repoKey, user string, limit int) ([]c
 		out = append(out, c)
 	}
 	return out, rows.Err()
+}
+
+// goalSourceAsserted reports whether a goal source is confident enough
+// to state plainly ("Goal:"), vs. softly framed as a guess. Marker and
+// manual are deliberate intent; window/embed are derived proxies.
+func goalSourceAsserted(source string) bool {
+	return source == handoff.GoalSourceMarker || source == handoff.GoalSourceManual
+}
+
+// goalSourceSoftPrefix returns the soft framing prefix for an
+// auto-derived goal, so a noisy opener is never asserted as a definitive
+// goal. embed reads as "likely"; window (and any unknown source) reads
+// as "session opened with".
+func goalSourceSoftPrefix(source string) string {
+	if source == handoff.GoalSourceAutoEmbed {
+		return "Likely goal —"
+	}
+	return "Session opened with —"
 }
 
 // indentQuote prefixes every newline with "> " so multi-line ask /

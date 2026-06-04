@@ -13,6 +13,7 @@ import (
 type ParsedHandoff struct {
 	User        string
 	Ask         *UserAsk
+	Goal        *SessionGoal
 	Suggestion  *NextSuggestion
 	Reflections []SessionReflection
 }
@@ -86,6 +87,14 @@ func IngestUserFile(store *graph.Store, repoKey, domain, path, localSlug string,
 			ask.Domain = domain
 			if err := RecordAsk(store, repoKey, ask); err != nil {
 				return fmt.Errorf("ingest ask: %w", err)
+			}
+		}
+		if parsed.Goal != nil && parsed.Goal.Text != "" {
+			goal := *parsed.Goal
+			goal.User = user
+			goal.Domain = domain
+			if err := RecordGoal(store, repoKey, goal); err != nil {
+				return fmt.Errorf("ingest goal: %w", err)
 			}
 		}
 		if parsed.Suggestion != nil && parsed.Suggestion.Text != "" {
@@ -172,6 +181,17 @@ func ParseUserHandoff(data []byte) (*ParsedHandoff, error) {
 
 	if txt := stripBlockquote(sections["last user ask"]); txt != "" {
 		out.Ask = &UserAsk{Text: txt, SessionID: fm["session"]}
+	}
+	if raw := stripBlockquote(sections["session goal"]); raw != "" {
+		// The render glues a soft prefix ("Session opened with —" /
+		// "Likely goal —") onto auto-derived goals and leaves marker/
+		// manual goals bare. Recover both the text and the framing from
+		// that prefix so the goal round-trips faithfully cross-machine
+		// without masquerading as a manual override.
+		text, source := parseGoalSection(raw)
+		if text != "" {
+			out.Goal = &SessionGoal{Text: text, Source: source, SessionID: fm["session"]}
+		}
 	}
 	if sec := sections["suggested next prompt"]; strings.TrimSpace(sec) != "" {
 		// Skip auto-derived suggestions entirely. The projection
@@ -288,6 +308,24 @@ func stripBlockquote(section string) string {
 		lines = append(lines, line)
 	}
 	return strings.TrimSpace(strings.Join(lines, "\n"))
+}
+
+// parseGoalSection recovers the goal text and its source framing from
+// the rendered "## Session goal" body. The projection writes a soft
+// prefix for auto-derived goals and leaves marker/manual goals bare;
+// this inverts that so the source survives the markdown round trip.
+// A bare goal is treated as a marker (asserted, priority 2) — high
+// enough to outrank a fresh window pass on the receiving machine but
+// below a deliberate manual override.
+func parseGoalSection(body string) (text, source string) {
+	body = strings.TrimSpace(body)
+	if rest, ok := strings.CutPrefix(body, "Session opened with —"); ok {
+		return strings.TrimSpace(rest), GoalSourceAutoWindow
+	}
+	if rest, ok := strings.CutPrefix(body, "Likely goal —"); ok {
+		return strings.TrimSpace(rest), GoalSourceAutoEmbed
+	}
+	return body, GoalSourceMarker
 }
 
 // isAutoDerivedSection returns true when the suggestion section
