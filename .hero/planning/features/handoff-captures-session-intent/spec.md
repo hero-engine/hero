@@ -12,6 +12,8 @@ relates-to:
   - next-auto-emit-user-ask
   - resume-brief-surfaces-handoff
   - handoff-one-call-simplification
+depends-on:
+  - cross-machine-handoff-slug-mismatch
 ---
 
 # Handoff captures session intent, not just the last message
@@ -184,48 +186,120 @@ Option 3 (generative, expensive).
 
 ## Recommended Design
 
-**Primary: Option 1 (first + last) as the automatic floor, with a thin
-Option-2 sticky-override hook layered on top — and explicit "possibly the
-opener, not a stated goal" honesty in how the goal line is presented.**
+**Primary: an unconditional floor + opportunistic overrides on a single
+priority ladder — never "primary path with a fallback," which has a hole when
+the primary doesn't fire.** The floor always runs and always produces a goal
+candidate; better signals override it *when present*; nothing is ever
+load-bearing except the floor.
 
-Rationale: the mission demands an **automatic default**, which rules out 2-manual
-and 3 as the floor. Option 4 doesn't address the goal blind spot. Option 1 is
-the only automatic option that surfaces *original framing* at near-zero cost
-(both extractors already exist). Its weakness — "first ≠ goal" — is mitigated
-two ways: (a) a manual sticky override that, when set, *wins* over the
-auto-derived first message; (b) presenting the auto-derived goal with honest
-framing so a stale opener is read as "the session opened with…", not asserted
-as "the goal is…".
+### Capture scope — the goal is PER-USER state (not project state)
 
-Concretely:
+`SessionGoal` is a per-`(user, repo, domain)` singleton — same class as
+`UserAsk` / `NextSuggestion` / `SessionReflection`. It renders in the **per-user**
+surfaces only: `.hero/next/<user>.md` and the per-user resume brief ("Where you
+left off"). It does **NOT** render in the project-level `.hero/NEXT.md` — that
+file is project-state-only by the `next-as-projection` rule ("No 'Last user ask'
+or 'Suggested next' — those are user state"). A repo has no single goal; each
+person/session does. (Team-mode future: a person's `SessionGoal` is a natural
+source for their one-line **roster** entry in the shared `.hero/NEXT.md`, but
+roster projection is the deferred `next-team-mode-shared-roster-projection`
+follow-up — out of scope here.)
 
-**Capture (where).** In `autoEmitUserAsk` (`checkpoint.go`), in addition to the
-existing last-message `RecordAsk`, also read `firstUserAskFromTranscript` and
-record it as a **second, distinct singleton: a session-goal node**. Use a new
-node type `NodeSessionGoal = "SessionGoal"` in the `handoff` package, singleton
-per `(user, repo, domain)` (same keying as `UserAsk`), with a
-`source: "auto-first"` prop so the renderer and the override path can tell
-auto-derived from manually-set.
+> **Prerequisite — deliver `cross-machine-handoff-slug-mismatch` first.** Because
+> the goal is keyed by the per-user slug, it rides the exact identity path that
+> bug breaks: if the slug resolves differently across machines, the goal silently
+> evaporates on machine B just like the ask does. Building this on top of the
+> unfixed slug bug ships a richer payload that still vanishes cross-machine. The
+> slug fix is a hard dependency.
 
-- The goal node is written **only if no manually-set goal exists yet for this
-  singleton**, OR the existing goal node is also `source: "auto-first"`. This
-  makes auto-first **self-refreshing within a session** (each turn re-reads the
-  same transcript opener — idempotent via content hash) but **never clobbers a
-  manual override**. A `source: "manual"` goal is sticky and survives every
-  subsequent checkpoint.
-- Guarded exactly like the existing last-ask emit: empty first → no-op; any
-  error → stderr + return. Never fails the Stop hook.
+### The priority ladder
+
+A single ordered ladder; each capture writes the goal **only if its source's
+priority ≥ the existing goal's priority** — so an auto pass refreshes a
+lower/equal source but **never clobbers** a higher one:
+
+| Priority | `source` | What | This spec? | Rendered |
+|---|---|---|---|---|
+| 0 | `auto-window` | opening-window + triviality filter (the floor) | **yes — always on** | `Goal (session opened with): …` (soft) |
+| 1 | `auto-embed` | local `hero-embed-v1` confidence-gated pick | opt-in (`goal_capture: "embed"`) | `Goal (likely): …` (soft) |
+| 2 | `marker` | agent emits `<!-- hero:goal: … -->`, grepped from transcript | **yes — best-effort, default** | `Goal: …` (asserted) |
+| 3 | `manual` | `hero next goal "…"` | **yes** | `Goal: …` (asserted) |
+
+The floor (0) is unconditional, so there is **no hole**: when the marker never
+fires and embed abstains, the window goal is already sitting there. The `source`
+label drives both the honest framing (soft for guesses, asserted for
+statements) and instrumentation (count `source=marker`/`auto-embed` in real use
+to learn whether they're worth leaning on).
+
+Concretely — all capture happens in `autoEmitUserAsk` (`checkpoint.go`),
+alongside the existing last-message `RecordAsk`, writing a separate
+`SessionGoal` singleton. Each path is best-effort (empty → no-op; any error →
+stderr + return; never fails the Stop hook) and obeys the priority guard.
+
+**Floor (priority 0, `auto-window`) — always on, no deps.** Don't capture the
+literal first line; capture an **opening window** and prune obvious filler:
+- Walk the transcript's user messages from the start; collect the first **K
+  (≈3) *substantial*** ones into the window.
+- A message is **trivial** (skipped) if, after lowercasing/stripping
+  punctuation, it is essentially just greeting/ack tokens (`hi`, `hey`,
+  `thanks`, `ok`, `yes`, `sure`, `go ahead`, `continue`, `lgtm`, `cool`, `perfect`…)
+  **or** it is very short (≤ ~3 words) **with no substance signal**. Whole-message
+  match, not prefix ("ok now also do X" survives).
+- A **substance signal** keeps a message: a `?`, a code fence/backticks, a file
+  path or `.ext`, an error-looking token, an imperative request verb (`add`,
+  `fix`, `build`, `make`, `change`, `remove`, `why`, `how`, `refactor`,
+  `implement`…), or length ≥ ~6 words.
+- The window is the goal candidate (the reading model — itself an LLM — extracts
+  the goal from the opening exchange). If *every* opener is trivial, keep the raw
+  first message rather than emptying — the floor never produces nothing.
+- Reuses the existing transcript scanner (`firstUserAskFromTranscript` /
+  `scanUserAskFromTranscript`); same `compactHandoffKickoffCap` truncation.
+
+**Embed refiner (priority 1, `auto-embed`) — opt-in (`goal_capture: "embed"`),
+confidence-gated, best-effort.** When enabled AND the local `hero-embed-v1`
+model is loaded: embed the window candidates + the session's substantive content,
+score each candidate by similarity to the content centroid, and **only override
+when confident** —
+- A candidate is **strong** iff it is *on-theme* (similarity above an absolute
+  floor — filters greetings/outliers) **AND** a *clear winner* (meaningful margin
+  over the next candidate). 
+- ≥1 strong → take the strongest (keep 1–2 if several clear the bar); none strong
+  → **abstain** (leave the floor untouched — never surface a low-confidence pick,
+  never empty the list).
+- Thresholds ship **high** (abstains often = safe) and are loosened from logged
+  scores. If the model isn't available → skip → floor stands. `hero-embed-v1` is
+  256-dim/topic-level: it confidently drops obvious junk and abstains on the
+  subtle "goal vs refinement" call — silence over a wrong guess, by design.
+
+**Marker override (priority 2, `marker`) — best-effort, default-on.** A one-line
+skill/AGENTS.md instruction asks the agent, once it understands the ask, to emit
+`<!-- hero:goal: <one-line goal> -->` (HTML comment → invisible in rendered
+markdown, trivially greppable, no chat noise). The checkpoint greps the
+transcript's **assistant** messages for the marker, takes the **last** one,
+records it as the goal. This is model-quality intent at near-zero cost (no extra
+call — it's in the response the agent already writes, parsed from the transcript
+the Stop hook already reads). It is **never load-bearing** — if absent, the floor
+holds. Stale-marker mitigations: take the last marker; the window stays captured
+as a cross-check; staleness note applies.
+
+**Priority guard (`RecordGoal`).** A write at priority P overwrites the existing
+goal iff `P ≥ existing.priority`. So `auto-window` refreshes a window goal but
+not a marker/manual; `marker` overrides window/embed but not manual; `manual`
+wins over all. This generalizes the existing "don't clobber a manual override"
+rule to the four-level ladder.
 
 **Store (what).** New in `internal/handoff/handoff.go`:
 - `NodeSessionGoal = "SessionGoal"` constant.
-- `SessionGoal` struct (`User, Domain, Text, Source, SessionID, UpdatedAt`).
+- `SessionGoal` struct (`User, Domain, Text, Source, SessionID, UpdatedAt`),
+  where `Source ∈ {auto-window, auto-embed, marker, manual}`.
+- A `goalSourcePriority(source) int` helper mapping the four sources to `0..3`.
 - `RecordGoal(store, repoKey, goal)` — upsert singleton; mirrors `RecordAsk`.
-  Empty text clears. The `Source` prop ("auto-first" | "manual") is persisted.
-- `LatestGoal(store, user, repoKey, domain)` — mirrors `LatestAsk`.
-- `RecordGoal` must **not** overwrite a `source:"manual"` row with an
-  `source:"auto-first"` write. Enforce in `RecordGoal`: when the incoming
-  source is `auto-first`, read the current row; if it exists and is `manual`,
-  return nil (no-op). Manual writes always win.
+  Empty text clears. Enforces the **priority guard**: read the current row; write
+  only if `priority(incoming) ≥ priority(existing)` (or no row exists). Same-source
+  re-writes refresh idempotently (content-hash). This single rule implements the
+  whole ladder — no per-source special-casing.
+- `LatestGoal(store, user, repoKey, domain)` — mirrors `LatestAsk`; returns the
+  text + source so renderers can pick framing.
 
 **Override (the ceiling).** Extend `hero next ask`
 (`internal/cli/next_handoff.go` `runNextAsk`) — or add a sibling
@@ -275,54 +349,75 @@ reuses every pattern in the `handoff` package (keying, upsert, scan, render).
 - It does **not** distill or summarize. The goal line is a verbatim (truncated)
   user message, same as the last-ask line.
 
-### Tiering decision (maintainer, 2026-06-04)
+### Scope of THIS spec vs opt-in / follow-up (maintainer, 2026-06-04)
 
-Goal capture is a **three-tier ladder**; this spec delivers Tier 1 now and
-leaves the higher tiers as opt-in follow-ups the user can choose to enable:
+This spec ships the ladder levels that are cheap and safe by default, and gates
+the rest behind a config knob:
 
-| Tier | What | Cost | Status |
-|------|------|------|--------|
-| **1 — first-message** | Auto-capture the transcript opener as `SessionGoal` (Option 1) | zero (extractor exists) | **This spec — ships now, default-on** |
-| **2 — embeddings select** | Pick the most-on-theme message / detect pivots via local `hero-embed-v1` (Option 5) | low (local embed, no LLM) | Optional follow-up, **user-toggleable** |
-| **3 — model-distilled** | Agent emits a synthesized one-line goal (Option 3) | discipline/LLM step | Optional ceiling, **user-toggleable** |
+| Ladder level | In this spec? |
+|---|---|
+| **0 `auto-window`** (window + triviality filter) | **Yes — always-on floor** |
+| **2 `marker`** (passive `<!-- hero:goal: … -->` grep + skill instruction) | **Yes — best-effort, default-on** (near-free; floor covers its absence) |
+| **3 `manual`** (`hero next goal`) | **Yes** |
+| **1 `auto-embed`** (confidence-gated `hero-embed-v1` selector) | **No — opt-in** via `next.goal_capture` |
 
-The maintainer's call: **ship Tier 1, and make Tiers 2/3 a setting the user
-opts into** (e.g. `next.goal_capture: "first" | "embed" | "distill"` in
-`hero.json`, default `"first"`) rather than forcing the higher-cost paths on
-everyone. The sticky `hero next goal` manual override (in the Recommended
-Design) works at every tier. Tiers 2 and 3 are **out of scope for this spec** —
-file them as follow-ups (`handoff-goal-embed-selector`,
-`handoff-goal-model-distill`) if/when Tier 1's first-message proxy proves too
-noisy in real use. The config knob (the `goal_capture` mode field + its default)
-*should* be introduced by this spec even though only `"first"` is implemented,
-so enabling a higher tier later is a config flip, not a schema change.
+The config knob `next.goal_capture` (default `"floor"` = levels 0+2+3) is
+**introduced by this spec** even though `auto-embed` isn't implemented, so
+enabling it later is a config flip, not a schema change. Set `"embed"` to insert
+level 1 into the ladder. A heavier *active* model-distill tier is largely
+**superseded by the marker** (which gets model-quality intent passively at near-zero
+cost) — file `handoff-goal-embed-selector` as a follow-up only if real-world
+`source` instrumentation shows the marker fires too rarely and the window proxy
+is too noisy. The marker's reliability is explicitly **not assumed** — it is
+upside on top of the unconditional floor, and we measure it (`source=marker`
+counts) before leaning on it.
 
 ## Acceptance Criteria
 
-- WHEN the Stop-hook checkpoint runs and the transcript has a readable first
-  user message THE SYSTEM SHALL record a `SessionGoal` singleton with
-  `source: "auto-first"` for the `(user, repo, domain)` triple.
-- WHEN a `SessionGoal` with `source: "manual"` already exists THE SYSTEM SHALL
-  NOT overwrite it with an auto-first write.
-- WHEN the user runs `hero next goal "<text>"` THE SYSTEM SHALL record a
-  `SessionGoal` with `source: "manual"` that supersedes any auto-first goal.
-- WHEN `hero next goal` is run with no argument THE SYSTEM SHALL print the
-  current session goal (or a "none recorded" hint).
-- WHEN the digest resume brief renders and a session goal exists THE SYSTEM
-  SHALL show a `Goal:` line above the latest-ask line in "Where you left off".
-- WHERE the session goal is `source: "auto-first"` THE SYSTEM SHALL frame the
-  goal line as the session opener (e.g. "session opened with") rather than
-  asserting it as a stated goal.
-- IF the goal text equals the latest-ask text THEN THE SYSTEM SHALL omit the
-  goal line to avoid duplication.
-- WHEN the per-user handoff file is projected and a goal exists THE SYSTEM
-  SHALL render a `## Session goal` section above `## Last user ask`.
-- IF the transcript is missing, unreadable, or has no first user message THEN
-  THE SYSTEM SHALL leave any existing goal untouched and never fail the Stop
-  hook.
-- THE SYSTEM SHALL keep the existing last-ask auto-emit behavior unchanged.
+- THE SYSTEM SHALL record the goal as a per-`(user, repo, domain)` `SessionGoal`
+  singleton (user state) and SHALL surface it only in the per-user file and the
+  per-user resume brief — NOT in the project-level `.hero/NEXT.md`.
+- WHEN the Stop-hook checkpoint runs THE SYSTEM SHALL record a floor goal
+  (`source: auto-window`) from the opening window of substantial user messages,
+  skipping trivial greeting/ack openers; and IF every opener is trivial THEN it
+  SHALL fall back to the raw first message rather than producing an empty goal.
+- WHEN the transcript contains an `<!-- hero:goal: … -->` marker THE SYSTEM SHALL
+  record the last such marker as `source: marker`, overriding the window goal.
+- WHEN the user runs `hero next goal "<text>"` THE SYSTEM SHALL record
+  `source: manual`, which supersedes every auto/marker goal; with no argument it
+  SHALL print the current goal (or a "none recorded" hint).
+- THE SYSTEM SHALL enforce the priority ladder in `RecordGoal`: a write at
+  priority P overwrites the existing goal iff `P ≥ existing` (`auto-window 0 <
+  auto-embed 1 < marker 2 < manual 3`) — a higher-source goal is never clobbered
+  by a lower-source auto pass.
+- WHERE `next.goal_capture = "embed"` AND the local model is available THE SYSTEM
+  SHALL override the window goal with an embeddings-selected message ONLY when a
+  candidate is both on-theme and a clear winner; otherwise it SHALL abstain and
+  leave the floor goal in place (never surface a low-confidence pick).
+- WHEN the resume brief / per-user file render a goal THE SYSTEM SHALL place it
+  above the latest-ask line, frame `auto-window`/`auto-embed` softly ("session
+  opened with" / "likely") and `marker`/`manual` as asserted ("Goal:"), and omit
+  the goal line when it equals the latest-ask text.
+- IF the transcript is missing/unreadable, no model is available, or no marker is
+  present THEN THE SYSTEM SHALL degrade to the next-lower-priority signal and
+  never fail or hang the Stop hook (best-effort contract).
+- THE SYSTEM SHALL keep the existing last-ask auto-emit behavior unchanged, and
+  SHALL introduce the `next.goal_capture` config field (default `"floor"`) even
+  though `auto-embed` is not implemented in this spec.
+- **(prerequisite, not delivered here)** This feature SHALL be delivered after
+  `cross-machine-handoff-slug-mismatch`, since the goal rides the same per-user
+  slug identity that bug breaks cross-machine.
 
 ## Approach / Changes
+
+> **Note (2026-06-04):** the step-by-step below predates the converged design and
+> still describes the simpler `auto-first` + `manual` two-source model. The
+> authoritative contract is the **Recommended Design** (window+filter floor,
+> best-effort marker, confidence-gated opt-in embed, manual) and its
+> **priority-ladder `RecordGoal`** above. Implement the four-source ladder
+> (`auto-window 0 < auto-embed 1 < marker 2 < manual 3`); the `Source` field is an
+> enum, not a two-value flag. Treat the steps below as a starting skeleton to
+> extend, not the final shape.
 
 1. **`internal/handoff/handoff.go`** — add the `SessionGoal` node type.
    - Add `NodeSessionGoal = "SessionGoal"` to the node-type constants.
