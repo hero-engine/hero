@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-04T15:33:14Z · projected from 303 source nodes_
+_Last refreshed: 2026-06-04T15:40:43Z · projected from 305 source nodes_
 
 ## Surfaces
 
@@ -17,7 +17,7 @@ _Last refreshed: 2026-06-04T15:33:14Z · projected from 303 source nodes_
 | landing | building | web/landing/ | 3d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
 | serve | building | internal/serve/ | 2d ago | vocabulary-resolve-misses-methodology-derivation |
-| (unassigned) | — | — | — | 138 specs without surface |
+| (unassigned) | — | — | — | 140 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
 
@@ -64,11 +64,11 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Blocked specs (14):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `e2e-traversal` (waits on traversal-queries); `embedded-inference` (waits on master-ingest-restore); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection); `traversal-queries` (waits on master-ingest-restore); `unified-retrieval-layer` (waits on master-ingest-restore).
 - **Stale-in-flight (21):** `hero-landing-page` (16d), `hero-sales` (16d), `vocabulary-resolve-misses-methodology-derivation` (16d), `agent-outposts` (16d), `unified-search` (16d), `cross-repo-peering` (16d), `e2e-discovery` (16d), `e2e-traversal` (16d), `e2e-validation` (16d), `graph-conflict-detection` (16d), `spec-types-cache-frontmatter-empty` (16d), `hero-team-server` (16d), `hero-local-merge-missing-dialect-fields` (16d), `master-ingest-restore` (16d), `monorepo-satellite-installs` (16d), `per-feature-smoke-coverage` (16d), `spec-status-integrity` (16d), `traversal-queries` (16d), `tripwire-system` (16d), `unified-retrieval-layer` (16d), `compact-handoff-test-coverage` (14d).
 - **Aged open bugs (3):** `hero-workspace-not-self-describing` (open 23d), `scan-enrichment-unbounded-loop` (open 23d), `scan-test-detection-misses-spock-vitest` (open 23d).
-- **Unassigned specs (138) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
+- **Unassigned specs (140) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 143/281 (50%)
-- Projection generation: 1ms · Source nodes: 303
+- Specs covered: 143/283 (50%)
+- Projection generation: 1ms · Source nodes: 305
 

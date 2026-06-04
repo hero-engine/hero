@@ -157,6 +157,31 @@ Capture the last N user messages so the refinement keeps its local context.
   *refinements*; none of them restate the original framing. More tokens, same
   blind spot. Doesn't solve the stated problem.
 
+### Option 5 — Embeddings-based smart selector (local `hero-embed-v1`)
+
+Hero already ships a local 256-dim embedding model (`internal/embeddings/`,
+`hero-embed-v1`, `CosineSimilarity`) — semantic similarity/retrieval, **no
+generation**. Use it to *select* a better goal message than "first": embed the
+session's user messages and pick the one nearest the session centroid (the
+most on-theme message), and/or detect a topic *pivot* (a later message far from
+the opener → the goal changed mid-session). This is a deterministic,
+no-generation **selector** that sits between Option 1 (positional, dumb) and
+Option 3 (generative, expensive).
+
+- **Pro:** smarter than first-message at near-zero marginal cost (the model and
+  cosine sim already exist); catches the "session pivoted to a new goal" case
+  that Option 1 misses; runs locally, no LLM call, no discipline tax.
+- **Con — honest scoping:** `hero-embed-v1` is a lightweight averaged-token
+  embedding (256-dim, bag-of-tokens), so it resolves *topic-level* similarity,
+  not subtle intent nuance. It can pick the most-central or detect a big pivot;
+  it will NOT reliably distinguish "the goal" from "a closely-related
+  refinement." And it still **selects a verbatim message** — it cannot
+  *synthesize* a clean goal line (that's Option 3 only). Adds an embed step to
+  the Stop path (bounded, but more than the zero-cost first-message read).
+- **Verdict:** a legitimate **optional middle tier**, not the floor. Ship
+  Option 1 first; layer Option 5 in if real-world use shows the first-message
+  proxy is too noisy. Keep it behind the same toggle as Option 3 (see Tiering).
+
 ## Recommended Design
 
 **Primary: Option 1 (first + last) as the automatic floor, with a thin
@@ -249,6 +274,28 @@ reuses every pattern in the `handoff` package (keying, upsert, scan, render).
   judgment), which stays optional.
 - It does **not** distill or summarize. The goal line is a verbatim (truncated)
   user message, same as the last-ask line.
+
+### Tiering decision (maintainer, 2026-06-04)
+
+Goal capture is a **three-tier ladder**; this spec delivers Tier 1 now and
+leaves the higher tiers as opt-in follow-ups the user can choose to enable:
+
+| Tier | What | Cost | Status |
+|------|------|------|--------|
+| **1 — first-message** | Auto-capture the transcript opener as `SessionGoal` (Option 1) | zero (extractor exists) | **This spec — ships now, default-on** |
+| **2 — embeddings select** | Pick the most-on-theme message / detect pivots via local `hero-embed-v1` (Option 5) | low (local embed, no LLM) | Optional follow-up, **user-toggleable** |
+| **3 — model-distilled** | Agent emits a synthesized one-line goal (Option 3) | discipline/LLM step | Optional ceiling, **user-toggleable** |
+
+The maintainer's call: **ship Tier 1, and make Tiers 2/3 a setting the user
+opts into** (e.g. `next.goal_capture: "first" | "embed" | "distill"` in
+`hero.json`, default `"first"`) rather than forcing the higher-cost paths on
+everyone. The sticky `hero next goal` manual override (in the Recommended
+Design) works at every tier. Tiers 2 and 3 are **out of scope for this spec** —
+file them as follow-ups (`handoff-goal-embed-selector`,
+`handoff-goal-model-distill`) if/when Tier 1's first-message proxy proves too
+noisy in real use. The config knob (the `goal_capture` mode field + its default)
+*should* be introduced by this spec even though only `"first"` is implemented,
+so enabling a higher tier later is a config flip, not a schema change.
 
 ## Acceptance Criteria
 
