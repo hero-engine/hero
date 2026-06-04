@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/fs"
@@ -159,6 +160,15 @@ func writeCheckpoint() (string, error) {
 	cfg, err := config.Load(projectRoot)
 	if err != nil {
 		return "", fmt.Errorf("loading config: %w", err)
+	}
+
+	// A-1 stabilizer (cross-machine-handoff-slug-mismatch): pin the
+	// current machine's derived identity into the COMMITTED hero.json so
+	// every clone derives the same handoff slug regardless of local git
+	// config. Best-effort and one-time — only fires when defaultAgent is
+	// unset (so the slug is currently coming from volatile git/$USER).
+	if persisted := persistDefaultAgentIfUnset(projectRoot, cfg); persisted != nil {
+		cfg = *persisted
 	}
 
 	heroDir := cfg.HeroDir(projectRoot)
@@ -420,6 +430,81 @@ func writeUserHandoffFile(projectRoot, heroDir string, cfg config.Config) error 
 		return fmt.Errorf("write %s: %w", userPath, err)
 	}
 	return nil
+}
+
+// persistDefaultAgentIfUnset is the A-1 stabilizer for
+// cross-machine-handoff-slug-mismatch. When the merged config has no
+// tracking.defaultAgent, the handoff slug is being derived from
+// volatile local git/$USER config and will diverge across machines.
+// This pins the current machine's derived slug into the COMMITTED
+// hero.json (never hero.local.json) so every clone derives the same
+// identity and the handoff keys line up.
+//
+// It is deliberately surgical: it reads the committed hero.json on its
+// own (NOT the local-merged cfg), so a defaultAgent already set in
+// hero.local.json does not suppress the committed write, and local-only
+// secrets are never round-tripped into the committed file. Best-effort:
+// any error is logged and skipped — a checkpoint must never fail on it.
+//
+// Returns the updated config when it wrote (so the caller can keep
+// using the freshly-pinned slug this turn), or nil when it did nothing.
+func persistDefaultAgentIfUnset(projectRoot string, merged config.Config) *config.Config {
+	// Only act when the EFFECTIVE identity is unpinned. If the merged
+	// config already has a defaultAgent (from committed or local config),
+	// identity is already stable enough — don't churn the committed file.
+	if merged.Tracking != nil && merged.Tracking.DefaultAgent != "" {
+		return nil
+	}
+
+	slug := gitUserName()
+	if slug == "" || slug == "unknown" {
+		// Nothing stable to pin — leave the file alone rather than
+		// committing a useless "unknown" identity.
+		return nil
+	}
+
+	heroDir := filepath.Join(projectRoot, merged.Folder)
+	configPath := filepath.Join(heroDir, config.ConfigFileName)
+
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		// No committed hero.json (uninitialized workspace) → nothing to
+		// pin into. Skip silently; A-1 only stabilizes existing repos.
+		return nil
+	}
+
+	// Read the COMMITTED file on its own — no local merge, no default
+	// fill — so we write back exactly what was there plus the new field.
+	var committed config.Config
+	if err := json.Unmarshal(data, &committed); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: A-1 defaultAgent persist: parse hero.json: %v\n", err)
+		return nil
+	}
+	if committed.Tracking != nil && committed.Tracking.DefaultAgent != "" {
+		// Committed file already pins it (merged check missed it only if
+		// local cleared it, which it can't). Nothing to do.
+		return nil
+	}
+	if committed.Folder == "" {
+		committed.Folder = merged.Folder
+	}
+	if committed.Tracking == nil {
+		committed.Tracking = &config.TrackingConfig{}
+	}
+	committed.Tracking.DefaultAgent = slug
+
+	if err := committed.Save(projectRoot); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: A-1 defaultAgent persist: write hero.json: %v\n", err)
+		return nil
+	}
+
+	// Reflect the pin in the in-memory config the rest of this checkpoint
+	// uses, so the slug is consistent within the turn.
+	if merged.Tracking == nil {
+		merged.Tracking = &config.TrackingConfig{}
+	}
+	merged.Tracking.DefaultAgent = slug
+	return &merged
 }
 
 func writeFileIfChanged(path string, content []byte, mode fs.FileMode) (bool, error) {

@@ -394,7 +394,7 @@ func Test_writeCheckpoint_TeamMode_RoundTripIsIdempotent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := handoff.IngestUserFile(store, repoKey, domain, userPath); err != nil {
+	if err := handoff.IngestUserFile(store, repoKey, domain, userPath, "", true); err != nil {
 		t.Fatalf("ingest: %v", err)
 	}
 	store.Close()
@@ -718,7 +718,7 @@ func Test_CrossMachineRoundTrip_FullLoop(t *testing.T) {
 		t.Fatalf("machine B has stale suggestion before ingest: %+v", got)
 	}
 
-	if err := handoff.IngestUserFile(storeB, repoKey, "engineering", handoffPath); err != nil {
+	if err := handoff.IngestUserFile(storeB, repoKey, "engineering", handoffPath, "", true); err != nil {
 		t.Fatalf("IngestUserFile B: %v", err)
 	}
 
@@ -741,7 +741,7 @@ func Test_CrossMachineRoundTrip_FullLoop(t *testing.T) {
 
 	// --- Idempotency: a second SessionStart ingest must not duplicate. ---
 
-	if err := handoff.IngestUserFile(storeB, repoKey, "engineering", handoffPath); err != nil {
+	if err := handoff.IngestUserFile(storeB, repoKey, "engineering", handoffPath, "", true); err != nil {
 		t.Fatalf("second IngestUserFile B: %v", err)
 	}
 	refsAfter, _ := handoff.RecentReflections(storeB, user, repoKey, "engineering", 10)

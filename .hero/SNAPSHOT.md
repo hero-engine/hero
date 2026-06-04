@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-04T16:53:55Z · projected from 305 source nodes_
+_Last refreshed: 2026-06-04T17:31:52Z · projected from 305 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 10h ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 11h ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | building | domains/engineering/ | 3d ago | spec-types-cache-frontmatter-empty |

@@ -30,10 +30,10 @@ import (
 // accumulation (reflections).
 
 var (
-	handoffJSON  bool
-	handoffCopy  bool
-	handoffUser  string
-	ingestQuiet  bool
+	handoffJSON bool
+	handoffCopy bool
+	handoffUser string
+	ingestQuiet bool
 )
 
 var nextSuggestCmd = &cobra.Command{
@@ -134,8 +134,22 @@ func runNextIngest(cmd *cobra.Command, args []string) error {
 	}
 
 	domain := graph.DomainFor(cfg, graph.IntrinsicActive)
+	// localSlug is the identity the local reader (hero resume,
+	// hero next ask/suggest) derives. Threaded into ingest so the
+	// rehydrated singletons are mirrored under it when the file's
+	// recorded user differs — closing the cross-machine slug-divergence
+	// gap (see internal/handoff.IngestUserFile).
+	localSlug := nextUserSlug(cfg)
+	// singleTravelFile gates the cross-machine alias mirror: it may only
+	// fire when exactly ONE distinct travel-eligible identity exists on
+	// disk, so a brand-new teammate (empty graph, zero handoff nodes)
+	// never has another user's handoff mirrored onto their slug. We count
+	// distinct frontmatter `user:` values across .hero/next/*.md (the same
+	// authoritative count resolveHandoffIdentity reads), not len(paths),
+	// so an explicit-args invocation can't widen the gate.
+	singleTravelFile := len(nextFileUserSlugs(heroDir)) == 1
 	for _, p := range paths {
-		if err := handoff.IngestUserFile(store, repoKey, domain, p); err != nil {
+		if err := handoff.IngestUserFile(store, repoKey, domain, p, localSlug, singleTravelFile); err != nil {
 			return fmt.Errorf("ingest %s: %w", p, err)
 		}
 		if !ingestQuiet {

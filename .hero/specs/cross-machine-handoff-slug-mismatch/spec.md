@@ -2,7 +2,7 @@
 title: "Cross-machine handoff loads empty when the local user slug differs between machines"
 slug: cross-machine-handoff-slug-mismatch
 type: bug
-status: planning
+status: completed
 severity: high
 priority: high
 domain: engineering
@@ -13,6 +13,7 @@ relates-to:
   - resume-brief-surfaces-handoff
   - e2e-handoff-continuity
   - next-as-projection
+completed_at: 2026-06-04T17:55:55Z
 ---
 
 # Cross-machine handoff loads empty when the local user slug differs between machines
@@ -340,6 +341,16 @@ Land **B-1 + B-2 + B-3** as the fix (identity-aware ingest + read-fallback + fai
 ## Notes
 - Session-originated; no tracker configured (`hero.json` tracker.type = "none"), so no tracker posting. No `tracker_id`.
 - The original report's "derived from email → bdwheeler" mechanism is corrected here: the divergent slug actually comes from `$USER`, not email (`gitutil.UserName` never reads email). Root cause and severity are unchanged.
+
+## Delivered (files changed)
+- `internal/handoff/ingest.go` — B-1: `IngestUserFile` takes a `localSlug` param and mirrors singletons under it when safe; added `safeAliasSlug` (zero-existing-node gate). Reflection dedupe reused so the alias copy never double-counts.
+- `internal/cli/next_handoff.go` — threads `nextUserSlug(cfg)` into `IngestUserFile` (the real `hero next ingest` entry point).
+- `internal/cli/scan.go` — threads `nextUserSlug(cfg)` into `IngestUserFile` (the `hero scan` ingest entry point).
+- `internal/cli/brief.go` — B-2/B-3: `resolveHandoffIdentity` + `handoffHasContent` + `nextFileUserSlugs`; `runResume` reconciles the local slug against on-disk file identities and emits a fail-loud diagnostic when unresolvable.
+- `internal/cli/checkpoint.go` — A-1: `persistDefaultAgentIfUnset` writes the derived slug to the COMMITTED `hero.json` (surgical, never `hero.local.json`) once when unset.
+- Tests: `internal/handoff/ingest_test.go` (alias + gate units), `internal/cli/handoff_continuity_test.go` (`Test_HandoffContinuity_CrossMachine_SlugDivergence`, `_SlugDivergence_FallbackWithoutMirror`, `_UnresolvableIdentity_IsObservable`, `Test_persistDefaultAgentIfUnset_*`, `Test_IngestUserFile_TeamModeGate_NoCrossContamination`). Existing callers updated to the new signature (pass `""` = no alias).
+- Team-mode anti-corruption gate chosen: **alias only when the local slug currently has ZERO handoff nodes**. Works in any mode; a real second team member already owns nodes, so their handoff is never clobbered.
+- Verified end-to-end with the built binary: A (`user.name "BW"` → slug `bw`) → clone → B (email-only, divergent `$USER`): pre-ingest `hero resume` emits the diagnostic (no silent empty); post-ingest it surfaces A's ask/suggestion/reflection. A-1 path also verified (committed `default_agent` travels, B derives `bw`).
 
 ## Kickoff
 

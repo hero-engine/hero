@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"io"
 	"os"
 	"os/exec"
@@ -251,7 +252,7 @@ func Test_HandoffContinuity_CrossMachine(t *testing.T) {
 	}
 
 	// --- Rehydrate on B: the real `hero next ingest` entry point. ----
-	if err := handoff.IngestUserFile(storeB, repoKeyB, domainB, bUserPath); err != nil {
+	if err := handoff.IngestUserFile(storeB, repoKeyB, domainB, bUserPath, "", true); err != nil {
 		storeB.Close()
 		t.Fatalf("ingest on B: %v", err)
 	}
@@ -388,7 +389,7 @@ func Test_HandoffContinuity_CrossMachine_Idempotent(t *testing.T) {
 		if err != nil {
 			t.Fatalf("open B graph: %v", err)
 		}
-		if err := handoff.IngestUserFile(store, repoKeyB, domainB, bUserPath); err != nil {
+		if err := handoff.IngestUserFile(store, repoKeyB, domainB, bUserPath, "", true); err != nil {
 			store.Close()
 			t.Fatalf("ingest on B: %v", err)
 		}
@@ -560,7 +561,7 @@ func Test_HandoffContinuity_CrossMachine_AutoEmit(t *testing.T) {
 	}
 
 	// --- Rehydrate on B via the real ingest entry point.
-	if err := handoff.IngestUserFile(storeB, repoKeyB, domainB, bUserPath); err != nil {
+	if err := handoff.IngestUserFile(storeB, repoKeyB, domainB, bUserPath, "", true); err != nil {
 		storeB.Close()
 		t.Fatalf("ingest on B: %v", err)
 	}
@@ -613,6 +614,515 @@ func Test_HandoffContinuity_CrossMachine_AutoEmit(t *testing.T) {
 	}
 	if !strings.Contains(briefB.Markdown(), autoAsk) {
 		t.Errorf("B's resume brief missing the auto-emitted ask:\n%s", briefB.Markdown())
+	}
+}
+
+// divergentTeamCfg builds a team-mode config whose handoff slug is the
+// given value — used to give machine B a LOCAL identity that differs
+// from the slug baked into the traveled file. This is the exact
+// cross-machine condition the previous guardrail could not exercise:
+// teamCfg() pins "alice" on both sides, so a slug DIVERGENCE between
+// machines never happened.
+func divergentTeamCfg(slug string) config.Config {
+	cfg := config.DefaultConfig()
+	cfg.Next = &config.NextConfig{Mode: "team"}
+	cfg.Tracking = &config.TrackingConfig{DefaultAgent: "human/" + slug}
+	return cfg
+}
+
+// Test_HandoffContinuity_CrossMachine_SlugDivergence is the guardrail
+// the spec demands — and the one the legacy cross-machine test
+// structurally could not be. Machine A keys handoff under slug "alice"
+// and commits .hero/next/alice.md. Machine B has a DIFFERENT local
+// slug ("bob") and ONLY the committed alice.md travels (no graph.db).
+// After the real ingest (which threads B's local slug, per B-1), B's
+// `hero resume` brief — queried under B's "bob" identity — must STILL
+// surface A's ask and suggestion. This proves the cross-machine load
+// survives a slug divergence, which is the whole bug.
+func Test_HandoffContinuity_CrossMachine_SlugDivergence(t *testing.T) {
+	s := defaultSeed()
+
+	// --- Machine A: slug "alice", project & capture committed bytes.
+	cfgA := teamCfg() // DefaultAgent human/alice → slug "alice"
+	envA := newTestEnv(t)
+	if err := cfgA.Save(envA.dir); err != nil {
+		t.Fatalf("save A cfg: %v", err)
+	}
+	committed, _ := seedMachineA(t, envA, cfgA, s)
+
+	// --- Machine B: LOCAL slug "bob" (divergent), empty graph, only the
+	// committed alice.md.
+	const localSlugB = "bob"
+	cfgB := divergentTeamCfg(localSlugB)
+	envB := newTestEnv(t)
+	if err := cfgB.Save(envB.dir); err != nil {
+		t.Fatalf("save B cfg: %v", err)
+	}
+	if got := nextUserSlug(cfgB); got != localSlugB {
+		t.Fatalf("B local slug = %q, want %q (test premise broken)", got, localSlugB)
+	}
+	// The file that traveled is alice.md (A's identity), NOT bob.md.
+	bUserPath := filepath.Join(envB.heroDir, nextDirName, "alice.md")
+	if err := os.MkdirAll(filepath.Dir(bUserPath), 0o755); err != nil {
+		t.Fatalf("mkdir B next dir: %v", err)
+	}
+	if err := os.WriteFile(bUserPath, committed, 0o644); err != nil {
+		t.Fatalf("drop committed file on B: %v", err)
+	}
+
+	repoKeyB := gitutil.RepoKey(envB.dir)
+	domainB := graph.DomainFor(cfgB, graph.IntrinsicActive)
+
+	// Sanity: B finds NOTHING under its local "bob" slug before ingest —
+	// the file is keyed "alice", so a naive read misses (the bug).
+	storeB, err := graph.Open(envB.heroDir)
+	if err != nil {
+		t.Fatalf("open B graph: %v", err)
+	}
+	if ask, _ := handoff.LatestAsk(storeB, localSlugB, repoKeyB, domainB); ask != nil && ask.Text != "" {
+		storeB.Close()
+		t.Fatalf("B graph not empty under %q before ingest", localSlugB)
+	}
+
+	// --- Rehydrate on B via the REAL ingest, threading B's local slug
+	// exactly as runNextIngest does (B-1). This mirrors the singletons
+	// under "bob" because "bob" currently has zero handoff nodes.
+	if err := handoff.IngestUserFile(storeB, repoKeyB, domainB, bUserPath, nextUserSlug(cfgB), true); err != nil {
+		storeB.Close()
+		t.Fatalf("ingest on B: %v", err)
+	}
+	storeB.Close()
+
+	// --- B's resume brief, queried under B's DIVERGENT local slug, must
+	// carry A's content. This is the assertion the old guardrail could
+	// not make. We replicate runResume's opts + identity reconciliation.
+	storeB, err = graph.Open(envB.heroDir)
+	if err != nil {
+		t.Fatalf("reopen B graph: %v", err)
+	}
+	opts := digest.Options{
+		RepoKey:     repoKeyB,
+		Branch:      gitutil.CurrentBranch(envB.dir),
+		AuthorEmail: "bob@example.com",
+		User:        nextUserSlug(cfgB), // "bob"
+		Domain:      domainB,
+	}
+	resolveHandoffIdentity(storeB, envB.heroDir, &opts, io.Discard)
+	briefB, err := digest.Generate(storeB, opts)
+	storeB.Close()
+	if err != nil {
+		t.Fatalf("hero resume load path failed on B: %v", err)
+	}
+	mdB := briefB.Markdown()
+	for _, want := range []string{s.ask, s.suggestion} {
+		if !strings.Contains(mdB, want) {
+			t.Errorf("B's resume brief (local slug %q) did not carry A's handoff content %q:\n%s",
+				localSlugB, want, mdB)
+		}
+	}
+
+	// --- Prove it BITES: a naive read under B's local slug WITHOUT the
+	// fix's mirror/fallback would find nothing. We assert that querying
+	// the singleton directly under "bob" WITH the alias mirror in place
+	// DOES resolve — and that querying under a third, never-seen slug
+	// does NOT (so the alias is identity-scoped, not a blanket leak).
+	storeB, err = graph.Open(envB.heroDir)
+	if err != nil {
+		t.Fatalf("reopen B graph for bite check: %v", err)
+	}
+	defer storeB.Close()
+	if ask, _ := handoff.LatestAsk(storeB, localSlugB, repoKeyB, domainB); ask == nil || !strings.Contains(ask.Text, s.ask) {
+		t.Errorf("B-1 mirror missing: no ask under local slug %q after ingest: %+v", localSlugB, ask)
+	}
+	if ask, _ := handoff.LatestAsk(storeB, "carol", repoKeyB, domainB); ask != nil && ask.Text != "" {
+		t.Errorf("alias leaked to an unrelated slug \"carol\": %+v", ask)
+	}
+}
+
+// Test_HandoffContinuity_SlugDivergence_FallbackWithoutMirror proves
+// B-2/B-3: even when ingest did NOT mirror under the local slug (e.g.
+// ingest ran on an earlier session before this fix, so nodes exist only
+// under the file's "alice" identity), the read-side fallback in
+// resolveHandoffIdentity resolves the single on-disk identity so the
+// brief still loads — and the bite assertion confirms that without the
+// fallback the brief would be empty under "bob".
+func Test_HandoffContinuity_SlugDivergence_FallbackWithoutMirror(t *testing.T) {
+	s := defaultSeed()
+
+	cfgA := teamCfg()
+	envA := newTestEnv(t)
+	if err := cfgA.Save(envA.dir); err != nil {
+		t.Fatalf("save A cfg: %v", err)
+	}
+	committed, _ := seedMachineA(t, envA, cfgA, s)
+
+	const localSlugB = "bob"
+	cfgB := divergentTeamCfg(localSlugB)
+	envB := newTestEnv(t)
+	if err := cfgB.Save(envB.dir); err != nil {
+		t.Fatalf("save B cfg: %v", err)
+	}
+	bUserPath := filepath.Join(envB.heroDir, nextDirName, "alice.md")
+	if err := os.MkdirAll(filepath.Dir(bUserPath), 0o755); err != nil {
+		t.Fatalf("mkdir B next dir: %v", err)
+	}
+	if err := os.WriteFile(bUserPath, committed, 0o644); err != nil {
+		t.Fatalf("drop committed file on B: %v", err)
+	}
+
+	repoKeyB := gitutil.RepoKey(envB.dir)
+	domainB := graph.DomainFor(cfgB, graph.IntrinsicActive)
+
+	// Ingest WITHOUT the local-slug mirror (localSlug=""), simulating a
+	// prior-session ingest that keyed only under "alice".
+	storeB, err := graph.Open(envB.heroDir)
+	if err != nil {
+		t.Fatalf("open B graph: %v", err)
+	}
+	if err := handoff.IngestUserFile(storeB, repoKeyB, domainB, bUserPath, "", true); err != nil {
+		storeB.Close()
+		t.Fatalf("ingest on B: %v", err)
+	}
+	storeB.Close()
+
+	// BITE: without the read-side fallback, a query under "bob" finds
+	// nothing (nodes are keyed "alice").
+	storeB, err = graph.Open(envB.heroDir)
+	if err != nil {
+		t.Fatalf("reopen B graph: %v", err)
+	}
+	if ask, _ := handoff.LatestAsk(storeB, localSlugB, repoKeyB, domainB); ask != nil && ask.Text != "" {
+		storeB.Close()
+		t.Fatalf("test premise broken: ask present under %q without mirror", localSlugB)
+	}
+
+	// With the fallback, resolveHandoffIdentity adopts the single on-disk
+	// identity ("alice"), and the brief loads A's content.
+	opts := digest.Options{
+		RepoKey:     repoKeyB,
+		Branch:      gitutil.CurrentBranch(envB.dir),
+		AuthorEmail: "bob@example.com",
+		User:        localSlugB,
+		Domain:      domainB,
+	}
+	resolveHandoffIdentity(storeB, envB.heroDir, &opts, io.Discard)
+	if opts.User != "alice" {
+		t.Errorf("read-side fallback did not adopt the single on-disk identity: opts.User=%q, want \"alice\"", opts.User)
+	}
+	briefB, err := digest.Generate(storeB, opts)
+	storeB.Close()
+	if err != nil {
+		t.Fatalf("digest.Generate on B: %v", err)
+	}
+	mdB := briefB.Markdown()
+	for _, want := range []string{s.ask, s.suggestion} {
+		if !strings.Contains(mdB, want) {
+			t.Errorf("B's brief missing %q after read-side fallback:\n%s", want, mdB)
+		}
+	}
+}
+
+// Test_HandoffContinuity_UnresolvableIdentity_IsObservable proves B-3:
+// when handoff files exist under slugs that match neither the local
+// identity nor resolve to a single fallback (two distinct users, none
+// matching local "bob"), the read path emits an observable diagnostic
+// naming the queried slug vs. the available slugs — NOT a silent empty
+// section — and resume still succeeds (non-fatal).
+func Test_HandoffContinuity_UnresolvableIdentity_IsObservable(t *testing.T) {
+	const localSlugB = "bob"
+	cfgB := divergentTeamCfg(localSlugB)
+	envB := newTestEnv(t)
+	if err := cfgB.Save(envB.dir); err != nil {
+		t.Fatalf("save B cfg: %v", err)
+	}
+	repoKeyB := gitutil.RepoKey(envB.dir)
+	domainB := graph.DomainFor(cfgB, graph.IntrinsicActive)
+
+	// Two distinct real users with handoff content in the graph AND on
+	// disk — neither is "bob". This is the ambiguous case: no single
+	// fallback can be chosen.
+	storeB, err := graph.Open(envB.heroDir)
+	if err != nil {
+		t.Fatalf("open B graph: %v", err)
+	}
+	for _, u := range []string{"alice", "dustin"} {
+		if err := handoff.RecordAsk(storeB, repoKeyB, handoff.UserAsk{
+			User: u, Domain: domainB, Text: "ASK_" + u,
+		}); err != nil {
+			storeB.Close()
+			t.Fatalf("seed ask for %s: %v", u, err)
+		}
+		path := filepath.Join(envB.heroDir, nextDirName, u+".md")
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			storeB.Close()
+			t.Fatalf("mkdir: %v", err)
+		}
+		md := "---\nuser: " + u + "\n---\n\n# " + u + "'s handoff\n\n## Last user ask\n\n> ASK_" + u + "\n"
+		if err := os.WriteFile(path, []byte(md), 0o644); err != nil {
+			storeB.Close()
+			t.Fatalf("write %s.md: %v", u, err)
+		}
+	}
+
+	opts := digest.Options{
+		RepoKey: repoKeyB,
+		User:    localSlugB,
+		Domain:  domainB,
+	}
+	var warn bytes.Buffer
+	resolveHandoffIdentity(storeB, envB.heroDir, &opts, &warn)
+	storeB.Close()
+
+	// Identity stays "bob" (no single fallback resolvable).
+	if opts.User != localSlugB {
+		t.Errorf("ambiguous identity should not be auto-resolved: opts.User=%q, want %q", opts.User, localSlugB)
+	}
+	diag := warn.String()
+	if diag == "" {
+		t.Fatalf("B-3 violated: unresolvable identity produced NO diagnostic (silent empty handoff)")
+	}
+	// The hint must name the queried slug and the available slugs.
+	if !strings.Contains(diag, localSlugB) {
+		t.Errorf("diagnostic does not name the queried slug %q: %q", localSlugB, diag)
+	}
+	for _, u := range []string{"alice", "dustin"} {
+		if !strings.Contains(diag, u) {
+			t.Errorf("diagnostic does not name available slug %q: %q", u, diag)
+		}
+	}
+}
+
+// Test_persistDefaultAgentIfUnset_PinsCommittedIdentity proves A-1: when
+// the committed hero.json has no tracking.defaultAgent, the stabilizer
+// writes the current derived slug there so every clone derives the same
+// identity. nextUserSlug already prefers defaultAgent over git config —
+// asserted here too (the precedence the spec requires).
+func Test_persistDefaultAgentIfUnset_PinsCommittedIdentity(t *testing.T) {
+	env := newTestEnv(t)
+	// Start from a committed config with NO tracking block.
+	cfg := config.DefaultConfig()
+	cfg.Tracking = nil
+	if err := cfg.Save(env.dir); err != nil {
+		t.Fatalf("save cfg: %v", err)
+	}
+
+	// Precondition: gitUserName() must yield a stable, non-"unknown" slug
+	// in this environment for the pin to fire. If it can't, skip — the
+	// stabilizer is correctly a no-op on an unidentifiable machine.
+	slug := gitUserName()
+	if slug == "" || slug == "unknown" {
+		t.Skipf("no stable local identity (gitUserName=%q); A-1 correctly no-ops", slug)
+	}
+
+	merged, err := config.Load(env.dir)
+	if err != nil {
+		t.Fatalf("load cfg: %v", err)
+	}
+	updated := persistDefaultAgentIfUnset(env.dir, merged)
+	if updated == nil {
+		t.Fatalf("expected A-1 to pin defaultAgent, got nil")
+	}
+	if updated.Tracking == nil || updated.Tracking.DefaultAgent != slug {
+		t.Errorf("in-memory config not updated: %+v, want defaultAgent=%q", updated.Tracking, slug)
+	}
+
+	// The COMMITTED file must now carry it (not hero.local.json).
+	reloaded, err := config.Load(env.dir)
+	if err != nil {
+		t.Fatalf("reload cfg: %v", err)
+	}
+	if reloaded.Tracking == nil || reloaded.Tracking.DefaultAgent != slug {
+		t.Errorf("committed hero.json did not persist defaultAgent: %+v", reloaded.Tracking)
+	}
+	// Precedence: nextUserSlug prefers the now-committed defaultAgent.
+	if got := nextUserSlug(reloaded); got != slug {
+		t.Errorf("nextUserSlug = %q, want pinned defaultAgent %q (precedence violated)", got, slug)
+	}
+
+	// Idempotent: a second call is a no-op (already pinned).
+	if again := persistDefaultAgentIfUnset(env.dir, reloaded); again != nil {
+		t.Errorf("A-1 should be a no-op when defaultAgent is already set, got %+v", again.Tracking)
+	}
+}
+
+// Test_persistDefaultAgentIfUnset_RespectsExistingPin proves A-1 never
+// churns a workspace that already pins identity (committed or via the
+// merged local config). The committed file is left byte-for-byte intact.
+func Test_persistDefaultAgentIfUnset_RespectsExistingPin(t *testing.T) {
+	env := newTestEnv(t)
+	cfg := config.DefaultConfig()
+	cfg.Tracking = &config.TrackingConfig{DefaultAgent: "human/preset"}
+	if err := cfg.Save(env.dir); err != nil {
+		t.Fatalf("save cfg: %v", err)
+	}
+	before, err := os.ReadFile(filepath.Join(env.heroDir, config.ConfigFileName))
+	if err != nil {
+		t.Fatalf("read committed cfg: %v", err)
+	}
+
+	merged, err := config.Load(env.dir)
+	if err != nil {
+		t.Fatalf("load cfg: %v", err)
+	}
+	if got := persistDefaultAgentIfUnset(env.dir, merged); got != nil {
+		t.Errorf("A-1 churned an already-pinned workspace: %+v", got.Tracking)
+	}
+	after, err := os.ReadFile(filepath.Join(env.heroDir, config.ConfigFileName))
+	if err != nil {
+		t.Fatalf("re-read committed cfg: %v", err)
+	}
+	if string(before) != string(after) {
+		t.Errorf("committed hero.json changed despite existing pin:\nbefore:\n%s\nafter:\n%s", before, after)
+	}
+}
+
+// Test_IngestUserFile_TeamModeGate_NoCrossContamination proves the B-1
+// anti-corruption gate: when the local slug ALREADY has its own handoff
+// nodes (a genuine second team member), ingesting another user's file
+// must NOT mirror that user's content under the local slug.
+func Test_IngestUserFile_TeamModeGate_NoCrossContamination(t *testing.T) {
+	env := newTestEnv(t)
+	repoKey := gitutil.RepoKey(env.dir)
+	const domain = "engineering"
+
+	store, err := graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatalf("open graph: %v", err)
+	}
+	// "bob" is a real local user with his OWN handoff already in the graph.
+	if err := handoff.RecordAsk(store, repoKey, handoff.UserAsk{
+		User: "bob", Domain: domain, Text: "BOB_OWN_ASK",
+	}); err != nil {
+		store.Close()
+		t.Fatalf("seed bob ask: %v", err)
+	}
+	store.Close()
+
+	// alice.md travels in. Ingest with localSlug="bob". Because "bob"
+	// already has handoff content, the alias gate must NOT fire.
+	alicePath := filepath.Join(env.heroDir, nextDirName, "alice.md")
+	if err := os.MkdirAll(filepath.Dir(alicePath), 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	aliceMD := "---\nuser: alice\n---\n\n# alice's handoff\n\n## Last user ask\n\n> ALICE_ASK\n"
+	if err := os.WriteFile(alicePath, []byte(aliceMD), 0o644); err != nil {
+		t.Fatalf("write alice.md: %v", err)
+	}
+
+	store, err = graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatalf("reopen graph: %v", err)
+	}
+	defer store.Close()
+	if err := handoff.IngestUserFile(store, repoKey, domain, alicePath, "bob", true); err != nil {
+		t.Fatalf("ingest alice.md: %v", err)
+	}
+
+	// bob's ask must be UNCHANGED — alice's content must not bleed in.
+	bobAsk, _ := handoff.LatestAsk(store, "bob", repoKey, domain)
+	if bobAsk == nil || bobAsk.Text != "BOB_OWN_ASK" {
+		t.Errorf("bob's handoff was corrupted by the alias: got %+v, want text=BOB_OWN_ASK", bobAsk)
+	}
+	// alice's own keying must still be present (recorded under her slug).
+	aliceAsk, _ := handoff.LatestAsk(store, "alice", repoKey, domain)
+	if aliceAsk == nil || aliceAsk.Text != "ALICE_ASK" {
+		t.Errorf("alice's own handoff missing after ingest: %+v", aliceAsk)
+	}
+}
+
+// Test_IngestUserFile_MultiFile_NoAlias closes the empty-graph-teammate
+// leak a cold audit flagged. The zero-node alias gate alone is unsafe for
+// a BRAND-NEW teammate: their graph is empty, so they too have zero
+// handoff nodes — and the old gate would mirror whichever other user's
+// .hero/next/*.md sorts first onto their local slug. Asks/suggestions are
+// singletons that self-heal next checkpoint, but REFLECTIONS leak and
+// persist under the wrong identity, violating the "no cross-contamination"
+// guarantee.
+//
+// Scenario: a repo with TWO travel-eligible files (alice.md, bob.md), a
+// local user "carol" with an EMPTY graph, runs ingest exactly as
+// runNextIngest does — computing the single-file gate via the real
+// nextFileUserSlugs helper. With two distinct identities on disk the gate
+// is false, so NO node — especially no reflection — may be mirrored onto
+// carol.
+//
+// Bite proof: drop the single-file condition (pass singleTravelFile=true,
+// the pre-this-change behaviour) and carol gets alice's reflection
+// mirrored — the very leak the production gate now blocks.
+func Test_IngestUserFile_MultiFile_NoAlias(t *testing.T) {
+	env := newTestEnv(t)
+	repoKey := gitutil.RepoKey(env.dir)
+	const domain = "engineering"
+	const localSlug = "carol" // brand-new teammate: empty graph, zero nodes
+
+	nextDir := filepath.Join(env.heroDir, nextDirName)
+	if err := os.MkdirAll(nextDir, 0o755); err != nil {
+		t.Fatalf("mkdir next dir: %v", err)
+	}
+
+	// Two distinct travel-eligible files. Each carries a UNIQUE reflection
+	// so a leak is unambiguous: if carol ends up with either reflection,
+	// it bled across from someone else's file.
+	const aliceReflection = "ALICE_REFLECTION only alice should ever own this"
+	const bobReflection = "BOB_REFLECTION only bob should ever own this"
+	aliceMD := "---\nuser: alice\n---\n\n# alice's handoff\n\n" +
+		"## Last user ask\n\n> ALICE_ASK\n\n## Recent reflections\n\n- " + aliceReflection + "\n"
+	bobMD := "---\nuser: bob\n---\n\n# bob's handoff\n\n" +
+		"## Last user ask\n\n> BOB_ASK\n\n## Recent reflections\n\n- " + bobReflection + "\n"
+	alicePath := filepath.Join(nextDir, "alice.md")
+	bobPath := filepath.Join(nextDir, "bob.md")
+	if err := os.WriteFile(alicePath, []byte(aliceMD), 0o644); err != nil {
+		t.Fatalf("write alice.md: %v", err)
+	}
+	if err := os.WriteFile(bobPath, []byte(bobMD), 0o644); err != nil {
+		t.Fatalf("write bob.md: %v", err)
+	}
+
+	// The gate exactly as runNextIngest computes it: distinct travel-
+	// eligible identities on disk. Two files → false → alias suppressed.
+	singleTravelFile := len(nextFileUserSlugs(env.heroDir)) == 1
+	if singleTravelFile {
+		t.Fatalf("test premise broken: two distinct files present but gate computed single=true (slugs=%v)",
+			nextFileUserSlugs(env.heroDir))
+	}
+
+	store, err := graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatalf("open graph: %v", err)
+	}
+	defer store.Close()
+
+	// Ingest BOTH files under carol's local slug, mirroring runNextIngest's
+	// loop. Order is deterministic (sorted), so alice.md is processed first
+	// — the file the old zero-node gate would have mirrored onto carol.
+	for _, p := range []string{alicePath, bobPath} {
+		if err := handoff.IngestUserFile(store, repoKey, domain, p, localSlug, singleTravelFile); err != nil {
+			t.Fatalf("ingest %s: %v", filepath.Base(p), err)
+		}
+	}
+
+	// carol's identity must be PRISTINE — no ask, no reflection mirrored.
+	if ask, _ := handoff.LatestAsk(store, localSlug, repoKey, domain); ask != nil && ask.Text != "" {
+		t.Errorf("alias leaked an ask onto %q: %+v", localSlug, ask)
+	}
+	carolRefs, _ := handoff.RecentReflections(store, localSlug, repoKey, domain, 10)
+	if len(carolRefs) != 0 {
+		t.Errorf("alias leaked %d reflection(s) onto %q: %+v — empty-graph teammate contaminated",
+			len(carolRefs), localSlug, carolRefs)
+	}
+
+	// And each user's own keying must still be intact under their own slug.
+	for slug, want := range map[string]string{"alice": aliceReflection, "bob": bobReflection} {
+		refs, _ := handoff.RecentReflections(store, slug, repoKey, domain, 10)
+		found := false
+		for _, r := range refs {
+			if r.Text == want {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("%s's own reflection missing under their slug: %+v", slug, refs)
+		}
 	}
 }
 

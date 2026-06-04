@@ -2,8 +2,10 @@ package cli
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -11,6 +13,7 @@ import (
 	"github.com/hero-engine/hero/internal/digest"
 	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/graph"
+	"github.com/hero-engine/hero/internal/handoff"
 	"github.com/hero-engine/hero/internal/peering"
 	"github.com/hero-engine/hero/internal/traversal"
 	"github.com/spf13/cobra"
@@ -101,6 +104,15 @@ func runResume(cmd *cobra.Command, args []string) error {
 		SessionID:   readSessionFromExistingNext(heroDir),
 	}
 
+	// Cross-machine identity reconciliation: the local slug
+	// (nextUserSlug) is derived from volatile git/$USER config and can
+	// differ from the slug baked into a traveled .hero/next/<user>.md.
+	// When the handoff query misses under the local slug, resolve the
+	// identity from the files on disk; when it can't be resolved but
+	// handoff files DO exist under other slugs, emit a diagnostic rather
+	// than a silent empty section. Never fails resume.
+	resolveHandoffIdentity(store, heroDir, &opts, os.Stderr)
+
 	brief, err := digest.Generate(store, opts)
 	if err != nil {
 		return fmt.Errorf("generating brief: %w", err)
@@ -131,6 +143,122 @@ func runResume(cmd *cobra.Command, args []string) error {
 		fmt.Print(signal)
 	}
 	return nil
+}
+
+// resolveHandoffIdentity reconciles the locally-derived handoff slug
+// (opts.User) against the slugs actually present in the traveled
+// .hero/next/<user>.md files. It mutates opts.User in place when a
+// single fallback identity resolves, and writes a diagnostic to warn
+// when handoff content exists under slugs that don't match the local
+// identity and can't be auto-resolved.
+//
+// Best-effort by contract: any error path leaves opts.User untouched
+// and emits nothing. Resume must never fail on a handoff miss.
+//
+// Resolution rules:
+//   - If the local slug already has handoff content → no-op (the common
+//     same-machine case; fresh repos with no files also fall through
+//     silently).
+//   - Else scan .hero/next/*.md (excluding *.local.md) for distinct
+//     frontmatter `user:` values that carry handoff content in the graph.
+//   - Exactly one such slug (≠ local) → adopt it as opts.User.
+//   - More than one, or one that still doesn't resolve → emit a
+//     diagnostic naming the queried slug vs. the available slugs.
+func resolveHandoffIdentity(store *graph.Store, heroDir string, opts *digest.Options, warn io.Writer) {
+	if opts == nil || store == nil {
+		return
+	}
+	// If the local slug already resolves, nothing to do.
+	if handoffHasContent(store, opts.User, opts.RepoKey, opts.Domain) {
+		return
+	}
+
+	fileUsers := nextFileUserSlugs(heroDir)
+	if len(fileUsers) == 0 {
+		return // no traveled files → genuinely-fresh repo, stay silent
+	}
+
+	// Of the slugs recorded in the files, which actually carry handoff
+	// content in the graph (i.e. ingest has run for them)?
+	var resolved []string
+	for _, u := range fileUsers {
+		if u == opts.User {
+			continue
+		}
+		if handoffHasContent(store, u, opts.RepoKey, opts.Domain) {
+			resolved = append(resolved, u)
+		}
+	}
+
+	switch len(resolved) {
+	case 1:
+		// Single unambiguous fallback identity — adopt it.
+		opts.User = resolved[0]
+	default:
+		// Either zero slugs resolve (files present but not ingested, or
+		// keyed differently) or several do (ambiguous). In both cases the
+		// local read found nothing under its own slug while handoff files
+		// exist on disk — surface that observably instead of an empty
+		// section. The hint names the queried slug vs. what's available.
+		if warn != nil && len(fileUsers) > 0 {
+			fmt.Fprintf(warn,
+				"warning: handoff present for %v but local identity is %q — set tracking.defaultAgent or git user.name to match, or run `hero next ingest`\n",
+				fileUsers, opts.User)
+		}
+	}
+}
+
+// handoffHasContent reports whether any handoff singleton (ask /
+// suggestion / reflection) exists for the (user, repo, domain) triple.
+// Errors are treated as "no content" — this is a best-effort probe.
+func handoffHasContent(store *graph.Store, user, repoKey, domain string) bool {
+	if user == "" {
+		return false
+	}
+	if ask, _ := handoff.LatestAsk(store, user, repoKey, domain); ask != nil && ask.Text != "" {
+		return true
+	}
+	if sug, _ := handoff.LatestSuggestion(store, user, repoKey, domain); sug != nil && sug.Text != "" {
+		return true
+	}
+	if refs, _ := handoff.RecentReflections(store, user, repoKey, domain, 1); len(refs) > 0 {
+		return true
+	}
+	return false
+}
+
+// nextFileUserSlugs returns the distinct frontmatter `user:` values
+// across the travel-eligible .hero/next/*.md files (excluding
+// *.local.md), sorted for deterministic diagnostics. Files that don't
+// parse or carry no `user:` are skipped.
+func nextFileUserSlugs(heroDir string) []string {
+	entries, err := os.ReadDir(filepath.Join(heroDir, nextDirName))
+	if err != nil {
+		return nil
+	}
+	seen := map[string]struct{}{}
+	var out []string
+	for _, e := range entries {
+		name := e.Name()
+		if e.IsDir() || !strings.HasSuffix(name, ".md") || strings.HasSuffix(name, ".local.md") {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join(heroDir, nextDirName, name))
+		if err != nil {
+			continue
+		}
+		parsed, err := handoff.ParseUserHandoff(data)
+		if err != nil || parsed.User == "" {
+			continue
+		}
+		if _, ok := seen[parsed.User]; ok {
+			continue
+		}
+		seen[parsed.User] = struct{}{}
+		out = append(out, parsed.User)
+	}
+	sort.Strings(out)
+	return out
 }
 
 // contractImportSignalForFocus runs the contract-import scanner over
