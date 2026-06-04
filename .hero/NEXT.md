@@ -5,7 +5,7 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-06-04T20:37:17Z
+updated: 2026-06-04T21:12:43Z
 repo: hero-engine/hero
 branch: fix/gofmt-config-struct-alignment
 ---
