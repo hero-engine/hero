@@ -24,34 +24,34 @@ type Config struct {
 	// when missing on an older workspace. See contracts/peering for
 	// the wire-shape side. Display alias for human reading lives
 	// outside Config (registered via `hero repos add` on peers).
-	PeerID  string            `json:"peer_id,omitempty"`
-	Peering *PeeringConfig    `json:"peering,omitempty"`
-	Domain  string            `json:"domain,omitempty"`
-	Team        *TeamConfig       `json:"team,omitempty"`
-	Tracker     *TrackerConfig    `json:"tracker,omitempty"`
-	Import      *ImportConfig     `json:"import,omitempty"`
-	Sync        *SyncConfig       `json:"sync,omitempty"`
-	Conventions *ConventionConfig `json:"conventions,omitempty"`
-	Serve       *ServeConfig      `json:"serve,omitempty"`
-	Knowledge   *KnowledgeConfig  `json:"knowledge,omitempty"`
-	Jira        *JiraConfig       `json:"jira,omitempty"`
-	Confluence  *ConfluenceConfig `json:"confluence,omitempty"`
-	Models      *ModelConfig      `json:"models,omitempty"`
-	Mockups     *MockupsConfig    `json:"mockups,omitempty"`
-	Prime       *PrimeConfig      `json:"prime,omitempty"`
-	Hooks       *HooksConfig      `json:"hooks,omitempty"`
-	Tracking    *TrackingConfig   `json:"tracking,omitempty"`
-	Sessions    *SessionsConfig   `json:"sessions,omitempty"`
-	Pulse       *PulseConfig      `json:"pulse,omitempty"`
-	Testing     *TestingConfig    `json:"testing,omitempty"`
-	Demos       *DemosConfig      `json:"demos,omitempty"`
-	CodeScan    *CodeScanConfig   `json:"code_scan,omitempty"`
-	Score       *ScoreConfig      `json:"score,omitempty"`
-	Cloud       *CloudConfig      `json:"cloud,omitempty"`
-	Next        *NextConfig       `json:"next,omitempty"`
-	Snapshot    *SnapshotConfig   `json:"snapshot,omitempty"`
-	Specs       *SpecsConfig      `json:"specs,omitempty"`
-	Delivery    *DeliveryConfig   `json:"delivery,omitempty"`
+	PeerID      string             `json:"peer_id,omitempty"`
+	Peering     *PeeringConfig     `json:"peering,omitempty"`
+	Domain      string             `json:"domain,omitempty"`
+	Team        *TeamConfig        `json:"team,omitempty"`
+	Tracker     *TrackerConfig     `json:"tracker,omitempty"`
+	Import      *ImportConfig      `json:"import,omitempty"`
+	Sync        *SyncConfig        `json:"sync,omitempty"`
+	Conventions *ConventionConfig  `json:"conventions,omitempty"`
+	Serve       *ServeConfig       `json:"serve,omitempty"`
+	Knowledge   *KnowledgeConfig   `json:"knowledge,omitempty"`
+	Jira        *JiraConfig        `json:"jira,omitempty"`
+	Confluence  *ConfluenceConfig  `json:"confluence,omitempty"`
+	Models      *ModelConfig       `json:"models,omitempty"`
+	Mockups     *MockupsConfig     `json:"mockups,omitempty"`
+	Prime       *PrimeConfig       `json:"prime,omitempty"`
+	Hooks       *HooksConfig       `json:"hooks,omitempty"`
+	Tracking    *TrackingConfig    `json:"tracking,omitempty"`
+	Sessions    *SessionsConfig    `json:"sessions,omitempty"`
+	Pulse       *PulseConfig       `json:"pulse,omitempty"`
+	Testing     *TestingConfig     `json:"testing,omitempty"`
+	Demos       *DemosConfig       `json:"demos,omitempty"`
+	CodeScan    *CodeScanConfig    `json:"code_scan,omitempty"`
+	Score       *ScoreConfig       `json:"score,omitempty"`
+	Cloud       *CloudConfig       `json:"cloud,omitempty"`
+	Next        *NextConfig        `json:"next,omitempty"`
+	Snapshot    *SnapshotConfig    `json:"snapshot,omitempty"`
+	Specs       *SpecsConfig       `json:"specs,omitempty"`
+	Delivery    *DeliveryConfig    `json:"delivery,omitempty"`
 	Environment *EnvironmentConfig `json:"environment,omitempty"`
 	// Vocabulary names the active vocabulary preset (e.g. "default",
 	// "agile-scrum", "shape-up", "kanban", "jira", "linear"). When set,
@@ -83,8 +83,8 @@ type Config struct {
 	// the active methodology presets that influence vocabulary
 	// auto-selection. The shape mirrors hero-pm's design; only the
 	// subset needed for vocabulary resolution is declared here.
-	PM *PMConfig `json:"pm,omitempty"`
-	Repos       map[string]string `json:"repos,omitempty"`
+	PM    *PMConfig         `json:"pm,omitempty"`
+	Repos map[string]string `json:"repos,omitempty"`
 	// RepoMeta carries peer-discovery metadata for each entry in Repos,
 	// keyed by the same alias. peer_id is the canonical join key for
 	// cross-repo peering; the Repos map keeps its alias→path shape
