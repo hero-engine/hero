@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-03T03:40:35Z
+updated: 2026-06-04T03:03:43Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver hero-mcp-orphan-no-parent-liveness: parent-liveness watchdog in mcp stdio Run() to reap orphaned hero mcp processes.
+> Deliver Phase 1 of next-team-mode-per-user-handoff-unmaintained: wire up team-mode per-user projection, make migration path mode-aware via resolveNextPath, deconflict shared-file write path. Phase 2 roster renderer deferred.
 
 ## Suggested next prompt
 
