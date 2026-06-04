@@ -5,7 +5,7 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-06-04T13:05:27Z
+updated: 2026-06-04T14:08:24Z
 repo: hero-engine/hero
 branch: fix/next-team-mode-per-user-handoff
 ---
@@ -20,7 +20,7 @@ No open features in this repo.
 
 ## Roadmap shape
 
-4 specs have size drift — run /roadmap-review to triage
+5 specs have size drift — run /roadmap-review to triage
 
 ## Blocked on
 
