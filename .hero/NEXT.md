@@ -12,6 +12,7 @@ branch: main
 
 ## Just finished
 
+- `d71b141` — chore: stage projected handoff files + pre-existing planning items
 - `818e860` — chore: stage projected handoff files
 - `8391d6e` — chore: stage desktop-sidebar-mcp-not-running spec + projected files
 - `5c09c37` — style: fix gofmt struct-tag alignment drift in Config
@@ -19,7 +20,6 @@ branch: main
 - `c8bc9ac` — feat(next): capture session goal (kickoff intent), not just last message
 - `76dc9fc` — Merge: NEXT/handoff subsystem overhaul
 - `5c77b83` — fix(next): rebuild project context for the resume brief
-- `940ab59` — fix(next): cross-machine handoff loads under divergent git identity
 
 ## Next
 
