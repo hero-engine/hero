@@ -52,10 +52,14 @@ func runNextMigrateProjection(cmd *cobra.Command, args []string) error {
 	}
 
 	heroDir := cfg.HeroDir(projectRoot)
-	nextPath := filepath.Join(heroDir, "NEXT.md")
+	// Capture the file the projection gate flags as unmigrated, which
+	// is mode-dependent: shared .hero/NEXT.md in solo, per-user
+	// .hero/next/<user>.md in team. Hardcoding NEXT.md silently
+	// diverged from the gate once team mode existed.
+	nextPath := resolveNextPath(heroDir, cfg)
 	body, err := os.ReadFile(nextPath)
 	if err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("read NEXT.md: %w", err)
+		return fmt.Errorf("read %s: %w", nextPath, err)
 	}
 
 	store, err := graph.Open(heroDir)
@@ -123,14 +127,14 @@ func captureNextSnapshot(store *graph.Store, repoKey string, body []byte) error 
 	stamp := time.Now().UTC().Format("20060102T150405")
 	key := "next-md-migration-snapshot-" + stamp
 	props := map[string]any{
-		"title":     "NEXT.md migration snapshot " + stamp,
-		"body":      string(body),
-		"captured":  time.Now().UTC().Format(time.RFC3339),
-		"reason":    "next-as-projection migration; preserving pre-projection content",
+		"title":    "NEXT.md migration snapshot " + stamp,
+		"body":     string(body),
+		"captured": time.Now().UTC().Format(time.RFC3339),
+		"reason":   "next-as-projection migration; preserving pre-projection content",
 	}
 	_, err := store.UpsertNode(&graph.Node{
 		Type:   "Note",
-		Domain:      "engineering",
+		Domain: "engineering",
 		Key:    key,
 		Props:  props,
 		Repo:   repoKey,

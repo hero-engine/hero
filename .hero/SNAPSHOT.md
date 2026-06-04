@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-03T20:50:58Z · projected from 289 source nodes_
+_Last refreshed: 2026-06-04T03:03:43Z · projected from 295 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 1d ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 2d ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | building | domains/engineering/ | 2d ago | spec-types-cache-frontmatter-empty |
@@ -16,8 +16,8 @@ _Last refreshed: 2026-06-03T20:50:58Z · projected from 289 source nodes_
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 2d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 1d ago | vocabulary-resolve-misses-methodology-derivation |
-| (unassigned) | — | — | — | 126 specs without surface |
+| serve | building | internal/serve/ | 2d ago | vocabulary-resolve-misses-methodology-derivation |
+| (unassigned) | — | — | — | 132 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
 
@@ -47,7 +47,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — hero-mcp-orphan-no-parent-liveness, roadmap-shape, roadmap-review-ambient-surfacing, multi-spec-design-routing, roadmap-review, spec-size-and-promotion-nudge, deliver-stamps-completed-at, upgrade-strands-install-layout
+- **(unassigned)** — next-team-mode-per-user-handoff-unmaintained, hero-mcp-orphan-no-parent-liveness, roadmap-shape, roadmap-review-ambient-surfacing, multi-spec-design-routing, roadmap-review, spec-size-and-promotion-nudge, deliver-stamps-completed-at
 - **core** — tracker-update-size
 - **domains/engineering** — native-mockup-rendering, mockup-renderer-selection-swiftui-bias
 - **serve** — size-drift-actionable-output
@@ -63,13 +63,13 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Open risks & blockers
 
 - **Blocked specs (14):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `e2e-traversal` (waits on traversal-queries); `embedded-inference` (waits on master-ingest-restore); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection); `traversal-queries` (waits on master-ingest-restore); `unified-retrieval-layer` (waits on master-ingest-restore).
-- **Stale-in-flight (20):** `spec-status-integrity` (16d), `spec-types-cache-frontmatter-empty` (16d), `vocabulary-resolve-misses-methodology-derivation` (16d), `unified-search` (16d), `cross-repo-peering` (16d), `e2e-discovery` (16d), `e2e-traversal` (16d), `e2e-validation` (16d), `hero-landing-page` (16d), `graph-conflict-detection` (16d), `master-ingest-restore` (16d), `unified-retrieval-layer` (16d), `tripwire-system` (16d), `monorepo-satellite-installs` (16d), `per-feature-smoke-coverage` (16d), `hero-local-merge-missing-dialect-fields` (16d), `traversal-queries` (16d), `hero-sales` (15d), `hero-team-server` (15d), `agent-outposts` (15d).
-- **Aged open bugs (3):** `hero-workspace-not-self-describing` (open 22d), `scan-enrichment-unbounded-loop` (open 22d), `scan-test-detection-misses-spock-vitest` (open 22d).
-- **Unassigned specs (126) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
+- **Stale-in-flight (20):** `hero-local-merge-missing-dialect-fields` (16d), `spec-types-cache-frontmatter-empty` (16d), `vocabulary-resolve-misses-methodology-derivation` (16d), `agent-outposts` (16d), `cross-repo-peering` (16d), `e2e-discovery` (16d), `e2e-traversal` (16d), `e2e-validation` (16d), `graph-conflict-detection` (16d), `hero-landing-page` (16d), `hero-sales` (16d), `hero-team-server` (16d), `master-ingest-restore` (16d), `monorepo-satellite-installs` (16d), `per-feature-smoke-coverage` (16d), `spec-status-integrity` (16d), `traversal-queries` (16d), `tripwire-system` (16d), `unified-retrieval-layer` (16d), `unified-search` (16d).
+- **Aged open bugs (3):** `hero-workspace-not-self-describing` (open 23d), `scan-enrichment-unbounded-loop` (open 23d), `scan-test-detection-misses-spock-vitest` (open 23d).
+- **Unassigned specs (132) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 142/268 (52%)
-- Projection generation: 0ms · Source nodes: 289
+- Specs covered: 142/274 (51%)
+- Projection generation: 1ms · Source nodes: 295
 
