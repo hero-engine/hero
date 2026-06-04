@@ -40,6 +40,16 @@ Records a `UserAsk` node attributed to the current user. Singleton
 per user — the latest supersedes prior. The projection renders this
 as the **"Last user ask"** section.
 
+> **Auto-emit:** as of `next-auto-emit-user-ask`, the end-of-turn Stop
+> checkpoint (`hero next checkpoint`) automatically records the user's
+> **last** transcript message as the `UserAsk` whenever the harness
+> supplies a `transcript_path` (Claude Code does). So this command is
+> now a **manual override**, not a per-turn requirement — fire it only
+> when you want to record something other than the verbatim last
+> message (e.g. a one-line paraphrase of a long, wandering prompt).
+> Singleton supersession means your override cleanly replaces the
+> auto-emitted node, and vice versa, with no duplicates.
+
 When to fire:
 - **Every meaningful user prompt.** Right after the user finishes
   asking for something concrete, before you start working on it.

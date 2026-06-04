@@ -53,6 +53,17 @@ func runInit(cmd *cobra.Command, args []string) error {
 	cfg.Folder = initFolder
 	cfg.PeerID = peering.MintPeerID()
 
+	// Born projected: fresh workspaces never enter legacy NEXT mode, so
+	// they never hit the checkpoint migration gate. This is set only on
+	// the config `init` writes to disk — DefaultConfig() itself stays
+	// projected==false so existing repos that fall back to defaults
+	// (no hero.json, or a hero.json without a `next` block) keep their
+	// legacy behavior until the auto-migrate path transitions them.
+	if cfg.Next == nil {
+		cfg.Next = &config.NextConfig{}
+	}
+	cfg.Next.Projected = true
+
 	if initDomain != "" {
 		if _, err := hero.DomainFS(initDomain); err != nil {
 			return err

@@ -26,7 +26,32 @@ type ParsedHandoff struct {
 // edits when the content hasn't changed (UpsertNode skips no-op
 // writes). Reflections are deduped by text match against existing
 // entries since their timestamps are not preserved through markdown.
-func IngestUserFile(store *graph.Store, repoKey, domain, path string) error {
+//
+// localSlug is the slug the LOCAL reader (`hero resume`,
+// `hero next ask/suggest/reflection`) will derive via nextUserSlug.
+// When it differs from the file's recorded `user:` — which happens
+// whenever git user.name / $USER diverges between the authoring and
+// reading machines — the singletons are ALSO mirrored under the local
+// slug so the read finds them. Mirroring is gated on safety on two
+// fronts: it fires only when the local slug currently has zero handoff
+// nodes of its own, AND only when singleTravelFile is true.
+//
+// singleTravelFile reports whether exactly ONE travel-eligible
+// `.hero/next/*.md` file (excluding `*.local.md`) is present on disk.
+// The caller computes this — the handoff package never enumerates the
+// directory, to keep it free of a `cli` import. The flag closes the
+// empty-graph-teammate leak: a brand-new teammate has zero handoff
+// nodes too, so the zero-node gate alone would mirror whichever other
+// user's file sorts first onto their identity. Aliasing is only
+// unambiguous when a single user's handoff file exists (the solo
+// cross-machine case — one person, two machines). When two or more
+// travel-eligible files exist you cannot know which (if any) is "you,"
+// so mirroring is suppressed and read-side resolution / fail-loud
+// diagnostics handle the load instead.
+//
+// Pass "" for localSlug to disable mirroring (records only under the
+// file identity).
+func IngestUserFile(store *graph.Store, repoKey, domain, path, localSlug string, singleTravelFile bool) error {
 	if store == nil {
 		return fmt.Errorf("handoff: nil store")
 	}
@@ -46,44 +71,94 @@ func IngestUserFile(store *graph.Store, repoKey, domain, path string) error {
 		return nil
 	}
 
-	if parsed.Ask != nil && parsed.Ask.Text != "" {
-		parsed.Ask.User = parsed.User
-		parsed.Ask.Domain = domain
-		if err := RecordAsk(store, repoKey, *parsed.Ask); err != nil {
-			return fmt.Errorf("ingest ask: %w", err)
-		}
+	// Record under the file's recorded identity (the machine-independent
+	// truth), then — when the local reader looks under a different slug —
+	// mirror under that slug too, but only when it's safe to do so.
+	users := []string{parsed.User}
+	if alias := safeAliasSlug(store, repoKey, domain, parsed.User, localSlug, singleTravelFile); alias != "" {
+		users = append(users, alias)
 	}
-	if parsed.Suggestion != nil && parsed.Suggestion.Text != "" {
-		parsed.Suggestion.User = parsed.User
-		parsed.Suggestion.Domain = domain
-		if err := RecordSuggestion(store, repoKey, *parsed.Suggestion); err != nil {
-			return fmt.Errorf("ingest suggestion: %w", err)
+
+	for _, user := range users {
+		if parsed.Ask != nil && parsed.Ask.Text != "" {
+			ask := *parsed.Ask
+			ask.User = user
+			ask.Domain = domain
+			if err := RecordAsk(store, repoKey, ask); err != nil {
+				return fmt.Errorf("ingest ask: %w", err)
+			}
 		}
-	}
-	if len(parsed.Reflections) > 0 {
-		existing, _ := RecentReflections(store, parsed.User, repoKey, domain, 100)
-		seen := make(map[string]struct{}, len(existing))
-		for _, e := range existing {
-			seen[strings.TrimSpace(e.Text)] = struct{}{}
+		if parsed.Suggestion != nil && parsed.Suggestion.Text != "" {
+			sug := *parsed.Suggestion
+			sug.User = user
+			sug.Domain = domain
+			if err := RecordSuggestion(store, repoKey, sug); err != nil {
+				return fmt.Errorf("ingest suggestion: %w", err)
+			}
 		}
-		for _, ref := range parsed.Reflections {
-			text := strings.TrimSpace(ref.Text)
-			if text == "" {
-				continue
+		if len(parsed.Reflections) > 0 {
+			existing, _ := RecentReflections(store, user, repoKey, domain, 100)
+			seen := make(map[string]struct{}, len(existing))
+			for _, e := range existing {
+				seen[strings.TrimSpace(e.Text)] = struct{}{}
 			}
-			if _, ok := seen[text]; ok {
-				continue
+			for _, ref := range parsed.Reflections {
+				text := strings.TrimSpace(ref.Text)
+				if text == "" {
+					continue
+				}
+				if _, ok := seen[text]; ok {
+					continue
+				}
+				r := ref
+				r.User = user
+				r.Domain = domain
+				r.Text = text
+				if err := RecordReflection(store, repoKey, r); err != nil {
+					return fmt.Errorf("ingest reflection: %w", err)
+				}
+				seen[text] = struct{}{}
 			}
-			ref.User = parsed.User
-			ref.Domain = domain
-			ref.Text = text
-			if err := RecordReflection(store, repoKey, ref); err != nil {
-				return fmt.Errorf("ingest reflection: %w", err)
-			}
-			seen[text] = struct{}{}
 		}
 	}
 	return nil
+}
+
+// safeAliasSlug decides whether the rehydrated singletons should be
+// mirrored under localSlug in addition to fileUser. It returns the
+// alias slug to mirror under, or "" to skip mirroring.
+//
+// The gate is deliberately conservative: alias only when localSlug is
+// non-empty, differs from the file's user, exactly ONE travel-eligible
+// handoff file exists on disk (singleTravelFile), and the local slug
+// currently has ZERO handoff nodes of its own in the graph.
+//
+// The zero-node check is the anti-corruption invariant for an EXISTING
+// teammate — a real second member already has their own handoff nodes,
+// so the alias short-circuits and never attributes one person's handoff
+// to another. But a brand-new teammate with an empty graph ALSO has zero
+// nodes, so the zero-node check alone would mirror whichever other
+// user's file sorts first onto their identity (asks/suggestions
+// self-heal next checkpoint, but reflections leak and persist). The
+// singleTravelFile condition closes that gap: when two or more
+// travel-eligible files exist the alias is suppressed entirely, because
+// no single identity is unambiguously "you." With exactly one file, the
+// mirror is the solo cross-machine case — one person, two machines —
+// and the alias fires so the cross-machine load succeeds.
+func safeAliasSlug(store *graph.Store, repoKey, domain, fileUser, localSlug string, singleTravelFile bool) string {
+	if localSlug == "" || localSlug == fileUser || !singleTravelFile {
+		return ""
+	}
+	if ask, _ := LatestAsk(store, localSlug, repoKey, domain); ask != nil && ask.Text != "" {
+		return ""
+	}
+	if sug, _ := LatestSuggestion(store, localSlug, repoKey, domain); sug != nil && sug.Text != "" {
+		return ""
+	}
+	if refs, _ := RecentReflections(store, localSlug, repoKey, domain, 1); len(refs) > 0 {
+		return ""
+	}
+	return localSlug
 }
 
 // ParseUserHandoff inverts projection.UserHandoffMD. Tolerant of

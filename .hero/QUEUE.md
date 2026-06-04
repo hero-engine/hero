@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-03T21:06:34Z · 98 ready specs_
+_Generated: 2026-06-04T18:09:07Z · 103 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -198,6 +198,91 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-sales/spec.md)_
+
+---
+
+## handoff-captures-session-intent — "Handoff captures session intent, not just the last message"
+_feature · planning · horizon: now_
+
+Captures the session's GOAL (first user message) alongside the latest ask, so
+a fresh session knows the *why*, not just the last refinement.
+
+**Status:** planning — spec just landed, no code yet.
+
+**Pick up at:** start in `internal/handoff/handoff.go` — add the `SessionGoal`
+node type (`RecordGoal`/`LatestGoal`, singleton per user/repo/domain) with the
+auto-first-never-clobbers-manual guard. Then wire `firstUserAskFromTranscript`
+into `autoEmitUserAsk` (`checkpoint.go`). Surfaces (digest + user_handoff)
+come after the capture+store path is green.
+
+→ `.hero/planning/features/handoff-captures-session-intent/spec.md`
+
+**Files:** `internal/handoff/handoff.go`, `internal/cli/checkpoint.go:100`, `internal/cli/next_compact_handoff.go:580`, `internal/projection/user_handoff.go:64`, `internal/digest/digest.go:313`
+**Skip:** model-distilled goal as the default (stays optional via `hero next goal`); last-N-window (Option 4 — doesn't surface the goal); reusing the `UserAsk` singleton (goal and latest must not clobber each other).
+
+---
+
+## handoff-one-call-simplification — Handoff Simplification — One Persist, One Load, Fewest Files
+_feature · planning · horizon: now_
+
+You're picking up the umbrella simplification of Hero's handoff subsystem. Read this spec, then
+the two Phase-1 children. The thesis: the whole subsystem is "persist at end of turn, load at
+start of turn, travel via git," and it accreted into ~18 moving parts and 9 files where ~2 files
+and one persist/one load call would do. The two things the maintainer actually feels — drift and
+"not in my commit" — are **Phase 1** and are pure re-wires of existing code.
+
+**Pick up at:** deliver [next-auto-emit-user-ask](next-auto-emit-user-ask) and
+[next-unconditional-commit-staging](next-unconditional-commit-staging) — both are diagnosed,
+delivery-ready, and independent. Auto-emit reuses `resolveSessionContext` /
+`firstUserAskFromTranscript` from `internal/cli/next_compact_handoff.go`; staging consolidates
+the two installers in `internal/hooks/install.go` + `internal/cli/next_hooks.go`. After Phase 1,
+revisit Phase 2 (drop SNAPSHOT/QUEUE/local files) with fresh per-file specs.
+
+→ `internal/cli/checkpoint.go`, `internal/cli/next_compact_handoff.go`, `internal/cli/next_hooks.go`, `internal/hooks/install.go`, `internal/projection/user_handoff.go`
+
+---
+
+## concurrent-session-branching — "Concurrent-Session Branching & Worktree Isolation"
+_initiative · planning · horizon: now_
+
+Make Hero safe to run in many concurrent sessions on one checkout: every
+claimed spec gets its own git worktree + branch, all resolving to one shared
+`.hero/`. Spec lives at
+`.hero/planning/initiatives/concurrent-session-branching/spec.md`.
+
+**Status:** planning — initiative spec landed, 7 child stubs sequenced, no code.
+
+**Pick up at:** `/design csb-phase0-git-primitives-async-retrofit` — add write
+ops to `internal/gitutil/gitutil.go` (currently READ-ONLY) and retrofit
+`internal/async/runner.go` to run each `runDeliver` job in an isolated
+worktree. That closes the live clobbering bug and proves the primitives.
+
+→ `.hero/planning/initiatives/concurrent-session-branching/spec.md`
+
+**Files:** `internal/gitutil/gitutil.go`, `internal/async/runner.go:142`, `internal/async/jobs.go:38`, `internal/workspace/locate.go:85`, `internal/cli/claim.go:72`
+**Skip:** reusing graph-conflict-detection for content conflicts (wrong layer — use `hero conflicts`); `/release` owning the integration target (net-new state, prefer a `hero target set` verb); auto-managing per-worktree build state in v1.
+
+---
+
+## cli-test-isolation-stray-workspace-boundary — "Harden CLI test isolation against stray hero workspaces"
+_enhancement · planning · horizon: now_
+
+Stops the CLI test suite from discovering a stray `/tmp/.hero` by wiring an
+env-var boundary into the workspace upward-walk and setting it from the test
+harness.
+
+**Status:** planning — spec just landed, no code yet. Boundary machinery
+(`WithStopAt`) already exists; `LocateFromCWD` never passes it.
+
+**Pick up at:** add a `HERO_WORKSPACE_BOUNDARY` env read inside
+`LocateFromCWD` (locate.go:159) that forwards to `WithStopAt`, then have
+`newTestEnv`/`newTestEnvEmpty` set it via `t.Setenv` to the temp dir. Add the
+parent-stray regression test last.
+
+→ `.hero/planning/features/cli-test-isolation-stray-workspace-boundary/spec.md`
+
+**Files:** `internal/workspace/locate.go:85,145,159`, `internal/cli/root.go:226`, `internal/cli/helpers_test.go:26,87`, `internal/cli/scan_test.go:183`
+**Skip:** building new boundary infra — `WithStopAt` already exists. Changing prod discovery semantics — out of scope unless clearly safe.
 
 ---
 
@@ -699,25 +784,10 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## project-rules — Project Rules
-_rule · active · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/knowledge/rules/project-rules/spec.md)_
-
----
-
-## sprint-2026-05-19 — Sprint Plan — dashboard-fix-and-rebuild (2026-05-19)
+## handoff-over-engineering-nexthandoff-subsystem-got-over-buil — handoff-over-engineering NEXT/handoff subsystem got over-built: ~18 moving pa...
 _note · active · horizon: now_
 
-The user will explicitly kick off delivery on item 1
-(`dashboard-user-identity-os-env-mismatch`) after this plan is saved. Do
-not auto-start `/deliver` from the sprint plan.
-
-When ready, the kickoff command is:
-
-```
-/deliver dashboard-user-identity-os-env-mismatch
-```
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/knowledge/notes/handoff-over-engineering-nexthandoff-subsystem-got-over-buil/spec.md)_
 
 ---
 
@@ -764,6 +834,28 @@ form for the field-grab writers (positional form wins by symmetry with
 "auto-written by" string would all break for zero behavior gain);
 marker-preservation inside `.hero/next/<user>.md` (total-rewrite stays
 v1; revisit only on user request).
+
+---
+
+## project-rules — Project Rules
+_rule · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/knowledge/rules/project-rules/spec.md)_
+
+---
+
+## sprint-2026-05-19 — Sprint Plan — dashboard-fix-and-rebuild (2026-05-19)
+_note · active · horizon: now_
+
+The user will explicitly kick off delivery on item 1
+(`dashboard-user-identity-os-env-mismatch`) after this plan is saved. Do
+not auto-start `/deliver` from the sprint plan.
+
+When ready, the kickoff command is:
+
+```
+/deliver dashboard-user-identity-os-env-mismatch
+```
 
 ---
 

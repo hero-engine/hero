@@ -111,7 +111,7 @@ func TestIngestUserFile_RoundTripsAcrossMachines(t *testing.T) {
 	}
 
 	storeB := openTestStore(t)
-	if err := IngestUserFile(storeB, "repo-x", "engineering", path); err != nil {
+	if err := IngestUserFile(storeB, "repo-x", "engineering", path, "", true); err != nil {
 		t.Fatalf("IngestUserFile: %v", err)
 	}
 
@@ -145,13 +145,13 @@ func TestIngestUserFile_IdempotentOnReingest(t *testing.T) {
 	}
 	store := openTestStore(t)
 
-	if err := IngestUserFile(store, "repo-x", "engineering", path); err != nil {
+	if err := IngestUserFile(store, "repo-x", "engineering", path, "", true); err != nil {
 		t.Fatal(err)
 	}
 	first, _ := RecentReflections(store, "alice", "repo-x", "engineering", 10)
 
 	// Re-ingest the same file. Reflections shouldn't double up.
-	if err := IngestUserFile(store, "repo-x", "engineering", path); err != nil {
+	if err := IngestUserFile(store, "repo-x", "engineering", path, "", true); err != nil {
 		t.Fatal(err)
 	}
 	second, _ := RecentReflections(store, "alice", "repo-x", "engineering", 10)
@@ -163,7 +163,7 @@ func TestIngestUserFile_IdempotentOnReingest(t *testing.T) {
 
 func TestIngestUserFile_MissingFileIsNoOp(t *testing.T) {
 	store := openTestStore(t)
-	err := IngestUserFile(store, "repo-x", "engineering", "/no/such/path.md")
+	err := IngestUserFile(store, "repo-x", "engineering", "/no/such/path.md", "", true)
 	if err != nil {
 		t.Errorf("missing file should be no-op, got %v", err)
 	}
@@ -201,11 +201,88 @@ _(none yet)_
 		t.Fatal(err)
 	}
 	store := openTestStore(t)
-	if err := IngestUserFile(store, "repo-x", "engineering", path); err != nil {
+	if err := IngestUserFile(store, "repo-x", "engineering", path, "", true); err != nil {
 		t.Fatal(err)
 	}
 	got, _ := LatestSuggestion(store, "alice", "repo-x", "engineering")
 	if got != nil {
 		t.Errorf("LatestSuggestion = %+v, want nil (auto-derived should not round-trip)", got)
+	}
+}
+
+// TestIngestUserFile_MirrorsUnderLocalSlug is the B-1 unit test for
+// cross-machine-handoff-slug-mismatch: when localSlug differs from the
+// file's recorded user and has no handoff nodes of its own, the
+// singletons are recorded under BOTH the file user AND the local slug,
+// and reflections dedupe so the alias copy doesn't double-count.
+func TestIngestUserFile_MirrorsUnderLocalSlug(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "alice.md")
+	if err := os.WriteFile(path, []byte(sampleHandoffMarkdown), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	store := openTestStore(t)
+
+	// File user is "alice"; local reader derives "bob".
+	if err := IngestUserFile(store, "repo-x", "engineering", path, "bob", true); err != nil {
+		t.Fatalf("IngestUserFile: %v", err)
+	}
+
+	for _, user := range []string{"alice", "bob"} {
+		ask, _ := LatestAsk(store, user, "repo-x", "engineering")
+		if ask == nil || ask.Text != "where did we leave off on the auth bug?" {
+			t.Errorf("[%s] ask not recorded: %+v", user, ask)
+		}
+		sug, _ := LatestSuggestion(store, user, "repo-x", "engineering")
+		if sug == nil || sug.Text != "let's tackle phase 5 of next-as-projection" {
+			t.Errorf("[%s] suggestion not recorded: %+v", user, sug)
+		}
+		refs, _ := RecentReflections(store, user, "repo-x", "engineering", 10)
+		if len(refs) != 2 {
+			t.Errorf("[%s] reflections = %d, want 2 (dedupe held)", user, len(refs))
+		}
+	}
+
+	// Re-ingest with the same local slug must remain idempotent under the
+	// alias — reflections must not double up.
+	if err := IngestUserFile(store, "repo-x", "engineering", path, "bob", true); err != nil {
+		t.Fatalf("re-ingest: %v", err)
+	}
+	refs, _ := RecentReflections(store, "bob", "repo-x", "engineering", 10)
+	if len(refs) != 2 {
+		t.Errorf("alias reflections doubled on re-ingest: got %d, want 2", len(refs))
+	}
+}
+
+// TestIngestUserFile_AliasGatedWhenLocalSlugHasContent is the B-1
+// anti-corruption gate at the unit level: if the local slug already
+// owns handoff content (a real second user), the alias must NOT fire.
+func TestIngestUserFile_AliasGatedWhenLocalSlugHasContent(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "alice.md")
+	if err := os.WriteFile(path, []byte(sampleHandoffMarkdown), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	store := openTestStore(t)
+
+	// "bob" already has his own ask.
+	if err := RecordAsk(store, "repo-x", UserAsk{
+		User: "bob", Domain: "engineering", Text: "BOB_OWN_ASK",
+	}); err != nil {
+		t.Fatalf("seed bob: %v", err)
+	}
+
+	if err := IngestUserFile(store, "repo-x", "engineering", path, "bob", true); err != nil {
+		t.Fatalf("IngestUserFile: %v", err)
+	}
+
+	// bob's ask must be untouched; alice's must NOT have overwritten it.
+	bob, _ := LatestAsk(store, "bob", "repo-x", "engineering")
+	if bob == nil || bob.Text != "BOB_OWN_ASK" {
+		t.Errorf("alias clobbered bob's handoff: %+v", bob)
+	}
+	alice, _ := LatestAsk(store, "alice", "repo-x", "engineering")
+	if alice == nil || alice.Text == "" {
+		t.Errorf("alice's own keying missing: %+v", alice)
 	}
 }

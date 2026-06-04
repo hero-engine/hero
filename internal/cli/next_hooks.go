@@ -9,9 +9,6 @@ import (
 	"strings"
 
 	"github.com/hero-engine/hero/internal/config"
-	"github.com/hero-engine/hero/internal/gitutil"
-	"github.com/hero-engine/hero/internal/graph"
-	"github.com/hero-engine/hero/internal/projection"
 	"github.com/spf13/cobra"
 )
 
@@ -27,9 +24,32 @@ const (
 	mergeDriverName = "hero-next"
 )
 
+// handoffFilePaths is the single source of truth for the projected
+// handoff files that must (a) travel with every commit via the
+// pre-commit staging `git add` and (b) be declared merge=union in
+// .gitattributes. Both lists are derived from this slice so they can
+// never drift apart again — the historical SNAPSHOT.md gap existed
+// precisely because the two lists were maintained independently.
+//
+// Order is significant only for stable output (tests assert exact
+// pathspec strings). The `.hero/next/*.md` glob matches the per-user
+// handoff files (e.g. `alice.md`). It also expands to match
+// `alice.local.md`, but those are NEVER staged: `.hero/next/*.local.md`
+// is gitignored, and `git add` skips ignored paths (no `-f`). So
+// gitignore — not the glob — is what keeps the local-only machine-state
+// files out of commits. `.hero/QUEUE.md` may be absent (a sibling effort
+// may drop it as a file); the per-path staging loop swallows missing
+// paths via `2>/dev/null || true`, so its absence is a safe no-op.
+var handoffFilePaths = []string{
+	".hero/NEXT.md",
+	".hero/next/*.md",
+	".hero/SNAPSHOT.md",
+	".hero/QUEUE.md",
+}
+
 var nextInstallHooksCmd = &cobra.Command{
 	Use:   "install-hooks",
-	Short: "Install git hooks + merge driver for projection-based NEXT files",
+	Short: "Install git hooks + .gitattributes merge strategy for projection-based NEXT files",
 	Long: `Writes:
 
   .git/hooks/pre-commit       — runs 'hero next checkpoint -q' before
@@ -42,41 +62,21 @@ var nextInstallHooksCmd = &cobra.Command{
   .git/hooks/post-merge       — runs 'hero next checkpoint -q' after
                                 a merge so the merged result is regen
                                 from graph.
-  .git/config (merge driver)  — registers 'hero-next' driver pointing
-                                at 'hero next merge-resolve'. Catches
-                                conflicts on .hero/next/*.md and
-                                regenerates instead of marking up.
-  .gitattributes              — adds 'merge=hero-next' for the
-                                projected files (idempotent — adds a
-                                marker block; preserves user content).
+  .gitattributes              — adds 'merge=union' for the projected
+                                files (idempotent — adds a marker
+                                block; preserves user content). 'union'
+                                is a git built-in, so it needs no
+                                per-clone .git/config registration and
+                                travels with the repo: fresh clones and
+                                CI resolve these merges marker-free.
 
 All writes are marker-delimited and idempotent — re-run safely. To
 remove, delete the marker blocks.`,
 	RunE: runNextInstallHooks,
 }
 
-var nextMergeResolveOutput string
-
-var nextMergeResolveCmd = &cobra.Command{
-	Use:   "merge-resolve",
-	Short: "Internal: git merge driver that regenerates a projected file from graph",
-	Long: `Used by the 'hero-next' git merge driver to resolve conflicts on
-projected NEXT files. Ignores both sides of the merge and writes a
-fresh projection from the local graph to --output.
-
-Not intended for direct user invocation — git calls this when merging
-a file marked 'merge=hero-next' in .gitattributes. To trigger a
-regen manually, use 'hero next checkpoint' instead.`,
-	Hidden: true,
-	RunE:   runNextMergeResolve,
-}
-
-func init() {
-	nextMergeResolveCmd.Flags().StringVar(&nextMergeResolveOutput, "output", "", "path the regenerated content should be written to (git's %A)")
-}
-
-// runNextInstallHooks writes the git hooks, the .gitattributes
-// directive, and registers the merge driver in .git/config.
+// runNextInstallHooks writes the git hooks and the .gitattributes
+// merge directive.
 func runNextInstallHooks(cmd *cobra.Command, args []string) error {
 	projectRoot := findProjectRoot()
 	gitDir, err := resolveGitDir(projectRoot)
@@ -98,165 +98,13 @@ func runNextInstallHooks(cmd *cobra.Command, args []string) error {
 	}
 	fmt.Fprintln(cmd.OutOrStdout(), "wrote", postMerge)
 
-	// 3. merge driver in .git/config
-	if err := registerMergeDriver(projectRoot); err != nil {
-		return fmt.Errorf("merge driver: %w", err)
-	}
-	fmt.Fprintln(cmd.OutOrStdout(), "registered merge driver:", mergeDriverName)
-
-	// 4. .gitattributes
+	// 3. .gitattributes
 	if err := updateGitAttributes(projectRoot); err != nil {
 		return fmt.Errorf(".gitattributes: %w", err)
 	}
-	fmt.Fprintln(cmd.OutOrStdout(), "updated .gitattributes for merge=hero-next")
+	fmt.Fprintln(cmd.OutOrStdout(), "updated .gitattributes for merge=union")
 
 	return nil
-}
-
-// runNextMergeResolve is invoked by git as the merge driver. The
-// merge driver protocol passes %A (current/ours), %O (base), %B
-// (theirs) — git expects the merged result written to %A.
-//
-// Strategy: ignore %O / %B, regenerate from the local graph, write
-// to %A. Result: no conflict markers ever land in projected files
-// for users who have the driver registered.
-func runNextMergeResolve(cmd *cobra.Command, args []string) error {
-	if nextMergeResolveOutput == "" {
-		return fmt.Errorf("--output is required (git supplies %%A)")
-	}
-	projectRoot := findProjectRoot()
-	cfg, err := config.Load(projectRoot)
-	if err != nil {
-		return fmt.Errorf("loading config: %w", err)
-	}
-	heroDir := cfg.HeroDir(projectRoot)
-
-	store, err := graph.Open(heroDir)
-	if err != nil {
-		return fmt.Errorf("opening graph: %w", err)
-	}
-	defer store.Close()
-
-	repoKey := gitutil.RepoKey(projectRoot)
-
-	// QUEUE.md doesn't depend on the graph store — it's regenerated
-	// from the on-disk spec corpus. Detect the path and route there
-	// before attempting NEXT-file projection.
-	if isQueueOutputPath(nextMergeResolveOutput) {
-		content, err := RenderQueueSnapshot(heroDir)
-		if err != nil {
-			return fmt.Errorf("queue snapshot: %w", err)
-		}
-		return os.WriteFile(nextMergeResolveOutput, []byte(content), 0o644)
-	}
-
-	// SNAPSHOT.md is regenerated from the graph + repo shape by the
-	// project-snapshot projector. Same merge-driver pattern as
-	// NEXT.md: ignore both sides, write a fresh projection.
-	if isSnapshotOutputPath(nextMergeResolveOutput) {
-		return runSnapshotMergeResolve(projectRoot, heroDir, cfg)
-	}
-
-	user := userFromOutputPath(nextMergeResolveOutput)
-	if user == "" {
-		// Unknown projected path — leave file as-is (current side
-		// wins, no conflict markers). Still exit 0 so git treats
-		// the merge as successful.
-		return nil
-	}
-
-	content, err := projection.UserHandoffMD(store, projection.UserHandoffOptions{
-		User:    user,
-		RepoKey: repoKey,
-	})
-	if err != nil {
-		return fmt.Errorf("projection: %w", err)
-	}
-	if err := os.WriteFile(nextMergeResolveOutput, []byte(content), 0o644); err != nil {
-		return fmt.Errorf("write output: %w", err)
-	}
-	return nil
-}
-
-// isQueueOutputPath reports whether the merge driver's --output path
-// names the QUEUE.md snapshot.
-func isQueueOutputPath(path string) bool {
-	return filepath.Base(path) == QueueFileName
-}
-
-// isSnapshotOutputPath reports whether the merge driver's --output
-// path names the project SNAPSHOT.md.
-func isSnapshotOutputPath(path string) bool {
-	return filepath.Base(path) == "SNAPSHOT.md"
-}
-
-// runSnapshotMergeResolve regenerates .hero/SNAPSHOT.md from the
-// local graph and writes the result to --output. Used by the
-// hero-next merge driver when git asks it to resolve a conflict on
-// the snapshot file. Mirrors the strategy used for NEXT.md and
-// QUEUE.md: ignore both sides, project fresh.
-func runSnapshotMergeResolve(projectRoot, heroDir string, cfg config.Config) error {
-	// Snapshot projection is implemented in internal/snapshot. We
-	// invoke it directly here via the same options the checkpoint
-	// command uses; the only difference is that we redirect the
-	// rendered bytes to --output rather than letting the projector
-	// write to .hero/SNAPSHOT.md.
-	missionPath := filepath.Join(heroDir, "mission.md")
-	mission := readMissionOneLiner(missionPath)
-	projectName := filepath.Base(projectRoot)
-
-	// Run the projector at HeroDir; capture rendered bytes after the
-	// write by reading the written file.
-	archive := cfg.SnapshotArchive()
-	_, err := snapshotProject(snapshotProjectArgs{
-		ProjectRoot:  projectRoot,
-		HeroDir:      heroDir,
-		ProjectName:  projectName,
-		Mission:      mission,
-		ArchiveCfg:   archive,
-		Milestones:   cfg.SnapshotMilestonesEnabled(),
-	})
-	if err != nil {
-		return fmt.Errorf("snapshot projection: %w", err)
-	}
-	rendered, err := os.ReadFile(filepath.Join(heroDir, "SNAPSHOT.md"))
-	if err != nil {
-		return fmt.Errorf("read regenerated snapshot: %w", err)
-	}
-	return os.WriteFile(nextMergeResolveOutput, rendered, 0o644)
-}
-
-// snapshotProjectArgs is the merge-driver glue type so we don't
-// pull internal/snapshot into the import-graph of every CLI file.
-type snapshotProjectArgs struct {
-	ProjectRoot string
-	HeroDir     string
-	ProjectName string
-	Mission     string
-	ArchiveCfg  config.SnapshotArchiveConfig
-	Milestones  bool
-}
-
-// snapshotProject is filled in by checkpoint.go (which already
-// imports internal/snapshot) to keep this file free of the
-// dependency. The indirection lets the merge driver reuse the
-// projection without bloating package boundaries.
-var snapshotProject = func(args snapshotProjectArgs) (any, error) {
-	return nil, fmt.Errorf("snapshot projection unavailable in this build")
-}
-
-// userFromOutputPath extracts <user> from .../next/<user>.md. Returns
-// empty string for paths that don't fit the user-handoff shape.
-func userFromOutputPath(path string) string {
-	base := filepath.Base(path)
-	if !strings.HasSuffix(base, ".md") || strings.HasSuffix(base, ".local.md") {
-		return ""
-	}
-	parent := filepath.Base(filepath.Dir(path))
-	if parent != "next" {
-		return ""
-	}
-	return strings.TrimSuffix(base, ".md")
 }
 
 // preCommitHookInstalled reports whether the Hero managed block is
@@ -266,6 +114,34 @@ func userFromOutputPath(path string) string {
 func preCommitHookInstalled(projectRoot string) bool {
 	_, err := currentPreCommitManagedBlock(projectRoot)
 	return err == nil
+}
+
+// preCommitHasHeroHookButNoStaging reports whether the installed
+// .git/hooks/pre-commit contains SOME Hero-managed content (the generic
+// installer's `# Hero git hook` marker) but lacks the hero-next staging
+// managed block — i.e. a repo that fires `hero hook pre-commit` on every
+// commit but never stages the projected handoff files. This is the
+// distinct misconfiguration `hero check` flags: the projecting-but-not-
+// staging gap. Returns false when there is no Hero pre-commit hook at all
+// (that case is the plain "not installed" warning) or when the staging
+// block is present (correctly wired).
+func preCommitHasHeroHookButNoStaging(projectRoot string) bool {
+	if preCommitHookInstalled(projectRoot) {
+		// Staging block present — correctly wired, not a misconfig.
+		return false
+	}
+	gitDir, err := resolveGitDir(projectRoot)
+	if err != nil {
+		return false
+	}
+	body, err := os.ReadFile(filepath.Join(gitDir, "hooks", "pre-commit"))
+	if err != nil {
+		return false
+	}
+	// genericHeroHookMarker mirrors internal/hooks.heroMarker ("# Hero
+	// git hook"); duplicated as a literal here to avoid a CLI→hooks
+	// dependency just for a substring check.
+	return strings.Contains(string(body), "# Hero git hook")
 }
 
 // hookInstallOptedOut reports whether the user has explicitly opted
@@ -383,9 +259,6 @@ func installNextHooksQuiet(projectRoot string) error {
 	if err := writeHookFile(postMerge, hookScript("post-merge")); err != nil {
 		return fmt.Errorf("post-merge hook: %w", err)
 	}
-	if err := registerMergeDriver(projectRoot); err != nil {
-		return fmt.Errorf("merge driver: %w", err)
-	}
 	if err := updateGitAttributes(projectRoot); err != nil {
 		return fmt.Errorf(".gitattributes: %w", err)
 	}
@@ -443,11 +316,20 @@ func hookScript(kind string) string {
   hero index --if-stale -q || true`
 		queueRefresh = `
   hero queue write -q || true`
-		stage = `
-  # Re-stage projected files so they travel with the commit. The
-  # 2>/dev/null || true swallows the case where a path doesn't exist
-  # yet (fresh repo, solo mode, no per-user file).
-  git add -- .hero/NEXT.md .hero/next/*.md .hero/QUEUE.md 2>/dev/null || true`
+		// Stage each projected handoff path independently. A single
+		// combined `git add -- a b c` aborts the WHOLE add (and stages
+		// nothing) the moment any pathspec matches no file — e.g. a
+		// dropped QUEUE.md or an empty `.hero/next/*.md` glob in solo
+		// mode. Looping per-path isolates that failure so the paths that
+		// DO exist still travel. The 2>/dev/null || true swallows the
+		// no-match case per path. Spec: next-unconditional-commit-staging.
+		stage = fmt.Sprintf(`
+  # Re-stage projected handoff files so they travel with the commit,
+  # one path at a time so a missing path (dropped QUEUE.md, no per-user
+  # file in solo mode) doesn't abort staging of the others.
+  for p in %s; do
+    git add -- "$p" 2>/dev/null || true
+  done`, strings.Join(handoffFilePaths, " "))
 	}
 	return fmt.Sprintf(`%s
 # Refresh projected NEXT files, sync the search index against any
@@ -492,28 +374,15 @@ func mergeMarkerBlock(src, start, end, block string) string {
 	return prefix + "\n\n" + block + "\n\n" + suffix
 }
 
-// registerMergeDriver writes [merge "hero-next"] driver in .git/config.
-// Idempotent — git config set always overwrites the prior value.
-func registerMergeDriver(projectRoot string) error {
-	driver := "hero next merge-resolve --output %A"
-	for _, args := range [][]string{
-		{"merge." + mergeDriverName + ".name", "Hero — regenerate projected NEXT files from graph on conflict"},
-		{"merge." + mergeDriverName + ".driver", driver},
-	} {
-		cmd := exec.Command("git", append([]string{"-C", projectRoot, "config"}, args...)...)
-		if out, err := cmd.CombinedOutput(); err != nil {
-			return fmt.Errorf("git config %v: %w\n%s", args, err, out)
-		}
-	}
-	return nil
-}
-
 // uninstallNextHooks strips the hero-next managed blocks from
-// .git/hooks/pre-commit, .git/hooks/post-merge, and .gitattributes,
-// and unregisters the hero-next merge driver from .git/config.
+// .git/hooks/pre-commit, .git/hooks/post-merge, and .gitattributes.
+// It also clears any legacy merge.hero-next.* entry left in
+// .git/config by older installs (Hero no longer registers a custom
+// merge driver — projected files use the built-in merge=union — but
+// existing clones may still carry the orphaned stanza).
 // Idempotent — running it twice or against a never-installed repo is
 // a no-op. Returns the list of paths actually modified (or that had
-// their driver registration cleared), suitable for caller print-out.
+// the legacy driver registration cleared), suitable for caller print-out.
 func uninstallNextHooks(projectRoot string) (removed []string, err error) {
 	gitDir, gerr := resolveGitDir(projectRoot)
 	if gerr != nil {
@@ -543,8 +412,9 @@ func uninstallNextHooks(projectRoot string) (removed []string, err error) {
 		removed = append(removed, gaPath)
 	}
 
-	// .git/config: unset merge driver entries. Best-effort — ignore
-	// "key not found" errors so a never-installed repo doesn't fail.
+	// .git/config: clear any legacy merge.hero-next.* driver stanza
+	// left by older installs. Best-effort — ignore "key not found"
+	// errors so a never-installed (or already-cleaned) repo doesn't fail.
 	driverCleared := false
 	for _, key := range []string{
 		"merge." + mergeDriverName + ".driver",
@@ -710,8 +580,11 @@ func stripGitAttributesBlock(path string) (bool, error) {
 	return true, nil
 }
 
-// nextMergeDriverRegistered reports whether the hero-next merge driver
-// is currently registered in .git/config. Used by `hero hooks status`.
+// nextMergeDriverRegistered reports whether a legacy hero-next merge
+// driver stanza is still present in .git/config. Hero no longer
+// registers a custom driver (projected files use the built-in
+// merge=union), so this only ever returns true for clones carrying an
+// orphaned entry from an older install. Used by `hero hooks status`.
 func nextMergeDriverRegistered(projectRoot string) bool {
 	cmd := exec.Command("git", "-C", projectRoot, "config", "--get", "merge."+mergeDriverName+".driver")
 	if err := cmd.Run(); err != nil {
@@ -722,15 +595,25 @@ func nextMergeDriverRegistered(projectRoot string) bool {
 
 // updateGitAttributes ensures .gitattributes contains the marker-
 // bounded merge directive. Idempotent.
+//
+// Binds the projected handoff paths to git's BUILT-IN "union" merge
+// driver. Unlike a custom driver — whose definition would live only in
+// per-clone .git/config and never travel with the repo — "union" needs
+// no config registration, so fresh clones, CI checkouts, and not-yet-
+// installed teammates resolve these merges marker-free. Union
+// concatenates both sides; the next `hero next checkpoint` total-
+// overwrites the result from the graph (see checkpoint.go:
+// writeProjectedNextMD).
 func updateGitAttributes(projectRoot string) error {
 	path := filepath.Join(projectRoot, ".gitattributes")
 	existing, _ := os.ReadFile(path)
 
-	managed := fmt.Sprintf(`%s
-.hero/next/*.md merge=%s
-.hero/NEXT.md merge=%s
-.hero/QUEUE.md merge=%s
-%s`, gaMarkerStart, mergeDriverName, mergeDriverName, mergeDriverName, gaMarkerEnd)
+	var lines strings.Builder
+	for _, p := range handoffFilePaths {
+		lines.WriteString(p)
+		lines.WriteString(" merge=union\n")
+	}
+	managed := fmt.Sprintf("%s\n%s%s", gaMarkerStart, lines.String(), gaMarkerEnd)
 
 	body := mergeMarkerBlock(string(existing), gaMarkerStart, gaMarkerEnd, managed)
 	return os.WriteFile(path, []byte(body), 0o644)

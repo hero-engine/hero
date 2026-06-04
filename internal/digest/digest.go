@@ -7,9 +7,9 @@
 // with corpus size we built a logger, not a digester.
 //
 // This package owns three concerns:
-//   1. Querying the graph for candidate facts (more than will fit)
-//   2. Scoring candidates (recency × focus_match × signal_weight)
-//   3. Enforcing a token budget — top-K by score, byte-aware rendering
+//  1. Querying the graph for candidate facts (more than will fit)
+//  2. Scoring candidates (recency × focus_match × signal_weight)
+//  3. Enforcing a token budget — top-K by score, byte-aware rendering
 //
 // All three live together because they tune against each other.
 package digest
@@ -19,23 +19,27 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/hero-engine/hero/internal/graph"
+	"github.com/hero-engine/hero/internal/handoff"
 )
 
 // Options tunes a brief render.
 type Options struct {
-	RepoKey       string   // partition filter; required
-	Branch        string   // current branch (frontmatter only)
-	SessionID     string   // anchors "tried" attempts to a session
-	AuthorEmail   string   // who's asking (powers Person lookup, focus_match)
-	FocusFiles    []string // files in working tree → biases scoring
-	TokenBudget   int      // default 3000 if 0
-	Now           time.Time
+	RepoKey     string   // partition filter; required
+	Branch      string   // current branch (frontmatter only)
+	SessionID   string   // anchors "tried" attempts to a session
+	AuthorEmail string   // who's asking (powers Person lookup, focus_match)
+	User        string   // user slug — handoff singleton key (last ask / suggested-next / reflections)
+	Domain      string   // domain partition for the handoff key; "" → handoff section omitted
+	FocusFiles  []string // files in working tree → biases scoring
+	TokenBudget int      // default 3000 if 0
+	Now         time.Time
 }
 
 // Brief is the structured output of a digest. Markdown renders cleanly
@@ -63,16 +67,16 @@ type BriefSection struct {
 // gets a small brief; a complex one with rich history grows — but
 // only when high-scoring items justify it.
 const (
-	defaultFloor      = 1500  // never go smaller — minimum useful brief
-	defaultSoftTarget = 3000  // typical brief size; first place we trim past
-	defaultHardCap    = 12000 // beyond this we're a logger, not a digester
-	relevanceThreshold = 0.05 // below this score, items are dropped past target
+	defaultFloor       = 1500  // never go smaller — minimum useful brief
+	defaultSoftTarget  = 3000  // typical brief size; first place we trim past
+	defaultHardCap     = 12000 // beyond this we're a logger, not a digester
+	relevanceThreshold = 0.05  // below this score, items are dropped past target
 )
 
 // Section budget allocation as fractions of soft target. Sections grow
 // proportionally if the soft target rises with corpus complexity.
 type budgetPlan struct {
-	Mission, WhoYouAre, Sprint, InFlight, JustChanged, TriedAndFailed, BlockedOn, Nearby, Acceptance int
+	Mission, WhoYouAre, Handoff, Sprint, InFlight, JustChanged, TriedAndFailed, BlockedOn, Nearby, Acceptance int
 }
 
 func planFor(softTarget int) budgetPlan {
@@ -82,6 +86,7 @@ func planFor(softTarget int) budgetPlan {
 	return budgetPlan{
 		Mission:        softTarget * 250 / 3000,
 		WhoYouAre:      softTarget * 100 / 3000,
+		Handoff:        softTarget * 300 / 3000,
 		Sprint:         softTarget * 400 / 3000,
 		InFlight:       softTarget * 400 / 3000,
 		JustChanged:    softTarget * 350 / 3000,
@@ -131,6 +136,20 @@ func Generate(store *graph.Store, opts Options) (*Brief, error) {
 	if sec, err := whoYouAreSection(store, opts, plan.WhoYouAre); err != nil {
 		return nil, err
 	} else {
+		b.Sections = append(b.Sections, sec)
+		b.BudgetUsed += sec.Tokens
+	}
+
+	// 1b. Where you left off — the handoff singletons (last user ask,
+	// suggested-next, recent reflections) for the current user. Placed
+	// just after identity and BEFORE in-flight/nearby: "what was I
+	// doing" is the highest-value context for a fresh or cross-machine
+	// session. Renders nothing when User=="" or no handoff nodes exist
+	// (fresh repos stay clean), and is best-effort — a read error is
+	// logged and skipped, never failing Generate.
+	if sec, err := handoffSection(store, opts, plan.Handoff); err != nil {
+		return nil, err
+	} else if len(sec.Lines) > 0 {
 		b.Sections = append(b.Sections, sec)
 		b.BudgetUsed += sec.Tokens
 	}
@@ -280,6 +299,61 @@ func whoYouAreSection(store *graph.Store, opts Options, budget int) (BriefSectio
 	return sec, nil
 }
 
+// handoffSection surfaces the per-user handoff singletons — the last
+// user ask, the agent's suggested next step, and the most recent
+// reflections — keyed by the same (user, repo, domain) triple the
+// projection and auto-emit use. This closes the "load" half of the
+// handoff loop: capture lands in the graph, travels via git, and now
+// surfaces at session start.
+//
+// Best-effort by contract: an empty User (non-CLI callers that don't
+// know the slug) or a read error yields an empty section the caller
+// skips — it never fails Generate. When all three singletons are
+// absent the section is empty too, so fresh repos stay clean.
+func handoffSection(store *graph.Store, opts Options, budget int) (BriefSection, error) {
+	sec := BriefSection{Title: "Where you left off"}
+	if opts.User == "" {
+		return sec, nil
+	}
+
+	logSkip := func(what string, err error) {
+		fmt.Fprintf(os.Stderr, "warning: digest handoff section: %s: %v\n", what, err)
+	}
+
+	if ask, err := handoff.LatestAsk(store, opts.User, opts.RepoKey, opts.Domain); err != nil {
+		logSkip("last ask", err)
+		return BriefSection{Title: sec.Title}, nil
+	} else if ask != nil && ask.Text != "" {
+		sec.Lines = append(sec.Lines, "Last ask: "+oneLine(ask.Text))
+	}
+
+	if sug, err := handoff.LatestSuggestion(store, opts.User, opts.RepoKey, opts.Domain); err != nil {
+		logSkip("suggested next", err)
+		return BriefSection{Title: sec.Title}, nil
+	} else if sug != nil && sug.Text != "" {
+		sec.Lines = append(sec.Lines, "Suggested next: "+oneLine(sug.Text))
+	}
+
+	if refs, err := handoff.RecentReflections(store, opts.User, opts.RepoKey, opts.Domain, 3); err != nil {
+		logSkip("recent reflections", err)
+		return BriefSection{Title: sec.Title}, nil
+	} else {
+		for _, r := range refs {
+			if r.Text == "" {
+				continue
+			}
+			sec.Lines = append(sec.Lines, "Recent: "+oneLine(r.Text))
+		}
+	}
+
+	// All three absent → empty section, caller omits it.
+	if len(sec.Lines) == 0 {
+		return sec, nil
+	}
+	sec.Truncated = trimToBudget(&sec, budget)
+	return sec, nil
+}
+
 // sprintSection surfaces the currently-active Sprint and its issues
 // when one exists in the graph. Renders nothing for fresh repos or
 // repos without tracker integration — the section only shows up when
@@ -299,8 +373,8 @@ func sprintSection(store *graph.Store, opts Options, budget int) (BriefSection, 
 		  LIMIT 1`,
 	)
 	var (
-		sprintID                          int64
-		key, name, goal, start, endDate   string
+		sprintID                        int64
+		key, name, goal, start, endDate string
 	)
 	if err := row.Scan(&sprintID, &key, &name, &goal, &start, &endDate); err != nil {
 		// No active sprint — empty section, caller skips.
@@ -380,8 +454,8 @@ func inFlightSection(store *graph.Store, opts Options, budget int) (BriefSection
 
 	type cand struct {
 		key, title, status, priority, claimedBy string
-		ingested                                 time.Time
-		score                                    float64
+		ingested                                time.Time
+		score                                   float64
 	}
 	var cands []cand
 	for rows.Next() {

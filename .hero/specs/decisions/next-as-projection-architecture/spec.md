@@ -163,7 +163,20 @@ only fires when the flag is true. No file-level sentinel needed — the
 config flag is simpler, atomic, and lives where every other config
 already lives.
 
-### 5. Pre-flight migration gate
+### 5. Pre-flight migration gate (REVISED — auto-migrate, don't refuse)
+
+> **Revised by `next-projection-gate-punts-migration-to-user`.** The
+> original gate *refused* and punted a CLI incantation to the user. It
+> now **auto-migrates silently**: when `next.projected == false` AND
+> `.hero/NEXT.md` contains unmigrated content, `hero next checkpoint`
+> runs the content-preserving `migrateToProjection` transition (the same
+> logic `hero next migrate-to-projection` performs), reloads config, and
+> continues as a migrated repo. `hero upgrade` performs the same
+> transition proactively, and `hero init` is born `next.projected: true`
+> so fresh repos never enter legacy mode. A message is surfaced ONLY on
+> migration failure, and that failure path keeps the original no-clobber
+> safety (NEXT.md untouched, `next.projected` stays false). The
+> historical refuse-gate text below is retained for context.
 
 When `next.projected == false` AND `.hero/NEXT.md` contains unmigrated
 content, `hero next checkpoint` *refuses* to write NEXT.md and exits
@@ -424,11 +437,18 @@ errors at PR time, before they merge.
   types attribute via this helper. Any future per-user node should
   use it too; introducing a parallel identity resolution would
   fragment the Person graph.
-- **The migration gate must keep firing for unmigrated repos
-  indefinitely.** Removing it would silently wipe hand-authored
-  content the first time `hero next checkpoint` ran on a repo where
-  someone skipped `hero next migrate-to-projection`. The check is
-  cheap and the cost of removing it is unbounded.
+- **The migration trigger must keep firing for unmigrated repos
+  indefinitely (REVISED — auto-migrate, don't refuse).** The detection
+  (`detectUnmigratedNextMD`) must keep running on every checkpoint, but
+  per `next-projection-gate-punts-migration-to-user` it now triggers a
+  silent, content-preserving auto-migration rather than a refusal.
+  Removing the *detection* would let the legacy placeholder write
+  silently wipe hand-authored content; that risk is unchanged. What
+  changed is the response: Hero performs the safe migration itself
+  (capturing the body as a durable Note first) instead of punting a CLI
+  incantation to the user. The no-clobber fallback survives only on
+  migration failure. The check is cheap and the cost of removing it is
+  unbounded.
 - **The CI drift gate is part of the workflow.** Anyone who removes
   the workflow step removes the contract that committed NEXT.md
   matches projector output. Removal should be loudly noticed.
