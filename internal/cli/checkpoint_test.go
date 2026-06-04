@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/handoff"
 	"github.com/hero-engine/hero/internal/projection"
@@ -192,6 +193,235 @@ func TestWriteUserHandoffFileSkipsUpdatedOnlyChange(t *testing.T) {
 	}
 	if string(secondBody) != string(firstBody) {
 		t.Fatalf("user handoff changed on updated-only render:\nfirst:\n%s\nsecond:\n%s", firstBody, secondBody)
+	}
+}
+
+// TestWriteUserHandoffFileTeamModeProjectsPerUserFile is the canonical
+// regression for the primary bug (Change 1): in team mode,
+// writeUserHandoffFile used to early-return without writing anything,
+// so the per-user .hero/next/<user>.md was never projected from the
+// graph. After the fix it must project the file in BOTH modes. This
+// test FAILS before Change 1 (the early return writes nothing) and
+// passes after.
+func TestWriteUserHandoffFileTeamModeProjectsPerUserFile(t *testing.T) {
+	env := newTestEnv(t)
+	cfg := config.DefaultConfig()
+	cfg.Next = &config.NextConfig{Mode: "team"}
+	cfg.Tracking = &config.TrackingConfig{DefaultAgent: "human/alice"}
+
+	repoKey := gitutil.RepoKey(env.dir)
+	store, err := graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := handoff.RecordAsk(store, repoKey, handoff.UserAsk{
+		User: "alice", Text: "wire up the team-mode handoff",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := handoff.RecordSuggestion(store, repoKey, handoff.NextSuggestion{
+		User: "alice", Text: "land the per-user projection next",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	store.Close()
+
+	if err := writeUserHandoffFile(env.dir, env.heroDir, cfg); err != nil {
+		t.Fatalf("writeUserHandoffFile (team): %v", err)
+	}
+
+	userPath := filepath.Join(env.heroDir, nextDirName, "alice.md")
+	body, err := os.ReadFile(userPath)
+	if err != nil {
+		t.Fatalf("team-mode per-user file not written: %v", err)
+	}
+	got := string(body)
+	if !strings.Contains(got, "wire up the team-mode handoff") {
+		t.Errorf("per-user file missing recorded ask:\n%s", got)
+	}
+	if !strings.Contains(got, "land the per-user projection next") {
+		t.Errorf("per-user file missing recorded suggestion:\n%s", got)
+	}
+	// Personal-briefing shape — not the project-shape NEXT.md render.
+	if !strings.Contains(got, "## Last user ask") || !strings.Contains(got, "## Suggested next prompt") {
+		t.Errorf("per-user file is not the personal-briefing render:\n%s", got)
+	}
+}
+
+// Test_writeCheckpoint_TeamMode_WritesBothFiles guards Change 3: a full
+// checkpoint in team mode must write BOTH the gitignored machine-state
+// file (<user>.local.md) AND the durable per-user briefing (<user>.md),
+// and the durable file must be the personal-briefing render
+// (## Last user ask / ## Suggested next prompt), NOT the project-shape
+// NEXT.md render (## Just finished). The project-shape projection must
+// land on the shared .hero/NEXT.md, not clobber the per-user file.
+func Test_writeCheckpoint_TeamMode_WritesBothFiles(t *testing.T) {
+	env := newTestEnv(t)
+	cfg := config.DefaultConfig()
+	cfg.Next = &config.NextConfig{Mode: "team", Projected: true}
+	cfg.Tracking = &config.TrackingConfig{DefaultAgent: "human/alice"}
+	if err := cfg.Save(env.dir); err != nil {
+		t.Fatalf("save cfg: %v", err)
+	}
+
+	repoKey := gitutil.RepoKey(env.dir)
+	store, err := graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := handoff.RecordAsk(store, repoKey, handoff.UserAsk{
+		User: "alice", Text: "team-mode durable briefing should persist",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	store.Close()
+
+	if _, err := writeCheckpoint(); err != nil {
+		t.Fatalf("writeCheckpoint (team): %v", err)
+	}
+
+	localPath := filepath.Join(env.heroDir, nextDirName, "alice"+localStateSuffix)
+	if _, err := os.Stat(localPath); err != nil {
+		t.Fatalf("machine-state file %s not written: %v", localPath, err)
+	}
+
+	userPath := filepath.Join(env.heroDir, nextDirName, "alice.md")
+	body, err := os.ReadFile(userPath)
+	if err != nil {
+		t.Fatalf("durable per-user file not written: %v", err)
+	}
+	got := string(body)
+	if !strings.Contains(got, "## Last user ask") || !strings.Contains(got, "## Suggested next prompt") {
+		t.Errorf("durable per-user file is not the personal-briefing render:\n%s", got)
+	}
+	if strings.Contains(got, "## Just finished") {
+		t.Errorf("durable per-user file got project-shape NEXT.md content (double-write contamination):\n%s", got)
+	}
+	if !strings.Contains(got, "team-mode durable briefing should persist") {
+		t.Errorf("durable per-user file missing recorded ask:\n%s", got)
+	}
+}
+
+// Test_writeCheckpoint_TeamMode_NonFatalOnProjectionError pins the
+// warn-and-continue contract for the per-user projection: if the
+// user-handoff projection fails, writeCheckpoint must still return nil.
+// We force a failure by making .hero/next/<user>.md a directory, so the
+// underlying file write errors out — the checkpoint must swallow it.
+func Test_writeCheckpoint_TeamMode_NonFatalOnProjectionError(t *testing.T) {
+	env := newTestEnv(t)
+	cfg := config.DefaultConfig()
+	cfg.Next = &config.NextConfig{Mode: "team", Projected: true}
+	cfg.Tracking = &config.TrackingConfig{DefaultAgent: "human/alice"}
+	if err := cfg.Save(env.dir); err != nil {
+		t.Fatalf("save cfg: %v", err)
+	}
+
+	// Make the per-user path a directory so the file write fails.
+	userPath := filepath.Join(env.heroDir, nextDirName, "alice.md")
+	if err := os.MkdirAll(userPath, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := writeCheckpoint(); err != nil {
+		t.Fatalf("writeCheckpoint must stay non-fatal on per-user projection failure, got: %v", err)
+	}
+}
+
+// Test_writeCheckpoint_TeamMode_RoundTripIsIdempotent is the spec's
+// Test Plan #5: with Phase 1 now projecting the per-user
+// .hero/next/<user>.md in team mode, that file becomes a live ingest
+// target on other machines. The project → ingest → re-project cycle
+// must be idempotent — re-ingesting a freshly-projected file and
+// re-projecting must reproduce the same semantic content (the ingest
+// dedupes reflections on text and skips auto-derived suggestions, so
+// nothing should duplicate or get corrupted).
+//
+// We compare via normalizeUpdatedFrontmatter — the same semantic
+// equality the projector uses to suppress updated-only churn — so the
+// unavoidable wall-clock `updated:` timestamp delta between two
+// renders doesn't mask the real concern: duplicated reflections or
+// auto-derived-suggestion corruption.
+func Test_writeCheckpoint_TeamMode_RoundTripIsIdempotent(t *testing.T) {
+	env := newTestEnv(t)
+	cfg := config.DefaultConfig()
+	cfg.Next = &config.NextConfig{Mode: "team"}
+	cfg.Tracking = &config.TrackingConfig{DefaultAgent: "human/alice"}
+
+	repoKey := gitutil.RepoKey(env.dir)
+	domain := graph.DomainFor(cfg, graph.IntrinsicActive)
+
+	// Seed the user-graph with all three handoff node types. The
+	// suggestion is a real agent emission (no auto-derived footer) so
+	// it must survive the round-trip; the reflection is the dedupe
+	// target.
+	store, err := graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := handoff.RecordAsk(store, repoKey, handoff.UserAsk{
+		User: "alice", Domain: domain, Text: "where did we leave off on team-mode handoff?",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := handoff.RecordSuggestion(store, repoKey, handoff.NextSuggestion{
+		User: "alice", Domain: domain, Text: "land the per-user projection idempotence test",
+		Rationale: "closes the last open item on the spec",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := handoff.RecordReflection(store, repoKey, handoff.SessionReflection{
+		User: "alice", Domain: domain, Text: "team-mode reuses the solo render — only the gate changed",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	store.Close()
+
+	userPath := filepath.Join(env.heroDir, nextDirName, "alice.md")
+
+	// 1. First projection.
+	if err := writeUserHandoffFile(env.dir, env.heroDir, cfg); err != nil {
+		t.Fatalf("first projection: %v", err)
+	}
+	first, err := os.ReadFile(userPath)
+	if err != nil {
+		t.Fatalf("read first projection: %v", err)
+	}
+
+	// 2. Ingest it back via the real `hero next ingest` entry point.
+	store, err = graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := handoff.IngestUserFile(store, repoKey, domain, userPath); err != nil {
+		t.Fatalf("ingest: %v", err)
+	}
+	store.Close()
+
+	// 3. Re-project after the ingest round-trip.
+	if err := writeUserHandoffFile(env.dir, env.heroDir, cfg); err != nil {
+		t.Fatalf("second projection: %v", err)
+	}
+	second, err := os.ReadFile(userPath)
+	if err != nil {
+		t.Fatalf("read second projection: %v", err)
+	}
+
+	// 4. Assert byte-stable modulo the `updated:` timestamp. Any drift
+	// here means the ingest duplicated a reflection or mangled the
+	// suggestion — a real non-idempotence finding, not a test flake.
+	firstNorm := normalizeUpdatedFrontmatter(string(first))
+	secondNorm := normalizeUpdatedFrontmatter(string(second))
+	if firstNorm != secondNorm {
+		t.Fatalf("project→ingest→re-project not idempotent.\nfirst:\n%s\n\nsecond:\n%s", first, second)
+	}
+
+	// Belt-and-suspenders: the suggestion survived (not dropped as
+	// auto-derived) and the reflection appears exactly once.
+	if !strings.Contains(secondNorm, "land the per-user projection idempotence test") {
+		t.Errorf("agent suggestion lost across round-trip:\n%s", second)
+	}
+	if n := strings.Count(secondNorm, "team-mode reuses the solo render"); n != 1 {
+		t.Errorf("reflection appears %d times after round-trip, want exactly 1:\n%s", n, second)
 	}
 }
 
@@ -409,15 +639,15 @@ func Test_writeCheckpoint_CrossRepoAskDoesNotLeakIntoUserHandoff(t *testing.T) {
 // Test_CrossMachineRoundTrip_FullLoop pins next-as-projection AC-6
 // and AC-11. The full sequence:
 //
-//   1. Machine A's graph records a NextSuggestion via the field-grab
-//      CLI's underlying handoff.RecordSuggestion.
-//   2. projection.UserHandoffMD renders A's user-graph into a
-//      .hero/next/<user>.md markdown file (the cross-machine medium).
-//   3. The file travels via git (here, just written to disk).
-//   4. Machine B (a fresh, empty graph) calls handoff.IngestUserFile
-//      on the same file — this is what the SessionStart hook fires
-//      on a new session opening after `git pull`.
-//   5. Machine B's queries return A's recorded suggestion verbatim.
+//  1. Machine A's graph records a NextSuggestion via the field-grab
+//     CLI's underlying handoff.RecordSuggestion.
+//  2. projection.UserHandoffMD renders A's user-graph into a
+//     .hero/next/<user>.md markdown file (the cross-machine medium).
+//  3. The file travels via git (here, just written to disk).
+//  4. Machine B (a fresh, empty graph) calls handoff.IngestUserFile
+//     on the same file — this is what the SessionStart hook fires
+//     on a new session opening after `git pull`.
+//  5. Machine B's queries return A's recorded suggestion verbatim.
 //
 // Two ephemeral graph DBs in one test process simulate the
 // two-machine boundary cleanly without spinning up actual git or

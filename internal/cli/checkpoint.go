@@ -116,6 +116,17 @@ func writeCheckpoint() (string, error) {
 	nextPath := resolveNextPath(heroDir, cfg)
 	localPath := resolveLocalStatePath(heroDir, cfg)
 
+	// sharedNextPath is the project-shape NEXT.md the snapshot pointer
+	// and the project projection target. In solo mode it equals
+	// nextPath (resolveNextPath returns .hero/NEXT.md). In team mode
+	// resolveNextPath returns the per-user .hero/next/<user>.md, which
+	// is owned by writeUserHandoffFile (personal-briefing render) — so
+	// the project-shape NEXT.md write must target the shared file
+	// instead, otherwise both writers race for the per-user path and
+	// the per-user file flips between project-shape and personal-
+	// briefing content within a single checkpoint.
+	sharedNextPath := filepath.Join(heroDir, nextFileName)
+
 	// Pre-flight migration gate (AC-14 of next-as-projection): refuse
 	// to overwrite NEXT.md when the repo hasn't been migrated to
 	// projection mode AND the existing file carries legacy content.
@@ -145,7 +156,7 @@ func writeCheckpoint() (string, error) {
 	//   content; just strip any embedded machine block from prior
 	//   layouts so it doesn't drift back in.
 	if cfg.NextProjected() {
-		if err := writeProjectedNextMD(nextPath, projectRoot, heroDir); err != nil {
+		if err := writeProjectedNextMD(sharedNextPath, projectRoot, heroDir); err != nil {
 			fmt.Fprintf(os.Stderr, "warning: NEXT.md projection failed: %v\n", err)
 			// Fall through to the legacy path so we still produce
 			// a current file rather than nothing.
@@ -154,15 +165,15 @@ func writeCheckpoint() (string, error) {
 		}
 	}
 	{
-		nextExisting, _ := os.ReadFile(nextPath)
+		nextExisting, _ := os.ReadFile(sharedNextPath)
 		nextBody := stripMachineBlock(string(nextExisting))
 		if strings.TrimSpace(nextBody) == "" {
 			nextBody = nextPlaceholder(projectRoot)
 		}
 		nextBody = strings.TrimRight(nextBody, "\n") + "\n"
 
-		if _, err := writeFileIfChanged(nextPath, []byte(nextBody), 0o644); err != nil {
-			return "", fmt.Errorf("writing %s: %w", nextPath, err)
+		if _, err := writeFileIfChanged(sharedNextPath, []byte(nextBody), 0o644); err != nil {
+			return "", fmt.Errorf("writing %s: %w", sharedNextPath, err)
 		}
 	}
 
@@ -198,7 +209,7 @@ local:
 	// the SNAPSHOT pointer in NEXT.md / AGENTS.md. Non-fatal: the
 	// snapshot projector logs and continues on every error so the
 	// checkpoint never fails because of snapshot-side issues.
-	projectSnapshot(projectRoot, heroDir, cfg, nextPath)
+	projectSnapshot(projectRoot, heroDir, cfg, sharedNextPath)
 
 	return nextPath, nil
 }
@@ -311,17 +322,14 @@ func writeProjectedNextMD(nextPath, projectRoot, heroDir string) error {
 	return err
 }
 
-// writeUserHandoffFile renders .hero/next/<user>.md from the graph.
-//
-// In team mode, .hero/next/<user>.md is the primary handoff file
-// (resolveNextPath returns it) and currently holds agent-authored
-// content. To avoid clobbering that during the projection rollout,
-// this function is a no-op in team mode — the migration command
-// (Phase 7) handles the team-mode switchover deliberately.
+// writeUserHandoffFile renders .hero/next/<user>.md from the graph in
+// BOTH solo and team mode. In team mode this file is the primary
+// handoff (resolveNextPath returns it); in solo mode it is the
+// per-user companion to the shared NEXT.md. The render is total-
+// rewrite from the user-graph nodes (UserAsk / NextSuggestion /
+// SessionReflection) — projections always win, and the semantic-
+// change guard below suppresses updated-only churn.
 func writeUserHandoffFile(projectRoot, heroDir string, cfg config.Config) error {
-	if cfg.NextMode() == "team" {
-		return nil
-	}
 	user := nextUserSlug(cfg)
 	if user == "" {
 		return nil
