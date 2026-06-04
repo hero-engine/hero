@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-04T04:33:50Z · projected from 295 source nodes_
+_Last refreshed: 2026-06-04T04:34:36Z · projected from 295 source nodes_
 
 ## Surfaces
 
@@ -47,9 +47,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — next-projection-gate-punts-migration-to-user, next-team-mode-per-user-handoff-unmaintained, hero-mcp-orphan-no-parent-liveness, roadmap-shape, roadmap-review-ambient-surfacing, multi-spec-design-routing, roadmap-review, spec-size-and-promotion-nudge, deliver-stamps-completed-at
+- **(unassigned)** — next-snapshot-file-missing-merge-attribute, next-merge-driver-not-portable, next-projection-gate-punts-migration-to-user, next-team-mode-per-user-handoff-unmaintained, hero-mcp-orphan-no-parent-liveness, roadmap-shape, roadmap-review-ambient-surfacing, multi-spec-design-routing, roadmap-review, spec-size-and-promotion-nudge
 - **core** — tracker-update-size
-- **domains/engineering** — native-mockup-rendering
 - **serve** — size-drift-actionable-output
 
 ## Next up across surfaces

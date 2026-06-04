@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-04T04:34:36Z · 99 ready specs_
+_Generated: 2026-06-04T04:46:35Z · 103 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -198,6 +198,71 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · delivering · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-sales/spec.md)_
+
+---
+
+## handoff-one-call-simplification — Handoff Simplification — One Persist, One Load, Fewest Files
+_feature · planning · horizon: now_
+
+You're picking up the umbrella simplification of Hero's handoff subsystem. Read this spec, then
+the two Phase-1 children. The thesis: the whole subsystem is "persist at end of turn, load at
+start of turn, travel via git," and it accreted into ~18 moving parts and 9 files where ~2 files
+and one persist/one load call would do. The two things the maintainer actually feels — drift and
+"not in my commit" — are **Phase 1** and are pure re-wires of existing code.
+
+**Pick up at:** deliver [next-auto-emit-user-ask](next-auto-emit-user-ask) and
+[next-unconditional-commit-staging](next-unconditional-commit-staging) — both are diagnosed,
+delivery-ready, and independent. Auto-emit reuses `resolveSessionContext` /
+`firstUserAskFromTranscript` from `internal/cli/next_compact_handoff.go`; staging consolidates
+the two installers in `internal/hooks/install.go` + `internal/cli/next_hooks.go`. After Phase 1,
+revisit Phase 2 (drop SNAPSHOT/QUEUE/local files) with fresh per-file specs.
+
+→ `internal/cli/checkpoint.go`, `internal/cli/next_compact_handoff.go`, `internal/cli/next_hooks.go`, `internal/hooks/install.go`, `internal/projection/user_handoff.go`
+
+---
+
+## next-unconditional-commit-staging — "Handoff-file staging is opt-in and lives in only one of two hook installers"
+_bug · planning · horizon: now_
+
+Makes Hero always stage projected handoff files (NEXT.md, SNAPSHOT.md, next/*.md) into commits — fixes "NEXT.md isn't in my commit" by closing the two-installer split where one installer projects but never stages.
+
+**Status:** planning — diagnosis complete, root cause confirmed at file:line. No code yet.
+
+**Pick up at:** consolidate so there's one install path that always stages. Start by (1) adding `.hero/SNAPSHOT.md` to the staging `git add` in `hookScript` and deriving both the staging list and the `.gitattributes` list from one constant, then (2) make `hero hooks install` route through `installNextHooksQuiet` so the generic installer can't produce hooks-without-staging.
+
+→ `.hero/planning/bugs/next-unconditional-commit-staging/spec.md`
+
+**Files:** `internal/cli/next_hooks.go:257-283`, `internal/cli/hook.go:94-128`, `internal/hooks/install.go:66-116`, `internal/cli/check.go:251-283`
+**Skip:** patching only the generic post-commit to stage (post-commit stages for the *next* commit — pre-commit consolidation is correct); depending on QUEUE.md existing (a sibling effort may drop it).
+
+---
+
+## next-auto-emit-user-ask — "Auto-Emit UserAsk on End-of-Turn Checkpoint"
+_feature · planning · horizon: now_
+
+Makes the user's last ask land in the handoff automatically at end-of-turn, so
+`.hero/next/<user>.md` stops showing a stale ask (or the "none recorded"
+placeholder) unless the agent remembers to type `hero next ask`.
+
+**Status:** planning — spec just landed; transcript-parsing reuse confirmed
+available in `next_compact_handoff.go`. No code yet.
+
+**Pick up at:** add `lastUserAskFromTranscript` next to
+`firstUserAskFromTranscript` (clone the bounded scan, return the *last* user
+record instead of the first), then wire `autoEmitUserAsk(cmd.InOrStdin())` into
+`runNextCheckpoint` *before* `writeCheckpoint`'s projection so the recorded ask
+renders the same turn. Singleton supersession needs no handoff.go change.
+
+→ `.hero/planning/features/next-auto-emit-user-ask/spec.md`
+
+**Files:** `internal/cli/next_compact_handoff.go:580` (clone target),
+`internal/cli/checkpoint.go:64` (wire point),
+`internal/handoff/handoff.go:101` (RecordAsk, no change),
+`internal/projection/user_handoff.go:64` (render target),
+`internal/cli/next_compact_handoff_test.go:863` (test helpers)
+**Skip:** auto-deriving a *good* NextSuggestion — needs model judgment, keep the
+mechanical floor + agent ceiling. Don't touch SessionReflection. Don't change
+`firstUserAskFromTranscript` — compact-handoff depends on "first".
 
 ---
 
@@ -718,6 +783,13 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · planning · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/configurable-workspace-location/spec.md)_
+
+---
+
+## handoff-over-engineering-nexthandoff-subsystem-got-over-buil — handoff-over-engineering NEXT/handoff subsystem got over-built: ~18 moving pa...
+_note · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/notes/handoff-over-engineering-nexthandoff-subsystem-got-over-buil/spec.md)_
 
 ---
 
