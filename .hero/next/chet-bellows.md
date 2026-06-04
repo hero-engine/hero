@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-04T14:42:37Z
+updated: 2026-06-04T15:40:43Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver resume-brief-surfaces-handoff: add a handoffSection to the digest brief so hero resume surfaces last ask / suggested-next / reflections. Thread user+domain into digest.Options. Closes the load half of the magic.
+> Two follow-ups from the content-quality eval: (1) diagnose why the resume brief's 'Just changed'/project-context is empty (commits not reaching the graph same-machine + project context not surviving a clone); (2) design capturing session INTENT in the handoff, not just the last user message.
 
 ## Suggested next prompt
 
