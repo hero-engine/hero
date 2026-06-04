@@ -19,6 +19,7 @@ import (
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/graph"
+	"github.com/hero-engine/hero/internal/handoff"
 	"github.com/hero-engine/hero/internal/projection"
 	"github.com/hero-engine/hero/internal/snapshot"
 	"github.com/spf13/cobra"
@@ -62,6 +63,14 @@ func init() {
 }
 
 func runNextCheckpoint(cmd *cobra.Command, args []string) error {
+	// Auto-emit the user's last ask from the Stop-hook transcript
+	// payload BEFORE projecting, so the just-recorded UserAsk renders
+	// into .hero/next/<user>.md in this same checkpoint pass. Reads
+	// stdin exactly once (via resolveSessionContext); writeCheckpoint
+	// never touches stdin, so there is no double-consume. Entirely
+	// best-effort — it never fails or hangs the Stop hook.
+	autoEmitUserAsk(cmd.InOrStdin())
+
 	path, err := writeCheckpoint()
 	if err != nil {
 		return err
@@ -70,6 +79,64 @@ func runNextCheckpoint(cmd *cobra.Command, args []string) error {
 		fmt.Printf("checkpoint written → %s\n", path)
 	}
 	return nil
+}
+
+// autoEmitUserAsk records the user's last transcript message as a
+// UserAsk graph node so the projected handoff stops depending on the
+// agent remembering to run `hero next ask`. It mirrors the manual
+// command's (user, repo, domain) derivation exactly so the recorded
+// node lands on the same singleton the projection reads.
+//
+// Contract: this is the end-of-turn Stop hook, which must NEVER fail or
+// hang. Every error path is a no-op that logs to stderr and returns —
+// same best-effort contract as writeUserHandoffFile / projectSnapshot.
+//
+//   - No stdin payload (other harnesses, the git post-commit fallback):
+//     resolveSessionContext returns an empty TranscriptPath → return.
+//   - Transcript missing / unreadable / malformed: lastUserAskFromTranscript
+//     returns "" → return, leaving any existing UserAsk untouched.
+//   - The transcript read is bounded (64 KiB / 1000 lines) so an
+//     oversized or blocking transcript can't hang the hook.
+func autoEmitUserAsk(stdin io.Reader) {
+	ctx := resolveSessionContext(stdin, "")
+	if ctx.TranscriptPath == "" {
+		return
+	}
+	last := lastUserAskFromTranscript(ctx.TranscriptPath)
+	if last == "" {
+		return
+	}
+
+	projectRoot := findProjectRoot()
+	cfg, err := config.Load(projectRoot)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: auto-emit user ask: loading config: %v\n", err)
+		return
+	}
+	heroDir := cfg.HeroDir(projectRoot)
+
+	store, err := graph.Open(heroDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: auto-emit user ask: open graph: %v\n", err)
+		return
+	}
+	defer store.Close()
+
+	user := nextUserSlug(cfg)
+	if user == "" {
+		return
+	}
+	repoKey := gitutil.RepoKey(projectRoot)
+	domain := graph.DomainFor(cfg, graph.IntrinsicActive)
+
+	if err := handoff.RecordAsk(store, repoKey, handoff.UserAsk{
+		User:      user,
+		Domain:    domain,
+		Text:      last,
+		SessionID: ctx.SessionID,
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: auto-emit user ask: record: %v\n", err)
+	}
 }
 
 // writeCheckpoint writes two files:

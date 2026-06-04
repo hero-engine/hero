@@ -576,8 +576,29 @@ type transcriptMessage struct {
 
 // firstUserAskFromTranscript opens transcriptPath (bounded read) and
 // returns the text of the first user record. Any parse / IO error
-// short-circuits to empty string.
+// short-circuits to empty string. compact-handoff depends on "first".
 func firstUserAskFromTranscript(transcriptPath string) string {
+	return scanUserAskFromTranscript(transcriptPath, false)
+}
+
+// lastUserAskFromTranscript opens transcriptPath (same bounded read as
+// firstUserAskFromTranscript) and returns the text of the LAST user
+// record within the scanned window. Any parse / IO error short-circuits
+// to empty string. This is what the end-of-turn auto-emit path wants:
+// the user's most recent message, not the session's opening prompt.
+func lastUserAskFromTranscript(transcriptPath string) string {
+	return scanUserAskFromTranscript(transcriptPath, true)
+}
+
+// scanUserAskFromTranscript is the shared bounded scan behind both
+// firstUserAskFromTranscript and lastUserAskFromTranscript. It reads at
+// most transcriptReadByteCap bytes and scans at most
+// transcriptReadLineCap lines, returning the user-record text truncated
+// at compactHandoffKickoffCap. When wantLast is false it returns the
+// FIRST matching user record (the long-standing compact-handoff
+// behavior); when true it keeps scanning and returns the LAST. Any IO /
+// parse error yields "" — the always-exit-0 hook contract.
+func scanUserAskFromTranscript(transcriptPath string, wantLast bool) string {
 	f, err := os.Open(transcriptPath)
 	if err != nil {
 		return ""
@@ -602,6 +623,7 @@ func firstUserAskFromTranscript(transcriptPath string) string {
 	if len(lines) > transcriptReadLineCap {
 		lines = lines[:transcriptReadLineCap]
 	}
+	var last string
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" {
@@ -630,9 +652,12 @@ func firstUserAskFromTranscript(transcriptPath string) string {
 		if len(text) > compactHandoffKickoffCap {
 			text = text[:compactHandoffKickoffCap] + "…"
 		}
-		return text
+		if !wantLast {
+			return text
+		}
+		last = text
 	}
-	return ""
+	return last
 }
 
 // extractTranscriptText pulls the user-visible text out of a Claude Code

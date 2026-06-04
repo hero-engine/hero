@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-04T03:04:40Z
+updated: 2026-06-04T06:29:50Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver Phase 1 of next-team-mode-per-user-handoff-unmaintained: wire up team-mode per-user projection, make migration path mode-aware via resolveNextPath, deconflict shared-file write path. Phase 2 roster renderer deferred.
+> Deliver next-auto-emit-user-ask: fold auto-emit of UserAsk into the Stop checkpoint, reusing the transcript parsing in next_compact_handoff.go. Extend the continuity guardrail's AC-6 seam to prove auto-emit feeds the magic.
 
 ## Suggested next prompt
 

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,6 +15,7 @@ import (
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/handoff"
 	"github.com/hero-engine/hero/internal/projection"
+	"github.com/spf13/cobra"
 )
 
 // handoff_continuity_test.go is the executable guardrail for Hero's
@@ -87,11 +89,14 @@ func seedMachineA(t *testing.T, env *testEnv, cfg config.Config, s seededHandoff
 	repoKey := gitutil.RepoKey(env.dir)
 	domain := graph.DomainFor(cfg, graph.IntrinsicActive)
 
-	// SEAM(next-auto-emit-user-ask): when that feature lands, this
-	// manual graph seed is replaced by "drive a Stop checkpoint with a
-	// transcript payload" — the same writeUserHandoffFile / ingest /
-	// load assertions below should then prove auto-emit feeds the
-	// magic, with no change to the cross-machine leap that follows.
+	// SEAM(next-auto-emit-user-ask): the auto-emit feature has landed.
+	// Test_HandoffContinuity_CrossMachine_AutoEmit drives a real Stop
+	// checkpoint with a transcript payload (instead of this manual
+	// graph seed) and runs the SAME cross-machine reconstruction below,
+	// proving auto-capture → travel → reconstruct feeds the magic. This
+	// helper keeps the manual seed because it also exercises the
+	// NextSuggestion + SessionReflection surfaces, which auto-emit does
+	// not (and must not) feed.
 	store, err := graph.Open(env.heroDir)
 	if err != nil {
 		t.Fatalf("open A graph: %v", err)
@@ -462,6 +467,124 @@ func Test_HandoffContinuity_CrossMachine_GuardrailBites(t *testing.T) {
 	text, _, _ := projection.PickUserSuggestion(store, "alice", repoKeyB, domainB)
 	if strings.Contains(text, s.suggestion) {
 		t.Fatalf("guardrail does not bite: B reconstructed the suggestion WITHOUT ingest. got %q", text)
+	}
+}
+
+// Test_HandoffContinuity_CrossMachine_AutoEmit closes the SEAM in
+// seedMachineA: it proves the auto-emit path (not a manual RecordAsk)
+// feeds the cross-machine magic. On machine A it drives a REAL Stop
+// checkpoint with a transcript payload whose LAST user message is a
+// known string, capturing the committed `.hero/next/<user>.md`. Then it
+// runs the SAME cross-machine reconstruction the manual-seed guardrail
+// uses: machine B is born empty, ONLY the committed file travels, the
+// real ingest runs, and B must surface the auto-emitted ask through the
+// real `hero next ask` query surface AND the re-projected briefing.
+//
+// This upgrades the guardrail from "manual-seed → travel → reconstruct"
+// to "auto-capture → travel → reconstruct" — the actual end-to-end loop
+// a developer relies on when they never type `hero next ask`.
+func Test_HandoffContinuity_CrossMachine_AutoEmit(t *testing.T) {
+	const autoAsk = "MACHINE_A_AUTO_ASK what was the last thing the user actually said?"
+
+	// --- Machine A: drive a real checkpoint with a transcript payload.
+	cfgA := teamCfg()
+	envA := newTestEnv(t)
+	if err := cfgA.Save(envA.dir); err != nil {
+		t.Fatalf("save A cfg: %v", err)
+	}
+
+	tp := writeTranscript(t, envA.dir,
+		`{"type":"user","message":{"role":"user","content":"earlier ask that must NOT win"}}`+"\n"+
+			`{"type":"assistant","message":{"role":"assistant","content":"working on it"}}`+"\n"+
+			`{"type":"user","message":{"role":"user","content":"`+autoAsk+`"}}`+"\n")
+	payload := `{"session_id":"sess-A-auto","transcript_path":"` + tp + `"}`
+
+	checkpointQuiet = true
+	cmdA := &cobra.Command{RunE: runNextCheckpoint}
+	cmdA.SetIn(strings.NewReader(payload))
+	cmdA.SetOut(io.Discard)
+	cmdA.SetErr(io.Discard)
+	if err := cmdA.Execute(); err != nil {
+		t.Fatalf("machine-A checkpoint with transcript payload: %v", err)
+	}
+
+	// The committed file is exactly what `git add` would stage and
+	// travel to B. Auto-emit ran BEFORE the projection, so the file
+	// already carries the auto-emitted ask.
+	aUserPath := filepath.Join(envA.heroDir, nextDirName, "alice.md")
+	committed, err := os.ReadFile(aUserPath)
+	if err != nil {
+		t.Fatalf("read A committed handoff file: %v", err)
+	}
+	if !strings.Contains(string(committed), autoAsk) {
+		t.Fatalf("auto-emit did not feed A's committed file (same-turn render failed):\n%s", committed)
+	}
+	if strings.Contains(string(committed), "earlier ask that must NOT win") {
+		t.Fatalf("A's file carries the FIRST user message, not the LAST:\n%s", committed)
+	}
+
+	// --- Machine B: brand-new workspace, own empty graph, only the file.
+	cfgB := teamCfg()
+	envB := newTestEnv(t)
+	if err := cfgB.Save(envB.dir); err != nil {
+		t.Fatalf("save B cfg: %v", err)
+	}
+	bUserPath := filepath.Join(envB.heroDir, nextDirName, "alice.md")
+	if err := os.MkdirAll(filepath.Dir(bUserPath), 0o755); err != nil {
+		t.Fatalf("mkdir B next dir: %v", err)
+	}
+	if err := os.WriteFile(bUserPath, committed, 0o644); err != nil {
+		t.Fatalf("drop committed file on B: %v", err)
+	}
+
+	repoKeyB := gitutil.RepoKey(envB.dir)
+	domainB := graph.DomainFor(cfgB, graph.IntrinsicActive)
+
+	// Sanity: B is genuinely empty before ingest — the magic must come
+	// from the traveled file alone.
+	storeB, err := graph.Open(envB.heroDir)
+	if err != nil {
+		t.Fatalf("open B graph: %v", err)
+	}
+	if ask, _ := handoff.LatestAsk(storeB, "alice", repoKeyB, domainB); ask != nil && ask.Text != "" {
+		storeB.Close()
+		t.Fatalf("B graph not empty before ingest: found %q", ask.Text)
+	}
+
+	// --- Rehydrate on B via the real ingest entry point.
+	if err := handoff.IngestUserFile(storeB, repoKeyB, domainB, bUserPath); err != nil {
+		storeB.Close()
+		t.Fatalf("ingest on B: %v", err)
+	}
+	storeB.Close()
+
+	// --- The assertion that bites: B reconstructs the AUTO-EMITTED ask
+	// from the committed file alone, through the real query surface.
+	storeB, err = graph.Open(envB.heroDir)
+	if err != nil {
+		t.Fatalf("reopen B graph: %v", err)
+	}
+	ask, err := handoff.LatestAsk(storeB, "alice", repoKeyB, domainB)
+	if err != nil {
+		storeB.Close()
+		t.Fatalf("LatestAsk on B: %v", err)
+	}
+	if ask == nil || !strings.Contains(ask.Text, autoAsk) {
+		storeB.Close()
+		t.Fatalf("B did not reconstruct the auto-emitted ask: got %+v, want contains %q", ask, autoAsk)
+	}
+
+	// And the personal briefing a fresh session opens carries it too.
+	briefing, err := projection.UserHandoffMD(storeB, projection.UserHandoffOptions{
+		User:    "alice",
+		RepoKey: repoKeyB,
+	})
+	storeB.Close()
+	if err != nil {
+		t.Fatalf("re-project B briefing: %v", err)
+	}
+	if !strings.Contains(briefing, autoAsk) {
+		t.Errorf("B re-projected briefing missing auto-emitted ask:\n%s", briefing)
 	}
 }
 
