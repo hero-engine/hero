@@ -83,6 +83,20 @@ func runResume(cmd *cobra.Command, args []string) error {
 	}
 	defer store.Close()
 
+	// Cold-graph nudge (resume-brief-missing-project-context, Change 2b):
+	// SessionStart ingest auto-rebuilds project context on a fresh clone
+	// (Change 2a), but if that rebuild was skipped or no-op'd — e.g.
+	// resume is the first command run, before any ingest — the brief's
+	// project-context sections would render empty with no explanation.
+	// Detect the cold graph here and name the one command that restores
+	// context, so the user never lands on a silent empty map. Best-effort
+	// and never fatal; emitted to stderr so it doesn't pollute the brief
+	// the model consumes on stdout.
+	if projectGraphCold(store, gitutil.RepoKey(projectRoot)) {
+		fmt.Fprintln(os.Stderr,
+			"hint: project context is empty for this clone — run `hero scan` to populate it (commits, specs, blockers)")
+	}
+
 	email := resumeEmail
 	if email == "" {
 		email = gitConfigEmail(projectRoot)

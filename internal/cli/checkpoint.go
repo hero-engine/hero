@@ -286,7 +286,38 @@ local:
 	// checkpoint never fails because of snapshot-side issues.
 	projectSnapshot(projectRoot, heroDir, cfg, sharedNextPath)
 
+	// Keep the project graph's Commit nodes current so the next
+	// `hero resume`'s "Just changed" reflects commits made this session
+	// — including ones made outside the git post-commit hook, since this
+	// runs on every Stop/PreCompact checkpoint too. `Commit` nodes are
+	// otherwise only written by `hero scan`/`graph reingest`, neither of
+	// which runs on commit or session start (resume-brief-missing-
+	// project-context). Bounded limit keeps `git log` cheap on the hot
+	// path; WriteGitLogGraph is idempotent so repeated checkpoints never
+	// duplicate nodes. Best-effort by the same contract as the rest of
+	// the checkpoint: a graph/ingest error warns to stderr and is
+	// swallowed — it must never fail the Stop hook.
+	ingestRecentCommits(projectRoot, heroDir)
+
 	return nextPath, nil
+}
+
+// ingestRecentCommits upserts the most recent commits into the graph as
+// Commit nodes, keyed by gitutil.RepoKey(projectRoot) so the writer and
+// the digest's justChangedSection reader agree on the repo partition.
+// Bounded, idempotent, and entirely best-effort: every error path warns
+// to stderr and returns, so the Stop-hook checkpoint never fails.
+func ingestRecentCommits(projectRoot, heroDir string) {
+	store, err := graph.Open(heroDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: commit graph ingest: open graph: %v\n", err)
+		return
+	}
+	defer store.Close()
+	repoKey := gitutil.RepoKey(projectRoot)
+	if _, err := gitutil.WriteGitLogGraph(projectRoot, repoKey, 50, store); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: commit graph ingest failed: %v\n", err)
+	}
 }
 
 // projectSnapshot refreshes .hero/SNAPSHOT.md and the pointer line
