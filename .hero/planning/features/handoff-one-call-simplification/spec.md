@@ -142,6 +142,17 @@ split is **projection vs. emission**: checkpoint projects but never emits.
   the fly, top open features). Absorbs today's separate `ingest` / `resume` / `prime` /
   compact-handoff-kickoff into one.
 
+> **Finding from the [e2e-handoff-continuity](../../specs/e2e-handoff-continuity/spec.md) guardrail
+> (2026-06-04):** the `hero resume` brief (`digest.Generate`) does **NOT** currently surface the
+> handoff singletons (last ask / suggested-next / reflections) — it carries Mission / In-flight /
+> Just-changed / Tried / Blocked. The ask/suggestion content is reachable only via `hero next`
+> and the projected `.hero/next/<user>.md`. So "one start-of-turn `resume` that emits the
+> briefing" is not just a *consolidation* — the resume brief must be **extended** to carry the
+> handoff content. This is a real gap in the *load* half of the magic: the auto-fired session-start
+> path doesn't actually surface "what you last asked / what's next." The guardrail asserts against
+> the genuine handoff surfaces (graph queries + re-projected file), so it stays honest regardless,
+> but the Phase-3 `resume` work owns closing this gap.
+
 **Travel — one unconditional pre-commit hook,** folded into the single default installer:
 `git add` the projected tracked files so "hooks installed" ⟹ "handoff travels."
 
