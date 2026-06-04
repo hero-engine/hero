@@ -27,6 +27,10 @@
   "knowledge": {
     "auto_capture": true
   },
+  "tracking": {
+    "stale_claim_days": 0,
+    "default_agent": "chet-bellows"
+  },
   "code_scan": {
     "depth": "normal",
     "parser": "auto",

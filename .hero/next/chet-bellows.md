@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-04T20:08:31Z
+updated: 2026-06-04T21:22:07Z
 repo: hero-engine/hero
 ---
 
@@ -8,11 +8,11 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Diagnose: HeroDesktop sidebar 'hero_list MCP call failed: notRunning' — the Swift desktop companion calls hero_list but hero serve isn't running. Needs diagnosis of lifecycle management + graceful degradation.
+> what the hell is this: One note: the hook also printed a warning — unmigrated NEXT.md detected (legacy section header ## Just finished) — run hero next migrate-to-projection first
 
 ## Suggested next prompt
 
-> Deliver next-projection-gate-punts-migration-to-user — now unblocked. The team-mode fix made next_migrate.go:55 mode-aware (resolveNextPath), which was the gate spec's deferred Secondary Defect 1. The gate spec's auto-migration helper should call into that mode-aware path. This is the original user-facing bug (the 'run hero next migrate-to-projection first' warning).
+_(none — `hero next suggest "..."` to set, or open a Feature to derive one)_
 
 ## Recent reflections
 
@@ -24,5 +24,10 @@ Nothing this session.
 
 ## Your recent activity
 
-_(no commits attributed to you in this repo's graph)_
+- `8391d6e` — chore: stage desktop-sidebar-mcp-not-running spec + projected files
+- `5c09c37` — style: fix gofmt struct-tag alignment drift in Config
+- `ab8c299` — docs(next): diagnose desktop sidebar notRunning + archive intent spec
+- `c8bc9ac` — feat(next): capture session goal (kickoff intent), not just last message
+- `76dc9fc` — Merge: NEXT/handoff subsystem overhaul
+- `5c77b83` — fix(next): rebuild project context for the resume brief
 
