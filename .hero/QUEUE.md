@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-04T17:31:30Z · 105 ready specs_
+_Generated: 2026-06-04T17:56:11Z · 104 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -235,22 +235,6 @@ Fixes `hero resume`'s empty project-context sections — commits never become gr
 
 **Files:** `internal/cli/checkpoint.go:157`, `internal/gitutil/graph_ingest.go:28`, `internal/digest/digest.go:488`, `internal/cli/next_handoff.go:94`, `internal/cli/brief.go:77`
 **Skip:** rebuilding Commit nodes from `events.log` (too thin — `{event,sha}` only); committing graph.db; adding an author filter to `justChangedSection`.
-
----
-
-## cross-machine-handoff-slug-mismatch — "Cross-machine handoff loads empty when the local user slug differs between machines"
-_bug · planning · horizon: now_
-
-Cross-machine handoff silently loads EMPTY because `hero resume` re-derives the user slug from volatile local git/`$USER` config, which differs from the slug baked into the traveled `.hero/next/<user>.md` file that `ingest` keyed nodes under.
-
-**Status:** planning — root cause confirmed against source (file:line) and a live repro; no code written.
-
-**Pick up at:** implement Option B — make `IngestUserFile` mirror handoff nodes under the local slug when it differs from the file's `user:` (B-1), add a read-side fallback + fail-loud hint in `handoffSection`/`runResume` (B-2/B-3), and write `Test_HandoffContinuity_CrossMachine_SlugDivergence` that pins DIFFERENT slugs on A and B (the current guardrail pins them equal and cannot catch this).
-
-→ `.hero/planning/bugs/cross-machine-handoff-slug-mismatch/spec.md`
-
-**Files:** `internal/handoff/ingest.go:44`, `internal/cli/brief.go:97`, `internal/digest/digest.go:313`, `internal/cli/handoff_continuity_test.go:85`, `internal/cli/next.go:91`
-**Skip:** changing `gitutil.UserName()` derivation or deriving from email — re-keys existing repos, orphans existing handoff files (Option C, rejected).
 
 ---
 

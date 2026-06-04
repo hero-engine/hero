@@ -500,8 +500,8 @@ func writeSiblingSubgraphs(cfg config.Config, projectRoot string, store *graph.S
 			continue
 		}
 		report.add(stepResult{
-			name: "sibling " + alias,
-			ok:   true,
+			name:   "sibling " + alias,
+			ok:     true,
 			detail: fmt.Sprintf("%s, %d specs, %d edges", siblingKey, summary.Specs, summary.Edges),
 		})
 	}
@@ -593,6 +593,11 @@ func writeWorkSubgraph(cfg config.Config, projectRoot, heroDir string, store *gr
 	// the whole scan.
 	handoffStep := stepResult{name: "handoff"}
 	if entries, _ := os.ReadDir(filepath.Join(heroDir, "next")); len(entries) > 0 {
+		// singleTravelFile gates the cross-machine alias mirror to the
+		// unambiguous single-identity case, so a brand-new teammate's
+		// empty graph never has another user's handoff mirrored onto it
+		// (see handoff.IngestUserFile).
+		singleTravelFile := len(nextFileUserSlugs(heroDir)) == 1
 		ingested := 0
 		for _, e := range entries {
 			name := e.Name()
@@ -600,7 +605,7 @@ func writeWorkSubgraph(cfg config.Config, projectRoot, heroDir string, store *gr
 				continue
 			}
 			path := filepath.Join(heroDir, "next", name)
-			if err := handoff.IngestUserFile(store, repoKey, graph.DomainFor(cfg, graph.IntrinsicActive), path); err != nil {
+			if err := handoff.IngestUserFile(store, repoKey, graph.DomainFor(cfg, graph.IntrinsicActive), path, nextUserSlug(cfg), singleTravelFile); err != nil {
 				handoffStep.failed = true
 				handoffStep.err = err
 				break

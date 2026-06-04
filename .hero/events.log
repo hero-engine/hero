@@ -120,3 +120,5 @@
 {"ts":"2026-06-04T13:05:08.001709Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-unconditional-commit-staging","message":"status -\u003e completed"}
 {"ts":"2026-06-04T14:42:26.08602Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"resume-brief-surfaces-handoff","message":"Resume Brief Surfaces Handoff — Close the Load Half of the Magic"}
 {"ts":"2026-06-04T14:42:26.086109Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"resume-brief-surfaces-handoff","message":"status -\u003e completed"}
+{"ts":"2026-06-04T17:55:56.619728Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"cross-machine-handoff-slug-mismatch","message":"\"Cross-machine handoff loads empty when the local user slug differs between machines\""}
+{"ts":"2026-06-04T17:55:56.619833Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"cross-machine-handoff-slug-mismatch","message":"status -\u003e completed"}
