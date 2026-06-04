@@ -106,8 +106,18 @@ func TestHookScript_PreCommit_StagesProjectedFiles(t *testing.T) {
 	if !contains(body, "hero next checkpoint -q") {
 		t.Errorf("pre-commit must invoke hero next checkpoint -q; got:\n%s", body)
 	}
-	if !contains(body, "git add -- .hero/NEXT.md .hero/next/*.md") {
-		t.Errorf("pre-commit must stage projected NEXT files with the exact pathspec; got:\n%s", body)
+	// Staging is a per-path loop so a missing path (dropped QUEUE.md,
+	// empty next/*.md glob) doesn't abort staging of the others.
+	if !contains(body, "for p in .hero/NEXT.md .hero/next/*.md .hero/SNAPSHOT.md .hero/QUEUE.md") {
+		t.Errorf("pre-commit must loop over the projected handoff paths; got:\n%s", body)
+	}
+	if !contains(body, `git add -- "$p"`) {
+		t.Errorf("pre-commit must git-add each path individually; got:\n%s", body)
+	}
+	for _, p := range []string{".hero/NEXT.md", ".hero/next/*.md", ".hero/SNAPSHOT.md", ".hero/QUEUE.md"} {
+		if !contains(body, p) {
+			t.Errorf("pre-commit staging must include %q; got:\n%s", p, body)
+		}
 	}
 	if !contains(body, "2>/dev/null || true") {
 		t.Errorf("git add must swallow missing-file errors so a fresh repo doesn't fail the hook; got:\n%s", body)
@@ -142,10 +152,10 @@ func TestHookScript_PreCommit_RefreshesQueueSnapshot(t *testing.T) {
 		t.Errorf("pre-commit must invoke hero queue write -q; got:\n%s", body)
 	}
 	if !contains(body, ".hero/QUEUE.md") {
-		t.Errorf("pre-commit must reference .hero/QUEUE.md in git add pathspec; got:\n%s", body)
+		t.Errorf("pre-commit must reference .hero/QUEUE.md in the staging loop; got:\n%s", body)
 	}
-	if !contains(body, "git add -- .hero/NEXT.md .hero/next/*.md .hero/QUEUE.md") {
-		t.Errorf("pre-commit must stage NEXT.md, next/*.md, and QUEUE.md together; got:\n%s", body)
+	if !contains(body, "for p in .hero/NEXT.md .hero/next/*.md .hero/SNAPSHOT.md .hero/QUEUE.md") {
+		t.Errorf("pre-commit must stage NEXT.md, next/*.md, SNAPSHOT.md, and QUEUE.md in the loop; got:\n%s", body)
 	}
 }
 
@@ -158,6 +168,53 @@ func TestHookScript_PreCommit_RefreshesIndex(t *testing.T) {
 
 	if !contains(body, "hero index --if-stale -q") {
 		t.Errorf("pre-commit must invoke hero index --if-stale -q; got:\n%s", body)
+	}
+}
+
+// TestHandoffFileList_SingleSourceOfTruth is the single-list invariant
+// (Secondary Defect 2): the staging `git add` pathspec and the
+// .gitattributes merge=union block must cover the exact same set of
+// handoff paths, because both are derived from handoffFilePaths. A
+// future edit that adds a path to staging but forgets .gitattributes
+// (or vice versa) turns this red.
+func TestHandoffFileList_SingleSourceOfTruth(t *testing.T) {
+	// Every path in the constant must appear in BOTH the staging line
+	// and the .gitattributes block.
+	stagingBody := hookScript("pre-commit")
+
+	dir := t.TempDir()
+	if err := updateGitAttributes(dir); err != nil {
+		t.Fatalf("updateGitAttributes: %v", err)
+	}
+	gaData, err := os.ReadFile(filepath.Join(dir, ".gitattributes"))
+	if err != nil {
+		t.Fatalf("read .gitattributes: %v", err)
+	}
+	ga := string(gaData)
+
+	for _, p := range handoffFilePaths {
+		if !contains(stagingBody, p) {
+			t.Errorf("staging list missing %q (derived from handoffFilePaths); got:\n%s", p, stagingBody)
+		}
+		if !contains(ga, p+" merge=union") {
+			t.Errorf(".gitattributes missing %q merge=union (derived from handoffFilePaths); got:\n%s", p, ga)
+		}
+	}
+
+	// SNAPSHOT.md specifically must be in both — it was the historical
+	// gap that motivated the single-source-of-truth refactor.
+	if !contains(stagingBody, ".hero/SNAPSHOT.md") {
+		t.Errorf("staging must include .hero/SNAPSHOT.md; got:\n%s", stagingBody)
+	}
+	if !contains(ga, ".hero/SNAPSHOT.md merge=union") {
+		t.Errorf(".gitattributes must include .hero/SNAPSHOT.md merge=union; got:\n%s", ga)
+	}
+
+	// The constant must NOT include gitignored local-only paths.
+	for _, p := range handoffFilePaths {
+		if strings.Contains(p, ".local.md") || strings.Contains(p, "graph.db") {
+			t.Errorf("handoffFilePaths must never include gitignored path %q", p)
+		}
 	}
 }
 

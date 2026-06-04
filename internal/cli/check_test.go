@@ -94,6 +94,42 @@ func TestCheckFlagsStalePreCommitHook(t *testing.T) {
 	}
 }
 
+// TestCheckFlagsHookWithoutStaging is Test Plan #7 — a repo with a Hero
+// pre-commit hook (generic `hero hook` dispatch) but NO handoff-file
+// staging block must be flagged distinctly: the warning names the
+// missing staging invariant and the single fix command.
+// Spec: next-unconditional-commit-staging.
+func TestCheckFlagsHookWithoutStaging(t *testing.T) {
+	env := newTestEnv(t)
+	if err := exec.Command("git", "init", "-q", env.dir).Run(); err != nil {
+		t.Fatalf("git init: %v", err)
+	}
+	hookPath := filepath.Join(env.dir, ".git", "hooks", "pre-commit")
+	if err := os.MkdirAll(filepath.Dir(hookPath), 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	// A generic Hero pre-commit hook: has the `# Hero git hook` marker
+	// but NOT the hero-next staging managed block.
+	generic := "#!/bin/sh\n# Hero git hook — pre-commit\nhero hook pre-commit \"$@\"\n"
+	if err := os.WriteFile(hookPath, []byte(generic), 0o755); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	out, err := runCmd("check")
+	if err != nil {
+		t.Fatalf("check: %v", err)
+	}
+	if !strings.Contains(out, "handoff files are not staged") {
+		t.Errorf("expected staging-invariant warning, got:\n%s", out)
+	}
+	if !strings.Contains(out, "hero next install-hooks") {
+		t.Errorf("expected single fix command in warning, got:\n%s", out)
+	}
+	if strings.Contains(out, "Pre-commit hook not installed") {
+		t.Errorf("should not say 'not installed' when a Hero hook is present:\n%s", out)
+	}
+}
+
 func TestCheckFlagsMissingKickoff(t *testing.T) {
 	env := newTestEnv(t)
 

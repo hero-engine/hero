@@ -77,6 +77,18 @@ func runHooksInstall(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("installing hooks: %w", err)
 	}
 
+	// Also wire the hero-next staging pre-commit block so this generic
+	// install path can never produce hooks-without-staging. Without
+	// this, a repo set up via `hero hooks install` (not `hero init` /
+	// `hero next install-hooks`) would project handoff files on every
+	// commit but never stage them — stranding handoff state locally.
+	// Idempotent + marker-bounded, so it coexists with the generic
+	// `# Hero git hook` pre-commit block. Spec: next-unconditional-commit-staging.
+	projectRoot := findProjectRoot()
+	if err := installNextHooksQuiet(projectRoot); err != nil {
+		return fmt.Errorf("installing handoff-staging hook: %w", err)
+	}
+
 	after, err := hooks.Status(gitDir)
 	if err != nil {
 		return fmt.Errorf("checking hook status after install: %w", err)

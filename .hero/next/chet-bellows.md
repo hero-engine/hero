@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-04T06:29:50Z
+updated: 2026-06-04T12:59:56Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver next-auto-emit-user-ask: fold auto-emit of UserAsk into the Stop checkpoint, reusing the transcript parsing in next_compact_handoff.go. Extend the continuity guardrail's AC-6 seam to prove auto-emit feeds the magic.
+> Deliver next-unconditional-commit-staging: make handoff-file staging an invariant of one default hook installer so projected files always travel. Last Phase-1 item.
 
 ## Suggested next prompt
 

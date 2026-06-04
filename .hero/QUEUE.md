@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-04T06:29:59Z · 102 ready specs_
+_Generated: 2026-06-04T13:05:27Z · 102 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -201,6 +201,28 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
+## concurrent-session-branching — "Concurrent-Session Branching & Worktree Isolation"
+_initiative · planning · horizon: now_
+
+Make Hero safe to run in many concurrent sessions on one checkout: every
+claimed spec gets its own git worktree + branch, all resolving to one shared
+`.hero/`. Spec lives at
+`.hero/planning/initiatives/concurrent-session-branching/spec.md`.
+
+**Status:** planning — initiative spec landed, 7 child stubs sequenced, no code.
+
+**Pick up at:** `/design csb-phase0-git-primitives-async-retrofit` — add write
+ops to `internal/gitutil/gitutil.go` (currently READ-ONLY) and retrofit
+`internal/async/runner.go` to run each `runDeliver` job in an isolated
+worktree. That closes the live clobbering bug and proves the primitives.
+
+→ `.hero/planning/initiatives/concurrent-session-branching/spec.md`
+
+**Files:** `internal/gitutil/gitutil.go`, `internal/async/runner.go:142`, `internal/async/jobs.go:38`, `internal/workspace/locate.go:85`, `internal/cli/claim.go:72`
+**Skip:** reusing graph-conflict-detection for content conflicts (wrong layer — use `hero conflicts`); `/release` owning the integration target (net-new state, prefer a `hero target set` verb); auto-managing per-worktree build state in v1.
+
+---
+
 ## handoff-one-call-simplification — Handoff Simplification — One Persist, One Load, Fewest Files
 _feature · planning · horizon: now_
 
@@ -218,22 +240,6 @@ the two installers in `internal/hooks/install.go` + `internal/cli/next_hooks.go`
 revisit Phase 2 (drop SNAPSHOT/QUEUE/local files) with fresh per-file specs.
 
 → `internal/cli/checkpoint.go`, `internal/cli/next_compact_handoff.go`, `internal/cli/next_hooks.go`, `internal/hooks/install.go`, `internal/projection/user_handoff.go`
-
----
-
-## next-unconditional-commit-staging — "Handoff-file staging is opt-in and lives in only one of two hook installers"
-_bug · planning · horizon: now_
-
-Makes Hero always stage projected handoff files (NEXT.md, SNAPSHOT.md, next/*.md) into commits — fixes "NEXT.md isn't in my commit" by closing the two-installer split where one installer projects but never stages.
-
-**Status:** planning — diagnosis complete, root cause confirmed at file:line. No code yet.
-
-**Pick up at:** consolidate so there's one install path that always stages. Start by (1) adding `.hero/SNAPSHOT.md` to the staging `git add` in `hookScript` and deriving both the staging list and the `.gitattributes` list from one constant, then (2) make `hero hooks install` route through `installNextHooksQuiet` so the generic installer can't produce hooks-without-staging.
-
-→ `.hero/planning/bugs/next-unconditional-commit-staging/spec.md`
-
-**Files:** `internal/cli/next_hooks.go:257-283`, `internal/cli/hook.go:94-128`, `internal/hooks/install.go:66-116`, `internal/cli/check.go:251-283`
-**Skip:** patching only the generic post-commit to stage (post-commit stages for the *next* commit — pre-commit consolidation is correct); depending on QUEUE.md existing (a sibling effort may drop it).
 
 ---
 

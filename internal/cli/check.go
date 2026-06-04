@@ -50,8 +50,8 @@ func init() {
 	// Subverbs migrated from top-level commands. `hero check` alone
 	// runs the default health check; subverbs target specific
 	// dimensions of corpus health.
-	checkCmd.AddCommand(validateCmd) // hero check validate (was hero validate)
-	checkCmd.AddCommand(triageCmd)   // hero check triage   (was hero triage)
+	checkCmd.AddCommand(validateCmd)  // hero check validate (was hero validate)
+	checkCmd.AddCommand(triageCmd)    // hero check triage   (was hero triage)
 	checkCmd.AddCommand(conflictsCmd) // hero check conflicts (was hero conflicts)
 }
 
@@ -255,6 +255,20 @@ func runCheck(cmd *cobra.Command, args []string) error {
 	// Spec: pre-commit-auto-stage-next.
 	if _, err := resolveGitDir(projectRoot); err == nil {
 		switch {
+		case preCommitHasHeroHookButNoStaging(projectRoot):
+			// A Hero pre-commit hook exists (generic `hero hook`
+			// dispatch) but the handoff-file staging block is absent —
+			// the projecting-but-not-staging gap. Distinct from "no hook
+			// at all" so the user knows the precise invariant that's
+			// broken. Spec: next-unconditional-commit-staging.
+			issues++
+			fmt.Println("Pre-commit hook present but handoff files are not staged:")
+			fmt.Println("  A Hero pre-commit hook is installed, but it lacks the")
+			fmt.Println("  handoff-file staging block — projected handoff files")
+			fmt.Println("  (NEXT.md, SNAPSHOT.md, next/*.md) won't travel with commits.")
+			fmt.Println("  Run 'hero next install-hooks' to wire staging.")
+			fmt.Println()
+			addRow("pre-commit-hook", "warn", "pre-commit hook present but handoff-file staging not wired; run 'hero next install-hooks'")
 		case !preCommitHookInstalled(projectRoot):
 			issues++
 			fmt.Println("Pre-commit hook not installed:")
