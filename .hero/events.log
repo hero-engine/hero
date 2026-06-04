@@ -127,3 +127,4 @@
 {"ts":"2026-06-04T19:06:56.189396Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"handoff-captures-session-intent","message":"\"Handoff captures session intent, not just the last message\""}
 {"ts":"2026-06-04T19:06:56.189563Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"handoff-captures-session-intent","message":"status -\u003e completed"}
 {"ts":"2026-06-04T21:04:52.524175Z","type":"peer.call.invoked","agent":"hero","slug":"desktop-sidebar-mcp-not-running","message":"peer call spec-out mode=spec-out target=hero-code call_id=18b5fcb77271f5a89ca04c452c688f8c"}
+{"ts":"2026-06-04T21:14:52.581863Z","type":"peer.call.completed","agent":"hero","slug":"desktop-sidebar-mcp-not-running","message":"peer call failed: subagent timed out after 10m0s:  (call_id 18b5fcb77271f5a89ca04c452c688f8c)"}
