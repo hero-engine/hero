@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-04T06:04:35Z · 103 ready specs_
+_Generated: 2026-06-04T06:29:59Z · 102 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -234,35 +234,6 @@ Makes Hero always stage projected handoff files (NEXT.md, SNAPSHOT.md, next/*.md
 
 **Files:** `internal/cli/next_hooks.go:257-283`, `internal/cli/hook.go:94-128`, `internal/hooks/install.go:66-116`, `internal/cli/check.go:251-283`
 **Skip:** patching only the generic post-commit to stage (post-commit stages for the *next* commit — pre-commit consolidation is correct); depending on QUEUE.md existing (a sibling effort may drop it).
-
----
-
-## next-auto-emit-user-ask — "Auto-Emit UserAsk on End-of-Turn Checkpoint"
-_feature · planning · horizon: now_
-
-Makes the user's last ask land in the handoff automatically at end-of-turn, so
-`.hero/next/<user>.md` stops showing a stale ask (or the "none recorded"
-placeholder) unless the agent remembers to type `hero next ask`.
-
-**Status:** planning — spec just landed; transcript-parsing reuse confirmed
-available in `next_compact_handoff.go`. No code yet.
-
-**Pick up at:** add `lastUserAskFromTranscript` next to
-`firstUserAskFromTranscript` (clone the bounded scan, return the *last* user
-record instead of the first), then wire `autoEmitUserAsk(cmd.InOrStdin())` into
-`runNextCheckpoint` *before* `writeCheckpoint`'s projection so the recorded ask
-renders the same turn. Singleton supersession needs no handoff.go change.
-
-→ `.hero/planning/features/next-auto-emit-user-ask/spec.md`
-
-**Files:** `internal/cli/next_compact_handoff.go:580` (clone target),
-`internal/cli/checkpoint.go:64` (wire point),
-`internal/handoff/handoff.go:101` (RecordAsk, no change),
-`internal/projection/user_handoff.go:64` (render target),
-`internal/cli/next_compact_handoff_test.go:863` (test helpers)
-**Skip:** auto-deriving a *good* NextSuggestion — needs model judgment, keep the
-mechanical floor + agent ceiling. Don't touch SessionReflection. Don't change
-`firstUserAskFromTranscript` — compact-handoff depends on "first".
 
 ---
 

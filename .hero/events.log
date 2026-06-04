@@ -114,3 +114,5 @@
 {"ts":"2026-06-04T04:34:26.462687Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-snapshot-file-missing-merge-attribute","message":"status -\u003e completed"}
 {"ts":"2026-06-04T06:04:09.041419Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"e2e-handoff-continuity","message":"E2E Handoff Continuity — The Magic Guardrail"}
 {"ts":"2026-06-04T06:04:09.041512Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"e2e-handoff-continuity","message":"status -\u003e completed"}
+{"ts":"2026-06-04T06:28:46.984076Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"next-auto-emit-user-ask","message":"\"Auto-Emit UserAsk on End-of-Turn Checkpoint\""}
+{"ts":"2026-06-04T06:28:46.984174Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-auto-emit-user-ask","message":"status -\u003e completed"}

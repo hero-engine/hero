@@ -2,7 +2,7 @@
 title: "Auto-Emit UserAsk on End-of-Turn Checkpoint"
 slug: next-auto-emit-user-ask
 type: feature
-status: planning
+status: completed
 priority: high
 severity: high
 size: small
@@ -14,6 +14,7 @@ relates-to:
   - handoff-one-call-simplification
   - next-unconditional-commit-staging
 root_cause_class: design
+completed_at: 2026-06-04T06:28:45Z
 ---
 
 # Auto-Emit UserAsk on End-of-Turn Checkpoint
@@ -162,6 +163,26 @@ Boundaries below spell out what auto-emit explicitly does **not** do
 - THE SYSTEM SHALL leave `NextSuggestion` (floor + optional agent ceiling) and `SessionReflection` (agent-emitted) behavior unchanged.
 
 ## Changes
+
+> **Delivered** (files actually touched this delivery):
+> - `internal/cli/next_compact_handoff.go` — added `lastUserAskFromTranscript`
+>   + shared `scanUserAskFromTranscript(path, wantLast)` helper;
+>   `firstUserAskFromTranscript` now delegates to it (behavior unchanged).
+> - `internal/cli/checkpoint.go` — added `autoEmitUserAsk(io.Reader)`, wired
+>   into `runNextCheckpoint` before `writeCheckpoint`; added `handoff` import.
+> - `internal/cli/next_compact_handoff_test.go` — `lastUserAskFromTranscript`
+>   unit tests (last-wins, malformed, missing, empty-path, bounded-no-hang,
+>   truncate-at-cap).
+> - `internal/cli/checkpoint_test.go` — auto-emit integration tests
+>   (records+renders, no-payload no-op, singleton supersession,
+>   post-commit no-stdin path).
+> - `internal/cli/handoff_continuity_test.go` — new guardrail
+>   `Test_HandoffContinuity_CrossMachine_AutoEmit`; SEAM comment updated to
+>   point at it.
+> - `.claude/skills/next-handoff-emit/SKILL.md` — one-paragraph note that
+>   `UserAsk` is now auto-emitted (manual `hero next ask` is an override).
+> - No change to `internal/handoff/handoff.go` or
+>   `internal/projection/user_handoff.go` (as designed).
 
 1. **`internal/cli/next_compact_handoff.go` — add `lastUserAskFromTranscript`.**
    - Clone `firstUserAskFromTranscript` (`:580-636`) into a `last` variant: same
@@ -313,7 +334,7 @@ Makes the user's last ask land in the handoff automatically at end-of-turn, so
 `.hero/next/<user>.md` stops showing a stale ask (or the "none recorded"
 placeholder) unless the agent remembers to type `hero next ask`.
 
-**Status:** planning — spec just landed; transcript-parsing reuse confirmed
+**Status:** completed — delivered on `fix/next-team-mode-per-user-handoff` (audit SHIP, 8/8 ACs). autoEmitUserAsk wired into runNextCheckpoint before projection; lastUserAskFromTranscript added; continuity guardrail extended to prove auto-capture feeds the magic.
 available in `next_compact_handoff.go`. No code yet.
 
 **Pick up at:** add `lastUserAskFromTranscript` next to

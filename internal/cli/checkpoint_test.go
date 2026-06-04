@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/handoff"
 	"github.com/hero-engine/hero/internal/projection"
+	"github.com/spf13/cobra"
 )
 
 func TestWriteFileIfChangedSkipsIdenticalContent(t *testing.T) {
@@ -1044,4 +1046,230 @@ func mustStatModTime(t *testing.T, path string) time.Time {
 		t.Fatalf("Stat: %v", err)
 	}
 	return info.ModTime()
+}
+
+// --- auto-emit UserAsk on checkpoint (next-auto-emit-user-ask) ------------
+
+// newCheckpointCmd returns a cobra command wired to runNextCheckpoint
+// with the given stdin payload, so a test can drive the real Stop-hook
+// entry point (autoEmitUserAsk + writeCheckpoint) end-to-end.
+func newCheckpointCmd(stdin string) *cobra.Command {
+	checkpointQuiet = true
+	cmd := &cobra.Command{RunE: runNextCheckpoint}
+	cmd.SetIn(strings.NewReader(stdin))
+	cmd.SetOut(io.Discard)
+	cmd.SetErr(io.Discard)
+	return cmd
+}
+
+// autoEmitTeamCfg is the team-mode + projected config the auto-emit
+// integration tests share: user slug "alice", per-user file is the live
+// handoff target, projection on so .hero/next/<user>.md is rendered.
+func autoEmitTeamCfg() config.Config {
+	cfg := config.DefaultConfig()
+	cfg.Next = &config.NextConfig{Mode: "team", Projected: true}
+	cfg.Tracking = &config.TrackingConfig{DefaultAgent: "human/alice"}
+	return cfg
+}
+
+// currentAskCount returns how many CURRENT (valid_to IS NULL) UserAsk
+// nodes exist for the (user, repo, domain) singleton triple — the
+// supersession invariant is "exactly one."
+func currentAskCount(t *testing.T, heroDir, user, repoKey, domain string) int {
+	t.Helper()
+	store, err := graph.Open(heroDir)
+	if err != nil {
+		t.Fatalf("open graph for count: %v", err)
+	}
+	defer store.Close()
+	key := user + ":" + domain
+	row := store.DB().QueryRow(
+		`SELECT COUNT(*) FROM nodes
+		  WHERE type = ? AND key = ? AND repo = ? AND valid_to IS NULL`,
+		handoff.NodeUserAsk, key, repoKey,
+	)
+	var n int
+	if err := row.Scan(&n); err != nil {
+		t.Fatalf("scan ask count: %v", err)
+	}
+	return n
+}
+
+// Test_autoEmitUserAsk_RecordsAndRenders is AC-1 + AC-2: a checkpoint
+// carrying a Stop-hook stdin payload records the transcript's LAST user
+// message as a UserAsk (no manual `hero next ask`), and that ask renders
+// into .hero/next/<user>.md in the SAME checkpoint pass.
+func Test_autoEmitUserAsk_RecordsAndRenders(t *testing.T) {
+	env := newTestEnv(t)
+	cfg := autoEmitTeamCfg()
+	if err := cfg.Save(env.dir); err != nil {
+		t.Fatalf("save cfg: %v", err)
+	}
+
+	const lastMsg = "AUTO_EMIT please wire the checkpoint to the transcript"
+	tp := writeTranscript(t, env.dir,
+		`{"type":"user","message":{"role":"user","content":"opening prompt"}}`+"\n"+
+			`{"type":"assistant","message":{"role":"assistant","content":"ok"}}`+"\n"+
+			`{"type":"user","message":{"role":"user","content":"`+lastMsg+`"}}`+"\n")
+	payload := `{"session_id":"sess-auto","transcript_path":"` + tp + `"}`
+
+	if err := newCheckpointCmd(payload).Execute(); err != nil {
+		t.Fatalf("checkpoint with payload: %v", err)
+	}
+
+	// AC-1: the graph carries the LAST user message.
+	repoKey := gitutil.RepoKey(env.dir)
+	domain := graph.DomainFor(cfg, graph.IntrinsicActive)
+	store, err := graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatalf("open graph: %v", err)
+	}
+	ask, err := handoff.LatestAsk(store, "alice", repoKey, domain)
+	store.Close()
+	if err != nil {
+		t.Fatalf("LatestAsk: %v", err)
+	}
+	if ask == nil || ask.Text != lastMsg {
+		t.Fatalf("auto-emitted ask = %+v; want text %q", ask, lastMsg)
+	}
+	if ask.SessionID != "sess-auto" {
+		t.Errorf("auto-emitted ask SessionID = %q; want %q", ask.SessionID, "sess-auto")
+	}
+
+	// AC-2: the per-user briefing rendered the ask this same pass — no
+	// placeholder.
+	body, err := os.ReadFile(filepath.Join(env.heroDir, nextDirName, "alice.md"))
+	if err != nil {
+		t.Fatalf("read user handoff file: %v", err)
+	}
+	if !strings.Contains(string(body), lastMsg) {
+		t.Errorf("user handoff file missing auto-emitted ask:\n%s", body)
+	}
+	if strings.Contains(string(body), "none recorded") {
+		t.Errorf("user handoff file still shows the placeholder:\n%s", body)
+	}
+}
+
+// Test_autoEmitUserAsk_NoPayloadIsNoOp is AC-3: a checkpoint with empty
+// stdin (no transcript_path — the other-harness / git post-commit shape)
+// is a clean no-op for auto-emit: no error, the checkpoint succeeds, any
+// pre-existing UserAsk is untouched, and no new node is created.
+func Test_autoEmitUserAsk_NoPayloadIsNoOp(t *testing.T) {
+	env := newTestEnv(t)
+	cfg := autoEmitTeamCfg()
+	if err := cfg.Save(env.dir); err != nil {
+		t.Fatalf("save cfg: %v", err)
+	}
+
+	repoKey := gitutil.RepoKey(env.dir)
+	domain := graph.DomainFor(cfg, graph.IntrinsicActive)
+
+	// Pre-existing ask the no-op must preserve verbatim.
+	const preExisting = "PRE_EXISTING ask that the no-op must not disturb"
+	store, err := graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatalf("open graph: %v", err)
+	}
+	if err := handoff.RecordAsk(store, repoKey, handoff.UserAsk{
+		User: "alice", Domain: domain, Text: preExisting,
+	}); err != nil {
+		t.Fatalf("seed ask: %v", err)
+	}
+	store.Close()
+
+	before := currentAskCount(t, env.heroDir, "alice", repoKey, domain)
+
+	// Empty stdin — no transcript_path.
+	if err := newCheckpointCmd("").Execute(); err != nil {
+		t.Fatalf("no-payload checkpoint must succeed, got: %v", err)
+	}
+
+	after := currentAskCount(t, env.heroDir, "alice", repoKey, domain)
+	if after != before {
+		t.Errorf("no-op created/removed a node: before=%d after=%d", before, after)
+	}
+
+	store, err = graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatalf("reopen graph: %v", err)
+	}
+	ask, _ := handoff.LatestAsk(store, "alice", repoKey, domain)
+	store.Close()
+	if ask == nil || ask.Text != preExisting {
+		t.Errorf("pre-existing ask was disturbed by the no-op: got %+v want %q", ask, preExisting)
+	}
+}
+
+// Test_autoEmitUserAsk_SingletonSupersession is AC-6: a manual RecordAsk
+// followed by an auto-emit of a DIFFERENT last message leaves exactly one
+// current (valid_to IS NULL) UserAsk node for the singleton triple,
+// carrying the auto-emitted text.
+func Test_autoEmitUserAsk_SingletonSupersession(t *testing.T) {
+	env := newTestEnv(t)
+	cfg := autoEmitTeamCfg()
+	if err := cfg.Save(env.dir); err != nil {
+		t.Fatalf("save cfg: %v", err)
+	}
+
+	repoKey := gitutil.RepoKey(env.dir)
+	domain := graph.DomainFor(cfg, graph.IntrinsicActive)
+
+	// Manual ask first (e.g. the agent ran `hero next ask` this turn).
+	store, err := graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatalf("open graph: %v", err)
+	}
+	if err := handoff.RecordAsk(store, repoKey, handoff.UserAsk{
+		User: "alice", Domain: domain, Text: "MANUAL the agent typed this",
+	}); err != nil {
+		t.Fatalf("manual record: %v", err)
+	}
+	store.Close()
+
+	const autoMsg = "AUTO_SUPERSEDE the transcript's last message overrides"
+	tp := writeTranscript(t, env.dir,
+		`{"type":"user","message":{"role":"user","content":"`+autoMsg+`"}}`+"\n")
+	payload := `{"session_id":"sess-supersede","transcript_path":"` + tp + `"}`
+
+	if err := newCheckpointCmd(payload).Execute(); err != nil {
+		t.Fatalf("checkpoint: %v", err)
+	}
+
+	// Exactly one current node, carrying the auto-emitted text.
+	if n := currentAskCount(t, env.heroDir, "alice", repoKey, domain); n != 1 {
+		t.Errorf("current UserAsk count = %d; want exactly 1 (singleton supersession)", n)
+	}
+	store, err = graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatalf("reopen graph: %v", err)
+	}
+	ask, _ := handoff.LatestAsk(store, "alice", repoKey, domain)
+	store.Close()
+	if ask == nil || ask.Text != autoMsg {
+		t.Errorf("current ask = %+v; want auto-emitted text %q", ask, autoMsg)
+	}
+}
+
+// Test_autoEmitUserAsk_PostCommitNoStdinPath is the regression guard for
+// the git post-commit fallback (hook.go calls writeCheckpoint() with no
+// stdin available). The checkpoint path must still succeed; auto-emit
+// simply never fires. We call writeCheckpoint() directly — the exact
+// entry point the post-commit hook uses — and assert no error and no
+// spurious UserAsk.
+func Test_autoEmitUserAsk_PostCommitNoStdinPath(t *testing.T) {
+	env := newTestEnv(t)
+	cfg := autoEmitTeamCfg()
+	if err := cfg.Save(env.dir); err != nil {
+		t.Fatalf("save cfg: %v", err)
+	}
+
+	if _, err := writeCheckpoint(); err != nil {
+		t.Fatalf("post-commit writeCheckpoint() path must succeed with no stdin, got: %v", err)
+	}
+
+	repoKey := gitutil.RepoKey(env.dir)
+	domain := graph.DomainFor(cfg, graph.IntrinsicActive)
+	if n := currentAskCount(t, env.heroDir, "alice", repoKey, domain); n != 0 {
+		t.Errorf("post-commit path created a UserAsk without a transcript: count=%d", n)
+	}
 }
