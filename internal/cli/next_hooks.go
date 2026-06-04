@@ -24,6 +24,29 @@ const (
 	mergeDriverName = "hero-next"
 )
 
+// handoffFilePaths is the single source of truth for the projected
+// handoff files that must (a) travel with every commit via the
+// pre-commit staging `git add` and (b) be declared merge=union in
+// .gitattributes. Both lists are derived from this slice so they can
+// never drift apart again — the historical SNAPSHOT.md gap existed
+// precisely because the two lists were maintained independently.
+//
+// Order is significant only for stable output (tests assert exact
+// pathspec strings). The `.hero/next/*.md` glob matches the per-user
+// handoff files (e.g. `alice.md`). It also expands to match
+// `alice.local.md`, but those are NEVER staged: `.hero/next/*.local.md`
+// is gitignored, and `git add` skips ignored paths (no `-f`). So
+// gitignore — not the glob — is what keeps the local-only machine-state
+// files out of commits. `.hero/QUEUE.md` may be absent (a sibling effort
+// may drop it as a file); the per-path staging loop swallows missing
+// paths via `2>/dev/null || true`, so its absence is a safe no-op.
+var handoffFilePaths = []string{
+	".hero/NEXT.md",
+	".hero/next/*.md",
+	".hero/SNAPSHOT.md",
+	".hero/QUEUE.md",
+}
+
 var nextInstallHooksCmd = &cobra.Command{
 	Use:   "install-hooks",
 	Short: "Install git hooks + .gitattributes merge strategy for projection-based NEXT files",
@@ -91,6 +114,34 @@ func runNextInstallHooks(cmd *cobra.Command, args []string) error {
 func preCommitHookInstalled(projectRoot string) bool {
 	_, err := currentPreCommitManagedBlock(projectRoot)
 	return err == nil
+}
+
+// preCommitHasHeroHookButNoStaging reports whether the installed
+// .git/hooks/pre-commit contains SOME Hero-managed content (the generic
+// installer's `# Hero git hook` marker) but lacks the hero-next staging
+// managed block — i.e. a repo that fires `hero hook pre-commit` on every
+// commit but never stages the projected handoff files. This is the
+// distinct misconfiguration `hero check` flags: the projecting-but-not-
+// staging gap. Returns false when there is no Hero pre-commit hook at all
+// (that case is the plain "not installed" warning) or when the staging
+// block is present (correctly wired).
+func preCommitHasHeroHookButNoStaging(projectRoot string) bool {
+	if preCommitHookInstalled(projectRoot) {
+		// Staging block present — correctly wired, not a misconfig.
+		return false
+	}
+	gitDir, err := resolveGitDir(projectRoot)
+	if err != nil {
+		return false
+	}
+	body, err := os.ReadFile(filepath.Join(gitDir, "hooks", "pre-commit"))
+	if err != nil {
+		return false
+	}
+	// genericHeroHookMarker mirrors internal/hooks.heroMarker ("# Hero
+	// git hook"); duplicated as a literal here to avoid a CLI→hooks
+	// dependency just for a substring check.
+	return strings.Contains(string(body), "# Hero git hook")
 }
 
 // hookInstallOptedOut reports whether the user has explicitly opted
@@ -265,11 +316,20 @@ func hookScript(kind string) string {
   hero index --if-stale -q || true`
 		queueRefresh = `
   hero queue write -q || true`
-		stage = `
-  # Re-stage projected files so they travel with the commit. The
-  # 2>/dev/null || true swallows the case where a path doesn't exist
-  # yet (fresh repo, solo mode, no per-user file).
-  git add -- .hero/NEXT.md .hero/next/*.md .hero/QUEUE.md 2>/dev/null || true`
+		// Stage each projected handoff path independently. A single
+		// combined `git add -- a b c` aborts the WHOLE add (and stages
+		// nothing) the moment any pathspec matches no file — e.g. a
+		// dropped QUEUE.md or an empty `.hero/next/*.md` glob in solo
+		// mode. Looping per-path isolates that failure so the paths that
+		// DO exist still travel. The 2>/dev/null || true swallows the
+		// no-match case per path. Spec: next-unconditional-commit-staging.
+		stage = fmt.Sprintf(`
+  # Re-stage projected handoff files so they travel with the commit,
+  # one path at a time so a missing path (dropped QUEUE.md, no per-user
+  # file in solo mode) doesn't abort staging of the others.
+  for p in %s; do
+    git add -- "$p" 2>/dev/null || true
+  done`, strings.Join(handoffFilePaths, " "))
 	}
 	return fmt.Sprintf(`%s
 # Refresh projected NEXT files, sync the search index against any
@@ -548,12 +608,12 @@ func updateGitAttributes(projectRoot string) error {
 	path := filepath.Join(projectRoot, ".gitattributes")
 	existing, _ := os.ReadFile(path)
 
-	managed := fmt.Sprintf(`%s
-.hero/next/*.md merge=union
-.hero/NEXT.md merge=union
-.hero/QUEUE.md merge=union
-.hero/SNAPSHOT.md merge=union
-%s`, gaMarkerStart, gaMarkerEnd)
+	var lines strings.Builder
+	for _, p := range handoffFilePaths {
+		lines.WriteString(p)
+		lines.WriteString(" merge=union\n")
+	}
+	managed := fmt.Sprintf("%s\n%s%s", gaMarkerStart, lines.String(), gaMarkerEnd)
 
 	body := mergeMarkerBlock(string(existing), gaMarkerStart, gaMarkerEnd, managed)
 	return os.WriteFile(path, []byte(body), 0o644)

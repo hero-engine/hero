@@ -2,7 +2,7 @@
 title: "Handoff-file staging is opt-in and lives in only one of two hook installers"
 slug: next-unconditional-commit-staging
 type: bug
-status: planning
+status: completed
 severity: high
 priority: high
 size: small
@@ -15,6 +15,7 @@ relates-to:
   - handoff-one-call-simplification
   - next-auto-emit-user-ask
   - pre-commit-auto-stage-next
+completed_at: 2026-06-04T13:05:07Z
 ---
 
 # Handoff-file staging is opt-in and lives in only one of two hook installers
@@ -216,6 +217,17 @@ Make the next-hooks installer (the one that already stages) the single source of
 3. **Extend `hero check` staging detector (`internal/cli/check.go:251-283`).** Today it warns when the next-hooks managed block is absent. Strengthen the message and detection so a repo with *some* Hero pre-commit hook but *no staging block* is flagged distinctly: "Hero pre-commit hook present but projected handoff files are not staged — they won't travel with commits." Detect by checking whether the installed pre-commit content contains the staging `git add` of handoff files (or the next-hooks managed marker), not merely whether any Hero hook exists.
 
 4. **Drop / re-scope the backstop rule (`internal/install/agents_md.go:452`).** Once staging is unconditional, the manual hand-staging instruction is redundant for correctly-installed repos. Keep a one-line note that the staging hook is what guarantees travel and `hero check` flags when it's missing; remove the framing that hand-staging is the routine expectation. (Optional, low-risk; coordinate with `next-as-projection` doc owners.)
+
+## Delivery
+
+Implemented per Option (b) + the SNAPSHOT/single-list fix. Files changed:
+
+- `internal/cli/next_hooks.go` — added package-level `handoffFilePaths` single source of truth; `hookScript("pre-commit")` and `updateGitAttributes` both derive from it (adds `.hero/SNAPSHOT.md`). Staging rewritten as a **per-path loop** (`for p in …; do git add -- "$p" 2>/dev/null || true; done`) because a single combined `git add -- a b c` aborts the whole add and stages **nothing** when any pathspec matches no file (dropped QUEUE.md / empty `next/*.md` glob) — the latent defect that broke the missing-QUEUE AC. Added `preCommitHasHeroHookButNoStaging` detector.
+- `internal/cli/hooks.go` — `runHooksInstall` now also calls `installNextHooksQuiet(projectRoot)` so the generic `hero hooks install` surface can never produce hooks-without-staging. The two managed blocks coexist; uninstall already strips both.
+- `internal/cli/check.go` — added a distinct `hero check` warning for "Hero pre-commit hook present but handoff-file staging not wired," naming the invariant and the single fix command.
+- `internal/install/agents_md.go` — re-scoped the manual-staging backstop rule (Change 4, done): staging is now automatic on every install path; hand-staging is a backstop only when `hero check` flags it.
+- `domains/engineering/AGENTS.md` — regenerated golden pack file to match the re-scoped backstop rule (via `HERO_REGEN_PACK_AGENTS=1`).
+- Tests: `internal/cli/next_hooks_test.go` (SNAPSHOT staging + single-list invariant), `internal/cli/check_test.go` (misconfig flag), `internal/cli/hooks_staging_integration_test.go` (NEW — default-install staging, **generic-install staging regression**, gitignored-never-staged, missing-QUEUE no-op).
 
 ## Test Plan
 
