@@ -2,7 +2,7 @@
 title: Resume Brief Surfaces Handoff — Close the Load Half of the Magic
 slug: resume-brief-surfaces-handoff
 type: feature
-status: planning
+status: completed
 priority: high
 severity: high
 size: small
@@ -15,6 +15,7 @@ relates-to:
   - next-auto-emit-user-ask
   - e2e-handoff-continuity
   - next-as-projection
+completed_at: 2026-06-04T14:42:25Z
 ---
 
 # Resume Brief Surfaces Handoff — Close the Load Half of the Magic
@@ -144,6 +145,16 @@ Wire the handoff key through `digest.Options`, add a `handoffSection`, and place
 
 Regression: the other brief sections, budget trimming, and `--json` output must be unaffected;
 run the full `internal/digest` and `internal/cli` suites.
+
+## Delivered
+
+Files touched (2026-06-04):
+- `internal/digest/digest.go` — added `User`/`Domain` to `Options`; added `Handoff` budget slice to `budgetPlan`/`planFor`; added `handoffSection` (title "Where you left off") and placed it in `Generate` just below Who-you-are, above In-flight; best-effort on error, omitted when empty or `User==""`.
+- `internal/cli/brief.go` — `runResume` now populates `User: nextUserSlug(cfg)` and `Domain: graph.DomainFor(cfg, graph.IntrinsicActive)` in `digest.Options`.
+- `internal/digest/handoff_section_test.go` — new: present-with-text + ordered-above-in-flight, omitted-when-empty (no nodes / empty user), keyed-correctly (different user / different domain), best-effort-on-error (closed store).
+- `internal/cli/resume_handoff_test.go` — new: `hero resume` integration; drives `runResume`, asserts the rendered markdown carries the last ask + suggestion.
+- `internal/cli/handoff_continuity_test.go` — strengthened: B's cross-machine `digest.Generate` brief now asserted to CONTAIN A's ask + suggestion (base + AutoEmit variants); header design-note updated to reflect the brief now carries handoff content.
+- `.hero/planning/features/handoff-one-call-simplification/spec.md` — updated the e2e-handoff-continuity finding note to RESOLVED.
 
 ## Boundaries
 

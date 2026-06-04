@@ -34,13 +34,8 @@ import (
 //
 // --- A note on the real start-of-turn load surface ---------------
 //
-// The spec's design sketch names `digest.Generate` (the `hero resume`
-// path) as the thing to assert handoff content against. Reading the
-// code shows that is not where per-user handoff content surfaces:
-// `digest.Generate`'s brief carries Mission / In-flight / Just-changed
-// / Tried / Blocked / Nearby — it does NOT query the UserAsk /
-// NextSuggestion / SessionReflection singletons. The handoff content a
-// fresh session actually consumes surfaces through two real paths:
+// The handoff content a fresh session consumes surfaces through THREE
+// real paths, and the guardrail now asserts against all three:
 //
 //   1. The graph-query surface the `hero next ask/suggest/reflection`
 //      commands read: handoff.LatestAsk / projection.PickUserSuggestion
@@ -49,16 +44,19 @@ import (
 //   2. The re-projected `.hero/next/<user>.md`, rendered from the graph
 //      by writeUserHandoffFile → projection.UserHandoffMD. This is the
 //      personal briefing a fresh session opens.
+//   3. The `hero resume` brief itself. As of
+//      resume-brief-surfaces-handoff, `digest.Generate` carries a
+//      "Where you left off" section (digest.handoffSection) that reads
+//      the UserAsk / NextSuggestion / SessionReflection singletons keyed
+//      by (user, repo, domain). The brief previously could NOT carry
+//      this content — that gap is closed, so the guardrail now asserts
+//      B's brief CONTAINS A's ask and suggestion, not merely that
+//      digest.Generate runs without error.
 //
-// So the guardrail asserts handoff reconstruction against BOTH of those
-// real surfaces, and ALSO runs `digest.Generate` on the rehydrated B
-// graph to prove the actual `hero resume` load path executes end-to-end
-// against the traveled-and-ingested state (it must not error, and must
-// see B as a populated workspace). Asserting against the genuine
-// consumption surfaces — rather than the brief, which structurally
-// cannot carry this content today — is what makes the guardrail honest:
-// it tracks the path a fresh session takes, and it bites when travel
-// breaks (see Test_HandoffContinuity_CrossMachine_GuardrailBites).
+// Asserting against all three genuine consumption surfaces is what makes
+// the guardrail honest: it tracks the paths a fresh session takes, and
+// it bites when travel breaks (see
+// Test_HandoffContinuity_CrossMachine_GuardrailBites).
 
 // seededHandoff is the distinct, greppable text a "machine A" turn
 // persists. Each string is unique so an assertion can prove the exact
@@ -260,23 +258,33 @@ func Test_HandoffContinuity_CrossMachine(t *testing.T) {
 	storeB.Close()
 
 	// --- Prove the real `hero resume` load path runs end-to-end on the
-	// rehydrated B graph. The brief structurally does not carry handoff
-	// singletons (see file header), but it MUST generate without error
-	// against the traveled-and-ingested state — that is the load a fresh
-	// session performs first.
+	// rehydrated B graph AND now carries A's handoff content. The brief
+	// surfaces the per-user handoff singletons through digest's
+	// handoffSection (resume-brief-surfaces-handoff), keyed by the same
+	// (user, repo, domain) triple — so B's fresh-session brief must
+	// contain A's ask and suggestion, not merely generate without error.
 	storeB, err = graph.Open(envB.heroDir)
 	if err != nil {
 		t.Fatalf("reopen B graph: %v", err)
 	}
-	if _, err := digest.Generate(storeB, digest.Options{
+	briefB, err := digest.Generate(storeB, digest.Options{
 		RepoKey:     repoKeyB,
 		Branch:      gitutil.CurrentBranch(envB.dir),
 		AuthorEmail: "alice@example.com",
-	}); err != nil {
+		User:        "alice",
+		Domain:      domainB,
+	})
+	if err != nil {
 		storeB.Close()
 		t.Fatalf("hero resume load path (digest.Generate) failed on B: %v", err)
 	}
 	storeB.Close()
+	mdB := briefB.Markdown()
+	for _, want := range []string{s.ask, s.suggestion} {
+		if !strings.Contains(mdB, want) {
+			t.Errorf("B's resume brief did not carry A's handoff content %q:\n%s", want, mdB)
+		}
+	}
 
 	// --- The assertion that bites: B reconstructed A's context from the
 	// committed file alone.
@@ -579,12 +587,32 @@ func Test_HandoffContinuity_CrossMachine_AutoEmit(t *testing.T) {
 		User:    "alice",
 		RepoKey: repoKeyB,
 	})
-	storeB.Close()
 	if err != nil {
+		storeB.Close()
 		t.Fatalf("re-project B briefing: %v", err)
 	}
 	if !strings.Contains(briefing, autoAsk) {
+		storeB.Close()
 		t.Errorf("B re-projected briefing missing auto-emitted ask:\n%s", briefing)
+	}
+
+	// And the real `hero resume` brief — the surface the model actually
+	// reads at session start — now carries the auto-emitted ask too
+	// (resume-brief-surfaces-handoff). This is the end of the loop:
+	// auto-capture → travel → ingest → brief.
+	briefB, err := digest.Generate(storeB, digest.Options{
+		RepoKey:     repoKeyB,
+		Branch:      gitutil.CurrentBranch(envB.dir),
+		AuthorEmail: "alice@example.com",
+		User:        "alice",
+		Domain:      domainB,
+	})
+	storeB.Close()
+	if err != nil {
+		t.Fatalf("hero resume load path (digest.Generate) failed on B: %v", err)
+	}
+	if !strings.Contains(briefB.Markdown(), autoAsk) {
+		t.Errorf("B's resume brief missing the auto-emitted ask:\n%s", briefB.Markdown())
 	}
 }
 

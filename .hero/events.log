@@ -118,3 +118,5 @@
 {"ts":"2026-06-04T06:28:46.984174Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-auto-emit-user-ask","message":"status -\u003e completed"}
 {"ts":"2026-06-04T13:05:08.00161Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"next-unconditional-commit-staging","message":"\"Handoff-file staging is opt-in and lives in only one of two hook installers\""}
 {"ts":"2026-06-04T13:05:08.001709Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-unconditional-commit-staging","message":"status -\u003e completed"}
+{"ts":"2026-06-04T14:42:26.08602Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"resume-brief-surfaces-handoff","message":"Resume Brief Surfaces Handoff — Close the Load Half of the Magic"}
+{"ts":"2026-06-04T14:42:26.086109Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"resume-brief-surfaces-handoff","message":"status -\u003e completed"}

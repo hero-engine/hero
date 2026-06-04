@@ -94,6 +94,8 @@ func runResume(cmd *cobra.Command, args []string) error {
 		RepoKey:     gitutil.RepoKey(projectRoot),
 		Branch:      gitutil.CurrentBranch(projectRoot),
 		AuthorEmail: email,
+		User:        nextUserSlug(cfg),
+		Domain:      graph.DomainFor(cfg, graph.IntrinsicActive),
 		FocusFiles:  focus,
 		TokenBudget: resumeBudget,
 		SessionID:   readSessionFromExistingNext(heroDir),

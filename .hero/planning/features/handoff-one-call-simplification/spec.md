@@ -143,15 +143,18 @@ split is **projection vs. emission**: checkpoint projects but never emits.
   compact-handoff-kickoff into one.
 
 > **Finding from the [e2e-handoff-continuity](../../specs/e2e-handoff-continuity/spec.md) guardrail
-> (2026-06-04):** the `hero resume` brief (`digest.Generate`) does **NOT** currently surface the
-> handoff singletons (last ask / suggested-next / reflections) — it carries Mission / In-flight /
-> Just-changed / Tried / Blocked. The ask/suggestion content is reachable only via `hero next`
-> and the projected `.hero/next/<user>.md`. So "one start-of-turn `resume` that emits the
-> briefing" is not just a *consolidation* — the resume brief must be **extended** to carry the
-> handoff content. This is a real gap in the *load* half of the magic: the auto-fired session-start
-> path doesn't actually surface "what you last asked / what's next." The guardrail asserts against
-> the genuine handoff surfaces (graph queries + re-projected file), so it stays honest regardless,
-> but the Phase-3 `resume` work owns closing this gap.
+> (2026-06-04) — RESOLVED by [resume-brief-surfaces-handoff](resume-brief-surfaces-handoff/spec.md):**
+> the `hero resume` brief (`digest.Generate`) previously did **NOT** surface the handoff singletons
+> (last ask / suggested-next / reflections) — it carried Mission / In-flight / Just-changed /
+> Tried / Blocked only, and the ask/suggestion content was reachable only via `hero next` and the
+> projected `.hero/next/<user>.md`. This was a real gap in the *load* half of the magic. It is now
+> closed: `digest.Options` carries `User`/`Domain`, and `digest.handoffSection` emits a "Where you
+> left off" block (last ask / suggested-next / recent reflections) placed just below Who-you-are and
+> above In-flight, omitted when empty and best-effort on read error. The continuity guardrail was
+> strengthened to assert B's cross-machine brief now **contains** A's ask and suggestion (both the
+> manual-seed and AutoEmit variants), in addition to the graph-query + re-projected-file surfaces.
+> The remaining Phase-3 work is the broader *consolidation* of `ingest`/`resume`/`prime` into one
+> call — not the load-content gap, which this slice closed.
 
 **Travel — one unconditional pre-commit hook,** folded into the single default installer:
 `git add` the projected tracked files so "hooks installed" ⟹ "handoff travels."
