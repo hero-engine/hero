@@ -2,17 +2,17 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-04T18:18:02Z · projected from 305 source nodes_
+_Last refreshed: 2026-06-04T19:58:55Z · projected from 305 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | <1m ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 1h ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | building | domains/engineering/ | 3d ago | spec-types-cache-frontmatter-empty |
-| domains/pm | concept | domains/pm/ | 16d ago | — |
+| domains/pm | concept | domains/pm/ | 17d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 3d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
@@ -48,7 +48,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — resume-brief-missing-project-context, cross-machine-handoff-slug-mismatch, resume-brief-surfaces-handoff, next-unconditional-commit-staging, e2e-handoff-continuity, next-snapshot-file-missing-merge-attribute, next-merge-driver-not-portable, next-projection-gate-punts-migration-to-user, next-team-mode-per-user-handoff-unmaintained, hero-mcp-orphan-no-parent-liveness, roadmap-shape
+- **(unassigned)** — handoff-captures-session-intent, resume-brief-missing-project-context, cross-machine-handoff-slug-mismatch, resume-brief-surfaces-handoff, next-unconditional-commit-staging, e2e-handoff-continuity, next-snapshot-file-missing-merge-attribute, next-merge-driver-not-portable, next-projection-gate-punts-migration-to-user, next-team-mode-per-user-handoff-unmaintained, hero-mcp-orphan-no-parent-liveness
 - **core** — next-auto-emit-user-ask
 
 ## Next up across surfaces
@@ -62,7 +62,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Open risks & blockers
 
 - **Blocked specs (14):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `e2e-traversal` (waits on traversal-queries); `embedded-inference` (waits on master-ingest-restore); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection); `traversal-queries` (waits on master-ingest-restore); `unified-retrieval-layer` (waits on master-ingest-restore).
-- **Stale-in-flight (21):** `hero-landing-page` (16d), `hero-sales` (16d), `vocabulary-resolve-misses-methodology-derivation` (16d), `agent-outposts` (16d), `unified-search` (16d), `cross-repo-peering` (16d), `e2e-discovery` (16d), `e2e-traversal` (16d), `e2e-validation` (16d), `graph-conflict-detection` (16d), `spec-types-cache-frontmatter-empty` (16d), `hero-team-server` (16d), `hero-local-merge-missing-dialect-fields` (16d), `master-ingest-restore` (16d), `monorepo-satellite-installs` (16d), `per-feature-smoke-coverage` (16d), `spec-status-integrity` (16d), `traversal-queries` (16d), `tripwire-system` (16d), `unified-retrieval-layer` (16d), `compact-handoff-test-coverage` (14d).
+- **Stale-in-flight (21):** `hero-landing-page` (17d), `spec-status-integrity` (17d), `vocabulary-resolve-misses-methodology-derivation` (17d), `unified-search` (17d), `unified-retrieval-layer` (17d), `cross-repo-peering` (17d), `e2e-discovery` (17d), `e2e-traversal` (17d), `e2e-validation` (17d), `graph-conflict-detection` (17d), `spec-types-cache-frontmatter-empty` (17d), `tripwire-system` (17d), `hero-local-merge-missing-dialect-fields` (17d), `master-ingest-restore` (17d), `monorepo-satellite-installs` (17d), `per-feature-smoke-coverage` (17d), `traversal-queries` (17d), `hero-team-server` (16d), `hero-sales` (16d), `agent-outposts` (16d), `compact-handoff-test-coverage` (14d).
 - **Aged open bugs (3):** `hero-workspace-not-self-describing` (open 23d), `scan-enrichment-unbounded-loop` (open 23d), `scan-test-detection-misses-spock-vitest` (open 23d).
 - **Unassigned specs (140) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
