@@ -106,3 +106,5 @@
 {"ts":"2026-06-03T03:39:56.592954Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-mcp-orphan-no-parent-liveness","message":"status -\u003e completed"}
 {"ts":"2026-06-04T03:02:47.381911Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"next-team-mode-per-user-handoff-unmaintained","message":"Team-mode NEXT handoff is half-built — per-user .hero/next/\u003cuser\u003e.md is neither projected nor migrated"}
 {"ts":"2026-06-04T03:02:47.382014Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-team-mode-per-user-handoff-unmaintained","message":"status -\u003e completed"}
+{"ts":"2026-06-04T03:19:55.635525Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"next-projection-gate-punts-migration-to-user","message":"NEXT-projection migration gate punts migration to the user instead of doing it automatically"}
+{"ts":"2026-06-04T03:19:55.635645Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-projection-gate-punts-migration-to-user","message":"status -\u003e completed"}

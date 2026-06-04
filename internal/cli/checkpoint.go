@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -127,19 +128,35 @@ func writeCheckpoint() (string, error) {
 	// briefing content within a single checkpoint.
 	sharedNextPath := filepath.Join(heroDir, nextFileName)
 
-	// Pre-flight migration gate (AC-14 of next-as-projection): refuse
-	// to overwrite NEXT.md when the repo hasn't been migrated to
-	// projection mode AND the existing file carries legacy content.
-	// Without this gate, the legacy write path silently rewrites the
-	// file with a placeholder, losing hand-authored sections that
-	// `hero next migrate-to-projection` would have ingested into the
-	// graph as durable nodes.
+	// Pre-flight migration gate (revises AC-14 of next-as-projection):
+	// when the repo hasn't been migrated to projection mode AND the
+	// existing file carries legacy hand-authored content, auto-migrate
+	// silently rather than refusing. The migration captures the legacy
+	// body as a durable Note, ingests structured fields into the graph,
+	// and flips next.projected — there is no human judgment required, so
+	// Hero does the transition itself instead of punting a CLI
+	// incantation back to the user.
+	//
+	// On migration FAILURE we keep the exact no-clobber safety the
+	// original gate protected: NEXT.md is left byte-for-byte untouched
+	// (never the nextPlaceholder overwrite), next.projected stays false,
+	// and the user gets an actionable, human message.
 	if !cfg.NextProjected() {
 		if reason := detectUnmigratedNextMD(nextPath); reason != "" {
-			return "", fmt.Errorf(
-				"unmigrated NEXT.md detected (%s) — run `hero next migrate-to-projection` first",
-				reason,
-			)
+			if err := migrateToProjection(projectRoot, cfg, io.Discard); err != nil {
+				return "", fmt.Errorf(
+					"automatic NEXT.md migration failed (%s): %w — your NEXT.md was left untouched; "+
+						"run `hero next migrate-to-projection` to retry or inspect the error",
+					reason, err,
+				)
+			}
+			// Reload config so the rest of writeCheckpoint sees
+			// next.projected == true and takes the projection path
+			// (which regenerates NEXT.md from the graph, now including
+			// the just-ingested content).
+			if reloaded, lerr := config.Load(projectRoot); lerr == nil {
+				cfg = reloaded
+			}
 		}
 	}
 

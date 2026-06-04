@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-04T03:03:43Z · projected from 295 source nodes_
+_Last refreshed: 2026-06-04T03:20:08Z · projected from 295 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 2d ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 3m ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | building | domains/engineering/ | 2d ago | spec-types-cache-frontmatter-empty |
@@ -47,9 +47,9 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — next-team-mode-per-user-handoff-unmaintained, hero-mcp-orphan-no-parent-liveness, roadmap-shape, roadmap-review-ambient-surfacing, multi-spec-design-routing, roadmap-review, spec-size-and-promotion-nudge, deliver-stamps-completed-at
+- **(unassigned)** — next-projection-gate-punts-migration-to-user, next-team-mode-per-user-handoff-unmaintained, hero-mcp-orphan-no-parent-liveness, roadmap-shape, roadmap-review-ambient-surfacing, multi-spec-design-routing, roadmap-review, spec-size-and-promotion-nudge, deliver-stamps-completed-at
 - **core** — tracker-update-size
-- **domains/engineering** — native-mockup-rendering, mockup-renderer-selection-swiftui-bias
+- **domains/engineering** — native-mockup-rendering
 - **serve** — size-drift-actionable-output
 
 ## Next up across surfaces

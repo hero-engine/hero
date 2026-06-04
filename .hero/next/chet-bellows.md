@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-04T03:03:43Z
+updated: 2026-06-04T03:04:40Z
 repo: hero-engine/hero
 ---
 
@@ -12,7 +12,7 @@ repo: hero-engine/hero
 
 ## Suggested next prompt
 
-> Open a PR for branch fix/mcp-orphan-parent-liveness (mcp orphan watchdog), then add the e2e reparent->exit smoke test to the e2e-validation suite — the one deferred coverage gap.
+> Deliver next-projection-gate-punts-migration-to-user — now unblocked. The team-mode fix made next_migrate.go:55 mode-aware (resolveNextPath), which was the gate spec's deferred Secondary Defect 1. The gate spec's auto-migration helper should call into that mode-aware path. This is the original user-facing bug (the 'run hero next migrate-to-projection first' warning).
 
 ## Recent reflections
 

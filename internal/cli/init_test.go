@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/hero-engine/hero/internal/config"
 )
 
 func TestInitCreatesDirectories(t *testing.T) {
@@ -75,6 +77,35 @@ func TestInitWritesHeroJSON(t *testing.T) {
 	}
 	if !strings.Contains(content, `"stale_days": 14`) {
 		t.Error("hero.json missing stale_days default")
+	}
+}
+
+// TestInitBornProjected pins AC-B (born-projected): a freshly
+// init-created workspace has next.projected == true, so it never
+// enters legacy mode and never hits the checkpoint migration gate.
+// It also guards that config.DefaultConfig() itself stays unprojected
+// — DefaultConfig is the fallback for repos with no hero.json, and
+// flipping it there would retroactively migrate existing legacy repos,
+// which is the auto-migrate path's job, not init's.
+func TestInitBornProjected(t *testing.T) {
+	env := newTestEnvEmpty(t)
+
+	if _, err := runCmd("init"); err != nil {
+		t.Fatalf("init returned error: %v", err)
+	}
+
+	cfg, err := config.Load(env.dir)
+	if err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+	if !cfg.NextProjected() {
+		t.Error("freshly init-created workspace should be born next.projected == true")
+	}
+
+	// DefaultConfig (the no-hero.json fallback) must NOT be projected,
+	// so existing legacy repos aren't retroactively flipped.
+	if config.DefaultConfig().NextProjected() {
+		t.Error("config.DefaultConfig() must stay next.projected == false to avoid retroactively flipping existing repos")
 	}
 }
 

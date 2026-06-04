@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -60,6 +61,20 @@ func runUpgrade(cmd *cobra.Command, args []string) error {
 	heroDir := filepath.Join(projectRoot, cfg.Folder)
 	if _, err := os.Stat(heroDir); os.IsNotExist(err) {
 		return fmt.Errorf("no hero workspace found (run 'hero init' first)")
+	}
+
+	// Proactively transition version-skewed workspaces to NEXT
+	// projection. Workspaces created before projection existed default
+	// to next.projected == false; rather than wait for the next
+	// checkpoint to auto-migrate, do it at upgrade. Idempotent (no-op
+	// when already projected). Content-preserving — surfaces only on
+	// failure, leaving NEXT.md untouched in that case.
+	if !cfg.NextProjected() {
+		if err := migrateToProjection(projectRoot, cfg, io.Discard); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: NEXT.md projection migration failed: %v — run `hero next migrate-to-projection` to retry\n", err)
+		} else if reloaded, lerr := config.Load(projectRoot); lerr == nil {
+			cfg = reloaded
+		}
 	}
 
 	binaryVersion := rootCmd.Version

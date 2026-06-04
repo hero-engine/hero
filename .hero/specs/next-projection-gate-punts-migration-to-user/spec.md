@@ -2,7 +2,7 @@
 title: NEXT-projection migration gate punts migration to the user instead of doing it automatically
 slug: next-projection-gate-punts-migration-to-user
 type: bug
-status: planning
+status: completed
 severity: high
 priority: P1
 domain: engineering
@@ -21,6 +21,7 @@ relations:
     kind: relates-to
   - target: next-merge-driver-not-portable
     kind: relates-to
+completed_at: 2026-06-04T03:19:54Z
 ---
 
 # NEXT-projection migration gate punts migration to the user instead of doing it automatically
@@ -376,3 +377,16 @@ When done, update AC-14 in `.hero/specs/next-as-projection/spec.md:451-457` and 
 
 ## Recap
 Hero's NEXT-projection pre-flight gate (`checkpoint.go:126-133`, AC-14) refuses every checkpoint in an unmigrated repo and tells the user to run `hero next migrate-to-projection` by hand — even though that migration is already non-interactive and content-preserving. It's a design/process defect (an over-cautious transition that conflated "silently wipe content" with "silently migrate content"). The fix is to call the existing migration logic automatically at the checkpoint trigger (and at `hero upgrade`), surfacing a message only on genuine failure while keeping the no-clobber safety. Severity: high — the subsystem punts its own designed work back onto the user, directly against Hero's mission.
+
+---
+
+## Changes (landed)
+
+- `internal/cli/next_migrate.go` — extracted `migrateToProjection(projectRoot, cfg, out io.Writer) error` from `runNextMigrateProjection`; the cobra command is now a thin wrapper passing `cmd.OutOrStdout()`. Idempotent (no-op when projected), `captureNextSnapshot` runs first, mode-aware `resolveNextPath` preserved, progress writes to `out`. (Change 1)
+- `internal/cli/checkpoint.go` — replaced the refuse-gate in `writeCheckpoint` with silent `migrateToProjection(projectRoot, cfg, io.Discard)`; reloads config on success; on failure returns an actionable human error, leaves NEXT.md byte-untouched, keeps `next.projected == false`. Added `io` import. (Change 2)
+- `internal/cli/upgrade.go` — wired `migrateToProjection(projectRoot, cfg, io.Discard)` into `runUpgrade` guarded by `!cfg.NextProjected()`, surfacing only on failure. Added `io` import. (Change 3)
+- `internal/cli/init.go` — `runInit` now sets `cfg.Next.Projected = true` on the config it writes, so fresh workspaces are born projected. `config.DefaultConfig()` left unprojected so existing repos aren't retroactively flipped. (Change 4)
+- `internal/cli/checkpoint_test.go` — inverted the two `Refuses*` gate tests into `AutoMigrates*` (assert migration runs, flag flips, snapshot Note captured, NEXT.md projected); added silence, failure-preserves-content, and idempotence tests; added `assertMigrationSnapshotCaptured` helper.
+- `internal/cli/init_test.go` — added `TestInitBornProjected` (asserts a fresh init is projected AND that `DefaultConfig()` stays unprojected).
+- `.hero/specs/next-as-projection/spec.md` — AC-14 revised to "auto-migrate, don't refuse."
+- `.hero/specs/decisions/next-as-projection-architecture/spec.md` — §5 and the "What this locks in" migration-gate bullet revised to reflect auto-migration.
