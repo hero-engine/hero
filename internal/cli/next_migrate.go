@@ -26,8 +26,8 @@ var nextMigrateProjectionCmd = &cobra.Command{
 2. Extracts structured fields from the existing markdown:
      - "Last user ask" / first frontmatter quote → UserAsk node
      - "Proposed next ask" / "Suggested next prompt" → NextSuggestion
-3. Updates .gitattributes so .hero/NEXT.md uses the hero-next merge
-   driver (regen-on-conflict).
+3. Updates .gitattributes so the projected files use git's built-in
+   merge=union strategy (travels with the repo; no per-clone setup).
 4. Sets next.projected = true in hero.json. From this point forward,
    hero next checkpoint regenerates NEXT.md from the graph each turn.
 
@@ -113,13 +113,13 @@ func migrateToProjection(projectRoot string, cfg config.Config, out io.Writer) e
 		}
 	}
 
-	// 3. Update .gitattributes so NEXT.md uses the hero-next merge
-	// driver. The Phase-6 marker block already covers .hero/next/*.md;
-	// this appends a NEXT.md line to it idempotently.
+	// 3. Update .gitattributes so the projected files use the built-in
+	// merge=union strategy (travels via .gitattributes alone — no
+	// per-clone .git/config registration needed).
 	if err := ensureNextMDMergeDirective(projectRoot); err != nil {
 		return fmt.Errorf("update .gitattributes: %w", err)
 	}
-	fmt.Fprintln(out, "updated .gitattributes for .hero/NEXT.md merge=hero-next")
+	fmt.Fprintln(out, "updated .gitattributes for projected files (merge=union)")
 
 	// 4. Flip next.projected = true in .hero/hero.json (or create
 	// the file if it doesn't exist with just that field).
@@ -246,48 +246,14 @@ func firstQuoteOrText(section string) string {
 	return strings.TrimSpace(strings.Join(para, " "))
 }
 
-// ensureNextMDMergeDirective appends a NEXT.md merge-directive line
-// inside the existing Phase-6 marker block in .gitattributes. If the
-// marker block doesn't exist yet, falls back to creating a new one.
-// Idempotent.
+// ensureNextMDMergeDirective writes the canonical .gitattributes
+// managed block binding the projected handoff files (.hero/next/*.md,
+// .hero/NEXT.md, .hero/QUEUE.md, .hero/SNAPSHOT.md) to git's built-in
+// merge=union driver. Delegates to updateGitAttributes — the single
+// source of truth for the managed block — so the migration path can't
+// drift from the install path. Idempotent.
 func ensureNextMDMergeDirective(projectRoot string) error {
-	path := filepath.Join(projectRoot, ".gitattributes")
-	existing, _ := os.ReadFile(path)
-	src := string(existing)
-
-	directives := []string{
-		".hero/NEXT.md merge=" + mergeDriverName,
-		".hero/SNAPSHOT.md merge=" + mergeDriverName,
-	}
-
-	startIdx := strings.Index(src, gaMarkerStart)
-	if startIdx < 0 {
-		// No existing block — create one with all directives.
-		block := fmt.Sprintf(`%s
-.hero/NEXT.md merge=%s
-.hero/next/*.md merge=%s
-.hero/SNAPSHOT.md merge=%s
-%s`, gaMarkerStart, mergeDriverName, mergeDriverName, mergeDriverName, gaMarkerEnd)
-		body := mergeMarkerBlock(src, gaMarkerStart, gaMarkerEnd, block)
-		return os.WriteFile(path, []byte(body), 0o644)
-	}
-	// Existing block — splice in any missing directive.
-	body := src
-	for _, directive := range directives {
-		if strings.Contains(body, directive) {
-			continue
-		}
-		endIdx := strings.Index(body, gaMarkerEnd)
-		if endIdx < 0 {
-			return fmt.Errorf("malformed .gitattributes: missing %q", gaMarkerEnd)
-		}
-		insertAt := strings.LastIndex(body[:endIdx], "\n") + 1
-		body = body[:insertAt] + directive + "\n" + body[insertAt:]
-	}
-	if body == src {
-		return nil
-	}
-	return os.WriteFile(path, []byte(body), 0o644)
+	return updateGitAttributes(projectRoot)
 }
 
 // setNextProjected updates .hero/hero.json (or creates it) with

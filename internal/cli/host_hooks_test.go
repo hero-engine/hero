@@ -200,9 +200,16 @@ func TestHostHooksUninstall_AllRemovesGitAndClaude(t *testing.T) {
 	if !gitInstalled {
 		t.Fatal("precondition: at least one git hook should have a Hero block")
 	}
-	// Sanity: hero-next merge driver registered.
+	// Hero no longer registers a custom merge driver (projected files
+	// use built-in merge=union). Seed a legacy merge.hero-next.* stanza
+	// so we can verify uninstall idempotently clears orphaned entries
+	// left by older installs.
+	if err := exec.Command("git", "-C", env.dir, "config",
+		"merge.hero-next.driver", "hero next merge-resolve --output %A").Run(); err != nil {
+		t.Fatalf("seed legacy driver: %v", err)
+	}
 	if !nextMergeDriverRegistered(env.dir) {
-		t.Fatal("precondition: hero-next merge driver should be registered")
+		t.Fatal("precondition: seeded legacy merge driver should be present")
 	}
 
 	if _, err := runCmd("hooks", "uninstall", "--host=all"); err != nil {

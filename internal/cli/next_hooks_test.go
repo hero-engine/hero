@@ -10,23 +10,57 @@ import (
 	"testing"
 )
 
-func TestUserFromOutputPath(t *testing.T) {
-	cases := []struct {
-		path string
-		want string
-	}{
-		{".hero/next/chet-bellows.md", "chet-bellows"},
-		{"/abs/path/.hero/next/alice.md", "alice"},
-		{".hero/next/chet-bellows.local.md", ""},          // local files aren't projected
-		{".hero/NEXT.md", ""},                          // project file, not user file
-		{".hero/some/other/chet-bellows.md", ""},          // wrong parent dir
-		{"random.md", ""},                              // no parent dir at all
+// TestUpdateGitAttributes_BindsAllFourPathsToUnion asserts the managed
+// .gitattributes block binds every projected handoff file to git's
+// built-in merge=union strategy and names no custom driver. union is a
+// git built-in, so it travels via the tracked .gitattributes alone —
+// fresh clones / CI resolve these merges marker-free without any
+// per-clone .git/config registration.
+func TestUpdateGitAttributes_BindsAllFourPathsToUnion(t *testing.T) {
+	dir := t.TempDir()
+	if err := updateGitAttributes(dir); err != nil {
+		t.Fatalf("updateGitAttributes: %v", err)
 	}
-	for _, tc := range cases {
-		got := userFromOutputPath(tc.path)
-		if got != tc.want {
-			t.Errorf("userFromOutputPath(%q) = %q, want %q", tc.path, got, tc.want)
+	data, err := os.ReadFile(filepath.Join(dir, ".gitattributes"))
+	if err != nil {
+		t.Fatalf("read .gitattributes: %v", err)
+	}
+	ga := string(data)
+
+	for _, path := range []string{
+		".hero/next/*.md",
+		".hero/NEXT.md",
+		".hero/QUEUE.md",
+		".hero/SNAPSHOT.md",
+	} {
+		want := path + " merge=union"
+		if !strings.Contains(ga, want) {
+			t.Errorf("missing union directive %q in:\n%s", want, ga)
 		}
+	}
+	if strings.Contains(ga, "merge=hero-next") {
+		t.Errorf(".gitattributes still names the deleted custom driver:\n%s", ga)
+	}
+	if !strings.Contains(ga, gaMarkerStart) || !strings.Contains(ga, gaMarkerEnd) {
+		t.Errorf(".gitattributes managed block missing markers:\n%s", ga)
+	}
+}
+
+// TestUpdateGitAttributes_Idempotent re-runs the writer and asserts the
+// managed block doesn't grow or duplicate — re-run safety the install /
+// upgrade paths depend on.
+func TestUpdateGitAttributes_Idempotent(t *testing.T) {
+	dir := t.TempDir()
+	if err := updateGitAttributes(dir); err != nil {
+		t.Fatalf("first updateGitAttributes: %v", err)
+	}
+	first, _ := os.ReadFile(filepath.Join(dir, ".gitattributes"))
+	if err := updateGitAttributes(dir); err != nil {
+		t.Fatalf("second updateGitAttributes: %v", err)
+	}
+	second, _ := os.ReadFile(filepath.Join(dir, ".gitattributes"))
+	if string(first) != string(second) {
+		t.Errorf("not idempotent:\nfirst  = %q\nsecond = %q", first, second)
 	}
 }
 
@@ -281,24 +315,6 @@ func TestRefreshHooksIfPresent_DryRunCurrent(t *testing.T) {
 	}
 	if !strings.Contains(out.String(), "is current") {
 		t.Errorf("expected 'is current' message, got: %q", out.String())
-	}
-}
-
-func TestIsQueueOutputPath(t *testing.T) {
-	cases := map[string]bool{
-		"/repo/.hero/QUEUE.md":            true,
-		".hero/QUEUE.md":                  true,
-		"QUEUE.md":                        true,
-		"/repo/.hero/NEXT.md":             false,
-		"/repo/.hero/next/chet-bellows.md":   false,
-		"/repo/.hero/queue.md":            false, // case-sensitive
-		"/repo/.hero/foo/QUEUE.md.backup": false,
-	}
-	for path, want := range cases {
-		got := isQueueOutputPath(path)
-		if got != want {
-			t.Errorf("isQueueOutputPath(%q) = %v, want %v", path, got, want)
-		}
 	}
 }
 

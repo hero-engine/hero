@@ -72,8 +72,10 @@ prior content. Invoked by the pre-commit hook so the snapshot travels
 with the commit, and by /handoff, /design, /deliver after spec
 mutations.
 
-The file is committed (not gitignored) and merge-driven by hero-next:
-on conflicts, git regenerates instead of marking up.`,
+The file is committed (not gitignored) and bound to git's built-in
+merge=union strategy in .gitattributes: merges concatenate instead of
+producing conflict markers, and the next checkpoint / queue write
+total-overwrites the result cleanly.`,
 	RunE: runQueueWrite,
 }
 

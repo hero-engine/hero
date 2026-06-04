@@ -59,25 +59,6 @@ automated tool touches.`,
 
 func init() {
 	nextCheckpointCmd.Flags().BoolVarP(&checkpointQuiet, "quiet", "q", false, "suppress success output")
-
-	// Wire snapshot projection for the hero-next merge driver. The
-	// indirection lives in next_hooks.go so merge resolution doesn't
-	// require importing internal/snapshot directly.
-	snapshotProject = func(args snapshotProjectArgs) (any, error) {
-		return snapshot.Project(snapshot.ProjectOptions{
-			ProjectRoot: args.ProjectRoot,
-			HeroDir:     args.HeroDir,
-			ProjectName: args.ProjectName,
-			Mission:     args.Mission,
-			ArchiveConfig: snapshot.ArchiveConfig{
-				StalenessCutoff:   args.ArchiveCfg.StalenessCutoff,
-				MilestonesEnabled: args.Milestones,
-				ReleaseTagPattern: args.ArchiveCfg.ReleaseTagPattern,
-				Retention:         args.ArchiveCfg.Retention,
-				RetentionCount:    args.ArchiveCfg.RetentionCount,
-			},
-		})
-	}
 }
 
 func runNextCheckpoint(cmd *cobra.Command, args []string) error {
