@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-04T13:05:27Z · 102 ready specs_
+_Generated: 2026-06-04T14:08:25Z · 103 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -198,6 +198,33 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-sales/spec.md)_
+
+---
+
+## resume-brief-surfaces-handoff — Resume Brief Surfaces Handoff — Close the Load Half of the Magic
+_feature · planning · horizon: now_
+
+Closes the *load* half of the handoff magic: make `hero resume` actually show the last user ask /
+suggested-next / reflections that auto-emit now captures and staging now ships. Today the
+`digest` brief structurally can't — `digest.Options` doesn't even carry the user/domain the
+handoff nodes are keyed by.
+
+**Status:** planning — diagnosis complete, read against source. No code yet.
+
+**Pick up at:** (1) add `User`/`Domain` to `digest.Options` (`internal/digest/digest.go:31`);
+(2) populate them in `hero resume` (`internal/cli/brief.go:93`) via `nextUserSlug(cfg)` +
+`graph.DomainFor(cfg, graph.IntrinsicActive)` — mirror `autoEmitUserAsk` in `checkpoint.go`;
+(3) add `handoffSection` beside the other section builders, reading `handoff.LatestAsk` /
+`LatestSuggestion` / `RecentReflections`, omitted when `User==""` or empty, best-effort on error;
+(4) place it just after Who-you-are and before In-flight, inside the budget machinery; (5)
+extend the continuity guardrail to assert B's brief now contains A's ask/suggestion.
+
+→ `internal/digest/digest.go:31` (Options), `internal/digest/digest.go:97` (Generate/section order),
+`internal/cli/brief.go:93` (resume Options), `internal/handoff/handoff.go:210` (read funcs),
+`internal/cli/handoff_continuity_test.go` (guardrail extension)
+
+**Skip:** model-synthesized suggested-next (keep recorded value + optional mechanical floor);
+SNAPSHOT/QUEUE; budget redesign.
 
 ---
 
