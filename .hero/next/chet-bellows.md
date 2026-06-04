@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-04T19:07:12Z
+updated: 2026-06-04T20:08:31Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver handoff-captures-session-intent on main: SessionGoal node, window+filter floor + marker override + manual, priority ladder, source-labeled rendering, per-user scoping, next.goal_capture config knob (only 'floor' implemented).
+> Diagnose: HeroDesktop sidebar 'hero_list MCP call failed: notRunning' — the Swift desktop companion calls hero_list but hero serve isn't running. Needs diagnosis of lifecycle management + graceful degradation.
 
 ## Suggested next prompt
 

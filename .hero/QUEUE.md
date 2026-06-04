@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-04T19:07:13Z · 102 ready specs_
+_Generated: 2026-06-04T20:08:31Z · 103 ready specs_
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_
@@ -198,6 +198,34 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · delivering · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-sales/spec.md)_
+
+---
+
+## desktop-sidebar-mcp-not-running — "HeroDesktop sidebar shows MCP notRunning error when hero serve is absent"
+_bug · planning · horizon: now_
+
+Investigate and fix the HeroDesktop sidebar `notRunning` error when `hero serve` is absent.
+
+**Go-side scope:** Add `hero serve ensure` subcommand (idempotent start-if-not-running), export `ProbeHeroDaemon`. Optionally add LaunchAgent plist generator.
+
+**What you need to know:**
+- `hero serve` is the HTTP daemon on port 7437 -- manually started, no auto-start mechanism
+- The desktop calls `hero_list` via MCP; when the daemon is absent, the call fails at the transport layer
+- All lifecycle primitives exist (`probeHeroDaemon`, `IsProcessAlive`, `PortListenerHeld`) -- they just need to be wired into an `ensure` command
+- The orphan spec (`hero-mcp-orphan-no-parent-liveness`) solved the inverse problem (stop side); this solves the start side
+
+**Start with:**
+1. Export `probeHeroDaemon` -> `ProbeHeroDaemon` in `internal/serve/lifecycle.go`
+2. Update the one caller in `internal/serve/server.go:624`
+3. Add `internal/cli/serve_ensure.go` with the ensure subcommand
+4. Register it in `internal/cli/serve.go` init()
+5. Test manually: `hero serve ensure` when stopped, when running
+
+**Skip:** Desktop-side changes (separate repo), LaunchAgent plist (optional/separate), stdio MCP changes (irrelevant).
+
+-> `.hero/planning/bugs/desktop-sidebar-mcp-not-running/spec.md`
+
+**Files:** `internal/cli/serve_ensure.go` (new), `internal/serve/lifecycle.go` (export rename), `internal/serve/server.go` (update caller)
 
 ---
 
