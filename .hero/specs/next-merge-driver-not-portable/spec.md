@@ -2,7 +2,7 @@
 title: "hero-next merge driver isn't portable — fresh clones get raw conflict markers in projected NEXT files"
 slug: next-merge-driver-not-portable
 type: bug
-status: delivering
+status: completed
 severity: medium
 priority: medium
 size: small
@@ -15,6 +15,7 @@ relates-to:
   - next-projection-gate-punts-migration-to-user
   - next-project-file-conflict-not-regenerated
   - next-team-mode-per-user-handoff-unmaintained
+completed_at: 2026-06-04T04:34:24Z
 ---
 
 # hero-next merge driver isn't portable — fresh clones get raw conflict markers in projected NEXT files

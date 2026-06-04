@@ -2,7 +2,7 @@
 title: "Merge driver never regenerates .hero/NEXT.md — project file falls through to 'keep ours'"
 slug: next-project-file-conflict-not-regenerated
 type: bug
-status: planning
+status: superseded
 severity: medium
 priority: medium
 size: small
