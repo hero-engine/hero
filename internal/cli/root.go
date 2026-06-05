@@ -128,6 +128,7 @@ func init() {
 	rootCmd.AddCommand(deliverAliasCmd)
 	rootCmd.AddCommand(diagnoseAliasCmd)
 	rootCmd.AddCommand(designAliasCmd)
+	rootCmd.AddCommand(connectAliasCmd)
 	rootCmd.AddCommand(nextCmd)
 	rootCmd.AddCommand(driftCmd)
 	rootCmd.AddCommand(recapCmd)
