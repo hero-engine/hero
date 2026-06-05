@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-05T01:27:32Z · projected from 305 source nodes_
+_Last refreshed: 2026-06-05T21:02:44Z · projected from 306 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 15m ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 1d ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | building | domains/engineering/ | 15m ago | spec-types-cache-frontmatter-empty |
-| domains/pm | concept | domains/pm/ | 16d ago | — |
+| domains/engineering | building | domains/engineering/ | 4d ago | spec-types-cache-frontmatter-empty |
+| domains/pm | concept | domains/pm/ | 18d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
-| landing | building | web/landing/ | 15m ago | hero-landing-page |
+| landing | building | web/landing/ | 4d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 15m ago | vocabulary-resolve-misses-methodology-derivation |
+| serve | building | internal/serve/ | 3d ago | vocabulary-resolve-misses-methodology-derivation |
 | (unassigned) | — | — | — | 141 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -62,7 +62,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Open risks & blockers
 
 - **Blocked specs (14):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `e2e-traversal` (waits on traversal-queries); `embedded-inference` (waits on master-ingest-restore); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection); `traversal-queries` (waits on master-ingest-restore); `unified-retrieval-layer` (waits on master-ingest-restore).
-- **Stale-in-flight (20):** `hero-local-merge-missing-dialect-fields` (16d), `spec-types-cache-frontmatter-empty` (16d), `vocabulary-resolve-misses-methodology-derivation` (16d), `agent-outposts` (16d), `cross-repo-peering` (16d), `e2e-discovery` (16d), `e2e-traversal` (16d), `e2e-validation` (16d), `graph-conflict-detection` (16d), `hero-landing-page` (16d), `hero-sales` (16d), `hero-team-server` (16d), `master-ingest-restore` (16d), `monorepo-satellite-installs` (16d), `per-feature-smoke-coverage` (16d), `spec-status-integrity` (16d), `traversal-queries` (16d), `tripwire-system` (16d), `unified-retrieval-layer` (16d), `unified-search` (16d).
+- **Stale-in-flight (21):** `hero-landing-page` (18d), `spec-status-integrity` (18d), `vocabulary-resolve-misses-methodology-derivation` (18d), `unified-search` (18d), `unified-retrieval-layer` (18d), `cross-repo-peering` (18d), `e2e-discovery` (18d), `e2e-traversal` (18d), `e2e-validation` (18d), `graph-conflict-detection` (18d), `spec-types-cache-frontmatter-empty` (18d), `tripwire-system` (18d), `hero-local-merge-missing-dialect-fields` (18d), `master-ingest-restore` (18d), `monorepo-satellite-installs` (18d), `per-feature-smoke-coverage` (18d), `traversal-queries` (18d), `hero-team-server` (17d), `hero-sales` (17d), `agent-outposts` (17d), `compact-handoff-test-coverage` (15d).
 - **Aged open bugs (3):** `hero-workspace-not-self-describing` (open 24d), `scan-enrichment-unbounded-loop` (open 24d), `scan-test-detection-misses-spock-vitest` (open 24d).
 - **Unassigned specs (141) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
@@ -70,5 +70,5 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
 - Specs covered: 143/284 (50%)
-- Projection generation: 1ms · Source nodes: 305
+- Projection generation: 0ms · Source nodes: 306
 
