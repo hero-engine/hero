@@ -5,13 +5,14 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-06-05T01:16:42Z
+updated: 2026-06-05T01:27:32Z
 repo: hero-engine/hero
 branch: main
 ---
 
 ## Just finished
 
+- `15e6104` — fix(cli): wire top-level `hero connect` alias for `hero sync connect`
 - `b92a83a` — chore: projected-file refresh (post-hook)
 - `1eb9798` — chore: final projected-file refresh
 - `d71b141` — chore: stage projected handoff files + pre-existing planning items
@@ -19,7 +20,6 @@ branch: main
 - `8391d6e` — chore: stage desktop-sidebar-mcp-not-running spec + projected files
 - `5c09c37` — style: fix gofmt struct-tag alignment drift in Config
 - `ab8c299` — docs(next): diagnose desktop sidebar notRunning + archive intent spec
-- `c8bc9ac` — feat(next): capture session goal (kickoff intent), not just last message
 
 ## Next
 

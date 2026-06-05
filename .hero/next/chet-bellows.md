@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-05T01:16:42Z
+updated: 2026-06-05T01:27:32Z
 repo: hero-engine/hero
 ---
 
@@ -9,6 +9,8 @@ repo: hero-engine/hero
 ## Last user ask
 
 > i was trying to use hero connect --list and it says no such command but the cli told me to use it when i added jira
+
+_possibly stale — 1 commit(s) since, last set 10m ago_
 
 ## Suggested next prompt
 

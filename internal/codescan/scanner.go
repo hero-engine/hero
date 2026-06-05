@@ -98,13 +98,21 @@ func (s *Scanner) RegisterExtension(ext, lang string) {
 }
 
 // languageForExt returns the language for a file extension.
+//
+// .gsp (Groovy Server Pages) maps to "groovy" so the heuristic Groovy
+// parser picks up any `<%= %>` scriptlets, controller/action references,
+// and inline class declarations — far from a full template parser, but
+// enough to keep GSP files visible in the code graph.
 func languageForExt(ext string) string {
 	m := map[string]string{
 		".go":    "go",
 		".js":    "javascript",
 		".jsx":   "javascript",
+		".mjs":   "javascript",
+		".cjs":   "javascript",
 		".ts":    "typescript",
 		".tsx":   "typescript",
+		".mts":   "typescript",
 		".py":    "python",
 		".pyw":   "python",
 		".java":  "java",
@@ -119,6 +127,7 @@ func languageForExt(ext string) string {
 		".rb":    "ruby",
 		".groovy": "groovy",
 		".gvy":    "groovy",
+		".gsp":    "groovy",
 	}
 	return m[ext]
 }

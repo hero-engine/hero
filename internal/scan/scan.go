@@ -29,6 +29,11 @@ type Result struct {
 	MultiModule      *MultiModuleInfo // nil if single-module project
 	FrameworkDetails []FrameworkDetail // deep framework-specific info
 	ImportSources    []ImportSource    // existing knowledge files found
+
+	// WalkTruncated is true when the file-extension walk hit its safety
+	// cap before completing. Language counts in that case are partial.
+	WalkTruncated  bool
+	WalkFileCount  int // total files visited during the walk
 }
 
 // Language represents a detected programming language.
@@ -118,11 +123,19 @@ func Analyze(projectRoot string) (*Result, error) {
 	}
 	r.Structure.TopLevelDirs = topDirs
 
-	// Walk the tree counting extensions (limit depth to avoid huge repos)
-	maxFiles := 10000
+	// Walk the tree counting extensions. The cap is a safety valve for
+	// pathological repos (millions of generated files); when hit, the
+	// language counts are partial and we surface a warning on the
+	// Result so callers can tell the user.
+	const maxFiles = 200000
 	fileCount := 0
+	truncated := false
 	filepath.Walk(projectRoot, func(path string, info os.FileInfo, err error) error {
-		if err != nil || fileCount >= maxFiles {
+		if err != nil {
+			return filepath.SkipDir
+		}
+		if fileCount >= maxFiles {
+			truncated = true
 			return filepath.SkipDir
 		}
 
@@ -143,8 +156,12 @@ func Analyze(projectRoot string) (*Result, error) {
 		}
 
 		fileCount++
-		ext := strings.ToLower(filepath.Ext(info.Name()))
-		if ext != "" {
+		// Count every recognized extension in the dot chain, not just
+		// the outermost one. Grails / Sprockets-style asset pipelines
+		// produce names like `application.js.coffee` (CoffeeScript that
+		// outputs JavaScript) — both languages are present in the
+		// stack, so we credit both.
+		for _, ext := range extensionChain(info.Name()) {
 			extCounts[ext]++
 		}
 
@@ -158,6 +175,8 @@ func Analyze(projectRoot string) (*Result, error) {
 
 		return nil
 	})
+	r.WalkFileCount = fileCount
+	r.WalkTruncated = truncated
 
 	// Detect languages from extensions
 	r.Languages = detectLanguages(extCounts)
@@ -201,6 +220,8 @@ var langDef = map[string]string{
 	".go":     "Go",
 	".java":   "Java",
 	".groovy": "Groovy",
+	".gvy":    "Groovy",
+	".gsp":    "Groovy", // Groovy Server Pages — templating layer
 	".kt":     "Kotlin",
 	".kts":    "Kotlin",
 	".rs":     "Rust",
@@ -209,6 +230,10 @@ var langDef = map[string]string{
 	".js":     "JavaScript",
 	".mjs":    "JavaScript",
 	".cjs":    "JavaScript",
+	".es6":    "JavaScript",
+	".coffee": "CoffeeScript",
+	".vue":    "Vue",
+	".svelte": "Svelte",
 	".ts":     "TypeScript",
 	".mts":    "TypeScript",
 	".tsx":    "TypeScript",
@@ -231,6 +256,36 @@ var langDef = map[string]string{
 	".sh":     "Shell",
 	".bash":   "Shell",
 	".zsh":    "Shell",
+	".scss":   "Sass",
+	".sass":   "Sass",
+	".less":   "Less",
+	".styl":   "Stylus",
+}
+
+// extensionChain returns the recognized langDef keys present in the dot
+// chain of a filename, deepest-first. Sprockets / Grails asset pipelines
+// produce compound names like `application.js.coffee` where both `.js`
+// and `.coffee` carry meaning; we want to credit both.
+//
+// Only extensions that exist in langDef are returned, so unrelated
+// trailing tokens (like `.bak` or version numbers in `app.config.js`)
+// don't produce noise.
+func extensionChain(name string) []string {
+	base := strings.ToLower(name)
+	var out []string
+	seen := map[string]bool{}
+	for {
+		ext := filepath.Ext(base)
+		if ext == "" {
+			break
+		}
+		if _, ok := langDef[ext]; ok && !seen[ext] {
+			out = append(out, ext)
+			seen[ext] = true
+		}
+		base = strings.TrimSuffix(base, ext)
+	}
+	return out
 }
 
 func detectLanguages(extCounts map[string]int) []Language {
@@ -738,6 +793,10 @@ func (r *Result) Summary() string {
 
 	sb.WriteString("Project Scan Results\n")
 	sb.WriteString(strings.Repeat("─", 40) + "\n")
+
+	if r.WalkTruncated {
+		sb.WriteString(fmt.Sprintf("\nNote: file walk hit safety cap at %d files — language counts below are partial.\n", r.WalkFileCount))
+	}
 
 	// Languages
 	if len(r.Languages) > 0 {
