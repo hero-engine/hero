@@ -48,7 +48,7 @@ func init() {
 	upgradeCmd.Flags().BoolVar(&upgradeDryRun, "dry-run", false, "show what would change without modifying files")
 	upgradeCmd.Flags().BoolVar(&upgradeForce, "force", false, "overwrite customized files")
 	upgradeCmd.Flags().BoolVar(&upgradeNoHooks, "no-hooks", false, "skip refreshing the installed pre-commit hook (mirrors `hero scan --no-hooks`)")
-	upgradeCmd.Flags().StringSliceVar(&upgradeTargets, "target", nil, "narrow to one or more targets (claude, opencode, cursor); default: every detected target")
+	upgradeCmd.Flags().StringSliceVar(&upgradeTargets, "target", nil, "narrow to one or more targets (claude, opencode, cursor, codex, copilot, generic); default: every detected target")
 }
 
 func runUpgrade(cmd *cobra.Command, args []string) error {
@@ -378,13 +378,16 @@ func resolveUpgradeTargets(projectRoot string, info *version.Info, requested []s
 		"opencode": install.TargetOpenCode,
 		"cursor":   install.TargetCursor,
 		"claude":   install.TargetClaude,
+		"codex":    install.TargetCodex,
+		"copilot":  install.TargetCopilot,
+		"generic":  install.TargetGeneric,
 	}
 	seen := map[install.Target]bool{}
 	out := make([]install.Target, 0, len(requested))
 	for _, name := range requested {
 		t, ok := known[strings.ToLower(name)]
 		if !ok {
-			return nil, fmt.Errorf("unknown --target %q (valid: opencode, cursor, claude)", name)
+			return nil, fmt.Errorf("unknown --target %q (valid: opencode, cursor, claude, codex, copilot, generic)", name)
 		}
 		if seen[t] {
 			continue
@@ -396,56 +399,35 @@ func resolveUpgradeTargets(projectRoot string, info *version.Info, requested []s
 }
 
 // detectInstalledTargets returns every AI-tool target that has a
-// directory installed in projectRoot. version.json's LastInstall is
-// included so a freshly-installed-but-not-yet-touched target still
-// shows up. Order is stable: opencode, cursor, claude — matches the
-// supportedTargets list in install/.
+// directory installed in projectRoot. Delegates to install.DetectInstalledTargets
+// which walks the targetLayouts registry — so new targets added there
+// are picked up automatically. version.json's LastInstall is included
+// as a fallback so a freshly-installed-but-not-yet-touched target
+// still shows up.
 //
 // Returns an empty slice when no targets are detected (caller falls
 // back to "stamp version only").
 func detectInstalledTargets(projectRoot string, info *version.Info) []install.Target {
-	seen := map[install.Target]bool{}
-	var out []install.Target
-
-	add := func(t install.Target) {
-		if t == "" || seen[t] {
-			return
-		}
-		seen[t] = true
-		out = append(out, t)
-	}
-
-	// Filesystem probes — the authoritative signal. Order is stable.
-	if _, err := os.Stat(filepath.Join(projectRoot, ".opencode")); err == nil {
-		add(install.TargetOpenCode)
-	}
-	if _, err := os.Stat(filepath.Join(projectRoot, ".cursor")); err == nil {
-		add(install.TargetCursor)
-	}
-	if _, err := os.Stat(filepath.Join(projectRoot, ".claude")); err == nil {
-		add(install.TargetClaude)
-	}
+	// Filesystem probes via the install package's registry — authoritative.
+	out := install.DetectInstalledTargets(projectRoot)
 
 	// Fall back to LastInstall when no directory is detected — covers
 	// edge cases like a targets-renamed repo where the dir was moved
 	// but the install record is still authoritative.
 	if len(out) == 0 && info != nil && info.LastInstall != nil && info.LastInstall.Target != "" {
-		add(install.Target(info.LastInstall.Target))
+		out = append(out, install.Target(info.LastInstall.Target))
 	}
 
 	return out
 }
 
 // resolveTargetDir returns the destination directory for a given subdir and target.
+// Uses the install package's TargetLayout registry so new targets are
+// picked up automatically.
 func resolveTargetDir(projectRoot string, target install.Target, subdir string) string {
-	switch target {
-	case install.TargetOpenCode:
-		return filepath.Join(projectRoot, ".opencode", subdir)
-	case install.TargetCursor:
-		return filepath.Join(projectRoot, ".cursor", "rules", subdir)
-	case install.TargetClaude:
-		return filepath.Join(projectRoot, ".claude", subdir)
-	default:
+	layout := install.LayoutFor(target)
+	if layout == nil || layout.SubDir == "" {
 		return ""
 	}
+	return filepath.Join(projectRoot, layout.SubDir, subdir)
 }

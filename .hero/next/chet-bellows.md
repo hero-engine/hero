@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-06T16:37:44Z
+updated: 2026-06-06T20:36:37Z
 repo: hero-engine/hero
 ---
 
@@ -26,10 +26,10 @@ Nothing this session.
 
 ## Your recent activity
 
+- `71e4b1b` — feat(verify): delivery gate enforcement — hero verify becomes the load-bearing checkpoint
 - `ce9b237` — chore: refresh projected handoff files
 - `1eb9798` — chore: final projected-file refresh
 - `b92a83a` — chore: projected-file refresh (post-hook)
 - `d71b141` — chore: stage projected handoff files + pre-existing planning items
 - `818e860` — chore: stage projected handoff files
-- `8391d6e` — chore: stage desktop-sidebar-mcp-not-running spec + projected files
 
