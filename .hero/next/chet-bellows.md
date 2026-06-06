@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-06T20:36:37Z
+updated: 2026-06-06T20:38:01Z
 repo: hero-engine/hero
 ---
 
@@ -26,10 +26,10 @@ Nothing this session.
 
 ## Your recent activity
 
+- `228097c` — fix(upgrade): detect all installed targets — codex, copilot, generic were missed
 - `71e4b1b` — feat(verify): delivery gate enforcement — hero verify becomes the load-bearing checkpoint
 - `ce9b237` — chore: refresh projected handoff files
 - `1eb9798` — chore: final projected-file refresh
 - `b92a83a` — chore: projected-file refresh (post-hook)
 - `d71b141` — chore: stage projected handoff files + pre-existing planning items
-- `818e860` — chore: stage projected handoff files
 

@@ -5,13 +5,14 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-06-06T20:36:36Z
+updated: 2026-06-06T20:45:53Z
 repo: hero-engine/hero
 branch: main
 ---
 
 ## Just finished
 
+- `228097c` — fix(upgrade): detect all installed targets — codex, copilot, generic were missed
 - `71e4b1b` — feat(verify): delivery gate enforcement — hero verify becomes the load-bearing checkpoint
 - `ce9b237` — chore: refresh projected handoff files
 - `9537eb1` — fix(scan): detect .gsp, compound asset-pipeline extensions, raise walk cap
@@ -19,7 +20,6 @@ branch: main
 - `1eb9798` — chore: final projected-file refresh
 - `b92a83a` — chore: projected-file refresh (post-hook)
 - `d71b141` — chore: stage projected handoff files + pre-existing planning items
-- `818e860` — chore: stage projected handoff files
 
 ## Next
 

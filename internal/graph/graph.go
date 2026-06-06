@@ -252,7 +252,20 @@ func (s *Store) migrate() error {
 	}
 
 	if currentVersion != schemaVersion {
-		return fmt.Errorf("graph schema version mismatch: db=%s binary=%s", currentVersion, schemaVersion)
+		if currentVersion > schemaVersion {
+			// The db was migrated by a newer binary. Our migrations are
+			// additive (ALTER TABLE ADD COLUMN), so the extra columns are
+			// harmless — SQLite ignores columns the query doesn't reference.
+			// Warn instead of failing so older binaries can still read the
+			// workspace. The user can update their binary to silence this.
+			fmt.Fprintf(os.Stderr,
+				"Warning: graph schema is newer than this binary (db=%s, binary=%s). "+
+					"Update your hero binary to silence this warning.\n",
+				currentVersion, schemaVersion)
+			return nil
+		}
+		return fmt.Errorf("graph schema version mismatch: db=%s binary=%s — "+
+			"run `hero upgrade` or rebuild the binary", currentVersion, schemaVersion)
 	}
 	return nil
 }
