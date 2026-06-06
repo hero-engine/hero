@@ -411,8 +411,11 @@ func TestUpgradeRejectsUnknownTarget(t *testing.T) {
 
 func TestDetectInstalledTargets_DedupsAndOrdersStably(t *testing.T) {
 	dir := t.TempDir()
+	// DetectInstalledTargets requires at least one symlinked subdir
+	// (agents/, commands/, skills/) inside the target directory to
+	// count it as a real install.
 	for _, sub := range []string{".opencode", ".claude"} {
-		if err := os.MkdirAll(filepath.Join(dir, sub), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Join(dir, sub, "agents"), 0o755); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -420,8 +423,10 @@ func TestDetectInstalledTargets_DedupsAndOrdersStably(t *testing.T) {
 	if len(got) != 2 {
 		t.Fatalf("len = %d, want 2: %v", len(got), got)
 	}
-	if string(got[0]) != "opencode" || string(got[1]) != "claude" {
-		t.Errorf("order = %v, want [opencode claude]", got)
+	// install.DetectInstalledTargets walks targetLayouts in registration
+	// order: claude, codex, opencode, cursor, copilot, generic.
+	if string(got[0]) != "claude" || string(got[1]) != "opencode" {
+		t.Errorf("order = %v, want [claude opencode]", got)
 	}
 }
 

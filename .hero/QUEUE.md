@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-06T20:10:26Z · 104 ready specs_
+_Generated: 2026-06-06T20:36:37Z · 104 ready specs_
 
 ## delivery-gate-enforcement — "Delivery Gate Enforcement — hero verify Becomes the Load-Bearing Checkpoint"
 _feature · delivering · horizon: now_
