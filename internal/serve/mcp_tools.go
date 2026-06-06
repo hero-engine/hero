@@ -711,6 +711,23 @@ func (s *MCPServer) toolReadSpec(args map[string]interface{}) (string, error) {
 		}
 	}
 
+	// Fallback to filesystem discovery when the index doesn't have the
+	// slug — covers freshly-created specs whose index entry hasn't
+	// landed yet (ensureFreshIndex can silently fail or race the write).
+	if specPath == "" {
+		if specs, discErr := spec.Discover(s.heroDir); discErr == nil {
+			for _, sp := range specs {
+				if sp.Slug == slug {
+					specPath = sp.Path
+					specTitle = sp.Title
+					specStatus = string(sp.Status)
+					specType = string(sp.Type)
+					break
+				}
+			}
+		}
+	}
+
 	if specPath == "" {
 		return fmt.Sprintf("Spec %q not found.", slug), nil
 	}
