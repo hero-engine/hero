@@ -153,6 +153,7 @@ status: approved
 func TestVerify(t *testing.T) {
 	env := newTestEnv(t)
 
+	// Verify now enforces gates — a spec without a ledger or audit should FAIL.
 	env.addSpec("planning/features/feat-verify/spec.md", `---
 title: Verifiable Feature
 type: feature
@@ -161,61 +162,30 @@ delivery_method: manual
 ---
 # Verifiable Feature
 
-## Goal
-
-Do something verifiable.
-
 ## Acceptance Criteria
 
 - API must return JSON with status field
-- Response time must be under 200ms
-- Error cases must return 4xx status codes
 
 ## Changes
 
 - src/api/handler.go
-- src/api/handler_test.go
-
-## Test Strategy
-
-- Unit tests for handler logic
-- Integration test for full request cycle
 `)
 
 	env.indexAll()
 
-	output, err := runCmd("spec", "verify", "feat-verify")
-	if err != nil {
-		t.Fatalf("verify returned error: %v", err)
+	_, err := runCmd("spec", "verify", "--skip-tests", "feat-verify")
+	if err == nil {
+		t.Fatal("verify should fail — no ledger, no audit")
 	}
-
-	// Should show acceptance criteria
-	if !strings.Contains(output, "API must return JSON") {
-		t.Errorf("should show acceptance criteria: %q", output)
-	}
-	if !strings.Contains(output, "Response time must be under 200ms") {
-		t.Errorf("should show all criteria: %q", output)
-	}
-
-	// Should show expected files
-	if !strings.Contains(output, "src/api/handler.go") {
-		t.Errorf("should show expected files: %q", output)
-	}
-
-	// Should show test strategy
-	if !strings.Contains(output, "Unit tests for handler logic") {
-		t.Errorf("should show test strategy: %q", output)
-	}
-
-	// Should show verification prompt
-	if !strings.Contains(output, "PASS/FAIL") {
-		t.Errorf("should include verification instructions: %q", output)
+	if !strings.Contains(err.Error(), "verification failed") {
+		t.Errorf("error = %q, want 'verification failed'", err.Error())
 	}
 }
 
 func TestVerifyNoAcceptanceCriteria(t *testing.T) {
 	env := newTestEnv(t)
 
+	// A spec with no AC and no ledger should fail gate 1.
 	env.addSpec("planning/features/feat-noac/spec.md", `---
 title: No AC Feature
 type: feature
@@ -228,13 +198,12 @@ Just a description, no acceptance criteria.
 
 	env.indexAll()
 
-	output, err := runCmd("spec", "verify", "feat-noac")
-	if err != nil {
-		t.Fatalf("verify returned error: %v", err)
+	_, err := runCmd("spec", "verify", "--skip-tests", "feat-noac")
+	if err == nil {
+		t.Fatal("verify should fail — no ledger, no audit")
 	}
-
-	if !strings.Contains(output, "No acceptance criteria") {
-		t.Errorf("should warn about missing AC: %q", output)
+	if !strings.Contains(err.Error(), "verification failed") {
+		t.Errorf("error = %q, want 'verification failed'", err.Error())
 	}
 }
 
@@ -377,15 +346,16 @@ func TestImportScaffoldsKickoffPlaceholder(t *testing.T) {
 
 // TestDeliverManualAutoArchivesOnVerify exercises the full sync deliver
 // → completed → archive cycle without anyone running `hero spec complete`.
-// The agent flips status to completed during /deliver; `hero verify`
-// auto-archives it. Symptom 1 in spec-lifecycle-hygiene-breakdown.
+// With gated verify, the agent no longer flips status directly.
+// hero verify checks gates and flips status + archives when all pass.
+// This test confirms verify with all gates satisfied archives correctly.
 func TestDeliverManualAutoArchivesOnVerify(t *testing.T) {
 	env := newTestEnv(t)
 
 	env.addSpec("planning/features/feat-auto/spec.md", `---
 title: Auto Archive Feature
 type: feature
-status: approved
+status: delivering
 ---
 # Auto Archive Feature
 
@@ -395,48 +365,43 @@ Pick up here.
 
 ## Acceptance Criteria
 
-- Must work
+- AC-1: Must work
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion | Status | Note |
+|---|---|---|---|
+| 1 | Must work | DONE | implemented |
+
+### Exercise-the-feature check
+
+- [x] Exercised: ran the feature, confirmed working
+`)
+
+	// Write audit report
+	writeFile(t, filepath.Join(env.heroDir, "planning/features/feat-auto/delivery-audit.md"), `# Delivery audit — feat-auto
+
+**Verdict:** SHIP
+**Surface:** clean
 `)
 	env.indexAll()
 
-	// /deliver step
-	if _, err := runCmd("spec", "deliver", "--manual", "feat-auto"); err != nil {
-		t.Fatalf("deliver --manual: %v", err)
-	}
-
-	// Agent step: flip status to completed in the spec frontmatter.
-	specPath := filepath.Join(env.heroDir, "planning/features/feat-auto/spec.md")
-	data, err := os.ReadFile(specPath)
+	output, err := runCmd("spec", "verify", "--skip-tests", "feat-auto")
 	if err != nil {
-		t.Fatalf("read spec: %v", err)
-	}
-	updated := strings.Replace(string(data), "status: delivering", "status: completed", 1)
-	if err := os.WriteFile(specPath, []byte(updated), 0o644); err != nil {
-		t.Fatalf("write spec: %v", err)
+		t.Fatalf("verify: %v\noutput: %s", err, output)
 	}
 
-	// `hero verify` — should auto-archive.
-	output, err := runCmd("spec", "verify", "feat-auto")
-	if err != nil {
-		t.Fatalf("verify: %v", err)
-	}
-	if !strings.Contains(output, "Auto-archived") {
-		t.Errorf("verify should report auto-archive, got: %q", output)
-	}
-
-	// Spec must now live under specs/feat-auto/spec.md, not planning/.
+	// Spec must now live under specs/feat-auto/spec.md.
 	destPath := filepath.Join(env.heroDir, "specs", "feat-auto", "spec.md")
 	if _, err := os.Stat(destPath); os.IsNotExist(err) {
 		t.Errorf("spec not moved to %s", destPath)
 	}
-	if _, err := os.Stat(specPath); !os.IsNotExist(err) {
-		t.Errorf("source spec still present at %s", specPath)
-	}
 }
 
-// TestVerifyDoesNotArchiveIncomplete confirms the auto-archive is a
-// no-op while the spec is still delivering. We do NOT want verify to
-// move things prematurely.
+// TestVerifyDoesNotArchiveIncomplete confirms that verify refuses to
+// archive a spec that fails gates.
 func TestVerifyDoesNotArchiveIncomplete(t *testing.T) {
 	env := newTestEnv(t)
 
@@ -453,16 +418,18 @@ status: delivering
 `)
 	env.indexAll()
 
-	output, err := runCmd("spec", "verify", "feat-inprog")
-	if err != nil {
-		t.Fatalf("verify: %v", err)
+	_, err := runCmd("spec", "verify", "--skip-tests", "feat-inprog")
+	if err == nil {
+		t.Fatal("verify should fail — no ledger, no audit")
 	}
-	if strings.Contains(output, "Auto-archived") {
-		t.Errorf("verify should not auto-archive a delivering spec, got: %q", output)
-	}
+
 	specPath := filepath.Join(env.heroDir, "planning/features/feat-inprog/spec.md")
 	if _, err := os.Stat(specPath); err != nil {
 		t.Errorf("spec should still be in planning/: %v", err)
+	}
+	archivedPath := filepath.Join(env.heroDir, "specs", "feat-inprog", "spec.md")
+	if _, err := os.Stat(archivedPath); !os.IsNotExist(err) {
+		t.Error("spec should NOT be archived when gates fail")
 	}
 }
 

@@ -131,8 +131,12 @@ The ledger has two tables — one for acceptance criteria, one for `## Changes` 
 
 ### Exercise-the-feature check
 
-- [x] User-visible behavior was exercised end-to-end: <describe how>
-- [ ] OR: cannot be exercised in this environment because <reason>
+- [x] User-visible behavior was exercised end-to-end: <command run + what was observed>
+- [ ] OR: cannot be exercised in this environment because <specific reason>
+
+The description MUST include the actual command run and a one-line summary
+of what was observed. `hero spec verify` checks for detail text after the
+checkbox — a bare `[x]` with no description will fail Gate 1.
 
 ### Excellence Bar self-check
 

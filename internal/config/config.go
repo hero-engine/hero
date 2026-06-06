@@ -52,6 +52,7 @@ type Config struct {
 	Snapshot    *SnapshotConfig    `json:"snapshot,omitempty"`
 	Specs       *SpecsConfig       `json:"specs,omitempty"`
 	Delivery    *DeliveryConfig    `json:"delivery,omitempty"`
+	Verify      *VerifyConfig      `json:"verify,omitempty"`
 	Environment *EnvironmentConfig `json:"environment,omitempty"`
 	// Vocabulary names the active vocabulary preset (e.g. "default",
 	// "agile-scrum", "shape-up", "kanban", "jira", "linear"). When set,
@@ -390,6 +391,32 @@ type DeliveryConfig struct {
 	// the operator finish one before starting another. 0 or unset → 5.
 	// Never a hard block — it warns to stderr and continues.
 	WIPWarningThreshold int `json:"wip_warning_threshold,omitempty"`
+}
+
+// VerifyConfig holds delivery verification gate settings.
+type VerifyConfig struct {
+	// RunTests controls whether hero verify runs the test command.
+	// Default: true.
+	RunTests *bool `json:"run_tests,omitempty"`
+	// TestCommand overrides the auto-detected test command.
+	// Empty uses stack detection (Go → "go test ./...", etc.).
+	TestCommand string `json:"test_command,omitempty"`
+}
+
+// RunTestsOrDefault returns RunTests or true if unset.
+func (c *VerifyConfig) RunTestsOrDefault() bool {
+	if c == nil || c.RunTests == nil {
+		return true
+	}
+	return *c.RunTests
+}
+
+// TestCommandOrDefault returns TestCommand or empty (auto-detect) if unset.
+func (c *VerifyConfig) TestCommandOrDefault() string {
+	if c == nil {
+		return ""
+	}
+	return c.TestCommand
 }
 
 // NextConfig holds handoff briefing settings.

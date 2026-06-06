@@ -54,6 +54,18 @@ func runComplete(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("only feature, bug, and initiative specs can be completed (this is a %s spec)", s.Type)
 	}
 
+	// Gate: work specs (feature, bug) must go through `hero spec verify`
+	// which checks the Completion Ledger + audit report before flipping
+	// status. Direct `hero spec complete` bypasses those gates. Redirect
+	// the caller to verify instead.
+	if s.IsWorkSpec() && s.Status != spec.StatusCompleted {
+		fmt.Fprintf(os.Stderr, "Use `hero spec verify %s` instead — verify checks delivery gates\n"+
+			"(Completion Ledger, audit report, test coverage) before marking complete.\n"+
+			"If you need to force-complete without gates, use `hero spec verify %s --force`.\n",
+			s.Slug, s.Slug)
+		return fmt.Errorf("work specs must be completed via `hero spec verify`, not `hero spec complete`")
+	}
+
 	// Each step below is independently idempotent. The previous version
 	// gated everything on `status == completed`, which stranded specs in
 	// planning/ whenever something else flipped the status first
@@ -193,6 +205,10 @@ func hasRecentDeliveryComplete(logPath, slug string, window time.Duration) bool 
 // the file move; we only invoke it when status is actually completed
 // so a not-yet-finished spec isn't archived prematurely.
 func autoArchiveIfCompleted(specPath, heroDir string) (bool, error) {
+	return autoArchiveIfCompletedOpt(specPath, heroDir, false)
+}
+
+func autoArchiveIfCompletedOpt(specPath, heroDir string, skipGateCheck bool) (bool, error) {
 	s, err := spec.ParseFile(specPath)
 	if err != nil {
 		return false, fmt.Errorf("parsing spec: %w", err)
@@ -200,6 +216,33 @@ func autoArchiveIfCompleted(specPath, heroDir string) (bool, error) {
 	if s.Status != spec.StatusCompleted {
 		return false, nil
 	}
+
+	// Gate check: for work specs not yet archived, verify the delivery
+	// gates were satisfied before archiving. This catches the case where
+	// an agent edits status: completed in the frontmatter directly
+	// without running `hero spec verify`.
+	if s.IsWorkSpec() && !isAlreadyInSpecsDir(specPath, heroDir) && !skipGateCheck {
+		ledger := spec.ParseLedger(s)
+		audit := spec.FindAuditReport(s)
+		if !ledger.Found || !audit.Found || audit.Verdict != "SHIP" {
+			var missing []string
+			if !ledger.Found {
+				missing = append(missing, "no Completion Ledger")
+			}
+			if !audit.Found {
+				missing = append(missing, "no audit report")
+			} else if audit.Verdict != "SHIP" {
+				missing = append(missing, "audit verdict is "+audit.Verdict)
+			}
+			fmt.Fprintf(os.Stderr,
+				"Warning: spec %s has status: completed but delivery gates are not satisfied (%s).\n"+
+					"Run `hero spec verify %s` to complete properly, or `hero spec verify %s --force` to override.\n"+
+					"Refusing to auto-archive without gates.\n",
+				s.Slug, strings.Join(missing, ", "), s.Slug, s.Slug)
+			return false, nil
+		}
+	}
+
 	// Safety net for the model-driven /deliver path: the agent rewrites
 	// frontmatter directly with its file edit tool, then runs `hero spec
 	// verify` — which lands here. If the agent (or a human hand-edit)

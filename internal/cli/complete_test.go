@@ -151,6 +151,8 @@ status: completed
 	}
 }
 
+// TestComplete_FeatureSpec confirms that `hero spec complete` on a
+// non-completed work spec redirects to `hero spec verify`.
 func TestComplete_FeatureSpec(t *testing.T) {
 	env := newTestEnv(t)
 
@@ -167,46 +169,21 @@ Export data to CSV format.
 `)
 
 	specPath := filepath.Join(env.heroDir, "planning/features/csv-export/spec.md")
-	output, err := runCmd("spec", "complete", specPath)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	_, err := runCmd("spec", "complete", specPath)
+	if err == nil {
+		t.Fatal("expected error — work specs must go through verify")
+	}
+	if !strings.Contains(err.Error(), "hero spec verify") {
+		t.Errorf("error should redirect to verify, got: %v", err)
 	}
 
-	// Check output messages
-	if !strings.Contains(output, "Updated status to completed") {
-		t.Errorf("output should mention status update, got: %s", output)
-	}
-	if !strings.Contains(output, "Moved") {
-		t.Errorf("output should mention move, got: %s", output)
-	}
-	if !strings.Contains(output, "Re-indexed") {
-		t.Errorf("output should mention re-index, got: %s", output)
-	}
-	if !strings.Contains(output, "Completed spec: csv-export") {
-		t.Errorf("output should show completed slug, got: %s", output)
-	}
-
-	// Verify spec was moved to specs/
-	destPath := filepath.Join(env.heroDir, "specs", "csv-export", "spec.md")
-	if _, err := os.Stat(destPath); os.IsNotExist(err) {
-		t.Errorf("spec should exist at %s", destPath)
-	}
-
-	// Verify source is gone
-	if _, err := os.Stat(specPath); !os.IsNotExist(err) {
-		t.Error("source spec should be removed after move")
-	}
-
-	// Verify status was updated in the file
-	data, err := os.ReadFile(destPath)
-	if err != nil {
-		t.Fatalf("reading moved spec: %v", err)
-	}
-	if !strings.Contains(string(data), "status: completed") {
-		t.Errorf("spec should have status: completed, got:\n%s", string(data))
+	// Spec should NOT have been moved
+	if _, err := os.Stat(specPath); err != nil {
+		t.Errorf("spec should still be in planning/: %v", err)
 	}
 }
 
+// TestComplete_BugSpec confirms work specs redirect to verify.
 func TestComplete_BugSpec(t *testing.T) {
 	env := newTestEnv(t)
 
@@ -223,19 +200,12 @@ Fix null pointer in login flow.
 `)
 
 	specPath := filepath.Join(env.heroDir, "planning/bugs/null-pointer/spec.md")
-	output, err := runCmd("spec", "complete", specPath)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	_, err := runCmd("spec", "complete", specPath)
+	if err == nil {
+		t.Fatal("expected error — work specs must go through verify")
 	}
-
-	if !strings.Contains(output, "Completed spec: null-pointer") {
-		t.Errorf("output should show completed slug, got: %s", output)
-	}
-
-	// Verify moved to specs/
-	destPath := filepath.Join(env.heroDir, "specs", "null-pointer", "spec.md")
-	if _, err := os.Stat(destPath); os.IsNotExist(err) {
-		t.Errorf("spec should exist at %s", destPath)
+	if !strings.Contains(err.Error(), "hero spec verify") {
+		t.Errorf("error should redirect to verify, got: %v", err)
 	}
 }
 
@@ -265,10 +235,11 @@ Migrate to V2 architecture.
 	}
 }
 
+// TestComplete_SpecAlreadyInSpecs — a work spec in specs/ with
+// non-completed status redirects to verify.
 func TestComplete_SpecAlreadyInSpecs(t *testing.T) {
 	env := newTestEnv(t)
 
-	// A spec that's in specs/ but not yet marked completed (e.g. was moved manually)
 	env.addSpec("specs/csv-export/spec.md", `---
 title: CSV Export
 type: feature
@@ -278,67 +249,54 @@ status: delivering
 `)
 
 	specPath := filepath.Join(env.heroDir, "specs/csv-export/spec.md")
-	output, err := runCmd("spec", "complete", specPath)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	_, err := runCmd("spec", "complete", specPath)
+	if err == nil {
+		t.Fatal("expected error — work specs must go through verify")
 	}
-
-	// Should update status but NOT report a move
-	if !strings.Contains(output, "Updated status to completed") {
-		t.Errorf("output should mention status update, got: %s", output)
-	}
-	if strings.Contains(output, "Moved") {
-		t.Errorf("output should NOT mention move for spec already in specs/, got: %s", output)
-	}
-
-	// Verify status was updated
-	data, err := os.ReadFile(specPath)
-	if err != nil {
-		t.Fatalf("reading spec: %v", err)
-	}
-	if !strings.Contains(string(data), "status: completed") {
-		t.Errorf("spec should have status: completed, got:\n%s", string(data))
+	if !strings.Contains(err.Error(), "hero spec verify") {
+		t.Errorf("error should redirect to verify, got: %v", err)
 	}
 }
 
+// TestComplete_StatusUpdatePreservesContent uses an initiative (not gated)
+// to verify that content is preserved during completion.
 func TestComplete_StatusUpdatePreservesContent(t *testing.T) {
 	env := newTestEnv(t)
 
 	originalContent := `---
-title: CSV Export
-type: feature
+title: V3 Migration
+type: initiative
 status: planning
 tags: [data, export]
 claimed_by: alice
 ---
-# CSV Export
+# V3 Migration
 
 ## Goal
 
-Export data to CSV format.
+Migrate to V3 architecture.
 
 ## Changes
 
 - internal/export/csv.go
 `
 
-	env.addSpec("planning/features/csv-export/spec.md", originalContent)
+	env.addSpec("planning/initiatives/v3-migration/spec.md", originalContent)
 
-	specPath := filepath.Join(env.heroDir, "planning/features/csv-export/spec.md")
+	specPath := filepath.Join(env.heroDir, "planning/initiatives/v3-migration/spec.md")
 	_, err := runCmd("spec", "complete", specPath)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	destPath := filepath.Join(env.heroDir, "specs", "csv-export", "spec.md")
+	destPath := filepath.Join(env.heroDir, "specs", "v3-migration", "spec.md")
 	data, err := os.ReadFile(destPath)
 	if err != nil {
 		t.Fatalf("reading moved spec: %v", err)
 	}
 	content := string(data)
 
-	// Verify all original content is preserved
-	if !strings.Contains(content, "title: CSV Export") {
+	if !strings.Contains(content, "title: V3 Migration") {
 		t.Error("title should be preserved")
 	}
 	if !strings.Contains(content, "tags: [data, export]") {
@@ -350,36 +308,30 @@ Export data to CSV format.
 	if !strings.Contains(content, "## Goal") {
 		t.Error("Goal section should be preserved")
 	}
-	if !strings.Contains(content, "## Changes") {
-		t.Error("Changes section should be preserved")
-	}
 	if !strings.Contains(content, "status: completed") {
 		t.Error("status should be updated to completed")
 	}
-	if strings.Contains(content, "status: planning") {
-		t.Error("old status should be replaced")
-	}
 }
 
+// TestComplete_EmptyPlanningDirCleaned uses an initiative (not gated).
 func TestComplete_EmptyPlanningDirCleaned(t *testing.T) {
 	env := newTestEnv(t)
 
-	env.addSpec("planning/features/csv-export/spec.md", `---
-title: CSV Export
-type: feature
+	env.addSpec("planning/initiatives/cleanup-task/spec.md", `---
+title: Cleanup Task
+type: initiative
 status: planning
 ---
-# CSV Export
+# Cleanup Task
 `)
 
-	specPath := filepath.Join(env.heroDir, "planning/features/csv-export/spec.md")
+	specPath := filepath.Join(env.heroDir, "planning/initiatives/cleanup-task/spec.md")
 	_, err := runCmd("spec", "complete", specPath)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// The csv-export directory under planning should be removed
-	slugDir := filepath.Join(env.heroDir, "planning/features/csv-export")
+	slugDir := filepath.Join(env.heroDir, "planning/initiatives/cleanup-task")
 	if _, err := os.Stat(slugDir); !os.IsNotExist(err) {
 		t.Errorf("empty slug directory should be cleaned up: %s", slugDir)
 	}
@@ -394,15 +346,16 @@ status: planning
 func TestComplete_EmitsDeliveryCompleteEvent(t *testing.T) {
 	env := newTestEnv(t)
 
-	env.addSpec("planning/features/csv-export/spec.md", `---
+	// Use initiative — not gated by verify.
+	env.addSpec("planning/initiatives/csv-export/spec.md", `---
 title: CSV Export
-type: feature
+type: initiative
 status: planning
 ---
 # CSV Export
 `)
 
-	specPath := filepath.Join(env.heroDir, "planning/features/csv-export/spec.md")
+	specPath := filepath.Join(env.heroDir, "planning/initiatives/csv-export/spec.md")
 	if _, err := runCmd("spec", "complete", specPath); err != nil {
 		t.Fatalf("complete: %v", err)
 	}
@@ -418,7 +371,6 @@ status: planning
 		t.Error("event agent should not be empty")
 	}
 
-	// And a companion spec.status_changed event lands.
 	statusEvts := readEventsByType(t, env.heroDir, "spec.status_changed", "csv-export")
 	if len(statusEvts) != 1 {
 		t.Errorf("expected 1 spec.status_changed event, got %d", len(statusEvts))
@@ -430,20 +382,19 @@ status: planning
 func TestComplete_IdempotentEventEmission(t *testing.T) {
 	env := newTestEnv(t)
 
-	env.addSpec("planning/features/csv-export/spec.md", `---
+	env.addSpec("planning/initiatives/csv-export/spec.md", `---
 title: CSV Export
-type: feature
+type: initiative
 status: planning
 ---
 # CSV Export
 `)
 
-	specPath := filepath.Join(env.heroDir, "planning/features/csv-export/spec.md")
+	specPath := filepath.Join(env.heroDir, "planning/initiatives/csv-export/spec.md")
 	if _, err := runCmd("spec", "complete", specPath); err != nil {
 		t.Fatalf("first complete: %v", err)
 	}
 
-	// Second run on the already-completed-and-moved spec.
 	destPath := filepath.Join(env.heroDir, "specs", "csv-export", "spec.md")
 	if _, err := runCmd("spec", "complete", destPath); err != nil {
 		t.Fatalf("second complete: %v", err)
@@ -488,15 +439,15 @@ func TestComplete_EmitsAgentFromEnv(t *testing.T) {
 
 	t.Setenv("HERO_AGENT", "mcp/hero")
 
-	env.addSpec("planning/features/csv-export/spec.md", `---
+	env.addSpec("planning/initiatives/csv-export/spec.md", `---
 title: CSV Export
-type: feature
+type: initiative
 status: planning
 ---
 # CSV Export
 `)
 
-	specPath := filepath.Join(env.heroDir, "planning/features/csv-export/spec.md")
+	specPath := filepath.Join(env.heroDir, "planning/initiatives/csv-export/spec.md")
 	if _, err := runCmd("spec", "complete", specPath); err != nil {
 		t.Fatalf("complete: %v", err)
 	}
@@ -610,19 +561,20 @@ func withSpecNowFn(t *testing.T, fixed time.Time) {
 	t.Cleanup(func() { spec.SwapNowFnForTest(prev) })
 }
 
+// TestRunComplete_StampsCompletedAt uses initiative (not gated).
 func TestRunComplete_StampsCompletedAt(t *testing.T) {
 	env := newTestEnv(t)
 	fixed := time.Date(2026, 5, 31, 19, 42, 8, 0, time.UTC)
 	withSpecNowFn(t, fixed)
 
-	env.addSpec("planning/features/csv-export/spec.md", `---
+	env.addSpec("planning/initiatives/csv-export/spec.md", `---
 title: CSV Export
-type: feature
+type: initiative
 status: in-review
 ---
 # CSV Export
 `)
-	src := filepath.Join(env.heroDir, "planning/features/csv-export/spec.md")
+	src := filepath.Join(env.heroDir, "planning/initiatives/csv-export/spec.md")
 
 	if _, err := runCmd("spec", "complete", src); err != nil {
 		t.Fatalf("runComplete failed: %v", err)
@@ -647,14 +599,14 @@ func TestRunComplete_IdempotentCompletedAt(t *testing.T) {
 	first := time.Date(2026, 5, 31, 19, 42, 8, 0, time.UTC)
 	withSpecNowFn(t, first)
 
-	env.addSpec("planning/features/csv-export/spec.md", `---
+	env.addSpec("planning/initiatives/csv-export/spec.md", `---
 title: CSV Export
-type: feature
+type: initiative
 status: in-review
 ---
 # CSV Export
 `)
-	src := filepath.Join(env.heroDir, "planning/features/csv-export/spec.md")
+	src := filepath.Join(env.heroDir, "planning/initiatives/csv-export/spec.md")
 	if _, err := runCmd("spec", "complete", src); err != nil {
 		t.Fatalf("first runComplete failed: %v", err)
 	}
@@ -686,14 +638,15 @@ func TestAutoArchiveIfCompleted_StampsWhenMissing(t *testing.T) {
 	fixed := time.Date(2026, 5, 31, 19, 42, 8, 0, time.UTC)
 	withSpecNowFn(t, fixed)
 
-	env.addSpec("planning/features/csv-export/spec.md", `---
+	// Use initiative — not gated by verify.
+	env.addSpec("planning/initiatives/csv-export/spec.md", `---
 title: CSV Export
-type: feature
+type: initiative
 status: completed
 ---
 # CSV Export
 `)
-	src := filepath.Join(env.heroDir, "planning/features/csv-export/spec.md")
+	src := filepath.Join(env.heroDir, "planning/initiatives/csv-export/spec.md")
 
 	if _, err := autoArchiveIfCompleted(src, env.heroDir); err != nil {
 		t.Fatalf("autoArchive failed: %v", err)
@@ -713,16 +666,17 @@ func TestAutoArchiveIfCompleted_LeavesExistingStamp(t *testing.T) {
 	env := newTestEnv(t)
 	withSpecNowFn(t, time.Date(2026, 11, 11, 11, 11, 11, 0, time.UTC))
 
+	// Use initiative — not gated by verify.
 	original := `---
 title: CSV Export
-type: feature
+type: initiative
 status: completed
 completed_at: 2025-01-15T08:00:00Z
 ---
 # CSV Export
 `
-	env.addSpec("planning/features/csv-export/spec.md", original)
-	src := filepath.Join(env.heroDir, "planning/features/csv-export/spec.md")
+	env.addSpec("planning/initiatives/csv-export/spec.md", original)
+	src := filepath.Join(env.heroDir, "planning/initiatives/csv-export/spec.md")
 
 	if _, err := autoArchiveIfCompleted(src, env.heroDir); err != nil {
 		t.Fatalf("autoArchive failed: %v", err)

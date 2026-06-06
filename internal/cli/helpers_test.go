@@ -364,6 +364,11 @@ func resetFlags() {
 	backfillCompletedAtDryRun = false
 	backfillCompletedAtQuiet = false
 
+	// Reset verify flags
+	verifyJSON = false
+	verifySkipTests = false
+	verifyForce = false
+
 	// Note: upgradeContentFS is intentionally NOT reset here — it's a test
 	// injection point, not a CLI flag.
 }
