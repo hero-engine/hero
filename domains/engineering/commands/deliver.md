@@ -246,16 +246,18 @@ At the end of the delivery loop:
    visible from the first prompt.
 
 When delivery is complete and the Completion Ledger is fully `DONE` (or
-non-`DONE` rows have explicit user sign-off), set the spec's
-`status: completed` in the frontmatter and run `hero spec verify <slug>` —
-verify auto-archives a completed spec to `.hero/specs/<slug>/`, so you
-don't need a separate `hero spec complete` step. The async runner does the
-same auto-archive at the tail of every successful agent delivery.
+non-`DONE` rows have explicit user sign-off), run `hero spec verify <slug>`.
+**Do not edit `status: completed` in the frontmatter directly** — `hero
+verify` is the only path to completed. It checks four gates (ledger,
+audit report, test coverage, build) and flips status + archives only when
+all hard gates pass. If verify returns FAIL, read the specific gate
+failures and route them back to the engineer to address. Re-run verify
+after fixes.
 
-Do not hand-write `completed_at:` when you flip the status — `hero spec
-verify` stamps the canonical timestamp automatically (RFC 3339 UTC) so
-downstream consumers like the Sprint Dashboard read an authoritative
-value. Hand-writing the field is harmless (idempotent) but unnecessary.
+Use `--skip-tests` if the test suite was just run and you don't want to
+re-run it. Use `--json` for structured output the delivery lead can parse.
+`--force` exists for exceptional human-judgment overrides — it bypasses
+failed gates but logs the override visibly.
 
 The Completion Ledger replaces the older "implementation summary" pattern.
 Soft prose summaries that gloss skipped or partial work are explicitly

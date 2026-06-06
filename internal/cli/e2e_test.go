@@ -158,7 +158,7 @@ func TestE2E_FullLifecycle(t *testing.T) {
 		// Just verify it ran without crashing — the exact format may vary
 	}
 
-	// --- Step 12: hero complete (move spec to specs/) ---
+	// --- Step 12: hero verify --force (complete via verify gate) ---
 	specPath := filepath.Join(heroDir, "planning", "features", "user-csv-export", "spec.md")
 	// Write some more content to make it a valid spec with Changes section
 	data, _ := os.ReadFile(specPath)
@@ -166,16 +166,18 @@ func TestE2E_FullLifecycle(t *testing.T) {
 		"- `src/export/csv.go`\n- `src/api/users.go`", 1)
 	os.WriteFile(specPath, []byte(enriched), 0o644)
 
-	// Commit the spec so hero complete can proceed
+	// Commit the spec so hero verify can proceed
 	git("add", ".")
 	git("commit", "-m", "add specs")
 
-	output, err = runCmd("spec", "complete", specPath)
+	// Work specs go through verify, not complete. Use --force to bypass
+	// gates (no ledger/audit in this e2e fixture).
+	output, err = runCmd("spec", "verify", "--force", "--skip-tests", "user-csv-export")
 	if err != nil {
-		t.Fatalf("complete failed: %v", err)
+		t.Fatalf("verify --force failed: %v", err)
 	}
-	if !strings.Contains(output, "Completed") {
-		t.Errorf("complete output unexpected: %s", output)
+	if !strings.Contains(output, "FORCED") {
+		t.Errorf("verify output unexpected: %s", output)
 	}
 
 	// Verify the spec was moved to specs/

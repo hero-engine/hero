@@ -6,7 +6,22 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-05T21:03:38Z · 103 ready specs_
+_Generated: 2026-06-06T20:10:26Z · 104 ready specs_
+
+## delivery-gate-enforcement — "Delivery Gate Enforcement — hero verify Becomes the Load-Bearing Checkpoint"
+_feature · delivering · horizon: now_
+
+Pick up at: greenfield. Deliver `delivery-gate-enforcement` — make
+`hero verify` the real enforcement checkpoint for delivery closeout. Four
+gates: ledger present with all rows DONE, audit report on disk with SHIP
+verdict, test coverage mapped to ACs, and build/test passing. Verify
+flips status + archives only when all gates pass. Key files:
+`internal/spec/ledger.go` (new parser), `internal/cli/verify.go` (rewrite
+to gated flow), `internal/cli/verify_test.go` (new), `deliver.md` and
+`engineer.md` instruction updates. Run `go test ./internal/spec/...
+./internal/cli/... ./internal/coverage/...` to validate.
+
+---
 
 ## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 _feature · delivering · horizon: now_

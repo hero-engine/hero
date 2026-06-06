@@ -133,7 +133,7 @@ Check the invocation for a mode flag. If none is specified, use **supervised**.
     - **HOLD** → route the audit's specific concerns back to the engineer, re-validate, re-audit. **Bounded retry:** if the same row returns HOLD after 2 engineer passes, stop looping and escalate to the user — that row needs human judgment, not another grind.
     - **SHIP + noteworthy** → quote the full `<AUDIT_HEADLINE>` (file tables and all) AND the highlight bullets in your final response, link to the report file, proceed.
     - **SHIP + clean** → quote the full `<AUDIT_HEADLINE>` and proceed. The file inventory is earned signal on every delivery — do NOT collapse it. What you skip on a clean SHIP is the highlights block, not the receipt. Full report stays on disk for depth.
-19. On completion (audit returned SHIP), move the spec from `planning/` to `specs/` and update its status to `completed`
+19. On completion (audit returned SHIP), run `hero spec verify <slug> --skip-tests` (tests were already run in step 16). **Do not edit `status: completed` directly** — `hero verify` checks four gates (ledger, audit, coverage, tests) and flips status + archives only when all pass. If verify returns FAIL, read the specific gate failures and route them back to the engineer. Re-run verify after fixes.
 20. If a tracker is configured, update the issue
 21. **Suggest what's next.** Your final response must end with a single concrete "Next up" recommendation — not an option list, not "let me know." Use `hero_kickoff` or `hero_pulse` if uncertain. Emit via the `next-handoff-emit` pattern so it persists into `.hero/NEXT.md` and the next session resumes with it visible.
 

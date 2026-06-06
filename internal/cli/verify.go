@@ -1,29 +1,63 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/hero-engine/hero/internal/config"
-	"github.com/hero-engine/hero/internal/score"
+	"github.com/hero-engine/hero/internal/coverage"
 	"github.com/hero-engine/hero/internal/spec"
 	"github.com/spf13/cobra"
 )
 
+var (
+	verifyJSON      bool
+	verifySkipTests bool
+	verifyForce     bool
+)
+
 var verifyCmd = &cobra.Command{
 	Use:   "verify <spec-slug>",
-	Short: "Verify implementation against spec acceptance criteria",
-	Long: `Reviews a spec's acceptance criteria and produces a verification checklist.
+	Short: "Verify delivery gates and complete a spec",
+	Long: `Checks four delivery gates before marking a spec completed:
 
-For each acceptance criterion, reports whether it can be verified from the
-current codebase state. Use after manual delivery to check your work before
-marking the spec as complete.
+  Gate 1: Completion Ledger — present, all AC rows DONE (or signed-off)
+  Gate 2: Delivery Audit — audit report exists with SHIP verdict
+  Gate 3: Test Coverage — AC-to-test mapping (advisory, not blocking)
+  Gate 4: Build & Tests — test command passes
 
-Outputs the acceptance criteria, files that should have been touched, and
-a structured prompt suitable for AI-assisted review.`,
+If all hard gates pass, flips status to completed and archives the spec.
+If any gate fails, reports the failures and does NOT change status.
+
+Use --force to bypass gates (logged visibly). Use --skip-tests to skip Gate 4.
+Use --json for machine-readable output.`,
 	Args: cobra.ExactArgs(1),
 	RunE: runVerify,
+}
+
+func init() {
+	verifyCmd.Flags().BoolVar(&verifyJSON, "json", false, "output JSON result")
+	verifyCmd.Flags().BoolVar(&verifySkipTests, "skip-tests", false, "skip Gate 4 (build & tests)")
+	verifyCmd.Flags().BoolVar(&verifyForce, "force", false, "bypass failed gates (logged visibly)")
+}
+
+// GateResult is the outcome of a single verification gate.
+type GateResult struct {
+	Name    string   `json:"name"`
+	Result  string   `json:"result"` // PASS, FAIL, ADVISORY, SKIPPED
+	Details []string `json:"details"`
+}
+
+// VerifyResult is the overall verification outcome.
+type VerifyResult struct {
+	Slug     string       `json:"slug"`
+	Result   string       `json:"result"` // PASS, FAIL, FORCED
+	Gates    []GateResult `json:"gates"`
+	Archived bool         `json:"archived"`
 }
 
 func runVerify(cmd *cobra.Command, args []string) error {
@@ -55,138 +89,421 @@ func runVerify(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("spec %q not found", args[0])
 	}
 
-	// Score the spec first
-	scoreCfg := score.DefaultConfig()
-	if cfg.Score != nil && cfg.Score.MinScore > 0 {
-		scoreCfg.MinScore = cfg.Score.MinScore
+	// If already completed and archived, report and exit
+	if target.Status == spec.StatusCompleted && isAlreadyInSpecsDir(target.Path, heroDir) {
+		if verifyJSON {
+			r := VerifyResult{Slug: target.Slug, Result: "PASS", Archived: true}
+			r.Gates = append(r.Gates, GateResult{Name: "already-completed", Result: "PASS", Details: []string{"spec is already completed and archived"}})
+			return outputJSON(r)
+		}
+		fmt.Printf("\n  Spec %s is already completed and archived.\n\n", target.Slug)
+		return nil
 	}
-	result := score.Score(target, scoreCfg)
 
-	// Extract acceptance criteria
-	acSection := ""
-	for name, content := range target.Sections {
-		lower := strings.ToLower(name)
-		if strings.Contains(lower, "acceptance") || strings.Contains(lower, "success criteria") ||
-			strings.Contains(lower, "done when") || strings.Contains(lower, "definition of done") {
-			acSection = content
-			break
+	result := VerifyResult{Slug: target.Slug}
+
+	// Gate 1: Completion Ledger
+	gate1 := checkLedger(target)
+	result.Gates = append(result.Gates, gate1)
+
+	// Gate 2: Delivery Audit
+	gate2 := checkAudit(target)
+	result.Gates = append(result.Gates, gate2)
+
+	// Gate 3: Test Coverage (advisory)
+	gate3 := checkCoverage(projectRoot, heroDir, target, cfg)
+	result.Gates = append(result.Gates, gate3)
+
+	// Gate 4: Build & Tests
+	gate4 := checkTests(projectRoot, cfg)
+	result.Gates = append(result.Gates, gate4)
+
+	// Determine overall result
+	hardFails := 0
+	for _, g := range result.Gates {
+		if g.Result == "FAIL" {
+			hardFails++
 		}
 	}
 
-	// Extract test strategy
-	testSection := ""
-	for name, content := range target.Sections {
-		lower := strings.ToLower(name)
-		if strings.Contains(lower, "test") || strings.Contains(lower, "verification") ||
-			strings.Contains(lower, "validation") {
-			testSection = content
-			break
-		}
-	}
-
-	// Print verification report
-	fmt.Printf("\n  Verification Report: %s\n", target.Slug)
-	fmt.Printf("  %s\n", strings.Repeat("═", 60))
-
-	// Spec quality
-	fmt.Printf("\n  Spec Quality: %d/100 (Grade %s)\n", result.Score, result.Grade)
-
-	// Acceptance criteria
-	if acSection != "" {
-		fmt.Printf("\n  Acceptance Criteria:\n")
-		criteria := extractCriteriaItems(acSection)
-		if len(criteria) > 0 {
-			for i, c := range criteria {
-				fmt.Printf("    %d. [ ] %s\n", i+1, c)
-			}
-		} else {
-			fmt.Printf("    (section exists but no list items found)\n")
-		}
+	if hardFails == 0 {
+		result.Result = "PASS"
+	} else if verifyForce {
+		result.Result = "FORCED"
 	} else {
-		fmt.Printf("\n  ⚠ No acceptance criteria section found in spec.\n")
+		result.Result = "FAIL"
 	}
 
-	// Files that should have been touched
-	if len(target.FilesTouched) > 0 {
-		fmt.Printf("\n  Expected File Changes:\n")
-		for _, f := range target.FilesTouched {
-			if _, err := os.Stat(f); err == nil {
-				fmt.Printf("    ✓ %s (exists)\n", f)
-			} else {
-				fmt.Printf("    ? %s (not found — may need creating or path differs)\n", f)
-			}
+	// Archive on PASS or FORCED. Skip the gate check in autoArchive
+	// because verify already checked the gates (PASS) or the user
+	// explicitly bypassed them (FORCED).
+	if result.Result == "PASS" || result.Result == "FORCED" {
+		moved, err := completeAndArchive(target.Path, heroDir, true)
+		if err != nil {
+			return fmt.Errorf("completing spec: %w", err)
 		}
+		result.Archived = moved || isAlreadyInSpecsDir(target.Path, heroDir)
 	}
 
-	// Test strategy
-	if testSection != "" {
-		fmt.Printf("\n  Test Strategy:\n")
-		items := extractCriteriaItems(testSection)
-		if len(items) > 0 {
-			for _, item := range items {
-				fmt.Printf("    • %s\n", item)
-			}
-		} else {
-			// Print the section as-is, trimmed
-			for _, line := range strings.Split(strings.TrimSpace(testSection), "\n") {
-				trimmed := strings.TrimSpace(line)
-				if trimmed != "" {
-					fmt.Printf("    %s\n", trimmed)
-				}
-			}
-		}
+	if verifyJSON {
+		return outputJSON(result)
 	}
 
-	// Generate AI verification prompt
-	fmt.Printf("\n  %s\n", strings.Repeat("─", 60))
-	fmt.Printf("  AI Verification Prompt (copy to agent):\n")
-	fmt.Printf("  %s\n\n", strings.Repeat("─", 60))
-
-	var prompt strings.Builder
-	prompt.WriteString(fmt.Sprintf("Verify the implementation of spec '%s'.\n\n", target.Slug))
-	prompt.WriteString(fmt.Sprintf("Spec: %s\n\n", target.Path))
-
-	if acSection != "" {
-		prompt.WriteString("Check each acceptance criterion:\n")
-		criteria := extractCriteriaItems(acSection)
-		for i, c := range criteria {
-			prompt.WriteString(fmt.Sprintf("%d. %s\n", i+1, c))
-		}
-		prompt.WriteString("\n")
+	printVerifyReport(result, hardFails)
+	if result.Result == "FAIL" {
+		return fmt.Errorf("verification failed: %d gate(s) did not pass", hardFails)
 	}
-
-	if len(target.FilesTouched) > 0 {
-		prompt.WriteString("Expected files changed:\n")
-		for _, f := range target.FilesTouched {
-			prompt.WriteString(fmt.Sprintf("- %s\n", f))
-		}
-		prompt.WriteString("\n")
-	}
-
-	prompt.WriteString("For each criterion: examine the code, run relevant tests if possible, and report PASS/FAIL with evidence.\n")
-	prompt.WriteString("At the end, give an overall PASS/FAIL verdict.\n")
-
-	fmt.Print(prompt.String())
-	fmt.Println()
-
-	// Auto-archive when the spec is already at status: completed. This
-	// closes the manual /deliver loop: the model flips status to
-	// completed during delivery, runs `hero verify` for the AC report,
-	// and the verify call moves the spec under specs/ without anyone
-	// having to remember `hero spec complete`. No-op when status hasn't
-	// flipped yet, so calling verify mid-delivery is still safe.
-	moved, err := autoArchiveIfCompleted(target.Path, heroDir)
-	if err != nil {
-		return fmt.Errorf("auto-archive: %w", err)
-	}
-	if moved {
-		fmt.Printf("Auto-archived: spec moved to specs/%s/\n", target.Slug)
-	}
-
 	return nil
 }
 
-// extractCriteriaItems pulls list items from a section.
+// checkLedger verifies Gate 1: Completion Ledger present and clean.
+func checkLedger(s *spec.Spec) GateResult {
+	gate := GateResult{Name: "Completion Ledger"}
+	ledger := spec.ParseLedger(s)
+
+	if !ledger.Found {
+		gate.Result = "FAIL"
+		gate.Details = append(gate.Details, "no Completion Ledger section found in spec")
+		return gate
+	}
+	gate.Details = append(gate.Details, "ledger found")
+
+	// Check AC rows
+	allDone := true
+	acCount := len(ledger.ACRows)
+	doneCount := 0
+	for _, row := range ledger.ACRows {
+		switch row.Status {
+		case spec.LedgerDone:
+			doneCount++
+		case spec.LedgerSkipped, spec.LedgerBlocked:
+			if row.SignedOff {
+				doneCount++
+			} else {
+				allDone = false
+				gate.Details = append(gate.Details,
+					fmt.Sprintf("AC-%d is %s (not signed-off): %s", row.Index, row.Status, row.Note))
+			}
+		case spec.LedgerPartial:
+			allDone = false
+			gate.Details = append(gate.Details,
+				fmt.Sprintf("AC-%d is PARTIAL: %s", row.Index, row.Note))
+		default:
+			allDone = false
+			gate.Details = append(gate.Details,
+				fmt.Sprintf("AC-%d has unrecognized status: %s", row.Index, row.Status))
+		}
+	}
+
+	if acCount > 0 {
+		gate.Details = append([]string{gate.Details[0],
+			fmt.Sprintf("%d/%d AC rows DONE", doneCount, acCount)}, gate.Details[1:]...)
+	}
+
+	// Check Changes rows
+	for _, row := range ledger.ChangesRows {
+		if row.Status != spec.LedgerDone && !(row.SignedOff && (row.Status == spec.LedgerSkipped || row.Status == spec.LedgerBlocked)) {
+			allDone = false
+			gate.Details = append(gate.Details,
+				fmt.Sprintf("Changes item %d is %s: %s", row.Index, row.Status, row.Note))
+		}
+	}
+	if len(ledger.ChangesRows) > 0 {
+		changesOK := 0
+		for _, row := range ledger.ChangesRows {
+			if row.Status == spec.LedgerDone || (row.SignedOff && (row.Status == spec.LedgerSkipped || row.Status == spec.LedgerBlocked)) {
+				changesOK++
+			}
+		}
+		gate.Details = append(gate.Details,
+			fmt.Sprintf("%d/%d Changes rows DONE", changesOK, len(ledger.ChangesRows)))
+	}
+
+	// Check exercise
+	if ledger.ExerciseChecked && ledger.ExerciseDetail != "" {
+		gate.Details = append(gate.Details,
+			fmt.Sprintf("exercise-the-feature: checked with detail"))
+	} else if ledger.ExerciseChecked && ledger.ExerciseDetail == "" {
+		allDone = false
+		gate.Details = append(gate.Details,
+			"exercise-the-feature: checked but no detail provided")
+	} else {
+		allDone = false
+		gate.Details = append(gate.Details, "exercise-the-feature: not checked")
+	}
+
+	if allDone {
+		gate.Result = "PASS"
+	} else {
+		gate.Result = "FAIL"
+	}
+	return gate
+}
+
+// checkAudit verifies Gate 2: Delivery audit report exists with SHIP verdict.
+func checkAudit(s *spec.Spec) GateResult {
+	gate := GateResult{Name: "Delivery Audit"}
+	audit := spec.FindAuditReport(s)
+
+	if !audit.Found {
+		gate.Result = "FAIL"
+		gate.Details = append(gate.Details, "no audit report found (expected delivery-audit.md in spec directory)")
+		return gate
+	}
+
+	gate.Details = append(gate.Details, fmt.Sprintf("audit report found at %s", audit.Path))
+
+	if audit.Verdict == "SHIP" {
+		gate.Result = "PASS"
+		surface := audit.Surface
+		if surface == "" {
+			surface = "unknown"
+		}
+		gate.Details = append(gate.Details, fmt.Sprintf("verdict: SHIP (%s)", surface))
+	} else if audit.Verdict == "HOLD" {
+		gate.Result = "FAIL"
+		gate.Details = append(gate.Details, "verdict: HOLD — audit found issues that need resolution")
+	} else {
+		gate.Result = "FAIL"
+		gate.Details = append(gate.Details, fmt.Sprintf("verdict: %q — expected SHIP or HOLD", audit.Verdict))
+	}
+
+	return gate
+}
+
+// checkCoverage verifies Gate 3: Test coverage for acceptance criteria (advisory).
+func checkCoverage(projectRoot, heroDir string, s *spec.Spec, cfg config.Config) GateResult {
+	gate := GateResult{Name: "Test Coverage"}
+
+	testDir := ""
+	if cfg.Testing != nil && cfg.Testing.TestDir != "" {
+		testDir = cfg.Testing.TestDir
+	}
+
+	report, err := coverage.Analyze(projectRoot, heroDir, s.Slug, testDir)
+	if err != nil {
+		gate.Result = "ADVISORY"
+		gate.Details = append(gate.Details, fmt.Sprintf("could not analyze coverage: %v", err))
+		return gate
+	}
+
+	if report.Total == 0 {
+		gate.Result = "ADVISORY"
+		gate.Details = append(gate.Details, "no acceptance criteria to check coverage for")
+		return gate
+	}
+
+	gate.Details = append(gate.Details,
+		fmt.Sprintf("%d/%d criteria have test coverage (%d strong, %d weak)",
+			report.Covered, report.Total, report.StrongCount, report.WeakCount))
+
+	if report.Gaps > 0 {
+		gate.Result = "ADVISORY"
+		for _, c := range report.Criteria {
+			if !c.Covered {
+				gate.Details = append(gate.Details,
+					fmt.Sprintf("gap: AC-%d %q — %s",
+						c.Index, truncateForVerify(c.Raw, 60), c.Detail))
+			}
+		}
+	} else {
+		gate.Result = "PASS"
+	}
+
+	return gate
+}
+
+// checkTests verifies Gate 4: Build & tests pass.
+func checkTests(projectRoot string, cfg config.Config) GateResult {
+	gate := GateResult{Name: "Build & Tests"}
+
+	if verifySkipTests {
+		gate.Result = "SKIPPED"
+		gate.Details = append(gate.Details, "skipped via --skip-tests")
+		return gate
+	}
+
+	if cfg.Verify != nil && !cfg.Verify.RunTestsOrDefault() {
+		gate.Result = "SKIPPED"
+		gate.Details = append(gate.Details, "disabled via verify.run_tests=false in hero.json")
+		return gate
+	}
+
+	testCmd := detectTestCommand(projectRoot, cfg)
+	if testCmd == "" {
+		gate.Result = "SKIPPED"
+		gate.Details = append(gate.Details, "no test command detected — set verify.test_command in hero.json")
+		return gate
+	}
+
+	gate.Details = append(gate.Details, fmt.Sprintf("running: %s", testCmd))
+
+	cmd := exec.Command("sh", "-c", testCmd)
+	cmd.Dir = projectRoot
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		gate.Result = "FAIL"
+		// Truncate output to last 30 lines for readability
+		lines := strings.Split(string(output), "\n")
+		if len(lines) > 30 {
+			lines = lines[len(lines)-30:]
+		}
+		gate.Details = append(gate.Details, fmt.Sprintf("FAILED: %v", err))
+		gate.Details = append(gate.Details, strings.Join(lines, "\n"))
+	} else {
+		gate.Result = "PASS"
+		// Count packages/tests from output
+		summary := summarizeTestOutput(string(output))
+		if summary != "" {
+			gate.Details = append(gate.Details, summary)
+		} else {
+			gate.Details = append(gate.Details, "tests passed")
+		}
+	}
+
+	return gate
+}
+
+// detectTestCommand determines the test command from config or stack detection.
+func detectTestCommand(projectRoot string, cfg config.Config) string {
+	// Check config override first
+	if cfg.Verify != nil && cfg.Verify.TestCommandOrDefault() != "" {
+		return cfg.Verify.TestCommandOrDefault()
+	}
+
+	// Stack detection
+	if _, err := os.Stat(filepath.Join(projectRoot, "go.mod")); err == nil {
+		return "go build ./... && go test ./..."
+	}
+	if _, err := os.Stat(filepath.Join(projectRoot, "package.json")); err == nil {
+		return "npm test"
+	}
+	if _, err := os.Stat(filepath.Join(projectRoot, "pyproject.toml")); err == nil {
+		return "pytest"
+	}
+	if _, err := os.Stat(filepath.Join(projectRoot, "Cargo.toml")); err == nil {
+		return "cargo test"
+	}
+	if _, err := os.Stat(filepath.Join(projectRoot, "build.gradle")); err == nil {
+		return "./gradlew test"
+	}
+	if _, err := os.Stat(filepath.Join(projectRoot, "pom.xml")); err == nil {
+		return "mvn test"
+	}
+
+	return ""
+}
+
+// summarizeTestOutput extracts a summary line from test output.
+func summarizeTestOutput(output string) string {
+	lines := strings.Split(output, "\n")
+	okCount := 0
+	failCount := 0
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "ok ") || strings.HasPrefix(trimmed, "ok\t") {
+			okCount++
+		}
+		if strings.HasPrefix(trimmed, "FAIL") {
+			failCount++
+		}
+	}
+	if okCount > 0 || failCount > 0 {
+		return fmt.Sprintf("%d packages ok, %d failed", okCount, failCount)
+	}
+	return ""
+}
+
+// completeAndArchive flips status to completed and archives.
+// skipGateCheck bypasses the ledger/audit gate in autoArchive
+// (used when verify itself already checked the gates or --force was used).
+func completeAndArchive(specPath, heroDir string, skipGateCheck bool) (bool, error) {
+	// Read the current spec to check status
+	s, err := spec.ParseFile(specPath)
+	if err != nil {
+		return false, fmt.Errorf("parsing spec: %w", err)
+	}
+
+	// Flip status to completed if not already
+	if s.Status != spec.StatusCompleted {
+		if err := updateFrontmatterStatus(specPath, "completed"); err != nil {
+			return false, fmt.Errorf("updating status: %w", err)
+		}
+	}
+
+	// Use the existing auto-archive path. Skip the gate check because
+	// verify already validated the gates (or --force was used).
+	return autoArchiveIfCompletedOpt(specPath, heroDir, skipGateCheck)
+}
+
+// printVerifyReport outputs a human-readable verification report.
+func printVerifyReport(r VerifyResult, hardFails int) {
+	fmt.Printf("\n  Delivery Gate Report: %s\n", r.Slug)
+	fmt.Printf("  %s\n", strings.Repeat("=", 60))
+
+	for _, g := range r.Gates {
+		symbol := "PASS"
+		switch g.Result {
+		case "PASS":
+			symbol = "PASS"
+		case "FAIL":
+			symbol = "FAIL"
+		case "ADVISORY":
+			symbol = "ADVISORY"
+		case "SKIPPED":
+			symbol = "SKIPPED"
+		}
+
+		fmt.Printf("\n  %-35s %s\n", g.Name, symbol)
+		for _, d := range g.Details {
+			prefix := "    "
+			switch {
+			case strings.HasPrefix(d, "gap:") || strings.Contains(d, "PARTIAL") ||
+				strings.Contains(d, "SKIPPED") || strings.Contains(d, "BLOCKED") ||
+				strings.Contains(d, "FAIL") || strings.Contains(d, "not checked") ||
+				strings.Contains(d, "no detail"):
+				prefix = "    ! "
+			default:
+				prefix = "    "
+			}
+			fmt.Printf("%s%s\n", prefix, d)
+		}
+	}
+
+	fmt.Printf("\n  %s\n", strings.Repeat("-", 60))
+
+	switch r.Result {
+	case "PASS":
+		fmt.Printf("  Result: PASS — all gates satisfied\n")
+		if r.Archived {
+			fmt.Printf("  -> Status flipped to completed\n")
+			fmt.Printf("  -> Archived to specs/%s/\n", r.Slug)
+		}
+	case "FORCED":
+		fmt.Printf("  Result: FORCED — %d gate(s) bypassed\n", hardFails)
+		fmt.Printf("  WARNING: gates were bypassed with --force\n")
+		if r.Archived {
+			fmt.Printf("  -> Status flipped to completed (FORCED)\n")
+			fmt.Printf("  -> Archived to specs/%s/\n", r.Slug)
+		}
+	case "FAIL":
+		fmt.Printf("  Result: FAIL — %d gate(s) did not pass\n", hardFails)
+		fmt.Printf("  -> Status NOT changed. Fix the failures and re-run hero verify.\n")
+	}
+	fmt.Println()
+}
+
+func outputJSON(r VerifyResult) error {
+	data, err := json.MarshalIndent(r, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshaling JSON: %w", err)
+	}
+	fmt.Println(string(data))
+	return nil
+}
+
+// extractCriteriaItems pulls list items from a section. Retained for
+// backward compatibility — used by deliver_test.go.
 func extractCriteriaItems(section string) []string {
 	var items []string
 	for _, line := range strings.Split(section, "\n") {
@@ -194,11 +511,9 @@ func extractCriteriaItems(section string) []string {
 		if len(trimmed) < 3 {
 			continue
 		}
-		// Match bullet or numbered list items
 		if strings.HasPrefix(trimmed, "- ") || strings.HasPrefix(trimmed, "* ") || strings.HasPrefix(trimmed, "+ ") {
 			items = append(items, strings.TrimSpace(trimmed[2:]))
 		} else if len(trimmed) > 2 && trimmed[0] >= '0' && trimmed[0] <= '9' {
-			// Numbered items like "1. text" or "1) text"
 			for i := 1; i < len(trimmed); i++ {
 				if trimmed[i] == '.' || trimmed[i] == ')' {
 					if i+1 < len(trimmed) && trimmed[i+1] == ' ' {
@@ -213,4 +528,13 @@ func extractCriteriaItems(section string) []string {
 		}
 	}
 	return items
+}
+
+// truncateForVerify shortens s to max chars. Separate from the
+// truncateStr in automations.go to avoid redeclaration.
+func truncateForVerify(s string, max int) string {
+	if len(s) <= max {
+		return s
+	}
+	return s[:max-3] + "..."
 }
