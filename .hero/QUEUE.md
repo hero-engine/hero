@@ -6,31 +6,12 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T19:57:49Z · 97 ready specs_
+_Generated: 2026-06-09T21:30:01Z · 97 ready specs_
 
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
-
----
-
-## hihcp-skill-run-tool — "Add skill_run Tool to hero-code Native Tool Catalog"
-_feature · planning · horizon: now_
-
-Adds a `skill_run` native tool to hero-code so the model can invoke
-Hero workflows (/design, /deliver, /diagnose, etc.).
-
-**Status:** planning — full design complete, no code yet.
-
-**Pick up at:** Add the tool spec to `nativeToolSpecs()` in AgentLoop,
-then the dispatch intercept and registry wiring. Three files, one new
-`else if` branch in the tool dispatch chain.
-
-→ `/deliver hihcp-skill-run-tool`
-
-**Files:** `Engine/AgentLoop.swift:1258` (nativeToolSpecs), `Engine/AgentLoop.swift:518` (dispatch chain), `State/AppState.swift:955` (registry wiring)
-**Skip:** ToolExecutor dispatch (registries are @MainActor, ToolExecutor is an actor — use AgentLoop intercept instead)
 
 ---
 
@@ -978,6 +959,25 @@ Start with Phase 0 only. Do not build anything. Read [next-compact-handoff/spec.
 Output a written assessment with a clear recommendation: proceed to Phase 1 prototype, or close as "not worth it" with the analysis preserved so future revisits don't re-litigate.
 
 Time budget: ~2 days of focused research, no implementation. If the assessment can't be reached in that budget, the answer is probably no.
+
+---
+
+## hihcp-skill-run-tool — "Add skill_run Tool to hero-code Native Tool Catalog"
+_feature · handed_off · horizon: now_
+
+Adds a `skill_run` native tool to hero-code so the model can invoke
+Hero workflows (/design, /deliver, /diagnose, etc.).
+
+**Status:** planning — full design complete, no code yet.
+
+**Pick up at:** Add the tool spec to `nativeToolSpecs()` in AgentLoop,
+then the dispatch intercept and registry wiring. Three files, one new
+`else if` branch in the tool dispatch chain.
+
+→ `/deliver hihcp-skill-run-tool`
+
+**Files:** `Engine/AgentLoop.swift:1258` (nativeToolSpecs), `Engine/AgentLoop.swift:518` (dispatch chain), `State/AppState.swift:955` (registry wiring)
+**Skip:** ToolExecutor dispatch (registries are @MainActor, ToolExecutor is an actor — use AgentLoop intercept instead)
 
 ---
 

@@ -1,11 +1,21 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "hero next ingest --quiet",
+            "type": "command"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "hero next checkpoint --quiet"
+            "command": "hero next checkpoint --quiet",
+            "type": "command"
           }
         ]
       }

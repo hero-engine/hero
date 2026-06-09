@@ -1,3 +1,5 @@
+# hero:managed
 [mcp_servers.hero]
+command = "/Users/developer/go/bin/hero"
 args = ["mcp"]
-command = "hero"
+# end:hero:managed

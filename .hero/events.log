@@ -130,3 +130,48 @@
 {"ts":"2026-06-04T21:14:52.581863Z","type":"peer.call.completed","agent":"hero","slug":"desktop-sidebar-mcp-not-running","message":"peer call failed: subagent timed out after 10m0s:  (call_id 18b5fcb77271f5a89ca04c452c688f8c)"}
 {"ts":"2026-06-06T18:21:29.60593Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"delivery-gate-enforcement","message":"\"Delivery Gate Enforcement — hero verify Becomes the Load-Bearing Checkpoint\""}
 {"ts":"2026-06-06T18:21:29.606018Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"delivery-gate-enforcement","message":"status -\u003e completed"}
+{"ts":"2026-06-09T15:47:45.161051Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"codex-install-broken","message":"\"Codex install is broken — AGENTS.md body missing, agents/skills not materialized, MCP unreachable\""}
+{"ts":"2026-06-09T15:47:45.16114Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"codex-install-broken","message":"status -\u003e completed"}
+{"ts":"2026-06-09T16:55:40.946674Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"master-ingest-restore","message":"Master Ingest Restore — `hero scan` Returns to Its V2 Promise"}
+{"ts":"2026-06-09T16:55:40.946756Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"master-ingest-restore","message":"status -\u003e completed"}
+{"ts":"2026-06-09T17:34:51.420331Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-local-merge-missing-dialect-fields","message":"hero.local.json merge doesn't forward vocabulary / methodology fields"}
+{"ts":"2026-06-09T17:34:51.420434Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-local-merge-missing-dialect-fields","message":"status -\u003e completed"}
+{"ts":"2026-06-09T18:14:49.693996Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"spec-types-cache-frontmatter-empty","message":"spec-types.json records emit frontmatter as null — loader never populates it"}
+{"ts":"2026-06-09T18:14:49.694097Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"spec-types-cache-frontmatter-empty","message":"status -\u003e completed"}
+{"ts":"2026-06-09T18:17:12.97811Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"vocabulary-resolve-misses-methodology-derivation","message":"vocabulary.Resolve doesn't fold methodology-derived auto-derivation"}
+{"ts":"2026-06-09T18:17:12.978189Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"vocabulary-resolve-misses-methodology-derivation","message":"status -\u003e completed"}
+{"ts":"2026-06-09T18:21:22.768053Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"delivery-gate-enforcement","message":"\"Delivery Gate Enforcement — hero verify Becomes the Load-Bearing Checkpoint\""}
+{"ts":"2026-06-09T18:21:22.768157Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"delivery-gate-enforcement","message":"status -\u003e completed"}
+{"ts":"2026-06-09T18:21:23.674722Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"compact-handoff-test-coverage","message":"\"Compact Handoff Test Coverage — Close MVP Coverage Gaps\""}
+{"ts":"2026-06-09T18:21:23.674828Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"compact-handoff-test-coverage","message":"status -\u003e completed"}
+{"ts":"2026-06-09T18:29:13.275815Z","type":"spec_created","agent":"mcp/hero","slug":"hero-in-hero-code-parity","message":"Initiative spec authored: hero-in-hero-code-parity — 8 child specs across 3 waves fixing Hero workflow integration in hero-code desktop app. Wave 1 (P0): skill_run tool + harness-agnostic AGENTS.md. Wave 2 (P1): MCP readiness, auto-reconnect, stuck turn prevention. Wave 3 (P2): rgignore, fuzzy path resolution, permission validation. Next: /design hihcp-skill-run-tool."}
+{"ts":"2026-06-09T18:33:01.450909Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"unified-search","message":"Unified Search — Merge Federation Graph and On-Disk Spec Index"}
+{"ts":"2026-06-09T18:33:01.451083Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"unified-search","message":"status -\u003e completed"}
+{"ts":"2026-06-09T18:38:24.867935Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"tripwire-system","message":"\"Tripwire System — Forbidden-Option Guardrails for Model Sessions\""}
+{"ts":"2026-06-09T18:38:24.868054Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"tripwire-system","message":"status -\u003e completed"}
+{"ts":"2026-06-09T18:42:06.945574Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"traversal-queries","message":"Traversal Queries — `hero why` and `hero blocked`"}
+{"ts":"2026-06-09T18:42:06.945687Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"traversal-queries","message":"status -\u003e completed"}
+{"ts":"2026-06-09T18:46:26.752747Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"spec-status-integrity","message":"Spec Status Integrity — Graph-Verified Delivery Claims"}
+{"ts":"2026-06-09T18:46:26.752839Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"spec-status-integrity","message":"status -\u003e completed"}
+{"ts":"2026-06-09T18:49:13.789742Z","type":"spec_updated","agent":"mcp/hero","slug":"hihcp-skill-run-tool","message":"Full design spec for skill_run native tool. Dispatch via AgentLoop intercept (not ToolExecutor), wire CommandRegistry + SkillRegistry from AppState. Commands first, skills second on lookup. 3 files to change, 0 new files. Ready for /deliver."}
+{"ts":"2026-06-09T18:53:50.487398Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"per-feature-smoke-coverage","message":"Per-Feature Smoke Coverage — Continuous Real-World Verification"}
+{"ts":"2026-06-09T18:53:50.487474Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"per-feature-smoke-coverage","message":"status -\u003e completed"}
+{"ts":"2026-06-09T19:01:11.290378Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"monorepo-satellite-installs","message":"\"Monorepo Satellite Installs — One Workspace, Many Subfolder Entry Points\""}
+{"ts":"2026-06-09T19:01:11.290462Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"monorepo-satellite-installs","message":"status -\u003e completed"}
+{"ts":"2026-06-09T19:15:15.594592Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"graph-conflict-detection","message":"Graph Conflict Detection — Detect and Surface Concurrent Node Divergence"}
+{"ts":"2026-06-09T19:15:15.594686Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"graph-conflict-detection","message":"status -\u003e completed"}
+{"ts":"2026-06-09T19:18:12.241238Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"e2e-validation","message":"E2E Validation — Repeatable Take-It-For-A-Spin Smoke Test"}
+{"ts":"2026-06-09T19:18:12.241332Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"e2e-validation","message":"status -\u003e completed"}
+{"ts":"2026-06-09T19:21:37.758078Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"e2e-traversal","message":"E2E Traversal Suite — Graph Queries Beat Grep"}
+{"ts":"2026-06-09T19:21:37.758184Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"e2e-traversal","message":"status -\u003e completed"}
+{"ts":"2026-06-09T19:23:51.81564Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"e2e-discovery","message":"E2E Discovery Suite — The Model Can Find What's There"}
+{"ts":"2026-06-09T19:23:51.815743Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"e2e-discovery","message":"status -\u003e completed"}
+{"ts":"2026-06-09T19:29:57.015284Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"cross-repo-peering","message":"\"Cross-Repo Peering — Conventions Travel, Specs Hand Off, Heroes Call Each Other\""}
+{"ts":"2026-06-09T19:29:57.015373Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"cross-repo-peering","message":"status -\u003e completed"}
+{"ts":"2026-06-09T19:35:15.504524Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"embedded-inference","message":"\"Embedded Inference — Zero-Dependency Semantic Retrieval for Hero\""}
+{"ts":"2026-06-09T19:35:15.504605Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"embedded-inference","message":"status -\u003e completed"}
+{"ts":"2026-06-09T19:38:25.132584Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"unified-retrieval-layer","message":"Unified Retrieval Layer — Cross-Type Ranking via Faceted Search Index"}
+{"ts":"2026-06-09T19:38:25.132684Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"unified-retrieval-layer","message":"status -\u003e completed"}
+{"ts":"2026-06-09T19:57:42.796871Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-sales","message":"Hero Sales — AI-Powered Sales Workflow for Revenue Teams"}
+{"ts":"2026-06-09T19:57:42.797001Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-sales","message":"status -\u003e completed"}
+{"ts":"2026-06-09T21:23:18.923892Z","type":"peer.handoff.sent","agent":"hero","slug":"hihcp-skill-run-tool","message":"handed off to hero-code/hihcp-skill-run-tool (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)"}
