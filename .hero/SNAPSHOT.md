@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-09T19:18:22Z · projected from 317 source nodes_
+_Last refreshed: 2026-06-09T19:22:27Z · projected from 317 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 56m ago | cross-repo-peering |
+| core | building | cmd/, internal/ | 1h ago | cross-repo-peering |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | maturing | domains/engineering/ | 57m ago | — |
+| domains/engineering | maturing | domains/engineering/ | 1h ago | — |
 | domains/pm | concept | domains/pm/ | 22d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 8d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 17m ago | agent-outposts |
+| serve | building | internal/serve/ | 21m ago | agent-outposts |
 | (unassigned) | — | — | — | 150 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -49,23 +49,23 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — e2e-validation, graph-conflict-detection, per-feature-smoke-coverage, spec-status-integrity, traversal-queries, unified-search
+- **(unassigned)** — e2e-traversal, e2e-validation, graph-conflict-detection, per-feature-smoke-coverage, spec-status-integrity, traversal-queries, unified-search
 - **core** — compact-handoff-test-coverage
-- **domains/engineering** — delivery-gate-enforcement, spec-types-cache-frontmatter-empty
+- **domains/engineering** — delivery-gate-enforcement
 - **serve** — monorepo-satellite-installs, tripwire-system, vocabulary-resolve-misses-methodology-derivation
 
 ## Next up across surfaces
 
 1. **(unassigned)** — `e2e-discovery` (P0, delivering)
-2. **(unassigned)** — `e2e-traversal` (P0, delivering)
-3. **landing** — `hero-landing-page` (P0, delivering)
-4. **serve** — `hero-sales` (P0, delivering)
-5. **core** — `cross-repo-peering` (high, delivering)
+2. **landing** — `hero-landing-page` (P0, delivering)
+3. **serve** — `hero-sales` (P0, delivering)
+4. **core** — `cross-repo-peering` (high, delivering)
+5. **core** — `embedded-inference` (P1, delivering)
 
 ## Open risks & blockers
 
 - **Blocked specs (10):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection).
-- **Stale-in-flight (8):** `cross-repo-peering` (22d), `e2e-discovery` (22d), `e2e-traversal` (22d), `hero-landing-page` (22d), `unified-retrieval-layer` (22d), `agent-outposts` (21d), `hero-sales` (21d), `hero-team-server` (21d).
+- **Stale-in-flight (6):** `cross-repo-peering` (22d), `hero-landing-page` (22d), `unified-retrieval-layer` (22d), `agent-outposts` (21d), `hero-sales` (21d), `hero-team-server` (21d).
 - **Aged open bugs (7):** `hero-workspace-not-self-describing` (open 28d), `scan-enrichment-unbounded-loop` (open 28d), `scan-test-detection-misses-spock-vitest` (open 28d), `initiative-required-sections-drift` (open 23d), `install-target-emits-both-claude-and-agents-md` (open 22d), `spec-lifecycle-hygiene-breakdown` (open 22d), `claim-matches-sentinel-collision` (open 21d).
 - **Unassigned specs (150) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
@@ -73,5 +73,5 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
 - Specs covered: 145/295 (49%)
-- Projection generation: 1ms · Source nodes: 317
+- Projection generation: 0ms · Source nodes: 317
 

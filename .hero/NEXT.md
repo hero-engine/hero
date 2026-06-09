@@ -5,13 +5,14 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-06-09T19:21:45Z
+updated: 2026-06-09T19:23:58Z
 repo: hero-engine/hero
 branch: main
 ---
 
 ## Just finished
 
+- `2c78aeb` — feat(e2e): e2e-traversal — 8-AC traversal verb smoke suite (why/blocked/impact/relevant/suggest/conflicts)
 - `763b12a` — feat(e2e): e2e-validation — repeatable smoke harness and run-1 findings documented
 - `85e1386` — feat(graph): graph conflict detection — detect concurrent node divergence (SC-1..4)
 - `f1763f8` — feat(install): monorepo satellite installs — one workspace, many subfolder entry points [monorepo-satellite-installs]
@@ -19,7 +20,6 @@ branch: main
 - `fc6ce2b` — feat(integrity): spec status integrity — graph-verified delivery claims [spec-status-integrity]
 - `326da19` — feat(traversal): traversal queries — hero why and hero blocked [traversal-queries]
 - `12574a9` — feat(context): tripwire system — forbidden-option guardrails [tripwire-system]
-- `c8ac975` — feat(search): unified-search — repo label for cross-repo results [unified-search]
 
 ## Next
 

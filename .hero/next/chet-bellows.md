@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-09T19:21:45Z
+updated: 2026-06-09T19:23:58Z
 repo: hero-engine/hero
 ---
 
@@ -9,6 +9,8 @@ repo: hero-engine/hero
 ## Last user ask
 
 > are you able to inspect all the chat history - inputs and outputs - from the ../hero-code swift apps runtime - to look at hero use - figure out if hero is working properly in the app usage over the last couple days?
+
+_possibly stale — 1 commit(s) since, last set 5m ago_
 
 ## Suggested next prompt
 
@@ -24,10 +26,10 @@ Nothing this session.
 
 ## Your recent activity
 
+- `2c78aeb` — feat(e2e): e2e-traversal — 8-AC traversal verb smoke suite (why/blocked/impact/relevant/suggest/conflicts)
 - `763b12a` — feat(e2e): e2e-validation — repeatable smoke harness and run-1 findings documented
 - `85e1386` — feat(graph): graph conflict detection — detect concurrent node divergence (SC-1..4)
 - `f1763f8` — feat(install): monorepo satellite installs — one workspace, many subfolder entry points [monorepo-satellite-installs]
 - `cd3a3f7` — feat(smoke): per-feature smoke coverage — continuous real-world verification [per-feature-smoke-coverage]
 - `fc6ce2b` — feat(integrity): spec status integrity — graph-verified delivery claims [spec-status-integrity]
-- `326da19` — feat(traversal): traversal queries — hero why and hero blocked [traversal-queries]
 
