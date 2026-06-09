@@ -79,9 +79,11 @@ func TestHarness_SmokeCursor(t *testing.T) {
 // from harness-install-paths-match-loaders:
 //   - Agents render as TOML at .codex/agents/<n>.toml
 //     (markdown is dead bytes — Codex only reads .toml files)
-//   - Commands NOT installed (Codex has no command loader)
+//   - Commands emitted as skills at .agents/skills/command-<name>/SKILL.md
+//     (Codex has no command loader — skills are the bridge)
 //   - Skills land at .agents/skills/ (cross-tool standard) — no
 //     longer at .codex/skills/
+//   - AGENTS.md has a Codex-specific workflow execution section
 //   - AGENTS.md and .codex/hooks.json land at root
 func TestHarness_SmokeCodex(t *testing.T) {
 	h := newInstallHarness(t)
@@ -100,8 +102,17 @@ func TestHarness_SmokeCodex(t *testing.T) {
 	h.mustBeRegularFile(".agents/skills/spec-format/SKILL.md")
 	h.mustBeRegularFile(".agents/skills/test-strategy/SKILL.md")
 
+	// Commands emitted as Codex-loadable skills with execution preamble.
+	h.mustBeRegularFile(".agents/skills/command-deliver/SKILL.md")
+	h.mustBeRegularFile(".agents/skills/command-design/SKILL.md")
+	h.mustContain(".agents/skills/command-deliver/SKILL.md", "This is a Hero workflow for Codex")
+	h.mustContain(".agents/skills/command-deliver/SKILL.md", "purpose: command-workflow")
+
 	h.mustBeRegularFile("AGENTS.md")
 	h.mustContain("AGENTS.md", "hero:managed-start")
+	// Target-aware AGENTS.md section tells Codex how to execute workflows.
+	h.mustContain("AGENTS.md", "Running Hero Workflows in Codex")
+	h.mustContain("AGENTS.md", "command-deliver/SKILL.md")
 	h.mustBeRegularFile(".codex/hooks.json")
 
 	if len(res.Copied) == 0 {

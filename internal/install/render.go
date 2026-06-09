@@ -167,6 +167,29 @@ func renderCodexAgentToml(entry canonicalEntry) (string, []byte, error) {
 	return entry.Name + ".toml", out.Bytes(), nil
 }
 
+// renderCommandAsCodexSkill renders a canonical command markdown file as
+// a Codex-loadable skill at command-<name>/SKILL.md. The rendered skill
+// includes an execution preamble so Codex treats the file as a workflow
+// to execute rather than documentation to summarize.
+func renderCommandAsCodexSkill(entry canonicalEntry) (string, []byte, error) {
+	desc := entry.Frontmatter["description"]
+	if desc == "" {
+		desc = "Hero /" + entry.Name + " workflow — follow these steps to execute the command"
+	}
+
+	var out bytes.Buffer
+	fmt.Fprintf(&out, "---\nname: command-%s\ndescription: %s\nmetadata:\n  purpose: command-workflow\n---\n\n", entry.Name, desc)
+	out.WriteString("> **This is a Hero workflow for Codex.** Read each step below and execute it in sequence.\n")
+	out.WriteString("> Do NOT summarize or treat these steps as documentation.\n")
+	out.WriteString("> Do NOT update spec frontmatter as a substitute for doing the actual work described.\n\n")
+	body := bytes.TrimLeft(entry.Body, "\n")
+	out.Write(body)
+	if len(body) > 0 && body[len(body)-1] != '\n' {
+		out.WriteByte('\n')
+	}
+	return "command-" + entry.Name + "/SKILL.md", out.Bytes(), nil
+}
+
 // renderCopilotPromptFile emits a Copilot .prompt.md file from a
 // canonical agent or command markdown entry. Copilot prompt files are
 // markdown with optional YAML frontmatter; the renderer writes a

@@ -72,6 +72,14 @@ func runCodex(opts Options) (*Result, error) {
 		return nil, fmt.Errorf("installing skills to %s: %w", skillsDest, err)
 	}
 
+	// Commands as Codex skills — Codex's SlashCommand is a built-in enum
+	// and cannot load external command definitions. Emit each command as a
+	// skill at command-<name>/SKILL.md so Codex agents can read and execute
+	// Hero workflows step-by-step.
+	if err := renderToFile(opts, result, "commands", skillsDest, renderCommandAsCodexSkill); err != nil {
+		return nil, fmt.Errorf("render commands as codex skills: %w", err)
+	}
+
 	// AGENTS.md (project root) or ~/.codex/AGENTS.md (global) via the
 	// shared managed-region writer. Already correct.
 	if agentsMdPath := resolveAgentsMdPath(opts); agentsMdPath != "" {
