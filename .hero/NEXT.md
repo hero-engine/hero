@@ -5,21 +5,21 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-06-09T15:49:03Z
+updated: 2026-06-09T16:56:13Z
 repo: hero-engine/hero
 branch: main
 ---
 
 ## Just finished
 
+- `fd25109` — chore: archive codex-install-broken spec — delivery complete
+- `afe9553` — fix(codex): commands as skills + target-aware AGENTS.md bridge Codex workflow execution gap
 - `2e7a724` — fix(mcp): read_spec falls back to filesystem when index misses a slug
 - `1427a09` — fix(graph): tolerate newer schema — warn instead of failing when db is ahead
 - `228097c` — fix(upgrade): detect all installed targets — codex, copilot, generic were missed
 - `71e4b1b` — feat(verify): delivery gate enforcement — hero verify becomes the load-bearing checkpoint
 - `ce9b237` — chore: refresh projected handoff files
 - `9537eb1` — fix(scan): detect .gsp, compound asset-pipeline extensions, raise walk cap
-- `15e6104` — fix(cli): wire top-level `hero connect` alias for `hero sync connect`
-- `1eb9798` — chore: final projected-file refresh
 
 ## Next
 

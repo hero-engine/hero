@@ -2,7 +2,7 @@
 title: Master Ingest Restore — `hero scan` Returns to Its V2 Promise
 slug: master-ingest-restore
 type: feature
-status: delivering
+status: completed
 priority: P0
 tags: [scan, ingest, corpus, mission-critical, v2-recovery]
 created: 2026-04-28
@@ -31,6 +31,7 @@ smoke:
   script: scripts/smoke/master-ingest-restore.sh
   expects: [master-ingest-restore:AC-1, master-ingest-restore:AC-2, master-ingest-restore:AC-3, master-ingest-restore:AC-4, master-ingest-restore:AC-5, master-ingest-restore:AC-6, master-ingest-restore:AC-7, master-ingest-restore:AC-8]
   runs_on: [commit-touches:internal/cli/scan*.go, commit-touches:internal/knowledge/*.go, commit-touches:internal/memory/*.go, nightly]
+completed_at: 2026-06-09T16:55:40Z
 ---
 
 ## Goal
@@ -220,3 +221,20 @@ network failure, OAuth token expiry).
 - What's the budget cap for Tier-2 extraction in a single scan? Lean:
   enforce existing `cost.budget_per_session` setting; degrade to
   "skipped, budget exceeded" with clear message.
+
+## Completion Ledger
+
+| # | Item | Status | Evidence |
+|---|------|--------|----------|
+| AC-1 | Note nodes from `knowledge/notes/*/spec.md` | DONE | `spec.WriteGraph` handles `type: note` frontmatter → Note nodes. Was always passing; verified: 7 Note nodes match 7 note dirs. |
+| AC-2 | Memory nodes from `~/.claude/.../memory/` | DONE | `memory.WriteGraph` at scan.go:662. Best-effort: omits step when dir absent, skips with friendly message when empty. Tests: `TestWriteGraph_UpsertsMemoryNodes`, `TestWriteGraph_Idempotent`, `TestScanOmitsClaudeMemoryStepWhenAbsent`, `TestScanEmitsFriendlyClaudeMemoryWhenEmpty`. |
+| AC-3 | Tracker pull → Issue + Person nodes | DONE | `tracker.PullAndWriteGraph` at scan.go:681. Skips with reason when no tracker config/token. Tests: `TestWriteIssuesGraph_UpsertsIssuesAndPersons`, `TestWriteIssuesGraph_Idempotent`. |
+| AC-4 | Opportunistic team-server sync | DONE | `runOpportunisticTeamSync` at scan.go:702. Push always (deltas-only); pull rate-limited to 5 min. Skips with reason when not logged in or org_id unset. |
+| AC-5 | Tier-2 LLM extraction auto-runs on scan | DONE | `extract.RunAuto` at scan.go:640. Skips with "no API key" when `ANTHROPIC_API_KEY` absent. Idempotent via content-hash cache. |
+| AC-6 | "Graph ingest summary" block at end of scan | DONE | `ingestReport`/`stepResult` at scan.go:426–462. `report.print()` emits ✅/⊘/❌ per step. Tests: `TestIngestReport_RendersAllOutcomes`, `TestIngestReport_EmptyPrintsNothing`. |
+| AC-7 | Idempotent on consecutive runs | DONE | Structural: content-hashed upserts throughout all ingest paths. Verified: identical node/edge counts on re-run. |
+| AC-8 | Per-step failure isolation | DONE | Each step adds independently to `ingestReport`; errors don't propagate. `scan_report_test.go:TestIngestReport_RendersAllOutcomes` exercises ok/skipped/failed outcomes together. |
+
+### Exercise-the-feature check
+
+- [x] Exercised: `go test ./internal/cli/... -run ".*[Ss]can.*" -v` — 9 tests pass including `TestScanOmitsClaudeMemoryStepWhenAbsent`, `TestScanEmitsFriendlyClaudeMemoryWhenEmpty`, `TestSmokeScan`. `go test ./internal/memory/... ./internal/tracker/... ./internal/extract/...` also pass.

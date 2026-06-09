@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-09T15:46:36Z · projected from 308 source nodes_
+_Last refreshed: 2026-06-09T16:50:21Z · projected from 308 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 3m ago | codex-install-broken |
+| core | building | cmd/, internal/ | 1h ago | hero-local-merge-missing-dialect-fields |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | building | domains/engineering/ | 2d ago | spec-types-cache-frontmatter-empty |
@@ -48,16 +48,16 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — handoff-captures-session-intent, resume-brief-missing-project-context, cross-machine-handoff-slug-mismatch, resume-brief-surfaces-handoff, next-unconditional-commit-staging, e2e-handoff-continuity, next-snapshot-file-missing-merge-attribute, next-merge-driver-not-portable, next-projection-gate-punts-migration-to-user, next-team-mode-per-user-handoff-unmaintained, hero-mcp-orphan-no-parent-liveness
-- **core** — next-auto-emit-user-ask
+- **(unassigned)** — handoff-captures-session-intent, resume-brief-missing-project-context, cross-machine-handoff-slug-mismatch, resume-brief-surfaces-handoff, next-unconditional-commit-staging, e2e-handoff-continuity, next-snapshot-file-missing-merge-attribute, next-merge-driver-not-portable, next-projection-gate-punts-migration-to-user, next-team-mode-per-user-handoff-unmaintained
+- **core** — codex-install-broken, next-auto-emit-user-ask
 
 ## Next up across surfaces
 
-1. **core** — `codex-install-broken` (P0, delivering)
-2. **domains/engineering** — `delivery-gate-enforcement` (P0, delivering)
-3. **(unassigned)** — `e2e-discovery` (P0, delivering)
-4. **(unassigned)** — `e2e-traversal` (P0, delivering)
-5. **landing** — `hero-landing-page` (P0, delivering)
+1. **domains/engineering** — `delivery-gate-enforcement` (P0, delivering)
+2. **(unassigned)** — `e2e-discovery` (P0, delivering)
+3. **(unassigned)** — `e2e-traversal` (P0, delivering)
+4. **landing** — `hero-landing-page` (P0, delivering)
+5. **serve** — `hero-sales` (P0, delivering)
 
 ## Open risks & blockers
 
