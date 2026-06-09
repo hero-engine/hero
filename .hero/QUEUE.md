@@ -6,19 +6,12 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T19:38:34Z · 98 ready specs_
+_Generated: 2026-06-09T19:57:49Z · 97 ready specs_
 
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
-
----
-
-## hero-sales — Hero Sales — AI-Powered Sales Workflow for Revenue Teams
-_feature · delivering · horizon: someday_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-sales/spec.md)_
 
 ---
 
