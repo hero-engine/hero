@@ -5,13 +5,14 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-06-09T18:38:32Z
+updated: 2026-06-09T18:42:14Z
 repo: hero-engine/hero
 branch: main
 ---
 
 ## Just finished
 
+- `c8ac975` — feat(search): unified-search — repo label for cross-repo results [unified-search]
 - `f4beda7` — verify and archive delivery-gate-enforcement + compact-handoff-test-coverage
 - `48052cc` — fix: fold methodology-derived step into vocabulary.Resolve (vocabulary-resolve-misses-methodology-derivation)
 - `1968468` — fix: populate spec-types.json frontmatter from source markdown (spec-types-cache-frontmatter-empty)
@@ -19,7 +20,6 @@ branch: main
 - `67b4390` — verify and archive master-ingest-restore
 - `fd25109` — chore: archive codex-install-broken spec — delivery complete
 - `afe9553` — fix(codex): commands as skills + target-aware AGENTS.md bridge Codex workflow execution gap
-- `2e7a724` — fix(mcp): read_spec falls back to filesystem when index misses a slug
 
 ## Next
 
