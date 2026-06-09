@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/hero-engine/hero/internal/retrieval"
 )
 
 func TestSearchByQuery(t *testing.T) {
@@ -342,5 +344,33 @@ status: planning
 	var parsed []any
 	if err := json.Unmarshal([]byte(out), &parsed); err != nil {
 		t.Errorf("output should be valid JSON empty array: %v", err)
+	}
+}
+
+// TestPrintGraphResults_RepoLabelAppearsForCrossRepoResult verifies
+// SC-4 of unified-search: sibling-repo results get a [repo] label in
+// printGraphResults output when the result's Repo differs from localRepo.
+func TestPrintGraphResults_RepoLabelAppearsForCrossRepoResult(t *testing.T) {
+	results := []retrieval.Result{
+		{Type: "Feature", Key: "my-feature", Title: "My Feature", Score: 10, Source: "graph", Repo: "alice/sibling-repo"},
+		{Type: "Bug", Key: "local-bug", Title: "Local Bug", Score: 9, Source: "graph", Repo: "owner/local-repo"},
+		{Type: "Feature", Key: "no-repo", Title: "No Repo Feature", Score: 8, Source: "graph", Repo: ""},
+	}
+
+	out := captureStdout(func() {
+		_ = printGraphResults(results, "test", 4000, false, "owner/local-repo")
+	})
+
+	// Cross-repo result should carry [alice/sibling-repo] label.
+	if !strings.Contains(out, "[alice/sibling-repo]") {
+		t.Errorf("expected cross-repo label in output; got:\n%s", out)
+	}
+	// Local result should NOT carry a label.
+	if strings.Contains(out, "[owner/local-repo]") {
+		t.Errorf("unexpected local repo label in output; got:\n%s", out)
+	}
+	// Result with empty Repo should also have no label.
+	if strings.Contains(out, "[]") {
+		t.Errorf("unexpected empty [] label in output; got:\n%s", out)
 	}
 }

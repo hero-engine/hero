@@ -2,22 +2,22 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-09T18:17:20Z · projected from 308 source nodes_
+_Last refreshed: 2026-06-09T18:31:57Z · projected from 317 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 42m ago | compact-handoff-test-coverage |
+| core | building | cmd/, internal/ | 10m ago | cross-repo-peering |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | building | domains/engineering/ | 2m ago | delivery-gate-enforcement |
+| domains/engineering | maturing | domains/engineering/ | 10m ago | — |
 | domains/pm | concept | domains/pm/ | 21d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 8d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | <1m ago | agent-outposts |
-| (unassigned) | — | — | — | 141 specs without surface |
+| serve | building | internal/serve/ | 14m ago | agent-outposts |
+| (unassigned) | — | — | — | 150 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
 
@@ -29,6 +29,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
 - **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 4/11 specs done; in flight: per-feature-smoke-coverage, spec-status-integrity, traversal-queries
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, serve) — 10/16 specs done; in flight: hero-sales
+- **"Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"** (surface: —) — 0/8 specs done
 - **Hero Killer Features — Agent Effectiveness, Team Power, Living Specs** (surface: core, serve) — 10/11 specs done
 - **Hero Marketing — Positioning, Distribution, and Launch** (surface: landing) — 0/9 specs done; in flight: hero-landing-page
 - **Hero Platform — Headless Execution, Team Automation, and Shared Visibility** (surface: core, serve) — 2/7 specs done; in flight: hero-team-server
@@ -48,29 +49,29 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — master-ingest-restore, handoff-captures-session-intent, resume-brief-missing-project-context, cross-machine-handoff-slug-mismatch, resume-brief-surfaces-handoff, next-unconditional-commit-staging, e2e-handoff-continuity
-- **core** — hero-local-merge-missing-dialect-fields, codex-install-broken, next-auto-emit-user-ask
-- **domains/engineering** — spec-types-cache-frontmatter-empty
+- **(unassigned)** — master-ingest-restore, handoff-captures-session-intent, resume-brief-missing-project-context, cross-machine-handoff-slug-mismatch, resume-brief-surfaces-handoff, next-unconditional-commit-staging
+- **core** — compact-handoff-test-coverage, hero-local-merge-missing-dialect-fields, codex-install-broken
+- **domains/engineering** — delivery-gate-enforcement, spec-types-cache-frontmatter-empty
 - **serve** — vocabulary-resolve-misses-methodology-derivation
 
 ## Next up across surfaces
 
-1. **domains/engineering** — `delivery-gate-enforcement` (P0, delivering)
-2. **(unassigned)** — `e2e-discovery` (P0, delivering)
-3. **(unassigned)** — `e2e-traversal` (P0, delivering)
-4. **landing** — `hero-landing-page` (P0, delivering)
-5. **serve** — `hero-sales` (P0, delivering)
+1. **(unassigned)** — `e2e-discovery` (P0, delivering)
+2. **(unassigned)** — `e2e-traversal` (P0, delivering)
+3. **landing** — `hero-landing-page` (P0, delivering)
+4. **serve** — `hero-sales` (P0, delivering)
+5. **(unassigned)** — `per-feature-smoke-coverage` (P0, delivering)
 
 ## Open risks & blockers
 
 - **Blocked specs (11):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `e2e-traversal` (waits on traversal-queries); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection).
-- **Stale-in-flight (17):** `hero-sales` (21d), `hero-team-server` (21d), `cross-repo-peering` (21d), `e2e-discovery` (21d), `e2e-traversal` (21d), `e2e-validation` (21d), `graph-conflict-detection` (21d), `hero-landing-page` (21d), `unified-search` (21d), `monorepo-satellite-installs` (21d), `agent-outposts` (21d), `per-feature-smoke-coverage` (21d), `spec-status-integrity` (21d), `traversal-queries` (21d), `tripwire-system` (21d), `unified-retrieval-layer` (21d), `compact-handoff-test-coverage` (19d).
+- **Stale-in-flight (15):** `agent-outposts` (21d), `cross-repo-peering` (21d), `e2e-discovery` (21d), `e2e-traversal` (21d), `e2e-validation` (21d), `graph-conflict-detection` (21d), `hero-landing-page` (21d), `hero-sales` (21d), `hero-team-server` (21d), `monorepo-satellite-installs` (21d), `per-feature-smoke-coverage` (21d), `spec-status-integrity` (21d), `traversal-queries` (21d), `tripwire-system` (21d), `unified-retrieval-layer` (21d).
 - **Aged open bugs (7):** `hero-workspace-not-self-describing` (open 28d), `scan-enrichment-unbounded-loop` (open 28d), `scan-test-detection-misses-spock-vitest` (open 28d), `initiative-required-sections-drift` (open 23d), `spec-lifecycle-hygiene-breakdown` (open 22d), `claim-matches-sentinel-collision` (open 21d), `install-target-emits-both-claude-and-agents-md` (open 21d).
-- **Unassigned specs (141) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
+- **Unassigned specs (150) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 145/286 (50%)
-- Projection generation: 0ms · Source nodes: 308
+- Specs covered: 145/295 (49%)
+- Projection generation: 1ms · Source nodes: 317
 
