@@ -6,48 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T18:17:21Z · 103 ready specs_
-
-## delivery-gate-enforcement — "Delivery Gate Enforcement — hero verify Becomes the Load-Bearing Checkpoint"
-_feature · delivering · horizon: now_
-
-Pick up at: greenfield. Deliver `delivery-gate-enforcement` — make
-`hero verify` the real enforcement checkpoint for delivery closeout. Four
-gates: ledger present with all rows DONE, audit report on disk with SHIP
-verdict, test coverage mapped to ACs, and build/test passing. Verify
-flips status + archives only when all gates pass. Key files:
-`internal/spec/ledger.go` (new parser), `internal/cli/verify.go` (rewrite
-to gated flow), `internal/cli/verify_test.go` (new), `deliver.md` and
-`engineer.md` instruction updates. Run `go test ./internal/spec/...
-./internal/cli/... ./internal/coverage/...` to validate.
-
----
-
-## compact-handoff-test-coverage — "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
-_feature · delivering · horizon: now_
-
-Add the test coverage that the MVP shipped without. The most consequential additions are: (1) the full-assembly integration test that exercises a populated session end-to-end, and (2) the panic-recovery + always-exit-0 safety tests for the hook command.
-
-Read first:
-- [next-compact-handoff](../next-compact-handoff/spec.md) for the full content shape and truncation order being verified.
-- `internal/cli/next_compact_handoff.go` to understand the assembly path being exercised.
-- `internal/projection/compact_handoff.go` for the graph query.
-- `internal/hooks/claude_settings.go` for the settings-file mutation surface.
-
-Then build in roughly this order:
-
-1. Shared test fixture helper for populated graph + active session registry + fixture spec on disk. Keep it small and reusable.
-2. `TestAssembleFullHandoff_PopulatedSession` — the integration test. This will surface any small assembly bugs that the unit tests missed; expect to iterate once before it passes.
-3. Truncation cascade (5 + invariant test).
-4. Panic recovery + bad-stdin safety contract tests.
-5. Settings-file edge cases (six tests).
-6. Init flow (three tests).
-7. Codex stub + `--host=all` tests.
-8. Projection-side spec-anchored carryover bidirectionality.
-
-Run `go test -cover ./internal/cli/... ./internal/projection/... ./internal/hooks/...` before and after to confirm the coverage move. Do not gate on the percentage; gate on the gap list above being closed.
-
----
+_Generated: 2026-06-09T18:21:38Z · 101 ready specs_
 
 ## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
 _feature · delivering · horizon: now_

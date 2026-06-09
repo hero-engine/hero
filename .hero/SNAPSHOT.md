@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-09T18:16:33Z · projected from 308 source nodes_
+_Last refreshed: 2026-06-09T18:17:20Z · projected from 308 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 41m ago | compact-handoff-test-coverage |
+| core | building | cmd/, internal/ | 42m ago | compact-handoff-test-coverage |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | building | domains/engineering/ | 1m ago | delivery-gate-enforcement |
+| domains/engineering | building | domains/engineering/ | 2m ago | delivery-gate-enforcement |
 | domains/pm | concept | domains/pm/ | 21d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 8d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | <1m ago | vocabulary-resolve-misses-methodology-derivation |
+| serve | building | internal/serve/ | <1m ago | agent-outposts |
 | (unassigned) | — | — | — | 141 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -48,9 +48,10 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — master-ingest-restore, handoff-captures-session-intent, resume-brief-missing-project-context, cross-machine-handoff-slug-mismatch, resume-brief-surfaces-handoff, next-unconditional-commit-staging, e2e-handoff-continuity, next-snapshot-file-missing-merge-attribute
+- **(unassigned)** — master-ingest-restore, handoff-captures-session-intent, resume-brief-missing-project-context, cross-machine-handoff-slug-mismatch, resume-brief-surfaces-handoff, next-unconditional-commit-staging, e2e-handoff-continuity
 - **core** — hero-local-merge-missing-dialect-fields, codex-install-broken, next-auto-emit-user-ask
 - **domains/engineering** — spec-types-cache-frontmatter-empty
+- **serve** — vocabulary-resolve-misses-methodology-derivation
 
 ## Next up across surfaces
 
@@ -64,12 +65,12 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - **Blocked specs (11):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `e2e-traversal` (waits on traversal-queries); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection).
 - **Stale-in-flight (17):** `hero-sales` (21d), `hero-team-server` (21d), `cross-repo-peering` (21d), `e2e-discovery` (21d), `e2e-traversal` (21d), `e2e-validation` (21d), `graph-conflict-detection` (21d), `hero-landing-page` (21d), `unified-search` (21d), `monorepo-satellite-installs` (21d), `agent-outposts` (21d), `per-feature-smoke-coverage` (21d), `spec-status-integrity` (21d), `traversal-queries` (21d), `tripwire-system` (21d), `unified-retrieval-layer` (21d), `compact-handoff-test-coverage` (19d).
-- **Aged open bugs (8):** `hero-workspace-not-self-describing` (open 28d), `scan-enrichment-unbounded-loop` (open 28d), `scan-test-detection-misses-spock-vitest` (open 28d), `initiative-required-sections-drift` (open 23d), `vocabulary-resolve-misses-methodology-derivation` (open 23d), `spec-lifecycle-hygiene-breakdown` (open 22d), `claim-matches-sentinel-collision` (open 21d), `install-target-emits-both-claude-and-agents-md` (open 21d).
+- **Aged open bugs (7):** `hero-workspace-not-self-describing` (open 28d), `scan-enrichment-unbounded-loop` (open 28d), `scan-test-detection-misses-spock-vitest` (open 28d), `initiative-required-sections-drift` (open 23d), `spec-lifecycle-hygiene-breakdown` (open 22d), `claim-matches-sentinel-collision` (open 21d), `install-target-emits-both-claude-and-agents-md` (open 21d).
 - **Unassigned specs (141) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
 - Specs covered: 145/286 (50%)
-- Projection generation: 1ms · Source nodes: 308
+- Projection generation: 0ms · Source nodes: 308
 
