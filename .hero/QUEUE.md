@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T16:56:14Z · 106 ready specs_
+_Generated: 2026-06-09T17:35:20Z · 105 ready specs_
 
 ## delivery-gate-enforcement — "Delivery Gate Enforcement — hero verify Becomes the Load-Bearing Checkpoint"
 _feature · delivering · horizon: now_
@@ -192,13 +192,6 @@ _bug · delivering · horizon: now_
 _bug · delivering · horizon: now_
 
 > Read `.hero/planning/bugs/spec-types-cache-frontmatter-empty/spec.md` (this file). Inspect `internal/spectypes/loader.go::parseRecord` (the existing per-block parsing pattern), `internal/spectypes/registry.go::FrontmatterSchema` (the target shape), `internal/spectypes/export.go::exportRecord` (the export wiring — confirm the `Frontmatter` field is already serialized), and one canonical source file like `core/spec-types/feature.md` (verify the `frontmatter:` block is present in YAML; if not, author it from the legacy lint validator's field set in `internal/triage/`). Implement the loader-side parser per the Fix section. Add unit tests per the Acceptance Criteria. Regenerate `.hero/cache/spec-types.json` and confirm `jq '.types[].frontmatter | length' .hero/cache/spec-types.json | sort -u` returns positive numbers (not `null`). Run `go build ./...` and `go test ./...` clean. Report what shipped, any type files that needed a frontmatter block authored, and any open questions under 400 words.
-
----
-
-## hero-local-merge-missing-dialect-fields — hero.local.json merge doesn't forward vocabulary / methodology fields
-_bug · delivering · horizon: now_
-
-> Read `.hero/planning/bugs/hero-local-merge-missing-dialect-fields/spec.md` (this file), `internal/config/config.go::MergeLocal` (or whatever the local-merge function is named there — `grep -n "MergeLocal\|LoadLocal\|merge" internal/config/config.go`), and one neighboring already-merged nested block (e.g. `Tracker`) for the merge pattern to copy. Extend the merger to forward the four dialect fields per the Fix section. Add unit tests per the Acceptance Criteria. Update `docs/contracts/active-dialect.md` §2 to make the `hero.local.json` override behavior normative (replacing the "planned extension point" note). Run `go build ./...` and `go test ./...` clean. Report what shipped, the exact functions touched, and any open questions under 300 words.
 
 ---
 
