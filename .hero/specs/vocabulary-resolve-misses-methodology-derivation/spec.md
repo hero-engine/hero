@@ -2,7 +2,7 @@
 title: vocabulary.Resolve doesn't fold methodology-derived auto-derivation
 slug: vocabulary-resolve-misses-methodology-derivation
 type: bug
-status: delivering
+status: completed
 severity: medium
 priority: P1
 created: 2026-05-17
@@ -12,6 +12,7 @@ relations:
     kind: surfaced-by
   - target: pm-foundation-delivery
     kind: regression-of
+completed_at: 2026-06-09T18:17:12Z
 ---
 
 # vocabulary.Resolve doesn't fold methodology-derived auto-derivation
@@ -108,3 +109,21 @@ Keep current behavior; rename to `ResolveBare` (and/or add a `ResolveWithMethodo
 ## Kickoff
 
 > Read `.hero/planning/bugs/vocabulary-resolve-misses-methodology-derivation/spec.md` (this file), `internal/vocabulary/resolver.go`, `internal/methodology/resolver.go::DeriveVocabularyName`, and the three wrapper call sites: `internal/cli/vocab.go`, `internal/serve/vocab.go`, `internal/install/dialect.go`. Implement Option A: extend `vocabulary.Resolve` to take a `methodologies map[string]*methodology.Methodology` (or accept a pre-resolved `*methodology.Methodology` — pick whichever has lower blast radius) and fold the methodology-derived step into the precedence chain between explicit and tracker-inferred. Remove the three wrapper shims and route them through the new bare `Resolve`. Add unit tests per the Acceptance Criteria. Run `go build ./...` and `go test ./...` clean. Report what shipped, the chosen signature, and any open questions under 300 words.
+
+## Completion Ledger
+
+| # | Item | Status | Evidence |
+|---|------|--------|----------|
+| AC-1 | `Resolve(cfg{Methodology:"scrum"}, vocabs, methodologies)` returns `"agile-scrum"` | DONE | resolver.go:70-88 applies methodology-derived step; `TestResolve_MethodologyScrumDerivesAgileScrum` passes. |
+| AC-2 | Three wrapper call sites updated (shims removed) | DONE | cli/vocab.go, serve/vocab.go, install/dialect.go all call `vocabulary.Resolve(cfg, vocabs, methodologies)` directly. `grep DeriveVocabularyName` only appears in resolver.go and resolver_test.go. |
+| AC-3 | Documented precedence chain in active-dialect.md §3 unchanged | DONE | No changes to docs/contracts/active-dialect.md. Implementation matches the documented 5-step chain. |
+| AC-4 | methodology-derived step applies when cfg.Methodology set and cfg.Vocabulary empty | DONE | `TestResolve_MethodologyScrumDerivesAgileScrum`, `TestResolve_MethodologyShapeUpDerivesShapeUp`, `TestResolve_MethodologyKanbanDerivesKanban` pass. |
+| AC-5 | Explicit cfg.Vocabulary still wins over methodology-derived | DONE | `TestResolve_ExplicitVocabularyBeatsMethodologyDerived` passes. |
+| AC-6 | Falls through to tracker-inferred → default when neither set | DONE | `TestResolve_TrackerFallbackWhenNoMethodologyOrVocab`, `TestResolve_EmptyConfigDefault` pass. |
+| Changes: resolver.go extended | DONE | `Resolve`/`pickName` take `methodologies` param; methodology-derived step at resolver.go:75-88. |
+| Changes: 3 call sites updated | DONE | See AC-2. |
+| Changes: resolver_test.go 9+ new tests | DONE | 20 tests total including all 9 methodology-derived cases specified plus `TestResolve_NilMethodologiesSkipsDerivation`, `TestResolve_UnknownMethodologyFallsThrough`, `TestResolve_MethodologyDerivedBeatsTracker`. All pass. |
+
+### Exercise-the-feature check
+
+- [x] Exercised: `go test ./internal/vocabulary/... -v` → 20 tests pass including all 9 methodology-derived precedence tests. `grep -r DeriveVocabularyName internal/cli internal/serve internal/install` → no results (shims gone).
