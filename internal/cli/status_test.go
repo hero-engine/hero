@@ -1,8 +1,12 @@
 package cli
 
 import (
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestStatusEmpty(t *testing.T) {
@@ -91,6 +95,67 @@ status: accepted
 	// Should show summary line with in-flight counts
 	if !strings.Contains(output, "in-flight") {
 		t.Error("status missing summary line with in-flight counts")
+	}
+}
+
+// TestStatus_SurfacesSmokeFailures verifies per-feature-smoke-coverage AC-6:
+// hero status surfaces failed smokes in its default output.
+func TestStatus_SurfacesSmokeFailures(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Seed a last-run.json with one failed and one passed smoke.
+	smokeDir := filepath.Join(env.heroDir, "smoke")
+	if err := os.MkdirAll(smokeDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll smoke dir: %v", err)
+	}
+	records := []SmokeRunRecord{
+		{Slug: "failing-feature", Status: "fail", Timestamp: time.Now(), DurationMS: 250, Error: "smoke script exited 1"},
+		{Slug: "passing-feature", Status: "pass", Timestamp: time.Now(), DurationMS: 120},
+	}
+	data, _ := json.Marshal(records)
+	if err := os.WriteFile(filepath.Join(smokeDir, "last-run.json"), data, 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	output, err := runCmd("status")
+	if err != nil {
+		t.Fatalf("status returned error: %v", err)
+	}
+
+	if !strings.Contains(output, "Smoke failures") {
+		t.Errorf("expected 'Smoke failures' section in output; got:\n%s", output)
+	}
+	if !strings.Contains(output, "failing-feature") {
+		t.Errorf("expected failing-feature in smoke failures; got:\n%s", output)
+	}
+	if strings.Contains(output, "passing-feature") {
+		t.Errorf("passing-feature should not appear in smoke failures; got:\n%s", output)
+	}
+}
+
+// TestStatus_NoSmokeFailuresSilent verifies that when all smokes pass,
+// no smoke failure section is rendered.
+func TestStatus_NoSmokeFailuresSilent(t *testing.T) {
+	env := newTestEnv(t)
+
+	smokeDir := filepath.Join(env.heroDir, "smoke")
+	if err := os.MkdirAll(smokeDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll smoke dir: %v", err)
+	}
+	records := []SmokeRunRecord{
+		{Slug: "all-good", Status: "pass", Timestamp: time.Now(), DurationMS: 100},
+	}
+	data, _ := json.Marshal(records)
+	if err := os.WriteFile(filepath.Join(smokeDir, "last-run.json"), data, 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	output, err := runCmd("status")
+	if err != nil {
+		t.Fatalf("status returned error: %v", err)
+	}
+	if strings.Contains(output, "Smoke failures") {
+		t.Errorf("no smoke failures expected; got:\n%s", output)
 	}
 }
 

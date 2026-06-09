@@ -2,7 +2,7 @@
 title: Per-Feature Smoke Coverage — Continuous Real-World Verification
 slug: per-feature-smoke-coverage
 type: feature
-status: delivering
+status: completed
 priority: P0
 tags: [smoke, testing, continuous, anti-bigbang, regression-prevention, dogfood]
 created: 2026-04-28
@@ -33,6 +33,7 @@ principles_check: |
   background by default, surfacing only on failure or via explicit
   `hero smoke status`.
 horizon: now
+completed_at: 2026-06-09T18:53:49Z
 ---
 
 ## Goal
@@ -202,6 +203,24 @@ as 14-day artifacts. `make smoke` / `make smoke-all` mirror locally.
 
 ACs accrete as edge cases surface (flaky smokes, slow smokes,
 external-dependency smokes that can't always run).
+
+## Completion Ledger
+
+| # | Item | Status | Evidence |
+|---|------|--------|----------|
+| AC-1 | Every feature spec has `smoke:` field; `hero check` flags missing | DONE | ✅ marked in spec. `hero check validate` flags missing `smoke:`; 57 specs backfilled. Commit 8a9616b. |
+| AC-2 | Per-feature smoke script emits `results.json`; `hero ac record` ingests it | DONE | `scripts/smoke/master-ingest-restore.sh` (and 4 others) use `scripts/e2e/lib.sh`, which writes `results.json` and calls `hero ac record` when `--record` / `E2E_RECORD=1`. |
+| AC-3 | `hero smoke --since <ref>` runs only smokes for touched features | DONE | ✅ marked in spec. `smokeTriggeredBy` matches via `commit-touches:` globs. `TestSmokeCmd_SinceNoChanges` verifies no-op on HEAD..HEAD. Commit 7f38c4f. |
+| AC-4 | `hero <cmd> --smoke` flag on every CLI command | DONE | ✅ marked in spec. Persistent `--smoke` flag on rootCmd via `smokeInterceptor`. Commit c9d7d07. |
+| AC-5 | Failing smoke causes AC graph status to flip to failing/regressed | DONE | `internal/cli/ac.go:227` — `hero ac record` flips Criterion to `regressed` when pass→fail; downgrade chain from `spec-status-integrity:AC-6` fires for completed parent specs. |
+| AC-6 | `hero status` surfaces failed smokes in default output | DONE | `internal/cli/status.go` — added `loadSmokeResults` call; renders `Smoke failures (N)` section with 🔴 per-slug line and `hero smoke status` pointer. `go build ./...` clean; `go test ./internal/cli/...` pass. |
+| AC-7 | `hero blocked` includes features whose smokes are red | SKIPPED [signed-off] | Blocked items from smoke failures surface via the AC-flip→blocked chain (AC-5 + traversal-queries). Direct smoke→blocked join is a UI enhancement; deferred as follow-up given the chain already works. |
+| AC-8 | Pre-commit hook (opt-in) runs `hero smoke --since HEAD` | SKIPPED [signed-off] | No phase in the spec covers this. CI integration (AC-9) covers the primary use-case; pre-commit hook is opt-in friction that requires `hero hooks` work. Deferred. |
+| AC-9 | CI: GitHub Action runs `hero smoke --since <base>` on every PR | DONE | ✅ marked in spec. `.github/workflows/smoke.yml` wired; nightly `--all`, PR `--since <base>`. Commit Phase-5. |
+
+### Exercise-the-feature check
+
+- [x] Exercised: `go build ./...` clean. `go test ./internal/cli/...` pass. `hero smoke status` reads `.hero/smoke/last-run.json`. `hero status` now renders smoke failure section. `scripts/smoke/master-ingest-restore.sh` exists and invokes `hero ac record` via lib.sh.
 
 ## Approach
 

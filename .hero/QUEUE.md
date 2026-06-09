@@ -6,14 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T18:46:38Z · 107 ready specs_
-
-## per-feature-smoke-coverage — Per-Feature Smoke Coverage — Continuous Real-World Verification
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/per-feature-smoke-coverage/spec.md)_
-
----
+_Generated: 2026-06-09T18:54:00Z · 106 ready specs_
 
 ## monorepo-satellite-installs — "Monorepo Satellite Installs — One Workspace, Many Subfolder Entry Points"
 _feature · delivering · horizon: now_
@@ -159,6 +152,25 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
+## hihcp-skill-run-tool — "Add skill_run Tool to hero-code Native Tool Catalog"
+_feature · planning · horizon: now_
+
+Adds a `skill_run` native tool to hero-code so the model can invoke
+Hero workflows (/design, /deliver, /diagnose, etc.).
+
+**Status:** planning — full design complete, no code yet.
+
+**Pick up at:** Add the tool spec to `nativeToolSpecs()` in AgentLoop,
+then the dispatch intercept and registry wiring. Three files, one new
+`else if` branch in the tool dispatch chain.
+
+→ `/deliver hihcp-skill-run-tool`
+
+**Files:** `Engine/AgentLoop.swift:1258` (nativeToolSpecs), `Engine/AgentLoop.swift:518` (dispatch chain), `State/AppState.swift:955` (registry wiring)
+**Skip:** ToolExecutor dispatch (registries are @MainActor, ToolExecutor is an actor — use AgentLoop intercept instead)
+
+---
+
 ## hihcp-permission-bridge-validation — "Harden Permission Bridge Payload Validation"
 _bug · planning · horizon: now_
 
@@ -205,13 +217,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _bug · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-agents-md-harness-agnostic/spec.md)_
-
----
-
-## hihcp-skill-run-tool — "Add skill_run Tool to hero-code Native Tool Catalog"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hihcp-skill-run-tool/spec.md)_
 
 ---
 
