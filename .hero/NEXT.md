@@ -5,13 +5,14 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-06-06T20:53:33Z
+updated: 2026-06-09T15:46:36Z
 repo: hero-engine/hero
 branch: main
 ---
 
 ## Just finished
 
+- `2e7a724` — fix(mcp): read_spec falls back to filesystem when index misses a slug
 - `1427a09` — fix(graph): tolerate newer schema — warn instead of failing when db is ahead
 - `228097c` — fix(upgrade): detect all installed targets — codex, copilot, generic were missed
 - `71e4b1b` — feat(verify): delivery gate enforcement — hero verify becomes the load-bearing checkpoint
@@ -19,7 +20,6 @@ branch: main
 - `9537eb1` — fix(scan): detect .gsp, compound asset-pipeline extensions, raise walk cap
 - `15e6104` — fix(cli): wire top-level `hero connect` alias for `hero sync connect`
 - `1eb9798` — chore: final projected-file refresh
-- `b92a83a` — chore: projected-file refresh (post-hook)
 
 ## Next
 

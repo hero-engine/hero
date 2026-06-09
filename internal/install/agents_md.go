@@ -332,7 +332,40 @@ func (s agentsMdBodySection) SectionTitle() string {
 }
 
 func (s agentsMdBodySection) Render(_ managed.Context) (string, error) {
-	return s.body + renderActiveDialectBlock(s.opts), nil
+	body := s.body + renderActiveDialectBlock(s.opts)
+	if s.opts.Target == TargetCodex {
+		body += renderCodexWorkflowSection()
+	}
+	return body, nil
+}
+
+// renderCodexWorkflowSection appends a Codex-specific section that teaches
+// the agent to execute Hero workflows via skill files. Codex's SlashCommand
+// is a built-in enum — it cannot load external command definitions. Hero
+// emits each command as a skill (command-<name>/SKILL.md); this section
+// tells the agent to read and follow those files step-by-step rather than
+// treating them as documentation.
+func renderCodexWorkflowSection() string {
+	var sb strings.Builder
+	sb.WriteString("\n\n### Running Hero Workflows in Codex\n\n")
+	sb.WriteString("Hero's workflow commands are **not slash commands in Codex** — they are skill files you read and follow step-by-step.\n\n")
+	sb.WriteString("**When the user asks you to deliver, diagnose, design, or run any Hero workflow:**\n\n")
+	sb.WriteString("1. Read the workflow skill file at `.agents/skills/command-<name>/SKILL.md`\n")
+	sb.WriteString("   (e.g. `.agents/skills/command-deliver/SKILL.md` when the user says \"deliver\")\n")
+	sb.WriteString("2. Follow each step in the file as your workflow. These are **instructions to execute**, not documentation.\n")
+	sb.WriteString("3. **Do NOT** skip steps, flip spec frontmatter as a shortcut, or treat the workflow as informational.\n\n")
+	sb.WriteString("**Workflow routing table for Codex:**\n\n")
+	sb.WriteString("| User intent | Skill file to read and follow |\n|---|---|\n")
+	sb.WriteString("| Deliver, implement, ship, execute | `.agents/skills/command-deliver/SKILL.md` |\n")
+	sb.WriteString("| Diagnose, investigate, debug, fix | `.agents/skills/command-diagnose/SKILL.md` |\n")
+	sb.WriteString("| Design, plan, spec, add feature | `.agents/skills/command-design/SKILL.md` |\n")
+	sb.WriteString("| Review, PR, pull request | `.agents/skills/command-review/SKILL.md` |\n")
+	sb.WriteString("| Check, health, validate workspace | `.agents/skills/command-check/SKILL.md` |\n")
+	sb.WriteString("| Note, capture, remember | `.agents/skills/command-note/SKILL.md` |\n")
+	sb.WriteString("| Compose, break down, epic | `.agents/skills/command-compose/SKILL.md` |\n")
+	sb.WriteString("| Discover, brainstorm, explore | `.agents/skills/command-discover/SKILL.md` |\n\n")
+	sb.WriteString("If the skill file doesn't exist, fall back to reading `.claude/commands/<name>.md` directly.\n")
+	return sb.String()
 }
 
 // generateEngineeringAgentsMdBody renders the engineering pack body
