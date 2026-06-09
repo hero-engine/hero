@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-09T19:25:23Z · projected from 317 source nodes_
+_Last refreshed: 2026-06-09T19:30:07Z · projected from 317 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 1h ago | cross-repo-peering |
+| core | building | cmd/, internal/ | <1m ago | embedded-inference |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | maturing | domains/engineering/ | 1h ago | — |
@@ -16,7 +16,7 @@ _Last refreshed: 2026-06-09T19:25:23Z · projected from 317 source nodes_
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 8d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 24m ago | agent-outposts |
+| serve | building | internal/serve/ | 28m ago | agent-outposts |
 | (unassigned) | — | — | — | 150 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -50,22 +50,21 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Recently completed (last 14 days)
 
 - **(unassigned)** — e2e-discovery, e2e-traversal, e2e-validation, graph-conflict-detection, per-feature-smoke-coverage, spec-status-integrity, traversal-queries, unified-search
-- **core** — compact-handoff-test-coverage
-- **domains/engineering** — delivery-gate-enforcement
+- **core** — cross-repo-peering, compact-handoff-test-coverage
 - **serve** — monorepo-satellite-installs, tripwire-system
 
 ## Next up across surfaces
 
 1. **landing** — `hero-landing-page` (P0, delivering)
 2. **serve** — `hero-sales` (P0, delivering)
-3. **core** — `cross-repo-peering` (high, delivering)
-4. **core** — `embedded-inference` (P1, delivering)
-5. **serve** — `hero-team-server` (P1, delivering)
+3. **core** — `embedded-inference` (P1, delivering)
+4. **serve** — `hero-team-server` (P1, delivering)
+5. **(unassigned)** — `unified-retrieval-layer` (P1, delivering)
 
 ## Open risks & blockers
 
 - **Blocked specs (10):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection).
-- **Stale-in-flight (6):** `cross-repo-peering` (22d), `hero-landing-page` (22d), `unified-retrieval-layer` (22d), `agent-outposts` (21d), `hero-sales` (21d), `hero-team-server` (21d).
+- **Stale-in-flight (5):** `hero-landing-page` (22d), `unified-retrieval-layer` (22d), `agent-outposts` (21d), `hero-sales` (21d), `hero-team-server` (21d).
 - **Aged open bugs (7):** `hero-workspace-not-self-describing` (open 28d), `scan-enrichment-unbounded-loop` (open 28d), `scan-test-detection-misses-spock-vitest` (open 28d), `initiative-required-sections-drift` (open 23d), `install-target-emits-both-claude-and-agents-md` (open 22d), `spec-lifecycle-hygiene-breakdown` (open 22d), `claim-matches-sentinel-collision` (open 21d).
 - **Unassigned specs (150) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
