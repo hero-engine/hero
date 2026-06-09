@@ -6,19 +6,12 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T19:35:23Z · 99 ready specs_
+_Generated: 2026-06-09T19:38:34Z · 98 ready specs_
 
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
-
----
-
-## unified-retrieval-layer — Unified Retrieval Layer — Cross-Type Ranking via Faceted Search Index
-_feature · delivering · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/unified-retrieval-layer/spec.md)_
 
 ---
 
