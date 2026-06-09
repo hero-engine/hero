@@ -6,34 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T15:46:36Z · 105 ready specs_
-
-## codex-install-broken — "Codex install is broken — AGENTS.md body missing, agents/skills not materialized, MCP unreachable"
-_bug · delivering · horizon: now_
-
-```
-I'm picking up the codex-install-broken bug spec at .hero/planning/bugs/codex-install-broken/spec.md.
-
-The diagnosis is complete — 10 bugs total across three confirmed failure modes:
-- Mode A: MCP unreachable + AGENTS.md empty → Codex sees nothing (hero repo)
-- Mode B: MCP reachable, tools queryable, but no workflow orchestration → Codex does one-shot lookups, can't execute /deliver (theme-engine session)
-- Mode C: Codex finds command files, reads them, understands them, but treats them as docs instead of instructions → marks spec complete without writing code (provider-bridge session)
-
-The highest-leverage fix is NOT the re-install. It's Fix 1 + Fix 2: teach AGENTS.md to tell Codex how to use command files as workflow checklists, and emit commands as Codex-loadable skills.
-
-Delivery order:
-1. Fix 1 — make AGENTS.md body target-aware with Codex-specific workflow instructions (internal/install/agents_md.go)
-2. Fix 2 — emit Hero commands as Codex skills (internal/install/target_codex.go → installCommandsAsSkills)
-3. Fix 3 — re-install Codex target to verify fixes 1+2 produce working output
-4. Fix 4 — add hero check advisories for target completeness
-5. Fix 6 — auto-detect stale managed regions during upgrade
-
-Fix 5 (MCP in sandbox) needs research into Codex's setup_steps / environment support.
-
-Start by reading the spec, then implement Fix 1: make the agentsMdBodySection in agents_md.go target-aware. When target is Codex, emit routing instructions that tell the agent to read command files as manual workflow checklists.
-```
-
----
+_Generated: 2026-06-09T15:49:03Z · 104 ready specs_
 
 ## delivery-gate-enforcement — "Delivery Gate Enforcement — hero verify Becomes the Load-Bearing Checkpoint"
 _feature · delivering · horizon: now_

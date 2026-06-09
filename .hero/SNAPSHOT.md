@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-06T19:25:20Z · projected from 307 source nodes_
+_Last refreshed: 2026-06-09T15:46:36Z · projected from 308 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 2d ago | hero-local-merge-missing-dialect-fields |
+| core | building | cmd/, internal/ | 3m ago | codex-install-broken |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | building | domains/engineering/ | 1h ago | spec-types-cache-frontmatter-empty |
-| domains/pm | concept | domains/pm/ | 19d ago | — |
+| domains/engineering | building | domains/engineering/ | 2d ago | spec-types-cache-frontmatter-empty |
+| domains/pm | concept | domains/pm/ | 21d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
-| landing | building | web/landing/ | 5d ago | hero-landing-page |
+| landing | building | web/landing/ | 8d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 4d ago | vocabulary-resolve-misses-methodology-derivation |
+| serve | building | internal/serve/ | 7d ago | vocabulary-resolve-misses-methodology-derivation |
 | (unassigned) | — | — | — | 141 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -53,22 +53,22 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Next up across surfaces
 
-1. **domains/engineering** — `delivery-gate-enforcement` (P0, delivering)
-2. **(unassigned)** — `e2e-discovery` (P0, delivering)
-3. **(unassigned)** — `e2e-traversal` (P0, delivering)
-4. **landing** — `hero-landing-page` (P0, delivering)
-5. **serve** — `hero-sales` (P0, delivering)
+1. **core** — `codex-install-broken` (P0, delivering)
+2. **domains/engineering** — `delivery-gate-enforcement` (P0, delivering)
+3. **(unassigned)** — `e2e-discovery` (P0, delivering)
+4. **(unassigned)** — `e2e-traversal` (P0, delivering)
+5. **landing** — `hero-landing-page` (P0, delivering)
 
 ## Open risks & blockers
 
 - **Blocked specs (14):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `e2e-traversal` (waits on traversal-queries); `embedded-inference` (waits on master-ingest-restore); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection); `traversal-queries` (waits on master-ingest-restore); `unified-retrieval-layer` (waits on master-ingest-restore).
-- **Stale-in-flight (21):** `hero-landing-page` (19d), `spec-status-integrity` (19d), `vocabulary-resolve-misses-methodology-derivation` (19d), `unified-search` (19d), `unified-retrieval-layer` (19d), `cross-repo-peering` (19d), `e2e-discovery` (19d), `e2e-traversal` (19d), `e2e-validation` (19d), `graph-conflict-detection` (19d), `spec-types-cache-frontmatter-empty` (19d), `tripwire-system` (19d), `hero-local-merge-missing-dialect-fields` (19d), `master-ingest-restore` (19d), `monorepo-satellite-installs` (19d), `per-feature-smoke-coverage` (19d), `traversal-queries` (19d), `hero-team-server` (18d), `hero-sales` (18d), `agent-outposts` (18d), `compact-handoff-test-coverage` (16d).
-- **Aged open bugs (3):** `hero-workspace-not-self-describing` (open 25d), `scan-enrichment-unbounded-loop` (open 25d), `scan-test-detection-misses-spock-vitest` (open 25d).
+- **Stale-in-flight (21):** `hero-landing-page` (21d), `hero-sales` (21d), `vocabulary-resolve-misses-methodology-derivation` (21d), `agent-outposts` (21d), `unified-search` (21d), `cross-repo-peering` (21d), `e2e-discovery` (21d), `e2e-traversal` (21d), `e2e-validation` (21d), `graph-conflict-detection` (21d), `spec-types-cache-frontmatter-empty` (21d), `hero-team-server` (21d), `hero-local-merge-missing-dialect-fields` (21d), `master-ingest-restore` (21d), `monorepo-satellite-installs` (21d), `per-feature-smoke-coverage` (21d), `spec-status-integrity` (21d), `traversal-queries` (21d), `tripwire-system` (21d), `unified-retrieval-layer` (21d), `compact-handoff-test-coverage` (19d).
+- **Aged open bugs (10):** `hero-workspace-not-self-describing` (open 28d), `scan-enrichment-unbounded-loop` (open 28d), `scan-test-detection-misses-spock-vitest` (open 28d), `hero-local-merge-missing-dialect-fields` (open 23d), `initiative-required-sections-drift` (open 23d), `spec-types-cache-frontmatter-empty` (open 23d), `vocabulary-resolve-misses-methodology-derivation` (open 23d), `spec-lifecycle-hygiene-breakdown` (open 22d), `claim-matches-sentinel-collision` (open 21d), `install-target-emits-both-claude-and-agents-md` (open 21d).
 - **Unassigned specs (141) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 144/285 (50%)
-- Projection generation: 0ms · Source nodes: 307
+- Specs covered: 145/286 (50%)
+- Projection generation: 0ms · Source nodes: 308
 
