@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T17:35:20Z · 105 ready specs_
+_Generated: 2026-06-09T18:14:59Z · 104 ready specs_
 
 ## delivery-gate-enforcement — "Delivery Gate Enforcement — hero verify Becomes the Load-Bearing Checkpoint"
 _feature · delivering · horizon: now_
@@ -185,13 +185,6 @@ boundary nudges, full-delivery sync peer call — all v4+.
 _bug · delivering · horizon: now_
 
 > Read `.hero/planning/bugs/vocabulary-resolve-misses-methodology-derivation/spec.md` (this file), `internal/vocabulary/resolver.go`, `internal/methodology/resolver.go::DeriveVocabularyName`, and the three wrapper call sites: `internal/cli/vocab.go`, `internal/serve/vocab.go`, `internal/install/dialect.go`. Implement Option A: extend `vocabulary.Resolve` to take a `methodologies map[string]*methodology.Methodology` (or accept a pre-resolved `*methodology.Methodology` — pick whichever has lower blast radius) and fold the methodology-derived step into the precedence chain between explicit and tracker-inferred. Remove the three wrapper shims and route them through the new bare `Resolve`. Add unit tests per the Acceptance Criteria. Run `go build ./...` and `go test ./...` clean. Report what shipped, the chosen signature, and any open questions under 300 words.
-
----
-
-## spec-types-cache-frontmatter-empty — spec-types.json records emit frontmatter as null — loader never populates it
-_bug · delivering · horizon: now_
-
-> Read `.hero/planning/bugs/spec-types-cache-frontmatter-empty/spec.md` (this file). Inspect `internal/spectypes/loader.go::parseRecord` (the existing per-block parsing pattern), `internal/spectypes/registry.go::FrontmatterSchema` (the target shape), `internal/spectypes/export.go::exportRecord` (the export wiring — confirm the `Frontmatter` field is already serialized), and one canonical source file like `core/spec-types/feature.md` (verify the `frontmatter:` block is present in YAML; if not, author it from the legacy lint validator's field set in `internal/triage/`). Implement the loader-side parser per the Fix section. Add unit tests per the Acceptance Criteria. Regenerate `.hero/cache/spec-types.json` and confirm `jq '.types[].frontmatter | length' .hero/cache/spec-types.json | sort -u` returns positive numbers (not `null`). Run `go build ./...` and `go test ./...` clean. Report what shipped, any type files that needed a frontmatter block authored, and any open questions under 400 words.
 
 ---
 

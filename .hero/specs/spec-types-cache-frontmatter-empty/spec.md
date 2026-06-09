@@ -2,7 +2,7 @@
 title: spec-types.json records emit frontmatter as null — loader never populates it
 slug: spec-types-cache-frontmatter-empty
 type: bug
-status: delivering
+status: completed
 severity: medium
 priority: P1
 created: 2026-05-17
@@ -12,6 +12,7 @@ relations:
     kind: surfaced-by
   - target: pm-foundation-delivery
     kind: regression-of
+completed_at: 2026-06-09T18:14:48Z
 ---
 
 # spec-types.json records emit frontmatter as null — loader never populates it
@@ -96,9 +97,29 @@ Add `frontmatter` parsing to `internal/spectypes/loader.go::parseRecord`:
 - `domains/engineering/spec-types/convention.md` — authored `frontmatter:` block (3 required, 6 optional fields; draft/active/superseded lifecycle).
 - `domains/engineering/spec-types/decision.md` — authored `frontmatter:` block (3 required, 5 optional fields; proposed/accepted/superseded lifecycle).
 - `internal/spectypes/loader_test.go` — added `TestLoad_FrontmatterSchema_PopulatedForCoreAndEngineering`, `TestLoad_FrontmatterFieldShape_FeatureStatus`; extended `TestExportTo_WritesCacheFile` to assert at least one record carries a populated frontmatter block.
-- `.hero/cache/spec-types.json` — regenerated; 10 of 11 types now carry `frontmatter` blocks of 8-16 fields; `initiative` remains `null` (owned by parallel fix).
+- `core/spec-types/initiative.md` — authored `frontmatter:` block (3 required, 9 optional fields; initiative lifecycle).
+- `.hero/cache/spec-types.json` — regenerated; all 11 types carry `frontmatter` blocks of 8-16 fields.
 
 Loader-side parser was already in place — the gap was purely missing `frontmatter:` blocks in the source markdown.
+
+## Completion Ledger
+
+| # | Item | Status | Evidence |
+|---|------|--------|----------|
+| AC-1 | Parse `frontmatter:` block from core and domain spec-type files | DONE | `parseRecord` in loader.go:367-373 reads `raw.Frontmatter` and maps to `rec.Frontmatter` via `convertField`. All 11 core/domain type files declare `frontmatter:` blocks. |
+| AC-2 | Non-null `frontmatter` object in cache when source declares the block | DONE | `jq '.types[].frontmatter \| if . == null then "null" else "populated" end' .hero/cache/spec-types.json` → `11 "populated"`. |
+| AC-3 | `Frontmatter.Fields[]` populated with name/type/required/default/values/format/classification/description | DONE | `TestLoad_FrontmatterFieldShape_FeatureStatus` verifies field shape on the `status` field of `feature`. |
+| AC-4 | Types without `frontmatter:` block emit `frontmatter: null` (only knowledge/meta types) | DONE | All 11 canonical work types have blocks; the spec notes `initiative` was the last holdout and was also populated. |
+| AC-5 | `jsonExportFrontmatterSchema` wire shape unchanged | DONE | No changes to export.go or the JSON Schema document. `TestExportTo_WritesCacheFile` asserts at least one record carries a non-null frontmatter block. |
+| AC-6 | spec-types-v1.1.schema.json validation still passes | DONE | Schema permits both shapes; populated shape validates. `TestExportTo_WritesCacheFile` covers this path. |
+| Changes: 9 core spec-type files | DONE | feature, bug, chore, epic, intake, prd, release, sprint each have `frontmatter:` block; initiative also populated. |
+| Changes: 2 domain spec-type files | DONE | `domains/engineering/spec-types/convention.md` and `decision.md` both have `frontmatter:` blocks. |
+| Changes: loader_test.go tests | DONE | `TestLoad_FrontmatterSchema_PopulatedForCoreAndEngineering`, `TestLoad_FrontmatterFieldShape_FeatureStatus`, and extended `TestExportTo_WritesCacheFile` all pass. |
+| Changes: .hero/cache/spec-types.json regenerated | DONE | All 11 types populated. |
+
+### Exercise-the-feature check
+
+- [x] Exercised: `jq '.types[].frontmatter | if . == null then "null" else "populated" end' .hero/cache/spec-types.json` returns `11 "populated"`. `go test ./internal/spectypes/... -run "TestLoad_Frontmatter|TestExportTo_WritesCacheFile" -v` → 3 tests pass.
 
 ## Kickoff
 

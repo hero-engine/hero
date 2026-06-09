@@ -5,13 +5,14 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-06-09T17:35:19Z
+updated: 2026-06-09T18:14:58Z
 repo: hero-engine/hero
 branch: main
 ---
 
 ## Just finished
 
+- `94caba0` — fix: forward dialect fields in MergeLocal (hero-local-merge-missing-dialect-fields)
 - `67b4390` — verify and archive master-ingest-restore
 - `fd25109` — chore: archive codex-install-broken spec — delivery complete
 - `afe9553` — fix(codex): commands as skills + target-aware AGENTS.md bridge Codex workflow execution gap
@@ -19,7 +20,6 @@ branch: main
 - `1427a09` — fix(graph): tolerate newer schema — warn instead of failing when db is ahead
 - `228097c` — fix(upgrade): detect all installed targets — codex, copilot, generic were missed
 - `71e4b1b` — feat(verify): delivery gate enforcement — hero verify becomes the load-bearing checkpoint
-- `ce9b237` — chore: refresh projected handoff files
 
 ## Next
 
