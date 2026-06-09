@@ -109,7 +109,11 @@ func (s *Store) DB() *sql.DB { return s.db }
 //     place at ALTER time (SQLite renders the literal default at
 //     read time), so the migration is invisible to engineering-only
 //     workspaces.
-const schemaVersion = "3"
+// v4: graph conflict detection — adds `client_id` to nodes so
+//     concurrent pushes from different install IDs can be detected
+//     via FindGraphConflicts. DEFAULT '' is safe for existing rows
+//     (they pre-date federation push and have no client provenance).
+const schemaVersion = "4"
 
 // migration is one ordered, idempotent step in the schema timeline.
 // version is the resulting schema_version after the step applies.
@@ -200,6 +204,17 @@ var migrations = []migration{
 			`ALTER TABLE edges ADD COLUMN domain TEXT NOT NULL DEFAULT 'engineering'`,
 			`CREATE INDEX IF NOT EXISTS idx_nodes_domain ON nodes(domain)`,
 			`CREATE INDEX IF NOT EXISTS idx_edges_domain ON edges(domain)`,
+		},
+	},
+	{
+		// v4: client_id for graph conflict detection. Stores the install ID
+		// of the client that pushed each node, enabling FindGraphConflicts
+		// to detect concurrent pushes from different clients. DEFAULT ''
+		// is safe for existing rows (they pre-date federation push).
+		version: "4",
+		statements: []string{
+			`ALTER TABLE nodes ADD COLUMN client_id TEXT NOT NULL DEFAULT ''`,
+			`CREATE INDEX IF NOT EXISTS idx_nodes_client ON nodes(client_id)`,
 		},
 	},
 }

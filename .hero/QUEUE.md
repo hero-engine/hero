@@ -6,14 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T19:01:20Z · 105 ready specs_
-
-## graph-conflict-detection — Graph Conflict Detection — Detect and Surface Concurrent Node Divergence
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/graph-conflict-detection/spec.md)_
-
----
+_Generated: 2026-06-09T19:15:29Z · 104 ready specs_
 
 ## e2e-validation — E2E Validation — Repeatable Take-It-For-A-Spin Smoke Test
 _feature · delivering · horizon: now_

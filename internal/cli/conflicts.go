@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/index"
 	"github.com/spf13/cobra"
 )
@@ -72,10 +73,38 @@ func runConflicts(cmd *cobra.Command, args []string) error {
 		fmt.Printf("\n%d conflict(s) (graph-level) — run 'hero sync graph pull && hero scan' to reconcile.\n", len(records))
 	}
 
+	// --- Graph-level conflicts (bitemporal history — local graph.db) ---
+	if store, gerr := graph.Open(heroDir); gerr == nil {
+		if gconflicts, gerr := store.FindGraphConflicts(slug); gerr == nil && len(gconflicts) > 0 {
+			found = true
+			fmt.Printf("\nGraph divergence for %s (multiple clients pushed different versions):\n\n", slug)
+			for _, c := range gconflicts {
+				fmt.Printf("  %s %s — %d versions from %d client(s):\n", c.NodeType, c.NodeKey, len(c.Versions), countDistinctClients(c.Versions))
+				for _, v := range c.Versions {
+					cur := ""
+					if v.Current {
+						cur = " [current]"
+					}
+					fmt.Printf("    client %s: status=%s at %s%s\n", v.ClientID, v.Status, v.ValidFrom.Format("2006-01-02 15:04"), cur)
+				}
+			}
+			fmt.Printf("\n%d divergent node(s) — run 'hero sync graph pull && hero scan' to reconcile.\n", len(gconflicts))
+		}
+		store.Close()
+	}
+
 	if !found {
 		fmt.Printf("No conflicts found for %s.\n", slug)
 	}
 	return nil
+}
+
+func countDistinctClients(versions []graph.GraphConflictVersion) int {
+	seen := map[string]bool{}
+	for _, v := range versions {
+		seen[v.ClientID] = true
+	}
+	return len(seen)
 }
 
 // loadPushConflictsForSlug reads .hero/push_conflicts.json and returns

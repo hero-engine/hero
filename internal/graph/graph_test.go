@@ -236,7 +236,7 @@ func TestPartialMigrationRecovery(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Stats: %v", err)
 	}
-	if st.SchemaVersion != "3" {
-		t.Errorf("schema_version = %q, want %q", st.SchemaVersion, "3")
+	if st.SchemaVersion != schemaVersion {
+		t.Errorf("schema_version = %q, want %q", st.SchemaVersion, schemaVersion)
 	}
 }
