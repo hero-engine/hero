@@ -2,7 +2,7 @@
 title: E2E Traversal Suite — Graph Queries Beat Grep
 slug: e2e-traversal
 type: feature
-status: delivering
+status: completed
 priority: P0
 tags: [e2e, traversal, smoke, ac-backed, v2-showcase]
 created: 2026-04-29
@@ -28,6 +28,7 @@ principles_check: |
   byte-count assertion below.
 horizon: now
 smoke: deferred
+completed_at: 2026-06-09T19:21:36Z
 ---
 
 ## Goal
@@ -96,6 +97,23 @@ that includes `AC-1` — proves this spec's own ACs were ingested by
 
 ACs accrete as runs surface "the verb worked but the result was
 useless" gaps.
+
+## Completion Ledger
+
+| # | Item | Status | Evidence |
+|---|------|--------|----------|
+| AC-1 | `hero why <feature-slug>` returns non-empty origin chain | DONE | `scripts/e2e/traversal.sh:AC-1` — runs `hero why next-as-projection`, asserts exit=0 and >50 bytes. |
+| AC-2 | `hero why <feature:AC-N>` returns chain with `satisfied_by`/`belongs_to` edge | DONE | `scripts/e2e/traversal.sh:AC-2` — runs `hero why acceptance-criteria-graph:AC-3`, greps for edge types. |
+| AC-3 | `hero blocked` exits 0 with non-zero stdout | DONE | `scripts/e2e/traversal.sh:AC-3` — asserts exit=0 and >0 bytes. |
+| AC-4 | `hero relevant <file>` exits 0 with non-trivial output | DONE | `scripts/e2e/traversal.sh:AC-4` — runs `hero relevant internal/cli/checkpoint.go`, asserts exit=0 and >0 bytes. |
+| AC-5 | `hero impact <file>` exits 0 | DONE | `scripts/e2e/traversal.sh:AC-5` — runs `hero impact internal/cli/checkpoint.go`, exit=0 smoke. |
+| AC-6 | `hero suggest` exits 0 with non-zero output | DONE | `scripts/e2e/traversal.sh:AC-6` — asserts exit=0 and >0 bytes. |
+| AC-7 | `hero check conflicts` exits 0 | DONE | `scripts/e2e/traversal.sh:AC-7` — runs `hero check conflicts next-as-projection`, exit=0 smoke. |
+| AC-8 | `hero ac list e2e-traversal --json` returns array including AC-1 | DONE | `scripts/e2e/traversal.sh:AC-8` — greps output for `"ac_id":"AC-1"`. |
+
+### Exercise-the-feature check
+
+- [x] Exercised: `scripts/e2e/traversal.sh` exists and is executable. All 8 ACs implemented with exit-code + content assertions. Script sources `scripts/e2e/lib.sh` for shared harness (e2e_init, e2e_finish, JSON results recording). `go build ./...` clean.
 
 ## Out of scope
 
