@@ -6,14 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T18:42:15Z · 108 ready specs_
-
-## spec-status-integrity — Spec Status Integrity — Graph-Verified Delivery Claims
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/spec-status-integrity/spec.md)_
-
----
+_Generated: 2026-06-09T18:46:38Z · 107 ready specs_
 
 ## per-feature-smoke-coverage — Per-Feature Smoke Coverage — Continuous Real-World Verification
 _feature · delivering · horizon: now_

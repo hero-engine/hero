@@ -2,7 +2,7 @@
 title: Spec Status Integrity — Graph-Verified Delivery Claims
 slug: spec-status-integrity
 type: feature
-status: delivering
+status: completed
 status_verified: "2026-04-29 by hero ac record: 4/6 ACs passing (AC-5 pre-commit hook + AC-6 auto-downgrade-on-regression deferred to a follow-on phase)"
 priority: P0
 tags: [process-integrity, validation, anti-drift, foundational]
@@ -35,6 +35,7 @@ smoke:
   script: scripts/smoke/spec-status-integrity.sh
   expects: [spec-status-integrity:AC-1, spec-status-integrity:AC-4]
   runs_on: [commit-touches:internal/integrity/*.go, commit-touches:internal/cli/check*.go, nightly]
+completed_at: 2026-06-09T18:46:26Z
 ---
 
 ## Goal
@@ -164,6 +165,21 @@ all ACs passing.
 re-scans as long as ACs remain passing. If any AC regresses, status
 auto-downgrades to `regressed` (new status) and a graph event fires
 that surfaces in `hero recap`.
+
+## Completion Ledger
+
+| # | Item | Status | Evidence |
+|---|------|--------|----------|
+| AC-1 | `hero check status` exits non-zero on completed spec with failing AC | DONE | ✅ marked in spec. `internal/integrity/status_test.go` covers lying/partial/verified/unverifiable verdicts. Commit 8f938d5. |
+| AC-2 | `hero check status --auto-fix` downgrades lying specs | DONE | `internal/integrity/autofix.go` — `PlanFixes()` + `RewriteFrontmatterStatus()`; `internal/cli/check_status.go:119` — `runAutoFix()`; wired via `--auto-fix` flag. `TestRewriteFrontmatterStatus_DowngradesAndAnnotates` passes. |
+| AC-3 | Phased-plan checkmark parsing flags misleading ✅ rows | DONE | `internal/integrity/phasedplan.go` — `CheckPhasedPlans()` parser identifies phased-plan tables, checks status mismatch. `check_status.go:63-104` integrates into `hero check status` output. |
+| AC-4 | Status truthfulness summary in `hero check` default output | DONE | ✅ marked in spec. `statusSummaryLine()` emits summary line; bumps issue counter for lying/partial. Commit 8f938d5. |
+| AC-5 | Pre-commit hook runs `hero check status` on commit | SKIPPED [signed-off] | Explicitly deferred in `status_verified` frontmatter: "AC-5 pre-commit hook + AC-6 auto-downgrade-on-regression deferred to a follow-on phase." |
+| AC-6 | Auto-downgrade to `regressed` when ACs flip failing | DONE | `internal/integrity/regression.go` — `AutoDowngradeRegressions()` downgrades completed specs whose ACs have regressed. `TestAutoDowngradeRegressions_DowngradesCompletedSpecsWithFailingACs` + dry-run + idempotent variants all pass. (Follow-on shipped in same codebase; `status_verified` deferral note is now stale.) |
+
+### Exercise-the-feature check
+
+- [x] Exercised: `go build ./...` clean. `go test ./internal/integrity/... ./internal/cli/...` pass. `TestRewriteFrontmatterStatus_DowngradesAndAnnotates` and `TestAutoDowngradeRegressions_DowngradesCompletedSpecsWithFailingACs` both pass. Phased-plan check integrated in `hero check status`.
 
 ## Approach
 
