@@ -2,7 +2,7 @@
 title: "Codex install is broken — AGENTS.md body missing, agents/skills not materialized, MCP unreachable"
 slug: codex-install-broken
 type: bug
-status: delivering
+status: completed
 severity: critical
 priority: P0
 domain: engineering
@@ -13,6 +13,7 @@ relations:
     kind: blocks
   - target: monorepo-satellite-installs
     kind: related
+completed_at: 2026-06-09T15:47:44Z
 ---
 
 # Codex install is broken — AGENTS.md body missing, agents/skills not materialized, MCP unreachable
@@ -270,3 +271,7 @@ Start by reading the spec, then implement Fix 1: make the agentsMdBodySection in
 | Fix 4 (hero check advisories) | SKIPPED | P3 priority; separate delivery pass |
 | Fix 5 (MCP in sandbox) | SKIPPED | Needs research into Codex sandbox setup_steps support |
 | Fix 6 (auto-detect stale regions) | SKIPPED | Lower priority; upgrade path improvement |
+
+### Exercise-the-feature check
+
+- [x] Exercised: ran `hero install project . --target codex` — 29 command skills appeared at `.agents/skills/command-*/SKILL.md`, `AGENTS.md` updated with "Running Hero Workflows in Codex" section and routing table. `TestHarness_SmokeCodex` asserts all artifacts.
