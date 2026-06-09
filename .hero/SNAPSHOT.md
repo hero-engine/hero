@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-09T19:22:27Z · projected from 317 source nodes_
+_Last refreshed: 2026-06-09T19:25:23Z · projected from 317 source nodes_
 
 ## Surfaces
 
@@ -16,7 +16,7 @@ _Last refreshed: 2026-06-09T19:22:27Z · projected from 317 source nodes_
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 8d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 21m ago | agent-outposts |
+| serve | building | internal/serve/ | 24m ago | agent-outposts |
 | (unassigned) | — | — | — | 150 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -49,18 +49,18 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — e2e-traversal, e2e-validation, graph-conflict-detection, per-feature-smoke-coverage, spec-status-integrity, traversal-queries, unified-search
+- **(unassigned)** — e2e-discovery, e2e-traversal, e2e-validation, graph-conflict-detection, per-feature-smoke-coverage, spec-status-integrity, traversal-queries, unified-search
 - **core** — compact-handoff-test-coverage
 - **domains/engineering** — delivery-gate-enforcement
-- **serve** — monorepo-satellite-installs, tripwire-system, vocabulary-resolve-misses-methodology-derivation
+- **serve** — monorepo-satellite-installs, tripwire-system
 
 ## Next up across surfaces
 
-1. **(unassigned)** — `e2e-discovery` (P0, delivering)
-2. **landing** — `hero-landing-page` (P0, delivering)
-3. **serve** — `hero-sales` (P0, delivering)
-4. **core** — `cross-repo-peering` (high, delivering)
-5. **core** — `embedded-inference` (P1, delivering)
+1. **landing** — `hero-landing-page` (P0, delivering)
+2. **serve** — `hero-sales` (P0, delivering)
+3. **core** — `cross-repo-peering` (high, delivering)
+4. **core** — `embedded-inference` (P1, delivering)
+5. **serve** — `hero-team-server` (P1, delivering)
 
 ## Open risks & blockers
 

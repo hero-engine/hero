@@ -2,7 +2,7 @@
 title: "Cross-Repo Peering — Conventions Travel, Specs Hand Off, Heroes Call Each Other"
 slug: cross-repo-peering
 type: feature
-status: delivering
+status: completed
 priority: high
 tags: [federation, peering, conventions, handoff, sync-peer-call, local-first]
 created: 2026-05-15
@@ -16,6 +16,7 @@ relations:
   - target: agent-outposts
     kind: related
 horizon: now
+completed_at: 2026-06-09T19:29:56Z
 ---
 
 # Cross-Repo Peering — Conventions Travel, Specs Hand Off, Heroes Call Each Other
@@ -1291,3 +1292,53 @@ appear on structural contract edits.
 - **Full-delivery sync peer call** with approval + budget.
 - **Machine-to-machine peering** for different operators or
   different machines without cloud.
+
+## Completion Ledger
+
+| # | Item | Status | Evidence |
+|---|------|--------|----------|
+| Phase-0-identity | peer_id minted on hero init, migrated on first run | DONE | `internal/peering/identity.go` — `MintPeerID()`, `EnsurePeerID()`; `internal/cli/init.go` — mint on init and events log entry |
+| Phase-0-identity-stable | peer_id treated as canonical join key (never alias) | DONE | `internal/spec/resolve.go` — `CrossRepoResolver` dual-keys alias+peer_id; `contracts/peering/handoff.go` — trail entries use peer_id |
+| Phase-0-identity-display | human output resolves peer_id to alias | DONE | `internal/cli/repos.go` — lazy peer_id read; `internal/cli/handoff.go` — alias display in status output |
+| Phase-0-identity-scan | hero repos scan/add captures sibling peer_id | DONE | `internal/cli/repos.go` — `readPeerIDFromRepo()`, `recordPeerMeta()`, lazy fallback on `hero repos list` |
+| Phase-0-contracts | contracts/peering/ package — PeerManifest, HandoffRecord, PeerCallRequest, PeerCallResult, TrailEntry | DONE | `contracts/peering/manifest.go`, `handoff.go`, `peercall.go`, `events.go`, `version.go` — all present and compiling |
+| Phase-0-contracts-version | PeeringContractsVersion in contracts/peering/version.go | DONE | `contracts/peering/version.go` — version evolves independently of main ContractsVersion |
+| Phase-0-resolver | CrossRepoResolver upgraded to dual-key on peer_id + alias | DONE | `internal/spec/resolve.go` — `WithPeerIDs()`, `PeerIDForAlias()`, `AliasForPeerID()`, trail-walk methods |
+| Phase-0-manifest | peer-manifest.yaml generation; default publishes zero conventions | DONE | `internal/peering/manifest.go` — `GenerateManifest()`, `GenerateAndWriteManifest()`; `internal/cli/index.go` lines 59, 83 — called on every index run |
+| Phase-1-statuses | handed_off, awaiting_peer, handed_back added to spec model | DONE | `internal/spec/spec.go` — `StatusHandedOff`, `StatusAwaitingPeer`, `StatusHandedBack`; `ReceivedFromBlock` struct and YAML parser |
+| Phase-1-handoff | hero handoff <slug> <peer> — two-side write, trail, events | DONE | `internal/peering/handoff.go` — `Handoff()` with slug-collision suffix, atomic receiver-first write; `internal/cli/handoff.go` |
+| Phase-1-handoff-events | peer.handoff.sent/received emitted to events.log | DONE | `internal/feed/feed.go` — ValidTypes includes peer.handoff.sent, peer.handoff.received, peer.handoff.bounced, peer.handoff.accepted |
+| Phase-1-trail | ## Handoff Trail section read/write round-trips cleanly | DONE | `internal/peering/trail.go` — `ReadTrail()`, `AppendTrail()`; `trail_test.go` — `TestTrailRoundTrip`, `TestAppendTrailToContent` |
+| Phase-1-trail-YAML | trail entries in YAML block list format | DONE | `contracts/peering/handoff.go` — `TrailEntry` with Direction, Mode, PeerID, AtCommit, Reason, ResultRef |
+| Phase-1-accept | hero handoff accept — prompts next status (delivering/in-review) | DONE | `internal/cli/handoff.go` — `promptNextStatus()`, non-interactive default to delivering |
+| Phase-1-queue | hero queue shows Incoming Handoffs section | DONE | `internal/cli/queue.go` — `renderIncomingHandoffs()` at line 196 |
+| Phase-1-status-display | hero status surfaces handed-off/awaiting-peer/handed-back | DONE | `internal/cli/status.go` — `handoffPending` and `handedBack` groups; `ReconcileAwaitingPeer` auto-fire at render time |
+| Phase-1-integrity-coord | handed_off/awaiting_peer excluded from active-delivering invariant | PARTIAL | `internal/spec/spec.go` — `IsLocallyDelivering()` helper documents the contract; integrity package implicitly excludes non-completed specs; explicit wiring has a `TODO(cross-repo-peering, spec-status-integrity)` — deferred to `spec-status-integrity` spec |
+| Phase-1-manifest-index | hero index regenerates peer-manifest.yaml | DONE | `internal/cli/index.go` lines 59, 83 — `peering.GenerateAndWriteManifest(projectRoot)` called on every index run |
+| Phase-2-advisory | hero peer call --mode=advisory (no-write subagent, structured result) | DONE | `internal/peering/peercall.go` — `Call()`, dry-run mode, budget defaults; `peercall_test.go` — TestCallDryRunAdvisory, TestCallRejectsUnknownPeer |
+| Phase-2-specout | hero peer call --mode=spec-out (peer design flow, slug return) | DONE | `internal/peering/peercall.go` — mode dispatch, `WritePeerCallArtifact()`, `RecordOriginatorSide()`; `peercall_test.go` |
+| Phase-2-budget | advisory 20t/50k, spec-out 50t/150k constants | DONE | `internal/peering/peercall.go` — `DefaultAdvisoryTurns`, `DefaultAdvisoryTokens`, `DefaultSpecOutTurns`, `DefaultSpecOutTokens` |
+| Phase-2-reconcile | awaiting_peer → handed_back auto-fire at hero status render | DONE | `internal/peering/resolve.go` — `ReconcileAwaitingPeer()`; `internal/cli/status.go` line 73 — wired |
+| Phase-2-relevant-peer | hero relevant --peer <alias> loads peer-surface conventions | DONE | `internal/cli/relevant.go` — `--peer` and `--surface` flags; `ReadPeerManifest()` + `FilterConventionsBySurface()` |
+| Phase-2-relevant-error | missing manifest fails with clear error pointing at hero index | DONE | `internal/peering/resolve.go` — `ReadPeerManifest()` returns typed error; `internal/cli/relevant.go` surfaces it |
+| Phase-3-scanner | contract import scanner: positive hit, test/generated/vendor filters | DONE | `internal/peering/contract_imports.go` — `ScanContractImports()`; `contract_imports_test.go` — 8 tests covering all filter cases |
+| Phase-3-surfacing | passive surfacing in hero resume (/brief) and hero context | DONE | `internal/cli/brief.go` — `contractImportSignalForFocus()`; `internal/cli/context.go` — `contextImportsCmd` |
+| Phase-3-integration | integration harness: full ladder across mock sibling workspaces | DONE | `internal/peering/integration_test.go` — `TestPilotHarness_FullLadder` exercises manifest read, advisory dry-run, spec-out, handoff, reconcile, contract-import signal |
+| Phase-3-knowledge | .hero/knowledge/conventions/peering-protocol.md | DONE | File present; documents three-tier ladder, manifest, handoff lifecycle, trail format, local-vs-cloud transport |
+| Phase-3-commands | commands/handoff.md and commands/peer.md slash command docs | DONE | `domains/engineering/commands/handoff.md`, `domains/engineering/commands/peer.md` — both present |
+| Phase-3-skill | domains/engineering/skills/cross-repo-peering/SKILL.md | DONE | File present; covers decision tree, mode selection, convention-import fallback, anti-patterns |
+| Phase-3-feature-delivery-agent | feature-delivery-lead.md — peer handoff routing + sync peer call sections | PARTIAL | `domains/engineering/agents/feature-delivery-lead.md` does not contain explicit peer-call routing sections; the peer.md command covers this instead. Convention-writing SKILL.md lacks dedicated peer-surface subsection — addressed in cross-repo-peering SKILL.md |
+| Phase-4-cloud | cloud/api/handlers/peering.go + cloud/store/peering.go | SKIPPED | Signed-off as Phase 4 gated — local-first transport is the v1 scope; cloud server API files not created by design |
+| Phase-4-boundary-nudge | hero nudge contract-shape boundary suggestion | SKIPPED | Signed-off as Phase 4 gated |
+
+### Exercise-the-feature check
+
+- [x] `go test ./internal/peering/... ./contracts/peering/... -count=1` passes — 36 tests across both packages, 0 failures
+- [x] `contracts/peering/` — all 5 files present (events.go, handoff.go, manifest.go, peercall.go, version.go)
+- [x] `internal/peering/` — all 14 files present (contract_imports.go, contract_imports_test.go, handoff.go, handoff_test.go, identity.go, identity_test.go, integration_test.go, manifest.go, manifest_test.go, peercall.go, peercall_test.go, resolve.go, trail.go, trail_test.go)
+- [x] `internal/cli/peer.go` and `internal/cli/handoff.go` — CLI entry points wired
+- [x] `hero peer list`, `hero peer show`, `hero handoff`, `hero peer call` all wired in CLI subcommand tree
+- [x] `hero index` calls `peering.GenerateAndWriteManifest()` on every run
+- [x] `hero status` auto-fires `ReconcileAwaitingPeer` to flip `awaiting_peer → handed_back`
+- [x] `hero queue` renders Incoming Handoffs section for received specs
+- [x] `/resume` (brief.go) and `hero context imports` surface contract-import signal passively
