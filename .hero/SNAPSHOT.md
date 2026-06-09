@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-09T21:30:01Z · projected from 317 source nodes_
+_Last refreshed: 2026-06-09T21:30:09Z · projected from 317 source nodes_
 
 ## Surfaces
 
@@ -73,5 +73,5 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
 - Specs covered: 145/295 (49%)
-- Projection generation: 0ms · Source nodes: 317
+- Projection generation: 1ms · Source nodes: 317
 
