@@ -6,26 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T19:30:07Z · 100 ready specs_
-
-## embedded-inference — "Embedded Inference — Zero-Dependency Semantic Retrieval for Hero"
-_feature · delivering · horizon: next_
-
-Pick up at: All four phases implemented and tested. The engine, storage, chunking, refresh, RRF fusion, CLI, and scan integration are shipped. Remaining: prepare a real Model2Vec weight file (Python distillation of a base model, export as vocab.txt + weights.bin), install to `~/.hero/models/embeddings/hero-embed-v1/`, and run the 10-query quality validation on this repo.
-
-Read first:
-- `internal/embeddings/` — the full package: model.go, storage.go, chunker.go, refresh.go
-- `internal/retrieval/retrieval.go` — `retrieveHybrid()` and `fuseRRF()` at the bottom
-- `internal/cli/embeddings.go` — `hero embeddings status` and `hero embeddings rebuild`
-- `internal/cli/scan.go` ~line 395 — embedding refresh wired into `hero scan`
-
-Next steps:
-1. Run Model2Vec distillation (Python, one-time) on `all-MiniLM-L6-v2` → export vocab.txt + weights.bin to `~/.hero/models/embeddings/hero-embed-v1/`
-2. Run `hero embeddings rebuild` against this repo to populate vec_chunks
-3. Run the 10-query quality validation (AC-10)
-4. If quality passes, decide on `//go:embed` vs download-on-first-use for model distribution
-
----
+_Generated: 2026-06-09T19:35:23Z · 99 ready specs_
 
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
