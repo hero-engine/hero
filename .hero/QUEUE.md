@@ -6,14 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T18:21:38Z · 101 ready specs_
-
-## unified-search — Unified Search — Merge Federation Graph and On-Disk Spec Index
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/unified-search/spec.md)_
-
----
+_Generated: 2026-06-09T18:33:23Z · 109 ready specs_
 
 ## tripwire-system — "Tripwire System — Forbidden-Option Guardrails for Model Sessions"
 _feature · delivering · horizon: now_
@@ -177,6 +170,69 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-sales/spec.md)_
+
+---
+
+## hihcp-permission-bridge-validation — "Harden Permission Bridge Payload Validation"
+_bug · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-permission-bridge-validation/spec.md)_
+
+---
+
+## hihcp-fuzzy-path-resolution — "Add Workspace-Relative Path Fuzzy Resolution"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hihcp-fuzzy-path-resolution/spec.md)_
+
+---
+
+## hihcp-rgignore — "Add .rgignore to hero-code Repo"
+_bug · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-rgignore/spec.md)_
+
+---
+
+## hihcp-agent-loop-error-recovery — "Harden Agent Loop Error Recovery (Stuck Turn Prevention)"
+_bug · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-agent-loop-error-recovery/spec.md)_
+
+---
+
+## hihcp-mcp-auto-reconnect — "Auto-Recover from MCP Server Disconnect Mid-Session"
+_bug · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-mcp-auto-reconnect/spec.md)_
+
+---
+
+## hihcp-mcp-first-turn-readiness — "Gate First Turn on Hero MCP Readiness"
+_bug · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-mcp-first-turn-readiness/spec.md)_
+
+---
+
+## hihcp-agents-md-harness-agnostic — "Produce Harness-Agnostic AGENTS.md, Demote CLAUDE.md"
+_bug · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-agents-md-harness-agnostic/spec.md)_
+
+---
+
+## hihcp-skill-run-tool — "Add skill_run Tool to hero-code Native Tool Catalog"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hihcp-skill-run-tool/spec.md)_
+
+---
+
+## hero-in-hero-code-parity — "Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"
+_initiative · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-in-hero-code-parity/spec.md)_
 
 ---
 

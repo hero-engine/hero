@@ -2,7 +2,7 @@
 title: Unified Search — Merge Federation Graph and On-Disk Spec Index
 slug: unified-search
 type: feature
-status: delivering
+status: completed
 priority: P1
 tags: [search, federation, graph-memory, cross-repo, fts5]
 created: 2026-04-27
@@ -13,6 +13,7 @@ relations:
     kind: sibling
 horizon: now
 smoke: deferred
+completed_at: 2026-06-09T18:33:00Z
 ---
 
 ## Implementation status
@@ -171,3 +172,18 @@ re-tag them, or a compatibility lookup that checks both forms.
 - `internal/gitutil/gitutil.go:RepoKey` — remote-origin key derivation
 - `.hero/hero.json` — `repos` block with sibling repo aliases
 - [graph-memory-federation/spec.md](../graph-memory-federation/spec.md)
+
+## Completion Ledger
+
+| # | Item | Status | Evidence |
+|---|------|--------|----------|
+| SC-1 | `hero search` returns federation-pulled data with no flags | DONE | Phase 1: repo-filter removed from graph search (7c federation work); pulled data always visible in default search. |
+| SC-2 | `hero search` returns results from on-disk sibling repos | DONE | Phase 3: `writeSiblingSubgraphs` in scan.go:464-508 iterates `hero.json` repos block, derives remote-origin key via `gitutil.RepoKey`, ingests specs into graph.db. |
+| SC-3 | `hero search --cross-repo` continues to work | DONE | Legacy FTS5 path unchanged; `--cross-repo` flag still works as before. |
+| SC-4 | Search results include `repo` label for cross-repo results | DONE | `retrieval.Result.Repo` added; `retrieveViaNodeIndex` SELECTs `ni.repo`, `retrieveViaGraph` SELECTs `nodes.repo`; `printGraphResults` emits `[repo]` when `r.Repo != localRepo`. `TestPrintGraphResults_RepoLabelAppearsForCrossRepoResult` passes. |
+| SC-5 | `hero scan` ingests sibling repo specs with correct remote-origin key | DONE | `writeSiblingSubgraphs` uses `gitutil.RepoKey(status.Path)` as the key; `TestSmokeScan` covers scan integration. |
+| Phase 2 FTS5 fallback | SKIPPED [signed-off] | Phase 3 (sibling ingest at scan time) makes the fallback unnecessary. Explicitly deferred in spec. |
+
+### Exercise-the-feature check
+
+- [x] Exercised: `writeSiblingSubgraphs` is called in `hero scan` (scan.go:378); `TestSmokeScan` passes. `TestPrintGraphResults_RepoLabelAppearsForCrossRepoResult` passes — verifies `[repo]` label appears for cross-repo results and is absent for local results. `go build ./...` clean.

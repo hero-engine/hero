@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/index"
 	"github.com/hero-engine/hero/internal/retrieval"
 	"github.com/spf13/cobra"
@@ -154,7 +155,7 @@ func runSearch(cmd *cobra.Command, args []string) error {
 	// results use the tabular format.
 	switch results[0].Source {
 	case "graph", "hybrid", "vector":
-		return printGraphResults(results, strings.Join(args, " "), searchBudget, searchJSON)
+		return printGraphResults(results, strings.Join(args, " "), searchBudget, searchJSON, gitutil.RepoKey(projectRoot))
 	default:
 		return printFTSResults(results, searchJSON)
 	}
@@ -284,7 +285,10 @@ func printFTSResults(results []retrieval.Result, asJSON bool) error {
 
 // printGraphResults formats graph-sourced retrieval.Results in the markdown
 // list layout, budget-limited to approximately the given token count.
-func printGraphResults(results []retrieval.Result, topic string, budget int, asJSON bool) error {
+// localRepo is the remote-origin key for this workspace; results with a
+// different non-empty Repo get a "[repo]" label so cross-repo provenance
+// is visible at a glance.
+func printGraphResults(results []retrieval.Result, topic string, budget int, asJSON bool, localRepo string) error {
 	if asJSON {
 		fmt.Print("[")
 		for i, r := range results {
@@ -303,6 +307,9 @@ func printGraphResults(results []retrieval.Result, topic string, budget int, asJ
 	dropped := 0
 	for _, r := range results {
 		line := fmt.Sprintf("- **%s** _(%s, `%s`)_", r.Title, r.Type, r.Key)
+		if r.Repo != "" && r.Repo != localRepo {
+			line += fmt.Sprintf(" [%s]", r.Repo)
+		}
 		if r.Snippet != "" {
 			line += " — " + r.Snippet
 		}

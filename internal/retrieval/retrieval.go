@@ -82,6 +82,7 @@ type Result struct {
 	Status    string // spec status when Source=="fts5"; empty for graph nodes
 	ClaimedBy string // non-empty when a spec is claimed
 	Path      string // on-disk path when Source=="fts5"; empty for graph nodes
+	Repo      string // remote-origin key; non-empty when result is from a sibling repo
 }
 
 // Retriever wraps the graph store, FTS5 index, and optional embedding model.
@@ -235,7 +236,7 @@ func (r *Retriever) retrieveViaNodeIndex(q Query, limit int) ([]Result, error) {
 	// Non-spec nodes (Commit, Symbol, ...) have no specs row and the
 	// joined column comes back as NULL → empty string after scan.
 	rows, err := indexDB.Query(`
-		SELECT ni.node_type, ni.key, ni.path,
+		SELECT ni.node_type, ni.key, ni.path, ni.repo,
 		       snippet(fts_nodes, 0, '>>>', '<<<', '...', 24) AS title_snip,
 		       snippet(fts_nodes, 1, '>>>', '<<<', '...', 32) AS body_snip,
 		       fts_nodes.rank AS bm25_rank,
@@ -257,6 +258,7 @@ func (r *Retriever) retrieveViaNodeIndex(q Query, limit int) ([]Result, error) {
 		nodeType     string
 		key          string
 		path         string
+		repo         string
 		titleSnip    string
 		bodySnip     string
 		bm25Rank     float64
@@ -268,7 +270,7 @@ func (r *Retriever) retrieveViaNodeIndex(q Query, limit int) ([]Result, error) {
 	for rows.Next() {
 		var c cand
 		var rank sql.NullFloat64
-		if err := rows.Scan(&c.nodeType, &c.key, &c.path, &c.titleSnip, &c.bodySnip, &rank, &c.supersededBy); err != nil {
+		if err := rows.Scan(&c.nodeType, &c.key, &c.path, &c.repo, &c.titleSnip, &c.bodySnip, &rank, &c.supersededBy); err != nil {
 			continue
 		}
 		if rank.Valid {
@@ -317,6 +319,7 @@ func (r *Retriever) retrieveViaNodeIndex(q Query, limit int) ([]Result, error) {
 			Score:   c.score,
 			Source:  "graph",
 			Path:    c.path,
+			Repo:    c.repo,
 		}
 	}
 	return results, nil
@@ -378,7 +381,7 @@ func (r *Retriever) retrieveViaGraph(q Query, limit int) ([]Result, error) {
 	// Fetch up to 200 candidates; scoring + sort below brings the best to the
 	// front before we cap at limit.
 	rows, err := r.store.DB().Query(
-		`SELECT id, type, key,
+		`SELECT id, type, key, repo,
 		        COALESCE(json_extract(props, '$.title'),   '') AS title,
 		        COALESCE(json_extract(props, '$.body'),    '') AS body,
 		        COALESCE(json_extract(props, '$.subject'), '') AS subject
@@ -401,6 +404,7 @@ func (r *Retriever) retrieveViaGraph(q Query, limit int) ([]Result, error) {
 		id       int64
 		nodeType string
 		key      string
+		repo     string
 		title    string
 		body     string
 		score    float64
@@ -410,7 +414,7 @@ func (r *Retriever) retrieveViaGraph(q Query, limit int) ([]Result, error) {
 	for rows.Next() {
 		var c cand
 		var subject string
-		if err := rows.Scan(&c.id, &c.nodeType, &c.key, &c.title, &c.body, &subject); err != nil {
+		if err := rows.Scan(&c.id, &c.nodeType, &c.key, &c.repo, &c.title, &c.body, &subject); err != nil {
 			return nil, err
 		}
 		if c.body == "" && subject != "" {
@@ -456,6 +460,7 @@ func (r *Retriever) retrieveViaGraph(q Query, limit int) ([]Result, error) {
 			Snippet: snippet,
 			Score:   c.score,
 			Source:  "graph",
+			Repo:    c.repo,
 		}
 	}
 	return results, nil
