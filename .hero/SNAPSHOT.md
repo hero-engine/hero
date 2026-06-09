@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-09T18:31:57Z · projected from 317 source nodes_
+_Last refreshed: 2026-06-09T18:33:22Z · projected from 317 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 10m ago | cross-repo-peering |
+| core | building | cmd/, internal/ | 12m ago | cross-repo-peering |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | maturing | domains/engineering/ | 10m ago | — |
+| domains/engineering | maturing | domains/engineering/ | 12m ago | — |
 | domains/pm | concept | domains/pm/ | 21d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 8d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 14m ago | agent-outposts |
+| serve | building | internal/serve/ | 16m ago | agent-outposts |
 | (unassigned) | — | — | — | 150 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -49,7 +49,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — master-ingest-restore, handoff-captures-session-intent, resume-brief-missing-project-context, cross-machine-handoff-slug-mismatch, resume-brief-surfaces-handoff, next-unconditional-commit-staging
+- **(unassigned)** — unified-search, master-ingest-restore, handoff-captures-session-intent, resume-brief-missing-project-context, cross-machine-handoff-slug-mismatch, resume-brief-surfaces-handoff
 - **core** — compact-handoff-test-coverage, hero-local-merge-missing-dialect-fields, codex-install-broken
 - **domains/engineering** — delivery-gate-enforcement, spec-types-cache-frontmatter-empty
 - **serve** — vocabulary-resolve-misses-methodology-derivation
