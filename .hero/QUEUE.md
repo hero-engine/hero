@@ -6,14 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T18:38:32Z · 108 ready specs_
-
-## traversal-queries — Traversal Queries — `hero why` and `hero blocked`
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/traversal-queries/spec.md)_
-
----
+_Generated: 2026-06-09T18:42:15Z · 108 ready specs_
 
 ## spec-status-integrity — Spec Status Integrity — Graph-Verified Delivery Claims
 _feature · delivering · horizon: now_
@@ -47,6 +40,13 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · delivering · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/e2e-validation/spec.md)_
+
+---
+
+## e2e-traversal — E2E Traversal Suite — Graph Queries Beat Grep
+_feature · delivering · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/e2e-traversal/spec.md)_
 
 ---
 
