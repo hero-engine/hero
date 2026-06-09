@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T15:49:03Z · 104 ready specs_
+_Generated: 2026-06-09T16:56:14Z · 106 ready specs_
 
 ## delivery-gate-enforcement — "Delivery Gate Enforcement — hero verify Becomes the Load-Bearing Checkpoint"
 _feature · delivering · horizon: now_
@@ -63,6 +63,13 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
+## traversal-queries — Traversal Queries — `hero why` and `hero blocked`
+_feature · delivering · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/traversal-queries/spec.md)_
+
+---
+
 ## spec-status-integrity — Spec Status Integrity — Graph-Verified Delivery Claims
 _feature · delivering · horizon: now_
 
@@ -81,13 +88,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · delivering · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/monorepo-satellite-installs/spec.md)_
-
----
-
-## master-ingest-restore — Master Ingest Restore — `hero scan` Returns to Its V2 Promise
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/master-ingest-restore/spec.md)_
 
 ---
 
@@ -202,10 +202,36 @@ _bug · delivering · horizon: now_
 
 ---
 
+## embedded-inference — "Embedded Inference — Zero-Dependency Semantic Retrieval for Hero"
+_feature · delivering · horizon: next_
+
+Pick up at: All four phases implemented and tested. The engine, storage, chunking, refresh, RRF fusion, CLI, and scan integration are shipped. Remaining: prepare a real Model2Vec weight file (Python distillation of a base model, export as vocab.txt + weights.bin), install to `~/.hero/models/embeddings/hero-embed-v1/`, and run the 10-query quality validation on this repo.
+
+Read first:
+- `internal/embeddings/` — the full package: model.go, storage.go, chunker.go, refresh.go
+- `internal/retrieval/retrieval.go` — `retrieveHybrid()` and `fuseRRF()` at the bottom
+- `internal/cli/embeddings.go` — `hero embeddings status` and `hero embeddings rebuild`
+- `internal/cli/scan.go` ~line 395 — embedding refresh wired into `hero scan`
+
+Next steps:
+1. Run Model2Vec distillation (Python, one-time) on `all-MiniLM-L6-v2` → export vocab.txt + weights.bin to `~/.hero/models/embeddings/hero-embed-v1/`
+2. Run `hero embeddings rebuild` against this repo to populate vec_chunks
+3. Run the 10-query quality validation (AC-10)
+4. If quality passes, decide on `//go:embed` vs download-on-first-use for model distribution
+
+---
+
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
+
+---
+
+## unified-retrieval-layer — Unified Retrieval Layer — Cross-Type Ranking via Faceted Search Index
+_feature · delivering · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/unified-retrieval-layer/spec.md)_
 
 ---
 
