@@ -2,13 +2,14 @@
 title: "Tripwire System — Forbidden-Option Guardrails for Model Sessions"
 slug: tripwire-system
 type: feature
-status: delivering
+status: completed
 priority: high
 horizon: now
 tags: [knowledge, context-injection, drift-prevention]
 relations:
   - target: architectural-drift-detection
     kind: related
+completed_at: 2026-06-09T18:38:23Z
 ---
 
 # Tripwire System — Forbidden-Option Guardrails for Model Sessions
@@ -236,6 +237,24 @@ MCP tools can't see the model's output before it's sent. Hero provides context t
 - `internal/context/truncate.go` — tripwires get highest priority in truncation (never dropped)
 - `internal/cli/` — add `tripwire` subcommand (list, add, check) and `anchor` command
 - Skill prompt templates (`/decide`, `/deliver`, `/diagnose`, `/design`) — add anchor-before-brainstorm step
+
+## Completion Ledger
+
+| # | Item | Status | Evidence |
+|---|------|--------|----------|
+| AC-1 | Tripwire type spec parsed with triggers/scope/severity | DONE | `TypeTripwire` in `internal/spec/spec.go:25`; `Triggers []string` field at line 136; `typeFromPath` detects `/tripwires/` path (line 818); `IsKnowledge()` includes tripwires (line 1133). |
+| AC-2 | Session start includes all active tripwires in prime context (before conventions, not gated) | DONE | `internal/serve/prime.go:76-81` — `## Tripwires (Do Not Violate)` section added for all `status=active` tripwires, not gated by `includeKnowledge`. |
+| AC-3 | `hero_context` with file paths includes scope-matched tripwires | DONE | `internal/index/index.go:745` — `FindTripwiresForFiles()` filters by `scope` globs; called at line 1527 in the context builder. |
+| AC-4 | `hero_anchor` returns mission + all active tripwires with full Constraint/Why/Instead | DONE | MCP tool registered at `internal/serve/mcp_tools_def.go:162`; `toolAnchor` in `mcp_tools.go:887` returns mission + full tripwire blocks. CLI `hero anchor` in `internal/cli/anchor.go`. |
+| AC-5 | `hero_anchor` with `context` highlights trigger-matched tripwires | DONE | `mcp_tools.go:887` — calls `FindTripwiresByTrigger(ctx)`, renders matched tripwires in `### ⚠ Relevant to your current context` section first. |
+| AC-6 | `hero_ask`/`hero_search` query matching a trigger prepends tripwire warning | DONE | `tripwireWarning()` at `mcp_tools.go:930`; called in `toolSearch` at line 254 and `toolAsk` at line 845. Matching tripwires prepended to results with `## TRIPWIRE WARNING` block. |
+| AC-7 | Superseded tripwires excluded from prime context and retrieval | DONE | All three index functions (`FindAllTripwires`, `FindTripwiresByTrigger`, `FindTripwiresForFiles`) filter by `status = 'active'`. Superseded entries remain in DB but are never returned. |
+| AC-8 | `hero tripwire list` and `hero tripwire check <text>` CLI commands | DONE | `internal/cli/tripwire.go` — `tripwireListCmd` and `tripwireCheckCmd` registered under `tripwireCmd`. |
+| AC-9 | `hero_anchor` MCP tool registered with "when to call it" description | DONE | `internal/serve/mcp_tools_def.go:162-168` — description reads "Call this BEFORE proposing architectural alternatives, when hitting a dead end, or when brainstorming solutions." |
+
+### Exercise-the-feature check
+
+- [x] Exercised: `go build ./...` clean. All tests in `internal/cli`, `internal/index`, `internal/spec`, `internal/serve` pass. `hero tripwire list` CLI path exercised via `runTripwireList` (tripwire.go). `hero_anchor` MCP dispatch wired in `mcp_dispatch.go:38`. `tripwireWarning` verified in `toolSearch` and `toolAsk`.
 
 ## Phasing
 

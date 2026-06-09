@@ -6,14 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T18:33:23Z · 109 ready specs_
-
-## tripwire-system — "Tripwire System — Forbidden-Option Guardrails for Model Sessions"
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/tripwire-system/spec.md)_
-
----
+_Generated: 2026-06-09T18:38:32Z · 108 ready specs_
 
 ## traversal-queries — Traversal Queries — `hero why` and `hero blocked`
 _feature · delivering · horizon: now_
