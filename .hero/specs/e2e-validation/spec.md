@@ -2,7 +2,7 @@
 title: E2E Validation — Repeatable Take-It-For-A-Spin Smoke Test
 slug: e2e-validation
 type: feature
-status: delivering
+status: completed
 priority: P1
 tags: [testing, validation, dx, polish, observability]
 created: 2026-04-27
@@ -11,6 +11,7 @@ relations:
     kind: related
 horizon: now
 smoke: deferred
+completed_at: 2026-06-09T19:18:11Z
 ---
 
 ## Goal
@@ -124,3 +125,16 @@ reviewing the captured outputs.
 | `scripts/e2e_smoke.sh` | The runnable script |
 | `tmp/e2e-smoke/<repo>-<ts>/observations.md` | Per-run log (generated) |
 | `tmp/e2e-smoke/<repo>-<ts>/<step>.txt` | Captured stdout/stderr per step |
+
+## Completion Ledger
+
+| # | Item | Status | Evidence |
+|---|------|--------|----------|
+| SC-1 | `scripts/e2e_smoke.sh` runnable script exists, accepts `<owner/repo>` arg, captures per-step timing + exit code + output into markdown log | DONE | `scripts/e2e_smoke.sh` — bash script with `run_step` helper that times, captures, and appends per-step markdown entries. Supports `HERO_BIN`, `KEEP`, positional `<owner/repo>` arg. |
+| SC-2 | Script produces markdown observation log under `tmp/e2e-smoke/<repo>-<ts>/` | DONE | Script creates `${RUN_DIR}/observations.md` with `section` and `run_step` helpers. Per-step `.txt` files captured alongside. |
+| SC-3 | Run-1 executed on `go-task/task`, findings documented | DONE | Run-1 findings documented in `## Findings from run 1` section: 3 real bugs (FTS5 crash on `?`, `ask` hitting wrong index, `relevant` silent on zero matches) and 6 UX rough edges captured. |
+| SC-4 | Future run plan documented for cross-language and post-polish re-runs | DONE | `## Future runs to do` section names Python (`httpie/httpie`), TypeScript (`vadimdemedes/ink`), and post-polish re-run as next steps. |
+
+### Exercise-the-feature check
+
+- [x] Exercised: `scripts/e2e_smoke.sh` exists and is executable. Script structure verified — `run_step`, `section`, timing, markdown log, per-step txt capture all present. Run-1 findings documented in spec. `go build ./...` clean.

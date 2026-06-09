@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-09T19:08:05Z · projected from 317 source nodes_
+_Last refreshed: 2026-06-09T19:15:28Z · projected from 317 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 46m ago | cross-repo-peering |
+| core | building | cmd/, internal/ | 54m ago | cross-repo-peering |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | maturing | domains/engineering/ | 46m ago | — |
+| domains/engineering | maturing | domains/engineering/ | 54m ago | — |
 | domains/pm | concept | domains/pm/ | 22d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 8d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 6m ago | agent-outposts |
+| serve | building | internal/serve/ | 14m ago | agent-outposts |
 | (unassigned) | — | — | — | 150 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -49,7 +49,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — per-feature-smoke-coverage, spec-status-integrity, traversal-queries, unified-search, master-ingest-restore
+- **(unassigned)** — graph-conflict-detection, per-feature-smoke-coverage, spec-status-integrity, traversal-queries, unified-search
 - **core** — compact-handoff-test-coverage, hero-local-merge-missing-dialect-fields
 - **domains/engineering** — delivery-gate-enforcement, spec-types-cache-frontmatter-empty
 - **serve** — monorepo-satellite-installs, tripwire-system, vocabulary-resolve-misses-methodology-derivation
@@ -73,5 +73,5 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
 - Specs covered: 145/295 (49%)
-- Projection generation: 1ms · Source nodes: 317
+- Projection generation: 0ms · Source nodes: 317
 
