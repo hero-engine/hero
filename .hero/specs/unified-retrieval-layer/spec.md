@@ -2,7 +2,7 @@
 title: Unified Retrieval Layer — Cross-Type Ranking via Faceted Search Index
 slug: unified-retrieval-layer
 type: feature
-status: delivering
+status: completed
 status_verified: 2026-04-29
 horizon: next
 priority: P1
@@ -31,6 +31,7 @@ principles_check: |
   traversal queries, search index for ranked retrieval — each tool
   for its job). Doesn't risk any principle.
 smoke: deferred
+completed_at: 2026-06-09T19:38:24Z
 ---
 
 ## Captured + reframed
@@ -203,6 +204,20 @@ substrate; project from it.
 
 After `master-ingest-restore` lands → this becomes a clean next
 move (probably 2-3 days of work depending on engine choice).
+
+## Completion Ledger
+
+| # | Item | Status | Evidence |
+|---|------|--------|----------|
+| AC-1 | Graph nodes projected into unified search index; type boosts prevent commit drowning | DONE | `internal/retrieval/retrieval.go` — `ProjectGraphNodes` projects at scan+rebuild; `TestBM25RegressionD9997ea` confirms Feature ranks above 50 Commits. |
+| AC-2 | BM25 ranking across all types (not per-type SQL windowing) | DONE | `fts_nodes` BM25 rank × `typeBoost` multiplier; `TestBM25RankingViaNodeIndex` passes. |
+| AC-3 | Type facet available via node_index.node_type; tag/repo/date facets projected but not yet in Query API | PARTIAL | Facets exist in `node_index` schema. Not exposed in `Query` struct — by design: "Next step when a caller needs them." Deferred per spec. |
+| AC-4 | Single retrieval interface (`internal/retrieval/`) wraps search index + graph | DONE | `internal/retrieval/retrieval.go` — `Retrieve()` is the sole entry; all callers use it (hero search, hero ask, hero relevant). No raw SQL in callers. |
+| AC-5 | Zero-match BM25 falls through to graph node-key matching | DONE | `TestBM25FallbackToGraphLIKE` passes. |
+
+### Exercise-the-feature check
+
+- [x] Exercised: `go test ./internal/retrieval/...` passes including `TestBM25RegressionD9997ea`, `TestBM25RankingViaNodeIndex`, `TestBM25FallbackToGraphLIKE`. SQLite FTS5 with `fts_nodes` + `node_index` schema chosen over Bleve. `go build ./...` clean.
 
 ## Engine decision (resolved 2026-04-29)
 

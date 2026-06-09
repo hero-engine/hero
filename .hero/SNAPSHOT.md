@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-09T19:30:07Z · projected from 317 source nodes_
+_Last refreshed: 2026-06-09T19:35:23Z · projected from 317 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | <1m ago | embedded-inference |
+| core | maturing | cmd/, internal/ | <1m ago | hero-workspace-not-self-describing |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | maturing | domains/engineering/ | 1h ago | — |
@@ -16,7 +16,7 @@ _Last refreshed: 2026-06-09T19:30:07Z · projected from 317 source nodes_
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 8d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 28m ago | agent-outposts |
+| serve | building | internal/serve/ | 34m ago | agent-outposts |
 | (unassigned) | — | — | — | 150 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -50,16 +50,16 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Recently completed (last 14 days)
 
 - **(unassigned)** — e2e-discovery, e2e-traversal, e2e-validation, graph-conflict-detection, per-feature-smoke-coverage, spec-status-integrity, traversal-queries, unified-search
-- **core** — cross-repo-peering, compact-handoff-test-coverage
+- **core** — embedded-inference, cross-repo-peering
 - **serve** — monorepo-satellite-installs, tripwire-system
 
 ## Next up across surfaces
 
 1. **landing** — `hero-landing-page` (P0, delivering)
 2. **serve** — `hero-sales` (P0, delivering)
-3. **core** — `embedded-inference` (P1, delivering)
-4. **serve** — `hero-team-server` (P1, delivering)
-5. **(unassigned)** — `unified-retrieval-layer` (P1, delivering)
+3. **serve** — `hero-team-server` (P1, delivering)
+4. **(unassigned)** — `unified-retrieval-layer` (P1, delivering)
+5. **serve** — `agent-outposts` (medium, delivering)
 
 ## Open risks & blockers
 
