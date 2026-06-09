@@ -6,76 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T19:23:58Z · 101 ready specs_
-
-## cross-repo-peering — "Cross-Repo Peering — Conventions Travel, Specs Hand Off, Heroes Call Each Other"
-_feature · delivering · horizon: now_
-
-Three-tier ladder for sibling Hero workspaces: sync peer call (ask
-B's Hero now), async handoff (pass the spec to B), or convention
-import (load B's rules into A). Backed by a stable peer UUID, a
-handoff trail recorded on every spec, and passive contract-import
-surfacing.
-
-**Status:** delivering — Phase 0 (identity + contracts/peering/ +
-resolver), Phase 1 (handoff lifecycle + trail + async drop + peer
-manifest), Phase 2 (sync peer call advisory + spec-out, peer CLI,
-`hero relevant --peer`, auto-fire peer-side completion), and Phase 3
-(contract-import passive surfacing + pilot harness +
-peering-protocol convention with dogfood checklist) have all landed.
-
-**Pick up at:** the pilot dogfood. The mechanics for the full ladder
-are wired, unit-tested, and end-to-end integration-tested against a
-three-sibling fixture (`internal/peering/integration_test.go`). The
-exit gate for Phase 3 is the user walking the dogfood checklist in
-`.hero/knowledge/conventions/peering-protocol.md` against their
-three real repos and answering "tag team or ceremony?". If ceremony,
-scope a Phase 3.5 ergonomics pass before Phase 4. If tag team, open
-Phase 4 — cloud transport (graph-memory-federation hook-up) plus
-the boundary-nudge upgrade (structural contract edits suggest an
-advisory call via `hero nudge`).
-
-→ `.hero/planning/features/cross-repo-peering/spec.md`
-
-**Files (Phase 3, landed):**
-`internal/peering/contract_imports.go` (Go import scanner — changed
-files, peer-aware, with test/generated/vendor filters);
-`internal/peering/contract_imports_test.go` (unit coverage);
-`internal/peering/integration_test.go` (three-sibling pilot harness
-exercising the full ladder end-to-end);
-`internal/cli/brief.go` (wires the passive signal into `hero resume`
-output after the brief);
-`internal/cli/context.go` (new `hero context imports` subcommand
-mirroring the `context scope` pattern);
-`.hero/knowledge/conventions/peering-protocol.md` (protocol +
-dogfood checklist). The manifest already carries the `contracts:`
-section from Phase 0
-(`contracts/peering/manifest.go:ContractsSection`).
-**Already in place from Phase 0/1/2:** `contracts/peering/`,
-`internal/peering/{identity,trail,handoff,manifest,peercall,
-resolve}.go`, `internal/cli/{handoff,peer}.go`, `hero relevant
---peer/--surface`, auto-fire `awaiting_peer → handed_back` at
-`hero status` render time.
-**Skip:** machine-to-machine peering across hosts, auto-trigger
-boundary nudges, full-delivery sync peer call — all v4+.
-
-**Locked Phase 2 decisions (don't relitigate):**
-1. *Subagent invocation API* — Option A, shell-out to a configured
-   LLM CLI (default `claude`), prompt envelope on stdin, parse
-   `<peer-call-result>...</peer-call-result>` YAML fence from stdout.
-   Config: `peering.subagent.command|args|env_passthrough` in
-   `hero.json`. Hero never holds an API key.
-2. *Budget defaults* — advisory 20 turns / 50k tokens; spec-out 50
-   turns / 150k tokens. Pass through to subagent via
-   `HERO_PEER_CALL_BUDGET_TURNS|TOKENS` env vars; subagent honors at
-   harness level.
-3. *Auto-fire trigger* — on-demand at `hero status` render time, no
-   daemon. `peering.ReconcileAwaitingPeer` walks every awaiting_peer
-   spec, reads peer counterpart status via the resolved peer path,
-   flips to `handed_back` with a trail entry when the peer's spec is
-   `completed`.
-
----
+_Generated: 2026-06-09T19:30:07Z · 100 ready specs_
 
 ## embedded-inference — "Embedded Inference — Zero-Dependency Semantic Retrieval for Hero"
 _feature · delivering · horizon: next_
