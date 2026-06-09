@@ -6,14 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T18:54:00Z · 106 ready specs_
-
-## monorepo-satellite-installs — "Monorepo Satellite Installs — One Workspace, Many Subfolder Entry Points"
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/monorepo-satellite-installs/spec.md)_
-
----
+_Generated: 2026-06-09T19:01:20Z · 105 ready specs_
 
 ## graph-conflict-detection — Graph Conflict Detection — Detect and Surface Concurrent Node Divergence
 _feature · delivering · horizon: now_

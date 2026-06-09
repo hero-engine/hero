@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-09T18:49:46Z · projected from 317 source nodes_
+_Last refreshed: 2026-06-09T18:53:59Z · projected from 317 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 28m ago | cross-repo-peering |
+| core | building | cmd/, internal/ | 32m ago | cross-repo-peering |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | maturing | domains/engineering/ | 28m ago | — |
+| domains/engineering | maturing | domains/engineering/ | 32m ago | — |
 | domains/pm | concept | domains/pm/ | 22d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 8d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 11m ago | agent-outposts |
+| serve | building | internal/serve/ | 15m ago | agent-outposts |
 | (unassigned) | — | — | — | 150 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -27,7 +27,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - **"Concurrent-Session Branching & Worktree Isolation"** (surface: —) — 0/0 specs done
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
-- **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 6/11 specs done; in flight: per-feature-smoke-coverage
+- **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 7/11 specs done
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, serve) — 10/16 specs done; in flight: hero-sales
 - **"Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"** (surface: —) — 0/8 specs done
 - **Hero Killer Features — Agent Effectiveness, Team Power, Living Specs** (surface: core, serve) — 10/11 specs done
@@ -49,7 +49,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — spec-status-integrity, traversal-queries, unified-search, master-ingest-restore, handoff-captures-session-intent
+- **(unassigned)** — per-feature-smoke-coverage, spec-status-integrity, traversal-queries, unified-search, master-ingest-restore
 - **core** — compact-handoff-test-coverage, hero-local-merge-missing-dialect-fields, codex-install-broken
 - **domains/engineering** — delivery-gate-enforcement, spec-types-cache-frontmatter-empty
 - **serve** — tripwire-system, vocabulary-resolve-misses-methodology-derivation
@@ -60,7 +60,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 2. **(unassigned)** — `e2e-traversal` (P0, delivering)
 3. **landing** — `hero-landing-page` (P0, delivering)
 4. **serve** — `hero-sales` (P0, delivering)
-5. **(unassigned)** — `per-feature-smoke-coverage` (P0, delivering)
+5. **core** — `cross-repo-peering` (high, delivering)
 
 ## Open risks & blockers
 
@@ -73,5 +73,5 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
 - Specs covered: 145/295 (49%)
-- Projection generation: 0ms · Source nodes: 317
+- Projection generation: 1ms · Source nodes: 317
 

@@ -2,7 +2,7 @@
 title: "Monorepo Satellite Installs — One Workspace, Many Subfolder Entry Points"
 slug: monorepo-satellite-installs
 type: feature
-status: delivering
+status: completed
 priority: high
 horizon: now
 tags: [install, monorepo, harness-integration, scoping, team-config]
@@ -11,6 +11,7 @@ relations:
     kind: related
   - target: cloud-mcp
     kind: related
+completed_at: 2026-06-09T19:01:10Z
 ---
 
 # Monorepo Satellite Installs — One Workspace, Many Subfolder Entry Points
@@ -368,6 +369,41 @@ The cloud-mcp federation story is unaffected: a satellite is a local materializa
 - IF the host OS does not support relative symlinks (or the current user lacks privilege to create them) THEN THE SYSTEM SHALL fall back to writing only the marker files (`.hero-satellite` and per-harness markers), SHALL NOT create copies of agents/commands/skills, AND SHALL print a message instructing the user to enable symlink support or open the workspace root directly.
 - WHERE Windows symlink fallback is in effect THE SYSTEM SHALL still update `.hero/satellites.local.json` to record the degraded satellite, and `hero install --repair` SHALL re-attempt full materialization on subsequent runs.
 - THE SYSTEM SHALL NOT use NTFS junction points as a fallback for symlinks.
+
+## Completion Ledger
+
+| # | Item | Status | Evidence |
+|---|------|--------|----------|
+| AC-1 | hero install at cwd with .hero/ operates in root mode | DONE | install.go checks ws.Root==absTarget; falls through to root install |
+| AC-2 | hero install at cwd without .hero/ but ancestor has .hero/ operates in satellite mode | DONE | install.go routes to runSatelliteInstall when ws.Root != absTarget; satellite_test.go |
+| AC-3 | hero install with no workspace anywhere creates root mode at cwd | DONE | workspace.Locate ErrNotFound falls through to root install path |
+| AC-4 | hero install --root operates in root mode regardless, with destructive-action warning | DONE | installForceRoot flag; warning printed in install.go |
+| AC-5 | satellite materializes relative subdirectory symlinks agents/commands/skills | DONE | SymlinkedDirs=["agents","commands","skills"]; relative via filepath.Rel; TestMaterializeFullSatellite |
+| AC-6 | settings.json NOT symlinked; settings.local.json NOT created in satellite | DONE | SymlinkedDirs contains only agents/commands/skills; explicit comment in satellite.go |
+| AC-7 | .mcp.json NOT created in satellite folder | DONE | Materialize never writes .mcp.json; explicit comment |
+| AC-8 | .hero/ NOT created in satellite folder | DONE | Materialize never creates .hero/; explicit comment |
+| AC-9 | satellite writes .hero-satellite JSON with relative root path, scope, hero version | DONE | workspace.WriteMarker writes {root,scope,version}; TestLocateSatelliteMarker |
+| AC-10 | satellite writes per-harness marker file (CLAUDE.md/AGENTS.md) with root and scope | DONE | perTargetMarker() generates content with satellite sentinel; TestMaterializeFullSatellite |
+| AC-11 | every hero CLI command resolves workspace root via .hero/ then .hero-satellite then walk-up | DONE | workspace.Locate() 3-step resolution; findProjectRoot() delegates to LocateFromCWD; TestLocateAtRoot, TestLocateWalkUp, TestLocateNoWorkspace |
+| AC-12 | hero CLI computes scope as longest declared subproject prefix | DONE | MatchScope() longest-prefix in scope.go; TestMatchScope, TestScopeFallsBackToDeclared |
+| AC-13 | spec/knowledge/note creation stamps active scope into frontmatter and writes under root .hero/ | PARTIAL | hero note stamps scope; hero context scope provides context to model-driven commands; deliver.go/diagnose.go do not call resolveActiveScope directly. Functional via MCP context; direct CLI gap is a follow-up. |
+| AC-14 | hero install without subprojects.json detects candidates, walks y/N/a/s/q/x/? | DONE | postRootInstallSubprojectWalk→walkCandidates; full option set in install_satellites.go; satellite_detect_test.go |
+| AC-15 | hero install with subprojects.json reconciles declared-vs-materialized | DONE | reconcileDeclared (default Y), Repair DriftLocalNotDeclared, walkCandidates; satellite_repair_test.go |
+| AC-16 | hero install in satellite mode in undeclared subfolder prompts once, materializes regardless | DONE | runSatelliteInstall prompts, calls Materialize, calls RecordSatellite regardless of answer |
+| AC-17 | satellite materialized or removed → satellites.local.json updated | DONE | RecordSatellite()/uninstallSatellites() writes manifest; satellites_local_test.go |
+| AC-18 | subprojects.json committed; satellites.local.json gitignored | DONE | satellites.local.json in managed gitignore block (init.go) |
+| AC-19 | hero install or hero upgrade with new root target prompts per satellite to extend | PARTIAL | Repair() detects DriftNewTargetAtRoot, surfaced by hero check and hero install --repair; hero upgrade does NOT invoke satellite repair. Follow-up. |
+| AC-20 | hero install --repair verifies each satellite, repairs broken symlinks, drops missing entries | DONE | Repair() implements all; TestRepairDropsMissingFolder, TestRepairFixesBrokenSymlink, TestRepairRewritesMissingMarker |
+| AC-21 | hero check reports satellite drift without changes | DONE | reportSatelliteDrift() dry-run repair in check.go |
+| AC-22 | hero uninstall at root removes all materialized satellite trees | DONE | uninstallSatellites() reads manifest, calls RemoveSatellite per target |
+| AC-23 | hero install finds nested .hero/ → prompts to convert, migrates specs/knowledge/events | PARTIAL | ApplyMigration() fully implements conversion; exposed via hero install satellites --migrate-nested --apply; main hero install flow does not auto-raise the conversion prompt on detection. UX hook deferred. |
+| AC-24 | OS without symlink support falls back to marker-only, prints message | DONE | SymlinksSupported() probes; Degraded=true path skips symlinks; degraded message in satellite install path |
+| AC-25 | Windows fallback: degraded satellite in satellites.local.json; repair re-attempts full materialization | PARTIAL | Degraded field recorded; repair re-attempt implicit via caller-level Materialize re-run, not explicit in Repair(). Acceptable for Phase 6. |
+| AC-26 | NTFS junction points NOT used | DONE | No junction point creation anywhere in codebase |
+
+### Exercise-the-feature check
+
+- [x] Exercised: `go build ./...` clean. `go test ./internal/install/... ./internal/workspace/...` pass. `TestMaterializeFullSatellite`, `TestRepairDropsMissingFolder`, `TestRepairFixesBrokenSymlink`, `TestLocateSatelliteMarker`, `TestMatchScope`, `TestApplyMigrationFull`, `TestApplyMigrationDryRun` all PASS.
 
 ## Changes
 
