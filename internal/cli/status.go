@@ -202,6 +202,23 @@ func runStatus(cmd *cobra.Command, args []string) error {
 		fmt.Printf("\nAuto-generated code-scan stubs: %d (in .hero/knowledge/code/, hidden from this list)\n", len(autoContext))
 	}
 
+	// Smoke failures — surface prominently so regressions aren't missed.
+	// Best-effort: missing last-run.json is treated as no failures.
+	if smokeRecords, serr := loadSmokeResults(heroDir); serr == nil {
+		var failed []SmokeRunRecord
+		for _, r := range smokeRecords {
+			if r.Status == "fail" {
+				failed = append(failed, r)
+			}
+		}
+		if len(failed) > 0 {
+			fmt.Printf("\nSmoke failures (%d) — run `hero smoke status` for details:\n", len(failed))
+			for _, r := range failed {
+				fmt.Printf("  🔴 %s\n", r.Slug)
+			}
+		}
+	}
+
 	// Async delivery jobs
 	printAsyncJobs()
 
