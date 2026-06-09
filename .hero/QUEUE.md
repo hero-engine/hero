@@ -6,14 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T19:21:45Z · 102 ready specs_
-
-## e2e-discovery — E2E Discovery Suite — The Model Can Find What's There
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/e2e-discovery/spec.md)_
-
----
+_Generated: 2026-06-09T19:23:58Z · 101 ready specs_
 
 ## cross-repo-peering — "Cross-Repo Peering — Conventions Travel, Specs Hand Off, Heroes Call Each Other"
 _feature · delivering · horizon: now_
