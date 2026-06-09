@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T18:14:59Z · 104 ready specs_
+_Generated: 2026-06-09T18:17:21Z · 103 ready specs_
 
 ## delivery-gate-enforcement — "Delivery Gate Enforcement — hero verify Becomes the Load-Bearing Checkpoint"
 _feature · delivering · horizon: now_
@@ -178,13 +178,6 @@ boundary nudges, full-delivery sync peer call — all v4+.
    spec, reads peer counterpart status via the resolved peer path,
    flips to `handed_back` with a trail entry when the peer's spec is
    `completed`.
-
----
-
-## vocabulary-resolve-misses-methodology-derivation — vocabulary.Resolve doesn't fold methodology-derived auto-derivation
-_bug · delivering · horizon: now_
-
-> Read `.hero/planning/bugs/vocabulary-resolve-misses-methodology-derivation/spec.md` (this file), `internal/vocabulary/resolver.go`, `internal/methodology/resolver.go::DeriveVocabularyName`, and the three wrapper call sites: `internal/cli/vocab.go`, `internal/serve/vocab.go`, `internal/install/dialect.go`. Implement Option A: extend `vocabulary.Resolve` to take a `methodologies map[string]*methodology.Methodology` (or accept a pre-resolved `*methodology.Methodology` — pick whichever has lower blast radius) and fold the methodology-derived step into the precedence chain between explicit and tracker-inferred. Remove the three wrapper shims and route them through the new bare `Resolve`. Add unit tests per the Acceptance Criteria. Run `go build ./...` and `go test ./...` clean. Report what shipped, the chosen signature, and any open questions under 300 words.
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-09T18:14:59Z
+updated: 2026-06-09T18:17:20Z
 repo: hero-engine/hero
 ---
 
@@ -8,15 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Route this delivery request to the `feature-delivery-lead` agent for execution.
-> 
-> Be the `feature-delivery-lead` agent. Load the `context-injection` skill before starting.
-> 
-> **Before starting work**, emit a `hero next ask` capturing what the user
-> asked for. This preserves session intent across compaction — see the
-> `next-handoff-emit` skill for the full pattern (ask / suggest / reflection).
-> 
-> ## Del…
+> are you able to inspect all the chat history - inputs and outputs - from the ../hero-code swift apps runtime - to look at hero use - figure out if hero is working properly in the app usage over the last couple days?
 
 ## Suggested next prompt
 
@@ -32,10 +24,10 @@ Nothing this session.
 
 ## Your recent activity
 
+- `1968468` — fix: populate spec-types.json frontmatter from source markdown (spec-types-cache-frontmatter-empty)
 - `94caba0` — fix: forward dialect fields in MergeLocal (hero-local-merge-missing-dialect-fields)
 - `67b4390` — verify and archive master-ingest-restore
 - `fd25109` — chore: archive codex-install-broken spec — delivery complete
 - `afe9553` — fix(codex): commands as skills + target-aware AGENTS.md bridge Codex workflow execution gap
 - `2e7a724` — fix(mcp): read_spec falls back to filesystem when index misses a slug
-- `1427a09` — fix(graph): tolerate newer schema — warn instead of failing when db is ahead
 
