@@ -6,14 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T19:15:29Z · 104 ready specs_
-
-## e2e-validation — E2E Validation — Repeatable Take-It-For-A-Spin Smoke Test
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/e2e-validation/spec.md)_
-
----
+_Generated: 2026-06-09T19:18:18Z · 103 ready specs_
 
 ## e2e-traversal — E2E Traversal Suite — Graph Queries Beat Grep
 _feature · delivering · horizon: now_
