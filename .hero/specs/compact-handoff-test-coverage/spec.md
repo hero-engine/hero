@@ -2,13 +2,14 @@
 title: "Compact Handoff Test Coverage — Close MVP Coverage Gaps"
 slug: compact-handoff-test-coverage
 type: feature
-status: delivering
+status: completed
 priority: medium
 horizon: now
 tags: [tests, quality, compact-handoff, regression-prevention]
 relations:
   - target: next-compact-handoff
     kind: hardens
+completed_at: 2026-06-09T18:21:22Z
 ---
 
 # Compact Handoff Test Coverage — Close MVP Coverage Gaps
@@ -210,3 +211,24 @@ Then build in roughly this order:
 8. Projection-side spec-anchored carryover bidirectionality.
 
 Run `go test -cover ./internal/cli/... ./internal/projection/... ./internal/hooks/...` before and after to confirm the coverage move. Do not gate on the percentage; gate on the gap list above being closed.
+
+## Completion Ledger
+
+| # | Item | Status | Evidence |
+|---|------|--------|----------|
+| AC-1 | TestAssembleFullHandoff_PopulatedSession — full envelope from populated fixture | DONE | Passes: validates header, active-spec line, spec body, kickoff, files-touched, decisions, next-action, working-tree. |
+| AC-2 | Truncation cascade 5 steps + PreservesInvariants | DONE | `TestEnforceTokenCap_FullCascade` (5 subtests: dropWorkingTree, trimFilesTouched, trimDecisions, shrinkSpecBody, shrinkKickoff) + `TestEnforceTokenCap_PreservesInvariants` pass. |
+| AC-3 | Panic-recovery + always-exit-0 safety contract | DONE | `TestRunCompactHandoff_PanicRecoveryReturnsValidEnvelope` and `TestRunCompactHandoff_AlwaysExitsZeroOnBadStdin` pass. |
+| AC-4 | Settings-file edge cases (missing, invalid JSON, partial matcher, non-Hero entries) | DONE | `TestInstall_MissingSettingsFile_CreatesIt`, `TestInstall_InvalidJSON_ErrorsCleanly`, `TestInstall_SessionStartArrayExistsNoCompact_AddsCompactEntry`, `TestInstall_CompactMatcherHasUserEntry_HeroEntryAddedAlongside`, `TestUninstall_NoHeroEntries_IsNoOp`, `TestRemoveThenReinstall_PreservesIdempotency` all pass. |
+| AC-5 | `hero init` default, --no-hooks, idempotency | DONE | `TestInit_DefaultInstallsCompactHook`, `TestInit_NoHooksFlagSkipsCompactHook`, `TestInit_IsIdempotentForCompactHook` pass. |
+| AC-6 | --host=all and Codex stub messaging | DONE | `TestHostHooksInstall_AllInstallsGitAndClaude`, `TestHostHooksInstall_CodexInstallsToProjectFile`, `TestHostHooksStatus_ReportsPerHostState`, `TestHostHooksUninstall_AllRemovesGitAndClaude` pass. |
+| AC-7 | Content extraction: frontmatter stripping, body truncation, Goal extraction | DONE | `TestStripFrontmatter_HandlesAllShapes` (3 subtests), `TestExtractGoalSection_PreservesIntent` pass. TruncateSpecBody tested via cascade. |
+| AC-8 | Original-kickoff transcript fallback | DONE | `TestKickoffFromTranscript_WhenNoUserAsk` passes. |
+| AC-9 | Spec-anchored carryover bidirectionality + exclude UserAsk/NextSuggestion from other sessions | DONE | `TestCollectSessionEvents_SpecAnchoredCarryover_ExcludesUserAskFromOthers`, `TestCollectSessionEvents_BothDirectionsForSameSpec`, `TestFilesTouched_DeduplicatesAcrossEvents` pass. |
+| AC-10 | Coverage targets advisory — gap list closed | DONE | All 10 gap items from the Problem section are now tested. |
+| AC-11 | All new tests pass in <10s combined | DONE | `go test ./internal/cli/... ./internal/hooks/... ./internal/projection/... -run <patterns>` → <2s wall time. |
+| AC-12 | No production code modified except for testability | DONE | Only `_test.go` files added; zero changes to production code. |
+
+### Exercise-the-feature check
+
+- [x] Exercised: `go test ./internal/cli/... ./internal/hooks/... ./internal/projection/... -run "TestAssembleFullHandoff|TestEnforceTokenCap|TestRunCompactHandoff_Panic|TestRunCompactHandoff_Always|TestExtractGoal|TestStripFrontmatter|TestHostHooks|TestInit.*Compact|TestInstall_Missing|TestInstall_Invalid|TestInstall_Compact|TestRemoveThen|TestCollectSession|TestFilesTouched_Dedup"` → all tests pass across 3 packages.

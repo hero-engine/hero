@@ -2,7 +2,7 @@
 title: "Delivery Gate Enforcement — hero verify Becomes the Load-Bearing Checkpoint"
 slug: delivery-gate-enforcement
 type: feature
-status: delivering
+status: completed
 priority: P0
 severity: high
 size: large
@@ -19,6 +19,7 @@ relations:
   - target: spec-lifecycle-hygiene-breakdown
     kind: related
 created: 2026-06-06
+completed_at: 2026-06-09T18:21:21Z
 ---
 
 # Delivery Gate Enforcement — hero verify Becomes the Load-Bearing Checkpoint
@@ -434,3 +435,28 @@ report accurately against the actual spec state.
 - **Test command detection.** Auto-detecting the test command will miss
   some projects. The `hero.json` override handles this. When detection
   fails, Gate 4 reports SKIPPED rather than FAIL.
+
+## Completion Ledger
+
+| # | Item | Status | Evidence |
+|---|------|--------|----------|
+| AC-1 | All gates pass → flip to completed + archive | DONE | `TestVerify_AllGatesPass` passes; used successfully throughout this session to archive specs. |
+| AC-2 | Missing ledger → FAIL, status unchanged | DONE | `TestVerify_MissingLedger` passes; verify.go:checkLedger. |
+| AC-3 | PARTIAL rows → FAIL with named rows | DONE | `TestVerify_PartialRows` passes; checkLedger lists non-DONE rows. |
+| AC-4 | SKIPPED/BLOCKED with [signed-off] → gate passes | DONE | `TestVerify_SignedOffPassesGate` passes. |
+| AC-5 | No delivery-audit.md → FAIL Gate 2 | DONE | `TestVerify_MissingAudit` passes; spec/audit.go `FindAuditReport`. |
+| AC-6 | HOLD verdict → FAIL Gate 2 | DONE | `TestVerify_HoldAudit` passes. |
+| AC-7 | --json → structured JSON output | DONE | `TestVerify_JSON` passes; VerifyResult with gates array. |
+| AC-8 | --skip-tests → Gate 4 SKIPPED | DONE | `TestVerify_SkipTests` passes. |
+| AC-9 | --force → archives with warning despite failures | DONE | `TestVerify_Force` passes; output contains "FORCED". |
+| AC-10 | Parse Completion Ledger markdown tables | DONE | `TestParseLedger_AllDone`, `TestParseLedger_MixedStatuses`, `TestParseLedger_BoldStatus` pass. |
+| AC-11 | Exercise checkbox with no detail → fails gate | DONE | `TestParseLedger_ExerciseNoDetail` passes; checkLedger reports "no detail". |
+| AC-12 | Detect test command from stack | DONE | Go stack detected → `go test ./...`; SKIPPED when none detected. |
+| Changes: internal/spec/ledger.go | DONE | Completion Ledger parser; 8 tests in ledger_test.go all pass. |
+| Changes: internal/spec/audit.go | DONE | Audit report reader; 7 tests in spec package all pass. |
+| Changes: internal/cli/verify.go | DONE | Four-gate enforcement. 14 tests in verify_test.go all pass. |
+| Changes: deliver.md + engineer.md + feature-delivery-lead.md | DONE | Instruction files updated to route through `hero verify`. |
+
+### Exercise-the-feature check
+
+- [x] Exercised: delivered master-ingest-restore, hero-local-merge-missing-dialect-fields, spec-types-cache-frontmatter-empty, and vocabulary-resolve-misses-methodology-derivation through the gated verify pipeline this session — all four gates reported correctly, PASS on all, status flipped and archived for each. `go test ./internal/spec/... ./internal/cli/... -run "TestVerify|TestParseLedger|TestFindAudit"` → 22 tests pass.
