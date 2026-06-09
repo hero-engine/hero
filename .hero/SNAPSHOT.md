@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-09T18:38:32Z · projected from 317 source nodes_
+_Last refreshed: 2026-06-09T18:42:14Z · projected from 317 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 17m ago | cross-repo-peering |
+| core | building | cmd/, internal/ | 20m ago | cross-repo-peering |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | maturing | domains/engineering/ | 17m ago | — |
+| domains/engineering | maturing | domains/engineering/ | 20m ago | — |
 | domains/pm | concept | domains/pm/ | 21d ago | — |
 | domains/sales | concept | domains/sales/ | — | — |
 | landing | building | web/landing/ | 8d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | <1m ago | agent-outposts |
+| serve | building | internal/serve/ | 3m ago | agent-outposts |
 | (unassigned) | — | — | — | 150 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -27,7 +27,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - **"Concurrent-Session Branching & Worktree Isolation"** (surface: —) — 0/0 specs done
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
-- **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 4/11 specs done; in flight: per-feature-smoke-coverage, spec-status-integrity, traversal-queries
+- **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 5/11 specs done; in flight: per-feature-smoke-coverage, spec-status-integrity
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, serve) — 10/16 specs done; in flight: hero-sales
 - **"Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"** (surface: —) — 0/8 specs done
 - **Hero Killer Features — Agent Effectiveness, Team Power, Living Specs** (surface: core, serve) — 10/11 specs done
@@ -49,7 +49,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — unified-search, master-ingest-restore, handoff-captures-session-intent, resume-brief-missing-project-context, cross-machine-handoff-slug-mismatch
+- **(unassigned)** — traversal-queries, unified-search, master-ingest-restore, handoff-captures-session-intent, resume-brief-missing-project-context
 - **core** — compact-handoff-test-coverage, hero-local-merge-missing-dialect-fields, codex-install-broken
 - **domains/engineering** — delivery-gate-enforcement, spec-types-cache-frontmatter-empty
 - **serve** — tripwire-system, vocabulary-resolve-misses-methodology-derivation
@@ -64,8 +64,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Open risks & blockers
 
-- **Blocked specs (11):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `e2e-traversal` (waits on traversal-queries); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection).
-- **Stale-in-flight (14):** `agent-outposts` (21d), `cross-repo-peering` (21d), `e2e-discovery` (21d), `e2e-traversal` (21d), `e2e-validation` (21d), `graph-conflict-detection` (21d), `hero-landing-page` (21d), `hero-sales` (21d), `hero-team-server` (21d), `monorepo-satellite-installs` (21d), `per-feature-smoke-coverage` (21d), `spec-status-integrity` (21d), `traversal-queries` (21d), `unified-retrieval-layer` (21d).
+- **Blocked specs (10):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection).
+- **Stale-in-flight (13):** `agent-outposts` (21d), `cross-repo-peering` (21d), `e2e-discovery` (21d), `e2e-traversal` (21d), `e2e-validation` (21d), `graph-conflict-detection` (21d), `hero-landing-page` (21d), `hero-sales` (21d), `hero-team-server` (21d), `monorepo-satellite-installs` (21d), `per-feature-smoke-coverage` (21d), `spec-status-integrity` (21d), `unified-retrieval-layer` (21d).
 - **Aged open bugs (7):** `hero-workspace-not-self-describing` (open 28d), `scan-enrichment-unbounded-loop` (open 28d), `scan-test-detection-misses-spock-vitest` (open 28d), `initiative-required-sections-drift` (open 23d), `spec-lifecycle-hygiene-breakdown` (open 22d), `claim-matches-sentinel-collision` (open 21d), `install-target-emits-both-claude-and-agents-md` (open 21d).
 - **Unassigned specs (150) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
@@ -73,5 +73,5 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
 - Specs covered: 145/295 (49%)
-- Projection generation: 1ms · Source nodes: 317
+- Projection generation: 0ms · Source nodes: 317
 
