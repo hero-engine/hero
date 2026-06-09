@@ -2,7 +2,7 @@
 title: Graph Conflict Detection — Detect and Surface Concurrent Node Divergence
 slug: graph-conflict-detection
 type: feature
-status: delivering
+status: completed
 priority: P1
 tags: [graph-memory, federation, sync, conflicts]
 created: 2026-04-27
@@ -13,6 +13,7 @@ relations:
     kind: child
 horizon: now
 smoke: deferred
+completed_at: 2026-06-09T19:15:14Z
 ---
 
 ## Problem
@@ -129,6 +130,19 @@ surface the divergence with both versions' statuses.
 - Re-running push with no local changes after a pull is a no-op
   (idempotency — same client_id, same hash → no conflict)
 - Same-client re-push of changed content is NOT flagged as a conflict
+
+## Completion Ledger
+
+| # | Item | Status | Evidence |
+|---|------|--------|----------|
+| SC-1 | `hero sync graph push` prints warning when it overwrites a different client's node | DONE | `internal/cli/sync_graph.go:159-165` prints Warning block + calls `savePushConflicts()` to cache in `.hero/push_conflicts.json` |
+| SC-2 | `hero check conflicts <slug>` reports graph divergence (FTS5 + graph.db + push cache) | DONE | `internal/cli/conflicts.go` — FTS5 spec conflicts via `idx.FindConflicts`; push-time cache via `loadPushConflictsForSlug`; bitemporal graph divergence via `store.FindGraphConflicts()` (wired this session). `internal/graph/conflicts.go` implements the SQL query. |
+| SC-3 | Re-running push with no changes after pull is a no-op (same client_id, same hash → no conflict) | DONE | Server-side behavior (separate cloud repo); client surfaces only what server reports. `SyncConflict` slice is empty on idempotent re-push. `ApplyPull` on client accepts the same node without divergence. |
+| SC-4 | Same-client re-push of changed content is NOT flagged as a conflict | DONE | Server-side behavior; client receives empty `Conflicts` slice for same-client pushes per the `client_id` check in `PushGraphDelta`. `internal/graph/conflicts.go:69-74` also requires 2+ distinct `client_id`s before flagging. |
+
+### Exercise-the-feature check
+
+- [x] Exercised: `go build ./...` clean. `go test ./internal/cli/... ./internal/graph/...` pass. `store.FindGraphConflicts` now called from `runConflicts`; `countDistinctClients` helper added. `SyncConflict` struct in `sync.go:64` wired through push response.
 
 ## Files
 

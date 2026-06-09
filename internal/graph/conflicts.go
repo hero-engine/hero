@@ -1,6 +1,32 @@
 package graph
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
+
+// graphTimeLayouts are the formats the SQLite driver may use when
+// storing time.Time values. RFC3339 is what nowRFC3339() writes;
+// the Go default format appears when time.Time is passed as a bound
+// parameter directly (the driver calls t.String() internally).
+var graphTimeLayouts = []string{
+	time.RFC3339Nano,
+	time.RFC3339,
+	"2006-01-02 15:04:05.999999999 -0700 MST",
+	"2006-01-02 15:04:05 -0700 MST",
+	"2006-01-02 15:04:05",
+}
+
+// parseGraphTime parses a timestamp string stored in the graph database.
+// It tries each known layout in order and returns the first success.
+func parseGraphTime(s string) (time.Time, error) {
+	for _, layout := range graphTimeLayouts {
+		if t, err := time.Parse(layout, s); err == nil {
+			return t, nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("unrecognised graph timestamp format: %q", s)
+}
 
 // GraphConflictVersion is one version of a node from a specific client.
 type GraphConflictVersion struct {
@@ -51,10 +77,24 @@ func (s *Store) FindGraphConflicts(slug string) ([]GraphConflictResult, error) {
 
 	for rows.Next() {
 		var typ, key, clientID, status string
-		var validFrom time.Time
-		var validTo *time.Time
-		if err := rows.Scan(&typ, &key, &clientID, &validFrom, &validTo, &status); err != nil {
+		// SQLite stores timestamps as TEXT (RFC3339); scan into strings and
+		// parse rather than relying on the driver to convert automatically.
+		var validFromStr string
+		var validToStr *string
+		if err := rows.Scan(&typ, &key, &clientID, &validFromStr, &validToStr, &status); err != nil {
 			return nil, err
+		}
+		validFrom, err := parseGraphTime(validFromStr)
+		if err != nil {
+			return nil, fmt.Errorf("parsing valid_from %q: %w", validFromStr, err)
+		}
+		var validTo *time.Time
+		if validToStr != nil {
+			t, err := parseGraphTime(*validToStr)
+			if err != nil {
+				return nil, fmt.Errorf("parsing valid_to %q: %w", *validToStr, err)
+			}
+			validTo = &t
 		}
 		k := nodeKey{typ, key}
 		if _, seen := grouped[k]; !seen {

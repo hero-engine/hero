@@ -6,7 +6,7 @@ import (
 )
 
 // TestSchemaV3FreshDB asserts that opening a brand-new database
-// produces a v3 schema with the `domain` column on both nodes and
+// produces the current schema with the `domain` column on both nodes and
 // edges. DSKG AC #1 (idempotent schema migration).
 func TestSchemaV3FreshDB(t *testing.T) {
 	s := openTestStore(t)
@@ -15,8 +15,8 @@ func TestSchemaV3FreshDB(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Stats: %v", err)
 	}
-	if st.SchemaVersion != "3" {
-		t.Fatalf("schema_version = %q, want %q", st.SchemaVersion, "3")
+	if st.SchemaVersion != schemaVersion {
+		t.Fatalf("schema_version = %q, want %q", st.SchemaVersion, schemaVersion)
 	}
 
 	// Column existence is implicit in DomainStats not erroring.
@@ -69,8 +69,8 @@ func TestSchemaV3Idempotent(t *testing.T) {
 		t.Fatalf("first Open: %v", err)
 	}
 	st1, _ := s1.Stats()
-	if st1.SchemaVersion != "3" {
-		t.Fatalf("first open schema = %q, want %q", st1.SchemaVersion, "3")
+	if st1.SchemaVersion != schemaVersion {
+		t.Fatalf("first open schema = %q, want %q", st1.SchemaVersion, schemaVersion)
 	}
 	s1.Close()
 
@@ -80,8 +80,8 @@ func TestSchemaV3Idempotent(t *testing.T) {
 	}
 	defer s2.Close()
 	st2, _ := s2.Stats()
-	if st2.SchemaVersion != "3" {
-		t.Errorf("re-open schema = %q, want %q", st2.SchemaVersion, "3")
+	if st2.SchemaVersion != schemaVersion {
+		t.Errorf("re-open schema = %q, want %q", st2.SchemaVersion, schemaVersion)
 	}
 }
 
@@ -115,15 +115,15 @@ func TestRollbackV3(t *testing.T) {
 	}
 	s.Close()
 
-	// Re-opening migrates forward to v3 again.
+	// Re-opening migrates forward to current schema version again.
 	s2, err := Open(path)
 	if err != nil {
 		t.Fatalf("re-open after rollback: %v", err)
 	}
 	defer s2.Close()
 	st, _ := s2.Stats()
-	if st.SchemaVersion != "3" {
-		t.Errorf("post-rollback re-open schema = %q, want %q", st.SchemaVersion, "3")
+	if st.SchemaVersion != schemaVersion {
+		t.Errorf("post-rollback re-open schema = %q, want %q", st.SchemaVersion, schemaVersion)
 	}
 }
 
