@@ -6,12 +6,26 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-09T21:30:39Z · 97 ready specs_
+_Generated: 2026-06-10T04:06:19Z · 100 ready specs_
 
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
+
+---
+
+## agent-safety-conventions — "Agent Safety Conventions — Harness-Agnostic Behavioral Guardrails"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/agent-safety-conventions/spec.md)_
+
+---
+
+## context-engine-v2 — "Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"
+_initiative · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/context-engine-v2/spec.md)_
 
 ---
 
@@ -469,6 +483,13 @@ _bug · planning · horizon: now_
 _bug · planning · horizon: now_
 
 Resume work on the AGENTS.md project-structure regression. Read this spec, the v0.8 install refactor commits (`git log --oneline | head -20`), and `internal/install/agents_md.go`. The fix is already in place; remaining work is (a) optional unit test pinning the resolved paths against fresh-install output, (b) follow-up for non-AGENTS.md surfaces that may carry the same hardcoded layout description (search for `commands/. — Slash` and similar wording across the repo).
+
+---
+
+## retrieval-quality — "Retrieval Quality — Reranking, Expansion & Feedback Loop"
+_initiative · planning · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/retrieval-quality/spec.md)_
 
 ---
 
