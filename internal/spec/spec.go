@@ -90,23 +90,25 @@ const (
 // validSizes lists the canonical 6-tier size ladder shared across
 // feature / bug / enhancement / epic / initiative specs. Empty
 // string is "unset" and intentionally absent from this slice;
-// validateSize accepts empty as valid.
 var validSizes = []string{"trivial", "small", "medium", "large", "x-large", "giant"}
 
-// validateSize reports whether v is a valid declared size: either
-// empty (unset) or one of the six ladder tiers. Returns an error
-// naming the field and allowed values when v is non-empty and
-// outside the ladder.
-func validateSize(v string) error {
+var sizeAbbrevs = map[string]string{
+	"xs": "trivial", "s": "small", "m": "medium",
+	"l": "large", "xl": "x-large", "g": "giant",
+}
+
+// NormalizeSize maps common abbreviations to canonical tier names.
+// Unknown values pass through unchanged — a non-standard size should
+// never prevent a spec from loading.
+func NormalizeSize(v string) string {
 	if v == "" {
-		return nil
+		return ""
 	}
-	for _, s := range validSizes {
-		if v == s {
-			return nil
-		}
+	lower := strings.ToLower(strings.TrimSpace(v))
+	if canon, ok := sizeAbbrevs[lower]; ok {
+		return canon
 	}
-	return fmt.Errorf("invalid size %q: must be one of %v", v, validSizes)
+	return lower
 }
 
 // IsValidHorizon reports whether h is one of the four canonical
@@ -384,12 +386,7 @@ func Parse(content, path string, modTime time.Time) (*Spec, error) {
 		s.FilesTouched = extractFilePaths(changes)
 	}
 
-	// Validate enum-typed frontmatter fields. Empty values are
-	// always accepted (treated as unset); only non-empty out-of-ladder
-	// values produce a load-time error.
-	if err := validateSize(s.Size); err != nil {
-		return nil, err
-	}
+	s.Size = NormalizeSize(s.Size)
 
 	return s, nil
 }

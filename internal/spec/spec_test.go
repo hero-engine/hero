@@ -744,7 +744,7 @@ size: ` + tier + `
 	}
 }
 
-func TestParseSize_InvalidValueErrors(t *testing.T) {
+func TestParseSize_UnknownValuePassesThrough(t *testing.T) {
 	content := `---
 title: Some Feature
 type: feature
@@ -753,21 +753,32 @@ size: bogus
 ---
 # Some Feature
 `
-	_, err := Parse(content, "/project/.hero/planning/features/some-feature/spec.md", time.Now())
-	if err == nil {
-		t.Fatal("Parse succeeded with size: bogus, want error")
+	s, err := Parse(content, "/project/.hero/planning/features/some-feature/spec.md", time.Now())
+	if err != nil {
+		t.Fatalf("Parse should not fail on unknown size: %v", err)
 	}
-	msg := err.Error()
-	if !strings.Contains(msg, "size") {
-		t.Errorf("error %q does not mention the field name 'size'", msg)
+	if s.Size != "bogus" {
+		t.Errorf("Size = %q, want %q (unknown values pass through)", s.Size, "bogus")
 	}
-	if !strings.Contains(msg, "bogus") {
-		t.Errorf("error %q does not echo the bad value", msg)
+}
+
+func TestParseSize_AbbreviationsNormalize(t *testing.T) {
+	cases := map[string]string{
+		"XS": "trivial", "S": "small", "M": "medium",
+		"L": "large", "XL": "x-large", "G": "giant",
+		"l": "large", " L ": "large",
 	}
-	for _, tier := range []string{"trivial", "small", "medium", "large", "x-large", "giant"} {
-		if !strings.Contains(msg, tier) {
-			t.Errorf("error %q does not list allowed value %q", msg, tier)
-		}
+	for abbrev, want := range cases {
+		t.Run(abbrev, func(t *testing.T) {
+			content := "---\ntitle: F\ntype: feature\nstatus: planning\nsize: " + abbrev + "\n---\n# F\n"
+			s, err := Parse(content, "/project/.hero/planning/features/f/spec.md", time.Now())
+			if err != nil {
+				t.Fatalf("Parse failed for size %q: %v", abbrev, err)
+			}
+			if s.Size != want {
+				t.Errorf("Size = %q, want %q", s.Size, want)
+			}
+		})
 	}
 }
 
