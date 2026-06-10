@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-10T04:05:34Z · projected from 320 source nodes_
+_Last refreshed: 2026-06-10T15:55:24Z · projected from 320 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | maturing | cmd/, internal/ | 8h ago | hero-workspace-not-self-describing |
+| core | maturing | cmd/, internal/ | 20h ago | hero-workspace-not-self-describing |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | maturing | domains/engineering/ | 9h ago | — |
+| domains/engineering | maturing | domains/engineering/ | 21h ago | — |
 | domains/pm | concept | domains/pm/ | 22d ago | — |
-| domains/sales | maturing | domains/sales/ | 8h ago | — |
+| domains/sales | maturing | domains/sales/ | 19h ago | — |
 | landing | building | web/landing/ | 9d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 9h ago | agent-outposts |
+| serve | building | internal/serve/ | 20h ago | agent-outposts |
 | (unassigned) | — | — | — | 153 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._

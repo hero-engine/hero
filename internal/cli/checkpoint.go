@@ -633,24 +633,35 @@ func writeProjectedFileIfSemanticChanged(path string, content []byte, mode fs.Fi
 
 func normalizeUpdatedFrontmatter(content string) string {
 	const placeholder = "updated: <preserved>"
-	if !strings.HasPrefix(content, "---\n") {
+	// Find the YAML frontmatter block. It may not start at offset 0 —
+	// the managed-pointer block (<!-- hero:managed-start ... -->) can
+	// precede it.
+	start := -1
+	if strings.HasPrefix(content, "---\n") {
+		start = 0
+	} else if idx := strings.Index(content, "\n---\n"); idx >= 0 {
+		start = idx + 1
+	}
+	if start < 0 {
 		return content
 	}
-	end := strings.Index(content[4:], "\n---")
+
+	end := strings.Index(content[start+4:], "\n---")
 	if end < 0 {
 		return content
 	}
-	end += 4
+	end += start + 4
 
-	frontmatter := content[:end]
+	frontmatter := content[start:end]
 	rest := content[end:]
+	prefix := content[:start]
 	lines := strings.Split(frontmatter, "\n")
 	for i, line := range lines {
 		if strings.HasPrefix(line, "updated:") {
 			lines[i] = placeholder
 		}
 	}
-	return strings.Join(lines, "\n") + rest
+	return prefix + strings.Join(lines, "\n") + rest
 }
 
 // resolveLocalStatePath returns the gitignored per-user machine-state

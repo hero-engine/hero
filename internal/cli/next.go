@@ -21,9 +21,10 @@ const (
 var nextCmd = &cobra.Command{
 	Use:   "next",
 	Short: "Show your handoff briefing — personal in team mode, shared in solo mode",
-	Long: `NEXT.md is a three-section briefing (Just finished / Next /
-Context to carry forward) the agent overwrites at the end of meaningful
-turns so a fresh session can pick up where the last one left off.
+	Long: `NEXT.md is a briefing (Next / Blocked on / Context to carry
+forward) the agent overwrites at the end of meaningful turns so a fresh
+session can pick up where the last one left off. Recent commit history
+is read from git log at session start rather than frozen in the file.
 
 Mode is controlled by "next.mode" in hero.json:
 

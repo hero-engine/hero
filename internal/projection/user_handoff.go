@@ -16,8 +16,7 @@ type UserHandoffOptions struct {
 	RepoKey     string // partition for "your recent activity" filtering
 	Domain      string // handoff singleton domain partition; "" = engineering
 	SessionID   string // anchors session-scoped sections
-	ReflectionN int    // most recent reflections (default 5)
-	CommitsN    int    // your recent commits (default 6)
+	ReflectionN int // most recent reflections (default 5)
 }
 
 // UserHandoffMD renders .hero/next/<user>.md from the user-graph
@@ -38,10 +37,6 @@ func UserHandoffMD(store *graph.Store, opts UserHandoffOptions) (string, error) 
 	if opts.ReflectionN == 0 {
 		opts.ReflectionN = 5
 	}
-	if opts.CommitsN == 0 {
-		opts.CommitsN = 6
-	}
-
 	var b strings.Builder
 	b.WriteString("---\n")
 	fmt.Fprintf(&b, "user: %s\n", opts.User)
@@ -149,19 +144,9 @@ func UserHandoffMD(store *graph.Store, opts UserHandoffOptions) (string, error) 
 	}
 	b.WriteString("\n")
 
-	// Your recent activity — author-attributed commits in this repo.
+	// Your recent activity — pointer to git log rather than a frozen copy.
 	b.WriteString("## Your recent activity\n\n")
-	mine, err := userRecentCommits(store, opts.RepoKey, opts.User, opts.CommitsN)
-	if err != nil {
-		return "", fmt.Errorf("recent activity: %w", err)
-	}
-	if len(mine) == 0 {
-		b.WriteString("_(no commits attributed to you in this repo's graph)_\n")
-	} else {
-		for _, c := range mine {
-			fmt.Fprintf(&b, "- `%s` — %s\n", shortSha(c.sha), oneLine(c.subject))
-		}
-	}
+	b.WriteString("Run `git log --oneline --author=<you> -10` for recent commits.\n")
 	b.WriteString("\n")
 
 	return b.String(), nil
@@ -339,45 +324,6 @@ func topOpenInitiative(store *graph.Store, repoKey string) string {
 		return ""
 	}
 	return title.String
-}
-
-// userRecentCommits filters Commit nodes by author. Author matching
-// is loose: matches if the user slug appears in author_email or
-// author_name (case-insensitive), so "chet-bellows" matches both
-// "user@example.com" and "username" git user.name configurations.
-func userRecentCommits(store *graph.Store, repoKey, user string, limit int) ([]commitRow, error) {
-	if user == "" {
-		return nil, nil
-	}
-	pattern := "%" + strings.ToLower(user) + "%"
-	rows, err := store.DB().Query(
-		`SELECT json_extract(props, '$.sha') AS sha,
-		        json_extract(props, '$.subject') AS subject,
-		        json_extract(props, '$.date') AS date
-		   FROM nodes
-		  WHERE type = 'Commit' AND repo = ? AND valid_to IS NULL
-		    AND (LOWER(COALESCE(json_extract(props, '$.author_email'), '')) LIKE ?
-		      OR LOWER(COALESCE(json_extract(props, '$.author_name'),  '')) LIKE ?)
-		  ORDER BY json_extract(props, '$.date') DESC
-		  LIMIT ?`,
-		repoKey, pattern, pattern, limit,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var out []commitRow
-	for rows.Next() {
-		var c commitRow
-		var sha, subject, date sql.NullString
-		if err := rows.Scan(&sha, &subject, &date); err != nil {
-			return nil, err
-		}
-		c.sha, c.subject, c.date = sha.String, subject.String, date.String
-		out = append(out, c)
-	}
-	return out, rows.Err()
 }
 
 // goalSourceAsserted reports whether a goal source is confident enough

@@ -30,8 +30,7 @@ type NextMDOptions struct {
 	RepoKey       string // partition filter; required
 	Branch        string // current branch (frontmatter only)
 	SessionID     string // anchors "Tried and failed" to a session
-	JustFinishedN int    // commits to show under "## Just finished" (default 8)
-	NextN         int    // open features to surface under "## Next" (default 1)
+	NextN int // open features to surface under "## Next" (default 1)
 	// Vocab is the active vocabulary preset used to render type / kind
 	// display names (e.g. "feature" → "Story" under agile-scrum). Nil
 	// preserves the canonical literal — engineering / legacy workspaces
@@ -78,9 +77,6 @@ func NextMD(store *graph.Store, opts NextMDOptions) (string, error) {
 	if opts.RepoKey == "" {
 		return "", fmt.Errorf("projection: RepoKey is required")
 	}
-	if opts.JustFinishedN == 0 {
-		opts.JustFinishedN = 8
-	}
 	if opts.NextN == 0 {
 		opts.NextN = 1
 	}
@@ -97,19 +93,11 @@ func NextMD(store *graph.Store, opts NextMDOptions) (string, error) {
 	}
 	b.WriteString("---\n\n")
 
-	// Just finished
+	// Just finished — pointer to git log rather than a frozen copy.
+	// Commit lists embedded in NEXT.md are always stale (pre-commit
+	// can't see its own SHA) and duplicate what git log already provides.
 	b.WriteString("## Just finished\n\n")
-	commits, err := recentCommits(store, opts.RepoKey, opts.JustFinishedN)
-	if err != nil {
-		return "", fmt.Errorf("just finished: %w", err)
-	}
-	if len(commits) == 0 {
-		b.WriteString("Nothing yet.\n")
-	} else {
-		for _, c := range commits {
-			fmt.Fprintf(&b, "- `%s` — %s\n", shortSha(c.sha), oneLine(c.subject))
-		}
-	}
+	b.WriteString("Run `git log --oneline -10` for recent commits.\n")
 	b.WriteString("\n")
 
 	// Next
@@ -201,39 +189,6 @@ func NextMD(store *graph.Store, opts NextMDOptions) (string, error) {
 }
 
 // --- queries ---------------------------------------------------------------
-
-type commitRow struct {
-	sha, subject, date string
-}
-
-func recentCommits(store *graph.Store, repoKey string, limit int) ([]commitRow, error) {
-	rows, err := store.DB().Query(
-		`SELECT json_extract(props, '$.sha') AS sha,
-		        json_extract(props, '$.subject') AS subject,
-		        json_extract(props, '$.date') AS date
-		   FROM nodes
-		  WHERE type = 'Commit' AND repo = ? AND valid_to IS NULL
-		  ORDER BY json_extract(props, '$.date') DESC
-		  LIMIT ?`,
-		repoKey, limit,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var out []commitRow
-	for rows.Next() {
-		var c commitRow
-		var sha, subject, date sql.NullString
-		if err := rows.Scan(&sha, &subject, &date); err != nil {
-			return nil, err
-		}
-		c.sha, c.subject, c.date = sha.String, subject.String, date.String
-		out = append(out, c)
-	}
-	return out, rows.Err()
-}
 
 type featureRow struct {
 	slug, title, status, priority string

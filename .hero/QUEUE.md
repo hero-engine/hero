@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-10T04:06:19Z · 100 ready specs_
+_Generated: 2026-06-10T16:06:59Z · 100 ready specs_
 
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
