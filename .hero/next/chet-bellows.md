@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-10T04:05:34Z
+updated: 2026-06-10T15:55:22Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,13 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> are you able to inspect all the chat history - inputs and outputs - from the ../hero-code swift apps runtime - to look at hero use - figure out if hero is working properly in the app usage over the last couple days?
+> question - can't get main clean - evertime i commit theres changes right after: Changes not staged for commit:
+>   (use "git add <file>..." to update what will be committed)
+>   (use "git restore <file>..." to discard changes in working directory)
+> 	modified:   ../../.hero/NEXT.md
+> 	modified:   ../../.hero/SNAPSHOT.md
+> 	modified:   ../../.hero/next/chet-bellows.local.md
+> 	modified:   ../../.hero/peer-mani…
 
 ## Suggested next prompt
 
@@ -24,10 +30,5 @@ Nothing this session.
 
 ## Your recent activity
 
-- `b8a2707` — chore: snapshot timestamp refresh (build-triggered)
-- `5015b78` — chore: regenerate snapshot and peer manifest post-install
-- `5af2e46` — chore: workspace state — harness install, new hihcp specs, handoff files
-- `3e792fb` — feat(sales): hero-sales domain pack — MEDDPICC qualification, deal strategy, forecast, pipeline (markdown-first)
-- `9f81f99` — feat(retrieval): unified retrieval layer — FTS5 BM25 with type boosts, single Retrieve() interface
-- `e9874a2` — feat(embeddings): embedded inference — zero-dep Model2Vec semantic retrieval, hybrid RRF search
+Run `git log --oneline --author=<you> -10` for recent commits.
 

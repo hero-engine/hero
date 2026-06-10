@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -160,11 +161,13 @@ func Project(opts ProjectOptions) (*ProjectResult, error) {
 	return result, nil
 }
 
-// writeIfChanged writes data to path when the existing bytes differ.
-// Returns (wrote, error).
+// writeIfChanged writes data to path when the semantic content differs.
+// Timestamp and relative-time strings are stripped before comparison so
+// a regeneration that only advances "Last refreshed" or "8h ago → 9h ago"
+// is treated as a no-op.
 func writeIfChanged(path string, data []byte) (bool, error) {
 	existing, err := os.ReadFile(path)
-	if err == nil && string(existing) == string(data) {
+	if err == nil && stripVolatile(string(existing)) == stripVolatile(string(data)) {
 		return false, nil
 	}
 	if err != nil && !os.IsNotExist(err) {
@@ -174,6 +177,15 @@ func writeIfChanged(path string, data []byte) (bool, error) {
 		return false, err
 	}
 	return true, os.WriteFile(path, data, 0o644)
+}
+
+var reLastRefreshed = regexp.MustCompile(`(?m)^_Last refreshed: .+$`)
+var reRelativeTime = regexp.MustCompile(`\d+[dhm] ago`)
+
+func stripVolatile(s string) string {
+	s = reLastRefreshed.ReplaceAllString(s, "_Last refreshed: <stripped>")
+	s = reRelativeTime.ReplaceAllString(s, "<ago>")
+	return s
 }
 
 // scanGitTags lists git tags matching pattern. Best-effort; returns

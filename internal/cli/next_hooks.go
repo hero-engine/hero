@@ -45,6 +45,7 @@ var handoffFilePaths = []string{
 	".hero/next/*.md",
 	".hero/SNAPSHOT.md",
 	".hero/QUEUE.md",
+	".hero/peer-manifest.yaml",
 }
 
 var nextInstallHooksCmd = &cobra.Command{

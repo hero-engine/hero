@@ -117,12 +117,12 @@ func TestNextMD_HappyPath(t *testing.T) {
 		}
 	}
 
-	// Just finished — recent commits
-	if !strings.Contains(out, "abc1234") {
-		t.Error("expected commit abc1234 in Just finished")
+	// Just finished — pointer to git log, not a frozen commit list
+	if !strings.Contains(out, "git log") {
+		t.Error("expected git log pointer in Just finished")
 	}
-	if !strings.Contains(out, "feat: ship phase 4") {
-		t.Error("expected commit subject in Just finished")
+	if strings.Contains(out, "abc1234") {
+		t.Error("commit SHAs should not appear in Just finished (use git log)")
 	}
 
 	// Next — top-priority open feature
@@ -163,8 +163,8 @@ func TestNextMD_EmptyRepo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NextMD: %v", err)
 	}
-	if !strings.Contains(out, "Nothing yet.") {
-		t.Error("expected 'Nothing yet.' for empty Just finished")
+	if !strings.Contains(out, "git log") {
+		t.Error("expected git log pointer in Just finished")
 	}
 	if !strings.Contains(out, "No open features in this repo.") {
 		t.Error("expected message for empty Next")

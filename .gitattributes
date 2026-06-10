@@ -1,6 +1,7 @@
 # >>> hero next merge driver (managed) >>>
-.hero/next/*.md merge=union
 .hero/NEXT.md merge=union
-.hero/QUEUE.md merge=union
+.hero/next/*.md merge=union
 .hero/SNAPSHOT.md merge=union
+.hero/QUEUE.md merge=union
+.hero/peer-manifest.yaml merge=union
 # <<< hero next merge driver (managed) <<<
