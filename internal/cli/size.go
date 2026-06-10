@@ -138,6 +138,7 @@ func runSizeGet(heroDir, slug string) error {
 // runSizeSet validates the tier and writes the frontmatter field
 // non-destructively via spec.SetFrontmatterField.
 func runSizeSet(heroDir, slug, tier string) error {
+	tier = spec.NormalizeSize(tier)
 	if err := validateSizeTier(tier); err != nil {
 		return err
 	}
@@ -169,6 +170,7 @@ func runSizeSet(heroDir, slug, tier string) error {
 // compatibility). Idempotent — re-stamping the same tier is a no-op
 // from the user's perspective.
 func runSizeAck(heroDir, slug, tier string) error {
+	tier = spec.NormalizeSize(tier)
 	if err := validateSizeTier(tier); err != nil {
 		return err
 	}
