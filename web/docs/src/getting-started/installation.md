@@ -87,6 +87,37 @@ hero --version
 You should see the installed version printed. If not, confirm the
 install location is on your PATH.
 
+## Monorepo setup
+
+Install Hero on each platform first using the [macOS](#macos-homebrew),
+[Linux](#linux-install-script-or-homebrew), or [Windows](#windows-scoop-or-install-script)
+instructions above, then set up satellite workspaces as described below.
+
+If your repository has multiple independent workspaces (e.g. a `/backend` and
+`/frontend` subfolder, or an npm/pnpm/Yarn monorepo with multiple packages),
+you can install Hero as a **satellite** in each subfolder. Each satellite gets
+its own `.hero/` corpus scoped to that workspace.
+
+```bash
+# From each subfolder that should have its own Hero workspace:
+cd backend
+hero init && hero scan
+hero install project . --target claude
+
+cd ../frontend
+hero init && hero scan
+hero install project . --target claude
+```
+
+Each `hero install` writes harness files (e.g. `CLAUDE.md`) into that
+subfolder, pointing the AI tool at the satellite corpus. Specs, conventions,
+and knowledge stay scoped to the subfolder they belong to.
+
+!!! tip "Single install at the repo root"
+    If your monorepo has a single shared context, a single `hero init` at the
+    root works fine. Use satellite installs only when subfolders are genuinely
+    independent workspaces with different conventions, stacks, or teams.
+
 ## Next steps
 
 - [Project Setup](project-setup.md) — Initialize Hero in your project
