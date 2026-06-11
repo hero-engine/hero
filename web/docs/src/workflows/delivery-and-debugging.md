@@ -29,7 +29,7 @@ Before any code is written, `/deliver` runs a series of checks:
 ### Delivery workflow
 
 ```
-Spec → Delivery Lead → Engineering Agents → Validation → Archive
+Spec → Delivery Lead → Engineering Agents → Verify Gate → Archive
 ```
 
 1. The **delivery lead** reads the spec and generates implementation context,
@@ -37,11 +37,35 @@ Spec → Delivery Lead → Engineering Agents → Validation → Archive
 2. **Engineering agents** implement the changes — Hero selects from specialists
    like `engineer`, `api-engineer`, `database-engineer`, `migration-engineer`,
    and others based on the work type
-3. **Validation** runs against the spec's Validation section to confirm
-   acceptance criteria are met
+3. **Verify gate** — `hero verify` checks all acceptance criteria against the
+   delivered state before the spec can move to `completed`. This is a hard
+   checkpoint: a spec cannot be archived without passing it.
 4. The completed spec moves from `.hero/planning/` to `.hero/specs/`
 5. **Tracker sync** updates the issue status
 6. **Knowledge capture** persists any learnings from the implementation
+
+### The verify gate
+
+`hero verify <slug>` is the required checkpoint between "implementation done"
+and "spec closed." It checks four gates: completion ledger, audit report, test
+coverage, and build. All must pass before the spec status flips to `completed`
+and the spec is archived.
+
+```bash
+# Run the verify gate on a spec
+hero verify csv-export-reports
+
+# Skip re-running the test suite if tests just passed
+hero verify csv-export-reports --skip-tests
+
+# Structured output for CI or scripted checks
+hero verify csv-export-reports --json
+```
+
+!!! warning "Don't skip the gate"
+    Flipping `status: completed` manually in frontmatter bypasses the four-gate
+    check. Use `hero verify` — it's the only path to `completed` that produces
+    a durable audit record and triggers archiving.
 
 ```bash
 # Deliver by slug
