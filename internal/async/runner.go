@@ -168,23 +168,30 @@ func (r *Runner) runDeliver(jobID string, job *Job) error {
 
 	log("Agent delivery completed")
 
-	// 2b. Auto-archive the spec when the agent left it at status: completed.
-	// /deliver's contract ends with "status: completed" in the spec
-	// frontmatter — without this hook the spec strands under planning/
-	// and the user has to remember `hero spec complete`. We invoke the
-	// CLI verb so the move + reindex stay in one place (complete.go).
-	// `spec complete` is idempotent (a non-completed status no-ops).
-	// Run this *before* the commit so the archive move travels with
-	// the agent's delivery PR rather than dangling on disk.
+	// 2b. Run verify to check gates, write AC graph, and archive.
+	// This routes through the standard gate checks so the AC graph
+	// gets updated and initiative auto-complete fires. Skip tests
+	// since the agent already ran them during delivery. Fall back to
+	// `hero spec complete` if verify fails, preserving the prior
+	// behavior where async deliveries always archive.
 	if exe, err := os.Executable(); err == nil {
-		archiveCmd := exec.Command(exe, "spec", "complete", job.SpecPath)
-		archiveCmd.Dir = r.projectDir
-		archiveCmd.Stdout = logFile
-		archiveCmd.Stderr = logFile
-		if err := archiveCmd.Run(); err != nil {
-			log("Auto-archive failed: %v", err)
+		verifyCmd := exec.Command(exe, "verify", "--skip-tests", job.Slug)
+		verifyCmd.Dir = r.projectDir
+		verifyCmd.Stdout = logFile
+		verifyCmd.Stderr = logFile
+		if err := verifyCmd.Run(); err != nil {
+			log("Verify failed (%v), falling back to spec complete", err)
+			archiveCmd := exec.Command(exe, "spec", "complete", job.SpecPath)
+			archiveCmd.Dir = r.projectDir
+			archiveCmd.Stdout = logFile
+			archiveCmd.Stderr = logFile
+			if err := archiveCmd.Run(); err != nil {
+				log("Auto-archive failed: %v", err)
+			} else {
+				log("Auto-archived spec %s (via fallback)", job.Slug)
+			}
 		} else {
-			log("Auto-archived spec %s", job.Slug)
+			log("Verified and archived spec %s", job.Slug)
 		}
 	}
 
