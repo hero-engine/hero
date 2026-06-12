@@ -93,7 +93,7 @@ a `rules/` entry directly with a `forbidden:` marker.
 
 ### Spec scoring and sizing
 
-The knowledge base also reflects spec health. `hero check` and `hero warnings`
+The knowledge base also reflects spec health. `hero check`
 surface specs whose declared `size:` has drifted from their actual complexity,
 or that are oversized for their type. This sizing guidance flows into context
 injection — agents working on a `large` or `x-large` spec receive a nudge to
