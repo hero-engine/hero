@@ -177,3 +177,5 @@
 {"ts":"2026-06-09T21:23:18.923892Z","type":"peer.handoff.sent","agent":"hero","slug":"hihcp-skill-run-tool","message":"handed off to hero-code/hihcp-skill-run-tool (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)"}
 {"ts":"2026-06-11T02:30:51.171882Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"landing-docs-content-refresh","message":"\"Landing Page \u0026 Docs Content Refresh — Peering, Semantic Search, Verify Gate\""}
 {"ts":"2026-06-11T02:30:51.171968Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"landing-docs-content-refresh","message":"status -\u003e completed"}
+{"ts":"2026-06-12T01:26:51.138647Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"spec-completion-loop","message":"\"Spec Completion Loop — Ledger-to-Graph Writeback, Initiative Auto-Complete, and Verify Auto-Invoke\""}
+{"ts":"2026-06-12T01:26:51.138728Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"spec-completion-loop","message":"status -\u003e completed"}

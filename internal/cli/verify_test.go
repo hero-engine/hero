@@ -1,11 +1,15 @@
 package cli
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/hero-engine/hero/internal/graph"
 )
 
 // specWithLedgerAndAudit is a complete spec ready to pass all gates.
@@ -341,5 +345,339 @@ func writeVerifyFile(t *testing.T, path, content string) {
 	}
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatalf("WriteFile: %v", err)
+	}
+}
+
+// seedGraphCriterion inserts a Criterion node into the graph at heroDir.
+func seedGraphCriterion(t *testing.T, store *graph.Store, key, statement, status string) {
+	t.Helper()
+	sum := sha256.Sum256([]byte(key + "|" + statement + "|" + status))
+	hash := hex.EncodeToString(sum[:])
+	_, err := store.UpsertNode(&graph.Node{
+		Type:   "Criterion",
+		Domain: "engineering",
+		Key:    key,
+		Props: map[string]any{
+			"ac_id":     key,
+			"statement": statement,
+			"status":    status,
+			"parent":    strings.SplitN(key, ":", 2)[0],
+		},
+		Repo:        "test-repo",
+		ContentHash: hash,
+	})
+	if err != nil {
+		t.Fatalf("seed criterion %s: %v", key, err)
+	}
+}
+
+func getGraphCriterionStatus(t *testing.T, store *graph.Store, key string) string {
+	t.Helper()
+	n, err := store.GetNode("Criterion", key)
+	if err != nil {
+		t.Fatalf("GetNode(%s): %v", key, err)
+	}
+	s, _ := n.Props["status"].(string)
+	return s
+}
+
+func TestVerify_LedgerWritebackToGraph(t *testing.T) {
+	env := newTestEnv(t)
+
+	specContent := `---
+title: Writeback Test
+type: feature
+status: delivering
+slug: writeback-test
+---
+# Writeback Test
+
+## Acceptance Criteria
+
+- AC-1: THE SYSTEM SHALL handle X
+- AC-2: THE SYSTEM SHALL handle Y
+- AC-3: THE SYSTEM SHALL handle Z
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | handle X | DONE | implemented |
+| 2 | handle Y | DONE | implemented |
+| 3 | handle Z | DONE | implemented |
+
+### Exercise-the-feature check
+
+- [x] Exercised: confirmed all three handlers work
+`
+	env.addSpec("planning/features/writeback-test/spec.md", specContent)
+	writeVerifyFile(t, filepath.Join(env.heroDir, "planning/features/writeback-test/delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "writeback-test", -1))
+	env.indexAll()
+
+	// Seed Criterion nodes in the graph so Record can find and flip them.
+	store, err := graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatalf("graph.Open: %v", err)
+	}
+	seedGraphCriterion(t, store, "writeback-test:AC-1", "THE SYSTEM SHALL handle X", "proposed")
+	seedGraphCriterion(t, store, "writeback-test:AC-2", "THE SYSTEM SHALL handle Y", "proposed")
+	seedGraphCriterion(t, store, "writeback-test:AC-3", "THE SYSTEM SHALL handle Z", "proposed")
+	store.Close()
+
+	output, err := runCmd("spec", "verify", "--skip-tests", "--json", "writeback-test")
+	if err != nil {
+		t.Fatalf("verify failed: %v\noutput: %s", err, output)
+	}
+
+	var result VerifyResult
+	if err := json.Unmarshal([]byte(strings.TrimSpace(output)), &result); err != nil {
+		t.Fatalf("failed to parse JSON: %v\noutput: %s", err, output)
+	}
+
+	if result.ACStatusUpdates != 3 {
+		t.Errorf("ACStatusUpdates = %d, want 3", result.ACStatusUpdates)
+	}
+
+	// Verify the graph nodes are now "passing".
+	store2, err := graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatalf("graph.Open (re-read): %v", err)
+	}
+	defer store2.Close()
+
+	for _, key := range []string{"writeback-test:AC-1", "writeback-test:AC-2", "writeback-test:AC-3"} {
+		if s := getGraphCriterionStatus(t, store2, key); s != "passing" {
+			t.Errorf("Criterion %s status = %q, want passing", key, s)
+		}
+	}
+}
+
+func TestVerify_InitiativeAutoComplete(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Parent initiative.
+	initiativeContent := `---
+title: Parent Initiative
+type: initiative
+status: planning
+slug: parent-init
+---
+# Parent Initiative
+`
+	env.addSpec("planning/initiatives/parent-init/spec.md", initiativeContent)
+
+	// Child 1 — already completed and archived.
+	child1Content := `---
+title: Child One
+type: feature
+status: completed
+slug: child-one
+parent: parent-init
+---
+# Child One
+`
+	env.addSpec("specs/child-one/spec.md", child1Content)
+
+	// Child 2 — delivering, about to be verified.
+	child2Content := `---
+title: Child Two
+type: feature
+status: delivering
+slug: child-two
+parent: parent-init
+---
+# Child Two
+
+## Acceptance Criteria
+
+- AC-1: THE SYSTEM SHALL do child-two work
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | do child-two work | DONE | implemented |
+
+### Exercise-the-feature check
+
+- [x] Exercised: verified child two works
+`
+	env.addSpec("planning/features/child-two/spec.md", child2Content)
+	writeVerifyFile(t, filepath.Join(env.heroDir, "planning/features/child-two/delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "child-two", -1))
+	env.indexAll()
+
+	output, err := runCmd("spec", "verify", "--skip-tests", "--json", "child-two")
+	if err != nil {
+		t.Fatalf("verify failed: %v\noutput: %s", err, output)
+	}
+
+	var result VerifyResult
+	if err := json.Unmarshal([]byte(strings.TrimSpace(output)), &result); err != nil {
+		t.Fatalf("failed to parse JSON: %v\noutput: %s", err, output)
+	}
+
+	if result.InitiativeCompleted != "parent-init" {
+		t.Errorf("InitiativeCompleted = %q, want parent-init", result.InitiativeCompleted)
+	}
+
+	// Parent initiative should be archived.
+	archivedPath := filepath.Join(env.heroDir, "specs", "parent-init", "spec.md")
+	if _, err := os.Stat(archivedPath); os.IsNotExist(err) {
+		t.Error("parent initiative was not auto-archived")
+	}
+}
+
+func TestVerify_ExerciseDemotedToAdvisory(t *testing.T) {
+	env := newTestEnv(t)
+
+	// All ACs DONE but exercise-the-feature NOT checked.
+	specContent := `---
+title: Exercise Advisory
+type: feature
+status: delivering
+slug: exercise-advisory
+---
+# Exercise Advisory
+
+## Acceptance Criteria
+
+- AC-1: THE SYSTEM SHALL do X
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | do X | DONE | implemented |
+
+### Exercise-the-feature check
+
+- [ ] not exercised
+`
+	env.addSpec("planning/features/exercise-advisory/spec.md", specContent)
+	writeVerifyFile(t, filepath.Join(env.heroDir, "planning/features/exercise-advisory/delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "exercise-advisory", -1))
+	env.indexAll()
+
+	output, err := runCmd("spec", "verify", "--skip-tests", "--json", "exercise-advisory")
+	if err != nil {
+		t.Fatalf("verify should PASS with exercise unchecked (advisory only): %v\noutput: %s", err, output)
+	}
+
+	var result VerifyResult
+	if err := json.Unmarshal([]byte(strings.TrimSpace(output)), &result); err != nil {
+		t.Fatalf("failed to parse JSON: %v\noutput: %s", err, output)
+	}
+
+	if result.Result != "PASS" {
+		t.Errorf("Result = %q, want PASS (exercise is advisory)", result.Result)
+	}
+
+	// Gate 1 should PASS, and include the advisory note.
+	for _, g := range result.Gates {
+		if g.Name == "Completion Ledger" {
+			if g.Result != "PASS" {
+				t.Errorf("Completion Ledger gate Result = %q, want PASS", g.Result)
+			}
+			hasAdvisory := false
+			for _, d := range g.Details {
+				if strings.Contains(d, "ADVISORY") && strings.Contains(d, "exercise") {
+					hasAdvisory = true
+				}
+			}
+			if !hasAdvisory {
+				t.Errorf("expected ADVISORY note about exercise in gate details, got: %v", g.Details)
+			}
+		}
+	}
+}
+
+func TestVerify_ACKeyMismatchResilience(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Ledger has 5 ACs, but graph only has 3 Criterion nodes.
+	specContent := `---
+title: Mismatch Test
+type: feature
+status: delivering
+slug: mismatch-test
+---
+# Mismatch Test
+
+## Acceptance Criteria
+
+- AC-1: handle A
+- AC-2: handle B
+- AC-3: handle C
+- AC-4: handle D
+- AC-5: handle E
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | handle A | DONE | implemented |
+| 2 | handle B | DONE | implemented |
+| 3 | handle C | DONE | implemented |
+| 4 | handle D | DONE | implemented |
+| 5 | handle E | DONE | implemented |
+
+### Exercise-the-feature check
+
+- [x] Exercised: all five work
+`
+	env.addSpec("planning/features/mismatch-test/spec.md", specContent)
+	writeVerifyFile(t, filepath.Join(env.heroDir, "planning/features/mismatch-test/delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "mismatch-test", -1))
+	env.indexAll()
+
+	// Only seed 3 of the 5 criteria in the graph.
+	store, err := graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatalf("graph.Open: %v", err)
+	}
+	seedGraphCriterion(t, store, "mismatch-test:AC-1", "handle A", "proposed")
+	seedGraphCriterion(t, store, "mismatch-test:AC-3", "handle C", "proposed")
+	seedGraphCriterion(t, store, "mismatch-test:AC-5", "handle E", "proposed")
+	store.Close()
+
+	output, err := runCmd("spec", "verify", "--skip-tests", "--json", "mismatch-test")
+	if err != nil {
+		t.Fatalf("verify failed: %v\noutput: %s", err, output)
+	}
+
+	var result VerifyResult
+	if err := json.Unmarshal([]byte(strings.TrimSpace(output)), &result); err != nil {
+		t.Fatalf("failed to parse JSON: %v\noutput: %s", err, output)
+	}
+
+	// Only the 3 existing criteria should be flipped; 2 unknown → no error.
+	if result.ACStatusUpdates != 3 {
+		t.Errorf("ACStatusUpdates = %d, want 3 (2 missing from graph should be silently skipped)", result.ACStatusUpdates)
+	}
+
+	if result.Result != "PASS" {
+		t.Errorf("Result = %q, want PASS", result.Result)
+	}
+
+	// Verify the 3 existing ones are passing.
+	store2, err := graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatalf("graph.Open: %v", err)
+	}
+	defer store2.Close()
+	for _, key := range []string{"mismatch-test:AC-1", "mismatch-test:AC-3", "mismatch-test:AC-5"} {
+		if s := getGraphCriterionStatus(t, store2, key); s != "passing" {
+			t.Errorf("Criterion %s status = %q, want passing", key, s)
+		}
 	}
 }

@@ -245,14 +245,17 @@ At the end of the delivery loop:
    — that way the next session resumes with the same recommendation
    visible from the first prompt.
 
-When delivery is complete and the Completion Ledger is fully `DONE` (or
-non-`DONE` rows have explicit user sign-off), run `hero spec verify <slug>`.
-**Do not edit `status: completed` in the frontmatter directly** — `hero
-verify` is the only path to completed. It checks four gates (ledger,
-audit report, test coverage, build) and flips status + archives only when
-all hard gates pass. If verify returns FAIL, read the specific gate
-failures and route them back to the engineer to address. Re-run verify
-after fixes.
+**MUST run `hero spec verify <slug>` before reporting delivery as complete.**
+This is not optional — do not report the delivery as done, do not suggest
+next steps, do not end the session without a verify pass (or an explicit
+user override). `hero spec verify` is the only path to `completed`: it checks
+four gates (ledger, audit report, test coverage, build), writes AC pass
+statuses to the knowledge graph, auto-completes parent initiatives when
+all children land, and archives the spec. **Do not edit `status: completed`
+in the frontmatter directly.**
+
+If verify returns FAIL, read the specific gate failures and route them
+back to the engineer to address. Re-run verify after fixes.
 
 Use `--skip-tests` if the test suite was just run and you don't want to
 re-run it. Use `--json` for structured output the delivery lead can parse.

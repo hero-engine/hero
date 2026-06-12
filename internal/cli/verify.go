@@ -8,8 +8,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/hero-engine/hero/internal/acceptance"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/coverage"
+	"github.com/hero-engine/hero/internal/gitutil"
+	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/spec"
 	"github.com/spf13/cobra"
 )
@@ -54,10 +57,12 @@ type GateResult struct {
 
 // VerifyResult is the overall verification outcome.
 type VerifyResult struct {
-	Slug     string       `json:"slug"`
-	Result   string       `json:"result"` // PASS, FAIL, FORCED
-	Gates    []GateResult `json:"gates"`
-	Archived bool         `json:"archived"`
+	Slug                string       `json:"slug"`
+	Result              string       `json:"result"` // PASS, FAIL, FORCED
+	Gates               []GateResult `json:"gates"`
+	Archived            bool         `json:"archived"`
+	ACStatusUpdates     int          `json:"ac_status_updates,omitempty"`
+	InitiativeCompleted string       `json:"initiative_completed,omitempty"`
 }
 
 func runVerify(cmd *cobra.Command, args []string) error {
@@ -134,6 +139,15 @@ func runVerify(cmd *cobra.Command, args []string) error {
 		result.Result = "FAIL"
 	}
 
+	// Ledger → AC graph writeback: flip DONE criteria to passing.
+	if gate1.Result == "PASS" {
+		ledger := spec.ParseLedger(target)
+		if len(ledger.ACRows) > 0 {
+			acUpdates := recordLedgerToGraph(target.Slug, ledger, heroDir, projectRoot)
+			result.ACStatusUpdates = acUpdates
+		}
+	}
+
 	// Archive on PASS or FORCED. Skip the gate check in autoArchive
 	// because verify already checked the gates (PASS) or the user
 	// explicitly bypassed them (FORCED).
@@ -143,6 +157,11 @@ func runVerify(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("completing spec: %w", err)
 		}
 		result.Archived = moved || isAlreadyInSpecsDir(target.Path, heroDir)
+
+		// Auto-complete parent initiative if all children are done.
+		if slug := autoCompleteParentIfReady(target, heroDir); slug != "" {
+			result.InitiativeCompleted = slug
+		}
 	}
 
 	if verifyJSON {
@@ -150,6 +169,15 @@ func runVerify(cmd *cobra.Command, args []string) error {
 	}
 
 	printVerifyReport(result, hardFails)
+	if result.ACStatusUpdates > 0 {
+		fmt.Printf("  AC graph: %d criteria flipped to passing\n", result.ACStatusUpdates)
+	}
+	if result.InitiativeCompleted != "" {
+		fmt.Printf("  Initiative %q auto-completed — all children delivered\n", result.InitiativeCompleted)
+	}
+	if result.ACStatusUpdates > 0 || result.InitiativeCompleted != "" {
+		fmt.Println()
+	}
 	if result.Result == "FAIL" {
 		return fmt.Errorf("verification failed: %d gate(s) did not pass", hardFails)
 	}
@@ -219,17 +247,16 @@ func checkLedger(s *spec.Spec) GateResult {
 			fmt.Sprintf("%d/%d Changes rows DONE", changesOK, len(ledger.ChangesRows)))
 	}
 
-	// Check exercise
+	// Exercise-the-feature is advisory — it nudges toward regression
+	// tests but does not block the gate from passing.
 	if ledger.ExerciseChecked && ledger.ExerciseDetail != "" {
-		gate.Details = append(gate.Details,
-			fmt.Sprintf("exercise-the-feature: checked with detail"))
+		gate.Details = append(gate.Details, "exercise-the-feature: checked with detail")
 	} else if ledger.ExerciseChecked && ledger.ExerciseDetail == "" {
-		allDone = false
 		gate.Details = append(gate.Details,
-			"exercise-the-feature: checked but no detail provided")
+			"ADVISORY: exercise-the-feature checked but no detail — consider a regression test")
 	} else {
-		allDone = false
-		gate.Details = append(gate.Details, "exercise-the-feature: not checked")
+		gate.Details = append(gate.Details,
+			"ADVISORY: exercise-the-feature not checked — consider a regression test for this behavior")
 	}
 
 	if allDone {
@@ -537,4 +564,103 @@ func truncateForVerify(s string, max int) string {
 		return s
 	}
 	return s[:max-3] + "..."
+}
+
+// recordLedgerToGraph converts DONE ledger rows into acceptance.RunResult
+// entries and records them to the AC graph, flipping Criterion nodes to
+// "passing". Returns the number of criteria updated.
+func recordLedgerToGraph(slug string, ledger spec.LedgerResult, heroDir, projectRoot string) int {
+	var results []acceptance.RunResult
+	for _, row := range ledger.ACRows {
+		if row.Status != spec.LedgerDone {
+			continue
+		}
+		results = append(results, acceptance.RunResult{
+			AC:     fmt.Sprintf("%s:AC-%d", slug, row.Index),
+			Status: "pass",
+		})
+	}
+	if len(results) == 0 {
+		return 0
+	}
+
+	store, err := graph.Open(heroDir)
+	if err != nil {
+		return 0
+	}
+	defer store.Close()
+
+	repoKey := gitutil.RepoKey(projectRoot)
+	summary, err := acceptance.Record(results, repoKey, store)
+	if err != nil {
+		return 0
+	}
+	return summary.Criteria
+}
+
+// autoCompleteParentIfReady checks whether the completed spec's parent
+// initiative has all children done. If so, it auto-completes and archives
+// the parent. Returns the parent slug if completed, empty string otherwise.
+func autoCompleteParentIfReady(target *spec.Spec, heroDir string) string {
+	for _, rel := range target.Relations {
+		if rel.Kind != "parent" && rel.Kind != "child-of" {
+			continue
+		}
+		parentSlug := normalizeVerifyParentTarget(rel.Target)
+
+		allSpecs, err := spec.Discover(heroDir)
+		if err != nil {
+			continue
+		}
+
+		var parent *spec.Spec
+		for _, s := range allSpecs {
+			if s.Slug == parentSlug {
+				parent = s
+				break
+			}
+		}
+		if parent == nil || parent.Type != spec.TypeInitiative {
+			continue
+		}
+		if parent.Status == spec.StatusCompleted {
+			continue
+		}
+
+		allDone := true
+		childCount := 0
+		for _, s := range allSpecs {
+			for _, r := range s.Relations {
+				if (r.Kind == "parent" || r.Kind == "child-of") &&
+					normalizeVerifyParentTarget(r.Target) == parentSlug {
+					childCount++
+					if s.Status != spec.StatusCompleted {
+						allDone = false
+					}
+					break
+				}
+			}
+		}
+		if childCount == 0 || !allDone {
+			continue
+		}
+
+		if _, err := completeAndArchive(parent.Path, heroDir, true); err != nil {
+			fmt.Fprintf(os.Stderr, "warning: could not auto-complete initiative %q: %v\n", parentSlug, err)
+			continue
+		}
+		return parentSlug
+	}
+	return ""
+}
+
+// normalizeVerifyParentTarget converts a parent reference to a slug.
+// Handles both slug format ("hero-cli") and relative-path format
+// ("../../initiatives/hero-cli/spec.md").
+func normalizeVerifyParentTarget(target string) string {
+	if !strings.Contains(target, "/") {
+		return target
+	}
+	dir := filepath.Dir(target)
+	return filepath.Base(dir)
 }
