@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-12T01:47:28Z · projected from 322 source nodes_
+_Last refreshed: 2026-06-13T02:34:39Z · projected from 322 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | maturing | cmd/, internal/ | 2d ago | hero-workspace-not-self-describing |
+| core | maturing | cmd/, internal/ | 3d ago | hero-workspace-not-self-describing |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | maturing | domains/engineering/ | 20m ago | — |
-| domains/pm | concept | domains/pm/ | 24d ago | — |
-| domains/sales | maturing | domains/sales/ | 2d ago | — |
-| landing | building | web/landing/ | 10d ago | hero-landing-page |
+| domains/engineering | maturing | domains/engineering/ | 1d ago | — |
+| domains/pm | concept | domains/pm/ | 25d ago | — |
+| domains/sales | maturing | domains/sales/ | 3d ago | — |
+| landing | building | web/landing/ | 11d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 2d ago | agent-outposts |
+| serve | building | internal/serve/ | 3d ago | agent-outposts |
 | (unassigned) | — | — | — | 154 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -68,8 +68,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Open risks & blockers
 
 - **Blocked specs (10):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection).
-- **Stale-in-flight (3):** `agent-outposts` (24d), `hero-landing-page` (24d), `hero-team-server` (24d).
-- **Aged open bugs (7):** `hero-workspace-not-self-describing` (open 31d), `scan-enrichment-unbounded-loop` (open 31d), `scan-test-detection-misses-spock-vitest` (open 31d), `initiative-required-sections-drift` (open 26d), `spec-lifecycle-hygiene-breakdown` (open 25d), `claim-matches-sentinel-collision` (open 24d), `install-target-emits-both-claude-and-agents-md` (open 24d).
+- **Stale-in-flight (3):** `agent-outposts` (25d), `hero-landing-page` (25d), `hero-team-server` (25d).
+- **Aged open bugs (7):** `hero-workspace-not-self-describing` (open 32d), `scan-enrichment-unbounded-loop` (open 32d), `scan-test-detection-misses-spock-vitest` (open 32d), `initiative-required-sections-drift` (open 27d), `spec-lifecycle-hygiene-breakdown` (open 26d), `claim-matches-sentinel-collision` (open 25d), `install-target-emits-both-claude-and-agents-md` (open 25d).
 - **Unassigned specs (154) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health

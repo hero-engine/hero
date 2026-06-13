@@ -58,26 +58,6 @@ Prebuilt binaries for every OS/arch are attached to each release at
 Download the archive for your platform, extract `hero` (or `hero.exe`),
 and put it somewhere on your PATH.
 
-## Build from source
-
-The Hero source repository is private at the moment. If you have
-access:
-
-```bash
-git clone git@github.com:hero-engine/hero.git
-cd hero
-make install     # installs to ~/go/bin/
-```
-
-Requires **Go 1.21+**. Ensure `~/go/bin` is on your PATH:
-
-```bash
-export PATH="$HOME/go/bin:$PATH"
-```
-
-!!! tip
-    Add the export line to your `~/.zshrc` or `~/.bashrc` to make it permanent.
-
 ## Verify
 
 ```bash

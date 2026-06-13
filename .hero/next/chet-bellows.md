@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-12T04:34:01Z
+updated: 2026-06-12T19:28:57Z
 repo: hero-engine/hero
 ---
 
@@ -8,14 +8,12 @@ repo: hero-engine/hero
 
 ## Session goal
 
-> Session opened with — our website says MIT - i actually not sure about plan on releasing source code and having a license yet - can we clean that out ?
-> _possibly stale — 1 commit(s) since, last set 23h 12m ago_
-> _possibly stale — 1 commit(s) since, last set 40m ago_
+> Session opened with — how do we give chet bellows a bit more of an online presence - so he doens't look suspicious like a fake person?
+> ah yeah - we should like generate an avatar for him
 
 ## Last user ask
 
-> Deliver spec-completion-loop: wire Completion Ledger into AC graph, auto-complete initiatives when all children land, auto-invoke hero verify at delivery end, demote exercise-the-feature to advisory
-> _possibly stale — 1 commit(s) since, last set 45m ago_
+> ah yeah - we should like generate an avatar for him
 
 ## Suggested next prompt
 
