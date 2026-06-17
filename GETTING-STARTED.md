@@ -402,28 +402,31 @@ Generated/local files usually ignored:
 
 ## Quick Reference
 
-| I want to... | Run this |
-|---|---|
-| Warm up a session | `/resume` |
-| Preserve handoff state | `/handoff` |
-| Design a feature | `/design <description>` |
-| Diagnose a bug | `/diagnose <description>` |
-| Deliver work | `/deliver <spec-path-or-slug>` |
-| Route natural language | `/hero <request>` or `hero do "<request>"` |
-| Scan a repo | `/scan` or `hero scan` |
-| Search the corpus | `hero search "<query>"` |
-| Ask a question | `hero ask "<question>"` |
-| Get file-aware context | `hero relevant <paths>` |
-| See ready work | `hero queue --format kickoff` |
-| Create a spec from CLI | `hero spec new <slug>` |
-| Claim a spec | `hero spec claim <slug>` |
-| Verify a spec | `hero spec verify <slug>` |
-| Complete a spec | `hero spec complete <spec-path>` |
-| Find blockers | `hero blocked` |
-| Trace origins | `hero why <target>` |
-| Generate tests | `hero test generate <slug>` |
-| Record a demo | `hero spec demo record <slug>` |
-| Find high-churn undocumented areas | `hero suggest --top 10` |
-| Run headlessly | `hero agent run deliver <slug>` |
-| Validate docs | `hero docs check` |
-| Upgrade installed harness files | `hero upgrade` |
+Slash commands (`/name`) run inside AI tools (Claude Code, Cursor, etc.).
+CLI commands (`hero name`) run in the terminal. Some commands exist on both surfaces.
+
+| I want to... | Run this | Surface |
+|---|---|---|
+| Warm up a session | `/resume` | slash |
+| Preserve handoff state | `/handoff` | slash |
+| Design a feature | `/design <description>` | both |
+| Diagnose a bug | `/diagnose <description>` | both |
+| Deliver work | `/deliver <spec-path-or-slug>` | both |
+| Route natural language | `/hero <request>` or `hero do "<request>"` | both |
+| Scan a repo | `/scan` or `hero scan` | both |
+| Search the corpus | `hero search "<query>"` | CLI |
+| Ask a question | `hero ask "<question>"` | CLI |
+| Get file-aware context | `hero relevant <paths>` | CLI |
+| See ready work | `hero queue --format kickoff` | CLI |
+| Create a spec from CLI | `hero spec new <slug>` | CLI |
+| Claim a spec | `hero spec claim <slug>` | CLI |
+| Verify a spec | `hero spec verify <slug>` | CLI |
+| Complete a spec | `hero spec complete <spec-path>` | CLI |
+| Find blockers | `hero blocked` | CLI |
+| Trace origins | `hero why <target>` | CLI |
+| Generate tests | `hero test generate <slug>` | CLI |
+| Record a demo | `hero spec demo record <slug>` | CLI |
+| Find high-churn undocumented areas | `hero suggest --top 10` | CLI |
+| Run headlessly | `hero agent run deliver <slug>` | CLI |
+| Validate docs | `hero docs check` | CLI |
+| Upgrade installed harness files | `hero upgrade` | CLI |

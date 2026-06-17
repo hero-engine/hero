@@ -10,7 +10,7 @@ and issue management commands to keep delivery on track.
 Plans a sprint by selecting and sequencing specs from a backlog or initiative.
 Delegated to the **feature-delivery-lead**.
 
-```bash
+```text
 # Plan from an initiative
 /sprint team-permissions
 
@@ -117,7 +117,7 @@ hero spec claims
 Runs a retrospective comparing a completed spec against what was actually
 implemented. Routes to the appropriate delivery lead based on work type.
 
-```bash
+```text
 # Retro on a completed spec
 /retro team-permissions
 

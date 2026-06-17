@@ -11,7 +11,7 @@ project knowledge.
 Analyzes a codebase pattern and produces a convention spec documenting the
 canonical approach. Delegated to the **convention-author** agent.
 
-```bash
+```text
 # Document an existing pattern
 /convention error handling in API handlers
 
@@ -40,7 +40,7 @@ Saves the current conversation as a note in the knowledge base. Use this for
 brainstorms, design explorations, debugging sessions, and architecture
 discussions.
 
-```bash
+```text
 # Capture with a topic
 /note auth flow brainstorm
 
@@ -64,7 +64,7 @@ Reviews the current session and identifies knowledge worth persisting. Unlike
 `/note` (which captures conversation), `/capture` extracts **insights** —
 conventions discovered, decisions made, gotchas found, and rules established.
 
-```bash
+```text
 /capture
 ```
 
@@ -98,7 +98,7 @@ For each learning, `/capture`:
 Scans the codebase to detect the technology stack and generates initial
 knowledge base entries — project overview, conventions, rules, and context.
 
-```bash
+```text
 # Preview what will be detected
 /scan --dry-run
 
@@ -128,7 +128,7 @@ Generated entries include:
 Runs a workspace health check covering convention compliance, stale specs, and
 project hygiene.
 
-```bash
+```text
 # General health check
 /check
 
@@ -162,7 +162,7 @@ Routes documentation requests to the appropriate specialist:
 | Project context, `AGENTS.md`, repo instructions | `project-context-builder` |
 | Technical docs, API docs, operational docs | `documentation-engineer` |
 
-```bash
+```text
 # Update project context
 /docs update AGENTS.md with the new authentication flow
 
