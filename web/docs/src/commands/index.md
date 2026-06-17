@@ -86,6 +86,11 @@ plain natural-language asks are routed to these same workflows.
 
 ## Notes
 
+- **Slash commands run inside your AI tool only.** They are not `hero <name>`
+  terminal commands. Only a subset have CLI equivalents: `/check`, `/deliver`,
+  `/design`, `/diagnose`, `/docs`, `/handoff`, `/import`, `/note`, `/scan`,
+  `/sprint`, `/why`. All other slash commands (e.g. `/discover`, `/convention`,
+  `/review`, `/mock`) exist only in the AI tool.
 - `/prime` remains in older installed content as a session-start helper,
   but `/resume` is the current graph-backed warm-start workflow.
 - CLI spec operations live under `hero spec ...`; for example

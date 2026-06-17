@@ -15,7 +15,7 @@ The agent walks through product context, goals, and pain points, then proposes
 and evaluates feature ideas to produce a prioritized list of work items ready
 for `/design`.
 
-```bash
+```text
 # Open-ended exploration
 /discover
 
@@ -44,7 +44,7 @@ Hero automatically selects the right lead:
 | Product features, user-facing enhancements | `feature-delivery-lead` |
 | Migrations, refactors, platform changes | `platform-delivery-lead` |
 
-```bash
+```text
 # Feature spec
 /design add CSV export to the analytics dashboard
 
@@ -78,7 +78,7 @@ The workflow has two phases:
 2. The appropriate **delivery lead** produces an initiative spec at
    `.hero/planning/initiatives/{slug}/spec.md` containing child spec stubs
 
-```bash
+```text
 # Product initiative
 /compose rebuild the permissions system to support team-based access control
 
@@ -109,7 +109,7 @@ Generates self-contained HTML mockups from a spec or free-text description
 using the **ui-designer** agent. No external dependencies — just a single
 `index.html` with embedded CSS and inline JS.
 
-```bash
+```text
 # From a spec
 /mock team-permissions-ui
 
@@ -141,7 +141,7 @@ domain-specific architects:
 | Existing system constraints | `brownfield-architect` |
 | New system or subsystem design | `greenfield-architect` |
 
-```bash
+```text
 # Technology choice
 /decide should we use SQLite or PostgreSQL for the knowledge base
 
@@ -162,7 +162,7 @@ recommendation, rationale, tradeoff analysis, and consequences.
 Decomposes a spec that's too large for a single delivery into smaller,
 independently deliverable child specs. Routes to the appropriate delivery lead.
 
-```bash
+```text
 # Split by slug
 /split team-permissions
 

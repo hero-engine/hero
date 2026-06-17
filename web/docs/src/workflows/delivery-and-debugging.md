@@ -67,7 +67,7 @@ hero spec verify csv-export-reports --json
     check. Use `hero spec verify` — it's the only path to `completed` that produces
     a durable audit record and triggers archiving.
 
-```bash
+```text
 # Deliver by slug
 /deliver team-permissions-rbac
 
@@ -123,7 +123,7 @@ After the quality gate passes, the **delivery lead**:
 5. Saves the fix spec
 6. Posts a summary comment and attaches the report to the tracker
 
-```bash
+```text
 # Diagnose by slug
 /diagnose cart-total-rounding-bug
 

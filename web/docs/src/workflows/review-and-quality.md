@@ -23,7 +23,7 @@ of review needed.
 | `test-architect` | Test strategy, coverage gaps, test design |
 | `dependency-analyst` | Dependency health, vulnerabilities, license risks |
 
-```bash
+```text
 # PR review (most common)
 /review PR #42
 
@@ -72,7 +72,7 @@ Each scrubber follows the same four-step process:
 3. **Implement** — fix high-confidence issues automatically
 4. **Verify** — run the build and tests to confirm nothing broke
 
-```bash
+```text
 # Scrub a single concern
 /scrub dead-code
 
