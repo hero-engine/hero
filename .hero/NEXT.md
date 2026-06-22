@@ -5,7 +5,7 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-06-22T01:04:31Z
+updated: 2026-06-22T04:19:53Z
 repo: hero-engine/hero
 branch: deliver/verify-slug-resolution-hints
 ---
@@ -17,6 +17,10 @@ Run `git log --oneline -10` for recent commits.
 ## Next
 
 No open features in this repo.
+
+## Roadmap shape
+
+1 spec has size drift — run /roadmap-review to triage
 
 ## Blocked on
 
