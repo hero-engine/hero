@@ -5,7 +5,7 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-06-22T04:19:53Z
+updated: 2026-06-22T04:22:29Z
 repo: hero-engine/hero
 branch: deliver/verify-slug-resolution-hints
 ---

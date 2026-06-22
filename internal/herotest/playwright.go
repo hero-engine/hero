@@ -183,14 +183,20 @@ func resolveBaseURL(cfg *config.TestingConfig) string {
 }
 
 // mapCriterionToAssertion maps a natural-language criterion to Playwright assertion code.
+// It delegates keyword classification to the shared ClassifyAssertion and then renders
+// Playwright-specific code from the returned hint.
 func mapCriterionToAssertion(criterion string, baseURL string) string {
-	lower := strings.ToLower(criterion)
+	hint := ClassifyAssertion(criterion)
+	return renderPlaywrightAssertion(hint, baseURL)
+}
 
+// renderPlaywrightAssertion emits Playwright assertion code from an AssertionHint.
+func renderPlaywrightAssertion(hint AssertionHint, baseURL string) string {
 	var b strings.Builder
 
-	switch {
-	case containsAny(lower, "url", "navigate to", "redirect", "route"):
-		b.WriteString(fmt.Sprintf("    // Criterion: %s\n", criterion))
+	switch hint.Kind {
+	case "url":
+		b.WriteString(fmt.Sprintf("    // Criterion: %s\n", hint.Criterion))
 		if baseURL != "" {
 			b.WriteString(fmt.Sprintf("    await expect(page).toHaveURL(/%s/);\n", escapeRegex(baseURL)))
 		} else {
@@ -198,59 +204,57 @@ func mapCriterionToAssertion(criterion string, baseURL string) string {
 			b.WriteString("    // await expect(page).toHaveURL(/expected-path/);\n")
 		}
 
-	case containsAny(lower, "title"):
-		b.WriteString(fmt.Sprintf("    // Criterion: %s\n", criterion))
+	case "title":
+		b.WriteString(fmt.Sprintf("    // Criterion: %s\n", hint.Criterion))
 		b.WriteString("    // TODO: specify expected title\n")
 		b.WriteString("    // await expect(page).toHaveTitle(/Expected Title/);\n")
 
-	case containsAny(lower, "visible", "display", "show", "appear", "render"):
-		b.WriteString(fmt.Sprintf("    // Criterion: %s\n", criterion))
-		selector := extractSelector(criterion)
-		if selector != "" {
-			b.WriteString(fmt.Sprintf("    await expect(page.locator('%s')).toBeVisible();\n", selector))
+	case "visible":
+		b.WriteString(fmt.Sprintf("    // Criterion: %s\n", hint.Criterion))
+		if hint.Selector != "" {
+			b.WriteString(fmt.Sprintf("    await expect(page.locator('%s')).toBeVisible();\n", hint.Selector))
 		} else {
 			b.WriteString("    // TODO: specify element selector\n")
 			b.WriteString("    // await expect(page.locator('.element')).toBeVisible();\n")
 		}
 
-	case containsAny(lower, "text", "contain", "message", "label"):
-		b.WriteString(fmt.Sprintf("    // Criterion: %s\n", criterion))
-		textSnippet := extractQuotedText(criterion)
-		if textSnippet != "" {
-			b.WriteString(fmt.Sprintf("    await expect(page.locator('body')).toContainText('%s');\n", escapeTS(textSnippet)))
+	case "text_contains":
+		b.WriteString(fmt.Sprintf("    // Criterion: %s\n", hint.Criterion))
+		if hint.QuotedText != "" {
+			b.WriteString(fmt.Sprintf("    await expect(page.locator('body')).toContainText('%s');\n", escapeTS(hint.QuotedText)))
 		} else {
 			b.WriteString("    // TODO: specify expected text\n")
 			b.WriteString("    // await expect(page.locator('.element')).toContainText('expected');\n")
 		}
 
-	case containsAny(lower, "count", "number of", "items", "results"):
-		b.WriteString(fmt.Sprintf("    // Criterion: %s\n", criterion))
+	case "count":
+		b.WriteString(fmt.Sprintf("    // Criterion: %s\n", hint.Criterion))
 		b.WriteString("    // TODO: specify selector and expected count\n")
 		b.WriteString("    // await expect(page.locator('.item')).toHaveCount(N);\n")
 
-	case containsAny(lower, "input", "value", "field", "form"):
-		b.WriteString(fmt.Sprintf("    // Criterion: %s\n", criterion))
+	case "input":
+		b.WriteString(fmt.Sprintf("    // Criterion: %s\n", hint.Criterion))
 		b.WriteString("    // TODO: specify input selector and expected value\n")
 		b.WriteString("    // await expect(page.locator('input[name=\"field\"]')).toHaveValue('expected');\n")
 
-	case containsAny(lower, "click", "button", "press", "submit"):
-		b.WriteString(fmt.Sprintf("    // Criterion: %s\n", criterion))
+	case "click":
+		b.WriteString(fmt.Sprintf("    // Criterion: %s\n", hint.Criterion))
 		b.WriteString("    // TODO: specify button/element to click and expected result\n")
 		b.WriteString("    // await page.click('button[type=\"submit\"]');\n")
 		b.WriteString("    // await expect(page).toHaveURL(/success/);\n")
 
-	case containsAny(lower, "error", "fail", "invalid", "reject"):
-		b.WriteString(fmt.Sprintf("    // Criterion: %s\n", criterion))
+	case "error":
+		b.WriteString(fmt.Sprintf("    // Criterion: %s\n", hint.Criterion))
 		b.WriteString("    // TODO: trigger error condition and verify error message\n")
 		b.WriteString("    // await expect(page.locator('.error')).toBeVisible();\n")
 
-	case containsAny(lower, "json", "output", "return"):
-		b.WriteString(fmt.Sprintf("    // Criterion: %s\n", criterion))
+	case "output":
+		b.WriteString(fmt.Sprintf("    // Criterion: %s\n", hint.Criterion))
 		b.WriteString("    // TODO: verify output/response content\n")
 		b.WriteString("    // await expect(page.locator('[data-testid=\"output\"]')).toContainText('expected');\n")
 
 	default:
-		b.WriteString(fmt.Sprintf("    // Criterion: %s\n", criterion))
+		b.WriteString(fmt.Sprintf("    // Criterion: %s\n", hint.Criterion))
 		b.WriteString("    // TODO: implement assertion for this criterion\n")
 		b.WriteString("    test.skip();\n")
 	}
@@ -258,51 +262,6 @@ func mapCriterionToAssertion(criterion string, baseURL string) string {
 	return b.String()
 }
 
-// containsAny checks if s contains any of the given substrings.
-func containsAny(s string, substrs ...string) bool {
-	for _, sub := range substrs {
-		if strings.Contains(s, sub) {
-			return true
-		}
-	}
-	return false
-}
-
-// extractSelector attempts to extract a CSS selector hint from criterion text.
-// Looks for backtick-delimited strings that look like selectors.
-func extractSelector(criterion string) string {
-	start := strings.Index(criterion, "`")
-	if start < 0 {
-		return ""
-	}
-	end := strings.Index(criterion[start+1:], "`")
-	if end < 0 {
-		return ""
-	}
-	candidate := criterion[start+1 : start+1+end]
-	// Basic heuristic: if it looks like a CSS selector or HTML element
-	if strings.HasPrefix(candidate, ".") || strings.HasPrefix(candidate, "#") ||
-		strings.HasPrefix(candidate, "[") || strings.Contains(candidate, "-") {
-		return candidate
-	}
-	return ""
-}
-
-// extractQuotedText extracts text within single or double quotes.
-func extractQuotedText(criterion string) string {
-	for _, q := range []string{"\"", "'"} {
-		start := strings.Index(criterion, q)
-		if start < 0 {
-			continue
-		}
-		end := strings.Index(criterion[start+1:], q)
-		if end < 0 {
-			continue
-		}
-		return criterion[start+1 : start+1+end]
-	}
-	return ""
-}
 
 // escapeTS escapes characters that would break a TypeScript string literal.
 func escapeTS(s string) string {

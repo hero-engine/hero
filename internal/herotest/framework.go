@@ -79,6 +79,87 @@ func ExtractCriteria(s *spec.Spec) []string {
 	return criteria
 }
 
+// NameStyle controls how test function names are formatted per framework convention.
+type NameStyle int
+
+const (
+	// NameStyleRaw lowercases and strips special chars (JS/Playwright convention).
+	NameStyleRaw NameStyle = iota
+	// NameStylePascal produces TestUserCanLogIn (Go convention).
+	NameStylePascal
+	// NameStyleCamel produces testUserCanLogIn (Swift/XCTest convention).
+	NameStyleCamel
+	// NameStyleSnake produces test_user_can_log_in (Python/pytest convention).
+	NameStyleSnake
+)
+
+// FormatTestName converts a criterion string to a test function name in the given style.
+func FormatTestName(criterion string, style NameStyle) string {
+	if style == NameStyleRaw {
+		return CriterionToTestName(criterion)
+	}
+
+	// Clean the criterion: remove backticks, quotes, and non-alphanumeric/space chars.
+	cleaned := strings.Map(func(r rune) rune {
+		if r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == ' ' {
+			return r
+		}
+		return ' '
+	}, criterion)
+
+	// Split into words, dropping empty entries from consecutive spaces.
+	words := strings.Fields(cleaned)
+	if len(words) == 0 {
+		switch style {
+		case NameStylePascal:
+			return "Test"
+		case NameStyleSnake:
+			return "test"
+		default:
+			return "test"
+		}
+	}
+
+	switch style {
+	case NameStylePascal:
+		// "user can log in" -> "TestUserCanLogIn"
+		var b strings.Builder
+		b.WriteString("Test")
+		for _, w := range words {
+			b.WriteString(titleWord(w))
+		}
+		return b.String()
+
+	case NameStyleCamel:
+		// "user can log in" -> "testUserCanLogIn"
+		var b strings.Builder
+		b.WriteString("test")
+		for _, w := range words {
+			b.WriteString(titleWord(w))
+		}
+		return b.String()
+
+	case NameStyleSnake:
+		// "user can log in" -> "test_user_can_log_in"
+		var lower []string
+		for _, w := range words {
+			lower = append(lower, strings.ToLower(w))
+		}
+		return "test_" + strings.Join(lower, "_")
+
+	default:
+		return CriterionToTestName(criterion)
+	}
+}
+
+// titleWord capitalises the first letter of a word, lowercases the rest.
+func titleWord(w string) string {
+	if w == "" {
+		return ""
+	}
+	return strings.ToUpper(w[:1]) + strings.ToLower(w[1:])
+}
+
 // CriterionToTestName converts a criterion string to a concise test name.
 func CriterionToTestName(criterion string) string {
 	// Lowercase, trim, limit length
