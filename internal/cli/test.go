@@ -22,8 +22,9 @@ var testCmd = &cobra.Command{
 // ---------- test generate ----------
 
 var (
-	testGenerateAll  bool
-	testGenerateMode string
+	testGenerateAll       bool
+	testGenerateMode      string
+	testGenerateFramework string
 )
 
 var testGenerateCmd = &cobra.Command{
@@ -64,6 +65,7 @@ var testShowCmd = &cobra.Command{
 func init() {
 	testGenerateCmd.Flags().BoolVar(&testGenerateAll, "all", false, "generate tests for all delivering/completed specs")
 	testGenerateCmd.Flags().StringVar(&testGenerateMode, "mode", "", "override generation mode (agent, assisted, autonomous)")
+	testGenerateCmd.Flags().StringVar(&testGenerateFramework, "framework", "", "override test framework (playwright, xctest, go, vitest, jest, pytest)")
 
 	testRunCmd.Flags().BoolVar(&testRunAll, "all", false, "run tests for all specs with test files")
 
@@ -78,6 +80,14 @@ func runTestGenerate(cmd *cobra.Command, args []string) error {
 	cfg, err := config.Load(projectRoot)
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)
+	}
+
+	// Override framework from CLI flag if set
+	if testGenerateFramework != "" {
+		if cfg.Testing == nil {
+			cfg.Testing = &config.TestingConfig{}
+		}
+		cfg.Testing.Framework = testGenerateFramework
 	}
 
 	heroDir := cfg.HeroDir(projectRoot)
@@ -188,48 +198,68 @@ func runAllTests(projectRoot string, cfg config.Config) error {
 		return fmt.Errorf("discovering specs: %w", err)
 	}
 
-	var testFiles []string
+	type frameworkGroup struct {
+		name  string
+		files []string
+	}
+	groups := map[string]*frameworkGroup{}
+
 	for _, s := range specs {
-		if herotest.TestFileExists(projectRoot, s.Slug, cfg.Testing) {
-			testFiles = append(testFiles, herotest.TestFilePath(s.Slug, cfg.Testing))
+		if !herotest.TestFileExists(projectRoot, s.Slug, cfg.Testing) {
+			continue
+		}
+		cmd, args, err := herotest.RunArgs(s.Slug, cfg.Testing)
+		if err != nil {
+			continue
+		}
+		key := cmd + " " + strings.Join(args[:len(args)-1], " ")
+		fw := herotest.TestFilePath(s.Slug, cfg.Testing)
+		if g, ok := groups[key]; ok {
+			g.files = append(g.files, fw)
+		} else {
+			fwName := "unknown"
+			if cfg.Testing != nil && cfg.Testing.Framework != "" {
+				fwName = cfg.Testing.Framework
+			} else if detected, dErr := herotest.Detect(projectRoot); dErr == nil && detected != "" {
+				fwName = detected
+			}
+			groups[key] = &frameworkGroup{name: fwName, files: []string{fw}}
 		}
 	}
 
-	if len(testFiles) == 0 {
+	if len(groups) == 0 {
 		fmt.Println("No test files found. Run: hero test generate --all")
 		return nil
 	}
 
-	// Run all test files in a single Playwright invocation
-	frameworkName := "playwright"
-	if cfg.Testing != nil {
-		frameworkName = cfg.Testing.FrameworkOrDefault()
-	}
+	var failures []string
+	for _, g := range groups {
+		if len(g.files) == 0 {
+			continue
+		}
+		cmd, args, err := herotest.RunArgs(
+			strings.TrimSuffix(filepath.Base(g.files[0]), filepath.Ext(g.files[0])),
+			cfg.Testing,
+		)
+		if err != nil {
+			failures = append(failures, fmt.Sprintf("%s: %v", g.name, err))
+			continue
+		}
+		fmt.Printf("Running %d test file(s) with %s...\n\n", len(g.files), g.name)
 
-	runner := "npx"
-	args := []string{"playwright", "test"}
-	if cfg.Testing != nil && cfg.Testing.RunnerCommand != "" {
-		parts := strings.Fields(cfg.Testing.RunnerCommand)
-		if len(parts) > 0 {
-			runner = parts[0]
-			args = parts[1:]
+		c := exec.Command(cmd, args...)
+		c.Dir = projectRoot
+		c.Stdout = os.Stdout
+		c.Stderr = os.Stderr
+		c.Stdin = os.Stdin
+
+		if err := c.Run(); err != nil {
+			failures = append(failures, fmt.Sprintf("%s: %v", g.name, err))
 		}
 	}
-	args = append(args, testFiles...)
-	if cfg.Testing != nil && cfg.Testing.ConfigPath != "" {
-		args = append(args, "--config", cfg.Testing.ConfigPath)
-	}
 
-	fmt.Printf("Running %d test file(s) with %s...\n\n", len(testFiles), frameworkName)
-
-	c := exec.Command(runner, args...)
-	c.Dir = projectRoot
-	c.Stdout = os.Stdout
-	c.Stderr = os.Stderr
-	c.Stdin = os.Stdin
-
-	if err := c.Run(); err != nil {
-		return fmt.Errorf("tests failed: %w", err)
+	if len(failures) > 0 {
+		return fmt.Errorf("tests failed:\n  %s", strings.Join(failures, "\n  "))
 	}
 	return nil
 }

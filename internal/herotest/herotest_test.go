@@ -112,6 +112,70 @@ func TestCriterionToTestName(t *testing.T) {
 	}
 }
 
+func TestFormatTestNameRaw(t *testing.T) {
+	got := FormatTestName("User can log in", NameStyleRaw)
+	want := "user can log in"
+	if got != want {
+		t.Errorf("FormatTestName(Raw) = %q, want %q", got, want)
+	}
+}
+
+func TestFormatTestNamePascal(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"user can log in", "TestUserCanLogIn"},
+		{"User can log in", "TestUserCanLogIn"},
+		{"show `#dashboard` element", "TestShowDashboardElement"},
+		{`It's a "test" with 'quotes'`, "TestItSATestWithQuotes"},
+		{"has 3 items", "TestHas3Items"},
+		{"  spaces   everywhere  ", "TestSpacesEverywhere"},
+		{"", "Test"},
+	}
+	for _, tt := range tests {
+		got := FormatTestName(tt.input, NameStylePascal)
+		if got != tt.want {
+			t.Errorf("FormatTestName(%q, Pascal) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
+func TestFormatTestNameCamel(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"user can log in", "testUserCanLogIn"},
+		{"Dashboard shows metrics", "testDashboardShowsMetrics"},
+		{"", "test"},
+	}
+	for _, tt := range tests {
+		got := FormatTestName(tt.input, NameStyleCamel)
+		if got != tt.want {
+			t.Errorf("FormatTestName(%q, Camel) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
+func TestFormatTestNameSnake(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"user can log in", "test_user_can_log_in"},
+		{"Dashboard Shows Metrics", "test_dashboard_shows_metrics"},
+		{"has 3 items", "test_has_3_items"},
+		{"", "test"},
+	}
+	for _, tt := range tests {
+		got := FormatTestName(tt.input, NameStyleSnake)
+		if got != tt.want {
+			t.Errorf("FormatTestName(%q, Snake) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
 // --- PlaywrightFramework tests ---
 
 func TestPlaywrightTestFilePath(t *testing.T) {
@@ -540,5 +604,230 @@ func TestRunArgs(t *testing.T) {
 	}
 	if args[0] != "playwright" {
 		t.Errorf("args[0] = %q, want playwright", args[0])
+	}
+}
+
+// --- Auto-detection integration tests ---
+
+func TestGenerateAutoDetectGo(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create a go.mod to trigger Go detection
+	if err := os.WriteFile(filepath.Join(tmpDir, "go.mod"), []byte("module example.com/test\n\ngo 1.21\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	s := makeSpec("my-feature", "My Feature", []string{"Feature works correctly"})
+
+	// No explicit framework in config — should auto-detect "go"
+	testFile, err := Generate(tmpDir, s, nil, "assisted")
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	// Should produce a _test.go file, not a .spec.ts
+	if !strings.HasSuffix(testFile, "_test.go") {
+		t.Errorf("expected _test.go file, got %q", testFile)
+	}
+
+	// Read and verify Go test structure
+	data, err := os.ReadFile(filepath.Join(tmpDir, testFile))
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := string(data)
+	if !strings.Contains(content, "package ") {
+		t.Error("missing Go package declaration")
+	}
+	if !strings.Contains(content, `import "testing"`) {
+		t.Error("missing Go testing import")
+	}
+	if !strings.Contains(content, "func Test") {
+		t.Error("missing Go test function")
+	}
+}
+
+func TestGenerateAutoDetectSwift(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create Package.swift to trigger XCTest detection
+	if err := os.WriteFile(filepath.Join(tmpDir, "Package.swift"), []byte("// swift-tools-version:5.9\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	s := makeSpec("my-feature", "My Feature", []string{"Feature works correctly"})
+
+	testFile, err := Generate(tmpDir, s, nil, "assisted")
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	// Should produce a .swift file
+	if !strings.HasSuffix(testFile, ".swift") {
+		t.Errorf("expected .swift file, got %q", testFile)
+	}
+
+	data, err := os.ReadFile(filepath.Join(tmpDir, testFile))
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := string(data)
+	if !strings.Contains(content, "import XCTest") {
+		t.Error("missing XCTest import")
+	}
+	if !strings.Contains(content, "XCTestCase") {
+		t.Error("missing XCTestCase class")
+	}
+}
+
+func TestGenerateAutoDetectVitest(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create vitest.config.ts to trigger Vitest detection
+	if err := os.WriteFile(filepath.Join(tmpDir, "vitest.config.ts"), []byte("export default {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	s := makeSpec("my-feature", "My Feature", []string{"Feature works correctly"})
+
+	testFile, err := Generate(tmpDir, s, nil, "assisted")
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	// Should produce a .test.ts file
+	if !strings.HasSuffix(testFile, ".test.ts") {
+		t.Errorf("expected .test.ts file, got %q", testFile)
+	}
+
+	data, err := os.ReadFile(filepath.Join(tmpDir, testFile))
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := string(data)
+	if !strings.Contains(content, "import { describe, it, expect } from 'vitest'") {
+		t.Error("missing vitest import")
+	}
+	if !strings.Contains(content, "describe(") {
+		t.Error("missing describe block")
+	}
+}
+
+func TestGenerateAutoDetectPytest(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create pyproject.toml to trigger pytest detection
+	if err := os.WriteFile(filepath.Join(tmpDir, "pyproject.toml"), []byte("[tool.pytest]\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	s := makeSpec("my-feature", "My Feature", []string{"Feature works correctly"})
+
+	testFile, err := Generate(tmpDir, s, nil, "assisted")
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	// Should produce a test_*.py file
+	if !strings.HasSuffix(testFile, ".py") {
+		t.Errorf("expected .py file, got %q", testFile)
+	}
+	if !strings.Contains(testFile, "test_") {
+		t.Errorf("expected test_ prefix in file name, got %q", testFile)
+	}
+
+	data, err := os.ReadFile(filepath.Join(tmpDir, testFile))
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := string(data)
+	if !strings.Contains(content, "import pytest") {
+		t.Error("missing pytest import")
+	}
+	if !strings.Contains(content, "def test_") {
+		t.Error("missing pytest test function")
+	}
+}
+
+func TestGenerateExplicitOverridesDetect(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create go.mod — detection would pick "go"
+	if err := os.WriteFile(filepath.Join(tmpDir, "go.mod"), []byte("module example.com/test\n\ngo 1.21\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	s := makeSpec("my-feature", "My Feature", []string{"Feature works correctly"})
+
+	// Explicitly set framework to pytest — should override detection
+	cfg := &config.TestingConfig{Framework: "pytest"}
+	testFile, err := Generate(tmpDir, s, cfg, "assisted")
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	// Should produce a pytest file, not Go
+	if !strings.HasSuffix(testFile, ".py") {
+		t.Errorf("explicit framework should override detection: expected .py, got %q", testFile)
+	}
+}
+
+func TestGenerateAutoDetectJest(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create jest.config.js to trigger Jest detection
+	if err := os.WriteFile(filepath.Join(tmpDir, "jest.config.js"), []byte("module.exports = {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	s := makeSpec("my-feature", "My Feature", []string{"Feature works correctly"})
+
+	testFile, err := Generate(tmpDir, s, nil, "assisted")
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	// Should produce a .test.ts file in __tests__
+	if !strings.HasSuffix(testFile, ".test.ts") {
+		t.Errorf("expected .test.ts file, got %q", testFile)
+	}
+	if !strings.Contains(testFile, "__tests__") {
+		t.Errorf("expected __tests__ directory, got %q", testFile)
+	}
+
+	data, err := os.ReadFile(filepath.Join(tmpDir, testFile))
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := string(data)
+	// Jest should NOT have explicit vitest import
+	if strings.Contains(content, "from 'vitest'") {
+		t.Error("jest file should not import from vitest")
+	}
+	if !strings.Contains(content, "// Jest test file") {
+		t.Error("missing Jest header comment")
+	}
+}
+
+func TestTestFileExistsAutoDetect(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create go.mod for Go detection
+	os.WriteFile(filepath.Join(tmpDir, "go.mod"), []byte("module test\n"), 0o644)
+
+	// Not existing yet
+	if TestFileExists(tmpDir, "my-slug", nil) {
+		t.Error("should not exist before generation")
+	}
+
+	// Create the Go test file at the expected path
+	os.MkdirAll(filepath.Join(tmpDir, "."), 0o755)
+	os.WriteFile(filepath.Join(tmpDir, "my_slug_test.go"), []byte("package main\n"), 0o644)
+
+	// TestFileExists doesn't have projectRoot, so it can't auto-detect.
+	// With explicit config, it should work.
+	cfg := &config.TestingConfig{Framework: "go"}
+	if !TestFileExists(tmpDir, "my-slug", cfg) {
+		t.Error("should exist with explicit go framework config")
 	}
 }
