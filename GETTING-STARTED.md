@@ -402,8 +402,8 @@ Generated/local files usually ignored:
 
 ## Quick Reference
 
-Slash commands (`/name`) run inside AI tools (Claude Code, Cursor, etc.).
-CLI commands (`hero name`) run in the terminal. Some commands exist on both surfaces.
+Slash commands (`/<name>`) run inside AI tools (Claude Code, Cursor, etc.).
+CLI commands (`hero <name>`) run in the terminal. Some commands exist on both surfaces.
 
 | I want to... | Run this | Surface |
 |---|---|---|
