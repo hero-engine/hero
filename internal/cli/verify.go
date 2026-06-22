@@ -83,14 +83,11 @@ func runVerify(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("discovering specs: %w", err)
 	}
 
-	var target *spec.Spec
-	for _, s := range specs {
-		if s.Slug == args[0] {
-			target = s
-			break
-		}
-	}
+	target, hint := spec.ResolveOrHint(args[0], specs)
 	if target == nil {
+		if hint != "" {
+			return fmt.Errorf("%s", hint)
+		}
 		return fmt.Errorf("spec %q not found", args[0])
 	}
 

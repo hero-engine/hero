@@ -179,3 +179,5 @@
 {"ts":"2026-06-11T02:30:51.171968Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"landing-docs-content-refresh","message":"status -\u003e completed"}
 {"ts":"2026-06-12T01:26:51.138647Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"spec-completion-loop","message":"\"Spec Completion Loop — Ledger-to-Graph Writeback, Initiative Auto-Complete, and Verify Auto-Invoke\""}
 {"ts":"2026-06-12T01:26:51.138728Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"spec-completion-loop","message":"status -\u003e completed"}
+{"ts":"2026-06-22T01:03:27.129433Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"verify-slug-resolution-hints","message":"\"Helpful spec-not-found errors for hero spec verify\""}
+{"ts":"2026-06-22T01:03:27.129511Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"verify-slug-resolution-hints","message":"status -\u003e completed"}
