@@ -681,3 +681,54 @@ slug: mismatch-test
 		}
 	}
 }
+
+// verifyInitiativeWithChild is an initiative spec whose Children table lists an
+// unmaterialized child (no spec.md on disk for it).
+const verifyInitiativeWithChild = `---
+title: Retrieval Quality
+type: initiative
+status: delivering
+slug: retrieval-quality
+---
+# Retrieval Quality
+
+## Children
+
+| Slug | Title | Priority |
+|---|---|---|
+| configurable-reranking | Configurable reranking | P1 |
+| query-expansion | Query expansion | P1 |
+`
+
+func TestVerify_UnmaterializedInitiativeChild(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("planning/initiatives/retrieval-quality/spec.md", verifyInitiativeWithChild)
+	env.indexAll()
+
+	_, err := runCmd("spec", "verify", "--skip-tests", "configurable-reranking")
+	if err == nil {
+		t.Fatal("expected verify to error on unmaterialized child slug")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "retrieval-quality") {
+		t.Errorf("error %q should name the owning initiative", msg)
+	}
+	if !strings.Contains(msg, "/design") {
+		t.Errorf("error %q should direct the user to /design", msg)
+	}
+}
+
+func TestVerify_NoSignalBareMessage(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("planning/initiatives/retrieval-quality/spec.md", verifyInitiativeWithChild)
+	env.indexAll()
+
+	_, err := runCmd("spec", "verify", "--skip-tests", "totally-unrelated-xyz")
+	if err == nil {
+		t.Fatal("expected verify to error on unknown slug")
+	}
+	want := `spec "totally-unrelated-xyz" not found`
+	if err.Error() != want {
+		t.Errorf("error = %q, want exactly %q", err.Error(), want)
+	}
+}

@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-13T02:34:39Z · projected from 322 source nodes_
+_Last refreshed: 2026-06-22T01:04:32Z · projected from 323 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | maturing | cmd/, internal/ | 3d ago | hero-workspace-not-self-describing |
+| core | maturing | cmd/, internal/ | 1m ago | hero-workspace-not-self-describing |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | maturing | domains/engineering/ | 1d ago | — |
-| domains/pm | concept | domains/pm/ | 25d ago | — |
-| domains/sales | maturing | domains/sales/ | 3d ago | — |
-| landing | building | web/landing/ | 11d ago | hero-landing-page |
+| domains/engineering | maturing | domains/engineering/ | 9d ago | — |
+| domains/pm | concept | domains/pm/ | 34d ago | — |
+| domains/sales | maturing | domains/sales/ | 12d ago | — |
+| landing | building | web/landing/ | 20d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 3d ago | agent-outposts |
+| serve | building | internal/serve/ | 12d ago | agent-outposts |
 | (unassigned) | — | — | — | 154 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -51,8 +51,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — landing-docs-content-refresh, unified-retrieval-layer, e2e-discovery, e2e-traversal, e2e-validation, graph-conflict-detection, per-feature-smoke-coverage
-- **core** — embedded-inference, cross-repo-peering
+- **(unassigned)** — landing-docs-content-refresh, unified-retrieval-layer, e2e-discovery, e2e-traversal, e2e-validation, graph-conflict-detection
+- **core** — verify-slug-resolution-hints, embedded-inference, cross-repo-peering
 - **domains/engineering** — spec-completion-loop
 - **domains/sales** — hero-sales
 - **serve** — monorepo-satellite-installs
@@ -68,13 +68,13 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Open risks & blockers
 
 - **Blocked specs (10):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection).
-- **Stale-in-flight (3):** `agent-outposts` (25d), `hero-landing-page` (25d), `hero-team-server` (25d).
-- **Aged open bugs (7):** `hero-workspace-not-self-describing` (open 32d), `scan-enrichment-unbounded-loop` (open 32d), `scan-test-detection-misses-spock-vitest` (open 32d), `initiative-required-sections-drift` (open 27d), `spec-lifecycle-hygiene-breakdown` (open 26d), `claim-matches-sentinel-collision` (open 25d), `install-target-emits-both-claude-and-agents-md` (open 25d).
+- **Stale-in-flight (3):** `agent-outposts` (34d), `hero-landing-page` (34d), `hero-team-server` (34d).
+- **Aged open bugs (8):** `hero-workspace-not-self-describing` (open 41d), `scan-enrichment-unbounded-loop` (open 41d), `scan-test-detection-misses-spock-vitest` (open 41d), `initiative-required-sections-drift` (open 36d), `spec-lifecycle-hygiene-breakdown` (open 35d), `claim-matches-sentinel-collision` (open 34d), `install-target-emits-both-claude-and-agents-md` (open 34d), `hero-search-json-flag-silently-ignored` (open 29d).
 - **Unassigned specs (154) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 146/300 (48%)
-- Projection generation: 0ms · Source nodes: 322
+- Specs covered: 147/301 (48%)
+- Projection generation: 1ms · Source nodes: 323
 
