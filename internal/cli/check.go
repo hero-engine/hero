@@ -305,12 +305,16 @@ func runCheck(cmd *cobra.Command, args []string) error {
 		addRow("kickoff-coverage", "warn", fmt.Sprintf("kickoff audit failed: %v", err))
 	} else if len(missing) > 0 {
 		issues += len(missing)
-		fmt.Printf("Specs missing `## Kickoff` section (%d):\n", len(missing))
-		for _, s := range missing {
+		fmt.Printf("Specs missing `## Kickoff` section (%d) — excluded from `hero queue`:\n", len(missing))
+		const kickoffShowMax = 5
+		for i, s := range missing {
+			if i >= kickoffShowMax {
+				fmt.Printf("  … and %d more.\n", len(missing)-kickoffShowMax)
+				break
+			}
 			fmt.Printf("  %-30s  %-10s  %s\n", s.Slug, s.Status, s.Title)
 		}
-		fmt.Println("  These specs are excluded from `hero queue`. Run /design or")
-		fmt.Println("  /deliver on each, or hand-edit per skills/kickoff-prompt.md.")
+		fmt.Println("  Run /design or /deliver on each, or hand-edit per skills/kickoff-prompt.md.")
 		fmt.Println()
 		addRow("kickoff-coverage", "warn", fmt.Sprintf("%d spec(s) missing ## Kickoff section", len(missing)))
 	} else {
@@ -407,10 +411,28 @@ func runCheck(cmd *cobra.Command, args []string) error {
 		addRow("snapshot-health", "pass", "snapshot archives healthy")
 	}
 
+	// Severity-aware summary: surface failing vs advisory categories so a
+	// scaffold-heavy but healthy workspace (all warnings) doesn't read as
+	// broken. The flat item count is retained as detail.
 	if issues == 0 {
 		fmt.Println("No issues found.")
 	} else {
-		fmt.Printf("%d issue(s) found.\n", issues)
+		var fails, warns []string
+		for _, r := range jsonRows {
+			switch r.Status {
+			case "fail":
+				fails = append(fails, r.Name)
+			case "warn":
+				warns = append(warns, r.Name)
+			}
+		}
+		if len(fails) == 0 {
+			fmt.Printf("No failures — %d advisory check(s) with findings (%s), %d item(s). Advisories are non-blocking.\n",
+				len(warns), strings.Join(warns, ", "), issues)
+		} else {
+			fmt.Printf("%d failing check(s): %s. Plus %d advisory check(s), %d item(s) total. Fix failures first.\n",
+				len(fails), strings.Join(fails, ", "), len(warns), issues)
+		}
 	}
 
 	if checkJSON {
