@@ -79,6 +79,32 @@ These are run in the terminal, not as slash commands:
 
 Your harness may expose the agent/command/skill directories under its own prefix (`.claude/`, `.opencode/`, `.cursor/`, etc.) as symlinks back to the canonical paths above. Edit only the canonical files — harness directories are views.
 
+### Declaring Spec Relationships
+
+Relationships (parent/child, depends-on, blocks) become knowledge-graph edges **only** through frontmatter. Body `[[wikilinks]]` are searchable text and form **no** edges. Two syntaxes work:
+
+Top-level shorthand (simplest):
+
+```yaml
+parent: i1-config-plane          # also accepted: initiative: i1-config-plane
+depends-on: [f2-store, f3-watcher]   # also accepted: depends_on:
+child:
+  - sub-a
+  - sub-b
+```
+
+`relations:` block (for mixed kinds):
+
+```yaml
+relations:
+  - target: i1-config-plane
+    kind: parent
+  - target: other-spec
+    kind: related
+```
+
+Pitfalls: inline flow style (`- { kind: parent, target: x }`) does **not** parse — use the block form with `target:`/`kind:` on separate lines. Recognized kinds: `parent`, `child`, `depends-on`, `blocks`, `supersedes`, `related`. `hero check` warns when a spec uses edge-intent `[[wikilinks]]`.
+
 ### Internal Lookups — Tool Routing
 
 When **you** need to look something up mid-task (as opposed to running a slash command for the user), pick the tool that matches the *shape* of the question, not the one that feels exhaustive:
