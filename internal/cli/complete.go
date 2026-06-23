@@ -356,27 +356,62 @@ func moveToSpecs(specPath, heroDir string) (string, bool, error) {
 		return specPath, false, fmt.Errorf("creating destination: %w", err)
 	}
 
-	// Try git mv first (preserves history), fall back to os.Rename
+	// Try git mv first (preserves history), fall back to os.Rename.
+	gitRoot := ""
 	if isGitRepo(absHeroDir) {
+		gitRoot = filepath.Dir(absHeroDir)
+	}
+	moved := false
+	if gitRoot != "" {
 		gitCmd := exec.Command("git", "mv", absPath, destPath)
-		gitCmd.Dir = filepath.Dir(absHeroDir)
+		gitCmd.Dir = gitRoot
 		if err := gitCmd.Run(); err == nil {
-			// Also try to remove the now-empty source directory
-			removeEmptyParents(specDir, planningDir)
-			return destPath, true, nil
+			moved = true
 		}
 		// git mv failed — fall through to os.Rename
 	}
-
-	// Plain filesystem move
-	if err := os.Rename(absPath, destPath); err != nil {
-		return specPath, false, fmt.Errorf("moving file: %w", err)
+	if !moved {
+		if err := os.Rename(absPath, destPath); err != nil {
+			return specPath, false, fmt.Errorf("moving file: %w", err)
+		}
 	}
+
+	// Move any sibling artifacts (delivery-audit.md, plan.md, mocks, …)
+	// so the completed spec keeps its delivery record instead of
+	// orphaning them in planning/.
+	moveSiblingArtifacts(specDir, destDir, gitRoot)
 
 	// Clean up empty source directory
 	removeEmptyParents(specDir, planningDir)
 
 	return destPath, true, nil
+}
+
+// moveSiblingArtifacts relocates everything left in a spec's source
+// directory (after spec.md has moved) into the archived destination, so
+// delivery records like delivery-audit.md travel with the spec instead
+// of being orphaned in planning/. Best-effort: clobbers nothing and
+// swallows per-entry errors, matching the archive path's non-fatal stance.
+func moveSiblingArtifacts(srcDir, destDir, gitRoot string) {
+	entries, err := os.ReadDir(srcDir)
+	if err != nil {
+		return
+	}
+	for _, e := range entries {
+		src := filepath.Join(srcDir, e.Name())
+		dst := filepath.Join(destDir, e.Name())
+		if _, err := os.Stat(dst); err == nil {
+			continue // never clobber an existing destination
+		}
+		if gitRoot != "" {
+			cmd := exec.Command("git", "mv", src, dst)
+			cmd.Dir = gitRoot
+			if cmd.Run() == nil {
+				continue
+			}
+		}
+		_ = os.Rename(src, dst)
+	}
 }
 
 // isAlreadyInSpecsDir reports whether the given spec path lives under
