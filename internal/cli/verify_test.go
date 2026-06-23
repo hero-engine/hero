@@ -526,6 +526,69 @@ slug: writeback-test
 	}
 }
 
+func TestVerify_InitiativeNotCompletedWithUnbuiltChildren(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Initiative declares two children (block-style list) but only one is
+	// materialized. Completing it must NOT auto-complete the initiative.
+	initiativeContent := `---
+title: Multi Child Init
+type: initiative
+status: planning
+slug: multi-child-init
+child:
+  - built-child
+  - unbuilt-child
+---
+# Multi Child Init
+`
+	env.addSpec("planning/initiatives/multi-child-init/spec.md", initiativeContent)
+
+	builtChild := `---
+title: Built Child
+type: feature
+status: delivering
+slug: built-child
+parent: multi-child-init
+---
+# Built Child
+
+## Acceptance Criteria
+
+- AC-1: THE SYSTEM SHALL do the built work
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | do the built work | DONE | implemented |
+
+### Exercise-the-feature check
+
+- [x] Exercised: confirmed built child works
+`
+	env.addSpec("planning/features/built-child/spec.md", builtChild)
+	writeVerifyFile(t, filepath.Join(env.heroDir, "planning/features/built-child/delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "built-child", -1))
+	env.indexAll()
+
+	output, err := runCmd("spec", "verify", "--skip-tests", "built-child")
+	if err != nil {
+		t.Fatalf("verify built-child failed: %v\noutput: %s", err, output)
+	}
+	if strings.Contains(output, "auto-completed") {
+		t.Errorf("initiative wrongly auto-completed with an unbuilt declared child:\n%s", output)
+	}
+	if _, err := os.Stat(filepath.Join(env.heroDir, "specs", "multi-child-init", "spec.md")); err == nil {
+		t.Error("initiative archived despite an unbuilt declared child")
+	}
+	if _, err := os.Stat(filepath.Join(env.heroDir, "planning/initiatives/multi-child-init/spec.md")); os.IsNotExist(err) {
+		t.Error("initiative disappeared from planning")
+	}
+}
+
 func TestVerify_InitiativeAutoComplete(t *testing.T) {
 	env := newTestEnv(t)
 
