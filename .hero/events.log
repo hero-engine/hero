@@ -181,3 +181,7 @@
 {"ts":"2026-06-12T01:26:51.138728Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"spec-completion-loop","message":"status -\u003e completed"}
 {"ts":"2026-06-22T01:03:27.129433Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"verify-slug-resolution-hints","message":"\"Helpful spec-not-found errors for hero spec verify\""}
 {"ts":"2026-06-22T01:03:27.129511Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"verify-slug-resolution-hints","message":"status -\u003e completed"}
+{"ts":"2026-06-23T19:57:04.718117Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"cst-verify-lifecycle-scoping","message":"\"hero spec verify runs delivery gates on planning drafts (no lifecycle guard)\""}
+{"ts":"2026-06-23T19:57:04.718218Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"cst-verify-lifecycle-scoping","message":"status -\u003e completed"}
+{"ts":"2026-06-23T19:57:05.401199Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"cold-start-trust-hardening","message":"\"Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use\""}
+{"ts":"2026-06-23T19:57:05.401269Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"cold-start-trust-hardening","message":"status -\u003e completed"}
