@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-22T04:19:53Z
+updated: 2026-06-23T19:08:18Z
 repo: hero-engine/hero
 ---
 
@@ -8,11 +8,15 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> got this - Confirmed — this is the repo's established pattern: even the delivered R-01 (committed "Deliver R-01" in git history) still shows status: planning and isn't findable by hero spec verify. The tool doesn't support initiative-child slugs. The entire hydra-production-ready initiative was delivered by committing per spec with a "Deliver R-XX" message, relying on review + tests as the gate.…
+> heres a chat about a projects using hero - it seems like mcp was having issues and anything we can learn from the models responses abotu it trying to learn and use hero? : Got it — .hero is the home for all of this, and the docs/ folder I created was a wrong guess. Let me fix that: migrate the architecture content into Hero, delete docs/, make sure .hero specs are tracked by git, then create all…
 
 ## Suggested next prompt
 
-_(none — `hero next suggest "..."` to set, or open a Feature to derive one)_
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 

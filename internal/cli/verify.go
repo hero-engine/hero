@@ -65,6 +65,14 @@ type VerifyResult struct {
 	InitiativeCompleted string       `json:"initiative_completed,omitempty"`
 }
 
+// isPreDeliveryStatus reports whether a spec is in an early lifecycle
+// state where delivery gates do not yet apply. Verifying such a spec
+// would fail on a Completion Ledger and audit report it has no business
+// carrying until delivery starts.
+func isPreDeliveryStatus(s spec.Status) bool {
+	return s == spec.StatusPlanning || s == spec.StatusDraft
+}
+
 func runVerify(cmd *cobra.Command, args []string) error {
 	projectRoot := findProjectRoot()
 	cfg, err := config.Load(projectRoot)
@@ -100,6 +108,21 @@ func runVerify(cmd *cobra.Command, args []string) error {
 		}
 		fmt.Printf("\n  Spec %s is already completed and archived.\n\n", target.Slug)
 		return nil
+	}
+
+	// Delivery gates only apply once a spec has entered delivery. Running
+	// them on a pre-delivery draft (planning/draft) produces confusing
+	// "no Completion Ledger" / "no audit report" failures for artifacts the
+	// spec has no business carrying yet. Guard with a lifecycle-aware
+	// message; --force bypasses so the old behavior stays reachable.
+	if isPreDeliveryStatus(target.Status) && !verifyForce {
+		msg := fmt.Sprintf("spec %q is in %s status — delivery gates (Completion Ledger, audit report) only apply once delivery has started. Run /deliver to begin implementation, then verify; or pass --force to run the gates anyway.", target.Slug, target.Status)
+		if verifyJSON {
+			r := VerifyResult{Slug: target.Slug, Result: "SKIPPED"}
+			r.Gates = append(r.Gates, GateResult{Name: "lifecycle", Result: "SKIPPED", Details: []string{msg}})
+			return outputJSON(r)
+		}
+		return fmt.Errorf("%s", msg)
 	}
 
 	result := VerifyResult{Slug: target.Slug}
