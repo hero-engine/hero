@@ -185,3 +185,5 @@
 {"ts":"2026-06-23T19:57:04.718218Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"cst-verify-lifecycle-scoping","message":"status -\u003e completed"}
 {"ts":"2026-06-23T19:57:05.401199Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"cold-start-trust-hardening","message":"\"Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use\""}
 {"ts":"2026-06-23T19:57:05.401269Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"cold-start-trust-hardening","message":"status -\u003e completed"}
+{"ts":"2026-06-23T22:29:43.98919Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"cst-initiative-premature-autocomplete","message":"\"Initiative auto-completes when its only materialized child is delivered, ignoring unbuilt declared children\""}
+{"ts":"2026-06-23T22:29:43.989268Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"cst-initiative-premature-autocomplete","message":"status -\u003e completed"}

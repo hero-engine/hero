@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-23T19:34:59Z · projected from 323 source nodes_
+_Last refreshed: 2026-06-23T22:00:54Z · projected from 325 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | maturing | cmd/, internal/ | 1d ago | hero-workspace-not-self-describing |
+| core | maturing | cmd/, internal/ | <1m ago | cst-initiative-premature-autocomplete |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | maturing | domains/engineering/ | 8d ago | — |
@@ -25,7 +25,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Active initiatives
 
-- **"Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use"** (surface: —) — 0/0 specs done
+- **"Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use"** (surface: core) — 1/2 specs done
 - **"Concurrent-Session Branching & Worktree Isolation"** (surface: —) — 0/0 specs done
 - **"Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"** (surface: —) — 0/0 specs done
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
@@ -52,10 +52,9 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — landing-docs-content-refresh, unified-retrieval-layer
-- **core** — verify-slug-resolution-hints, embedded-inference
+- **(unassigned)** — landing-docs-content-refresh
+- **core** — cst-verify-lifecycle-scoping, verify-slug-resolution-hints
 - **domains/engineering** — spec-completion-loop
-- **domains/sales** — hero-sales
 
 ## Next up across surfaces
 
@@ -74,6 +73,6 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 147/302 (48%)
-- Projection generation: 0ms · Source nodes: 323
+- Specs covered: 149/304 (49%)
+- Projection generation: 0ms · Source nodes: 325
 
