@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -321,6 +322,28 @@ func runCheck(cmd *cobra.Command, args []string) error {
 		addRow("kickoff-coverage", "pass", "all work specs carry ## Kickoff sections")
 	}
 
+	// Wikilink relation intent — `[[slug]]` in a spec body reads like a
+	// relationship but creates no graph edge (wikilinks are searchable
+	// text only). Nudge toward the frontmatter that does form edges.
+	if hits, err := specsWithWikilinks(heroDir); err == nil && len(hits) > 0 {
+		issues += len(hits)
+		fmt.Printf("Specs using `[[wikilinks]]` that create no graph edges (%d):\n", len(hits))
+		const wikilinkShowMax = 5
+		for i, h := range hits {
+			if i >= wikilinkShowMax {
+				fmt.Printf("  … and %d more.\n", len(hits)-wikilinkShowMax)
+				break
+			}
+			fmt.Printf("  %-30s  %s\n", h.Slug, strings.Join(h.Links, ", "))
+		}
+		fmt.Println("  Wikilinks are searchable text only. For relationships use frontmatter:")
+		fmt.Println("  `parent: <slug>`, `depends-on: [<slug>]`, or a relations: block.")
+		fmt.Println()
+		addRow("wikilink-edges", "warn", fmt.Sprintf("%d spec(s) use [[wikilinks]] that create no graph edges", len(hits)))
+	} else {
+		addRow("wikilink-edges", "pass", "no edge-intent wikilinks in spec bodies")
+	}
+
 	// Status truthfulness — one-line summary plus an issue count
 	// bump for any spec lying about being completed. Run `hero check
 	// status` for the full breakdown.
@@ -514,6 +537,44 @@ func reportSatelliteDrift(projectRoot, heroDir string) int {
 // status that lack a `## Kickoff` section. Knowledge specs and
 // closed work specs are skipped — kickoff is only meaningful for
 // pickup-able work.
+var wikilinkRe = regexp.MustCompile(`\[\[([^\]\n]+)\]\]`)
+
+type wikilinkHit struct {
+	Slug  string
+	Links []string
+}
+
+// specsWithWikilinks returns work specs whose body contains `[[...]]`
+// wikilinks. These read like relationships but create no graph edges,
+// so hero check nudges the author toward relation frontmatter.
+func specsWithWikilinks(heroDir string) ([]wikilinkHit, error) {
+	specs, err := spec.Discover(heroDir)
+	if err != nil {
+		return nil, err
+	}
+	var out []wikilinkHit
+	for _, s := range specs {
+		if !s.IsWorkSpec() {
+			continue
+		}
+		matches := wikilinkRe.FindAllStringSubmatch(s.RawContent, -1)
+		if len(matches) == 0 {
+			continue
+		}
+		seen := map[string]bool{}
+		var links []string
+		for _, m := range matches {
+			t := strings.TrimSpace(m[1])
+			if t != "" && !seen[t] {
+				seen[t] = true
+				links = append(links, t)
+			}
+		}
+		out = append(out, wikilinkHit{Slug: s.Slug, Links: links})
+	}
+	return out, nil
+}
+
 func missingKickoffSpecs(heroDir string) ([]*spec.Spec, error) {
 	specs, err := spec.Discover(heroDir)
 	if err != nil {
