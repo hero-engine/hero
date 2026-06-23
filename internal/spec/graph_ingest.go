@@ -225,7 +225,7 @@ func graphEdgeForRelation(kind string) string {
 		return "blocks"
 	case "supersedes":
 		return "supersedes"
-	case "related", "sibling":
+	case "related", "relates-to", "relates_to", "sibling":
 		return "related_to"
 	case "child":
 		// Inverse of parent — emitted from the child's side, so skip here

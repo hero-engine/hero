@@ -457,6 +457,14 @@ func generateEngineeringAgentsMdBody(paths contentPathsForBody) string {
 	sb.WriteString("- `.hero/hero.json` — Project configuration\n\n")
 	sb.WriteString("Your harness may expose the agent/command/skill directories under its own prefix (`.claude/`, `.opencode/`, `.cursor/`, etc.) as symlinks back to the canonical paths above. Edit only the canonical files — harness directories are views.\n\n")
 
+	sb.WriteString("### Declaring Spec Relationships\n\n")
+	sb.WriteString("Relationships (parent/child, depends-on, blocks) become knowledge-graph edges **only** through frontmatter. Body `[[wikilinks]]` are searchable text and form **no** edges. Two syntaxes work:\n\n")
+	sb.WriteString("Top-level shorthand (simplest):\n\n")
+	sb.WriteString("```yaml\nparent: i1-config-plane          # also accepted: initiative: i1-config-plane\ndepends-on: [f2-store, f3-watcher]   # also accepted: depends_on:\nchild:\n  - sub-a\n  - sub-b\n```\n\n")
+	sb.WriteString("`relations:` block (for mixed kinds):\n\n")
+	sb.WriteString("```yaml\nrelations:\n  - target: i1-config-plane\n    kind: parent\n  - target: other-spec\n    kind: related\n```\n\n")
+	sb.WriteString("Pitfalls: inline flow style (`- { kind: parent, target: x }`) does **not** parse — use the block form with `target:`/`kind:` on separate lines. Recognized kinds: `parent`, `child`, `depends-on`, `blocks`, `supersedes`, `related`. `hero check` warns when a spec uses edge-intent `[[wikilinks]]`.\n\n")
+
 	sb.WriteString("### Internal Lookups — Tool Routing\n\n")
 	sb.WriteString("When **you** need to look something up mid-task (as opposed to running a slash command for the user), pick the tool that matches the *shape* of the question, not the one that feels exhaustive:\n\n")
 	sb.WriteString("| Shape of question | Tool |\n|---|---|\n")
