@@ -214,6 +214,50 @@ relates-to: use-postgres-fts
 	}
 }
 
+func TestParseRelations_ShorthandAliasesAndBlockList(t *testing.T) {
+	// The shorthands first-use sessions reach for must form relations,
+	// not silently drop: `initiative:` (→ parent), `depends_on:`
+	// (underscore → depends-on), and a block-style `child:` list.
+	content := `---
+title: Config Loader
+type: feature
+status: planning
+initiative: i1-config-plane
+depends_on: [f2-config-store, f3-watcher]
+child:
+  - sub-a
+  - sub-b
+---
+# Config Loader
+`
+	s, err := Parse(content, "/project/.hero/planning/features/config-loader/spec.md", time.Now())
+	if err != nil {
+		t.Fatalf("Parse failed: %v", err)
+	}
+
+	var parents, dependsOn, children []string
+	for _, r := range s.Relations {
+		switch r.Kind {
+		case "parent":
+			parents = append(parents, r.Target)
+		case "depends-on":
+			dependsOn = append(dependsOn, r.Target)
+		case "child":
+			children = append(children, r.Target)
+		}
+	}
+
+	if len(parents) != 1 || parents[0] != "i1-config-plane" {
+		t.Errorf("initiative: should map to a parent relation, got parents=%v", parents)
+	}
+	if len(dependsOn) != 2 || dependsOn[0] != "f2-config-store" || dependsOn[1] != "f3-watcher" {
+		t.Errorf("depends_on: should map to depends-on relations, got %v", dependsOn)
+	}
+	if len(children) != 2 || children[0] != "sub-a" || children[1] != "sub-b" {
+		t.Errorf("block-style child: list should parse, got %v", children)
+	}
+}
+
 func TestTypeFromPath(t *testing.T) {
 	tests := []struct {
 		path string

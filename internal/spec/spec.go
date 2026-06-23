@@ -504,9 +504,32 @@ func (s *Spec) parseFrontmatter(content string) string {
 			s.ReleaseTarget = val
 		case "triggers":
 			s.Triggers = parseList(val)
-		case "relates-to", "depends-on", "supersedes", "parent", "child":
-			for _, target := range parseList(val) {
-				s.Relations = append(s.Relations, Relation{Target: target, Kind: key})
+		case "relates-to", "depends-on", "depends_on", "supersedes", "parent", "child", "initiative":
+			// Accept the shorthands first-use sessions reach for:
+			// `initiative:` (a parent) and `depends_on:` (underscore
+			// variant). Normalize to canonical kinds so they form graph
+			// edges instead of silently dropping.
+			relKind := key
+			switch key {
+			case "initiative":
+				relKind = "parent"
+			case "depends_on":
+				relKind = "depends-on"
+			}
+			targets := parseList(val)
+			if len(targets) == 0 {
+				// Block-style list on the following indented lines:
+				//   child:
+				//     - slug-a
+				//     - slug-b
+				var consumed int
+				targets, consumed = parseScalarListBlock(lines, i+1, closeIdx)
+				if consumed > i+1 {
+					i = consumed - 1
+				}
+			}
+			for _, target := range targets {
+				s.Relations = append(s.Relations, Relation{Target: target, Kind: relKind})
 			}
 		case "relations":
 			// YAML-list-of-objects format:
@@ -642,6 +665,38 @@ func parseRelationsBlock(lines []string, start, end int) ([]Relation, int) {
 	}
 	if current.Target != "" {
 		out = append(out, normalizeRelation(current))
+	}
+	return out, idx
+}
+
+// parseScalarListBlock walks an indented YAML list of scalars under a
+// top-level key (e.g. a block-style `child:` / `depends-on:` list) and
+// returns the items plus the index of the next line the outer parser
+// should resume from. Without this, a block-style list silently parsed
+// to nothing because parseList only reads the same-line value.
+//
+//	child:
+//	  - slug-a
+//	  - slug-b
+func parseScalarListBlock(lines []string, start, end int) ([]string, int) {
+	var out []string
+	idx := start
+	for ; idx < end; idx++ {
+		raw := lines[idx]
+		trimmed := strings.TrimSpace(raw)
+		if trimmed == "" {
+			continue
+		}
+		// A top-level key (no indent) ends the block.
+		if leadingSpaceCount(raw) == 0 {
+			break
+		}
+		if strings.HasPrefix(trimmed, "- ") {
+			item := strings.Trim(strings.TrimSpace(strings.TrimPrefix(trimmed, "- ")), `"'`)
+			if item != "" {
+				out = append(out, item)
+			}
+		}
 	}
 	return out, idx
 }
