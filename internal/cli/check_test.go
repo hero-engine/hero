@@ -26,6 +26,37 @@ func TestCheckEmpty(t *testing.T) {
 	}
 }
 
+func TestCheck_WikilinkEdgeWarning(t *testing.T) {
+	env := newTestEnv(t)
+	content := `---
+title: Uses Wikilinks
+type: feature
+status: planning
+slug: uses-wikilinks
+---
+# Uses Wikilinks
+
+This depends on [[config-loader]] and relates to [[watcher]].
+
+## Kickoff
+
+Pick up here.
+`
+	env.addSpec("planning/features/uses-wikilinks/spec.md", content)
+	env.indexAll()
+
+	output, err := runCmd("check")
+	if err != nil {
+		t.Fatalf("check errored: %v", err)
+	}
+	if !strings.Contains(output, "[[wikilinks]]") {
+		t.Errorf("check should warn about wikilinks: %q", output)
+	}
+	if !strings.Contains(output, "config-loader") {
+		t.Errorf("check should name the wikilink target: %q", output)
+	}
+}
+
 func TestCheckWithSpecs(t *testing.T) {
 	env := newTestEnv(t)
 
