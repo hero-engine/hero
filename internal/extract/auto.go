@@ -31,7 +31,7 @@ func RunAuto(ctx context.Context, store *graph.Store, heroDir, repoKey string) (
 	if apiKey == "" {
 		return &RunSummary{
 			Skipped: true,
-			Reason:  "no ANTHROPIC_API_KEY (or equivalent provider key) — Tier-2 extraction disabled",
+			Reason:  "optional LLM enrichment skipped — no provider key set (ANTHROPIC_API_KEY / OPENAI_API_KEY / AZURE_OPENAI_KEY). Structural graph is unaffected.",
 		}, nil
 	}
 
