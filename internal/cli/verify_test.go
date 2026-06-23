@@ -526,6 +526,32 @@ slug: writeback-test
 	}
 }
 
+func TestVerify_ArchiveMovesSiblingArtifacts(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("planning/features/sibling-test/spec.md",
+		strings.Replace(specWithLedgerAndAudit, "test-feature", "sibling-test", -1))
+	dir := filepath.Join(env.heroDir, "planning/features/sibling-test")
+	writeVerifyFile(t, filepath.Join(dir, "delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "sibling-test", -1))
+	writeVerifyFile(t, filepath.Join(dir, "plan.md"), "# Plan\n")
+	env.indexAll()
+
+	if _, err := runCmd("spec", "verify", "--skip-tests", "sibling-test"); err != nil {
+		t.Fatalf("verify failed: %v", err)
+	}
+
+	specDir := filepath.Join(env.heroDir, "specs", "sibling-test")
+	for _, f := range []string{"spec.md", "delivery-audit.md", "plan.md"} {
+		if _, err := os.Stat(filepath.Join(specDir, f)); os.IsNotExist(err) {
+			t.Errorf("%s was not moved with the spec to specs/sibling-test/", f)
+		}
+	}
+	// Source planning dir must not survive as an orphan.
+	if _, err := os.Stat(dir); err == nil {
+		t.Error("planning spec dir survived archive — siblings orphaned")
+	}
+}
+
 func TestVerify_InitiativeNotCompletedWithUnbuiltChildren(t *testing.T) {
 	env := newTestEnv(t)
 
