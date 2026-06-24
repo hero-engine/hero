@@ -136,7 +136,7 @@ confidence. The risky, novel part; worthless without #2 behind it. Also wire the
 explicit signal — the initiative/epic `completed` gate — as a zero-false-positive
 candidate source. Size: medium–large.
 
-### fks-trust-handshake  *(stub — design when #3 lands)*
+### fks-trust-handshake  *(delivered)*
 Turn candidates into the autonomy the user asked for: on detection, surface
 "feature X shipped across these specs — I drafted an entry; keep doing this
 automatically / let me review each / turn it off," and persist the choice in
