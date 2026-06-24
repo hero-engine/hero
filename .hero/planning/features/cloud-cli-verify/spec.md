@@ -77,10 +77,16 @@ correct URL shape.
 
 ## Notes
 
-- Could not formally notify hero-cloud of completion: `hero peer call` spawns a
-  cold `claude -p` subprocess that can't inherit this desktop session's
-  subscription auth (no persisted credentials file / keychain entry), so peer
-  calls fail in this environment. The handoff trail below is the record.
+- Notified hero-cloud via `hero peer call --mode=advisory` on 2026-06-24
+  (artifact `.hero/peer-calls/18bc2898432b8f308b4b2e4d358b6714.md`; trail entry
+  below). hero-cloud CONFIRMED the wire contract matches byte-for-byte — server
+  routes `POST/GET /api/v1/orgs/{org}/graph/push|pull` (`cloud/api/graph.go:36-37`)
+  — and that their `TestIntegration_GraphURLContract` is the symmetric server-side
+  guard to our `TestSyncEndpoints_DoNotDoubleAPIPrefix` (a contract-pinning pair).
+- hero-cloud flagged two CLI-side acceptance criteria they SKIPPED (cannot test
+  from their repo) as possible follow-up. These are NOT part of the URL-fix slice:
+  - AC #5: server unreachable → CLI falls back to local operation with a warning
+  - AC #6: auth token expires mid-sync → CLI refreshes the token and retries
 
 ## Handoff Trail
 
@@ -89,3 +95,11 @@ correct URL shape.
   originating_spec: cloud-cli-verify
   peer_spec: hero/cloud-cli-verify
   at_commit: ea7ed71
+
+- 2026-06-24T23:37:59Z — out → hero-cloud (peer_id: 5770cae7-b233-45c0-8e5d-765338a6058c)
+  mode: advisory
+  originating_spec: cloud-cli-verify
+  at_commit: ce338c5
+  result_ref: .hero/peer-calls/18bc2898432b8f308b4b2e4d358b6714.md
+  reason: "Notify hero-cloud that the hero-repo slice of cloud-cli-verify is delivered (graph-sync URL fix), shipped in v0.21.1."
+
