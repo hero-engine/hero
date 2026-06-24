@@ -88,6 +88,7 @@ func init() {
 	rootCmd.AddCommand(trustCmd)
 	rootCmd.AddCommand(indexCmd)
 	rootCmd.AddCommand(searchCmd)
+	rootCmd.AddCommand(synthesizeCmd)
 	rootCmd.AddCommand(askCmd)
 	rootCmd.AddCommand(checkCmd)
 	rootCmd.AddCommand(graphCmd)

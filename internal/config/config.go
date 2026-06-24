@@ -1623,6 +1623,12 @@ func (c Config) NotesDir(projectRoot string) string {
 	return filepath.Join(c.KnowledgeDir(projectRoot), "notes")
 }
 
+// ExplainersDir returns the path to the explainers subdirectory under
+// knowledge — synthesized "how a feature works" entries.
+func (c Config) ExplainersDir(projectRoot string) string {
+	return filepath.Join(c.KnowledgeDir(projectRoot), "explainers")
+}
+
 // TrackerKnowledgeDir returns the path to the tracker knowledge subdirectory.
 // Used for caching discovered field mappings and other tracker integration state.
 func (c Config) TrackerKnowledgeDir(projectRoot string) string {

@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-24T03:15:46Z
+updated: 2026-06-24T07:05:22Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,9 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> so - someone asked me a question who was using here - like a dev was off doing a whole feature for like a couple weeks - tons of work - and theres specs and stuff - could read them all - but tedious - but was there a summary in knowledge of how that feature works or something. which made me wonder - are we doing enough to recognize when something is worthy of being in knowledge and not just in spe…
+> i thought we fixed this to not update the next and other commit hook files if the only change is the timestamp - but im still seeing this - here is activity in another project at the end of the turn where we keep fighting the hook changing files and endless dirty state: Commit succeeded on main. I’m checking the worktree now in case hooks generated any post-commit changes.
+> 
+> Ran git status --shor…
 
 ## Suggested next prompt
 

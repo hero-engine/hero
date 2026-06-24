@@ -37,6 +37,7 @@ import (
 	"github.com/hero-engine/hero/internal/sizing"
 	"github.com/hero-engine/hero/internal/skills"
 	"github.com/hero-engine/hero/internal/spec"
+	"github.com/hero-engine/hero/internal/synthesize"
 	"github.com/hero-engine/hero/internal/tracking"
 	"github.com/hero-engine/hero/internal/traversal"
 	"github.com/hero-engine/hero/internal/vocabulary"
@@ -2050,6 +2051,32 @@ func (s *MCPServer) toolErrorPattern(args map[string]interface{}) (string, error
 	}
 
 	return fmt.Sprintf("Error pattern '%s' saved to .hero/knowledge/error-patterns/%s.md", id, id), nil
+}
+
+func (s *MCPServer) toolSynthesize(args map[string]interface{}) (string, error) {
+	slugsStr, _ := args["slugs"].(string)
+	if slugsStr == "" {
+		return "", fmt.Errorf("slugs parameter is required (comma-separated spec slugs)")
+	}
+	var slugs []string
+	for _, part := range strings.Split(slugsStr, ",") {
+		if p := strings.TrimSpace(part); p != "" {
+			slugs = append(slugs, p)
+		}
+	}
+
+	pkt, err := synthesize.Assemble(s.heroDir, s.projectRoot, slugs)
+	if err != nil {
+		return "", err
+	}
+
+	cfg, err := config.Load(s.projectRoot)
+	if err != nil {
+		return "", fmt.Errorf("loading config: %w", err)
+	}
+	outPath := filepath.Join(cfg.ExplainersDir(s.projectRoot), pkt.OutSlug, "spec.md")
+	today := time.Now().Format("2006-01-02")
+	return pkt.AgentPacket(outPath, today), nil
 }
 
 func (s *MCPServer) toolEnrich(args map[string]interface{}) (string, error) {

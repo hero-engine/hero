@@ -58,6 +58,7 @@ func (s *MCPServer) toolHandlers() map[string]toolHandler {
 		"hero_demo_record":   s.toolDemoRecord,
 		"hero_code":          s.toolCode,
 		"hero_enrich":        s.toolEnrich,
+		"hero_synthesize":    s.toolSynthesize,
 
 		// analyze
 		"hero_drift":         s.toolDrift,

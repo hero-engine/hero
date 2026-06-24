@@ -203,6 +203,14 @@ large.
 
 ## Progress
 
+- 2026-06-23 — **Delivered #2 `fks-on-demand-synthesizer`.** New
+  `internal/synthesize` package + `hero synthesize <slug...>` CLI and
+  `hero_synthesize` MCP tool. Per the "both" decision: CLI assembles specs +
+  git-diff window + referenced decisions deterministically; prose is generated
+  by the in-session agent (MCP, no key) by default, or by the CLI's LLM path
+  when a provider key is present (for headless / the future #3/#4 auto-trigger).
+  Fail-loud on unresolved slugs; scaffold fallback with the material when no key.
+  Verified e2e on the real repo. #3 (cluster detection) is next.
 - 2026-06-23 — **Delivered #1 `fks-feature-knowledge-artifact`.** Added the
   first-class `explainer` knowledge type (`.hero/knowledge/explainers/<slug>/spec.md`),
   wired through type recognition, `IsKnowledge`, graph node type, both

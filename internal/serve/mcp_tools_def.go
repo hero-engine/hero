@@ -282,6 +282,17 @@ func (s *MCPServer) toolDefinitions() []ToolDefinition {
 			},
 		},
 		{
+			Name:        "hero_synthesize",
+			Description: "Assemble the material for a feature 'explainer' knowledge entry (how a feature works, as it exists now) from a cluster of spec slugs. Returns the synthesis instructions, the target path, the provenance frontmatter, and the assembled context (source specs, git activity across the delivery window, and referenced decisions). YOU then write the explainer markdown to the target path following the instructions, and run hero index. Part of feature-knowledge-synthesis.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]PropSchema{
+					"slugs": {Type: "string", Description: "Comma-separated spec slugs that make up the feature (e.g. 'cold-start-trust-hardening' or 'feat-a,feat-b,feat-c'). An initiative slug among them sets the explainer's title and out-path."},
+				},
+				Required: []string{"slugs"},
+			},
+		},
+		{
 			Name:        "hero_score",
 			Description: "Score a spec's quality and readiness for delivery. Returns a score (0-100), grade (A-F), per-dimension breakdown, warnings, and actionable suggestions. Use before delivering a spec to check readiness.",
 			InputSchema: InputSchema{

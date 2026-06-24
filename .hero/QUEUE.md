@@ -6,27 +6,12 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-24T03:39:43Z · 101 ready specs_
+_Generated: 2026-06-24T07:11:56Z · 100 ready specs_
 
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
-
----
-
-## fks-on-demand-synthesizer — "On-Demand Feature Synthesizer — hero synthesize <slugs>"
-_feature · planning · horizon: now_
-
-Build `hero synthesize <slug…>`: read the named specs + the git diff over their
-delivery window, synthesize one feature knowledge entry in the
-`fks-feature-knowledge-artifact` template, and write it to
-`.hero/knowledge/explainers/<slug>/spec.md` with provenance frontmatter
-(`synthesized_from`, `last_synthesized`). Add the matching MCP tool. Then run
-`hero index`. Depends on `fks-feature-knowledge-artifact` landing the artifact
-contract. Parent initiative: `feature-knowledge-synthesis`. Look at how existing
-knowledge writes happen (`hero note`, `auto-knowledge-capture` skill) and how
-delivery windows are derived from spec timestamps + git history.
 
 ---
 
