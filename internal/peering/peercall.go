@@ -43,6 +43,13 @@ const DefaultSubagentCommand = "claude"
 // is the YAML body.
 var resultFenceRE = regexp.MustCompile(`(?s)<peer-call-result>\s*(.*?)\s*</peer-call-result>`)
 
+// notLoggedInRE matches the common "your LLM CLI is not authenticated"
+// signatures. The default `claude` CLI prints "Not logged in · Please
+// run /login" to *stdout* on exit 1; other CLIs use similar phrasing.
+// We use this to turn an opaque exit status into a clear "log in" prompt.
+// Per-CLI signatures are generalized by the multi-CLI subagent spec.
+var notLoggedInRE = regexp.MustCompile(`(?i)not logged in|please run /login|/login\b|not authenticated|unauthorized|invalid api key|missing api key|no api key|please log ?in`)
+
 // CallOptions configures a single sync peer call.
 type CallOptions struct {
 	// PeerAlias is the local alias of the target peer. Required.
@@ -412,18 +419,50 @@ func runSubagent(peerPath string, sub config.SubagentConfig, envelope string, bu
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		// Surface stderr in the error for diagnosability — the
-		// subagent's last words are usually the most useful clue.
-		errTail := strings.TrimSpace(stderr.String())
-		if len(errTail) > 2000 {
-			errTail = "..." + errTail[len(errTail)-2000:]
-		}
-		if ctx.Err() == context.DeadlineExceeded {
-			return stdout.String(), fmt.Errorf("subagent timed out after %s: %s", DefaultCallTimeout, errTail)
-		}
-		return stdout.String(), fmt.Errorf("subagent exited with error: %w (stderr: %s)", err, errTail)
+		timedOut := ctx.Err() == context.DeadlineExceeded
+		return stdout.String(), subagentRunError(sub.Command, err, stdout.String(), stderr.String(), timedOut)
 	}
 	return stdout.String(), nil
+}
+
+// subagentRunError builds the diagnostic error for a failed subagent
+// run. It combines stderr AND stdout — some CLIs (claude) print auth and
+// usage errors to stdout, so surfacing stderr alone hid the one message
+// that tells the user what to do. When the output looks like an
+// unauthenticated CLI, it returns actionable login guidance instead of a
+// bare exit status.
+func subagentRunError(command string, runErr error, stdoutStr, stderrStr string, timedOut bool) error {
+	diag := combinedTail(stderrStr, stdoutStr)
+	if timedOut {
+		return fmt.Errorf("subagent timed out after %s: %s", DefaultCallTimeout, diag)
+	}
+	if notLoggedInRE.MatchString(diag) {
+		hint := fmt.Sprintf("subagent CLI %q is not logged in — authenticate it and retry", command)
+		if command == DefaultSubagentCommand {
+			hint += " (run `claude` then `/login`, or set ANTHROPIC_API_KEY)"
+		}
+		return fmt.Errorf("%s; CLI output: %s", hint, diag)
+	}
+	return fmt.Errorf("subagent exited with error: %w (output: %s)", runErr, diag)
+}
+
+// combinedTail builds a bounded diagnostic string from a subagent's
+// stderr and stdout. stderr leads (the conventional error channel) but
+// stdout is appended because some CLIs print auth/usage errors there.
+func combinedTail(stderrStr, stdoutStr string) string {
+	parts := make([]string, 0, 2)
+	if s := strings.TrimSpace(stderrStr); s != "" {
+		parts = append(parts, s)
+	}
+	if s := strings.TrimSpace(stdoutStr); s != "" {
+		parts = append(parts, s)
+	}
+	out := strings.Join(parts, " | ")
+	const max = 2000
+	if len(out) > max {
+		out = "..." + out[len(out)-max:]
+	}
+	return out
 }
 
 // writePeerCallArtifact writes a per-call markdown artifact under
