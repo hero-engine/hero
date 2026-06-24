@@ -62,7 +62,8 @@ Hero is configured through a `hero.json` file at the root of your project (or in
   },
 
   "knowledge": {
-    "auto_capture": true
+    "auto_capture": true,
+    "explainer_synthesis": "review"
   },
 
   "models": {
@@ -237,6 +238,7 @@ Knowledge base behavior.
 | Key | Type | Default | Description |
 |---|---|---|---|
 | `auto_capture` | `bool` | `true` | Automatically capture learnings at the end of major workflows |
+| `explainer_synthesis` | `string` | `"review"` | Autonomy for `hero synthesize`: `"auto"` (synthesize eligible clusters automatically), `"review"` (surface clusters for review), `"off"` (disabled) |
 
 ---
 

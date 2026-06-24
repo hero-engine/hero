@@ -225,7 +225,7 @@ The binary is organized around a few stable groups.
 | Spec lifecycle | `hero spec new`, `hero spec deliver`, `hero spec verify`, `hero spec complete`, `hero spec claim`, `hero spec plan`, `hero diff`, `hero drift`, `hero list`, `hero queue`, `hero suggest` |
 | Acceptance criteria | `hero ac list`, `hero ac record`, `hero ac status`, `hero ac history`, `hero coverage`, `hero spec contract` |
 | Workspace health | `hero status`, `hero dashboard`, `hero check`, `hero docs check`, `hero smoke`, `hero ci`, `hero anchor`, `hero tripwire` |
-| Graph and retrieval | `hero scan`, `hero graph`, `hero extract`, `hero impact`, `hero why`, `hero blocked`, `hero snapshot`, `hero embeddings` |
+| Graph and retrieval | `hero scan`, `hero graph`, `hero extract`, `hero impact`, `hero why`, `hero blocked`, `hero snapshot`, `hero synthesize`, `hero embeddings` |
 | Tracker and sync | `hero sync connect`, `hero sync import`, `hero sync pull`, `hero sync spec`, `hero sync link`, `hero sync comment`, `hero sync attach`, `hero sync graph` |
 | Cross-repo peering | `hero admin repos`, `hero peer manifest`, `hero peer list`, `hero peer show`, `hero peer call`, `hero handoff`, `hero handoff status`, `hero handoff accept`, `hero context imports` |
 | Automation and headless work | `hero agent run`, `hero agent jobs`, `hero agent approve`, `hero agent automate`, `hero pipeline`, `hero watch` |
@@ -277,10 +277,13 @@ tool set is:
 `hero_insights`, `hero_contract`, `hero_plan`, `hero_impact`,
 `hero_recap`, `hero_drift`, `hero_ci`, `hero_feed`, `hero_event`,
 `hero_active`, `hero_coverage`, `hero_why`, `hero_blocked`,
-`hero_expand`, `hero_snapshot`.
+`hero_expand`, `hero_snapshot`, `hero_synthesize`.
 
 Most tools are read-only. Tools that intentionally mutate local state
-include claim/event/plan/enrich/test/demo helpers.
+include claim/event/plan/enrich/test/demo helpers. `hero_synthesize`
+assembles the material for an explainer (source specs, git activity,
+referenced decisions, target path, provenance frontmatter) and returns
+it for the in-session agent to write the document.
 
 ---
 
@@ -303,6 +306,7 @@ include claim/event/plan/enrich/test/demo helpers.
 │   ├── rules/
 │   ├── context/
 │   ├── notes/
+│   ├── explainers/            # synthesized "how a feature works now" docs
 │   ├── templates/
 │   └── external/
 ├── next/                       # per-user and local handoff projections
@@ -402,7 +406,8 @@ Common `.hero/hero.json` fields:
     "stale_days": 14
   },
   "knowledge": {
-    "auto_capture": true
+    "auto_capture": true,
+    "explainer_synthesis": "review"
   },
   "next": {
     "mode": "personal",
