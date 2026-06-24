@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-24T07:05:22Z · projected from 329 source nodes_
+_Last refreshed: 2026-06-24T07:13:10Z · projected from 329 source nodes_
 
 ## Surfaces
 
@@ -29,7 +29,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **"Concurrent-Session Branching & Worktree Isolation"** (surface: —) — 0/0 specs done
 - **"Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"** (surface: —) — 0/0 specs done
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
-- **"Feature Knowledge Synthesis — Auto-Generated 'How It Works' Entries from Shipped Work"** (surface: —) — 1/2 specs done; in flight: fks-on-demand-synthesizer
+- **"Feature Knowledge Synthesis — Auto-Generated 'How It Works' Entries from Shipped Work"** (surface: —) — 2/2 specs done
 - **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 7/11 specs done
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 11/16 specs done
 - **"Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"** (surface: —) — 0/8 specs done
@@ -53,7 +53,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — fks-feature-knowledge-artifact, landing-docs-content-refresh
+- **(unassigned)** — fks-feature-knowledge-artifact, fks-on-demand-synthesizer, landing-docs-content-refresh
 - **core** — cst-initiative-premature-autocomplete, cst-verify-lifecycle-scoping, verify-slug-resolution-hints
 - **domains/engineering** — spec-completion-loop
 
@@ -62,8 +62,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 1. **landing** — `hero-landing-page` (P0, delivering)
 2. **serve** — `hero-team-server` (P1, delivering)
 3. **serve** — `agent-outposts` (medium, delivering)
-4. **(unassigned)** — `fks-on-demand-synthesizer` (medium, delivering)
-5. **(unassigned)** — `context-engine-v2` (critical, planning)
+4. **(unassigned)** — `context-engine-v2` (critical, planning)
+5. **(unassigned)** — `core-vertical-layering` (P0, planning)
 
 ## Open risks & blockers
 
