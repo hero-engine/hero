@@ -2,11 +2,12 @@
 title: "Feature Knowledge Synthesis — Auto-Generated 'How It Works' Entries from Shipped Work"
 slug: feature-knowledge-synthesis
 type: initiative
-status: planning
+status: completed
 domain: engineering
 size: large
 priority: medium
 created: 2026-06-23
+completed_at: 2026-06-23
 horizon: next
 tags: [knowledge, synthesis, discoverability, cold-start, initiative, onboarding, dx]
 child:
@@ -144,7 +145,7 @@ automatically / let me review each / turn it off," and persist the choice in
 candidates always route through review regardless of mode. This is what makes
 auto-generation safe against detection false positives. Size: small–medium.
 
-### fks-living-doc-amendment  *(stub — design last)*
+### fks-living-doc-amendment  *(delivered)*
 Keep the entry current: when a later spec joins a known cluster, **amend
 surgically** — add new behavior, strike/correct what it contradicts — rather than
 regenerate. Fire from `synthesis-maintenance`'s `OnWrite` hook. Honor human
@@ -203,6 +204,21 @@ large.
 
 ## Progress
 
+- 2026-06-23 — **Initiative complete — all 5 children delivered.** The full
+  chain works: `explainer` knowledge type (#1) ← `hero synthesize` + MCP (#2) ←
+  cluster detection `--detect` (#3) ← autonomy handshake `--set-mode`/`--auto`
+  (#4) ← living-doc `--stale`/`--amend` (#5). Dogfooded throughout: the
+  cold-start-trust-hardening explainer is the first real entry, and `--detect`
+  surfaces the fks cluster itself. One honest deferral: the automatic
+  initiative-`completed` → synthesis trigger awaits `synthesis-maintenance`'s
+  `OnWrite` hook (unbuilt); every piece behind that trigger is shipped and
+  manually/headlessly invokable today.
+- 2026-06-23 — **Delivered #5 `fks-living-doc-amendment`.** Staleness detection
+  + surgical amendment that preserves Developer Notes and human edits (amends the
+  on-disk body, not a rebuild). OnWrite auto-trigger deferred (owner unbuilt).
+- 2026-06-23 — **Delivered #4 `fks-trust-handshake`.** `knowledge.explainer_synthesis`
+  (auto/review/off) + policy with a 0.9 confidence bar; `--set-mode`/`--detect`/
+  `--auto` surfaces. Sub-bar candidates always route to review.
 - 2026-06-23 — **Delivered #3 `fks-cluster-detection`.** `Detect` + `hero
   synthesize --detect`: explicit (completed-initiative children) + inferred
   (graph + file-overlap, completeness-gated, dedup'd) candidates with explainable

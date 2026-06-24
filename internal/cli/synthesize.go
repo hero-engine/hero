@@ -23,6 +23,8 @@ var (
 	synthesizeDetect   bool
 	synthesizeAuto     bool
 	synthesizeSetMode  string
+	synthesizeStale    bool
+	synthesizeAmend    string
 )
 
 var synthesizeCmd = &cobra.Command{
@@ -55,6 +57,8 @@ func init() {
 	synthesizeCmd.Flags().BoolVar(&synthesizeDetect, "detect", false, "list explainer-worthy spec clusters with their action under the current mode")
 	synthesizeCmd.Flags().BoolVar(&synthesizeAuto, "auto", false, "synthesize auto-eligible clusters per the autonomy mode; list the rest for review")
 	synthesizeCmd.Flags().StringVar(&synthesizeSetMode, "set-mode", "", "persist synthesis autonomy to hero.json: auto | review | off")
+	synthesizeCmd.Flags().BoolVar(&synthesizeStale, "stale", false, "list explainers whose cluster gained completed specs since last synthesis")
+	synthesizeCmd.Flags().StringVar(&synthesizeAmend, "amend", "", "amend an explainer by slug from the specs that joined its cluster")
 }
 
 func runSynthesize(cmd *cobra.Command, args []string) error {
@@ -71,6 +75,10 @@ func runSynthesize(cmd *cobra.Command, args []string) error {
 	switch {
 	case synthesizeSetMode != "":
 		return runSynthesizeSetMode(cmd, cfg, projectRoot, synthesizeSetMode)
+	case synthesizeStale:
+		return runSynthesizeStale(cmd, heroDir)
+	case synthesizeAmend != "":
+		return runSynthesizeAmend(cmd, cfg, projectRoot, heroDir, synthesizeAmend)
 	case synthesizeDetect:
 		return runSynthesizeDetect(cmd, cfg, heroDir)
 	case synthesizeAuto:
@@ -210,5 +218,78 @@ func runSynthesizeAuto(cmd *cobra.Command, cfg config.Config, projectRoot, heroD
 		}
 	}
 	fmt.Fprintf(w, "\nmode %s: %d synthesized, %d awaiting review.\n", mode, synthesized, review)
+	return nil
+}
+
+// runSynthesizeStale lists explainers whose cluster gained completed specs
+// since they were last synthesized.
+func runSynthesizeStale(cmd *cobra.Command, heroDir string) error {
+	reports, err := synthesize.StaleExplainers(heroDir)
+	if err != nil {
+		return err
+	}
+	w := cmd.OutOrStdout()
+	if len(reports) == 0 {
+		fmt.Fprintln(w, "All explainers are current.")
+		return nil
+	}
+	fmt.Fprintf(w, "%d stale explainer(s):\n\n", len(reports))
+	for _, r := range reports {
+		fmt.Fprintf(w, "● %s — %d new spec(s): %s\n", r.ExplainerSlug, len(r.NewSlugs), strings.Join(r.NewSlugs, ", "))
+		fmt.Fprintf(w, "    → hero synthesize --amend %s\n\n", r.ExplainerSlug)
+	}
+	return nil
+}
+
+// runSynthesizeAmend amends an explainer from the specs that joined its
+// cluster, preserving the Developer Notes section and existing edits.
+func runSynthesizeAmend(cmd *cobra.Command, cfg config.Config, projectRoot, heroDir, slug string) error {
+	clusterSlugs, path, err := synthesize.AmendTargets(heroDir, slug)
+	if err != nil {
+		return err
+	}
+	existing, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("reading explainer: %w", err)
+	}
+	bodyAndNotes := synthesize.StripFrontmatter(string(existing))
+	genBody, devNotes := synthesize.SplitDeveloperNotes(bodyAndNotes)
+
+	pkt, err := synthesize.Assemble(heroDir, projectRoot, clusterSlugs)
+	if err != nil {
+		return err
+	}
+	today := time.Now().Format("2006-01-02")
+
+	client, err := buildExtractClient(synthesizeProvider, synthesizeModel)
+	if err != nil {
+		return err
+	}
+	var content string
+	amended := false
+	if client.HasKey() {
+		sys, usr := pkt.AmendPrompt(genBody)
+		resp, rerr := client.Run(context.Background(), extract.Request{System: sys, User: usr, MaxOut: 3000})
+		if rerr != nil {
+			return fmt.Errorf("amendment: %w", rerr)
+		}
+		content = pkt.RenderAmended(resp.Text, devNotes, today)
+		amended = true
+	} else {
+		content = pkt.AmendScaffold(genBody, devNotes, today)
+	}
+
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		return fmt.Errorf("writing amended explainer: %w", err)
+	}
+	if _, err := index.RefreshIfStale(heroDir); err != nil {
+		fmt.Fprintf(cmd.ErrOrStderr(), "warning: index refresh failed: %v\n", err)
+	}
+	if amended {
+		fmt.Fprintf(cmd.OutOrStdout(), "Amended explainer: %s (Developer Notes preserved)\n", path)
+	} else {
+		fmt.Fprintf(cmd.OutOrStdout(), "No provider key — wrote an amend-scaffold with the new material: %s\n", path)
+		fmt.Fprintln(cmd.OutOrStdout(), "Fold it in via the agent, or set ANTHROPIC_API_KEY and re-run.")
+	}
 	return nil
 }
