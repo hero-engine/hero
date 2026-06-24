@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-23T22:00:54Z · projected from 325 source nodes_
+_Last refreshed: 2026-06-24T02:12:45Z · projected from 325 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | maturing | cmd/, internal/ | <1m ago | cst-initiative-premature-autocomplete |
+| core | maturing | cmd/, internal/ | 3h ago | hero-workspace-not-self-describing |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | maturing | domains/engineering/ | 8d ago | — |
@@ -25,7 +25,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Active initiatives
 
-- **"Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use"** (surface: core) — 1/2 specs done
+- **"Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use"** (surface: core) — 2/2 specs done
 - **"Concurrent-Session Branching & Worktree Isolation"** (surface: —) — 0/0 specs done
 - **"Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"** (surface: —) — 0/0 specs done
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
@@ -53,7 +53,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Recently completed (last 14 days)
 
 - **(unassigned)** — landing-docs-content-refresh
-- **core** — cst-verify-lifecycle-scoping, verify-slug-resolution-hints
+- **core** — cst-initiative-premature-autocomplete, cst-verify-lifecycle-scoping, verify-slug-resolution-hints
 - **domains/engineering** — spec-completion-loop
 
 ## Next up across surfaces
@@ -67,7 +67,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Open risks & blockers
 
 - **Blocked specs (10):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection).
-- **Aged open bugs (7):** `hero-workspace-not-self-describing` (open 42d), `scan-enrichment-unbounded-loop` (open 42d), `scan-test-detection-misses-spock-vitest` (open 42d), `initiative-required-sections-drift` (open 37d), `spec-lifecycle-hygiene-breakdown` (open 36d), `claim-matches-sentinel-collision` (open 35d), `hero-search-json-flag-silently-ignored` (open 30d).
+- **Aged open bugs (8):** `hero-workspace-not-self-describing` (open 43d), `scan-enrichment-unbounded-loop` (open 43d), `scan-test-detection-misses-spock-vitest` (open 43d), `initiative-required-sections-drift` (open 38d), `spec-lifecycle-hygiene-breakdown` (open 37d), `claim-matches-sentinel-collision` (open 36d), `hero-search-json-flag-silently-ignored` (open 31d), `next-project-file-conflict-not-regenerated` (open 21d).
 - **Unassigned specs (155) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
