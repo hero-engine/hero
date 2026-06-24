@@ -42,3 +42,21 @@ func TestIngestReport_EmptyPrintsNothing(t *testing.T) {
 		t.Errorf("empty report printed %q", out)
 	}
 }
+
+// Tier-labeling: a skipped "enrichment" step renders under its new
+// name and prints the note clarifying the structural graph is built
+// regardless.
+func TestIngestReport_EnrichmentSkipNote(t *testing.T) {
+	r := &ingestReport{}
+	r.add(stepResult{name: "planning", ok: true, detail: "10 specs"})
+	r.add(stepResult{name: "enrichment", skipped: true,
+		reason: "optional LLM enrichment skipped — no provider key set. Structural graph is unaffected."})
+
+	out := captureStdout(r.print)
+	if !strings.Contains(out, "⊘  enrichment:") {
+		t.Errorf("expected enrichment step rendered, got:\n%s", out)
+	}
+	if !strings.Contains(out, "structural graph") {
+		t.Errorf("expected note that the structural graph is unaffected, got:\n%s", out)
+	}
+}

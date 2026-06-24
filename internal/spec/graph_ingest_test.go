@@ -185,3 +185,22 @@ func TestSpecWriteGraphSkipsUnknownRelationTarget(t *testing.T) {
 		t.Errorf("expected 0 edges (target missing), got %d", summary.Edges)
 	}
 }
+
+// relates-to/relates_to must map to a related_to edge (they previously
+// fell through to no edge, silently dropping the relationship).
+func TestGraphEdgeForRelation_RelatesToMapsToEdge(t *testing.T) {
+	cases := map[string]string{
+		"related":    "related_to",
+		"relates-to": "related_to",
+		"relates_to": "related_to",
+		"sibling":    "related_to",
+		"parent":     "belongs_to",
+		"depends-on": "depends_on",
+		"child":      "", // inverse of parent — emitted from the child side
+	}
+	for kind, want := range cases {
+		if got := graphEdgeForRelation(kind); got != want {
+			t.Errorf("graphEdgeForRelation(%q) = %q, want %q", kind, got, want)
+		}
+	}
+}

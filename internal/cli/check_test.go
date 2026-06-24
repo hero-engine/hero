@@ -270,3 +270,26 @@ status: planning
 		t.Errorf("check should show header: %q", output)
 	}
 }
+
+// Severity-aware summary + kickoff collapse: many missing-Kickoff
+// scaffolds are an advisory category, the list is collapsed, and the
+// summary distinguishes advisory findings from failures.
+func TestCheck_SeveritySummaryAndKickoffCollapse(t *testing.T) {
+	env := newTestEnv(t)
+	for _, slug := range []string{"nk1", "nk2", "nk3", "nk4", "nk5", "nk6", "nk7"} {
+		env.addSpec("planning/features/"+slug+"/spec.md",
+			"---\ntitle: "+slug+"\ntype: feature\nstatus: planning\nslug: "+slug+"\n---\n# "+slug+"\n")
+	}
+	env.indexAll()
+
+	output, err := runCmd("check")
+	if err != nil {
+		t.Fatalf("check errored: %v", err)
+	}
+	if !strings.Contains(output, "and 2 more") {
+		t.Errorf("expected kickoff list collapsed to '… and 2 more', got:\n%s", output)
+	}
+	if !strings.Contains(output, "advisory check(s)") {
+		t.Errorf("expected severity-aware summary mentioning advisory check(s), got:\n%s", output)
+	}
+}
