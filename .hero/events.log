@@ -194,3 +194,13 @@
 {"ts":"2026-06-24T18:01:15.359054Z","type":"peer.handoff.sent","agent":"hero","slug":"hihcp-rgignore","message":"handed off to hero-code/hihcp-rgignore (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)"}
 {"ts":"2026-06-24T18:01:15.459131Z","type":"peer.handoff.sent","agent":"hero","slug":"hihcp-agents-md-harness-agnostic","message":"handed off to hero-code/hihcp-agents-md-harness-agnostic (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)"}
 {"ts":"2026-06-24T18:01:15.550835Z","type":"peer.handoff.sent","agent":"hero","slug":"desktop-sidebar-mcp-not-running","message":"handed off to hero-code/desktop-sidebar-mcp-not-running (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)"}
+{"ts":"2026-06-24T18:09:11.36646Z","type":"peer.handoff.received","agent":"hero","slug":"cloud-cli-verify","message":"received from hero-cloud/cloud-cli-verify (peer_id 5770cae7-b233-45c0-8e5d-765338a6058c)"}
+{"ts":"2026-06-24T20:37:42.50759Z","type":"peer.call.invoked","agent":"hero","slug":"cloud-cli-verify","message":"peer call advisory mode=advisory target=hero-cloud call_id=18bc1ed748112d68bc35195e8b3b82ac"}
+{"ts":"2026-06-24T20:37:43.944195Z","type":"peer.call.completed","agent":"hero","slug":"cloud-cli-verify","message":"peer call failed: subagent exited with error: exit status 1 (stderr: ) (call_id 18bc1ed748112d68bc35195e8b3b82ac)"}
+{"ts":"2026-06-24T20:37:54.480176Z","type":"peer.call.invoked","agent":"hero","slug":"cloud-cli-verify","message":"peer call advisory mode=advisory target=hero-cloud call_id=18bc1eda11ae1d280001b3e595911a44"}
+{"ts":"2026-06-24T20:38:03.306439Z","type":"peer.call.invoked","agent":"hero","slug":"cloud-cli-verify","message":"peer call advisory mode=advisory target=hero-cloud call_id=18bc1edc1fc3f868cf20bf73ec7ae0c6"}
+{"ts":"2026-06-24T20:38:03.92558Z","type":"peer.call.completed","agent":"hero","slug":"cloud-cli-verify","message":"peer call failed: subagent exited with error: exit status 1 (stderr: ) (call_id 18bc1edc1fc3f868cf20bf73ec7ae0c6)"}
+{"ts":"2026-06-24T20:38:12.018037Z","type":"peer.call.invoked","agent":"hero","message":"peer call advisory mode=advisory target=hero-cloud call_id=18bc1ede27046818429ea8d98a455ce3"}
+{"ts":"2026-06-24T20:38:12.765835Z","type":"peer.call.completed","agent":"hero","message":"peer call failed: subagent exited with error: exit status 1 (stderr: ) (call_id 18bc1ede27046818429ea8d98a455ce3)"}
+{"ts":"2026-06-24T20:38:35.25891Z","type":"peer.call.invoked","agent":"hero","message":"peer call advisory mode=advisory target=hero-cloud call_id=18bc1ee390480fc85a9738a511985a68"}
+{"ts":"2026-06-24T20:38:35.911751Z","type":"peer.call.completed","agent":"hero","message":"peer call failed: subagent exited with error: exit status 1 (stderr: ) (call_id 18bc1ee390480fc85a9738a511985a68)"}

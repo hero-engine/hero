@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-24T17:55:19Z
+updated: 2026-06-24T20:37:02Z
 repo: hero-engine/hero
 ---
 
@@ -8,9 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> so - someone asked me a question who was using here - like a dev was off doing a whole feature for like a couple weeks - tons of work - and theres specs and stuff - could read them all - but tedious - but was there a summary in knowledge of how that feature works or something. which made me wonder - are we doing enough to recognize when something is worthy of being in knowledge and not just in spe…
-
-_possibly stale — 1 commit(s) since, last set 21m ago_
+> got a peer request from hero-cloud - hero handoff accept cloud-cli-verify
 
 ## Suggested next prompt
 

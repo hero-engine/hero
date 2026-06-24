@@ -5,7 +5,7 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-06-24T17:55:18Z
+updated: 2026-06-24T21:06:54Z
 repo: hero-engine/hero
 branch: main
 ---
@@ -20,7 +20,7 @@ No open features in this repo.
 
 ## Roadmap shape
 
-5 specs have size drift — run /roadmap-review to triage
+7 specs have size drift — run /roadmap-review to triage
 
 ## Blocked on
 

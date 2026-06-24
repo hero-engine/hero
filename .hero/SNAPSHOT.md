@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-24T17:55:19Z · projected from 333 source nodes_
+_Last refreshed: 2026-06-24T21:06:55Z · projected from 334 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | maturing | cmd/, internal/ | 7m ago | hero-runner |
+| core | maturing | cmd/, internal/ | 3h ago | hero-runner |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | maturing | domains/engineering/ | 9d ago | — |
@@ -16,8 +16,8 @@ _Last refreshed: 2026-06-24T17:55:19Z · projected from 333 source nodes_
 | domains/sales | maturing | domains/sales/ | 9d ago | — |
 | landing | building | web/landing/ | 9d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 7m ago | agent-outposts |
-| (unassigned) | — | — | — | 162 specs without surface |
+| serve | building | internal/serve/ | 3h ago | agent-outposts |
+| (unassigned) | — | — | — | 163 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
 
@@ -52,7 +52,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — fks-feature-knowledge-artifact, fks-living-doc-amendment, scan-enrichment-unbounded-loop, spec-lifecycle-hygiene-breakdown, fks-cluster-detection, initiative-required-sections-drift, fks-on-demand-synthesizer, fks-trust-handshake
+- **(unassigned)** — cloud-cli-verify, fks-cluster-detection, fks-living-doc-amendment, spec-lifecycle-hygiene-breakdown, initiative-required-sections-drift, fks-feature-knowledge-artifact, scan-enrichment-unbounded-loop, fks-on-demand-synthesizer
 - **core** — cst-initiative-premature-autocomplete, cst-verify-lifecycle-scoping, scan-test-detection-misses-spock-vitest
 - **serve** — claim-matches-sentinel-collision
 
@@ -68,11 +68,11 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - **Blocked specs (12):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection).
 - **Aged open bugs (1):** `next-project-file-conflict-not-regenerated` (open 21d).
-- **Unassigned specs (162) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
+- **Unassigned specs (163) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 149/311 (47%)
-- Projection generation: 2ms · Source nodes: 333
+- Specs covered: 149/312 (47%)
+- Projection generation: 0ms · Source nodes: 334
 
