@@ -1,6 +1,7 @@
 package peering
 
 import (
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -543,6 +544,57 @@ func TestRecordOriginatorSideFallsBackToCallIDWhenNoArtifact(t *testing.T) {
 	}
 	if len(entries) != 1 || entries[0].ResultRef != req.CallID {
 		t.Fatalf("expected ResultRef==call_id fallback, got %+v", entries)
+	}
+}
+
+// TestSubagentRunError_DetectsLoggedOut verifies the regression for the
+// swallowed-login-message bug: claude prints "Not logged in · Please run
+// /login" to stdout (stderr empty), and the old code surfaced only
+// stderr — yielding an opaque "exit status 1 (stderr: )". The error must
+// now surface that stdout AND give an actionable claude login hint.
+func TestSubagentRunError_DetectsLoggedOut(t *testing.T) {
+	err := subagentRunError("claude", errors.New("exit status 1"),
+		"Not logged in · Please run /login", "", false)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "not logged in") {
+		t.Errorf("want login guidance, got: %s", msg)
+	}
+	if !strings.Contains(msg, "claude") || !strings.Contains(msg, "ANTHROPIC_API_KEY") {
+		t.Errorf("want actionable claude hint, got: %s", msg)
+	}
+	if !strings.Contains(msg, "Please run /login") {
+		t.Errorf("swallowed stdout must now be surfaced, got: %s", msg)
+	}
+	if strings.Contains(msg, "(stderr: )") {
+		t.Errorf("must not regress to the opaque empty-stderr form: %s", msg)
+	}
+}
+
+// TestSubagentRunError_SurfacesStdoutOnGenericFailure confirms a
+// non-auth failure still surfaces whatever the CLI wrote to stdout.
+func TestSubagentRunError_SurfacesStdoutOnGenericFailure(t *testing.T) {
+	err := subagentRunError("claude", errors.New("exit status 2"),
+		"panic: boom on stdout", "", false)
+	if !strings.Contains(err.Error(), "boom on stdout") {
+		t.Errorf("stdout should be surfaced in error, got: %s", err.Error())
+	}
+}
+
+// TestSubagentRunError_CustomCLINoClaudeHint verifies a non-claude CLI
+// gets a generic "authenticate it" message, never claude-specific advice
+// that would be wrong for it — the seam the multi-CLI spec builds on.
+func TestSubagentRunError_CustomCLINoClaudeHint(t *testing.T) {
+	err := subagentRunError("codex", errors.New("exit status 1"),
+		"", "Error: unauthorized", false)
+	msg := err.Error()
+	if !strings.Contains(msg, `"codex"`) {
+		t.Errorf("want command name in message, got: %s", msg)
+	}
+	if strings.Contains(msg, "ANTHROPIC_API_KEY") || strings.Contains(msg, "/login") {
+		t.Errorf("must not give claude-specific hint for codex: %s", msg)
 	}
 }
 
