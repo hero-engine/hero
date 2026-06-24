@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-24T08:01:43Z · 79 ready specs_
+_Generated: 2026-06-24T08:07:04Z · 78 ready specs_
 
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
@@ -486,13 +486,6 @@ literally `you` or `me` would cross-match other people's claims.
 → `internal/serve/pages/now/data/plate.go:60-70`
 
 **Files:** `internal/serve/pages/now/data/plate.go`, `internal/gitutil/gitutil.go`, `internal/serve/pages/now/data/plate_test.go`
-
----
-
-## feature-knowledge-synthesis — "Feature Knowledge Synthesis — Auto-Generated 'How It Works' Entries from Shipped Work"
-_initiative · planning · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/feature-knowledge-synthesis/spec.md)_
 
 ---
 
