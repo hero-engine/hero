@@ -269,6 +269,7 @@ func TestTypeFromPath(t *testing.T) {
 		{"/project/.hero/decisions/qux/spec.md", TypeDecision},
 		{"/project/.hero/planning/initiatives/quux/spec.md", TypeInitiative},
 		{"/project/.hero/specs/foo/spec.md", TypeFeature},
+		{"/project/.hero/knowledge/explainers/agent-outposts/spec.md", TypeExplainer},
 	}
 
 	for _, tt := range tests {
@@ -1169,6 +1170,46 @@ func TestTripwireTypeFromPath(t *testing.T) {
 	st := statusFromPath("/project/.hero/knowledge/tripwires/no-pyo3/spec.md")
 	if st != StatusActive {
 		t.Errorf("statusFromPath = %q, want %q", st, StatusActive)
+	}
+}
+
+func TestExplainerParse(t *testing.T) {
+	content := `---
+title: How Agent Outposts Work
+type: explainer
+synthesized_from:
+  - agent-outposts
+  - outpost-credentials
+last_synthesized: 2026-06-23
+---
+# How Agent Outposts Work
+
+## What it is
+
+Operable external systems with scoped credentials.
+
+## Developer Notes
+
+Watch the token refresh path.
+`
+	s, err := Parse(content, "/project/.hero/knowledge/explainers/agent-outposts/spec.md", time.Now())
+	if err != nil {
+		t.Fatalf("Parse failed: %v", err)
+	}
+	if s.Type != TypeExplainer {
+		t.Errorf("Type = %q, want %q", s.Type, TypeExplainer)
+	}
+	if !s.IsKnowledge() {
+		t.Error("explainer should be classified as knowledge")
+	}
+	if s.IsWorkSpec() {
+		t.Error("explainer must not be classified as a work spec")
+	}
+	if len(s.SynthesizedFrom) != 2 || s.SynthesizedFrom[0] != "agent-outposts" {
+		t.Errorf("SynthesizedFrom = %v, want [agent-outposts outpost-credentials]", s.SynthesizedFrom)
+	}
+	if s.LastSynthesized != "2026-06-23" {
+		t.Errorf("LastSynthesized = %q, want %q", s.LastSynthesized, "2026-06-23")
 	}
 }
 

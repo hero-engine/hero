@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-24T03:14:16Z · 103 ready specs_
+_Generated: 2026-06-24T03:39:43Z · 101 ready specs_
 
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
@@ -15,18 +15,18 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## fks-feature-knowledge-artifact — "Feature Knowledge Artifact — the 'How It Works' Entry Type"
+## fks-on-demand-synthesizer — "On-Demand Feature Synthesizer — hero synthesize <slugs>"
 _feature · planning · horizon: now_
 
-Define a new knowledge artifact type for "how a feature works" explainers.
-Deliverable: a documented template + frontmatter contract under
-`.hero/knowledge/` (likely a `features/` subdir), recognized by `hero index` and
-`hero search` like other knowledge types. Must carry provenance (source spec
-slugs + last-synthesized timestamp), a fixed how-it-works section skeleton, and a
-**Developer Notes** section flagged as human-owned / never auto-touched. Settle
-link-don't-restate vs. `decision` entries. Parent initiative:
-`feature-knowledge-synthesis`. Start by reading an existing `decision` entry and
-`core/skills/note-capture` for current knowledge conventions.
+Build `hero synthesize <slug…>`: read the named specs + the git diff over their
+delivery window, synthesize one feature knowledge entry in the
+`fks-feature-knowledge-artifact` template, and write it to
+`.hero/knowledge/explainers/<slug>/spec.md` with provenance frontmatter
+(`synthesized_from`, `last_synthesized`). Add the matching MCP tool. Then run
+`hero index`. Depends on `fks-feature-knowledge-artifact` landing the artifact
+contract. Parent initiative: `feature-knowledge-synthesis`. Look at how existing
+knowledge writes happen (`hero note`, `auto-knowledge-capture` skill) and how
+delivery windows are derived from spec timestamps + git history.
 
 ---
 
@@ -441,20 +441,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _bug · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-mcp-auto-reconnect/spec.md)_
-
----
-
-## hihcp-agents-md-harness-agnostic — "Produce Harness-Agnostic AGENTS.md, Demote CLAUDE.md"
-_bug · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-agents-md-harness-agnostic/spec.md)_
-
----
-
-## hihcp-agent-loop-error-recovery — "Harden Agent Loop Error Recovery (Stuck Turn Prevention)"
-_bug · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-agent-loop-error-recovery/spec.md)_
 
 ---
 

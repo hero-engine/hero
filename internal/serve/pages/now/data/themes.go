@@ -105,7 +105,7 @@ func LoadThemes(in ThemesInputs) Themes {
 func isNonWorkType(t spec.Type) bool {
 	switch t {
 	case spec.TypeNote, spec.TypeContext, spec.TypeTripwire,
-		spec.TypeExternal, spec.TypeRule:
+		spec.TypeExternal, spec.TypeRule, spec.TypeExplainer:
 		return true
 	}
 	return false

@@ -37,7 +37,7 @@ because someone remembered to write it.
 
 Recognize when a coherent feature has shipped — whether wrapped in a formal
 initiative or assembled from a loose cluster of specs — and synthesize a
-durable `type: feature` knowledge entry describing how it works, with
+durable `explainer` knowledge entry describing how it works, with
 provenance back to the specs it came from. Generation happens automatically,
 behind a one-keystroke trust handshake; the entry stays current by being
 amended (not regenerated) as later related specs land; and a human can always
@@ -100,7 +100,7 @@ These two are adjacent and must not be conflated:
   `supersedes`/`related` edges). It keeps the graph *connected*. It never
   produces a new human-readable artifact.
 - **This initiative** does *feature-level synthesis*: collapse a *cluster* of
-  completed specs into one new `type: feature` explainer. It produces a new
+  completed specs into one new `explainer` entry. It produces a new
   artifact.
 
 They compose: `fks-living-doc-amendment` (#5) should fire from
@@ -116,7 +116,7 @@ exist); #3–#5 are sequenced stubs, deliberately left for a `/design` pass once
 the engine has taught us what a good synthesis looks like.
 
 ### fks-feature-knowledge-artifact  *(materialized — designed)*
-Define the `type: feature` knowledge entry: its template ("how it works"
+Define the `explainer` knowledge entry: its template ("how it works"
 structure — purpose, surfaces/entry points, key flows, data shape, gotchas),
 its provenance frontmatter (source specs + last-synthesized timestamp), and the
 sacred **Developer Notes** section. Settles the link policy vs. `decision`
@@ -203,6 +203,16 @@ large.
 
 ## Progress
 
+- 2026-06-23 — **Delivered #1 `fks-feature-knowledge-artifact`.** Added the
+  first-class `explainer` knowledge type (`.hero/knowledge/explainers/<slug>/spec.md`),
+  wired through type recognition, `IsKnowledge`, graph node type, both
+  `validTypes` allowlists, the knowledge stats counter, and four work-rollup
+  exclusion switches; `hero check --knowledge` now validates `synthesized_from`
+  + `last_synthesized` provenance. Format doc at
+  `core/skills/explainer-format/SKILL.md`. Verified end-to-end with the dev
+  binary; full `internal/spec`/`cli`/`serve` suites green. Verification corrected
+  the on-disk layout (dir/`spec.md`, not flat) and surfaced a pre-existing
+  cross-type queue-advisory issue (flagged separately). #2 is next.
 - 2026-06-23 — Initiative drafted from a `/discover` session on the "no how-it-
   works summary after a multi-week feature" gap. Resolved three design forks:
   inferred clusters (not initiative-close only), auto-with-handshake autonomy,

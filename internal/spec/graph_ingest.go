@@ -206,6 +206,8 @@ func graphTypeFor(t Type) string {
 		return "External"
 	case TypeTripwire:
 		return "Tripwire"
+	case TypeExplainer:
+		return "Explainer"
 	default:
 		return ""
 	}

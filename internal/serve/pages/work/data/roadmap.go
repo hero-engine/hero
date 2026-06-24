@@ -134,7 +134,8 @@ func LoadRoadmap(in RoadmapInputs) Roadmap {
 		}
 		switch s.Type {
 		case spec.TypeContext, spec.TypeNote, spec.TypeExternal,
-			spec.TypeConvention, spec.TypeRule, spec.TypeTripwire:
+			spec.TypeConvention, spec.TypeRule, spec.TypeTripwire,
+			spec.TypeExplainer:
 			continue
 		}
 		if !passesFilter(s, typeF, ageF) {

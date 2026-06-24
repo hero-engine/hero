@@ -680,6 +680,34 @@ func runKnowledgeLint(heroDir, projectRoot string) int {
 	}
 	issues += brokenRefs
 
+	// 3b. Check explainer provenance (synthesized_from + last_synthesized).
+	// An explainer claims to describe current reality, so it must name the
+	// specs it was synthesized from and when — else readers can't judge
+	// staleness. See feature-knowledge-synthesis.
+	provCount := 0
+	for _, s := range knowledgeSpecs {
+		if s.Type != spec.TypeExplainer {
+			continue
+		}
+		var missing []string
+		if len(s.SynthesizedFrom) == 0 {
+			missing = append(missing, "synthesized_from")
+		}
+		if s.LastSynthesized == "" {
+			missing = append(missing, "last_synthesized")
+		}
+		if len(missing) > 0 {
+			provCount++
+			if provCount <= 5 {
+				fmt.Printf("  ⚠ %s — explainer missing provenance: %s\n", s.Slug, strings.Join(missing, ", "))
+			}
+		}
+	}
+	if provCount > 5 {
+		fmt.Printf("  ... and %d more explainers missing provenance\n", provCount-5)
+	}
+	issues += provCount
+
 	// 4. Check for orphan raw files (raw/ entries with no corresponding knowledge entry)
 	rawDir := filepath.Join(knowledgeDir, "raw")
 	if entries, err := os.ReadDir(rawDir); err == nil {

@@ -20,7 +20,7 @@ relations:
 ## Goal
 
 Ship the synthesis engine: given an explicit set of spec slugs, read them and the
-git diff across their delivery window and emit one `type: feature` knowledge
+git diff across their delivery window and emit one `explainer` knowledge
 entry in the `fks-feature-knowledge-artifact` shape. Exposed as
 `hero synthesize <slugs…>` and an MCP tool. This is the spine of the initiative —
 manually invoked, zero detection risk — and it exists first so we learn what a
@@ -32,7 +32,7 @@ upkeep (#5).
 Build `hero synthesize <slug…>`: read the named specs + the git diff over their
 delivery window, synthesize one feature knowledge entry in the
 `fks-feature-knowledge-artifact` template, and write it to
-`.hero/knowledge/features/<slug>.md` with provenance frontmatter
+`.hero/knowledge/explainers/<slug>/spec.md` with provenance frontmatter
 (`synthesized_from`, `last_synthesized`). Add the matching MCP tool. Then run
 `hero index`. Depends on `fks-feature-knowledge-artifact` landing the artifact
 contract. Parent initiative: `feature-knowledge-synthesis`. Look at how existing
@@ -58,7 +58,7 @@ on an explicit slug list, has two payoffs:
 
 ### Surface
 - `hero synthesize <slug> [<slug> …]` — explicit spec slugs.
-- Optional `--out <path>` override; default `.hero/knowledge/features/<slug>.md`
+- Optional `--out <path>` override; default `.hero/knowledge/explainers/<slug>/spec.md`
   where `<slug>` derives from the dominant spec / initiative slug.
 - MCP tool mirroring the CLI for in-session synthesis.
 
@@ -71,7 +71,7 @@ on an explicit slug list, has two payoffs:
    decisions** links (link, don't restate).
 
 ### Output
-- One `type: feature` knowledge entry in the #1 template, with `synthesized_from`
+- One `explainer` knowledge entry in the #1 template, with `synthesized_from`
   set to the input slugs and `last_synthesized` to today.
 - Followed by `hero index` so it's immediately searchable.
 
@@ -83,7 +83,7 @@ on an explicit slug list, has two payoffs:
 ## Acceptance Criteria
 
 - WHEN a user runs `hero synthesize <slug…>` with valid spec slugs THE SYSTEM
-  SHALL write one `type: feature` knowledge entry in the
+  SHALL write one `explainer` knowledge entry in the
   `fks-feature-knowledge-artifact` template populated from those specs.
 - THE SYSTEM SHALL set `synthesized_from` to the input slugs and
   `last_synthesized` to the run date in the entry's frontmatter.

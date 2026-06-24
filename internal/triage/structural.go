@@ -20,6 +20,7 @@ var validTypes = map[spec.Type]bool{
 	spec.TypeExternal:   true,
 	spec.TypeContext:    true,
 	spec.TypeNote:       true,
+	spec.TypeExplainer:  true,
 }
 
 // workStatuses are valid statuses for feature/bug specs.
