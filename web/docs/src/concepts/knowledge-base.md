@@ -11,6 +11,7 @@ Hero's knowledge base is a local, queryable store of project knowledge that agen
 ├── rules/          # Hard constraints (security, compliance, performance)
 ├── context/        # Project background (architecture, domain model)
 ├── notes/          # Brainstorms, ideas, rough thoughts
+├── explainers/     # Synthesized "how a feature works now" docs
 └── templates/      # Reusable spec and document templates
 ```
 
@@ -23,6 +24,7 @@ Hero's knowledge base is a local, queryable store of project knowledge that agen
 | **Rules** | Non-negotiable constraints | "No secrets in environment variables; use Vault" |
 | **Context** | Background information | "The billing service was extracted from the monolith in Q3" |
 | **Notes** | Informal captures | "Brainstorm: possible migration to gRPC" |
+| **Explainers** | Synthesized "how a feature works, as it exists now" docs | "How cluster detection assembles an explainer" |
 | **Templates** | Scaffolds for specs and docs | Feature spec template, ADR template |
 
 ## Auto-Capture
