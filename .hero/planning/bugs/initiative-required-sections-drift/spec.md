@@ -2,7 +2,8 @@
 title: initiative spec-type's required-sections YAML disagrees with its prose docs
 slug: initiative-required-sections-drift
 type: bug
-status: planning
+status: completed
+completed_at: 2026-06-23
 severity: low
 priority: P2
 created: 2026-05-17
@@ -80,3 +81,7 @@ Touch:
 ## Kickoff
 
 > Read `.hero/planning/bugs/initiative-required-sections-drift/spec.md` (this file) and `core/spec-types/initiative.md`. Update the prose body to describe `Goal` as the sole required section; demote `Bet`, `Evidence`, `Tradeoffs` to suggested/optional with a Shape Up reference. Walk `.hero/planning/initiatives/*/spec.md` and confirm each has a `## Goal` section (likely all do — verify, don't assume). Run `go test ./internal/spectypes/...` clean (no Go changes expected). Report what shipped and whether any existing initiatives needed a `Goal` section added, under 200 words.
+
+## Resolution (2026-06-23)
+
+**Verified already fixed** (status was stale). core/spec-types/initiative.md prose now matches the YAML: Goal required; Bet/Evidence/Tradeoffs demoted to 'suggested', with a methodology-neutral note.

@@ -2,7 +2,8 @@
 title: hero search --json silently emits human text on the FTS5 path
 slug: hero-search-json-flag-silently-ignored
 type: bug
-status: planning
+status: completed
+completed_at: 2026-06-23
 severity: low
 priority: P2
 created: 2026-05-24
@@ -84,3 +85,7 @@ Additionally, every test uses a 1–2 spec corpus, which means the graph-vs-FTS5
 - `hero search "<any query>" --json` emits valid JSON on stdout for every routing path (FTS5, graph, list, file, cross-repo).
 - `hero search "no-match-string" --json` emits `[]`.
 - New tests cover at least the FTS5 path and the empty-results path; they fail against current `main` and pass after the fix.
+
+## Resolution (2026-06-23)
+
+**Verified already fixed** (status was stale). internal/cli/search.go honors `--json` on the FTS5, list, and graph paths and emits `[]` on empty; TestSearchJSONFTS5Path / TestSearchJSONListMode present and passing.

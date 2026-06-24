@@ -2,7 +2,8 @@
 title: Spec lifecycle hygiene breakdown — five concurrent failures of Hero's own contracts
 slug: spec-lifecycle-hygiene-breakdown
 type: bug
-status: planning
+status: completed
+completed_at: 2026-06-23
 severity: high
 priority: P0
 root_cause_class: design
@@ -308,3 +309,7 @@ One per symptom, except Symptom 4 (folded into existing in-flight spec). Naming 
 ---
 
 Needs more research? → No
+
+## Resolution (2026-06-23)
+
+**Verified resolved** (status was stale). 4 of 5 symptoms fixed by the cold-start-trust-hardening initiative (auto-archive on completion, kickoff delivery gate, WIP soft-advisory, pre-commit hook auto-install). Symptom 4 (0/N verifiable on empty AC graph) is a data/backfill dependency tracked under the completed spec-status-integrity feature, not a code defect here.

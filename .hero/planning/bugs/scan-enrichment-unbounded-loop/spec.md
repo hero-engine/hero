@@ -2,7 +2,8 @@
 title: /scan post-scan enrichment loop is unbounded
 slug: scan-enrichment-unbounded-loop
 type: bug
-status: planning
+status: completed
+completed_at: 2026-06-23
 severity: high
 created: 2026-05-12
 tags: [scan, commands, enrichment, opencode]
@@ -49,3 +50,7 @@ Rewrote step 4 in `commands/scan.md` (and the synced copy `core/commands/scan.md
 ## Kickoff
 
 Resume work on the `/scan` enrichment-loop fix. Read this spec and `commands/scan.md`. The fix is in place; remaining work is to validate the new step 4 wording in real opencode/codex sessions (does the model actually stop after 5 entries? does it still reach for `.hero/knowledge/code/` files?) and, if needed, tighten the language further. Consider also extending the same bounded-enrichment pattern to other "read N things and enrich each" command surfaces.
+
+## Resolution (2026-06-23)
+
+**Verified already fixed** (status was stale). core/commands/scan.md step 4 caps enrichment to the five highest-value entries, excludes .hero/knowledge/code/, and stops explicitly.
