@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/hero-engine/hero/internal/config"
@@ -19,6 +20,7 @@ var (
 	synthesizeModel    string
 	synthesizeProvider string
 	synthesizePacket   bool
+	synthesizeDetect   bool
 )
 
 var synthesizeCmd = &cobra.Command{
@@ -35,8 +37,9 @@ material for an agent (via the hero_synthesize MCP tool) or a human to fill.
 
   hero synthesize cold-start-trust-hardening
   hero synthesize feat-a feat-b feat-c --out .hero/knowledge/explainers/my-feature/spec.md
-  hero synthesize feat-a --packet     # print the synthesis packet, write nothing`,
-	Args: cobra.MinimumNArgs(1),
+  hero synthesize feat-a --packet     # print the synthesis packet, write nothing
+  hero synthesize --detect            # list inferred explainer-worthy clusters`,
+	Args: cobra.ArbitraryArgs,
 	RunE: runSynthesize,
 }
 
@@ -45,6 +48,7 @@ func init() {
 	synthesizeCmd.Flags().StringVar(&synthesizeModel, "model", "", "override the LLM model for prose generation")
 	synthesizeCmd.Flags().StringVar(&synthesizeProvider, "provider", "", "override the LLM provider (default anthropic)")
 	synthesizeCmd.Flags().BoolVar(&synthesizePacket, "packet", false, "print the synthesis packet for an agent and write nothing")
+	synthesizeCmd.Flags().BoolVar(&synthesizeDetect, "detect", false, "list inferred explainer-worthy spec clusters and exit")
 }
 
 func runSynthesize(cmd *cobra.Command, args []string) error {
@@ -56,6 +60,13 @@ func runSynthesize(cmd *cobra.Command, args []string) error {
 	heroDir := cfg.HeroDir(projectRoot)
 	if _, err := os.Stat(heroDir); os.IsNotExist(err) {
 		return fmt.Errorf("no hero workspace found (run 'hero init' first)")
+	}
+
+	if synthesizeDetect {
+		return runSynthesizeDetect(cmd, heroDir)
+	}
+	if len(args) == 0 {
+		return fmt.Errorf("provide spec slugs to synthesize, or --detect to list candidates")
 	}
 
 	// Assemble fails loud on any unresolved slug, before we write anything.
@@ -111,6 +122,27 @@ func runSynthesize(cmd *cobra.Command, args []string) error {
 	} else {
 		fmt.Fprintf(cmd.OutOrStdout(), "No provider key — wrote a scaffold with the synthesis material: %s\n", outPath)
 		fmt.Fprintln(cmd.OutOrStdout(), "Complete it via the hero_synthesize MCP tool, or set ANTHROPIC_API_KEY and re-run.")
+	}
+	return nil
+}
+
+// runSynthesizeDetect lists inferred explainer-worthy clusters. Detection
+// only — each candidate is a `hero synthesize <slugs>` invocation away.
+func runSynthesizeDetect(cmd *cobra.Command, heroDir string) error {
+	cands, err := synthesize.Detect(heroDir)
+	if err != nil {
+		return err
+	}
+	w := cmd.OutOrStdout()
+	if len(cands) == 0 {
+		fmt.Fprintln(w, "No explainer-worthy clusters detected (need ≥2 completed, related specs not already covered by an explainer).")
+		return nil
+	}
+	fmt.Fprintf(w, "%d candidate cluster(s):\n\n", len(cands))
+	for _, c := range cands {
+		fmt.Fprintf(w, "● %s  (confidence %.0f%%, %s)\n", c.OutSlug, c.Confidence*100, strings.Join(c.Signals, ", "))
+		fmt.Fprintf(w, "    specs: %s\n", strings.Join(c.Slugs, ", "))
+		fmt.Fprintf(w, "    → hero synthesize %s\n\n", strings.Join(c.Slugs, " "))
 	}
 	return nil
 }
