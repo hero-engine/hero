@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-24T07:51:12Z · projected from 331 source nodes_
+_Last refreshed: 2026-06-24T17:32:21Z · projected from 333 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | maturing | cmd/, internal/ | 9h ago | hero-workspace-not-self-describing |
+| core | maturing | cmd/, internal/ | 19h ago | hero-workspace-not-self-describing |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | maturing | domains/engineering/ | 9d ago | — |
@@ -17,7 +17,7 @@ _Last refreshed: 2026-06-24T07:51:12Z · projected from 331 source nodes_
 | landing | building | web/landing/ | 9d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
 | serve | building | internal/serve/ | 9d ago | agent-outposts |
-| (unassigned) | — | — | — | 161 specs without surface |
+| (unassigned) | — | — | — | 163 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
 
@@ -29,7 +29,6 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **"Concurrent-Session Branching & Worktree Isolation"** (surface: —) — 0/0 specs done
 - **"Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"** (surface: —) — 0/0 specs done
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
-- **"Feature Knowledge Synthesis — Auto-Generated 'How It Works' Entries from Shipped Work"** (surface: —) — 2/3 specs done
 - **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 7/11 specs done
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 11/16 specs done
 - **"Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"** (surface: —) — 0/8 specs done
@@ -47,13 +46,13 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ### Recently completed initiatives
 
+- **"Feature Knowledge Synthesis — Auto-Generated 'How It Works' Entries from Shipped Work"** (surface: —) — 5/5 specs done · COMPLETED 2026-06-23
 - **Roadmap Shape — Detect, Surface, and Resolve Spec-Shape Drift** (surface: serve) — 4/4 specs done · COMPLETED 2026-06-01
 - **hero serve Project Section — Per-Project Info, Utilities, and Operations Page** (surface: serve) — 5/5 specs done · COMPLETED 2026-05-20
-- **Hero v2 — System Design Initiative** (surface: core, serve) — 8/8 specs done · COMPLETED 2026-05-18
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — cold-start-trust-hardening, fks-feature-knowledge-artifact, fks-on-demand-synthesizer, landing-docs-content-refresh
+- **(unassigned)** — cold-start-trust-hardening, fks-cluster-detection, fks-feature-knowledge-artifact, fks-living-doc-amendment, fks-on-demand-synthesizer, fks-trust-handshake, feature-knowledge-synthesis, landing-docs-content-refresh
 - **core** — cst-initiative-premature-autocomplete, cst-verify-lifecycle-scoping, verify-slug-resolution-hints
 - **domains/engineering** — spec-completion-loop
 
@@ -69,11 +68,11 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - **Blocked specs (10):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection).
 - **Aged open bugs (8):** `hero-workspace-not-self-describing` (open 43d), `scan-enrichment-unbounded-loop` (open 43d), `scan-test-detection-misses-spock-vitest` (open 43d), `initiative-required-sections-drift` (open 38d), `spec-lifecycle-hygiene-breakdown` (open 37d), `claim-matches-sentinel-collision` (open 36d), `hero-search-json-flag-silently-ignored` (open 31d), `next-project-file-conflict-not-regenerated` (open 21d).
-- **Unassigned specs (161) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
+- **Unassigned specs (163) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 149/310 (48%)
-- Projection generation: 0ms · Source nodes: 331
+- Specs covered: 149/312 (47%)
+- Projection generation: 0ms · Source nodes: 333
 
