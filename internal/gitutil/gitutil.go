@@ -24,21 +24,29 @@ import (
 // Empty strings at any stage fall through to the next source.
 func UserName() string {
 	if out, err := exec.Command("git", "config", "user.name").Output(); err == nil {
-		if name := normalizeIdentity(string(out)); name != "" {
+		if name := normalizeIdentity(string(out)); name != "" && !isSentinelIdentity(name) {
 			return name
 		}
 	}
 	if v := os.Getenv("USER"); v != "" {
-		if name := normalizeIdentity(v); name != "" {
+		if name := normalizeIdentity(v); name != "" && !isSentinelIdentity(name) {
 			return name
 		}
 	}
 	if v := os.Getenv("USERNAME"); v != "" {
-		if name := normalizeIdentity(v); name != "" {
+		if name := normalizeIdentity(v); name != "" && !isSentinelIdentity(name) {
 			return name
 		}
 	}
 	return "unknown"
+}
+
+// isSentinelIdentity reports whether a normalized identity collides with a
+// claim sentinel ("you"/"me"). Such a value must not be used as a real user
+// identity — it would make sentinel-claimed specs match this user. See
+// claim-matches-sentinel-collision.
+func isSentinelIdentity(s string) bool {
+	return s == "you" || s == "me"
 }
 
 // normalizeIdentity trims whitespace, lowercases, and replaces spaces

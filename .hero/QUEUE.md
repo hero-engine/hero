@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-24T08:07:04Z · 78 ready specs_
+_Generated: 2026-06-24T17:48:14Z · 71 ready specs_
 
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
@@ -366,38 +366,10 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## spec-lifecycle-hygiene-breakdown — Spec lifecycle hygiene breakdown — five concurrent failures of Hero's own contracts
-_bug · planning · horizon: now_
-
-You are picking up a meta-bug: Hero is failing to enforce its own spec-lifecycle contracts. Five symptoms surfaced together in `hero check` on 2026-05-18 (120 issues total): 11 completed-but-not-moved specs, 43 kickoff-missing specs (12 of them currently delivering), 19 specs simultaneously in `delivering` (no WIP limit anywhere), 0/125 status-truthfulness verifications (the verifier ships but no specs have AC graph nodes), and `hero next install-hooks` is run by `hero init` but not by `hero install` or `hero scan`. Open this spec, then read `internal/cli/check.go:55-265`, `internal/cli/complete.go`, `internal/cli/deliver.go:99-134`, `internal/integrity/status.go`, `internal/cli/next_hooks.go:262-372`, and `commands/deliver.md:114`. Pick up at: classify each symptom, then propose child fix-specs in `## Proposed Child Specs` — do NOT create the child specs.
-
----
-
-## scan-test-detection-misses-spock-vitest — hero scan misses Spock, dependency-only Vitest/Playwright, and Playwright .js/.mts configs
-_bug · planning · horizon: now_
-
-Resume work on the test-framework detector miss. Read this spec and `internal/scan/scan.go` (the `detectFromMarkers`, `detectTestFromPackageJSON`, and `detectJVMTestFrameworks` functions). Fix is in place. Outstanding work to consider: (a) unit tests covering Spock + Vitest + Playwright detection paths (currently verified live, no unit coverage added); (b) frame detection for less-common JVM frameworks (Spek for Kotlin, ScalaTest); (c) consider parsing `package.json`'s `"scripts"` section for `test`/`e2e` patterns when no framework dep is declared.
-
----
-
-## scan-enrichment-unbounded-loop — /scan post-scan enrichment loop is unbounded
-_bug · planning · horizon: now_
-
-Resume work on the `/scan` enrichment-loop fix. Read this spec and `commands/scan.md`. The fix is in place; remaining work is to validate the new step 4 wording in real opencode/codex sessions (does the model actually stop after 5 entries? does it still reach for `.hero/knowledge/code/` files?) and, if needed, tighten the language further. Consider also extending the same bounded-enrichment pattern to other "read N things and enrich each" command surfaces.
-
----
-
 ## install-target-emits-both-claude-and-agents-md — "`hero install --target claude` emits both CLAUDE.md and AGENTS.md"
 _bug · planning · horizon: now_
 
 Reproduce: cd into a clean repo with no `CLAUDE.md` or `AGENTS.md`, run `hero install --target claude`. Expected: only `CLAUDE.md` lands. Observed: both `CLAUDE.md` and `AGENTS.md` are emitted with the same managed-block content. Fix likely lives in the install target dispatch in the hero CLI — read the install command source, find where both files get written, and gate `AGENTS.md` emission on the target not being `claude` (or on a generic/fallback target). Update tests to cover each target's expected file set.
-
----
-
-## initiative-required-sections-drift — initiative spec-type's required-sections YAML disagrees with its prose docs
-_bug · planning · horizon: now_
-
-> Read `.hero/planning/bugs/initiative-required-sections-drift/spec.md` (this file) and `core/spec-types/initiative.md`. Update the prose body to describe `Goal` as the sole required section; demote `Bet`, `Evidence`, `Tradeoffs` to suggested/optional with a Shape Up reference. Walk `.hero/planning/initiatives/*/spec.md` and confirm each has a `## Goal` section (likely all do — verify, don't assume). Run `go test ./internal/spectypes/...` clean (no Go changes expected). Report what shipped and whether any existing initiatives needed a `Goal` section added, under 200 words.
 
 ---
 
@@ -429,20 +401,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## hero-workspace-not-self-describing — AGENTS.md Project Structure section lies about content-path locations
-_bug · planning · horizon: now_
-
-Resume work on the AGENTS.md project-structure regression. Read this spec, the v0.8 install refactor commits (`git log --oneline | head -20`), and `internal/install/agents_md.go`. The fix is already in place; remaining work is (a) optional unit test pinning the resolved paths against fresh-install output, (b) follow-up for non-AGENTS.md surfaces that may carry the same hardcoded layout description (search for `commands/. — Slash` and similar wording across the repo).
-
----
-
-## hero-search-json-flag-silently-ignored — hero search --json silently emits human text on the FTS5 path
-_bug · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hero-search-json-flag-silently-ignored/spec.md)_
-
----
-
 ## desktop-sidebar-mcp-not-running — "HeroDesktop sidebar shows MCP notRunning error when hero serve is absent"
 _bug · planning · horizon: now_
 
@@ -468,24 +426,6 @@ Investigate and fix the HeroDesktop sidebar `notRunning` error when `hero serve`
 -> `.hero/planning/bugs/desktop-sidebar-mcp-not-running/spec.md`
 
 **Files:** `internal/cli/serve_ensure.go` (new), `internal/serve/lifecycle.go` (export rename), `internal/serve/server.go` (update caller)
-
----
-
-## claim-matches-sentinel-collision — claimedByMatches "you"/"me" sentinels collide with real git identities
-_bug · planning · horizon: now_
-
-A tiny matcher in the dashboard's plate treats the literal strings `"you"`
-and `"me"` as "match the current viewer" regardless of identity. Now that
-identity comes from `git config user.name`, a user whose git name is
-literally `you` or `me` would cross-match other people's claims.
-
-**Status:** planning — backlog spec carved out of `dashboard-user-identity-os-env-mismatch`. No code yet.
-
-**Pick up at:** confirm there are no in-repo writers emitting `claimed_by: you` or `claimed_by: me` (only matcher-side sentinels exist today), then implement **Option C** — reject `you`/`me` as identity inputs in `gitutil.UserName()` normalization, and delete the `cb == "you" || cb == "me"` arm from `claimedByMatches`.
-
-→ `internal/serve/pages/now/data/plate.go:60-70`
-
-**Files:** `internal/serve/pages/now/data/plate.go`, `internal/gitutil/gitutil.go`, `internal/serve/pages/now/data/plate_test.go`
 
 ---
 

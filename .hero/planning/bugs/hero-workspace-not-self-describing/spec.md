@@ -2,7 +2,8 @@
 title: AGENTS.md Project Structure section lies about content-path locations
 slug: hero-workspace-not-self-describing
 type: bug
-status: planning
+status: completed
+completed_at: 2026-06-23
 severity: high
 created: 2026-05-12
 tags: [install, agents-md, symlink-refactor, opencode, multi-harness]
@@ -65,3 +66,7 @@ Make the body resolve the actual canonical paths from the project's `hero.json` 
 ## Kickoff
 
 Resume work on the AGENTS.md project-structure regression. Read this spec, the v0.8 install refactor commits (`git log --oneline | head -20`), and `internal/install/agents_md.go`. The fix is already in place; remaining work is (a) optional unit test pinning the resolved paths against fresh-install output, (b) follow-up for non-AGENTS.md surfaces that may carry the same hardcoded layout description (search for `commands/. — Slash` and similar wording across the repo).
+
+## Resolution (2026-06-23)
+
+**Verified already fixed** (status was stale). AGENTS.md 'Project Structure' now renders `<harness>/commands|agents|skills` placeholders plus the symlink-to-canonical note (render-direct-install in internal/install/agents_md.go); the misleading bare project-root paths are gone.

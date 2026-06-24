@@ -2,7 +2,8 @@
 title: hero scan misses Spock, dependency-only Vitest/Playwright, and Playwright .js/.mts configs
 slug: scan-test-detection-misses-spock-vitest
 type: bug
-status: planning
+status: completed
+completed_at: 2026-06-23
 severity: medium
 created: 2026-05-12
 tags: [scan, detector, test-frameworks, spock, vitest, playwright, junit]
@@ -61,3 +62,7 @@ Empty Go project still emits the "No tests" gap correctly (`e.GoTestCount == 0 &
 ## Kickoff
 
 Resume work on the test-framework detector miss. Read this spec and `internal/scan/scan.go` (the `detectFromMarkers`, `detectTestFromPackageJSON`, and `detectJVMTestFrameworks` functions). Fix is in place. Outstanding work to consider: (a) unit tests covering Spock + Vitest + Playwright detection paths (currently verified live, no unit coverage added); (b) frame detection for less-common JVM frameworks (Spek for Kotlin, ScalaTest); (c) consider parsing `package.json`'s `"scripts"` section for `test`/`e2e` patterns when no framework dep is declared.
+
+## Resolution (2026-06-23)
+
+**Verified already fixed** (status was stale). internal/scan/scan.go detects Spock (detectJVMTestFrameworks), dependency-only Vitest/Playwright (detectTestFromPackageJSON), and .js/.mts Playwright/Vitest config markers. Remaining: dedicated unit tests for these detectors (test-coverage debt, tracked separately — behavior verified live).

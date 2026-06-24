@@ -42,6 +42,19 @@ func initGitRepo(t *testing.T) string {
 	return dir
 }
 
+func TestIsSentinelIdentity(t *testing.T) {
+	for _, s := range []string{"you", "me"} {
+		if !isSentinelIdentity(s) {
+			t.Errorf("isSentinelIdentity(%q) = false, want true", s)
+		}
+	}
+	for _, s := range []string{"alice", "you-2", "meredith", ""} {
+		if isSentinelIdentity(s) {
+			t.Errorf("isSentinelIdentity(%q) = true, want false", s)
+		}
+	}
+}
+
 func TestIsRepo(t *testing.T) {
 	dir := initGitRepo(t)
 	if !IsRepo(dir) {

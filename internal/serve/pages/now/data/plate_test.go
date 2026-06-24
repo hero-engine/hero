@@ -6,6 +6,26 @@ import (
 	"testing"
 )
 
+func TestClaimedByMatches_NoSentinelCollision(t *testing.T) {
+	cases := []struct {
+		claimedBy, user string
+		want            bool
+	}{
+		{"alice", "alice", true},
+		{"Alice", "alice", true}, // case-insensitive
+		{"you", "alice", false},  // sentinel must not match a real user
+		{"me", "alice", false},   // sentinel must not match a real user
+		{"bob", "alice", false},  // different users don't match
+		{"", "alice", false},     // empty claim never matches
+		{"alice", "", false},     // empty user never matches
+	}
+	for _, c := range cases {
+		if got := claimedByMatches(c.claimedBy, c.user); got != c.want {
+			t.Errorf("claimedByMatches(%q, %q) = %v, want %v", c.claimedBy, c.user, got, c.want)
+		}
+	}
+}
+
 func TestLoadPlate_EmptyWorkspace(t *testing.T) {
 	got := LoadPlate(PlateInputs{})
 	if got.Primary != nil || got.Secondary != nil {

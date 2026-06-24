@@ -33,8 +33,9 @@ func LoadPlate(in PlateInputs) Plate {
 		if !s.IsWorkSpec() {
 			continue
 		}
-		// Match either by username or by "you" sentinel value some
-		// claim flows write.
+		// Match by normalized username. (Literal "you"/"me" sentinels are
+		// no longer matched — they collided with real git identities; see
+		// claim-matches-sentinel-collision.)
 		if claimedByMatches(s.ClaimedBy, user) {
 			mine = append(mine, s)
 		}
@@ -56,7 +57,10 @@ func LoadPlate(in PlateInputs) Plate {
 	return p
 }
 
-// claimedByMatches accepts a few common spellings of "claimed by me".
+// claimedByMatches reports whether a spec's claimed_by refers to the current
+// user. It matches the normalized username only — the old "you"/"me" sentinel
+// arms were removed because they collided with real git identities literally
+// named "you"/"me", making every such spec read as the current user's.
 func claimedByMatches(claimedBy, user string) bool {
 	if claimedBy == "" {
 		return false
@@ -66,7 +70,7 @@ func claimedByMatches(claimedBy, user string) bool {
 	if u == "" {
 		return false
 	}
-	return cb == u || cb == "you" || cb == "me"
+	return cb == u
 }
 
 func plateCardFor(s *spec.Spec, secondary bool) PlateCard {
