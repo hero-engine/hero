@@ -23,6 +23,10 @@ const (
 	TypeContext    Type = "context"
 	TypeNote       Type = "note"
 	TypeTripwire   Type = "tripwire"
+	// TypeExplainer is a synthesized "how a feature works" knowledge entry
+	// (feature-knowledge-synthesis initiative). Lives under
+	// .hero/knowledge/explainers/; classified as knowledge, not work.
+	TypeExplainer Type = "explainer"
 )
 
 // Status represents the lifecycle state of a spec.
@@ -204,6 +208,13 @@ type Spec struct {
 	// frontmatter; cascades from parent initiative when unset on a
 	// child. Read by internal/snapshot/release.go's resolver.
 	ReleaseTarget string
+
+	// SynthesizedFrom lists the spec slugs an `explainer` entry was
+	// synthesized from (provenance). Empty on non-explainer specs.
+	SynthesizedFrom []string
+	// LastSynthesized is the date an `explainer` entry was last
+	// synthesized or amended (YYYY-MM-DD). Empty on non-explainer specs.
+	LastSynthesized string
 }
 
 // ReceivedFromBlock mirrors contracts/peering.ReceivedFrom for use in
@@ -504,6 +515,20 @@ func (s *Spec) parseFrontmatter(content string) string {
 			s.ReleaseTarget = val
 		case "triggers":
 			s.Triggers = parseList(val)
+		case "synthesized_from":
+			// Provenance for `explainer` entries. Inline list or
+			// block-style list of spec slugs (same shape as `child:`).
+			targets := parseList(val)
+			if len(targets) == 0 {
+				var consumed int
+				targets, consumed = parseScalarListBlock(lines, i+1, closeIdx)
+				if consumed > i+1 {
+					i = consumed - 1
+				}
+			}
+			s.SynthesizedFrom = targets
+		case "last_synthesized":
+			s.LastSynthesized = val
 		case "relates-to", "depends-on", "depends_on", "supersedes", "parent", "child", "initiative":
 			// Accept the shorthands first-use sessions reach for:
 			// `initiative:` (a parent) and `depends_on:` (underscore
@@ -870,6 +895,9 @@ func typeFromPath(path string) Type {
 	if strings.Contains(path, "/tripwires/") {
 		return TypeTripwire
 	}
+	if strings.Contains(path, "/explainers/") {
+		return TypeExplainer
+	}
 	return TypeFeature
 }
 
@@ -896,6 +924,9 @@ func statusFromPath(path string) Status {
 		return StatusActive
 	}
 	if strings.Contains(path, "/tripwires/") {
+		return StatusActive
+	}
+	if strings.Contains(path, "/explainers/") {
 		return StatusActive
 	}
 	return StatusCompleted
@@ -1182,7 +1213,7 @@ func (s *Spec) IsWorkSpec() bool {
 func (s *Spec) IsKnowledge() bool {
 	return s.Type == TypeConvention || s.Type == TypeDecision ||
 		s.Type == TypeRule || s.Type == TypeExternal || s.Type == TypeContext ||
-		s.Type == TypeNote || s.Type == TypeTripwire
+		s.Type == TypeNote || s.Type == TypeTripwire || s.Type == TypeExplainer
 }
 
 // IsInFlight returns true if the spec is currently being worked on,
