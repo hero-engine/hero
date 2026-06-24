@@ -1,13 +1,14 @@
 ---
 title: "On-Demand Feature Synthesizer — hero synthesize <slugs>"
 type: feature
-status: planning
+status: completed
 slug: fks-on-demand-synthesizer
 domain: engineering
 parent: feature-knowledge-synthesis
 priority: medium
 size: medium
 created: 2026-06-23
+completed_at: 2026-06-23
 tags: [knowledge, synthesis, cli, mcp, generation]
 kind: new
 relations:
@@ -117,3 +118,26 @@ on an explicit slug list, has two payoffs:
 Use a real shipped feature as the calibration target — `cold-start-trust-
 hardening` (10 child specs, rich progress log) is an ideal first synthesis to
 judge output quality against.
+
+## Delivery notes
+
+- 2026-06-23 — Delivered. New `internal/synthesize` package does the
+  deterministic assembly (resolve slugs → fail loud; delivery window from
+  spec created/completed dates; git commits + changed files in that window;
+  referenced `decision` slugs) and renders prompt / scaffold / agent-packet /
+  final forms. `hero synthesize <slug...>` (`internal/cli/synthesize.go`):
+  generates via the `extract` LLM client when a provider key is present, else
+  writes a scaffold with the assembled material; `--packet` prints the agent
+  packet and writes nothing. MCP tool `hero_synthesize` returns the agent
+  packet (the no-key default — the in-session model writes the file).
+  `config.ExplainersDir` added. Tests: `internal/synthesize` unit (resolution,
+  fail-loud, provenance, initiative-dominance) + MCP roster; spec/cli/serve/
+  config suites green. Verified e2e on the real repo (fail-loud, --packet,
+  scaffold write → indexed + searchable as `explainer`, provenance check
+  passes).
+- **"Both" design decision (user, 2026-06-23):** CLI assembles deterministically;
+  the model fills — in-session agent via MCP by default (no key), CLI LLM path
+  when a key is present (headless / future #3/#4 auto-trigger).
+- Generating the calibration explainer for `cold-start-trust-hardening` was
+  left for a follow-up run (needs a provider key, or do it via the
+  `hero_synthesize` MCP path in-session) rather than shipping a Haiku draft.
