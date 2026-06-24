@@ -21,6 +21,8 @@ var (
 	synthesizeProvider string
 	synthesizePacket   bool
 	synthesizeDetect   bool
+	synthesizeAuto     bool
+	synthesizeSetMode  string
 )
 
 var synthesizeCmd = &cobra.Command{
@@ -38,7 +40,9 @@ material for an agent (via the hero_synthesize MCP tool) or a human to fill.
   hero synthesize cold-start-trust-hardening
   hero synthesize feat-a feat-b feat-c --out .hero/knowledge/explainers/my-feature/spec.md
   hero synthesize feat-a --packet     # print the synthesis packet, write nothing
-  hero synthesize --detect            # list inferred explainer-worthy clusters`,
+  hero synthesize --detect            # list explainer-worthy clusters + their action
+  hero synthesize --auto              # synthesize auto-eligible clusters per the mode
+  hero synthesize --set-mode review   # persist autonomy: auto | review | off`,
 	Args: cobra.ArbitraryArgs,
 	RunE: runSynthesize,
 }
@@ -48,7 +52,9 @@ func init() {
 	synthesizeCmd.Flags().StringVar(&synthesizeModel, "model", "", "override the LLM model for prose generation")
 	synthesizeCmd.Flags().StringVar(&synthesizeProvider, "provider", "", "override the LLM provider (default anthropic)")
 	synthesizeCmd.Flags().BoolVar(&synthesizePacket, "packet", false, "print the synthesis packet for an agent and write nothing")
-	synthesizeCmd.Flags().BoolVar(&synthesizeDetect, "detect", false, "list inferred explainer-worthy spec clusters and exit")
+	synthesizeCmd.Flags().BoolVar(&synthesizeDetect, "detect", false, "list explainer-worthy spec clusters with their action under the current mode")
+	synthesizeCmd.Flags().BoolVar(&synthesizeAuto, "auto", false, "synthesize auto-eligible clusters per the autonomy mode; list the rest for review")
+	synthesizeCmd.Flags().StringVar(&synthesizeSetMode, "set-mode", "", "persist synthesis autonomy to hero.json: auto | review | off")
 }
 
 func runSynthesize(cmd *cobra.Command, args []string) error {
@@ -62,27 +68,43 @@ func runSynthesize(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no hero workspace found (run 'hero init' first)")
 	}
 
-	if synthesizeDetect {
-		return runSynthesizeDetect(cmd, heroDir)
-	}
-	if len(args) == 0 {
-		return fmt.Errorf("provide spec slugs to synthesize, or --detect to list candidates")
+	switch {
+	case synthesizeSetMode != "":
+		return runSynthesizeSetMode(cmd, cfg, projectRoot, synthesizeSetMode)
+	case synthesizeDetect:
+		return runSynthesizeDetect(cmd, cfg, heroDir)
+	case synthesizeAuto:
+		return runSynthesizeAuto(cmd, cfg, projectRoot, heroDir)
 	}
 
-	// Assemble fails loud on any unresolved slug, before we write anything.
-	pkt, err := synthesize.Assemble(heroDir, projectRoot, args)
+	if len(args) == 0 {
+		return fmt.Errorf("provide spec slugs to synthesize, or --detect / --auto / --set-mode")
+	}
+	return synthesizeCluster(cmd, cfg, projectRoot, heroDir, args, synthesizeOut)
+}
+
+// explainerMode reads the configured autonomy mode (default review).
+func explainerMode(cfg config.Config) synthesize.Mode {
+	s := ""
+	if cfg.Knowledge != nil {
+		s = cfg.Knowledge.ExplainerSynthesis
+	}
+	return synthesize.NormalizeMode(s)
+}
+
+// synthesizeCluster assembles, generates (or scaffolds), writes, and indexes
+// one explainer for the given slugs. Fails loud on any unresolved slug.
+func synthesizeCluster(cmd *cobra.Command, cfg config.Config, projectRoot, heroDir string, slugs []string, outOverride string) error {
+	pkt, err := synthesize.Assemble(heroDir, projectRoot, slugs)
 	if err != nil {
 		return err
 	}
 	today := time.Now().Format("2006-01-02")
-
-	outPath := synthesizeOut
+	outPath := outOverride
 	if outPath == "" {
 		outPath = filepath.Join(cfg.ExplainersDir(projectRoot), pkt.OutSlug, "spec.md")
 	}
 
-	// --packet: hand the assembled material to the caller (an agent) and
-	// write nothing.
 	if synthesizePacket {
 		fmt.Fprintln(cmd.OutOrStdout(), pkt.AgentPacket(outPath, today))
 		return nil
@@ -92,7 +114,6 @@ func runSynthesize(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-
 	var content string
 	generated := false
 	if client.HasKey() {
@@ -126,23 +147,68 @@ func runSynthesize(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// runSynthesizeDetect lists inferred explainer-worthy clusters. Detection
-// only — each candidate is a `hero synthesize <slugs>` invocation away.
-func runSynthesizeDetect(cmd *cobra.Command, heroDir string) error {
+// runSynthesizeSetMode persists the autonomy mode to hero.json.
+func runSynthesizeSetMode(cmd *cobra.Command, cfg config.Config, projectRoot, raw string) error {
+	if raw != "auto" && raw != "review" && raw != "off" {
+		return fmt.Errorf("invalid mode %q — use auto, review, or off", raw)
+	}
+	if cfg.Knowledge == nil {
+		cfg.Knowledge = &config.KnowledgeConfig{AutoCapture: true}
+	}
+	cfg.Knowledge.ExplainerSynthesis = raw
+	if err := cfg.Save(projectRoot); err != nil {
+		return fmt.Errorf("saving config: %w", err)
+	}
+	fmt.Fprintf(cmd.OutOrStdout(), "Explainer synthesis mode set to %q.\n", raw)
+	return nil
+}
+
+// runSynthesizeDetect lists explainer-worthy clusters and the action each
+// would take under the current autonomy mode.
+func runSynthesizeDetect(cmd *cobra.Command, cfg config.Config, heroDir string) error {
 	cands, err := synthesize.Detect(heroDir)
 	if err != nil {
 		return err
 	}
+	mode := explainerMode(cfg)
 	w := cmd.OutOrStdout()
 	if len(cands) == 0 {
 		fmt.Fprintln(w, "No explainer-worthy clusters detected (need ≥2 completed, related specs not already covered by an explainer).")
 		return nil
 	}
-	fmt.Fprintf(w, "%d candidate cluster(s):\n\n", len(cands))
+	fmt.Fprintf(w, "%d candidate cluster(s) — mode: %s\n\n", len(cands), mode)
 	for _, c := range cands {
-		fmt.Fprintf(w, "● %s  (confidence %.0f%%, %s)\n", c.OutSlug, c.Confidence*100, strings.Join(c.Signals, ", "))
+		action := synthesize.Action(c.Confidence, mode)
+		fmt.Fprintf(w, "● %s  [%s]  (confidence %.0f%%, %s)\n", c.OutSlug, strings.ToUpper(action), c.Confidence*100, strings.Join(c.Signals, ", "))
 		fmt.Fprintf(w, "    specs: %s\n", strings.Join(c.Slugs, ", "))
 		fmt.Fprintf(w, "    → hero synthesize %s\n\n", strings.Join(c.Slugs, " "))
 	}
+	return nil
+}
+
+// runSynthesizeAuto synthesizes the auto-eligible clusters under the current
+// mode and lists the review-only ones without writing them.
+func runSynthesizeAuto(cmd *cobra.Command, cfg config.Config, projectRoot, heroDir string) error {
+	cands, err := synthesize.Detect(heroDir)
+	if err != nil {
+		return err
+	}
+	mode := explainerMode(cfg)
+	w := cmd.OutOrStdout()
+	var synthesized, review int
+	for _, c := range cands {
+		switch synthesize.Action(c.Confidence, mode) {
+		case "auto":
+			if err := synthesizeCluster(cmd, cfg, projectRoot, heroDir, c.Slugs, ""); err != nil {
+				fmt.Fprintf(cmd.ErrOrStderr(), "warning: synthesizing %s failed: %v\n", c.OutSlug, err)
+				continue
+			}
+			synthesized++
+		case "review":
+			review++
+			fmt.Fprintf(w, "REVIEW: %s (%.0f%%) → hero synthesize %s\n", c.OutSlug, c.Confidence*100, strings.Join(c.Slugs, " "))
+		}
+	}
+	fmt.Fprintf(w, "\nmode %s: %d synthesized, %d awaiting review.\n", mode, synthesized, review)
 	return nil
 }

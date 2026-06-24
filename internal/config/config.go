@@ -1029,6 +1029,11 @@ type ConventionConfig struct {
 // KnowledgeConfig holds knowledge base settings.
 type KnowledgeConfig struct {
 	AutoCapture bool `json:"auto_capture"` // auto-capture learnings at end of workflows (default: true)
+	// ExplainerSynthesis controls synthesis autonomy for the
+	// feature-knowledge-synthesis trust handshake: "auto" | "review" | "off".
+	// Default "review" (propose, don't auto-write). Empty is treated as the
+	// default by ExplainerSynthesisMode.
+	ExplainerSynthesis string `json:"explainer_synthesis,omitempty"`
 }
 
 // ScoreConfig holds spec quality scoring settings.
