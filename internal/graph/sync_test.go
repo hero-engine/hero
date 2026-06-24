@@ -19,9 +19,17 @@ type fakeServer struct {
 	edges []Edge
 }
 
+// orgURL builds the org-scoped base URL that the real CLI passes as
+// SyncClient.ServerURL (see internal/cli/sync_graph.go). Push/Pull append
+// the /graph/... route onto this — the prefix must already be present so
+// the tests exercise the same shape the bug double-nested.
+func orgURL(base, org string) string {
+	return base + "/api/v1/orgs/" + org
+}
+
 func (f *fakeServer) handler() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /api/v1/graph/push", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("POST /api/v1/orgs/{org}/graph/push", func(w http.ResponseWriter, r *http.Request) {
 		var req PushRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), 400)
@@ -40,7 +48,7 @@ func (f *fakeServer) handler() http.Handler {
 		}
 		_ = json.NewEncoder(w).Encode(resp)
 	})
-	mux.HandleFunc("GET /api/v1/graph/pull", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /api/v1/orgs/{org}/graph/pull", func(w http.ResponseWriter, r *http.Request) {
 		since := r.URL.Query().Get("since")
 		var nodesOut []Node
 		for _, n := range f.nodes {
@@ -87,7 +95,7 @@ func TestPush_SendsTeamScopeNodesAndEdges(t *testing.T) {
 	ts := httptest.NewServer(srv.handler())
 	t.Cleanup(ts.Close)
 
-	c := NewSyncClient(ts.URL, "test-repo", "test-org")
+	c := NewSyncClient(orgURL(ts.URL, "test-org"), "test-repo", "test-org")
 	resp, err := s.Push(c)
 	if err != nil {
 		t.Fatalf("Push: %v", err)
@@ -111,7 +119,7 @@ func TestPush_IsIdempotentViaSyncState(t *testing.T) {
 	ts := httptest.NewServer(srv.handler())
 	t.Cleanup(ts.Close)
 
-	c := NewSyncClient(ts.URL, "test-repo", "test-org")
+	c := NewSyncClient(orgURL(ts.URL, "test-org"), "test-repo", "test-org")
 	if _, err := s.Push(c); err != nil {
 		t.Fatalf("first push: %v", err)
 	}
@@ -140,14 +148,14 @@ func TestPullAndApply_RoundTripsWithEdges(t *testing.T) {
 	srv := &fakeServer{}
 	ts := httptest.NewServer(srv.handler())
 	t.Cleanup(ts.Close)
-	srcClient := NewSyncClient(ts.URL, "test-repo", "test-org")
+	srcClient := NewSyncClient(orgURL(ts.URL, "test-org"), "test-repo", "test-org")
 	if _, err := src.Push(srcClient); err != nil {
 		t.Fatalf("src push: %v", err)
 	}
 
 	// Pull into a fresh dst store
 	dst := openTestStore(t)
-	dstClient := NewSyncClient(ts.URL, "test-repo", "test-org")
+	dstClient := NewSyncClient(orgURL(ts.URL, "test-org"), "test-repo", "test-org")
 	resp, nodesApplied, edgesApplied, edgesDeferred, err := dst.Pull(dstClient)
 	if err != nil {
 		t.Fatalf("dst pull: %v", err)
@@ -195,13 +203,63 @@ func TestPush_ServerErrorReturnsErr(t *testing.T) {
 		http.Error(w, "boom", 500)
 	}))
 	t.Cleanup(ts.Close)
-	c := NewSyncClient(ts.URL, "test-repo", "test-org")
+	c := NewSyncClient(orgURL(ts.URL, "test-org"), "test-repo", "test-org")
 	_, err := s.Push(c)
 	if err == nil {
 		t.Fatal("expected error on 500")
 	}
 	if !strings.Contains(err.Error(), "500") {
 		t.Errorf("error should mention status: %v", err)
+	}
+}
+
+// TestSyncEndpoints_DoNotDoubleAPIPrefix is the regression guard for the
+// graph-sync URL bug (cloud-cli-verify peer handoff from hero-cloud). The
+// CLI passes an org-scoped ServerURL (…/api/v1/orgs/<org>); Push/Pull must
+// append only /graph/push and /graph/pull, producing a single /api/v1/
+// segment — never the doubled …/orgs/<org>/api/v1/graph/push it shipped.
+func TestSyncEndpoints_DoNotDoubleAPIPrefix(t *testing.T) {
+	s := openTestStore(t)
+	if _, err := s.UpsertNode(&Node{
+		Type: "Feature", Key: "x", Domain: "engineering", Scope: ScopeTeam, ContentHash: "h",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	var paths []string
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		paths = append(paths, r.URL.Path)
+		now := time.Now().UTC().Format(time.RFC3339)
+		if r.Method == http.MethodPost {
+			_ = json.NewEncoder(w).Encode(PushResponse{Accepted: 1, ServerTime: now})
+			return
+		}
+		_ = json.NewEncoder(w).Encode(PullResponse{NextCursor: now, ServerTime: now})
+	}))
+	t.Cleanup(ts.Close)
+
+	c := NewSyncClient(orgURL(ts.URL, "test-org"), "test-repo", "test-org")
+	if _, err := s.Push(c); err != nil {
+		t.Fatalf("Push: %v", err)
+	}
+	if _, _, _, _, err := s.Pull(c); err != nil {
+		t.Fatalf("Pull: %v", err)
+	}
+
+	want := []string{
+		"/api/v1/orgs/test-org/graph/push",
+		"/api/v1/orgs/test-org/graph/pull",
+	}
+	if len(paths) != len(want) {
+		t.Fatalf("hit %d endpoints %v, want %v", len(paths), paths, want)
+	}
+	for i, p := range paths {
+		if p != want[i] {
+			t.Errorf("endpoint %d = %q, want %q", i, p, want[i])
+		}
+		if strings.Count(p, "/api/v1/") != 1 {
+			t.Errorf("endpoint %q has a doubled /api/v1/ prefix", p)
+		}
 	}
 }
 
