@@ -6,12 +6,29 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-24T07:11:56Z · 100 ready specs_
+_Generated: 2026-06-24T07:50:26Z · 102 ready specs_
 
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
+
+---
+
+## fks-cluster-detection — "Feature Cluster Detection — Infer Explainer-Worthy Spec Clusters"
+_feature · planning · horizon: now_
+
+Build cluster detection for the feature-knowledge-synthesis initiative. Given
+all specs, produce candidate clusters of completed specs that look like one
+shipped feature, each with a confidence score, the signals that fired, and a
+suggested out-slug. Two sources: (a) an initiative/epic at `completed` → its
+child set is a zero-false-positive cluster; (b) inferred connected components
+over the relation graph + file-overlap, above a confidence threshold. **Graph
+signals dominate; time-proximity is a weak tiebreaker only** (see Problem).
+Gate on completeness — never propose a cluster with open members. Output feeds
+#4 (trust handshake); synthesis itself is `hero synthesize` (#2). Likely a new
+`internal/synthesize` (or sibling) detector + a `hero synthesize --detect`
+surface. Depends on #2.
 
 ---
 
@@ -689,6 +706,13 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · planning · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/configurable-workspace-location/spec.md)_
+
+---
+
+## cold-start-trust-hardening — "Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use"
+_explainer · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/knowledge/explainers/cold-start-trust-hardening/spec.md)_
 
 ---
 

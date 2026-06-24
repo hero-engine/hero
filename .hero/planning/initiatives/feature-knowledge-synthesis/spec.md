@@ -128,7 +128,7 @@ diff across their delivery window, emit one feature knowledge entry in the #1
 shape. Exercised manually first — zero detection risk — so we learn what "good"
 is before automating the trigger. The spine of the initiative. Size: medium.
 
-### fks-cluster-detection  *(stub — design when #1/#2 land)*
+### fks-cluster-detection  *(materialized — designed)*
 Infer feature boundaries Hero isn't told about: score coherent spec clusters from
 graph signals (shared relations, co-touched files, time window, author) and a
 completeness gate (don't synthesize a half-shipped feature). Emit candidates with
@@ -203,6 +203,13 @@ large.
 
 ## Progress
 
+- 2026-06-23 — **Designed #3 `fks-cluster-detection`** (full spec materialized).
+  Folded in a delivered learning from #2: time-window clustering swept in
+  unrelated same-day commits, so detection is specced graph-first (shared
+  parent/relations/co-touched files dominate; time is a weak tiebreaker), with a
+  completeness gate and explainable confidence scoring. Emits candidates only;
+  synthesis stays in #2, the prompt in #4. Also produced the first real explainer
+  (dogfood: `cold-start-trust-hardening`) via the agent-fills path.
 - 2026-06-23 — **Delivered #2 `fks-on-demand-synthesizer`.** New
   `internal/synthesize` package + `hero synthesize <slug...>` CLI and
   `hero_synthesize` MCP tool. Per the "both" decision: CLI assembles specs +

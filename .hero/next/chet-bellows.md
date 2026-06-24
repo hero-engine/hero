@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-24T07:13:10Z
+updated: 2026-06-24T07:49:23Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> so - someone asked me a question who was using here - like a dev was off doing a whole feature for like a couple weeks - tons of work - and theres specs and stuff - could read them all - but tedious - but was there a summary in knowledge of how that feature works or something. which made me wonder - are we doing enough to recognize when something is worthy of being in knowledge and not just in spe…
+> In the Hero Go codebase, `hero queue` surfaces kickoff-less knowledge-type specs (notes, contexts, and now `explainer` entries) in its "no `## Kickoff` section — run /design or hand-edit" advisory list. Knowledge entries are not work and should not be nagged for kickoff sections. Verified: an existing note (`buddy-model-architecture`) and a context (`architecture-overview`) both appear in `hero …
 
 ## Suggested next prompt
 
