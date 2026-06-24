@@ -1,13 +1,14 @@
 ---
 title: "Feature Cluster Detection — Infer Explainer-Worthy Spec Clusters"
 type: feature
-status: planning
+status: completed
 slug: fks-cluster-detection
 domain: engineering
 parent: feature-knowledge-synthesis
 priority: medium
 size: large
 created: 2026-06-23
+completed_at: 2026-06-23
 tags: [knowledge, synthesis, clustering, graph, detection, explainer]
 kind: new
 relations:
@@ -141,3 +142,23 @@ fresh candidate.
 
 - The time-window limitation is a *delivered observation*, not a hypothesis —
   recorded so #3 doesn't repeat #2's same-day conflation.
+
+## Delivery notes
+
+- 2026-06-23 — Delivered. `internal/synthesize/detect.go` (`Detect(heroDir)`)
+  + `hero synthesize --detect`. Explicit source (initiative with all
+  materialized children completed → 0.95) and inferred source (union-find over
+  relation edges + shared-parent + file-overlap among completed work specs,
+  scored by structural signals, time/author excluded). Completeness gate +
+  dedup against existing explainers' `synthesized_from`.
+- **Over-clustering fix (found in e2e on the real repo):** file-overlap union
+  via common "hub" files (e.g. `internal/cli/root.go`, touched by dozens of
+  specs) transitively chained ~180 unrelated specs into one blob. Fixed with a
+  **hub-file guard** (ignore files touched by > `hubFileThreshold` specs for
+  membership) plus a **`maxInferredCluster` size-cap backstop**. After the fix,
+  `--detect` on this repo returns clean candidates: 5 real initiative clusters
+  + the inferred `fks-feature-knowledge-artifact`/`fks-on-demand-synthesizer`
+  pair (dogfood). Tests cover explicit, completeness gate, dedup, file-overlap,
+  hub-file non-chaining, and unrelated-no-cluster.
+- Emits candidates only — `--detect` prints them with confidence + signals +
+  the ready `hero synthesize` command. The prompt/autonomy is #4.
