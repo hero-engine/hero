@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // TestLoad_CoreFile_NineCanonicalTypes verifies the loader picks up
@@ -299,6 +300,47 @@ func TestExportTo_WritesCacheFile(t *testing.T) {
 	}
 	if populated == 0 {
 		t.Error("exported cache has zero records with a non-null frontmatter block; loader gap regression")
+	}
+}
+
+// TestExportTo_SkipsWriteWhenOnlyTimestampChanged pins the idempotency
+// guard: re-exporting an unchanged registry must not rewrite the cache
+// file when the only difference is the generated_at timestamp. Without
+// this, the PersistentPreRun export re-stamps the file on every `hero`
+// invocation, leaving .hero/cache/spec-types.json perpetually dirty and
+// racing the pre-commit hook that stages it.
+func TestExportTo_SkipsWriteWhenOnlyTimestampChanged(t *testing.T) {
+	reg, err := Load("engineering")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	tmp := t.TempDir()
+	if err := ExportTo(reg, tmp); err != nil {
+		t.Fatalf("ExportTo (first): %v", err)
+	}
+	out := filepath.Join(tmp, ".hero", "cache", "spec-types.json")
+	fi, err := os.Stat(out)
+	if err != nil {
+		t.Fatalf("stat after first export: %v", err)
+	}
+	firstMod := fi.ModTime()
+
+	// Force a detectable mtime gap, then re-export the same registry.
+	// The only thing that would differ is generated_at, so the guard
+	// must skip the write and leave the file (and its mtime) untouched.
+	past := firstMod.Add(-2 * time.Second)
+	if err := os.Chtimes(out, past, past); err != nil {
+		t.Fatalf("chtimes: %v", err)
+	}
+	if err := ExportTo(reg, tmp); err != nil {
+		t.Fatalf("ExportTo (second): %v", err)
+	}
+	fi2, err := os.Stat(out)
+	if err != nil {
+		t.Fatalf("stat after second export: %v", err)
+	}
+	if !fi2.ModTime().Equal(past) {
+		t.Errorf("cache file was rewritten on timestamp-only re-export: mtime changed from %v to %v", past, fi2.ModTime())
 	}
 }
 
