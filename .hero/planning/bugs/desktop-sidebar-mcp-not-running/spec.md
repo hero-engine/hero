@@ -2,7 +2,7 @@
 title: "HeroDesktop sidebar shows MCP notRunning error when hero serve is absent"
 slug: desktop-sidebar-mcp-not-running
 type: bug
-status: planning
+status: handed_off
 priority: medium
 severity: medium
 domain: engineering
@@ -437,3 +437,13 @@ Investigate and fix the HeroDesktop sidebar `notRunning` error when `hero serve`
 -> `.hero/planning/bugs/desktop-sidebar-mcp-not-running/spec.md`
 
 **Files:** `internal/cli/serve_ensure.go` (new), `internal/serve/lifecycle.go` (export rename), `internal/serve/server.go` (update caller)
+
+## Handoff Trail
+
+- 2026-06-24T18:01:15Z — out → hero-code (peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
+  mode: async-drop
+  originating_spec: desktop-sidebar-mcp-not-running
+  peer_spec: hero-code/desktop-sidebar-mcp-not-running
+  at_commit: 2f774b7
+  reason: "The user-visible defect is in hero-code's Swift HeroDesktop sidebar (SidebarSectionBody notRunning string). The hero CLI only owns the optional 'hero serve ensure' enabler, tracked separately."
+

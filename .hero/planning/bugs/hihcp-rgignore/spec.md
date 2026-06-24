@@ -2,7 +2,7 @@
 title: "Add .rgignore to hero-code Repo"
 slug: hihcp-rgignore
 type: bug
-status: planning
+status: handed_off
 domain: engineering
 size: trivial
 priority: medium
@@ -52,3 +52,13 @@ Single-file change. No code modifications required.
 - `rg` searches complete within 2 seconds (down from 10+)
 - No rg timeout errors in model sessions
 - Source files and test fixtures remain searchable
+
+## Handoff Trail
+
+- 2026-06-24T18:01:15Z — out → hero-code (peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
+  mode: async-drop
+  originating_spec: hihcp-rgignore
+  peer_spec: hero-code/hihcp-rgignore
+  at_commit: 2f774b7
+  reason: "Title literally scopes to the hero-code repo (.build/DerivedData rg timeouts). The hero CLI is Go with no such artifacts."
+

@@ -2,7 +2,7 @@
 title: "Harden Permission Bridge Payload Validation"
 slug: hihcp-permission-bridge-validation
 type: bug
-status: planning
+status: handed_off
 domain: engineering
 size: small
 priority: medium
@@ -55,3 +55,13 @@ Parent initiative: `hero-in-hero-code-parity`.
 - Well-formed permission requests continue to work exactly as before
 - The error message includes enough detail for the model to construct a valid
   request on retry
+
+## Handoff Trail
+
+- 2026-06-24T18:01:15Z — out → hero-code (peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
+  mode: async-drop
+  originating_spec: hihcp-permission-bridge-validation
+  peer_spec: hero-code/hihcp-permission-bridge-validation
+  at_commit: 2f774b7
+  reason: "Targets hero-code's Swift permission bridge in Engine/AgentLoop.swift. No Go equivalent in the hero CLI repo."
+

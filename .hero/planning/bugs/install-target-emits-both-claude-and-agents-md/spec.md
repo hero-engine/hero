@@ -5,6 +5,7 @@ type: bug
 status: planning
 priority: medium
 severity: low
+superseded_by: single-source-install-p1-agents-md
 ---
 
 ## Goal
@@ -45,3 +46,7 @@ Confusion + duplication. Two files with the same managed block means future edit
 
 - Should `hero install --target all` exist for multi-harness teams, or is "run install once per harness" the model?
 - For hero and hero-cloud which currently have both files committed — leave as-is, or run a one-shot cleanup once the fix lands?
+
+## Resolution (2026-06-23)
+
+**Superseded by `single-source-install-p1-agents-md`.** This bug wants the old model (claude → CLAUDE.md only; AGENTS.md as harness-fallback). The single-source-install direction makes AGENTS.md the *only* canonical root file with CLAUDE.md demoted to a stub — under which emitting both for the claude target is correct. Fixing this as written would regress that architecture. Closed as superseded during pre-release triage rather than fixed.

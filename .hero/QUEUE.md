@@ -6,12 +6,19 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-24T17:48:14Z · 71 ready specs_
+_Generated: 2026-06-24T18:01:28Z · 71 ready specs_
 
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
+
+---
+
+## install-target-emits-both-claude-and-agents-md — "`hero install --target claude` emits both CLAUDE.md and AGENTS.md"
+_bug · planning · horizon: now_
+
+Reproduce: cd into a clean repo with no `CLAUDE.md` or `AGENTS.md`, run `hero install --target claude`. Expected: only `CLAUDE.md` lands. Observed: both `CLAUDE.md` and `AGENTS.md` are emitted with the same managed-block content. Fix likely lives in the install target dispatch in the hero CLI — read the install command source, find where both files get written, and gate `AGENTS.md` emission on the target not being `claude` (or on a generic/fallback target). Update tests to cover each target's expected file set.
 
 ---
 
@@ -366,69 +373,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## install-target-emits-both-claude-and-agents-md — "`hero install --target claude` emits both CLAUDE.md and AGENTS.md"
-_bug · planning · horizon: now_
-
-Reproduce: cd into a clean repo with no `CLAUDE.md` or `AGENTS.md`, run `hero install --target claude`. Expected: only `CLAUDE.md` lands. Observed: both `CLAUDE.md` and `AGENTS.md` are emitted with the same managed-block content. Fix likely lives in the install target dispatch in the hero CLI — read the install command source, find where both files get written, and gate `AGENTS.md` emission on the target not being `claude` (or on a generic/fallback target). Update tests to cover each target's expected file set.
-
----
-
-## hihcp-rgignore — "Add .rgignore to hero-code Repo"
-_bug · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-rgignore/spec.md)_
-
----
-
-## hihcp-permission-bridge-validation — "Harden Permission Bridge Payload Validation"
-_bug · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-permission-bridge-validation/spec.md)_
-
----
-
-## hihcp-mcp-first-turn-readiness — "Gate First Turn on Hero MCP Readiness"
-_bug · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-mcp-first-turn-readiness/spec.md)_
-
----
-
-## hihcp-mcp-auto-reconnect — "Auto-Recover from MCP Server Disconnect Mid-Session"
-_bug · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-mcp-auto-reconnect/spec.md)_
-
----
-
-## desktop-sidebar-mcp-not-running — "HeroDesktop sidebar shows MCP notRunning error when hero serve is absent"
-_bug · planning · horizon: now_
-
-Investigate and fix the HeroDesktop sidebar `notRunning` error when `hero serve` is absent.
-
-**Go-side scope:** Add `hero serve ensure` subcommand (idempotent start-if-not-running), export `ProbeHeroDaemon`. Optionally add LaunchAgent plist generator.
-
-**What you need to know:**
-- `hero serve` is the HTTP daemon on port 7437 -- manually started, no auto-start mechanism
-- The desktop calls `hero_list` via MCP; when the daemon is absent, the call fails at the transport layer
-- All lifecycle primitives exist (`probeHeroDaemon`, `IsProcessAlive`, `PortListenerHeld`) -- they just need to be wired into an `ensure` command
-- The orphan spec (`hero-mcp-orphan-no-parent-liveness`) solved the inverse problem (stop side); this solves the start side
-
-**Start with:**
-1. Export `probeHeroDaemon` -> `ProbeHeroDaemon` in `internal/serve/lifecycle.go`
-2. Update the one caller in `internal/serve/server.go:624`
-3. Add `internal/cli/serve_ensure.go` with the ensure subcommand
-4. Register it in `internal/cli/serve.go` init()
-5. Test manually: `hero serve ensure` when stopped, when running
-
-**Skip:** Desktop-side changes (separate repo), LaunchAgent plist (optional/separate), stdio MCP changes (irrelevant).
-
--> `.hero/planning/bugs/desktop-sidebar-mcp-not-running/spec.md`
-
-**Files:** `internal/cli/serve_ensure.go` (new), `internal/serve/lifecycle.go` (export rename), `internal/serve/server.go` (update caller)
-
----
-
 ## retrieval-quality — "Retrieval Quality — Reranking, Expansion & Feedback Loop"
 _initiative · planning · horizon: next_
 
@@ -693,6 +637,62 @@ Start with Phase 0 only. Do not build anything. Read [next-compact-handoff/spec.
 Output a written assessment with a clear recommendation: proceed to Phase 1 prototype, or close as "not worth it" with the analysis preserved so future revisits don't re-litigate.
 
 Time budget: ~2 days of focused research, no implementation. If the assessment can't be reached in that budget, the answer is probably no.
+
+---
+
+## desktop-sidebar-mcp-not-running — "HeroDesktop sidebar shows MCP notRunning error when hero serve is absent"
+_bug · handed_off · horizon: now_
+
+Investigate and fix the HeroDesktop sidebar `notRunning` error when `hero serve` is absent.
+
+**Go-side scope:** Add `hero serve ensure` subcommand (idempotent start-if-not-running), export `ProbeHeroDaemon`. Optionally add LaunchAgent plist generator.
+
+**What you need to know:**
+- `hero serve` is the HTTP daemon on port 7437 -- manually started, no auto-start mechanism
+- The desktop calls `hero_list` via MCP; when the daemon is absent, the call fails at the transport layer
+- All lifecycle primitives exist (`probeHeroDaemon`, `IsProcessAlive`, `PortListenerHeld`) -- they just need to be wired into an `ensure` command
+- The orphan spec (`hero-mcp-orphan-no-parent-liveness`) solved the inverse problem (stop side); this solves the start side
+
+**Start with:**
+1. Export `probeHeroDaemon` -> `ProbeHeroDaemon` in `internal/serve/lifecycle.go`
+2. Update the one caller in `internal/serve/server.go:624`
+3. Add `internal/cli/serve_ensure.go` with the ensure subcommand
+4. Register it in `internal/cli/serve.go` init()
+5. Test manually: `hero serve ensure` when stopped, when running
+
+**Skip:** Desktop-side changes (separate repo), LaunchAgent plist (optional/separate), stdio MCP changes (irrelevant).
+
+-> `.hero/planning/bugs/desktop-sidebar-mcp-not-running/spec.md`
+
+**Files:** `internal/cli/serve_ensure.go` (new), `internal/serve/lifecycle.go` (export rename), `internal/serve/server.go` (update caller)
+
+---
+
+## hihcp-rgignore — "Add .rgignore to hero-code Repo"
+_bug · handed_off · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-rgignore/spec.md)_
+
+---
+
+## hihcp-permission-bridge-validation — "Harden Permission Bridge Payload Validation"
+_bug · handed_off · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-permission-bridge-validation/spec.md)_
+
+---
+
+## hihcp-mcp-auto-reconnect — "Auto-Recover from MCP Server Disconnect Mid-Session"
+_bug · handed_off · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-mcp-auto-reconnect/spec.md)_
+
+---
+
+## hihcp-mcp-first-turn-readiness — "Gate First Turn on Hero MCP Readiness"
+_bug · handed_off · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-mcp-first-turn-readiness/spec.md)_
 
 ---
 

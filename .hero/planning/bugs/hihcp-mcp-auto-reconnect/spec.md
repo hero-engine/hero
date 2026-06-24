@@ -2,7 +2,7 @@
 title: "Auto-Recover from MCP Server Disconnect Mid-Session"
 slug: hihcp-mcp-auto-reconnect
 type: bug
-status: planning
+status: handed_off
 domain: engineering
 size: small
 priority: high
@@ -62,3 +62,13 @@ Parent initiative: `hero-in-hero-code-parity`.
 - User sees a notification when MCP tools are degraded
 - After successful reconnect, Hero MCP tools work normally on the next tool call
 - Expected disconnects (app shutdown) do not trigger reconnect attempts
+
+## Handoff Trail
+
+- 2026-06-24T18:01:15Z — out → hero-code (peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
+  mode: async-drop
+  originating_spec: hihcp-mcp-auto-reconnect
+  peer_spec: hero-code/hihcp-mcp-auto-reconnect
+  at_commit: 2f774b7
+  reason: "Targets hero-code's Engine/MCPManager.swift (handleDisconnect). No matching code in the hero CLI repo per pre-release triage."
+

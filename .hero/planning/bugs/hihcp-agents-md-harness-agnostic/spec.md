@@ -2,7 +2,7 @@
 title: "Produce Harness-Agnostic AGENTS.md, Demote CLAUDE.md"
 slug: hihcp-agents-md-harness-agnostic
 type: bug
-status: planning
+status: handed_off
 domain: engineering
 size: small
 priority: critical
@@ -63,3 +63,13 @@ now exists).
 - No references to Claude Code-specific concepts in the hero-code prompt
 - `hero install` on a hero-code project emits AGENTS.md with correct content
 - Claude Code users are unaffected (CLAUDE.md still works for them)
+
+## Handoff Trail
+
+- 2026-06-24T18:01:15Z — out → hero-code (peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
+  mode: async-drop
+  originating_spec: hihcp-agents-md-harness-agnostic
+  peer_spec: hero-code/hihcp-agents-md-harness-agnostic
+  at_commit: 2f774b7
+  reason: "Primary deliverables edit hero-code's checked-in AGENTS.md/CLAUDE.md and prompt. The hero-repo sub-task is already satisfied by per-target install dispatch."
+
