@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-24T02:21:06Z
+updated: 2026-06-24T03:15:46Z
 repo: hero-engine/hero
 ---
 
@@ -8,15 +8,11 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> heres a chat about a projects using hero - it seems like mcp was having issues and anything we can learn from the models responses abotu it trying to learn and use hero? : Got it — .hero is the home for all of this, and the docs/ folder I created was a wrong guess. Let me fix that: migrate the architecture content into Hero, delete docs/, make sure .hero specs are tracked by git, then create all…
+> so - someone asked me a question who was using here - like a dev was off doing a whole feature for like a couple weeks - tons of work - and theres specs and stuff - could read them all - but tedious - but was there a summary in knowledge of how that feature works or something. which made me wonder - are we doing enough to recognize when something is worthy of being in knowledge and not just in spe…
 
 ## Suggested next prompt
 
-> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
-
-_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
-
-_Source: auto-derived from open feature — `hero next suggest "..."` to override._
+_(none — `hero next suggest "..."` to set, or open a Feature to derive one)_
 
 ## Recent reflections
 
