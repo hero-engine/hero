@@ -12,8 +12,14 @@ things). It is synthesized from a cluster of completed specs and is meant to be
 the single doc a newcomer reads instead of reverse-engineering the feature from
 spec history.
 
-Explainers live at `.hero/knowledge/explainers/<slug>/spec.md`. They are classified as
-knowledge (not work), so they never appear in `hero queue` or work rollups.
+In documentation terms this is the **explanation** (understanding-oriented)
+quadrant of the [Diátaxis](https://diataxis.fr) framework — as opposed to
+tutorials, how-to guides, or reference. `decision` entries are the adjacent
+"why we chose" (ADR) category; explainers are the "how it works."
+
+Explainers live at `.hero/knowledge/explainers/<slug>/spec.md`. They are
+classified as knowledge (not work), so they are excluded from work rollups
+(`hero` queue ranking, roadmap, in-flight strips).
 
 ## Frontmatter contract
 
