@@ -552,6 +552,62 @@ func TestMoveToSpecs_DestinationExists(t *testing.T) {
 	}
 }
 
+// TestMoveToSpecs_FlatFile archives an initiative child stored as a flat
+// `<slug>.md` sibling of the initiative spec.md. It must land at
+// specs/<child-slug>/spec.md (slug from the spec, NOT the initiative dir
+// name) and must NOT drag the initiative or sibling children along.
+// Regression for flat-named-spec-discovery.
+func TestMoveToSpecs_FlatFile(t *testing.T) {
+	dir := t.TempDir()
+	heroDir := filepath.Join(dir, ".hero")
+	initDir := filepath.Join(heroDir, "planning", "initiatives", "make-it-fast")
+	if err := os.MkdirAll(initDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	initPath := filepath.Join(initDir, "spec.md")
+	childPath := filepath.Join(initDir, "f-15-buffer-pool.md")
+	siblingPath := filepath.Join(initDir, "f-16-wal-commit.md")
+	os.WriteFile(initPath, []byte("---\ntype: initiative\nslug: make-it-fast\n---\n# Init\n"), 0o644)
+	os.WriteFile(childPath, []byte("---\ntype: feature\nslug: f-15-buffer-pool\nstatus: completed\nparent: make-it-fast\n---\n# Buffer Pool\n"), 0o644)
+	os.WriteFile(siblingPath, []byte("---\ntype: feature\nslug: f-16-wal-commit\nstatus: delivering\nparent: make-it-fast\n---\n# WAL Commit\n"), 0o644)
+
+	result, moved, err := moveToSpecs(childPath, heroDir)
+	if err != nil {
+		t.Fatalf("moveToSpecs: %v", err)
+	}
+	if !moved {
+		t.Fatal("expected the flat child to be archived")
+	}
+
+	// moveToSpecs resolves symlinks (macOS /var → /private/var), so compare
+	// against the resolved hero dir.
+	resolvedHero, _ := filepath.EvalSymlinks(heroDir)
+	wantDest := filepath.Join(resolvedHero, "specs", "f-15-buffer-pool", "spec.md")
+	if result != wantDest {
+		t.Errorf("dest = %s, want %s", result, wantDest)
+	}
+	if _, err := os.Stat(wantDest); err != nil {
+		t.Errorf("archived spec not at %s: %v", wantDest, err)
+	}
+
+	// The initiative and the OTHER child must remain untouched in planning/.
+	if _, err := os.Stat(initPath); err != nil {
+		t.Errorf("initiative spec.md should remain in place: %v", err)
+	}
+	if _, err := os.Stat(siblingPath); err != nil {
+		t.Errorf("sibling child should remain in place: %v", err)
+	}
+	// The child must be gone from its source location.
+	if _, err := os.Stat(childPath); !os.IsNotExist(err) {
+		t.Errorf("child should have moved out of planning/, still at %s", childPath)
+	}
+	// And it must NOT have been mis-archived under the initiative slug.
+	if _, err := os.Stat(filepath.Join(heroDir, "specs", "make-it-fast", "spec.md")); !os.IsNotExist(err) {
+		t.Error("child must not be archived under the initiative slug")
+	}
+}
+
 // withSpecNowFn overrides the spec package's nowFn for the duration of
 // the test so stamping is deterministic. Mirrors the test helper inside
 // internal/spec but accessible from the cli test package.
@@ -692,4 +748,3 @@ completed_at: 2025-01-15T08:00:00Z
 		t.Errorf("existing stamp was modified:\n%s", body)
 	}
 }
-

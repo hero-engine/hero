@@ -957,7 +957,16 @@ func slugFromPath(path string) string {
 	// Path is like .hero/planning/features/my-feature/spec.md
 	// or .hero/specs/my-feature/spec.md
 	// or .hero/conventions/error-handling/spec.md
-	// We want the directory name containing spec.md
+	// For the canonical spec.md and three-file (requirements.md) layouts the
+	// slug is the directory name.
+	base := filepath.Base(path)
+	if base != "spec.md" && base != "requirements.md" {
+		// Flat `<slug>.md` spec (e.g. an initiative child stored as a
+		// sibling of the initiative's spec.md): the slug is the filename
+		// stem, not the parent directory — sharing the parent's name would
+		// collide with the initiative and the other children.
+		return strings.TrimSuffix(base, ".md")
+	}
 	dir := filepath.Dir(path)
 	return filepath.Base(dir)
 }
@@ -1084,13 +1093,25 @@ func Discover(heroDir string) ([]*Spec, error) {
 			}
 			return nil
 		}
-		if info.Name() != "spec.md" {
+		if !strings.HasSuffix(info.Name(), ".md") {
 			return nil
 		}
 
 		// Skip if we already loaded this directory as three-file
 		dir := filepath.Dir(path)
 		if loadedDirs[dir] {
+			return nil
+		}
+
+		// A flat `<slug>.md` spec (e.g. an initiative child stored as a
+		// sibling of the initiative's spec.md) is discovered only when its
+		// frontmatter explicitly declares a work-spec type. The explicit
+		// requirement keeps untyped artifacts (audit reports, retros,
+		// next/*, peer-calls) out — those would otherwise default to
+		// feature/initiative via typeFromPath. Knowledge entries and meta
+		// files (mission, retro) are excluded too. The canonical spec.md
+		// and three-file layouts keep their type-agnostic load.
+		if info.Name() != "spec.md" && !isDiscoverableFlatSpec(path) {
 			return nil
 		}
 
@@ -1107,6 +1128,72 @@ func Discover(heroDir string) ([]*Spec, error) {
 	}
 
 	return specs, nil
+}
+
+// nonWorkFlatTypes are the explicit frontmatter `type:` values that must NOT
+// turn a flat `<name>.md` file into a discovered spec. These are knowledge
+// entries (which Hero stores and retrieves through the knowledge corpus, not
+// work-spec discovery) and meta documents. Any other explicit type — feature,
+// bug, initiative, or a custom work type like enhancement/epic — is treated as
+// a discoverable work spec.
+var nonWorkFlatTypes = map[string]bool{
+	string(TypeConvention): true,
+	string(TypeDecision):   true,
+	string(TypeRule):       true,
+	string(TypeExternal):   true,
+	string(TypeContext):    true,
+	string(TypeNote):       true,
+	string(TypeTripwire):   true,
+	string(TypeExplainer):  true,
+	"mission":              true,
+	"retro":                true,
+}
+
+// isDiscoverableFlatSpec reports whether a flat `<name>.md` file (one not named
+// spec.md) should be loaded as a standalone spec. It returns true only when the
+// file's frontmatter *explicitly* declares a work-spec `type:`. Requiring an
+// explicit type is load-bearing: untyped artifacts (delivery-audit.md,
+// retro.md, next/*, peer-calls) would otherwise default to feature/initiative
+// via typeFromPath and be slurped into discovery.
+func isDiscoverableFlatSpec(path string) bool {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return false
+	}
+	t := frontmatterType(string(data))
+	if t == "" {
+		return false
+	}
+	return !nonWorkFlatTypes[t]
+}
+
+// frontmatterType extracts the literal `type:` value from a file's leading
+// `---` frontmatter block, or "" when there is no frontmatter or no explicit
+// type key. Values are unquoted and lowercased to match the Type constants.
+func frontmatterType(content string) string {
+	content = strings.TrimLeft(content, "\uFEFF \t\r\n")
+	if !strings.HasPrefix(content, "---") {
+		return ""
+	}
+	scanner := bufio.NewScanner(strings.NewReader(content))
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	first := true
+	for scanner.Scan() {
+		line := scanner.Text()
+		if first {
+			first = false
+			continue // skip opening ---
+		}
+		if strings.TrimSpace(line) == "---" {
+			return "" // end of frontmatter, no type found
+		}
+		if rest, ok := strings.CutPrefix(strings.TrimSpace(line), "type:"); ok {
+			v := strings.TrimSpace(rest)
+			v = strings.Trim(v, `"'`)
+			return strings.ToLower(strings.TrimSpace(v))
+		}
+	}
+	return ""
 }
 
 // Kickoff returns the spec's `## Kickoff` section body — the paste-ready
