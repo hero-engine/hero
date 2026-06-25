@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-24T23:39:13Z
+updated: 2026-06-24T23:59:33Z
 repo: hero-engine/hero
 ---
 
@@ -9,8 +9,6 @@ repo: hero-engine/hero
 ## Last user ask
 
 > got a peer request from hero-cloud - hero handoff accept cloud-cli-verify
-
-_possibly stale — 2 commit(s) since, last set 9m ago_
 
 ## Suggested next prompt
 

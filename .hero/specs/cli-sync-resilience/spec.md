@@ -2,8 +2,9 @@
 title: "CLI Sync Resilience — Unreachable Fallback & Mid-Sync Token Refresh"
 slug: cli-sync-resilience
 type: feature
-status: planning
+status: completed
 created: 2026-06-24
+completed_at: 2026-06-24T23:59:00Z
 tags: [cli, cloud, sync, auth, resilience]
 parent: cloud-cli-verify
 ---
@@ -109,8 +110,40 @@ Replace the static `authTransport` with one that can refresh once on `401`:
   (proactive-at-load + reactive-on-401).
 - Single retry only; repeated 401s after a refresh surface the error.
 
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion | Status | Evidence |
+|---|-----------|--------|----------|
+| 1 | 401 + valid refresh token → refresh once, persist, retry, succeed | DONE | `authTransport.RoundTrip`/`refreshIfStale` (`sync_graph.go`); `TestAuthTransport_RefreshesOn401AndRetries`, `TestAuthTransport_ReplaysPostBodyAfterRefresh` |
+| 2 | Refresh fails → clear "run `hero login`" error, not a bare 401 | DONE | `augmentAuthError` on push/pull; `TestAugmentAuthError`; no-refresh path `TestAuthTransport_NoRefreshTokenSurfaces401` |
+| 3 | Token already expired before sync → proactive refresh via `LoadCloudToken` | DONE | `loadRefreshedCredentials` (`cloud_auth.go`) wired into `setupGraphSync` + scan path; `TestLoadRefreshedCredentials_ProactiveRefreshWhenExpired` / `_KeepsValidToken` |
+| 4 | Unreachable during opportunistic scan → skip with reason, scan completes | DONE | `runOpportunisticTeamSync` (pre-existing) now also proactive-refreshes; `TestRunOpportunisticTeamSync_SkipsWhenUnreachable` |
+| 5 | Unreachable during explicit `hero sync graph push` / `pull` → non-nil error | DONE | `Store.Push`/`Pull` propagate; `TestPush_UnreachableServerReturnsErr` (graph) |
+
+### Changes
+
+| File | Status | Evidence |
+|------|--------|----------|
+| `internal/cli/cloud_auth.go` | DONE | `loadRefreshedCredentials` (proactive refresh-at-load) |
+| `internal/cli/sync_graph.go` | DONE | refreshing `authTransport` + `newAuthTransport`/`refreshIfStale`; `augmentAuthError`; setup uses `loadRefreshedCredentials` |
+| `internal/cli/scan_team_sync.go` | DONE | opportunistic path uses `loadRefreshedCredentials` + `newAuthTransport` |
+| `internal/cli/sync_graph_auth_test.go` | DONE | 7 new cli tests (refresh/retry, body replay, loop guard, proactive refresh, opportunistic skip, error hint) |
+| `internal/graph/sync_test.go` | DONE | `TestPush_UnreachableServerReturnsErr` |
+
+### Verification
+
+- `go build ./...`, `go vet ./internal/cli ./internal/graph`, and
+  `go test ./internal/cli ./internal/graph` all pass (8 new tests green).
+- NOTE: `internal/cli` currently only compiles with the unrelated uncommitted
+  `connect_team.go` WIP stashed — that file adds a duplicate `openBrowser` that
+  breaks the package build independently of this work. Verified against a tree with
+  that WIP temporarily set aside; nothing in this delivery touches it.
+
 ## Open Questions
 
 - Does `hero sync cloud` (spec sync) share the same static-token transport and need
   the same treatment, or is it already routed through `LoadCloudToken`? Verify during
-  implementation and fold in if the gap is identical.
+  implementation and fold in if the gap is identical. (Left as follow-up — this
+  delivery scoped to graph sync, where the audited gap lives.)

@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/hero-engine/hero/internal/config"
@@ -79,11 +81,11 @@ func setupGraphSync(orgIDOverride string) (*graphSyncContext, error) {
 		return nil, fmt.Errorf("no hero workspace found (run 'hero init' first)")
 	}
 
-	creds, err := loadCredentials()
+	creds, err := loadRefreshedCredentials()
 	if err != nil {
 		return nil, fmt.Errorf("loading cloud credentials (run 'hero login' first): %w", err)
 	}
-	if creds.AccessToken == "" {
+	if creds == nil || creds.AccessToken == "" {
 		return nil, fmt.Errorf("not logged in — run 'hero login' first")
 	}
 
@@ -110,11 +112,8 @@ func setupGraphSync(orgIDOverride string) (*graphSyncContext, error) {
 	// Build a SyncClient whose HTTP transport injects the bearer token
 	// on every request.
 	httpClient := &http.Client{
-		Timeout: 30 * time.Second,
-		Transport: &authTransport{
-			token: creds.AccessToken,
-			base:  http.DefaultTransport,
-		},
+		Timeout:   30 * time.Second,
+		Transport: newAuthTransport(creds),
 	}
 	c := graph.NewSyncClient(
 		fmt.Sprintf("%s/api/v1/orgs/%s", cloudURL, orgID),
@@ -133,15 +132,89 @@ func setupGraphSync(orgIDOverride string) (*graphSyncContext, error) {
 	}, nil
 }
 
-// authTransport adds Authorization headers to outbound requests.
+// authTransport adds the bearer token to outbound requests and, on a
+// 401, refreshes the access token once and replays the request. This is
+// the CLI-side half of cloud-cli-verify AC #6 (mid-sync token refresh).
 type authTransport struct {
+	mu    sync.Mutex
 	token string
+	creds *cloudCredentials // nil disables refresh
 	base  http.RoundTripper
 }
 
+func newAuthTransport(creds *cloudCredentials) *authTransport {
+	return &authTransport{
+		token: creds.AccessToken,
+		creds: creds,
+		base:  http.DefaultTransport,
+	}
+}
+
+func (t *authTransport) currentToken() string {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.token
+}
+
+// refreshIfStale refreshes the access token unless another in-flight
+// request already rotated it (detected by comparing the token that just
+// failed). Returns the usable token, or "" when refresh is impossible.
+func (t *authTransport) refreshIfStale(failedToken string) string {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.token != failedToken {
+		return t.token // a concurrent request already refreshed
+	}
+	if t.creds == nil {
+		return ""
+	}
+	refreshed := tryRefresh(t.creds)
+	if refreshed == nil {
+		return ""
+	}
+	t.creds = refreshed
+	t.token = refreshed.AccessToken
+	return refreshed.AccessToken
+}
+
 func (t *authTransport) RoundTrip(r *http.Request) (*http.Response, error) {
-	r.Header.Set("Authorization", "Bearer "+t.token)
-	return t.base.RoundTrip(r)
+	used := t.currentToken()
+	r.Header.Set("Authorization", "Bearer "+used)
+	resp, err := t.base.RoundTrip(r)
+	if err != nil || resp.StatusCode != http.StatusUnauthorized || t.creds == nil {
+		return resp, err
+	}
+
+	// Single refresh-and-retry on 401.
+	fresh := t.refreshIfStale(used)
+	if fresh == "" {
+		return resp, nil // surface the 401; caller renders the error
+	}
+	// Only retry when the body can be rebuilt — GetBody is set for the
+	// bytes/strings readers the sync client uses.
+	if r.Body != nil && r.GetBody == nil {
+		return resp, nil
+	}
+	resp.Body.Close()
+	retry := r.Clone(r.Context())
+	if r.GetBody != nil {
+		body, berr := r.GetBody()
+		if berr != nil {
+			return resp, nil
+		}
+		retry.Body = body
+	}
+	retry.Header.Set("Authorization", "Bearer "+fresh)
+	return t.base.RoundTrip(retry)
+}
+
+// augmentAuthError appends a re-login hint when the server rejected our
+// credentials (401) and an automatic refresh could not recover.
+func augmentAuthError(err error) error {
+	if err != nil && strings.Contains(err.Error(), "401") {
+		return fmt.Errorf("%w — run 'hero login' to re-authenticate", err)
+	}
+	return err
 }
 
 func runSyncGraphPush(cmd *cobra.Command, args []string) error {
@@ -153,7 +226,7 @@ func runSyncGraphPush(cmd *cobra.Command, args []string) error {
 
 	resp, err := ctx.store.Push(ctx.client)
 	if err != nil {
-		return fmt.Errorf("push: %w", err)
+		return augmentAuthError(fmt.Errorf("push: %w", err))
 	}
 	fmt.Printf("Pushed: %d rows accepted (server time %s)\n", resp.Accepted, resp.ServerTime)
 	if len(resp.Conflicts) > 0 {
@@ -218,7 +291,7 @@ func runSyncGraphPull(cmd *cobra.Command, args []string) error {
 
 	_, nodesApplied, edgesApplied, edgesDeferred, err := ctx.store.Pull(ctx.client)
 	if err != nil {
-		return fmt.Errorf("pull: %w", err)
+		return augmentAuthError(fmt.Errorf("pull: %w", err))
 	}
 	fmt.Printf("Pulled: %d nodes, %d edges applied", nodesApplied, edgesApplied)
 	if edgesDeferred > 0 {

@@ -202,6 +202,29 @@ func loadCredentials() (*cloudCredentials, error) {
 	return &creds, nil
 }
 
+// loadRefreshedCredentials loads stored credentials, proactively
+// refreshing the access token when it has already expired. Returns nil
+// when not logged in. This is the credential entry point for the sync
+// paths so an expired-at-rest token is renewed before the first request
+// (cloud-cli-verify AC #6).
+func loadRefreshedCredentials() (*cloudCredentials, error) {
+	creds, err := loadCredentials()
+	if err != nil {
+		return nil, err
+	}
+	if creds == nil {
+		return nil, nil
+	}
+	if creds.ExpiresAt != "" {
+		if exp, perr := time.Parse(time.RFC3339, creds.ExpiresAt); perr == nil && time.Now().After(exp) {
+			if refreshed := tryRefresh(creds); refreshed != nil {
+				return refreshed, nil
+			}
+		}
+	}
+	return creds, nil
+}
+
 // LoadCloudToken returns the current access token, refreshing if needed.
 // Returns empty string if not logged in.
 func LoadCloudToken() string {
