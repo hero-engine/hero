@@ -55,6 +55,35 @@ func RegisterJobsAPI(mux *http.ServeMux, jq *JobQueue, authMiddleware func(http.
 		}
 	}))
 
+	mux.Handle("/api/sessions", wrap(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case "GET":
+			sessions, _ := jq.ActiveSessions()
+			if sessions == nil {
+				sessions = []map[string]string{}
+			}
+			jsonResponse(w, sessions)
+		case "POST":
+			handleRegisterSession(w, r, jq)
+		default:
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
+	}))
+
+	mux.Handle("/api/sessions/", wrap(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "DELETE" {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		id := strings.TrimPrefix(r.URL.Path, "/api/sessions/")
+		if id == "" {
+			jsonError(w, "session id required", http.StatusBadRequest)
+			return
+		}
+		jq.UnregisterSession(id)
+		jsonResponse(w, map[string]string{"status": "unregistered", "id": id})
+	}))
+
 	mux.Handle("/api/team/status", wrap(func(w http.ResponseWriter, r *http.Request) {
 		handleTeamStatus(w, r, jq)
 	}))
@@ -211,6 +240,33 @@ func jsonError(w http.ResponseWriter, msg string, code int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	json.NewEncoder(w).Encode(map[string]string{"error": msg})
+}
+
+func handleRegisterSession(w http.ResponseWriter, r *http.Request, jq *JobQueue) {
+	var req struct {
+		ID       string `json:"id"`
+		UserID   string `json:"user_id"`
+		Agent    string `json:"agent"`
+		SpecSlug string `json:"spec_slug"`
+		Command  string `json:"command"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		jsonError(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+	if req.ID == "" {
+		jsonError(w, "id is required", http.StatusBadRequest)
+		return
+	}
+	if req.UserID == "" {
+		req.UserID = r.Header.Get("X-Hero-User")
+	}
+	if err := jq.RegisterSession(req.ID, req.UserID, req.Agent, req.SpecSlug, req.Command); err != nil {
+		jsonError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+	jsonResponse(w, map[string]string{"status": "registered", "id": req.ID})
 }
 
 // timeNowUnixNano is a var for testability
