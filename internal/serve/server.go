@@ -341,6 +341,26 @@ func (s *Server) Run(ctx context.Context) error {
 		}
 
 		RegisterAuthAPI(mux, s.jobQueue, jwtSecret)
+
+		// Wire OAuth if configured via env.
+		oauthClientID := os.Getenv("HERO_OAUTH_CLIENT_ID")
+		oauthClientSecret := os.Getenv("HERO_OAUTH_CLIENT_SECRET")
+		oauthProvider := os.Getenv("HERO_OAUTH_PROVIDER")
+		if oauthClientID != "" && oauthClientSecret != "" && oauthProvider != "" {
+			oauthCfg := &OAuthConfig{
+				Provider:     oauthProvider,
+				ClientID:     oauthClientID,
+				ClientSecret: oauthClientSecret,
+				Org:          os.Getenv("HERO_OAUTH_ORG"),
+				HostedDomain: os.Getenv("HERO_OAUTH_HOSTED_DOMAIN"),
+			}
+			if redirectURI := os.Getenv("HERO_OAUTH_REDIRECT_URI"); redirectURI != "" {
+				oauthRedirectURI = redirectURI
+			}
+			RegisterOAuthAPI(mux, s.jobQueue, jwtSecret, oauthCfg)
+			fmt.Fprintf(os.Stderr, "hero serve: OAuth enabled (provider: %s)\n", oauthProvider)
+		}
+
 		RegisterJobsAPI(mux, s.jobQueue, authMiddleware)
 		RegisterTeamCoordinationAPI(mux, s.jobQueue, authMiddleware)
 		handler = mux

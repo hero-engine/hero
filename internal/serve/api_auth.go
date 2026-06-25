@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 // RegisterAuthAPI adds authentication endpoints.
@@ -30,6 +31,14 @@ func RegisterAuthAPI(mux *http.ServeMux, jq *JobQueue, jwtSecret string) {
 		default:
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		}
+	})
+
+	mux.HandleFunc("/auth/refresh", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		handleRefresh(w, r, jq, jwtSecret)
 	})
 
 	mux.HandleFunc("/api/users/", func(w http.ResponseWriter, r *http.Request) {
@@ -161,6 +170,58 @@ func handleDeleteUser(w http.ResponseWriter, r *http.Request, jq *JobQueue, jwtS
 		return
 	}
 	jsonResponse(w, map[string]string{"status": "deleted", "username": username})
+}
+
+func handleRefresh(w http.ResponseWriter, r *http.Request, jq *JobQueue, jwtSecret string) {
+	auth := r.Header.Get("Authorization")
+	if auth == "" {
+		jsonError(w, "authorization required", http.StatusUnauthorized)
+		return
+	}
+
+	parts := strings.SplitN(auth, " ", 2)
+	if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
+		jsonError(w, "invalid auth format", http.StatusUnauthorized)
+		return
+	}
+
+	claims, err := ValidateJWT(parts[1], jwtSecret)
+	if err != nil {
+		jsonError(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	// Only refresh if the token expires within 7 days.
+	sevenDays := 7 * 24 * time.Hour
+	expiresAt := time.Unix(claims.Exp, 0)
+	if time.Until(expiresAt) > sevenDays {
+		jsonError(w, "token not yet eligible for refresh", http.StatusBadRequest)
+		return
+	}
+
+	// Look up the user to get current state.
+	user, err := jq.GetUser(claims.Sub)
+	if err != nil {
+		// User may have been created via OAuth and not in the local DB
+		// with the same ID. Issue a new token from claims directly.
+		user = &User{
+			ID:          claims.Sub,
+			DisplayName: claims.Name,
+			Email:       claims.Email,
+			Role:        claims.Role,
+		}
+	}
+
+	token, err := IssueJWT(user, jwtSecret, 30*24*time.Hour)
+	if err != nil {
+		jsonError(w, "failed to issue token", http.StatusInternalServerError)
+		return
+	}
+
+	jsonResponse(w, map[string]interface{}{
+		"token": token,
+		"user":  user,
+	})
 }
 
 func requireAdmin(w http.ResponseWriter, r *http.Request, jwtSecret string) bool {
