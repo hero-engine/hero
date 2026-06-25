@@ -187,6 +187,8 @@
 {"ts":"2026-06-23T19:57:05.401269Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"cold-start-trust-hardening","message":"status -\u003e completed"}
 {"ts":"2026-06-23T22:29:43.98919Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"cst-initiative-premature-autocomplete","message":"\"Initiative auto-completes when its only materialized child is delivered, ignoring unbuilt declared children\""}
 {"ts":"2026-06-23T22:29:43.989268Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"cst-initiative-premature-autocomplete","message":"status -\u003e completed"}
+{"ts":"2026-06-24T17:14:34.314598Z","type":"spec_created","agent":"mcp/hero","slug":"knowledge-export-cli","message":"Designed platform feature spec for `hero export knowledge \u003cdestination\u003e` with fail/skip/overwrite/merge convergence strategies and refreshed queue/index."}
+{"event":"claimed","slug":"knowledge-export-cli","agent":"chet-bellows","at":"2026-06-24T10:32:40.204289-07:00"}
 {"ts":"2026-06-24T18:01:14.966835Z","type":"peer.handoff.sent","agent":"hero","slug":"hihcp-mcp-first-turn-readiness","message":"handed off to hero-code/hihcp-mcp-first-turn-readiness (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)"}
 {"ts":"2026-06-24T18:01:15.062558Z","type":"peer.handoff.sent","agent":"hero","slug":"hihcp-mcp-auto-reconnect","message":"handed off to hero-code/hihcp-mcp-auto-reconnect (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)"}
 {"ts":"2026-06-24T18:01:15.155982Z","type":"peer.handoff.sent","agent":"hero","slug":"hihcp-agent-loop-error-recovery","message":"handed off to hero-code/hihcp-agent-loop-error-recovery (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)"}
@@ -195,6 +197,10 @@
 {"ts":"2026-06-24T18:01:15.459131Z","type":"peer.handoff.sent","agent":"hero","slug":"hihcp-agents-md-harness-agnostic","message":"handed off to hero-code/hihcp-agents-md-harness-agnostic (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)"}
 {"ts":"2026-06-24T18:01:15.550835Z","type":"peer.handoff.sent","agent":"hero","slug":"desktop-sidebar-mcp-not-running","message":"handed off to hero-code/desktop-sidebar-mcp-not-running (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)"}
 {"ts":"2026-06-24T18:09:11.36646Z","type":"peer.handoff.received","agent":"hero","slug":"cloud-cli-verify","message":"received from hero-cloud/cloud-cli-verify (peer_id 5770cae7-b233-45c0-8e5d-765338a6058c)"}
+{"ts":"2026-06-24T18:44:02.127363Z","type":"blocker_hit","agent":"mcp/hero","slug":"knowledge-export-cli","message":"Implemented `knowledge-export-cli` and reached verify with ledger/audit/coverage passing; final build/test gate is blocked because this shell has no Go toolchain."}
+{"ts":"2026-06-24T19:03:06.479865Z","type":"delivery_complete","agent":"human/jordon-saardchit","slug":"knowledge-export-cli","message":"Knowledge Export CLI"}
+{"ts":"2026-06-24T19:03:06.479992Z","type":"spec.status_changed","agent":"human/jordon-saardchit","slug":"knowledge-export-cli","message":"status -\u003e completed"}
+{"ts":"2026-06-24T19:03:22.515773Z","type":"delivery_complete","agent":"mcp/hero","slug":"knowledge-export-cli","message":"Completed `knowledge-export-cli`: final audit clean, `hero spec verify` passed all gates, and spec archived."}
 {"ts":"2026-06-24T20:37:42.50759Z","type":"peer.call.invoked","agent":"hero","slug":"cloud-cli-verify","message":"peer call advisory mode=advisory target=hero-cloud call_id=18bc1ed748112d68bc35195e8b3b82ac"}
 {"ts":"2026-06-24T20:37:43.944195Z","type":"peer.call.completed","agent":"hero","slug":"cloud-cli-verify","message":"peer call failed: subagent exited with error: exit status 1 (stderr: ) (call_id 18bc1ed748112d68bc35195e8b3b82ac)"}
 {"ts":"2026-06-24T20:37:54.480176Z","type":"peer.call.invoked","agent":"hero","slug":"cloud-cli-verify","message":"peer call advisory mode=advisory target=hero-cloud call_id=18bc1eda11ae1d280001b3e595911a44"}
@@ -206,8 +212,10 @@
 {"ts":"2026-06-24T20:38:35.911751Z","type":"peer.call.completed","agent":"hero","message":"peer call failed: subagent exited with error: exit status 1 (stderr: ) (call_id 18bc1ee390480fc85a9738a511985a68)"}
 {"ts":"2026-06-24T22:17:29.354639Z","type":"peer.handoff.received","agent":"hero","slug":"team-oauth","message":"received from hero-cloud/team-oauth (peer_id 5770cae7-b233-45c0-8e5d-765338a6058c)"}
 {"ts":"2026-06-24T22:17:54.373536Z","type":"peer.handoff.received","agent":"hero","slug":"team-connect","message":"received from hero-cloud/team-connect (peer_id 5770cae7-b233-45c0-8e5d-765338a6058c)"}
+{"event":"claimed","slug":"mock-export-cli","agent":"chet-bellows","at":"2026-06-24T16:15:47.106804-07:00"}
 {"ts":"2026-06-24T23:27:58.189887Z","type":"peer.call.invoked","agent":"hero","message":"peer call advisory mode=advisory target=hero-cloud call_id=18bc2821ce2c34082c0879f091744c98"}
 {"ts":"2026-06-24T23:27:59.212486Z","type":"peer.call.completed","agent":"hero","message":"peer call failed: subagent CLI \"claude\" is not logged in — authenticate it and retry (run `claude` then `/login`, or set ANTHROPIC_API_KEY); CLI output: Not logged in · Please run /login (call_id 18bc2821ce2c34082c0879f091744c98)"}
+{"event":"completed","slug":"mock-export-cli","agent":"chet-bellows","at":"2026-06-24T16:32:26.358435-07:00","duration_minutes":16}
 {"ts":"2026-06-24T23:36:26.958932Z","type":"peer.call.invoked","agent":"hero","slug":"cloud-cli-verify","message":"peer call advisory mode=advisory target=hero-cloud call_id=18bc2898432b8f308b4b2e4d358b6714"}
 {"ts":"2026-06-24T23:37:59.001097Z","type":"peer.call.completed","agent":"hero","slug":"cloud-cli-verify","message":"peer call ok mode=advisory target=hero-cloud kind=findings call_id=18bc2898432b8f308b4b2e4d358b6714 artifact=.hero/peer-calls/18bc2898432b8f308b4b2e4d358b6714.md"}
 {"ts":"2026-06-25T00:09:53.964823Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"cli-sync-resilience","message":"\"CLI Sync Resilience — Unreachable Fallback \u0026 Mid-Sync Token Refresh\""}

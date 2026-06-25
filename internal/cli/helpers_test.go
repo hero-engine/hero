@@ -296,6 +296,9 @@ func resetFlags() {
 	importTag = ""
 	importMaxBytes = defaultMaxIngestFileBytes
 
+	// Reset export flags
+	exportConflict = "fail"
+
 	// Reset replay flags
 	replayBase = "HEAD"
 
