@@ -18,4 +18,20 @@ The workflow:
 
 Each child spec stub should be actionable as input to `/design` when the team is ready to start that piece.
 
+### Where child specs live
+
+The initiative's children table may reference children as lightweight stubs
+before they are designed. When `/design` **materializes** a child into a real
+spec, give it its **own folder under the initiative**:
+`.hero/planning/initiatives/{initiative-slug}/{child-slug}/spec.md`. The folder
+keeps the child grouped with its initiative *and* gives it a home for its
+companion artifacts (delivery audit, mocks, plan) — which the delivery gates
+look for beside `spec.md`. See the `spec-format` skill's "Folder-per-spec is the
+optimal layout" guidance.
+
+A child may start as a flat `.../{initiative-slug}/{child-slug}.md` stub, but
+promote it to its own folder before delivery so its audit and mocks co-locate
+where `hero spec verify` expects them. Always stamp `slug:` in each child's
+frontmatter — it is the authoritative identifier regardless of layout.
+
 Initiative to decompose: $ARGUMENTS

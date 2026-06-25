@@ -33,6 +33,30 @@ The `{hero_folder}` defaults to `.hero` and is configurable via `hero.json`.
 
 The `{slug}` is a short, lowercase, hyphenated identifier derived from the work item title (e.g., `add-csv-export`, `login-timeout-race`).
 
+### Folder-per-spec is the optimal layout — and why
+
+A spec gets its **own folder** (`{slug}/spec.md`) because the folder is a
+**bundle for the spec's companion artifacts**: `delivery-audit.md`, `plan.md`,
+mockups under `mocks/`, `retro.md`, and any diagnosis attachments. The delivery
+gates look for these *beside* `spec.md` — e.g. `hero spec verify` finds the
+delivery audit at `{slug}/delivery-audit.md`. A spec without its own folder has
+nowhere to put these, and the audit/coverage gates can't find them.
+
+**Steer to folder-per-spec for any spec that will be delivered.** This is the
+default; prefer it.
+
+A **flat `<slug>.md`** file (no folder) is *tolerated by the engine* —
+discovery, slug resolution, and archival all handle it — and is acceptable for a
+**lightweight stub or planning-only child** that carries no companions yet (e.g.
+an initiative child not yet in delivery). But **promote a flat spec to its own
+folder before delivery starts**, so its delivery audit and mocks co-locate where
+the gates look. Do not author a deliverable spec as a flat file.
+
+**Stamp `slug:` in frontmatter — it is the authoritative identifier.** For a
+folder spec the slug matches the folder name; for a flat file it matches the
+filename. Either way, the frontmatter `slug:` is the source of truth, so never
+rely on the path alone.
+
 ## Feature spec template
 
 ```markdown
@@ -257,7 +281,7 @@ All spec types use YAML frontmatter. The following fields are supported:
 | Field | Required | Applies to | Description |
 |-------|----------|------------|-------------|
 | `title` | Yes | All | Human-readable title. |
-| `slug` | Yes | All | Short kebab-case identifier matching the spec's directory name. Stamp this in frontmatter so it's easy to copy when linking the spec from another session or prompt. |
+| `slug` | Yes | All | Short kebab-case identifier and the spec's authoritative ID. Matches the folder name (folder-per-spec) or the filename (flat `<slug>.md`). Always stamp it in frontmatter — it is the source of truth for resolution and for linking the spec from another session or prompt, independent of path. |
 | `type` | Yes | All | Spec type: `feature`, `bug`, `convention`, `decision`, `initiative` |
 | `status` | Yes | All | Lifecycle state. Work specs: `planning`, `in-review`, `delivering`, `completed`. Conventions: `draft`, `active`. Decisions: `proposed`, `accepted`. Any type can be `superseded`. |
 | `scope` | Yes (conventions) | Convention | Array of glob patterns identifying which files this convention applies to. Used by `hero relevant` to inject relevant conventions. |
