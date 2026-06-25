@@ -33,10 +33,14 @@ var disconnectTeamCmd = &cobra.Command{
 	RunE:  runDisconnectTeam,
 }
 
-var connectTeamToken string
+var (
+	connectTeamToken      string
+	connectTeamNoAutoSync bool
+)
 
 func init() {
 	connectTeamCmd.Flags().StringVar(&connectTeamToken, "token", "", "auth token (if server uses token auth)")
+	connectTeamCmd.Flags().BoolVar(&connectTeamNoAutoSync, "no-auto-sync", false, "disable automatic background sync to cloud")
 	connectCmd.AddCommand(connectTeamCmd)
 	connectCmd.AddCommand(disconnectTeamCmd)
 }
@@ -116,9 +120,11 @@ func connectWithToken(serverURL, token string) error {
 	}
 	json.NewDecoder(resp.Body).Decode(&status)
 
+	autoSync := !connectTeamNoAutoSync
 	tc := &config.TeamConnection{
-		URL:   serverURL,
-		Token: token,
+		URL:      serverURL,
+		Token:    token,
+		AutoSync: &autoSync,
 	}
 	if err := config.SaveTeamConnection(tc); err != nil {
 		return fmt.Errorf("saving connection: %w", err)
@@ -128,6 +134,9 @@ func connectWithToken(serverURL, token string) error {
 	fmt.Printf("  Active sessions: %d\n", len(status.Sessions))
 	fmt.Printf("  Running jobs: %d\n", len(status.RunningJobs))
 	fmt.Printf("  Queued jobs: %d\n", len(status.QueuedJobs))
+	if autoSync {
+		fmt.Println("  Auto-sync: enabled")
+	}
 	fmt.Println("\nhero run will now route jobs through the team server.")
 	return nil
 }
@@ -188,10 +197,12 @@ func connectWithOAuth(serverURL, provider string) error {
 			return result.Err
 		}
 
+		autoSync := !connectTeamNoAutoSync
 		tc := &config.TeamConnection{
-			URL:   serverURL,
-			Token: result.Token,
-			User:  result.Email,
+			URL:      serverURL,
+			Token:    result.Token,
+			User:     result.Email,
+			AutoSync: &autoSync,
 		}
 		if err := config.SaveTeamConnection(tc); err != nil {
 			return fmt.Errorf("saving connection: %w", err)

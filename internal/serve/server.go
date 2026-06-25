@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hero-engine/hero/internal/cloud"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/index"
@@ -99,6 +100,10 @@ type Server struct {
 	workerPool     *WorkerPool
 	scheduledTasks *ScheduledTasks
 	authToken      string
+
+	// Cloud auto-sync
+	cloudDaemon *cloud.Daemon
+	cloudBusSub uint64
 }
 
 // ServerConfig configures the daemon.
@@ -196,6 +201,49 @@ func NewServer(cfg ServerConfig) *Server {
 	}
 
 	return s
+}
+
+// startCloudSync starts the background sync daemon if a team connection
+// with cloud config exists and auto-sync is enabled.
+func (s *Server) startCloudSync() {
+	tc := config.LoadTeamConnection()
+	if tc == nil || !tc.AutoSyncEnabled() {
+		return
+	}
+
+	cfg, err := config.Load(s.projectRoot)
+	if err != nil || cfg.Cloud == nil || cfg.Cloud.OrgID == "" || cfg.Cloud.RepoID == "" {
+		return
+	}
+
+	cloudURL := tc.URL
+	if cloudURL == "" {
+		return
+	}
+
+	daemon := cloud.NewDaemon(cloud.Config{
+		CloudURL:    cloudURL,
+		Token:       tc.Token,
+		OrgID:       cfg.Cloud.OrgID,
+		RepoID:      cfg.Cloud.RepoID,
+		ProjectRoot: s.projectRoot,
+		HeroDir:     s.heroDir,
+	})
+	daemon.Start()
+
+	id, events := s.bus.Subscribe(64)
+	go func() {
+		for ev := range events {
+			switch ev.Type {
+			case EventSpecCreated, EventSpecModified, EventSpecDeleted, EventIndexRebuilt:
+				daemon.Notify()
+			}
+		}
+	}()
+
+	s.cloudDaemon = daemon
+	s.cloudBusSub = id
+	fmt.Fprintf(os.Stderr, "hero serve: cloud auto-sync enabled\n")
 }
 
 // Bus returns the event bus (for external publishing or testing).
@@ -374,6 +422,9 @@ func (s *Server) Run(ctx context.Context) error {
 
 		fmt.Fprintf(os.Stderr, "hero serve: team mode enabled (%d workers)\n", s.workerPool.count)
 	}
+
+	// Start cloud auto-sync daemon if team connection and cloud config exist.
+	s.startCloudSync()
 
 	// Initialize the chat dispatcher. The registry, store, and API
 	// live alongside the rest of the daemon; the MCP server receives
@@ -586,6 +637,12 @@ func (s *Server) shutdown() error {
 		}
 	}
 	s.mu.RUnlock()
+
+	// Stop cloud auto-sync
+	if s.cloudDaemon != nil {
+		s.cloudDaemon.Stop()
+		s.bus.Unsubscribe(s.cloudBusSub)
+	}
 
 	// Stop team mode components
 	if s.scheduledTasks != nil {
