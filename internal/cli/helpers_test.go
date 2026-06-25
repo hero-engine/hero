@@ -366,6 +366,10 @@ func resetFlags() {
 	syncPushJSON = false
 	syncPushFieldSource = "diff"
 
+	// Reset sync pull (field-level) flags
+	syncPullFields = nil
+	syncPullJSON = false
+
 	// Reset backfill-completed-at flags
 	backfillCompletedAtDryRun = false
 	backfillCompletedAtQuiet = false
