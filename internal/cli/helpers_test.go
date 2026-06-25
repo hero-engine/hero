@@ -360,6 +360,12 @@ func resetFlags() {
 	syncCloudFull = false
 	syncCloudStatus = false
 
+	// Reset sync push (field-level) flags
+	syncPushFields = nil
+	syncPushDryRun = false
+	syncPushJSON = false
+	syncPushFieldSource = "diff"
+
 	// Reset backfill-completed-at flags
 	backfillCompletedAtDryRun = false
 	backfillCompletedAtQuiet = false
