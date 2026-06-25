@@ -95,6 +95,28 @@ type Tracker interface {
 	// GetIssue retrieves current issue info from the tracker.
 	GetIssue(issueID string) (*Issue, error)
 
+	// UpdateFields writes a set of canonical field values to an existing
+	// tracker issue. Keys are canonical hero-side field names (e.g.
+	// "title", "description", "points", "priority", "labels"); the
+	// adapter resolves them to provider-native fields and encodes the
+	// Value tagged union into the provider's wire shape. Called only
+	// with the diff (the fields that actually changed) — see the
+	// field-level push path in internal/cli/sync_push.go.
+	//
+	// Errors are classified via FieldError so the CLI can map 401/403 →
+	// exit 2 and apply the 429 retry policy. An empty patch is a no-op
+	// (no network call); callers should not invoke UpdateFields with an
+	// empty map.
+	UpdateFields(issueID string, fields map[string]Value) error
+
+	// GetFields fetches the current tracker-side values for the
+	// canonical content fields, keyed by canonical hero-side name. Used
+	// by the diff path (`hero sync push <slug>` with no --field flags)
+	// to compute what differs from local. Only content-classified
+	// fields the adapter knows how to read are returned; unknown or
+	// org-state fields are omitted.
+	GetFields(issueID string) (map[string]Value, error)
+
 	// ListIssues fetches open issues from the tracker. Returns up to limit issues.
 	// If label is non-empty, filters by that label.
 	ListIssues(label string, limit int) ([]Issue, error)

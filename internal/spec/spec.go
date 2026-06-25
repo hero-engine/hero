@@ -195,6 +195,17 @@ type Spec struct {
 	// still infer one from the spec's FilesTouched.
 	Surface string
 
+	// Owner is the canonical owner role for this spec (pm / engineering
+	// / qa / devops / design / docs). Empty on legacy specs predating
+	// owner_history; callers synthesize a single-entry history from it.
+	Owner string
+	// OwnerHistory is the parsed ownership timeline from the
+	// `owner_history:` frontmatter block. Empty when the field is
+	// absent — the loader/set-owner path synthesizes from Owner +
+	// file mtime in that case. Unknown per-entry fields are preserved
+	// for forward compat (see OwnerHistoryEntry.Extra).
+	OwnerHistory []OwnerHistoryEntry
+
 	// Domain is the DSKG namespace partition this spec belongs to
 	// (engineering / pm / future packs). Set by `/design` and
 	// `/diagnose` at scaffolding time from the active workspace
@@ -509,6 +520,16 @@ func (s *Spec) parseFrontmatter(content string) string {
 			s.Subproject = val
 		case "surface":
 			s.Surface = val
+		case "owner":
+			s.Owner = val
+		case "owner_history":
+			// Block-style YAML list of {owner, from, to} entries.
+			// Unknown per-entry keys are preserved (forward compat).
+			entries, consumed := ParseOwnerHistoryBlock(lines, i+1, closeIdx)
+			s.OwnerHistory = entries
+			if consumed > i+1 {
+				i = consumed - 1
+			}
 		case "domain":
 			s.Domain = val
 		case "release_target":
@@ -1368,6 +1389,97 @@ func frontmatterHasField(content, key string) bool {
 		}
 	}
 	return false
+}
+
+// SetOwnerHistoryBlock replaces (or inserts) the `owner_history:` block
+// in a spec's YAML frontmatter with the rendered form of history,
+// preserving everything else in the file. The existing block — the
+// `owner_history:` key line plus all its indented continuation lines —
+// is removed and the freshly rendered block inserted in its place. When
+// no block exists, the new block is inserted just before any tracker
+// comment section (# Jira / # Github / # Linear), matching where
+// hero-section fields land.
+//
+// An empty history removes the block entirely.
+func SetOwnerHistoryBlock(content string, history []OwnerHistoryEntry) string {
+	lines := strings.Split(content, "\n")
+	if len(lines) == 0 || strings.TrimSpace(lines[0]) != "---" {
+		// No frontmatter — synthesize one carrying just the block.
+		block := RenderOwnerHistoryBlock(history)
+		if block == "" {
+			return content
+		}
+		return "---\n" + block + "\n---\n" + content
+	}
+
+	closeIdx := -1
+	for i := 1; i < len(lines); i++ {
+		if strings.TrimSpace(lines[i]) == "---" {
+			closeIdx = i
+			break
+		}
+	}
+	if closeIdx < 0 {
+		block := RenderOwnerHistoryBlock(history)
+		if block == "" {
+			return content
+		}
+		return "---\n" + block + "\n---\n" + content
+	}
+
+	// Locate an existing owner_history block: the key line plus its
+	// indented continuation lines.
+	blockStart, blockEnd := -1, -1
+	for j := 1; j < closeIdx; j++ {
+		if strings.HasPrefix(strings.TrimSpace(lines[j]), "owner_history:") &&
+			leadingSpaceCount(lines[j]) == 0 {
+			blockStart = j
+			k := j + 1
+			for ; k < closeIdx; k++ {
+				t := strings.TrimSpace(lines[k])
+				// Continuation = indented (or blank inside the block).
+				if t == "" {
+					continue
+				}
+				if leadingSpaceCount(lines[k]) == 0 {
+					break
+				}
+			}
+			blockEnd = k // exclusive
+			break
+		}
+	}
+
+	rendered := RenderOwnerHistoryBlock(history)
+	var newBlockLines []string
+	if rendered != "" {
+		newBlockLines = strings.Split(rendered, "\n")
+	}
+
+	if blockStart >= 0 {
+		// Replace [blockStart, blockEnd).
+		out := append([]string{}, lines[:blockStart]...)
+		out = append(out, newBlockLines...)
+		out = append(out, lines[blockEnd:]...)
+		return strings.Join(out, "\n")
+	}
+
+	if len(newBlockLines) == 0 {
+		return content
+	}
+
+	// Insert before the first tracker comment section, else before close.
+	insertIdx := closeIdx
+	for j := 1; j < closeIdx; j++ {
+		if strings.HasPrefix(strings.TrimSpace(lines[j]), "# ") {
+			insertIdx = j
+			break
+		}
+	}
+	out := append([]string{}, lines[:insertIdx]...)
+	out = append(out, newBlockLines...)
+	out = append(out, lines[insertIdx:]...)
+	return strings.Join(out, "\n")
 }
 
 // SetFrontmatterField sets or updates a key-value pair in YAML frontmatter.
