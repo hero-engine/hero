@@ -263,6 +263,29 @@ func TestSyncEndpoints_DoNotDoubleAPIPrefix(t *testing.T) {
 	}
 }
 
+// TestPush_UnreachableServerReturnsErr backs the CLI-side AC #5 split:
+// the Store layer surfaces a hard error when the server is unreachable,
+// which the direct `hero sync graph push` command propagates (while the
+// opportunistic scan path catches it and degrades — tested in cli).
+func TestPush_UnreachableServerReturnsErr(t *testing.T) {
+	s := openTestStore(t)
+	if _, err := s.UpsertNode(&Node{
+		Type: "Feature", Key: "x", Domain: "engineering", Scope: ScopeTeam, ContentHash: "h",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Bind then close so the address refuses connections.
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	url := ts.URL
+	ts.Close()
+
+	c := NewSyncClient(orgURL(url, "test-org"), "test-repo", "test-org")
+	if _, err := s.Push(c); err == nil {
+		t.Fatal("expected error pushing to an unreachable server")
+	}
+}
+
 // drainBody is a small helper for diagnostic test bodies.
 func drainBody(r io.Reader) string {
 	b, _ := io.ReadAll(r)
