@@ -21,6 +21,17 @@ var validTypes = map[spec.Type]bool{
 	spec.TypeContext:    true,
 	spec.TypeNote:       true,
 	spec.TypeExplainer:  true,
+	spec.TypeIntake:     true,
+}
+
+// intakeStatuses are valid statuses for intake (pre-commitment) specs.
+// Lifecycle: planning → triaged → promoted | rejected | merged.
+var intakeStatuses = map[spec.Status]bool{
+	spec.StatusPlanning: true,
+	spec.StatusTriaged:  true,
+	spec.StatusPromoted: true,
+	spec.StatusRejected: true,
+	spec.StatusMerged:   true,
 }
 
 // workStatuses are valid statuses for feature/bug specs.
@@ -68,7 +79,7 @@ func ValidateStructure(s *spec.Spec) []StructuralIssue {
 	} else if !validTypes[s.Type] {
 		issues = append(issues, StructuralIssue{
 			Field:   "type",
-			Message: "invalid type: " + string(s.Type) + " (must be one of: feature, bug, convention, decision, initiative, rule, external, context, note)",
+			Message: "invalid type: " + string(s.Type) + " (must be one of: feature, bug, convention, decision, initiative, rule, external, context, note, intake)",
 			IsError: true,
 		})
 	}
@@ -87,6 +98,14 @@ func ValidateStructure(s *spec.Spec) []StructuralIssue {
 				issues = append(issues, StructuralIssue{
 					Field:   "status",
 					Message: "invalid status for " + string(s.Type) + ": " + string(s.Status) + " (must be one of: planning, in-review, delivering, completed)",
+					IsError: true,
+				})
+			}
+		case spec.TypeIntake:
+			if !intakeStatuses[s.Status] {
+				issues = append(issues, StructuralIssue{
+					Field:   "status",
+					Message: "invalid status for intake: " + string(s.Status) + " (must be one of: planning, triaged, promoted, rejected, merged)",
 					IsError: true,
 				})
 			}

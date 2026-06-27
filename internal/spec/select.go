@@ -116,7 +116,7 @@ func (sel Selector) Apply(all []*Spec) []*Spec {
 // …) are never ready: they carry no delivery lifecycle, so the queue
 // must not nag them for a `## Kickoff` section.
 func IsReady(s *Spec, bySlug map[string]*Spec) bool {
-	if s.IsKnowledge() {
+	if s.IsKnowledge() || s.IsPreCommitment() {
 		return false
 	}
 	if !isOpenStatus(s.Status) {

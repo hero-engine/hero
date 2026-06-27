@@ -27,6 +27,13 @@ const (
 	// (feature-knowledge-synthesis initiative). Lives under
 	// .hero/knowledge/explainers/; classified as knowledge, not work.
 	TypeExplainer Type = "explainer"
+	// TypeIntake is a pre-commitment signal — a captured idea or inbound
+	// request that lives in the spec graph (searchable, provenance-linked)
+	// but is deliberately excluded from committed-work rollups (status,
+	// queue, velocity, snapshot) until promoted to a roadmap spec. Lives
+	// under .hero/planning/intake/. Neither work nor knowledge: see
+	// IsPreCommitment. Declared in core/spec-types/intake.md.
+	TypeIntake Type = "intake"
 )
 
 // Status represents the lifecycle state of a spec.
@@ -66,6 +73,15 @@ const (
 	// Decision states
 	StatusProposed Status = "proposed"
 	StatusAccepted Status = "accepted"
+
+	// Intake (pre-commitment) states. Initial is StatusPlanning (shared);
+	// lifecycle: planning → triaged → promoted | rejected | merged. See
+	// core/spec-types/intake.md. StatusRejected and StatusMerged are
+	// terminal alongside StatusPromoted.
+	StatusTriaged  Status = "triaged"
+	StatusPromoted Status = "promoted"
+	StatusRejected Status = "rejected"
+	StatusMerged   Status = "merged"
 
 	// Shared terminal state
 	StatusSuperseded Status = "superseded"
@@ -919,6 +935,9 @@ func typeFromPath(path string) Type {
 	if strings.Contains(path, "/explainers/") {
 		return TypeExplainer
 	}
+	if strings.Contains(path, "/intake/") {
+		return TypeIntake
+	}
 	return TypeFeature
 }
 
@@ -1322,6 +1341,17 @@ func (s *Spec) IsKnowledge() bool {
 	return s.Type == TypeConvention || s.Type == TypeDecision ||
 		s.Type == TypeRule || s.Type == TypeExternal || s.Type == TypeContext ||
 		s.Type == TypeNote || s.Type == TypeTripwire || s.Type == TypeExplainer
+}
+
+// IsPreCommitment returns true if the spec is a captured-but-uncommitted
+// signal (intake). Pre-commitment specs appear in search, the graph, and
+// hero_why (provenance matters) but are excluded from every committed-work
+// rollup — status work buckets, queue, velocity, snapshot — until promoted
+// to a roadmap spec. This is the third category alongside IsWorkSpec
+// (committed work) and IsKnowledge (reference): a type is covered by exactly
+// one of the three.
+func (s *Spec) IsPreCommitment() bool {
+	return s.Type == TypeIntake
 }
 
 // IsInFlight returns true if the spec is currently being worked on,

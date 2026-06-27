@@ -80,7 +80,7 @@ func runPipeline(cmd *cobra.Command, args []string) error {
 	// Filter to work specs
 	var work []*spec.Spec
 	for _, s := range specs {
-		if s.Type != spec.TypeFeature && s.Type != spec.TypeBug {
+		if !s.IsWorkSpec() {
 			continue
 		}
 		if pipelineType != "" && string(s.Type) != pipelineType {

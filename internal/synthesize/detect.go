@@ -90,7 +90,7 @@ func Detect(heroDir string) ([]Candidate, error) {
 	// --- Inferred: connected components among completed work specs. ---
 	var work []*spec.Spec
 	for _, s := range all {
-		if s.Status == spec.StatusCompleted && (s.Type == spec.TypeFeature || s.Type == spec.TypeBug) && !claimed[s.Slug] {
+		if s.Status == spec.StatusCompleted && s.IsWorkSpec() && !claimed[s.Slug] {
 			work = append(work, s)
 		}
 	}

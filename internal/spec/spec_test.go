@@ -270,6 +270,7 @@ func TestTypeFromPath(t *testing.T) {
 		{"/project/.hero/planning/initiatives/quux/spec.md", TypeInitiative},
 		{"/project/.hero/specs/foo/spec.md", TypeFeature},
 		{"/project/.hero/knowledge/explainers/agent-outposts/spec.md", TypeExplainer},
+		{"/project/.hero/planning/intake/csv-export/spec.md", TypeIntake},
 	}
 
 	for _, tt := range tests {
