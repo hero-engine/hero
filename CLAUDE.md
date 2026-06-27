@@ -18,6 +18,7 @@ When the user describes what they want in natural language, route to the appropr
 | Bug, error, broken, fix, investigate, diagnose | `/diagnose` |
 | New feature, build, design, add, plan | `/design` |
 | Implement, deliver, ship, code, execute | `/deliver` |
+| Autopilot/run a whole initiative, "put X on autopilot", "drive the initiative", keep working autonomously | `/drive <initiative>` |
 | Review, PR, pull request, code review | `/review` |
 | Break down, decompose, epic, sequence | `/compose` |
 | Convention, pattern, standard, style | `/convention` |
@@ -45,7 +46,7 @@ When routing, pass the user's original context as arguments to the command. If t
 
 | Surface | Commands |
 |---|---|
-| **Slash-only** (no `hero <name>` equivalent) | `/capture`, `/challenge`, `/compose`, `/convention`, `/decide`, `/discover`, `/mock`, `/prime`, `/release`, `/retro`, `/review`, `/scrub`, `/split` |
+| **Slash-only** (no `hero <name>` equivalent) | `/capture`, `/challenge`, `/compose`, `/convention`, `/decide`, `/discover`, `/drive`, `/mock`, `/prime`, `/release`, `/retro`, `/review`, `/scrub`, `/split` |
 | **Both slash and CLI** | `/check`, `/deliver`, `/design`, `/diagnose`, `/docs`, `/handoff`, `/import`, `/note`, `/scan`, `/sprint`, `/why` |
 | **CLI-only** (see CLI Commands below) | `hero status`, `hero search`, `hero ask`, `hero list`, `hero queue`, `hero spec verify`, `hero spec score`, `hero diff`, `hero drift`, etc. |
 

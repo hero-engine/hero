@@ -450,3 +450,25 @@ Not a list item
 		t.Errorf("first item = %q", items[0])
 	}
 }
+
+func TestDeliverRejectsInitiativeWithDrivePointer(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("planning/initiatives/big-thing/spec.md", `---
+title: Big Thing
+type: initiative
+status: planning
+---
+# Big Thing
+
+## Goal
+
+Run all the children.
+`)
+	_, err := runCmd("spec", "deliver", "--manual", "big-thing")
+	if err == nil {
+		t.Fatal("delivering an initiative should error, not flip it to delivering")
+	}
+	if !strings.Contains(err.Error(), "/drive") {
+		t.Errorf("error should point the user to /drive, got: %v", err)
+	}
+}

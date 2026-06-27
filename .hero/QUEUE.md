@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-27T23:45:15Z · 89 ready specs_
+_Generated: 2026-06-27T23:51:27Z · 88 ready specs_
 
 ## flat-named-spec-discovery — "Flat-named spec files are invisible to discovery — verify can't resolve initiative children"
 _bug · delivering · horizon: now_
@@ -47,22 +47,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · in-review · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-idea-primitive-core/spec.md)_
-
----
-
-## drive-command-routing — "`/drive` command + natural-language routing + `/deliver`-on-initiative fallback"
-_feature · planning · horizon: now_
-
-Add a `/drive` command + a `drive` skill (NOT a dedicated agent — an agent
-would duplicate the harness loop and we want the boundary deterministic in
-`needs_me`). The skill: resolve the initiative, ensure/author its `## Goal`
-([initiative-goal-section](../initiative-goal-section/spec.md)), confirm on
-first arm, emit the condition via `hero goal --emit`, hand it to the harness
-`/goal`, ensure the Stop hook calling `hero goal --check`
-([hero-goal-command](../hero-goal-command/spec.md)) is wired, and render
-pause questions / accept answers ([drive-pause-resume](../drive-pause-resume/spec.md)).
-Add the routing-table rows. Mirror the command across harness command dirs
-(`core/commands/`, `domains/engineering/commands/`) per existing convention.
 
 ---
 
