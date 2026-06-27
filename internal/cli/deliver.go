@@ -98,6 +98,14 @@ func runDeliver(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("spec %q not found", args[0])
 	}
 
+	// An initiative is a parent, not a single deliverable. Delivering one
+	// child at a time is `/deliver`; running the whole initiative
+	// autonomously is `/drive`. Point the user there rather than flipping an
+	// initiative to delivering (which would strand its children).
+	if target.Type == spec.TypeInitiative {
+		return fmt.Errorf("%q is an initiative, not a single spec — run `/drive %s` (or `hero goal %s`) to execute the whole initiative; `/deliver` works one child at a time", target.Slug, target.Slug, target.Slug)
+	}
+
 	// Kickoff is a hard precondition for flipping to delivering. Without
 	// a `## Kickoff` section the spec can't be picked up from a fresh
 	// session and `hero queue` excludes it — flipping it to delivering

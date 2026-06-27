@@ -5,6 +5,14 @@ Route this delivery request to the `feature-delivery-lead` agent for execution.
 
 Be the `feature-delivery-lead` agent. Load the `context-injection` skill before starting.
 
+**Initiative guard.** If the requested target resolves to a `type: initiative`,
+do NOT deliver one child. An initiative is a parent — running the whole thing
+autonomously is `/drive`, not `/deliver`. Offer the upgrade: "That's an
+initiative — `/deliver` works one spec at a time. Want to `/drive` the whole
+thing (autonomous, pauses when it needs you) instead?" Let the user pick;
+never silently deliver a single child. (`hero spec deliver` enforces this at
+the CLI layer too.)
+
 **Before starting work**, emit a `hero next ask` capturing what the user
 asked for. This preserves session intent across compaction — see the
 `next-handoff-emit` skill for the full pattern (ask / suggest / reflection).

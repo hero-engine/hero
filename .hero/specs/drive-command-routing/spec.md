@@ -2,7 +2,7 @@
 title: "`/drive` command + natural-language routing + `/deliver`-on-initiative fallback"
 slug: drive-command-routing
 type: feature
-status: planning
+status: completed
 priority: high
 horizon: now
 tags: [drive, command, skill, routing, natural-language, ux]
@@ -12,6 +12,8 @@ relations:
     kind: parent
   - target: hero-goal-command
     kind: depends-on
+delivery_method: manual
+completed_at: 2026-06-27T23:51:09Z
 ---
 
 # `/drive` command + natural-language routing + `/deliver`-on-initiative fallback
@@ -124,3 +126,48 @@ initiative's "no `/deliver` overload" decision.)
   confirm on *first* arm per initiative; subsequent resumes don't re-confirm.
 - **Skill/loop boundary blur** — keep the skill free of judgment logic; if
   it starts deciding proceed/pause, that belongs in `needs_me`.
+
+## Changes
+
+- `core/commands/drive.md` + `domains/engineering/commands/drive.md` — the
+  `/drive <initiative>` command (arm-the-run instructions, not-`/deliver`
+  guidance).
+- `domains/engineering/skills/drive/SKILL.md` — the `drive` skill (resolve,
+  ensure Goal, confirm-on-first-arm, emit, wire Stop hook, relay pauses).
+  **Skill, not agent.**
+- `internal/cli/deliver.go` — initiative guard: `hero spec deliver` on an
+  initiative errors with a `/drive` pointer instead of stranding children.
+- `domains/engineering/commands/deliver.md` — the `/deliver`-on-initiative
+  fallback offer.
+- `CLAUDE.md` — NL routing row + `/drive` in the slash-only list.
+- Test: `internal/cli/deliver_test.go`.
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | `/drive <init>` arms after first-arm confirmation (condition/mode/guardrails) | DONE | `domains/engineering/skills/drive/SKILL.md` "Arming a run" steps 1–4 + `core/commands/drive.md`; confirmation + dry-run offer specified |
+| 2 | "autopilot this initiative" + synonyms route to `/drive` | DONE | `CLAUDE.md` routing row; synonyms named in the command body |
+| 3 | `/drive` on a non-initiative declines → `/deliver` | DONE | skill step 1 declines; `hero goal` enforces at the CLI (rejects non-initiatives, from spec #3) |
+| 4 | `/deliver` on an initiative offers `/drive`, no silent child delivery | DONE | `internal/cli/deliver.go` guard + `TestDeliverRejectsInitiativeWithDrivePointer`; `deliver.md` offer; **exercised live** on the real initiative |
+| 5 | While armed, surface pause questions / accept answers, delegating to `hero goal --check` | DONE | skill "Per turn (relay only)" + the Stop-hook contract from spec #3; verdict authority stays in `hero goal` |
+| 6 | Implemented as a skill, not a dedicated agent | DONE | `skills/drive/SKILL.md` exists; no `agents/drive*.md`; boundary kept deterministic in `needs_me` |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | `/drive` command (core + engineering mirror) | DONE | both files written, identical |
+| 2 | `drive` skill | DONE | arm/relay/guardrails |
+| 3 | `hero deliver` initiative guard + test | DONE | code + `TestDeliverRejectsInitiativeWithDrivePointer` |
+| 4 | `/deliver` fallback + CLAUDE.md routing | DONE | deliver.md offer, routing row, slash-only list |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end: ran `hero spec deliver --manual drive-autonomous-initiative-execution` (the real initiative) and got the guard error pointing to `/drive drive-autonomous-initiative-execution` instead of a stranded child delivery. The `/drive` command + `drive` skill files are present in the canonical command/skill dirs.
+
+### Excellence Bar self-check
+
+- [x] yes — the one code-enforceable AC (the deliver guard) is unit-tested and exercised live; the rest are realized as the canonical harness command/skill/routing definitions (the actual product surface). Skill not agent; no judgment logic in the skill (delegated to `hero goal`/`needs_me`); `/deliver` deliberately not overloaded.
