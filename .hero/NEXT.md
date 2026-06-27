@@ -5,9 +5,9 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-06-27T05:19:51Z
+updated: 2026-06-27T05:22:18Z
 repo: hero-engine/hero
-branch: feat/intake-primitive-engine
+branch: main
 ---
 
 ## Just finished
