@@ -141,6 +141,54 @@ func TestSpecWriteGraphIsIdempotent(t *testing.T) {
 	}
 }
 
+// TestSpecWriteGraphIntakeProvenance locks the intake provenance chain:
+// an intake gets a graph node (graphTypeFor), and a promoted feature's
+// `derived_from` relation materializes as a derived_from edge
+// (graphEdgeForRelation) — the edge `hero why` walks back to the intake.
+func TestSpecWriteGraphIntakeProvenance(t *testing.T) {
+	store := openSpecTestStore(t)
+	specs := []*Spec{
+		{
+			Slug: "csv-export", Title: "Export to CSV",
+			Type: TypeIntake, Status: StatusPromoted,
+			Path:       "/repo/.hero/planning/intake/csv-export/spec.md",
+			ModifiedAt: time.Now(),
+		},
+		{
+			Slug: "csv-export", Title: "Export to CSV",
+			Type: TypeFeature, Status: StatusPlanning,
+			Path:       "/repo/.hero/planning/features/csv-export/spec.md",
+			ModifiedAt: time.Now(),
+			Relations: []Relation{
+				{Target: "csv-export", Kind: "derived_from"},
+			},
+		},
+	}
+	if _, err := WriteGraph(specs, "test-repo", "engineering", store); err != nil {
+		t.Fatalf("WriteGraph: %v", err)
+	}
+	stats, _ := store.Stats()
+	if stats.NodesByType["Intake"] != 1 {
+		t.Errorf("Intake nodes = %d, want 1 (intake not graphed)", stats.NodesByType["Intake"])
+	}
+	if stats.EdgesByType["derived_from"] != 1 {
+		t.Errorf("derived_from edges = %d, want 1 (provenance edge not materialized)", stats.EdgesByType["derived_from"])
+	}
+
+	// The edge must point at the Intake node, not self-loop back to the
+	// Feature (the intake and feature share the slug "csv-export").
+	var toType string
+	if err := store.DB().QueryRow(
+		`SELECT n.type FROM edges e JOIN nodes n ON n.id = e.to_id
+		  WHERE e.type = 'derived_from' AND e.valid_to IS NULL LIMIT 1`,
+	).Scan(&toType); err != nil {
+		t.Fatalf("querying derived_from target: %v", err)
+	}
+	if toType != "Intake" {
+		t.Errorf("derived_from points at %q, want Intake (self-loop bug)", toType)
+	}
+}
+
 func TestSpecWriteGraphChildRelationNotEmittedAsEdge(t *testing.T) {
 	store := openSpecTestStore(t)
 	specs := []*Spec{

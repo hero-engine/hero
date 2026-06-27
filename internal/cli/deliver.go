@@ -297,7 +297,7 @@ func runDeliverBatch() error {
 	// Find all approved specs (ready for delivery)
 	var approved []*spec.Spec
 	for _, s := range specs {
-		if s.Type != spec.TypeFeature && s.Type != spec.TypeBug {
+		if !s.IsWorkSpec() {
 			continue
 		}
 		if s.Status == spec.StatusCompleted || s.Status == "delivering" {
