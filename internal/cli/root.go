@@ -97,6 +97,7 @@ func init() {
 	rootCmd.AddCommand(blockedCmd)
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(queueCmd)
+	rootCmd.AddCommand(goalCmd)
 	rootCmd.AddCommand(relevantCmd)
 	rootCmd.AddCommand(syncCmd)
 	rootCmd.AddCommand(dashboardCmd)

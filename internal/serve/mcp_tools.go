@@ -19,6 +19,7 @@ import (
 	"github.com/hero-engine/hero/internal/coverage"
 	"github.com/hero-engine/hero/internal/demos"
 	"github.com/hero-engine/hero/internal/drift"
+	"github.com/hero-engine/hero/internal/drive"
 	"github.com/hero-engine/hero/internal/environment"
 	"github.com/hero-engine/hero/internal/errpattern"
 	"github.com/hero-engine/hero/internal/feed"
@@ -1234,6 +1235,64 @@ func (s *MCPServer) toolDrift(args map[string]interface{}) (string, error) {
 	}
 
 	return drift.RenderJSON(reports)
+}
+
+// toolGoal mirrors the `hero goal` CLI: emit the run condition, or judge a
+// /drive run turn (check) / preview it (dry_run). Same verdict shape as the
+// CLI so a harness can call either surface. It does NOT drive the loop.
+func (s *MCPServer) toolGoal(args map[string]interface{}) (string, error) {
+	initSlug, _ := args["initiative"].(string)
+	if initSlug == "" {
+		return "", fmt.Errorf("provide the initiative slug")
+	}
+	all, err := spec.Discover(s.heroDir)
+	if err != nil {
+		return "", fmt.Errorf("discovering specs: %w", err)
+	}
+	var init *spec.Spec
+	for _, sp := range all {
+		if sp.Slug == initSlug {
+			init = sp
+			break
+		}
+	}
+	if init == nil {
+		return "", fmt.Errorf("initiative %q not found", initSlug)
+	}
+	if init.Type != spec.TypeInitiative {
+		return "", fmt.Errorf("%q is a %s, not an initiative", init.Slug, init.Type)
+	}
+
+	check, _ := args["check"].(bool)
+	dryRun := 0
+	if f, ok := args["dry_run"].(float64); ok { // JSON numbers decode as float64
+		dryRun = int(f)
+	}
+
+	switch {
+	case check:
+		return goalJSON(drive.Check(init, all))
+	case dryRun > 0:
+		return goalJSON(drive.DryRun(init, all, dryRun))
+	default:
+		bySlug := make(map[string]*spec.Spec, len(all))
+		for _, sp := range all {
+			bySlug[sp.Slug] = sp
+		}
+		return goalJSON(map[string]any{
+			"initiative": init.Slug,
+			"objective":  strings.TrimSpace(init.GoalSection()),
+			"condition":  init.RunCondition(bySlug),
+		})
+	}
+}
+
+func goalJSON(v any) (string, error) {
+	b, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }
 
 func (s *MCPServer) toolSkillRun(args map[string]interface{}) (string, error) {
