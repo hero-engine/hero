@@ -2,7 +2,7 @@
 title: "`hero goal` — emit the run condition, `--check` the per-turn verdict, Stop-hook contract"
 slug: hero-goal-command
 type: feature
-status: planning
+status: completed
 priority: high
 horizon: now
 tags: [drive, goal, cli, mcp, stop-hook, harness, verify]
@@ -14,6 +14,8 @@ relations:
     kind: depends-on
   - target: needs-me-predicate
     kind: depends-on
+delivery_method: manual
+completed_at: 2026-06-27T23:44:48Z
 ---
 
 # `hero goal` — emit the run condition, `--check` the per-turn verdict, Stop-hook contract
@@ -146,3 +148,56 @@ over the same `--check` JSON (tracked as R2 on the initiative).
   cache, with a `--reverify` escalation) to keep per-turn latency low.
 - **Emit/derive coupling** — `--emit` must match the condition
   `initiative-goal-section` materializes; share one code path.
+
+## Changes
+
+- `internal/drive/check.go` — `Check()` (per-turn verdict from on-disk
+  child verify-status + `NeedsMe`), `DryRun()` (preview), `Children()` and
+  dependency-readiness helpers.
+- `internal/cli/goal.go` + `root.go` — `hero goal` command: emit / `--check`
+  / `--dry-run`, initiative guard.
+- `internal/serve/{mcp_tools.go,mcp_dispatch.go,mcp_tools_def.go}` —
+  `hero_goal` MCP tool with the same verdict shape; test-count bump.
+- `scripts/drive/stop-hook.sh` + `stop-hook-contract.md` — reference
+  Claude Code Stop hook and the harness-agnostic contract.
+- Tests: `internal/drive/check_test.go`, `internal/cli/goal_test.go`,
+  `internal/serve/mcp_test.go`.
+
+**v1 signal scope (settled with the user):** `--check` operates at
+spec-transition granularity; verdict is driven by mode + child verify-status
++ dependency-readiness. Richer `needs_me` signals (readiness score,
+design-fork, irreversible-action, verify-stuck counts) await their detectors
+/ the run-ledger in later specs and default to "unknown → safe" meanwhile.
+Irreversible-action safety lives at the per-turn layer (base safety rules +
+harness), not in the between-spec verdict — documented in the contract.
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | `hero goal <init>` prints the run condition | DONE | `goal.go` emit; `TestGoalEmit`; exercised live (printed objective + derived condition for the real initiative) |
+| 2 | `--check` all children pass → `done` | DONE | `drive.Check`; `TestCheckDoneWhenAllChildrenCompleted` |
+| 3 | `--check` ready next child → `continue` + Kickoff | DONE | `TestGoalCheckContinue`, `TestCheckContinueGuided`; live `--check` returned the real progress |
+| 4 | `NeedsMe` pause → `pause` with category/reason | DONE | `TestCheckPauseSupervised`, `TestCheckBlockedWhenDepsUnmet` |
+| 5 | Verdict derived from on-disk state only (cold-stable) | DONE | `Check`/`DryRun` are pure over discovered specs; live run read the two archived completed children correctly |
+| 6 | Does NOT run turns or judge completion from transcript | DONE | no such code; loop/eval is the harness's; asserted in `stop-hook-contract.md` |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | `internal/drive/check.go` verdict engine | DONE | Check/DryRun/Children + helpers |
+| 2 | `hero goal` CLI (emit/check/dry-run) + registration | DONE | `goal.go`, `root.go` |
+| 3 | `hero_goal` MCP tool (parity) | DONE | handler + dispatch + def; `TestMCP_ToolGoal_CheckParity` |
+| 4 | Stop-hook reference + contract | DONE | `scripts/drive/stop-hook.sh`, `stop-hook-contract.md` |
+| 5 | Tests across drive/cli/serve | DONE | 8 drive + 3 cli + 1 mcp, all passing |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end: built the binary and ran all three modes against the real workspace. `hero goal drive-autonomous-initiative-execution` emitted the objective + derived condition; `--check` returned `completed: [initiative-goal-section, needs-me-predicate]` / `remaining: [the other four]` with a supervised-mode pause on `hero-goal-command`; `--dry-run 3` previewed correctly; and `hero goal needs-me-predicate` (a feature) was rejected with the `/deliver` pointer.
+
+### Excellence Bar self-check
+
+- [x] yes — thin CLI/MCP over a pure, testable verdict engine; honest v1 signal scope agreed with the user (no fake detectors); harness-agnostic JSON contract; reference hook + doc; CLI and MCP return identical shapes. No scope creep into loop-driving or transcript-judging.

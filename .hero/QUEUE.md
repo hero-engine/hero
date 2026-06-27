@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-27T21:50:55Z · 88 ready specs_
+_Generated: 2026-06-27T23:45:15Z · 89 ready specs_
 
 ## flat-named-spec-discovery — "Flat-named spec files are invisible to discovery — verify can't resolve initiative children"
 _bug · delivering · horizon: now_
@@ -50,19 +50,19 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## hero-goal-command — "`hero goal` — emit the run condition, `--check` the per-turn verdict, Stop-hook contract"
+## drive-command-routing — "`/drive` command + natural-language routing + `/deliver`-on-initiative fallback"
 _feature · planning · horizon: now_
 
-Add a `hero goal` command ([internal/cli/](../../../../../internal/cli/)) and a
-matching MCP tool ([internal/serve/mcp_dispatch.go](../../../../../internal/serve/mcp_dispatch.go)).
-`hero goal <init>` (or `--emit`) prints the run condition from the
-initiative's `## Goal` ([initiative-goal-section](../initiative-goal-section/spec.md)).
-`hero goal <init> --check` returns JSON `{verdict: continue|pause|done, ...}`
-by ANDing `hero verify` over the children with `NeedsMe()`
-([needs-me-predicate](../needs-me-predicate/spec.md)). Write the Stop-hook
-contract doc + a reference hook script so Claude Code calls `--check` each
-turn. Keep `--check` I/O plain JSON so other harnesses (Codex) need only a
-thin adapter. No `/drive` command here — that's `drive-command-routing`.
+Add a `/drive` command + a `drive` skill (NOT a dedicated agent — an agent
+would duplicate the harness loop and we want the boundary deterministic in
+`needs_me`). The skill: resolve the initiative, ensure/author its `## Goal`
+([initiative-goal-section](../initiative-goal-section/spec.md)), confirm on
+first arm, emit the condition via `hero goal --emit`, hand it to the harness
+`/goal`, ensure the Stop hook calling `hero goal --check`
+([hero-goal-command](../hero-goal-command/spec.md)) is wired, and render
+pause questions / accept answers ([drive-pause-resume](../drive-pause-resume/spec.md)).
+Add the routing-table rows. Mirror the command across harness command dirs
+(`core/commands/`, `domains/engineering/commands/`) per existing convention.
 
 ---
 
@@ -488,6 +488,22 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/cev2-bash-output-supersede.md)_
+
+---
+
+## drive-pause-resume — "Pause-as-question + resume — a precise question to disk, resumable cold"
+_feature · planning · horizon: next_
+
+When `hero goal --check` returns `pause`
+([hero-goal-command](../hero-goal-command/spec.md)), write a structured
+question to the user's handoff file (`.hero/NEXT.md` solo, `.hero/next/<user>.md`
+team) and to a run-ledger that records where the run is. Enrich the existing
+`hero next` / checkpoint machinery
+([internal/cli/next.go](../../../../../internal/cli/next.go)) rather than
+inventing a new file. Resume = human answers, run is re-armed, `--check`
+reads ledger + answer and continues. All state on disk so a cold process
+resumes identically. Reuse the `next` projection so the question travels
+with commits like other handoff state.
 
 ---
 

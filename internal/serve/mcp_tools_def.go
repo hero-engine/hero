@@ -411,6 +411,19 @@ func (s *MCPServer) toolDefinitions() []ToolDefinition {
 			},
 		},
 		{
+			Name:        "hero_goal",
+			Description: "Bridge an initiative to the harness /goal loop for /drive. Default: emit the run condition (objective + machine stop-condition). With check: return a one-turn verdict (continue|pause|done) computed from on-disk child verify-status ANDed with the needs_me autonomy boundary. With dry_run N: preview the next N transitions check would take. Does NOT drive the loop or judge completion from a transcript — it is the authoritative judge the harness Stop hook consults.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]PropSchema{
+					"initiative": {Type: "string", Description: "Initiative slug to run/judge"},
+					"check":      {Type: "boolean", Description: "Return a one-turn verdict (continue|pause|done) as JSON"},
+					"dry_run":    {Type: "integer", Description: "Preview the next N transitions check would take"},
+				},
+				Required: []string{"initiative"},
+			},
+		},
+		{
 			Name:        "hero_drift",
 			Description: "Report drift between spec and code for one or more specs. Detects missing files, renamed files, unaddressed acceptance criteria, and boundary violations. All signals are heuristic and local — no LLM calls.",
 			InputSchema: InputSchema{

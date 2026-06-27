@@ -221,3 +221,5 @@
 {"ts":"2026-06-27T21:43:21.774633Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"initiative-goal-section","message":"status -\u003e completed"}
 {"ts":"2026-06-27T21:50:47.155893Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"needs-me-predicate","message":"\"`needs_me()` predicate — the autonomy boundary + `autonomy:` policy field\""}
 {"ts":"2026-06-27T21:50:47.156Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"needs-me-predicate","message":"status -\u003e completed"}
+{"ts":"2026-06-27T23:44:49.878389Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"hero-goal-command","message":"\"`hero goal` — emit the run condition, `--check` the per-turn verdict, Stop-hook contract\""}
+{"ts":"2026-06-27T23:44:49.878491Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"hero-goal-command","message":"status -\u003e completed"}
