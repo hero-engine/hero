@@ -217,3 +217,5 @@
 {"ts":"2026-06-27T00:29:07.158044Z","type":"peer.call.completed","agent":"hero","slug":"hero-idea-primitive-core","message":"peer call ok mode=advisory target=hero-code kind=findings call_id=18bcc88ccdad7378b3600011124c181a artifact=.hero/peer-calls/18bcc88ccdad7378b3600011124c181a.md"}
 {"ts":"2026-06-27T01:26:58.473558Z","type":"peer.call.invoked","agent":"hero","slug":"hero-idea-primitive-core","message":"peer call advisory mode=advisory target=hero-code call_id=18bccbc96adc6700f8a56408df73869d"}
 {"ts":"2026-06-27T01:28:55.685442Z","type":"peer.call.completed","agent":"hero","slug":"hero-idea-primitive-core","message":"peer call ok mode=advisory target=hero-code kind=findings call_id=18bccbc96adc6700f8a56408df73869d artifact=.hero/peer-calls/18bccbc96adc6700f8a56408df73869d.md"}
+{"ts":"2026-06-27T21:43:21.774563Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"initiative-goal-section","message":"\"Initiative `## Goal` section — the loop opener, parallel to a spec's Kickoff\""}
+{"ts":"2026-06-27T21:43:21.774633Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"initiative-goal-section","message":"status -\u003e completed"}

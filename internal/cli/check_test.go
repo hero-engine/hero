@@ -293,3 +293,54 @@ func TestCheck_SeveritySummaryAndKickoffCollapse(t *testing.T) {
 		t.Errorf("expected severity-aware summary mentioning advisory check(s), got:\n%s", output)
 	}
 }
+
+func TestMissingGoalInitiatives(t *testing.T) {
+	env := newTestEnv(t)
+	// Initiative WITH a Goal run-opener — should not be flagged.
+	env.addSpec("planning/initiatives/has-goal/spec.md", `---
+title: Has Goal
+type: initiative
+status: planning
+---
+# Has Goal
+
+## Goal
+
+Run the children autonomously.
+`)
+	// Initiative WITHOUT a Goal body — should be flagged (advisory).
+	env.addSpec("planning/initiatives/no-goal/spec.md", `---
+title: No Goal
+type: initiative
+status: planning
+---
+# No Goal
+
+## Problem
+
+Has no Goal run-opener.
+`)
+	// A leaf feature with no Goal — must NOT be flagged by this check.
+	env.addSpec("planning/features/leaf/spec.md", `---
+title: Leaf
+type: feature
+status: planning
+---
+# Leaf
+
+## Kickoff
+
+opener.
+`)
+
+	missing, err := missingGoalInitiatives(env.heroDir)
+	if err != nil {
+		t.Fatalf("missingGoalInitiatives: %v", err)
+	}
+	if len(missing) != 1 {
+		t.Fatalf("missingGoalInitiatives = %d specs, want 1", len(missing))
+	}
+	if missing[0].Slug != "no-goal" {
+		t.Errorf("flagged %q, want no-goal (only the goalless initiative)", missing[0].Slug)
+	}
+}

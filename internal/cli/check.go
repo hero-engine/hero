@@ -322,6 +322,23 @@ func runCheck(cmd *cobra.Command, args []string) error {
 		addRow("kickoff-coverage", "pass", "all work specs carry ## Kickoff sections")
 	}
 
+	// Initiative Goal-opener coverage — ADVISORY (does not bump issues). An
+	// open initiative without a `## Goal` run-opener still surfaces in
+	// `hero queue`, but can't be armed with `/drive` until it has one.
+	// Spec: initiative-goal-section.
+	if missing, err := missingGoalInitiatives(heroDir); err != nil {
+		addRow("initiative-goal-coverage", "warn", fmt.Sprintf("initiative goal audit failed: %v", err))
+	} else if len(missing) > 0 {
+		fmt.Printf("Initiatives without a `## Goal` run-opener (%d) — can't `/drive` until added:\n", len(missing))
+		for _, s := range missing {
+			fmt.Printf("  %-30s  %-10s  %s\n", s.Slug, s.Status, s.Title)
+		}
+		fmt.Println()
+		addRow("initiative-goal-coverage", "warn", fmt.Sprintf("%d initiative(s) missing ## Goal run-opener (advisory)", len(missing)))
+	} else {
+		addRow("initiative-goal-coverage", "pass", "all open initiatives carry a ## Goal run-opener")
+	}
+
 	// Wikilink relation intent — `[[slug]]` in a spec body reads like a
 	// relationship but creates no graph edge (wikilinks are searchable
 	// text only). Nudge toward the frontmatter that does form edges.
@@ -590,6 +607,31 @@ func missingKickoffSpecs(heroDir string) ([]*spec.Spec, error) {
 			continue
 		}
 		if strings.TrimSpace(s.Kickoff()) == "" {
+			out = append(out, s)
+		}
+	}
+	return out, nil
+}
+
+// missingGoalInitiatives returns initiatives in an open status whose
+// `## Goal` run-opener is empty — they surface in `hero queue` without a
+// paste-ready `/drive` opener. Advisory only: an initiative is still valid
+// without one. Spec: initiative-goal-section.
+func missingGoalInitiatives(heroDir string) ([]*spec.Spec, error) {
+	specs, err := spec.Discover(heroDir)
+	if err != nil {
+		return nil, err
+	}
+	var out []*spec.Spec
+	for _, s := range specs {
+		if s.Type != spec.TypeInitiative {
+			continue
+		}
+		switch s.Status {
+		case spec.StatusCompleted, spec.StatusSuperseded:
+			continue
+		}
+		if strings.TrimSpace(s.GoalSection()) == "" {
 			out = append(out, s)
 		}
 	}

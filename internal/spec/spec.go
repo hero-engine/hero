@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -1221,6 +1222,73 @@ func frontmatterType(content string) string {
 // is missing.
 func (s *Spec) Kickoff() string {
 	return s.Sections["kickoff"]
+}
+
+// GoalSection returns an initiative's `## Goal` section body — the
+// paste-ready *run opener* that `/drive` arms and `hero queue` surfaces in
+// place of a leaf spec's `## Kickoff`. Where a Kickoff opens one session on
+// one spec, a Goal opens the loop over a whole initiative. Empty for
+// non-initiative specs.
+func (s *Spec) GoalSection() string {
+	if s.Type != TypeInitiative {
+		return ""
+	}
+	return s.Sections["goal"]
+}
+
+// RunCondition returns an initiative's machine-checkable run condition — the
+// stop-condition `/drive` hands the harness `/goal`. It prefers an
+// author-written condition embedded in the `## Goal` section (a line
+// beginning "Run until") and otherwise derives the canonical default from
+// the initiative's children: every child verifies, or a needs_me pause is
+// raised. Empty for non-initiative specs.
+func (s *Spec) RunCondition(bySlug map[string]*Spec) string {
+	if s.Type != TypeInitiative {
+		return ""
+	}
+	if authored := authoredRunCondition(s.Sections["goal"]); authored != "" {
+		return authored
+	}
+	kids := s.ChildSlugs(bySlug)
+	if len(kids) == 0 {
+		return fmt.Sprintf("Run until `hero verify %s` reports PASS — OR a needs_me pause is raised.", s.Slug)
+	}
+	return fmt.Sprintf("Run until every child reports `hero verify` PASS — OR a needs_me pause is raised. Children: %s.", strings.Join(kids, ", "))
+}
+
+// ChildSlugs returns, sorted, the slugs of specs in the population that
+// declare this spec as their parent (a `parent` relation targeting s.Slug).
+// Sorting keeps the derived run condition deterministic across map order.
+func (s *Spec) ChildSlugs(bySlug map[string]*Spec) []string {
+	var kids []string
+	for slug, other := range bySlug {
+		if other == nil || slug == s.Slug {
+			continue
+		}
+		for _, r := range other.Relations {
+			if r.Kind == "parent" && r.Target == s.Slug {
+				kids = append(kids, slug)
+				break
+			}
+		}
+	}
+	sort.Strings(kids)
+	return kids
+}
+
+// authoredRunCondition extracts an explicit run condition from a `## Goal`
+// body: the first line beginning with "Run until" (after stripping a
+// leading blockquote "> "). Empty when the author wrote none.
+func authoredRunCondition(goalBody string) string {
+	scanner := bufio.NewScanner(strings.NewReader(goalBody))
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		line = strings.TrimSpace(strings.TrimPrefix(line, ">"))
+		if strings.HasPrefix(strings.ToLower(line), "run until") {
+			return line
+		}
+	}
+	return ""
 }
 
 // AcceptanceCriteria parses the "acceptance criteria" section into a list of
