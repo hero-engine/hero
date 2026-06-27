@@ -337,6 +337,20 @@ func renderSpecsKickoff(w io.Writer, specs []*spec.Spec) error {
 		fmt.Fprintf(w, "## %s — %s%s\n", s.Slug, s.Title, pin)
 		fmt.Fprintf(w, "_%s · %s · horizon: %s_\n\n", displayType(vocab, string(s.Type)), s.Status, s.EffectiveHorizon())
 
+		// Initiatives surface their `## Goal` run-opener (arm with /drive),
+		// not a per-session Kickoff. A Goal opens the loop over the whole
+		// initiative where a Kickoff opens one session on one spec.
+		if s.Type == spec.TypeInitiative {
+			body := strings.TrimSpace(s.GoalSection())
+			if body == "" {
+				fmt.Fprintf(w, "_(no `## Goal` run opener — hand-edit %s)_\n", s.Path)
+				continue
+			}
+			fmt.Fprintf(w, "_Run opener — arm with `/drive %s`_\n\n", s.Slug)
+			fmt.Fprintln(w, body)
+			continue
+		}
+
 		body := strings.TrimSpace(s.Kickoff())
 		if body == "" {
 			fmt.Fprintf(w, "_(no `## Kickoff` section — run `/design` or hand-edit %s)_\n", s.Path)

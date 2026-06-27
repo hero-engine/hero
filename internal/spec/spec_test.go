@@ -1427,3 +1427,110 @@ body
 		t.Errorf("CompletedAt = %v, want %v", s.CompletedAt, want)
 	}
 }
+
+func TestGoalSectionInitiativeOnly(t *testing.T) {
+	initiative := `---
+title: Drive
+slug: drive
+type: initiative
+status: planning
+---
+# Drive
+
+## Goal
+
+Run the whole initiative autonomously.
+
+## Problem
+
+Stops every spec.
+`
+	s, err := Parse(initiative, "/p/.hero/planning/initiatives/drive/spec.md", time.Now())
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if got := s.GoalSection(); !strings.Contains(got, "autonomously") {
+		t.Errorf("GoalSection() = %q, want it to contain the Goal body", got)
+	}
+	if strings.Contains(s.GoalSection(), "## Problem") {
+		t.Errorf("GoalSection() leaked into next section: %q", s.GoalSection())
+	}
+
+	feature := `---
+title: Leaf
+slug: leaf
+type: feature
+status: planning
+---
+# Leaf
+
+## Goal
+
+A feature goal.
+`
+	f, err := Parse(feature, "/p/.hero/planning/features/leaf/spec.md", time.Now())
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if got := f.GoalSection(); got != "" {
+		t.Errorf("GoalSection() on a feature = %q, want empty (initiative-only)", got)
+	}
+}
+
+func TestRunConditionDerivedFromChildren(t *testing.T) {
+	init := &Spec{Slug: "drive", Type: TypeInitiative, Sections: map[string]string{"goal": "No authored condition here."}}
+	childA := &Spec{Slug: "alpha", Type: TypeFeature, Relations: []Relation{{Kind: "parent", Target: "drive"}}}
+	childB := &Spec{Slug: "bravo", Type: TypeFeature, Relations: []Relation{{Kind: "parent", Target: "drive"}}}
+	unrelated := &Spec{Slug: "zulu", Type: TypeFeature, Relations: []Relation{{Kind: "parent", Target: "other"}}}
+	bySlug := map[string]*Spec{"drive": init, "alpha": childA, "bravo": childB, "zulu": unrelated}
+
+	got := init.RunCondition(bySlug)
+	for _, want := range []string{"hero verify", "needs_me", "alpha, bravo"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("RunCondition() = %q, want substring %q", got, want)
+		}
+	}
+	if strings.Contains(got, "zulu") {
+		t.Errorf("RunCondition() included unrelated spec: %q", got)
+	}
+}
+
+func TestRunConditionPrefersAuthored(t *testing.T) {
+	init := &Spec{
+		Slug: "drive", Type: TypeInitiative,
+		Sections: map[string]string{"goal": "Objective prose.\n\n> Run until all gold tests are green.\n"},
+	}
+	child := &Spec{Slug: "alpha", Type: TypeFeature, Relations: []Relation{{Kind: "parent", Target: "drive"}}}
+	bySlug := map[string]*Spec{"drive": init, "alpha": child}
+
+	got := init.RunCondition(bySlug)
+	if got != "Run until all gold tests are green." {
+		t.Errorf("RunCondition() = %q, want the authored condition (blockquote stripped)", got)
+	}
+}
+
+func TestRunConditionNonInitiativeEmpty(t *testing.T) {
+	f := &Spec{Slug: "leaf", Type: TypeFeature, Sections: map[string]string{"goal": "x"}}
+	if got := f.RunCondition(map[string]*Spec{"leaf": f}); got != "" {
+		t.Errorf("RunCondition() on a feature = %q, want empty", got)
+	}
+}
+
+func TestChildSlugsSortedAndScoped(t *testing.T) {
+	init := &Spec{Slug: "drive", Type: TypeInitiative}
+	c1 := &Spec{Slug: "charlie", Relations: []Relation{{Kind: "parent", Target: "drive"}}}
+	c2 := &Spec{Slug: "alpha", Relations: []Relation{{Kind: "parent", Target: "drive"}}}
+	c3 := &Spec{Slug: "bravo", Relations: []Relation{{Kind: "depends-on", Target: "drive"}}} // not a child
+	bySlug := map[string]*Spec{"drive": init, "charlie": c1, "alpha": c2, "bravo": c3}
+
+	got := init.ChildSlugs(bySlug)
+	want := []string{"alpha", "charlie"}
+	if len(got) != len(want) {
+		t.Fatalf("ChildSlugs() = %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("ChildSlugs() = %v, want %v (sorted, parent-only)", got, want)
+		}
+	}
+}

@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-26T20:41:17Z
+updated: 2026-06-27T20:41:23Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> you got some handoff stuff for some hero-cloud work to pick up here?
+> new thing to explore - i see a ton about loops and using loops - i can do some research and paste if needed, but you can probably find the top repos and articles on loop programming with AI - and i get it - but havent tried to set it up - feels like something hero would be very good at facilitating - research and figure out if and how that fits in? seems like could have hero drive a loop and get a…
 
 ## Suggested next prompt
 

@@ -6,12 +6,88 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-24T18:01:28Z · 71 ready specs_
+_Generated: 2026-06-27T21:44:03Z · 88 ready specs_
+
+## flat-named-spec-discovery — "Flat-named spec files are invisible to discovery — verify can't resolve initiative children"
+_bug · delivering · horizon: now_
+
+Fix: flat-named spec files (e.g. initiative children stored as
+`<slug>.md` siblings of an initiative `spec.md`) are invisible to
+`spec.Discover`, so `hero spec verify <slug>` can't resolve them and
+`ResolveOrHint` misfires with a "hasn't been designed yet" hint. Two-part fix:
+(1) `spec.Discover` loads flat `.md` files that explicitly declare a work-spec
+`type:`; (2) `moveToSpecs` archives a flat-file spec to `specs/<slug>/spec.md`
+without dragging shared initiative-directory siblings. See root cause and AC in
+this spec. Verify with `go test ./internal/spec/... ./internal/cli/...`.
+
+---
+
+## team-connect — "Team Connect — CLI Registration with Team Server"
+_feature · delivering · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/team-connect/spec.md)_
+
+---
+
+## team-oauth — "Team OAuth — GitHub/Google SSO for Team Server Authentication"
+_feature · delivering · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/team-oauth/spec.md)_
+
+---
 
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
+
+---
+
+## hero-idea-primitive-core — "Intake primitive — Go engine recognition, committed-work predicate, CLI & MCP"
+_feature · in-review · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-idea-primitive-core/spec.md)_
+
+---
+
+## needs-me-predicate — "`needs_me()` predicate — the autonomy boundary + `autonomy:` policy field"
+_feature · planning · horizon: now_
+
+Build `needs_me(spec, ctx) -> Decision` as a shared, deterministic Go
+predicate — a sibling, on a different axis, to the existing
+`is_committed_work()` predicate from the intake primitive (see
+[internal/handoff](../../../../../internal/handoff) and
+[hero-idea-primitive-core](../../../features/hero-idea-primitive-core/spec.md)). It
+returns `proceed` or `pause{reason, category}`, and is **conservative:
+unknown → pause**. Add an `autonomy: supervised | guided | autonomous`
+frontmatter field (default `supervised` = today's behavior) that tunes the
+thresholds. Encode the pause taxonomy and the hard-pause guardrails below.
+No loop logic, no `/goal` wiring — those are in `hero-goal-command`. This
+predicate is pure and unit-testable in isolation.
+
+---
+
+## drive-autonomous-initiative-execution — "Drive — Autonomous Initiative Execution with a Human-Boundary Predicate"
+_initiative · planning · horizon: now_
+
+Building "Drive": autonomous execution of a whole initiative's child
+specs. The loop driver is the **harness's `/goal`** (Claude Code/Codex) —
+Hero does NOT build a loop engine. Hero supplies (a) the objective via a
+new initiative `## Goal` section and (b) an authoritative per-turn judge,
+`hero goal <init> --check`, wired through a Claude Code **Stop hook**. The
+judge ANDs `hero verify` over the children with a new conservative
+`needs_me()` predicate that decides proceed-vs-pause-for-human. Pauses
+write a *question* to NEXT.md and resume from disk. Start with child
+`initiative-goal-section`, then `needs-me-predicate`. Read this initiative
+spec and the six children for the full picture and the settled naming
+(`/drive`, not `/autopilot`; `/deliver` is NOT overloaded).
+
+---
+
+## peer-call-multi-cli — "Peer Call Multi-CLI — Pluggable Subagent Backends"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/peer-call-multi-cli/spec.md)_
 
 ---
 
@@ -84,6 +160,21 @@ Build a Hero-native system that actively manages session context — not just *i
 **Status:** planning — design captured; no code changes yet. Implementation will land as a v1 (additive only, ships on Claude Code today) and v2 (subtractive primitives, when the harness or SDK exposes them).
 
 **Pick up at:** decide curator implementation approach (rule-based vs Haiku-call vs hybrid), then scaffold the Ledger as a session-scoped record in `.hero/sessions/<id>/ledger.jsonl`.
+
+---
+
+## portable-routing-rules — "Portable Routing Rules — One `routing.md`, Every Harness Gets It Natively"
+_feature · planning · horizon: now_
+
+Portable routing rules: extract the natural-language → slash-command table out of `internal/install/agents_md.go` into one `routing.md`, then render per-target include directives so every harness loads it natively.
+
+**Status:** planning — spec just landed, no code yet.
+
+**Pick up at:** map the per-target rendering matrix. Start at `internal/install/agents_md.go:224` (`generateAgentsMdBody`) to see the content that's moving, then walk each `target_*.go` to confirm the native include idiom (Cursor `.mdc` frontmatter, Aider `read:`, Cline `.clinerules/`, opencode `instructions:`). Bucket A = native include; Bucket B = inline at install time.
+
+→ `.hero/planning/portable-routing-rules.md`
+
+**Files:** `internal/install/agents_md.go:224-313`, `internal/install/target_claude.go`, `internal/install/target_opencode.go`, `internal/install/target_cursor.go`, `internal/install/target_copilot.go`, `internal/install/target_codex.go`
 
 ---
 
@@ -370,6 +461,55 @@ parent-stray regression test last.
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-safety-conventions/spec.md)_
+
+---
+
+## cev2-widen-load-bearing-markers — "Widen looksLoadBearing() marker set"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/cev2-widen-load-bearing-markers.md)_
+
+---
+
+## cev2-tool-input-compression — "Tool input compression"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/cev2-tool-input-compression.md)_
+
+---
+
+## cev2-context-engine-test-harness — "Context engine test harness"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/cev2-context-engine-test-harness.md)_
+
+---
+
+## cev2-bash-output-supersede — "Bash output supersede"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/cev2-bash-output-supersede.md)_
+
+---
+
+## mock-tracker-server — "Mock Tracker Server — Offline Multi-Tracker HTTP Fake with Drift Injection"
+_feature · planning · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/mock-tracker-server/spec.md)_
+
+---
+
+## gitlab-tracker-support — "GitLab Tracker Support — Issues/Epics/Milestones/Iterations Round-Trip"
+_feature · planning · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/gitlab-tracker-support/spec.md)_
+
+---
+
+## tracker-fixtures — "Tracker Fixtures — GitLab Parity and Offline Mock Server for Round-Trip Validation"
+_initiative · planning · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/tracker-fixtures/spec.md)_
 
 ---
 
@@ -721,6 +861,20 @@ then the dispatch intercept and registry wiring. Three files, one new
 
 **Files:** `Engine/AgentLoop.swift:1258` (nativeToolSpecs), `Engine/AgentLoop.swift:518` (dispatch chain), `State/AppState.swift:955` (registry wiring)
 **Skip:** ToolExecutor dispatch (registries are @MainActor, ToolExecutor is an actor — use AgentLoop intercept instead)
+
+---
+
+## handoff-to-hero-code — Hero QA — Handoff to hero-code for implementation kickoff
+_reference · handoff · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-qa/handoff-to-hero-code.md)_
+
+---
+
+## handoff-to-hero-code — Hero PM — Handoff to hero-code for implementation kickoff
+_reference · handoff · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-pm/handoff-to-hero-code.md)_
 
 ---
 
