@@ -237,6 +237,12 @@ type Spec struct {
 	// child. Read by internal/snapshot/release.go's resolver.
 	ReleaseTarget string
 
+	// Autonomy is the per-initiative `/drive` policy knob:
+	// "supervised" (default — pause every spec boundary, today's
+	// behavior), "guided", or "autonomous". Read by the needs_me()
+	// predicate (internal/drive). Empty defaults to supervised.
+	Autonomy string
+
 	// SynthesizedFrom lists the spec slugs an `explainer` entry was
 	// synthesized from (provenance). Empty on non-explainer specs.
 	SynthesizedFrom []string
@@ -551,6 +557,8 @@ func (s *Spec) parseFrontmatter(content string) string {
 			s.Domain = val
 		case "release_target":
 			s.ReleaseTarget = val
+		case "autonomy":
+			s.Autonomy = val
 		case "triggers":
 			s.Triggers = parseList(val)
 		case "synthesized_from":
