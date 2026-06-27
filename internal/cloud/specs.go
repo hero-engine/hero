@@ -30,8 +30,9 @@ type cloudSpec struct {
 }
 
 type SyncResult struct {
-	Synced int `json:"synced"`
-	Total  int `json:"total"`
+	Synced    int `json:"synced"`
+	Total     int `json:"total"`
+	Knowledge int `json:"knowledge"`
 }
 
 // SyncSpecs discovers all specs in heroDir and pushes them to the cloud
@@ -70,7 +71,14 @@ func SyncSpecs(ctx context.Context, client *http.Client, syncURL, heroDir string
 		payload = append(payload, cs)
 	}
 
-	body, err := json.Marshal(map[string]interface{}{"specs": payload})
+	knowledge := discoverKnowledge(heroDir)
+
+	reqPayload := map[string]interface{}{"specs": payload}
+	if len(knowledge) > 0 {
+		reqPayload["knowledge"] = knowledge
+	}
+
+	body, err := json.Marshal(reqPayload)
 	if err != nil {
 		return nil, fmt.Errorf("marshaling payload: %w", err)
 	}

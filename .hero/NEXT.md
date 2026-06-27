@@ -5,9 +5,9 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-06-25T00:20:13Z
+updated: 2026-06-27T05:19:51Z
 repo: hero-engine/hero
-branch: main
+branch: feat/intake-primitive-engine
 ---
 
 ## Just finished
@@ -20,7 +20,7 @@ No open features in this repo.
 
 ## Roadmap shape
 
-7 specs have size drift — run /roadmap-review to triage
+8 specs have size drift — run /roadmap-review to triage
 
 ## Blocked on
 

@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-24T23:59:33Z
+updated: 2026-06-26T20:41:17Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> got a peer request from hero-cloud - hero handoff accept cloud-cli-verify
+> you got some handoff stuff for some hero-cloud work to pick up here?
 
 ## Suggested next prompt
 

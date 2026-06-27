@@ -101,9 +101,10 @@ type Server struct {
 	scheduledTasks *ScheduledTasks
 	authToken      string
 
-	// Cloud auto-sync
-	cloudDaemon *cloud.Daemon
-	cloudBusSub uint64
+	// Cloud auto-sync and presence
+	cloudDaemon   *cloud.Daemon
+	cloudPresence *cloud.PresenceReporter
+	cloudBusSub   uint64
 }
 
 // ServerConfig configures the daemon.
@@ -221,14 +222,16 @@ func (s *Server) startCloudSync() {
 		return
 	}
 
-	daemon := cloud.NewDaemon(cloud.Config{
+	cloudCfg := cloud.Config{
 		CloudURL:    cloudURL,
 		Token:       tc.Token,
 		OrgID:       cfg.Cloud.OrgID,
 		RepoID:      cfg.Cloud.RepoID,
 		ProjectRoot: s.projectRoot,
 		HeroDir:     s.heroDir,
-	})
+	}
+
+	daemon := cloud.NewDaemon(cloudCfg)
 	daemon.Start()
 
 	id, events := s.bus.Subscribe(64)
@@ -243,7 +246,14 @@ func (s *Server) startCloudSync() {
 
 	s.cloudDaemon = daemon
 	s.cloudBusSub = id
-	fmt.Fprintf(os.Stderr, "hero serve: cloud auto-sync enabled\n")
+
+	// Start presence reporter (shares the same bearer-auth client)
+	authClient := cloud.NewAuthenticatedClient(tc.Token)
+	reporter := cloud.NewPresenceReporter(cloudCfg, authClient)
+	reporter.Start("", "serve")
+	s.cloudPresence = reporter
+
+	fmt.Fprintf(os.Stderr, "hero serve: cloud auto-sync and presence enabled\n")
 }
 
 // Bus returns the event bus (for external publishing or testing).
@@ -638,7 +648,10 @@ func (s *Server) shutdown() error {
 	}
 	s.mu.RUnlock()
 
-	// Stop cloud auto-sync
+	// Stop cloud presence and auto-sync
+	if s.cloudPresence != nil {
+		s.cloudPresence.Stop()
+	}
 	if s.cloudDaemon != nil {
 		s.cloudDaemon.Stop()
 		s.bus.Unsubscribe(s.cloudBusSub)
