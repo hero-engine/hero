@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-27T21:44:03Z · 88 ready specs_
+_Generated: 2026-06-27T21:50:55Z · 88 ready specs_
 
 ## flat-named-spec-discovery — "Flat-named spec files are invisible to discovery — verify can't resolve initiative children"
 _bug · delivering · horizon: now_
@@ -50,20 +50,19 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## needs-me-predicate — "`needs_me()` predicate — the autonomy boundary + `autonomy:` policy field"
+## hero-goal-command — "`hero goal` — emit the run condition, `--check` the per-turn verdict, Stop-hook contract"
 _feature · planning · horizon: now_
 
-Build `needs_me(spec, ctx) -> Decision` as a shared, deterministic Go
-predicate — a sibling, on a different axis, to the existing
-`is_committed_work()` predicate from the intake primitive (see
-[internal/handoff](../../../../../internal/handoff) and
-[hero-idea-primitive-core](../../../features/hero-idea-primitive-core/spec.md)). It
-returns `proceed` or `pause{reason, category}`, and is **conservative:
-unknown → pause**. Add an `autonomy: supervised | guided | autonomous`
-frontmatter field (default `supervised` = today's behavior) that tunes the
-thresholds. Encode the pause taxonomy and the hard-pause guardrails below.
-No loop logic, no `/goal` wiring — those are in `hero-goal-command`. This
-predicate is pure and unit-testable in isolation.
+Add a `hero goal` command ([internal/cli/](../../../../../internal/cli/)) and a
+matching MCP tool ([internal/serve/mcp_dispatch.go](../../../../../internal/serve/mcp_dispatch.go)).
+`hero goal <init>` (or `--emit`) prints the run condition from the
+initiative's `## Goal` ([initiative-goal-section](../initiative-goal-section/spec.md)).
+`hero goal <init> --check` returns JSON `{verdict: continue|pause|done, ...}`
+by ANDing `hero verify` over the children with `NeedsMe()`
+([needs-me-predicate](../needs-me-predicate/spec.md)). Write the Stop-hook
+contract doc + a reference hook script so Claude Code calls `--check` each
+turn. Keep `--check` I/O plain JSON so other harnesses (Codex) need only a
+thin adapter. No `/drive` command here — that's `drive-command-routing`.
 
 ---
 

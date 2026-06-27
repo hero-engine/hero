@@ -2,7 +2,7 @@
 title: "`needs_me()` predicate — the autonomy boundary + `autonomy:` policy field"
 slug: needs-me-predicate
 type: feature
-status: planning
+status: completed
 priority: high
 horizon: now
 tags: [drive, needs-me, predicate, autonomy, safety, boundary]
@@ -12,6 +12,8 @@ relations:
     kind: parent
   - target: hero-idea-primitive-core
     kind: relates-to
+delivery_method: manual
+completed_at: 2026-06-27T21:50:46Z
 ---
 
 # `needs_me()` predicate — the autonomy boundary + `autonomy:` policy field
@@ -150,3 +152,42 @@ trivially testable and reproducible.
   markers); unknown action shape = irreversible = pause.
 - **Predicate drift from `is_committed_work()`** — keep them as distinct
   axes (classification vs. autonomy); do not fold one into the other.
+
+## Changes
+
+- `internal/drive/needsme.go` — new package: `AutonomyMode` + `ParseMode`,
+  `PauseCategory` (+ `Promotable`), `Decision`, `RunContext`, and the pure
+  `NeedsMe()` predicate with hard-pause guardrails, the taxonomy, and an
+  Autonomous-only promotion hook.
+- `internal/spec/spec.go` — add the `Autonomy` field + `autonomy:`
+  frontmatter parse case.
+- Tests: `internal/drive/needsme_test.go`, `internal/spec/spec_test.go`.
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Irreversible action → `pause{Irreversible}` in every mode | DONE | hard guardrail first in `NeedsMe`; `TestNeedsMeIrreversibleAlwaysPausesEveryMode` (all 3 modes, even with promotion on) |
+| 2 | `supervised` pauses at every boundary (parity) | DONE | `TestNeedsMeSupervisedAlwaysPauses` (base ctx that would proceed in guided) |
+| 3 | Next spec below threshold → `pause{Underspecified}` | DONE | `TestNeedsMeTaxonomy/underspecified_pauses`; `score_unknown` (-1) does not pause |
+| 4 | Verify failed N times → `pause{VerifyStuck}` (not infinite retry) | DONE | `TestNeedsMeTaxonomy/verify_fail_at_threshold`; under-threshold = rework proceed |
+| 5 | Unclassifiable transition → pause (conservative) | DONE | `TestNeedsMeUnknownActionPauses` (`ActionClassified=false`) |
+| 6 | verify-PASS → ready scored next child → proceed (guided/autonomous) | DONE | `TestNeedsMeTaxonomy/{guided,autonomous}_proceeds_on_clean` |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | New `internal/drive` predicate package | DONE | `needsme.go`, ~190 LOC, pure |
+| 2 | `Autonomy` field + parse on the spec model | DONE | `internal/spec/spec.go`; `TestParseAutonomyField` |
+| 3 | Table-driven + property + hard-cap + promotion tests | DONE | `needsme_test.go`, 8 test funcs all passing |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end: this spec ships a library predicate with no CLI surface yet (the `hero goal --check` wiring is spec #3). Exercised via its test suite — `go test ./internal/drive/` runs all 8 functions green, covering each AC path, the hard-cap, and the Autonomous promotion seam. No user-facing command is in scope here by design (Risk: "Scope creep" guardrail).
+
+### Excellence Bar self-check
+
+- [x] yes — pure, deterministic predicate; conservative-by-default; hard guardrails enforced first and never relaxed by mode/promotion; the Promoted seam is wired but inert until spec #5 supplies it. Comprehensive table tests.

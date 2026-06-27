@@ -1534,3 +1534,26 @@ func TestChildSlugsSortedAndScoped(t *testing.T) {
 		}
 	}
 }
+
+func TestParseAutonomyField(t *testing.T) {
+	content := `---
+title: Drive
+slug: drive
+type: initiative
+status: planning
+autonomy: autonomous
+---
+# Drive
+
+## Goal
+
+Run it.
+`
+	s, err := Parse(content, "/p/.hero/planning/initiatives/drive/spec.md", time.Now())
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if s.Autonomy != "autonomous" {
+		t.Errorf("Autonomy = %q, want autonomous", s.Autonomy)
+	}
+}
