@@ -61,18 +61,22 @@ type Daemon struct {
 	GraphFunc func(ctx context.Context, client *http.Client, serverURL, orgID, heroDir, projectRoot string) (*GraphResult, error)
 }
 
+// NewAuthenticatedClient returns an HTTP client that injects a Bearer token
+// on every request. Shared by both the sync daemon and the presence reporter.
+func NewAuthenticatedClient(token string) *http.Client {
+	return &http.Client{
+		Timeout:   30 * time.Second,
+		Transport: &bearerTransport{token: token, base: http.DefaultTransport},
+	}
+}
+
 // NewDaemon creates a sync daemon with the given config.
 func NewDaemon(cfg Config) *Daemon {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	transport := &bearerTransport{
-		token: cfg.Token,
-		base:  http.DefaultTransport,
-	}
-
 	return &Daemon{
 		cfg:    cfg,
-		client: &http.Client{Timeout: 30 * time.Second, Transport: transport},
+		client: NewAuthenticatedClient(cfg.Token),
 		ctx:    ctx,
 		cancel: cancel,
 		trigger: make(chan struct{}, 64),
