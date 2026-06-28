@@ -5,9 +5,9 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-06-28T07:20:03Z
+updated: 2026-06-28T18:04:09Z
 repo: hero-engine/hero
-branch: feat/drive-autonomous-initiative
+branch: main
 ---
 
 ## Just finished
