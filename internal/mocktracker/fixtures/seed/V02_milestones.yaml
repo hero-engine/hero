@@ -1,0 +1,4 @@
+seed:
+  milestone:
+    - key: global_id
+      data: { global_id: MILE-1, title: "Checkout GA", due: "2026-09-30" }

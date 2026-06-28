@@ -1,0 +1,37 @@
+# Six issues spread across the two epics, one milestone, one iteration.
+# epic_id / milestone_id / iteration_id are scalar references to the
+# corresponding global_id (no FK directives). weight is the GitLab Premium
+# size signal; severity rides bugs.
+dependsOn: [V01_epics, V02_milestones, V03_iterations, V04_users]
+seed:
+  issue:
+    - key: global_id
+      data: { global_id: ACME-101, type: story, title: "Add Apple Pay sheet",
+              body: "Show the Apple Pay sheet at checkout.",
+              epic_id: EPIC-1, milestone_id: MILE-1, iteration_id: ITER-3,
+              status: open, assignee: alice, weight: 3, severity: "" }
+    - key: global_id
+      data: { global_id: ACME-102, type: story, title: "Add Google Pay sheet",
+              body: "Show the Google Pay sheet at checkout.",
+              epic_id: EPIC-1, milestone_id: MILE-1, iteration_id: ITER-3,
+              status: in_review, assignee: bob, weight: 5, severity: "" }
+    - key: global_id
+      data: { global_id: ACME-103, type: bug, title: "Apple Pay sheet dismisses on rotation",
+              body: "Rotating the device dismisses the sheet.",
+              epic_id: EPIC-1, milestone_id: MILE-1, iteration_id: ITER-3,
+              status: open, assignee: alice, weight: 2, severity: high }
+    - key: global_id
+      data: { global_id: ACME-104, type: story, title: "Refund initiation flow",
+              body: "Let support agents initiate refunds.",
+              epic_id: EPIC-2, milestone_id: MILE-1, iteration_id: "",
+              status: open, assignee: "", weight: 8, severity: "" }
+    - key: global_id
+      data: { global_id: ACME-105, type: bug, title: "Refund double-submits on retry",
+              body: "Retrying a refund submits twice.",
+              epic_id: EPIC-2, milestone_id: MILE-1, iteration_id: "",
+              status: open, assignee: bob, weight: 3, severity: critical }
+    - key: global_id
+      data: { global_id: ACME-106, type: story, title: "Dispute evidence upload",
+              body: "Attach evidence to a dispute.",
+              epic_id: EPIC-2, milestone_id: "", iteration_id: "",
+              status: closed, assignee: alice, weight: 5, severity: "" }
