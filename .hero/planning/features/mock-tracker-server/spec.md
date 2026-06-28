@@ -361,18 +361,31 @@ endpoints were called in the right order.
 
 | AC | File | Status |
 |----|------|--------|
-| AC-1 | `cmd/mock-tracker-server/main.go`, `internal/mocktracker/server.go` | — |
-| AC-2 | `internal/mocktracker/github.go`, `internal/mocktracker/github_test.go` | — |
-| AC-3 | `internal/mocktracker/jira.go`, `internal/mocktracker/jira_test.go` | — |
-| AC-4 | `internal/mocktracker/linear.go`, `internal/mocktracker/linear_test.go` | — |
-| AC-5 | `internal/mocktracker/gitlab.go`, `internal/mocktracker/gitlab_test.go` | — |
-| AC-6 | `internal/mocktracker/pagination.go`, `internal/mocktracker/pagination_test.go` | — |
-| AC-7 | `internal/mocktracker/ratelimit.go`, `internal/mocktracker/admin.go` | — |
-| AC-8 | `internal/mocktracker/admin.go` | — |
-| AC-9 | `internal/mocktracker/admin.go`, `internal/mocktracker/store.go` | — |
-| AC-10 | `internal/mocktracker/seed.go` (sprout.Apply), `internal/mocktracker/seed_test.go` | — |
-| AC-11 | (cross-cutting) | — |
-| AC-12 | (cross-cutting) | — |
+| AC-1 | `cmd/mock-tracker-server/main.go`, `internal/mocktracker/server.go` | ✅ binary builds; `--port 0` prints `listening on :PORT` on stdout. Note: AC-1's literal `--seed fixtures/default-seed.json` predates the Sprout reconciliation — `--seed` now takes a **directory** of Sprout YAML; no flag → embedded fixture. Verified live (curl github+gitlab). |
+| AC-2 | `internal/mocktracker/github.go`, `internal/mocktracker/server_test.go` | ✅ real `internal/tracker` github adapter completes ListIssues + GetFields + UpdateFields against the seed. `TestRoundTrip_GitHub`. |
+| AC-3 | `internal/mocktracker/jira.go`, `internal/mocktracker/server_test.go` | ✅ real jira adapter round-trips via `/rest/api/3/search/jql` + `/issue/:key` (best-effort JQL: project/status/assignee; ordering normalized). `TestRoundTrip_Jira`. |
+| AC-4 | `internal/mocktracker/linear.go`, `internal/mocktracker/server_test.go` | ✅ real linear adapter round-trips; GraphQL handler dispatches issueCreate/issueUpdate/commentCreate/team-issues/issue-by-id. `TestRoundTrip_Linear`. |
+| AC-5 | `internal/mocktracker/gitlab.go`, `internal/mocktracker/server_test.go` | ✅ real gitlab adapter (sibling spec) round-trips incl. epic linkage + status close. `TestRoundTrip_GitLab`. |
+| AC-6 | `internal/mocktracker/pagination.go`, `internal/mocktracker/server_test.go` | ✅ Link-header pagination to exhaustion (per_page=2 over 6 → 3 pages, no dupes/misses). `TestPagination_GitHub`. The 150-issue figure is exercised by hero-code's full dataset; the mechanism is covered on the embedded fixture. |
+| AC-7 | `internal/mocktracker/ratelimit.go`, `internal/mocktracker/admin.go` | ✅ `/__admin/inject-429` → single 429 + Retry-After, adapter's `doWithRetry` retries to success. `TestAdmin_Inject429`. |
+| AC-8 | `internal/mocktracker/admin.go` | ✅ `/__admin/mutate` rewrites a field out-of-band; next read shows drift. `TestAdmin_MutateDrift`. |
+| AC-9 | `internal/mocktracker/admin.go`, `internal/mocktracker/store.go` | ✅ `/__admin/rotate-ids` rotates IID (github IID-based: old 404s, new resolves; jira key-based: still found). `TestAdmin_RotateIDs`. |
+| AC-10 | `internal/mocktracker/seed.go` (sprout.Apply), `internal/mocktracker/seed_test.go` | ✅ clean apply, idempotent re-apply (checksum-skip), force re-apply, invalid-seed error. |
+| AC-11 | `internal/mocktracker/server_test.go` (`newTestServer` + `t.Cleanup`) | ✅ one server per test on `httptest` (`:0`), cleaned up via `t.Cleanup`; no port conflicts/process leaks. |
+| AC-12 | (cross-cutting) | ✅ `grep -r 'mocktracker\|mock-tracker-server' internal/cli internal/tracker internal/serve` → no hits; `go tool nm` on the hero binary → 0 mocktracker symbols. cmd/ placement keeps it out of the main binary. |
+
+### Cross-repo contract notes (flagged, not guessed)
+
+- **GitLab external-id format.** Adopted hero-code's `gitlab-import-shape`
+  contract `gitlab:<project>:<iid>` (the binding cross-repo key) over the
+  local gitlab spec's GitLab-native `<project_path>#<iid>` / `<group_path>&<id>`
+  notation, which is treated as display-only. See `gitlab-tracker-support`.
+- **Seed FK shape.** The embedded fixture uses **scalar `*_id` references**
+  because this schema keys on `global_id`, not the `id` column Sprout's
+  nested-map FK directive requires. hero-code's `acme-checkout-dataset`
+  sketches nested-map FKs with a `code` key — reconcile before wiring
+  `--seed` at the full dataset (add an `id` alias column, or author scalar
+  refs). Documented in `internal/mocktracker/fixtures/SEED-FORMAT.md`.
 
 ## Dependencies
 

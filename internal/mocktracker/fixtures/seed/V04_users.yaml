@@ -1,0 +1,6 @@
+seed:
+  app_user:
+    - key: username
+      data: { username: alice, email: "alice@acme.test", display: "Alice Adams" }
+    - key: username
+      data: { username: bob, email: "bob@acme.test", display: "Bob Brown" }

@@ -1,0 +1,6 @@
+# `start` / `end` are SQLite keywords; Sprout always-quotes identifiers,
+# and the store quotes them in its own queries too.
+seed:
+  iteration:
+    - key: global_id
+      data: { global_id: ITER-3, name: "Sprint 3", start: "2026-06-01", end: "2026-06-14" }

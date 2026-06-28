@@ -1,0 +1,9 @@
+# Tiny default Acme Checkout fixture for mock-tracker-server's own tests.
+# Tracker-neutral tables = the mock server's SQLite schema (schema.go).
+# 2 epics, 1 milestone, 1 iteration, 6 issues, labels, users.
+V01_epics.yaml
+V02_milestones.yaml
+V03_iterations.yaml
+V04_users.yaml
+V05_issues.yaml
+V06_labels.yaml
