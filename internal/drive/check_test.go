@@ -6,6 +6,11 @@ import (
 	"github.com/hero-engine/hero/internal/spec"
 )
 
+// Pin the scorer so stage classification in these tests is driven purely by
+// structure (AC presence), not the real scorer's verdict on tiny fixtures.
+func init() { scoreFn = func(*spec.Spec) int { return 100 } }
+
+// mkChild builds a *designed* child (has acceptance criteria → ready-to-deliver).
 func mkChild(slug, parent string, status spec.Status, deps ...string) *spec.Spec {
 	rels := []spec.Relation{{Kind: "parent", Target: parent}}
 	for _, d := range deps {
@@ -14,7 +19,23 @@ func mkChild(slug, parent string, status spec.Status, deps ...string) *spec.Spec
 	return &spec.Spec{
 		Slug: slug, Type: spec.TypeFeature, Status: status,
 		Relations: rels,
-		Sections:  map[string]string{"kickoff": "kickoff for " + slug},
+		Sections: map[string]string{
+			"kickoff":             "kickoff for " + slug,
+			"acceptance criteria": "- THE SYSTEM SHALL do " + slug,
+		},
+	}
+}
+
+// mkStub builds an *undesigned* child (no acceptance criteria → needs-design).
+func mkStub(slug, parent string, deps ...string) *spec.Spec {
+	rels := []spec.Relation{{Kind: "parent", Target: parent}}
+	for _, d := range deps {
+		rels = append(rels, spec.Relation{Kind: "depends-on", Target: d})
+	}
+	return &spec.Spec{
+		Slug: slug, Type: spec.TypeFeature, Status: spec.StatusPlanning,
+		Relations: rels,
+		Sections:  map[string]string{"goal": "do " + slug},
 	}
 }
 

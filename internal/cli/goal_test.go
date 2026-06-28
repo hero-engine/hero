@@ -21,6 +21,8 @@ horizon: now
 Run all the children to completion.
 `
 
+// goalChildA is a *designed* child (has acceptance criteria + design + test
+// plan) so Drive classifies it ready-to-deliver, not needs-design.
 const goalChildA = `---
 title: Child A
 type: feature
@@ -32,9 +34,26 @@ relations:
 ---
 # Child A
 
+## Goal
+
+Deliver child A's behavior.
+
 ## Kickoff
 
 deliver child a
+
+## Design
+
+Implement the handler in child-a.go and wire it into the router.
+
+## Acceptance Criteria
+
+- WHEN the user invokes child A, THE SYSTEM SHALL produce the A result.
+- IF the input is missing, THEN THE SYSTEM SHALL return a clear error.
+
+## Test Plan
+
+- Unit: the A handler over valid and missing input.
 `
 
 func TestGoalEmit(t *testing.T) {

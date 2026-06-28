@@ -26,10 +26,17 @@ verdict="$(printf '%s' "$verdict_json" | sed -n 's/.*"verdict": *"\([a-z]*\)".*/
 
 case "$verdict" in
   continue)
-    # Block the stop so the harness runs another turn; hand back the next
-    # child's kickoff as the reason/continuation prompt.
-    reason="$(printf '%s' "$verdict_json" | sed -n 's/.*"kickoff": *"\(.*\)".*/\1/p' | head -1)"
-    printf '{"decision":"block","reason":%s}\n' "$(printf '%s' "${reason:-continue the run}" | json_escape 2>/dev/null || printf '"continue the run"')"
+    # Block the stop so the harness runs another turn. The `action` says
+    # whether to /design the next child (it's an undesigned stub) or /deliver
+    # it (it's designed) — progressive design. Never deliver a design action.
+    action="$(printf '%s' "$verdict_json" | sed -n 's/.*"action": *"\([a-z]*\)".*/\1/p' | head -1)"
+    next="$(printf '%s' "$verdict_json" | sed -n 's/.*"next_spec": *"\([a-z0-9-]*\)".*/\1/p' | head -1)"
+    case "$action" in
+      design) reason="Run /design ${next} — it is not designed yet (progressive design)." ;;
+      *)      reason="$(printf '%s' "$verdict_json" | sed -n 's/.*"kickoff": *"\(.*\)".*/\1/p' | head -1)"
+              reason="${reason:-Run /deliver ${next}.}" ;;
+    esac
+    printf '{"decision":"block","reason":%s}\n' "$(printf '%s' "$reason" | json_escape 2>/dev/null || printf '"continue the run"')"
     ;;
   done)
     # Allow the stop; the run is complete.

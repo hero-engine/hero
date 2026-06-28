@@ -33,12 +33,21 @@ the boundary must stay deterministic.
 
 The harness runs the turn; the Stop hook calls `hero goal <init> --check`:
 
-- **continue** → deliver `next_spec` using its kickoff, then let the loop run.
+- **continue** → act on the verdict's **`action`** (progressive design):
+  - `action: deliver` → run `/deliver <next_spec>` using its kickoff.
+  - `action: design` → run `/design <next_spec>` first — the child isn't
+    designed yet (a stub, or declared-but-unscaffolded). Designing as you go is
+    normal; **do not** hand an undesigned child to delivery. After it's
+    designed, the next `--check` returns `deliver` for it.
+  Then let the loop run.
 - **pause** → stop; surface `pause.reason`. The pause/resume layer writes the
   full question to `NEXT.md`. Wait for the human; on their answer, re-arm and
-  the run resumes from the same point (state is on disk).
-- **done** → report completion; the initiative auto-completes when its last
-  child verifies.
+  the run resumes from the same point (state is on disk). A genuine design
+  **fork** surfaced while designing is a `DesignFork` pause — routine design is
+  not.
+- **done** → report completion; reached only when **every intended child**
+  (including ones the initiative declared but hadn't scaffolded) is designed
+  and verified. The initiative auto-completes when its last child verifies.
 
 ## Guardrails (never relax)
 
