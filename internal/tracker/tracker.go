@@ -194,6 +194,13 @@ func New(cfg *config.TrackerConfig) (Tracker, error) {
 		}
 		l.configuredSizeMapping = cfg.SizeMapping
 		return l, nil
+	case "gitlab":
+		gl, err := newGitLab(cfg.Project, token, cfg.BaseURL)
+		if err != nil {
+			return nil, err
+		}
+		gl.configuredSizeMapping = cfg.SizeMapping
+		return gl, nil
 	default:
 		return nil, fmt.Errorf("unknown tracker type: %q", cfg.Type)
 	}

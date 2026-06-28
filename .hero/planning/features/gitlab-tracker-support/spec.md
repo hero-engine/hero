@@ -206,16 +206,16 @@ follows `Link: rel="next"` until exhausted, capped at the existing
 
 | AC | File | Status |
 |----|------|--------|
-| AC-1 | `internal/tracker/gitlab.go`, `internal/tracker/tracker.go` | — |
-| AC-2 | `internal/tracker/gitlab.go`, `internal/cli/sync_import.go` | — |
-| AC-3 | `internal/tracker/gitlab_fields.go` | — |
-| AC-4 | `internal/tracker/gitlab_fields.go`, `internal/cli/pull.go` | — |
-| AC-5 | `internal/tracker/gitlab.go` (`UpdateStatus`) | — |
-| AC-6 | `internal/tracker/gitlab_fields.go` | — |
-| AC-7 | `internal/cli/sprint.go`, `internal/cli/sync_import.go` | — |
-| AC-8 | `internal/tracker/gitlab.go` | — |
-| AC-9 | `internal/tracker/gitlab_sprint.go`, `internal/tracker/sprint.go` | — |
-| AC-10 | `internal/tracker/gitlab_test.go`, `internal/tracker/gitlab_fields_test.go` | — |
+| AC-1 | `internal/tracker/gitlab.go`, `internal/tracker/tracker.go` | ✅ `newGitLab` rejects empty `base_url`; compile-time `var _ Tracker = (*gitLab)(nil)`; `New()` wires `case "gitlab"`. Test: `TestNewGitLab_*`. |
+| AC-2 | `internal/tracker/gitlab.go`, `internal/cli/sync_import.go` | ✅ `toIssue` maps issue_type→story/bug, embeds epic/milestone/iteration refs; `sync_import` writes `gitlab_*` frontmatter generically (prefix from `Name()`). Standalone epic→initiative/epic via `ListEpics`. Test: `TestGitLab_GetIssue`, `TestGitLab_IssueTypeMapping`. |
+| AC-3 | `internal/tracker/gitlab_fields.go` | ✅ `UpdateFields` PUTs title/description; labels GET-then-PUT merge. Test: `TestGitLab_UpdateFields_TitleDescription`, `..._LabelMergePreservation`. |
+| AC-4 | `internal/tracker/gitlab_fields.go`, `internal/cli/pull.go` | ✅ `GetFields` reads title/description/labels/weight (drives the existing diff/pull path; `pull.go` is tracker-agnostic). Test: `TestGitLab_GetFields`. |
+| AC-5 | `internal/tracker/gitlab.go` (`UpdateStatus`) | ✅ note + `state_event=close` on completed/superseded, `reopen` otherwise. Test: `TestGitLab_UpdateStatus_Completed`. |
+| AC-6 | `internal/tracker/gitlab_fields.go` | ✅ assignee surfaced via `toIssue` (`gitlab_assignee`); owner-history block is the tracker-agnostic `spec set-owner` path. Note: assignee write-back is not advertised in v1 (parity with github — labels/title/description only). |
+| AC-7 | `internal/cli/sprint.go`, `internal/cli/sync_import.go` | ✅ `"gitlab_"` added to both prefix lists; `detectTrackerPrefix` returns `"gitlab"`. |
+| AC-8 | `internal/tracker/gitlab.go`, `internal/tracker/gitlab_sprint.go` | ✅ `ListEpics` 403/404 → `(nil,false,nil)` (one notice, continue); iterations 403/404 → clear error. Test: `TestGitLab_ListEpics_PremiumDegradation`, `TestGitLabSprint_PremiumDegradation`. |
+| AC-9 | `internal/tracker/gitlab_sprint.go`, `internal/tracker/sprint.go` | ✅ `gitlabSprintLoader` over group Iterations; `NewSprintLoader` wires `case "gitlab"`. Test: `TestGitLabSprint_LoadIteration`. |
+| AC-10 | `internal/tracker/gitlab_test.go`, `internal/tracker/gitlab_fields_test.go` | ✅ happy path, 401/403, 404, 429-single-retry, label-merge, pagination-to-exhaustion + single-page fallback, premium degradation. All `httptest.Server`, no live network. |
 
 ## Dependencies
 

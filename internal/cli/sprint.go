@@ -410,7 +410,7 @@ func detectTrackerPrefix(content string) string {
 		if !inFrontmatter {
 			continue
 		}
-		for _, prefix := range []string{"jira_", "github_", "linear_"} {
+		for _, prefix := range []string{"jira_", "github_", "linear_", "gitlab_"} {
 			if strings.HasPrefix(trimmed, prefix) {
 				return strings.TrimSuffix(prefix, "_")
 			}

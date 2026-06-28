@@ -928,11 +928,11 @@ type TeamConfig struct {
 
 // TrackerConfig holds work tracker integration settings.
 type TrackerConfig struct {
-	Type          string `json:"type"`            // github, jira, linear, none
-	Project       string `json:"project"`         // project identifier (e.g. "owner/repo" for GitHub, project key for Jira, team key for Linear)
+	Type          string `json:"type"`            // github, jira, linear, gitlab, none
+	Project       string `json:"project"`         // project identifier (e.g. "owner/repo" for GitHub, project key for Jira, team key for Linear, "namespace/project" or numeric ID for GitLab)
 	Token         string `json:"token,omitempty"` // literal API token (set in hero.local.json or credentials store; never in hero.json)
 	TokenEnv      string `json:"token_env"`       // env var name holding the API token (e.g. "GITHUB_TOKEN")
-	BaseURL       string `json:"base_url"`        // API base URL (required for Jira, optional override for GitHub/Linear)
+	BaseURL       string `json:"base_url"`        // API base URL (required for Jira and GitLab, optional override for GitHub/Linear)
 	UserEmail     string `json:"user_email"`      // user email for services requiring basic auth (e.g. Jira Cloud, Confluence Cloud)
 	PostOnDesign  bool   `json:"post_on_design"`  // create issue when spec enters design
 	PostOnDeliver bool   `json:"post_on_deliver"`
