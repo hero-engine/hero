@@ -15,6 +15,7 @@ When the user describes what they want in natural language, route to the appropr
 | Bug, error, broken, fix, investigate, diagnose | `/diagnose` |
 | New feature, build, design, add, plan | `/design` |
 | Implement, deliver, ship, code, execute | `/deliver` |
+| Autopilot/run a whole initiative, "put X on autopilot", "drive the initiative", keep working autonomously | `/drive <initiative>` |
 | Review, PR, pull request, code review | `/review` |
 | Break down, decompose, epic, sequence | `/compose` |
 | Convention, pattern, standard, style | `/convention` |
