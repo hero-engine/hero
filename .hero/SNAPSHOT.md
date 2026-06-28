@@ -2,22 +2,22 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-28T06:15:29Z · projected from 363 source nodes_
+_Last refreshed: 2026-06-28T07:20:04Z · projected from 364 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 6h ago | flat-named-spec-discovery |
+| core | building | cmd/, internal/ | 7h ago | flat-named-spec-discovery |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | maturing | domains/engineering/ | 1m ago | — |
+| domains/engineering | maturing | domains/engineering/ | 1h ago | — |
 | domains/pm | concept | domains/pm/ | 13d ago | — |
 | domains/sales | maturing | domains/sales/ | 13d ago | — |
 | landing | building | web/landing/ | 13d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 6h ago | agent-outposts |
-| (unassigned) | — | — | — | 179 specs without surface |
+| serve | building | internal/serve/ | 7h ago | agent-outposts |
+| (unassigned) | — | — | — | 180 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
 
@@ -70,11 +70,11 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - **Blocked specs (13):** `cev2-system-prompt-curator` (waits on cev2-context-engine-test-harness); `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection).
 - **Aged open bugs (2):** `next-project-file-conflict-not-regenerated` (open 25d), `desktop-sidebar-mcp-not-running` (open 24d).
-- **Unassigned specs (179) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
+- **Unassigned specs (180) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 162/341 (47%)
-- Projection generation: 0ms · Source nodes: 363
+- Specs covered: 162/342 (47%)
+- Projection generation: 1ms · Source nodes: 364
 
