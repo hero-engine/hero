@@ -110,6 +110,7 @@ func init() {
 	rootCmd.AddCommand(watchCmd)
 	rootCmd.AddCommand(serveCmd)
 	rootCmd.AddCommand(importCmd)
+	rootCmd.AddCommand(exportCmd)
 	rootCmd.AddCommand(sprintCmd) // sprint umbrella: load, estimate, status, retro, report, velocity
 	rootCmd.AddCommand(mcpCmd)
 	rootCmd.AddCommand(upgradeCmd)

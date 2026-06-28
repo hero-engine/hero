@@ -35,11 +35,26 @@ _feature · delivering · horizon: now_
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/team-oauth/spec.md)_
 
 ---
+_Generated: 2026-06-25T00:02:19Z · 193 ready specs_
 
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/agent-outposts/spec.md)_
+
+---
+
+## cli-sync-resilience — "CLI Sync Resilience — Unreachable Fallback & Mid-Sync Token Refresh"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/cli-sync-resilience/spec.md)_
+
+---
+
+## peer-call-multi-cli — "Peer Call Multi-CLI — Pluggable Subagent Backends"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/peer-call-multi-cli/spec.md)_
 
 ---
 
@@ -64,6 +79,13 @@ Reproduce: cd into a clean repo with no `CLAUDE.md` or `AGENTS.md`, run `hero in
 
 ---
 
+## cold-start-trust-hardening — "Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use"
+_initiative · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/initiatives/cold-start-trust-hardening/spec.md)_
+
+---
+
 ## team-mode-cloud-coordination — "Team-Mode Cloud Coordination — Sync Mutable State via Hero Cloud, Keep Git for Source"
 _feature · planning · horizon: now_
 
@@ -74,17 +96,137 @@ Cold-start prompt:
 
 ---
 
-## cold-start-trust-hardening — "Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use"
+## hero-in-hero-code-parity — "Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"
 _initiative · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/cold-start-trust-hardening/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/initiatives/hero-in-hero-code-parity/spec.md)_
+
+---
+
+## context-engine-v2 — "Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"
+_initiative · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/initiatives/context-engine-v2/spec.md)_
+
+---
+
+## hihcp-fuzzy-path-resolution — "Add Workspace-Relative Path Fuzzy Resolution"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/hihcp-fuzzy-path-resolution/spec.md)_
+
+---
+
+## agent-safety-conventions — "Agent Safety Conventions — Harness-Agnostic Behavioral Guardrails"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/agent-safety-conventions/spec.md)_
+
+---
+
+## single-source-install — Single-Source Install — One Canonical Tree, Every Harness Reads It
+_initiative · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/initiatives/single-source-install/spec.md)_
+
+---
+
+## hero-surface-polish — Hero Surface Polish — Ongoing Quality Pass on the Web Companion
+_initiative · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/initiatives/hero-surface-polish/spec.md)_
+
+---
+
+## hero-surface-architecture — Hero Surface Architecture — One Surface, Every Layer, Every Role
+_initiative · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/initiatives/hero-surface-architecture/spec.md)_
+
+---
+
+## get-back-on-track — Get Back on Track — Mission-First V2 Recovery
+_initiative · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/initiatives/get-back-on-track/spec.md)_
+
+---
+
+## concurrent-session-branching — "Concurrent-Session Branching & Worktree Isolation"
+_initiative · planning · horizon: now_
+
+Make Hero safe to run in many concurrent sessions on one checkout: every
+claimed spec gets its own git worktree + branch, all resolving to one shared
+`.hero/`. Spec lives at
+`.hero/planning/initiatives/concurrent-session-branching/spec.md`.
+
+**Status:** planning — initiative spec landed, 7 child stubs sequenced, no code.
+
+**Pick up at:** `/design csb-phase0-git-primitives-async-retrofit` — add write
+ops to `internal/gitutil/gitutil.go` (currently READ-ONLY) and retrofit
+`internal/async/runner.go` to run each `runDeliver` job in an isolated
+worktree. That closes the live clobbering bug and proves the primitives.
+
+→ `.hero/planning/initiatives/concurrent-session-branching/spec.md`
+
+**Files:** `internal/gitutil/gitutil.go`, `internal/async/runner.go:142`, `internal/async/jobs.go:38`, `internal/workspace/locate.go:85`, `internal/cli/claim.go:72`
+**Skip:** reusing graph-conflict-detection for content conflicts (wrong layer — use `hero conflicts`); `/release` owning the integration target (net-new state, prefer a `hero target set` verb); auto-managing per-worktree build state in v1.
+
+---
+
+## handoff-one-call-simplification — Handoff Simplification — One Persist, One Load, Fewest Files
+_feature · planning · horizon: now_
+
+You're picking up the umbrella simplification of Hero's handoff subsystem. Read this spec, then
+the two Phase-1 children. The thesis: the whole subsystem is "persist at end of turn, load at
+start of turn, travel via git," and it accreted into ~18 moving parts and 9 files where ~2 files
+and one persist/one load call would do. The two things the maintainer actually feels — drift and
+"not in my commit" — are **Phase 1** and are pure re-wires of existing code.
+
+**Pick up at:** deliver [next-auto-emit-user-ask](next-auto-emit-user-ask) and
+[next-unconditional-commit-staging](next-unconditional-commit-staging) — both are diagnosed,
+delivery-ready, and independent. Auto-emit reuses `resolveSessionContext` /
+`firstUserAskFromTranscript` from `internal/cli/next_compact_handoff.go`; staging consolidates
+the two installers in `internal/hooks/install.go` + `internal/cli/next_hooks.go`. After Phase 1,
+revisit Phase 2 (drop SNAPSHOT/QUEUE/local files) with fresh per-file specs.
+
+→ `internal/cli/checkpoint.go`, `internal/cli/next_compact_handoff.go`, `internal/cli/next_hooks.go`, `internal/hooks/install.go`, `internal/projection/user_handoff.go`
+
+---
+
+## cli-test-isolation-stray-workspace-boundary — "Harden CLI test isolation against stray hero workspaces"
+_enhancement · planning · horizon: now_
+
+Stops the CLI test suite from discovering a stray `/tmp/.hero` by wiring an
+env-var boundary into the workspace upward-walk and setting it from the test
+harness.
+
+**Status:** planning — spec just landed, no code yet. Boundary machinery
+(`WithStopAt`) already exists; `LocateFromCWD` never passes it.
+
+**Pick up at:** add a `HERO_WORKSPACE_BOUNDARY` env read inside
+`LocateFromCWD` (locate.go:159) that forwards to `WithStopAt`, then have
+`newTestEnv`/`newTestEnvEmpty` set it via `t.Setenv` to the temp dir. Add the
+parent-stray regression test last.
+
+→ `.hero/planning/features/cli-test-isolation-stray-workspace-boundary/spec.md`
+
+**Files:** `internal/workspace/locate.go:85,145,159`, `internal/cli/root.go:226`, `internal/cli/helpers_test.go:26,87`, `internal/cli/scan_test.go:183`
+**Skip:** building new boundary infra — `WithStopAt` already exists. Changing prod discovery semantics — out of scope unless clearly safe.
+
+---
+
+## hero-search-tiered-response — hero search response tiering — max_results + pagination instead of compact boolean
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/hero-search-tiered-response/spec.md)_
 
 ---
 
 ## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/specs/retrieval-contradiction-detection/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/specs/retrieval-contradiction-detection/spec.md)_
 
 ---
 
@@ -189,63 +331,6 @@ primitive rather than building a parallel one.
 
 ---
 
-## hero-surface-polish — Hero Surface Polish — Ongoing Quality Pass on the Web Companion
-_initiative · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-surface-polish/spec.md)_
-
----
-
-## hero-surface-architecture — Hero Surface Architecture — One Surface, Every Layer, Every Role
-_initiative · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-surface-architecture/spec.md)_
-
----
-
-## hero-in-hero-code-parity — "Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"
-_initiative · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-in-hero-code-parity/spec.md)_
-
----
-
-## get-back-on-track — Get Back on Track — Mission-First V2 Recovery
-_initiative · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/get-back-on-track/spec.md)_
-
----
-
-## context-engine-v2 — "Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"
-_initiative · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/context-engine-v2/spec.md)_
-
----
-
-## concurrent-session-branching — "Concurrent-Session Branching & Worktree Isolation"
-_initiative · planning · horizon: now_
-
-Make Hero safe to run in many concurrent sessions on one checkout: every
-claimed spec gets its own git worktree + branch, all resolving to one shared
-`.hero/`. Spec lives at
-`.hero/planning/initiatives/concurrent-session-branching/spec.md`.
-
-**Status:** planning — initiative spec landed, 7 child stubs sequenced, no code.
-
-**Pick up at:** `/design csb-phase0-git-primitives-async-retrofit` — add write
-ops to `internal/gitutil/gitutil.go` (currently READ-ONLY) and retrofit
-`internal/async/runner.go` to run each `runDeliver` job in an isolated
-worktree. That closes the live clobbering bug and proves the primitives.
-
-→ `.hero/planning/initiatives/concurrent-session-branching/spec.md`
-
-**Files:** `internal/gitutil/gitutil.go`, `internal/async/runner.go:142`, `internal/async/jobs.go:38`, `internal/workspace/locate.go:85`, `internal/cli/claim.go:72`
-**Skip:** reusing graph-conflict-detection for content conflicts (wrong layer — use `hero conflicts`); `/release` owning the integration target (net-new state, prefer a `hero target set` verb); auto-managing per-worktree build state in v1.
-
----
-
 ## version-mismatch-severity — Version mismatch severity
 _feature · planning · horizon: now_
 
@@ -256,14 +341,14 @@ Change `Mismatch()` in `internal/version/version.go` to return a `MismatchResult
 ## synthesis-maintenance — "Synthesis Maintenance — Write-Through Coherence for the Hero Graph"
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/synthesis-maintenance/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/synthesis-maintenance/spec.md)_
 
 ---
 
 ## single-source-install-p1-agents-md — "Single-Source Install P1 — AGENTS.md as the Only Root Instruction File"
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/single-source-install-p1-agents-md/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/single-source-install-p1-agents-md/spec.md)_
 
 ---
 
@@ -305,7 +390,7 @@ Resume by reading `.hero/planning/features/satellite-corpus-integration/spec.md`
 ## premise-interrogation — "Premise Interrogation — Force-Question the Framing Before Designing"
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/premise-interrogation/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/premise-interrogation/spec.md)_
 
 ---
 
@@ -335,20 +420,6 @@ The sprint is composed of **nine work items** organized into three tracks (conte
 
 ---
 
-## hihcp-fuzzy-path-resolution — "Add Workspace-Relative Path Fuzzy Resolution"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hihcp-fuzzy-path-resolution/spec.md)_
-
----
-
-## hero-search-tiered-response — hero search response tiering — max_results + pagination instead of compact boolean
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-search-tiered-response/spec.md)_
-
----
-
 ## hero-governance — "Hero Governance — Classification, Policy-Filtered Retrieval, Agent Identity, Audit-by-Construction"
 _feature · planning · horizon: now_
 
@@ -371,26 +442,6 @@ a new `contracts/governance/` directory before any enforcement work.
 `.hero/planning/features/tenant-isolation-rls/spec.md`
 **Skip:** designing the admin UI, SSO/SAML wiring, specific PII regex
 catalogs, and LLM-call wrapping mechanics — all are out of scope here.
-
----
-
-## handoff-one-call-simplification — Handoff Simplification — One Persist, One Load, Fewest Files
-_feature · planning · horizon: now_
-
-You're picking up the umbrella simplification of Hero's handoff subsystem. Read this spec, then
-the two Phase-1 children. The thesis: the whole subsystem is "persist at end of turn, load at
-start of turn, travel via git," and it accreted into ~18 moving parts and 9 files where ~2 files
-and one persist/one load call would do. The two things the maintainer actually feels — drift and
-"not in my commit" — are **Phase 1** and are pure re-wires of existing code.
-
-**Pick up at:** deliver [next-auto-emit-user-ask](next-auto-emit-user-ask) and
-[next-unconditional-commit-staging](next-unconditional-commit-staging) — both are diagnosed,
-delivery-ready, and independent. Auto-emit reuses `resolveSessionContext` /
-`firstUserAskFromTranscript` from `internal/cli/next_compact_handoff.go`; staging consolidates
-the two installers in `internal/hooks/install.go` + `internal/cli/next_hooks.go`. After Phase 1,
-revisit Phase 2 (drop SNAPSHOT/QUEUE/local files) with fresh per-file specs.
-
-→ `internal/cli/checkpoint.go`, `internal/cli/next_compact_handoff.go`, `internal/cli/next_hooks.go`, `internal/hooks/install.go`, `internal/projection/user_handoff.go`
 
 ---
 
@@ -482,21 +533,21 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 ## retrieval-quality — "Retrieval Quality — Reranking, Expansion & Feedback Loop"
 _initiative · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/retrieval-quality/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/initiatives/retrieval-quality/spec.md)_
 
 ---
 
 ## hero-platform — Hero Platform — Headless Execution, Team Automation, and Shared Visibility
 _initiative · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-platform/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/initiatives/hero-platform/spec.md)_
 
 ---
 
 ## hero-killer-features — Hero Killer Features — Agent Effectiveness, Team Power, Living Specs
 _initiative · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-killer-features/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/initiatives/hero-killer-features/spec.md)_
 
 ---
 
@@ -543,28 +594,28 @@ After this sprint completes, hero-code (Rust) consumes three independent contrac
 ## environment-awareness — Environment Awareness — CI/Deployment/Runtime Visibility
 _initiative · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/environment-awareness/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/initiatives/environment-awareness/spec.md)_
 
 ---
 
 ## spec-prioritization — Spec Prioritization — Now / Next / Someday / Parking-Lot
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/spec-prioritization/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/spec-prioritization/spec.md)_
 
 ---
 
 ## project-charter — Project Charter — Mission, Principles, and Auto-Injection
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/project-charter/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/project-charter/spec.md)_
 
 ---
 
 ## lean-agent-profile — Lean Agent Profile — Opt-In Trim for Top-Tier Models
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/lean-agent-profile/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/lean-agent-profile/spec.md)_
 
 ---
 
@@ -578,7 +629,7 @@ _feature · planning · horizon: next_
 ## hero-runner — Hero Runner — Headless Agent Execution via Claude API
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-runner/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/hero-runner/spec.md)_
 
 ---
 
@@ -601,105 +652,1000 @@ Second non-engineering Hero domain pack: QA. The thesis: **Hero QA is the qualit
 ## graph-memory — Graph Memory — Unified Substrate for Hero's Knowledge Corpus
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/graph-memory/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/graph-memory/spec.md)_
 
 ---
 
 ## graph-memory-federation — Graph Memory Federation — Multi-Repo, Multi-Team, Cross-Unit Topology
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/graph-memory-federation/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/graph-memory-federation/spec.md)_
 
 ---
 
 ## graph-memory-7c-live-test — Graph Memory Phase 7c — Live Multi-Dev Sync Test
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/graph-memory-7c-live-test/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/graph-memory-7c-live-test/spec.md)_
 
 ---
 
 ## e2e-onboarding — E2E Onboarding Suite — Fresh Repo to Productive Workspace
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/e2e-onboarding/spec.md)_
-
----
-
-## launch-readiness — Launch Readiness — Telemetry, Deploy, and Public-Use Polish
-_initiative · planning · horizon: someday_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/launch-readiness/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/e2e-onboarding/spec.md)_
 
 ---
 
 ## hero-marketing — Hero Marketing — Positioning, Distribution, and Launch
 _initiative · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-marketing/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/initiatives/hero-marketing/spec.md)_
+
+---
+
+## launch-readiness — Launch Readiness — Telemetry, Deploy, and Public-Use Polish
+_initiative · planning · horizon: someday_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/initiatives/launch-readiness/spec.md)_
 
 ---
 
 ## hero-telemetry — Hero Telemetry — Opt-In Usage Analytics + Feedback Channel
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-telemetry/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/hero-telemetry/spec.md)_
 
 ---
 
 ## hero-positioning — Hero Positioning — Narrative, ICP, Messaging, Comparison
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-positioning/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/hero-positioning/spec.md)_
 
 ---
 
 ## hero-distribution — Hero Distribution — Homebrew, Install Script, GitHub Releases
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-distribution/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/hero-distribution/spec.md)_
 
 ---
 
 ## hero-community — Hero Community — Discord/Discussions, Contributor Guide, Issue Templates
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-community/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/hero-community/spec.md)_
 
 ---
 
 ## configurable-workspace-location — Configurable Workspace Location — Hero Dir Anywhere
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/configurable-workspace-location/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/configurable-workspace-location/spec.md)_
+
+---
+
+## filesystem-path-conflicts — Filesystem Path Conflict Errors
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/context/filesystem-path-conflicts/spec.md)_
+
+---
+
+## project-rules — Project Rules
+_rule · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/rules/project-rules/spec.md)_
+
+---
+
+## ci-github-actions — CI Must Pass (GitHub Actions)
+_rule · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/rules/ci-github-actions/spec.md)_
+
+---
+
+## project-overview — Project Overview
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/context/project-overview/spec.md)_
+
+---
+
+## dev-workflow — Development Workflow & Commands
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/context/dev-workflow/spec.md)_
+
+---
+
+## architecture-overview — Architecture Overview
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/context/architecture-overview/spec.md)_
+
+---
+
+## index — Code Structure Index
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/index/spec.md)_
+
+---
+
+## tools — "Package: tools"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/tools/spec.md)_
+
+---
+
+## internal-workspace — "Package: workspace"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-workspace/spec.md)_
+
+---
+
+## internal-wiki — "Package: wiki"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-wiki/spec.md)_
+
+---
+
+## internal-watch — "Package: watch"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-watch/spec.md)_
+
+---
+
+## internal-vocabulary — "Package: vocabulary"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-vocabulary/spec.md)_
+
+---
+
+## internal-version — "Package: version"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-version/spec.md)_
+
+---
+
+## internal-triage — "Package: triage"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-triage/spec.md)_
+
+---
+
+## internal-traversal — "Package: traversal"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-traversal/spec.md)_
+
+---
+
+## internal-tracking — "Package: tracking"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-tracking/spec.md)_
+
+---
+
+## internal-tracker — "Package: tracker"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-tracker/spec.md)_
+
+---
+
+## internal-templates — "Package: templates"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-templates/spec.md)_
+
+---
+
+## internal-tasks — "Package: tasks"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-tasks/spec.md)_
+
+---
+
+## internal-spectypes — "Package: spectypes"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-spectypes/spec.md)_
+
+---
+
+## internal-spec — "Package: spec"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-spec/spec.md)_
+
+---
+
+## internal-snapshot — "Package: snapshot"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-snapshot/spec.md)_
+
+---
+
+## internal-skills — "Package: skills"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-skills/spec.md)_
+
+---
+
+## internal-sizing — "Package: sizing"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-sizing/spec.md)_
+
+---
+
+## internal-sitegen — "Package: sitegen"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-sitegen/spec.md)_
+
+---
+
+## internal-sessions — "Package: sessions"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-sessions/spec.md)_
+
+---
+
+## internal-serve-shell-static-islands — "Package: islands"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-shell-static-islands/spec.md)_
+
+---
+
+## internal-serve-shell — "Package: shell"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-shell/spec.md)_
+
+---
+
+## internal-serve-session — "Package: session"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-session/spec.md)_
+
+---
+
+## internal-serve-projectpage-static — "Package: static"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-projectpage-static/spec.md)_
+
+---
+
+## internal-serve-projectpage-data — "Package: data"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-projectpage-data/spec.md)_
+
+---
+
+## internal-serve-projectpage — "Package: projectpage"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-projectpage/spec.md)_
+
+---
+
+## internal-serve-pages-work-data — "Package: data"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-pages-work-data/spec.md)_
+
+---
+
+## internal-serve-pages-work — "Package: work"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-pages-work/spec.md)_
+
+---
+
+## internal-serve-pages-rollup — "Package: rollup"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-pages-rollup/spec.md)_
+
+---
+
+## internal-serve-pages-people-data — "Package: data"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-pages-people-data/spec.md)_
+
+---
+
+## internal-serve-pages-people — "Package: people"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-pages-people/spec.md)_
+
+---
+
+## internal-serve-pages-now-data — "Package: data"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-pages-now-data/spec.md)_
+
+---
+
+## internal-serve-pages-now — "Package: now"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-pages-now/spec.md)_
+
+---
+
+## internal-serve-pages-knowledge-data — "Package: data"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-pages-knowledge-data/spec.md)_
+
+---
+
+## internal-serve-pages-knowledge — "Package: knowledge"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-pages-knowledge/spec.md)_
+
+---
+
+## internal-serve-pages-agentspage-data — "Package: data"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-pages-agentspage-data/spec.md)_
+
+---
+
+## internal-serve-pages-agentspage — "Package: agentspage"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-pages-agentspage/spec.md)_
+
+---
+
+## internal-serve-opsrunner — "Package: opsrunner"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-opsrunner/spec.md)_
+
+---
+
+## internal-serve-metrics — "Package: metrics"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-metrics/spec.md)_
+
+---
+
+## internal-serve-mdrender — "Package: mdrender"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-mdrender/spec.md)_
+
+---
+
+## internal-serve-healthcache — "Package: healthcache"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-healthcache/spec.md)_
+
+---
+
+## internal-serve-edition — "Package: edition"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-edition/spec.md)_
+
+---
+
+## internal-serve-chat — "Package: chat"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-chat/spec.md)_
+
+---
+
+## internal-serve-api — "Package: api"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve-api/spec.md)_
+
+---
+
+## internal-serve — "Package: serve"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-serve/spec.md)_
+
+---
+
+## internal-search — "Package: search"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-search/spec.md)_
+
+---
+
+## internal-score — "Package: score"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-score/spec.md)_
+
+---
+
+## internal-scan — "Package: scan"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-scan/spec.md)_
+
+---
+
+## internal-runner — "Package: runner"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-runner/spec.md)_
+
+---
+
+## internal-retrieval — "Package: retrieval"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-retrieval/spec.md)_
+
+---
+
+## internal-refs — "Package: refs"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-refs/spec.md)_
+
+---
+
+## internal-reconcile — "Package: reconcile"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-reconcile/spec.md)_
+
+---
+
+## internal-recap — "Package: recap"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-recap/spec.md)_
+
+---
+
+## internal-pulse — "Package: pulse"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-pulse/spec.md)_
+
+---
+
+## internal-propose — "Package: propose"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-propose/spec.md)_
+
+---
+
+## internal-projection — "Package: projection"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-projection/spec.md)_
+
+---
+
+## internal-peering — "Package: peering"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-peering/spec.md)_
+
+---
+
+## internal-nextdoc — "Package: nextdoc"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-nextdoc/spec.md)_
+
+---
+
+## internal-mission — "Package: mission"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-mission/spec.md)_
+
+---
+
+## internal-methodology — "Package: methodology"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-methodology/spec.md)_
+
+---
+
+## internal-memory — "Package: memory"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-memory/spec.md)_
+
+---
+
+## internal-managed — "Package: managed"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-managed/spec.md)_
+
+---
+
+## internal-knowledge — "Package: knowledge"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-knowledge/spec.md)_
+
+---
+
+## internal-integrity — "Package: integrity"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-integrity/spec.md)_
+
+---
+
+## internal-install — "Package: install"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-install/spec.md)_
+
+---
+
+## internal-index — "Package: index"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-index/spec.md)_
+
+---
+
+## internal-impact — "Package: impact"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-impact/spec.md)_
+
+---
+
+## internal-hooks — "Package: hooks"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-hooks/spec.md)_
+
+---
+
+## internal-herotest — "Package: herotest"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-herotest/spec.md)_
+
+---
+
+## internal-handoff — "Package: handoff"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-handoff/spec.md)_
+
+---
+
+## internal-graph — "Package: graph"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-graph/spec.md)_
+
+---
+
+## internal-gitutil — "Package: gitutil"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-gitutil/spec.md)_
+
+---
+
+## internal-feed — "Package: feed"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-feed/spec.md)_
+
+---
+
+## internal-extract — "Package: extract"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-extract/spec.md)_
+
+---
+
+## internal-errpattern — "Package: errpattern"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-errpattern/spec.md)_
+
+---
+
+## internal-environment — "Package: environment"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-environment/spec.md)_
+
+---
+
+## internal-embeddings-defaultmodel — "Package: defaultmodel"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-embeddings-defaultmodel/spec.md)_
+
+---
+
+## internal-embeddings — "Package: embeddings"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-embeddings/spec.md)_
+
+---
+
+## internal-drift — "Package: drift"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-drift/spec.md)_
+
+---
+
+## internal-domains — "Package: domains"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-domains/spec.md)_
+
+---
+
+## internal-digest — "Package: digest"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-digest/spec.md)_
+
+---
+
+## internal-demos — "Package: demos"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-demos/spec.md)_
+
+---
+
+## internal-cost — "Package: cost"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-cost/spec.md)_
+
+---
+
+## internal-contract — "Package: contract"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-contract/spec.md)_
+
+---
+
+## internal-config — "Package: config"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-config/spec.md)_
+
+---
+
+## internal-codescan — "Package: codescan"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-codescan/spec.md)_
+
+---
+
+## internal-clusters — "Package: clusters"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-clusters/spec.md)_
+
+---
+
+## internal-cli — "Package: cli"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-cli/spec.md)_
+
+---
+
+## internal-automations — "Package: automations"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-automations/spec.md)_
+
+---
+
+## internal-async — "Package: async"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-async/spec.md)_
+
+---
+
+## internal-active — "Package: active"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-active/spec.md)_
+
+---
+
+## internal-acceptance — "Package: acceptance"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/internal-acceptance/spec.md)_
+
+---
+
+## domains-engineering-scan — "Package: engineeringscan"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/domains-engineering-scan/spec.md)_
+
+---
+
+## contracts-peering — "Package: peering"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/contracts-peering/spec.md)_
+
+---
+
+## contracts-governance — "Package: governance"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/contracts-governance/spec.md)_
+
+---
+
+## contracts — "Package: contracts_test"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/contracts/spec.md)_
+
+---
+
+## cmd-hero — "Package: main"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/cmd-hero/spec.md)_
+
+---
+
+## root — "Package: hero"
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/code/root/spec.md)_
+
+---
+
+## next-as-projection-architecture — NEXT-as-Projection Architecture — Three-File Split, Merge Driver, Migration Gate, Drift CI
+_decision · accepted · horizon: now_
+
+Post-hoc decision record for the v0.10.0 NEXT.md cutover from
+hand-maintained handoff document to graph projection. Captures *why* the
+subsystem is shaped the way it is — three-file split
+(project / per-user durable / per-machine local), Stop-hook total
+rewrite, merge driver, migration gate, SessionStart ingest hook, CI
+drift gate. The original delivery spec
+(`.hero/specs/next-as-projection/spec.md`) carries the full design
+narrative; this record exists so a future maintainer extending or
+modifying the handoff plumbing doesn't have to reverse-engineer the
+choices.
+
+**Status:** accepted — design shipped across the v0.9.2→v0.10.0 commit
+window, completed 2026-05-18 (commit `ae6da6f`).
+
+**Pick up at:** read this record before touching the projector entry
+points, the merge driver, the SessionStart hook, the CI drift gate, or
+the three-file file-shape contract. Cross-check the original delivery
+spec for sub-decision rationale (e.g. why `checkpoint` was kept as the
+command name, why writers stay positional vs `set` subcommands).
+
+→ `.hero/planning/decisions/next-as-projection-architecture/spec.md`
+
+**Files:** `internal/cli/checkpoint.go`,
+`internal/cli/next.go`,
+`internal/handoff/handoff.go`,
+`internal/install/claude_hooks.go`,
+`internal/install/codex_hooks.go`,
+`.gitattributes`,
+`.github/workflows/test.yml` (drift gate step),
+`skills/next-merge-recovery/SKILL.md`,
+`.hero/specs/next-as-projection/spec.md`
+
+**Skip:** per-branch user-state separation (out of scope by design); LLM
+narration of project state (separate Tier-3 work); a `set` subcommand
+form for the field-grab writers (positional form wins by symmetry with
+`git config user.email "..."`); renaming `hero next checkpoint` to
+`--write` (install-hook prefix matchers and the user-visible
+"auto-written by" string would all break for zero behavior gain);
+marker-preservation inside `.hero/next/<user>.md` (total-rewrite stays
+v1; revisit only on user request).
+
+---
+
+## handoff-over-engineering-nexthandoff-subsystem-got-over-buil — handoff-over-engineering NEXT/handoff subsystem got over-built: ~18 moving pa...
+_note · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/notes/handoff-over-engineering-nexthandoff-subsystem-got-over-buil/spec.md)_
+
+---
+
+## snapshot-architecture — Snapshot Architecture — Projector, Surfaces, Lifecycle, Archives, Pointer Discovery
+_decision · accepted · horizon: now_
+
+Post-hoc decision record for `hero snapshot` (v0.10.0). Captures *why*
+the snapshot subsystem is shaped the way it is — projector framework,
+inferred surfaces with override layer, six-stage lifecycle, three-trigger
+archive model, discoverable pointer (never auto-injected), and strict
+archive isolation. The original delivery spec
+(`.hero/specs/project-snapshot/spec.md`, 1,759 lines) carries the full
+design narrative; this record exists so a future maintainer extending or
+modifying the subsystem doesn't have to reverse-engineer the choices.
+
+**Status:** accepted — design shipped in commit `5110b1a` on 2026-05-18.
+
+**Pick up at:** read this record before adding a new surface-detection
+signal, a new archive trigger, a new lifecycle stage, or any change that
+would push snapshot content into session context automatically. Cross-
+check the original delivery spec for full rationale on individual
+sub-decisions.
+
+→ `.hero/planning/decisions/snapshot-architecture/spec.md`
+
+**Files:** `internal/snapshot/projector.go`,
+`internal/snapshot/detect.go`, `internal/snapshot/surfaces.go`,
+`internal/snapshot/stage.go`, `internal/snapshot/archive.go`,
+`internal/snapshot/pointers.go`, `internal/cli/snapshot.go`,
+`.hero/specs/project-snapshot/spec.md`
+
+**Skip:** treating archives as searchable peers of specs/knowledge,
+auto-injecting snapshot bytes into `/resume` or `/prime` by default,
+adding a fixed-interval archive trigger (replaced by staleness cutoff),
+demanding a single `release_target:` field (resolution chain handles
+heterogeneous projects).
+
+---
+
+## hero-surface-deployment-and-rendering — Hero Surface — Deployment Layers and Rendering Model
+_decision · accepted · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/hero-surface-deployment-and-rendering/spec.md)_
+
+---
+
+## v2-delivery-audit-2026-04-28 — V2 Delivery Audit — 2026-04-28
+_note · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/notes/v2-delivery-audit-2026-04-28/spec.md)_
+
+---
+
+## v2-audit-liars-resolved — V2 Delivery Audit Liars — Resolution Status
+_note · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/notes/v2-audit-liars-resolved/spec.md)_
+
+---
+
+## sprint-2026-05-19 — Sprint Plan — dashboard-fix-and-rebuild (2026-05-19)
+_note · active · horizon: now_
+
+The user will explicitly kick off delivery on item 1
+(`dashboard-user-identity-os-env-mismatch`) after this plan is saved. Do
+not auto-start `/deliver` from the sprint plan.
+
+When ready, the kickoff command is:
+
+```
+/deliver dashboard-user-identity-os-env-mismatch
+```
+
+---
+
+## sprint-2026-05-01 — Sprint Plan — 2026-05-01 → 2026-05-14
+_note · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/notes/sprint-2026-05-01/spec.md)_
+
+---
+
+## recovery-strategy-conversation — Recovery Strategy Conversation — 2026-04-28
+_note · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/notes/recovery-strategy-conversation/spec.md)_
+
+---
+
+## active-context-management-design — Active Context Management — Design Constraints and Layering Rationale
+_note · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/notes/active-context-management-design/spec.md)_
+
+---
+
+## temporal-supersession-pattern — Temporal Supersession Pattern — Detecting Stale Facts at Read Time
+_context · active · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/context/temporal-supersession-pattern/spec.md)_
 
 ---
 
 ## execution-plan — "Execution Plan — Local Finish + Cloud Launch"
 _plan · active · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/execution-plan/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/initiatives/execution-plan/spec.md)_
 
 ---
 
-## multi-domain-core — "Multi-Domain Core Engine"
-_feature · draft · horizon: next_
+## second-model-design-review — Second Model Design Review — Automated Second Set of Eyes
+_note · active · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/multi-domain-core/spec.md)_
-
----
-
-## greenfield-scaffolding — "Greenfield Scaffolding"
-_feature · draft · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/greenfield-scaffolding/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/notes/second-model-design-review/spec.md)_
 
 ---
 
-## cross-spec-awareness — "Cross-Spec Awareness"
-_feature · draft · horizon: next_
+## next-resume-handoff-design — hero next vs hero resume vs hero handoff — Design and History
+_note · active · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/cross-spec-awareness/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/notes/next-resume-handoff-design/spec.md)_
+
+---
+
+## core-vertical-triangulation — Core / Vertical Triangulation — Full Classification of Existing Artifacts
+_note · active · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/notes/core-vertical-triangulation/spec.md)_
+
+---
+
+## buddy-model-architecture — Buddy Model Architecture — Two-Model Tag Team Vision
+_note · active · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/notes/buddy-model-architecture/spec.md)_
+
+---
+
+## memory-tools-and-community-patterns — Memory Tools, Community Patterns, and Where Hero Stands
+_note · active · horizon: someday_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/knowledge/notes/memory-tools-and-community-patterns/spec.md)_
 
 ---
 
@@ -726,10 +1672,31 @@ The deliverable is reviewable in two cuts: (a) the seam + direct backend (smalle
 
 ---
 
+## multi-domain-core — "Multi-Domain Core Engine"
+_feature · draft · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/multi-domain-core/spec.md)_
+
+---
+
+## greenfield-scaffolding — "Greenfield Scaffolding"
+_feature · draft · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/greenfield-scaffolding/spec.md)_
+
+---
+
+## cross-spec-awareness — "Cross-Spec Awareness"
+_feature · draft · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/cross-spec-awareness/spec.md)_
+
+---
+
 ## architectural-drift-detection — "Architectural Drift Detection"
 _feature · draft · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/architectural-drift-detection/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/features/architectural-drift-detection/spec.md)_
 
 ---
 
@@ -754,6 +1721,31 @@ Swift-native equivalent on your side via `/design`. Read the brief below; the
 Go specs (archived under `.hero/specs/` on the originator: `needs-me-predicate`,
 `hero-goal-command`, `drive-progressive-design`) are the reference design, not
 code to translate.
+## hihcp-rgignore — "Add .rgignore to hero-code Repo"
+_bug · handed_off · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/bugs/hihcp-rgignore/spec.md)_
+
+---
+
+## hihcp-permission-bridge-validation — "Harden Permission Bridge Payload Validation"
+_bug · handed_off · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/bugs/hihcp-permission-bridge-validation/spec.md)_
+
+---
+
+## hihcp-mcp-first-turn-readiness — "Gate First Turn on Hero MCP Readiness"
+_bug · handed_off · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/bugs/hihcp-mcp-first-turn-readiness/spec.md)_
+
+---
+
+## hihcp-mcp-auto-reconnect — "Auto-Recover from MCP Server Disconnect Mid-Session"
+_bug · handed_off · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/bugs/hihcp-mcp-auto-reconnect/spec.md)_
 
 ---
 
@@ -782,43 +1774,6 @@ Investigate and fix the HeroDesktop sidebar `notRunning` error when `hero serve`
 -> `.hero/planning/bugs/desktop-sidebar-mcp-not-running/spec.md`
 
 **Files:** `internal/cli/serve_ensure.go` (new), `internal/serve/lifecycle.go` (export rename), `internal/serve/server.go` (update caller)
-
----
-
-## hihcp-rgignore — "Add .rgignore to hero-code Repo"
-_bug · handed_off · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-rgignore/spec.md)_
-
----
-
-## hihcp-permission-bridge-validation — "Harden Permission Bridge Payload Validation"
-_bug · handed_off · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-permission-bridge-validation/spec.md)_
-
----
-
-## hihcp-mcp-auto-reconnect — "Auto-Recover from MCP Server Disconnect Mid-Session"
-_bug · handed_off · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-mcp-auto-reconnect/spec.md)_
-
----
-
-## hihcp-mcp-first-turn-readiness — "Gate First Turn on Hero MCP Readiness"
-_bug · handed_off · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-mcp-first-turn-readiness/spec.md)_
-
----
-
-## unified-spec-type-model — Unified Spec-Type Model — Nine Real-Named Types, Methodology + Vocabulary Adaptation
-_feature · designed · horizon: now_
-
-Lock the work-tracking foundation for Hero so PM ships as an additive domain pack and engineering keeps doing what it's doing. **Nine canonical types using names every tool already uses** (`initiative`, `prd`, `epic`, `feature`, `bug`, `chore`, `intake`, `release`, `sprint`). Sub-typing via `kind`. Two independent adaptation layers — methodology profile (lifecycle, time-box, estimation, rituals, rollups) and vocabulary preset (display names, tracker mappings). **No migration**: existing engineering specs and folders unchanged; the registry registers what's already there plus the new PM-led and time-box types. AC infrastructure untouched. Tasks ships additively with its own package. Cross-domain handoff is an owner flip on the same artifact, not a separate spec creation.
-
-→ Drives `spec-type-registry`, the PM pack delivery, the new `core/methodologies/` system, and Phase A of the `hero-domains` initiative.
 
 ---
 
@@ -852,6 +1807,12 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _reference · handoff · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-pm/handoff-to-hero-code.md)_
+## unified-spec-type-model — Unified Spec-Type Model — Nine Real-Named Types, Methodology + Vocabulary Adaptation
+_feature · designed · horizon: now_
+
+Lock the work-tracking foundation for Hero so PM ships as an additive domain pack and engineering keeps doing what it's doing. **Nine canonical types using names every tool already uses** (`initiative`, `prd`, `epic`, `feature`, `bug`, `chore`, `intake`, `release`, `sprint`). Sub-typing via `kind`. Two independent adaptation layers — methodology profile (lifecycle, time-box, estimation, rituals, rollups) and vocabulary preset (display names, tracker mappings). **No migration**: existing engineering specs and folders unchanged; the registry registers what's already there plus the new PM-led and time-box types. AC infrastructure untouched. Tasks ships additively with its own package. Cross-domain handoff is an owner flip on the same artifact, not a separate spec creation.
+
+→ Drives `spec-type-registry`, the PM pack delivery, the new `core/methodologies/` system, and Phase A of the `hero-domains` initiative.
 
 ---
 
@@ -875,4 +1836,4 @@ First non-engineering Hero domain pack. PM-shaped spec types (PRD, story, epic, 
 ## pre-launch-hardening — Pre-Launch Hardening — Federation Polish, Security, Observability
 _initiative · delivered · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/pre-launch-hardening/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/jsaardchit/ideaspace/hero/.hero/planning/initiatives/pre-launch-hardening/spec.md)_
