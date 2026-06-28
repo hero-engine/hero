@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-28T07:20:04Z
+updated: 2026-06-28T18:01:08Z
 repo: hero-engine/hero
 ---
 
@@ -8,17 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> # Hero peer call
-> 
-> You are running as a subagent invoked by `hero peer call` from a sibling
-> Hero workspace. Your cwd is **this peer workspace**. Load this workspace's
-> Hero context (conventions, decisions, code knowledge) — use `hero context`,
-> `hero search`, and the local files as needed.
-> 
-> ## Caller
-> 
-> - Origin workspace: hero-code (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
-> - Target alias on cal…
+> new thing to explore - i see a ton about loops and using loops - i can do some research and paste if needed, but you can probably find the top repos and articles on loop programming with AI - and i get it - but havent tried to set it up - feels like something hero would be very good at facilitating - research and figure out if and how that fits in? seems like could have hero drive a loop and get a…
 
 ## Suggested next prompt
 
