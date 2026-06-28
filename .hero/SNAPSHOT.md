@@ -2,22 +2,22 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-27T21:25:22Z · projected from 362 source nodes_
+_Last refreshed: 2026-06-28T00:15:09Z · projected from 362 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 2d ago | flat-named-spec-discovery |
+| core | building | cmd/, internal/ | 13m ago | flat-named-spec-discovery |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | maturing | domains/engineering/ | 12d ago | — |
+| domains/engineering | maturing | domains/engineering/ | 23m ago | — |
 | domains/pm | concept | domains/pm/ | 12d ago | — |
 | domains/sales | maturing | domains/sales/ | 12d ago | — |
 | landing | building | web/landing/ | 12d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 16h ago | agent-outposts |
-| (unassigned) | — | — | — | 185 specs without surface |
+| serve | building | internal/serve/ | 1m ago | agent-outposts |
+| (unassigned) | — | — | — | 179 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
 
@@ -28,7 +28,6 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **"Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use"** (surface: core) — 2/2 specs done
 - **"Concurrent-Session Branching & Worktree Isolation"** (surface: —) — 0/0 specs done
 - **"Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"** (surface: —) — 2/7 specs done
-- **"Drive — Autonomous Initiative Execution with a Human-Boundary Predicate"** (surface: —) — 0/6 specs done
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
 - **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 7/11 specs done
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 11/16 specs done
@@ -48,15 +47,16 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ### Recently completed initiatives
 
+- **"Drive — Autonomous Initiative Execution with a Human-Boundary Predicate"** (surface: core, domains/engineering, serve) — 6/6 specs done · COMPLETED 2026-06-28
 - **"Feature Knowledge Synthesis — Auto-Generated 'How It Works' Entries from Shipped Work"** (surface: —) — 5/5 specs done · COMPLETED 2026-06-23
 - **Roadmap Shape — Detect, Surface, and Resolve Spec-Shape Drift** (surface: serve) — 4/4 specs done · COMPLETED 2026-06-01
-- **hero serve Project Section — Per-Project Info, Utilities, and Operations Page** (surface: serve) — 5/5 specs done · COMPLETED 2026-05-20
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — cloud-cli-verify, fks-cluster-detection, fks-on-demand-synthesizer, spec-lifecycle-hygiene-breakdown, hero-search-json-flag-silently-ignored, scan-enrichment-unbounded-loop, fks-feature-knowledge-artifact
-- **core** — cli-sync-resilience, cst-initiative-premature-autocomplete, cst-verify-lifecycle-scoping, hero-workspace-not-self-describing
-- **serve** — claim-matches-sentinel-collision
+- **(unassigned)** — drive-autonomous-initiative-execution, cloud-cli-verify, fks-trust-handshake
+- **core** — drive-pause-resume, hero-goal-command, needs-me-predicate, initiative-goal-section, cli-sync-resilience, cst-initiative-premature-autocomplete, cst-verify-lifecycle-scoping
+- **domains/engineering** — drive-command-routing
+- **serve** — drive-autonomy-learning
 
 ## Next up across surfaces
 
@@ -68,13 +68,13 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Open risks & blockers
 
-- **Blocked specs (17):** `cev2-system-prompt-curator` (waits on cev2-context-engine-test-harness); `core-vertical-layering` (waits on project-charter); `drive-autonomy-learning` (waits on drive-pause-resume); `drive-command-routing` (waits on hero-goal-command); `drive-pause-resume` (waits on needs-me-predicate, hero-goal-command); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-goal-command` (waits on initiative-goal-section, needs-me-predicate); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection).
-- **Aged open bugs (2):** `next-project-file-conflict-not-regenerated` (open 24d), `desktop-sidebar-mcp-not-running` (open 23d).
-- **Unassigned specs (185) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
+- **Blocked specs (13):** `cev2-system-prompt-curator` (waits on cev2-context-engine-test-harness); `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection).
+- **Aged open bugs (2):** `next-project-file-conflict-not-regenerated` (open 25d), `desktop-sidebar-mcp-not-running` (open 24d).
+- **Unassigned specs (179) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 155/340 (45%)
-- Projection generation: 1ms · Source nodes: 362
+- Specs covered: 161/340 (47%)
+- Projection generation: 0ms · Source nodes: 362
 
