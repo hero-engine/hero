@@ -188,6 +188,9 @@ func resetFlags() {
 	goalEmit = false
 	goalDryRun = 0
 	goalAnswer = ""
+	goalRedirect = false
+	goalTrust = false
+	goalUntrust = ""
 
 	// Reset install flags
 	installTarget = ""

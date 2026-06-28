@@ -10,15 +10,19 @@ import (
 
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/drive"
+	"github.com/hero-engine/hero/internal/feed"
 	"github.com/hero-engine/hero/internal/spec"
 	"github.com/spf13/cobra"
 )
 
 var (
-	goalCheck  bool
-	goalEmit   bool
-	goalDryRun int
-	goalAnswer string
+	goalCheck    bool
+	goalEmit     bool
+	goalDryRun   int
+	goalAnswer   string
+	goalRedirect bool
+	goalTrust    bool
+	goalUntrust  string
 )
 
 var goalCmd = &cobra.Command{
@@ -42,6 +46,9 @@ func init() {
 	goalCmd.Flags().BoolVar(&goalEmit, "emit", false, "print the run condition (default action)")
 	goalCmd.Flags().IntVar(&goalDryRun, "dry-run", 0, "preview the next N transitions (e.g. --dry-run 3)")
 	goalCmd.Flags().StringVar(&goalAnswer, "answer", "", "clear the open pause with your decision, so the run resumes")
+	goalCmd.Flags().BoolVar(&goalRedirect, "redirect", false, "resolve the open pause by redirecting — records a demote so that category keeps pausing")
+	goalCmd.Flags().BoolVar(&goalTrust, "trust", false, "show which pause-categories are promoted to auto-proceed for you")
+	goalCmd.Flags().StringVar(&goalUntrust, "untrust", "", "reset the learned promotion for a pause-category")
 }
 
 func runGoal(cmd *cobra.Command, args []string) error {
@@ -67,32 +74,43 @@ func runGoal(cmd *cobra.Command, args []string) error {
 	}
 
 	w := cmd.OutOrStdout()
+	user := nextUserSlug(cfg)
 	switch {
-	case goalAnswer != "":
-		led, lerr := drive.LoadLedger(heroDir, init.Slug)
-		if lerr != nil {
-			return lerr
+	case goalTrust:
+		promo, perr := drive.LoadPromotions(heroDir, user)
+		if perr != nil {
+			return perr
 		}
-		paused, ok := led.RecordAnswer(goalAnswer)
-		if !ok {
-			return fmt.Errorf("no open Drive pause for %q to answer", init.Slug)
+		return goalEmitJSON(w, map[string]any{"user": user, "promoted": promo.PromotedList(), "categories": promo.Categories})
+	case goalUntrust != "":
+		promo, perr := drive.LoadPromotions(heroDir, user)
+		if perr != nil {
+			return perr
 		}
-		if err := led.Save(); err != nil {
+		promo.Reset(drive.PauseCategory(goalUntrust))
+		if err := promo.Save(); err != nil {
 			return err
 		}
-		if err := clearDriveQuestion(heroDir, cfg); err != nil {
-			return err
-		}
-		fmt.Fprintf(w, "Recorded your answer for %s — re-run `/drive %s` (or `hero goal %s --check`) to resume.\n", paused, init.Slug, init.Slug)
+		fmt.Fprintf(w, "Reset learned promotion for %q — it will pause again.\n", goalUntrust)
 		return nil
+	case goalAnswer != "" || goalRedirect:
+		return runGoalResolve(w, heroDir, cfg, user, init, goalAnswer, goalRedirect)
 	case goalCheck:
-		res := drive.Check(init, all)
+		promo, perr := drive.LoadPromotions(heroDir, user)
+		if perr != nil {
+			return perr
+		}
+		res := drive.Check(init, all, promo.IsPromoted)
 		if err := reconcilePause(heroDir, cfg, init.Slug, all, &res); err != nil {
 			return err
 		}
 		return goalEmitJSON(w, res)
 	case goalDryRun > 0:
-		return goalEmitJSON(w, drive.DryRun(init, all, goalDryRun))
+		promo, perr := drive.LoadPromotions(heroDir, user)
+		if perr != nil {
+			return perr
+		}
+		return goalEmitJSON(w, drive.DryRun(init, all, goalDryRun, promo.IsPromoted))
 	default: // emit
 		bySlug := make(map[string]*spec.Spec, len(all))
 		for _, s := range all {
@@ -111,6 +129,71 @@ func goalEmitJSON(w io.Writer, v any) error {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	return enc.Encode(v)
+}
+
+// runGoalResolve resolves an open pause: --answer records an approved
+// outcome (advancing the category toward promotion) and resumes the run;
+// --redirect records a demote so that category keeps pausing. Either way the
+// outcome is logged to the activity feed.
+func runGoalResolve(w io.Writer, heroDir string, cfg config.Config, user string, init *spec.Spec, answer string, redirect bool) error {
+	led, err := drive.LoadLedger(heroDir, init.Slug)
+	if err != nil {
+		return err
+	}
+	if led.Pause == nil {
+		return fmt.Errorf("no open Drive pause for %q to resolve", init.Slug)
+	}
+	cat := drive.PauseCategory(led.Pause.Category)
+
+	promo, err := drive.LoadPromotions(heroDir, user)
+	if err != nil {
+		return err
+	}
+	outcome := drive.OutcomeApproved
+	if redirect {
+		outcome = drive.OutcomeRedirected
+	}
+	promo.RecordOutcome(cat, outcome)
+	if err := promo.Save(); err != nil {
+		return err
+	}
+	emitDriveOutcomeEvent(heroDir, init.Slug, cat, outcome)
+
+	if redirect {
+		led.ClearPause()
+		if err := led.Save(); err != nil {
+			return err
+		}
+		if err := clearDriveQuestion(heroDir, cfg); err != nil {
+			return err
+		}
+		fmt.Fprintf(w, "Recorded a redirect on %s (%s) — that category will keep pausing for you.\n", init.Slug, cat)
+		return nil
+	}
+
+	paused, _ := led.RecordAnswer(answer)
+	if err := led.Save(); err != nil {
+		return err
+	}
+	if err := clearDriveQuestion(heroDir, cfg); err != nil {
+		return err
+	}
+	note := ""
+	if promo.IsPromoted(cat) {
+		note = fmt.Sprintf(" (%s is now auto-proceed in autonomous mode — `hero goal %s --untrust %s` to undo)", cat, init.Slug, cat)
+	}
+	fmt.Fprintf(w, "Recorded your answer for %s — re-run `/drive %s` to resume.%s\n", paused, init.Slug, note)
+	return nil
+}
+
+// emitDriveOutcomeEvent logs a pause outcome to the activity feed (best-effort).
+func emitDriveOutcomeEvent(heroDir, initSlug string, cat drive.PauseCategory, outcome string) {
+	_ = feed.AppendEvent(filepath.Join(heroDir, "events.log"), feed.FeedEvent{
+		Type:    "drive.pause_outcome",
+		Slug:    initSlug,
+		Agent:   "human",
+		Message: fmt.Sprintf("drive pause %s resolved: %s", cat, outcome),
+	})
 }
 
 // reconcilePause persists a Drive run's pause/resume state against the

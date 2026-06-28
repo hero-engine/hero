@@ -2,7 +2,7 @@
 title: "Rubber-stamp learning — promote always-approved pauses to auto-proceed"
 slug: drive-autonomy-learning
 type: feature
-status: planning
+status: completed
 priority: medium
 horizon: next
 tags: [drive, learning, autonomy, feedback, events, floor-raising]
@@ -12,6 +12,8 @@ relations:
     kind: parent
   - target: drive-pause-resume
     kind: depends-on
+delivery_method: manual
+completed_at: 2026-06-28T00:13:50Z
 ---
 
 # Rubber-stamp learning — promote always-approved pauses to auto-proceed
@@ -124,3 +126,60 @@ inherits the senior's "this is fine" patterns — the floor-raising payoff.
 - **Cross-initiative leakage** — a promotion learned on trivial work
   applied to risky work. Mitigation: scope promotions by initiative kind/
   size where signal allows; default to per-initiative until confidence.
+
+## Changes
+
+- `internal/drive/trust.go` — `Promotions` (per-user, per-category streak +
+  promoted state at `.hero/drive/trust/<user>.json`), `RecordOutcome`
+  (promote at K / demote on edit-redirect, guardrail categories never
+  tracked), `IsPromoted`, `Reset`, `PromotedList`.
+- `internal/drive/check.go` — `Check`/`DryRun`/`step` thread a `promoted`
+  hook into `RunContext.Promoted` so the (already-built) `NeedsMe` promotion
+  path activates in Autonomous mode.
+- `internal/cli/goal.go` — `--answer` records an approved outcome;
+  `--redirect` records a demote; `--trust` lists promotions; `--untrust`
+  resets one; each outcome logs a `drive.pause_outcome` feed event.
+- `internal/feed/feed.go` — register the `drive.pause_outcome` event type.
+- `internal/serve/mcp_tools.go` — updated `Check`/`DryRun` call sites.
+- Tests: `internal/drive/trust_test.go`, `internal/cli/goal_test.go`,
+  plus `check_test.go`/`helpers_test.go` call-site + flag-reset updates.
+
+**Honest status — armed but dormant.** The learning subsystem is complete
+and tested, but it cannot fire *end-to-end* in v1 because the **promotable**
+pause categories (DesignFork / Underspecified / AmbiguousPick) are not yet
+*detected* by `Check` (those detectors were deferred in `hero-goal-command`).
+So today no promotable pause is produced through the live loop, and nothing
+auto-promotes. The machinery activates the moment those detectors land — no
+further wiring needed. The guardrail categories that *do* fire today
+(Supervised, Blocked) are correctly never promotable.
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | K consecutive approved → promote category for that user | DONE | `RecordOutcome`; `TestPromotionStateMachine`; CLI records via `--answer` (`TestGoalAnswerRecordsOutcomeAndTrust`) |
+| 2 | Edit/redirect at a promoted category → demote, resume pausing | DONE | `RecordOutcome` redirect/edited resets+demotes; `TestPromotionStateMachine`; `--redirect` flag |
+| 3 | NEVER promote Irreversible or the hard-cap | DONE | `Promotable()` gate in `RecordOutcome`/`IsPromoted`; `TestGuardrailCategoriesNeverPromote` (also Unknown/VerifyStuck/Blocked) |
+| 4 | supervised/guided ignore promotions (autonomous only) | DONE | `maybePromoted` gated on `Autonomous`; `TestNeedsMeAutonomousPromotionProceeds` (guided still pauses) |
+| 5 | Promotions inspectable + individually resettable | DONE | `hero goal --trust` / `--untrust`; `TestGoalAnswerRecordsOutcomeAndTrust`; exercised live (`--trust` on the real workspace) |
+| 6 | Record each pause outcome as a feed event | DONE | `emitDriveOutcomeEvent` → `drive.pause_outcome`; events.log assertion in the CLI test |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | `Promotions` trust store | DONE | per-user JSON |
+| 2 | Thread promotion hook through `Check` | DONE | activates `NeedsMe` path |
+| 3 | `--answer`/`--redirect`/`--trust`/`--untrust` + event | DONE | CLI surface |
+| 4 | `drive.pause_outcome` event type | DONE | feed registration |
+| 5 | Tests | DONE | state machine + CLI + guardrails |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end: `TestGoalAnswerRecordsOutcomeAndTrust` drives the real CLI through seed-pause → `--answer` (records outcome + logs a `drive.pause_outcome` event) → `--trust` (shows the category) → `--untrust` (clears it). Live, `hero goal <init> --trust` returned the (empty) promotions for the current user. The full auto-promote-through-the-loop path is dormant until the promotable-category detectors land (disclosed above).
+
+### Excellence Bar self-check
+
+- [x] yes — complete, tested learning subsystem; guardrail categories structurally un-promotable; promotions per-user, inspectable, instantly resettable; outcomes are auditable feed events. I have **not** overclaimed: the ledger and Changes section state plainly that the end-to-end auto-promotion is dormant until the deferred detectors land.

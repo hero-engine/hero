@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-28T00:02:20Z · 88 ready specs_
+_Generated: 2026-06-28T00:14:05Z · 86 ready specs_
 
 ## flat-named-spec-discovery — "Flat-named spec files are invisible to discovery — verify can't resolve initiative children"
 _bug · delivering · horizon: now_
@@ -47,23 +47,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · in-review · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-idea-primitive-core/spec.md)_
-
----
-
-## drive-autonomous-initiative-execution — "Drive — Autonomous Initiative Execution with a Human-Boundary Predicate"
-_initiative · planning · horizon: now_
-
-Building "Drive": autonomous execution of a whole initiative's child
-specs. The loop driver is the **harness's `/goal`** (Claude Code/Codex) —
-Hero does NOT build a loop engine. Hero supplies (a) the objective via a
-new initiative `## Goal` section and (b) an authoritative per-turn judge,
-`hero goal <init> --check`, wired through a Claude Code **Stop hook**. The
-judge ANDs `hero verify` over the children with a new conservative
-`needs_me()` predicate that decides proceed-vs-pause-for-human. Pauses
-write a *question* to NEXT.md and resume from disk. Start with child
-`initiative-goal-section`, then `needs-me-predicate`. Read this initiative
-spec and the six children for the full picture and the settled naming
-(`/drive`, not `/autopilot`; `/deliver` is NOT overloaded).
 
 ---
 
@@ -472,22 +455,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/cev2-bash-output-supersede.md)_
-
----
-
-## drive-autonomy-learning — "Rubber-stamp learning — promote always-approved pauses to auto-proceed"
-_feature · planning · horizon: next_
-
-Record every pause → outcome as an event (reuse the existing event/feed
-infra, [internal/serve/team_coordination.go](../../../../../internal/serve/team_coordination.go)
-and `hero_event`): `{user, initiative, category, outcome: approved-unchanged
-| edited | redirected}`. Maintain a per-(user, category[, initiative])
-promotion state: K consecutive `approved-unchanged` → `promoted`; any
-`edited`/`redirected` → demote and reset. `NeedsMe`
-([needs-me-predicate](../needs-me-predicate/spec.md)) consults promotion
-state in `autonomous` mode only, and **never** for hard-pause guardrails
-(irreversible, hard cap). Surface promotions so they're visible and
-reversible. Start with K conservative (e.g. 3) and config-tunable.
 
 ---
 

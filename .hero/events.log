@@ -227,3 +227,7 @@
 {"ts":"2026-06-27T23:51:10.830757Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"drive-command-routing","message":"status -\u003e completed"}
 {"ts":"2026-06-28T00:02:08.080957Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"drive-pause-resume","message":"\"Pause-as-question + resume — a precise question to disk, resumable cold\""}
 {"ts":"2026-06-28T00:02:08.081042Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"drive-pause-resume","message":"status -\u003e completed"}
+{"ts":"2026-06-28T00:13:51.853476Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"drive-autonomy-learning","message":"\"Rubber-stamp learning — promote always-approved pauses to auto-proceed\""}
+{"ts":"2026-06-28T00:13:51.853631Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"drive-autonomy-learning","message":"status -\u003e completed"}
+{"ts":"2026-06-28T00:13:52.702408Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"drive-autonomous-initiative-execution","message":"\"Drive — Autonomous Initiative Execution with a Human-Boundary Predicate\""}
+{"ts":"2026-06-28T00:13:52.702485Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"drive-autonomous-initiative-execution","message":"status -\u003e completed"}
