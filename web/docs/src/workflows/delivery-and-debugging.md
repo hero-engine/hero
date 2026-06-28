@@ -85,6 +85,56 @@ hero spec verify csv-export-reports --json
 
 ---
 
+## `/drive` — Run a Whole Initiative
+
+Where `/deliver` ships one spec with you at the boundary, `/drive` runs an
+entire initiative on its own: it designs, delivers, and verifies the child
+specs in order, and **only stops when a decision genuinely needs you**. It's
+the difference between approving each step and setting a destination.
+
+```
+/drive the checkout-redesign initiative
+```
+
+Natural language works too — *"put the checkout-redesign initiative on
+autopilot"* or *"keep working the whole initiative"* route to `/drive`.
+
+### How it works
+
+Hero does **not** reinvent the agent loop — it surrounds your tool's own
+goal-loop (Claude Code / Codex `/goal`) and acts as the authoritative judge it
+consults each turn:
+
+1. **Objective** — the initiative's `## Goal` section is the run-opener: the
+   condition the loop runs toward.
+2. **Per-turn judgment** — after each turn, `hero goal <initiative> --check`
+   returns `continue` (with the next action), `pause`, or `done`, derived from
+   on-disk state: each child's verify status ANDed with the autonomy boundary.
+3. **Progressive design** — an undesigned child is **designed first, then
+   delivered** — Drive never hands a stub to delivery, and never declares an
+   initiative done while intended children remain unspecced.
+4. **The human boundary** — a conservative `needs_me` predicate decides what
+   to auto-proceed versus surface to you. Irreversible or outward-facing
+   actions **always** pause, regardless of mode.
+
+### Autonomy modes
+
+Set `autonomy:` on the initiative to tune how far Drive goes on its own:
+
+| Mode | Behavior |
+|---|---|
+| `supervised` (default) | Pause at every spec boundary — today's hand-approved flow. |
+| `guided` | Proceed on routine work; pause on every real decision (design forks, ambiguity, blocked, stuck gates). |
+| `autonomous` | Also auto-proceed on the decision types you've repeatedly approved — Drive learns your rubber-stamps and stops asking. |
+
+!!! warning "Pauses are resumable, and safe by construction"
+    When Drive pauses it writes a precise question to your handoff file and
+    stops cleanly — answer it and the run resumes from exactly that point, even
+    in a fresh session. Irreversible actions, initiative boundaries, and a hard
+    step-cap always pause; the boundary is conservative when unsure.
+
+---
+
 ## `/diagnose` — Investigate Bugs
 
 A two-phase workflow that traces bugs to their root cause with evidence, then
