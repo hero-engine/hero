@@ -31,15 +31,28 @@ Designed in response to `hero peer call --mode=spec-out` from peer
 `hero-code` (peer_id `cd8dd06d-3df1-4878-a88f-24593dcbb4b3`),
 related to originator spec `pm-workbench-tracker-validation`.
 
+## Reconciliation (supersedes the original storage design)
+
+> This spec was authored via spec-out **before** the `hero-tracker-fixtures`
+> decision to go **all-in on Sprout** as the seeding engine. The original
+> design used an in-memory Go `State` struct + a bespoke versioned-JSON seed
+> format. That is **superseded** here by **in-memory SQLite seeded by sprout-Go**
+> (`github.com/bdwheeler/sprout/go`, shipped). Rationale: the Acme backlog is then
+> authored **once** in Sprout seed YAML (owned by hero-code's
+> `acme-checkout-dataset`) and reused by both this mock server and the real-account
+> seeders — no second seed format, no drift. Determinism is preserved by using an
+> **`:memory:` SQLite DB reset from seed each run**. Everything else in this spec
+> (the API subsets, pagination, 429, drift/admin plane, ACs) stands unchanged.
+
 ## Goal
 
-Ship a single-binary, in-memory HTTP server that speaks the *subset*
-of GitHub Issues, Jira Cloud, Linear, and GitLab APIs that hero's
-tracker adapters actually call — enough to drive `hero sync import`,
-`hero sync push --field`, `hero sync pull --field`, and
-`hero spec set-owner` to completion without any real network
-dependency. It is the offline twin of the four real trackers, and
-also the test-double Hero's own integration tests run against.
+Ship a single-binary HTTP server — backed by an **in-memory SQLite DB seeded by
+sprout-Go** — that speaks the *subset* of GitHub Issues, Jira Cloud, Linear, and
+GitLab APIs that hero's tracker adapters actually call — enough to drive
+`hero sync import`, `hero sync push --field`, `hero sync pull --field`, and
+`hero spec set-owner` to completion without any real network dependency. It is the
+offline twin of the four real trackers, and also the test-double Hero's own
+integration tests run against.
 
 ## Non-Goal
 
@@ -58,8 +71,9 @@ cmd/mock-tracker-server/
   main.go                # flag parsing, server bootstrap
 internal/mocktracker/
   server.go              # http.Handler, mux, mode dispatch
-  state.go               # in-memory data model (tracker-neutral)
-  seed.go                # seed-file loader and validator
+  schema.go              # SQLite DDL (tracker-neutral tables)
+  store.go               # *sql.DB open(:memory:) + row→wire queries
+  seed.go                # embed Sprout YAML + sprout.Apply wrapper
   github.go              # GitHub Issues API subset
   jira.go                # Jira Cloud API subset
   linear.go              # Linear GraphQL subset
@@ -68,90 +82,89 @@ internal/mocktracker/
   admin.go               # /__admin endpoints (mutate, drift, rotate)
   pagination.go          # shared pagination + Link header helpers
   ratelimit.go           # configurable 429 / Retry-After injector
-  fixtures/
-    default-seed.json    # tiny default for hero's own tests
+  fixtures/seed/
+    V01_*.yaml …         # tiny default Sprout seed for hero's own tests
+    seeds.list
   *_test.go              # contract tests per tracker mode
 ```
+
+`go.mod` adds `github.com/bdwheeler/sprout/go` and `modernc.org/sqlite`
+(pure-Go SQLite, no cgo). The `cmd/` placement still keeps it out of the
+main hero binary.
 
 The `cmd/` placement ensures `go build ./...` for hero proper does
 not link it into the main hero binary. CI builds the mock server as
 a separate artifact.
 
-### State Model (Tracker-Neutral)
+### State Model (Tracker-Neutral, SQLite)
 
-The server's internal state is one canonical model that each tracker
-handler projects into its own wire shape:
+The server's state is one canonical, tracker-neutral schema in an
+**in-memory SQLite DB** (`sql.Open("sqlite", ":memory:")`, `SetMaxOpenConns(1)`)
+that each tracker handler projects into its own wire shape:
+
+```sql
+-- schema.go (created before seeding)
+CREATE TABLE issue      (global_id TEXT PRIMARY KEY, type TEXT, title TEXT, body TEXT,
+                         epic_id TEXT, milestone_id TEXT, iteration_id TEXT,
+                         status TEXT, assignee TEXT, weight INTEGER, severity TEXT);
+CREATE TABLE epic       (global_id TEXT PRIMARY KEY, title TEXT, parent_id TEXT);
+CREATE TABLE milestone  (global_id TEXT PRIMARY KEY, title TEXT, due TEXT);
+CREATE TABLE iteration  (global_id TEXT PRIMARY KEY, name TEXT, start TEXT, end TEXT);
+CREATE TABLE label      (issue_id TEXT, name TEXT);
+CREATE TABLE app_user   (username TEXT PRIMARY KEY, email TEXT, display TEXT);
+CREATE TABLE id_alias   (global_id TEXT, iid TEXT);   -- /__admin/rotate-ids
+```
+
+Each handler queries by `global_id` and projects rows back into the
+requested wire format. This is what makes one seed work across all four
+tracker modes: the dataset is authored once in the neutral schema and
+re-emitted as `{"number": 42, ...}` for GitHub, `{"key": "ACME-42", ...}`
+for Jira, `{"id": "ACME-42", ...}` for Linear, and
+`{"iid": 42, "web_url": "..."}` for GitLab. The table/column names are the
+relational shape the **Sprout seed YAML** targets — the shared contract with
+hero-code's `acme-checkout-dataset`.
+
+### Seed Format — Sprout seed YAML via sprout-Go
+
+The seed is **Sprout seed YAML** (the normative `seed-json-schema` format),
+applied to the SQLite DB by the **shipped sprout-Go engine**. The server creates
+the schema, then seeds:
 
 ```go
-type State struct {
-    Issues      map[string]*Issue      // keyed by global ID
-    Epics       map[string]*Epic       // includes Jira Epic, Linear Project, GitHub sub-issue parent, GitLab Epic
-    Milestones  map[string]*Milestone  // Jira fixVersion, GitHub milestone, GitLab milestone, Linear cycle (when used as release)
-    Iterations  map[string]*Iteration  // Linear cycle, Jira sprint, GitLab iteration
-    Labels      map[string]*Label
-    Users       map[string]*User
-    Comments    []*Comment
-    // ID-rotation table — see /__admin/rotate-ids
-    IDAliases   map[string]string
+import sprout "github.com/bdwheeler/sprout/go"
+
+//go:embed fixtures/seed/*.yaml fixtures/seed/seeds.list
+var defaultSeed embed.FS
+
+func seed(ctx context.Context, db *sql.DB, src fs.FS, base string) error {
+    _, err := sprout.Apply(ctx, db,
+        sprout.WithFS(src, base),                 // or sprout.WithDir(path)
+        sprout.WithDialect(sprout.SQLiteDialect{}))
+    return err                                     // idempotent: checksum-skip
 }
 ```
 
-Each handler maps requests into State by global ID, and projects
-State back into the requested wire format. This is what makes one
-seed file work across all four tracker modes: the dataset is
-authored once in the neutral shape and re-emitted as
-`{"number": 42, ...}` for GitHub, `{"key": "ACME-42", ...}` for
-Jira, `{"id": "ACME-42", ...}` for Linear, and
-`{"iid": 42, "web_url": "..."}` for GitLab.
+The seed YAML's tables (`issue`/`epic`/`milestone`/`iteration`/`label`/`app_user`)
+are the schema above; FK relationships use Sprout's nested-map references
+(`epic: {global_id: epic:express-pay}`) and `dependsOn` ordering. Example:
 
-### Seed Format
-
-Versioned JSON, owned-by-contract:
-
-```jsonc
-{
-  "schema_version": 1,
-  "project": {
-    "name": "Acme Checkout",
-    "slug": "acme-checkout"
-  },
-  "epics": [
-    {"id": "epic:guest-checkout", "title": "Guest Checkout", ...},
-    {"id": "epic:express-pay",    "title": "Express Pay",    ...},
-    {"id": "epic:fraud",          "title": "Fraud Controls", ...},
-    {"id": "epic:refunds",        "title": "Refunds",        ...},
-    {"id": "epic:wallet",         "title": "Wallet",         ...}
-  ],
-  "milestones": [
-    {"id": "release:v1.0", "title": "Acme Checkout v1.0", "due": "2026-09-01"}
-  ],
-  "iterations": [
-    {"id": "sprint:2026-06-w4", "name": "Sprint 26.6.4", "start": "...", "end": "..."}
-  ],
-  "issues": [
-    {"id": "ACME-100", "type": "story", "title": "Add Apple Pay sheet",
-     "epic": "epic:express-pay", "milestone": "release:v1.0",
-     "iteration": "sprint:2026-06-w4", "labels": ["frontend"],
-     "assignee": "alice", "status": "open", "weight": 3,
-     "description": "..."},
-    {"id": "ACME-200", "type": "bug", "severity": "high",
-     "title": "Refund webhook drops idempotency key on retry", ...}
-  ],
-  "users": [
-    {"username": "alice", "email": "alice@acme.test", "display": "Alice K."}
-  ]
-}
+```yaml
+# V03_issues.yaml
+dependsOn: [V01_epics, V02_milestones]
+seed:
+  issue:
+    - key: global_id
+      data: { global_id: ACME-100, type: story, title: "Add Apple Pay sheet",
+              epic_id: "epic:express-pay", milestone_id: "release:v1.0",
+              status: open, assignee: alice, weight: 3 }
 ```
 
-Unknown top-level keys are rejected (forward-incompatible by
-default) so seed-file drift is caught early. `schema_version: 1` is
-the only accepted value in this feature; bumping it is a coordinated
-change with hero-code.
-
-The bundled `fixtures/default-seed.json` is tiny — 2 epics, 6
-issues, 1 milestone — purely so hero's `go test ./internal/...` can
-spin up the server without depending on hero-code's larger Acme
-dataset.
+`--seed <path>` points at a real directory (hero-code's Acme dataset); with no
+flag the server seeds from the embedded `fixtures/seed/` (tiny — 2 epics, 6
+issues, 1 milestone — so hero's `go test ./internal/...` is self-contained). The
+format/validation is owned by Sprout (`sprout validate` / `seed-json-schema`),
+**not** a bespoke schema — and it is the **same format** hero-code's
+`acme-checkout-dataset` authors and the real-account seeders consume.
 
 ### Mode and Routing
 
@@ -311,9 +324,11 @@ endpoints were called in the right order.
    subsequent `hero sync pull` still finds the issue by global ID
    without re-importing. Tests this for github/gitlab (IID-based) and
    jira/linear (key-based).
-10. **AC-10: Seed-format strictness** — server rejects
-    `schema_version: 2`, unknown top-level keys, and unknown issue
-    fields with descriptive errors. Test fixtures cover all three.
+10. **AC-10: Seed via sprout-Go** — the server seeds its SQLite DB through
+    `sprout.Apply` from Sprout seed YAML (embedded default + `--seed <dir>`);
+    re-seeding is idempotent (checksum-skip), and a malformed seed surfaces
+    sprout's validation error. Test fixtures cover a clean apply, an idempotent
+    re-apply, and an invalid seed.
 11. **AC-11: Test isolation** — `go test ./internal/mocktracker/...`
     starts one server per test on `:0`, no port conflicts, no
     process leaks. Standard `t.Cleanup` discipline.
@@ -334,8 +349,13 @@ endpoints were called in the right order.
   `sync.RWMutex` around State. Writes are admin-driven and rare;
   reads dominate. Contention is a non-issue at fixture scale (~50
   issues).
-- **Persistence between runs.** **Decision:** none. Always start
-  from seed. Determinism is the whole point.
+- **Persistence between runs.** **Decision:** none — the SQLite DB is
+  `:memory:`, created and seeded fresh on every start. Determinism is the whole
+  point, and `sprout.WithForce()` re-applies on demand for a mid-run reset.
+- **Why SQLite, not Go maps.** **Decision:** SQLite is the cost of going all-in
+  on Sprout (a SQL seeder) so the Acme backlog has one seed format across the
+  mock server and the real-account seeders. `:memory:` SQLite keeps it
+  dependency-light (pure-Go `modernc.org/sqlite`) and fully deterministic.
 
 ## Completion Ledger
 
@@ -349,8 +369,8 @@ endpoints were called in the right order.
 | AC-6 | `internal/mocktracker/pagination.go`, `internal/mocktracker/pagination_test.go` | — |
 | AC-7 | `internal/mocktracker/ratelimit.go`, `internal/mocktracker/admin.go` | — |
 | AC-8 | `internal/mocktracker/admin.go` | — |
-| AC-9 | `internal/mocktracker/admin.go`, `internal/mocktracker/state.go` | — |
-| AC-10 | `internal/mocktracker/seed.go`, `internal/mocktracker/seed_test.go` | — |
+| AC-9 | `internal/mocktracker/admin.go`, `internal/mocktracker/store.go` | — |
+| AC-10 | `internal/mocktracker/seed.go` (sprout.Apply), `internal/mocktracker/seed_test.go` | — |
 | AC-11 | (cross-cutting) | — |
 | AC-12 | (cross-cutting) | — |
 
