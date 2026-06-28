@@ -235,3 +235,4 @@
 {"ts":"2026-06-28T06:08:54.589216Z","type":"peer.call.completed","agent":"hero","slug":"drive-progressive-design","message":"peer call failed: subagent timed out after 10m0s:  (call_id 18bd2934e03d2818be5600379d61ac4f)"}
 {"ts":"2026-06-28T06:14:12.20456Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"drive-progressive-design","message":"\"Drive honors progressive design — design-then-deliver per child, no short-circuit\""}
 {"ts":"2026-06-28T06:14:12.204634Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"drive-progressive-design","message":"status -\u003e completed"}
+{"ts":"2026-06-28T07:09:55.13497Z","type":"peer.handoff.sent","agent":"hero","slug":"native-drive-for-hero-code","message":"handed off to hero-code/native-drive-for-hero-code (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)"}

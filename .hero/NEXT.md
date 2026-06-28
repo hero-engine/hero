@@ -5,7 +5,7 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-06-28T00:24:58Z
+updated: 2026-06-28T06:15:29Z
 repo: hero-engine/hero
 branch: feat/drive-autonomous-initiative
 ---
@@ -20,7 +20,7 @@ No open features in this repo.
 
 ## Roadmap shape
 
-11 specs have size drift — run /roadmap-review to triage
+10 specs have size drift — run /roadmap-review to triage
 
 ## Blocked on
 

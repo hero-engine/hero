@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-28T06:14:23Z · 86 ready specs_
+_Generated: 2026-06-28T07:10:10Z · 87 ready specs_
 
 ## flat-named-spec-discovery — "Flat-named spec files are invisible to discovery — verify can't resolve initiative children"
 _bug · delivering · horizon: now_
@@ -743,6 +743,17 @@ Start with Phase 0 only. Do not build anything. Read [next-compact-handoff/spec.
 Output a written assessment with a clear recommendation: proceed to Phase 1 prototype, or close as "not worth it" with the analysis preserved so future revisits don't re-litigate.
 
 Time budget: ~2 days of focused research, no implementation. If the assessment can't be reached in that budget, the answer is probably no.
+
+---
+
+## native-drive-for-hero-code — "Native Drive — autonomous initiative execution for the hero-code Swift app"
+_feature · handed_off · horizon: now_
+
+Design native Drive for hero-code. The Go engine just shipped it; build the
+Swift-native equivalent on your side via `/design`. Read the brief below; the
+Go specs (archived under `.hero/specs/` on the originator: `needs-me-predicate`,
+`hero-goal-command`, `drive-progressive-design`) are the reference design, not
+code to translate.
 
 ---
 
