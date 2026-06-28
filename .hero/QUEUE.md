@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-28T00:24:41Z · 87 ready specs_
+_Generated: 2026-06-28T06:14:23Z · 86 ready specs_
 
 ## flat-named-spec-discovery — "Flat-named spec files are invisible to discovery — verify can't resolve initiative children"
 _bug · delivering · horizon: now_
@@ -47,26 +47,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · in-review · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-idea-primitive-core/spec.md)_
-
----
-
-## drive-progressive-design — "Drive honors progressive design — design-then-deliver per child, no short-circuit"
-_feature · planning · horizon: now_
-
-Drive today is deliver-centric: `drive.Check`
-([internal/drive/check.go](../../../internal/drive/check.go)) treats
-`completed` as done and hands the next child's `## Kickoff` to *delivery*,
-with no notion of "this child still needs designing." Two bugs follow: (1) an
-undesigned stub gets handed to `/deliver`; (2) children that exist only as
-rows in the initiative's child table aren't discovered, so the run
-short-circuits to "done." Fix: add a per-child **stage**
-(`needs-design | ready-to-deliver | done`), make the `--check` verdict carry
-an **action** (`design | deliver`), route `needs-design` children through
-`/design` autonomously (folding in the deferred `Underspecified`/score and
-`DesignFork` detectors from `needs-me-predicate`), and derive the
-**authoritative intended-child set** so "done" means *every intended child
-designed AND verified*. Read the parent initiative + `hero-goal-command` +
-`needs-me-predicate` first.
 
 ---
 

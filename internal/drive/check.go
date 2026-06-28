@@ -3,6 +3,7 @@ package drive
 import (
 	"sort"
 
+	"github.com/hero-engine/hero/internal/score"
 	"github.com/hero-engine/hero/internal/spec"
 )
 
@@ -16,7 +17,8 @@ type PauseInfo struct {
 // contract the harness Stop hook consumes. Derived from on-disk state only,
 // so a cold process produces the same verdict.
 type CheckResult struct {
-	Verdict    string     `json:"verdict"` // "continue" | "pause" | "done"
+	Verdict    string     `json:"verdict"`          // "continue" | "pause" | "done"
+	Action     string     `json:"action,omitempty"` // on continue: "design" | "deliver"
 	Initiative string     `json:"initiative"`
 	NextSpec   string     `json:"next_spec,omitempty"`
 	Kickoff    string     `json:"kickoff,omitempty"`
@@ -72,36 +74,89 @@ func completedSet(all []*spec.Spec) map[string]bool {
 	return done
 }
 
-// Check computes the verdict for one turn of an initiative run. It ANDs the
-// children's verify-status (completed == verify-gated) with the needs_me
-// boundary, deriving everything from on-disk state.
+// scoreFn computes a spec's readiness score. Overridable in tests so stage
+// classification can be driven deterministically off structure.
+var scoreFn = func(s *spec.Spec) int {
+	if s == nil {
+		return -1
+	}
+	return score.Score(s, score.DefaultConfig()).Score
+}
+
+// intended is one child the initiative intends to ship — either a discovered
+// spec or a declared-but-unscaffolded slug (spec == nil).
+type intended struct {
+	slug string
+	spec *spec.Spec
+}
+
+func (ic *intended) stage(completed map[string]bool) Stage {
+	if completed[ic.slug] {
+		return StageDone
+	}
+	if ic.spec == nil {
+		return StageNeedsScaffold
+	}
+	return ChildStage(ic.spec, scoreFn(ic.spec))
+}
+
+func (ic *intended) ready(completed map[string]bool) bool {
+	if ic.spec == nil {
+		return true // a declared stub has no deps to satisfy yet
+	}
+	return depsMet(ic.spec, completed)
+}
+
+// buildIntended is the authoritative child set: discovered children (via
+// `parent` relations) unioned with the slugs the initiative declares in its
+// child table. A declared slug with a spec on disk attaches it; one without
+// becomes a needs-scaffold entry — so the run can't short-circuit to done.
+func buildIntended(init *spec.Spec, all []*spec.Spec) []intended {
+	seen := map[string]bool{}
+	var out []intended
+	for _, k := range Children(init, all) {
+		seen[k.Slug] = true
+		out = append(out, intended{slug: k.Slug, spec: k})
+	}
+	for _, slug := range declaredChildSlugs(init) {
+		if seen[slug] {
+			continue
+		}
+		seen[slug] = true
+		out = append(out, intended{slug: slug, spec: specBySlugDrive(all, slug)})
+	}
+	return out
+}
+
+func specBySlugDrive(all []*spec.Spec, slug string) *spec.Spec {
+	for _, s := range all {
+		if s != nil && s.Slug == slug {
+			return s
+		}
+	}
+	return nil
+}
+
+// Check computes the verdict for one turn of an initiative run. It classifies
+// each intended child's design→deliver stage, ANDs verify-status with the
+// needs_me boundary, and returns the next ACTION (design or deliver) — all
+// from on-disk state.
 //
-// v1 signal scope (hero-goal-command): mode, child verify-status, and
-// dependency-readiness drive the verdict. Richer needs_me signals (readiness
-// score, design-fork, irreversible-action, verify-stuck fail counts) await
-// their detectors / the run-ledger in later specs; until then they default
-// to "unknown → safe" and simply do not fire.
-// promoted is the learning hook: reports whether a pause-category has been
-// promoted to auto-proceed for the current user (nil = no promotions).
-// Consulted only in Autonomous mode and only for Promotable categories.
+// Progressive design: an undesigned child routes to `design` (autonomously),
+// never to delivery; the run is not `done` while any intended child —
+// including declared-but-unscaffolded ones — is unfinished. A low score means
+// "design it," not "pause"; only a genuine design fork (raised by the design
+// step) pauses.
+//
+// promoted is the learning hook (nil = no promotions), consulted only in
+// Autonomous mode for Promotable categories.
 func Check(init *spec.Spec, all []*spec.Spec, promoted func(PauseCategory) bool) CheckResult {
 	mode := ParseMode(init.Autonomy)
-	kids := Children(init, all)
 	completed := completedSet(all)
 	res := CheckResult{Verdict: "done", Initiative: init.Slug}
 
-	var pending []*spec.Spec
-	for _, k := range kids {
-		if isCompleted(k) {
-			res.Completed = append(res.Completed, k.Slug)
-		} else {
-			res.Remaining = append(res.Remaining, k.Slug)
-			pending = append(pending, k)
-		}
-	}
-
-	if len(kids) == 0 {
-		// No children: the run condition is the initiative itself verifying.
+	intendeds := buildIntended(init, all)
+	if len(intendeds) == 0 {
 		if isCompleted(init) {
 			return res // done
 		}
@@ -109,106 +164,104 @@ func Check(init *spec.Spec, all []*spec.Spec, promoted func(PauseCategory) bool)
 		res.Pause = &PauseInfo{Category: string(CategoryBlocked), Reason: "initiative has no child specs to run"}
 		return res
 	}
-	if len(pending) == 0 {
-		return res // every child verified → done
-	}
 
-	verdict, next, pause := step(pending, completed, mode, promoted)
-	res.Verdict = verdict
-	if next != nil {
-		res.NextSpec = next.Slug
-		if verdict == "continue" {
-			res.Kickoff = next.Kickoff()
+	var nextI, firstRem *intended
+	var nextStage Stage
+	for i := range intendeds {
+		ic := &intendeds[i]
+		if ic.stage(completed) == StageDone {
+			res.Completed = append(res.Completed, ic.slug)
+			continue
+		}
+		res.Remaining = append(res.Remaining, ic.slug)
+		if firstRem == nil {
+			firstRem = ic
+		}
+		if nextI == nil && ic.ready(completed) {
+			nextI, nextStage = ic, ic.stage(completed)
 		}
 	}
-	res.Pause = pause
-	return res
-}
 
-// step picks the next ready pending child and runs needs_me against it,
-// returning the verdict, the chosen spec, and a pause payload when paused.
-// Shared by Check (one turn) and DryRun (simulated turns).
-func step(pending []*spec.Spec, completed map[string]bool, mode AutonomyMode, promoted func(PauseCategory) bool) (string, *spec.Spec, *PauseInfo) {
-	var next *spec.Spec
-	blocked := false
-	for _, p := range pending {
-		if depsMet(p, completed) {
-			next = p
-			break
-		}
+	if len(res.Remaining) == 0 {
+		return res // every intended child finished → done
 	}
-	if next == nil {
+
+	ctx := RunContext{ActionClassified: true, NextScore: -1, Promoted: promoted}
+	if nextI == nil {
 		// Every remaining child is blocked on an unmet dependency.
-		next = pending[0]
-		blocked = true
+		nextI, nextStage = firstRem, firstRem.stage(completed)
+		ctx.Blocked = true
 	}
 
-	ctx := RunContext{
-		ActionClassified: true,
-		NextScore:        -1, // readiness-score detector deferred
-		Blocked:          blocked,
-		Promoted:         promoted,
+	res.NextSpec = nextI.slug
+	dec := NeedsMe(nextI.spec, ctx, mode)
+	if !dec.Proceed {
+		res.Verdict = "pause"
+		res.Pause = &PauseInfo{Category: string(dec.Category), Reason: dec.Reason}
+		return res
 	}
-	dec := NeedsMe(next, ctx, mode)
-	if dec.Proceed {
-		return "continue", next, nil
+	res.Verdict = "continue"
+	res.Action = ActionForStage(nextStage)
+	if res.Action == ActionDeliver && nextI.spec != nil {
+		res.Kickoff = nextI.spec.Kickoff()
 	}
-	return "pause", next, &PauseInfo{Category: string(dec.Category), Reason: dec.Reason}
+	return res
 }
 
 // DryStep is one simulated transition in a DryRun preview.
 type DryStep struct {
 	Step     int    `json:"step"`
 	Verdict  string `json:"verdict"`
+	Action   string `json:"action,omitempty"`
 	Spec     string `json:"spec,omitempty"`
 	Category string `json:"category,omitempty"`
 	Reason   string `json:"reason,omitempty"`
 }
 
-// DryRun previews up to n transitions Check WOULD take from the current
-// state, optimistically assuming each "continue" child then completes. It
-// stops early on a pause or when the run would be done. No disk writes.
+// DryRun previews up to n transitions Check WOULD take, optimistically
+// assuming each "continue" child then finishes. Stops on a pause or done.
 func DryRun(init *spec.Spec, all []*spec.Spec, n int, promoted func(PauseCategory) bool) []DryStep {
 	mode := ParseMode(init.Autonomy)
-	kids := Children(init, all)
+	intendeds := buildIntended(init, all)
 	completed := completedSet(all)
-
-	// Working pending list (copy; we mutate the simulated completed set).
-	var pending []*spec.Spec
-	for _, k := range kids {
-		if !isCompleted(k) {
-			pending = append(pending, k)
-		}
-	}
 
 	var steps []DryStep
 	for i := 1; i <= n; i++ {
-		if len(pending) == 0 {
+		var nextI *intended
+		var nextStage Stage
+		allDone := true
+		for j := range intendeds {
+			ic := &intendeds[j]
+			if ic.stage(completed) == StageDone {
+				continue
+			}
+			allDone = false
+			if nextI == nil && ic.ready(completed) {
+				nextI, nextStage = ic, ic.stage(completed)
+			}
+		}
+		if allDone {
 			steps = append(steps, DryStep{Step: i, Verdict: "done"})
 			break
 		}
-		verdict, next, pause := step(pending, completed, mode, promoted)
-		ds := DryStep{Step: i, Verdict: verdict}
-		if next != nil {
-			ds.Spec = next.Slug
+		if nextI == nil {
+			steps = append(steps, DryStep{Step: i, Verdict: "pause", Category: string(CategoryBlocked), Reason: "remaining children are blocked on dependencies"})
+			break
 		}
-		if pause != nil {
-			ds.Category = pause.Category
-			ds.Reason = pause.Reason
+		ctx := RunContext{ActionClassified: true, NextScore: -1, Promoted: promoted}
+		dec := NeedsMe(nextI.spec, ctx, mode)
+		ds := DryStep{Step: i, Spec: nextI.slug}
+		if !dec.Proceed {
+			ds.Verdict = "pause"
+			ds.Category = string(dec.Category)
+			ds.Reason = dec.Reason
+			steps = append(steps, ds)
+			break
 		}
+		ds.Verdict = "continue"
+		ds.Action = ActionForStage(nextStage)
 		steps = append(steps, ds)
-		if verdict != "continue" {
-			break // a pause halts the preview, as it would the run
-		}
-		// Optimistically advance: mark next done, drop from pending.
-		completed[next.Slug] = true
-		out := pending[:0]
-		for _, p := range pending {
-			if p.Slug != next.Slug {
-				out = append(out, p)
-			}
-		}
-		pending = out
+		completed[nextI.slug] = true // simulate this child finishing
 	}
 	return steps
 }

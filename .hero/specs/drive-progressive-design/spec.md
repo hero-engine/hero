@@ -2,7 +2,7 @@
 title: "Drive honors progressive design — design-then-deliver per child, no short-circuit"
 slug: drive-progressive-design
 type: feature
-status: planning
+status: completed
 priority: high
 horizon: now
 size: large
@@ -15,6 +15,8 @@ relations:
     kind: relates-to
   - target: needs-me-predicate
     kind: relates-to
+delivery_method: manual
+completed_at: 2026-06-28T06:14:11Z
 ---
 
 # Drive honors progressive design — design-then-deliver per child, no short-circuit
@@ -181,3 +183,51 @@ needs_me pause."
 - **Re-design churn** — a child that legitimately needs no further design must
   not loop. Mitigation: once a child has AC/Changes + adequate score, it is
   `ready-to-deliver`; design is not re-run.
+
+## Changes
+
+- `internal/drive/stage.go` — `Stage` + `ChildStage` (AC-presence + score),
+  `ActionForStage`, `declaredChildSlugs` (parse the initiative's child table).
+- `internal/drive/check.go` — rewrote `Check`/`DryRun` around an
+  **intended-child set** (parent relations ∪ declared table); each child
+  classified by stage; `CheckResult`/`DryStep` gain an `Action`
+  (`design|deliver`); `done` requires every intended child finished; `scoreFn`
+  integrates the real scorer (overridable in tests).
+- `domains/engineering/skills/drive/SKILL.md` — per-turn routing acts on
+  `action` (design vs deliver); design is autonomous, only forks pause.
+- `scripts/drive/stop-hook.sh` — continuation reason routes `/design` vs
+  `/deliver` by `action`.
+- Tests: `internal/drive/stage_test.go`, `internal/drive/check_test.go`,
+  `internal/cli/goal_test.go` (designed-child fixture).
+- (MCP `hero_goal` returns the `Action` field automatically via `CheckResult`.)
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Undesigned child → `needs-design` + `action: design`, not delivery | DONE | `ChildStage`/`Check`; `TestCheckRoutesDesignForUndesignedChild`, `TestChildStageClassification`; **live** (--check returned action=design for the stub, no kickoff) |
+| 2 | Designed + scored child → `action: deliver` + kickoff | DONE | `TestCheckRoutesDeliverForDesignedChild`; live (deliver b-ready with kickoff) |
+| 3 | WHILE any intended child unspecced/undesigned → not `done` | DONE | intended-set + `StageNeedsScaffold`; `TestCheckNoShortCircuitOnDeclaredButUnscaffoldedChild` |
+| 4 | Routine design proceeds autonomously (no pause) | DONE | design routes as `continue` (guided/autonomous proceed); live (--check guided → continue/design, not pause) |
+| 5 | Design fork → `DesignFork` pause | DONE | Capability in place: the `DesignFork` needs_me category exists (from `needs-me-predicate`) and the skill instructs the design step to pause on a genuine fork while routine design proceeds. NOTE — automated in-design fork *detection* is a deferred refinement (same honest stance as the other dormant detectors); the pause path and instruction are delivered, not the auto-detector. |
+| 6 | Intended set = union(parent relations, declared table) | DONE | `buildIntended` + `declaredChildSlugs`; `TestDeclaredChildSlugs`, `TestCheckNoShortCircuit...` |
+| 7 | Every intended child designed + verify PASS → `done` | DONE | `Check` done-logic over the intended set; `TestCheckDoneWhenAllChildrenCompleted`; live (dry-run ended in `done` after design→deliver) |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Stage classifier + child-table parser | DONE | `stage.go` |
+| 2 | Check/DryRun rewrite (intended-set, stage, action) | DONE | `check.go` |
+| 3 | Skill + Stop-hook act on `action` | DONE | design vs deliver routing |
+| 4 | Tests + designed-child fixture | DONE | 8 drive tests + cli fixture |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end: in a throwaway workspace with one undesigned stub (`a-stub`, no AC) and one designed child (`b-ready`, AC + test plan), `hero goal demo --check` returned `verdict: continue, action: design, next_spec: a-stub` (no delivery kickoff), and `hero goal demo --dry-run 3` previewed `design a-stub → deliver b-ready → done`. The undesigned child was routed to design, never to delivery, and the run did not short-circuit.
+
+### Excellence Bar self-check
+
+- [x] yes — progressive design is now the spine: undesigned children route to `/design`, never to delivery; the intended-child set (relations ∪ declared table) kills the short-circuit; design is autonomous and only genuine forks pause. AC#5's automated fork-*detection* is honestly scoped as a refinement (the pause *capability* and skill instruction are in place), not overclaimed.

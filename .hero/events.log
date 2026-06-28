@@ -231,3 +231,7 @@
 {"ts":"2026-06-28T00:13:51.853631Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"drive-autonomy-learning","message":"status -\u003e completed"}
 {"ts":"2026-06-28T00:13:52.702408Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"drive-autonomous-initiative-execution","message":"\"Drive — Autonomous Initiative Execution with a Human-Boundary Predicate\""}
 {"ts":"2026-06-28T00:13:52.702485Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"drive-autonomous-initiative-execution","message":"status -\u003e completed"}
+{"ts":"2026-06-28T05:58:54.585708Z","type":"peer.call.invoked","agent":"hero","slug":"drive-progressive-design","message":"peer call spec-out mode=spec-out target=hero-code call_id=18bd2934e03d2818be5600379d61ac4f"}
+{"ts":"2026-06-28T06:08:54.589216Z","type":"peer.call.completed","agent":"hero","slug":"drive-progressive-design","message":"peer call failed: subagent timed out after 10m0s:  (call_id 18bd2934e03d2818be5600379d61ac4f)"}
+{"ts":"2026-06-28T06:14:12.20456Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"drive-progressive-design","message":"\"Drive honors progressive design — design-then-deliver per child, no short-circuit\""}
+{"ts":"2026-06-28T06:14:12.204634Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"drive-progressive-design","message":"status -\u003e completed"}
