@@ -4,7 +4,7 @@ Hero installs slash command definitions into the user's harness. The
 commands route natural-language work into repeatable workflows and
 delegate to the appropriate agents and skills.
 
-Current installed command definitions: **28**.
+Current installed command definitions: **29**.
 
 ```text
 /design auth flow for OAuth2 providers
@@ -35,6 +35,7 @@ plain natural-language asks are routed to these same workflows.
 | `/diagnose` | Investigate a bug and produce a fix spec. |
 | `/challenge` | Push back on a diagnosis — re-examine the root cause with new context. |
 | `/deliver` | Implement and validate an approved spec. |
+| `/drive` | Run a whole initiative autonomously — design, deliver, and verify its child specs in order, pausing only when a decision genuinely needs you. |
 | `/review` | Review PRs, current changes, security, architecture, tests, or specs. |
 | `/scrub` | Remove quality issues such as dead code, weak types, duplication, stale comments, and legacy cruft. |
 
@@ -77,6 +78,7 @@ plain natural-language asks are routed to these same workflows.
 /design add CSV export for user data
 /diagnose login times out after 30 seconds
 /deliver .hero/planning/features/csv-export/spec.md
+/drive the checkout-redesign initiative
 /review PR #42
 /scrub stale docs and comments
 /handoff
@@ -101,3 +103,6 @@ plain natural-language asks are routed to these same workflows.
   `hero sync comment`.
 - Headless work lives under `hero agent ...`; for example
   `hero agent run`, `hero agent jobs`, and `hero agent approve`.
+- `/drive` runs a whole initiative autonomously; it surrounds your AI tool's
+  own goal-loop rather than replacing it, and is backed by the `hero goal` CLI
+  (`hero goal <initiative> --emit` / `--check` / `--dry-run`).
