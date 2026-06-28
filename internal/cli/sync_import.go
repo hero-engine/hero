@@ -735,7 +735,7 @@ func currentSpecFieldValue(s *spec.Spec, key string) string {
 		return s.Severity
 	default:
 		// Tracker-prefixed fields: read from parsed tracker metadata
-		for _, prefix := range []string{"jira_", "github_", "linear_"} {
+		for _, prefix := range []string{"jira_", "github_", "linear_", "gitlab_"} {
 			if strings.HasPrefix(key, prefix) {
 				field := strings.TrimPrefix(key, prefix)
 				switch field {
