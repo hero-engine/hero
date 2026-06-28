@@ -28,7 +28,7 @@ func TestCheckDoneWhenAllChildrenCompleted(t *testing.T) {
 		mkChild("a", "drive", spec.StatusCompleted),
 		mkChild("b", "drive", spec.StatusCompleted),
 	}
-	res := Check(init, all)
+	res := Check(init, all, nil)
 	if res.Verdict != "done" {
 		t.Fatalf("verdict=%q, want done", res.Verdict)
 	}
@@ -43,7 +43,7 @@ func TestCheckContinueGuided(t *testing.T) {
 		mkChild("a", "drive", spec.StatusCompleted),
 		mkChild("b", "drive", spec.StatusPlanning),
 	}
-	res := Check(init, all)
+	res := Check(init, all, nil)
 	if res.Verdict != "continue" {
 		t.Fatalf("verdict=%q, want continue", res.Verdict)
 	}
@@ -58,7 +58,7 @@ func TestCheckContinueGuided(t *testing.T) {
 func TestCheckPauseSupervised(t *testing.T) {
 	init := mkInit("drive", "supervised")
 	all := []*spec.Spec{init, mkChild("b", "drive", spec.StatusPlanning)}
-	res := Check(init, all)
+	res := Check(init, all, nil)
 	if res.Verdict != "pause" || res.Pause == nil || res.Pause.Category != string(CategorySupervised) {
 		t.Fatalf("want supervised pause, got %+v", res)
 	}
@@ -69,7 +69,7 @@ func TestCheckBlockedWhenDepsUnmet(t *testing.T) {
 	all := []*spec.Spec{init,
 		mkChild("b", "drive", spec.StatusPlanning, "a"), // depends on a, which is not completed
 	}
-	res := Check(init, all)
+	res := Check(init, all, nil)
 	if res.Verdict != "pause" || res.Pause == nil || res.Pause.Category != string(CategoryBlocked) {
 		t.Fatalf("want blocked pause, got %+v", res)
 	}
@@ -77,7 +77,7 @@ func TestCheckBlockedWhenDepsUnmet(t *testing.T) {
 
 func TestCheckNoChildrenPauses(t *testing.T) {
 	init := mkInit("drive", "guided")
-	res := Check(init, []*spec.Spec{init})
+	res := Check(init, []*spec.Spec{init}, nil)
 	if res.Verdict != "pause" || res.Pause == nil {
 		t.Fatalf("initiative with no children should pause, got %+v", res)
 	}
@@ -89,7 +89,7 @@ func TestDryRunGuidedPreviewsThenDone(t *testing.T) {
 		mkChild("a", "drive", spec.StatusPlanning),
 		mkChild("b", "drive", spec.StatusPlanning),
 	}
-	steps := DryRun(init, all, 5)
+	steps := DryRun(init, all, 5, nil)
 	// 2 continues (a, b) then a done step.
 	if len(steps) != 3 {
 		t.Fatalf("steps=%d, want 3 (%+v)", len(steps), steps)
@@ -111,7 +111,7 @@ func TestDryRunSupervisedStopsAtFirst(t *testing.T) {
 		mkChild("a", "drive", spec.StatusPlanning),
 		mkChild("b", "drive", spec.StatusPlanning),
 	}
-	steps := DryRun(init, all, 3)
+	steps := DryRun(init, all, 3, nil)
 	if len(steps) != 1 || steps[0].Verdict != "pause" {
 		t.Fatalf("supervised dry-run should pause at first step, got %+v", steps)
 	}

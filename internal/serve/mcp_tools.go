@@ -1271,9 +1271,9 @@ func (s *MCPServer) toolGoal(args map[string]interface{}) (string, error) {
 
 	switch {
 	case check:
-		return goalJSON(drive.Check(init, all))
+		return goalJSON(drive.Check(init, all, nil))
 	case dryRun > 0:
-		return goalJSON(drive.DryRun(init, all, dryRun))
+		return goalJSON(drive.DryRun(init, all, dryRun, nil))
 	default:
 		bySlug := make(map[string]*spec.Spec, len(all))
 		for _, sp := range all {

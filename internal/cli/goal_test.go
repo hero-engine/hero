@@ -148,3 +148,48 @@ func TestGoalPauseWritesQuestionThenResumesOnAnswer(t *testing.T) {
 		t.Fatalf("should resume to continue after answer, got:\n%s", out4)
 	}
 }
+
+func TestGoalAnswerRecordsOutcomeAndTrust(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("planning/initiatives/drive/spec.md", goalInitiative) // guided
+	env.addSpec("planning/initiatives/drive/child-a/spec.md", goalChildA)
+
+	// Seed a ledger with a *promotable* pause (DesignFork) at child-a.
+	driveDir := filepath.Join(env.heroDir, "drive")
+	if err := os.MkdirAll(driveDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	ledgerJSON := `{"initiative":"drive","pause":{"spec":"child-a","category":"DesignFork","reason":"pick an approach"}}`
+	if err := os.WriteFile(filepath.Join(driveDir, "drive.json"), []byte(ledgerJSON), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Answer it: records an approved outcome for DesignFork + a feed event.
+	if _, err := runCmd("goal", "drive", "--answer", "go with option A"); err != nil {
+		t.Fatalf("answer: %v", err)
+	}
+	// Event logged.
+	if b, _ := os.ReadFile(filepath.Join(env.heroDir, "events.log")); !strings.Contains(string(b), "drive.pause_outcome") {
+		t.Errorf("pause outcome not logged to events.log, got:\n%s", b)
+	}
+	// --trust reflects the recorded DesignFork streak.
+	out, err := runCmd("goal", "drive", "--trust")
+	if err != nil {
+		t.Fatalf("trust: %v", err)
+	}
+	if !strings.Contains(out, "DesignFork") {
+		t.Errorf("--trust should show the recorded DesignFork category, got:\n%s", out)
+	}
+
+	// --untrust resets it.
+	if _, err := runCmd("goal", "drive", "--untrust", "DesignFork"); err != nil {
+		t.Fatalf("untrust: %v", err)
+	}
+	out2, err := runCmd("goal", "drive", "--trust")
+	if err != nil {
+		t.Fatalf("trust 2: %v", err)
+	}
+	if strings.Contains(out2, "DesignFork") {
+		t.Errorf("--untrust should have removed DesignFork, got:\n%s", out2)
+	}
+}
