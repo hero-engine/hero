@@ -396,6 +396,7 @@ func generateEngineeringAgentsMdBody(paths contentPathsForBody) string {
 	sb.WriteString("| Bug, error, broken, fix, investigate, diagnose | `/diagnose` |\n")
 	sb.WriteString("| New feature, build, design, add, plan | `/design` |\n")
 	sb.WriteString("| Implement, deliver, ship, code, execute | `/deliver` |\n")
+	sb.WriteString("| Autopilot/run a whole initiative, \"put X on autopilot\", \"drive the initiative\", keep working autonomously | `/drive <initiative>` |\n")
 	sb.WriteString("| Review, PR, pull request, code review | `/review` |\n")
 	sb.WriteString("| Break down, decompose, epic, sequence | `/compose` |\n")
 	sb.WriteString("| Convention, pattern, standard, style | `/convention` |\n")
