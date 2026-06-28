@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-27T23:51:27Z · 88 ready specs_
+_Generated: 2026-06-28T00:02:20Z · 88 ready specs_
 
 ## flat-named-spec-discovery — "Flat-named spec files are invisible to discovery — verify can't resolve initiative children"
 _bug · delivering · horizon: now_
@@ -475,19 +475,19 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## drive-pause-resume — "Pause-as-question + resume — a precise question to disk, resumable cold"
+## drive-autonomy-learning — "Rubber-stamp learning — promote always-approved pauses to auto-proceed"
 _feature · planning · horizon: next_
 
-When `hero goal --check` returns `pause`
-([hero-goal-command](../hero-goal-command/spec.md)), write a structured
-question to the user's handoff file (`.hero/NEXT.md` solo, `.hero/next/<user>.md`
-team) and to a run-ledger that records where the run is. Enrich the existing
-`hero next` / checkpoint machinery
-([internal/cli/next.go](../../../../../internal/cli/next.go)) rather than
-inventing a new file. Resume = human answers, run is re-armed, `--check`
-reads ledger + answer and continues. All state on disk so a cold process
-resumes identically. Reuse the `next` projection so the question travels
-with commits like other handoff state.
+Record every pause → outcome as an event (reuse the existing event/feed
+infra, [internal/serve/team_coordination.go](../../../../../internal/serve/team_coordination.go)
+and `hero_event`): `{user, initiative, category, outcome: approved-unchanged
+| edited | redirected}`. Maintain a per-(user, category[, initiative])
+promotion state: K consecutive `approved-unchanged` → `promoted`; any
+`edited`/`redirected` → demote and reset. `NeedsMe`
+([needs-me-predicate](../needs-me-predicate/spec.md)) consults promotion
+state in `autonomous` mode only, and **never** for hard-pause guardrails
+(irreversible, hard cap). Surface promotions so they're visible and
+reversible. Start with K conservative (e.g. 3) and config-tunable.
 
 ---
 

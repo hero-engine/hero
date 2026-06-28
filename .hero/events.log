@@ -225,3 +225,5 @@
 {"ts":"2026-06-27T23:44:49.878491Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"hero-goal-command","message":"status -\u003e completed"}
 {"ts":"2026-06-27T23:51:10.830672Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"drive-command-routing","message":"\"`/drive` command + natural-language routing + `/deliver`-on-initiative fallback\""}
 {"ts":"2026-06-27T23:51:10.830757Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"drive-command-routing","message":"status -\u003e completed"}
+{"ts":"2026-06-28T00:02:08.080957Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"drive-pause-resume","message":"\"Pause-as-question + resume — a precise question to disk, resumable cold\""}
+{"ts":"2026-06-28T00:02:08.081042Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"drive-pause-resume","message":"status -\u003e completed"}

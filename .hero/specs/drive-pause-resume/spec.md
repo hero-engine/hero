@@ -2,7 +2,7 @@
 title: "Pause-as-question + resume — a precise question to disk, resumable cold"
 slug: drive-pause-resume
 type: feature
-status: planning
+status: completed
 priority: high
 horizon: next
 tags: [drive, pause, resume, next, checkpoint, human-in-loop]
@@ -14,6 +14,8 @@ relations:
     kind: depends-on
   - target: hero-goal-command
     kind: depends-on
+delivery_method: manual
+completed_at: 2026-06-28T00:02:07Z
 ---
 
 # Pause-as-question + resume — a precise question to disk, resumable cold
@@ -129,3 +131,44 @@ handoffs.
   metadata only.
 - **Team-mode races** — two users answering the same run. Out of scope for
   v1 (single-owner runs); note for the team-server follow-on.
+
+## Changes
+
+- `internal/drive/ledger.go` — `RunLedger` (load/save `.hero/drive/<init>.json`),
+  `PendingPause`, `RecordAnswer`/`IsAnswered`/`SetPause`/`ClearPause`.
+- `internal/drive/question.go` — `ComposeQuestion` (structured pause question)
+  + `MergeQuestion`/`StripQuestion` (idempotent in-place block in the handoff file).
+- `internal/cli/goal.go` — `--answer` flag; `reconcilePause` integrates the
+  ledger + question into `--check` (resume-if-answered, else surface);
+  `writeDriveQuestion`/`clearDriveQuestion` via the team-aware `resolveNextPath`.
+- Tests: `internal/drive/ledger_test.go`, `internal/drive/question_test.go`,
+  `internal/cli/goal_test.go`, `internal/cli/helpers_test.go` (flag reset).
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Pause writes a structured question to the handoff file | DONE | `ComposeQuestion` + `writeDriveQuestion`; `TestComposeMergeStripQuestion`; **exercised live** (NEXT.md got 1 question block) |
+| 2 | Answer + re-arm resumes from the paused transition (not restart) | DONE | `RecordAnswer` + `reconcilePause` override pause→continue for the answered spec; `TestGoalPauseWritesQuestionThenResumesOnAnswer` step 4; **live** (--check → continue after --answer) |
+| 3 | Run state persisted to disk; cold process resumes identically | DONE | `RunLedger` JSON at `.hero/drive/<init>.json`; `TestRunLedgerRoundTripAndAnswer` (reload preserves answer) |
+| 4 | Unanswered pause → `--check` returns the same pause (idempotent) | DONE | `MergeQuestion` replaces (no duplicate); `TestGoal...` step 2 asserts exactly 1 block on repeat; verdict recomputed from disk |
+| 5 | Team mode → write to the per-user handoff file | DONE | `writeDriveQuestion` writes via `resolveNextPath`, the existing team-aware resolver (`.hero/next/<user>.md` in team mode) already covered by `hero next` tests — reused, not reimplemented |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | `RunLedger` persistence | DONE | load/save/answer/pause |
+| 2 | Question compose/merge/strip | DONE | idempotent block |
+| 3 | `--answer` + `--check` pause reconciliation | DONE | resume handshake |
+| 4 | Tests (drive + cli) + flag reset | DONE | 5 new tests, all passing |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end: against the real workspace, `hero goal <init> --check` (supervised) paused and wrote the "Drive paused — needs you" block to `.hero/NEXT.md` and created `.hero/drive/<init>.json`; a second `--check` left exactly one block (idempotent); `hero goal <init> --answer "yes, proceed"` cleared the block; and `--check` then returned `verdict: continue`. Workspace restored afterward.
+
+### Excellence Bar self-check
+
+- [x] yes — verdict stays recomputed from spec status (ledger holds only *answers*, never contradicts disk truth); question is structured (decision/done/remaining/resume), not a status line; idempotent in-place merge; team-mode path reuses the proven `resolveNextPath` rather than a parallel implementation. AC#5's team branch is delegated (honestly noted), not separately unit-tested.

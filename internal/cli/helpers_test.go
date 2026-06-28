@@ -183,6 +183,12 @@ func resetFlags() {
 	searchSince = ""
 	searchListOnly = false
 
+	// Reset goal flags
+	goalCheck = false
+	goalEmit = false
+	goalDryRun = 0
+	goalAnswer = ""
+
 	// Reset install flags
 	installTarget = ""
 	installForce = false

@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -83,5 +85,66 @@ func TestGoalRejectsNonInitiative(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "not an initiative") {
 		t.Errorf("error should explain it needs an initiative, got: %v", err)
+	}
+}
+
+const goalSupervisedInitiative = `---
+title: Drive
+type: initiative
+status: planning
+autonomy: supervised
+horizon: now
+---
+# Drive
+
+## Goal
+
+Run all the children to completion.
+`
+
+func TestGoalPauseWritesQuestionThenResumesOnAnswer(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("planning/initiatives/drive/spec.md", goalSupervisedInitiative)
+	env.addSpec("planning/initiatives/drive/child-a/spec.md", goalChildA)
+
+	// 1. --check pauses (supervised), writes the question + ledger.
+	out, err := runCmd("goal", "drive", "--check")
+	if err != nil {
+		t.Fatalf("check: %v", err)
+	}
+	if !strings.Contains(out, `"verdict": "pause"`) {
+		t.Fatalf("supervised should pause, got:\n%s", out)
+	}
+	nextPath := filepath.Join(env.heroDir, "NEXT.md")
+	if b, _ := os.ReadFile(nextPath); !strings.Contains(string(b), "Drive paused") {
+		t.Errorf("pause question not written to NEXT.md, got:\n%s", b)
+	}
+	if _, statErr := os.Stat(filepath.Join(env.heroDir, "drive", "drive.json")); statErr != nil {
+		t.Errorf("run ledger not written: %v", statErr)
+	}
+
+	// 2. Idempotent: a second --check still pauses, one question block.
+	if _, err := runCmd("goal", "drive", "--check"); err != nil {
+		t.Fatalf("check 2: %v", err)
+	}
+	if b, _ := os.ReadFile(nextPath); strings.Count(string(b), "Drive paused — needs you") != 1 {
+		t.Errorf("question should not duplicate on repeated check:\n%s", b)
+	}
+
+	// 3. Answer clears the question.
+	if _, err := runCmd("goal", "drive", "--answer", "go ahead"); err != nil {
+		t.Fatalf("answer: %v", err)
+	}
+	if b, _ := os.ReadFile(nextPath); strings.Contains(string(b), "Drive paused") {
+		t.Errorf("question should be cleared after answer, got:\n%s", b)
+	}
+
+	// 4. --check now resumes (continue) past the answered transition.
+	out4, err := runCmd("goal", "drive", "--check")
+	if err != nil {
+		t.Fatalf("check 4: %v", err)
+	}
+	if !strings.Contains(out4, `"verdict": "continue"`) {
+		t.Fatalf("should resume to continue after answer, got:\n%s", out4)
 	}
 }

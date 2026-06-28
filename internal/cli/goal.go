@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/hero-engine/hero/internal/config"
@@ -17,6 +18,7 @@ var (
 	goalCheck  bool
 	goalEmit   bool
 	goalDryRun int
+	goalAnswer string
 )
 
 var goalCmd = &cobra.Command{
@@ -39,6 +41,7 @@ func init() {
 	goalCmd.Flags().BoolVar(&goalCheck, "check", false, "emit one-turn verdict as JSON")
 	goalCmd.Flags().BoolVar(&goalEmit, "emit", false, "print the run condition (default action)")
 	goalCmd.Flags().IntVar(&goalDryRun, "dry-run", 0, "preview the next N transitions (e.g. --dry-run 3)")
+	goalCmd.Flags().StringVar(&goalAnswer, "answer", "", "clear the open pause with your decision, so the run resumes")
 }
 
 func runGoal(cmd *cobra.Command, args []string) error {
@@ -65,8 +68,29 @@ func runGoal(cmd *cobra.Command, args []string) error {
 
 	w := cmd.OutOrStdout()
 	switch {
+	case goalAnswer != "":
+		led, lerr := drive.LoadLedger(heroDir, init.Slug)
+		if lerr != nil {
+			return lerr
+		}
+		paused, ok := led.RecordAnswer(goalAnswer)
+		if !ok {
+			return fmt.Errorf("no open Drive pause for %q to answer", init.Slug)
+		}
+		if err := led.Save(); err != nil {
+			return err
+		}
+		if err := clearDriveQuestion(heroDir, cfg); err != nil {
+			return err
+		}
+		fmt.Fprintf(w, "Recorded your answer for %s — re-run `/drive %s` (or `hero goal %s --check`) to resume.\n", paused, init.Slug, init.Slug)
+		return nil
 	case goalCheck:
-		return goalEmitJSON(w, drive.Check(init, all))
+		res := drive.Check(init, all)
+		if err := reconcilePause(heroDir, cfg, init.Slug, all, &res); err != nil {
+			return err
+		}
+		return goalEmitJSON(w, res)
 	case goalDryRun > 0:
 		return goalEmitJSON(w, drive.DryRun(init, all, goalDryRun))
 	default: // emit
@@ -87,4 +111,84 @@ func goalEmitJSON(w io.Writer, v any) error {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	return enc.Encode(v)
+}
+
+// reconcilePause persists a Drive run's pause/resume state against the
+// verdict. On a pause it either resumes (if the human already answered this
+// transition) or writes the question to the handoff file; on continue/done it
+// clears any stale pause + question. Mutates res when resuming.
+func reconcilePause(heroDir string, cfg config.Config, initSlug string, all []*spec.Spec, res *drive.CheckResult) error {
+	led, err := drive.LoadLedger(heroDir, initSlug)
+	if err != nil {
+		return err
+	}
+
+	if res.Verdict == "pause" && res.Pause != nil {
+		// Resume: the human already cleared this exact transition.
+		if led.IsAnswered(res.NextSpec) {
+			res.Verdict = "continue"
+			res.Pause = nil
+			if next := specBySlug(all, res.NextSpec); next != nil {
+				res.Kickoff = next.Kickoff()
+			}
+			led.ClearPause()
+			if err := led.Save(); err != nil {
+				return err
+			}
+			return clearDriveQuestion(heroDir, cfg)
+		}
+		// Otherwise record the open question and surface it.
+		led.SetPause(&drive.PendingPause{Spec: res.NextSpec, Category: res.Pause.Category, Reason: res.Pause.Reason})
+		if err := led.Save(); err != nil {
+			return err
+		}
+		return writeDriveQuestion(heroDir, cfg, initSlug, *res)
+	}
+
+	// continue / done — clear any stale pause + lingering question.
+	if led.Pause != nil {
+		led.ClearPause()
+		if err := led.Save(); err != nil {
+			return err
+		}
+	}
+	return clearDriveQuestion(heroDir, cfg)
+}
+
+func specBySlug(all []*spec.Spec, slug string) *spec.Spec {
+	for _, s := range all {
+		if s.Slug == slug {
+			return s
+		}
+	}
+	return nil
+}
+
+// writeDriveQuestion merges the pause question into the team-aware handoff
+// file (NEXT.md solo, .hero/next/<user>.md in team mode).
+func writeDriveQuestion(heroDir string, cfg config.Config, initSlug string, res drive.CheckResult) error {
+	path := resolveNextPath(heroDir, cfg)
+	prior, _ := os.ReadFile(path)
+	merged := drive.MergeQuestion(string(prior), drive.ComposeQuestion(initSlug, res))
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(path, []byte(merged), 0o644)
+}
+
+// clearDriveQuestion strips any drive-pause block from the handoff file.
+func clearDriveQuestion(heroDir string, cfg config.Config) error {
+	path := resolveNextPath(heroDir, cfg)
+	prior, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	stripped := drive.StripQuestion(string(prior))
+	if stripped == string(prior) {
+		return nil
+	}
+	return os.WriteFile(path, []byte(stripped), 0o644)
 }
