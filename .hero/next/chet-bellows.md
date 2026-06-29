@@ -1,8 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-28T18:01:08Z
-updated: 2026-06-25T00:02:19Z
-updated: 2026-06-24T23:59:33Z
+updated: 2026-06-28T20:17:29Z
 repo: hero-engine/hero
 ---
 
@@ -10,18 +8,16 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> new thing to explore - i see a ton about loops and using loops - i can do some research and paste if needed, but you can probably find the top repos and articles on loop programming with AI - and i get it - but havent tried to set it up - feels like something hero would be very good at facilitating - research and figure out if and how that fits in? seems like could have hero drive a loop and get a…
-> Deliver mock-export-cli: add hero export mocks <destination> with fail/skip/overwrite/merge/interactive behavior, tests, audit, and verification.
-
-_possibly stale — 5 commit(s) since, last set 46m ago_
+> Deliver the `tracker-fixtures` initiative's two children in this repo (the hero Go CLI).
+> Specs are committed under .hero/planning/: the `tracker-fixtures` initiative +
+> `mock-tracker-server` + `gitlab-tracker-support`. Read all three first.
+> Cross-repo contract — read these two specs in the sibling hero-code repo before starting;
+> they define the shared interfaces you must match:
+>   /Users/bwheeler/…
 
 ## Suggested next prompt
 
-> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
-
-_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
-
-_Source: auto-derived from open feature — `hero next suggest "..."` to override._
+_(none — `hero next suggest "..."` to set, or open a Feature to derive one)_
 
 ## Recent reflections
 
