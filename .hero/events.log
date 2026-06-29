@@ -244,3 +244,5 @@
 {"ts":"2026-06-28T06:14:12.20456Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"drive-progressive-design","message":"\"Drive honors progressive design — design-then-deliver per child, no short-circuit\""}
 {"ts":"2026-06-28T06:14:12.204634Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"drive-progressive-design","message":"status -\u003e completed"}
 {"ts":"2026-06-28T07:09:55.13497Z","type":"peer.handoff.sent","agent":"hero","slug":"native-drive-for-hero-code","message":"handed off to hero-code/native-drive-for-hero-code (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)"}
+{"ts":"2026-06-28T18:36:15.811435Z","type":"peer.handoff.received","agent":"hero","slug":"mock-tracker-server-2","message":"received from hero-code/mock-tracker-server (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)"}
+{"ts":"2026-06-28T18:36:15.888296Z","type":"peer.handoff.received","agent":"hero","slug":"gitlab-tracker-support-2","message":"received from hero-code/gitlab-tracker-support (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)"}
