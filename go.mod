@@ -4,7 +4,7 @@ go 1.26.4
 
 require (
 	github.com/BurntSushi/toml v1.6.0
-	github.com/bdwheeler/sprout/go v0.0.0-00010101000000-000000000000
+	github.com/bdwheeler/sprout/go v0.1.0
 	github.com/google/uuid v1.6.0
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/crypto v0.50.0
@@ -13,11 +13,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.53.0
 )
-
-// sprout-Go is the shipped seeding engine, not yet published. The
-// mock-tracker-server (cmd/) is the only consumer; it never links into
-// the main hero binary.
-replace github.com/bdwheeler/sprout/go => /Users/bwheeler/projects/personal/repository/sprout/go
 
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
