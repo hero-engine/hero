@@ -17,6 +17,26 @@ the CLI layer too.)
 asked for. This preserves session intent across compaction — see the
 `next-handoff-emit` skill for the full pattern (ask / suggest / reflection).
 
+## Definition of done
+
+A delivery is **not** finished until `hero spec verify <slug>` passes — and
+verify requires the cold audit (step 6 below) to have run first. Until that
+gate passes the work is in-flight, not delivered: do not report "done," do not
+suggest next steps, and do not leave the spec in `planning`/`delivering` with
+the audit unrun.
+
+The closing gates — cold audit → `hero spec verify` — run in the **same turn**
+as the implementation. They are not a follow-up the user triggers later. If you
+catch yourself about to say "the audit still needs to run" or "I didn't mark it
+complete because the gate hasn't run," that is the signal to **run the gate
+now**, not to yield.
+
+This holds in **every** mode, including the default supervised mode. The
+persistence rule below (`agent-reliability` — "Persistence on continuous
+tasks") is not autopilot-only: reaching the closing gates before you yield is
+mandatory regardless of mode. "Pause at handoffs" does not include the closing
+gates — they are part of finishing, not a decision to surface.
+
 ## Delivery modes
 
 Parse the mode from the user's invocation. If no mode is specified, default
@@ -24,7 +44,7 @@ to **supervised**.
 
 | Flag | Behavior |
 |---|---|
-| `--supervised` (default) | Pause at handoffs, surface decisions, ask before destructive actions. Current behavior. |
+| `--supervised` (default) | Pause at handoffs, surface decisions, ask before destructive actions. The closing gates (cold audit → `hero spec verify`) are NOT handoffs — run them before yielding, never stop short and hand back with the audit unrun. |
 | `--autopilot` | Run to completion without intermediate confirmations. Stop only on test failure, drift warning, boundary violation, or any non-`DONE` Completion Ledger item (PARTIAL, SKIPPED, BLOCKED). |
 | `--dry-run` | Run analysis and planning. Produce a delivery plan (file list, agent assignments, estimated changes) but write NO code. |
 

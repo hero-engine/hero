@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-06-28T20:17:29Z
+updated: 2026-06-29T19:03:10Z
 repo: hero-engine/hero
 ---
 
@@ -8,12 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver the `tracker-fixtures` initiative's two children in this repo (the hero Go CLI).
-> Specs are committed under .hero/planning/: the `tracker-fixtures` initiative +
-> `mock-tracker-server` + `gitlab-tracker-support`. Read all three first.
-> Cross-repo contract — read these two specs in the sibling hero-code repo before starting;
-> they define the shared interfaces you must match:
->   /Users/bwheeler/…
+> using hero in my hydra project and i keep getting messages like this where codex is not running audits at the end and leaving specs in planning after doing work - do we have any gaps or loose language that might be allowing it to not understand it needs to audit? project is at ~/projects/personal/repository/hyrdra - and this is message: Caveat: this is validated with Hydra’s in-process TCP AMQP …
 
 ## Suggested next prompt
 
