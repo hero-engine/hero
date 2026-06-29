@@ -2,7 +2,7 @@
 title: "GitLab Tracker Support — Issues/Epics/Milestones/Iterations Round-Trip"
 slug: gitlab-tracker-support
 type: feature
-status: planning
+status: completed
 priority: high
 horizon: next
 tags: [tracker, gitlab, sync, round-trip]
