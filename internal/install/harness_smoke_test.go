@@ -46,6 +46,11 @@ func TestHarness_SmokeClaude(t *testing.T) {
 	h.mustContain("AGENTS.md", "hero:managed-start")
 	h.mustBeRegularFile("CLAUDE.md")
 	h.mustContain("CLAUDE.md", "hero:managed-start")
+	// The closing-gate terminal contract lives in the shared body, so it
+	// reaches the always-loaded root file for every target — not just
+	// Codex's AGENTS.md. Assert it on the Claude CLAUDE.md path.
+	h.mustContain("CLAUDE.md", "Finish the closing gate before yielding")
+	h.mustContain("AGENTS.md", "Finish the closing gate before yielding")
 
 	// Sanity: result records copies.
 	if len(res.Copied) == 0 {
@@ -113,6 +118,10 @@ func TestHarness_SmokeCodex(t *testing.T) {
 	// Target-aware AGENTS.md section tells Codex how to execute workflows.
 	h.mustContain("AGENTS.md", "Running Hero Workflows in Codex")
 	h.mustContain("AGENTS.md", "command-deliver/SKILL.md")
+	// Terminal-state contract: a delivery is not finished until the closing
+	// gate runs — the agent must run it, not yield with it unrun.
+	h.mustContain("AGENTS.md", "not finished until its closing gate runs")
+	h.mustContain("AGENTS.md", "run it now instead")
 	h.mustBeRegularFile(".codex/hooks.json")
 
 	if len(res.Copied) == 0 {

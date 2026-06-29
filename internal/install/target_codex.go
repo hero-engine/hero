@@ -33,9 +33,12 @@ import (
 // Hero implementation:
 //   - Renders canonical agents (markdown) into TOML via
 //     renderCodexAgentToml. Cannot symlink — format differs.
-//   - Symlinks (or renders fallback copy) canonical skills into BOTH
-//     .agents/skills/ (preferred) AND .codex/skills/ (back-compat).
-//   - Does NOT install commands at any scope (no loader exists).
+//   - Writes canonical skills (a rendered copy, not a symlink) into
+//     .agents/skills/ — the preferred repo-walk path the Codex loader
+//     reads. Does not write the deprecated .codex/skills/ config-layer
+//     path.
+//   - Installs commands as skills under .agents/skills/command-<name>/
+//     (Codex has no command loader — SlashCommand is a built-in enum).
 //   - Cleans up dead bytes from prior installs at .codex/agents/*.md
 //     and .codex/commands/*.
 
