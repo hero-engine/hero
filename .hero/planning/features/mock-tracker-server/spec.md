@@ -2,7 +2,7 @@
 title: "Mock Tracker Server — Offline Multi-Tracker HTTP Fake with Drift Injection"
 slug: mock-tracker-server
 type: feature
-status: planning
+status: completed
 priority: high
 horizon: next
 tags: [tracker, mock-server, fixtures, testing, round-trip]
