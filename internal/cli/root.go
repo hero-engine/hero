@@ -124,6 +124,7 @@ func init() {
 	rootCmd.AddCommand(pipelineCmd)
 	rootCmd.AddCommand(loginCmd)
 	rootCmd.AddCommand(logoutCmd)
+	rootCmd.AddCommand(cloudCmd)
 	rootCmd.AddCommand(jobRunCmd)
 	rootCmd.AddCommand(specCmd)
 	rootCmd.AddCommand(domainCmd)
