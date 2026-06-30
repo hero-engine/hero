@@ -37,11 +37,13 @@ Examples:
 var (
 	syncCloudFull   bool
 	syncCloudStatus bool
+	syncCloudOrg    string
 )
 
 func init() {
 	syncCloudCmd.Flags().BoolVar(&syncCloudFull, "full", false, "include full spec body content")
 	syncCloudCmd.Flags().BoolVar(&syncCloudStatus, "status", false, "show sync status without pushing")
+	syncCloudCmd.Flags().StringVar(&syncCloudOrg, "org", "", "org id, name, or slug to sync into (required when you belong to more than one org)")
 }
 
 // cloudSpec is the payload sent to the cloud sync endpoint.
@@ -135,7 +137,7 @@ func runSyncCloud(cmd *cobra.Command, args []string) error {
 
 	// Determine org and repo from config or credentials
 	cloudURL := cloudBaseURL()
-	orgID, repoID, err := resolveCloudTarget(cfg, token, cloudURL)
+	orgID, repoID, err := resolveCloudTarget(cfg, token, cloudURL, projectRoot, syncCloudOrg)
 	if err != nil {
 		return fmt.Errorf("resolving cloud target: %w", err)
 	}
@@ -181,14 +183,27 @@ func runSyncCloud(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// cloudOrg is one entry of the org list response.
+type cloudOrg struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Slug string `json:"slug"`
+}
+
 // resolveCloudTarget determines the org_id and repo_id for sync.
-// It checks cloud config in hero.json first, then falls back to listing orgs.
-func resolveCloudTarget(cfg config.Config, token, cloudURL string) (string, string, error) {
+//
+// It checks cloud config in hero.json first; when both ids are present
+// it short-circuits and performs no network calls. Otherwise it lists
+// the user's orgs (honoring an explicit --org selector), find-or-creates
+// a repo, and on success writes both ids back into hero.json so the next
+// sync reads them from config without re-listing. The write-back is
+// idempotent: it only persists when the resolved ids differ from what's
+// already in config.
+func resolveCloudTarget(cfg config.Config, token, cloudURL, projectRoot, orgSelector string) (string, string, error) {
 	if cfg.Cloud != nil && cfg.Cloud.OrgID != "" && cfg.Cloud.RepoID != "" {
 		return cfg.Cloud.OrgID, cfg.Cloud.RepoID, nil
 	}
 
-	// Fall back to listing user's orgs and picking the first one
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	req, err := http.NewRequest("GET", cloudURL+"/api/v1/orgs", nil)
@@ -208,19 +223,17 @@ func resolveCloudTarget(cfg config.Config, token, cloudURL string) (string, stri
 	}
 
 	var orgsResp struct {
-		Orgs []struct {
-			ID   string `json:"id"`
-			Name string `json:"name"`
-		} `json:"orgs"`
+		Orgs []cloudOrg `json:"orgs"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&orgsResp); err != nil {
 		return "", "", err
 	}
-	if len(orgsResp.Orgs) == 0 {
-		return "", "", fmt.Errorf("no orgs found — create one at Hero Cloud first")
-	}
 
-	orgID := orgsResp.Orgs[0].ID
+	org, err := selectOrg(orgsResp.Orgs, orgSelector)
+	if err != nil {
+		return "", "", err
+	}
+	orgID := org.ID
 
 	// List repos in the org, try to find one matching the project name
 	req, err = http.NewRequest("GET", fmt.Sprintf("%s/api/v1/orgs/%s/repos", cloudURL, orgID), nil)
@@ -249,12 +262,14 @@ func resolveCloudTarget(cfg config.Config, token, cloudURL string) (string, stri
 	projectName := projectDirName()
 	for _, r := range reposResp.Repos {
 		if strings.EqualFold(r.Name, projectName) {
+			persistCloudTarget(cfg, projectRoot, orgID, r.ID)
 			return orgID, r.ID, nil
 		}
 	}
 
 	// If only one repo, use it
 	if len(reposResp.Repos) == 1 {
+		persistCloudTarget(cfg, projectRoot, orgID, reposResp.Repos[0].ID)
 		return orgID, reposResp.Repos[0].ID, nil
 	}
 
@@ -280,8 +295,64 @@ func resolveCloudTarget(cfg config.Config, token, cloudURL string) (string, stri
 		return "", "", fmt.Errorf("parsing new repo: %w", err)
 	}
 
-	fmt.Printf("Created repo '%s' in org '%s'\n", projectName, orgsResp.Orgs[0].Name)
+	fmt.Printf("Created repo '%s' in org '%s'\n", projectName, org.Name)
+	persistCloudTarget(cfg, projectRoot, orgID, newRepo.ID)
 	return orgID, newRepo.ID, nil
+}
+
+// selectOrg picks one org from the listed set.
+//
+//   - selector set: match by id first, then case-insensitive name/slug;
+//     error if no org matches.
+//   - selector empty, exactly one org: take it.
+//   - selector empty, more than one org: error with the --org hint
+//     rather than silently taking the first.
+func selectOrg(orgs []cloudOrg, selector string) (cloudOrg, error) {
+	if len(orgs) == 0 {
+		return cloudOrg{}, fmt.Errorf("no orgs found — run 'hero cloud create-org <name>' to create one")
+	}
+
+	if selector != "" {
+		for _, o := range orgs {
+			if o.ID == selector {
+				return o, nil
+			}
+		}
+		for _, o := range orgs {
+			if strings.EqualFold(o.Name, selector) || (o.Slug != "" && strings.EqualFold(o.Slug, selector)) {
+				return o, nil
+			}
+		}
+		return cloudOrg{}, fmt.Errorf("no org matching %q — you belong to: %s", selector, orgNames(orgs))
+	}
+
+	if len(orgs) == 1 {
+		return orgs[0], nil
+	}
+
+	return cloudOrg{}, fmt.Errorf("you belong to %d orgs — pass --org <id-or-name> to choose one: %s", len(orgs), orgNames(orgs))
+}
+
+// orgNames renders a human-readable list of orgs for error messages.
+func orgNames(orgs []cloudOrg) string {
+	names := make([]string, 0, len(orgs))
+	for _, o := range orgs {
+		names = append(names, o.Name)
+	}
+	return strings.Join(names, ", ")
+}
+
+// persistCloudTarget writes the resolved org/repo ids back to hero.json,
+// but only when they differ from what's already in config — keeping the
+// write idempotent so routine syncs don't churn the working tree.
+func persistCloudTarget(cfg config.Config, projectRoot, orgID, repoID string) {
+	if cfg.Cloud != nil && cfg.Cloud.OrgID == orgID && cfg.Cloud.RepoID == repoID {
+		return
+	}
+	cfg.Cloud = &config.CloudConfig{OrgID: orgID, RepoID: repoID}
+	if err := cfg.Save(projectRoot); err != nil {
+		fmt.Printf("warning: failed to persist cloud target to hero.json: %v\n", err)
+	}
 }
 
 func projectDirName() string {

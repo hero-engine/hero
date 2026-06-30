@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -32,6 +33,40 @@ var logoutCmd = &cobra.Command{
 	RunE:  runLogout,
 }
 
+// loginCallbackPort, when non-empty, pins the OAuth callback server to a
+// fixed port instead of letting the OS assign a free one. It can also be
+// set via HERO_CALLBACK_PORT.
+var loginCallbackPort string
+
+func init() {
+	loginCmd.Flags().StringVar(&loginCallbackPort, "callback-port", "", "pin the local OAuth callback port (default: OS-assigned free port; env: HERO_CALLBACK_PORT)")
+}
+
+// callbackListener binds the local OAuth callback server.
+//
+// Precedence: --callback-port flag, then HERO_CALLBACK_PORT env, then an
+// OS-assigned free port (127.0.0.1:0). Binding :0 means concurrent
+// `hero login` runs never collide on a fixed port. Returns the listener
+// and the actual bound port, which the cloud uses to redirect the
+// browser back after OAuth.
+func callbackListener(flagPort string) (net.Listener, int, error) {
+	port := flagPort
+	if port == "" {
+		port = os.Getenv("HERO_CALLBACK_PORT")
+	}
+
+	addr := "127.0.0.1:0"
+	if port != "" {
+		addr = "127.0.0.1:" + port
+	}
+
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		return nil, 0, err
+	}
+	return ln, ln.Addr().(*net.TCPAddr).Port, nil
+}
+
 // Credentials stored at ~/.hero/credentials.json
 type cloudCredentials struct {
 	AccessToken  string `json:"access_token"`
@@ -43,20 +78,33 @@ type cloudCredentials struct {
 func runLogin(cmd *cobra.Command, args []string) error {
 	cloudURL := cloudBaseURL()
 
-	// Request the GitHub OAuth URL from the server
-	req, err := http.NewRequest("GET", cloudURL+"/api/v1/auth/github", nil)
+	// Bind the local callback listener first so we know which port the
+	// cloud must redirect the browser back to. Defaults to an OS-assigned
+	// free port (127.0.0.1:0) so concurrent logins don't collide.
+	listener, port, err := callbackListener(loginCallbackPort)
 	if err != nil {
+		return fmt.Errorf("binding callback port: %w", err)
+	}
+
+	// Request the GitHub OAuth URL from the server, telling it our
+	// callback port so the post-OAuth redirect lands on our listener.
+	authURL := fmt.Sprintf("%s/api/v1/auth/github?callback_port=%d", cloudURL, port)
+	req, err := http.NewRequest("GET", authURL, nil)
+	if err != nil {
+		listener.Close()
 		return fmt.Errorf("creating request: %w", err)
 	}
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		listener.Close()
 		return fmt.Errorf("connecting to Hero Cloud at %s: %w", cloudURL, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		listener.Close()
 		return fmt.Errorf("Hero Cloud returned %d — is the server running at %s?", resp.StatusCode, cloudURL)
 	}
 
@@ -64,6 +112,7 @@ func runLogin(cmd *cobra.Command, args []string) error {
 		URL string `json:"url"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		listener.Close()
 		return fmt.Errorf("parsing response: %w", err)
 	}
 
@@ -77,7 +126,7 @@ func runLogin(cmd *cobra.Command, args []string) error {
 	tokenCh := make(chan *cloudCredentials, 1)
 	errCh := make(chan error, 1)
 
-	server := &http.Server{Addr: ":19876"}
+	server := &http.Server{}
 	server.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// The cloud server redirects here after OAuth with tokens as query params
 		accessToken := r.URL.Query().Get("access_token")
@@ -102,7 +151,7 @@ func runLogin(cmd *cobra.Command, args []string) error {
 	})
 
 	go func() {
-		if err := server.ListenAndServe(); err != http.ErrServerClosed {
+		if err := server.Serve(listener); err != http.ErrServerClosed {
 			errCh <- err
 		}
 	}()
