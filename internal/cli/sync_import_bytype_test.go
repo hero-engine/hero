@@ -121,3 +121,40 @@ func TestHasExplicitQueryOverride(t *testing.T) {
 		t.Error("--priority set should report an override")
 	}
 }
+
+// TestHasConfiguredImportFilter distinguishes a real user/config filter
+// from the synthesized base_filter defaults. The regression: a plain
+// import with only `tracker` set (no import block) must report FALSE so
+// it broad-fetches via ListIssues instead of Search-with-defaults.
+func TestHasConfiguredImportFilter(t *testing.T) {
+	cases := []struct {
+		name string
+		cfg  config.Config
+		want bool
+	}{
+		{"no import block", config.Config{}, false},
+		{"empty import block", config.Config{Import: &config.ImportConfig{}}, false},
+		{"empty base_filter", config.Config{Import: &config.ImportConfig{BaseFilter: &config.ImportFilter{}}}, false},
+		{"configured base_filter", config.Config{Import: &config.ImportConfig{BaseFilter: &config.ImportFilter{Status: "Open"}}}, true},
+		{"configured filter", config.Config{Import: &config.ImportConfig{Filter: &config.ImportFilter{Labels: []string{"ready"}}}}, true},
+		{"by_type", config.Config{Import: &config.ImportConfig{ByType: map[string]*config.ImportFilter{"bug": {Priority: "High"}}}}, true},
+	}
+	for _, c := range cases {
+		if got := hasConfiguredImportFilter(c.cfg); got != c.want {
+			t.Errorf("%s: hasConfiguredImportFilter = %v, want %v", c.name, got, c.want)
+		}
+	}
+}
+
+// TestIsEmptyFilter covers the per-field emptiness check.
+func TestIsEmptyFilter(t *testing.T) {
+	if !isEmptyFilter(nil) {
+		t.Error("nil filter should be empty")
+	}
+	if !isEmptyFilter(&config.ImportFilter{}) {
+		t.Error("zero filter should be empty")
+	}
+	if isEmptyFilter(&config.ImportFilter{OrderBy: "created DESC"}) {
+		t.Error("filter with OrderBy should not be empty")
+	}
+}
