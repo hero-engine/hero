@@ -43,7 +43,8 @@ func TestMergeTitle_TruthTable(t *testing.T) {
 	})
 
 	// both changed → keep REMOTE (upstream is truth), never push local over
-	// it, and preserve the local title in a marker. This is the drift-test
+	// it, and record the dropped local title in a terse conflict note (for the
+	// local-only sync_conflict field — NOT the body). This is the drift-test
 	// guarantee.
 	t.Run("both_changed_keeps_remote", func(t *testing.T) {
 		local := "Fix login bug LOCAL"
@@ -55,8 +56,12 @@ func TestMergeTitle_TruthTable(t *testing.T) {
 		if r.PushLocal {
 			t.Fatal("must NOT push local title over a concurrent upstream edit")
 		}
-		if !strings.Contains(r.LocalNote, local) {
-			t.Fatalf("local title %q not preserved in note %q", local, r.LocalNote)
+		if !strings.Contains(r.ConflictNote, local) || !strings.Contains(r.ConflictNote, remote) {
+			t.Fatalf("conflict note %q must reference both local %q and remote %q", r.ConflictNote, local, remote)
+		}
+		// The note is a terse frontmatter record, not an HTML body marker.
+		if strings.Contains(r.ConflictNote, LocalEditMarkerPrefix) {
+			t.Fatalf("title conflict must not produce a body marker: %q", r.ConflictNote)
 		}
 	})
 }

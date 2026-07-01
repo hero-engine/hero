@@ -1,6 +1,9 @@
 package sync
 
-import "sort"
+import (
+	"fmt"
+	"sort"
+)
 
 // SharedField names a field that both sides (local spec + tracker) may edit —
 // the fields that need a 3-way merge. There are exactly three, matching the
@@ -72,10 +75,14 @@ type MergeTextResult struct {
 	// must be written up to the tracker. When false, the tracker already holds
 	// Merged and only the local spec is updated.
 	PushLocal bool
-	// LocalNote, when non-empty, is a preserved-local marker block the caller
-	// appends to the body so a superseded local edit is recoverable. Only set
-	// for the title policy (the local title is preserved in the body).
-	LocalNote string
+	// ConflictNote, when non-empty, is a terse one-line record of a title
+	// both-changed conflict — the caller writes it to the local-only
+	// `sync_conflict` frontmatter field (overwritten each sync, never appended
+	// and never pushed). The title merge keeps upstream and drops the local
+	// value; this note makes the dropped edit recoverable WITHOUT mutating the
+	// body. Only the title policy sets it — a body conflict preserves its local
+	// hunk inline within the body itself (that IS the field in conflict).
+	ConflictNote string
 }
 
 // MergeText resolves a scalar or long-text shared field via the 3-way truth
@@ -103,20 +110,22 @@ func MergeText(kind SharedKind, base, local, remote string) MergeTextResult {
 			merged := MergeBody(base, local, remote)
 			return MergeTextResult{Merged: merged, PushLocal: merged != remote}
 		}
-		// Title: upstream is truth. Keep remote; preserve the local title in a
-		// marker block so it's recoverable. Remote already holds the value —
-		// never push local over it (this is the drift-test guarantee).
+		// Title: upstream is truth. Keep remote; never push local over it (the
+		// drift-test guarantee). The dropped local edit is recorded in a terse
+		// local-only frontmatter note — NOT in the body — so nothing pollutes
+		// the body or re-syncs.
 		return MergeTextResult{
-			Merged:    remote,
-			PushLocal: false,
-			LocalNote: titleLocalNote(local),
+			Merged:       remote,
+			PushLocal:    false,
+			ConflictNote: titleConflictNote(local, remote),
 		}
 	}
 }
 
-// titleLocalNote renders the preserved-local-title marker appended to the body.
-func titleLocalNote(local string) string {
-	return LocalEditMarkerPrefix + " (title, unmerged): " + local + " -->"
+// titleConflictNote renders the terse one-line conflict record for the
+// local-only `sync_conflict` field. Overwritten each sync (not appended).
+func titleConflictNote(local, remote string) string {
+	return fmt.Sprintf("title: local edit %q not applied — kept upstream %q", local, remote)
 }
 
 // MergeTagsResult is the outcome of a tag-set 3-way merge.
