@@ -96,8 +96,8 @@ func (g *gitLab) setHeaders(req *http.Request) {
 
 // gitLabIssue is the wire shape of a GitLab issue (the subset hero reads).
 type gitLabIssue struct {
-	ID          int      `json:"id"`   // global ID
-	IID         int      `json:"iid"`  // per-project ID (addresses REST routes)
+	ID          int      `json:"id"`  // global ID
+	IID         int      `json:"iid"` // per-project ID (addresses REST routes)
 	Title       string   `json:"title"`
 	Description string   `json:"description"`
 	State       string   `json:"state"` // "opened" | "closed"
@@ -172,9 +172,10 @@ func (g *gitLab) toIssue(gi gitLabIssue) Issue {
 }
 
 // heroIssueType maps GitLab's issue_type onto a string inferSpecType
-// recognizes. incident → bug; task/issue → story unless a bug-style
-// label is present, then bug. Mirrors github.go's label-driven type
-// inference defaults.
+// recognizes. incident → bug; test_case → task; otherwise the label
+// conventions decide (bug/epic/initiative via typeFromLabels, shared
+// with the other adapters for consistent classification). Falls through
+// to story when no type signal is present.
 func heroIssueType(gitlabType string, labels []string) string {
 	switch strings.ToLower(gitlabType) {
 	case "incident":
@@ -182,22 +183,10 @@ func heroIssueType(gitlabType string, labels []string) string {
 	case "test_case":
 		return "task"
 	}
-	if hasBugLabel(labels) {
-		return "bug"
+	if t := typeFromLabels(labels); t != "" {
+		return t
 	}
 	return "story"
-}
-
-// hasBugLabel reports whether any label matches the bug-label
-// convention (type::bug, kind/bug, or a bare "bug").
-func hasBugLabel(labels []string) bool {
-	for _, l := range labels {
-		switch strings.ToLower(l) {
-		case "bug", "type::bug", "kind/bug", "type/bug":
-			return true
-		}
-	}
-	return false
 }
 
 // priorityFromLabels extracts a priority::<level> scoped label, GitLab's
@@ -441,10 +430,20 @@ func (g *gitLab) ListIssues(label string, limit int) ([]Issue, error) {
 
 // Search fetches issues with a structured query. GitLab has no JQL; we
 // translate the field-level filters onto issue list parameters.
+//
+// Field coverage (parity baseline): Status, Priority (priority::<level>
+// scoped label), Assignee, Labels, IssueType (mapped onto the type-label
+// convention, since GitLab's native issue_type only covers
+// issue/incident/task), OrderBy, and Limit all map to native list
+// params. RawQuery maps to the free-text `search` param; FilterID is
+// Jira-specific and ignored (documented no-op).
 func (g *gitLab) Search(query SearchQuery) ([]Issue, error) {
 	limit := query.Limit
 	if limit <= 0 {
 		limit = 30
+	}
+	if query.FilterID != "" {
+		fmt.Fprintln(os.Stderr, "Note: GitLab ignores --filter (Jira saved-filter ID is Jira-only).")
 	}
 	q := url.Values{}
 	q.Set("per_page", "100")
@@ -461,8 +460,18 @@ func (g *gitLab) Search(query SearchQuery) ([]Issue, error) {
 	if state != "all" {
 		q.Set("state", state)
 	}
-	if len(query.Labels) > 0 {
-		q.Set("labels", strings.Join(query.Labels, ","))
+	// Labels: user labels plus, when IssueType is set, the type-label
+	// convention (Bug/epic/initiative) and, when Priority is set, the
+	// priority::<level> scoped label GitLab conventionally carries.
+	labels := append([]string{}, query.Labels...)
+	if lbl := typeLabelFor(query.IssueType); lbl != "" {
+		labels = append(labels, lbl)
+	}
+	if query.Priority != "" {
+		labels = append(labels, "priority::"+strings.ToLower(query.Priority))
+	}
+	if len(labels) > 0 {
+		q.Set("labels", strings.Join(labels, ","))
 	}
 	if query.Assignee != "" {
 		switch strings.ToLower(query.Assignee) {

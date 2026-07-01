@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -698,6 +699,17 @@ type ImportConfig struct {
 	// it replaces the default filter — CLI flags still override individual fields.
 	Presets map[string]*ImportFilter `json:"presets,omitempty"`
 
+	// ByType holds per-spec-type filters, keyed by hero spec type
+	// ("bug", "feature", "story", "epic", "initiative"). The effective
+	// filter for a type is base_filter merged with by_type[type], where
+	// by_type overrides base per non-empty field. A plain `hero sync
+	// import` (no positional/--type arg) runs each type's effective
+	// filter and unions the results (dedup by external id); a scoped
+	// import (`hero import bugs`) runs only that type's effective filter.
+	// Precedence sits between --preset and base_filter: --jql > --filter
+	// > CLI field flags > --preset > by_type > base_filter defaults.
+	ByType map[string]*ImportFilter `json:"by_type,omitempty"`
+
 	// Inventory controls whether an inventory report is generated alongside imports.
 	// Default: true.
 	Inventory *bool `json:"inventory,omitempty"`
@@ -841,6 +853,84 @@ func (c *ImportConfig) EffectiveBaseFilter() *ImportFilter {
 		defaults.OrderBy = bf.OrderBy
 	}
 	return defaults
+}
+
+// mergeFilter overlays non-empty fields from over onto a copy of base
+// and returns the merged filter. over wins per-field; base fields
+// survive where over leaves them empty. Neither input is mutated. A nil
+// base is treated as an empty filter; a nil over returns a copy of base.
+func mergeFilter(base, over *ImportFilter) *ImportFilter {
+	out := &ImportFilter{}
+	if base != nil {
+		*out = *base
+	}
+	if over == nil {
+		return out
+	}
+	if over.JQL != "" {
+		out.JQL = over.JQL
+	}
+	if over.FilterID != "" {
+		out.FilterID = over.FilterID
+	}
+	if over.IssueType != "" {
+		out.IssueType = over.IssueType
+	}
+	if over.Assignee != "" {
+		out.Assignee = over.Assignee
+	}
+	if len(over.Labels) > 0 {
+		out.Labels = over.Labels
+	}
+	if over.Status != "" {
+		out.Status = over.Status
+	}
+	if over.Priority != "" {
+		out.Priority = over.Priority
+	}
+	if over.OrderBy != "" {
+		out.OrderBy = over.OrderBy
+	}
+	return out
+}
+
+// HasByType reports whether any per-type filters are configured.
+func (c *ImportConfig) HasByType() bool {
+	return c != nil && len(c.ByType) > 0
+}
+
+// ByTypeKeys returns the spec-type keys that have a by_type entry, in no
+// particular order. Empty when none are configured.
+func (c *ImportConfig) ByTypeKeys() []string {
+	if c == nil {
+		return nil
+	}
+	keys := make([]string, 0, len(c.ByType))
+	for k := range c.ByType {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+// EffectiveFilterForType returns the effective filter for a spec type:
+// the effective base filter merged with by_type[specType] (by_type
+// overrides base per non-empty field). When no by_type entry exists for
+// the type, this equals EffectiveBaseFilter — so callers get sane
+// defaults for every type regardless of whether it's enumerated in
+// by_type. specType is matched case-insensitively.
+func (c *ImportConfig) EffectiveFilterForType(specType string) *ImportFilter {
+	base := c.EffectiveBaseFilter()
+	if c == nil || len(c.ByType) == 0 {
+		return base
+	}
+	var over *ImportFilter
+	for k, v := range c.ByType {
+		if strings.EqualFold(k, specType) {
+			over = v
+			break
+		}
+	}
+	return mergeFilter(base, over)
 }
 
 // EffectiveInventoryPath returns the inventory report path, applying defaults.
