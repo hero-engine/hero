@@ -138,12 +138,22 @@ func runSyncImport(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("initializing tracker: %w", err)
 	}
 
-	// Fetch issues. Three paths, in precedence order:
+	// Fetch issues. Four paths, in precedence order:
 	//   1. by_type union — when import.by_type is configured and no
 	//      explicit CLI/preset override or scoped type is active, run
 	//      each type's effective filter and union (dedup by external id).
-	//   2. single Search — any explicit query parameter present.
-	//   3. ListIssues — no query parameters at all.
+	//   2. scoped by_type — a positional/--type arg with by_type set.
+	//   3. single Search — a *user-or-config-supplied* filter is present.
+	//   4. ListIssues — nothing supplied: broad-fetch all active issues.
+	//
+	// Path 3 must gate on an actually-supplied filter, NOT on the query
+	// fields directly: resolveImportQuery synthesizes base_filter
+	// defaults (assignee=unassigned/status=New/issue_type=Bug) even when
+	// the user configured nothing, and treating that synthesized default
+	// as "explicit query present" would send a truly-empty import down
+	// the Search path and filter everything out. A plain import with only
+	// `tracker` set (no import block, no flags) must broad-fetch.
+	userFilter := hasExplicitQueryOverride() || hasConfiguredImportFilter(cfg)
 	var issues []tracker.Issue
 	if cfg.Import.HasByType() && typeFilter == "" && !hasExplicitQueryOverride() {
 		issues, err = fetchByTypeUnion(cfg, t, limit)
@@ -154,9 +164,7 @@ func runSyncImport(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Searching %s for %s issues...\n", t.Name(), typeFilter)
 		printQuerySummary(scoped)
 		issues, err = t.Search(scoped)
-	} else if query.RawQuery != "" || query.FilterID != "" || query.IssueType != "" ||
-		query.Assignee != "" || len(query.Labels) > 0 || query.Status != "" ||
-		query.Priority != "" || query.OrderBy != "" {
+	} else if userFilter {
 		query.Limit = limit
 		if importPreset != "" {
 			fmt.Printf("Searching %s with preset %q...\n", t.Name(), importPreset)
@@ -482,6 +490,35 @@ func hasExplicitQueryOverride() bool {
 	return importJQL != "" || importFilterID != "" || importIssueType != "" ||
 		importAssignee != "" || importLabel != "" || importStatus != "" ||
 		importPriority != "" || importOrderBy != "" || importPreset != ""
+}
+
+// hasConfiguredImportFilter reports whether hero.json actually declares
+// an import filter — a non-empty import.filter, import.base_filter, or
+// import.by_type. This is distinct from the synthesized defaults
+// EffectiveBaseFilter returns: those defaults exist so a *filtered*
+// import has sane values, but their mere presence must NOT force a
+// truly-empty import onto the Search path. When this returns false and
+// no CLI/preset override is present, the import broad-fetches via
+// ListIssues (the pre-parity behavior).
+func hasConfiguredImportFilter(cfg config.Config) bool {
+	if cfg.Import == nil {
+		return false
+	}
+	if cfg.Import.HasByType() {
+		return true
+	}
+	return !isEmptyFilter(cfg.Import.Filter) || !isEmptyFilter(cfg.Import.BaseFilter)
+}
+
+// isEmptyFilter reports whether an ImportFilter is nil or has no
+// non-zero fields (i.e. contributes no actual filtering).
+func isEmptyFilter(f *config.ImportFilter) bool {
+	if f == nil {
+		return true
+	}
+	return f.JQL == "" && f.FilterID == "" && f.IssueType == "" &&
+		f.Assignee == "" && len(f.Labels) == 0 && f.Status == "" &&
+		f.Priority == "" && f.OrderBy == ""
 }
 
 // fetchByTypeUnion runs each configured by_type filter's effective query

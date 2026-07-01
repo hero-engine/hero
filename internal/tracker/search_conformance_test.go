@@ -97,6 +97,74 @@ func TestGitHub_TypeInference(t *testing.T) {
 	}
 }
 
+// TestListIssues_ClassifiesTypes asserts the broad ListIssues path
+// (used by a no-config plain import) sets Issue.IssueType from labels on
+// all three label-based adapters — so a plain import classifies
+// bug/epic/feature rather than importing everything as feature.
+func TestListIssues_ClassifiesTypes(t *testing.T) {
+	t.Run("linear", func(t *testing.T) {
+		nodes := []interface{}{
+			linearNode("ENG-1", "crash", "Bug"),
+			linearNode("ENG-2", "roadmap", "acme-type::initiative"),
+			linearNode("ENG-3", "plain", "team::x"),
+		}
+		srv := linearIssuesServer(t, nodes, nil)
+		defer srv.Close()
+		l, _ := newLinear("ENG", "tok", srv.URL)
+		issues, err := l.ListIssues("", 10)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertTypes(t, issues, map[string]string{"ENG-1": "bug", "ENG-2": "initiative", "ENG-3": "story"})
+	})
+
+	t.Run("github", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			json.NewEncoder(w).Encode([]map[string]interface{}{
+				{"number": 1, "title": "crash", "state": "open",
+					"labels": []map[string]string{{"name": "bug"}}},
+				{"number": 2, "title": "plain", "state": "open",
+					"labels": []map[string]string{{"name": "area::x"}}},
+			})
+		}))
+		defer srv.Close()
+		g, _ := newGitHub("acme/widgets", "tok", srv.URL)
+		issues, err := g.ListIssues("", 10)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertTypes(t, issues, map[string]string{"1": "bug", "2": "story"})
+	})
+
+	t.Run("gitlab", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			json.NewEncoder(w).Encode([]gitLabIssue{
+				{IID: 1, Title: "crash", State: "opened", Labels: []string{"type::bug"}},
+				{IID: 2, Title: "plain", State: "opened", Labels: []string{"team::x"}},
+			})
+		}))
+		defer srv.Close()
+		g, _ := newGitLab("group/proj", "tok", srv.URL)
+		issues, err := g.ListIssues("", 10)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertTypes(t, issues, map[string]string{"1": "bug", "2": "story"})
+	})
+}
+
+func assertTypes(t *testing.T, issues []Issue, want map[string]string) {
+	t.Helper()
+	if len(issues) != len(want) {
+		t.Fatalf("got %d issues, want %d", len(issues), len(want))
+	}
+	for _, iss := range issues {
+		if iss.IssueType != want[iss.ID] {
+			t.Errorf("%s: IssueType = %q, want %q", iss.ID, iss.IssueType, want[iss.ID])
+		}
+	}
+}
+
 // TestGitLab_SearchConformance asserts each SearchQuery field maps onto
 // the native GitLab list params, with IssueType and Priority mapped onto
 // the type-label / priority-label conventions.
