@@ -5,6 +5,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -68,20 +69,20 @@ Examples:
 }
 
 var (
-	importLabel     string
-	importLimit     int
-	syncImportDryRun    bool
-	syncImportType      string
-	importJQL       string
-	importFilterID  string
-	importAssignee  string
-	importIssueType string
-	importStatus    string
-	importPriority  string
-	importOrderBy   string
-	importNoReport  bool
-	importRefresh   bool
-	importPreset    string
+	importLabel      string
+	importLimit      int
+	syncImportDryRun bool
+	syncImportType   string
+	importJQL        string
+	importFilterID   string
+	importAssignee   string
+	importIssueType  string
+	importStatus     string
+	importPriority   string
+	importOrderBy    string
+	importNoReport   bool
+	importRefresh    bool
+	importPreset     string
 )
 
 func init() {
@@ -137,9 +138,23 @@ func runSyncImport(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("initializing tracker: %w", err)
 	}
 
-	// Fetch issues — use Search if we have any query parameters, otherwise fall back to ListIssues
+	// Fetch issues. Three paths, in precedence order:
+	//   1. by_type union — when import.by_type is configured and no
+	//      explicit CLI/preset override or scoped type is active, run
+	//      each type's effective filter and union (dedup by external id).
+	//   2. single Search — any explicit query parameter present.
+	//   3. ListIssues — no query parameters at all.
 	var issues []tracker.Issue
-	if query.RawQuery != "" || query.FilterID != "" || query.IssueType != "" ||
+	if cfg.Import.HasByType() && typeFilter == "" && !hasExplicitQueryOverride() {
+		issues, err = fetchByTypeUnion(cfg, t, limit)
+	} else if cfg.Import.HasByType() && typeFilter != "" && !hasExplicitQueryOverride() {
+		// Scoped import with by_type configured: run only that type's
+		// effective filter (base ⊕ by_type[type]).
+		scoped := tracker.SearchQueryFromConfig(cfg.Import.EffectiveFilterForType(typeFilter), limit)
+		fmt.Printf("Searching %s for %s issues...\n", t.Name(), typeFilter)
+		printQuerySummary(scoped)
+		issues, err = t.Search(scoped)
+	} else if query.RawQuery != "" || query.FilterID != "" || query.IssueType != "" ||
 		query.Assignee != "" || len(query.Labels) > 0 || query.Status != "" ||
 		query.Priority != "" || query.OrderBy != "" {
 		query.Limit = limit
@@ -335,7 +350,7 @@ func inferSpecType(issue tracker.Issue) string {
 	switch strings.ToLower(issue.IssueType) {
 	case "bug", "defect":
 		return "bug"
-	case "epic":
+	case "epic", "initiative":
 		return "initiative"
 	case "story", "task", "feature request", "feature", "sub-task", "subtask",
 		"improvement", "enhancement", "new feature":
@@ -456,6 +471,54 @@ func resolveImportQuery(cfg config.Config) (tracker.SearchQuery, error) {
 	}
 
 	return query, nil
+}
+
+// hasExplicitQueryOverride reports whether the user supplied an explicit
+// query on the CLI (any field flag, --jql, --filter, --label) or a
+// --preset. When true, the by_type union is bypassed so the explicit
+// query wins — preserving the precedence chain (--jql > --filter > CLI
+// field flags > --preset > by_type > base_filter).
+func hasExplicitQueryOverride() bool {
+	return importJQL != "" || importFilterID != "" || importIssueType != "" ||
+		importAssignee != "" || importLabel != "" || importStatus != "" ||
+		importPriority != "" || importOrderBy != "" || importPreset != ""
+}
+
+// fetchByTypeUnion runs each configured by_type filter's effective query
+// (base ⊕ by_type[type]) through the tracker's Search and unions the
+// results, deduping by external id (Issue.ID). Limit caps the total
+// unioned result set. Types with no by_type entry are not enumerated
+// here — an unconfigured type contributes nothing to the union (its
+// issues still land correctly when caught by another type's filter, or
+// via a plain per-type import). The first Search error aborts.
+func fetchByTypeUnion(cfg config.Config, t tracker.Tracker, limit int) ([]tracker.Issue, error) {
+	types := cfg.Import.ByTypeKeys()
+	sort.Strings(types) // deterministic order for stable output
+	fmt.Printf("Searching %s per type (%s), unioning results...\n", t.Name(), strings.Join(types, ", "))
+
+	seen := map[string]bool{}
+	var union []tracker.Issue
+	for _, specType := range types {
+		eff := cfg.Import.EffectiveFilterForType(specType)
+		q := tracker.SearchQueryFromConfig(eff, limit)
+		fmt.Printf("  [%s]\n", specType)
+		printQuerySummary(q)
+		found, err := t.Search(q)
+		if err != nil {
+			return nil, fmt.Errorf("searching %s for %s: %w", t.Name(), specType, err)
+		}
+		for _, iss := range found {
+			if seen[iss.ID] {
+				continue
+			}
+			seen[iss.ID] = true
+			union = append(union, iss)
+			if limit > 0 && len(union) >= limit {
+				return union, nil
+			}
+		}
+	}
+	return union, nil
 }
 
 // mergeQuery overlays non-empty fields from src onto dst.

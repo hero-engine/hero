@@ -408,8 +408,33 @@ func (l *linear) ListIssues(label string, limit int) ([]Issue, error) {
 	})
 }
 
+// heroIssueType infers the hero spec type for a Linear issue from its
+// labels. Linear has no native issue type — every node is an "issue" —
+// so type must ride labels. Bug/epic/initiative labels (the conventions
+// the seeders write, e.g. `acme-type::initiative`, `Bug`, `epic`) map to
+// their kinds; everything else falls through to "story" (which
+// inferSpecType maps to a feature spec). Shared with the other adapters
+// via typeFromLabels so classification is consistent tracker-wide.
+func (l *linear) heroIssueType(labels []string) string {
+	if t := typeFromLabels(labels); t != "" {
+		return t
+	}
+	return "story"
+}
+
 // Search fetches issues from Linear using a structured query.
+//
+// Field coverage (parity baseline): Status, Priority, Assignee, Labels,
+// IssueType (mapped onto the type-label convention), OrderBy, and Limit
+// all translate to native GraphQL `filter`/`orderBy` clauses. RawQuery
+// and FilterID are Jira-specific and ignored here (documented no-op).
 func (l *linear) Search(query SearchQuery) ([]Issue, error) {
+	if query.RawQuery != "" || query.FilterID != "" {
+		// RawQuery (JQL) and FilterID (saved Jira filter) have no Linear
+		// equivalent. Note it and fall through to the field filters.
+		fmt.Fprintln(os.Stderr, "Note: Linear ignores --jql/--filter (Jira-only); using field filters.")
+	}
+
 	limit := query.Limit
 	if limit <= 0 {
 		limit = 30
@@ -418,8 +443,18 @@ func (l *linear) Search(query SearchQuery) ([]Issue, error) {
 		limit = 100
 	}
 
-	// Linear uses GraphQL filters — build the filter object
-	filterParts := []string{`state: { type: { nin: ["completed", "canceled"] } }`}
+	// Linear uses GraphQL filters — build the filter object.
+	// Status: default excludes completed/canceled. A specific status
+	// name filters by state name; "all" drops the state exclusion.
+	var filterParts []string
+	switch strings.ToLower(query.Status) {
+	case "":
+		filterParts = append(filterParts, `state: { type: { nin: ["completed", "canceled"] } }`)
+	case "all":
+		// no state constraint
+	default:
+		filterParts = append(filterParts, fmt.Sprintf(`state: { name: { eqIgnoreCase: %q } }`, query.Status))
+	}
 
 	if query.Assignee != "" {
 		switch strings.ToLower(query.Assignee) {
@@ -448,16 +483,32 @@ func (l *linear) Search(query SearchQuery) ([]Issue, error) {
 		}
 	}
 
-	if len(query.Labels) > 0 {
+	// IssueType maps onto the type-label convention (Linear has no
+	// native type), so `issue_type: Bug` filters by the bug label.
+	labelFilters := append([]string{}, query.Labels...)
+	if lbl := typeLabelFor(query.IssueType); lbl != "" {
+		labelFilters = append(labelFilters, lbl)
+	}
+	if len(labelFilters) > 0 {
 		filterParts = append(filterParts, fmt.Sprintf(`labels: { name: { in: [%s] } }`,
-			quoteStrings(query.Labels)))
+			quoteStrings(labelFilters)))
 	}
 
 	filter := strings.Join(filterParts, ", ")
 
+	// OrderBy: Linear's issues connection takes an orderBy enum
+	// (createdAt | updatedAt | priority). Default to createdAt.
+	orderBy := "createdAt"
+	switch {
+	case strings.HasPrefix(strings.ToLower(query.OrderBy), "updated"):
+		orderBy = "updatedAt"
+	case strings.HasPrefix(strings.ToLower(query.OrderBy), "priority"):
+		orderBy = "priority"
+	}
+
 	graphqlQuery := fmt.Sprintf(`query ListIssues($teamKey: String!, $first: Int!) {
 		team(id: $teamKey) {
-			issues(first: $first, filter: { %s }) {
+			issues(first: $first, orderBy: %s, filter: { %s }) {
 				nodes {
 					id
 					identifier
@@ -483,7 +534,7 @@ func (l *linear) Search(query SearchQuery) ([]Issue, error) {
 				}
 			}
 		}
-	}`, filter)
+	}`, orderBy, filter)
 
 	variables := map[string]interface{}{
 		"teamKey": l.teamKey,
@@ -574,6 +625,7 @@ func (l *linear) Search(query SearchQuery) ([]Issue, error) {
 			Reporter:    creatorName,
 			Priority:    priorityName,
 			Labels:      labels,
+			IssueType:   l.heroIssueType(labels),
 		})
 	}
 	return issues, nil
