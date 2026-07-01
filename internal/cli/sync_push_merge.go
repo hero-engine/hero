@@ -38,7 +38,7 @@ func mergeSharedFields(
 	heroDir string,
 	s *spec.Spec,
 	local, remote map[string]tracker.Value,
-) (pushPatch map[string]tracker.Value, localWriteback map[string]tracker.Value, updatedBase map[string]syncpkg.Base, err error) {
+) (pushPatch map[string]tracker.Value, localWriteback map[string]tracker.Value, updatedBase map[string]syncpkg.Base, conflictNote string, err error) {
 	pushPatch = map[string]tracker.Value{}
 	localWriteback = map[string]tracker.Value{}
 	updatedBase = map[string]syncpkg.Base{}
@@ -47,16 +47,12 @@ func mergeSharedFields(
 	if rerr != nil {
 		// A corrupt baseline degrades to no-op rather than merging against a
 		// bad ancestor. The caller leaves shared fields untouched this run.
-		return nil, nil, nil, fmt.Errorf("reading sync baseline for %s: %w", s.Slug, rerr)
+		return nil, nil, nil, "", fmt.Errorf("reading sync baseline for %s: %w", s.Slug, rerr)
 	}
 	baseMap := map[string]syncpkg.Base{}
 	if baseline != nil {
 		baseMap = baseline.Base
 	}
-
-	// A note block to append to the body (description) for preserved-local
-	// title/body edits. Collected across fields, applied once.
-	var localNotes []string
 
 	for _, f := range syncpkg.SharedFields {
 		lv, hasLocal := local[f.Canonical]
@@ -97,49 +93,18 @@ func mergeSharedFields(
 			if res.Merged != localStr {
 				localWriteback[f.Canonical] = tracker.StringValue(res.Merged)
 			}
-			if res.LocalNote != "" {
-				localNotes = append(localNotes, res.LocalNote)
+			// A title both-changed conflict records a terse note for the
+			// local-only `sync_conflict` field. It is NOT written to the body —
+			// the body is never mutated by a title conflict. Overwritten each
+			// sync (last-writer), so notes never accumulate.
+			if res.ConflictNote != "" {
+				conflictNote = res.ConflictNote
 			}
 			updatedBase[f.BaselineKey] = syncpkg.TextBase(res.Merged)
 		}
 	}
 
-	// Preserved-local markers (title kept-remote, body conflicting hunk) are
-	// appended to the description write-back so the local edit is recoverable.
-	if len(localNotes) > 0 {
-		descKey := "description"
-		cur := ""
-		if wv, ok := localWriteback[descKey]; ok {
-			cur = wv.Str
-		} else if lv, ok := local[descKey]; ok {
-			cur = lv.Str
-		} else if rv, ok := remote[descKey]; ok {
-			cur = rv.Str
-		}
-		merged := appendLocalNotes(cur, localNotes)
-		localWriteback[descKey] = tracker.StringValue(merged)
-		// The note lives only in the local spec, not pushed upstream, and it
-		// updates the body baseline to the value the spec now holds.
-		updatedBase["body"] = syncpkg.TextBase(merged)
-	}
-
-	return pushPatch, localWriteback, updatedBase, nil
-}
-
-// appendLocalNotes appends preserved-local marker lines to a body, avoiding
-// duplicates so a re-sync stays idempotent.
-func appendLocalNotes(body string, notes []string) string {
-	out := body
-	for _, n := range notes {
-		if strings.Contains(out, n) {
-			continue
-		}
-		if out != "" && !strings.HasSuffix(out, "\n") {
-			out += "\n"
-		}
-		out += n
-	}
-	return out
+	return pushPatch, localWriteback, updatedBase, conflictNote, nil
 }
 
 // applyLocalWriteback writes merged shared-field values back into the spec.md
@@ -170,6 +135,33 @@ func applyLocalWriteback(path string, writeback map[string]tracker.Value) error 
 		content = spec.SetFrontmatterField(content, key, frontmatterScalar(v))
 	}
 	return os.WriteFile(path, []byte(content), 0o644)
+}
+
+// applyConflictNote records a title both-changed conflict in the local-only
+// `sync_conflict` frontmatter field. It is OVERWRITTEN each sync (never
+// appended), so notes never accumulate, and it is Hero-local — not in the
+// shared/pushable set — so it never reaches the tracker and never re-syncs. An
+// empty note clears a stale record (a re-sync that no longer conflicts drops
+// the note). A note is written only when the field already exists or a conflict
+// is present, so a clean spec that never conflicted stays untouched.
+func applyConflictNote(path, note string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	content := string(data)
+	if note == "" && !strings.Contains(content, "\nsync_conflict:") && !strings.HasPrefix(content, "sync_conflict:") {
+		// No conflict this run and no stale note to clear — leave the spec alone.
+		return nil
+	}
+	content = spec.SetFrontmatterField(content, "sync_conflict", quoteScalar(note))
+	return os.WriteFile(path, []byte(content), 0o644)
+}
+
+// quoteScalar wraps a frontmatter string value in double quotes (escaping any
+// embedded quotes), so a note containing colons or quotes stays valid YAML.
+func quoteScalar(s string) string {
+	return `"` + strings.ReplaceAll(s, `"`, `\"`) + `"`
 }
 
 // frontmatterScalar renders a Value as a frontmatter scalar: strings are

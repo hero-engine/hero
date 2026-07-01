@@ -65,9 +65,10 @@ func specFile(env *testEnv, slug string) string {
 
 // TestSyncPush_Merge_TitleBothChanged_KeepsUpstream is the wired equivalent of
 // the drift test: title diverged on both sides from the same base. The merge
-// must NOT push the local title over the concurrent upstream edit, and must
-// converge the spec + baseline to the upstream value (local preserved in a
-// marker in the body).
+// must NOT push the local title over the concurrent upstream edit, must
+// converge the spec + baseline to the upstream value, and must record the
+// dropped local title in a local-only `sync_conflict` frontmatter note WITHOUT
+// mutating the body.
 func TestSyncPush_Merge_TitleBothChanged_KeepsUpstream(t *testing.T) {
 	env := newTestEnv(t)
 	writeTrackerConfig(env, "github", "acme/widgets")
@@ -81,9 +82,11 @@ func TestSyncPush_Merge_TitleBothChanged_KeepsUpstream(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	// Local diverged: title = "Local title".
+	// Local diverged: title = "Local title". A distinctive body sentinel lets
+	// us assert the body is left untouched by a title conflict.
+	const bodySentinel = "# body\n\nUNTOUCHED BODY CONTENT\n"
 	env.addSpec("planning/features/"+slug+"/spec.md",
-		"---\ntitle: Local title\ntype: feature\nstatus: planning\ntracker_id: 42\n---\n# body\n")
+		"---\ntitle: Local title\ntype: feature\nstatus: planning\ntracker_id: 42\n---\n"+bodySentinel)
 
 	// Remote diverged: title = "Upstream title".
 	mock := &mergeMockTracker{fields: map[string]tracker.Value{
@@ -101,14 +104,32 @@ func TestSyncPush_Merge_TitleBothChanged_KeepsUpstream(t *testing.T) {
 		t.Fatalf("pushed title %q over a concurrent upstream edit — must not!", v.Str)
 	}
 
-	// Spec converged to upstream title, local preserved in a marker.
+	// Spec converged to upstream title.
 	data, _ := os.ReadFile(specFile(env, slug))
 	content := string(data)
 	if !strings.Contains(content, "title: Upstream title") {
 		t.Errorf("spec not converged to upstream title:\n%s", content)
 	}
-	if !strings.Contains(content, "Local title") || !strings.Contains(content, syncpkg.LocalEditMarkerPrefix) {
-		t.Errorf("local title not preserved in a marker:\n%s", content)
+
+	// Body is UNTOUCHED — no marker, no pollution.
+	if !strings.Contains(content, bodySentinel) {
+		t.Errorf("body was mutated by a title conflict — must stay untouched:\n%s", content)
+	}
+	if strings.Contains(content, syncpkg.LocalEditMarkerPrefix) {
+		t.Errorf("title conflict wrote a body marker — must not:\n%s", content)
+	}
+
+	// The dropped local title is recorded in a local-only sync_conflict note.
+	if !strings.Contains(content, "sync_conflict:") {
+		t.Errorf("no sync_conflict note recorded:\n%s", content)
+	}
+	if !strings.Contains(content, "Local title") || !strings.Contains(content, "Upstream title") {
+		t.Errorf("sync_conflict note should reference both local and upstream titles:\n%s", content)
+	}
+
+	// The conflict note must NOT be pushed to the tracker (Hero-local field).
+	if _, ok := mock.updated["sync_conflict"]; ok {
+		t.Error("sync_conflict must never be pushed to the tracker")
 	}
 
 	// Baseline advanced to the converged (upstream) title.

@@ -263,7 +263,7 @@ func diffPatch(heroDir string, t tracker.Tracker, s *spec.Spec, env *pushEnvelop
 	patch := Diff(local, remote, nonSharedPushFields())
 
 	// Shared-field 3-way merge.
-	pushShared, writeback, updatedBase, err := mergeSharedFields(heroDir, s, local, remote)
+	pushShared, writeback, updatedBase, conflictNote, err := mergeSharedFields(heroDir, s, local, remote)
 	if err != nil {
 		// A corrupt/unreadable baseline degrades to no shared-field merge this
 		// run (leave shared fields as-is), rather than merging against a bad
@@ -277,6 +277,9 @@ func diffPatch(heroDir string, t tracker.Tracker, s *spec.Spec, env *pushEnvelop
 
 	commit := func() error {
 		if werr := applyLocalWriteback(s.Path, writeback); werr != nil {
+			return werr
+		}
+		if werr := applyConflictNote(s.Path, conflictNote); werr != nil {
 			return werr
 		}
 		return advanceBaseline(heroDir, s, remote, updatedBase)
