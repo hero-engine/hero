@@ -135,14 +135,16 @@ func runSyncPush(cmd *cobra.Command, args []string) error {
 	}
 
 	// Build the patch — either from --field (patch source) or by diffing.
-	// mergeCommit, when non-nil (diff path only), applies the shared-field
-	// merge's local write-back + baseline advance AFTER the network push
-	// succeeds, so a push failure never leaves a half-write.
+	// mergeCommit, when non-nil, applies the shared-field merge's local
+	// write-back + conflict note + baseline advance AFTER the network push
+	// succeeds, so a push failure never leaves a half-write. BOTH the diff path
+	// and the --field patch path set it — the app pushes via --field, so the
+	// patch path must protect shared fields too.
 	var patch map[string]tracker.Value
 	var mergeCommit func() error
 	switch syncPushFieldSource {
 	case "patch":
-		patch, err = patchFromFlags(syncPushFields, &env)
+		patch, mergeCommit, err = patchPush(heroDir, t, s, syncPushFields, &env)
 		if err != nil {
 			return err
 		}
@@ -150,7 +152,7 @@ func runSyncPush(cmd *cobra.Command, args []string) error {
 		if len(syncPushFields) > 0 {
 			// Explicit --field flags imply the patch path even under the
 			// diff default — pushing exactly what was named.
-			patch, err = patchFromFlags(syncPushFields, &env)
+			patch, mergeCommit, err = patchPush(heroDir, t, s, syncPushFields, &env)
 			if err != nil {
 				return err
 			}
@@ -238,6 +240,65 @@ func patchFromFlags(flags []string, env *pushEnvelope) (map[string]tracker.Value
 	return patch, nil
 }
 
+// patchPush builds the push patch for the --field path. It parses the flags
+// (org-state refusal + unknown-field skipping unchanged), then splits them:
+//
+//   - non-shared fields (hero-owned status/size, priority, points, …) → direct
+//     patch-push, exactly as before. Those are hero-authoritative; no 3-way
+//     merge, and no remote fetch when NO shared field is named (the hot path
+//     the app uses for status stays a single write, no extra round-trip).
+//   - shared fields (title/body/tags) → routed through the SAME 3-way merge the
+//     diff path uses (runSharedMerge), with the --field value as "local" and
+//     the fetched remote as the upstream side. Never a blind push over a
+//     concurrent upstream edit. This closes the gap where an app push via
+//     `--field title=…` clobbered upstream.
+//
+// A GetFields fetch failure (only reached when a shared field is named) leaves
+// both sides untouched — the whole shared-field merge is skipped and the shared
+// --field values are NOT pushed (fail-safe: retry next run, no half-write). The
+// returned mergeCommit is nil unless the shared merge ran, and it is applied by
+// the caller only after the network push succeeds.
+func patchPush(heroDir string, t tracker.Tracker, s *spec.Spec, flags []string, env *pushEnvelope) (map[string]tracker.Value, func() error, error) {
+	patch, err := patchFromFlags(flags, env)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Which named fields are shared? Split them out; leave non-shared in patch.
+	sharedLocal := map[string]tracker.Value{}
+	restrict := map[string]bool{}
+	for name, v := range patch {
+		if _, shared := syncSharedByCanonical(name); shared {
+			sharedLocal[name] = v
+			restrict[name] = true
+			delete(patch, name) // shared values come from the merge, not the raw flag
+		}
+	}
+
+	// No shared field named → nothing to merge; the direct patch stands as-is.
+	if len(restrict) == 0 {
+		return patch, nil, nil
+	}
+
+	remote, ferr := t.GetFields(s.TrackerID)
+	if ferr != nil {
+		// Fail-safe: leave both sides untouched, drop the shared --field values
+		// (don't blind-push them), retry next run. Non-shared fields still push.
+		fmt.Fprintf(os.Stderr, "Warning: could not fetch remote for shared-field merge (%v) — skipping shared fields this run\n", ferr)
+		return patch, nil, nil
+	}
+
+	sharedPatch, commit, merr := runSharedMerge(heroDir, s, sharedLocal, remote, restrict)
+	if merr != nil {
+		fmt.Fprintf(os.Stderr, "Warning: %v — skipping shared-field merge this run\n", merr)
+		return patch, nil, nil
+	}
+	for k, v := range sharedPatch {
+		patch[k] = v
+	}
+	return patch, commit, nil
+}
+
 // diffPatch fetches the tracker's current content fields once, then builds the
 // push patch from two paths:
 //
@@ -259,11 +320,10 @@ func diffPatch(heroDir string, t tracker.Tracker, s *spec.Spec, env *pushEnvelop
 	local := localFields(s)
 
 	// Non-shared content fields keep the 2-way diff. Shared fields are excluded
-	// here and handled by the merge below.
+	// here and handled by the 3-way merge (restrict=nil: reconcile all shared).
 	patch := Diff(local, remote, nonSharedPushFields())
 
-	// Shared-field 3-way merge.
-	pushShared, writeback, updatedBase, conflictNote, err := mergeSharedFields(heroDir, s, local, remote)
+	sharedPatch, commit, err := runSharedMerge(heroDir, s, local, remote, nil)
 	if err != nil {
 		// A corrupt/unreadable baseline degrades to no shared-field merge this
 		// run (leave shared fields as-is), rather than merging against a bad
@@ -271,10 +331,27 @@ func diffPatch(heroDir string, t tracker.Tracker, s *spec.Spec, env *pushEnvelop
 		fmt.Fprintf(os.Stderr, "Warning: %v — skipping shared-field merge this run\n", err)
 		return patch, nil, nil
 	}
-	for k, v := range pushShared {
+	for k, v := range sharedPatch {
 		patch[k] = v
 	}
+	return patch, commit, nil
+}
 
+// runSharedMerge runs the shared-field 3-way merge and returns the shared-field
+// push patch plus a commit closure (local write-back + conflict note + baseline
+// advance) the caller runs AFTER a successful push. It is the single merge entry
+// point used by BOTH the diff path (restrict=nil, local from the spec) and the
+// --field patch path (restrict = the named shared fields, local from the flags).
+func runSharedMerge(
+	heroDir string,
+	s *spec.Spec,
+	local, remote map[string]tracker.Value,
+	restrict map[string]bool,
+) (map[string]tracker.Value, func() error, error) {
+	sharedPatch, writeback, updatedBase, conflictNote, err := mergeSharedFields(heroDir, s, local, remote, restrict)
+	if err != nil {
+		return nil, nil, err
+	}
 	commit := func() error {
 		if werr := applyLocalWriteback(s.Path, writeback); werr != nil {
 			return werr
@@ -284,7 +361,7 @@ func diffPatch(heroDir string, t tracker.Tracker, s *spec.Spec, env *pushEnvelop
 		}
 		return advanceBaseline(heroDir, s, remote, updatedBase)
 	}
-	return patch, commit, nil
+	return sharedPatch, commit, nil
 }
 
 // nonSharedPushFields is pushFields minus the shared set — the fields that keep

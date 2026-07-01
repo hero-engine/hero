@@ -256,6 +256,15 @@ func runSyncImport(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("writing spec: %w", err)
 		}
 
+		// Seed the last-synced baseline from the imported issue: the spec was
+		// just created FROM this issue, so tracker == local for the shared
+		// fields (title/body/tags) and that value is the common ancestor. This
+		// gives a base BEFORE any divergence, so the first shared-field push is
+		// a true 3-way merge, not the first-run adopt-remote fallback.
+		if berr := seedBaselineFromIssue(heroDir, slug, &issue); berr != nil {
+			fmt.Fprintf(os.Stderr, "  Warning: could not seed sync baseline for %s: %v\n", slug, berr)
+		}
+
 		fmt.Printf("  Created %s: %s (from %s %s)\n", specType, slug, t.Name(), issue.ID)
 		created++
 		typeCounts[specType]++

@@ -10,19 +10,30 @@ import (
 	"github.com/hero-engine/hero/internal/tracker"
 )
 
-// mergeSharedFields runs the 3-way shared-field merge for a diff-source push.
+// mergeSharedFields runs the 3-way shared-field merge, shared by both push
+// entry points (the DIFF path and the --field PATCH path).
 //
 // For each shared field (title/body-as-description/tags-as-labels) it computes
-// base (from the persisted baseline), local (spec), remote (fetched tracker
-// value) and resolves deterministically via the merge package. The result:
+// base (from the persisted baseline), local (the caller-supplied value), remote
+// (fetched tracker value) and resolves deterministically via the merge package.
+// The result:
 //   - a patch of the shared values that must be pushed UP to the tracker (the
 //     merged value differs from remote),
 //   - local write-backs applied to the spec.md so the spec converges to the
 //     merged value (a taken-remote value, or a preserved-local marker),
 //   - an updated baseline written to .hero/sync-state/<slug>.json at the
-//     converged value.
+//     converged value,
+//   - a terse title-conflict note for the local-only sync_conflict field.
 //
-// Non-shared fields are NOT handled here — the caller diffs them as before.
+// `local` is where the two callers differ: the DIFF path passes the spec's
+// fields (localFields); the --field PATCH path passes the flag values. Both run
+// the exact same merge.
+//
+// `restrict`, when non-nil, limits the merge to the shared fields whose
+// canonical name is a key (the PATCH path only touches the fields the caller
+// named). When nil, all shared fields are reconciled (the DIFF path).
+//
+// Non-shared fields are NOT handled here — the caller diffs/patches them.
 //
 // First-run / no-baseline: when the baseline file is absent (a spec imported
 // before this feature), remote is adopted as the base for THIS sync, so the
@@ -30,14 +41,15 @@ import (
 //
 // Failure isolation (never stuck / never half-write): the remote fetch happens
 // once, up front, in the caller; if it fails the whole shared-field merge is
-// skipped and both sides are left unchanged. Local write-backs are applied
-// before the network push, but the baseline is only advanced to the pushed
-// value after the push succeeds — so a push failure leaves the baseline at the
-// pre-push state and the merge simply retries next run (idempotent).
+// skipped and both sides are left unchanged. Local write-backs and the baseline
+// advance are applied by the caller only after the network push succeeds — so a
+// push failure leaves the baseline at the pre-push state and the merge simply
+// retries next run (idempotent).
 func mergeSharedFields(
 	heroDir string,
 	s *spec.Spec,
 	local, remote map[string]tracker.Value,
+	restrict map[string]bool,
 ) (pushPatch map[string]tracker.Value, localWriteback map[string]tracker.Value, updatedBase map[string]syncpkg.Base, conflictNote string, err error) {
 	pushPatch = map[string]tracker.Value{}
 	localWriteback = map[string]tracker.Value{}
@@ -55,6 +67,11 @@ func mergeSharedFields(
 	}
 
 	for _, f := range syncpkg.SharedFields {
+		// PATCH path: only reconcile the shared fields the caller named.
+		if restrict != nil && !restrict[f.Canonical] {
+			continue
+		}
+
 		lv, hasLocal := local[f.Canonical]
 		rv, hasRemote := remote[f.Canonical]
 
@@ -240,6 +257,88 @@ func advanceBaseline(heroDir string, s *spec.Spec, remote map[string]tracker.Val
 				baseline.Base[f.BaselineKey] = syncpkg.TextBase(rv.Str)
 			}
 		}
+	}
+	return syncpkg.WriteBaseline(heroDir, s.Slug, baseline)
+}
+
+// seedBaselineFromIssue writes the last-synced baseline for a spec directly from
+// a fetched tracker Issue. Used by the IMPORT and PULL paths, where the tracker
+// value has just become the local value (import creates the spec FROM the issue;
+// pull converges the spec toward the issue) — so tracker == local for the shared
+// fields and that converged value IS the new common ancestor.
+//
+// Establishing the baseline here (not only on push) is what makes the app's
+// pull/import-then-edit flow safe: a base exists BEFORE any local/upstream
+// divergence, so the first conflicting push is a true 3-way merge rather than
+// the first-run adopt-remote fallback. A write failure is non-fatal to the
+// caller (baseline seeding is best-effort; the next push seeds/advances it).
+func seedBaselineFromIssue(heroDir, slug string, issue *tracker.Issue) error {
+	if issue == nil {
+		return nil
+	}
+	baseline := &syncpkg.Baseline{
+		TrackerID: issue.ID,
+		Base: map[string]syncpkg.Base{
+			"title": syncpkg.TextBase(issue.Title),
+			"body":  syncpkg.TextBase(issue.Description),
+			"tags":  syncpkg.TagsBase(issue.Labels),
+		},
+	}
+	return syncpkg.WriteBaseline(heroDir, slug, baseline)
+}
+
+// advanceBaselineOnPull updates the baseline on `hero sync pull`, per shared
+// field, ONLY where the local spec value already equals the tracker value —
+// i.e. the two sides are converged and that value is a genuine common ancestor.
+// A shared field that differs (a pending local or upstream edit) is left as-is
+// so a real ancestor is never clobbered by one side's value; the next push's
+// 3-way merge reconciles it. Best-effort: existing baseline fields for
+// non-converged shared fields are preserved. No-op when there's nothing to
+// converge (keeps pull idempotent and avoids a needless write).
+func advanceBaselineOnPull(heroDir string, s *spec.Spec, issue *tracker.Issue) error {
+	if issue == nil {
+		return nil
+	}
+	existing, rerr := syncpkg.ReadBaseline(heroDir, s.Slug)
+	if rerr != nil {
+		return rerr
+	}
+	baseline := &syncpkg.Baseline{TrackerID: issue.ID, Base: map[string]syncpkg.Base{}}
+	if existing != nil {
+		if existing.TrackerID != "" {
+			baseline.TrackerID = existing.TrackerID
+		}
+		for k, v := range existing.Base {
+			baseline.Base[k] = v
+		}
+	}
+
+	local := localFields(s)
+	changed := false
+	for _, f := range syncpkg.SharedFields {
+		switch f.Kind {
+		case syncpkg.KindTags:
+			remote := tracker.StringsValue(issue.Labels)
+			if lv, ok := local[f.Canonical]; ok && lv.Equal(remote) {
+				baseline.Base[f.BaselineKey] = syncpkg.TagsBase(issue.Labels)
+				changed = true
+			}
+		default:
+			var remoteStr string
+			if f.BaselineKey == "title" {
+				remoteStr = issue.Title
+			} else {
+				remoteStr = issue.Description
+			}
+			if lv, ok := local[f.Canonical]; ok && lv.Str == remoteStr {
+				baseline.Base[f.BaselineKey] = syncpkg.TextBase(remoteStr)
+				changed = true
+			}
+		}
+	}
+	if !changed && existing != nil {
+		// Nothing newly converged and a baseline already exists — leave it.
+		return nil
 	}
 	return syncpkg.WriteBaseline(heroDir, s.Slug, baseline)
 }
