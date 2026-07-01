@@ -102,6 +102,14 @@ func runStatusPull(specPath string) error {
 		return fmt.Errorf("fetching issue %s: %w", s.TrackerID, err)
 	}
 
+	// Advance the last-synced baseline for any shared field (title/body/tags)
+	// that is converged (local == tracker) — that value is the common ancestor
+	// for the next push's 3-way merge. Best-effort: pull's primary job (status)
+	// proceeds regardless.
+	if berr := advanceBaselineOnPull(heroDir, s, issue); berr != nil {
+		fmt.Fprintf(os.Stderr, "  Warning: could not advance sync baseline: %v\n", berr)
+	}
+
 	fmt.Printf("Tracker issue %s: %s\n", issue.ID, issue.Title)
 	fmt.Printf("  Tracker status: %s\n", issue.Status)
 	fmt.Printf("  Spec status:    %s\n", s.Status)
