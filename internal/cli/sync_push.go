@@ -22,6 +22,14 @@ var (
 	syncPushFieldSource string
 )
 
+// newTrackerForPush builds the tracker adapter for the field-level push path.
+// It is a package var (mirroring newTrackerForPull) so tests can inject a
+// no-network mock. Production wiring is tracker.NewWithJiraConfig — the same
+// constructor the rest of the sync commands use.
+var newTrackerForPush = func(cfg config.Config, projectRoot string) (tracker.Tracker, error) {
+	return tracker.NewWithJiraConfig(cfg.Tracker, cfg.Jira, cfg.TrackerKnowledgeDir(projectRoot))
+}
+
 var syncPushCmd = &cobra.Command{
 	Use:   "push <slug>",
 	Short: "Push spec field changes to the tracker (field-level diff)",
@@ -113,7 +121,7 @@ func runSyncPush(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no tracker configured — set tracker.type in hero.json")
 	}
 
-	t, err := tracker.NewWithJiraConfig(cfg.Tracker, cfg.Jira, cfg.TrackerKnowledgeDir(projectRoot))
+	t, err := newTrackerForPush(cfg, projectRoot)
 	if err != nil {
 		return fmt.Errorf("initializing tracker: %w", err)
 	}
@@ -127,7 +135,11 @@ func runSyncPush(cmd *cobra.Command, args []string) error {
 	}
 
 	// Build the patch — either from --field (patch source) or by diffing.
+	// mergeCommit, when non-nil (diff path only), applies the shared-field
+	// merge's local write-back + baseline advance AFTER the network push
+	// succeeds, so a push failure never leaves a half-write.
 	var patch map[string]tracker.Value
+	var mergeCommit func() error
 	switch syncPushFieldSource {
 	case "patch":
 		patch, err = patchFromFlags(syncPushFields, &env)
@@ -143,7 +155,7 @@ func runSyncPush(cmd *cobra.Command, args []string) error {
 				return err
 			}
 		} else {
-			patch, err = diffPatch(t, s, &env)
+			patch, mergeCommit, err = diffPatch(heroDir, t, s, &env)
 			if err != nil {
 				return finishWithError(env, start, err)
 			}
@@ -154,8 +166,16 @@ func runSyncPush(cmd *cobra.Command, args []string) error {
 
 	env.PushedFields = sortedPatchKeys(patch)
 
-	// Empty patch → in sync, no network write (AC: idempotency).
+	// Empty push patch → nothing to write to the tracker. But a shared-field
+	// merge may still have local write-backs (only-remote-changed: pull the
+	// upstream value into the spec) + a baseline advance to commit. Under
+	// dry-run we skip the commit; otherwise we commit and report in-sync.
 	if len(patch) == 0 {
+		if !syncPushDryRun && mergeCommit != nil {
+			if err := mergeCommit(); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: shared-field merge write-back failed for %s: %v\n", slug, err)
+			}
+		}
 		env.Status = "synced"
 		env.DurationMs = time.Since(start).Milliseconds()
 		emitPush(env, fmt.Sprintf("%s in sync — nothing to push", slug))
@@ -173,6 +193,16 @@ func runSyncPush(cmd *cobra.Command, args []string) error {
 	// Perform the write.
 	if err := t.UpdateFields(s.TrackerID, patch); err != nil {
 		return finishWithError(env, start, err)
+	}
+
+	// Push succeeded → now (and only now) apply the shared-field merge's local
+	// write-back + baseline advance. Ordering after the network write keeps the
+	// "never half-write" guarantee: a push failure above leaves the spec and
+	// baseline at their pre-sync state and the merge retries next run.
+	if mergeCommit != nil {
+		if err := mergeCommit(); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: shared-field merge write-back failed for %s: %v\n", slug, err)
+		}
 	}
 
 	env.Status = "pushed"
@@ -208,15 +238,64 @@ func patchFromFlags(flags []string, env *pushEnvelope) (map[string]tracker.Value
 	return patch, nil
 }
 
-// diffPatch fetches the tracker's current content fields and diffs them
-// against the local spec, producing the patch to push.
-func diffPatch(t tracker.Tracker, s *spec.Spec, env *pushEnvelope) (map[string]tracker.Value, error) {
+// diffPatch fetches the tracker's current content fields once, then builds the
+// push patch from two paths:
+//
+//   - shared fields (title/description/labels) → 3-way merge against the
+//     persisted baseline (mergeSharedFields). Never a blind push; upstream is
+//     never lost.
+//   - non-shared content fields (priority, points, …) → the existing 2-way diff
+//     (unchanged: those are tracker/hero-owned and already safe).
+//
+// It returns the combined push patch plus a mergeCommit closure the caller runs
+// AFTER a successful push to apply the merge's local spec write-back and advance
+// the baseline. A fetch failure returns the error and leaves both sides
+// untouched (never stuck, never half-write).
+func diffPatch(heroDir string, t tracker.Tracker, s *spec.Spec, env *pushEnvelope) (map[string]tracker.Value, func() error, error) {
 	remote, err := t.GetFields(s.TrackerID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	local := localFields(s)
-	return Diff(local, remote, pushFields), nil
+
+	// Non-shared content fields keep the 2-way diff. Shared fields are excluded
+	// here and handled by the merge below.
+	patch := Diff(local, remote, nonSharedPushFields())
+
+	// Shared-field 3-way merge.
+	pushShared, writeback, updatedBase, err := mergeSharedFields(heroDir, s, local, remote)
+	if err != nil {
+		// A corrupt/unreadable baseline degrades to no shared-field merge this
+		// run (leave shared fields as-is), rather than merging against a bad
+		// ancestor. Non-shared fields still push.
+		fmt.Fprintf(os.Stderr, "Warning: %v — skipping shared-field merge this run\n", err)
+		return patch, nil, nil
+	}
+	for k, v := range pushShared {
+		patch[k] = v
+	}
+
+	commit := func() error {
+		if werr := applyLocalWriteback(s.Path, writeback); werr != nil {
+			return werr
+		}
+		return advanceBaseline(heroDir, s, remote, updatedBase)
+	}
+	return patch, commit, nil
+}
+
+// nonSharedPushFields is pushFields minus the shared set — the fields that keep
+// the 2-way diff. Shared fields (title/description/labels) are handled by the
+// 3-way merge instead of a blind push.
+func nonSharedPushFields() []ClassifiedField {
+	out := make([]ClassifiedField, 0, len(pushFields))
+	for _, f := range pushFields {
+		if _, shared := syncSharedByCanonical(f.Name); shared {
+			continue
+		}
+		out = append(out, f)
+	}
+	return out
 }
 
 // localFields builds the canonical content-field map from a spec's
