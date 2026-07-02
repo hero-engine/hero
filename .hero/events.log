@@ -248,3 +248,7 @@
 {"ts":"2026-06-28T18:36:15.888296Z","type":"peer.handoff.received","agent":"hero","slug":"gitlab-tracker-support-2","message":"received from hero-code/gitlab-tracker-support (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)"}
 {"ts":"2026-06-29T18:05:29.449331Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"delivery-closing-gate-terminal-contract","message":"Delivery Closing Gate Terminal Contract"}
 {"ts":"2026-06-29T18:05:29.449441Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"delivery-closing-gate-terminal-contract","message":"status -\u003e completed"}
+{"ts":"2026-07-02T02:37:28.280957Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"tracker-fixtures","message":"\"Tracker Fixtures — GitLab Parity and Offline Mock Server for Round-Trip Validation\""}
+{"ts":"2026-07-02T02:37:28.281059Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"tracker-fixtures","message":"status -\u003e completed"}
+{"ts":"2026-07-02T02:38:02.691641Z","type":"peer.call.invoked","agent":"hero","slug":"tracker-fixtures","message":"peer call advisory mode=advisory target=hero-code call_id=18be5891189bad88b4c345e6262a1c8a"}
+{"ts":"2026-07-02T02:40:21.779157Z","type":"peer.call.completed","agent":"hero","slug":"tracker-fixtures","message":"peer call ok mode=advisory target=hero-code kind=findings call_id=18be5891189bad88b4c345e6262a1c8a artifact=.hero/peer-calls/18be5891189bad88b4c345e6262a1c8a.md"}
