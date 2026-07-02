@@ -116,6 +116,10 @@ func (r *Runner) Start(ctx context.Context, slug, projectRoot, verb string) (job
 
 	// Build the subprocess.
 	cmd := exec.CommandContext(r.parentCtx, r.binaryPath, args...)
+	// Run the child in its own process group and kill the whole group on
+	// ctx cancel — otherwise the `#!/bin/sh` wrapper's grandchildren leak,
+	// hold the stdout/stderr pipes open, and stall the waiter goroutine.
+	setupProcessGroup(cmd)
 	cmd.Dir = projectRoot
 	cmd.Env = append(os.Environ(), "HERO_OPSRUNNER=1")
 
