@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-02T02:40:27Z · projected from 370 source nodes_
+_Last refreshed: 2026-07-02T07:12:47Z · projected from 370 source nodes_
 
 ## Surfaces
 
@@ -12,9 +12,9 @@ _Last refreshed: 2026-07-02T02:40:27Z · projected from 370 source nodes_
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | maturing | domains/engineering/ | 2d ago | — |
-| domains/pm | concept | domains/pm/ | 16d ago | — |
-| domains/sales | maturing | domains/sales/ | 16d ago | — |
-| landing | building | web/landing/ | 16d ago | hero-landing-page |
+| domains/pm | concept | domains/pm/ | 17d ago | — |
+| domains/sales | maturing | domains/sales/ | 17d ago | — |
+| landing | building | web/landing/ | 17d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
 | serve | building | internal/serve/ | 3d ago | agent-outposts |
 | (unassigned) | — | — | — | 180 specs without surface |
@@ -68,7 +68,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Open risks & blockers
 
 - **Blocked specs (13):** `cev2-system-prompt-curator` (waits on cev2-context-engine-test-harness); `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection).
-- **Stale-in-flight (3):** `agent-outposts` (16d), `hero-landing-page` (16d), `hero-team-server` (16d).
+- **Stale-in-flight (3):** `agent-outposts` (17d), `hero-landing-page` (17d), `hero-team-server` (17d).
 - **Aged open bugs (8):** `next-project-file-conflict-not-regenerated` (open 29d), `desktop-sidebar-mcp-not-running` (open 28d), `hihcp-agent-loop-error-recovery` (open 23d), `hihcp-agents-md-harness-agnostic` (open 23d), `hihcp-mcp-auto-reconnect` (open 23d), `hihcp-mcp-first-turn-readiness` (open 23d), `hihcp-permission-bridge-validation` (open 23d), `hihcp-rgignore` (open 23d).
 - **Unassigned specs (180) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
