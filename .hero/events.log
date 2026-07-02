@@ -252,3 +252,7 @@
 {"ts":"2026-07-02T02:37:28.281059Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"tracker-fixtures","message":"status -\u003e completed"}
 {"ts":"2026-07-02T02:38:02.691641Z","type":"peer.call.invoked","agent":"hero","slug":"tracker-fixtures","message":"peer call advisory mode=advisory target=hero-code call_id=18be5891189bad88b4c345e6262a1c8a"}
 {"ts":"2026-07-02T02:40:21.779157Z","type":"peer.call.completed","agent":"hero","slug":"tracker-fixtures","message":"peer call ok mode=advisory target=hero-code kind=findings call_id=18be5891189bad88b4c345e6262a1c8a artifact=.hero/peer-calls/18be5891189bad88b4c345e6262a1c8a.md"}
+{"ts":"2026-07-02T07:24:42.847259Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"team-oauth","message":"\"Team OAuth — GitHub/Google SSO for Team Server Authentication\""}
+{"ts":"2026-07-02T07:24:42.847346Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"team-oauth","message":"status -\u003e completed"}
+{"ts":"2026-07-02T07:25:09.660694Z","type":"peer.call.invoked","agent":"hero","slug":"team-oauth","message":"peer call advisory mode=advisory target=hero-cloud call_id=18be683c0ffab088f90d7347ccaa2da9"}
+{"ts":"2026-07-02T07:26:39.488995Z","type":"peer.call.completed","agent":"hero","slug":"team-oauth","message":"peer call ok mode=advisory target=hero-cloud kind=findings call_id=18be683c0ffab088f90d7347ccaa2da9 artifact=.hero/peer-calls/18be683c0ffab088f90d7347ccaa2da9.md"}
