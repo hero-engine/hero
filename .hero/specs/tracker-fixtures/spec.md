@@ -2,7 +2,7 @@
 title: "Tracker Fixtures — GitLab Parity and Offline Mock Server for Round-Trip Validation"
 slug: tracker-fixtures
 type: initiative
-status: planning
+status: completed
 priority: high
 horizon: next
 tags: [tracker, gitlab, mock-server, fixtures, round-trip, validation]
@@ -21,6 +21,7 @@ relations:
     kind: child
   - target: mock-tracker-server
     kind: child
+completed_at: 2026-07-02T02:37:27Z
 ---
 
 # Tracker Fixtures — GitLab Parity and Offline Mock Server for Round-Trip Validation
@@ -165,3 +166,13 @@ documented in the mock-tracker-server feature spec.
 - Reproducing every GitHub Projects v2 GraphQL field. The existing
   github adapter skips points/priority with a warning; the mock
   preserves that behavior verbatim rather than implementing v2.
+
+## Handoff Trail
+
+- 2026-07-02T02:40:21Z — out → hero-code (peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
+  mode: advisory
+  originating_spec: tracker-fixtures
+  at_commit: 98731d6
+  result_ref: private-peer-result-excluded
+  reason: "Closing the loop: the tracker engine hero-code spec-out'd (pm-workbench-tracker-validation, call 18bd0775) is delivered and released in hero v0.23.3."
+

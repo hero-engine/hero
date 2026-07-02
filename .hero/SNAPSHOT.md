@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-01T23:45:00Z · projected from 370 source nodes_
+_Last refreshed: 2026-07-02T02:40:27Z · projected from 370 source nodes_
 
 ## Surfaces
 
@@ -43,18 +43,17 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Pre-Launch Hardening — Federation Polish, Security, Observability** (surface: —) — 0/0 specs done
 - **"Retrieval Quality — Reranking, Expansion & Feedback Loop"** (surface: —) — 0/0 specs done
 - **Single-Source Install — One Canonical Tree, Every Harness Reads It** (surface: core) — 5/6 specs done
-- **"Tracker Fixtures — GitLab Parity and Offline Mock Server for Round-Trip Validation"** (surface: —) — 2/2 specs done
 
 ### Recently completed initiatives
 
+- **"Tracker Fixtures — GitLab Parity and Offline Mock Server for Round-Trip Validation"** (surface: —) — 2/2 specs done · COMPLETED 2026-07-02
 - **"Drive — Autonomous Initiative Execution with a Human-Boundary Predicate"** (surface: core, domains/engineering, serve) — 6/6 specs done · COMPLETED 2026-06-28
 - **"Feature Knowledge Synthesis — Auto-Generated 'How It Works' Entries from Shipped Work"** (surface: —) — 5/5 specs done · COMPLETED 2026-06-23
-- **Roadmap Shape — Detect, Surface, and Resolve Spec-Shape Drift** (surface: serve) — 4/4 specs done · COMPLETED 2026-06-01
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — mock-tracker-server, gitlab-tracker-support, drive-autonomous-initiative-execution
-- **core** — drive-pause-resume, hero-goal-command, needs-me-predicate, initiative-goal-section, cli-sync-resilience
+- **(unassigned)** — tracker-fixtures, mock-tracker-server, gitlab-tracker-support, drive-autonomous-initiative-execution
+- **core** — drive-pause-resume, hero-goal-command, needs-me-predicate, initiative-goal-section
 - **domains/engineering** — delivery-closing-gate-terminal-contract, drive-progressive-design, drive-command-routing
 - **serve** — drive-autonomy-learning
 
@@ -70,12 +69,12 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - **Blocked specs (13):** `cev2-system-prompt-curator` (waits on cev2-context-engine-test-harness); `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection).
 - **Stale-in-flight (3):** `agent-outposts` (16d), `hero-landing-page` (16d), `hero-team-server` (16d).
-- **Aged open bugs (8):** `next-project-file-conflict-not-regenerated` (open 28d), `desktop-sidebar-mcp-not-running` (open 27d), `hihcp-agent-loop-error-recovery` (open 22d), `hihcp-agents-md-harness-agnostic` (open 22d), `hihcp-mcp-auto-reconnect` (open 22d), `hihcp-mcp-first-turn-readiness` (open 22d), `hihcp-permission-bridge-validation` (open 22d), `hihcp-rgignore` (open 22d).
+- **Aged open bugs (8):** `next-project-file-conflict-not-regenerated` (open 29d), `desktop-sidebar-mcp-not-running` (open 28d), `hihcp-agent-loop-error-recovery` (open 23d), `hihcp-agents-md-harness-agnostic` (open 23d), `hihcp-mcp-auto-reconnect` (open 23d), `hihcp-mcp-first-turn-readiness` (open 23d), `hihcp-permission-bridge-validation` (open 23d), `hihcp-rgignore` (open 23d).
 - **Unassigned specs (180) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
 - Specs covered: 166/346 (47%)
-- Projection generation: 3ms · Source nodes: 370
+- Projection generation: 1ms · Source nodes: 370
 
