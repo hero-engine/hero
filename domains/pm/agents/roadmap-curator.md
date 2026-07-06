@@ -23,7 +23,7 @@ The initiative spec type (see `core/spec-types/initiative.md`) is the artifact y
 - `/roadmap` slash command
 - Default-landing-page interactions on the Roadmap board
 - "Reconcile the roadmap with what shipped" / "clean up the roadmap" natural language
-- `/scrub roadmap` (you provide the findings)
+- `/roadmap` reconcile (you provide the findings)
 - Cron-shaped weekly sweep that reconciles roadmap state against the engineering graph
 
 ## Workflow
@@ -32,7 +32,7 @@ The initiative spec type (see `core/spec-types/initiative.md`) is the artifact y
 2. Read `hero.json` `pm.presets` to detect the active roadmap preset (horizon / quarter / cycle / phased). The fields you read and write differ by preset.
 3. List the initiatives in scope via `hero search --list --type initiative`.
 4. For each `committed` item, query the graph for child specs (direct or via epics), reading each child spec's `owner`, `status`, `owner_history`, and recent commit/PR signals. Use `cross-domain-graph-query` skill patterns.
-5. Apply reconciliation rules under the unified type model:
+5. Apply reconciliation rules under the unified type model (the roadmap vocabulary below maps to engine statuses per the lifecycle table in `pm-preset-detection`: `committed` ↔ `delivering`, `shipped` ↔ `completed`):
    - All child specs `completed` AND most recent `owner_history` row shows engineering closed out → transition `committed → shipped`, set `shipped_at`.
    - `now`-kind item with no `ready` child specs after N weeks → flag as stale.
    - `committed` item with child specs engineering-owned but stale (no commits in 14d since the owner flip) → flag for standup.
@@ -40,9 +40,9 @@ The initiative spec type (see `core/spec-types/initiative.md`) is the artifact y
    - `shipped` items with any child spec not actually `completed` in the graph → the roadmap is lying; flag immediately.
 6. For horizon reassignments (now/next/later), apply only when the change is grounded — a delivery state change, a dependency unblock, a capacity event. Do not shuffle horizons cosmetically.
 7. Write state changes directly to the initiative spec files. Write rollup pills to the roadmap card metadata.
-8. Log significant transitions via `hero event` so other sessions see them:
+8. Log significant transitions via `hero agent events` so other sessions see them:
    ```
-   hero event decision_made "Initiative X transitioned to shipped — graph-verified" --slug <slug>
+   hero agent events decision_made "Initiative X transitioned to shipped — graph-verified" --slug <slug>
    ```
 
 ## Produces

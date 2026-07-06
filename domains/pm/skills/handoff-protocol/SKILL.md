@@ -50,7 +50,7 @@ New workflow (current):
 2. `handoff-coordinator` pre-flights the spec and flips `owner: pm →
    engineering` on the same spec.
 3. Engineering's `engineer` agent picks up the spec via `/deliver
-   <slug>`.
+   <slug>` (engineering pack).
 4. The `owner_history` (bitemporal) is the cross-domain edge — no
    separate `kind: handoff` edge is written.
 5. There is no "linked engineering feature" rail — it's the same spec.
@@ -68,8 +68,9 @@ without strategic framing legitimately.
 
 ### Blocking gates
 
-1. **Status is `ready`.** Not `drafted` or `refined`. The `pm-reviewer`
-   gate must have passed. A `ready` status means INVEST was checked,
+1. **Status is `in-review`.** Not `planning` (per the lifecycle table
+   in `pm-preset-detection`). The `pm-reviewer`
+   gate must have passed. An `in-review` status means INVEST was checked,
    AC was written in EARS, the preset's required fields are populated,
    and Out-of-Scope is explicit.
 
@@ -110,22 +111,19 @@ delivers from, and ambiguity at the flip becomes drift downstream.
 
 ## The owner flip
 
-This is the load-bearing step. `handoff-coordinator` updates the spec's
-frontmatter:
+This is the load-bearing step. `handoff-coordinator` flips owner with
+`hero spec set-owner <slug> engineering`:
 
-```yaml
-# Before
-owner: pm
-status: ready
-
-# After
-owner: engineering
-status: ready    # engineering's claim flips this to `delivering`
+```
+hero spec set-owner <slug> engineering
+# owner: pm → engineering; status stays in-review until engineering's
+# claim flips it to `delivering` (per the lifecycle table in
+# `pm-preset-detection`)
 ```
 
-The flip is recorded bitemporally in `owner_history` by the spec store
-(in `internal/spec/`). Authoring code never writes `owner_history`
-directly — updating `owner` causes the history append. The history
+`set-owner` appends the `owner_history` row atomically (the spec store
+lives in `internal/spec/`); a raw frontmatter edit records **no**
+history, so always use the command. The history
 entry looks like:
 
 ```yaml
@@ -162,16 +160,16 @@ The owner flip is the handoff. `handoff-coordinator` verifies, in order:
 2. The bitemporal `owner_history` row landed — `from: pm, to:
    engineering, at: <ts>` is present.
 3. The Cross-domain Handoff stream picks up the transition (the event
-   log row from `hero event handoff ...` is what the dashboard polls;
+   log row from `hero agent events spec_updated ...` is what the dashboard polls;
    the bitemporal history is the source of truth).
-4. Engineering's queue (`hero queue --owner engineering --status
-   ready`) shows the spec.
+4. A read-back of the spec shows `owner: engineering` on disk (`hero
+   list --status in-review` as the sweep before engineering claims).
 5. Within a short window, engineering's `engineer` agent claims the
-   spec via `/deliver <slug>`; status flips `ready → delivering`.
+   spec via `/deliver <slug>` (engineering pack); status flips `in-review → delivering`.
 
 If verification step 5 doesn't happen within the expected window,
 surface as a finding — engineering may be offline; the user can
-manually invoke `/deliver` to push the pickup. Do not retry the owner
+manually invoke `/deliver` (engineering pack) to push the pickup. Do not retry the owner
 flip; it's already done.
 
 ## Hand-back path
@@ -180,7 +178,7 @@ Engineering can flip `owner` back to `pm` with a frontmatter
 `handed_back_reason:` field set, when refinement reveals an
 under-specified requirement. When this happens:
 
-1. The spec appears back in PM's queue (`hero queue --owner pm`).
+1. The spec's `owner:` is `pm` again (read it back).
 2. `handoff-coordinator` reads the spec on next pre-flight; sees
    `owner: pm` and a `handed_back_reason:`; routes to `pm-reviewer`
    or `story-writer` to address the gap.
@@ -207,7 +205,7 @@ The owner flip succeeded but engineering doesn't pick the spec up
 within the expected window. Possible causes:
 
 - **Engineering is offline.** Surface; the user can invoke `/deliver
-  <slug>` manually to force the pickup.
+  <slug>` (engineering pack) manually to force the pickup.
 - **No engineer agent available.** Same resolution.
 - **Workspace doesn't have an engineering domain configured.** This is
   a PM-only workspace — the owner-flip workflow doesn't make sense.

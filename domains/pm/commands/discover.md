@@ -17,7 +17,7 @@ Route this discovery request to the `discovery-researcher` agent. Loads `opportu
 Discovery artifacts land inside the linked initiative or PRD — never as standalone files:
 
 - OST → written to a `## Opportunity Solution Tree` section on the initiative.
-- Interview guides → written to `.hero/planning/roadmap/<slug>/research/interview-<n>.md` and linked from the initiative.
+- Interview guides → written to `.hero/planning/initiatives/<slug>/research/interview-<n>.md` and linked from the initiative.
 - Assumption tests → added to a `## Assumption Tests` section with hypothesis, test design, success criteria, and a status field.
 - Synthesis notes (after interviews / tests run) → written to `.hero/knowledge/notes/research/<topic>.md` so future sessions inherit the evidence base.
 

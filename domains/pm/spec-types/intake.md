@@ -113,7 +113,7 @@ later. Paraphrasing erases trust.
   existing initiative — link it directly via the existing item's
   evidence section, then create the intake if there's any
   ambiguity worth preserving for future analysis.
-- Bug reports with reproduction steps — those route to `/diagnose` in
+- Bug reports with reproduction steps — those route to engineering's `/diagnose` (engineering pack) in
   the engineering domain.
 
 ## Lifecycle SLA
@@ -151,7 +151,7 @@ The four outcomes:
   signal.
 - Auto-merging duplicates without human confirmation — recall matters
   more than precision; humans confirm.
-- Triage SLA breach (>24h in `new`) — surfaces as a `/scrub intake`
+- Triage SLA breach (>24h in `new`) — surfaces as a `/triage` sweep
   finding.
 
 ## Conflict policy

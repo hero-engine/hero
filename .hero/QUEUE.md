@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-06T19:15:36Z · 93 ready specs_
+_Generated: 2026-07-06T20:58:49Z · 92 ready specs_
 
 ## flat-named-spec-discovery — "Flat-named spec files are invisible to discovery — verify can't resolve initiative children"
 _bug · delivering · horizon: now_
@@ -90,28 +90,6 @@ Fixes every sales-pack claim that doesn't match the engine — phantom CLI comma
 
 **Files:** `domains/sales/AGENTS.md`, `domains/sales/spec-types/deal.yaml`, `core/spec-types/feature.md`, `internal/spectypes/loader.go:223`
 **Skip:** don't copy `domains/pm/spec-types/*.md` frontmatter shape — it fails `parseRecord`; don't add Go config keys — content-only.
-
----
-
-## pm-pack-phantom-surfaces — "PM Pack Phantom Surfaces — fix every reference to a surface that doesn't exist"
-_bug · planning · horizon: now_
-
-Fixes everything in the PM pack that references surfaces that don't exist —
-dead slash routes, six wrong CLI invocations, ghost agents in allowlists,
-broken owner-flip mechanics, and non-engine lifecycle statuses.
-
-**Status:** planning — spec authored from hero-content-audit findings; all
-paths and CLI claims re-verified at `3aaad62`; no edits yet.
-
-**Pick up at:** Change 1 (lifecycle mapping in `pm-preset-detection`) and
-Change 2 (promote `kickoff-prompt` to core), then sweep `domains/pm/AGENTS.md`
-(Changes 3–5).
-
-→ `/deliver pm-pack-phantom-surfaces`
-
-**Files:** domains/pm/AGENTS.md, domains/pm/agents/pm-delivery-lead.md,
-domains/pm/agents/handoff-coordinator.md,
-domains/pm/skills/pm-preset-detection/SKILL.md
 
 ---
 

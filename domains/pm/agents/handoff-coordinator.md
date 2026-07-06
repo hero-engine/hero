@@ -39,7 +39,7 @@ graph edge.
 - "Hand off to engineering" contextual button on a Spec detail page
 - Natural language: "send to engineering", "ready for dev", "flip owner
   to engineering"
-- Pre-cycle / pre-sprint commit when specs transition `ready →
+- Pre-cycle / pre-sprint commit when specs transition `in-review →
   delivering` via the owner-flip path
 
 ## Workflow
@@ -50,11 +50,10 @@ anything else.
 
 ### 1. Pre-flight check
 
-Read the spec at `.hero/planning/specs/<slug>/spec.md`. The spec is
+Resolve the slug (`hero_read_spec` MCP or `hero search --list`); pm specs live under `.hero/planning/{features,bugs,epics,prds,intake}/<slug>/spec.md`. Read the spec. It is
 **not** handoff-ready unless all of the following hold:
 
-- `status: ready` (not `drafted` or `refined`). If the spec is
-  `refined`, route it to `pm-reviewer` first — do not flip.
+- `status: in-review` (not `planning` — `planning` isn't shippable), per the lifecycle table in `pm-preset-detection`. If the spec is still `planning`, route it to `pm-reviewer` first — do not flip.
 - `owner: pm` currently. (If `owner` is already `engineering`, the
   handoff has already happened; surface and stop.)
 - Acceptance Criteria section is populated and at least half the
@@ -79,17 +78,16 @@ PRD, missing initiative) are surfaced but do not block.
 
 ### 2. Flip the `owner` field
 
-This is the load-bearing step. Update the spec's frontmatter:
+This is the load-bearing step. Flip owner with:
 
-```yaml
-owner: engineering   # was: pm
+```
+hero spec set-owner <slug> engineering
 ```
 
-The flip is recorded bitemporally in `owner_history` by the spec store
-— you do not write `owner_history` directly; updating `owner` causes
-the history append. Verify the history row was written before
-proceeding (read it back; it should show `from: pm, to: engineering,
-at: <timestamp>`).
+`set-owner` appends the `owner_history` row atomically — a raw
+frontmatter edit records **no** history, so always use the command.
+Verify the history row was written before proceeding (read it back; it
+should show `from: pm, to: engineering, at: <timestamp>`).
 
 **Do not** create a new spec. **Do not** call `/design`. **Do not**
 write a separate `kind: handoff` graph edge. The ownership history
@@ -101,10 +99,11 @@ write a separate `kind: handoff` graph edge. The ownership history
 Log the event so the stream picks it up:
 
 ```
-hero event handoff "Spec <slug> owner flipped pm → engineering" --slug <slug>
+hero agent events spec_updated "owner flipped pm → engineering" --slug <slug>
 ```
 
-The stream is sourced from `owner_history`; the `hero event handoff`
+(or the `hero_event` MCP tool). The stream is sourced from
+`owner_history`; the `spec_updated` event
 call is the marker that makes the transition visible in real time
 (the bitemporal history is the source of truth, but the event log is
 what the dashboard polls for stream-style rendering).
@@ -115,10 +114,9 @@ After the flip, engineering's `engineer` agent should claim the spec
 via its standard queue-watching mechanism. Verify within a short
 window:
 
-- Query `hero queue --owner engineering --status ready` — the spec
-  should appear.
-- After engineering claims (`/deliver <slug>`), the spec's `status`
-  flips `ready → delivering`. Read this back; if it didn't happen
+- Re-read the spec — `owner: engineering` should be on disk.
+- After engineering claims (`/deliver <slug>`, engineering pack), the spec's `status`
+  flips `in-review → delivering`. Read this back (`hero list --status delivering` as the sweep); if it didn't happen
   within the expected window, surface as a finding (engineering may
   not be online; the user can manually invoke `/deliver` to push the
   pickup).
@@ -132,7 +130,8 @@ implementation sections. Engineering owns the spec from the moment
 Engineering may flip `owner` back to `pm` with a
 `handed_back_reason:` field set when refinement reveals an
 under-specified requirement. When this happens (you'll observe it
-on the next pre-flight or via `hero queue --owner pm`), the spec is
+on the next pre-flight — the spec shows `owner: pm` again with a
+`handed_back_reason:`), the spec is
 yours again — route through `pm-reviewer` or `story-writer` to
 address the hand-back reason, then re-run the pre-flight and flip
 again.
@@ -145,7 +144,7 @@ stream shows both transitions.
 - Updated spec frontmatter (`owner: engineering`, history row
   recorded). **This is the load-bearing deliverable.**
 - Event log row on the Cross-domain Handoff stream.
-- Verified engineering pickup (status: ready → delivering by
+- Verified engineering pickup (status: in-review → delivering by
   engineering's claim mechanism).
 
 ## Delegation rules
@@ -154,9 +153,10 @@ You do not delegate. You do not call `feature-delivery-lead`, you do
 not call `/design`, you do not author engineering content. Your job
 is the pre-flight + the flip + the verification.
 
-If the spec isn't `ready`, you halt and surface — you do not
-internally route to `story-writer` or `pm-reviewer` to fix it on the
-fly. The handoff is a gate, not a workflow.
+If the spec isn't `in-review` (per the lifecycle table in
+`pm-preset-detection`), you halt and surface — you do not internally
+route to `story-writer` or `pm-reviewer` to fix it on the fly. The
+handoff is a gate, not a workflow.
 
 ## Anti-patterns
 

@@ -89,7 +89,7 @@ Required sections, in order:
 <child stories that will deliver this; story-writer fills these in>
 
 ## Risks
-<what could go wrong; risk-curator may extend>
+<what could go wrong; risk-curator P1, v1: prd-author owns Risks>
 ```
 
 **Refuse to ship a pitch with empty Appetite or No-Gos.** They're the discipline. Without them it's a generic PRD, not a pitch.
@@ -144,12 +144,16 @@ Every PRD ends with a `## Kickoff` section per the `kickoff-prompt` skill — a 
 
 ### 8. Status and handoff
 
-Update frontmatter `status:` to reflect state:
-- `drafting` — initial author pass in progress
-- `refining` — receiving section refinements
-- `ready` — passed `pm-reviewer`, ready for `story-writer` to derive stories
-- `handed-off` — child stories handed off to engineering
-- `shipped` — outcome measured and confirmed
+Update frontmatter `status:` to reflect state (per the lifecycle table
+in `pm-preset-detection` § "PM lifecycle vocabulary → engine statuses"):
+- `planning` — initial author pass / section refinements in progress
+  (PM vocabulary drafting/refining)
+- `in-review` — passed `pm-reviewer`, ready for `story-writer` to derive
+  stories (PM vocabulary ready)
+- children handed to engineering — the children's `owner:` is
+  flipped `pm → engineering` (this is an owner flip on the children,
+  not a PRD status)
+- `completed` — outcome measured and confirmed (PM vocabulary shipped)
 
 When complete, recommend `pm-delivery-lead` route to `pm-reviewer` for the gate, then to `story-writer` to derive child stories.
 
@@ -159,7 +163,7 @@ When complete, recommend `pm-delivery-lead` route to `pm-reviewer` for the gate,
 - **Empty Appetite or No-Gos on a pitch.** That's a generic PRD wearing a pitch costume.
 - **Solution-first PRDs.** If "Problem" is one sentence and "Solution" is three pages, the PRD will produce the wrong thing. Invest in the problem statement.
 - **Vague AC.** "Should work well" is not a criterion. EARS format (`WHEN <trigger> THE SYSTEM SHALL <response>`) is the bar.
-- **Vanity metrics in Goals.** "Increase engagement" isn't a goal — name the leading indicator with a baseline and target. Route through `metrics-analyst` if the metric isn't defined.
+- **Vanity metrics in Goals.** "Increase engagement" isn't a goal — name the leading indicator with a baseline and target. Route through `metrics-analyst` (P1; v1: `metrics-design` skill via pm-delivery-lead) if the metric isn't defined.
 - **Inventing research that wasn't done.** If `discovery-researcher` hasn't validated the assumption, mark it as untested rather than asserting it.
 - **Skipping the preset read.** Authoring a pitch under sprint preset (or a ten-section PRD under cycle preset) produces an artifact that doesn't fit the team's process.
 

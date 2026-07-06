@@ -16,7 +16,7 @@ Use `hero search --list --type intake --status new` to enumerate.
 
 Before `intake-triager` runs:
 - **If scope > 1 item**, invoke `duplicate-detector` first to cluster near-duplicates. The triager processes clusters as units, not items.
-- **If an intake is ambiguous** (no clear ask, no source quote, or no segment tag), invoke `pm-investigator` first via `/diagnose` to extract the actual customer ask from the raw signal. Skip the item until investigation lands.
+- **If an intake is ambiguous** (no clear ask, no source quote, or no segment tag), invoke `pm-investigator` directly (agent — no command shim ships with pm) to extract the actual customer ask from the raw signal. Skip the item until investigation lands.
 
 ## Output
 
@@ -30,11 +30,11 @@ Emit a one-line log per item to chat:
 
 ```
 intake-acme-csv-export → linked → roadmap-self-serve-exports (3 prior signals, enterprise segment)
-intake-billing-flicker → rejected → bug, not a product ask; refiled via /diagnose
+intake-billing-flicker → rejected → bug, not a product ask; refiled to engineering as a bug
 ```
 
 **SLA reminder.** Items at `status: new` for more than 24h are overdue. If any in scope are older than 24h, surface that in the run summary.
 
-After triage, log notable promotions or rejections via `hero event decision_made` so other sessions see the inbox state move.
+After triage, log notable promotions or rejections via `hero agent events decision_made` so other sessions see the inbox state move.
 
 Request: $ARGUMENTS
