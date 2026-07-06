@@ -10,13 +10,13 @@ import (
 
 // Claude Code's settings.json schema for the hook events we manage:
 //
-//   {
-//     "hooks": {
-//       "Stop":         [ {"matcher": "", "hooks": [ {"type": "command", "command": "..."} ]} ],
-//       "PreCompact":   [ {"matcher": "", "hooks": [ {"type": "command", "command": "..."} ]} ],
-//       "SessionStart": [ {"matcher": "", "hooks": [ {"type": "command", "command": "..."} ]} ]
-//     }
-//   }
+//	{
+//	  "hooks": {
+//	    "Stop":         [ {"matcher": "", "hooks": [ {"type": "command", "command": "..."} ]} ],
+//	    "PreCompact":   [ {"matcher": "", "hooks": [ {"type": "command", "command": "..."} ]} ],
+//	    "SessionStart": [ {"matcher": "", "hooks": [ {"type": "command", "command": "..."} ]} ]
+//	  }
+//	}
 //
 // We identify hero-managed hook entries by the command string itself —
 // any inner hook whose command begins with one of the heroCmdPrefixes
@@ -39,14 +39,14 @@ var heroCmdPrefixes = []string{"hero next checkpoint", "hero next ingest"}
 
 // claudeHookEvents are the host-tool events we wire hero commands into.
 //
-//   Stop         — fires after every assistant turn ends; keeps NEXT.md fresh continuously
-//                  (hero next checkpoint)
-//   PreCompact   — fires before context compaction; the most dangerous moment for losing state
-//                  (hero next checkpoint)
-//   SessionStart — fires when a new Claude Code session opens; round-trip ingests any
-//                  `.hero/next/<user>.md` content committed from another machine back
-//                  into this machine's local graph so the cross-machine continuity loop
-//                  closes without a manual `hero next ingest` (hero next ingest)
+//	Stop         — fires after every assistant turn ends; keeps NEXT.md fresh continuously
+//	               (hero next checkpoint)
+//	PreCompact   — fires before context compaction; the most dangerous moment for losing state
+//	               (hero next checkpoint)
+//	SessionStart — fires when a new Claude Code session opens; round-trip ingests any
+//	               `.hero/next/<user>.md` content committed from another machine back
+//	               into this machine's local graph so the cross-machine continuity loop
+//	               closes without a manual `hero next ingest` (hero next ingest)
 var claudeHookEvents = []string{"Stop", "PreCompact", "SessionStart"}
 
 // claudeHookCommandFor returns the canonical hero command for a given

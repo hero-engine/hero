@@ -260,4 +260,3 @@ func stringsToTargets(s []string) []Target {
 	}
 	return out
 }
-

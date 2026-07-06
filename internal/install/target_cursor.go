@@ -30,7 +30,7 @@ func runCursor(opts Options) (*Result, error) {
 	if err := installFlat(opts, result, "commands", filepath.Join(destBase, "commands")); err != nil {
 		return nil, fmt.Errorf("installing commands: %w", err)
 	}
-	if err := installFlat(opts, result, "skills", filepath.Join(destBase, "skills")); err != nil {
+	if err := installSkillsFlat(opts, result, filepath.Join(destBase, "skills")); err != nil {
 		return nil, fmt.Errorf("installing skills: %w", err)
 	}
 
