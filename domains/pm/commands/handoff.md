@@ -1,4 +1,5 @@
 ---
+core_fork: PM handoff is an owner-flip to engineering on the same artifact, intentionally replacing core's session-handoff /handoff
 description: Hand a refined spec off to engineering — flips `owner: pm → engineering` on the same artifact. No new spec is created.
 ---
 Route this handoff to the `handoff-coordinator` agent. Loads the `handoff-protocol` skill.

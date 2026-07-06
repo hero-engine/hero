@@ -31,7 +31,11 @@ changed, dead ends to skip, blockers, and files-nearby context.
    `hero why <slug>` to traverse the graph backwards.
 5. If the user asks "what's blocked?" or "what should I work on?",
    prefer the resume output's `Blocked on` and `In flight` sections
-   over re-deriving from scratch by reading files.
+   over re-deriving from scratch by reading files. For a paste-ready
+   list of ready-to-pick-up specs (each with a kickoff prompt), call
+   `hero_queue` via MCP or read `.hero/QUEUE.md` directly. The queue
+   is the cold-start surface; resume is the warm-context surface —
+   they compose.
 6. The first item in `In flight` is usually the right next action.
    Propose it directly — don't ask "what should we work on?".
 

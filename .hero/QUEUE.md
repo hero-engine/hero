@@ -6,19 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-06-29T18:35:10Z · 87 ready specs_
-
-## delivery-closing-gate-terminal-contract — Delivery Closing Gate Terminal Contract
-_feature · delivering · horizon: now_
-
-Pick up at: make the three edits in the Changes section. Start with
-`renderCodexWorkflowSection()` in `internal/install/agents_md.go` (the
-always-loaded contract), then `domains/engineering/commands/deliver.md`
-(Definition-of-done callout + supervised-row annotation), then extend
-`internal/install/harness_smoke_test.go`. Validate with
-`go test ./internal/install/...` and `go build ./...`.
-
----
+_Generated: 2026-07-06T04:30:03Z · 85 ready specs_
 
 ## flat-named-spec-discovery — "Flat-named spec files are invisible to discovery — verify can't resolve initiative children"
 _bug · delivering · horizon: now_
@@ -41,13 +29,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## team-oauth — "Team OAuth — GitHub/Google SSO for Team Server Authentication"
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/team-oauth/spec.md)_
-
----
-
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
 
@@ -62,6 +43,24 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
+## content-dedup-resync — Content Dedup & Resync — Single-Master core/engineering Content with CI Parity Gate
+_bug · planning · horizon: now_
+
+Collapse the 34 duplicated core↔engineering content files to single
+masters in core, merging stranded improvements both ways, then add a CI
+parity test so drift can't recur silently.
+
+**Status:** planning — spec written from audit theme T1; no edits yet.
+
+**Pick up at:** the merge table in `## Changes` step 2 — do the 14 forked
+pairs first (each row names its direction), then delete all 34 engineering
+copies, then write the parity test.
+
+→ `.hero/planning/features/content-dedup-resync/spec.md` · evidence:
+`.hero/specs/hero-content-audit/findings-skills.md` §(b)
+
+---
+
 ## intake-capture-loop — "Intake Capture Loop — Silently Capture Intent-Bearing Loose Asks, Manual Promote Gate"
 _feature · planning · horizon: now_
 
@@ -70,8 +69,12 @@ Lightweight loop on the shipped `intake` primitive. Treat it as a sibling of
 a decision, a workaround — not a typo/rename/format, not work already under a
 spec), silently fire `hero intake "<ask + one-line why>"`. Reuse the existing
 auto-capture threshold machinery and `hero intake` CLI — no new verbs, no graph
-edges, no hooks. Manual promote stays the gate. Decisions locked: retroactive +
-threshold-gated (NOT capture-then-edit), capture auto / promote manual.
+edges, no new hooks. Manual promote stays the gate. Land the trigger + threshold
+on **all six install targets** (opencode/cursor/claude/copilot/codex/generic) via
+the shared `.hero/knowledge/` convention rendered into AGENTS.md (+ CLAUDE.md for
+Claude); make AGENTS.md guidance self-contained since only Claude has an
+end-of-session hook. Decisions locked: retroactive + threshold-gated (NOT
+capture-then-edit), capture auto / promote manual.
 
 ---
 
@@ -486,27 +489,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/cev2-bash-output-supersede.md)_
-
----
-
-## tracker-fixtures — "Tracker Fixtures — GitLab Parity and Offline Mock Server for Round-Trip Validation"
-_initiative · planning · horizon: next_
-
-_Run opener — arm with `/drive tracker-fixtures`_
-
-Make Hero's tracker round-trip (import → push → pull → set-owner)
-exercisable two ways:
-
-1. **Live**: against a real GitLab project, joining the existing
-   github/jira/linear round-trip parity.
-2. **Offline**: against a local `mock-tracker-server` binary that speaks
-   the GitHub, Jira, Linear, and GitLab API subset our adapters
-   actually call. Same harness, same assertions, no network, no
-   rate-limit risk, deterministic.
-
-Together the two children unblock the originator-side live-validation
-harness: hero-code can point at a real GitLab for one CI lane and at
-`mock-tracker-server` for the other.
 
 ---
 

@@ -33,6 +33,30 @@ The `{hero_folder}` defaults to `.hero` and is configurable via `hero.json`.
 
 The `{slug}` is a short, lowercase, hyphenated identifier derived from the work item title (e.g., `add-csv-export`, `login-timeout-race`).
 
+### Folder-per-spec is the optimal layout — and why
+
+A spec gets its **own folder** (`{slug}/spec.md`) because the folder is a
+**bundle for the spec's companion artifacts**: `delivery-audit.md`, `plan.md`,
+mockups under `mocks/`, `retro.md`, and any diagnosis attachments. The delivery
+gates look for these *beside* `spec.md` — e.g. `hero spec verify` finds the
+delivery audit at `{slug}/delivery-audit.md`. A spec without its own folder has
+nowhere to put these, and the audit/coverage gates can't find them.
+
+**Steer to folder-per-spec for any spec that will be delivered.** This is the
+default; prefer it.
+
+A **flat `<slug>.md`** file (no folder) is *tolerated by the engine* —
+discovery, slug resolution, and archival all handle it — and is acceptable for a
+**lightweight stub or planning-only child** that carries no companions yet (e.g.
+an initiative child not yet in delivery). But **promote a flat spec to its own
+folder before delivery starts**, so its delivery audit and mocks co-locate where
+the gates look. Do not author a deliverable spec as a flat file.
+
+**Stamp `slug:` in frontmatter — it is the authoritative identifier.** For a
+folder spec the slug matches the folder name; for a flat file it matches the
+filename. Either way, the frontmatter `slug:` is the source of truth, so never
+rely on the path alone.
+
 ## Feature spec template
 
 ```markdown
@@ -62,6 +86,12 @@ without additional context.
 2. {description of second change}
    - {specific detail}
 3. ...
+
+## Mockups
+Optional. Visual mockups produced for this spec. Auto-populated by `/mock`
+against the spec slug. Omit this section if no mockup was produced.
+
+- [Mockup name](.hero/mocks/{slug}/index.html) — YYYY-MM-DD — what the mockup shows
 
 ## Boundaries
 What is NOT in scope. Adjacent work to explicitly avoid.
@@ -112,6 +142,12 @@ naming specific files and components.
    - {specific detail}
 3. ...
 
+## Mockups
+Optional. Visual mockups produced for this fix, if any. Auto-populated by
+`/mock` against the spec slug. Omit this section if no mockup was produced.
+
+- [Mockup name](.hero/mocks/{slug}/index.html) — YYYY-MM-DD — what the mockup shows
+
 ## Boundaries
 What this fix does NOT attempt to address.
 Related issues that should be separate work items.
@@ -124,6 +160,42 @@ Areas that need careful testing.
 How to verify the fix works. Regression test expectations.
 How to confirm the original issue no longer reproduces.
 ```
+
+## Mockups section
+
+(`/mock` ships with the engineering pack; in packs without it, this section
+appears only when added by hand.)
+
+When `/mock` produces a visual prototype against a spec slug, it appends
+(or updates, on `--iterate`) a `## Mockups` section in the spec body listing
+each mockup. This makes the artifact discoverable to humans reading the spec
+and to delivery agents reading the spec for context.
+
+**Format.** One entry per mockup, in a top-level `## Mockups` section placed
+between `## Changes` and `## Boundaries`:
+
+```markdown
+## Mockups
+
+- [Hero landing page](.hero/mocks/hero-landing-page/index.html) — 2026-05-20 — public homepage with install CTA and feature grid
+- [Hero landing page — dense variant](.hero/mocks/hero-landing-page/dense.html) — 2026-05-22 — compressed-density alternative for above-the-fold
+```
+
+**Rules:**
+
+- The section is optional — omit it entirely if no mockup was produced.
+- Path is relative to the repo root so the link works in markdown renderers.
+- Date is ISO format (`YYYY-MM-DD`).
+- Description is one line — what's shown, not why.
+- Multiple mockups per spec are supported as additional list items.
+- `/mock --iterate` updates the matching entry's date in place rather than
+  appending a duplicate when the path is unchanged.
+- Free-text `/mock` calls (no spec slug) do not write back — those mockups
+  land under `.hero/mocks/_adhoc/` and are not linked to any spec.
+
+`/deliver` reads `.hero/mocks/{slug}/` directly as a pre-flight step, so
+mockups generated before this section was introduced (or dropped in by
+hand) are still surfaced to the engineer.
 
 ## Convention spec template
 
@@ -211,11 +283,14 @@ All spec types use YAML frontmatter. The following fields are supported:
 
 | Field | Required | Applies to | Description |
 |-------|----------|------------|-------------|
+| `title` | Yes | All | Human-readable title. |
+| `slug` | Yes | All | Short kebab-case identifier and the spec's authoritative ID. Matches the folder name (folder-per-spec) or the filename (flat `<slug>.md`). Always stamp it in frontmatter — it is the source of truth for resolution and for linking the spec from another session or prompt, independent of path. |
 | `type` | Yes | All | Spec type: `feature`, `bug`, `convention`, `decision`, `initiative` |
 | `status` | Yes | All | Lifecycle state. Work specs: `planning`, `in-review`, `delivering`, `completed`. Conventions: `draft`, `active`. Decisions: `proposed`, `accepted`. Any type can be `superseded`. |
 | `scope` | Yes (conventions) | Convention | Array of glob patterns identifying which files this convention applies to. Used by `hero relevant` to inject relevant conventions. |
 | `tags` | No | All | Array of tags for search and filtering. Use lowercase, hyphenated terms. |
 | `claimed_by` | No | Work specs | Who is currently working on this spec. Set via `hero spec claim`. |
+| `completed_at` | No | Work specs | RFC 3339 UTC timestamp recording when `status` flipped to `completed`. Hero writes this automatically at status-transition time — agents and humans should not hand-write it. The reader also accepts `completedAt:` for tolerance, but only `completed_at:` is ever produced. Historical specs without the field can be backfilled from git history via `hero admin backfill-completed-at`. |
 | `created` | No | All | ISO 8601 date when the spec was created. |
 | `relates-to` | No | All | Array of spec slugs that are related but not dependent. |
 | `depends-on` | No | All | Array of spec slugs that must be completed before this spec can proceed. |

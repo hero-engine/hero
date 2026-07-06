@@ -15,10 +15,10 @@ The argument can be:
    - If the argument looks like a query (contains `=`, `AND`, `OR`, or field operators), use `--jql`
    - If empty, run with defaults
 
-2. Run the appropriate `hero import` command:
-   - Preset: `hero import --preset <name>`
-   - Raw JQL: `hero import --jql "<query>"`
-   - Default: `hero import`
+2. Run the appropriate `hero sync import` command:
+   - Preset: `hero sync import --preset <name>`
+   - Raw JQL: `hero sync import --jql "<query>"`
+   - Default: `hero sync import`
 
 3. Review the output — report how many issues were imported, skipped, and any errors
 
