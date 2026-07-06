@@ -49,19 +49,19 @@ func newInstallHarness(t *testing.T) *installHarness {
 func (h *installHarness) seedSource() {
 	h.t.Helper()
 
-	// Skills land in seed under the legacy flat layout `skills/<name>.md`
-	// because cursor's fallback path (target_cursor.go uses installFlat
-	// for skills) requires flat source. installSkillsNested transparently
-	// rewrites flat source into the nested `<name>/SKILL.md` destination
-	// for the other targets, so this single seed shape works everywhere.
+	// Skills use the canonical nested layout `skills/<name>/SKILL.md` —
+	// the shape the embedded content actually ships. installSkillsNested
+	// consumes it directly; cursor's installSkillsFlat flattens it to
+	// `<name>.md`. (An earlier flat seed masked a cursor bug where
+	// installFlat skipped skill directories entirely.)
 	files := map[string]string{
-		"agents/engineer.md":      "---\nname: engineer\ndescription: Generic engineer.\n---\n# Engineer agent\nGeneric engineer.",
-		"agents/reviewer.md":      "---\nname: reviewer\ndescription: Reviews PRs.\n---\n# Reviewer agent\nReviews PRs.",
-		"commands/design.md":      "---\ndescription: Produces a spec.\n---\n# /design command\n",
-		"commands/deliver.md":     "---\ndescription: Implements a spec.\n---\n# /deliver command\n",
-		"skills/spec-format.md":   "---\ndescription: Defines spec structure.\n---\n# spec-format skill\n",
-		"skills/test-strategy.md": "---\ndescription: Test pyramid guidance.\n---\n# test-strategy skill\n",
-		"opencode.json":           `{"$schema":"https://opencode.ai/config.json"}`,
+		"agents/engineer.md":            "---\nname: engineer\ndescription: Generic engineer.\n---\n# Engineer agent\nGeneric engineer.",
+		"agents/reviewer.md":            "---\nname: reviewer\ndescription: Reviews PRs.\n---\n# Reviewer agent\nReviews PRs.",
+		"commands/design.md":            "---\ndescription: Produces a spec.\n---\n# /design command\n",
+		"commands/deliver.md":           "---\ndescription: Implements a spec.\n---\n# /deliver command\n",
+		"skills/spec-format/SKILL.md":   "---\ndescription: Defines spec structure.\n---\n# spec-format skill\n",
+		"skills/test-strategy/SKILL.md": "---\ndescription: Test pyramid guidance.\n---\n# test-strategy skill\n",
+		"opencode.json":                 `{"$schema":"https://opencode.ai/config.json"}`,
 	}
 
 	for relPath, body := range files {

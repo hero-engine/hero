@@ -1,0 +1,108 @@
+package install
+
+import (
+	"io/fs"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+)
+
+// content_test.go — coverage for the shared content-install primitives
+// across every target. Regression guards for two bugs in the same family:
+//
+//   - Cursor shipped zero skills: target_cursor.go used installFlat for
+//     skills, which skips directories — and skills are now directories
+//     containing SKILL.md. Fixed by installSkillsFlat.
+//   - installFlat had no README exclusion, so domain content READMEs
+//     (pm/sales ship agents/README.md etc.) installed as pseudo-agents.
+
+// TestAllTargets_ShipSkills asserts every install target materializes a
+// nonzero number of skill files from the canonical nested source layout,
+// at the layout its harness actually loads.
+func TestAllTargets_ShipSkills(t *testing.T) {
+	cases := []struct {
+		target    Target
+		skillsDir string // dest dir holding installed skills
+		specSkill string // where the seeded spec-format skill must land
+	}{
+		{TargetClaude, ".claude/skills", ".claude/skills/spec-format/SKILL.md"},
+		{TargetOpenCode, ".opencode/skills", ".opencode/skills/spec-format/SKILL.md"},
+		{TargetCursor, ".cursor/rules/skills", ".cursor/rules/skills/spec-format.md"},
+		{TargetCodex, ".agents/skills", ".agents/skills/spec-format/SKILL.md"},
+		{TargetCopilot, ".github/skills", ".github/skills/spec-format/SKILL.md"},
+		{TargetGeneric, ".ai/skills", ".ai/skills/spec-format/SKILL.md"},
+	}
+
+	for _, tc := range cases {
+		t.Run(string(tc.target), func(t *testing.T) {
+			h := newInstallHarness(t)
+			if err := os.MkdirAll(filepath.Join(h.TargetDir, ".hero"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			h.Run(tc.target, nil)
+
+			h.mustBeRegularFile(tc.specSkill)
+
+			if n := countFilesUnder(t, filepath.Join(h.TargetDir, tc.skillsDir)); n == 0 {
+				t.Errorf("target %s shipped zero skill files under %s", tc.target, tc.skillsDir)
+			}
+		})
+	}
+}
+
+// TestInstall_ExcludesContentReadmes asserts that README.md files in the
+// source content tree (documentation for humans browsing agents/,
+// commands/, skills/ — the pm and sales domains ship them) are never
+// installed as content.
+func TestInstall_ExcludesContentReadmes(t *testing.T) {
+	seedReadmes := func(h *installHarness) {
+		for _, rel := range []string{"agents/README.md", "commands/README.md", "skills/README.md"} {
+			full := filepath.Join(h.SourceDir, rel)
+			if err := os.WriteFile(full, []byte("# Directory readme\n"), 0o644); err != nil {
+				h.t.Fatal(err)
+			}
+		}
+	}
+
+	t.Run("claude", func(t *testing.T) {
+		h := newInstallHarness(t)
+		seedReadmes(h)
+		h.Run(TargetClaude, nil)
+
+		h.mustNotExist(".claude/agents/README.md")
+		h.mustNotExist(".claude/commands/README.md")
+		h.mustNotExist(".claude/skills/README.md")
+		h.mustNotExist(".claude/skills/README/SKILL.md")
+	})
+
+	t.Run("cursor", func(t *testing.T) {
+		h := newInstallHarness(t)
+		seedReadmes(h)
+		h.Run(TargetCursor, nil)
+
+		h.mustNotExist(".cursor/rules/agents/README.md")
+		h.mustNotExist(".cursor/rules/commands/README.md")
+		h.mustNotExist(".cursor/rules/skills/README.md")
+	})
+}
+
+// countFilesUnder returns the number of regular files anywhere under dir.
+// A missing dir counts as zero.
+func countFilesUnder(t *testing.T, dir string) int {
+	t.Helper()
+	count := 0
+	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() && strings.HasSuffix(d.Name(), ".md") {
+			count++
+		}
+		return nil
+	})
+	if err != nil && !os.IsNotExist(err) {
+		t.Fatalf("walking %s: %v", dir, err)
+	}
+	return count
+}

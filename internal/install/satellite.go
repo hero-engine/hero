@@ -384,15 +384,15 @@ func perTargetMarker(rootAbs, satAbs, scope string, targets []Target, symlinks b
 	return fmt.Sprintf(`<!-- hero:satellite -->
 # Hero satellite
 
-This folder is a satellite of the Hero workspace at ` + "`%s`" + `.
+This folder is a satellite of the Hero workspace at `+"`%s`"+`.
 
-- **Scope:** ` + "`%s`" + `
+- **Scope:** `+"`%s`"+`
 - **%s:** %s
 - **Mode:** %s
 
 Specs, knowledge, and events created from this folder land in the root
 workspace, scoped to the identifier above. To work directly at the
-workspace root, open ` + "`%s`" + ` in your editor or chat tool.
+workspace root, open `+"`%s`"+` in your editor or chat tool.
 `, rel, scope, label, strings.Join(names, ", "), mode, rel)
 }
 

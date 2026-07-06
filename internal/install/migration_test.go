@@ -35,7 +35,7 @@ func TestMigration_CodexLegacyLayoutCleanup(t *testing.T) {
 	if err := os.MkdirAll(legacySkillDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	mustMirrorCanonical(t, h, "skills/spec-format.md", filepath.Join(legacySkillDir, "SKILL.md"))
+	mustMirrorCanonical(t, h, "skills/spec-format/SKILL.md", filepath.Join(legacySkillDir, "SKILL.md"))
 
 	h.Run(TargetCodex, nil)
 
@@ -72,7 +72,7 @@ func TestMigration_CopilotLegacyLayoutCleanup(t *testing.T) {
 	if err := os.MkdirAll(legacySkillDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	mustMirrorCanonical(t, h, "skills/spec-format.md", filepath.Join(legacySkillDir, "SKILL.md"))
+	mustMirrorCanonical(t, h, "skills/spec-format/SKILL.md", filepath.Join(legacySkillDir, "SKILL.md"))
 
 	h.Run(TargetCopilot, nil)
 

@@ -27,11 +27,11 @@ import (
 // canonicalEntry is a single canonical file from the embedded source
 // FS, ready for rendering.
 type canonicalEntry struct {
-	Name        string // filename stem (e.g. "engineer" for "engineer.md")
-	SourcePath  string // path within sourceFS (e.g. "agents/engineer.md")
+	Name        string            // filename stem (e.g. "engineer" for "engineer.md")
+	SourcePath  string            // path within sourceFS (e.g. "agents/engineer.md")
 	Frontmatter map[string]string // parsed YAML frontmatter, key→trimmed-value
-	Body        []byte // markdown body after the closing `---`
-	Raw         []byte // full file bytes
+	Body        []byte            // markdown body after the closing `---`
+	Raw         []byte            // full file bytes
 }
 
 // renderToFile renders entries from a canonical kind dir into destDir
@@ -211,4 +211,3 @@ func renderCopilotPromptFile(entry canonicalEntry) (string, []byte, error) {
 	}
 	return entry.Name + ".prompt.md", out.Bytes(), nil
 }
-
