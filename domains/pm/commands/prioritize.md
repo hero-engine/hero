@@ -27,6 +27,6 @@ Determine what's being ranked:
 - On the Roadmap board view, an inline-proposed ordering change is surfaced (accept/reject) rather than auto-applied.
 - A ranked table is logged to chat with scores and the strategist's soft-input commentary.
 
-After ranking lands, log `hero event decision_made` with the framework used and the top-of-list rationale so the next session sees the priority call.
+After ranking lands, log `hero agent events decision_made` with the framework used and the top-of-list rationale so the next session sees the priority call.
 
 Request: $ARGUMENTS

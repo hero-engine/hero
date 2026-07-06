@@ -42,7 +42,7 @@ The pattern:
 [evidence grounding the hypothesis]
 ```
 
-This is the bet-shaping discipline. Read more in Marty Cagan / SVPG's outcomes-over-outputs framing.
+This is the bet-shaping discipline. Read more in Marty Cagan / SVPG's outcomes-over-outputs framing (*Inspired*, *Empowered*).
 
 ### Evidence — without source attribution, the bet is opinion
 
@@ -93,16 +93,16 @@ The horizon discipline is what keeps the roadmap honest. Common rot pattern: ite
 An item is honestly `now` when **all** of these hold:
 
 - The bet has a PRD (or a pitch) drafted and approved.
-- At least one child story is in `ready` or `in-flight`.
+- At least one child story is `in-review` or `delivering` (engine statuses; see the lifecycle table in `pm-preset-detection`).
 - The team has explicitly committed in the current planning cycle (sprint plan, cycle bet, release plan).
 - An engineering feature exists (cross-domain edge populated) OR the work is single-domain PM.
 
 An item is *not* honestly `now` if:
 
 - It has no child stories.
-- Its child stories are all `drafted` or `refined` (not `ready`).
+- Its child stories are all `planning` (none yet `in-review`).
 - The team hasn't committed — it's "what we hope to do next."
-- It's been `now` for >2 planning cycles without delivery progress (use `stale-roadmap-scrubber` to surface).
+- It's been `now` for >2 planning cycles without delivery progress (use `roadmap-curator` to surface).
 
 ### `next` — committed for the period after now
 
@@ -195,12 +195,10 @@ These are not auto-corrected. The curator surfaces them; the PM decides. (Auto-c
 
 ## Cross-references
 
-- `outcomes-over-outputs` — Marty Cagan's framing; deeper on the output-vs-outcome distinction.
 - `prioritization-frameworks` — RICE / ICE / WSJF mechanics for picking between initiatives.
 - `cross-domain-graph-query` — how `roadmap-curator` reads engineering delivery state.
 - `evidence-synthesis` — how to ground the Evidence section.
 - `opportunity-solution-trees-torres` — discovery framework that often feeds initiatives.
-- `risk-surfacing` — Risks section discipline.
 - `prd-structure` and `pitch-writing-shape-up` — once an initiative promotes to `committed`, a PRD or pitch follows.
 - PM domain mission — principle #3 (tradeoffs visible), principle #4 (alignment maintained), principle #5 (learn from what shipped) all live here.
 - Prior art: Marty Cagan / SVPG (*Inspired*, *Empowered*) on outcome-shaped roadmaps; Teresa Torres on opportunity-grounded bets.

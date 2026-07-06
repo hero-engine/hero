@@ -3,7 +3,7 @@ name: evidence-synthesis
 description: Turn raw signals — customer quotes, interview synthesis, usage data, NPS comments — into a roadmap evidence trail that survives the "how do you know?" challenge.
 compatibility: opencode
 metadata:
-  audience: intake-triager, discovery-researcher, competitive-analyst, metrics-analyst, product-strategist
+  audience: intake-triager, discovery-researcher, product-strategist
   purpose: discovery-curation
 ---
 
@@ -17,8 +17,8 @@ Load this skill when:
 
 - promoting an intake to an initiative — the rolled-up evidence becomes the initiative's Evidence section (`intake-triager`)
 - writing a discovery synthesis after interviews or research sessions (`discovery-researcher`)
-- adding a competitive observation to an existing initiative (`competitive-analyst`)
-- attaching usage-data analysis to a PRD or initiative (`metrics-analyst`)
+- adding a competitive observation to an existing initiative (competitive-analyst is P1)
+- attaching usage-data analysis to a PRD or initiative (metrics-analyst is P1)
 - a `product-strategist` is framing a bet and needs to defend "why this and not that"
 - `pm-investigator` is populating an intake Investigation section
 

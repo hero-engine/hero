@@ -27,6 +27,10 @@ is to re-run the workflow or hand-edit — same as any other spec content.
 
 ## When to write or update me
 
+The command names below are the **engineering pack**; in pm, `prd-author` and
+`story-writer` write the kickoff as part of authoring (`hero queue` renders
+`## Kickoff` on every domain, so the skill is domain-universal).
+
 - **`/design`** — write a fresh `## Kickoff` as part of scaffolding the
   new spec, between `## Goal` and `## Problem`.
 - **`/deliver`** — rewrite `## Kickoff` when the spec's status flips

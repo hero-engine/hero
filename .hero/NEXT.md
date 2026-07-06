@@ -5,9 +5,9 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-07-06T19:16:00Z
+updated: 2026-07-06T21:00:21Z
 repo: hero-engine/hero
-branch: main
+branch: fix/pm-pack-phantom-surfaces
 ---
 
 ## Just finished
@@ -20,7 +20,7 @@ No open features in this repo.
 
 ## Roadmap shape
 
-3 specs have size drift — run /roadmap-review to triage
+9 specs have size drift — run /roadmap-review to triage
 
 ## Blocked on
 

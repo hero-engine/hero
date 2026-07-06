@@ -182,8 +182,8 @@ A tree that hasn't changed in a month is either an outcome that's been solved or
 
 - `metrics-design` — outcome definitions follow the same leading/observable/baseline rules.
 - `continuous-discovery-cadence` — the weekly rhythm that keeps the tree alive.
-- `discovery-interview-design` — how to run the interviews that populate the opportunity space.
-- `assumption-testing` — designing tests that resolve in days.
+- `discovery-interview-design` (P1, ships v1.5) — how to run the interviews that populate the opportunity space.
+- `assumption-testing` (P1, ships v1.5) — designing tests that resolve in days.
 - `evidence-synthesis` — clustering raw research into mapped opportunities.
 - `initiative` spec type — the `Evidence` section is where the tree's output lives.
 - PM principle #1 (decide what's worth building) and #5 (learn from what shipped) — the OST is the operating system for both.

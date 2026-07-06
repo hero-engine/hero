@@ -3,7 +3,7 @@ name: metrics-design
 description: Define success metrics for product work — leading vs lagging, observable, with named baseline and target before commit.
 compatibility: opencode
 metadata:
-  audience: metrics-analyst, prd-author, roadmap-curator
+  audience: pm-delivery-lead, prd-author, roadmap-curator
   purpose: framework-guidance
 ---
 ## What I do

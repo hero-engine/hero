@@ -3,7 +3,7 @@ name: prd-structure
 description: Canonical PRD templates and section-by-section quality bar — pitch-shaped (default under cycle preset) and ten-section (default under sprint, continuous, and phased presets).
 compatibility: opencode
 metadata:
-  audience: prd-author, pitch-author, pm-reviewer
+  audience: prd-author, pm-reviewer
   purpose: prd-authoring
 ---
 
@@ -15,7 +15,7 @@ Provide the two canonical PRD templates Hero PM ships with, the rules for choosi
 
 Load this skill when:
 
-- drafting a new PRD from an initiative (`prd-author`, `pitch-author`)
+- drafting a new PRD from an initiative (`prd-author`; pitch authoring is P1)
 - choosing between pitch shape and ten-section shape based on the active preset
 - reviewing a PRD for completeness (`pm-reviewer`)
 - switching template mid-draft (rare, but allowed)
@@ -164,7 +164,7 @@ From ChatPRD / MetaGPT prior art. Every PRD must pass:
 2. **Structure** — sections in the right order, none silently omitted, each section earning its place.
 3. **Flexibility** — leaves room for engineering judgment on the *how* (the Negotiable bit from INVEST applies at PRD scope too).
 4. **Actionability** — engineering or design can pick this up and start decomposing into stories without back-and-forth on intent.
-5. **Stakeholder focus** — exec / customer / engineering / sales each find what they need. (`stakeholder-communication` covers the audience-cut details.)
+5. **Stakeholder focus** — exec / customer / engineering / sales each find what they need. (Stakeholder-communication audience-cut details are P1, ships v1.5.)
 
 `pm-reviewer` runs the five-adjective test on every PRD before `review → approved`. Failure on any one is a blocking finding.
 

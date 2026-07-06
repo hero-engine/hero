@@ -3,7 +3,7 @@ name: cycle-planning
 description: Shape Up cycle planning — six-week build + two-week cooldown rhythm, betting table mechanics, appetite as constraint, hill chart as inflight signal.
 compatibility: opencode
 metadata:
-  audience: cycle-planner, pitch-author, pm-delivery-lead
+  audience: pm-delivery-lead
   purpose: process-guidance
 ---
 ## What I do
@@ -62,7 +62,7 @@ Not at the table: individual contributors. The team that builds the bet isn't in
 
 ### What gets bet
 
-- **Pitches.** A pitch is a written artifact (problem, appetite, solution sketch, rabbit holes, no-gos). Authored by `pitch-author` (or `prd-author` in pitch shape).
+- **Pitches.** A pitch is a written artifact (problem, appetite, solution sketch, rabbit holes, no-gos). Authored by a pitch author (P1; v1: prd-author).
 - **Not ideas.** Ideas without pitches don't enter the betting table. The discipline of writing the pitch is the qualifying gate.
 - **Not committed work.** Last cycle's bets that didn't finish don't automatically continue. They have to be re-pitched and re-bet.
 
@@ -179,8 +179,8 @@ It's the wrong choice when:
 ## Cross-references
 
 - `pitch-writing-shape-up` — how to author the pitches that enter the betting table.
-- `shape-up-cadence` — the operational rhythm of the cycle preset (this skill focuses on planning; that skill focuses on the recurring cadence).
-- `hill-chart-reasoning` — deeper guidance on reading and updating the hill chart.
+- `shape-up-cadence` (P1) — the operational rhythm of the cycle preset (this skill focuses on planning; that skill focuses on the recurring cadence).
+- `hill-chart-reasoning` (P1) — deeper guidance on reading and updating the hill chart.
 - `sprint-planning` — the alternative delivery layer for teams running fixed sprints.
 - `prioritization-frameworks` — produces the pitch ranking the betting table considers.
 - `initiative` and `feature` spec types — `appetite`, `cycle`, and `hill_position` are the preset-conditional fields cycle planning populates.

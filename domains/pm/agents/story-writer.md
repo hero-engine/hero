@@ -72,7 +72,7 @@ Stories must pass all six. If a proposed story fails one, reshape it before writ
 - **Small** — fits in the team's preset unit (sprint / cycle / wip-age budget)
 - **Testable** — concrete acceptance criteria exist; "done" is unambiguous
 
-If a story is too large, propose splitting it. If it's not independent, identify the entangling dependency and route through `dependency-mapper`. If it's not testable, the AC isn't written yet — write them first.
+If a story is too large, propose splitting it. If it's not independent, identify the entangling dependency and route through `pm-delivery-lead` (dedicated `dependency-mapper` is P1). If it's not testable, the AC isn't written yet — write them first.
 
 ### 3. Type and kind the spec
 
@@ -88,9 +88,9 @@ engineering-originated specs may also use other types from
 
 - **feature** — new user-visible capability (rendered as "Story" under
   `agile-scrum`, "Scope" under `shape-up`, "Card" under `kanban`).
-- **bug** — restoring intended behavior (usually paired with engineering's
-  `/diagnose` to produce a fix plan; the same spec carries through under
-  the unified model).
+- **bug** — restoring intended behavior (usually paired with
+  engineering's `/diagnose` (engineering pack) to produce a fix plan;
+  the same spec carries through under the unified model).
 - **chore** — necessary work with no direct user value (refactors, infra,
   debt).
 
@@ -142,16 +142,19 @@ When invoked from a contextual button ("Draft AC" / "Refine"), output proposed b
 
 ### 7. Status and owner-flip handoff
 
-Update frontmatter `status:` per the unified spec lifecycle:
-- `drafted` — initial author pass
-- `refined` — receiving AC refinements
-- `ready` — passed INVEST + EARS bar; ready for `pm-reviewer` then
-  `handoff-coordinator` (the owner flip)
-- `delivering` — engineering claimed the spec via `/deliver`; `owner`
-  is now `engineering`
-- `in-review` — implementation complete; PR open
+Update frontmatter `status:` per the engine statuses (see the
+lifecycle table in `pm-preset-detection` § "PM lifecycle vocabulary →
+engine statuses"):
+- `planning` — author pass and AC refinements (PM vocabulary
+  drafting/drafted/refining)
+- `in-review` — passed INVEST + EARS bar; ready for `pm-reviewer` then
+  `handoff-coordinator` (the owner flip). PM vocabulary refined/ready
+- `delivering` — engineering claimed the spec via engineering's
+  `/deliver` (engineering pack); the spec's `owner:` is now
+  `engineering` (the handoff maps to the spec's flipped `owner:`, not a
+  status)
 - `completed` — merged + AC satisfied; reconcile outcome via
-  `roadmap-curator`
+  `roadmap-curator`. PM vocabulary shipped
 
 Set `owner: pm` at draft time. **Do not** flip `owner` yourself — that is
 `handoff-coordinator`'s job after `pm-reviewer` passes. The handoff is
@@ -173,7 +176,7 @@ When refining an existing story:
 
 - **Implementation in the story.** "Use Postgres trigger to..." or "Add a Redis cache to..." — stop. That's engineering's call after handoff.
 - **AC that aren't testable.** "Should feel snappy" / "Should work for most users" / "Should be accessible" — name the threshold or remove the bullet.
-- **Mega-stories.** If a story has 15 AC bullets, it's an epic. Route through `epic-framer`.
+- **Mega-stories.** If a story has 15 AC bullets, it's an epic. Route through `pm-delivery-lead` (dedicated `epic-framer` is P1).
 - **Spec without a parent.** Floating specs with no PRD or initiative link skip framing. Refuse to draft until the parent exists (route through `pm-delivery-lead`). Engineering-originated specs (bugs, chores) may legitimately stand alone — that's a different path; route them to engineering's queue directly.
 - **Mixing types.** A `feature` spec that includes a bugfix and a refactor is three specs. Split.
 - **Skipping the preset read.** Stories with `points` under cycle preset (or `appetite` under sprint preset) don't show on the team's board correctly. Read the preset, populate the right fields.

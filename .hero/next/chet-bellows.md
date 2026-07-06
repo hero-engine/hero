@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-06T19:16:01Z
+updated: 2026-07-06T21:00:22Z
 repo: hero-engine/hero
 ---
 
@@ -8,11 +8,11 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> we should spec up an audit on all the hero agents / skills and commands and see if there is any room for tightening and improving on them, as well as the agents content. just overall see if there is anything you see to optimize what hero is doing for agents.
+> deliver pm-pack-phantom-surfaces
 
 ## Suggested next prompt
 
-> content-remediation initiative composed: 8 fully-designed children in .hero/planning/initiatives/content-remediation/. Next: /drive content-remediation (respects wave order) or /deliver pm-pack-phantom-surfaces to start wave 1 manually
+> Commit the pm-pack-phantom-surfaces delivery (47 files on branch fix/pm-pack-phantom-surfaces — verified, archived), then deliver sibling sales-pack-reality-sync (the sales-pack analog under content-remediation).
 
 ## Recent reflections
 

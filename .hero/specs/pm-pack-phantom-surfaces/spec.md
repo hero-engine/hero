@@ -2,7 +2,7 @@
 title: "PM Pack Phantom Surfaces — fix every reference to a surface that doesn't exist"
 slug: pm-pack-phantom-surfaces
 type: bug
-status: planning
+status: completed
 priority: P1
 size: medium
 domain: engineering
@@ -11,6 +11,8 @@ tags: [pm-pack, content-audit, phantom-surfaces, routing, handoff]
 relations:
   - { target: content-remediation, kind: parent }
   - { target: hero-content-audit, kind: related }
+delivery_method: manual
+completed_at: 2026-07-06T20:58:30Z
 ---
 
 # PM Pack Phantom Surfaces — fix every reference to a surface that doesn't exist
@@ -525,3 +527,58 @@ corrected to the surfaces that exist).
 5. **Cold read:** open `domains/pm/agents/handoff-coordinator.md` and execute
    its workflow steps 1-4 mentally against a scratch pm workspace spec — every
    step names a runnable surface and the read-back verification can succeed.
+
+## Completion Ledger
+
+Delivered as a content-remediation sweep of `domains/pm/` (plus the `core/`
+promotion of `kickoff-prompt`). No Go code changed. Base: `40a3b85`. All CLI
+surfaces re-verified against a freshly-built binary (line numbers had drifted
+from `3aaad62`, so edits matched on quoted strings per the Risks section).
+
+### Acceptance Criteria
+
+| # | Criterion | Status | Evidence |
+|---|---|---|---|
+| 1 | No AGENTS.md routing row targets an absent slash command | DONE | `domains/pm/AGENTS.md` routing + vocabulary tables rewritten; `/interview`→`/discover --interview`, `/scrub *`→`/roadmap`/`/triage`/`/refine`, `/diagnose`/`/review`→direct agent, `/search`→`hero search`, `/capacity`/`/plan-*`/`/standup` collapsed to a scoped v1.5 row. Untouched targets (`/why`,`/blocked`,`/note`,`/decide`,`/retro`) confirmed present in `core/commands/`. |
+| 2 | Only existing CLI commands/flags in every `domains/pm/` file | DONE | Grep gate 1a empty; CLI spot-checks pass against fresh binary: `hero agent events`, `hero spec new/set-owner/design`, `hero sync import`, `hero search --tag`, `hero list --status` all exit 0; `--kind`/`--themes`/`--owner` confirmed absent. |
+| 3 | Events use `hero agent events <valid-type>` or `hero_event` MCP | DONE | All `hero event ...` → `hero agent events ...`; invalid `handoff` type → `spec_updated` (AGENTS.md, pm-delivery-lead, handoff-coordinator, handoff command, handoff-protocol, roadmap-curator, triage, prioritize, release-notes). |
+| 4 | Owner flip described exclusively via `hero spec set-owner` | DONE | AGENTS.md handoff steps, handoff-coordinator §2, handoff command, handoff-protocol all flip via `hero spec set-owner <slug> engineering` (atomic history append); "raw frontmatter edit records no history" warning added. |
+| 5 | pm-delivery-lead `permission.task` allowlist lists only shipped agents | DONE | 8 ghost `allow` entries deleted; allowlist is the 11 shipped subagents (`git diff` confirms). |
+| 6 | Unshipped agent/skill scoped with P1 marker + named v1 fallback | DONE | Grep gates 1b/1c empty (excl. sanctioned Marty Cagan citation, roadmap-framing:45). Specialist tables, audience lists, prose across 20+ files scoped; ghosts dropped from `metadata.audience`. Also fixed `prd-anti-patterns` (omitted from the spec's Change list). |
+| 7 | Lifecycle mapping in exactly one skill; citing agents cite it | DONE | `## PM lifecycle vocabulary → engine statuses` added to `pm-preset-detection`; pm-delivery-lead, handoff-coordinator, handoff command/protocol, story-writer, prd-author, pm-reviewer, roadmap-curator cite "per the lifecycle table in `pm-preset-detection`". |
+| 8 | pm spec paths only under `.hero/planning/{...}` | DONE | `planning/specs/` → slug-resolved `.hero/planning/{features,bugs,epics,prds,intake}/` (handoff-coordinator, handoff command); `planning/roadmap/` → `planning/initiatives/` (discover command). Grep gate 1a empty. |
+| 9 | `<harness>/` placeholders + `.hero/hero.json` in AGENTS.md structure | DONE | Project Structure rewritten to mirror `domains/engineering/AGENTS.md` (`<harness>/commands\|agents\|skills` + install sentence); `hero.json` → `.hero/hero.json`; dead relative decision link flattened. |
+| 10 | Engineering-only command refs scoped or repointed | DONE | `/deliver`/`/design`/`/diagnose`/`/review`/`/scrub` scoped "(engineering pack)" or repointed to pm surfaces across agents, commands, skills, spec-types. |
+| 11 | `kickoff-prompt` resolves in a `--domain pm` install | DONE | `git mv` engineering→`core/skills/kickoff-prompt` + engineering-pack scope note. Install smoke: skill lands at `~/pm-smoke2/.claude/skills/kickoff-prompt/SKILL.md` (was absent pre-move). |
+| 12 | `go test ./...` passes including `content_parity_test.go` | DONE | `go test ./...` → 86 packages ok, 0 FAIL, exit 0. `TestDomainPacks_NoUnannotatedCoreShadows` (parity) PASS for engineering/sales/pm. |
+
+### Changes
+
+| # | Change | Status | Evidence |
+|---|---|---|---|
+| 1 | Lifecycle mapping + audience/body ghost fixes in `pm-preset-detection` | DONE | Section appended; audience trimmed to shipped 4; body ghosts → pm-delivery-lead "(P1 … v1.5)". |
+| 2 | Promote `kickoff-prompt` to `core/skills/` + scope engineering cmd names | DONE | `git mv` + scope note; parity test green; install-verified. |
+| 3 | Fix AGENTS.md routing + vocabulary tables | DONE | Both tables rewritten; `hero new <type>` → `hero spec new`; dup `/refine` merged. |
+| 4 | Fix AGENTS.md CLI + compaction mechanics | DONE | events, handoff steps, `hero sync import`, `--kind`→`--tag`, `hero_active` MCP. |
+| 5 | Fix AGENTS.md structure/config/dead-link + presets roster | DONE | `<harness>/` structure, `.hero/hero.json`, flattened link, dropped `core/vocabularies` path, roster reworded. |
+| 6 | Trim pm-delivery-lead to shipped surfaces | DONE | allowlist ghost-free; 8 specialist rows repointed; status chain + events fixed. |
+| 7 | Rewrite handoff-coordinator mechanics on real surfaces | DONE | slug-resolve paths, `set-owner` flip, `spec_updated` event, read-back verify, no `queue --owner`. |
+| 8 | Same-surface fixes in pm `/handoff` command | DONE | in-review gate, real paths, `set-owner`, `spec_updated`, read-back verify. |
+| 9 | Kill dead CLI in handoff-protocol | DONE | events + verify + hand-back on real surfaces; `set-owner` added; `/deliver` scoped. |
+| 10 | Normalize type model (cross-domain-graph-query, dependency-mapping) | DONE | `spec` type → `type: feature`; `hero_why <slug>`; example tree in slug/status terms; ghosts dropped. |
+| 11 | Sweep remaining agent files (8) | DONE | story-writer, prd-author, pm-reviewer, roadmap-curator, intake-triager, discovery-researcher, product-strategist, prioritization-strategist. |
+| 12 | Sweep remaining command files (8) | DONE | README, metrics, pitch, refine, release-notes, discover, triage, prioritize. |
+| 13 | Sweep remaining skill files (13 + `prd-anti-patterns`) | DONE | phantom skills/agents scoped or repointed; `--themes`→`--list --tag`; `/scrub intake`→`/triage`. |
+| 14 | Scope pm spec-type docs (`intake.md`) | DONE | `/diagnose` → engineering-pack; `/scrub intake` → `/triage` sweep. |
+
+### Exercise-the-feature check
+
+The "feature" is a corrected content pack; exercised by:
+- **Install smoke** — `hero install project ~/pm-smoke2 --target claude --domain pm` (fresh binary): 34 skills install, `kickoff-prompt` present, installed `AGENTS.md`/`CLAUDE.md` managed bodies grep-clean of every dead surface, lifecycle section present.
+- **CLI spot-checks** — every surviving invocation run verbatim against the binary; none printed "unknown command"/"unknown flag".
+- **Cold read** — walked `handoff-coordinator.md` steps 1–5; each names a runnable surface and the read-back verification can succeed.
+
+### Excellence Bar self-check
+
+- Went beyond the letter of the spec where the ACs required it: fixed `prd-anti-patterns` (an unscoped `pitch-author` + `prd-author-scrubber` the Change list omitted) and tightened two sub-engineer rows that were still phantom-skill-shaped (capacity row → real `sprint-planning`/`cycle-planning`; handoff-coordinator delegation prose → `in-review`).
+- Left the one spec-sanctioned residual intact (Marty Cagan book citation, roadmap-framing:45) rather than over-scrubbing.

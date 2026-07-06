@@ -2,18 +2,18 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-06T19:16:01Z · projected from 382 source nodes_
+_Last refreshed: 2026-07-06T21:00:22Z · projected from 382 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 3m ago | flat-named-spec-discovery |
+| core | building | cmd/, internal/ | 1h ago | flat-named-spec-discovery |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | maturing | domains/engineering/ | <1m ago | core-commands-domain-neutral |
-| domains/pm | maturing | domains/pm/ | 3m ago | pm-pack-phantom-surfaces |
-| domains/sales | maturing | domains/sales/ | 2m ago | sales-pack-reality-sync |
+| domains/engineering | maturing | domains/engineering/ | 1h ago | core-commands-domain-neutral |
+| domains/pm | maturing | domains/pm/ | 1m ago | — |
+| domains/sales | maturing | domains/sales/ | 1h ago | sales-pack-reality-sync |
 | landing | building | web/landing/ | 21d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
 | serve | building | internal/serve/ | 8d ago | agent-outposts |
@@ -55,8 +55,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - **(unassigned)** — hero-content-audit, team-oauth, tracker-fixtures, mock-tracker-server, gitlab-tracker-support, drive-autonomous-initiative-execution
 - **core** — drive-pause-resume
-- **domains/engineering** — delivery-closing-gate-terminal-contract, drive-progressive-design, drive-command-routing
-- **domains/pm** — content-dedup-resync
+- **domains/engineering** — delivery-closing-gate-terminal-contract, drive-progressive-design
+- **domains/pm** — pm-pack-phantom-surfaces, content-dedup-resync
 - **serve** — drive-autonomy-learning
 
 ## Next up across surfaces
