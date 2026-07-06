@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-06T04:30:03Z · 85 ready specs_
+_Generated: 2026-07-06T19:15:36Z · 93 ready specs_
 
 ## flat-named-spec-discovery — "Flat-named spec files are invisible to discovery — verify can't resolve initiative children"
 _bug · delivering · horizon: now_
@@ -43,21 +43,161 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## content-dedup-resync — Content Dedup & Resync — Single-Master core/engineering Content with CI Parity Gate
+## content-remediation — Content Remediation — Audit Follow-Through Across Packs, Gates, and Harnesses
+_initiative · planning · horizon: now_
+
+_Run opener — arm with `/drive content-remediation`_
+
+Every confirmed audit finding is retired by a delivered child spec: no
+shipped content references a surface that doesn't exist on its install;
+the delivery doctrine is stated once and gate-consistent everywhere;
+content works on all six install targets; the named verbosity cuts are
+applied without losing a rule; and the chat pack's status is deliberate
+instead of accidental. `hero spec verify` passes for all eight children.
+
+---
+
+## core-commands-domain-neutral — "Core commands are engineering-only — dangling agents, skills, routes, and storage paths on pm/sales installs"
 _bug · planning · horizon: now_
 
-Collapse the 34 duplicated core↔engineering content files to single
-masters in core, merging stranded improvements both ways, then add a CI
-parity test so drift can't recur silently.
+Makes the core command pack safe on every domain install — today pm/sales
+users get commands that delegate to engineering-only agents, route to
+nonexistent slash commands, and cite storage paths that were never real.
 
-**Status:** planning — spec written from audit theme T1; no edits yet.
+**Status:** planning — spec authored from audit findings F4/F15/F16/F22 plus
+a verified storage-path sweep; no edits yet.
 
-**Pick up at:** the merge table in `## Changes` step 2 — do the 14 forked
-pairs first (each row names its direction), then delete all 34 engineering
-copies, then write the parity test.
+**Pick up at:** Change 1 — slim `core/commands/hero.md` to defer to the
+install's instruction-file routing table; then work the Changes list in order.
 
-→ `.hero/planning/features/content-dedup-resync/spec.md` · evidence:
-`.hero/specs/hero-content-audit/findings-skills.md` §(b)
+→ `/deliver core-commands-domain-neutral`
+
+**Files:** core/commands/hero.md, core/commands/decide.md, core/commands/retro.md, core/commands/resume.md, content_parity_test.go
+**Skip:** per-domain regeneration of /hero at install time; promoting the `drive` skill to core — relocated to the engineering pack instead (see Approach). (`kickoff-prompt` promotion is owned by [[pm-pack-phantom-surfaces]] Change 2 — initiative reconciliation.)
+
+---
+
+## sales-pack-reality-sync — "Sales Pack Reality Sync — make every sales-pack claim match the engine"
+_bug · planning · horizon: now_
+
+Fixes every sales-pack claim that doesn't match the engine — phantom CLI commands, a `hero.json` schema nothing reads, a `deal.yaml` spec type the loader never loads, and battlecard/playbook lookups that silently return nothing.
+
+**Status:** planning — spec authored from hero-content-audit findings; every path and CLI claim re-verified post-`177e8a1`; no edits yet.
+
+**Pick up at:** Change 1 — convert `domains/sales/spec-types/deal.yaml` → `deal.md` in the core spec-type shape, then sweep AGENTS.md (Changes 3–9).
+
+→ `.hero/planning/initiatives/content-remediation/sales-pack-reality-sync/spec.md`
+
+**Files:** `domains/sales/AGENTS.md`, `domains/sales/spec-types/deal.yaml`, `core/spec-types/feature.md`, `internal/spectypes/loader.go:223`
+**Skip:** don't copy `domains/pm/spec-types/*.md` frontmatter shape — it fails `parseRecord`; don't add Go config keys — content-only.
+
+---
+
+## pm-pack-phantom-surfaces — "PM Pack Phantom Surfaces — fix every reference to a surface that doesn't exist"
+_bug · planning · horizon: now_
+
+Fixes everything in the PM pack that references surfaces that don't exist —
+dead slash routes, six wrong CLI invocations, ghost agents in allowlists,
+broken owner-flip mechanics, and non-engine lifecycle statuses.
+
+**Status:** planning — spec authored from hero-content-audit findings; all
+paths and CLI claims re-verified at `3aaad62`; no edits yet.
+
+**Pick up at:** Change 1 (lifecycle mapping in `pm-preset-detection`) and
+Change 2 (promote `kickoff-prompt` to core), then sweep `domains/pm/AGENTS.md`
+(Changes 3–5).
+
+→ `/deliver pm-pack-phantom-surfaces`
+
+**Files:** domains/pm/AGENTS.md, domains/pm/agents/pm-delivery-lead.md,
+domains/pm/agents/handoff-coordinator.md,
+domains/pm/skills/pm-preset-detection/SKILL.md
+
+---
+
+## delivery-gate-consistency — Delivery Gate Consistency — One Owner for the Ledger Contract and the Verify-Gated Close
+_enhancement · planning · horizon: now_
+
+Makes the four-gate delivery close (`hero spec verify`) consistent across the
+engineering pack: extracts the Completion Ledger contract to a core skill,
+rewrites platform-delivery-lead as a thin delta on feature-delivery-lead, and
+deletes sprint.md's gate-bypassing execute mode in favor of `/drive`.
+
+**Status:** planning — spec authored from audit findings; no edits yet.
+
+**Pick up at:** Change 1 — create `core/skills/completion-ledger/SKILL.md`
+from `engineer.md:105-169`, reconciled against the Gate 1 parser.
+
+→ `/deliver delivery-gate-consistency`
+
+**Files:** `domains/engineering/agents/engineer.md:105-169`,
+`domains/engineering/agents/platform-delivery-lead.md:61-80`,
+`domains/engineering/commands/sprint.md:33-60`, `internal/spec/ledger.go`,
+`internal/cli/verify.go:207`
+**Skip:** compressing feature-delivery-lead/deliver.md verbosity — that is
+[[token-efficiency-pass]]'s job (wave 3, depends on this extraction).
+
+---
+
+## routing-file-completeness — "Routing File Completeness — full rosters, one skeleton, installable links for the domain AGENTS.md files"
+_enhancement · planning · horizon: now_
+
+Makes the three domain AGENTS.md files complete and uniform: engineering routes all 30 installed commands and names all agents/skills (dual-edited with the Go fallback); pm/sales adopt one `###`-depth skeleton; sales' ~20 dead relative links become `<harness>/` placeholders.
+
+**Status:** planning — spec authored from hero-content-audit routing findings; no edits yet.
+
+**Pick up at:** confirm both `follows` siblings landed, then write the skeleton convention entry and edit `generateEngineeringAgentsMdBody`, regenerating the pack file.
+
+→ `HERO_REGEN_PACK_AGENTS=1 go test -run TestEngineeringPackBodyMatchesGoFallback ./internal/install/`
+
+**Files:** internal/install/agents_md.go:379, domains/engineering/AGENTS.md, domains/pm/AGENTS.md, domains/sales/AGENTS.md
+**Skip:** hand-editing engineering's AGENTS.md alone — the parity test fails unless the Go fallback moves with it.
+
+---
+
+## token-efficiency-pass — "Token Efficiency Pass — apply the content audit's named verbosity cuts"
+_enhancement · planning · horizon: now_
+
+Applies the content audit's named verbosity cuts: ~20 command/agent/skill
+files trimmed to target word counts, with every displaced rule moved to a
+single owning skill and replaced by a pointer.
+
+**Status:** planning — spec authored from audit findings; no cuts made yet.
+
+**Pick up at:** confirm `delivery-gate-consistency` has landed (ledger home
+may have moved from engineer.md to a skill), then execute Changes in order,
+starting with the two new skill homes (items 1–2) so pointers have targets.
+
+→ `.hero/planning/initiatives/content-remediation/token-efficiency-pass/spec.md`
+
+**Files:** domains/engineering/commands/deliver.md,
+domains/engineering/agents/feature-delivery-lead.md,
+.hero/specs/hero-content-audit/findings-commands.md
+**Skip:** platform-delivery-lead merge and ledger extraction — sibling
+delivery-gate-consistency owns both.
+
+---
+
+## harness-agnosticism-sweep — "Harness Agnosticism Sweep — De-Claude and De-Dogfood the Shipped Content"
+_enhancement · planning · horizon: now_
+
+Sweeps Claude-Code-only assumptions and hero-repo dogfood leakage out of the shipped content packs so all six install targets get instructions that actually work for them, plus a scripted strip of three inert frontmatter fields (~96 files).
+
+**Status:** planning — spec authored from audit findings; all paths verified against post-dedup tree (`177e8a1`).
+
+**Pick up at:** Change 1 — rewrite the Internal Lookups section harness-neutrally in `domains/engineering/AGENTS.md` AND `internal/install/agents_md.go` together (test-enforced identical), then the parity table (Change 2).
+
+→ `.hero/planning/initiatives/content-remediation/harness-agnosticism-sweep/spec.md`
+
+**Files:** `domains/engineering/AGENTS.md:110-127`, `internal/install/agents_md.go:471-483`, `core/skills/next-md/SKILL.md`, `domains/engineering/skills/drive/SKILL.md:28-34`
+**Skip:** adding engine semantics for `compatibility:`/`role:` — audit verdict is strip, not wire.
+
+---
+
+## install-json-mode-repair-migrate-parity — "`hero install --repair`/`--migrate` ignore `--json` — stdout contract broken for programmatic consumers"
+_bug · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/install-json-mode-repair-migrate-parity/spec.md)_
 
 ---
 

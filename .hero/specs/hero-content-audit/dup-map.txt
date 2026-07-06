@@ -1,0 +1,113 @@
+== same-named SKILLs across packs (md5 of SKILL.md) ==
+--- agent-reliability
+  2e2cae7a  621w  core/skills/agent-reliability/SKILL.md
+  8ec69a8d  1182w  domains/engineering/skills/agent-reliability/SKILL.md
+--- auto-knowledge-capture
+  b5c89c62  649w  core/skills/auto-knowledge-capture/SKILL.md
+  b5c89c62  649w  domains/engineering/skills/auto-knowledge-capture/SKILL.md
+--- context-injection
+  1d7c2d5e  1319w  core/skills/context-injection/SKILL.md
+  b51f483a  1189w  domains/engineering/skills/context-injection/SKILL.md
+--- convention-writing
+  8f67c707  994w  core/skills/convention-writing/SKILL.md
+  8f67c707  994w  domains/engineering/skills/convention-writing/SKILL.md
+--- documentation-practices
+  266eb238  89w  core/skills/documentation-practices/SKILL.md
+  266eb238  89w  domains/engineering/skills/documentation-practices/SKILL.md
+--- executive-report
+  06d18066  359w  core/skills/executive-report/SKILL.md
+  06d18066  359w  domains/engineering/skills/executive-report/SKILL.md
+--- knowledge-flywheel
+  6db39ff5  303w  core/skills/knowledge-flywheel/SKILL.md
+  6db39ff5  303w  domains/engineering/skills/knowledge-flywheel/SKILL.md
+--- next-handoff-emit
+  466cdef0  1445w  core/skills/next-handoff-emit/SKILL.md
+  516c41c1  1494w  domains/engineering/skills/next-handoff-emit/SKILL.md
+--- next-md
+  bb7d5054  1520w  core/skills/next-md/SKILL.md
+  1637047b  1654w  domains/engineering/skills/next-md/SKILL.md
+--- note-capture
+  b3ea54de  733w  core/skills/note-capture/SKILL.md
+  b3ea54de  733w  domains/engineering/skills/note-capture/SKILL.md
+--- nudge-awareness
+  f01c382b  548w  core/skills/nudge-awareness/SKILL.md
+  f01c382b  548w  domains/engineering/skills/nudge-awareness/SKILL.md
+--- project-context-generation
+  6648eb69  210w  core/skills/project-context-generation/SKILL.md
+  6648eb69  210w  domains/engineering/skills/project-context-generation/SKILL.md
+--- spec-format
+  871c3d6a  2015w  core/skills/spec-format/SKILL.md
+  816d6044  2482w  domains/engineering/skills/spec-format/SKILL.md
+
+== same-named COMMANDs across packs ==
+--- blocked.md
+  54268878  134w  core/commands/blocked.md
+  54268878  134w  domains/engineering/commands/blocked.md
+--- capture.md
+  c0a8e41f  79w  core/commands/capture.md
+  4ac16fdc  116w  domains/engineering/commands/capture.md
+  1859cae5  159w  domains/chat/commands/capture.md
+--- check.md
+  7dcb77b9  244w  core/commands/check.md
+  7dcb77b9  244w  domains/engineering/commands/check.md
+--- convention.md
+  89c2eb67  74w  core/commands/convention.md
+  0fcb4818  111w  domains/engineering/commands/convention.md
+--- decide.md
+  77936fe0  101w  core/commands/decide.md
+  5017c46f  174w  domains/engineering/commands/decide.md
+--- discover.md
+  8d9bb626  75w  core/commands/discover.md
+  8d9bb626  75w  domains/engineering/commands/discover.md
+  6a376f75  279w  domains/pm/commands/discover.md
+  6ea78c0e  162w  domains/chat/commands/discover.md
+--- docs.md
+  9ec81ef1  60w  core/commands/docs.md
+  9ec81ef1  60w  domains/engineering/commands/docs.md
+--- drive.md
+  f495b973  206w  core/commands/drive.md
+  f495b973  206w  domains/engineering/commands/drive.md
+--- handoff.md
+  e2c57bba  193w  core/commands/handoff.md
+  c6b2a90c  242w  domains/engineering/commands/handoff.md
+  5e5576a6  776w  domains/pm/commands/handoff.md
+--- hero.md
+  8d2a00b6  487w  core/commands/hero.md
+  8d2a00b6  487w  domains/engineering/commands/hero.md
+--- import.md
+  bfc7fd54  273w  core/commands/import.md
+  0e47d8b7  277w  domains/engineering/commands/import.md
+--- note.md
+  d780f954  76w  core/commands/note.md
+  635690e9  113w  domains/engineering/commands/note.md
+  1cf3c68b  157w  domains/chat/commands/note.md
+--- prime.md
+  627cd023  203w  core/commands/prime.md
+  eb769e11  254w  domains/engineering/commands/prime.md
+--- resume.md
+  3388ab61  520w  core/commands/resume.md
+  dc783e61  554w  domains/engineering/commands/resume.md
+--- retro.md
+  ad7bf9ab  231w  core/commands/retro.md
+  ad7bf9ab  231w  domains/engineering/commands/retro.md
+--- scan.md
+  921f63e8  216w  core/commands/scan.md
+  921f63e8  216w  domains/engineering/commands/scan.md
+--- why.md
+  e9ca866f  149w  core/commands/why.md
+  e9ca866f  149w  domains/engineering/commands/why.md
+  58eb59ef  150w  domains/chat/commands/why.md
+
+== same-named AGENTs across packs ==
+--- convention-author.md
+  54ef2c3a  436w  core/agents/convention-author.md
+  54ef2c3a  436w  domains/engineering/agents/convention-author.md
+--- documentation-engineer.md
+  4489d4ca  149w  core/agents/documentation-engineer.md
+  4489d4ca  149w  domains/engineering/agents/documentation-engineer.md
+--- project-context-builder.md
+  05015c05  250w  core/agents/project-context-builder.md
+  05015c05  250w  domains/engineering/agents/project-context-builder.md
+--- session-primer.md
+  f24f32a8  387w  core/agents/session-primer.md
+  16901f76  388w  domains/engineering/agents/session-primer.md
