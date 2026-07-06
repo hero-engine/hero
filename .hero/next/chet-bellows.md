@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-02T07:12:47Z
+updated: 2026-07-06T18:39:22Z
 repo: hero-engine/hero
 ---
 
@@ -8,13 +8,11 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> using hero in my hydra project and i keep getting messages like this where codex is not running audits at the end and leaving specs in planning after doing work - do we have any gaps or loose language that might be allowing it to not understand it needs to audit? project is at ~/projects/personal/repository/hyrdra - and this is message: Caveat: this is validated with Hydra’s in-process TCP AMQP …
-
-_possibly stale — 1 commit(s) since, last set 4h 32m ago_
+> In /Users/developer/projects/hero-engine/repository/hero: `hero install project . --target opencode --json` exits with code 0 even when the install fails (observed with "Error: materialize satellite: no harness targets installed at root ..." printed to stderr plus cobra usage text — no JSON emitted, yet $? was 0). Non-json mode may share the issue. Find where the install command's RunE error is s…
 
 ## Suggested next prompt
 
-_(none — `hero next suggest "..."` to set, or open a Feature to derive one)_
+> Spin the follow-up specs from the content audit: /design content-dedup-resync first (removes the 34-file double-edit hazard), then pm-pack-phantom-surfaces and sales-pack-reality-sync; report at .hero/specs/hero-content-audit/audit-report.md
 
 ## Recent reflections
 

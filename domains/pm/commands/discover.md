@@ -1,4 +1,5 @@
 ---
+core_fork: PM-native discovery workflow (opportunity solution trees, interview design) intentionally replaces core's generic ideation /discover
 description: Continuous-discovery research kickoff or check-in — opportunity solution trees, interview design, assumption tests.
 ---
 Route this discovery request to the `discovery-researcher` agent. Loads `opportunity-solution-trees-torres`, `continuous-discovery-cadence`, and `evidence-synthesis` skills.

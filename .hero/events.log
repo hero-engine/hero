@@ -256,3 +256,9 @@
 {"ts":"2026-07-02T07:24:42.847346Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"team-oauth","message":"status -\u003e completed"}
 {"ts":"2026-07-02T07:25:09.660694Z","type":"peer.call.invoked","agent":"hero","slug":"team-oauth","message":"peer call advisory mode=advisory target=hero-cloud call_id=18be683c0ffab088f90d7347ccaa2da9"}
 {"ts":"2026-07-02T07:26:39.488995Z","type":"peer.call.completed","agent":"hero","slug":"team-oauth","message":"peer call ok mode=advisory target=hero-cloud kind=findings call_id=18be683c0ffab088f90d7347ccaa2da9 artifact=private-peer-result-excluded"}
+{"ts":"2026-07-06T04:21:42.09235Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"hero-content-audit","message":"Hero Content Audit — Agents, Commands, and Skills Quality Pass"}
+{"ts":"2026-07-06T04:21:42.092426Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"hero-content-audit","message":"status -\u003e completed"}
+{"ts":"2026-07-06T08:04:51.844563Z","type":"peer.call.invoked","agent":"hero","slug":"multi-domain-context-activation","message":"peer call spec-out mode=spec-out target=hero-code call_id=18bfa4b8fa6fcf18840063a49d13d7e2"}
+{"ts":"2026-07-06T08:14:51.875765Z","type":"peer.call.completed","agent":"hero","slug":"multi-domain-context-activation","message":"peer call failed: subagent timed out after 10m0s:  (call_id 18bfa4b8fa6fcf18840063a49d13d7e2)"}
+{"ts":"2026-07-06T18:42:27.997316Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"content-dedup-resync","message":"Content Dedup \u0026 Resync — Single-Master core/engineering Content with CI Parity Gate"}
+{"ts":"2026-07-06T18:42:27.997401Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"content-dedup-resync","message":"status -\u003e completed"}

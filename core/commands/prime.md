@@ -12,6 +12,12 @@ to the user before any other priming output.
 In team mode, also check `.hero/NEXT.md` for the team roster (who's
 working on what) and any recent team updates.
 
+**Then, surface the ready queue.** Read `.hero/QUEUE.md` (or run
+`hero queue --limit 5`) and show the top few ready specs with their
+kickoff prompts. This gives the user paste-ready session-openers for
+the parallel work paths in flight, not just the one path NEXT.md
+captured. If the queue is empty, skip silently.
+
 **Next, run `hero recap`** to get a spec-grouped summary of recent activity
 (commits grouped by spec, status transitions, knowledge updates). This
 complements the handoff — intent from the last session plus facts from git.
