@@ -26,8 +26,8 @@ Surface any violations before proposing strategy.
 
 **Search for applicable playbooks and battlecards**:
 ```
-hero search --type playbook "<segment>"     # e.g. "enterprise land"
-hero search --type battlecard "<competitor>" # if competitive deal
+ls .hero/knowledge/playbooks/        # applicable playbooks (read the matching file)
+ls .hero/knowledge/battlecards/      # competitive positioning, if a competitive deal
 ```
 Include relevant playbook guidance in the strategy.
 
@@ -71,10 +71,10 @@ probability: 45   # updated from strategy assessment
 
 ## Strategy Review
 
-To get a second opinion on the strategy before executing it:
+To pressure-test the strategy before executing it:
 
-After `/strategize` completes, suggest: "Run `/review <slug>` to have the
-deal reviewed for gaps before you start executing."
+After `/strategize` completes, suggest: "Run `/qualify <slug>` to re-score the
+deal against the new plan."
 
 ---
 

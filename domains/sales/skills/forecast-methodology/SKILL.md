@@ -73,7 +73,7 @@ a miss.
 weighted_arr = arr × (probability / 100)
 ```
 
-### Stage probability defaults (from hero.json)
+### Stage probability defaults (from the `deal` spec-type stage defaults)
 
 | Stage | Default Probability |
 |---|---|
@@ -134,8 +134,8 @@ Flag a deal as at-risk when 2+ of these signals are present:
 
 ### Activity-based signals
 
-- **Stale deal:** No CRM activity or spec update in 14+ days (Prospect/Qualifying)
-  or 10+ days (Proposal/Negotiation)
+- **Stale deal:** No CRM activity or spec update past the stage's stale
+  threshold (see the stale-deal table in `pipeline-management`)
 - **Unresponsive champion:** Champion has not responded to 2 outreach attempts
   in 7 days
 - **Meeting canceled without rescheduling:** A key meeting was canceled and
@@ -213,8 +213,8 @@ probability unless there's a documented reason.
 
 ### Historical win rate calibration
 
-If historical data is available (`hero search --type retro`), compute
-actual win rate by stage. Use this to calibrate stage default probabilities:
+If historical data is available (`hero search "debrief <competitor or segment>"`),
+compute actual win rate by stage. Use this to calibrate stage default probabilities:
 
 ```
 actual_win_rate_by_stage = won_deals_that_were_at_stage / deals_that_were_at_stage
@@ -228,7 +228,7 @@ adjust the configured weight to match history.
 ## Forecast Output Format
 
 The `forecast-analyst` should produce all sections in the format defined
-in `forecast.md` (the command file). The key requirement is:
+by the `/forecast` command. The key requirement is:
 
 1. Executive summary first — the numbers a CRO reads in 30 seconds
 2. Coverage ratio prominently and with interpretation

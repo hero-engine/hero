@@ -32,7 +32,7 @@ Before conducting external research, check Hero's knowledge base:
 
 ```
 hero search "<company>"
-hero search --type knowledge "<company>"
+hero search "<company> research"       # prior knowledge-base entries
 hero search --type deal "<company>"   # past deals with this company
 ```
 
@@ -219,13 +219,18 @@ their journey, and why this is a good time to engage]
 For company research:
 - If a deal spec exists: append to `.hero/planning/deals/<slug>/spec.md`
   under `## Research`
-- If no deal spec: create a prospect spec at
+- If no deal spec: create a prospect — a `type: deal` spec at
+  `status: prospect` (the deal lifecycle's initial state) — at
   `.hero/planning/deals/<slug>/spec.md` with research in the body
 
 For competitive research: coordinate with `competitive-intel` agent.
 
-For knowledge base entries: write to `.hero/knowledge/` with appropriate
-type (`prospect`, `persona`, or `knowledge`).
+For knowledge base entries: write to `.hero/knowledge/prospects/` or
+`.hero/knowledge/personas/` as plain markdown. Do not add a work-ish
+`type:` frontmatter line — knowledge files are plain markdown; a
+`type: prospect`/`type: persona` would make the file a discoverable flat
+spec and pollute `hero list`. Put the discriminating word in the title
+instead (e.g. "Prospect Research: [Company]", "Persona: [Role]").
 
 ## Rules
 

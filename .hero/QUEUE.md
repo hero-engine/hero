@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-06T20:58:49Z · 92 ready specs_
+_Generated: 2026-07-07T02:37:40Z · 92 ready specs_
 
 ## flat-named-spec-discovery — "Flat-named spec files are invisible to discovery — verify can't resolve initiative children"
 _bug · delivering · horizon: now_
@@ -43,6 +43,23 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
+## knowledge-content-retrieval — "Knowledge Content Retrieval — make hand-authored .hero/knowledge/ files searchable"
+_feature · planning · horizon: now_
+
+Flat `.hero/knowledge/<subdir>/*.md` files are invisible to `hero search` and
+`hero ask` — only spec.md-shaped knowledge and `raw/` are indexed (verified: 60
+flat files in this repo, incl. every `decisions/*.md`, return nothing).
+Fix: add a knowledge ingest that indexes `.hero/knowledge/**/*.md` into the
+existing retrieval corpus under `category=knowledge`, keyed by directory so
+untyped files (e.g. the sales battlecard template) are covered. Expose via
+`hero ask` (already type-aware) and `hero search --knowledge`. Do NOT loosen
+`nonWorkFlatTypes` — the category marker keeps knowledge out of work discovery.
+See ADR `knowledge-retrieved-through-unified-corpus`. Start:
+`internal/index/refresh.go`, `internal/spec/spec.go:1085` (Discover),
+`internal/cli/ask.go`, `internal/cli/search.go`.
+
+---
+
 ## content-remediation — Content Remediation — Audit Follow-Through Across Packs, Gates, and Harnesses
 _initiative · planning · horizon: now_
 
@@ -74,22 +91,6 @@ install's instruction-file routing table; then work the Changes list in order.
 
 **Files:** core/commands/hero.md, core/commands/decide.md, core/commands/retro.md, core/commands/resume.md, content_parity_test.go
 **Skip:** per-domain regeneration of /hero at install time; promoting the `drive` skill to core — relocated to the engineering pack instead (see Approach). (`kickoff-prompt` promotion is owned by [[pm-pack-phantom-surfaces]] Change 2 — initiative reconciliation.)
-
----
-
-## sales-pack-reality-sync — "Sales Pack Reality Sync — make every sales-pack claim match the engine"
-_bug · planning · horizon: now_
-
-Fixes every sales-pack claim that doesn't match the engine — phantom CLI commands, a `hero.json` schema nothing reads, a `deal.yaml` spec type the loader never loads, and battlecard/playbook lookups that silently return nothing.
-
-**Status:** planning — spec authored from hero-content-audit findings; every path and CLI claim re-verified post-`177e8a1`; no edits yet.
-
-**Pick up at:** Change 1 — convert `domains/sales/spec-types/deal.yaml` → `deal.md` in the core spec-type shape, then sweep AGENTS.md (Changes 3–9).
-
-→ `.hero/planning/initiatives/content-remediation/sales-pack-reality-sync/spec.md`
-
-**Files:** `domains/sales/AGENTS.md`, `domains/sales/spec-types/deal.yaml`, `core/spec-types/feature.md`, `internal/spectypes/loader.go:223`
-**Skip:** don't copy `domains/pm/spec-types/*.md` frontmatter shape — it fails `parseRecord`; don't add Go config keys — content-only.
 
 ---
 

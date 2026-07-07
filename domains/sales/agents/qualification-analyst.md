@@ -35,7 +35,7 @@ Read the full deal spec at the provided path. Note:
 
 ### 2. Load the framework
 
-Read `qualification.framework` from `.hero/hero.json`. Default to `meddpicc`.
+Read `qualification_framework` from the deal spec frontmatter. Default to `meddpicc`.
 
 Supported frameworks:
 - **MEDDPICC** — Metrics, Economic Buyer, Decision Criteria, Decision
@@ -145,7 +145,7 @@ A 5-bullet executive summary suitable for a pipeline review:
 
 ## BANT qualification (when configured)
 
-When `qualification.framework: bant`:
+When the deal spec's `qualification_framework: bant`:
 
 | Dimension | Confirmed | Evidence | Gap |
 |---|---|---|---|

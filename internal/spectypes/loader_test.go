@@ -422,3 +422,36 @@ func TestLoad_FrontmatterFieldShape_FeatureStatus(t *testing.T) {
 		t.Errorf("status.classification = %q, want org-state", status.Classification)
 	}
 }
+
+// TestLoad_SalesOverlay_DealLifecycle verifies the sales domain overlay
+// registers the `deal` work type with its full 7-state lifecycle and clean
+// referential integrity. Guards the deal.yaml → deal.md conversion
+// (sales-pack-reality-sync): a malformed deal.md would break every command
+// in a sales workspace via exportSpecTypesCache.
+func TestLoad_SalesOverlay_DealLifecycle(t *testing.T) {
+	reg, err := Load("sales")
+	if err != nil {
+		t.Fatalf("Load(sales): %v", err)
+	}
+	rec, ok := reg.Lookup("deal")
+	if !ok {
+		t.Fatal(`sales overlay did not register type "deal"`)
+	}
+	if rec.Domain != "sales" {
+		t.Errorf("deal.Domain = %q, want sales", rec.Domain)
+	}
+	if rec.Category != CategoryWork {
+		t.Errorf("deal.Category = %q, want work", rec.Category)
+	}
+	gotStates := strings.Join(rec.Lifecycle.States, ",")
+	wantStates := "prospect,qualifying,demo,proposal,negotiation,won,lost"
+	if gotStates != wantStates {
+		t.Errorf("deal lifecycle states = %q, want %q", gotStates, wantStates)
+	}
+	if rec.Lifecycle.Initial != "prospect" {
+		t.Errorf("deal lifecycle initial = %q, want prospect", rec.Lifecycle.Initial)
+	}
+	if got := strings.Join(rec.Lifecycle.Terminal, ","); got != "won,lost" {
+		t.Errorf("deal lifecycle terminal = %q, want %q", got, "won,lost")
+	}
+}

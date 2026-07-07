@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-06T21:00:22Z
+updated: 2026-07-07T02:38:11Z
 repo: hero-engine/hero
 ---
 
@@ -8,11 +8,14 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> deliver pm-pack-phantom-surfaces
+> Investigate and spec making hand-authored `.hero/knowledge/**/*.md` files content-retrievable via a CLI surface.
+> 
+> Context discovered during delivery of `sales-pack-reality-sync`: hand-authored knowledge files (e.g. `.hero/knowledge/battlecards/<competitor>.md`, `.hero/knowledge/playbooks/<slug>.md`) are reachable by NO content-search surface today:
+> - `hero search` indexes work-spec discovery only;…
 
 ## Suggested next prompt
 
-> Commit the pm-pack-phantom-surfaces delivery (47 files on branch fix/pm-pack-phantom-surfaces — verified, archived), then deliver sibling sales-pack-reality-sync (the sales-pack analog under content-remediation).
+> Commit + merge the sales-pack-reality-sync delivery to main (30 files on fix/sales-pack-reality-sync, verified + archived). Then consider the 'make .hero/knowledge/ content-retrievable' follow-up, or the next content-remediation sibling (routing-file-completeness / token-efficiency-pass).
 
 ## Recent reflections
 
