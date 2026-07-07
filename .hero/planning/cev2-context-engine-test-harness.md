@@ -2,11 +2,21 @@
 title: "Context engine test harness"
 slug: cev2-context-engine-test-harness
 type: feature
-status: planning
+status: superseded
+superseded_by: context-fixture-test-harness
+superseded_by_peer:
+  peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3
+  peer_alias_display: hero-code
+  peer_slug: context-fixture-test-harness
+  successor_initiative: context-engine-v3
+  reason: "Scope moved to hero-code's context-engine-v3 initiative; successor slug renamed to context-fixture-test-harness."
 priority: high
 size: medium
 parent: context-engine-v2
 created: 2026-06-09
+relations:
+  - target: context-fixture-test-harness
+    kind: superseded-by
 tags: [hero-code, swift, context-engine, testing, fixtures, regression]
 ---
 
