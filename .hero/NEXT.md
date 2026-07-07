@@ -5,9 +5,9 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-07-07T02:42:39Z
+updated: 2026-07-07T06:13:29Z
 repo: hero-engine/hero
-branch: fix/sales-pack-reality-sync
+branch: main
 ---
 
 ## Just finished
@@ -20,7 +20,7 @@ No open features in this repo.
 
 ## Roadmap shape
 
-9 specs have size drift — run /roadmap-review to triage
+10 specs have size drift — run /roadmap-review to triage
 
 ## Blocked on
 

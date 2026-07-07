@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-07T02:37:40Z · 92 ready specs_
+_Generated: 2026-07-07T03:01:47Z · 94 ready specs_
 
 ## flat-named-spec-discovery — "Flat-named spec files are invisible to discovery — verify can't resolve initiative children"
 _bug · delivering · horizon: now_
@@ -43,20 +43,47 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## knowledge-content-retrieval — "Knowledge Content Retrieval — make hand-authored .hero/knowledge/ files searchable"
+## knowledge-context-injection — "Knowledge Context Injection — push captured knowledge into model context at edit time"
 _feature · planning · horizon: now_
 
-Flat `.hero/knowledge/<subdir>/*.md` files are invisible to `hero search` and
-`hero ask` — only spec.md-shaped knowledge and `raw/` are indexed (verified: 60
-flat files in this repo, incl. every `decisions/*.md`, return nothing).
-Fix: add a knowledge ingest that indexes `.hero/knowledge/**/*.md` into the
-existing retrieval corpus under `category=knowledge`, keyed by directory so
-untyped files (e.g. the sales battlecard template) are covered. Expose via
-`hero ask` (already type-aware) and `hero search --knowledge`. Do NOT loosen
-`nonWorkFlatTypes` — the category marker keeps knowledge out of work discovery.
-See ADR `knowledge-retrieved-through-unified-corpus`. Start:
-`internal/index/refresh.go`, `internal/spec/spec.go:1085` (Discover),
-`internal/cli/ask.go`, `internal/cli/search.go`.
+Every ambient-injection surface reads `specs` / `convention_scopes`, which flat
+knowledge never enters — so a flat `conventions/contracts-import-discipline.md`
+that governs `internal/**` never injects when the model edits there. P1 lands
+flat knowledge in the corpus; this phase feeds code-scoped knowledge's `scope:`
+globs into `convention_scopes` so the *existing* matchers light up with no
+per-surface rewrite: `BuildContext` (`hero_context`), `BuildNudge`
+(`hero relevant`), `drift`, `impact` all ride `FindConventionsForFiles`.
+Free-form knowledge (battlecards/playbooks) has no scope and stays pull-only, so
+injection stays signal, not noise. Start:
+`internal/index/index.go` (`IndexSpec` scope population, `FindConventionsForFiles`,
+`BuildContext`, `BuildNudge`), `internal/drift/drift.go`,
+`internal/impact/impact.go`, `internal/cli/anchor.go`.
+
+---
+
+## knowledge-content-retrieval — "Knowledge Content Retrieval — layout-agnostic ingest + pull (ask/search)"
+_feature · planning · horizon: now_
+
+Whether a captured knowledge entry surfaces is decided by accidental layout, not
+intent: `<slug>/spec.md` entries are indexed and found; flat `<name>.md` entries
+are not. Verified in this repo: all 23 `decisions/*.md` and 4 `conventions/*.md`
+are flat → `hero ask`/`search` return nothing; the tripwire (a spec.md dir) is
+fine. Fix: a **layout-agnostic** ingest that walks `.hero/knowledge/**` (except
+`raw/`) and indexes every `*.md` — flat, slug/spec, or three-file; typed or
+untyped; known or domain-invented subdir — into the existing corpus under
+`category=knowledge`, `kind` from the subdir, deduped against what Discover
+already indexes for spec.md-shaped knowledge. Expose via `hero ask` + `hero
+search --knowledge`. Do NOT loosen `nonWorkFlatTypes`; the `category` marker
+keeps knowledge out of work discovery. Start: `internal/index/refresh.go`,
+`internal/spec/spec.go:1085` (Discover), `internal/cli/ask.go`,
+`internal/cli/search.go`, `internal/knowledge/graph_ingest.go` (sibling ingest).
+
+---
+
+## knowledge-surfacing — "Knowledge Surfacing — Everything Captured Is Retrievable and Fed at the Right Time"
+_initiative · planning · horizon: now_
+
+_(no `## Goal` run opener — hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/knowledge-surfacing/spec.md)_
 
 ---
 
