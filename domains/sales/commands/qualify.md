@@ -15,8 +15,8 @@ output template the analyst must write to the deal spec.
 3. Check `status` — if the deal is `won` or `lost`, report: "This deal is
    already closed. Run `/debrief <slug>` for post-close analysis."
 
-**Load the qualification framework** from `.hero/hero.json` under
-`qualification.framework`. Default to `meddpicc` if not set.
+**Load the qualification framework** from the deal spec's
+`qualification_framework` frontmatter field. Default to `meddpicc` if not set.
 
 **Delegate to `qualification-analyst`** with:
 - The full deal spec path

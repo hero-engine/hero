@@ -1,8 +1,8 @@
 ---
 name: objection-handling
-description: Common objection patterns and proven responses tailored to Hero and AI-powered tooling. Loaded by deal-strategist and qualification-analyst.
+description: Common objection patterns and proven responses tailored to Hero and AI-powered tooling. Loaded by deal-strategist.
 metadata:
-  audience: deal-strategist, buyer-researcher
+  audience: deal-strategist
   purpose: objection-playbook
 ---
 
@@ -233,7 +233,7 @@ After each significant objection interaction:
 1. Note what worked and what didn't in the deal spec
 2. If a novel objection or novel response pattern appeared, capture it:
    ```
-   hero note "<objection> response" --type knowledge
+   hero note "<objection> response"
    ```
 3. If the same objection pattern appears across multiple deals, it should
    graduate to a `.hero/knowledge/objections/<slug>.md` knowledge entry

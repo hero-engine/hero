@@ -2,7 +2,7 @@
 title: "Sales Pack Reality Sync — make every sales-pack claim match the engine"
 slug: sales-pack-reality-sync
 type: bug
-status: planning
+status: completed
 priority: P1
 size: medium
 domain: engineering
@@ -11,6 +11,8 @@ tags: [content-audit, sales-pack, docs-accuracy, spec-types]
 relations:
   - { target: content-remediation, kind: parent }
   - { target: hero-content-audit, kind: related }
+delivery_method: manual
+completed_at: 2026-07-07T02:28:00Z
 ---
 
 # Sales Pack Reality Sync — make every sales-pack claim match the engine
@@ -135,3 +137,61 @@ Fixes every sales-pack claim that doesn't match the engine — phantom CLI comma
 5. **Install render**: `hero install project <tmpdir> --domain sales --target claude`; grep the emitted AGENTS.md/CLAUDE.md managed region for `](commands/`, `](agents/`, `](skills/`, `](spec-types/` → zero hits; confirm the CLI/slash blocks are separated and the config JSON block is gone.
 6. **Roster check**: for each sales skill, diff its description/`metadata.audience` against the Required-skills sections of the five agents (+ `/pipeline`, `/forecast` command loads) — no contradictions.
 7. **Repo gates**: `go test ./...` (content parity + docs drift tests must stay green; sales files have no core twins, so the parity gate is unaffected by design — verify).
+
+## Completion Ledger
+
+Content-remediation sweep of `domains/sales/` plus the `deal.yaml → deal.md`
+spec-type conversion and one test (`internal/spectypes/loader_test.go`). Base:
+`65e3333`. All CLI surfaces and the deal loader re-verified against a
+freshly-built binary and a temp sales workspace.
+
+**Deviation from spec (AC#6 lookup mechanism):** the spec's premise — that
+`hero search "battlecard X"` retrieves battlecard/playbook knowledge files —
+is empirically false. `hero search` indexes work-spec discovery only;
+`nonWorkFlatTypes` (internal/spec/spec.go:1166) deliberately excludes knowledge
+from discovery, and the knowledge-graph surface (`hero ask`) ingests only
+`.hero/knowledge/raw/`. So no content-search surface reaches
+`.hero/knowledge/battlecards/`. Per the delivery decision, lookup was
+corrected to **path-based** (list/read the known save dir) — the one mechanism
+that makes save+lookup genuinely agree with zero engine change. AC#6 is met by
+this mechanism, not the spec's original search-based one. A follow-up was filed
+to decide whether `.hero/knowledge/` *should* be content-searchable (an
+all-domains engine change, out of scope here).
+
+### Acceptance Criteria
+
+| # | Criterion | Status | Evidence |
+|---|---|---|---|
+| 1 | No phantom CLI (`hero read-spec`/`pulse`/`forecast`/`research`, `--match`, `hero note --type`, `--type playbook/battlecard/prospect/knowledge/retro`) under domains/sales/ | DONE | Phantom sweep (Validation §1) returns empty over the whole tree. |
+| 2 | `Load("sales")` registers `deal` with 7-state lifecycle, no load error | DONE | `TestLoad_SalesOverlay_DealLifecycle` PASS; `hero status` in a temp sales ws exits 0 (loader clean). |
+| 3 | Every cited `hero …` invocation exits without unknown-command/flag | DONE | CLI checks: `sprint status --week`, `list --type deal --status <comma>`, `list --type deal --stale 14`, etc. all exit 0; `--match`/`--type playbook…` absent. |
+| 4 | No documented `.hero/hero.json` key that `config.go` doesn't read | DONE | Domain Configuration JSON block deleted (honest prose replaces it); `qualify.md` phantom `qualification.framework` read repointed to deal frontmatter (straggler not in Change list). |
+| 5 | Staleness/risk numeric thresholds in exactly one file (`pipeline-management`) | DONE | forecast-methodology, deal-qualification, forecast-analyst, deal-strategy, forecast.md, pipeline.md numbers → cross-refs to `pipeline-management`; it carries the sole stale-deal table. (Cold audit caught `deal-strategy`/`forecast-analyst` stragglers — the exact numeric drift the spec targets — since fixed. Remaining day-numbers are a worked-example row, the distinct unresponsive-champion signal, and battlecard-freshness, none of which pipeline-management owns.) |
+| 6 | Battlecard/playbook save+lookup agree | DONE | Met via path-based lookup (see Deviation above): lookup corrected from non-functional `hero search` to `ls`/read of `.hero/knowledge/battlecards` and `.hero/knowledge/playbooks`; save writes the same path. Empirically: saved file is listed and readable. |
+| 7 | Battlecard per template NOT surfaced in work discovery (`hero list`) | DONE | `type: battlecard` line removed from template; temp-ws test: battlecard absent from `hero list`, deal present. |
+| 8 | Install render emits no repo-only relative link | DONE | `hero install --domain sales` rendered AGENTS.md/CLAUDE.md: zero `](commands\|agents\|skills\|spec-types/` hits; config JSON gone. |
+| 9 | Every skill's `description`/`audience` "Loaded by" matches an agent's Required-skills | DONE | Roster cross-check both directions: all 7 sales skills' audiences match exactly the agents/commands that reference them. |
+
+### Changes
+
+| # | Change | Status | Evidence |
+|---|---|---|---|
+| 1 | Convert `deal.yaml → deal.md` (core spec-type shape) | DONE | `deal.md` written in `parseRecord` shape; `deal.yaml` `git rm`; loader test green. |
+| 2 | spec-types/README repoint to deal.md | DONE | Links + closing line → `deal.md`; lifecycle-states note added. |
+| 3–9 | AGENTS.md (Session Start, Key CLI, Auto-Capture, compaction, config delete, Deal Spec Structure, link-strip) | DONE | Real CLI surfaces, honest config prose, `<harness>`-safe (no relative links in transplanted body). |
+| 10–14 | Agent files (deal-strategist, forecast-analyst, qualification-analyst, buyer-researcher, competitive-intel) | DONE | Real surfaces; forecasts → `.hero/reports/forecasts/`; knowledge writes carry no work-ish `type:`; battlecard template de-typed + retitled. |
+| 15 | Skills (6): phantom refs, thresholds single-owner, roster fixes | DONE | See AC#5, AC#9. |
+| 16 | Commands (5): real CLI, `/review`→`/qualify`, path/real-status lookups | DONE | Plus qualify.md straggler fixed (AC#4). |
+| + | Loader test + path-based lookup correction (12 sites) + deal.md note | DONE | `TestLoad_SalesOverlay_DealLifecycle`; all `hero search "battlecard\|playbook…"` lookups → path-based. |
+
+### Exercise-the-feature check
+
+- **Temp sales workspace** (`hero install --domain sales`): `hero status` exits 0 (deal type loads); a `status: prospect` deal is returned by `hero list --type deal --status prospect`; a battlecard authored per the updated template is **absent** from `hero list` (AC#7) and retrievable by path (AC#6).
+- **CLI spot-checks** of every surviving invocation against the fresh binary — none unknown.
+- **Install render** grep-clean of repo-only links; config JSON gone.
+
+### Excellence Bar self-check
+
+- Caught and corrected the spec's false core premise (search-based knowledge lookup) rather than shipping broken lookups — verified empirically in both a temp workspace and the real repo before pivoting to path-based.
+- Fixed two stragglers the Change list omitted (`qualify.md` phantom config read; two extra stale-number sites in deal-qualification) to actually satisfy AC#4/AC#5.
+- Filed the "should knowledge be content-searchable" engine question as a separate follow-up rather than smuggling an out-of-scope engine change into a content delivery.

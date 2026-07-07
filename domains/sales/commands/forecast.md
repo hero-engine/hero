@@ -14,7 +14,7 @@ definitions, and slippage risk signals.
 
 **Gather pipeline data** by reading all open deal specs:
 ```
-hero search --type deal --status "qualifying,demo,proposal,negotiation"
+hero list --type deal --status qualifying,demo,proposal,negotiation
 ```
 For each deal, extract: `arr`, `probability`, `close_date`, `stage`,
 `owner`, `meddpicc_score`, `company`.
@@ -22,8 +22,9 @@ For each deal, extract: `arr`, `probability`, `close_date`, `stage`,
 **Delegate to `forecast-analyst`** with:
 - The list of open deals and their fields
 - The period requested
-- The forecast methodology from `hero.json` (default: weighted)
-- Stage probability weights from `hero.json`
+- The forecast methodology and stage probability weights from the
+  `forecast-methodology` skill and deal frontmatter / spec-type stage defaults
+  (default: weighted)
 
 The agent will produce:
 
@@ -54,8 +55,8 @@ Week-by-week or month-by-month close date distribution within the period.
 ### 5. At-Risk Deals
 
 Deals flagged for slippage risk (see `forecast-methodology` skill for
-signals: close date pushed, no activity in 14+ days, low MEDDPICC score,
-single-threaded with departing champion, etc.).
+signals: close date pushed, no activity past the stale threshold, low MEDDPICC
+score, single-threaded with departing champion, etc.).
 
 | Deal | ARR | Risk Signal | Recommended Action |
 |---|---|---|---|
@@ -64,7 +65,7 @@ single-threaded with departing champion, etc.).
 
 High-priority list for the current week with next actions.
 
-**Write the forecast** as a file at `.hero/planning/forecasts/<period>.md`
+**Write the forecast** as a file at `.hero/reports/forecasts/<period>.md`
 so it can be referenced later and compared to actuals.
 
 **If a CRM is configured**, optionally pull the latest stage data before

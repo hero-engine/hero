@@ -29,7 +29,7 @@ Always load before forecasting:
 
 Read all open deal specs with stage not in `[won, lost]`:
 ```
-hero search --type deal --status "prospect,qualifying,demo,proposal,negotiation"
+hero list --type deal --status prospect,qualifying,demo,proposal,negotiation
 ```
 
 For each deal extract:
@@ -42,14 +42,14 @@ For each deal extract:
 - `company` — company name
 - Last activity date (from spec history)
 
-### 2. Load forecast configuration
+### 2. Determine methodology and weights
 
-Read from `.hero/hero.json`:
-- `forecast.methodology` — weighted, commit, or best-case
-- `forecast.stages` — probability weights by stage
+The methodology defaults to **weighted** per the `forecast-methodology`
+skill (which defines the weighted-pipeline formula, coverage ratios, and
+commit definitions).
 
-If a deal's `probability` field is set, use it. Otherwise apply the stage
-default weight.
+For each deal's weight: if its `probability` field is set, use it.
+Otherwise apply the `deal` spec type's stage default weight.
 
 ### 3. Compute the forecast
 
@@ -84,7 +84,7 @@ Apply slippage signals from the `forecast-methodology` skill. For each deal,
 check:
 
 - **Close date pushed** — close date moved back since last review
-- **Stale deal** — no CRM activity or spec update in 14+ days
+- **Stale deal** — no CRM activity or spec update past the stage's stale threshold (see `pipeline-management`'s stale-deal table)
 - **Low MEDDPICC, late stage** — score < 50 but in Proposal or Negotiation
 - **Single-threaded** — only one contact in a late-stage deal
 - **Missing Economic Buyer** — in Proposal without EB identified
@@ -153,7 +153,7 @@ Deals by close date (within the forecast period):
 
 ### 6. Write the forecast to disk
 
-Write the complete forecast to `.hero/planning/forecasts/<period>.md`.
+Write the complete forecast to `.hero/reports/forecasts/<period>.md`.
 
 Update the format: `Q3-2026.md` or `2026-06.md`.
 
@@ -196,8 +196,8 @@ Produce a **Forecast Delta** table comparing this period to last:
 - **Distinguish methodology from rep optimism.** If a rep has a deal at 90%
   probability but MEDDPICC score is 30, note the mismatch and apply a
   risk adjustment.
-- **Use the configured stage weights as defaults.** Don't invent probability
-  percentages.
+- **Use the `deal` spec type's stage default weights as defaults.** Don't
+  invent probability percentages.
 - **The forecast file on disk is the deliverable.** Write it there.
 - **Coverage ratio is the most important leading indicator.** Always feature
   it prominently and flag when below threshold.

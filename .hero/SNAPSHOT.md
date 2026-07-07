@@ -2,22 +2,22 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-06T23:42:45Z · projected from 382 source nodes_
+_Last refreshed: 2026-07-07T02:38:11Z · projected from 383 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 4h ago | flat-named-spec-discovery |
+| core | building | cmd/, internal/ | 7h ago | flat-named-spec-discovery |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | maturing | domains/engineering/ | 4h ago | core-commands-domain-neutral |
-| domains/pm | maturing | domains/pm/ | <1m ago | — |
-| domains/sales | maturing | domains/sales/ | 4h ago | sales-pack-reality-sync |
+| domains/engineering | maturing | domains/engineering/ | 7h ago | core-commands-domain-neutral |
+| domains/pm | maturing | domains/pm/ | 2h ago | — |
+| domains/sales | maturing | domains/sales/ | 10m ago | — |
 | landing | building | web/landing/ | 21d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
 | serve | building | internal/serve/ | 8d ago | agent-outposts |
-| (unassigned) | — | — | — | 182 specs without surface |
+| (unassigned) | — | — | — | 183 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
 
@@ -54,9 +54,9 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Recently completed (last 14 days)
 
 - **(unassigned)** — hero-content-audit, team-oauth, tracker-fixtures, mock-tracker-server, gitlab-tracker-support, drive-autonomous-initiative-execution
-- **core** — drive-pause-resume
 - **domains/engineering** — delivery-closing-gate-terminal-contract, drive-progressive-design
 - **domains/pm** — pm-pack-phantom-surfaces, content-dedup-resync
+- **domains/sales** — sales-pack-reality-sync
 - **serve** — drive-autonomy-learning
 
 ## Next up across surfaces
@@ -71,12 +71,12 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - **Blocked specs (13):** `cev2-system-prompt-curator` (waits on cev2-context-engine-test-harness); `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection).
 - **Stale-in-flight (3):** `agent-outposts` (21d), `hero-landing-page` (21d), `hero-team-server` (21d).
-- **Aged open bugs (8):** `next-project-file-conflict-not-regenerated` (open 33d), `desktop-sidebar-mcp-not-running` (open 32d), `hihcp-agent-loop-error-recovery` (open 27d), `hihcp-agents-md-harness-agnostic` (open 27d), `hihcp-mcp-auto-reconnect` (open 27d), `hihcp-mcp-first-turn-readiness` (open 27d), `hihcp-permission-bridge-validation` (open 27d), `hihcp-rgignore` (open 27d).
-- **Unassigned specs (182) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
+- **Aged open bugs (8):** `next-project-file-conflict-not-regenerated` (open 34d), `desktop-sidebar-mcp-not-running` (open 33d), `hihcp-agent-loop-error-recovery` (open 28d), `hihcp-agents-md-harness-agnostic` (open 28d), `hihcp-mcp-auto-reconnect` (open 28d), `hihcp-mcp-first-turn-readiness` (open 28d), `hihcp-permission-bridge-validation` (open 28d), `hihcp-rgignore` (open 28d).
+- **Unassigned specs (183) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 175/357 (49%)
-- Projection generation: 1ms · Source nodes: 382
+- Specs covered: 175/358 (48%)
+- Projection generation: 1ms · Source nodes: 383
 

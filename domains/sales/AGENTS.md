@@ -22,8 +22,9 @@ At the start of every session:
    the spec immediately:
    ```
    hero search "<company name>"          # find the deal spec
-   hero read-spec <slug>                  # load frontmatter and current state
    ```
+   Then load frontmatter and current state via the `hero_read_spec` MCP tool
+   (or open the spec path returned by `hero search`).
    Do not start work before understanding where the deal currently stands:
    stage, MEDDPICC score, last activity, next action, close date, ARR.
 
@@ -36,11 +37,13 @@ At the start of every session:
    A rep should never start a session wondering "what should I work on?" —
    Hero answers that.
 
-5. **Load relevant playbooks.** Before strategizing or qualifying, search
-   the knowledge base for applicable patterns:
+5. **Load relevant playbooks.** Before strategizing or qualifying, browse
+   the knowledge base for applicable patterns. Playbooks and battlecards are
+   plain markdown under `.hero/knowledge/` (not work specs, so not in
+   `hero search`) — list the directory and read the relevant file:
    ```
-   hero search --type playbook "<segment or motion>"
-   hero search --type battlecard "<competitor>"
+   ls .hero/knowledge/playbooks/     # sales motions, titled "Playbook: <segment>"
+   ls .hero/knowledge/battlecards/   # one file per competitor
    ```
 
 6. **Anchor check for large strategic moves.** Before proposing a deal
@@ -87,13 +90,13 @@ no match.
 
 | Command | What it does |
 |---|---|
-| [`/qualify`](commands/qualify.md) | Run MEDDPICC (or configured framework) — score deal and write findings to spec |
-| [`/strategize`](commands/strategize.md) | Produce a full deal plan: approach, stakeholder map, objections, win criteria |
-| [`/forecast`](commands/forecast.md) | Weighted pipeline forecast grouped by stage, rep, and time period |
-| [`/pipeline`](commands/pipeline.md) | Kanban overview of all open deals by stage with ARR totals |
-| [`/research`](commands/research.md) | Competitive intel, buyer background, company context |
-| [`/debrief`](commands/debrief.md) | Win/loss analysis — capture learnings, update knowledge base |
-| [`/prospect`](commands/prospect.md) | ICP scoring, outreach strategy, discovery angle for new targets |
+| `/qualify` | Run MEDDPICC (or configured framework) — score deal and write findings to spec |
+| `/strategize` | Produce a full deal plan: approach, stakeholder map, objections, win criteria |
+| `/forecast` | Weighted pipeline forecast grouped by stage, rep, and time period |
+| `/pipeline` | Kanban overview of all open deals by stage with ARR totals |
+| `/research` | Competitive intel, buyer background, company context |
+| `/debrief` | Win/loss analysis — capture learnings, update knowledge base |
+| `/prospect` | ICP scoring, outreach strategy, discovery angle for new targets |
 
 ---
 
@@ -101,11 +104,11 @@ no match.
 
 | Agent | Role |
 |---|---|
-| [`deal-strategist`](agents/deal-strategist.md) | Coordinates the full deal plan — the delivery lead equivalent |
-| [`qualification-analyst`](agents/qualification-analyst.md) | Runs structured qualification, produces scored deal brief |
-| [`forecast-analyst`](agents/forecast-analyst.md) | Maintains pipeline accuracy, flags slippage, produces forecast |
-| [`competitive-intel`](agents/competitive-intel.md) | Tracks competitive landscape, battlecards, win probability |
-| [`buyer-researcher`](agents/buyer-researcher.md) | Researches prospects, identifies buying triggers, maps org |
+| `deal-strategist` | Coordinates the full deal plan — the delivery lead equivalent |
+| `qualification-analyst` | Runs structured qualification, produces scored deal brief |
+| `forecast-analyst` | Maintains pipeline accuracy, flags slippage, produces forecast |
+| `competitive-intel` | Tracks competitive landscape, battlecards, win probability |
+| `buyer-researcher` | Researches prospects, identifies buying triggers, maps org |
 
 ---
 
@@ -113,20 +116,20 @@ no match.
 
 | Skill | What it covers |
 |---|---|
-| [`deal-qualification`](skills/deal-qualification/SKILL.md) | MEDDPICC framework, scoring rubrics, red flags |
-| [`deal-strategy`](skills/deal-strategy/SKILL.md) | Multi-threaded approach, champion development, economic buyer access |
-| [`objection-handling`](skills/objection-handling/SKILL.md) | Common objection patterns and proven responses |
-| [`pipeline-management`](skills/pipeline-management/SKILL.md) | Stage definitions, exit criteria, deal hygiene rules |
-| [`forecast-methodology`](skills/forecast-methodology/SKILL.md) | Weighted pipeline, coverage ratio, commit vs. upside |
-| [`competitive-positioning`](skills/competitive-positioning/SKILL.md) | Battlecard patterns, win/loss analysis |
-| [`discovery-questioning`](skills/discovery-questioning/SKILL.md) | SPIN questioning — Situation, Problem, Implication, Need-payoff |
+| `deal-qualification` | MEDDPICC framework, scoring rubrics, red flags |
+| `deal-strategy` | Multi-threaded approach, champion development, economic buyer access |
+| `objection-handling` | Common objection patterns and proven responses |
+| `pipeline-management` | Stage definitions, exit criteria, deal hygiene rules |
+| `forecast-methodology` | Weighted pipeline, coverage ratio, commit vs. upside |
+| `competitive-positioning` | Battlecard patterns, win/loss analysis |
+| `discovery-questioning` | SPIN questioning — Situation, Problem, Implication, Need-payoff |
 
 ---
 
 ## Deal Spec Structure
 
 All deals are tracked as specs following the schema in
-[`spec-types/deal.yaml`](spec-types/deal.yaml). Key fields:
+`spec-types/deal.md`. Key fields:
 
 ```yaml
 ---
@@ -150,27 +153,32 @@ Deal specs live at `.hero/planning/deals/<slug>/spec.md`.
 
 ## Key CLI Commands (Sales)
 
+These are run in the terminal, not as slash commands:
+
 ```bash
 # Pipeline state
-hero status                           # pipeline by stage with ARR totals
-hero pulse --week                     # weekly pipeline narrative
-hero forecast                         # weighted forecast summary
+hero status                          # workspace/spec state
+hero sprint status --week            # weekly pipeline narrative
 
 # Work a deal
 hero search "Acme Corp"              # find the deal spec
-/qualify acme-corp-enterprise        # score with MEDDPICC
-/strategize acme-corp-enterprise     # produce deal plan
-/research "Acme Corp"                # buyer and company intel
 
-# Knowledge management
-hero search --type playbook          # find applicable playbooks
-hero search --type battlecard        # find competitive positioning
-/debrief acme-corp-enterprise --won  # capture win learnings
+# Knowledge management (plain markdown under .hero/knowledge/ — browse, then read the file)
+ls .hero/knowledge/playbooks/        # applicable playbooks
+ls .hero/knowledge/battlecards/      # competitive positioning, one file per competitor
 
 # Pipeline hygiene
-hero queue                           # deals needing attention
-hero search --match "stale"          # find stale deals
+hero queue                           # ranked ready-to-work specs
+hero list --type deal --stale 14     # find stale deals
 ```
+
+Slash commands (run inside the AI tool's session, not the terminal):
+
+- `/forecast` — weighted forecast summary
+- `/qualify acme-corp-enterprise` — score with MEDDPICC
+- `/strategize acme-corp-enterprise` — produce deal plan
+- `/research "Acme Corp"` — buyer and company intel
+- `/debrief acme-corp-enterprise --won` — capture win learnings
 
 ---
 
@@ -189,9 +197,10 @@ competitive landscape.
 
 To review what's been captured:
 ```bash
-hero search --type knowledge          # all knowledge entries
-hero search --type playbook           # playbooks built from patterns
-hero search --type battlecard         # competitive intel
+ls .hero/knowledge/                    # captured knowledge entries (browse by category)
+ls .hero/knowledge/playbooks/          # playbooks built from patterns
+ls .hero/knowledge/battlecards/        # competitive intel
+hero list --type deal                  # deal inventory
 ```
 
 ---
@@ -208,44 +217,18 @@ window. If the context compacts mid-session:
    pipeline view from spec frontmatter at any time.
 3. **NEXT.md carries session intent** — read `.hero/NEXT.md` to see what you
    were working toward before compaction hit.
-4. **Session handoff pattern** — before ending any session, run `hero next`
-   to write a crisp handoff that the next session (possibly a different rep)
-   can pick up cold.
+4. **Session handoff pattern** — before ending any session, write your briefing
+   to the path returned by `hero next path` so the next session (possibly a
+   different rep) can pick up cold. Note that `hero next` only *shows* the
+   briefing — it does not write it.
 
 ---
 
 ## Domain Configuration
 
-Hero Sales reads sales-specific config from `.hero/hero.json`:
+No sales-specific `hero.json` keys are read by the engine today. Sales behavior
+is driven from the specs themselves, not from central config.
 
-```json
-{
-  "domain": "sales",
-  "crm": {
-    "type": "salesforce",
-    "instance": "your-org.my.salesforce.com",
-    "token_env": "SALESFORCE_TOKEN",
-    "auto_sync": true
-  },
-  "qualification": {
-    "framework": "meddpicc",
-    "min_score": 60
-  },
-  "forecast": {
-    "methodology": "weighted",
-    "stages": {
-      "Prospecting": 10,
-      "Discovery": 20,
-      "Evaluation": 40,
-      "Proposal": 60,
-      "Negotiation": 80,
-      "Closed Won": 100,
-      "Closed Lost": 0
-    }
-  },
-  "pipeline": {
-    "stale_days": 14,
-    "hygiene_schedule": "weekly"
-  }
-}
-```
+The qualification framework is per-deal frontmatter (`qualification_framework`,
+default `meddpicc`). Forecast methodology and stage weights live in the
+`forecast-methodology` skill and the `deal` spec type's stage defaults.
