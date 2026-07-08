@@ -100,9 +100,9 @@ If the user asks to fix/deliver multiple specs (e.g. "fix the researched bugs", 
    - Read the spec and its fix plan
    - Implement the fix
    - Run tests / build to verify
-   - Require a **Completion Ledger** from the engineer covering every acceptance criterion and Changes item (see `engineer.md` — "Closing output"). Validate it against the spec.
+   - Require a **Completion Ledger** from the engineer covering every acceptance criterion and Changes item (see the `completion-ledger` skill). Validate it against the spec.
    - Commit with a message referencing the spec slug and tracker ID
-   - Only set `status: completed` if the ledger is fully `DONE`. PARTIAL rows are sent back to the engineer to finish (see "Validate the Completion Ledger" above); SKIPPED / BLOCKED rows halt and surface — do not flip status without sign-off. `hero spec verify` or the async runner will auto-archive completed specs to specs/.
+   - Run `hero spec verify <slug>` once the ledger is fully `DONE`. PARTIAL rows are sent back to the engineer to finish (see "Validate the Completion Ledger" above); SKIPPED / BLOCKED rows halt and surface — do not flip status without sign-off. `hero spec verify` (or the async runner) is what flips status and auto-archives to specs/.
    - Post results to tracker if configured
 5. **One commit per fix** — each fix is atomic and independently revertable
 6. If a fix fails tests or creates problems, skip it, note the issue in the spec, and move to the next one
@@ -154,7 +154,7 @@ At the end of the delivery loop:
 4. **Link tests to criteria** — connect each new test back to the
    acceptance criterion it verifies so regressions are traceable.
 5. **Validate the Completion Ledger** — the engineer's closing artifact
-   (see `engineer.md` — "Closing output") enumerates every acceptance
+   (see the `completion-ledger` skill) enumerates every acceptance
    criterion and every `## Changes` item with a `DONE` / `PARTIAL` /
    `SKIPPED` / `BLOCKED` status. Before flipping spec status:
    - Confirm every acceptance criterion and every Changes item has a row.

@@ -121,7 +121,7 @@ Check the invocation for a mode flag. If none is specified, use **supervised**.
     - Look at the code you touched and the code adjacent to it. If a function you modified, a module you integrated with, or a code path you changed lacks test coverage, add tests. Don't just cover the spec — cover the blast radius.
     - Run the full test suite for affected packages and fix anything that broke.
     - For high-impact changes, involve the `functional-qa-engineer` to assess edge cases and regression risk.
-17. **Validate the engineer's Completion Ledger.** The engineer's closing artifact is a structured Completion Ledger (see `engineer.md` — "Closing output"). Before flipping spec status, you must:
+17. **Validate the engineer's Completion Ledger.** The engineer's closing artifact is a structured Completion Ledger (see the `completion-ledger` skill). Before flipping spec status, you must:
     - Confirm the ledger enumerates **every** acceptance criterion AND **every** `## Changes` item from the spec. Missing rows are a defect — request a corrected ledger.
     - Cross-check each `DONE` row against actual evidence: code on disk, test files, exercise notes. Performative `DONE` marks (rows without corresponding code or test changes) must be challenged and downgraded.
     - For user-visible behavior, confirm the Exercise-the-feature check is filled. Unit-tests-only is not sufficient evidence for a user-visible `DONE`.
@@ -133,7 +133,7 @@ Check the invocation for a mode flag. If none is specified, use **supervised**.
     - **HOLD** → route the audit's specific concerns back to the engineer, re-validate, re-audit. **Bounded retry:** if the same row returns HOLD after 2 engineer passes, stop looping and escalate to the user — that row needs human judgment, not another grind.
     - **SHIP + noteworthy** → quote the full `<AUDIT_HEADLINE>` (file tables and all) AND the highlight bullets in your final response, link to the report file, proceed.
     - **SHIP + clean** → quote the full `<AUDIT_HEADLINE>` and proceed. The file inventory is earned signal on every delivery — do NOT collapse it. What you skip on a clean SHIP is the highlights block, not the receipt. Full report stays on disk for depth.
-19. On completion (audit returned SHIP), run `hero spec verify <slug> --skip-tests` (tests were already run in step 16). **Do not edit `status: completed` directly** — `hero verify` checks four gates (ledger, audit, coverage, tests) and flips status + archives only when all pass. If verify returns FAIL, read the specific gate failures and route them back to the engineer. Re-run verify after fixes.
+19. On completion (audit returned SHIP), run `hero spec verify <slug> --skip-tests` (tests were already run in step 16). **Do not edit `status: completed` directly** — `hero spec verify` checks four gates (ledger, audit, coverage, tests) and flips status + archives only when all pass. If verify returns FAIL, read the specific gate failures and route them back to the engineer. Re-run verify after fixes.
 20. If a tracker is configured, update the issue
 21. **Suggest what's next.** Your final response must end with a single concrete "Next up" recommendation — not an option list, not "let me know." Use `hero_kickoff` or `hero_pulse` if uncertain. Emit via the `next-handoff-emit` pattern so it persists into `.hero/NEXT.md` and the next session resumes with it visible.
 
@@ -161,7 +161,7 @@ Before ending any session where implementation work was done:
 1. **Update spec status** — If you made meaningful progress on a spec, update its `status:` frontmatter:
    - Started implementation → `delivering`
    - Ready for review → `in-review`
-   - Fully complete → `completed` (and use `hero spec complete`)
+   - Fully complete → run `hero spec verify <slug>` (step 19) — never hand-edit `completed` or use `hero spec complete` on a work spec
 2. **Update the Changes section** — Add or revise the `## Changes` section to list files that were actually modified, not just files that were planned. This drives git-based status reconciliation.
 3. **Run `hero index`** — Refresh the search index so status, file lists, and other metadata are current.
 
