@@ -6,9 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-07T03:01:47Z · 94 ready specs_
-_Generated: 2026-07-08T18:10:11Z · 91 ready specs_
-_Generated: 2026-07-08T18:10:29Z · 91 ready specs_
+_Generated: 2026-07-08T18:20:11Z · 86 ready specs_
 
 ## flat-named-spec-discovery — "Flat-named spec files are invisible to discovery — verify can't resolve initiative children"
 _bug · delivering · horizon: now_
@@ -27,16 +25,14 @@ this spec. Verify with `go test ./internal/spec/... ./internal/cli/...`.
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/team-connect/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/team-connect/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/team-connect/spec.md)_
 
 ---
 
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/agent-outposts/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/agent-outposts/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
 
 ---
 
@@ -47,47 +43,53 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## knowledge-context-injection — "Knowledge Context Injection — push captured knowledge into model context at edit time"
-_feature · planning · horizon: now_
-
-Every ambient-injection surface reads `specs` / `convention_scopes`, which flat
-knowledge never enters — so a flat `conventions/contracts-import-discipline.md`
-that governs `internal/**` never injects when the model edits there. P1 lands
-flat knowledge in the corpus; this phase feeds code-scoped knowledge's `scope:`
-globs into `convention_scopes` so the *existing* matchers light up with no
-per-surface rewrite: `BuildContext` (`hero_context`), `BuildNudge`
-(`hero relevant`), `drift`, `impact` all ride `FindConventionsForFiles`.
-Free-form knowledge (battlecards/playbooks) has no scope and stays pull-only, so
-injection stays signal, not noise. Start:
-`internal/index/index.go` (`IndexSpec` scope population, `FindConventionsForFiles`,
-`BuildContext`, `BuildNudge`), `internal/drift/drift.go`,
-`internal/impact/impact.go`, `internal/cli/anchor.go`.
-
----
-
-## knowledge-content-retrieval — "Knowledge Content Retrieval — layout-agnostic ingest + pull (ask/search)"
-_feature · planning · horizon: now_
-
-Whether a captured knowledge entry surfaces is decided by accidental layout, not
-intent: `<slug>/spec.md` entries are indexed and found; flat `<name>.md` entries
-are not. Verified in this repo: all 23 `decisions/*.md` and 4 `conventions/*.md`
-are flat → `hero ask`/`search` return nothing; the tripwire (a spec.md dir) is
-fine. Fix: a **layout-agnostic** ingest that walks `.hero/knowledge/**` (except
-`raw/`) and indexes every `*.md` — flat, slug/spec, or three-file; typed or
-untyped; known or domain-invented subdir — into the existing corpus under
-`category=knowledge`, `kind` from the subdir, deduped against what Discover
-already indexes for spec.md-shaped knowledge. Expose via `hero ask` + `hero
-search --knowledge`. Do NOT loosen `nonWorkFlatTypes`; the `category` marker
-keeps knowledge out of work discovery. Start: `internal/index/refresh.go`,
-`internal/spec/spec.go:1085` (Discover), `internal/cli/ask.go`,
-`internal/cli/search.go`, `internal/knowledge/graph_ingest.go` (sibling ingest).
-
----
-
 ## knowledge-surfacing — "Knowledge Surfacing — Everything Captured Is Retrievable and Fed at the Right Time"
 _initiative · planning · horizon: now_
 
-_(no `## Goal` run opener — hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/knowledge-surfacing/spec.md)_
+_Run opener — arm with `/drive knowledge-surfacing`_
+
+Run until `hero verify knowledge-surfacing` reports PASS — every child
+(`knowledge-content-retrieval`, then `knowledge-context-injection`) designed,
+delivered, and verified — or a `needs_me` pause is raised. Order is forced: P2
+`depends-on` P1, so P1 ships first. Pause on any design fork (the ingest-seam
+choice, the `category`-column schema migration), any irreversible action, or a
+stuck gate.
+
+---
+
+## flat-tripwire-trigger-parity — "Flat tripwires never trigger-highlight — wire knowledge triggers into FindTripwiresByTrigger"
+_enhancement · planning · horizon: now_
+
+`FindTripwiresByTrigger` (`internal/index/index.go:1175`) matches context tokens
+against the `tripwire_triggers` table, which `IndexSpec` populates from spec
+`Triggers` and which flat knowledge never enters — so a flat tripwire's triggers
+are invisible to it. It has **four** consumers, all equally blind:
+`internal/cli/anchor.go:51`, `internal/cli/tripwire.go:82`, and
+`internal/serve/mcp_tools.go:889` and `:941`.
+
+The correct fix is a single DB seam, not four in-memory patches (an anchor-only
+patch would leave `hero tripwire` and both MCP surfaces inconsistent — the exact
+per-surface drift this initiative exists to eliminate). Mirror the existing
+`knowledge_scopes` pattern:
+
+- **Migration** (`internal/index/index.go` `migrate`): add
+  `knowledge_triggers (id, knowledge_slug, trigger)` + a slug index, parallel to
+  `knowledge_scopes`.
+- **Capture** the triggers: `KnowledgeEntry` has no `Triggers` field today.
+  Add one and populate it in `parseKnowledgeFile`
+  (`internal/index/knowledge_discover.go`) from `spec.ParseFile`'s `s.Triggers`
+  (already parsed, just not carried).
+- **Ingest** (`IndexKnowledge`): delete-then-insert `knowledge_triggers` for the
+  slug, exactly like the `knowledge_scopes` block already does; clean up in
+  `RemoveKnowledge`.
+- **Query** (`FindTripwiresByTrigger`): union matched flat-tripwire slugs from
+  `knowledge_triggers` and build their `TripwireResult`s from the `knowledge`
+  table + `spec.ParseFile(path)`, reusing the same section-parsing tail that
+  `FindAllTripwires` now uses for flat tripwires. Match semantics must stay
+  identical (case-insensitive token equality OR substring containment).
+
+Because all four consumers call `FindTripwiresByTrigger`, they light up
+together.
 
 ---
 
@@ -102,50 +104,6 @@ the delivery doctrine is stated once and gate-consistent everywhere;
 content works on all six install targets; the named verbosity cuts are
 applied without losing a rule; and the chat pack's status is deliberate
 instead of accidental. `hero spec verify` passes for all eight children.
-
----
-
-## core-commands-domain-neutral — "Core commands are engineering-only — dangling agents, skills, routes, and storage paths on pm/sales installs"
-_bug · planning · horizon: now_
-
-Makes the core command pack safe on every domain install — today pm/sales
-users get commands that delegate to engineering-only agents, route to
-nonexistent slash commands, and cite storage paths that were never real.
-
-**Status:** planning — spec authored from audit findings F4/F15/F16/F22 plus
-a verified storage-path sweep; no edits yet.
-
-**Pick up at:** Change 1 — slim `core/commands/hero.md` to defer to the
-install's instruction-file routing table; then work the Changes list in order.
-
-→ `/deliver core-commands-domain-neutral`
-
-**Files:** core/commands/hero.md, core/commands/decide.md, core/commands/retro.md, core/commands/resume.md, content_parity_test.go
-**Skip:** per-domain regeneration of /hero at install time; promoting the `drive` skill to core — relocated to the engineering pack instead (see Approach). (`kickoff-prompt` promotion is owned by [[pm-pack-phantom-surfaces]] Change 2 — initiative reconciliation.)
-
----
-
-## delivery-gate-consistency — Delivery Gate Consistency — One Owner for the Ledger Contract and the Verify-Gated Close
-_enhancement · planning · horizon: now_
-
-Makes the four-gate delivery close (`hero spec verify`) consistent across the
-engineering pack: extracts the Completion Ledger contract to a core skill,
-rewrites platform-delivery-lead as a thin delta on feature-delivery-lead, and
-deletes sprint.md's gate-bypassing execute mode in favor of `/drive`.
-
-**Status:** planning — spec authored from audit findings; no edits yet.
-
-**Pick up at:** Change 1 — create `core/skills/completion-ledger/SKILL.md`
-from `engineer.md:105-169`, reconciled against the Gate 1 parser.
-
-→ `/deliver delivery-gate-consistency`
-
-**Files:** `domains/engineering/agents/engineer.md:105-169`,
-`domains/engineering/agents/platform-delivery-lead.md:61-80`,
-`domains/engineering/commands/sprint.md:33-60`, `internal/spec/ledger.go`,
-`internal/cli/verify.go:207`
-**Skip:** compressing feature-delivery-lead/deliver.md verbosity — that is
-[[token-efficiency-pass]]'s job (wave 3, depends on this extraction).
 
 ---
 
@@ -258,16 +216,13 @@ _initiative · planning · horizon: now_
 _Run opener — arm with `/drive cold-start-trust-hardening`_
 
 Eliminate the class of first-use failures where Hero degrades silently or misleadingly, forcing the user to guess. Concretely: every relationship a user declares either becomes an edge or produces a precise error; the deterministic (Tier-1) graph is never confused with optional LLM enrichment (Tier-2); and routine Hero commands stop dirtying the tree or crying wolf.
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/hero-idea-primitive-core/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/hero-idea-primitive-core/spec.md)_
 
 ---
 
 ## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/specs/retrieval-contradiction-detection/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/specs/retrieval-contradiction-detection/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/specs/retrieval-contradiction-detection/spec.md)_
 
 ---
 
@@ -366,16 +321,14 @@ target-by-kind cells are uncovered.
 ## hero-surface-polish — Hero Surface Polish — Ongoing Quality Pass on the Web Companion
 _initiative · planning · horizon: now_
 
-_(no `## Goal` run opener — hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/initiatives/hero-surface-polish/spec.md)_
-_(no `## Goal` run opener — hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/initiatives/hero-surface-polish/spec.md)_
+_(no `## Goal` run opener — hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-surface-polish/spec.md)_
 
 ---
 
 ## hero-surface-architecture — Hero Surface Architecture — One Surface, Every Layer, Every Role
 _initiative · planning · horizon: now_
 
-_(no `## Goal` run opener — hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/initiatives/hero-surface-architecture/spec.md)_
-_(no `## Goal` run opener — hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/initiatives/hero-surface-architecture/spec.md)_
+_(no `## Goal` run opener — hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-surface-architecture/spec.md)_
 
 ---
 
@@ -405,145 +358,6 @@ dogfood proof that Hero serves its own mission.
 
 ---
 
-## context-engine-v2 — "Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"
-_initiative · planning · horizon: now_
-
-_Run opener — arm with `/drive context-engine-v2`_
-
-Eliminate the 7 identified token-waste issues, bringing a representative 50K
-session from ~43% waste to under 15%. The verbatim window reliably preserves
-the last 4 turns of work regardless of tool-call fan-out. Every change is
-covered by regression tests, and the port-fidelity ledger is updated to
-document intentional divergences from v1.
-
----
-
-## token-efficiency-pass — "Token Efficiency Pass — apply the content audit's named verbosity cuts"
-_enhancement · planning · horizon: now_
-
-Applies the content audit's named verbosity cuts: ~20 command/agent/skill
-files trimmed to target word counts, with every displaced rule moved to a
-single owning skill and replaced by a pointer.
-
-**Status:** planning — spec authored from audit findings; no cuts made yet.
-
-**Pick up at:** confirm `delivery-gate-consistency` has landed (ledger home
-may have moved from engineer.md to a skill), then execute Changes in order,
-starting with the two new skill homes (items 1–2) so pointers have targets.
-
-→ `.hero/planning/initiatives/content-remediation/token-efficiency-pass/spec.md`
-
-**Files:** domains/engineering/commands/deliver.md,
-domains/engineering/agents/feature-delivery-lead.md,
-.hero/specs/hero-content-audit/findings-commands.md
-**Skip:** platform-delivery-lead merge and ledger extraction — sibling
-delivery-gate-consistency owns both.
-
----
-
-## content-remediation — Content Remediation — Audit Follow-Through Across Packs, Gates, and Harnesses
-_initiative · planning · horizon: now_
-
-_Run opener — arm with `/drive content-remediation`_
-
-Every confirmed audit finding is retired by a delivered child spec: no
-shipped content references a surface that doesn't exist on its install;
-the delivery doctrine is stated once and gate-consistent everywhere;
-content works on all six install targets; the named verbosity cuts are
-applied without losing a rule; and the chat pack's status is deliberate
-instead of accidental. `hero spec verify` passes for all eight children.
-
----
-
-## sales-pack-reality-sync — "Sales Pack Reality Sync — make every sales-pack claim match the engine"
-_bug · planning · horizon: now_
-
-Fixes every sales-pack claim that doesn't match the engine — phantom CLI commands, a `hero.json` schema nothing reads, a `deal.yaml` spec type the loader never loads, and battlecard/playbook lookups that silently return nothing.
-
-**Status:** planning — spec authored from hero-content-audit findings; every path and CLI claim re-verified post-`177e8a1`; no edits yet.
-
-**Pick up at:** Change 1 — convert `domains/sales/spec-types/deal.yaml` → `deal.md` in the core spec-type shape, then sweep AGENTS.md (Changes 3–9).
-
-→ `.hero/planning/initiatives/content-remediation/sales-pack-reality-sync/spec.md`
-
-**Files:** `domains/sales/AGENTS.md`, `domains/sales/spec-types/deal.yaml`, `core/spec-types/feature.md`, `internal/spectypes/loader.go:223`
-**Skip:** don't copy `domains/pm/spec-types/*.md` frontmatter shape — it fails `parseRecord`; don't add Go config keys — content-only.
-
----
-
-## routing-file-completeness — "Routing File Completeness — full rosters, one skeleton, installable links for the domain AGENTS.md files"
-_enhancement · planning · horizon: now_
-
-Makes the three domain AGENTS.md files complete and uniform: engineering routes all 30 installed commands and names all agents/skills (dual-edited with the Go fallback); pm/sales adopt one `###`-depth skeleton; sales' ~20 dead relative links become `<harness>/` placeholders.
-
-**Status:** planning — spec authored from hero-content-audit routing findings; no edits yet.
-
-**Pick up at:** confirm both `follows` siblings landed, then write the skeleton convention entry and edit `generateEngineeringAgentsMdBody`, regenerating the pack file.
-
-→ `HERO_REGEN_PACK_AGENTS=1 go test -run TestEngineeringPackBodyMatchesGoFallback ./internal/install/`
-
-**Files:** internal/install/agents_md.go:379, domains/engineering/AGENTS.md, domains/pm/AGENTS.md, domains/sales/AGENTS.md
-**Skip:** hand-editing engineering's AGENTS.md alone — the parity test fails unless the Go fallback moves with it.
-
----
-
-## harness-agnosticism-sweep — "Harness Agnosticism Sweep — De-Claude and De-Dogfood the Shipped Content"
-_enhancement · planning · horizon: now_
-
-Sweeps Claude-Code-only assumptions and hero-repo dogfood leakage out of the shipped content packs so all six install targets get instructions that actually work for them, plus a scripted strip of three inert frontmatter fields (~96 files).
-
-**Status:** planning — spec authored from audit findings; all paths verified against post-dedup tree (`177e8a1`).
-
-**Pick up at:** Change 1 — rewrite the Internal Lookups section harness-neutrally in `domains/engineering/AGENTS.md` AND `internal/install/agents_md.go` together (test-enforced identical), then the parity table (Change 2).
-
-→ `.hero/planning/initiatives/content-remediation/harness-agnosticism-sweep/spec.md`
-
-**Files:** `domains/engineering/AGENTS.md:110-127`, `internal/install/agents_md.go:471-483`, `core/skills/next-md/SKILL.md`, `domains/engineering/skills/drive/SKILL.md:28-34`
-**Skip:** adding engine semantics for `compatibility:`/`role:` — audit verdict is strip, not wire.
-
----
-
-## delivery-gate-consistency — Delivery Gate Consistency — One Owner for the Ledger Contract and the Verify-Gated Close
-_enhancement · planning · horizon: now_
-
-Makes the four-gate delivery close (`hero spec verify`) consistent across the
-engineering pack: extracts the Completion Ledger contract to a core skill,
-rewrites platform-delivery-lead as a thin delta on feature-delivery-lead, and
-deletes sprint.md's gate-bypassing execute mode in favor of `/drive`.
-
-**Status:** planning — spec authored from audit findings; no edits yet.
-
-**Pick up at:** Change 1 — create `core/skills/completion-ledger/SKILL.md`
-from `engineer.md:105-169`, reconciled against the Gate 1 parser.
-
-→ `/deliver delivery-gate-consistency`
-
-**Files:** `domains/engineering/agents/engineer.md:105-169`,
-`domains/engineering/agents/platform-delivery-lead.md:61-80`,
-`domains/engineering/commands/sprint.md:33-60`, `internal/spec/ledger.go`,
-`internal/cli/verify.go:207`
-**Skip:** compressing feature-delivery-lead/deliver.md verbosity — that is
-[[token-efficiency-pass]]'s job (wave 3, depends on this extraction).
-## core-commands-domain-neutral — "Core commands are engineering-only — dangling agents, skills, routes, and storage paths on pm/sales installs"
-_bug · planning · horizon: now_
-
-Makes the core command pack safe on every domain install — today pm/sales
-users get commands that delegate to engineering-only agents, route to
-nonexistent slash commands, and cite storage paths that were never real.
-
-**Status:** planning — spec authored from audit findings F4/F15/F16/F22 plus
-a verified storage-path sweep; no edits yet.
-
-**Pick up at:** Change 1 — slim `core/commands/hero.md` to defer to the
-install's instruction-file routing table; then work the Changes list in order.
-
-→ `/deliver core-commands-domain-neutral`
-
-**Files:** core/commands/hero.md, core/commands/decide.md, core/commands/retro.md, core/commands/resume.md, content_parity_test.go
-**Skip:** per-domain regeneration of /hero at install time; promoting the `drive` skill to core — relocated to the engineering pack instead (see Approach). (`kickoff-prompt` promotion is owned by [[pm-pack-phantom-surfaces]] Change 2 — initiative reconciliation.)
-
----
-
 ## concurrent-session-branching — "Concurrent-Session Branching & Worktree Isolation"
 _initiative · planning · horizon: now_
 
@@ -561,15 +375,6 @@ work — orphaned and stale state is *surfaced*, never auto-removed.
 
 ---
 
-## cold-start-trust-hardening — "Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use"
-_initiative · planning · horizon: now_
-
-_Run opener — arm with `/drive cold-start-trust-hardening`_
-
-Eliminate the class of first-use failures where Hero degrades silently or misleadingly, forcing the user to guess. Concretely: every relationship a user declares either becomes an edge or produces a precise error; the deterministic (Tier-1) graph is never confused with optional LLM enrichment (Tier-2); and routine Hero commands stop dirtying the tree or crying wolf.
-
----
-
 ## version-mismatch-severity — Version mismatch severity
 _feature · planning · horizon: now_
 
@@ -577,29 +382,17 @@ Change `Mismatch()` in `internal/version/version.go` to return a `MismatchResult
 
 ---
 
-## team-mode-cloud-coordination — "Team-Mode Cloud Coordination — Sync Mutable State via Hero Cloud, Keep Git for Source"
-_feature · planning · horizon: now_
-
-**Pick up at:** decide the ADR ("transport follows `next_mode`") first, then start with phase 1 (claims via `/api/claims`).
-
-Cold-start prompt:
-> Implement team-mode cloud coordination so mutable state (claims, events, projections) syncs via Hero Cloud / the team server instead of git, keyed on `next_mode`. The cloud primitives already exist — `hero sync graph push/pull` federates `graph.db` with `local`/`unit`/`team` scopes (`internal/cli/sync_graph.go`), and the team server exposes `/api/claims` and `/api/feed` (`internal/serve/team_coordination.go`). Start with phase 1: route `hero claim`/release through server-side arbitration when connected, falling back to frontmatter+git in solo mode. See the data classification and grounding facts above. This is a feature under the `hero-team-experience` initiative and relates to `hero-team-server`; it likely decomposes into the 5 phases listed — consider `/compose` to break it out.
-
----
-
 ## synthesis-maintenance — "Synthesis Maintenance — Write-Through Coherence for the Hero Graph"
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/synthesis-maintenance/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/synthesis-maintenance/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/synthesis-maintenance/spec.md)_
 
 ---
 
 ## single-source-install-p1-agents-md — "Single-Source Install P1 — AGENTS.md as the Only Root Instruction File"
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/single-source-install-p1-agents-md/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/single-source-install-p1-agents-md/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/single-source-install-p1-agents-md/spec.md)_
 
 ---
 
@@ -641,8 +434,7 @@ Resume by reading `.hero/planning/features/satellite-corpus-integration/spec.md`
 ## premise-interrogation — "Premise Interrogation — Force-Question the Framing Before Designing"
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/premise-interrogation/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/premise-interrogation/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/premise-interrogation/spec.md)_
 
 ---
 
@@ -672,44 +464,17 @@ The sprint is composed of **nine work items** organized into three tracks (conte
 
 ---
 
-## peer-call-multi-cli — "Peer Call Multi-CLI — Pluggable Subagent Backends"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/peer-call-multi-cli/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/peer-call-multi-cli/spec.md)_
-
----
-
-## intake-capture-loop — "Intake Capture Loop — Silently Capture Intent-Bearing Loose Asks, Manual Promote Gate"
-_feature · planning · horizon: now_
-
-Lightweight loop on the shipped `intake` primitive. Treat it as a sibling of
-`auto_capture`: after a loose change lands, *if* the ask carried intent (a reason,
-a decision, a workaround — not a typo/rename/format, not work already under a
-spec), silently fire `hero intake "<ask + one-line why>"`. Reuse the existing
-auto-capture threshold machinery and `hero intake` CLI — no new verbs, no graph
-edges, no new hooks. Manual promote stays the gate. Land the trigger + threshold
-on **all six install targets** (opencode/cursor/claude/copilot/codex/generic) via
-the shared `.hero/knowledge/` convention rendered into AGENTS.md (+ CLAUDE.md for
-Claude); make AGENTS.md guidance self-contained since only Claude has an
-end-of-session hook. Decisions locked: retroactive + threshold-gated (NOT
-capture-then-edit), capture auto / promote manual.
-
----
-
 ## hihcp-fuzzy-path-resolution — "Add Workspace-Relative Path Fuzzy Resolution"
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/hihcp-fuzzy-path-resolution/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/hihcp-fuzzy-path-resolution/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hihcp-fuzzy-path-resolution/spec.md)_
 
 ---
 
 ## hero-search-tiered-response — hero search response tiering — max_results + pagination instead of compact boolean
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/hero-search-tiered-response/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/hero-search-tiered-response/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-search-tiered-response/spec.md)_
 
 ---
 
@@ -790,55 +555,7 @@ parent-stray regression test last.
 ## agent-safety-conventions — "Agent Safety Conventions — Harness-Agnostic Behavioral Guardrails"
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/agent-safety-conventions/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/agent-safety-conventions/spec.md)_
-
----
-
-## cev2-widen-load-bearing-markers — "Widen looksLoadBearing() marker set"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/cev2-widen-load-bearing-markers.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/cev2-widen-load-bearing-markers.md)_
-
----
-
-## cev2-tool-input-compression — "Tool input compression"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/cev2-tool-input-compression.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/cev2-tool-input-compression.md)_
-
----
-
-## cev2-context-engine-test-harness — "Context engine test harness"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/cev2-context-engine-test-harness.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/cev2-context-engine-test-harness.md)_
-
----
-
-## cev2-bash-output-supersede — "Bash output supersede"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/cev2-bash-output-supersede.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/cev2-bash-output-supersede.md)_
-
----
-
-## install-target-emits-both-claude-and-agents-md — "`hero install --target claude` emits both CLAUDE.md and AGENTS.md"
-_bug · planning · horizon: now_
-
-Reproduce: cd into a clean repo with no `CLAUDE.md` or `AGENTS.md`, run `hero install --target claude`. Expected: only `CLAUDE.md` lands. Observed: both `CLAUDE.md` and `AGENTS.md` are emitted with the same managed-block content. Fix likely lives in the install target dispatch in the hero CLI — read the install command source, find where both files get written, and gate `AGENTS.md` emission on the target not being `claude` (or on a generic/fallback target). Update tests to cover each target's expected file set.
-
----
-
-## install-json-mode-repair-migrate-parity — "`hero install --repair`/`--migrate` ignore `--json` — stdout contract broken for programmatic consumers"
-_bug · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/bugs/install-json-mode-repair-migrate-parity/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/bugs/install-json-mode-repair-migrate-parity/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-safety-conventions/spec.md)_
 
 ---
 
@@ -914,24 +631,21 @@ data through CLI commands, MCP tools, and the `hero prime` context pipeline.
 ## spec-prioritization — Spec Prioritization — Now / Next / Someday / Parking-Lot
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/spec-prioritization/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/spec-prioritization/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/spec-prioritization/spec.md)_
 
 ---
 
 ## project-charter — Project Charter — Mission, Principles, and Auto-Injection
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/project-charter/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/project-charter/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/project-charter/spec.md)_
 
 ---
 
 ## lean-agent-profile — Lean Agent Profile — Opt-In Trim for Top-Tier Models
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/lean-agent-profile/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/lean-agent-profile/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/lean-agent-profile/spec.md)_
 
 ---
 
@@ -945,8 +659,7 @@ _feature · planning · horizon: next_
 ## hero-runner — Hero Runner — Headless Agent Execution via Claude API
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/hero-runner/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/hero-runner/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-runner/spec.md)_
 
 ---
 
@@ -969,32 +682,28 @@ Second non-engineering Hero domain pack: QA. The thesis: **Hero QA is the qualit
 ## graph-memory — Graph Memory — Unified Substrate for Hero's Knowledge Corpus
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/graph-memory/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/graph-memory/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/graph-memory/spec.md)_
 
 ---
 
 ## graph-memory-federation — Graph Memory Federation — Multi-Repo, Multi-Team, Cross-Unit Topology
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/graph-memory-federation/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/graph-memory-federation/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/graph-memory-federation/spec.md)_
 
 ---
 
 ## graph-memory-7c-live-test — Graph Memory Phase 7c — Live Multi-Dev Sync Test
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/graph-memory-7c-live-test/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/graph-memory-7c-live-test/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/graph-memory-7c-live-test/spec.md)_
 
 ---
 
 ## e2e-onboarding — E2E Onboarding Suite — Fresh Repo to Productive Workspace
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/e2e-onboarding/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/e2e-onboarding/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/e2e-onboarding/spec.md)_
 
 ---
 
@@ -1026,72 +735,63 @@ positioning, surfaces, and content engine to do this repeatably.
 ## hero-telemetry — Hero Telemetry — Opt-In Usage Analytics + Feedback Channel
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/hero-telemetry/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/hero-telemetry/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-telemetry/spec.md)_
 
 ---
 
 ## hero-positioning — Hero Positioning — Narrative, ICP, Messaging, Comparison
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/hero-positioning/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/hero-positioning/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-positioning/spec.md)_
 
 ---
 
 ## hero-distribution — Hero Distribution — Homebrew, Install Script, GitHub Releases
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/hero-distribution/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/hero-distribution/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-distribution/spec.md)_
 
 ---
 
 ## hero-community — Hero Community — Discord/Discussions, Contributor Guide, Issue Templates
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/hero-community/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/hero-community/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-community/spec.md)_
 
 ---
 
 ## configurable-workspace-location — Configurable Workspace Location — Hero Dir Anywhere
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/configurable-workspace-location/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/configurable-workspace-location/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/configurable-workspace-location/spec.md)_
 
 ---
 
 ## execution-plan — "Execution Plan — Local Finish + Cloud Launch"
 _plan · active · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/initiatives/execution-plan/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/initiatives/execution-plan/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/execution-plan/spec.md)_
 
 ---
 
 ## multi-domain-core — "Multi-Domain Core Engine"
 _feature · draft · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/multi-domain-core/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/multi-domain-core/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/multi-domain-core/spec.md)_
 
 ---
 
 ## greenfield-scaffolding — "Greenfield Scaffolding"
 _feature · draft · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/greenfield-scaffolding/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/greenfield-scaffolding/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/greenfield-scaffolding/spec.md)_
 
 ---
 
 ## cross-spec-awareness — "Cross-Spec Awareness"
 _feature · draft · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/cross-spec-awareness/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/cross-spec-awareness/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/cross-spec-awareness/spec.md)_
 
 ---
 
@@ -1121,8 +821,7 @@ The deliverable is reviewable in two cuts: (a) the seam + direct backend (smalle
 ## architectural-drift-detection — "Architectural Drift Detection"
 _feature · draft · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/architectural-drift-detection/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/architectural-drift-detection/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/architectural-drift-detection/spec.md)_
 
 ---
 
@@ -1139,15 +838,6 @@ Time budget: ~2 days of focused research, no implementation. If the assessment c
 
 ---
 
-## unified-spec-type-model — Unified Spec-Type Model — Nine Real-Named Types, Methodology + Vocabulary Adaptation
-_feature · designed · horizon: now_
-
-Lock the work-tracking foundation for Hero so PM ships as an additive domain pack and engineering keeps doing what it's doing. **Nine canonical types using names every tool already uses** (`initiative`, `prd`, `epic`, `feature`, `bug`, `chore`, `intake`, `release`, `sprint`). Sub-typing via `kind`. Two independent adaptation layers — methodology profile (lifecycle, time-box, estimation, rituals, rollups) and vocabulary preset (display names, tracker mappings). **No migration**: existing engineering specs and folders unchanged; the registry registers what's already there plus the new PM-led and time-box types. AC infrastructure untouched. Tasks ships additively with its own package. Cross-domain handoff is an owner flip on the same artifact, not a separate spec creation.
-
-→ Drives `spec-type-registry`, the PM pack delivery, the new `core/methodologies/` system, and Phase A of the `hero-domains` initiative.
-
----
-
 ## native-drive-for-hero-code — "Native Drive — autonomous initiative execution for the hero-code Swift app"
 _feature · handed_off · horizon: now_
 
@@ -1156,73 +846,6 @@ Swift-native equivalent on your side via `/design`. Read the brief below; the
 Go specs (archived under `.hero/specs/` on the originator: `needs-me-predicate`,
 `hero-goal-command`, `drive-progressive-design`) are the reference design, not
 code to translate.
-
----
-
-## hihcp-skill-run-tool — "Add skill_run Tool to hero-code Native Tool Catalog"
-_feature · handed_off · horizon: now_
-
-Adds a `skill_run` native tool to hero-code so the model can invoke
-Hero workflows (/design, /deliver, /diagnose, etc.).
-
-**Status:** planning — full design complete, no code yet.
-
-**Pick up at:** Add the tool spec to `nativeToolSpecs()` in AgentLoop,
-then the dispatch intercept and registry wiring. Three files, one new
-`else if` branch in the tool dispatch chain.
-
-→ `/deliver hihcp-skill-run-tool`
-
-**Files:** `Engine/AgentLoop.swift:1258` (nativeToolSpecs), `Engine/AgentLoop.swift:518` (dispatch chain), `State/AppState.swift:955` (registry wiring)
-**Skip:** ToolExecutor dispatch (registries are @MainActor, ToolExecutor is an actor — use AgentLoop intercept instead)
-
----
-
-## handoff-to-hero-code — Hero QA — Handoff to hero-code for implementation kickoff
-_reference · handoff · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/hero-qa/handoff-to-hero-code.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/hero-qa/handoff-to-hero-code.md)_
-
----
-
-## handoff-to-hero-code — Hero PM — Handoff to hero-code for implementation kickoff
-_reference · handoff · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/hero-pm/handoff-to-hero-code.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/hero-pm/handoff-to-hero-code.md)_
-
----
-
-## hihcp-rgignore — "Add .rgignore to hero-code Repo"
-_bug · handed_off · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/bugs/hihcp-rgignore/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/bugs/hihcp-rgignore/spec.md)_
-
----
-
-## hihcp-permission-bridge-validation — "Harden Permission Bridge Payload Validation"
-_bug · handed_off · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/bugs/hihcp-permission-bridge-validation/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/bugs/hihcp-permission-bridge-validation/spec.md)_
-
----
-
-## hihcp-mcp-first-turn-readiness — "Gate First Turn on Hero MCP Readiness"
-_bug · handed_off · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/bugs/hihcp-mcp-first-turn-readiness/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/bugs/hihcp-mcp-first-turn-readiness/spec.md)_
-
----
-
-## hihcp-mcp-auto-reconnect — "Auto-Recover from MCP Server Disconnect Mid-Session"
-_bug · handed_off · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/bugs/hihcp-mcp-auto-reconnect/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/bugs/hihcp-mcp-auto-reconnect/spec.md)_
 
 ---
 
@@ -1251,6 +874,76 @@ Investigate and fix the HeroDesktop sidebar `notRunning` error when `hero serve`
 -> `.hero/planning/bugs/desktop-sidebar-mcp-not-running/spec.md`
 
 **Files:** `internal/cli/serve_ensure.go` (new), `internal/serve/lifecycle.go` (export rename), `internal/serve/server.go` (update caller)
+
+---
+
+## hihcp-rgignore — "Add .rgignore to hero-code Repo"
+_bug · handed_off · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-rgignore/spec.md)_
+
+---
+
+## hihcp-permission-bridge-validation — "Harden Permission Bridge Payload Validation"
+_bug · handed_off · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-permission-bridge-validation/spec.md)_
+
+---
+
+## hihcp-mcp-auto-reconnect — "Auto-Recover from MCP Server Disconnect Mid-Session"
+_bug · handed_off · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-mcp-auto-reconnect/spec.md)_
+
+---
+
+## hihcp-mcp-first-turn-readiness — "Gate First Turn on Hero MCP Readiness"
+_bug · handed_off · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-mcp-first-turn-readiness/spec.md)_
+
+---
+
+## unified-spec-type-model — Unified Spec-Type Model — Nine Real-Named Types, Methodology + Vocabulary Adaptation
+_feature · designed · horizon: now_
+
+Lock the work-tracking foundation for Hero so PM ships as an additive domain pack and engineering keeps doing what it's doing. **Nine canonical types using names every tool already uses** (`initiative`, `prd`, `epic`, `feature`, `bug`, `chore`, `intake`, `release`, `sprint`). Sub-typing via `kind`. Two independent adaptation layers — methodology profile (lifecycle, time-box, estimation, rituals, rollups) and vocabulary preset (display names, tracker mappings). **No migration**: existing engineering specs and folders unchanged; the registry registers what's already there plus the new PM-led and time-box types. AC infrastructure untouched. Tasks ships additively with its own package. Cross-domain handoff is an owner flip on the same artifact, not a separate spec creation.
+
+→ Drives `spec-type-registry`, the PM pack delivery, the new `core/methodologies/` system, and Phase A of the `hero-domains` initiative.
+
+---
+
+## hihcp-skill-run-tool — "Add skill_run Tool to hero-code Native Tool Catalog"
+_feature · handed_off · horizon: now_
+
+Adds a `skill_run` native tool to hero-code so the model can invoke
+Hero workflows (/design, /deliver, /diagnose, etc.).
+
+**Status:** planning — full design complete, no code yet.
+
+**Pick up at:** Add the tool spec to `nativeToolSpecs()` in AgentLoop,
+then the dispatch intercept and registry wiring. Three files, one new
+`else if` branch in the tool dispatch chain.
+
+→ `/deliver hihcp-skill-run-tool`
+
+**Files:** `Engine/AgentLoop.swift:1258` (nativeToolSpecs), `Engine/AgentLoop.swift:518` (dispatch chain), `State/AppState.swift:955` (registry wiring)
+**Skip:** ToolExecutor dispatch (registries are @MainActor, ToolExecutor is an actor — use AgentLoop intercept instead)
+
+---
+
+## handoff-to-hero-code — Hero QA — Handoff to hero-code for implementation kickoff
+_reference · handoff · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-qa/handoff-to-hero-code.md)_
+
+---
+
+## handoff-to-hero-code — Hero PM — Handoff to hero-code for implementation kickoff
+_reference · handoff · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-pm/handoff-to-hero-code.md)_
 
 ---
 
