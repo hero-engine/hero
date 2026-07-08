@@ -2,7 +2,7 @@
 title: Delivery Gate Consistency — One Owner for the Ledger Contract and the Verify-Gated Close
 slug: delivery-gate-consistency
 type: enhancement
-status: planning
+status: completed
 priority: P1
 size: medium
 domain: engineering
@@ -13,6 +13,7 @@ relations:
     kind: parent
   - target: hero-content-audit
     kind: related
+completed_at: 2026-07-08T18:10:21Z
 ---
 
 # Delivery Gate Consistency — One Owner for the Ledger Contract and the Verify-Gated Close
@@ -352,3 +353,38 @@ at verify / the new skill.
 6. Manual read of the new platform-delivery-lead delivery phase: citation
    names file + section + steps, four-gate close restated in one sentence,
    delta bullets contain no procedural steps.
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Ledger format contract lives in exactly one file (`core/skills/completion-ledger/SKILL.md`), cited by engineer.md/feature-delivery-lead.md/deliver.md/delivery-audit/agent-reliability | DONE | `core/skills/completion-ledger/SKILL.md` created; all 5 citing files updated (`engineer.md`, `feature-delivery-lead.md`, `deliver.md`, `domains/engineering/skills/delivery-audit/SKILL.md`, `core/skills/agent-reliability/SKILL.md`). Grep for the ledger table header (`Criterion (abbreviated)`) across all `.md` files returns exactly one hit — the new skill. |
+| 2 | Skill documents `[signed-off]` annotation, UNKNOWN-status failure mode, advisory exercise-check status, matching `ledger.go`/`checkLedger` | DONE | Skill's "What Gate 1 actually parses" section (`core/skills/completion-ledger/SKILL.md`) states all three, verified line-by-line against `internal/spec/ledger.go` (`parseDataRow`, `parseStatus`) and `internal/cli/verify.go:207-288` (`checkLedger`); scratch-file parse test (removed after use) confirmed the skill's own format example round-trips through `ParseLedger` with correct AC/Changes rows, statuses, and exercise/excellence checks. |
+| 3 | platform-delivery-lead delivery routes through the identical closing sequence as feature-delivery-lead, no hand-edit/move-to-specs instruction | DONE | `domains/engineering/agents/platform-delivery-lead.md` "Delivery phase" rewritten as a citation block (ledger validation → cold audit → `hero spec verify`) + 3 platform delta bullets; `rg "move the spec from\|update its status"` against the file returns empty. |
+| 4 | `/sprint` execute/run/go routes initiative → `/drive`, ad-hoc list → `/deliver` queue mode, no bespoke loop | DONE | `domains/engineering/commands/sprint.md` "## Execute mode" (old lines 33-59) replaced with "## Executing the sprint" routing note; no `/deliver --autopilot` loop or `hero spec complete` call remains in the file. |
+| 5 | No engineering-pack/core content instructs `hero spec complete` on a work spec or hand-editing `status: completed` (diagnose.md/debug-investigator.md excepted) | DONE | `rg -n "hero spec complete" core/ domains/engineering/ --glob '*.md'` returns only: the new skill's prohibition sentence, sprint.md's prohibition reference, feature-delivery-lead.md's prohibition reference, and the two excepted files (`diagnose.md`, `debug-investigator.md`). No instruction to run it on a work spec remains. |
+| 6 | `hero install` for any domain installs `completion-ledger`, resolving `agent-reliability`'s reference | DONE | Verified with a locally-built binary: `hero install project . --target claude --domain pm --root` and `--domain engineering --root` both install `.claude/skills/completion-ledger/SKILL.md`; the pm install's `agent-reliability/SKILL.md` line 41 correctly names `completion-ledger` and the skill directory exists alongside it. |
+| 7 | `go test ./...` passes after delivery, including `content_parity_test.go` and the AGENTS.md identity test | DONE | Full `go test ./...` green (all packages `ok`, exit 0). `TestDomainPacks_NoUnannotatedCoreShadows` (content_parity_test.go) passes — new core skill is not a domain shadow. `TestEngineeringPackBodyMatchesGoFallback` (internal/install/agents_md_test.go, the AGENTS.md identity test) passes — `domains/engineering/AGENTS.md` and `internal/install/agents_md.go` untouched. |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Create `core/skills/completion-ledger/SKILL.md` | DONE | New file: format block, status definitions, honesty rules, "What Gate 1 actually parses," "Validating a ledger." Frontmatter matches spec exactly (`name`, description, `compatibility: opencode`, `metadata`). |
+| 2 | Edit `engineer.md` — compress Closing output section | DONE | `domains/engineering/agents/engineer.md`: replaced ~65-line section with ~5-line mandate + skill citation + the two behavioral non-negotiables. Startup always-load list (line 22) untouched. |
+| 3 | Edit `platform-delivery-lead.md` — thin delta | DONE | `domains/engineering/agents/platform-delivery-lead.md`: Delivery phase steps 1-14 replaced with citation block + 3 delta bullets (rollout sequencing, migration-engineer, brownfield-architect). Frontmatter, identity, Design phase, Rules, Default output all kept verbatim. |
+| 4 | Edit `sprint.md` — delete execute mode | DONE | `domains/engineering/commands/sprint.md`: "## Execute mode" + "Safety rails" replaced with "## Executing the sprint" (initiative → `/drive`, ad-hoc → `/deliver` queue mode). Planning mode (steps 1-7 + principles) untouched. |
+| 5 | Edit `feature-delivery-lead.md` — gate-machinery citations | DONE | 3 edits: step 17 cites `completion-ledger` skill instead of engineer.md; step 19 says "`hero spec verify`" instead of bare "`hero verify`"; wrap-up step 1 repoints to `hero spec verify` and drops `hero spec complete`. No prose compression elsewhere. |
+| 6 | Edit `deliver.md` — gate-machinery citations | DONE | Batch step 4: `engineer.md` citation → `completion-ledger` skill; "Only set `status: completed`..." → "Run `hero spec verify <slug>`...". Single-spec step 5: same citation repoint. No other deliver.md changes. |
+| 7 | Edit `core/skills/agent-reliability/SKILL.md` line 41 | DONE | "see the engineering pack's `engineer.md` for the format" → "see the `completion-ledger` skill for the format"; packs-without-engineer caveat kept verbatim. |
+| 8 | Edit `domains/engineering/skills/delivery-audit/SKILL.md` line 38 | DONE | Appended "(format contract: `completion-ledger` skill)" to the Ledger input bullet. |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end: ran `rg` validation greps from the spec's own Validation section (all clean per the excepted files); built `hero` from this worktree and ran `hero install project . --target claude --domain pm --root` and `--domain engineering --root` against scratch directories, confirming `completion-ledger` installs and `agent-reliability`'s citation resolves in both; wrote a scratch Go test pasting the skill's format example through `ParseLedger` and confirmed AC rows, Changes rows, statuses, and exercise/excellence checkboxes all parsed as documented (test file removed after use, not part of the diff).
+
+### Excellence Bar self-check
+
+Yes — the extraction is a faithful, line-by-line match to the actual parser (verified with a real parse, not just reading the Go source), the platform-delivery-lead delta is genuinely thin (no procedural steps, just 3 emphasis bullets), and every citation site was individually greppable and confirmed post-edit. The one soft spot: `hero docs check` reports 0 actual counts against both README and GETTING-STARTED even on the pre-change baseline (verified via `git stash`), so it could not confirm or deny numeric-claim drift from the new skill — this is a pre-existing tool limitation unrelated to this spec's changes, not a gap in this delivery.
