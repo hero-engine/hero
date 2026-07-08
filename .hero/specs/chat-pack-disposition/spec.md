@@ -2,7 +2,7 @@
 title: "Chat Pack Disposition — Formalize domains/chat as a Client-Embedded Pack"
 slug: chat-pack-disposition
 type: decision
-status: planning
+status: completed
 priority: P2
 domain: engineering
 created: 2026-07-06
@@ -14,6 +14,7 @@ relations:
     kind: related
   - target: multi-domain-context-activation
     kind: builds-on
+completed_at: 2026-07-08T23:04:06Z
 ---
 
 # Chat Pack Disposition — Formalize domains/chat as a Client-Embedded Pack
@@ -302,6 +303,31 @@ nothing (build.rs ignores a root AGENTS.md by construction).
 - THE SYSTEM SHALL scope space.md's SpaceStore instruction to the hero-code (GPUI) client with the paste-a-summary path as the default elsewhere.
 - THE SYSTEM SHALL ship a domains/chat/AGENTS.md whose routing table references only the six commands the chat pack contains.
 - WHEN `go test ./...` runs at the repo root THE SYSTEM SHALL pass with the existing parity test unmodified.
+
+## Completion Ledger
+
+| # | AC / Change item | Status | Evidence |
+|---|---|---|---|
+| C1 | content.go documents the intentional exclusion | DONE | package comment + `clientEmbeddedDomains` var with citation, content.go |
+| C2 | New test: DomainFS("chat") errors + domains/ taxonomy allowlist | DONE | `TestDomainFS_ChatIsClientEmbedded`, `TestDomainsDirectory_AllEntriesAccounted` in content_test.go; negative case fixture-exercised (stray unlisted dir fails, removed → pass) |
+| C3 | ask-corpus.md — capability language, not tool identifiers | DONE | step 1 rewritten |
+| C4 | space.md — SpaceStore scoped to hero-code, generic path default | DONE | step 3 rewritten |
+| C5 | domains/chat/AGENTS.md — minimal routing spine | DONE | new file, H1 + `###` section, 6-command table, no relative links |
+| C6 | Close the audit loop in content-remediation tracking | DONE | "Wave 1 progress" section added to content-remediation/spec.md naming F9/F29/S3 resolved |
+| AC1 | content.go documents chat as non-installable, names build.rs | DONE | see C1 |
+| AC2 | DomainFS("chat") returns error, asserted by test | DONE | see C2 |
+| AC3 | Unlisted domains/ dir fails content test suite | DONE | fixture-verified |
+| AC4 | AvailableDomains() unchanged (engineering, sales, pm) | DONE | `TestAvailableDomains` passes unmodified |
+| AC5 | ask-corpus.md capability-phrased | DONE | see C3 |
+| AC6 | space.md SpaceStore scoped to hero-code | DONE | see C4 |
+| AC7 | domains/chat/AGENTS.md ships, routes only the 6 commands | DONE | see C5 |
+| AC8 | go test ./... passes, parity test unmodified | DONE | full suite green; `TestDomainPacks_NoUnannotatedCoreShadows` untouched and passing |
+
+Exercise-the-feature check: `hero domain list` output unchanged
+(engineering/sales/pm); cross-repo smoke `cargo build -p hero-core` in
+`../hero-code` — clean build, chat pack structurally unaffected (build.rs
+stages category dirs only; the new AGENTS.md and wording-only command
+edits don't change what's staged).
 
 ## Validation
 

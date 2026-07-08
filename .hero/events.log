@@ -270,3 +270,5 @@
 {"ts":"2026-07-08T18:09:58.922799Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"core-commands-domain-neutral","message":"status -\u003e completed"}
 {"ts":"2026-07-08T18:10:22.889204Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"delivery-gate-consistency","message":"Delivery Gate Consistency — One Owner for the Ledger Contract and the Verify-Gated Close"}
 {"ts":"2026-07-08T18:10:22.889289Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"delivery-gate-consistency","message":"status -\u003e completed"}
+{"ts":"2026-07-08T23:04:08.483835Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"chat-pack-disposition","message":"\"Chat Pack Disposition — Formalize domains/chat as a Client-Embedded Pack\""}
+{"ts":"2026-07-08T23:04:08.483943Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"chat-pack-disposition","message":"status -\u003e completed"}

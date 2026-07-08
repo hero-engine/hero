@@ -11,8 +11,10 @@ Steps:
 2. Compose a system addendum that captures the topic, key constraints,
    and the user's persona in ≤ 5 sentences. The addendum is what every
    future chat in this Space sees prepended.
-3. Use the `SpaceStore` API (or surface a brief summary the user can
-   paste into the New-Space dialog if running outside the GPUI shell).
+3. Surface a brief summary the user can paste into their client's
+   new-space (or new-thread) dialog. In the hero-code (GPUI) client
+   specifically, use the `SpaceStore` API to create the Space directly
+   instead of asking the user to paste anything.
 4. Confirm the new Space name back to the user and suggest they open a
    fresh session inside it for the next turn.
 
