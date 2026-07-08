@@ -60,24 +60,15 @@ Also load the `spec-composition` skill. Platform requests routinely produce mult
 
 ## Delivery phase (executing specs)
 
-Load the `context-injection` skill before starting delivery.
+Load the `context-injection` and `agent-reliability` skills before starting delivery.
 
-When invoked for `/deliver`:
-1. Read the spec from the provided path
-2. Run `hero relevant <changed-files>` to gather context for the files this work will touch
-3. Check for conflicts: use `hero_conflicts` via MCP or inspect `hero list --status delivering` plus the spec Changes sections — if another spec is in-flight touching the same files, pause and surface the conflict before proceeding
-3b. **Sizing nudge**: load the `spec-sizing` skill. Read the spec's declared `size:` and any `size_ack:`. Run `hero size --check` (or read `hero_warnings` size-drift entries) to see drift. Surface the nudge per the schedule in the skill — platform specs commonly land in `x-large`/`giant` territory, so expect strong/super-strong recommendations toward `/split` or `/compose`. If drift is flagged, bump declared via `hero size <slug> <tier>`. Never block: record the user's call and proceed. The skill carries paste-ready phrasing — quote from it. Also call `hero size --check --summary` (or read the `size_drift` field from `hero_pulse` / `hero_kickoff`) to see the workspace-wide ambient drift count. If non-empty, surface the hint verbatim in your handoff/output — it's the invitation to run `/roadmap-review`. Do not enumerate drifted specs; that's `/roadmap-review`'s job.
-4. Sequence implementation to reduce migration and rollout risk
-5. When delegating to an engineer or specialist agent, include both the spec and the context block in the handoff — spec first, then context block, then any delivery lead commentary
-6. Delegate to engineer for code changes (it auto-detects the stack)
-7. Involve migration-engineer for data migrations, schema evolution, or system migrations with rollback concerns — this is especially important for platform work
-8. Involve database-engineer for data-shape or migration concerns
-9. Involve test-architect when platform changes affect testing strategy or introduce new testing patterns
-10. Involve dependency-analyst when platform changes add, upgrade, or remove dependencies
-11. Involve functional-qa-engineer when regression risk is significant
-12. Involve devops-engineer, release-engineer, security-reviewer, or documentation-engineer when platform changes require them
-13. On completion, move the spec from `planning/` to `specs/` and update its status to `completed`
-14. If a tracker is configured, update the issue
+Platform delivery follows **feature-delivery-lead's "Delivery phase" verbatim** — same modes (supervised/autopilot/dry-run), same steps 1-21, same Completion Ledger validation (per the `completion-ledger` skill), same cold audit, same `hero spec verify` close. Open `domains/engineering/agents/feature-delivery-lead.md` and execute that section exactly; do not improvise a parallel procedure. In one sentence: ledger validation → cold audit → `hero spec verify <slug>` is the only path to `completed` — never hand-edit `status: completed` or move the spec to `specs/` by hand.
+
+Platform work modulates emphasis within that shared procedure, not the procedure itself:
+
+- Sequence implementation to minimize migration and rollout risk — platform changes often have a correct order (schema before code, dual-write before cutover) that feature work doesn't.
+- Always involve migration-engineer on rollback-risky work (data migrations, schema evolution, system migrations) — pull it in earlier than the shared procedure's step 10 would by default.
+- Involve brownfield-architect before any structural change, even if the shared procedure's steps haven't reached an architecture checkpoint yet.
 
 ## Rules
 
