@@ -1,7 +1,6 @@
 ---
 name: prioritization-frameworks
 description: RICE, ICE, WSJF, and value-vs-effort prioritization — formulas, when each fits, and how soft inputs make the scores lie.
-compatibility: opencode
 metadata:
   audience: prioritization-strategist, roadmap-curator, pm-delivery-lead
   purpose: framework-guidance

@@ -1,7 +1,6 @@
 ---
 name: agent-reliability
 description: Behavioral rules that make AI coding agents more reliable — verification, self-correction, and scope discipline.
-compatibility: opencode
 metadata:
   audience: all-agents
   purpose: reliability-rules

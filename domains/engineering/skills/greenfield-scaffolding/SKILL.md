@@ -1,7 +1,6 @@
 ---
 name: greenfield-scaffolding
 description: Bootstrap a new project's Hero workspace with stack-appropriate conventions, decisions, and initial specs.
-compatibility: opencode
 metadata:
   audience: any-agent
   purpose: project-onboarding

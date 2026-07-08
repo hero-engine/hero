@@ -1,7 +1,6 @@
 ---
 name: architecture-principles
 description: Shared software architecture principles focused on right-tool decisions, scale-readiness, and avoiding unnecessary distributed complexity.
-compatibility: opencode
 metadata:
   audience: architects
   purpose: reusable-guidance

@@ -1,7 +1,6 @@
 ---
 name: cross-repo-peering
 description: How agents pick the right cross-repo interaction mode (advisory call / spec-out call / async handoff / convention import) and compose well-shaped peer-call prompts. Load when a session touches a sibling Hero workspace's surface.
-compatibility: opencode
 metadata:
   audience: agents
   purpose: cross-repo-coordination
@@ -11,7 +10,7 @@ metadata:
 
 Teach agents how to use Hero's cross-repo peering protocol — the three-tier ladder (advisory peer call, spec-out peer call, async handoff) plus the convention-import fallback — so work that crosses a sibling workspace's surface gets the protocol's provenance for free.
 
-The full protocol convention lives at `.hero/knowledge/conventions/peering-protocol.md`. Read it once for depth. This skill is the agent-facing operational distillation.
+This skill is the agent-facing operational distillation of the protocol — everything you need for a peer call or handoff lives below. If your workspace carries a fuller peering convention under `.hero/knowledge/` (e.g. a `peering-protocol` convention note), read it for extra depth; not every workspace has one.
 
 ## When to use me
 
@@ -148,7 +147,7 @@ Pulls the peer's peer-surface conventions matching the surface tag into your act
 | What does one peer expose? | `hero peer show <alias>` |
 | What's in flight across the boundary? | `hero handoff status` |
 
-If `hero peer list` returns empty, peers aren't registered yet. Run `hero admin repos add <alias> <path>` first (see `CROSS-REPO-PEERING.md`).
+If `hero peer list` returns empty, peers aren't registered yet. Run `hero admin repos add <alias> <path>` first.
 
 ## Output discipline
 
@@ -158,7 +157,5 @@ After a handoff, **confirm the trail wrote** (`hero handoff status` shows the en
 
 ## Related
 
-- Convention: `.hero/knowledge/conventions/peering-protocol.md` — the full protocol with edge cases and v2 directions.
-- Decision: `.hero/knowledge/decisions/cross-repo-peering-local-first.md` — why local-first by default.
-- Setup guide: `CROSS-REPO-PEERING.md` (workspace root) — one-time registration and config.
+- If your workspace has a peering convention or a local-first-by-default decision recorded under `.hero/knowledge/`, it carries the edge cases and rationale this skill omits for brevity.
 - Slash command: `/peer` — structured front door for peer call / handoff / list / show.

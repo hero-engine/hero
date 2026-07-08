@@ -1,10 +1,6 @@
 ---
 name: code-scrub
 description: Methodology and rules for scrubbing codebases — removing dead code, weak types, duplication, bad comments, defensive programming, and legacy cruft.
-compatibility:
-  - opencode
-  - cursor
-  - claude
 metadata:
   audience: agents
   purpose: skill-routing

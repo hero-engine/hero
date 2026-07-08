@@ -1,7 +1,6 @@
 ---
 name: security-review
 description: Security review guidance for trust boundaries, auth, input handling, secret exposure, and meaningful application risk.
-compatibility: opencode
 metadata:
   audience: security
   purpose: review-guidance

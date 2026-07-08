@@ -185,9 +185,9 @@ At the end of the delivery loop:
    the delivery before you flip status. This is the second set of eyes
    the lead cannot be, because the lead watched the work happen.
 
-   Invoke a general-purpose subagent with the `delivery-audit` skill
-   loaded. Hand it ONLY artifacts on disk — no commentary, no framing,
-   no "this looks good to me":
+   Invoke a fresh subagent with no delivery context, with the
+   `delivery-audit` skill loaded. Hand it ONLY artifacts on disk — no
+   commentary, no framing, no "this looks good to me":
    - Spec path (absolute)
    - Diff command (`git diff <base>...HEAD` or equivalent)
    - The engineer's Completion Ledger, verbatim

@@ -1,7 +1,6 @@
 ---
 name: sprint-planning
 description: Sprint commit, velocity reading, and cut-line decisions under the sprint preset — including what to do when plans drift.
-compatibility: opencode
 metadata:
   audience: pm-delivery-lead
   purpose: process-guidance

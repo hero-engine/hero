@@ -1,7 +1,6 @@
 ---
 name: acceptance-criteria-ears
 description: EARS (Easy Approach to Requirements Syntax) patterns for writing acceptance criteria that survive handoff to engineering without ambiguity.
-compatibility: opencode
 metadata:
   audience: story-writer, prd-author, handoff-coordinator, pm-reviewer
   purpose: ac-authoring

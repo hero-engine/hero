@@ -1,7 +1,6 @@
 ---
 name: convention-writing
 description: How to analyze a codebase for recurring patterns and write effective convention specs that standardize them.
-compatibility: opencode
 metadata:
   audience: convention-author
   purpose: convention-authoring

@@ -82,7 +82,7 @@ If the user provides `--iterate` feedback, read the existing mockup first and mo
 
 **Surface outputs — orchestrator responsibility (READ THIS):**
 
-The `ui-designer` runs as a subagent. **The subagent's return value is NOT visible to the user.** When the Agent tool completes, you (the orchestrator running this command) MUST emit a clickable file inventory in your *own* user-facing text response — do not assume the subagent's links reach the user.
+The `ui-designer` runs as a subagent. **The subagent's return value is NOT visible to the user.** When the subagent completes, you (the orchestrator running this command) MUST emit a clickable file inventory in your *own* user-facing text response — do not assume the subagent's links reach the user.
 
 To make this reliable, instruct the `ui-designer` (in the prompt you send it) to terminate its return text with a machine-parseable block:
 

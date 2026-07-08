@@ -1,7 +1,6 @@
 ---
 name: opportunity-solution-trees-torres
 description: Teresa Torres' Opportunity Solution Tree — map a clear outcome to opportunities, solutions, and assumption tests before authoring.
-compatibility: opencode
 metadata:
   audience: discovery-researcher, pm-investigator, product-strategist
   purpose: framework-guidance

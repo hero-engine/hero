@@ -1,7 +1,6 @@
 ---
 name: javascript-stack
 description: JavaScript and Node implementation guidance for modules, async behavior, data validation, and runtime safety.
-compatibility: opencode
 metadata:
   audience: engineer
   purpose: stack-guidance

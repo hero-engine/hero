@@ -1,7 +1,6 @@
 ---
 name: continuous-discovery-cadence
 description: Teresa Torres-style weekly discovery rhythm — three touchpoints, opportunity revisits, and assumption tests as habit, not project.
-compatibility: opencode
 metadata:
   audience: discovery-researcher, pm-investigator, product-strategist
   purpose: process-guidance

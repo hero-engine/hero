@@ -1,7 +1,6 @@
 ---
 name: react-stack
 description: React implementation guidance for component boundaries, state ownership, accessibility, and practical frontend behavior.
-compatibility: opencode
 metadata:
   audience: engineer
   purpose: stack-guidance

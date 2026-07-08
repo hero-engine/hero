@@ -1,7 +1,6 @@
 ---
 name: deep-code-enrichment
 description: Guide for running deep code scanning with LLM-generated symbol descriptions.
-compatibility: opencode
 metadata:
   audience: agents
   purpose: code-enrichment
