@@ -26,7 +26,7 @@ it.**
 | Hand off, send to engineering, "ready for dev", "flip owner to engineering" | `/handoff` (flips `owner: pm → engineering` on the same artifact) |
 | Create a story / spec / feature / pitch / scope (vocabulary-aware) | `hero spec new <slug> --type feature` (alias `hero design <slug>`) |
 | Create a bug | `hero spec new <slug> --type bug` |
-| Create an epic / pitch / theme | no CLI scaffolder (`hero spec new` has no epic type) — hand-author `.hero/planning/epics/<slug>/spec.md` per `core/spec-types/epic.md` |
+| Create an epic / pitch / theme | no CLI scaffolder (`hero spec new` has no epic type) — hand-author `.hero/planning/epics/<slug>/spec.md` per the registered `epic` spec type |
 | Create a roadmap-item / bet / initiative | `hero spec new <slug> --type initiative` |
 | Draft PRD, write requirements, product doc, "spec this out" | `/prd` |
 | Pitch, Shape Up, "shape this", appetite, betting table | `/pitch` |
@@ -64,7 +64,7 @@ translates display terms back to canonical:
 |---|---|
 | "draft a story" / "shape a scope" / "create an issue" | `hero spec new <slug> --type feature` (alias `hero design <slug>`) |
 | "log a bug" | `hero spec new <slug> --type bug` |
-| "frame a pitch" / "frame a theme" / "create an epic" | no CLI scaffolder (`hero spec new` has no epic type) — hand-author `.hero/planning/epics/<slug>/spec.md` per `core/spec-types/epic.md` |
+| "frame a pitch" / "frame a theme" / "create an epic" | no CLI scaffolder (`hero spec new` has no epic type) — hand-author `.hero/planning/epics/<slug>/spec.md` per the registered `epic` spec type |
 | "add a bet" / "add a roadmap initiative" | `hero spec new <slug> --type initiative` |
 
 Agents and CLI output render the active vocabulary on the way out

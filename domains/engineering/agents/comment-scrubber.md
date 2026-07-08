@@ -2,7 +2,6 @@
 name: comment-scrubber
 description: Remove AI slop, narrating comments, stubs, misleading documentation, and work-in-progress references. Keep only comments that help.
 mode: subagent
-role: execution
 temperature: 0.1
 color: secondary
 permission:

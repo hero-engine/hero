@@ -1,7 +1,6 @@
 ---
 name: devops-and-operations
 description: Operational guidance for CI/CD, deployments, runtime configuration, environment parity, and observability-aware system delivery.
-compatibility: opencode
 metadata:
   audience: devops
   purpose: operations-guidance

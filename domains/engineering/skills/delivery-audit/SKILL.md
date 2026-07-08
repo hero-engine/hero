@@ -1,7 +1,6 @@
 ---
 name: delivery-audit
 description: Cold-audit a completed delivery — verify the spec was actually delivered, challenge performative claims, and produce a what-landed report.
-compatibility: opencode
 metadata:
   audience: cold-auditor-subagent
   purpose: delivery-validation

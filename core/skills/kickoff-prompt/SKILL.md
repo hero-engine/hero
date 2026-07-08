@@ -1,7 +1,6 @@
 ---
 name: kickoff-prompt
 description: Format and quality bar for the `## Kickoff` section that lives in every spec. Defines a paste-ready cold-start prompt the user can drop into a fresh session.
-compatibility: opencode
 metadata:
   audience: any-agent
   purpose: cold-session-start

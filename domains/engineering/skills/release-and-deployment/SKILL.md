@@ -1,7 +1,6 @@
 ---
 name: release-and-deployment
 description: Release and deployment guidance for versioning, changelogs, rollout safety, and rollback-aware delivery.
-compatibility: opencode
 metadata:
   audience: release
   purpose: release-guidance

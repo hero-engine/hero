@@ -36,7 +36,7 @@ When asked to diagnose multiple bugs (e.g. "diagnose 10 bugs", "work through the
 
 ### Parallel batch mode
 
-If the user explicitly asks to run diagnoses in parallel (e.g. "run each in an agent", "diagnose all of them at once"), launch multiple Task agents. **Each agent must follow these rules:**
+If the user explicitly asks to run diagnoses in parallel (e.g. "run each in an agent", "diagnose all of them at once"), launch parallel subagents via your harness's delegation mechanism (e.g. Task agents on Claude Code). **Each agent must follow these rules:**
 
 1. **Each agent runs as the `debug-investigator`**. Tell each agent: "You are the `debug-investigator`. Load the `debugging-investigation` skill. Diagnose the bug described in the spec at `<spec-path>`. Write all findings into the spec file on disk. After writing the spec, post results to the tracker (see step 6)."
 2. **Include the bug context** in each agent's prompt — the spec path, the tracker ID, and a brief description of the bug. The agent will read the full spec and any tracker issues.

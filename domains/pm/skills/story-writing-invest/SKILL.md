@@ -1,7 +1,6 @@
 ---
 name: story-writing-invest
 description: INVEST shape for user stories — Independent, Negotiable, Valuable, Estimable, Small, Testable. The bar every story must clear before handoff to engineering.
-compatibility: opencode
 metadata:
   audience: story-writer, pm-delivery-lead, pm-reviewer
   purpose: story-authoring
@@ -115,8 +114,8 @@ Load `acceptance-criteria-ears` alongside this skill when writing or reviewing s
 
 Under the unified type model, the PM-common work types are `feature`,
 `bug`, `chore`. Engineering-originated work may use additional types
-from `core/spec-types/`. Set at draft time; drives priority defaults
-and review rigor.
+from the registered spec types. Set at draft time; drives priority
+defaults and review rigor.
 
 - **feature** — new user-facing capability. Full INVEST + EARS bar. Goes through `pm-reviewer` before the owner-flip handoff.
 - **bug** — broken behavior the user experiences. AC describes the *correct* behavior (not "fix the bug"). Reproduction steps belong in the description; the AC is the post-fix expectation. INVEST applies but Negotiable is looser — sometimes the only valid fix is one specific thing.

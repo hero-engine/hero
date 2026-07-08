@@ -1,7 +1,6 @@
 ---
 name: api-design-and-contracts
 description: API guidance for contract design, boundary validation, compatibility, versioning, and consumer-safe changes.
-compatibility: opencode
 metadata:
   audience: api
   purpose: contract-guidance

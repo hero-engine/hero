@@ -1,7 +1,6 @@
 ---
 name: duplicate-detection
 description: Detect near-duplicate PM artifacts using overlap signals beyond lexical similarity — theme, segment, source-cluster, and cross-domain overlap. Never auto-merge.
-compatibility: opencode
 metadata:
   audience: duplicate-detector, intake-triager, pm-reviewer
   purpose: intake-curation

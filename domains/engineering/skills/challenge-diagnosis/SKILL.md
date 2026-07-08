@@ -1,7 +1,6 @@
 ---
 name: challenge-diagnosis
 description: Protocol for challenging and revising a bug diagnosis — layer vs reject modes, investigation history format, re-diagnosis instructions.
-compatibility: opencode
 metadata:
   audience: debug-investigator
   purpose: diagnosis-feedback-loop

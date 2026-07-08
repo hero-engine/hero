@@ -1,7 +1,6 @@
 ---
 name: intake-classification
 description: Classifying inbound intakes by theme, segment, source quality, and signal strength — without losing source attribution or treating one loud customer as a pattern.
-compatibility: opencode
 metadata:
   audience: intake-triager, pm-investigator, duplicate-detector
   purpose: intake-curation

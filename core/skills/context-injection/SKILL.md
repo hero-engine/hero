@@ -1,7 +1,6 @@
 ---
 name: context-injection
 description: How delivery leads use hero relevant output to equip specialist agents with relevant conventions, past work, decisions, and known risks.
-compatibility: opencode
 metadata:
   audience: delivery-leads
   purpose: context-injection
