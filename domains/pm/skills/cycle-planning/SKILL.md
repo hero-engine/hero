@@ -1,7 +1,6 @@
 ---
 name: cycle-planning
 description: Shape Up cycle planning — six-week build + two-week cooldown rhythm, betting table mechanics, appetite as constraint, hill chart as inflight signal.
-compatibility: opencode
 metadata:
   audience: pm-delivery-lead
   purpose: process-guidance

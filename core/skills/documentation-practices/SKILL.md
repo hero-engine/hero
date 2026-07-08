@@ -1,7 +1,6 @@
 ---
 name: documentation-practices
 description: Documentation guidance for writing accurate, concrete, and operationally useful technical docs.
-compatibility: opencode
 metadata:
   audience: docs
   purpose: documentation-guidance

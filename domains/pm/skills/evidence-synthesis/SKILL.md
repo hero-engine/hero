@@ -1,7 +1,6 @@
 ---
 name: evidence-synthesis
 description: Turn raw signals — customer quotes, interview synthesis, usage data, NPS comments — into a roadmap evidence trail that survives the "how do you know?" challenge.
-compatibility: opencode
 metadata:
   audience: intake-triager, discovery-researcher, product-strategist
   purpose: discovery-curation

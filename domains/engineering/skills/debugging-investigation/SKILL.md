@@ -1,7 +1,6 @@
 ---
 name: debugging-investigation
 description: Debugging guidance and structured report template for thorough bug investigation, evidence gathering, and root cause documentation.
-compatibility: opencode
 metadata:
   audience: debugging
   purpose: investigation-guidance

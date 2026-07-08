@@ -1,6 +1,5 @@
 ---
 name: deal-strategist
-domains: [sales]
 description: Develops multi-threaded deal strategy, stakeholder influence maps, objection playbooks, and close plans. The delivery lead equivalent for sales deals.
 mode: subagent
 temperature: 0.2

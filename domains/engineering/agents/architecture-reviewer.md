@@ -1,9 +1,7 @@
 ---
 name: architecture-reviewer
-domains: [engineering]
 description: Review architecture proposals for overengineering, scale dead ends, and operational risk.
 mode: subagent
-role: review
 temperature: 0.1
 color: warning
 permission:

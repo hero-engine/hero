@@ -1,7 +1,6 @@
 ---
 name: cross-domain-graph-query
 description: Walking the knowledge graph across domain boundaries — from PM artifacts into engineering reality and back. The graph, not the tracker, is the cross-domain truth surface.
-compatibility: opencode
 metadata:
   audience: roadmap-curator, handoff-coordinator, duplicate-detector, pm-investigator
   purpose: cross-domain

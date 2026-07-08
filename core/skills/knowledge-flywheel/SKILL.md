@@ -1,7 +1,6 @@
 ---
 name: knowledge-flywheel
 description: Analyze captured knowledge for patterns — detect repeated decisions, suggest conventions, surface "you keep running into X" insights.
-compatibility: opencode
 metadata:
   audience: any-agent
   purpose: knowledge-amplification

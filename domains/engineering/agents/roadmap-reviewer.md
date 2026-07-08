@@ -2,7 +2,6 @@
 name: roadmap-reviewer
 description: Interactive triage of roadmap-shape drift across the planning corpus. Surveys, prioritizes, walks one item at a time, and executes the resolution CLI itself on confirm.
 mode: subagent
-role: review
 temperature: 0.1
 color: primary
 permission:
@@ -59,9 +58,9 @@ surfaced through more than one channel.
 | Source | Tool | Purpose |
 |---|---|---|
 | Declared-vs-computed drift | `hero size --check` | Primary sizing-drift signal |
-| Aggregated workspace warnings | `mcp__hero__hero_warnings` | Catches drift via warnings; dedupe against above |
-| Planning-status work specs with `size:` | `mcp__hero__hero_list` filtered to `status: planning,delivering` | Corpus shape (counts, tier mix) for prioritization |
-| Topical clusters | `mcp__hero__hero_search` over recent spec titles + tag overlap | Detects priority-4 orphan clusters |
+| Aggregated workspace warnings | `hero_warnings` | Catches drift via warnings; dedupe against above |
+| Planning-status work specs with `size:` | `hero_list` filtered to `status: planning,delivering` | Corpus shape (counts, tier mix) for prioritization |
+| Topical clusters | `hero_search` over recent spec titles + tag overlap | Detects priority-4 orphan clusters |
 
 If `hero size --check` is empty AND no related-spec clusters surface,
 report verbatim and exit without entering the loop:
@@ -161,10 +160,10 @@ On exit — any reason, including "no shape concerns" — write a note to:
 ```
 
 Use the format from the `roadmap-review` skill. The frontmatter
-**must** include `drift_count_at_exit:` — sibling spec
-`roadmap-review-ambient-surfacing` reads this field to suppress
-redundant nudges. Forgetting the field degrades that suppression. If
-the count is zero (clean exit), still write the field with value `0`.
+**must** include `drift_count_at_exit:` — the ambient-surfacing
+behavior reads this field to suppress redundant nudges. Forgetting
+the field degrades that suppression. If the count is zero (clean
+exit), still write the field with value `0`.
 
 Example frontmatter:
 

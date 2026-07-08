@@ -2,7 +2,6 @@
 name: legacy-scrubber
 description: Find and remove deprecated, legacy, and fallback code. Make all code paths clean, concise, and singular.
 mode: subagent
-role: execution
 temperature: 0.1
 color: secondary
 permission:

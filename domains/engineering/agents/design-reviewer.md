@@ -2,7 +2,6 @@
 name: design-reviewer
 description: Review spec designs for completeness, feasibility, and consistency with Hero conventions before delivery begins.
 mode: subagent
-role: review
 temperature: 0.1
 color: warning
 permission:

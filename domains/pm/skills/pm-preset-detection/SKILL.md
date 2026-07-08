@@ -1,7 +1,6 @@
 ---
 name: pm-preset-detection
 description: Read `hero.json`'s `pm.presets` config and apply the right authoring rules per artifact type. Analog to engineering's stack-detection.
-compatibility: opencode
 metadata:
   audience: prd-author, story-writer, roadmap-curator, pm-delivery-lead
   purpose: operational
@@ -23,7 +22,7 @@ Hero has **two independent preset systems**:
    templates to use, which dashboards to render).
 
 2. **Vocabulary preset** (`vocabulary` and `vocabulary_overrides` in
-   `hero.json`) — handled by the `internal/vocabulary/` resolver. Drives
+   `hero.json`) — handled by Hero's vocabulary resolver. Drives
    *display names only* — the canonical type/kind pair `spec, kind:
    feature` is rendered as "Story" under `agile-scrum`, "Scope" under
    `shape-up`, "Card" under `kanban`, "Feature" under `default`. Does
@@ -37,9 +36,9 @@ cadence). Most teams use the natural pairing (cycle + shape-up, sprint +
 agile-scrum), but the systems do not require it.
 
 **This skill governs methodology preset only.** When you need to render
-a type or kind name for the user, read the vocabulary via the
-`internal/vocabulary/` resolver — do not hardcode "Story" or "Feature"
-in agent output.
+a type or kind name for the user, read it from Hero's vocabulary
+resolver (configured via `hero.json`) — do not hardcode "Story" or
+"Feature" in agent output.
 
 ## When to use me
 

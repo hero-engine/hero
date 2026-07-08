@@ -2,7 +2,6 @@
 name: brownfield-architect
 description: Understand existing codebases and design minimal, scale-ready changes that fit the current system.
 mode: subagent
-role: design
 temperature: 0.1
 color: info
 permission:

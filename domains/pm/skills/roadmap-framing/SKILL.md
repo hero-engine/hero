@@ -1,7 +1,6 @@
 ---
 name: roadmap-framing
 description: How to write initiatives that read honestly — bet-shaped framing, evidence-grounded rationale, named tradeoffs, and horizon assignments that reconcile against engineering reality.
-compatibility: opencode
 metadata:
   audience: product-strategist, roadmap-curator, pm-reviewer
   purpose: roadmap-authoring

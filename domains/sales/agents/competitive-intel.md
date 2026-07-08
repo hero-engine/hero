@@ -1,6 +1,5 @@
 ---
 name: competitive-intel
-domains: [sales]
 description: Tracks the competitive landscape, prepares battlecards, assesses win probability in competitive deals, and helps reps counter competitor moves.
 mode: subagent
 temperature: 0.2

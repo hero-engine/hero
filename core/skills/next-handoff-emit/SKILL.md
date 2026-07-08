@@ -1,7 +1,6 @@
 ---
 name: next-handoff-emit
 description: When and how to emit handoff state (UserAsk / NextSuggestion / SessionReflection) to the graph during work, so the projected NEXT.md and per-user handoff stay current without agent discipline on a tracked file.
-compatibility: opencode
 metadata:
   audience: any-agent
   purpose: session-handoff
@@ -17,9 +16,9 @@ field-grab CLI (`hero next suggest`, `hero next ask`,
 markdown file that the next checkpoint will clobber.
 
 This skill replaces the "write the agent half of NEXT.md" pattern in
-[skills/next-md.md](next-md.md) when `next.projected` is true. With
-projection on, anything you write into NEXT.md gets wiped on the next
-Stop hook. Emit structured events instead.
+the `next-md` skill when `next.projected` is true. With projection on,
+anything you write into NEXT.md gets wiped on the next Stop hook. Emit
+structured events instead.
 
 ## Why emit, not write
 
@@ -43,8 +42,13 @@ as the **"Last user ask"** section.
 > **Auto-emit:** as of `next-auto-emit-user-ask`, the end-of-turn Stop
 > checkpoint (`hero next checkpoint`) automatically records the user's
 > **last** transcript message as the `UserAsk` whenever the harness
-> supplies a `transcript_path` (Claude Code does). So this command is
-> now a **manual override**, not a per-turn requirement — fire it only
+> supplies a `transcript_path` (Claude Code does) — and only on
+> harnesses where the Stop-hook checkpoint is wired at all (Claude
+> Code, Codex today). On a hookless harness (opencode, cursor,
+> copilot, generic), or one that doesn't supply a `transcript_path`,
+> treat auto-emit as absent and fire `hero next ask` explicitly every
+> time. Where auto-emit does apply, this command is a **manual
+> override**, not a per-turn requirement — fire it only
 > when you want to record something other than the verbatim last
 > message (e.g. a one-line paraphrase of a long, wandering prompt).
 > Singleton supersession means your override cleanly replaces the

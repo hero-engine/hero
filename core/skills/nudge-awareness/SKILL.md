@@ -1,7 +1,6 @@
 ---
 name: nudge-awareness
 description: How agents check for and surface relevant context when a developer is working without a spec.
-compatibility: opencode
 metadata:
   audience: agents
   purpose: context-awareness

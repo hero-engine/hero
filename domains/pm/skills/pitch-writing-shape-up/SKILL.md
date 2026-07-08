@@ -1,7 +1,6 @@
 ---
 name: pitch-writing-shape-up
 description: Shape Up pitch authoring discipline — appetite as budget, fat-marker sketches, rabbit holes as named traps, no-gos as scope defense, cooldown as first-class state.
-compatibility: opencode
 metadata:
   audience: prd-author, pm-reviewer, pm-delivery-lead
   purpose: pitch-writing

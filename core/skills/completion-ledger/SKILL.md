@@ -1,7 +1,6 @@
 ---
 name: completion-ledger
 description: Format and validation contract for the Completion Ledger — the closing artifact hero spec verify Gate 1 parses
-compatibility: opencode
 metadata:
   audience: engineer, delivery-leads, auditors
   purpose: delivery-gate-contract
@@ -62,7 +61,7 @@ Before the tables, include: a brief understanding of the task as executed, the s
 
 ## What Gate 1 actually parses
 
-`internal/spec/ledger.go` (`ParseLedger`) and `checkLedger` in `internal/cli/verify.go` implement the machine side of this contract. Match it exactly:
+Hero's engine parses this section mechanically to gate `hero spec verify`. Match the contract exactly:
 
 - **Section shape**: a `## Completion Ledger` section (matched case-insensitively), containing `### Acceptance Criteria` and `### Changes` sub-tables, plus `### Exercise-the-feature check` and `### Excellence Bar self-check` checkbox blocks (these two are matched on "exercise" / "excellence" appearing anywhere in the sub-header — the exact wording above is not required, but keep it for consistency).
 - **Table tolerance**: rows may have 3 or 4 columns. 4-column = `# | Summary | Status | Note`; 3-column (no index) = `Summary | Status | Note`. Bold text, backticks, and extra whitespace in cells are stripped before matching.

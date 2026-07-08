@@ -39,6 +39,14 @@ When the user describes what they want in natural language, route to the appropr
 
 When routing, pass the user's original context as arguments to the command. If the intent is ambiguous, present the top 2-3 options and ask.
 
+**Slash commands ≠ CLI subcommands.** Slash commands (e.g. `/discover`, `/convention`) run inside the AI tool's session only — they are **not** `hero discover` or `hero convention` terminal commands. Some commands exist on both surfaces, but many are slash-only. Do not hallucinate CLI subcommands from slash command names. <!-- drift-test:ignore (illustrative: `hero discover`/`hero convention` above are explicitly non-existent subcommands) -->
+
+| Surface | Commands |
+|---|---|
+| **Slash-only** (no `hero <name>` equivalent) | `/capture`, `/challenge`, `/compose`, `/convention`, `/decide`, `/discover`, `/drive`, `/mock`, `/release`, `/retro`, `/review`, `/roadmap-review`, `/scrub`, `/split` |
+| **Both slash and CLI** | `/blocked`, `/check`, `/deliver`, `/design`, `/diagnose`, `/docs`, `/handoff` (slash = NEXT.md refresh; CLI `hero handoff <spec> <alias>` = cross-repo drop to a peer), `/import` (slash = tracker import via `hero sync import`; root `hero import` is unrelated knowledge-base ingestion), `/note`, `/peer`, `/resume`, `/scan`, `/sprint`, `/why` |
+| **CLI-only** (see CLI Commands below) | `hero status`, `hero search`, `hero ask`, `hero list`, `hero queue`, `hero spec verify`, `hero spec score`, `hero diff`, `hero drift`, etc. |
+
 **Mockup routing.** Any request to mock, wireframe, prototype, or visualize a screen — including casual questions like "what would this look like?" or "is that a swift mock?" — routes to `/mock`. **Never hand-generate a mockup outside that command, and never pick the format yourself.** `/mock` runs `hero spec mock detect`, which chooses the renderer (HTML vs. native SwiftUI) deterministically from the repo's stack and announces it before generating. There is **no "HTML-first, then port to SwiftUI" workflow** — that is a confabulation, not a real Hero pattern. In a native app you produce a native SwiftUI mockup directly (compiled, with real screenshots); in a web app you produce HTML. Do **not** generate an HTML approximation "to iterate faster" on a native project. Always end your response with the clickable file inventory `/mock` surfaces — never make the user ask for the links.
 
 **Cross-repo peering disambiguation.** The session-level `/handoff` slash command (force-refresh NEXT.md) and the cross-repo `hero handoff <spec> <alias>` command share a verb but do different things. Disambiguate by whether the user names a peer alias: if they do, it's cross-repo; if not, it's session handoff. When a user says "ask hero-code about X" or "hand off to hero-cloud," route to the cross-repo command and **compose the prompt yourself** — don't paraphrase the user's words verbatim. A good peer-call prompt names the specific question, references the active spec via `--related-spec <slug>` when one exists, and includes `--reason` explaining why the call is happening. Pick the mode: **advisory** (need a fact, peer writes nothing), **spec-out** (peer designs the fix on its side), or **handoff** (you already did the investigation, dropping it on peer's queue).
@@ -113,18 +121,18 @@ When **you** need to look something up mid-task (as opposed to running a slash c
 
 | Shape of question | Tool |
 |---|---|
-| "Does spec/knowledge entry X exist? Has this been discussed?" | `mcp__hero__hero_search` with `compact: true` — single-line count, no excerpt noise |
-| "What's the status / frontmatter of spec X?" | `mcp__hero__hero_read_spec` |
-| "What's in flight / ready / blocked / mine?" | `mcp__hero__hero_list`, `hero_queue`, `hero_blocked` |
-| "Where did this come from? What chain of decisions led here?" | `mcp__hero__hero_why` — graph traversal beats grep on relations |
+| "Does spec/knowledge entry X exist? Has this been discussed?" | `hero_search` with `compact: true` — single-line count, no excerpt noise |
+| "What's the status / frontmatter of spec X?" | `hero_read_spec` |
+| "What's in flight / ready / blocked / mine?" | `hero_list`, `hero_queue`, `hero_blocked` |
+| "Where did this come from? What chain of decisions led here?" | `hero_why` — graph traversal beats grep on relations |
 | Literal string `foo_bar_baz` across code | `rg` / `grep` |
 | Known file at a known path | `Read` |
 | Recent commits / git history | `git log` |
-| Broad exploration across many files | `Explore` agent (context-protective) |
+| Broad exploration across many files | a context-protective read-only search subagent, where your harness provides one (e.g. Claude Code's `Explore` agent); otherwise `rg` + targeted reads |
 
-**Rule of thumb:** graph- or spec-shaped questions → Hero MCP tools. String-shaped → grep. File-shaped → Read. Don't reach for `grep` on `.hero/` to answer "does spec X exist?" — substring search only finds *literal matches*, not *semantically related* specs (e.g. a spec slugged `domain-routing-and-agents` is the same concept as "domain swap" but won't match either word as a phrase).
+**Rule of thumb:** graph- or spec-shaped questions → Hero MCP tools (`hero_*` — on Claude Code these surface as `mcp__hero__<name>`). String-shaped → grep. File-shaped → Read. Don't reach for `grep` on `.hero/` to answer "does spec X exist?" — substring search only finds *literal matches*, not *semantically related* specs (e.g. a spec slugged `domain-routing-and-agents` is the same concept as "domain swap" but won't match either word as a phrase).
 
-Deferred-tool friction (the one-time `ToolSearch` schema load for `mcp__hero__*`) is real but cheap — one round-trip, then the tool stays loaded. The cost of reading 20 verbose CLI excerpts to answer a binary "exists?" question is higher.
+Some harnesses defer MCP tool schemas behind a one-time lookup before the tool is callable — e.g. Claude Code's `ToolSearch`. The load is one round-trip and worth it; it's not a reason to fall back to a weaker tool.
 
 ### Important Rules
 

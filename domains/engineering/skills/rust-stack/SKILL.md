@@ -1,7 +1,6 @@
 ---
 name: rust-stack
 description: Rust implementation guidance for ownership, error handling, module boundaries, and pragmatic async design.
-compatibility: opencode
 metadata:
   audience: engineer
   purpose: stack-guidance

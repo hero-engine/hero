@@ -83,8 +83,8 @@ type: feature | bug | chore
 ```
 
 The canonical work types in the PM pack are `feature`, `bug`, `chore` —
-engineering-originated specs may also use other types from
-`core/spec-types/`. Authoring agents primarily produce `feature`.
+engineering-originated specs may also use other registered spec types.
+Authoring agents primarily produce `feature`.
 
 - **feature** — new user-visible capability (rendered as "Story" under
   `agile-scrum`, "Scope" under `shape-up`, "Card" under `kanban`).

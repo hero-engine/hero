@@ -1,7 +1,6 @@
 ---
 name: dependency-analysis
 description: How to evaluate libraries for health, security, license compatibility, and size impact before adopting or continuing to use them.
-compatibility: opencode
 metadata:
   audience: dependency-analyst
   purpose: dependency-evaluation
