@@ -38,6 +38,14 @@ changed, dead ends to skip, blockers, and files-nearby context.
    they compose.
 6. The first item in `In flight` is usually the right next action.
    Propose it directly — don't ask "what should we work on?".
+7. Run `hero check --reconcile` to fix any status drift (specs stuck at
+   delivering when git shows completion, etc.). This is silent when
+   nothing needs fixing.
+8. In team mode, also glance at `.hero/NEXT.md` for the team roster
+   (who's working on what).
+
+For a deeper orientation on conventions, decisions, and risks, be the
+`session-primer` agent (core).
 
 **Why this matters:**
 
