@@ -1,7 +1,6 @@
 ---
 name: spec-sizing
 description: The shared 6-tier size ladder, per-type bands, and the nudge protocol delivery leads use to surface promotion recommendations on oversized specs.
-compatibility: opencode
 metadata:
   audience: delivery-leads
   purpose: sizing-nudge

@@ -1,7 +1,6 @@
 ---
 name: implementation-principles
 description: Shared implementation guidance for making minimal, correct, maintainable code changes that fit existing systems.
-compatibility: opencode
 metadata:
   audience: engineers
   purpose: implementation-guidance

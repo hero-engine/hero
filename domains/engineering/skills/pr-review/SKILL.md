@@ -1,7 +1,6 @@
 ---
 name: pr-review
 description: Review guidance for pull requests with emphasis on correctness, regressions, validation gaps, and operational risk.
-compatibility: opencode
 metadata:
   audience: reviewers
   purpose: review-guidance

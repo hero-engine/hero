@@ -1,7 +1,6 @@
 ---
 name: python-stack
 description: Python implementation guidance for project structure, type safety, dependency management, testing, and operational correctness.
-compatibility: opencode
 metadata:
   audience: engineer
   purpose: stack-guidance

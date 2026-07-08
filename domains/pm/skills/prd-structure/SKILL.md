@@ -1,7 +1,6 @@
 ---
 name: prd-structure
 description: Canonical PRD templates and section-by-section quality bar — pitch-shaped (default under cycle preset) and ten-section (default under sprint, continuous, and phased presets).
-compatibility: opencode
 metadata:
   audience: prd-author, pm-reviewer
   purpose: prd-authoring

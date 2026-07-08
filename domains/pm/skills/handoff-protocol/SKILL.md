@@ -1,7 +1,6 @@
 ---
 name: handoff-protocol
 description: The formal protocol for handing a spec off from PM to engineering — pre-flight gates, the `owner: pm → engineering` flip on the same artifact, the bitemporal ownership history that is the cross-domain edge, and the hand-back path.
-compatibility: opencode
 metadata:
   audience: handoff-coordinator, pm-reviewer, pm-delivery-lead
   purpose: cross-domain
@@ -121,10 +120,9 @@ hero spec set-owner <slug> engineering
 # `pm-preset-detection`)
 ```
 
-`set-owner` appends the `owner_history` row atomically (the spec store
-lives in `internal/spec/`); a raw frontmatter edit records **no**
-history, so always use the command. The history
-entry looks like:
+`set-owner` appends the `owner_history` row atomically; a raw
+frontmatter edit records **no** history, so always use the command.
+The history entry looks like:
 
 ```yaml
 owner_history:

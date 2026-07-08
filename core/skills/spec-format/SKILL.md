@@ -1,7 +1,6 @@
 ---
 name: spec-format
 description: Defines the spec document structure and conventions for feature designs and bug diagnoses in the hero workflow.
-compatibility: opencode
 metadata:
   audience: delivery-leads
   purpose: spec-writing

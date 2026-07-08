@@ -1,6 +1,5 @@
 ---
 name: buyer-researcher
-domains: [sales]
 description: Researches prospects and buyers — company background, org structure, buying triggers, contact intelligence — so reps walk into every meeting fully prepared.
 mode: subagent
 temperature: 0.2

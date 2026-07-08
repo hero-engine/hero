@@ -1,7 +1,6 @@
 ---
 name: project-context-generation
 description: Guidance for analyzing a repository and creating concise, high-value AGENTS.md and related instruction context for future agent sessions.
-compatibility: opencode
 metadata:
   audience: context-builders
   purpose: project-guidance

@@ -1,6 +1,5 @@
 ---
 name: migration-engineer
-domains: [engineering]
 description: Plan and execute data migrations, API version migrations, and library upgrade paths with rollback strategies and zero-downtime approaches.
 mode: subagent
 temperature: 0.1

@@ -1,7 +1,6 @@
 ---
 name: dependency-mapping
 description: Walk the cross-artifact dependency graph forward and backward, distinguish hard blockers from soft sequencing, and surface cross-domain chains.
-compatibility: opencode
 metadata:
   audience: roadmap-curator, prioritization-strategist
   purpose: curation

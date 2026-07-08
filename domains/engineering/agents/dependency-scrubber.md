@@ -2,7 +2,6 @@
 name: dependency-scrubber
 description: Analyze and improve dependency structure — untangle circular dependencies, reduce coupling, simplify import graphs.
 mode: subagent
-role: execution
 temperature: 0.1
 color: secondary
 permission:

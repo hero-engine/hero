@@ -1,7 +1,6 @@
 ---
 name: prd-anti-patterns
 description: The PRD smells that make a document unusable — what they look like, why they fail, and what to write instead.
-compatibility: opencode
 metadata:
   audience: prd-author, pm-reviewer
   purpose: prd-review

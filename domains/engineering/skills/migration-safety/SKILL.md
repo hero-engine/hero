@@ -1,7 +1,6 @@
 ---
 name: migration-safety
 description: Safe migration patterns for databases, APIs, libraries, and data transformations with zero-downtime techniques and mandatory rollback planning.
-compatibility: opencode
 metadata:
   audience: migration-engineer, platform-delivery-lead
   purpose: migration-guidance

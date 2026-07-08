@@ -1,7 +1,6 @@
 ---
 name: roadmap-review
 description: The doctrine for `/roadmap-review` — interactive triage of roadmap-shape drift, walked one item at a time, with paste-ready resolution phrasing for the active sizing lens.
-compatibility: opencode
 metadata:
   audience: roadmap-reviewer-agent
   purpose: shape-triage
@@ -152,11 +151,10 @@ Placeholder. Same refusal pattern.
 On exit — any reason — the agent writes a short note to
 `.hero/knowledge/roadmap-review-sessions/{YYYY-MM-DD}-{HHMM}.md`.
 This is the dogfood signal: cadence over time, items resolved per
-session, what gets deferred. Sibling spec
-`roadmap-review-ambient-surfacing` reads these records to power the
-"stop nagging if nothing's changed since the last triage" rule, so the
-`drift_count_at_exit:` frontmatter field is **load-bearing**, not
-optional.
+session, what gets deferred. The ambient-surfacing behavior below
+reads these records to power the "stop nagging if nothing's changed
+since the last triage" rule, so the `drift_count_at_exit:` frontmatter
+field is **load-bearing**, not optional.
 
 Format:
 
@@ -201,8 +199,8 @@ ambient surfaces carry the same paste-ready hint pointing here:
   `platform-delivery-lead` quote the hint verbatim in their handoff
   output when the workspace-wide count is non-empty.
 
-All three quote the canonical hint from `internal/sizing/ambient.go` —
-they do not compose the string themselves. The noise threshold (active
+All three quote the same canonical hint from a shared source — they
+do not compose the string themselves. The noise threshold (active
 spec union 7d recency union horizon:now unsized initiatives) and the
 24h stop-nagging rule (suppress while a recent
 `.hero/knowledge/roadmap-review-sessions/` record's

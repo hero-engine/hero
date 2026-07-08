@@ -1,7 +1,6 @@
 ---
 name: test-strategy
 description: Test strategy design covering the test pyramid, coverage ROI, test boundaries, and identifying gaps in existing codebases.
-compatibility: opencode
 metadata:
   audience: test-architect, delivery-leads
   purpose: test-strategy

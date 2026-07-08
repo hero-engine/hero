@@ -2,7 +2,6 @@
 name: dedup-scrubber
 description: Find and consolidate duplicated code. Apply DRY where it reduces complexity without adding indirection.
 mode: subagent
-role: execution
 temperature: 0.1
 color: secondary
 permission:
