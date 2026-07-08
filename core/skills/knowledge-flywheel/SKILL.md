@@ -15,7 +15,7 @@ notes into structured team intelligence.
 ## When to use me
 
 - At the end of a sprint or after 5+ knowledge entries have been captured
-- When `/prime` detects a growing knowledge base (>10 entries)
+- When `/resume` detects a growing knowledge base (>10 entries)
 - When the user asks "what have we learned?" or "any patterns?"
 
 ## How to use me

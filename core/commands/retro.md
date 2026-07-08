@@ -1,13 +1,14 @@
 ---
 description: Run a post-delivery retrospective comparing a completed spec against what was actually implemented.
 ---
-Route this retrospective to the appropriate delivery lead based on the spec type.
+Delegate to the install's delivery-lead agent if one is installed, otherwise
+run the retrospective directly as the session agent.
 
-Determine whether the completed spec is product or platform work:
-- Product features, user-facing enhancements → delegate to `feature-delivery-lead`
-- Migrations, refactors, platform changes → delegate to `platform-delivery-lead`
+Engineering installs route product work to `feature-delivery-lead` and
+platform work to `platform-delivery-lead`; pm installs ship
+`pm-delivery-lead`.
 
-The delivery lead will:
+Whoever runs this will:
 1. Read the completed spec from the provided path
 2. Review the git history to see what was actually implemented (diff against the spec's timeframe)
 3. Compare spec intent vs delivered reality:

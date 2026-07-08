@@ -266,3 +266,5 @@
 {"ts":"2026-07-06T20:58:32.201367Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"pm-pack-phantom-surfaces","message":"status -\u003e completed"}
 {"ts":"2026-07-07T02:28:01.650731Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"sales-pack-reality-sync","message":"\"Sales Pack Reality Sync — make every sales-pack claim match the engine\""}
 {"ts":"2026-07-07T02:28:01.650816Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"sales-pack-reality-sync","message":"status -\u003e completed"}
+{"ts":"2026-07-08T18:09:58.922715Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"core-commands-domain-neutral","message":"\"Core commands are engineering-only — dangling agents, skills, routes, and storage paths on pm/sales installs\""}
+{"ts":"2026-07-08T18:09:58.922799Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"core-commands-domain-neutral","message":"status -\u003e completed"}

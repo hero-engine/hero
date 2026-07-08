@@ -2,7 +2,7 @@
 title: "Core commands are engineering-only — dangling agents, skills, routes, and storage paths on pm/sales installs"
 slug: core-commands-domain-neutral
 type: bug
-status: planning
+status: completed
 priority: P1
 size: medium
 domain: engineering
@@ -12,6 +12,8 @@ relations:
   - {target: content-remediation, kind: parent}
   - {target: hero-content-audit, kind: related}
   - {target: content-dedup-resync, kind: builds-on}
+delivery_method: manual
+completed_at: 2026-07-08T18:09:57Z
 ---
 
 # Core commands are engineering-only — dangling agents, skills, routes, and storage paths on pm/sales installs
@@ -339,3 +341,52 @@ hedge).
 - Manual read-through of the slimmed `/hero` on an engineering install:
   confirm a "fix this bug" request routes to `/diagnose` via the routing
   table with no hardcoded fallback.
+
+## Completion Ledger
+
+Base commit: `752e516`. `kickoff-prompt` was confirmed already promoted to
+`core/skills/` by the sibling `pm-pack-phantom-surfaces` (commit `65e3333`,
+landed before this delivery started), so Change 11 drops the "where
+installed" hedge per the spec's own instruction.
+
+### Changes
+
+| # | Change | Status | Evidence |
+|---|---|---|---|
+| 1 | `core/commands/hero.md` — slim the meta-router | DONE | Deleted "Available workflows" (14-command + CLI lists) and the hardcoded intent table; replaced with "read the routing table in this install's instruction file... match intent... run it"; kept the "Important" rules and the `hero do` CLI pointer. `git diff 752e516 -- core/commands/hero.md` shows 59 lines removed/replaced. |
+| 2 | `core/commands/check.md` — conditional delegation + conventions path | DONE | Conventions path now `.hero/knowledge/conventions/`; convention-compliance and dependency branches both read "delegate ... if one is installed (engineering ships X); otherwise perform ... directly". General/stale/drift branches untouched (diff shows only 2 hunks touched). |
+| 3 | `core/commands/decide.md` — neutral evaluation + decisions path | DONE | Step 1 (`hero_anchor`) kept verbatim; hard route to `architecture-reviewer` replaced with "run directly ... or delegate ... (engineering: `architecture-reviewer`; pm: `pm-reviewer`)"; architect consults scoped "On engineering installs..."; save path is now `.hero/knowledge/decisions/<slug>.md` citing the `spec-format` skill's ADR template. |
+| 4 | `core/commands/convention.md` — conventions path | DONE | Save path changed to `.hero/knowledge/conventions/<slug>.md`; single-line diff, nothing else touched. |
+| 5 | `core/commands/discover.md` — agent fallback + handoff target | DONE | "using the `product-ideator` agent" → "be the install's ideation agent if one is installed... otherwise run directly"; output framing now points to "the install's design workflow (`/design` where installed; otherwise `hero spec new <slug>`)"; pm's `core_fork:` discover.md left untouched (verified: only `domains/pm/commands/discover.md` and `handoff.md` carry `core_fork:` in the repo). |
+| 6 | `core/commands/retro.md` — delivery-lead fallback | DONE | Preamble replaced with "delegate to the install's delivery-lead agent if one is installed... otherwise run directly"; engineering/pm names scoped in a follow-up sentence; steps 1–6 left verbatim (diff touches only the opening paragraph). |
+| 7 | Move `core/commands/drive.md` → `domains/engineering/commands/drive.md` | DONE | `git mv`; `git diff --find-renames --stat` shows a pure 0-line-changed rename; byte-for-byte `diff` against the pre-move blob confirms identical content. |
+| 8 | `core/commands/resume.md` — absorb prime's unique steps | DONE | Added steps 7 (`hero check --reconcile`, silent when clean) and 8 (team-mode `.hero/NEXT.md` roster glance), plus a closing `session-primer` deep-orientation pointer. Rest of file untouched. |
+| 9 | Delete `core/commands/prime.md` | DONE | `git rm core/commands/prime.md`; file absent from `core/commands/` (`ls` confirms). |
+| 10 | `core/skills/knowledge-flywheel/SKILL.md` — retarget `/prime` | DONE | Line 18: "When `/prime` detects..." → "When `/resume` detects...". `grep -rn "/prime" core/ domains/` returns nothing; `internal/version/version_test.go:43` fixture string left untouched as instructed. |
+| 11 | `core/commands/handoff.md` — skill references by name | DONE | Closing paragraph now cites "the `next-md` skill" and "the `kickoff-prompt` skill" by name, no `skills/<name>.md` paths, no hedge (sibling already landed the core promotion). |
+
+### Acceptance Criteria
+
+| # | Criterion | Status | Evidence |
+|---|---|---|---|
+| 1 | No unscoped agent/skill/command ref in `core/commands/*.md` | DONE | `grep -rn "architecture-reviewer\|dependency-analyst\|brownfield-architect\|greenfield-architect\|product-ideator\|feature-delivery-lead\|platform-delivery-lead\|pm-reviewer\|pm-delivery-lead" core/commands/` — every hit is inside "if installed"/"engineering installs"/"pm:" scoping (9 hits across decide.md, check.md, retro.md, discover.md, all scoped). |
+| 2 | `/hero` routes via install's instruction-file table | DONE | `core/commands/hero.md` routing logic now reads "the routing table in this install's instruction file (the managed region of AGENTS.md / CLAUDE.md...)"; no hardcoded workflow list remains. |
+| 3 | `/decide` cites `.hero/knowledge/decisions/<slug>.md` | DONE | `core/commands/decide.md:14` (post-edit) — confirmed by `grep -n "knowledge/decisions" core/commands/decide.md`. |
+| 4 | `/convention` and `/check conventions` cite `.hero/knowledge/conventions/` | DONE | `core/commands/convention.md` save path + `core/commands/check.md` load path both updated; `grep -rn "\.hero/decisions\|\.hero/conventions" core/commands/` returns empty. |
+| 5 | Exactly one session-start command (`/resume`), with reconcile + session-primer pointer | DONE | `core/commands/prime.md` deleted; `core/commands/resume.md` carries `hero check --reconcile` (step 7), team-roster glance (step 8), and the `session-primer` closing pointer. |
+| 6 | pm/sales installs ship no `/drive` or `/prime` | DONE | Install smoke: `hero install project <tmp> --target claude --domain pm --root` and `--domain sales --root` — `ls .claude/commands/drive.md .claude/commands/prime.md` → "No such file" for both domains. |
+| 7 | Engineering install ships `/drive` unchanged from pre-move core copy | DONE | Install smoke: `--domain engineering --root` → `.claude/commands/drive.md` present, `.claude/commands/prime.md` absent. Content identity confirmed at the move (Change 7 evidence). |
+| 8 | `core/commands/handoff.md` cites skills by name only | DONE | `grep -rn "skills/.*\.md" core/commands/` returns empty; handoff.md now reads "the `next-md` skill" / "the `kickoff-prompt` skill". |
+| 9 | Shadowing domain files still carry non-empty `core_fork:` and differ from core | DONE | `go test . -run TestDomainPacks_NoUnannotatedCoreShadows -v` — PASS for engineering, sales, pm subtests. Only `domains/pm/commands/discover.md` and `domains/pm/commands/handoff.md` shadow core, both pre-existing `core_fork:` annotations, both untouched by this spec. |
+
+### Validation
+
+| Check | Status | Evidence |
+|---|---|---|
+| `go test ./...` | DONE | Full suite green: `contracts`, `contracts/peering`, and all `internal/*` packages `ok`; root package (`content_parity_test.go`) `ok` (cached, and re-run explicitly with `-run TestDomainPacks_NoUnannotatedCoreShadows -v` — 3/3 subtests PASS). Zero FAIL lines across the run. |
+| Dangling-reference sweep | DONE | See AC #1 evidence — 9 hits, all scoped. |
+| Stale-path sweep | DONE | `grep -rn "\.hero/decisions\|\.hero/conventions" core/commands/` and `grep -rn "skills/.*\.md" core/commands/` both empty. |
+| Retirement sweep | DONE | `core/commands/prime.md` and `core/commands/drive.md` absent; `grep -rn "/prime" core/ domains/` empty; `domains/engineering/commands/drive.md` exists, `git diff --find-renames` shows pure rename (0 lines changed), byte-diff against pre-move blob is identical. |
+| Install smoke test (pm, sales, engineering) | DONE | Three fresh `--root` installs built from this worktree's binary; pm and sales ship no `drive.md`/`prime.md` and `kickoff-prompt` resolves under `.claude/skills/`; engineering ships `drive.md`, no `prime.md`; every scoped agent name referenced by an installed core command resolves in that domain's installed `.claude/agents/` (spot-checked `pm-reviewer`, `pm-delivery-lead`, `session-primer` on pm; `session-primer` on sales). `/hero` contains no hardcoded workflow list on any install. |
+| `hero docs check` | SKIPPED (pre-existing, out of scope) | Fails identically on base commit `752e516` before any edit in this spec (`agents: claims 34, actual 0` / `skills: claims 45, actual 0`) — `findProjectRoot()` resolves to this repo's git root, which has no top-level `agents/`/`commands/`/`skills/` dirs (this repo uses `.agents/`), so the check has been structurally broken independent of this spec's content. No literal "core 17→15" / "engineering 13→14" count claim exists anywhere in README.md or GETTING-STARTED.md to update — the spec's Boundaries note anticipated a claim that isn't present in the current tree. This repo's own root `AGENTS.md`/`CLAUDE.md` (tracked files, last touched at `3e34f72`) contain a stale hand-authored `/prime` mention inside the Hero-managed region, but `TestMarkdownInvocationsResolveAgainstRootCmd` and `content_parity_test.go` both explicitly scope their scan to `domains/engineering/AGENTS.md` (the clean source template) and exclude the repo's own root install artifacts — confirmed no test gates on this staleness. Regenerating those root files was judged out of Boundaries ("No engine/Go changes beyond `git mv`") and out of surgical-change scope for a content-only spec; flagged here rather than silently left. |
+| Manual read-through of slimmed `/hero` | DONE | Read `core/commands/hero.md` post-edit: a "fix this bug" request has no hardcoded fallback table to match against — the agent is instructed to read the install's own routing table (which on an engineering install has "Bug, error, broken, fix, investigate, diagnose → `/diagnose`") and route there. No dangling logic. |

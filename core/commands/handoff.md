@@ -27,8 +27,7 @@ when stepping away.
 4. Confirm to the user that NEXT.md and QUEUE.md are current and
    ready for handoff.
 
-See `skills/next-md.md` for the NEXT.md format and
-`skills/kickoff-prompt.md` for the `## Kickoff` sections that
-populate `hero queue` / QUEUE.md.
+See the `next-md` skill for the NEXT.md format and the `kickoff-prompt`
+skill for the `## Kickoff` sections that populate `hero queue` / QUEUE.md.
 
 **What to say:** "handoff", "save checkpoint", "save session", "save state".
