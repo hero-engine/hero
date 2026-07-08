@@ -5,6 +5,20 @@
 // Content is organized by domain under domains/<name>/. The default domain
 // is "engineering". Other domains (e.g. "pm", "sales") provide alternative
 // agents, commands, and skills for non-engineering workflows.
+//
+// domains/chat is deliberately excluded from this embed set. It is a
+// client-embedded pack, not an installable one: the sibling hero-code
+// repo (a Rust/GPUI chat client) stages every domains/<name>/{agents,
+// skills,commands} directory directly from this source tree at build
+// time (crates/hero-core/build.rs) and loads chat's six commands
+// independent of hero install. There is no hero install --domain chat
+// audience today, so chat has no go:embed directive, no DomainFS case,
+// and does not appear in AvailableDomains(). See
+// .hero/specs/chat-pack-disposition/spec.md (option a) and
+// .hero/knowledge/decisions/multi-domain-context-activation.md for the
+// full rationale. clientEmbeddedDomains below is the enforcement point:
+// any new non-installable domain directory must be added there or the
+// content test suite fails.
 package hero
 
 import (
@@ -262,4 +276,17 @@ func sortDirEntries(entries []fs.DirEntry) {
 // today (mission + structure but no real content yet).
 func AvailableDomains() []string {
 	return []string{"engineering", "sales", "pm"}
+}
+
+// clientEmbeddedDomains lists directories under domains/ that are
+// intentionally NOT installable via hero install — they are consumed
+// directly from source by an external client's own build process
+// instead. Every directory under domains/ must appear either here or
+// in AvailableDomains(); the content test suite enforces this so a new
+// domain can't silently reproduce the chat pack's original "dead
+// content" audit finding (it wasn't dead — hero-code's build.rs was
+// staging it from source all along; the exclusion just wasn't
+// documented). See .hero/specs/chat-pack-disposition/spec.md.
+var clientEmbeddedDomains = map[string]bool{
+	"chat": true, // consumed by ../hero-code's crates/hero-core/build.rs
 }

@@ -94,6 +94,23 @@ independent and parallelizable; across waves, order matters.
 | 2 | [[routing-file-completeness]] | enhancement | small | After harness sweep — skeleton/heading alignment formats final AGENTS.md content; both edit the Go fallback in lockstep, serialize 2a→2b. Must also follow core-commands-domain-neutral: its roster tables count command files, and that child retires `/prime` and moves `drive.md` into the engineering pack |
 | 3 | [[token-efficiency-pass]] | enhancement | medium | Last — cuts against post-fix text; depends on gate-consistency's extraction to avoid double-moving the ledger contract |
 
+### Wave 1 progress
+
+All five wave-1 children delivered as of 2026-07-08: pm-pack-phantom-surfaces,
+sales-pack-reality-sync, core-commands-domain-neutral, delivery-gate-consistency,
+chat-pack-disposition. Wave 2 (harness-agnosticism-sweep,
+routing-file-completeness) is now unblocked.
+
+chat-pack-disposition's delivery also closes three audit findings directly:
+F9 (findings-commands.md, chat pack graded dead — corrected: it's a live
+client-embedded pack, consumed by hero-code's build.rs, not installable
+via `hero install`; the exclusion is now documented in `content.go` and
+enforced by `TestDomainsDirectory_AllEntriesAccounted`), F29
+(findings-skills.md / commands, unscoped client internals in
+`ask-corpus.md` / `space.md` — fixed), and the routing S3 finding
+(findings-routing.md, engineering-fallback misroute risk — preempted by
+`domains/chat/AGENTS.md`).
+
 ## Cross-cutting concerns
 
 - **Dual-edit lockstep.** Engineering AGENTS.md and

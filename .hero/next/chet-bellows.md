@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-07T06:11:05Z
+updated: 2026-07-08T23:01:23Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> you got a handoff for cev2?
+> we should spec up an audit on all the hero agents / skills and commands and see if there is any room for tightening and improving on them, as well as the agents content. just overall see if there is anything you see to optimize what hero is doing for agents.
 
 ## Suggested next prompt
 
