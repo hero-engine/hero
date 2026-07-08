@@ -8,6 +8,7 @@
 
 _Generated: 2026-07-07T03:01:47Z · 94 ready specs_
 _Generated: 2026-07-08T18:10:11Z · 91 ready specs_
+_Generated: 2026-07-08T18:10:29Z · 91 ready specs_
 
 ## flat-named-spec-discovery — "Flat-named spec files are invisible to discovery — verify can't resolve initiative children"
 _bug · delivering · horizon: now_
@@ -27,6 +28,7 @@ this spec. Verify with `go test ./internal/spec/... ./internal/cli/...`.
 _feature · delivering · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/team-connect/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/team-connect/spec.md)_
 
 ---
 
@@ -34,6 +36,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/agent-outposts/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/agent-outposts/spec.md)_
 
 ---
 
@@ -256,6 +259,7 @@ _Run opener — arm with `/drive cold-start-trust-hardening`_
 
 Eliminate the class of first-use failures where Hero degrades silently or misleadingly, forcing the user to guess. Concretely: every relationship a user declares either becomes an edge or produces a precise error; the deterministic (Tier-1) graph is never confused with optional LLM enrichment (Tier-2); and routine Hero commands stop dirtying the tree or crying wolf.
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/hero-idea-primitive-core/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/hero-idea-primitive-core/spec.md)_
 
 ---
 
@@ -263,6 +267,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/specs/retrieval-contradiction-detection/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/specs/retrieval-contradiction-detection/spec.md)_
 
 ---
 
@@ -362,6 +367,7 @@ target-by-kind cells are uncovered.
 _initiative · planning · horizon: now_
 
 _(no `## Goal` run opener — hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/initiatives/hero-surface-polish/spec.md)_
+_(no `## Goal` run opener — hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/initiatives/hero-surface-polish/spec.md)_
 
 ---
 
@@ -369,6 +375,7 @@ _(no `## Goal` run opener — hand-edit /Users/developer/projects/hero-engine/re
 _initiative · planning · horizon: now_
 
 _(no `## Goal` run opener — hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/initiatives/hero-surface-architecture/spec.md)_
+_(no `## Goal` run opener — hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/initiatives/hero-surface-architecture/spec.md)_
 
 ---
 
@@ -517,6 +524,23 @@ from `engineer.md:105-169`, reconciled against the Gate 1 parser.
 `internal/cli/verify.go:207`
 **Skip:** compressing feature-delivery-lead/deliver.md verbosity — that is
 [[token-efficiency-pass]]'s job (wave 3, depends on this extraction).
+## core-commands-domain-neutral — "Core commands are engineering-only — dangling agents, skills, routes, and storage paths on pm/sales installs"
+_bug · planning · horizon: now_
+
+Makes the core command pack safe on every domain install — today pm/sales
+users get commands that delegate to engineering-only agents, route to
+nonexistent slash commands, and cite storage paths that were never real.
+
+**Status:** planning — spec authored from audit findings F4/F15/F16/F22 plus
+a verified storage-path sweep; no edits yet.
+
+**Pick up at:** Change 1 — slim `core/commands/hero.md` to defer to the
+install's instruction-file routing table; then work the Changes list in order.
+
+→ `/deliver core-commands-domain-neutral`
+
+**Files:** core/commands/hero.md, core/commands/decide.md, core/commands/retro.md, core/commands/resume.md, content_parity_test.go
+**Skip:** per-domain regeneration of /hero at install time; promoting the `drive` skill to core — relocated to the engineering pack instead (see Approach). (`kickoff-prompt` promotion is owned by [[pm-pack-phantom-surfaces]] Change 2 — initiative reconciliation.)
 
 ---
 
@@ -567,6 +591,7 @@ Cold-start prompt:
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/synthesis-maintenance/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/synthesis-maintenance/spec.md)_
 
 ---
 
@@ -574,6 +599,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/single-source-install-p1-agents-md/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/single-source-install-p1-agents-md/spec.md)_
 
 ---
 
@@ -616,6 +642,7 @@ Resume by reading `.hero/planning/features/satellite-corpus-integration/spec.md`
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/premise-interrogation/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/premise-interrogation/spec.md)_
 
 ---
 
@@ -649,6 +676,7 @@ The sprint is composed of **nine work items** organized into three tracks (conte
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/peer-call-multi-cli/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/peer-call-multi-cli/spec.md)_
 
 ---
 
@@ -673,6 +701,7 @@ capture-then-edit), capture auto / promote manual.
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/hihcp-fuzzy-path-resolution/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/hihcp-fuzzy-path-resolution/spec.md)_
 
 ---
 
@@ -680,6 +709,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/hero-search-tiered-response/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/hero-search-tiered-response/spec.md)_
 
 ---
 
@@ -761,6 +791,7 @@ parent-stray regression test last.
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/agent-safety-conventions/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/agent-safety-conventions/spec.md)_
 
 ---
 
@@ -768,6 +799,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/cev2-widen-load-bearing-markers.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/cev2-widen-load-bearing-markers.md)_
 
 ---
 
@@ -775,6 +807,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/cev2-tool-input-compression.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/cev2-tool-input-compression.md)_
 
 ---
 
@@ -782,6 +815,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/cev2-context-engine-test-harness.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/cev2-context-engine-test-harness.md)_
 
 ---
 
@@ -789,6 +823,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/cev2-bash-output-supersede.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/cev2-bash-output-supersede.md)_
 
 ---
 
@@ -803,6 +838,7 @@ Reproduce: cd into a clean repo with no `CLAUDE.md` or `AGENTS.md`, run `hero in
 _bug · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/bugs/install-json-mode-repair-migrate-parity/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/bugs/install-json-mode-repair-migrate-parity/spec.md)_
 
 ---
 
@@ -879,6 +915,7 @@ data through CLI commands, MCP tools, and the `hero prime` context pipeline.
 _feature · planning · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/spec-prioritization/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/spec-prioritization/spec.md)_
 
 ---
 
@@ -886,6 +923,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · planning · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/project-charter/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/project-charter/spec.md)_
 
 ---
 
@@ -893,6 +931,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · planning · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/lean-agent-profile/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/lean-agent-profile/spec.md)_
 
 ---
 
@@ -907,6 +946,7 @@ _feature · planning · horizon: next_
 _feature · planning · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/hero-runner/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/hero-runner/spec.md)_
 
 ---
 
@@ -930,6 +970,7 @@ Second non-engineering Hero domain pack: QA. The thesis: **Hero QA is the qualit
 _feature · planning · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/graph-memory/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/graph-memory/spec.md)_
 
 ---
 
@@ -937,6 +978,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · planning · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/graph-memory-federation/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/graph-memory-federation/spec.md)_
 
 ---
 
@@ -944,6 +986,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · planning · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/graph-memory-7c-live-test/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/graph-memory-7c-live-test/spec.md)_
 
 ---
 
@@ -951,6 +994,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · planning · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/e2e-onboarding/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/e2e-onboarding/spec.md)_
 
 ---
 
@@ -983,6 +1027,7 @@ positioning, surfaces, and content engine to do this repeatably.
 _feature · planning · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/hero-telemetry/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/hero-telemetry/spec.md)_
 
 ---
 
@@ -990,6 +1035,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · planning · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/hero-positioning/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/hero-positioning/spec.md)_
 
 ---
 
@@ -997,6 +1043,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · planning · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/hero-distribution/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/hero-distribution/spec.md)_
 
 ---
 
@@ -1004,6 +1051,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · planning · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/hero-community/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/hero-community/spec.md)_
 
 ---
 
@@ -1011,6 +1059,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · planning · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/configurable-workspace-location/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/configurable-workspace-location/spec.md)_
 
 ---
 
@@ -1018,6 +1067,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _plan · active · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/initiatives/execution-plan/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/initiatives/execution-plan/spec.md)_
 
 ---
 
@@ -1025,6 +1075,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · draft · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/multi-domain-core/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/multi-domain-core/spec.md)_
 
 ---
 
@@ -1032,6 +1083,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · draft · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/greenfield-scaffolding/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/greenfield-scaffolding/spec.md)_
 
 ---
 
@@ -1039,6 +1091,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · draft · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/cross-spec-awareness/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/cross-spec-awareness/spec.md)_
 
 ---
 
@@ -1069,6 +1122,7 @@ The deliverable is reviewable in two cuts: (a) the seam + direct backend (smalle
 _feature · draft · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/architectural-drift-detection/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/architectural-drift-detection/spec.md)_
 
 ---
 
@@ -1128,6 +1182,7 @@ then the dispatch intercept and registry wiring. Three files, one new
 _reference · handoff · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/hero-qa/handoff-to-hero-code.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/hero-qa/handoff-to-hero-code.md)_
 
 ---
 
@@ -1135,6 +1190,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _reference · handoff · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/features/hero-pm/handoff-to-hero-code.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/features/hero-pm/handoff-to-hero-code.md)_
 
 ---
 
@@ -1142,6 +1198,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _bug · handed_off · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/bugs/hihcp-rgignore/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/bugs/hihcp-rgignore/spec.md)_
 
 ---
 
@@ -1149,6 +1206,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _bug · handed_off · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/bugs/hihcp-permission-bridge-validation/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/bugs/hihcp-permission-bridge-validation/spec.md)_
 
 ---
 
@@ -1156,6 +1214,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _bug · handed_off · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/bugs/hihcp-mcp-first-turn-readiness/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/bugs/hihcp-mcp-first-turn-readiness/spec.md)_
 
 ---
 
@@ -1163,6 +1222,7 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _bug · handed_off · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-abd76592d15c5fdf4/.hero/planning/bugs/hihcp-mcp-auto-reconnect/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.claude/worktrees/agent-a91e42f62bc620a51/.hero/planning/bugs/hihcp-mcp-auto-reconnect/spec.md)_
 
 ---
 
