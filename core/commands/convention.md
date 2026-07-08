@@ -10,6 +10,6 @@ The convention author will:
 2. Assess whether current usage is consistent or fragmented
 3. Identify or synthesize the canonical approach
 4. Produce a convention spec with examples, anti-patterns, and adoption notes
-5. Save it to `.hero/conventions/{slug}/spec.md`
+5. Save it to `.hero/knowledge/conventions/<slug>.md`
 
 Pattern to standardize: $ARGUMENTS
