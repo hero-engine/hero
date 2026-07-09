@@ -60,6 +60,17 @@ type Query struct {
 	// RRF score. See spec embeddings-superseded-respect, Decision 5.
 	// Do not set this from external callers.
 	skipSupersedeDeweight bool
+
+	// IncludeKnowledge merges hand-authored .hero/knowledge/** results into
+	// the primary results. Set by `hero ask` (a knowledge-base question);
+	// left false by default `hero search` so knowledge never appears in
+	// work-search. Spec: knowledge-surfacing.
+	IncludeKnowledge bool
+
+	// KnowledgeOnly restricts retrieval to the knowledge corpus. Set by
+	// `hero search --knowledge`. Types, when present, filter by knowledge
+	// kind (e.g. "battlecards", "decisions").
+	KnowledgeOnly bool
 }
 
 // supersededDeweight is the score multiplier applied to results whose
@@ -182,6 +193,63 @@ func (r *Retriever) Retrieve(q Query) ([]Result, error) {
 		limit = 20
 	}
 
+	// `hero search --knowledge` → knowledge corpus only.
+	if q.KnowledgeOnly {
+		return r.retrieveKnowledge(q, limit)
+	}
+
+	base, err := r.retrieveBase(q, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	// `hero ask` merges knowledge into the primary results. Work and knowledge
+	// scores live on different scales (graph rank vs FTS rank vs synthetic), so
+	// a score sort would let one corpus starve the other. Round-robin interleave
+	// instead — knowledge first, since ask is a knowledge-base question — which
+	// guarantees each corpus fair representation and preserves each list's own
+	// internal ranking.
+	if q.IncludeKnowledge {
+		kres, _ := r.retrieveKnowledge(q, limit)
+		if len(kres) > 0 {
+			base = interleave(kres, base, limit)
+		}
+	}
+	return base, nil
+}
+
+// interleave round-robins two ranked lists (a first) up to limit, dropping
+// duplicates by Key.
+func interleave(a, b []Result, limit int) []Result {
+	out := make([]Result, 0, limit)
+	seen := make(map[string]bool)
+	i, j := 0, 0
+	for len(out) < limit && (i < len(a) || j < len(b)) {
+		if i < len(a) {
+			if r := a[i]; !seen[r.Key] {
+				seen[r.Key] = true
+				out = append(out, r)
+			}
+			i++
+		}
+		if len(out) >= limit {
+			break
+		}
+		if j < len(b) {
+			if r := b[j]; !seen[r.Key] {
+				seen[r.Key] = true
+				out = append(out, r)
+			}
+			j++
+		}
+	}
+	return out
+}
+
+// retrieveBase runs the work-corpus retrieval (graph → node index → FTS5),
+// unchanged from the original Retrieve body. Knowledge is layered on by the
+// caller so default `hero search` stays work-only.
+func (r *Retriever) retrieveBase(q Query, limit int) ([]Result, error) {
 	// Hybrid search: when SemanticOK is set and an embedding model is loaded,
 	// run lexical retrieval then fuse with vector results via RRF.
 	if q.SemanticOK && r.embModel != nil && r.embStore != nil {
@@ -207,6 +275,32 @@ func (r *Retriever) Retrieve(q Query) ([]Result, error) {
 		}
 	}
 	return r.retrieveViaFTS(q, limit)
+}
+
+// retrieveKnowledge searches the isolated knowledge corpus (fts_knowledge).
+// q.Types, when set, filters by knowledge kind. Results carry Source
+// "knowledge" and a real on-disk Path so passage extraction (hero ask) works.
+func (r *Retriever) retrieveKnowledge(q Query, limit int) ([]Result, error) {
+	hits, err := r.fts.SearchKnowledge(q.Text, q.Types, limit)
+	if err != nil {
+		return nil, err
+	}
+	results := make([]Result, 0, len(hits))
+	for i, h := range hits {
+		// Rank-descending synthetic score so knowledge interleaves sanely
+		// with FTS spec scores when merged for `hero ask`.
+		score := 1.0 - float64(i)*0.01
+		results = append(results, Result{
+			Type:    h.Kind,
+			Key:     h.Slug,
+			Title:   h.Title,
+			Snippet: h.Content,
+			Score:   score,
+			Source:  "knowledge",
+			Path:    h.Path,
+		})
+	}
+	return results, nil
 }
 
 // NudgeFiles returns file-based context for hero relevant. It delegates to the

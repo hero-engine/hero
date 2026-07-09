@@ -1,7 +1,6 @@
 ---
 name: sprint-planning
 description: Sprint commit, velocity reading, and cut-line decisions under the sprint preset — including what to do when plans drift.
-compatibility: opencode
 metadata:
   audience: pm-delivery-lead
   purpose: process-guidance
@@ -164,4 +163,3 @@ What sprint preset does *not* fix:
 - `story-writing-invest` — INVEST-shaped stories are what makes refinement (and therefore sizing) possible.
 - `capacity-planning` (P1, ships v1.5) — the cross-team / cross-sprint capacity view that sits above sprint planning.
 - `story` spec type — `points` and `sprint` are the preset-conditional fields planning populates.
-- PM principle #3 (make tradeoffs visible) — commit vs stretch is the operating mechanism.

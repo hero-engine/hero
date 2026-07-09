@@ -99,8 +99,61 @@ func RefreshIfStale(heroDir string) (RefreshStats, error) {
 		}
 	}
 
+	// Same self-healing pass over the isolated knowledge corpus
+	// (.hero/knowledge/** flat files). Kept separate from the spec
+	// diff so knowledge never touches the specs table.
+	if err := refreshKnowledge(idx, heroDir, &stats); err != nil {
+		return stats, err
+	}
+
 	stats.DurationMS = time.Since(start).Milliseconds()
 	return stats, nil
+}
+
+// refreshKnowledge diffs the knowledge tables against disk truth and applies
+// surgical updates: index new entries, re-index entries whose disk mtime is
+// newer, and remove orphans whose file no longer exists. Spec:
+// knowledge-surfacing.
+func refreshKnowledge(idx *DB, heroDir string, stats *RefreshStats) error {
+	entries, err := DiscoverKnowledge(heroDir)
+	if err != nil {
+		return fmt.Errorf("discovering knowledge: %w", err)
+	}
+	stats.Scanned += len(entries)
+
+	indexed, err := idx.KnowledgeModifiedAt()
+	if err != nil {
+		return fmt.Errorf("reading knowledge index: %w", err)
+	}
+
+	seen := make(map[string]struct{}, len(entries))
+	for _, e := range entries {
+		seen[e.Slug] = struct{}{}
+		stored, ok := indexed[e.Slug]
+		if !ok {
+			if err := idx.IndexKnowledge(e); err != nil {
+				return fmt.Errorf("indexing knowledge %s: %w", e.Slug, err)
+			}
+			stats.Indexed++
+			continue
+		}
+		if e.ModifiedAt.Truncate(time.Second).After(stored) {
+			if err := idx.IndexKnowledge(e); err != nil {
+				return fmt.Errorf("re-indexing knowledge %s: %w", e.Slug, err)
+			}
+			stats.Updated++
+		}
+	}
+
+	for slug := range indexed {
+		if _, ok := seen[slug]; !ok {
+			if err := idx.RemoveKnowledge(slug); err != nil {
+				return fmt.Errorf("removing knowledge orphan %s: %w", slug, err)
+			}
+			stats.Removed++
+		}
+	}
+	return nil
 }
 
 // indexedModifiedAt returns slug -> stored modified_at across all

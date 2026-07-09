@@ -1,7 +1,6 @@
 ---
 name: continuous-discovery-cadence
 description: Teresa Torres-style weekly discovery rhythm — three touchpoints, opportunity revisits, and assumption tests as habit, not project.
-compatibility: opencode
 metadata:
   audience: discovery-researcher, pm-investigator, product-strategist
   purpose: process-guidance
@@ -25,6 +24,8 @@ Torres' weekly minimum:
 - **3 customer touchpoints per week** — interviews, usability sessions, customer calls where the PM is listening for opportunity signal (not running a demo).
 - **1 opportunity revisited per week** — the active branch of the OST gets new evidence or gets re-ranked.
 - **1 assumption tested per week** — a small, fast test (prototype, concierge, fake door, paper sketch) resolves an assumption.
+
+Beyond the weekly floor, the tree's active branch also informs cycle/sprint authoring, and gets fully revisited at each outcome milestone to confirm the outcome is still right.
 
 The number 3 matters less than the recurrence. A team that does 3 touchpoints every week for a quarter learns more than a team that does 30 in a single month and then nothing for six. The rhythm is what produces insight; bursts produce reports.
 
@@ -158,4 +159,3 @@ The cadence rarely dies all at once. It erodes through one of these failure mode
 - `intake-classification` — the inbound side that feeds discovery (and gets shaped by it).
 - `metrics-design` — outcomes at the top of the OST follow these rules.
 - `initiative` and `prd` spec types — the `Evidence` sections where discovery output lands.
-- PM principle #1 (decide what's worth building) — continuous discovery is the operating mechanism.

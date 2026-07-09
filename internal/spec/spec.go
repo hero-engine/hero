@@ -536,9 +536,33 @@ func (s *Spec) parseFrontmatter(content string) string {
 				s.CompletedAt = t
 			}
 		case "tags":
-			s.Tags = parseList(val)
+			// Inline list (`tags: [a, b]`) or block-style list on the
+			// following indented lines. Without the block fallback a
+			// block-style tags list silently parses to nothing — the same
+			// class of drop as `scope:` and inline-flow relations.
+			tags := parseList(val)
+			if len(tags) == 0 {
+				var consumed int
+				tags, consumed = parseScalarListBlock(lines, i+1, closeIdx)
+				if consumed > i+1 {
+					i = consumed - 1
+				}
+			}
+			s.Tags = tags
 		case "scope":
-			s.Scope = parseList(val)
+			// Inline list (`scope: [a, b]`) or block-style list on the
+			// following indented lines. Without the block fallback a
+			// block-style scope silently parses to nothing — the same
+			// class of drop as inline-flow relations.
+			scope := parseList(val)
+			if len(scope) == 0 {
+				var consumed int
+				scope, consumed = parseScalarListBlock(lines, i+1, closeIdx)
+				if consumed > i+1 {
+					i = consumed - 1
+				}
+			}
+			s.Scope = scope
 		case "subproject":
 			s.Subproject = val
 		case "surface":
@@ -560,7 +584,18 @@ func (s *Spec) parseFrontmatter(content string) string {
 		case "autonomy":
 			s.Autonomy = val
 		case "triggers":
-			s.Triggers = parseList(val)
+			// Inline list (`triggers: [a, b]`) or block-style list on the
+			// following indented lines. Same block fallback as `tags:` and
+			// `scope:` — otherwise a block-style triggers list drops silently.
+			triggers := parseList(val)
+			if len(triggers) == 0 {
+				var consumed int
+				triggers, consumed = parseScalarListBlock(lines, i+1, closeIdx)
+				if consumed > i+1 {
+					i = consumed - 1
+				}
+			}
+			s.Triggers = triggers
 		case "synthesized_from":
 			// Provenance for `explainer` entries. Inline list or
 			// block-style list of spec slugs (same shape as `child:`).
@@ -731,7 +766,13 @@ func parseRelationsBlock(lines []string, start, end int) ([]Relation, int) {
 			}
 			current = Relation{}
 			rest := strings.TrimSpace(strings.TrimPrefix(trimmed, "- "))
-			applyRelField(&current, rest)
+			// Inline-flow entry (`- { target: x, kind: parent }`) — parse the
+			// whole map on this line. Block-style continues on the next lines.
+			if strings.HasPrefix(rest, "{") {
+				applyInlineRelation(&current, rest)
+			} else {
+				applyRelField(&current, rest)
+			}
 		default:
 			applyRelField(&current, trimmed)
 		}
@@ -860,6 +901,25 @@ func parseReceivedFromBlock(lines []string, start, end int) (*ReceivedFromBlock,
 // applyRelField parses "key: value" inside a YAML object and assigns
 // to the open Relation. Quietly ignores unrecognised fields so future
 // metadata (notes, tags) doesn't break parsing.
+// applyInlineRelation parses an inline-flow relation entry, e.g.
+// "{ target: foo, kind: parent }", applying each comma-separated key:value
+// pair via applyRelField. Relation values are simple slugs/enums with no
+// nested commas or quotes, so a plain comma split is sufficient. Without this,
+// inline-flow relations (valid YAML, emitted by the /design templates) parse
+// to nothing and are silently dropped. Spec: inline-flow-relations-dropped.
+func applyInlineRelation(r *Relation, s string) {
+	s = strings.TrimSpace(s)
+	s = strings.TrimPrefix(s, "{")
+	s = strings.TrimSuffix(s, "}")
+	for _, pair := range strings.Split(s, ",") {
+		pair = strings.TrimSpace(pair)
+		if pair == "" {
+			continue
+		}
+		applyRelField(r, pair)
+	}
+}
+
 func applyRelField(r *Relation, line string) {
 	k, v, ok := strings.Cut(line, ":")
 	if !ok {

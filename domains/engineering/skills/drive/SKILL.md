@@ -1,6 +1,6 @@
 ---
 name: drive
-description: Arm and supervise an autonomous /drive run over an initiative — ensure the Goal opener, confirm on first arm, emit the condition for the harness /goal, relay needs_me pauses, and resume. Skill, not agent — the autonomy boundary stays deterministic in needs_me.
+description: Arm and supervise an autonomous /drive run over an initiative — ensure the Goal opener, confirm on first arm, emit the run condition for your harness's loop/continuation mechanism, relay needs_me pauses, and resume. Skill, not agent — the autonomy boundary stays deterministic in needs_me.
 metadata:
   audience: main-loop
   purpose: autonomous-initiative-execution
@@ -10,9 +10,10 @@ metadata:
 
 `/drive <initiative>` runs a whole initiative on autopilot. You are thin
 orchestration + UX; the judgment lives in `hero goal` / the `needs_me`
-predicate, and the loop lives in the harness `/goal`. Do **not** reimplement
-the loop or the completion check, and do **not** delegate to a sub-agent —
-the boundary must stay deterministic.
+predicate, and the loop lives in your harness's loop/continuation
+mechanism, where one exists. Do **not** reimplement the loop or the
+completion check, and do **not** delegate to a sub-agent — the
+boundary must stay deterministic.
 
 ## Arming a run
 
@@ -25,13 +26,17 @@ the boundary must stay deterministic.
    guardrails (irreversible actions always pause; hard cap; dry-run
    available). Require a go-ahead. Offer `hero goal <init> --dry-run 3` so
    the user can preview the next transitions before committing.
-4. **Emit + hand off.** Paste the emitted condition into the harness `/goal`,
-   and ensure the Stop hook (`scripts/drive/stop-hook.sh` → `hero goal <init>
-   --check`) is armed with `$HERO_DRIVE_INITIATIVE=<init>`.
+4. **Emit + hand off.** No shipped hook wires `hero goal <init> --check`
+   into a per-turn loop yet — on every harness, the supervisor runs the
+   check manually between turns: call `hero goal <init> --check` with
+   `$HERO_DRIVE_INITIATIVE=<init>` set, and act on the verdict below.
+   Where your harness offers its own loop/continuation mechanism, paste
+   the emitted run condition into it as an additional guard.
 
 ## Per turn (relay only)
 
-The harness runs the turn; the Stop hook calls `hero goal <init> --check`:
+The supervisor calls `hero goal <init> --check` each turn (per the arming
+step above) and relays the verdict:
 
 - **continue** → act on the verdict's **`action`** (progressive design):
   - `action: deliver` → run `/deliver <next_spec>` using its kickoff.

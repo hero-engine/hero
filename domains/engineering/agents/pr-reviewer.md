@@ -2,7 +2,6 @@
 name: pr-reviewer
 description: Review pull requests for bugs, regressions, missing tests, operational risk, and overcomplicated design choices.
 mode: subagent
-role: review
 temperature: 0.1
 color: error
 permission:

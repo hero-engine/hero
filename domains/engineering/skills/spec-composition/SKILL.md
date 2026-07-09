@@ -1,7 +1,6 @@
 ---
 name: spec-composition
 description: When work would produce 2+ related specs, prefer initiative-first composition over `/design` × N siblings. Carries the canonical "multiple related specs" phrasing that both interactive triage (`/roadmap-review`) and design-time routing (`/design`) quote.
-compatibility: opencode
 metadata:
   audience: any-agent
   purpose: composition-discipline
@@ -19,8 +18,7 @@ Two surfaces consume me:
 - **`/roadmap-review`** (interactive triage) — surfaces orphan
   clusters that already exist in the planning corpus and offers to
   `/compose` them into an initiative.
-- **`/design`** (multi-spec routing, sibling spec
-  `multi-spec-design-routing`) — catches the condition *at design
+- **`/design`** (multi-spec routing) — catches the condition *at design
   time*, before the second or third related spec lands, and routes
   the user toward `/compose` first.
 
@@ -78,9 +76,8 @@ enough.
    uncertain.
 
 3. **Rolled-up size ≥ `large`.** If the lead can estimate the
-   deliverables' sizes individually, and the midpoint-sum across them
-   rolls up to `large` or higher on the shared ladder (per the
-   midpoint-sum mechanic in `internal/snapshot/rollup.go`), the
+   deliverables' sizes individually, and summing their midpoints on
+   the shared sizing ladder rolls up to `large` or higher, the
    cluster wants an initiative parent regardless of how the request
    was phrased. Fall back to triggers #1 / #2 when there isn't enough
    information to estimate.

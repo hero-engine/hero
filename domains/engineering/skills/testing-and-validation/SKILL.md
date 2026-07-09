@@ -1,7 +1,6 @@
 ---
 name: testing-and-validation
 description: Shared testing and validation guidance for choosing the right checks, improving confidence, and reporting residual risk clearly.
-compatibility: opencode
 metadata:
   audience: engineers
   purpose: validation-guidance

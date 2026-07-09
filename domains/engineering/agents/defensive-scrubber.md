@@ -2,7 +2,6 @@
 name: defensive-scrubber
 description: Remove unnecessary error-swallowing, panic recovery, and fallback patterns that hide bugs instead of handling them.
 mode: subagent
-role: execution
 temperature: 0.1
 color: secondary
 permission:

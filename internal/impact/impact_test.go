@@ -1,8 +1,59 @@
 package impact
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
+
+	"github.com/hero-engine/hero/internal/index"
 )
+
+// TestAnalyze_FlatKnowledge covers the impact follow-on: a flat code-scoped
+// convention in the isolated knowledge table governs a file and must appear in
+// the impact report, at parity with spec.md conventions.
+func TestAnalyze_FlatKnowledge(t *testing.T) {
+	tmp := t.TempDir()
+	heroDir := filepath.Join(tmp, ".hero")
+	kPath := filepath.Join(heroDir, "knowledge", "conventions", "contracts-import-discipline.md")
+	if err := os.MkdirAll(filepath.Dir(kPath), 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	os.WriteFile(kPath, []byte(`---
+title: Contracts Import Discipline
+type: convention
+scope:
+  - internal/contracts/*.go
+---
+# Contracts Import Discipline
+Never import internal packages across the contracts boundary.
+`), 0o644)
+
+	if _, err := index.RefreshIfStale(heroDir); err != nil {
+		t.Fatalf("refresh: %v", err)
+	}
+	idx, err := index.Open(heroDir)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer idx.Close()
+
+	reports, err := Analyze(idx, []string{"internal/contracts/manifest.go"})
+	if err != nil {
+		t.Fatalf("Analyze: %v", err)
+	}
+	if len(reports) != 1 {
+		t.Fatalf("want 1 report, got %d", len(reports))
+	}
+	var found bool
+	for _, c := range reports[0].Conventions {
+		if c.Slug == "conventions/contracts-import-discipline" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("flat scoped convention did not surface in impact; conventions=%+v", reports[0].Conventions)
+	}
+}
 
 func TestRenderText_Empty(t *testing.T) {
 	out := RenderText(nil)

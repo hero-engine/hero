@@ -1,7 +1,6 @@
 ---
 name: integration-boundaries
 description: Guidance for external integrations, service boundaries, webhooks, retries, idempotency, and failure-aware interface design.
-compatibility: opencode
 metadata:
   audience: integrations
   purpose: boundary-guidance

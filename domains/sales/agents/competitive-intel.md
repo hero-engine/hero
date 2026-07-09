@@ -1,6 +1,5 @@
 ---
 name: competitive-intel
-domains: [sales]
 description: Tracks the competitive landscape, prepares battlecards, assesses win probability in competitive deals, and helps reps counter competitor moves.
 mode: subagent
 temperature: 0.2
@@ -141,10 +140,11 @@ Track new intel here as it comes in from deals:
 
 When called to assess a specific deal in the context of a competitor:
 
-1. **Load the battlecard** for the named competitor — read
-   `.hero/knowledge/battlecards/<competitor-slug>.md` directly (or
-   `ls .hero/knowledge/battlecards/` to find it). Battlecards are plain
-   markdown, not work specs, so they aren't in `hero search`. Create if missing.
+1. **Load the battlecard** for the named competitor — `hero ask "battlecard
+   for <competitor>"` or `hero search --knowledge "<competitor>"`, or read
+   `.hero/knowledge/battlecards/<competitor-slug>.md` directly. Battlecards are
+   knowledge, not work specs, so they surface under `hero search --knowledge`
+   (not the default `hero search`). Create if missing.
 2. **Read the deal spec** to understand what's been discovered about the
    competitive dynamic in this specific deal
 3. **Assess win probability adjustment** — does this competitive situation

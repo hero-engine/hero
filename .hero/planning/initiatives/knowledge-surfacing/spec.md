@@ -22,6 +22,8 @@ relations:
 child:
   - knowledge-content-retrieval
   - knowledge-context-injection
+  - inline-flow-relations-dropped
+  - flat-tripwire-trigger-parity
 mission_alignment: |
   Hero's pitch is that captured institutional knowledge makes every session
   start smarter. Today that is only true for knowledge that happens to be
@@ -31,9 +33,19 @@ mission_alignment: |
   makes the capture→surface loop whole: everything that belongs in ask, search,
   or context is captured regardless of layout, and fed to the model at the
   moments that matter.
+autonomy: guided
 ---
 
 # Knowledge Surfacing — Everything Captured Is Retrievable and Fed at the Right Time
+
+## Goal
+
+Run until `hero verify knowledge-surfacing` reports PASS — every child
+(`knowledge-content-retrieval`, then `knowledge-context-injection`) designed,
+delivered, and verified — or a `needs_me` pause is raised. Order is forced: P2
+`depends-on` P1, so P1 ships first. Pause on any design fork (the ingest-seam
+choice, the `category`-column schema migration), any irreversible action, or a
+stuck gate.
 
 ## Context
 

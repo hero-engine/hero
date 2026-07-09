@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/index"
 	"github.com/hero-engine/hero/internal/retrieval"
 	"github.com/hero-engine/hero/internal/search"
 	"github.com/spf13/cobra"
@@ -62,11 +63,21 @@ func runAsk(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no hero workspace found (run 'hero init' first)")
 	}
 
+	// Self-heal the index (incl. the knowledge corpus) so freshly-authored
+	// .hero/knowledge/** files are answerable without a manual reindex.
+	if _, err := index.RefreshIfStale(heroDir); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: index refresh failed: %v\n", err)
+	}
+
 	// Route through the unified retrieval layer. hero ask is always a
-	// text-content question. --type forces FTS5 (spec-corpus type filter).
+	// text-content question against the knowledge base, so it merges the
+	// hand-authored .hero/knowledge/** corpus with the spec corpus.
+	// --type forces FTS5 (spec-corpus type filter) and also filters the
+	// knowledge corpus by kind. Spec: knowledge-surfacing.
 	q := retrieval.Query{
-		Text:  question,
-		Limit: askLimit,
+		Text:             question,
+		Limit:            askLimit,
+		IncludeKnowledge: true,
 	}
 	if askType != "" {
 		q.Types = []string{askType}

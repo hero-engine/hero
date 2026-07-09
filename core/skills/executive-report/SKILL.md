@@ -1,7 +1,6 @@
 ---
 name: executive-report
 description: Generate a comprehensive project intelligence report — the thing managers actually read.
-compatibility: opencode
 metadata:
   audience: delivery-leads
   purpose: reporting

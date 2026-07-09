@@ -1,7 +1,6 @@
 ---
 name: groovy-stack
 description: Groovy implementation guidance for application code, Gradle logic, DSLs, and Spock-oriented testing.
-compatibility: opencode
 metadata:
   audience: engineer
   purpose: stack-guidance

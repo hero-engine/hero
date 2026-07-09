@@ -2,7 +2,7 @@
 title: "Harness Agnosticism Sweep — De-Claude and De-Dogfood the Shipped Content"
 slug: harness-agnosticism-sweep
 type: enhancement
-status: planning
+status: completed
 priority: P1
 size: medium
 domain: engineering
@@ -17,6 +17,7 @@ relations:
     kind: builds-on
   - target: agent-safety-conventions
     kind: related
+completed_at: 2026-07-08T23:38:47Z
 ---
 
 # Harness Agnosticism Sweep — De-Claude and De-Dogfood the Shipped Content
@@ -158,3 +159,47 @@ Content-only where possible: the two Go files touched are `agents_md.go` (string
 - Install smoke: `hero install project <tmpdir> --target cursor` and `--target codex` into a scratch workspace; confirm the managed AGENTS.md region contains the parity table, the neutral Internal Lookups section, and no `Explore`/`ToolSearch` outside scoped examples; confirm codex additionally gets its hook wiring while cursor content instructs manual `hero next checkpoint`.
 - Manual read-through of the five rewritten skills (drive, cross-repo-peering, roadmap-review, spec-composition, next-md) confirming each rule survived with only tool/path nouns changed.
 - `hero spec lint harness-agnosticism-sweep` — EARS classification clean.
+
+## Completion Ledger
+
+Delivered against the current tree (post `content-dedup-resync`, `core-commands-domain-neutral`, `delivery-gate-consistency`, `chat-pack-disposition` — all landed on main before this delivery started). All audit-cited counts were re-verified with fresh greps rather than trusted from the spec's authoring-time numbers (several had shifted; see Change 11 note).
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Internal Lookups names harness-exclusive tools only inside scoped examples | DONE | `domains/engineering/AGENTS.md:110-127` + `internal/install/agents_md.go` `generateEngineeringAgentsMdBody` rewritten in lockstep; verified rendered output for `opencode` and `codex` install smoke targets shows `hero_*` bare names with `Explore`/`ToolSearch`/`mcp__hero__` appearing only inside "e.g. Claude Code's ..." asides |
+| 2 | Parity table generated from pack source + Go fallback | DONE | Table added to both files (`domains/engineering/AGENTS.md` + `agents_md.go`); `TestEngineeringPackBodyMatchesGoFallback` passes; confirmed present in `opencode`/`codex` install-smoke output |
+| 3 | `/resume`, `/blocked`, `/peer` → Both; `/roadmap-review` → slash-only | DONE | Verified each has both a pack command file and a real `hero` subcommand (`hero blocked`, `hero resume`, `hero peer` in `hero --help`); `/roadmap-review` has no CLI twin. Also dropped `/prime` from slash-only — confirmed retired (no `prime.md` anywhere in `core/commands` or `domains/engineering/commands`) |
+| 4 | `/import` and `/handoff` annotated with differing semantics | DONE | Inline parenthetical annotation added directly in the Both-surface table cell in both files |
+| 5 | Hookless-harness instruction for `next-md`/`next-handoff-emit` | DONE | `core/skills/next-md/SKILL.md` and `core/skills/next-handoff-emit/SKILL.md` scoped: Claude Code + Codex get the auto-hook claim; all other harnesses instructed to run `hero next checkpoint` / `hero next ask` themselves. Verified in installed cursor skill file (hookless target) — scoping paragraph present |
+| 6 | `/release` skips `hero docs check` pre-flight when no hero-repo docs layout | DONE | `domains/engineering/commands/release.md` gated on "repo has a `hero docs check`-managed docs surface (...)"; no behavior change for this repo, skip path added for user projects |
+| 7 | No installed content references hero-repo-only artifacts | DONE | Fixed all enumerated instances (Changes 6-8) plus same-pattern instances the audit's first pass found were missed: `domains/engineering/agents/roadmap-reviewer.md` (sibling-spec slug), `core/skills/completion-ledger/SKILL.md` (`internal/spec/ledger.go`/`internal/cli/verify.go`). The cold audit (round 1) correctly flagged that AC7 was overstated: 8 live `core/spec-types/`/`domains/pm/spec-types/` references remained in `domains/pm/AGENTS.md`, `pm-reviewer.md`, `roadmap-curator.md`, `handoff-coordinator.md`, `story-writer.md` (plus `intake-triager.md`, one more the audit didn't enumerate). All fixed in a second pass after the audit — re-verified `grep -rn 'core/spec-types\|domains/pm/spec-types' domains/pm/AGENTS.md domains/pm/agents/*.md` → empty. Left `core/skills/kickoff-prompt/SKILL.md:151,157` untouched — those `internal/spec/spec.go` mentions sit inside a fenced illustrative example of a historical kickoff format, not a live instruction (audit did not flag this one) |
+| 8 | Harness-neutral subagent phrasing in diagnose/deliver/mock | DONE | All three lines rewritten per spec wording exactly |
+| 9 | Zero `compatibility:`/`role:` keys in pack frontmatter | DONE | `grep -rcE '^compatibility:\|^role:' core domains` → 0 |
+| 10 | Zero `domains:` keys in domain-pack agents; `readAgentDomainsFrontmatter` intact | DONE | `grep -rlE '^domains:' domains/*/agents` → empty; `internal/install/content.go`'s `readAgentDomainsFrontmatter` untouched (still consumed at content.go:83) |
+| 11 | `TestEngineeringPackBodyMatchesGoFallback` + `content_parity_test.go` pass | DONE | Both green; full `go test ./...` green |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Rewrite Internal Lookups harness-neutrally (dual-edit) | DONE | `domains/engineering/AGENTS.md` + `agents_md.go`; bare `hero_*` table, `Explore`-row → capability phrasing, `ToolSearch` paragraph → scoped one-liner |
+| 2 | Parity table into pack source (dual-edit) | DONE | Table + `/import`/`/handoff` inline annotations added to both files. `core/commands/handoff.md:30-31`'s stale skill-path links were already fixed by a prior landed sibling delivery (`core-commands-domain-neutral`) — verified, no action needed |
+| 3 | Harness-neutral subagent phrasing (F23) | DONE | `diagnose.md:39`, `deliver.md:188`, `mock.md:85` |
+| 4 | Scope Stop-hook machinery in next-md/next-handoff-emit | DONE | Scoping paragraphs added; broken relative links (`next-md.md`, `next-handoff-emit.md`) replaced with skill-name references |
+| 5 | De-dogfood drive skill | DONE | Confirmed via `grep` that no shipped install code (`claude_hooks.go`, `codex_hooks.go`) wires `hero goal --check`/`scripts/drive/stop-hook.sh` for any harness — scoped text to manual-loop-everywhere per the spec's fallback instruction, rather than describing a claude/codex hook that doesn't exist. `scripts/drive/stop-hook.sh` path reference removed; "the harness `/goal`" rephrased as "your harness's loop/continuation mechanism, where one exists" (confirmed no pack ships a `/goal` command) |
+| 6 | De-dogfood cross-repo-peering | DONE | Lines 14, 151, 161-163 rephrased to conditional ("if your workspace carries...") instead of asserted-present hero-repo paths |
+| 7 | De-dogfood roadmap-review + spec-composition | DONE | Both skill files fixed at the cited lines; also fixed the same sibling-spec-slug pattern in the agent counterpart `domains/engineering/agents/roadmap-reviewer.md`, and (post cold-audit round 1) the `core/spec-types/`/`domains/pm/spec-types/` pattern across `domains/pm/AGENTS.md`, `pm-reviewer.md`, `roadmap-curator.md`, `handoff-coordinator.md`, `story-writer.md`, `intake-triager.md` — same finding class, not originally enumerated |
+| 8 | De-dogfood pm skills | DONE | `pm-preset-detection`, `handoff-protocol`, `story-writing-invest` fixed at cited lines; also fixed the parallel `internal/` leak in `core/skills/completion-ledger/SKILL.md` |
+| 9 | Fix project-context-builder + roadmap-reviewer agents | DONE | `core/agents/project-context-builder.md:13,25` scoped; `domains/engineering/agents/roadmap-reviewer.md:62-64` bare `hero_*` |
+| 10 | Gate `/release` docs pre-flight (F14) | DONE | Conditional wording added, no repo-specific behavior change |
+| 11 | Mechanical frontmatter strip (~96 files) | DONE | Re-verified counts before writing (differed from the spec's authoring-time audit): **68** `compatibility:` files (not 67 — 15 core + 34 engineering + 19 pm), forms: 65 single `opencode`, 2 comma-string, 1 YAML-list (`code-scrub`); **16** `role:` files (15 engineering + `pm-reviewer.md`) — matched audit; **13** `domains:` pack-agent files (8 engineering + 5 sales) — matched audit. Frontmatter-block-aware Python script (scratch, discarded) strips only lines inside the leading `---` block, list-aware for the YAML-list form. 96 files touched by the script (1 file — `architecture-reviewer.md` — carries both `role:` and `domains:`, matching the spec's predicted overlap). Grep-zero verified; `go test ./...` green after |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end: built `hero` from this worktree (`go build -o /tmp/hero-worktree ./cmd/hero`), ran `hero install project <tmpdir> --target opencode` and `--target codex` against scratch directories, and read the rendered `AGENTS.md` in each — confirmed the parity table, the harness-neutral Internal Lookups section (bare `hero_*`, scoped `Explore`/`ToolSearch`/`mcp__hero__` mentions), the codex Stop-hook wiring (`.codex/hooks.json`), and (via a `--target cursor` install) the hookless-harness `next-md` skill text instructing manual `hero next checkpoint`. Cursor does not currently receive the managed `AGENTS.md`/`CLAUDE.md` body at all (pre-existing gap in `target_cursor.go` — no `installAgentsMd`/`installManagedMarkdown` call for that target), so the spec's Validation-section cursor assertion about the managed AGENTS.md region was substituted with opencode for that specific check; the codex hook-wiring assertion was checked as specified.
+
+### Excellence Bar self-check
+
+Yes — the dual-edit pair was kept in lockstep with a test run after each of the two changes (per the Risks mitigation), the mechanical strip re-verified its own file counts against the live tree instead of trusting stale audit numbers, and a first-round cold audit (round 1, verdict SHIP with one flagged inconsistency) caught that AC7's "no hero-repo-only artifact references" claim understated its own exception — the `core/spec-types:`/`domains/pm/spec-types/` pattern was more systemic across the pm domain than the ledger first admitted. Rather than leave that as a documented gap, it was fixed in a second pass (6 files, 9 references) and re-verified grep-zero before finalizing. `mission.md` was confirmed not installed by any target (`internal/install/*.go` only installs `agents/commands/skills` kinds) and left untouched — it's a repo-authoring doc, not shipped content, so it's correctly out of the AC's scope.

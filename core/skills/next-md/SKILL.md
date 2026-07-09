@@ -1,7 +1,6 @@
 ---
 name: next-md
-description: Format and quality bar for the handoff briefing the agent maintains across sessions. Supports solo and team modes. Legacy mode — when next.projected is enabled, see skills/next-handoff-emit.md instead.
-compatibility: opencode
+description: Format and quality bar for the handoff briefing the agent maintains across sessions. Supports solo and team modes. Legacy mode — when next.projected is enabled, see the next-handoff-emit skill instead.
 metadata:
   audience: any-agent
   purpose: session-handoff
@@ -13,7 +12,7 @@ writes the agent half of `NEXT.md`. If the project has run
 `hero next migrate-to-projection` (config: `next.projected: true` in
 `.hero/hero.json`), NEXT.md is now graph-projected — anything you
 write to it gets wiped on the next Stop hook. Use the
-[next-handoff-emit](next-handoff-emit.md) skill instead.
+`next-handoff-emit` skill instead.
 
 To check: `hero next` — if the file's `updated:` frontmatter
 timestamp moves on every Stop hook, projection is on.
@@ -31,8 +30,12 @@ NEXT.md is split in two halves:
 | **Agent half** — Last user ask, Just finished, Next, Blocked on, Tried and failed, Context | The agent | When the intent shifts, something fails, an approach gets rejected, or you're about to switch tools |
 | **Machine half** — Branch, recent commits, working tree, hot files | `hero next checkpoint` (run by a host-tool Stop hook) | Every turn, automatically |
 
-The agent never has to write the machine half. The harness keeps it
-fresh on every turn — no agent discipline required. The agent's only
+On harnesses with the Stop-hook checkpoint wired (Claude Code and
+Codex today), the agent never has to write the machine half: the hook
+keeps it fresh on every turn, no agent discipline required. On other
+harnesses (opencode, cursor, copilot, generic) no such hook ships
+yet — run `hero next checkpoint` yourself at the end of each turn to
+keep the machine half current. Either way, the agent's only *authored*
 job is the agent half.
 
 ### `.hero/next/<user>.local.md` is machine-state-only

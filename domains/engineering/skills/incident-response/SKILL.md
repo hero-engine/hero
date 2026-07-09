@@ -1,7 +1,6 @@
 ---
 name: incident-response
 description: Production incident handling covering triage, evidence gathering, mitigation, communication, and post-mortem practices.
-compatibility: opencode
 metadata:
   audience: debug-investigator
   purpose: incident-handling

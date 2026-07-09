@@ -1,7 +1,6 @@
 ---
 name: issue-list-report
 description: Create a well-formatted local report for a provided list of issues.
-compatibility: opencode
 metadata:
   audience: issue-tracking
   purpose: list-reporting

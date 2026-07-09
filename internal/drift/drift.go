@@ -232,21 +232,39 @@ func checkConventions(r *Report, s *spec.Spec, idx *index.DB) {
 		return
 	}
 
-	results, err := idx.FindConventionsForFiles(s.FilesTouched)
-	if err != nil || len(results) == 0 {
-		return
+	seen := make(map[string]bool)
+
+	if results, err := idx.FindConventionsForFiles(s.FilesTouched); err == nil {
+		for _, conv := range results {
+			if seen[conv.Slug] {
+				continue
+			}
+			seen[conv.Slug] = true
+			r.Conventions = append(r.Conventions, ConventionWarning{
+				Slug:  conv.Slug,
+				Title: conv.Title,
+			})
+		}
 	}
 
-	seen := make(map[string]bool)
-	for _, conv := range results {
-		if seen[conv.Slug] {
-			continue
+	// Flat code-scoped knowledge (conventions/rules) governs these files too but
+	// lives in the isolated knowledge table, so FindConventionsForFiles misses
+	// it — surface it here for parity. Decisions aren't constraints; skip them.
+	// Spec: knowledge-context-injection (drift/impact follow-on).
+	if knowledge, err := idx.FindKnowledgeForFiles(s.FilesTouched); err == nil {
+		for _, k := range knowledge {
+			if k.Kind == "decisions" || k.Type == "decision" {
+				continue
+			}
+			if seen[k.Slug] {
+				continue
+			}
+			seen[k.Slug] = true
+			r.Conventions = append(r.Conventions, ConventionWarning{
+				Slug:  k.Slug,
+				Title: k.Title,
+			})
 		}
-		seen[conv.Slug] = true
-		r.Conventions = append(r.Conventions, ConventionWarning{
-			Slug:  conv.Slug,
-			Title: conv.Title,
-		})
 	}
 }
 

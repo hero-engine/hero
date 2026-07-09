@@ -72,8 +72,9 @@ loads it cleanly on top of the core spec types.
   `.hero/knowledge/{playbooks,battlecards,prospects,personas}/` as plain
   markdown with descriptive titles ("Playbook: …", "Battlecard — Hero vs. …")
   and carry no work-ish `type:` frontmatter, so they stay out of work-spec
-  discovery (`hero list`). They are not work specs, so they are retrieved by
-  path — browse the directory and read the file — not via `hero search`.
+  discovery (`hero list`). They are retrieved from the knowledge corpus —
+  `hero search --knowledge` / `hero ask` (or by browsing the directory) — not
+  the default `hero search`, which covers work specs only.
 
 ## Lifecycle
 

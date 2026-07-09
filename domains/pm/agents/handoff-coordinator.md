@@ -27,8 +27,7 @@ same workspace; the right-rail "linked engineering work" rail
 **disappears entirely** because it's the same spec. The artifact
 transitions surfaces without changing identity.
 
-The spec type `feature` (see
-`core/spec-types/feature.md`) is your input. The owner flip — recorded in
+The registered `feature` spec type is your input. The owner flip — recorded in
 the spec's bitemporal `owner_history` — is your deliverable. There is
 no separate engineering spec; there is no separate `kind: handoff`
 graph edge.

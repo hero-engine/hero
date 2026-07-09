@@ -2,7 +2,6 @@
 name: deadcode-scrubber
 description: Find and remove unused functions, types, constants, imports, and unreachable code paths.
 mode: subagent
-role: execution
 temperature: 0.1
 color: secondary
 permission:
