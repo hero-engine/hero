@@ -8,8 +8,10 @@ and offer to run a regular (non-scoped) query.
 
 Steps:
 
-1. Search the corpus first with `semantic_search` or `grep`. Read the
-   hits with `read_file`.
+1. Search the corpus first with whatever semantic-search capability the
+   session exposes, falling back to a plain text/grep search where it
+   doesn't. Read the matching files with the session's file-read
+   capability.
 2. Synthesize a concise answer (≤ 6 sentences) grounded only in what
    you found.
 3. List every source you drew on as a `Sources:` footer with relative

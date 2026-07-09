@@ -19,6 +19,10 @@ import (
 //                 loader requires this directory layout (Claude Code, opencode,
 //                 Codex). Includes legacy-flat-file cleanup so re-running
 //                 install against a buggy prior install self-migrates.
+// installSkillsFlat — flattens each skill (canonical `skills/<name>/SKILL.md`
+//                 source layout) to a single destDir/<name>.md file. Used by
+//                 harnesses that only read flat instruction files (Cursor
+//                 rules) and therefore can't consume the nested layout.
 
 func installFlat(opts Options, result *Result, kind, destDir string) error {
 	srcFS := opts.sourceFS()
@@ -40,7 +44,7 @@ func installFlat(opts Options, result *Result, kind, destDir string) error {
 	}
 
 	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") || isContentReadme(entry.Name()) {
 			continue
 		}
 		srcPath := kind + "/" + entry.Name()
@@ -189,7 +193,7 @@ func installSkillsNested(opts Options, result *Result, destDir string) error {
 
 		// Legacy flat layout: `skills/<name>.md`. Still supported for
 		// backward compat; rendered into the nested layout at dest.
-		if !strings.HasSuffix(name, ".md") {
+		if !strings.HasSuffix(name, ".md") || isContentReadme(name) {
 			continue
 		}
 		base := strings.TrimSuffix(name, ".md")
@@ -201,6 +205,58 @@ func installSkillsNested(opts Options, result *Result, destDir string) error {
 	}
 
 	return nil
+}
+
+// installSkillsFlat writes each skill as a single destDir/<name>.md file,
+// flattening the canonical `skills/<name>/SKILL.md` source layout. Legacy
+// flat source files `skills/<name>.md` pass through unchanged.
+func installSkillsFlat(opts Options, result *Result, destDir string) error {
+	srcFS := opts.sourceFS()
+	if srcFS == nil {
+		return fmt.Errorf("no content source available")
+	}
+
+	entries, err := fs.ReadDir(srcFS, "skills")
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	for _, entry := range entries {
+		name := entry.Name()
+
+		if entry.IsDir() {
+			srcSkill := "skills/" + name + "/SKILL.md"
+			if _, err := fs.Stat(srcFS, srcSkill); err != nil {
+				continue // directory without SKILL.md — not a skill
+			}
+			dst := filepath.Join(destDir, name+".md")
+			if err := copyFileFromFS(opts, result, srcFS, srcSkill, dst); err != nil {
+				return err
+			}
+			continue
+		}
+
+		if !strings.HasSuffix(name, ".md") || isContentReadme(name) {
+			continue
+		}
+		dst := filepath.Join(destDir, name)
+		if err := copyFileFromFS(opts, result, srcFS, "skills/"+name, dst); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// isContentReadme reports whether a source entry is a directory README —
+// documentation for humans browsing the content tree, not installable
+// content. The pm and sales domains ship README.md alongside their agents,
+// commands, and skills; installing those would materialize pseudo-agents.
+func isContentReadme(name string) bool {
+	return strings.EqualFold(name, "README.md")
 }
 
 // cleanupFlatSkills removes flat *.md files at destDir written by prior

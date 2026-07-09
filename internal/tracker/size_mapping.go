@@ -75,6 +75,26 @@ func defaultGitHubSizeMapping() *config.SizeMappingConfig {
 	}
 }
 
+// defaultGitLabSizeMapping is the shipped default for GitLab. Maps to
+// the conventional scoped-label prefix `workflow::size/<tier>`,
+// parallel to GitHub's `size/<tier>`. Teams with GitLab Premium can
+// prefer native numeric weight by overriding tracker.size_mapping with
+// `field: "weight"` and numeric thresholds — the size_mapping path
+// already supports both numeric and label-prefix modes.
+func defaultGitLabSizeMapping() *config.SizeMappingConfig {
+	return &config.SizeMappingConfig{
+		Field: "workflow::size/", // scoped-label prefix
+		Thresholds: map[string][]*float64{
+			"trivial": {floatPtr(0), floatPtr(0)},
+			"small":   {floatPtr(1), floatPtr(1)},
+			"medium":  {floatPtr(2), floatPtr(2)},
+			"large":   {floatPtr(3), floatPtr(3)},
+			"x-large": {floatPtr(4), floatPtr(4)},
+			"giant":   {floatPtr(5), nil},
+		},
+	}
+}
+
 func floatPtr(v float64) *float64 { return &v }
 
 // effectiveMapping picks the configured mapping when present, falling
@@ -91,6 +111,8 @@ func effectiveMapping(cfg *config.SizeMappingConfig, trackerName string) *config
 		return defaultLinearSizeMapping()
 	case "github":
 		return defaultGitHubSizeMapping()
+	case "gitlab":
+		return defaultGitLabSizeMapping()
 	default:
 		return nil
 	}
@@ -225,6 +247,14 @@ func (l *linear) ReverseMapSize(trackerValue string) (string, error) {
 	return reverseMapSizeWith(l.sizeMapping(), trackerValue)
 }
 
+func (g *gitLab) MapSize(localTier string) (string, error) {
+	return mapSizeWith(g.sizeMapping(), localTier)
+}
+
+func (g *gitLab) ReverseMapSize(trackerValue string) (string, error) {
+	return reverseMapSizeWith(g.sizeMapping(), trackerValue)
+}
+
 func (g *gitHub) MapSize(localTier string) (string, error) {
 	return mapSizeWith(g.sizeMapping(), localTier)
 }
@@ -258,6 +288,13 @@ func (g *gitHub) sizeMapping() *config.SizeMappingConfig {
 		return g.configuredSizeMapping
 	}
 	return defaultGitHubSizeMapping()
+}
+
+func (g *gitLab) sizeMapping() *config.SizeMappingConfig {
+	if g.configuredSizeMapping != nil {
+		return g.configuredSizeMapping
+	}
+	return defaultGitLabSizeMapping()
 }
 
 // ExtractTrackerSize reads the tracker-side size value out of an Issue
@@ -329,6 +366,8 @@ func mappingFromTracker(t Tracker) *config.SizeMappingConfig {
 		return tr.sizeMapping()
 	case *gitHub:
 		return tr.sizeMapping()
+	case *gitLab:
+		return tr.sizeMapping()
 	}
 	return nil
 }
@@ -342,7 +381,7 @@ func mappingFromTracker(t Tracker) *config.SizeMappingConfig {
 // CI runs, fresh checkouts).
 func TypeSupportsHierarchy(trackerType string) bool {
 	switch trackerType {
-	case "jira", "linear":
+	case "jira", "linear", "gitlab":
 		return true
 	default:
 		return false

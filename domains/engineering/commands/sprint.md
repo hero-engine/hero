@@ -30,32 +30,17 @@ The delivery lead will:
 - Prioritize specs that unblock other specs
 - If a spec is too large for a sprint, suggest running `/split` first
 
-## Execute mode
+## Executing the sprint
 
-When the user says `/sprint execute <initiative>` or includes "execute", "run",
-or "go" in the arguments:
+`/sprint` plans; it does not run a bespoke execution loop. Route based on shape:
 
-1. Load the initiative and list its child specs in dependency order
-   (use `hero_sequence` to determine optimal order)
-2. Filter to specs with `status: planning` that have acceptance criteria
-   and a Changes section — these are ready to deliver
-3. Show the execution plan to the user: "Will deliver N specs in order:
-   [list]. Mode: autopilot. Halting on: test failure, drift warning,
-   boundary violation."
-4. For each spec in order:
-   a. Run `/deliver <slug> --autopilot`
-   b. After delivery completes, run `hero drift <slug>` to verify
-   c. If clean: run `hero spec complete <spec-path>`, log success, move to next
-   d. If failure/drift/regression: halt, report the issue, ask whether
-      to skip and continue or stop the sprint
-5. At the end, produce a sprint summary: N delivered, N skipped (with reasons),
-   total time, any specs remaining
+- **Initiative-shaped** (the sprint maps to an initiative's child specs) →
+  `/drive <initiative>`. Autonomous, with deterministic `needs_me` pauses;
+  strictly supersedes any hand-rolled autopilot loop here.
+- **Ad-hoc list of ready specs** (no single initiative) → `/deliver` queue
+  mode: "deliver these while I'm away."
 
-**Safety rails:**
-- Always show the plan before starting — never auto-execute without confirmation
-- Default halt conditions: test failure, boundary violation, drift warning
-- User can override with `--halt-on drift,test` to be selective
-- Each spec delivery is atomic — failures don't corrupt prior work
-- The sprint can be resumed: skipped specs stay at `planning`
+Both paths already run `hero spec verify` as their own closing gate — no
+separate `hero spec complete` step is needed or correct here.
 
 Initiative or context: $ARGUMENTS

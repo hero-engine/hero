@@ -34,9 +34,16 @@ var teamUsageCmd = &cobra.Command{
 	RunE:  runTeamUsage,
 }
 
+var teamSessionsCmd = &cobra.Command{
+	Use:   "sessions",
+	Short: "Show active sessions on the team server",
+	RunE:  runTeamSessions,
+}
+
 func init() {
 	teamCmd.AddCommand(teamStatusCmd)
 	teamCmd.AddCommand(teamUsageCmd)
+	teamCmd.AddCommand(teamSessionsCmd)
 }
 
 func runTeamStatus(cmd *cobra.Command, args []string) error {
@@ -119,6 +126,37 @@ func runTeamUsage(cmd *cobra.Command, args []string) error {
 			u["user_id"], u["jobs"], u["input_tokens"], u["output_tokens"], u["total_cost"])
 	}
 
+	return nil
+}
+
+func runTeamSessions(cmd *cobra.Command, args []string) error {
+	tc := config.LoadTeamConnection()
+	if tc == nil {
+		fmt.Println("Not connected to a team server.")
+		fmt.Println("Run: hero connect team <url>")
+		return nil
+	}
+
+	data, err := teamGet(tc, "/api/sessions")
+	if err != nil {
+		return fmt.Errorf("fetching sessions: %w", err)
+	}
+
+	var sessions []map[string]string
+	json.Unmarshal(data, &sessions)
+
+	if len(sessions) == 0 {
+		fmt.Println("No active sessions.")
+		return nil
+	}
+
+	fmt.Printf("%-20s  %-15s  %-12s  %-20s  %s\n", "SESSION", "USER", "COMMAND", "SPEC", "LAST SEEN")
+	fmt.Printf("%-20s  %-15s  %-12s  %-20s  %s\n", "───────", "────", "───────", "────", "─────────")
+	for _, s := range sessions {
+		fmt.Printf("%-20s  %-15s  %-12s  %-20s  %s\n",
+			truncate(s["id"], 20), truncate(s["user_id"], 15),
+			truncate(s["command"], 12), truncate(s["spec_slug"], 20), s["last_seen"])
+	}
 	return nil
 }
 

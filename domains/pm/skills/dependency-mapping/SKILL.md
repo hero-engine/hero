@@ -3,7 +3,7 @@ name: dependency-mapping
 description: Walk the cross-artifact dependency graph forward and backward, distinguish hard blockers from soft sequencing, and surface cross-domain chains.
 compatibility: opencode
 metadata:
-  audience: dependency-mapper, roadmap-curator, prioritization-strategist, cycle-planner
+  audience: roadmap-curator, prioritization-strategist
   purpose: curation
 ---
 
@@ -15,7 +15,7 @@ Provide the rules for analyzing dependencies across PM artifacts (and across the
 
 Load this skill when:
 
-- planning a cycle / sprint / release and need to know what can actually start (`cycle-planner`, `capacity-planner`)
+- planning a cycle / sprint / release and need to know what can actually start (`pm-delivery-lead`; dedicated planners P1)
 - curating the roadmap and reconciling which `committed` items are actually unblocked (`roadmap-curator`)
 - prioritizing — a high-value item blocked by a P3 prerequisite needs its real start date surfaced (`prioritization-strategist`)
 - a PM asks "what's blocking story X?" or "what does initiative Y unblock?"
@@ -78,23 +78,22 @@ The rule: **walk to terminal state.** Stop only at `done` / `shipped` / `dropped
 
 The most common chain in Hero:
 
-> PM `story` → blocked by → engineering `feature` → blocked by → another engineering `feature`
+> PM-owned spec → blocked by → engineering-owned spec → blocked by → another engineering-owned spec
 
-This chain crosses the domain boundary twice. Use the `cross-domain-graph-query` skill to traverse cross-namespace edges. The chain renders with the domain boundary visible:
+This chain crosses the domain boundary twice. Use the `cross-domain-graph-query` skill to traverse cross-namespace edges. The chain renders with the domain boundary visible (the `owner:` field, not the type, marks the side):
 
 ```
-story:enable-saml [refined]
-  blocked-by feature:saml-provider [delivering]
-    blocked-by feature:auth-refactor [planning]
+enable-saml [in-review] depends-on saml-provider [delivering]
+  saml-provider [delivering] depends-on auth-refactor [planning]
 ```
 
-The PM-side reading of "this story is blocked" requires reading engineering-side delivery state — there is no other source of truth. The tracker silos by project; the graph is the cross-domain truth surface.
+The PM-side reading of "this spec is blocked" requires reading engineering-side delivery state — there is no other source of truth. The tracker silos by project; the graph is the cross-domain truth surface.
 
 ### Hard blocker that's unblocked but slow
 
 A common case: the blocker (engineering feature) is `delivering` — not done, but unblocked itself. The dependent story is technically "still blocked," but the blocker has a real ETA.
 
-Surface this as **"blocker in progress, ETA <date>"** rather than as a binary blocked/unblocked. `cycle-planner` and `capacity-planner` use the ETA to decide whether the dependent can be committed to the next cycle.
+Surface this as **"blocker in progress, ETA <date>"** rather than as a binary blocked/unblocked. `pm-delivery-lead` uses the ETA to decide whether the dependent can be committed to the next cycle (planners P1).
 
 If the blocker has been `delivering` for multiple cycles with no progress signal (no commits referencing it, hill chart stuck), flag it as a `roadmap-curator` finding — the chain is at risk.
 

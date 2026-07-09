@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -698,6 +699,17 @@ type ImportConfig struct {
 	// it replaces the default filter — CLI flags still override individual fields.
 	Presets map[string]*ImportFilter `json:"presets,omitempty"`
 
+	// ByType holds per-spec-type filters, keyed by hero spec type
+	// ("bug", "feature", "story", "epic", "initiative"). The effective
+	// filter for a type is base_filter merged with by_type[type], where
+	// by_type overrides base per non-empty field. A plain `hero sync
+	// import` (no positional/--type arg) runs each type's effective
+	// filter and unions the results (dedup by external id); a scoped
+	// import (`hero import bugs`) runs only that type's effective filter.
+	// Precedence sits between --preset and base_filter: --jql > --filter
+	// > CLI field flags > --preset > by_type > base_filter defaults.
+	ByType map[string]*ImportFilter `json:"by_type,omitempty"`
+
 	// Inventory controls whether an inventory report is generated alongside imports.
 	// Default: true.
 	Inventory *bool `json:"inventory,omitempty"`
@@ -843,6 +855,84 @@ func (c *ImportConfig) EffectiveBaseFilter() *ImportFilter {
 	return defaults
 }
 
+// mergeFilter overlays non-empty fields from over onto a copy of base
+// and returns the merged filter. over wins per-field; base fields
+// survive where over leaves them empty. Neither input is mutated. A nil
+// base is treated as an empty filter; a nil over returns a copy of base.
+func mergeFilter(base, over *ImportFilter) *ImportFilter {
+	out := &ImportFilter{}
+	if base != nil {
+		*out = *base
+	}
+	if over == nil {
+		return out
+	}
+	if over.JQL != "" {
+		out.JQL = over.JQL
+	}
+	if over.FilterID != "" {
+		out.FilterID = over.FilterID
+	}
+	if over.IssueType != "" {
+		out.IssueType = over.IssueType
+	}
+	if over.Assignee != "" {
+		out.Assignee = over.Assignee
+	}
+	if len(over.Labels) > 0 {
+		out.Labels = over.Labels
+	}
+	if over.Status != "" {
+		out.Status = over.Status
+	}
+	if over.Priority != "" {
+		out.Priority = over.Priority
+	}
+	if over.OrderBy != "" {
+		out.OrderBy = over.OrderBy
+	}
+	return out
+}
+
+// HasByType reports whether any per-type filters are configured.
+func (c *ImportConfig) HasByType() bool {
+	return c != nil && len(c.ByType) > 0
+}
+
+// ByTypeKeys returns the spec-type keys that have a by_type entry, in no
+// particular order. Empty when none are configured.
+func (c *ImportConfig) ByTypeKeys() []string {
+	if c == nil {
+		return nil
+	}
+	keys := make([]string, 0, len(c.ByType))
+	for k := range c.ByType {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+// EffectiveFilterForType returns the effective filter for a spec type:
+// the effective base filter merged with by_type[specType] (by_type
+// overrides base per non-empty field). When no by_type entry exists for
+// the type, this equals EffectiveBaseFilter — so callers get sane
+// defaults for every type regardless of whether it's enumerated in
+// by_type. specType is matched case-insensitively.
+func (c *ImportConfig) EffectiveFilterForType(specType string) *ImportFilter {
+	base := c.EffectiveBaseFilter()
+	if c == nil || len(c.ByType) == 0 {
+		return base
+	}
+	var over *ImportFilter
+	for k, v := range c.ByType {
+		if strings.EqualFold(k, specType) {
+			over = v
+			break
+		}
+	}
+	return mergeFilter(base, over)
+}
+
 // EffectiveInventoryPath returns the inventory report path, applying defaults.
 func (c *ImportConfig) EffectiveInventoryPath(specType string) string {
 	if c != nil && c.InventoryPath != "" {
@@ -928,11 +1018,11 @@ type TeamConfig struct {
 
 // TrackerConfig holds work tracker integration settings.
 type TrackerConfig struct {
-	Type          string `json:"type"`            // github, jira, linear, none
-	Project       string `json:"project"`         // project identifier (e.g. "owner/repo" for GitHub, project key for Jira, team key for Linear)
+	Type          string `json:"type"`            // github, jira, linear, gitlab, none
+	Project       string `json:"project"`         // project identifier (e.g. "owner/repo" for GitHub, project key for Jira, team key for Linear, "namespace/project" or numeric ID for GitLab)
 	Token         string `json:"token,omitempty"` // literal API token (set in hero.local.json or credentials store; never in hero.json)
 	TokenEnv      string `json:"token_env"`       // env var name holding the API token (e.g. "GITHUB_TOKEN")
-	BaseURL       string `json:"base_url"`        // API base URL (required for Jira, optional override for GitHub/Linear)
+	BaseURL       string `json:"base_url"`        // API base URL (required for Jira and GitLab, optional override for GitHub/Linear)
 	UserEmail     string `json:"user_email"`      // user email for services requiring basic auth (e.g. Jira Cloud, Confluence Cloud)
 	PostOnDesign  bool   `json:"post_on_design"`  // create issue when spec enters design
 	PostOnDeliver bool   `json:"post_on_deliver"`
@@ -1029,6 +1119,11 @@ type ConventionConfig struct {
 // KnowledgeConfig holds knowledge base settings.
 type KnowledgeConfig struct {
 	AutoCapture bool `json:"auto_capture"` // auto-capture learnings at end of workflows (default: true)
+	// ExplainerSynthesis controls synthesis autonomy for the
+	// feature-knowledge-synthesis trust handshake: "auto" | "review" | "off".
+	// Default "review" (propose, don't auto-write). Empty is treated as the
+	// default by ExplainerSynthesisMode.
+	ExplainerSynthesis string `json:"explainer_synthesis,omitempty"`
 }
 
 // ScoreConfig holds spec quality scoring settings.
@@ -1621,6 +1716,12 @@ func (c Config) TemplatesDir(projectRoot string) string {
 // NotesDir returns the path to the notes subdirectory under knowledge.
 func (c Config) NotesDir(projectRoot string) string {
 	return filepath.Join(c.KnowledgeDir(projectRoot), "notes")
+}
+
+// ExplainersDir returns the path to the explainers subdirectory under
+// knowledge — synthesized "how a feature works" entries.
+func (c Config) ExplainersDir(projectRoot string) string {
+	return filepath.Join(c.KnowledgeDir(projectRoot), "explainers")
 }
 
 // TrackerKnowledgeDir returns the path to the tracker knowledge subdirectory.

@@ -2,7 +2,7 @@
 title: "Gate First Turn on Hero MCP Readiness"
 slug: hihcp-mcp-first-turn-readiness
 type: bug
-status: planning
+status: handed_off
 domain: engineering
 size: small
 priority: high
@@ -57,3 +57,13 @@ Parent initiative: `hero-in-hero-code-parity`.
 - Timeout degrades gracefully: first turn proceeds without Hero MCP tools and
   they appear on the second turn after `callTool` triggers `ensureReady`
 - No visible delay for users who do not have a Hero MCP server configured
+
+## Handoff Trail
+
+- 2026-06-24T18:01:14Z — out → hero-code (peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
+  mode: async-drop
+  originating_spec: hihcp-mcp-first-turn-readiness
+  peer_spec: hero-code/hihcp-mcp-first-turn-readiness
+  at_commit: 2f774b7
+  reason: "Targets the hero-code Swift agent loop (Engine/MCPManager.swift / ensureReady). Pre-release triage of the hero CLI confirmed no matching Go code exists here."
+

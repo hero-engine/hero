@@ -17,8 +17,8 @@ metadata:
 
 ## Battlecard Structure
 
-See `competitive-intel.md` for the full battlecard template. Key structural
-principles:
+The full battlecard template is carried by the `competitive-intel` agent. Key
+structural principles:
 
 ### What belongs in a battlecard
 

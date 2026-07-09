@@ -31,9 +31,21 @@ changed, dead ends to skip, blockers, and files-nearby context.
    `hero why <slug>` to traverse the graph backwards.
 5. If the user asks "what's blocked?" or "what should I work on?",
    prefer the resume output's `Blocked on` and `In flight` sections
-   over re-deriving from scratch by reading files.
+   over re-deriving from scratch by reading files. For a paste-ready
+   list of ready-to-pick-up specs (each with a kickoff prompt), call
+   `hero_queue` via MCP or read `.hero/QUEUE.md` directly. The queue
+   is the cold-start surface; resume is the warm-context surface —
+   they compose.
 6. The first item in `In flight` is usually the right next action.
    Propose it directly — don't ask "what should we work on?".
+7. Run `hero check --reconcile` to fix any status drift (specs stuck at
+   delivering when git shows completion, etc.). This is silent when
+   nothing needs fixing.
+8. In team mode, also glance at `.hero/NEXT.md` for the team roster
+   (who's working on what).
+
+For a deeper orientation on conventions, decisions, and risks, be the
+`session-primer` agent (core).
 
 **Why this matters:**
 

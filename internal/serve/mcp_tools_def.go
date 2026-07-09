@@ -282,6 +282,17 @@ func (s *MCPServer) toolDefinitions() []ToolDefinition {
 			},
 		},
 		{
+			Name:        "hero_synthesize",
+			Description: "Assemble the material for a feature 'explainer' knowledge entry (how a feature works, as it exists now) from a cluster of spec slugs. Returns the synthesis instructions, the target path, the provenance frontmatter, and the assembled context (source specs, git activity across the delivery window, and referenced decisions). YOU then write the explainer markdown to the target path following the instructions, and run hero index. Part of feature-knowledge-synthesis.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]PropSchema{
+					"slugs": {Type: "string", Description: "Comma-separated spec slugs that make up the feature (e.g. 'cold-start-trust-hardening' or 'feat-a,feat-b,feat-c'). An initiative slug among them sets the explainer's title and out-path."},
+				},
+				Required: []string{"slugs"},
+			},
+		},
+		{
 			Name:        "hero_score",
 			Description: "Score a spec's quality and readiness for delivery. Returns a score (0-100), grade (A-F), per-dimension breakdown, warnings, and actionable suggestions. Use before delivering a spec to check readiness.",
 			InputSchema: InputSchema{
@@ -397,6 +408,19 @@ func (s *MCPServer) toolDefinitions() []ToolDefinition {
 					"subproject": {Type: "string", Description: "Filter to a specific subproject scope (e.g. \"engines/mlx\"). When the user is working in a satellite or you have been told the active subproject, pass it here so results are scope-relevant. Pass \"all\" to disable when the user is asking a workspace-wide question."},
 					"compact":    {Type: "boolean", Description: "If true, return summary + ref_id only. Default: false."},
 				},
+			},
+		},
+		{
+			Name:        "hero_goal",
+			Description: "Bridge an initiative to the harness /goal loop for /drive. Default: emit the run condition (objective + machine stop-condition). With check: return a one-turn verdict (continue|pause|done) computed from on-disk child verify-status ANDed with the needs_me autonomy boundary. With dry_run N: preview the next N transitions check would take. Does NOT drive the loop or judge completion from a transcript — it is the authoritative judge the harness Stop hook consults.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]PropSchema{
+					"initiative": {Type: "string", Description: "Initiative slug to run/judge"},
+					"check":      {Type: "boolean", Description: "Return a one-turn verdict (continue|pause|done) as JSON"},
+					"dry_run":    {Type: "integer", Description: "Preview the next N transitions check would take"},
+				},
+				Required: []string{"initiative"},
 			},
 		},
 		{

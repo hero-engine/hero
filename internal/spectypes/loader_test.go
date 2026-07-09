@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // TestLoad_CoreFile_NineCanonicalTypes verifies the loader picks up
@@ -302,6 +303,47 @@ func TestExportTo_WritesCacheFile(t *testing.T) {
 	}
 }
 
+// TestExportTo_SkipsWriteWhenOnlyTimestampChanged pins the idempotency
+// guard: re-exporting an unchanged registry must not rewrite the cache
+// file when the only difference is the generated_at timestamp. Without
+// this, the PersistentPreRun export re-stamps the file on every `hero`
+// invocation, leaving .hero/cache/spec-types.json perpetually dirty and
+// racing the pre-commit hook that stages it.
+func TestExportTo_SkipsWriteWhenOnlyTimestampChanged(t *testing.T) {
+	reg, err := Load("engineering")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	tmp := t.TempDir()
+	if err := ExportTo(reg, tmp); err != nil {
+		t.Fatalf("ExportTo (first): %v", err)
+	}
+	out := filepath.Join(tmp, ".hero", "cache", "spec-types.json")
+	fi, err := os.Stat(out)
+	if err != nil {
+		t.Fatalf("stat after first export: %v", err)
+	}
+	firstMod := fi.ModTime()
+
+	// Force a detectable mtime gap, then re-export the same registry.
+	// The only thing that would differ is generated_at, so the guard
+	// must skip the write and leave the file (and its mtime) untouched.
+	past := firstMod.Add(-2 * time.Second)
+	if err := os.Chtimes(out, past, past); err != nil {
+		t.Fatalf("chtimes: %v", err)
+	}
+	if err := ExportTo(reg, tmp); err != nil {
+		t.Fatalf("ExportTo (second): %v", err)
+	}
+	fi2, err := os.Stat(out)
+	if err != nil {
+		t.Fatalf("stat after second export: %v", err)
+	}
+	if !fi2.ModTime().Equal(past) {
+		t.Errorf("cache file was rewritten on timestamp-only re-export: mtime changed from %v to %v", past, fi2.ModTime())
+	}
+}
+
 // TestLoad_FrontmatterSchema_PopulatedForCoreAndEngineering pins the
 // canonical work types and engineering knowledge types to a non-empty
 // frontmatter schema. Surfaces the spec-types-cache-frontmatter-empty
@@ -378,5 +420,38 @@ func TestLoad_FrontmatterFieldShape_FeatureStatus(t *testing.T) {
 	}
 	if status.Classification != ClassificationOrgState {
 		t.Errorf("status.classification = %q, want org-state", status.Classification)
+	}
+}
+
+// TestLoad_SalesOverlay_DealLifecycle verifies the sales domain overlay
+// registers the `deal` work type with its full 7-state lifecycle and clean
+// referential integrity. Guards the deal.yaml → deal.md conversion
+// (sales-pack-reality-sync): a malformed deal.md would break every command
+// in a sales workspace via exportSpecTypesCache.
+func TestLoad_SalesOverlay_DealLifecycle(t *testing.T) {
+	reg, err := Load("sales")
+	if err != nil {
+		t.Fatalf("Load(sales): %v", err)
+	}
+	rec, ok := reg.Lookup("deal")
+	if !ok {
+		t.Fatal(`sales overlay did not register type "deal"`)
+	}
+	if rec.Domain != "sales" {
+		t.Errorf("deal.Domain = %q, want sales", rec.Domain)
+	}
+	if rec.Category != CategoryWork {
+		t.Errorf("deal.Category = %q, want work", rec.Category)
+	}
+	gotStates := strings.Join(rec.Lifecycle.States, ",")
+	wantStates := "prospect,qualifying,demo,proposal,negotiation,won,lost"
+	if gotStates != wantStates {
+		t.Errorf("deal lifecycle states = %q, want %q", gotStates, wantStates)
+	}
+	if rec.Lifecycle.Initial != "prospect" {
+		t.Errorf("deal lifecycle initial = %q, want prospect", rec.Lifecycle.Initial)
+	}
+	if got := strings.Join(rec.Lifecycle.Terminal, ","); got != "won,lost" {
+		t.Errorf("deal lifecycle terminal = %q, want %q", got, "won,lost")
 	}
 }

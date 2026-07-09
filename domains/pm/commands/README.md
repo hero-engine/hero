@@ -11,7 +11,7 @@ here:
 | File | Routes to | Purpose |
 |---|---|---|
 | `triage.md` | `intake-triager` | Process inbound intake |
-| `refine.md` | `pm-delivery-lead` → `story-writer` / `prd-author` / `epic-framer` | Refine an artifact for delivery readiness |
+| `refine.md` | `pm-delivery-lead` → `story-writer` / `prd-author` / `epic-framer` (P1, ships v1.5) | Refine an artifact for delivery readiness |
 | `roadmap.md` | `roadmap-curator` | Open / reconcile the roadmap |
 | `prioritize.md` | `prioritization-strategist` | Rank a set of initiatives or specs |
 | `prd.md` | `prd-author` | Draft or refine a PRD |
@@ -23,9 +23,9 @@ here:
 
 ### Reused (cross-domain / core)
 - `/why` — multi-hop trace across the spec hierarchy + bitemporal `owner_history` rows that show cross-domain ownership transitions
-- `/search` — cross-domain search (results render `owner` so the PM/engineering boundary is visible)
+- `hero search` (CLI; no pack ships a `/search` command) — cross-domain search (results render `owner` so the PM/engineering boundary is visible)
 - `/note` — note capture
-- `/deliver` — picked up by engineering's `engineer` agent after the owner flip; runs against the same spec PM authored
+- `/deliver` — engineering-pack command — runs on the engineering side after the owner flip, not in a pm install; runs against the same spec PM authored
 
 P1 / P2 commands (`/capacity`, `/plan-cycle`, `/plan-sprint`,
 `/plan-iteration`, `/standup`, `/interview`, `/scrub roadmap`,

@@ -154,7 +154,7 @@ func WriteGraph(specs []*Spec, repoKey, fallbackDomain string, store *graph.Stor
 			if edgeType == "" {
 				continue
 			}
-			toID, ok := resolveTargetID(rel.Target, idByTypeKey)
+			toID, ok := resolveTargetID(rel.Target, idByTypeKey, fromID)
 			if !ok {
 				continue // target not in this batch — skipped, will resolve on a later run
 			}
@@ -206,6 +206,10 @@ func graphTypeFor(t Type) string {
 		return "External"
 	case TypeTripwire:
 		return "Tripwire"
+	case TypeExplainer:
+		return "Explainer"
+	case TypeIntake:
+		return "Intake"
 	default:
 		return ""
 	}
@@ -225,8 +229,12 @@ func graphEdgeForRelation(kind string) string {
 		return "blocks"
 	case "supersedes":
 		return "supersedes"
-	case "related", "sibling":
+	case "related", "relates-to", "relates_to", "sibling":
 		return "related_to"
+	case "derived_from", "derived-from":
+		// Promoted roadmap spec → originating intake. `hero why` walks
+		// this in reverse to surface an intake's provenance.
+		return "derived_from"
 	case "child":
 		// Inverse of parent — emitted from the child's side, so skip here
 		// to avoid duplicate edges.
@@ -252,8 +260,13 @@ func normalizeRelTarget(target string) string {
 }
 
 // resolveTargetID looks up a relation target slug across all spec
-// types, since relations carry only the slug.
-func resolveTargetID(target string, idByTypeKey map[string]int64) (int64, bool) {
+// types, since relations carry only the slug. fromID is the node that
+// declared the relation; a match equal to fromID is skipped so a spec
+// never edges to itself. This also disambiguates the promote case where
+// an intake and its promoted spec share a slug: a derived_from relation
+// declared by the promoted spec resolves to the (other-typed) intake
+// node rather than self-looping back to the promoted spec.
+func resolveTargetID(target string, idByTypeKey map[string]int64, fromID int64) (int64, bool) {
 	target = strings.TrimSpace(target)
 	if target == "" {
 		return 0, false
@@ -261,9 +274,9 @@ func resolveTargetID(target string, idByTypeKey map[string]int64) (int64, bool) 
 	target = normalizeRelTarget(target)
 	for _, t := range []string{
 		"Feature", "Initiative", "Bug", "Convention", "Decision",
-		"Rule", "ContextDoc", "Note", "External", "Criterion",
+		"Rule", "ContextDoc", "Note", "External", "Intake", "Criterion",
 	} {
-		if id, ok := idByTypeKey[t+":"+target]; ok {
+		if id, ok := idByTypeKey[t+":"+target]; ok && id != fromID {
 			return id, true
 		}
 	}

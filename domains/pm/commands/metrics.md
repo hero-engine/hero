@@ -1,7 +1,7 @@
 ---
 description: Define success metrics for a PRD or initiative — current → target, leading-not-lagging, with named baselines.
 ---
-Route this metrics request to the `metrics-analyst` agent (P1). In v1, falls through to `pm-delivery-lead` loading the `metrics-design` skill directly.
+Route to `pm-delivery-lead` loading `metrics-design` (`metrics-analyst` takes over in v1.5).
 
 ## Required argument
 

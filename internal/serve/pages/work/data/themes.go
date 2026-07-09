@@ -136,7 +136,7 @@ func workSpecsModifiedSince(heroDir string, cutoff time.Time) []*spec.Spec {
 func isNonWorkSpecType(t spec.Type) bool {
 	switch t {
 	case spec.TypeNote, spec.TypeContext, spec.TypeTripwire,
-		spec.TypeExternal, spec.TypeRule:
+		spec.TypeExternal, spec.TypeRule, spec.TypeExplainer:
 		return true
 	}
 	return false

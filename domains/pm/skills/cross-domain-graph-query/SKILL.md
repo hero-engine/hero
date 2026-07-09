@@ -3,7 +3,7 @@ name: cross-domain-graph-query
 description: Walking the knowledge graph across domain boundaries — from PM artifacts into engineering reality and back. The graph, not the tracker, is the cross-domain truth surface.
 compatibility: opencode
 metadata:
-  audience: roadmap-curator, handoff-coordinator, dependency-mapper, duplicate-detector, pm-investigator
+  audience: roadmap-curator, handoff-coordinator, duplicate-detector, pm-investigator
   purpose: cross-domain
 ---
 
@@ -19,7 +19,7 @@ Load this skill when:
 
 - `roadmap-curator` is reconciling weekly roadmap status against engineering delivery
 - `handoff-coordinator` is verifying that the bitemporal `owner_history` row landed and engineering picked up the spec
-- `dependency-mapper` is walking a `spec → spec → spec` chain across owner-flip boundaries
+- `pm-delivery-lead` is walking a `spec → spec → spec` chain across owner-flip boundaries (dependency mapping P1)
 - `duplicate-detector` is checking whether an incoming intake duplicates an existing in-flight or completed spec
 - `pm-investigator` is asking "has engineering already shipped something for this?"
 
@@ -87,7 +87,7 @@ The chain of decisions is contiguous — there is no domain *boundary* in the sp
 - `spec:csv-export-fix-line-endings` (`owner: engineering, kind: bug` — same spec type, different owner; clearly marked by owner)
 - `spec:csv-export-v1-perf` (`owner: engineering, kind: perf` — same type, different owner; clearly marked)
 
-Under the unified type model, the *type* is the same (`spec`) across domains — what distinguishes "PM-led" from "engineering-led" is the `owner` field. Search renders the `owner` prominently so the user sees which side currently has the spec. There is no longer a separate `feature` type to mark visually; the boundary is the `owner` field, not the type.
+Under the unified type model, the *artifact* is the same (`type: feature`) across domains — the `owner:` field, not the type, marks the domain. Search renders the `owner` prominently so the user sees which side currently has the spec. There is no longer a separate `feature` type to mark visually; the boundary is the `owner` field, not the type.
 
 ## Using `hero_why` to walk back
 
@@ -95,9 +95,9 @@ Under the unified type model, the *type* is the same (`spec`) across domains —
 
 Use cases:
 
-- PM asks "why is this feature in engineering?" → `hero_why feature:X` returns the cross-domain handoff edge and the upstream story / epic / initiative.
-- PM asks "why did we drop this initiative?" → `hero_why roadmap:X` returns the rejection_reason, the dropped-on date, and any intakes that were re-routed.
-- Engineering asks "why is this feature scoped this way?" → `hero_why feature:X` returns the originating story's AC and the linked PRD's Goals.
+- PM asks "why is this feature in engineering?" → `hero_why X` returns the cross-domain handoff edge and the upstream story / epic / initiative.
+- PM asks "why did we drop this initiative?" → `hero_why X` returns the rejection_reason, the dropped-on date, and any intakes that were re-routed.
+- Engineering asks "why is this feature scoped this way?" → `hero_why X` returns the originating story's AC and the linked PRD's Goals.
 
 `hero_why` respects the domain boundary in output rendering — cross-domain nodes are visually distinguished.
 

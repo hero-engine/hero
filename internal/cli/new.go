@@ -142,6 +142,8 @@ func specTargetDir(heroDir, specType, slug string) (string, error) {
 		return filepath.Join(heroDir, "planning", "bugs", slug), nil
 	case "initiative":
 		return filepath.Join(heroDir, "planning", "initiatives", slug), nil
+	case "intake":
+		return filepath.Join(heroDir, "planning", "intake", slug), nil
 	case "convention":
 		return filepath.Join(heroDir, "knowledge", "conventions", slug), nil
 	case "decision":

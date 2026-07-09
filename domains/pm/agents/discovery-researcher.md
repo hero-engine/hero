@@ -27,7 +27,7 @@ Load before substantial work:
 
 ## When invoked
 
-You receive work via `/discover`, `/interview`, "we need to understand X before building" natural language, and high-uncertainty initiatives (often handed in by `pm-delivery-lead` after `product-strategist` framed the bet but flagged thin evidence).
+You receive work via `/discover`, `/discover --interview`, "we need to understand X before building" natural language, and high-uncertainty initiatives (often handed in by `pm-delivery-lead` after `product-strategist` framed the bet but flagged thin evidence).
 
 ## Workflow
 

@@ -53,7 +53,7 @@ func LoadKnowledge(in KnowledgeInputs) Knowledge {
 			out.Conventions++
 		case spec.TypeNote:
 			out.Notes++
-		case spec.TypeRule, spec.TypeContext:
+		case spec.TypeRule, spec.TypeContext, spec.TypeExplainer:
 			out.Captures++
 		default:
 			continue

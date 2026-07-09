@@ -25,7 +25,7 @@ func withHorizon(h Horizon) func(*Spec) { return func(s *Spec) { s.Horizon = h }
 func withTags(tags ...string) func(*Spec) {
 	return func(s *Spec) { s.Tags = tags }
 }
-func withPinned() func(*Spec)             { return func(s *Spec) { s.Pinned = true } }
+func withPinned() func(*Spec)              { return func(s *Spec) { s.Pinned = true } }
 func withModified(t time.Time) func(*Spec) { return func(s *Spec) { s.ModifiedAt = t } }
 func withDependsOn(targets ...string) func(*Spec) {
 	return func(s *Spec) {
@@ -74,6 +74,31 @@ func TestSelectorReadyExcludesUnmetDeps(t *testing.T) {
 	want = []string{"bar", "qux"}
 	if diff := slugDiff(slugs(got), want); diff != "" {
 		t.Errorf("ready after foo completed: %s", diff)
+	}
+}
+
+func TestSelectorReadyExcludesKnowledge(t *testing.T) {
+	// Knowledge entries (notes, contexts, conventions, explainers, …)
+	// carry no delivery lifecycle, so the queue must not surface them
+	// in its actionable / kickoff-advisory output even when they're in
+	// an open status. Work specs remain unaffected.
+	all := []*Spec{
+		makeSpec("ship-it", "Ship It", TypeFeature, StatusDelivering),
+		makeSpec("plan-it", "Plan It", TypeBug, StatusPlanning),
+		makeSpec("buddy-model-architecture", "Buddy Model", TypeNote, StatusActive),
+		makeSpec("architecture-overview", "Arch Overview", TypeContext, StatusActive),
+		makeSpec("explainer-entry", "Explainer", TypeExplainer, StatusActive),
+		makeSpec("naming-convention", "Naming", TypeConvention, StatusActive),
+	}
+
+	got := Selector{
+		Filter: Filter{Ready: true, ExcludeClosedDefault: true},
+		Sort:   SortAlpha,
+	}.Apply(all)
+
+	want := []string{"plan-it", "ship-it"}
+	if diff := slugDiff(slugs(got), want); diff != "" {
+		t.Errorf("ready set: %s", diff)
 	}
 }
 

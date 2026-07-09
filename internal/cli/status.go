@@ -107,8 +107,12 @@ func runStatus(cmd *cobra.Command, args []string) error {
 	var planning, inReview, delivering, completed []*spec.Spec
 	var handoffPending, handedBack []*spec.Spec
 	var conventions, decisions, rules, external, context, notes []*spec.Spec
+	var intake []*spec.Spec
 	for _, s := range specs {
 		switch {
+		case s.Type == spec.TypeIntake:
+			// Pre-commitment: never enters the work status buckets.
+			intake = append(intake, s)
 		case s.Type == spec.TypeConvention:
 			conventions = append(conventions, s)
 		case s.Type == spec.TypeDecision:
@@ -200,6 +204,16 @@ func runStatus(cmd *cobra.Command, args []string) error {
 
 	if len(autoContext) > 0 {
 		fmt.Printf("\nAuto-generated code-scan stubs: %d (in .hero/knowledge/code/, hidden from this list)\n", len(autoContext))
+	}
+
+	// Pre-commitment intakes — captured but not committed work. Listed
+	// separately so they never read as in-flight; promote with
+	// `hero intake promote <slug>`.
+	if len(intake) > 0 {
+		fmt.Printf("\nIntake — pre-commitment (%d):\n", len(intake))
+		for _, s := range intake {
+			fmt.Printf("  %-30s  %-8s  %s\n", s.Slug, string(s.Status), s.Title)
+		}
 	}
 
 	// Smoke failures — surface prominently so regressions aren't missed.

@@ -340,6 +340,12 @@ func (g *gitHub) ListIssues(label string, limit int) ([]Issue, error) {
 }
 
 // Search fetches issues from GitHub using a structured query.
+//
+// Field coverage (parity baseline): Status, Priority (priority::<level>
+// scoped label), Assignee, Labels, IssueType (mapped onto the type-label
+// convention, since GitHub Issues have no native type), OrderBy, and
+// Limit all map to native list params. RawQuery routes to the GitHub
+// search API; FilterID is Jira-specific and ignored (documented no-op).
 func (g *gitHub) Search(query SearchQuery) ([]Issue, error) {
 	limit := query.Limit
 	if limit <= 0 {
@@ -347,6 +353,9 @@ func (g *gitHub) Search(query SearchQuery) ([]Issue, error) {
 	}
 	if limit > 100 {
 		limit = 100
+	}
+	if query.FilterID != "" {
+		fmt.Fprintln(os.Stderr, "Note: GitHub ignores --filter (Jira saved-filter ID is Jira-only).")
 	}
 
 	// GitHub doesn't support raw JQL or filter IDs, but we can build a search query
@@ -368,8 +377,16 @@ func (g *gitHub) Search(query SearchQuery) ([]Issue, error) {
 
 	url := fmt.Sprintf("%s/repos/%s/%s/issues?state=%s&per_page=%d", g.baseURL, g.owner, g.repo, state, limit)
 
-	// Labels (comma-separated)
-	labels := query.Labels
+	// Labels: user labels plus, when IssueType is set, the type-label
+	// convention (Bug/epic/initiative), and when Priority is set the
+	// priority::<level> scoped label.
+	labels := append([]string{}, query.Labels...)
+	if lbl := typeLabelFor(query.IssueType); lbl != "" {
+		labels = append(labels, lbl)
+	}
+	if query.Priority != "" {
+		labels = append(labels, "priority::"+strings.ToLower(query.Priority))
+	}
 	if len(labels) > 0 {
 		url += "&labels=" + strings.Join(labels, ",")
 	}
@@ -469,9 +486,23 @@ func (g *gitHub) searchIssues(rawQuery string, limit int) ([]Issue, error) {
 		for _, l := range r.Labels {
 			issue.Labels = append(issue.Labels, l.Name)
 		}
+		issue.IssueType = githubIssueType(issue.Labels)
 		issues = append(issues, issue)
 	}
 	return issues, nil
+}
+
+// githubIssueType infers the hero spec type for a GitHub issue from its
+// labels. GitHub Issues have no native type, so bug/epic/initiative ride
+// labels (the same conventions the other adapters recognize via
+// typeFromLabels). Falls through to "story" when no type label is
+// present. Shared recognition keeps classification consistent
+// tracker-wide.
+func githubIssueType(labels []string) string {
+	if t := typeFromLabels(labels); t != "" {
+		return t
+	}
+	return "story"
 }
 
 // fetchIssueList fetches issues from a GitHub list endpoint URL.
@@ -533,6 +564,7 @@ func (g *gitHub) fetchIssueList(url string) ([]Issue, error) {
 		for _, l := range r.Labels {
 			issue.Labels = append(issue.Labels, l.Name)
 		}
+		issue.IssueType = githubIssueType(issue.Labels)
 		issues = append(issues, issue)
 	}
 	return issues, nil

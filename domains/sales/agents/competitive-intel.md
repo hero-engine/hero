@@ -37,8 +37,7 @@ Write battlecards to `.hero/knowledge/battlecards/<competitor-slug>.md`:
 
 ```markdown
 ---
-title: Hero vs. [Competitor]
-type: battlecard
+title: Battlecard — Hero vs. [Competitor]
 competitor: [Competitor Name]
 updated: YYYY-MM-DD
 win_rate: XX%  # fill in from win/loss data if available
@@ -142,7 +141,10 @@ Track new intel here as it comes in from deals:
 
 When called to assess a specific deal in the context of a competitor:
 
-1. **Load the battlecard** for the named competitor (or create if missing)
+1. **Load the battlecard** for the named competitor — read
+   `.hero/knowledge/battlecards/<competitor-slug>.md` directly (or
+   `ls .hero/knowledge/battlecards/` to find it). Battlecards are plain
+   markdown, not work specs, so they aren't in `hero search`. Create if missing.
 2. **Read the deal spec** to understand what's been discovered about the
    competitive dynamic in this specific deal
 3. **Assess win probability adjustment** — does this competitive situation

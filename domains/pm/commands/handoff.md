@@ -1,4 +1,5 @@
 ---
+core_fork: PM handoff is an owner-flip to engineering on the same artifact, intentionally replacing core's session-handoff /handoff
 description: Hand a refined spec off to engineering — flips `owner: pm → engineering` on the same artifact. No new spec is created.
 ---
 Route this handoff to the `handoff-coordinator` agent. Loads the `handoff-protocol` skill.
@@ -13,7 +14,7 @@ A spec slug. Without it, the command asks which spec to hand off (don't guess fr
 
 Before the coordinator flips owner, verify the spec:
 
-1. **`status: ready`.** Specs at `drafted` or `refined` aren't shippable. → If not ready, ask the user to run `/refine` first and stop.
+1. **`status: in-review`.** Specs at `planning` aren't shippable (per the lifecycle table in `pm-preset-detection`). → If not ready, ask the user to run `/refine` first and stop.
 2. **`owner: pm` currently.** If `owner` is already `engineering`, the handoff already happened — surface and stop. (Use `hero why <slug>` to inspect the `owner_history`.)
 3. **Acceptance criteria use EARS patterns** (or have a documented reason not to). → If AC is missing or freeform-only without rationale, ask the user to run `/refine --section ac` first and stop.
 4. **`Out-of-Scope` section is non-empty.** → If empty, ask the user to fill it via `/refine --section out-of-scope` first and stop.
@@ -24,11 +25,11 @@ Before the coordinator flips owner, verify the spec:
 
 The `handoff-coordinator`:
 
-1. **Reads the spec** at `.hero/planning/specs/<slug>/spec.md` and runs the pre-flight above.
-2. **Flips the `owner` field** in frontmatter (`pm → engineering`). The bitemporal `owner_history` row is appended by the spec store. **This is the load-bearing step.**
+1. **Reads the spec** — resolve the slug (`hero_read_spec` MCP or `hero search --list`); pm specs live under `.hero/planning/{features,bugs,epics,prds,intake}/<slug>/spec.md` — and runs the pre-flight above.
+2. **Flips the `owner` field** via `hero spec set-owner <slug> engineering` (`pm → engineering`). The command appends the bitemporal `owner_history` row atomically — a raw frontmatter edit records no history. **This is the load-bearing step.**
 3. **Verifies the history landed** — reads back the `owner_history`; if the new row isn't present, that's a hard error (see Failure modes).
-4. **Logs the transition** via `hero event handoff "<spec-slug> owner flipped pm → engineering" --slug <spec-slug>` so the Cross-domain Handoff stream picks it up.
-5. **Verifies engineering pickup** — within a short window, `hero queue --owner engineering --status ready` should list the spec; after engineering claims (`/deliver <spec-slug>`), the spec's `status` flips `ready → delivering`. If pickup doesn't happen, surface as a finding (engineering may be offline; user can invoke `/deliver` manually).
+4. **Logs the transition** via `hero agent events spec_updated "owner flipped pm → engineering" --slug <spec-slug>` (or the `hero_event` MCP tool) so the Cross-domain Handoff stream picks it up.
+5. **Verifies engineering pickup** — within a short window, re-read the spec (`owner: engineering` on disk); after engineering claims (`/deliver <spec-slug>`, engineering pack), the spec's `status` flips `in-review → delivering` (`hero list --status delivering` as the sweep). If pickup doesn't happen, surface as a finding (engineering may be offline; user can invoke `/deliver` manually).
 
 What does **not** happen:
 
@@ -44,11 +45,11 @@ What does **not** happen:
 - **Spec is already engineering-owned** → surface `owner_history`; if the most recent transition is `pm → engineering`, the handoff already happened; if it's `engineering → pm` with a `handed_back_reason`, address the reason via `/refine` before re-flipping.
 - **Frontmatter write fails** → hard error. The handoff did not happen. Surface and stop. Do not retry silently.
 - **`owner_history` row does not appear after write** → hard error. The store invariant is broken; do not proceed.
-- **Engineering doesn't claim within the expected window** → surface as a finding (engineering may be offline). The owner flip succeeded; the missing pickup is a workflow gap, not a handoff failure. User can invoke `/deliver <slug>` manually to force the claim.
+- **Engineering doesn't claim within the expected window** → surface as a finding (engineering may be offline). The owner flip succeeded; the missing pickup is a workflow gap, not a handoff failure. User can invoke `/deliver <slug>` (engineering pack) manually to force the claim.
 
 ## Output
 
-- The same spec path at `.hero/planning/specs/<slug>/spec.md`, now with `owner: engineering` and a new `owner_history` row.
+- The same spec (resolve the slug; pm specs live under `.hero/planning/{features,bugs,epics,prds,intake}/<slug>/spec.md`), now with `owner: engineering` and a new `owner_history` row.
 - A one-line log: `handoff <slug>: owner flipped pm → engineering @ <timestamp>; engineering queue updated.`
 
 ## Contextual invocation

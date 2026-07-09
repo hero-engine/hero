@@ -91,6 +91,7 @@ func validateSpec(s *spec.Spec, slugIndex map[string]bool, projectRoot string) [
 		spec.TypeConvention: true,
 		spec.TypeDecision:   true,
 		spec.TypeInitiative: true,
+		spec.TypeExplainer:  true,
 	}
 	if s.Type != "" && !validTypes[s.Type] {
 		issues = append(issues, fmt.Sprintf("invalid type: %q", s.Type))

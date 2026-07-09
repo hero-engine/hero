@@ -12,13 +12,13 @@ import (
 
 // render.go — per-harness format rendering of canonical content.
 //
-// Most install targets symlink (or render copy) the canonical
-// agents/commands/skills tree directly because their consuming
-// harness reads the same file format Hero authors. Codex agents
-// (TOML) and Copilot agents/commands (.prompt.md) are exceptions:
-// the consuming format genuinely differs from canonical markdown.
-// This file provides the small helpers those targets use to render
-// rather than symlink.
+// Install targets write the canonical agents/commands/skills tree into
+// each harness's own directory — nothing is symlinked. Most targets
+// share the file format Hero authors, so the write is a plain copy.
+// Codex agents (TOML) and Copilot agents/commands (.prompt.md) are
+// exceptions: the consuming format genuinely differs from canonical
+// markdown. This file provides the small helpers those targets use to
+// render the differing shape.
 //
 // Single canonical source is preserved — these helpers READ
 // canonical bytes from opts.sourceFS() and emit a different shape
@@ -27,11 +27,11 @@ import (
 // canonicalEntry is a single canonical file from the embedded source
 // FS, ready for rendering.
 type canonicalEntry struct {
-	Name        string // filename stem (e.g. "engineer" for "engineer.md")
-	SourcePath  string // path within sourceFS (e.g. "agents/engineer.md")
+	Name        string            // filename stem (e.g. "engineer" for "engineer.md")
+	SourcePath  string            // path within sourceFS (e.g. "agents/engineer.md")
 	Frontmatter map[string]string // parsed YAML frontmatter, key→trimmed-value
-	Body        []byte // markdown body after the closing `---`
-	Raw         []byte // full file bytes
+	Body        []byte            // markdown body after the closing `---`
+	Raw         []byte            // full file bytes
 }
 
 // renderToFile renders entries from a canonical kind dir into destDir
@@ -211,4 +211,3 @@ func renderCopilotPromptFile(entry canonicalEntry) (string, []byte, error) {
 	}
 	return entry.Name + ".prompt.md", out.Bytes(), nil
 }
-

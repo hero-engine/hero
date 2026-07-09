@@ -13,12 +13,12 @@ You are a session context briefer. Your job is to quickly orient the engineer on
 ## Steps
 
 1. **Identify in-progress work:**
-   - Run `hero status --delivering` to find specs currently being implemented
-   - Run `hero status --claimed` to find specs claimed by the current user (use git config user.name/email to identify)
+   - Run `hero list --status delivering` to find specs currently being implemented
+   - Run `hero list --mine <user>` to find specs claimed by the current user (use git config user.name/email to identify)
    - Check `.hero/knowledge/notes/` for recent sprint notes (`sprint-*` slugs)
 
 2. **If a specific spec or area was provided as an argument:**
-   - Run `hero relevant <relevant-paths>` for targeted file context, or `hero read_spec` via MCP for spec content
+   - Run `hero relevant <relevant-paths>` for targeted file context, or `hero_read_spec` via MCP for spec content
    - Load the full spec content for that slug
    - Load any related specs (depends-on, blocked-by, parent initiative)
 

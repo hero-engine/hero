@@ -78,16 +78,20 @@ Paraphrasing erases trust.
 
 ## Lifecycle
 
-States: `new → triaged → linked` (terminal); plus `rejected` (terminal)
-reachable from `new` or `triaged`.
+States: `planning → triaged → promoted` (terminal); plus `rejected` and
+`merged` (terminal) reachable from `planning` or `triaged`. This mirrors
+the authoritative frontmatter `lifecycle:` block above and the engine
+`Status` constants (planning/triaged/promoted/rejected/merged).
 
-- `new → triaged` — gate: intake-triager classified and clustered (target
-  SLA: 24h).
-- `triaged → linked` — gate: linked to an initiative / epic / feature, or
-  merged into another intake.
-- `triaged → rejected` — gate: rejected with reason.
-- `new → rejected` — gate: obvious reject at intake (spam, off-product,
-  duplicate of recently rejected).
+- `planning → triaged` — gate: intake-triager classified and clustered
+  (target SLA: 24h).
+- `triaged → promoted` — gate: promoted to a feature / bug / epic
+  (`hero intake promote <slug>`), writing the `derived_from` provenance edge.
+- `triaged → rejected` — gate: rejected with reason
+  (`hero intake reject <slug>`).
+- `triaged → merged` — gate: merged into another intake.
+- `planning → rejected` — gate: obvious reject at intake (spam,
+  off-product, duplicate of recently rejected).
 
 ## Kind
 

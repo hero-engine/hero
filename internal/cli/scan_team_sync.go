@@ -37,7 +37,7 @@ const pullStaleAfter = 5 * time.Minute
 // Best-effort: any network/auth error is collapsed into Skipped+Reason
 // rather than bubbling up — never breaks the scan.
 func runOpportunisticTeamSync(cfg config.Config, repoKey string, store *graph.Store) (*teamSyncResult, error) {
-	creds, err := loadCredentials()
+	creds, err := loadRefreshedCredentials()
 	if err != nil || creds == nil || creds.AccessToken == "" {
 		return &teamSyncResult{Skipped: true, Reason: "not logged in to Hero Cloud"}, nil
 	}
@@ -50,11 +50,8 @@ func runOpportunisticTeamSync(cfg config.Config, repoKey string, store *graph.St
 		cloudURL = cloudBaseURL()
 	}
 	httpClient := &http.Client{
-		Timeout: 30 * time.Second,
-		Transport: &authTransport{
-			token: creds.AccessToken,
-			base:  http.DefaultTransport,
-		},
+		Timeout:   30 * time.Second,
+		Transport: newAuthTransport(creds),
 	}
 	c := graph.NewSyncClient(
 		fmt.Sprintf("%s/api/v1/orgs/%s", cloudURL, cfg.Cloud.OrgID),

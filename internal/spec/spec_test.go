@@ -214,6 +214,50 @@ relates-to: use-postgres-fts
 	}
 }
 
+func TestParseRelations_ShorthandAliasesAndBlockList(t *testing.T) {
+	// The shorthands first-use sessions reach for must form relations,
+	// not silently drop: `initiative:` (→ parent), `depends_on:`
+	// (underscore → depends-on), and a block-style `child:` list.
+	content := `---
+title: Config Loader
+type: feature
+status: planning
+initiative: i1-config-plane
+depends_on: [f2-config-store, f3-watcher]
+child:
+  - sub-a
+  - sub-b
+---
+# Config Loader
+`
+	s, err := Parse(content, "/project/.hero/planning/features/config-loader/spec.md", time.Now())
+	if err != nil {
+		t.Fatalf("Parse failed: %v", err)
+	}
+
+	var parents, dependsOn, children []string
+	for _, r := range s.Relations {
+		switch r.Kind {
+		case "parent":
+			parents = append(parents, r.Target)
+		case "depends-on":
+			dependsOn = append(dependsOn, r.Target)
+		case "child":
+			children = append(children, r.Target)
+		}
+	}
+
+	if len(parents) != 1 || parents[0] != "i1-config-plane" {
+		t.Errorf("initiative: should map to a parent relation, got parents=%v", parents)
+	}
+	if len(dependsOn) != 2 || dependsOn[0] != "f2-config-store" || dependsOn[1] != "f3-watcher" {
+		t.Errorf("depends_on: should map to depends-on relations, got %v", dependsOn)
+	}
+	if len(children) != 2 || children[0] != "sub-a" || children[1] != "sub-b" {
+		t.Errorf("block-style child: list should parse, got %v", children)
+	}
+}
+
 func TestTypeFromPath(t *testing.T) {
 	tests := []struct {
 		path string
@@ -225,6 +269,8 @@ func TestTypeFromPath(t *testing.T) {
 		{"/project/.hero/decisions/qux/spec.md", TypeDecision},
 		{"/project/.hero/planning/initiatives/quux/spec.md", TypeInitiative},
 		{"/project/.hero/specs/foo/spec.md", TypeFeature},
+		{"/project/.hero/knowledge/explainers/agent-outposts/spec.md", TypeExplainer},
+		{"/project/.hero/planning/intake/csv-export/spec.md", TypeIntake},
 	}
 
 	for _, tt := range tests {
@@ -262,6 +308,12 @@ func TestSlugFromPath(t *testing.T) {
 		{"/project/.hero/planning/features/add-csv-export/spec.md", "add-csv-export"},
 		{"/project/.hero/specs/dark-mode/spec.md", "dark-mode"},
 		{"/project/.hero/conventions/api-format/spec.md", "api-format"},
+		// Three-file requirements.md → directory name (not "requirements").
+		{"/project/.hero/planning/features/dark-mode/requirements.md", "dark-mode"},
+		// Flat <slug>.md → filename stem, not the parent dir (initiative
+		// children stored as siblings). Regression: flat-named-spec-discovery.
+		{"/project/.hero/planning/initiatives/make-it-fast/f-15-buffer-pool.md", "f-15-buffer-pool"},
+		{"/project/.hero/planning/loose-feature.md", "loose-feature"},
 	}
 
 	for _, tt := range tests {
@@ -473,6 +525,100 @@ func TestDiscover(t *testing.T) {
 	}
 	if typeCount[TypeDecision] != 1 {
 		t.Errorf("Decisions = %d, want 1", typeCount[TypeDecision])
+	}
+}
+
+// TestDiscoverFlatNamedSpec covers initiative children stored as flat
+// `<slug>.md` files sibling to the initiative's spec.md — they must be
+// discovered by their declared work type. Regression for
+// flat-named-spec-discovery.
+func TestDiscoverFlatNamedSpec(t *testing.T) {
+	heroDir := filepath.Join(t.TempDir(), ".hero")
+	initDir := filepath.Join(heroDir, "planning", "initiatives", "make-it-fast")
+	if err := os.MkdirAll(initDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+
+	files := map[string]string{
+		// The initiative itself (canonical spec.md).
+		filepath.Join(initDir, "spec.md"): "---\ntype: initiative\nslug: make-it-fast\nstatus: delivering\n---\n# Make It Fast\n",
+		// Flat children sibling to the initiative — must be discovered.
+		filepath.Join(initDir, "f-01-buffer-pool.md"): "---\ntitle: Buffer Pool\nslug: f-01-buffer-pool\ntype: feature\nstatus: delivering\nparent: make-it-fast\n---\n# Buffer Pool\n",
+		filepath.Join(initDir, "f-02-wal-commit.md"):  "---\nslug: f-02-wal-commit\ntype: bug\nstatus: delivering\nparent: make-it-fast\n---\n# WAL Commit\n",
+		// Flat feature WITHOUT an explicit slug (relies on filename) — still
+		// discovered because type is explicit; slug derives from filename.
+		filepath.Join(heroDir, "planning", "loose-feature.md"): "---\ntype: feature\nstatus: planning\n---\n# Loose Feature\n",
+	}
+	for path, content := range files {
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatalf("WriteFile %s: %v", path, err)
+		}
+	}
+
+	discovered, err := Discover(heroDir)
+	if err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+
+	bySlug := make(map[string]*Spec)
+	for _, s := range discovered {
+		bySlug[s.Slug] = s
+	}
+
+	for _, want := range []string{"make-it-fast", "f-01-buffer-pool", "f-02-wal-commit", "loose-feature"} {
+		if _, ok := bySlug[want]; !ok {
+			t.Errorf("Discover missed flat spec %q; got %d specs: %v", want, len(discovered), slugs(discovered))
+		}
+	}
+	if got := bySlug["f-01-buffer-pool"]; got != nil && got.Type != TypeFeature {
+		t.Errorf("f-01 type = %q, want feature", got.Type)
+	}
+	if got := bySlug["f-02-wal-commit"]; got != nil && got.Type != TypeBug {
+		t.Errorf("f-02 type = %q, want bug", got.Type)
+	}
+}
+
+// TestDiscoverIgnoresNonSpecFlatFiles guards against the explicit-type gate
+// regressing into a vacuum cleaner: untyped artifacts and knowledge entries
+// stored as flat `.md` files must stay out of work-spec discovery.
+func TestDiscoverIgnoresNonSpecFlatFiles(t *testing.T) {
+	heroDir := filepath.Join(t.TempDir(), ".hero")
+	initDir := filepath.Join(heroDir, "planning", "initiatives", "make-it-fast")
+	auditDir := filepath.Join(initDir, "audits")
+	nextDir := filepath.Join(heroDir, "next")
+	knowDir := filepath.Join(heroDir, "knowledge", "decisions")
+	for _, d := range []string{auditDir, nextDir, knowDir} {
+		if err := os.MkdirAll(d, 0o755); err != nil {
+			t.Fatalf("MkdirAll: %v", err)
+		}
+	}
+
+	files := map[string]string{
+		// One real spec so the directory isn't empty.
+		filepath.Join(initDir, "spec.md"): "---\ntype: initiative\nslug: make-it-fast\nstatus: delivering\n---\n# Make It Fast\n",
+		// Untyped artifacts under an initiative dir — would default to
+		// initiative/feature via typeFromPath if the explicit gate broke.
+		filepath.Join(auditDir, "f-01-followup-2026-06-24.md"): "# Audit\n\nNo frontmatter, just prose.\n",
+		filepath.Join(nextDir, "alice.md"):                     "---\nuser: alice\n---\n# Handoff\n",
+		// Knowledge entries with explicit non-work types — excluded.
+		filepath.Join(knowDir, "some-decision.md"):             "---\ntype: decision\nstatus: accepted\n---\n# A Decision\n",
+		filepath.Join(heroDir, "knowledge", "a-convention.md"): "---\ntype: convention\nslug: a-convention\nstatus: active\n---\n# A Convention\n",
+		filepath.Join(heroDir, "mission.md"):                   "---\ntype: mission\n---\n# Mission\n",
+		filepath.Join(initDir, "f-01-followup.retro.md"):       "---\ntype: retro\n---\n# Retro\n",
+	}
+	for path, content := range files {
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatalf("WriteFile %s: %v", path, err)
+		}
+	}
+
+	discovered, err := Discover(heroDir)
+	if err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+
+	if len(discovered) != 1 || discovered[0].Slug != "make-it-fast" {
+		t.Errorf("Discover should find only the initiative; got %d: %v", len(discovered), slugs(discovered))
 	}
 }
 
@@ -1128,6 +1274,46 @@ func TestTripwireTypeFromPath(t *testing.T) {
 	}
 }
 
+func TestExplainerParse(t *testing.T) {
+	content := `---
+title: How Agent Outposts Work
+type: explainer
+synthesized_from:
+  - agent-outposts
+  - outpost-credentials
+last_synthesized: 2026-06-23
+---
+# How Agent Outposts Work
+
+## What it is
+
+Operable external systems with scoped credentials.
+
+## Developer Notes
+
+Watch the token refresh path.
+`
+	s, err := Parse(content, "/project/.hero/knowledge/explainers/agent-outposts/spec.md", time.Now())
+	if err != nil {
+		t.Fatalf("Parse failed: %v", err)
+	}
+	if s.Type != TypeExplainer {
+		t.Errorf("Type = %q, want %q", s.Type, TypeExplainer)
+	}
+	if !s.IsKnowledge() {
+		t.Error("explainer should be classified as knowledge")
+	}
+	if s.IsWorkSpec() {
+		t.Error("explainer must not be classified as a work spec")
+	}
+	if len(s.SynthesizedFrom) != 2 || s.SynthesizedFrom[0] != "agent-outposts" {
+		t.Errorf("SynthesizedFrom = %v, want [agent-outposts outpost-credentials]", s.SynthesizedFrom)
+	}
+	if s.LastSynthesized != "2026-06-23" {
+		t.Errorf("LastSynthesized = %q, want %q", s.LastSynthesized, "2026-06-23")
+	}
+}
+
 // withNowFn swaps the package-level nowFn for the duration of the test
 // and restores the original on cleanup. Tests use this to make the
 // `completed_at:` stamp deterministic.
@@ -1239,5 +1425,135 @@ body
 	want := time.Date(2026, 5, 31, 19, 42, 8, 0, time.UTC)
 	if !s.CompletedAt.Equal(want) {
 		t.Errorf("CompletedAt = %v, want %v", s.CompletedAt, want)
+	}
+}
+
+func TestGoalSectionInitiativeOnly(t *testing.T) {
+	initiative := `---
+title: Drive
+slug: drive
+type: initiative
+status: planning
+---
+# Drive
+
+## Goal
+
+Run the whole initiative autonomously.
+
+## Problem
+
+Stops every spec.
+`
+	s, err := Parse(initiative, "/p/.hero/planning/initiatives/drive/spec.md", time.Now())
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if got := s.GoalSection(); !strings.Contains(got, "autonomously") {
+		t.Errorf("GoalSection() = %q, want it to contain the Goal body", got)
+	}
+	if strings.Contains(s.GoalSection(), "## Problem") {
+		t.Errorf("GoalSection() leaked into next section: %q", s.GoalSection())
+	}
+
+	feature := `---
+title: Leaf
+slug: leaf
+type: feature
+status: planning
+---
+# Leaf
+
+## Goal
+
+A feature goal.
+`
+	f, err := Parse(feature, "/p/.hero/planning/features/leaf/spec.md", time.Now())
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if got := f.GoalSection(); got != "" {
+		t.Errorf("GoalSection() on a feature = %q, want empty (initiative-only)", got)
+	}
+}
+
+func TestRunConditionDerivedFromChildren(t *testing.T) {
+	init := &Spec{Slug: "drive", Type: TypeInitiative, Sections: map[string]string{"goal": "No authored condition here."}}
+	childA := &Spec{Slug: "alpha", Type: TypeFeature, Relations: []Relation{{Kind: "parent", Target: "drive"}}}
+	childB := &Spec{Slug: "bravo", Type: TypeFeature, Relations: []Relation{{Kind: "parent", Target: "drive"}}}
+	unrelated := &Spec{Slug: "zulu", Type: TypeFeature, Relations: []Relation{{Kind: "parent", Target: "other"}}}
+	bySlug := map[string]*Spec{"drive": init, "alpha": childA, "bravo": childB, "zulu": unrelated}
+
+	got := init.RunCondition(bySlug)
+	for _, want := range []string{"hero verify", "needs_me", "alpha, bravo"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("RunCondition() = %q, want substring %q", got, want)
+		}
+	}
+	if strings.Contains(got, "zulu") {
+		t.Errorf("RunCondition() included unrelated spec: %q", got)
+	}
+}
+
+func TestRunConditionPrefersAuthored(t *testing.T) {
+	init := &Spec{
+		Slug: "drive", Type: TypeInitiative,
+		Sections: map[string]string{"goal": "Objective prose.\n\n> Run until all gold tests are green.\n"},
+	}
+	child := &Spec{Slug: "alpha", Type: TypeFeature, Relations: []Relation{{Kind: "parent", Target: "drive"}}}
+	bySlug := map[string]*Spec{"drive": init, "alpha": child}
+
+	got := init.RunCondition(bySlug)
+	if got != "Run until all gold tests are green." {
+		t.Errorf("RunCondition() = %q, want the authored condition (blockquote stripped)", got)
+	}
+}
+
+func TestRunConditionNonInitiativeEmpty(t *testing.T) {
+	f := &Spec{Slug: "leaf", Type: TypeFeature, Sections: map[string]string{"goal": "x"}}
+	if got := f.RunCondition(map[string]*Spec{"leaf": f}); got != "" {
+		t.Errorf("RunCondition() on a feature = %q, want empty", got)
+	}
+}
+
+func TestChildSlugsSortedAndScoped(t *testing.T) {
+	init := &Spec{Slug: "drive", Type: TypeInitiative}
+	c1 := &Spec{Slug: "charlie", Relations: []Relation{{Kind: "parent", Target: "drive"}}}
+	c2 := &Spec{Slug: "alpha", Relations: []Relation{{Kind: "parent", Target: "drive"}}}
+	c3 := &Spec{Slug: "bravo", Relations: []Relation{{Kind: "depends-on", Target: "drive"}}} // not a child
+	bySlug := map[string]*Spec{"drive": init, "charlie": c1, "alpha": c2, "bravo": c3}
+
+	got := init.ChildSlugs(bySlug)
+	want := []string{"alpha", "charlie"}
+	if len(got) != len(want) {
+		t.Fatalf("ChildSlugs() = %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("ChildSlugs() = %v, want %v (sorted, parent-only)", got, want)
+		}
+	}
+}
+
+func TestParseAutonomyField(t *testing.T) {
+	content := `---
+title: Drive
+slug: drive
+type: initiative
+status: planning
+autonomy: autonomous
+---
+# Drive
+
+## Goal
+
+Run it.
+`
+	s, err := Parse(content, "/p/.hero/planning/initiatives/drive/spec.md", time.Now())
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if s.Autonomy != "autonomous" {
+		t.Errorf("Autonomy = %q, want autonomous", s.Autonomy)
 	}
 }

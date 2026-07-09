@@ -13,13 +13,15 @@ import (
 
 // SyncClient pushes local-graph deltas to and pulls server-graph
 // deltas from a hero team server. The wire format is documented in
-// .hero/planning/features/graph-memory-federation/spec.md:
+// .hero/planning/features/graph-memory-federation/spec.md. ServerURL is
+// the org-scoped base (…/api/v1/orgs/<org>); Push/Pull append the
+// graph route onto it:
 //
-//   POST /api/v1/graph/push?repo=<repo>
+//   POST <ServerURL>/graph/push?repo=<repo>
 //     body: PushRequest
 //     resp: PushResponse
 //
-//   GET  /api/v1/graph/pull?repo=<repo>&since=<cursor>&include=team,unit
+//   GET  <ServerURL>/graph/pull?repo=<repo>&since=<cursor>&include=team,unit
 //     resp: PullResponse
 //
 // All bodies are JSON. Auth is handled by the caller injecting an
@@ -270,7 +272,7 @@ func (s *Store) Push(c *SyncClient) (*PushResponse, error) {
 		return nil, err
 	}
 
-	endpoint := c.ServerURL + "/api/v1/graph/push?repo=" + url.QueryEscape(c.Repo)
+	endpoint := c.ServerURL + "/graph/push?repo=" + url.QueryEscape(c.Repo)
 	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
@@ -309,7 +311,7 @@ func (s *Store) Pull(c *SyncClient) (*PullResponse, int, int, int, error) {
 	}
 	q.Set("include", "team,unit")
 
-	endpoint := c.ServerURL + "/api/v1/graph/pull?" + q.Encode()
+	endpoint := c.ServerURL + "/graph/pull?" + q.Encode()
 	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, 0, 0, 0, err

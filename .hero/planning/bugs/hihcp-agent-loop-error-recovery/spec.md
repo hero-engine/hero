@@ -2,7 +2,7 @@
 title: "Harden Agent Loop Error Recovery (Stuck Turn Prevention)"
 slug: hihcp-agent-loop-error-recovery
 type: bug
-status: planning
+status: handed_off
 domain: engineering
 size: medium
 priority: high
@@ -76,3 +76,13 @@ Three complementary fixes:
 - The model receives a structured error it can understand and act on
 - The UI shows what went wrong when a tool call fails
 - Legitimate long-running tools (under 120s) are not interrupted
+
+## Handoff Trail
+
+- 2026-06-24T18:01:15Z — out → hero-code (peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
+  mode: async-drop
+  originating_spec: hihcp-agent-loop-error-recovery
+  peer_spec: hero-code/hihcp-agent-loop-error-recovery
+  at_commit: 2f774b7
+  reason: "Targets hero-code's Engine/AgentLoop.swift + ChatLoop reducers (runningTools, assistant_turn_errored). Not present in the hero CLI repo."
+

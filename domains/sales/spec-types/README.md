@@ -4,7 +4,7 @@ Deal spec schema definitions for the Hero Sales domain pack.
 
 | Spec Type | File | Description |
 |---|---|---|
-| `deal` | [deal.yaml](deal.yaml) | An active sales opportunity — frontmatter fields, status values, CRM integration fields |
+| `deal` | [deal.md](deal.md) | An active sales opportunity — frontmatter fields, status values, CRM integration fields |
 
 ### Deal status values
 
@@ -18,7 +18,9 @@ Deal spec schema definitions for the Hero Sales domain pack.
 | `won` | Closed Won |
 | `lost` | Closed Lost |
 
+Deal statuses are registry-backed lifecycle states: `prospect → qualifying → demo → proposal → negotiation → won|lost`.
+
 Deal specs live at `.hero/planning/deals/<slug>/spec.md`.
 
-See [deal.yaml](deal.yaml) for the full schema with all frontmatter fields.
+See [deal.md](deal.md) for the full schema with all frontmatter fields.
 See [../AGENTS.md](../AGENTS.md) for how agents work with deal specs.

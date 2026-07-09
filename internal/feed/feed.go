@@ -28,6 +28,7 @@ var ValidTypes = []string{
 	"blocker_hit",
 	"delivery_complete",
 	"subproject_changed",
+	"drive.pause_outcome",
 
 	// cross-repo-peering (Phase 0+1)
 	"workspace.peer_id_minted",

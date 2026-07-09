@@ -459,6 +459,12 @@ func (r *ingestReport) print() {
 			fmt.Printf("  ❌ %-12s %v\n", s.name+":", s.err)
 		}
 	}
+	for _, s := range r.steps {
+		if s.name == "enrichment" && s.skipped {
+			fmt.Println("  note: enrichment is optional LLM analysis; the structural graph (specs, relations) is built without it.")
+			break
+		}
+	}
 }
 
 // writeSiblingSubgraphs iterates hero.json's `repos` block and ingests
@@ -638,18 +644,18 @@ func writeWorkSubgraph(cfg config.Config, projectRoot, heroDir string, store *gr
 
 	// Tier-2 extraction — best-effort.
 	if tierTwo, err := extract.RunAuto(context.Background(), store, heroDir, repoKey); err != nil {
-		report.add(stepResult{name: "tier-2", failed: true, err: err})
+		report.add(stepResult{name: "enrichment", failed: true, err: err})
 	} else if tierTwo.Skipped {
-		report.add(stepResult{name: "tier-2", skipped: true, reason: tierTwo.Reason})
+		report.add(stepResult{name: "enrichment", skipped: true, reason: tierTwo.Reason})
 	} else if tierTwo.Sources > 0 {
 		report.add(stepResult{
-			name: "tier-2",
+			name: "enrichment",
 			ok:   true,
 			detail: fmt.Sprintf("%d decisions, %d concepts, %d edges across %d sources (%d cached)",
 				tierTwo.Decisions, tierTwo.Concepts, tierTwo.Edges, tierTwo.Sources, tierTwo.Cached),
 		})
 	} else {
-		report.add(stepResult{name: "tier-2", skipped: true, reason: "no sources to extract from"})
+		report.add(stepResult{name: "enrichment", skipped: true, reason: "no sources to extract from"})
 	}
 
 	// Claude Code memory ingest. Omit the step entirely when the dir

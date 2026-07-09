@@ -23,7 +23,8 @@ func LoadCounts(in CountsInputs) PageCounts {
 		// Skip non-work types from the headline tally.
 		switch s.Type {
 		case spec.TypeContext, spec.TypeNote, spec.TypeExternal,
-			spec.TypeConvention, spec.TypeRule, spec.TypeTripwire:
+			spec.TypeConvention, spec.TypeRule, spec.TypeTripwire,
+			spec.TypeExplainer:
 			continue
 		}
 		out.Total++

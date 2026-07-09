@@ -183,11 +183,21 @@ func resetFlags() {
 	searchSince = ""
 	searchListOnly = false
 
+	// Reset goal flags
+	goalCheck = false
+	goalEmit = false
+	goalDryRun = 0
+	goalAnswer = ""
+	goalRedirect = false
+	goalTrust = false
+	goalUntrust = ""
+
 	// Reset install flags
 	installTarget = ""
 	installForce = false
 	installDryRun = false
 	installNoHooks = false
+	installJSON = false
 
 	// Reset upgrade flags
 	upgradeDryRun = false
@@ -296,6 +306,9 @@ func resetFlags() {
 	importTag = ""
 	importMaxBytes = defaultMaxIngestFileBytes
 
+	// Reset export flags
+	exportConflict = "fail"
+
 	// Reset replay flags
 	replayBase = "HEAD"
 
@@ -359,6 +372,16 @@ func resetFlags() {
 	// Reset sync cloud flags
 	syncCloudFull = false
 	syncCloudStatus = false
+
+	// Reset sync push (field-level) flags
+	syncPushFields = nil
+	syncPushDryRun = false
+	syncPushJSON = false
+	syncPushFieldSource = "diff"
+
+	// Reset sync pull (field-level) flags
+	syncPullFields = nil
+	syncPullJSON = false
 
 	// Reset backfill-completed-at flags
 	backfillCompletedAtDryRun = false

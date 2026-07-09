@@ -5,9 +5,37 @@ Route this delivery request to the `feature-delivery-lead` agent for execution.
 
 Be the `feature-delivery-lead` agent. Load the `context-injection` skill before starting.
 
+**Initiative guard.** If the requested target resolves to a `type: initiative`,
+do NOT deliver one child. An initiative is a parent — running the whole thing
+autonomously is `/drive`, not `/deliver`. Offer the upgrade: "That's an
+initiative — `/deliver` works one spec at a time. Want to `/drive` the whole
+thing (autonomous, pauses when it needs you) instead?" Let the user pick;
+never silently deliver a single child. (`hero spec deliver` enforces this at
+the CLI layer too.)
+
 **Before starting work**, emit a `hero next ask` capturing what the user
 asked for. This preserves session intent across compaction — see the
 `next-handoff-emit` skill for the full pattern (ask / suggest / reflection).
+
+## Definition of done
+
+A delivery is **not** finished until `hero spec verify <slug>` passes — and
+verify requires the cold audit (step 6 below) to have run first. Until that
+gate passes the work is in-flight, not delivered: do not report "done," do not
+suggest next steps, and do not leave the spec in `planning`/`delivering` with
+the audit unrun.
+
+The closing gates — cold audit → `hero spec verify` — run in the **same turn**
+as the implementation. They are not a follow-up the user triggers later. If you
+catch yourself about to say "the audit still needs to run" or "I didn't mark it
+complete because the gate hasn't run," that is the signal to **run the gate
+now**, not to yield.
+
+This holds in **every** mode, including the default supervised mode. The
+persistence rule below (`agent-reliability` — "Persistence on continuous
+tasks") is not autopilot-only: reaching the closing gates before you yield is
+mandatory regardless of mode. "Pause at handoffs" does not include the closing
+gates — they are part of finishing, not a decision to surface.
 
 ## Delivery modes
 
@@ -16,7 +44,7 @@ to **supervised**.
 
 | Flag | Behavior |
 |---|---|
-| `--supervised` (default) | Pause at handoffs, surface decisions, ask before destructive actions. Current behavior. |
+| `--supervised` (default) | Pause at handoffs, surface decisions, ask before destructive actions. The closing gates (cold audit → `hero spec verify`) are NOT handoffs — run them before yielding, never stop short and hand back with the audit unrun. |
 | `--autopilot` | Run to completion without intermediate confirmations. Stop only on test failure, drift warning, boundary violation, or any non-`DONE` Completion Ledger item (PARTIAL, SKIPPED, BLOCKED). |
 | `--dry-run` | Run analysis and planning. Produce a delivery plan (file list, agent assignments, estimated changes) but write NO code. |
 
@@ -72,9 +100,9 @@ If the user asks to fix/deliver multiple specs (e.g. "fix the researched bugs", 
    - Read the spec and its fix plan
    - Implement the fix
    - Run tests / build to verify
-   - Require a **Completion Ledger** from the engineer covering every acceptance criterion and Changes item (see `engineer.md` — "Closing output"). Validate it against the spec.
+   - Require a **Completion Ledger** from the engineer covering every acceptance criterion and Changes item (see the `completion-ledger` skill). Validate it against the spec.
    - Commit with a message referencing the spec slug and tracker ID
-   - Only set `status: completed` if the ledger is fully `DONE`. PARTIAL rows are sent back to the engineer to finish (see "Validate the Completion Ledger" above); SKIPPED / BLOCKED rows halt and surface — do not flip status without sign-off. `hero spec verify` or the async runner will auto-archive completed specs to specs/.
+   - Run `hero spec verify <slug>` once the ledger is fully `DONE`. PARTIAL rows are sent back to the engineer to finish (see "Validate the Completion Ledger" above); SKIPPED / BLOCKED rows halt and surface — do not flip status without sign-off. `hero spec verify` (or the async runner) is what flips status and auto-archives to specs/.
    - Post results to tracker if configured
 5. **One commit per fix** — each fix is atomic and independently revertable
 6. If a fix fails tests or creates problems, skip it, note the issue in the spec, and move to the next one
@@ -126,7 +154,7 @@ At the end of the delivery loop:
 4. **Link tests to criteria** — connect each new test back to the
    acceptance criterion it verifies so regressions are traceable.
 5. **Validate the Completion Ledger** — the engineer's closing artifact
-   (see `engineer.md` — "Closing output") enumerates every acceptance
+   (see the `completion-ledger` skill) enumerates every acceptance
    criterion and every `## Changes` item with a `DONE` / `PARTIAL` /
    `SKIPPED` / `BLOCKED` status. Before flipping spec status:
    - Confirm every acceptance criterion and every Changes item has a row.

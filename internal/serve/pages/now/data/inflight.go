@@ -90,7 +90,8 @@ func inflightRowsFor(heroDir, projectSlug, urlPrefix string) []InflightRow {
 		// their own pages and don't belong in this strip.
 		switch s.Type {
 		case spec.TypeContext, spec.TypeNote, spec.TypeExternal,
-			spec.TypeConvention, spec.TypeRule, spec.TypeTripwire:
+			spec.TypeConvention, spec.TypeRule, spec.TypeTripwire,
+			spec.TypeExplainer:
 			continue
 		}
 		href := "/work/spec/" + s.Slug
