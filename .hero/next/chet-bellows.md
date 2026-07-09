@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-09T01:10:26Z
+updated: 2026-07-09T17:11:28Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> we should spec up an audit on all the hero agents / skills and commands and see if there is any room for tightening and improving on them, as well as the agents content. just overall see if there is anything you see to optimize what hero is doing for agents.
+> In /Users/bwheeler/projects/hero-engine/repository/hero: `internal/cli/verify.go`'s `autoCompleteParentIfReady` (around line 624) is supposed to auto-complete and archive an initiative spec once every declared child is `status: completed`. It did not fire for the `content-remediation` initiative (.hero/planning/initiatives/content-remediation/spec.md, type: initiative, status: planning) even after…
 
 ## Suggested next prompt
 

@@ -65,6 +65,26 @@ func Analyze(idx *index.DB, filePaths []string) ([]Report, error) {
 			}
 		}
 
+		// Flat code-scoped knowledge governs this file too but lives in the
+		// isolated knowledge table. Conventions/rules join the Conventions
+		// block; decisions join Decisions — parity with BuildContext routing.
+		// Spec: knowledge-context-injection (drift/impact follow-on).
+		if knowledge, kerr := idx.FindKnowledgeForFiles([]string{fp}); kerr == nil {
+			for _, k := range knowledge {
+				if k.Kind == "decisions" || k.Type == "decision" {
+					r.Decisions = append(r.Decisions, DecisionRef{
+						Slug:  k.Slug,
+						Title: k.Title,
+					})
+				} else {
+					r.Conventions = append(r.Conventions, ConvRef{
+						Slug:  k.Slug,
+						Title: k.Title,
+					})
+				}
+			}
+		}
+
 		// Decisions mentioning the file path
 		decResults, err := idx.Search(fp)
 		if err == nil {

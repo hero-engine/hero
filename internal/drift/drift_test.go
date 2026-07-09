@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/hero-engine/hero/internal/index"
 	"github.com/hero-engine/hero/internal/spec"
 )
 
@@ -43,6 +44,60 @@ func TestCheckMissingFiles_AllExist(t *testing.T) {
 
 	if len(r.Signals) != 0 {
 		t.Errorf("expected 0 signals, got %d", len(r.Signals))
+	}
+}
+
+// TestCheckConventions_FlatKnowledge covers the drift follow-on: a flat
+// code-scoped convention in the isolated knowledge table governs a touched
+// file and must appear in the drift report, at parity with spec.md conventions.
+func TestCheckConventions_FlatKnowledge(t *testing.T) {
+	tmp := t.TempDir()
+	heroDir := filepath.Join(tmp, ".hero")
+	kPath := filepath.Join(heroDir, "knowledge", "conventions", "contracts-import-discipline.md")
+	if err := os.MkdirAll(filepath.Dir(kPath), 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	os.WriteFile(kPath, []byte(`---
+title: Contracts Import Discipline
+type: convention
+scope:
+  - internal/contracts/*.go
+---
+# Contracts Import Discipline
+Never import internal packages across the contracts boundary.
+`), 0o644)
+
+	if _, err := index.RefreshIfStale(heroDir); err != nil {
+		t.Fatalf("refresh: %v", err)
+	}
+	idx, err := index.Open(heroDir)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer idx.Close()
+
+	s := &spec.Spec{Slug: "some-work", FilesTouched: []string{"internal/contracts/manifest.go"}}
+	r := &Report{Slug: s.Slug}
+	checkConventions(r, s, idx)
+
+	var found bool
+	for _, c := range r.Conventions {
+		if c.Slug == "conventions/contracts-import-discipline" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("flat scoped convention did not surface in drift; conventions=%+v", r.Conventions)
+	}
+
+	// Non-matching file → no flat convention.
+	s2 := &spec.Spec{Slug: "other", FilesTouched: []string{"internal/other/thing.go"}}
+	r2 := &Report{Slug: s2.Slug}
+	checkConventions(r2, s2, idx)
+	for _, c := range r2.Conventions {
+		if c.Slug == "conventions/contracts-import-discipline" {
+			t.Errorf("flat convention surfaced for non-matching file")
+		}
 	}
 }
 
