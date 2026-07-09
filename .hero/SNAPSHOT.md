@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-06-22T04:20:04Z · projected from 323 source nodes_
+_Last refreshed: 2026-07-09T00:52:06Z · projected from 323 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | maturing | cmd/, internal/ | 3h ago | hero-workspace-not-self-describing |
+| core | maturing | cmd/, internal/ | 16d ago | hero-workspace-not-self-describing |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | maturing | domains/engineering/ | 10d ago | — |
-| domains/pm | concept | domains/pm/ | 34d ago | — |
-| domains/sales | maturing | domains/sales/ | 12d ago | — |
-| landing | building | web/landing/ | 21d ago | hero-landing-page |
+| domains/engineering | maturing | domains/engineering/ | 26d ago | — |
+| domains/pm | concept | domains/pm/ | 51d ago | — |
+| domains/sales | maturing | domains/sales/ | 29d ago | — |
+| landing | building | web/landing/ | 37d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 12d ago | agent-outposts |
+| serve | building | internal/serve/ | 29d ago | agent-outposts |
 | (unassigned) | — | — | — | 154 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -51,11 +51,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — landing-docs-content-refresh, unified-retrieval-layer, e2e-discovery, e2e-traversal, e2e-validation, graph-conflict-detection
-- **core** — verify-slug-resolution-hints, embedded-inference, cross-repo-peering
-- **domains/engineering** — spec-completion-loop
-- **domains/sales** — hero-sales
-- **serve** — monorepo-satellite-installs
+_Nothing recent._
 
 ## Next up across surfaces
 
@@ -68,8 +64,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Open risks & blockers
 
 - **Blocked specs (10):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `timely-briefs` (waits on retrieval-contradiction-detection).
-- **Stale-in-flight (3):** `agent-outposts` (34d), `hero-landing-page` (34d), `hero-team-server` (34d).
-- **Aged open bugs (8):** `hero-workspace-not-self-describing` (open 41d), `scan-enrichment-unbounded-loop` (open 41d), `scan-test-detection-misses-spock-vitest` (open 41d), `initiative-required-sections-drift` (open 36d), `spec-lifecycle-hygiene-breakdown` (open 35d), `claim-matches-sentinel-collision` (open 34d), `install-target-emits-both-claude-and-agents-md` (open 34d), `hero-search-json-flag-silently-ignored` (open 29d).
+- **Stale-in-flight (3):** `agent-outposts` (51d), `hero-landing-page` (51d), `hero-team-server` (51d).
+- **Aged open bugs (16):** `hero-workspace-not-self-describing` (open 58d), `scan-test-detection-misses-spock-vitest` (open 58d), `scan-enrichment-unbounded-loop` (open 58d), `initiative-required-sections-drift` (open 53d), `spec-lifecycle-hygiene-breakdown` (open 52d), `claim-matches-sentinel-collision` (open 51d), `install-target-emits-both-claude-and-agents-md` (open 51d), `hero-search-json-flag-silently-ignored` (open 46d), `next-project-file-conflict-not-regenerated` (open 36d), `desktop-sidebar-mcp-not-running` (open 35d), `hihcp-agent-loop-error-recovery` (open 30d), `hihcp-rgignore` (open 30d), `hihcp-permission-bridge-validation` (open 30d), `hihcp-mcp-first-turn-readiness` (open 30d), `hihcp-mcp-auto-reconnect` (open 30d), `hihcp-agents-md-harness-agnostic` (open 30d).
 - **Unassigned specs (154) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
