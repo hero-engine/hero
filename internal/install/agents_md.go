@@ -364,7 +364,8 @@ func renderCodexWorkflowSection() string {
 	sb.WriteString("| Note, capture, remember | `.agents/skills/command-note/SKILL.md` |\n")
 	sb.WriteString("| Compose, break down, epic | `.agents/skills/command-compose/SKILL.md` |\n")
 	sb.WriteString("| Discover, brainstorm, explore | `.agents/skills/command-discover/SKILL.md` |\n\n")
-	sb.WriteString("If the skill file doesn't exist, fall back to reading `.claude/commands/<name>.md` directly.\n")
+	sb.WriteString("If the skill file doesn't exist, fall back to reading `.claude/commands/<name>.md` directly.\n\n")
+	sb.WriteString("**A Hero workflow is not finished until its closing gate runs.** For `/deliver`, that gate is `hero spec verify <slug>` passing — and verify requires the cold delivery audit to have run first. Do NOT yield back to the user with a spec still in `planning` or `delivering` and the audit unrun. The audit and verify run in the **same turn** as the implementation — they are not a follow-up step the user triggers later. If you find yourself about to say \"the audit still needs to run\" or \"I did not mark the spec complete because the gate still needs to run\" — **run it now instead.** Stopping one step short of the closing gate is an unfinished delivery, not a handoff. This holds in every delivery mode, including the default supervised mode: \"pause at handoffs\" does not include the closing gates.\n")
 	return sb.String()
 }
 
@@ -396,6 +397,7 @@ func generateEngineeringAgentsMdBody(paths contentPathsForBody) string {
 	sb.WriteString("| Bug, error, broken, fix, investigate, diagnose | `/diagnose` |\n")
 	sb.WriteString("| New feature, build, design, add, plan | `/design` |\n")
 	sb.WriteString("| Implement, deliver, ship, code, execute | `/deliver` |\n")
+	sb.WriteString("| Autopilot/run a whole initiative, \"put X on autopilot\", \"drive the initiative\", keep working autonomously | `/drive <initiative>` |\n")
 	sb.WriteString("| Review, PR, pull request, code review | `/review` |\n")
 	sb.WriteString("| Break down, decompose, epic, sequence | `/compose` |\n")
 	sb.WriteString("| Convention, pattern, standard, style | `/convention` |\n")
@@ -428,7 +430,8 @@ func generateEngineeringAgentsMdBody(paths contentPathsForBody) string {
 	sb.WriteString("1. **Design first**: Use `/design` to create a spec before building anything\n")
 	sb.WriteString("2. **Deliver from spec**: Use `/deliver` to implement from an approved spec\n")
 	sb.WriteString("3. **Debug with specs**: Use `/diagnose` to investigate bugs and produce fix specs\n")
-	sb.WriteString("4. **Never work on closed items**: Commands like `/diagnose` and `/deliver` check if the tracker issue is still open before starting work\n\n")
+	sb.WriteString("4. **Never work on closed items**: Commands like `/diagnose` and `/deliver` check if the tracker issue is still open before starting work\n")
+	sb.WriteString("5. **Finish the closing gate before yielding**: `/deliver` is not done until `hero spec verify <slug>` passes — and verify requires the cold delivery audit to run first. The audit and verify run in the **same turn** as the implementation, not as a follow-up the user triggers. Never stop with a spec left in `planning`/`delivering` and the audit unrun, and never say \"the audit still needs to run\" — run it now instead. This holds in every delivery mode, including the default supervised mode.\n\n")
 
 	sb.WriteString("### CLI Commands\n\n")
 	sb.WriteString("These are run in the terminal, not as slash commands:\n")
@@ -455,7 +458,15 @@ func generateEngineeringAgentsMdBody(paths contentPathsForBody) string {
 	sb.WriteString("- `.hero/specs/` — Completed specs (archive)\n")
 	sb.WriteString("- `.hero/knowledge/` — Project knowledge base (conventions, decisions, context)\n")
 	sb.WriteString("- `.hero/hero.json` — Project configuration\n\n")
-	sb.WriteString("Your harness may expose the agent/command/skill directories under its own prefix (`.claude/`, `.opencode/`, `.cursor/`, etc.) as symlinks back to the canonical paths above. Edit only the canonical files — harness directories are views.\n\n")
+	sb.WriteString("`hero install` **writes** these into your harness's own directory in that harness's native format — e.g. `.claude/commands/`, `.claude/agents/`, and `.claude/skills/` for Claude; `.codex/agents/*.toml` (TOML) plus workflow skills under `.agents/skills/` for Codex (Codex has no commands directory — its slash commands are a built-in enum, so Hero commands install there as skills). They are generated copies, **not** symlinks or views: re-running `hero install` regenerates them, so hand-edits to the installed files are overwritten on the next install.\n\n")
+
+	sb.WriteString("### Declaring Spec Relationships\n\n")
+	sb.WriteString("Relationships (parent/child, depends-on, blocks) become knowledge-graph edges **only** through frontmatter. Body `[[wikilinks]]` are searchable text and form **no** edges. Two syntaxes work:\n\n")
+	sb.WriteString("Top-level shorthand (simplest):\n\n")
+	sb.WriteString("```yaml\nparent: i1-config-plane          # also accepted: initiative: i1-config-plane\ndepends-on: [f2-store, f3-watcher]   # also accepted: depends_on:\nchild:\n  - sub-a\n  - sub-b\n```\n\n")
+	sb.WriteString("`relations:` block (for mixed kinds):\n\n")
+	sb.WriteString("```yaml\nrelations:\n  - target: i1-config-plane\n    kind: parent\n  - target: other-spec\n    kind: related\n```\n\n")
+	sb.WriteString("Pitfalls: inline flow style (`- { kind: parent, target: x }`) does **not** parse — use the block form with `target:`/`kind:` on separate lines. Recognized kinds: `parent`, `child`, `depends-on`, `blocks`, `supersedes`, `related`. `hero check` warns when a spec uses edge-intent `[[wikilinks]]`.\n\n")
 
 	sb.WriteString("### Internal Lookups — Tool Routing\n\n")
 	sb.WriteString("When **you** need to look something up mid-task (as opposed to running a slash command for the user), pick the tool that matches the *shape* of the question, not the one that feels exhaustive:\n\n")

@@ -16,15 +16,15 @@ can suggest strong discovery questions tailored to this prospect's profile.
 **Check for existing intel**:
 ```
 hero search "<company or description>"
-hero search --type prospect "<company>"
+hero list --type deal --status prospect     # or plain-text: hero search "<company>"
 ```
 If a prospect or deal spec already exists, load it and extend — don't
 start fresh.
 
 **Load ICP definition** from `.hero/knowledge/` if it exists:
 ```
-hero search --type knowledge "ICP"
-hero search --type knowledge "ideal customer profile"
+hero search "ICP"
+hero search "ideal customer profile"
 ```
 Use the ICP to score fit for this prospect.
 

@@ -250,14 +250,15 @@ func TestMCP_ToolsList(t *testing.T) {
 		t.Fatalf("decode result: %v", err)
 	}
 
-	if len(result.Tools) != 42 {
-		t.Errorf("expected 42 tools, got %d", len(result.Tools))
+	if len(result.Tools) != 44 {
+		t.Errorf("expected 44 tools, got %d", len(result.Tools))
 	}
 
 	expectedNames := map[string]bool{
 		"hero_context": true, "hero_search": true, "hero_status": true,
 		"hero_check": true, "hero_nudge": true, "hero_list": true,
 		"hero_queue": true, "hero_kickoff": true,
+		"hero_goal": true,
 		"hero_knowledge": true, "hero_read_spec": true,
 		"hero_ask": true, "hero_anchor": true,
 		"hero_pulse": true, "hero_skill_run": true,
@@ -266,6 +267,7 @@ func TestMCP_ToolsList(t *testing.T) {
 		"hero_code": true,
 		"hero_error_pattern": true,
 		"hero_enrich": true,
+		"hero_synthesize": true,
 		"hero_diagnose": true,
 		"hero_score": true,
 		"hero_verify": true,
@@ -1085,5 +1087,55 @@ func TestMCP_ToolCall_List_ReadyAndBlockedExclusive(t *testing.T) {
 	})
 	if !result.IsError {
 		t.Fatal("expected error when both ready and blocked are true")
+	}
+}
+
+func TestMCP_ToolGoal_CheckParity(t *testing.T) {
+	tmp := t.TempDir()
+	heroDir := filepath.Join(tmp, ".hero")
+	initDir := filepath.Join(heroDir, "planning", "initiatives", "drive")
+	childDir := filepath.Join(initDir, "child-a")
+	if err := os.MkdirAll(childDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(initDir, "spec.md"), []byte(`---
+title: Drive
+type: initiative
+status: planning
+autonomy: guided
+---
+# Drive
+
+## Goal
+
+Run the children.
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(childDir, "spec.md"), []byte(`---
+title: Child A
+type: feature
+status: planning
+relations:
+  - target: drive
+    kind: parent
+---
+# Child A
+
+## Kickoff
+
+deliver child a
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	srv := NewMCPServer(heroDir, filepath.Dir(heroDir), "1.0.0")
+	result := callTool(t, srv, "hero_goal", map[string]interface{}{"initiative": "drive", "check": true})
+	if result.IsError {
+		t.Fatalf("hero_goal error: %s", result.Content[0].Text)
+	}
+	text := result.Content[0].Text
+	if !strings.Contains(text, `"verdict": "continue"`) || !strings.Contains(text, `"next_spec": "child-a"`) {
+		t.Errorf("hero_goal --check parity failed, got:\n%s", text)
 	}
 }

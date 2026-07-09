@@ -2,6 +2,7 @@ package hero
 
 import (
 	"io/fs"
+	"os"
 	"path"
 	"strings"
 	"testing"
@@ -406,6 +407,59 @@ func TestDomainSpecTypesFS_Sales(t *testing.T) {
 func TestDomainSpecTypesFS_UnknownReturnsNil(t *testing.T) {
 	if got := DomainSpecTypesFS("not-a-real-domain"); got != nil {
 		t.Errorf("DomainSpecTypesFS(\"not-a-real-domain\") = %v, want nil", got)
+	}
+}
+
+// TestDomainFS_ChatIsClientEmbedded documents that "chat" is a known,
+// deliberately non-installable domain (see chat-pack-disposition
+// spec): DomainFS must still return the domain-not-found error for it,
+// same as any other name outside AvailableDomains().
+func TestDomainFS_ChatIsClientEmbedded(t *testing.T) {
+	_, err := DomainFS("chat")
+	if err == nil {
+		t.Fatal("DomainFS(\"chat\") should error — chat is a client-embedded pack, not installable via hero install")
+	}
+	if !strings.Contains(err.Error(), "chat") {
+		t.Errorf("error should mention requested domain, got: %v", err)
+	}
+}
+
+// TestDomainsDirectory_AllEntriesAccounted walks the domains/ directory
+// on disk and asserts every subdirectory is either an installable pack
+// (AvailableDomains()) or an explicitly documented client-embedded pack
+// (clientEmbeddedDomains). This is the enforcement point for the
+// chat-pack-disposition decision: a new domain directory that is
+// neither embedded nor allowlisted fails here instead of silently
+// reproducing "dead content" that a future audit has to rediscover.
+//
+// Reads the source tree rather than the embed, so it only runs from a
+// repo checkout (CI, local dev); skips cleanly when domains/ isn't
+// present, e.g. this package used as a dependency elsewhere.
+func TestDomainsDirectory_AllEntriesAccounted(t *testing.T) {
+	entries, err := os.ReadDir("domains")
+	if err != nil {
+		if os.IsNotExist(err) {
+			t.Skip("domains/ not present on disk (not a repo checkout)")
+		}
+		t.Fatalf("read domains/: %v", err)
+	}
+
+	available := make(map[string]bool)
+	for _, d := range AvailableDomains() {
+		available[d] = true
+	}
+
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		if available[name] || clientEmbeddedDomains[name] {
+			continue
+		}
+		t.Errorf("domains/%s is neither in AvailableDomains() nor clientEmbeddedDomains — "+
+			"either wire it up (embed + DomainFS case + AvailableDomains entry) or add it to "+
+			"clientEmbeddedDomains in content.go with a comment naming its consumer", name)
 	}
 }
 

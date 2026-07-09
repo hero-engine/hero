@@ -32,7 +32,7 @@ func autoSyncSiblings(opts Options, result *Result) error {
 	for _, t := range siblings {
 		sub := opts
 		sub.Target = t
-		sub.AutoSyncTargets = false  // prevent recursion
+		sub.AutoSyncTargets = false    // prevent recursion
 		sub.SkipCanonicalRender = true // legacy cleanup already ran once this turn
 		if _, subErr := Run(sub); subErr != nil {
 			fmt.Fprintf(os.Stderr, "  warning: auto-sync %s failed: %v\n", t, subErr)

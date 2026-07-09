@@ -113,7 +113,9 @@ var targetContracts = map[Target]map[ContentKind]HarnessContract{
 	TargetCursor: {
 		KindAgents:   {Format: FormatFreeform},
 		KindCommands: {Format: FormatFreeform},
-		KindSkills:   {Format: FormatFreeform, FilenameRequired: "SKILL.md"},
+		// Skills are flattened to <name>.md (installSkillsFlat) —
+		// Cursor rules are flat files, not nested SKILL.md dirs.
+		KindSkills: {Format: FormatFreeform, FilenameSuffix: ".md"},
 	},
 
 	// Codex CLI reads TOML for agents (`developer_instructions`

@@ -2,11 +2,20 @@
 title: "Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"
 slug: context-engine-v2
 type: initiative
-status: planning
+status: superseded
+superseded_by: context-engine-v3
+superseded_by_peer:
+  peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3
+  peer_alias_display: hero-code
+  peer_slug: context-engine-v3
+  reason: "Remaining scope (bash-output-supersede, tool-input-compression, test-harness, system-prompt-curator) migrated to hero-code's context-engine-v3 initiative. Three v2 children (cev2-verbatim-turn-counting, cev2-protect-compaction-summaries, cev2-widen-load-bearing-markers) remain completed on their original workspaces and are not superseded."
 domain: engineering
 size: x-large
 priority: critical
 created: 2026-06-09
+relations:
+  - target: context-engine-v3
+    kind: superseded-by
 tags: [hero-code, swift, context-engine, curator, compactor, performance, token-efficiency]
 child:
   - cev2-verbatim-turn-counting
@@ -311,6 +320,26 @@ Week 4-5 (after harness is mature):
 
 Total estimated effort: 4-5 weeks with one engineer. Phases 1-2 are
 parallelizable across two engineers if capacity exists.
+
+## Reconciliation (2026-07-07)
+
+Superseded by `context-engine-v3` on peer `hero-code`. Not all v2
+scope moved — three children shipped and are frozen where they
+delivered:
+
+| Child                                | Outcome           | Where it shipped |
+|--------------------------------------|-------------------|------------------|
+| `cev2-verbatim-turn-counting`        | completed         | this workspace   |
+| `cev2-protect-compaction-summaries`  | completed         | this workspace   |
+| `cev2-widen-load-bearing-markers`    | completed         | peer `hero-code` |
+| `cev2-bash-output-supersede`         | superseded → v3   | peer `hero-code` |
+| `cev2-tool-input-compression`        | superseded → v3   | peer `hero-code` |
+| `cev2-context-engine-test-harness`   | superseded → v3 (`context-fixture-test-harness`) | peer `hero-code` |
+| `cev2-system-prompt-curator`         | superseded → v3 (`system-prompt-curation`) | peer `hero-code` |
+
+Successor initiative: `context-engine-v3` on peer `hero-code`
+(peer_id `cd8dd06d-3df1-4878-a88f-24593dcbb4b3`). It declares
+`supersedes: context-engine-v2`.
 
 ## Progress
 

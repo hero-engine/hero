@@ -11,8 +11,11 @@ Determine the check type from the request:
   - Decisions that reference outdated context
   - Suggest `hero check` for the CLI-based quick version
 
-- **Convention compliance** (`/check conventions`) — delegate to `architecture-reviewer` for a deeper review:
-  - Load active conventions from `.hero/conventions/`
+- **Convention compliance** (`/check conventions`) — delegate to the install's
+  architecture/review agent if one is installed (engineering installs ship
+  `architecture-reviewer`); otherwise perform the review directly as the
+  session agent:
+  - Load active conventions from `.hero/knowledge/conventions/`
   - Assess whether the codebase follows each convention's scope and rules
   - Report violations and drift
 
@@ -26,9 +29,11 @@ Determine the check type from the request:
   - Flag specs with no corresponding branch or recent commits
   - Suggest next actions (deliver, update, or archive)
 
-- **Dependencies** (`/check deps`) — delegate to `dependency-analyst`:
+- **Dependencies** (`/check deps`) — delegate to a dependency-analysis agent
+  if one is installed (engineering ships `dependency-analyst`); otherwise
+  run the audit directly as the session agent:
   - Audit dependency health, vulnerabilities, and license concerns
 
-For general and stale checks, perform the analysis directly. For convention compliance and dependency audits, delegate to the specialist agent.
+For general and stale checks, perform the analysis directly. For convention compliance and dependency audits, delegate to the specialist agent if the install ships one, otherwise perform the analysis directly.
 
 Check focus: $ARGUMENTS

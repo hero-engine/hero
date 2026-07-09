@@ -105,6 +105,13 @@ func runRun(cmd *cobra.Command, args []string) error {
 		return runBulkMode(heroDir, projectRoot, command, &cfg)
 	}
 
+	// Register session with team server if connected (best-effort)
+	if tc := config.LoadTeamConnection(); tc != nil && !runDryRun {
+		sessionID := fmt.Sprintf("%d", time.Now().UnixNano())
+		registerTeamSession(tc, sessionID, command, runArgs)
+		defer unregisterTeamSession(tc, sessionID)
+	}
+
 	job, err := runner.Run(runner.RunConfig{
 		ProjectRoot:   projectRoot,
 		HeroDir:       heroDir,
@@ -283,6 +290,38 @@ func tryTeamRoute(tc *config.TeamConnection, args []string) bool {
 	fmt.Printf("  Status: %s\n", result.Status)
 	fmt.Println("\nTrack with: hero jobs")
 	return true
+}
+
+func registerTeamSession(tc *config.TeamConnection, sessionID, command, args string) {
+	body := map[string]string{
+		"id":        sessionID,
+		"user_id":   tc.User,
+		"command":   command,
+		"spec_slug": args,
+	}
+	data, _ := json.Marshal(body)
+	client := &http.Client{Timeout: 5 * time.Second}
+	req, err := http.NewRequest("POST", tc.URL+"/api/sessions", bytes.NewReader(data))
+	if err != nil {
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if k, v := tc.AuthHeader(); k != "" {
+		req.Header.Set(k, v)
+	}
+	client.Do(req) // best-effort, don't fail the run
+}
+
+func unregisterTeamSession(tc *config.TeamConnection, sessionID string) {
+	client := &http.Client{Timeout: 5 * time.Second}
+	req, err := http.NewRequest("DELETE", tc.URL+"/api/sessions/"+sessionID, nil)
+	if err != nil {
+		return
+	}
+	if k, v := tc.AuthHeader(); k != "" {
+		req.Header.Set(k, v)
+	}
+	client.Do(req) // best-effort
 }
 
 func hasTag(tags []string, tag string) bool {

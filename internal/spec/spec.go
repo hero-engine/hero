@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -23,6 +24,17 @@ const (
 	TypeContext    Type = "context"
 	TypeNote       Type = "note"
 	TypeTripwire   Type = "tripwire"
+	// TypeExplainer is a synthesized "how a feature works" knowledge entry
+	// (feature-knowledge-synthesis initiative). Lives under
+	// .hero/knowledge/explainers/; classified as knowledge, not work.
+	TypeExplainer Type = "explainer"
+	// TypeIntake is a pre-commitment signal — a captured idea or inbound
+	// request that lives in the spec graph (searchable, provenance-linked)
+	// but is deliberately excluded from committed-work rollups (status,
+	// queue, velocity, snapshot) until promoted to a roadmap spec. Lives
+	// under .hero/planning/intake/. Neither work nor knowledge: see
+	// IsPreCommitment. Declared in core/spec-types/intake.md.
+	TypeIntake Type = "intake"
 )
 
 // Status represents the lifecycle state of a spec.
@@ -62,6 +74,15 @@ const (
 	// Decision states
 	StatusProposed Status = "proposed"
 	StatusAccepted Status = "accepted"
+
+	// Intake (pre-commitment) states. Initial is StatusPlanning (shared);
+	// lifecycle: planning → triaged → promoted | rejected | merged. See
+	// core/spec-types/intake.md. StatusRejected and StatusMerged are
+	// terminal alongside StatusPromoted.
+	StatusTriaged  Status = "triaged"
+	StatusPromoted Status = "promoted"
+	StatusRejected Status = "rejected"
+	StatusMerged   Status = "merged"
 
 	// Shared terminal state
 	StatusSuperseded Status = "superseded"
@@ -191,6 +212,17 @@ type Spec struct {
 	// still infer one from the spec's FilesTouched.
 	Surface string
 
+	// Owner is the canonical owner role for this spec (pm / engineering
+	// / qa / devops / design / docs). Empty on legacy specs predating
+	// owner_history; callers synthesize a single-entry history from it.
+	Owner string
+	// OwnerHistory is the parsed ownership timeline from the
+	// `owner_history:` frontmatter block. Empty when the field is
+	// absent — the loader/set-owner path synthesizes from Owner +
+	// file mtime in that case. Unknown per-entry fields are preserved
+	// for forward compat (see OwnerHistoryEntry.Extra).
+	OwnerHistory []OwnerHistoryEntry
+
 	// Domain is the DSKG namespace partition this spec belongs to
 	// (engineering / pm / future packs). Set by `/design` and
 	// `/diagnose` at scaffolding time from the active workspace
@@ -204,6 +236,19 @@ type Spec struct {
 	// frontmatter; cascades from parent initiative when unset on a
 	// child. Read by internal/snapshot/release.go's resolver.
 	ReleaseTarget string
+
+	// Autonomy is the per-initiative `/drive` policy knob:
+	// "supervised" (default — pause every spec boundary, today's
+	// behavior), "guided", or "autonomous". Read by the needs_me()
+	// predicate (internal/drive). Empty defaults to supervised.
+	Autonomy string
+
+	// SynthesizedFrom lists the spec slugs an `explainer` entry was
+	// synthesized from (provenance). Empty on non-explainer specs.
+	SynthesizedFrom []string
+	// LastSynthesized is the date an `explainer` entry was last
+	// synthesized or amended (YYYY-MM-DD). Empty on non-explainer specs.
+	LastSynthesized string
 }
 
 // ReceivedFromBlock mirrors contracts/peering.ReceivedFrom for use in
@@ -498,15 +543,64 @@ func (s *Spec) parseFrontmatter(content string) string {
 			s.Subproject = val
 		case "surface":
 			s.Surface = val
+		case "owner":
+			s.Owner = val
+		case "owner_history":
+			// Block-style YAML list of {owner, from, to} entries.
+			// Unknown per-entry keys are preserved (forward compat).
+			entries, consumed := ParseOwnerHistoryBlock(lines, i+1, closeIdx)
+			s.OwnerHistory = entries
+			if consumed > i+1 {
+				i = consumed - 1
+			}
 		case "domain":
 			s.Domain = val
 		case "release_target":
 			s.ReleaseTarget = val
+		case "autonomy":
+			s.Autonomy = val
 		case "triggers":
 			s.Triggers = parseList(val)
-		case "relates-to", "depends-on", "supersedes", "parent", "child":
-			for _, target := range parseList(val) {
-				s.Relations = append(s.Relations, Relation{Target: target, Kind: key})
+		case "synthesized_from":
+			// Provenance for `explainer` entries. Inline list or
+			// block-style list of spec slugs (same shape as `child:`).
+			targets := parseList(val)
+			if len(targets) == 0 {
+				var consumed int
+				targets, consumed = parseScalarListBlock(lines, i+1, closeIdx)
+				if consumed > i+1 {
+					i = consumed - 1
+				}
+			}
+			s.SynthesizedFrom = targets
+		case "last_synthesized":
+			s.LastSynthesized = val
+		case "relates-to", "depends-on", "depends_on", "supersedes", "parent", "child", "initiative":
+			// Accept the shorthands first-use sessions reach for:
+			// `initiative:` (a parent) and `depends_on:` (underscore
+			// variant). Normalize to canonical kinds so they form graph
+			// edges instead of silently dropping.
+			relKind := key
+			switch key {
+			case "initiative":
+				relKind = "parent"
+			case "depends_on":
+				relKind = "depends-on"
+			}
+			targets := parseList(val)
+			if len(targets) == 0 {
+				// Block-style list on the following indented lines:
+				//   child:
+				//     - slug-a
+				//     - slug-b
+				var consumed int
+				targets, consumed = parseScalarListBlock(lines, i+1, closeIdx)
+				if consumed > i+1 {
+					i = consumed - 1
+				}
+			}
+			for _, target := range targets {
+				s.Relations = append(s.Relations, Relation{Target: target, Kind: relKind})
 			}
 		case "relations":
 			// YAML-list-of-objects format:
@@ -642,6 +736,38 @@ func parseRelationsBlock(lines []string, start, end int) ([]Relation, int) {
 	}
 	if current.Target != "" {
 		out = append(out, normalizeRelation(current))
+	}
+	return out, idx
+}
+
+// parseScalarListBlock walks an indented YAML list of scalars under a
+// top-level key (e.g. a block-style `child:` / `depends-on:` list) and
+// returns the items plus the index of the next line the outer parser
+// should resume from. Without this, a block-style list silently parsed
+// to nothing because parseList only reads the same-line value.
+//
+//	child:
+//	  - slug-a
+//	  - slug-b
+func parseScalarListBlock(lines []string, start, end int) ([]string, int) {
+	var out []string
+	idx := start
+	for ; idx < end; idx++ {
+		raw := lines[idx]
+		trimmed := strings.TrimSpace(raw)
+		if trimmed == "" {
+			continue
+		}
+		// A top-level key (no indent) ends the block.
+		if leadingSpaceCount(raw) == 0 {
+			break
+		}
+		if strings.HasPrefix(trimmed, "- ") {
+			item := strings.Trim(strings.TrimSpace(strings.TrimPrefix(trimmed, "- ")), `"'`)
+			if item != "" {
+				out = append(out, item)
+			}
+		}
 	}
 	return out, idx
 }
@@ -815,6 +941,12 @@ func typeFromPath(path string) Type {
 	if strings.Contains(path, "/tripwires/") {
 		return TypeTripwire
 	}
+	if strings.Contains(path, "/explainers/") {
+		return TypeExplainer
+	}
+	if strings.Contains(path, "/intake/") {
+		return TypeIntake
+	}
 	return TypeFeature
 }
 
@@ -843,6 +975,9 @@ func statusFromPath(path string) Status {
 	if strings.Contains(path, "/tripwires/") {
 		return StatusActive
 	}
+	if strings.Contains(path, "/explainers/") {
+		return StatusActive
+	}
 	return StatusCompleted
 }
 
@@ -850,7 +985,16 @@ func slugFromPath(path string) string {
 	// Path is like .hero/planning/features/my-feature/spec.md
 	// or .hero/specs/my-feature/spec.md
 	// or .hero/conventions/error-handling/spec.md
-	// We want the directory name containing spec.md
+	// For the canonical spec.md and three-file (requirements.md) layouts the
+	// slug is the directory name.
+	base := filepath.Base(path)
+	if base != "spec.md" && base != "requirements.md" {
+		// Flat `<slug>.md` spec (e.g. an initiative child stored as a
+		// sibling of the initiative's spec.md): the slug is the filename
+		// stem, not the parent directory — sharing the parent's name would
+		// collide with the initiative and the other children.
+		return strings.TrimSuffix(base, ".md")
+	}
 	dir := filepath.Dir(path)
 	return filepath.Base(dir)
 }
@@ -977,13 +1121,25 @@ func Discover(heroDir string) ([]*Spec, error) {
 			}
 			return nil
 		}
-		if info.Name() != "spec.md" {
+		if !strings.HasSuffix(info.Name(), ".md") {
 			return nil
 		}
 
 		// Skip if we already loaded this directory as three-file
 		dir := filepath.Dir(path)
 		if loadedDirs[dir] {
+			return nil
+		}
+
+		// A flat `<slug>.md` spec (e.g. an initiative child stored as a
+		// sibling of the initiative's spec.md) is discovered only when its
+		// frontmatter explicitly declares a work-spec type. The explicit
+		// requirement keeps untyped artifacts (audit reports, retros,
+		// next/*, peer-calls) out — those would otherwise default to
+		// feature/initiative via typeFromPath. Knowledge entries and meta
+		// files (mission, retro) are excluded too. The canonical spec.md
+		// and three-file layouts keep their type-agnostic load.
+		if info.Name() != "spec.md" && !isDiscoverableFlatSpec(path) {
 			return nil
 		}
 
@@ -1002,12 +1158,145 @@ func Discover(heroDir string) ([]*Spec, error) {
 	return specs, nil
 }
 
+// nonWorkFlatTypes are the explicit frontmatter `type:` values that must NOT
+// turn a flat `<name>.md` file into a discovered spec. These are knowledge
+// entries (which Hero stores and retrieves through the knowledge corpus, not
+// work-spec discovery) and meta documents. Any other explicit type — feature,
+// bug, initiative, or a custom work type like enhancement/epic — is treated as
+// a discoverable work spec.
+var nonWorkFlatTypes = map[string]bool{
+	string(TypeConvention): true,
+	string(TypeDecision):   true,
+	string(TypeRule):       true,
+	string(TypeExternal):   true,
+	string(TypeContext):    true,
+	string(TypeNote):       true,
+	string(TypeTripwire):   true,
+	string(TypeExplainer):  true,
+	"mission":              true,
+	"retro":                true,
+}
+
+// isDiscoverableFlatSpec reports whether a flat `<name>.md` file (one not named
+// spec.md) should be loaded as a standalone spec. It returns true only when the
+// file's frontmatter *explicitly* declares a work-spec `type:`. Requiring an
+// explicit type is load-bearing: untyped artifacts (delivery-audit.md,
+// retro.md, next/*, peer-calls) would otherwise default to feature/initiative
+// via typeFromPath and be slurped into discovery.
+func isDiscoverableFlatSpec(path string) bool {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return false
+	}
+	t := frontmatterType(string(data))
+	if t == "" {
+		return false
+	}
+	return !nonWorkFlatTypes[t]
+}
+
+// frontmatterType extracts the literal `type:` value from a file's leading
+// `---` frontmatter block, or "" when there is no frontmatter or no explicit
+// type key. Values are unquoted and lowercased to match the Type constants.
+func frontmatterType(content string) string {
+	content = strings.TrimLeft(content, "\uFEFF \t\r\n")
+	if !strings.HasPrefix(content, "---") {
+		return ""
+	}
+	scanner := bufio.NewScanner(strings.NewReader(content))
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	first := true
+	for scanner.Scan() {
+		line := scanner.Text()
+		if first {
+			first = false
+			continue // skip opening ---
+		}
+		if strings.TrimSpace(line) == "---" {
+			return "" // end of frontmatter, no type found
+		}
+		if rest, ok := strings.CutPrefix(strings.TrimSpace(line), "type:"); ok {
+			v := strings.TrimSpace(rest)
+			v = strings.Trim(v, `"'`)
+			return strings.ToLower(strings.TrimSpace(v))
+		}
+	}
+	return ""
+}
+
 // Kickoff returns the spec's `## Kickoff` section body — the paste-ready
 // cold-start prompt authored by spec-writing skills (`/design`, `/deliver`)
 // and surfaced by `hero queue`. Returns the empty string if the section
 // is missing.
 func (s *Spec) Kickoff() string {
 	return s.Sections["kickoff"]
+}
+
+// GoalSection returns an initiative's `## Goal` section body — the
+// paste-ready *run opener* that `/drive` arms and `hero queue` surfaces in
+// place of a leaf spec's `## Kickoff`. Where a Kickoff opens one session on
+// one spec, a Goal opens the loop over a whole initiative. Empty for
+// non-initiative specs.
+func (s *Spec) GoalSection() string {
+	if s.Type != TypeInitiative {
+		return ""
+	}
+	return s.Sections["goal"]
+}
+
+// RunCondition returns an initiative's machine-checkable run condition — the
+// stop-condition `/drive` hands the harness `/goal`. It prefers an
+// author-written condition embedded in the `## Goal` section (a line
+// beginning "Run until") and otherwise derives the canonical default from
+// the initiative's children: every child verifies, or a needs_me pause is
+// raised. Empty for non-initiative specs.
+func (s *Spec) RunCondition(bySlug map[string]*Spec) string {
+	if s.Type != TypeInitiative {
+		return ""
+	}
+	if authored := authoredRunCondition(s.Sections["goal"]); authored != "" {
+		return authored
+	}
+	kids := s.ChildSlugs(bySlug)
+	if len(kids) == 0 {
+		return fmt.Sprintf("Run until `hero verify %s` reports PASS — OR a needs_me pause is raised.", s.Slug)
+	}
+	return fmt.Sprintf("Run until every child reports `hero verify` PASS — OR a needs_me pause is raised. Children: %s.", strings.Join(kids, ", "))
+}
+
+// ChildSlugs returns, sorted, the slugs of specs in the population that
+// declare this spec as their parent (a `parent` relation targeting s.Slug).
+// Sorting keeps the derived run condition deterministic across map order.
+func (s *Spec) ChildSlugs(bySlug map[string]*Spec) []string {
+	var kids []string
+	for slug, other := range bySlug {
+		if other == nil || slug == s.Slug {
+			continue
+		}
+		for _, r := range other.Relations {
+			if r.Kind == "parent" && r.Target == s.Slug {
+				kids = append(kids, slug)
+				break
+			}
+		}
+	}
+	sort.Strings(kids)
+	return kids
+}
+
+// authoredRunCondition extracts an explicit run condition from a `## Goal`
+// body: the first line beginning with "Run until" (after stripping a
+// leading blockquote "> "). Empty when the author wrote none.
+func authoredRunCondition(goalBody string) string {
+	scanner := bufio.NewScanner(strings.NewReader(goalBody))
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		line = strings.TrimSpace(strings.TrimPrefix(line, ">"))
+		if strings.HasPrefix(strings.ToLower(line), "run until") {
+			return line
+		}
+	}
+	return ""
 }
 
 // AcceptanceCriteria parses the "acceptance criteria" section into a list of
@@ -1127,7 +1416,18 @@ func (s *Spec) IsWorkSpec() bool {
 func (s *Spec) IsKnowledge() bool {
 	return s.Type == TypeConvention || s.Type == TypeDecision ||
 		s.Type == TypeRule || s.Type == TypeExternal || s.Type == TypeContext ||
-		s.Type == TypeNote || s.Type == TypeTripwire
+		s.Type == TypeNote || s.Type == TypeTripwire || s.Type == TypeExplainer
+}
+
+// IsPreCommitment returns true if the spec is a captured-but-uncommitted
+// signal (intake). Pre-commitment specs appear in search, the graph, and
+// hero_why (provenance matters) but are excluded from every committed-work
+// rollup — status work buckets, queue, velocity, snapshot — until promoted
+// to a roadmap spec. This is the third category alongside IsWorkSpec
+// (committed work) and IsKnowledge (reference): a type is covered by exactly
+// one of the three.
+func (s *Spec) IsPreCommitment() bool {
+	return s.Type == TypeIntake
 }
 
 // IsInFlight returns true if the spec is currently being worked on,
@@ -1282,6 +1582,97 @@ func frontmatterHasField(content, key string) bool {
 		}
 	}
 	return false
+}
+
+// SetOwnerHistoryBlock replaces (or inserts) the `owner_history:` block
+// in a spec's YAML frontmatter with the rendered form of history,
+// preserving everything else in the file. The existing block — the
+// `owner_history:` key line plus all its indented continuation lines —
+// is removed and the freshly rendered block inserted in its place. When
+// no block exists, the new block is inserted just before any tracker
+// comment section (# Jira / # Github / # Linear), matching where
+// hero-section fields land.
+//
+// An empty history removes the block entirely.
+func SetOwnerHistoryBlock(content string, history []OwnerHistoryEntry) string {
+	lines := strings.Split(content, "\n")
+	if len(lines) == 0 || strings.TrimSpace(lines[0]) != "---" {
+		// No frontmatter — synthesize one carrying just the block.
+		block := RenderOwnerHistoryBlock(history)
+		if block == "" {
+			return content
+		}
+		return "---\n" + block + "\n---\n" + content
+	}
+
+	closeIdx := -1
+	for i := 1; i < len(lines); i++ {
+		if strings.TrimSpace(lines[i]) == "---" {
+			closeIdx = i
+			break
+		}
+	}
+	if closeIdx < 0 {
+		block := RenderOwnerHistoryBlock(history)
+		if block == "" {
+			return content
+		}
+		return "---\n" + block + "\n---\n" + content
+	}
+
+	// Locate an existing owner_history block: the key line plus its
+	// indented continuation lines.
+	blockStart, blockEnd := -1, -1
+	for j := 1; j < closeIdx; j++ {
+		if strings.HasPrefix(strings.TrimSpace(lines[j]), "owner_history:") &&
+			leadingSpaceCount(lines[j]) == 0 {
+			blockStart = j
+			k := j + 1
+			for ; k < closeIdx; k++ {
+				t := strings.TrimSpace(lines[k])
+				// Continuation = indented (or blank inside the block).
+				if t == "" {
+					continue
+				}
+				if leadingSpaceCount(lines[k]) == 0 {
+					break
+				}
+			}
+			blockEnd = k // exclusive
+			break
+		}
+	}
+
+	rendered := RenderOwnerHistoryBlock(history)
+	var newBlockLines []string
+	if rendered != "" {
+		newBlockLines = strings.Split(rendered, "\n")
+	}
+
+	if blockStart >= 0 {
+		// Replace [blockStart, blockEnd).
+		out := append([]string{}, lines[:blockStart]...)
+		out = append(out, newBlockLines...)
+		out = append(out, lines[blockEnd:]...)
+		return strings.Join(out, "\n")
+	}
+
+	if len(newBlockLines) == 0 {
+		return content
+	}
+
+	// Insert before the first tracker comment section, else before close.
+	insertIdx := closeIdx
+	for j := 1; j < closeIdx; j++ {
+		if strings.HasPrefix(strings.TrimSpace(lines[j]), "# ") {
+			insertIdx = j
+			break
+		}
+	}
+	out := append([]string{}, lines[:insertIdx]...)
+	out = append(out, newBlockLines...)
+	out = append(out, lines[insertIdx:]...)
+	return strings.Join(out, "\n")
 }
 
 // SetFrontmatterField sets or updates a key-value pair in YAML frontmatter.

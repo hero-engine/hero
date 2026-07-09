@@ -31,6 +31,7 @@ func (s *MCPServer) toolHandlers() map[string]toolHandler {
 		"hero_nudge":     s.toolNudge,
 		"hero_list":      s.toolList,
 		"hero_queue":     s.toolQueue,
+		"hero_goal":      s.toolGoal,
 		"hero_kickoff":   s.toolKickoff,
 		"hero_knowledge": s.toolKnowledge,
 		"hero_read_spec": s.toolReadSpec,
@@ -58,6 +59,7 @@ func (s *MCPServer) toolHandlers() map[string]toolHandler {
 		"hero_demo_record":   s.toolDemoRecord,
 		"hero_code":          s.toolCode,
 		"hero_enrich":        s.toolEnrich,
+		"hero_synthesize":    s.toolSynthesize,
 
 		// analyze
 		"hero_drift":         s.toolDrift,

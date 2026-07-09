@@ -14,6 +14,16 @@ type TeamConnection struct {
 	Token       string `json:"token"`
 	User        string `json:"user"`
 	ConnectedAt string `json:"connected_at"`
+	AutoSync    *bool  `json:"auto_sync,omitempty"`
+}
+
+// AutoSyncEnabled returns whether auto-sync is enabled. Defaults to
+// true for existing connections (nil pointer = not explicitly set).
+func (tc *TeamConnection) AutoSyncEnabled() bool {
+	if tc.AutoSync == nil {
+		return true
+	}
+	return *tc.AutoSync
 }
 
 // teamConfigPath returns ~/.hero/team.json

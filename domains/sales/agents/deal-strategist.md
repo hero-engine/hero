@@ -56,9 +56,12 @@ a deal with no Economic Buyer.
 ### 3. Load applicable playbooks
 
 ```
-hero search --type playbook "<segment>"
-hero search --type playbook "<motion>"    # e.g. "competitive displacement"
+ls .hero/knowledge/playbooks/      # browse; playbooks are titled "Playbook: <segment/motion>"
+# then read the matching file, e.g. .hero/knowledge/playbooks/competitive-displacement.md
 ```
+
+Playbooks are plain markdown under `.hero/knowledge/`, not work specs, so
+they are found by path (browse + read), not `hero search`.
 
 If no playbook matches, proceed without one. Note the gap for future
 playbook creation.
@@ -198,10 +201,10 @@ probability: 55   # adjusted based on strategy assessment
 
 If you discover a strategic pattern that should be documented (e.g., "CFO
 engagement before security review shortens procurement in healthcare"),
-write it to `.hero/knowledge/` with:
-```
-hero note "Pattern: [title]" --type playbook
-```
+write it directly to `.hero/knowledge/playbooks/<slug>.md` titled
+"Playbook: [title]". Do not add a `type:` frontmatter line — knowledge
+files are plain markdown; a work-ish `type:` would make the file a
+discoverable flat spec and pollute `hero list`.
 
 ## Win/loss debrief mode
 

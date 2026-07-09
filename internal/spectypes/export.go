@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"time"
 )
 
@@ -230,18 +231,39 @@ func exportRecord(rec *Record) jsonExportRecord {
 // root, creating the .hero/cache/ directory if needed. Path is
 // <workspaceRoot>/.hero/cache/spec-types.json per the cross-language
 // contract.
+//
+// Skips the write when only the generated_at timestamp changed. This
+// export runs in the CLI's PersistentPreRun on every `hero` invocation,
+// so an unconditional write would re-stamp the timestamp constantly,
+// leaving .hero/cache/spec-types.json perpetually dirty and racing the
+// pre-commit hook that stages it. Mirrors WriteManifest's guard.
 func ExportTo(reg Registry, workspaceRoot string) error {
 	data, err := reg.JSONSchema()
 	if err != nil {
 		return fmt.Errorf("marshaling registry: %w", err)
 	}
 	cacheDir := filepath.Join(workspaceRoot, ".hero", "cache")
+	outPath := filepath.Join(cacheDir, "spec-types.json")
+
+	if existing, readErr := os.ReadFile(outPath); readErr == nil {
+		if stripGeneratedAt(existing) == stripGeneratedAt(data) {
+			return nil
+		}
+	}
+
 	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
 		return fmt.Errorf("creating cache dir: %w", err)
 	}
-	outPath := filepath.Join(cacheDir, "spec-types.json")
 	if err := os.WriteFile(outPath, data, 0o644); err != nil {
 		return fmt.Errorf("writing %s: %w", outPath, err)
 	}
 	return nil
+}
+
+var reGeneratedAt = regexp.MustCompile(`"generated_at": ".*?"`)
+
+// stripGeneratedAt blanks the generated_at value so two exports that
+// differ only by timestamp compare equal.
+func stripGeneratedAt(b []byte) string {
+	return reGeneratedAt.ReplaceAllString(string(b), `"generated_at": ""`)
 }

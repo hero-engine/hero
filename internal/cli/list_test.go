@@ -310,3 +310,42 @@ func TestQueueWriteOverwrites(t *testing.T) {
 		t.Errorf("second write should produce real snapshot; got:\n%s", body)
 	}
 }
+
+const initiativeWithGoalOpener = `---
+title: Drive Initiative
+type: initiative
+status: planning
+horizon: now
+tags: [demo, drive]
+---
+# Drive Initiative
+
+## Goal
+
+Run every child to completion, pausing only when a decision needs me.
+
+## Problem
+
+It stops at every spec today.
+`
+
+func TestQueueRendersInitiativeGoalOpener(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("planning/initiatives/drive-initiative/spec.md", initiativeWithGoalOpener)
+
+	out, err := runCmd("queue", "--format", "kickoff")
+	if err != nil {
+		t.Fatalf("queue kickoff: %v", err)
+	}
+	// Initiative surfaces its Goal run-opener, armable with /drive.
+	if !strings.Contains(out, "Run opener — arm with `/drive drive-initiative`") {
+		t.Errorf("initiative should render the /drive run-opener hint, got:\n%s", out)
+	}
+	if !strings.Contains(out, "pausing only when a decision needs me") {
+		t.Errorf("initiative should render its ## Goal body, got:\n%s", out)
+	}
+	// It must NOT be nagged for a missing Kickoff like a leaf spec.
+	if strings.Contains(out, "no `## Kickoff` section") {
+		t.Errorf("initiative was nagged for a Kickoff instead of rendering its Goal, got:\n%s", out)
+	}
+}

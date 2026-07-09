@@ -83,8 +83,10 @@ func NewSprintLoader(cfg *config.TrackerConfig, jiraCfg *config.JiraConfig, trac
 		return newJiraSprintLoader(cfg.Project, token, cfg.UserEmail, cfg.BaseURL, jiraCfg, trackerKnowledgeDir)
 	case "linear":
 		return newLinearSprintLoader(cfg.Project, token, cfg.BaseURL)
+	case "gitlab":
+		return newGitLabSprintLoader(cfg.Project, token, cfg.BaseURL)
 	default:
-		return nil, fmt.Errorf("sprint loading is not supported for tracker type %q (supported: jira, linear)", cfg.Type)
+		return nil, fmt.Errorf("sprint loading is not supported for tracker type %q (supported: jira, linear, gitlab)", cfg.Type)
 	}
 }
 

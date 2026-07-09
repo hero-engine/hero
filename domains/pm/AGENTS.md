@@ -21,34 +21,30 @@ it.**
 | User intent | Command |
 |---|---|
 | New feedback, customer ask, support escalation, sales note, "this came in" | `/triage` |
-| Refine, tighten, "make this ready", "draft AC", INVEST, EARS | `/refine` |
+| Refine, tighten, "make this ready", "draft AC", INVEST, EARS; refine an existing spec (PRD / feature / epic / initiative); ambiguous specs that "won't deliver cleanly" | `/refine` |
 | Prioritize, rank, RICE, ICE, WSJF, value-vs-effort, "what's first" | `/prioritize` |
 | Hand off, send to engineering, "ready for dev", "flip owner to engineering" | `/handoff` (flips `owner: pm → engineering` on the same artifact) |
-| Create a story / spec / feature / pitch / scope (vocabulary-aware) | `hero new feature` (canonical; vocabulary renders the display term) |
-| Create a bug | `hero new bug` |
-| Create an epic / pitch / theme | `hero new epic` |
-| Create a roadmap-item / bet / initiative | `hero new initiative` |
+| Create a story / spec / feature / pitch / scope (vocabulary-aware) | `hero spec new <slug> --type feature` (alias `hero design <slug>`) |
+| Create a bug | `hero spec new <slug> --type bug` |
+| Create an epic / pitch / theme | no CLI scaffolder (`hero spec new` has no epic type) — hand-author `.hero/planning/epics/<slug>/spec.md` per `core/spec-types/epic.md` |
+| Create a roadmap-item / bet / initiative | `hero spec new <slug> --type initiative` |
 | Draft PRD, write requirements, product doc, "spec this out" | `/prd` |
 | Pitch, Shape Up, "shape this", appetite, betting table | `/pitch` |
 | Roadmap, "what's coming", reconcile roadmap, "show the roadmap" | `/roadmap` |
+| Stale roadmap, "clean up the roadmap", "what's been dropped" | `/roadmap` (reconcile mode) |
 | Discover, explore, "we don't know enough about X", customer research | `/discover` |
 | Metric, success measure, KPI, "how do we measure this" | `/metrics` |
-| Interview, customer call, user research, "design an interview" | `/interview` |
+| Interview, customer call, user research, "design an interview" | `/discover --interview <count>` |
 | Release notes, announce, "what shipped this week" | `/release-notes` |
-| Capacity, "can we fit X this cycle", velocity, appetite room | `/capacity` |
-| Plan next cycle / sprint / iteration | `/plan-cycle` / `/plan-sprint` / `/plan-iteration` |
-| Standup, daily update, "what's new this week" | `/standup` |
-| Stale roadmap, "clean up the roadmap", "what's been dropped" | `/scrub roadmap` |
-| Duplicate intake, cluster feedback, "is this a duplicate" | `/scrub intake` |
-| Ambiguous specs / stories, "won't deliver cleanly" | `/scrub specs` |
-| Confusing customer signal, "what's actually being asked here" | `/diagnose` (routes to `pm-investigator`) |
-| Refine an existing spec (PRD / feature / epic / initiative) | `/refine` |
-| Search across PRDs, specs, intake, roadmap | `/search` |
+| Capacity, cycle/sprint/iteration planning, standup / weekly update | (P1, ships v1.5 — no v1 surface) |
+| Duplicate intake, cluster feedback, "is this a duplicate" | `/triage` (duplicate clustering via intake-triager + duplicate-detector) |
+| Confusing customer signal, "what's actually being asked here" | invoke `pm-investigator` directly (agent — no command shim ships with pm) |
+| Search across PRDs, specs, intake, roadmap | `hero search <query>` (CLI) |
 | Why does this exist, "trace this back" | `/why` |
 | What's stuck, blocked items, dependencies | `/blocked` |
 | Note, capture, remember this conversation | `/note` |
 | Decision, tradeoff, choose between options | `/decide` |
-| Review this PRD / spec / roadmap | `/review` (routed to `pm-reviewer`) |
+| Review this PRD / spec / roadmap | invoke `pm-reviewer` directly (agent — no `/review` command ships with pm) |
 | Retro, postmortem, lessons learned on a shipped item | `/retro` |
 
 When routing, pass the user's original context as arguments to the
@@ -66,10 +62,10 @@ translates display terms back to canonical:
 
 | User says (vocabulary-dependent) | Canonical route |
 |---|---|
-| "draft a story" / "shape a scope" / "create an issue" | `hero new feature` |
-| "log a bug" | `hero new bug` |
-| "frame a pitch" / "frame a theme" / "create an epic" | `hero new epic` |
-| "add a bet" / "add a roadmap initiative" | `hero new initiative` |
+| "draft a story" / "shape a scope" / "create an issue" | `hero spec new <slug> --type feature` (alias `hero design <slug>`) |
+| "log a bug" | `hero spec new <slug> --type bug` |
+| "frame a pitch" / "frame a theme" / "create an epic" | no CLI scaffolder (`hero spec new` has no epic type) — hand-author `.hero/planning/epics/<slug>/spec.md` per `core/spec-types/epic.md` |
+| "add a bet" / "add a roadmap initiative" | `hero spec new <slug> --type initiative` |
 
 Agents and CLI output render the active vocabulary on the way out
 ("Drafting a Story…" under agile-scrum; "Drafting a Scope…" under
@@ -88,9 +84,9 @@ behavior onto them. Read the active preset from `hero.json` under
 - `delivery`: `continuous` / `sprint` / `cycle` / `phased`
 - `overlay`: `null` or `release`/`milestone`
 
-Authoring agents (`prd-author`, `story-writer`, `pitch-author`) and
-the `cycle-planner` agent must load `pm-preset-detection` and populate
-the right preset-specific fields (`sprint`/`points`,
+Authoring agents (`prd-author`, `story-writer`) must load
+`pm-preset-detection` and populate the right preset-specific fields
+(P1 agents `pitch-author` and `cycle-planner` join in v1.5) (`sprint`/`points`,
 `cycle`/`hill_position`, `appetite`, `release`/`phase`). Switching a
 preset is a config edit + dashboard reload — no data migration.
 
@@ -107,9 +103,13 @@ After triaging intake, promoting an initiative, handing a story off,
 or making a notable tradeoff, log it so other sessions can see:
 
 ```
-hero event decision_made "Deferred billing self-serve to Q4 — capacity reshuffle" --slug roadmap-q3-reshuffle
-hero event handoff "Story cart-abandon-email handed off to engineering" --slug cart-abandon-email
+hero agent events decision_made "Deferred billing self-serve to Q4 — capacity reshuffle" --slug roadmap-q3-reshuffle
+hero agent events spec_updated "Story cart-abandon-email handed off to engineering" --slug cart-abandon-email
 ```
+
+Valid event types: `spec_created`, `spec_updated`, `files_modified`,
+`decision_made`, `blocker_hit`, `delivery_complete`. In an MCP session the
+`hero_event` tool is the equivalent tool-call.
 
 Before starting work, check what other PM / engineering sessions have
 done recently:
@@ -146,17 +146,22 @@ thesis in one click. Under the unified type model, the handoff is an
 *owner flip on the same artifact* — not a new spec creation. The flow
 must always:
 
-1. Pre-flight check: spec is `status: ready` with EARS AC, populated
-   Out of Scope, linked PRD context (warn if absent), linked
-   initiative with rationale (warn if absent).
-2. Flip the spec's `owner` field from `pm` to `engineering`. The
-   bitemporal history (`owner_history`) is recorded automatically.
+1. Pre-flight check: spec is `status: in-review` (per the lifecycle
+   table in `pm-preset-detection`) with EARS AC, populated Out of
+   Scope, linked PRD context (warn if absent), linked initiative with
+   rationale (warn if absent).
+2. Flip the spec's `owner` field from `pm` to `engineering` via
+   `hero spec set-owner <slug> engineering` — this appends the
+   `owner_history` row atomically. A raw frontmatter edit records
+   **no** history.
 3. The Cross-domain Handoff stream row is sourced from
-   `owner_history`; the spec appears in engineering's queue
-   (`hero queue --owner engineering`) immediately.
+   `owner_history`. Verify the flip by reading the spec back
+   (`hero_read_spec` MCP or the file on disk) and `hero list --status
+   in-review`.
 4. Engineering's `engineer` agent picks the spec up via `/deliver
-   <slug>`; status flips `ready → delivering`; `plan.md` is authored
-   as a companion artifact in the same spec folder.
+   <slug>` (engineering pack); status flips `in-review → delivering`;
+   `plan.md` is authored as a companion artifact in the same spec
+   folder.
 
 `handoff-coordinator` orchestrates the pre-flight and the flip. It does
 **not** call `/design`, does **not** author an engineering spec, does
@@ -175,9 +180,11 @@ These are run in the terminal, not as slash commands:
 - `hero status` — workspace state and active specs
 - `hero search <query>` — find specs by keyword (cross-domain by
   default; active-domain results rank first)
-- `hero import` — import issues from tracker as PM spec scaffolds via
-  the active vocabulary's `tracker_mappings` (Jira `Epic` → `epic`;
-  Jira `Story` → `feature`; Jira `Bug` → `bug`)
+- `hero sync import` — import issues from tracker as PM spec scaffolds
+  via the active vocabulary's `tracker_mappings` (Jira `Epic` → `epic`;
+  Jira `Story` → `feature`; Jira `Bug` → `bug`). (The root-level
+  `hero import <url|file>` ingests URLs/files into the knowledge base —
+  a different command.)
 - `hero sync pull <slug>` — sync spec status from tracker
 - `hero note <slug>` — quick note capture
 - `hero check` — health check
@@ -189,26 +196,30 @@ These are run in the terminal, not as slash commands:
 
 ## Project Structure
 
-- `domains/pm/agents/` — PM specialist agents
-- `domains/pm/skills/` — PM domain skills (writing, frameworks,
-  process, curation, cross-domain, operational)
-- `domains/pm/commands/` — PM slash commands
-- `domains/pm/spec-types/` — PM-led spec-type schemas (`prd`,
-  `intake`)
-- `core/spec-types/` — shared cross-domain spec-type schemas
-  (`feature`, `epic`, `initiative`) used by both PM and engineering
-- `core/vocabularies/` — vocabulary preset files (`default`,
-  `agile-scrum`, `shape-up`, `kanban`, `jira`, `linear`)
-- `.hero/planning/features/` — Features in flight (replaces `stories/`;
-  `type: feature`)
+- `<harness>/commands/` — PM slash command definitions (`/triage`,
+  `/refine`, `/prd`, `/roadmap`, …)
+- `<harness>/agents/` — PM specialist agent roles (prd-author,
+  story-writer, roadmap-curator, …)
+- `<harness>/skills/` — PM domain skills (writing, frameworks, process,
+  curation, cross-domain, operational — each skill is a subdir with
+  SKILL.md)
+- `.hero/planning/features/` — Features in flight (`type: feature`)
 - `.hero/planning/epics/` — Epics in flight
 - `.hero/planning/initiatives/` — Initiatives
 - `.hero/planning/prds/` — PRDs in flight
 - `.hero/planning/intake/` — Intake
-- `.hero/knowledge/` — Project knowledge base (decisions,
-  conventions, customer-research notes)
-- `hero.json` — Project configuration (including `pm.presets`,
+- `.hero/specs/` — Completed specs (archive)
+- `.hero/knowledge/` — Project knowledge base (decisions, conventions,
+  customer-research notes)
+- `.hero/hero.json` — Project configuration (including `pm.presets`,
   `vocabulary`, `vocabulary_overrides`)
+
+`hero install` **writes** the `<harness>/` directories into your
+harness's own directory in that harness's native format — e.g.
+`.claude/commands/`, `.claude/agents/`, `.claude/skills/` for Claude;
+other harnesses vary. They are generated copies, **not** symlinks:
+re-running `hero install` regenerates them, so hand-edits to the
+installed files are overwritten on the next install.
 
 ## Important Rules
 
@@ -234,13 +245,13 @@ These are run in the terminal, not as slash commands:
 - **Tracker wins org-state; Hero wins content.** Assignee, sprint,
   workflow status come from the tracker. PRD body, AC, spec
   description, tasks live locally. Conflict policy is in
-  [tracker-fronting-and-local-first](../../.hero/knowledge/decisions/tracker-fronting-and-local-first.md).
+  [tracker-fronting-and-local-first](.hero/knowledge/decisions/tracker-fronting-and-local-first.md).
   Tracker-type → Hero (type, kind) mapping is owned by the active
-  vocabulary preset's `tracker_mappings` (in `core/vocabularies/*.yaml`),
-  not by per-domain registry hardcoded switches.
+  vocabulary preset's `tracker_mappings`, not by per-domain registry
+  hardcoded switches.
 - **Local specs first.** Use `hero search --list --type feature`
   (or `prd` / `epic` / `initiative` / `intake`), and filter by
-  `--kind=…` when narrower scope is wanted.
+  `--tag <theme>` when narrower scope is wanted.
   Go to the tracker only if local search comes up empty. When working
   on a list of items, pick from local — never bulk-query the tracker
   to choose.
@@ -290,13 +301,13 @@ limits:
 
 1. **Update your handoff briefing immediately** — don't wait for
    end-of-turn.
-2. **Register active specs** — `hero active register <session-id>
-   <slug>` for any PRD/story/initiative you're mid-shape on.
+2. **Register active specs** — use the `hero_active` MCP tool (its
+   `register` action) for any PRD/story/initiative you're mid-shape on.
 3. **Write partial progress** — commit drafted content into the spec
    file even if incomplete. The artifact is source of truth.
 
-After compaction, read your handoff file, check `hero active list`,
-and run `hero recap --since 1h`.
+After compaction, read your handoff file, check active specs via the
+`hero_active` MCP tool (its `list` action), and run `hero recap --since 1h`.
 
 ## Capture execution plans
 

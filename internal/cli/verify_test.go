@@ -305,6 +305,77 @@ slug: already-done
 	}
 }
 
+func TestVerify_PlanningStatusGuarded(t *testing.T) {
+	env := newTestEnv(t)
+	// Fully complete spec (ledger + audit) — would pass every gate — but
+	// in planning status. The lifecycle guard must block it anyway.
+	planningSpec := strings.Replace(
+		strings.Replace(specWithLedgerAndAudit, "test-feature", "planning-guard", -1),
+		"status: delivering", "status: planning", 1)
+	env.addSpec("planning/features/planning-guard/spec.md", planningSpec)
+	writeVerifyFile(t, filepath.Join(env.heroDir, "planning/features/planning-guard/delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "planning-guard", -1))
+	env.indexAll()
+
+	_, err := runCmd("spec", "verify", "--skip-tests", "planning-guard")
+	if err == nil {
+		t.Fatal("expected verify to be blocked for a planning-status spec")
+	}
+	if !strings.Contains(err.Error(), "planning status") {
+		t.Errorf("error = %q, want a lifecycle message mentioning 'planning status'", err.Error())
+	}
+	// A planning draft must never be archived.
+	archivedPath := filepath.Join(env.heroDir, "specs", "planning-guard", "spec.md")
+	if _, statErr := os.Stat(archivedPath); statErr == nil {
+		t.Error("planning spec was archived despite the lifecycle guard")
+	}
+}
+
+func TestVerify_PlanningStatusForceBypass(t *testing.T) {
+	env := newTestEnv(t)
+	planningSpec := strings.Replace(
+		strings.Replace(specWithLedgerAndAudit, "test-feature", "planning-force", -1),
+		"status: delivering", "status: planning", 1)
+	env.addSpec("planning/features/planning-force/spec.md", planningSpec)
+	writeVerifyFile(t, filepath.Join(env.heroDir, "planning/features/planning-force/delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "planning-force", -1))
+	env.indexAll()
+
+	output, err := runCmd("spec", "verify", "--skip-tests", "--force", "planning-force")
+	if err != nil {
+		t.Fatalf("verify --force should bypass the lifecycle guard: %v\noutput: %s", err, output)
+	}
+	// With a complete ledger+audit, forced gates pass and the spec archives.
+	archivedPath := filepath.Join(env.heroDir, "specs", "planning-force", "spec.md")
+	if _, statErr := os.Stat(archivedPath); os.IsNotExist(statErr) {
+		t.Error("forced verify did not archive the spec")
+	}
+}
+
+func TestVerify_PlanningStatusJSON(t *testing.T) {
+	env := newTestEnv(t)
+	planningSpec := strings.Replace(
+		strings.Replace(specWithLedgerAndAudit, "test-feature", "planning-json", -1),
+		"status: delivering", "status: planning", 1)
+	env.addSpec("planning/features/planning-json/spec.md", planningSpec)
+	env.indexAll()
+
+	output, err := runCmd("spec", "verify", "--skip-tests", "--json", "planning-json")
+	if err != nil {
+		t.Fatalf("json verify on a planning spec should exit 0: %v\noutput: %s", err, output)
+	}
+	var result VerifyResult
+	if err := json.Unmarshal([]byte(strings.TrimSpace(output)), &result); err != nil {
+		t.Fatalf("failed to parse JSON output: %v\noutput: %s", err, output)
+	}
+	if result.Result != "SKIPPED" {
+		t.Errorf("Result = %q, want SKIPPED", result.Result)
+	}
+	if len(result.Gates) != 1 || result.Gates[0].Name != "lifecycle" {
+		t.Errorf("expected a single 'lifecycle' gate, got %+v", result.Gates)
+	}
+}
+
 func TestVerify_SkipTests(t *testing.T) {
 	env := newTestEnv(t)
 	env.addSpec("planning/features/skip-test/spec.md", strings.Replace(specWithLedgerAndAudit, "test-feature", "skip-test", -1))
@@ -452,6 +523,95 @@ slug: writeback-test
 		if s := getGraphCriterionStatus(t, store2, key); s != "passing" {
 			t.Errorf("Criterion %s status = %q, want passing", key, s)
 		}
+	}
+}
+
+func TestVerify_ArchiveMovesSiblingArtifacts(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("planning/features/sibling-test/spec.md",
+		strings.Replace(specWithLedgerAndAudit, "test-feature", "sibling-test", -1))
+	dir := filepath.Join(env.heroDir, "planning/features/sibling-test")
+	writeVerifyFile(t, filepath.Join(dir, "delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "sibling-test", -1))
+	writeVerifyFile(t, filepath.Join(dir, "plan.md"), "# Plan\n")
+	env.indexAll()
+
+	if _, err := runCmd("spec", "verify", "--skip-tests", "sibling-test"); err != nil {
+		t.Fatalf("verify failed: %v", err)
+	}
+
+	specDir := filepath.Join(env.heroDir, "specs", "sibling-test")
+	for _, f := range []string{"spec.md", "delivery-audit.md", "plan.md"} {
+		if _, err := os.Stat(filepath.Join(specDir, f)); os.IsNotExist(err) {
+			t.Errorf("%s was not moved with the spec to specs/sibling-test/", f)
+		}
+	}
+	// Source planning dir must not survive as an orphan.
+	if _, err := os.Stat(dir); err == nil {
+		t.Error("planning spec dir survived archive — siblings orphaned")
+	}
+}
+
+func TestVerify_InitiativeNotCompletedWithUnbuiltChildren(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Initiative declares two children (block-style list) but only one is
+	// materialized. Completing it must NOT auto-complete the initiative.
+	initiativeContent := `---
+title: Multi Child Init
+type: initiative
+status: planning
+slug: multi-child-init
+child:
+  - built-child
+  - unbuilt-child
+---
+# Multi Child Init
+`
+	env.addSpec("planning/initiatives/multi-child-init/spec.md", initiativeContent)
+
+	builtChild := `---
+title: Built Child
+type: feature
+status: delivering
+slug: built-child
+parent: multi-child-init
+---
+# Built Child
+
+## Acceptance Criteria
+
+- AC-1: THE SYSTEM SHALL do the built work
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | do the built work | DONE | implemented |
+
+### Exercise-the-feature check
+
+- [x] Exercised: confirmed built child works
+`
+	env.addSpec("planning/features/built-child/spec.md", builtChild)
+	writeVerifyFile(t, filepath.Join(env.heroDir, "planning/features/built-child/delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "built-child", -1))
+	env.indexAll()
+
+	output, err := runCmd("spec", "verify", "--skip-tests", "built-child")
+	if err != nil {
+		t.Fatalf("verify built-child failed: %v\noutput: %s", err, output)
+	}
+	if strings.Contains(output, "auto-completed") {
+		t.Errorf("initiative wrongly auto-completed with an unbuilt declared child:\n%s", output)
+	}
+	if _, err := os.Stat(filepath.Join(env.heroDir, "specs", "multi-child-init", "spec.md")); err == nil {
+		t.Error("initiative archived despite an unbuilt declared child")
+	}
+	if _, err := os.Stat(filepath.Join(env.heroDir, "planning/initiatives/multi-child-init/spec.md")); os.IsNotExist(err) {
+		t.Error("initiative disappeared from planning")
 	}
 }
 

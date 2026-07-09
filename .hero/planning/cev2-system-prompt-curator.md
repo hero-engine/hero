@@ -2,13 +2,23 @@
 title: "System prompt curator"
 slug: cev2-system-prompt-curator
 type: feature
-status: planning
+status: superseded
+superseded_by: system-prompt-curation
+superseded_by_peer:
+  peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3
+  peer_alias_display: hero-code
+  peer_slug: system-prompt-curation
+  successor_initiative: context-engine-v3
+  reason: "Scope moved to hero-code's context-engine-v3 initiative; successor slug renamed to system-prompt-curation."
 priority: medium
 size: large
 parent: context-engine-v2
 depends-on:
   - cev2-context-engine-test-harness
 created: 2026-06-09
+relations:
+  - target: system-prompt-curation
+    kind: superseded-by
 tags: [hero-code, swift, context-engine, system-prompt, curation, token-efficiency, high-risk]
 ---
 

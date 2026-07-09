@@ -6,16 +6,16 @@ research, also involve the `competitive-intel` agent.
 
 **Determine the research type** from the argument:
 
-1. **Company research** — `hero research "Acme Corp"` or `hero research acme-corp`
-2. **Person research** — `hero research "Jane Smith VP Engineering Acme"`
-3. **Competitive research** — `hero research "vs. Competitor X"` or `hero research "battlecard Competitor X"`
-4. **Market / segment research** — `hero research "Series B fintech payments"` or `hero research "healthcare CIOs"`
+1. **Company research** — `/research "Acme Corp"` or `/research acme-corp`
+2. **Person research** — `/research "Jane Smith VP Engineering Acme"`
+3. **Competitive research** — `/research "vs. Competitor X"` or `/research "battlecard Competitor X"`
+4. **Market / segment research** — `/research "Series B fintech payments"` or `/research "healthcare CIOs"`
 
 **Check for existing intel** before researching:
 ```
-hero search "<company or topic>"         # existing deal specs, notes, battlecards
-hero search --type battlecard "<competitor>" # existing competitive intel
-hero search --type knowledge "<company>"    # ingested call transcripts, notes
+hero search "<company or topic>"              # existing deal specs (deals are work specs)
+ls .hero/knowledge/battlecards/               # existing competitive intel (one file per competitor)
+ls .hero/knowledge/prospects/                 # prior account research / call notes
 ```
 Surface what's already known before starting fresh research. Do not
 re-research what Hero already knows.

@@ -2,11 +2,19 @@
 title: "Widen looksLoadBearing() marker set"
 slug: cev2-widen-load-bearing-markers
 type: feature
-status: planning
+status: completed
+completed_at: 2026-06-09
 priority: medium
 size: small
 parent: context-engine-v2
 created: 2026-06-09
+delivered_in_peer:
+  peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3
+  peer_alias_display: hero-code
+  code_path: apps/hero-desktop-mac/Sources/HeroDesktop/Engine/ContextCurator.swift
+  function: looksLoadBearing
+  summary: "Marker set widened 8 → 22 with [cev2]-tagged additions plus code-fence and pipe-table structural signals."
+  audit_local: .hero/planning/audits/cev2-widen-load-bearing-markers-audit.md
 tags: [hero-code, swift, context-engine, curator, tagging, heuristics]
 ---
 

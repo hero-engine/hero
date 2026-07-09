@@ -26,6 +26,37 @@ func TestCheckEmpty(t *testing.T) {
 	}
 }
 
+func TestCheck_WikilinkEdgeWarning(t *testing.T) {
+	env := newTestEnv(t)
+	content := `---
+title: Uses Wikilinks
+type: feature
+status: planning
+slug: uses-wikilinks
+---
+# Uses Wikilinks
+
+This depends on [[config-loader]] and relates to [[watcher]].
+
+## Kickoff
+
+Pick up here.
+`
+	env.addSpec("planning/features/uses-wikilinks/spec.md", content)
+	env.indexAll()
+
+	output, err := runCmd("check")
+	if err != nil {
+		t.Fatalf("check errored: %v", err)
+	}
+	if !strings.Contains(output, "[[wikilinks]]") {
+		t.Errorf("check should warn about wikilinks: %q", output)
+	}
+	if !strings.Contains(output, "config-loader") {
+		t.Errorf("check should name the wikilink target: %q", output)
+	}
+}
+
 func TestCheckWithSpecs(t *testing.T) {
 	env := newTestEnv(t)
 
@@ -237,5 +268,79 @@ status: planning
 	// depending on timing. We just verify the command doesn't error.
 	if !strings.Contains(output, "Hero workspace health check") {
 		t.Errorf("check should show header: %q", output)
+	}
+}
+
+// Severity-aware summary + kickoff collapse: many missing-Kickoff
+// scaffolds are an advisory category, the list is collapsed, and the
+// summary distinguishes advisory findings from failures.
+func TestCheck_SeveritySummaryAndKickoffCollapse(t *testing.T) {
+	env := newTestEnv(t)
+	for _, slug := range []string{"nk1", "nk2", "nk3", "nk4", "nk5", "nk6", "nk7"} {
+		env.addSpec("planning/features/"+slug+"/spec.md",
+			"---\ntitle: "+slug+"\ntype: feature\nstatus: planning\nslug: "+slug+"\n---\n# "+slug+"\n")
+	}
+	env.indexAll()
+
+	output, err := runCmd("check")
+	if err != nil {
+		t.Fatalf("check errored: %v", err)
+	}
+	if !strings.Contains(output, "and 2 more") {
+		t.Errorf("expected kickoff list collapsed to '… and 2 more', got:\n%s", output)
+	}
+	if !strings.Contains(output, "advisory check(s)") {
+		t.Errorf("expected severity-aware summary mentioning advisory check(s), got:\n%s", output)
+	}
+}
+
+func TestMissingGoalInitiatives(t *testing.T) {
+	env := newTestEnv(t)
+	// Initiative WITH a Goal run-opener — should not be flagged.
+	env.addSpec("planning/initiatives/has-goal/spec.md", `---
+title: Has Goal
+type: initiative
+status: planning
+---
+# Has Goal
+
+## Goal
+
+Run the children autonomously.
+`)
+	// Initiative WITHOUT a Goal body — should be flagged (advisory).
+	env.addSpec("planning/initiatives/no-goal/spec.md", `---
+title: No Goal
+type: initiative
+status: planning
+---
+# No Goal
+
+## Problem
+
+Has no Goal run-opener.
+`)
+	// A leaf feature with no Goal — must NOT be flagged by this check.
+	env.addSpec("planning/features/leaf/spec.md", `---
+title: Leaf
+type: feature
+status: planning
+---
+# Leaf
+
+## Kickoff
+
+opener.
+`)
+
+	missing, err := missingGoalInitiatives(env.heroDir)
+	if err != nil {
+		t.Fatalf("missingGoalInitiatives: %v", err)
+	}
+	if len(missing) != 1 {
+		t.Fatalf("missingGoalInitiatives = %d specs, want 1", len(missing))
+	}
+	if missing[0].Slug != "no-goal" {
+		t.Errorf("flagged %q, want no-goal (only the goalless initiative)", missing[0].Slug)
 	}
 }

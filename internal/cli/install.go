@@ -98,6 +98,13 @@ func init() {
 }
 
 func runInstall(cmd *cobra.Command, args []string) error {
+	// In --json mode a machine consumer parses stdout; cobra's usage
+	// dump on stderr is noise — the JSON error object carries the
+	// failure.
+	if installJSON {
+		cmd.SilenceUsage = true
+	}
+
 	mode := install.Mode(args[0])
 	if mode != install.ModeProject && mode != install.ModeGlobal {
 		return fmt.Errorf("mode must be 'project' or 'global', got %q", args[0])
@@ -161,6 +168,23 @@ func runInstall(cmd *cobra.Command, args []string) error {
 		if ws, err := workspace.Locate(targetDir); err == nil {
 			absTarget, _ := filepath.Abs(targetDir)
 			if ws.Root != absTarget {
+				if installJSON {
+					// The satellite path predates --json and prints
+					// human progress; wrap it so the contract holds:
+					// exactly one JSON object on stdout, error field
+					// set, nonzero exit on failure.
+					start := time.Now()
+					var satErr error
+					silenceStdout(func() { satErr = runSatelliteInstall(ws, absTarget, binaryVersion) })
+					return emitJSON(install.InstallJSONOutput{
+						Target:     installTarget,
+						Mode:       string(mode),
+						TargetDir:  targetDir,
+						Version:    binaryVersion,
+						DurationMs: time.Since(start).Milliseconds(),
+						Error:      install.NewJSONError("install_failed", satErr),
+					}, satErr)
+				}
 				return runSatelliteInstall(ws, absTarget, binaryVersion)
 			}
 		}
@@ -398,7 +422,9 @@ func runSatelliteInstall(ws *workspace.Workspace, satAbs, version string) error 
 
 	scope := rel
 	if !subs.IsDeclared(rel) {
-		add := isTerminal() && !installDryRun
+		// Never prompt in --json mode — the caller is a program, and
+		// stdout is reserved for the JSON result object.
+		add := isTerminal() && !installDryRun && !installJSON
 		if add {
 			reader := bufio.NewReader(os.Stdin)
 			fmt.Printf("This subfolder is not declared in %s/%s.\n", workspace.HeroDir, install.SubprojectsFile)

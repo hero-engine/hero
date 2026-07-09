@@ -1,0 +1,9 @@
+# Two epics. Scalar FKs throughout (the schema keys on global_id, not an
+# `id` column), so values are plain strings — no Sprout nested-map FK
+# directives. parent_id is empty for top-level epics.
+seed:
+  epic:
+    - key: global_id
+      data: { global_id: EPIC-1, title: "Express Pay", parent_id: "" }
+    - key: global_id
+      data: { global_id: EPIC-2, title: "Refunds & Disputes", parent_id: "" }

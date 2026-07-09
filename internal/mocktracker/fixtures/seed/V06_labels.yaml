@@ -1,0 +1,18 @@
+# Labels keyed by the (issue_id, name) pair so re-applying is idempotent.
+dependsOn: [V05_issues]
+seed:
+  label:
+    - key: [issue_id, name]
+      data: { issue_id: ACME-101, name: "priority::high" }
+    - key: [issue_id, name]
+      data: { issue_id: ACME-101, name: "team::payments" }
+    - key: [issue_id, name]
+      data: { issue_id: ACME-102, name: "priority::medium" }
+    - key: [issue_id, name]
+      data: { issue_id: ACME-103, name: "type::bug" }
+    - key: [issue_id, name]
+      data: { issue_id: ACME-103, name: "priority::high" }
+    - key: [issue_id, name]
+      data: { issue_id: ACME-105, name: "type::bug" }
+    - key: [issue_id, name]
+      data: { issue_id: ACME-105, name: "priority::critical" }

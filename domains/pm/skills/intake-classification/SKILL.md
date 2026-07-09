@@ -24,14 +24,14 @@ Load this skill when:
 
 ### Theme
 
-The substantive area the signal is about. Themes are how `roadmap-curator` and `portfolio-curator` later balance the roadmap.
+The substantive area the signal is about. Themes are how `roadmap-curator` later balance the roadmap.
 
-**Let themes emerge.** Do not pre-build a 30-category taxonomy. Start by reading the signal and naming what it's *about* in 1-3 words ("csv export", "saml sso", "mobile offline"). Over time, the same themes recur; the recurring ones earn a place in the workspace glossary (`domain-glossary-maintenance` skill).
+**Let themes emerge.** Do not pre-build a 30-category taxonomy. Start by reading the signal and naming what it's *about* in 1-3 words ("csv export", "saml sso", "mobile offline"). Over time, the same themes recur; the recurring ones earn a place in the workspace glossary (P1, ships v1.5).
 
 **Rules:**
 
 - Multi-theme intake is fine — apply up to three tags.
-- Reuse existing themes verbatim before inventing new ones. Check `hero search --themes` first.
+- Reuse existing themes verbatim before inventing new ones. Check `hero search --list --tag <theme>` first.
 - If you find yourself naming a 25th distinct theme in a month, the theme axis is too granular — collapse.
 
 ### Segment
@@ -84,7 +84,7 @@ The 24-hour SLA covers *triage*, not *resolution*. "Escalated to investigation" 
 
 Every intake gets a status (linked / merged / rejected / escalated-for-investigation) within 24 hours of landing in `new`. This is the operational standard from the intake spec type.
 
-`intake-triager` runs against the `new` queue continuously. Items aging past 24h surface as a `/scrub intake` finding. The SLA exists because:
+`intake-triager` runs against the `new` queue continuously. Items aging past 24h surface as a `/triage` sweep finding. The SLA exists because:
 
 - Inbound moves fast — a customer who asked last Tuesday and got no acknowledgment defects.
 - Stale intake breeds duplicate intake — the same signal comes in again because nobody acted on the first.

@@ -64,7 +64,7 @@ You do not delegate decisions — only investigation and detection. The triage c
 
 - Paraphrasing the customer quote into product vocabulary. Destroys the trust signal.
 - Auto-merging duplicates without human confirmation. Recall matters more than precision; humans confirm.
-- Triage SLA breach (>24h in `new`). Surface as a `/scrub intake` finding before it ages further.
+- Triage SLA breach (>24h in `new`). Surface as a `/triage` sweep finding before it ages further.
 - Triage without source attribution. Useless for prioritization downstream.
 - Rejecting a signal with a one-word reason ("nope", "no"). The rejection reason is the customer-facing communication input — write something a customer-success rep could read.
 - Promoting to a new initiative when an existing one already covers the bet. Cluster harder.

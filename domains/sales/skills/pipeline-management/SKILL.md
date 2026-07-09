@@ -1,8 +1,8 @@
 ---
 name: pipeline-management
-description: Stage definitions, exit criteria, deal hygiene rules, and the signals that indicate a deal belongs where it says it does. Loaded by forecast-analyst and pipeline command.
+description: Stage definitions, exit criteria, deal hygiene rules, and the signals that indicate a deal belongs where it says it does. Loaded by forecast-analyst and the /pipeline command.
 metadata:
-  audience: forecast-analyst, deal-strategist
+  audience: forecast-analyst, /pipeline command
   purpose: pipeline-hygiene
 ---
 
@@ -168,6 +168,9 @@ Rule: if a deal's close date has passed without closing, it must be updated
 within 48 hours with a revised date and a note on what happened.
 
 ### 3. Stale deal thresholds
+
+This skill is the single owner of all numeric staleness and risk thresholds.
+Sibling skills reference these values rather than restating them.
 
 | Stage | Stale threshold | Action |
 |---|---|---|

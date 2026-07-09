@@ -3,7 +3,7 @@ name: sprint-planning
 description: Sprint commit, velocity reading, and cut-line decisions under the sprint preset — including what to do when plans drift.
 compatibility: opencode
 metadata:
-  audience: cycle-planner, capacity-planner, pm-delivery-lead
+  audience: pm-delivery-lead
   purpose: process-guidance
 ---
 ## What I do
@@ -32,7 +32,7 @@ Min/Max: 19 / 41
 
 Plan the **commit** against the median or slightly below. Reserve room for the variance — if the team has hit 19 in a recent sprint, committing to 35 because last sprint was a 35 is gambling.
 
-If a `capacity-planner` shows a single velocity number with no distribution, push back. The distribution is the artifact; the headline number erases the signal.
+If a capacity model shows a single velocity number with no distribution, push back. The distribution is the artifact; the headline number erases the signal.
 
 ## Commit vs stretch
 
@@ -159,9 +159,9 @@ What sprint preset does *not* fix:
 ## Cross-references
 
 - `cycle-planning` — the Shape Up alternative for teams running 6+2 instead of fixed sprints.
-- `iteration-planning` — generic iteration shape for kanban / phased presets.
+- `iteration-planning` (P1, ships v1.5) — generic iteration shape for kanban / phased presets.
 - `prioritization-frameworks` — produces the prioritized queue that sprint planning draws from.
 - `story-writing-invest` — INVEST-shaped stories are what makes refinement (and therefore sizing) possible.
-- `capacity-planning` — the cross-team / cross-sprint capacity view that sits above sprint planning.
+- `capacity-planning` (P1, ships v1.5) — the cross-team / cross-sprint capacity view that sits above sprint planning.
 - `story` spec type — `points` and `sprint` are the preset-conditional fields planning populates.
 - PM principle #3 (make tradeoffs visible) — commit vs stretch is the operating mechanism.

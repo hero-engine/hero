@@ -5,6 +5,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -68,20 +69,20 @@ Examples:
 }
 
 var (
-	importLabel     string
-	importLimit     int
-	syncImportDryRun    bool
-	syncImportType      string
-	importJQL       string
-	importFilterID  string
-	importAssignee  string
-	importIssueType string
-	importStatus    string
-	importPriority  string
-	importOrderBy   string
-	importNoReport  bool
-	importRefresh   bool
-	importPreset    string
+	importLabel      string
+	importLimit      int
+	syncImportDryRun bool
+	syncImportType   string
+	importJQL        string
+	importFilterID   string
+	importAssignee   string
+	importIssueType  string
+	importStatus     string
+	importPriority   string
+	importOrderBy    string
+	importNoReport   bool
+	importRefresh    bool
+	importPreset     string
 )
 
 func init() {
@@ -137,11 +138,33 @@ func runSyncImport(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("initializing tracker: %w", err)
 	}
 
-	// Fetch issues — use Search if we have any query parameters, otherwise fall back to ListIssues
+	// Fetch issues. Four paths, in precedence order:
+	//   1. by_type union — when import.by_type is configured and no
+	//      explicit CLI/preset override or scoped type is active, run
+	//      each type's effective filter and union (dedup by external id).
+	//   2. scoped by_type — a positional/--type arg with by_type set.
+	//   3. single Search — a *user-or-config-supplied* filter is present.
+	//   4. ListIssues — nothing supplied: broad-fetch all active issues.
+	//
+	// Path 3 must gate on an actually-supplied filter, NOT on the query
+	// fields directly: resolveImportQuery synthesizes base_filter
+	// defaults (assignee=unassigned/status=New/issue_type=Bug) even when
+	// the user configured nothing, and treating that synthesized default
+	// as "explicit query present" would send a truly-empty import down
+	// the Search path and filter everything out. A plain import with only
+	// `tracker` set (no import block, no flags) must broad-fetch.
+	userFilter := hasExplicitQueryOverride() || hasConfiguredImportFilter(cfg)
 	var issues []tracker.Issue
-	if query.RawQuery != "" || query.FilterID != "" || query.IssueType != "" ||
-		query.Assignee != "" || len(query.Labels) > 0 || query.Status != "" ||
-		query.Priority != "" || query.OrderBy != "" {
+	if cfg.Import.HasByType() && typeFilter == "" && !hasExplicitQueryOverride() {
+		issues, err = fetchByTypeUnion(cfg, t, limit)
+	} else if cfg.Import.HasByType() && typeFilter != "" && !hasExplicitQueryOverride() {
+		// Scoped import with by_type configured: run only that type's
+		// effective filter (base ⊕ by_type[type]).
+		scoped := tracker.SearchQueryFromConfig(cfg.Import.EffectiveFilterForType(typeFilter), limit)
+		fmt.Printf("Searching %s for %s issues...\n", t.Name(), typeFilter)
+		printQuerySummary(scoped)
+		issues, err = t.Search(scoped)
+	} else if userFilter {
 		query.Limit = limit
 		if importPreset != "" {
 			fmt.Printf("Searching %s with preset %q...\n", t.Name(), importPreset)
@@ -231,6 +254,15 @@ func runSyncImport(cmd *cobra.Command, args []string) error {
 		content := generateImportedSpec(issue, specType, t.Name(), slug)
 		if err := os.WriteFile(specPath, []byte(content), 0o644); err != nil {
 			return fmt.Errorf("writing spec: %w", err)
+		}
+
+		// Seed the last-synced baseline from the imported issue: the spec was
+		// just created FROM this issue, so tracker == local for the shared
+		// fields (title/body/tags) and that value is the common ancestor. This
+		// gives a base BEFORE any divergence, so the first shared-field push is
+		// a true 3-way merge, not the first-run adopt-remote fallback.
+		if berr := seedBaselineFromIssue(heroDir, slug, &issue); berr != nil {
+			fmt.Fprintf(os.Stderr, "  Warning: could not seed sync baseline for %s: %v\n", slug, berr)
 		}
 
 		fmt.Printf("  Created %s: %s (from %s %s)\n", specType, slug, t.Name(), issue.ID)
@@ -335,7 +367,7 @@ func inferSpecType(issue tracker.Issue) string {
 	switch strings.ToLower(issue.IssueType) {
 	case "bug", "defect":
 		return "bug"
-	case "epic":
+	case "epic", "initiative":
 		return "initiative"
 	case "story", "task", "feature request", "feature", "sub-task", "subtask",
 		"improvement", "enhancement", "new feature":
@@ -456,6 +488,83 @@ func resolveImportQuery(cfg config.Config) (tracker.SearchQuery, error) {
 	}
 
 	return query, nil
+}
+
+// hasExplicitQueryOverride reports whether the user supplied an explicit
+// query on the CLI (any field flag, --jql, --filter, --label) or a
+// --preset. When true, the by_type union is bypassed so the explicit
+// query wins — preserving the precedence chain (--jql > --filter > CLI
+// field flags > --preset > by_type > base_filter).
+func hasExplicitQueryOverride() bool {
+	return importJQL != "" || importFilterID != "" || importIssueType != "" ||
+		importAssignee != "" || importLabel != "" || importStatus != "" ||
+		importPriority != "" || importOrderBy != "" || importPreset != ""
+}
+
+// hasConfiguredImportFilter reports whether hero.json actually declares
+// an import filter — a non-empty import.filter, import.base_filter, or
+// import.by_type. This is distinct from the synthesized defaults
+// EffectiveBaseFilter returns: those defaults exist so a *filtered*
+// import has sane values, but their mere presence must NOT force a
+// truly-empty import onto the Search path. When this returns false and
+// no CLI/preset override is present, the import broad-fetches via
+// ListIssues (the pre-parity behavior).
+func hasConfiguredImportFilter(cfg config.Config) bool {
+	if cfg.Import == nil {
+		return false
+	}
+	if cfg.Import.HasByType() {
+		return true
+	}
+	return !isEmptyFilter(cfg.Import.Filter) || !isEmptyFilter(cfg.Import.BaseFilter)
+}
+
+// isEmptyFilter reports whether an ImportFilter is nil or has no
+// non-zero fields (i.e. contributes no actual filtering).
+func isEmptyFilter(f *config.ImportFilter) bool {
+	if f == nil {
+		return true
+	}
+	return f.JQL == "" && f.FilterID == "" && f.IssueType == "" &&
+		f.Assignee == "" && len(f.Labels) == 0 && f.Status == "" &&
+		f.Priority == "" && f.OrderBy == ""
+}
+
+// fetchByTypeUnion runs each configured by_type filter's effective query
+// (base ⊕ by_type[type]) through the tracker's Search and unions the
+// results, deduping by external id (Issue.ID). Limit caps the total
+// unioned result set. Types with no by_type entry are not enumerated
+// here — an unconfigured type contributes nothing to the union (its
+// issues still land correctly when caught by another type's filter, or
+// via a plain per-type import). The first Search error aborts.
+func fetchByTypeUnion(cfg config.Config, t tracker.Tracker, limit int) ([]tracker.Issue, error) {
+	types := cfg.Import.ByTypeKeys()
+	sort.Strings(types) // deterministic order for stable output
+	fmt.Printf("Searching %s per type (%s), unioning results...\n", t.Name(), strings.Join(types, ", "))
+
+	seen := map[string]bool{}
+	var union []tracker.Issue
+	for _, specType := range types {
+		eff := cfg.Import.EffectiveFilterForType(specType)
+		q := tracker.SearchQueryFromConfig(eff, limit)
+		fmt.Printf("  [%s]\n", specType)
+		printQuerySummary(q)
+		found, err := t.Search(q)
+		if err != nil {
+			return nil, fmt.Errorf("searching %s for %s: %w", t.Name(), specType, err)
+		}
+		for _, iss := range found {
+			if seen[iss.ID] {
+				continue
+			}
+			seen[iss.ID] = true
+			union = append(union, iss)
+			if limit > 0 && len(union) >= limit {
+				return union, nil
+			}
+		}
+	}
+	return union, nil
 }
 
 // mergeQuery overlays non-empty fields from src onto dst.
@@ -735,7 +844,7 @@ func currentSpecFieldValue(s *spec.Spec, key string) string {
 		return s.Severity
 	default:
 		// Tracker-prefixed fields: read from parsed tracker metadata
-		for _, prefix := range []string{"jira_", "github_", "linear_"} {
+		for _, prefix := range []string{"jira_", "github_", "linear_", "gitlab_"} {
 			if strings.HasPrefix(key, prefix) {
 				field := strings.TrimPrefix(key, prefix)
 				switch field {

@@ -3,7 +3,7 @@ name: pm-preset-detection
 description: Read `hero.json`'s `pm.presets` config and apply the right authoring rules per artifact type. Analog to engineering's stack-detection.
 compatibility: opencode
 metadata:
-  audience: prd-author, story-writer, pitch-author, roadmap-curator, epic-framer, cycle-planner, capacity-planner, pm-delivery-lead
+  audience: prd-author, story-writer, roadmap-curator, pm-delivery-lead
   purpose: operational
 ---
 
@@ -47,7 +47,7 @@ Load this skill when:
 
 - any PM authoring agent starts work on a `feature`, `epic`, `initiative`, `prd`, or `pitch`
 - `roadmap-curator` is grouping the Roadmap board (grouping depends on roadmap preset)
-- `capacity-planner` or `cycle-planner` needs the math model for the active preset
+- `pm-delivery-lead` needs the math model for the active preset (P1 planners `capacity-planner` / `cycle-planner` ship v1.5)
 - `pm-delivery-lead` is orchestrating a refinement pass and needs to decide which authoring agent to call
 
 ## The preset schema
@@ -128,7 +128,7 @@ Preset-conditional:
 | `phased` | `release` | The release the epic is committed to. |
 | `continuous` | (none) | Epics are coarse containers; no preset-specific fields. |
 
-`epic-framer` reads the preset to decide which fields to populate.
+`pm-delivery-lead` reads the preset to decide which fields to populate (P1 `epic-framer` ships v1.5).
 
 ## "Switching is a config edit, not a migration" — preserve fields when their preset toggles off
 
@@ -201,3 +201,34 @@ If `pm-delivery-lead` encounters a story authored under a different preset than 
 - **Mixing org-state and content fields without classification awareness.** Per the tracker-fronting decision, classification drives the write path. Confusing them produces sync conflicts.
 - **Authoring overlay fields as if they replace delivery-preset fields.** Overlay is additive. A story under sprint + release overlay has both `points` and `release`.
 - **Cross-preset auto-conversion.** Switching cycle → sprint does not auto-translate `appetite: big` to `points: 13`. The estimates are not commensurable; let the team re-estimate if needed.
+
+## PM lifecycle vocabulary → engine statuses
+
+PM process language (drafting, refined, ready, shipped, …) is **vocabulary**,
+not a separate status machine. Every PM lifecycle word maps onto exactly one
+engine status. **This table is the single source for status vocabulary; agents
+cite it, they don't restate it.**
+
+| PM lifecycle term | Engine status | Applies to |
+|---|---|---|
+| `drafting`, `drafted`, `shaping`, `refining` | `planning` | work specs |
+| `refined`, `ready` (reviewed, handoff-eligible) | `in-review` | work specs |
+| engineering has claimed the spec | `delivering` | work specs |
+| `shipped` | `completed` | work specs |
+| `dropped` | `superseded` (work specs) / `rejected` (intake) | work specs / intake |
+| initiative `candidate` | `planning` | initiatives |
+| initiative `committed` | `delivering` | initiatives |
+| initiative `shipped` | `completed` | initiatives |
+
+The canonical engine statuses are `planning`, `in-review`, `delivering`,
+`completed`, `regressed` (work specs); `triaged`, `promoted`, `rejected`,
+`merged` (intake); `superseded` (shared). PM agents write these values on disk —
+the terms in the left column describe PM *process*, they are never a status
+value in frontmatter.
+
+**`handed_off` / `handed_back` are not part of this mapping.** They are
+cross-repo peering statuses (the `hero peer` / `hero handoff <spec> <alias>`
+boundary between sibling repos), not the pm→engineering owner flip. The
+pm→engineering handoff is an `owner:` change — `hero spec set-owner <slug>
+engineering` — **not** a status change: the spec stays `in-review` until
+engineering claims it and flips it to `delivering`.

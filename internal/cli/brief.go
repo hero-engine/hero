@@ -15,6 +15,7 @@ import (
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/handoff"
 	"github.com/hero-engine/hero/internal/peering"
+	"github.com/hero-engine/hero/internal/spec"
 	"github.com/hero-engine/hero/internal/traversal"
 	"github.com/spf13/cobra"
 )
@@ -566,6 +567,18 @@ func runBlocked(cmd *cobra.Command, args []string) error {
 		cfgVal = *cfg
 	}
 	scope := graph.ResolveDomain(cfgVal, override)
+
+	// Reconcile the spec subgraph from frontmatter (the durable source of
+	// truth) before querying, so `hero blocked` reflects current relations
+	// even on a fresh clone where graph.db — a regenerable cache — hasn't
+	// been reingested yet. This keeps `hero blocked` in agreement with
+	// `hero queue`, which reads frontmatter directly. Best-effort: on any
+	// error we just query whatever the graph already holds.
+	if cfg != nil {
+		if specs, derr := spec.Discover(cfg.HeroDir(findProjectRoot())); derr == nil {
+			_, _ = spec.WriteGraph(specs, repoKey, graph.DomainFor(cfgVal, graph.IntrinsicActive), store)
+		}
+	}
 
 	// f.domain = scope is the active filter on the Feature row; we
 	// always JOIN both endpoints so cross-domain rows can be rendered

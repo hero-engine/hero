@@ -253,8 +253,8 @@ to the timeline.
 
 Call a deal review (escalate to manager or deal desk) when:
 - MEDDPICC score has not improved in 3 weeks despite activity
-- Champion has gone dark for 14+ days
-- Deal has been in the same stage for 30+ days
+- Champion has gone dark past the stage's stale window (thresholds owned by `pipeline-management`)
+- Deal has stalled in the same stage beyond its stale window (thresholds owned by `pipeline-management`)
 - Close date has pushed twice
 - A new stakeholder appears late in the process
 - The EB says something unexpected about budget or priority

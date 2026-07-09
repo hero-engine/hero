@@ -3,7 +3,7 @@ name: prd-anti-patterns
 description: The PRD smells that make a document unusable — what they look like, why they fail, and what to write instead.
 compatibility: opencode
 metadata:
-  audience: prd-author, pm-reviewer, prd-author-scrubber
+  audience: prd-author, pm-reviewer
   purpose: prd-review
 ---
 
@@ -16,7 +16,7 @@ Provide the concrete failure modes PRDs fall into — the smells `pm-reviewer` f
 Load this skill when:
 
 - reviewing a PRD before it advances to `approved` (`pm-reviewer`)
-- authoring a PRD and self-checking against known traps (`prd-author`, `pitch-author`)
+- authoring a PRD and self-checking against known traps (`prd-author`; `pitch-author` ships v1.5)
 - running the planned PRD scrubber (`prd-author-scrubber` — P1)
 - sanity-checking an inherited or externally-drafted PRD
 

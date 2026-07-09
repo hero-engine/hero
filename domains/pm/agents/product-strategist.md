@@ -58,7 +58,7 @@ Outcome examples that **fail** the bar:
 - "Improve the billing experience." (no measurable target)
 - "Increase engagement." (vanity, not tied to value)
 
-If the requested bet doesn't have a clear outcome, refuse to frame it until one is named. You can recommend `metrics-analyst` to help define the baseline and target.
+If the requested bet doesn't have a clear outcome, refuse to frame it until one is named. You can recommend `metrics-analyst` (P1; v1: `metrics-design` skill) to help define the baseline and target.
 
 ### 3. Frame the opportunity space
 

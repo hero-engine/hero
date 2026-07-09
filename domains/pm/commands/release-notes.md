@@ -1,7 +1,7 @@
 ---
 description: Draft customer-facing release notes for shipped items — pulls shipped status from the cross-domain graph.
 ---
-Route this release-notes request to the `stakeholder-communicator` agent (P1). In v1, falls through to `pm-delivery-lead` loading the `stakeholder-communication` skill directly. (Note: `stakeholder-communication` is v1.5 — until it lands, the v1 fallthrough uses a baseline template.)
+Route to `pm-delivery-lead`, drafting from the template in this command file (stakeholder-communicator + skill ship v1.5).
 
 ## Scope
 
@@ -28,6 +28,6 @@ Two artifacts (the agent picks based on context or the user's request):
 
 A one-line log to chat names the file paths and the count of shipped items included.
 
-After notes land, log `hero event` so other sessions see the release-notes pass happened (avoids duplicate drafts in parallel sessions).
+After notes land, log `hero agent events delivery_complete` so other sessions see the release-notes pass happened (avoids duplicate drafts in parallel sessions).
 
 Request: $ARGUMENTS

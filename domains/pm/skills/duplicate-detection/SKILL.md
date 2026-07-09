@@ -19,7 +19,7 @@ Load this skill when:
 
 - `duplicate-detector` runs at write-time of a new `intake` (the default trigger)
 - `intake-triager` is comparing a triaged item against existing initiatives
-- `pm-reviewer` is auditing for accumulated dupes during a `/scrub intake`
+- `pm-reviewer` is auditing for accumulated dupes during a `/triage` dedup sweep
 - a PM searches a theme and wants to know "is this already on the roadmap?"
 
 ## The overlap signals

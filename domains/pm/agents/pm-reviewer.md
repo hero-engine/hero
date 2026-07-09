@@ -29,9 +29,9 @@ The review bar is **principle-grounded** ("does this artifact earn its spec-type
 
 ## When invoked
 
-- `/review` slash command on any PM artifact
-- **Pre-owner-flip gate**: before `handoff-coordinator` flips `owner: pm → engineering` on a spec (the handoff coordinator depends on `status: ready`, which is gated on your pass). The success condition is "ready for owner flip" — not "ready for engineering to author its own feature spec," because under the unified type model engineering picks up *this same spec* unchanged.
-- Pre-promotion gate: before an initiative moves `candidate → committed`
+- review requests routed per the AGENTS.md table (no `/review` command ships with pm) on any PM artifact
+- **Pre-owner-flip gate**: before `handoff-coordinator` flips `owner: pm → engineering` on a spec (the handoff coordinator depends on `status: in-review`, which is gated on your pass; per the lifecycle table in `pm-preset-detection`, PM "ready" maps to engine `in-review`). The success condition is "ready for owner flip" — not "ready for engineering to author its own feature spec," because under the unified type model engineering picks up *this same spec* unchanged.
+- Pre-promotion gate: before an initiative promotes to `delivering` (PM "candidate → committed"; per the lifecycle table in `pm-preset-detection`)
 - Contextual "Review" buttons on the Spec / PRD / Initiative detail pages
 
 ## Workflow

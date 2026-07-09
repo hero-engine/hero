@@ -6,7 +6,7 @@ and hygiene rules before rendering.
 
 **Gather all open deals**:
 ```
-hero search --type deal --status "prospect,qualifying,demo,proposal,negotiation"
+hero list --type deal --status prospect,qualifying,demo,proposal,negotiation
 ```
 
 **Produce a pipeline board** organized as a kanban view by stage. For each
@@ -20,7 +20,7 @@ stage, show:
   - MEDDPICC score (color-coded: red <40, yellow 40–59, green 60+)
   - Next action due (from deal spec)
   - Owner
-  - Staleness flag if no activity in 14+ days
+  - Staleness flag when past the stage's stale threshold (per `pipeline-management`)
 
 **Format**:
 
@@ -47,7 +47,7 @@ Startup Co              $80K   ·  Day 3   ·  Score: —   ·
 | Total open pipeline | $X.XM |
 | Weighted forecast | $X.XM |
 | At-risk deals | N |
-| Stale deals (14+ days) | N |
+| Stale deals (past stale threshold) | N |
 | Deals closing this week | N |
 | Deals closing this month | N |
 
@@ -70,7 +70,7 @@ slippage signal.
 - `--rep <name>` — filter to one rep's pipeline
 - `--stage <stage>` — show only that stage
 - `--at-risk` — show only deals with risk signals
-- `--stale` — show only deals with no activity in 14+ days
+- `--stale <days>` — show only deals with no activity in the given window (per-stage thresholds: `pipeline-management`)
 - `--week` — deals with close dates in the next 7 days
 
 ---

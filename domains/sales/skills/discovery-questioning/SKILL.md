@@ -1,8 +1,8 @@
 ---
 name: discovery-questioning
-description: SPIN questioning framework (Situation, Problem, Implication, Need-payoff) with question banks for common Hero sales scenarios. Loaded by buyer-researcher and deal-strategist.
+description: SPIN questioning framework (Situation, Problem, Implication, Need-payoff) with question banks for common Hero sales scenarios. Loaded by buyer-researcher.
 metadata:
-  audience: buyer-researcher, deal-strategist, qualification-analyst
+  audience: buyer-researcher
   purpose: discovery-framework
 ---
 

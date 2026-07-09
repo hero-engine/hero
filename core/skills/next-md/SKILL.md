@@ -35,6 +35,21 @@ The agent never has to write the machine half. The harness keeps it
 fresh on every turn — no agent discipline required. The agent's only
 job is the agent half.
 
+### `.hero/next/<user>.local.md` is machine-state-only
+
+The gitignored per-machine state file `.hero/next/<user>.local.md` is
+**rebuilt wholesale on every checkpoint** — it contains the marker-
+bounded machine block and nothing else. **Never hand-edit it. Never
+write scratch into it. Anything outside the marker block is wiped
+on the next Stop hook** (the first time a wipe happens, the prior
+hand-content is backed up once to `<user>.local.md.bak.<timestamp>`
+so an accidental loss is recoverable, then discarded on subsequent
+runs).
+
+If you want a preserved per-machine briefing the agent doesn't touch,
+write to a separately-named file such as `.hero/notes/<user>.md` —
+no Hero tool reads or rewrites that path.
+
 ## Modes
 
 Run `hero next path` to get the file path you should write to:
@@ -218,6 +233,10 @@ Most turns don't warrant a team update. If unsure, skip it.
   at the artifact instead.
 - Don't paraphrase what's already in the spec corpus or the codebase.
   The handoff is the *delta* not visible elsewhere.
+- **Don't hand-edit `.hero/next/<user>.local.md`.** It is rebuilt
+  every checkpoint and any content you write outside the marker
+  block will be discarded. Use `.hero/notes/<user>.md` (or any
+  path not under `.hero/next/`) for preserved per-machine notes.
 
 ## CLI commands
 

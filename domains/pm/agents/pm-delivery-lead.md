@@ -19,14 +19,6 @@ permission:
     prioritization-strategist: allow
     handoff-coordinator: allow
     pm-reviewer: allow
-    pitch-author: allow
-    epic-framer: allow
-    dependency-mapper: allow
-    risk-curator: allow
-    metrics-analyst: allow
-    cycle-planner: allow
-    capacity-planner: allow
-    stakeholder-communicator: allow
   skill:
     "*": allow
   webfetch: allow
@@ -79,19 +71,19 @@ Map intent to artifact under the unified type model: `intake` (raw inbound), `in
 | Frame a strategic bet | `product-strategist` |
 | Design or synthesize research | `discovery-researcher` |
 | Author or refine a PRD | `prd-author` |
-| Author a Shape Up pitch | `pitch-author` |
+| Author a Shape Up pitch | `prd-author` (pitch template) (pitch-author P1) |
 | Author or refine a feature / bug / chore spec | `story-writer` (canonical pack name; v1) |
-| Frame an epic | `epic-framer` |
+| Frame an epic | `pm-delivery-lead` direct (epic-framer P1) |
 | Curate the roadmap board | `roadmap-curator` |
 | Apply RICE / ICE / WSJF / value-vs-effort | `prioritization-strategist` |
-| Reconcile capacity vs commitment | `capacity-planner` |
-| Plan a sprint / cycle / phase | `cycle-planner` |
-| Map dependencies | `dependency-mapper` |
-| Curate risks | `risk-curator` |
-| Define success metrics | `metrics-analyst` |
+| Reconcile capacity vs commitment | `pm-delivery-lead` + `sprint-planning`/`cycle-planning` skills (capacity-planner P1) |
+| Plan a sprint / cycle / phase | `pm-delivery-lead` + `sprint-planning`/`cycle-planning` skills (planners P1) |
+| Map dependencies | `pm-delivery-lead` + `dependency-mapping` skill |
+| Curate risks | `prd-author` (Risks section) |
+| Define success metrics | `pm-delivery-lead` + `metrics-design` skill (metrics-analyst P1) |
 | Find near-duplicates | `duplicate-detector` |
 | Review before advancing | `pm-reviewer` |
-| Translate for stakeholders | `stakeholder-communicator` |
+| Translate for stakeholders | `pm-delivery-lead` (stakeholder-communicator P1) |
 | Hand off to engineering | `handoff-coordinator` |
 
 ### 4. Delegate with context
@@ -114,8 +106,8 @@ Before declaring an artifact "ready":
 - run `pm-reviewer` on PRDs and stories pre-handoff
 - confirm the artifact passes its type's quality bar (INVEST + EARS for stories; five-adjective test for PRDs; tradeoffs visible on initiatives)
 - confirm the active preset's required fields are populated
-- update the artifact's `status` frontmatter (`refining` → `ready` → `handed-off` → `shipped`)
-- log significant transitions: `hero event handoff "..."` or `hero event decision_made "..."`
+- update the artifact's `status` frontmatter along the engine statuses `planning` → `in-review` → `delivering` → `completed` (per the lifecycle table in `pm-preset-detection`)
+- log significant transitions: `hero agent events spec_updated "..." --slug <slug>` or `hero agent events decision_made "..." --slug <slug>` (or the `hero_event` MCP tool)
 
 ## The five PM principles
 
@@ -133,15 +125,15 @@ When the workflow reaches the PM → engineering boundary, you delegate to `hand
 
 You may coordinate with engineering's `feature-delivery-lead` for **ownership-transfer concerns** (e.g. is engineering available to claim now? is the spec sized for current capacity?) — but you never delegate spec authorship across the boundary. The spec is the same artifact; only its `owner` field changes.
 
-After the handoff lands, verify the bitemporal `owner_history` row was written and engineering picked up the spec (status `ready → delivering`). If the ownership history didn't update or engineering didn't claim within the expected window, the handoff didn't complete — surface and re-run.
+After the handoff lands, verify the bitemporal `owner_history` row was written and engineering picked up the spec (status `in-review → delivering`). If the ownership history didn't update or engineering didn't claim within the expected window, the handoff didn't complete — surface and re-run.
 
 ## Session wrap-up
 
 Before ending a session where meaningful PM work happened:
 
-1. **Update artifact status** — `status:` frontmatter reflects current state (`triaging` / `discovering` / `shaping` / `refining` / `ready` / `handed-off` / `shipped` / `dropped`).
+1. **Update artifact status** — `status:` frontmatter reflects current state using engine statuses `planning` / `in-review` / `delivering` / `completed` / `superseded` (per the lifecycle table in `pm-preset-detection`).
 2. **Update preset-specific fields** — if you promoted, refined, or planned, set `points` / `cycle` + `hill_position` / `appetite` / `release` + `phase` per the active preset.
-3. **Log significant events** — `hero event` for decisions, handoffs, drops.
+3. **Log significant events** — `hero agent events` (types: `decision_made`, `spec_updated`, `delivery_complete`) for decisions, handoffs, drops (or the `hero_event` MCP tool).
 4. **Refresh handoff briefing** — overwrite `.hero/NEXT.md` (or `.hero/next/<user>.md` in team mode).
 5. **Run `hero index`** — keep search current.
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 
@@ -17,7 +18,7 @@ var connectCmd = &cobra.Command{
 	Short: "Connect hero to an external tracker or wiki service",
 	Long: `Interactively configure a tracker or wiki connection and save credentials.
 
-Supported types: github, jira, linear, confluence
+Supported types: github, jira, linear, gitlab, confluence
 
 Examples:
   hero connect github       — guided setup for GitHub Issues
@@ -67,7 +68,7 @@ func runConnect(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(args) == 0 {
-		return fmt.Errorf("usage: hero connect <type>  (github, jira, linear, confluence)\n\nRun 'hero connect --list' to see saved connections.")
+		return fmt.Errorf("usage: hero connect <type>  (github, jira, linear, gitlab, confluence)\n\nRun 'hero connect --list' to see saved connections.")
 	}
 
 	trackerType := strings.ToLower(args[0])
@@ -78,10 +79,12 @@ func runConnect(cmd *cobra.Command, args []string) error {
 		return runConnectJira(projectRoot, creds)
 	case "linear":
 		return runConnectLinear(projectRoot, creds)
+	case "gitlab":
+		return runConnectGitLab(projectRoot, creds)
 	case "confluence":
 		return runConnectConfluence(projectRoot, creds)
 	default:
-		return fmt.Errorf("unknown type %q — supported: github, jira, linear, confluence", trackerType)
+		return fmt.Errorf("unknown type %q — supported: github, jira, linear, gitlab, confluence", trackerType)
 	}
 }
 
@@ -252,6 +255,43 @@ func runConnectLinear(projectRoot string, creds config.Credentials) error {
 
 	entry := config.CredentialEntry{Token: token}
 	return saveConnection(projectRoot, creds, "linear", project, entry, "", "")
+}
+
+// ---------------------------------------------------------------------------
+// gitlab
+// ---------------------------------------------------------------------------
+
+func runConnectGitLab(projectRoot string, creds config.Credentials) error {
+	fmt.Println("Connecting to GitLab...")
+	fmt.Println()
+
+	baseURL := prompt("GitLab base URL [https://gitlab.com]: ")
+	if baseURL == "" {
+		baseURL = "https://gitlab.com"
+	}
+	baseURL = strings.TrimRight(baseURL, "/")
+
+	project := prompt("Project (namespace/project or numeric ID): ")
+	if project == "" {
+		return fmt.Errorf("project is required")
+	}
+
+	token := promptSecret("Personal/Project access token (needs 'api' scope): ")
+	if token == "" {
+		return fmt.Errorf("token is required")
+	}
+
+	fmt.Println()
+	fmt.Print("Verifying connection... ")
+
+	if err := verifyGitLabToken(baseURL, project, token); err != nil {
+		fmt.Println("FAILED")
+		return fmt.Errorf("could not verify GitLab connection: %w", err)
+	}
+	fmt.Println("OK")
+
+	entry := config.CredentialEntry{Token: token, BaseURL: baseURL}
+	return saveConnection(projectRoot, creds, "gitlab", project, entry, baseURL, "")
 }
 
 // ---------------------------------------------------------------------------
@@ -437,6 +477,16 @@ func verifyLinearToken(_, token string) error {
 	_, err := httpPOST("https://api.linear.app/graphql", `{"query":"{ viewer { id name } }"}`, map[string]string{
 		"Authorization": token,
 		"Content-Type":  "application/json",
+	})
+	return err
+}
+
+// verifyGitLabToken checks that the token can read the given project via
+// the REST v4 API. Uses the PRIVATE-TOKEN header (PAT/project token).
+func verifyGitLabToken(baseURL, project, token string) error {
+	_, err := httpGET(baseURL+"/api/v4/projects/"+url.PathEscape(project), map[string]string{
+		"PRIVATE-TOKEN": token,
+		"Accept":        "application/json",
 	})
 	return err
 }

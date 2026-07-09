@@ -2,11 +2,21 @@
 title: "Bash output supersede"
 slug: cev2-bash-output-supersede
 type: feature
-status: planning
+status: superseded
+superseded_by: bash-output-supersede
+superseded_by_peer:
+  peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3
+  peer_alias_display: hero-code
+  peer_slug: bash-output-supersede
+  successor_initiative: context-engine-v3
+  reason: "Scope moved to hero-code's context-engine-v3 initiative; implementation is native Swift and lives in the peer workspace."
 priority: high
 size: medium
 parent: context-engine-v2
 created: 2026-06-09
+relations:
+  - target: bash-output-supersede
+    kind: superseded-by
 tags: [hero-code, swift, context-engine, curator, supersede, bash, token-efficiency]
 ---
 

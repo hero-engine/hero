@@ -3,8 +3,8 @@ name: pitch-writing-shape-up
 description: Shape Up pitch authoring discipline — appetite as budget, fat-marker sketches, rabbit holes as named traps, no-gos as scope defense, cooldown as first-class state.
 compatibility: opencode
 metadata:
-  audience: pitch-author, prd-author, pm-reviewer, pm-delivery-lead
-  purpose: pitch-authoring
+  audience: prd-author, pm-reviewer, pm-delivery-lead
+  purpose: pitch-writing
 ---
 
 ## What I do
@@ -15,7 +15,7 @@ Provide the authoring discipline for Shape Up pitches — the pitch-shaped varia
 
 Load this skill when:
 
-- authoring a pitch (`pitch-author`, or `prd-author` when cycle preset is active)
+- authoring a pitch (P1; v1: `prd-author` in pitch shape)
 - reviewing a pitch before a betting table (`pm-reviewer`, `pm-delivery-lead`)
 - coaching a team adopting Shape Up for the first time
 - distinguishing a pitch from a generic PRD when a team asks "is this a pitch?"
@@ -261,7 +261,7 @@ raw idea → shaping → shaped pitch → bet → build → ship-or-kill
 
 ## Anti-patterns to refuse
 
-When `pitch-author` or `pm-reviewer` is asked to advance a pitch, refuse if:
+When the reviewer (P1; v1: `prd-author` in pitch shape) or `pm-reviewer` is asked to advance a pitch, refuse if:
 
 - Appetite section is empty, says "TBD," or names a non-standard duration.
 - Solution contains implementation details (architecture, schema, API contracts).
@@ -276,8 +276,8 @@ When `pitch-author` or `pm-reviewer` is asked to advance a pitch, refuse if:
 
 - `prd-structure` — pitch shape is the default PRD template under cycle preset; this skill goes deeper.
 - `prd-anti-patterns` — Shape-Up-specific failures (#2 empty No-Gos, #5 missing Appetite, #10 Rabbit-Hole-as-risk) are covered there.
-- `shape-up-cadence` — the 6+2 rhythm, betting table mechanics, cycle scheduling.
-- `hill-chart-reasoning` — hill charts as unknowns-remaining visualization (not progress bars).
+- `shape-up-cadence` (P1, ships v1.5) — the 6+2 rhythm, betting table mechanics, cycle scheduling.
+- `hill-chart-reasoning` (P1, ships v1.5) — hill charts as unknowns-remaining visualization (not progress bars).
 - `cycle-planning` — capacity and commit logistics under cycle preset.
 - PM domain mission — principle #3 (tradeoffs visible) is the philosophical root of Rabbit Holes and No-Gos.
 - Prior art: Ryan Singer, *Shape Up* (Basecamp, 2019) — read it if you haven't.

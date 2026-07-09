@@ -97,20 +97,20 @@ func PlanMigration(rootDir, nestedRel string) (*MigrationPlan, error) {
 
 	// Anything else inside .hero/ is flagged.
 	known := map[string]bool{
-		"planning":   true,
-		"knowledge":  true,
-		"events.log": true,
-		"specs":      true,
-		"hero.json":  true,
+		"planning":     true,
+		"knowledge":    true,
+		"events.log":   true,
+		"specs":        true,
+		"hero.json":    true,
 		"version.json": true,
-		"context":    true,
-		"conventions": true,
-		"decisions":  true,
-		"index.db":   true,
-		"graph.db":   true,
-		"mocks":      true,
-		"NEXT.md":    true,
-		"next":       true,
+		"context":      true,
+		"conventions":  true,
+		"decisions":    true,
+		"index.db":     true,
+		"graph.db":     true,
+		"mocks":        true,
+		"NEXT.md":      true,
+		"next":         true,
 	}
 	entries, _ := os.ReadDir(nestedHero)
 	for _, e := range entries {

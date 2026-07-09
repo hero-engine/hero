@@ -9,7 +9,6 @@ metadata:
 ## What this skill covers
 
 - The MEDDPICC qualification framework and scoring rubric
-- BANT as an alternative for SMB deals
 - The red flag checklist
 - How to distinguish confirmed from assumed information
 - When to recommend qualifying out
@@ -226,7 +225,7 @@ qualification review with manager.
 - [ ] Pain is only tactical (no business impact articulated)
 - [ ] Competitive situation unknown
 - [ ] Champion is leaving or role changed
-- [ ] Deal has been in the same stage for 30+ days with no movement
+- [ ] Deal has stalled in the same stage past its stale threshold (see `pipeline-management`)
 - [ ] Close date has pushed twice or more
 
 ---
@@ -248,11 +247,11 @@ When scoring, only award full points for **Confirmed** information.
 ## Qualify-out guidance
 
 Recommend qualify-out review when:
-- MEDDPICC score < 25 after 2+ qualification conversations
+- MEDDPICC score < 25 after 3 qualification conversations — canonical thresholds: `pipeline-management`
 - No EB identified at Proposal stage
 - Champion departed or gone silent with no replacement
 - Compelling event evaporated (the "why now" no longer exists)
-- Deal has been in the same stage for 45+ days with no movement
+- Deal has stalled in the same stage past its stale threshold (see `pipeline-management`)
 
 Qualify-out is not a failure — it's pipeline hygiene. A deal that can't
 close wastes rep time, pollutes the forecast, and creates false confidence

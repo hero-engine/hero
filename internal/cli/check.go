@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -305,16 +306,59 @@ func runCheck(cmd *cobra.Command, args []string) error {
 		addRow("kickoff-coverage", "warn", fmt.Sprintf("kickoff audit failed: %v", err))
 	} else if len(missing) > 0 {
 		issues += len(missing)
-		fmt.Printf("Specs missing `## Kickoff` section (%d):\n", len(missing))
-		for _, s := range missing {
+		fmt.Printf("Specs missing `## Kickoff` section (%d) — excluded from `hero queue`:\n", len(missing))
+		const kickoffShowMax = 5
+		for i, s := range missing {
+			if i >= kickoffShowMax {
+				fmt.Printf("  … and %d more.\n", len(missing)-kickoffShowMax)
+				break
+			}
 			fmt.Printf("  %-30s  %-10s  %s\n", s.Slug, s.Status, s.Title)
 		}
-		fmt.Println("  These specs are excluded from `hero queue`. Run /design or")
-		fmt.Println("  /deliver on each, or hand-edit per skills/kickoff-prompt.md.")
+		fmt.Println("  Run /design or /deliver on each, or hand-edit per skills/kickoff-prompt.md.")
 		fmt.Println()
 		addRow("kickoff-coverage", "warn", fmt.Sprintf("%d spec(s) missing ## Kickoff section", len(missing)))
 	} else {
 		addRow("kickoff-coverage", "pass", "all work specs carry ## Kickoff sections")
+	}
+
+	// Initiative Goal-opener coverage — ADVISORY (does not bump issues). An
+	// open initiative without a `## Goal` run-opener still surfaces in
+	// `hero queue`, but can't be armed with `/drive` until it has one.
+	// Spec: initiative-goal-section.
+	if missing, err := missingGoalInitiatives(heroDir); err != nil {
+		addRow("initiative-goal-coverage", "warn", fmt.Sprintf("initiative goal audit failed: %v", err))
+	} else if len(missing) > 0 {
+		fmt.Printf("Initiatives without a `## Goal` run-opener (%d) — can't `/drive` until added:\n", len(missing))
+		for _, s := range missing {
+			fmt.Printf("  %-30s  %-10s  %s\n", s.Slug, s.Status, s.Title)
+		}
+		fmt.Println()
+		addRow("initiative-goal-coverage", "warn", fmt.Sprintf("%d initiative(s) missing ## Goal run-opener (advisory)", len(missing)))
+	} else {
+		addRow("initiative-goal-coverage", "pass", "all open initiatives carry a ## Goal run-opener")
+	}
+
+	// Wikilink relation intent — `[[slug]]` in a spec body reads like a
+	// relationship but creates no graph edge (wikilinks are searchable
+	// text only). Nudge toward the frontmatter that does form edges.
+	if hits, err := specsWithWikilinks(heroDir); err == nil && len(hits) > 0 {
+		issues += len(hits)
+		fmt.Printf("Specs using `[[wikilinks]]` that create no graph edges (%d):\n", len(hits))
+		const wikilinkShowMax = 5
+		for i, h := range hits {
+			if i >= wikilinkShowMax {
+				fmt.Printf("  … and %d more.\n", len(hits)-wikilinkShowMax)
+				break
+			}
+			fmt.Printf("  %-30s  %s\n", h.Slug, strings.Join(h.Links, ", "))
+		}
+		fmt.Println("  Wikilinks are searchable text only. For relationships use frontmatter:")
+		fmt.Println("  `parent: <slug>`, `depends-on: [<slug>]`, or a relations: block.")
+		fmt.Println()
+		addRow("wikilink-edges", "warn", fmt.Sprintf("%d spec(s) use [[wikilinks]] that create no graph edges", len(hits)))
+	} else {
+		addRow("wikilink-edges", "pass", "no edge-intent wikilinks in spec bodies")
 	}
 
 	// Status truthfulness — one-line summary plus an issue count
@@ -407,10 +451,28 @@ func runCheck(cmd *cobra.Command, args []string) error {
 		addRow("snapshot-health", "pass", "snapshot archives healthy")
 	}
 
+	// Severity-aware summary: surface failing vs advisory categories so a
+	// scaffold-heavy but healthy workspace (all warnings) doesn't read as
+	// broken. The flat item count is retained as detail.
 	if issues == 0 {
 		fmt.Println("No issues found.")
 	} else {
-		fmt.Printf("%d issue(s) found.\n", issues)
+		var fails, warns []string
+		for _, r := range jsonRows {
+			switch r.Status {
+			case "fail":
+				fails = append(fails, r.Name)
+			case "warn":
+				warns = append(warns, r.Name)
+			}
+		}
+		if len(fails) == 0 {
+			fmt.Printf("No failures — %d advisory check(s) with findings (%s), %d item(s). Advisories are non-blocking.\n",
+				len(warns), strings.Join(warns, ", "), issues)
+		} else {
+			fmt.Printf("%d failing check(s): %s. Plus %d advisory check(s), %d item(s) total. Fix failures first.\n",
+				len(fails), strings.Join(fails, ", "), len(warns), issues)
+		}
 	}
 
 	if checkJSON {
@@ -492,6 +554,44 @@ func reportSatelliteDrift(projectRoot, heroDir string) int {
 // status that lack a `## Kickoff` section. Knowledge specs and
 // closed work specs are skipped — kickoff is only meaningful for
 // pickup-able work.
+var wikilinkRe = regexp.MustCompile(`\[\[([^\]\n]+)\]\]`)
+
+type wikilinkHit struct {
+	Slug  string
+	Links []string
+}
+
+// specsWithWikilinks returns work specs whose body contains `[[...]]`
+// wikilinks. These read like relationships but create no graph edges,
+// so hero check nudges the author toward relation frontmatter.
+func specsWithWikilinks(heroDir string) ([]wikilinkHit, error) {
+	specs, err := spec.Discover(heroDir)
+	if err != nil {
+		return nil, err
+	}
+	var out []wikilinkHit
+	for _, s := range specs {
+		if !s.IsWorkSpec() {
+			continue
+		}
+		matches := wikilinkRe.FindAllStringSubmatch(s.RawContent, -1)
+		if len(matches) == 0 {
+			continue
+		}
+		seen := map[string]bool{}
+		var links []string
+		for _, m := range matches {
+			t := strings.TrimSpace(m[1])
+			if t != "" && !seen[t] {
+				seen[t] = true
+				links = append(links, t)
+			}
+		}
+		out = append(out, wikilinkHit{Slug: s.Slug, Links: links})
+	}
+	return out, nil
+}
+
 func missingKickoffSpecs(heroDir string) ([]*spec.Spec, error) {
 	specs, err := spec.Discover(heroDir)
 	if err != nil {
@@ -507,6 +607,31 @@ func missingKickoffSpecs(heroDir string) ([]*spec.Spec, error) {
 			continue
 		}
 		if strings.TrimSpace(s.Kickoff()) == "" {
+			out = append(out, s)
+		}
+	}
+	return out, nil
+}
+
+// missingGoalInitiatives returns initiatives in an open status whose
+// `## Goal` run-opener is empty — they surface in `hero queue` without a
+// paste-ready `/drive` opener. Advisory only: an initiative is still valid
+// without one. Spec: initiative-goal-section.
+func missingGoalInitiatives(heroDir string) ([]*spec.Spec, error) {
+	specs, err := spec.Discover(heroDir)
+	if err != nil {
+		return nil, err
+	}
+	var out []*spec.Spec
+	for _, s := range specs {
+		if s.Type != spec.TypeInitiative {
+			continue
+		}
+		switch s.Status {
+		case spec.StatusCompleted, spec.StatusSuperseded:
+			continue
+		}
+		if strings.TrimSpace(s.GoalSection()) == "" {
 			out = append(out, s)
 		}
 	}
@@ -596,6 +721,34 @@ func runKnowledgeLint(heroDir, projectRoot string) int {
 		fmt.Printf("  ... and %d more broken references\n", brokenRefs-5)
 	}
 	issues += brokenRefs
+
+	// 3b. Check explainer provenance (synthesized_from + last_synthesized).
+	// An explainer claims to describe current reality, so it must name the
+	// specs it was synthesized from and when — else readers can't judge
+	// staleness. See feature-knowledge-synthesis.
+	provCount := 0
+	for _, s := range knowledgeSpecs {
+		if s.Type != spec.TypeExplainer {
+			continue
+		}
+		var missing []string
+		if len(s.SynthesizedFrom) == 0 {
+			missing = append(missing, "synthesized_from")
+		}
+		if s.LastSynthesized == "" {
+			missing = append(missing, "last_synthesized")
+		}
+		if len(missing) > 0 {
+			provCount++
+			if provCount <= 5 {
+				fmt.Printf("  ⚠ %s — explainer missing provenance: %s\n", s.Slug, strings.Join(missing, ", "))
+			}
+		}
+	}
+	if provCount > 5 {
+		fmt.Printf("  ... and %d more explainers missing provenance\n", provCount-5)
+	}
+	issues += provCount
 
 	// 4. Check for orphan raw files (raw/ entries with no corresponding knowledge entry)
 	rawDir := filepath.Join(knowledgeDir, "raw")

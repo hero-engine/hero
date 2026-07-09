@@ -21,20 +21,20 @@ var ErrSizeUpdateNotSupported = errors.New("tracker: UpdateSize not supported by
 
 // Issue represents an issue in an external tracker.
 type Issue struct {
-	ID          string // tracker-native ID (e.g. "42" for GitHub, "PROJ-123" for Jira)
-	Title       string
-	Status      string            // tracker-native status string
-	URL         string            // web URL to the issue
-	Priority    string            // e.g. "high", "medium", "low" (Jira built-in priority field)
-	Severity    string            // convenience: first severity-like value found in CustomFields
-	Assignee    string            // display name or email of assignee
-	Labels      []string          // label names
-	IssueType   string            // tracker issue type name (e.g. "Story", "Bug", "Epic")
-	EpicKey     string            // epic/parent key (Jira: epic link custom field)
-	SprintName  string            // sprint or iteration name
-	Reporter    string            // display name or email of reporter
-	CreatedAt   string            // creation date (ISO 8601 or tracker-native)
-	Description string            // issue description/body text
+	ID           string // tracker-native ID (e.g. "42" for GitHub, "PROJ-123" for Jira)
+	Title        string
+	Status       string            // tracker-native status string
+	URL          string            // web URL to the issue
+	Priority     string            // e.g. "high", "medium", "low" (Jira built-in priority field)
+	Severity     string            // convenience: first severity-like value found in CustomFields
+	Assignee     string            // display name or email of assignee
+	Labels       []string          // label names
+	IssueType    string            // tracker issue type name (e.g. "Story", "Bug", "Epic")
+	EpicKey      string            // epic/parent key (Jira: epic link custom field)
+	SprintName   string            // sprint or iteration name
+	Reporter     string            // display name or email of reporter
+	CreatedAt    string            // creation date (ISO 8601 or tracker-native)
+	Description  string            // issue description/body text
 	CustomFields map[string]string // custom field values keyed by lowercase field name (e.g. "severity" → "critical")
 }
 
@@ -94,6 +94,28 @@ type Tracker interface {
 
 	// GetIssue retrieves current issue info from the tracker.
 	GetIssue(issueID string) (*Issue, error)
+
+	// UpdateFields writes a set of canonical field values to an existing
+	// tracker issue. Keys are canonical hero-side field names (e.g.
+	// "title", "description", "points", "priority", "labels"); the
+	// adapter resolves them to provider-native fields and encodes the
+	// Value tagged union into the provider's wire shape. Called only
+	// with the diff (the fields that actually changed) — see the
+	// field-level push path in internal/cli/sync_push.go.
+	//
+	// Errors are classified via FieldError so the CLI can map 401/403 →
+	// exit 2 and apply the 429 retry policy. An empty patch is a no-op
+	// (no network call); callers should not invoke UpdateFields with an
+	// empty map.
+	UpdateFields(issueID string, fields map[string]Value) error
+
+	// GetFields fetches the current tracker-side values for the
+	// canonical content fields, keyed by canonical hero-side name. Used
+	// by the diff path (`hero sync push <slug>` with no --field flags)
+	// to compute what differs from local. Only content-classified
+	// fields the adapter knows how to read are returned; unknown or
+	// org-state fields are omitted.
+	GetFields(issueID string) (map[string]Value, error)
 
 	// ListIssues fetches open issues from the tracker. Returns up to limit issues.
 	// If label is non-empty, filters by that label.
@@ -172,6 +194,13 @@ func New(cfg *config.TrackerConfig) (Tracker, error) {
 		}
 		l.configuredSizeMapping = cfg.SizeMapping
 		return l, nil
+	case "gitlab":
+		gl, err := newGitLab(cfg.Project, token, cfg.BaseURL)
+		if err != nil {
+			return nil, err
+		}
+		gl.configuredSizeMapping = cfg.SizeMapping
+		return gl, nil
 	default:
 		return nil, fmt.Errorf("unknown tracker type: %q", cfg.Type)
 	}
@@ -265,6 +294,65 @@ func truncateDescription(s string, maxLen int) string {
 		truncated = truncated[:idx]
 	}
 	return truncated + "..."
+}
+
+// typeFromLabels infers a hero spec type ("bug", "epic", "initiative",
+// or "" for none) from a label set, using the conventions the seeders
+// write across trackers that have no native issue type (Linear) or that
+// carry type on scoped labels (GitLab/GitHub). Recognized:
+//
+//	bug:        "bug", "type::bug", "type/bug", "kind/bug",
+//	            "acme-type::bug", "Bug" (case-insensitive)
+//	epic:       "epic", "type::epic", "acme-type::epic"
+//	initiative: "initiative", "type::initiative", "acme-type::initiative"
+//
+// Returns "" when no type label is present so callers fall through to
+// their default (story/feature). Matching is case-insensitive and the
+// convention prefix (acme-type::, type::) is stripped before comparison.
+func typeFromLabels(labels []string) string {
+	for _, raw := range labels {
+		l := strings.ToLower(strings.TrimSpace(raw))
+		// Strip a scoped-label prefix so "acme-type::bug" and
+		// "type::bug" reduce to the bare kind. kind/bug and type/bug
+		// use "/" as the separator; handle both.
+		bare := l
+		for _, sep := range []string{"::", "/"} {
+			if idx := strings.LastIndex(bare, sep); idx >= 0 {
+				bare = bare[idx+len(sep):]
+			}
+		}
+		switch bare {
+		case "bug", "defect":
+			return "bug"
+		case "epic":
+			return "epic"
+		case "initiative":
+			return "initiative"
+		}
+	}
+	return ""
+}
+
+// typeLabelFor maps a SearchQuery IssueType filter onto the label a
+// label-based tracker (Linear/GitLab/GitHub) filters by. It accepts
+// either a hero spec type ("bug", "epic", "initiative") or a
+// tracker-native type name ("Bug", "Story") and returns the
+// lower-cased convention label to match against, or "" when the type
+// has no label representation (e.g. "story"/"feature", which is the
+// unlabeled default). The returned bare label ("bug"/"epic"/
+// "initiative") matches the seeder-written labels after typeFromLabels
+// normalization, so filtering on it and inferring from it agree.
+func typeLabelFor(issueType string) string {
+	switch strings.ToLower(strings.TrimSpace(issueType)) {
+	case "bug", "defect":
+		return "bug"
+	case "epic":
+		return "epic"
+	case "initiative":
+		return "initiative"
+	default:
+		return ""
+	}
 }
 
 // SearchQueryFromConfig builds a SearchQuery from an ImportFilter configuration.

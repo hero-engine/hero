@@ -2,7 +2,8 @@
 title: claimedByMatches "you"/"me" sentinels collide with real git identities
 slug: claim-matches-sentinel-collision
 type: bug
-status: planning
+status: completed
+completed_at: 2026-06-23
 severity: low
 root_cause_class: code
 priority: low
@@ -230,3 +231,7 @@ invariant to the identity resolver that already owns this contract.
    dashboard renders with the next-ladder identity (e.g. `$USER`),
    not with `you`.
 4. Full `go test ./internal/serve/... ./internal/gitutil/...` passes.
+
+## Resolution (2026-06-23)
+
+**Fixed.** Removed the `"you"/"me"` sentinel arm from `claimedByMatches` (internal/serve/pages/now/data/plate.go) and guarded `gitutil.UserName` with `isSentinelIdentity` so a git identity literally named you/me can't impersonate the current user. Regression tests added (plate_test.go, gitutil_test.go).
