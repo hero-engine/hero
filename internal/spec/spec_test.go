@@ -214,6 +214,40 @@ relates-to: use-postgres-fts
 	}
 }
 
+// A conflicts-with relation (and its underscore variant) must round-trip
+// through the parser as the canonical `conflicts-with` kind, not degrade to a
+// `related` relation that the /drive soft-mutex gate can't see.
+func TestParseRelations_ConflictsWith(t *testing.T) {
+	content := `---
+title: Region Editor
+type: feature
+status: planning
+conflicts-with: region-renderer
+conflicts_with: region-index
+---
+# Region Editor
+`
+	s, err := Parse(content, "/project/.hero/planning/features/region-editor/spec.md", time.Now())
+	if err != nil {
+		t.Fatalf("Parse failed: %v", err)
+	}
+	var conflicts, related []string
+	for _, r := range s.Relations {
+		switch r.Kind {
+		case "conflicts-with":
+			conflicts = append(conflicts, r.Target)
+		case "related", "relates-to":
+			related = append(related, r.Target)
+		}
+	}
+	if len(related) != 0 {
+		t.Errorf("conflicts-with must not degrade to related, got related=%v", related)
+	}
+	if len(conflicts) != 2 || conflicts[0] != "region-renderer" || conflicts[1] != "region-index" {
+		t.Errorf("conflicts-with = %v, want [region-renderer region-index]", conflicts)
+	}
+}
+
 func TestParseRelations_ShorthandAliasesAndBlockList(t *testing.T) {
 	// The shorthands first-use sessions reach for must form relations,
 	// not silently drop: `initiative:` (→ parent), `depends_on:`

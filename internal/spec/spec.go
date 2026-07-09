@@ -575,7 +575,7 @@ func (s *Spec) parseFrontmatter(content string) string {
 			s.SynthesizedFrom = targets
 		case "last_synthesized":
 			s.LastSynthesized = val
-		case "relates-to", "depends-on", "depends_on", "supersedes", "parent", "child", "initiative":
+		case "relates-to", "depends-on", "depends_on", "supersedes", "parent", "child", "initiative", "conflicts-with", "conflicts_with":
 			// Accept the shorthands first-use sessions reach for:
 			// `initiative:` (a parent) and `depends_on:` (underscore
 			// variant). Normalize to canonical kinds so they form graph
@@ -586,6 +586,8 @@ func (s *Spec) parseFrontmatter(content string) string {
 				relKind = "parent"
 			case "depends_on":
 				relKind = "depends-on"
+			case "conflicts_with":
+				relKind = "conflicts-with"
 			}
 			targets := parseList(val)
 			if len(targets) == 0 {

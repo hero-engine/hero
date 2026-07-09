@@ -225,6 +225,11 @@ func graphEdgeForRelation(kind string) string {
 		return "belongs_to"
 	case "depends-on", "depends_on":
 		return "depends_on"
+	case "conflicts-with", "conflicts_with":
+		// Soft mutex consumed by the /drive judge: two specs must not
+		// deliver concurrently. Distinct from related_to so the gate can
+		// find it.
+		return "conflicts_with"
 	case "blocks":
 		return "blocks"
 	case "supersedes":
