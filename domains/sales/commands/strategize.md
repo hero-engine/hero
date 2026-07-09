@@ -26,8 +26,8 @@ Surface any violations before proposing strategy.
 
 **Search for applicable playbooks and battlecards**:
 ```
-ls .hero/knowledge/playbooks/        # applicable playbooks (read the matching file)
-ls .hero/knowledge/battlecards/      # competitive positioning, if a competitive deal
+hero search --knowledge "<segment or competitor>"   # rank applicable playbooks / battlecards by content
+ls .hero/knowledge/playbooks/ .hero/knowledge/battlecards/   # or browse by directory
 ```
 Include relevant playbook guidance in the strategy.
 

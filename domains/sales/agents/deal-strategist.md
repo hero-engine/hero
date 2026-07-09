@@ -55,12 +55,14 @@ a deal with no Economic Buyer.
 ### 3. Load applicable playbooks
 
 ```
-ls .hero/knowledge/playbooks/      # browse; playbooks are titled "Playbook: <segment/motion>"
+hero search --knowledge "competitive displacement"   # rank playbooks by content
+# or browse: ls .hero/knowledge/playbooks/  (playbooks are titled "Playbook: <segment/motion>")
 # then read the matching file, e.g. .hero/knowledge/playbooks/competitive-displacement.md
 ```
 
-Playbooks are plain markdown under `.hero/knowledge/`, not work specs, so
-they are found by path (browse + read), not `hero search`.
+Playbooks are knowledge, not work specs, so they surface under
+`hero search --knowledge` / `hero ask` (or by browsing the directory) — not the
+default `hero search`, which covers work specs only.
 
 If no playbook matches, proceed without one. Note the gap for future
 playbook creation.

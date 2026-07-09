@@ -693,6 +693,99 @@ parent: parent-init
 	}
 }
 
+// TestVerify_InitiativeAutoComplete_FlowStyleRelations is a regression test
+// for a bug where content-remediation's 8th and final child
+// (token-efficiency-pass) verified and archived cleanly but never
+// auto-completed the parent initiative. Root cause: children declared their
+// parent link with inline-flow YAML (`relations: [{target: x, kind:
+// parent}]`, the shape /design templates emit) while the initiative declared
+// its roster with a block-style `child:` list — both valid YAML, but at the
+// time this ran, spec.go's relation parser only handled block-style
+// `key: value` relation entries and silently dropped inline-flow ones. With
+// zero parsed "parent" relations on the just-verified child,
+// autoCompleteParentIfReady found nothing to check and returned immediately.
+func TestVerify_InitiativeAutoComplete_FlowStyleRelations(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Parent initiative with a block-style `child:` roster (not `relations:`).
+	initiativeContent := `---
+title: Content Remediation
+type: initiative
+status: planning
+slug: content-remediation
+child:
+  - child-one
+  - child-two
+---
+# Content Remediation
+`
+	env.addSpec("planning/initiatives/content-remediation/spec.md", initiativeContent)
+
+	// Child 1 — already completed and archived, parent link in inline-flow style.
+	child1Content := `---
+title: Child One
+type: bug
+status: completed
+slug: child-one
+relations:
+  - { target: content-remediation, kind: parent }
+---
+# Child One
+`
+	env.addSpec("specs/child-one/spec.md", child1Content)
+
+	// Child 2 — delivering, about to be verified. Parent link also inline-flow.
+	child2Content := `---
+title: Child Two
+type: enhancement
+status: delivering
+slug: child-two
+relations:
+  - { target: content-remediation, kind: parent }
+---
+# Child Two
+
+## Acceptance Criteria
+
+- AC-1: THE SYSTEM SHALL do child-two work
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | do child-two work | DONE | implemented |
+
+### Exercise-the-feature check
+
+- [x] Exercised: verified child two works
+`
+	env.addSpec("planning/features/child-two/spec.md", child2Content)
+	writeVerifyFile(t, filepath.Join(env.heroDir, "planning/features/child-two/delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "child-two", -1))
+	env.indexAll()
+
+	output, err := runCmd("spec", "verify", "--skip-tests", "--json", "child-two")
+	if err != nil {
+		t.Fatalf("verify failed: %v\noutput: %s", err, output)
+	}
+
+	var result VerifyResult
+	if err := json.Unmarshal([]byte(strings.TrimSpace(output)), &result); err != nil {
+		t.Fatalf("failed to parse JSON: %v\noutput: %s", err, output)
+	}
+
+	if result.InitiativeCompleted != "content-remediation" {
+		t.Errorf("InitiativeCompleted = %q, want content-remediation", result.InitiativeCompleted)
+	}
+
+	archivedPath := filepath.Join(env.heroDir, "specs", "content-remediation", "spec.md")
+	if _, err := os.Stat(archivedPath); os.IsNotExist(err) {
+		t.Error("parent initiative was not auto-archived")
+	}
+}
+
 func TestVerify_ExerciseDemotedToAdvisory(t *testing.T) {
 	env := newTestEnv(t)
 

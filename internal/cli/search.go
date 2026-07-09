@@ -47,6 +47,7 @@ var (
 	searchSemantic        bool
 	searchHybrid          bool
 	searchIncludeSuperseded bool
+	searchKnowledge         bool
 )
 
 func init() {
@@ -58,6 +59,7 @@ func init() {
 	searchCmd.Flags().BoolVar(&searchListOnly, "list", false, "list specs matching filters without a text query (FTS5 path)")
 	searchCmd.Flags().BoolVar(&searchCrossRepo, "cross-repo", false, "search across all configured repos (FTS5 path)")
 	searchCmd.Flags().BoolVar(&searchSpecsOnly, "specs", false, "force the legacy FTS5 spec-only search")
+	searchCmd.Flags().BoolVar(&searchKnowledge, "knowledge", false, "search the hand-authored .hero/knowledge/** corpus instead of work specs (--type filters by knowledge kind)")
 	searchCmd.Flags().IntVar(&searchBudget, "budget", 800, "token budget for graph search results")
 	searchCmd.Flags().BoolVar(&searchJSON, "json", false, "emit JSON (graph search only)")
 	searchCmd.Flags().StringVar(&searchSubproject, "subproject", "", "filter by subproject scope (e.g. engines/mlx); 'all' disables. Default: active scope from cwd")
@@ -100,6 +102,33 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		Limit:             searchBudget,
 		SemanticOK:        searchSemantic || searchHybrid,
 		IncludeSuperseded: searchIncludeSuperseded,
+	}
+	// --knowledge scopes to the isolated knowledge corpus; --type filters by
+	// knowledge kind (battlecards, decisions, …). Spec: knowledge-surfacing.
+	if searchKnowledge {
+		q.KnowledgeOnly = true
+		q.SemanticOK = false
+		if searchType != "" {
+			q.Types = []string{searchType}
+		}
+		ret, err := retrieval.New(heroDir)
+		if err != nil {
+			return fmt.Errorf("opening retrieval layer: %w", err)
+		}
+		defer ret.Close()
+		results, err := ret.Retrieve(q)
+		if err != nil {
+			return fmt.Errorf("searching: %w", err)
+		}
+		if len(results) == 0 {
+			if searchJSON {
+				fmt.Println("[]")
+				return nil
+			}
+			fmt.Println("No knowledge found.")
+			return nil
+		}
+		return printFTSResults(results, searchJSON)
 	}
 	if searchSpecsOnly || hasFilters() {
 		q.Types = nil

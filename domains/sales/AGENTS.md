@@ -35,13 +35,14 @@ At the start of every session:
    A rep should never start a session wondering "what should I work on?" —
    Hero answers that.
 
-5. **Load relevant playbooks.** Before strategizing or qualifying, browse
+5. **Load relevant playbooks.** Before strategizing or qualifying, search
    the knowledge base for applicable patterns. Playbooks and battlecards are
-   plain markdown under `.hero/knowledge/` (not work specs, so not in
-   `hero search`) — list the directory and read the relevant file:
+   plain markdown under `.hero/knowledge/` (knowledge, not work specs) —
+   search their content or ask a direct question:
    ```
-   ls .hero/knowledge/playbooks/     # sales motions, titled "Playbook: <segment>"
-   ls .hero/knowledge/battlecards/   # one file per competitor
+   hero search --knowledge "competitive displacement"  # rank playbooks/battlecards by content
+   hero ask "how do we counter RivalCorp on price"      # direct answer with citations
+   ls .hero/knowledge/playbooks/ .hero/knowledge/battlecards/  # or browse by directory
    ```
 
 6. **Anchor check for large strategic moves.** Before proposing a deal
@@ -127,9 +128,10 @@ hero sprint status --week            # weekly pipeline narrative
 # Work a deal
 hero search "Acme Corp"              # find the deal spec
 
-# Knowledge management (plain markdown under .hero/knowledge/ — browse, then read the file)
-ls .hero/knowledge/playbooks/        # applicable playbooks
-ls .hero/knowledge/battlecards/      # competitive positioning, one file per competitor
+# Knowledge (plain markdown under .hero/knowledge/ — search content, ask, or browse)
+hero search --knowledge "displacement"   # rank playbooks/battlecards by content
+hero ask "battlecard for RivalCorp"      # direct answer with citations
+ls .hero/knowledge/playbooks/ .hero/knowledge/battlecards/  # or browse by directory
 
 # Pipeline hygiene
 hero queue                           # ranked ready-to-work specs

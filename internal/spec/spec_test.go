@@ -258,6 +258,73 @@ child:
 	}
 }
 
+// TestParseRelations_InlineFlowAndMixed guards the inline-flow-relations-dropped
+// bug: `- { target: x, kind: y }` (valid YAML, emitted by /design templates)
+// must parse, and must mix with block-style entries.
+func TestParseRelations_InlineFlowAndMixed(t *testing.T) {
+	content := `---
+title: Mixed Relations
+type: feature
+status: planning
+relations:
+  - { target: content-remediation, kind: parent }
+  - { target: hero-content-audit, kind: related }
+  - target: unified-retrieval-layer
+    kind: depends-on
+---
+# Mixed Relations
+`
+	s, err := Parse(content, "/project/.hero/planning/features/mixed/spec.md", time.Now())
+	if err != nil {
+		t.Fatalf("Parse failed: %v", err)
+	}
+	if len(s.Relations) != 3 {
+		t.Fatalf("Relations = %d, want 3 (2 inline-flow + 1 block)", len(s.Relations))
+	}
+	got := make(map[string]string)
+	for _, r := range s.Relations {
+		got[r.Target] = r.Kind
+	}
+	if got["content-remediation"] != "parent" {
+		t.Errorf("inline-flow parent dropped: got %q", got["content-remediation"])
+	}
+	if got["hero-content-audit"] != "related" {
+		t.Errorf("inline-flow related dropped: got %q", got["hero-content-audit"])
+	}
+	if got["unified-retrieval-layer"] != "depends-on" {
+		t.Errorf("block-style entry after inline-flow dropped: got %q", got["unified-retrieval-layer"])
+	}
+}
+
+// TestParseListFields_BlockStyle guards the same class of drop as
+// inline-flow-relations-dropped for the scalar-list fields `tags:` and
+// `triggers:`: a block-style YAML list must parse, not silently vanish.
+func TestParseListFields_BlockStyle(t *testing.T) {
+	content := `---
+title: Block List Fields
+type: feature
+status: planning
+tags:
+  - foo
+  - bar
+triggers:
+  - on-commit
+  - on-review
+---
+# Block List Fields
+`
+	s, err := Parse(content, "/project/.hero/planning/features/block/spec.md", time.Now())
+	if err != nil {
+		t.Fatalf("Parse failed: %v", err)
+	}
+	if len(s.Tags) != 2 || s.Tags[0] != "foo" || s.Tags[1] != "bar" {
+		t.Errorf("block-style tags dropped: got %v, want [foo bar]", s.Tags)
+	}
+	if len(s.Triggers) != 2 || s.Triggers[0] != "on-commit" || s.Triggers[1] != "on-review" {
+		t.Errorf("block-style triggers dropped: got %v, want [on-commit on-review]", s.Triggers)
+	}
+}
+
 func TestTypeFromPath(t *testing.T) {
 	tests := []struct {
 		path string

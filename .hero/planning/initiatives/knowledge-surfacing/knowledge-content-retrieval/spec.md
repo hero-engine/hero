@@ -2,20 +2,27 @@
 title: "Knowledge Content Retrieval — layout-agnostic ingest + pull (ask/search)"
 slug: knowledge-content-retrieval
 type: feature
-status: planning
+status: completed
 priority: P2
 size: medium
 domain: engineering
 created: 2026-07-06
+completed_at: 2026-07-07T00:00:00Z
+delivery_method: drive
 tags: [knowledge, retrieval, ingest, hero-ask, hero-search, all-domains]
 relations:
-  - { target: knowledge-surfacing, kind: parent }
-  - { target: knowledge-context-injection, kind: enables }
-  - { target: hero-ask, kind: related }
-  - { target: unified-retrieval-layer, kind: related }
-  - { target: sales-pack-reality-sync, kind: informed-by }
-  - { target: knowledge-retrieved-through-unified-corpus, kind: decided-in }
-delivery_method: manual
+  - target: knowledge-surfacing
+    kind: parent
+  - target: knowledge-context-injection
+    kind: enables
+  - target: hero-ask
+    kind: related
+  - target: unified-retrieval-layer
+    kind: related
+  - target: sales-pack-reality-sync
+    kind: informed-by
+  - target: knowledge-retrieved-through-unified-corpus
+    kind: decided-in
 ---
 
 # Knowledge Content Retrieval — layout-agnostic ingest + pull (ask/search)
