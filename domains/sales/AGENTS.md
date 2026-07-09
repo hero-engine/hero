@@ -113,6 +113,7 @@ no match.
 | `forecast-methodology` | Weighted pipeline, coverage ratio, commit vs. upside |
 | `competitive-positioning` | Battlecard patterns, win/loss analysis |
 | `discovery-questioning` | SPIN questioning — Situation, Problem, Implication, Need-payoff |
+| `buyer-research` | Company research dimension catalog — tech stack, news, pain signals, triggers, stakeholders, ICP fit |
 
 ### Key CLI Commands (Sales)
 

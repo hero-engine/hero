@@ -6,15 +6,6 @@ metadata:
   purpose: objection-playbook
 ---
 
-## What this skill covers
-
-- How to process and respond to objections (the framework)
-- Common objection categories with specific response patterns
-- Hero-specific objections (AI, security, CRM integration, ROI)
-- How to capture objection intel back into the knowledge base
-
----
-
 ## The Objection Framework
 
 Objections are almost never what they appear to be. The stated objection

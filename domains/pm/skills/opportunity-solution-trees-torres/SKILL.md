@@ -159,11 +159,7 @@ The initiative's `Bet` section names the bet; the `Evidence` section shows the O
 
 ## Continuous discovery cadence
 
-The OST is not authored once. It's revisited weekly as part of continuous discovery (see `continuous-discovery-cadence`). The cadence:
-
-- **Weekly:** Three customer touchpoints feed new evidence into the tree. The active opportunity gets re-examined. One assumption test resolves (or progresses).
-- **Per cycle / sprint:** The tree's active branch informs what gets authored as a story or PRD.
-- **Per outcome milestone:** The whole tree is revisited — are we still pointed at the right outcome?
+The OST is not authored once — it's revisited weekly as part of continuous discovery; see `continuous-discovery-cadence` for the full weekly / per-cycle / per-outcome-milestone rhythm.
 
 A tree that hasn't changed in a month is either an outcome that's been solved or a team that's stopped doing discovery. Either way, surface it.
 
@@ -185,4 +181,3 @@ A tree that hasn't changed in a month is either an outcome that's been solved or
 - `assumption-testing` (P1, ships v1.5) — designing tests that resolve in days.
 - `evidence-synthesis` — clustering raw research into mapped opportunities.
 - `initiative` spec type — the `Evidence` section is where the tree's output lives.
-- PM principle #1 (decide what's worth building) and #5 (learn from what shipped) — the OST is the operating system for both.

@@ -163,4 +163,3 @@ What sprint preset does *not* fix:
 - `story-writing-invest` — INVEST-shaped stories are what makes refinement (and therefore sizing) possible.
 - `capacity-planning` (P1, ships v1.5) — the cross-team / cross-sprint capacity view that sits above sprint planning.
 - `story` spec type — `points` and `sprint` are the preset-conditional fields planning populates.
-- PM principle #3 (make tradeoffs visible) — commit vs stretch is the operating mechanism.

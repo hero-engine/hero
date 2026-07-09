@@ -18,34 +18,34 @@ When the PM describes what they want in natural language, route to the
 appropriate Hero slash command. **Run the command — don't just suggest
 it.**
 
-| User intent | Command |
-|---|---|
-| New feedback, customer ask, support escalation, sales note, "this came in" | `/triage` |
-| Refine, tighten, "make this ready", "draft AC", INVEST, EARS; refine an existing spec (PRD / feature / epic / initiative); ambiguous specs that "won't deliver cleanly" | `/refine` |
-| Prioritize, rank, RICE, ICE, WSJF, value-vs-effort, "what's first" | `/prioritize` |
-| Hand off, send to engineering, "ready for dev", "flip owner to engineering" | `/handoff` (flips `owner: pm → engineering` on the same artifact) |
-| Create a story / spec / feature / pitch / scope (vocabulary-aware) | `hero spec new <slug> --type feature` (alias `hero design <slug>`) |
-| Create a bug | `hero spec new <slug> --type bug` |
-| Create an epic / pitch / theme | no CLI scaffolder (`hero spec new` has no epic type) — hand-author `.hero/planning/epics/<slug>/spec.md` per the registered `epic` spec type |
-| Create a roadmap-item / bet / initiative | `hero spec new <slug> --type initiative` |
-| Draft PRD, write requirements, product doc, "spec this out" | `/prd` |
-| Pitch, Shape Up, "shape this", appetite, betting table | `/pitch` |
-| Roadmap, "what's coming", reconcile roadmap, "show the roadmap" | `/roadmap` |
-| Stale roadmap, "clean up the roadmap", "what's been dropped" | `/roadmap` (reconcile mode) |
-| Discover, explore, "we don't know enough about X", customer research | `/discover` |
-| Metric, success measure, KPI, "how do we measure this" | `/metrics` |
-| Interview, customer call, user research, "design an interview" | `/discover --interview <count>` |
-| Release notes, announce, "what shipped this week" | `/release-notes` |
-| Capacity, cycle/sprint/iteration planning, standup / weekly update | (P1, ships v1.5 — no v1 surface) |
-| Duplicate intake, cluster feedback, "is this a duplicate" | `/triage` (duplicate clustering via intake-triager + duplicate-detector) |
-| Confusing customer signal, "what's actually being asked here" | invoke `pm-investigator` directly (agent — no command shim ships with pm) |
-| Search across PRDs, specs, intake, roadmap | `hero search <query>` (CLI) |
-| Why does this exist, "trace this back" | `/why` |
-| What's stuck, blocked items, dependencies | `/blocked` |
-| Note, capture, remember this conversation | `/note` |
-| Decision, tradeoff, choose between options | `/decide` |
-| Review this PRD / spec / roadmap | invoke `pm-reviewer` directly (agent — no `/review` command ships with pm) |
-| Retro, postmortem, lessons learned on a shipped item | `/retro` |
+| User intent | Vocabulary-variant phrasing | Command |
+|---|---|---|
+| New feedback, customer ask, support escalation, sales note, "this came in" | | `/triage` |
+| Refine, tighten, "make this ready", "draft AC", INVEST, EARS; refine an existing spec (PRD / feature / epic / initiative); ambiguous specs that "won't deliver cleanly" | | `/refine` |
+| Prioritize, rank, RICE, ICE, WSJF, value-vs-effort, "what's first" | | `/prioritize` |
+| Hand off, send to engineering, "ready for dev", "flip owner to engineering" | | `/handoff` (flips `owner: pm → engineering` on the same artifact) |
+| Create a story / spec / feature / pitch / scope | "draft a story" / "shape a scope" / "create an issue" | `hero spec new <slug> --type feature` (alias `hero design <slug>`) |
+| Create a bug | "log a bug" | `hero spec new <slug> --type bug` |
+| Create an epic / pitch / theme | "frame a pitch" / "frame a theme" / "create an epic" | no CLI scaffolder (`hero spec new` has no epic type) — hand-author `.hero/planning/epics/<slug>/spec.md` per the registered `epic` spec type |
+| Create a roadmap-item / bet / initiative | "add a bet" / "add a roadmap initiative" | `hero spec new <slug> --type initiative` |
+| Draft PRD, write requirements, product doc, "spec this out" | | `/prd` |
+| Pitch, Shape Up, "shape this", appetite, betting table | | `/pitch` |
+| Roadmap, "what's coming", reconcile roadmap, "show the roadmap" | | `/roadmap` |
+| Stale roadmap, "clean up the roadmap", "what's been dropped" | | `/roadmap` (reconcile mode) |
+| Discover, explore, "we don't know enough about X", customer research | | `/discover` |
+| Metric, success measure, KPI, "how do we measure this" | | `/metrics` |
+| Interview, customer call, user research, "design an interview" | | `/discover --interview <count>` |
+| Release notes, announce, "what shipped this week" | | `/release-notes` |
+| Capacity, cycle/sprint/iteration planning, standup / weekly update | | (P1, ships v1.5 — no v1 surface) |
+| Duplicate intake, cluster feedback, "is this a duplicate" | | `/triage` (duplicate clustering via intake-triager + duplicate-detector) |
+| Confusing customer signal, "what's actually being asked here" | | invoke `pm-investigator` directly (agent — no command shim ships with pm) |
+| Search across PRDs, specs, intake, roadmap | | `hero search <query>` (CLI) |
+| Why does this exist, "trace this back" | | `/why` |
+| What's stuck, blocked items, dependencies | | `/blocked` |
+| Note, capture, remember this conversation | | `/note` |
+| Decision, tradeoff, choose between options | | `/decide` |
+| Review this PRD / spec / roadmap | | invoke `pm-reviewer` directly (agent — no `/review` command ships with pm) |
+| Retro, postmortem, lessons learned on a shipped item | | `/retro` |
 
 When routing, pass the user's original context as arguments to the
 command. If the intent is ambiguous, present the top 2-3 options and
@@ -53,19 +53,13 @@ ask.
 
 ### Vocabulary-aware routing
 
-The routing table above lists **canonical** type names (`feature`, `epic`,
-`initiative`). The user's natural language may use whatever vocabulary
+The table above lists **canonical** type names (`feature`, `epic`,
+`initiative`) with vocabulary-variant phrasing alongside where it
+applies. The user's natural language may use whatever vocabulary
 their workspace has active — "story" under `agile-scrum`, "scope" under
 `shape-up`, "card" under `kanban`, "issue" under `linear`, "initiative"
-under `jira`. The router reads the active vocabulary at session start and
-translates display terms back to canonical:
-
-| User says (vocabulary-dependent) | Canonical route |
-|---|---|
-| "draft a story" / "shape a scope" / "create an issue" | `hero spec new <slug> --type feature` (alias `hero design <slug>`) |
-| "log a bug" | `hero spec new <slug> --type bug` |
-| "frame a pitch" / "frame a theme" / "create an epic" | no CLI scaffolder (`hero spec new` has no epic type) — hand-author `.hero/planning/epics/<slug>/spec.md` per the registered `epic` spec type |
-| "add a bet" / "add a roadmap initiative" | `hero spec new <slug> --type initiative` |
+under `jira`. The router reads the active vocabulary at session start
+and translates display terms back to canonical.
 
 Agents and CLI output render the active vocabulary on the way out
 ("Drafting a Story…" under agile-scrum; "Drafting a Scope…" under
@@ -74,28 +68,14 @@ regardless of what the user (or the dashboard) sees.
 
 ### Methodology presets
 
-Hero PM is **layered presets, not modes**. Artifacts (`prd`, `feature`,
-`epic`, `initiative`, `intake`) are universal under the unified
-type model. Process layers overlay methodology-specific fields and
-behavior onto them. Read the active preset from `hero.json` under
-`pm.presets` before authoring:
-
-- `roadmap`: `horizon` (Now/Next/Later) or a quarter
-- `delivery`: `continuous` / `sprint` / `cycle` / `phased`
-- `overlay`: `null` or `release`/`milestone`
-
-Authoring agents (`prd-author`, `story-writer`) must load
-`pm-preset-detection` and populate the right preset-specific fields
-(P1 agents `pitch-author` and `cycle-planner` join in v1.5) (`sprint`/`points`,
-`cycle`/`hill_position`, `appetite`, `release`/`phase`). Switching a
-preset is a config edit + dashboard reload — no data migration.
-
-Methodology preset is **independent** of vocabulary preset. A team can
-run a `cycle` delivery preset (Shape Up methodology) with `agile-scrum`
-vocabulary (calls features "Stories"), or a `sprint` preset with
-`shape-up` vocabulary (calls features "Scopes" but with story points
-and sprint cadence). See `pm-preset-detection` and the vocabulary
-preset system for details.
+Hero PM is **layered presets, not modes**: universal artifacts
+(`prd`, `feature`, `epic`, `initiative`, `intake`) get methodology-specific
+fields and behavior overlaid via `hero.json`'s `pm.presets` — dimensions
+are `roadmap` (horizon/quarter), `delivery` (continuous/sprint/cycle/phased),
+and `overlay` (null/release/milestone). Methodology preset is
+**independent** of vocabulary preset (e.g. a `cycle` delivery preset can
+run under `agile-scrum` vocabulary). Authoring agents must load
+`pm-preset-detection` for the field-level detail and switching mechanics.
 
 ### Log significant events
 
@@ -141,37 +121,11 @@ hero feed --since 1h
 
 ### The handoff is an owner flip
 
-Clicking **Hand off to engineering** on a refined spec is the platform
-thesis in one click. Under the unified type model, the handoff is an
-*owner flip on the same artifact* — not a new spec creation. The flow
-must always:
-
-1. Pre-flight check: spec is `status: in-review` (per the lifecycle
-   table in `pm-preset-detection`) with EARS AC, populated Out of
-   Scope, linked PRD context (warn if absent), linked initiative with
-   rationale (warn if absent).
-2. Flip the spec's `owner` field from `pm` to `engineering` via
-   `hero spec set-owner <slug> engineering` — this appends the
-   `owner_history` row atomically. A raw frontmatter edit records
-   **no** history.
-3. The Cross-domain Handoff stream row is sourced from
-   `owner_history`. Verify the flip by reading the spec back
-   (`hero_read_spec` MCP or the file on disk) and `hero list --status
-   in-review`.
-4. Engineering's `engineer` agent picks the spec up via `/deliver
-   <slug>` (engineering pack); status flips `in-review → delivering`;
-   `plan.md` is authored as a companion artifact in the same spec
-   folder.
-
-`handoff-coordinator` orchestrates the pre-flight and the flip. It does
-**not** call `/design`, does **not** author an engineering spec, does
-**not** write a separate `kind: handoff` graph edge — the ownership
-history is the edge. Handoff is the boundary, and the spec carries
-through unchanged.
-
-**Hand-back path.** Engineering can flip `owner` back to `pm` with a
-`handed_back_reason` when refinement reveals an under-specified
-requirement.
+Clicking **Hand off to engineering** on a refined spec is an *owner
+flip on the same artifact*, not a new spec creation — pre-flight
+gates, the `owner_history` mechanics, and the hand-back path are all
+in the `handoff-protocol` skill; `handoff-coordinator` (invoked via
+`/handoff`) is what runs it.
 
 ### Commands Reference
 
@@ -305,20 +259,12 @@ installed files are overwritten on the next install.
 
 ### Capture execution plans
 
-When you generate a shape plan, prioritization sequence, or sprint
-commit, persist it as a Hero artifact via `hero_plan`. This writes the
-plan to `.hero/planning/<type>/<slug>/plan.md` alongside the spec.
-Plans live with the artifact so the next session can pick up where
-this one stopped.
-
-**When to capture:**
-- Before authoring (the initial PRD shape plan)
-- Before commit (the sprint / cycle commit recommendation)
-- When the plan changes significantly mid-shape
-
-**When NOT to capture:**
-- Trivial plans (refining a single AC bullet)
-- Purely conversational turns
+Persist a shape plan, prioritization sequence, or sprint commit via
+`hero_plan`, which writes to `.hero/planning/<type>/<slug>/plan.md`
+alongside the spec — so the next session can pick up where this one
+stopped. Capture before authoring or before commit, and whenever the
+plan changes significantly mid-shape. Skip trivial plans (a single AC
+tweak) and purely conversational turns.
 
 ### Keep handoff briefings current
 

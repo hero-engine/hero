@@ -21,15 +21,7 @@ Load this skill when:
 
 ## The five-adjective bar (recap)
 
-From ChatPRD / MetaGPT. Every PRD must pass:
-
-- **Clarity** — readable in one pass by someone unfamiliar.
-- **Structure** — every required section present and earning its place.
-- **Flexibility** — leaves the *how* to engineering.
-- **Actionability** — engineering can decompose into stories without back-and-forth.
-- **Stakeholder focus** — exec, customer, engineering, sales each find what they need.
-
-Each anti-pattern below maps to at least one failed adjective. The fix restores it.
+See `pitch-writing-shape-up` for the five-adjective definitions (Clarity, Structure, Flexibility, Actionability, Stakeholder focus). Each anti-pattern below maps to at least one failed adjective; the fix restores it.
 
 ## The anti-pattern catalog
 
@@ -47,7 +39,7 @@ Each anti-pattern below maps to at least one failed adjective. The fix restores 
 
 **Why it fails:** No-Gos are the scope-defense section. Under Shape Up, the team commits to ship within Appetite — but if scope can creep silently, the team blows the appetite and Cooldown vanishes. Empty No-Gos guarantee creep.
 
-**Fix:** Every pitch has at least one No-Go. "No mobile app changes this cycle." "No new admin UI." "Not handling the multi-tenant case." If the author genuinely can't name an exclusion, the bet isn't shaped — push back to discovery. `pm-reviewer` blocks `draft → review` on empty No-Gos.
+**Fix:** Every pitch has at least one No-Go (see `pitch-writing-shape-up` for passing/failing examples). If the author genuinely can't name an exclusion, the bet isn't shaped — push back to discovery. `pm-reviewer` blocks `draft → review` on empty No-Gos.
 
 ### 3. The intake-paraphrase PRD
 
@@ -71,7 +63,7 @@ Each anti-pattern below maps to at least one failed adjective. The fix restores 
 
 **Why it fails:** Appetite is *the* Shape Up constraint — it's the budget the team agrees to spend, full stop. Without Appetite, the team estimates inside the cycle, which is the trap Shape Up was built to prevent.
 
-**Fix:** Pick small (1-2 weeks) or big (6 weeks). Name the rationale in one sentence ("Small — we don't yet know if customers will use this; ship a thin slice and learn"). `pm-reviewer` blocks `draft → review` on missing Appetite under cycle preset.
+**Fix:** Name a value and a one-sentence rationale (see `pitch-writing-shape-up` for the pattern). `pm-reviewer` blocks `draft → review` on missing Appetite under cycle preset.
 
 ### 6. The missing-Timeline PRD (phased preset)
 
@@ -111,7 +103,7 @@ Each anti-pattern below maps to at least one failed adjective. The fix restores 
 
 **Why it fails:** Rabbit Holes are *specific traps with named avoidance decisions*. Generic risks belong in the Risks section. Rabbit Holes that read as risks signal the author didn't actually shape the work — they listed concerns instead of making cuts.
 
-**Fix:** Each Rabbit Hole names: the specific scenario the team would otherwise sink time into, and the explicit decision to avoid it. "Don't build configurable rate-limiting — pick one rate and ship." "Skip the multi-tenant case — single-tenant only this cycle." If you can't name the avoidance decision, it's a risk, not a Rabbit Hole. Cross-reference `pitch-writing-shape-up`.
+**Fix:** Each Rabbit Hole names the specific scenario and the explicit decision to avoid it — see `pitch-writing-shape-up` for passing/failing examples. If you can't name the avoidance decision, it's a risk, not a Rabbit Hole.
 
 ### 11. The stakeholder-list PRD
 
@@ -155,4 +147,3 @@ The `prd-author` agent runs a lighter version of the catalog *during* authoring 
 - `acceptance-criteria-ears` — the AC shape (relevant to anti-patterns 4, 7).
 - `metrics-design` — the metric-quality bar (relevant to anti-pattern 4).
 - `evidence-synthesis` and `opportunity-solution-trees-torres` — synthesis bar (relevant to anti-pattern 3).
-- PM domain mission — principle #3 (tradeoffs visible) drives No-Gos / Out of Scope discipline; principle #5 (learn from what shipped) drives metric rigor.

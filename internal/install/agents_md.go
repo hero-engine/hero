@@ -470,7 +470,7 @@ func generateEngineeringAgentsMdBody(paths contentPathsForBody) string {
 	sb.WriteString("Grouped by concern (every installed skill, no links):\n\n")
 	sb.WriteString("- **Stacks & detection:** database-stack, go-stack, groovy-stack, java-stack, javascript-stack, python-stack, react-stack, rust-stack, stack-detection — conventions per detected stack.\n")
 	sb.WriteString("- **Architecture & design:** api-design-and-contracts, architecture-principles, greenfield-scaffolding, implementation-principles, integration-boundaries — design-time reasoning for new and evolving systems.\n")
-	sb.WriteString("- **Delivery & spec process:** delivery-audit, drive, spec-composition, spec-sizing — sizing, composing, delivering, and cold-auditing specs.\n")
+	sb.WriteString("- **Delivery & spec process:** batch-discipline, delivery-audit, drive, spec-composition, spec-sizing — sizing, composing, delivering, and cold-auditing specs.\n")
 	sb.WriteString("- **Investigation & quality:** challenge-diagnosis, debugging-investigation, dependency-analysis, pr-review, root-cause-classification, security-review, test-strategy, testing-and-validation — diagnosing, reviewing, testing.\n")
 	sb.WriteString("- **Scrub:** code-scrub — shared methodology behind the scrubber agents.\n")
 	sb.WriteString("- **Ops, incident & release:** devops-and-operations, incident-response, release-and-deployment — production operations lifecycle.\n")

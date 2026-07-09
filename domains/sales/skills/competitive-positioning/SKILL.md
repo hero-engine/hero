@@ -6,15 +6,6 @@ metadata:
   purpose: competitive-framework
 ---
 
-## What this skill covers
-
-- Battlecard structure and maintenance standards
-- Competitive positioning principles (what to claim, what not to)
-- Win/loss pattern analysis
-- How to handle competitive deals
-
----
-
 ## Battlecard Structure
 
 The full battlecard template is carried by the `competitive-intel` agent. Key
