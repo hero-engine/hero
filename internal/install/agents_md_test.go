@@ -3,6 +3,7 @@ package install
 import (
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -51,6 +52,108 @@ func TestEngineeringPackBodyMatchesGoFallback(t *testing.T) {
 			"--- want (first 400 bytes) ---\n%s\n--- got (first 400 bytes) ---\n%s",
 			truncate(canonical, 400), truncate(string(got), 400))
 	}
+}
+
+// TestEngineeringAgentsMdRosterComplete walks the shipped engineering
+// (pack + core) commands, agents, and skills directories and asserts
+// every one of them is named in domains/engineering/AGENTS.md — a
+// command as a literal `/name` token, an agent or skill as its bare
+// name. This is the backstop for domain-agents-md-skeleton's roster-
+// completeness rule: an entry that ships but isn't named can't be
+// routed to, and nothing else catches that regression. Run this test
+// once with a name deliberately removed from any of the six
+// directories to confirm it fails naming the missing entry.
+func TestEngineeringAgentsMdRosterComplete(t *testing.T) {
+	repoRoot, err := repoRootFromHere()
+	if err != nil {
+		t.Fatalf("locate repo root: %v", err)
+	}
+
+	agentsMdPath := filepath.Join(repoRoot, "domains", "engineering", "AGENTS.md")
+	raw, err := os.ReadFile(agentsMdPath)
+	if err != nil {
+		t.Fatalf("read %s: %v", agentsMdPath, err)
+	}
+	content := string(raw)
+
+	var missing []string
+
+	for _, dir := range []string{
+		filepath.Join(repoRoot, "domains", "engineering", "commands"),
+		filepath.Join(repoRoot, "core", "commands"),
+	} {
+		for _, name := range rosterMdFileNames(t, dir) {
+			if !strings.Contains(content, "/"+name) {
+				missing = append(missing, "command /"+name)
+			}
+		}
+	}
+
+	for _, dir := range []string{
+		filepath.Join(repoRoot, "domains", "engineering", "agents"),
+		filepath.Join(repoRoot, "core", "agents"),
+	} {
+		for _, name := range rosterMdFileNames(t, dir) {
+			if !strings.Contains(content, name) {
+				missing = append(missing, "agent "+name)
+			}
+		}
+	}
+
+	for _, dir := range []string{
+		filepath.Join(repoRoot, "domains", "engineering", "skills"),
+		filepath.Join(repoRoot, "core", "skills"),
+	} {
+		for _, name := range rosterSkillDirNames(t, dir) {
+			if !strings.Contains(content, name) {
+				missing = append(missing, "skill "+name)
+			}
+		}
+	}
+
+	if len(missing) > 0 {
+		sort.Strings(missing)
+		t.Fatalf("domains/engineering/AGENTS.md is missing roster entries for:\n  %s",
+			strings.Join(missing, "\n  "))
+	}
+}
+
+// rosterMdFileNames returns the base names (no ".md", README skipped)
+// of every markdown file directly inside dir. Used for command and
+// agent directories, which are flat files.
+func rosterMdFileNames(t *testing.T, dir string) []string {
+	t.Helper()
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatalf("read dir %s: %v", dir, err)
+	}
+	var names []string
+	for _, e := range entries {
+		if e.IsDir() || e.Name() == "README.md" || !strings.HasSuffix(e.Name(), ".md") {
+			continue
+		}
+		names = append(names, strings.TrimSuffix(e.Name(), ".md"))
+	}
+	return names
+}
+
+// rosterSkillDirNames returns the subdirectory names directly inside
+// dir. Used for skills directories, where each skill is a subdir
+// containing SKILL.md.
+func rosterSkillDirNames(t *testing.T, dir string) []string {
+	t.Helper()
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatalf("read dir %s: %v", dir, err)
+	}
+	var names []string
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		names = append(names, e.Name())
+	}
+	return names
 }
 
 // TestSplitPackAgentsMd verifies the H1-stripping logic for pack

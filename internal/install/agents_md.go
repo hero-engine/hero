@@ -87,6 +87,10 @@ func defaultSections(opts Options, filePath string) []managed.SectionContributor
 // (the H1 text, minus the leading "# "). When the chain falls through
 // to the Go fallback, title is empty and the caller renders the legacy
 // "Hero — Spec-Driven AI Engineering" H2.
+//
+// Pack authors: the heading depth, section order, and path-placeholder
+// rules a pack body must follow are documented in
+// .hero/knowledge/conventions/domain-agents-md-skeleton.md.
 func loadPackAgentsMdBody(opts Options) (body, title string, fellBack bool) {
 	if len(opts.AgentsMdBodyOverride) > 0 {
 		raw := string(opts.AgentsMdBodyOverride)
@@ -285,7 +289,10 @@ func (o Options) heroVersion() string {
 // actual on-disk layout — pointing the model at directories that don't
 // exist sends it hunting through the workspace from first principles
 // and is the most common reason a non-Claude-Code harness wanders
-// after `hero scan`.
+// after `hero scan`. See
+// .hero/knowledge/conventions/domain-agents-md-skeleton.md for the
+// full skeleton (heading depth, section order, path placeholders) every
+// pack body — including this one — must follow.
 // RenderAgentsMdBodyForDriftTest exposes the rendered managed-region
 // body (orchestrator output, contributors stitched together) for the
 // markdown invocation drift test in internal/cli. The shape is what
@@ -412,12 +419,23 @@ func generateEngineeringAgentsMdBody(paths contentPathsForBody) string {
 	sb.WriteString("| Check, health, validate workspace | `/check` |\n")
 	sb.WriteString("| Sprint, iteration, load sprint | `/sprint` |\n")
 	sb.WriteString("| Import, pull issues, fetch from tracker, sync issues | `/import` |\n")
+	sb.WriteString("| What's stuck, blocked items, dependencies, can't move forward | `/blocked` |\n")
+	sb.WriteString("| Capture, extract learnings, persist session knowledge to the knowledge base | `/capture` |\n")
+	sb.WriteString("| Challenge or revise a diagnosis, push back on root cause with new context | `/challenge` |\n")
+	sb.WriteString("| Start of session, load ranked context, what's in flight | `/resume` |\n")
+	sb.WriteString("| Roadmap drift triage, \"review the roadmap for staleness\" | `/roadmap-review` |\n")
+	sb.WriteString("| Scrub the codebase — dead code, weak types, duplication, bad comments, legacy cruft | `/scrub` |\n")
+	sb.WriteString("| Break a large spec into smaller, independently deliverable child specs | `/split` |\n")
+	sb.WriteString("| Trace where something came from, chain of decisions/specs/commits | `/why` |\n")
+	sb.WriteString("| Not sure which command to use, route my request | `/hero` |\n")
 	sb.WriteString("| Ask sibling/peer repo a question, check with peer | `hero peer call <alias> --mode=advisory \"...\"` |\n")
 	sb.WriteString("| Have peer design something, let peer handle design | `hero peer call <alias> --mode=spec-out \"...\"` |\n")
 	sb.WriteString("| Hand off a spec to a peer repo, drop on peer's queue, transfer to sibling | `hero handoff <spec> <alias>` |\n")
 	sb.WriteString("| Pick up handed-back spec, accept the handoff, peer finished | `hero handoff accept <spec>` |\n")
 	sb.WriteString("| What peers do we have, list siblings, which repos are linked | `hero peer list` |\n")
-	sb.WriteString("| What does peer expose, peer surface, peer conventions, inspect peer | `hero peer show <alias>` |\n\n")
+	sb.WriteString("| What does peer expose, peer surface, peer conventions, inspect peer | `hero peer show <alias>` |\n")
+	sb.WriteString("| Cross-repo peering front door (session-level; picks advisory/spec-out/handoff/list/show for you) | `/peer` |\n")
+	sb.WriteString("| Force-refresh NEXT.md/QUEUE.md before switching tools (session-level; distinct from the cross-repo rows above) | `/handoff` |\n\n")
 
 	sb.WriteString("When routing, pass the user's original context as arguments to the command. ")
 	sb.WriteString("If the intent is ambiguous, present the top 2-3 options and ask.\n\n")
@@ -425,7 +443,7 @@ func generateEngineeringAgentsMdBody(paths contentPathsForBody) string {
 	sb.WriteString("**Slash commands ≠ CLI subcommands.** Slash commands (e.g. `/discover`, `/convention`) run inside the AI tool's session only — they are **not** `hero discover` or `hero convention` terminal commands. Some commands exist on both surfaces, but many are slash-only. Do not hallucinate CLI subcommands from slash command names. <!-- drift-test:ignore (illustrative: `hero discover`/`hero convention` above are explicitly non-existent subcommands) -->\n\n")
 	sb.WriteString("| Surface | Commands |\n|---|---|\n")
 	sb.WriteString("| **Slash-only** (no `hero <name>` equivalent) | `/capture`, `/challenge`, `/compose`, `/convention`, `/decide`, `/discover`, `/drive`, `/mock`, `/release`, `/retro`, `/review`, `/roadmap-review`, `/scrub`, `/split` |\n")
-	sb.WriteString("| **Both slash and CLI** | `/blocked`, `/check`, `/deliver`, `/design`, `/diagnose`, `/docs`, `/handoff` (slash = NEXT.md refresh; CLI `hero handoff <spec> <alias>` = cross-repo drop to a peer), `/import` (slash = tracker import via `hero sync import`; root `hero import` is unrelated knowledge-base ingestion), `/note`, `/peer`, `/resume`, `/scan`, `/sprint`, `/why` |\n")
+	sb.WriteString("| **Both slash and CLI** | `/blocked`, `/check`, `/deliver`, `/design`, `/diagnose`, `/docs`, `/handoff` (slash = NEXT.md refresh; CLI `hero handoff <spec> <alias>` = cross-repo drop to a peer), `/hero` (\"which command do I use\" meta-help; CLI equivalent `hero do <request>`), `/import` (slash = tracker import via `hero sync import`; root `hero import` is unrelated knowledge-base ingestion), `/note`, `/peer`, `/resume`, `/scan`, `/sprint`, `/why` |\n")
 	sb.WriteString("| **CLI-only** (see CLI Commands below) | `hero status`, `hero search`, `hero ask`, `hero list`, `hero queue`, `hero spec verify`, `hero spec score`, `hero diff`, `hero drift`, etc. |\n\n")
 
 	sb.WriteString("**Mockup routing.** Any request to mock, wireframe, prototype, or visualize a screen — including casual questions like \"what would this look like?\" or \"is that a swift mock?\" — routes to `/mock`. **Never hand-generate a mockup outside that command, and never pick the format yourself.** `/mock` runs `hero spec mock detect`, which chooses the renderer (HTML vs. native SwiftUI) deterministically from the repo's stack and announces it before generating. There is **no \"HTML-first, then port to SwiftUI\" workflow** — that is a confabulation, not a real Hero pattern. In a native app you produce a native SwiftUI mockup directly (compiled, with real screenshots); in a web app you produce HTML. Do **not** generate an HTML approximation \"to iterate faster\" on a native project. Always end your response with the clickable file inventory `/mock` surfaces — never make the user ask for the links.\n\n")
@@ -438,6 +456,29 @@ func generateEngineeringAgentsMdBody(paths contentPathsForBody) string {
 	sb.WriteString("3. **Debug with specs**: Use `/diagnose` to investigate bugs and produce fix specs\n")
 	sb.WriteString("4. **Never work on closed items**: Commands like `/diagnose` and `/deliver` check if the tracker issue is still open before starting work\n")
 	sb.WriteString("5. **Finish the closing gate before yielding**: `/deliver` is not done until `hero spec verify <slug>` passes — and verify requires the cold delivery audit to run first. The audit and verify run in the **same turn** as the implementation, not as a follow-up the user triggers. Never stop with a spec left in `planning`/`delivering` and the audit unrun, and never say \"the audit still needs to run\" — run it now instead. This holds in every delivery mode, including the default supervised mode.\n\n")
+
+	sb.WriteString("### Agents Reference\n\n")
+	sb.WriteString("Grouped by role (every installed agent, no links):\n\n")
+	sb.WriteString("- **Delivery leads:** feature-delivery-lead, platform-delivery-lead — product features vs. platform/migration work.\n")
+	sb.WriteString("- **Architects & reviewers:** greenfield-architect, brownfield-architect, architecture-reviewer, design-reviewer, pr-reviewer, security-reviewer, roadmap-reviewer — design-time and review gates.\n")
+	sb.WriteString("- **Specialist engineers:** engineer, api-engineer, database-engineer, devops-engineer, integration-engineer, migration-engineer, performance-engineer, release-engineer — build and ship by concern.\n")
+	sb.WriteString("- **QA & investigation:** functional-qa-engineer, test-architect, debug-investigator, dependency-analyst, issue-tracker, product-ideator, ui-designer — testing, root-cause work, dependency mapping, issue triage, ideation, UI review.\n")
+	sb.WriteString("- **Scrubbers:** comment-scrubber, deadcode-scrubber, dedup-scrubber, defensive-scrubber, dependency-scrubber, legacy-scrubber, type-scrubber — one code-quality concern each.\n")
+	sb.WriteString("- **Core (installed with every pack):** convention-author, documentation-engineer, project-context-builder, session-primer.\n\n")
+
+	sb.WriteString("### Skills Reference\n\n")
+	sb.WriteString("Grouped by concern (every installed skill, no links):\n\n")
+	sb.WriteString("- **Stacks & detection:** database-stack, go-stack, groovy-stack, java-stack, javascript-stack, python-stack, react-stack, rust-stack, stack-detection — conventions per detected stack.\n")
+	sb.WriteString("- **Architecture & design:** api-design-and-contracts, architecture-principles, greenfield-scaffolding, implementation-principles, integration-boundaries — design-time reasoning for new and evolving systems.\n")
+	sb.WriteString("- **Delivery & spec process:** delivery-audit, drive, spec-composition, spec-sizing — sizing, composing, delivering, and cold-auditing specs.\n")
+	sb.WriteString("- **Investigation & quality:** challenge-diagnosis, debugging-investigation, dependency-analysis, pr-review, root-cause-classification, security-review, test-strategy, testing-and-validation — diagnosing, reviewing, testing.\n")
+	sb.WriteString("- **Scrub:** code-scrub — shared methodology behind the scrubber agents.\n")
+	sb.WriteString("- **Ops, incident & release:** devops-and-operations, incident-response, release-and-deployment — production operations lifecycle.\n")
+	sb.WriteString("- **Mockups:** html-mockup-generation, swiftui-mockup-renderer — the two `/mock` renderer paths.\n")
+	sb.WriteString("- **Cross-repo & reporting:** cross-repo-peering, deep-code-enrichment, issue-list-report — peer calls, enrichment passes, report formatting.\n")
+	sb.WriteString("- **Roadmap & performance:** performance-optimization, roadmap-review — perf tuning and roadmap-shape triage.\n")
+	sb.WriteString("- **Migration:** migration-safety — safe migration/refactor patterns.\n")
+	sb.WriteString("- **Core (installed with every pack):** agent-reliability, auto-knowledge-capture, completion-ledger, context-injection, convention-writing, documentation-practices, executive-report, explainer-format, kickoff-prompt, knowledge-flywheel, next-handoff-emit, next-md, note-capture, nudge-awareness, project-context-generation, spec-format.\n\n")
 
 	sb.WriteString("### CLI Commands\n\n")
 	sb.WriteString("These are run in the terminal, not as slash commands:\n")
