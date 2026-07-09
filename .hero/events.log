@@ -280,3 +280,5 @@
 {"ts":"2026-07-09T01:48:57.252461Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"token-efficiency-pass","message":"status -\u003e completed"}
 {"ts":"2026-07-09T18:28:19.037293Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"priority-conflict-aware-drive-selection","message":"\"Priority- and conflict-aware next-spec selection in the /drive judge\""}
 {"ts":"2026-07-09T18:28:19.037367Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"priority-conflict-aware-drive-selection","message":"status -\u003e completed"}
+{"ts":"2026-07-09T21:56:48.388585Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"compose-emits-conflicts-and-priority","message":"\"Compose emits priority + reciprocal conflicts-with on child stubs\""}
+{"ts":"2026-07-09T21:56:48.388676Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"compose-emits-conflicts-and-priority","message":"status -\u003e completed"}
