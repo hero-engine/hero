@@ -160,7 +160,8 @@ The owner flip is the handoff. `handoff-coordinator` verifies, in order:
 3. The Cross-domain Handoff stream picks up the transition (the event
    log row from `hero agent events spec_updated ...` is what the dashboard polls;
    the bitemporal history is the source of truth).
-4. A read-back of the spec shows `owner: engineering` on disk (`hero
+4. A read-back of the spec shows `owner: engineering` on disk — via
+   the `hero_read_spec` MCP tool or the file directly (`hero
    list --status in-review` as the sweep before engineering claims).
 5. Within a short window, engineering's `engineer` agent claims the
    spec via `/deliver <slug>` (engineering pack); status flips `in-review → delivering`.

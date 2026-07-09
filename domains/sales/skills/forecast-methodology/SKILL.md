@@ -6,17 +6,6 @@ metadata:
   purpose: forecast-framework
 ---
 
-## What this skill covers
-
-- The three forecast categories: commit, best case, upside
-- Weighted pipeline calculation
-- Coverage ratio and what it means
-- Slippage risk signals
-- Forecast confidence levels
-- How to adjust for rep optimism bias
-
----
-
 ## The Three Forecast Categories
 
 ### Commit

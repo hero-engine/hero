@@ -134,4 +134,3 @@ Principle: the team owns the call. The framework owns the audit trail.
 - `metrics-design` — Impact often refers to a metric movement; metric definitions should match.
 - `opportunity-solution-trees-torres` — items emerging from an OST should carry inherited Confidence from the assumption tests that produced them.
 - `initiative` spec type — RICE/ICE/WSJF scores live in `rice_score`, `ice_score`, `wsjf_score` frontmatter fields; `rationale` records framework overrides.
-- PM principle #3 (make tradeoffs visible) — every override deserves a recorded reason.

@@ -41,23 +41,7 @@ Hero PM adds two optional sections (Linked stories, Risks) for graph-integration
 
 ## Appetite — the canonical rule
 
-**Appetite is the budget, not the estimate.**
-
-This is *the* Shape Up rule. Memorize it. Everything else about pitches follows from it.
-
-- **Estimate** says: "this work will take 6 weeks." (You're predicting cost.)
-- **Appetite** says: "this problem is worth 6 weeks." (You're naming what you're willing to spend.)
-
-The difference is direction of control. Estimates flow from work → cost ("how long will it take?"). Appetite flows from cost → work ("we're willing to spend 6 weeks; what can we build?"). Appetite makes scope the variable; estimates make time the variable.
-
-### Two appetite values
-
-Shape Up uses two:
-
-- **Small batch** — 1-2 weeks. For tightly-scoped bets where the value is clear and the risk is low.
-- **Big batch** — 6 weeks. For meatier work where the team needs the full cycle to ship.
-
-Anything that doesn't fit in 6 weeks is either too big to shape (push back to discovery / break into multiple bets) or evidence the bet should be re-scoped.
+**Appetite is the budget, not the estimate.** Estimates flow from work → cost ("how long will it take?"); Appetite flows from cost → work ("we're willing to spend 6 weeks; what can we build?"). Appetite makes scope the variable; estimates make time the variable. See `cycle-planning` for the full mechanics — the two appetite values, who sets appetite, and what happens when engineering pushes back on the number.
 
 ### Writing the Appetite section
 
@@ -204,33 +188,13 @@ Same instinct as Rabbit Holes but at a coarser scale. Ask: *what would a stakeho
 
 ## Cooldown as a first-class state
 
-After every 6-week cycle, Shape Up reserves 2 weeks of cooldown. Cooldown is not optional and not for catching up on cycle work.
-
-### What cooldown is for
-
-- Bug fixes, especially the long-tail issues that don't justify a pitch on their own.
-- Engineering-led refactoring and infrastructure work.
-- Exploration — engineers and designers chase ideas they've been sitting on.
-- The shaping work that produces next cycle's pitches.
-
-### What cooldown is NOT for
-
-- Finishing cycle work that didn't ship. (If a bet doesn't ship in Appetite, it's killed — not rolled into cooldown. The team explicitly decides whether to re-pitch next cycle.)
-- "Catching up" — the cycle's done; everything that didn't ship is in the past.
-- Starting new bets. (New bets go through the next betting table.)
+After every 6-week cycle, Shape Up reserves 2 weeks of cooldown. Cooldown is not optional and not for catching up on cycle work — see `cycle-planning` for the full rules on what it's for and what it isn't.
 
 Pitches must respect Cooldown. A pitch that requires "we'll polish it in cooldown" violates Appetite — the work isn't actually fitting.
 
 ## The betting table
 
-The betting table is a 90-minute meeting at the end of each cycle that decides what to bet on next.
-
-### Mechanics
-
-- **Fixed inputs** — the pitches that were shaped during this cycle (and any that survived from previous cycles). No new ideas surfaced at the table.
-- **Stakeholders** — small group (Basecamp uses founders + heads of product/design/engineering). The team that has to ship the work has a say.
-- **Decisions** — for each pitch: bet, kill, or shape further. A bet means commitment to next cycle.
-- **No backlog** — pitches not bet on don't go on a list; they either re-surface next cycle or they don't. The author has to re-champion.
+The betting table is a 90-minute meeting at the end of each cycle that decides what to bet on next — see `cycle-planning` for the full mechanics (who's in the room, what gets bet, how the decision is recorded).
 
 ### Implication for pitch authors
 
@@ -271,6 +235,18 @@ When the reviewer (P1; v1: `prd-author` in pitch shape) or `pm-reviewer` is aske
 - Pitch describes work that will "spill into cooldown." (Violates Cooldown.)
 - Pitch is being authored without a clear champion who'll defend it at the betting table.
 
+## The five-adjective test
+
+From ChatPRD / MetaGPT prior art. Every PRD — pitch or ten-section — must pass:
+
+1. **Clarity** — a reader unfamiliar with the work understands the problem and the proposal in one pass.
+2. **Structure** — sections in the right order, none silently omitted, each section earning its place.
+3. **Flexibility** — leaves room for engineering judgment on the *how* (the Negotiable bit from INVEST applies at PRD scope too).
+4. **Actionability** — engineering or design can pick this up and start decomposing into stories without back-and-forth on intent.
+5. **Stakeholder focus** — exec / customer / engineering / sales each find what they need.
+
+`pm-reviewer` runs the five-adjective test on every pitch before `review → approved`. Failure on any one is a blocking finding.
+
 ## Cross-references
 
 - `prd-structure` — pitch shape is the default PRD template under cycle preset; this skill goes deeper.
@@ -278,5 +254,4 @@ When the reviewer (P1; v1: `prd-author` in pitch shape) or `pm-reviewer` is aske
 - `shape-up-cadence` (P1, ships v1.5) — the 6+2 rhythm, betting table mechanics, cycle scheduling.
 - `hill-chart-reasoning` (P1, ships v1.5) — hill charts as unknowns-remaining visualization (not progress bars).
 - `cycle-planning` — capacity and commit logistics under cycle preset.
-- PM domain mission — principle #3 (tradeoffs visible) is the philosophical root of Rabbit Holes and No-Gos.
 - Prior art: Ryan Singer, *Shape Up* (Basecamp, 2019) — read it if you haven't.

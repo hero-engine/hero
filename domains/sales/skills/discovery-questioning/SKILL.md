@@ -6,16 +6,6 @@ metadata:
   purpose: discovery-framework
 ---
 
-## What this skill covers
-
-- The SPIN questioning framework
-- Question banks by situation type
-- ICP scoring dimensions
-- How to personalize questions from research
-- Discovery call structure
-
----
-
 ## The SPIN Framework
 
 SPIN questioning (Situation → Problem → Implication → Need-payoff) is the
@@ -199,6 +189,45 @@ is now describing what success looks like.
 **Need-payoff:**
 - "If pipeline hygiene were automated and the forecast were built from
   real-time deal signals, how would that change your team's capacity?"
+
+---
+
+## Question Banks by MEDDPICC Dimension
+
+Questions to surface each MEDDPICC dimension during qualification (see
+`deal-qualification` for the scoring rubric these questions feed).
+
+**Metrics:**
+- "What does success look like in 6 months? How would you measure it?"
+- "What's the cost of NOT solving this problem this year?"
+- "What metrics does your team report to leadership on this area?"
+
+**Economic Buyer:**
+- "Who owns the budget for this initiative?"
+- "Who would sign off on a purchase like this?"
+- "Is there anyone else who needs to be involved in the final decision?"
+
+**Decision Criteria:**
+- "What criteria will you use to evaluate vendors?"
+- "What does the perfect solution look like to you?"
+- "Are there things that would immediately disqualify a vendor?"
+
+**Decision Process:**
+- "Walk me through how a decision like this typically gets made here."
+- "Who else needs to be involved before you can move forward?"
+- "What does legal/security/procurement review look like for a deal like this?"
+- "What would need to happen for you to move forward by [target date]?"
+
+**Identify Pain:**
+- "What's the biggest challenge you're facing in this area right now?"
+- "What happens if you don't solve this in the next 6 months?"
+- "How is this problem affecting the broader business?"
+- "How long has this been a problem? Why is now the right time to fix it?"
+
+**Competition:**
+- "Are you evaluating other vendors?"
+- "Have you seen [competitor] in this space?"
+- "What would a vendor need to do to win this evaluation?"
 
 ---
 

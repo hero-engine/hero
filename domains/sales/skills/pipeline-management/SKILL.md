@@ -6,15 +6,6 @@ metadata:
   purpose: pipeline-hygiene
 ---
 
-## What this skill covers
-
-- Stage definitions and what each stage actually requires
-- Exit criteria — what must be true before advancing a deal
-- Pipeline hygiene rules
-- Stale deal detection and intervention
-
----
-
 ## Stage Definitions and Exit Criteria
 
 Each stage requires specific evidence before a deal can advance. Moving a

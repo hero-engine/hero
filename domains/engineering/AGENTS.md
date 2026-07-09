@@ -87,7 +87,7 @@ Grouped by concern (every installed skill, no links):
 
 - **Stacks & detection:** database-stack, go-stack, groovy-stack, java-stack, javascript-stack, python-stack, react-stack, rust-stack, stack-detection — conventions per detected stack.
 - **Architecture & design:** api-design-and-contracts, architecture-principles, greenfield-scaffolding, implementation-principles, integration-boundaries — design-time reasoning for new and evolving systems.
-- **Delivery & spec process:** delivery-audit, drive, spec-composition, spec-sizing — sizing, composing, delivering, and cold-auditing specs.
+- **Delivery & spec process:** batch-discipline, delivery-audit, drive, spec-composition, spec-sizing — sizing, composing, delivering, and cold-auditing specs.
 - **Investigation & quality:** challenge-diagnosis, debugging-investigation, dependency-analysis, pr-review, root-cause-classification, security-review, test-strategy, testing-and-validation — diagnosing, reviewing, testing.
 - **Scrub:** code-scrub — shared methodology behind the scrubber agents.
 - **Ops, incident & release:** devops-and-operations, incident-response, release-and-deployment — production operations lifecycle.
