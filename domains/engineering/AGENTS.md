@@ -30,12 +30,23 @@ When the user describes what they want in natural language, route to the appropr
 | Check, health, validate workspace | `/check` |
 | Sprint, iteration, load sprint | `/sprint` |
 | Import, pull issues, fetch from tracker, sync issues | `/import` |
+| What's stuck, blocked items, dependencies, can't move forward | `/blocked` |
+| Capture, extract learnings, persist session knowledge to the knowledge base | `/capture` |
+| Challenge or revise a diagnosis, push back on root cause with new context | `/challenge` |
+| Start of session, load ranked context, what's in flight | `/resume` |
+| Roadmap drift triage, "review the roadmap for staleness" | `/roadmap-review` |
+| Scrub the codebase — dead code, weak types, duplication, bad comments, legacy cruft | `/scrub` |
+| Break a large spec into smaller, independently deliverable child specs | `/split` |
+| Trace where something came from, chain of decisions/specs/commits | `/why` |
+| Not sure which command to use, route my request | `/hero` |
 | Ask sibling/peer repo a question, check with peer | `hero peer call <alias> --mode=advisory "..."` |
 | Have peer design something, let peer handle design | `hero peer call <alias> --mode=spec-out "..."` |
 | Hand off a spec to a peer repo, drop on peer's queue, transfer to sibling | `hero handoff <spec> <alias>` |
 | Pick up handed-back spec, accept the handoff, peer finished | `hero handoff accept <spec>` |
 | What peers do we have, list siblings, which repos are linked | `hero peer list` |
 | What does peer expose, peer surface, peer conventions, inspect peer | `hero peer show <alias>` |
+| Cross-repo peering front door (session-level; picks advisory/spec-out/handoff/list/show for you) | `/peer` |
+| Force-refresh NEXT.md/QUEUE.md before switching tools (session-level; distinct from the cross-repo rows above) | `/handoff` |
 
 When routing, pass the user's original context as arguments to the command. If the intent is ambiguous, present the top 2-3 options and ask.
 
@@ -44,7 +55,7 @@ When routing, pass the user's original context as arguments to the command. If t
 | Surface | Commands |
 |---|---|
 | **Slash-only** (no `hero <name>` equivalent) | `/capture`, `/challenge`, `/compose`, `/convention`, `/decide`, `/discover`, `/drive`, `/mock`, `/release`, `/retro`, `/review`, `/roadmap-review`, `/scrub`, `/split` |
-| **Both slash and CLI** | `/blocked`, `/check`, `/deliver`, `/design`, `/diagnose`, `/docs`, `/handoff` (slash = NEXT.md refresh; CLI `hero handoff <spec> <alias>` = cross-repo drop to a peer), `/import` (slash = tracker import via `hero sync import`; root `hero import` is unrelated knowledge-base ingestion), `/note`, `/peer`, `/resume`, `/scan`, `/sprint`, `/why` |
+| **Both slash and CLI** | `/blocked`, `/check`, `/deliver`, `/design`, `/diagnose`, `/docs`, `/handoff` (slash = NEXT.md refresh; CLI `hero handoff <spec> <alias>` = cross-repo drop to a peer), `/hero` ("which command do I use" meta-help; CLI equivalent `hero do <request>`), `/import` (slash = tracker import via `hero sync import`; root `hero import` is unrelated knowledge-base ingestion), `/note`, `/peer`, `/resume`, `/scan`, `/sprint`, `/why` |
 | **CLI-only** (see CLI Commands below) | `hero status`, `hero search`, `hero ask`, `hero list`, `hero queue`, `hero spec verify`, `hero spec score`, `hero diff`, `hero drift`, etc. |
 
 **Mockup routing.** Any request to mock, wireframe, prototype, or visualize a screen — including casual questions like "what would this look like?" or "is that a swift mock?" — routes to `/mock`. **Never hand-generate a mockup outside that command, and never pick the format yourself.** `/mock` runs `hero spec mock detect`, which chooses the renderer (HTML vs. native SwiftUI) deterministically from the repo's stack and announces it before generating. There is **no "HTML-first, then port to SwiftUI" workflow** — that is a confabulation, not a real Hero pattern. In a native app you produce a native SwiftUI mockup directly (compiled, with real screenshots); in a web app you produce HTML. Do **not** generate an HTML approximation "to iterate faster" on a native project. Always end your response with the clickable file inventory `/mock` surfaces — never make the user ask for the links.
@@ -58,6 +69,33 @@ When routing, pass the user's original context as arguments to the command. If t
 3. **Debug with specs**: Use `/diagnose` to investigate bugs and produce fix specs
 4. **Never work on closed items**: Commands like `/diagnose` and `/deliver` check if the tracker issue is still open before starting work
 5. **Finish the closing gate before yielding**: `/deliver` is not done until `hero spec verify <slug>` passes — and verify requires the cold delivery audit to run first. The audit and verify run in the **same turn** as the implementation, not as a follow-up the user triggers. Never stop with a spec left in `planning`/`delivering` and the audit unrun, and never say "the audit still needs to run" — run it now instead. This holds in every delivery mode, including the default supervised mode.
+
+### Agents Reference
+
+Grouped by role (every installed agent, no links):
+
+- **Delivery leads:** feature-delivery-lead, platform-delivery-lead — product features vs. platform/migration work.
+- **Architects & reviewers:** greenfield-architect, brownfield-architect, architecture-reviewer, design-reviewer, pr-reviewer, security-reviewer, roadmap-reviewer — design-time and review gates.
+- **Specialist engineers:** engineer, api-engineer, database-engineer, devops-engineer, integration-engineer, migration-engineer, performance-engineer, release-engineer — build and ship by concern.
+- **QA & investigation:** functional-qa-engineer, test-architect, debug-investigator, dependency-analyst, issue-tracker, product-ideator, ui-designer — testing, root-cause work, dependency mapping, issue triage, ideation, UI review.
+- **Scrubbers:** comment-scrubber, deadcode-scrubber, dedup-scrubber, defensive-scrubber, dependency-scrubber, legacy-scrubber, type-scrubber — one code-quality concern each.
+- **Core (installed with every pack):** convention-author, documentation-engineer, project-context-builder, session-primer.
+
+### Skills Reference
+
+Grouped by concern (every installed skill, no links):
+
+- **Stacks & detection:** database-stack, go-stack, groovy-stack, java-stack, javascript-stack, python-stack, react-stack, rust-stack, stack-detection — conventions per detected stack.
+- **Architecture & design:** api-design-and-contracts, architecture-principles, greenfield-scaffolding, implementation-principles, integration-boundaries — design-time reasoning for new and evolving systems.
+- **Delivery & spec process:** delivery-audit, drive, spec-composition, spec-sizing — sizing, composing, delivering, and cold-auditing specs.
+- **Investigation & quality:** challenge-diagnosis, debugging-investigation, dependency-analysis, pr-review, root-cause-classification, security-review, test-strategy, testing-and-validation — diagnosing, reviewing, testing.
+- **Scrub:** code-scrub — shared methodology behind the scrubber agents.
+- **Ops, incident & release:** devops-and-operations, incident-response, release-and-deployment — production operations lifecycle.
+- **Mockups:** html-mockup-generation, swiftui-mockup-renderer — the two `/mock` renderer paths.
+- **Cross-repo & reporting:** cross-repo-peering, deep-code-enrichment, issue-list-report — peer calls, enrichment passes, report formatting.
+- **Roadmap & performance:** performance-optimization, roadmap-review — perf tuning and roadmap-shape triage.
+- **Migration:** migration-safety — safe migration/refactor patterns.
+- **Core (installed with every pack):** agent-reliability, auto-knowledge-capture, completion-ledger, context-injection, convention-writing, documentation-practices, executive-report, explainer-format, kickoff-prompt, knowledge-flywheel, next-handoff-emit, next-md, note-capture, nudge-awareness, project-context-generation, spec-format.
 
 ### CLI Commands
 
