@@ -2,17 +2,17 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-08T23:05:26Z · projected from 388 source nodes_
+_Last refreshed: 2026-07-08T23:43:56Z · projected from 388 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 4h ago | flat-named-spec-discovery |
+| core | building | cmd/, internal/ | 5h ago | flat-named-spec-discovery |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | maturing | domains/engineering/ | 4h ago | harness-agnosticism-sweep |
-| domains/pm | maturing | domains/pm/ | 1d ago | — |
+| domains/engineering | maturing | domains/engineering/ | 2m ago | routing-file-completeness |
+| domains/pm | maturing | domains/pm/ | 2d ago | — |
 | domains/sales | maturing | domains/sales/ | 1d ago | — |
 | landing | building | web/landing/ | 23d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
@@ -27,7 +27,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - **"Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use"** (surface: core) — 2/2 specs done
 - **"Concurrent-Session Branching & Worktree Isolation"** (surface: —) — 0/0 specs done
-- **Content Remediation — Audit Follow-Through Across Packs, Gates, and Harnesses** (surface: core, domains/engineering) — 2/4 specs done
+- **Content Remediation — Audit Follow-Through Across Packs, Gates, and Harnesses** (surface: core, domains/engineering) — 3/4 specs done
 - **"Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"** (surface: —) — 4/8 specs done
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
 - **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 7/11 specs done
@@ -54,9 +54,9 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — inline-flow-relations-dropped, knowledge-content-retrieval, knowledge-context-injection, hero-content-audit, cev2-corpus-reconcile-to-v3, team-oauth, tracker-fixtures
+- **(unassigned)** — knowledge-context-injection, knowledge-content-retrieval, inline-flow-relations-dropped, hero-content-audit, cev2-corpus-reconcile-to-v3, team-oauth
 - **core** — delivery-gate-consistency
-- **domains/engineering** — core-commands-domain-neutral
+- **domains/engineering** — harness-agnosticism-sweep, core-commands-domain-neutral
 - **domains/pm** — pm-pack-phantom-surfaces, content-dedup-resync
 - **domains/sales** — sales-pack-reality-sync
 
