@@ -111,6 +111,22 @@ enforced by `TestDomainsDirectory_AllEntriesAccounted`), F29
 (findings-routing.md, engineering-fallback misroute risk — preempted by
 `domains/chat/AGENTS.md`).
 
+### Wave 2 / Wave 3 — all children delivered
+
+`harness-agnosticism-sweep` and `routing-file-completeness` (wave 2)
+landed, followed by `token-efficiency-pass` (wave 3, the last child) on
+2026-07-09 — `hero spec verify` passed and it's archived to
+`.hero/specs/token-efficiency-pass/`. All 8 declared children now show
+`status: completed`. Note for the record: this initiative's own
+`status:` frontmatter was still `planning` immediately after
+`token-efficiency-pass`'s verify ran and after a `hero check
+--reconcile` pass — the auto-complete-parent check in `hero spec
+verify` (`internal/cli/verify.go: autoCompleteParentIfReady`) did not
+flip it, for reasons not diagnosed here (not hand-edited per this
+child's delivery instructions — a human or a follow-up session should
+inspect why the check didn't fire despite all 8 declared `child:`
+entries resolving to `completed` specs).
+
 ## Cross-cutting concerns
 
 - **Dual-edit lockstep.** Engineering AGENTS.md and

@@ -276,3 +276,5 @@
 {"ts":"2026-07-08T23:38:48.656121Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"harness-agnosticism-sweep","message":"status -\u003e completed"}
 {"ts":"2026-07-09T00:05:27.498544Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"routing-file-completeness","message":"\"Routing File Completeness — full rosters, one skeleton, installable links for the domain AGENTS.md files\""}
 {"ts":"2026-07-09T00:05:27.498637Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"routing-file-completeness","message":"status -\u003e completed"}
+{"ts":"2026-07-09T01:48:57.252355Z","type":"delivery_complete","agent":"human/bdwheeler","slug":"token-efficiency-pass","message":"\"Token Efficiency Pass — apply the content audit's named verbosity cuts\""}
+{"ts":"2026-07-09T01:48:57.252461Z","type":"spec.status_changed","agent":"human/bdwheeler","slug":"token-efficiency-pass","message":"status -\u003e completed"}

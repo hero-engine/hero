@@ -6,15 +6,6 @@ metadata:
   purpose: qualification-framework
 ---
 
-## What this skill covers
-
-- The MEDDPICC qualification framework and scoring rubric
-- The red flag checklist
-- How to distinguish confirmed from assumed information
-- When to recommend qualifying out
-
----
-
 ## MEDDPICC Framework
 
 MEDDPICC is the standard qualification framework for complex B2B enterprise
@@ -26,10 +17,8 @@ dimension has a gap to close.
 **What it means:** Quantified business impact. What are the measurable
 outcomes the buyer expects from this purchase?
 
-**Questions that surface it:**
-- "What does success look like in 6 months? How would you measure it?"
-- "What's the cost of NOT solving this problem this year?"
-- "What metrics does your team report to leadership on this area?"
+**Question to surface it:** "What does success look like in 6 months? How
+would you measure it?" (full question bank: `discovery-questioning`)
 
 **Scoring rubric:**
 - **2 (Strong):** Specific metrics documented — "Reduce time-to-onboard
@@ -51,10 +40,8 @@ likely haven't secured internal budget approval and are still exploring.
 budget transfer — without asking anyone else. Not the champion. Often
 one level up from the champion.
 
-**Questions that surface it:**
-- "Who owns the budget for this initiative?"
-- "Who would sign off on a purchase like this?"
-- "Is there anyone else who needs to be involved in the final decision?"
+**Question to surface it:** "Who owns the budget for this initiative?"
+(full question bank: `discovery-questioning`)
 
 **Scoring rubric:**
 - **2 (Strong):** Economic Buyer identified by name and title. Rep has met
@@ -74,10 +61,8 @@ risk of a surprise "no budget" at the end.
 **What it means:** The specific criteria the buyer will use to choose a
 vendor. What does the evaluation scorecard look like?
 
-**Questions that surface it:**
-- "What criteria will you use to evaluate vendors?"
-- "What does the perfect solution look like to you?"
-- "Are there things that would immediately disqualify a vendor?"
+**Question to surface it:** "What criteria will you use to evaluate
+vendors?" (full question bank: `discovery-questioning`)
 
 **Scoring rubric:**
 - **2 (Strong):** Decision criteria documented. Rep knows the weighting
@@ -98,11 +83,8 @@ probably has.
 what steps are required, what the timeline looks like, and what approvals
 are needed.
 
-**Questions that surface it:**
-- "Walk me through how a decision like this typically gets made here."
-- "Who else needs to be involved before you can move forward?"
-- "What does legal/security/procurement review look like for a deal like this?"
-- "What would need to happen for you to move forward by [target date]?"
+**Question to surface it:** "Walk me through how a decision like this
+typically gets made here." (full question bank: `discovery-questioning`)
 
 **Scoring rubric:**
 - **2 (Strong):** Decision process mapped step by step with owners and
@@ -121,11 +103,8 @@ are needed.
 Not features they want — the problem that's costing them money, time,
 risk, or competitive disadvantage today.
 
-**Questions that surface it:**
-- "What's the biggest challenge you're facing in this area right now?"
-- "What happens if you don't solve this in the next 6 months?"
-- "How is this problem affecting the broader business?"
-- "How long has this been a problem? Why is now the right time to fix it?"
+**Question to surface it:** "What's the biggest challenge you're facing in
+this area right now?" (full question bank: `discovery-questioning`)
 
 **Scoring rubric:**
 - **2 (Strong):** Specific pain articulated with business impact. "Our
@@ -144,11 +123,8 @@ risk, or competitive disadvantage today.
 has credibility with the Economic Buyer, and is willing to sell internally
 on your behalf when you're not in the room.
 
-**Signs of a true champion (not just a friendly contact):**
-- Has shared internal information you shouldn't otherwise have access to
-- Has actively advocated for you in internal meetings
-- Has arranged access to decision-makers for you
-- Has a stake in this purchase succeeding
+**Signs of a true champion:** see the champion definition and champion
+test in `deal-strategy`.
 
 **Scoring rubric:**
 - **2 (Strong):** Named champion who has done at least 2 champion behaviors
@@ -168,10 +144,8 @@ credibility. A champion without influence cannot move the deal.
 **What it means:** Who else is in the evaluation, how they're positioned,
 and what your competitive posture is.
 
-**Questions that surface it:**
-- "Are you evaluating other vendors?"
-- "Have you seen [competitor] in this space?"
-- "What would a vendor need to do to win this evaluation?"
+**Question to surface it:** "Are you evaluating other vendors?" (full
+question bank: `discovery-questioning`)
 
 **Scoring rubric:**
 - **2 (Strong):** Competitive landscape fully known. Know who's in it,

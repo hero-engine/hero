@@ -171,11 +171,6 @@ You are the one deciding `surface`. The orchestrator trusts your call. Be honest
 
 Do not pick `clean` to be polite. Do not pick `noteworthy` to look thorough. The point of this signal is to keep the user's attention pointed at deliveries that actually need it — fake noise and fake silence both break that.
 
-Legend:
-- `✓` = delivered with real evidence
-- `✗` = claimed but no evidence found (performative)
-- `~` = partially delivered (genuine PARTIAL with concrete reason, or split across rows)
-
 ### Verdict rules
 
 - **SHIP** = every acceptance criterion and every Changes item has `✓` evidence, OR any non-`✓` rows have concrete user-actionable reasons captured in Open items.
