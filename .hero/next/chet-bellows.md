@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-09T18:31:38Z
+updated: 2026-07-09T21:17:18Z
 repo: hero-engine/hero
 ---
 
@@ -12,7 +12,7 @@ repo: hero-engine/hero
 
 ## Suggested next prompt
 
-_(none — `hero next suggest "..."` to set, or open a Feature to derive one)_
+> Teach /compose (and the compose delivery lead) to emit conflicts-with relations + priority when it detects overlapping seams — the judge now honors them but nothing authors them yet. Follow-ups: peer-delivering conflict states, deferred wave ordinal.
 
 ## Recent reflections
 

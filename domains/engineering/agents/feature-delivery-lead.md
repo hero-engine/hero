@@ -45,6 +45,8 @@ Load `spec-format` before writing any spec. Also load `spec-sizing` to stamp `si
 
 Also load `spec-composition`. If the request matches its multi-spec trigger (names multiple deliverables, independent sub-deliverables surface during clarification, or rolled-up scope reaches `large`), fire its routing nudge **before writing any individual spec** — the user chooses `/compose` vs. proceeding with N siblings. When both nudges would apply, routing precedes sizing; see `spec-composition`'s Precedence section for the full rule.
 
+When you materialize the ideator's sequenced list into initiative **child stubs**, emit the structured signals the `/drive` judge reads — don't leave them in prose only. **Stamp `priority:` on every child** (and `severity:` on `bug`-type children) per the mapping, and for **every overlap seam the ideator flagged**, emit a **reciprocal `conflicts-with`** relation on **both** named children (one edge each — the judge honors outbound edges only). Keep the Wave table and overlap narrative, and hold the prose ⇄ relation sync invariant (no orphan prose, no orphan relation). The `spec-format` "Child-stub authoring contract" is the source of truth for the mapping, reciprocity, sync invariant, and preserve-on-materialize rules.
+
 ### For features (`/design`):
 1. Clarify the feature goal and acceptance criteria
 2. **Anchor check**: call `hero_anchor` with the feature context; review active tripwires and stop to surface any conflict before proceeding — don't propose alternatives that violate them

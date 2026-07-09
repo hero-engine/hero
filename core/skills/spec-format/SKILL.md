@@ -293,6 +293,9 @@ All spec types use YAML frontmatter. The following fields are supported:
 | `created` | No | All | ISO 8601 date when the spec was created. |
 | `relates-to` | No | All | Array of spec slugs that are related but not dependent. |
 | `depends-on` | No | All | Array of spec slugs that must be completed before this spec can proceed. |
+| `conflicts-with` | No | All | Array of spec slugs this spec must not be delivered concurrently with — a **soft mutex** the `/drive` judge honors (outbound-only in v1). A first-class relation kind alongside `depends-on`/`relates-to`; for initiative children it is authored **reciprocally** (an edge on both). See "Child-stub authoring contract". |
+| `priority` | No | Work specs | Sequencing tiebreak on the `critical`/`high`/`medium`/`low` scale. The `/drive` judge uses it to pick among dependency-ready children (unstamped ranks last). For initiative child stubs, stamp it from the mapping in "Child-stub authoring contract". |
+| `severity` | No | `bug` specs | Impact tier on the `critical`/`high`/`medium`/`low` scale, ranked by the judge after `priority`. Stamped on `bug`-type children from the same impact reasoning. |
 | `supersedes` | No | All | Slug of the spec this one replaces. Computed automatically when you use `hero supersede` — the inverse view of `superseded_by` on the older spec. |
 | `superseded_by` | No | All | Slug of the spec that replaces this one. Authoritative genealogy signal: when set, retrieval de-weights this spec and context-injection annotates it with a redirect marker. Set via `hero supersede <old> --by <new>`, not hand-editing. Orthogonal to `status:` — a spec can be `completed` and superseded. |
 | `parent` | No | Work specs | Slug of the initiative this spec belongs to. |
@@ -346,6 +349,94 @@ When a new spec replaces an older one, run `hero supersede <old> --by <new>` rat
 `superseded_by` is the authoritative signal — lifecycle (`status:`) stays orthogonal. A `completed` spec can be superseded; the `status: superseded` enum value is legacy and not required for new work.
 
 To find candidate supersede pairs in an existing corpus, run `hero supersede --scan`; it writes `.hero/reports/supersede-candidates.md` and never mutates a spec.
+
+## Child-stub authoring contract
+
+When `/compose` decomposes an initiative it writes a **child stub** for each
+sequenced work item (see "Where child specs live" in the `compose` command and
+"Folder-per-spec is the optimal layout" above). Beyond `title`/`slug`/`type` a
+stub carries two structured signals the `/drive` judge reads when it picks the
+next child to work: a `priority:` stamp and, for overlap seams, reciprocal
+`conflicts-with` relations. These are **not** decoration — the judge consumes
+them directly, so the rules below are a hard authoring contract. This section is
+the **single source of truth**; the authoring surfaces (`compose`,
+`product-ideator`, the delivery-lead agents) reference it rather than restating
+the mapping table, so it can't drift.
+
+### Priority stamping — the mapping table
+
+Derive each child's `priority:` from the sequencing analysis (its Wave position
+and "why this position" rationale) with this fixed, reproducible mapping:
+
+| Sequencing signal (from the compose analysis) | `priority:` |
+|---|---|
+| Foundational anchor — blocks the most siblings, or is safety- / security- / data-integrity-critical (typically Wave 1) | `critical` |
+| On the critical path — early wave, one or more siblings depend on it | `high` |
+| Standard work — middle wave, no special urgency, no dependents waiting | `medium` |
+| Deferrable — late wave, independent polish, or explicitly "nice to have" | `low` |
+
+- **Stamp every child.** An unstamped child ranks `unset=99` in the judge and
+  sinks below every stamped sibling, so leaving *some* children unstamped
+  silently reorders the run. All-or-nothing: if you stamp one, stamp all.
+- **Priority is a tiebreak, not an ordering.** Hard ordering stays in
+  `depends-on`. `priority:` only decides *which of several dependency-ready
+  children the judge wants first* — the Wave position is the proxy for that.
+- **`severity:` for `bug`-type children.** A `bug` child additionally carries a
+  `severity:` stamped from the same impact reasoning (a Wave-1
+  data-loss/correctness bug → `severity: critical`); the judge ranks severity as
+  the second key, after priority. Feature/enhancement children need only
+  `priority:`.
+
+### Reciprocal `conflicts-with` — the seam relation
+
+When the sequencing analysis names two children that touch the same code region
+(a "same-file conflict" / overlap seam), emit a `conflicts-with` relation **on
+both children** — one edge each. Reciprocity is **required, not optional**:
+
+```yaml
+# in child-a/spec.md stub frontmatter
+relations:
+  - target: child-b
+    kind: conflicts-with
+# in child-b/spec.md stub frontmatter
+relations:
+  - target: child-a
+    kind: conflicts-with
+```
+
+The `/drive` judge honors a child's **own (outbound)** `conflicts-with`
+relations and does **not** scan inbound edges (v1 semantics from the shipped
+`priority-conflict-aware-drive-selection`). A one-sided edge therefore protects
+only one direction — whichever child is being *selected* must itself carry the
+edge — so a single edge silently no-ops the guard in the other direction. Author
+both edges; do not "simplify" to one.
+
+### Prose ⇄ relation sync invariant
+
+The Wave table and "in-flight overlap watch" narrative stay — they explain the
+*why* a machine can't infer. The `conflicts-with` relations are that prose's
+machine-actionable projection, authored alongside it and kept in lockstep:
+
+> Every named seam / same-file / overlap entry in the initiative prose MUST have
+> a matching reciprocal `conflicts-with` relation on the two named children, and
+> every `conflicts-with` relation MUST have prose explaining it. No orphan prose
+> (a named seam with no relation), no orphan relation (an edge with no prose).
+
+The prose and the relations are one fact expressed twice on purpose — reviewable
+by a human, executable by the judge — so a future editor can't quietly drop one.
+
+### Preserve on materialize
+
+A stub is later **materialized** into a full spec by `/design` at
+`.hero/planning/initiatives/{initiative}/{child}/spec.md`. Materialize MUST
+**preserve** the stub's `priority`/`severity` frontmatter and its
+`conflicts-with` relations — silently dropping them re-inerts the judge at the
+exact moment the child becomes real and deliverable. Carry them over; refine only
+if the design work genuinely changes the sequencing or seam analysis.
+
+`conflicts-with` is a first-class relation kind alongside `depends-on` and
+`relates-to` (see the Frontmatter conventions table above); `priority`/`severity`
+are the same `critical|high|medium|low` string fields used elsewhere.
 
 ## Acceptance Criteria and EARS
 

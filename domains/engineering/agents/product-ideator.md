@@ -47,6 +47,8 @@ When the user is ready to conclude ideation, produce:
 
 1. **Prioritized feature list** — ordered by recommended priority
    - Each item: title, one-line description, estimated size (small/medium/large), rationale for priority position
+   - A concrete **`priority` value** on the `critical|high|medium|low` scale, mapping the item's priority-position rationale per the `spec-format` skill's "Child-stub authoring contract" table — so the delivery lead can stamp it directly onto the child stub rather than re-deriving it. Give one to **every** item, not just the top few.
+   - For any two items you expect to touch the **same code region** (same file, module, or subsystem), an explicit **overlap/seam callout** naming both — this is the raw material the delivery lead turns into reciprocal `conflicts-with` relations. Naming the seam is sequencing analysis, not technical design; you flag the overlap, the delivery lead emits the relation.
 2. **Deferred ideas** — things discussed but not prioritized, with brief explanation of why
 3. **Open questions** — unresolved questions that would affect prioritization
 4. **Recommended next step** — which item(s) to `/design` first and why
