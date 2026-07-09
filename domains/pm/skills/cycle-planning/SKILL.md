@@ -183,5 +183,4 @@ It's the wrong choice when:
 - `sprint-planning` — the alternative delivery layer for teams running fixed sprints.
 - `prioritization-frameworks` — produces the pitch ranking the betting table considers.
 - `initiative` and `feature` spec types — `appetite`, `cycle`, and `hill_position` are the preset-conditional fields cycle planning populates.
-- PM principle #3 (make tradeoffs visible) — the betting table's recorded decisions are the operating mechanism.
 - Singer, *Shape Up* (basecamp.com/shapeup) — original source.

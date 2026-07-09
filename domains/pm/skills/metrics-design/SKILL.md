@@ -146,5 +146,4 @@ A team that ships without measuring is a team that prioritizes from intuition fo
 - `continuous-discovery-cadence` — discovery surfaces which opportunities matter; metrics confirm whether the bet on an opportunity worked.
 - `prd-structure` — the `Goals & Success Metrics` section follows the table format above.
 - `initiative` spec type — frontmatter carries the metric definitions; `Bet` references them.
-- PM principle #5 (learn from what shipped) — metrics design is its operating mechanism.
 - PM mission anti-pattern "a roadmap that lies" — applies equally to "a PRD whose metrics are unmeasurable."

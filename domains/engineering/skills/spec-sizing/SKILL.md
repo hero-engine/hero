@@ -159,24 +159,6 @@ When NOT to use it:
 - The `roadmap-reviewer` agent should ack every "keep declared as-is"
   decision in its session — that's the durable record of inspection.
 
-## Drift handling
-
-When `hero size --check`, `hero check`, or `hero_warnings` surfaces
-drift between declared and computed size, the lead does **not**
-ignore it. Two flavors:
-
-- **Leaf drift** (feature/bug/enhancement): declared `size:` differs
-  from `hero sprint estimate` bucket. Bump declared via
-  `hero size <slug> <tier>` to reflect what the spec actually is, then
-  re-fire the nudge for the new tier.
-- **Container drift** (epic/initiative): declared `size:` is smaller
-  than the aggregated child rollup. Bump declared to at least the
-  rollup tier.
-
-Bumping the declared field is **the lead's job**, not the engineer's.
-Don't write code to auto-bump — surface the recommendation and let
-the user or the lead update it via the CLI.
-
 ## Phrasing — paste-ready
 
 These are the lines the lead should quote. Tune by tier and (where
@@ -256,27 +238,25 @@ When `tracker.type != "none"` AND `supports_hierarchy: true`:
 When the tracker has no hierarchy support, fire the local-only
 phrasing above and do not offer tracker-side parent creation.
 
-## What to do on drift
+## Drift handling
 
-`hero size --check` flags declared-vs-computed mismatch. The lead's
-move:
+`hero size --check`, `hero check`, or `hero_warnings` surfaces drift
+between declared and computed size. Don't ignore it — the whole point
+of the field is to make scope changes visible; a lying `size:` is
+worse than no field. Bumping the declared field is **the lead's job**,
+not the engineer's — surface the recommendation, don't auto-bump in code.
 
-1. Read the drift line. Two columns: declared tier and computed tier.
-2. **If declared is too small** (most common): bump it.
-   ```
-   hero size <slug> <new-tier>
-   ```
-   Then re-evaluate: the new tier may itself trigger a nudge (e.g.
-   bumping `medium` → `x-large` lands you in strong-nudge territory).
-3. **If declared is too large** (rare; usually after scope shrinks):
-   bump it down. No nudge fires; the spec just looks less alarming.
-4. **Container drift**: same — bump the container's declared `size:`
-   to at least match the child rollup, then check whether the new
-   container tier itself triggers a nudge.
-
-Don't ignore drift. The whole point of the field is to make scope
-changes visible — ignoring drift makes `size:` lie, and a lying
-field is worse than no field.
+1. Read the drift line (declared tier vs. computed tier).
+2. **Leaf drift** (feature/bug/enhancement), declared too small (most
+   common): bump via `hero size <slug> <new-tier>`, then re-evaluate —
+   the new tier may itself trigger a nudge (e.g. `medium` → `x-large`
+   lands in strong-nudge territory).
+3. **Declared too large** (rare; usually after scope shrinks): bump it
+   down. No nudge fires; the spec just looks less alarming.
+4. **Container drift** (epic/initiative): declared `size:` is smaller
+   than the aggregated child rollup — bump to at least the rollup
+   tier, then check whether the new container tier itself triggers a
+   nudge.
 
 ## Don't block
 

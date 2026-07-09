@@ -6,17 +6,6 @@ metadata:
   purpose: strategic-framework
 ---
 
-## What this skill covers
-
-- How to choose the right strategic motion for a deal
-- Building multi-threaded deals that don't die when one contact leaves
-- Champion development — from friendly contact to true advocate
-- Economic Buyer access strategies
-- Close plan construction
-- Deal reviews and when to call them
-
----
-
 ## Choosing the Strategic Motion
 
 The motion determines the primary angle you lead with. Mismatch between
