@@ -244,7 +244,11 @@ func TestGraphEdgeForRelation_RelatesToMapsToEdge(t *testing.T) {
 		"sibling":    "related_to",
 		"parent":     "belongs_to",
 		"depends-on": "depends_on",
-		"child":      "", // inverse of parent — emitted from the child side
+		// conflicts-with is a distinct soft-mutex edge — must NOT fall
+		// through to related_to (that would hide it from the /drive gate).
+		"conflicts-with": "conflicts_with",
+		"conflicts_with": "conflicts_with",
+		"child":          "", // inverse of parent — emitted from the child side
 	}
 	for kind, want := range cases {
 		if got := graphEdgeForRelation(kind); got != want {

@@ -2,6 +2,7 @@ package drive
 
 import (
 	"sort"
+	"strings"
 
 	"github.com/hero-engine/hero/internal/score"
 	"github.com/hero-engine/hero/internal/spec"
@@ -61,6 +62,64 @@ func depsMet(s *spec.Spec, completed map[string]bool) bool {
 	return true
 }
 
+// rank maps a hero priority/severity string to a total, case-insensitive
+// ordering key: critical=0, high=1, medium=2, low=3, unset/unknown last (99).
+// Shared by priority and severity so candidate selection is a pure function of
+// on-disk state — no reliance on map iteration or input order.
+func rank(v string) int {
+	switch strings.ToLower(strings.TrimSpace(v)) {
+	case "critical":
+		return 0
+	case "high":
+		return 1
+	case "medium":
+		return 2
+	case "low":
+		return 3
+	default:
+		return 99
+	}
+}
+
+// lessCandidate orders two ready candidates by (priorityRank, severityRank,
+// slug). Slug is the final deterministic tiebreak so ties never depend on
+// iteration order. Missing priority/severity (including spec == nil stubs)
+// rank last via the empty string.
+func lessCandidate(a, b *intended) bool {
+	if ra, rb := rank(a.priority()), rank(b.priority()); ra != rb {
+		return ra < rb
+	}
+	if ra, rb := rank(a.severity()), rank(b.severity()); ra != rb {
+		return ra < rb
+	}
+	return a.slug < b.slug
+}
+
+// conflictDeliveringSlug returns the slug of a conflicts-with target of ic
+// that is currently delivering locally, or "" if none. This is the soft-mutex
+// gate: a child is not selectable while a spec it conflicts with is in flight.
+// Reads only on-disk status via IsLocallyDelivering, so it stays
+// deterministic. Dangling and self targets resolve to a no-op (never panic).
+// v1 honors conflicts-with as authored (outbound only); inbound conflicts are
+// a documented follow-up.
+func conflictDeliveringSlug(ic *intended, all []*spec.Spec) string {
+	if ic.spec == nil {
+		return ""
+	}
+	for _, r := range ic.spec.Relations {
+		if r.Kind != "conflicts-with" && r.Kind != "conflicts_with" {
+			continue
+		}
+		if r.Target == ic.slug {
+			continue // self-conflict is a no-op
+		}
+		if t := specBySlugDrive(all, r.Target); t != nil && t.IsLocallyDelivering() {
+			return t.Slug
+		}
+	}
+	return ""
+}
+
 // completedSet returns the slugs of all specs in a completed/superseded
 // state. Children archive to .hero/specs/ on completion but remain
 // discoverable, so this reflects real verify-gated progress.
@@ -105,6 +164,23 @@ func (ic *intended) ready(completed map[string]bool) bool {
 		return true // a declared stub has no deps to satisfy yet
 	}
 	return depsMet(ic.spec, completed)
+}
+
+// priority returns the child's declared priority, or "" for a needs-scaffold
+// stub (spec == nil) — which ranks last in selection.
+func (ic *intended) priority() string {
+	if ic.spec == nil {
+		return ""
+	}
+	return ic.spec.Priority
+}
+
+// severity returns the child's declared severity, or "" for a stub.
+func (ic *intended) severity() string {
+	if ic.spec == nil {
+		return ""
+	}
+	return ic.spec.Severity
 }
 
 // buildIntended is the authoritative child set: discovered children (via
@@ -165,8 +241,11 @@ func Check(init *spec.Spec, all []*spec.Spec, promoted func(PauseCategory) bool)
 		return res
 	}
 
-	var nextI, firstRem *intended
-	var nextStage Stage
+	// Completed/Remaining reporting stays slug-stable (intendeds preserves
+	// Children()/buildIntended order). Priority ordering below is scoped to
+	// selection of the next candidate only — it does not reorder these lists.
+	var firstRem *intended
+	var ready []*intended
 	for i := range intendeds {
 		ic := &intendeds[i]
 		if ic.stage(completed) == StageDone {
@@ -177,8 +256,10 @@ func Check(init *spec.Spec, all []*spec.Spec, promoted func(PauseCategory) bool)
 		if firstRem == nil {
 			firstRem = ic
 		}
-		if nextI == nil && ic.ready(completed) {
-			nextI, nextStage = ic, ic.stage(completed)
+		// A child is selectable when its deps are met AND no conflicts-with
+		// target is currently delivering (soft-mutex seam collision).
+		if ic.ready(completed) && conflictDeliveringSlug(ic, all) == "" {
+			ready = append(ready, ic)
 		}
 	}
 
@@ -186,11 +267,36 @@ func Check(init *spec.Spec, all []*spec.Spec, promoted func(PauseCategory) bool)
 		return res // every intended child finished → done
 	}
 
+	// Among selectable candidates, pick the min under (priority, severity,
+	// slug). Slug is the final tiebreak, keeping the choice reproducible.
+	var nextI *intended
+	var nextStage Stage
+	for _, ic := range ready {
+		if nextI == nil || lessCandidate(ic, nextI) {
+			nextI = ic
+		}
+	}
+	if nextI != nil {
+		nextStage = nextI.stage(completed)
+	}
+
 	ctx := RunContext{ActionClassified: true, NextScore: -1, Promoted: promoted}
 	if nextI == nil {
-		// Every remaining child is blocked on an unmet dependency.
+		// Nothing selectable. Distinguish the fallback reason off the
+		// first-remaining child: ready-on-deps but conflict-excluded is a
+		// SeamCollision (name the in-flight spec); otherwise it's blocked on
+		// an unmet dependency, as today.
 		nextI, nextStage = firstRem, firstRem.stage(completed)
-		ctx.Blocked = true
+		if firstRem.ready(completed) {
+			if conflict := conflictDeliveringSlug(firstRem, all); conflict != "" {
+				ctx.SeamBlocked = true
+				ctx.SeamConflictSlug = conflict
+			} else {
+				ctx.Blocked = true
+			}
+		} else {
+			ctx.Blocked = true
+		}
 	}
 
 	res.NextSpec = nextI.slug
@@ -227,8 +333,8 @@ func DryRun(init *spec.Spec, all []*spec.Spec, n int, promoted func(PauseCategor
 
 	var steps []DryStep
 	for i := 1; i <= n; i++ {
-		var nextI *intended
-		var nextStage Stage
+		var firstRem *intended
+		var ready []*intended
 		allDone := true
 		for j := range intendeds {
 			ic := &intendeds[j]
@@ -236,15 +342,36 @@ func DryRun(init *spec.Spec, all []*spec.Spec, n int, promoted func(PauseCategor
 				continue
 			}
 			allDone = false
-			if nextI == nil && ic.ready(completed) {
-				nextI, nextStage = ic, ic.stage(completed)
+			if firstRem == nil {
+				firstRem = ic
+			}
+			if ic.ready(completed) && conflictDeliveringSlug(ic, all) == "" {
+				ready = append(ready, ic)
 			}
 		}
 		if allDone {
 			steps = append(steps, DryStep{Step: i, Verdict: "done"})
 			break
 		}
+		// Same priority-aware, conflict-excluding selection as Check, so the
+		// preview matches real behavior. Deterministic (slug final tiebreak).
+		var nextI *intended
+		var nextStage Stage
+		for _, ic := range ready {
+			if nextI == nil || lessCandidate(ic, nextI) {
+				nextI = ic
+			}
+		}
+		if nextI != nil {
+			nextStage = nextI.stage(completed)
+		}
 		if nextI == nil {
+			if firstRem.ready(completed) {
+				if conflict := conflictDeliveringSlug(firstRem, all); conflict != "" {
+					steps = append(steps, DryStep{Step: i, Verdict: "pause", Category: string(CategorySeamCollision), Reason: seamReason(firstRem.slug, conflict)})
+					break
+				}
+			}
 			steps = append(steps, DryStep{Step: i, Verdict: "pause", Category: string(CategoryBlocked), Reason: "remaining children are blocked on dependencies"})
 			break
 		}

@@ -59,12 +59,16 @@ const (
 	CategoryHardCap       PauseCategory = "HardCap"         // initiative boundary or N-consecutive-proceeds cap
 	CategoryUnknown       PauseCategory = "Unknown"         // unclassifiable transition — conservative pause
 	CategorySupervised    PauseCategory = "Supervised"      // supervised mode pauses at every boundary
+	// CategorySeamCollision is a soft-mutex collision: the candidate
+	// conflicts-with a spec that is currently delivering. A real obstacle,
+	// non-promotable — even Autonomous mode pauses.
+	CategorySeamCollision PauseCategory = "SeamCollision"
 )
 
 // Promotable reports whether a category may ever be auto-proceeded by the
 // learning layer in Autonomous mode. The hard-pause guardrails and real
-// obstacles (Irreversible, HardCap, Unknown, VerifyStuck, Blocked) are
-// never promotable; only the human-judgment categories are.
+// obstacles (Irreversible, HardCap, Unknown, VerifyStuck, Blocked,
+// SeamCollision) are never promotable; only the human-judgment categories are.
 func (c PauseCategory) Promotable() bool {
 	switch c {
 	case CategoryDesignFork, CategoryUnderspecified, CategoryAmbiguousPick:
@@ -102,6 +106,13 @@ type RunContext struct {
 	DesignFork    bool // design surfaced ≥2 viable approaches
 	AmbiguousPick bool // queue near-tie of different intent
 
+	// SeamBlocked marks that the only otherwise-ready candidate is excluded
+	// because a conflicts-with target is currently delivering (soft-mutex
+	// seam collision). Distinct from Blocked (unmet dependency).
+	SeamBlocked bool
+	// SeamConflictSlug names the in-flight conflicting spec, for the reason.
+	SeamConflictSlug string
+
 	// Irreversible: the pending action touches an irreversible /
 	// outward-facing surface. Always pauses, every mode.
 	Irreversible bool
@@ -124,6 +135,13 @@ type RunContext struct {
 
 func pause(cat PauseCategory, reason string) Decision {
 	return Decision{Proceed: false, Category: cat, Reason: reason}
+}
+
+// seamReason renders the SeamCollision pause reason, naming both the candidate
+// and the in-flight conflicting spec. Shared by NeedsMe and DryRun so the two
+// surfaces stay byte-identical.
+func seamReason(name, conflict string) string {
+	return fmt.Sprintf("%s conflicts with %s, which is currently delivering — pausing so they don't run concurrently", name, conflict)
 }
 
 func proceed() Decision { return Decision{Proceed: true} }
@@ -161,6 +179,12 @@ func NeedsMe(at *spec.Spec, ctx RunContext, mode AutonomyMode) Decision {
 	if ctx.VerifyVerdict == "FAIL" && ctx.VerifyStuckThreshold > 0 && ctx.VerifyFailCount >= ctx.VerifyStuckThreshold {
 		return maybePromoted(CategoryVerifyStuck,
 			fmt.Sprintf("verify has failed %d times on %s — needs your eyes, not another retry", ctx.VerifyFailCount, name), ctx, mode)
+	}
+	// SeamCollision is a real obstacle, not a human-judgment fork — return a
+	// plain pause (never via maybePromoted) so it pauses in every mode,
+	// Autonomous included.
+	if ctx.SeamBlocked {
+		return pause(CategorySeamCollision, seamReason(name, ctx.SeamConflictSlug))
 	}
 	if ctx.Blocked {
 		return maybePromoted(CategoryBlocked, fmt.Sprintf("%s is blocked on an unmet dependency", name), ctx, mode)

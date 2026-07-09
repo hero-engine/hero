@@ -1,6 +1,7 @@
 package drive
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/hero-engine/hero/internal/spec"
@@ -154,10 +155,39 @@ func TestPromotableScope(t *testing.T) {
 			t.Errorf("%q should be promotable", c)
 		}
 	}
-	never := []PauseCategory{CategoryIrreversible, CategoryHardCap, CategoryUnknown, CategoryVerifyStuck, CategoryBlocked, CategorySupervised}
+	never := []PauseCategory{CategoryIrreversible, CategoryHardCap, CategoryUnknown, CategoryVerifyStuck, CategoryBlocked, CategorySupervised, CategorySeamCollision}
 	for _, c := range never {
 		if c.Promotable() {
 			t.Errorf("%q must never be promotable", c)
+		}
+	}
+}
+
+// TestNeedsMeSeamCollisionPausesEveryMode: a seam collision is a real
+// obstacle — it pauses in every mode, and in Guided/Autonomous surfaces the
+// SeamCollision category naming the in-flight spec even when a promotion would
+// otherwise auto-proceed.
+func TestNeedsMeSeamCollisionPausesEveryMode(t *testing.T) {
+	at := &spec.Spec{Slug: "candidate"}
+	for _, mode := range []AutonomyMode{Supervised, Guided, Autonomous} {
+		ctx := base()
+		ctx.SeamBlocked = true
+		ctx.SeamConflictSlug = "in-flight-peer"
+		// A promotion that would auto-proceed a promotable category must not
+		// relax SeamCollision.
+		ctx.Promoted = func(PauseCategory) bool { return true }
+		got := NeedsMe(at, ctx, mode)
+		if got.Proceed {
+			t.Fatalf("mode %v: seam collision must pause", mode)
+		}
+		if mode == Supervised {
+			continue // supervised pauses first with its own category
+		}
+		if got.Category != CategorySeamCollision {
+			t.Errorf("mode %v: category=%q, want SeamCollision", mode, got.Category)
+		}
+		if !strings.Contains(got.Reason, "in-flight-peer") {
+			t.Errorf("mode %v: reason=%q, want it to name in-flight-peer", mode, got.Reason)
 		}
 	}
 }
