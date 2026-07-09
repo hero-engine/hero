@@ -1,7 +1,6 @@
 ---
 name: java-stack
 description: Java implementation guidance covering service structure, strong typing, testing, and common JVM application concerns.
-compatibility: opencode
 metadata:
   audience: engineer
   purpose: stack-guidance

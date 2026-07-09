@@ -1,7 +1,6 @@
 ---
 name: note-capture
 description: How agents capture conversations, brainstorms, and thinking as notes in the Hero knowledge base.
-compatibility: opencode, cursor, claude
 metadata:
   audience: agents
   purpose: knowledge-capture

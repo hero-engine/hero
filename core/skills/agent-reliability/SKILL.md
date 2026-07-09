@@ -1,7 +1,6 @@
 ---
 name: agent-reliability
 description: Behavioral rules that make AI coding agents more reliable — verification, self-correction, and scope discipline.
-compatibility: opencode
 metadata:
   audience: all-agents
   purpose: reliability-rules
@@ -58,6 +57,16 @@ A **true blocker is NOT**:
 - "I've done a reasonable chunk — good stopping point."
 
 **Stopping early with "let me know if you want me to continue" is a failure mode, not politeness.** The next message should be the next step, not a yield. Explicit confirmation steps configured in supervised mode (e.g. `/deliver --supervised`) are not unilateral yields and are exempt from this rule — the rule applies to *unilateral* mid-task stops.
+
+## Dead ends in investigation work
+
+Investigation and research tasks (bug diagnosis, signal/opportunity investigation, root-cause analysis) are not omniscient work — some require runtime state, production data, external system access, domain knowledge, or a stakeholder conversation you don't have. You will hit genuine dead ends. This does not contradict the persistence rule above: investigation persistence means producing a conclusive report, not necessarily a conclusive answer.
+
+**Partial findings are a valid, complete output.** A report that says "here's what I found, here's where the trail goes cold, here's what we'd need to go further" is genuinely useful — it saves the next person hours of re-tracing the same ground. Don't treat an incomplete diagnosis as failure.
+
+**Distinguish pivoting from looping.** Hitting a dead end and finding a better angle is good investigation. Searching for the same thing with different words, re-reading files you've already read, or guessing at paths and names is not pivoting — it's looping.
+
+**The worst outcome is not "I don't know" — it's spending hours looping without producing findings.** Stop, write up what you have, and hand off.
 
 ## Error recovery
 

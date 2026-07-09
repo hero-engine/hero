@@ -204,6 +204,40 @@ func (idx *DB) migrate() error {
 			FOREIGN KEY (spec_slug) REFERENCES specs(slug) ON DELETE CASCADE
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_tripwire_triggers_slug ON tripwire_triggers(spec_slug)`,
+
+		// knowledge-surfacing (P1): hand-authored .hero/knowledge/** flat files
+		// live in isolated tables so they are reachable by `hero ask` /
+		// `hero search --knowledge` WITHOUT ever appearing in the work-spec
+		// `specs` table (the work/knowledge boundary is structural, not a
+		// per-query filter). spec.md-shaped knowledge stays in `specs` via
+		// Discover; only files Discover skips land here.
+		`CREATE TABLE IF NOT EXISTS knowledge (
+			slug        TEXT PRIMARY KEY,
+			title       TEXT NOT NULL,
+			kind        TEXT NOT NULL,
+			type        TEXT NOT NULL DEFAULT '',
+			path        TEXT NOT NULL,
+			domain      TEXT NOT NULL DEFAULT '',
+			tags        TEXT NOT NULL DEFAULT '',
+			modified_at TEXT NOT NULL DEFAULT ''
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_knowledge_kind ON knowledge(kind)`,
+		`CREATE VIRTUAL TABLE IF NOT EXISTS fts_knowledge USING fts5(
+			slug,
+			title,
+			content,
+			tokenize='porter'
+		)`,
+		// knowledge-context-injection (P2): code globs for code-scoped
+		// knowledge (conventions/decisions/rules), so BuildContext can inject
+		// flat knowledge on file-touch. Parallel to convention_scopes but keyed
+		// by knowledge slug (no FK to specs — knowledge is isolated).
+		`CREATE TABLE IF NOT EXISTS knowledge_scopes (
+			id             INTEGER PRIMARY KEY AUTOINCREMENT,
+			knowledge_slug TEXT NOT NULL,
+			scope_glob     TEXT NOT NULL
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_knowledge_scopes_slug ON knowledge_scopes(knowledge_slug)`,
 	}
 
 	for _, m := range migrations {
@@ -358,6 +392,229 @@ func (idx *DB) RemoveSpec(slug string) error {
 	}
 
 	return tx.Commit()
+}
+
+// KnowledgeEntry is a hand-authored .hero/knowledge/** file that work-spec
+// Discover skips (flat files, untyped or knowledge-typed). Isolated from the
+// specs table so it never leaks into work surfaces. Spec: knowledge-surfacing.
+type KnowledgeEntry struct {
+	Slug       string // <kind>/<name>, e.g. "decisions/peer-manifest-publish-boundary"
+	Title      string
+	Kind       string // first path segment under knowledge/, e.g. "decisions", "battlecards"
+	Type       string // frontmatter type: if any; else ""
+	Path       string
+	Domain     string
+	Tags       []string
+	Scope      []string // code globs from frontmatter `scope:` — drives injection
+	Content    string
+	ModifiedAt time.Time
+}
+
+// IndexKnowledge upserts one knowledge entry into the knowledge + fts_knowledge
+// tables. Idempotent on slug.
+func (idx *DB) IndexKnowledge(e *KnowledgeEntry) error {
+	tx, err := idx.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	_, err = tx.Exec(`
+		INSERT INTO knowledge (slug, title, kind, type, path, domain, tags, modified_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(slug) DO UPDATE SET
+			title=excluded.title, kind=excluded.kind, type=excluded.type,
+			path=excluded.path, domain=excluded.domain, tags=excluded.tags,
+			modified_at=excluded.modified_at
+	`, e.Slug, e.Title, e.Kind, e.Type, e.Path, e.Domain,
+		strings.Join(e.Tags, ","), e.ModifiedAt.Format(time.RFC3339))
+	if err != nil {
+		return fmt.Errorf("upserting knowledge: %w", err)
+	}
+
+	if _, err := tx.Exec("DELETE FROM fts_knowledge WHERE slug = ?", e.Slug); err != nil {
+		return err
+	}
+	if _, err := tx.Exec("INSERT INTO fts_knowledge (slug, title, content) VALUES (?, ?, ?)",
+		e.Slug, e.Title, e.Content); err != nil {
+		return fmt.Errorf("updating knowledge FTS: %w", err)
+	}
+
+	// Refresh code scopes (P2 injection). Only code-scoped kinds carry them;
+	// free-form knowledge (battlecards/playbooks) has none and stays pull-only.
+	if _, err := tx.Exec("DELETE FROM knowledge_scopes WHERE knowledge_slug = ?", e.Slug); err != nil {
+		return err
+	}
+	for _, g := range e.Scope {
+		if _, err := tx.Exec("INSERT INTO knowledge_scopes (knowledge_slug, scope_glob) VALUES (?, ?)", e.Slug, g); err != nil {
+			return fmt.Errorf("inserting knowledge scope: %w", err)
+		}
+	}
+
+	return tx.Commit()
+}
+
+// RemoveKnowledge deletes a knowledge entry by slug.
+func (idx *DB) RemoveKnowledge(slug string) error {
+	tx, err := idx.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if _, err := tx.Exec("DELETE FROM fts_knowledge WHERE slug = ?", slug); err != nil {
+		return err
+	}
+	if _, err := tx.Exec("DELETE FROM knowledge_scopes WHERE knowledge_slug = ?", slug); err != nil {
+		return err
+	}
+	if _, err := tx.Exec("DELETE FROM knowledge WHERE slug = ?", slug); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// codeScopedKinds are the knowledge kinds/types eligible for file-scoped
+// injection. Free-form knowledge (battlecards, playbooks, …) is excluded so
+// injected context stays high-signal. Matched against both kind (subdir) and
+// type (frontmatter). Spec: knowledge-context-injection.
+var codeScopedKinds = map[string]bool{
+	"convention": true, "conventions": true,
+	"decision": true, "decisions": true,
+	"rule": true, "rules": true,
+}
+
+// FindKnowledgeForFiles returns flat code-scoped knowledge entries whose scope
+// globs match any of the given file paths — the P2 injection query, parallel to
+// FindConventionsForFiles but over the isolated knowledge tables.
+func (idx *DB) FindKnowledgeForFiles(filePaths []string) ([]KnowledgeEntry, error) {
+	if len(filePaths) == 0 {
+		return nil, nil
+	}
+	rows, err := idx.db.Query(`
+		SELECT ks.scope_glob, k.slug, k.title, k.kind, k.type, k.path, k.domain, k.tags
+		FROM knowledge_scopes ks
+		JOIN knowledge k ON k.slug = ks.knowledge_slug
+		ORDER BY k.slug
+	`)
+	if err != nil {
+		return nil, nil // graceful on old schemas
+	}
+	defer rows.Close()
+
+	seen := make(map[string]bool)
+	var out []KnowledgeEntry
+	for rows.Next() {
+		var glob, tags string
+		var e KnowledgeEntry
+		if err := rows.Scan(&glob, &e.Slug, &e.Title, &e.Kind, &e.Type, &e.Path, &e.Domain, &tags); err != nil {
+			return nil, err
+		}
+		if seen[e.Slug] {
+			continue
+		}
+		if !codeScopedKinds[e.Kind] && !codeScopedKinds[e.Type] {
+			continue
+		}
+		for _, fp := range filePaths {
+			matched, _ := filepath.Match(glob, fp)
+			if !matched {
+				matched, _ = filepath.Match(glob, filepath.Base(fp))
+			}
+			if matched {
+				if tags != "" {
+					e.Tags = strings.Split(tags, ",")
+				}
+				out = append(out, e)
+				seen[e.Slug] = true
+				break
+			}
+		}
+	}
+	return out, rows.Err()
+}
+
+// KnowledgeModifiedAt returns slug -> stored modified_at for every knowledge
+// row, so refresh can diff against disk (self-healing parity with specs).
+func (idx *DB) KnowledgeModifiedAt() (map[string]time.Time, error) {
+	rows, err := idx.db.Query(`SELECT slug, modified_at FROM knowledge`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make(map[string]time.Time)
+	for rows.Next() {
+		var slug, raw string
+		if err := rows.Scan(&slug, &raw); err != nil {
+			return nil, err
+		}
+		t, parseErr := time.Parse(time.RFC3339, raw)
+		if parseErr != nil {
+			t = time.Time{}
+		}
+		out[slug] = t
+	}
+	return out, rows.Err()
+}
+
+// SearchKnowledge runs an FTS5 query over the knowledge corpus, optionally
+// restricted to one or more kinds. Ordered by FTS rank.
+func (idx *DB) SearchKnowledge(query string, kinds []string, limit int) ([]KnowledgeEntry, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	ftsQuery := SanitizeFTSQuery(query)
+	if ftsQuery == "" {
+		return nil, nil
+	}
+
+	sql := `
+		SELECT k.slug, k.title, k.kind, k.type, k.path, k.domain, k.tags,
+		       snippet(fts_knowledge, 2, '>>>', '<<<', '…', 16) AS snip
+		  FROM fts_knowledge
+		  JOIN knowledge k ON k.slug = fts_knowledge.slug
+		 WHERE fts_knowledge MATCH ?`
+	args := []any{ftsQuery}
+	if len(kinds) > 0 {
+		// Match either the subdir kind ("decisions", "battlecards") or the
+		// frontmatter type ("decision") so `--type decision` and
+		// `--type battlecards` both resolve. Singular spec types map to
+		// plural subdirs via the type column; free-form kinds match on kind.
+		placeholders := make([]string, len(kinds))
+		for i := range kinds {
+			placeholders[i] = "?"
+		}
+		ph := strings.Join(placeholders, ",")
+		sql += " AND (k.kind IN (" + ph + ") OR k.type IN (" + ph + "))"
+		for _, k := range kinds {
+			args = append(args, k)
+		}
+		for _, k := range kinds {
+			args = append(args, k)
+		}
+	}
+	sql += " ORDER BY fts_knowledge.rank LIMIT ?"
+	args = append(args, limit)
+
+	rows, err := idx.db.Query(sql, args...)
+	if err != nil {
+		return nil, nil // graceful: table may be empty/absent on old schemas
+	}
+	defer rows.Close()
+
+	var out []KnowledgeEntry
+	for rows.Next() {
+		var e KnowledgeEntry
+		var tags, snip string
+		if err := rows.Scan(&e.Slug, &e.Title, &e.Kind, &e.Type, &e.Path, &e.Domain, &tags, &snip); err != nil {
+			return nil, err
+		}
+		if tags != "" {
+			e.Tags = strings.Split(tags, ",")
+		}
+		e.Content = snip
+		out = append(out, e)
+	}
+	return out, rows.Err()
 }
 
 // SearchResult holds a single search hit.
@@ -868,7 +1125,49 @@ func (idx *DB) FindAllTripwires(heroDir string) ([]TripwireResult, error) {
 		r.Triggers = s.Triggers
 		results = append(results, r)
 	}
-	return results, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	// Flat tripwires captured in the isolated knowledge table (subdir kind
+	// 'tripwires' or frontmatter type 'tripwire') never reach the specs table,
+	// so they must be surfaced separately to reach parity with spec.md-shaped
+	// tripwires. Spec: knowledge-context-injection (drift/impact/anchor follow-on).
+	kwRows, err := idx.db.Query(`
+		SELECT slug, title, path
+		FROM knowledge
+		WHERE type = 'tripwire' OR kind = 'tripwires'
+		ORDER BY slug
+	`)
+	if err != nil {
+		return results, nil // graceful: knowledge table may be absent on old schemas
+	}
+	defer kwRows.Close()
+	for kwRows.Next() {
+		var r TripwireResult
+		if err := kwRows.Scan(&r.Slug, &r.Title, &r.Path); err != nil {
+			return nil, err
+		}
+		r.Type = spec.TypeTripwire
+		r.Status = spec.StatusActive
+		s, perr := spec.ParseFile(r.Path)
+		if perr != nil {
+			continue
+		}
+		if r.Title == "" {
+			r.Title = s.Title
+		}
+		r.Severity = s.Severity
+		if r.Severity == "" {
+			r.Severity = "high"
+		}
+		r.Constraint = s.Sections["constraint"]
+		r.Why = s.Sections["why"]
+		r.Instead = s.Sections["instead"]
+		r.Triggers = s.Triggers
+		results = append(results, r)
+	}
+	return results, kwRows.Err()
 }
 
 // FindTripwiresByTrigger returns active tripwires whose trigger keywords
@@ -1445,7 +1744,8 @@ func Rebuild(heroDir string) (*Stats, error) {
 
 	// Clear existing data
 	for _, table := range []string{"fts_specs", "files_touched", "root_causes", "decisions",
-		"convention_scopes", "tripwire_triggers", "spec_relations", "claims", "specs"} {
+		"convention_scopes", "tripwire_triggers", "spec_relations", "claims", "specs",
+		"fts_knowledge", "knowledge", "knowledge_scopes"} {
 		if _, err := idx.db.Exec(fmt.Sprintf("DELETE FROM %s", table)); err != nil {
 			return nil, fmt.Errorf("clearing %s: %w", table, err)
 		}
@@ -1464,6 +1764,17 @@ func Rebuild(heroDir string) (*Stats, error) {
 		}
 		if err := idx.IndexSpec(s, string(content)); err != nil {
 			return nil, fmt.Errorf("indexing %s: %w", s.Slug, err)
+		}
+	}
+
+	// Index the isolated knowledge corpus (.hero/knowledge/** flat files).
+	knowledge, err := DiscoverKnowledge(heroDir)
+	if err != nil {
+		return nil, fmt.Errorf("discovering knowledge: %w", err)
+	}
+	for _, e := range knowledge {
+		if err := idx.IndexKnowledge(e); err != nil {
+			return nil, fmt.Errorf("indexing knowledge %s: %w", e.Slug, err)
 		}
 	}
 
@@ -1521,6 +1832,27 @@ func (idx *DB) BuildContext(filePaths []string) (*ContextBlock, error) {
 			Path:    r.Path,
 			Summary: r.Snippet,
 		})
+	}
+
+	// Find matching flat code-scoped knowledge (P2 injection). Routed into the
+	// same Conventions/Rules/Decisions blocks by kind so hand-authored flat
+	// knowledge injects identically to spec.md-shaped knowledge. Free-form
+	// knowledge without a scope never reaches here. Spec:
+	// knowledge-context-injection.
+	knowledge, err := idx.FindKnowledgeForFiles(filePaths)
+	if err != nil {
+		return nil, fmt.Errorf("finding knowledge: %w", err)
+	}
+	for _, k := range knowledge {
+		entry := ContextEntry{Slug: k.Slug, Title: k.Title, Type: spec.Type(k.Type), Path: k.Path}
+		switch {
+		case k.Kind == "rules" || k.Type == "rule":
+			ctx.Rules = append(ctx.Rules, entry)
+		case k.Kind == "decisions" || k.Type == "decision":
+			ctx.Decisions = append(ctx.Decisions, entry)
+		default:
+			ctx.Conventions = append(ctx.Conventions, entry)
+		}
 	}
 
 	// Find matching tripwires (forbidden-option guardrails)
@@ -1849,6 +2181,18 @@ func (idx *DB) BuildNudge(filePaths []string) (*NudgeResult, error) {
 			Status: c.Status,
 			Path:   c.Path,
 		})
+	}
+	// Flat code-scoped knowledge (conventions/rules) nudges at parity with
+	// spec.md conventions. Spec: knowledge-context-injection.
+	if knowledge, kerr := idx.FindKnowledgeForFiles(filePaths); kerr == nil {
+		for _, k := range knowledge {
+			result.Conventions = append(result.Conventions, ContextEntry{
+				Slug:  k.Slug,
+				Title: k.Title,
+				Type:  spec.Type(k.Type),
+				Path:  k.Path,
+			})
+		}
 	}
 	result.HasConventions = len(result.Conventions) > 0
 

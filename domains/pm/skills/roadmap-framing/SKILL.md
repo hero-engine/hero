@@ -1,7 +1,6 @@
 ---
 name: roadmap-framing
 description: How to write initiatives that read honestly — bet-shaped framing, evidence-grounded rationale, named tradeoffs, and horizon assignments that reconcile against engineering reality.
-compatibility: opencode
 metadata:
   audience: product-strategist, roadmap-curator, pm-reviewer
   purpose: roadmap-authoring
@@ -123,14 +122,7 @@ Some teams use quarter strings instead of now/next/later. Same discipline applie
 
 ### Reconciling against engineering reality
 
-`roadmap-curator` runs weekly and walks the cross-domain graph:
-
-- If all child stories are `done` and the cross-domain feature is `delivered`, status → `shipped` automatically, `shipped_at` populated.
-- If a `now` item has no committed child stories after 2+ cycles, surface as stale; recommend drop with reason or refresh.
-- If a `committed` item has cross-domain features in `delivering` state but no PM-side movement (no new linked stories, no PRD updates), surface in standup.
-- If "shipped" is claimed in the roadmap but no satisfying cross-domain edge exists, surface as a lie — the roadmap claims completion the graph can't substantiate.
-
-This is principle #4 (alignment maintained) operationalized. The roadmap reconciles against reality; if it doesn't, the curator surfaces the drift.
+`roadmap-curator` walks the cross-domain graph weekly and applies the reconciliation policy — see "How `roadmap-curator` reads the graph weekly" below for the full rule set. This is principle #4 (alignment maintained) operationalized.
 
 ## Rationale — "why this and not that"
 
@@ -171,11 +163,12 @@ The output is implicit in the outcome — the team will build *something* to mov
 
 ## How `roadmap-curator` reads the graph weekly
 
-The curator's weekly sweep walks every initiative and applies the reconciliation rules above. It produces:
+The curator's weekly sweep walks every initiative and applies the reconciliation policy. It produces:
 
-- **Auto-state-changes** (with notification, not silent): `committed → shipped` when graph confirms delivery.
-- **Stale-now warnings**: items in `now` for >2 cycles without movement.
-- **Lying-shipped warnings**: items in `shipped` without satisfying graph edges.
+- **Auto-state-changes** (with notification, not silent): `committed → shipped` when all child stories are `done` and the cross-domain feature is `delivered` (`shipped_at` populated).
+- **Stale-now warnings**: items in `now` for >2 cycles without movement (no committed child stories).
+- **Delivering-without-PM-movement warnings**: a `committed` item with cross-domain features in `delivering` state but no PM-side movement (no new linked stories, no PRD updates) — surfaced in standup.
+- **Lying-shipped warnings**: items in `shipped` without satisfying graph edges — the roadmap claims completion the graph can't substantiate.
 - **Lonely-committed warnings**: `committed` items with no child stories or PRDs.
 - **Orphan-feature warnings**: cross-domain features with no parent initiative (engineering shipped something the roadmap doesn't claim).
 
@@ -200,5 +193,4 @@ These are not auto-corrected. The curator surfaces them; the PM decides. (Auto-c
 - `evidence-synthesis` — how to ground the Evidence section.
 - `opportunity-solution-trees-torres` — discovery framework that often feeds initiatives.
 - `prd-structure` and `pitch-writing-shape-up` — once an initiative promotes to `committed`, a PRD or pitch follows.
-- PM domain mission — principle #3 (tradeoffs visible), principle #4 (alignment maintained), principle #5 (learn from what shipped) all live here.
 - Prior art: Marty Cagan / SVPG (*Inspired*, *Empowered*) on outcome-shaped roadmaps; Teresa Torres on opportunity-grounded bets.

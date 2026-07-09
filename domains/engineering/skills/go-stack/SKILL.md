@@ -1,7 +1,6 @@
 ---
 name: go-stack
 description: Go implementation guidance for package design, explicit error handling, concurrency, and operational simplicity.
-compatibility: opencode
 metadata:
   audience: engineer
   purpose: stack-guidance

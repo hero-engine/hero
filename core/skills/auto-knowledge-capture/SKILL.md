@@ -1,7 +1,6 @@
 ---
 name: auto-knowledge-capture
 description: How agents automatically detect and persist learnings at the end of major workflows.
-compatibility: opencode, cursor, claude
 metadata:
   audience: agents
   purpose: knowledge-capture

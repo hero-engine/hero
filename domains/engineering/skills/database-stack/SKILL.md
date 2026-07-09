@@ -1,7 +1,6 @@
 ---
 name: database-stack
 description: Database implementation guidance for schema design, migrations, queries, indexing, and rollout safety.
-compatibility: opencode
 metadata:
   audience: database-engineers
   purpose: stack-guidance

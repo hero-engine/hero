@@ -1,7 +1,6 @@
 ---
 name: performance-optimization
 description: Guidance for identifying bottlenecks, measuring impact, and making pragmatic performance improvements without cargo-cult optimization.
-compatibility: opencode
 metadata:
   audience: performance
   purpose: optimization-guidance

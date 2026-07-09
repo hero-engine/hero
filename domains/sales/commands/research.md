@@ -14,8 +14,8 @@ research, also involve the `competitive-intel` agent.
 **Check for existing intel** before researching:
 ```
 hero search "<company or topic>"              # existing deal specs (deals are work specs)
-ls .hero/knowledge/battlecards/               # existing competitive intel (one file per competitor)
-ls .hero/knowledge/prospects/                 # prior account research / call notes
+hero search --knowledge "<company or topic>"  # existing battlecards / prospect research in the knowledge corpus
+ls .hero/knowledge/battlecards/ .hero/knowledge/prospects/   # or browse by directory
 ```
 Surface what's already known before starting fresh research. Do not
 re-research what Hero already knows.

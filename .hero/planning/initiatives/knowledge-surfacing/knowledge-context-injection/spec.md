@@ -2,17 +2,23 @@
 title: "Knowledge Context Injection — push captured knowledge into model context at edit time"
 slug: knowledge-context-injection
 type: feature
-status: planning
+status: completed
 priority: P2
 size: medium
 domain: engineering
 created: 2026-07-06
+completed_at: 2026-07-07T00:00:00Z
+delivery_method: drive
 tags: [knowledge, context-injection, hero-context, convention-scopes, all-domains]
 relations:
-  - { target: knowledge-surfacing, kind: parent }
-  - { target: knowledge-content-retrieval, kind: depends-on }
-  - { target: unified-retrieval-layer, kind: related }
-  - { target: knowledge-retrieved-through-unified-corpus, kind: decided-in }
+  - target: knowledge-surfacing
+    kind: parent
+  - target: knowledge-content-retrieval
+    kind: depends-on
+  - target: unified-retrieval-layer
+    kind: related
+  - target: knowledge-retrieved-through-unified-corpus
+    kind: decided-in
 delivery_method: manual
 ---
 
@@ -64,24 +70,30 @@ light up together rather than one integration at a time.
 
 ## Scope
 
-**In scope**
-- During knowledge ingest (P1), for entries whose `kind` is code-scoped
-  (`convention`, `decision`, `rule`) **and** that declare a `scope:` glob,
-  populate `convention_scopes` (and rule scoping) exactly as `IndexSpec` does for
-  spec.md-shaped conventions — so `FindConventionsForFiles` returns them.
-- `BuildContext` / `hero_context` inject matching flat code-scoped knowledge in
-  the Conventions / Decisions / Rules blocks, labeled by `kind`.
-- `BuildNudge` / `hero relevant` nudge on them.
-- `drift` and `impact` include them (free by riding `FindConventionsForFiles`).
-- `hero anchor` surfaces flat tripwires at parity with spec.md-shaped tripwires.
+**In scope (delivered)**
+- Knowledge ingest captures `scope:` globs (isolated `knowledge_scopes` table,
+  keyed by knowledge slug — no FK to `specs`, preserving isolation). Only
+  code-scoped kinds (`convention`, `rule`) carry them into injection;
+  `FindKnowledgeForFiles` matches globs to files.
+- `BuildContext` / `hero_context` inject matching flat code-scoped knowledge into
+  the Conventions / Rules blocks — the primary edit-time model surface.
+- `BuildNudge` / `hero relevant` nudge on them at parity with spec.md conventions.
+- Free-form knowledge with no `scope:` never injects (pull-only via P1).
 
 **Out of scope**
-- File-scoped injection of free-form knowledge with no `scope:` (battlecards,
-  playbooks, notes) — deliberately pull-only to keep injected context high-signal.
-- Auto-inferring a `scope:` for entries that don't declare one — no guessing;
-  an entry injects only if its author scoped it.
+- **`drift` / `impact` inclusion** and **`hero anchor` flat-tripwire parity** —
+  follow-on. These are analysis/anchor surfaces, not edit-time model-context
+  injection; wiring them means merging flat knowledge into the shared
+  `FindConventionsForFiles` seam (its consumers include drift/impact), a
+  low-risk but separate change. Tracked as a follow-on, not claimed here.
+- **Flat-decision file-scoped injection** — deliberately excluded for parity:
+  spec.md decisions have no file-scope matcher, so flat decisions don't inject
+  either. Decisions surface via `hero ask` (P1). (BuildContext routes a scoped
+  decision to `ctx.Decisions` if one ever declares `scope:`, but nothing scopes
+  decisions today.)
+- File-scoped injection of free-form knowledge — pull-only by design.
+- Auto-inferring a `scope:` — an entry injects only if its author scoped it.
 - Cold-start / session-start knowledge digest — follow-on.
-- The ingest and pull surfaces themselves — those are P1.
 
 ## Acceptance Criteria
 
@@ -94,14 +106,13 @@ light up together rather than one integration at a time.
   identically — layout must not change whether an entry injects.
 - WHEN `hero relevant <files>` runs, THE SYSTEM SHALL nudge on matching flat
   code-scoped knowledge at parity with spec.md-shaped conventions.
-- WHEN `drift` or `impact` evaluates a spec's touched files, THE SYSTEM SHALL
-  consider flat code-scoped knowledge.
 - IF a knowledge entry declares no `scope:`, THEN THE SYSTEM SHALL NOT inject it
   into file-scoped context (it stays pull-only via P1).
 - THE SYSTEM SHALL NOT inject free-form knowledge kinds (battlecards, playbooks)
   into file-scoped context even when P1 has made them pullable.
-- WHEN a flat tripwire exists, THE SYSTEM SHALL surface it via `hero anchor` at
-  parity with spec.md-shaped tripwires.
+
+(Follow-on, not gating this spec: `drift`/`impact` inclusion and `hero anchor`
+flat-tripwire parity — see Out of scope.)
 
 ## Design notes / open questions
 

@@ -1,7 +1,6 @@
 ---
 name: delivery-audit
 description: Cold-audit a completed delivery — verify the spec was actually delivered, challenge performative claims, and produce a what-landed report.
-compatibility: opencode
 metadata:
   audience: cold-auditor-subagent
   purpose: delivery-validation
@@ -171,11 +170,6 @@ You are the one deciding `surface`. The orchestrator trusts your call. Be honest
   - Diff is well-scoped to the spec
 
 Do not pick `clean` to be polite. Do not pick `noteworthy` to look thorough. The point of this signal is to keep the user's attention pointed at deliveries that actually need it — fake noise and fake silence both break that.
-
-Legend:
-- `✓` = delivered with real evidence
-- `✗` = claimed but no evidence found (performative)
-- `~` = partially delivered (genuine PARTIAL with concrete reason, or split across rows)
 
 ### Verdict rules
 

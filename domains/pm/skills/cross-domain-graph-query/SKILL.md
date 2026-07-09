@@ -1,7 +1,6 @@
 ---
 name: cross-domain-graph-query
 description: Walking the knowledge graph across domain boundaries — from PM artifacts into engineering reality and back. The graph, not the tracker, is the cross-domain truth surface.
-compatibility: opencode
 metadata:
   audience: roadmap-curator, handoff-coordinator, duplicate-detector, pm-investigator
   purpose: cross-domain
@@ -113,18 +112,7 @@ The principle: respect the user's working context (active domain) without hiding
 
 ## How `roadmap-curator` reads live engineering delivery state
 
-The weekly reconciliation pass under the unified type model:
-
-1. For each `committed` initiative, walk to all child specs (direct or via epics).
-2. For each child spec, read `owner`, `status`, latest `owner_history` row, latest commit timestamp, open PR state.
-3. Apply transition rules:
-   - All child specs `completed` + shipped in a release → initiative `shipped`.
-   - Any child spec engineering-owned but stale (no commits in 14d since the `pm → engineering` flip) → surface as a risk in the Roadmap board.
-   - Any child spec PM-owned long after the initiative was committed → surface as not-yet-handed-off.
-   - Any child spec recently flipped back to PM (`engineering → pm` in the last week) with a `handed_back_reason` → surface for follow-up.
-4. Write the reconciled status to the initiative; update the `shipped_at` field when transitioning.
-
-The reconciliation is the live wire between PM and engineering reality. Without it, the roadmap drifts; with it, the roadmap reconciles itself weekly. The bitemporal `owner_history` is what makes the cross-domain reconciliation queryable without a dedicated edge.
+The weekly reconciliation pass walks the graph: for each `committed` initiative, walk to all child specs (direct or via epics); for each child spec, read `owner`, `status`, latest `owner_history` row, latest commit timestamp, and open PR state. The bitemporal `owner_history` is what makes this queryable without a dedicated edge. See `roadmap-framing` for the reconciliation policy — the state transitions and warnings this walk produces.
 
 ## Pitfalls
 

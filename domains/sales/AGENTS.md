@@ -8,9 +8,7 @@ strategized, then gets executed with full context.
 The core manifesto (`.hero/mission.md`) applies unchanged. The shape of
 the work changes; the system's job doesn't.
 
----
-
-## Session Start
+### Session Start
 
 At the start of every session:
 
@@ -37,13 +35,14 @@ At the start of every session:
    A rep should never start a session wondering "what should I work on?" —
    Hero answers that.
 
-5. **Load relevant playbooks.** Before strategizing or qualifying, browse
+5. **Load relevant playbooks.** Before strategizing or qualifying, search
    the knowledge base for applicable patterns. Playbooks and battlecards are
-   plain markdown under `.hero/knowledge/` (not work specs, so not in
-   `hero search`) — list the directory and read the relevant file:
+   plain markdown under `.hero/knowledge/` (knowledge, not work specs) —
+   search their content or ask a direct question:
    ```
-   ls .hero/knowledge/playbooks/     # sales motions, titled "Playbook: <segment>"
-   ls .hero/knowledge/battlecards/   # one file per competitor
+   hero search --knowledge "competitive displacement"  # rank playbooks/battlecards by content
+   hero ask "how do we counter RivalCorp on price"      # direct answer with citations
+   ls .hero/knowledge/playbooks/ .hero/knowledge/battlecards/  # or browse by directory
    ```
 
 6. **Anchor check for large strategic moves.** Before proposing a deal
@@ -52,9 +51,7 @@ At the start of every session:
    apply (e.g., "do not discount below X", "executive engagement requires
    approval above $Y ARR").
 
----
-
-## Natural Language Routing
+### Natural Language Routing
 
 When the user describes what they want, route to the appropriate command.
 **Run the command — don't just suggest it.**
@@ -84,9 +81,7 @@ hero search "<company name>"
 Pass the resolved slug to the command. Only ask the user if search returns
 no match.
 
----
-
-## Commands Reference
+### Commands Reference
 
 | Command | What it does |
 |---|---|
@@ -98,9 +93,7 @@ no match.
 | `/debrief` | Win/loss analysis — capture learnings, update knowledge base |
 | `/prospect` | ICP scoring, outreach strategy, discovery angle for new targets |
 
----
-
-## Agents Reference
+### Agents Reference
 
 | Agent | Role |
 |---|---|
@@ -110,9 +103,7 @@ no match.
 | `competitive-intel` | Tracks competitive landscape, battlecards, win probability |
 | `buyer-researcher` | Researches prospects, identifies buying triggers, maps org |
 
----
-
-## Skills Reference
+### Skills Reference
 
 | Skill | What it covers |
 |---|---|
@@ -123,13 +114,43 @@ no match.
 | `forecast-methodology` | Weighted pipeline, coverage ratio, commit vs. upside |
 | `competitive-positioning` | Battlecard patterns, win/loss analysis |
 | `discovery-questioning` | SPIN questioning — Situation, Problem, Implication, Need-payoff |
+| `buyer-research` | Company research dimension catalog — tech stack, news, pain signals, triggers, stakeholders, ICP fit |
 
----
+### Key CLI Commands (Sales)
 
-## Deal Spec Structure
+These are run in the terminal, not as slash commands:
 
-All deals are tracked as specs following the schema in
-`spec-types/deal.md`. Key fields:
+```bash
+# Pipeline state
+hero status                          # workspace/spec state
+hero sprint status --week            # weekly pipeline narrative
+
+# Work a deal
+hero search "Acme Corp"              # find the deal spec
+
+# Knowledge (plain markdown under .hero/knowledge/ — search content, ask, or browse)
+hero search --knowledge "displacement"   # rank playbooks/battlecards by content
+hero ask "battlecard for RivalCorp"      # direct answer with citations
+ls .hero/knowledge/playbooks/ .hero/knowledge/battlecards/  # or browse by directory
+
+# Pipeline hygiene
+hero queue                           # ranked ready-to-work specs
+hero list --type deal --stale 14     # find stale deals
+```
+
+Slash commands (run inside the AI tool's session, not the terminal):
+
+- `/forecast` — weighted forecast summary
+- `/qualify acme-corp-enterprise` — score with MEDDPICC
+- `/strategize acme-corp-enterprise` — produce deal plan
+- `/research "Acme Corp"` — buyer and company intel
+- `/debrief acme-corp-enterprise --won` — capture win learnings
+
+### Deal Spec Structure
+
+All deals are tracked as specs following the registered `deal` spec type
+schema (the resolved schema is cached at `.hero/cache/spec-types.json`).
+Key fields:
 
 ```yaml
 ---
@@ -149,40 +170,7 @@ probability: 25
 
 Deal specs live at `.hero/planning/deals/<slug>/spec.md`.
 
----
-
-## Key CLI Commands (Sales)
-
-These are run in the terminal, not as slash commands:
-
-```bash
-# Pipeline state
-hero status                          # workspace/spec state
-hero sprint status --week            # weekly pipeline narrative
-
-# Work a deal
-hero search "Acme Corp"              # find the deal spec
-
-# Knowledge management (plain markdown under .hero/knowledge/ — browse, then read the file)
-ls .hero/knowledge/playbooks/        # applicable playbooks
-ls .hero/knowledge/battlecards/      # competitive positioning, one file per competitor
-
-# Pipeline hygiene
-hero queue                           # ranked ready-to-work specs
-hero list --type deal --stale 14     # find stale deals
-```
-
-Slash commands (run inside the AI tool's session, not the terminal):
-
-- `/forecast` — weighted forecast summary
-- `/qualify acme-corp-enterprise` — score with MEDDPICC
-- `/strategize acme-corp-enterprise` — produce deal plan
-- `/research "Acme Corp"` — buyer and company intel
-- `/debrief acme-corp-enterprise --won` — capture win learnings
-
----
-
-## Auto-Capture and Knowledge Flywheel
+### Auto-Capture and Knowledge Flywheel
 
 After every significant deal interaction, Hero captures what was learned:
 
@@ -203,9 +191,16 @@ ls .hero/knowledge/battlecards/        # competitive intel
 hero list --type deal                  # deal inventory
 ```
 
----
+### Domain Configuration
 
-## Surviving Context Compaction
+No sales-specific `hero.json` keys are read by the engine today. Sales behavior
+is driven from the specs themselves, not from central config.
+
+The qualification framework is per-deal frontmatter (`qualification_framework`,
+default `meddpicc`). Forecast methodology and stage weights live in the
+`forecast-methodology` skill and the `deal` spec type's stage defaults.
+
+### Surviving Context Compaction
 
 Sales sessions can run long — multiple deal reviews in a single context
 window. If the context compacts mid-session:
@@ -221,14 +216,3 @@ window. If the context compacts mid-session:
    to the path returned by `hero next path` so the next session (possibly a
    different rep) can pick up cold. Note that `hero next` only *shows* the
    briefing — it does not write it.
-
----
-
-## Domain Configuration
-
-No sales-specific `hero.json` keys are read by the engine today. Sales behavior
-is driven from the specs themselves, not from central config.
-
-The qualification framework is per-deal frontmatter (`qualification_framework`,
-default `meddpicc`). Forecast methodology and stage weights live in the
-`forecast-methodology` skill and the `deal` spec type's stage defaults.

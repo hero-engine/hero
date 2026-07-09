@@ -31,3 +31,5 @@ then a markdown body with role, when-invoked, workflow guidance, and
 delegation rules.
 
 P1 / P2 agents are listed in §C of the pack design and ship in v1.5+.
+
+**Note (v1, pack filename).** `story-writer.md` is the canonical pack filename for v1; a follow-up may rename it to `spec-writer.md`. Its display name is vocabulary-aware (see table above); the canonical frontmatter it authors always says `type: feature` (or `type: bug` / `type: chore` / …) regardless of display name.

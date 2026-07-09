@@ -1,7 +1,6 @@
 ---
 name: stack-detection
 description: Detect the language, framework, and tooling stack of a project or set of files to load the right engineering skills.
-compatibility: opencode
 metadata:
   audience: engineers
   purpose: skill-routing

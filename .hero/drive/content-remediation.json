@@ -1,0 +1,8 @@
+{
+  "initiative": "content-remediation",
+  "pause": {
+    "spec": "chat-pack-disposition",
+    "category": "Supervised",
+    "reason": "supervised mode pauses at every spec boundary (before chat-pack-disposition)"
+  }
+}

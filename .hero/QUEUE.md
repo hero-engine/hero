@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-09T18:28:58Z · 87 ready specs_
+_Generated: 2026-07-09T18:31:38Z · 83 ready specs_
 
 ## flat-named-spec-discovery — "Flat-named spec files are invisible to discovery — verify can't resolve initiative children"
 _bug · delivering · horizon: now_
@@ -46,67 +46,50 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 ## knowledge-surfacing — "Knowledge Surfacing — Everything Captured Is Retrievable and Fed at the Right Time"
 _initiative · planning · horizon: now_
 
-_(no `## Goal` run opener — hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/knowledge-surfacing/spec.md)_
+_Run opener — arm with `/drive knowledge-surfacing`_
+
+Run until `hero verify knowledge-surfacing` reports PASS — every child
+(`knowledge-content-retrieval`, then `knowledge-context-injection`) designed,
+delivered, and verified — or a `needs_me` pause is raised. Order is forced: P2
+`depends-on` P1, so P1 ships first. Pause on any design fork (the ingest-seam
+choice, the `category`-column schema migration), any irreversible action, or a
+stuck gate.
 
 ---
 
-## knowledge-context-injection — "Knowledge Context Injection — push captured knowledge into model context at edit time"
-_feature · planning · horizon: now_
-
-Every ambient-injection surface reads `specs` / `convention_scopes`, which flat
-knowledge never enters — so a flat `conventions/contracts-import-discipline.md`
-that governs `internal/**` never injects when the model edits there. P1 lands
-flat knowledge in the corpus; this phase feeds code-scoped knowledge's `scope:`
-globs into `convention_scopes` so the *existing* matchers light up with no
-per-surface rewrite: `BuildContext` (`hero_context`), `BuildNudge`
-(`hero relevant`), `drift`, `impact` all ride `FindConventionsForFiles`.
-Free-form knowledge (battlecards/playbooks) has no scope and stays pull-only, so
-injection stays signal, not noise. Start:
-`internal/index/index.go` (`IndexSpec` scope population, `FindConventionsForFiles`,
-`BuildContext`, `BuildNudge`), `internal/drift/drift.go`,
-`internal/impact/impact.go`, `internal/cli/anchor.go`.
-
----
-
-## knowledge-content-retrieval — "Knowledge Content Retrieval — layout-agnostic ingest + pull (ask/search)"
-_feature · planning · horizon: now_
-
-Whether a captured knowledge entry surfaces is decided by accidental layout, not
-intent: `<slug>/spec.md` entries are indexed and found; flat `<name>.md` entries
-are not. Verified in this repo: all 23 `decisions/*.md` and 4 `conventions/*.md`
-are flat → `hero ask`/`search` return nothing; the tripwire (a spec.md dir) is
-fine. Fix: a **layout-agnostic** ingest that walks `.hero/knowledge/**` (except
-`raw/`) and indexes every `*.md` — flat, slug/spec, or three-file; typed or
-untyped; known or domain-invented subdir — into the existing corpus under
-`category=knowledge`, `kind` from the subdir, deduped against what Discover
-already indexes for spec.md-shaped knowledge. Expose via `hero ask` + `hero
-search --knowledge`. Do NOT loosen `nonWorkFlatTypes`; the `category` marker
-keeps knowledge out of work discovery. Start: `internal/index/refresh.go`,
-`internal/spec/spec.go:1085` (Discover), `internal/cli/ask.go`,
-`internal/cli/search.go`, `internal/knowledge/graph_ingest.go` (sibling ingest).
-
----
-
-## token-efficiency-pass — "Token Efficiency Pass — apply the content audit's named verbosity cuts"
+## flat-tripwire-trigger-parity — "Flat tripwires never trigger-highlight — wire knowledge triggers into FindTripwiresByTrigger"
 _enhancement · planning · horizon: now_
 
-Applies the content audit's named verbosity cuts: ~20 command/agent/skill
-files trimmed to target word counts, with every displaced rule moved to a
-single owning skill and replaced by a pointer.
+`FindTripwiresByTrigger` (`internal/index/index.go:1175`) matches context tokens
+against the `tripwire_triggers` table, which `IndexSpec` populates from spec
+`Triggers` and which flat knowledge never enters — so a flat tripwire's triggers
+are invisible to it. It has **four** consumers, all equally blind:
+`internal/cli/anchor.go:51`, `internal/cli/tripwire.go:82`, and
+`internal/serve/mcp_tools.go:889` and `:941`.
 
-**Status:** planning — spec authored from audit findings; no cuts made yet.
+The correct fix is a single DB seam, not four in-memory patches (an anchor-only
+patch would leave `hero tripwire` and both MCP surfaces inconsistent — the exact
+per-surface drift this initiative exists to eliminate). Mirror the existing
+`knowledge_scopes` pattern:
 
-**Pick up at:** confirm `delivery-gate-consistency` has landed (ledger home
-may have moved from engineer.md to a skill), then execute Changes in order,
-starting with the two new skill homes (items 1–2) so pointers have targets.
+- **Migration** (`internal/index/index.go` `migrate`): add
+  `knowledge_triggers (id, knowledge_slug, trigger)` + a slug index, parallel to
+  `knowledge_scopes`.
+- **Capture** the triggers: `KnowledgeEntry` has no `Triggers` field today.
+  Add one and populate it in `parseKnowledgeFile`
+  (`internal/index/knowledge_discover.go`) from `spec.ParseFile`'s `s.Triggers`
+  (already parsed, just not carried).
+- **Ingest** (`IndexKnowledge`): delete-then-insert `knowledge_triggers` for the
+  slug, exactly like the `knowledge_scopes` block already does; clean up in
+  `RemoveKnowledge`.
+- **Query** (`FindTripwiresByTrigger`): union matched flat-tripwire slugs from
+  `knowledge_triggers` and build their `TripwireResult`s from the `knowledge`
+  table + `spec.ParseFile(path)`, reusing the same section-parsing tail that
+  `FindAllTripwires` now uses for flat tripwires. Match semantics must stay
+  identical (case-insensitive token equality OR substring containment).
 
-→ `.hero/planning/initiatives/content-remediation/token-efficiency-pass/spec.md`
-
-**Files:** domains/engineering/commands/deliver.md,
-domains/engineering/agents/feature-delivery-lead.md,
-.hero/specs/hero-content-audit/findings-commands.md
-**Skip:** platform-delivery-lead merge and ledger extraction — sibling
-delivery-gate-consistency owns both.
+Because all four consumers call `FindTripwiresByTrigger`, they light up
+together.
 
 ---
 
@@ -121,38 +104,6 @@ the delivery doctrine is stated once and gate-consistent everywhere;
 content works on all six install targets; the named verbosity cuts are
 applied without losing a rule; and the chat pack's status is deliberate
 instead of accidental. `hero spec verify` passes for all eight children.
-
----
-
-## routing-file-completeness — "Routing File Completeness — full rosters, one skeleton, installable links for the domain AGENTS.md files"
-_enhancement · planning · horizon: now_
-
-Makes the three domain AGENTS.md files complete and uniform: engineering routes all 30 installed commands and names all agents/skills (dual-edited with the Go fallback); pm/sales adopt one `###`-depth skeleton; sales' ~20 dead relative links become `<harness>/` placeholders.
-
-**Status:** planning — spec authored from hero-content-audit routing findings; no edits yet.
-
-**Pick up at:** confirm both `follows` siblings landed, then write the skeleton convention entry and edit `generateEngineeringAgentsMdBody`, regenerating the pack file.
-
-→ `HERO_REGEN_PACK_AGENTS=1 go test -run TestEngineeringPackBodyMatchesGoFallback ./internal/install/`
-
-**Files:** internal/install/agents_md.go:379, domains/engineering/AGENTS.md, domains/pm/AGENTS.md, domains/sales/AGENTS.md
-**Skip:** hand-editing engineering's AGENTS.md alone — the parity test fails unless the Go fallback moves with it.
-
----
-
-## harness-agnosticism-sweep — "Harness Agnosticism Sweep — De-Claude and De-Dogfood the Shipped Content"
-_enhancement · planning · horizon: now_
-
-Sweeps Claude-Code-only assumptions and hero-repo dogfood leakage out of the shipped content packs so all six install targets get instructions that actually work for them, plus a scripted strip of three inert frontmatter fields (~96 files).
-
-**Status:** planning — spec authored from audit findings; all paths verified against post-dedup tree (`177e8a1`).
-
-**Pick up at:** Change 1 — rewrite the Internal Lookups section harness-neutrally in `domains/engineering/AGENTS.md` AND `internal/install/agents_md.go` together (test-enforced identical), then the parity table (Change 2).
-
-→ `.hero/planning/initiatives/content-remediation/harness-agnosticism-sweep/spec.md`
-
-**Files:** `domains/engineering/AGENTS.md:110-127`, `internal/install/agents_md.go:471-483`, `core/skills/next-md/SKILL.md`, `domains/engineering/skills/drive/SKILL.md:28-34`
-**Skip:** adding engine semantics for `compatibility:`/`role:` — audit verdict is strip, not wire.
 
 ---
 

@@ -9,7 +9,7 @@ See the [agent-pack design](../../../.hero/planning/features/hero-pm/agent-pack-
 §D for the full 32-skill library and prior-art attribution. The v1
 P0 skill set (~18 skills) shipped here:
 
-### Writing (5)
+### Writing (6)
 - `story-writing-invest/` — INVEST shape for stories
 - `acceptance-criteria-ears/` — EARS patterns for AC
 - `prd-structure/` — pitch-shaped + ten-section PRD templates

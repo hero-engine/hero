@@ -1,7 +1,6 @@
 ---
 name: prd-structure
 description: Canonical PRD templates and section-by-section quality bar — pitch-shaped (default under cycle preset) and ten-section (default under sprint, continuous, and phased presets).
-compatibility: opencode
 metadata:
   audience: prd-author, pm-reviewer
   purpose: prd-authoring
@@ -106,7 +105,7 @@ The customer-grounded thing that's broken or missing. **What "passes":** a singl
 
 ### Appetite (pitch only)
 
-The *budget*, not the estimate. Two values: small (1-2 weeks) or big (6 weeks). The team commits to ship something within the appetite or kill the bet. **What "passes":** a one-liner naming the appetite and the rationale ("Small — we don't yet know if customers will use this; better to ship a thin slice and learn"). **What "fails:"** missing Appetite (blocks `draft → review`); estimate-shaped Appetite ("4 weeks"); Appetite that contradicts the Solution's complexity.
+The *budget*, not the estimate; missing Appetite blocks `draft → review`. See `pitch-writing-shape-up` for the full quality bar and passing/failing examples.
 
 ### Goals & Success Metrics (ten-section only)
 
@@ -130,11 +129,11 @@ The PRD-scope AC — outcome-level, aggregates across child stories. **What "pas
 
 ### Rabbit Holes (pitch only)
 
-Specific traps the team must avoid. Each Rabbit Hole names a scenario the team would otherwise sink time into. **What "passes":** "Don't build configurable rate-limiting per-user — pick one rate and ship." **What "fails":** generic risks ("might be hard to scale"); reassurance ("we'll keep an eye on performance"); no Rabbit Holes at all (almost every appetite has at least one).
+Specific traps the team must avoid, each with a named scenario and an avoidance decision — not a generic risk list. See `pitch-writing-shape-up` for passing/failing examples.
 
 ### No-Gos (pitch only)
 
-Work explicitly excluded from this appetite. The scope-defense section. **What "passes":** "No mobile app changes this cycle." "No new admin UI." "Not handling the multi-tenant case — single-tenant only." **What "fails":** empty No-Gos (the most common failure mode — leaves the team to assume scope and inevitably creep); No-Gos that are restated Rabbit Holes; No-Gos that contradict the Solution.
+Work explicitly excluded from this appetite. The scope-defense section; empty No-Gos is the most common failure mode. See `pitch-writing-shape-up` for passing/failing examples.
 
 ### Out of Scope (ten-section only)
 
@@ -158,15 +157,7 @@ Child stories that decompose the PRD. Populated during `/refine` — empty at dr
 
 ## The five-adjective test
 
-From ChatPRD / MetaGPT prior art. Every PRD must pass:
-
-1. **Clarity** — a reader unfamiliar with the work understands the problem and the proposal in one pass.
-2. **Structure** — sections in the right order, none silently omitted, each section earning its place.
-3. **Flexibility** — leaves room for engineering judgment on the *how* (the Negotiable bit from INVEST applies at PRD scope too).
-4. **Actionability** — engineering or design can pick this up and start decomposing into stories without back-and-forth on intent.
-5. **Stakeholder focus** — exec / customer / engineering / sales each find what they need. (Stakeholder-communication audience-cut details are P1, ships v1.5.)
-
-`pm-reviewer` runs the five-adjective test on every PRD before `review → approved`. Failure on any one is a blocking finding.
+See `pitch-writing-shape-up` for the definition (Clarity, Structure, Flexibility, Actionability, Stakeholder focus). `pm-reviewer` runs it on every PRD — pitch or ten-section — before `review → approved`; failure on any one is a blocking finding.
 
 ## PRD vs story scope — what belongs where
 
@@ -190,4 +181,3 @@ PRDs that bundle story content inline (a common ChatPRD-template failure mode) l
 - `story-writing-invest` — what the child stories look like.
 - `metrics-design` — the Goals & Success Metrics deeper bar.
 - `pm-preset-detection` — selects the default template.
-- PM domain mission — the five PM principles, especially principle #3 (tradeoffs visible) which drives No-Gos / Out of Scope.
