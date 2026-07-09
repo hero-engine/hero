@@ -2,7 +2,7 @@
 title: "Routing File Completeness — full rosters, one skeleton, installable links for the domain AGENTS.md files"
 slug: routing-file-completeness
 type: enhancement
-status: planning
+status: completed
 priority: P2
 size: small
 domain: engineering
@@ -17,6 +17,7 @@ relations:
     kind: follows
   - target: sales-pack-reality-sync
     kind: follows
+completed_at: 2026-07-09T00:05:26Z
 ---
 
 # Routing File Completeness — full rosters, one skeleton, installable links for the domain AGENTS.md files
@@ -129,3 +130,45 @@ Sequencing: this spec `follows` both content-truth siblings. Restructuring first
 - Manual install check: `hero install --target claude` into a scratch project; open the generated `CLAUDE.md`/`AGENTS.md` and confirm every pack section for each domain nests under the managed-region H2 (no section escapes it).
 - `hero check` — clean.
 - Diff review of pm/sales: changes read as moves, heading demotions, roster additions, and path rewrites only.
+
+## Completion Ledger
+
+**Pre-flight note:** both `follows` siblings (`pm-pack-phantom-surfaces`, `sales-pack-reality-sync`) had already landed on this branch's base — verified: pm's Project Structure already uses `<harness>/` + `.hero/` placeholders and a plain `.hero/knowledge/decisions/...` link, the two `/refine` rows were already merged into one, and sales' Commands/Agents/Skills reference tables already use backticked names (no repo-relative links). This delivery built the skeleton/roster/structure pass on top of that corrected content, per the spec's sequencing.
+
+Counts re-verified against the current tree (they had shifted from the spec's authored numbers, as flagged): engineering ships 14 pack + 15 core = **29** commands (not 30), 31 pack + 4 core = **35** agents (matches), 38 pack + 16 core = **54** skills (not 53). All Go-side logic (the roster and the new test) walks the directories directly, so it is self-correcting regardless of any documented count.
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | NL Routing row in engineering AGENTS.md for every installed command (29 actual) | DONE | `internal/install/agents_md.go` NL Routing table now carries all 29 commands as literal `/name` rows; verified line-by-line against `domains/engineering/commands`, `core/commands` |
+| 2 | Name all installed agents (35) and skills (54) in engineering AGENTS.md rosters | DONE | New `### Agents Reference` / `### Skills Reference` sections, grouped one-liners, all names verbatim |
+| 3 | `TestEngineeringPackBodyMatchesGoFallback` passes with updated body | DONE | `go test -run TestEngineeringPackBodyMatchesGoFallback ./internal/install/` green after `HERO_REGEN_PACK_AGENTS=1` regen |
+| 4 | Missing roster entry fails `TestEngineeringAgentsMdRosterComplete`, naming it | DONE | `internal/install/agents_md_test.go` — new test added; verified by temporarily stripping `session-primer` from the pack file, confirming failure names it, then restoring via regen |
+| 5 | `###` depth for every body section in all three files, no `##` below H1 | DONE | `grep -nE '^## ' domains/{engineering,pm,sales}/AGENTS.md` → no matches |
+| 6 | Sections in skeleton's canonical order in all three files | DONE | Engineering: Agents/Skills Reference inserted before CLI Commands. PM: Commands/Agents/Skills Reference inserted before CLI Commands; `Capture execution plans` moved before the closing handoff/compaction pair. Sales: `Key CLI Commands` moved to directly follow Skills Reference; `Domain Configuration` moved before `Surviving Context Compaction` so compaction-survival is last |
+| 7 | No repo-relative links or hero-engine source paths in pm/sales AGENTS.md | DONE | `grep -nE '\]\((commands\|agents\|skills\|spec-types\|\.\./)' domains/pm/AGENTS.md domains/sales/AGENTS.md` → no matches. Sales' one remaining bare `spec-types/deal.md` path mention rewritten to reference the registered `deal` spec type + `.hero/cache/spec-types.json` (a real `.hero/`-form workspace pointer, since spec-types are never installed into a user's project) |
+| 8 | Skeleton documented in `.hero/knowledge/conventions/domain-agents-md-skeleton.md` | DONE | New convention file: heading rule, canonical order, path rule, renderer rationale, dual-edit note, enforcement pointers |
+| 9 | `domains/engineering/AGENTS.md` ≤ 2,600 words | DONE | `wc -w` → 2,580 |
+| 10 | `domains/pm/skills/README.md` says `### Writing (6)` | DONE | Line 12 updated |
+| 11 | pm/sales restructuring preserves sibling-owned claim text verbatim apart from relocation/heading/path form | DONE | Diffs are moves + heading demotions + new roster sections + the one spec-types path rewrite (see AC 7 note); no other prose changed |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | New skeleton convention file | DONE | `.hero/knowledge/conventions/domain-agents-md-skeleton.md` |
+| 2 | Pointer comment in `agents_md.go` near existing authoring guidance | DONE | Added at `loadPackAgentsMdBody`'s doc comment and at the on-disk-layout warning doc comment (near `generateAgentsMdBody`) |
+| 3 | Extend `generateEngineeringAgentsMdBody`, regenerate pack file | DONE | 11 new NL Routing rows (`/blocked /capture /challenge /resume /roadmap-review /scrub /split /why /hero /peer /handoff`), `/hero` added to the slash/CLI parity table, new Agents/Skills Reference sections; regenerated via `HERO_REGEN_PACK_AGENTS=1 go test -run TestEngineeringPackBodyMatchesGoFallback ./internal/install/` |
+| 4 | New `TestEngineeringAgentsMdRosterComplete` | DONE | Walks `domains/engineering/{commands,agents,skills}` + `core/{commands,agents,skills}` (skip README.md), asserts coverage; verified it fails-and-names on a deliberately removed entry |
+| 5 | pm structural pass + roster | DONE | `##`→`###`; Commands/Agents/Skills Reference sections added (naming `pm-delivery-lead`, `prioritization-strategist`, `duplicate-detector`, and all 19 pm + 16 core skills); `Capture execution plans` relocated before the closing pair. The two `/refine` rows and the Project Structure/hero.json/knowledge-link fixes were already done by `pm-pack-phantom-surfaces` — verified, not redone |
+| 6 | sales structural pass + link fix | DONE | `##`→`###`; `---` divider lines removed (the two `---` inside the Deal Spec Structure YAML example were preserved); `Key CLI Commands (Sales)` moved up; `Domain Configuration`/`Surviving Context Compaction` swapped; `spec-types/deal.md` path reference rewritten. The ~20 relative links in the reference tables were already fixed by `sales-pack-reality-sync` — verified, not redone |
+| 7 | `domains/pm/skills/README.md` line 12 fix | DONE | `Writing (5)` → `Writing (6)` |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end: built `/tmp/hero-rfc` from this worktree, ran `hero init --domain engineering|pm|sales` + `hero install project . --target claude` into three scratch repos, and inspected the generated `CLAUDE.md` in each — every pack section (including the new Agents/Skills Reference sections) nests as `###` under the installed `##` H2, none escapes the managed region. Also ran `hero check` in this worktree — no failures (pre-existing advisory findings only, unrelated to this spec).
+
+### Excellence Bar self-check
+
+Yes — the roster-completeness test is real (verified fail-and-restore), the dual-edit stays enforced by construction (Go-side edit + regen, not a hand-edit), the skeleton convention documents the renderer rationale rather than asserting a bare rule, and the pm/sales diffs are honest moves/demotions/additions with one narrowly-scoped path rewrite called out rather than silently folded in.

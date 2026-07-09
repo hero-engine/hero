@@ -8,9 +8,7 @@ strategized, then gets executed with full context.
 The core manifesto (`.hero/mission.md`) applies unchanged. The shape of
 the work changes; the system's job doesn't.
 
----
-
-## Session Start
+### Session Start
 
 At the start of every session:
 
@@ -52,9 +50,7 @@ At the start of every session:
    apply (e.g., "do not discount below X", "executive engagement requires
    approval above $Y ARR").
 
----
-
-## Natural Language Routing
+### Natural Language Routing
 
 When the user describes what they want, route to the appropriate command.
 **Run the command — don't just suggest it.**
@@ -84,9 +80,7 @@ hero search "<company name>"
 Pass the resolved slug to the command. Only ask the user if search returns
 no match.
 
----
-
-## Commands Reference
+### Commands Reference
 
 | Command | What it does |
 |---|---|
@@ -98,9 +92,7 @@ no match.
 | `/debrief` | Win/loss analysis — capture learnings, update knowledge base |
 | `/prospect` | ICP scoring, outreach strategy, discovery angle for new targets |
 
----
-
-## Agents Reference
+### Agents Reference
 
 | Agent | Role |
 |---|---|
@@ -110,9 +102,7 @@ no match.
 | `competitive-intel` | Tracks competitive landscape, battlecards, win probability |
 | `buyer-researcher` | Researches prospects, identifies buying triggers, maps org |
 
----
-
-## Skills Reference
+### Skills Reference
 
 | Skill | What it covers |
 |---|---|
@@ -124,34 +114,7 @@ no match.
 | `competitive-positioning` | Battlecard patterns, win/loss analysis |
 | `discovery-questioning` | SPIN questioning — Situation, Problem, Implication, Need-payoff |
 
----
-
-## Deal Spec Structure
-
-All deals are tracked as specs following the schema in
-`spec-types/deal.md`. Key fields:
-
-```yaml
----
-title: Acme Corp — Enterprise Platform Deal
-slug: acme-corp-enterprise
-type: deal
-status: qualifying          # prospect → qualifying → demo → proposal → negotiation → won → lost
-company: Acme Corp
-owner: jane.smith@company.com
-arr: 120000
-close_date: 2026-09-30
-stage: Qualifying
-meddpicc_score: 42
-probability: 25
----
-```
-
-Deal specs live at `.hero/planning/deals/<slug>/spec.md`.
-
----
-
-## Key CLI Commands (Sales)
+### Key CLI Commands (Sales)
 
 These are run in the terminal, not as slash commands:
 
@@ -180,9 +143,31 @@ Slash commands (run inside the AI tool's session, not the terminal):
 - `/research "Acme Corp"` — buyer and company intel
 - `/debrief acme-corp-enterprise --won` — capture win learnings
 
----
+### Deal Spec Structure
 
-## Auto-Capture and Knowledge Flywheel
+All deals are tracked as specs following the registered `deal` spec type
+schema (the resolved schema is cached at `.hero/cache/spec-types.json`).
+Key fields:
+
+```yaml
+---
+title: Acme Corp — Enterprise Platform Deal
+slug: acme-corp-enterprise
+type: deal
+status: qualifying          # prospect → qualifying → demo → proposal → negotiation → won → lost
+company: Acme Corp
+owner: jane.smith@company.com
+arr: 120000
+close_date: 2026-09-30
+stage: Qualifying
+meddpicc_score: 42
+probability: 25
+---
+```
+
+Deal specs live at `.hero/planning/deals/<slug>/spec.md`.
+
+### Auto-Capture and Knowledge Flywheel
 
 After every significant deal interaction, Hero captures what was learned:
 
@@ -203,9 +188,16 @@ ls .hero/knowledge/battlecards/        # competitive intel
 hero list --type deal                  # deal inventory
 ```
 
----
+### Domain Configuration
 
-## Surviving Context Compaction
+No sales-specific `hero.json` keys are read by the engine today. Sales behavior
+is driven from the specs themselves, not from central config.
+
+The qualification framework is per-deal frontmatter (`qualification_framework`,
+default `meddpicc`). Forecast methodology and stage weights live in the
+`forecast-methodology` skill and the `deal` spec type's stage defaults.
+
+### Surviving Context Compaction
 
 Sales sessions can run long — multiple deal reviews in a single context
 window. If the context compacts mid-session:
@@ -221,14 +213,3 @@ window. If the context compacts mid-session:
    to the path returned by `hero next path` so the next session (possibly a
    different rep) can pick up cold. Note that `hero next` only *shows* the
    briefing — it does not write it.
-
----
-
-## Domain Configuration
-
-No sales-specific `hero.json` keys are read by the engine today. Sales behavior
-is driven from the specs themselves, not from central config.
-
-The qualification framework is per-deal frontmatter (`qualification_framework`,
-default `meddpicc`). Forecast methodology and stage weights live in the
-`forecast-methodology` skill and the `deal` spec type's stage defaults.
