@@ -41,7 +41,7 @@ func TestActionForStage(t *testing.T) {
 func TestCheckRoutesDesignForUndesignedChild(t *testing.T) {
 	init := mkInit("drive", "guided")
 	all := []*spec.Spec{init, mkStub("stub-child", "drive")}
-	res := Check(init, all, nil)
+	res := Check(init, all, nil, nil)
 	if res.Verdict != "continue" {
 		t.Fatalf("verdict=%q, want continue", res.Verdict)
 	}
@@ -56,7 +56,7 @@ func TestCheckRoutesDesignForUndesignedChild(t *testing.T) {
 func TestCheckRoutesDeliverForDesignedChild(t *testing.T) {
 	init := mkInit("drive", "guided")
 	all := []*spec.Spec{init, mkChild("ready-child", "drive", spec.StatusPlanning)}
-	res := Check(init, all, nil)
+	res := Check(init, all, nil, nil)
 	if res.Verdict != "continue" || res.Action != ActionDeliver {
 		t.Fatalf("want continue+deliver, got verdict=%q action=%q", res.Verdict, res.Action)
 	}
@@ -80,7 +80,7 @@ func TestCheckNoShortCircuitOnDeclaredButUnscaffoldedChild(t *testing.T) {
 	done := mkChild("done-child", "drive", spec.StatusCompleted)
 	all := []*spec.Spec{init, done}
 
-	res := Check(init, all, nil)
+	res := Check(init, all, nil, nil)
 	if res.Verdict == "done" {
 		t.Fatalf("must NOT short-circuit to done while ghost-child is unscaffolded, got %+v", res)
 	}

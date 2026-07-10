@@ -63,6 +63,14 @@ const (
 	// conflicts-with a spec that is currently delivering. A real obstacle,
 	// non-promotable — even Autonomous mode pauses.
 	CategorySeamCollision PauseCategory = "SeamCollision"
+	// CategorySeamDetected is a heuristic whole-file overlap between the
+	// candidate and a currently-delivering spec that nobody authored as a
+	// conflicts-with relation. Unlike CategorySeamCollision (a deliberate,
+	// authored statement of intent — hard, non-promotable), this is a
+	// file-granular *suspicion*, so it is soft and **promotable**: it surfaces
+	// every time by default but Autonomous can auto-proceed once the learning
+	// layer has accepted the noise.
+	CategorySeamDetected PauseCategory = "SeamDetected"
 )
 
 // Promotable reports whether a category may ever be auto-proceeded by the
@@ -71,7 +79,7 @@ const (
 // SeamCollision) are never promotable; only the human-judgment categories are.
 func (c PauseCategory) Promotable() bool {
 	switch c {
-	case CategoryDesignFork, CategoryUnderspecified, CategoryAmbiguousPick:
+	case CategoryDesignFork, CategoryUnderspecified, CategoryAmbiguousPick, CategorySeamDetected:
 		return true
 	default:
 		return false
@@ -113,6 +121,18 @@ type RunContext struct {
 	// SeamConflictSlug names the in-flight conflicting spec, for the reason.
 	SeamConflictSlug string
 
+	// SeamDetected marks that the selected candidate whole-file-overlaps a
+	// currently-delivering spec that was NOT declared as a conflicts-with
+	// relation — a heuristic seam nobody wrote down. Softer and promotable,
+	// unlike the authored SeamBlocked. Set by Check only when a detector
+	// callback is injected; nil detector leaves it false (piece-1 behavior).
+	SeamDetected bool
+	// SeamDetectedSlug names the in-flight (delivering) spec whose files
+	// overlap the candidate; SeamDetectedFiles are the overlapping paths
+	// (index order). Both feed the pause reason.
+	SeamDetectedSlug  string
+	SeamDetectedFiles []string
+
 	// Irreversible: the pending action touches an irreversible /
 	// outward-facing surface. Always pauses, every mode.
 	Irreversible bool
@@ -142,6 +162,25 @@ func pause(cat PauseCategory, reason string) Decision {
 // surfaces stay byte-identical.
 func seamReason(name, conflict string) string {
 	return fmt.Sprintf("%s conflicts with %s, which is currently delivering — pausing so they don't run concurrently", name, conflict)
+}
+
+// seamDetectedReason renders the SeamDetected pause reason: a heuristic
+// whole-file overlap between the candidate and an in-flight (delivering) spec
+// that nobody authored as a conflicts-with. Names the candidate, the in-flight
+// spec, and the overlapping file(s) — with a count when more than one — so a
+// human immediately sees it's a same-file, maybe-not-real seam. Deterministic:
+// the caller supplies files in index order.
+func seamDetectedReason(candidate, conflictSlug string, files []string) string {
+	var where string
+	switch len(files) {
+	case 0:
+		where = ""
+	case 1:
+		where = " on " + files[0]
+	default:
+		where = fmt.Sprintf(" on %d files (%s)", len(files), strings.Join(files, ", "))
+	}
+	return fmt.Sprintf("%s overlaps%s with %s, which is currently delivering, but nobody declared a conflicts-with — pausing to surface the undeclared seam", candidate, where, conflictSlug)
 }
 
 func proceed() Decision { return Decision{Proceed: true} }
@@ -185,6 +224,14 @@ func NeedsMe(at *spec.Spec, ctx RunContext, mode AutonomyMode) Decision {
 	// Autonomous included.
 	if ctx.SeamBlocked {
 		return pause(CategorySeamCollision, seamReason(name, ctx.SeamConflictSlug))
+	}
+	// SeamDetected is evaluated AFTER SeamBlocked so an authored collision
+	// always wins. It is a heuristic (whole-file) suspicion, so — unlike the
+	// authored SeamCollision — it routes through maybePromoted: it pauses in
+	// Guided but Autonomous can proceed once the category has been promoted.
+	if ctx.SeamDetected {
+		return maybePromoted(CategorySeamDetected,
+			seamDetectedReason(name, ctx.SeamDetectedSlug, ctx.SeamDetectedFiles), ctx, mode)
 	}
 	if ctx.Blocked {
 		return maybePromoted(CategoryBlocked, fmt.Sprintf("%s is blocked on an unmet dependency", name), ctx, mode)

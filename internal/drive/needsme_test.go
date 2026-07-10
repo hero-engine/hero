@@ -149,7 +149,7 @@ func TestNeedsMeAutonomousPromotionProceeds(t *testing.T) {
 }
 
 func TestPromotableScope(t *testing.T) {
-	promotable := []PauseCategory{CategoryDesignFork, CategoryUnderspecified, CategoryAmbiguousPick}
+	promotable := []PauseCategory{CategoryDesignFork, CategoryUnderspecified, CategoryAmbiguousPick, CategorySeamDetected}
 	for _, c := range promotable {
 		if !c.Promotable() {
 			t.Errorf("%q should be promotable", c)
@@ -160,6 +160,51 @@ func TestPromotableScope(t *testing.T) {
 		if c.Promotable() {
 			t.Errorf("%q must never be promotable", c)
 		}
+	}
+}
+
+// TestNeedsMeSeamDetectedPromotable: a detected (heuristic, unauthored) seam
+// pauses in Guided naming the overlap + in-flight spec, is promotable in
+// Autonomous, and always yields to an authored SeamCollision when both fire.
+func TestNeedsMeSeamDetectedPromotable(t *testing.T) {
+	at := &spec.Spec{Slug: "candidate"}
+	mk := func() RunContext {
+		c := base()
+		c.SeamDetected = true
+		c.SeamDetectedSlug = "in-flight-peer"
+		c.SeamDetectedFiles = []string{"src/shared.go"}
+		return c
+	}
+
+	// Guided pauses and names the overlapping file + in-flight spec.
+	got := NeedsMe(at, mk(), Guided)
+	if got.Proceed || got.Category != CategorySeamDetected {
+		t.Fatalf("guided must pause SeamDetected, got %+v", got)
+	}
+	if !strings.Contains(got.Reason, "in-flight-peer") || !strings.Contains(got.Reason, "src/shared.go") {
+		t.Errorf("reason=%q, want it to name the in-flight spec and file", got.Reason)
+	}
+
+	// Autonomous + promoted proceeds (the deliberate contrast with the
+	// non-promotable authored SeamCollision).
+	promo := mk()
+	promo.Promoted = func(cat PauseCategory) bool { return cat == CategorySeamDetected }
+	if got := NeedsMe(at, promo, Autonomous); !got.Proceed {
+		t.Errorf("autonomous+promoted should proceed past SeamDetected, got %+v", got)
+	}
+	// Autonomous WITHOUT the promotion still pauses.
+	if got := NeedsMe(at, mk(), Autonomous); got.Proceed {
+		t.Errorf("autonomous without promotion must pause SeamDetected, got %+v", got)
+	}
+
+	// Authored SeamCollision wins when both signals are set, even with a
+	// blanket promotion.
+	both := mk()
+	both.SeamBlocked = true
+	both.SeamConflictSlug = "authored-peer"
+	both.Promoted = func(PauseCategory) bool { return true }
+	if got := NeedsMe(at, both, Autonomous); got.Proceed || got.Category != CategorySeamCollision {
+		t.Errorf("authored SeamCollision must win over detected, got %+v", got)
 	}
 }
 

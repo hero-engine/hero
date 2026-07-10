@@ -20,6 +20,7 @@ import (
 	"github.com/hero-engine/hero/internal/demos"
 	"github.com/hero-engine/hero/internal/drift"
 	"github.com/hero-engine/hero/internal/drive"
+	"github.com/hero-engine/hero/internal/driveio"
 	"github.com/hero-engine/hero/internal/environment"
 	"github.com/hero-engine/hero/internal/errpattern"
 	"github.com/hero-engine/hero/internal/feed"
@@ -1271,7 +1272,16 @@ func (s *MCPServer) toolGoal(args map[string]interface{}) (string, error) {
 
 	switch {
 	case check:
-		return goalJSON(drive.Check(init, all, nil))
+		// Self-heal then open the index so the detected-seam backstop reasons
+		// over current file footprints. The promoted arg stays nil (the MCP
+		// promotions gap is out of scope) — only the detector is wired here.
+		s.ensureFreshIndex()
+		idx, ierr := index.Open(s.heroDir)
+		if ierr != nil {
+			return "", fmt.Errorf("opening index: %w", ierr)
+		}
+		defer idx.Close()
+		return goalJSON(drive.Check(init, all, nil, driveio.Detector(idx)))
 	case dryRun > 0:
 		return goalJSON(drive.DryRun(init, all, dryRun, nil))
 	default:

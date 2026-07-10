@@ -269,6 +269,59 @@ func TestFindConflicts(t *testing.T) {
 	}
 }
 
+// TestFindDeliveringConflicts: the delivering-scoped variant includes only
+// specs whose status is delivering — planning and in-review overlaps are
+// excluded (mirrors the /drive judge's IsLocallyDelivering scope).
+func TestFindDeliveringConflicts(t *testing.T) {
+	idx, _ := setupTestDB(t)
+
+	// The candidate.
+	s1 := makeSpec("feat-a", "Feature A", spec.TypeFeature, spec.StatusPlanning)
+	s1.FilesTouched = []string{"src/api/users.ts", "src/db/users.sql"}
+
+	// Delivering overlap → included.
+	s2 := makeSpec("feat-b", "Feature B", spec.TypeFeature, spec.StatusDelivering)
+	s2.FilesTouched = []string{"src/api/users.ts"}
+
+	// Planning overlap → excluded by the delivering filter.
+	s3 := makeSpec("feat-c", "Feature C", spec.TypeFeature, spec.StatusPlanning)
+	s3.FilesTouched = []string{"src/api/users.ts"}
+
+	// In-review overlap → excluded.
+	s4 := makeSpec("feat-d", "Feature D", spec.TypeFeature, spec.StatusInReview)
+	s4.FilesTouched = []string{"src/db/users.sql"}
+
+	for _, s := range []*spec.Spec{s1, s2, s3, s4} {
+		if err := idx.IndexSpec(s, "# "+s.Title); err != nil {
+			t.Fatalf("IndexSpec failed: %v", err)
+		}
+	}
+
+	// FindConflicts (all in-flight statuses) sees b, c, and d.
+	all, err := idx.FindConflicts("feat-a")
+	if err != nil {
+		t.Fatalf("FindConflicts failed: %v", err)
+	}
+	if len(all) != 3 {
+		t.Fatalf("FindConflicts returned %d, want 3 (feat-b, feat-c, feat-d)", len(all))
+	}
+
+	// FindDeliveringConflicts sees only the delivering feat-b.
+	delivering, err := idx.FindDeliveringConflicts("feat-a")
+	if err != nil {
+		t.Fatalf("FindDeliveringConflicts failed: %v", err)
+	}
+	if len(delivering) != 1 {
+		t.Fatalf("FindDeliveringConflicts returned %d, want 1", len(delivering))
+	}
+	if delivering[0].Slug != "feat-b" {
+		t.Errorf("delivering conflict slug = %q, want feat-b", delivering[0].Slug)
+	}
+	if len(delivering[0].OverlappingFiles) != 1 || delivering[0].OverlappingFiles[0] != "src/api/users.ts" {
+		t.Errorf("OverlappingFiles = %v, want [src/api/users.ts]", delivering[0].OverlappingFiles)
+	}
+}
+
 func TestClaimAndUnclaim(t *testing.T) {
 	idx, _ := setupTestDB(t)
 

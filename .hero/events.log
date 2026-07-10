@@ -282,3 +282,5 @@
 {"ts":"2026-07-09T18:28:19.037367Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"priority-conflict-aware-drive-selection","message":"status -\u003e completed"}
 {"ts":"2026-07-09T21:56:48.388585Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"compose-emits-conflicts-and-priority","message":"\"Compose emits priority + reciprocal conflicts-with on child stubs\""}
 {"ts":"2026-07-09T21:56:48.388676Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"compose-emits-conflicts-and-priority","message":"status -\u003e completed"}
+{"ts":"2026-07-10T00:46:26.053925Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"drive-judge-findconflicts-backstop","message":"\"Drive judge FindConflicts backstop — detect undeclared file overlaps against in-flight specs\""}
+{"ts":"2026-07-10T00:46:26.054007Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"drive-judge-findconflicts-backstop","message":"status -\u003e completed"}
