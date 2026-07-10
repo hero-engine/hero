@@ -640,53 +640,11 @@ func autoCompleteParentIfReady(target *spec.Spec, heroDir string) string {
 				break
 			}
 		}
-		if parent == nil || parent.Type != spec.TypeInitiative {
-			continue
-		}
-		if parent.Status == spec.StatusCompleted {
-			continue
-		}
 
-		// The parent's own declared child roster (block-style `child:`
-		// lists now parse to child relations). If the initiative declares
-		// children, every declared child must resolve to a materialized,
-		// completed spec — otherwise delivering a single child would
-		// wrongly complete an initiative whose other children are unbuilt
-		// stubs.
-		statusBySlug := make(map[string]spec.Status, len(allSpecs))
-		for _, s := range allSpecs {
-			statusBySlug[s.Slug] = s.Status
-		}
-		declaredCount := 0
-		declaredComplete := true
-		for _, r := range parent.Relations {
-			if r.Kind != "child" && r.Kind != "child-of" {
-				continue
-			}
-			declaredCount++
-			if statusBySlug[normalizeVerifyParentTarget(r.Target)] != spec.StatusCompleted {
-				declaredComplete = false
-			}
-		}
-		if declaredCount > 0 && !declaredComplete {
-			continue
-		}
-
-		allDone := true
-		childCount := 0
-		for _, s := range allSpecs {
-			for _, r := range s.Relations {
-				if (r.Kind == "parent" || r.Kind == "child-of") &&
-					normalizeVerifyParentTarget(r.Target) == parentSlug {
-					childCount++
-					if s.Status != spec.StatusCompleted {
-						allDone = false
-					}
-					break
-				}
-			}
-		}
-		if childCount == 0 || !allDone {
+		// The completion decision (roster gate + child-count gate) lives in
+		// a shared predicate so this in-process side-effect and the standalone
+		// reconcile re-check (`hero check --reconcile`) can never diverge.
+		if !spec.InitiativeReadyToComplete(parent, allSpecs) {
 			continue
 		}
 

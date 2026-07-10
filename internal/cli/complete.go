@@ -311,6 +311,23 @@ func updateFrontmatterStatus(path, newStatus string) error {
 	return os.WriteFile(path, []byte(updated), 0o644)
 }
 
+// clearCompletedAt removes an orphaned `completed_at:` (or camelCase
+// `completedAt:`) stamp from a spec whose status is no longer completed,
+// repairing the status ↔ completed_at invariant. A no-op when neither field
+// is present.
+func clearCompletedAt(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	updated := spec.ClearFrontmatterField(string(data), "completed_at")
+	updated = spec.ClearFrontmatterField(updated, "completedAt")
+	if updated == string(data) {
+		return nil
+	}
+	return os.WriteFile(path, []byte(updated), 0o644)
+}
+
 // moveToSpecs moves a spec from planning/ to specs/.
 // Returns the new path and whether a move occurred.
 func moveToSpecs(specPath, heroDir string) (string, bool, error) {

@@ -971,6 +971,126 @@ func TestVerify_UnmaterializedInitiativeChild(t *testing.T) {
 	}
 }
 
+// TestCheckReconcile_CompletesArchivedChildrenInitiative is the inverse of
+// TestVerify_UnmaterializedInitiativeChild: an initiative whose block-style
+// `child:` roster is fully completed AND already archived under specs/**, with
+// no child verified in the current process, is completed and archived by the
+// standalone `hero check --reconcile` re-check. Re-running the re-check is a
+// clean no-op (idempotency).
+func TestCheckReconcile_CompletesArchivedChildrenInitiative(t *testing.T) {
+	env := newTestEnv(t)
+	gitRun(t, env.dir, "init", "-q")
+
+	env.addSpec("planning/initiatives/content-remediation/spec.md", `---
+title: Content Remediation
+type: initiative
+status: planning
+slug: content-remediation
+child:
+  - child-one
+  - child-two
+---
+# Content Remediation
+`)
+	for _, slug := range []string{"child-one", "child-two"} {
+		env.addSpec("specs/"+slug+"/spec.md", `---
+title: `+slug+`
+type: bug
+status: completed
+slug: `+slug+`
+relations:
+  - { target: content-remediation, kind: parent }
+---
+# `+slug+`
+`)
+	}
+	gitRun(t, env.dir, "add", ".")
+	gitRun(t, env.dir, "commit", "-q", "-m", "stranded initiative")
+	env.indexAll()
+
+	// Dry run (no --reconcile) must only report, not mutate.
+	out, err := runCmd("check")
+	if err != nil {
+		t.Fatalf("check (dry-run) errored: %v\n%s", err, out)
+	}
+	if _, statErr := os.Stat(filepath.Join(env.heroDir, "specs", "content-remediation", "spec.md")); !os.IsNotExist(statErr) {
+		t.Fatal("dry-run check must not archive the initiative")
+	}
+	planningPath := filepath.Join(env.heroDir, "planning", "initiatives", "content-remediation", "spec.md")
+	if _, statErr := os.Stat(planningPath); statErr != nil {
+		t.Fatalf("dry-run check must leave the initiative in planning/: %v", statErr)
+	}
+
+	// Apply.
+	out, err = runCmd("check", "--reconcile")
+	if err != nil {
+		t.Fatalf("check --reconcile errored: %v\n%s", err, out)
+	}
+
+	archivedPath := filepath.Join(env.heroDir, "specs", "content-remediation", "spec.md")
+	data, statErr := os.ReadFile(archivedPath)
+	if statErr != nil {
+		t.Fatalf("initiative was not completed + archived to specs/: %v", statErr)
+	}
+	body := string(data)
+	if !strings.Contains(body, "status: completed") {
+		t.Errorf("archived initiative should be status: completed:\n%s", body)
+	}
+	if _, statErr := os.Stat(planningPath); !os.IsNotExist(statErr) {
+		t.Error("initiative should no longer exist under planning/")
+	}
+
+	// Idempotency: re-running is a clean no-op (no error, no double-archive).
+	env.indexAll()
+	out, err = runCmd("check", "--reconcile")
+	if err != nil {
+		t.Fatalf("second check --reconcile errored: %v\n%s", err, out)
+	}
+	if strings.Contains(out, "completed + archived") {
+		t.Errorf("second reconcile should not re-complete the initiative:\n%s", out)
+	}
+}
+
+// TestCheckReconcile_ClearsOrphanCompletedAt proves the status ↔ completed_at
+// invariant repair end-to-end: a genuinely reopened spec (completed_at set,
+// status planning) has its orphaned timestamp cleared by `hero check
+// --reconcile`.
+func TestCheckReconcile_ClearsOrphanCompletedAt(t *testing.T) {
+	env := newTestEnv(t)
+	gitRun(t, env.dir, "init", "-q")
+
+	specPath := "planning/features/half-restored/spec.md"
+	env.addSpec(specPath, `---
+title: Half Restored
+type: feature
+status: planning
+slug: half-restored
+completed_at: 2026-06-23T19:57:04Z
+---
+# Half Restored
+`)
+	gitRun(t, env.dir, "add", ".")
+	gitRun(t, env.dir, "commit", "-q", "-m", "orphaned completed_at")
+	env.indexAll()
+
+	out, err := runCmd("check", "--reconcile")
+	if err != nil {
+		t.Fatalf("check --reconcile errored: %v\n%s", err, out)
+	}
+
+	data, readErr := os.ReadFile(filepath.Join(env.heroDir, specPath))
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	body := string(data)
+	if strings.Contains(body, "completed_at") {
+		t.Errorf("orphaned completed_at should be cleared:\n%s", body)
+	}
+	if !strings.Contains(body, "status: planning") {
+		t.Errorf("status should remain planning:\n%s", body)
+	}
+}
+
 func TestVerify_NoSignalBareMessage(t *testing.T) {
 	env := newTestEnv(t)
 	env.addSpec("planning/initiatives/retrieval-quality/spec.md", verifyInitiativeWithChild)

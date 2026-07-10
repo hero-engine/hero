@@ -284,3 +284,9 @@
 {"ts":"2026-07-09T21:56:48.388676Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"compose-emits-conflicts-and-priority","message":"status -\u003e completed"}
 {"ts":"2026-07-10T00:46:26.053925Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"drive-judge-findconflicts-backstop","message":"\"Drive judge FindConflicts backstop — detect undeclared file overlaps against in-flight specs\""}
 {"ts":"2026-07-10T00:46:26.054007Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"drive-judge-findconflicts-backstop","message":"status -\u003e completed"}
+{"ts":"2026-07-10T01:26:07.180026Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"content-remediation","message":"Content Remediation — Audit Follow-Through Across Packs, Gates, and Harnesses"}
+{"ts":"2026-07-10T01:26:07.18012Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"content-remediation","message":"status -\u003e completed"}
+{"ts":"2026-07-10T01:26:08.258687Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-surface-polish","message":"Hero Surface Polish — Ongoing Quality Pass on the Web Companion"}
+{"ts":"2026-07-10T01:26:08.258762Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-surface-polish","message":"status -\u003e completed"}
+{"ts":"2026-07-10T01:32:38.360874Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"initiative-autocomplete-misses-completed-children","message":"\"Initiative auto-complete misses already-completed children — no standalone parent re-check strands every finished initiative\""}
+{"ts":"2026-07-10T01:32:38.360967Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"initiative-autocomplete-misses-completed-children","message":"status -\u003e completed"}

@@ -292,6 +292,147 @@ status: active
 	}
 }
 
+// initiativeWithArchivedChildren wires an initiative that declares a
+// block-style `child:` roster whose entries are all completed, archived specs
+// under specs/**. None is verified in-process — this is the stranded
+// end-state the standalone reconcile re-check must recover.
+func initiativeWithArchivedChildren(t *testing.T, heroDir string, childStatus ...spec.Status) {
+	t.Helper()
+	addSpec(t, heroDir, "planning/initiatives/content-remediation/spec.md", `---
+title: Content Remediation
+type: initiative
+status: planning
+slug: content-remediation
+child:
+  - child-one
+  - child-two
+---
+# Content Remediation
+`)
+	statuses := []spec.Status{spec.StatusCompleted, spec.StatusCompleted}
+	if len(childStatus) == 2 {
+		statuses = childStatus
+	}
+	for i, slug := range []string{"child-one", "child-two"} {
+		addSpec(t, heroDir, "specs/"+slug+"/spec.md", `---
+title: `+slug+`
+type: bug
+status: `+string(statuses[i])+`
+slug: `+slug+`
+relations:
+  - { target: content-remediation, kind: parent }
+---
+# `+slug+`
+`)
+	}
+}
+
+// TestReconcile_InitiativeCompleteFromArchivedChildren proves the standalone
+// re-check: an initiative whose declared block-style `child:` roster is fully
+// completed and already archived (no child verified in-process) is flagged
+// for completion. This is the inverse of the premature-autocomplete guard.
+func TestReconcile_InitiativeCompleteFromArchivedChildren(t *testing.T) {
+	projectRoot, heroDir := initGitRepo(t)
+	initiativeWithArchivedChildren(t, heroDir)
+
+	findings := Reconcile(heroDir, projectRoot)
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %+v", len(findings), findings)
+	}
+	f := findings[0]
+	if f.Kind != FindingInitiativeComplete {
+		t.Errorf("Kind = %q, want %q", f.Kind, FindingInitiativeComplete)
+	}
+	if f.Spec.Slug != "content-remediation" {
+		t.Errorf("Spec.Slug = %q, want content-remediation", f.Spec.Slug)
+	}
+	if f.SuggestedStatus != spec.StatusCompleted {
+		t.Errorf("SuggestedStatus = %q, want completed", f.SuggestedStatus)
+	}
+	if !f.CanAutoFix() {
+		t.Error("initiative-complete finding should be auto-fixable")
+	}
+}
+
+// TestReconcile_InitiativeComplete_Idempotent confirms that once the
+// initiative is completed and archived, the re-check produces no finding — a
+// clean no-op with no double-archive.
+func TestReconcile_InitiativeComplete_Idempotent(t *testing.T) {
+	projectRoot, heroDir := initGitRepo(t)
+	// Initiative already completed + archived under specs/.
+	addSpec(t, heroDir, "specs/content-remediation/spec.md", `---
+title: Content Remediation
+type: initiative
+status: completed
+slug: content-remediation
+completed_at: 2026-01-01T00:00:00Z
+child:
+  - child-one
+---
+# Content Remediation
+`)
+	addSpec(t, heroDir, "specs/child-one/spec.md", `---
+title: child-one
+type: bug
+status: completed
+slug: child-one
+relations:
+  - { target: content-remediation, kind: parent }
+---
+# child-one
+`)
+
+	findings := Reconcile(heroDir, projectRoot)
+	for _, f := range findings {
+		if f.Spec.Slug == "content-remediation" {
+			t.Errorf("completed initiative should produce no finding, got %+v", f)
+		}
+	}
+}
+
+// TestReconcile_OrphanCompletedAt proves the status ↔ completed_at invariant:
+// a spec carrying completed_at while its status is not completed is detected
+// for repair.
+func TestReconcile_OrphanCompletedAt(t *testing.T) {
+	projectRoot, heroDir := initGitRepo(t)
+	addSpec(t, heroDir, "planning/features/half-restored/spec.md", `---
+title: Half Restored
+type: feature
+status: planning
+slug: half-restored
+completed_at: 2026-06-23T19:57:04Z
+---
+# Half Restored
+`)
+
+	findings := Reconcile(heroDir, projectRoot)
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %+v", len(findings), findings)
+	}
+	f := findings[0]
+	if f.Kind != FindingOrphanCompletedAt {
+		t.Errorf("Kind = %q, want %q", f.Kind, FindingOrphanCompletedAt)
+	}
+	if !f.CanAutoFix() {
+		t.Error("orphan-completed-at finding should be auto-fixable")
+	}
+}
+
+// TestReconcile_NegativeGuard_UnmaterializedChild re-confirms the
+// premature-autocomplete guarantee: an initiative with a declared child that
+// is not completed is NOT flagged for completion by the new path.
+func TestReconcile_NegativeGuard_UnmaterializedChild(t *testing.T) {
+	projectRoot, heroDir := initGitRepo(t)
+	initiativeWithArchivedChildren(t, heroDir, spec.StatusCompleted, spec.StatusDelivering)
+
+	findings := Reconcile(heroDir, projectRoot)
+	for _, f := range findings {
+		if f.Kind == FindingInitiativeComplete {
+			t.Errorf("initiative with a non-completed child must not be completed: %+v", f)
+		}
+	}
+}
+
 func TestFinding_CanAutoFix(t *testing.T) {
 	tests := []struct {
 		from spec.Status
