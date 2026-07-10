@@ -292,3 +292,5 @@
 {"ts":"2026-07-10T01:32:38.360967Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"initiative-autocomplete-misses-completed-children","message":"status -\u003e completed"}
 {"ts":"2026-07-10T03:36:58.969803Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"eventslog-churn-fix-tracked-not-dirty","message":"\"events.log churn fix — keep it tracked, stop it dirtying the tree, let interesting events travel into commits\""}
 {"ts":"2026-07-10T03:36:58.969905Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"eventslog-churn-fix-tracked-not-dirty","message":"status -\u003e completed"}
+{"ts":"2026-07-10T05:54:25.63572Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"flat-named-spec-discovery","message":"\"Flat-named spec files are invisible to discovery — verify can't resolve initiative children\""}
+{"ts":"2026-07-10T05:54:25.635823Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"flat-named-spec-discovery","message":"status -\u003e completed"}
