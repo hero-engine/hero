@@ -9,9 +9,30 @@ import (
 	"github.com/hero-engine/hero/internal/spec"
 )
 
+// FindingKind classifies the repair a finding calls for, so the applier
+// (`hero check --reconcile`) can pick the right action rather than inferring
+// it from the status pair alone.
+type FindingKind string
+
+const (
+	// FindingStatusDrift is a git-evidence promotion (planning → delivering).
+	FindingStatusDrift FindingKind = "status-drift"
+	// FindingCompletedStuck is a completed spec still living under planning/
+	// that should be moved to specs/.
+	FindingCompletedStuck FindingKind = "completed-stuck"
+	// FindingInitiativeComplete is an initiative whose every declared child is
+	// already completed; it should be completed and archived even though no
+	// child was verified in the current process.
+	FindingInitiativeComplete FindingKind = "initiative-complete"
+	// FindingOrphanCompletedAt is a spec carrying a `completed_at:` stamp while
+	// its status is not completed; the orphaned timestamp should be cleared.
+	FindingOrphanCompletedAt FindingKind = "orphan-completed-at"
+)
+
 // Finding represents a single status mismatch between a spec's declared
-// status and what git evidence suggests it should be.
+// status and what git evidence (or its child roster) suggests it should be.
 type Finding struct {
+	Kind            FindingKind
 	Spec            *spec.Spec
 	CurrentStatus   spec.Status
 	SuggestedStatus spec.Status
@@ -19,8 +40,14 @@ type Finding struct {
 }
 
 // CanAutoFix returns true if this finding can be safely auto-fixed.
-// We auto-promote planning → delivering, and auto-move completed specs out of planning.
+// We auto-promote planning → delivering, auto-move completed specs out of
+// planning, complete initiatives whose children are all done, and clear
+// orphaned completed_at stamps.
 func (f Finding) CanAutoFix() bool {
+	switch f.Kind {
+	case FindingInitiativeComplete, FindingOrphanCompletedAt:
+		return true
+	}
 	if f.CurrentStatus == spec.StatusPlanning && f.SuggestedStatus == spec.StatusDelivering {
 		return true
 	}
@@ -29,11 +56,6 @@ func (f Finding) CanAutoFix() bool {
 		return true
 	}
 	return false
-}
-
-// NeedsMove returns true if this finding requires moving the spec from planning/ to specs/.
-func (f Finding) NeedsMove() bool {
-	return f.CurrentStatus == spec.StatusCompleted && f.SuggestedStatus == spec.StatusCompleted
 }
 
 // Reconcile compares work specs against git evidence and returns findings
@@ -69,10 +91,46 @@ func Reconcile(heroDir, projectRoot string) []Finding {
 			continue
 		}
 
+		// Standalone initiative completion re-check: an initiative whose every
+		// declared child is already a completed, archived spec should be
+		// completed and archived even though no child was verified in this
+		// process. This is the idempotent recovery path for the one-shot
+		// in-process trigger in `hero spec verify`. Initiatives only — never
+		// auto-complete a leaf feature/bug from git or roster evidence.
+		if s.Type == spec.TypeInitiative &&
+			(s.Status == spec.StatusPlanning || s.Status == spec.StatusDelivering) &&
+			spec.InitiativeReadyToComplete(s, specs) {
+			findings = append(findings, Finding{
+				Kind:            FindingInitiativeComplete,
+				Spec:            s,
+				CurrentStatus:   s.Status,
+				SuggestedStatus: spec.StatusCompleted,
+				Evidence:        "every declared child is completed — initiative should be completed and archived",
+			})
+			continue
+		}
+
+		// Invariant: a spec must not carry a completed_at stamp while its
+		// status is not completed. When the roster re-check above completes an
+		// initiative, the completed-write reconciles the pair; anything left
+		// here is a genuine split (e.g. a manual reopen) whose orphaned
+		// timestamp should be cleared.
+		if !s.CompletedAt.IsZero() && s.Status != spec.StatusCompleted {
+			findings = append(findings, Finding{
+				Kind:            FindingOrphanCompletedAt,
+				Spec:            s,
+				CurrentStatus:   s.Status,
+				SuggestedStatus: s.Status,
+				Evidence:        "completed_at is set but status is not completed — orphaned timestamp should be cleared",
+			})
+			continue
+		}
+
 		// Check for completed specs stuck in planning/
 		if s.Status == spec.StatusCompleted {
 			if isInPlanning(s.Path) {
 				findings = append(findings, Finding{
+					Kind:            FindingCompletedStuck,
 					Spec:            s,
 					CurrentStatus:   spec.StatusCompleted,
 					SuggestedStatus: spec.StatusCompleted,
@@ -116,6 +174,7 @@ func checkSpec(s *spec.Spec, projectRoot string, changedFiles map[string]bool) *
 		if matchCount > 0 {
 			evidence := pluralize(matchCount, "file", "files") + " from the Changes section " + haveHas(matchCount) + " been modified"
 			return &Finding{
+				Kind:            FindingStatusDrift,
 				Spec:            s,
 				CurrentStatus:   s.Status,
 				SuggestedStatus: spec.StatusDelivering,
@@ -124,6 +183,7 @@ func checkSpec(s *spec.Spec, projectRoot string, changedFiles map[string]bool) *
 		}
 		if hasClaim {
 			return &Finding{
+				Kind:            FindingStatusDrift,
 				Spec:            s,
 				CurrentStatus:   s.Status,
 				SuggestedStatus: spec.StatusDelivering,

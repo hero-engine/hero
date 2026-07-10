@@ -6,7 +6,14 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-10T00:46:39Z · 83 ready specs_
+_Generated: 2026-07-10T01:34:54Z · 81 ready specs_
+
+## single-source-install-p1-agents-md — "Single-Source Install P1 — AGENTS.md as the Only Root Instruction File"
+_feature · delivering · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/single-source-install-p1-agents-md/spec.md)_
+
+---
 
 ## flat-named-spec-discovery — "Flat-named spec files are invisible to discovery — verify can't resolve initiative children"
 _bug · delivering · horizon: now_
@@ -40,6 +47,15 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · in-review · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-idea-primitive-core/spec.md)_
+
+---
+
+## cold-start-trust-hardening — "Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use"
+_initiative · planning · horizon: now_
+
+_Run opener — arm with `/drive cold-start-trust-hardening`_
+
+Eliminate the class of first-use failures where Hero degrades silently or misleadingly, forcing the user to guess. Concretely: every relationship a user declares either becomes an edge or produces a precise error; the deterministic (Tier-1) graph is never confused with optional LLM enrichment (Tier-2); and routine Hero commands stop dirtying the tree or crying wolf.
 
 ---
 
@@ -90,29 +106,6 @@ per-surface drift this initiative exists to eliminate). Mirror the existing
 
 Because all four consumers call `FindTripwiresByTrigger`, they light up
 together.
-
----
-
-## content-remediation — Content Remediation — Audit Follow-Through Across Packs, Gates, and Harnesses
-_initiative · planning · horizon: now_
-
-_Run opener — arm with `/drive content-remediation`_
-
-Every confirmed audit finding is retired by a delivered child spec: no
-shipped content references a surface that doesn't exist on its install;
-the delivery doctrine is stated once and gate-consistent everywhere;
-content works on all six install targets; the named verbosity cuts are
-applied without losing a rule; and the chat pack's status is deliberate
-instead of accidental. `hero spec verify` passes for all eight children.
-
----
-
-## cold-start-trust-hardening — "Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use"
-_initiative · planning · horizon: now_
-
-_Run opener — arm with `/drive cold-start-trust-hardening`_
-
-Eliminate the class of first-use failures where Hero degrades silently or misleadingly, forcing the user to guess. Concretely: every relationship a user declares either becomes an edge or produces a precise error; the deterministic (Tier-1) graph is never confused with optional LLM enrichment (Tier-2); and routine Hero commands stop dirtying the tree or crying wolf.
 
 ---
 
@@ -267,13 +260,6 @@ messy installs.
 
 ---
 
-## hero-surface-polish — Hero Surface Polish — Ongoing Quality Pass on the Web Companion
-_initiative · planning · horizon: now_
-
-_(no `## Goal` run opener — hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-surface-polish/spec.md)_
-
----
-
 ## hero-surface-architecture — Hero Surface Architecture — One Surface, Every Layer, Every Role
 _initiative · planning · horizon: now_
 
@@ -379,13 +365,6 @@ Change `Mismatch()` in `internal/version/version.go` to return a `MismatchResult
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/synthesis-maintenance/spec.md)_
-
----
-
-## single-source-install-p1-agents-md — "Single-Source Install P1 — AGENTS.md as the Only Root Instruction File"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/single-source-install-p1-agents-md/spec.md)_
 
 ---
 

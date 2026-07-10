@@ -1788,3 +1788,37 @@ func SetFrontmatterField(content, key, value string) string {
 
 	return strings.Join(lines, "\n")
 }
+
+// ClearFrontmatterField removes a top-level key from YAML frontmatter,
+// returning the content unchanged when the key (or frontmatter) is absent.
+// Only single-line scalar fields are targeted; it does not remove indented
+// continuation lines of a block field. Used to repair an orphaned
+// `completed_at:` when a spec is no longer completed.
+func ClearFrontmatterField(content, key string) string {
+	lines := strings.Split(content, "\n")
+	if len(lines) == 0 || strings.TrimSpace(lines[0]) != "---" {
+		return content
+	}
+
+	closeIdx := -1
+	for i := 1; i < len(lines); i++ {
+		if strings.TrimSpace(lines[i]) == "---" {
+			closeIdx = i
+			break
+		}
+	}
+	if closeIdx < 0 {
+		return content
+	}
+
+	prefix := key + ":"
+	for j := 1; j < closeIdx; j++ {
+		if strings.HasPrefix(strings.TrimSpace(lines[j]), prefix) &&
+			leadingSpaceCount(lines[j]) == 0 {
+			out := append([]string{}, lines[:j]...)
+			out = append(out, lines[j+1:]...)
+			return strings.Join(out, "\n")
+		}
+	}
+	return content
+}

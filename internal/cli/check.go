@@ -201,7 +201,8 @@ func runCheck(cmd *cobra.Command, args []string) error {
 			action := "→"
 			suffix := ""
 			if checkReconcile && f.CanAutoFix() {
-				if f.NeedsMove() {
+				switch f.Kind {
+				case reconcile.FindingCompletedStuck:
 					// Completed spec stuck in planning — move it to specs/
 					destPath, moved, err := moveToSpecs(f.Spec.Path, heroDir)
 					if err != nil {
@@ -211,7 +212,28 @@ func runCheck(cmd *cobra.Command, args []string) error {
 						suffix = fmt.Sprintf("  (moved to %s)", destPath)
 						fixed++
 					}
-				} else {
+				case reconcile.FindingInitiativeComplete:
+					// All children done — complete + archive the initiative.
+					// completeAndArchive flips status to completed (stamping
+					// completed_at in the same write) and moves it to specs/.
+					if _, err := completeAndArchive(f.Spec.Path, heroDir, true); err != nil {
+						suffix = fmt.Sprintf("  (auto-complete failed: %v)", err)
+					} else {
+						action = "✓"
+						suffix = fmt.Sprintf("  (completed + archived to specs/%s/)", f.Spec.Slug)
+						fixed++
+					}
+				case reconcile.FindingOrphanCompletedAt:
+					// completed_at set while status != completed — clear the
+					// orphaned timestamp so the invariant holds.
+					if err := clearCompletedAt(f.Spec.Path); err != nil {
+						suffix = fmt.Sprintf("  (repair failed: %v)", err)
+					} else {
+						action = "✓"
+						suffix = "  (cleared orphaned completed_at)"
+						fixed++
+					}
+				default:
 					if err := updateFrontmatterStatus(f.Spec.Path, string(f.SuggestedStatus)); err != nil {
 						suffix = fmt.Sprintf("  (auto-fix failed: %v)", err)
 					} else {
