@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-10T06:06:11Z
+updated: 2026-07-10T06:06:21Z
 repo: hero-engine/hero
 ---
 
@@ -10,7 +10,7 @@ repo: hero-engine/hero
 
 > Session opened with — been running some drive's on other projects - here is some output i got one one that made me wonder if there are enhancements to the judge piece: Cold audit: SHIP + noteworthy, high confidence. All three flagged items check out — the AC7 hard-path gap is genuinely pre-existing (buildState byte-identical HEAD vs working tree, follow-up task spawned), the pinned-file deviation is correct (no pin d…
 
-_possibly stale — 8 commit(s) since, last set 13h 20m ago_
+_possibly stale — 9 commit(s) since, last set 13h 20m ago_
 
 ## Last user ask
 
