@@ -1139,3 +1139,87 @@ deliver child a
 		t.Errorf("hero_goal --check parity failed, got:\n%s", text)
 	}
 }
+
+// TestMCP_ToolGoal_CheckDetectsUndeclaredSeam: with the driveio detector wired,
+// the MCP hero_goal --check surface pauses with SeamDetected when the selected
+// child whole-file-overlaps a delivering spec that nobody authored as a
+// conflicts-with — the piece-3 backstop, guarding that the MCP caller wires the
+// same detector as the CLI (parity by construction via driveio.Detector).
+func TestMCP_ToolGoal_CheckDetectsUndeclaredSeam(t *testing.T) {
+	tmp := t.TempDir()
+	heroDir := filepath.Join(tmp, ".hero")
+	initDir := filepath.Join(heroDir, "planning", "initiatives", "drive")
+	childDir := filepath.Join(initDir, "child-a")
+	peerDir := filepath.Join(heroDir, "planning", "features", "in-flight-peer")
+	for _, d := range []string{childDir, peerDir} {
+		if err := os.MkdirAll(d, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(initDir, "spec.md"), []byte(`---
+title: Drive
+type: initiative
+status: planning
+autonomy: guided
+---
+# Drive
+
+## Goal
+
+Run the children.
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// child-a touches internal/shared/util.go and declares NO conflicts-with.
+	if err := os.WriteFile(filepath.Join(childDir, "spec.md"), []byte(`---
+title: Child A
+type: feature
+status: planning
+relations:
+  - target: drive
+    kind: parent
+---
+# Child A
+
+## Kickoff
+
+deliver child a
+
+## Acceptance Criteria
+
+- THE SYSTEM SHALL do child a.
+
+## Changes
+
+1. Edit `+"`internal/shared/util.go`"+` — touch the shared helper.
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// A currently-delivering spec touching the same file — the undeclared seam.
+	if err := os.WriteFile(filepath.Join(peerDir, "spec.md"), []byte(`---
+title: In Flight Peer
+type: feature
+status: delivering
+---
+# In Flight Peer
+
+## Changes
+
+1. Edit `+"`internal/shared/util.go`"+` — also touch the shared helper.
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	srv := NewMCPServer(heroDir, filepath.Dir(heroDir), "1.0.0")
+	result := callTool(t, srv, "hero_goal", map[string]interface{}{"initiative": "drive", "check": true})
+	if result.IsError {
+		t.Fatalf("hero_goal error: %s", result.Content[0].Text)
+	}
+	text := result.Content[0].Text
+	if !strings.Contains(text, `"verdict": "pause"`) || !strings.Contains(text, `"category": "SeamDetected"`) {
+		t.Errorf("hero_goal --check should pause SeamDetected on the undeclared overlap, got:\n%s", text)
+	}
+	if !strings.Contains(text, "in-flight-peer") || !strings.Contains(text, "internal/shared/util.go") {
+		t.Errorf("SeamDetected reason should name the in-flight spec and overlapping file, got:\n%s", text)
+	}
+}

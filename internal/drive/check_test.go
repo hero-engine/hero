@@ -50,7 +50,7 @@ func TestCheckDoneWhenAllChildrenCompleted(t *testing.T) {
 		mkChild("a", "drive", spec.StatusCompleted),
 		mkChild("b", "drive", spec.StatusCompleted),
 	}
-	res := Check(init, all, nil)
+	res := Check(init, all, nil, nil)
 	if res.Verdict != "done" {
 		t.Fatalf("verdict=%q, want done", res.Verdict)
 	}
@@ -65,7 +65,7 @@ func TestCheckContinueGuided(t *testing.T) {
 		mkChild("a", "drive", spec.StatusCompleted),
 		mkChild("b", "drive", spec.StatusPlanning),
 	}
-	res := Check(init, all, nil)
+	res := Check(init, all, nil, nil)
 	if res.Verdict != "continue" {
 		t.Fatalf("verdict=%q, want continue", res.Verdict)
 	}
@@ -80,7 +80,7 @@ func TestCheckContinueGuided(t *testing.T) {
 func TestCheckPauseSupervised(t *testing.T) {
 	init := mkInit("drive", "supervised")
 	all := []*spec.Spec{init, mkChild("b", "drive", spec.StatusPlanning)}
-	res := Check(init, all, nil)
+	res := Check(init, all, nil, nil)
 	if res.Verdict != "pause" || res.Pause == nil || res.Pause.Category != string(CategorySupervised) {
 		t.Fatalf("want supervised pause, got %+v", res)
 	}
@@ -91,7 +91,7 @@ func TestCheckBlockedWhenDepsUnmet(t *testing.T) {
 	all := []*spec.Spec{init,
 		mkChild("b", "drive", spec.StatusPlanning, "a"), // depends on a, which is not completed
 	}
-	res := Check(init, all, nil)
+	res := Check(init, all, nil, nil)
 	if res.Verdict != "pause" || res.Pause == nil || res.Pause.Category != string(CategoryBlocked) {
 		t.Fatalf("want blocked pause, got %+v", res)
 	}
@@ -99,7 +99,7 @@ func TestCheckBlockedWhenDepsUnmet(t *testing.T) {
 
 func TestCheckNoChildrenPauses(t *testing.T) {
 	init := mkInit("drive", "guided")
-	res := Check(init, []*spec.Spec{init}, nil)
+	res := Check(init, []*spec.Spec{init}, nil, nil)
 	if res.Verdict != "pause" || res.Pause == nil {
 		t.Fatalf("initiative with no children should pause, got %+v", res)
 	}
@@ -226,7 +226,7 @@ func TestCheckSelectsHigherPriorityOverSlug(t *testing.T) {
 		withPriority(mkChild("aaa", "drive", spec.StatusPlanning), "low"),
 		withPriority(mkChild("zzz", "drive", spec.StatusPlanning), "critical"),
 	}
-	res := Check(init, all, nil)
+	res := Check(init, all, nil, nil)
 	if res.Verdict != "continue" {
 		t.Fatalf("verdict=%q, want continue (%+v)", res.Verdict, res)
 	}
@@ -246,7 +246,7 @@ func TestCheckConflictExcludesDeliveringCandidate(t *testing.T) {
 		mkChild("bbb", "drive", spec.StatusPlanning),
 		{Slug: "seam-peer", Type: spec.TypeFeature, Status: spec.StatusDelivering},
 	}
-	res := Check(init, all, nil)
+	res := Check(init, all, nil, nil)
 	if res.Verdict != "continue" {
 		t.Fatalf("verdict=%q, want continue (%+v)", res.Verdict, res)
 	}
@@ -264,7 +264,7 @@ func TestCheckSeamCollisionWhenOnlyCandidateConflicts(t *testing.T) {
 		withConflict(mkChild("aaa", "drive", spec.StatusPlanning), "seam-peer"),
 		{Slug: "seam-peer", Type: spec.TypeFeature, Status: spec.StatusDelivering},
 	}
-	res := Check(init, all, nil)
+	res := Check(init, all, nil, nil)
 	if res.Verdict != "pause" || res.Pause == nil {
 		t.Fatalf("want pause, got %+v", res)
 	}
@@ -283,7 +283,7 @@ func TestCheckBlockedNotSeamWhenDepUnmet(t *testing.T) {
 	all := []*spec.Spec{init,
 		mkChild("aaa", "drive", spec.StatusPlanning, "missing-dep"),
 	}
-	res := Check(init, all, nil)
+	res := Check(init, all, nil, nil)
 	if res.Verdict != "pause" || res.Pause == nil || res.Pause.Category != string(CategoryBlocked) {
 		t.Fatalf("want blocked pause, got %+v", res)
 	}
@@ -298,9 +298,9 @@ func TestCheckDeterministic(t *testing.T) {
 		withPriority(mkChild("bbb", "drive", spec.StatusPlanning), "critical"),
 		withPriority(mkChild("ccc", "drive", spec.StatusPlanning), "critical"),
 	}
-	first := Check(init, all, nil)
+	first := Check(init, all, nil, nil)
 	for i := 0; i < 20; i++ {
-		got := Check(init, all, nil)
+		got := Check(init, all, nil, nil)
 		if got.NextSpec != first.NextSpec || got.Verdict != first.Verdict {
 			t.Fatalf("call %d differs: %+v vs %+v", i, got, first)
 		}
@@ -339,7 +339,7 @@ func TestCheckDeterministicUnderInputPermutation(t *testing.T) {
 		for _, idx := range order {
 			all = append(all, kids[idx])
 		}
-		res := Check(init, all, nil)
+		res := Check(init, all, nil, nil)
 		if res.Verdict != "continue" {
 			t.Fatalf("ordering %d: verdict=%q, want continue (%+v)", i, res.Verdict, res)
 		}
@@ -356,6 +356,144 @@ func TestCheckDeterministicUnderInputPermutation(t *testing.T) {
 	}
 }
 
+// --- Detected-seam backstop (piece 3): injected detector callback ---
+
+// TestCheckSeamDetectedPauseNamesOverlap: a selected candidate whose files
+// overlap a delivering spec (per the injected detector) — and that overlap is
+// NOT authored — pauses with SeamDetected naming the file(s) + in-flight spec.
+func TestCheckSeamDetectedPauseNamesOverlap(t *testing.T) {
+	init := mkInit("drive", "guided")
+	all := []*spec.Spec{init, mkChild("aaa", "drive", spec.StatusPlanning)}
+	detect := func(slug string) []DetectedConflict {
+		if slug == "aaa" {
+			return []DetectedConflict{{Slug: "in-flight-peer", Files: []string{"internal/shared/util.go"}}}
+		}
+		return nil
+	}
+	res := Check(init, all, nil, detect)
+	if res.Verdict != "pause" || res.Pause == nil {
+		t.Fatalf("want pause, got %+v", res)
+	}
+	if res.Pause.Category != string(CategorySeamDetected) {
+		t.Errorf("category=%q, want SeamDetected", res.Pause.Category)
+	}
+	if !strings.Contains(res.Pause.Reason, "in-flight-peer") || !strings.Contains(res.Pause.Reason, "internal/shared/util.go") {
+		t.Errorf("reason=%q, want it to name the in-flight spec and the overlapping file", res.Pause.Reason)
+	}
+}
+
+// TestCheckSeamDetectedSkipsAuthoredPicksUndeclared: the dedup subtracts any
+// detected overlap already authored as conflicts-with, then surfaces the first
+// remaining (undeclared) overlap — proving the subtraction and the
+// deterministic slug-order "first" together.
+func TestCheckSeamDetectedSkipsAuthoredPicksUndeclared(t *testing.T) {
+	init := mkInit("drive", "guided")
+	// aaa authors conflicts-with "authored-peer" (not delivering → stays
+	// selectable). The detector reports both authored-peer and an undeclared
+	// ghost-peer; only ghost-peer should surface.
+	all := []*spec.Spec{init,
+		withConflict(mkChild("aaa", "drive", spec.StatusPlanning), "authored-peer"),
+	}
+	detect := func(slug string) []DetectedConflict {
+		return []DetectedConflict{
+			{Slug: "authored-peer", Files: []string{"src/authored.go"}},
+			{Slug: "ghost-peer", Files: []string{"src/ghost.go"}},
+		}
+	}
+	res := Check(init, all, nil, detect)
+	if res.Verdict != "pause" || res.Pause == nil || res.Pause.Category != string(CategorySeamDetected) {
+		t.Fatalf("want SeamDetected pause, got %+v", res)
+	}
+	if strings.Contains(res.Pause.Reason, "authored-peer") {
+		t.Errorf("authored overlap must be subtracted, reason names it: %q", res.Pause.Reason)
+	}
+	if !strings.Contains(res.Pause.Reason, "ghost-peer") || !strings.Contains(res.Pause.Reason, "src/ghost.go") {
+		t.Errorf("reason=%q, want the undeclared ghost-peer overlap", res.Pause.Reason)
+	}
+}
+
+// TestCheckSeamDetectedPromotableAcrossModes: SeamDetected is promotable —
+// Autonomous+promoted proceeds, Guided pauses (ignores promotions), Supervised
+// pauses at the boundary (its own category, before the taxonomy).
+func TestCheckSeamDetectedPromotableAcrossModes(t *testing.T) {
+	detect := func(slug string) []DetectedConflict {
+		if slug == "aaa" {
+			return []DetectedConflict{{Slug: "peer", Files: []string{"src/a.go"}}}
+		}
+		return nil
+	}
+	mkAll := func(init *spec.Spec) []*spec.Spec {
+		return []*spec.Spec{init, mkChild("aaa", "drive", spec.StatusPlanning)}
+	}
+
+	// Autonomous + promoted SeamDetected → proceed.
+	initA := mkInit("drive", "autonomous")
+	promoted := func(c PauseCategory) bool { return c == CategorySeamDetected }
+	if res := Check(initA, mkAll(initA), promoted, detect); res.Verdict != "continue" {
+		t.Fatalf("autonomous+promoted should proceed past SeamDetected, got %+v", res)
+	}
+
+	// Guided → pause even with a blanket promotion (Guided ignores promotions).
+	initG := mkInit("drive", "guided")
+	if res := Check(initG, mkAll(initG), func(PauseCategory) bool { return true }, detect); res.Verdict != "pause" || res.Pause.Category != string(CategorySeamDetected) {
+		t.Fatalf("guided should pause SeamDetected, got %+v", res)
+	}
+
+	// Supervised → pause at the boundary (CategorySupervised wins first).
+	initS := mkInit("drive", "supervised")
+	if res := Check(initS, mkAll(initS), nil, detect); res.Verdict != "pause" || res.Pause.Category != string(CategorySupervised) {
+		t.Fatalf("supervised should pause at boundary, got %+v", res)
+	}
+}
+
+// TestCheckAuthoredWinsOverDetected: when the candidate's overlap is authored
+// AND the target is delivering, the authored gate excludes it from selection
+// and the fallback emits SeamCollision — never SeamDetected — even if the
+// detector also reports the same overlap.
+func TestCheckAuthoredWinsOverDetected(t *testing.T) {
+	init := mkInit("drive", "guided")
+	all := []*spec.Spec{init,
+		withConflict(mkChild("aaa", "drive", spec.StatusPlanning), "peer"),
+		{Slug: "peer", Type: spec.TypeFeature, Status: spec.StatusDelivering},
+	}
+	detect := func(slug string) []DetectedConflict {
+		return []DetectedConflict{{Slug: "peer", Files: []string{"src/shared.go"}}}
+	}
+	res := Check(init, all, nil, detect)
+	if res.Verdict != "pause" || res.Pause == nil {
+		t.Fatalf("want pause, got %+v", res)
+	}
+	if res.Pause.Category != string(CategorySeamCollision) {
+		t.Errorf("category=%q, want SeamCollision (authored wins, never SeamDetected)", res.Pause.Category)
+	}
+}
+
+// TestCheckNilDetectorMatchesPiece1: a nil detector never emits SeamDetected
+// and is deterministic across runs; an empty detector yields the identical
+// verdict — the piece-1 backward-compat / determinism anchor.
+func TestCheckNilDetectorMatchesPiece1(t *testing.T) {
+	init := mkInit("drive", "guided")
+	all := []*spec.Spec{init,
+		mkChild("aaa", "drive", spec.StatusPlanning),
+		withPriority(mkChild("zzz", "drive", spec.StatusPlanning), "critical"),
+	}
+	first := Check(init, all, nil, nil)
+	if first.Pause != nil && first.Pause.Category == string(CategorySeamDetected) {
+		t.Fatalf("nil detector must never emit SeamDetected, got %+v", first)
+	}
+	for i := 0; i < 10; i++ {
+		got := Check(init, all, nil, nil)
+		if got.Verdict != first.Verdict || got.NextSpec != first.NextSpec {
+			t.Fatalf("run %d differs from first: %+v vs %+v", i, got, first)
+		}
+	}
+	// An empty (no-op) detector must produce the same verdict as nil.
+	noop := func(string) []DetectedConflict { return nil }
+	if got := Check(init, all, nil, noop); got.Verdict != first.Verdict || got.NextSpec != first.NextSpec {
+		t.Fatalf("empty detector diverged from nil: %+v vs %+v", got, first)
+	}
+}
+
 // TestCheckBackwardCompatSlugOrder: no priorities + no conflicts-with must
 // reproduce today's slug-order selection AND today's Remaining/Completed
 // ordering.
@@ -366,7 +504,7 @@ func TestCheckBackwardCompatSlugOrder(t *testing.T) {
 		mkChild("alpha", "drive", spec.StatusPlanning),
 		mkChild("bravo", "drive", spec.StatusPlanning),
 	}
-	res := Check(init, all, nil)
+	res := Check(init, all, nil, nil)
 	if res.NextSpec != "alpha" {
 		t.Errorf("next=%q, want alpha (slug-first when no priorities)", res.NextSpec)
 	}

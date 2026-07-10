@@ -10,7 +10,9 @@ import (
 
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/drive"
+	"github.com/hero-engine/hero/internal/driveio"
 	"github.com/hero-engine/hero/internal/feed"
+	"github.com/hero-engine/hero/internal/index"
 	"github.com/hero-engine/hero/internal/spec"
 	"github.com/spf13/cobra"
 )
@@ -100,7 +102,17 @@ func runGoal(cmd *cobra.Command, args []string) error {
 		if perr != nil {
 			return perr
 		}
-		res := drive.Check(init, all, promo.IsPromoted)
+		// Self-heal the index so the detected-seam backstop reasons over
+		// current file footprints; a stale verdict beats aborting the check.
+		if _, rerr := index.RefreshIfStale(heroDir); rerr != nil {
+			fmt.Fprintf(os.Stderr, "Warning: index refresh failed: %v\n", rerr)
+		}
+		idx, ierr := index.Open(heroDir)
+		if ierr != nil {
+			return fmt.Errorf("opening index: %w", ierr)
+		}
+		defer idx.Close()
+		res := drive.Check(init, all, promo.IsPromoted, driveio.Detector(idx))
 		if err := reconcilePause(heroDir, cfg, init.Slug, all, &res); err != nil {
 			return err
 		}

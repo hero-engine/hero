@@ -93,6 +93,116 @@ func TestGoalCheckContinue(t *testing.T) {
 	}
 }
 
+// goalChildAWithChanges is a designed child that touches a shared file (so the
+// index records a file footprint the detected-seam backstop can match).
+const goalChildAWithChanges = `---
+title: Child A
+type: feature
+status: planning
+horizon: now
+relations:
+  - target: drive
+    kind: parent
+---
+# Child A
+
+## Kickoff
+
+deliver child a
+
+## Acceptance Criteria
+
+- WHEN invoked, THE SYSTEM SHALL produce the A result.
+
+## Changes
+
+1. Edit ` + "`internal/shared/util.go`" + ` — touch the shared helper.
+`
+
+// goalChildAConflictsPeer is the same child but authoring conflicts-with the
+// in-flight peer, so the authored gate (not the detected backstop) fires.
+const goalChildAConflictsPeer = `---
+title: Child A
+type: feature
+status: planning
+horizon: now
+relations:
+  - target: drive
+    kind: parent
+  - target: in-flight-peer
+    kind: conflicts-with
+---
+# Child A
+
+## Kickoff
+
+deliver child a
+
+## Acceptance Criteria
+
+- WHEN invoked, THE SYSTEM SHALL produce the A result.
+
+## Changes
+
+1. Edit ` + "`internal/shared/util.go`" + ` — touch the shared helper.
+`
+
+// deliveringPeer is an in-flight (delivering) spec touching the same file as
+// child-a — the undeclared seam the backstop must surface.
+const deliveringPeer = `---
+title: In Flight Peer
+type: feature
+status: delivering
+horizon: now
+---
+# In Flight Peer
+
+## Changes
+
+1. Edit ` + "`internal/shared/util.go`" + ` — also touch the shared helper.
+`
+
+// TestGoalCheckDetectsUndeclaredSeam: an undeclared whole-file overlap against a
+// delivering spec pauses `hero goal --check` with SeamDetected, naming the file
+// and the in-flight spec.
+func TestGoalCheckDetectsUndeclaredSeam(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("planning/initiatives/drive/spec.md", goalInitiative)
+	env.addSpec("planning/initiatives/drive/child-a/spec.md", goalChildAWithChanges)
+	env.addSpec("planning/features/in-flight-peer/spec.md", deliveringPeer)
+
+	out, err := runCmd("goal", "drive", "--check")
+	if err != nil {
+		t.Fatalf("goal check: %v", err)
+	}
+	if !strings.Contains(out, `"verdict": "pause"`) || !strings.Contains(out, `"category": "SeamDetected"`) {
+		t.Errorf("undeclared overlap should pause SeamDetected, got:\n%s", out)
+	}
+	if !strings.Contains(out, "in-flight-peer") || !strings.Contains(out, "internal/shared/util.go") {
+		t.Errorf("reason should name the in-flight spec and overlapping file, got:\n%s", out)
+	}
+}
+
+// TestGoalCheckAuthoredConflictStaysSeamCollision: when the overlap IS authored
+// as conflicts-with, the authored gate wins — SeamCollision, not SeamDetected.
+func TestGoalCheckAuthoredConflictStaysSeamCollision(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("planning/initiatives/drive/spec.md", goalInitiative)
+	env.addSpec("planning/initiatives/drive/child-a/spec.md", goalChildAConflictsPeer)
+	env.addSpec("planning/features/in-flight-peer/spec.md", deliveringPeer)
+
+	out, err := runCmd("goal", "drive", "--check")
+	if err != nil {
+		t.Fatalf("goal check: %v", err)
+	}
+	if !strings.Contains(out, `"verdict": "pause"`) || !strings.Contains(out, `"category": "SeamCollision"`) {
+		t.Errorf("authored conflict should stay SeamCollision, got:\n%s", out)
+	}
+	if strings.Contains(out, "SeamDetected") {
+		t.Errorf("authored conflict must not emit SeamDetected, got:\n%s", out)
+	}
+}
+
 func TestGoalRejectsNonInitiative(t *testing.T) {
 	env := newTestEnv(t)
 	env.addSpec("planning/initiatives/drive/spec.md", goalInitiative)

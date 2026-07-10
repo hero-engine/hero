@@ -1258,18 +1258,42 @@ func (idx *DB) FindTripwiresByTrigger(query string) ([]TripwireResult, error) {
 	return results, specRows.Err()
 }
 
-// FindConflicts finds in-flight specs that touch overlapping files with the given spec.
+// FindConflicts finds in-flight specs (planning, in-review, or delivering)
+// that touch overlapping files with the given spec.
 func (idx *DB) FindConflicts(slug string) ([]ConflictResult, error) {
-	rows, err := idx.db.Query(`
+	return idx.findConflicts(slug, "planning", "in-review", "delivering")
+}
+
+// FindDeliveringConflicts is a scoped variant of FindConflicts that narrows the
+// status filter to delivering-only. The /drive judge's detected-seam backstop
+// uses it so its scope matches the authored gate's IsLocallyDelivering — an
+// overlap only matters when the other spec is actively in flight. Not a second
+// detector: same overlap engine, narrower status set.
+func (idx *DB) FindDeliveringConflicts(slug string) ([]ConflictResult, error) {
+	return idx.findConflicts(slug, "delivering")
+}
+
+// findConflicts is the shared overlap engine: it finds specs in any of the
+// given statuses whose files overlap slug's, grouped per spec with overlapping
+// files in a deterministic order (ORDER BY s.slug, ft2.file_path).
+func (idx *DB) findConflicts(slug string, statuses ...string) ([]ConflictResult, error) {
+	placeholders := make([]string, len(statuses))
+	argv := make([]interface{}, 0, len(statuses)+1)
+	argv = append(argv, slug)
+	for i, st := range statuses {
+		placeholders[i] = "?"
+		argv = append(argv, st)
+	}
+	rows, err := idx.db.Query(fmt.Sprintf(`
 		SELECT DISTINCT s.slug, s.title, s.type, s.status, s.path,
 			ft2.file_path, s.claimed_by
 		FROM files_touched ft1
 		JOIN files_touched ft2 ON ft1.file_path = ft2.file_path AND ft1.spec_slug != ft2.spec_slug
 		JOIN specs s ON s.slug = ft2.spec_slug
 		WHERE ft1.spec_slug = ?
-		AND s.status IN ('planning', 'in-review', 'delivering')
+		AND s.status IN (%s)
 		ORDER BY s.slug, ft2.file_path
-	`, slug)
+	`, strings.Join(placeholders, ", ")), argv...)
 	if err != nil {
 		return nil, fmt.Errorf("finding conflicts: %w", err)
 	}

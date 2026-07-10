@@ -14,6 +14,15 @@ type PauseInfo struct {
 	Reason   string `json:"reason"`
 }
 
+// DetectedConflict is one currently-delivering spec whose files whole-file
+// overlap the candidate. It lives in package drive (not internal/index) so the
+// pure predicate stays decoupled from the sqlite-backed index — the real
+// callers build these via the internal/driveio seam; tests pass a fake.
+type DetectedConflict struct {
+	Slug  string   // the in-flight (delivering) spec
+	Files []string // the overlapping file paths, in index order
+}
+
 // CheckResult is the per-turn verdict `hero goal --check` emits — the
 // contract the harness Stop hook consumes. Derived from on-disk state only,
 // so a cold process produces the same verdict.
@@ -118,6 +127,28 @@ func conflictDeliveringSlug(ic *intended, all []*spec.Spec) string {
 		}
 	}
 	return ""
+}
+
+// authoredConflictTargets returns the set of conflicts-with target slugs the
+// candidate authored (outbound, self-target excluded — matching
+// conflictDeliveringSlug's walk, but independent of delivering status). The
+// detected gate subtracts this set so an overlap already declared as a
+// conflicts-with is never re-reported as a heuristic SeamDetected.
+func authoredConflictTargets(ic *intended) map[string]bool {
+	out := map[string]bool{}
+	if ic.spec == nil {
+		return out
+	}
+	for _, r := range ic.spec.Relations {
+		if r.Kind != "conflicts-with" && r.Kind != "conflicts_with" {
+			continue
+		}
+		if r.Target == ic.slug {
+			continue // self-conflict is a no-op
+		}
+		out[r.Target] = true
+	}
+	return out
 }
 
 // completedSet returns the slugs of all specs in a completed/superseded
@@ -226,7 +257,13 @@ func specBySlugDrive(all []*spec.Spec, slug string) *spec.Spec {
 //
 // promoted is the learning hook (nil = no promotions), consulted only in
 // Autonomous mode for Promotable categories.
-func Check(init *spec.Spec, all []*spec.Spec, promoted func(PauseCategory) bool) CheckResult {
+//
+// detect is the injected, nil-safe overlap backstop: given the selected
+// candidate's slug it reports currently-delivering specs whose files overlap
+// the candidate (backed by index.FindDeliveringConflicts via the driveio seam).
+// A nil detect skips the detected gate entirely — the verdict is then
+// byte-for-byte identical to piece 1, the determinism / cold-start anchor.
+func Check(init *spec.Spec, all []*spec.Spec, promoted func(PauseCategory) bool, detect func(candidateSlug string) []DetectedConflict) CheckResult {
 	mode := ParseMode(init.Autonomy)
 	completed := completedSet(all)
 	res := CheckResult{Verdict: "done", Initiative: init.Slug}
@@ -297,6 +334,24 @@ func Check(init *spec.Spec, all []*spec.Spec, promoted func(PauseCategory) bool)
 		} else {
 			ctx.Blocked = true
 		}
+	} else if detect != nil {
+		// Detected gate: a post-selection whole-file overlap check on the
+		// already-chosen candidate (not the authored-fallback path, which owns
+		// SeamCollision above). It never steers selection — it only surfaces a
+		// seam nobody declared. Subtract the candidate's authored conflicts-with
+		// targets so an authored collision is never double-reported here, then
+		// take the first remaining overlap (detect returns slug-ordered results,
+		// so "first" is deterministic).
+		authored := authoredConflictTargets(nextI)
+		for _, dc := range detect(nextI.slug) {
+			if authored[dc.Slug] {
+				continue // authored wins — handled by the authored gate, not here
+			}
+			ctx.SeamDetected = true
+			ctx.SeamDetectedSlug = dc.Slug
+			ctx.SeamDetectedFiles = dc.Files
+			break
+		}
 	}
 
 	res.NextSpec = nextI.slug
@@ -326,6 +381,12 @@ type DryStep struct {
 
 // DryRun previews up to n transitions Check WOULD take, optimistically
 // assuming each "continue" child then finishes. Stops on a pause or done.
+//
+// DryRun stays authored-only: it takes no detector and never applies the
+// detected gate. It optimistically simulates children finishing (see
+// completed[nextI.slug] = true below), but the index-backed detector reflects
+// on-disk delivering state, not those simulated completions — wiring it here
+// would produce a misleading preview. Detected-overlap preview is a follow-up.
 func DryRun(init *spec.Spec, all []*spec.Spec, n int, promoted func(PauseCategory) bool) []DryStep {
 	mode := ParseMode(init.Autonomy)
 	intendeds := buildIntended(init, all)
