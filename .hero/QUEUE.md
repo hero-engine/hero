@@ -6,7 +6,21 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-10T05:55:24Z · 80 ready specs_
+_Generated: 2026-07-10T06:06:11Z · 78 ready specs_
+
+## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
+_feature · delivering · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/specs/retrieval-contradiction-detection/spec.md)_
+
+---
+
+## satellite-corpus-integration — "Satellite Corpus Integration — Scope as a First-Class Facet"
+_feature · delivering · horizon: now_
+
+Resume by reading `.hero/planning/features/satellite-corpus-integration/spec.md` for the full design, then continue Phase 2 (index + filter surfaces) — Phase 1 (slash-command scope injection) and Phase 3 (migration execution) are also pending. The parent spec [monorepo-satellite-installs](../monorepo-satellite-installs/spec.md) shipped in commits f279f42 and 48a379c. Phase 2 is the highest-leverage next step because it's what makes scope queryable from the existing read surfaces (`list`, `search`, `recap`, `feed`).
+
+---
 
 ## single-source-install-p1-agents-md — "Single-Source Install P1 — AGENTS.md as the Only Root Instruction File"
 _feature · delivering · horizon: now_
@@ -42,56 +56,6 @@ _initiative · planning · horizon: now_
 _Run opener — arm with `/drive cold-start-trust-hardening`_
 
 Eliminate the class of first-use failures where Hero degrades silently or misleadingly, forcing the user to guess. Concretely: every relationship a user declares either becomes an edge or produces a precise error; the deterministic (Tier-1) graph is never confused with optional LLM enrichment (Tier-2); and routine Hero commands stop dirtying the tree or crying wolf.
-
----
-
-## knowledge-surfacing — "Knowledge Surfacing — Everything Captured Is Retrievable and Fed at the Right Time"
-_initiative · planning · horizon: now_
-
-_Run opener — arm with `/drive knowledge-surfacing`_
-
-Run until `hero verify knowledge-surfacing` reports PASS — every child
-(`knowledge-content-retrieval`, then `knowledge-context-injection`) designed,
-delivered, and verified — or a `needs_me` pause is raised. Order is forced: P2
-`depends-on` P1, so P1 ships first. Pause on any design fork (the ingest-seam
-choice, the `category`-column schema migration), any irreversible action, or a
-stuck gate.
-
----
-
-## flat-tripwire-trigger-parity — "Flat tripwires never trigger-highlight — wire knowledge triggers into FindTripwiresByTrigger"
-_enhancement · planning · horizon: now_
-
-`FindTripwiresByTrigger` (`internal/index/index.go:1175`) matches context tokens
-against the `tripwire_triggers` table, which `IndexSpec` populates from spec
-`Triggers` and which flat knowledge never enters — so a flat tripwire's triggers
-are invisible to it. It has **four** consumers, all equally blind:
-`internal/cli/anchor.go:51`, `internal/cli/tripwire.go:82`, and
-`internal/serve/mcp_tools.go:889` and `:941`.
-
-The correct fix is a single DB seam, not four in-memory patches (an anchor-only
-patch would leave `hero tripwire` and both MCP surfaces inconsistent — the exact
-per-surface drift this initiative exists to eliminate). Mirror the existing
-`knowledge_scopes` pattern:
-
-- **Migration** (`internal/index/index.go` `migrate`): add
-  `knowledge_triggers (id, knowledge_slug, trigger)` + a slug index, parallel to
-  `knowledge_scopes`.
-- **Capture** the triggers: `KnowledgeEntry` has no `Triggers` field today.
-  Add one and populate it in `parseKnowledgeFile`
-  (`internal/index/knowledge_discover.go`) from `spec.ParseFile`'s `s.Triggers`
-  (already parsed, just not carried).
-- **Ingest** (`IndexKnowledge`): delete-then-insert `knowledge_triggers` for the
-  slug, exactly like the `knowledge_scopes` block already does; clean up in
-  `RemoveKnowledge`.
-- **Query** (`FindTripwiresByTrigger`): union matched flat-tripwire slugs from
-  `knowledge_triggers` and build their `TripwireResult`s from the `knowledge`
-  table + `spec.ParseFile(path)`, reusing the same section-parsing tail that
-  `FindAllTripwires` now uses for flat tripwires. Match semantics must stay
-  identical (case-insensitive token equality OR substring containment).
-
-Because all four consumers call `FindTripwiresByTrigger`, they light up
-together.
 
 ---
 
@@ -273,13 +237,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
-## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/specs/retrieval-contradiction-detection/spec.md)_
-
----
-
 ## hero-agent-run-validation — Hero Agent Run Validation — First-Use Smoke Test for Headless Delivery
 _feature · planning · horizon: now_
 
@@ -379,13 +336,6 @@ Resume by reading `.hero/planning/features/satellite-scope-extras/spec.md`. Phas
 _feature · planning · horizon: now_
 
 Resume by reading the spec at `.hero/planning/features/satellite-harness-coverage/spec.md`. Closes the per-harness coverage gap from the satellite arc. Mostly a registry edit (`targetLayouts`) plus a small refactor of `perTargetMarker` to accept multiple targets and a written-paths dedup in `Materialize`. Parent spec: monorepo-satellite-installs. Verified gap during example codebase migration (OpenCode+Claude both installed at root, only Claude got the marker).
-
----
-
-## satellite-corpus-integration — "Satellite Corpus Integration — Scope as a First-Class Facet"
-_feature · planning · horizon: now_
-
-Resume by reading `.hero/planning/features/satellite-corpus-integration/spec.md` for the full design, then continue Phase 2 (index + filter surfaces) — Phase 1 (slash-command scope injection) and Phase 3 (migration execution) are also pending. The parent spec [monorepo-satellite-installs](../monorepo-satellite-installs/spec.md) shipped in commits f279f42 and 48a379c. Phase 2 is the highest-leverage next step because it's what makes scope queryable from the existing read surfaces (`list`, `search`, `recap`, `feed`).
 
 ---
 

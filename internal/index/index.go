@@ -238,6 +238,16 @@ func (idx *DB) migrate() error {
 			scope_glob     TEXT NOT NULL
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_knowledge_scopes_slug ON knowledge_scopes(knowledge_slug)`,
+		// flat-tripwire-trigger-parity: trigger keywords for flat tripwires in the
+		// isolated knowledge table, so FindTripwiresByTrigger can highlight them
+		// identically to spec.md-shaped tripwires. Parallel to knowledge_scopes,
+		// keyed by knowledge slug (no FK to specs — knowledge is isolated).
+		`CREATE TABLE IF NOT EXISTS knowledge_triggers (
+			id             INTEGER PRIMARY KEY AUTOINCREMENT,
+			knowledge_slug TEXT NOT NULL,
+			trigger        TEXT NOT NULL
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_knowledge_triggers_slug ON knowledge_triggers(knowledge_slug)`,
 	}
 
 	for _, m := range migrations {
@@ -406,6 +416,7 @@ type KnowledgeEntry struct {
 	Domain     string
 	Tags       []string
 	Scope      []string // code globs from frontmatter `scope:` — drives injection
+	Triggers   []string // trigger keywords from frontmatter `triggers:` — drives tripwire highlighting
 	Content    string
 	ModifiedAt time.Time
 }
@@ -451,6 +462,18 @@ func (idx *DB) IndexKnowledge(e *KnowledgeEntry) error {
 		}
 	}
 
+	// Refresh trigger keywords (tripwire highlighting). Only flat tripwires
+	// carry them; other knowledge has none. Delete-then-insert so removing a
+	// tripwire's `triggers:` self-heals on the next reindex.
+	if _, err := tx.Exec("DELETE FROM knowledge_triggers WHERE knowledge_slug = ?", e.Slug); err != nil {
+		return err
+	}
+	for _, trig := range e.Triggers {
+		if _, err := tx.Exec("INSERT INTO knowledge_triggers (knowledge_slug, trigger) VALUES (?, ?)", e.Slug, trig); err != nil {
+			return fmt.Errorf("inserting knowledge trigger: %w", err)
+		}
+	}
+
 	return tx.Commit()
 }
 
@@ -465,6 +488,9 @@ func (idx *DB) RemoveKnowledge(slug string) error {
 		return err
 	}
 	if _, err := tx.Exec("DELETE FROM knowledge_scopes WHERE knowledge_slug = ?", slug); err != nil {
+		return err
+	}
+	if _, err := tx.Exec("DELETE FROM knowledge_triggers WHERE knowledge_slug = ?", slug); err != nil {
 		return err
 	}
 	if _, err := tx.Exec("DELETE FROM knowledge WHERE slug = ?", slug); err != nil {
@@ -1196,54 +1222,155 @@ func (idx *DB) FindTripwiresByTrigger(query string) ([]TripwireResult, error) {
 		if err := rows.Scan(&slug, &trigger); err != nil {
 			return nil, err
 		}
-		trigger = strings.ToLower(trigger)
-		for _, tok := range tokens {
-			if tok == trigger || strings.Contains(query, trigger) {
-				matchedSlugs[slug] = true
-				break
-			}
+		if triggerMatches(query, tokens, trigger) {
+			matchedSlugs[slug] = true
 		}
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	if len(matchedSlugs) == 0 {
+	var results []TripwireResult
+
+	// Load the matched spec.md-shaped tripwires.
+	if len(matchedSlugs) > 0 {
+		var placeholders []string
+		var args []interface{}
+		for slug := range matchedSlugs {
+			placeholders = append(placeholders, "?")
+			args = append(args, slug)
+		}
+
+		specRows, err := idx.db.Query(fmt.Sprintf(`
+			SELECT s.slug, s.title, s.type, s.status, s.path, s.tags
+			FROM specs s
+			WHERE s.slug IN (%s)
+			ORDER BY s.slug
+		`, strings.Join(placeholders, ",")), args...)
+		if err != nil {
+			return nil, fmt.Errorf("loading matched tripwires: %w", err)
+		}
+		defer specRows.Close()
+
+		for specRows.Next() {
+			var r TripwireResult
+			var specType, status string
+			if err := specRows.Scan(&r.Slug, &r.Title, &specType, &status, &r.Path, &r.Tags); err != nil {
+				return nil, err
+			}
+			r.Type = spec.Type(specType)
+			r.Status = spec.Status(status)
+
+			s, err := spec.ParseFile(r.Path)
+			if err != nil {
+				continue
+			}
+			r.Severity = s.Severity
+			if r.Severity == "" {
+				r.Severity = "high"
+			}
+			r.Constraint = s.Sections["constraint"]
+			r.Why = s.Sections["why"]
+			r.Instead = s.Sections["instead"]
+			r.Triggers = s.Triggers
+			results = append(results, r)
+		}
+		if err := specRows.Err(); err != nil {
+			return nil, err
+		}
+	}
+
+	// Union flat tripwires whose triggers (in the isolated knowledge table)
+	// match the same query. These never reach tripwire_triggers, so without
+	// this branch a flat tripwire with a `triggers:` list would list but never
+	// highlight. Spec: flat-tripwire-trigger-parity.
+	kwResults, err := idx.matchKnowledgeTripwires(query, tokens)
+	if err != nil {
+		return nil, err
+	}
+	results = append(results, kwResults...)
+
+	return results, nil
+}
+
+// triggerMatches reports whether a trigger keyword matches the query — exact
+// token equality OR substring containment of the raw query. Shared by the
+// specs-table and knowledge-table tripwire scans so flat and spec.md-shaped
+// tripwires highlight on identical semantics.
+func triggerMatches(query string, tokens []string, trigger string) bool {
+	trigger = strings.ToLower(trigger)
+	for _, tok := range tokens {
+		if tok == trigger || strings.Contains(query, trigger) {
+			return true
+		}
+	}
+	return false
+}
+
+// matchKnowledgeTripwires returns TripwireResults for flat tripwires (isolated
+// knowledge table) whose knowledge_triggers rows match the query, built with the
+// same section-parsing tail FindAllTripwires uses for flat tripwires. Graceful
+// on an absent knowledge_triggers table (old schema): returns no results.
+func (idx *DB) matchKnowledgeTripwires(query string, tokens []string) ([]TripwireResult, error) {
+	rows, err := idx.db.Query(`
+		SELECT kt.knowledge_slug, kt.trigger
+		FROM knowledge_triggers kt
+		JOIN knowledge k ON k.slug = kt.knowledge_slug
+		WHERE k.type = 'tripwire' OR k.kind = 'tripwires'
+	`)
+	if err != nil {
+		return nil, nil // graceful: table may be absent on old schemas
+	}
+	defer rows.Close()
+
+	matched := make(map[string]bool)
+	for rows.Next() {
+		var slug, trigger string
+		if err := rows.Scan(&slug, &trigger); err != nil {
+			return nil, err
+		}
+		if triggerMatches(query, tokens, trigger) {
+			matched[slug] = true
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if len(matched) == 0 {
 		return nil, nil
 	}
 
-	// Load the matched tripwires
 	var placeholders []string
 	var args []interface{}
-	for slug := range matchedSlugs {
+	for slug := range matched {
 		placeholders = append(placeholders, "?")
 		args = append(args, slug)
 	}
-
-	specRows, err := idx.db.Query(fmt.Sprintf(`
-		SELECT s.slug, s.title, s.type, s.status, s.path, s.tags
-		FROM specs s
-		WHERE s.slug IN (%s)
-		ORDER BY s.slug
+	kwRows, err := idx.db.Query(fmt.Sprintf(`
+		SELECT slug, title, path
+		FROM knowledge
+		WHERE slug IN (%s)
+		ORDER BY slug
 	`, strings.Join(placeholders, ",")), args...)
 	if err != nil {
-		return nil, fmt.Errorf("loading matched tripwires: %w", err)
+		return nil, fmt.Errorf("loading matched flat tripwires: %w", err)
 	}
-	defer specRows.Close()
+	defer kwRows.Close()
 
 	var results []TripwireResult
-	for specRows.Next() {
+	for kwRows.Next() {
 		var r TripwireResult
-		var specType, status string
-		if err := specRows.Scan(&r.Slug, &r.Title, &specType, &status, &r.Path, &r.Tags); err != nil {
+		if err := kwRows.Scan(&r.Slug, &r.Title, &r.Path); err != nil {
 			return nil, err
 		}
-		r.Type = spec.Type(specType)
-		r.Status = spec.Status(status)
-
-		s, err := spec.ParseFile(r.Path)
-		if err != nil {
+		r.Type = spec.TypeTripwire
+		r.Status = spec.StatusActive
+		s, perr := spec.ParseFile(r.Path)
+		if perr != nil {
 			continue
+		}
+		if r.Title == "" {
+			r.Title = s.Title
 		}
 		r.Severity = s.Severity
 		if r.Severity == "" {
@@ -1255,7 +1382,7 @@ func (idx *DB) FindTripwiresByTrigger(query string) ([]TripwireResult, error) {
 		r.Triggers = s.Triggers
 		results = append(results, r)
 	}
-	return results, specRows.Err()
+	return results, kwRows.Err()
 }
 
 // FindConflicts finds in-flight specs (planning, in-review, or delivering)
@@ -1769,7 +1896,7 @@ func Rebuild(heroDir string) (*Stats, error) {
 	// Clear existing data
 	for _, table := range []string{"fts_specs", "files_touched", "root_causes", "decisions",
 		"convention_scopes", "tripwire_triggers", "spec_relations", "claims", "specs",
-		"fts_knowledge", "knowledge", "knowledge_scopes"} {
+		"fts_knowledge", "knowledge", "knowledge_scopes", "knowledge_triggers"} {
 		if _, err := idx.db.Exec(fmt.Sprintf("DELETE FROM %s", table)); err != nil {
 			return nil, fmt.Errorf("clearing %s: %w", table, err)
 		}

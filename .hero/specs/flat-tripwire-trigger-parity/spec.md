@@ -2,7 +2,7 @@
 title: "Flat tripwires never trigger-highlight — wire knowledge triggers into FindTripwiresByTrigger"
 slug: flat-tripwire-trigger-parity
 type: enhancement
-status: planning
+status: completed
 priority: P3
 size: small
 domain: engineering
@@ -13,6 +13,7 @@ relations:
     kind: parent
   - target: knowledge-context-injection
     kind: depends-on
+completed_at: 2026-07-10T06:05:05Z
 ---
 
 # Flat tripwires never trigger-highlight — wire knowledge triggers into FindTripwiresByTrigger
@@ -33,36 +34,20 @@ identically to `<slug>/spec.md`-shaped tripwires — with no per-surface patch.
 
 ## Kickoff
 
-`FindTripwiresByTrigger` (`internal/index/index.go:1175`) matches context tokens
-against the `tripwire_triggers` table, which `IndexSpec` populates from spec
-`Triggers` and which flat knowledge never enters — so a flat tripwire's triggers
-are invisible to it. It has **four** consumers, all equally blind:
-`internal/cli/anchor.go:51`, `internal/cli/tripwire.go:82`, and
-`internal/serve/mcp_tools.go:889` and `:941`.
-
-The correct fix is a single DB seam, not four in-memory patches (an anchor-only
-patch would leave `hero tripwire` and both MCP surfaces inconsistent — the exact
-per-surface drift this initiative exists to eliminate). Mirror the existing
-`knowledge_scopes` pattern:
-
-- **Migration** (`internal/index/index.go` `migrate`): add
-  `knowledge_triggers (id, knowledge_slug, trigger)` + a slug index, parallel to
-  `knowledge_scopes`.
-- **Capture** the triggers: `KnowledgeEntry` has no `Triggers` field today.
-  Add one and populate it in `parseKnowledgeFile`
-  (`internal/index/knowledge_discover.go`) from `spec.ParseFile`'s `s.Triggers`
-  (already parsed, just not carried).
-- **Ingest** (`IndexKnowledge`): delete-then-insert `knowledge_triggers` for the
-  slug, exactly like the `knowledge_scopes` block already does; clean up in
-  `RemoveKnowledge`.
-- **Query** (`FindTripwiresByTrigger`): union matched flat-tripwire slugs from
-  `knowledge_triggers` and build their `TripwireResult`s from the `knowledge`
-  table + `spec.ParseFile(path)`, reusing the same section-parsing tail that
-  `FindAllTripwires` now uses for flat tripwires. Match semantics must stay
-  identical (case-insensitive token equality OR substring containment).
-
-Because all four consumers call `FindTripwiresByTrigger`, they light up
-together.
+**Pick up at: DELIVERED — pending `hero spec verify`.** The `knowledge_triggers`
+DB seam is implemented in `internal/index/index.go` (migration + slug index,
+`KnowledgeEntry.Triggers`, `IndexKnowledge`/`RemoveKnowledge`/`Rebuild`
+maintenance, and a `matchKnowledgeTripwires` union inside `FindTripwiresByTrigger`
+sharing a `triggerMatches` helper for identical semantics), with capture in
+`internal/index/knowledge_discover.go`. All four consumers
+(`anchor.go`, `tripwire.go`, `mcp_tools.go` ×2) call `FindTripwiresByTrigger`
+unchanged — no call-site edits, as the seam design requires. Tests
+(highlight/parity, negative, self-heal) are in
+`internal/index/knowledge_discover_test.go`; `go test ./...` is green (86 pkgs).
+See the Completion Ledger below. Next action: cold audit → `hero spec verify
+flat-tripwire-trigger-parity` (last open child of the knowledge-surfacing
+initiative; on completion the initiative auto-completes via `hero check
+--reconcile`).
 
 ## Scope
 
@@ -109,6 +94,29 @@ together.
   assert no stale `knowledge_triggers` rows remain.
 - `go test ./...` green; existing `FindAllTripwires` / `FindTripwiresByTrigger`
   tests still pass.
+
+## Completion Ledger
+
+| AC | Status | Note |
+|----|--------|------|
+| AC-1 (flat tripwire trigger-highlights in anchor) | DONE | `knowledge_triggers` seam + `matchKnowledgeTripwires` union in `FindTripwiresByTrigger`; `TestFlatTripwireHighlightsByTrigger` |
+| AC-2 (flat/spec.md parity) | DONE | shared `triggerMatches` helper drives both scans; parity fixture (flat + spec.md, identical triggers) both highlight in `TestFlatTripwireHighlightsByTrigger` |
+| AC-3 (tripwire + MCP surfaces, no call-site edits) | DONE | all four consumers call `FindTripwiresByTrigger` unchanged; `git diff` touches no call site |
+| AC-4 (no triggers → lists, never highlights) | DONE | `TestFlatTripwireNoTriggersNeverHighlights` |
+| AC-5 (self-heal on edit/remove) | DONE | delete-then-insert in `IndexKnowledge`, delete in `RemoveKnowledge`, `knowledge_triggers` added to `Rebuild` clear-list; `TestFlatTripwireTriggerSelfHeals` |
+| Validation (`go test ./...` green) | DONE | 86 packages ok, 0 failed |
+
+- [x] exercise-the-feature: parity fixture drives a flat and a spec.md-shaped tripwire through the real `RefreshIfStale` → `FindTripwiresByTrigger` path; both highlight, untriggered flat never does, self-heal verified against the DB rows.
+
+## Changes
+
+| # | Change | Status |
+|---|--------|--------|
+| 1 | `internal/index/index.go`: `knowledge_triggers` table + slug index (migration); `KnowledgeEntry.Triggers` field | DONE |
+| 2 | `internal/index/index.go`: `IndexKnowledge`/`RemoveKnowledge` maintain `knowledge_triggers` (delete-then-insert + cleanup); `Rebuild` clear-list | DONE |
+| 3 | `internal/index/index.go`: `FindTripwiresByTrigger` unions flat tripwires via new `matchKnowledgeTripwires`; shared `triggerMatches` helper for identical semantics | DONE |
+| 4 | `internal/index/knowledge_discover.go`: capture `s.Triggers` in `parseKnowledgeFile` | DONE |
+| 5 | Tests: highlight/parity, negative, self-heal (`internal/index/knowledge_discover_test.go`) | DONE |
 
 ## Notes
 

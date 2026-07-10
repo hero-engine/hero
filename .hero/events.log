@@ -294,3 +294,7 @@
 {"ts":"2026-07-10T03:36:58.969905Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"eventslog-churn-fix-tracked-not-dirty","message":"status -\u003e completed"}
 {"ts":"2026-07-10T05:54:25.63572Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"flat-named-spec-discovery","message":"\"Flat-named spec files are invisible to discovery — verify can't resolve initiative children\""}
 {"ts":"2026-07-10T05:54:25.635823Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"flat-named-spec-discovery","message":"status -\u003e completed"}
+{"ts":"2026-07-10T06:05:07.056942Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"flat-tripwire-trigger-parity","message":"\"Flat tripwires never trigger-highlight — wire knowledge triggers into FindTripwiresByTrigger\""}
+{"ts":"2026-07-10T06:05:07.057062Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"flat-tripwire-trigger-parity","message":"status -\u003e completed"}
+{"ts":"2026-07-10T06:05:08.332444Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"knowledge-surfacing","message":"\"Knowledge Surfacing — Everything Captured Is Retrievable and Fed at the Right Time\""}
+{"ts":"2026-07-10T06:05:08.332546Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"knowledge-surfacing","message":"status -\u003e completed"}

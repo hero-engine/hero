@@ -2,7 +2,7 @@
 title: "Knowledge Surfacing — Everything Captured Is Retrievable and Fed at the Right Time"
 slug: knowledge-surfacing
 type: initiative
-status: planning
+status: completed
 priority: P2
 size: large
 domain: engineering
@@ -34,6 +34,7 @@ mission_alignment: |
   or context is captured regardless of layout, and fed to the model at the
   moments that matter.
 autonomy: guided
+completed_at: 2026-07-10T06:05:07Z
 ---
 
 # Knowledge Surfacing — Everything Captured Is Retrievable and Fed at the Right Time
