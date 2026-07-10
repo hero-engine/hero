@@ -100,13 +100,14 @@ func parseKnowledgeFile(knowledgeDir, path string) *KnowledgeEntry {
 	slug := strings.TrimSuffix(rel, ".md")
 
 	var title, ftype, domain string
-	var tags, scope []string
+	var tags, scope, triggers []string
 	if s, perr := spec.ParseFile(path); perr == nil && s != nil {
 		title = strings.TrimSpace(s.Title)
 		ftype = string(s.Type)
 		domain = s.Domain
 		tags = s.Tags
 		scope = s.Scope
+		triggers = s.Triggers
 	}
 	if title == "" {
 		title = firstH1(content)
@@ -130,6 +131,7 @@ func parseKnowledgeFile(knowledgeDir, path string) *KnowledgeEntry {
 		Domain:     domain,
 		Tags:       tags,
 		Scope:      scope,
+		Triggers:   triggers,
 		Content:    content,
 		ModifiedAt: mt,
 	}

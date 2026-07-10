@@ -322,3 +322,200 @@ Use the query builder in internal/db.
 		t.Errorf("tripwire sections not parsed: %+v", found)
 	}
 }
+
+// flatTripwireBody renders a flat tripwire file with the given title and an
+// optional `triggers:` line (omitted when triggers is empty).
+func flatTripwireBody(title, triggersLine string) string {
+	return "---\ntitle: " + title + "\ntype: tripwire\nseverity: high\n" + triggersLine + "---\n# " + title + `
+
+## Constraint
+Do not do the forbidden thing.
+
+## Why
+It causes the bad outcome.
+
+## Instead
+Do the safe thing.
+`
+}
+
+func hasTripwire(results []TripwireResult, slug string) bool {
+	for i := range results {
+		if results[i].Slug == slug {
+			return true
+		}
+	}
+	return false
+}
+
+// TestFlatTripwireHighlightsByTrigger is the flat-tripwire-trigger-parity repro:
+// a flat tripwire with a `triggers:` list must now be trigger-highlighted by
+// FindTripwiresByTrigger (before the fix it appeared only in FindAllTripwires),
+// and it must highlight identically to a spec.md-shaped tripwire with the same
+// triggers for the same context (layout-agnostic parity).
+func TestFlatTripwireHighlightsByTrigger(t *testing.T) {
+	heroDir := newRefreshHeroDir(t)
+
+	// A flat tripwire in the isolated knowledge table.
+	writeKnowledge(t, heroDir, "tripwires/no-globalstate.md",
+		flatTripwireBody("No Global State", "triggers: [globalstate, \"mutable singleton\"]\n"))
+
+	// A spec.md-shaped tripwire with identical triggers → reaches the specs
+	// table via spec.Discover / IndexSpec (tripwire_triggers).
+	writeRefreshSpec(t, heroDir, "no-globalstate-spec", `---
+title: No Global State (spec-shaped)
+type: tripwire
+status: active
+triggers: [globalstate, "mutable singleton"]
+severity: high
+---
+# No Global State (spec-shaped)
+
+## Constraint
+Do not introduce a global.
+
+## Why
+It couples everything.
+
+## Instead
+Pass it explicitly.
+`)
+
+	if _, err := RefreshIfStale(heroDir); err != nil {
+		t.Fatalf("refresh: %v", err)
+	}
+	idx, err := Open(heroDir)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer idx.Close()
+
+	// Single-token trigger match.
+	matched, err := idx.FindTripwiresByTrigger("should we use globalstate here")
+	if err != nil {
+		t.Fatalf("FindTripwiresByTrigger: %v", err)
+	}
+	if !hasTripwire(matched, "tripwires/no-globalstate") {
+		t.Errorf("flat tripwire did not trigger-highlight; got %+v", matched)
+	}
+	if !hasTripwire(matched, "no-globalstate-spec") {
+		t.Errorf("spec-shaped tripwire did not trigger-highlight; got %+v", matched)
+	}
+
+	// Multi-word trigger (substring) match — parity on the second trigger too.
+	matched, err = idx.FindTripwiresByTrigger("what about a mutable singleton")
+	if err != nil {
+		t.Fatalf("FindTripwiresByTrigger (multiword): %v", err)
+	}
+	if !hasTripwire(matched, "tripwires/no-globalstate") || !hasTripwire(matched, "no-globalstate-spec") {
+		t.Errorf("multi-word trigger parity failed; got %+v", matched)
+	}
+
+	// The flat result must carry its parsed sections + severity, like the
+	// FindAllTripwires flat branch.
+	var flat *TripwireResult
+	for i := range matched {
+		if matched[i].Slug == "tripwires/no-globalstate" {
+			flat = &matched[i]
+		}
+	}
+	if flat == nil {
+		t.Fatal("flat tripwire missing from multiword match")
+	}
+	if flat.Severity != "high" || flat.Constraint == "" || flat.Why == "" || flat.Instead == "" {
+		t.Errorf("flat tripwire result not fully parsed: %+v", flat)
+	}
+}
+
+// TestFlatTripwireNoTriggersNeverHighlights covers the negative AC: a flat
+// tripwire with no `triggers:` still lists (FindAllTripwires) but is never
+// trigger-highlighted.
+func TestFlatTripwireNoTriggersNeverHighlights(t *testing.T) {
+	heroDir := newRefreshHeroDir(t)
+	writeKnowledge(t, heroDir, "tripwires/plain.md",
+		flatTripwireBody("Plain Tripwire", ""))
+
+	if _, err := RefreshIfStale(heroDir); err != nil {
+		t.Fatalf("refresh: %v", err)
+	}
+	idx, err := Open(heroDir)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer idx.Close()
+
+	all, err := idx.FindAllTripwires(heroDir)
+	if err != nil {
+		t.Fatalf("FindAllTripwires: %v", err)
+	}
+	if !hasTripwire(all, "tripwires/plain") {
+		t.Errorf("untriggered flat tripwire should still list; got %+v", all)
+	}
+
+	matched, err := idx.FindTripwiresByTrigger("plain tripwire mentioned in passing")
+	if err != nil {
+		t.Fatalf("FindTripwiresByTrigger: %v", err)
+	}
+	if hasTripwire(matched, "tripwires/plain") {
+		t.Errorf("untriggered flat tripwire must never highlight; got %+v", matched)
+	}
+}
+
+// TestFlatTripwireTriggerSelfHeals covers AC-5: editing away a flat tripwire's
+// `triggers:` (delete-then-insert) leaves no stale rows, and removing the file
+// orphan-cleans knowledge_triggers on the next refresh — parity with
+// knowledge_scopes.
+func TestFlatTripwireTriggerSelfHeals(t *testing.T) {
+	heroDir := newRefreshHeroDir(t)
+	path := writeKnowledge(t, heroDir, "tripwires/heals.md",
+		flatTripwireBody("Heals", "triggers: [healtrigger]\n"))
+
+	if _, err := RefreshIfStale(heroDir); err != nil {
+		t.Fatalf("refresh 1: %v", err)
+	}
+	idx, err := Open(heroDir)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	countRows := func(db *DB) int {
+		var n int
+		db.db.QueryRow("SELECT COUNT(*) FROM knowledge_triggers WHERE knowledge_slug = ?",
+			"tripwires/heals").Scan(&n)
+		return n
+	}
+	if got := countRows(idx); got != 1 {
+		t.Errorf("after index, want 1 knowledge_triggers row, got %d", got)
+	}
+	idx.Close()
+
+	// Edit-self-heal: rewrite the entry with no triggers via the same ingest
+	// path — the delete-then-insert must drop the stale row.
+	entry := parseKnowledgeFile(filepath.Join(heroDir, "knowledge"), path)
+	entry.Triggers = nil
+	idx2, _ := Open(heroDir)
+	if err := idx2.IndexKnowledge(entry); err != nil {
+		t.Fatalf("IndexKnowledge: %v", err)
+	}
+	if got := countRows(idx2); got != 0 {
+		t.Errorf("after edit-away, want 0 knowledge_triggers rows, got %d", got)
+	}
+	idx2.Close()
+
+	// Orphan cleanup: remove the file, refresh, assert no stale rows remain and
+	// nothing highlights.
+	if err := os.Remove(path); err != nil {
+		t.Fatalf("remove: %v", err)
+	}
+	if _, err := RefreshIfStale(heroDir); err != nil {
+		t.Fatalf("refresh 2: %v", err)
+	}
+	idx3, _ := Open(heroDir)
+	defer idx3.Close()
+	if got := countRows(idx3); got != 0 {
+		t.Errorf("after remove, want 0 knowledge_triggers rows, got %d", got)
+	}
+	matched, _ := idx3.FindTripwiresByTrigger("healtrigger now gone")
+	if hasTripwire(matched, "tripwires/heals") {
+		t.Errorf("removed flat tripwire still highlights; got %+v", matched)
+	}
+}
