@@ -2,12 +2,13 @@
 title: "Flat-named spec files are invisible to discovery — verify can't resolve initiative children"
 slug: flat-named-spec-discovery
 type: bug
-status: delivering
+status: completed
 priority: high
 severity: high
 size: medium
 domain: engineering
 tags: [spec-discovery, slug-resolution, verify, initiative-children, archive]
+completed_at: 2026-07-10T05:54:24Z
 ---
 
 # Flat-named spec files are invisible to discovery
@@ -115,7 +116,7 @@ So the fix must cover discovery **and** archive.
 |----|--------|------|
 | AC-1 | DONE | `Discover` flat-file branch; `TestDiscoverFlatNamedSpec` |
 | AC-2 | DONE | explicit-type gate; `TestDiscoverIgnoresNonSpecFlatFiles` |
-| AC-3 | DONE | covered by discovery; `ResolveOrHint` unchanged, resolves on exact match |
+| AC-3 | DONE | covered by discovery; `ResolveOrHint` resolves on exact match; `TestResolveOrHint/discovered_child_resolves_despite_being_in_children_table` locks step-1-beats-step-3 ordering |
 | AC-4 | DONE | `moveToSpecs` flat-file branch; `TestMoveToSpecsFlatFile` |
 | AC-5 | DONE | build + spec/cli tests green |
 

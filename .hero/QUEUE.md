@@ -6,26 +6,12 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-10T03:37:19Z · 81 ready specs_
+_Generated: 2026-07-10T05:55:24Z · 80 ready specs_
 
 ## single-source-install-p1-agents-md — "Single-Source Install P1 — AGENTS.md as the Only Root Instruction File"
 _feature · delivering · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/single-source-install-p1-agents-md/spec.md)_
-
----
-
-## flat-named-spec-discovery — "Flat-named spec files are invisible to discovery — verify can't resolve initiative children"
-_bug · delivering · horizon: now_
-
-Fix: flat-named spec files (e.g. initiative children stored as
-`<slug>.md` siblings of an initiative `spec.md`) are invisible to
-`spec.Discover`, so `hero spec verify <slug>` can't resolve them and
-`ResolveOrHint` misfires with a "hasn't been designed yet" hint. Two-part fix:
-(1) `spec.Discover` loads flat `.md` files that explicitly declare a work-spec
-`type:`; (2) `moveToSpecs` archives a flat-file spec to `specs/<slug>/spec.md`
-without dragging shared initiative-directory siblings. See root cause and AC in
-this spec. Verify with `go test ./internal/spec/... ./internal/cli/...`.
 
 ---
 

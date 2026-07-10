@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-10T03:37:19Z · projected from 395 source nodes_
+_Last refreshed: 2026-07-10T05:55:24Z · projected from 395 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 2h ago | single-source-install-p1-agents-md |
+| core | building | cmd/, internal/ | <1m ago | single-source-install-p1-agents-md |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | maturing | domains/engineering/ | 9h ago | — |
+| domains/engineering | maturing | domains/engineering/ | 11h ago | — |
 | domains/pm | maturing | domains/pm/ | 1d ago | — |
 | domains/sales | maturing | domains/sales/ | 1d ago | — |
-| landing | building | web/landing/ | 38d ago | hero-landing-page |
+| landing | building | web/landing/ | 39d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 2h ago | agent-outposts |
+| serve | building | internal/serve/ | 5h ago | agent-outposts |
 | (unassigned) | — | — | — | 191 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -53,17 +53,17 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Recently completed (last 14 days)
 
 - **(unassigned)** — eventslog-churn-fix-tracked-not-dirty, initiative-autocomplete-misses-completed-children, hero-surface-polish, content-remediation, compose-emits-conflicts-and-priority, mock-tracker-server, gitlab-tracker-support
-- **core** — priority-conflict-aware-drive-selection
-- **domains/engineering** — token-efficiency-pass, routing-file-completeness, harness-agnosticism-sweep
+- **core** — flat-named-spec-discovery, priority-conflict-aware-drive-selection
+- **domains/engineering** — token-efficiency-pass, routing-file-completeness
 - **serve** — drive-judge-findconflicts-backstop
 
 ## Next up across surfaces
 
 1. **landing** — `hero-landing-page` (P0, delivering)
 2. **core** — `single-source-install-p1-agents-md` (P0, delivering)
-3. **core** — `flat-named-spec-discovery` (high, delivering)
-4. **serve** — `hero-team-server` (P1, delivering)
-5. **serve** — `agent-outposts` (medium, delivering)
+3. **serve** — `hero-team-server` (P1, delivering)
+4. **serve** — `agent-outposts` (medium, delivering)
+5. **(unassigned)** — `team-connect` (—, delivering)
 
 ## Open risks & blockers
 

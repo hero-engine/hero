@@ -104,6 +104,21 @@ loose-child | A child without outer pipes`
 			wantHint: "no spec `report` found — did you mean `reports`, `resort`, `deport`?",
 		},
 		{
+			// Regression for flat-named-spec-discovery: once a flat child is
+			// discovered, its slug is both an exact-match spec AND a first-column
+			// entry in its initiative's children table. Step 1 (exact match) must
+			// win so verify resolves the real spec instead of misfiring the
+			// step-3 "hasn't been designed yet" hint. Guards the step ordering.
+			name: "discovered child resolves despite being in children table",
+			slug: "configurable-reranking",
+			specs: []*Spec{
+				initiativeWith("retrieval-quality", "children", childTable),
+				specWithSlug("configurable-reranking", TypeFeature),
+			},
+			wantSlug: "configurable-reranking",
+			wantHint: "",
+		},
+		{
 			name: "initiative-child beats fuzzy on tie",
 			slug: "configurable-reranking",
 			specs: []*Spec{
