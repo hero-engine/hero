@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-10T06:06:11Z · projected from 395 source nodes_
+_Last refreshed: 2026-07-10T06:21:25Z · projected from 395 source nodes_
 
 ## Surfaces
 
@@ -16,7 +16,7 @@ _Last refreshed: 2026-07-10T06:06:11Z · projected from 395 source nodes_
 | domains/sales | maturing | domains/sales/ | 1d ago | — |
 | landing | building | web/landing/ | 39d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | <1m ago | agent-outposts |
+| serve | building | internal/serve/ | 15m ago | agent-outposts |
 | (unassigned) | — | — | — | 190 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -47,12 +47,12 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - **"Knowledge Surfacing — Everything Captured Is Retrievable and Fed at the Right Time"** (surface: core) — 4/4 specs done · COMPLETED 2026-07-10
 - **Hero Surface Polish — Ongoing Quality Pass on the Web Companion** (surface: serve) — 5/5 specs done · COMPLETED 2026-07-10
-- **Content Remediation — Audit Follow-Through Across Packs, Gates, and Harnesses** (surface: core, domains/engineering) — 4/4 specs done · COMPLETED 2026-07-10
+- **Content Remediation — Audit Follow-Through Across Packs, Gates, and Harnesses** (surface: core, domains/engineering, domains/pm, domains/sales) — 8/8 specs done · COMPLETED 2026-07-10
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — knowledge-surfacing, eventslog-churn-fix-tracked-not-dirty, initiative-autocomplete-misses-completed-children, hero-surface-polish, content-remediation, compose-emits-conflicts-and-priority, mock-tracker-server
-- **core** — flat-tripwire-trigger-parity, flat-named-spec-discovery, priority-conflict-aware-drive-selection
+- **(unassigned)** — knowledge-surfacing, eventslog-churn-fix-tracked-not-dirty, initiative-autocomplete-misses-completed-children, hero-surface-polish, content-remediation, compose-emits-conflicts-and-priority
+- **core** — install-json-mode-repair-migrate-parity, flat-tripwire-trigger-parity, flat-named-spec-discovery, priority-conflict-aware-drive-selection
 - **domains/engineering** — token-efficiency-pass
 - **serve** — drive-judge-findconflicts-backstop
 

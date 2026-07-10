@@ -298,3 +298,5 @@
 {"ts":"2026-07-10T06:05:07.057062Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"flat-tripwire-trigger-parity","message":"status -\u003e completed"}
 {"ts":"2026-07-10T06:05:08.332444Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"knowledge-surfacing","message":"\"Knowledge Surfacing — Everything Captured Is Retrievable and Fed at the Right Time\""}
 {"ts":"2026-07-10T06:05:08.332546Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"knowledge-surfacing","message":"status -\u003e completed"}
+{"ts":"2026-07-10T06:21:03.685756Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"install-json-mode-repair-migrate-parity","message":"\"`hero install --repair`/`--migrate` ignore `--json` — stdout contract broken for programmatic consumers\""}
+{"ts":"2026-07-10T06:21:03.68587Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"install-json-mode-repair-migrate-parity","message":"status -\u003e completed"}

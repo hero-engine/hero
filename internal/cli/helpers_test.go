@@ -198,6 +198,8 @@ func resetFlags() {
 	installDryRun = false
 	installNoHooks = false
 	installJSON = false
+	installRepair = false
+	installMigrate = false
 
 	// Reset upgrade flags
 	upgradeDryRun = false
