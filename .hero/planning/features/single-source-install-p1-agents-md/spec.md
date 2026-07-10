@@ -2,7 +2,7 @@
 title: "Single-Source Install P1 — AGENTS.md as the Only Root Instruction File"
 slug: single-source-install-p1-agents-md
 type: feature
-status: planning
+status: delivering
 priority: P0
 tags: [install, agents-md, claude-md, instructions, migration]
 created: 2026-05-11

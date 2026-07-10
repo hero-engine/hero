@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-10T01:34:54Z · 81 ready specs_
+_Generated: 2026-07-10T01:34:55Z · 81 ready specs_
 
 ## single-source-install-p1-agents-md — "Single-Source Install P1 — AGENTS.md as the Only Root Instruction File"
 _feature · delivering · horizon: now_

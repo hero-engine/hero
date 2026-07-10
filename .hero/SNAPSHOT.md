@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-10T01:33:45Z · projected from 394 source nodes_
+_Last refreshed: 2026-07-10T01:34:54Z · projected from 394 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 7m ago | single-source-install-p1-agents-md |
+| core | building | cmd/, internal/ | 8m ago | single-source-install-p1-agents-md |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | maturing | domains/engineering/ | 7h ago | — |
@@ -16,7 +16,7 @@ _Last refreshed: 2026-07-10T01:33:45Z · projected from 394 source nodes_
 | domains/sales | maturing | domains/sales/ | 1d ago | — |
 | landing | building | web/landing/ | 38d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 47m ago | agent-outposts |
+| serve | building | internal/serve/ | 48m ago | agent-outposts |
 | (unassigned) | — | — | — | 190 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -76,5 +76,5 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
 - Specs covered: 177/367 (48%)
-- Projection generation: 0ms · Source nodes: 394
+- Projection generation: 1ms · Source nodes: 394
 

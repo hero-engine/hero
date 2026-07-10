@@ -28,7 +28,6 @@ relations:
     kind: related
   - target: spec-lifecycle-hygiene-breakdown
     kind: related
-completed_at: 2026-06-23T19:57:04Z
 ---
 
 ## Vision
