@@ -79,6 +79,26 @@ func committedTree(t *testing.T, dir string) map[string]bool {
 	return set
 }
 
+// TestPostCommitHook_DoesNotAppendEventsLog is the Prong 1 regression
+// guard: the post-commit hook must NOT append to .hero/events.log. Before
+// this fix it wrote a write-only {event: post-commit, sha} marker that
+// dirtied the tree the instant every commit finished. writeCheckpoint()
+// (the NEXT.md refresh) is deliberately preserved; only the events.log
+// append was removed. Spec: eventslog-churn-fix-tracked-not-dirty.
+func TestPostCommitHook_DoesNotAppendEventsLog(t *testing.T) {
+	env := newTestEnv(t)
+	eventsLog := filepath.Join(env.heroDir, "events.log")
+
+	if err := runHook(hookCmd, []string{"post-commit"}); err != nil {
+		t.Fatalf("post-commit hook must never error: %v", err)
+	}
+
+	if _, err := os.Stat(eventsLog); !os.IsNotExist(err) {
+		body, _ := os.ReadFile(eventsLog)
+		t.Errorf("post-commit hook must not create/append events.log; got:\n%s", body)
+	}
+}
+
 // writeHandoffFiles creates the projected handoff files on disk so the
 // pre-commit staging line has something to add. Mirrors what
 // `hero next checkpoint` would project.
@@ -90,9 +110,10 @@ func writeHandoffFiles(t *testing.T, root string, snapshot bool) {
 		t.Fatalf("mkdir next: %v", err)
 	}
 	files := map[string]string{
-		filepath.Join(heroDir, "NEXT.md"):  "# NEXT\nhandoff state\n",
-		filepath.Join(nextDir, "alice.md"): "# alice handoff\n",
-		filepath.Join(heroDir, "QUEUE.md"): "# QUEUE\n",
+		filepath.Join(heroDir, "NEXT.md"):    "# NEXT\nhandoff state\n",
+		filepath.Join(nextDir, "alice.md"):   "# alice handoff\n",
+		filepath.Join(heroDir, "QUEUE.md"):   "# QUEUE\n",
+		filepath.Join(heroDir, "events.log"): `{"ts":"2026-07-09T00:00:00Z","event":"claimed","slug":"x"}` + "\n",
 	}
 	if snapshot {
 		files[filepath.Join(heroDir, "SNAPSHOT.md")] = "# SNAPSHOT\nproject shape\n"
@@ -133,7 +154,7 @@ func TestIntegration_DefaultInstall_StagesHandoffFiles(t *testing.T) {
 	}
 
 	tree := committedTree(t, env.dir)
-	for _, want := range []string{".hero/NEXT.md", ".hero/SNAPSHOT.md", ".hero/next/alice.md", ".hero/QUEUE.md"} {
+	for _, want := range []string{".hero/NEXT.md", ".hero/SNAPSHOT.md", ".hero/next/alice.md", ".hero/QUEUE.md", ".hero/events.log"} {
 		if !tree[want] {
 			t.Errorf("expected %q in commit tree, got: %v", want, keys(tree))
 		}

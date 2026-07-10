@@ -32,6 +32,7 @@ func TestUpdateGitAttributes_BindsAllFourPathsToUnion(t *testing.T) {
 		".hero/NEXT.md",
 		".hero/QUEUE.md",
 		".hero/SNAPSHOT.md",
+		".hero/events.log",
 	} {
 		want := path + " merge=union"
 		if !strings.Contains(ga, want) {

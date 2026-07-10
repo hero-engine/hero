@@ -290,3 +290,5 @@
 {"ts":"2026-07-10T01:26:08.258762Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-surface-polish","message":"status -\u003e completed"}
 {"ts":"2026-07-10T01:32:38.360874Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"initiative-autocomplete-misses-completed-children","message":"\"Initiative auto-complete misses already-completed children — no standalone parent re-check strands every finished initiative\""}
 {"ts":"2026-07-10T01:32:38.360967Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"initiative-autocomplete-misses-completed-children","message":"status -\u003e completed"}
+{"ts":"2026-07-10T03:36:58.969803Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"eventslog-churn-fix-tracked-not-dirty","message":"\"events.log churn fix — keep it tracked, stop it dirtying the tree, let interesting events travel into commits\""}
+{"ts":"2026-07-10T03:36:58.969905Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"eventslog-churn-fix-tracked-not-dirty","message":"status -\u003e completed"}
