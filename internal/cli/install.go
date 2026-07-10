@@ -29,6 +29,27 @@ func emitJSON(payload any, originalErr error) error {
 	return originalErr
 }
 
+// emitInstallJSON runs fn with stdout silenced, then emits exactly one
+// InstallJSONOutput on stdout with the error field populated from fn's return
+// under the stable code. It honors the --json stdout contract for the install
+// short-circuits (satellite, repair, migrate) that return before the main
+// install body's JSON handling — without it, any early-returning path prints
+// human text and no parseable object. fn's error is returned unchanged so the
+// CLI still exits nonzero on failure.
+func emitInstallJSON(mode install.Mode, targetDir, version, code string, fn func() error) error {
+	start := time.Now()
+	var err error
+	silenceStdout(func() { err = fn() })
+	return emitJSON(install.InstallJSONOutput{
+		Target:     installTarget,
+		Mode:       string(mode),
+		TargetDir:  targetDir,
+		Version:    version,
+		DurationMs: time.Since(start).Milliseconds(),
+		Error:      install.NewJSONError(code, err),
+	}, err)
+}
+
 // silenceStdout redirects os.Stdout for the duration of fn, discarding
 // anything written. Used by --json modes to ensure ONLY the structured
 // JSON payload reaches the caller, even if a deep-helper still uses
@@ -131,10 +152,22 @@ func runInstall(cmd *cobra.Command, args []string) error {
 	// the cleanup happens transparently.
 	if installMigrate {
 		if mode != install.ModeProject || targetDir == "" {
-			return fmt.Errorf("--migrate requires project mode with an explicit target path")
+			modeErr := fmt.Errorf("--migrate requires project mode with an explicit target path")
+			if installJSON {
+				return emitInstallJSON(mode, targetDir, binaryVersion, "migrate_failed",
+					func() error { return modeErr })
+			}
+			return modeErr
 		}
-		fmt.Println("Note: `--migrate` is now equivalent to a regular install — legacy")
-		fmt.Println("symlink/canonical cleanup runs automatically. Continuing.")
+		// The note is human progress; in --json mode it would corrupt the
+		// single-object stdout contract, so route it to stderr instead.
+		if installJSON {
+			fmt.Fprintln(os.Stderr, "Note: `--migrate` is now equivalent to a regular install — legacy")
+			fmt.Fprintln(os.Stderr, "symlink/canonical cleanup runs automatically. Continuing.")
+		} else {
+			fmt.Println("Note: `--migrate` is now equivalent to a regular install — legacy")
+			fmt.Println("symlink/canonical cleanup runs automatically. Continuing.")
+		}
 		// Fall through to the regular install body below by treating
 		// the target as required. If no --target flag was passed, detect
 		// the first installed harness; auto-sync will refresh the rest.
@@ -142,7 +175,12 @@ func runInstall(cmd *cobra.Command, args []string) error {
 			if detected, derr := install.DetectFirstInstalledTarget(targetDir); derr == nil && detected != "" {
 				installTarget = string(detected)
 			} else {
-				return fmt.Errorf("--migrate requires either a --target flag or a previously-installed harness in %s", targetDir)
+				detectErr := fmt.Errorf("--migrate requires either a --target flag or a previously-installed harness in %s", targetDir)
+				if installJSON {
+					return emitInstallJSON(mode, targetDir, binaryVersion, "migrate_failed",
+						func() error { return detectErr })
+				}
+				return detectErr
 			}
 		}
 	}
@@ -156,7 +194,16 @@ func runInstall(cmd *cobra.Command, args []string) error {
 		}
 		ws, err := workspace.Locate(probeDir)
 		if err != nil {
-			return fmt.Errorf("--repair requires an existing workspace: %w", err)
+			locErr := fmt.Errorf("--repair requires an existing workspace: %w", err)
+			if installJSON {
+				return emitInstallJSON(mode, targetDir, binaryVersion, "repair_failed",
+					func() error { return locErr })
+			}
+			return locErr
+		}
+		if installJSON {
+			return emitInstallJSON(mode, targetDir, binaryVersion, "repair_failed",
+				func() error { return runSatelliteRepair(ws, binaryVersion, false) })
 		}
 		fmt.Printf("Repairing satellites for workspace at %s\n", ws.Root)
 		return runSatelliteRepair(ws, binaryVersion, false)
@@ -173,17 +220,8 @@ func runInstall(cmd *cobra.Command, args []string) error {
 					// human progress; wrap it so the contract holds:
 					// exactly one JSON object on stdout, error field
 					// set, nonzero exit on failure.
-					start := time.Now()
-					var satErr error
-					silenceStdout(func() { satErr = runSatelliteInstall(ws, absTarget, binaryVersion) })
-					return emitJSON(install.InstallJSONOutput{
-						Target:     installTarget,
-						Mode:       string(mode),
-						TargetDir:  targetDir,
-						Version:    binaryVersion,
-						DurationMs: time.Since(start).Milliseconds(),
-						Error:      install.NewJSONError("install_failed", satErr),
-					}, satErr)
+					return emitInstallJSON(mode, targetDir, binaryVersion, "install_failed",
+						func() error { return runSatelliteInstall(ws, absTarget, binaryVersion) })
 				}
 				return runSatelliteInstall(ws, absTarget, binaryVersion)
 			}
