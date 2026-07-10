@@ -40,12 +40,17 @@ const (
 // files out of commits. `.hero/QUEUE.md` may be absent (a sibling effort
 // may drop it as a file); the per-path staging loop swallows missing
 // paths via `2>/dev/null || true`, so its absence is a safe no-op.
+//
+// `.hero/events.log` is append-only, timestamped JSONL and is union-safe:
+// concurrent appends concatenate under `merge=union`, and every reader
+// re-sorts by timestamp, so out-of-order concatenation is harmless.
 var handoffFilePaths = []string{
 	".hero/NEXT.md",
 	".hero/next/*.md",
 	".hero/SNAPSHOT.md",
 	".hero/QUEUE.md",
 	".hero/peer-manifest.yaml",
+	".hero/events.log",
 }
 
 var nextInstallHooksCmd = &cobra.Command{

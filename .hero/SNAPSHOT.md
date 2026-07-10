@@ -2,22 +2,22 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-10T01:34:54Z · projected from 394 source nodes_
+_Last refreshed: 2026-07-10T03:37:19Z · projected from 395 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 8m ago | single-source-install-p1-agents-md |
+| core | building | cmd/, internal/ | 2h ago | single-source-install-p1-agents-md |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | maturing | domains/engineering/ | 7h ago | — |
+| domains/engineering | maturing | domains/engineering/ | 9h ago | — |
 | domains/pm | maturing | domains/pm/ | 1d ago | — |
 | domains/sales | maturing | domains/sales/ | 1d ago | — |
 | landing | building | web/landing/ | 38d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 48m ago | agent-outposts |
-| (unassigned) | — | — | — | 190 specs without surface |
+| serve | building | internal/serve/ | 2h ago | agent-outposts |
+| (unassigned) | — | — | — | 191 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
 
@@ -52,8 +52,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — initiative-autocomplete-misses-completed-children, hero-surface-polish, content-remediation, compose-emits-conflicts-and-priority, mock-tracker-server, gitlab-tracker-support
-- **core** — priority-conflict-aware-drive-selection, delivery-gate-consistency
+- **(unassigned)** — eventslog-churn-fix-tracked-not-dirty, initiative-autocomplete-misses-completed-children, hero-surface-polish, content-remediation, compose-emits-conflicts-and-priority, mock-tracker-server, gitlab-tracker-support
+- **core** — priority-conflict-aware-drive-selection
 - **domains/engineering** — token-efficiency-pass, routing-file-completeness, harness-agnosticism-sweep
 - **serve** — drive-judge-findconflicts-backstop
 
@@ -70,11 +70,11 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Blocked specs (12):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection).
 - **Stale-in-flight (3):** `agent-outposts` (52d), `hero-landing-page` (52d), `hero-team-server` (52d).
 - **Aged open bugs (8):** `next-project-file-conflict-not-regenerated` (open 37d), `desktop-sidebar-mcp-not-running` (open 36d), `hihcp-agent-loop-error-recovery` (open 31d), `hihcp-agents-md-harness-agnostic` (open 31d), `hihcp-mcp-auto-reconnect` (open 31d), `hihcp-mcp-first-turn-readiness` (open 31d), `hihcp-permission-bridge-validation` (open 31d), `hihcp-rgignore` (open 31d).
-- **Unassigned specs (190) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
+- **Unassigned specs (191) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 177/367 (48%)
-- Projection generation: 1ms · Source nodes: 394
+- Specs covered: 177/368 (48%)
+- Projection generation: 0ms · Source nodes: 395
 

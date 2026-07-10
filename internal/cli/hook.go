@@ -92,11 +92,6 @@ func runHook(cmd *cobra.Command, args []string) error {
 		}
 
 	case "post-commit":
-		sha := gitRevParse("HEAD")
-		_ = hooks.LogEvent(eventsLogPath, map[string]string{
-			"event": "post-commit",
-			"sha":   sha,
-		})
 		// Refresh NEXT.md machine block so cross-session handoff stays
 		// fresh on every commit. This is the universal fallback for
 		// host tools without a native end-of-turn hook (cursor, copilot,
@@ -208,15 +203,6 @@ func replaceStatusInFrontmatter(content, oldStatus, newStatus string) string {
 	}
 
 	return strings.Join(lines, "\n")
-}
-
-// gitRevParse runs `git rev-parse <ref>` and returns the result.
-func gitRevParse(ref string) string {
-	out, err := exec.Command("git", "rev-parse", ref).Output()
-	if err != nil {
-		return ""
-	}
-	return strings.TrimSpace(string(out))
 }
 
 // injectCommitPrefix prepends the spec slug to the commit message file.
