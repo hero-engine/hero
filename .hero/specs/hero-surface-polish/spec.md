@@ -2,7 +2,7 @@
 title: Hero Surface Polish — Ongoing Quality Pass on the Web Companion
 slug: hero-surface-polish
 type: initiative
-status: planning
+status: completed
 tags: [serve, surface, polish, ongoing]
 created: 2026-05-18
 relations:
@@ -10,6 +10,7 @@ relations:
     kind: parent
 horizon: now
 size: giant
+completed_at: 2026-07-10T01:26:07Z
 ---
 
 ## Vision

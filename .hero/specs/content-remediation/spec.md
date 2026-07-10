@@ -2,7 +2,7 @@
 title: Content Remediation — Audit Follow-Through Across Packs, Gates, and Harnesses
 slug: content-remediation
 type: initiative
-status: planning
+status: completed
 priority: P1
 size: x-large
 domain: engineering
@@ -30,6 +30,7 @@ mission_alignment: |
   six-target installs. Every lie makes a session start dumber. This
   initiative retires every confirmed finding so the injected surface is
   true, minimal, and works on every harness for every domain.
+completed_at: 2026-07-10T01:26:06Z
 ---
 
 # Content Remediation — Audit Follow-Through Across Packs, Gates, and Harnesses
