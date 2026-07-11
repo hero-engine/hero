@@ -216,6 +216,12 @@ func resetFlags() {
 	checkJSON = false
 	checkKnowledge = false
 
+	// Reset admin backfill flags (cobra persists bools across in-process runs)
+	backfillCreatedDryRun = false
+	backfillCreatedQuiet = false
+	backfillCompletedAtDryRun = false
+	backfillCompletedAtQuiet = false
+
 	// Reset init flags
 	initFolder = config.DefaultFolder
 	initDomain = ""

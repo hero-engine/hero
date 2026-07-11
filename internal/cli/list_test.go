@@ -216,6 +216,29 @@ func TestListJSONFormatIncludesKickoff(t *testing.T) {
 	}
 }
 
+func TestListJSONFormatIncludesCreated(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("specs/dated/spec.md", `---
+title: Dated Spec
+type: feature
+status: completed
+created: 2026-06-29
+---
+# Dated Spec
+
+## Kickoff
+Pick up here.
+`)
+	// Completed is excluded by default, so ask for it explicitly.
+	out, err := runCmd("list", "--status", "completed", "--format", "json")
+	if err != nil {
+		t.Fatalf("list json: %v", err)
+	}
+	if !strings.Contains(out, `"created": "2026-06-29"`) {
+		t.Errorf("expected created field (frontmatter date) in JSON, got:\n%s", out)
+	}
+}
+
 func TestListUnknownSortFails(t *testing.T) {
 	env := newTestEnv(t)
 	env.addSpec("specs/has-kickoff/spec.md", featureWithKickoff)
