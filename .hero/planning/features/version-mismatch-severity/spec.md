@@ -8,6 +8,7 @@ tags: [cli, version, reliability]
 horizon: now
 smoke: false
 delivery_method: supervised
+created: 2026-05-12
 ---
 
 # Version mismatch severity

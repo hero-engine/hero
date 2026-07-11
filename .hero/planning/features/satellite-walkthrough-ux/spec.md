@@ -9,6 +9,7 @@ tags: [monorepo, satellites, ux, install]
 relations:
   - target: monorepo-satellite-installs
     kind: parent
+created: 2026-05-12
 ---
 
 # Satellite Walkthrough UX — Vendor-Pattern Detection and Exclude-Parent Shortcut

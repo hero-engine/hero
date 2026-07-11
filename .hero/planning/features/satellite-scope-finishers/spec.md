@@ -13,6 +13,7 @@ relations:
     kind: parent
   - target: satellite-scope-extras
     kind: parent
+created: 2026-05-12
 ---
 
 # Satellite Scope Finishers — Queue Default and MCP Subproject Param

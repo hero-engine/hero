@@ -9,6 +9,7 @@ horizon: now
 tags: [hero-core, intake, workflow, capture, claude-md, auto-capture]
 relations:
   - { kind: follows, target_type: feature, target: hero-idea-primitive-core }
+created: 2026-06-29
 ---
 
 # Intake Capture Loop — Silently Capture Intent-Bearing Loose Asks, Manual Promote Gate

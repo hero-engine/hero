@@ -6,6 +6,7 @@ status: completed
 priority: high
 horizon: now
 completed_at: 2026-05-18T19:25:38Z
+created: 2026-05-12
 ---
 
 # Spec Quality Scoring

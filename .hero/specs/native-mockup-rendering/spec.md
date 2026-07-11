@@ -4,6 +4,7 @@ type: feature
 status: completed
 priority: p2
 completed_at: 2026-06-01T03:09:16Z
+created: 2026-06-01
 ---
 
 ## Goal

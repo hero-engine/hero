@@ -10,6 +10,7 @@ relations:
   - target: next-compact-handoff
     kind: hardens
 completed_at: 2026-06-09T18:21:22Z
+created: 2026-06-09
 ---
 
 # Compact Handoff Test Coverage — Close MVP Coverage Gaps

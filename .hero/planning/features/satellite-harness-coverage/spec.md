@@ -9,6 +9,7 @@ tags: [monorepo, satellites, harness-integration]
 relations:
   - target: monorepo-satellite-installs
     kind: parent
+created: 2026-05-12
 ---
 
 # Satellite Harness Coverage — Per-Target Markers for OpenCode, Cursor, Generic

@@ -18,6 +18,7 @@ relations:
     kind: related
   - target: master-ingest-restore
     kind: related
+created: 2026-05-21
 ---
 
 # Embeddings Index — Semantic Retrieval Over Hero's Project Corpus

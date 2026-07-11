@@ -9,6 +9,7 @@ received_from:
   originator_slug: cloud-cli-verify
   handed_off_at: 2026-06-24T18:09:11Z
   at_commit: ea7ed71
+created: 2026-07-10
 ---
 
 # Cloud CLI Verify — Cross-Repo CLI ↔ Server Integration (hero slice)

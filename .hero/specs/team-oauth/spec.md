@@ -10,6 +10,7 @@ received_from:
   at_commit: 923152b
   reason: "All changes are hero-side code (internal/serve/, internal/cli/, internal/config/). Needs OAuth flow, JWT issuance, JWTAuthMiddleware, hero connect team command."
 completed_at: 2026-07-02T07:24:41Z
+created: 2026-07-02
 ---
 
 # Team OAuth — GitHub/Google SSO for Team Server Authentication

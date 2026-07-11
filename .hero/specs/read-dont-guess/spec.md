@@ -7,6 +7,7 @@ priority: high
 horizon: now
 smoke: deferred
 completed_at: 2026-05-21T14:24:00Z
+created: 2026-05-21
 ---
 
 # Read Don't Guess

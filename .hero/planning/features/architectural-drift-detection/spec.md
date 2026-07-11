@@ -7,6 +7,7 @@ priority: high
 tags: [cloud, enterprise, billion-dollar]
 horizon: next
 smoke: deferred
+created: 2026-05-12
 ---
 
 # Architectural Drift Detection — Continuous Architecture Compliance

@@ -13,6 +13,7 @@ relations:
     kind: related
   - target: embeddings-index
     kind: related
+created: 2026-05-21
 ---
 
 # Compact Handoff Summarizer — LLM-Curated Middle Section for Resume Context

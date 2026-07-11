@@ -11,6 +11,7 @@ relations:
     kind: related
   - target: knowledge-flywheel
     kind: related
+created: 2026-05-21
 ---
 
 # Local Project Model — Hero-Bundled Tiny Model Continuously Trained on Project Corpus

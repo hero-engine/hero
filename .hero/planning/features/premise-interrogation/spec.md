@@ -11,6 +11,7 @@ relations:
     kind: related
   - target: synthesis-maintenance
     kind: related
+created: 2026-05-12
 ---
 
 ## Problem

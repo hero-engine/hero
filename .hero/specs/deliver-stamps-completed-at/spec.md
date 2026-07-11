@@ -12,6 +12,7 @@ received_from:
   at_commit: bee38d6
   reason: "Sprint dashboard depends on completedAt timestamps; stamping them in /deliver removes our git fallback path."
 completed_at: 2026-06-01T03:39:24Z
+created: 2026-06-01
 ---
 
 # Stamp `completed_at` into spec frontmatter on status transition

@@ -12,6 +12,7 @@ relations:
     kind: related
   - target: cross-repo-peering
     kind: related
+created: 2026-05-17
 ---
 
 # Portable Routing Rules — One `routing.md`, Every Harness Gets It Natively

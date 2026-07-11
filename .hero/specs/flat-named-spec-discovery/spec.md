@@ -9,6 +9,7 @@ size: medium
 domain: engineering
 tags: [spec-discovery, slug-resolution, verify, initiative-children, archive]
 completed_at: 2026-07-10T05:54:24Z
+created: 2026-07-10
 ---
 
 # Flat-named spec files are invisible to discovery
