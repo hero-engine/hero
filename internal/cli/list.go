@@ -290,24 +290,30 @@ func renderSpecText(w io.Writer, specs []*spec.Spec) error {
 
 func renderSpecsJSON(w io.Writer, specs []*spec.Spec) error {
 	type jsonRow struct {
-		Slug     string   `json:"slug"`
-		Title    string   `json:"title"`
-		Type     string   `json:"type"`
-		Status   string   `json:"status"`
-		Horizon  string   `json:"horizon"`
-		Tags     []string `json:"tags,omitempty"`
-		Pinned   bool     `json:"pinned,omitempty"`
-		Kickoff  string   `json:"kickoff,omitempty"`
-		Path     string   `json:"path,omitempty"`
+		Slug    string   `json:"slug"`
+		Title   string   `json:"title"`
+		Type    string   `json:"type"`
+		Status  string   `json:"status"`
+		Horizon string   `json:"horizon"`
+		Created string   `json:"created,omitempty"`
+		Tags    []string `json:"tags,omitempty"`
+		Pinned  bool     `json:"pinned,omitempty"`
+		Kickoff string   `json:"kickoff,omitempty"`
+		Path    string   `json:"path,omitempty"`
 	}
 	rows := make([]jsonRow, len(specs))
 	for i, s := range specs {
+		created := ""
+		if !s.CreatedAt.IsZero() {
+			created = s.CreatedAt.Format("2006-01-02")
+		}
 		rows[i] = jsonRow{
 			Slug:    s.Slug,
 			Title:   s.Title,
 			Type:    string(s.Type),
 			Status:  string(s.Status),
 			Horizon: string(s.EffectiveHorizon()),
+			Created: created,
 			Tags:    s.Tags,
 			Pinned:  s.Pinned,
 			Kickoff: s.Kickoff(),

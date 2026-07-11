@@ -24,4 +24,5 @@ func init() {
 	adminCmd.AddCommand(domainCmd)
 	adminCmd.AddCommand(reposCmd)
 	adminCmd.AddCommand(backfillCompletedAtCmd)
+	adminCmd.AddCommand(backfillCreatedCmd)
 }

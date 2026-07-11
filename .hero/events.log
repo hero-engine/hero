@@ -300,3 +300,5 @@
 {"ts":"2026-07-10T06:05:08.332546Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"knowledge-surfacing","message":"status -\u003e completed"}
 {"ts":"2026-07-10T06:21:03.685756Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"install-json-mode-repair-migrate-parity","message":"\"`hero install --repair`/`--migrate` ignore `--json` — stdout contract broken for programmatic consumers\""}
 {"ts":"2026-07-10T06:21:03.68587Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"install-json-mode-repair-migrate-parity","message":"status -\u003e completed"}
+{"ts":"2026-07-11T19:32:59.657239Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"created-field-stamp-and-surface","message":"\"Surface `created` in list JSON, and make the created date reliable (stamp + backfill)\""}
+{"ts":"2026-07-11T19:32:59.657326Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"created-field-stamp-and-surface","message":"status -\u003e completed"}

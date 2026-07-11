@@ -1,22 +1,20 @@
 ---
 user: chet-bellows
-updated: 2026-07-10T06:21:25Z
+updated: 2026-07-10T06:22:30Z
 repo: hero-engine/hero
 ---
 
 # chet-bellows's handoff
 
-## Session goal
-
-> Session opened with — been running some drive's on other projects - here is some output i got one one that made me wonder if there are enhancements to the judge piece: Cold audit: SHIP + noteworthy, high confidence. All three flagged items check out — the AC7 hard-path gap is genuinely pre-existing (buildState byte-identical HEAD vs working tree, follow-up task spawned), the pinned-file deviation is correct (no pin d…
-
-_possibly stale — 10 commit(s) since, last set 13h 35m ago_
-
 ## Last user ask
 
-> Deliver flat-tripwire-trigger-parity: wire knowledge triggers into FindTripwiresByTrigger via a knowledge_triggers DB seam so flat tripwires trigger-highlight identically to spec.md-shaped ones. Last open child of knowledge-surfacing initiative.
-
-_possibly stale — 1 commit(s) since, last set 25m ago_
+> Finish off the pending Hero work from the last week. Work in this repo's Hero
+> workspace; deliver from the existing local specs (don't re-design them — each
+> already has a full spec + kickoff). Run each through /deliver, and for every one:
+> validate the engineer's Completion Ledger, run a cold delivery-audit, `hero spec
+> verify`, then commit atomically and push. Sequence:
+> 
+> 1. flat-named-spec-discove…
 
 ## Suggested next prompt
 

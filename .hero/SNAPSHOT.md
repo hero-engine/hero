@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-10T06:21:25Z · projected from 395 source nodes_
+_Last refreshed: 2026-07-11T19:33:21Z · projected from 396 source nodes_
 
 ## Surfaces
 
@@ -11,12 +11,12 @@ _Last refreshed: 2026-07-10T06:21:25Z · projected from 395 source nodes_
 | core | building | cmd/, internal/ | <1m ago | satellite-corpus-integration |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | maturing | domains/engineering/ | 11h ago | — |
-| domains/pm | maturing | domains/pm/ | 1d ago | — |
-| domains/sales | maturing | domains/sales/ | 1d ago | — |
-| landing | building | web/landing/ | 39d ago | hero-landing-page |
+| domains/engineering | maturing | domains/engineering/ | 2d ago | — |
+| domains/pm | maturing | domains/pm/ | 2d ago | — |
+| domains/sales | maturing | domains/sales/ | 2d ago | — |
+| landing | building | web/landing/ | 40d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 15m ago | agent-outposts |
+| serve | building | internal/serve/ | 1d ago | agent-outposts |
 | (unassigned) | — | — | — | 190 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -52,8 +52,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Recently completed (last 14 days)
 
 - **(unassigned)** — knowledge-surfacing, eventslog-churn-fix-tracked-not-dirty, initiative-autocomplete-misses-completed-children, hero-surface-polish, content-remediation, compose-emits-conflicts-and-priority
-- **core** — install-json-mode-repair-migrate-parity, flat-tripwire-trigger-parity, flat-named-spec-discovery, priority-conflict-aware-drive-selection
-- **domains/engineering** — token-efficiency-pass
+- **core** — created-field-stamp-and-surface, install-json-mode-repair-migrate-parity, flat-tripwire-trigger-parity, flat-named-spec-discovery, priority-conflict-aware-drive-selection
 - **serve** — drive-judge-findconflicts-backstop
 
 ## Next up across surfaces
@@ -67,13 +66,13 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Open risks & blockers
 
 - **Blocked specs (12):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection).
-- **Stale-in-flight (3):** `agent-outposts` (52d), `hero-landing-page` (52d), `hero-team-server` (52d).
-- **Aged open bugs (8):** `next-project-file-conflict-not-regenerated` (open 37d), `desktop-sidebar-mcp-not-running` (open 36d), `hihcp-agent-loop-error-recovery` (open 31d), `hihcp-agents-md-harness-agnostic` (open 31d), `hihcp-mcp-auto-reconnect` (open 31d), `hihcp-mcp-first-turn-readiness` (open 31d), `hihcp-permission-bridge-validation` (open 31d), `hihcp-rgignore` (open 31d).
+- **Stale-in-flight (3):** `hero-landing-page` (54d), `agent-outposts` (53d), `hero-team-server` (53d).
+- **Aged open bugs (8):** `next-project-file-conflict-not-regenerated` (open 38d), `desktop-sidebar-mcp-not-running` (open 37d), `hihcp-agent-loop-error-recovery` (open 32d), `hihcp-agents-md-harness-agnostic` (open 32d), `hihcp-mcp-auto-reconnect` (open 32d), `hihcp-mcp-first-turn-readiness` (open 32d), `hihcp-permission-bridge-validation` (open 32d), `hihcp-rgignore` (open 32d).
 - **Unassigned specs (190) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 178/368 (48%)
-- Projection generation: 1ms · Source nodes: 395
+- Specs covered: 179/369 (48%)
+- Projection generation: 1ms · Source nodes: 396
 

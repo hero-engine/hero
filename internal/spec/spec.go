@@ -145,20 +145,25 @@ func IsValidHorizon(h Horizon) bool {
 
 // Spec represents a parsed spec document with extracted metadata.
 type Spec struct {
-	Slug        string
-	Title       string
-	Type        Type
-	Status      Status
-	Path        string    // absolute path to spec.md
-	CreatedAt   time.Time // from frontmatter or file mtime
-	ModifiedAt  time.Time // file modification time
-	CompletedAt time.Time // when status flipped to completed; zero if never completed
-	Tags        []string  // from frontmatter
-	Scope       []string  // glob patterns (conventions/rules/tripwires only)
-	Subproject  string    // monorepo subproject scope identifier (forward-slash path relative to root, e.g. "engines/mlx"); empty = workspace root
-	Triggers    []string  // keywords that activate this tripwire in retrieval
-	Priority    string    // hero-level priority (e.g. "critical", "high", "medium", "low")
-	Severity    string    // hero-level severity (e.g. "critical", "high", "medium", "low")
+	Slug      string
+	Title     string
+	Type      Type
+	Status    Status
+	Path      string    // absolute path to spec.md
+	CreatedAt time.Time // from frontmatter or file mtime
+	// CreatedFromFrontmatter is true when CreatedAt came from an authored
+	// `created:` frontmatter field, false when it fell back to file mtime.
+	// Distinguishes a trustworthy creation date from an mtime guess (which
+	// drifts on edit) — drives the backfill/reconcile stamping.
+	CreatedFromFrontmatter bool
+	ModifiedAt             time.Time // file modification time
+	CompletedAt            time.Time // when status flipped to completed; zero if never completed
+	Tags                   []string  // from frontmatter
+	Scope                  []string  // glob patterns (conventions/rules/tripwires only)
+	Subproject             string    // monorepo subproject scope identifier (forward-slash path relative to root, e.g. "engines/mlx"); empty = workspace root
+	Triggers               []string  // keywords that activate this tripwire in retrieval
+	Priority               string    // hero-level priority (e.g. "critical", "high", "medium", "low")
+	Severity               string    // hero-level severity (e.g. "critical", "high", "medium", "low")
 	// Size is the declared effort tier (shared 6-tier ladder:
 	// trivial / small / medium / large / x-large / giant). Empty
 	// string means unset. See spec-size-and-promotion-nudge for the
@@ -526,8 +531,10 @@ func (s *Spec) parseFrontmatter(content string) string {
 		case "created":
 			if t, err := time.Parse("2006-01-02", val); err == nil {
 				s.CreatedAt = t
+				s.CreatedFromFrontmatter = true
 			} else if t, err := time.Parse(time.RFC3339, val); err == nil {
 				s.CreatedAt = t
+				s.CreatedFromFrontmatter = true
 			}
 		case "completed_at", "completedAt":
 			if t, err := time.Parse(time.RFC3339, val); err == nil {

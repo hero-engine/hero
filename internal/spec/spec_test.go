@@ -33,6 +33,10 @@ Performance with large datasets.
 		t.Fatalf("Parse failed: %v", err)
 	}
 
+	if !s.CreatedFromFrontmatter {
+		t.Error("CreatedFromFrontmatter = false, want true (created: is in frontmatter)")
+	}
+
 	if s.Title != "Add CSV Export" {
 		t.Errorf("Title = %q, want %q", s.Title, "Add CSV Export")
 	}
@@ -59,6 +63,31 @@ Performance with large datasets.
 	}
 	if _, ok := s.Sections["risks"]; !ok {
 		t.Error("Sections missing 'risks'")
+	}
+}
+
+// TestParseCreatedFallsBackToMtime covers the mtime fallback: a spec with no
+// authored created: field takes CreatedAt from the file mtime and reports
+// CreatedFromFrontmatter=false — the signal the backfill/reconcile stamping
+// keys on (spec: created-field-stamp-and-surface).
+func TestParseCreatedFallsBackToMtime(t *testing.T) {
+	content := `---
+title: No Created Field
+type: feature
+status: planning
+---
+# No Created Field
+`
+	mtime := time.Date(2026, 7, 1, 9, 0, 0, 0, time.UTC)
+	s, err := Parse(content, "/project/.hero/planning/features/no-created/spec.md", mtime)
+	if err != nil {
+		t.Fatalf("Parse failed: %v", err)
+	}
+	if s.CreatedFromFrontmatter {
+		t.Error("CreatedFromFrontmatter = true, want false (no created: in frontmatter)")
+	}
+	if !s.CreatedAt.Equal(mtime) {
+		t.Errorf("CreatedAt = %v, want mtime fallback %v", s.CreatedAt, mtime)
 	}
 }
 

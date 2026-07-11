@@ -260,6 +260,39 @@ func runCheck(cmd *cobra.Command, args []string) error {
 		fmt.Println()
 	}
 
+	// Missing created: (data-quality self-heal). A work spec whose CreatedAt is
+	// an mtime guess rather than an authored `created:` gets stamped from its
+	// first git commit under --reconcile; otherwise it's just reported. Kept
+	// separate from status drift — it's data quality, not a git-status mismatch.
+	missingCreated := workSpecsMissingCreated(heroDir)
+	if len(missingCreated) == 0 {
+		addRow("missing-created", "pass", "all work specs carry created:")
+	} else {
+		addRow("missing-created", "warn", fmt.Sprintf("%d spec(s) missing created:", len(missingCreated)))
+		issues += len(missingCreated)
+		stamped := 0
+		fmt.Printf("Missing created: (%d spec(s)):\n", len(missingCreated))
+		for _, s := range missingCreated {
+			suffix := ""
+			if checkReconcile {
+				ts := createdDate(projectRoot, s.Path)
+				if err := writeCreatedStamp(s.Path, ts); err != nil {
+					suffix = fmt.Sprintf("  (stamp failed: %v)", err)
+				} else {
+					suffix = fmt.Sprintf("  ✓ stamped created: %s", ts.Format("2006-01-02"))
+					stamped++
+				}
+			}
+			fmt.Printf("  %-30s  no authored created:%s\n", s.Slug, suffix)
+		}
+		if stamped > 0 {
+			fmt.Printf("\n  %d spec(s) stamped. Run 'hero index' to update the search index.\n", stamped)
+		} else if !checkReconcile {
+			fmt.Printf("\n  Run 'hero check --reconcile' to stamp them, or 'hero admin backfill-created'.\n")
+		}
+		fmt.Println()
+	}
+
 	// Knowledge lint
 	if checkKnowledge {
 		knowledgeIssues := runKnowledgeLint(heroDir, projectRoot)
