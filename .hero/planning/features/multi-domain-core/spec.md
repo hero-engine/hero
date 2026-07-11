@@ -6,6 +6,7 @@ status: draft
 priority: low
 horizon: next
 smoke: deferred
+created: 2026-05-12
 ---
 
 # Multi-Domain Core Engine

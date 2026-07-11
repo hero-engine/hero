@@ -12,6 +12,7 @@ relations:
   - target: cloud-mcp
     kind: related
 completed_at: 2026-06-09T19:01:10Z
+created: 2026-06-09
 ---
 
 # Monorepo Satellite Installs — One Workspace, Many Subfolder Entry Points

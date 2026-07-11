@@ -9,6 +9,7 @@ received_from:
   handed_off_at: 2026-06-24T22:17:54Z
   at_commit: 923152b
   reason: "All changes are hero-side code (internal/cli/, internal/config/, internal/runner/). Needs hero connect/disconnect team commands, team.json storage, runner integration for team queue routing, MCP session registration."
+created: 2026-05-12
 ---
 
 # Team Connect — CLI Registration with Team Server

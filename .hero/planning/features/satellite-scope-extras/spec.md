@@ -11,6 +11,7 @@ relations:
     kind: parent
   - target: satellite-corpus-integration
     kind: parent
+created: 2026-05-12
 ---
 
 # Satellite Scope Extras — Why Traversal, Spec Move, Cloud Filtering

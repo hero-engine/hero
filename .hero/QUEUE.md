@@ -6,12 +6,12 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-11T19:33:21Z · 77 ready specs_
+_Generated: 2026-07-11T19:33:57Z · 77 ready specs_
 
-## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
+## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/specs/retrieval-contradiction-detection/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/team-connect/spec.md)_
 
 ---
 
@@ -22,17 +22,17 @@ Resume by reading `.hero/planning/features/satellite-corpus-integration/spec.md`
 
 ---
 
+## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
+_feature · delivering · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/specs/retrieval-contradiction-detection/spec.md)_
+
+---
+
 ## single-source-install-p1-agents-md — "Single-Source Install P1 — AGENTS.md as the Only Root Instruction File"
 _feature · delivering · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/single-source-install-p1-agents-md/spec.md)_
-
----
-
-## team-connect — "Team Connect — CLI Registration with Team Server"
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/team-connect/spec.md)_
 
 ---
 
@@ -47,6 +47,94 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · in-review · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-idea-primitive-core/spec.md)_
+
+---
+
+## portable-routing-rules — "Portable Routing Rules — One `routing.md`, Every Harness Gets It Natively"
+_feature · planning · horizon: now_
+
+Portable routing rules: extract the natural-language → slash-command table out of `internal/install/agents_md.go` into one `routing.md`, then render per-target include directives so every harness loads it natively.
+
+**Status:** planning — spec just landed, no code yet.
+
+**Pick up at:** map the per-target rendering matrix. Start at `internal/install/agents_md.go:224` (`generateAgentsMdBody`) to see the content that's moving, then walk each `target_*.go` to confirm the native include idiom (Cursor `.mdc` frontmatter, Aider `read:`, Cline `.clinerules/`, opencode `instructions:`). Bucket A = native include; Bucket B = inline at install time.
+
+→ `.hero/planning/portable-routing-rules.md`
+
+**Files:** `internal/install/agents_md.go:224-313`, `internal/install/target_claude.go`, `internal/install/target_opencode.go`, `internal/install/target_cursor.go`, `internal/install/target_copilot.go`, `internal/install/target_codex.go`
+
+---
+
+## version-mismatch-severity — Version mismatch severity
+_feature · planning · horizon: now_
+
+Change `Mismatch()` in `internal/version/version.go` to return a `MismatchResult` struct with `Severity` (none/warning/error) and `Message` fields instead of a bare string. Severity is `error` when the major version component differs, `warning` when only minor/patch differ, and `none` when versions match or checks are skipped. Update `PersistentPreRun` in `internal/cli/root.go` to exit non-zero on error severity (keeping the existing exempt-command list: init, install, trust, upgrade, mcp, version, help, scan). Update all tests in `internal/version/version_test.go` to assert on `MismatchResult.Severity` and `MismatchResult.Message`. Dev builds ("dev") and empty versions continue to skip all checks.
+
+---
+
+## synthesis-maintenance — "Synthesis Maintenance — Write-Through Coherence for the Hero Graph"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/synthesis-maintenance/spec.md)_
+
+---
+
+## satellite-walkthrough-ux — "Satellite Walkthrough UX — Vendor-Pattern Detection and Exclude-Parent Shortcut"
+_feature · planning · horizon: now_
+
+Resume by reading `.hero/planning/features/satellite-walkthrough-ux/spec.md`. Two small UX fixes for the satellite install walkthrough surfaced during the example codebase migration: auto-noise `*-vendor` / `vendor-*` / `vendored` directory names in the candidate detector, and add capital `X` as an "exclude parent" walkthrough option that drops all remaining candidates under the parent. Parent spec: monorepo-satellite-installs.
+
+---
+
+## satellite-scope-finishers — "Satellite Scope Finishers — Queue Default and MCP Subproject Param"
+_feature · planning · horizon: now_
+
+Resume by reading the spec at `.hero/planning/features/satellite-scope-finishers/spec.md`. Two surface additions: `hero queue --subproject` flag (mirrors `hero list`), and `subproject` parameter on five MCP tools (`hero_list`, `hero_queue`, `hero_search`, `hero_recap`, `hero_feed`) with consistent description telling the model when to pass it. Parent specs in the satellite arc: monorepo-satellite-installs, satellite-corpus-integration, satellite-scope-extras — all shipped.
+
+---
+
+## satellite-scope-extras — "Satellite Scope Extras — Why Traversal, Spec Move, Cloud Filtering"
+_feature · planning · horizon: now_
+
+Resume by reading `.hero/planning/features/satellite-scope-extras/spec.md`. Phases 1 (`hero why` annotation) and 2 (`hero spec move`) are local-CLI work; Phase 3 (cloud) touches `cloud/store`, `cloud/api`, and `cloud/web/app.js`. Parent specs that already shipped: [monorepo-satellite-installs](../monorepo-satellite-installs/spec.md) (foundation) and [satellite-corpus-integration](../satellite-corpus-integration/spec.md) (scope flows through corpus).
+
+---
+
+## satellite-harness-coverage — "Satellite Harness Coverage — Per-Target Markers for OpenCode, Cursor, Generic"
+_feature · planning · horizon: now_
+
+Resume by reading the spec at `.hero/planning/features/satellite-harness-coverage/spec.md`. Closes the per-harness coverage gap from the satellite arc. Mostly a registry edit (`targetLayouts`) plus a small refactor of `perTargetMarker` to accept multiple targets and a written-paths dedup in `Materialize`. Parent spec: monorepo-satellite-installs. Verified gap during example codebase migration (OpenCode+Claude both installed at root, only Claude got the marker).
+
+---
+
+## premise-interrogation — "Premise Interrogation — Force-Question the Framing Before Designing"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/premise-interrogation/spec.md)_
+
+---
+
+## intake-capture-loop — "Intake Capture Loop — Silently Capture Intent-Bearing Loose Asks, Manual Promote Gate"
+_feature · planning · horizon: now_
+
+Lightweight loop on the shipped `intake` primitive. Treat it as a sibling of
+`auto_capture`: after a loose change lands, *if* the ask carried intent (a reason,
+a decision, a workaround — not a typo/rename/format, not work already under a
+spec), silently fire `hero intake "<ask + one-line why>"`. Reuse the existing
+auto-capture threshold machinery and `hero intake` CLI — no new verbs, no graph
+edges, no new hooks. Manual promote stays the gate. Land the trigger + threshold
+on **all six install targets** (opencode/cursor/claude/copilot/codex/generic) via
+the shared `.hero/knowledge/` convention rendered into AGENTS.md (+ CLAUDE.md for
+Claude); make AGENTS.md guidance self-contained since only Claude has an
+end-of-session hook. Decisions locked: retroactive + threshold-gated (NOT
+capture-then-edit), capture auto / promote manual.
+
+---
+
+## install-target-emits-both-claude-and-agents-md — "`hero install --target claude` emits both CLAUDE.md and AGENTS.md"
+_bug · planning · horizon: now_
+
+Reproduce: cd into a clean repo with no `CLAUDE.md` or `AGENTS.md`, run `hero install --target claude`. Expected: only `CLAUDE.md` lands. Observed: both `CLAUDE.md` and `AGENTS.md` are emitted with the same managed-block content. Fix likely lives in the install target dispatch in the hero CLI — read the install command source, find where both files get written, and gate `AGENTS.md` emission on the target not being `claude` (or on a generic/fallback target). Update tests to cover each target's expected file set.
 
 ---
 
@@ -73,30 +161,6 @@ Cold-start prompt:
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/peer-call-multi-cli/spec.md)_
-
----
-
-## intake-capture-loop — "Intake Capture Loop — Silently Capture Intent-Bearing Loose Asks, Manual Promote Gate"
-_feature · planning · horizon: now_
-
-Lightweight loop on the shipped `intake` primitive. Treat it as a sibling of
-`auto_capture`: after a loose change lands, *if* the ask carried intent (a reason,
-a decision, a workaround — not a typo/rename/format, not work already under a
-spec), silently fire `hero intake "<ask + one-line why>"`. Reuse the existing
-auto-capture threshold machinery and `hero intake` CLI — no new verbs, no graph
-edges, no new hooks. Manual promote stays the gate. Land the trigger + threshold
-on **all six install targets** (opencode/cursor/claude/copilot/codex/generic) via
-the shared `.hero/knowledge/` convention rendered into AGENTS.md (+ CLAUDE.md for
-Claude); make AGENTS.md guidance self-contained since only Claude has an
-end-of-session hook. Decisions locked: retroactive + threshold-gated (NOT
-capture-then-edit), capture auto / promote manual.
-
----
-
-## install-target-emits-both-claude-and-agents-md — "`hero install --target claude` emits both CLAUDE.md and AGENTS.md"
-_bug · planning · horizon: now_
-
-Reproduce: cd into a clean repo with no `CLAUDE.md` or `AGENTS.md`, run `hero install --target claude`. Expected: only `CLAUDE.md` lands. Observed: both `CLAUDE.md` and `AGENTS.md` are emitted with the same managed-block content. Fix likely lives in the install target dispatch in the hero CLI — read the install command source, find where both files get written, and gate `AGENTS.md` emission on the target not being `claude` (or on a generic/fallback target). Update tests to cover each target's expected file set.
 
 ---
 
@@ -290,55 +354,6 @@ target-by-kind cells are uncovered.
 
 ---
 
-## version-mismatch-severity — Version mismatch severity
-_feature · planning · horizon: now_
-
-Change `Mismatch()` in `internal/version/version.go` to return a `MismatchResult` struct with `Severity` (none/warning/error) and `Message` fields instead of a bare string. Severity is `error` when the major version component differs, `warning` when only minor/patch differ, and `none` when versions match or checks are skipped. Update `PersistentPreRun` in `internal/cli/root.go` to exit non-zero on error severity (keeping the existing exempt-command list: init, install, trust, upgrade, mcp, version, help, scan). Update all tests in `internal/version/version_test.go` to assert on `MismatchResult.Severity` and `MismatchResult.Message`. Dev builds ("dev") and empty versions continue to skip all checks.
-
----
-
-## synthesis-maintenance — "Synthesis Maintenance — Write-Through Coherence for the Hero Graph"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/synthesis-maintenance/spec.md)_
-
----
-
-## satellite-walkthrough-ux — "Satellite Walkthrough UX — Vendor-Pattern Detection and Exclude-Parent Shortcut"
-_feature · planning · horizon: now_
-
-Resume by reading `.hero/planning/features/satellite-walkthrough-ux/spec.md`. Two small UX fixes for the satellite install walkthrough surfaced during the example codebase migration: auto-noise `*-vendor` / `vendor-*` / `vendored` directory names in the candidate detector, and add capital `X` as an "exclude parent" walkthrough option that drops all remaining candidates under the parent. Parent spec: monorepo-satellite-installs.
-
----
-
-## satellite-scope-finishers — "Satellite Scope Finishers — Queue Default and MCP Subproject Param"
-_feature · planning · horizon: now_
-
-Resume by reading the spec at `.hero/planning/features/satellite-scope-finishers/spec.md`. Two surface additions: `hero queue --subproject` flag (mirrors `hero list`), and `subproject` parameter on five MCP tools (`hero_list`, `hero_queue`, `hero_search`, `hero_recap`, `hero_feed`) with consistent description telling the model when to pass it. Parent specs in the satellite arc: monorepo-satellite-installs, satellite-corpus-integration, satellite-scope-extras — all shipped.
-
----
-
-## satellite-scope-extras — "Satellite Scope Extras — Why Traversal, Spec Move, Cloud Filtering"
-_feature · planning · horizon: now_
-
-Resume by reading `.hero/planning/features/satellite-scope-extras/spec.md`. Phases 1 (`hero why` annotation) and 2 (`hero spec move`) are local-CLI work; Phase 3 (cloud) touches `cloud/store`, `cloud/api`, and `cloud/web/app.js`. Parent specs that already shipped: [monorepo-satellite-installs](../monorepo-satellite-installs/spec.md) (foundation) and [satellite-corpus-integration](../satellite-corpus-integration/spec.md) (scope flows through corpus).
-
----
-
-## satellite-harness-coverage — "Satellite Harness Coverage — Per-Target Markers for OpenCode, Cursor, Generic"
-_feature · planning · horizon: now_
-
-Resume by reading the spec at `.hero/planning/features/satellite-harness-coverage/spec.md`. Closes the per-harness coverage gap from the satellite arc. Mostly a registry edit (`targetLayouts`) plus a small refactor of `perTargetMarker` to accept multiple targets and a written-paths dedup in `Materialize`. Parent spec: monorepo-satellite-installs. Verified gap during example codebase migration (OpenCode+Claude both installed at root, only Claude got the marker).
-
----
-
-## premise-interrogation — "Premise Interrogation — Force-Question the Framing Before Designing"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/premise-interrogation/spec.md)_
-
----
-
 ## pm-foundation-delivery — PM Foundation Delivery — Ship PM Pack Additively + Unblock hero-code
 _feature · planning · horizon: now_
 
@@ -394,21 +409,6 @@ catalogs, and LLM-call wrapping mechanics — all are out of scope here.
 _feature · planning · horizon: now_
 
 > Read `.hero/planning/features/document-vocabulary-auto-select-schema/spec.md` (this file). Inspect `internal/vocabulary/vocabulary.go` and `internal/vocabulary/resolver.go` for the auto_select rule struct shape, allowed-value set, and match semantics — these are the authoritative source. Check existing presets: `core/vocabularies/agile-scrum.yaml`, `core/vocabularies/kanban.yaml`, `core/vocabularies/shape-up.yaml`, `core/vocabularies/default.yaml`, `core/vocabularies/jira.yaml`, `core/vocabularies/linear.yaml` for what auto_select blocks already exist. Author `docs/contracts/vocabulary-auto-select.md` per the six sections in this spec's Design. Update `docs/contracts/active-dialect.md` §3 with a cross-link and add a row to `docs/contracts/README.md`'s table. Keep the doc under 250 lines. Run `go build ./...` (should be unchanged). Report what shipped, the auto_select rule fields you documented, and any code-vs-prose discrepancies you spotted, under 250 words.
-
----
-
-## portable-routing-rules — "Portable Routing Rules — One `routing.md`, Every Harness Gets It Natively"
-_feature · planning · horizon: now_
-
-Portable routing rules: extract the natural-language → slash-command table out of `internal/install/agents_md.go` into one `routing.md`, then render per-target include directives so every harness loads it natively.
-
-**Status:** planning — spec just landed, no code yet.
-
-**Pick up at:** map the per-target rendering matrix. Start at `internal/install/agents_md.go:224` (`generateAgentsMdBody`) to see the content that's moving, then walk each `target_*.go` to confirm the native include idiom (Cursor `.mdc` frontmatter, Aider `read:`, Cline `.clinerules/`, opencode `instructions:`). Bucket A = native include; Bucket B = inline at install time.
-
-→ `.hero/planning/portable-routing-rules.md`
-
-**Files:** `internal/install/agents_md.go:224-313`, `internal/install/target_claude.go`, `internal/install/target_opencode.go`, `internal/install/target_cursor.go`, `internal/install/target_copilot.go`, `internal/install/target_codex.go`
 
 ---
 
@@ -627,6 +627,27 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
+## multi-domain-core — "Multi-Domain Core Engine"
+_feature · draft · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/multi-domain-core/spec.md)_
+
+---
+
+## greenfield-scaffolding — "Greenfield Scaffolding"
+_feature · draft · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/greenfield-scaffolding/spec.md)_
+
+---
+
+## cross-spec-awareness — "Cross-Spec Awareness"
+_feature · draft · horizon: next_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/cross-spec-awareness/spec.md)_
+
+---
+
 ## compact-handoff-summarizer — "Compact Handoff Summarizer — LLM-Curated Middle Section for Resume Context"
 _feature · draft · horizon: next_
 
@@ -647,27 +668,6 @@ Then implement in order:
 6. Privacy-disclosure surface in `hero hooks install --host=claude` when hero-cloud becomes the default.
 
 The deliverable is reviewable in two cuts: (a) the seam + direct backend (smaller change, immediately useful for users with API keys), and (b) the hero-cloud backend (bigger surface, depends on infra availability). Land (a) standalone if (b) isn't ready.
-
----
-
-## multi-domain-core — "Multi-Domain Core Engine"
-_feature · draft · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/multi-domain-core/spec.md)_
-
----
-
-## greenfield-scaffolding — "Greenfield Scaffolding"
-_feature · draft · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/greenfield-scaffolding/spec.md)_
-
----
-
-## cross-spec-awareness — "Cross-Spec Awareness"
-_feature · draft · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/cross-spec-awareness/spec.md)_
 
 ---
 

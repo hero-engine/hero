@@ -9,6 +9,7 @@ relates-to:
   - recap-unregister-stale-and-empty-repo
   - hero-import-directory-unsupported
 completed_at: 2026-05-18T19:25:38Z
+created: 2026-05-18
 ---
 
 # `hero init`'s managed-gitignore block omits `.hero/index.db`, causing projects to commit the binary SQLite search index

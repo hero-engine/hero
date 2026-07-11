@@ -5,6 +5,7 @@ severity: medium-high
 tags: [install, snapshot, agents-md, managed-region, refactor, drift]
 relates-to: [snapshot-architecture, next-as-projection-architecture, cli-invocation-drift-test-markdown, next-noop-writes]
 completed_at: 2026-05-18T23:22:59Z
+created: 2026-05-18
 ---
 # AGENTS.md Managed-Region Consolidation
 

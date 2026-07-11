@@ -8,6 +8,7 @@ related_specs:
   - hero-landing-page
   - hero-docs-site
 completed_at: 2026-06-11T02:30:50Z
+created: 2026-06-11
 ---
 
 ## Goal

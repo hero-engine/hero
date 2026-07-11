@@ -6,6 +6,7 @@ status: planning
 priority: medium
 severity: low
 superseded_by: single-source-install-p1-agents-md
+created: 2026-05-15
 ---
 
 ## Goal

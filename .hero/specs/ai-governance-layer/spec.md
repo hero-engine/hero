@@ -7,6 +7,7 @@ priority: high
 tags: [cloud, enterprise, billion-dollar]
 horizon: now
 completed_at: 2026-05-18T19:25:38Z
+created: 2026-05-12
 ---
 
 # AI Governance Layer — "The Spec Is The Law"

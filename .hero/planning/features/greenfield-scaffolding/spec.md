@@ -6,6 +6,7 @@ status: draft
 priority: medium
 horizon: next
 smoke: deferred
+created: 2026-05-12
 ---
 
 # Greenfield Scaffolding

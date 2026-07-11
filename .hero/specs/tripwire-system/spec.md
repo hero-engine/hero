@@ -10,6 +10,7 @@ relations:
   - target: architectural-drift-detection
     kind: related
 completed_at: 2026-06-09T18:38:23Z
+created: 2026-06-09
 ---
 
 # Tripwire System — Forbidden-Option Guardrails for Model Sessions

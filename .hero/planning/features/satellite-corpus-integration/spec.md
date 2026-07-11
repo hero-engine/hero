@@ -9,6 +9,7 @@ tags: [monorepo, satellites, scoping, graph, skills, migration]
 relations:
   - target: monorepo-satellite-installs
     kind: parent
+created: 2026-05-12
 ---
 
 # Satellite Corpus Integration — Scope as a First-Class Facet

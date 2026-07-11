@@ -11,6 +11,7 @@ relations:
     kind: related
   - target: cloud-mcp
     kind: related
+created: 2026-05-12
 ---
 
 # Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction

@@ -15,6 +15,7 @@ relations:
     kind: complements
   - target: spec-drift-detection
     kind: complements
+created: 2026-05-12
 ---
 
 ## Problem
