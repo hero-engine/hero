@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-12T19:59:52Z
+updated: 2026-07-12T20:13:19Z
 repo: hero-engine/hero
 ---
 
@@ -15,7 +15,11 @@ repo: hero-engine/hero
 
 ## Suggested next prompt
 
-> Harness-native install/upgrade is delivered + verified (bug resolved). Next: commit the batch (install code + governance spec edits) to main; then re-send the hero-code peer advisory when auth works; optionally decide if hero init should skip AGENTS.md for claude-only repos. Then back to remaining pre-release bugs.
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 

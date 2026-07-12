@@ -5,7 +5,7 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-07-12T20:00:55Z
+updated: 2026-07-12T20:39:18Z
 repo: hero-engine/hero
 branch: main
 ---
@@ -45,9 +45,9 @@ Nothing this session.
 
 ## Context to carry forward
 
+- Single-Source Install — One Canonical Tree, Every Harness Reads It — `single-source-install`
 - Hero Surface — Deployment Layers and Rendering Model — `hero-surface-deployment-and-rendering`
 - "Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use" — `cold-start-trust-hardening`
 - "Concurrent-Session Branching & Worktree Isolation" — `concurrent-session-branching`
 - Environment Awareness — CI/Deployment/Runtime Visibility — `environment-awareness`
-- Get Back on Track — Mission-First V2 Recovery — `get-back-on-track`
 
