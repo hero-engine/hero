@@ -243,6 +243,202 @@ func TestNextMD_RoadmapShape_NeverEmitted(t *testing.T) {
 	}
 }
 
+// section returns the text of a `## Heading` block — from the heading
+// line up to (but not including) the next `## ` heading or EOF. Used to
+// compare a single projected section byte-for-byte across graph states.
+func section(out, heading string) string {
+	start := strings.Index(out, heading)
+	if start < 0 {
+		return ""
+	}
+	rest := out[start+len(heading):]
+	if next := strings.Index(rest, "\n## "); next >= 0 {
+		return heading + rest[:next]
+	}
+	return heading + rest
+}
+
+// TestNextMD_CarryForward_DeterministicAcrossIngestOrder is the core
+// regression guard for next-context-carry-forward-drift: the
+// `## Context to carry forward` list must order on committed-derivable
+// fields only (priority, created, key), never on the graph-runtime
+// `ingested_at`. We project the same committed Decisions/Initiatives from
+// two graphs — one clean-scan-like (single clustered ingested_at, natural
+// insert order) and one working-graph-like (rows inserted in reverse with
+// a subset's ingested_at bumped to "now", simulating a dev who recently
+// touched them) — and assert the section is byte-identical.
+func TestNextMD_CarryForward_DeterministicAcrossIngestOrder(t *testing.T) {
+	type ctxNode struct {
+		typ, key, title, prio, created string
+	}
+	// Same committed props in both graphs; only insert order and
+	// ingested_at differ between store A and store B.
+	nodes := []ctxNode{
+		{"Decision", "d-alpha", "Alpha decision", "P1", "2026-07-01"},
+		{"Decision", "d-bravo", "Bravo decision", "P0", "2026-07-02"},
+		{"Initiative", "i-charlie", "Charlie initiative", "P0", "2026-07-03"},
+		{"Decision", "d-delta", "Delta decision", "P2", "2026-07-01"},
+		{"Initiative", "i-echo", "Echo initiative", "P1", "2026-07-05"},
+	}
+
+	seed := func(t *testing.T, reverse bool, bump bool) *graph.Store {
+		store := openTestStore(t)
+		if _, err := store.UpsertNode(&graph.Node{
+			Type: "Repo", Key: "test-repo", Repo: "test-repo", ContentHash: "h-repo",
+		}); err != nil {
+			t.Fatal(err)
+		}
+		order := make([]ctxNode, len(nodes))
+		copy(order, nodes)
+		if reverse {
+			for i, j := 0, len(order)-1; i < j; i, j = i+1, j-1 {
+				order[i], order[j] = order[j], order[i]
+			}
+		}
+		for i, n := range order {
+			ingested := "2026-07-10T00:00:00Z" // clean-scan-like: one cluster
+			if bump {
+				// working-graph-like: distinct, recent, and in an order
+				// that would flip an ingested_at DESC sort if it still
+				// governed the ranking.
+				ingested = time.Date(2026, 8, 1, 0, 0, i, 0, time.UTC).Format(time.RFC3339)
+			}
+			if _, err := store.UpsertNode(&graph.Node{
+				Type: n.typ, Key: n.key, Repo: "test-repo", Domain: "engineering",
+				Props: map[string]any{
+					"title": n.title, "status": "planning",
+					"priority": n.prio, "created": n.created,
+				},
+				IngestedAt:  ingested,
+				ContentHash: "h-" + n.key,
+			}); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return store
+	}
+
+	storeA := seed(t, false, false) // natural order, clustered ingested_at
+	storeB := seed(t, true, true)   // reversed order, bumped ingested_at
+
+	outA, err := NextMD(storeA, NextMDOptions{RepoKey: "test-repo"})
+	if err != nil {
+		t.Fatalf("NextMD A: %v", err)
+	}
+	outB, err := NextMD(storeB, NextMDOptions{RepoKey: "test-repo"})
+	if err != nil {
+		t.Fatalf("NextMD B: %v", err)
+	}
+
+	secA := section(outA, "## Context to carry forward")
+	secB := section(outB, "## Context to carry forward")
+	if secA == "" {
+		t.Fatal("Context to carry forward section missing")
+	}
+	if secA != secB {
+		t.Errorf("carry-forward section not deterministic across ingest order/state:\n--- clean-scan ---\n%s\n--- working-graph ---\n%s", secA, secB)
+	}
+	// Handoff-magic guard: the section must still carry real pinned
+	// context, not be empty.
+	if !strings.Contains(secA, "`i-charlie`") || !strings.Contains(secA, "`d-bravo`") {
+		t.Errorf("carry-forward section lost its pinned context:\n%s", secA)
+	}
+	// And it must be ordered priority ASC, created DESC, key ASC:
+	// i-charlie(P0,07-03) < d-bravo(P0,07-02) < i-echo(P1,07-05) < d-alpha(P1,07-01) < d-delta(P2).
+	got := []int{
+		strings.Index(secA, "`i-charlie`"),
+		strings.Index(secA, "`d-bravo`"),
+		strings.Index(secA, "`i-echo`"),
+		strings.Index(secA, "`d-alpha`"),
+		strings.Index(secA, "`d-delta`"),
+	}
+	for i := 1; i < len(got); i++ {
+		if !(got[i-1] < got[i]) {
+			t.Errorf("carry-forward not ordered priority/created/key: positions=%v\n%s", got, secA)
+			break
+		}
+	}
+}
+
+// TestNextMD_Next_TieBreakDeterministic guards the `## Next` pick: with
+// multiple features tied on the top priority, the ordering must break the
+// tie on committed-derivable fields (created DESC, key ASC), never on
+// `ingested_at`. Projecting the same committed features from a clean-scan-
+// like graph and a working-graph-like graph must yield an identical
+// `## Next` section.
+func TestNextMD_Next_TieBreakDeterministic(t *testing.T) {
+	type featNode struct {
+		key, title, created string
+	}
+	feats := []featNode{
+		{"f-one", "Feature one", "2026-07-01"},
+		{"f-two", "Feature two", "2026-07-03"},
+		{"f-three", "Feature three", "2026-07-02"},
+	}
+
+	seed := func(t *testing.T, reverse bool, bump bool) *graph.Store {
+		store := openTestStore(t)
+		if _, err := store.UpsertNode(&graph.Node{
+			Type: "Repo", Key: "test-repo", Repo: "test-repo", ContentHash: "h-repo",
+		}); err != nil {
+			t.Fatal(err)
+		}
+		order := make([]featNode, len(feats))
+		copy(order, feats)
+		if reverse {
+			for i, j := 0, len(order)-1; i < j; i, j = i+1, j-1 {
+				order[i], order[j] = order[j], order[i]
+			}
+		}
+		for i, f := range order {
+			ingested := "2026-07-11T23:01:00Z" // clean-scan-like cluster
+			if bump {
+				ingested = time.Date(2026, 8, 1, 0, 0, i, 0, time.UTC).Format(time.RFC3339)
+			}
+			if _, err := store.UpsertNode(&graph.Node{
+				Type: "Feature", Key: f.key, Repo: "test-repo", Domain: "engineering",
+				Props: map[string]any{
+					"title": f.title, "status": "planning",
+					"priority": "P0", "created": f.created,
+				},
+				IngestedAt:  ingested,
+				ContentHash: "h-" + f.key,
+			}); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return store
+	}
+
+	storeA := seed(t, false, false)
+	storeB := seed(t, true, true)
+
+	outA, err := NextMD(storeA, NextMDOptions{RepoKey: "test-repo", NextN: 3})
+	if err != nil {
+		t.Fatalf("NextMD A: %v", err)
+	}
+	outB, err := NextMD(storeB, NextMDOptions{RepoKey: "test-repo", NextN: 3})
+	if err != nil {
+		t.Fatalf("NextMD B: %v", err)
+	}
+
+	secA := section(outA, "## Next")
+	secB := section(outB, "## Next")
+	if secA == "" {
+		t.Fatal("Next section missing")
+	}
+	if secA != secB {
+		t.Errorf("Next section not deterministic across ingest order/state:\n--- clean-scan ---\n%s\n--- working-graph ---\n%s", secA, secB)
+	}
+	// Tie-break must be created DESC then key ASC: f-two(07-03) < f-three(07-02) < f-one(07-01).
+	i2 := strings.Index(secA, "f-two")
+	i3 := strings.Index(secA, "f-three")
+	i1 := strings.Index(secA, "f-one")
+	if !(i2 < i3 && i3 < i1) {
+		t.Errorf("Next tie-break not created-DESC/key-ASC: two=%d three=%d one=%d\n%s", i2, i3, i1, secA)
+	}
+}
+
 func TestNextMD_AttemptsLinkedToSession(t *testing.T) {
 	store := openTestStore(t)
 	seedRepo(t, store)

@@ -319,3 +319,5 @@
 {"ts":"2026-07-12T18:57:55.35926Z","type":"peer.call.invoked","agent":"hero","slug":"harness-native-install-target-aware-upgrade","message":"peer call advisory mode=advisory target=hero-code call_id=18c19fd781c34858775c1221df9b653c"}
 {"ts":"2026-07-12T19:59:18.379039Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"harness-native-install-target-aware-upgrade","message":"\"Harness-Native Install — Target-Aware Instruction Files and Upgrade\""}
 {"ts":"2026-07-12T19:59:18.379135Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"harness-native-install-target-aware-upgrade","message":"status -\u003e completed"}
+{"ts":"2026-07-12T22:47:43.401398Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"next-context-carry-forward-drift","message":"\"NEXT.md projection drift gate still unwinnable — ## Context to carry forward (and ## Next) rank on volatile graph ingested_at\""}
+{"ts":"2026-07-12T22:47:43.401504Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-context-carry-forward-drift","message":"status -\u003e completed"}
