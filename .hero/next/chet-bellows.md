@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-12T07:16:12Z
+updated: 2026-07-12T15:56:27Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +8,9 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> `hero scan` regenerates auto-generated project-scan knowledge entries (those tagged `auto-generated, project-scan`, e.g. `.hero/knowledge/rules/ci-github-actions/spec.md`, `.hero/knowledge/context/architecture-overview/spec.md`, `dev-workflow`, `project-overview`, `rules/project-rules`) and in doing so (a) DROPS the `slug:` frontmatter field and (b) FLIPS `created:` to today's date, overwriting th…
+> Investigate whether the `internal/codescan` knowledge writer has the same frontmatter-clobber bug that was just fixed for `internal/scan`.
+> 
+> Context: The bug spec `scan-clobbers-authored-created-slug-frontmatter` (now completed, archived at `/Users/developer/projects/hero-engine/repository/hero/.hero/specs/scan-clobbers-authored-created-slug-frontmatter/spec.md`) fixed `hero scan` regenerating `.her…
 
 ## Suggested next prompt
 
