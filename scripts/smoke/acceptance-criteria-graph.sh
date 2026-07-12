@@ -128,6 +128,10 @@ smoke: deferred
 ---
 ## Goal
 Test spec for smoke verification.
+## Kickoff
+Sandbox spec used only by the acceptance-criteria-graph smoke to exercise
+`hero spec deliver --manual`. Not real work — delivery just needs to print
+the AC block.
 ## Acceptance criteria
 **AC-1:** something verifiable happens when delivered
 **AC-2:** another criterion exists
