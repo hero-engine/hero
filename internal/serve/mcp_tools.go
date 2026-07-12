@@ -2193,8 +2193,12 @@ func (s *MCPServer) toolEnrich(args map[string]interface{}) (string, error) {
 
 	// Regenerate knowledge files with enrichments applied
 	checksums, _ := codescan.LoadChecksums(codeDir)
+	prevCache, cacheErr := codescan.LoadScanCache(codeDir)
+	if cacheErr != nil {
+		prevCache = nil
+	}
 	scanner := codescan.NewScanner(cfg.CodeScan, s.projectRoot)
-	result, err := scanner.Scan(checksums)
+	result, err := scanner.Scan(checksums, prevCache)
 	if err != nil {
 		return fmt.Sprintf("Saved %d enrichment(s) but failed to regenerate knowledge: %v", count, err), nil
 	}

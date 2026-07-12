@@ -261,11 +261,18 @@ func runCodeScan(cfg config.Config, projectRoot, heroDir string) error {
 		fmt.Fprintf(os.Stderr, "Warning: could not load previous checksums: %v\n", err)
 	}
 
+	// Load the prior scan cache so unchanged files can be carried forward.
+	prevCache, err := codescan.LoadScanCache(codeDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not load scan cache, re-parsing all files: %v\n", err)
+		prevCache = nil
+	}
+
 	fmt.Printf("Scanning code structure (depth: %s, parser: %s)...\n", cfg.CodeScan.Depth, resolveParser(cfg.CodeScan.Parser))
 	start := time.Now()
 
 	scanner := codescan.NewScannerWithMode(cfg.CodeScan, projectRoot, resolveParser(cfg.CodeScan.Parser))
-	result, err := scanner.Scan(prevChecksums)
+	result, err := scanner.Scan(prevChecksums, prevCache)
 	if err != nil {
 		return fmt.Errorf("code scan failed: %w", err)
 	}

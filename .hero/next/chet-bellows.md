@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-12T16:48:03Z
+updated: 2026-07-12T16:48:10Z
 repo: hero-engine/hero
 ---
 
@@ -8,12 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Investigate and fix a data-loss bug in the incremental code-scan knowledge writer.
-> 
-> ## Symptom
-> After an incremental `hero scan`, `.hero/knowledge/code/` contains ONLY the packages whose files changed since the previous scan — every unchanged package's `spec.md` directory has been deleted. On this repo, `ls .hero/knowledge/code/` shows just `index/`, `internal-projection/`, `internal-serve-opsrun…
-
-_possibly stale — 1 commit(s) since, last set 10m ago_
+> In internal/serve/opsrunner, `(*Runner).Start()` (runner.go:~150) spawns `pump()` goroutines that can outlive the test that started them — e.g. `TestRunner_Start_Dedup` (runner_test.go:~61) leaves its runner's pump() goroutine running after the test returns. This was one half of the data race fixed in `opsrunner-keepalive-data-race` (the race itself is gone now — `now`/`keepaliveInterval` beca…
 
 ## Suggested next prompt
 

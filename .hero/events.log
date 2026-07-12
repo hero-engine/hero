@@ -310,3 +310,5 @@
 {"ts":"2026-07-12T15:23:04.793544Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"scan-clobbers-authored-created-slug-frontmatter","message":"status -\u003e completed"}
 {"ts":"2026-07-12T16:37:14.78413Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"incremental-scan-prunes-unchanged-packages","message":"\"Incremental code-scan prunes unchanged package dirs — data loss in .hero/knowledge/code/\""}
 {"ts":"2026-07-12T16:37:14.784465Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"incremental-scan-prunes-unchanged-packages","message":"status -\u003e completed"}
+{"ts":"2026-07-12T17:05:09.23677Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"incremental-scan-complete-result","message":"\"Incremental code-scan produces a complete Result — scan cache carries unchanged files forward\""}
+{"ts":"2026-07-12T17:05:09.236851Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"incremental-scan-complete-result","message":"status -\u003e completed"}
