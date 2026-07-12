@@ -199,8 +199,9 @@ func openFeaturesByPriority(store *graph.Store, repoKey string, limit int) ([]fe
 		   FROM nodes
 		  WHERE type = 'Feature' AND repo = ? AND valid_to IS NULL
 		    AND COALESCE(json_extract(props, '$.status'), '') NOT IN ('completed', 'superseded')
-		  ORDER BY COALESCE(json_extract(props, '$.priority'), 'P9'),
-		           ingested_at DESC
+		  ORDER BY COALESCE(json_extract(props, '$.priority'), 'P9') ASC,
+		           COALESCE(json_extract(props, '$.created'), '') DESC,
+		           key ASC
 		  LIMIT ?`,
 		repoKey, limit,
 	)
@@ -306,7 +307,10 @@ func contextToCarry(store *graph.Store, repoKey string) ([]string, error) {
 		  WHERE type IN ('Decision', 'Initiative')
 		    AND repo = ? AND valid_to IS NULL
 		    AND COALESCE(json_extract(props, '$.status'), '') NOT IN ('completed', 'superseded')
-		  ORDER BY ingested_at DESC
+		  ORDER BY COALESCE(json_extract(props, '$.priority'), 'P9') ASC,
+		           COALESCE(json_extract(props, '$.created'), '') DESC,
+		           key ASC,
+		           type ASC
 		  LIMIT 5`,
 		repoKey,
 	)
