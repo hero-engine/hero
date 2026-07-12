@@ -1,11 +1,11 @@
 ---
 title: CI Must Pass (GitHub Actions)
-slug: ci-github-actions
 type: rule
 status: active
 created: 2026-04-29
 scope: ["*"]
 tags: [auto-generated, project-scan, ci]
+slug: ci-github-actions
 ---
 # CI Must Pass (GitHub Actions)
 
