@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-12T15:56:27Z
+updated: 2026-07-12T16:37:59Z
 repo: hero-engine/hero
 ---
 
@@ -8,17 +8,14 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Investigate whether the `internal/codescan` knowledge writer has the same frontmatter-clobber bug that was just fixed for `internal/scan`.
+> Investigate and fix a data-loss bug in the incremental code-scan knowledge writer.
 > 
-> Context: The bug spec `scan-clobbers-authored-created-slug-frontmatter` (now completed, archived at `/Users/developer/projects/hero-engine/repository/hero/.hero/specs/scan-clobbers-authored-created-slug-frontmatter/spec.md`) fixed `hero scan` regenerating `.her…
+> ## Symptom
+> After an incremental `hero scan`, `.hero/knowledge/code/` contains ONLY the packages whose files changed since the previous scan — every unchanged package's `spec.md` directory has been deleted. On this repo, `ls .hero/knowledge/code/` shows just `index/`, `internal-projection/`, `internal-serve-opsrun…
 
 ## Suggested next prompt
 
-> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
-
-_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
-
-_Source: auto-derived from open feature — `hero next suggest "..."` to override._
+> Commit the incremental-scan data-loss fix (branch off main first): internal/codescan/generate.go + codescan_test.go, and stage .hero/ handoff files. Follow-up available: secondary defect #1 — incremental scan still writes a partial index/ConfigVars/Endpoints (needs full prior Result carried forward).
 
 ## Recent reflections
 

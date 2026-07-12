@@ -33,8 +33,23 @@ func GenerateKnowledge(result *Result, codeDir string) error {
 	}
 	writtenSlugs["index"] = true
 
+	// Build the prune keep-set from the COMPLETE current file set. On an
+	// incremental scan result.Packages holds only changed packages, so
+	// writtenSlugs alone would drop every unchanged package and prune its
+	// still-valid directory. result.Checksums is recorded for every current
+	// file on both full and incremental scans, so slugging each file's
+	// directory reconstructs the full set of live package dirs. Genuinely
+	// deleted packages are absent from result.Checksums and are still pruned.
+	keep := make(map[string]bool, len(writtenSlugs)+len(result.Checksums))
+	for slug := range writtenSlugs {
+		keep[slug] = true
+	}
+	for relPath := range result.Checksums {
+		keep[slugify(filepath.Dir(relPath))] = true
+	}
+
 	// Remove stale directories from previous runs
-	pruneStaleDirectories(codeDir, writtenSlugs)
+	pruneStaleDirectories(codeDir, keep)
 
 	// Save checksums for incremental scanning
 	if err := SaveChecksums(codeDir, result.Checksums); err != nil {

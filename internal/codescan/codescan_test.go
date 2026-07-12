@@ -602,6 +602,98 @@ func (s *Service) Run() error { return nil }
 	}
 }
 
+// TestGenerateKnowledgeIncrementalPreservesUnchangedPackages guards against the
+// data-loss bug where an incremental scan (which rebuilds only changed packages)
+// pruned every unchanged package's directory from .hero/knowledge/code/. The
+// prune keep-set must be derived from the complete current file set
+// (result.Checksums), not the changed-only result.Packages.
+func TestGenerateKnowledgeIncrementalPreservesUnchangedPackages(t *testing.T) {
+	dir := t.TempDir()
+
+	aDir := filepath.Join(dir, "internal", "a")
+	os.MkdirAll(aDir, 0o755)
+	aFile := filepath.Join(aDir, "a.go")
+	os.WriteFile(aFile, []byte(`package a
+
+// Alpha does alpha things.
+type Alpha struct{}
+`), 0o644)
+
+	bDir := filepath.Join(dir, "internal", "b")
+	os.MkdirAll(bDir, 0o755)
+	bFile := filepath.Join(bDir, "b.go")
+	os.WriteFile(bFile, []byte(`package b
+
+// Beta does beta things.
+type Beta struct{}
+`), 0o644)
+
+	cfg := config.DefaultCodeScanConfig()
+	scanner := NewScanner(cfg, dir)
+	codeDir := filepath.Join(dir, ".hero", "knowledge", "code")
+
+	// Full scan writes both packages.
+	result, err := scanner.Scan(nil)
+	if err != nil {
+		t.Fatalf("full scan failed: %v", err)
+	}
+	if err := GenerateKnowledge(result, codeDir); err != nil {
+		t.Fatalf("GenerateKnowledge (full) failed: %v", err)
+	}
+	aSpec := filepath.Join(codeDir, "internal-a", "spec.md")
+	bSpec := filepath.Join(codeDir, "internal-b", "spec.md")
+	if _, err := os.Stat(aSpec); err != nil {
+		t.Fatalf("package A spec missing after full scan: %v", err)
+	}
+	if _, err := os.Stat(bSpec); err != nil {
+		t.Fatalf("package B spec missing after full scan: %v", err)
+	}
+
+	// Change ONLY package A, then re-scan incrementally with the prior checksums.
+	os.WriteFile(aFile, []byte(`package a
+
+// Alpha does alpha things.
+type Alpha struct{}
+
+// Gamma is new.
+func Gamma() {}
+`), 0o644)
+
+	result2, err := scanner.Scan(result.Checksums)
+	if err != nil {
+		t.Fatalf("incremental scan failed: %v", err)
+	}
+	if err := GenerateKnowledge(result2, codeDir); err != nil {
+		t.Fatalf("GenerateKnowledge (incremental) failed: %v", err)
+	}
+
+	// Core regression: package B was unchanged but its spec.md must survive.
+	if _, err := os.Stat(bSpec); err != nil {
+		t.Errorf("package B spec deleted by incremental scan (regression): %v", err)
+	}
+	// Package A was rewritten and must still exist.
+	if _, err := os.Stat(aSpec); err != nil {
+		t.Errorf("package A spec missing after incremental scan: %v", err)
+	}
+
+	// Genuinely-deleted package: remove B's file, re-scan incrementally, and
+	// confirm B's directory IS pruned (deletions must still take effect).
+	os.Remove(bFile)
+	result3, err := scanner.Scan(result2.Checksums)
+	if err != nil {
+		t.Fatalf("incremental scan after delete failed: %v", err)
+	}
+	if err := GenerateKnowledge(result3, codeDir); err != nil {
+		t.Fatalf("GenerateKnowledge (after delete) failed: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(codeDir, "internal-b")); !os.IsNotExist(err) {
+		t.Errorf("package B dir should be pruned after its file was deleted, stat err = %v", err)
+	}
+	if _, err := os.Stat(aSpec); err != nil {
+		t.Errorf("package A spec missing after delete-scan: %v", err)
+	}
+}
+
 func contains(s, substr string) bool {
 	return len(s) > 0 && len(substr) > 0 && findIndex(s, substr) >= 0
 }
