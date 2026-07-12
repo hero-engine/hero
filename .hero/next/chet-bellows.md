@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-11T23:11:02Z
+updated: 2026-07-12T05:35:22Z
 repo: hero-engine/hero
 ---
 
@@ -15,6 +15,8 @@ repo: hero-engine/hero
 > verify`, then commit atomically and push. Sequence:
 > 
 > 1. flat-named-spec-discove…
+
+_possibly stale — 1 commit(s) since, last set 2h 43m ago_
 
 ## Suggested next prompt
 
