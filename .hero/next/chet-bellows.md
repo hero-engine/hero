@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-10T06:22:30Z
+updated: 2026-07-11T23:11:02Z
 repo: hero-engine/hero
 ---
 
@@ -18,7 +18,11 @@ repo: hero-engine/hero
 
 ## Suggested next prompt
 
-_(none — `hero next suggest "..."` to set, or open a Feature to derive one)_
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 

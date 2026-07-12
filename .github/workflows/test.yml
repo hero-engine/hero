@@ -45,9 +45,10 @@ jobs:
           set -e
           go build -o ./hero ./cmd/hero
           # Build a graph from the repo sources so the projection has
-          # real content to project against. Quiet by default to keep
-          # the workflow log focused on the gate's signal.
-          ./hero scan -q || true
+          # real content to project against. `hero scan` has no quiet
+          # flag, so redirect output to keep the workflow log focused on
+          # the gate's signal.
+          ./hero scan >/dev/null 2>&1 || true
           ./hero next checkpoint --quiet
           if ! git diff --exit-code -- .hero/NEXT.md; then
             echo "::error::.hero/NEXT.md drifted from hero next checkpoint output."

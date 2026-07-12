@@ -42,7 +42,7 @@ func seedRepo(t *testing.T, store *graph.Store) {
 		date := now.Add(time.Duration(-i) * time.Hour).Format(time.RFC3339)
 		if _, err := store.UpsertNode(&graph.Node{
 			Type: "Commit", Key: c.sha, Repo: "test-repo",
-			Domain:      "engineering",
+			Domain: "engineering",
 			Props: map[string]any{
 				"sha": c.sha, "subject": c.subj, "date": date,
 			},
@@ -59,7 +59,7 @@ func seedRepo(t *testing.T, store *graph.Store) {
 	} {
 		if _, err := store.UpsertNode(&graph.Node{
 			Type: "Feature", Key: f.slug, Repo: "test-repo",
-			Domain:      "engineering",
+			Domain: "engineering",
 			Props: map[string]any{
 				"title": f.title, "status": f.status, "priority": f.prio,
 			},
@@ -71,7 +71,7 @@ func seedRepo(t *testing.T, store *graph.Store) {
 	// A completed feature (must NOT appear under "Next")
 	if _, err := store.UpsertNode(&graph.Node{
 		Type: "Feature", Key: "graph-memory", Repo: "test-repo",
-		Domain:      "engineering",
+		Domain: "engineering",
 		Props: map[string]any{
 			"title": "Graph memory", "status": "completed", "priority": "P0",
 		},
@@ -196,20 +196,19 @@ func TestNextMD_Blockers(t *testing.T) {
 	}
 }
 
-// TestNextMD_RoadmapShape_Emits covers the ambient size-drift surface:
-// when AmbientDrift returns a non-quiet non-zero report, NextMD emits
-// the `## Roadmap shape` section between `## Next` and `## Blocked on`.
-func TestNextMD_RoadmapShape_Emits(t *testing.T) {
+// TestNextMD_RoadmapShape_NeverEmitted is the regression guard for
+// next-drift-gate-unwinnable: the ambient size-drift line was removed from the
+// NEXT.md projection because its corpus-derived count is stale-by-construction
+// in the committed file and made the CI byte-exact drift gate unwinnable. Even
+// with real drift present (a leaf whose declared size mismatches computed), the
+// projection must NOT emit `## Roadmap shape` or the churny count — that signal
+// now lives only in `hero size --check` / pulse / MCP.
+func TestNextMD_RoadmapShape_NeverEmitted(t *testing.T) {
 	store := openTestStore(t)
 	seedRepo(t, store)
 
 	tmp := t.TempDir()
 	heroDir := filepath.Join(tmp, ".hero")
-	if err := os.MkdirAll(heroDir, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	// Drifted leaf — declared size doesn't match computed (lots of files
-	// against declared trivial). ActiveSpec match fires rule 1.
 	specDir := filepath.Join(heroDir, "planning", "features", "drifted-leaf")
 	if err := os.MkdirAll(specDir, 0o755); err != nil {
 		t.Fatal(err)
@@ -223,6 +222,10 @@ func TestNextMD_RoadmapShape_Emits(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// ActiveSpec fires rule 1 of the AmbientDrift noise filter so the report
+	// is non-quiet with Count>0 — i.e. the removed emission WOULD fire here if
+	// it were restored. Without this the guard is vacuous (Quiet=true → the
+	// emission's `if !rep.Quiet && rep.Count > 0` never fires regardless).
 	out, err := NextMD(store, NextMDOptions{
 		RepoKey:     "test-repo",
 		HeroDir:     heroDir,
@@ -232,66 +235,11 @@ func TestNextMD_RoadmapShape_Emits(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NextMD: %v", err)
 	}
-
-	if !strings.Contains(out, "## Roadmap shape") {
-		t.Errorf("expected '## Roadmap shape' section, got:\n%s", out)
-	}
-	if !strings.Contains(out, "size drift") {
-		t.Errorf("expected lens-agnostic 'size drift' phrasing, got:\n%s", out)
-	}
-	if !strings.Contains(out, "/roadmap-review") {
-		t.Errorf("expected '/roadmap-review' CTA, got:\n%s", out)
-	}
-
-	// Placement check: `## Roadmap shape` must sit between `## Next`
-	// and `## Blocked on`.
-	idxNext := strings.Index(out, "## Next")
-	idxRoadmap := strings.Index(out, "## Roadmap shape")
-	idxBlocked := strings.Index(out, "## Blocked on")
-	if !(idxNext < idxRoadmap && idxRoadmap < idxBlocked) {
-		t.Errorf("placement wrong: next=%d roadmap=%d blocked=%d", idxNext, idxRoadmap, idxBlocked)
-	}
-}
-
-// TestNextMD_RoadmapShape_OmittedWhenQuiet covers the quiet path:
-// no drift → no `## Roadmap shape` header in the output at all.
-func TestNextMD_RoadmapShape_OmittedWhenQuiet(t *testing.T) {
-	store := openTestStore(t)
-	seedRepo(t, store)
-
-	tmp := t.TempDir()
-	heroDir := filepath.Join(tmp, ".hero")
-	if err := os.MkdirAll(heroDir, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	// Empty hero workspace → no drift → quiet.
-
-	out, err := NextMD(store, NextMDOptions{
-		RepoKey:     "test-repo",
-		HeroDir:     heroDir,
-		ProjectRoot: tmp,
-	})
-	if err != nil {
-		t.Fatalf("NextMD: %v", err)
-	}
 	if strings.Contains(out, "## Roadmap shape") {
-		t.Errorf("expected no '## Roadmap shape' section when quiet, got:\n%s", out)
+		t.Errorf("`## Roadmap shape` must not appear in NEXT.md (removed for the drift gate), got:\n%s", out)
 	}
-}
-
-// TestNextMD_RoadmapShape_NoHeroDir covers the legacy-caller path:
-// when HeroDir/ProjectRoot aren't set, the section is omitted (no
-// regression for existing NextMD callers that haven't been updated).
-func TestNextMD_RoadmapShape_NoHeroDir(t *testing.T) {
-	store := openTestStore(t)
-	seedRepo(t, store)
-
-	out, err := NextMD(store, NextMDOptions{RepoKey: "test-repo"})
-	if err != nil {
-		t.Fatalf("NextMD: %v", err)
-	}
-	if strings.Contains(out, "## Roadmap shape") {
-		t.Errorf("expected no '## Roadmap shape' section when HeroDir unset, got:\n%s", out)
+	if strings.Contains(out, "size drift") {
+		t.Errorf("churny size-drift count must not appear in NEXT.md, got:\n%s", out)
 	}
 }
 
@@ -301,7 +249,7 @@ func TestNextMD_AttemptsLinkedToSession(t *testing.T) {
 
 	sessID, _ := store.UpsertNode(&graph.Node{
 		Type: "Session", Key: "session-1", Repo: "test-repo", ContentHash: "h-sess",
-		Domain:      "engineering",
+		Domain: "engineering",
 	})
 	a, _ := store.UpsertNode(&graph.Node{
 		Type: "Attempt", Key: "session-1:abc",
