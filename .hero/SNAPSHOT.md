@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-12T15:52:50Z · projected from 401 source nodes_
+_Last refreshed: 2026-07-12T15:56:27Z · projected from 402 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 29m ago | satellite-corpus-integration |
+| core | building | cmd/, internal/ | 33m ago | satellite-corpus-integration |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | maturing | domains/engineering/ | 20h ago | — |
@@ -17,7 +17,7 @@ _Last refreshed: 2026-07-12T15:52:50Z · projected from 401 source nodes_
 | landing | building | web/landing/ | 20h ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
 | serve | building | internal/serve/ | 10h ago | agent-outposts |
-| (unassigned) | — | — | — | 190 specs without surface |
+| (unassigned) | — | — | — | 191 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
 
@@ -51,7 +51,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — knowledge-surfacing, eventslog-churn-fix-tracked-not-dirty, initiative-autocomplete-misses-completed-children, hero-surface-polish, content-remediation
+- **(unassigned)** — codescan-created-slug-frontmatter-followup, knowledge-surfacing, eventslog-churn-fix-tracked-not-dirty, initiative-autocomplete-misses-completed-children, hero-surface-polish
 - **core** — scan-clobbers-authored-created-slug-frontmatter, next-drift-gate-unwinnable, created-field-stamp-and-surface, install-json-mode-repair-migrate-parity, flat-tripwire-trigger-parity, flat-named-spec-discovery
 - **serve** — opsrunner-keepalive-data-race
 
@@ -68,11 +68,11 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Blocked specs (12):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection).
 - **Stale-in-flight (2):** `hero-landing-page` (54d), `hero-team-server` (54d).
 - **Aged open bugs (9):** `install-target-emits-both-claude-and-agents-md` (open 58d), `next-project-file-conflict-not-regenerated` (open 39d), `desktop-sidebar-mcp-not-running` (open 38d), `hihcp-agent-loop-error-recovery` (open 33d), `hihcp-agents-md-harness-agnostic` (open 33d), `hihcp-mcp-auto-reconnect` (open 33d), `hihcp-mcp-first-turn-readiness` (open 33d), `hihcp-permission-bridge-validation` (open 33d), `hihcp-rgignore` (open 33d).
-- **Unassigned specs (190) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
+- **Unassigned specs (191) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 182/372 (48%)
-- Projection generation: 1ms · Source nodes: 401
+- Specs covered: 182/373 (48%)
+- Projection generation: 1ms · Source nodes: 402
 
