@@ -213,21 +213,17 @@ func TestRunner_ClientDisconnect_DoesNotKillSubprocess(t *testing.T) {
 }
 
 func TestRunner_Keepalive(t *testing.T) {
-	// Force keepalive to a small interval and use a clock that jumps
-	// past it on every read so the first tick is past-due.
-	prevInterval := keepaliveInterval
-	prevNow := nowFn
-	keepaliveInterval = 50 * time.Millisecond
-	// Restore globals AFTER the job finishes — pump() reads nowFn
-	// from its goroutine, so t.Cleanup races if the job is still running.
-
 	withFakeBinary(t, `sleep 1; exit 0`)
 	r := New(context.Background())
+	// Force keepalive to a small interval on THIS runner so a tick fires
+	// while the subprocess is quiet. Per-runner (not a shared global), so
+	// no cross-test race with other runners' goroutines — set before Start,
+	// never mutated after.
+	r.keepaliveInterval = 50 * time.Millisecond
 	id, _, err := r.Start(context.Background(), "p", t.TempDir(), "re-scan")
 	if err != nil {
 		t.Fatal(err)
 	}
-	job := r.registry.findByID("p", id)
 	// Wait briefly so the subprocess is running but quiet (sleep 1).
 	time.Sleep(200 * time.Millisecond)
 
@@ -246,16 +242,6 @@ func TestRunner_Keepalive(t *testing.T) {
 	if !strings.Contains(body, ": keepalive") {
 		t.Errorf("expected keepalive frame; body:\n%s", body)
 	}
-	// Wait for the job to finish BEFORE restoring globals — pump()
-	// goroutine reads nowFn, and restoring it while pump runs is a
-	// data race. This was the source of the CI-only flake.
-	select {
-	case <-job.Done():
-	case <-time.After(5 * time.Second):
-		t.Log("warning: job did not finish within 5s")
-	}
-	keepaliveInterval = prevInterval
-	nowFn = prevNow
 }
 
 func TestRunner_FinishedJob_LookupAndFindByID(t *testing.T) {

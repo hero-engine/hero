@@ -23,14 +23,11 @@ const ringCap = 200
 // failure.
 const stderrTailCap = 200
 
-// keepaliveInterval is how long Stream waits without real output before
-// it emits an SSE comment frame to keep proxies from closing the
-// connection. Exposed as a var for tests to override.
-var keepaliveInterval = 15 * time.Second
-
-// nowFn is the clock used for StartedAt and keepalive timers. Tests
-// swap it to inject a deterministic clock.
-var nowFn = time.Now
+// defaultKeepaliveInterval is how long Stream waits without real output
+// before it emits an SSE comment frame to keep proxies from closing the
+// connection. Per-Runner (Runner.keepaliveInterval) so tests can shorten
+// it on their own runner without mutating shared global state.
+const defaultKeepaliveInterval = 15 * time.Second
 
 // Runner is the public type. Server.Run constructs one per daemon and
 // shares it across per-project + aggregate handlers.
@@ -52,6 +49,14 @@ type Runner struct {
 	// resolverErr is non-nil when os.Executable() failed at
 	// construction. Surfaces on Start.
 	resolverErr error
+
+	// now is the clock used for StartedAt and keepalive timers, and
+	// keepaliveInterval is the no-output window before an SSE comment
+	// frame. Both are set once in New and never mutated after, so the
+	// goroutines that read them (Start/Stream/pump) are race-free
+	// regardless of goroutine lifetime. Tests override them per-runner.
+	now               func() time.Time
+	keepaliveInterval time.Duration
 }
 
 // New constructs a Runner. The parent ctx scopes every subprocess —
@@ -65,7 +70,12 @@ func New(parent context.Context) *Runner {
 	if parent == nil {
 		parent = context.Background()
 	}
-	r := &Runner{parentCtx: parent, registry: newRegistry()}
+	r := &Runner{
+		parentCtx:         parent,
+		registry:          newRegistry(),
+		now:               time.Now,
+		keepaliveInterval: defaultKeepaliveInterval,
+	}
 	path, err := executablePath()
 	if err != nil {
 		r.resolverErr = fmt.Errorf("opsrunner: resolve hero binary: %w", err)
@@ -105,7 +115,7 @@ func (r *Runner) Start(ctx context.Context, slug, projectRoot, verb string) (job
 			ID:        newJobID(),
 			Slug:      slug,
 			Verb:      verb,
-			StartedAt: nowFn().UTC(),
+			StartedAt: r.now().UTC(),
 			done:      make(chan struct{}),
 			ring:      newRingBuffer(ringCap),
 		}
@@ -246,8 +256,8 @@ func (r *Runner) Stream(ctx context.Context, slug, jobID string, w http.Response
 		}
 	}
 
-	lastWrite := nowFn()
-	ticker := time.NewTicker(keepaliveInterval / 3)
+	lastWrite := r.now()
+	ticker := time.NewTicker(r.keepaliveInterval / 3)
 	defer ticker.Stop()
 
 	for {
@@ -283,14 +293,14 @@ func (r *Runner) Stream(ctx context.Context, slug, jobID string, w http.Response
 			if !writeLine(w, flusher, line) {
 				return nil
 			}
-			lastWrite = nowFn()
+			lastWrite = r.now()
 		case <-ticker.C:
-			if nowFn().Sub(lastWrite) >= keepaliveInterval {
+			if r.now().Sub(lastWrite) >= r.keepaliveInterval {
 				if _, err := fmt.Fprint(w, ": keepalive\n\n"); err != nil {
 					return nil
 				}
 				flusher.Flush()
-				lastWrite = nowFn()
+				lastWrite = r.now()
 			}
 		}
 	}
@@ -304,7 +314,7 @@ func (run *Runner) pump(job *Job, stream string, src io.Reader, wg *sync.WaitGro
 	sc.Buffer(make([]byte, 0, 64*1024), 1<<20)
 	for sc.Scan() {
 		text := sc.Text()
-		job.emit(outputLine{Stream: stream, Text: text, At: nowFn()})
+		job.emit(outputLine{Stream: stream, Text: text, At: run.now()})
 		if tail != nil {
 			tail.write(text)
 		}

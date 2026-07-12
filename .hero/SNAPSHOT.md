@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-12T01:05:14Z · projected from 499 source nodes_
+_Last refreshed: 2026-07-12T05:21:49Z · projected from 500 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | <1m ago | satellite-corpus-integration |
+| core | building | cmd/, internal/ | 4h ago | satellite-corpus-integration |
 | docs | concept | web/docs/ | — | — |
 | domains/chat | concept | domains/chat/ | — | — |
-| domains/engineering | maturing | domains/engineering/ | 5h ago | — |
+| domains/engineering | maturing | domains/engineering/ | 9h ago | — |
 | domains/pm | maturing | domains/pm/ | 3d ago | — |
 | domains/sales | maturing | domains/sales/ | 3d ago | — |
-| landing | building | web/landing/ | 5h ago | hero-landing-page |
+| landing | building | web/landing/ | 9h ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 5h ago | agent-outposts |
+| serve | building | internal/serve/ | <1m ago | agent-outposts |
 | (unassigned) | — | — | — | 190 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -51,9 +51,9 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — knowledge-surfacing, eventslog-churn-fix-tracked-not-dirty, initiative-autocomplete-misses-completed-children, hero-surface-polish, content-remediation, compose-emits-conflicts-and-priority
+- **(unassigned)** — knowledge-surfacing, eventslog-churn-fix-tracked-not-dirty, initiative-autocomplete-misses-completed-children, hero-surface-polish, content-remediation
 - **core** — next-drift-gate-unwinnable, created-field-stamp-and-surface, install-json-mode-repair-migrate-parity, flat-tripwire-trigger-parity, flat-named-spec-discovery
-- **serve** — drive-judge-findconflicts-backstop
+- **serve** — opsrunner-keepalive-data-race, drive-judge-findconflicts-backstop
 
 ## Next up across surfaces
 
@@ -73,6 +73,6 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 180/370 (48%)
-- Projection generation: 1ms · Source nodes: 499
+- Specs covered: 181/371 (48%)
+- Projection generation: 1ms · Source nodes: 500
 
