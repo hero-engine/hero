@@ -35,6 +35,23 @@ principles_check: |
 size: giant
 ---
 
+> # ✏️ AMENDED (2026-07-12) — root-instruction-file model reversed
+> **What still stands:** the *canonical content tree* goal — one copy of
+> `.hero/{agents,commands,skills}` on disk, harnesses reach it via
+> symlink/config-redirect/rendered-copy, no drifted duplicate agent/skill trees
+> (Phases 2 & 4). That is the durable core of this initiative and is unchanged.
+>
+> **What changed:** the *root instruction file* thesis — "**one** root file at
+> `AGENTS.md`, every harness reads it, `CLAUDE.md → AGENTS.md` symlink" — is
+> **reversed**. Hero's install model is now **harness-native, target-aware**:
+> `--target claude` → CLAUDE.md only; other targets → AGENTS.md; multi-target →
+> both; and `hero upgrade` only touches the native files of previously-installed
+> targets. **Phase 1 is superseded** by
+> [`harness-native-install-target-aware-upgrade`](../../features/harness-native-install-target-aware-upgrade/spec.md).
+> Read statements below about "the only root instruction file / AGENTS.md as the
+> single canonical instruction file / CLAUDE.md symlink" through that lens — they
+> are historical and describe the retired convergence model.
+
 ## Goal
 
 A Hero-installed project has **one** canonical content tree in `.hero/`,
@@ -139,18 +156,25 @@ independently but together produce the full value. Each phase
 materially improves the situation for new and existing projects;
 none is optional for the architecture to be coherent.
 
-### Phase 1 — `AGENTS.md` as the single root instruction file
-*(spec: `.hero/planning/features/single-source-install-p1-agents-md/`)*
+### Phase 1 — ⛔ SUPERSEDED — Harness-native root instruction files
+*(retired spec: `single-source-install-p1-agents-md`; replaced by
+`.hero/planning/features/harness-native-install-target-aware-upgrade/`)*
 
-Replace the per-harness root instruction file with a single
-`AGENTS.md`. Hero owns a marked block; user owns the rest. For
-harnesses that don't read AGENTS.md natively (Claude Code), generate
-a one-line shim or symlink. Migration from existing CLAUDE.md content
-merges into AGENTS.md non-destructively.
+**Original (retired) intent:** replace the per-harness root instruction file
+with a single `AGENTS.md`, with a `CLAUDE.md → AGENTS.md` shim/symlink for
+Claude Code. **This convergence model was reversed.**
 
-**User-visible win:** the root directory becomes one instruction file
-the user actually edits, instead of two-to-five files of overlapping
-content.
+**Current model (harness-native, target-aware):** `hero install` writes each
+installed target's *native* root file — `--target claude` → CLAUDE.md only,
+every other target → AGENTS.md, multi-target-with-claude → both — each with the
+same Hero-managed block. `hero upgrade` regenerates only the native files of
+previously-installed targets (persisted in `install-state.json`) and never
+creates a CLAUDE.md if claude was never a target. The managed-region mechanics
+(versioned markers, preserve-user-content, idempotence) carry over unchanged.
+
+**User-visible win:** every harness gets exactly the file it natively reads —
+no phantom AGENTS.md in a Claude-only repo, and upgrade stays faithful to what
+was installed.
 
 ### Phase 2 — Canonical `.hero/{agents,commands,skills}/` + harness-aware install modes
 *(spec: `.hero/planning/features/single-source-install-p2-canonical-tree/`)*
@@ -343,9 +367,12 @@ initiative. Phase specs decompose into testable EARS criteria.
 - THE SYSTEM SHALL store agent/command/skill content in exactly one
   filesystem location per project (`.hero/agents/`, `.hero/commands/`,
   `.hero/skills/`) regardless of how many harnesses are installed
-- THE SYSTEM SHALL maintain `AGENTS.md` as the single canonical
-  root-level instruction file, with a Hero-managed region and
-  user-owned regions clearly delimited
+- THE SYSTEM SHALL write, per installed target, that target's native
+  root instruction file (claude → `CLAUDE.md`; all other targets →
+  `AGENTS.md`), each with a Hero-managed region and user-owned regions
+  clearly delimited — and SHALL NOT create a root instruction file for
+  a harness that was never an install target *(amended — see banner;
+  detailed in `harness-native-install-target-aware-upgrade`)*
 - WHEN multiple harnesses are installed in one project THE SYSTEM
   SHALL NOT create more than one physical copy of any agent, command,
   or skill file

@@ -200,12 +200,14 @@ func resetFlags() {
 	installJSON = false
 	installRepair = false
 	installMigrate = false
+	installPruneOrphans = false
 
 	// Reset upgrade flags
 	upgradeDryRun = false
 	upgradeForce = false
 	upgradeNoHooks = false
 	upgradeTargets = nil
+	upgradePruneOrphans = false
 
 	// Reset nudge flags
 	relevantFiles = nil

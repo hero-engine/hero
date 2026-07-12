@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-12T18:23:32Z · 77 ready specs_
+_Generated: 2026-07-12T20:00:55Z · 75 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -29,13 +29,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## single-source-install-p1-agents-md — "Single-Source Install P1 — AGENTS.md as the Only Root Instruction File"
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/single-source-install-p1-agents-md/spec.md)_
-
----
-
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
 
@@ -47,6 +40,23 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · in-review · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-idea-primitive-core/spec.md)_
+
+---
+
+## single-source-install — Single-Source Install — One Canonical Tree, Every Harness Reads It
+_initiative · planning · horizon: now_
+
+_Run opener — arm with `/drive single-source-install`_
+
+A Hero-installed project has **one** canonical content tree in `.hero/`,
+**one** root instruction file at `AGENTS.md`, and zero duplicated content
+across harness directories. Every supported harness reads from the
+canonical via config-redirect, symlink, or rendered-copy fallback,
+chosen automatically based on what the harness supports and what the
+host filesystem allows. `hero install` and `hero upgrade` are the only
+operations that touch harness directories, and both are idempotent,
+non-destructive of user content, and capable of cleaning up legacy
+messy installs.
 
 ---
 
@@ -128,13 +138,6 @@ the shared `.hero/knowledge/` convention rendered into AGENTS.md (+ CLAUDE.md fo
 Claude); make AGENTS.md guidance self-contained since only Claude has an
 end-of-session hook. Decisions locked: retroactive + threshold-gated (NOT
 capture-then-edit), capture auto / promote manual.
-
----
-
-## install-target-emits-both-claude-and-agents-md — "`hero install --target claude` emits both CLAUDE.md and AGENTS.md"
-_bug · planning · horizon: now_
-
-Reproduce: cd into a clean repo with no `CLAUDE.md` or `AGENTS.md`, run `hero install --target claude`. Expected: only `CLAUDE.md` lands. Observed: both `CLAUDE.md` and `AGENTS.md` are emitted with the same managed-block content. Fix likely lives in the install target dispatch in the hero CLI — read the install command source, find where both files get written, and gate `AGENTS.md` emission on the target not being `claude` (or on a generic/fallback target). Update tests to cover each target's expected file set.
 
 ---
 
@@ -247,23 +250,6 @@ parent-stray regression test last.
 
 **Files:** `internal/workspace/locate.go:85,145,159`, `internal/cli/root.go:226`, `internal/cli/helpers_test.go:26,87`, `internal/cli/scan_test.go:183`
 **Skip:** building new boundary infra — `WithStopAt` already exists. Changing prod discovery semantics — out of scope unless clearly safe.
-
----
-
-## single-source-install — Single-Source Install — One Canonical Tree, Every Harness Reads It
-_initiative · planning · horizon: now_
-
-_Run opener — arm with `/drive single-source-install`_
-
-A Hero-installed project has **one** canonical content tree in `.hero/`,
-**one** root instruction file at `AGENTS.md`, and zero duplicated content
-across harness directories. Every supported harness reads from the
-canonical via config-redirect, symlink, or rendered-copy fallback,
-chosen automatically based on what the harness supports and what the
-host filesystem allows. `hero install` and `hero upgrade` are the only
-operations that touch harness directories, and both are idempotent,
-non-destructive of user content, and capable of cleaning up legacy
-messy installs.
 
 ---
 

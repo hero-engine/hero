@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/hero-engine/hero/internal/managed"
 	"github.com/hero-engine/hero/internal/version"
 )
 
@@ -176,6 +177,116 @@ func RecordTargetInstall(opts Options, mode string) {
 	if err := WriteInstallState(opts.TargetDir, st); err != nil {
 		fmt.Printf("  warning: could not write install-state: %v\n", err)
 	}
+}
+
+// PreviouslyInstalledTargets returns the set of targets recorded in
+// install-state.json `targets` — the authoritative previously-installed set
+// for upgrade. A key present in the map means that target was installed and
+// its native instruction file must be maintained. Returns nil when no state
+// file exists or no targets are recorded. Order is the stable targetLayouts
+// order (claude first) so callers get deterministic output.
+func PreviouslyInstalledTargets(projectRoot string) []Target {
+	st, err := ReadInstallState(projectRoot)
+	if err != nil || st == nil || len(st.Targets) == 0 {
+		return nil
+	}
+	var out []Target
+	for _, layout := range targetLayouts {
+		if _, ok := st.Targets[string(layout.Target)]; ok {
+			out = append(out, layout.Target)
+		}
+	}
+	return out
+}
+
+// InferInstalledTargets reconstructs the prior installed-target set for a
+// repo that has no persisted `targets` (a pre-state install). It combines:
+//
+//  1. Content-dir probe (DetectInstalledTargets) — AUTHORITATIVE for the
+//     SET. A harness content dir (.claude/, .codex/, …) proves that target
+//     was installed.
+//  2. Instruction-file presence — a SECONDARY signal used only to keep an
+//     existing Hero-managed file maintained, never to invent a target. A
+//     CLAUDE.md carrying a Hero managed region implies Claude was a target
+//     (covers the legacy Hero-managed-stub case with no content dir). A lone
+//     AGENTS.md is deliberately NOT adopted as evidence of a specific
+//     non-Claude target — the upgrade orphan-maintain path handles it
+//     instead, so a phantom Model-B AGENTS.md never conjures a phantom
+//     target.
+//
+// Returns targets in stable targetLayouts order, deduped.
+func InferInstalledTargets(projectRoot string) []Target {
+	seen := map[Target]bool{}
+	var out []Target
+	add := func(t Target) {
+		if !seen[t] {
+			seen[t] = true
+			out = append(out, t)
+		}
+	}
+	for _, t := range DetectInstalledTargets(projectRoot) {
+		add(t)
+	}
+	if claudeMdIsHeroManaged(projectRoot) {
+		add(TargetClaude)
+	}
+	return out
+}
+
+// claudeMdIsHeroManaged reports whether a CLAUDE.md at projectRoot exists and
+// carries a Hero managed region — the signal that Claude was a Hero target
+// even when no .claude/ content dir survives.
+func claudeMdIsHeroManaged(projectRoot string) bool {
+	data, err := os.ReadFile(filepath.Join(projectRoot, "CLAUDE.md"))
+	if err != nil {
+		return false
+	}
+	return managed.FindManagedRegion(string(data)).Present
+}
+
+// PersistInferredTargets records a backfilled/inferred target set into
+// install-state.json `targets`, so the next upgrade reads a persisted set
+// instead of re-inferring. Existing entries are preserved (their
+// installed_at and mode are kept); inferred-new entries get installed_at =
+// last_updated_at = now and the given hero version. Best-effort: no-op when
+// the set is empty or no .hero/ workspace exists.
+func PersistInferredTargets(projectRoot string, targets []Target, heroVersion string) error {
+	if len(targets) == 0 || InstallStatePath(projectRoot) == "" {
+		return nil
+	}
+	st, err := ReadInstallState(projectRoot)
+	if err != nil {
+		return err
+	}
+	now := time.Now().UTC().Format(time.RFC3339)
+	ver := heroVersion
+	if ver == "" {
+		ver = "dev"
+	}
+	for _, t := range targets {
+		key := string(t)
+		prior, had := st.Targets[key]
+		installedAt := now
+		mode := "rendered"
+		if had {
+			if prior.InstalledAt != "" {
+				installedAt = prior.InstalledAt
+			}
+			if prior.Mode != "" {
+				mode = prior.Mode
+			}
+		}
+		st.Targets[key] = TargetState{
+			Mode:          mode,
+			InstalledAt:   installedAt,
+			LastUpdatedAt: now,
+			HeroVersion:   ver,
+		}
+	}
+	if st.HeroVersion == "" {
+		st.HeroVersion = ver
+	}
+	return WriteInstallState(projectRoot, st)
 }
 
 // StampInstallVersion writes version and checksum info to .hero/version.json.

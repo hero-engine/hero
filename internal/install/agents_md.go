@@ -39,13 +39,78 @@ func resolveAgentsMdPath(opts Options) string {
 		if err != nil {
 			return ""
 		}
-		if opts.Target == TargetCodex {
+		// Global-mode AGENTS.md only has a defined home for the two
+		// harnesses that natively read a global AGENTS.md (Codex,
+		// OpenCode). Cursor/Copilot/Generic have no global root
+		// instruction file, so return "" rather than mis-writing one
+		// into an unrelated harness dir.
+		switch opts.Target {
+		case TargetCodex:
 			return filepath.Join(home, ".codex", "AGENTS.md")
+		case TargetOpenCode:
+			return filepath.Join(home, ".config", "opencode", "AGENTS.md")
+		default:
+			return ""
 		}
-		return filepath.Join(home, ".config", "opencode", "AGENTS.md")
 	default:
 		return ""
 	}
+}
+
+// nativeInstructionFile returns the base name of the root instruction file
+// a target natively reads. Claude Code reads CLAUDE.md; every other harness
+// (codex, opencode, cursor, copilot, generic) reads AGENTS.md. This is the
+// single source of truth for the harness-native install mapping — no target
+// can silently miss coverage because each run<Target> routes through
+// installNativeInstructionFile, which consults this function.
+func nativeInstructionFile(t Target) string {
+	if t == TargetClaude {
+		return "CLAUDE.md"
+	}
+	return "AGENTS.md"
+}
+
+// installNativeInstructionFile writes Hero's managed block into the one root
+// instruction file the current target natively reads (per
+// nativeInstructionFile). Claude → CLAUDE.md (installClaudeMd semantics,
+// including --no-touch-claude-md and legacy-symlink cleanup); every other
+// target → AGENTS.md. Both files share the same managed body via
+// defaultSections, so a multi-target install with Claude produces byte-
+// identical managed regions in CLAUDE.md and AGENTS.md.
+func installNativeInstructionFile(opts Options, result *Result) error {
+	if nativeInstructionFile(opts.Target) == "CLAUDE.md" {
+		_, claudeMdPath, err := resolveClaudePaths(opts)
+		if err != nil {
+			return err
+		}
+		return installClaudeMd(opts, result, claudeMdPath)
+	}
+	agentsMdPath := resolveAgentsMdPath(opts)
+	if agentsMdPath == "" {
+		return nil
+	}
+	return installAgentsMd(opts, result, agentsMdPath)
+}
+
+// instructionFileIsHeroManagedOnly reports whether a root instruction file's
+// content is entirely Hero-owned — nothing outside the managed markers
+// except (optionally) the default H1 that Hero itself writes for a fresh
+// file. This is the "safe to delete" predicate for
+// --prune-orphaned-instruction-files: any user-authored content outside the
+// markers makes it return false, so a file a user has edited is never
+// pruned. Extends managed.IsLegacyHeroStub, which does not tolerate the
+// Hero-written default H1.
+func instructionFileIsHeroManagedOnly(content, defaultH1 string) bool {
+	region := managed.FindManagedRegion(content)
+	if !region.Present {
+		return false
+	}
+	prefix := strings.TrimSpace(content[:region.StartIdx])
+	suffix := strings.TrimSpace(content[region.EndIdx:])
+	if suffix != "" {
+		return false
+	}
+	return prefix == "" || prefix == strings.TrimSpace(defaultH1)
 }
 
 // installAgentsMd writes Hero's managed block into AGENTS.md. See
@@ -59,6 +124,85 @@ func installAgentsMd(opts Options, result *Result, agentsMdPath string) error {
 		AllowSkip:   false,
 		SkipEnabled: false,
 	})
+}
+
+// InstructionFileOrphanAction is the outcome of applying the upgrade
+// orphan-instruction-file policy to a single root instruction file.
+type InstructionFileOrphanAction string
+
+const (
+	// OrphanAbsent — no such file on disk; nothing done (never created).
+	OrphanAbsent InstructionFileOrphanAction = "absent"
+	// OrphanPreserved — file has user content and no Hero managed region;
+	// left byte-for-byte untouched.
+	OrphanPreserved InstructionFileOrphanAction = "preserved"
+	// OrphanMaintained — file carries a Hero managed region for a target
+	// not in the resolved set; the region was regenerated in place so it
+	// doesn't rot, all content outside the markers preserved.
+	OrphanMaintained InstructionFileOrphanAction = "maintained"
+	// OrphanPruned — file was entirely Hero-managed, its target is not in
+	// the resolved set, and --prune-orphaned-instruction-files was set;
+	// the file was deleted.
+	OrphanPruned InstructionFileOrphanAction = "pruned"
+)
+
+// ApplyOrphanInstructionFilePolicy handles a single root instruction file
+// (AGENTS.md or CLAUDE.md at fileName) whose owning target is NOT in the
+// resolved upgrade/install set. It enforces the migration-safety invariant:
+//
+//   - Absent file → OrphanAbsent, no write. Orphan handling never creates
+//     an instruction file for an un-inferred target.
+//   - No Hero managed region (pure user file) → OrphanPreserved, untouched.
+//   - prune==true AND entirely Hero-managed → the file is deleted
+//     (OrphanPruned). A file with any user content outside the markers is
+//     never deleted, even with prune set.
+//   - Otherwise (Hero-managed region present) → the region is regenerated
+//     in place (OrphanMaintained), preserving user content outside it.
+//
+// opts supplies the content FS, version, project dir, and DryRun. opts.Target
+// only affects managed-body rendering (the Codex-specific section); callers
+// pass a representative target for the file.
+func ApplyOrphanInstructionFilePolicy(opts Options, fileName string, prune bool) (InstructionFileOrphanAction, error) {
+	root := opts.projectRoot()
+	if root == "" {
+		return OrphanAbsent, nil
+	}
+	path := filepath.Join(root, fileName)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return OrphanAbsent, nil
+	}
+	content := string(data)
+	defaultH1 := "# " + fileName
+
+	if !managed.FindManagedRegion(content).Present {
+		// Pure user-authored file — never touch.
+		return OrphanPreserved, nil
+	}
+
+	if prune && instructionFileIsHeroManagedOnly(content, defaultH1) {
+		if opts.DryRun {
+			return OrphanPruned, nil
+		}
+		if err := os.Remove(path); err != nil {
+			return "", err
+		}
+		return OrphanPruned, nil
+	}
+
+	// Maintain the managed region in place so an orphaned-but-managed file
+	// doesn't rot. installManagedMarkdown short-circuits to zero writes when
+	// the regenerated content already matches (idempotent).
+	res := &Result{}
+	if err := installManagedMarkdown(opts, res, installManagedSpec{
+		Path:      path,
+		Label:     fileName,
+		DefaultH1: defaultH1,
+		Sections:  defaultSections(opts, path),
+	}); err != nil {
+		return "", err
+	}
+	return OrphanMaintained, nil
 }
 
 // defaultSections returns the canonical section contributor order for

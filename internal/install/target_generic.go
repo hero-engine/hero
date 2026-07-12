@@ -35,8 +35,10 @@ func runGeneric(opts Options) (*Result, error) {
 		return nil, fmt.Errorf("installing skills: %w", err)
 	}
 
-	agentsMdPath := filepath.Join(opts.TargetDir, "AGENTS.md")
-	if err := installInstructionsMd(opts, result, agentsMdPath, "generic"); err != nil {
+	// Generic's root instruction file is AGENTS.md, written with the same
+	// Hero-managed block as every other non-Claude target (harness-native
+	// mapping) rather than the minimal legacy stub.
+	if err := installNativeInstructionFile(opts, result); err != nil {
 		return nil, fmt.Errorf("installing AGENTS.md: %w", err)
 	}
 

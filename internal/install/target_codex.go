@@ -84,11 +84,9 @@ func runCodex(opts Options) (*Result, error) {
 	}
 
 	// AGENTS.md (project root) or ~/.codex/AGENTS.md (global) via the
-	// shared managed-region writer. Already correct.
-	if agentsMdPath := resolveAgentsMdPath(opts); agentsMdPath != "" {
-		if err := installAgentsMd(opts, result, agentsMdPath); err != nil {
-			return nil, fmt.Errorf("installing AGENTS.md: %w", err)
-		}
+	// harness-native mapping — Codex's native root file is AGENTS.md.
+	if err := installNativeInstructionFile(opts, result); err != nil {
+		return nil, fmt.Errorf("installing AGENTS.md: %w", err)
 	}
 
 	// Hooks at .codex/hooks.json (project) or ~/.codex/hooks.json (global).

@@ -83,9 +83,16 @@ func silenceStdout(fn func()) {
 var installCmd = &cobra.Command{
 	Use:   "install <project|global> [path]",
 	Short: "Install hero agents, commands, and skills to a target tool",
-	Long:  "Copies hero content into the target tool's expected directory structure.",
-	Args:  cobra.MinimumNArgs(1),
-	RunE:  runInstall,
+	Long: `Copies hero content into the target tool's expected directory structure.
+
+Install is harness-native: each target gets only the root instruction file it
+natively reads — CLAUDE.md for claude, AGENTS.md for every other target
+(codex, opencode, cursor, copilot, generic). Installing multiple targets that
+include claude produces both files with the same Hero-managed body. The
+installed target set is recorded in .hero/install-state.json so 'hero upgrade'
+stays faithful to what was installed.`,
+	Args: cobra.MinimumNArgs(1),
+	RunE: runInstall,
 }
 
 var (
@@ -101,6 +108,7 @@ var (
 	installMigrate         bool
 	installJSON            bool
 	installNoHooks         bool
+	installPruneOrphans    bool
 )
 
 func init() {
@@ -116,6 +124,7 @@ func init() {
 	installCmd.Flags().BoolVar(&installMigrate, "migrate", false, "auto-detect installed harness targets, reconcile drifted copies (newest mtime wins), promote to canonical, and re-install each target as symlinks pointing at canonical")
 	installCmd.Flags().BoolVar(&installJSON, "json", false, "emit a single JSON result object on stdout instead of human-readable progress output (for programmatic consumers like a Hero-native client)")
 	installCmd.Flags().BoolVar(&installNoHooks, "no-hooks", false, "skip installing the pre-commit hook (the hook is otherwise self-installed on first install when no managed block exists)")
+	installCmd.Flags().BoolVar(&installPruneOrphans, "prune-orphaned-instruction-files", false, "after install, delete a root instruction file (AGENTS.md/CLAUDE.md) whose target is not installed AND whose entire content is Hero-managed; files with any user content are never deleted")
 }
 
 func runInstall(cmd *cobra.Command, args []string) error {
@@ -262,16 +271,16 @@ func runInstall(cmd *cobra.Command, args []string) error {
 	contentFS := hero.OverlayFS(domainFS, hero.CoreFS())
 
 	opts := install.Options{
-		ContentFS:          contentFS,
-		Target:             target,
-		Mode:               mode,
-		TargetDir:          targetDir,
-		Force:              installForce,
-		DryRun:             installDryRun,
-		Version:            binaryVersion,
-		Domain:             domain,
-		NoTouchClaudeMd:    installNoTouchClaudeMd,
-		Quiet:              installJSON,
+		ContentFS:       contentFS,
+		Target:          target,
+		Mode:            mode,
+		TargetDir:       targetDir,
+		Force:           installForce,
+		DryRun:          installDryRun,
+		Version:         binaryVersion,
+		Domain:          domain,
+		NoTouchClaudeMd: installNoTouchClaudeMd,
+		Quiet:           installJSON,
 		// Auto-sync detected sibling harnesses so adding one target to
 		// an existing multi-harness project refreshes the others too —
 		// prevents drift between install moments. Suppressed in
@@ -319,6 +328,19 @@ func runInstall(cmd *cobra.Command, args []string) error {
 		}
 		fmt.Println()
 		printHandoffHint(target)
+	}
+
+	// Opt-in orphan pruning: after a harness-native install, a legacy
+	// Model-B phantom (e.g. an AGENTS.md left by an older Claude-only
+	// install) can be removed when its target isn't installed and its whole
+	// content is Hero-managed. Never deletes a file with user content.
+	if installPruneOrphans && mode == install.ModeProject && targetDir != "" {
+		resolved := unionTargets(
+			install.PreviouslyInstalledTargets(targetDir),
+			install.DetectInstalledTargets(targetDir),
+			[]install.Target{target},
+		)
+		handleOrphanedInstructionFiles(targetDir, resolved, contentFS, binaryVersion, true, installDryRun)
 	}
 
 	// Self-heal pre-commit hook install on first run when no managed
