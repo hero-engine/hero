@@ -21,16 +21,15 @@ import (
 
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/methodology"
-	"github.com/hero-engine/hero/internal/sizing"
 	"github.com/hero-engine/hero/internal/vocabulary"
 )
 
 // NextMDOptions tunes the NEXT.md projection.
 type NextMDOptions struct {
-	RepoKey       string // partition filter; required
-	Branch        string // current branch (frontmatter only)
-	SessionID     string // anchors "Tried and failed" to a session
-	NextN int // open features to surface under "## Next" (default 1)
+	RepoKey   string // partition filter; required
+	Branch    string // current branch (frontmatter only)
+	SessionID string // anchors "Tried and failed" to a session
+	NextN     int    // open features to surface under "## Next" (default 1)
 	// Vocab is the active vocabulary preset used to render type / kind
 	// display names (e.g. "feature" → "Story" under agile-scrum). Nil
 	// preserves the canonical literal — engineering / legacy workspaces
@@ -124,20 +123,13 @@ func NextMD(store *graph.Store, opts NextMDOptions) (string, error) {
 	}
 	b.WriteString("\n")
 
-	// Roadmap shape — ambient size-drift surfacing. Omitted entirely
-	// when quiet (no header, no placeholder line). See spec
-	// roadmap-review-ambient-surfacing.
-	if opts.HeroDir != "" && opts.ProjectRoot != "" {
-		rep := sizing.AmbientDrift(opts.HeroDir, opts.ProjectRoot, sizing.AmbientDriftOpts{
-			ActiveSpec:       opts.ActiveSpec,
-			RecencyDays:      opts.RoadmapRecencyDays,
-			StopNaggingHours: opts.RoadmapStopNaggingHours,
-		})
-		if !rep.Quiet && rep.Count > 0 {
-			b.WriteString("## Roadmap shape\n\n")
-			fmt.Fprintf(&b, "%s\n\n", rep.Hint)
-		}
-	}
+	// NOTE: the ambient `## Roadmap shape` size-drift line was removed from the
+	// NEXT.md projection — it embedded a corpus-derived count that is stale by
+	// construction in the committed file (the pre-commit hook computes it
+	// against the pre-commit index; a clean rebuild computes a different value),
+	// which made the CI byte-exact drift gate structurally unwinnable. The
+	// authoritative count still lives in `hero size --check`, `hero pulse`, and
+	// the MCP surfaces. Spec: next-drift-gate-unwinnable.
 
 	// Blocked on
 	b.WriteString("## Blocked on\n\n")
