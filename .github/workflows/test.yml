@@ -50,7 +50,12 @@ jobs:
           # the gate's signal.
           ./hero scan >/dev/null 2>&1 || true
           ./hero next checkpoint --quiet
-          if ! git diff --exit-code -- .hero/NEXT.md; then
+          # The `updated:` frontmatter line is a wall-clock stamp refreshed on
+          # every projection — it is a clock, not drift. Ignore it (-I) so only
+          # real content divergence (a hook-less commit / stale projection)
+          # fails the gate. Everything else in NEXT.md is deterministic once the
+          # churny size-drift count was removed (spec next-drift-gate-unwinnable).
+          if ! git diff --exit-code -I'^updated: ' -- .hero/NEXT.md; then
             echo "::error::.hero/NEXT.md drifted from hero next checkpoint output."
             echo "Run \`hero next checkpoint\` locally and commit the result, or"
             echo "install the pre-commit hook via \`hero install\` so commits"
