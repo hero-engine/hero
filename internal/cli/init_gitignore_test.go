@@ -32,10 +32,20 @@ func TestEnsureManagedGitignoreBlock_CreatesWhenMissing(t *testing.T) {
 		".hero/next/*.local.md",
 		".hero/knowledge/code/",
 		".hero/satellites.local.json",
+		".hero/cache/",
+		".hero/sessions/",
+		".hero/install-state.json",
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("missing %q in:\n%s", want, body)
 		}
+	}
+
+	// Guardrail: events.log is the committed append-only ledger (velocity/
+	// pulse read from it; graph.db is merely a regenerable cache of it). It
+	// must never be ignored — fence against a future edit adding it.
+	if strings.Contains(body, "events.log") {
+		t.Errorf("events.log must NOT be gitignored (source-of-truth ledger):\n%s", body)
 	}
 }
 
@@ -113,5 +123,13 @@ func TestEnsureManagedGitignoreBlock_RefreshesUpdatedEntries(t *testing.T) {
 	}
 	if !strings.Contains(string(got), ".hero/next/*.local.md") {
 		t.Errorf("new entries missing after refresh:\n%s", got)
+	}
+	// An existing install re-running `hero init` must gain the machine-local
+	// entries added after its managed block was first written — this is the
+	// zero-migration rollout guarantee.
+	for _, want := range []string{".hero/cache/", ".hero/sessions/", ".hero/install-state.json"} {
+		if !strings.Contains(string(got), want) {
+			t.Errorf("entry %q missing after refresh (rollout gap):\n%s", want, got)
+		}
 	}
 }

@@ -451,6 +451,15 @@ var managedGitignoreEntries = []string{
 	"",
 	"# Per-machine satellite manifest (which subprojects are symlinked locally)",
 	".hero/satellites.local.json",
+	"",
+	"# Regenerable cross-language cache (rewritten every hero invocation)",
+	".hero/cache/",
+	"",
+	"# Per-session ref store (ephemeral, session-scoped)",
+	".hero/sessions/",
+	"",
+	"# Per-machine install state (host capabilities, informational)",
+	".hero/install-state.json",
 }
 
 // ensureManagedGitignoreBlock writes (or refreshes) the marker-bounded
