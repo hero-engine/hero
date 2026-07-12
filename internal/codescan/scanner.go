@@ -143,8 +143,10 @@ func isEndpointOnlyExt(ext string) bool {
 }
 
 // Scan walks the project, parses source files, and returns the result.
-// If prevChecksums is provided, only changed files are re-parsed.
-func (s *Scanner) Scan(prevChecksums map[string]string) (*Result, error) {
+// If prevChecksums is provided, only changed files are re-parsed; unchanged
+// files are carried forward from prevCache so the merged Result stays complete.
+// A nil prevCache (missing/corrupt/legacy) degrades gracefully to a full re-parse.
+func (s *Scanner) Scan(prevChecksums map[string]string, prevCache *ScanCache) (*Result, error) {
 	result := &Result{
 		ProjectRoot: s.projectRoot,
 		Checksums:   make(map[string]string),
@@ -206,10 +208,21 @@ func (s *Scanner) Scan(prevChecksums map[string]string) (*Result, error) {
 		sum := fmt.Sprintf("%x", sha256.Sum256(content))
 		result.Checksums[relPath] = sum
 
-		// Skip unchanged files if we have previous checksums
+		// Unchanged file: carry its prior parse result forward from the cache so
+		// the merged Result stays complete without re-parsing. If the cache lacks
+		// an entry (missing/partial/legacy cache), fall through and parse fresh —
+		// never drop the file.
 		if prevChecksums != nil {
 			if prev, ok := prevChecksums[relPath]; ok && prev == sum {
-				return nil
+				if prevCache != nil {
+					if fi, ok := prevCache.Files[relPath]; ok {
+						files = append(files, fi)
+						result.ConfigVars = append(result.ConfigVars, prevCache.ConfigVars[relPath]...)
+						result.Endpoints = append(result.Endpoints, prevCache.Endpoints[relPath]...)
+						return nil
+					}
+				}
+				// no cached entry — fall through to parse fresh
 			}
 		}
 

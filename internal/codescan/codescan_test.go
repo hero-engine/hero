@@ -1,8 +1,11 @@
 package codescan
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"testing"
 
 	"github.com/hero-engine/hero/internal/config"
@@ -525,7 +528,7 @@ export interface ApiConfig {
 
 	cfg := config.DefaultCodeScanConfig()
 	scanner := NewScanner(cfg, dir)
-	result, err := scanner.Scan(nil)
+	result, err := scanner.Scan(nil, nil)
 	if err != nil {
 		t.Fatalf("Scan failed: %v", err)
 	}
@@ -537,12 +540,12 @@ export interface ApiConfig {
 		t.Errorf("Checksums = %d, want 2", len(result.Checksums))
 	}
 
-	// Test incremental scan — no changes
-	result2, err := scanner.Scan(result.Checksums)
+	// Test incremental scan — no changes; unchanged files are carried forward
+	// from the cache rather than re-parsed.
+	result2, err := scanner.Scan(result.Checksums, BuildScanCache(result))
 	if err != nil {
 		t.Fatalf("Incremental scan failed: %v", err)
 	}
-	// Files are skipped but checksums are still computed
 	if len(result2.Checksums) != 2 {
 		t.Errorf("Incremental checksums = %d, want 2", len(result2.Checksums))
 	}
@@ -563,7 +566,7 @@ func (s *Service) Run() error { return nil }
 
 	cfg := config.DefaultCodeScanConfig()
 	scanner := NewScanner(cfg, dir)
-	result, err := scanner.Scan(nil)
+	result, err := scanner.Scan(nil, nil)
 	if err != nil {
 		t.Fatalf("Scan failed: %v", err)
 	}
@@ -633,7 +636,7 @@ type Beta struct{}
 	codeDir := filepath.Join(dir, ".hero", "knowledge", "code")
 
 	// Full scan writes both packages.
-	result, err := scanner.Scan(nil)
+	result, err := scanner.Scan(nil, nil)
 	if err != nil {
 		t.Fatalf("full scan failed: %v", err)
 	}
@@ -659,7 +662,7 @@ type Alpha struct{}
 func Gamma() {}
 `), 0o644)
 
-	result2, err := scanner.Scan(result.Checksums)
+	result2, err := scanner.Scan(result.Checksums, BuildScanCache(result))
 	if err != nil {
 		t.Fatalf("incremental scan failed: %v", err)
 	}
@@ -679,7 +682,7 @@ func Gamma() {}
 	// Genuinely-deleted package: remove B's file, re-scan incrementally, and
 	// confirm B's directory IS pruned (deletions must still take effect).
 	os.Remove(bFile)
-	result3, err := scanner.Scan(result2.Checksums)
+	result3, err := scanner.Scan(result2.Checksums, BuildScanCache(result2))
 	if err != nil {
 		t.Fatalf("incremental scan after delete failed: %v", err)
 	}
@@ -692,6 +695,344 @@ func Gamma() {}
 	if _, err := os.Stat(aSpec); err != nil {
 		t.Errorf("package A spec missing after delete-scan: %v", err)
 	}
+}
+
+// --- Incremental-scan-complete-result tests ---
+//
+// These lock in that an incremental scan produces a Result equal by content to
+// a full scan of the same tree (packages, config vars, endpoints), by carrying
+// unchanged files forward from the scan cache. Comparisons are order-insensitive
+// because full and incremental scans append in different file-walk order.
+
+// canonPackages renders packages as a sorted, order-insensitive canonical form:
+// per package, its path, language, line/file counts, sorted files, and sorted
+// symbols (name|kind|file|line). This is what the equivalence assertions compare.
+func canonPackages(pkgs []Package) []string {
+	out := make([]string, 0, len(pkgs))
+	for _, p := range pkgs {
+		files := append([]string(nil), p.Files...)
+		sort.Strings(files)
+		syms := make([]string, 0, len(p.Symbols))
+		for _, s := range p.Symbols {
+			syms = append(syms, fmt.Sprintf("%s|%s|%s|%d", s.Name, s.Kind, s.File, s.Line))
+		}
+		sort.Strings(syms)
+		out = append(out, fmt.Sprintf("path=%s lang=%s lines=%d files=%d [%s] {%s}",
+			p.Path, p.Language, p.LineCount, p.FileCount,
+			strings.Join(files, ","), strings.Join(syms, ",")))
+	}
+	sort.Strings(out)
+	return out
+}
+
+func canonConfigVars(cvs []ConfigVar) []string {
+	out := make([]string, 0, len(cvs))
+	for _, c := range cvs {
+		out = append(out, fmt.Sprintf("%s|%s|%s|%d|%v", c.Name, c.Source, c.File, c.Line, c.Required))
+	}
+	sort.Strings(out)
+	return out
+}
+
+func canonEndpoints(eps []Endpoint) []string {
+	out := make([]string, 0, len(eps))
+	for _, e := range eps {
+		out = append(out, fmt.Sprintf("%s|%s|%s|%s|%d|%s", e.Method, e.Path, e.Handler, e.File, e.Line, e.Protocol))
+	}
+	sort.Strings(out)
+	return out
+}
+
+func assertStringSlicesEqual(t *testing.T, label string, got, want []string) {
+	t.Helper()
+	if len(got) != len(want) {
+		t.Errorf("%s: length mismatch got=%d want=%d\n got=%v\nwant=%v", label, len(got), len(want), got, want)
+		return
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("%s: element %d mismatch\n got=%q\nwant=%q", label, i, got[i], want[i])
+		}
+	}
+}
+
+// writeEquivFixture builds a project with three package shapes:
+//   - package A (internal/a): two files; a1.go will change, a2.go stays put.
+//     a1.go reads an env var (ConfigVar in the changed file); a2.go registers a
+//     route (Endpoint in the UNCHANGED file — the carry-forward path under test).
+//   - package B (internal/b): untouched, single file with its own symbol.
+//   - package C (internal/c): single file that will change.
+func writeEquivFixture(t *testing.T) (dir, a1, cFile string) {
+	t.Helper()
+	dir = t.TempDir()
+
+	aDir := filepath.Join(dir, "internal", "a")
+	if err := os.MkdirAll(aDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	a1 = filepath.Join(aDir, "a1.go")
+	os.WriteFile(a1, []byte(`package a
+
+import "os"
+
+// DBURL reads the database url.
+func DBURL() string { return os.Getenv("DATABASE_URL") }
+`), 0o644)
+	os.WriteFile(filepath.Join(aDir, "a2.go"), []byte(`package a
+
+import "net/http"
+
+// RegisterHealth wires the health route.
+func RegisterHealth() {
+	http.HandleFunc("/health", nil)
+}
+`), 0o644)
+
+	bDir := filepath.Join(dir, "internal", "b")
+	if err := os.MkdirAll(bDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	os.WriteFile(filepath.Join(bDir, "b.go"), []byte(`package b
+
+// Beta does beta things.
+type Beta struct{}
+`), 0o644)
+
+	cDir := filepath.Join(dir, "internal", "c")
+	if err := os.MkdirAll(cDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	cFile = filepath.Join(cDir, "c.go")
+	os.WriteFile(cFile, []byte(`package c
+
+// Charlie does charlie things.
+func Charlie() {}
+`), 0o644)
+
+	return dir, a1, cFile
+}
+
+// TestIncrementalScanEqualsFullScan is the core equivalence test: after mutating
+// one file in a partially-changed package plus a single-file package, an
+// incremental scan produces packages/configvars/endpoints equal by content to a
+// full re-scan, and the partially-changed package's on-disk spec.md lists BOTH
+// files' symbols.
+func TestIncrementalScanEqualsFullScan(t *testing.T) {
+	dir, a1, cFile := writeEquivFixture(t)
+	cfg := config.DefaultCodeScanConfig()
+	scanner := NewScanner(cfg, dir)
+	codeDir := filepath.Join(dir, ".hero", "knowledge", "code")
+
+	r1, err := scanner.Scan(nil, nil)
+	if err != nil {
+		t.Fatalf("full scan failed: %v", err)
+	}
+
+	// Mutate A's a1.go (adds a symbol, keeps the env var) and C's file.
+	os.WriteFile(a1, []byte(`package a
+
+import "os"
+
+// DBURL reads the database url.
+func DBURL() string { return os.Getenv("DATABASE_URL") }
+
+// CacheURL is new in a1.
+func CacheURL() string { return os.Getenv("CACHE_URL") }
+`), 0o644)
+	os.WriteFile(cFile, []byte(`package c
+
+// Charlie does charlie things.
+func Charlie() {}
+
+// Delta is new.
+func Delta() {}
+`), 0o644)
+
+	// Incremental scan carrying unchanged files forward from r1's cache.
+	r2, err := scanner.Scan(r1.Checksums, BuildScanCache(r1))
+	if err != nil {
+		t.Fatalf("incremental scan failed: %v", err)
+	}
+
+	// Full re-scan of the mutated tree with a fresh scanner (no cache).
+	fresh := NewScanner(cfg, dir)
+	rFull, err := fresh.Scan(nil, nil)
+	if err != nil {
+		t.Fatalf("full re-scan failed: %v", err)
+	}
+
+	assertStringSlicesEqual(t, "packages", canonPackages(r2.Packages), canonPackages(rFull.Packages))
+	assertStringSlicesEqual(t, "config_vars", canonConfigVars(r2.ConfigVars), canonConfigVars(rFull.ConfigVars))
+	assertStringSlicesEqual(t, "endpoints", canonEndpoints(r2.Endpoints), canonEndpoints(rFull.Endpoints))
+
+	// The carry-forward path must preserve the endpoint from the UNCHANGED file.
+	if len(canonEndpoints(r2.Endpoints)) == 0 {
+		t.Fatal("expected at least one endpoint carried forward from a2.go")
+	}
+
+	// Deepest defect: package A's spec.md must list BOTH files' symbols after an
+	// incremental scan, not just the changed file's.
+	if err := GenerateKnowledge(r2, codeDir); err != nil {
+		t.Fatalf("GenerateKnowledge failed: %v", err)
+	}
+	aSpec, err := os.ReadFile(filepath.Join(codeDir, "internal-a", "spec.md"))
+	if err != nil {
+		t.Fatalf("reading package A spec: %v", err)
+	}
+	s := string(aSpec)
+	for _, want := range []string{"DBURL", "CacheURL", "RegisterHealth"} {
+		if !contains(s, want) {
+			t.Errorf("package A spec.md missing symbol %q (partial-package corruption)", want)
+		}
+	}
+}
+
+// TestIncrementalScanDeletedFileDropsAndPrunes confirms a file deleted between
+// scans drops its package (when emptied) and its extracted symbols/endpoints.
+func TestIncrementalScanDeletedFileDropsAndPrunes(t *testing.T) {
+	dir, _, _ := writeEquivFixture(t)
+	cfg := config.DefaultCodeScanConfig()
+	scanner := NewScanner(cfg, dir)
+	codeDir := filepath.Join(dir, ".hero", "knowledge", "code")
+
+	r1, err := scanner.Scan(nil, nil)
+	if err != nil {
+		t.Fatalf("full scan failed: %v", err)
+	}
+	if err := GenerateKnowledge(r1, codeDir); err != nil {
+		t.Fatalf("GenerateKnowledge (full) failed: %v", err)
+	}
+
+	// Delete package B's only file.
+	os.Remove(filepath.Join(dir, "internal", "b", "b.go"))
+
+	r2, err := scanner.Scan(r1.Checksums, BuildScanCache(r1))
+	if err != nil {
+		t.Fatalf("incremental scan failed: %v", err)
+	}
+	if err := GenerateKnowledge(r2, codeDir); err != nil {
+		t.Fatalf("GenerateKnowledge (incremental) failed: %v", err)
+	}
+
+	for _, p := range r2.Packages {
+		if p.Path == filepath.Join("internal", "b") {
+			t.Errorf("package B should be absent from incremental result, found %+v", p)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(codeDir, "internal-b")); !os.IsNotExist(err) {
+		t.Errorf("package B dir should be pruned, stat err = %v", err)
+	}
+	// The deleted package's endpoint/configvars must be gone; the surviving
+	// packages' endpoints (from a2.go) must remain.
+	assertStringSlicesEqual(t, "packages match fresh scan",
+		canonPackages(r2.Packages), canonPackages(mustFullScan(t, cfg, dir).Packages))
+}
+
+// TestIncrementalScanMissingCacheFallback confirms that a nil cache and a
+// corrupted .scan-cache.json both degrade to a complete (full-equivalent) result.
+func TestIncrementalScanMissingCacheFallback(t *testing.T) {
+	dir, a1, _ := writeEquivFixture(t)
+	cfg := config.DefaultCodeScanConfig()
+	scanner := NewScanner(cfg, dir)
+	codeDir := filepath.Join(dir, ".hero", "knowledge", "code")
+
+	r1, err := scanner.Scan(nil, nil)
+	if err != nil {
+		t.Fatalf("full scan failed: %v", err)
+	}
+
+	// Change a1.go so an incremental scan must re-parse it while a2.go would
+	// normally carry forward — but here there is no usable cache.
+	os.WriteFile(a1, []byte(`package a
+
+import "os"
+
+// DBURL reads the database url.
+func DBURL() string { return os.Getenv("DATABASE_URL") }
+
+// Extra is new.
+func Extra() {}
+`), 0o644)
+
+	want := canonPackages(mustFullScan(t, cfg, dir).Packages)
+
+	// (a) nil cache.
+	rNil, err := scanner.Scan(r1.Checksums, nil)
+	if err != nil {
+		t.Fatalf("incremental scan (nil cache) failed: %v", err)
+	}
+	assertStringSlicesEqual(t, "nil-cache packages", canonPackages(rNil.Packages), want)
+
+	// (b) corrupted .scan-cache.json → LoadScanCache returns a non-nil error and
+	// a nil cache; the caller proceeds with nil.
+	if err := os.MkdirAll(codeDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(codeDir, ".scan-cache.json"), []byte("{not valid json"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	corrupt, loadErr := LoadScanCache(codeDir)
+	if loadErr == nil {
+		t.Error("expected LoadScanCache to return an error for corrupted cache")
+	}
+	if corrupt != nil {
+		t.Errorf("expected nil cache for corrupted file, got %+v", corrupt)
+	}
+	rCorrupt, err := scanner.Scan(r1.Checksums, corrupt)
+	if err != nil {
+		t.Fatalf("incremental scan (corrupt cache) failed: %v", err)
+	}
+	assertStringSlicesEqual(t, "corrupt-cache packages", canonPackages(rCorrupt.Packages), want)
+}
+
+// TestFullScanWritesCompleteCache confirms a full scan + GenerateKnowledge writes
+// a versioned .scan-cache.json that round-trips every current file.
+func TestFullScanWritesCompleteCache(t *testing.T) {
+	dir, _, _ := writeEquivFixture(t)
+	cfg := config.DefaultCodeScanConfig()
+	scanner := NewScanner(cfg, dir)
+	codeDir := filepath.Join(dir, ".hero", "knowledge", "code")
+
+	r1, err := scanner.Scan(nil, nil)
+	if err != nil {
+		t.Fatalf("full scan failed: %v", err)
+	}
+	if err := GenerateKnowledge(r1, codeDir); err != nil {
+		t.Fatalf("GenerateKnowledge failed: %v", err)
+	}
+
+	cachePath := filepath.Join(codeDir, ".scan-cache.json")
+	if _, err := os.Stat(cachePath); err != nil {
+		t.Fatalf(".scan-cache.json not written: %v", err)
+	}
+
+	cache, err := LoadScanCache(codeDir)
+	if err != nil {
+		t.Fatalf("LoadScanCache failed: %v", err)
+	}
+	if cache == nil {
+		t.Fatal("expected a non-nil cache after a full scan")
+	}
+	if cache.Version != scanCacheVersion {
+		t.Errorf("cache version = %d, want %d", cache.Version, scanCacheVersion)
+	}
+	if len(r1.Files) == 0 {
+		t.Fatal("expected r1.Files to be non-empty")
+	}
+	for _, fi := range r1.Files {
+		if _, ok := cache.Files[fi.Path]; !ok {
+			t.Errorf("cache missing entry for file %q", fi.Path)
+		}
+	}
+}
+
+func mustFullScan(t *testing.T, cfg *config.CodeScanConfig, dir string) *Result {
+	t.Helper()
+	r, err := NewScanner(cfg, dir).Scan(nil, nil)
+	if err != nil {
+		t.Fatalf("full scan failed: %v", err)
+	}
+	return r
 }
 
 func contains(s, substr string) bool {

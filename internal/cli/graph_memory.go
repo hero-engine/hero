@@ -168,8 +168,13 @@ func reingestCode(cfg config.Config, projectRoot string, store *graph.Store) err
 	if err != nil {
 		return fmt.Errorf("loading checksums: %w", err)
 	}
+	prevCache, err := codescan.LoadScanCache(codeDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not load scan cache, re-parsing all files: %v\n", err)
+		prevCache = nil
+	}
 	scanner := codescan.NewScannerWithMode(cfg.CodeScan, projectRoot, resolveParser(cfg.CodeScan.Parser))
-	result, err := scanner.Scan(prevChecksums)
+	result, err := scanner.Scan(prevChecksums, prevCache)
 	if err != nil {
 		return fmt.Errorf("scanning: %w", err)
 	}

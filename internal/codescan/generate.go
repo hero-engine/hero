@@ -56,6 +56,12 @@ func GenerateKnowledge(result *Result, codeDir string) error {
 		return fmt.Errorf("saving checksums: %w", err)
 	}
 
+	// Save the per-file scan cache built from the complete result so the next
+	// incremental scan can carry unchanged files forward.
+	if err := BuildScanCache(result).Save(codeDir); err != nil {
+		return fmt.Errorf("saving scan cache: %w", err)
+	}
+
 	return nil
 }
 
