@@ -308,3 +308,5 @@
 {"ts":"2026-07-12T05:21:31.740809Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"opsrunner-keepalive-data-race","message":"status -\u003e completed"}
 {"ts":"2026-07-12T15:23:04.793419Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"scan-clobbers-authored-created-slug-frontmatter","message":"\"`hero scan` clobbers authored `created:` and drops `slug:` on regenerated knowledge entries\""}
 {"ts":"2026-07-12T15:23:04.793544Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"scan-clobbers-authored-created-slug-frontmatter","message":"status -\u003e completed"}
+{"ts":"2026-07-12T16:37:14.78413Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"incremental-scan-prunes-unchanged-packages","message":"\"Incremental code-scan prunes unchanged package dirs — data loss in .hero/knowledge/code/\""}
+{"ts":"2026-07-12T16:37:14.784465Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"incremental-scan-prunes-unchanged-packages","message":"status -\u003e completed"}
