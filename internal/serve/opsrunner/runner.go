@@ -35,9 +35,20 @@ const defaultKeepaliveInterval = 15 * time.Second
 // A Runner is safe for concurrent use.
 type Runner struct {
 	// parentCtx scopes every subprocess. When parentCtx is cancelled
-	// (daemon shutdown), every in-flight subprocess receives SIGKILL via
-	// exec.CommandContext.
+	// (daemon shutdown or Stop), every in-flight subprocess receives
+	// SIGKILL via exec.CommandContext. It is a child of the ctx passed to
+	// New, cancellable independently via cancel so Stop can reap
+	// subprocesses without disturbing the caller's ctx.
 	parentCtx context.Context
+
+	// cancel cancels parentCtx. Stop calls it, then blocks on wg until
+	// every pump/waiter goroutine has returned.
+	cancel context.CancelFunc
+
+	// wg tracks every goroutine Start spawns (two pumps + one waiter per
+	// job) so Stop can wait for a clean shutdown — no goroutine outlives
+	// the Runner.
+	wg sync.WaitGroup
 
 	// binaryPath is the absolute path to the `hero` binary the runner
 	// invokes. Resolved at construction via os.Executable() so the
@@ -70,8 +81,10 @@ func New(parent context.Context) *Runner {
 	if parent == nil {
 		parent = context.Background()
 	}
+	ctx, cancel := context.WithCancel(parent)
 	r := &Runner{
-		parentCtx:         parent,
+		parentCtx:         ctx,
+		cancel:            cancel,
 		registry:          newRegistry(),
 		now:               time.Now,
 		keepaliveInterval: defaultKeepaliveInterval,
@@ -82,6 +95,25 @@ func New(parent context.Context) *Runner {
 	}
 	r.binaryPath = path
 	return r
+}
+
+// Stop cancels every in-flight subprocess (via parentCtx) and blocks
+// until all pump + waiter goroutines have returned, so no goroutine
+// outlives the Runner. Safe to call more than once; a second call is a
+// no-op wait. After Stop the Runner should not be reused — subsequent
+// Start calls would spawn subprocesses on an already-cancelled ctx.
+//
+// Server shutdown and tests both call this to guarantee a clean
+// lifecycle; the daemon otherwise relied on parentCtx cancellation
+// alone, which killed subprocesses but never waited for the goroutines.
+func (r *Runner) Stop() {
+	if r == nil {
+		return
+	}
+	if r.cancel != nil {
+		r.cancel()
+	}
+	r.wg.Wait()
 }
 
 // executablePath is a var so tests can stub it.
@@ -154,7 +186,9 @@ func (r *Runner) Start(ctx context.Context, slug, projectRoot, verb string) (job
 	job.cmd = cmd
 
 	// Fan out stdout + stderr concurrently. The waiter goroutine joins
-	// both readers before calling cmd.Wait() and closing job.done.
+	// both readers before calling cmd.Wait() and closing job.done. All
+	// three goroutines register with r.wg so Stop can wait them out.
+	r.wg.Add(3)
 	var ioWG sync.WaitGroup
 	ioWG.Add(2)
 	go r.pump(job, "stdout", stdout, &ioWG, nil)
@@ -163,6 +197,7 @@ func (r *Runner) Start(ctx context.Context, slug, projectRoot, verb string) (job
 	go r.pump(job, "stderr", stderr, &ioWG, stderrTail)
 
 	go func() {
+		defer r.wg.Done()
 		ioWG.Wait()
 		waitErr := cmd.Wait()
 		exitCode := 0
@@ -309,6 +344,7 @@ func (r *Runner) Stream(ctx context.Context, slug, jobID string, w http.Response
 // pump reads lines from r and emits them on the job's fan-out. The
 // scanner buffer is bumped to 1MiB so long log lines don't fail.
 func (run *Runner) pump(job *Job, stream string, src io.Reader, wg *sync.WaitGroup, tail *tailBuffer) {
+	defer run.wg.Done()
 	defer wg.Done()
 	sc := bufio.NewScanner(src)
 	sc.Buffer(make([]byte, 0, 64*1024), 1<<20)
