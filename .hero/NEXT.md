@@ -5,9 +5,9 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-07-12T05:35:22Z
+updated: 2026-07-12T15:52:50Z
 repo: hero-engine/hero
-branch: main
+branch: fix/scan-preserves-created-slug-frontmatter
 ---
 
 ## Just finished

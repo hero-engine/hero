@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-12T05:35:22Z
+updated: 2026-07-12T07:16:12Z
 repo: hero-engine/hero
 ---
 
@@ -8,15 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Finish off the pending Hero work from the last week. Work in this repo's Hero
-> workspace; deliver from the existing local specs (don't re-design them — each
-> already has a full spec + kickoff). Run each through /deliver, and for every one:
-> validate the engineer's Completion Ledger, run a cold delivery-audit, `hero spec
-> verify`, then commit atomically and push. Sequence:
-> 
-> 1. flat-named-spec-discove…
-
-_possibly stale — 1 commit(s) since, last set 2h 43m ago_
+> `hero scan` regenerates auto-generated project-scan knowledge entries (those tagged `auto-generated, project-scan`, e.g. `.hero/knowledge/rules/ci-github-actions/spec.md`, `.hero/knowledge/context/architecture-overview/spec.md`, `dev-workflow`, `project-overview`, `rules/project-rules`) and in doing so (a) DROPS the `slug:` frontmatter field and (b) FLIPS `created:` to today's date, overwriting th…
 
 ## Suggested next prompt
 
