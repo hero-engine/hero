@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-12T18:23:32Z
+updated: 2026-07-12T19:59:52Z
 repo: hero-engine/hero
 ---
 
@@ -8,18 +8,14 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> i was setting up a new project with hero and pushing first push and got this confusion on what to ignore or not - Let me check one more authoritative source — there's a .hero/.gitignore (a nested ignore file Hero manages), which is literally "what Hero says to ignore" inside .hero/:
+> Investigate and fix a data-loss bug in the incremental code-scan knowledge writer.
 > 
-> Read Hero's nested gitignore, check coverage
-> You're right, and that was sloppy — I ignored four files off their…
+> ## Symptom
+> After an incremental `hero scan`, `.hero/knowledge/code/` contains ONLY the packages whose files changed since the previous scan — every unchanged package's `spec.md` directory has been deleted. On this repo, `ls .hero/knowledge/code/` shows just `index/`, `internal-projection/`, `internal-serve-opsrun…
 
 ## Suggested next prompt
 
-> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
-
-_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
-
-_Source: auto-derived from open feature — `hero next suggest "..."` to override._
+> Harness-native install/upgrade is delivered + verified (bug resolved). Next: commit the batch (install code + governance spec edits) to main; then re-send the hero-code peer advisory when auth works; optionally decide if hero init should skip AGENTS.md for claude-only repos. Then back to remaining pre-release bugs.
 
 ## Recent reflections
 

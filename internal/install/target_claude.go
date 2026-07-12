@@ -20,7 +20,7 @@ import (
 // ~/.claude/. No symlinks; no `.hero/{agents,commands,skills}/` canonical
 // mirror.
 func runClaude(opts Options) (*Result, error) {
-	destBase, claudeMdPath, err := resolveClaudePaths(opts)
+	destBase, _, err := resolveClaudePaths(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -37,13 +37,11 @@ func runClaude(opts Options) (*Result, error) {
 		return nil, fmt.Errorf("installing skills: %w", err)
 	}
 
-	if agentsMdPath := resolveAgentsMdPath(opts); agentsMdPath != "" {
-		if err := installAgentsMd(opts, result, agentsMdPath); err != nil {
-			return nil, fmt.Errorf("installing AGENTS.md: %w", err)
-		}
-	}
-
-	if err := installClaudeMd(opts, result, claudeMdPath); err != nil {
+	// Harness-native: Claude reads CLAUDE.md and only CLAUDE.md. It does NOT
+	// write AGENTS.md — a Claude-only install must not litter a root file no
+	// Claude session reads. installNativeInstructionFile routes to
+	// installClaudeMd for TargetClaude.
+	if err := installNativeInstructionFile(opts, result); err != nil {
 		return nil, fmt.Errorf("installing CLAUDE.md: %w", err)
 	}
 

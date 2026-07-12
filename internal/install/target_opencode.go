@@ -44,10 +44,9 @@ func runOpenCode(opts Options) (*Result, error) {
 		return nil, fmt.Errorf("installing config: %w", err)
 	}
 
-	if agentsMdPath := resolveAgentsMdPath(opts); agentsMdPath != "" {
-		if err := installAgentsMd(opts, result, agentsMdPath); err != nil {
-			return nil, fmt.Errorf("installing AGENTS.md: %w", err)
-		}
+	// OpenCode's native root file is AGENTS.md (harness-native mapping).
+	if err := installNativeInstructionFile(opts, result); err != nil {
+		return nil, fmt.Errorf("installing AGENTS.md: %w", err)
 	}
 
 	return result, nil

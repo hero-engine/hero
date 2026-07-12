@@ -93,6 +93,43 @@ func writeHealthJSON(heroDir string, rows []healthJSONRow) error {
 	return nil
 }
 
+// orphanInstructionFile describes a root instruction file present on disk
+// whose owning target is not recorded in install-state.json.
+type orphanInstructionFile struct {
+	file string // "CLAUDE.md" or "AGENTS.md"
+	role string // "claude" or "non-claude"
+}
+
+// detectOrphanInstructionFiles returns the root instruction files present on
+// disk whose owning target is not in the persisted install-state `targets`
+// set. CLAUDE.md is orphaned when claude is not recorded; AGENTS.md is
+// orphaned when no non-claude target is recorded. Informational only.
+func detectOrphanInstructionFiles(projectRoot string) []orphanInstructionFile {
+	recorded := install.PreviouslyInstalledTargets(projectRoot)
+	claudeRecorded := false
+	nonClaudeRecorded := false
+	for _, t := range recorded {
+		if t == install.TargetClaude {
+			claudeRecorded = true
+		} else {
+			nonClaudeRecorded = true
+		}
+	}
+	var out []orphanInstructionFile
+	if fileExists(filepath.Join(projectRoot, "CLAUDE.md")) && !claudeRecorded {
+		out = append(out, orphanInstructionFile{file: "CLAUDE.md", role: "claude"})
+	}
+	if fileExists(filepath.Join(projectRoot, "AGENTS.md")) && !nonClaudeRecorded {
+		out = append(out, orphanInstructionFile{file: "AGENTS.md", role: "non-claude"})
+	}
+	return out
+}
+
+func fileExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && !info.IsDir()
+}
+
 func runCheck(cmd *cobra.Command, args []string) error {
 	projectRoot := findProjectRoot()
 	cfg, err := config.Load(projectRoot)
@@ -465,6 +502,23 @@ func runCheck(cmd *cobra.Command, args []string) error {
 			fmt.Sprintf("%d legacy install artifact(s); run 'hero upgrade'", len(driftFindings)))
 	} else {
 		addRow("install-drift", "pass", "no legacy install drift")
+	}
+
+	// Orphaned root instruction files — INFORMATIONAL, not a failure. A
+	// CLAUDE.md/AGENTS.md present for a target not recorded in
+	// install-state.json `targets` (e.g. a Model-B phantom AGENTS.md from a
+	// Claude-only install). Surface a heads-up with the opt-in prune hint;
+	// do not count it as an issue.
+	orphanFiles := detectOrphanInstructionFiles(projectRoot)
+	if len(orphanFiles) > 0 {
+		for _, o := range orphanFiles {
+			fmt.Printf("Note: %s present but no %s target recorded in install-state; run 'hero install --prune-orphaned-instruction-files' to remove, or ignore to keep.\n", o.file, o.role)
+		}
+		fmt.Println()
+		addRow("orphan-instruction-files", "warn",
+			fmt.Sprintf("%d orphaned instruction file(s); informational — use 'hero install --prune-orphaned-instruction-files' to remove", len(orphanFiles)))
+	} else {
+		addRow("orphan-instruction-files", "pass", "no orphaned instruction files")
 	}
 
 	// Size drift — rate-limited. Per spec Implementation Notes, dump

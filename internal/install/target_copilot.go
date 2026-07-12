@@ -83,10 +83,17 @@ func runCopilot(opts Options) (*Result, error) {
 		return nil, fmt.Errorf("render commands to copilot prompts: %w", err)
 	}
 
-	// Single instructions file at .github/copilot-instructions.md.
+	// Single instructions file at .github/copilot-instructions.md
+	// (Copilot-specific content surface, separate from the root file).
 	instructionsPath := filepath.Join(opts.TargetDir, ".github", "copilot-instructions.md")
 	if err := installInstructionsMd(opts, result, instructionsPath, "copilot"); err != nil {
 		return nil, fmt.Errorf("installing copilot-instructions.md: %w", err)
+	}
+
+	// Copilot reads AGENTS.md as its root instruction file (harness-native
+	// mapping). copilot-instructions.md above is a distinct surface.
+	if err := installNativeInstructionFile(opts, result); err != nil {
+		return nil, fmt.Errorf("installing AGENTS.md: %w", err)
 	}
 
 	return result, nil

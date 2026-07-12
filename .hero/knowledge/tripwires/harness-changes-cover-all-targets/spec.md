@@ -43,9 +43,17 @@ often enough to need an always-on guardrail. See
 - **Author once, harness-agnostic.** Put the authoritative content in `.hero/`
   (knowledge/convention/skill), then let `hero install` propagation render it to
   each target.
-- **AGENTS.md is the canonical instruction surface** (native to ~9 harnesses);
-  `CLAUDE.md` is the Claude-only *view*, fed by the `CLAUDE.md → AGENTS.md`
-  symlink / `@AGENTS.md` import `hero install` already wires.
+- **Each target gets its own native root instruction file — there is no single
+  canonical one.** Under the harness-native, target-aware install model,
+  `hero install` writes the file each installed target natively reads: `claude`
+  → `CLAUDE.md`, every other target (`opencode | cursor | copilot | codex |
+  generic`) → `AGENTS.md`. Both carry the **same** Hero-managed block body
+  (rendered once, written into each target's file) — so "author once, propagate
+  to every target" still holds for the *content*, it just lands in per-target
+  files. There is **no** `CLAUDE.md → AGENTS.md` symlink/`@import` shim, and a
+  target that was never installed gets **no** root file (upgrade respects the
+  persisted installed-target set). See
+  [[harness-native-install-target-aware-upgrade]].
 - **Make AGENTS.md guidance self-contained and imperative** so a hookless harness
   can act on instruction alone. Treat the Claude Stop/PreCompact hook as an
   enhancement layered on top — never the mechanism. Never gate core behavior on a

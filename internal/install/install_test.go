@@ -720,29 +720,30 @@ func TestRunClaudeProject(t *testing.T) {
 		t.Errorf("legacy flat skill file still present at %s — Skill loader would ignore the nested SKILL.md if flat sibling exists", flatPath)
 	}
 
-	// Under single-source-install P1: both AGENTS.md and CLAUDE.md get
-	// the same Hero managed-block treatment. Each is a regular file with
-	// versioned managed markers wrapping the same body content.
-	for _, name := range []string{"AGENTS.md", "CLAUDE.md"} {
-		path := filepath.Join(targetDir, name)
-		info, err := os.Lstat(path)
-		if err != nil {
-			t.Fatalf("%s not created: %v", name, err)
-		}
-		if info.Mode()&os.ModeSymlink != 0 {
-			t.Errorf("%s should be a regular file, got symlink", name)
-		}
-		data, err := os.ReadFile(path)
-		if err != nil {
-			t.Fatalf("read %s: %v", name, err)
-		}
-		body := string(data)
-		if !strings.Contains(body, "hero:managed-start") {
-			t.Errorf("%s missing versioned managed-region marker", name)
-		}
-		if !strings.Contains(body, "Spec-Driven AI Engineering") {
-			t.Errorf("%s missing Hero section content", name)
-		}
+	// Harness-native model: --target claude writes CLAUDE.md ONLY. It must
+	// NOT emit AGENTS.md — a Claude-only install leaves no root file that no
+	// Claude session reads.
+	claudePath := filepath.Join(targetDir, "CLAUDE.md")
+	info, err := os.Lstat(claudePath)
+	if err != nil {
+		t.Fatalf("CLAUDE.md not created: %v", err)
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		t.Errorf("CLAUDE.md should be a regular file, got symlink")
+	}
+	data, err := os.ReadFile(claudePath)
+	if err != nil {
+		t.Fatalf("read CLAUDE.md: %v", err)
+	}
+	body := string(data)
+	if !strings.Contains(body, "hero:managed-start") {
+		t.Errorf("CLAUDE.md missing versioned managed-region marker")
+	}
+	if !strings.Contains(body, "Spec-Driven AI Engineering") {
+		t.Errorf("CLAUDE.md missing Hero section content")
+	}
+	if _, err := os.Stat(filepath.Join(targetDir, "AGENTS.md")); err == nil {
+		t.Errorf("AGENTS.md must NOT be created for a Claude-only install (harness-native model)")
 	}
 }
 
@@ -827,10 +828,11 @@ func TestRunClaudeGlobal(t *testing.T) {
 	}
 }
 
-// TestRunClaude_PreservesUserAuthoredClaudeMd asserts the P1 policy for
-// user-authored CLAUDE.md: every byte of user content is preserved, AND
-// the same Hero managed block written into AGENTS.md is also written into
-// CLAUDE.md (same managed-region pattern, no special-cased symlink/shim).
+// TestRunClaude_PreservesUserAuthoredClaudeMd asserts the harness-native
+// policy for a user-authored CLAUDE.md: every byte of user content is
+// preserved and Hero's managed block is inserted (same managed-region
+// pattern, no symlink/shim). Under the harness-native model a Claude-only
+// install writes CLAUDE.md and NOT AGENTS.md.
 func TestRunClaude_PreservesUserAuthoredClaudeMd(t *testing.T) {
 	sourceDir := t.TempDir()
 	targetDir := t.TempDir()
@@ -867,7 +869,7 @@ func TestRunClaude_PreservesUserAuthoredClaudeMd(t *testing.T) {
 		}
 	}
 
-	// Same managed block as AGENTS.md.
+	// Hero managed block inserted.
 	if !strings.Contains(got, "hero:managed-start") {
 		t.Error("expected Hero managed-region marker")
 	}
@@ -884,9 +886,9 @@ func TestRunClaude_PreservesUserAuthoredClaudeMd(t *testing.T) {
 		t.Error("CLAUDE.md should be a regular file with a managed block, not a symlink")
 	}
 
-	// AGENTS.md still created.
-	if _, err := os.Stat(filepath.Join(targetDir, "AGENTS.md")); err != nil {
-		t.Errorf("AGENTS.md not created: %v", err)
+	// Harness-native: a Claude-only install must NOT create AGENTS.md.
+	if _, err := os.Stat(filepath.Join(targetDir, "AGENTS.md")); err == nil {
+		t.Errorf("AGENTS.md must NOT be created for a Claude-only install")
 	}
 
 	// Idempotency: second run produces no further change to CLAUDE.md.
@@ -1066,9 +1068,10 @@ func TestRunClaude_NoTouchClaudeMd_LeavesEverythingAlone(t *testing.T) {
 		t.Errorf("--no-touch-claude-md should leave CLAUDE.md byte-identical\nbefore: %q\nafter:  %q", userContent, string(data))
 	}
 
-	// AGENTS.md still created.
-	if _, err := os.Stat(filepath.Join(targetDir, "AGENTS.md")); err != nil {
-		t.Errorf("AGENTS.md should still be created: %v", err)
+	// Harness-native: --target claude does not write AGENTS.md, so with
+	// --no-touch-claude-md no root instruction file is written at all.
+	if _, err := os.Stat(filepath.Join(targetDir, "AGENTS.md")); err == nil {
+		t.Errorf("AGENTS.md must NOT be created for a Claude-only install")
 	}
 }
 

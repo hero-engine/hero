@@ -2,12 +2,22 @@
 title: "`hero install --target claude` emits both CLAUDE.md and AGENTS.md"
 slug: install-target-emits-both-claude-and-agents-md
 type: bug
-status: planning
+status: superseded
 priority: medium
 severity: low
-superseded_by: single-source-install-p1-agents-md
+superseded_by: harness-native-install-target-aware-upgrade
 created: 2026-05-15
+# superseded_reason: The new harness-native spec implements exactly what this bug wanted (--target claude => CLAUDE.md only). Repoint from the stale P1 supersession to the authoritative spec.
 ---
+
+> # ⛔ SUPERSEDED — DO NOT IMPLEMENT SEPARATELY
+> This bug reported real, correct behavior (`--target claude` should emit
+> CLAUDE.md only). Its fix is now folded into the authoritative install spec —
+> **do not deliver this bug on its own**, or you'll ship a partial version of the
+> model. The prior "superseded by single-source-install-p1" note was wrong (P1
+> itself has been reversed).
+>
+> **Authoritative spec:** [`harness-native-install-target-aware-upgrade`](../../features/harness-native-install-target-aware-upgrade/spec.md).
 
 ## Goal
 

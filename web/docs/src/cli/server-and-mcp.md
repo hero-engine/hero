@@ -45,6 +45,60 @@ hero install project . --target cursor --workspace services/auth
 Use `--dry-run` to preview and `hero upgrade` to refresh installed
 agent/command/skill files and MCP registration after upgrading Hero.
 
+### Harness-native root instruction files
+
+`hero install` is **harness-native**: each target gets only the root
+instruction file it natively reads — nothing else.
+
+| Target | Root instruction file |
+|---|---|
+| `claude` | `CLAUDE.md` |
+| `codex`, `opencode`, `cursor`, `copilot`, `generic` | `AGENTS.md` |
+
+- `hero install --target claude` writes `CLAUDE.md` only — it does **not**
+  litter an `AGENTS.md` no Claude session reads.
+- `hero install --target <non-claude>` writes `AGENTS.md` only.
+- Installing multiple targets where one is Claude produces **both**
+  `CLAUDE.md` and `AGENTS.md`, each carrying the same Hero-managed block.
+
+Both files use the same versioned managed region (`<!-- hero:managed-start
+… -->` / `<!-- hero:managed-end -->`); content you write **outside** the
+markers is preserved byte-for-byte on every re-install.
+
+### Persisted target set
+
+Every project-mode install records the installed target set in
+`.hero/install-state.json` (`targets`). `hero upgrade` reads it and
+regenerates the managed region **only** in the native instruction files of
+previously-installed targets:
+
+- If Claude was never a target, upgrade never creates a `CLAUDE.md`.
+- If Claude was a target, upgrade regenerates `CLAUDE.md`'s managed region.
+
+A repo installed before this state existed is **backfilled** on the next
+upgrade: Hero infers the prior target set from the harness content
+directories (`.claude/`, `.codex/`, …) plus any Hero-managed instruction
+file, persists it, and proceeds.
+
+### Migration safety and pruning orphans
+
+Upgrading a repo installed under the old "always both files" model is
+non-destructive: **Hero never deletes your `AGENTS.md` or `CLAUDE.md` by
+default.** An instruction file whose target is not in the resolved set has
+its managed region kept current (so it doesn't rot), but is never removed.
+
+To remove a leftover phantom file, opt in explicitly:
+
+```bash
+hero install project . --target claude --prune-orphaned-instruction-files
+hero upgrade --prune-orphaned-instruction-files
+```
+
+Even with the flag, a file is deleted **only** when its target is not in the
+resolved set **and** its entire content is Hero-managed. Any user content
+outside the markers means the file is always preserved. `hero check`
+surfaces an informational note when an orphaned instruction file is present.
+
 ## HTTP Daemon
 
 ```bash

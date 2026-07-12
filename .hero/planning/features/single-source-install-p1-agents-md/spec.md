@@ -2,7 +2,7 @@
 title: "Single-Source Install P1 — AGENTS.md as the Only Root Instruction File"
 slug: single-source-install-p1-agents-md
 type: feature
-status: delivering
+status: superseded
 priority: P0
 tags: [install, agents-md, claude-md, instructions, migration]
 created: 2026-05-11
@@ -12,7 +12,21 @@ relations:
   - target: harness-instruction-file-survey
     kind: motivated-by
 horizon: now
+superseded_by: harness-native-install-target-aware-upgrade
+# superseded_reason: Reverses P1's AGENTS.md-as-only-root-file convergence. New direction is harness-native/target-aware: --target claude emits CLAUDE.md only, others AGENTS.md, upgrade respects previously-installed targets.
 ---
+
+> # ⛔ SUPERSEDED — DO NOT IMPLEMENT
+> This spec's core thesis ("**AGENTS.md as the only root instruction file**",
+> write both files for `--target claude`) has been **reversed**. Hero's install
+> model is now **harness-native, target-aware**: `--target claude` → CLAUDE.md
+> only; other targets → AGENTS.md; upgrade respects previously-installed targets.
+>
+> **Authoritative spec:** [`harness-native-install-target-aware-upgrade`](../harness-native-install-target-aware-upgrade/spec.md).
+> The managed-region *mechanics* below (versioned markers, preserve-user-content,
+> idempotence, hand-edit refusal) remain correct and are reused by the new spec —
+> only the per-target file mapping and upgrade behavior changed. Kept for genealogy
+> (`hero why`); do not deliver as written.
 
 ## Goal
 

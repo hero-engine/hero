@@ -34,6 +34,13 @@ func runCursor(opts Options) (*Result, error) {
 		return nil, fmt.Errorf("installing skills: %w", err)
 	}
 
+	// Cursor Agent mode reads AGENTS.md natively — write it as Cursor's
+	// root instruction file (harness-native mapping). The .cursor/rules/
+	// content dirs above are a separate surface.
+	if err := installNativeInstructionFile(opts, result); err != nil {
+		return nil, fmt.Errorf("installing AGENTS.md: %w", err)
+	}
+
 	return result, nil
 }
 

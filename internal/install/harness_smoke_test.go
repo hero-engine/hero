@@ -39,18 +39,15 @@ func TestHarness_SmokeClaude(t *testing.T) {
 	h.mustSatisfyContract(TargetClaude, KindCommands)
 	h.mustSatisfyContract(TargetClaude, KindSkills)
 
-	// Under P1: both AGENTS.md and CLAUDE.md are regular files with the
-	// same managed-block treatment. Same body content, different roots so
-	// every harness sees Hero regardless of which file it reads.
-	h.mustBeRegularFile("AGENTS.md")
-	h.mustContain("AGENTS.md", "hero:managed-start")
+	// Harness-native: --target claude writes CLAUDE.md ONLY. AGENTS.md must
+	// NOT be created — Claude Code reads CLAUDE.md, so a Claude-only install
+	// leaves no root file no harness reads.
 	h.mustBeRegularFile("CLAUDE.md")
 	h.mustContain("CLAUDE.md", "hero:managed-start")
+	h.mustNotExist("AGENTS.md")
 	// The closing-gate terminal contract lives in the shared body, so it
-	// reaches the always-loaded root file for every target — not just
-	// Codex's AGENTS.md. Assert it on the Claude CLAUDE.md path.
+	// reaches the always-loaded root file. Assert it on the Claude CLAUDE.md.
 	h.mustContain("CLAUDE.md", "Finish the closing gate before yielding")
-	h.mustContain("AGENTS.md", "Finish the closing gate before yielding")
 
 	// Sanity: result records copies.
 	if len(res.Copied) == 0 {
