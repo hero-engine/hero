@@ -217,6 +217,7 @@ func execSmoke(s *spec.Spec, projectRoot string) SmokeRunRecord {
 	start := time.Now()
 	cmd := exec.Command("bash", scriptPath)
 	cmd.Dir = projectRoot
+	cmd.Env = smokeScriptEnv()
 	out, err := cmd.CombinedOutput()
 	record.DurationMS = time.Since(start).Milliseconds()
 	record.Output = string(out)
@@ -227,6 +228,21 @@ func execSmoke(s *spec.Spec, projectRoot string) SmokeRunRecord {
 		record.Status = "pass"
 	}
 	return record
+}
+
+// smokeScriptEnv returns the environment for a smoke script. Scripts source
+// scripts/e2e/lib.sh which defaults HERO_BIN to `hero` on PATH — absent in CI
+// (only ./hero is built) and potentially stale locally (a Homebrew hero). We
+// point HERO_BIN at the running binary so scripts always exercise the hero
+// under test, without depending on PATH. An explicit HERO_BIN override wins.
+func smokeScriptEnv() []string {
+	env := os.Environ()
+	if os.Getenv("HERO_BIN") == "" {
+		if self, err := os.Executable(); err == nil {
+			env = append(env, "HERO_BIN="+self)
+		}
+	}
+	return env
 }
 
 func printSmokeRecord(r SmokeRunRecord) {

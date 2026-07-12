@@ -41,6 +41,13 @@ jobs:
       - name: Build hero
         run: make build
 
+      # Several smokes (e.g. acceptance-criteria-graph) run against the live
+      # repo and require a populated graph. A fresh checkout has none
+      # (.hero/graph.db is gitignored), so scan first. The smoke runner sets
+      # HERO_BIN=<the built hero> for the scripts itself.
+      - name: Populate the graph for live-repo smokes
+        run: ./hero scan
+
       - name: Determine smoke mode and base ref
         id: mode
         run: |
