@@ -304,3 +304,5 @@
 {"ts":"2026-07-11T19:32:59.657326Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"created-field-stamp-and-surface","message":"status -\u003e completed"}
 {"ts":"2026-07-12T01:04:51.227105Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"next-drift-gate-unwinnable","message":"\"CI NEXT.md drift gate is structurally unwinnable — Test job red on every commit\""}
 {"ts":"2026-07-12T01:04:51.227222Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-drift-gate-unwinnable","message":"status -\u003e completed"}
+{"ts":"2026-07-12T05:21:31.74073Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"opsrunner-keepalive-data-race","message":"\"Flaky data race in opsrunner — global nowFn swapped by tests races leaked pump() goroutine\""}
+{"ts":"2026-07-12T05:21:31.740809Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"opsrunner-keepalive-data-race","message":"status -\u003e completed"}
