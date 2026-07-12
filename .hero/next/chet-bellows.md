@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-12T18:09:02Z
+updated: 2026-07-12T18:23:32Z
 repo: hero-engine/hero
 ---
 
@@ -15,7 +15,11 @@ repo: hero-engine/hero
 
 ## Suggested next prompt
 
-> Commit the gitignore fix on a feature branch (currently on main): stage internal/cli/init.go, internal/cli/init_gitignore_test.go, the 3 staged refs.db untrackings, and the archived spec under specs/. Then the managed-gitignore gap is fully closed for fresh hero init projects.
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 
