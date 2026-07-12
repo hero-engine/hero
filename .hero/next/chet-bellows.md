@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-12T16:37:59Z
+updated: 2026-07-12T16:48:03Z
 repo: hero-engine/hero
 ---
 
@@ -13,9 +13,15 @@ repo: hero-engine/hero
 > ## Symptom
 > After an incremental `hero scan`, `.hero/knowledge/code/` contains ONLY the packages whose files changed since the previous scan — every unchanged package's `spec.md` directory has been deleted. On this repo, `ls .hero/knowledge/code/` shows just `index/`, `internal-projection/`, `internal-serve-opsrun…
 
+_possibly stale — 1 commit(s) since, last set 10m ago_
+
 ## Suggested next prompt
 
-> Commit the incremental-scan data-loss fix (branch off main first): internal/codescan/generate.go + codescan_test.go, and stage .hero/ handoff files. Follow-up available: secondary defect #1 — incremental scan still writes a partial index/ConfigVars/Endpoints (needs full prior Result carried forward).
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 

@@ -680,10 +680,22 @@ func (s *Server) shutdown() error {
 		}
 	}()
 
+	var httpErr error
 	if s.httpServer != nil {
-		return s.httpServer.Shutdown(ctx)
+		httpErr = s.httpServer.Shutdown(ctx)
 	}
-	return nil
+
+	// Reap in-flight ops subprocesses and wait for their pump goroutines
+	// AFTER the HTTP server has drained, so no handler can spawn a new op
+	// concurrently with the wait. The runner was scoped to
+	// context.Background (nothing else cancels it), and its subprocesses
+	// run in their own process groups — without this Stop they'd orphan
+	// when the daemon exits.
+	if s.opsRunner != nil {
+		s.opsRunner.Stop()
+	}
+
+	return httpErr
 }
 
 // StartedAt returns the wall-clock time this server began listening.

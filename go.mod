@@ -7,6 +7,7 @@ require (
 	github.com/bdwheeler/sprout/go v0.1.0
 	github.com/google/uuid v1.6.0
 	github.com/spf13/cobra v1.10.2
+	go.uber.org/goleak v1.3.0
 	golang.org/x/crypto v0.50.0
 	golang.org/x/sys v0.44.0
 	golang.org/x/term v0.42.0

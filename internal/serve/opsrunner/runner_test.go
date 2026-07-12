@@ -10,7 +10,26 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"go.uber.org/goleak"
 )
+
+// TestMain runs goleak after the suite to prove no opsrunner goroutine
+// (pump/waiter) survives its test — the stop-and-wait lifecycle plus the
+// per-test r.Stop() cleanups should leave the process goroutine-clean.
+func TestMain(m *testing.M) {
+	goleak.VerifyTestMain(m)
+}
+
+// newRunner builds a Runner on a background parent and registers a
+// t.Cleanup that Stops it, so no pump/waiter goroutine outlives the
+// test. Every test uses this instead of calling New directly.
+func newRunner(t *testing.T) *Runner {
+	t.Helper()
+	r := New(context.Background())
+	t.Cleanup(r.Stop)
+	return r
+}
 
 // withFakeBinary writes a shell script to tempdir, points the runner's
 // executablePath resolver at it, and registers a cleanup to restore.
@@ -46,7 +65,7 @@ func drainStream(t *testing.T, runner *Runner, slug, id string) string {
 
 func TestRunner_Start_AllowlistEnforcement(t *testing.T) {
 	withFakeBinary(t, `echo ok`)
-	r := New(context.Background())
+	r := newRunner(t)
 	if _, _, err := r.Start(context.Background(), "p", t.TempDir(), "rm-rf"); err == nil {
 		t.Fatal("expected error for non-allowlisted verb")
 	}
@@ -56,7 +75,7 @@ func TestRunner_Start_Dedup(t *testing.T) {
 	// Sleep keeps the first invocation alive long enough for the second
 	// Start to land while it's still in flight.
 	withFakeBinary(t, `sleep 2; echo done`)
-	r := New(context.Background())
+	r := newRunner(t)
 
 	id1, fresh1, err := r.Start(context.Background(), "p", t.TempDir(), "re-scan")
 	if err != nil || !fresh1 {
@@ -76,7 +95,7 @@ func TestRunner_Start_Dedup(t *testing.T) {
 
 func TestRunner_Stream_EmitsExitEvent(t *testing.T) {
 	withFakeBinary(t, `echo "hello from fake hero"; echo "world"; exit 0`)
-	r := New(context.Background())
+	r := newRunner(t)
 	id, _, err := r.Start(context.Background(), "p", t.TempDir(), "re-scan")
 	if err != nil {
 		t.Fatal(err)
@@ -107,7 +126,7 @@ func TestRunner_Stream_EmitsExitEvent(t *testing.T) {
 
 func TestRunner_Stream_NonZeroExit(t *testing.T) {
 	withFakeBinary(t, `echo "trouble" 1>&2; exit 3`)
-	r := New(context.Background())
+	r := newRunner(t)
 	id, _, err := r.Start(context.Background(), "p", t.TempDir(), "re-scan")
 	if err != nil {
 		t.Fatal(err)
@@ -129,7 +148,7 @@ func TestRunner_Stream_NonZeroExit(t *testing.T) {
 
 func TestRunner_Lookup_AfterFinish(t *testing.T) {
 	withFakeBinary(t, `echo done`)
-	r := New(context.Background())
+	r := newRunner(t)
 	id, _, err := r.Start(context.Background(), "p", t.TempDir(), "re-scan")
 	if err != nil {
 		t.Fatal(err)
@@ -146,7 +165,7 @@ func TestRunner_Lookup_AfterFinish(t *testing.T) {
 
 func TestRunner_Lookup_InFlight(t *testing.T) {
 	withFakeBinary(t, `sleep 2; echo done`)
-	r := New(context.Background())
+	r := newRunner(t)
 	id, _, err := r.Start(context.Background(), "p", t.TempDir(), "re-scan")
 	if err != nil {
 		t.Fatal(err)
@@ -161,6 +180,7 @@ func TestRunner_ParentContextCancel_KillsSubprocess(t *testing.T) {
 	withFakeBinary(t, `sleep 30; echo done`)
 	parent, cancel := context.WithCancel(context.Background())
 	r := New(parent)
+	t.Cleanup(r.Stop)
 	id, _, err := r.Start(context.Background(), "p", t.TempDir(), "re-scan")
 	if err != nil {
 		t.Fatal(err)
@@ -185,7 +205,7 @@ func TestRunner_ParentContextCancel_KillsSubprocess(t *testing.T) {
 
 func TestRunner_ClientDisconnect_DoesNotKillSubprocess(t *testing.T) {
 	withFakeBinary(t, `for i in 1 2 3 4 5; do echo "line $i"; sleep 0.2; done; exit 0`)
-	r := New(context.Background())
+	r := newRunner(t)
 	id, _, err := r.Start(context.Background(), "p", t.TempDir(), "re-scan")
 	if err != nil {
 		t.Fatal(err)
@@ -214,7 +234,7 @@ func TestRunner_ClientDisconnect_DoesNotKillSubprocess(t *testing.T) {
 
 func TestRunner_Keepalive(t *testing.T) {
 	withFakeBinary(t, `sleep 1; exit 0`)
-	r := New(context.Background())
+	r := newRunner(t)
 	// Force keepalive to a small interval on THIS runner so a tick fires
 	// while the subprocess is quiet. Per-runner (not a shared global), so
 	// no cross-test race with other runners' goroutines — set before Start,
@@ -246,7 +266,7 @@ func TestRunner_Keepalive(t *testing.T) {
 
 func TestRunner_FinishedJob_LookupAndFindByID(t *testing.T) {
 	withFakeBinary(t, `echo done; exit 0`)
-	r := New(context.Background())
+	r := newRunner(t)
 	id, _, err := r.Start(context.Background(), "p", t.TempDir(), "re-scan")
 	if err != nil {
 		t.Fatal(err)
