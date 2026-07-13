@@ -2,7 +2,7 @@
 title: "hero docs check reports actual:0 in the engine repo, and GETTING-STARTED.md counts are stale"
 slug: hero-docs-check-engine-repo-misfire
 type: bug
-status: delivering
+status: completed
 priority: medium
 severity: low
 domain: engineering
@@ -12,6 +12,7 @@ root_cause_class: design
 tags: [docs, hero-docs-check, engine-repo, getting-started, counts]
 relates-to:
   - agent-hero-version-schema-confusion
+completed_at: 2026-07-13T19:13:29Z
 ---
 
 # hero docs check reports actual:0 in the engine repo, and GETTING-STARTED.md counts are stale

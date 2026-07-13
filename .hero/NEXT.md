@@ -5,7 +5,7 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-07-13T19:08:56Z
+updated: 2026-07-13T19:13:31Z
 repo: hero-engine/hero
 branch: fix/agent-hero-version-schema-confusion
 ---

@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-13T18:57:41Z · projected from 518 source nodes_
+_Last refreshed: 2026-07-13T19:13:31Z · projected from 518 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 22h ago | satellite-corpus-integration |
+| core | building | cmd/, internal/ | 23h ago | satellite-corpus-integration |
 | docs | maturing | web/docs/ | 18h ago | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | maturing | domains/engineering/ | 1d ago | — |
@@ -51,7 +51,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — doctor-routing-guidance-all-packs, agent-hero-version-schema-confusion, next-context-carry-forward-drift, init-gitignore-missing-machine-local-artifacts, incremental-scan-complete-result, incremental-scan-prunes-unchanged-packages, codescan-created-slug-frontmatter-followup
+- **(unassigned)** — hero-docs-check-engine-repo-misfire, doctor-routing-guidance-all-packs, agent-hero-version-schema-confusion, next-context-carry-forward-drift, init-gitignore-missing-machine-local-artifacts, incremental-scan-complete-result, incremental-scan-prunes-unchanged-packages
 - **core** — harness-native-install-target-aware-upgrade, scan-clobbers-authored-created-slug-frontmatter, next-drift-gate-unwinnable
 - **docs** — release-notes-page
 - **serve** — opsrunner-keepalive-data-race
@@ -62,7 +62,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 2. **serve** — `hero-team-server` (P1, delivering)
 3. **core** — `satellite-corpus-integration` (high, delivering)
 4. **serve** — `agent-outposts` (medium, delivering)
-5. **(unassigned)** — `hero-docs-check-engine-repo-misfire` (medium, delivering)
+5. **serve** — `retrieval-contradiction-detection` (—, delivering)
 
 ## Open risks & blockers
 
@@ -75,5 +75,5 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
 - Specs covered: 184/383 (48%)
-- Projection generation: 1ms · Source nodes: 518
+- Projection generation: 0ms · Source nodes: 518
 

@@ -327,3 +327,5 @@
 {"ts":"2026-07-13T16:20:51.826867Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"agent-hero-version-schema-confusion","message":"status -\u003e completed"}
 {"ts":"2026-07-13T18:55:30.737294Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"doctor-routing-guidance-all-packs","message":"\"Extract hero doctor / MCP-surface routing guidance into a shared domain-agnostic section\""}
 {"ts":"2026-07-13T18:55:30.737409Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"doctor-routing-guidance-all-packs","message":"status -\u003e completed"}
+{"ts":"2026-07-13T19:13:31.486293Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-docs-check-engine-repo-misfire","message":"\"hero docs check reports actual:0 in the engine repo, and GETTING-STARTED.md counts are stale\""}
+{"ts":"2026-07-13T19:13:31.486369Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-docs-check-engine-repo-misfire","message":"status -\u003e completed"}

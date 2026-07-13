@@ -6,21 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-13T19:08:57Z · 77 ready specs_
-
-## hero-docs-check-engine-repo-misfire — "hero docs check reports actual:0 in the engine repo, and GETTING-STARTED.md counts are stale"
-_bug · delivering · horizon: now_
-
-`hero docs check` reports `actual: 0` agents/skills in the engine repo (it assumes an installed harness layout; sources here live under `core/` + `domains/*`), and GETTING-STARTED.md counts drifted (claims 34 agents/27 commands/45 skills; actual ≈ 35/29/55).
-
-**Status:** planning — diagnosed during v0.25.0 release pre-flight; did not block that release.
-
-**Pick up at:** find the `hero docs check` implementation (grep "Documentation freshness check" in `internal/`) and the install-manifest enumeration (`internal/install/`, `internal/cli/install.go`). Add an engine-repo/source-layout counting mode that counts the canonical deduped install set (reuse the manifest logic so checker and install can't diverge), then refresh GETTING-STARTED.md + README.md counts from the fixed checker's output. Add a test for the engine-repo counting path.
-
-**Files:** `internal/install/`, `internal/cli/install.go`, `GETTING-STARTED.md`, `README.md`, wherever `docs check` is registered.
-**Skip:** raw recursive `find` counts (89/83/213 — inflated by `.claude`/`.codex`/`web/docs/site` mirrors); the canonical number is the deduped install manifest.
-
----
+_Generated: 2026-07-13T19:13:31Z · 76 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -76,20 +62,30 @@ Paste-ready cold-start prompt for the fix session:
 > **Do NOT revert `bcb9424`** — its orphan/duplicate-daemon reaping is real. Keep reaping
 > genuinely-dead daemons; never kill a live, connected one.
 >
-> **Implement the four changes in `## Suggested Fix Approach`:**
+> **A second session** reported the transport closing *and* an "index stale lock / schema
+> mismatch." That was run down: a locked index and a graph schema mismatch both produce
+> graceful `isError` tool results (reproduced) — they do **not** close the transport. So they
+> are a **separate reliability defect** (Trigger B1: the index opens SQLite with no
+> busy-timeout/WAL, so concurrent `hero next ingest`/`checkpoint` hook processes make tool
+> calls fail with `database is locked`), not a second transport-close cause.
+>
+> **Implement the changes in `## Suggested Fix Approach`:**
 > 1. `internal/serve/mcp_lifecycle.go` `Run()` — graceful SIGTERM handler that runs the
->    pidfile `release()` before exiting (stops leaked `.hero/mcp-<ppid>.pid`).
+>    pidfile `release()` before exiting (stops leaked pidfiles AND leaked index journals).
+> 1b. `internal/index/index.go` `Open` — add `_busy_timeout=5000` + `_journal_mode=WAL`
+>    (match the graph). **This is the fix for the second session's `database is locked`.**
 > 2. `internal/serve/mcp_singleton.go` — **coexist instead of supersede** when the incumbent
->    is genuinely alive (per-pid pidfile via a `coexistRelease` helper); this is the
->    load-bearing fix.
+>    is genuinely alive (per-pid pidfile via a `coexistRelease` helper); **the load-bearing
+>    fix for the transport close.**
 > 3. `internal/serve/mcp_watchdog.go` — only `os.Exit(0)` when reparented to init (ppid==1)
 >    or the original parent is confirmed dead, not on any ppid change.
-> 4. `internal/serve/mcp_lifecycle.go` `handleRequest` — wrap dispatch in `recover()` so one
->    tool panic can't crash the whole server.
+> 4. `internal/serve/mcp_lifecycle.go` `handleRequest` — wrap dispatch in `recover()` as
+>    defense-in-depth. **No panic path was found; this is not the fix for either report** —
+>    ship it, but don't rely on it.
 >
-> **Then follow `## Test Plan`** — especially the inverse-repro regression: two live daemons
-> sharing a parent + workspace must now **coexist** (incumbent stays alive after the second
-> starts). Reproduce manually with two `hero mcp` procs whose stdin is held open.
+> **Then follow `## Test Plan`** — especially the inverse-repro regression (two live daemons
+> sharing a parent + workspace must now **coexist**) and the index-concurrency test (a held
+> lock must no longer make `hero_search`/`hero_anchor` fail).
 >
 > **Still open (capture, don't block the fix):** the exact Codex-host event that spawns the
 > second daemon during comparison queries is not yet observed. Set `HERO_MCP_DEBUG=1` and
