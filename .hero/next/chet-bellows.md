@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-13T16:56:34Z
+updated: 2026-07-13T17:06:35Z
 repo: hero-engine/hero
 ---
 
@@ -12,13 +12,15 @@ repo: hero-engine/hero
 > then i stopped it - and ran a hero upgrade - and got this: 
 > The up…
 
-_possibly stale — 1 commit(s) since, last set 17m ago_
+_possibly stale — 3 commit(s) since, last set 27m ago_
 
 ## Last user ask
 
 > so - using hero on a project - first thing i got is this: hero resume is blocked by a local graph schema mismatch: the installed CLI understands schema 2 while this workspace graph is schema 4. I’m checking whether the repository’s current binary can read it; I won’t modify or downgrade the graph to work around that mismatch.
 > then i stopped it - and ran a hero upgrade - and got this:
 > The up…
+
+_possibly stale — 2 commit(s) since, last set 11m ago_
 
 ## Suggested next prompt
 
