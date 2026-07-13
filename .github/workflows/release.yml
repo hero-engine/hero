@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
   goreleaser:
@@ -35,3 +36,14 @@ jobs:
           # the private source repo and can't push cross-repo.
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           TAP_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Trigger docs deploy to refresh the releases page
+        # Only fires when docs.yml's own deploy gate is on — a tag push
+        # should not force-deploy docs if DEPLOY_DOCS is off (see docs.yml).
+        if: vars.DEPLOY_DOCS == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run docs.yml \
+            --repo "${{ github.repository }}" \
+            --field deploy=true

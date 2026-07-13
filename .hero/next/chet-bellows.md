@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-12T22:48:02Z
+updated: 2026-07-13T00:23:06Z
 repo: hero-engine/hero
 ---
 
@@ -8,28 +8,20 @@ repo: hero-engine/hero
 
 ## Session goal
 
-> Session opened with — Investigate and fix a data-loss bug in the incremental code-scan knowledge writer.
-> 
-> ## Symptom
-> After an incremental `hero scan`, `.hero/knowledge/code/` contains ONLY the packages whose files changed since the previous scan — every unchanged package's `spec.md` directory has been deleted. On this repo, `ls .hero/knowledge/code/` shows just `index/`, `internal-projection/`, `internal-serve-opsrun…
-
-_possibly stale — 3 commit(s) since, last set 2h 7m ago_
+> Session opened with — we should have a page on the website iwth releases and release notes - like left of them on the left that navs to the release and the bulletted highlights of major things or fixes?
+> **Before creating any file**, check whether the user is working in a sub-folder workspace. If so, preserve that workspace's `subproject:` frontmatter and write the spec under the workspace's `.hero/` root; otherwise wri…
 
 ## Last user ask
 
-> Deliver next-context-carry-forward-drift: make NEXT.md deterministic — replace ingested_at ordering with priority/created/key in contextToCarry + openFeaturesByPriority (internal/projection/projection.go); add determinism tests; verify clean-worktree byte-identical NEXT.md. Autopilot.
+> Deliver the release-notes-page spec: build a docs.heroengine.ai/releases/ page driven by hero-releases GitHub Releases data
 
 ## Suggested next prompt
 
-> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
-
-_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
-
-_Source: auto-derived from open feature — `hero next suggest "..."` to override._
+> release-notes-page shipped — what's next on the docs/web front, or should we pick up one of the in-flight deliveries (hero-landing-page, agent-outposts, team-connect)?
 
 ## Recent reflections
 
-_(none yet)_
+- mkdocs-material's theme feature for integrated left-nav TOC is toc.integrate, not navigation.integrate (that flag doesn't exist in 9.7.x) — check the compiled template partials before trusting a spec's exact feature-flag name
 
 ## Tried and failed (this session)
 

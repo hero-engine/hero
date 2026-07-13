@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<!-- Hero Mock: release-notes-page | Generated: 2026-07-12 -->
+<!-- Description: docs.heroengine.ai/releases/ — mkdocs-material integrated left-nav release history -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Releases — Hero Docs — Mock</title>
+<style>
+  :root {
+    --hero-blue-300: #9bc1e6;
+    --hero-blue-500: #6cb6ff;
+    --hero-blue-700: #2a6cb5;
+    --hero-ink: #14181e;
+
+    --bg: #ffffff;
+    --bg-nav: #fafbfc;
+    --text: #1b1f24;
+    --text-secondary: #57606a;
+    --text-muted: #8a939c;
+    --border: #e3e6ea;
+    --code-bg: #f4f6f8;
+    --success-bg: #e6f4ea;
+    --success-fg: #1b7a3d;
+    --fix-bg: #fdeeee;
+    --fix-fg: #b3261e;
+    --changes-bg: #eef2f7;
+    --changes-fg: #445266;
+    --shadow: 0 1px 2px rgba(20,24,30,0.06);
+    --radius: 6px;
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #14181e;
+    --bg-nav: #171c23;
+    --text: #e6e9ed;
+    --text-secondary: #9aa4b0;
+    --text-muted: #6b7480;
+    --border: #262c35;
+    --code-bg: #1c222b;
+    --success-bg: #16301f;
+    --success-fg: #6fd18e;
+    --fix-bg: #331a1a;
+    --fix-fg: #ef8f89;
+    --changes-bg: #1f2733;
+    --changes-fg: #a9b6c6;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14181e;
+      --bg-nav: #171c23;
+      --text: #e6e9ed;
+      --text-secondary: #9aa4b0;
+      --text-muted: #6b7480;
+      --border: #262c35;
+      --code-bg: #1c222b;
+      --success-bg: #16301f;
+      --success-fg: #6fd18e;
+      --fix-bg: #331a1a;
+      --fix-fg: #ef8f89;
+      --changes-bg: #1f2733;
+      --changes-fg: #a9b6c6;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4);
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: var(--text);
+    background: var(--bg);
+  }
+
+  code, .mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  /* ---------- Header ---------- */
+  .md-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 56px;
+    padding: 0 16px;
+    background: var(--hero-ink);
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  }
+
+  .md-header__button {
+    display: none;
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 4px;
+  }
+  .md-header__button:hover { background: rgba(255,255,255,0.08); }
+  .md-header__button svg { width: 20px; height: 20px; display: block; }
+
+  .md-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+  }
+  .md-logo svg { width: 22px; height: 22px; }
+  .md-logo .title {
+    color: var(--hero-blue-300);
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    font-size: 17px;
+  }
+
+  .md-header__title {
+    font-weight: 500;
+    font-size: 14.5px;
+    color: rgba(255,255,255,0.85);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .md-header__title .sep { color: rgba(255,255,255,0.35); }
+
+  .md-header__spacer { flex: 1; }
+
+  .md-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: rgba(255,255,255,0.55);
+    font-size: 13.5px;
+    width: 220px;
+    cursor: text;
+  }
+  .md-search svg { width: 15px; height: 15px; flex-shrink: 0; opacity: 0.8; }
+  @media (max-width: 900px) { .md-search { display: none; } }
+
+  .md-header__icons {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .icon-btn {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.85);
+    cursor: pointer;
+    padding: 7px;
+    border-radius: 5px;
+    display: flex;
+  }
+  .icon-btn:hover { background: rgba(255,255,255,0.1); }
+  .icon-btn svg { width: 18px; height: 18px; }
+
+  /* ---------- Shell ---------- */
+  .shell {
+    display: flex;
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+
+  /* ---------- Primary left nav (site sections) ---------- */
+  .nav-primary {
+    width: 232px;
+    flex-shrink: 0;
+    padding: 24px 0 40px;
+    border-right: 1px solid var(--border);
+    background: var(--bg-nav);
+    align-self: flex-start;
+    position: sticky;
+    top: 56px;
+    height: calc(100vh - 56px);
+    overflow-y: auto;
+  }
+
+  .nav-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    padding: 4px 20px;
+    margin-top: 18px;
+  }
+  .nav-section-label:first-child { margin-top: 0; }
+
+  .nav-primary a {
+    display: block;
+    padding: 6px 20px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    border-left: 2px solid transparent;
+  }
+  .nav-primary a:hover { color: var(--text); background: rgba(108,182,255,0.06); }
+  .nav-primary a.active {
+    color: var(--hero-blue-700);
+    font-weight: 600;
+    border-left-color: var(--hero-blue-700);
+    background: rgba(108,182,255,0.08);
+  }
+  :root[data-theme="dark"] .nav-primary a.active,
+  @media (prefers-color-scheme: dark) {
+    .nav-primary a.active { color: var(--hero-blue-500); border-left-color: var(--hero-blue-500); }
+  }
+
+  /* ---------- Integrated TOC nav (release list — this page's contribution) ---------- */
+  .nav-releases {
+    margin-top: 2px;
+  }
+  .nav-releases .release-link {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 7px 20px 7px 32px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    font-size: 13.5px;
+    position: relative;
+  }
+  .nav-releases .release-link .v {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .nav-releases .release-link .d {
+    font-size: 11.5px;
+    color: var(--text-muted);
+  }
+  .nav-releases .release-link:hover { background: rgba(108,182,255,0.06); color: var(--text); }
+  .nav-releases .release-link.current {
+    color: var(--hero-blue-700);
+    border-left-color: var(--hero-blue-700);
+    background: rgba(108,182,255,0.09);
+  }
+  .nav-releases .release-link.current .v { color: var(--hero-blue-700); }
+
+  .nav-sub {
+    padding: 3px 20px 3px 44px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    text-decoration: none;
+    display: block;
+  }
+  .nav-sub:hover { color: var(--text-secondary); }
+  .nav-sub.current { color: var(--hero-blue-700); font-weight: 600; }
+
+  /* ---------- Main content ---------- */
+  main {
+    flex: 1;
+    min-width: 0;
+    padding: 40px 56px 96px;
+    max-width: 820px;
+  }
+
+  .page-eyebrow {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  .page-eyebrow a { color: var(--hero-blue-700); text-decoration: none; }
+  :root[data-theme="dark"] .page-eyebrow a { color: var(--hero-blue-500); }
+
+  h1.page-title {
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin: 0 0 8px;
+  }
+  .page-sub {
+    color: var(--text-secondary);
+    margin: 0 0 40px;
+    font-size: 15px;
+  }
+  .page-sub code {
+    background: var(--code-bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  .release {
+    scroll-margin-top: 76px;
+    padding-bottom: 40px;
+    margin-bottom: 40px;
+    border-bottom: 1px solid var(--border);
+  }
+  .release:last-child { border-bottom: none; }
+
+  .release h2 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .release h2 .headerlink {
+    opacity: 0;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 16px;
+    transition: opacity 0.1s ease;
+  }
+  .release h2:hover .headerlink { opacity: 1; }
+  .release h2 .headerlink:hover { color: var(--hero-blue-700); }
+
+  .release .meta {
+    color: var(--text-secondary);
+    font-size: 13.5px;
+    margin: 0 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+  }
+  .badge-latest { background: var(--success-bg); color: var(--success-fg); }
+
+  .release h3 {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin: 22px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .release h3 .headerlink { opacity: 0; color: var(--text-muted); text-decoration: none; font-size: 13px; }
+  .release h3:hover .headerlink { opacity: 1; }
+
+  .section-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .section-tag.features { color: var(--success-fg); }
+  .section-tag.fixes { color: var(--fix-fg); }
+  .section-tag.changes { color: var(--changes-fg); }
+
+  .release ul {
+    margin: 0 0 4px;
+    padding-left: 22px;
+  }
+  .release ul li {
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .release ul li code {
+    background: var(--code-bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--hero-blue-700);
+  }
+  :root[data-theme="dark"] .release ul li code { color: var(--hero-blue-500); }
+
+  .fallback-note {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    background: var(--changes-bg);
+    color: var(--changes-fg);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  .fallback-note svg { width: 15px; height: 15px; flex-shrink: 0; margin-top: 2px; }
+
+  /* ---------- Mobile ---------- */
+  .drawer-scrim {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 40;
+  }
+
+  @media (max-width: 960px) {
+    .md-header__button.nav-toggle { display: inline-flex; }
+
+    .nav-primary {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      width: 280px;
+      z-index: 60;
+      transform: translateX(-100%);
+      transition: transform 0.22s ease;
+      box-shadow: var(--shadow);
+      padding-top: 56px;
+    }
+    .nav-primary.open { transform: translateX(0); }
+
+    .drawer-scrim.open { display: block; }
+
+    main {
+      padding: 28px 20px 72px;
+      max-width: 100%;
+    }
+
+    .shell { display: block; }
+  }
+
+  @media (max-width: 600px) {
+    .md-logo .title { display: none; }
+    .md-header__title { display: none; }
+    h1.page-title { font-size: 24px; }
+  }
+
+  /* mock-only banner */
+  .mock-banner {
+    background: linear-gradient(90deg, var(--hero-blue-700), var(--hero-blue-500));
+    color: #fff;
+    text-align: center;
+    font-size: 12.5px;
+    padding: 6px 12px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="mock-banner">MOCKUP — docs.heroengine.ai/releases/ · mkdocs-material with navigation.integrate · resize window to preview mobile drawer</div>
+
+<header class="md-header">
+  <button class="md-header__button nav-toggle" onclick="toggleDrawer()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/></svg>
+  </button>
+  <a href="#" class="md-logo">
+    <svg viewBox="0 0 90 90" fill="var(--hero-blue-300)"><path d="M52 8 L22 46 L40 46 L34 82 L68 42 L50 42 Z"/></svg>
+    <span class="title">Hero</span>
+  </a>
+  <span class="md-header__title"><span class="sep">/</span> Releases</span>
+  <div class="md-header__spacer"></div>
+  <div class="md-search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
+    Search
+  </div>
+  <div class="md-header__icons">
+    <button class="icon-btn" onclick="toggleTheme()" aria-label="Toggle color scheme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke-linecap="round"/></svg>
+    </button>
+    <button class="icon-btn" aria-label="GitHub repository">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49 0-.24-.01-.87-.01-1.71-2.78.62-3.37-1.36-3.37-1.36-.45-1.19-1.11-1.5-1.11-1.5-.91-.64.07-.63.07-.63 1 .07 1.53 1.05 1.53 1.05.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.31.1-2.73 0 0 .84-.28 2.75 1.05a9.3 9.3 0 0 1 2.5-.35c.85 0 1.71.12 2.5.35 1.91-1.33 2.75-1.05 2.75-1.05.55 1.42.2 2.47.1 2.73.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.8-4.57 5.06.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.58 17.52 2 12 2z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="drawer-scrim" id="scrim" onclick="toggleDrawer()"></div>
+
+<div class="shell">
+  <nav class="nav-primary" id="navPrimary">
+    <div class="nav-section-label">Docs</div>
+    <a href="#">What Is Hero?</a>
+    <a href="#">Why Hero</a>
+
+    <div class="nav-section-label">Getting Started</div>
+    <a href="#">Installation</a>
+    <a href="#">Project Setup</a>
+    <a href="#">First Workflow</a>
+
+    <div class="nav-section-label">CLI Reference</div>
+    <a href="#">Overview</a>
+    <a href="#">Spec Management</a>
+
+    <div class="nav-section-label">Releases</div>
+    <a href="#top" class="active" onclick="return false;">Releases</a>
+
+    <!-- Integrated TOC: navigation.integrate renders this page's H2/H3 headings
+         directly under the active nav entry, as the left nav column. -->
+    <div class="nav-releases" id="navReleases">
+      <a href="#v0-24-1" class="release-link current" data-release="v0-24-1">
+        <span class="v">v0.24.1</span><span class="d">Jul 9, 2026</span>
+      </a>
+      <a href="#v0-24-1-major-features" class="nav-sub" data-release="v0-24-1">Major Features</a>
+      <a href="#v0-24-1-fixes" class="nav-sub" data-release="v0-24-1">Fixes</a>
+
+      <a href="#v0-24-0" class="release-link" data-release="v0-24-0">
+        <span class="v">v0.24.0</span><span class="d">Jul 2, 2026</span>
+      </a>
+      <a href="#v0-24-0-major-features" class="nav-sub" data-release="v0-24-0">Major Features</a>
+      <a href="#v0-24-0-fixes" class="nav-sub" data-release="v0-24-0">Fixes</a>
+
+      <a href="#v0-23-2" class="release-link" data-release="v0-23-2">
+        <span class="v">v0.23.2</span><span class="d">Jun 24, 2026</span>
+      </a>
+      <a href="#v0-23-2-fixes" class="nav-sub" data-release="v0-23-2">Fixes</a>
+
+      <a href="#v0-23-0" class="release-link" data-release="v0-23-0">
+        <span class="v">v0.23.0</span><span class="d">Jun 11, 2026</span>
+      </a>
+      <a href="#v0-23-0-major-features" class="nav-sub" data-release="v0-23-0">Major Features</a>
+      <a href="#v0-23-0-fixes" class="nav-sub" data-release="v0-23-0">Fixes</a>
+
+      <a href="#v0-22-0" class="release-link" data-release="v0-22-0">
+        <span class="v">v0.22.0</span><span class="d">May 28, 2026</span>
+      </a>
+      <a href="#v0-22-0-changes" class="nav-sub" data-release="v0-22-0">Changes</a>
+    </div>
+
+    <div class="nav-section-label">Configuration</div>
+    <a href="#">hero.json</a>
+    <a href="#">Tracker Setup</a>
+  </nav>
+
+  <main id="top">
+    <p class="page-eyebrow"><a href="#">Hero Docs</a> / Releases</p>
+    <h1 class="page-title">Releases</h1>
+    <p class="page-sub">
+      Every release published to <code>hero-engine/hero-releases</code>, generated
+      automatically at docs build time. Pick a version in the left nav to jump to
+      its notes.
+    </p>
+
+    <!-- v0.24.1 -->
+    <section class="release" id="v0-24-1">
+      <h2>v0.24.1 <a class="headerlink" href="#v0-24-1" title="Permanent link">¶</a></h2>
+      <p class="meta">Jul 9, 2026 <span class="badge badge-latest">Latest</span></p>
+
+      <h3 id="v0-24-1-major-features">
+        <span class="section-tag features">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l2.9 6.6L22 9.3l-5 4.9 1.2 7-6.2-3.6-6.2 3.6 1.2-7-5-4.9 7.1-.7z"/></svg>
+          Major Features
+        </span>
+        <a class="headerlink" href="#v0-24-1-major-features" title="Permanent link">¶</a>
+      </h3>
+      <ul>
+        <li>Add <code>hero next install-hooks</code> to auto-stage projected handoff files (<code>NEXT.md</code>, <code>.hero/next/*.md</code>) on every commit, closing the gap where handoff state silently drifted from committed history.</li>
+        <li>Introduce graph-backed <code>hero why</code> traversal — trace any spec, decision, or commit back through the chain of relations that produced it, multi-hop, from a single CLI call.</li>
+        <li>Ship the <code>hero peer</code> surface (<code>peer list</code>, <code>peer show</code>, <code>peer call</code>) for cross-repo advisory questions and spec-out delegation between sibling Hero workspaces.</li>
+        <li>Add the <code>hero_search</code> MCP tool's <code>compact</code> mode — single-line existence checks instead of full excerpt dumps, cutting agent context usage on routine lookups.</li>
+      </ul>
+
+      <h3 id="v0-24-1-fixes">
+        <span class="section-tag fixes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          Fixes
+        </span>
+        <a class="headerlink" href="#v0-24-1-fixes" title="Permanent link">¶</a>
+      </h3>
+      <ul>
+        <li>Make <code>NEXT.md</code> projection deterministic from committed graph state — repeated runs on a clean checkout no longer produce diffing output.</li>
+        <li>Give smoke test scripts the built binary and a populated graph fixture, fixing false-negative failures on fresh CI runners.</li>
+        <li>Fix <code>events.log</code> merge conflicts on concurrent branches by adding a <code>merge=union</code> git attribute driver.</li>
+      </ul>
+    </section>
+
+    <!-- v0.24.0 -->
+    <section class="release" id="v0-24-0">
+      <h2>v0.24.0 <a class="headerlink" href="#v0-24-0" title="Permanent link">¶</a></h2>
+      <p class="meta">Jul 2, 2026</p>
+
+      <h3 id="v0-24-0-major-features">
+        <span class="section-tag features">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l2.9 6.6L22 9.3l-5 4.9 1.2 7-6.2-3.6-6.2 3.6 1.2-7-5-4.9 7.1-.7z"/></svg>
+          Major Features
+        </span>
+        <a class="headerlink" href="#v0-24-0-major-features" title="Permanent link">¶</a>
+      </h3>
+      <ul>
+        <li>Launch Graph Memory — a unified substrate backing specs, knowledge, decisions, and events behind one queryable corpus, replacing the previous flat-file indexes.</li>
+        <li>Add <code>hero_context</code> and <code>hero_relevant</code> MCP tools so delivery agents can pull ranked, related prior work into a session automatically, without a manual search step.</li>
+        <li>Support configurable workspace location — <code>.hero/</code> no longer has to live at repo root; point it anywhere via <code>hero.json</code>.</li>
+      </ul>
+
+      <h3 id="v0-24-0-fixes">
+        <span class="section-tag fixes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          Fixes
+        </span>
+        <a class="headerlink" href="#v0-24-0-fixes" title="Permanent link">¶</a>
+      </h3>
+      <ul>
+        <li>Fix <code>hero drift</code> reporting stale conventions as current when a spec was archived out of <code>.hero/planning/</code> without updating its relation edges.</li>
+        <li>Harden CLI test isolation so a stray <code>.hero/</code> workspace on the host machine no longer leaks into sandboxed test runs.</li>
+      </ul>
+    </section>
+
+    <!-- v0.23.2 -->
+    <section class="release" id="v0-23-2">
+      <h2>v0.23.2 <a class="headerlink" href="#v0-23-2" title="Permanent link">¶</a></h2>
+      <p class="meta">Jun 24, 2026</p>
+
+      <h3 id="v0-23-2-fixes">
+        <span class="section-tag fixes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          Fixes
+        </span>
+        <a class="headerlink" href="#v0-23-2-fixes" title="Permanent link">¶</a>
+      </h3>
+      <ul>
+        <li>Fix <code>hero sync pull</code> throwing on Jira issues with an empty <code>priority</code> field instead of defaulting to <code>P3</code>.</li>
+        <li>Fix a race in <code>hero_kickoff</code> where two agents claiming the same spec within the same second could both succeed.</li>
+        <li>Correct <code>hero snapshot</code> risk counts double-counting specs that appear in both <code>blocked</code> and <code>at-risk</code> buckets.</li>
+      </ul>
+    </section>
+
+    <!-- v0.23.0 -->
+    <section class="release" id="v0-23-0">
+      <h2>v0.23.0 <a class="headerlink" href="#v0-23-0" title="Permanent link">¶</a></h2>
+      <p class="meta">Jun 11, 2026</p>
+
+      <h3 id="v0-23-0-major-features">
+        <span class="section-tag features">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l2.9 6.6L22 9.3l-5 4.9 1.2 7-6.2-3.6-6.2 3.6 1.2-7-5-4.9 7.1-.7z"/></svg>
+          Major Features
+        </span>
+        <a class="headerlink" href="#v0-23-0-major-features" title="Permanent link">¶</a>
+      </h3>
+      <ul>
+        <li>Add the Team Server — a shared job queue and approval-gate coordination layer so multiple engineers can drive the same initiative without stepping on each other's claims.</li>
+        <li>Add <code>hero handoff</code> and <code>hero handoff accept</code> for async cross-repo spec transfer between sibling Hero workspaces, with full audit trail.</li>
+        <li>Introduce Retrieval Contradiction Detection — <code>hero ask</code> now surfaces when a retrieved fact conflicts with a more recent commit or spec, instead of silently returning stale context.</li>
+      </ul>
+
+      <h3 id="v0-23-0-fixes">
+        <span class="section-tag fixes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          Fixes
+        </span>
+        <a class="headerlink" href="#v0-23-0-fixes" title="Permanent link">¶</a>
+      </h3>
+      <ul>
+        <li>Fix <code>hero_verify</code> MCP tool timing out on specs with more than 40 acceptance criteria instead of chunking the request.</li>
+        <li>Fix nav sidebar in the docs site failing to highlight the active section after a client-side route change under <code>navigation.instant</code>.</li>
+      </ul>
+    </section>
+
+    <!-- v0.22.0 — pre-grouping fallback shape -->
+    <section class="release" id="v0-22-0">
+      <h2>v0.22.0 <a class="headerlink" href="#v0-22-0" title="Permanent link">¶</a></h2>
+      <p class="meta">May 28, 2026</p>
+
+      <h3 id="v0-22-0-changes">
+        <span class="section-tag changes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4v16M4 4h12l4 4-4 4H4M4 12h10" stroke-linejoin="round"/></svg>
+          Changes
+        </span>
+        <a class="headerlink" href="#v0-22-0-changes" title="Permanent link">¶</a>
+      </h3>
+      <div class="fallback-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01" stroke-linecap="round"/></svg>
+        Published before grouped changelogs were enabled — rendered as a single fallback section per the spec's Boundaries.
+      </div>
+      <ul>
+        <li>Add <code>hero scan</code> deep-enrichment pass for auto-generated symbol descriptions across large codebases.</li>
+        <li>Fix <code>hero import</code> pagination cutting off after 100 tracker issues on GitHub-backed projects.</li>
+        <li>Add <code>hero.json</code> validation on <code>hero check</code> to catch malformed tracker config before a sync attempt fails mid-run.</li>
+        <li>Fix stale <code>hero_active</code> results after a spec's status changed via direct tracker sync rather than the CLI.</li>
+      </ul>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  function toggleDrawer() {
+    document.getElementById('navPrimary').classList.toggle('open');
+    document.getElementById('scrim').classList.toggle('open');
+  }
+
+  function toggleTheme() {
+    const root = document.documentElement;
+    const current = root.getAttribute('data-theme');
+    if (current === 'dark') {
+      root.setAttribute('data-theme', 'light');
+    } else {
+      root.setAttribute('data-theme', 'dark');
+    }
+  }
+
+  // Highlight current release in nav based on scroll position (simulates
+  // navigation.integrate's TOC-follow behavior).
+  const releaseLinks = Array.from(document.querySelectorAll('.nav-releases .release-link'));
+  const sections = Array.from(document.querySelectorAll('main .release'));
+
+  function updateActiveNav() {
+    let currentId = sections[0]?.id;
+    const scrollPos = window.scrollY + 90;
+    for (const sec of sections) {
+      if (sec.offsetTop <= scrollPos) currentId = sec.id;
+    }
+    releaseLinks.forEach(a => {
+      a.classList.toggle('current', a.dataset.release === currentId);
+    });
+  }
+
+  window.addEventListener('scroll', updateActiveNav, { passive: true });
+  updateActiveNav();
+
+  // Close mobile drawer after selecting a release link.
+  document.querySelectorAll('.nav-primary a').forEach(a => {
+    a.addEventListener('click', () => {
+      if (window.innerWidth <= 960) {
+        document.getElementById('navPrimary').classList.remove('open');
+        document.getElementById('scrim').classList.remove('open');
+      }
+    });
+  });
+</script>
+</body>
+</html>
