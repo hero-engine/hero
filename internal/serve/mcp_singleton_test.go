@@ -1,6 +1,7 @@
 package serve
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"sync/atomic"
@@ -8,12 +9,13 @@ import (
 	"time"
 )
 
-// TestMCPSingleton_SupersedesLiveIncumbent verifies the core dedup: when a
-// live daemon already holds the (workspace, client) pidfile, a second startup
-// signals it to exit and takes over the file, leaving exactly one owner. This
-// is the leak the orphan watchdog cannot reap — a still-connected duplicate
-// under a live parent.
-func TestMCPSingleton_SupersedesLiveIncumbent(t *testing.T) {
+// TestMCPSingleton_CoexistsWithLiveIncumbent is the primary-fix regression:
+// when a live daemon already holds the (workspace, client) pidfile, a second
+// startup must NOT signal it (killing a live, connected incumbent is the
+// reported Codex "transport closed" bug). Instead the newcomer coexists via a
+// per-pid pidfile, leaving the incumbent's record and process untouched. This
+// is the inverse of the reproduced failure, at the acquire seam.
+func TestMCPSingleton_CoexistsWithLiveIncumbent(t *testing.T) {
 	restore := stubSingletonSeams(t)
 	defer restore()
 
@@ -32,25 +34,40 @@ func TestMCPSingleton_SupersedesLiveIncumbent(t *testing.T) {
 
 	// Newcomer starts for the same client+workspace; incumbent is alive.
 	aliveSet[newcomer] = true
-	if _, err := acquireMCPSingleton(path, newcomer, ppid); err != nil {
+	relNewcomer, err := acquireMCPSingleton(path, newcomer, ppid)
+	if err != nil {
 		t.Fatalf("newcomer acquire: %v", err)
 	}
 
-	// The incumbent must have received the exit signal...
-	if !signaled[incumbent] {
-		t.Fatalf("incumbent (pid %d) was not signaled to exit", incumbent)
+	// The incumbent must NOT have been signaled — a live session is never
+	// torn down.
+	if signaled[incumbent] {
+		t.Fatalf("live incumbent (pid %d) was signaled — coexist policy violated", incumbent)
 	}
-	// ...and exactly one owner remains: the newcomer.
-	rec := readMCPPIDRecord(path)
-	if rec == nil || rec.PID != newcomer {
-		t.Fatalf("newcomer did not take over pidfile: %+v", rec)
+	// The incumbent's record is untouched: it still owns the primary pidfile.
+	if rec := readMCPPIDRecord(path); rec == nil || rec.PID != incumbent {
+		t.Fatalf("incumbent's pidfile was disturbed by coexisting newcomer: %+v", rec)
+	}
+	// The newcomer owns a distinct per-pid pidfile.
+	altPath := fmt.Sprintf("%s.%d", path, newcomer)
+	if rec := readMCPPIDRecord(altPath); rec == nil || rec.PID != newcomer {
+		t.Fatalf("newcomer did not claim its per-pid pidfile: %+v", rec)
 	}
 
-	// The superseded incumbent's release must NOT delete the successor's
-	// file — it no longer owns it.
+	// The newcomer's release removes only its own suffixed file, never the
+	// incumbent's.
+	relNewcomer()
+	if _, err := os.Stat(altPath); !os.IsNotExist(err) {
+		t.Fatalf("newcomer release did not remove its per-pid pidfile: err=%v", err)
+	}
+	if rec := readMCPPIDRecord(path); rec == nil || rec.PID != incumbent {
+		t.Fatalf("newcomer release clobbered incumbent's pidfile: %+v", rec)
+	}
+
+	// The incumbent's own release cleanly removes the primary pidfile.
 	relIncumbent()
-	if rec := readMCPPIDRecord(path); rec == nil || rec.PID != newcomer {
-		t.Fatalf("superseded incumbent release clobbered successor: %+v", rec)
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Fatalf("incumbent release did not remove primary pidfile: err=%v", err)
 	}
 }
 
@@ -84,10 +101,13 @@ func TestMCPSingleton_StalePidfileTreatedAsFree(t *testing.T) {
 	}
 }
 
-// TestMCPSingleton_ReconnectEndsWithNewServer models the reconnect the fix
-// must not break: the client drops the old connection and opens a new one.
-// The new daemon must end up owning the lock (serving), not refuse forever.
-func TestMCPSingleton_ReconnectEndsWithNewServer(t *testing.T) {
+// TestMCPSingleton_ReconnectLeavesNewServerServing models the reconnect the
+// fix must not break: the client drops the old connection and opens a new one
+// while the old daemon is still winding down. Under the coexist policy the new
+// daemon claims a per-pid pidfile and keeps serving (it never refuses); when
+// the old daemon exits it removes only the primary pidfile, never the new
+// server's file. Both release cleanly with no leak.
+func TestMCPSingleton_ReconnectLeavesNewServerServing(t *testing.T) {
 	restore := stubSingletonSeams(t)
 	defer restore()
 
@@ -101,26 +121,36 @@ func TestMCPSingleton_ReconnectEndsWithNewServer(t *testing.T) {
 	}
 
 	// Reconnect: client spawns a fresh daemon (same parent) while the old
-	// one is still winding down.
+	// one is still alive/winding down. It coexists rather than killing old.
 	aliveSet[newConn] = true
 	relNew, err := acquireMCPSingleton(path, newConn, ppid)
 	if err != nil {
 		t.Fatalf("new connection acquire: %v", err)
 	}
-
-	// The old daemon exits (its release runs). It must not remove the new
-	// owner's pidfile.
-	relOld()
-
-	rec := readMCPPIDRecord(path)
-	if rec == nil || rec.PID != newConn {
-		t.Fatalf("reconnect did not leave the new server owning the lock: %+v", rec)
+	if signaled[oldConn] {
+		t.Fatalf("old connection (pid %d) was signaled — coexist policy violated", oldConn)
 	}
 
-	// Clean shutdown of the surviving server releases the lock.
-	relNew()
+	// The new server is serving with its own per-pid pidfile.
+	altPath := fmt.Sprintf("%s.%d", path, newConn)
+	if rec := readMCPPIDRecord(altPath); rec == nil || rec.PID != newConn {
+		t.Fatalf("new server did not claim its per-pid pidfile: %+v", rec)
+	}
+
+	// The old daemon exits (its release runs). It removes only the primary
+	// pidfile and must not touch the new server's file.
+	relOld()
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
-		t.Fatalf("surviving server release did not remove pidfile: err=%v", err)
+		t.Fatalf("old server release did not remove primary pidfile: err=%v", err)
+	}
+	if rec := readMCPPIDRecord(altPath); rec == nil || rec.PID != newConn {
+		t.Fatalf("old server release clobbered the new server's pidfile: %+v", rec)
+	}
+
+	// Clean shutdown of the surviving server releases its own file.
+	relNew()
+	if _, err := os.Stat(altPath); !os.IsNotExist(err) {
+		t.Fatalf("surviving server release did not remove its pidfile: err=%v", err)
 	}
 }
 

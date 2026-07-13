@@ -1,6 +1,8 @@
 package index
 
 import (
+	"context"
+	"database/sql"
 	"os"
 	"path/filepath"
 	"testing"
@@ -1067,5 +1069,78 @@ func TestTripwireInBuildContext(t *testing.T) {
 
 	if len(ctx.Tripwires) != 1 {
 		t.Errorf("BuildContext Tripwires = %d, want 1", len(ctx.Tripwires))
+	}
+}
+
+// TestConcurrentWrite_WaitsForBusyTimeout is the Trigger-B1 regression: a
+// second connection holds the write lock, and a write on the primary index
+// must WAIT for the lock to release (via the busy-timeout) and then succeed —
+// not fail instantly with "database is locked". Before the busy_timeout + WAL
+// fix (Open opened SQLite with no connection params) this returned
+// SQLITE_BUSY immediately, which is the degraded tooling the second failing
+// session observed under concurrent `hero next` hook processes.
+func TestConcurrentWrite_WaitsForBusyTimeout(t *testing.T) {
+	idx, heroDir := setupTestDB(t)
+	dbPath := filepath.Join(heroDir, IndexFileName)
+
+	// A second connection grabs and holds the write lock, simulating a
+	// concurrent `hero next ingest`/`checkpoint` hook process or a second
+	// daemon mid-write.
+	locker, err := sql.Open("sqlite", dbPath+"?_pragma=busy_timeout(5000)")
+	if err != nil {
+		t.Fatalf("open locker connection: %v", err)
+	}
+	defer locker.Close()
+
+	ctx := context.Background()
+	conn, err := locker.Conn(ctx)
+	if err != nil {
+		t.Fatalf("pin locker connection: %v", err)
+	}
+	defer conn.Close()
+
+	if _, err := conn.ExecContext(ctx, "BEGIN IMMEDIATE"); err != nil {
+		t.Fatalf("locker acquire write lock: %v", err)
+	}
+
+	// Release the lock after a bounded hold. The primary write must block
+	// until then and succeed, proving the busy-timeout engaged.
+	const hold = 300 * time.Millisecond
+	go func() {
+		time.Sleep(hold)
+		_, _ = conn.ExecContext(ctx, "COMMIT")
+	}()
+
+	s := makeSpec("concurrency-probe", "Concurrency Probe", spec.TypeFeature, spec.StatusPlanning)
+	start := time.Now()
+	err = idx.IndexSpec(s, "body content for the concurrency probe")
+	elapsed := time.Since(start)
+
+	if err != nil {
+		t.Fatalf("IndexSpec under write contention failed — busy_timeout/WAL not applied: %v", err)
+	}
+	// It must have WAITED for the lock (proving contention was real and the
+	// timeout absorbed it), not returned instantly.
+	if elapsed < hold/2 {
+		t.Fatalf("write returned in %v — did not wait for the held lock; the busy-timeout was not exercised", elapsed)
+	}
+	// And it must have succeeded well within the 5s busy-timeout budget.
+	if elapsed > 5*time.Second {
+		t.Fatalf("write took %v — exceeded the busy-timeout window", elapsed)
+	}
+}
+
+// TestOpen_UsesWALJournalMode verifies the index opens in WAL mode (matching
+// the graph's concurrency posture), so readers proceed while a writer holds
+// the DB. This is the persistent half of the Trigger-B1 fix.
+func TestOpen_UsesWALJournalMode(t *testing.T) {
+	idx, _ := setupTestDB(t)
+
+	var mode string
+	if err := idx.RawDB().QueryRow("PRAGMA journal_mode").Scan(&mode); err != nil {
+		t.Fatalf("query journal_mode: %v", err)
+	}
+	if mode != "wal" {
+		t.Fatalf("journal_mode = %q, want \"wal\"", mode)
 	}
 }

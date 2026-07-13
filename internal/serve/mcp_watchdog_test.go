@@ -119,6 +119,105 @@ func TestParentWatchdog_ExitsOnPpidChange(t *testing.T) {
 	}
 }
 
+// TestParentWatchdog_IgnoresReparentWhileParentAlive exercises the
+// reparent-hardening: a bare ppid change to a non-init value while the
+// ORIGINAL parent is still alive is a false positive (an intermediate
+// wrapper exited, the session is still live) and must NOT trigger exit.
+// This is the secondary mid-session death vector the fix closes. It must
+// NOT run in parallel — it mutates package-level seam vars.
+func TestParentWatchdog_IgnoresReparentWhileParentAlive(t *testing.T) {
+	origExit := watchdogExit
+	origGetppid := watchdogGetppid
+	origAlive := singletonIsAlive
+	origInterval := parentWatchdogInterval
+	defer func() {
+		watchdogExit = origExit
+		watchdogGetppid = origGetppid
+		singletonIsAlive = origAlive
+		parentWatchdogInterval = origInterval
+	}()
+
+	const startPpid = 1000
+	const reparentedPpid = 999 // non-init: an intermediate wrapper exited
+	var calls int64
+	watchdogGetppid = func() int {
+		if atomic.AddInt64(&calls, 1) == 1 {
+			return startPpid
+		}
+		return reparentedPpid
+	}
+	// The original parent is still alive — the session is live.
+	singletonIsAlive = func(pid int) bool { return pid == startPpid }
+
+	exited := make(chan int, 1)
+	watchdogExit = func(code int) {
+		exited <- code
+		select {}
+	}
+	parentWatchdogInterval = time.Millisecond
+
+	done := make(chan struct{})
+	defer close(done)
+	startParentWatchdog(done)
+
+	// Give the poll many ticks; it must never fire while the parent lives.
+	select {
+	case code := <-exited:
+		t.Fatalf("watchdog exited (code %d) on a bare reparent while the original parent is alive — false positive", code)
+	case <-time.After(200 * time.Millisecond):
+		// Expected: no exit.
+	}
+}
+
+// TestParentWatchdog_ExitsWhenOriginalParentDead verifies the other half of
+// the hardened condition: a ppid change to a non-init value is a real orphan
+// when the ORIGINAL parent is confirmed dead, so the watchdog must exit. It
+// must NOT run in parallel — it mutates package-level seam vars.
+func TestParentWatchdog_ExitsWhenOriginalParentDead(t *testing.T) {
+	origExit := watchdogExit
+	origGetppid := watchdogGetppid
+	origAlive := singletonIsAlive
+	origInterval := parentWatchdogInterval
+	defer func() {
+		watchdogExit = origExit
+		watchdogGetppid = origGetppid
+		singletonIsAlive = origAlive
+		parentWatchdogInterval = origInterval
+	}()
+
+	const startPpid = 1000
+	const reparentedPpid = 999 // non-init, but original parent is gone
+	var calls int64
+	watchdogGetppid = func() int {
+		if atomic.AddInt64(&calls, 1) == 1 {
+			return startPpid
+		}
+		return reparentedPpid
+	}
+	// The original parent is dead → genuine orphan, must reap.
+	singletonIsAlive = func(pid int) bool { return false }
+
+	exited := make(chan int, 1)
+	watchdogExit = func(code int) {
+		exited <- code
+		select {}
+	}
+	parentWatchdogInterval = time.Millisecond
+
+	done := make(chan struct{})
+	defer close(done)
+	startParentWatchdog(done)
+
+	select {
+	case code := <-exited:
+		if code != 0 {
+			t.Fatalf("watchdog exited with code %d, want 0", code)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("watchdog did not exit when the original parent is confirmed dead")
+	}
+}
+
 // waitForGoroutinesAtMost polls runtime.NumGoroutine() until it is at most
 // target or the timeout elapses, returning the last observed count.
 func waitForGoroutinesAtMost(target int, timeout time.Duration) int {
