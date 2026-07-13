@@ -54,7 +54,7 @@ to its notes.
 - fdba2acc346eae9038bfcd3eeb861d3ba802210f fix(delivery): apply the ledger-citation and gate-bypass edits (delivery-gate-consistency)
 - db899c599ab40451fc37c09c3494c40699a413d2 fix(delivery): unify Completion Ledger contract, remove verify-bypasses (delivery-gate-consistency)
 - ce3e9131c711e4233496d63d1211140f605609a6 fix(harness): scope Claude-only assumptions, fix parity table + dogfood leakage (harness-agnosticism-sweep)
-- f1b5388a804e9f27b102a30b63431b7cf602af86 fix(init): ignore machine-local .hero artifacts in managed .gitignore
+- f1b5388a804e9f27b102a30b63431b7cf602af86 fix(init): ignore machine-local .hero artifacts in managed .gitignore <!-- drift-test:ignore -->
 - 4b2ac5823336e6b01a281e7b4f8e49e4d1bbbf0b fix(install): cursor skills flattening, README exclusion, --json exit-code/repair/migrate parity
 - e00ae038f3f73daf606a3074701c6d931283935d fix(install): honor --json contract in --repair and --migrate short-circuits
 - 03dfef9bb7914786ecf5a7c178a643cd76baed7f fix(opsrunner): kill data race — per-Runner clock instead of mutable globals
@@ -67,7 +67,7 @@ to its notes.
 - c79d47165dcfe063df77f780c5be278c466cd3f2 fix(spec): discover flat-named specs so verify resolves initiative children
 - e7ecb907c5c3ab83aa47c657d913f5a18ae8e011 fix(token-efficiency): cut named audit verbosity, single-owner content homes (token-efficiency-pass)
 - 9a51152f178773273fc32e3f4362b66f779d297c fix(verify): complete initiatives from already-archived children via reconcile
-- 0349bba95223ff329ff98a841c8bd79c90c7a853 hero stuff
+- 0349bba95223ff329ff98a841c8bd79c90c7a853 hero stuff <!-- drift-test:ignore -->
 - 40a3b856759a8618315a033806293d90aba5dd41 plan(content-remediation): archive content audit, record multi-domain decision, compose remediation initiative
 - bc86ad9ae02b4e33155e4b244ccb31a5691abbaf plan(team-oauth): complete + close hero-cloud peer loop
 
@@ -125,12 +125,12 @@ to its notes.
 - cdcde69e98a303f288c0b1ffe8acf2a7c5bf00e9 docs(planning): capture team-mode cloud coordination feature
 - 32ccaa3622c875eec7aea96e3f1e419e9bacae48 feat(knowledge): add the explainer knowledge type
 - c46b7e9e7a8b985eb5d049b8218e92505291d812 feat(planning): scope feature-knowledge-synthesis initiative
-- 1fde4fab3e5b06d4a532ace02bef197875483593 feat(synthesize): add hero synthesize and the hero_synthesize MCP tool
-- 9570310c144741ed22b8b20e86548e5398630d73 feat(synthesize): deliver cluster detection (hero synthesize --detect)
+- 1fde4fab3e5b06d4a532ace02bef197875483593 feat(synthesize): add hero synthesize and the hero_synthesize MCP tool <!-- drift-test:ignore -->
+- 9570310c144741ed22b8b20e86548e5398630d73 feat(synthesize): deliver cluster detection (hero synthesize --detect) <!-- drift-test:ignore -->
 - 75dd0cc2ef78cf337c51a326a72105d79d6aaa69 feat(synthesize): deliver living-doc amendment; complete the initiative
 - 7eb151ca86bd8ea0207f430604bd82fbdda25e0e feat(synthesize): deliver the trust handshake (auto/review/off)
 - 7c34dc7cf06670d113b4901fb58c656e1613fe2d fix(now): stop "you"/"me" claim sentinels colliding with real identities
-- 72121934fa2498a703e6b785bd26b967389c7463 fix(queue): exclude knowledge specs from hero queue output
+- 72121934fa2498a703e6b785bd26b967389c7463 fix(queue): exclude knowledge specs from hero queue output <!-- drift-test:ignore -->
 - 1d88b0a5731d311205d12b7188b342684e30abf1 fix(spectypes): skip spec-types.json export when only timestamp changed
 
 ## v0.20.0 — 2026-06-24
@@ -160,7 +160,7 @@ to its notes.
 
 - 86ede335a799c9a91cf8f4de83cd07b705bfa58b docs(web): landing + docs content refresh — peering, semantic search, verify gate
 - 7374ea40fefe6521cb8e604455681b836012f40a feat(verify): close spec completion loop — ledger→graph writeback, initiative auto-complete, exercise demotion
-- db611bbee4d1080e93664c3001ee5cc9104ff8db fix(docs): correct hero verify → hero spec verify in web docs
+- db611bbee4d1080e93664c3001ee5cc9104ff8db fix(docs): correct hero verify → hero spec verify in web docs <!-- drift-test:ignore -->
 
 ## v0.17.1 — 2026-06-10
 
@@ -186,7 +186,7 @@ to its notes.
 - 3e792fbaf2ee2ff5c79793259c6c1e0ba3099053 feat(sales): hero-sales domain pack — MEDDPICC qualification, deal strategy, forecast, pipeline (markdown-first)
 - c8ac9750393917657f61a70bd9e3c2a41b6ffcdc feat(search): unified-search — repo label for cross-repo results [unified-search]
 - cd3a3f7e4e517ef6a6399f080a9c7a8e8a77a2b2 feat(smoke): per-feature smoke coverage — continuous real-world verification [per-feature-smoke-coverage]
-- 326da19b338196685a0814376f69978c3c732268 feat(traversal): traversal queries — hero why and hero blocked [traversal-queries]
+- 326da19b338196685a0814376f69978c3c732268 feat(traversal): traversal queries — hero why and hero blocked [traversal-queries] <!-- drift-test:ignore -->
 - afe95534b942811b739459100a91afbedb7a95c8 fix(codex): commands as skills + target-aware AGENTS.md bridge Codex workflow execution gap
 - 48052ccdba6518b6c3a83c496eeaa079ec1da39f fix: fold methodology-derived step into vocabulary.Resolve (vocabulary-resolve-misses-methodology-derivation)
 - 94caba04f72a5ad9ea3ebc431d6f4965aa00c80d fix: forward dialect fields in MergeLocal (hero-local-merge-missing-dialect-fields)
@@ -210,13 +210,13 @@ to its notes.
 
 ### Changes
 
-- 71e4b1b8fed422d1a139a5689f9e686fb3894a4b feat(verify): delivery gate enforcement — hero verify becomes the load-bearing checkpoint
+- 71e4b1b8fed422d1a139a5689f9e686fb3894a4b feat(verify): delivery gate enforcement — hero verify becomes the load-bearing checkpoint <!-- drift-test:ignore -->
 
 ## v0.16.2 — 2026-06-05
 
 ### Changes
 
-- 15e6104285659343dfdde232426c905052f4d94d fix(cli): wire top-level `hero connect` alias for `hero sync connect`
+- 15e6104285659343dfdde232426c905052f4d94d fix(cli): wire top-level `hero connect` alias for `hero sync connect` <!-- drift-test:ignore -->
 - 9537eb1aa2b92ebfdc716e4f4887a0e423f19bf2 fix(scan): detect .gsp, compound asset-pipeline extensions, raise walk cap
 
 ## v0.16.1 — 2026-06-04
@@ -285,7 +285,7 @@ to its notes.
 
 ### Changes
 
-- bcb9424813c7778ef9510c51fa49a20b73e4e121 fix(serve): reap orphaned hero mcp processes with a parent-liveness watchdog
+- bcb9424813c7778ef9510c51fa49a20b73e4e121 fix(serve): reap orphaned hero mcp processes with a parent-liveness watchdog <!-- drift-test:ignore -->
 
 ## v0.15.1 — 2026-06-02
 
@@ -323,7 +323,7 @@ to its notes.
 
 ### Changes
 
-- 6468ec8bc33f0fd7d9e60289f0e33f92f8e01d74 fix(install): detect strand drift in PersistentPreRun + hero check
+- 6468ec8bc33f0fd7d9e60289f0e33f92f8e01d74 fix(install): detect strand drift in PersistentPreRun + hero check <!-- drift-test:ignore -->
 
 ## v0.14.2 — 2026-05-31
 
@@ -347,7 +347,7 @@ to its notes.
 - 33d3adbf6a508592c3d22afc8fd613fd6e5fae30 feat(rules): add honesty/pushback rules to agent instructions
 - d7fd9e9152a582240d0fda93c99d26f2f4bd44d6 feat(superseded-specs-soft-archive): frontmatter-driven supersede genealogy
 - 90b85787f6cbdaaaeb812627f51899394fe0ad98 fix(deliver): keep the file-inventory receipt on every delivery, not just noteworthy
-- d843d036aa02fec721315033eb532cbee6ffdd8e fix(docs): swiftui-mockup-renderer references hero spec mock, not hero mock
+- d843d036aa02fec721315033eb532cbee6ffdd8e fix(docs): swiftui-mockup-renderer references hero spec mock, not hero mock <!-- drift-test:ignore -->
 - 1859b99a84b1f28b9d2fc2678af688c74461be31 fix(snapshot): resolve path-format parent references to slugs
 - 0e0196597181e3803649bd97d9319d353366c40e fix(workflows): make mockup links reach the user and stop accepting PARTIAL as done
 
@@ -364,9 +364,9 @@ to its notes.
 
 - 344b81aa2307ac78d0a6e65aba5165b03848e78e docs(agents): add internal-lookup tool routing guidance
 - 18c6d39fd20ea48424f3b483ed3297cb1e6097b2 docs(agents): sync Go fallback with AGENTS.md tool routing addition
-- f2da497adb10c654bf90f9cee329653337d088ed feat(graph): add hero graph edge add write CLI [pm-ui-brand-button-prereq]
-- b0d39d5b5d7470458501269913ccd88cc2dd326e feat(graph): add hero graph node add write CLI [pm-ui-brand-button-prereq-2]
-- 7a60709736d431cf2ddf9dd5a869085a21775fd8 fix(cli): hero search --json honored on all paths
+- f2da497adb10c654bf90f9cee329653337d088ed feat(graph): add hero graph edge add write CLI [pm-ui-brand-button-prereq] <!-- drift-test:ignore -->
+- b0d39d5b5d7470458501269913ccd88cc2dd326e feat(graph): add hero graph node add write CLI [pm-ui-brand-button-prereq-2] <!-- drift-test:ignore -->
+- 7a60709736d431cf2ddf9dd5a869085a21775fd8 fix(cli): hero search --json honored on all paths <!-- drift-test:ignore -->
 - 09636c7df40eb6c2c37ca874868642ed10b471c8 spec(search): tiered response with max_results + pagination
 
 ## v0.12.1 — 2026-05-22
@@ -386,7 +386,7 @@ to its notes.
 - b24151b0551fb4aaf6f991a16bcca0ec5c16644f feat(next): compact handoff — session-scoped resume envelope at compaction time
 - 956f8c248cf3e20c5a7b49bda7d987702db08f60 feat(next): wire Codex SessionStart{compact} installer — spec complete
 - 145710722196f68eb72d5533e9c8807aa76e4c8b feat(skills): read-don't-guess — replace passive assumption rule with procedural grounding check
-- 8a9dd105af06e83e490a455abec05b88e1197d7f fix(next): transcript-fallback kickoff + uninstall reaches all hero git hooks
+- 8a9dd105af06e83e490a455abec05b88e1197d7f fix(next): transcript-fallback kickoff + uninstall reaches all hero git hooks <!-- drift-test:ignore -->
 - a5621a44be46b91eb02fffb26aa22f656e258641 test(next): close compact handoff coverage gaps
 
 ## v0.11.0 — 2026-05-20
@@ -457,8 +457,8 @@ to its notes.
 
 - 79d361f625bbd7b10a27f0fa922a3fada8510669 chore(spec): archive accepted decision specs → .hero/specs/decisions/
 - 8f2e393fdf272ebd077573d9f4db9db47160cb58 docs(drift): fix 15 real CLI-invocation drift hits surfaced by new test
-- 2cc138aa3984609606c3419cd5ab41ed2effd89c docs(import): add CLI reference page for hero import
-- 9901b4bbad5c8e0a8b857e557e2f21b4c67716e5 docs(import): add hero import CLI reference page content
+- 2cc138aa3984609606c3419cd5ab41ed2effd89c docs(import): add CLI reference page for hero import <!-- drift-test:ignore -->
+- 9901b4bbad5c8e0a8b857e557e2f21b4c67716e5 docs(import): add hero import CLI reference page content <!-- drift-test:ignore -->
 - e53d8b37a948c14665aab9d4cffd76f890174930 docs(serve): add minimal route inventory for web UI homes
 - 8528c2e73624edac797e9c395a7dc3eb3592129b feat(docs-check): markdown CLI-invocation drift detector
 - c5d4505dcd8bce7a966a7fd28f1a960b590f99c0 feat(lifecycle): enforce spec contracts at transition sites
@@ -470,7 +470,7 @@ to its notes.
 ### Changes
 
 - 4ea18c4bc64fd1ed458f6068b519d14d3c262535 Merge B3: internal/methodology/ Go package
-- a935782ae83a36a42d3fc968db24eeeb66aab48e Merge B4: internal/tasks/ + hero task CLI
+- a935782ae83a36a42d3fc968db24eeeb66aab48e Merge B4: internal/tasks/ + hero task CLI <!-- drift-test:ignore -->
 - bf655985eb80834bcde97068cf0a95bd3e806d8d Merge B5: inline-propose Go side
 - 091ffca0bc11c037dcfccebff6e3dd28c82432d5 Merge C1: inline-propose v1 test fixtures
 - 94911df2918427459bf89ae5cc2e0cdfe152c9d5 Merge C2: docs/contracts/README.md discovery index
@@ -488,7 +488,7 @@ to its notes.
 - 812320500a5fd48d53a6dd062f2fb08322793469 chore(peering): register hero-code + hero-cloud as peers; fix doc drift
 - 317673667333263552109b1bdb60648cf7b5f62c chore(spec): archive hero-trust-global-scope to specs/
 - cdbdc6ebaa75e38fe325811731ab5c3885f45f4f chore(spec): archive next-checkpoint-cross-repo-pollution → specs/
-- ae6da6fbe8757ded8028727e8bd97cd79721740a chore(spec): move next-as-projection to .hero/specs/ via hero spec complete
+- ae6da6fbe8757ded8028727e8bd97cd79721740a chore(spec): move next-as-projection to .hero/specs/ via hero spec complete <!-- drift-test:ignore -->
 - e7d95949a7bb49cb5d095ed224f4ceb3991c5315 ci: NEXT.md projection drift gate (AC-12)
 - 292ba85a968ab309c4d3191c1b1e87074c8688e3 docs(contracts): active-dialect read contract for consumers
 - 7c661bae8e6f0ab4e4b37770cee1cd2b13520ed2 docs(contracts): discovery index for the four cross-language contracts
@@ -500,8 +500,8 @@ to its notes.
 - 71bc34351424bc4690a4fbc3cf53e98215aa08eb docs(peering): cross-repo peering setup guide + README integration
 - c9571adcd8e69d8b96403ebd6b448f5eb7046565 docs(spec): hero-cloud-split phase 1 landed; phase 2 next
 - 3f95efd6636ce919e14704979a2bf4aeda666d56 docs(spec): hero-cloud-split — workspace init landed in hero-cloud
-- aaa3ae2c1c63e3bd83452272f8beb16e43d0292d docs(v0.10): refresh for snapshot, peering, NEXT projection + fix stale hero pull
-- 07a0403712e001f56b3fef8b078c38ecd18d4ba2 feat(cli): pre-flight migration gate for hero next checkpoint (AC-14)
+- aaa3ae2c1c63e3bd83452272f8beb16e43d0292d docs(v0.10): refresh for snapshot, peering, NEXT projection + fix stale hero pull <!-- drift-test:ignore -->
+- 07a0403712e001f56b3fef8b078c38ecd18d4ba2 feat(cli): pre-flight migration gate for hero next checkpoint (AC-14) <!-- drift-test:ignore -->
 - c269b604035aba3a906b92b2bbf9462d7f23c8dd feat(cli): wire spec-types.json cache export into PersistentPreRun
 - 4427cec5960fd8f5ff1f89baefcf7e4e4f70d6d0 feat(contracts): add contracts package skeleton + import discipline (hero-cloud-split phase 0)
 - 1763417f3c0314c6a10174125f6bfaa27f4580e7 feat(contracts): enforce cloud→contracts boundary + migrate cloud imports (hero-cloud-split phase 0)
@@ -509,14 +509,14 @@ to its notes.
 - e81a7ad025ff1af18addadf17f49f64b03062694 feat(domains): chat — content bundle for hero-chat Sprint 4
 - fbcbe7739bebe2e64fa8b939a915918fd2aebdbe feat(domains): finish B1 cutover — verify PM pack + lock ContentFS decision
 - 04f8af2fa159f1cc2b5a4b10ad156fd8040768eb feat(examples): scrum-workspace sample for hero-code consumers (C5)
-- 522e4a9502452509b20547b89495829945601f3c feat(install): SessionStart hook fires hero next ingest for cross-machine continuity
+- 522e4a9502452509b20547b89495829945601f3c feat(install): SessionStart hook fires hero next ingest for cross-machine continuity <!-- drift-test:ignore -->
 - 8e07c9a3b697222b4f7cf0539bdb679129cbbdf8 feat(install): route cross-repo peering intents from natural language
 - 61a80f2feb12a31249bf64d3b31e2d80c0c9b65b feat(landing): add heroengine.ai landing page under web/landing/
 - b565efe1c238e62499566902a27942db43e7f37c feat(methodology): internal/methodology Go package (B3)
 - 19b691833c278183e8bc46b9bc4701b37993d8ed feat(peering): /peer slash command + cross-repo-peering skill
 - 4fa06a72b3b4a7e46bc857180d710b8124fec655 feat(peering): contract-import passive surfacing (cross-repo-peering phase 3)
 - a62461abc9e930c5ba1d4d1290e5348ae601f991 feat(peering): handoff lifecycle + trail + async drop (cross-repo-peering phase 1)
-- b3aa7763a4da8fd30210b779a1e310ea1bdc3293 feat(peering): hero peer CLI tree + relevant --peer fallback (cross-repo-peering phase 2)
+- b3aa7763a4da8fd30210b779a1e310ea1bdc3293 feat(peering): hero peer CLI tree + relevant --peer fallback (cross-repo-peering phase 2) <!-- drift-test:ignore -->
 - e0ce3c071b687b927ab5e67bd224680df70ee7df feat(peering): mint peer UUIDs + contracts/peering/ + dual-key resolver (cross-repo-peering phase 0)
 - 2b53b26d61b51ff6a9ce22a520f27d6e1639238b feat(peering): pilot harness + peering-protocol doc (cross-repo-peering phase 3)
 - fbadf805fef1452182adbf40644fe10406090f02 feat(peering): sync peer call dispatcher + auto-fire reconciler (cross-repo-peering phase 2)
@@ -537,8 +537,8 @@ to its notes.
 - 5110b1adec3c53ad3271df6b8a0155c60cead6ba feat(snapshot): land project-snapshot — projector, CLI, MCP, /project home, archive containment
 - 1936d0cb513556538f60efbdb44b45ad9f44f213 feat(spectypes): registry loader, schema 1.1 export, lint parity (B2)
 - 17f79c6ff2a4e4c074a474cc88456d98a7699ec3 feat(split): hero-cloud-split phase 3 — remove cloud trees from hero
-- 52c7f99d9630034fe623fd91f5ceac53dd95ddc2 feat(tasks): additive internal/tasks/ package + hero task CLI (B4)
-- 9ee9b5271872828563258bd1aeb196a664a0fe7a feat(trust): add optional <project|global> scope to `hero trust claude`
+- 52c7f99d9630034fe623fd91f5ceac53dd95ddc2 feat(tasks): additive internal/tasks/ package + hero task CLI (B4) <!-- drift-test:ignore -->
+- 9ee9b5271872828563258bd1aeb196a664a0fe7a feat(trust): add optional <project|global> scope to `hero trust claude` <!-- drift-test:ignore -->
 - 48ceaa3fc1021027608d7807d8253f5b9b0032c1 fix(config): forward vocabulary + methodology fields through MergeLocal
 - 0b973b2e403e0b79fe38561e28878e1464b5fbd7 fix(docs): contrast on active sidebar nav links
 - 0cfe4038228dfa604c32805804d052db9efd51a4 fix(next): stop .local.md narrative accumulation + repo-scope handoff reads
@@ -550,7 +550,7 @@ to its notes.
 - 8933fb9624f9861c8b86629bbc279d23aeb00054 fix: correct .envrc gitignore pattern (trailing comment broke matching)
 - 69e926e0c54103136a4745642867d03bf68bff9f refactor(web): make docs and landing peer surfaces under web/
 - 97c85bdb4216d9c510d725257ea3f320ca514791 skills(next-merge-recovery): self-heal protocol for projected NEXT files (AC-16)
-- 5f8331ea49818b818b88c76ad7a3da0b1afb13b9 spec(bug): hero install --target claude emits both CLAUDE.md and AGENTS.md
+- 5f8331ea49818b818b88c76ad7a3da0b1afb13b9 spec(bug): hero install --target claude emits both CLAUDE.md and AGENTS.md <!-- drift-test:ignore -->
 - 545cef8c7263b2d5d2820c9ff78034e1aa392834 spec(contract-gaps): file 5 follow-up specs from hero-code-handover-pack
 - 2289d890c8d8f94241f05ce6c90b374707d4acd9 spec(hero-code-handover-pack): sprint manifest + completion checklist
 - 31609b10b275e6be51b53a6f70e445a974a2965e spec(inline-propose-v1.1): file gated post-hero-code anchor.value spec
