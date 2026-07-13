@@ -3,7 +3,6 @@ package install
 import (
 	"bufio"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,42 +29,24 @@ func installFlat(opts Options, result *Result, kind, destDir string) error {
 		return fmt.Errorf("no content source available")
 	}
 
-	entries, err := fs.ReadDir(srcFS, kind)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
-	}
-
 	activeDomain := opts.Domain
 	if activeDomain == "" {
 		activeDomain = "engineering"
 	}
 
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") || isContentReadme(entry.Name()) {
-			continue
-		}
-		srcPath := kind + "/" + entry.Name()
+	// selectFlatContent (manifest.go) applies the skip rules — dirs,
+	// non-.md, directory READMEs, and the agent `domains:` frontmatter
+	// filter. Routing install through the same selector the docs-checker
+	// counts keeps "what install copies" and "what the checker reports"
+	// identical by construction.
+	names, err := selectFlatContent(srcFS, kind, activeDomain)
+	if err != nil {
+		return err
+	}
 
-		// Agents may declare a `domains:` frontmatter field that
-		// restricts which active-domain workspaces they're materialized
-		// into. Absent field means "all domains" (today's default). The
-		// universal core + pack overlay merges happen at the FS level
-		// upstream of this loop (OverlayFS in internal/cli/install.go),
-		// so the filter is applied uniformly to whatever the merged FS
-		// surfaces — pack files shadowing core files inherit the pack's
-		// frontmatter, not the core file's.
-		if kind == "agents" {
-			data, readErr := fs.ReadFile(srcFS, srcPath)
-			if readErr == nil && !agentMatchesActiveDomain(data, activeDomain) {
-				continue
-			}
-		}
-
-		dst := filepath.Join(destDir, entry.Name())
-
+	for _, name := range names {
+		srcPath := kind + "/" + name
+		dst := filepath.Join(destDir, name)
 		if err := copyFileFromFS(opts, result, srcFS, srcPath, dst); err != nil {
 			return err
 		}
@@ -158,11 +139,8 @@ func installSkillsNested(opts Options, result *Result, destDir string) error {
 		return fmt.Errorf("no content source available")
 	}
 
-	entries, err := fs.ReadDir(srcFS, "skills")
+	skills, err := selectSkillContent(srcFS)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
 		return err
 	}
 
@@ -174,32 +152,13 @@ func installSkillsNested(opts Options, result *Result, destDir string) error {
 		return fmt.Errorf("cleaning legacy flat skills: %w", err)
 	}
 
-	for _, entry := range entries {
-		name := entry.Name()
-
-		// Canonical source layout: `skills/<name>/SKILL.md`. Read directly
-		// from there, write to `<destDir>/<name>/SKILL.md`.
-		if entry.IsDir() {
-			srcSkill := "skills/" + name + "/SKILL.md"
-			if _, err := fs.Stat(srcFS, srcSkill); err != nil {
-				continue // directory without SKILL.md — not a skill
-			}
-			dst := filepath.Join(destDir, name, "SKILL.md")
-			if err := copyFileFromFS(opts, result, srcFS, srcSkill, dst); err != nil {
-				return err
-			}
-			continue
-		}
-
-		// Legacy flat layout: `skills/<name>.md`. Still supported for
-		// backward compat; rendered into the nested layout at dest.
-		if !strings.HasSuffix(name, ".md") || isContentReadme(name) {
-			continue
-		}
-		base := strings.TrimSuffix(name, ".md")
-		srcPath := "skills/" + name
-		dst := filepath.Join(destDir, base, "SKILL.md")
-		if err := copyFileFromFS(opts, result, srcFS, srcPath, dst); err != nil {
+	// selectSkillContent (manifest.go) recognizes both the canonical
+	// `skills/<name>/SKILL.md` layout and the legacy flat `skills/<name>.md`
+	// file, resolving each to the SKILL.md content path. Every skill lands
+	// in the nested `<destDir>/<name>/SKILL.md` layout the loader requires.
+	for _, s := range skills {
+		dst := filepath.Join(destDir, s.Name, "SKILL.md")
+		if err := copyFileFromFS(opts, result, srcFS, s.SourcePath, dst); err != nil {
 			return err
 		}
 	}
@@ -216,34 +175,17 @@ func installSkillsFlat(opts Options, result *Result, destDir string) error {
 		return fmt.Errorf("no content source available")
 	}
 
-	entries, err := fs.ReadDir(srcFS, "skills")
+	skills, err := selectSkillContent(srcFS)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
 		return err
 	}
 
-	for _, entry := range entries {
-		name := entry.Name()
-
-		if entry.IsDir() {
-			srcSkill := "skills/" + name + "/SKILL.md"
-			if _, err := fs.Stat(srcFS, srcSkill); err != nil {
-				continue // directory without SKILL.md — not a skill
-			}
-			dst := filepath.Join(destDir, name+".md")
-			if err := copyFileFromFS(opts, result, srcFS, srcSkill, dst); err != nil {
-				return err
-			}
-			continue
-		}
-
-		if !strings.HasSuffix(name, ".md") || isContentReadme(name) {
-			continue
-		}
-		dst := filepath.Join(destDir, name)
-		if err := copyFileFromFS(opts, result, srcFS, "skills/"+name, dst); err != nil {
+	// Same selector as installSkillsNested, but flattened: each skill's
+	// SKILL.md content is written to a single `<destDir>/<name>.md` file
+	// for harnesses that only read flat instruction files.
+	for _, s := range skills {
+		dst := filepath.Join(destDir, s.Name+".md")
+		if err := copyFileFromFS(opts, result, srcFS, s.SourcePath, dst); err != nil {
 			return err
 		}
 	}
