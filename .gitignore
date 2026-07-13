@@ -19,6 +19,10 @@ index.db
 # from core/spec-types/ + domains/<active>/spec-types/)
 .hero/cache/
 
+# MCP daemon runtime state (per-process singleton pidfile + debug log) — ephemeral
+.hero/mcp-*.pid
+.hero/mcp-debug.log
+
 # Per-machine NEXT state — auto-rewritten every Stop hook + agent scratch.
 # Tracked NEXT.md and .hero/next/<user>.md are project/user-durable;
 # anything ending in .local.md is genuinely local and never tracked.
