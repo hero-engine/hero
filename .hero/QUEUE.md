@@ -6,7 +6,21 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-13T18:55:31Z · 76 ready specs_
+_Generated: 2026-07-13T19:08:57Z · 77 ready specs_
+
+## hero-docs-check-engine-repo-misfire — "hero docs check reports actual:0 in the engine repo, and GETTING-STARTED.md counts are stale"
+_bug · delivering · horizon: now_
+
+`hero docs check` reports `actual: 0` agents/skills in the engine repo (it assumes an installed harness layout; sources here live under `core/` + `domains/*`), and GETTING-STARTED.md counts drifted (claims 34 agents/27 commands/45 skills; actual ≈ 35/29/55).
+
+**Status:** planning — diagnosed during v0.25.0 release pre-flight; did not block that release.
+
+**Pick up at:** find the `hero docs check` implementation (grep "Documentation freshness check" in `internal/`) and the install-manifest enumeration (`internal/install/`, `internal/cli/install.go`). Add an engine-repo/source-layout counting mode that counts the canonical deduped install set (reuse the manifest logic so checker and install can't diverge), then refresh GETTING-STARTED.md + README.md counts from the fixed checker's output. Add a test for the engine-repo counting path.
+
+**Files:** `internal/install/`, `internal/cli/install.go`, `GETTING-STARTED.md`, `README.md`, wherever `docs check` is registered.
+**Skip:** raw recursive `find` counts (89/83/213 — inflated by `.claude`/`.codex`/`web/docs/site` mirrors); the canonical number is the deduped install manifest.
+
+---
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -43,17 +57,47 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## hero-docs-check-engine-repo-misfire — "hero docs check reports actual:0 in the engine repo, and GETTING-STARTED.md counts are stale"
+## mcp-transport-closes-midsession-supersede — "Hero MCP transport closes mid-session in Codex — singleton supersede / process-lifecycle guards kill the live daemon"
 _bug · planning · horizon: now_
 
-`hero docs check` reports `actual: 0` agents/skills in the engine repo (it assumes an installed harness layout; sources here live under `core/` + `domains/*`), and GETTING-STARTED.md counts drifted (claims 34 agents/27 commands/45 skills; actual ≈ 35/29/55).
+Paste-ready cold-start prompt for the fix session:
 
-**Status:** planning — diagnosed during v0.25.0 release pre-flight; did not block that release.
-
-**Pick up at:** find the `hero docs check` implementation (grep "Documentation freshness check" in `internal/`) and the install-manifest enumeration (`internal/install/`, `internal/cli/install.go`). Add an engine-repo/source-layout counting mode that counts the canonical deduped install set (reuse the manifest logic so checker and install can't diverge), then refresh GETTING-STARTED.md + README.md counts from the fixed checker's output. Add a test for the engine-repo counting path.
-
-**Files:** `internal/install/`, `internal/cli/install.go`, `GETTING-STARTED.md`, `README.md`, wherever `docs check` is registered.
-**Skip:** raw recursive `find` counts (89/83/213 — inflated by `.claude`/`.codex`/`web/docs/site` mirrors); the canonical number is the deduped install manifest.
+> Fix the Hero MCP server dying mid-session in Codex (spec:
+> `.hero/planning/bugs/mcp-transport-closes-midsession-supersede/spec.md`).
+>
+> **Root cause (proven):** the singleton guard in `internal/serve/mcp_singleton.go`
+> (`acquireMCPSingleton`, from commit `bcb9424`) SIGTERMs a live, serving `hero mcp` daemon
+> the instant a second daemon starts for the same `(workspace, parent-pid)`. Reproduced: the
+> incumbent dies within 1s. Codex sees this as "in-process search transport closed" and falls
+> back to the CLI. The search path itself is clean (a 7-call `hero_search` batch responds and
+> exits 0). This is a **design** flaw: the guard assumes "same-parent second spawn ==
+> reconnect" without verifying the incumbent's connection is dead.
+>
+> **Do NOT revert `bcb9424`** — its orphan/duplicate-daemon reaping is real. Keep reaping
+> genuinely-dead daemons; never kill a live, connected one.
+>
+> **Implement the four changes in `## Suggested Fix Approach`:**
+> 1. `internal/serve/mcp_lifecycle.go` `Run()` — graceful SIGTERM handler that runs the
+>    pidfile `release()` before exiting (stops leaked `.hero/mcp-<ppid>.pid`).
+> 2. `internal/serve/mcp_singleton.go` — **coexist instead of supersede** when the incumbent
+>    is genuinely alive (per-pid pidfile via a `coexistRelease` helper); this is the
+>    load-bearing fix.
+> 3. `internal/serve/mcp_watchdog.go` — only `os.Exit(0)` when reparented to init (ppid==1)
+>    or the original parent is confirmed dead, not on any ppid change.
+> 4. `internal/serve/mcp_lifecycle.go` `handleRequest` — wrap dispatch in `recover()` so one
+>    tool panic can't crash the whole server.
+>
+> **Then follow `## Test Plan`** — especially the inverse-repro regression: two live daemons
+> sharing a parent + workspace must now **coexist** (incumbent stays alive after the second
+> starts). Reproduce manually with two `hero mcp` procs whose stdin is held open.
+>
+> **Still open (capture, don't block the fix):** the exact Codex-host event that spawns the
+> second daemon during comparison queries is not yet observed. Set `HERO_MCP_DEBUG=1` and
+> reproduce in Codex to capture `.hero/mcp-debug.log` and confirm the trigger. The coexist
+> fix is correct regardless of which event spawns the second daemon.
+>
+> Build target: `go build ./cmd/hero` (the CLI); the installed `~/go/bin/hero` that Codex
+> runs must be rebuilt/reinstalled to pick up the fix.
 
 ---
 

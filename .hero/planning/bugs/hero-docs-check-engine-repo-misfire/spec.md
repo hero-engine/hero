@@ -2,7 +2,7 @@
 title: "hero docs check reports actual:0 in the engine repo, and GETTING-STARTED.md counts are stale"
 slug: hero-docs-check-engine-repo-misfire
 type: bug
-status: planning
+status: delivering
 priority: medium
 severity: low
 domain: engineering
@@ -55,6 +55,26 @@ Discovered during the v0.25.0 release readiness pre-flight (the release skill ru
 ## Notes
 - Keep this scoped to counting + doc refresh. Do NOT fold in unrelated docs rewrites.
 - Cross-check with the release pre-flight in the `release` skill, which is the caller that surfaced this.
+
+## Completion Ledger
+
+Delivered on branch `fix/agent-hero-version-schema-confusion`. `go build ./cmd/hero/` OK; `go test ./internal/cli/... ./internal/install/...` green; `go vet` clean. Canonical counts **derived** (not hardcoded) from the fixed enumeration: **35 agents / 29 commands / 55 skills** (engineering domain).
+
+| Acceptance criterion | Status | Evidence |
+|---|---|---|
+| `hero docs check` in engine repo reports non-zero canonical counts (== install manifest), passes when docs accurate | DONE | Live run: engine-repo mode detected, 35/29/55, exit 0, "No issues found." Match-to-install proven by `TestEnumerateContent_MatchesInstalledFiles`. |
+| GETTING-STARTED.md + README.md counts match canonical (checker-derived, not estimate) | DONE | `GETTING-STARTED.md:74` (34/27/45→35/29/55); `README.md:127-129` table (34/45→35/55, 28→29 cmds); verified by `TestDocCountsMatchManifest`. |
+| Test covers engine-repo counting path (can't regress to actual:0) | DONE | `TestCanonicalCountsNonZero`, `TestIsEngineSourceRepo` (`internal/cli/docs_check_test.go`); `TestEnumerateContent_MatchesInstalledFiles` (`internal/install`). |
+| Release pre-flight `hero docs check` green in engine repo | DONE | Exits 0 (was exit 1). |
+
+**Root-of-fix:** extracted install's content selection into shared `selectFlatContent`/`selectSkillContent` (`internal/install/manifest.go`) consumed by BOTH `installFlat`/`installSkills*` AND a new `EnumerateContent` — checker and install cannot diverge by construction. Engine-repo signal: `core/` + `domains/` + `.goreleaser.yaml` at root.
+
+**Changes:** new `internal/install/manifest.go` (+ `_test.go`); `internal/install/content.go` (install fns consume shared selectors, net line reduction, no behavior change); `internal/cli/docs_check.go` (engine-repo counting mode; installed-workspace path unchanged); new `internal/cli/docs_check_test.go`; `GETTING-STARTED.md`, `README.md` counts refreshed.
+
+**Deliberate scope decisions (disclosed):**
+- *Stretch (generated counts):* evaluated, deferred — the spec marked it optional; `TestDocCountsMatchManifest` provides the anti-drift guard without a codegen step.
+- *MCP-tool counts* (GETTING-STARTED "41", README "42") left alone — out of this spec's agents/commands/skills scope; a real but separate inconsistency worth a follow-up.
+- *README table* enforced by the Go test rather than the runtime claim-regex (regex doesn't match the table format); regex extension is a reasonable follow-up.
 
 ## Kickoff
 

@@ -10,6 +10,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	hero "github.com/hero-engine/hero"
+	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/install"
 )
 
@@ -44,15 +46,37 @@ func init() {
 func runDocsCheck(cmd *cobra.Command, args []string) error {
 	projectRoot := findProjectRoot()
 
-	// Count actual .md files in each directory.
-	agentCount := countMDFiles(filepath.Join(projectRoot, "agents"))
-	commandCount := countMDFiles(filepath.Join(projectRoot, "commands"))
-	// Skills are directories containing SKILL.md, not flat .md files.
-	skillCount := countSkillDirs(filepath.Join(projectRoot, "skills"))
+	var agentCount, commandCount, skillCount int
+	var err error
+	if isEngineSourceRepo(projectRoot) {
+		// Engine source repo: agents/commands/skills live as authored
+		// source under core/ + domains/<domain>/ (and are mirrored into
+		// .claude/, .codex/, web/docs/site/), not as an installed harness
+		// tree. Count the canonical deduped install set for the active
+		// domain via the same enumeration `hero install` uses, so the
+		// checker's numbers can never diverge from what install copies.
+		domain := activeDomainForRoot(projectRoot)
+		agentCount, commandCount, skillCount, err = canonicalInstallCounts(domain)
+		if err != nil {
+			return err
+		}
+		fmt.Println("Documentation freshness check")
+		fmt.Println("=============================")
+		fmt.Println()
+		fmt.Printf("Engine source repo detected — counting canonical install set for domain %q (core + domain, deduped).\n", domain)
+		fmt.Println()
+	} else {
+		// Installed workspace: count the harness tree hero install wrote.
+		agentCount = countMDFiles(filepath.Join(projectRoot, "agents"))
+		commandCount = countMDFiles(filepath.Join(projectRoot, "commands"))
+		// Skills are directories containing SKILL.md, not flat .md files.
+		skillCount = countSkillDirs(filepath.Join(projectRoot, "skills"))
 
-	fmt.Println("Documentation freshness check")
-	fmt.Println("=============================")
-	fmt.Println()
+		fmt.Println("Documentation freshness check")
+		fmt.Println("=============================")
+		fmt.Println()
+	}
+
 	fmt.Printf("Actual counts:\n")
 	fmt.Printf("  agents:   %d\n", agentCount)
 	fmt.Printf("  commands: %d\n", commandCount)
@@ -230,6 +254,46 @@ func walkMarkdownDirForInvocations(projectRoot, dir string) []Invocation {
 		return nil
 	})
 	return out
+}
+
+// isEngineSourceRepo reports whether root is the hero engine's own source
+// tree, where agents/commands/skills live as authored source under core/
+// and domains/<domain>/ rather than as an installed harness. The signature
+// — core/, domains/, and .goreleaser.yaml all present at root — is unique
+// to this repo; an installed workspace has none of these three.
+func isEngineSourceRepo(root string) bool {
+	for _, marker := range []string{"core", "domains", ".goreleaser.yaml"} {
+		if _, err := os.Stat(filepath.Join(root, marker)); err != nil {
+			return false
+		}
+	}
+	return true
+}
+
+// activeDomainForRoot resolves the active domain pack for the repo at root:
+// hero.json's domain if set, else the "engineering" default.
+func activeDomainForRoot(root string) string {
+	if cfg, err := config.Load(root); err == nil && cfg.Domain != "" {
+		return cfg.Domain
+	}
+	return "engineering"
+}
+
+// canonicalInstallCounts returns the deduped agent/command/skill counts the
+// install pipeline would materialize for domain, built from the same
+// embedded content FS `hero install` reads (core overlaid by the active
+// domain). Reusing install.EnumerateContent guarantees the checker's counts
+// equal what install copies.
+func canonicalInstallCounts(domain string) (agents, commands, skills int, err error) {
+	domainFS, derr := hero.DomainFS(domain)
+	if derr != nil {
+		return 0, 0, 0, fmt.Errorf("resolving domain %q content: %w", domain, derr)
+	}
+	manifest, merr := install.EnumerateContent(hero.OverlayFS(domainFS, hero.CoreFS()), domain)
+	if merr != nil {
+		return 0, 0, 0, fmt.Errorf("enumerating canonical install set: %w", merr)
+	}
+	return len(manifest.Agents), len(manifest.Commands), len(manifest.Skills), nil
 }
 
 // countMDFiles returns the number of .md files in a directory (non-recursive).
