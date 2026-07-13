@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/serve/chat"
 )
 
@@ -37,7 +38,21 @@ func (s *MCPServer) Run() error {
 	// notices the reparent and exits. Gated to real stdio mode so tests
 	// that drive Run() with a bytes.Buffer never start it. Stopped when
 	// Run() returns via the done channel.
+	//
+	// The singleton lock is an additional, orthogonal guard: it reaps a
+	// redundant, still-connected daemon left behind when a live client
+	// reconnects — the live-duplicate case the orphan watchdog cannot
+	// cover. Same real-stdio gate so unit tests never touch the pidfile.
 	if s.input == os.Stdin {
+		ppid := os.Getppid()
+		if release, err := acquireMCPSingleton(mcpPIDFilePath(s.heroDir, ppid), os.Getpid(), ppid); err != nil {
+			// Non-fatal: a pidfile problem must never stop us serving.
+			// Degrade to the pre-fix behavior (no dedup) rather than refuse.
+			fmt.Fprintf(os.Stderr, "hero mcp: singleton lock: %v\n", err)
+		} else {
+			defer release()
+		}
+
 		done := make(chan struct{})
 		defer close(done)
 		startParentWatchdog(done)
@@ -128,8 +143,10 @@ func (s *MCPServer) handleInitialize(req *JSONRPCRequest) {
 			Tools: &MCPToolsCapability{},
 		},
 		ServerInfo: MCPServerInfo{
-			Name:    "hero",
-			Version: s.version,
+			Name:        "hero",
+			Version:     s.version,
+			Schema:      graph.CompiledSchemaVersion(),
+			GraphSchema: s.graphSchema,
 		},
 		Instructions: instructions,
 	}
@@ -242,10 +259,10 @@ type mcpClientAdapter struct {
 	kinds   []chat.Kind
 }
 
-func (a *mcpClientAdapter) Name() string      { return a.name }
-func (a *mcpClientAdapter) Version() string   { return a.version }
+func (a *mcpClientAdapter) Name() string       { return a.name }
+func (a *mcpClientAdapter) Version() string    { return a.version }
 func (a *mcpClientAdapter) Kinds() []chat.Kind { return a.kinds }
-func (a *mcpClientAdapter) Close() error      { return nil }
+func (a *mcpClientAdapter) Close() error       { return nil }
 func (a *mcpClientAdapter) Stream(ctx context.Context, req chat.DispatchRequest) (<-chan chat.Event, error) {
 	out := make(chan chat.Event, 2)
 	go func() {

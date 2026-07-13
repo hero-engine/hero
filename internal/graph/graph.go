@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -34,8 +35,8 @@ const FileName = "graph.db"
 //   - local:  per-developer, never leaves the machine.
 //   - team:   per-repo team graph; default for ingested data.
 //   - unit:   business-unit / product-line join graph spanning a
-//             handful of related repos. Cross-repo entities and edges
-//             are promoted here.
+//     handful of related repos. Cross-repo entities and edges
+//     are promoted here.
 //   - public: cross-org / open-source patterns and shared learnings.
 //
 // Org-wide scope was considered and rejected: at 1000+ repos with
@@ -86,6 +87,34 @@ func Open(heroDir string) (*Store, error) {
 	return s, nil
 }
 
+// CompiledSchemaVersion returns the schema version this binary was
+// compiled against. Diagnostics (hero doctor, the MCP initialize stamp)
+// use it to report which schema the running binary understands.
+func CompiledSchemaVersion() string { return schemaVersion }
+
+// ReadSchemaVersion returns the schema_version recorded in the graph at
+// heroDir WITHOUT running migrations. Diagnostics need the graph's
+// schema even when this binary is too old to migrate it (running Open
+// would fail in that case). Returns "" with a nil error when no graph
+// database exists yet.
+func ReadSchemaVersion(heroDir string) (string, error) {
+	dbPath := filepath.Join(heroDir, FileName)
+	if _, err := os.Stat(dbPath); err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
+		return "", err
+	}
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		return "", err
+	}
+	defer db.Close()
+	var v string
+	_ = db.QueryRow(`SELECT value FROM meta WHERE key = 'schema_version'`).Scan(&v)
+	return v, nil
+}
+
 // Close closes the underlying database handle.
 func (s *Store) Close() error { return s.db.Close() }
 
@@ -100,19 +129,24 @@ func (s *Store) DB() *sql.DB { return s.db }
 //
 // v1: initial schema (nodes, edges, sync_state, meta).
 // v2: federation contracts — adds `repo` and `unit` partition columns
-//     to nodes and edges so per-repo / per-unit sync filtering is
-//     possible without scanning the props blob.
+//
+//	to nodes and edges so per-repo / per-unit sync filtering is
+//	possible without scanning the props blob.
+//
 // v3: domain-scoped knowledge graph — adds the `domain` namespace
-//     column on nodes and edges so PM / engineering / future packs
-//     can coexist without silently mixing in shared queries. The
-//     DEFAULT 'engineering' clause backfills every existing row in
-//     place at ALTER time (SQLite renders the literal default at
-//     read time), so the migration is invisible to engineering-only
-//     workspaces.
+//
+//	column on nodes and edges so PM / engineering / future packs
+//	can coexist without silently mixing in shared queries. The
+//	DEFAULT 'engineering' clause backfills every existing row in
+//	place at ALTER time (SQLite renders the literal default at
+//	read time), so the migration is invisible to engineering-only
+//	workspaces.
+//
 // v4: graph conflict detection — adds `client_id` to nodes so
-//     concurrent pushes from different install IDs can be detected
-//     via FindGraphConflicts. DEFAULT '' is safe for existing rows
-//     (they pre-date federation push and have no client provenance).
+//
+//	concurrent pushes from different install IDs can be detected
+//	via FindGraphConflicts. DEFAULT '' is safe for existing rows
+//	(they pre-date federation push and have no client provenance).
 const schemaVersion = "4"
 
 // migration is one ordered, idempotent step in the schema timeline.
@@ -266,23 +300,68 @@ func (s *Store) migrate() error {
 		return fmt.Errorf("seeding install_id: %w", err)
 	}
 
-	if currentVersion != schemaVersion {
-		if currentVersion > schemaVersion {
-			// The db was migrated by a newer binary. Our migrations are
-			// additive (ALTER TABLE ADD COLUMN), so the extra columns are
-			// harmless — SQLite ignores columns the query doesn't reference.
-			// Warn instead of failing so older binaries can still read the
-			// workspace. The user can update their binary to silence this.
-			fmt.Fprintf(os.Stderr,
-				"Warning: graph schema is newer than this binary (db=%s, binary=%s). "+
-					"Update your hero binary to silence this warning.\n",
-				currentVersion, schemaVersion)
-			return nil
-		}
-		return fmt.Errorf("graph schema version mismatch: db=%s binary=%s — "+
-			"run `hero upgrade` or rebuild the binary", currentVersion, schemaVersion)
+	warning, err := checkSchemaMismatch(schemaVersion, currentVersion)
+	if err != nil {
+		return err
+	}
+	if warning != "" {
+		fmt.Fprint(os.Stderr, warning)
 	}
 	return nil
+}
+
+// schemaLess reports whether schema version a is older than b. Schema
+// versions are numeric strings ("2".."4"..); a lexical compare inverts
+// once the schema reaches double digits ("10" < "9" lexically), so parse
+// to ints. A schema that doesn't parse falls back to a lexical compare —
+// a safe last resort, since unknown values are rare and never expected in
+// a Hero-managed graph.
+func schemaLess(a, b string) bool {
+	ai, aerr := strconv.Atoi(a)
+	bi, berr := strconv.Atoi(b)
+	if aerr != nil || berr != nil {
+		return a < b
+	}
+	return ai < bi
+}
+
+// checkSchemaMismatch reconciles the graph's stored schema (graphSchema)
+// with this binary's compiled schema (binarySchema). It returns a
+// warning to print when the graph is NEWER than the binary (tolerated —
+// migrations are additive, so an older binary can still read the extra
+// columns) and an error when the binary is NEWER than the graph.
+//
+// Both messages name the running binary via os.Executable() so the
+// caller can see WHICH hero is complaining, and point at `hero doctor`
+// rather than the misleading `hero upgrade` — the reported bug is a
+// stray binary on PATH reading a current graph, which `hero upgrade`
+// (a workspace-file operation) cannot fix.
+func checkSchemaMismatch(binarySchema, graphSchema string) (warning string, err error) {
+	if graphSchema == binarySchema {
+		return "", nil
+	}
+	exe, _ := os.Executable()
+	if exe == "" {
+		exe = "unknown"
+	}
+	if schemaLess(binarySchema, graphSchema) {
+		return fmt.Sprintf(
+			"Warning: graph schema is newer than this hero binary.\n"+
+				"  running binary: %s (schema %s)\n"+
+				"  graph schema:   %s\n"+
+				"This is almost always the WRONG hero binary on PATH, not a workspace problem.\n"+
+				"Run `hero doctor` to see which binary your shell/harness resolves and how to fix it.\n"+
+				"(`hero upgrade` will NOT help — it updates workspace files, not this binary.)\n",
+			exe, binarySchema, graphSchema), nil
+	}
+	return "", fmt.Errorf(
+		"graph schema version mismatch — this hero binary is newer than the workspace graph.\n"+
+			"  running binary: %s (schema %s)\n"+
+			"  graph schema:   %s\n"+
+			"This is almost always the WRONG hero binary on PATH, not a workspace problem.\n"+
+			"Run `hero doctor` to see which binary your shell/harness resolves and how to fix it.\n"+
+			"(`hero upgrade` will NOT help — it updates workspace files, not this binary.)",
+		exe, binarySchema, graphSchema)
 }
 
 // isColumnAlreadyExists returns true if err is SQLite's "duplicate

@@ -64,6 +64,41 @@ func TestHarnessNative_PerTargetFileSet(t *testing.T) {
 	}
 }
 
+// TestHarnessNative_DoctorRoutingGuidanceAllTargets asserts that the
+// version/schema routing guidance (prefer the MCP surface; on a schema/
+// version mismatch run `hero doctor`, not `hero upgrade`; don't confabulate
+// a migration story) lands in every one of the six targets' native root
+// instruction file. This is the enforcement for tripwire
+// `harness-changes-cover-all-targets`: any target missing the guidance
+// fails the test naming that target. Authored once in
+// generateEngineeringAgentsMdBody (mirrored to domains/engineering/AGENTS.md),
+// so a single edit must reach claude→CLAUDE.md and every other target→
+// AGENTS.md.
+func TestHarnessNative_DoctorRoutingGuidanceAllTargets(t *testing.T) {
+	// Substrings encoding the two required behaviors: prefer MCP over a bare
+	// shelled-out `hero`, and route schema/version confusion to `hero doctor`
+	// (explicitly NOT `hero upgrade`).
+	guidance := []string{
+		"Prefer Hero's MCP tools over shelling out to a bare `hero`",
+		"run `hero doctor`",
+		"do NOT run `hero upgrade`",
+	}
+	for _, target := range []Target{
+		TargetClaude, TargetCodex, TargetOpenCode,
+		TargetCursor, TargetCopilot, TargetGeneric,
+	} {
+		t.Run(string(target), func(t *testing.T) {
+			h := newInstallHarness(t)
+			mkHeroDir(t, h.TargetDir)
+			h.Run(target, nil)
+			file := nativeInstructionFile(target)
+			for _, want := range guidance {
+				h.mustContain(file, want)
+			}
+		})
+	}
+}
+
 // TestHarnessNative_MultiTargetIncludingClaude asserts that a multi-target
 // install including claude produces BOTH files, each with a Hero-managed
 // region.

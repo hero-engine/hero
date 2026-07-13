@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/refs"
 	"github.com/hero-engine/hero/internal/serve/chat"
 )
@@ -30,6 +31,7 @@ type MCPServer struct {
 	heroDir     string
 	projectRoot string
 	version     string
+	graphSchema string // workspace graph schema, read at construction; "" when no graph
 	input       io.Reader
 	output      io.Writer
 	filter      *ToolFilter // optional tool filter; nil = allow all
@@ -52,10 +54,15 @@ type MCPServer struct {
 
 // NewMCPServer creates an MCP server for the given hero workspace.
 func NewMCPServer(heroDir, projectRoot, version string) *MCPServer {
+	// Read the graph schema without migrating so a stale binary can still
+	// report the graph's schema on initialize. Best-effort: leaving it
+	// "" (no graph, or unreadable) simply omits the field.
+	graphSchema, _ := graph.ReadSchemaVersion(heroDir)
 	s := &MCPServer{
 		heroDir:      heroDir,
 		projectRoot:  projectRoot,
 		version:      version,
+		graphSchema:  graphSchema,
 		input:        os.Stdin,
 		output:       os.Stdout,
 		refsRegistry: refs.NewRegistry(),

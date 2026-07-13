@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/index"
 	"github.com/hero-engine/hero/internal/spec"
 )
@@ -230,6 +231,50 @@ func TestMCP_Initialize(t *testing.T) {
 	}
 }
 
+// TestMCP_Initialize_StampsSchema asserts the initialize result carries
+// the compiled binary schema and, when a workspace graph exists, its
+// schema — so a harness can SEE version/schema skew instead of inventing
+// a migration narrative.
+func TestMCP_Initialize_StampsSchema(t *testing.T) {
+	tmpDir := t.TempDir()
+	heroDir := filepath.Join(tmpDir, ".hero")
+	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// Create a real graph so the server reads a concrete graph schema.
+	store, err := graph.Open(heroDir)
+	if err != nil {
+		t.Fatalf("graph.Open: %v", err)
+	}
+	store.Close()
+
+	srv := NewMCPServer(heroDir, tmpDir, "1.0.0-test")
+	resp := sendRecv(t, srv, JSONRPCRequest{
+		JSONRPC: "2.0",
+		ID:      rawID(1),
+		Method:  "initialize",
+	})
+	if resp.Error != nil {
+		t.Fatalf("expected no error, got: %s", resp.Error.Message)
+	}
+
+	resultBytes, _ := json.Marshal(resp.Result)
+	var result InitializeResult
+	if err := json.Unmarshal(resultBytes, &result); err != nil {
+		t.Fatalf("decode result: %v", err)
+	}
+
+	if result.ServerInfo.Version != "1.0.0-test" {
+		t.Errorf("server version = %q, want 1.0.0-test", result.ServerInfo.Version)
+	}
+	if result.ServerInfo.Schema != graph.CompiledSchemaVersion() {
+		t.Errorf("binary schema = %q, want %q", result.ServerInfo.Schema, graph.CompiledSchemaVersion())
+	}
+	if result.ServerInfo.GraphSchema != graph.CompiledSchemaVersion() {
+		t.Errorf("graph schema = %q, want %q", result.ServerInfo.GraphSchema, graph.CompiledSchemaVersion())
+	}
+}
+
 func TestMCP_ToolsList(t *testing.T) {
 	heroDir, _ := setupTestWorkspace(t)
 	srv := NewMCPServer(heroDir, filepath.Dir(heroDir), "1.0.0")
@@ -258,37 +303,37 @@ func TestMCP_ToolsList(t *testing.T) {
 		"hero_context": true, "hero_search": true, "hero_status": true,
 		"hero_check": true, "hero_nudge": true, "hero_list": true,
 		"hero_queue": true, "hero_kickoff": true,
-		"hero_goal": true,
+		"hero_goal":      true,
 		"hero_knowledge": true, "hero_read_spec": true,
 		"hero_ask": true, "hero_anchor": true,
 		"hero_pulse": true, "hero_skill_run": true,
 		"hero_claim": true, "hero_velocity": true,
 		"hero_test_generate": true, "hero_demo_record": true,
-		"hero_code": true,
+		"hero_code":          true,
 		"hero_error_pattern": true,
-		"hero_enrich": true,
-		"hero_synthesize": true,
-		"hero_diagnose": true,
-		"hero_score": true,
-		"hero_verify": true,
-		"hero_conflicts": true,
-		"hero_sequence": true,
-		"hero_warnings": true,
-		"hero_insights": true,
-		"hero_drift": true,
-		"hero_plan": true,
-		"hero_contract": true,
-		"hero_impact": true,
-		"hero_recap": true,
-		"hero_active": true,
-		"hero_coverage": true,
-		"hero_ci": true,
-		"hero_feed": true,
-		"hero_event": true,
-		"hero_why": true,
-		"hero_blocked": true,
-		"hero_expand": true,
-		"hero_snapshot": true,
+		"hero_enrich":        true,
+		"hero_synthesize":    true,
+		"hero_diagnose":      true,
+		"hero_score":         true,
+		"hero_verify":        true,
+		"hero_conflicts":     true,
+		"hero_sequence":      true,
+		"hero_warnings":      true,
+		"hero_insights":      true,
+		"hero_drift":         true,
+		"hero_plan":          true,
+		"hero_contract":      true,
+		"hero_impact":        true,
+		"hero_recap":         true,
+		"hero_active":        true,
+		"hero_coverage":      true,
+		"hero_ci":            true,
+		"hero_feed":          true,
+		"hero_event":         true,
+		"hero_why":           true,
+		"hero_blocked":       true,
+		"hero_expand":        true,
+		"hero_snapshot":      true,
 	}
 	for _, tool := range result.Tools {
 		if !expectedNames[tool.Name] {
