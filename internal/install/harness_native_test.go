@@ -3,8 +3,10 @@ package install
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
+	hero "github.com/hero-engine/hero"
 	"github.com/hero-engine/hero/internal/managed"
 )
 
@@ -67,13 +69,17 @@ func TestHarnessNative_PerTargetFileSet(t *testing.T) {
 // TestHarnessNative_DoctorRoutingGuidanceAllTargets asserts that the
 // version/schema routing guidance (prefer the MCP surface; on a schema/
 // version mismatch run `hero doctor`, not `hero upgrade`; don't confabulate
-// a migration story) lands in every one of the six targets' native root
-// instruction file. This is the enforcement for tripwire
-// `harness-changes-cover-all-targets`: any target missing the guidance
-// fails the test naming that target. Authored once in
-// generateEngineeringAgentsMdBody (mirrored to domains/engineering/AGENTS.md),
-// so a single edit must reach claude→CLAUDE.md and every other target→
-// AGENTS.md.
+// a migration story) lands in every domain × every one of the six targets'
+// native root instruction file. The guidance is authored once as the shared
+// domain-agnostic operationalGuidanceSection wired into defaultSections, so
+// it must reach every pack (engineering, pm, sales, chat) and every target
+// (claude→CLAUDE.md, all others→AGENTS.md). This is the enforcement for
+// tripwire `harness-changes-cover-all-targets`: dropping the shared section
+// fails the test naming the domain/target that lost the guidance.
+//
+// It also proves the guidance is sourced from the shared section, not any
+// pack body: pm/sales/chat bodies never carried it, and the engineering
+// body no longer does (see TestEngineeringBodyOmitsOperationalGuidance).
 func TestHarnessNative_DoctorRoutingGuidanceAllTargets(t *testing.T) {
 	// Substrings encoding the two required behaviors: prefer MCP over a bare
 	// shelled-out `hero`, and route schema/version confusion to `hero doctor`
@@ -82,21 +88,104 @@ func TestHarnessNative_DoctorRoutingGuidanceAllTargets(t *testing.T) {
 		"Prefer Hero's MCP tools over shelling out to a bare `hero`",
 		"run `hero doctor`",
 		"do NOT run `hero upgrade`",
+		// The shared section's own H2 heading — proves the source is the
+		// section contributor, not a paragraph buried in a pack body.
+		"## Hero Binary & MCP Surface",
 	}
-	for _, target := range []Target{
+	targets := []Target{
 		TargetClaude, TargetCodex, TargetOpenCode,
 		TargetCursor, TargetCopilot, TargetGeneric,
-	} {
-		t.Run(string(target), func(t *testing.T) {
-			h := newInstallHarness(t)
-			mkHeroDir(t, h.TargetDir)
-			h.Run(target, nil)
-			file := nativeInstructionFile(target)
-			for _, want := range guidance {
-				h.mustContain(file, want)
-			}
-		})
 	}
+	// Per-domain Options mutator supplying that domain's real pack body.
+	// engineering/pm/sales are installable, so they go through the real
+	// embedded DomainFS pipeline. chat is a client-embedded, non-installable
+	// pack (no DomainFS case — see content.go), so its real on-disk body is
+	// fed through the AgentsMdBodyOverride seam. Both paths prove the shared
+	// section renders on top of a pack body that never carried the guidance.
+	repoRoot, err := repoRootFromHere()
+	if err != nil {
+		t.Fatalf("locate repo root: %v", err)
+	}
+	domainOpts := func(t *testing.T, domain string) func(*Options) {
+		if domain == "chat" {
+			body, err := os.ReadFile(filepath.Join(repoRoot, "domains", "chat", "AGENTS.md"))
+			if err != nil {
+				t.Fatalf("read chat pack AGENTS.md: %v", err)
+			}
+			return func(o *Options) {
+				o.Domain = domain
+				o.AgentsMdBodyOverride = body
+			}
+		}
+		domainFS, err := hero.DomainFS(domain)
+		if err != nil {
+			t.Fatalf("DomainFS(%s): %v", domain, err)
+		}
+		contentFS := hero.OverlayFS(domainFS, hero.CoreFS())
+		return func(o *Options) {
+			o.Domain = domain
+			o.ContentFS = contentFS
+		}
+	}
+	for _, domain := range []string{"engineering", "pm", "sales", "chat"} {
+		mutate := domainOpts(t, domain)
+		for _, target := range targets {
+			t.Run(domain+"/"+string(target), func(t *testing.T) {
+				h := newInstallHarness(t)
+				mkHeroDir(t, h.TargetDir)
+				h.Run(target, mutate)
+				file := nativeInstructionFile(target)
+				for _, want := range guidance {
+					h.mustContain(file, want)
+				}
+			})
+		}
+	}
+}
+
+// TestEngineeringBodyOmitsOperationalGuidance guards against a lingering
+// duplicate source: the shared operationalGuidanceSection is now the single
+// author of the doctor/MCP routing guidance, so the engineering pack body
+// (both the Go fallback and the mirrored domains/engineering/AGENTS.md) must
+// NOT still carry a private copy. A stray copy would double-render the
+// guidance in an engineering install.
+func TestEngineeringBodyOmitsOperationalGuidance(t *testing.T) {
+	const marker = "Prefer Hero's MCP tools over shelling out to a bare `hero`"
+
+	goBody := generateEngineeringAgentsMdBody(resolveContentPathsForBody(Options{}))
+	if strings.Contains(goBody, marker) {
+		t.Errorf("generateEngineeringAgentsMdBody still contains the operational guidance paragraph; it must be sourced only from the shared section")
+	}
+
+	repoRoot, err := repoRootFromHere()
+	if err != nil {
+		t.Fatalf("locate repo root: %v", err)
+	}
+	packBytes, err := os.ReadFile(filepath.Join(repoRoot, "domains", "engineering", "AGENTS.md"))
+	if err != nil {
+		t.Fatalf("read engineering pack AGENTS.md: %v", err)
+	}
+	if strings.Contains(string(packBytes), marker) {
+		t.Errorf("domains/engineering/AGENTS.md still contains the operational guidance paragraph; regenerate with HERO_REGEN_PACK_AGENTS=1")
+	}
+}
+
+// TestHarnessNative_OperationalGuidanceFallbackDomain proves that a domain
+// with no own AGENTS.md — a future/unknown pack that falls through to the
+// engineering Go fallback body — still receives the shared operational
+// guidance. Because the engineering fallback body no longer carries the
+// paragraph, its presence here can only come from the shared section.
+func TestHarnessNative_OperationalGuidanceFallbackDomain(t *testing.T) {
+	h := newInstallHarness(t)
+	mkHeroDir(t, h.TargetDir)
+	// No ContentFS with an AGENTS.md and a non-engineering domain forces
+	// loadPackAgentsMdBody down the engineering Go fallback path.
+	h.Run(TargetClaude, func(o *Options) {
+		o.Domain = "widgets"
+	})
+	h.mustContain("CLAUDE.md", "## Hero Binary & MCP Surface")
+	h.mustContain("CLAUDE.md", "run `hero doctor`")
+	h.mustContain("CLAUDE.md", "do NOT run `hero upgrade`")
 }
 
 // TestHarnessNative_MultiTargetIncludingClaude asserts that a multi-target

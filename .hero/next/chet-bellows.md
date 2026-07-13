@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-13T18:20:51Z
+updated: 2026-07-13T18:45:13Z
 repo: hero-engine/hero
 ---
 
@@ -8,11 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> so - using hero on a project - first thing i got is this: hero resume is blocked by a local graph schema mismatch: the installed CLI understands schema 2 while this workspace graph is schema 4. I’m checking whether the repository’s current binary can read it; I won’t modify or downgrade the graph to work around that mismatch.
-> then i stopped it - and ran a hero upgrade - and got this: 
-> The up…
-
-_possibly stale — 1 commit(s) since, last set 1h 13m ago_
+> have a new error in a chat session in codex - Hero’s in-process search transport closed on the comparison queries, so I’m switching to the local Hero CLI for this read-only inventory
 
 ## Suggested next prompt
 

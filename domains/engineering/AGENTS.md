@@ -172,8 +172,6 @@ When **you** need to look something up mid-task (as opposed to running a slash c
 
 Some harnesses defer MCP tool schemas behind a one-time lookup before the tool is callable — e.g. Claude Code's `ToolSearch`. The load is one round-trip and worth it; it's not a reason to fall back to a weaker tool.
 
-**Prefer Hero's MCP tools over shelling out to a bare `hero` in a terminal.** A GUI-launched harness can resolve a *different or stale* `hero` binary on its PATH than your login shell does; the MCP surface is the in-process Hero you're already connected to, so it can't drift out from under you. When you must use the CLI and hit a schema/version mismatch or a confusing `hero` version error, **run `hero doctor` and act on its output** — it reports which binary is actually on PATH, its schema, the graph's schema, and the real remediation. Do NOT invent a schema-migration narrative, and do NOT run `hero upgrade` to "fix schema": `hero upgrade` updates workspace files, not the binary, so it cannot fix a wrong-binary-on-PATH situation.
-
 ### Important Rules
 
 - **Don't assume.** Surface tradeoffs and ask questions if anything is unclear. Present multiple interpretations instead of picking one silently.

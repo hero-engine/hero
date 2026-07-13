@@ -6,7 +6,21 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-13T18:20:51Z · 77 ready specs_
+_Generated: 2026-07-13T18:52:27Z · 77 ready specs_
+
+## doctor-routing-guidance-all-packs — "Extract hero doctor / MCP-surface routing guidance into a shared domain-agnostic section"
+_enhancement · delivering · horizon: now_
+
+v0.25.0 put the universal "prefer the MCP surface; run `hero doctor` on version/schema confusion" guidance inside the **engineering** pack body. It's domain-agnostic and should be a shared section, not a per-pack copy — there's no `core/AGENTS.md` and all four domains ship their own body, so duplication would be the wrong call.
+
+**Status:** planning — corrected design (was "copy into pm/sales/chat"; now "extract to a shared section contributor"). Deferred follow-up from `agent-hero-version-schema-confusion`.
+
+**Pick up at:** model a new domain-agnostic `managed.SectionContributor` on `internal/snapshot/pointers.go` `NewPointerSection`; emit the routing paragraph (verbatim from `internal/install/agents_md.go:675`); wire it into `defaultSections()` (`agents_md.go:212`); then **remove** the paragraph from `generateEngineeringAgentsMdBody` + `domains/engineering/AGENTS.md` and regenerate the mirror (`HERO_REGEN_PACK_AGENTS=1`). Repoint `TestHarnessNative_DoctorRoutingGuidanceAllTargets` to assert all-domain × all-target coverage from the shared section.
+
+**Files:** `internal/install/agents_md.go` (`defaultSections`, `generateEngineeringAgentsMdBody`), new section file (near `internal/snapshot/pointers.go` for the pattern), `domains/engineering/AGENTS.md`, `internal/install/harness_native_test.go`.
+**Skip:** copying the paragraph into pm/sales/chat bodies (the rejected approach); introducing a `core/AGENTS.md`; converting AGENTS.md resolution from whole-file override to section merge.
+
+---
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -40,20 +54,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · in-review · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-idea-primitive-core/spec.md)_
-
----
-
-## doctor-routing-guidance-all-packs — "Extract hero doctor / MCP-surface routing guidance into a shared domain-agnostic section"
-_enhancement · planning · horizon: now_
-
-v0.25.0 put the universal "prefer the MCP surface; run `hero doctor` on version/schema confusion" guidance inside the **engineering** pack body. It's domain-agnostic and should be a shared section, not a per-pack copy — there's no `core/AGENTS.md` and all four domains ship their own body, so duplication would be the wrong call.
-
-**Status:** planning — corrected design (was "copy into pm/sales/chat"; now "extract to a shared section contributor"). Deferred follow-up from `agent-hero-version-schema-confusion`.
-
-**Pick up at:** model a new domain-agnostic `managed.SectionContributor` on `internal/snapshot/pointers.go` `NewPointerSection`; emit the routing paragraph (verbatim from `internal/install/agents_md.go:675`); wire it into `defaultSections()` (`agents_md.go:212`); then **remove** the paragraph from `generateEngineeringAgentsMdBody` + `domains/engineering/AGENTS.md` and regenerate the mirror (`HERO_REGEN_PACK_AGENTS=1`). Repoint `TestHarnessNative_DoctorRoutingGuidanceAllTargets` to assert all-domain × all-target coverage from the shared section.
-
-**Files:** `internal/install/agents_md.go` (`defaultSections`, `generateEngineeringAgentsMdBody`), new section file (near `internal/snapshot/pointers.go` for the pattern), `domains/engineering/AGENTS.md`, `internal/install/harness_native_test.go`.
-**Skip:** copying the paragraph into pm/sales/chat bodies (the rejected approach); introducing a `core/AGENTS.md`; converting AGENTS.md resolution from whole-file override to section merge.
 
 ---
 
