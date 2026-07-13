@@ -2,7 +2,7 @@
 title: "Extract hero doctor / MCP-surface routing guidance into a shared domain-agnostic section"
 slug: doctor-routing-guidance-all-packs
 type: enhancement
-status: delivering
+status: completed
 priority: low
 domain: engineering
 created: 2026-07-13
@@ -11,6 +11,7 @@ origin: session
 tags: [harness, install, domain-packs, base-vs-overlay, section-contributor, doctor, mcp-routing, agents-md, refactor]
 relates-to:
   - agent-hero-version-schema-confusion
+completed_at: 2026-07-13T18:55:29Z
 ---
 
 # Extract hero doctor / MCP-surface routing guidance into a shared domain-agnostic section

@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-13T18:52:27Z · projected from 517 source nodes_
+_Last refreshed: 2026-07-13T18:55:30Z · projected from 517 source nodes_
 
 ## Surfaces
 
@@ -51,8 +51,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — agent-hero-version-schema-confusion, next-context-carry-forward-drift, init-gitignore-missing-machine-local-artifacts, incremental-scan-complete-result, incremental-scan-prunes-unchanged-packages, codescan-created-slug-frontmatter-followup
-- **core** — harness-native-install-target-aware-upgrade, scan-clobbers-authored-created-slug-frontmatter, next-drift-gate-unwinnable, created-field-stamp-and-surface
+- **(unassigned)** — doctor-routing-guidance-all-packs, agent-hero-version-schema-confusion, next-context-carry-forward-drift, init-gitignore-missing-machine-local-artifacts, incremental-scan-complete-result, incremental-scan-prunes-unchanged-packages, codescan-created-slug-frontmatter-followup
+- **core** — harness-native-install-target-aware-upgrade, scan-clobbers-authored-created-slug-frontmatter, next-drift-gate-unwinnable
 - **docs** — release-notes-page
 - **serve** — opsrunner-keepalive-data-race
 
@@ -62,7 +62,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 2. **serve** — `hero-team-server` (P1, delivering)
 3. **core** — `satellite-corpus-integration` (high, delivering)
 4. **serve** — `agent-outposts` (medium, delivering)
-5. **(unassigned)** — `doctor-routing-guidance-all-packs` (low, delivering)
+5. **serve** — `retrieval-contradiction-detection` (—, delivering)
 
 ## Open risks & blockers
 
