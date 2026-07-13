@@ -2,14 +2,14 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-13T15:14:11Z · projected from 515 source nodes_
+_Last refreshed: 2026-07-13T16:21:30Z · projected from 515 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 19h ago | satellite-corpus-integration |
-| docs | maturing | web/docs/ | 14h ago | — |
+| core | building | cmd/, internal/ | 20h ago | satellite-corpus-integration |
+| docs | maturing | web/docs/ | 15h ago | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | maturing | domains/engineering/ | 1d ago | — |
 | domains/pm | maturing | domains/pm/ | 4d ago | — |
@@ -51,8 +51,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — next-context-carry-forward-drift, init-gitignore-missing-machine-local-artifacts, incremental-scan-complete-result, incremental-scan-prunes-unchanged-packages, codescan-created-slug-frontmatter-followup
-- **core** — harness-native-install-target-aware-upgrade, scan-clobbers-authored-created-slug-frontmatter, next-drift-gate-unwinnable, created-field-stamp-and-surface, install-json-mode-repair-migrate-parity
+- **(unassigned)** — agent-hero-version-schema-confusion, next-context-carry-forward-drift, init-gitignore-missing-machine-local-artifacts, incremental-scan-complete-result, incremental-scan-prunes-unchanged-packages, codescan-created-slug-frontmatter-followup
+- **core** — harness-native-install-target-aware-upgrade, scan-clobbers-authored-created-slug-frontmatter, next-drift-gate-unwinnable, created-field-stamp-and-surface
 - **docs** — release-notes-page
 - **serve** — opsrunner-keepalive-data-race
 

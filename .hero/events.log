@@ -323,3 +323,5 @@
 {"ts":"2026-07-12T22:47:43.401504Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-context-carry-forward-drift","message":"status -\u003e completed"}
 {"ts":"2026-07-13T00:22:46.740412Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"release-notes-page","message":"\"Release Notes Page — Left-Nav Release History for docs.heroengine.ai\""}
 {"ts":"2026-07-13T00:22:46.740483Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"release-notes-page","message":"status -\u003e completed"}
+{"ts":"2026-07-13T16:20:51.826788Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"agent-hero-version-schema-confusion","message":"\"Agents confabulate a schema/version narrative when a stray hero binary meets a schema-4 graph\""}
+{"ts":"2026-07-13T16:20:51.826867Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"agent-hero-version-schema-confusion","message":"status -\u003e completed"}

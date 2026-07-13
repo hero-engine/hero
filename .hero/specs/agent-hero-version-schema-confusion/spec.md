@@ -2,7 +2,7 @@
 title: "Agents confabulate a schema/version narrative when a stray hero binary meets a schema-4 graph"
 slug: agent-hero-version-schema-confusion
 type: bug
-status: planning
+status: completed
 priority: high
 severity: high
 domain: engineering
@@ -17,6 +17,7 @@ relates-to:
   - desktop-sidebar-mcp-not-running
   - codex-install-broken
 root_cause_class_detail: "multi-cause — code (Defect 1 watchdog can't reap live redundant children; Defect 3 wrong remediation string + no self-location), env/process (Defect 2 GUI PATH skew binds a stale binary), design (no `hero doctor`, no version/schema stamping on the MCP surface, terminal-mode fallback undetected)"
+completed_at: 2026-07-13T16:20:50Z
 ---
 
 # Agents confabulate a schema/version narrative when a stray hero binary meets a schema-4 graph
@@ -310,13 +311,51 @@ This confirms Defect 2's specific trigger and closes the "schema 2" attribution.
 
 ---
 
+## Completion Ledger
+
+Delivered on branch `fix/agent-hero-version-schema-confusion` (commit 7dba572). Full suite: 85 packages OK; the only failure is the pre-existing, unrelated `TestMarkdownInvocationsResolveAgainstRootCmd` (release-notes doc drift — tracked separately). Cold audit: **SHIP / clean / high confidence** (`delivery-audit.md`).
+
+### Spec A — engine: self-location + `hero doctor` + MCP schema stamping
+
+| Item | Status | Evidence |
+|------|--------|----------|
+| Mismatch branches print `os.Executable()` + binary schema + graph schema | DONE | `internal/graph/graph.go` `checkSchemaMismatch`; `TestCheckSchemaMismatch` asserts exe+both schemas each branch. |
+| Replace false `hero upgrade` remedy → `hero doctor`; name wrong-binary-on-PATH cause | DONE | Both messages point at `hero doctor`, carry "`hero upgrade` will NOT help"; `hero upgrade` (`upgrade.go`) unchanged. |
+| Fix lexical schema compare (double-digit inversion) | DONE | `schemaLess()` (numeric); `TestSchemaLess` covers `"9"<"10"`. |
+| Up-migration success path untouched | DONE | Only post-loop mismatch block changed; existing graph migration tests green. |
+| New `hero doctor` (exe/PATH divergence flag, versions, schemas, verdict, graceful outside workspace) | DONE | `internal/cli/doctor.go` + `root.go`; `TestBuildDoctorReport` (7 subtests); exercised live — real PATH-divergence warning fired. |
+| Stamp binary+graph schema on MCP `initialize` (additive) | DONE | `mcp_protocol.go`/`mcp.go`/`mcp_lifecycle.go`; `TestMCP_Initialize_StampsSchema`; live `serverInfo` emits `schema`/`graphSchema`. |
+
+### Spec B — engine: MCP daemon dedup/supersede
+
+| Item | Status | Evidence |
+|------|--------|----------|
+| Per-(workspace heroDir + parent pid) singleton; supersede live incumbent on reconnect | DONE | `internal/serve/mcp_singleton.go`; wired in `Run()` (`mcp_lifecycle.go`), gated `s.input == os.Stdin`. `TestMCPSingleton_SupersedesLiveIncumbent`. |
+| Stale pidfile (dead holder) treated as free; reuse `IsProcessAlive` | DONE | `TestMCPSingleton_StalePidfileTreatedAsFree`; distinct clients isolated (`TestMCPSingleton_DistinctClientsDoNotCollide`). |
+| Ownership-checked release on clean shutdown | DONE | Deferred `release()`; exercised live (pidfile removed on EOF). |
+| Orphan watchdog not regressed | DONE | Watchdog code untouched; `TestMCPSingleton_OrphanWatchdogStillFires` + existing `mcp_watchdog_test.go` all pass (incl. `-race`). |
+| Exercised: two daemons → one survivor | DONE | Two real `hero mcp` under one parent: incumbent superseded, exactly one survivor. |
+
+### Spec C — harness: route agents to MCP surface + `hero doctor` (all six targets)
+
+| Item | Status | Evidence |
+|------|--------|----------|
+| Guidance in author-once source | DONE | `internal/install/agents_md.go` `generateEngineeringAgentsMdBody`; mirror `domains/engineering/AGENTS.md` (regen test green). |
+| Propagates to all six targets (opencode/cursor/claude/copilot/codex/generic) | DONE | `TestHarnessNative_DoctorRoutingGuidanceAllTargets` (table over all six); live `hero install` proof for a CLAUDE.md and an AGENTS.md target. |
+| Test fails if any target drops guidance (tripwire teeth) | DONE | Per-target `t.Fatalf` on missing substring. |
+
+### Disclosed scope
+
+- **Domain packs:** guidance added to the **engineering** pack only (the active domain). The `pm`/`sales`/`chat` packs have independent bodies and were not touched — orthogonal to the six-target tripwire, which is fully satisfied. Optional small follow-up if wanted.
+- **Open repro item (non-code):** literal Codex-side error text (`db=X binary=Y`) + `command -v hero; hero --version` from inside a Codex terminal session in hero-code — confirms Defect-2's specific stale-binary attribution. `Needs more research → Yes` for that attribution only.
+
 ## Kickoff
 
 Agents invent a "your graph is schema 2, run `hero upgrade`" story when a stale `hero` binary (bound via Codex's GUI PATH) reads a schema-4 graph. Make hero self-locating instead.
 
-**Status:** planning — three defects confirmed by source read; one repro step (literal Codex error text) still open.
+**Status:** completed (verified, archived) — all three concerns delivered on commit 7dba572; cold audit SHIP/clean. One non-code repro step remains open (see below).
 
-**Pick up at:** start with engine Spec A — rewrite the `graph.go:269-284` mismatch block to print `os.Executable()` + both schemas + point at a new `hero doctor` (NOT `hero upgrade`), fix the lexical schema compare, and stamp binary+graph schema on the MCP `initialize` result. Split Defect-1 dedup (Spec B) and harness routing (Spec C, all six targets) into separate specs.
+**Pick up at:** the only remaining thread is the **open repro item** — from inside a Codex terminal session in hero-code, capture the literal `db=X binary=Y` error text + `command -v hero; hero --version` to confirm exactly which stale binary Codex bound (Defect-2 attribution). Optional follow-up: extend the `hero doctor` routing guidance to the `pm`/`sales`/`chat` domain packs (engineering pack is done). Now that `hero doctor` exists, the fastest way to close the repro is to run it inside Codex and read its PATH-divergence verdict.
 
 → `.hero/planning/bugs/agent-hero-version-schema-confusion/spec.md`
 
