@@ -8,6 +8,8 @@ created: 2026-04-23
 relations:
   - target: hero-cloud
     kind: related
+child:
+  - always-on-runtime
 horizon: next
 size: giant
 ---

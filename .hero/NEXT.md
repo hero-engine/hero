@@ -5,7 +5,7 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-07-13T20:27:59Z
+updated: 2026-07-13T20:28:08Z
 repo: hero-engine/hero
 branch: fix/mcp-transport-closes-midsession-supersede
 ---
