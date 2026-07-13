@@ -43,9 +43,17 @@ const (
 // ---------------------------------------------------------------------------
 
 // MCPServerInfo describes this server.
+//
+// Schema and GraphSchema are Hero extensions: the compiled binary schema
+// and the workspace graph schema. They let a harness SEE version/schema
+// skew (a stray binary reading a newer graph) instead of inventing a
+// migration narrative. Additive and omitempty, so existing clients that
+// only read Name/Version are unaffected.
 type MCPServerInfo struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
+	Name        string `json:"name"`
+	Version     string `json:"version"`
+	Schema      string `json:"schema,omitempty"`
+	GraphSchema string `json:"graphSchema,omitempty"`
 }
 
 // MCPCapabilities declares what the server (or, for client-sent

@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-13T00:23:06Z · 75 ready specs_
+_Generated: 2026-07-13T16:14:06Z · 76 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -40,6 +40,22 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · in-review · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-idea-primitive-core/spec.md)_
+
+---
+
+## agent-hero-version-schema-confusion — "Agents confabulate a schema/version narrative when a stray hero binary meets a schema-4 graph"
+_bug · planning · horizon: now_
+
+Agents invent a "your graph is schema 2, run `hero upgrade`" story when a stale `hero` binary (bound via Codex's GUI PATH) reads a schema-4 graph. Make hero self-locating instead.
+
+**Status:** planning — three defects confirmed by source read; one repro step (literal Codex error text) still open.
+
+**Pick up at:** start with engine Spec A — rewrite the `graph.go:269-284` mismatch block to print `os.Executable()` + both schemas + point at a new `hero doctor` (NOT `hero upgrade`), fix the lexical schema compare, and stamp binary+graph schema on the MCP `initialize` result. Split Defect-1 dedup (Spec B) and harness routing (Spec C, all six targets) into separate specs.
+
+→ `.hero/planning/bugs/agent-hero-version-schema-confusion/spec.md`
+
+**Files:** `internal/graph/graph.go:269-284`, `internal/cli/upgrade.go:27-60`, `internal/serve/mcp_lifecycle.go:125-136`, `internal/serve/mcp_watchdog.go:34-54`, `internal/cli/mcp.go:35-63`
+**Skip:** `hero upgrade` as the remediation (upgrades overlay files, not the binary); blaming the five live MCP daemons for the schema report (they're `~/go/bin/hero`/schema-4 — that's the separate Defect 1 leak).
 
 ---
 

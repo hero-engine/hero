@@ -38,7 +38,7 @@ func init() {
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		// Skip version check for init, install, upgrade, mcp, and version itself
 		name := cmd.Name()
-		if name == "init" || name == "install" || name == "trust" || name == "upgrade" || name == "mcp" || name == "version" || name == "help" {
+		if name == "init" || name == "install" || name == "trust" || name == "upgrade" || name == "mcp" || name == "version" || name == "help" || name == "doctor" {
 			return
 		}
 
@@ -91,6 +91,7 @@ func init() {
 	rootCmd.AddCommand(synthesizeCmd)
 	rootCmd.AddCommand(askCmd)
 	rootCmd.AddCommand(checkCmd)
+	rootCmd.AddCommand(doctorCmd)
 	rootCmd.AddCommand(graphCmd)
 	rootCmd.AddCommand(resumeCmd)
 	rootCmd.AddCommand(whyCmd)

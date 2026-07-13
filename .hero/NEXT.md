@@ -5,9 +5,9 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-07-13T00:23:06Z
+updated: 2026-07-13T16:14:05Z
 repo: hero-engine/hero
-branch: main
+branch: fix/agent-hero-version-schema-confusion
 ---
 
 ## Just finished
@@ -45,9 +45,9 @@ Nothing this session.
 
 ## Context to carry forward
 
+- Get Back on Track — Mission-First V2 Recovery — `get-back-on-track`
+- Install + Upgrade Contract Coverage — Prove Every Target Works Every Time — `install-upgrade-contract-coverage`
+- Pre-Launch Hardening — Federation Polish, Security, Observability — `pre-launch-hardening`
 - Single-Source Install — One Canonical Tree, Every Harness Reads It — `single-source-install`
-- Hero Surface — Deployment Layers and Rendering Model — `hero-surface-deployment-and-rendering`
-- "Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use" — `cold-start-trust-hardening`
-- "Concurrent-Session Branching & Worktree Isolation" — `concurrent-session-branching`
-- Environment Awareness — CI/Deployment/Runtime Visibility — `environment-awareness`
+- Launch Readiness — Telemetry, Deploy, and Public-Use Polish — `launch-readiness`
 

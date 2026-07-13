@@ -1,23 +1,22 @@
 ---
 user: chet-bellows
-updated: 2026-07-13T00:23:06Z
+updated: 2026-07-13T15:50:31Z
 repo: hero-engine/hero
 ---
 
 # chet-bellows's handoff
 
-## Session goal
-
-> Session opened with — we should have a page on the website iwth releases and release notes - like left of them on the left that navs to the release and the bulletted highlights of major things or fixes?
-> **Before creating any file**, check whether the user is working in a sub-folder workspace. If so, preserve that workspace's `subproject:` frontmatter and write the spec under the workspace's `.hero/` root; otherwise wri…
-
 ## Last user ask
 
-> Deliver the release-notes-page spec: build a docs.heroengine.ai/releases/ page driven by hero-releases GitHub Releases data
+> speed question - im a little confused on how best to develop hero and install use it here on this box - when im doing work my /go/bin is on the path - and if i do a hero -v i often see version dev reported - if i make install i see a version that ends in -dirty - and so when im working on another project im not sure if its just picking up the dev or the dirty - or how i should best be setting up m…
 
 ## Suggested next prompt
 
-> release-notes-page shipped — what's next on the docs/web front, or should we pick up one of the in-flight deliveries (hero-landing-page, agent-outposts, team-connect)?
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 
