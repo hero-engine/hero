@@ -2,7 +2,7 @@
 title: "Hero MCP transport closes mid-session in Codex — singleton supersede / process-lifecycle guards kill the live daemon"
 slug: mcp-transport-closes-midsession-supersede
 type: bug
-status: planning
+status: completed
 domain: engineering
 size: small
 priority: high
@@ -11,6 +11,8 @@ root_cause_class: design
 created: 2026-07-13
 tags: [mcp, stdio, transport, codex, singleton, watchdog, reliability, serve]
 tracker_id: null
+delivery_method: manual
+completed_at: 2026-07-13T20:23:20Z
 ---
 
 # Hero MCP transport closes mid-session in Codex
@@ -251,6 +253,17 @@ Concurrency is real and routine under Codex: `.codex/hooks.json` fires `hero nex
 `hero` processes opening the workspace DBs while the persistent `hero mcp` daemon queries
 them. On the index (no busy_timeout) the loser gets `database is locked`.
 
+**Observed in the wild (concrete driver, not hypothetical):** at diagnosis time `ps` showed
+**seven** live `hero mcp` daemons on this one workspace, spawned across the day (08:53, 10:57,
+11:02, 12:54, 12:58, 13:04, 13:14). The singleton guard keys on `(workspace, parent-pid)`, so
+it only dedupes *within a single session's process tree* — daemons from different
+sessions/shells never supersede each other and simply **accumulate** (a recurrence of
+[[hero-mcp-orphan-no-parent-liveness]], nominally completed). Seven daemons all reading/writing
+one `index.db` with no busy_timeout means a lock storm is the steady state, not an edge case —
+which is why **Item 1b (busy_timeout + WAL) is the highest-value part of this fix**, not a
+footnote. No leaked `.hero/mcp-*.pid` files or stale journal/WAL sidecars were present, so the
+damage is process pileup + instant-fail contention, not on-disk corruption.
+
 **Reproduced (decisive):** with an `EXCLUSIVE` lock held on `.hero/index.db`, firing
 `initialize` + `hero_anchor` + `hero_search` + `hero_status` at the compiled server:
 ```
@@ -269,14 +282,20 @@ off-main-goroutine panic in retrieval.
 **B2 — Graph schema mismatch (`root_cause_class: env` — version skew).** "Schema mismatch"
 maps to `checkSchemaMismatch` (`internal/graph/graph.go:339`): when the running binary's
 compiled graph schema is **newer** than the on-disk graph, `graph.Open` **returns an error**
-(when the graph is newer than the binary it only prints a stderr warning). This is the exact
-stray-/duplicate-binary-on-PATH condition commit `7dba572` added the `initialize`
-`Schema`/`GraphSchema` fields to surface. It affects only the two graph-using read tools —
-`hero_why` (`mcp_tools.go:3134`) and `hero_blocked` (`mcp_tools.go:3172`) — **not**
-`hero_anchor` or `hero_search`, which are index-only. Like B1 it is a **returned error →
-`isError` tool result**, not a transport close. (Locally the schemas match, 4=4, so this
-session's own workspace is clean; the mismatch is an environment/PATH condition, not a code
-defect in the open path.)
+(when the graph is newer than the binary it only prints a stderr warning). Commit `7dba572`
+added the `initialize` `Schema`/`GraphSchema` fields to surface exactly this. It affects only
+the two graph-using read tools — `hero_why` (`mcp_tools.go:3134`) and `hero_blocked`
+(`mcp_tools.go:3172`) — **not** `hero_anchor` or `hero_search`, which are index-only. Like B1
+it is a **returned error → `isError` tool result**, not a transport close.
+
+**Corrected — this is NOT a stray-/duplicate-binary-on-PATH condition.** An earlier draft
+attributed the mismatch to a second `hero` binary on `PATH`; a direct check disproves that.
+`which -a hero` returns exactly one entry (`~/go/bin/hero`, `v0.25.0-dirty`); there is no
+Homebrew or other duplicate. The realistic trigger for a transient mismatch is therefore a
+**locally-rebuilt `-dirty` binary running ahead of an older on-disk `graph.db`** (rebuild
+before the graph was migrated), or a **separate git worktree with its own `.hero/`** — an
+environment/version-skew condition, not a second binary and not a code defect in the open
+path. Locally the schemas currently match (4=4), so this workspace is clean.
 
 ### Reconciliation — are A and B the same bug?
 **No — they are independent, and only A closes the transport.** Evidence:
@@ -402,8 +421,15 @@ Alternate death events reaching the same step 8: watchdog `os.Exit(0)` on ppid c
    paths (defect 1). Stale pidfiles are benign (treated as free next acquire); a stale index
    journal + no busy_timeout makes the next tool call more likely to hit `database is locked`.
 6. **Graph schema-mismatch surfaces as a raw tool error** (Trigger B2) — on a
-   binary-newer-than-graph PATH skew, `hero_why`/`hero_blocked` return the `checkSchemaMismatch`
-   error verbatim (already points at `hero doctor`). Environment condition, not a code defect.
+   binary-newer-than-graph **version skew** (e.g. a `-dirty` rebuild ahead of an un-migrated
+   `graph.db`, or a separate worktree's `.hero/` — **not** a stray PATH binary; `which -a hero`
+   shows a single install), `hero_why`/`hero_blocked` return the `checkSchemaMismatch` error
+   verbatim (already points at `hero doctor`). Environment condition, not a code defect.
+7. **Cross-session daemon accumulation** — the singleton guard dedupes only within one
+   parent-pid's process tree, so daemons from separate sessions never supersede and pile up
+   (seven observed live on one workspace). Amplifies defect 2's lock contention. Recurrence of
+   [[hero-mcp-orphan-no-parent-liveness]] (nominally completed) across the session boundary;
+   the parent-liveness watchdog is the only reaper and it only fires on the owning parent's death.
 
 ---
 
@@ -704,6 +730,40 @@ it as the fix for the "transport closed" reports — that is Item 2 (Trigger A) 
   `harness-changes-cover-all-targets` tripwire does not apply — but validate the reconnect
   behavior in **Codex specifically** (the reporting harness) and in Claude Code (hook-driven
   reconnect) before closing.
+
+---
+
+## Completion Ledger
+
+Delivered on branch `fix/mcp-transport-closes-midsession-supersede`. Cold audit: **SHIP (noteworthy)** — `delivery-audit.md`. All build/vet/tests independently re-run with cache disabled and PASS.
+
+### Suggested Fix Approach
+
+| # | Item | Status | Evidence |
+|---|---|---|---|
+| 1 | Graceful SIGTERM release — `internal/serve/mcp_lifecycle.go` `Run()` | DONE | `mcp_lifecycle.go:60-77` installs `signal.Notify(SIGTERM,SIGINT)` handler running `release()` before `os.Exit(0)`. Exercised: after SIGTERM, no `mcp-*.pid` leaked. |
+| 1b | Index busy_timeout + WAL — `internal/index/index.go` `Open` | DONE | `index.go:79` DSN `?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)` (modernc-correct — mattn params are silently ignored by `modernc.org/sqlite v1.53.0`, verified against driver). `TestConcurrentWrite_WaitsForBusyTimeout` PASS (0.35s wait, not instant-fail); `TestOpen_UsesWALJournalMode` PASS; `index.db` header bytes 18-19 = (2,2)=WAL. |
+| 2 | Coexist instead of supersede — `internal/serve/mcp_singleton.go` | DONE | `mcp_singleton.go:79` returns `coexistRelease(...)` for a live incumbent (never signals it); new helper writes per-pid `mcp-<ppid>.pid.<pid>`. `bcb9424` stale-holder reaping branch unchanged. `TestMCPSingleton_CoexistsWithLiveIncumbent` PASS; end-to-end incumbent stayed ALIVE 4s (spec repro: DEAD <1s). |
+| 3 | Watchdog reparent-hardening — `internal/serve/mcp_watchdog.go` | DONE | `mcp_watchdog.go:47-49` exits only when `now==1 \|\| !singletonIsAlive(startPpid)`. `TestParentWatchdog_IgnoresReparentWhileParentAlive` + `TestParentWatchdog_ExitsWhenOriginalParentDead` PASS; existing exit-on-reparent-to-init still PASS. |
+| 4 | Panic recovery (defense-in-depth) — `internal/serve/mcp_lifecycle.go` `handleRequest` | DONE | `mcp_lifecycle.go:96-104` wraps dispatch in `recover()` → `ErrCodeInternal`. `TestHandleRequest_RecoversPanicAndKeepsServing` PASS. Ships as insurance; no panic trigger found, per spec. |
+
+### Acceptance Criteria
+
+| # | Criterion | Status | Evidence |
+|---|---|---|---|
+| 1 | Two live daemons sharing parent+workspace **coexist** (incumbent no longer SIGTERM'd) | DONE | End-to-end with real binary: parent bash=3286, first=3306 stayed ALIVE the full 4s after second=3309 started. Pidfiles `mcp-3286.pid` + `mcp-3286.pid.3309`. |
+| 2 | Genuinely-dead/orphaned daemons still reaped (`bcb9424` benefit retained) | DONE | `TestMCPSingleton_StalePidfileTreatedAsFree` + `TestMCPSingleton_OrphanWatchdogStillFires` PASS. |
+| 3 | Reconnect leaves the new server serving | DONE | `TestMCPSingleton_ReconnectLeavesNewServerServing` PASS. |
+| 4 | No leaked `.hero/mcp-<ppid>.pid` after SIGTERM | DONE | Exercise: after `kill`, `ls mcp-*.pid*` → none. (Manual integration check per Test Plan; no automated test — handler present + correct.) |
+| 5 | Index tool under contended DB no longer instant-fails with `database is locked` | DONE | Unit: contended write waits+succeeds (0.35s). Binary: `hero_anchor`+`hero_search` returned `isError=False` while an external `BEGIN EXCLUSIVE` lock was held on the same `index.db`. |
+| 6 | Transport stays up / server recovers on panic | DONE | `TestHandleRequest_RecoversPanicAndKeepsServing` PASS; binary sessions all `SERVER_EXIT=0`. |
+
+### Files changed (all modifications to existing tracked files, no new files)
+- `internal/serve/mcp_singleton.go`, `internal/serve/mcp_lifecycle.go`, `internal/serve/mcp_watchdog.go`, `internal/index/index.go`
+- Tests: `internal/serve/mcp_singleton_test.go`, `internal/serve/mcp_watchdog_test.go`, `internal/serve/mcp_test.go`, `internal/index/index_test.go`
+
+### Known limitation (deliberate scope call)
+Coexist means a *live duplicate daemon under a live parent* is no longer reaped — so cross-session daemon accumulation (Secondary Defect #7) is intentionally NOT solved by this fix.
 
 ---
 

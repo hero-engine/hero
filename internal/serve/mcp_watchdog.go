@@ -25,9 +25,10 @@ var (
 // startParentWatchdog launches the parent-liveness backstop. It first
 // arms the OS-native fast path (Linux: PR_SET_PDEATHSIG; darwin: no-op),
 // then runs a portable ppid poll that covers platforms without a native
-// signal (notably macOS). The poll exits the process when our parent
-// changes from its startup value — i.e. we've been reparented to
-// launchd/init because the original parent died.
+// signal (notably macOS). The poll exits the process only when we've been
+// reparented to launchd/init (ppid==1) OR the original parent is confirmed
+// dead. A bare ppid change (an intermediate wrapper exited while the
+// session is still live) is a false positive and is ignored.
 //
 // It fires ONLY when the parent is already dead, so it can never disrupt
 // a live session.
@@ -44,8 +45,13 @@ func startParentWatchdog(done <-chan struct{}) {
 			case <-done:
 				return
 			case <-ticker.C:
-				if watchdogGetppid() != startPpid {
-					// Parent reparented away (died). Exit cleanly.
+				now := watchdogGetppid()
+				if now != startPpid && (now == 1 || !singletonIsAlive(startPpid)) {
+					// Exit only when reparented to launchd/init (ppid==1)
+					// or the original parent is confirmed dead. A mere
+					// ppid change — an intermediate wrapper process exited
+					// while the session is still live — is a false positive
+					// that must NOT tear down a live session.
 					watchdogExit(0)
 				}
 			}

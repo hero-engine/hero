@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-13T19:13:31Z · 76 ready specs_
+_Generated: 2026-07-13T20:28:00Z · 77 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -43,57 +43,27 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## mcp-transport-closes-midsession-supersede — "Hero MCP transport closes mid-session in Codex — singleton supersede / process-lifecycle guards kill the live daemon"
-_bug · planning · horizon: now_
+## job-run-contract-v1 — "Job and Run Contract v1"
+_feature · planning · horizon: now_
 
-Paste-ready cold-start prompt for the fix session:
+Adds the stable v1 job/event boundary consumed by Hero, hero-code, and Hero Cloud.
 
-> Fix the Hero MCP server dying mid-session in Codex (spec:
-> `.hero/planning/bugs/mcp-transport-closes-midsession-supersede/spec.md`).
->
-> **Root cause (proven):** the singleton guard in `internal/serve/mcp_singleton.go`
-> (`acquireMCPSingleton`, from commit `bcb9424`) SIGTERMs a live, serving `hero mcp` daemon
-> the instant a second daemon starts for the same `(workspace, parent-pid)`. Reproduced: the
-> incumbent dies within 1s. Codex sees this as "in-process search transport closed" and falls
-> back to the CLI. The search path itself is clean (a 7-call `hero_search` batch responds and
-> exits 0). This is a **design** flaw: the guard assumes "same-parent second spawn ==
-> reconnect" without verifying the incumbent's connection is dead.
->
-> **Do NOT revert `bcb9424`** — its orphan/duplicate-daemon reaping is real. Keep reaping
-> genuinely-dead daemons; never kill a live, connected one.
->
-> **A second session** reported the transport closing *and* an "index stale lock / schema
-> mismatch." That was run down: a locked index and a graph schema mismatch both produce
-> graceful `isError` tool results (reproduced) — they do **not** close the transport. So they
-> are a **separate reliability defect** (Trigger B1: the index opens SQLite with no
-> busy-timeout/WAL, so concurrent `hero next ingest`/`checkpoint` hook processes make tool
-> calls fail with `database is locked`), not a second transport-close cause.
->
-> **Implement the changes in `## Suggested Fix Approach`:**
-> 1. `internal/serve/mcp_lifecycle.go` `Run()` — graceful SIGTERM handler that runs the
->    pidfile `release()` before exiting (stops leaked pidfiles AND leaked index journals).
-> 1b. `internal/index/index.go` `Open` — add `_busy_timeout=5000` + `_journal_mode=WAL`
->    (match the graph). **This is the fix for the second session's `database is locked`.**
-> 2. `internal/serve/mcp_singleton.go` — **coexist instead of supersede** when the incumbent
->    is genuinely alive (per-pid pidfile via a `coexistRelease` helper); **the load-bearing
->    fix for the transport close.**
-> 3. `internal/serve/mcp_watchdog.go` — only `os.Exit(0)` when reparented to init (ppid==1)
->    or the original parent is confirmed dead, not on any ppid change.
-> 4. `internal/serve/mcp_lifecycle.go` `handleRequest` — wrap dispatch in `recover()` as
->    defense-in-depth. **No panic path was found; this is not the fix for either report** —
->    ship it, but don't rely on it.
->
-> **Then follow `## Test Plan`** — especially the inverse-repro regression (two live daemons
-> sharing a parent + workspace must now **coexist**) and the index-concurrency test (a held
-> lock must no longer make `hero_search`/`hero_anchor` fail).
->
-> **Still open (capture, don't block the fix):** the exact Codex-host event that spawns the
-> second daemon during comparison queries is not yet observed. Set `HERO_MCP_DEBUG=1` and
-> reproduce in Codex to capture `.hero/mcp-debug.log` and confirm the trigger. The coexist
-> fix is correct regardless of which event spawns the second daemon.
->
-> Build target: `go build ./cmd/hero` (the CLI); the installed `~/go/bin/hero` that Codex
-> runs must be rebuilt/reinstalled to pick up the fix.
+**Status:** planning — design complete; implementation waits on the runner-authority decision.
+
+**Pick up at:** define `contracts/runtime` types, transition validation, JSON Schema, and golden fixtures before adapting existing stores.
+
+→ `.hero/planning/initiatives/always-on-runtime/job-run-contract-v1/spec.md`
+
+**Files:** `contracts/version.go`, `contracts/contracts_boundary_test.go`, `internal/serve/jobs.go`, `internal/runner/runner.go`, `../hero-cloud/cloud/internal/seam_smoke.go`
+
+---
+
+## always-on-runtime — "Always-On Runtime"
+_initiative · planning · horizon: now_
+
+_Run opener — arm with `/drive always-on-runtime`_
+
+Deliver the versioned runtime contracts and reliable local/self-hosted execution spine that hero-code and Hero Cloud can consume. The first milestone proves a scheduled local workflow can run while the desktop is closed and later replay its complete history.
 
 ---
 
@@ -452,6 +422,18 @@ _feature · planning · horizon: now_
 
 ---
 
+## hero-platform — Hero Platform — Headless Execution, Team Automation, and Shared Visibility
+_initiative · planning · horizon: next_
+
+_Run opener — arm with `/drive hero-platform`_
+
+Transform Hero from a single-session CLI into a platform that runs agent
+work headlessly, triggers automations from external events, coordinates
+team members across sessions, and surfaces everything through a visual
+dashboard. Same binary, new modes.
+
+---
+
 ## retrieval-quality — "Retrieval Quality — Reranking, Expansion & Feedback Loop"
 _initiative · planning · horizon: next_
 
@@ -466,18 +448,6 @@ chunking dilutes long sections, and there's no feedback loop to measure misses.
 This initiative is a **menu, not a commitment**. Each child spec is independently
 designable and deliverable. The team picks based on measured pain and available
 time.
-
----
-
-## hero-platform — Hero Platform — Headless Execution, Team Automation, and Shared Visibility
-_initiative · planning · horizon: next_
-
-_Run opener — arm with `/drive hero-platform`_
-
-Transform Hero from a single-session CLI into a platform that runs agent
-work headlessly, triggers automations from external events, coordinates
-team members across sessions, and surfaces everything through a visual
-dashboard. Same binary, new modes.
 
 ---
 

@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/hero-engine/hero/internal/config"
@@ -45,13 +47,31 @@ func (s *MCPServer) Run() error {
 	// cover. Same real-stdio gate so unit tests never touch the pidfile.
 	if s.input == os.Stdin {
 		ppid := os.Getppid()
-		if release, err := acquireMCPSingleton(mcpPIDFilePath(s.heroDir, ppid), os.Getpid(), ppid); err != nil {
+		var release func()
+		if r, err := acquireMCPSingleton(mcpPIDFilePath(s.heroDir, ppid), os.Getpid(), ppid); err != nil {
 			// Non-fatal: a pidfile problem must never stop us serving.
 			// Degrade to the pre-fix behavior (no dedup) rather than refuse.
 			fmt.Fprintf(os.Stderr, "hero mcp: singleton lock: %v\n", err)
 		} else {
+			release = r
 			defer release()
 		}
+
+		// A superseding daemon or the OS sends SIGTERM (SIGINT under a
+		// terminal). The default disposition is immediate death, which
+		// skips the deferred release() — leaking .hero/mcp-<ppid>.pid and,
+		// worse, abandoning any in-flight index transaction as a hot
+		// journal/WAL lock. Install a handler that runs release() before
+		// exiting so shutdown is clean on every death path.
+		sigCh := make(chan os.Signal, 1)
+		signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
+		go func() {
+			<-sigCh
+			if release != nil {
+				release()
+			}
+			os.Exit(0)
+		}()
 
 		done := make(chan struct{})
 		defer close(done)
@@ -87,6 +107,17 @@ func (s *MCPServer) Run() error {
 }
 
 func (s *MCPServer) handleRequest(req *JSONRPCRequest) {
+	// Defense in depth: a panic in any tool handler would otherwise
+	// unwind through Run()'s scan loop and crash the whole process —
+	// a "transport closed" for every tool, not just the failing call.
+	// Recover turns it into one JSON-RPC error and keeps serving. No
+	// panic trigger is known today; this is cheap insurance.
+	defer func() {
+		if r := recover(); r != nil {
+			s.logDebug("PANIC in %s: %v", req.Method, r)
+			s.sendError(req.ID, ErrCodeInternal, fmt.Sprintf("internal error: %v", r))
+		}
+	}()
 	switch req.Method {
 	case "initialize":
 		s.handleInitialize(req)

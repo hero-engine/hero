@@ -189,6 +189,76 @@ func rawID(id int) json.RawMessage {
 	return data
 }
 
+// panicOnceWriter panics on its first Write and behaves normally on every
+// subsequent one. It drives the handleRequest panic-recovery path: the first
+// response emission panics mid-dispatch, the deferred recover() catches it and
+// emits an error, and the loop must keep serving.
+type panicOnceWriter struct {
+	buf      bytes.Buffer
+	panicked bool
+}
+
+func (w *panicOnceWriter) Write(p []byte) (int, error) {
+	if !w.panicked {
+		w.panicked = true
+		panic("boom: injected panic during response emission")
+	}
+	return w.buf.Write(p)
+}
+
+// TestHandleRequest_RecoversPanicAndKeepsServing verifies the defense-in-depth
+// recover() in handleRequest: a panic while handling one request is converted
+// to a JSON-RPC ErrCodeInternal error, the process does NOT crash, and the
+// scan loop continues to serve the next request. Without the recover the panic
+// would unwind through Run() and close the transport for every tool.
+func TestHandleRequest_RecoversPanicAndKeepsServing(t *testing.T) {
+	srv := NewMCPServer(t.TempDir(), t.TempDir(), "1.0.0-test")
+
+	// Two ping requests. The first response emission panics (recovered →
+	// error), the second must be served normally, proving the loop survived.
+	var input bytes.Buffer
+	for _, id := range []int{1, 2} {
+		data, _ := json.Marshal(JSONRPCRequest{
+			JSONRPC: "2.0",
+			ID:      rawID(id),
+			Method:  "ping",
+		})
+		input.Write(data)
+		input.WriteByte('\n')
+	}
+
+	out := &panicOnceWriter{}
+	srv.SetIO(&input, out)
+
+	if err := srv.Run(); err != nil {
+		t.Fatalf("Run returned error (loop crashed instead of recovering): %v", err)
+	}
+
+	var resps []JSONRPCResponse
+	for _, line := range strings.Split(strings.TrimSpace(out.buf.String()), "\n") {
+		if line == "" {
+			continue
+		}
+		var resp JSONRPCResponse
+		if err := json.Unmarshal([]byte(line), &resp); err != nil {
+			t.Fatalf("unmarshal response line: %v\nraw: %s", err, line)
+		}
+		resps = append(resps, resp)
+	}
+
+	if len(resps) != 2 {
+		t.Fatalf("expected 2 responses (recovered error + served ping), got %d: %s", len(resps), out.buf.String())
+	}
+	// First: the recovered panic became a structured internal error.
+	if resps[0].Error == nil || resps[0].Error.Code != ErrCodeInternal {
+		t.Fatalf("first response should be ErrCodeInternal (%d), got: %+v", ErrCodeInternal, resps[0])
+	}
+	// Second: the loop kept serving — a normal ping result.
+	if resps[1].Error != nil {
+		t.Fatalf("second ping should have served normally, got error: %+v", resps[1].Error)
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Protocol tests
 // ---------------------------------------------------------------------------

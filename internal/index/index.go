@@ -76,12 +76,23 @@ func Open(heroDir string) (*DB, error) {
 		return nil, fmt.Errorf("creating hero directory: %w", err)
 	}
 
-	db, err := sql.Open("sqlite", dbPath)
+	// _pragma=busy_timeout makes contended opens/queries WAIT (up to 5s)
+	// instead of failing instantly with SQLITE_BUSY; journal_mode=WAL lets
+	// readers proceed while a writer (a `hero next ingest` hook, a second
+	// daemon, or `hero index`) holds the DB. The graph already runs in WAL
+	// (internal/graph/graph.go); the index did not, so concurrent `hero`
+	// processes hit `database is locked`. modernc.org/sqlite applies
+	// _pragma params on every pooled connection (and orders busy_timeout
+	// first), so the timeout reliably covers all connections — unlike a
+	// single Exec, which only touches one connection in the pool.
+	db, err := sql.Open("sqlite", dbPath+"?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)")
 	if err != nil {
 		return nil, fmt.Errorf("opening index database: %w", err)
 	}
 
-	// Enable foreign keys
+	// Enable foreign keys (WAL + busy_timeout come from the DSN above and
+	// apply per-connection; foreign_keys is likewise a per-connection flag,
+	// but the index has always set it here, so keep it explicit).
 	if _, err := db.Exec("PRAGMA foreign_keys = ON"); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("enabling foreign keys: %w", err)

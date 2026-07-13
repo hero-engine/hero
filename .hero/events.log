@@ -329,3 +329,5 @@
 {"ts":"2026-07-13T18:55:30.737409Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"doctor-routing-guidance-all-packs","message":"status -\u003e completed"}
 {"ts":"2026-07-13T19:13:31.486293Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-docs-check-engine-repo-misfire","message":"\"hero docs check reports actual:0 in the engine repo, and GETTING-STARTED.md counts are stale\""}
 {"ts":"2026-07-13T19:13:31.486369Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-docs-check-engine-repo-misfire","message":"status -\u003e completed"}
+{"ts":"2026-07-13T20:23:22.056442Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"mcp-transport-closes-midsession-supersede","message":"\"Hero MCP transport closes mid-session in Codex — singleton supersede / process-lifecycle guards kill the live daemon\""}
+{"ts":"2026-07-13T20:23:22.056567Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"mcp-transport-closes-midsession-supersede","message":"status -\u003e completed"}
