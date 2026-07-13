@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-13T19:08:56Z
+updated: 2026-07-13T19:13:31Z
 repo: hero-engine/hero
 ---
 
@@ -10,7 +10,7 @@ repo: hero-engine/hero
 
 > have a new error in a chat session in codex - Hero’s in-process search transport closed on the comparison queries, so I’m switching to the local Hero CLI for this read-only inventory
 
-_possibly stale — 2 commit(s) since, last set 23m ago_
+_possibly stale — 3 commit(s) since, last set 28m ago_
 
 ## Suggested next prompt
 
