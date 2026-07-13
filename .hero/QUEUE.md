@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-13T17:06:35Z · 75 ready specs_
+_Generated: 2026-07-13T18:17:40Z · 77 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -40,6 +40,34 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · in-review · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-idea-primitive-core/spec.md)_
+
+---
+
+## doctor-routing-guidance-all-packs — "Extend hero doctor / MCP-surface routing guidance to all domain packs (pm, sales, chat)"
+_enhancement · planning · horizon: now_
+
+v0.25.0 added "prefer the MCP surface; run `hero doctor` on version/schema confusion, not a migration story" guidance to the **engineering** pack only. The `pm`/`sales`/`chat` packs have independent AGENTS.md bodies and didn't get it.
+
+**Status:** planning — a disclosed, deliberately-deferred scope item from `agent-hero-version-schema-confusion`.
+
+**Pick up at:** find the per-pack AGENTS.md body generators in `internal/install/` (grep `generate*AgentsMdBody`) and the `domains/{pm,sales,chat}/AGENTS.md` mirrors + regen path. Add the same routing paragraph used in `generateEngineeringAgentsMdBody` to each, mirror it, and extend `TestHarnessNative_DoctorRoutingGuidanceAllTargets` to assert per-pack × per-target coverage.
+
+**Files:** `internal/install/agents_md.go` (+ any per-pack body generators), `domains/pm/AGENTS.md`, `domains/sales/AGENTS.md`, `domains/chat/AGENTS.md`, `internal/install/harness_native_test.go`.
+**Skip:** touching the engineering pack (done); adding any new guidance beyond the doctor/MCP-surface routing.
+
+---
+
+## hero-docs-check-engine-repo-misfire — "hero docs check reports actual:0 in the engine repo, and GETTING-STARTED.md counts are stale"
+_bug · planning · horizon: now_
+
+`hero docs check` reports `actual: 0` agents/skills in the engine repo (it assumes an installed harness layout; sources here live under `core/` + `domains/*`), and GETTING-STARTED.md counts drifted (claims 34 agents/27 commands/45 skills; actual ≈ 35/29/55).
+
+**Status:** planning — diagnosed during v0.25.0 release pre-flight; did not block that release.
+
+**Pick up at:** find the `hero docs check` implementation (grep "Documentation freshness check" in `internal/`) and the install-manifest enumeration (`internal/install/`, `internal/cli/install.go`). Add an engine-repo/source-layout counting mode that counts the canonical deduped install set (reuse the manifest logic so checker and install can't diverge), then refresh GETTING-STARTED.md + README.md counts from the fixed checker's output. Add a test for the engine-repo counting path.
+
+**Files:** `internal/install/`, `internal/cli/install.go`, `GETTING-STARTED.md`, `README.md`, wherever `docs check` is registered.
+**Skip:** raw recursive `find` counts (89/83/213 — inflated by `.claude`/`.codex`/`web/docs/site` mirrors); the canonical number is the deduped install manifest.
 
 ---
 
