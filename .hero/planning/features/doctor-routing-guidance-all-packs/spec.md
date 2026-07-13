@@ -2,7 +2,7 @@
 title: "Extract hero doctor / MCP-surface routing guidance into a shared domain-agnostic section"
 slug: doctor-routing-guidance-all-packs
 type: enhancement
-status: planning
+status: delivering
 priority: low
 domain: engineering
 created: 2026-07-13
@@ -55,6 +55,24 @@ The version/schema confusion is domain- and harness-agnostic: any agent in any d
 - This is a small refactor + coverage win, not new behavior. It corrects the placement from `agent-hero-version-schema-confusion` (which shipped it engineering-only under time pressure) rather than piling a second copy on top.
 - Governed by tripwire `harness-changes-cover-all-targets` — trivially satisfied here because a single `defaultSections` contributor is inherently all-target and all-domain.
 - Watch the managed-region diff/drift machinery: adding/removing a section changes the managed block; make sure `hero upgrade` on an existing install cleanly reconciles (the section add + the engineering-body removal net out to the same rendered text, so a re-install/upgrade should be a no-op in content for engineering and an addition for the other packs).
+
+## Completion Ledger
+
+Delivered on branch `fix/agent-hero-version-schema-confusion`. `go build ./cmd/hero/` OK; `go test ./internal/install/... ./internal/snapshot/...` green; `go vet` clean on touched packages.
+
+| Acceptance criterion | Status | Evidence |
+|---|---|---|
+| Guidance authored in exactly one place | DONE | `internal/install/operational_guidance.go` const `heroOperationalGuidance`; grep across `*.go` finds only the section def + tests; 0 occurrences in `agents_md.go`. |
+| Renders for all 4 domains × 6 targets | DONE | `TestHarnessNative_DoctorRoutingGuidanceAllTargets` — 24 subtests PASS; wired via `defaultSections` (`agents_md.go:216`), shared by AGENTS.md + CLAUDE.md callers. |
+| Removed from engineering body + mirror | DONE | Block deleted from `generateEngineeringAgentsMdBody`; `domains/engineering/AGENTS.md` regenerated (`HERO_REGEN_PACK_AGENTS=1`); `TestEngineeringBodyOmitsOperationalGuidance` PASS. |
+| Future/unknown domain inherits automatically | DONE | `TestHarnessNative_OperationalGuidanceFallbackDomain` (`--domain widgets`, no own AGENTS.md → engineering fallback body) PASS. |
+| Byte-stability tests green | DONE | `TestHarnessNative_SameManagedBody`, `TestEngineeringPackBodyMatchesGoFallback` PASS. |
+
+**Changes:** new `internal/install/operational_guidance.go` (+ `_test.go`); `internal/install/agents_md.go` (`defaultSections` wiring, engineering-body paragraph removed); `internal/install/harness_native_test.go` (repointed matrix + 2 new tests); `domains/engineering/AGENTS.md` (regenerated mirror).
+
+**Exercised:** real `hero install` — engineering CLAUDE.md renders the guidance **exactly once** (marker count 1, heading `## Hero Binary & MCP Surface` count 1, 0 before the section); `--domain pm` CLAUDE.md **now carries** it (count 1) where it previously did not.
+
+**Note:** `chat` is deliberately non-installable (no `DomainFS` case, `content.go:9-21`); its coverage runs through the on-disk `domains/chat/AGENTS.md` via the `AgentsMdBodyOverride` seam. The shared-section wiring covers it automatically if/when it becomes installable.
 
 ## Kickoff
 

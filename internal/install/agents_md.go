@@ -206,12 +206,15 @@ func ApplyOrphanInstructionFilePolicy(opts Options, fileName string, prune bool)
 }
 
 // defaultSections returns the canonical section contributor order for
-// the consolidated managed region: install body first, snapshot pointer
-// last. All callers (AGENTS.md, CLAUDE.md) use this same ordering so
-// the managed block is identical across files.
+// the consolidated managed region: install body first, then the shared
+// domain-agnostic operational guidance, then the snapshot pointer last.
+// All callers (AGENTS.md, CLAUDE.md) use this same ordering so the managed
+// block is identical across files, and every domain pack (current and
+// future) inherits the operational guidance for free.
 func defaultSections(opts Options, filePath string) []managed.SectionContributor {
 	return []managed.SectionContributor{
 		newAgentsMdBodySection(opts),
+		newHeroOperationalGuidanceSection(),
 		snapshot.NewPointerSection(filePath, snapshotPointerRelativePath(opts, filePath)),
 	}
 }
@@ -672,7 +675,6 @@ func generateEngineeringAgentsMdBody(paths contentPathsForBody) string {
 	sb.WriteString("| Broad exploration across many files | a context-protective read-only search subagent, where your harness provides one (e.g. Claude Code's `Explore` agent); otherwise `rg` + targeted reads |\n\n")
 	sb.WriteString("**Rule of thumb:** graph- or spec-shaped questions → Hero MCP tools (`hero_*` — on Claude Code these surface as `mcp__hero__<name>`). String-shaped → grep. File-shaped → Read. Don't reach for `grep` on `.hero/` to answer \"does spec X exist?\" — substring search only finds *literal matches*, not *semantically related* specs (e.g. a spec slugged `domain-routing-and-agents` is the same concept as \"domain swap\" but won't match either word as a phrase).\n\n")
 	sb.WriteString("Some harnesses defer MCP tool schemas behind a one-time lookup before the tool is callable — e.g. Claude Code's `ToolSearch`. The load is one round-trip and worth it; it's not a reason to fall back to a weaker tool.\n\n")
-	sb.WriteString("**Prefer Hero's MCP tools over shelling out to a bare `hero` in a terminal.** A GUI-launched harness can resolve a *different or stale* `hero` binary on its PATH than your login shell does; the MCP surface is the in-process Hero you're already connected to, so it can't drift out from under you. When you must use the CLI and hit a schema/version mismatch or a confusing `hero` version error, **run `hero doctor` and act on its output** — it reports which binary is actually on PATH, its schema, the graph's schema, and the real remediation. Do NOT invent a schema-migration narrative, and do NOT run `hero upgrade` to \"fix schema\": `hero upgrade` updates workspace files, not the binary, so it cannot fix a wrong-binary-on-PATH situation.\n\n")
 
 	sb.WriteString("### Important Rules\n\n")
 	sb.WriteString("- **Don't assume.** Surface tradeoffs and ask questions if anything is unclear. Present multiple interpretations instead of picking one silently.\n")
