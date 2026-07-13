@@ -30,6 +30,12 @@ jobs:
 
       - run: pip install -r requirements-docs.txt
 
+      - name: Generate release notes page
+        working-directory: web/docs
+        run: python scripts/generate_release_notes.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build docs
         working-directory: web/docs
         run: mkdocs build --strict

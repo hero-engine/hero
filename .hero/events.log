@@ -321,3 +321,5 @@
 {"ts":"2026-07-12T19:59:18.379135Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"harness-native-install-target-aware-upgrade","message":"status -\u003e completed"}
 {"ts":"2026-07-12T22:47:43.401398Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"next-context-carry-forward-drift","message":"\"NEXT.md projection drift gate still unwinnable — ## Context to carry forward (and ## Next) rank on volatile graph ingested_at\""}
 {"ts":"2026-07-12T22:47:43.401504Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-context-carry-forward-drift","message":"status -\u003e completed"}
+{"ts":"2026-07-13T00:22:46.740412Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"release-notes-page","message":"\"Release Notes Page — Left-Nav Release History for docs.heroengine.ai\""}
+{"ts":"2026-07-13T00:22:46.740483Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"release-notes-page","message":"status -\u003e completed"}

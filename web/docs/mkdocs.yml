@@ -38,6 +38,7 @@ theme:
     - content.code.copy
     - content.tabs.link
     - toc.follow
+    - toc.integrate
   icon:
     repo: fontawesome/brands/github
 
@@ -106,3 +107,4 @@ nav:
     - Tracker Setup: configuration/tracker-setup.md
     - MCP Setup: configuration/mcp-setup.md
   - Project Structure: project-structure.md
+  - Releases: releases/index.md
