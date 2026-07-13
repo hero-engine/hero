@@ -99,6 +99,25 @@ class FormatReleaseSectionTests(unittest.TestCase):
             rendered, "## v0.22.0 — 2026-05-28\n\n### Changes\n\n- feat(x): thing\n"
         )
 
+    def test_bullet_mentioning_hero_command_carries_drift_ignore_marker(self):
+        # Verbatim commit subjects that mention a `hero <command>` sequence
+        # must not be treated as prescriptive CLI examples by the markdown
+        # drift gate — the generator marks the line so the gate skips it.
+        sections = {
+            "Changes": [
+                "feat(verify): hero verify becomes the load-bearing checkpoint",
+                "fix(build): tighten packaging step",
+            ]
+        }
+        rendered = gen.format_release_section("v0.16.3", "2026-06-06T00:00:00Z", sections)
+        self.assertEqual(
+            rendered,
+            "## v0.16.3 — 2026-06-06\n\n### Changes\n\n"
+            "- feat(verify): hero verify becomes the load-bearing checkpoint "
+            "<!-- drift-test:ignore -->\n"
+            "- fix(build): tighten packaging step\n",
+        )
+
 
 class SortReleasesNewestFirstTests(unittest.TestCase):
     def test_sorts_by_published_at_descending(self):

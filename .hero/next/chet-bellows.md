@@ -1,20 +1,32 @@
 ---
 user: chet-bellows
-updated: 2026-07-13T16:38:50Z
+updated: 2026-07-13T16:56:34Z
 repo: hero-engine/hero
 ---
 
 # chet-bellows's handoff
 
+## Session goal
+
+> Session opened with — so - using hero on a project - first thing i got is this: hero resume is blocked by a local graph schema mismatch: the installed CLI understands schema 2 while this workspace graph is schema 4. I’m checking whether the repository’s current binary can read it; I won’t modify or downgrade the graph to work around that mismatch.
+> then i stopped it - and ran a hero upgrade - and got this: 
+> The up…
+
+_possibly stale — 1 commit(s) since, last set 17m ago_
+
 ## Last user ask
 
 > so - using hero on a project - first thing i got is this: hero resume is blocked by a local graph schema mismatch: the installed CLI understands schema 2 while this workspace graph is schema 4. I’m checking whether the repository’s current binary can read it; I won’t modify or downgrade the graph to work around that mismatch.
-> then i stopped it - and ran a hero upgrade - and got this: 
+> then i stopped it - and ran a hero upgrade - and got this:
 > The up…
 
 ## Suggested next prompt
 
-> Close the open repro on agent-hero-version-schema-confusion: run `hero doctor` inside a Codex terminal session in hero-code and read its PATH-divergence verdict + capture the literal db=X binary=Y error — confirms which stale binary Codex binds.
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 

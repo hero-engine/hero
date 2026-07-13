@@ -57,6 +57,19 @@ _KNOWN_GROUP_TITLES = {"major features": "Major Features", "fixes": "Fixes"}
 _HEADING_RE = re.compile(r"^#{2,4}\s+(.+?)\s*$")
 _BULLET_RE = re.compile(r"^[-*]\s+(.*\S)\s*$")
 
+# Changelog bullets are verbatim commit subjects, not prescriptive CLI docs.
+# Many mention a `hero <command>` sequence in prose ("hero verify becomes the
+# load-bearing checkpoint", "hero peer ... --peer fallback"), and some name
+# commands that have since been renamed. The markdown drift gate
+# (internal/cli/markdown_drift_test.go's
+# TestMarkdownInvocationsResolveAgainstRootCmd) scans this generated page and
+# tries to resolve every such sequence against the live CLI tree, so those
+# historical, unfixable subjects would fail it. Bullets that mention a hero
+# command therefore carry the gate's documented per-line ignore marker; the
+# HTML comment is invisible in rendered output.
+_HERO_INVOCATION_RE = re.compile(r"\bhero\s+[a-z]")
+DRIFT_IGNORE_MARKER = "<!-- drift-test:ignore -->"
+
 PAGE_HEADER = """# Releases
 
 Every release published to `hero-engine/hero-releases`, generated
@@ -107,6 +120,18 @@ def format_release_date(published_at: str) -> str:
     return published_at.split("T", 1)[0]
 
 
+def format_bullet(bullet: str) -> str:
+    """Render one changelog bullet, appending the markdown drift gate's ignore
+    marker when the commit subject mentions a ``hero <command>`` sequence.
+
+    See ``_HERO_INVOCATION_RE`` for why these verbatim subjects must be exempt
+    from CLI-invocation resolution.
+    """
+    if _HERO_INVOCATION_RE.search(bullet):
+        return f"- {bullet} {DRIFT_IGNORE_MARKER}"
+    return f"- {bullet}"
+
+
 def format_release_section(
     tag_name: str, published_at: str, sections: "dict[str, list[str]]"
 ) -> str:
@@ -118,7 +143,7 @@ def format_release_section(
         lines.append(f"### {title}")
         lines.append("")
         for bullet in bullets:
-            lines.append(f"- {bullet}")
+            lines.append(format_bullet(bullet))
         lines.append("")
 
     return "\n".join(lines).rstrip() + "\n"
