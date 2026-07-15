@@ -62,8 +62,15 @@ func parseLedgerContent(content string) LedgerResult {
 	var currentName string
 	var currentBody strings.Builder
 
+	var fence fenceTracker
 	for _, line := range strings.Split(content, "\n") {
 		trimmed := strings.TrimSpace(line)
+		// A `### ` inside a fenced block is quoted, not a sub-section break.
+		if fence.mark(line) || fence.inCode() {
+			currentBody.WriteString(line)
+			currentBody.WriteString("\n")
+			continue
+		}
 		if strings.HasPrefix(trimmed, "### ") {
 			if currentName != "" {
 				subs = append(subs, subSection{currentName, currentBody.String()})
