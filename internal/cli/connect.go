@@ -2,15 +2,19 @@ package cli
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
 
 var connectCmd = &cobra.Command{
@@ -38,10 +42,18 @@ Non-secret config (type, project, base_url) is written to hero.json if not alrea
 }
 
 var (
-	connectList    bool
-	connectRemove  string
-	connectGlobal  bool
-	connectProject string
+	connectList          bool
+	connectRemove        string
+	connectGlobal        bool
+	connectProject       string
+	connectIntegrationID string
+	connectRole          string
+	connectBaseURL       string
+	connectUserEmail     string
+	connectTokenStdin    bool
+	connectLocalOnly     bool
+	connectJSON          bool
+	connectNoVerify      bool
 )
 
 func init() {
@@ -49,9 +61,22 @@ func init() {
 	connectCmd.Flags().StringVar(&connectRemove, "remove", "", "remove connection for the given tracker type")
 	connectCmd.Flags().BoolVar(&connectGlobal, "global", false, "save token to global credentials (~/.config/hero/credentials.json) instead of hero.local.json")
 	connectCmd.Flags().StringVar(&connectProject, "project", "", "project identifier (used with --remove)")
+	addIntegrationConnectFlags(connectCmd)
+}
+
+func addIntegrationConnectFlags(c *cobra.Command) {
+	c.Flags().StringVar(&connectIntegrationID, "integration-id", "", "stable integration ID")
+	c.Flags().StringVar(&connectRole, "role", "delivery", "selection role (delivery, docs, roadmap)")
+	c.Flags().StringVar(&connectBaseURL, "base-url", "", "provider base URL")
+	c.Flags().StringVar(&connectUserEmail, "user-email", "", "provider user email")
+	c.Flags().BoolVar(&connectTokenStdin, "token-stdin", false, "read token from protected standard input (never argv)")
+	c.Flags().BoolVar(&connectLocalOnly, "local-only", false, "write the complete integration and selectors only to hero.local.json")
+	c.Flags().BoolVar(&connectJSON, "json", false, "emit machine-readable redacted status")
+	c.Flags().BoolVar(&connectNoVerify, "no-verify", false, "save without a provider network verification")
 }
 
 func runConnect(cmd *cobra.Command, args []string) error {
+	connectInput = bufio.NewReader(cmd.InOrStdin())
 	projectRoot := findProjectRoot()
 
 	creds, err := config.LoadCredentials()
@@ -60,7 +85,7 @@ func runConnect(cmd *cobra.Command, args []string) error {
 	}
 
 	if connectList {
-		return runConnectList(creds)
+		return runConnectList(cmd.OutOrStdout(), projectRoot, creds)
 	}
 
 	if connectRemove != "" {
@@ -72,6 +97,9 @@ func runConnect(cmd *cobra.Command, args []string) error {
 	}
 
 	trackerType := strings.ToLower(args[0])
+	if connectIntegrationID != "" || connectTokenStdin || connectProject != "" || connectBaseURL != "" || connectLocalOnly {
+		return runConnectNonInteractive(cmd, projectRoot, creds, trackerType)
+	}
 	switch trackerType {
 	case "github":
 		return runConnectGitHub(projectRoot, creds)
@@ -92,28 +120,188 @@ func runConnect(cmd *cobra.Command, args []string) error {
 // --list
 // ---------------------------------------------------------------------------
 
-func runConnectList(creds config.Credentials) error {
-	if len(creds) == 0 {
-		fmt.Println("No connections saved in", config.CredentialsPath())
-		fmt.Println("Run 'hero connect <type>' to set one up.")
+func runConnectList(w io.Writer, root string, creds config.Credentials) error {
+	type row struct {
+		ID               string            `json:"id"`
+		Provider         string            `json:"provider"`
+		Default          bool              `json:"default"`
+		Roles            []string          `json:"roles"`
+		CredentialSource string            `json:"credential_source"`
+		Ready            bool              `json:"ready"`
+		Verified         string            `json:"verification"`
+		Sources          map[string]string `json:"sources"`
+	}
+	rows := []row{}
+	cfg, err := config.Load(root)
+	if err != nil {
+		return err
+	}
+	if cfg.Integrations != nil {
+		for _, id := range config.SortedConnectionIDs(cfg.Integrations) {
+			x := cfg.Integrations.Connections[id]
+			rr := row{ID: id, Provider: x.Provider, Default: cfg.Integrations.Default == id, Verified: "not-checked", Sources: map[string]string{}}
+			prefix := "$.integrations.connections." + id
+			for path, src := range cfg.IntegrationProvenance {
+				if strings.HasPrefix(path, prefix) || path == "$.integrations.default" {
+					layer := "project"
+					if strings.HasSuffix(src.File, config.LocalConfigFileName) {
+						layer = "local"
+					}
+					rr.Sources[path] = layer
+				}
+			}
+			for role, v := range cfg.Integrations.Roles {
+				if v == id {
+					rr.Roles = append(rr.Roles, role)
+				}
+			}
+			sort.Strings(rr.Roles)
+			tokenPath := prefix + ".auth.token"
+			_, tokenFromWorkspace := cfg.IntegrationProvenance[tokenPath]
+			if x.Auth != nil && x.Auth.Token != "" && tokenFromWorkspace {
+				rr.Ready = true
+				rr.CredentialSource = "local"
+			} else if _, ok := creds[config.IntegrationCredentialKey(id)]; ok {
+				rr.Ready = true
+				rr.CredentialSource = "global"
+			} else if x.Auth != nil && x.Auth.TokenEnv != "" {
+				rr.Ready = os.Getenv(x.Auth.TokenEnv) != ""
+				rr.CredentialSource = "environment:" + x.Auth.TokenEnv
+			} else if x.Auth != nil && x.Auth.Token != "" {
+				rr.Ready = true
+				rr.CredentialSource = "global-legacy"
+			} else {
+				rr.CredentialSource = "missing"
+			}
+			rows = append(rows, rr)
+		}
+	}
+	if connectJSON {
+		b, _ := json.MarshalIndent(map[string]any{"integrations": rows}, "", "  ")
+		fmt.Fprintln(w, string(b))
 		return nil
 	}
-	fmt.Printf("Saved connections (%s):\n\n", config.CredentialsPath())
-	for key, entry := range creds {
-		parts := strings.SplitN(key, ":", 2)
-		trackerType := key
-		project := ""
-		if len(parts) == 2 {
-			trackerType = parts[0]
-			project = parts[1]
+	if len(rows) == 0 {
+		fmt.Fprintln(w, "No project integrations configured. Run 'hero connect <provider> --integration-id <id> --project <project> --token-stdin'.")
+		return nil
+	}
+	for _, r := range rows {
+		fmt.Fprintf(w, "%-24s provider=%-10s ready=%t source=%s", r.ID, r.Provider, r.Ready, r.CredentialSource)
+		if r.Default {
+			fmt.Fprint(w, " default")
 		}
-		fmt.Printf("  %-12s  %-30s  token: %s\n", trackerType, project, maskToken(entry.Token))
-		if entry.BaseURL != "" {
-			fmt.Printf("  %12s  base_url: %s\n", "", entry.BaseURL)
+		if len(r.Roles) > 0 {
+			fmt.Fprintf(w, " roles=%s", strings.Join(r.Roles, ","))
 		}
+		fmt.Fprintln(w)
 	}
 	return nil
 }
+
+func runConnectNonInteractive(cmd *cobra.Command, root string, creds config.Credentials, provider string) error {
+	if !providersCLI[provider] {
+		return fmt.Errorf("unknown provider %q", provider)
+	}
+	id := connectIntegrationID
+	if id == "" {
+		id = canonicalIntegrationID(provider, connectProject)
+	}
+	if connectProject == "" {
+		return fmt.Errorf("--project is required for non-interactive connect")
+	}
+	token := ""
+	if connectTokenStdin {
+		b, err := io.ReadAll(cmd.InOrStdin())
+		if err != nil {
+			return fmt.Errorf("reading protected token stdin: %w", err)
+		}
+		token = strings.TrimSpace(string(b))
+		if token == "" {
+			return fmt.Errorf("protected token input was empty")
+		}
+	}
+	if token == "" && !connectGlobal {
+		return fmt.Errorf("no credential supplied; use --token-stdin, --global with an existing credential, or configure auth.token_env")
+	}
+	if token == "" && connectGlobal {
+		if _, ok := creds[config.IntegrationCredentialKey(id)]; !ok {
+			return fmt.Errorf("no global credential exists for integration %q; pipe one with --token-stdin", id)
+		}
+	}
+	if token != "" && !connectNoVerify {
+		var verr error
+		switch provider {
+		case "github":
+			verr = verifyGitHubToken(connectProject, token)
+		case "jira":
+			verr = verifyJiraToken(connectBaseURL, connectProject, connectUserEmail, token)
+		case "linear":
+			verr = verifyLinearToken(connectProject, token)
+		case "gitlab":
+			verr = verifyGitLabToken(connectBaseURL, connectProject, token)
+		case "confluence":
+			verr = verifyConfluenceToken(connectBaseURL, connectProject, connectUserEmail, token)
+		}
+		if verr != nil {
+			return fmt.Errorf("could not verify %s integration %q: %w", provider, id, verr)
+		}
+	}
+	settings := map[string]any{"project": connectProject}
+	if provider == "confluence" {
+		delete(settings, "project")
+		settings["space_key"] = connectProject
+	}
+	if connectBaseURL != "" {
+		settings["base_url"] = connectBaseURL
+	}
+	if connectUserEmail != "" {
+		settings["user_email"] = connectUserEmail
+	}
+	role := connectRole
+	if provider == "confluence" && role == "delivery" {
+		role = "docs"
+	}
+	connection := map[string]any{"provider": provider, "settings": settings}
+	if connectLocalOnly {
+		connection["auth"] = map[string]any{"token": token}
+		p, _ := json.Marshal(map[string]any{"default": id, "roles": map[string]any{role: id}, "connections": map[string]any{id: connection}})
+		if err := config.PatchLocalIntegrations(root, config.DefaultFolder, p); err != nil {
+			return err
+		}
+	} else {
+		p, _ := json.Marshal(map[string]any{"default": id, "roles": map[string]any{role: id}, "connections": map[string]any{id: connection}})
+		if err := config.PatchCommittedIntegrations(root, config.DefaultFolder, p); err != nil {
+			return err
+		}
+		if token != "" {
+			if connectGlobal {
+				config.SetIntegrationCredential(creds, id, config.CredentialEntry{Token: token, BaseURL: connectBaseURL, UserEmail: connectUserEmail})
+				if err := config.SaveCredentials(creds); err != nil {
+					return err
+				}
+			} else {
+				p, _ := json.Marshal(map[string]any{"connections": map[string]any{id: map[string]any{"auth": map[string]any{"token": token}}}})
+				if err := config.PatchLocalIntegrations(root, config.DefaultFolder, p); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	verification := "verified"
+	if connectNoVerify {
+		verification = "not-checked"
+	}
+	result := map[string]any{"id": id, "provider": provider, "role": role, "ready": token != "" || connectGlobal, "verification": verification}
+	if connectJSON {
+		b, _ := json.Marshal(result)
+		fmt.Fprintln(cmd.OutOrStdout(), string(b))
+	} else {
+		fmt.Fprintf(cmd.OutOrStdout(), "Connected integration %s (%s). Inspect with 'hero connect --list'.\n", id, provider)
+	}
+	return nil
+}
+
+var providersCLI = map[string]bool{"github": true, "jira": true, "linear": true, "gitlab": true, "confluence": true}
 
 // ---------------------------------------------------------------------------
 // --remove
@@ -168,7 +356,7 @@ func runConnectGitHub(projectRoot string, creds config.Credentials) error {
 
 	token := promptSecret("Personal access token (needs 'repo' scope): ")
 	if token == "" {
-		return fmt.Errorf("token is required")
+		return fmt.Errorf("secure terminal token input unavailable or empty; retry in a TTY or use --token-stdin")
 	}
 
 	fmt.Println()
@@ -210,7 +398,7 @@ func runConnectJira(projectRoot string, creds config.Credentials) error {
 
 	token := promptSecret("API token (from https://id.atlassian.com/manage-profile/security/api-tokens): ")
 	if token == "" {
-		return fmt.Errorf("token is required")
+		return fmt.Errorf("secure terminal token input unavailable or empty; retry in a TTY or use --token-stdin")
 	}
 
 	fmt.Println()
@@ -241,7 +429,7 @@ func runConnectLinear(projectRoot string, creds config.Credentials) error {
 
 	token := promptSecret("API key (from https://linear.app/settings/api): ")
 	if token == "" {
-		return fmt.Errorf("token is required")
+		return fmt.Errorf("secure terminal token input unavailable or empty; retry in a TTY or use --token-stdin")
 	}
 
 	fmt.Println()
@@ -278,7 +466,7 @@ func runConnectGitLab(projectRoot string, creds config.Credentials) error {
 
 	token := promptSecret("Personal/Project access token (needs 'api' scope): ")
 	if token == "" {
-		return fmt.Errorf("token is required")
+		return fmt.Errorf("secure terminal token input unavailable or empty; retry in a TTY or use --token-stdin")
 	}
 
 	fmt.Println()
@@ -317,7 +505,7 @@ func runConnectConfluence(projectRoot string, creds config.Credentials) error {
 
 	token := promptSecret("API token: ")
 	if token == "" {
-		return fmt.Errorf("token is required")
+		return fmt.Errorf("secure terminal token input unavailable or empty; retry in a TTY or use --token-stdin")
 	}
 
 	fmt.Println()
@@ -339,46 +527,17 @@ func runConnectConfluence(projectRoot string, creds config.Credentials) error {
 
 // saveConnection persists the credential and updates hero.json / hero.local.json.
 func saveConnection(projectRoot string, creds config.Credentials, trackerType, project string, entry config.CredentialEntry, baseURL, userEmail string) error {
+	integrationID := canonicalIntegrationID(trackerType, project)
 	if connectGlobal {
 		// Save to global credentials file
-		config.SetCredential(creds, trackerType, project, entry)
+		config.SetIntegrationCredential(creds, integrationID, entry)
 		if err := config.SaveCredentials(creds); err != nil {
 			return fmt.Errorf("saving credentials: %w", err)
 		}
 		fmt.Printf("Token saved to %s\n", config.CredentialsPath())
 	} else {
-		// Save to project-local hero.local.json
-		cfg, err := config.Load(projectRoot)
-		if err != nil {
-			return fmt.Errorf("loading config: %w", err)
-		}
-
-		folder := cfg.Folder
-		if folder == "" {
-			folder = config.DefaultFolder
-		}
-
-		var local config.Config
-		if trackerType == "confluence" {
-			local.Confluence = &config.ConfluenceConfig{
-				Token: entry.Token,
-			}
-			if baseURL != "" {
-				local.Confluence.BaseURL = baseURL
-			}
-			if userEmail != "" {
-				local.Confluence.UserEmail = userEmail
-			}
-		} else {
-			local.Tracker = &config.TrackerConfig{
-				Token: entry.Token,
-			}
-			if userEmail != "" {
-				local.Tracker.UserEmail = userEmail
-			}
-		}
-
-		if err := config.SaveLocal(projectRoot, folder, local); err != nil {
+		patch, _ := json.Marshal(map[string]any{"connections": map[string]any{integrationID: map[string]any{"auth": map[string]any{"token": entry.Token}}}})
+		if err := config.PatchLocalIntegrations(projectRoot, config.DefaultFolder, patch); err != nil {
 			return fmt.Errorf("saving hero.local.json: %w", err)
 		}
 		fmt.Printf("Token saved to .hero/hero.local.json\n")
@@ -393,58 +552,35 @@ func saveConnection(projectRoot string, creds config.Credentials, trackerType, p
 	return nil
 }
 
+var nonID = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
+
+func canonicalIntegrationID(provider, project string) string {
+	v := strings.Trim(nonID.ReplaceAllString(strings.ToLower(project), "-"), "-")
+	if v == "" {
+		v = "default"
+	}
+	return provider + "-" + v
+}
+
 // updateHeroJSON writes non-secret tracker/confluence config to hero.json if not already set.
 func updateHeroJSON(projectRoot, trackerType, project, baseURL, userEmail string) error {
-	cfg, err := config.Load(projectRoot)
-	if err != nil {
-		// No hero.json yet — not an error, nothing to update
-		return nil
+	id := canonicalIntegrationID(trackerType, project)
+	settings := map[string]any{}
+	if baseURL != "" {
+		settings["base_url"] = baseURL
 	}
-
-	changed := false
-
+	if userEmail != "" {
+		settings["user_email"] = userEmail
+	}
+	role := "delivery"
 	if trackerType == "confluence" {
-		if cfg.Confluence == nil {
-			cfg.Confluence = &config.ConfluenceConfig{}
-		}
-		if cfg.Confluence.SpaceKey == "" {
-			cfg.Confluence.SpaceKey = project
-			changed = true
-		}
-		if baseURL != "" && cfg.Confluence.BaseURL == "" {
-			cfg.Confluence.BaseURL = baseURL
-			changed = true
-		}
-		if userEmail != "" && cfg.Confluence.UserEmail == "" {
-			cfg.Confluence.UserEmail = userEmail
-			changed = true
-		}
+		settings["space_key"] = project
+		role = "docs"
 	} else {
-		if cfg.Tracker == nil {
-			cfg.Tracker = &config.TrackerConfig{}
-		}
-		if cfg.Tracker.Type == "" || cfg.Tracker.Type == "none" {
-			cfg.Tracker.Type = trackerType
-			changed = true
-		}
-		if cfg.Tracker.Project == "" {
-			cfg.Tracker.Project = project
-			changed = true
-		}
-		if baseURL != "" && cfg.Tracker.BaseURL == "" {
-			cfg.Tracker.BaseURL = baseURL
-			changed = true
-		}
-		if userEmail != "" && cfg.Tracker.UserEmail == "" {
-			cfg.Tracker.UserEmail = userEmail
-			changed = true
-		}
+		settings["project"] = project
 	}
-
-	if !changed {
-		return nil
-	}
-	return cfg.Save(projectRoot)
+	patch, _ := json.Marshal(map[string]any{"default": id, "roles": map[string]any{role: id}, "connections": map[string]any{id: map[string]any{"provider": trackerType, "settings": settings}}})
+	return config.PatchCommittedIntegrations(projectRoot, config.DefaultFolder, patch)
 }
 
 // ---------------------------------------------------------------------------
@@ -566,41 +702,25 @@ func httpPOST(url, jsonBody string, headers map[string]string) ([]byte, error) {
 
 func prompt(label string) string {
 	fmt.Print(label)
-	scanner := bufio.NewScanner(os.Stdin)
-	if scanner.Scan() {
-		return strings.TrimSpace(scanner.Text())
-	}
-	return ""
+	line, _ := connectInput.ReadString('\n')
+	return strings.TrimSpace(line)
 }
 
-// promptSecret reads a token from the terminal. On Unix systems it reads from
-// /dev/tty so the input comes from the terminal even when stdin is piped.
-// We avoid CGo by not suppressing echo — the user sees their token as they type,
-// but the token is never written to any log file.
+var connectInput = bufio.NewReader(os.Stdin)
+
+// promptSecret requires a terminal and suppresses echo. Automation must use
+// --token-stdin; silently falling back to echoed input would expose credentials.
 func promptSecret(label string) string {
 	fmt.Print(label)
 	tty, err := os.OpenFile("/dev/tty", os.O_RDWR, 0)
-	if err == nil {
-		defer tty.Close()
-		scanner := bufio.NewScanner(tty)
-		if scanner.Scan() {
-			fmt.Fprintln(tty)
-			return strings.TrimSpace(scanner.Text())
-		}
+	if err != nil {
 		return ""
 	}
-	// Fallback: plain stdin
-	scanner := bufio.NewScanner(os.Stdin)
-	if scanner.Scan() {
-		return strings.TrimSpace(scanner.Text())
+	defer tty.Close()
+	b, err := term.ReadPassword(int(tty.Fd()))
+	fmt.Fprintln(tty)
+	if err != nil {
+		return ""
 	}
-	return ""
-}
-
-// maskToken returns a redacted version of a token for display.
-func maskToken(token string) string {
-	if len(token) <= 8 {
-		return "***"
-	}
-	return token[:4] + "..." + token[len(token)-4:]
+	return strings.TrimSpace(string(b))
 }

@@ -27,9 +27,9 @@ The spec type (bug or feature) is auto-inferred from the tracker's issue type
 field — Bugs become bug specs, Stories/Tasks become feature specs.
 
 An optional positional argument filters by inferred type:
-  hero import bugs       — only import issues that map to bug specs
-  hero import features   — only import issues that map to feature specs
-  hero import            — import all issues (each placed in the correct directory)
+  hero sync import bugs       — only import issues that map to bug specs
+  hero sync import features   — only import issues that map to feature specs
+  hero sync import            — import all issues (each placed in the correct directory)
 
 The --type flag works the same as the positional argument. If both are given,
 the positional argument takes precedence.
@@ -49,21 +49,21 @@ Presets:
       }
     }
 
-  Then: hero import --preset my-bugs
+  Then: hero sync import --preset my-bugs
 
 Filtering:
   Configure default filters in hero.json under "import.filter" or use CLI flags.
   Precedence: --jql > --filter > CLI field flags > --preset > hero.json defaults.
 
 Examples:
-  hero import
-  hero import bugs
-  hero import features
-  hero import --preset triage
-  hero import bugs --jql "project = PROJ AND type = Bug AND assignee = EMPTY"
-  hero import --filter 12345
-  hero import --assignee unassigned --issue-type Bug
-  hero import bugs --label critical --limit 50 --dry-run`,
+  hero sync import
+  hero sync import bugs
+  hero sync import features
+  hero sync import --preset triage
+  hero sync import bugs --jql "project = PROJ AND type = Bug AND assignee = EMPTY"
+  hero sync import --filter 12345
+  hero sync import --assignee unassigned --issue-type Bug
+  hero sync import bugs --label critical --limit 50 --dry-run`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runSyncImport,
 }
@@ -109,6 +109,9 @@ func runSyncImport(cmd *cobra.Command, args []string) error {
 	cfg, err := config.Load(projectRoot)
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)
+	}
+	if err := selectSyncIntegration(&cfg); err != nil {
+		return err
 	}
 
 	heroDir := cfg.HeroDir(projectRoot)

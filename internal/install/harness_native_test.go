@@ -91,6 +91,9 @@ func TestHarnessNative_DoctorRoutingGuidanceAllTargets(t *testing.T) {
 		// The shared section's own H2 heading — proves the source is the
 		// section contributor, not a paragraph buried in a pack body.
 		"## Hero Binary & MCP Surface",
+		"Tracker connections use stable IDs under `integrations.connections`",
+		"hero sync import",
+		"--token-stdin",
 	}
 	targets := []Target{
 		TargetClaude, TargetCodex, TargetOpenCode,

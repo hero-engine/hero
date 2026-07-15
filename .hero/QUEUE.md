@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-13T20:28:09Z · 77 ready specs_
+_Generated: 2026-07-15T16:37:48Z · 84 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -43,6 +43,155 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
+## machine-checkable-acs — "Acceptance Criteria Are Machine-Checkable — Human Attention Is for Judgment, Not Labor"
+_feature · planning · horizon: now_
+
+Stops specs from writing acceptance criteria that only a human can check — which the model then holds its own work hostage to, and the human rubber-stamps.
+
+**Status:** planning — spec just landed, no code yet. Guidance-only; no Go changes.
+
+**Pick up at:** write the rule into `core/skills/spec-format/SKILL.md` (new `### The model-checkable rule` subsection under "Acceptance Criteria and EARS"), then thread the one-line pointer through the two delivery leads and `/design` + `/diagnose`.
+
+→ `.hero/planning/features/machine-checkable-acs/spec.md`
+
+**Files:** `core/skills/spec-format/SKILL.md`, `domains/engineering/agents/feature-delivery-lead.md`, `domains/engineering/commands/design.md`, `internal/spec/acceptance.go:52`
+**Skip:** no `PENDING` ledger status, no Gate 1 change, no lint rule, no rewrite of the 250 existing specs — all rejected below as machinery for a channel that shouldn't exist.
+
+---
+
+## spec-state-axes — "Spec State Axes — Separate Delivery Lifecycle from Verification Health"
+_feature · planning · horizon: now_
+
+Splits spec `status` into two axes: `status` stays delivery lifecycle, and
+verification health becomes a read-only state derived from the AC graph — so a
+completed spec that breaks stays `completed` instead of being rewritten.
+
+**Status:** planning — spec just landed, no code yet. Design decisions are
+settled; see Approach.
+
+**Pick up at:** start with the pure-read conversion — add `VerificationState`
++ `Evaluate()` in `internal/integrity/`, mapping from the existing `Verdict`
+enum (the compute path already exists in `verifySpec`). Then gut
+`AutoDowngradeRegressions` to `DetectRegressions` (no file writes) and fix its
+one call site at `internal/cli/ac.go:233`. Rendering is Phase 3.
+
+→ `.hero/planning/features/spec-state-axes/spec.md`
+
+**Files:** `internal/integrity/regression.go:34`, `internal/integrity/status.go:91`,
+`internal/cli/ac.go:233`, `internal/acceptance/query.go:14`
+
+**Skip:** don't add a `verification:` frontmatter field — derived-on-read is the
+decided approach, and a persisted copy would be a git-visible fact whose evidence
+is machine-local. Don't design legacy evidence migration; the no-AC path is
+already safe.
+
+---
+
+## generated-command-refs-validated — "Generated Command Refs Validated — Every `hero <subcommand>` Hero Emits Must Exist"
+_feature · planning · horizon: now_
+
+Hero's digest shipped a `hero recall` reference for however long — the command was renamed to `hero search` and nothing noticed. This extracts every command ref Hero emits and asserts it resolves against Cobra.
+
+**Status:** planning — independent of the other children; can start immediately.
+
+**Pick up at:** build the Cobra registry walker first (flatten all registered command paths), then the extractor. Use the `hero recall` case as the regression test — it must catch it.
+
+→ `rg -n 'hero [a-z-]+' internal/digest/ core/ --only-matching | sort -u | head -40`
+
+**Files:** `internal/digest/digest.go:930`, `internal/cli/root.go`, `internal/install/agents_md.go`, `internal/cli/install.go:115`
+**Skip:** don't build general claim-checking (relations resolve, statuses accurate) — command refs only.
+
+---
+
+## spec-contract-enums-unified — "Spec Contract Enums Unified — One Definition of Hero's Types and Statuses"
+_feature · planning · horizon: now_
+
+Hero has three disagreeing answers to "what is a spec type?" — a 6-type validator, an 11-type triage enum, and 9 files on disk. They intersect on 3. This makes one.
+
+**Status:** planning — three definitions located and diffed; the per-type fate decisions are the open work.
+
+**Pick up at:** decide the fate of each of the 7 orphan types before writing plumbing — `context`×114 and `enhancement`×15 are the load-bearing calls (admit to contract vs. migrate corpus). The enum plumbing is easy; the decisions are the spec.
+
+→ `hero check validate 2>&1 | rg 'invalid type|invalid status' | sort | uniq -c | sort -rn`
+
+**Files:** `internal/cli/validate.go:88`, `internal/triage/structural.go`, `internal/spec/spec.go`, `internal/peering/handoff.go:212`, `core/spec-types/`
+**Skip:** don't wire the validator to a boundary here — that's `wire-checks-to-boundaries`, which hard-depends on this.
+
+---
+
+## resume-emits-dead-recall-command — "Cold-start digest emits a dead `hero recall` command — and a test enforces it"
+_bug · planning · horizon: now_
+
+The digest tells a fresh agent session to run `hero recall <topic>`. That command doesn't exist — it was renamed to `hero search`. A passing test pins the lie in place.
+
+**Status:** planning — two-line fix, fully diagnosed, no investigation needed.
+
+**Pick up at:** change the format string at `internal/digest/digest.go:930` to `hero search`, then fix the assertion at `internal/digest/digest_test.go:190` that requires "hero recall". Check `sectionRecallTopic` naming while there.
+
+→ `rg -n "hero recall|sectionRecallTopic" internal/digest/`
+
+**Files:** `internal/digest/digest.go:930`, `internal/digest/digest_test.go:190`
+
+---
+
+## hero-self-consistency — "Hero Doesn't Lie — Self-Consistency Between Generated Guidance, Hero's Own Writes, and Hero's Actual Contract"
+_initiative · planning · horizon: now_
+
+_Run opener — arm with `/drive hero-self-consistency`_
+
+Hero's generated guidance, Hero's own writes, and Hero's actual product contract agree — and something gates the disagreement when they drift apart. Done means: one definition of the spec-type and status contract instead of three; zero specs carrying a status Hero itself writes and Hero itself rejects; zero dead command references in generated output; and the checks that already exist running at a boundary instead of waiting for a human to remember them.
+
+---
+
+## next-drift-gate-branch-line-drift — "CI NEXT.md drift gate red again — projection stamps a live `branch:` line the gate doesn't ignore"
+_bug · planning · horizon: now_
+
+**Pick up at: DIAGNOSED — ready to fix.** The CI "NEXT.md projection drift gate"
+(`.github/workflows/test.yml:43-64`) is red again on `main`. Root cause is fully
+reproduced: `internal/projection/projection.go:90-92` stamps a live
+`branch: <git rev-parse --abbrev-ref HEAD>` line into the byte-gated `.hero/NEXT.md`.
+The committer/concurrent-session's branch (e.g. `fix/mcp-transport-closes-midsession-supersede`
+in HEAD `7a02a00`) gets baked in; CI re-projects on `main` → `branch: main`; the gate
+ignores `updated:` but not `branch:`, so `git diff --exit-code -I'^updated: '` returns
+exit 1. This is a recurrence of the completed spec `next-drift-gate-unwinnable`, which
+fixed the `updated:` timestamp and size-drift count but left `branch:` (same defect
+shape); the prior spec even rejected the "ignore volatile lines in the gate" approach as
+fragile — this bug is that prediction realized.
+
+**Do this:** apply Change 1 — delete the `branch:` (and latent `session:`) emission in
+`internal/projection/projection.go` `NextMD` (~line 87-92). Nothing consumes these
+(`Branch` is `// frontmatter only`); live branch is available via `git status`, and
+per-session context belongs in the gitignored `.hero/next/<user>.local.md`. Add the
+regression guard `TestNextMD_NoEnvironmentLocalFrontmatter` (assert no `branch:`/`session:`
+line even when the options set them) plus a cross-branch idempotence test (project with
+`Branch: feature/x` then `Branch: main`, assert byte-identical modulo `updated:`).
+
+**Verify:**
+```
+go build -o ./hero ./cmd/hero && ./hero scan >/dev/null 2>&1 || true
+./hero next checkpoint --quiet
+git diff --exit-code -I'^updated: ' -- .hero/NEXT.md   # must be exit 0
+go test ./internal/projection/... ./internal/cli/...
+```
+Then commit (stage `.hero/NEXT.md` + `.hero/next/*.md` per the handoff-travels-with-commits
+rule) and confirm the `Test` job turns green on the next push to `main` — that green run is
+the real acceptance. Do **not** re-adopt the enumerate-volatile-lines gate hack (Change 2)
+unless the team explicitly wants to keep the branch line visible; removal is the root-cause
+fix. Deferred scrub: collapse the two `currentBranch` helpers
+(`checkpoint.go:1136` vs `gitutil.CurrentBranch`) and drop the now-inert `Branch`/`SessionID`
+options + call-site assignments.
+
+---
+
+## always-on-runtime — "Always-On Runtime"
+_initiative · planning · horizon: now_
+
+_Run opener — arm with `/drive always-on-runtime`_
+
+Deliver the versioned runtime contracts and reliable local/self-hosted execution spine that hero-code and Hero Cloud can consume. The first milestone proves a scheduled local workflow can run while the desktop is closed and later replay its complete history.
+
+---
+
 ## job-run-contract-v1 — "Job and Run Contract v1"
 _feature · planning · horizon: now_
 
@@ -55,15 +204,6 @@ Adds the stable v1 job/event boundary consumed by Hero, hero-code, and Hero Clou
 → `.hero/planning/initiatives/always-on-runtime/job-run-contract-v1/spec.md`
 
 **Files:** `contracts/version.go`, `contracts/contracts_boundary_test.go`, `internal/serve/jobs.go`, `internal/runner/runner.go`, `../hero-cloud/cloud/internal/seam_smoke.go`
-
----
-
-## always-on-runtime — "Always-On Runtime"
-_initiative · planning · horizon: now_
-
-_Run opener — arm with `/drive always-on-runtime`_
-
-Deliver the versioned runtime contracts and reliable local/self-hosted execution spine that hero-code and Hero Cloud can consume. The first milestone proves a scheduled local workflow can run while the desktop is closed and later replay its complete history.
 
 ---
 

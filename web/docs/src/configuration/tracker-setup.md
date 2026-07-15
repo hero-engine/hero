@@ -1,9 +1,9 @@
 # Tracker Setup
 
-Hero integrates with **GitHub Issues**, **Jira**, and **Linear** to import issues, sync status, and post updates. This page covers setup for each tracker.
+Hero integrates with **GitHub Issues**, **Jira**, **Linear**, **GitLab**, and **Confluence** through stable integration IDs.
 
 !!! tip "Interactive setup"
-    Run `hero sync connect` for a guided setup that writes your `hero.json` config and validates the connection.
+    Run `hero sync connect jira` for guided setup, or use protected automation: `printf '%s' "$JIRA_TOKEN" | hero connect jira --integration-id jira-delivery --project PROJ --base-url https://example.atlassian.net --user-email you@example.com --token-stdin`.
 
 ---
 
@@ -13,10 +13,10 @@ Hero integrates with **GitHub Issues**, **Jira**, and **Linear** to import issue
 
     ```json title="hero.json"
     {
-      "tracker": {
-        "type": "github",
-        "project": "owner/repo",
-        "token_env": "GITHUB_TOKEN"
+      "integrations": {
+        "default": "github-delivery",
+        "roles": {"delivery": "github-delivery"},
+        "connections": {"github-delivery": {"provider": "github", "settings": {"project": "owner/repo"}, "auth": {"token_env": "GITHUB_TOKEN"}}}
       }
     }
     ```
@@ -31,11 +31,10 @@ Hero integrates with **GitHub Issues**, **Jira**, and **Linear** to import issue
 
     ```json title="hero.json"
     {
-      "tracker": {
-        "type": "jira",
-        "project": "PROJ",
-        "token_env": "JIRA_API_TOKEN",
-        "base_url": "https://myorg.atlassian.net"
+      "integrations": {
+        "default": "jira-delivery",
+        "roles": {"delivery": "jira-delivery"},
+        "connections": {"jira-delivery": {"provider": "jira", "settings": {"project": "PROJ", "base_url": "https://myorg.atlassian.net", "user_email": "you@company.com"}, "auth": {"token_env": "JIRA_API_TOKEN"}}}
       }
     }
     ```
@@ -51,10 +50,10 @@ Hero integrates with **GitHub Issues**, **Jira**, and **Linear** to import issue
 
     ```json title="hero.json"
     {
-      "tracker": {
-        "type": "linear",
-        "project": "TEAM-KEY",
-        "token_env": "LINEAR_API_KEY"
+      "integrations": {
+        "default": "linear-delivery",
+        "roles": {"delivery": "linear-delivery"},
+        "connections": {"linear-delivery": {"provider": "linear", "settings": {"project": "TEAM-KEY"}, "auth": {"token_env": "LINEAR_API_KEY"}}}
       }
     }
     ```
@@ -69,7 +68,7 @@ Hero integrates with **GitHub Issues**, **Jira**, and **Linear** to import issue
 
 ## Authentication
 
-Tokens are always read from environment variables — never stored in `hero.json`. The `token_env` field specifies which env var to read.
+Literal tokens are forbidden in committed `hero.json`. Put `auth.token` in the matching connection in gitignored `hero.local.json`, save it globally by stable ID, use `auth.token_env`, or pipe it through `hero connect ... --token-stdin`. Precedence is local token, stable-ID global credential, then `token_env`; status output never prints token-derived masks.
 
 | Tracker | Required env vars |
 |---|---|
@@ -80,6 +79,18 @@ Tokens are always read from environment variables — never stored in `hero.json
 
 !!! warning "Keep tokens out of version control"
     Set tokens in your shell profile (`~/.zshrc`, `~/.bashrc`), a `.env` file excluded from git, or a secrets manager.
+
+### Shared settings with personal credentials
+
+Both files use the same schema. A teammate may commit the connection settings above, while `.hero/hero.local.json` supplies only:
+
+```json
+{"integrations":{"connections":{"jira-delivery":{"auth":{"token":"<personal token>"}}}}}
+```
+
+An integration can instead be entirely personal by defining its `default`, role, provider, settings, and auth only in `hero.local.json`. Multiple connections—even two Jira projects—use distinct stable IDs. Local objects merge recursively; scalars including `false`, `0`, and `""` replace shared values, and `null` deletes an inherited optional field or connection in the effective view. A dangling selector is rejected with its JSON path.
+
+Inspect the redacted effective view with `hero connect --list` or `hero connect --list --json`. Override delivery selection for one sync with `hero sync --integration <id> …`.
 
 ---
 

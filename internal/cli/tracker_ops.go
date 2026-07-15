@@ -97,6 +97,9 @@ func initTracker() (tracker.Tracker, error) {
 	if err != nil {
 		return nil, fmt.Errorf("loading config: %w", err)
 	}
+	if err := selectSyncIntegration(&cfg); err != nil {
+		return nil, err
+	}
 
 	if cfg.Tracker == nil || cfg.Tracker.Type == "" || cfg.Tracker.Type == "none" {
 		return nil, fmt.Errorf("no tracker configured — set tracker.type in hero.json")
@@ -107,6 +110,18 @@ func initTracker() (tracker.Tracker, error) {
 		return nil, fmt.Errorf("initializing tracker: %w", err)
 	}
 	return t, nil
+}
+
+func selectSyncIntegration(cfg *config.Config) error {
+	if syncIntegration == "" {
+		return nil
+	}
+	t, err := cfg.SelectTracker(syncIntegration)
+	if err != nil {
+		return fmt.Errorf("selecting integration: %w", err)
+	}
+	cfg.Tracker = t
+	return nil
 }
 
 // deriveSpecAttachmentName creates a descriptive filename from a spec.md path.

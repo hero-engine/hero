@@ -20,13 +20,16 @@ Hero is configured through a `hero.json` file at the root of your project (or in
     "nudge_level": "moderate"
   },
 
-  "tracker": {
-    "type": "jira",
-    "project": "PROJ",
-    "token_env": "JIRA_API_TOKEN",
-    "base_url": "https://myorg.atlassian.net",
-    "post_on_design": true,
-    "post_on_deliver": true
+  "integrations": {
+    "default": "jira-delivery",
+    "roles": {"delivery": "jira-delivery"},
+    "connections": {
+      "jira-delivery": {
+        "provider": "jira",
+        "settings": {"project": "PROJ", "base_url": "https://myorg.atlassian.net"},
+        "auth": {"token_env": "JIRA_API_TOKEN"}
+      }
+    }
   },
 
   "import": {
@@ -150,24 +153,21 @@ Team workflow settings that control collaboration behavior.
 
 ---
 
-### `tracker`
+### `integrations`
 
-External issue tracker connection. See [Tracker Setup](tracker-setup.md) for detailed guides.
+Provider-neutral connections keyed by stable user-defined IDs. `default` and `roles` select a connection; `settings` are provider-specific and `auth` holds `token_env` or a local-only token overlay. The identical shape is accepted in `hero.local.json`, allowing either partial credentials or a complete personal integration. See [Tracker Setup](tracker-setup.md).
 
 | Key | Type | Description |
 |---|---|---|
-| `type` | `string` | Tracker type: `"github"`, `"jira"`, or `"linear"` |
-| `project` | `string` | Project key or repository (e.g. `"PROJ"`, `"owner/repo"`) |
-| `token_env` | `string` | Environment variable name containing the API token |
-| `base_url` | `string` | Base URL for self-hosted instances (Jira Server, GitHub Enterprise) |
-| `post_on_design` | `bool` | Post a comment to the tracker issue when a spec is designed |
-| `post_on_deliver` | `bool` | Post a comment when delivery is complete |
+| `default` | `string` | Stable ID used when no role or `--integration` override is supplied |
+| `roles` | `object` | Maps `delivery`, `docs`, or `roadmap` to stable IDs |
+| `connections` | `object` | Stable ID → `{provider, settings, auth}` definitions |
 
 ---
 
 ### `import`
 
-Controls how `/import` and `hero import` pull issues from the tracker.
+Controls how `/import` and `hero sync import` pull issues from the tracker.
 
 | Key | Type | Default | Description |
 |---|---|---|---|

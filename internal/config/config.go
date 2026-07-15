@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -15,6 +16,14 @@ const (
 	ConfigFileName      = "hero.json"
 	LocalConfigFileName = "hero.local.json"
 )
+
+var legacyIntegrationWarning sync.Once
+
+func warnLegacyIntegrations() {
+	legacyIntegrationWarning.Do(func() {
+		fmt.Fprintln(os.Stderr, "hero: legacy tracker/confluence config is deprecated; define stable IDs under integrations.connections (no files were rewritten)")
+	})
+}
 
 // Config represents the hero.json configuration file.
 type Config struct {
@@ -25,36 +34,40 @@ type Config struct {
 	// when missing on an older workspace. See contracts/peering for
 	// the wire-shape side. Display alias for human reading lives
 	// outside Config (registered via `hero repos add` on peers).
-	PeerID      string             `json:"peer_id,omitempty"`
-	Peering     *PeeringConfig     `json:"peering,omitempty"`
-	Domain      string             `json:"domain,omitempty"`
-	Team        *TeamConfig        `json:"team,omitempty"`
-	Tracker     *TrackerConfig     `json:"tracker,omitempty"`
-	Import      *ImportConfig      `json:"import,omitempty"`
-	Sync        *SyncConfig        `json:"sync,omitempty"`
-	Conventions *ConventionConfig  `json:"conventions,omitempty"`
-	Serve       *ServeConfig       `json:"serve,omitempty"`
-	Knowledge   *KnowledgeConfig   `json:"knowledge,omitempty"`
-	Jira        *JiraConfig        `json:"jira,omitempty"`
-	Confluence  *ConfluenceConfig  `json:"confluence,omitempty"`
-	Models      *ModelConfig       `json:"models,omitempty"`
-	Mockups     *MockupsConfig     `json:"mockups,omitempty"`
-	Prime       *PrimeConfig       `json:"prime,omitempty"`
-	Hooks       *HooksConfig       `json:"hooks,omitempty"`
-	Tracking    *TrackingConfig    `json:"tracking,omitempty"`
-	Sessions    *SessionsConfig    `json:"sessions,omitempty"`
-	Pulse       *PulseConfig       `json:"pulse,omitempty"`
-	Testing     *TestingConfig     `json:"testing,omitempty"`
-	Demos       *DemosConfig       `json:"demos,omitempty"`
-	CodeScan    *CodeScanConfig    `json:"code_scan,omitempty"`
-	Score       *ScoreConfig       `json:"score,omitempty"`
-	Cloud       *CloudConfig       `json:"cloud,omitempty"`
-	Next        *NextConfig        `json:"next,omitempty"`
-	Snapshot    *SnapshotConfig    `json:"snapshot,omitempty"`
-	Specs       *SpecsConfig       `json:"specs,omitempty"`
-	Delivery    *DeliveryConfig    `json:"delivery,omitempty"`
-	Verify      *VerifyConfig      `json:"verify,omitempty"`
-	Environment *EnvironmentConfig `json:"environment,omitempty"`
+	PeerID  string         `json:"peer_id,omitempty"`
+	Peering *PeeringConfig `json:"peering,omitempty"`
+	Domain  string         `json:"domain,omitempty"`
+	Team    *TeamConfig    `json:"team,omitempty"`
+	Tracker *TrackerConfig `json:"tracker,omitempty"`
+	// Integrations is the canonical provider-neutral integration contract.
+	// hero.local.json uses this exact shape and overlays hero.json by stable ID.
+	Integrations          *IntegrationsConfig          `json:"integrations,omitempty"`
+	IntegrationProvenance map[string]IntegrationSource `json:"-"`
+	Import                *ImportConfig                `json:"import,omitempty"`
+	Sync                  *SyncConfig                  `json:"sync,omitempty"`
+	Conventions           *ConventionConfig            `json:"conventions,omitempty"`
+	Serve                 *ServeConfig                 `json:"serve,omitempty"`
+	Knowledge             *KnowledgeConfig             `json:"knowledge,omitempty"`
+	Jira                  *JiraConfig                  `json:"jira,omitempty"`
+	Confluence            *ConfluenceConfig            `json:"confluence,omitempty"`
+	Models                *ModelConfig                 `json:"models,omitempty"`
+	Mockups               *MockupsConfig               `json:"mockups,omitempty"`
+	Prime                 *PrimeConfig                 `json:"prime,omitempty"`
+	Hooks                 *HooksConfig                 `json:"hooks,omitempty"`
+	Tracking              *TrackingConfig              `json:"tracking,omitempty"`
+	Sessions              *SessionsConfig              `json:"sessions,omitempty"`
+	Pulse                 *PulseConfig                 `json:"pulse,omitempty"`
+	Testing               *TestingConfig               `json:"testing,omitempty"`
+	Demos                 *DemosConfig                 `json:"demos,omitempty"`
+	CodeScan              *CodeScanConfig              `json:"code_scan,omitempty"`
+	Score                 *ScoreConfig                 `json:"score,omitempty"`
+	Cloud                 *CloudConfig                 `json:"cloud,omitempty"`
+	Next                  *NextConfig                  `json:"next,omitempty"`
+	Snapshot              *SnapshotConfig              `json:"snapshot,omitempty"`
+	Specs                 *SpecsConfig                 `json:"specs,omitempty"`
+	Delivery              *DeliveryConfig              `json:"delivery,omitempty"`
+	Verify                *VerifyConfig                `json:"verify,omitempty"`
+	Environment           *EnvironmentConfig           `json:"environment,omitempty"`
 	// Vocabulary names the active vocabulary preset (e.g. "default",
 	// "agile-scrum", "shape-up", "kanban", "jira", "linear"). When set,
 	// it wins the precedence chain in internal/vocabulary.Resolve over
@@ -1089,13 +1102,13 @@ func (s *SizeMappingConfig) Validate() error {
 // Priority: Token field (from local config / credentials) > TokenEnv env var.
 func (t *TrackerConfig) ResolveToken() (string, error) {
 	if t == nil {
-		return "", fmt.Errorf("tracker token_env is not configured")
+		return "", fmt.Errorf("no usable tracker credential; add integrations.connections.<id>.auth.token to .hero/hero.local.json, configure a stable-ID global credential, or set auth.token_env; inspect with 'hero connect --list'")
 	}
 	if t.Token != "" {
 		return t.Token, nil
 	}
 	if t.TokenEnv == "" {
-		return "", fmt.Errorf("tracker token_env is not configured")
+		return "", fmt.Errorf("no usable tracker credential; add integrations.connections.<id>.auth.token to .hero/hero.local.json, configure a stable-ID global credential, or set auth.token_env; inspect with 'hero connect --list'")
 	}
 	token := os.Getenv(t.TokenEnv)
 	if token == "" {
@@ -1393,16 +1406,62 @@ func Load(projectRoot string) (Config, error) {
 			if lerr == nil {
 				cfg = MergeLocal(cfg, local)
 			}
+			localPath := filepath.Join(heroDir, LocalConfigFileName)
+			localData, _ := os.ReadFile(localPath)
+			if hasLegacyIntegration(localData) {
+				warnLegacyIntegrations()
+			}
+			if resolved, rerr := ResolveIntegrationDocuments(configPath, nil, localPath, localData); rerr != nil {
+				return cfg, rerr
+			} else if resolved != nil {
+				cfg.Integrations = resolved.Config
+				cfg.IntegrationProvenance = resolved.Provenance
+				if tc, ok := resolved.DeliveryTracker(); ok {
+					cfg.Tracker = tc
+				}
+				if cc, ok := resolved.DocsConfluence(); ok {
+					cfg.Confluence = cc
+				}
+			}
 			if creds, cerr := LoadCredentials(); cerr == nil {
-				cfg = ApplyCredentials(cfg, creds)
+				var aerr error
+				cfg, aerr = ApplyCredentialsStrict(cfg, creds)
+				if aerr != nil {
+					return cfg, aerr
+				}
 			}
 			return cfg, nil
 		}
 		return cfg, err
 	}
+	if hasLegacyIntegration(data) {
+		warnLegacyIntegrations()
+	}
 
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		return cfg, fmt.Errorf("parsing %s: %w", configPath, err)
+	}
+	localPath := filepath.Join(heroDir, LocalConfigFileName)
+	localData, localReadErr := os.ReadFile(localPath)
+	if localReadErr != nil && !errors.Is(localReadErr, os.ErrNotExist) {
+		return cfg, localReadErr
+	}
+	if hasLegacyIntegration(localData) {
+		warnLegacyIntegrations()
+	}
+	resolved, ierr := ResolveIntegrationDocuments(configPath, data, localPath, localData)
+	if ierr != nil {
+		return cfg, ierr
+	}
+	if resolved != nil {
+		cfg.Integrations = resolved.Config
+		cfg.IntegrationProvenance = resolved.Provenance
+		if tc, ok := resolved.DeliveryTracker(); ok {
+			cfg.Tracker = tc
+		}
+		if cc, ok := resolved.DocsConfluence(); ok {
+			cfg.Confluence = cc
+		}
 	}
 
 	if cfg.Folder == "" {
@@ -1468,7 +1527,11 @@ func Load(projectRoot string) (Config, error) {
 
 	// Apply credentials store (lowest priority — local config overrides it above)
 	if creds, cerr := LoadCredentials(); cerr == nil {
-		cfg = ApplyCredentials(cfg, creds)
+		var aerr error
+		cfg, aerr = ApplyCredentialsStrict(cfg, creds)
+		if aerr != nil {
+			return cfg, aerr
+		}
 	}
 
 	return cfg, nil
@@ -1476,6 +1539,10 @@ func Load(projectRoot string) (Config, error) {
 
 // Save writes hero.json to the hero folder inside the given project root.
 func (c Config) Save(projectRoot string) error {
+	committed := c.forCommittedSave()
+	if err := ValidateCommittedIntegrations(committed.Integrations, filepath.Join(projectRoot, c.Folder, ConfigFileName)); err != nil {
+		return err
+	}
 	heroDir := filepath.Join(projectRoot, c.Folder)
 	if err := os.MkdirAll(heroDir, 0o755); err != nil {
 		return err
@@ -1483,13 +1550,52 @@ func (c Config) Save(projectRoot string) error {
 
 	configPath := filepath.Join(heroDir, ConfigFileName)
 
-	data, err := json.MarshalIndent(c, "", "  ")
+	data, err := json.MarshalIndent(committed, "", "  ")
 	if err != nil {
 		return err
 	}
 
 	data = append(data, '\n')
 	return os.WriteFile(configPath, data, 0o644)
+}
+
+// forCommittedSave creates a secret-free copy for the legacy generic Save
+// surface. Load returns a runtime-effective Config for compatibility, so its
+// Tracker/Confluence and canonical auth may contain local/global credentials.
+// Those values are runtime-only and must never cross the committed boundary.
+func (c Config) forCommittedSave() Config {
+	out := c
+	if c.Integrations != nil {
+		out.Tracker = nil
+		out.Confluence = nil
+	} else if c.Tracker != nil {
+		x := *c.Tracker
+		x.Token = ""
+		out.Tracker = &x
+	}
+	if c.Integrations == nil && c.Confluence != nil {
+		x := *c.Confluence
+		x.Token = ""
+		out.Confluence = &x
+	}
+	if c.Integrations != nil {
+		x := &IntegrationsConfig{Default: c.Integrations.Default, Roles: map[string]string{}, Connections: map[string]IntegrationConfig{}}
+		for k, v := range c.Integrations.Roles {
+			x.Roles[k] = v
+		}
+		for id, v := range c.Integrations.Connections {
+			n := IntegrationConfig{Provider: v.Provider, Settings: map[string]json.RawMessage{}}
+			for k, raw := range v.Settings {
+				n.Settings[k] = append(json.RawMessage(nil), raw...)
+			}
+			if v.Auth != nil {
+				n.Auth = &IntegrationAuth{TokenEnv: v.Auth.TokenEnv}
+			}
+			x.Connections[id] = n
+		}
+		out.Integrations = x
+	}
+	return out
 }
 
 // LoadLocal reads hero.local.json from the hero folder inside the given project root.
