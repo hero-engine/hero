@@ -71,6 +71,12 @@ func CredentialKey(trackerType, project string) string {
 	return trackerType + ":" + project
 }
 
+// IntegrationCredentialKey keys new credentials by stable workspace identity.
+func IntegrationCredentialKey(id string) string { return "integration:" + id }
+func SetIntegrationCredential(creds Credentials, id string, entry CredentialEntry) {
+	creds[IntegrationCredentialKey(id)] = entry
+}
+
 // SetCredential upserts a credential entry for the given type+project.
 func SetCredential(creds Credentials, trackerType, project string, entry CredentialEntry) {
 	creds[CredentialKey(trackerType, project)] = entry
@@ -92,6 +98,61 @@ func RemoveCredential(creds Credentials, trackerType, project string) {
 // from the credentials store, if the tracker has a project and no token is
 // already set. Returns the (possibly modified) config.
 func ApplyCredentials(cfg Config, creds Credentials) Config {
+	cfg, _ = ApplyCredentialsStrict(cfg, creds)
+	return cfg
+}
+
+// ApplyCredentialsStrict prefers stable-ID credentials and fails closed when
+// a legacy provider:project credential would ambiguously serve multiple IDs.
+func ApplyCredentialsStrict(cfg Config, creds Credentials) (Config, error) {
+	if cfg.Integrations != nil {
+		legacyUsers := map[string][]string{}
+		for id, x := range cfg.Integrations.Connections {
+			project := rawString(x.Settings, "project")
+			if x.Provider == "confluence" {
+				project = rawString(x.Settings, "space_key")
+			}
+			legacyUsers[CredentialKey(x.Provider, project)] = append(legacyUsers[CredentialKey(x.Provider, project)], id)
+		}
+		for id, x := range cfg.Integrations.Connections {
+			if x.Auth == nil {
+				x.Auth = &IntegrationAuth{}
+			}
+			if x.Auth.Token == "" {
+				entry, ok := creds[IntegrationCredentialKey(id)]
+				if !ok {
+					project := rawString(x.Settings, "project")
+					if x.Provider == "confluence" {
+						project = rawString(x.Settings, "space_key")
+					}
+					key := CredentialKey(x.Provider, project)
+					if len(legacyUsers[key]) > 1 {
+						if _, exists := creds[key]; exists {
+							return cfg, fmt.Errorf("legacy global credential %q is ambiguous for integration IDs %v; save credentials by stable integration ID", key, legacyUsers[key])
+						}
+					}
+					entry, ok = creds[key]
+				}
+				if ok {
+					x.Auth.Token = Secret(entry.Token)
+					if _, exists := x.Settings["base_url"]; !exists && entry.BaseURL != "" {
+						x.Settings["base_url"], _ = json.Marshal(entry.BaseURL)
+					}
+					if _, exists := x.Settings["user_email"]; !exists && entry.UserEmail != "" {
+						x.Settings["user_email"], _ = json.Marshal(entry.UserEmail)
+					}
+				}
+			}
+			cfg.Integrations.Connections[id] = x
+		}
+		r := ResolvedIntegrations{Config: cfg.Integrations}
+		if t, ok := r.DeliveryTracker(); ok {
+			cfg.Tracker = t
+		}
+		if c, ok := r.DocsConfluence(); ok {
+			cfg.Confluence = c
+		}
+	}
 	if cfg.Tracker != nil && cfg.Tracker.Project != "" && cfg.Tracker.Token == "" {
 		if entry, ok := GetCredential(creds, cfg.Tracker.Type, cfg.Tracker.Project); ok {
 			if entry.Token != "" {
@@ -115,5 +176,5 @@ func ApplyCredentials(cfg Config, creds Credentials) Config {
 			}
 		}
 	}
-	return cfg
+	return cfg, nil
 }

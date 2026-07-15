@@ -1,8 +1,10 @@
 package config
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -142,5 +144,26 @@ func TestApplyCredentials_NoMatch(t *testing.T) {
 	result := ApplyCredentials(cfg, creds)
 	if result.Tracker.Token != "" {
 		t.Errorf("expected empty token when no creds match, got %q", result.Tracker.Token)
+	}
+}
+
+func TestApplyCredentialsStableIDAndAmbiguousLegacy(t *testing.T) {
+	raw := func(s string) json.RawMessage { b, _ := json.Marshal(s); return b }
+	cfg := Config{Integrations: &IntegrationsConfig{Default: "one", Connections: map[string]IntegrationConfig{
+		"one": {Provider: "jira", Settings: map[string]json.RawMessage{"project": raw("P")}},
+		"two": {Provider: "jira", Settings: map[string]json.RawMessage{"project": raw("P")}},
+	}}}
+	creds := Credentials{IntegrationCredentialKey("one"): {Token: "stable"}, CredentialKey("jira", "P"): {Token: "legacy"}}
+	_, err := ApplyCredentialsStrict(cfg, creds)
+	if err == nil || !strings.Contains(err.Error(), "ambiguous") {
+		t.Fatalf("expected ambiguity, got %v", err)
+	}
+	delete(creds, CredentialKey("jira", "P"))
+	got, err := ApplyCredentialsStrict(cfg, creds)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Integrations.Connections["one"].Auth.Token.Reveal() != "stable" {
+		t.Fatal("stable ID credential not applied")
 	}
 }

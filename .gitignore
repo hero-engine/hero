@@ -21,7 +21,11 @@ index.db
 
 # MCP daemon runtime state (per-process singleton pidfile + debug log) — ephemeral
 .hero/mcp-*.pid
+.hero/mcp-*.pid.*
 .hero/mcp-debug.log
+
+# Python bytecode caches
+__pycache__/
 
 # Per-machine NEXT state — auto-rewritten every Stop hook + agent scratch.
 # Tracked NEXT.md and .hero/next/<user>.md are project/user-durable;

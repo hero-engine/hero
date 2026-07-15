@@ -54,7 +54,7 @@ hero sprint load "Sprint 24"
 
 ---
 
-## `hero import` — Pull Issues from Trackers
+## `hero sync import` — Pull Issues from Trackers
 
 Imports issues from Jira, GitHub, or Linear as spec scaffolds in
 `.hero/planning/`. Each imported spec includes tracker-prefixed fields in
@@ -62,10 +62,10 @@ its YAML frontmatter (e.g., `jira_status`, `jira_priority`, `jira_assignee`).
 
 ```bash
 # Import bugs from Jira
-hero import --type bug
+hero sync import --type bug
 
 # Import a specific issue
-hero import PROJ-1234
+hero sync import features
 
 # Import issues tagged with a specific label (source is set via `hero sync connect`)
 hero sync import --label "ready"

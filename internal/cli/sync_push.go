@@ -88,6 +88,9 @@ func runSyncPush(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)
 	}
+	if err := selectSyncIntegration(&cfg); err != nil {
+		return err
+	}
 
 	heroDir := cfg.HeroDir(projectRoot)
 	if _, err := os.Stat(heroDir); os.IsNotExist(err) {

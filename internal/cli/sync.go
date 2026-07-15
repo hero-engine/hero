@@ -57,9 +57,11 @@ Examples:
 var (
 	syncJiraPush         bool
 	syncJiraStatusFilter string
+	syncIntegration      string
 )
 
 func init() {
+	syncCmd.PersistentFlags().StringVar(&syncIntegration, "integration", "", "stable integration ID (overrides delivery role/default)")
 	syncJiraCmd.Flags().BoolVar(&syncJiraPush, "push", false, "actually push transitions (default: dry-run)")
 	syncJiraCmd.Flags().StringVar(&syncJiraStatusFilter, "status", "", "only sync specs with this status")
 
@@ -81,6 +83,9 @@ func runSync(cmd *cobra.Command, args []string) error {
 	cfg, err := config.Load(projectRoot)
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)
+	}
+	if err := selectSyncIntegration(&cfg); err != nil {
+		return err
 	}
 
 	heroDir := cfg.HeroDir(projectRoot)
@@ -157,6 +162,9 @@ func runSyncJira(cmd *cobra.Command, args []string) error {
 	cfg, err := config.Load(projectRoot)
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)
+	}
+	if err := selectSyncIntegration(&cfg); err != nil {
+		return err
 	}
 
 	heroDir := cfg.HeroDir(projectRoot)
