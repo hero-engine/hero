@@ -111,3 +111,45 @@ func contains(s, sub string) bool {
 	}
 	return false
 }
+
+// TestAcceptanceCriteria_LabeledEARSSatisfiesBothConsumers guards the
+// invariant that the two acceptance-criteria consumers agree on one bullet
+// form. ParseAcceptanceCriteria only makes an entry addressable when it
+// carries an AC-N label; ClassifyCriterion must still see the EARS keywords
+// underneath that label. Before the label strip these were mutually
+// exclusive: labeled ACs were addressable but always classified freeform,
+// and unlabeled EARS classified correctly but produced zero addressable
+// criteria.
+func TestAcceptanceCriteria_LabeledEARSSatisfiesBothConsumers(t *testing.T) {
+	s := mustParse(t, `---
+title: T
+type: feature
+---
+# T
+
+## Acceptance criteria
+
+- **AC-1:** WHEN a user clicks export THE SYSTEM SHALL enqueue a job
+- **AC-2:** THE SYSTEM SHALL log every failed login attempt
+`)
+
+	acs := s.ParseAcceptanceCriteria()
+	if len(acs) != 2 {
+		t.Fatalf("got %d addressable ACs, want 2: %#v", len(acs), acs)
+	}
+
+	criteria := s.AcceptanceCriteria()
+	if len(criteria) != 2 {
+		t.Fatalf("got %d classified criteria, want 2: %#v", len(criteria), criteria)
+	}
+	for i, c := range criteria {
+		if !c.Kind.IsEARS() {
+			t.Errorf("criteria[%d].Kind = %v, want an EARS kind (raw=%q)", i, c.Kind, c.Raw)
+		}
+	}
+
+	// Raw keeps the label so lint and contract output still show the AC id.
+	if !contains(criteria[0].Raw, "AC-1") {
+		t.Errorf("criteria[0].Raw = %q, want it to preserve the AC-1 label", criteria[0].Raw)
+	}
+}

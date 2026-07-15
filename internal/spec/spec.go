@@ -1410,8 +1410,13 @@ func (s *Spec) AcceptanceCriteria() []Criterion {
 // ClassifyCriterion parses a single bullet string and classifies it against
 // the EARS patterns. The lookup is case-insensitive on the EARS keywords but
 // preserves the original casing in Trigger/Behavior for downstream rendering.
+//
+// A leading `AC-N:` label (bare or bolded) is stripped before matching so the
+// addressable form ParseAcceptanceCriteria requires — `- **AC-1:** WHEN …` —
+// classifies the same as a plain `- WHEN …` bullet. Raw keeps the label.
 func ClassifyCriterion(raw string) Criterion {
 	text := strings.TrimSpace(raw)
+	text = acIDPattern.ReplaceAllString(text, "")
 	// Drop a single trailing period so Behavior values stay clean.
 	trimmed := strings.TrimRight(text, ".")
 
