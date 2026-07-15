@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-15T17:58:13Z
+updated: 2026-07-15T18:48:59Z
 repo: hero-engine/hero
 ---
 
@@ -8,14 +8,12 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> In /Users/bwheeler/projects/hero-engine/repository/hero, two acceptance-criteria consumers are mutually exclusive. Verified by direct test:
+> Bug in the Hero repo (/Users/bwheeler/projects/hero-engine/repository/hero): `parseSections` treats `## ` headings inside fenced code blocks as real section headings, forging phantom sections and silently truncating the preceding section's parsed content.
 > 
-> | AC form | ClassifyCriterion | ParseAcceptanceCriteria |
-> |---|---|---|
-> | `- **AC-1:** WHEN a user clicks THE SYSTEM SHALL respond` | freeform | 1 criterion |
-> | `- WHEN a user clicks THE SYSTEM SHALL respond` | event | 0 criteria |
-> 
-> Cause: `ClassifyCriterion`…
+> **Root cause:** `internal/spec/spec.go:1082` `parseSections()` scans line-by-line:
+> ```go
+> line := scanner.Text()
+> trimmed := strings.TrimSpace(li…
 
 ## Suggested next prompt
 

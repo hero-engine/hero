@@ -1083,10 +1083,22 @@ func (s *Spec) parseSections(content string) {
 	scanner := bufio.NewScanner(strings.NewReader(content))
 	var currentSection string
 	var currentContent strings.Builder
+	var fence fenceTracker
 
 	for scanner.Scan() {
 		line := scanner.Text()
 		trimmed := strings.TrimSpace(line)
+
+		// A `## ` inside a fenced block is quoted example content, not a
+		// section break. Fence lines and fenced content still accumulate into
+		// the current section body — only heading detection is suppressed.
+		if fence.mark(line) || fence.inCode() {
+			if currentSection != "" {
+				currentContent.WriteString(line)
+				currentContent.WriteString("\n")
+			}
+			continue
+		}
 
 		if strings.HasPrefix(trimmed, "## ") {
 			// Save previous section

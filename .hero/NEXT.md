@@ -5,9 +5,9 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-07-15T18:45:38Z
+updated: 2026-07-15T18:52:07Z
 repo: hero-engine/hero
-branch: main
+branch: fix/spec-fence-aware-section-parsing
 ---
 
 ## Just finished

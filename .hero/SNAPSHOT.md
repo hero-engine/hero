@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-15T16:37:14Z · projected from 531 source nodes_
+_Last refreshed: 2026-07-15T18:52:07Z · projected from 531 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 1m ago | satellite-corpus-integration |
+| core | building | cmd/, internal/ | 2h ago | satellite-corpus-integration |
 | docs | maturing | web/docs/ | 2d ago | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | maturing | domains/engineering/ | 3d ago | — |
@@ -68,7 +68,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Open risks & blockers
 
 - **Blocked specs (13):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection); `wire-checks-to-boundaries` (waits on spec-contract-enums-unified).
-- **Stale-in-flight (2):** `hero-landing-page` (57d), `hero-team-server` (57d).
+- **Stale-in-flight (2):** `hero-landing-page` (58d), `hero-team-server` (57d).
 - **Aged open bugs (9):** `install-target-emits-both-claude-and-agents-md` (open 61d), `next-project-file-conflict-not-regenerated` (open 42d), `desktop-sidebar-mcp-not-running` (open 41d), `hihcp-agent-loop-error-recovery` (open 36d), `hihcp-agents-md-harness-agnostic` (open 36d), `hihcp-mcp-auto-reconnect` (open 36d), `hihcp-mcp-first-turn-readiness` (open 36d), `hihcp-permission-bridge-validation` (open 36d), `hihcp-rgignore` (open 36d).
 - **Unassigned specs (205) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 

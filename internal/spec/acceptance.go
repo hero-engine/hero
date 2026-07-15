@@ -79,6 +79,7 @@ func parseACBlock(body string) []AcceptanceCriterion {
 	var out []AcceptanceCriterion
 	var current *AcceptanceCriterion
 	var blankRun int
+	var fence fenceTracker
 
 	flush := func() {
 		if current == nil {
@@ -94,6 +95,21 @@ func parseACBlock(body string) []AcceptanceCriterion {
 	for _, raw := range lines {
 		line := strings.TrimRight(raw, "\r")
 		trimmed := strings.TrimSpace(line)
+
+		// An `AC-N:` inside a fenced block is a quoted example, not a real
+		// entry. Fenced lines still extend the current statement, but a blank
+		// line inside a fence must not close the paragraph — the fence, not
+		// the whitespace, delimits the block.
+		if fence.mark(line) || fence.inCode() {
+			if current != nil && trimmed != "" {
+				blankRun = 0
+				if current.Statement != "" {
+					current.Statement += " "
+				}
+				current.Statement += trimmed
+			}
+			continue
+		}
 
 		if m := acIDPattern.FindStringSubmatchIndex(line); m != nil {
 			flush()
