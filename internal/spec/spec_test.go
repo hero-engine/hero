@@ -846,6 +846,48 @@ func TestClassifyCriterion(t *testing.T) {
 			wantTrigger:  "",
 			wantBehavior: "",
 		},
+		{
+			name:         "labeled bold event",
+			raw:          "**AC-1:** WHEN a user clicks export THE SYSTEM SHALL enqueue a job",
+			wantKind:     CriterionEvent,
+			wantTrigger:  "a user clicks export",
+			wantBehavior: "enqueue a job",
+		},
+		{
+			name:         "labeled bare ubiquitous",
+			raw:          "AC-2: THE SYSTEM SHALL log every failed login attempt",
+			wantKind:     CriterionUbiquitous,
+			wantTrigger:  "",
+			wantBehavior: "log every failed login attempt",
+		},
+		{
+			name:         "labeled bulleted unwanted",
+			raw:          "- **AC-3:** IF the token is missing THEN THE SYSTEM SHALL exit non-zero",
+			wantKind:     CriterionUnwanted,
+			wantTrigger:  "the token is missing",
+			wantBehavior: "exit non-zero",
+		},
+		{
+			name:         "labeled end-bold without colon",
+			raw:          "**AC-4** WHILE a sync is in flight THE SYSTEM SHALL block concurrent syncs",
+			wantKind:     CriterionState,
+			wantTrigger:  "a sync is in flight",
+			wantBehavior: "block concurrent syncs",
+		},
+		{
+			name:         "labeled freeform stays freeform",
+			raw:          "**AC-5:** the system should be fast enough",
+			wantKind:     CriterionFreeform,
+			wantTrigger:  "",
+			wantBehavior: "",
+		},
+		{
+			name:         "AC-like prose is not a label",
+			raw:          "THE SYSTEM SHALL reject AC-1 duplicates",
+			wantKind:     CriterionUbiquitous,
+			wantTrigger:  "",
+			wantBehavior: "reject AC-1 duplicates",
+		},
 	}
 
 	for _, tt := range tests {

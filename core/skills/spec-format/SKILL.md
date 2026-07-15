@@ -441,9 +441,21 @@ are the same `critical|high|medium|low` string fields used elsewhere.
 ## Acceptance Criteria and EARS
 
 Acceptance criteria live in a `## Acceptance Criteria` section as a bullet list.
-Hero recognizes five EARS (Easy Approach to Requirements Syntax) patterns and
-classifies each bullet automatically; freeform bullets remain valid for
-criteria that genuinely don't fit.
+Each bullet carries an `AC-N:` label and states its promise using one of five
+EARS (Easy Approach to Requirements Syntax) patterns. Hero classifies each
+bullet automatically; freeform bullets remain valid for criteria that
+genuinely don't fit.
+
+The label and the EARS body do different jobs, and you want both:
+
+- The **`AC-N:` label** makes the criterion *addressable* — it becomes a graph
+  node other specs, coverage, and the ledger can reference by id. Without a
+  label, a criterion is invisible to all of them.
+- The **EARS body** makes the criterion *machine-checkable* — the trigger and
+  behavior clauses drive `hero test generate` and the `hero spec lint`
+  classification.
+
+Write `- **AC-1:** WHEN … THE SYSTEM SHALL …` so a criterion gets both.
 
 | Pattern | Template | Use when |
 |---|---|---|
@@ -458,18 +470,21 @@ Example (from a real feature spec):
 ```markdown
 ## Acceptance Criteria
 
-- WHEN a user submits invalid form data THE SYSTEM SHALL display field-level validation errors
-- WHILE a sync is in flight THE SYSTEM SHALL block concurrent sync attempts
-- IF the tracker token is missing THEN THE SYSTEM SHALL print a setup hint and exit non-zero
-- WHERE auto_capture IS ENABLED THE SYSTEM SHALL persist learnings after /deliver
-- THE SYSTEM SHALL log every failed login attempt
+- **AC-1:** WHEN a user submits invalid form data THE SYSTEM SHALL display field-level validation errors
+- **AC-2:** WHILE a sync is in flight THE SYSTEM SHALL block concurrent sync attempts
+- **AC-3:** IF the tracker token is missing THEN THE SYSTEM SHALL print a setup hint and exit non-zero
+- **AC-4:** WHERE auto_capture IS ENABLED THE SYSTEM SHALL persist learnings after /deliver
+- **AC-5:** THE SYSTEM SHALL log every failed login attempt
 ```
 
 **Guidelines:**
 
+- Number labels sequentially from `AC-1` within a spec. Ids are referenced
+  elsewhere, so don't renumber existing criteria — append instead.
 - Keywords are case-insensitive, but uppercase reads best in review.
 - A trailing period is allowed but not required.
 - Don't force EARS onto criteria where it reads awkwardly — freeform is fine.
+  Keep the `AC-N:` label even then: a freeform criterion is still addressable.
 - Run `hero spec lint <slug>` to see the classification + freeform ratio.
 - `hero test generate` maps the `Behavior` clause to Playwright assertions,
   so concrete identifiers (selectors, URLs, flag names) inside the behavior
@@ -481,8 +496,8 @@ A spec is ready for delivery when:
 - The Goal section is concrete enough to verify completion
 - The Changes section lists every file or component to touch
 - Each change item has enough detail to implement without guessing
-- Acceptance Criteria use EARS patterns where they fit; freeform ratio is
-  reasonable for the spec's domain
+- Acceptance Criteria carry `AC-N:` labels and use EARS patterns where they
+  fit; freeform ratio is reasonable for the spec's domain
 - Boundaries are explicit — the engineer knows what NOT to do
 - Risks call out anything that could cause the implementation to stall
 - No section says "TBD" or "to be determined" without explanation

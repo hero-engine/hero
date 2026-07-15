@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-15T16:37:14Z
+updated: 2026-07-15T17:58:13Z
 repo: hero-engine/hero
 ---
 
@@ -8,11 +8,22 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> i did a deep dive with gpt on ideas to improve hero - crafted this initiative - and would love you thoughts. i do think theres a few good ones in there. no-repeat-surprises thoughts?
+> In /Users/bwheeler/projects/hero-engine/repository/hero, two acceptance-criteria consumers are mutually exclusive. Verified by direct test:
+> 
+> | AC form | ClassifyCriterion | ParseAcceptanceCriteria |
+> |---|---|---|
+> | `- **AC-1:** WHEN a user clicks THE SYSTEM SHALL respond` | freeform | 1 criterion |
+> | `- WHEN a user clicks THE SYSTEM SHALL respond` | event | 0 criteria |
+> 
+> Cause: `ClassifyCriterion`…
 
 ## Suggested next prompt
 
-> let's review the layered integration config diff, then commit it as one atomic change
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 
