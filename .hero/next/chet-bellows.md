@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-16T07:37:09Z
+updated: 2026-07-16T17:30:45Z
 repo: hero-engine/hero
 ---
 
@@ -15,7 +15,11 @@ repo: hero-engine/hero
 
 ## Suggested next prompt
 
-> Today's install-integrity thread is fully closed: eraser fixed+guarded, detection shipped, MCP resolver fixed, codex-install-broken superseded. Branch fix/agents-md-erased-by-snapshot-pointer-writer has 6 commits ready to merge to main. Remaining small items: orphan-instruction-files fresh-clone false positive (chip pending), copilot un-inferable on fresh clones (targetLayouts legacy probe), .mcp.json same-principle relocation, and the cosmetic 'downgrade detected' version misread.
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 

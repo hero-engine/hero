@@ -5,7 +5,7 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-07-16T16:55:28Z
+updated: 2026-07-16T17:30:45Z
 repo: hero-engine/hero
 branch: fix/agents-md-erased-by-snapshot-pointer-writer
 ---
