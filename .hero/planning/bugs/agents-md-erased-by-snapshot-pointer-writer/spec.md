@@ -14,6 +14,7 @@ relations:
     kind: related
   - target: agents-md-managed-region-consolidation
     kind: related
+supersedes: [codex-install-broken]
 ---
 
 # AGENTS.md silently erased by the snapshot pointer writer
