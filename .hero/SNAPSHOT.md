@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-16T20:46:41Z · projected from 535 source nodes_
+_Last refreshed: 2026-07-16T21:24:21Z · projected from 535 source nodes_
 
 ## Surfaces
 
@@ -53,8 +53,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — parent-watchdog-race-ci-red, codex-mcp-binary-path-resolution, mcp-transport-closes-midsession-supersede, hero-docs-check-engine-repo-misfire, doctor-routing-guidance-all-packs, agent-hero-version-schema-confusion, next-context-carry-forward-drift
-- **core** — install-integrity-self-check, layered-integration-configuration, harness-native-install-target-aware-upgrade
+- **(unassigned)** — next-drift-gate-branch-line-drift, parent-watchdog-race-ci-red, codex-mcp-binary-path-resolution, mcp-transport-closes-midsession-supersede, hero-docs-check-engine-repo-misfire, doctor-routing-guidance-all-packs, agent-hero-version-schema-confusion, next-context-carry-forward-drift
+- **core** — install-integrity-self-check, layered-integration-configuration
 - **docs** — release-notes-page
 - **serve** — agents-md-erased-by-snapshot-pointer-writer
 

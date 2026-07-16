@@ -85,11 +85,19 @@ func NextMD(store *graph.Store, opts NextMDOptions) (string, error) {
 	fmt.Fprintf(&b, "updated: %s\n", time.Now().UTC().Format(time.RFC3339))
 	fmt.Fprintf(&b, "repo: %s\n", opts.RepoKey)
 	if opts.SessionID != "" {
+		// session: is consumed — readSessionFromExistingNext reads it back
+		// to anchor "## Tried and failed" (attemptsForSession), and
+		// graph_ingest emits a Session node from it. It is stamped only in a
+		// live session (SessionID set) and is not written at commit time, so
+		// it never lands in the committed, CI-gated NEXT.md.
 		fmt.Fprintf(&b, "session: %s\n", opts.SessionID)
 	}
-	if opts.Branch != "" {
-		fmt.Fprintf(&b, "branch: %s\n", opts.Branch)
-	}
+	// branch: is deliberately NOT emitted. It had no consumer (only a Session
+	// node prop) yet was stamped at commit time from the committer's git
+	// checkout, so it differed from CI's `main` checkout and made the NEXT.md
+	// drift gate unwinnable. Live branch is available from `git status`.
+	// (updated: is the only other volatile field, and the gate already
+	// ignores it via -I'^updated: '.) See next-drift-gate-branch-line-drift.
 	b.WriteString("---\n\n")
 
 	// Just finished — pointer to git log rather than a frozen copy.

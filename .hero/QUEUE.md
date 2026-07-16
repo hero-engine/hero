@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-16T20:47:00Z · 84 ready specs_
+_Generated: 2026-07-16T21:24:22Z · 83 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -140,46 +140,6 @@ _initiative · planning · horizon: now_
 _Run opener — arm with `/drive hero-self-consistency`_
 
 Hero's generated guidance, Hero's own writes, and Hero's actual product contract agree — and something gates the disagreement when they drift apart. Done means: one definition of the spec-type and status contract instead of three; zero specs carrying a status Hero itself writes and Hero itself rejects; zero dead command references in generated output; and the checks that already exist running at a boundary instead of waiting for a human to remember them.
-
----
-
-## next-drift-gate-branch-line-drift — "CI NEXT.md drift gate red again — projection stamps a live `branch:` line the gate doesn't ignore"
-_bug · planning · horizon: now_
-
-**Pick up at: DIAGNOSED — ready to fix.** The CI "NEXT.md projection drift gate"
-(`.github/workflows/test.yml:43-64`) is red again on `main`. Root cause is fully
-reproduced: `internal/projection/projection.go:90-92` stamps a live
-`branch: <git rev-parse --abbrev-ref HEAD>` line into the byte-gated `.hero/NEXT.md`.
-The committer/concurrent-session's branch (e.g. `fix/mcp-transport-closes-midsession-supersede`
-in HEAD `7a02a00`) gets baked in; CI re-projects on `main` → `branch: main`; the gate
-ignores `updated:` but not `branch:`, so `git diff --exit-code -I'^updated: '` returns
-exit 1. This is a recurrence of the completed spec `next-drift-gate-unwinnable`, which
-fixed the `updated:` timestamp and size-drift count but left `branch:` (same defect
-shape); the prior spec even rejected the "ignore volatile lines in the gate" approach as
-fragile — this bug is that prediction realized.
-
-**Do this:** apply Change 1 — delete the `branch:` (and latent `session:`) emission in
-`internal/projection/projection.go` `NextMD` (~line 87-92). Nothing consumes these
-(`Branch` is `// frontmatter only`); live branch is available via `git status`, and
-per-session context belongs in the gitignored `.hero/next/<user>.local.md`. Add the
-regression guard `TestNextMD_NoEnvironmentLocalFrontmatter` (assert no `branch:`/`session:`
-line even when the options set them) plus a cross-branch idempotence test (project with
-`Branch: feature/x` then `Branch: main`, assert byte-identical modulo `updated:`).
-
-**Verify:**
-```
-go build -o ./hero ./cmd/hero && ./hero scan >/dev/null 2>&1 || true
-./hero next checkpoint --quiet
-git diff --exit-code -I'^updated: ' -- .hero/NEXT.md   # must be exit 0
-go test ./internal/projection/... ./internal/cli/...
-```
-Then commit (stage `.hero/NEXT.md` + `.hero/next/*.md` per the handoff-travels-with-commits
-rule) and confirm the `Test` job turns green on the next push to `main` — that green run is
-the real acceptance. Do **not** re-adopt the enumerate-volatile-lines gate hack (Change 2)
-unless the team explicitly wants to keep the branch line visible; removal is the root-cause
-fix. Deferred scrub: collapse the two `currentBranch` helpers
-(`checkpoint.go:1136` vs `gitutil.CurrentBranch`) and drop the now-inert `Branch`/`SessionID`
-options + call-site assignments.
 
 ---
 
