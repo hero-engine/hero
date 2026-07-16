@@ -83,6 +83,7 @@ nav:
     - Specs & Lifecycle: concepts/specs.md
     - Knowledge Base: concepts/knowledge-base.md
     - Agents & Skills: concepts/agents-and-skills.md
+    - Cross-Repo Peering: concepts/cross-repo.md
   - Workflows:
     - Discovery & Design: workflows/discovery-and-design.md
     - Delivery & Debugging: workflows/delivery-and-debugging.md

@@ -4,7 +4,7 @@ Hero installs slash command definitions into the user's harness. The
 commands route natural-language work into repeatable workflows and
 delegate to the appropriate agents and skills.
 
-Current installed command definitions: **29**.
+Current installed command definitions: **30**.
 
 ```text
 /design auth flow for OAuth2 providers
@@ -46,6 +46,7 @@ plain natural-language asks are routed to these same workflows.
 | `/compose` | Break an initiative into sequenced child specs. |
 | `/split` | Decompose a large spec into smaller deliverable specs. |
 | `/sprint` | Select and sequence work for an iteration. |
+| `/roadmap-review` | Triage roadmap-shape drift across the planning corpus, one finding at a time. |
 | `/import` | Import tracker issues into local spec scaffolds. |
 | `/release` | Assess release readiness and operational risk. |
 | `/retro` | Compare a completed spec to what shipped and capture learnings. |

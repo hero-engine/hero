@@ -47,6 +47,10 @@ func installFlat(opts Options, result *Result, kind, destDir string) error {
 	for _, name := range names {
 		srcPath := kind + "/" + name
 		dst := filepath.Join(destDir, name)
+		// Record the dest in the file-prune manifest unconditionally —
+		// before/independent of copyFileFromFS, whose Copied append is
+		// skipped on a byte-match no-op. See prune.go / Result.rendered.
+		result.rendered = append(result.rendered, dst)
 		if err := copyFileFromFS(opts, result, srcFS, srcPath, dst); err != nil {
 			return err
 		}
@@ -185,6 +189,10 @@ func installSkillsFlat(opts Options, result *Result, destDir string) error {
 	// for harnesses that only read flat instruction files.
 	for _, s := range skills {
 		dst := filepath.Join(destDir, s.Name+".md")
+		// Cursor's flat skills are files prune.go never touches (Cursor
+		// calls no skill-dir prune), so record them in the file manifest
+		// unconditionally. See prune.go / Result.rendered.
+		result.rendered = append(result.rendered, dst)
 		if err := copyFileFromFS(opts, result, srcFS, s.SourcePath, dst); err != nil {
 			return err
 		}

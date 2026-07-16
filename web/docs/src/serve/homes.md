@@ -9,7 +9,7 @@ router. Open the daemon and the top nav lists exactly the routes below.
 The homes:
 
 - [`/now`](#now-now) — what's happening right now
-- [`/project`](#project-project) — projected shape of the project
+- [`/rollup`](#rollup-rollup) — projected shape of the project
 - [`/work`](#work-work) — the spec corpus
 - [`/knowledge`](#knowledge-knowledge) — the knowledge base
 - [`/agents`](#agents-agents) — agent sessions and automation
@@ -25,14 +25,20 @@ in flight, what was just touched, what's waiting on you, and the chat
 input you'd usually reach for first. Registered in
 `internal/serve/pages/now/page.go` (`Slug: "now"`).
 
-## Project — `/project`
+## Rollup — `/rollup`
 
 A projected snapshot of the project's shape — surfaces, the spec
 table, initiatives, and the archives timeline. Aimed at leads and
 anyone trying to see the whole thing at a glance rather than the
 current sprint. Landed in v0.10 alongside the `hero snapshot`
-projector. Registered in `internal/serve/pages/project/page.go`
-(`Slug: "project"`).
+projector. Registered in `internal/serve/pages/rollup/page.go`
+(`Slug: "rollup"`).
+
+!!! note "Previously `/project`"
+    This home was originally mounted at `/project` and moved to `/rollup`.
+    The `/project` slot is now owned by the per-project **section** page
+    (`internal/serve/projectpage`, `Slug: "project"`) — an operator view
+    of a single registered project rather than the whole-workspace rollup.
 
 ## Work — `/work`
 

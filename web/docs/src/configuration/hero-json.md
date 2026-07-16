@@ -163,6 +163,20 @@ Provider-neutral connections keyed by stable user-defined IDs. `default` and `ro
 | `roles` | `object` | Maps `delivery`, `docs`, or `roadmap` to stable IDs |
 | `connections` | `object` | Stable ID → `{provider, settings, auth}` definitions |
 
+Valid `provider` values and their **required** `settings` differ per provider:
+
+| Provider | Role | Required `settings` | Notes |
+|---|---|---|---|
+| `github` | delivery | `project` | `project` is `owner/repo`. |
+| `linear` | delivery | `project` | `project` is the team key. |
+| `jira` | delivery | `project`, `base_url` | `user_email` required for Jira Cloud. |
+| `gitlab` | delivery | `project`, `base_url` | `base_url` is **mandatory** (`https://gitlab.com` for SaaS); token needs the `api` scope. |
+| `confluence` | docs | `space_key`, `base_url` | Not a tracker — a wiki *publish* target for `hero publish`. `base_url` includes `/wiki`; `user_email` required for Cloud. |
+
+A `delivery`-role Confluence connection is automatically rewritten to the
+`docs` role. See [Tracker Setup](tracker-setup.md) for full per-provider
+examples.
+
 ---
 
 ### `import`

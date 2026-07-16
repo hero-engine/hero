@@ -79,6 +79,15 @@ type TargetState struct {
 	// user's to keep. See prune.go. Absent for targets with no nested
 	// skills dest (cursor, copilot, generic).
 	SkillDirs []string `json:"skill_dirs,omitempty"`
+
+	// Files is the set of flat agent/command/flat-skill dest paths the most
+	// recent install wrote for this target — TargetDir-relative, forward
+	// slash. It is the file-level analogue of SkillDirs: the next install
+	// prunes recorded entries it no longer writes, the sole proof that an
+	// orphaned flat file is Hero's to remove rather than the user's to keep.
+	// See prune.go / pruneStaleFiles. Root instruction files (AGENTS.md /
+	// CLAUDE.md / copilot-instructions.md) are structurally excluded.
+	Files []string `json:"files,omitempty"`
 }
 
 const installStateSchemaVersion = 1
@@ -174,12 +183,21 @@ func RecordTargetInstall(opts Options, mode string, result *Result) {
 		skillDirs = append(skillDirs, result.skillDirs...)
 		sort.Strings(skillDirs)
 	}
+	// File manifest for the next run's prune (pruneStaleFiles). Replaced
+	// wholesale — the precise record of what Hero renders now, not an
+	// append-only accumulation. TargetDir-relative, forward-slash, sorted +
+	// deduped so re-installs produce a stable file. See prune.go.
+	var files []string
+	if result != nil {
+		files = renderedFileManifest(opts, result)
+	}
 	st.Targets[target] = TargetState{
 		Mode:          mode,
 		InstalledAt:   installedAt,
 		LastUpdatedAt: now,
 		HeroVersion:   ver,
 		SkillDirs:     skillDirs,
+		Files:         files,
 	}
 	st.HeroVersion = ver
 
@@ -287,6 +305,7 @@ func PersistInferredTargets(projectRoot string, targets []Target, heroVersion st
 		installedAt := now
 		mode := "rendered"
 		var skillDirs []string
+		var files []string
 		if had {
 			if prior.InstalledAt != "" {
 				installedAt = prior.InstalledAt
@@ -294,9 +313,10 @@ func PersistInferredTargets(projectRoot string, targets []Target, heroVersion st
 			if prior.Mode != "" {
 				mode = prior.Mode
 			}
-			// Backfilling a target set says nothing about its skills; keep
-			// the prune manifest an install wrote (see prune.go).
+			// Backfilling a target set says nothing about its skills or
+			// files; keep the prune manifests an install wrote (see prune.go).
 			skillDirs = prior.SkillDirs
+			files = prior.Files
 		}
 		st.Targets[key] = TargetState{
 			Mode:          mode,
@@ -304,6 +324,7 @@ func PersistInferredTargets(projectRoot string, targets []Target, heroVersion st
 			LastUpdatedAt: now,
 			HeroVersion:   ver,
 			SkillDirs:     skillDirs,
+			Files:         files,
 		}
 	}
 	if st.HeroVersion == "" {

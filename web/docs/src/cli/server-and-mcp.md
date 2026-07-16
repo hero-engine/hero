@@ -99,6 +99,20 @@ resolved set **and** its entire content is Hero-managed. Any user content
 outside the markers means the file is always preserved. `hero check`
 surfaces an informational note when an orphaned instruction file is present.
 
+## Git Hooks
+
+```bash
+hero hooks status      # show which Hero git hooks are installed
+hero hooks install     # install Hero git hooks into .git/hooks/
+hero hooks uninstall   # remove all Hero git hooks and the merge driver
+```
+
+Hero's git hooks keep projected handoff files (`.hero/NEXT.md`,
+`.hero/next/*.md`, `.hero/SNAPSHOT.md`, `.hero/QUEUE.md`) staged
+automatically so they travel with every commit — without which the next
+session (possibly on another machine) starts cold. Standard install paths
+wire these for you; `hero check` warns if the staging block is missing.
+
 ## HTTP Daemon
 
 ```bash
@@ -144,3 +158,112 @@ hero admin users add alice
 
 Team mode enables job queue workers, shared activity, and server-side
 coordination features.
+
+## Hero Cloud
+
+!!! note "Requires a Hero Cloud account"
+    These commands talk to Hero Cloud (or a self-hosted instance via
+    `HERO_CLOUD_URL`). They're independent of your issue-tracker setup.
+
+```bash
+hero login                 # authenticate via GitHub OAuth (stores ~/.hero/credentials.json)
+hero cloud create-org      # create a Hero Cloud organization
+hero sync cloud            # push specs to Hero Cloud
+hero sync graph            # push / pull knowledge-graph deltas
+hero logout                # revoke credentials and the server refresh token
+```
+
+`hero login` opens a browser to authenticate and stores a token locally;
+`hero cloud` bootstraps an org and links a repo without opening the
+dashboard. Once authenticated, cloud-aware commands — `hero sync cloud`,
+`hero sync graph`, and cross-repo queries like `hero impact --cross-repo` —
+become available.
+
+## Async Agent Runtime
+
+`hero agent` runs agent work *outside* the interactive session —
+fire-and-forget jobs, scheduled automations, and approval gates for work
+that needs human sign-off before it merges.
+
+```bash
+hero agent run deliver auth-flow       # run headlessly via the Claude/OpenAI API
+hero agent jobs                        # list / inspect / cancel async jobs
+hero agent automate                    # set up event-driven automations
+hero agent approve <job-id>            # approve a gated job to continue
+hero agent events                      # log / inspect cross-session events
+```
+
+`hero agent run` executes a workflow headlessly against a model provider
+API (set the corresponding key, e.g. `ANTHROPIC_API_KEY`). `hero agent
+jobs` inspects the queue; `hero agent automate` wires event-driven
+triggers; and gated jobs pause for `hero agent approve` before completing.
+
+## Publishing
+
+`hero publish` is one-way output of Hero state to external surfaces —
+the read-only counterpart to the bidirectional `hero sync`:
+
+```bash
+hero publish wiki      # push completed specs to Confluence / GitHub Wiki
+hero publish pages     # render the knowledge graph as a static GitHub Pages site
+```
+
+Configure the Confluence target as a `docs`-role connection — see
+[Tracker Setup → Confluence](../configuration/tracker-setup.md#confluence-wiki-publishing).
+
+## Workspace Watcher
+
+```bash
+hero watch                   # local mode: poll for changes, auto-reindex (Ctrl+C to stop)
+hero watch --interval 5      # local mode, 5s poll interval
+hero watch --mode ci         # one-shot: validate all specs + health checks, non-zero on issues
+```
+
+`hero watch` keeps the index fresh as you work (local mode) or runs a
+single validating pass for CI (ci mode).
+
+## CI Status
+
+```bash
+hero ci                    # pipeline status for the current branch
+hero ci --branch main      # a specific branch
+hero ci --format json      # machine-readable
+```
+
+`hero ci` queries the configured CI provider for the latest run on the
+branch — pass/fail, failed-step detail, and a link. Requires
+`environment.ci` in `hero.json`, e.g.
+`{ "environment": { "ci": { "provider": "github-actions" } } }`.
+
+## Skills
+
+Skills are reusable step-by-step workflows stored as
+`.hero/skills/<name>.md`:
+
+```bash
+hero skill list            # list available skills
+hero skill run <name>      # run a skill
+hero skill save <name>     # scaffold a new skill and open it in $EDITOR
+hero skill show <name>     # print the skill markdown
+```
+
+## Export
+
+```bash
+hero export knowledge <dir>   # export the knowledge base to a directory
+hero export mocks <dir>       # export mock artifacts
+```
+
+## Uninstall
+
+```bash
+hero uninstall --target claude
+hero uninstall --target codex
+hero uninstall --target claude --dry-run    # preview what would be removed
+```
+
+`hero uninstall` removes only the agent, command, and skill files Hero
+originally installed for a target (tracked in `.hero/version.json`);
+user-created files in those directories are preserved. For Claude Code it
+also strips the Hero-managed section from `CLAUDE.md`, leaving your own
+content intact. Supported targets: `opencode`, `cursor`, `claude`, `codex`.
