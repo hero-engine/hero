@@ -100,8 +100,12 @@ func TestNextMD_HappyPath(t *testing.T) {
 	if !strings.Contains(out, "repo: test-repo") {
 		t.Error("missing repo in frontmatter")
 	}
-	if !strings.Contains(out, "branch: main") {
-		t.Error("missing branch in frontmatter")
+	// branch: is deliberately NOT emitted even when Branch is set — it has
+	// no consumer, is stamped from the committer's checkout, and made the CI
+	// drift gate unwinnable (next-drift-gate-branch-line-drift). Guard
+	// against reintroduction.
+	if strings.Contains(out, "branch:") {
+		t.Error("branch: must not appear in NEXT.md frontmatter — it drifts between branch and CI's main checkout")
 	}
 
 	// Sections
@@ -471,5 +475,30 @@ func TestNextMD_AttemptsLinkedToSession(t *testing.T) {
 	}
 	if strings.Contains(out, "Nothing this session.") {
 		t.Error("Tried and failed should not be empty when session has attempts")
+	}
+}
+
+// TestNextMD_EmitsSessionButNotBranch pins the split decided in
+// next-drift-gate-branch-line-drift: branch: is dropped (no consumer,
+// causes CI drift) but session: is KEPT (readSessionFromExistingNext reads
+// it back to anchor "## Tried and failed", and graph_ingest emits a Session
+// node from it — removing it silently empties the handoff section).
+func TestNextMD_EmitsSessionButNotBranch(t *testing.T) {
+	store := openTestStore(t)
+	seedRepo(t, store)
+
+	out, err := NextMD(store, NextMDOptions{
+		RepoKey:   "test-repo",
+		Branch:    "some-feature-branch",
+		SessionID: "sess-xyz",
+	})
+	if err != nil {
+		t.Fatalf("NextMD: %v", err)
+	}
+	if !strings.Contains(out, "session: sess-xyz") {
+		t.Errorf("session: must be emitted when SessionID is set (it anchors 'Tried and failed'); got:\n%s", out[:200])
+	}
+	if strings.Contains(out, "branch:") {
+		t.Errorf("branch: must never be emitted even when Branch is set; got:\n%s", out[:200])
 	}
 }

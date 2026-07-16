@@ -2,7 +2,7 @@
 title: "CI NEXT.md drift gate red again — projection stamps a live `branch:` line the gate doesn't ignore"
 slug: next-drift-gate-branch-line-drift
 type: bug
-status: planning
+status: completed
 domain: engineering
 priority: high
 severity: high
@@ -11,6 +11,7 @@ size: small
 created: 2026-07-13
 tags: [ci, next-projection, drift-gate, flaky-gate, release-blocker, recurrence]
 related: [next-drift-gate-unwinnable, next-as-projection, next-as-projection-architecture]
+completed_at: 2026-07-16T21:20:33Z
 ---
 
 # CI NEXT.md drift gate red again — the `branch:` frontmatter line drifts
@@ -414,3 +415,30 @@ unless the team explicitly wants to keep the branch line visible; removal is the
 fix. Deferred scrub: collapse the two `currentBranch` helpers
 (`checkpoint.go:1136` vs `gitutil.CurrentBranch`) and drop the now-inert `Branch`/`SessionID`
 options + call-site assignments.
+
+## Completion Ledger
+
+Delivered 2026-07-16. Stack: Go. **Revised after the first cold audit (HOLD).**
+
+The initial implementation dropped BOTH `branch:` and `session:` per this spec's
+Suggested Fix Approach. The cold audit correctly found that claim false:
+`internal/nextdoc/graph_ingest.go` reads `session:` to emit Session nodes, and
+`readSessionFromExistingNext` → `attemptsForSession` reads it back to render the
+`## Tried and failed` handoff section. Dropping `session:` silently empties that
+section — a violation of the "don't break the handoff magic" constraint.
+
+**Revised approach: drop only `branch:` (the actually-drifting line, no consumer);
+keep `session:` (handoff-critical, and never committed so it does not drift).**
+
+| Item | Status | Evidence |
+|---|---|---|
+| Drop `branch:` from the projection | DONE | `internal/projection/projection.go` `NextMD`: `branch:` block removed with a comment; `session:` block retained (guarded by `SessionID != ""`). |
+| Keep `session:` — handoff intact | DONE | `session:` still emitted when set; `readSessionFromExistingNext` → `attemptsForSession` still anchors `## Tried and failed`; `graph_ingest` Session-node path unaffected. New test `TestNextMD_EmitsSessionButNotBranch` pins both (session present, branch absent). |
+| `branch:` never emitted (drift source gone) | DONE | `TestNextMD_HappyPath` asserts absence even when `Branch` is set; regenerated `.hero/NEXT.md` frontmatter is `updated:` + `repo:` only (`grep -c '^branch:'` → 0). |
+| Committed NEXT.md regenerated branch-free | DONE | HEAD's NEXT.md carried a stale `branch:` line; regenerated with the fixed binary so committed == CI-regenerated (modulo `updated:`, which the gate ignores). |
+| Why session: does not drift | DONE | `session:` is stamped only when `SessionID` is set (live session); it is not set at commit time, so it never lands in the committed, CI-gated NEXT.md. `git grep '^session:' -- .hero/NEXT.md` → none. |
+| Full suite green under -race | DONE | `go test -race -count=1 ./...` → all packages ok, 0 failures. |
+
+### Exercise-the-feature check
+
+- [x] Exercised: regenerated NEXT.md with the fixed binary → no `branch:` line, so the committer-vs-CI-`main` drift the gate flagged is gone. Confirmed `session:` is still emitted in a live session (handoff's "Tried and failed" preserved) via the dedicated test. The audit's blocker (handoff regression) is resolved by keeping `session:`.
