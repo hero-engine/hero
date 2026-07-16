@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-16T07:08:23Z · projected from 534 source nodes_
+_Last refreshed: 2026-07-16T07:36:50Z · projected from 534 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 4m ago | satellite-corpus-integration |
+| core | building | cmd/, internal/ | 32m ago | satellite-corpus-integration |
 | docs | maturing | web/docs/ | 3d ago | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | maturing | domains/engineering/ | 4d ago | — |
@@ -16,7 +16,7 @@ _Last refreshed: 2026-07-16T07:08:23Z · projected from 534 source nodes_
 | domains/sales | maturing | domains/sales/ | 7d ago | — |
 | landing | building | web/landing/ | 4d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | <1m ago | agent-outposts |
+| serve | building | internal/serve/ | 28m ago | agent-outposts |
 | (unassigned) | — | — | — | 206 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -53,7 +53,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — mcp-transport-closes-midsession-supersede, hero-docs-check-engine-repo-misfire, doctor-routing-guidance-all-packs, agent-hero-version-schema-confusion, next-context-carry-forward-drift, init-gitignore-missing-machine-local-artifacts, incremental-scan-complete-result
+- **(unassigned)** — codex-mcp-binary-path-resolution, mcp-transport-closes-midsession-supersede, hero-docs-check-engine-repo-misfire, doctor-routing-guidance-all-packs, agent-hero-version-schema-confusion, next-context-carry-forward-drift, init-gitignore-missing-machine-local-artifacts
 - **core** — install-integrity-self-check, layered-integration-configuration, harness-native-install-target-aware-upgrade
 - **docs** — release-notes-page
 - **serve** — agents-md-erased-by-snapshot-pointer-writer

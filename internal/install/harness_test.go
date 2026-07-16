@@ -34,6 +34,11 @@ type installHarness struct {
 func newInstallHarness(t *testing.T) *installHarness {
 	t.Helper()
 
+	// Codex MCP wiring writes the machine-local User layer
+	// (~/.codex/config.toml) even on project installs — isolate HOME so
+	// no harness-driven install can touch the real user config.
+	t.Setenv("HOME", t.TempDir())
+
 	h := &installHarness{
 		t:         t,
 		SourceDir: t.TempDir(),

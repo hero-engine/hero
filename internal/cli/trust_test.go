@@ -203,6 +203,7 @@ func TestTrustCodexWithScopeNote(t *testing.T) {
 
 func TestInstallCodexPrintsTrustHint(t *testing.T) {
 	_ = newTestEnvEmpty(t)
+	t.Setenv("HOME", t.TempDir()) // codex MCP wiring writes ~/.codex/config.toml
 	targetDir := t.TempDir()
 
 	out, err := runCmd("install", "project", targetDir, "--target", "codex")

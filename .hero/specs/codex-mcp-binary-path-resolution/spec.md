@@ -2,7 +2,7 @@
 title: "Hero MCP binary path resolved from the installer's ambient PATH, not the running binary — wrong-hero and non-portable configs"
 slug: codex-mcp-binary-path-resolution
 type: bug
-status: planning
+status: completed
 severity: medium
 priority: P2
 domain: engineering
@@ -16,6 +16,7 @@ relations:
     kind: related
   - target: install-integrity-self-check
     kind: related
+completed_at: 2026-07-16T07:36:28Z
 ---
 
 # Hero MCP binary path resolved from the installer's ambient PATH
@@ -26,19 +27,23 @@ relations:
 happens to be first on the installer's PATH — instead of the hero that's actually running.
 The result is a machine-specific absolute path baked into a git-tracked config.
 
-**Status:** planning — investigation complete. The originating claim (Codex sandbox has no
-`hero` on PATH) is **falsified**; a different, real defect was found underneath it.
+**Status:** delivering — **implemented, awaiting audit+verify.** All four Fix Direction
+items landed 2026-07-16: `findHeroBinary` is `os.Executable()`-first with errors surfaced,
+the Codex MCP block writes to the User layer (`~/.codex/config.toml`) in both modes, and
+project-mode installs migrate Hero's managed block out of the project `.codex/config.toml`
+(span-exact, file left in place). Dogfooded on this repo: migration fired, User layer points
+at the installing binary, re-run idempotent. See `## Completion Ledger`.
 
-**Pick up at:** `## Fix Direction (decided)`. The portability question is resolved: the MCP
-block moves to Codex's machine-local User layer (`~/.codex/config.toml`), the project
-`.codex/config.toml` gets Hero's managed block removed, and the path is resolved via
-`os.Executable()`. The defect is in *shared* code (`findHeroBinary`), so the resolver fix
-lands across claude/cursor/opencode/codex at once.
+**Pick up at:** `## Completion Ledger` — run the cold delivery audit, then
+`hero spec verify codex-mcp-binary-path-resolution`.
 
 → `.hero/planning/bugs/codex-mcp-binary-path-resolution/spec.md`
 
-**Files:** `internal/install/mcp.go:48-58` (the defect), `internal/install/mcp.go:220-260`
-(codex writer), `internal/cli/doctor.go:63` (the correct pattern), `.codex/config.toml`
+**Files:** `internal/install/mcp.go` (resolver + codex writer + migration),
+`internal/install/mcp_test.go`, `internal/install/install_test.go`,
+`internal/install/main_test.go` + `internal/cli/main_test.go` (package-level HOME isolation
+backstop — tests must never write the real `~/.codex/config.toml`), `.codex/config.toml`
+(migrated: now whitespace-empty)
 
 **Skip:** don't add `setup_steps` to config.toml — **the key does not exist in Codex** and
 unknown keys are silently ignored. Don't build sandbox detection for local Codex — local MCP
@@ -519,3 +524,59 @@ only machine that has run it.
 (`~/.codex/config.toml`, deep-merged with project config), Hero's managed block is removed
 from the project `.codex/config.toml` (the file is the user's), and the resolver becomes
 `os.Executable()` with errors surfaced. Ready to deliver.
+
+---
+
+## Completion Ledger
+
+Delivered 2026-07-16. Stack: Go. Validation: `go build ./...`,
+`go test -race -count=1 ./internal/install/ ./internal/cli/` (ok, 3.6s / 55.0s),
+full `go test -count=1 ./...` exit 0 (the known `internal/serve/pages/now/data`
+time-of-day flake did not fire). Dogfooded on this repo with a fresh
+`go build -o hero ./cmd/hero`.
+
+**Delivery note — one scoped refinement:** workspace-mode installs
+(`opts.ProjectRoot != ""`) keep writing the codex block to the *workspace's*
+`.codex/config.toml`. Their `--project-root` arg is project-specific, not
+machine-generic — putting it in the User layer would pin every codex session on the
+machine to one repo. Codex's Project layer overriding the User layer per-key is exactly
+the right home for it. Normal project and global installs both write the User layer as
+decided.
+
+**Delivery note — leak found and sealed:** with project-mode installs now writing
+`~/.codex/config.toml`, several tests that run codex installs outside the shared harness
+(e.g. `prune_test.go`) rewrote the REAL user config to point at a transient go-test
+binary — observed live during delivery. Fixed with package-level `TestMain` HOME
+isolation in both `internal/install` and `internal/cli` (backstop), plus explicit
+`t.Setenv("HOME", t.TempDir())` in the directly-affected tests. The user's real config
+was restored byte-identical (verified against a pre-run backup).
+
+### Acceptance Criteria
+
+| # | Fix Direction item | Status | Note |
+|---|---|---|---|
+| 1 | Codex MCP block written to User layer (`~/.codex/config.toml`) on both project and global installs | DONE | `internal/install/mcp.go` `registerMCPCodex` — both modes target the User layer (workspace mode excepted, see delivery note). Tests: `TestRegisterMCP_Codex_Project` (block in `$HOME`, NOT in project), `TestRegisterMCP_Codex_Idempotent`. Dogfood: block landed in real `~/.codex/config.toml`. |
+| 2 | Migration: remove Hero's managed span from project `.codex/config.toml`; bytes outside untouched; file left in place; one-line notice | DONE | `removeCodexManagedBlock` in `mcp.go` — span-exact removal (+ its trailing newline), never deletes the file, prints `moved hero MCP block: ... -> ...`. Tests: `TestRegisterMCPCodex_MigratesProjectBlockToUserLayer` (user bytes byte-identical), `TestRegisterMCPCodex_MigrationBlockOnlyFileLeftInPlace`. Dogfood: repo `.codex/config.toml` now present + empty, notice printed once, second run silent. |
+| 3 | `findHeroBinary`: `os.Executable()` first (symlinks resolved, matching `doctor.go`), `LookPath` fallback; doc comment fixed | DONE | `mcp.go` `findHeroBinary` — `os.Executable` + `filepath.EvalSymlinks`, PATH only as fallback; doc comment now describes the actual behavior. Test: `TestFindHeroBinary_PrefersRunningBinaryOverPATH` (decoy hero earlier on PATH loses), `TestFindHeroBinary_FallsBackToPATH`. Benefits all four MCP targets: `TestRegisterMCP_CommandPointsAtRunningBinary_AllTargets` (cursor/claude/opencode/codex). |
+| 4 | Stop swallowing `LookPath` failure — return a real error, callers handle it | DONE | `findHeroBinary` returns `fmt.Errorf(...)` when both resolutions fail; the `"hero", nil` fallback is gone. `RegisterMCP`'s existing error handling (previously dead) is now live. Test: `TestFindHeroBinary_ErrorWhenUnresolvable` (injectable seams `osExecutable`/`execLookPath`). |
+
+### Changes
+
+| # | Change | Status | Note |
+|---|---|---|---|
+| 1 | `internal/install/mcp.go` — resolver rewrite, User-layer codex writer, `removeCodexManagedBlock` migration helper, test seams | DONE | ~90 lines changed/added. `upsertCodexConfig`/`stripUnmanagedCodexHeroTable` semantics untouched (all 6 pre-existing marker/dedup tests pass unmodified). |
+| 2 | `internal/install/mcp_test.go` — resolver, migration, cross-target tests | DONE | +7 tests: 3 × `TestFindHeroBinary_*`, 2 × `TestRegisterMCPCodex_Migrat*`, `TestRegisterMCP_CommandPointsAtRunningBinary_AllTargets` (4 subtests), helper `testExecutable`. |
+| 3 | `internal/install/install_test.go` — codex MCP assertions updated for User-layer write | DONE | `TestRegisterMCP_Codex_Project` now asserts $HOME placement + running-binary command + no project block; `TestRegisterMCP_Codex_Idempotent` reads $HOME; `TestRunCodexProject` HOME-isolated. |
+| 4 | `internal/install/main_test.go`, `internal/cli/main_test.go` (new) + `harness_test.go`, `install_hooks_test.go`, `trust_test.go` — HOME isolation | DONE | Package-level `TestMain` backstops + targeted `t.Setenv("HOME", ...)`. Verified empirically: cleaned real config, ran both packages, file untouched. |
+| 5 | Dogfood migration of this repo's `.codex/config.toml` + real `~/.codex/config.toml` | DONE | Tracked file lost the block (whitespace-empty, still present); real User layer gained the block pointing at the freshly built binary. `./hero check` unchanged from pre-change baseline (verified via stash round-trip); `./hero doctor` reports sensibly and its wrong-hero WARNING now demonstrates exactly the case the fix guards. |
+
+### Exercise-the-feature check
+
+- [x] Exercised end-to-end: `go build -o hero ./cmd/hero && ./hero install project . --target codex --force` on this repo — migration notice printed, project `.codex/config.toml` emptied (file kept), real `~/.codex/config.toml` gained the managed block with `command = "/Users/developer/projects/hero-engine/repository/hero/hero"`; second run printed no migration notice and left exactly one block; `./hero check` clean relative to baseline; `./hero doctor` verdict OK.
+
+### Excellence Bar self-check
+
+Yes — the fix lands at the shared locus (all four MCP targets), the migration is
+byte-surgical with the user's file treated as theirs, the silent-fallback failure mode is
+gone, and the delivery caught + permanently sealed a live "tests rewrite the developer's
+real config" hazard that the change itself would otherwise have introduced.
