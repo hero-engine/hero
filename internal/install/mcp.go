@@ -45,18 +45,37 @@ func RegisterMCP(target Target, opts Options) error {
 	}
 }
 
-// findHeroBinary locates the hero binary. Checks:
-// 1. The running binary itself
-// 2. PATH lookup
+// Test seams for findHeroBinary — overridden in tests to simulate
+// resolution failure without disturbing the real environment.
+var (
+	osExecutable = os.Executable
+	execLookPath = exec.LookPath
+)
+
+// findHeroBinary locates the hero binary to wire into MCP configs. Checks:
+//  1. The running binary itself (os.Executable, symlinks resolved) — the
+//     hero performing the install is the hero the config must point at,
+//     not whichever hero happens to be first on the ambient PATH.
+//  2. PATH lookup, only as a fallback when os.Executable fails.
+//
+// Returns an error when neither resolves: writing a config that points at
+// a binary we could not locate would only defer the failure to the
+// harness's MCP startup, silently.
 func findHeroBinary() (string, error) {
-	// Try to find in PATH
-	path, err := exec.LookPath("hero")
-	if err == nil {
+	exe, exeErr := osExecutable()
+	if exeErr == nil {
+		if resolved, err := filepath.EvalSymlinks(exe); err == nil {
+			return resolved, nil
+		}
+		return exe, nil
+	}
+
+	path, lookErr := execLookPath("hero")
+	if lookErr == nil {
 		return path, nil
 	}
 
-	// If we can't find it, return a reasonable default
-	return "hero", nil
+	return "", fmt.Errorf("locating hero binary: os.Executable: %v; PATH lookup: %v", exeErr, lookErr)
 }
 
 // registerMCPCursor writes to .cursor/mcp.json in the project.
@@ -217,8 +236,20 @@ func upsertOpenCodeMCPConfig(configPath, heroPath string, dryRun bool, projectRo
 	return os.WriteFile(configPath, data, 0o644)
 }
 
-// registerMCPCodex writes the hero MCP server to .codex/config.toml.
-// Project mode: <project>/.codex/config.toml. Global mode: ~/.codex/config.toml.
+// registerMCPCodex writes the hero MCP server block to Codex's machine-local
+// User layer (~/.codex/config.toml) in BOTH project and global modes. Codex
+// deep-merges config layers — User (~/.codex/config.toml, precedence 20) <
+// Project (<repo>/.codex/, precedence 25), recursive per-key table merge
+// (openai/codex: config_layer_source.rs, merge.rs) — so one User-layer block
+// serves every Hero project on the machine (`hero mcp` resolves the workspace
+// from the session's cwd), and the machine-specific absolute binary path
+// never lands in a git-tracked project file.
+//
+// Exception: workspace mode (opts.ProjectRoot != "") pins the MCP server to a
+// specific project root via `--project-root`. That value is project-specific,
+// not machine-generic, so it stays in the workspace's own .codex/config.toml
+// — Codex's Project layer, which overrides the User layer per-key.
+//
 // Format uses a hero:managed marker block so we can update without clobbering user content:
 //
 //	# hero:managed
@@ -226,20 +257,69 @@ func upsertOpenCodeMCPConfig(configPath, heroPath string, dryRun bool, projectRo
 //	command = "/path/to/hero"
 //	args = ["mcp"]
 //	# end:hero:managed
+//
+// Project mode also migrates older installs: if the project's
+// .codex/config.toml still carries the managed block, exactly that span is
+// removed. Bytes outside it are untouched, and the file is left in place —
+// it is the user's file (their model/approval/other-MCP settings live
+// there), and deleting a possibly git-tracked file from an installer would
+// be a surprise.
 func registerMCPCodex(heroPath string, opts Options) error {
-	var configPath string
-	switch opts.Mode {
-	case ModeProject:
-		configPath = filepath.Join(opts.TargetDir, ".codex", "config.toml")
-	case ModeGlobal:
-		home, err := os.UserHomeDir()
+	if opts.Mode == ModeProject && opts.ProjectRoot != "" {
+		// Workspace mode: project-specific wiring belongs in the project layer.
+		configPath := filepath.Join(opts.TargetDir, ".codex", "config.toml")
+		return upsertCodexConfig(configPath, heroPath, opts.DryRun, opts.ProjectRoot)
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+	configPath := filepath.Join(home, ".codex", "config.toml")
+
+	if opts.Mode == ModeProject && !opts.DryRun {
+		projectConfig := filepath.Join(opts.TargetDir, ".codex", "config.toml")
+		migrated, err := removeCodexManagedBlock(projectConfig)
 		if err != nil {
-			return err
+			return fmt.Errorf("removing hero block from %s: %w", projectConfig, err)
 		}
-		configPath = filepath.Join(home, ".codex", "config.toml")
+		if migrated {
+			fmt.Printf("  moved hero MCP block: %s -> %s (Codex User layer)\n", projectConfig, configPath)
+		}
 	}
 
 	return upsertCodexConfig(configPath, heroPath, opts.DryRun, opts.ProjectRoot)
+}
+
+// removeCodexManagedBlock deletes Hero's `# hero:managed` … `# end:hero:managed`
+// span (plus the single trailing newline Hero wrote after it) from the file
+// at path. Every byte outside the span is left untouched, and the file is
+// left in place even when only whitespace remains. Returns true when a
+// block was found and removed.
+func removeCodexManagedBlock(path string) (bool, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	s := string(data)
+	start := strings.Index(s, codexMCPMarker)
+	if start < 0 {
+		return false, nil
+	}
+	end := strings.Index(s[start:], codexMCPEndMarker)
+	if end < 0 {
+		return false, nil
+	}
+	end += start + len(codexMCPEndMarker)
+	if end < len(s) && s[end] == '\n' {
+		end++
+	}
+
+	return true, os.WriteFile(path, []byte(s[:start]+s[end:]), 0o644)
 }
 
 const codexMCPMarker = "# hero:managed"

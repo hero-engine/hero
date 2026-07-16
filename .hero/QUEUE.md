@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-16T07:08:23Z · 85 ready specs_
+_Generated: 2026-07-16T07:36:50Z · 84 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -40,33 +40,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · in-review · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-idea-primitive-core/spec.md)_
-
----
-
-## codex-mcp-binary-path-resolution — "Hero MCP binary path resolved from the installer's ambient PATH, not the running binary — wrong-hero and non-portable configs"
-_bug · planning · horizon: now_
-
-`hero install` writes the MCP config by asking `exec.LookPath("hero")` — whichever hero
-happens to be first on the installer's PATH — instead of the hero that's actually running.
-The result is a machine-specific absolute path baked into a git-tracked config.
-
-**Status:** planning — investigation complete. The originating claim (Codex sandbox has no
-`hero` on PATH) is **falsified**; a different, real defect was found underneath it.
-
-**Pick up at:** `## Fix Direction (decided)`. The portability question is resolved: the MCP
-block moves to Codex's machine-local User layer (`~/.codex/config.toml`), the project
-`.codex/config.toml` gets Hero's managed block removed, and the path is resolved via
-`os.Executable()`. The defect is in *shared* code (`findHeroBinary`), so the resolver fix
-lands across claude/cursor/opencode/codex at once.
-
-→ `.hero/planning/bugs/codex-mcp-binary-path-resolution/spec.md`
-
-**Files:** `internal/install/mcp.go:48-58` (the defect), `internal/install/mcp.go:220-260`
-(codex writer), `internal/cli/doctor.go:63` (the correct pattern), `.codex/config.toml`
-
-**Skip:** don't add `setup_steps` to config.toml — **the key does not exist in Codex** and
-unknown keys are silently ignored. Don't build sandbox detection for local Codex — local MCP
-servers run *outside* the sandbox and inherit PATH.
 
 ---
 

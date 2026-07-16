@@ -15,6 +15,7 @@ import (
 // who discover `hero install` first still get hook coverage.
 func TestInstallSelfHealsPreCommitHook(t *testing.T) {
 	_ = newTestEnvEmpty(t)
+	t.Setenv("HOME", t.TempDir()) // codex MCP wiring writes ~/.codex/config.toml
 	targetDir := t.TempDir()
 	if err := exec.Command("git", "init", "-q", targetDir).Run(); err != nil {
 		t.Fatalf("git init: %v", err)
@@ -46,6 +47,7 @@ func TestInstallSelfHealsPreCommitHook(t *testing.T) {
 // the self-heal install — mirrors `hero init --no-hooks`.
 func TestInstallNoHooksFlag(t *testing.T) {
 	_ = newTestEnvEmpty(t)
+	t.Setenv("HOME", t.TempDir()) // codex MCP wiring writes ~/.codex/config.toml
 	targetDir := t.TempDir()
 	if err := exec.Command("git", "init", "-q", targetDir).Run(); err != nil {
 		t.Fatalf("git init: %v", err)
@@ -72,6 +74,7 @@ func TestInstallNoHooksFlag(t *testing.T) {
 // Critically, the marker block survives untouched (no double-write).
 func TestInstallSkipsHookWhenAlreadyInstalled(t *testing.T) {
 	_ = newTestEnvEmpty(t)
+	t.Setenv("HOME", t.TempDir()) // codex MCP wiring writes ~/.codex/config.toml
 	targetDir := t.TempDir()
 	if err := exec.Command("git", "init", "-q", targetDir).Run(); err != nil {
 		t.Fatalf("git init: %v", err)
@@ -111,6 +114,7 @@ func TestInstallSkipsHookWhenAlreadyInstalled(t *testing.T) {
 // before `git init`), so this must not error.
 func TestInstallSkipsHookOutsideGitRepo(t *testing.T) {
 	_ = newTestEnvEmpty(t)
+	t.Setenv("HOME", t.TempDir()) // codex MCP wiring writes ~/.codex/config.toml
 	targetDir := t.TempDir()
 	// Intentionally no `git init` — install should still succeed
 	// and just skip the hook install.
@@ -138,6 +142,7 @@ func TestInstallSkipsHookOutsideGitRepo(t *testing.T) {
 // want the hook, re-running install must not bring it back.
 func TestInstallRespectsExplicitOptOutSentinel(t *testing.T) {
 	_ = newTestEnvEmpty(t)
+	t.Setenv("HOME", t.TempDir()) // codex MCP wiring writes ~/.codex/config.toml
 	targetDir := t.TempDir()
 	if err := exec.Command("git", "init", "-q", targetDir).Run(); err != nil {
 		t.Fatalf("git init: %v", err)
