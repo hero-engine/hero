@@ -5,9 +5,8 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-07-16T21:24:21Z
+updated: 2026-07-16T21:25:26Z
 repo: hero-engine/hero
-branch: fix/next-drift-gate-branch-line-drift
 ---
 
 ## Just finished
