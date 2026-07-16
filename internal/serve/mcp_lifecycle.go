@@ -75,7 +75,9 @@ func (s *MCPServer) Run() error {
 
 		done := make(chan struct{})
 		defer close(done)
-		startParentWatchdog(done)
+		// The goroutine dies with the process; the join channel is only
+		// needed by tests that restore the watchdog's seam vars.
+		_ = startParentWatchdog(done)
 	}
 
 	scanner := bufio.NewScanner(s.input)

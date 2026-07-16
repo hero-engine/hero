@@ -32,12 +32,20 @@ var (
 //
 // It fires ONLY when the parent is already dead, so it can never disrupt
 // a live session.
-func startParentWatchdog(done <-chan struct{}) {
+// The returned channel is closed when the watchdog goroutine has fully
+// exited (after `done` is closed). It exists as a happens-before join for
+// tests that overwrite the package-level seam vars in cleanup — restoring
+// them while the goroutine is still mid-tick reading them is a data race
+// (-race catches it in CI). Production callers discard it: the goroutine
+// simply dies with the process.
+func startParentWatchdog(done <-chan struct{}) <-chan struct{} {
 	armParentDeathSignal() // platform-specific; no-op on darwin
 
 	startPpid := watchdogGetppid()
 	interval := parentWatchdogInterval
+	stopped := make(chan struct{})
 	go func() {
+		defer close(stopped)
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 		for {
@@ -57,4 +65,5 @@ func startParentWatchdog(done <-chan struct{}) {
 			}
 		}
 	}()
+	return stopped
 }
