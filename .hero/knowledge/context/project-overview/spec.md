@@ -20,7 +20,7 @@ Hero is the sidekick brain for AI-augmented knowledge work.
 | Build | Make (`Makefile`) |
 | Build | GoReleaser (`.goreleaser.yaml`) |
 | Package manager | Go Modules |
-| Testing | `go test` (373 test files) |
+| Testing | `go test` (387 test files) |
 | CI/CD | GitHub Actions |
 
 ## Key Dependencies

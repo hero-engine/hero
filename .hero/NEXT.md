@@ -5,7 +5,7 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-07-16T21:25:26Z
+updated: 2026-07-16T21:33:00Z
 repo: hero-engine/hero
 ---
 
@@ -37,6 +37,7 @@ Run `git log --oneline -10` for recent commits.
 - **hero-launch-playbook** ← waiting on `hero-positioning` (planning)
 - **hero-team-server** ← waiting on `hero-runner` (planning)
 - **timely-briefs** ← waiting on `retrieval-contradiction-detection` (delivering)
+- **wire-checks-to-boundaries** ← waiting on `spec-contract-enums-unified` (planning)
 
 ## Tried and failed
 
@@ -44,9 +45,9 @@ Nothing this session.
 
 ## Context to carry forward
 
+- "Always-On Runtime" — `always-on-runtime`
 - Get Back on Track — Mission-First V2 Recovery — `get-back-on-track`
 - Install + Upgrade Contract Coverage — Prove Every Target Works Every Time — `install-upgrade-contract-coverage`
 - Pre-Launch Hardening — Federation Polish, Security, Observability — `pre-launch-hardening`
 - Single-Source Install — One Canonical Tree, Every Harness Reads It — `single-source-install`
-- Launch Readiness — Telemetry, Deploy, and Public-Use Polish — `launch-readiness`
 

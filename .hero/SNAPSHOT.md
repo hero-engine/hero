@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-16T21:24:21Z · projected from 535 source nodes_
+_Last refreshed: 2026-07-16T21:33:00Z · projected from 536 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 3h ago | satellite-corpus-integration |
+| core | building | cmd/, internal/ | 4h ago | satellite-corpus-integration |
 | docs | maturing | web/docs/ | 3d ago | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | maturing | domains/engineering/ | 5d ago | — |
@@ -16,7 +16,7 @@ _Last refreshed: 2026-07-16T21:24:21Z · projected from 535 source nodes_
 | domains/sales | maturing | domains/sales/ | 7d ago | — |
 | landing | building | web/landing/ | 5d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 3h ago | agent-outposts |
+| serve | building | internal/serve/ | 4h ago | agent-outposts |
 | (unassigned) | — | — | — | 207 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -77,5 +77,5 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
 - Specs covered: 192/399 (48%)
-- Projection generation: 1ms · Source nodes: 535
+- Projection generation: 1ms · Source nodes: 536
 
