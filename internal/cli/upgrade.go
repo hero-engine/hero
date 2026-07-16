@@ -301,24 +301,8 @@ func displayVersion(v string) string {
 	return "v" + v
 }
 
-// trustedChecksumsFromInfo returns the project-relative-path → SHA256
-// map a prior Hero install recorded. Used by upgrade so the install
-// pipeline can distinguish "Hero installed this at an older version"
-// (safe to refresh) from "user edited this after Hero installed it"
-// (must preserve).
-func trustedChecksumsFromInfo(info *version.Info) map[string]string {
-	if info == nil || len(info.InstalledFiles) == 0 {
-		return nil
-	}
-	out := make(map[string]string, len(info.InstalledFiles))
-	for k, v := range info.InstalledFiles {
-		out[filepath.ToSlash(k)] = v
-	}
-	return out
-}
-
 // upgradeTarget runs the per-target upgrade by invoking the target's
-// own installer (install.Run with Force=upgradeForce). This delegates
+// own installer (install.Run with Force=true). This delegates
 // to the per-target install class so upgrade automatically inherits
 // every install-side behavior:
 //   - Cleanup of dead bytes from prior install layouts
@@ -328,20 +312,29 @@ func trustedChecksumsFromInfo(info *version.Info) map[string]string {
 //   - Symlinks-where-supported under the canonical-source layout.
 //   - Hook/permission/MCP wiring.
 //
-// User-customized files survive: the install pipeline's
-// copyFileFromFS refuses to overwrite drifted destinations unless
-// Force is set (multi-harness-install-collision contract).
+// Upgrade ALWAYS overwrites Hero's generated content (agents, commands,
+// skills). These are Hero's own files — nobody edits them, and the docs
+// say re-running install regenerates them — so there is nothing to
+// protect. The install path's checksum-trust guard cannot help here
+// anyway: it decides "is this Hero's file?" by matching a checksum
+// recorded by some earlier binary, but every version embeds different
+// content and users install arbitrary point releases, so on-disk will
+// never reliably match a recorded checksum. Trying to match it just
+// makes upgrade refuse to overwrite our own files. So: Force is always
+// on. User content lives ONLY in the root instruction files
+// (CLAUDE.md / AGENTS.md), which go through the managed-region writer —
+// that merges and preserves everything outside Hero's markers regardless
+// of Force, so forcing here is safe.
 func upgradeTarget(projectRoot string, target install.Target, contentFS fs.FS, info *version.Info) (int, int, map[string]string, error) {
 	checksums := make(map[string]string)
 
 	opts := install.Options{
-		Target:           target,
-		Mode:             install.ModeProject,
-		TargetDir:        projectRoot,
-		Force:            upgradeForce,
-		DryRun:           upgradeDryRun,
-		ContentFS:        contentFS,
-		TrustedChecksums: trustedChecksumsFromInfo(info),
+		Target:    target,
+		Mode:      install.ModeProject,
+		TargetDir: projectRoot,
+		Force:     true,
+		DryRun:    upgradeDryRun,
+		ContentFS: contentFS,
 	}
 	result, err := install.Run(opts)
 	if err != nil {

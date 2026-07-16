@@ -1,23 +1,14 @@
 ---
 user: chet-bellows
-updated: 2026-07-16T21:33:00Z
+updated: 2026-07-16T22:40:58Z
 repo: hero-engine/hero
 ---
 
 # chet-bellows's handoff
 
-## Session goal
-
-> Session opened with — In /Users/bwheeler/projects/hero-engine/repository/hero, `.agents/skills/` is committed to git but is stale and drifting from its source. Decide how to resolve it. Do NOT assume gitignoring is the answer — see the policy distinction below.
-> 
-> FACTS (verified):
-> - `.agents/skills/<name>/SKILL.md` is genuinely where the Codex CLI loads repo-scoped skills (verified against openai/codex `codex-rs/core-…
-> _possibly stale — 16 commit(s) since, last set 1d ago_
-
 ## Last user ask
 
-> Diagnose Test CI red on main since ~July 13: TestParentWatchdog_IgnoresReparentWhileParentAlive and _ExitsWhenOriginalParentDead in internal/serve fail under GitHub Actions Linux container but pass locally. Broken CI gate can't catch regressions. Fix without weakening the watchdog's real guarantee (daemon exits when original parent dies).
-> _possibly stale — 3 commit(s) since, last set 55m ago_
+> we need a full deep dive into all of our latest releases and compare them to the documentation site - make sure we document the new stuff - i noticed like gitlab trakcer isn't documented - and im sure there are other things
 
 ## Suggested next prompt
 
