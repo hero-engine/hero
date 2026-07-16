@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-16T20:46:41Z
+updated: 2026-07-16T20:46:59Z
 repo: hero-engine/hero
 ---
 
@@ -13,11 +13,13 @@ repo: hero-engine/hero
 > FACTS (verified):
 > - `.agents/skills/<name>/SKILL.md` is genuinely where the Codex CLI loads repo-scoped skills (verified against openai/codex `codex-rs/core-…
 
-_possibly stale — 13 commit(s) since, last set 1d ago_
+_possibly stale — 14 commit(s) since, last set 1d ago_
 
 ## Last user ask
 
 > Diagnose Test CI red on main since ~July 13: TestParentWatchdog_IgnoresReparentWhileParentAlive and _ExitsWhenOriginalParentDead in internal/serve fail under GitHub Actions Linux container but pass locally. Broken CI gate can't catch regressions. Fix without weakening the watchdog's real guarantee (daemon exits when original parent dies).
+
+_possibly stale — 1 commit(s) since, last set 16m ago_
 
 ## Suggested next prompt
 
