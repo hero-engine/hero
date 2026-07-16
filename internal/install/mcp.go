@@ -4,10 +4,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 )
+
+// heroCommand is the command MCP configs point at. It is the bare name,
+// not a resolved absolute path, on purpose: these configs live in
+// project-root files that travel with the repo (they are meant to — a
+// teammate who clones gets working MCP wiring without re-running install),
+// and an absolute path is machine-specific and breaks the moment the file
+// reaches another machine. Anyone able to use Hero's MCP server already
+// has `hero` installed, so the harness resolves it from PATH at launch.
+// The residual risk — a stale or wrong `hero` winning the PATH lookup —
+// is what `hero doctor` exists to diagnose.
+const heroCommand = "hero"
 
 // MCPServerConfig represents an MCP server entry for Cursor/Claude configs.
 // Format: { "command": "hero", "args": ["mcp"] }
@@ -24,63 +34,24 @@ type OpenCodeMCPConfig struct {
 }
 
 // RegisterMCP adds the Hero MCP server to the agent's MCP configuration.
-// It finds the hero binary path and writes the appropriate MCP config.
 func RegisterMCP(target Target, opts Options) error {
-	heroPath, err := findHeroBinary()
-	if err != nil {
-		return fmt.Errorf("finding hero binary: %w", err)
-	}
-
 	switch target {
 	case TargetCursor:
-		return registerMCPCursor(heroPath, opts)
+		return registerMCPCursor(opts)
 	case TargetClaude:
-		return registerMCPClaude(heroPath, opts)
+		return registerMCPClaude(opts)
 	case TargetOpenCode:
-		return registerMCPOpenCode(heroPath, opts)
+		return registerMCPOpenCode(opts)
 	case TargetCodex:
-		return registerMCPCodex(heroPath, opts)
+		return registerMCPCodex(opts)
 	default:
 		return nil
 	}
 }
 
-// Test seams for findHeroBinary — overridden in tests to simulate
-// resolution failure without disturbing the real environment.
-var (
-	osExecutable = os.Executable
-	execLookPath = exec.LookPath
-)
-
-// findHeroBinary locates the hero binary to wire into MCP configs. Checks:
-//  1. The running binary itself (os.Executable, symlinks resolved) — the
-//     hero performing the install is the hero the config must point at,
-//     not whichever hero happens to be first on the ambient PATH.
-//  2. PATH lookup, only as a fallback when os.Executable fails.
-//
-// Returns an error when neither resolves: writing a config that points at
-// a binary we could not locate would only defer the failure to the
-// harness's MCP startup, silently.
-func findHeroBinary() (string, error) {
-	exe, exeErr := osExecutable()
-	if exeErr == nil {
-		if resolved, err := filepath.EvalSymlinks(exe); err == nil {
-			return resolved, nil
-		}
-		return exe, nil
-	}
-
-	path, lookErr := execLookPath("hero")
-	if lookErr == nil {
-		return path, nil
-	}
-
-	return "", fmt.Errorf("locating hero binary: os.Executable: %v; PATH lookup: %v", exeErr, lookErr)
-}
-
 // registerMCPCursor writes to .cursor/mcp.json in the project.
 // Format: { "mcpServers": { "hero": { "command": "hero", "args": ["mcp"] } } }
-func registerMCPCursor(heroPath string, opts Options) error {
+func registerMCPCursor(opts Options) error {
 	var configPath string
 	switch opts.Mode {
 	case ModeProject:
@@ -93,13 +64,13 @@ func registerMCPCursor(heroPath string, opts Options) error {
 		configPath = filepath.Join(home, ".cursor", "mcp.json")
 	}
 
-	return upsertMCPConfig(configPath, heroPath, opts.DryRun, opts.ProjectRoot)
+	return upsertMCPConfig(configPath, opts.DryRun, opts.ProjectRoot)
 }
 
 // registerMCPClaude writes to .mcp.json in the project root (project mode)
 // or ~/.claude.json (global mode).
 // Format: { "mcpServers": { "hero": { "command": "hero", "args": ["mcp"] } } }
-func registerMCPClaude(heroPath string, opts Options) error {
+func registerMCPClaude(opts Options) error {
 	var configPath string
 	switch opts.Mode {
 	case ModeProject:
@@ -112,14 +83,14 @@ func registerMCPClaude(heroPath string, opts Options) error {
 		configPath = filepath.Join(home, ".claude.json")
 	}
 
-	return upsertMCPConfig(configPath, heroPath, opts.DryRun, opts.ProjectRoot)
+	return upsertMCPConfig(configPath, opts.DryRun, opts.ProjectRoot)
 }
 
 // registerMCPOpenCode writes the hero MCP server to the OpenCode config.
 // Project mode: <project>/opencode.json under the "mcp" key.
 // Global mode: ~/.config/opencode/opencode.json under the "mcp" key.
 // Format: { "mcp": { "hero": { "type": "local", "command": ["hero", "mcp"] } } }
-func registerMCPOpenCode(heroPath string, opts Options) error {
+func registerMCPOpenCode(opts Options) error {
 	var configPath string
 	switch opts.Mode {
 	case ModeProject:
@@ -132,13 +103,13 @@ func registerMCPOpenCode(heroPath string, opts Options) error {
 		configPath = filepath.Join(home, ".config", "opencode", "opencode.json")
 	}
 
-	return upsertOpenCodeMCPConfig(configPath, heroPath, opts.DryRun, opts.ProjectRoot)
+	return upsertOpenCodeMCPConfig(configPath, opts.DryRun, opts.ProjectRoot)
 }
 
 // upsertMCPConfig reads an existing MCP config (or creates a new one) and ensures
 // the hero server entry is present. Used for Cursor and Claude which use the
 // { "mcpServers": { ... } } format.
-func upsertMCPConfig(configPath, heroPath string, dryRun bool, projectRoot string) error {
+func upsertMCPConfig(configPath string, dryRun bool, projectRoot string) error {
 	if dryRun {
 		fmt.Printf("  MCP server -> %s\n", configPath)
 		return nil
@@ -165,7 +136,7 @@ func upsertMCPConfig(configPath, heroPath string, dryRun bool, projectRoot strin
 		args = append(args, "--project-root", projectRoot)
 	}
 	servers["hero"] = MCPServerConfig{
-		Command: heroPath,
+		Command: heroCommand,
 		Args:    args,
 	}
 	config["mcpServers"] = servers
@@ -186,7 +157,7 @@ func upsertMCPConfig(configPath, heroPath string, dryRun bool, projectRoot strin
 // upsertOpenCodeMCPConfig reads an existing OpenCode config (or creates one) and
 // ensures the hero MCP server entry is present under the "mcp" key.
 // OpenCode format: { "mcp": { "hero": { "type": "local", "command": ["hero", "mcp"] } } }
-func upsertOpenCodeMCPConfig(configPath, heroPath string, dryRun bool, projectRoot string) error {
+func upsertOpenCodeMCPConfig(configPath string, dryRun bool, projectRoot string) error {
 	if dryRun {
 		fmt.Printf("  MCP server -> %s\n", configPath)
 		return nil
@@ -207,8 +178,8 @@ func upsertOpenCodeMCPConfig(configPath, heroPath string, dryRun bool, projectRo
 		mcp = make(map[string]interface{})
 	}
 
-	// Build the command array: ["/path/to/hero", "mcp"] or with --project-root for workspaces
-	cmd := []string{heroPath, "mcp"}
+	// Build the command array: ["hero", "mcp"] or with --project-root for workspaces
+	cmd := []string{heroCommand, "mcp"}
 	if projectRoot != "" {
 		cmd = append(cmd, "--project-root", projectRoot)
 	}
@@ -236,90 +207,35 @@ func upsertOpenCodeMCPConfig(configPath, heroPath string, dryRun bool, projectRo
 	return os.WriteFile(configPath, data, 0o644)
 }
 
-// registerMCPCodex writes the hero MCP server block to Codex's machine-local
-// User layer (~/.codex/config.toml) in BOTH project and global modes. Codex
-// deep-merges config layers — User (~/.codex/config.toml, precedence 20) <
-// Project (<repo>/.codex/, precedence 25), recursive per-key table merge
-// (openai/codex: config_layer_source.rs, merge.rs) — so one User-layer block
-// serves every Hero project on the machine (`hero mcp` resolves the workspace
-// from the session's cwd), and the machine-specific absolute binary path
-// never lands in a git-tracked project file.
+// registerMCPCodex writes the hero MCP server block to the project's
+// .codex/config.toml (project mode) or ~/.codex/config.toml (global mode).
+// The block lives in the project layer because an MCP server serves that
+// project, and it points at the portable `hero` command (see heroCommand)
+// so the file travels with the repo.
 //
-// Exception: workspace mode (opts.ProjectRoot != "") pins the MCP server to a
-// specific project root via `--project-root`. That value is project-specific,
-// not machine-generic, so it stays in the workspace's own .codex/config.toml
-// — Codex's Project layer, which overrides the User layer per-key.
-//
-// Format uses a hero:managed marker block so we can update without clobbering user content:
+// .codex/config.toml is the user's own file — their model, approval, and
+// other MCP settings live there too — so Hero writes only its marked span
+// and never touches bytes outside it. Format:
 //
 //	# hero:managed
 //	[mcp_servers.hero]
-//	command = "/path/to/hero"
+//	command = "hero"
 //	args = ["mcp"]
 //	# end:hero:managed
-//
-// Project mode also migrates older installs: if the project's
-// .codex/config.toml still carries the managed block, exactly that span is
-// removed. Bytes outside it are untouched, and the file is left in place —
-// it is the user's file (their model/approval/other-MCP settings live
-// there), and deleting a possibly git-tracked file from an installer would
-// be a surprise.
-func registerMCPCodex(heroPath string, opts Options) error {
-	if opts.Mode == ModeProject && opts.ProjectRoot != "" {
-		// Workspace mode: project-specific wiring belongs in the project layer.
-		configPath := filepath.Join(opts.TargetDir, ".codex", "config.toml")
-		return upsertCodexConfig(configPath, heroPath, opts.DryRun, opts.ProjectRoot)
-	}
-
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-	configPath := filepath.Join(home, ".codex", "config.toml")
-
-	if opts.Mode == ModeProject && !opts.DryRun {
-		projectConfig := filepath.Join(opts.TargetDir, ".codex", "config.toml")
-		migrated, err := removeCodexManagedBlock(projectConfig)
+func registerMCPCodex(opts Options) error {
+	var configPath string
+	switch opts.Mode {
+	case ModeProject:
+		configPath = filepath.Join(opts.TargetDir, ".codex", "config.toml")
+	case ModeGlobal:
+		home, err := os.UserHomeDir()
 		if err != nil {
-			return fmt.Errorf("removing hero block from %s: %w", projectConfig, err)
+			return err
 		}
-		if migrated {
-			fmt.Printf("  moved hero MCP block: %s -> %s (Codex User layer)\n", projectConfig, configPath)
-		}
+		configPath = filepath.Join(home, ".codex", "config.toml")
 	}
 
-	return upsertCodexConfig(configPath, heroPath, opts.DryRun, opts.ProjectRoot)
-}
-
-// removeCodexManagedBlock deletes Hero's `# hero:managed` … `# end:hero:managed`
-// span (plus the single trailing newline Hero wrote after it) from the file
-// at path. Every byte outside the span is left untouched, and the file is
-// left in place even when only whitespace remains. Returns true when a
-// block was found and removed.
-func removeCodexManagedBlock(path string) (bool, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-		return false, err
-	}
-
-	s := string(data)
-	start := strings.Index(s, codexMCPMarker)
-	if start < 0 {
-		return false, nil
-	}
-	end := strings.Index(s[start:], codexMCPEndMarker)
-	if end < 0 {
-		return false, nil
-	}
-	end += start + len(codexMCPEndMarker)
-	if end < len(s) && s[end] == '\n' {
-		end++
-	}
-
-	return true, os.WriteFile(path, []byte(s[:start]+s[end:]), 0o644)
+	return upsertCodexConfig(configPath, opts.DryRun, opts.ProjectRoot)
 }
 
 const codexMCPMarker = "# hero:managed"
@@ -327,7 +243,7 @@ const codexMCPEndMarker = "# end:hero:managed"
 
 // upsertCodexConfig reads an existing .codex/config.toml (or creates one) and
 // ensures the hero MCP server block is present within hero:managed markers.
-func upsertCodexConfig(configPath, heroPath string, dryRun bool, projectRoot string) error {
+func upsertCodexConfig(configPath string, dryRun bool, projectRoot string) error {
 	if dryRun {
 		fmt.Printf("  MCP server -> %s\n", configPath)
 		return nil
@@ -339,7 +255,7 @@ func upsertCodexConfig(configPath, heroPath string, dryRun bool, projectRoot str
 	}
 
 	heroBlock := fmt.Sprintf("%s\n[mcp_servers.hero]\ncommand = %q\nargs = %s\n%s",
-		codexMCPMarker, heroPath, args, codexMCPEndMarker)
+		codexMCPMarker, heroCommand, args, codexMCPEndMarker)
 
 	existing := ""
 	if data, err := os.ReadFile(configPath); err == nil {

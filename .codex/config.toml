@@ -1,0 +1,5 @@
+# hero:managed
+[mcp_servers.hero]
+command = "hero"
+args = ["mcp"]
+# end:hero:managed
