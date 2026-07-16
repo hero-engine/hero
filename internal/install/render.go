@@ -167,6 +167,16 @@ func renderCodexAgentToml(entry canonicalEntry) (string, []byte, error) {
 	return entry.Name + ".toml", out.Bytes(), nil
 }
 
+// codexCommandSkillPrefix namespaces commands rendered as Codex skills.
+// The prune pass treats it as Hero-owned at the Codex skills dest, so it
+// must stay in lockstep with renderCommandAsCodexSkill's output path.
+const codexCommandSkillPrefix = "command-"
+
+// codexCommandSkillDir is the skill dir name for a canonical command.
+func codexCommandSkillDir(name string) string {
+	return codexCommandSkillPrefix + name
+}
+
 // renderCommandAsCodexSkill renders a canonical command markdown file as
 // a Codex-loadable skill at command-<name>/SKILL.md. The rendered skill
 // includes an execution preamble so Codex treats the file as a workflow
@@ -187,7 +197,7 @@ func renderCommandAsCodexSkill(entry canonicalEntry) (string, []byte, error) {
 	if len(body) > 0 && body[len(body)-1] != '\n' {
 		out.WriteByte('\n')
 	}
-	return "command-" + entry.Name + "/SKILL.md", out.Bytes(), nil
+	return codexCommandSkillDir(entry.Name) + "/SKILL.md", out.Bytes(), nil
 }
 
 // renderCopilotPromptFile emits a Copilot .prompt.md file from a

@@ -3,7 +3,10 @@ package install
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/hero-engine/hero/internal/snapshot"
 )
 
 // harness_smoke_test.go — smoke coverage for the installHarness helper and
@@ -306,5 +309,96 @@ func TestInstallState_NoHeroDirIsNoop(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(h.TargetDir, ".hero", "install-state.json")); err == nil {
 		t.Error("install-state.json should not be created without .hero/")
+	}
+}
+
+// TestHarness_InstalledContentSurvivesOrdinaryCommands pins the invariant
+// that the codex-install-broken loop kept missing: install is NOT a
+// terminal state.
+//
+// Every prior check of the root instruction file — TestHarness_SmokeCodex
+// above, and the manual "verified in AGENTS.md after install" in that
+// spec's completion ledger — ran immediately after install, which is the
+// one moment the file is guaranteed correct because install just wrote
+// it. A different writer then destroyed the file on the next ordinary
+// command, and the suite stayed green for two months while the repo's
+// own AGENTS.md sat at a 7-line stub.
+//
+// So: install, then run an ordinary command, then assert the file is
+// still complete. Any writer that eats installed content fails here,
+// regardless of which package it lives in.
+func TestHarness_InstalledContentSurvivesOrdinaryCommands(t *testing.T) {
+	// Every install target, per the harness-changes-cover-all-targets
+	// tripwire. This bug was filed as "Codex install is broken", but the
+	// eraser hit the root file of all five AGENTS.md-reading harnesses —
+	// only claude escaped, and only because the pointer path hardcoded the
+	// literal string "AGENTS.md" rather than resolving
+	// nativeInstructionFile(target). Covering one target here is how the
+	// blast radius got misjudged the first time.
+	cases := []struct {
+		name     string
+		target   Target
+		rootFile string
+	}{
+		{"claude", TargetClaude, "CLAUDE.md"},
+		{"codex", TargetCodex, "AGENTS.md"},
+		{"opencode", TargetOpenCode, "AGENTS.md"},
+		{"cursor", TargetCursor, "AGENTS.md"},
+		{"copilot", TargetCopilot, "AGENTS.md"},
+		{"generic", TargetGeneric, "AGENTS.md"},
+	}
+
+	// A distinctive line from the shared managed body — it reaches every
+	// target's root file, so its absence means the region was clobbered
+	// rather than merely reordered.
+	const mustKeep = "Finish the closing gate before yielding"
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			h := newInstallHarness(t)
+			heroDir := filepath.Join(h.TargetDir, ".hero")
+			if err := os.MkdirAll(heroDir, 0o755); err != nil {
+				t.Fatal(err)
+			}
+			h.Run(tc.target, nil)
+
+			path := filepath.Join(h.TargetDir, tc.rootFile)
+			before, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatalf("%s missing right after install: %v", tc.rootFile, err)
+			}
+			if !strings.Contains(string(before), mustKeep) {
+				t.Fatalf("%s lacks %q even at install time — test fixture is wrong",
+					tc.rootFile, mustKeep)
+			}
+
+			// An ordinary command. `hero snapshot --project` and
+			// `hero next checkpoint` both drive this projector; it is the
+			// writer that ate AGENTS.md on May 31 and Jun 9 2026.
+			if _, err := snapshot.Project(snapshot.ProjectOptions{
+				ProjectRoot: h.TargetDir,
+				HeroDir:     heroDir,
+				ProjectName: "smoke",
+				NextMDPath:  filepath.Join(heroDir, "NEXT.md"),
+			}); err != nil {
+				t.Fatalf("snapshot.Project: %v", err)
+			}
+
+			after, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatalf("%s gone after an ordinary command: %v", tc.rootFile, err)
+			}
+			if !strings.Contains(string(after), mustKeep) {
+				t.Errorf("%s lost %q after an ordinary hero command.\n"+
+					"install content was destroyed by a later writer — this is the "+
+					"codex-install-broken regression.\nsize %d -> %d\n--- after ---\n%s",
+					tc.rootFile, mustKeep, len(before), len(after), after)
+			}
+			if string(before) != string(after) {
+				t.Errorf("%s was modified by an ordinary hero command (size %d -> %d); "+
+					"only install may write this file's managed region",
+					tc.rootFile, len(before), len(after))
+			}
+		})
 	}
 }

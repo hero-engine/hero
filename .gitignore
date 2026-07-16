@@ -79,6 +79,11 @@ tmp/
 .codex/agents
 .codex/commands
 .codex/skills
+# Codex reads repo-scoped skills from .agents/skills/, not .codex/skills/
+# (the deprecated path above is only cleaned up, never written). The
+# `--target codex` install renders core/ + domains/*/ skills here, plus
+# each command as command-<name>/SKILL.md.
+.agents/skills
 
 # Local env (direnv) — carries credentials, must not be committed
 .envrc

@@ -394,23 +394,13 @@ func projectSnapshot(projectRoot, heroDir string, cfg config.Config, nextPath st
 	mission := readMissionOneLiner(missionPath)
 	projectName := filepath.Base(projectRoot)
 
-	agentsMD := filepath.Join(projectRoot, "AGENTS.md")
-	// Only update AGENTS.md when it already exists — never create one
-	// just to drop the pointer. The discovery story is "if AGENTS.md
-	// is here, we add a single-line pointer to it"; not "we manage
-	// AGENTS.md".
-	if _, err := os.Stat(agentsMD); err != nil {
-		agentsMD = ""
-	}
-
 	archiveCfg := cfg.SnapshotArchive()
 	_, err := snapshot.Project(snapshot.ProjectOptions{
-		ProjectRoot:  projectRoot,
-		HeroDir:      heroDir,
-		ProjectName:  projectName,
-		Mission:      mission,
-		NextMDPath:   nextPath,
-		AgentsMDPath: agentsMD,
+		ProjectRoot: projectRoot,
+		HeroDir:     heroDir,
+		ProjectName: projectName,
+		Mission:     mission,
+		NextMDPath:  nextPath,
 		ArchiveConfig: snapshot.ArchiveConfig{
 			StalenessCutoff:   archiveCfg.StalenessCutoff,
 			MilestonesEnabled: cfg.SnapshotMilestonesEnabled(),

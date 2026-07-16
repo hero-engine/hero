@@ -118,6 +118,12 @@ type Result struct {
 	Copied  []CopyAction `json:"copied"`
 	Merged  []string     `json:"merged"`
 	Skipped []string     `json:"skipped"`
+
+	// skillDirs is the set of skill dir names this run materialized at the
+	// target's nested-skills dest. RecordTargetInstall persists it as the
+	// next run's prune manifest (see prune.go). Unexported — internal
+	// bookkeeping, not part of the --json contract.
+	skillDirs []string
 }
 
 // CopyAction records a single file copy.
@@ -184,7 +190,7 @@ func Run(opts Options) (*Result, error) {
 
 	if opts.Mode == ModeProject && opts.TargetDir != "" && !opts.DryRun {
 		StampInstallVersion(opts, result)
-		RecordTargetInstall(opts, "rendered")
+		RecordTargetInstall(opts, "rendered", result)
 	}
 
 	// Auto-sync: refresh other installed harnesses so they stay at the

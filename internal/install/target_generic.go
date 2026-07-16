@@ -34,6 +34,9 @@ func runGeneric(opts Options) (*Result, error) {
 	if err := installSkillsNested(opts, result, filepath.Join(destBase, "skills")); err != nil {
 		return nil, fmt.Errorf("installing skills: %w", err)
 	}
+	if err := pruneNestedSkills(opts, result, filepath.Join(destBase, "skills")); err != nil {
+		return nil, fmt.Errorf("prune stale skills: %w", err)
+	}
 
 	// Generic's root instruction file is AGENTS.md, written with the same
 	// Hero-managed block as every other non-Claude target (harness-native

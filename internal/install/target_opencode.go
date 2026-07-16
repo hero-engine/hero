@@ -39,6 +39,9 @@ func runOpenCode(opts Options) (*Result, error) {
 	if err := installSkillsNested(opts, result, filepath.Join(destBase, "skills")); err != nil {
 		return nil, fmt.Errorf("installing skills: %w", err)
 	}
+	if err := pruneNestedSkills(opts, result, filepath.Join(destBase, "skills")); err != nil {
+		return nil, fmt.Errorf("prune stale skills: %w", err)
+	}
 
 	if err := installConfig(opts, result, configDest); err != nil {
 		return nil, fmt.Errorf("installing config: %w", err)

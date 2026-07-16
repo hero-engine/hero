@@ -45,7 +45,6 @@ func (s *MCPServer) toolSnapshot(args map[string]interface{}) (string, error) {
 			HeroDir:            heroDir,
 			ProjectName:        filepath.Base(s.projectRoot),
 			NextMDPath:         "",
-			AgentsMDPath:       "",
 			ManualArchive:      true,
 			ManualArchiveLabel: label,
 			ArchiveConfig: snapshot.ArchiveConfig{
