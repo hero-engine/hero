@@ -102,11 +102,23 @@ type orphanInstructionFile struct {
 }
 
 // detectOrphanInstructionFiles returns the root instruction files present on
-// disk whose owning target is not in the persisted install-state `targets`
-// set. CLAUDE.md is orphaned when claude is not recorded; AGENTS.md is
-// orphaned when no non-claude target is recorded. Informational only.
+// disk whose owning target is neither recorded in install-state nor
+// inferable from on-disk content. CLAUDE.md is orphaned when claude is not
+// installed; AGENTS.md is orphaned when no non-claude target is. Informational
+// only.
 func detectOrphanInstructionFiles(projectRoot string) []orphanInstructionFile {
-	recorded := install.PreviouslyInstalledTargets(projectRoot)
+	// Resolve the installed set as the union of the persisted record and a
+	// filesystem probe. PreviouslyInstalledTargets alone reads
+	// install-state.json, which is gitignored (machine-local) — on a fresh
+	// clone with a healthy install it returns nil, so both CLAUDE.md and
+	// AGENTS.md would falsely read as orphaned. InferInstalledTargets
+	// reconstructs the set from on-disk content dirs and works on a clone.
+	// Mirrors resolveUpgradeTargets and the install-integrity check so
+	// "installed" means the same thing everywhere.
+	recorded := install.UnionTargets(
+		install.PreviouslyInstalledTargets(projectRoot),
+		install.InferInstalledTargets(projectRoot),
+	)
 	claudeRecorded := false
 	nonClaudeRecorded := false
 	for _, t := range recorded {
