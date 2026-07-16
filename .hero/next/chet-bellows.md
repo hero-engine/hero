@@ -1,21 +1,17 @@
 ---
 user: chet-bellows
-updated: 2026-07-16T23:36:58Z
+updated: 2026-07-16T23:37:51Z
 repo: hero-engine/hero
 ---
 
 # chet-bellows's handoff
 
-## Session goal
+## Last user ask
 
-> Session opened with — In /Users/bwheeler/projects/hero-engine/repository/hero, `.agents/skills/` is committed to git but is stale and drifting from its source. Decide how to resolve it. Do NOT assume gitignoring is the answer — see the policy distinction below.
+> In /Users/bwheeler/projects/hero-engine/repository/hero, `.agents/skills/` is committed to git but is stale and drifting from its source. Decide how to resolve it. Do NOT assume gitignoring is the answer — see the policy distinction below.
 > 
 > FACTS (verified):
 > - `.agents/skills/<name>/SKILL.md` is genuinely where the Codex CLI loads repo-scoped skills (verified against openai/codex `codex-rs/core-…
-
-## Last user ask
-
-> Deliver manifest-driven-prune: record a per-target file manifest (TargetState.Files in install-state.json) from the canonical render set on install/upgrade; prune files in the prior manifest but absent from the new render (product-removed), never touching non-manifest user files; nil manifest = no-op (covers fresh clone + first-run). Generalizes prune.go's skill-dir provenance model to agent/command/skill files across all six targets.
 
 ## Suggested next prompt
 
