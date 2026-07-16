@@ -21,6 +21,38 @@ completed_at: 2026-07-16T07:36:28Z
 
 # Hero MCP binary path resolved from the installer's ambient PATH
 
+## Correction (2026-07-16, post-delivery)
+
+**The approach this spec delivered was reversed the same day. The body below
+describes the superseded design — read it as history, not as what shipped.**
+
+This spec delivered two things: (1) `findHeroBinary` → `os.Executable()`, and
+(2) moving the Codex MCP block to the machine-local User layer
+(`~/.codex/config.toml`) with a migration out of the project file. On review
+the user rejected the User-layer move as backwards: `~/.codex/config.toml` is
+the *user's own* file (their model, plugins, projects, other MCP servers — see
+the real example that prompted this), and Hero writing its block there put our
+content in the user's personal global config. An MCP server serves a project,
+so its wiring belongs in that project's config layer.
+
+**What actually shipped (commit follows this amendment):** all four MCP-writing
+targets (cursor, claude, opencode, codex) write the **portable** `command =
+"hero"` into their **project-level** config file — the value the code's own doc
+comments always described. That travels with the repo (a teammate who clones
+gets working wiring), needs no machine-specific path, and makes the whole
+resolver moot: `findHeroBinary`, the `os.Executable`/`LookPath` machinery, the
+User-layer move, and the migration were all deleted. The residual PATH-roulette
+risk (wrong `hero` wins) is what `hero doctor` diagnoses.
+
+This correction also fixed the same latent bug in claude's `.mcp.json`, which
+carried an absolute `/Users/.../hero` path — the identical non-portable defect,
+now portable too.
+
+Rationale for the reversal is recorded in
+[[mcp-config-is-portable-in-project-layer]].
+
+---
+
 ## Kickoff
 
 `hero install` writes the MCP config by asking `exec.LookPath("hero")` — whichever hero

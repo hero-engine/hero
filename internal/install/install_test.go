@@ -2,7 +2,6 @@ package install
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -1406,8 +1405,9 @@ func TestRunInstall_IncludesMCP(t *testing.T) {
 }
 
 func TestRunCodexProject(t *testing.T) {
-	// Codex MCP wiring writes the machine-local User layer — isolate HOME
-	// so the test never touches the real ~/.codex/config.toml.
+	// Global-mode installs (and any stray write) could touch the real home;
+	// isolate HOME so no install test can. Package-level TestMain also does
+	// this — belt and suspenders.
 	t.Setenv("HOME", t.TempDir())
 
 	sourceDir := t.TempDir()
@@ -1507,10 +1507,9 @@ func TestRunCodexGlobal(t *testing.T) {
 }
 
 // TestRegisterMCP_Codex_Project — project-mode codex installs write the
-// hero MCP block to Codex's machine-local User layer (~/.codex/config.toml),
-// NOT the project's .codex/config.toml. Codex deep-merges the User layer
-// into every project, and a machine-specific absolute path must not land
-// in a git-tracked project file (codex-mcp-binary-path-resolution).
+// hero MCP block to the PROJECT's .codex/config.toml (Codex's project
+// config layer), with the portable `hero` command so it travels with the
+// repo. The user's own ~/.codex/config.toml is left untouched.
 func TestRegisterMCP_Codex_Project(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
@@ -1524,39 +1523,26 @@ func TestRegisterMCP_Codex_Project(t *testing.T) {
 		t.Fatalf("RegisterMCP: %v", err)
 	}
 
-	// Block lands in the User layer.
-	userConfig := filepath.Join(home, ".codex", "config.toml")
-	data, err := os.ReadFile(userConfig)
+	// Block lands in the project config with a portable command.
+	projectConfig := filepath.Join(targetDir, ".codex", "config.toml")
+	data, err := os.ReadFile(projectConfig)
 	if err != nil {
-		t.Fatalf("~/.codex/config.toml not created: %v", err)
+		t.Fatalf("project .codex/config.toml not created: %v", err)
 	}
 	content := string(data)
 	if !strings.Contains(content, "[mcp_servers.hero]") {
-		t.Error("user-layer config.toml missing [mcp_servers.hero]")
+		t.Error("project config.toml missing [mcp_servers.hero]")
 	}
 	if !strings.Contains(content, "hero:managed") {
-		t.Error("user-layer config.toml missing hero:managed marker")
+		t.Error("project config.toml missing hero:managed marker")
+	}
+	if !strings.Contains(content, `command = "hero"`) {
+		t.Errorf("expected portable command = \"hero\" in project config, got:\n%s", content)
 	}
 
-	// The command points at the running binary (os.Executable of the test
-	// binary), not at whatever "hero" is first on PATH.
-	exe, err := os.Executable()
-	if err != nil {
-		t.Fatalf("os.Executable: %v", err)
-	}
-	if resolved, rerr := filepath.EvalSymlinks(exe); rerr == nil {
-		exe = resolved
-	}
-	if !strings.Contains(content, fmt.Sprintf("command = %q", exe)) {
-		t.Errorf("expected command = %q in user-layer config, got:\n%s", exe, content)
-	}
-
-	// The project file gets NO hero block.
-	projectConfig := filepath.Join(targetDir, ".codex", "config.toml")
-	if pdata, err := os.ReadFile(projectConfig); err == nil {
-		if strings.Contains(string(pdata), "[mcp_servers.hero]") {
-			t.Errorf("project .codex/config.toml must not carry the hero block, got:\n%s", pdata)
-		}
+	// The user's own global config is not touched by a project install.
+	if _, err := os.Stat(filepath.Join(home, ".codex", "config.toml")); err == nil {
+		t.Error("project install must not write ~/.codex/config.toml")
 	}
 }
 
@@ -1576,7 +1562,7 @@ func TestRegisterMCP_Codex_Idempotent(t *testing.T) {
 		}
 	}
 
-	configPath := filepath.Join(home, ".codex", "config.toml")
+	configPath := filepath.Join(targetDir, ".codex", "config.toml")
 	data, _ := os.ReadFile(configPath)
 	content := string(data)
 
