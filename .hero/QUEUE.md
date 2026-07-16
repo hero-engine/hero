@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-16T06:34:28Z · 87 ready specs_
+_Generated: 2026-07-16T07:04:35Z · 86 ready specs_
 
 ## agents-md-erased-by-snapshot-pointer-writer — "AGENTS.md silently erased by the snapshot pointer writer — five of six harnesses started cold for two months"
 _bug · delivering · horizon: now_
@@ -93,30 +93,6 @@ lands across claude/cursor/opencode/codex at once.
 **Skip:** don't add `setup_steps` to config.toml — **the key does not exist in Codex** and
 unknown keys are silently ignored. Don't build sandbox detection for local Codex — local MCP
 servers run *outside* the sandbox and inherit PATH.
-
----
-
-## install-integrity-self-check — "Install integrity is self-verifiable — hero check detects a damaged, stale, or incomplete install"
-_feature · planning · horizon: now_
-
-Adds an `install-integrity` check to `hero check` so a gutted or stale `AGENTS.md` /
-`CLAUDE.md` gets reported instead of silently making every agent session start cold.
-
-**Status:** planning — spec just landed, no code yet.
-
-**Pick up at:** add `internal/install/integrity.go` with `CheckIntegrity(projectRoot)`,
-re-rendering the body via `defaultSections` + `managed.Writer.RenderBody` and comparing
-against `managed.FindManagedRegion(onDisk).Body`. Compare **bodies, not regions** — the
-`v=` marker stamp changes on every version bump and would false-positive.
-
-→ `.hero/planning/features/install-integrity-self-check/spec.md`
-
-**Files:** `internal/install/agents_md.go:66,214`, `internal/managed/marker.go:82`,
-`internal/managed/region.go:136`, `internal/cli/check.go:107,133`, `internal/install/state.go:206`
-
-**Skip:** don't use `version.json` `installed_files` hashes as the oracle — root
-instruction files are not in that map (240 entries, zero of them). Don't auto-repair from
-`hero check`.
 
 ---
 

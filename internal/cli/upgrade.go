@@ -472,18 +472,10 @@ func detectInstalledTargets(projectRoot string, info *version.Info) []install.Ta
 
 // unionTargets merges several target slices into one, deduping while
 // preserving first-seen order (persisted set first, then probe extras).
+// Thin wrapper over install.UnionTargets so check (CheckIntegrity) and
+// upgrade share one definition of the installed-target union.
 func unionTargets(sets ...[]install.Target) []install.Target {
-	seen := map[install.Target]bool{}
-	var out []install.Target
-	for _, set := range sets {
-		for _, t := range set {
-			if !seen[t] {
-				seen[t] = true
-				out = append(out, t)
-			}
-		}
-	}
-	return out
+	return install.UnionTargets(sets...)
 }
 
 // handleOrphanedInstructionFiles applies the upgrade orphan policy to the two
