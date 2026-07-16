@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	hero "github.com/hero-engine/hero"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/index"
 	"github.com/hero-engine/hero/internal/install"
@@ -128,6 +129,67 @@ func detectOrphanInstructionFiles(projectRoot string) []orphanInstructionFile {
 func fileExists(path string) bool {
 	info, err := os.Stat(path)
 	return err == nil && !info.IsDir()
+}
+
+// reportInstallIntegrity runs install.CheckIntegrity and surfaces the
+// findings as the `install-integrity` row. Any damaged finding → fail
+// (the "agents are running cold" signal); stale only → warn. Silent-pass
+// row otherwise. Each finding line ends in the exact repair command.
+func reportInstallIntegrity(projectRoot, domain string, addRow func(name, status, message string), issues *int) {
+	resolvedDomain := domain
+	if resolvedDomain == "" {
+		resolvedDomain = "engineering"
+	}
+	domainFS, domainErr := hero.DomainFS(resolvedDomain)
+	if domainErr != nil {
+		fmt.Fprintf(os.Stderr, "Warning: install integrity check skipped: resolving domain %q: %v\n", resolvedDomain, domainErr)
+		addRow("install-integrity", "warn", fmt.Sprintf("check skipped: resolving domain %q: %v", resolvedDomain, domainErr))
+		return
+	}
+	base := install.Options{
+		ContentFS: hero.OverlayFS(domainFS, hero.CoreFS()),
+		Domain:    domain,
+	}
+
+	findings, err := install.CheckIntegrity(projectRoot, base)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: install integrity check failed: %v\n", err)
+		addRow("install-integrity", "warn", fmt.Sprintf("check failed: %v", err))
+		return
+	}
+	if len(findings) == 0 {
+		addRow("install-integrity", "pass", "installed instruction files match what install would produce")
+		return
+	}
+
+	damaged := false
+	var parts []string
+	fmt.Printf("Install integrity (%d):\n", len(findings))
+	for _, f := range findings {
+		var detail string
+		switch f.Kind {
+		case install.IntegrityDamaged:
+			damaged = true
+			if len(f.MissingSections) > 0 {
+				detail = fmt.Sprintf("%s (%s): damaged — managed region missing section(s): %s",
+					f.File, f.Target, strings.Join(f.MissingSections, ", "))
+			} else {
+				detail = fmt.Sprintf("%s (%s): damaged — Hero managed region missing", f.File, f.Target)
+			}
+		case install.IntegrityStale:
+			detail = fmt.Sprintf("%s (%s): stale — managed content differs from what this binary would install", f.File, f.Target)
+		}
+		fmt.Printf("  %s\n", detail)
+		fmt.Printf("    repair: run '%s'\n", f.RepairCmd)
+		parts = append(parts, fmt.Sprintf("%s; run '%s'", detail, f.RepairCmd))
+	}
+	fmt.Println()
+	*issues += len(findings)
+	status := "warn"
+	if damaged {
+		status = "fail"
+	}
+	addRow("install-integrity", status, strings.Join(parts, " | "))
 }
 
 func runCheck(cmd *cobra.Command, args []string) error {
@@ -520,6 +582,17 @@ func runCheck(cmd *cobra.Command, args []string) error {
 	} else {
 		addRow("orphan-instruction-files", "pass", "no orphaned instruction files")
 	}
+
+	// Install integrity — re-render the managed body install would produce
+	// right now and compare it to the body on disk in each installed
+	// target's native instruction file (CLAUDE.md / AGENTS.md). Damaged
+	// (region or sections gone) means agents in that harness run cold →
+	// fail; stale (body drift) → warn. check only reports; `hero install`
+	// / `hero upgrade` are the repair path. The Options here mirror the
+	// install command's construction (domain from hero.json, domain pack
+	// overlaid on core) so check resolves the same pack-body chain link
+	// install did.
+	reportInstallIntegrity(projectRoot, cfg.Domain, addRow, &issues)
 
 	// Size drift — rate-limited. Per spec Implementation Notes, dump
 	// at most two summary lines (one for leaf, one for container)

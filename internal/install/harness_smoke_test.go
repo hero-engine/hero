@@ -399,6 +399,19 @@ func TestHarness_InstalledContentSurvivesOrdinaryCommands(t *testing.T) {
 					"only install may write this file's managed region",
 					tc.rootFile, len(before), len(after))
 			}
+
+			// Ties "content survives" to "and we'd notice if it didn't":
+			// after the ordinary command, the install-integrity oracle must
+			// also report clean. If a future writer eats the region, the
+			// byte-equality above catches it in CI and CheckIntegrity is
+			// what catches it in a user's repo via `hero check`.
+			findings, err := CheckIntegrity(h.TargetDir, Options{SourceDir: h.SourceDir})
+			if err != nil {
+				t.Fatalf("CheckIntegrity after ordinary command: %v", err)
+			}
+			if len(findings) != 0 {
+				t.Errorf("CheckIntegrity should report clean after an ordinary command, got %+v", findings)
+			}
 		})
 	}
 }

@@ -1,17 +1,23 @@
 ---
 user: chet-bellows
-updated: 2026-07-15T20:40:40Z
+updated: 2026-07-16T07:04:34Z
 repo: hero-engine/hero
 ---
 
 # chet-bellows's handoff
 
-## Last user ask
+## Session goal
 
-> In /Users/developer/projects/hero-engine/repository/hero, `.agents/skills/` is committed to git but is stale and drifting from its source. Decide how to resolve it. Do NOT assume gitignoring is the answer — see the policy distinction below.
+> Session opened with — In /Users/developer/projects/hero-engine/repository/hero, `.agents/skills/` is committed to git but is stale and drifting from its source. Decide how to resolve it. Do NOT assume gitignoring is the answer — see the policy distinction below.
 > 
 > FACTS (verified):
 > - `.agents/skills/<name>/SKILL.md` is genuinely where the Codex CLI loads repo-scoped skills (verified against openai/codex `codex-rs/core-…
+
+_possibly stale — 2 commit(s) since, last set 10h 23m ago_
+
+## Last user ask
+
+> Deliver install-integrity-self-check: hero check gains an install-integrity advisory — re-render the managed body via managed.Writer/PlanContent and diff against the on-disk root instruction file per installed target; report damaged/stale/incomplete installs and point at hero install to repair. Revives Fix 4+6 that codex-install-broken cut.
 
 ## Suggested next prompt
 
