@@ -157,8 +157,13 @@ func TestParentWatchdog_IgnoresReparentWhileParentAlive(t *testing.T) {
 	parentWatchdogInterval = time.Millisecond
 
 	done := make(chan struct{})
-	defer close(done)
-	startParentWatchdog(done)
+	stopped := startParentWatchdog(done)
+	// Join the goroutine before the deferred cleanup restores the seam
+	// vars. `close(done)` only signals the goroutine to stop; it may still
+	// be mid-tick reading watchdogGetppid/singletonIsAlive when the restore
+	// writes them — a data race -race flags in CI. Registered AFTER the
+	// seam-restore defer, so LIFO runs it first: close → join → then restore.
+	defer func() { close(done); <-stopped }()
 
 	// Give the poll many ticks; it must never fire while the parent lives.
 	select {

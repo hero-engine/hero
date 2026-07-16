@@ -341,3 +341,5 @@
 {"ts":"2026-07-16T07:08:10.57184Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"agents-md-erased-by-snapshot-pointer-writer","message":"status -\u003e completed"}
 {"ts":"2026-07-16T07:36:30.390826Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"codex-mcp-binary-path-resolution","message":"\"Hero MCP binary path resolved from the installer's ambient PATH, not the running binary — wrong-hero and non-portable configs\""}
 {"ts":"2026-07-16T07:36:30.390903Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"codex-mcp-binary-path-resolution","message":"status -\u003e completed"}
+{"ts":"2026-07-16T20:46:18.877173Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"parent-watchdog-race-ci-red","message":"\"Test CI red for days — data race between the parent-watchdog goroutine and a test's deferred seam-var restore\""}
+{"ts":"2026-07-16T20:46:18.877527Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"parent-watchdog-race-ci-red","message":"status -\u003e completed"}
