@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-16T17:35:21Z
+updated: 2026-07-16T20:14:54Z
 repo: hero-engine/hero
 ---
 
@@ -12,8 +12,6 @@ repo: hero-engine/hero
 > 
 > FACTS (verified):
 > - `.agents/skills/<name>/SKILL.md` is genuinely where the Codex CLI loads repo-scoped skills (verified against openai/codex `codex-rs/core-…
-
-_possibly stale — 2 commit(s) since, last set 3m ago_
 
 ## Suggested next prompt
 
