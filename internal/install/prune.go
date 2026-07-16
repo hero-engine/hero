@@ -38,6 +38,20 @@ import (
 //
 // Everything else is left alone.
 
+// The file prune (pruneStaleFiles, below) extends this same doctrine from
+// nested skill DIRS to the flat rendered FILES — agent, command, and
+// Cursor flat-skill files — that the directory mechanism above does not
+// reach. The two-proof model narrows to ONE proof for files: manifest
+// membership only. A flat agent/command file has no Hero-owned namespace
+// at a shared dest (there is no `command-` analogue — `.claude/agents/foo.md`
+// looks identical whether Hero or the user wrote it), so the recorded
+// TargetState.Files manifest is the sole provenance. A file absent from the
+// prior manifest was never recorded as Hero-written and is invisible to the
+// prune. Nil/empty prior manifest, or an empty current render, → strict
+// no-op. The two prunes are disjoint by construction (see renderToFile's
+// path-separator rule): nested skills stay with SkillDirs, flat files stay
+// with Files.
+
 // staleSkillPrune describes one dest's convergence pass.
 type staleSkillPrune struct {
 	// dest is the skills destination directory to converge.
@@ -165,4 +179,100 @@ func canonicalSkillDirNames(opts Options) ([]string, error) {
 		return nil, err
 	}
 	return skillNames(skills), nil
+}
+
+// renderedFileManifest returns this run's flat rendered dest paths as
+// TargetDir-relative, forward-slash strings, sorted and deduped. It is the
+// canonical "what Hero renders now" record RecordTargetInstall persists as
+// TargetState.Files and pruneStaleFiles diffs against. Paths outside
+// TargetDir (never expected in project mode) are dropped.
+func renderedFileManifest(opts Options, result *Result) []string {
+	if result == nil || len(result.rendered) == 0 || opts.TargetDir == "" {
+		return nil
+	}
+	seen := map[string]bool{}
+	var out []string
+	for _, dst := range result.rendered {
+		rel, err := filepath.Rel(opts.TargetDir, dst)
+		if err != nil {
+			continue
+		}
+		rel = filepath.ToSlash(rel)
+		if rel == "" || strings.HasPrefix(rel, "../") {
+			continue
+		}
+		if seen[rel] {
+			continue
+		}
+		seen[rel] = true
+		out = append(out, rel)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// pruneStaleFiles removes flat agent/command/flat-skill files this target
+// recorded writing on its last install but did not write this run — the
+// product dropped them. It is the flat-file sibling of pruneStaleSkillDirs
+// and shares its provenance doctrine (see the header above): a file is
+// removed only when the recorded prior manifest proves Hero wrote it. Honors
+// opts.DryRun. Must run BEFORE RecordTargetInstall (which overwrites the
+// prior manifest with this run's set).
+func pruneStaleFiles(opts Options, result *Result) error {
+	if opts.Mode != ModeProject || opts.TargetDir == "" {
+		return nil
+	}
+
+	// Prior manifest is the sole provenance proof. Nil/empty → no proof of
+	// anything Hero wrote → prune nothing. Covers fresh clone with no
+	// install-state.json (AC-13), a pre-Files TargetState (AC-6), and a
+	// genuinely empty prior manifest (AC-3).
+	st, err := ReadInstallState(opts.TargetDir)
+	if err != nil || st == nil {
+		return nil
+	}
+	prior, ok := st.Targets[string(opts.Target)]
+	if !ok || len(prior.Files) == 0 {
+		return nil
+	}
+
+	// This run's rendered set. Empty → a broken/empty content source; skip
+	// rather than delete everything the prior manifest listed (AC-12).
+	current := renderedFileManifest(opts, result)
+	if len(current) == 0 {
+		return nil
+	}
+	currentSet := make(map[string]bool, len(current))
+	for _, rel := range current {
+		currentSet[rel] = true
+	}
+
+	var stale []string
+	for _, rel := range prior.Files {
+		if !currentSet[rel] {
+			stale = append(stale, rel)
+		}
+	}
+	sort.Strings(stale)
+
+	for _, rel := range stale {
+		full := filepath.Join(opts.TargetDir, filepath.FromSlash(rel))
+		if _, err := os.Stat(full); err != nil {
+			// Already gone — tolerate the skill-dir prune having removed it,
+			// or a user deletion. Nothing to do (AC-10).
+			continue
+		}
+		if opts.DryRun {
+			fmt.Fprintf(os.Stderr, "  cleanup %s (would remove — dropped from product)\n", full)
+			continue
+		}
+		if err := os.Remove(full); err != nil {
+			return fmt.Errorf("removing stale file %s: %w", full, err)
+		}
+		fmt.Fprintf(os.Stderr, "  cleanup %s (removed — dropped from product)\n", full)
+		// Best-effort tidy of a now-empty parent dir, matching the Copilot
+		// cleanup idiom. Ignore errors: a non-empty dir simply stays.
+		_ = os.Remove(filepath.Dir(full))
+	}
+	return nil
 }

@@ -124,6 +124,16 @@ type Result struct {
 	// next run's prune manifest (see prune.go). Unexported — internal
 	// bookkeeping, not part of the --json contract.
 	skillDirs []string
+
+	// rendered is the set of flat agent/command/flat-skill dest paths this
+	// run materialized (absolute). Populated unconditionally by the flat
+	// write primitives — installFlat, installSkillsFlat, and renderToFile
+	// (flat names only) — independent of copyFileFromFS's byte-match skip,
+	// so it is complete even on a no-op re-install. RecordTargetInstall
+	// persists it (TargetDir-relative) as the next run's file-prune
+	// manifest; pruneStaleFiles diffs against it. Unexported — internal
+	// bookkeeping, not part of the --json contract. See prune.go.
+	rendered []string
 }
 
 // CopyAction records a single file copy.
@@ -185,6 +195,17 @@ func Run(opts Options) (*Result, error) {
 	if opts.Mode == ModeProject && opts.TargetDir != "" {
 		if regErr := RegisterProject(opts.TargetDir, opts.DryRun); regErr != nil {
 			fmt.Printf("  warning: could not register project in daemon registry: %v\n", regErr)
+		}
+	}
+
+	// Prune files the product dropped since the last install. Reads the
+	// prior manifest, so it must run BEFORE RecordTargetInstall writes the
+	// new one. Honors DryRun internally (like pruneStaleSkillDirs), so it
+	// lives outside the !DryRun gate below. Best-effort: the install itself
+	// already succeeded, and the manifest self-heals on the next run.
+	if opts.Mode == ModeProject && opts.TargetDir != "" {
+		if err := pruneStaleFiles(opts, result); err != nil {
+			fmt.Printf("  warning: file prune: %v\n", err)
 		}
 	}
 

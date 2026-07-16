@@ -2,6 +2,19 @@
 
 Specs are Hero's fundamental unit of work. They live as markdown files with YAML frontmatter, tracked by status and synced with external issue trackers.
 
+## Intake: the pre-spec stage
+
+Not every idea is ready to be a spec. An **intake** is a pre-commitment idea or inbound signal — a raw "we should maybe…" — that Hero records in the spec graph so it's searchable and provenance-linked, but deliberately keeps **out** of committed-work rollups (`hero status`, `hero queue`, velocity, snapshot). It's the inbox that sits *before* planned work, so capturing a thought never inflates what looks committed.
+
+```bash
+hero intake "let users export to CSV"   # capture a signal
+hero intake list                         # review the inbox by status
+hero intake promote csv-export           # graduate it into a real feature/bug spec
+hero intake reject stale-idea            # terminal: drop it
+```
+
+Promoting an intake creates a normal spec (`feature` by default, `--type bug` for defects) and records the provenance link back to the original signal, so you can always trace where a piece of work came from. Until promoted, an intake is invisible to the planning surfaces below.
+
 ## Spec Types
 
 | Type | Purpose | Created by |

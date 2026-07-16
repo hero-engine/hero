@@ -188,6 +188,33 @@ of each workflow.
 
 ---
 
+## `hero synthesize` — Living Explainers
+
+Where `/convention` and `/capture` record individual learnings, **`hero
+synthesize`** rolls a *cluster* of related, completed specs into a single
+**explainer** — a "how this feature works, as it exists now" document. It
+reads the specs plus the git activity across their delivery window and
+writes the result to `.hero/knowledge/explainers/<slug>/spec.md`.
+
+```bash
+hero synthesize --detect              # find explainer-worthy spec clusters
+hero synthesize cold-start-trust-hardening   # synthesize one cluster
+hero synthesize --stale               # explainers whose cluster grew since last run
+hero synthesize --set-mode review     # autonomy: auto | review | off
+```
+
+The CLI assembles the inputs deterministically; the prose is written by an
+LLM when `ANTHROPIC_API_KEY` is set, otherwise a scaffold is emitted for an
+agent (via the `hero_synthesize` MCP tool) or a human to complete. An
+explainer is a *living* document — re-running `hero synthesize --stale`
+surfaces explainers whose underlying cluster has gained new completed specs
+and should be refreshed. Explainers are a first-class knowledge type, so
+they surface in `hero search` and `hero ask` alongside conventions and
+decisions. Autonomy is governed by the `explainer_synthesis` setting in
+`hero.json` (`auto` / `review` / `off`).
+
+---
+
 ## `hero ask` — Query the Knowledge Base
 
 Ask questions against the accumulated knowledge base.

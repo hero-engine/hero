@@ -1,6 +1,6 @@
 # Agents Reference
 
-Hero delegates work to **34 specialized agents**, each with a focused role and constrained set of tools. Commands orchestrate agents — you rarely invoke them directly.
+Hero delegates work to **35 specialized agents**, each with a focused role and constrained set of tools. Commands orchestrate agents — you rarely invoke them directly.
 
 Agents are defined as markdown files in the `agents/` directory and loaded at runtime based on the active command workflow.
 
@@ -61,6 +61,7 @@ Quality assurance and code review.
 | `security-reviewer` | Review code for auth, data exposure, input handling, and security risk |
 | `dependency-analyst` | Evaluate library choices, dependency health, license compatibility, vulnerability exposure |
 | `design-reviewer` | Review spec designs for completeness, feasibility, and consistency before delivery |
+| `roadmap-reviewer` | Triage roadmap-shape drift across the planning corpus; walk and resolve findings one at a time |
 
 ## Operations
 

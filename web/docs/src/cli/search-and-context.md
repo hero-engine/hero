@@ -69,6 +69,31 @@ hero ask "What conventions exist for error handling?"
 `hero ask` is extractive Q&A over the corpus. It uses BM25/TF-IDF
 ranking and does not call an LLM.
 
+## Capture: Notes and Intake
+
+Two low-friction ways to get a thought into the graph before it's a spec:
+
+```bash
+hero note "thinking about the auth flow"     # quick knowledge-base note
+hero note auth-ideas --from conversation.md   # import note content from a file
+cat convo.txt | hero note piped-thoughts      # or pipe via stdin
+
+hero intake "let users export to CSV"         # capture a pre-commitment idea
+hero intake list                              # list intakes by status
+hero intake promote csv-export                # promote an intake to a roadmap spec
+hero intake reject stale-idea                 # terminal: reject
+```
+
+`hero note` captures brainstorms, conversation dumps, and
+stream-of-consciousness thinking — anything not ready to be a spec.
+
+`hero intake` is different: an **intake** is a pre-commitment idea or
+inbound signal that lives in the spec graph (searchable,
+provenance-linked) but is deliberately held **out** of committed-work
+rollups — status, queue, velocity, snapshot — until you `promote` it to a
+real spec. It's the inbox stage before anything becomes planned work. See
+[Specs & Lifecycle](../concepts/specs.md#intake-the-pre-spec-stage).
+
 ## Relevant
 
 ```bash
@@ -141,6 +166,125 @@ hero graph csv-export --format mermaid
 
 `hero why` traces origin chains through the graph. `hero blocked` joins
 feature dependencies with failing or regressed acceptance criteria.
+
+## Impact Analysis
+
+```bash
+hero impact src/payments.go
+hero impact src/payments.go src/session.go     # multiple files
+hero impact src/payments.go --format           # JSON output
+```
+
+`hero impact` reports the blast radius of changing a file: which specs,
+conventions, and decisions are affected. Use it before a refactor to see
+what documentation and in-flight work touches the code you're about to
+move. (For teams on Hero Cloud, `--cross-repo` extends the query to
+callers in sibling repositories.)
+
+## Coverage Suggestions
+
+```bash
+hero suggest                # top churn areas with no spec coverage
+hero suggest --since 90d    # widen the churn window (default 30d)
+hero suggest --top 20       # show more suggestions
+```
+
+`hero suggest` analyzes git churn to find files with heavy recent
+activity but no spec coverage — the places where work is happening
+undocumented — ranked by churn intensity. It's a fast way to spot where a
+`/design` or `/scan` pass would pay off.
+
+## Synthesis (Explainers)
+
+```bash
+hero synthesize cold-start-trust-hardening      # synthesize one cluster
+hero synthesize feat-a feat-b feat-c            # synthesize across several specs
+hero synthesize --detect                        # list explainer-worthy clusters
+hero synthesize --auto                          # synthesize auto-eligible clusters
+hero synthesize --stale                         # explainers whose cluster grew since last run
+hero synthesize --set-mode review               # autonomy: auto | review | off
+```
+
+`hero synthesize` reads a cluster of related specs plus the git activity
+across their delivery window and produces an **explainer** — a "how this
+feature works, as it exists now" knowledge entry — at
+`.hero/knowledge/explainers/<slug>/spec.md`. The CLI assembles the inputs
+deterministically; prose is written by an LLM when `ANTHROPIC_API_KEY` is
+set, otherwise a scaffold is emitted for an agent (via the
+`hero_synthesize` MCP tool) or a human to complete. See
+[Knowledge & Standards](../workflows/knowledge-and-standards.md) for where
+explainers fit in the knowledge workflow.
+
+## Activity Feed
+
+```bash
+hero feed                        # last 20 significant events, newest first
+hero feed --since 1h             # events from the last hour
+hero feed --type decision_made   # filter by event type
+hero feed --slug csv-export      # filter by spec
+```
+
+`hero feed` is the cross-session activity feed — significant events
+logged by every agent working in the repo. It's how you see what other
+sessions (and other machines) have been doing.
+
+## Reasoning Sessions
+
+A **session** is a recorded reasoning log — the trail of events an agent
+emitted while working. Sessions can be distilled into knowledge or
+replayed to reconstruct how a decision was reached.
+
+```bash
+hero session list                # all sessions
+hero session start               # begin a new reasoning session
+hero session log <id>            # show events from a session
+hero session replay <id>         # render a full session summary
+hero session distill <id>        # suggest knowledge entries from a session
+hero session prune --days 30     # prune sessions older than N days
+```
+
+## Extract Decisions & Concepts
+
+```bash
+hero extract              # extract from notes (default target)
+hero extract specs        # extract from planning specs
+hero extract all          # both
+hero extract --dry-run    # preview without calling the LLM
+```
+
+`hero extract` reads hand-authored prose from notes and specs and pulls
+structured **Decision** and **Concept** nodes into the knowledge graph, so
+accumulated reasoning surfaces in later sessions. It's provider-agnostic
+(defaults to Anthropic via `ANTHROPIC_API_KEY`) and idempotent —
+unchanged sources are skipped by content hash, no LLM call.
+
+## Guardrails: anchor & tripwire
+
+Tripwires are forbidden-option guardrails — decisions the project has
+ruled out — and `anchor` re-grounds a session on the project mission plus
+any tripwires relevant to what you're deciding.
+
+```bash
+hero anchor                              # mission + all active tripwires
+hero anchor "should we add a message queue?"   # highlight tripwires matching this context
+hero tripwire list                       # list active tripwires
+hero tripwire check "let's cache in Redis"     # does this text trip a guardrail?
+```
+
+## Stack & Code Scan
+
+```bash
+hero scan              # detect stack + generate knowledge stubs + code intelligence
+hero scan --code       # code intelligence only (symbols, packages, deps)
+hero scan --dry-run    # preview without writing
+hero scan --force      # overwrite existing entries
+```
+
+`hero scan` detects the technology stack and seeds the knowledge base and
+code-intelligence corpus that `hero search` and `hero relevant` query.
+Generated knowledge entries are stubs — review and enrich them, or use the
+`/scan` workflow to let an agent fill them in. Code-scan depth is set by
+`code_scan.depth` in `hero.json` (`normal` / `deep` / `disabled`).
 
 ## Status and Health
 

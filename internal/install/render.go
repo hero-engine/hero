@@ -72,6 +72,15 @@ func renderToFile(opts Options, result *Result, kind, destDir string, fn func(ca
 			continue // renderer chose to skip this entry
 		}
 		dst := filepath.Join(destDir, destName)
+		// Record flat rendered files (Codex .toml, Copilot .prompt.md) in
+		// the file-prune manifest, in both the DryRun and write branches so
+		// --dry-run reporting sees the full set. Skip destNames that carry a
+		// path separator — Codex renders commands-as-skills at
+		// command-<name>/SKILL.md, a nested dir already owned by prune.go via
+		// SkillDirs. Keeping the two prunes disjoint. See prune.go.
+		if !strings.ContainsAny(destName, `/\`) {
+			result.rendered = append(result.rendered, dst)
+		}
 		if opts.DryRun {
 			logRendered(opts, dst, kind)
 			continue

@@ -1,9 +1,9 @@
 # Tracker Setup
 
-Hero integrates with **GitHub Issues**, **Jira**, **Linear**, **GitLab**, and **Confluence** through stable integration IDs.
+Hero syncs specs with four issue trackers — **GitHub Issues**, **Jira**, **Linear**, and **GitLab** — through stable integration IDs. **Confluence** is also supported, but as a one-way *wiki publish target* rather than a tracker; see [Confluence (wiki publishing)](#confluence-wiki-publishing) at the end of this page.
 
 !!! tip "Interactive setup"
-    Run `hero sync connect jira` for guided setup, or use protected automation: `printf '%s' "$JIRA_TOKEN" | hero connect jira --integration-id jira-delivery --project PROJ --base-url https://example.atlassian.net --user-email you@example.com --token-stdin`.
+    Run `hero sync connect <provider>` for guided setup (`github`, `jira`, `linear`, `gitlab`, or `confluence`), or use protected automation: `printf '%s' "$JIRA_TOKEN" | hero connect jira --integration-id jira-delivery --project PROJ --base-url https://example.atlassian.net --user-email you@example.com --token-stdin`.
 
 ---
 
@@ -64,6 +64,26 @@ Hero integrates with **GitHub Issues**, **Jira**, **Linear**, **GitLab**, and **
 
     Generate a personal API key at [linear.app/settings/api](https://linear.app/settings/api).
 
+=== "GitLab"
+
+    ```json title="hero.json"
+    {
+      "integrations": {
+        "default": "gitlab-delivery",
+        "roles": {"delivery": "gitlab-delivery"},
+        "connections": {"gitlab-delivery": {"provider": "gitlab", "settings": {"project": "namespace/project", "base_url": "https://gitlab.com"}, "auth": {"token_env": "GITLAB_TOKEN"}}}
+      }
+    }
+    ```
+
+    ```bash
+    export GITLAB_TOKEN="glpat-xxxxxxxxxxxxxxxxxxxx"
+    ```
+
+    - `settings.project` — **required**. A path (`"namespace/project"`, subgroups allowed) or a numeric project ID.
+    - `settings.base_url` — **required for GitLab** (unlike GitHub and Linear, which default it). Use `https://gitlab.com` for GitLab SaaS, or your self-hosted instance root; Hero appends `/api/v4`. Leaving it empty is rejected as a misconfiguration.
+    - Use a **Personal or Project access token with the `api` scope**. GitLab issues, epics, and iterations round-trip through the same `hero sync` commands as the other trackers.
+
 ---
 
 ## Authentication
@@ -76,6 +96,9 @@ Literal tokens are forbidden in committed `hero.json`. Put `auth.token` in the m
 | Jira Cloud | `JIRA_API_TOKEN`, `JIRA_USER_EMAIL` |
 | Jira Server | `JIRA_API_TOKEN` |
 | Linear | `LINEAR_API_KEY` |
+| GitLab | `GITLAB_TOKEN` (PAT with `api` scope) |
+
+The env-var *names* above are the conventional defaults referenced by the examples; the actual variable a connection reads is whatever you name in its `auth.token_env`.
 
 !!! warning "Keep tokens out of version control"
     Set tokens in your shell profile (`~/.zshrc`, `~/.bashrc`), a `.env` file excluded from git, or a secrets manager.
@@ -230,3 +253,34 @@ hero status
 ```
 
 This displays the configured tracker, connection status, and a count of imported specs.
+
+---
+
+## Confluence (wiki publishing)
+
+Confluence is **not** an issue tracker — Hero never imports issues from it or syncs spec status to it. It's a one-way **publish target**: `hero publish wiki` pushes completed specs into a Confluence space. Because of that, its connection uses the **`docs` role**, not `delivery` (Hero rewrites a `delivery` role to `docs` for Confluence automatically).
+
+```json title="hero.json"
+{
+  "integrations": {
+    "roles": {"docs": "confluence-docs"},
+    "connections": {"confluence-docs": {"provider": "confluence", "settings": {"space_key": "ENG", "base_url": "https://mycompany.atlassian.net/wiki", "user_email": "you@company.com"}, "auth": {"token_env": "CONFLUENCE_TOKEN"}}}
+  }
+}
+```
+
+```bash
+export CONFLUENCE_TOKEN="your-api-token"
+```
+
+- `settings.space_key` — **required**. The Confluence space key (e.g. `ENG`). Note this is `space_key`, not `project`.
+- `settings.base_url` — **required**, and must include the `/wiki` suffix (e.g. `https://mycompany.atlassian.net/wiki`).
+- `settings.user_email` — **required for Confluence Cloud** (auth is email + token). Confluence Server / Data Center omits it and authenticates with a Bearer PAT instead.
+
+Only `space_key`, `base_url`, and `user_email` are accepted in the connection block. Once connected, publish with:
+
+```bash
+hero publish wiki
+```
+
+`hero publish` is one-way output only (compare `hero sync`, which is bidirectional and tracker-aware). Alongside `publish wiki` (Confluence / GitHub Wiki), `hero publish pages` renders the knowledge graph as a static site deployable to GitHub Pages.
