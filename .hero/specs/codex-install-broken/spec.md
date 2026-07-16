@@ -14,6 +14,8 @@ relations:
   - target: monorepo-satellite-installs
     kind: related
 completed_at: 2026-06-09T15:47:44Z
+superseded_by: agents-md-erased-by-snapshot-pointer-writer
+# superseded_reason: Misdiagnosed its own P0. It blamed 'Codex install is broken' for an empty AGENTS.md, but install was never broken — it renders correctly and always did. The snapshot pointer writer was erasing the output afterward (see the superseding spec for the confirmed root cause). Its Fixes 1-3 were real and shipped (the 'Running Hero Workflows in Codex' section and 29 command skills are live in AGENTS.md today), but the P0 fix could never stick: it was verified 'after install' — the one moment the file is guaranteed correct — and closed 2026-06-09T15:47 while commit 5af2e46 had already re-stubbed the file the same day. Its Evidence section is a verbatim description of the repo for the following five weeks. Detection follow-ups it cut (Fix 4, Fix 6) now live in install-integrity-self-check; its Fix 5 (MCP in the Codex sandbox) is being diagnosed separately.
 ---
 
 # Codex install is broken — AGENTS.md body missing, agents/skills not materialized, MCP unreachable
