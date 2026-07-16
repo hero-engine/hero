@@ -5,9 +5,9 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-07-16T17:31:07Z
+updated: 2026-07-16T17:34:42Z
 repo: hero-engine/hero
-branch: main
+branch: fix/orphan-instruction-files-fresh-clone-false-positive
 ---
 
 ## Just finished
