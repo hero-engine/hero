@@ -41,6 +41,9 @@ import (
 //     (Codex has no command loader — SlashCommand is a built-in enum).
 //   - Cleans up dead bytes from prior installs at .codex/agents/*.md
 //     and .codex/commands/*.
+//   - Prunes skill dirs at the .agents/skills dest whose canonical source
+//     is gone, so a renamed command or skill doesn't keep loading forever
+//     (see prune.go for the provenance rules).
 
 func runCodex(opts Options) (*Result, error) {
 	destBase, err := resolveCodexPaths(opts)
@@ -83,6 +86,24 @@ func runCodex(opts Options) (*Result, error) {
 		return nil, fmt.Errorf("render commands as codex skills: %w", err)
 	}
 
+	// Converge: both writers above render into skillsDest, so the prune runs
+	// once, after both, over their combined output.
+	written, err := codexSkillDirNames(opts)
+	if err != nil {
+		return nil, fmt.Errorf("enumerating codex skill dirs: %w", err)
+	}
+	if err := pruneStaleSkillDirs(opts, staleSkillPrune{
+		dest:    skillsDest,
+		written: written,
+		// `source-command-` is a dead Hero namespace: a superseded layout
+		// rendered commands under that prefix. Nothing writes it now, so
+		// every such dir on disk is an orphan.
+		ownedPrefixes: []string{codexCommandSkillPrefix, "source-command-"},
+	}); err != nil {
+		return nil, fmt.Errorf("prune stale codex skills: %w", err)
+	}
+	result.skillDirs = written
+
 	// AGENTS.md (project root) or ~/.codex/AGENTS.md (global) via the
 	// harness-native mapping — Codex's native root file is AGENTS.md.
 	if err := installNativeInstructionFile(opts, result); err != nil {
@@ -95,6 +116,29 @@ func runCodex(opts Options) (*Result, error) {
 	}
 
 	return result, nil
+}
+
+// codexSkillDirNames returns every skill dir name a Codex install
+// materializes at the skills dest: the canonical skills, plus one
+// command-<name> dir per command (renderCommandAsCodexSkill).
+func codexSkillDirNames(opts Options) ([]string, error) {
+	names, err := canonicalSkillDirNames(opts)
+	if err != nil {
+		return nil, err
+	}
+	srcFS := opts.sourceFS()
+	domain := opts.Domain
+	if domain == "" {
+		domain = "engineering"
+	}
+	commands, err := selectFlatContent(srcFS, "commands", domain)
+	if err != nil {
+		return nil, err
+	}
+	for _, name := range trimMDNames(commands) {
+		names = append(names, codexCommandSkillDir(name))
+	}
+	return names, nil
 }
 
 // codexSkillsDest returns the .agents/skills/ destination for the

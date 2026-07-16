@@ -23,11 +23,11 @@ type ProjectOptions struct {
 	ProjectName string
 	Mission     string
 
-	// NextMDPath / AgentsMDPath are the absolute paths to the anchor
-	// files the pointer-writer should idempotently update. Empty
-	// disables the corresponding pointer.
-	NextMDPath   string
-	AgentsMDPath string
+	// NextMDPath is the absolute path to the anchor file the
+	// pointer-writer should idempotently update. Empty disables the
+	// pointer. AGENTS.md/CLAUDE.md are deliberately not pointer targets
+	// — install owns their managed region; see EnsurePointer.
+	NextMDPath string
 
 	// ArchiveConfig governs the archive evaluator. Zero-value uses
 	// the documented defaults.
@@ -115,8 +115,8 @@ func Project(opts ProjectOptions) (*ProjectResult, error) {
 	}
 
 	// 6. Pointer writes (idempotent; non-fatal).
-	if opts.NextMDPath != "" || opts.AgentsMDPath != "" {
-		if err := EnsurePointer(opts.NextMDPath, opts.AgentsMDPath); err != nil {
+	if opts.NextMDPath != "" {
+		if err := EnsurePointer(opts.NextMDPath); err != nil {
 			fmt.Fprintf(os.Stderr, "snapshot: pointer: %v\n", err)
 		}
 	}

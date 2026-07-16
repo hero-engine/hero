@@ -115,18 +115,13 @@ func runSnapshot(cmd *cobra.Command, args []string) error {
 	if snapshotProjectFlag {
 		// Project to file, mirrors the integration in checkpoint.
 		nextPath := resolveNextPath(heroDir, cfg)
-		agentsMD := filepath.Join(root, "AGENTS.md")
-		if _, err := os.Stat(agentsMD); err != nil {
-			agentsMD = ""
-		}
 		archive := cfg.SnapshotArchive()
 		_, err := snapshot.Project(snapshot.ProjectOptions{
-			ProjectRoot:  root,
-			HeroDir:      heroDir,
-			ProjectName:  filepath.Base(root),
-			Mission:      readMissionOneLiner(filepath.Join(heroDir, "mission.md")),
-			NextMDPath:   nextPath,
-			AgentsMDPath: agentsMD,
+			ProjectRoot: root,
+			HeroDir:     heroDir,
+			ProjectName: filepath.Base(root),
+			Mission:     readMissionOneLiner(filepath.Join(heroDir, "mission.md")),
+			NextMDPath:  nextPath,
 			ArchiveConfig: snapshot.ArchiveConfig{
 				StalenessCutoff:   archive.StalenessCutoff,
 				MilestonesEnabled: cfg.SnapshotMilestonesEnabled(),
@@ -297,7 +292,6 @@ func runSnapshotArchive(cmd *cobra.Command, args []string) error {
 		ProjectName:        filepath.Base(root),
 		Mission:            readMissionOneLiner(filepath.Join(heroDir, "mission.md")),
 		NextMDPath:         resolveNextPath(heroDir, cfg),
-		AgentsMDPath:       agentsMDPathOrEmpty(root),
 		ManualArchive:      true,
 		ManualArchiveLabel: snapshotLabel,
 		ArchiveConfig: snapshot.ArchiveConfig{
@@ -320,13 +314,6 @@ func runSnapshotArchive(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func agentsMDPathOrEmpty(root string) string {
-	p := filepath.Join(root, "AGENTS.md")
-	if _, err := os.Stat(p); err != nil {
-		return ""
-	}
-	return p
-}
 
 func runSnapshotHistory(cmd *cobra.Command, args []string) error {
 	root := findProjectRoot()

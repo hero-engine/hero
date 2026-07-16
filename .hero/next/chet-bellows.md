@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-15T18:48:59Z
+updated: 2026-07-15T20:40:40Z
 repo: hero-engine/hero
 ---
 
@@ -8,12 +8,10 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Bug in the Hero repo (/Users/bwheeler/projects/hero-engine/repository/hero): `parseSections` treats `## ` headings inside fenced code blocks as real section headings, forging phantom sections and silently truncating the preceding section's parsed content.
+> In /Users/bwheeler/projects/hero-engine/repository/hero, `.agents/skills/` is committed to git but is stale and drifting from its source. Decide how to resolve it. Do NOT assume gitignoring is the answer — see the policy distinction below.
 > 
-> **Root cause:** `internal/spec/spec.go:1082` `parseSections()` scans line-by-line:
-> ```go
-> line := scanner.Text()
-> trimmed := strings.TrimSpace(li…
+> FACTS (verified):
+> - `.agents/skills/<name>/SKILL.md` is genuinely where the Codex CLI loads repo-scoped skills (verified against openai/codex `codex-rs/core-…
 
 ## Suggested next prompt
 

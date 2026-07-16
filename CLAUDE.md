@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-<!-- hero:managed-start v=dev -->
+<!-- hero:managed-start v=v0.25.1-3-g153ab29-dirty -->
 ## Hero — Spec-Driven AI Engineering
 
 This project uses **Hero** for spec-driven engineering workflows. Hero manages specs, integrates with work trackers (Jira, GitHub, Linear), and provides structured workflows via slash commands.
@@ -33,21 +33,32 @@ When the user describes what they want in natural language, route to the appropr
 | Check, health, validate workspace | `/check` |
 | Sprint, iteration, load sprint | `/sprint` |
 | Import, pull issues, fetch from tracker, sync issues | `/import` |
+| What's stuck, blocked items, dependencies, can't move forward | `/blocked` |
+| Capture, extract learnings, persist session knowledge to the knowledge base | `/capture` |
+| Challenge or revise a diagnosis, push back on root cause with new context | `/challenge` |
+| Start of session, load ranked context, what's in flight | `/resume` |
+| Roadmap drift triage, "review the roadmap for staleness" | `/roadmap-review` |
+| Scrub the codebase — dead code, weak types, duplication, bad comments, legacy cruft | `/scrub` |
+| Break a large spec into smaller, independently deliverable child specs | `/split` |
+| Trace where something came from, chain of decisions/specs/commits | `/why` |
+| Not sure which command to use, route my request | `/hero` |
 | Ask sibling/peer repo a question, check with peer | `hero peer call <alias> --mode=advisory "..."` |
 | Have peer design something, let peer handle design | `hero peer call <alias> --mode=spec-out "..."` |
 | Hand off a spec to a peer repo, drop on peer's queue, transfer to sibling | `hero handoff <spec> <alias>` |
 | Pick up handed-back spec, accept the handoff, peer finished | `hero handoff accept <spec>` |
 | What peers do we have, list siblings, which repos are linked | `hero peer list` |
 | What does peer expose, peer surface, peer conventions, inspect peer | `hero peer show <alias>` |
+| Cross-repo peering front door (session-level; picks advisory/spec-out/handoff/list/show for you) | `/peer` |
+| Force-refresh NEXT.md/QUEUE.md before switching tools (session-level; distinct from the cross-repo rows above) | `/handoff` |
 
 When routing, pass the user's original context as arguments to the command. If the intent is ambiguous, present the top 2-3 options and ask.
 
-**Slash commands ≠ CLI subcommands.** Slash commands (e.g. `/discover`, `/convention`) run inside the AI tool's session only — they are **not** `hero discover` or `hero convention` terminal commands. Some commands exist on both surfaces, but many are slash-only. Do not hallucinate CLI subcommands from slash command names.
+**Slash commands ≠ CLI subcommands.** Slash commands (e.g. `/discover`, `/convention`) run inside the AI tool's session only — they are **not** `hero discover` or `hero convention` terminal commands. Some commands exist on both surfaces, but many are slash-only. Do not hallucinate CLI subcommands from slash command names. <!-- drift-test:ignore (illustrative: `hero discover`/`hero convention` above are explicitly non-existent subcommands) -->
 
 | Surface | Commands |
 |---|---|
-| **Slash-only** (no `hero <name>` equivalent) | `/capture`, `/challenge`, `/compose`, `/convention`, `/decide`, `/discover`, `/drive`, `/mock`, `/prime`, `/release`, `/retro`, `/review`, `/scrub`, `/split` |
-| **Both slash and CLI** | `/check`, `/deliver`, `/design`, `/diagnose`, `/docs`, `/handoff`, `/import`, `/note`, `/scan`, `/sprint`, `/why` |
+| **Slash-only** (no `hero <name>` equivalent) | `/capture`, `/challenge`, `/compose`, `/convention`, `/decide`, `/discover`, `/drive`, `/mock`, `/release`, `/retro`, `/review`, `/roadmap-review`, `/scrub`, `/split` |
+| **Both slash and CLI** | `/blocked`, `/check`, `/deliver`, `/design`, `/diagnose`, `/docs`, `/handoff` (slash = NEXT.md refresh; CLI `hero handoff <spec> <alias>` = cross-repo drop to a peer), `/hero` ("which command do I use" meta-help; CLI equivalent `hero do <request>`), `/import` (slash = tracker import via `hero sync import`; root `hero import` is unrelated knowledge-base ingestion), `/note`, `/peer`, `/resume`, `/scan`, `/sprint`, `/why` |
 | **CLI-only** (see CLI Commands below) | `hero status`, `hero search`, `hero ask`, `hero list`, `hero queue`, `hero spec verify`, `hero spec score`, `hero diff`, `hero drift`, etc. |
 
 **Mockup routing.** Any request to mock, wireframe, prototype, or visualize a screen — including casual questions like "what would this look like?" or "is that a swift mock?" — routes to `/mock`. **Never hand-generate a mockup outside that command, and never pick the format yourself.** `/mock` runs `hero spec mock detect`, which chooses the renderer (HTML vs. native SwiftUI) deterministically from the repo's stack and announces it before generating. There is **no "HTML-first, then port to SwiftUI" workflow** — that is a confabulation, not a real Hero pattern. In a native app you produce a native SwiftUI mockup directly (compiled, with real screenshots); in a web app you produce HTML. Do **not** generate an HTML approximation "to iterate faster" on a native project. Always end your response with the clickable file inventory `/mock` surfaces — never make the user ask for the links.
@@ -60,6 +71,34 @@ When routing, pass the user's original context as arguments to the command. If t
 2. **Deliver from spec**: Use `/deliver` to implement from an approved spec
 3. **Debug with specs**: Use `/diagnose` to investigate bugs and produce fix specs
 4. **Never work on closed items**: Commands like `/diagnose` and `/deliver` check if the tracker issue is still open before starting work
+5. **Finish the closing gate before yielding**: `/deliver` is not done until `hero spec verify <slug>` passes — and verify requires the cold delivery audit to run first. The audit and verify run in the **same turn** as the implementation, not as a follow-up the user triggers. Never stop with a spec left in `planning`/`delivering` and the audit unrun, and never say "the audit still needs to run" — run it now instead. This holds in every delivery mode, including the default supervised mode.
+
+### Agents Reference
+
+Grouped by role (every installed agent, no links):
+
+- **Delivery leads:** feature-delivery-lead, platform-delivery-lead — product features vs. platform/migration work.
+- **Architects & reviewers:** greenfield-architect, brownfield-architect, architecture-reviewer, design-reviewer, pr-reviewer, security-reviewer, roadmap-reviewer — design-time and review gates.
+- **Specialist engineers:** engineer, api-engineer, database-engineer, devops-engineer, integration-engineer, migration-engineer, performance-engineer, release-engineer — build and ship by concern.
+- **QA & investigation:** functional-qa-engineer, test-architect, debug-investigator, dependency-analyst, issue-tracker, product-ideator, ui-designer — testing, root-cause work, dependency mapping, issue triage, ideation, UI review.
+- **Scrubbers:** comment-scrubber, deadcode-scrubber, dedup-scrubber, defensive-scrubber, dependency-scrubber, legacy-scrubber, type-scrubber — one code-quality concern each.
+- **Core (installed with every pack):** convention-author, documentation-engineer, project-context-builder, session-primer.
+
+### Skills Reference
+
+Grouped by concern (every installed skill, no links):
+
+- **Stacks & detection:** database-stack, go-stack, groovy-stack, java-stack, javascript-stack, python-stack, react-stack, rust-stack, stack-detection — conventions per detected stack.
+- **Architecture & design:** api-design-and-contracts, architecture-principles, greenfield-scaffolding, implementation-principles, integration-boundaries — design-time reasoning for new and evolving systems.
+- **Delivery & spec process:** batch-discipline, delivery-audit, drive, spec-composition, spec-sizing — sizing, composing, delivering, and cold-auditing specs.
+- **Investigation & quality:** challenge-diagnosis, debugging-investigation, dependency-analysis, pr-review, root-cause-classification, security-review, test-strategy, testing-and-validation — diagnosing, reviewing, testing.
+- **Scrub:** code-scrub — shared methodology behind the scrubber agents.
+- **Ops, incident & release:** devops-and-operations, incident-response, release-and-deployment — production operations lifecycle.
+- **Mockups:** html-mockup-generation, swiftui-mockup-renderer — the two `/mock` renderer paths.
+- **Cross-repo & reporting:** cross-repo-peering, deep-code-enrichment, issue-list-report — peer calls, enrichment passes, report formatting.
+- **Roadmap & performance:** performance-optimization, roadmap-review — perf tuning and roadmap-shape triage.
+- **Migration:** migration-safety — safe migration/refactor patterns.
+- **Core (installed with every pack):** agent-reliability, auto-knowledge-capture, completion-ledger, context-injection, convention-writing, documentation-practices, executive-report, explainer-format, kickoff-prompt, knowledge-flywheel, next-handoff-emit, next-md, note-capture, nudge-awareness, project-context-generation, spec-format.
 
 ### CLI Commands
 
@@ -89,7 +128,33 @@ These are run in the terminal, not as slash commands:
 - `.hero/knowledge/` — Project knowledge base (conventions, decisions, context)
 - `.hero/hero.json` — Project configuration
 
-Your harness may expose the agent/command/skill directories under its own prefix (`.claude/`, `.opencode/`, `.cursor/`, etc.) as symlinks back to the canonical paths above. Edit only the canonical files — harness directories are views.
+`hero install` **writes** these into your harness's own directory in that harness's native format — e.g. `.claude/commands/`, `.claude/agents/`, and `.claude/skills/` for Claude; `.codex/agents/*.toml` (TOML) plus workflow skills under `.agents/skills/` for Codex (Codex has no commands directory — its slash commands are a built-in enum, so Hero commands install there as skills). They are generated copies, **not** symlinks or views: re-running `hero install` regenerates them, so hand-edits to the installed files are overwritten on the next install.
+
+### Declaring Spec Relationships
+
+Relationships (parent/child, depends-on, blocks) become knowledge-graph edges **only** through frontmatter. Body `[[wikilinks]]` are searchable text and form **no** edges. Two syntaxes work:
+
+Top-level shorthand (simplest):
+
+```yaml
+parent: i1-config-plane          # also accepted: initiative: i1-config-plane
+depends-on: [f2-store, f3-watcher]   # also accepted: depends_on:
+child:
+  - sub-a
+  - sub-b
+```
+
+`relations:` block (for mixed kinds):
+
+```yaml
+relations:
+  - target: i1-config-plane
+    kind: parent
+  - target: other-spec
+    kind: related
+```
+
+Pitfalls: inline flow style (`- { kind: parent, target: x }`) does **not** parse — use the block form with `target:`/`kind:` on separate lines. Recognized kinds: `parent`, `child`, `depends-on`, `blocks`, `supersedes`, `related`. `hero check` warns when a spec uses edge-intent `[[wikilinks]]`.
 
 ### Internal Lookups — Tool Routing
 
@@ -97,18 +162,18 @@ When **you** need to look something up mid-task (as opposed to running a slash c
 
 | Shape of question | Tool |
 |---|---|
-| "Does spec/knowledge entry X exist? Has this been discussed?" | `mcp__hero__hero_search` with `compact: true` — single-line count, no excerpt noise |
-| "What's the status / frontmatter of spec X?" | `mcp__hero__hero_read_spec` |
-| "What's in flight / ready / blocked / mine?" | `mcp__hero__hero_list`, `hero_queue`, `hero_blocked` |
-| "Where did this come from? What chain of decisions led here?" | `mcp__hero__hero_why` — graph traversal beats grep on relations |
+| "Does spec/knowledge entry X exist? Has this been discussed?" | `hero_search` with `compact: true` — single-line count, no excerpt noise |
+| "What's the status / frontmatter of spec X?" | `hero_read_spec` |
+| "What's in flight / ready / blocked / mine?" | `hero_list`, `hero_queue`, `hero_blocked` |
+| "Where did this come from? What chain of decisions led here?" | `hero_why` — graph traversal beats grep on relations |
 | Literal string `foo_bar_baz` across code | `rg` / `grep` |
 | Known file at a known path | `Read` |
 | Recent commits / git history | `git log` |
-| Broad exploration across many files | `Explore` agent (context-protective) |
+| Broad exploration across many files | a context-protective read-only search subagent, where your harness provides one (e.g. Claude Code's `Explore` agent); otherwise `rg` + targeted reads |
 
-**Rule of thumb:** graph- or spec-shaped questions → Hero MCP tools. String-shaped → grep. File-shaped → Read. Don't reach for `grep` on `.hero/` to answer "does spec X exist?" — substring search only finds *literal matches*, not *semantically related* specs (e.g. a spec slugged `domain-routing-and-agents` is the same concept as "domain swap" but won't match either word as a phrase).
+**Rule of thumb:** graph- or spec-shaped questions → Hero MCP tools (`hero_*` — on Claude Code these surface as `mcp__hero__<name>`). String-shaped → grep. File-shaped → Read. Don't reach for `grep` on `.hero/` to answer "does spec X exist?" — substring search only finds *literal matches*, not *semantically related* specs (e.g. a spec slugged `domain-routing-and-agents` is the same concept as "domain swap" but won't match either word as a phrase).
 
-Deferred-tool friction (the one-time `ToolSearch` schema load for `mcp__hero__*`) is real but cheap — one round-trip, then the tool stays loaded. The cost of reading 20 verbose CLI excerpts to answer a binary "exists?" question is higher.
+Some harnesses defer MCP tool schemas behind a one-time lookup before the tool is callable — e.g. Claude Code's `ToolSearch`. The load is one round-trip and worth it; it's not a reason to fall back to a weaker tool.
 
 ### Important Rules
 
@@ -122,10 +187,16 @@ Deferred-tool friction (the one-time `ToolSearch` schema load for `mcp__hero__*`
 - **Local specs first.** When asked to work on bugs, features, or any tracked items, ALWAYS check what's already imported locally before querying the tracker. Use `hero search --list --type <type>` to find local specs. Only go to the tracker if the local search comes up empty. When working on multiple items (e.g. "diagnose 10 bugs"), select from locally imported specs — never bulk-query the tracker to pick work items.
 - Always check spec status before doing work — don't investigate closed bugs or deliver completed specs
 - When a tracker is configured, sync status with `hero sync pull` before starting work
-- **Hero handoff travels with commits.** When committing, stage any modified `.hero/NEXT.md` and `.hero/next/*.md` alongside your code changes. These are projected handoff files — if they don't travel with the commit, the next session (possibly on another machine) starts cold. `hero next install-hooks` installs a pre-commit hook that automates this; the rule is your backstop when the hook isn't installed.
+- **Hero handoff travels with commits.** Projected handoff files (`.hero/NEXT.md`, `.hero/next/*.md`, `.hero/SNAPSHOT.md`, `.hero/QUEUE.md`) must travel with the commit or the next session (possibly on another machine) starts cold. Every Hero hook install path now wires a pre-commit hook that stages these automatically — you don't normally need to think about it. `hero check` flags a repo where the staging block is missing. As a backstop only, if `hero check` warns that staging isn't wired and you can't install hooks, stage the projected handoff files by hand alongside your code changes.
 - Capture novel learnings to `.hero/knowledge/` at the end of major workflows
 - Specs use YAML frontmatter with fields: title, type, status, tracker_id, priority, severity
 - Imported specs include tracker-prefixed fields (e.g. jira_status, jira_priority, jira_assignee) under a # Jira/GitHub/Linear comment header
+
+## Hero Binary & MCP Surface
+
+**Prefer Hero's MCP tools over shelling out to a bare `hero` in a terminal.** A GUI-launched harness can resolve a *different or stale* `hero` binary on its PATH than your login shell does; the MCP surface is the in-process Hero you're already connected to, so it can't drift out from under you. When you must use the CLI and hit a schema/version mismatch or a confusing `hero` version error, **run `hero doctor` and act on its output** — it reports which binary is actually on PATH, its schema, the graph's schema, and the real remediation. Do NOT invent a schema-migration narrative, and do NOT run `hero upgrade` to "fix schema": `hero upgrade` updates workspace files, not the binary, so it cannot fix a wrong-binary-on-PATH situation.
+
+Tracker connections use stable IDs under `integrations.connections`. Shared non-secret settings belong in `.hero/hero.json`; personal `auth.token` belongs at the same path in `.hero/hero.local.json`. Use `hero connect --list` to inspect readiness and `hero sync import` to import tracker issues. Never put credentials in argv or committed config; automation uses `--token-stdin`.
 
 ## Project snapshot
 

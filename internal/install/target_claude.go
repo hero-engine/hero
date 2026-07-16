@@ -36,6 +36,9 @@ func runClaude(opts Options) (*Result, error) {
 	if err := installSkillsNested(opts, result, filepath.Join(destBase, "skills")); err != nil {
 		return nil, fmt.Errorf("installing skills: %w", err)
 	}
+	if err := pruneNestedSkills(opts, result, filepath.Join(destBase, "skills")); err != nil {
+		return nil, fmt.Errorf("prune stale skills: %w", err)
+	}
 
 	// Harness-native: Claude reads CLAUDE.md and only CLAUDE.md. It does NOT
 	// write AGENTS.md — a Claude-only install must not litter a root file no

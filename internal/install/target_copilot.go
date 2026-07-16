@@ -71,6 +71,9 @@ func runCopilot(opts Options) (*Result, error) {
 	if err := installSkillsNested(opts, result, skillsDest); err != nil {
 		return nil, fmt.Errorf("installing skills to %s: %w", skillsDest, err)
 	}
+	if err := pruneNestedSkills(opts, result, skillsDest); err != nil {
+		return nil, fmt.Errorf("prune stale skills: %w", err)
+	}
 
 	// Agents → .github/prompts/agents/<name>.prompt.md (rendered).
 	promptsBase := filepath.Join(opts.TargetDir, ".github", "prompts")

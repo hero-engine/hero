@@ -6,7 +6,33 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-15T18:52:07Z · 84 ready specs_
+_Generated: 2026-07-16T04:28:03Z · 85 ready specs_
+
+## agents-md-erased-by-snapshot-pointer-writer — "AGENTS.md silently erased by the snapshot pointer writer — five of six harnesses started cold for two months"
+_bug · delivering · horizon: now_
+
+The snapshot pointer writer was deleting the whole AGENTS.md managed region every time
+you ran `hero snapshot --project`. Fixed — the writer can no longer touch install-managed
+files at all.
+
+**Status:** delivering — fix is implemented, all suites green, uncommitted in the working tree.
+
+**Pick up at:** commit the fix, then repair the repo's own AGENTS.md, which is still the
+7-line stub on disk: run `make install` (auto-syncs the codex sibling) or
+`hero install project . --target codex`, and confirm the file comes back at ~232 lines.
+Then correct the `codex-install-broken` record — it is marked `completed` while its
+Evidence section still describes today's repo.
+
+→ `.hero/planning/bugs/agents-md-erased-by-snapshot-pointer-writer/spec.md`
+
+**Files:** `internal/snapshot/pointers.go:17-53`, `internal/install/agents_md.go:214-220`,
+`internal/install/harness_smoke_test.go:330`, `.hero/specs/codex-install-broken/spec.md:262-277`
+
+**Skip:** don't make `managed.Writer.Write` merge with sections already on disk — section
+IDs are not emitted into rendered output and cannot be recovered from it. Don't re-add an
+`agentsPath` parameter guarded by an if; a param that silently does nothing is the same trap.
+
+---
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_

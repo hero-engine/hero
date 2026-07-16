@@ -1,13 +1,11 @@
 package snapshot
 
 import (
-	"strings"
-
 	"github.com/hero-engine/hero/internal/managed"
 )
 
-// PointerLine is the canonical one-liner inserted into NEXT.md and
-// AGENTS.md so a fresh session knows the snapshot artifact exists.
+// PointerLine is the canonical one-liner inserted into NEXT.md so a
+// fresh session knows the snapshot artifact exists.
 // The text is fixed so legacy hand-authored insertions can be detected
 // via exact-line match and not duplicated.
 const PointerLine = "Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md)."
@@ -16,58 +14,32 @@ const PointerLine = "Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md)."
 // the snapshot pointer. Stable string used for ordering/debugging.
 const PointerSectionID = "snapshot:pointer"
 
-// EnsurePointer makes sure both .hero/NEXT.md (or its team-mode
-// equivalent) and AGENTS.md carry the snapshot pointer line. The
-// pointer relative path is rewritten per file location so it
-// resolves from whichever directory each anchor file lives in.
+// EnsurePointer makes sure .hero/NEXT.md (or its team-mode equivalent)
+// carries the snapshot pointer line.
 //
-// Under the consolidated managed-region layout, the pointer is one
-// section inside the single Hero-managed block. EnsurePointer composes
-// a managed.Writer with just the pointer contributor (when the target
-// file isn't managed by install — i.e. NEXT.md) and writes through
-// it. For AGENTS.md, the install flow already wires the pointer as a
-// section in the consolidated region; EnsurePointer's AGENTS.md write
-// here is a fallback for callers that haven't run install (it still
-// produces the same consolidated layout).
+// NEXT.md is the only file written here. AGENTS.md and CLAUDE.md get
+// the pointer from install, which composes it as one section of the
+// consolidated managed region (internal/install defaultSections).
+//
+// Do not extend this to a file that install manages. writePointerOnly
+// renders the managed region from its own section list alone, so it
+// replaces — not merges — whatever the region held. Pointing it at an
+// install-managed file deletes every install section. That is not
+// hypothetical: it silently reduced AGENTS.md to a 7-line stub twice
+// (May 31 and Jun 9 2026) after the two-block layout was consolidated
+// into one region and this writer kept overwriting the whole block.
 //
 // Idempotent: on second and subsequent calls the orchestrator detects
 // no change and skips the write.
-//
-// Errors writing one file do not block the other — the caller gets a
-// combined error containing both failures when both occur.
-func EnsurePointer(nextPath, agentsPath string) error {
-	var errs []string
-	if nextPath != "" {
-		if err := writePointerOnly(nextPath, ".hero/SNAPSHOT.md"); err != nil {
-			errs = append(errs, "NEXT.md: "+err.Error())
-		}
+func EnsurePointer(nextPath string) error {
+	if nextPath == "" {
+		return nil
 	}
-	if agentsPath != "" {
-		// AGENTS.md is at the project root, so the relative pointer is
-		// the same path as for NEXT.md (which actually lives in .hero/
-		// — its relative path resolves the same way against the project
-		// root because the pointer always names .hero/SNAPSHOT.md).
-		if err := writePointerOnly(agentsPath, ".hero/SNAPSHOT.md"); err != nil {
-			errs = append(errs, "AGENTS.md: "+err.Error())
-		}
-	}
-	if len(errs) > 0 {
-		return &pointerError{messages: errs}
-	}
-	return nil
-}
-
-type pointerError struct {
-	messages []string
-}
-
-func (e *pointerError) Error() string {
-	return strings.Join(e.messages, "; ")
+	return writePointerOnly(nextPath, ".hero/SNAPSHOT.md")
 }
 
 // writePointerOnly drives the orchestrator for a file whose only
-// section is the snapshot pointer (the NEXT.md case, or the fallback
-// AGENTS.md case when install hasn't run). It also short-circuits when
+// section is the snapshot pointer. It also short-circuits when
 // a user has hand-authored the pointer line outside any marker pair,
 // preserving the legacy "respect hand-authored insertions" behavior.
 func writePointerOnly(path, snapshotRelativePath string) error {

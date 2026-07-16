@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"time"
 
 	"github.com/hero-engine/hero/internal/managed"
@@ -70,6 +71,14 @@ type TargetState struct {
 	// HeroVersion is the binary version of the most recent install for
 	// this target.
 	HeroVersion string `json:"hero_version"`
+
+	// SkillDirs is the set of skill directory names the most recent
+	// install wrote at this target's nested-skills destination. The next
+	// install prunes entries recorded here that it no longer writes — the
+	// proof that a leftover dir is Hero's to remove rather than the
+	// user's to keep. See prune.go. Absent for targets with no nested
+	// skills dest (cursor, copilot, generic).
+	SkillDirs []string `json:"skill_dirs,omitempty"`
 }
 
 const installStateSchemaVersion = 1
@@ -136,7 +145,7 @@ func WriteInstallState(projectRoot string, st *InstallState) error {
 // RecordTargetInstall stamps the install-state file with metadata for the
 // just-completed install. Best-effort: errors here are non-fatal because the
 // install itself succeeded.
-func RecordTargetInstall(opts Options, mode string) {
+func RecordTargetInstall(opts Options, mode string, result *Result) {
 	if opts.DryRun || opts.Mode != ModeProject || opts.TargetDir == "" {
 		return
 	}
@@ -157,11 +166,20 @@ func RecordTargetInstall(opts Options, mode string) {
 	if ver == "" {
 		ver = "dev"
 	}
+	// Skill-dir manifest for the next run's prune. Sorted so re-installs
+	// produce a stable file. Targets with no nested-skills dest leave it
+	// empty and `omitempty` drops the field.
+	var skillDirs []string
+	if result != nil && len(result.skillDirs) > 0 {
+		skillDirs = append(skillDirs, result.skillDirs...)
+		sort.Strings(skillDirs)
+	}
 	st.Targets[target] = TargetState{
 		Mode:          mode,
 		InstalledAt:   installedAt,
 		LastUpdatedAt: now,
 		HeroVersion:   ver,
+		SkillDirs:     skillDirs,
 	}
 	st.HeroVersion = ver
 
@@ -268,6 +286,7 @@ func PersistInferredTargets(projectRoot string, targets []Target, heroVersion st
 		prior, had := st.Targets[key]
 		installedAt := now
 		mode := "rendered"
+		var skillDirs []string
 		if had {
 			if prior.InstalledAt != "" {
 				installedAt = prior.InstalledAt
@@ -275,12 +294,16 @@ func PersistInferredTargets(projectRoot string, targets []Target, heroVersion st
 			if prior.Mode != "" {
 				mode = prior.Mode
 			}
+			// Backfilling a target set says nothing about its skills; keep
+			// the prune manifest an install wrote (see prune.go).
+			skillDirs = prior.SkillDirs
 		}
 		st.Targets[key] = TargetState{
 			Mode:          mode,
 			InstalledAt:   installedAt,
 			LastUpdatedAt: now,
 			HeroVersion:   ver,
+			SkillDirs:     skillDirs,
 		}
 	}
 	if st.HeroVersion == "" {
