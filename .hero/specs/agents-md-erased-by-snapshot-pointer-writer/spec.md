@@ -2,7 +2,7 @@
 title: "AGENTS.md silently erased by the snapshot pointer writer — five of six harnesses started cold for two months"
 slug: agents-md-erased-by-snapshot-pointer-writer
 type: bug
-status: delivering
+status: completed
 severity: critical
 priority: P0
 domain: engineering
@@ -15,6 +15,7 @@ relations:
   - target: agents-md-managed-region-consolidation
     kind: related
 supersedes: [codex-install-broken]
+completed_at: 2026-07-16T07:08:09Z
 ---
 
 # AGENTS.md silently erased by the snapshot pointer writer
@@ -25,7 +26,7 @@ The snapshot pointer writer was deleting the whole AGENTS.md managed region ever
 you ran `hero snapshot --project`. Fixed — the writer can no longer touch install-managed
 files at all.
 
-**Status:** delivering — fix is implemented, all suites green, uncommitted in the working tree.
+**Status:** delivering — fix committed in `fa3b339`, all suites green, cold audit SHIP; awaiting `hero spec verify`.
 
 **Pick up at:** commit the fix, then repair the repo's own AGENTS.md, which is still the
 7-line stub on disk: run `make install` (auto-syncs the codex sibling) or
@@ -245,9 +246,9 @@ Recorded here, not done in this pass:
 | Durable cross-target guard | DONE | `TestHarness_InstalledContentSurvivesOrdinaryCommands` (harness_smoke_test.go:330) — all six targets, asserts survival of `snapshot.Project`; **verified RED when eraser reintroduced** |
 | CLAUDE.md vulnerability proven | DONE | With eraser reintroduced, guard fails on CLAUDE.md at 19433 → 147 bytes — the reprieve was an accident of a hardcoded string, not a design |
 | All tests pass | DONE | `go test -race -count=1 ./...` green; build clean |
-| Repo's own AGENTS.md repaired | OUTSTANDING | Still the 7-line stub on disk; needs `make install` or `hero install project . --target codex` |
-| `codex-install-broken` record corrected | OUTSTANDING | Marked `completed` while its Evidence describes the live bug; the false-fixed signal that caused this recurrence |
-| Detection advisories (its Fix 4 / Fix 6) | OUTSTANDING | `hero check` advisory for managed regions missing expected sections — deliberately deferred, recorded so it isn't silently re-skipped a third time |
+| Repo's own AGENTS.md repaired | DONE | Restored 7 → 232 lines in `fa3b339` itself (`git show fa3b339:AGENTS.md`); full doctrine present at HEAD |
+| `codex-install-broken` record corrected | DONE | Superseded by this spec via `hero supersede` (commit `a8b31a2`); frontmatter carries `superseded_by` + reason, search de-weights it 0.3× |
+| Detection advisories (its Fix 4 / Fix 6) | DONE | Delivered as `install-integrity-self-check` (completed, archived, commit `8f89724`) — `hero check` now reports damaged/stale managed regions per installed target |
 
 ### Exercise-the-feature check
 
