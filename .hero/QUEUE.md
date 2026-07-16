@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-16T04:28:03Z · 85 ready specs_
+_Generated: 2026-07-16T04:54:33Z · 86 ready specs_
 
 ## agents-md-erased-by-snapshot-pointer-writer — "AGENTS.md silently erased by the snapshot pointer writer — five of six harnesses started cold for two months"
 _bug · delivering · horizon: now_
@@ -66,6 +66,30 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · in-review · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-idea-primitive-core/spec.md)_
+
+---
+
+## install-integrity-self-check — "Install integrity is self-verifiable — hero check detects a damaged, stale, or incomplete install"
+_feature · planning · horizon: now_
+
+Adds an `install-integrity` check to `hero check` so a gutted or stale `AGENTS.md` /
+`CLAUDE.md` gets reported instead of silently making every agent session start cold.
+
+**Status:** planning — spec just landed, no code yet.
+
+**Pick up at:** add `internal/install/integrity.go` with `CheckIntegrity(projectRoot)`,
+re-rendering the body via `defaultSections` + `managed.Writer.RenderBody` and comparing
+against `managed.FindManagedRegion(onDisk).Body`. Compare **bodies, not regions** — the
+`v=` marker stamp changes on every version bump and would false-positive.
+
+→ `.hero/planning/features/install-integrity-self-check/spec.md`
+
+**Files:** `internal/install/agents_md.go:66,214`, `internal/managed/marker.go:82`,
+`internal/managed/region.go:136`, `internal/cli/check.go:107,133`, `internal/install/state.go:206`
+
+**Skip:** don't use `version.json` `installed_files` hashes as the oracle — root
+instruction files are not in that map (240 entries, zero of them). Don't auto-repair from
+`hero check`.
 
 ---
 
