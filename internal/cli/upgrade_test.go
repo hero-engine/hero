@@ -13,10 +13,10 @@ import (
 // testContentFS creates an in-memory fs.FS with test agent/command/skill files.
 func testContentFS() fstest.MapFS {
 	return fstest.MapFS{
-		"agents/hero.md":      {Data: []byte("# Test Hero Agent v2\n")},
-		"agents/engineer.md":  {Data: []byte("# Test Engineer v2\n")},
-		"commands/design.md":  {Data: []byte("# Test Design Command v2\n")},
-		"skills/go-stack.md":  {Data: []byte("# Test Go Stack v2\n")},
+		"agents/hero.md":     {Data: []byte("# Test Hero Agent v2\n")},
+		"agents/engineer.md": {Data: []byte("# Test Engineer v2\n")},
+		"commands/design.md": {Data: []byte("# Test Design Command v2\n")},
+		"skills/go-stack.md": {Data: []byte("# Test Go Stack v2\n")},
 	}
 }
 
@@ -161,43 +161,42 @@ func TestUpgradeUpdatesFiles(t *testing.T) {
 	}
 }
 
-func TestUpgradeSkipsCustomizedFiles(t *testing.T) {
+// TestUpgradeOverwritesDriftedHeroFiles is the regression guard for the
+// v0.26.1 upgrade failure. agents/commands/skills are Hero's OWN generated
+// files — nobody edits them, and the docs say re-install regenerates them.
+// Upgrade must overwrite them unconditionally. The old behavior tried to
+// tell "Hero's file" from "user edit" by matching a checksum recorded at a
+// PRIOR version; but every version embeds different content and users
+// install arbitrary point releases, so the recorded checksum reliably does
+// NOT match the on-disk file — and upgrade then REFUSED to overwrite its
+// own files (erroring the whole target). This test pins the fix: a Hero
+// file whose bytes match no recorded checksum is still overwritten, no
+// error, no --force.
+func TestUpgradeOverwritesDriftedHeroFiles(t *testing.T) {
 	env := newTestEnv(t)
 
-	// Set up test content FS
 	upgradeContentFS = testContentFS()
 	defer func() { upgradeContentFS = nil }()
 
-	// Stamp workspace at 0.9.0 with known checksum for the agent file
 	agentRelPath := filepath.Join(".opencode", "agents", "hero.md")
 	agentDestPath := filepath.Join(env.dir, agentRelPath)
-
 	if err := os.MkdirAll(filepath.Dir(agentDestPath), 0o755); err != nil {
 		t.Fatalf("MkdirAll: %v", err)
 	}
 
-	// Write the original installed file
-	originalContent := []byte("# Original Hero Agent\n")
-	if err := os.WriteFile(agentDestPath, originalContent, 0o644); err != nil {
+	// A Hero file on disk from some earlier install — its bytes match
+	// NEITHER the current canonical content NOR the stale checksum recorded
+	// below. This is the normal cross-version state, not a user edit.
+	if err := os.WriteFile(agentDestPath, []byte("# Hero Agent from some older build\n"), 0o644); err != nil {
 		t.Fatalf("WriteFile: %v", err)
 	}
 
-	// Get its checksum
-	originalChecksum, err := version.FileChecksum(agentDestPath)
-	if err != nil {
-		t.Fatalf("FileChecksum: %v", err)
-	}
-
-	// Now write a customized version (simulate user edit)
-	if err := os.WriteFile(agentDestPath, []byte("# My Custom Hero Agent\n"), 0o644); err != nil {
-		t.Fatalf("WriteFile: %v", err)
-	}
-
-	// Stamp version with the original checksum
+	// version.json records a checksum from yet another version that no
+	// longer matches on disk — exactly the drift that broke real upgrades.
 	info := &version.Info{
 		HeroVersion: "0.9.0",
 		InstalledFiles: map[string]string{
-			agentRelPath: originalChecksum,
+			agentRelPath: "sha256:deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
 		},
 	}
 	if err := version.Write(env.heroDir, info); err != nil {
@@ -209,20 +208,20 @@ func TestUpgradeSkipsCustomizedFiles(t *testing.T) {
 
 	output, err := runCmd("upgrade")
 	if err != nil {
-		t.Fatalf("upgrade returned error: %v", err)
+		t.Fatalf("upgrade must not error on a drifted Hero file: %v", err)
+	}
+	if strings.Contains(output, "refusing to overwrite") {
+		t.Errorf("upgrade refused to overwrite its own file:\n%s", output)
 	}
 
-	if !strings.Contains(output, "skip") {
-		t.Errorf("should show skipped customized file: %q", output)
-	}
-
-	// The file should still have the user's customization
+	// The file must be overwritten with current canonical content — not
+	// preserved.
 	data, err := os.ReadFile(agentDestPath)
 	if err != nil {
 		t.Fatalf("ReadFile: %v", err)
 	}
-	if string(data) != "# My Custom Hero Agent\n" {
-		t.Errorf("customized file should not be overwritten: %q", string(data))
+	if string(data) != "# Test Hero Agent v2\n" {
+		t.Errorf("upgrade should have overwritten the drifted Hero file, got: %q", string(data))
 	}
 }
 
@@ -505,24 +504,24 @@ func TestUpgradeForceOverridesAlreadyAt(t *testing.T) {
 // TestUpgradePartialFailureDoesNotStampVersion verifies that when a
 // target install errors, HeroVersion is NOT rolled forward. Otherwise
 // the next upgrade short-circuits on "already at" and the user has to
-// hand-edit version.json to recover (the bug that surfaced in v0.14.4
-// when --force collided with an existing customized file).
+// hand-edit version.json to recover.
+//
+// (Upgrade no longer refuses to overwrite drifted Hero files — those are
+// Hero's own and are always overwritten — so the failure is triggered
+// here with a genuinely unwritable destination: the agent's target path
+// is pre-created as a DIRECTORY, so writing the agent file fails.)
 func TestUpgradePartialFailureDoesNotStampVersion(t *testing.T) {
 	env := newTestEnv(t)
 
 	upgradeContentFS = testContentFS()
 	defer func() { upgradeContentFS = nil }()
 
-	// Pre-create a customized opencode agent file without recording its
-	// checksum in version.json — install.Run will refuse to overwrite
-	// it without --force, producing the partial-failure condition.
+	// Make the opencode agent's destination path a directory so the copy
+	// (os.WriteFile to that path) fails — a real, unavoidable install error.
 	agentRelPath := filepath.Join(".opencode", "agents", "hero.md")
 	agentDestPath := filepath.Join(env.dir, agentRelPath)
-	if err := os.MkdirAll(filepath.Dir(agentDestPath), 0o755); err != nil {
+	if err := os.MkdirAll(agentDestPath, 0o755); err != nil {
 		t.Fatalf("MkdirAll: %v", err)
-	}
-	if err := os.WriteFile(agentDestPath, []byte("# Customized\n"), 0o644); err != nil {
-		t.Fatalf("WriteFile: %v", err)
 	}
 
 	if err := version.StampInit(env.heroDir, "0.9.0"); err != nil {
@@ -531,8 +530,8 @@ func TestUpgradePartialFailureDoesNotStampVersion(t *testing.T) {
 	rootCmd.Version = "1.0.0"
 	defer func() { rootCmd.Version = "" }()
 
-	// Upgrade should run, hit the refuse-to-overwrite error, and
-	// leave HeroVersion at 0.9.0 so a follow-up --force retry works.
+	// Upgrade should run, hit the write error, and leave HeroVersion at
+	// 0.9.0 so a follow-up retry works rather than short-circuiting.
 	_, _ = runCmd("upgrade")
 
 	info, err := version.Read(env.heroDir)
