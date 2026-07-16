@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-16T22:40:58Z
+updated: 2026-07-16T22:48:28Z
 repo: hero-engine/hero
 ---
 
@@ -9,6 +9,8 @@ repo: hero-engine/hero
 ## Last user ask
 
 > we need a full deep dive into all of our latest releases and compare them to the documentation site - make sure we document the new stuff - i noticed like gitlab trakcer isn't documented - and im sure there are other things
+
+_possibly stale — 1 commit(s) since, last set 7m ago_
 
 ## Suggested next prompt
 
