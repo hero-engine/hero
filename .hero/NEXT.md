@@ -5,7 +5,7 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-07-16T20:46:41Z
+updated: 2026-07-16T20:46:59Z
 repo: hero-engine/hero
 branch: fix/parent-watchdog-race-ci-red
 ---
