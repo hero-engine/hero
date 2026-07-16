@@ -337,3 +337,5 @@
 {"ts":"2026-07-15T16:35:56.4532Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"layered-integration-configuration","message":"status -\u003e completed"}
 {"ts":"2026-07-16T07:04:11.110026Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"install-integrity-self-check","message":"\"Install integrity is self-verifiable — hero check detects a damaged, stale, or incomplete install\""}
 {"ts":"2026-07-16T07:04:11.110134Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"install-integrity-self-check","message":"status -\u003e completed"}
+{"ts":"2026-07-16T07:08:10.571735Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"agents-md-erased-by-snapshot-pointer-writer","message":"\"AGENTS.md silently erased by the snapshot pointer writer — five of six harnesses started cold for two months\""}
+{"ts":"2026-07-16T07:08:10.57184Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"agents-md-erased-by-snapshot-pointer-writer","message":"status -\u003e completed"}
