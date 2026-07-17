@@ -112,6 +112,23 @@ repoints `/pitch` and `/release-notes` off their v1.5 placeholders.
 | "Convert this to a pitch", "shape as a pitch", appetite, betting table (real backing agent) | "shape a scope" | `/pitch` → `pitch-author` — the dedicated Shape Up pitch specialist; was `prd-author` with a v1.5 placeholder |
 | "Summarize for standup", "cut this for exec / customer", release notes, "what shipped this week" | | `stakeholder-communicator` — backs the PRD Editor "Summarize for standup" action; `/release-notes` also resolves here (was `pm-delivery-lead` with a v1.5 placeholder) |
 
+#### Wave-1 backing routes (story-detail-and-intake-scrubber-backing)
+
+These are net-new routes appended by `story-detail-and-intake-scrubber-backing`
+(child #5): the two agents that back live hero-code buttons drawn with no
+backing agent — Story Detail's **"Show dependencies"** and Intake Funnel's
+**"Cluster recent"** — plus the shared `/scrub` command scaffolded with its
+first concern (`intake`). `dependency-mapper` walks the graph read-only;
+`duplicate-intake-scrubber` is the batch/cluster complement to the write-time
+`duplicate-detector` (report-only, no auto-merge). This subsection also
+scaffolds `/scrub <concern>`; child #11 (`remaining-roles-scrubbers-and-launch`)
+appends the `roadmap` and `stories` concerns to the same command.
+
+| User intent | Vocabulary-variant phrasing | Command (shipped surface) |
+|---|---|---|
+| "Show dependencies", "what's blocking X", "what does Y unblock", cross-domain dependency chain, "can this actually start" | "map the dependencies" | invoke `dependency-mapper` directly (agent — backs the Story Detail "Show dependencies" button; walks the graph forward + backward read-only, no `/scrub` needed) |
+| "Cluster recent", "scrub intake", "find dups the detector missed", batch dedup sweep | "scrub intake" | `/scrub intake` → `duplicate-intake-scrubber` — batch/cluster sweep of recent intake; complements the write-time `duplicate-detector`; report-only, no auto-merge |
+
 When routing, pass the user's original context as arguments to the
 command. If the intent is ambiguous, present the top 2-3 options and
 ask.
@@ -197,6 +214,7 @@ in the `handoff-protocol` skill; `handoff-coordinator` (invoked via
 Every command an installed pm workspace ships, no links:
 
 - **PM:** `/discover`, `/experiment`, `/handoff`, `/interview`, `/metrics`, `/pitch`, `/prd`, `/prioritize`, `/refine`, `/release-notes`, `/roadmap`, `/standup`, `/triage` — see Natural Language Routing above for what each does. (`/discover` and `/handoff` override the core commands of the same name below.)
+- **PM Wave-1 backing:** `/scrub` — concern-dispatched workspace scrub; the `intake` concern (→ `duplicate-intake-scrubber`, batch dedup sweep) ships now, `roadmap` + `stories` land via child #11. See the Wave-1 backing routes above.
 - **Core (installed with every pack):** `/blocked`, `/capture`, `/check`, `/convention`, `/decide`, `/docs`, `/hero`, `/import`, `/note`, `/resume`, `/retro`, `/scan`, `/why`.
 
 ### Agents Reference
@@ -207,6 +225,7 @@ Every agent an installed pm workspace ships, no links:
 - **PM Wave-2 critics:** `roadmap-reviewer` (roadmap drift critic), `prioritization-challenger` (anti-gaming input critic), `experiment-readout-reviewer` (adversarial experiment-readout critic) — plus `pm-reviewer` sharpened into an adversarial doc critic. See the Wave-2 adversarial critic routes above.
 - **PM Wave-2 experiment & metrics:** `experiment-designer` (designs the pre-registered experiment brief — authoring, not critique), `metrics-analyst` (defines/interprets success metrics **and** runs "why did the metric move" RCA; backs `/metrics`). See the Wave-2 experiment & metrics routes above.
 - **PM Wave-2 PRD Editor & comms:** `pitch-author` (Shape Up pitch specialist, split from `prd-author`; backs the PRD Editor "Convert to pitch" action and `/pitch`), `stakeholder-communicator` (audience-shaped exec/customer/internal cuts; backs the PRD Editor "Summarize for standup" action, `/standup`, and `/release-notes`). See the Wave-2 PRD Editor & comms routes above.
+- **PM Wave-1 Story-Detail / Intake backing:** `dependency-mapper` (backs Story Detail "Show dependencies"; walks the dependency graph forward + backward, including cross-domain into engineering features — read-only), `duplicate-intake-scrubber` (backs Intake "Cluster recent" and `/scrub intake`; batch/cluster complement to the write-time `duplicate-detector` — report-only, no auto-merge). See the Wave-1 backing routes above.
 - **Core (installed with every pack):** `convention-author`, `documentation-engineer`, `project-context-builder`, `session-primer`.
 
 ### Skills Reference
