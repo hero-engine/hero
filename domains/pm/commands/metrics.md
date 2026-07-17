@@ -1,7 +1,7 @@
 ---
 description: Define success metrics for a PRD or initiative — current → target, leading-not-lagging, with named baselines.
 ---
-Route to `pm-delivery-lead` loading `metrics-design` (`metrics-analyst` takes over in v1.5).
+Route to the `metrics-analyst` agent, loading `metrics-design`. The analyst both **defines** success metrics (below) and runs **metric-movement RCA** — "why did the metric move" — via the `metric-rca` skill; for an RCA request ("why did activation drop," "run RCA on the funnel"), the analyst decomposes the metric tree, classifies the drift, and names the confirming cut before asserting a cause.
 
 ## Required argument
 

@@ -79,6 +79,21 @@ directly.
 | Adversarial PRD/spec review, "review as a CPO", premortem, "5 reasons this won't work" | "critique this doc" | invoke `pm-reviewer` directly (pm-critic mode) — sharpens the existing reviewer row's agent, no new command |
 | Review an experiment readout, "is this result real", SRM / peeking / guardrails / significance | "critique the readout" | invoke `experiment-readout-reviewer` directly (agent) — no `/experiment` command ships in pm |
 
+#### Wave-2 experiment & metrics routes
+
+These are net-new routes appended by `experiment-stage-and-metric-rca`
+(child #7): the pre-registered experiment stage and metric-movement RCA.
+`experiment-designer` and `metrics-analyst` are **authoring** agents (they
+produce briefs and metric sections); readout critique stays with the
+`experiment-readout-reviewer` critic row above. This subsection also
+un-dangles `/metrics`, which now resolves to `metrics-analyst`.
+
+| User intent | Vocabulary-variant phrasing | Command (shipped surface) |
+|---|---|---|
+| Design an A/B / holdout, "what should we test", "write the experiment brief", pre-registration | "design an experiment" | `/experiment` → `experiment-designer` — designs a pre-registered brief (single-variable hypothesis, primary metric + MDE, intended split, guardrails, decision/stop rule); it designs, it does **not** critique a readout (that stays `experiment-readout-reviewer`) |
+| "Why did the metric move", "run RCA on the funnel", "why did activation drop/spike" | "diagnose the metric" | invoke `metrics-analyst` directly (agent) — metric-tree decomposition + drift taxonomy + causality-before-asserting, via `metric-rca` |
+| Define / interpret a success metric, KPI, "how do we measure this" (un-dangled) | | `/metrics` → `metrics-analyst` (was `pm-delivery-lead` with no backing analyst; the analyst now ships) |
+
 When routing, pass the user's original context as arguments to the
 command. If the intent is ambiguous, present the top 2-3 options and
 ask.
@@ -163,7 +178,7 @@ in the `handoff-protocol` skill; `handoff-coordinator` (invoked via
 
 Every command an installed pm workspace ships, no links:
 
-- **PM:** `/discover`, `/handoff`, `/metrics`, `/pitch`, `/prd`, `/prioritize`, `/refine`, `/release-notes`, `/roadmap`, `/triage` — see Natural Language Routing above for what each does. (`/discover` and `/handoff` override the core commands of the same name below.)
+- **PM:** `/discover`, `/experiment`, `/handoff`, `/metrics`, `/pitch`, `/prd`, `/prioritize`, `/refine`, `/release-notes`, `/roadmap`, `/triage` — see Natural Language Routing above for what each does. (`/discover` and `/handoff` override the core commands of the same name below.)
 - **Core (installed with every pack):** `/blocked`, `/capture`, `/check`, `/convention`, `/decide`, `/docs`, `/hero`, `/import`, `/note`, `/resume`, `/retro`, `/scan`, `/why`.
 
 ### Agents Reference
@@ -172,6 +187,7 @@ Every agent an installed pm workspace ships, no links:
 
 - **PM:** `discovery-researcher`, `duplicate-detector`, `handoff-coordinator`, `intake-triager`, `pm-delivery-lead`, `pm-investigator`, `pm-reviewer`, `prd-author`, `prioritization-strategist`, `product-strategist`, `roadmap-curator`, `story-writer` — see Key Workflow above for how the core five fit together.
 - **PM Wave-2 critics:** `roadmap-reviewer` (roadmap drift critic), `prioritization-challenger` (anti-gaming input critic), `experiment-readout-reviewer` (adversarial experiment-readout critic) — plus `pm-reviewer` sharpened into an adversarial doc critic. See the Wave-2 adversarial critic routes above.
+- **PM Wave-2 experiment & metrics:** `experiment-designer` (designs the pre-registered experiment brief — authoring, not critique), `metrics-analyst` (defines/interprets success metrics **and** runs "why did the metric move" RCA; backs `/metrics`). See the Wave-2 experiment & metrics routes above.
 - **Core (installed with every pack):** `convention-author`, `documentation-engineer`, `project-context-builder`, `session-primer`.
 
 ### Skills Reference
@@ -186,6 +202,7 @@ Every skill an installed pm workspace ships, no links:
 - **Cross-domain:** `handoff-protocol`, `cross-domain-graph-query`.
 - **Operational:** `pm-preset-detection`.
 - **Wave-2 critics:** `outcome-drift` (roadmap drift detection — the ratio tally + stale-item taxonomy behind `roadmap-reviewer`), `evidence-forcing` (force prioritization inputs to name evidence or default to neutral — behind `prioritization-challenger`).
+- **Wave-2 experiment & metrics:** `experiment-design` (the pre-registered brief format — single-variable hypothesis, primary metric + MDE, intended split / SRM, guardrails, decision/stop rule — the artifact `experiment-readout-reviewer` reads back; behind `experiment-designer`), `metric-rca` (metric-tree decomposition + five-class drift taxonomy + causality-before-asserting; behind `metrics-analyst`).
 - **Core (installed with every pack):** `agent-reliability`, `auto-knowledge-capture`, `completion-ledger`, `context-injection`, `convention-writing`, `documentation-practices`, `executive-report`, `explainer-format`, `kickoff-prompt`, `knowledge-flywheel`, `next-handoff-emit`, `next-md`, `note-capture`, `nudge-awareness`, `project-context-generation`, `spec-format`.
 
 ### CLI Commands

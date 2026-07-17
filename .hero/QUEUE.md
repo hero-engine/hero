@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-17T20:57:15Z · 90 ready specs_
+_Generated: 2026-07-17T21:10:32Z · 89 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -68,13 +68,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/competitive-and-market-grounding.md)_
-
----
-
-## experiment-stage-and-metric-rca — "Experiment Stage + Metric RCA — Experiment Designer, Metrics Analyst"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/experiment-stage-and-metric-rca.md)_
 
 ---
 
