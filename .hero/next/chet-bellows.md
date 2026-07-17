@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-17T16:12:41Z
+updated: 2026-07-17T16:13:44Z
 repo: hero-engine/hero
 ---
 
@@ -18,6 +18,8 @@ repo: hero-engine/hero
 >   --project noeta-studios/chronecho \
 >   --base-url https://gitlab.com \
 >   --user-email sean@noetast…
+
+_possibly stale — 1 commit(s) since, last set 1m ago_
 
 ## Suggested next prompt
 
