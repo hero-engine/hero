@@ -129,6 +129,22 @@ appends the `roadmap` and `stories` concerns to the same command.
 | "Show dependencies", "what's blocking X", "what does Y unblock", cross-domain dependency chain, "can this actually start" | "map the dependencies" | invoke `dependency-mapper` directly (agent — backs the Story Detail "Show dependencies" button; walks the graph forward + backward read-only, no `/scrub` needed) |
 | "Cluster recent", "scrub intake", "find dups the detector missed", batch dedup sweep | "scrub intake" | `/scrub intake` → `duplicate-intake-scrubber` — batch/cluster sweep of recent intake; complements the write-time `duplicate-detector`; report-only, no auto-merge |
 
+#### Wave-2 competitive & market-grounding routes
+
+These are net-new routes appended by `competitive-and-market-grounding`
+(child #3): competitive teardown gains a dedicated **retrieval-only** agent, and
+defensible market sizing / opportunity assessment surface *through*
+`product-strategist` (no new command — the strategist runs the Cagan 10-Q +
+TAM/SAM/SOM before committing a bet). `competitive-analyst` describes what
+rivals **actually ship** (sourced + dated, never model-memory) and refuses a
+memory-only teardown. Consistent with the design (§F ships no `/review`-style
+command in pm), the competitive route invokes the agent directly.
+
+| User intent | Vocabulary-variant phrasing | Command (shipped surface) |
+|---|---|---|
+| "What are competitors doing about X", competitive teardown, "should we match feature X", "does Competitor X already have this", feature matrix, positioning | "tear down the competition" | invoke `competitive-analyst` directly (agent — retrieval-only teardown + three-band feature matrix + positioning read; sourced/dated, refuses model-memory; no `/review`-style command ships in pm) |
+| "How big is this market", TAM/SAM/SOM, "is this opportunity worth it", opportunity assessment, go/no-go, "size this bet" | "size the opportunity" | via `product-strategist` — the strategist runs the Cagan 10-question opportunity assessment (`opportunity-assessment`) + defensible TAM/SAM/SOM (`market-sizing`) before committing a bet; no new command |
+
 When routing, pass the user's original context as arguments to the
 command. If the intent is ambiguous, present the top 2-3 options and
 ask.
@@ -226,6 +242,7 @@ Every agent an installed pm workspace ships, no links:
 - **PM Wave-2 experiment & metrics:** `experiment-designer` (designs the pre-registered experiment brief — authoring, not critique), `metrics-analyst` (defines/interprets success metrics **and** runs "why did the metric move" RCA; backs `/metrics`). See the Wave-2 experiment & metrics routes above.
 - **PM Wave-2 PRD Editor & comms:** `pitch-author` (Shape Up pitch specialist, split from `prd-author`; backs the PRD Editor "Convert to pitch" action and `/pitch`), `stakeholder-communicator` (audience-shaped exec/customer/internal cuts; backs the PRD Editor "Summarize for standup" action, `/standup`, and `/release-notes`). See the Wave-2 PRD Editor & comms routes above.
 - **PM Wave-1 Story-Detail / Intake backing:** `dependency-mapper` (backs Story Detail "Show dependencies"; walks the dependency graph forward + backward, including cross-domain into engineering features — read-only), `duplicate-intake-scrubber` (backs Intake "Cluster recent" and `/scrub intake`; batch/cluster complement to the write-time `duplicate-detector` — report-only, no auto-merge). See the Wave-1 backing routes above.
+- **PM Wave-2 competitive & market:** `competitive-analyst` (retrieval-only competitive teardown — describes what rivals actually ship, sourced + dated, refuses model-memory; builds the three-band feature matrix and a positioning read; loads `competitive-research` + `feature-comparison-framing`). See the Wave-2 competitive & market-grounding routes above.
 - **Core (installed with every pack):** `convention-author`, `documentation-engineer`, `project-context-builder`, `session-primer`.
 
 ### Skills Reference
@@ -241,6 +258,7 @@ Every skill an installed pm workspace ships, no links:
 - **Operational:** `pm-preset-detection`.
 - **Wave-2 critics:** `outcome-drift` (roadmap drift detection — the ratio tally + stale-item taxonomy behind `roadmap-reviewer`), `evidence-forcing` (force prioritization inputs to name evidence or default to neutral — behind `prioritization-challenger`).
 - **Wave-2 experiment & metrics:** `experiment-design` (the pre-registered brief format — single-variable hypothesis, primary metric + MDE, intended split / SRM, guardrails, decision/stop rule — the artifact `experiment-readout-reviewer` reads back; behind `experiment-designer`), `metric-rca` (metric-tree decomposition + five-class drift taxonomy + causality-before-asserting; behind `metrics-analyst`).
+- **Wave-2 competitive & market:** `opportunity-assessment` (Cagan's 10-question opportunity assessment under single-challengeable-assumption discipline — the go/no-go gate before a bet commits), `market-sizing` (defensible TAM/SAM/SOM, one challengeable assumption per step, top-down↔bottom-up convergence with divergence flagged) — both loaded by `product-strategist`.
 - **Core (installed with every pack):** `agent-reliability`, `auto-knowledge-capture`, `completion-ledger`, `context-injection`, `convention-writing`, `documentation-practices`, `executive-report`, `explainer-format`, `kickoff-prompt`, `knowledge-flywheel`, `next-handoff-emit`, `next-md`, `note-capture`, `nudge-awareness`, `project-context-generation`, `spec-format`.
 
 ### CLI Commands
