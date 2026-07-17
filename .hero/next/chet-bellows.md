@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-17T16:14:40Z
+updated: 2026-07-17T17:49:17Z
 repo: hero-engine/hero
 ---
 
@@ -8,11 +8,24 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> hero code is now embedding us - the hero app - and is serving our agents / commands and skills out of our binary live and dynamically depending on the active domain - eng / code, PM, QA etc.. and it said the PM pack is very light - so we need to audit what we have for when a product manager is active - and make the inventory based off research of what commands / skills and agents we need (probably…
+> heres a snippet from trying to test out gitlab from another project ; ---
+> hero connect --user-email writes a config that hero's own validator rejects (v0.26.0)
+> 
+> What I ran — wiring up the new GitLab tracker:
+> 
+> printf '%s' "$GITLAB_TOKEN" | hero connect gitlab \
+>   --integration-id gitlab-chronecho \
+>   --project noeta-studios/chronecho \
+>   --base-url https://gitlab.com \
+>   --user-email sean@noetast…
 
 ## Suggested next prompt
 
-> doctor-install-target-table delivered + verified on branch feat/doctor-install-target-table (5 commits ahead of origin/main, not merged). Next: merge to main + release if desired (prior pattern: --no-ff merge, tag patch bump v0.26.5, push tag triggers goreleaser). Housekeeping: .build/ and .hero/index.db-shm/-wal are untracked but NOT gitignored.
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 
