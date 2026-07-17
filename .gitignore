@@ -3,12 +3,15 @@
 /hero-cloud
 bin/
 dist/
+.build/
 
 # Per-session state (refs.db, scratch) — local only
 .hero/sessions/
 
 # SQLite index
 index.db
+index.db-wal
+index.db-shm
 
 # Knowledge graph cache (regenerable from sources of truth + git history)
 .hero/graph.db
