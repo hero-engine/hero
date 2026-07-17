@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-17T16:13:45Z · 83 ready specs_
+_Generated: 2026-07-17T17:48:58Z · 85 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -40,6 +40,20 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · in-review · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-idea-primitive-core/spec.md)_
+
+---
+
+## pm-pack-completion — "PM Pack Completion — Author the Deferred Roster and Reframe Around Critics + Corpus-Grounding"
+_initiative · planning · horizon: now_
+
+_(no `## Goal` run opener — hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/spec.md)_
+
+---
+
+## pm-doctrine-and-skill-backfill — "PM Doctrine Spine + Referenced-Skill Backfill + Canonical AGENTS.md"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/pm-doctrine-and-skill-backfill.md)_
 
 ---
 
