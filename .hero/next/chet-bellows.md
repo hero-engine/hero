@@ -1,14 +1,14 @@
 ---
 user: chet-bellows
-updated: 2026-07-17T16:07:41Z
+updated: 2026-07-17T16:12:41Z
 repo: hero-engine/hero
 ---
 
 # chet-bellows's handoff
 
-## Session goal
+## Last user ask
 
-> Session opened with — heres a snippet from trying to test out gitlab from another project ; ---
+> heres a snippet from trying to test out gitlab from another project ; ---
 > hero connect --user-email writes a config that hero's own validator rejects (v0.26.0)
 > 
 > What I ran — wiring up the new GitLab tracker:
@@ -18,12 +18,6 @@ repo: hero-engine/hero
 >   --project noeta-studios/chronecho \
 >   --base-url https://gitlab.com \
 >   --user-email sean@noetast…
-
-_possibly stale — 2 commit(s) since, last set 10h 34m ago_
-
-## Last user ask
-
-> Deliver doctor-install-target-table: add an 'Installed harness targets' table to hero doctor showing per-target agents/commands/skills expected-vs-actual counts across all six targets; codex commands render as '—'; shortfall marks row with ! and warns to run 'hero upgrade'; not-installed targets informational only.
 
 ## Suggested next prompt
 

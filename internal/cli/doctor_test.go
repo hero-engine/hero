@@ -212,6 +212,31 @@ func TestBuildDoctorReport(t *testing.T) {
 		}
 	})
 
+	t.Run("over_count_is_not_a_shortfall", func(t *testing.T) {
+		// A stale extra file on disk makes actual EXCEED expected (this repo
+		// really produces claude 30/29). Over-count is not a shortfall: no
+		// `!`, no WARNING, no upgrade nudge. Pins the strict `<` so a future
+		// change to `<=`/`!=` can't silently start flagging over-counts.
+		claudeOver := healthyClaude()
+		claudeOver.Commands = kc(30, 29) // installed, over-count
+		info := base
+		info.inventory = []install.TargetInventory{claudeOver, healthyCodex()}
+		report := buildDoctorReport(info)
+
+		if !strings.Contains(report, "30/29") {
+			t.Errorf("expected over-count cell rendered as 30/29:\n%s", report)
+		}
+		if strings.Contains(report, "!") {
+			t.Errorf("over-count must not be flagged with `!`:\n%s", report)
+		}
+		if strings.Contains(report, "WARNING") {
+			t.Errorf("over-count must emit no WARNING:\n%s", report)
+		}
+		if strings.Contains(report, "hero upgrade") {
+			t.Errorf("over-count must not trigger the upgrade nudge:\n%s", report)
+		}
+	})
+
 	t.Run("verdict_unchanged_under_shortfall", func(t *testing.T) {
 		healthy := base
 		healthy.inventory = []install.TargetInventory{healthyClaude(), healthyCodex()}

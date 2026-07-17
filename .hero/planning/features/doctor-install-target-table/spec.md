@@ -99,13 +99,9 @@ Adds a brief "Installed harness targets" table to `hero doctor` — per-target
 expected/actual counts of agents, commands, and skills — so you can confirm an
 install landed and spot a partial one.
 
-**Status:** planning — spec just landed, no code yet.
+**Status:** delivering → verifying — implemented, tests green, cold audit SHIP. Committed on branch `feat/doctor-install-target-table` (`aba3fa4`).
 
-**Pick up at:** write `internal/install/inventory.go` — an exported
-`Inventory(projectRoot, domain)` that returns one `TargetInventory` per target in
-`UnionTargets(PreviouslyInstalledTargets, detected)`. Derive expected counts
-per-target from `EnumerateContent` (codex skills = skills+commands; codex
-commands = n/a). Then render it in `doctor.go` before the `Verdict:` line.
+**Pick up at:** delivery complete pending `hero spec verify`. The section lives in `internal/install/inventory.go` (`Inventory`/`inventoryFromFS`, `TargetInventory`/`KindCount`, `targetInstallPaths`, `targetInstalledOnDisk`) and renders in `internal/cli/doctor.go` (`buildInventorySection`, between Workspace graph and Verdict). Tests in `internal/install/inventory_test.go` and `internal/cli/doctor_test.go`.
 
 → `.hero/planning/features/doctor-install-target-table/spec.md`
 
@@ -410,3 +406,39 @@ Installed harness targets
 - Manual, union: `rm .hero/install-state.json && hero doctor` → rows still resolve from disk (proves AC-8's fresh-clone direction).
 - `go test ./internal/cli/ -run TestMarkdownDrift` green after the docs edit.
 - `hero docs check` still green — this spec changes no agent/command/skill counts, but the docs edit touches a file it scans.
+
+## Completion Ledger
+
+**Understanding:** add a fifth "Installed harness targets" section to `hero doctor` — a per-target table of expected-vs-actual agents/commands/skills across all six install targets — without touching the existing four sections or the `Verdict:` line. **Validation:** `go build ./...` clean, `go vet ./internal/...` clean, `go test ./internal/cli/... ./internal/install/...` green, `hero docs check` clean, and `hero doctor` exercised end-to-end (both shortfall and healthy states) on real repo data. Independent cold audit returned **SHIP** (report: `delivery-audit.md`).
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Evidence |
+|---|---|---|---|
+| AC-1 | Section rendered between Workspace graph and Verdict; one row/installed target, expected-vs-actual + root file | DONE | `internal/cli/doctor.go` `buildInventorySection` insertion; `doctor_test.go` healthy-table ordering subtest |
+| AC-2 | Expected counts from `install.EnumerateContent` over active-domain overlay FS | DONE | `internal/install/inventory.go` `Inventory`→`EnumerateContent` |
+| AC-3 | Uses active domain, falls back to engineering | DONE | `doctor.go` `activeDomainForRoot`; `Inventory` defaults `""`→engineering |
+| AC-4 | Correct row for all six targets from real dest paths | DONE | `targetInstallPaths`; `TestInventory_AllSixTargets` (no skips) |
+| AC-5 | codex commands `—` never `0`; skills = len(Skills)+len(Commands) | DONE | `KindCount` NotApplicable; `TestInventory_CodexCommandsNotApplicable`, `TestInventory_CodexSkillsMatchInstalledDirs` (asserts vs `codexSkillDirNames`) |
+| AC-6 | codex footnote iff codex present | DONE | `hasCodex` gate; present/omitted cli subtests |
+| AC-7 | copilot detected via file/dirs, not `DetectInstalledTargets` | DONE | `targetInstalledOnDisk` copilot branch; `TestInventory_CopilotDetectedFromInstructionsFile` |
+| AC-8 | Row set = union(persisted, detected); fresh-clone + missing-tree | DONE | `inventoryFromFS` union; `TestInventory_UnionSurvivesMissingInstallState`, `…PersistedTargetWithMissingTreeIsZero` |
+| AC-9 | No target installed → neutral line, no warning, no verdict change | DONE | empty branch; `doctor_test.go` neutral-line subtest |
+| AC-10 | Shortfall → `!` + WARNING recommending `hero upgrade` | DONE | `kindShort`/WARNING block; `shortfall_recommends_hero_upgrade`; observed live (codex `5/84 !`) |
+| AC-11 | Not-installed target → no `!`, no WARNING, no upgrade nudge | DONE | `not_installed_target_no_warning` |
+| AC-12 | `Verdict:` text/logic unchanged | DONE | section self-contained before `doctorVerdict`; `verdict_unchanged_under_shortfall` |
+| AC-13 | Outside workspace / no graph → early-return preserved, section skipped | DONE | section call after both early returns; skipped-early-return subtest |
+| AC-14 | Section brief — not-installed one line, no per-file names | DONE | single `not installed:` line; no filenames rendered |
+
+### Changes
+
+| # | Item | Status | Evidence |
+|---|---|---|---|
+| 1 | New `internal/install/inventory.go` — dest map, detection, counting, expected derivation | DONE | Types, `Inventory`/`inventoryFromFS`, `targetInstallPaths`, `RootFile` via `nativeInstructionFile` |
+| 2 | New `internal/install/inventory_test.go` — six-row table + guards | DONE | `TestInventory_AllSixTargets` + 5 named guard tests |
+| 3 | `internal/cli/doctor.go` — gather + render | DONE | `doctorInfo` fields, non-fatal populate, `buildInventorySection` |
+| 4 | `internal/cli/doctor_test.go` — subtests | DONE | 10 subtests |
+| 5 | `web/docs/src/cli/overview.md` — docs in same PR | DONE | Troubleshooting sample block + `doctor` utilities row; `TestMarkdownInvocationsResolveAgainstRootCmd` green |
+| 6 | Over-count (actual>expected) is not a shortfall — regression guard | DONE | added post-audit; see below |
+
+**Non-DONE rows:** none.
