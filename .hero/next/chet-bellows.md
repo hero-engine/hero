@@ -1,14 +1,14 @@
 ---
 user: chet-bellows
-updated: 2026-07-17T05:33:09Z
+updated: 2026-07-17T16:07:41Z
 repo: hero-engine/hero
 ---
 
 # chet-bellows's handoff
 
-## Last user ask
+## Session goal
 
-> heres a snippet from trying to test out gitlab from another project ; ---
+> Session opened with — heres a snippet from trying to test out gitlab from another project ; ---
 > hero connect --user-email writes a config that hero's own validator rejects (v0.26.0)
 > 
 > What I ran — wiring up the new GitLab tracker:
@@ -19,9 +19,19 @@ repo: hero-engine/hero
 >   --base-url https://gitlab.com \
 >   --user-email sean@noetast…
 
+_possibly stale — 2 commit(s) since, last set 10h 34m ago_
+
+## Last user ask
+
+> Deliver doctor-install-target-table: add an 'Installed harness targets' table to hero doctor showing per-target agents/commands/skills expected-vs-actual counts across all six targets; codex commands render as '—'; shortfall marks row with ! and warns to run 'hero upgrade'; not-installed targets informational only.
+
 ## Suggested next prompt
 
-> Push branch fix/tracker-migration-connect-link and open a PR for tracker-migration-connect-link-fixes (2 commits: e42e272 fix + 9e7fefe spec-complete). Requires 'gh auth switch --user chet-bellows' first. No open PR yet.
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 

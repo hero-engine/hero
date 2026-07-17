@@ -52,6 +52,7 @@ A few smaller commands manage workspace-level configuration:
 | `hero models` | Show or validate the model-role mapping (`design` / `execution` / `review`). Configure under `models.roles` in [hero.json](../configuration/hero-json.md). |
 | `hero domain` | Show, `list`, or `switch` the active domain (e.g. `engineering`, `sales`). |
 | `hero trust` | Apply one-time harness permission setup — `hero trust <claude\|codex> [project\|global]`. |
+| `hero doctor` | Reconcile the running binary against the workspace graph, and confirm each installed harness target is complete (see [Troubleshooting](#troubleshooting)). |
 
 ## Troubleshooting
 
@@ -65,6 +66,48 @@ GUI-launched harness resolving a different binary than your login shell —
 reading a current graph. `doctor` flags when the `PATH`-resolved `hero`
 differs from the running one. Note that `hero upgrade` does **not** fix
 this: it updates workspace files, not the binary.
+
+`doctor` reports five sections:
+
+```text
+hero doctor
+
+Running binary
+  os.Executable(): /Users/you/go/bin/hero
+  version:         v0.25.0
+  binary schema:   4
+
+PATH resolution
+  `hero` on PATH:  /Users/you/go/bin/hero
+
+Workspace graph
+  workspace:       /Users/you/projects/app/.hero
+  graph schema:    4
+
+Installed harness targets
+  TARGET   AGENTS   COMMANDS   SKILLS   ROOT FILE
+  claude    35/35      29/29    55/55   CLAUDE.md
+  codex     35/35          —    84/84   AGENTS.md
+  not installed: copilot, cursor, generic, opencode
+
+  codex has no command loader — its 29 commands install as skills under
+  .agents/skills/command-<name>/ (55 canonical + 29 commands = 84).
+
+Verdict: OK — binary and graph agree on schema 4.
+```
+
+- **Running binary / PATH resolution / Workspace graph** answer *which binary
+  is running and does its schema agree with the graph.*
+- **Installed harness targets** answers *did my install land?* Each row shows
+  expected-vs-actual counts of agents, commands, and skills for one installed
+  target. Absent targets collapse to a single `not installed:` line.
+  Codex's commands cell shows `—`, not a number: Codex has no command loader,
+  so Hero installs its commands as skills (which is why codex skills roll the
+  two together). A `—` there is expected, not a broken install.
+- If an installed target is **short on content**, its row is marked `!` and an
+  in-section `WARNING:` recommends `hero upgrade` to re-materialize the missing
+  files. The `Verdict:` line only ever answers the schema question, so an
+  incomplete install never changes it.
 
 ## Quick Reference
 

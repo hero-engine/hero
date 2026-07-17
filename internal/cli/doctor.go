@@ -5,10 +5,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/graph"
+	"github.com/hero-engine/hero/internal/install"
 	"github.com/hero-engine/hero/internal/version"
 	"github.com/spf13/cobra"
 )
@@ -49,6 +51,12 @@ type doctorInfo struct {
 	binarySchema     string
 	graphSchema      string // "" when not in a workspace / no graph
 	heroDir          string // "" when not in a workspace
+
+	// inventory is the per-target install introspection rendered as the
+	// "Installed harness targets" section. inventoryErr records a non-fatal
+	// introspection failure — doctor still reports binary/PATH/schema.
+	inventory    []install.TargetInventory
+	inventoryErr string
 }
 
 func runDoctor(cmd *cobra.Command, args []string) error {
@@ -86,6 +94,16 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 			if gs, err := graph.ReadSchemaVersion(heroDir); err == nil {
 				info.graphSchema = gs
 			}
+		}
+	}
+
+	// Introspect installed harness targets. A failure here must not fail
+	// doctor — it is triage and must still report binary/PATH/schema.
+	if projectRoot != "" {
+		if inv, err := install.Inventory(projectRoot, activeDomainForRoot(projectRoot)); err != nil {
+			info.inventoryErr = err.Error()
+		} else {
+			info.inventory = inv
 		}
 	}
 
@@ -140,8 +158,157 @@ func buildDoctorReport(info doctorInfo) string {
 	fmt.Fprintf(&b, "  graph schema:    %s\n", info.graphSchema)
 	b.WriteString("\n")
 
+	b.WriteString(buildInventorySection(info))
+
 	b.WriteString(doctorVerdict(info.binarySchema, info.graphSchema))
 	return b.String()
+}
+
+// inventoryTargetNames is the full six-target set, used to render the
+// "not installed:" line for targets absent from the row set.
+var inventoryTargetNames = []install.Target{
+	install.TargetClaude, install.TargetOpenCode, install.TargetCursor,
+	install.TargetCopilot, install.TargetCodex, install.TargetGeneric,
+}
+
+// buildInventorySection renders the "Installed harness targets" section: one
+// row per installed target with expected-vs-actual agent/command/skill counts,
+// a single "not installed:" line for absent targets, an in-section WARNING when
+// an installed target is short on content (fixed by `hero upgrade`), and a
+// codex footnote when codex is present. Pure so tests can drive it directly.
+func buildInventorySection(info doctorInfo) string {
+	var b strings.Builder
+	b.WriteString("Installed harness targets\n")
+
+	if info.inventoryErr != "" {
+		fmt.Fprintf(&b, "  install introspection unavailable: %s\n\n", info.inventoryErr)
+		return b.String()
+	}
+
+	if len(info.inventory) == 0 {
+		b.WriteString("  no harness targets installed — run `hero install --target <claude|codex|copilot|cursor|opencode|generic>`\n\n")
+		return b.String()
+	}
+
+	rows := [][]string{{"TARGET", "AGENTS", "COMMANDS", "SKILLS", "ROOT FILE"}}
+	installed := map[install.Target]bool{}
+	incomplete := 0
+	hasCodex := false
+	var codex install.TargetInventory
+	for _, inv := range info.inventory {
+		installed[inv.Target] = true
+		if inv.Target == install.TargetCodex {
+			hasCodex = true
+			codex = inv
+		}
+		if kindShort(inv.Agents) || kindShort(inv.Commands) || kindShort(inv.Skills) {
+			incomplete++
+		}
+		rows = append(rows, []string{
+			string(inv.Target),
+			kindCell(inv.Agents),
+			kindCell(inv.Commands),
+			kindCell(inv.Skills),
+			inv.RootFile,
+		})
+	}
+	b.WriteString(renderInventoryTable(rows))
+
+	var notInstalled []string
+	for _, t := range inventoryTargetNames {
+		if !installed[t] {
+			notInstalled = append(notInstalled, string(t))
+		}
+	}
+	sort.Strings(notInstalled)
+	if len(notInstalled) > 0 {
+		fmt.Fprintf(&b, "  not installed: %s\n", strings.Join(notInstalled, ", "))
+	}
+
+	if incomplete > 0 {
+		noun, verb := "target", "is"
+		if incomplete > 1 {
+			noun, verb = "targets", "are"
+		}
+		b.WriteString("\n")
+		fmt.Fprintf(&b, "  WARNING: %d installed %s %s incomplete (marked !) — content is\n", incomplete, noun, verb)
+		b.WriteString("           missing. Run `hero upgrade` to re-materialize the missing\n")
+		b.WriteString("           agents, commands, and skills.\n")
+	}
+
+	if hasCodex {
+		cmds := codex.Commands.Expected
+		canonical := codex.Skills.Expected - cmds
+		b.WriteString("\n")
+		fmt.Fprintf(&b, "  codex has no command loader — its %d commands install as skills under\n", cmds)
+		fmt.Fprintf(&b, "  .agents/skills/command-<name>/ (%d canonical + %d commands = %d).\n", canonical, cmds, codex.Skills.Expected)
+	}
+
+	b.WriteString("\n")
+	return b.String()
+}
+
+// kindShort reports whether an installed, applicable content kind is below its
+// expected count — the per-cell shortfall predicate. A NotApplicable cell
+// (codex commands) is never short.
+func kindShort(k install.KindCount) bool {
+	return !k.NotApplicable && k.Actual < k.Expected
+}
+
+// kindCell renders one count cell: "actual/expected" (with a trailing " !"
+// when short), or "—" for a NotApplicable kind.
+func kindCell(k install.KindCount) string {
+	if k.NotApplicable {
+		return "—"
+	}
+	cell := fmt.Sprintf("%d/%d", k.Actual, k.Expected)
+	if k.Actual < k.Expected {
+		cell += " !"
+	}
+	return cell
+}
+
+// renderInventoryTable formats rows (header first) into an aligned, two-space-
+// indented table. Target and root-file columns are left-aligned; the three
+// count columns are right-aligned so the numbers line up.
+func renderInventoryTable(rows [][]string) string {
+	const ncol = 5
+	widths := make([]int, ncol)
+	for _, r := range rows {
+		for i, c := range r {
+			if w := len([]rune(c)); w > widths[i] {
+				widths[i] = w
+			}
+		}
+	}
+	rightAlign := map[int]bool{1: true, 2: true, 3: true}
+	var b strings.Builder
+	for _, r := range rows {
+		var line strings.Builder
+		line.WriteString("  ")
+		for i, c := range r {
+			if i > 0 {
+				line.WriteString("   ")
+			}
+			line.WriteString(padCell(c, widths[i], rightAlign[i]))
+		}
+		b.WriteString(strings.TrimRight(line.String(), " "))
+		b.WriteString("\n")
+	}
+	return b.String()
+}
+
+// padCell pads s to width w with spaces, right- or left-aligned. Width is
+// measured in runes so the multibyte em dash aligns correctly.
+func padCell(s string, w int, right bool) string {
+	n := w - len([]rune(s))
+	if n <= 0 {
+		return s
+	}
+	if right {
+		return strings.Repeat(" ", n) + s
+	}
+	return s + strings.Repeat(" ", n)
 }
 
 // doctorVerdict states whether the binary and graph schemas agree and, if
