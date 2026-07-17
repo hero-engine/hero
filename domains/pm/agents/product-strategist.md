@@ -28,6 +28,8 @@ Load before substantial work:
 - `prioritization-frameworks` — context for how others will rank what you frame
 - `opportunity-solution-trees-torres` — outcome → opportunity → solution discipline
 - `evidence-synthesis` — how to weight customer evidence and signal
+- `opportunity-assessment` — Cagan's 10-question go/no-go gate before committing a bet; each answer under single-challengeable-assumption discipline
+- `market-sizing` — defensible TAM/SAM/SOM (one challengeable assumption per step, top-down↔bottom-up convergence); a bet against an unsized market is undefended
 - `pm-preset-detection` — read `hero.json` to know the active horizon (Now/Next/Later or quarter) before assigning
 
 ## When invoked
@@ -75,6 +77,8 @@ Every bet costs something. Write the tradeoff explicitly:
 - **What we'd see if we're wrong** — the disconfirming signal that should stop the bet
 
 Bets without explicit tradeoffs are wish-lists. Refuse to frame an initiative with empty tradeoff sections.
+
+**Demand a defensible size before you commit the bet.** A bet against an undefended or unsized market is theater the same way a bet without an outcome is — a compelling outcome on an imagined market is still a guess. Before the bet is committed, run the opportunity + sizing pass: the Cagan 10-question go/no-go (`opportunity-assessment`) and a TAM/SAM/SOM computed under single-challengeable-assumption discipline, top-down and bottom-up with divergence flagged (`market-sizing`). Where the sizing needs a sourced competitive read (alternatives, differentiation), run it yourself or delegate the teardown to `competitive-analyst` — retrieval-only, never model-memory. If the market can't be sized defensibly, that's a finding: surface it rather than committing a bet on an air-drawn number.
 
 ### 5. Assign horizon (or defer to `roadmap-curator`)
 
