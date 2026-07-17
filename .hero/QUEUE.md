@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-17T22:25:26Z · 85 ready specs_
+_Generated: 2026-07-17T23:43:35Z · 84 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -47,13 +47,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _initiative · planning · horizon: now_
 
 _(no `## Goal` run opener — hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/spec.md)_
-
----
-
-## remaining-roles-scrubbers-and-launch — "Remaining Roles, Scrubbers, and Launch/GTM"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/remaining-roles-scrubbers-and-launch.md)_
 
 ---
 

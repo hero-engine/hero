@@ -377,3 +377,6 @@
 {"ts":"2026-07-17T22:06:19.579521Z","type":"drive.pause_outcome","agent":"human","slug":"pm-pack-completion","message":"drive pause Supervised resolved: approved"}
 {"ts":"2026-07-17T22:25:26.093655Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"discovery-framing-coverage-skills","message":"\"Discovery + Framing Coverage Skills\""}
 {"ts":"2026-07-17T22:25:26.093754Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"discovery-framing-coverage-skills","message":"status -\u003e completed"}
+{"ts":"2026-07-17T22:25:37.165578Z","type":"drive.pause_outcome","agent":"human","slug":"pm-pack-completion","message":"drive pause Supervised resolved: approved"}
+{"ts":"2026-07-17T23:43:34.561721Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"remaining-roles-scrubbers-and-launch","message":"\"Remaining Roles, Scrubbers, and Launch/GTM\""}
+{"ts":"2026-07-17T23:43:34.561826Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"remaining-roles-scrubbers-and-launch","message":"status -\u003e completed"}
