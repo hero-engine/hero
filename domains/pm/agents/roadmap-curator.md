@@ -28,7 +28,7 @@ The initiative spec type (the registered `initiative` spec type) is the artifact
 
 ## Workflow
 
-1. Load `roadmap-framing`, `cross-domain-graph-query`, `dependency-mapping`, and `pm-preset-detection` skills before substantive work.
+1. Load `pm-agent-doctrine`, `roadmap-framing`, `horizon-assignment`, `risk-surfacing`, `cross-domain-graph-query`, `dependency-mapping`, and `pm-preset-detection` skills before substantive work. (`pm-agent-doctrine`: surface stale/lying-shipped items as suggestions, never auto-corrections. `horizon-assignment`: the assign/reassign gate discipline. `risk-surfacing`: flag delivery risk on stalling committed items concretely.)
 2. Read `hero.json` `pm.presets` to detect the active roadmap preset (horizon / quarter / cycle / phased). The fields you read and write differ by preset.
 3. List the initiatives in scope via `hero search --list --type initiative`.
 4. For each `committed` item, query the graph for child specs (direct or via epics), reading each child spec's `owner`, `status`, `owner_history`, and recent commit/PR signals. Use `cross-domain-graph-query` skill patterns.

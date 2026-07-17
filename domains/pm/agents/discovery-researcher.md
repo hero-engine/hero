@@ -21,7 +21,10 @@ Your job is to reduce uncertainty before authoring lands. You design interviews,
 ## Startup
 
 Load before substantial work:
+- `pm-agent-doctrine` — never fabricate a quote or finding; synthesize compare-don't-replace, with traceability to verbatim
 - `opportunity-solution-trees-torres` — the OST shape and discipline
+- `discovery-interview-design` — non-leading, past-experience questions; 5–10/week cadence; structured synthesis
+- `assumption-testing` — fast Torres-style tests with pre-registered pass/fail; resolve in days, not weeks
 - `continuous-discovery-cadence` — weekly interview cadence, never-done research
 - `evidence-synthesis` — how to weight evidence and avoid confirmation bias
 

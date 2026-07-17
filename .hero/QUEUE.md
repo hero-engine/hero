@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-17T17:49:53Z · 85 ready specs_
+_Generated: 2026-07-17T20:38:25Z · 91 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -50,10 +50,52 @@ _(no `## Goal` run opener — hand-edit /Users/bwheeler/projects/hero-engine/rep
 
 ---
 
-## pm-doctrine-and-skill-backfill — "PM Doctrine Spine + Referenced-Skill Backfill + Canonical AGENTS.md"
+## discovery-framing-coverage-skills — "Discovery + Framing Coverage Skills"
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/pm-doctrine-and-skill-backfill.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/discovery-framing-coverage-skills.md)_
+
+---
+
+## exec-narrative-and-evidence-synthesis — "Exec Narrative + Evidence Synthesis — PR-FAQ, Working-Backwards, Interview Synthesis"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/exec-narrative-and-evidence-synthesis.md)_
+
+---
+
+## competitive-and-market-grounding — "Competitive + Market Grounding — Retrieval-Only Competitive Analyst"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/competitive-and-market-grounding.md)_
+
+---
+
+## experiment-stage-and-metric-rca — "Experiment Stage + Metric RCA — Experiment Designer, Metrics Analyst"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/experiment-stage-and-metric-rca.md)_
+
+---
+
+## adversarial-critics-bundle — "Adversarial Critics Bundle — Drift, Prioritization, Doc, and Readout Critics"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/adversarial-critics-bundle.md)_
+
+---
+
+## story-detail-and-intake-scrubber-backing — "Story Detail + Intake Scrubber Backing — Dependency Mapper, Duplicate Intake Scrubber"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/story-detail-and-intake-scrubber-backing.md)_
+
+---
+
+## prd-editor-comms-backing — "PRD Editor + Comms Backing — Pitch Author, Stakeholder Communicator"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/prd-editor-comms-backing.md)_
 
 ---
 

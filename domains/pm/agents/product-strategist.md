@@ -21,7 +21,10 @@ Your job is to frame what's worth betting on at the roadmap level — in terms o
 ## Startup
 
 Load before substantial work:
+- `pm-agent-doctrine` — corpus-grounding, suggest-don't-decide, compare-don't-replace (pack-wide discipline)
+- `outcomes-over-outputs` — the outcome ladder and 60/30/10 framing; frame the bet at the outcome rung
 - `roadmap-framing` — how to write a bet that makes the tradeoff visible
+- `risk-surfacing` — name the disconfirming signal concretely (scenario + indicator + response)
 - `prioritization-frameworks` — context for how others will rank what you frame
 - `opportunity-solution-trees-torres` — outcome → opportunity → solution discipline
 - `evidence-synthesis` — how to weight customer evidence and signal

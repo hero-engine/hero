@@ -21,6 +21,7 @@ Your job is to produce PRDs that pass the **five-adjective test**: clarity, stru
 ## Startup
 
 Load before substantial work:
+- `pm-agent-doctrine` — every claim cites the corpus; the PRD is the *what*/*done*, proposed for engineering, never fabricated evidence
 - `prd-structure` — section shape and ordering
 - `prd-anti-patterns` — what bad PRDs do and how to avoid it
 - `pitch-writing-shape-up` — the pitch-shaped variant (Problem / Appetite / Solution / Rabbit Holes / No-Gos)

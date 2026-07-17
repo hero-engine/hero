@@ -31,7 +31,7 @@ The registered `intake` spec type is the artifact you author.
 
 ## Workflow
 
-1. Load `intake-classification`, `duplicate-detection`, and `evidence-synthesis` skills.
+1. Load `pm-agent-doctrine`, `intake-classification`, `duplicate-detection`, `customer-segment-weighting`, and `evidence-synthesis` skills. (`pm-agent-doctrine`: the triage decision is yours to record, not to auto-apply; preserve source grounding. `customer-segment-weighting`: weigh how much a signal counts by segment economics, disclosed.)
 2. Read the inbound signal in full — source, quote, customer, segment. Do not paraphrase into product vocabulary at this step; that comes later if at all.
 3. Populate or verify the intake's frontmatter (`source`, `source_url`, `source_quote`, `customer`, `customer_segment`).
 4. Run duplicate detection. Delegate to `duplicate-detector` when the candidate space is large or the overlap is borderline; handle obvious duplicates yourself.

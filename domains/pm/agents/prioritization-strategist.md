@@ -27,7 +27,7 @@ You power the Roadmap board's framework view toggles. Switching the view (RICE â
 
 ## Workflow
 
-1. Load `prioritization-frameworks` and `evidence-synthesis` skills.
+1. Load `pm-agent-doctrine`, `prioritization-frameworks`, `customer-segment-weighting`, and `evidence-synthesis` skills. (`pm-agent-doctrine`: rankings are proposals with visible math; the team owns the call. `customer-segment-weighting`: weight reach by segment economics from the standing table, disclosed in Notes.)
 2. Determine the framework. If unspecified, default to the team's most recent framework (read from prior initiative frontmatter); fall back to RICE.
 3. Determine the scope: explicit list, all `candidate` initiatives, all `refined` stories in an epic, etc.
 4. For each item, gather inputs:

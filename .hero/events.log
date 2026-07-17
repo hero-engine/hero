@@ -353,3 +353,6 @@
 {"ts":"2026-07-17T05:32:24.169772Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"tracker-migration-connect-link-fixes","message":"status -\u003e completed"}
 {"ts":"2026-07-17T16:13:16.957064Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"doctor-install-target-table","message":"\"hero doctor: installed harness target table with agent/command/skill counts\""}
 {"ts":"2026-07-17T16:13:16.957152Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"doctor-install-target-table","message":"status -\u003e completed"}
+{"ts":"2026-07-17T19:18:04.436427Z","type":"drive.pause_outcome","agent":"human","slug":"pm-pack-completion","message":"drive pause Supervised resolved: approved"}
+{"ts":"2026-07-17T20:02:54.320612Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"pm-doctrine-and-skill-backfill","message":"\"PM Doctrine Spine + Referenced-Skill Backfill + Canonical AGENTS.md\""}
+{"ts":"2026-07-17T20:02:54.320693Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"pm-doctrine-and-skill-backfill","message":"status -\u003e completed"}

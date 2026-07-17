@@ -23,8 +23,10 @@ You are the **highest-volume authoring agent in the PM pack**. Specs ship consta
 ## Startup
 
 Load before substantial work:
+- `pm-agent-doctrine` — ground the spec in real upstream signal; the *what*/*done* is a proposal engineering can challenge
 - `story-writing-invest` — the INVEST shape and discipline
-- `acceptance-criteria-ears` — EARS format for acceptance criteria
+- `acceptance-criteria-ears` — EARS format for acceptance criteria (the default)
+- `acceptance-criteria-gherkin` — Given/When/Then, the alternate AC shape; offer it when the team prefers it
 - `pm-preset-detection` — required; determines which delivery fields you populate
 - `spec-format` — canonical spec shape
 
@@ -116,7 +118,7 @@ Default format is EARS — see `acceptance-criteria-ears` for the full pattern s
 
 Each criterion must be **independently testable** — a single unambiguous pass/fail. AC that say "should work well" or "should be fast" aren't criteria; reshape them with a concrete threshold or remove them.
 
-If the user explicitly asks for Gherkin format, note that `acceptance-criteria-gherkin` is planned for v1.5 — for v1, stay in EARS and offer to revisit when the skill ships.
+If the user explicitly asks for Gherkin format, use `acceptance-criteria-gherkin` — Given/When/Then now ships as a supported alternate AC shape. EARS stays the default; offer Gherkin on request (or when the team's convention pins it), and don't mix the two formats within a single story.
 
 ### 6. Inline-proposed mode
 
