@@ -126,11 +126,35 @@ Each answer becomes a quote-or-question pair. Quotes go in Evidence; unanswered 
 
 Five whys is a pattern, not a script. Stop when you reach a defensible root or when further drilling requires new data.
 
+## The Torres synthesize-then-compare discipline
+
+Synthesis is a *second read*, not a replacement for the PM's own — this is `pm-agent-doctrine` doctrine 3 stated as synthesis mechanics. The distrusted pattern is "the agent read the interviews and here's the answer": it outsources judgment, and when it's subtly wrong (an over-weighted outlier, a fabricated theme), no one catches it because no one did the parallel read.
+
+The **synthesize-then-compare** loop inverts that:
+
+1. **Synthesize independently.** The agent (or the PM) pulls themes from the raw signal first, each theme carrying the verbatim quotes behind it.
+2. **Read independently.** The PM forms their own reading of the same source, without anchoring on the agent's.
+3. **Reconcile the two passes.** Diff them. Where they agree, confidence rises. Where they diverge, that gap is the finding — the agent may have over-weighted a vivid quote, or the PM may have skimmed a segment. Neither pass is authoritative until reconciled.
+
+Present the synthesis as "here's what I see — does it match what you see?", name your confidence per theme, and name where you're unsure. A synthesized theme is "proposed synthesis pending PM review," never "the finding," until the human has reconciled it. This protects the one thing the pack can't regenerate: the PM's ownership of their own read.
+
+## Surfacing the outlier, not just the modal answer
+
+A synthesis that reports only the confirming pattern is selling a conclusion. **The outlier is often the high-value finding** — the churned user who wanted the opposite, the one segment where the pattern broke, the interview that contradicted the other four. Report it; do not sand it into the modal narrative to make the story tidy.
+
+The rule: **the modal answer and the signal that broke it both get a line.** "4 of 5 enterprise prospects gate on SSO" is the pattern; "the 5th (delta-co) explicitly prefers OIDC-only and would churn on a SAML-first design" is the outlier that reshapes the solution. Dropping the 5th to keep "5 of 5" clean is the exact dishonesty that makes synthesis distrusted. An outlier belongs in the Evidence section's counter-evidence subsection, linked to its verbatim, not smoothed away.
+
+## Verbatim attribution survives reconciliation
+
+The synthesize-then-compare loop only works if the **theme → verbatim link survives it.** Every theme the agent proposes carries the exact quotes that produced it, so the PM can click from "users struggle to find export" to the three quotes behind it and judge whether the read is fair. Reconciliation *diffs the reads* — that diff is only possible when both passes trace to the same source words. A theme that loses its verbatim during synthesis becomes an unfalsifiable assertion: the PM can't check it, so they can't reconcile it, so the compare step collapses back into replace. Preserve the attribution through every step; a theme with no verbatim behind it is not a finding, it's an opinion.
+
 ## Anti-patterns
 
 - **"100 customers asked for this" with no underlying data.** Aggregates without sources are not evidence; they're claims.
 - **Cherry-picking one customer quote into a trend.** One quote is one quote. A trend requires recurrence across distinct sources.
 - **Synthesis that strips source attribution.** The trust signal is the source. Strip it and the synthesis becomes opinion.
+- **Synthesis-as-replacement.** Handing over "the answer" with no parallel read to reconcile against. Synthesize-then-compare, never replace (doctrine 3).
+- **Sanding off the outlier.** Dropping the signal that broke the pattern to keep the modal narrative clean. The outlier is often the finding, not noise.
 - **Conflating evidence with interpretation in the same sentence.** Lead with facts; interpret separately.
 - **Evidence sections with no counter-evidence subsection.** Either the analysis was selective, or the team didn't look hard.
 - **Quoting paraphrased text as if it were a direct quote.** Either preserve the verbatim or label as paraphrased.

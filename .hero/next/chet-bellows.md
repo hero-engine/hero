@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-17T21:50:43Z
+updated: 2026-07-17T22:05:47Z
 repo: hero-engine/hero
 ---
 
@@ -19,13 +19,13 @@ repo: hero-engine/hero
 >   --base-url https://gitlab.com \
 >   --user-email sean@noetast…
 
-_possibly stale — 6 commit(s) since, last set 4h 1m ago_
+_possibly stale — 7 commit(s) since, last set 4h 16m ago_
 
 ## Last user ask
 
 > deliver pm-pack-completion initiative in order (autopilot); currently delivering child #1 pm-doctrine-and-skill-backfill
 
-_possibly stale — 5 commit(s) since, last set 2h 23m ago_
+_possibly stale — 6 commit(s) since, last set 2h 38m ago_
 
 ## Suggested next prompt
 

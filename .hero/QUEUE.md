@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-17T21:50:43Z · 87 ready specs_
+_Generated: 2026-07-17T22:05:47Z · 86 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -61,13 +61,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/discovery-framing-coverage-skills.md)_
-
----
-
-## exec-narrative-and-evidence-synthesis — "Exec Narrative + Evidence Synthesis — PR-FAQ, Working-Backwards, Interview Synthesis"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/exec-narrative-and-evidence-synthesis.md)_
 
 ---
 

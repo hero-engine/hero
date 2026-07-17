@@ -145,6 +145,23 @@ command in pm), the competitive route invokes the agent directly.
 | "What are competitors doing about X", competitive teardown, "should we match feature X", "does Competitor X already have this", feature matrix, positioning | "tear down the competition" | invoke `competitive-analyst` directly (agent — retrieval-only teardown + three-band feature matrix + positioning read; sourced/dated, refuses model-memory; no `/review`-style command ships in pm) |
 | "How big is this market", TAM/SAM/SOM, "is this opportunity worth it", opportunity assessment, go/no-go, "size this bet" | "size the opportunity" | via `product-strategist` — the strategist runs the Cagan 10-question opportunity assessment (`opportunity-assessment`) + defensible TAM/SAM/SOM (`market-sizing`) before committing a bet; no new command |
 
+#### Wave-2 exec narrative & working-backwards routes
+
+These are net-new routes appended by `exec-narrative-and-evidence-synthesis`
+(child #9): the two working-backwards *authoring* formats the pack named but
+never homed — the Amazon **PR/FAQ** and the **six-page narrative**. Both route
+to `stakeholder-communicator`, which now loads the two new skills. This
+subsection **un-dangles** the `exec-narrative` forward-reference that
+`stakeholder-communication` and `stakeholder-communicator` already carried —
+the pointer now resolves to a real skill on disk. Consistent with the design
+(§F ships no `/review`-style command in pm), the route reaches the agent
+through the existing exec-cut / `/release-notes` surfaces, not a new command.
+
+| User intent | Vocabulary-variant phrasing | Command (shipped surface) |
+|---|---|---|
+| "Write the 6-pager", "working backwards", exec narrative, strategy memo, annual/quarterly plan narrative, "make the full written case" | "write the narrative" | via `stakeholder-communicator` (loads `exec-narrative`) — the Amazon six-page narrative + paragraph-level "so what?" test; reach for it when a one-page exec cut can't carry the decision. No new command; the deeper artifact `stakeholder-communication` defers to |
+| "Write the PR-FAQ", press release + FAQ, "surface the dragons before we build", launch narrative, "should we even build this" | "draft the PR-FAQ" | via `stakeholder-communicator` (loads `prfaq-writing`) — the Amazon PR/FAQ working-backwards format (mock press release + anticipated FAQ that hunts the hard questions); a cheap pre-commit kill-switch. No new command |
+
 When routing, pass the user's original context as arguments to the
 command. If the intent is ambiguous, present the top 2-3 options and
 ask.
@@ -259,6 +276,7 @@ Every skill an installed pm workspace ships, no links:
 - **Wave-2 critics:** `outcome-drift` (roadmap drift detection — the ratio tally + stale-item taxonomy behind `roadmap-reviewer`), `evidence-forcing` (force prioritization inputs to name evidence or default to neutral — behind `prioritization-challenger`).
 - **Wave-2 experiment & metrics:** `experiment-design` (the pre-registered brief format — single-variable hypothesis, primary metric + MDE, intended split / SRM, guardrails, decision/stop rule — the artifact `experiment-readout-reviewer` reads back; behind `experiment-designer`), `metric-rca` (metric-tree decomposition + five-class drift taxonomy + causality-before-asserting; behind `metrics-analyst`).
 - **Wave-2 competitive & market:** `opportunity-assessment` (Cagan's 10-question opportunity assessment under single-challengeable-assumption discipline — the go/no-go gate before a bet commits), `market-sizing` (defensible TAM/SAM/SOM, one challengeable assumption per step, top-down↔bottom-up convergence with divergence flagged) — both loaded by `product-strategist`.
+- **Wave-2 exec narrative & working-backwards:** `prfaq-writing` (the Amazon PR/FAQ — mock press release + anticipated FAQ that surfaces the "dragons" before building; reasoning over copy), `exec-narrative` (the Amazon six-page narrative — Intro / Goals / Tenets / State of the Business / Lessons / Strategic Priorities + the paragraph-level "so what?" test; prose exposes the gaps bullets hide) — both loaded by `stakeholder-communicator`; they home the working-backwards format `stakeholder-communication` names and defers.
 - **Core (installed with every pack):** `agent-reliability`, `auto-knowledge-capture`, `completion-ledger`, `context-injection`, `convention-writing`, `documentation-practices`, `executive-report`, `explainer-format`, `kickoff-prompt`, `knowledge-flywheel`, `next-handoff-emit`, `next-md`, `note-capture`, `nudge-awareness`, `project-context-generation`, `spec-format`.
 
 ### CLI Commands
