@@ -1,6 +1,7 @@
 package install
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -215,6 +216,177 @@ func TestDetectLegacyDrift_ReportsEveryHarnessPath(t *testing.T) {
 				t.Errorf("expected broken_symlink finding for %s, got: %+v", hp, findings)
 			}
 		})
+	}
+}
+
+// ---------------------------------------------------------------------------
+// codex-agents-wholesale-wipe-destroys-user-files: the .codex/agents cleanup
+// is .md-scoped (removeLegacyDirMatching), not a wholesale wipe. These tests
+// pin the load-bearing survival guarantee and the scoping semantics.
+// ---------------------------------------------------------------------------
+
+// TestRunCodex_PreservesUserAuthoredTomlAgent is the load-bearing regression
+// guard (AC-1). A user's hand-authored .codex/agents/<name>.toml — a live
+// Codex agent Hero never wrote — MUST survive a routine `hero install`, while
+// the pre-.toml legacy .md dead-byte is still cleaned and Hero's current .toml
+// agents are re-rendered. This install used to os.RemoveAll the whole dir.
+func TestRunCodex_PreservesUserAuthoredTomlAgent(t *testing.T) {
+	h := newInstallHarness(t)
+	// Pre-init the .hero/ workspace so the install runs its full path,
+	// including the manifest-driven prune (mirrors TestHarness_SmokeCodex).
+	if err := os.MkdirAll(filepath.Join(h.TargetDir, ".hero"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	// First install materializes Hero's .toml agents.
+	h.Run(TargetCodex, nil)
+	h.mustBeRegularFile(".codex/agents/engineer.toml")
+
+	// Plant a user-authored .toml agent (a non-Hero name, never in the
+	// install manifest) and a pre-.toml legacy .md dead-byte.
+	userAbs := filepath.Join(h.TargetDir, ".codex", "agents", "my-custom.toml")
+	userBytes := []byte("# my hand-authored codex agent — do not touch\ndeveloper_instructions = \"mine\"\n")
+	if err := os.WriteFile(userAbs, userBytes, 0o644); err != nil {
+		t.Fatalf("plant user .toml: %v", err)
+	}
+	legacyMd := filepath.Join(h.TargetDir, ".codex", "agents", "engineer.md")
+	if err := os.WriteFile(legacyMd, []byte("legacy dead-byte"), 0o644); err != nil {
+		t.Fatalf("plant legacy .md: %v", err)
+	}
+
+	// Re-run the routine, idempotent-looking install.
+	h.Run(TargetCodex, nil)
+
+	// AC-1: the user file survives byte-for-byte.
+	got, err := os.ReadFile(userAbs)
+	if err != nil {
+		t.Fatalf("AC-1: user .toml agent was destroyed: %v", err)
+	}
+	if !bytes.Equal(got, userBytes) {
+		t.Errorf("AC-1: user .toml agent mutated: got %q want %q", got, userBytes)
+	}
+	// AC-2: the legacy .md dead-byte is removed.
+	h.mustNotExist(".codex/agents/engineer.md")
+	// AC-4: Hero's current .toml agents are (re)rendered and present.
+	h.mustBeRegularFile(".codex/agents/engineer.toml")
+	h.mustBeRegularFile(".codex/agents/reviewer.toml")
+	// AC-8: the live dir is NOT removed while user/.toml files remain.
+	h.mustBeDirectory(".codex/agents")
+}
+
+// TestRunCodex_CommandsDirWholesaleRemoved pins AC-5: the .codex/commands
+// cleanup keeps wholesale removal (no loader there, nothing repopulates it).
+// A planted .toml proves the removal is NOT .md-scoped like .codex/agents.
+func TestRunCodex_CommandsDirWholesaleRemoved(t *testing.T) {
+	h := newInstallHarness(t)
+	dir := filepath.Join(h.TargetDir, ".codex", "commands")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range []string{"leftover.md", "user-thing.toml"} {
+		if err := os.WriteFile(filepath.Join(dir, f), []byte("x"), 0o644); err != nil {
+			t.Fatalf("plant %s: %v", f, err)
+		}
+	}
+
+	h.Run(TargetCodex, nil)
+
+	// Whole dir gone (emptied by wholesale removal, then rmdir'd) — the
+	// .toml would have survived a .md-scoped cleanup.
+	h.mustNotExist(".codex/commands")
+}
+
+// TestRemoveLegacyDirMatching_MdScopedPreservesOthers pins the predicate
+// semantics: with the .md predicate only .md entries go, and the live dir is
+// preserved because non-.md entries remain (AC-2, AC-8).
+func TestRemoveLegacyDirMatching_MdScopedPreservesOthers(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "agents")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	seed := map[string]string{
+		"engineer.md": "legacy dead-byte", // Hero's to remove
+		"user.toml":   "user agent",       // must survive
+		"notes.txt":   "user notes",       // must survive
+	}
+	for name, body := range seed {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(body), 0o644); err != nil {
+			t.Fatalf("seed %s: %v", name, err)
+		}
+	}
+
+	if err := removeLegacyDirMatching(Options{}, dir, isLegacyCodexAgentMarkdown); err != nil {
+		t.Fatalf("removeLegacyDirMatching: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(dir, "engineer.md")); !os.IsNotExist(err) {
+		t.Errorf("AC-2: legacy .md not removed (err=%v)", err)
+	}
+	for _, keep := range []string{"user.toml", "notes.txt"} {
+		if _, err := os.Stat(filepath.Join(dir, keep)); err != nil {
+			t.Errorf("scoped cleanup removed non-.md %s: %v", keep, err)
+		}
+	}
+	// AC-8: the live dir stays because non-.md entries survive.
+	if _, err := os.Stat(dir); err != nil {
+		t.Errorf("AC-8: live dir wrongly removed: %v", err)
+	}
+}
+
+// TestRemoveLegacyDirMatching_RemovesEmptyDirAfterScopedWipe: when every
+// entry matches the predicate, the dir ends up empty and is removed — the
+// smoke-test invariant for a dir that held only dead .md bytes.
+func TestRemoveLegacyDirMatching_RemovesEmptyDirAfterScopedWipe(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "agents")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range []string{"engineer.md", "reviewer.md"} {
+		if err := os.WriteFile(filepath.Join(dir, f), []byte("legacy"), 0o644); err != nil {
+			t.Fatalf("seed %s: %v", f, err)
+		}
+	}
+
+	if err := removeLegacyDirMatching(Options{}, dir, isLegacyCodexAgentMarkdown); err != nil {
+		t.Fatalf("removeLegacyDirMatching: %v", err)
+	}
+
+	if _, err := os.Stat(dir); !os.IsNotExist(err) {
+		t.Errorf("dir with only .md dead-bytes should be removed once empty (err=%v)", err)
+	}
+}
+
+// TestRemoveLegacyDirMatching_NilPredicateWholesale proves the nil-predicate
+// wrapper keeps byte-identical wholesale behavior — the path .codex/commands,
+// copilot's .github/copilot/*, and the .hero mirror rely on (AC-5, AC-6).
+func TestRemoveLegacyDirMatching_NilPredicateWholesale(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "commands")
+	if err := os.MkdirAll(filepath.Join(dir, "sub"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range []string{"a.md", "b.toml", "c.txt"} {
+		if err := os.WriteFile(filepath.Join(dir, f), []byte("x"), 0o644); err != nil {
+			t.Fatalf("seed %s: %v", f, err)
+		}
+	}
+
+	if err := removeLegacyDirMatching(Options{}, dir, nil); err != nil {
+		t.Fatalf("removeLegacyDirMatching: %v", err)
+	}
+
+	// Everything — files of every extension AND the subdir — is gone, and the
+	// emptied dir itself is removed.
+	if _, err := os.Stat(dir); !os.IsNotExist(err) {
+		t.Errorf("nil predicate must wholesale-remove the dir (err=%v)", err)
+	}
+}
+
+// TestRemoveLegacyDirMatching_MissingDirNoOp pins AC-7: a fresh install where
+// .codex/agents does not exist yet is a no-op with no error.
+func TestRemoveLegacyDirMatching_MissingDirNoOp(t *testing.T) {
+	missing := filepath.Join(t.TempDir(), "does-not-exist")
+	if err := removeLegacyDirMatching(Options{}, missing, isLegacyCodexAgentMarkdown); err != nil {
+		t.Errorf("AC-7: missing dir should no-op, got %v", err)
 	}
 }
 

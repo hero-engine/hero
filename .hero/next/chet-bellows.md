@@ -1,17 +1,23 @@
 ---
 user: chet-bellows
-updated: 2026-07-16T23:37:51Z
+updated: 2026-07-17T00:39:19Z
 repo: hero-engine/hero
 ---
 
 # chet-bellows's handoff
 
-## Last user ask
+## Session goal
 
-> In /Users/developer/projects/hero-engine/repository/hero, `.agents/skills/` is committed to git but is stale and drifting from its source. Decide how to resolve it. Do NOT assume gitignoring is the answer — see the policy distinction below.
+> Session opened with — In /Users/developer/projects/hero-engine/repository/hero, `.agents/skills/` is committed to git but is stale and drifting from its source. Decide how to resolve it. Do NOT assume gitignoring is the answer — see the policy distinction below.
 > 
 > FACTS (verified):
 > - `.agents/skills/<name>/SKILL.md` is genuinely where the Codex CLI loads repo-scoped skills (verified against openai/codex `codex-rs/core-…
+
+_possibly stale — 2 commit(s) since, last set 1h 34m ago_
+
+## Last user ask
+
+> Deliver codex-agents-wholesale-wipe fix: scope removeLegacyDir with a *.md-only predicate so the .codex/agents cleanup removes only legacy .md dead-bytes, leaving user files and Hero .toml (owned by render + pruneStaleFiles). Other call sites pass nil (allow-all, unchanged).
 
 ## Suggested next prompt
 

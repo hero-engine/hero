@@ -26,7 +26,27 @@ import (
 //   - Regular files and directories are removed unconditionally.
 //
 // Honors opts.DryRun.
+//
+// Kept as a thin wrapper (nil predicate = allow-all = wholesale) for
+// dead legacy locations that have no current consumer — .codex/commands,
+// .github/copilot/{agents,commands,skills}, and the P2-era
+// .hero/{agents,commands,skills} mirror. Directories that are ALSO live
+// loader dirs (they legitimately hold user content) must use
+// removeLegacyDirMatching with a predicate instead.
 func removeLegacyDir(opts Options, legacyDir string) error {
+	return removeLegacyDirMatching(opts, legacyDir, nil)
+}
+
+// removeLegacyDirMatching removes entries in legacyDir for which
+// shouldRemove returns true; a nil predicate matches every entry
+// (wholesale — the removeLegacyDir behavior). Use a predicate when
+// legacyDir is ALSO a live loader directory that legitimately holds user
+// content — e.g. .codex/agents, where only pre-.toml *.md dead-bytes are
+// Hero's to remove and any other file (a user .toml agent, notes, a
+// subdir) must survive. The empty-dir cleanup only fires when nothing is
+// left after the scoped removal, so a live dir with surviving user files
+// or current .toml is preserved rather than rmdir'd.
+func removeLegacyDirMatching(opts Options, legacyDir string, shouldRemove func(name string) bool) error {
 	info, err := os.Lstat(legacyDir)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -42,6 +62,9 @@ func removeLegacyDir(opts Options, legacyDir string) error {
 		return err
 	}
 	for _, e := range entries {
+		if shouldRemove != nil && !shouldRemove(e.Name()) {
+			continue // not ours to remove — leave user files / current .toml in place
+		}
 		full := filepath.Join(legacyDir, e.Name())
 		if err := removeLegacyEntry(opts, full, e); err != nil {
 			return err
