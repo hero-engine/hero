@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-17T00:39:19Z
+updated: 2026-07-17T00:39:30Z
 repo: hero-engine/hero
 ---
 
@@ -13,11 +13,13 @@ repo: hero-engine/hero
 > FACTS (verified):
 > - `.agents/skills/<name>/SKILL.md` is genuinely where the Codex CLI loads repo-scoped skills (verified against openai/codex `codex-rs/core-…
 
-_possibly stale — 2 commit(s) since, last set 1h 34m ago_
+_possibly stale — 3 commit(s) since, last set 1h 34m ago_
 
 ## Last user ask
 
 > Deliver codex-agents-wholesale-wipe fix: scope removeLegacyDir with a *.md-only predicate so the .codex/agents cleanup removes only legacy .md dead-bytes, leaving user files and Hero .toml (owned by render + pruneStaleFiles). Other call sites pass nil (allow-all, unchanged).
+
+_possibly stale — 1 commit(s) since, last set 15m ago_
 
 ## Suggested next prompt
 
