@@ -84,6 +84,12 @@ Hero syncs specs with four issue trackers — **GitHub Issues**, **Jira**, **Lin
     - `settings.base_url` — **required for GitLab** (unlike GitHub and Linear, which default it). Use `https://gitlab.com` for GitLab SaaS, or your self-hosted instance root; Hero appends `/api/v4`. Leaving it empty is rejected as a misconfiguration.
     - Use a **Personal or Project access token with the `api` scope**. GitLab issues, epics, and iterations round-trip through the same `hero sync` commands as the other trackers.
 
+    **Migrating an existing project onto GitLab?** Specs already linked to the
+    old tracker carry its `tracker_id`. Re-point each one onto its GitLab
+    equivalent with `hero sync link <slug> <new-id> --force` (the `--force` flag
+    overwrites the existing link and still verifies the new issue exists). See
+    [Tracker Integration → Sync Specs](../cli/tracker-integration.md#sync-specs).
+
 ---
 
 ## Authentication

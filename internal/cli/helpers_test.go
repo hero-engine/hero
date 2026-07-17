@@ -369,6 +369,9 @@ func resetFlags() {
 	// Reset score flags
 	scoreJSON = false
 
+	// Reset link flags
+	linkForce = false
+
 	// Reset pipeline flags
 	pipelineType = ""
 	pipelineJSON = false
