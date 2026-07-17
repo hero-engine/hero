@@ -351,3 +351,5 @@
 {"ts":"2026-07-17T00:39:02.170784Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"codex-agents-wholesale-wipe-destroys-user-files","message":"status -\u003e completed"}
 {"ts":"2026-07-17T05:32:24.169666Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"tracker-migration-connect-link-fixes","message":"\"Tracker-migration rough edges: connect persists unreadable config, and sync link can't re-point or take a spec dir\""}
 {"ts":"2026-07-17T05:32:24.169772Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"tracker-migration-connect-link-fixes","message":"status -\u003e completed"}
+{"ts":"2026-07-17T16:13:16.957064Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"doctor-install-target-table","message":"\"hero doctor: installed harness target table with agent/command/skill counts\""}
+{"ts":"2026-07-17T16:13:16.957152Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"doctor-install-target-table","message":"status -\u003e completed"}
