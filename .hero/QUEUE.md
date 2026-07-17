@@ -6,7 +6,25 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-17T03:12:40Z · 83 ready specs_
+_Generated: 2026-07-17T05:27:24Z · 84 ready specs_
+
+## tracker-migration-connect-link-fixes — "Tracker-migration rough edges: connect persists unreadable config, and sync link can't re-point or take a spec dir"
+_bug · delivering · horizon: now_
+
+Fixes three GitLab-migration rough edges: `hero connect` writing a config it can't
+read back, and `hero sync link` refusing to re-point a migrated spec or accept a
+spec directory.
+
+**Status:** planning — diagnosis complete, all three root causes verified in code; no code written.
+
+**Pick up at:** start with Defect 1 (it gates the rest) — add `config.ValidateConnectionSettings`, call it in `runConnectNonInteractive` before the Patch* write with a flag-named error, then add the Patch* backstop. Then Defect 2 (`--force`) and Defect 3 (directory/slug via `resolveSpec`).
+
+→ `.hero/planning/bugs/tracker-migration-connect-link-fixes/spec.md`
+
+**Files:** `internal/cli/connect.go:71,257`, `internal/config/integrations.go:267,439,494`, `internal/cli/link.go:43,48,64`, `internal/cli/score.go:71`; docs: `web/docs/src/cli/tracker-integration.md`, `web/docs/src/configuration/hero-json.md`, `web/docs/src/configuration/tracker-setup.md`
+**Skip:** validating each config file in isolation inside Patch* (the read path validates the *merged* result — per-file validation false-positives on token-only overlays); adding a fourth ad-hoc path resolver (extend `resolveSpec`).
+
+---
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_

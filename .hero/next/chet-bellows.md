@@ -1,19 +1,10 @@
 ---
 user: chet-bellows
-updated: 2026-07-17T03:12:40Z
+updated: 2026-07-17T05:16:09Z
 repo: hero-engine/hero
 ---
 
 # chet-bellows's handoff
-
-## Session goal
-
-> Session opened with — In /Users/developer/projects/hero-engine/repository/hero, `.agents/skills/` is committed to git but is stale and drifting from its source. Decide how to resolve it. Do NOT assume gitignoring is the answer — see the policy distinction below.
-> 
-> FACTS (verified):
-> - `.agents/skills/<name>/SKILL.md` is genuinely where the Codex CLI loads repo-scoped skills (verified against openai/codex `codex-rs/core-…
-
-_possibly stale — 7 commit(s) since, last set 4h 7m ago_
 
 ## Last user ask
 
@@ -21,7 +12,6 @@ _possibly stale — 7 commit(s) since, last set 4h 7m ago_
 > 
 > FACTS (verified):
 > - `.agents/skills/<name>/SKILL.md` is genuinely where the Codex CLI loads repo-scoped skills (verified against openai/codex `codex-rs/core-…
-> _possibly stale — 2 commit(s) since, last set 26m ago_
 
 ## Suggested next prompt
 

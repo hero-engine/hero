@@ -68,7 +68,7 @@ func addIntegrationConnectFlags(c *cobra.Command) {
 	c.Flags().StringVar(&connectIntegrationID, "integration-id", "", "stable integration ID")
 	c.Flags().StringVar(&connectRole, "role", "delivery", "selection role (delivery, docs, roadmap)")
 	c.Flags().StringVar(&connectBaseURL, "base-url", "", "provider base URL")
-	c.Flags().StringVar(&connectUserEmail, "user-email", "", "provider user email")
+	c.Flags().StringVar(&connectUserEmail, "user-email", "", "user email (Jira/Confluence Cloud only)")
 	c.Flags().BoolVar(&connectTokenStdin, "token-stdin", false, "read token from protected standard input (never argv)")
 	c.Flags().BoolVar(&connectLocalOnly, "local-only", false, "write the complete integration and selectors only to hero.local.json")
 	c.Flags().BoolVar(&connectJSON, "json", false, "emit machine-readable redacted status")
@@ -257,6 +257,9 @@ func runConnectNonInteractive(cmd *cobra.Command, root string, creds config.Cred
 	if connectUserEmail != "" {
 		settings["user_email"] = connectUserEmail
 	}
+	if err := config.ValidateConnectionSettings(id, provider, settings); err != nil {
+		return fmt.Errorf("cannot connect %s: %s", provider, settingErrorToFlag(err, provider))
+	}
 	role := connectRole
 	if provider == "confluence" && role == "delivery" {
 		role = "docs"
@@ -302,6 +305,26 @@ func runConnectNonInteractive(cmd *cobra.Command, root string, creds config.Cred
 }
 
 var providersCLI = map[string]bool{"github": true, "jira": true, "linear": true, "gitlab": true, "confluence": true}
+
+// settingFlagNames maps a provider-schema settings key to the connect flag the
+// user actually chose, so a schema rejection can be reported in flag vocabulary.
+var settingFlagNames = map[string]string{
+	"user_email": "--user-email",
+	"base_url":   "--base-url",
+	"project":    "--project",
+}
+
+// settingErrorToFlag translates a settings-schema error into flag vocabulary,
+// since connect is where the offending flag was selected. Falls back to the raw
+// error when no flag maps to the failing key.
+func settingErrorToFlag(err error, provider string) string {
+	for key, flag := range settingFlagNames {
+		if strings.Contains(err.Error(), ".settings."+key+":") {
+			return fmt.Sprintf("%s is not valid for provider %s", flag, provider)
+		}
+	}
+	return err.Error()
+}
 
 // ---------------------------------------------------------------------------
 // --remove
@@ -578,6 +601,9 @@ func updateHeroJSON(projectRoot, trackerType, project, baseURL, userEmail string
 		role = "docs"
 	} else {
 		settings["project"] = project
+	}
+	if err := config.ValidateConnectionSettings(id, trackerType, settings); err != nil {
+		return fmt.Errorf("cannot connect %s: %s", trackerType, settingErrorToFlag(err, trackerType))
 	}
 	patch, _ := json.Marshal(map[string]any{"default": id, "roles": map[string]any{role: id}, "connections": map[string]any{id: map[string]any{"provider": trackerType, "settings": settings}}})
 	return config.PatchCommittedIntegrations(projectRoot, config.DefaultFolder, patch)
