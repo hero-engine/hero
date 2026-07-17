@@ -51,7 +51,7 @@ If a line can't be tied to an outcome, a tradeoff, or a decision the reader has 
 
 Amazon's working-backwards method — the **PR-FAQ** (a press release plus anticipated FAQ, written *before* building) and the **six-page narrative** (prose, not slides, read in silence at the start of the meeting) — is the right tool when a bet needs a full narrative case: a major launch, a strategic pivot, a leadership decision that turns on the story rather than a status line.
 
-**This skill names the pattern and tells you when to reach for it. It does not reproduce the format.** The full PR-FAQ / narrative mechanics — the section-by-section structure, the FAQ discipline, the prose-over-bullets rule — live in `exec-narrative` (authored by child #9). When a moment calls for working-backwards, cross-reference `exec-narrative` as the home for the format; don't rebuild it inline here. Audience-shaped *cuts* (this skill) and the *full narrative artifact* (`exec-narrative`) are different jobs: reach for the narrative when a one-page exec cut can't carry the decision.
+**This skill names the pattern and tells you when to reach for it. It does not reproduce the format.** The full mechanics live in two dedicated skills: `prfaq-writing` (the PR-FAQ — mock press release + anticipated FAQ, surfacing the dragons) and `exec-narrative` (the six-page narrative — section structure + the "so what?" test). When a moment calls for working-backwards, cross-reference those as the home for the format; don't rebuild it inline here. Audience-shaped *cuts* (this skill) and the *full narrative artifacts* (`prfaq-writing` / `exec-narrative`) are different jobs: reach for the narrative when a one-page exec cut can't carry the decision.
 
 ## Anti-patterns
 

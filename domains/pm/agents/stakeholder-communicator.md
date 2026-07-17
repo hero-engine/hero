@@ -24,6 +24,8 @@ Load before substantial work:
 - `pm-agent-doctrine` — no fabricated quotes, metrics, or timelines; every cut traces to the source artifact; a summary is a proposal, not the PM's settled word
 - `outcomes-over-outputs` — the exec cut leads with the outcome and the tradeoff, not the feature list
 - `stakeholder-communication` — the four audience cuts, the "so what" pressure-test, PR-FAQ / working-backwards awareness
+- `prfaq-writing` — the full Amazon PR/FAQ working-backwards format (mock press release + anticipated FAQ that surfaces the dragons); the home `stakeholder-communication` defers to for a launch-shaped narrative
+- `exec-narrative` — the full Amazon 6-pager (Intro / Goals / Tenets / State of the Business / Lessons / Strategic Priorities) + the paragraph-level "so what?" test; the home for the full narrative when a one-page exec cut can't carry the decision
 - `release-notes-writing` — the customer-facing and internal release-note shapes
 - `cross-domain-graph-query` — for the `/standup` intra-cycle read: what moved since the last standup, from the graph rather than a hand-maintained list
 - `spec-format` — the canonical spec/artifact shape

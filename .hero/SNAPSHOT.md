@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-17T21:50:43Z · projected from 551 source nodes_
+_Last refreshed: 2026-07-17T22:05:47Z · projected from 551 source nodes_
 
 ## Surfaces
 
@@ -12,7 +12,7 @@ _Last refreshed: 2026-07-17T21:50:43Z · projected from 551 source nodes_
 | docs | maturing | web/docs/ | 4d ago | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | maturing | domains/engineering/ | 6d ago | — |
-| domains/pm | maturing | domains/pm/ | <1m ago | — |
+| domains/pm | maturing | domains/pm/ | 15m ago | — |
 | domains/sales | maturing | domains/sales/ | 8d ago | — |
 | landing | building | web/landing/ | 6d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
@@ -41,7 +41,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Hero Team Experience — Complete Multi-Developer Workflow** (surface: —) — 0/1 specs done
 - **Install + Upgrade Contract Coverage — Prove Every Target Works Every Time** (surface: —) — 0/0 specs done
 - **Launch Readiness — Telemetry, Deploy, and Public-Use Polish** (surface: —) — 0/0 specs done
-- **"PM Pack Completion — Author the Deferred Roster and Reframe Around Critics + Corpus-Grounding"** (surface: domains/pm) — 6/10 specs done
+- **"PM Pack Completion — Author the Deferred Roster and Reframe Around Critics + Corpus-Grounding"** (surface: domains/pm) — 7/10 specs done
 - **Pre-Launch Hardening — Federation Polish, Security, Observability** (surface: —) — 0/0 specs done
 - **"Retrieval Quality — Reranking, Expansion & Feedback Loop"** (surface: —) — 0/0 specs done
 - **Single-Source Install — One Canonical Tree, Every Harness Reads It** (surface: core) — 6/7 specs done
@@ -54,7 +54,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — story-detail-and-intake-scrubber-backing, prd-editor-comms-backing, experiment-stage-and-metric-rca, adversarial-critics-bundle, doctor-install-target-table, tracker-migration-connect-link-fixes, codex-agents-wholesale-wipe-destroys-user-files, manifest-driven-prune, next-drift-gate-branch-line-drift, parent-watchdog-race-ci-red
+- **(unassigned)** — exec-narrative-and-evidence-synthesis, story-detail-and-intake-scrubber-backing, prd-editor-comms-backing, experiment-stage-and-metric-rca, adversarial-critics-bundle, doctor-install-target-table, tracker-migration-connect-link-fixes, codex-agents-wholesale-wipe-destroys-user-files, manifest-driven-prune, next-drift-gate-branch-line-drift
 - **domains/pm** — competitive-and-market-grounding, pm-doctrine-and-skill-backfill
 
 ## Next up across surfaces
