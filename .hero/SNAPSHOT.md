@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-17T05:16:09Z · projected from 539 source nodes_
+_Last refreshed: 2026-07-17T05:32:36Z · projected from 539 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 11h ago | satellite-corpus-integration |
+| core | building | cmd/, internal/ | 12h ago | satellite-corpus-integration |
 | docs | maturing | web/docs/ | 4d ago | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | maturing | domains/engineering/ | 5d ago | — |
@@ -16,7 +16,7 @@ _Last refreshed: 2026-07-17T05:16:09Z · projected from 539 source nodes_
 | domains/sales | maturing | domains/sales/ | 8d ago | — |
 | landing | building | web/landing/ | 5d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 11h ago | agent-outposts |
+| serve | building | internal/serve/ | 12h ago | agent-outposts |
 | (unassigned) | — | — | — | 210 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -53,7 +53,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — codex-agents-wholesale-wipe-destroys-user-files, manifest-driven-prune, next-drift-gate-branch-line-drift, parent-watchdog-race-ci-red, codex-mcp-binary-path-resolution, mcp-transport-closes-midsession-supersede, hero-docs-check-engine-repo-misfire, doctor-routing-guidance-all-packs, agent-hero-version-schema-confusion
+- **(unassigned)** — tracker-migration-connect-link-fixes, codex-agents-wholesale-wipe-destroys-user-files, manifest-driven-prune, next-drift-gate-branch-line-drift, parent-watchdog-race-ci-red, codex-mcp-binary-path-resolution, mcp-transport-closes-midsession-supersede, hero-docs-check-engine-repo-misfire, doctor-routing-guidance-all-packs
 - **core** — install-integrity-self-check, layered-integration-configuration
 - **serve** — agents-md-erased-by-snapshot-pointer-writer
 
@@ -62,8 +62,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 1. **landing** — `hero-landing-page` (P0, delivering)
 2. **serve** — `hero-team-server` (P1, delivering)
 3. **core** — `satellite-corpus-integration` (high, delivering)
-4. **(unassigned)** — `tracker-migration-connect-link-fixes` (high, delivering)
-5. **serve** — `agent-outposts` (medium, delivering)
+4. **serve** — `agent-outposts` (medium, delivering)
+5. **serve** — `retrieval-contradiction-detection` (—, delivering)
 
 ## Open risks & blockers
 

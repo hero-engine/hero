@@ -2,7 +2,7 @@
 title: "Tracker-migration rough edges: connect persists unreadable config, and sync link can't re-point or take a spec dir"
 slug: tracker-migration-connect-link-fixes
 type: bug
-status: delivering
+status: completed
 domain: engineering
 root_cause_class: design
 severity: high
@@ -13,6 +13,7 @@ created: 2026-07-16
 tags: [gitlab, tracker, migration, connect, sync-link, config-validation, cli, ergonomics]
 relates-to: [layered-integration-configuration, jira-connection-onboarding-misleads-agents]
 delivery_method: manual
+completed_at: 2026-07-17T05:32:22Z
 ---
 
 # Tracker-migration rough edges: connect persists unreadable config, and sync link can't re-point or take a spec dir
@@ -474,11 +475,46 @@ Fixes three GitLab-migration rough edges: `hero connect` writing a config it can
 read back, and `hero sync link` refusing to re-point a migrated spec or accept a
 spec directory.
 
-**Status:** planning — diagnosis complete, all three root causes verified in code; no code written.
+**Status:** delivering → verifying — all three defects implemented, tests green, cold audit returned SHIP. Committed on branch `fix/tracker-migration-connect-link` (commit `e42e272`).
 
-**Pick up at:** start with Defect 1 (it gates the rest) — add `config.ValidateConnectionSettings`, call it in `runConnectNonInteractive` before the Patch* write with a flag-named error, then add the Patch* backstop. Then Defect 2 (`--force`) and Defect 3 (directory/slug via `resolveSpec`).
+**Pick up at:** delivery is complete pending `hero spec verify`. If reopening: the write-time gate lives in `config.ValidateConnectionSettings` + `validateMergedConnectionSettings` (backstop in both Patch* functions), `--force` and dir/slug live in `internal/cli/link.go`/`score.go`, docs updated under `web/docs/src/`. New tests in `internal/cli/connect_link_fixes_test.go` and `internal/config/integrations_test.go`.
 
 → `.hero/planning/bugs/tracker-migration-connect-link-fixes/spec.md`
 
 **Files:** `internal/cli/connect.go:71,257`, `internal/config/integrations.go:267,439,494`, `internal/cli/link.go:43,48,64`, `internal/cli/score.go:71`; docs: `web/docs/src/cli/tracker-integration.md`, `web/docs/src/configuration/hero-json.md`, `web/docs/src/configuration/tracker-setup.md`
 **Skip:** validating each config file in isolation inside Patch* (the read path validates the *merged* result — per-file validation false-positives on token-only overlays); adding a fourth ad-hoc path resolver (extend `resolveSpec`).
+
+## Completion Ledger
+
+**Understanding:** three contained tracker-migration defects on a working GitLab connector — connect persisting a config the loader rejects (write/read schema asymmetry), `sync link` unable to re-point a linked spec, and `sync link` rejecting a spec dir/slug. Defect 1 delivered first (it gates the migration path). **Validation:** full suite green (`go test ./internal/config/... ./internal/cli/... ./internal/spec/...`), `go build ./cmd/hero` clean, CLI exercised end-to-end in a scratch workspace, and an independent cold audit returned SHIP (report: `delivery-audit.md`).
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Evidence |
+|---|---|---|---|
+| AC-1 | Out-of-schema key → connect fails before persisting, writes neither file | DONE | `internal/cli/connect.go` validate-before-build; `TestNonInteractiveConnect_GitlabUserEmail_RejectedAndWritesNothing` (byte-compares hero.json, asserts hero.local.json absent, re-Loads to prove not bricked) |
+| AC-2 | `connect gitlab … --user-email` rejected at connect time naming the flag | DONE | `settingErrorToFlag` → `--user-email is not valid for provider gitlab`; `TestValidateConnectionSettings` |
+| AC-3 | No connect path persists a provider-bearing invalid connection | DONE | 1b/1c surface guards + 1d `validateMergedConnectionSettings` backstop in both `PatchCommitted/LocalIntegrations`; `TestPatchBackstopRejectsInvalidProviderSettings` |
+| AC-4 | Already-linked spec without `--force` refuses and mentions `--force` | DONE | `internal/cli/link.go` guard `(use --force to re-point)`; `TestLink_AlreadyLinked_MentionsForce` |
+| AC-5 | `--force` verifies new issue, overwrites `tracker_id`, prints old→new | DONE | keeps `GetIssue`; prints `Re-pointed spec …: old → new`; `TestLink_Force_RepointsAndPrintsTransition`, `TestLink_Force_NonexistentIssueStillErrors` |
+| AC-6 | `sync link <dir> <issue>` resolves `<dir>/spec.md` and links it | DONE | `resolveSpec` dir branch (`score.go`); `TestLink_AcceptsDirAndSlug/directory` |
+| AC-7 | `sync link <slug> <issue>` resolves via discovery and links | DONE | `resolveSpec` slug branch via `spec.Discover`; `TestLink_AcceptsDirAndSlug/slug` |
+| AC-8 | `--user-email` help text + docs state Jira/Confluence-only | DONE | `connect.go:71`; `web/docs/src/configuration/hero-json.md` explicit rejection line |
+| AC-9 | `sync link` docs document `--force` and dir/slug acceptance | DONE | `web/docs/src/cli/tracker-integration.md`, `web/docs/src/configuration/tracker-setup.md` |
+
+### Changes (Fix Plan)
+
+| # | Item | Status | Evidence |
+|---|---|---|---|
+| 1a | Exported `ValidateConnectionSettings` adapter | DONE | `internal/config/integrations.go` (marshals `map[string]any`→`RawMessage`, delegates to `validateProviderSettings`) |
+| 1b | Validate in `runConnectNonInteractive` + `settingErrorToFlag` | DONE | `internal/cli/connect.go` |
+| 1c | Same guard in `updateHeroJSON` (latent twin) | DONE | `internal/cli/connect.go` |
+| 1d | Backstop in both Patch functions; skip no-provider overlays; no `DisallowUnknownFields` | DONE | `validateMergedConnectionSettings`; `TestPatchBackstopAcceptsTokenOnlyOverlay` guards false positives |
+| 1e | Fix `--user-email` help text | DONE | `internal/cli/connect.go:71` |
+| 2 | `--force` on `sync link` | DONE | `internal/cli/link.go` |
+| 3a | Extend shared `resolveSpec` for directories (no 4th resolver) | DONE | `internal/cli/score.go`; `TestResolveSpec_DirAndSlug` |
+| 3b | Switch `link` off raw `ParseFile` to `resolveSpec` | DONE | `internal/cli/link.go` |
+| 3c | Write to resolved path; guard three-file → `requirements.md` | DONE | `internal/cli/link.go` |
+| 4 | Docs: tracker-integration / hero-json / tracker-setup | DONE | three website docs updated |
+
+**Non-DONE rows:** none.
