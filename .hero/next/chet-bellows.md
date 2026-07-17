@@ -1,14 +1,14 @@
 ---
 user: chet-bellows
-updated: 2026-07-17T17:49:17Z
+updated: 2026-07-17T20:38:25Z
 repo: hero-engine/hero
 ---
 
 # chet-bellows's handoff
 
-## Last user ask
+## Session goal
 
-> heres a snippet from trying to test out gitlab from another project ; ---
+> Session opened with — heres a snippet from trying to test out gitlab from another project ; ---
 > hero connect --user-email writes a config that hero's own validator rejects (v0.26.0)
 > 
 > What I ran — wiring up the new GitLab tracker:
@@ -18,6 +18,12 @@ repo: hero-engine/hero
 >   --project noeta-studios/chronecho \
 >   --base-url https://gitlab.com \
 >   --user-email sean@noetast…
+
+_possibly stale — 1 commit(s) since, last set 2h 49m ago_
+
+## Last user ask
+
+> deliver pm-pack-completion initiative in order (autopilot); currently delivering child #1 pm-doctrine-and-skill-backfill
 
 ## Suggested next prompt
 

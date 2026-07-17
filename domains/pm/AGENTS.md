@@ -18,34 +18,51 @@ When the PM describes what they want in natural language, route to the
 appropriate Hero slash command. **Run the command — don't just suggest
 it.**
 
-| User intent | Vocabulary-variant phrasing | Command |
+This table is the **canonical** PM routing table: it carries a row for
+every intent in the locked design's §F routing table (`agent-pack-design.md`),
+**reconciled onto shipped reality**. Where §F named a command the pack
+doesn't ship a v1 surface for, the row keeps the honest shipped-surface
+annotation rather than the aspirational §F command — coverage from §F,
+accuracy from what actually ships. The **Vocabulary-variant phrasing**
+column carries the user-facing synonyms the active vocabulary preset may
+surface.
+
+| User intent | Vocabulary-variant phrasing | Command (shipped surface) |
 |---|---|---|
 | New feedback, customer ask, support escalation, sales note, "this came in" | | `/triage` |
-| Refine, tighten, "make this ready", "draft AC", INVEST, EARS; refine an existing spec (PRD / feature / epic / initiative); ambiguous specs that "won't deliver cleanly" | | `/refine` |
+| Refine, tighten, "make this ready", "draft AC", INVEST, EARS; refine an existing spec (PRD / feature / epic / initiative) | | `/refine` |
 | Prioritize, rank, RICE, ICE, WSJF, value-vs-effort, "what's first" | | `/prioritize` |
-| Hand off, send to engineering, "ready for dev", "flip owner to engineering" | | `/handoff` (flips `owner: pm → engineering` on the same artifact) |
-| Create a story / spec / feature / pitch / scope | "draft a story" / "shape a scope" / "create an issue" | `hero spec new <slug> --type feature` (alias `hero design <slug>`) |
-| Create a bug | "log a bug" | `hero spec new <slug> --type bug` |
-| Create an epic / pitch / theme | "frame a pitch" / "frame a theme" / "create an epic" | no CLI scaffolder (`hero spec new` has no epic type) — hand-author `.hero/planning/epics/<slug>/spec.md` per the registered `epic` spec type |
-| Create a roadmap-item / bet / initiative | "add a bet" / "add a roadmap initiative" | `hero spec new <slug> --type initiative` |
+| Hand off, send to engineering, "ready for dev", "flip owner to engineering", "make this an engineering feature" | | `/handoff` — flips `owner: pm → engineering` on the **same** artifact (not §F's "produce a new engineering spec"; there is no second spec) |
 | Draft PRD, write requirements, product doc, "spec this out" | | `/prd` |
 | Pitch, Shape Up, "shape this", appetite, betting table | | `/pitch` |
 | Roadmap, "what's coming", reconcile roadmap, "show the roadmap" | | `/roadmap` |
-| Stale roadmap, "clean up the roadmap", "what's been dropped" | | `/roadmap` (reconcile mode) |
+| Stale roadmap, "clean up the roadmap", "what's been dropped" | "scrub the roadmap" | `/roadmap` (reconcile mode) — §F's `/scrub roadmap` ships **no v1 `/scrub` surface**; reconciliation lives in `/roadmap` |
 | Discover, explore, "we don't know enough about X", customer research | | `/discover` |
 | Metric, success measure, KPI, "how do we measure this" | | `/metrics` |
-| Interview, customer call, user research, "design an interview" | | `/discover --interview <count>` |
+| Interview, customer call, user research, "design an interview" | | `/discover --interview <count>` — §F's standalone `/interview` ships **no v1 surface**; use the `/discover` interview flag |
 | Release notes, announce, "what shipped this week" | | `/release-notes` |
-| Capacity, cycle/sprint/iteration planning, standup / weekly update | | (P1, ships v1.5 — no v1 surface) |
-| Duplicate intake, cluster feedback, "is this a duplicate" | | `/triage` (duplicate clustering via intake-triager + duplicate-detector) |
-| Confusing customer signal, "what's actually being asked here" | | invoke `pm-investigator` directly (agent — no command shim ships with pm) |
-| Search across PRDs, specs, intake, roadmap | | `hero search <query>` (CLI) |
+| Capacity, "can we fit X this cycle", velocity, appetite room | | §F's `/capacity` — **P1, no v1 surface** (ships v1.5) |
+| Plan next cycle / sprint / iteration, "what should we commit to" | | §F's `/plan-cycle` / `/plan-sprint` / `/plan-iteration` — **P1, no v1 surface** (ships v1.5) |
+| Standup, daily update, "what's new this week" | | §F's `/standup` — **P1, no v1 surface** (ships v1.5) |
+| Duplicate intake, cluster feedback, "is this a duplicate" | "scrub intake" | `/triage` (duplicate clustering via intake-triager + duplicate-detector) — §F's `/scrub intake` ships **no v1 `/scrub` surface** |
+| Ambiguous stories, "stories that won't deliver cleanly" | "scrub stories" | `/refine` — §F's `/scrub stories` ships **no v1 `/scrub` surface**; ambiguity is resolved in `/refine` |
+| Confusing customer signal, bug in a customer ask, "what's actually being asked here" | | invoke `pm-investigator` directly (agent) — §F's PM-flavored `/diagnose` ships **no command shim in pm** |
+| Design a feature spec from a roadmap-item or story; "create a story / spec / feature / scope" | "draft a story" / "shape a scope" / "create an issue" | `hero spec new <slug> --type feature` (alias `hero design <slug>`) — §F's `/design` is **not a pm command**; the pm surface is the CLI scaffolder |
+| Create a bug | "log a bug" | `hero spec new <slug> --type bug` |
+| Create an epic / pitch / theme | "frame a pitch" / "frame a theme" / "create an epic" | no CLI scaffolder (`hero spec new` has no epic type) — hand-author `.hero/planning/epics/<slug>/spec.md` per the registered `epic` spec type |
+| Create a roadmap-item / bet / initiative | "add a bet" / "add a roadmap initiative" | `hero spec new <slug> --type initiative` |
+| Search across PRDs, specs, intake, roadmap | | `hero search <query>` (CLI) — §F's `/search` is the `hero search` CLI, not a `/search` slash command |
 | Why does this exist, "trace this back" | | `/why` |
 | What's stuck, blocked items, dependencies | | `/blocked` |
 | Note, capture, remember this conversation | | `/note` |
 | Decision, tradeoff, choose between options | | `/decide` |
-| Review this PRD / spec / roadmap | | invoke `pm-reviewer` directly (agent — no `/review` command ships with pm) |
+| Review this PRD / spec / roadmap | | invoke `pm-reviewer` directly (agent) — §F's `/review` ships **no `/review` command** in pm |
 | Retro, postmortem, lessons learned on a shipped item | | `/retro` |
+
+<!-- WAVE-2 ROUTES: appended by adversarial-critics-bundle / experiment-stage-and-metric-rca -->
+<!-- Children #4, #6, #7, #8, #9 append net-new agent routes BELOW this line only.
+     Do NOT edit the canonical rows above. This region is owned by
+     pm-doctrine-and-skill-backfill; downstream children only append. -->
 
 When routing, pass the user's original context as arguments to the
 command. If the intent is ambiguous, present the top 2-3 options and
@@ -145,10 +162,11 @@ Every agent an installed pm workspace ships, no links:
 
 Every skill an installed pm workspace ships, no links:
 
-- **Writing:** `story-writing-invest`, `acceptance-criteria-ears`, `prd-structure`, `prd-anti-patterns`, `pitch-writing-shape-up`, `roadmap-framing`.
-- **Frameworks:** `prioritization-frameworks`, `opportunity-solution-trees-torres`, `metrics-design`.
+- **Doctrine:** `pm-agent-doctrine`, `outcomes-over-outputs`.
+- **Writing:** `story-writing-invest`, `acceptance-criteria-ears`, `acceptance-criteria-gherkin`, `prd-structure`, `prd-anti-patterns`, `pitch-writing-shape-up`, `roadmap-framing`, `epic-framing`.
+- **Frameworks:** `prioritization-frameworks`, `opportunity-solution-trees-torres`, `metrics-design`, `discovery-interview-design`, `assumption-testing`, `competitive-research`, `feature-comparison-framing`.
 - **Process / methodology:** `continuous-discovery-cadence`, `sprint-planning`, `cycle-planning`.
-- **Curation:** `intake-classification`, `duplicate-detection`, `dependency-mapping`, `evidence-synthesis`.
+- **Curation:** `intake-classification`, `duplicate-detection`, `dependency-mapping`, `evidence-synthesis`, `risk-surfacing`, `horizon-assignment`, `customer-segment-weighting`.
 - **Cross-domain:** `handoff-protocol`, `cross-domain-graph-query`.
 - **Operational:** `pm-preset-detection`.
 - **Core (installed with every pack):** `agent-reliability`, `auto-knowledge-capture`, `completion-ledger`, `context-injection`, `convention-writing`, `documentation-practices`, `executive-report`, `explainer-format`, `kickoff-prompt`, `knowledge-flywheel`, `next-handoff-emit`, `next-md`, `note-capture`, `nudge-awareness`, `project-context-generation`, `spec-format`.
