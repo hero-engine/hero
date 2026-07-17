@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-17T21:10:32Z · 89 ready specs_
+_Generated: 2026-07-17T21:25:02Z · 88 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -75,13 +75,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/story-detail-and-intake-scrubber-backing.md)_
-
----
-
-## prd-editor-comms-backing — "PRD Editor + Comms Backing — Pitch Author, Stakeholder Communicator"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/prd-editor-comms-backing.md)_
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 description: Draft a Shape Up pitch — Problem, Appetite, Solution sketch, Rabbit holes, No-Gos.
 ---
-Route to `prd-author` with the pitch template (`pitch-author` takes over in v1.5). Loads the `pitch-writing-shape-up` skill.
+Route to `pitch-author`. Loads the `pitch-writing-shape-up` skill.
 
 ## Pre-flight
 
