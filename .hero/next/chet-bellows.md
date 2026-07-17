@@ -1,35 +1,27 @@
 ---
 user: chet-bellows
-updated: 2026-07-17T03:12:40Z
+updated: 2026-07-17T05:33:09Z
 repo: hero-engine/hero
 ---
 
 # chet-bellows's handoff
 
-## Session goal
-
-> Session opened with — In /Users/bwheeler/projects/hero-engine/repository/hero, `.agents/skills/` is committed to git but is stale and drifting from its source. Decide how to resolve it. Do NOT assume gitignoring is the answer — see the policy distinction below.
-> 
-> FACTS (verified):
-> - `.agents/skills/<name>/SKILL.md` is genuinely where the Codex CLI loads repo-scoped skills (verified against openai/codex `codex-rs/core-…
-
-_possibly stale — 7 commit(s) since, last set 4h 7m ago_
-
 ## Last user ask
 
-> In /Users/bwheeler/projects/hero-engine/repository/hero, `.agents/skills/` is committed to git but is stale and drifting from its source. Decide how to resolve it. Do NOT assume gitignoring is the answer — see the policy distinction below.
+> heres a snippet from trying to test out gitlab from another project ; ---
+> hero connect --user-email writes a config that hero's own validator rejects (v0.26.0)
 > 
-> FACTS (verified):
-> - `.agents/skills/<name>/SKILL.md` is genuinely where the Codex CLI loads repo-scoped skills (verified against openai/codex `codex-rs/core-…
-> _possibly stale — 2 commit(s) since, last set 26m ago_
+> What I ran — wiring up the new GitLab tracker:
+> 
+> printf '%s' "$GITLAB_TOKEN" | hero connect gitlab \
+>   --integration-id gitlab-chronecho \
+>   --project noeta-studios/chronecho \
+>   --base-url https://gitlab.com \
+>   --user-email sean@noetast…
 
 ## Suggested next prompt
 
-> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
-
-_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
-
-_Source: auto-derived from open feature — `hero next suggest "..."` to override._
+> Push branch fix/tracker-migration-connect-link and open a PR for tracker-migration-connect-link-fixes (2 commits: e42e272 fix + 9e7fefe spec-complete). Requires 'gh auth switch --user chet-bellows' first. No open PR yet.
 
 ## Recent reflections
 

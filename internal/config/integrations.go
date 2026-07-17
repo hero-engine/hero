@@ -362,6 +362,62 @@ func validateProviderSettings(id string, c IntegrationConfig) error {
 	return nil
 }
 
+// ValidateConnectionSettings checks an assembled settings map against the
+// provider's schema before it is persisted, so connect never writes a config
+// the read path will reject.
+func ValidateConnectionSettings(id, provider string, settings map[string]any) error {
+	raw := make(map[string]json.RawMessage, len(settings))
+	for k, v := range settings {
+		b, err := json.Marshal(v)
+		if err != nil {
+			return err
+		}
+		raw[k] = b
+	}
+	return validateProviderSettings(id, IntegrationConfig{Provider: provider, Settings: raw})
+}
+
+// validateMergedConnectionSettings validates the settings of every
+// provider-bearing connection in a merged integrations document, so no
+// persistence path can write a config the read path would reject. Connections
+// with no provider (token-only credential overlays) are skipped — they
+// legitimately carry only auth.token. Only the settings subtree is validated;
+// unrelated top-level keys are left untouched.
+func validateMergedConnectionSettings(integrations any) error {
+	node, ok := integrations.(map[string]any)
+	if !ok {
+		return nil
+	}
+	conns, ok := node["connections"].(map[string]any)
+	if !ok {
+		return nil
+	}
+	for id, raw := range conns {
+		cn, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		provider, _ := cn["provider"].(string)
+		if provider == "" {
+			continue // token-only credential overlay
+		}
+		settings := map[string]json.RawMessage{}
+		if s, ok := cn["settings"].(map[string]any); ok {
+			for k, v := range s {
+				b, err := json.Marshal(v)
+				if err != nil {
+					return err
+				}
+				settings[k] = b
+			}
+		}
+		if err := validateProviderSettings(id, IntegrationConfig{Provider: provider, Settings: settings}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (r *ResolvedIntegrations) Select(explicit, role string) (string, IntegrationConfig, error) {
 	c := r.Config
 	id := explicit
@@ -458,6 +514,9 @@ func PatchLocalIntegrations(projectRoot, folder string, patch json.RawMessage) e
 		return fmt.Errorf("invalid integrations patch: %w", err)
 	}
 	doc["integrations"] = mergePatch(doc["integrations"], p)
+	if err := validateMergedConnectionSettings(doc["integrations"]); err != nil {
+		return err
+	}
 	b, err := json.MarshalIndent(doc, "", "  ")
 	if err != nil {
 		return err
@@ -516,6 +575,9 @@ func PatchCommittedIntegrations(projectRoot, folder string, patch json.RawMessag
 		return err
 	}
 	doc["integrations"] = mergePatch(doc["integrations"], probe)
+	if err := validateMergedConnectionSettings(doc["integrations"]); err != nil {
+		return err
+	}
 	b, err := json.MarshalIndent(doc, "", "  ")
 	if err != nil {
 		return err

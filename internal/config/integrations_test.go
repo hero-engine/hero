@@ -98,7 +98,7 @@ func TestPatchLocalIntegrationsPreservesKeysAndMode(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, LocalConfigFileName), []byte(`{"personal":"keep","integrations":{"connections":{"old":{"provider":"github","settings":{"project":"o/r"}}}}}`), 0644); err != nil {
 		t.Fatal(err)
 	}
-	patch := json.RawMessage(`{"connections":{"new":{"provider":"jira","settings":{"project":"P"},"auth":{"token":"LOCAL-CANARY"}}}}`)
+	patch := json.RawMessage(`{"connections":{"new":{"provider":"jira","settings":{"project":"P","base_url":"https://jira"},"auth":{"token":"LOCAL-CANARY"}}}}`)
 	if err := PatchLocalIntegrations(root, ".hero", patch); err != nil {
 		t.Fatal(err)
 	}
@@ -186,4 +186,84 @@ func TestProviderSettingsValidationIsSpecificAndTypeStrict(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestValidateConnectionSettings exercises the write-time adapter that connect
+// runs before persisting an assembled settings map. It must agree with the
+// read-time validator: a flag/provider mismatch is rejected, a valid map is ok.
+func TestValidateConnectionSettings(t *testing.T) {
+	cases := []struct {
+		name     string
+		provider string
+		settings map[string]any
+		wantErr  string // "" means expect nil
+	}{
+		{"gitlab-user-email", "gitlab", map[string]any{"project": "g/p", "base_url": "https://gitlab", "user_email": "x@y"}, "settings.user_email"},
+		{"gitlab-ok", "gitlab", map[string]any{"project": "g/p", "base_url": "https://gitlab"}, ""},
+		{"jira-user-email-ok", "jira", map[string]any{"project": "P", "base_url": "https://jira", "user_email": "x@y"}, ""},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateConnectionSettings("x", tc.provider, tc.settings)
+			if tc.wantErr == "" {
+				if err != nil {
+					t.Fatalf("expected nil, got %v", err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), "$.integrations.connections.x."+tc.wantErr) {
+				t.Fatalf("error=%v, want path fragment %q", err, tc.wantErr)
+			}
+		})
+	}
+}
+
+// TestPatchBackstopRejectsInvalidProviderSettings verifies the 1d backstop: the
+// persistence functions refuse a provider-bearing connection whose settings
+// fail the schema (gitlab + user_email), so no connect path can write a config
+// the loader rejects — for both the committed and local files.
+func TestPatchBackstopRejectsInvalidProviderSettings(t *testing.T) {
+	invalid := json.RawMessage(`{"connections":{"gl":{"provider":"gitlab","settings":{"project":"g/p","base_url":"https://gitlab","user_email":"x@y"}}}}`)
+
+	t.Run("committed", func(t *testing.T) {
+		root := t.TempDir()
+		err := PatchCommittedIntegrations(root, ".hero", invalid)
+		if err == nil || !strings.Contains(err.Error(), "settings.user_email") {
+			t.Fatalf("error=%v, want settings.user_email rejection", err)
+		}
+		if fileExistsTest(filepath.Join(root, ".hero", ConfigFileName)) {
+			t.Fatal("committed config was written despite invalid settings")
+		}
+	})
+
+	t.Run("local", func(t *testing.T) {
+		root := t.TempDir()
+		err := PatchLocalIntegrations(root, ".hero", invalid)
+		if err == nil || !strings.Contains(err.Error(), "settings.user_email") {
+			t.Fatalf("error=%v, want settings.user_email rejection", err)
+		}
+	})
+}
+
+// TestPatchBackstopAcceptsTokenOnlyOverlay is the false-positive regression
+// guard: a credential overlay that carries only auth.token (no provider) must
+// still be accepted — the backstop only validates provider-bearing connections.
+func TestPatchBackstopAcceptsTokenOnlyOverlay(t *testing.T) {
+	root := t.TempDir()
+	overlay := json.RawMessage(`{"connections":{"gl":{"auth":{"token":"LOCAL-CANARY"}}}}`)
+	if err := PatchLocalIntegrations(root, ".hero", overlay); err != nil {
+		t.Fatalf("token-only overlay rejected: %v", err)
+	}
+	b, err := os.ReadFile(filepath.Join(root, ".hero", LocalConfigFileName))
+	if err != nil {
+		t.Fatalf("local file not written: %v", err)
+	}
+	if !strings.Contains(string(b), "LOCAL-CANARY") {
+		t.Fatalf("token not persisted: %s", b)
+	}
+}
+
+func fileExistsTest(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && !info.IsDir()
 }

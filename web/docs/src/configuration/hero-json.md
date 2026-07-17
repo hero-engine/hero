@@ -177,6 +177,13 @@ A `delivery`-role Confluence connection is automatically rewritten to the
 `docs` role. See [Tracker Setup](tracker-setup.md) for full per-provider
 examples.
 
+`user_email` is valid **only** for `jira` and `confluence` (Cloud basic auth).
+It is **rejected for `github`, `linear`, and `gitlab` at connect time** — a
+`hero connect gitlab … --user-email …` fails immediately rather than writing a
+config the loader would later refuse. Each provider accepts only the `settings`
+keys listed above (plus the common `post_on_design`, `post_on_deliver`, and
+`size_mapping` options for trackers); any other key is an error.
+
 ---
 
 ### `import`

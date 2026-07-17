@@ -67,9 +67,21 @@ func runScore(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// resolveSpec finds a spec by slug or file path.
+// resolveSpec finds a spec by directory, file path, or slug.
 func resolveSpec(arg, heroDir string) (*spec.Spec, error) {
-	// Try as a direct file path first
+	// Directory: resolve to the spec inside it (single-file spec.md,
+	// otherwise a three-file requirements.md layout).
+	if info, err := os.Stat(arg); err == nil && info.IsDir() {
+		if p := filepath.Join(arg, "spec.md"); fileExists(p) {
+			return spec.ParseFile(p)
+		}
+		if fileExists(filepath.Join(arg, "requirements.md")) {
+			return spec.ParseThreeFile(arg)
+		}
+		return nil, fmt.Errorf("no spec.md or requirements.md in %s", arg)
+	}
+
+	// Try as a direct file path
 	if strings.HasSuffix(arg, ".md") || strings.Contains(arg, string(filepath.Separator)) {
 		return spec.ParseFile(arg)
 	}
