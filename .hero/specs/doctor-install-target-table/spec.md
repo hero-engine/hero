@@ -2,7 +2,7 @@
 title: "hero doctor: installed harness target table with agent/command/skill counts"
 slug: doctor-install-target-table
 type: feature
-status: delivering
+status: completed
 size: small
 domain: engineering
 priority: medium
@@ -12,6 +12,7 @@ relates-to:
   - hero-docs-check-engine-repo-misfire
   - install-json-mode-repair-migrate-parity
 delivery_method: manual
+completed_at: 2026-07-17T16:13:15Z
 ---
 
 # hero doctor: installed harness target table with agent/command/skill counts
