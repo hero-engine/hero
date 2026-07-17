@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-17T21:10:31Z · projected from 551 source nodes_
+_Last refreshed: 2026-07-17T21:25:02Z · projected from 551 source nodes_
 
 ## Surfaces
 
@@ -41,7 +41,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Hero Team Experience — Complete Multi-Developer Workflow** (surface: —) — 0/1 specs done
 - **Install + Upgrade Contract Coverage — Prove Every Target Works Every Time** (surface: —) — 0/0 specs done
 - **Launch Readiness — Telemetry, Deploy, and Public-Use Polish** (surface: —) — 0/0 specs done
-- **"PM Pack Completion — Author the Deferred Roster and Reframe Around Critics + Corpus-Grounding"** (surface: domains/pm) — 3/10 specs done
+- **"PM Pack Completion — Author the Deferred Roster and Reframe Around Critics + Corpus-Grounding"** (surface: domains/pm) — 4/10 specs done
 - **Pre-Launch Hardening — Federation Polish, Security, Observability** (surface: —) — 0/0 specs done
 - **"Retrieval Quality — Reranking, Expansion & Feedback Loop"** (surface: —) — 0/0 specs done
 - **Single-Source Install — One Canonical Tree, Every Harness Reads It** (surface: core) — 6/7 specs done
@@ -54,8 +54,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — experiment-stage-and-metric-rca, adversarial-critics-bundle, doctor-install-target-table, tracker-migration-connect-link-fixes, codex-agents-wholesale-wipe-destroys-user-files, manifest-driven-prune, next-drift-gate-branch-line-drift, parent-watchdog-race-ci-red, codex-mcp-binary-path-resolution
-- **core** — install-integrity-self-check
+- **(unassigned)** — prd-editor-comms-backing, experiment-stage-and-metric-rca, adversarial-critics-bundle, doctor-install-target-table, tracker-migration-connect-link-fixes, codex-agents-wholesale-wipe-destroys-user-files, manifest-driven-prune, next-drift-gate-branch-line-drift, parent-watchdog-race-ci-red, codex-mcp-binary-path-resolution
 - **domains/pm** — pm-doctrine-and-skill-backfill
 - **serve** — agents-md-erased-by-snapshot-pointer-writer
 

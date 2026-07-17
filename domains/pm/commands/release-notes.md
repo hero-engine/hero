@@ -1,7 +1,7 @@
 ---
 description: Draft customer-facing release notes for shipped items — pulls shipped status from the cross-domain graph.
 ---
-Route to `pm-delivery-lead`, drafting from the template in this command file (stakeholder-communicator + skill ship v1.5).
+Route to `stakeholder-communicator`, loading `release-notes-writing`. Drafts from the shapes below.
 
 ## Scope
 

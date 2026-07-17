@@ -94,6 +94,24 @@ un-dangles `/metrics`, which now resolves to `metrics-analyst`.
 | "Why did the metric move", "run RCA on the funnel", "why did activation drop/spike" | "diagnose the metric" | invoke `metrics-analyst` directly (agent) — metric-tree decomposition + drift taxonomy + causality-before-asserting, via `metric-rca` |
 | Define / interpret a success metric, KPI, "how do we measure this" (un-dangled) | | `/metrics` → `metrics-analyst` (was `pm-delivery-lead` with no backing analyst; the analyst now ships) |
 
+#### Wave-2 PRD Editor & comms routes
+
+These are net-new routes appended by `prd-editor-comms-backing` (child #8):
+the two agents that back the PRD Editor's "Convert to pitch" and "Summarize
+for standup" actions, plus the two net-new comms commands. `pitch-author`
+(split out of `prd-author`, which still owns PRD authoring) and
+`stakeholder-communicator` are **authoring** agents. This subsection
+**supersedes** the canonical table's "no v1 surface (ships v1.5)" annotations
+for `/standup` and `/interview` (the pattern the #7 `/metrics` row uses), and
+repoints `/pitch` and `/release-notes` off their v1.5 placeholders.
+
+| User intent | Vocabulary-variant phrasing | Command (shipped surface) |
+|---|---|---|
+| Standup, daily update, "what's new this week" (un-deferred) | | `/standup` → `stakeholder-communicator` — composes a standup update from intra-cycle graph changes; supersedes the canonical "no v1 surface (ships v1.5)" row |
+| Interview, customer call, "design an interview" (standalone, un-deferred) | | `/interview` → `discovery-researcher` (loads `discovery-interview-design`) — designs a customer interview guide; supersedes the canonical "`/discover --interview` … no v1 surface" annotation |
+| "Convert this to a pitch", "shape as a pitch", appetite, betting table (real backing agent) | "shape a scope" | `/pitch` → `pitch-author` — the dedicated Shape Up pitch specialist; was `prd-author` with a v1.5 placeholder |
+| "Summarize for standup", "cut this for exec / customer", release notes, "what shipped this week" | | `stakeholder-communicator` — backs the PRD Editor "Summarize for standup" action; `/release-notes` also resolves here (was `pm-delivery-lead` with a v1.5 placeholder) |
+
 When routing, pass the user's original context as arguments to the
 command. If the intent is ambiguous, present the top 2-3 options and
 ask.
@@ -178,7 +196,7 @@ in the `handoff-protocol` skill; `handoff-coordinator` (invoked via
 
 Every command an installed pm workspace ships, no links:
 
-- **PM:** `/discover`, `/experiment`, `/handoff`, `/metrics`, `/pitch`, `/prd`, `/prioritize`, `/refine`, `/release-notes`, `/roadmap`, `/triage` — see Natural Language Routing above for what each does. (`/discover` and `/handoff` override the core commands of the same name below.)
+- **PM:** `/discover`, `/experiment`, `/handoff`, `/interview`, `/metrics`, `/pitch`, `/prd`, `/prioritize`, `/refine`, `/release-notes`, `/roadmap`, `/standup`, `/triage` — see Natural Language Routing above for what each does. (`/discover` and `/handoff` override the core commands of the same name below.)
 - **Core (installed with every pack):** `/blocked`, `/capture`, `/check`, `/convention`, `/decide`, `/docs`, `/hero`, `/import`, `/note`, `/resume`, `/retro`, `/scan`, `/why`.
 
 ### Agents Reference
@@ -188,6 +206,7 @@ Every agent an installed pm workspace ships, no links:
 - **PM:** `discovery-researcher`, `duplicate-detector`, `handoff-coordinator`, `intake-triager`, `pm-delivery-lead`, `pm-investigator`, `pm-reviewer`, `prd-author`, `prioritization-strategist`, `product-strategist`, `roadmap-curator`, `story-writer` — see Key Workflow above for how the core five fit together.
 - **PM Wave-2 critics:** `roadmap-reviewer` (roadmap drift critic), `prioritization-challenger` (anti-gaming input critic), `experiment-readout-reviewer` (adversarial experiment-readout critic) — plus `pm-reviewer` sharpened into an adversarial doc critic. See the Wave-2 adversarial critic routes above.
 - **PM Wave-2 experiment & metrics:** `experiment-designer` (designs the pre-registered experiment brief — authoring, not critique), `metrics-analyst` (defines/interprets success metrics **and** runs "why did the metric move" RCA; backs `/metrics`). See the Wave-2 experiment & metrics routes above.
+- **PM Wave-2 PRD Editor & comms:** `pitch-author` (Shape Up pitch specialist, split from `prd-author`; backs the PRD Editor "Convert to pitch" action and `/pitch`), `stakeholder-communicator` (audience-shaped exec/customer/internal cuts; backs the PRD Editor "Summarize for standup" action, `/standup`, and `/release-notes`). See the Wave-2 PRD Editor & comms routes above.
 - **Core (installed with every pack):** `convention-author`, `documentation-engineer`, `project-context-builder`, `session-primer`.
 
 ### Skills Reference
@@ -195,7 +214,7 @@ Every agent an installed pm workspace ships, no links:
 Every skill an installed pm workspace ships, no links:
 
 - **Doctrine:** `pm-agent-doctrine`, `outcomes-over-outputs`.
-- **Writing:** `story-writing-invest`, `acceptance-criteria-ears`, `acceptance-criteria-gherkin`, `prd-structure`, `prd-anti-patterns`, `pitch-writing-shape-up`, `roadmap-framing`, `epic-framing`.
+- **Writing:** `story-writing-invest`, `acceptance-criteria-ears`, `acceptance-criteria-gherkin`, `prd-structure`, `prd-anti-patterns`, `pitch-writing-shape-up`, `roadmap-framing`, `epic-framing`, `stakeholder-communication`, `release-notes-writing`.
 - **Frameworks:** `prioritization-frameworks`, `opportunity-solution-trees-torres`, `metrics-design`, `discovery-interview-design`, `assumption-testing`, `competitive-research`, `feature-comparison-framing`.
 - **Process / methodology:** `continuous-discovery-cadence`, `sprint-planning`, `cycle-planning`.
 - **Curation:** `intake-classification`, `duplicate-detection`, `dependency-mapping`, `evidence-synthesis`, `risk-surfacing`, `horizon-assignment`, `customer-segment-weighting`.
