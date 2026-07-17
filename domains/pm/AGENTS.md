@@ -64,6 +64,21 @@ surface.
      Do NOT edit the canonical rows above. This region is owned by
      pm-doctrine-and-skill-backfill; downstream children only append. -->
 
+#### Wave-2 adversarial critic routes
+
+These are net-new **critic** routes appended by `adversarial-critics-bundle`.
+Critics review; they do not author or auto-edit — each surfaces findings and a
+verdict and routes the PM back to the authoring agent. Consistent with the
+design (§F ships no `/review` command in pm), each route invokes the agent
+directly.
+
+| User intent | Vocabulary-variant phrasing | Command (shipped surface) |
+|---|---|---|
+| Review a roadmap for drift, outcome-vs-output check, ~60/30/10, stale items, "is this a feature list" | "critique the roadmap" | invoke `roadmap-reviewer` directly (agent) — pm-domain drift critic; no `/review` command ships in pm |
+| Challenge a prioritization, "is this RICE/ICE/WSJF gamed", "are the inputs defensible", "why is this ranked #1" | "stress-test the ranking" | invoke `prioritization-challenger` directly (agent) — anti-gaming input critic |
+| Adversarial PRD/spec review, "review as a CPO", premortem, "5 reasons this won't work" | "critique this doc" | invoke `pm-reviewer` directly (pm-critic mode) — sharpens the existing reviewer row's agent, no new command |
+| Review an experiment readout, "is this result real", SRM / peeking / guardrails / significance | "critique the readout" | invoke `experiment-readout-reviewer` directly (agent) — no `/experiment` command ships in pm |
+
 When routing, pass the user's original context as arguments to the
 command. If the intent is ambiguous, present the top 2-3 options and
 ask.
@@ -156,6 +171,7 @@ Every command an installed pm workspace ships, no links:
 Every agent an installed pm workspace ships, no links:
 
 - **PM:** `discovery-researcher`, `duplicate-detector`, `handoff-coordinator`, `intake-triager`, `pm-delivery-lead`, `pm-investigator`, `pm-reviewer`, `prd-author`, `prioritization-strategist`, `product-strategist`, `roadmap-curator`, `story-writer` — see Key Workflow above for how the core five fit together.
+- **PM Wave-2 critics:** `roadmap-reviewer` (roadmap drift critic), `prioritization-challenger` (anti-gaming input critic), `experiment-readout-reviewer` (adversarial experiment-readout critic) — plus `pm-reviewer` sharpened into an adversarial doc critic. See the Wave-2 adversarial critic routes above.
 - **Core (installed with every pack):** `convention-author`, `documentation-engineer`, `project-context-builder`, `session-primer`.
 
 ### Skills Reference
@@ -169,6 +185,7 @@ Every skill an installed pm workspace ships, no links:
 - **Curation:** `intake-classification`, `duplicate-detection`, `dependency-mapping`, `evidence-synthesis`, `risk-surfacing`, `horizon-assignment`, `customer-segment-weighting`.
 - **Cross-domain:** `handoff-protocol`, `cross-domain-graph-query`.
 - **Operational:** `pm-preset-detection`.
+- **Wave-2 critics:** `outcome-drift` (roadmap drift detection — the ratio tally + stale-item taxonomy behind `roadmap-reviewer`), `evidence-forcing` (force prioritization inputs to name evidence or default to neutral — behind `prioritization-challenger`).
 - **Core (installed with every pack):** `agent-reliability`, `auto-knowledge-capture`, `completion-ledger`, `context-injection`, `convention-writing`, `documentation-practices`, `executive-report`, `explainer-format`, `kickoff-prompt`, `knowledge-flywheel`, `next-handoff-emit`, `next-md`, `note-capture`, `nudge-awareness`, `project-context-generation`, `spec-format`.
 
 ### CLI Commands
