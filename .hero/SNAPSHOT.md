@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-17T16:07:41Z · projected from 540 source nodes_
+_Last refreshed: 2026-07-17T16:13:28Z · projected from 540 source nodes_
 
 ## Surfaces
 
@@ -53,7 +53,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — tracker-migration-connect-link-fixes, codex-agents-wholesale-wipe-destroys-user-files, manifest-driven-prune, next-drift-gate-branch-line-drift, parent-watchdog-race-ci-red, codex-mcp-binary-path-resolution, mcp-transport-closes-midsession-supersede, hero-docs-check-engine-repo-misfire, doctor-routing-guidance-all-packs
+- **(unassigned)** — doctor-install-target-table, tracker-migration-connect-link-fixes, codex-agents-wholesale-wipe-destroys-user-files, manifest-driven-prune, next-drift-gate-branch-line-drift, parent-watchdog-race-ci-red, codex-mcp-binary-path-resolution, mcp-transport-closes-midsession-supersede, hero-docs-check-engine-repo-misfire
 - **core** — install-integrity-self-check, layered-integration-configuration
 - **serve** — agents-md-erased-by-snapshot-pointer-writer
 
@@ -63,7 +63,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 2. **serve** — `hero-team-server` (P1, delivering)
 3. **core** — `satellite-corpus-integration` (high, delivering)
 4. **serve** — `agent-outposts` (medium, delivering)
-5. **(unassigned)** — `doctor-install-target-table` (medium, delivering)
+5. **serve** — `retrieval-contradiction-detection` (—, delivering)
 
 ## Open risks & blockers
 

@@ -6,27 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-17T16:12:53Z · 84 ready specs_
-
-## doctor-install-target-table — "hero doctor: installed harness target table with agent/command/skill counts"
-_feature · delivering · horizon: now_
-
-Adds a brief "Installed harness targets" table to `hero doctor` — per-target
-expected/actual counts of agents, commands, and skills — so you can confirm an
-install landed and spot a partial one.
-
-**Status:** delivering → verifying — implemented, tests green, cold audit SHIP. Committed on branch `feat/doctor-install-target-table` (`aba3fa4`).
-
-**Pick up at:** delivery complete pending `hero spec verify`. The section lives in `internal/install/inventory.go` (`Inventory`/`inventoryFromFS`, `TargetInventory`/`KindCount`, `targetInstallPaths`, `targetInstalledOnDisk`) and renders in `internal/cli/doctor.go` (`buildInventorySection`, between Workspace graph and Verdict). Tests in `internal/install/inventory_test.go` and `internal/cli/doctor_test.go`.
-
-→ `.hero/planning/features/doctor-install-target-table/spec.md`
-
-**Files:** `internal/install/manifest.go:37`, `internal/install/contracts.go:69`,
-`internal/cli/doctor.go:98`, `internal/cli/docs_check.go:285`
-**Skip:** `install.DetectInstalledTargets` (probes legacy `.github/copilot/`, cannot
-see copilot — `integrity_test.go:397-407`); a `--json` flag (out of scope, see Boundaries).
-
----
+_Generated: 2026-07-17T16:13:29Z · 83 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
