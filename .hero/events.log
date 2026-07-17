@@ -347,3 +347,5 @@
 {"ts":"2026-07-16T21:20:35.18341Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-drift-gate-branch-line-drift","message":"status -\u003e completed"}
 {"ts":"2026-07-16T23:36:45.48972Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"manifest-driven-prune","message":"\"Manifest-driven prune of product-removed content — remove agents/commands/skills Hero dropped, never user files\""}
 {"ts":"2026-07-16T23:36:45.493627Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"manifest-driven-prune","message":"status -\u003e completed"}
+{"ts":"2026-07-17T00:39:02.170578Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"codex-agents-wholesale-wipe-destroys-user-files","message":"\"Codex install wholesale-wipes .codex/agents every run — destroys user-authored agent files\""}
+{"ts":"2026-07-17T00:39:02.170784Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"codex-agents-wholesale-wipe-destroys-user-files","message":"status -\u003e completed"}

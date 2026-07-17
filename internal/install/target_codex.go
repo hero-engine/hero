@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Codex CLI loader paths (source-verified against
@@ -39,8 +40,12 @@ import (
 //     path.
 //   - Installs commands as skills under .agents/skills/command-<name>/
 //     (Codex has no command loader — SlashCommand is a built-in enum).
-//   - Cleans up dead bytes from prior installs at .codex/agents/*.md
-//     and .codex/commands/*.
+//   - Cleans up dead bytes from prior installs: ONLY the pre-.toml *.md
+//     dead-bytes at .codex/agents/ (that dir is the LIVE loader dir and
+//     holds user .toml agents, so the cleanup is .md-scoped by
+//     construction — dropped Hero .toml agents are pruned provenance-safely
+//     by pruneStaleFiles), and the whole of .codex/commands/* (no loader
+//     at any scope; nothing repopulates it).
 //   - Prunes skill dirs at the .agents/skills dest whose canonical source
 //     is gone, so a renamed command or skill doesn't keep loading forever
 //     (see prune.go for the provenance rules).
@@ -54,12 +59,16 @@ func runCodex(opts Options) (*Result, error) {
 	result := &Result{}
 
 	// Cleanup of dead bytes from prior install layouts.
-	// .codex/agents/*.md (Codex requires .toml — markdown is dead;
-	// the dir is repopulated by renderToFile below with .toml).
-	// .codex/commands/* (no loader at any scope; nothing repopulates).
-	if err := removeLegacyDir(opts, filepath.Join(destBase, "agents")); err != nil {
+	// .codex/agents is the LIVE dir Codex loads <name>.toml agents from, so
+	// it legitimately holds user files. Remove ONLY pre-.toml *.md dead-bytes
+	// here; dropped Hero .toml agents are pruned provenance-safely by
+	// pruneStaleFiles (see prune.go / manifest-driven-prune), and user files
+	// (a hand-authored .toml agent, a subdir) are left untouched.
+	if err := removeLegacyDirMatching(opts, filepath.Join(destBase, "agents"), isLegacyCodexAgentMarkdown); err != nil {
 		return nil, fmt.Errorf("cleanup .codex/agents: %w", err)
 	}
+	// .codex/commands has no loader at any scope; nothing repopulates it, so
+	// wholesale removal is correct.
 	if err := removeLegacyDir(opts, filepath.Join(destBase, "commands")); err != nil {
 		return nil, fmt.Errorf("cleanup .codex/commands: %w", err)
 	}
@@ -116,6 +125,18 @@ func runCodex(opts Options) (*Result, error) {
 	}
 
 	return result, nil
+}
+
+// isLegacyCodexAgentMarkdown reports whether name is a pre-.toml Hero
+// agent dead-byte in .codex/agents. Codex's loader ignores .md there, so
+// any .md is non-functional legacy and Hero's to remove; .toml (current
+// render + manifest-pruned) and every other user file are preserved. A
+// user file that is itself a .md is inert in this dir and indistinguishable
+// from the dead-bytes, so it is removed too — the load-bearing data-loss
+// vector (a user's live .toml agent, or any subdir/other file) stays
+// protected.
+func isLegacyCodexAgentMarkdown(name string) bool {
+	return strings.HasSuffix(name, ".md")
 }
 
 // codexSkillDirNames returns every skill dir name a Codex install

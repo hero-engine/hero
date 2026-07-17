@@ -263,25 +263,34 @@ func TestCodexGlobalPrunesOwnedPrefixOnly(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 // fileTgt describes one target's flat-agent dest shape for the file-prune
-// tests. pruneActor is false for codex, whose .codex/agents dir is wiped
-// wholesale every run by removeLegacyDir (dead-bytes cleanup) — a dropped
-// codex agent is removed by that pre-existing mechanism, so pruneStaleFiles
-// correctly no-ops on it (AC-10) and prints nothing. For every other target
-// pruneStaleFiles is the actor for a dropped flat file.
+// tests. pruneActor is true for every target now that codex's .codex/agents
+// cleanup is .md-scoped (removeLegacyDirMatching) rather than a wholesale
+// wipe: a dropped codex .toml agent survives the dead-bytes cleanup and is
+// removed provenance-safely by pruneStaleFiles, exactly like the flat files
+// of every other target. (Before codex-agents-wholesale-wipe was fixed,
+// codex was pruneActor:false because removeLegacyDir wiped the dir wholesale
+// before the prune ever ran.)
+//
+// userFile is the basename of a user-authored file planted at the agent
+// dest to prove the prune leaves it alone. It must NOT collide with the
+// dead-bytes cleanup's blast radius at that dest — for codex the cleanup
+// removes *.md, so its user file is a .toml (an inert user .md in
+// .codex/agents is not protected and is not the load-bearing vector).
 type fileTgt struct {
 	name       string
 	target     Target
 	agentDest  func(stem string) string // TargetDir-relative dest for an agent stem
+	userFile   string                   // basename of a planted user-authored file that must survive a prune
 	pruneActor bool
 }
 
 var fileTgts = []fileTgt{
-	{"claude", TargetClaude, func(s string) string { return filepath.Join(".claude", "agents", s+".md") }, true},
-	{"codex", TargetCodex, func(s string) string { return filepath.Join(".codex", "agents", s+".toml") }, false},
-	{"copilot", TargetCopilot, func(s string) string { return filepath.Join(".github", "prompts", "agents", s+".prompt.md") }, true},
-	{"cursor", TargetCursor, func(s string) string { return filepath.Join(".cursor", "rules", "agents", s+".md") }, true},
-	{"opencode", TargetOpenCode, func(s string) string { return filepath.Join(".opencode", "agents", s+".md") }, true},
-	{"generic", TargetGeneric, func(s string) string { return filepath.Join(".ai", "agents", s+".md") }, true},
+	{"claude", TargetClaude, func(s string) string { return filepath.Join(".claude", "agents", s+".md") }, "my-custom-agent.md", true},
+	{"codex", TargetCodex, func(s string) string { return filepath.Join(".codex", "agents", s+".toml") }, "my-custom-agent.toml", true},
+	{"copilot", TargetCopilot, func(s string) string { return filepath.Join(".github", "prompts", "agents", s+".prompt.md") }, "my-custom-agent.md", true},
+	{"cursor", TargetCursor, func(s string) string { return filepath.Join(".cursor", "rules", "agents", s+".md") }, "my-custom-agent.md", true},
+	{"opencode", TargetOpenCode, func(s string) string { return filepath.Join(".opencode", "agents", s+".md") }, "my-custom-agent.md", true},
+	{"generic", TargetGeneric, func(s string) string { return filepath.Join(".ai", "agents", s+".md") }, "my-custom-agent.md", true},
 }
 
 // setupPruneWorkspace builds a source content tree and a target workspace
@@ -397,8 +406,9 @@ func TestPruneStaleFiles_RemovesDroppedAgent(t *testing.T) {
 				t.Errorf("manifest still lists dropped %s; got %v", fooRel, got)
 			}
 
-			// AC-1: pruneStaleFiles reports the removal — except for codex,
-			// where removeLegacyDir already cleared the dir before the prune.
+			// AC-1: pruneStaleFiles reports the removal for every target,
+			// codex included — its .toml agent now survives the .md-scoped
+			// dead-bytes cleanup and is pruned here by manifest provenance.
 			if tc.pruneActor {
 				if !strings.Contains(out, "removed — dropped from product") {
 					t.Errorf("missing prune report; stderr=%q", out)
@@ -412,8 +422,10 @@ func TestPruneStaleFiles_RemovesDroppedAgent(t *testing.T) {
 }
 
 // AC-2: a file the user authored (never recorded in the manifest) survives a
-// prune byte-for-byte. Excludes codex: its .codex/agents dir is owned wholesale
-// by removeLegacyDir (a separate dead-bytes mechanism), not by this prune.
+// prune byte-for-byte — codex included. Codex's user file is a .toml (its
+// .codex/agents dead-bytes cleanup is .md-scoped, so a live .toml agent is
+// exactly the load-bearing file that must survive); every other target uses a
+// .md. See codex-agents-wholesale-wipe-destroys-user-files.
 func TestPruneStaleFiles_NeverRemovesUserFile(t *testing.T) {
 	for _, tc := range fileTgts {
 		if !tc.pruneActor {
@@ -426,7 +438,7 @@ func TestPruneStaleFiles_NeverRemovesUserFile(t *testing.T) {
 			opts := Options{SourceDir: sourceDir, Target: tc.target, Mode: ModeProject, TargetDir: targetDir, Force: true}
 			runInstall(t, opts)
 
-			userAbs := filepath.Join(targetDir, filepath.Dir(tc.agentDest("foo")), "my-custom-agent.md")
+			userAbs := filepath.Join(targetDir, filepath.Dir(tc.agentDest("foo")), tc.userFile)
 			want := []byte("# My Own Agent — do not touch\n")
 			if err := os.WriteFile(userAbs, want, 0o644); err != nil {
 				t.Fatalf("plant user file: %v", err)
