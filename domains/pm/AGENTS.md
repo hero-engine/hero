@@ -162,6 +162,31 @@ through the existing exec-cut / `/release-notes` surfaces, not a new command.
 | "Write the 6-pager", "working backwards", exec narrative, strategy memo, annual/quarterly plan narrative, "make the full written case" | "write the narrative" | via `stakeholder-communicator` (loads `exec-narrative`) — the Amazon six-page narrative + paragraph-level "so what?" test; reach for it when a one-page exec cut can't carry the decision. No new command; the deeper artifact `stakeholder-communication` defers to |
 | "Write the PR-FAQ", press release + FAQ, "surface the dragons before we build", launch narrative, "should we even build this" | "draft the PR-FAQ" | via `stakeholder-communicator` (loads `prfaq-writing`) — the Amazon PR/FAQ working-backwards format (mock press release + anticipated FAQ that hunts the hard questions); a cheap pre-commit kill-switch. No new command |
 
+#### Wave-3 remaining roles, scrubbers & launch routes (remaining-roles-scrubbers-and-launch)
+
+These are net-new routes appended by `remaining-roles-scrubbers-and-launch`
+(child #11): the last designed P1/P2 roles (`epic-framer`, `risk-curator`,
+`portfolio-curator`, `discovery-reviewer`), the two remaining `/scrub` concerns
+(`roadmap` → `stale-roadmap-scrubber`, `stories` → `ambiguous-story-scrubber`,
+both appended to the shared `/scrub` command child #5 scaffolded), and
+launch/GTM coverage (the `launch-gtm-tiering` skill + the `/launch` command).
+`epic-framer` and `risk-curator` are **authoring**; `portfolio-curator` is
+**curation** (recommends, never auto-rebalances); `discovery-reviewer` is a
+**critic** (report-only, routes back to `discovery-researcher`); both scrubbers
+are **report-only** (no auto state flip / no auto edit). Consistent with the
+design (§F ships no `/review` command in pm), the critic and curation routes
+invoke the agent directly.
+
+| User intent | Vocabulary-variant phrasing | Command (shipped surface) |
+|---|---|---|
+| Frame an epic, "group these stories into an epic", rollup AC, sequence child stories, "is this a coherent bet" | "frame a theme" / "shape an epic" | `/refine` on an epic → `epic-framer` — writes the Why + rollup acceptance criteria, sequences child stories with dependencies surfaced; delegates story bodies to `story-writer` (authoring; loads `epic-framing`) |
+| "What could go wrong", PRD risk section, premortem, "shape the risks", "what are we not seeing" | | via `risk-curator` (authoring) — states each risk as scenario + indicator + response (never generic "might not scale"); splits test-now from defer; delegates assumption tests to `discovery-researcher`. No new command; reached in Risks authoring / pre-handoff review |
+| "How is our portfolio balanced", "are we over-investing in X", "is this outcome- or output-weighted", quarterly portfolio read | "balance the portfolio" | invoke `portfolio-curator` directly (agent) — cross-roadmap theme balance + capacity-vs-ambition; produces portfolio summaries (notes) + rebalance recommendations; recommends, never auto-rebalances (loads `outcomes-over-outputs`) |
+| "Is this discovery solid", review an opportunity-solution tree / interview synthesis / assumption test, "critique the research" | "critique the discovery" | invoke `discovery-reviewer` directly (agent — report-only rigor critic: opportunity-first tree, verbatim-traceable synthesis, falsifiable assumption tests with stop rules; routes back to `discovery-researcher`; no `/review` command ships in pm) |
+| Stale roadmap, "clean up the roadmap", "what's been dropped", shipped-but-active items, over-horizon `later` | "scrub the roadmap" | `/scrub roadmap` → `stale-roadmap-scrubber` — batch sweep for no-movement / shipped-but-active / over-horizon items; flag report with recommended action per item; report-only, no auto state flip |
+| Ambiguous stories, "stories that won't deliver cleanly", `ready` stories failing INVEST/EARS, pre-cycle story sweep | "scrub stories" | `/scrub stories` → `ambiguous-story-scrubber` — batch sweep of `ready` stories for INVEST/EARS failures; flag report with the specific failure + recommended refinement; report-only, no auto edit |
+| Plan a launch, "how should we launch this", GTM motion, launch tier, launch checklist, "what's the go-to-market" | "plan the launch" | `/launch` → `stakeholder-communicator` — detects the launch tier (1/2/3 by impact) and emits the five-phase checklist (alignment → positioning → enablement → launch → post-launch) scoped to that tier; loads `launch-gtm-tiering` |
+
 When routing, pass the user's original context as arguments to the
 command. If the intent is ambiguous, present the top 2-3 options and
 ask.
@@ -246,8 +271,8 @@ in the `handoff-protocol` skill; `handoff-coordinator` (invoked via
 
 Every command an installed pm workspace ships, no links:
 
-- **PM:** `/discover`, `/experiment`, `/handoff`, `/interview`, `/metrics`, `/pitch`, `/prd`, `/prioritize`, `/refine`, `/release-notes`, `/roadmap`, `/standup`, `/triage` — see Natural Language Routing above for what each does. (`/discover` and `/handoff` override the core commands of the same name below.)
-- **PM Wave-1 backing:** `/scrub` — concern-dispatched workspace scrub; the `intake` concern (→ `duplicate-intake-scrubber`, batch dedup sweep) ships now, `roadmap` + `stories` land via child #11. See the Wave-1 backing routes above.
+- **PM:** `/discover`, `/experiment`, `/handoff`, `/interview`, `/launch`, `/metrics`, `/pitch`, `/prd`, `/prioritize`, `/refine`, `/release-notes`, `/roadmap`, `/standup`, `/triage` — see Natural Language Routing above for what each does. (`/discover` and `/handoff` override the core commands of the same name below.) `/launch` (Wave-3) produces a tiered launch plan + phased checklist and routes to `stakeholder-communicator` (loads `launch-gtm-tiering`).
+- **PM `/scrub` concerns:** `/scrub` is a concern-dispatched workspace scrub, all concerns report-only. `intake` → `duplicate-intake-scrubber` (batch dedup sweep, Wave-1 child #5); `roadmap` → `stale-roadmap-scrubber` (stale / mislabeled roadmap items, Wave-3 child #11); `stories` → `ambiguous-story-scrubber` (`ready` stories failing INVEST/EARS, Wave-3 child #11). See the Wave-1 backing routes and the Wave-3 remaining roles, scrubbers & launch routes above.
 - **Core (installed with every pack):** `/blocked`, `/capture`, `/check`, `/convention`, `/decide`, `/docs`, `/hero`, `/import`, `/note`, `/resume`, `/retro`, `/scan`, `/why`.
 
 ### Agents Reference
@@ -260,6 +285,7 @@ Every agent an installed pm workspace ships, no links:
 - **PM Wave-2 PRD Editor & comms:** `pitch-author` (Shape Up pitch specialist, split from `prd-author`; backs the PRD Editor "Convert to pitch" action and `/pitch`), `stakeholder-communicator` (audience-shaped exec/customer/internal cuts; backs the PRD Editor "Summarize for standup" action, `/standup`, and `/release-notes`). See the Wave-2 PRD Editor & comms routes above.
 - **PM Wave-1 Story-Detail / Intake backing:** `dependency-mapper` (backs Story Detail "Show dependencies"; walks the dependency graph forward + backward, including cross-domain into engineering features — read-only), `duplicate-intake-scrubber` (backs Intake "Cluster recent" and `/scrub intake`; batch/cluster complement to the write-time `duplicate-detector` — report-only, no auto-merge). See the Wave-1 backing routes above.
 - **PM Wave-2 competitive & market:** `competitive-analyst` (retrieval-only competitive teardown — describes what rivals actually ship, sourced + dated, refuses model-memory; builds the three-band feature matrix and a positioning read; loads `competitive-research` + `feature-comparison-framing`). See the Wave-2 competitive & market-grounding routes above.
+- **PM Wave-3 remaining roles & scrubbers:** `epic-framer` (frames an epic as a coherent bet — Why + rollup AC + sequenced child stories; authoring), `risk-curator` (shapes risks as scenario + indicator + response; authoring), `portfolio-curator` (cross-roadmap theme balance + capacity-vs-ambition; recommends, never auto-rebalances), `discovery-reviewer` (adversarial rigor critic for discovery artifacts — report-only, routes back to `discovery-researcher`), `stale-roadmap-scrubber` (batch sweep for stale / mislabeled roadmap items; report-only, backs `/scrub roadmap`), `ambiguous-story-scrubber` (batch sweep of `ready` stories for INVEST/EARS failures; report-only, backs `/scrub stories`). See the Wave-3 remaining roles, scrubbers & launch routes above.
 - **Core (installed with every pack):** `convention-author`, `documentation-engineer`, `project-context-builder`, `session-primer`.
 
 ### Skills Reference
@@ -278,6 +304,7 @@ Every skill an installed pm workspace ships, no links:
 - **Wave-2 competitive & market:** `opportunity-assessment` (Cagan's 10-question opportunity assessment under single-challengeable-assumption discipline — the go/no-go gate before a bet commits), `market-sizing` (defensible TAM/SAM/SOM, one challengeable assumption per step, top-down↔bottom-up convergence with divergence flagged) — both loaded by `product-strategist`.
 - **Wave-2 exec narrative & working-backwards:** `prfaq-writing` (the Amazon PR/FAQ — mock press release + anticipated FAQ that surfaces the "dragons" before building; reasoning over copy), `exec-narrative` (the Amazon six-page narrative — Intro / Goals / Tenets / State of the Business / Lessons / Strategic Priorities + the paragraph-level "so what?" test; prose exposes the gaps bullets hide) — both loaded by `stakeholder-communicator`; they home the working-backwards format `stakeholder-communication` names and defers.
 - **Discovery & framing coverage (Wave-3):** `personas-and-journey-maps` (evidence-based personas + journey maps), `jtbd-job-stories` (`When … I want … so …`; context over persona), `positioning-canvas` (Dunford five-component positioning), `story-mapping` (Patton backbone + walking skeleton), `hill-chart-reasoning` (unknowns-remaining, not %-done), `domain-glossary-maintenance` (shared PM/eng vocabulary in `.hero/knowledge/`), `product-vision-writing` (one-page vision laddering strategy → roadmap).
+- **Launch / GTM (Wave-3):** `launch-gtm-tiering` (size a launch into Tier 1/2/3 by impact — blast radius, revenue/segment, net-new vs. incremental, competitive stakes — then run the five-phase checklist `alignment → positioning → enablement → launch → post-launch` scoped to the tier; loaded by `stakeholder-communicator` and the `/launch` command).
 - **Core (installed with every pack):** `agent-reliability`, `auto-knowledge-capture`, `completion-ledger`, `context-injection`, `convention-writing`, `documentation-practices`, `executive-report`, `explainer-format`, `kickoff-prompt`, `knowledge-flywheel`, `next-handoff-emit`, `next-md`, `note-capture`, `nudge-awareness`, `project-context-generation`, `spec-format`.
 
 ### CLI Commands
