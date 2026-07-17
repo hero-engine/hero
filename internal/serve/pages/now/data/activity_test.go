@@ -82,10 +82,13 @@ func TestLoadActivity_TodayWindowFiltersOlder(t *testing.T) {
 	dir := t.TempDir()
 	now := time.Now()
 	writeEvents(t, dir, []feed.FeedEvent{
-		// older than today (appended first)
+		// older than today (48h ago is always ≥ 2 calendar days back)
 		{Timestamp: now.Add(-48 * time.Hour), Type: "delivery_complete", Slug: "old", Agent: "engineer"},
-		// today
-		{Timestamp: now.Add(-1 * time.Hour), Type: "delivery_complete", Slug: "fresh", Agent: "engineer"},
+		// today — stamp at `now`, not now-1h. WindowToday's lower bound is
+		// startOfDay(now) (local midnight), so a now-1h event lands in
+		// YESTERDAY when the test runs in the first hour of a day (CI at
+		// 00:45 UTC hit exactly this). `now` is always ≥ startOfDay(now).
+		{Timestamp: now, Type: "delivery_complete", Slug: "fresh", Agent: "engineer"},
 	})
 	got := LoadActivity(ActivityInputs{HeroDir: dir, Window: WindowToday})
 	if len(got.Entries) != 1 {
