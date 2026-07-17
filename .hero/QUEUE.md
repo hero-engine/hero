@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-17T20:56:13Z · 91 ready specs_
+_Generated: 2026-07-17T20:57:15Z · 90 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -40,21 +40,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · in-review · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-idea-primitive-core/spec.md)_
-
----
-
-## adversarial-critics-bundle — "Adversarial Critics Bundle — Drift, Prioritization, Doc, and Readout Critics"
-_feature · planning · horizon: now_
-
-Deliver `adversarial-critics-bundle` (Wave-2 child #4 of `pm-pack-completion`).
-Author four adversarial PM critic agents in `domains/pm/agents/`
-(`roadmap-reviewer`, `prioritization-challenger`, sharpened `pm-reviewer`,
-`experiment-readout-reviewer`) plus two skills (`outcome-drift`,
-`evidence-forcing`). Every critic loads `pm-agent-doctrine`; the drift critic
-also loads `outcomes-over-outputs`. Append net-new routes to the AGENTS.md
-Wave-2 region **below** the marker only — leave the canonical table byte-for-byte
-unchanged. Content-only, no Go. Do not undo child #1's load-list additions to
-`pm-reviewer`. Run the `## Validation` block before flipping status.
 
 ---
 
