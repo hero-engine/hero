@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-17T20:38:25Z · 91 ready specs_
+_Generated: 2026-07-17T20:56:13Z · 91 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -43,6 +43,21 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 
 ---
 
+## adversarial-critics-bundle — "Adversarial Critics Bundle — Drift, Prioritization, Doc, and Readout Critics"
+_feature · planning · horizon: now_
+
+Deliver `adversarial-critics-bundle` (Wave-2 child #4 of `pm-pack-completion`).
+Author four adversarial PM critic agents in `domains/pm/agents/`
+(`roadmap-reviewer`, `prioritization-challenger`, sharpened `pm-reviewer`,
+`experiment-readout-reviewer`) plus two skills (`outcome-drift`,
+`evidence-forcing`). Every critic loads `pm-agent-doctrine`; the drift critic
+also loads `outcomes-over-outputs`. Append net-new routes to the AGENTS.md
+Wave-2 region **below** the marker only — leave the canonical table byte-for-byte
+unchanged. Content-only, no Go. Do not undo child #1's load-list additions to
+`pm-reviewer`. Run the `## Validation` block before flipping status.
+
+---
+
 ## pm-pack-completion — "PM Pack Completion — Author the Deferred Roster and Reframe Around Critics + Corpus-Grounding"
 _initiative · planning · horizon: now_
 
@@ -75,13 +90,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/experiment-stage-and-metric-rca.md)_
-
----
-
-## adversarial-critics-bundle — "Adversarial Critics Bundle — Drift, Prioritization, Doc, and Readout Critics"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/adversarial-critics-bundle.md)_
 
 ---
 
