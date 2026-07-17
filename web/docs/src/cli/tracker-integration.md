@@ -48,6 +48,28 @@ hero sync attach PROJ-1234 diagnosis.md
 Always run `hero sync pull <spec>` before starting tracker-backed work
 so closed or reassigned issues are not investigated again.
 
+The spec argument to `hero sync link` accepts an explicit `spec.md` path, a
+spec **directory**, or a bare **slug** — all three resolve to the same spec:
+
+```bash
+hero sync link .hero/planning/features/auth-flow/spec.md PROJ-1234  # explicit path
+hero sync link .hero/planning/features/auth-flow PROJ-1234          # spec directory
+hero sync link auth-flow PROJ-1234                                  # bare slug
+```
+
+By default `hero sync link` refuses to touch a spec that already has a
+`tracker_id`. When **migrating trackers** (e.g. re-pointing a spec off a dead
+Linear issue onto its GitLab equivalent), pass `--force` to overwrite the
+existing link:
+
+```bash
+hero sync link auth-flow 15 --force
+# → Re-pointed spec auth-flow: ECHO-176 → 15
+```
+
+`--force` still verifies the new issue exists in the tracker before overwriting,
+so it cannot point a spec at a non-existent issue.
+
 ## Push & Status Transitions
 
 `hero sync pull` brings tracker state *in*; these push Hero state back *out*:
