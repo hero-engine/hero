@@ -374,3 +374,6 @@
 {"ts":"2026-07-17T21:50:52.098653Z","type":"drive.pause_outcome","agent":"human","slug":"pm-pack-completion","message":"drive pause Supervised resolved: approved"}
 {"ts":"2026-07-17T22:05:47.377402Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"exec-narrative-and-evidence-synthesis","message":"\"Exec Narrative + Evidence Synthesis — PR-FAQ, Working-Backwards, Interview Synthesis\""}
 {"ts":"2026-07-17T22:05:47.377536Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"exec-narrative-and-evidence-synthesis","message":"status -\u003e completed"}
+{"ts":"2026-07-17T22:06:19.579521Z","type":"drive.pause_outcome","agent":"human","slug":"pm-pack-completion","message":"drive pause Supervised resolved: approved"}
+{"ts":"2026-07-17T22:25:26.093655Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"discovery-framing-coverage-skills","message":"\"Discovery + Framing Coverage Skills\""}
+{"ts":"2026-07-17T22:25:26.093754Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"discovery-framing-coverage-skills","message":"status -\u003e completed"}

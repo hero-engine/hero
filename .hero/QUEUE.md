@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-17T22:05:47Z · 86 ready specs_
+_Generated: 2026-07-17T22:25:26Z · 85 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -54,13 +54,6 @@ _(no `## Goal` run opener — hand-edit /Users/bwheeler/projects/hero-engine/rep
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/remaining-roles-scrubbers-and-launch.md)_
-
----
-
-## discovery-framing-coverage-skills — "Discovery + Framing Coverage Skills"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/discovery-framing-coverage-skills.md)_
 
 ---
 
