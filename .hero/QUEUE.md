@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-17T21:25:02Z · 88 ready specs_
+_Generated: 2026-07-17T21:37:04Z · 88 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -50,6 +50,13 @@ _(no `## Goal` run opener — hand-edit /Users/developer/projects/hero-engine/re
 
 ---
 
+## remaining-roles-scrubbers-and-launch — "Remaining Roles, Scrubbers, and Launch/GTM"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/remaining-roles-scrubbers-and-launch.md)_
+
+---
+
 ## discovery-framing-coverage-skills — "Discovery + Framing Coverage Skills"
 _feature · planning · horizon: now_
 
@@ -68,13 +75,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/competitive-and-market-grounding.md)_
-
----
-
-## story-detail-and-intake-scrubber-backing — "Story Detail + Intake Scrubber Backing — Dependency Mapper, Duplicate Intake Scrubber"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/pm-pack-completion/story-detail-and-intake-scrubber-backing.md)_
 
 ---
 

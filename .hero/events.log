@@ -365,3 +365,6 @@
 {"ts":"2026-07-17T21:10:53.847574Z","type":"drive.pause_outcome","agent":"human","slug":"pm-pack-completion","message":"drive pause Supervised resolved: approved"}
 {"ts":"2026-07-17T21:25:02.022242Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"prd-editor-comms-backing","message":"\"PRD Editor + Comms Backing — Pitch Author, Stakeholder Communicator\""}
 {"ts":"2026-07-17T21:25:02.022326Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"prd-editor-comms-backing","message":"status -\u003e completed"}
+{"ts":"2026-07-17T21:25:11.788472Z","type":"drive.pause_outcome","agent":"human","slug":"pm-pack-completion","message":"drive pause Supervised resolved: approved"}
+{"ts":"2026-07-17T21:37:03.923694Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"story-detail-and-intake-scrubber-backing","message":"\"Story Detail + Intake Scrubber Backing — Dependency Mapper, Duplicate Intake Scrubber\""}
+{"ts":"2026-07-17T21:37:03.923778Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"story-detail-and-intake-scrubber-backing","message":"status -\u003e completed"}
