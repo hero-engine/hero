@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-18T00:37:12Z · projected from 551 source nodes_
+_Last refreshed: 2026-07-18T03:18:53Z · projected from 551 source nodes_
 
 ## Surfaces
 
@@ -12,8 +12,8 @@ _Last refreshed: 2026-07-18T00:37:12Z · projected from 551 source nodes_
 | docs | maturing | web/docs/ | 5d ago | — |
 | domains/chat | concept | domains/chat/ | — | — |
 | domains/engineering | maturing | domains/engineering/ | 6d ago | — |
-| domains/pm | maturing | domains/pm/ | 33m ago | — |
-| domains/sales | maturing | domains/sales/ | 8d ago | — |
+| domains/pm | maturing | domains/pm/ | 3h ago | — |
+| domains/sales | maturing | domains/sales/ | 9d ago | — |
 | landing | building | web/landing/ | 6d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
 | serve | building | internal/serve/ | 1d ago | agent-outposts |
@@ -31,7 +31,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **"Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"** (surface: —) — 4/8 specs done
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
 - **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 7/11 specs done
-- **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 12/17 specs done
+- **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 13/17 specs done
 - **"Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"** (surface: —) — 0/8 specs done
 - **Hero Killer Features — Agent Effectiveness, Team Power, Living Specs** (surface: core, serve) — 10/11 specs done
 - **Hero Marketing — Positioning, Distribution, and Launch** (surface: landing) — 0/9 specs done; in flight: hero-landing-page
@@ -53,7 +53,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — pm-pack-completion, discovery-framing-coverage-skills, exec-narrative-and-evidence-synthesis, story-detail-and-intake-scrubber-backing, prd-editor-comms-backing, experiment-stage-and-metric-rca, adversarial-critics-bundle, doctor-install-target-table
+- **(unassigned)** — pm-foundation-delivery, pm-pack-completion, discovery-framing-coverage-skills, exec-narrative-and-evidence-synthesis, story-detail-and-intake-scrubber-backing, prd-editor-comms-backing, experiment-stage-and-metric-rca, adversarial-critics-bundle
 - **domains/pm** — story-queue-planning-backing, remaining-roles-scrubbers-and-launch, competitive-and-market-grounding, pm-doctrine-and-skill-backfill
 
 ## Next up across surfaces

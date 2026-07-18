@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-18T03:10:00Z · 83 ready specs_
+_Generated: 2026-07-18T03:18:53Z · 82 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -461,32 +461,6 @@ consume. Today only one target × one content kind has that
 guarantee — claude × agents, just added in the
 `claude-subagent-frontmatter-registration` fix. The other 17
 target-by-kind cells are uncovered.
-
----
-
-## pm-foundation-delivery — PM Foundation Delivery — Ship PM Pack Additively + Unblock hero-code
-_feature · planning · horizon: now_
-
-This is the **delivery sprint** for the work-tracking refactor designed across `unified-spec-type-model`, `spec-type-registry`, and `inline-propose-output-mode`. Goal: ship PM as an additive Hero domain pack, with engineering unchanged, and unblock hero-code (Rust dashboard) to start building PM and QA UI against stable contracts.
-
-The sprint is composed of **nine work items** organized into three tracks (content authoring, Go implementation, content alignment). Items can be picked up in fresh sessions independently where dependencies allow.
-
-**Sprint completes when:**
-- All nine canonical work-tracking spec types are registered (`initiative`, `prd`, `epic`, `feature`, `bug`, `chore`, `intake`, `release`, `sprint`)
-- Five methodology profiles are authored (Scrum, Kanban, Shape Up, Waterfall, Scrumban)
-- `internal/vocabulary/`, `internal/methodology/`, `internal/tasks/` Go packages are delivered and tested
-- `spec-type-registry` Go implementation exports schema 1.1 to `.hero/cache/spec-types.json`
-- `hero task` CLI surface ships (additive, AC infrastructure unchanged)
-- Inline-propose Go side ships
-- PM pack content is aligned to final canonical names
-- `domain-plugin-architecture` finishing touches are in
-- hero-code consumes the three stable contracts (registry / vocabulary / methodology)
-
-→ Each work item below has a paste-ready kickoff prompt for a fresh session.
-
-**Files:** `.hero/planning/features/pm-foundation-delivery/spec.md`, `.hero/planning/features/unified-spec-type-model/spec.md` (authoritative design), `.hero/planning/features/spec-type-registry/spec.md`, `.hero/planning/features/inline-propose-output-mode/spec.md`, `.hero/planning/features/hero-pm/spec.md`, `.hero/planning/features/domain-plugin-architecture/spec.md`, `domains/pm/`, `core/vocabularies/`, `internal/vocabulary/`
-
-**Skip:** Anything outside the work-tracking refactor scope (knowledge graph, meta types, dashboard UI implementation, new tracker providers, migration of any kind).
 
 ---
 
