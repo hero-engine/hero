@@ -472,10 +472,10 @@ var chatRoutingCmdPattern = regexp.MustCompile("`/([a-z][a-z0-9-]*)`")
 
 // TestChatPack validates the client-embedded chat pack's content. chat is
 // deliberately excluded from the go:embed set (see content.go and
-// TestDomainFS_ChatIsClientEmbedded), so the embed-walking frontmatter
-// tests above never touch it — a malformed chat agent or skill would ship
-// to hero-code's build.rs unchecked. This test closes that gap by reading
-// the pack from the source checkout.
+// TestDomainFS_ChatIsClientEmbedded), so the embed-walking tests above never
+// touch it. chat is a commands-only conversational pack (no agents, no skills —
+// see the chat-app-stays-single-surface decision), so this guards that its
+// shipped command set stays in sync with the AGENTS.md routing table.
 //
 // Like TestDomainsDirectory_AllEntriesAccounted, it reads the disk tree
 // rather than the embed, so it skips cleanly when domains/ is absent (this
@@ -489,102 +489,49 @@ func TestChatPack(t *testing.T) {
 		t.Fatalf("stat %s: %v", chatRoot, err)
 	}
 
-	// os.DirFS(".") lets the shared assert* helpers (built for fs.FS) read
-	// the unembedded chat files straight off disk.
-	diskFS := os.DirFS(".")
+	// Command set is exactly the six expected files, and the AGENTS.md routing
+	// table matches that set bidirectionally: every shipped command has a
+	// routing row and every routing row points at a shipped command.
+	want := map[string]bool{
+		"ask-corpus": true,
+		"capture":    true,
+		"discover":   true,
+		"note":       true,
+		"space":      true,
+		"why":        true,
+	}
 
-	// Agent frontmatter: name + description, name matching filename stem —
-	// a missing name silently drops the agent from the subagent registry.
-	t.Run("agents", func(t *testing.T) {
-		entries, err := os.ReadDir(path.Join(chatRoot, "agents"))
-		if err != nil {
-			t.Fatalf("read chat agents: %v", err)
+	entries, err := os.ReadDir(path.Join(chatRoot, "commands"))
+	if err != nil {
+		t.Fatalf("read chat commands: %v", err)
+	}
+	shipped := make(map[string]bool)
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".md") {
+			continue
 		}
-		count := 0
-		for _, e := range entries {
-			if e.IsDir() || !strings.HasSuffix(e.Name(), ".md") {
-				continue
-			}
-			if strings.EqualFold(e.Name(), "README.md") {
-				continue
-			}
-			assertAgentFrontmatter(t, diskFS, path.Join(chatRoot, "agents", e.Name()))
-			count++
+		if strings.EqualFold(e.Name(), "README.md") {
+			continue
 		}
-		if count == 0 {
-			t.Fatal("domains/chat/agents: no agent files found")
-		}
-	})
+		shipped[strings.TrimSuffix(e.Name(), ".md")] = true
+	}
+	assertStringSetsEqual(t, "shipped commands", shipped, "expected set", want)
 
-	// Skill frontmatter: non-empty description on every SKILL.md.
-	t.Run("skills", func(t *testing.T) {
-		entries, err := os.ReadDir(path.Join(chatRoot, "skills"))
-		if err != nil {
-			t.Fatalf("read chat skills: %v", err)
+	// Extract routing commands from AGENTS.md table rows only.
+	agentsData, err := os.ReadFile(path.Join(chatRoot, "AGENTS.md"))
+	if err != nil {
+		t.Fatalf("read chat AGENTS.md: %v", err)
+	}
+	routed := make(map[string]bool)
+	for _, line := range strings.Split(string(agentsData), "\n") {
+		if !strings.HasPrefix(strings.TrimSpace(line), "|") {
+			continue
 		}
-		count := 0
-		for _, e := range entries {
-			if !e.IsDir() {
-				continue
-			}
-			skillPath := path.Join(chatRoot, "skills", e.Name(), "SKILL.md")
-			if _, err := os.Stat(skillPath); err != nil {
-				continue // not a skill dir
-			}
-			assertSkillFrontmatter(t, diskFS, skillPath)
-			count++
+		for _, m := range chatRoutingCmdPattern.FindAllStringSubmatch(line, -1) {
+			routed[m[1]] = true
 		}
-		if count == 0 {
-			t.Fatal("domains/chat/skills: no SKILL.md files found")
-		}
-	})
-
-	// Command set is exactly the seven expected files, and the AGENTS.md
-	// routing table matches that set bidirectionally: every shipped command
-	// has a routing row and every routing row points at a shipped command.
-	t.Run("commands_and_routing", func(t *testing.T) {
-		want := map[string]bool{
-			"ask-corpus": true,
-			"capture":    true,
-			"discover":   true,
-			"note":       true,
-			"space":      true,
-			"why":        true,
-			"research":   true,
-		}
-
-		entries, err := os.ReadDir(path.Join(chatRoot, "commands"))
-		if err != nil {
-			t.Fatalf("read chat commands: %v", err)
-		}
-		shipped := make(map[string]bool)
-		for _, e := range entries {
-			if e.IsDir() || !strings.HasSuffix(e.Name(), ".md") {
-				continue
-			}
-			if strings.EqualFold(e.Name(), "README.md") {
-				continue
-			}
-			shipped[strings.TrimSuffix(e.Name(), ".md")] = true
-		}
-		assertStringSetsEqual(t, "shipped commands", shipped, "expected set", want)
-
-		// Extract routing commands from AGENTS.md table rows only.
-		agentsData, err := os.ReadFile(path.Join(chatRoot, "AGENTS.md"))
-		if err != nil {
-			t.Fatalf("read chat AGENTS.md: %v", err)
-		}
-		routed := make(map[string]bool)
-		for _, line := range strings.Split(string(agentsData), "\n") {
-			if !strings.HasPrefix(strings.TrimSpace(line), "|") {
-				continue
-			}
-			for _, m := range chatRoutingCmdPattern.FindAllStringSubmatch(line, -1) {
-				routed[m[1]] = true
-			}
-		}
-		assertStringSetsEqual(t, "AGENTS.md routing rows", routed, "shipped commands", shipped)
-	})
+	}
+	assertStringSetsEqual(t, "AGENTS.md routing rows", routed, "shipped commands", shipped)
 }
 
 // assertStringSetsEqual fails with a directional diff when two string sets

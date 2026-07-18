@@ -391,3 +391,5 @@
 {"ts":"2026-07-18T06:11:58.217298Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"chat-canonical-research","message":"status -\u003e completed"}
 {"ts":"2026-07-18T14:42:23.063421Z","type":"peer.call.invoked","agent":"hero","slug":"chat-canonical-research","message":"peer call advisory mode=advisory target=hero-code call_id=18c36961159146f873620cdd561c59ac"}
 {"ts":"2026-07-18T14:45:00.072184Z","type":"peer.call.completed","agent":"hero","slug":"chat-canonical-research","message":"peer call ok mode=advisory target=hero-code kind=findings call_id=18c36961159146f873620cdd561c59ac artifact=private-peer-result-excluded"}
+{"ts":"2026-07-18T14:55:14.744554Z","type":"peer.call.invoked","agent":"hero","slug":"chat-canonical-research","message":"peer call advisory mode=advisory target=hero-code call_id=18c36a14c158d53849481fad606186c8"}
+{"ts":"2026-07-18T14:59:11.092159Z","type":"peer.call.completed","agent":"hero","slug":"chat-canonical-research","message":"peer call ok mode=advisory target=hero-code kind=findings call_id=18c36a14c158d53849481fad606186c8 artifact=private-peer-result-excluded"}

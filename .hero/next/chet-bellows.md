@@ -1,37 +1,28 @@
 ---
 user: chet-bellows
-updated: 2026-07-18T14:44:50Z
+updated: 2026-07-18T15:52:40Z
 repo: hero-engine/hero
 ---
 
 # chet-bellows's handoff
 
-## Session goal
-
-> Session opened with — <command-message>deliver</command-message>
-> <command-name>/deliver</command-name>
-> <command-args>chat-canonical-research
-> 
-> First add a dedicated measurable EARS Acceptance Criteria section from the existing “Done when” and Validation requirements. Then deliver through audit and hero spec verify before stopping.</command-args>
-> Route this delivery request to the `feature-delivery-lead` agent for ex…
-
 ## Last user ask
 
-> Route this delivery request to the `feature-delivery-lead` agent for execution.
+> # Hero peer call
 > 
-> Be the `feature-delivery-lead` agent. Load the `context-injection` skill before starting.
+> You are running as a subagent invoked by `hero peer call` from a sibling
+> Hero workspace. Your cwd is **this peer workspace**. Load this workspace's
+> Hero context (conventions, decisions, code knowledge) — use `hero context`,
+> `hero search`, and the local files as needed.
 > 
-> **Initiative guard.** If the requested target resolves to a `type: initiative`,
-> do NOT deliver one child. An initiative is a parent — running the whole thing
-> autonomously is `/drive`, not `/deliver`. Offer the upgrade: "That's…
+> ## Caller
+> 
+> - Origin workspace: hero-code (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
+> - Target alias on cal…
 
 ## Suggested next prompt
 
-> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
-
-_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
-
-_Source: auto-derived from open feature — `hero next suggest "..."` to override._
+> Chat-app domain graduation (research/code modes + switching) abandoned — see decision chat-app-stays-single-surface. chat-canonical-research stands as shipped; no follow-up work pending on this thread.
 
 ## Recent reflections
 

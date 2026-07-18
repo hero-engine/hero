@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-18T14:49:18Z · projected from 552 source nodes_
+_Last refreshed: 2026-07-18T15:48:16Z · projected from 552 source nodes_
 
 ## Surfaces
 
@@ -10,9 +10,9 @@ _Last refreshed: 2026-07-18T14:49:18Z · projected from 552 source nodes_
 |---|---|---|---|---|
 | core | building | cmd/, internal/ | 1d ago | satellite-corpus-integration |
 | docs | maturing | web/docs/ | 5d ago | — |
-| domains/chat | maturing | domains/chat/ | 4m ago | — |
+| domains/chat | maturing | domains/chat/ | 49m ago | — |
 | domains/engineering | maturing | domains/engineering/ | 6d ago | — |
-| domains/pm | maturing | domains/pm/ | 14h ago | — |
+| domains/pm | maturing | domains/pm/ | 15h ago | — |
 | domains/sales | maturing | domains/sales/ | 9d ago | — |
 | landing | building | web/landing/ | 6d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
