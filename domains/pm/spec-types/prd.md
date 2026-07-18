@@ -150,8 +150,7 @@ What we'd discover too late if we didn't probe now.
   No-Gos must be non-empty before a PRD can move to `review`).
 - Acceptance criteria, when present in a PRD, prefer EARS via the
   `acceptance-criteria-ears` skill.
-- Metrics belong to `metrics-analyst` (P1) — in v1, `prd-author`
-  drafts a metrics section; metrics-analyst fills it in v1.5.
+- Metrics belong to `metrics-analyst`.
 
 ## Anti-patterns
 

@@ -11,15 +11,15 @@ here:
 | File | Routes to | Purpose |
 |---|---|---|
 | `triage.md` | `intake-triager` | Process inbound intake |
-| `refine.md` | `pm-delivery-lead` → `story-writer` / `prd-author` / `epic-framer` (P1, ships v1.5) | Refine an artifact for delivery readiness |
+| `refine.md` | `pm-delivery-lead` → `story-writer` / `prd-author` / `epic-framer` | Refine an artifact for delivery readiness |
 | `roadmap.md` | `roadmap-curator` | Open / reconcile the roadmap |
 | `prioritize.md` | `prioritization-strategist` | Rank a set of initiatives or specs |
 | `prd.md` | `prd-author` | Draft or refine a PRD |
-| `pitch.md` | `pitch-author` (P1) → falls back to `prd-author` in v1 with pitch template | Draft a Shape Up pitch |
+| `pitch.md` | `pitch-author` | Draft a Shape Up pitch |
 | `handoff.md` | `handoff-coordinator` | Flip `owner: pm → engineering` on a refined spec — the cross-domain owner-flip handoff (brand interaction; no separate engineering spec is created) |
 | `discover.md` | `discovery-researcher` | Continuous-discovery research kickoff |
-| `metrics.md` | `metrics-analyst` (P1) → falls back to `pm-delivery-lead` in v1 | Define success metrics for a PRD |
-| `release-notes.md` | `stakeholder-communicator` (P1) → falls back to `pm-delivery-lead` in v1 | Draft customer-facing release notes |
+| `metrics.md` | `metrics-analyst` | Define success metrics for a PRD |
+| `release-notes.md` | `stakeholder-communicator` | Draft customer-facing release notes |
 
 ### Reused (cross-domain / core)
 - `/why` — multi-hop trace across the spec hierarchy + bitemporal `owner_history` rows that show cross-domain ownership transitions

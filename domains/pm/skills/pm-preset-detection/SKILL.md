@@ -46,7 +46,7 @@ Load this skill when:
 
 - any PM authoring agent starts work on a `feature`, `epic`, `initiative`, `prd`, or `pitch`
 - `roadmap-curator` is grouping the Roadmap board (grouping depends on roadmap preset)
-- `pm-delivery-lead` needs the math model for the active preset (P1 planners `capacity-planner` / `cycle-planner` ship v1.5)
+- `pm-delivery-lead` needs the math model for the active preset (planners `capacity-planner` / `cycle-planner`)
 - `pm-delivery-lead` is orchestrating a refinement pass and needs to decide which authoring agent to call
 
 ## The preset schema
@@ -127,7 +127,7 @@ Preset-conditional:
 | `phased` | `release` | The release the epic is committed to. |
 | `continuous` | (none) | Epics are coarse containers; no preset-specific fields. |
 
-`pm-delivery-lead` reads the preset to decide which fields to populate (P1 `epic-framer` ships v1.5).
+`pm-delivery-lead` reads the preset to decide which fields to populate.
 
 ## "Switching is a config edit, not a migration" — preserve fields when their preset toggles off
 

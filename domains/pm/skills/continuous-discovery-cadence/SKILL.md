@@ -153,8 +153,8 @@ The cadence rarely dies all at once. It erodes through one of these failure mode
 ## Cross-references
 
 - `opportunity-solution-trees-torres` — the artifact discovery feeds and refines weekly.
-- `discovery-interview-design` (P1, ships v1.5) — how to run the individual touchpoint.
-- `assumption-testing` (P1, ships v1.5) — how to design tests that resolve in days.
+- `discovery-interview-design` — how to run the individual touchpoint.
+- `assumption-testing` — how to design tests that resolve in days.
 - `evidence-synthesis` — clustering raw interview notes into opportunity statements.
 - `intake-classification` — the inbound side that feeds discovery (and gets shaped by it).
 - `metrics-design` — outcomes at the top of the OST follow these rules.

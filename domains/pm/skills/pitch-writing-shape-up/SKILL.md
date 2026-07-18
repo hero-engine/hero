@@ -251,7 +251,7 @@ From ChatPRD / MetaGPT prior art. Every PRD — pitch or ten-section — must pa
 
 - `prd-structure` — pitch shape is the default PRD template under cycle preset; this skill goes deeper.
 - `prd-anti-patterns` — Shape-Up-specific failures (#2 empty No-Gos, #5 missing Appetite, #10 Rabbit-Hole-as-risk) are covered there.
-- `shape-up-cadence` (P1, ships v1.5) — the 6+2 rhythm, betting table mechanics, cycle scheduling.
-- `hill-chart-reasoning` (P1, ships v1.5) — hill charts as unknowns-remaining visualization (not progress bars).
+- `shape-up-cadence` — the 6+2 rhythm, betting table mechanics, cycle scheduling.
+- `hill-chart-reasoning` — hill charts as unknowns-remaining visualization (not progress bars).
 - `cycle-planning` — capacity and commit logistics under cycle preset.
 - Prior art: Ryan Singer, *Shape Up* (Basecamp, 2019) — read it if you haven't.
