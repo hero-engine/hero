@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-18T05:48:25Z
+updated: 2026-07-18T06:13:12Z
 repo: hero-engine/hero
 ---
 
@@ -8,22 +8,26 @@ repo: hero-engine/hero
 
 ## Session goal
 
-> Session opened with — hero code is now embedding us - the hero app - and is serving our agents / commands and skills out of our binary live and dynamically depending on the active domain - eng / code, PM, QA etc.. and it said the PM pack is very light - so we need to audit what we have for when a product manager is active - and make the inventory based off research of what commands / skills and agents we need (probably…
-
-_possibly stale — 3 commit(s) since, last set 5h 43m ago_
+> Session opened with — <command-message>deliver</command-message>
+> <command-name>/deliver</command-name>
+> <command-args>chat-canonical-research
+> 
+> First add a dedicated measurable EARS Acceptance Criteria section from the existing “Done when” and Validation requirements. Then deliver through audit and hero spec verify before stopping.</command-args>
+> Route this delivery request to the `feature-delivery-lead` agent for ex…
 
 ## Last user ask
 
-> hero code is now embedding us - the hero app - and is serving our agents / commands and skills out of our binary live and dynamically depending on the active domain - eng / code, PM, QA etc.. and it said the PM pack is very light - so we need to audit what we have for when a product manager is active - and make the inventory based off research of what commands / skills and agents we need (probably…
-> _possibly stale — 1 commit(s) since, last set 20m ago_
+> Route this delivery request to the `feature-delivery-lead` agent for execution.
+> 
+> Be the `feature-delivery-lead` agent. Load the `context-injection` skill before starting.
+> 
+> **Initiative guard.** If the requested target resolves to a `type: initiative`,
+> do NOT deliver one child. An initiative is a parent — running the whole thing
+> autonomously is `/drive`, not `/deliver`. Offer the upgrade: "That's…
 
 ## Suggested next prompt
 
-> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
-
-_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
-
-_Source: auto-derived from open feature — `hero next suggest "..."` to override._
+> Close the loop with hero-code: advisory peer call confirming chat-canonical-research is delivered/completed — the canonical domains/chat pack now ships /research + 3 agents + 5 skills, staged by build.rs with no build.rs change, ready for hero-code to build client loading + plan-approval/progress/interrupt rendering against.
 
 ## Recent reflections
 

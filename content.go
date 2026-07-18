@@ -10,10 +10,14 @@
 // client-embedded pack, not an installable one: the sibling hero-code
 // repo (a Rust/GPUI chat client) stages every domains/<name>/{agents,
 // skills,commands} directory directly from this source tree at build
-// time (crates/hero-core/build.rs) and loads chat's six commands
-// independent of hero install. There is no hero install --domain chat
-// audience today, so chat has no go:embed directive, no DomainFS case,
-// and does not appear in AvailableDomains(). See
+// time (crates/hero-core/build.rs) and loads chat independent of hero
+// install. chat now ships agents/ and skills/ alongside its commands/
+// (the canonical /research workflow, three specialist agents, and their
+// hidden research-doctrine skills); build.rs iterates the directories,
+// so those are staged automatically without any change here. There is
+// no hero install --domain chat audience today, so chat still has no
+// go:embed directive, no DomainFS case, and does not appear in
+// AvailableDomains(). See
 // .hero/specs/chat-pack-disposition/spec.md (option a) and
 // .hero/knowledge/decisions/multi-domain-context-activation.md for the
 // full rationale. clientEmbeddedDomains below is the enforcement point:
