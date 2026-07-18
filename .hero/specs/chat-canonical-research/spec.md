@@ -508,3 +508,17 @@ a deliberate choice the spec's Risks section already made.
   result_ref: .hero/peer-calls/18c36a14c158d53849481fad606186c8.md
   reason: "Design debate: should research graduate into its own domain (Extends chat), and should the chat app host a user-selectable SUBSET of domains (chat/research/code) so someone can run a lean chat+code experience without the full engineering delivery pack? hero-code owns the client's domain-loading + selection model, so their architectural position drives this."
 
+- 2026-07-18T16:01:10Z — out → hero-code (peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
+  mode: advisory
+  originating_spec: chat-canonical-research
+  at_commit: 04a0b5d
+  result_ref: .hero/peer-calls/18c36d77e1e311b892bc0838c2f3ce9f.md
+  reason: "Reversal notice: the chat pack has been trimmed back to lightweight — the /research workflow and its machine-readable checkpoint/interrupt contract (that I sent you earlier) are REMOVED. hero-code should stop building plan-approval/progress/interrupt UI for chat mode. Keeping chat simple per the chat-app-stays-single-surface decision."
+
+- 2026-07-18T16:59:07Z — out → hero-code (peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
+  mode: advisory
+  originating_spec: chat-canonical-research
+  at_commit: 04a0b5d
+  result_ref: .hero/peer-calls/18c370a26c194e3877a8c897c8aa09e6.md
+  reason: "Confirm the consumption path for the chat pack's AGENTS.md: does chat mode render domains/chat/AGENTS.md (the research-friendly habits + citation convention) into the model's system instructions, or is AGENTS.md currently unconsumed? Determines whether our ambient pack guidance has any runtime effect."
+

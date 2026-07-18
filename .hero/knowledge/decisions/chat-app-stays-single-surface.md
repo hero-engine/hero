@@ -1,15 +1,26 @@
 ---
 title: "Chat App Stays a Single Simple Surface — No Domain-Switching or Mode Packs"
 type: decision
-status: accepted
+status: superseded
+superseded_by: chat-sheds-research-to-seed
 created: 2026-07-18
-tags: [chat, domains, product-scope, hero-code, architecture, simplicity]
+tags: [chat, domains, product-scope, hero-code, architecture, simplicity, superseded]
 relations:
+  - target: chat-sheds-research-to-seed
+    kind: related
   - target: chat-canonical-research
     kind: related
 ---
 
 # Chat App Stays a Single Simple Surface — No Domain-Switching or Mode Packs
+
+> **Superseded (2026-07-18) by [[chat-sheds-research-to-seed]].** The
+> "research stays baked into the baseline chat pack" conclusion below was
+> reversed: baseline chat is basic Chat, and the research apparatus was extracted
+> to a dormant Hero Research seed. This decision's other two conclusions —
+> **no domain switcher** and **no lightweight `code` domain** — remain in force
+> and are re-adopted verbatim by the superseding decision. The reasoning below is
+> preserved as the historical record; do not treat its research clause as current.
 
 ## Decision
 
