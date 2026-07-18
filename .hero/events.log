@@ -380,3 +380,8 @@
 {"ts":"2026-07-17T22:25:37.165578Z","type":"drive.pause_outcome","agent":"human","slug":"pm-pack-completion","message":"drive pause Supervised resolved: approved"}
 {"ts":"2026-07-17T23:43:34.561721Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"remaining-roles-scrubbers-and-launch","message":"\"Remaining Roles, Scrubbers, and Launch/GTM\""}
 {"ts":"2026-07-17T23:43:34.561826Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"remaining-roles-scrubbers-and-launch","message":"status -\u003e completed"}
+{"ts":"2026-07-17T23:44:29.792531Z","type":"drive.pause_outcome","agent":"human","slug":"pm-pack-completion","message":"drive pause Supervised resolved: approved"}
+{"ts":"2026-07-18T00:03:50.421395Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"story-queue-planning-backing","message":"\"Story Queue Backing — Capacity + Cycle Planning Agents, Skills, Commands\""}
+{"ts":"2026-07-18T00:03:50.421504Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"story-queue-planning-backing","message":"status -\u003e completed"}
+{"ts":"2026-07-18T00:03:51.907104Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"pm-pack-completion","message":"\"PM Pack Completion — Author the Deferred Roster and Reframe Around Critics + Corpus-Grounding\""}
+{"ts":"2026-07-18T00:03:51.907189Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"pm-pack-completion","message":"status -\u003e completed"}

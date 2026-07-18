@@ -187,6 +187,25 @@ invoke the agent directly.
 | Ambiguous stories, "stories that won't deliver cleanly", `ready` stories failing INVEST/EARS, pre-cycle story sweep | "scrub stories" | `/scrub stories` → `ambiguous-story-scrubber` — batch sweep of `ready` stories for INVEST/EARS failures; flag report with the specific failure + recommended refinement; report-only, no auto edit |
 | Plan a launch, "how should we launch this", GTM motion, launch tier, launch checklist, "what's the go-to-market" | "plan the launch" | `/launch` → `stakeholder-communicator` — detects the launch tier (1/2/3 by impact) and emits the five-phase checklist (alignment → positioning → enablement → launch → post-launch) scoped to that tier; loads `launch-gtm-tiering` |
 
+#### Wave-1 Story Queue planning routes (story-queue-planning-backing)
+
+These are net-new routes appended by `story-queue-planning-backing` (the final
+pm-pack-completion child): the two agents that back the live Story Queue view —
+the **velocity cut-line** (`capacity-planner`) and the **cycle-fit marker**
+(`cycle-planner`, one preset-adaptive agent) — plus the four planning command
+shims. Both agents are **capacity/planning** agents: they recommend, they never
+auto-commit a plan (decision gate). This subsection **supersedes** the canonical
+table's `/capacity` and `/plan-cycle` / `/plan-sprint` / `/plan-iteration`
+"no v1 surface (ships v1.5)" annotations (the same supersede pattern children
+#7 `/metrics` and #8 `/standup` used).
+
+| User intent | Vocabulary-variant phrasing | Command (shipped surface) |
+|---|---|---|
+| Capacity, "can we fit X this cycle", velocity room, appetite room, WIP headroom, "are we over capacity" (un-deferred) | | `/capacity` → `capacity-planner` — reconciles committed work vs capacity under the active preset (velocity / appetite / WIP / release) and places the Story Queue cut-line; recommends, never auto-commits; supersedes the canonical "no v1 surface (ships v1.5)" row |
+| Plan next cycle, "what should we bet on", betting table, appetite (un-deferred) | "plan the scope cycle" | `/plan-cycle` → `cycle-planner` — the **shape-up cycle** entry point into the one preset-adaptive planner (betting table + appetite + cooldown cadence); the agent still reads the active preset via `pm-preset-detection` |
+| Plan next sprint, "what should we commit to", velocity commit, cut-line (un-deferred) | | `/plan-sprint` → `cycle-planner` — the **scrum sprint** entry point into the same preset-adaptive planner (velocity + commit/stretch) |
+| Plan next iteration, kanban pull, phased release plan, "what's next in the queue" (un-deferred) | "plan the phase" | `/plan-iteration` → `cycle-planner` — the **generic kanban/phased** entry point into the same preset-adaptive planner (WIP + rolling commit + phase gates) |
+
 When routing, pass the user's original context as arguments to the
 command. If the intent is ambiguous, present the top 2-3 options and
 ask.
@@ -271,7 +290,7 @@ in the `handoff-protocol` skill; `handoff-coordinator` (invoked via
 
 Every command an installed pm workspace ships, no links:
 
-- **PM:** `/discover`, `/experiment`, `/handoff`, `/interview`, `/launch`, `/metrics`, `/pitch`, `/prd`, `/prioritize`, `/refine`, `/release-notes`, `/roadmap`, `/standup`, `/triage` — see Natural Language Routing above for what each does. (`/discover` and `/handoff` override the core commands of the same name below.) `/launch` (Wave-3) produces a tiered launch plan + phased checklist and routes to `stakeholder-communicator` (loads `launch-gtm-tiering`).
+- **PM:** `/capacity`, `/discover`, `/experiment`, `/handoff`, `/interview`, `/launch`, `/metrics`, `/pitch`, `/plan-cycle`, `/plan-iteration`, `/plan-sprint`, `/prd`, `/prioritize`, `/refine`, `/release-notes`, `/roadmap`, `/standup`, `/triage` — see Natural Language Routing above for what each does. (`/discover` and `/handoff` override the core commands of the same name below.) `/launch` (Wave-3) produces a tiered launch plan + phased checklist and routes to `stakeholder-communicator` (loads `launch-gtm-tiering`). `/capacity` and `/plan-cycle` / `/plan-sprint` / `/plan-iteration` (Wave-1) route to the Story Queue planning agents (`capacity-planner`, `cycle-planner`) per the Wave-1 Story Queue planning routes above.
 - **PM `/scrub` concerns:** `/scrub` is a concern-dispatched workspace scrub, all concerns report-only. `intake` → `duplicate-intake-scrubber` (batch dedup sweep, Wave-1 child #5); `roadmap` → `stale-roadmap-scrubber` (stale / mislabeled roadmap items, Wave-3 child #11); `stories` → `ambiguous-story-scrubber` (`ready` stories failing INVEST/EARS, Wave-3 child #11). See the Wave-1 backing routes and the Wave-3 remaining roles, scrubbers & launch routes above.
 - **Core (installed with every pack):** `/blocked`, `/capture`, `/check`, `/convention`, `/decide`, `/docs`, `/hero`, `/import`, `/note`, `/resume`, `/retro`, `/scan`, `/why`.
 
@@ -286,6 +305,7 @@ Every agent an installed pm workspace ships, no links:
 - **PM Wave-1 Story-Detail / Intake backing:** `dependency-mapper` (backs Story Detail "Show dependencies"; walks the dependency graph forward + backward, including cross-domain into engineering features — read-only), `duplicate-intake-scrubber` (backs Intake "Cluster recent" and `/scrub intake`; batch/cluster complement to the write-time `duplicate-detector` — report-only, no auto-merge). See the Wave-1 backing routes above.
 - **PM Wave-2 competitive & market:** `competitive-analyst` (retrieval-only competitive teardown — describes what rivals actually ship, sourced + dated, refuses model-memory; builds the three-band feature matrix and a positioning read; loads `competitive-research` + `feature-comparison-framing`). See the Wave-2 competitive & market-grounding routes above.
 - **PM Wave-3 remaining roles & scrubbers:** `epic-framer` (frames an epic as a coherent bet — Why + rollup AC + sequenced child stories; authoring), `risk-curator` (shapes risks as scenario + indicator + response; authoring), `portfolio-curator` (cross-roadmap theme balance + capacity-vs-ambition; recommends, never auto-rebalances), `discovery-reviewer` (adversarial rigor critic for discovery artifacts — report-only, routes back to `discovery-researcher`), `stale-roadmap-scrubber` (batch sweep for stale / mislabeled roadmap items; report-only, backs `/scrub roadmap`), `ambiguous-story-scrubber` (batch sweep of `ready` stories for INVEST/EARS failures; report-only, backs `/scrub stories`). See the Wave-3 remaining roles, scrubbers & launch routes above.
+- **PM Wave-1 Story Queue planning:** `capacity-planner` (reconciles committed work vs capacity under the active preset — velocity/appetite/WIP/release; backs the Story Queue velocity cut-line; recommends, never auto-commits; loads `capacity-planning` + `sprint-planning` + `cycle-planning`), `cycle-planner` (**one preset-adaptive** planner — sprint/cycle/iteration; backs the Story Queue cycle-fit marker and the `/plan-cycle` / `/plan-sprint` / `/plan-iteration` shims; delegates the capacity read to `capacity-planner` and the ranked queue to `prioritization-strategist`). See the Wave-1 Story Queue planning routes above.
 - **Core (installed with every pack):** `convention-author`, `documentation-engineer`, `project-context-builder`, `session-primer`.
 
 ### Skills Reference
@@ -305,6 +325,7 @@ Every skill an installed pm workspace ships, no links:
 - **Wave-2 exec narrative & working-backwards:** `prfaq-writing` (the Amazon PR/FAQ — mock press release + anticipated FAQ that surfaces the "dragons" before building; reasoning over copy), `exec-narrative` (the Amazon six-page narrative — Intro / Goals / Tenets / State of the Business / Lessons / Strategic Priorities + the paragraph-level "so what?" test; prose exposes the gaps bullets hide) — both loaded by `stakeholder-communicator`; they home the working-backwards format `stakeholder-communication` names and defers.
 - **Discovery & framing coverage (Wave-3):** `personas-and-journey-maps` (evidence-based personas + journey maps), `jtbd-job-stories` (`When … I want … so …`; context over persona), `positioning-canvas` (Dunford five-component positioning), `story-mapping` (Patton backbone + walking skeleton), `hill-chart-reasoning` (unknowns-remaining, not %-done), `domain-glossary-maintenance` (shared PM/eng vocabulary in `.hero/knowledge/`), `product-vision-writing` (one-page vision laddering strategy → roadmap).
 - **Launch / GTM (Wave-3):** `launch-gtm-tiering` (size a launch into Tier 1/2/3 by impact — blast radius, revenue/segment, net-new vs. incremental, competitive stakes — then run the five-phase checklist `alignment → positioning → enablement → launch → post-launch` scoped to the tier; loaded by `stakeholder-communicator` and the `/launch` command).
+- **Story Queue planning (Wave-1):** `capacity-planning` (per-preset capacity math + honest velocity distribution + WIP limits + the Story Queue cut-line — un-dangles the `(P1, ships v1.5)` forward-ref in `sprint-planning`/`cycle-planning`), `iteration-planning` (generic kanban/phased iteration — WIP as a tool, rolling commit, phase gates), `shape-up-cadence` (the operational 6-week + cooldown rhythm, betting-table timing, hill-chart update cadence; cross-refs `hill-chart-reasoning`). All three loaded by `capacity-planner` and/or `cycle-planner`.
 - **Core (installed with every pack):** `agent-reliability`, `auto-knowledge-capture`, `completion-ledger`, `context-injection`, `convention-writing`, `documentation-practices`, `executive-report`, `explainer-format`, `kickoff-prompt`, `knowledge-flywheel`, `next-handoff-emit`, `next-md`, `note-capture`, `nudge-awareness`, `project-context-generation`, `spec-format`.
 
 ### CLI Commands
