@@ -445,6 +445,14 @@ func runWhy(cmd *cobra.Command, args []string) error {
 	}
 	defer store.Close()
 
+	// Reconcile the spec subgraph from disk before resolving, so a spec
+	// created since the last graph ingest (e.g. a peer-received spec-out
+	// spec) resolves without a prior manual `hero scan`. This is the
+	// graph-side analogue of the index's RefreshIfStale and mirrors what
+	// `hero blocked` already does. Covers both the recursive trace below
+	// and the --edges path (runWhyEdges is only reached from here).
+	reconcileSpecGraph(store, findProjectRoot(), repoKey, loadConfigSilent())
+
 	if whyEdges {
 		return runWhyEdges(store, repoKey, target)
 	}
@@ -572,13 +580,10 @@ func runBlocked(cmd *cobra.Command, args []string) error {
 	// truth) before querying, so `hero blocked` reflects current relations
 	// even on a fresh clone where graph.db — a regenerable cache — hasn't
 	// been reingested yet. This keeps `hero blocked` in agreement with
-	// `hero queue`, which reads frontmatter directly. Best-effort: on any
-	// error we just query whatever the graph already holds.
-	if cfg != nil {
-		if specs, derr := spec.Discover(cfg.HeroDir(findProjectRoot())); derr == nil {
-			_, _ = spec.WriteGraph(specs, repoKey, graph.DomainFor(cfgVal, graph.IntrinsicActive), store)
-		}
-	}
+	// `hero queue`, which reads frontmatter directly. Shared with `hero why`
+	// so the two read paths stay in lockstep. Best-effort: on any error we
+	// just query whatever the graph already holds.
+	reconcileSpecGraph(store, findProjectRoot(), repoKey, cfg)
 
 	// f.domain = scope is the active filter on the Feature row; we
 	// always JOIN both endpoints so cross-domain rows can be rendered
@@ -730,7 +735,57 @@ func openRepoStore() (*graph.Store, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
-	return store, gitutil.RepoKey(projectRoot), nil
+	return store, graphRepoKey(projectRoot), nil
+}
+
+// graphRepoKey is the single derivation of the graph partition key for
+// every graph writer and reader in this package. It MUST match the key
+// `hero scan` writes under and the key traversal.Why / hero blocked /
+// hero impact filter on, so nodes written by any command are reachable.
+//
+// Do NOT derive a graph repoKey via filepath.Base(projectRoot): that
+// yields the bare directory name ("hero") and diverges from
+// gitutil.RepoKey ("hero-engine/hero") whenever an origin remote is set,
+// silently partitioning writes into a subgraph the reader never queries.
+// (See graph-why-resolution-and-peer-spec-indexing/spec.md.)
+func graphRepoKey(projectRoot string) string {
+	return gitutil.RepoKey(projectRoot)
+}
+
+// reconcileSpecGraph re-writes the spec subgraph from frontmatter (the
+// durable source of truth) into the graph substrate before a read-side
+// traversal queries it. It is the graph-side analogue of the index's
+// RefreshIfStale: `hero why` / `hero blocked` read graph.db — a
+// regenerable cache with no read-side self-heal — so a spec created since
+// the last ingest (notably a peer-received spec-out spec that never hit an
+// ingest path) is otherwise invisible to them while `hero graph` /
+// `hero search` find it in the self-healing index.
+//
+// It reconciles ONLY the spec subgraph (not code/sessions/git), so it is
+// far cheaper than a full `hero graph reingest` — the same cost
+// `hero blocked` already pays. spec.WriteGraph is idempotent, so on a warm
+// graph this produces no new history for unchanged specs. It runs
+// unconditionally (not gated on projectGraphCold): the bug it fixes is a
+// warm graph missing a handful of newer specs, which a cold-graph guard
+// would skip entirely.
+//
+// repoKey MUST be graphRepoKey(projectRoot) so the reconciled nodes land
+// in the partition the reader filters on — this is also what keeps a local
+// spec's node live in the local partition even when a federated peer copy
+// exists under a sibling repoKey (see the team-oauth federation case).
+//
+// Best-effort by contract: any error leaves the graph as-is and the caller
+// queries whatever it already holds. A read command must never fail
+// because the reconcile couldn't run.
+func reconcileSpecGraph(store *graph.Store, projectRoot, repoKey string, cfg *config.Config) {
+	if store == nil || cfg == nil {
+		return
+	}
+	specs, err := spec.Discover(cfg.HeroDir(projectRoot))
+	if err != nil {
+		return
+	}
+	_, _ = spec.WriteGraph(specs, repoKey, graph.DomainFor(*cfg, graph.IntrinsicActive), store)
 }
 
 func gitConfigEmail(repoDir string) string {

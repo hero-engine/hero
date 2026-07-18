@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"sort"
 
 	"github.com/hero-engine/hero/internal/codescan"
@@ -192,7 +191,7 @@ func reingestCode(cfg config.Config, projectRoot string, store *graph.Store) err
 // sessions, then git log (so touches edges can resolve File targets
 // already created by codescan).
 func reingestWork(cfg config.Config, projectRoot, heroDir string, store *graph.Store) error {
-	repoKey := filepath.Base(projectRoot)
+	repoKey := graphRepoKey(projectRoot)
 
 	specs, err := spec.Discover(heroDir)
 	if err != nil {
