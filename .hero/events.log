@@ -385,3 +385,5 @@
 {"ts":"2026-07-18T00:03:50.421504Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"story-queue-planning-backing","message":"status -\u003e completed"}
 {"ts":"2026-07-18T00:03:51.907104Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"pm-pack-completion","message":"\"PM Pack Completion — Author the Deferred Roster and Reframe Around Critics + Corpus-Grounding\""}
 {"ts":"2026-07-18T00:03:51.907189Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"pm-pack-completion","message":"status -\u003e completed"}
+{"ts":"2026-07-18T03:18:36.457304Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"pm-foundation-delivery","message":"PM Foundation Delivery — Ship PM Pack Additively + Unblock hero-code"}
+{"ts":"2026-07-18T03:18:36.457461Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"pm-foundation-delivery","message":"status -\u003e completed"}
