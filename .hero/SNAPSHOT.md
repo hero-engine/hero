@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-18T03:18:53Z · projected from 551 source nodes_
+_Last refreshed: 2026-07-18T06:13:12Z · projected from 552 source nodes_
 
 ## Surfaces
 
@@ -10,9 +10,9 @@ _Last refreshed: 2026-07-18T03:18:53Z · projected from 551 source nodes_
 |---|---|---|---|---|
 | core | building | cmd/, internal/ | 1d ago | satellite-corpus-integration |
 | docs | maturing | web/docs/ | 5d ago | — |
-| domains/chat | concept | domains/chat/ | — | — |
+| domains/chat | maturing | domains/chat/ | 1m ago | — |
 | domains/engineering | maturing | domains/engineering/ | 6d ago | — |
-| domains/pm | maturing | domains/pm/ | 3h ago | — |
+| domains/pm | maturing | domains/pm/ | 6h ago | — |
 | domains/sales | maturing | domains/sales/ | 9d ago | — |
 | landing | building | web/landing/ | 6d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
@@ -54,7 +54,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Recently completed (last 14 days)
 
 - **(unassigned)** — pm-foundation-delivery, pm-pack-completion, discovery-framing-coverage-skills, exec-narrative-and-evidence-synthesis, story-detail-and-intake-scrubber-backing, prd-editor-comms-backing, experiment-stage-and-metric-rca, adversarial-critics-bundle
-- **domains/pm** — story-queue-planning-backing, remaining-roles-scrubbers-and-launch, competitive-and-market-grounding, pm-doctrine-and-skill-backfill
+- **domains/chat** — chat-canonical-research
+- **domains/pm** — story-queue-planning-backing, remaining-roles-scrubbers-and-launch, competitive-and-market-grounding
 
 ## Next up across surfaces
 
@@ -74,6 +75,6 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 196/414 (47%)
-- Projection generation: 1ms · Source nodes: 551
+- Specs covered: 197/415 (47%)
+- Projection generation: 1ms · Source nodes: 552
 
