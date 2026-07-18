@@ -15,7 +15,7 @@ Provide the concrete failure modes PRDs fall into — the smells `pm-reviewer` f
 Load this skill when:
 
 - reviewing a PRD before it advances to `approved` (`pm-reviewer`)
-- authoring a PRD and self-checking against known traps (`prd-author`; `pitch-author` ships v1.5)
+- authoring a PRD and self-checking against known traps (`prd-author`; `pitch-author`)
 - running the planned PRD scrubber (`prd-author-scrubber` — P1)
 - sanity-checking an inherited or externally-drafted PRD
 

@@ -158,8 +158,8 @@ What sprint preset does *not* fix:
 ## Cross-references
 
 - `cycle-planning` — the Shape Up alternative for teams running 6+2 instead of fixed sprints.
-- `iteration-planning` (P1, ships v1.5) — generic iteration shape for kanban / phased presets.
+- `iteration-planning` — generic iteration shape for kanban / phased presets.
 - `prioritization-frameworks` — produces the prioritized queue that sprint planning draws from.
 - `story-writing-invest` — INVEST-shaped stories are what makes refinement (and therefore sizing) possible.
-- `capacity-planning` (P1, ships v1.5) — the cross-team / cross-sprint capacity view that sits above sprint planning.
+- `capacity-planning` — the cross-team / cross-sprint capacity view that sits above sprint planning.
 - `story` spec type — `points` and `sprint` are the preset-conditional fields planning populates.

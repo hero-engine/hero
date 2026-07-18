@@ -128,7 +128,7 @@ If you can't decide between *feature* and *chore*, the question is *who asked fo
 
 - **The "wire it up" story** — "Hook the new endpoint to the dashboard." Almost always means two stories were split badly. Recombine or sequence with explicit dependency.
 - **The technical task masquerade** — "Add a feature flag for X." That's a chore inside the actual story, not a story on its own.
-- **The epic in story clothing** — Description paragraph keeps growing; AC list keeps growing; sizing keeps slipping. Promote to an epic (v1: `pm-delivery-lead` frames it; `epic-framer` ships v1.5).
+- **The epic in story clothing** — Description paragraph keeps growing; AC list keeps growing; sizing keeps slipping. Promote to an epic (`epic-framer` frames it).
 - **The implementation-as-value** — Value statement is "so that the system uses the new architecture." No actual user is named. Reframe or downgrade to chore.
 - **The everything-bagel AC** — AC list mixes happy path, edge cases, security requirements, and performance targets. Split by AC, or move non-functional requirements to a linked PRD.
 - **The spec without a `kind`** — Defaults shouldn't be implicit. Force the kind decision at draft time.

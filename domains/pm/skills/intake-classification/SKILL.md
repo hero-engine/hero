@@ -25,7 +25,7 @@ Load this skill when:
 
 The substantive area the signal is about. Themes are how `roadmap-curator` later balance the roadmap.
 
-**Let themes emerge.** Do not pre-build a 30-category taxonomy. Start by reading the signal and naming what it's *about* in 1-3 words ("csv export", "saml sso", "mobile offline"). Over time, the same themes recur; the recurring ones earn a place in the workspace glossary (P1, ships v1.5).
+**Let themes emerge.** Do not pre-build a 30-category taxonomy. Start by reading the signal and naming what it's *about* in 1-3 words ("csv export", "saml sso", "mobile offline"). Over time, the same themes recur; the recurring ones earn a place in the workspace glossary.
 
 **Rules:**
 

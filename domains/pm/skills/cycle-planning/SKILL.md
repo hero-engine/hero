@@ -178,8 +178,8 @@ It's the wrong choice when:
 ## Cross-references
 
 - `pitch-writing-shape-up` — how to author the pitches that enter the betting table.
-- `shape-up-cadence` (P1) — the operational rhythm of the cycle preset (this skill focuses on planning; that skill focuses on the recurring cadence).
-- `hill-chart-reasoning` (P1) — deeper guidance on reading and updating the hill chart.
+- `shape-up-cadence` — the operational rhythm of the cycle preset (this skill focuses on planning; that skill focuses on the recurring cadence).
+- `hill-chart-reasoning` — deeper guidance on reading and updating the hill chart.
 - `sprint-planning` — the alternative delivery layer for teams running fixed sprints.
 - `prioritization-frameworks` — produces the pitch ranking the betting table considers.
 - `initiative` and `feature` spec types — `appetite`, `cycle`, and `hill_position` are the preset-conditional fields cycle planning populates.

@@ -174,7 +174,7 @@ The `pm-reviewer` runs this checklist as a blocking gate on the `refined → rea
 - **Implementation-shaped AC.** `WHEN the user clicks the green button in the modal's top-right corner THE SYSTEM SHALL POST to /api/v2/users/:id/preferences with {notify: true}` — that's a test of a specific implementation, not of behavior. Engineering owns the *how*.
 - **Missing IF clauses.** AC section lists only WHEN bullets — only the happy path. The PRD ships, engineering builds it, QA finds the negative paths in staging. Every WHEN should be considered for a matching IF.
 - **EARS theater.** Every bullet starts with WHEN even when it shouldn't, because someone enforced "all AC must be EARS." The pattern is a tool, not a religion.
-- **Gherkin / EARS mixing inside one story.** Pick one shape per story. (`acceptance-criteria-gherkin` is planned for v1.5 — until it ships, stay in EARS.)
+- **Gherkin / EARS mixing inside one story.** Pick one shape per story. (`acceptance-criteria-gherkin` covers the Gherkin shape.)
 - **AC that restates the description.** "User can export CSV. WHEN a user exports CSV THE SYSTEM SHALL allow CSV export." Tautology. The AC must add specificity the description doesn't have.
 
 ## Cross-references

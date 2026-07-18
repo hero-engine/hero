@@ -17,7 +17,7 @@ Route this refinement request to `pm-delivery-lead`, who selects the right autho
 |---|---|---|
 | `feature` / `bug` / `chore` | `story-writer` (canonical pack name; vocabulary-aware display) | `story-writing-invest`, `acceptance-criteria-ears` |
 | `prd` | `prd-author` | `prd-structure` |
-| `epic` | `pm-delivery-lead` direct (`epic-framer` takes over in v1.5) | — |
+| `epic` | `epic-framer` | `epic-framing` |
 | `initiative` | `product-strategist` | `roadmap-framing` |
 | `intake` | `intake-triager` | `intake-classification`, `duplicate-detection` |
 
