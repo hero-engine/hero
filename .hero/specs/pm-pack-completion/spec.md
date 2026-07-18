@@ -2,7 +2,7 @@
 title: "PM Pack Completion — Author the Deferred Roster and Reframe Around Critics + Corpus-Grounding"
 slug: pm-pack-completion
 type: initiative
-status: planning
+status: completed
 domain: pm
 size: x-large
 horizon: now
@@ -26,6 +26,7 @@ child:
   - exec-narrative-and-evidence-synthesis
   - discovery-framing-coverage-skills
   - remaining-roles-scrubbers-and-launch
+completed_at: 2026-07-18T00:03:50Z
 ---
 
 # PM Pack Completion

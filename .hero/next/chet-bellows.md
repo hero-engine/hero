@@ -1,29 +1,14 @@
 ---
 user: chet-bellows
-updated: 2026-07-17T23:43:34Z
+updated: 2026-07-18T00:04:36Z
 repo: hero-engine/hero
 ---
 
 # chet-bellows's handoff
 
-## Session goal
-
-> Session opened with — heres a snippet from trying to test out gitlab from another project ; ---
-> hero connect --user-email writes a config that hero's own validator rejects (v0.26.0)
-> 
-> What I ran — wiring up the new GitLab tracker:
-> 
-> printf '%s' "$GITLAB_TOKEN" | hero connect gitlab \
->   --integration-id gitlab-chronecho \
->   --project noeta-studios/chronecho \
->   --base-url https://gitlab.com \
->   --user-email sean@noetast…
-> _possibly stale — 8 commit(s) since, last set 4h 36m ago_
-
 ## Last user ask
 
-> deliver pm-pack-completion initiative in order (autopilot); currently delivering child #1 pm-doctrine-and-skill-backfill
-> _possibly stale — 7 commit(s) since, last set 2h 58m ago_
+> hero code is now embedding us - the hero app - and is serving our agents / commands and skills out of our binary live and dynamically depending on the active domain - eng / code, PM, QA etc.. and it said the PM pack is very light - so we need to audit what we have for when a product manager is active - and make the inventory based off research of what commands / skills and agents we need (probably…
 
 ## Suggested next prompt
 
