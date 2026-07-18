@@ -492,3 +492,13 @@ rule is stated in every authored file, and the content test closes the exact
 validation gap the spec identified for unembedded content. One honest edge: the
 client-agnostic guarantee (AC-12) is enforced by review, not an automated grep —
 a deliberate choice the spec's Risks section already made.
+
+## Handoff Trail
+
+- 2026-07-18T14:45:00Z — out → hero-code (peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
+  mode: advisory
+  originating_spec: chat-canonical-research
+  at_commit: ff8c557
+  result_ref: private-peer-result-excluded
+  reason: "Closing the loop: chat-canonical-research (spec-out from hero-chat-swift-app) is delivered on hero main; the client-agnostic checkpoint contract is fixed for hero-code to build its loading + plan-approval/progress/interrupt surface against."
+
