@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-18T06:13:12Z
+updated: 2026-07-18T14:44:50Z
 repo: hero-engine/hero
 ---
 
@@ -27,7 +27,11 @@ repo: hero-engine/hero
 
 ## Suggested next prompt
 
-> Close the loop with hero-code: advisory peer call confirming chat-canonical-research is delivered/completed — the canonical domains/chat pack now ships /research + 3 agents + 5 skills, staged by build.rs with no build.rs change, ready for hero-code to build client loading + plan-approval/progress/interrupt rendering against.
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 

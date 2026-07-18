@@ -121,23 +121,75 @@ Every run emits this fixed sequence. Clients render each however they like; the
 plan  →  round (×N)  →  evaluation  →  synthesis  →  report
 ```
 
-- `plan` — carries the restated question, sub-questions, source set, stopping
-  criteria. **Blocks on user approval.**
-- `round` — carries the round number, queries run, findings, remaining gaps.
-  Emitted once per round.
-- `evaluation` — carries the retained source set with each source's credibility
-  triage.
-- `synthesis` — carries the assembled claims with their citations and any
-  surfaced contradictions.
-- `report` — carries the final cited report and the `Sources:` register.
+Each phase carries content for the user:
+
+- `plan` — the restated question, sub-questions, source set, stopping criteria.
+  **Blocks on user approval.**
+- `round` — the round number, queries run, findings, remaining gaps. Emitted once
+  per round.
+- `evaluation` — the retained source set with each source's credibility triage.
+- `synthesis` — the assembled claims with their citations and any surfaced
+  contradictions.
+- `report` — the final cited report and the `Sources:` register.
+
+### Machine-readable emission (the parseable signal)
+
+Prose alone is not a contract a client can bind to — wording drift would silently
+break a client that sniffs for phrases. So at **each** transition you MUST print,
+**on its own line, before that phase's human-readable content**, a single
+sentinel of this exact fixed-prefix form:
+
+```
+<hero:checkpoint kind="KIND" ...attributes>
+```
+
+The line is a machine signal, not prose; a client matches the literal prefix
+`<hero:checkpoint` and reads the attributes. The one per phase:
+
+| Emit at | Sentinel |
+|---|---|
+| Plan ready, before any search | `<hero:checkpoint kind="plan" status="awaiting-approval">` |
+| Start of round K | `<hero:checkpoint kind="round" n="K">` |
+| Source evaluation | `<hero:checkpoint kind="evaluation">` |
+| Synthesis | `<hero:checkpoint kind="synthesis">` |
+| Final report (run completed) | `<hero:checkpoint kind="report" status="complete">` |
+| Final report (interrupted) | `<hero:checkpoint kind="report" status="incomplete" stopped-after-round="K">` |
+
+Rules that make it parseable:
+
+- **One sentinel per transition, on its own line, at the transition** — before the
+  content it announces. Never inline inside a sentence.
+- **Fixed prefix, quoted attributes.** `kind` is always present; `n`,
+  `status`, and `stopped-after-round` appear where the table shows them.
+- **The `plan` sentinel's `status="awaiting-approval"` is the pause signal.** The
+  client renders the plan for approval on seeing it and must not proceed until the
+  user approves. You do not search past a `plan` sentinel on your own.
+- The sentinels are the authoritative machine signal; the surrounding prose is for
+  the human. Keep both — clients that ignore the sentinels still get readable
+  output, and clients that bind to them get a schema.
+
+### What the client owns (not enforceable here)
+
+This contract is emission only. Two guarantees depend on the client's loop and
+cannot be enforced from content — state them so the boundary is explicit:
+
+- **Plan-approval is a hard gate the client enforces.** The sentinel signals
+  "await approval"; actually withholding tool/search execution until the user
+  approves is the client's job. Treat the pause as advisory-until-the-client-gates.
+- **Graceful stop.** The partial-report guarantee below holds only if the client's
+  stop control lets you emit one final turn (the `report` sentinel + partial),
+  rather than hard-killing the stream mid-token.
 
 ## Interrupt safety
 
 A client's stop control can fire at any point. On interrupt, **never drop the
 turn**. Checkpoint whatever findings exist and produce a *usable partial report*:
 
-- Emit a `report` checkpoint marked, as its first line, with an explicit banner:
-  **"Incomplete — stopped after round K."**
+- Emit the interrupted `report` sentinel —
+  `<hero:checkpoint kind="report" status="incomplete" stopped-after-round="K">` —
+  then, as the report's **first human-readable line**, the banner
+  **"Incomplete — stopped after round K."** (The sentinel is the machine form; the
+  banner is the human form; both carry the same K.)
 - Include the sub-questions answered so far with their citations, and list the
   sub-questions still open.
 - Keep the `Sources:` register for whatever was actually used.

@@ -35,13 +35,17 @@ Steps:
    any sub-question left unanswered within scope.
 
 **Checkpoint contract:** emit `plan → round (×N) → evaluation → synthesis →
-report`, in that order. Any client can render these — the plan for approval,
-rounds as progress, the report as the result.
+report`, in that order. At each transition, print — on its own line, before that
+phase's content — the machine-readable sentinel `<hero:checkpoint kind="…" …>`
+defined in `research-workflow` (e.g. `<hero:checkpoint kind="plan"
+status="awaiting-approval">`, `<hero:checkpoint kind="round" n="1">`). The
+sentinel is the parseable signal a client binds to; the surrounding prose is for
+the user. Do not search past the `plan` sentinel until the user approves.
 
-**On interrupt, never drop the turn.** Checkpoint partial findings and produce a
-usable partial report whose first line is the banner "Incomplete — stopped after
-round K", listing the sub-questions answered so far (with citations) and those
-still open.
+**On interrupt, never drop the turn.** Emit `<hero:checkpoint kind="report"
+status="incomplete" stopped-after-round="K">`, then a usable partial report whose
+first human-readable line is the banner "Incomplete — stopped after round K",
+listing the sub-questions answered so far (with citations) and those still open.
 
 Reference session capabilities abstractly; name a specific client only as an
 optional aside. This command is canonical content — the client owns how the plan,
