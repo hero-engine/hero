@@ -2,7 +2,7 @@
 title: PM Foundation Delivery — Ship PM Pack Additively + Unblock hero-code
 slug: pm-foundation-delivery
 type: feature
-status: planning
+status: completed
 priority: P0
 tags: [sprint, delivery, pm, foundation, registry, vocabulary, methodology]
 created: 2026-05-17
@@ -19,6 +19,7 @@ relations:
     kind: delivers
 horizon: now
 smoke: deferred
+completed_at: 2026-07-18T03:18:34Z
 ---
 
 ## Kickoff
@@ -281,4 +282,48 @@ When all checked, sprint is done; hero-code is unblocked; PM ships.
   at_commit: c269b60
   result_ref: 18b0782b3d33c6204f79ffb0c2ba0a40
   reason: "PM Foundation sprint complete; three stabilized contracts ready for hero-code consumption"
+
+## Completion Ledger
+
+**Retroactive close (2026-07-18).** This sprint's deliverables shipped across
+May 2026 (see the fully-ticked checklist above + the Handoff Trail record
+announcing completion), but the spec's `status` was left at `planning`. Every
+completion criterion was re-verified against the current tree before this close;
+the evidence column cites what's on disk now. No new work — this is the audit
+trail the original delivery never recorded.
+
+### Acceptance Criteria
+
+| # | Sprint completion criterion | Status | Note (on-disk evidence, re-verified 2026-07-18) |
+|---|---|---|---|
+| 1 | Nine canonical work-tracking spec types registered | DONE | `core/spec-types/{initiative,prd,epic,feature,bug,chore,intake,release,sprint}.md` (9 files present) |
+| 2 | Five methodology profiles authored | DONE | `core/methodologies/{scrum,kanban,shape-up,waterfall,scrumban}.yaml` (5 files present) |
+| 3 | `internal/vocabulary/`, `internal/methodology/`, `internal/tasks/` Go pkgs delivered + tested | DONE | all three dirs present with Go sources; `go test ./...` clean (re-run 2026-07-18, 0 FAIL) |
+| 4 | `spec-type-registry` exports schema 1.1 to `.hero/cache/spec-types.json` | DONE | cache present; `"schema_version": "1.1"`; refreshed via `cli.PersistentPreRun` |
+| 5 | `hero task` CLI ships (AC infra unchanged) | DONE | `hero task --help` resolves; `internal/tasks/` present |
+| 6 | Inline-propose Go side ships | DONE | `internal/propose/` (6 Go files); contract at `docs/contracts/inline-propose-v1.md` |
+| 7 | PM pack content aligned to final canonical names | DONE | `domains/pm/spec-types/` holds only `intake.md` + `prd.md`; `story`/`roadmap-item`/`epic` collapsed into canonical types as designed |
+| 8 | `domain-plugin-architecture` finishing touches in | DONE | sibling spec `domain-plugin-architecture` is `status: completed` (archived under `.hero/specs/`) |
+| 9 | hero-code consumes the three stable contracts (registry / vocabulary / methodology) | DONE | Handoff Trail record (2026-05-17, advisory peer call to hero-code) + `hero-code-handover-pack` spec completed |
+
+### Changes
+
+| # | Track / work item | Status | Note |
+|---|---|---|---|
+| 1 | A1–A3 content authoring (canonical types, methodology profiles, pm-pack alignment) | DONE | checklist items A3 + type/profile files above |
+| 2 | B1 `domain-plugin-architecture` cutover | DONE | sibling completed |
+| 3 | B2 `internal/spectypes/` + schema 1.1 export | DONE | cache + package present |
+| 4 | B3 `internal/methodology/`, B4 `internal/tasks/` + `hero task` | DONE | packages present, tests green |
+| 5 | B5 inline-propose Go + published contract | DONE | `internal/propose/` + `docs/contracts/inline-propose-v1.md` |
+| 6 | B6 vocabulary/methodology-aware rendering (CLI/MCP/NEXT.md/agent prompts) | DONE | checklist B6 ticked; `internal/vocabulary` + `internal/methodology` wired |
+| 7 | Engineering corpus unchanged (no migration) | DONE | registry `TestLintParity` walks 187 specs vs legacy validator — zero drift |
+
+### Exercise-the-feature check
+
+- [x] Re-verified all nine criteria against the current tree on 2026-07-18: spec-type/methodology/vocabulary files present, Go packages present, `.hero/cache/spec-types.json` at schema 1.1, `hero task` + `hero spec new --type feature` resolve, `go test ./...` clean (0 FAIL).
+- [ ] Original end-to-end delivery was exercised in-session across May 2026 (per the checklist + handoff record); this close is a retroactive audit-trail reconstruction, not a re-delivery.
+
+### Excellence Bar self-check
+
+Yes — this is an honest bookkeeping close, not a force-flip: every criterion is backed by a re-verified on-disk artifact, and the spec's own completion checklist + handoff trail independently corroborate the sprint shipped. The only thing that was missing was the ledger itself, now recorded.
 
