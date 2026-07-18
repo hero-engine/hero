@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/graph"
@@ -53,7 +52,7 @@ func runPublishPages(cmd *cobra.Command, args []string) error {
 	}
 	defer store.Close()
 
-	repoKey := filepath.Base(projectRoot)
+	repoKey := graphRepoKey(projectRoot)
 	gen := &sitegen.Generator{
 		Store:    store,
 		RepoKey:  repoKey,

@@ -85,7 +85,7 @@ func runExtract(cmd *cobra.Command, args []string) error {
 	}
 	defer store.Close()
 
-	repoKey := filepath.Base(projectRoot)
+	repoKey := graphRepoKey(projectRoot)
 
 	// Build the LLM client. Provider override falls back to env-key
 	// detection. Failing to find a key only matters when --dry-run is

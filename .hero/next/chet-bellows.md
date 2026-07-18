@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-18T17:03:58Z
+updated: 2026-07-18T17:58:46Z
 repo: hero-engine/hero
 ---
 
@@ -27,11 +27,7 @@ repo: hero-engine/hero
 
 ## Suggested next prompt
 
-> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
-
-_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
-
-_Source: auto-derived from open feature — `hero next suggest "..."` to override._
+> chat-slim-to-basic-research-seed is delivered/verified. Open follow-up ('Thing 2'): reconcile hero-code's two contradictory staging stories — its crates/hero-core/build.rs DOES stage domains/chat (6 commands), but its desktop-app extract-hero-content.sh (enumerating 'hero domain list') does NOT serve chat (runs engineering). Determines whether chat needs a go:embed to actually be served by the app. Peer hero-code to resolve before any go:embed change.
 
 ## Recent reflections
 

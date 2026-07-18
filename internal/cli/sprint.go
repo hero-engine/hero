@@ -227,7 +227,7 @@ func writeSprintToGraph(heroDir, projectRoot string, items []tracker.SprintItem,
 	}
 	defer store.Close()
 
-	repoKey := filepath.Base(projectRoot)
+	repoKey := graphRepoKey(projectRoot)
 	summary, err := tracker.WriteSprintGraph(items, info, repoKey, store)
 	if err != nil {
 		return fmt.Errorf("writing sprint graph: %w", err)

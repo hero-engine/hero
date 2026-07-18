@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-18T17:56:58Z · 82 ready specs_
+_Generated: 2026-07-18T18:27:48Z · 83 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -40,6 +40,14 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · in-review · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-idea-primitive-core/spec.md)_
+
+---
+
+## graph-why-resolution-and-peer-spec-indexing — "hero why fails to resolve specs that hero graph resolves — graph substrate stale + repoKey divergence"
+_bug · planning · horizon: now_
+
+Paste into a fresh session to fix:
+> Fix the `hero why` vs `hero graph` resolution divergence per `.hero/planning/bugs/graph-why-resolution-and-peer-spec-indexing/spec.md`. Two changes: (1) add a disk→graph reconcile to `runWhy` in `internal/cli/brief.go` mirroring `runBlocked` (brief.go:577-581) — extract a shared `reconcileSpecGraph(store, repoKey)` helper; (2) replace `filepath.Base(projectRoot)` with `gitutil.RepoKey(projectRoot)` as the graph partition key in `internal/cli/graph_memory.go:195`, `sprint.go:230`, `extract.go:88`, `publish_pages.go:56`, `next_project.go:58`, routed through one helper. Add the prioritized regression tests from the spec's Test Plan (start with `TestWhyResolvesSpecCreatedSinceLastIngest` and `TestGraphReingestUsesGitRemoteRepoKey`). Do NOT change `resolveTarget`'s repo filter — the reader is correct; the writers and the missing reconcile are the bug.
 
 ---
 
