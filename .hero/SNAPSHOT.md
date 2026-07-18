@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-18T18:27:47Z · projected from 555 source nodes_
+_Last refreshed: 2026-07-18T18:50:22Z · projected from 555 source nodes_
 
 ## Surfaces
 
@@ -68,7 +68,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Open risks & blockers
 
 - **Blocked specs (13):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection); `wire-checks-to-boundaries` (waits on spec-contract-enums-unified).
-- **Stale-in-flight (2):** `hero-landing-page` (60d), `hero-team-server` (60d).
+- **Stale-in-flight (2):** `hero-landing-page` (61d), `hero-team-server` (60d).
 - **Aged open bugs (9):** `install-target-emits-both-claude-and-agents-md` (open 64d), `next-project-file-conflict-not-regenerated` (open 45d), `desktop-sidebar-mcp-not-running` (open 44d), `hihcp-agent-loop-error-recovery` (open 39d), `hihcp-agents-md-harness-agnostic` (open 39d), `hihcp-mcp-auto-reconnect` (open 39d), `hihcp-mcp-first-turn-readiness` (open 39d), `hihcp-permission-bridge-validation` (open 39d), `hihcp-rgignore` (open 39d).
 - **Unassigned specs (220) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
