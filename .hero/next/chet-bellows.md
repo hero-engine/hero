@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-18T17:58:46Z
+updated: 2026-07-18T18:50:53Z
 repo: hero-engine/hero
 ---
 
@@ -15,6 +15,8 @@ repo: hero-engine/hero
 > First add a dedicated measurable EARS Acceptance Criteria section from the existing “Done when” and Validation requirements. Then deliver through audit and hero spec verify before stopping.</command-args>
 > Route this delivery request to the `feature-delivery-lead` agent for ex…
 
+_possibly stale — 2 commit(s) since, last set 52m ago_
+
 ## Last user ask
 
 > Route this delivery request to the `feature-delivery-lead` agent for execution.
@@ -25,12 +27,19 @@ repo: hero-engine/hero
 > do NOT deliver one child. An initiative is a parent — running the whole thing
 > autonomously is `/drive`, not `/deliver`. Offer the upgrade: "That's…
 
+_possibly stale — 2 commit(s) since, last set 52m ago_
+
 ## Suggested next prompt
 
-> chat-slim-to-basic-research-seed is delivered/verified. Open follow-up ('Thing 2'): reconcile hero-code's two contradictory staging stories — its crates/hero-core/build.rs DOES stage domains/chat (6 commands), but its desktop-app extract-hero-content.sh (enumerating 'hero domain list') does NOT serve chat (runs engineering). Determines whether chat needs a go:embed to actually be served by the app. Peer hero-code to resolve before any go:embed change.
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 
+- Long session: shipped basic-chat + dormant research seed (chat-slim-to-basic-research-seed, on main), then root-caused and fixed the recurring 'hero why no node' bug (two-DB split + no graph.db self-heal + filepath.Base repoKey drift) — PR #2 open. Key stance to remember: core reliability (spec CRUD / install-copy / search) breaks weekly and needs a single self-healing store + write choke point + invariant tests. Chat/research/code content is Hero's call, not hero-code's; hero-code only consumes.
 - Integration config should key connections by stable IDs, not provider names: provider-keyed objects cannot represent two Jira projects, while explicit default/roles separate definition from selection.
 - Jira import already supports tracker.token in hero.local.json; the token_env-only error is false, and local connect can copy the resolved token into committed hero.json.
 - mkdocs-material's theme feature for integrated left-nav TOC is toc.integrate, not navigation.integrate (that flag doesn't exist in 9.7.x) — check the compiled template partials before trusting a spec's exact feature-flag name
