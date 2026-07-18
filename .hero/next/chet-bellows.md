@@ -1,16 +1,21 @@
 ---
 user: chet-bellows
-updated: 2026-07-18T03:31:06Z
+updated: 2026-07-18T05:48:25Z
 repo: hero-engine/hero
 ---
 
 # chet-bellows's handoff
 
+## Session goal
+
+> Session opened with — hero code is now embedding us - the hero app - and is serving our agents / commands and skills out of our binary live and dynamically depending on the active domain - eng / code, PM, QA etc.. and it said the PM pack is very light - so we need to audit what we have for when a product manager is active - and make the inventory based off research of what commands / skills and agents we need (probably…
+
+_possibly stale — 3 commit(s) since, last set 5h 43m ago_
+
 ## Last user ask
 
 > hero code is now embedding us - the hero app - and is serving our agents / commands and skills out of our binary live and dynamically depending on the active domain - eng / code, PM, QA etc.. and it said the PM pack is very light - so we need to audit what we have for when a product manager is active - and make the inventory based off research of what commands / skills and agents we need (probably…
-
-_possibly stale — 1 commit(s) since, last set 20m ago_
+> _possibly stale — 1 commit(s) since, last set 20m ago_
 
 ## Suggested next prompt
 
