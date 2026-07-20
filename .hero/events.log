@@ -406,3 +406,6 @@
 {"ts":"2026-07-20T17:57:48.972275Z","type":"peer.call.completed","agent":"hero","message":"peer call failed: subagent CLI \"claude\" is not logged in — authenticate it and retry (run `claude` then `/login`, or set ANTHROPIC_API_KEY); CLI output: Not logged in · Please run /login (call_id 18c41134443c9a68bc84cd1db0f429eb)"}
 {"ts":"2026-07-20T18:10:25.067752Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"tracker-issue-activity-timestamps","message":"\"Tracker Issue Activity Timestamps and Jira Broad-Import Field Parity\""}
 {"ts":"2026-07-20T18:10:25.067858Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"tracker-issue-activity-timestamps","message":"status -\u003e completed"}
+{"event":"claimed","slug":"progressive-design-ac-recap","agent":"codex","at":"2026-07-20T14:16:14.140903-06:00"}
+{"ts":"2026-07-20T20:22:35.820799Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"progressive-design-ac-recap","message":"\"Progressive Design AC Recap — Coverage and Delta Before Full Tables\""}
+{"ts":"2026-07-20T20:22:35.820885Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"progressive-design-ac-recap","message":"status -\u003e completed"}
