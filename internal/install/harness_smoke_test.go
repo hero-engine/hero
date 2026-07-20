@@ -179,6 +179,38 @@ func TestHarness_SmokeGeneric(t *testing.T) {
 	}
 }
 
+func TestHarness_DesignClosingUsesProgressiveACDisclosureForAllTargets(t *testing.T) {
+	tests := []struct {
+		name   string
+		target Target
+		path   string
+	}{
+		{"opencode", TargetOpenCode, ".opencode/commands/design.md"},
+		{"cursor", TargetCursor, ".cursor/rules/commands/design.md"},
+		{"claude", TargetClaude, ".claude/commands/design.md"},
+		{"copilot", TargetCopilot, ".github/prompts/commands/design.prompt.md"},
+		{"codex", TargetCodex, ".agents/skills/command-design/SKILL.md"},
+		{"generic", TargetGeneric, ".ai/commands/design.md"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := runOverlayInstall(t, tt.target, "engineering")
+			content, err := os.ReadFile(filepath.Join(dir, tt.path))
+			if err != nil {
+				t.Fatalf("read installed design command: %v", err)
+			}
+			body := string(content)
+			if !strings.Contains(body, "Use progressive disclosure for acceptance criteria") {
+				t.Errorf("%s missing progressive-disclosure contract", tt.path)
+			}
+			if strings.Contains(body, "Show the acceptance criteria in your closing message") {
+				t.Errorf("%s retains obsolete unconditional-table contract", tt.path)
+			}
+		})
+	}
+}
+
 // TestHarness_RenderDirect_NoCanonicalMirror confirms the
 // render-direct-install architecture: agents/commands/skills land
 // directly at each harness's documented destination, and there is

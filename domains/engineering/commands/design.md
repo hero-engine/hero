@@ -35,14 +35,16 @@ After saving the spec, run `hero index --if-stale -q` to register the new spec i
 
 After saving the spec, if `knowledge.auto_capture` is enabled in `hero.json` (default: on), silently review the design session for novel learnings — architectural decisions made, constraints discovered, technology choices with rationale. If anything meets the capture threshold, write it to `.hero/knowledge/` and run `hero index`. Don't prompt — just capture and briefly mention what was saved. See the `auto-knowledge-capture` skill for details.
 
-**Show the acceptance criteria in your closing message — don't just report a count.** "13 EARS ACs" tells the user nothing about what the spec actually commits to. Instead, render a compact table of the criteria so they can see the contract at a glance: one row per AC with its **id**, its **EARS pattern** (WHEN / IF / WHILE / WHERE / ubiquitous), and a **short paraphrase** of the behavior (not the full sentence). Keep each row to a single line — it's a scannable summary, not a transcript. Example:
+**Use progressive disclosure for acceptance criteria in the closing message.** The default recap reports `Acceptance criteria: N total`, followed by 2–5 short, concrete behavior-area labels under `Coverage` (avoid vague themes such as "functionality" or "quality"). Add `Changed this loop`: when five or fewer criteria changed, name their AC IDs with short behavior phrases; when more than five changed, report the changed count and affected themes, then point to the spec instead of listing them all. For an initial design, say `initial contract created` rather than enumerating every new criterion as a change.
+
+Add an `Attention` line only when a criterion is ambiguous, not independently testable, deferred, conflicting, or carries an unresolved decision; name each affected AC ID and its issue. Omit this line when no criterion needs attention. Always link the spec as the full acceptance-criteria contract, then give the score and next-step recommendation as usual.
+
+Expand the recap into the compact table below only when the contract has five or fewer criteria, the user explicitly asks to see all criteria, or the user explicitly asks to review or approve the acceptance-criteria contract. An ordinary post-design closing is not a formal AC approval request. In the expanded form, use one row per AC with its **id**, **EARS pattern** (WHEN / IF / WHILE / WHERE / ubiquitous), and a **short paraphrase** of the behavior (not the full sentence). Keep each row to a single line:
 
 | AC | Pattern | Behavior |
 |---|---|---|
 | AC-1 | WHEN | dropped-from-product file in the manifest is removed |
 | AC-2 | IF (guard) | a non-manifest (user) file is never removed |
 | AC-3 | IF (guard) | nil/empty manifest → no-op |
-
-Then give the file path, score, and your next-step recommendation as usual.
 
 Request: $ARGUMENTS
