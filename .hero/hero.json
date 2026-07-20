@@ -7,15 +7,6 @@
     "auto_context": true,
     "nudge_level": "gentle"
   },
-  "tracker": {
-    "type": "none",
-    "project": "",
-    "token_env": "",
-    "base_url": "",
-    "user_email": "",
-    "post_on_design": false,
-    "post_on_deliver": false
-  },
   "sync": {
     "target": "none",
     "auto": false

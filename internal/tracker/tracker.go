@@ -33,7 +33,8 @@ type Issue struct {
 	EpicKey      string            // epic/parent key (Jira: epic link custom field)
 	SprintName   string            // sprint or iteration name
 	Reporter     string            // display name or email of reporter
-	CreatedAt    string            // creation date (ISO 8601 or tracker-native)
+	CreatedAt    string            // provider-native creation timestamp
+	UpdatedAt    string            // provider-native update timestamp
 	Description  string            // issue description/body text
 	CustomFields map[string]string // custom field values keyed by lowercase field name (e.g. "severity" → "critical")
 }

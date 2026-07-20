@@ -837,10 +837,12 @@ func refreshImportedSpecs(cfg config.Config, heroDir string, t tracker.Tracker, 
 func currentSpecFieldValue(s *spec.Spec, key string) string {
 	switch key {
 	case "created":
-		if s.CreatedAt.IsZero() {
+		if !s.CreatedFromFrontmatter || s.CreatedAt.IsZero() {
 			return ""
 		}
 		return s.CreatedAt.Format("2006-01-02")
+	case "tracker_updated_at":
+		return s.TrackerUpdatedAt
 	case "priority":
 		return s.Priority
 	case "severity":
@@ -859,6 +861,8 @@ func currentSpecFieldValue(s *spec.Spec, key string) string {
 					return s.TrackerSeverity
 				case "assignee":
 					return s.TrackerAssignee
+				case "updated_at":
+					return s.TrackerNativeUpdatedAt
 				}
 			}
 		}
@@ -1248,12 +1252,13 @@ func specFieldsFromIssue(issue tracker.Issue, trackerName string) map[string]str
 	prefix := trackerName
 
 	// Hero-level fields
-	if issue.CreatedAt != "" {
-		for _, layout := range []string{"2006-01-02", time.RFC3339, "2006-01-02T15:04:05.000-0700", "2006-01-02T15:04:05.000Z"} {
-			if parsed, err := time.Parse(layout, issue.CreatedAt); err == nil {
-				fields["created"] = parsed.Format("2006-01-02")
-				break
-			}
+	if parsed, ok := parseTrackerTimestamp(issue.CreatedAt, true); ok {
+		fields["created"] = parsed.Format("2006-01-02")
+	}
+	if parsed, ok := parseTrackerTimestamp(issue.UpdatedAt, false); ok {
+		fields["tracker_updated_at"] = parsed.UTC().Format(time.RFC3339Nano)
+		if prefix != "" {
+			fields[prefix+"_updated_at"] = issue.UpdatedAt
 		}
 	}
 	if issue.Priority != "" {
@@ -1280,6 +1285,25 @@ func specFieldsFromIssue(issue tracker.Issue, trackerName string) map[string]str
 	return fields
 }
 
+// parseTrackerTimestamp validates the native timestamp strings returned by
+// tracker adapters. Jira uses an RFC3339-like numeric offset without a colon;
+// the other providers use RFC3339. Creation dates may also be date-only.
+func parseTrackerTimestamp(value string, allowDateOnly bool) (time.Time, bool) {
+	layouts := []string{
+		time.RFC3339Nano,
+		"2006-01-02T15:04:05.999999999-0700",
+	}
+	if allowDateOnly {
+		layouts = append(layouts, "2006-01-02")
+	}
+	for _, layout := range layouts {
+		if parsed, err := time.Parse(layout, value); err == nil {
+			return parsed, true
+		}
+	}
+	return time.Time{}, false
+}
+
 // generateImportedSpec creates spec content for an imported tracker issue.
 // trackerName is the tracker type (e.g. "jira", "github", "linear") used to
 // prefix tracker-specific fields in the frontmatter, keeping them visually
@@ -1294,12 +1318,6 @@ func generateImportedSpec(issue tracker.Issue, specType, trackerName, slug strin
 	fields := specFieldsFromIssue(issue, trackerName)
 	prefix := trackerName
 
-	// created: use tracker date from fields, or fall back to today
-	date := time.Now().Format("2006-01-02")
-	if d, ok := fields["created"]; ok {
-		date = d
-	}
-
 	// --- Hero section ---
 	var fm strings.Builder
 	fm.WriteString("---\n")
@@ -1309,7 +1327,12 @@ func generateImportedSpec(issue tracker.Issue, specType, trackerName, slug strin
 	fmt.Fprintf(&fm, "type: %s\n", specType)
 	fm.WriteString("status: planning\n")
 	fmt.Fprintf(&fm, "tracker_id: %s\n", issue.ID)
-	fmt.Fprintf(&fm, "created: %s\n", date)
+	if v, ok := fields["created"]; ok {
+		fmt.Fprintf(&fm, "created: %s\n", v)
+	}
+	if v, ok := fields["tracker_updated_at"]; ok {
+		fmt.Fprintf(&fm, "tracker_updated_at: %s\n", v)
+	}
 	if v, ok := fields["priority"]; ok {
 		fmt.Fprintf(&fm, "priority: %s\n", v)
 	}
@@ -1329,6 +1352,9 @@ func generateImportedSpec(issue tracker.Issue, specType, trackerName, slug strin
 	}
 	if v, ok := fields[prefix+"_severity"]; ok {
 		fmt.Fprintf(&fm, "%s_severity: %s\n", prefix, v)
+	}
+	if v, ok := fields[prefix+"_updated_at"]; ok {
+		fmt.Fprintf(&fm, "%s_updated_at: %s\n", prefix, v)
 	}
 	if issue.IssueType != "" {
 		fmt.Fprintf(&fm, "%s_type: %s\n", prefix, issue.IssueType)

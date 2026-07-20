@@ -100,6 +100,8 @@ func TestGitLab_GetIssue(t *testing.T) {
 			"web_url": "https://gitlab.com/group/proj/-/issues/42",
 			"labels": ["priority::high", "type::bug"],
 			"issue_type": "issue", "weight": 3,
+			"created_at": "2026-07-19T10:20:30.123Z",
+			"updated_at": "2026-07-20T11:22:33.456Z",
 			"assignee": {"username": "alice"},
 			"epic": {"id": 7, "iid": 3, "title": "Express Pay"},
 			"milestone": {"id": 5, "title": "v1.0"}
@@ -132,6 +134,9 @@ func TestGitLab_GetIssue(t *testing.T) {
 	}
 	if issue.EpicKey != "3" {
 		t.Errorf("EpicKey = %q, want 3", issue.EpicKey)
+	}
+	if issue.CreatedAt != "2026-07-19T10:20:30.123Z" || issue.UpdatedAt != "2026-07-20T11:22:33.456Z" {
+		t.Errorf("timestamps = %q/%q, want native GitLab values", issue.CreatedAt, issue.UpdatedAt)
 	}
 }
 
@@ -218,7 +223,14 @@ func TestGitLab_ListIssues_PaginationToExhaustion(t *testing.T) {
 		}
 		var batch []gitLabIssue
 		for i := start; i < end; i++ {
-			batch = append(batch, gitLabIssue{ID: 1000 + i, IID: i + 1, Title: fmt.Sprintf("Issue %d", i+1), State: "opened"})
+			batch = append(batch, gitLabIssue{
+				ID:        1000 + i,
+				IID:       i + 1,
+				Title:     fmt.Sprintf("Issue %d", i+1),
+				State:     "opened",
+				CreatedAt: "2026-07-19T10:20:30.123Z",
+				UpdatedAt: "2026-07-20T11:22:33.456Z",
+			})
 		}
 		if end < total {
 			nextURL := fmt.Sprintf("<%s://%s%s?page=%d>; rel=\"next\"", schemeOf(r), r.Host, r.URL.Path, page+1)
@@ -243,6 +255,35 @@ func TestGitLab_ListIssues_PaginationToExhaustion(t *testing.T) {
 			t.Errorf("duplicate issue %s", is.ID)
 		}
 		seen[is.ID] = true
+		if is.CreatedAt != "2026-07-19T10:20:30.123Z" || is.UpdatedAt != "2026-07-20T11:22:33.456Z" {
+			t.Errorf("%s timestamps = %q/%q, want native GitLab values", is.ID, is.CreatedAt, is.UpdatedAt)
+		}
+	}
+}
+
+func TestGitLab_SearchProjectsActivityTimestamps(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode([]gitLabIssue{{
+			ID:        1001,
+			IID:       42,
+			Title:     "Activity",
+			State:     "opened",
+			CreatedAt: "2026-07-19T10:20:30.123Z",
+			UpdatedAt: "2026-07-20T11:22:33.456Z",
+		}})
+	}))
+	defer srv.Close()
+
+	g, _ := newGitLab("group/proj", "test-token", srv.URL)
+	issues, err := g.Search(SearchQuery{RawQuery: "activity", Limit: 10})
+	if err != nil {
+		t.Fatalf("Search failed: %v", err)
+	}
+	if len(issues) != 1 {
+		t.Fatalf("Search returned %d issues, want 1", len(issues))
+	}
+	if issues[0].CreatedAt != "2026-07-19T10:20:30.123Z" || issues[0].UpdatedAt != "2026-07-20T11:22:33.456Z" {
+		t.Errorf("timestamps = %q/%q, want native GitLab values", issues[0].CreatedAt, issues[0].UpdatedAt)
 	}
 }
 

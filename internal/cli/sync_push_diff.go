@@ -43,12 +43,17 @@ var pushFields = []ClassifiedField{
 // orgStateFields are tracker-authoritative; a --field naming one of
 // these is refused with a non-zero exit (AC: org-state refusal).
 var orgStateFields = map[string]bool{
-	"tracker_id":     true,
-	"created":        true,
-	"reporter":       true,
-	"jira_status":    true,
-	"github_status":  true,
-	"linear_status":  true,
+	"tracker_id":         true,
+	"created":            true,
+	"tracker_updated_at": true,
+	"reporter":           true,
+	"jira_status":        true,
+	"github_status":      true,
+	"linear_status":      true,
+	"jira_updated_at":    true,
+	"github_updated_at":  true,
+	"gitlab_updated_at":  true,
+	"linear_updated_at":  true,
 }
 
 // classifyField returns the ClassifiedField for a canonical name, or

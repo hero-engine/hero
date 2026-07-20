@@ -234,11 +234,13 @@ func (g *gitHub) GetIssue(issueID string) (*Issue, error) {
 	}
 
 	var result struct {
-		Number int    `json:"number"`
-		Title  string `json:"title"`
-		State  string `json:"state"`
-		URL    string `json:"html_url"`
-		Labels []struct {
+		Number    int    `json:"number"`
+		Title     string `json:"title"`
+		State     string `json:"state"`
+		URL       string `json:"html_url"`
+		CreatedAt string `json:"created_at"`
+		UpdatedAt string `json:"updated_at"`
+		Labels    []struct {
 			Name string `json:"name"`
 		} `json:"labels"`
 	}
@@ -252,11 +254,13 @@ func (g *gitHub) GetIssue(issueID string) (*Issue, error) {
 	}
 
 	return &Issue{
-		ID:     fmt.Sprintf("%d", result.Number),
-		Title:  result.Title,
-		Status: result.State,
-		URL:    result.URL,
-		Labels: labels,
+		ID:        fmt.Sprintf("%d", result.Number),
+		Title:     result.Title,
+		Status:    result.State,
+		URL:       result.URL,
+		CreatedAt: result.CreatedAt,
+		UpdatedAt: result.UpdatedAt,
+		Labels:    labels,
 	}, nil
 }
 
@@ -454,6 +458,7 @@ func (g *gitHub) searchIssues(rawQuery string, limit int) ([]Issue, error) {
 			URL       string `json:"html_url"`
 			Body      string `json:"body"`
 			CreatedAt string `json:"created_at"`
+			UpdatedAt string `json:"updated_at"`
 			User      struct {
 				Login string `json:"login"`
 			} `json:"user"`
@@ -478,6 +483,7 @@ func (g *gitHub) searchIssues(rawQuery string, limit int) ([]Issue, error) {
 			URL:         r.URL,
 			Reporter:    r.User.Login,
 			CreatedAt:   r.CreatedAt,
+			UpdatedAt:   r.UpdatedAt,
 			Description: truncateDescription(r.Body, 500),
 		}
 		if r.Assignee != nil {
@@ -531,6 +537,7 @@ func (g *gitHub) fetchIssueList(url string) ([]Issue, error) {
 		URL       string `json:"html_url"`
 		Body      string `json:"body"`
 		CreatedAt string `json:"created_at"`
+		UpdatedAt string `json:"updated_at"`
 		User      *struct {
 			Login string `json:"login"`
 		} `json:"user"`
@@ -553,6 +560,7 @@ func (g *gitHub) fetchIssueList(url string) ([]Issue, error) {
 			Status:      r.State,
 			URL:         r.URL,
 			CreatedAt:   r.CreatedAt,
+			UpdatedAt:   r.UpdatedAt,
 			Description: truncateDescription(r.Body, 500),
 		}
 		if r.User != nil {

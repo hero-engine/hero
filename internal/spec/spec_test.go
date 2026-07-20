@@ -91,6 +91,49 @@ status: planning
 	}
 }
 
+func TestParseTrackerActivityTimestampFields(t *testing.T) {
+	const canonical = "2026-07-20T16:15:30.123456Z"
+	const native = "2026-07-20T10:15:30.123456-0600"
+	for _, provider := range []string{"jira", "github", "gitlab", "linear"} {
+		t.Run(provider, func(t *testing.T) {
+			content := "---\ntitle: Activity\ntype: feature\nstatus: planning\ntracker_updated_at: " + canonical + "\n" +
+				provider + "_updated_at: " + native + "\n---\n# Activity\n"
+			s, err := Parse(content, "/project/.hero/planning/features/activity/spec.md", time.Now())
+			if err != nil {
+				t.Fatalf("Parse failed: %v", err)
+			}
+			if s.TrackerUpdatedAt != canonical {
+				t.Errorf("TrackerUpdatedAt = %q, want %q", s.TrackerUpdatedAt, canonical)
+			}
+			if s.TrackerNativeUpdatedAt != native {
+				t.Errorf("TrackerNativeUpdatedAt = %q, want %q", s.TrackerNativeUpdatedAt, native)
+			}
+			if s.TrackerName != provider {
+				t.Errorf("TrackerName = %q, want %q", s.TrackerName, provider)
+			}
+		})
+	}
+}
+
+func TestParseWithoutTrackerActivityTimestampRemainsCompatible(t *testing.T) {
+	content := `---
+title: Legacy imported spec
+type: feature
+status: planning
+tracker_id: PROJ-42
+jira_id: PROJ-42
+---
+# Legacy imported spec
+`
+	s, err := Parse(content, "/project/.hero/planning/features/legacy/spec.md", time.Now())
+	if err != nil {
+		t.Fatalf("Parse failed: %v", err)
+	}
+	if s.TrackerUpdatedAt != "" || s.TrackerNativeUpdatedAt != "" {
+		t.Errorf("missing tracker activity parsed as %q/%q, want unknown empty values", s.TrackerUpdatedAt, s.TrackerNativeUpdatedAt)
+	}
+}
+
 func TestParseBugSpec(t *testing.T) {
 	content := `---
 title: Login Timeout Race

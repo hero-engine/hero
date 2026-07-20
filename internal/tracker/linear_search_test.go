@@ -20,6 +20,8 @@ func linearNode(identifier, title string, labels ...string) map[string]interface
 		"identifier": identifier,
 		"title":      title,
 		"url":        "https://linear.app/team/" + identifier,
+		"createdAt":  "2026-07-19T10:20:30.123Z",
+		"updatedAt":  "2026-07-20T11:22:33.456Z",
 		"state":      map[string]interface{}{"name": "Todo"},
 		"labels":     map[string]interface{}{"nodes": labelNodes},
 	}
@@ -87,6 +89,9 @@ func TestLinear_TypeInference(t *testing.T) {
 		if got := iss.IssueType; got != want[iss.ID] {
 			t.Errorf("%s: IssueType = %q, want %q", iss.ID, got, want[iss.ID])
 		}
+		if iss.CreatedAt != "2026-07-19T10:20:30.123Z" || iss.UpdatedAt != "2026-07-20T11:22:33.456Z" {
+			t.Errorf("%s: timestamps = %q/%q, want native Linear values", iss.ID, iss.CreatedAt, iss.UpdatedAt)
+		}
 	}
 }
 
@@ -112,12 +117,14 @@ func TestLinear_SearchConformance(t *testing.T) {
 	}
 
 	checks := map[string]string{
-		"status→state name":     `state: { name: { eqIgnoreCase: "In Progress" } }`,
-		"priority→numeric high": `priority: { eq: 2 }`,
-		"assignee→displayName":  `assignee: { displayName: { eq: "alice" } }`,
-		"issue_type→bug label":  `"bug"`,
-		"user label present":    `"team::payments"`,
-		"orderBy→updatedAt":     `orderBy: updatedAt`,
+		"status→state name":      `state: { name: { eqIgnoreCase: "In Progress" } }`,
+		"priority→numeric high":  `priority: { eq: 2 }`,
+		"assignee→displayName":   `assignee: { displayName: { eq: "alice" } }`,
+		"issue_type→bug label":   `"bug"`,
+		"user label present":     `"team::payments"`,
+		"orderBy→updatedAt":      `orderBy: updatedAt`,
+		"created activity field": "createdAt",
+		"updated activity field": "updatedAt",
 	}
 	for name, frag := range checks {
 		if !strings.Contains(q, frag) {
