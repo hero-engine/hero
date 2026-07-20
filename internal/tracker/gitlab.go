@@ -106,6 +106,7 @@ type gitLabIssue struct {
 	IssueType   string   `json:"issue_type"` // issue | incident | test_case | task
 	Weight      *int     `json:"weight"`
 	CreatedAt   string   `json:"created_at"`
+	UpdatedAt   string   `json:"updated_at"`
 	Assignee    *struct {
 		Username string `json:"username"`
 	} `json:"assignee"`
@@ -139,6 +140,7 @@ func (g *gitLab) toIssue(gi gitLabIssue) Issue {
 		Labels:       gi.Labels,
 		IssueType:    heroIssueType(gi.IssueType, gi.Labels),
 		CreatedAt:    gi.CreatedAt,
+		UpdatedAt:    gi.UpdatedAt,
 		Description:  truncateDescription(gi.Description, 500),
 		Priority:     priorityFromLabels(gi.Labels),
 		CustomFields: map[string]string{},

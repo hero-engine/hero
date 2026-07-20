@@ -1,10 +1,14 @@
 package cli
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/spec"
 	"github.com/hero-engine/hero/internal/tracker"
 )
 
@@ -67,7 +71,7 @@ func TestInferSpecType(t *testing.T) {
 		{"New Feature", "feature"},
 		{"Epic", "initiative"},
 		{"epic", "initiative"},
-		{"", "feature"},       // empty defaults to feature
+		{"", "feature"},        // empty defaults to feature
 		{"Unknown", "feature"}, // unknown defaults to feature
 	}
 
@@ -85,11 +89,11 @@ func TestResolveTypeFilter(t *testing.T) {
 	defer resetImportFlags()
 
 	tests := []struct {
-		name       string
-		args       []string
-		flagType   string
-		cfgType    string
-		want       string
+		name     string
+		args     []string
+		flagType string
+		cfgType  string
+		want     string
 	}{
 		{"no args, no flag, no config", nil, "", "", ""},
 		{"positional bugs", []string{"bugs"}, "", "", "bug"},
@@ -280,6 +284,203 @@ func TestGenerateImportedSpec_Bug(t *testing.T) {
 	// Should not have feature sections
 	if strings.Contains(content, "## Goal") {
 		t.Error("bug spec should not have Goal section")
+	}
+}
+
+func TestGenerateImportedSpec_TrackerActivityTimestamps(t *testing.T) {
+	issue := tracker.Issue{
+		ID:        "PROJ-42",
+		Title:     "Preserve tracker activity",
+		Status:    "Open",
+		CreatedAt: "2026-07-19T23:30:40.123-0600",
+		UpdatedAt: "2026-07-20T10:15:30.123456-0600",
+	}
+
+	content := generateImportedSpec(issue, "feature", "jira", "proj-42-activity")
+	for _, want := range []string{
+		"created: 2026-07-19",
+		"tracker_updated_at: 2026-07-20T16:15:30.123456Z",
+		"jira_updated_at: 2026-07-20T10:15:30.123456-0600",
+	} {
+		if !strings.Contains(content, want) {
+			t.Errorf("generated spec missing %q:\n%s", want, content)
+		}
+	}
+}
+
+func TestGenerateImportedSpec_InvalidOrMissingTimestampsOmitFields(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		issue tracker.Issue
+	}{
+		{name: "missing"},
+		{name: "malformed", issue: tracker.Issue{CreatedAt: "not-a-date", UpdatedAt: "also-not-a-date"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.issue.ID = "PROJ-42"
+			tc.issue.Title = "Unknown activity"
+			content := generateImportedSpec(tc.issue, "feature", "jira", "proj-42-unknown")
+			for _, unwanted := range []string{"created:", "tracker_updated_at:", "jira_updated_at:"} {
+				if strings.Contains(content, unwanted) {
+					t.Errorf("generated spec contains fallback %q:\n%s", unwanted, content)
+				}
+			}
+		})
+	}
+}
+
+func TestSpecFieldsFromIssue_ProviderTimestampEvidence(t *testing.T) {
+	const native = "2026-07-20T11:22:33.123456789Z"
+	for _, provider := range []string{"jira", "github", "gitlab", "linear"} {
+		t.Run(provider, func(t *testing.T) {
+			fields := specFieldsFromIssue(tracker.Issue{UpdatedAt: native}, provider)
+			if got := fields["tracker_updated_at"]; got != native {
+				t.Errorf("tracker_updated_at = %q, want %q", got, native)
+			}
+			if got := fields[provider+"_updated_at"]; got != native {
+				t.Errorf("%s_updated_at = %q, want exact native value", provider, got)
+			}
+		})
+	}
+}
+
+type activityMockTracker struct {
+	byTypeMockTracker
+	issue tracker.Issue
+}
+
+func (m *activityMockTracker) Name() string { return "jira" }
+func (m *activityMockTracker) GetIssue(string) (*tracker.Issue, error) {
+	issue := m.issue
+	return &issue, nil
+}
+
+func TestRefreshImportedSpecs_UpdatesPreservesAndIsIdempotent(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("planning/features/activity/spec.md", `---
+title: Activity
+slug: activity
+type: feature
+status: planning
+tracker_id: PROJ-42
+created: 2026-07-19
+tracker_updated_at: 2026-07-20T16:15:30.123Z
+jira_id: PROJ-42
+jira_updated_at: 2026-07-20T10:15:30.123-0600
+---
+# Activity
+`)
+	specPath := filepath.Join(env.heroDir, "planning", "features", "activity", "spec.md")
+	mock := &activityMockTracker{issue: tracker.Issue{
+		ID:        "PROJ-42",
+		Status:    "Open",
+		CreatedAt: "2026-07-19T23:30:40.123-0600",
+		UpdatedAt: "2026-07-21T09:08:07.123456-0600",
+	}}
+
+	first := refreshImportedSpecs(config.Config{}, env.heroDir, mock, nil)
+	if first.updated != 1 {
+		t.Fatalf("first refresh updated = %d, want 1", first.updated)
+	}
+	afterFirst, err := os.ReadFile(specPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		"tracker_updated_at: 2026-07-21T15:08:07.123456Z",
+		"jira_updated_at: 2026-07-21T09:08:07.123456-0600",
+	} {
+		if !strings.Contains(string(afterFirst), want) {
+			t.Errorf("refreshed spec missing %q:\n%s", want, afterFirst)
+		}
+	}
+
+	second := refreshImportedSpecs(config.Config{}, env.heroDir, mock, nil)
+	afterSecond, err := os.ReadFile(specPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if second.updated != 0 {
+		t.Errorf("second refresh updated = %d, want 0", second.updated)
+	}
+	if string(afterSecond) != string(afterFirst) {
+		t.Error("second refresh changed an already current spec")
+	}
+
+	mock.issue.CreatedAt = "malformed"
+	mock.issue.UpdatedAt = ""
+	third := refreshImportedSpecs(config.Config{}, env.heroDir, mock, nil)
+	afterThird, err := os.ReadFile(specPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if third.updated != 0 {
+		t.Errorf("malformed refresh updated = %d, want 0", third.updated)
+	}
+	if string(afterThird) != string(afterSecond) {
+		t.Error("malformed/missing refresh cleared or replaced valid timestamps")
+	}
+}
+
+func TestCurrentSpecFieldValue_MtimeIsNotTrackerCreatedEvidence(t *testing.T) {
+	content := "---\ntitle: Missing created\nslug: missing-created\ntype: feature\nstatus: planning\ntracker_id: PROJ-42\n---\n"
+	s, err := spec.Parse(content, filepath.Join(t.TempDir(), "spec.md"), time.Date(2026, 7, 19, 12, 0, 0, 0, time.UTC))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := currentSpecFieldValue(s, "created"); got != "" {
+		t.Errorf("current created = %q, want empty because value came from mtime", got)
+	}
+}
+
+func TestRefreshImportedSpecs_StampsCreatedWhenOnlyMtimeMatches(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("planning/features/missing-created/spec.md", `---
+title: Missing created
+slug: missing-created
+type: feature
+status: planning
+tracker_id: PROJ-42
+jira_id: PROJ-42
+---
+# Missing created
+`)
+	specPath := filepath.Join(env.heroDir, "planning", "features", "missing-created", "spec.md")
+	mtime := time.Date(2026, 7, 19, 12, 0, 0, 0, time.UTC)
+	if err := os.Chtimes(specPath, mtime, mtime); err != nil {
+		t.Fatal(err)
+	}
+	mock := &activityMockTracker{issue: tracker.Issue{
+		ID:        "PROJ-42",
+		Status:    "Open",
+		CreatedAt: "2026-07-19T23:30:40.123-0600",
+	}}
+
+	stats := refreshImportedSpecs(config.Config{}, env.heroDir, mock, nil)
+	if stats.updated != 1 {
+		t.Fatalf("refresh updated = %d, want 1", stats.updated)
+	}
+	content, err := os.ReadFile(specPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(content), "created: 2026-07-19") {
+		t.Errorf("refresh did not persist tracker creation date when mtime matched:\n%s", content)
+	}
+}
+
+func TestTrackerTimestampFieldsAreNonPushable(t *testing.T) {
+	for _, field := range []string{
+		"tracker_updated_at",
+		"jira_updated_at",
+		"github_updated_at",
+		"gitlab_updated_at",
+		"linear_updated_at",
+	} {
+		got, ok := classifyField(field)
+		if !ok || got.Class != classOrgState {
+			t.Errorf("classifyField(%q) = %+v, %v; want org-state", field, got, ok)
+		}
 	}
 }
 

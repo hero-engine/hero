@@ -200,15 +200,17 @@ type Spec struct {
 
 	// Tracker metadata — populated from tracker-prefixed frontmatter fields
 	// (e.g. jira_status, github_assignee, linear_priority).
-	TrackerName     string // which tracker: "jira", "github", "linear"
-	TrackerStatus   string // tracker-native status (e.g. "In Progress", "Open")
-	TrackerPriority string // tracker-native priority (e.g. "High", "Critical")
-	TrackerSeverity string // tracker-native severity
-	TrackerAssignee string // tracker-native assignee display name or email
-	TrackerType     string // tracker issue type (e.g. "Story", "Bug", "Task")
-	Description     string // short description (2-3 sentences) from tracker
-	RawContent      string // full file content including frontmatter
-	ThreeFile       bool   // true if loaded from three-file layout
+	TrackerName            string // which tracker: "jira", "github", "gitlab", "linear"
+	TrackerStatus          string // tracker-native status (e.g. "In Progress", "Open")
+	TrackerPriority        string // tracker-native priority (e.g. "High", "Critical")
+	TrackerSeverity        string // tracker-native severity
+	TrackerAssignee        string // tracker-native assignee display name or email
+	TrackerType            string // tracker issue type (e.g. "Story", "Bug", "Task")
+	TrackerUpdatedAt       string // canonical UTC tracker update timestamp
+	TrackerNativeUpdatedAt string // exact provider-native update timestamp evidence
+	Description            string // short description (2-3 sentences) from tracker
+	RawContent             string // full file content including frontmatter
+	ThreeFile              bool   // true if loaded from three-file layout
 
 	// Surface is the project-shape facet a work spec belongs to,
 	// inferred from repo structure by internal/snapshot or set
@@ -536,6 +538,8 @@ func (s *Spec) parseFrontmatter(content string) string {
 				s.CreatedAt = t
 				s.CreatedFromFrontmatter = true
 			}
+		case "tracker_updated_at":
+			s.TrackerUpdatedAt = val
 		case "completed_at", "completedAt":
 			if t, err := time.Parse(time.RFC3339, val); err == nil {
 				s.CompletedAt = t
@@ -683,8 +687,8 @@ func (s *Spec) parseFrontmatter(content string) string {
 			s.ReceivedFrom = rf
 			i = consumed - 1
 		default:
-			// Parse tracker-prefixed fields: jira_*, github_*, linear_*
-			for _, prefix := range []string{"jira_", "github_", "linear_"} {
+			// Parse tracker-prefixed fields: jira_*, github_*, linear_*, gitlab_*
+			for _, prefix := range []string{"jira_", "github_", "linear_", "gitlab_"} {
 				if strings.HasPrefix(key, prefix) {
 					trackerName := strings.TrimSuffix(prefix, "_")
 					field := strings.TrimPrefix(key, prefix)
@@ -710,6 +714,8 @@ func (s *Spec) parseFrontmatter(content string) string {
 						if s.URL == "" {
 							s.URL = val
 						}
+					case "updated_at":
+						s.TrackerNativeUpdatedAt = val
 					}
 					break
 				}

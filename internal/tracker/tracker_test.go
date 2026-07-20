@@ -402,10 +402,12 @@ func TestGitHub_GetIssue(t *testing.T) {
 			t.Errorf("unexpected path: %s", r.URL.Path)
 		}
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"number":   42,
-			"title":    "Test Issue",
-			"state":    "open",
-			"html_url": "https://github.com/acme/widgets/issues/42",
+			"number":     42,
+			"title":      "Test Issue",
+			"state":      "open",
+			"html_url":   "https://github.com/acme/widgets/issues/42",
+			"created_at": "2026-07-19T10:20:30Z",
+			"updated_at": "2026-07-20T11:22:33.456Z",
 		})
 	}))
 	defer srv.Close()
@@ -423,6 +425,9 @@ func TestGitHub_GetIssue(t *testing.T) {
 	}
 	if issue.Status != "open" {
 		t.Errorf("Status = %q, want %q", issue.Status, "open")
+	}
+	if issue.CreatedAt != "2026-07-19T10:20:30Z" || issue.UpdatedAt != "2026-07-20T11:22:33.456Z" {
+		t.Errorf("timestamps = %q/%q, want native GitHub values", issue.CreatedAt, issue.UpdatedAt)
 	}
 }
 
@@ -490,11 +495,15 @@ func TestJira_UpdateStatus(t *testing.T) {
 }
 
 func TestJira_GetIssue(t *testing.T) {
+	var requestedFields string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestedFields = r.URL.Query().Get("fields")
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"key": "PROJ-42",
 			"fields": map[string]interface{}{
 				"summary": "Test Jira Issue",
+				"created": "2026-07-19T10:20:30.123-0600",
+				"updated": "2026-07-20T11:22:33.456-0600",
 				"status": map[string]interface{}{
 					"name": "In Progress",
 				},
@@ -516,6 +525,59 @@ func TestJira_GetIssue(t *testing.T) {
 	}
 	if issue.Status != "In Progress" {
 		t.Errorf("Status = %q, want %q", issue.Status, "In Progress")
+	}
+	if !containsString(requestedFields, "created") || !containsString(requestedFields, "updated") {
+		t.Errorf("fields = %q, want created and updated", requestedFields)
+	}
+	if issue.CreatedAt != "2026-07-19T10:20:30.123-0600" || issue.UpdatedAt != "2026-07-20T11:22:33.456-0600" {
+		t.Errorf("timestamps = %q/%q, want native Jira values", issue.CreatedAt, issue.UpdatedAt)
+	}
+}
+
+func TestJira_ListSearchActivityTimestampParity(t *testing.T) {
+	const created = "2026-07-19T10:20:30.123-0600"
+	const updated = "2026-07-20T11:22:33.456-0600"
+	var requested []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requested = append(requested, r.URL.Query().Get("fields"))
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"issues": []map[string]interface{}{{
+				"key": "PROJ-42",
+				"fields": map[string]interface{}{
+					"summary": "Activity parity",
+					"status":  map[string]string{"name": "Open"},
+					"created": created,
+					"updated": updated,
+				},
+			}},
+		})
+	}))
+	defer srv.Close()
+
+	j, _ := newJira("PROJ", "test-token", "user@example.com", srv.URL)
+	j.fieldDiscoveryDone = true
+	j.resolvedCustom = map[string]string{}
+
+	listed, err := j.ListIssues("", 10)
+	if err != nil {
+		t.Fatalf("ListIssues failed: %v", err)
+	}
+	searched, err := j.Search(SearchQuery{RawQuery: "project = PROJ", Limit: 10})
+	if err != nil {
+		t.Fatalf("Search failed: %v", err)
+	}
+	for name, issues := range map[string][]Issue{"list": listed, "search": searched} {
+		if len(issues) != 1 {
+			t.Fatalf("%s returned %d issues, want 1", name, len(issues))
+		}
+		if issues[0].CreatedAt != created || issues[0].UpdatedAt != updated {
+			t.Errorf("%s timestamps = %q/%q, want %q/%q", name, issues[0].CreatedAt, issues[0].UpdatedAt, created, updated)
+		}
+	}
+	for _, fields := range requested {
+		if !containsString(fields, "created") || !containsString(fields, "updated") {
+			t.Errorf("fields = %q, want created and updated", fields)
+		}
 	}
 }
 
@@ -680,7 +742,13 @@ func TestLinear_CreateIssue_GraphQLError(t *testing.T) {
 }
 
 func TestLinear_GetIssue(t *testing.T) {
+	var graphqlQuery string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var request struct {
+			Query string `json:"query"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&request)
+		graphqlQuery = request.Query
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"data": map[string]interface{}{
 				"issue": map[string]interface{}{
@@ -688,6 +756,8 @@ func TestLinear_GetIssue(t *testing.T) {
 					"identifier": "ENG-42",
 					"title":      "Test Linear Issue",
 					"url":        "https://linear.app/team/ENG-42",
+					"createdAt":  "2026-07-19T10:20:30.123Z",
+					"updatedAt":  "2026-07-20T11:22:33.456Z",
 					"state": map[string]interface{}{
 						"name": "In Progress",
 					},
@@ -707,6 +777,12 @@ func TestLinear_GetIssue(t *testing.T) {
 	}
 	if issue.Title != "Test Linear Issue" {
 		t.Errorf("Title = %q, want %q", issue.Title, "Test Linear Issue")
+	}
+	if !containsString(graphqlQuery, "createdAt") || !containsString(graphqlQuery, "updatedAt") {
+		t.Errorf("query missing activity fields:\n%s", graphqlQuery)
+	}
+	if issue.CreatedAt != "2026-07-19T10:20:30.123Z" || issue.UpdatedAt != "2026-07-20T11:22:33.456Z" {
+		t.Errorf("timestamps = %q/%q, want native Linear values", issue.CreatedAt, issue.UpdatedAt)
 	}
 }
 
@@ -1100,6 +1176,7 @@ func TestGitHub_Search_AssigneeNone(t *testing.T) {
 				"html_url":   "https://github.com/acme/widgets/issues/1",
 				"body":       "Some body text",
 				"created_at": "2024-01-15T10:00:00Z",
+				"updated_at": "2024-01-16T11:22:33.456Z",
 				"user":       map[string]interface{}{"login": "reporter1"},
 				"assignee":   nil,
 				"labels":     []map[string]interface{}{},
@@ -1127,6 +1204,9 @@ func TestGitHub_Search_AssigneeNone(t *testing.T) {
 	}
 	if issues[0].Reporter != "reporter1" {
 		t.Errorf("Reporter = %q, want %q", issues[0].Reporter, "reporter1")
+	}
+	if issues[0].CreatedAt != "2024-01-15T10:00:00Z" || issues[0].UpdatedAt != "2024-01-16T11:22:33.456Z" {
+		t.Errorf("list timestamps = %q/%q, want native GitHub values", issues[0].CreatedAt, issues[0].UpdatedAt)
 	}
 }
 
@@ -1182,6 +1262,7 @@ func TestGitHub_Search_RawQuery(t *testing.T) {
 					"html_url":   "https://github.com/acme/widgets/issues/99",
 					"body":       "Found via search",
 					"created_at": "2024-03-01T08:00:00Z",
+					"updated_at": "2024-03-02T09:10:11.123Z",
 					"user":       map[string]interface{}{"login": "searcher"},
 					"assignee":   nil,
 					"labels":     []map[string]interface{}{{"name": "search-hit"}},
@@ -1207,6 +1288,9 @@ func TestGitHub_Search_RawQuery(t *testing.T) {
 	}
 	if issues[0].Title != "Search Result" {
 		t.Errorf("Title = %q, want %q", issues[0].Title, "Search Result")
+	}
+	if issues[0].CreatedAt != "2024-03-01T08:00:00Z" || issues[0].UpdatedAt != "2024-03-02T09:10:11.123Z" {
+		t.Errorf("search timestamps = %q/%q, want native GitHub values", issues[0].CreatedAt, issues[0].UpdatedAt)
 	}
 	if issues[0].Reporter != "searcher" {
 		t.Errorf("Reporter = %q, want %q", issues[0].Reporter, "searcher")

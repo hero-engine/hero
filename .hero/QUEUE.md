@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-18T18:50:54Z · 83 ready specs_
+_Generated: 2026-07-20T18:19:00Z · 86 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -40,6 +40,111 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · in-review · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/hero-idea-primitive-core/spec.md)_
+
+---
+
+## tracker-semantic-priority-field-mapping — "\"Jira custom field cannot be configured as canonical Hero priority\""
+_bug · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/bugs/tracker-semantic-priority-field-mapping/spec.md)_
+
+---
+
+## tracker-source-evidence-preflight — "Tracker Source-Evidence Preflight — Read Issue Description, Comments & Attachments Before Root-Cause Work"
+_feature · planning · horizon: now_
+
+Give `/diagnose` a real, read-only way to pull the *inbound* source evidence a
+human reporter attached — the latest issue description, the comment thread, and
+attachment content including screenshots — and require `debug-investigator` to
+consume that evidence before it classifies a root cause. Today the agent is
+told to "read the full issue: description, comments, screenshots, videos,
+attachments" but no command or model field actually fetches comments or
+attachment bytes, so the instruction points at a capability that does not exist.
+
+**Status:** planning — designed via `hero peer call` (spec-out) from hero-code.
+No tracker was contacted while writing this spec.
+
+**Pick up at:** add the read-side evidence model + `GetIssueEvidence` capability
+to `internal/tracker`, implement it for the four providers to their real
+capability, expose `hero sync evidence` (CLI) and `hero_tracker_evidence` (MCP)
+as read-only surfaces, and wire the evidence-preflight step into
+`debug-investigator.md` and the `debugging-investigation` report template.
+
+**Files (source of truth — never edit `.claude/` copies):**
+`internal/tracker/tracker.go`, `internal/tracker/{jira,github,gitlab,linear}.go`,
+`internal/cli/pull.go` (template), `internal/cli/sync.go`,
+`internal/serve/mcp_tools_def.go`, `internal/serve/mcp_dispatch.go`,
+`internal/mocktracker/`, `domains/engineering/agents/debug-investigator.md`,
+`domains/engineering/skills/debugging-investigation/SKILL.md`.
+
+**Skip:** hero-code UI, any tracker writeback, and committing arbitrary large
+binaries into git.
+
+**Paste-ready implementation prompt:**
+
+> Add a read-only tracker source-evidence capability and require /diagnose to
+> use it. In `internal/tracker`, add `Comment` and `Attachment` read models plus
+> an `IssueEvidence` aggregate and a capability-scoped `GetIssueEvidence(ctx,
+> issueID, EvidenceOptions) (*IssueEvidence, error)` method with a per-provider
+> `EvidenceCapabilities` descriptor. Implement it for Jira (native comment +
+> attachment REST), GitHub (issue comments + markdown-extracted user-content
+> attachments), GitLab (notes + `/uploads` markdown links), and Linear (GraphQL
+> comments + attachments). Bound every download by per-attachment and total byte
+> caps and a MIME allowlist; treat all fetched text/binaries as untrusted; redact
+> the configured integration secret and token-shaped strings from persisted text
+> using the `Secret` pattern; make zero mutating requests. Expose it as a
+> read-only `hero sync evidence <slug|issue-id>` command (copy `pull.go`,
+> including an injectable `newTrackerForEvidence` hook) and a read-group
+> `hero_tracker_evidence` MCP tool. Persist a committed `## Source Evidence`
+> section + `evidence/evidence.json` manifest in the spec folder and download
+> bounded attachments to a gitignored `evidence/attachments/` dir. Define
+> offline / auth-failure / unsupported-provider behavior that records the gap
+> instead of claiming full evidence. Rewrite `debug-investigator.md` lines 64-68
+> into a concrete evidence-preflight step that runs before root-cause work, and
+> add a Source Evidence section to the debugging-investigation report template.
+> Extend `internal/mocktracker` seeds + routers to serve comments and attachment
+> content, and add deterministic per-provider tests plus byte-cap, redaction,
+> offline, auth-failure, and never-writes-tracker assertions.
+
+---
+
+## tracker-backed-diagnosis-publication-contract-broken — "Hero Code blocks the existing tracker-backed diagnosis publication commands"
+_bug · planning · horizon: now_
+
+Restore tracker-backed `/diagnose` completion by letting Hero Code follow the
+canonical diagnose workflow and run Hero's existing `sync attach` and
+`sync comment` commands through its app-owned command runner.
+
+**Status:** planning — the root cause remains confirmed; the fix direction was
+simplified after engineer challenge. No live tracker was queried or mutated.
+
+**Pick up at:** expose `comment` and `attach` as narrow operations on Hero
+Code's existing tracker command runner, preserve normal process/external-
+mutation approval, and make every diagnose entry point load or repeat the
+canonical workflow's postback step.
+
+→ `.hero/planning/bugs/tracker-backed-diagnosis-publication-contract-broken/spec.md`
+
+**Files:** `internal/cli/diagnose.go:123`, `internal/serve/mcp_tools.go:2288`, `domains/engineering/agents/debug-investigator.md:129`, sibling `packages/hero-swift/Sources/HeroSharedApplication/Engine/ToolExecutor.swift:576`, sibling `packages/hero-swift/Sources/HeroSharedApplication/Engine/AgentLoop.swift:3167`
+**Skip:** do not add MCP, a new publication subsystem, or a new Hero CLI wrapper unless implementation proves the existing two commands cannot satisfy the workflow.
+
+**Paste-ready implementation prompt:**
+
+> Restore tracker-backed diagnosis postback with the smallest coherent change.
+> In Hero Code, extend the existing structured `hero_tracker` runner and schema
+> with validated `comment` and `attach` operations that invoke Hero's existing
+> `sync comment` and `sync attach` commands through the app-selected
+> `HeroProcessRunner`, `HeroTrackerProcessEnvironment`, and redaction path.
+> Keep generic `hero_cli sync` and Bash Hero execution blocked. Preserve
+> `hero_cli`/`hero_tracker` as `.process` tools; do not make them unconditional
+> first-party silent allows or bypass plan/process approval. In Hero, update the
+> short CLI/MCP diagnose instructions so natural-language diagnosis receives
+> the same tracker attachment/comment close as the canonical
+> debug-investigator workflow. Report the two command outcomes truthfully. Do
+> not add MCP, a combined publish command, adapter logic in Swift, an
+> idempotency subsystem, or stable-integration migration. Verify focused Swift
+> executor/permission tests, Hero diagnose-output tests, and installed-content
+> parity.
 
 ---
 

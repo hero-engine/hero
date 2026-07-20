@@ -284,6 +284,8 @@ func (l *linear) GetIssue(issueID string) (*Issue, error) {
 			identifier
 			title
 			url
+			createdAt
+			updatedAt
 			state {
 				name
 			}
@@ -307,6 +309,8 @@ func (l *linear) GetIssue(issueID string) (*Issue, error) {
 	title, _ := issueData["title"].(string)
 	identifier, _ := issueData["identifier"].(string)
 	url, _ := issueData["url"].(string)
+	createdAt, _ := issueData["createdAt"].(string)
+	updatedAt, _ := issueData["updatedAt"].(string)
 
 	statusName := ""
 	if state, ok := issueData["state"].(map[string]interface{}); ok {
@@ -314,10 +318,12 @@ func (l *linear) GetIssue(issueID string) (*Issue, error) {
 	}
 
 	return &Issue{
-		ID:     identifier,
-		Title:  title,
-		Status: statusName,
-		URL:    url,
+		ID:        identifier,
+		Title:     title,
+		Status:    statusName,
+		URL:       url,
+		CreatedAt: createdAt,
+		UpdatedAt: updatedAt,
 	}, nil
 }
 
@@ -516,6 +522,7 @@ func (l *linear) Search(query SearchQuery) ([]Issue, error) {
 					url
 					description
 					createdAt
+					updatedAt
 					state {
 						name
 					}
@@ -570,6 +577,7 @@ func (l *linear) Search(query SearchQuery) ([]Issue, error) {
 		url, _ := node["url"].(string)
 		description, _ := node["description"].(string)
 		createdAt, _ := node["createdAt"].(string)
+		updatedAt, _ := node["updatedAt"].(string)
 
 		statusName := ""
 		if state, ok := node["state"].(map[string]interface{}); ok {
@@ -621,6 +629,7 @@ func (l *linear) Search(query SearchQuery) ([]Issue, error) {
 			URL:         url,
 			Description: truncateDescription(description, 500),
 			CreatedAt:   createdAt,
+			UpdatedAt:   updatedAt,
 			Assignee:    assigneeName,
 			Reporter:    creatorName,
 			Priority:    priorityName,

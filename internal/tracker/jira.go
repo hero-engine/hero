@@ -627,7 +627,7 @@ func (j *jira) GetIssue(issueID string) (*Issue, error) {
 	sprintField := j.sprintField()
 	storyPtsField := j.storyPointsField()
 
-	fields := fmt.Sprintf("key,summary,status,priority,assignee,labels,issuetype,description,created,reporter,%s,%s,%s",
+	fields := fmt.Sprintf("key,summary,status,priority,assignee,labels,issuetype,description,created,updated,reporter,%s,%s,%s",
 		epicField, sprintField, storyPtsField)
 	for _, cfID := range j.customFieldIDs() {
 		fields += "," + cfID
@@ -786,6 +786,14 @@ func (j *jira) parseIssueRaw(raw map[string]json.RawMessage) (*Issue, error) {
 		}
 	}
 
+	// Updated date
+	if v, ok := fields["updated"]; ok {
+		var updated string
+		if err := json.Unmarshal(v, &updated); err == nil {
+			issue.UpdatedAt = updated
+		}
+	}
+
 	// Description (v3 returns ADF, v2 returns plain text — handle both)
 	if v, ok := fields["description"]; ok {
 		issue.Description = extractADFText(v)
@@ -937,7 +945,7 @@ func (j *jira) ListIssues(label string, limit int) ([]Issue, error) {
 		jql += fmt.Sprintf(" AND labels = %q", label)
 	}
 
-	listFields := "key,summary,status,priority,assignee,labels,issuetype"
+	listFields := "key,summary,status,priority,assignee,labels,issuetype,created,updated"
 	for _, cfID := range j.customFieldIDs() {
 		listFields += "," + cfID
 	}
@@ -955,7 +963,7 @@ func (j *jira) Search(query SearchQuery) ([]Issue, error) {
 		limit = maxSearchLimit
 	}
 
-	fields := "key,summary,status,priority,assignee,labels,issuetype,created,reporter,description"
+	fields := "key,summary,status,priority,assignee,labels,issuetype,created,updated,reporter,description"
 	for _, cfID := range j.customFieldIDs() {
 		fields += "," + cfID
 	}
