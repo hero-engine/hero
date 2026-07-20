@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-20T18:19:00Z · 86 ready specs_
+_Generated: 2026-07-20T20:23:02Z · 88 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -606,6 +606,27 @@ catalogs, and LLM-call wrapping mechanics — all are out of scope here.
 _feature · planning · horizon: now_
 
 > Read `.hero/planning/features/document-vocabulary-auto-select-schema/spec.md` (this file). Inspect `internal/vocabulary/vocabulary.go` and `internal/vocabulary/resolver.go` for the auto_select rule struct shape, allowed-value set, and match semantics — these are the authoritative source. Check existing presets: `core/vocabularies/agile-scrum.yaml`, `core/vocabularies/kanban.yaml`, `core/vocabularies/shape-up.yaml`, `core/vocabularies/default.yaml`, `core/vocabularies/jira.yaml`, `core/vocabularies/linear.yaml` for what auto_select blocks already exist. Author `docs/contracts/vocabulary-auto-select.md` per the six sections in this spec's Design. Update `docs/contracts/active-dialect.md` §3 with a cross-link and add a row to `docs/contracts/README.md`'s table. Keep the doc under 250 lines. Run `go build ./...` (should be unchanged). Report what shipped, the auto_select rule fields you documented, and any code-vs-prose discrepancies you spotted, under 250 words.
+
+---
+
+## durable-attention — "Durable Attention — Project Mail, Personal Focus, and Explicit Promotion"
+_initiative · planning · horizon: next_
+
+_Run opener — arm with `/drive durable-attention`_
+
+Deliver local-first Project Mail and user-global Personal Focus as distinct,
+Hero-owned durable primitives; expose them through CLI/API and one stable
+consumer read model; and reframe peering over asynchronous mail without making
+model execution part of the communication contract.
+
+---
+
+## durable-attention-contracts — "Durable Attention Contracts — Ownership, Storage, Compatibility, and Trust"
+_feature · planning · horizon: next_
+
+Inspect existing contracts, local-state conventions, peer identity, graph/event
+IDs, JSON Schema generation, and client fixture patterns. Design the smallest
+contract foundation that preserves separate Mail and Focus ownership.
 
 ---
 
