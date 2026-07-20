@@ -409,3 +409,9 @@
 {"event":"claimed","slug":"progressive-design-ac-recap","agent":"codex","at":"2026-07-20T14:16:14.140903-06:00"}
 {"ts":"2026-07-20T20:22:35.820799Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"progressive-design-ac-recap","message":"\"Progressive Design AC Recap — Coverage and Delta Before Full Tables\""}
 {"ts":"2026-07-20T20:22:35.820885Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"progressive-design-ac-recap","message":"status -\u003e completed"}
+{"ts":"2026-07-20T21:23:10.23932Z","type":"peer.call.invoked","agent":"hero","message":"peer call advisory mode=advisory target=hero-code call_id=18c41c69238fcae8b1bd3e3d7e290ff9"}
+{"ts":"2026-07-20T21:23:11.011674Z","type":"peer.call.completed","agent":"hero","message":"peer call failed: subagent CLI \"claude\" is not logged in — authenticate it and retry (run `claude` then `/login`, or set ANTHROPIC_API_KEY); CLI output: Not logged in · Please run /login (call_id 18c41c69238fcae8b1bd3e3d7e290ff9)"}
+{"ts":"2026-07-20T22:31:17.134083Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"tracker-diagnosis-full-ticket-evidence","message":"\"Tracker diagnosis cannot load complete ticket evidence\""}
+{"ts":"2026-07-20T22:31:17.134157Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"tracker-diagnosis-full-ticket-evidence","message":"status -\u003e completed"}
+{"ts":"2026-07-20T22:39:47.426Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"jira-import-per-type-filter-and-body-parity","message":"\"Tracker bulk import truncates work, drops bodies, and risks request fan-out\""}
+{"ts":"2026-07-20T22:39:47.426084Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"jira-import-per-type-filter-and-body-parity","message":"status -\u003e completed"}

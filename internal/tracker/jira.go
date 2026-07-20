@@ -7,6 +7,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -658,6 +659,149 @@ func (j *jira) GetIssue(issueID string) (*Issue, error) {
 	return j.parseIssueRaw(raw)
 }
 
+// GetIssueEvidence retrieves the lossless Jira issue payload plus every comment
+// page. It is intentionally read-only and authenticated through Hero's existing
+// Jira adapter; callers never handle the credential themselves.
+func (j *jira) GetIssueEvidence(issueID string) (*IssueEvidence, error) {
+	issueURL := fmt.Sprintf("%s/rest/api/3/issue/%s?fields=*all&expand=names,changelog", j.baseURL, url.PathEscape(issueID))
+	req, err := http.NewRequest("GET", issueURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("creating evidence request: %w", err)
+	}
+	j.setHeaders(req)
+	resp, err := j.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("getting issue evidence: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("jira API returned %d: %s", resp.StatusCode, string(body))
+	}
+
+	var raw struct {
+		Key       string                     `json:"key"`
+		Fields    map[string]json.RawMessage `json:"fields"`
+		Names     map[string]string          `json:"names"`
+		Changelog json.RawMessage            `json:"changelog"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
+		return nil, fmt.Errorf("decoding issue evidence: %w", err)
+	}
+	parseRaw := map[string]json.RawMessage{
+		"key":    json.RawMessage(strconv.Quote(raw.Key)),
+		"fields": mustMarshalRaw(raw.Fields),
+	}
+	normalized, err := j.parseIssueRaw(parseRaw)
+	if err != nil {
+		return nil, err
+	}
+
+	evidence := &IssueEvidence{
+		Tracker: "jira", IssueID: raw.Key, URL: fmt.Sprintf("%s/browse/%s", j.baseURL, raw.Key),
+		RetrievedAt: time.Now().UTC().Format(time.RFC3339), Normalized: normalized,
+		FieldNames: raw.Names, RawFields: raw.Fields, Changelog: raw.Changelog,
+		Comments: []EvidenceComment{}, Attachments: []EvidenceAttachment{},
+	}
+	if value, ok := raw.Fields["attachment"]; ok {
+		var attachments []struct {
+			ID, Filename, MimeType, Created, Content string
+			Size                                     int64
+			Author                                   struct {
+				DisplayName string `json:"displayName"`
+			}
+		}
+		if json.Unmarshal(value, &attachments) == nil {
+			for _, a := range attachments {
+				evidence.Attachments = append(evidence.Attachments, EvidenceAttachment{
+					ID: a.ID, Filename: a.Filename, MIMEType: a.MimeType, Size: a.Size,
+					Author: a.Author.DisplayName, Created: a.Created, Content: a.Content,
+				})
+			}
+		}
+	}
+	if err := j.fetchAllComments(issueID, evidence); err != nil {
+		return nil, err
+	}
+	return evidence, nil
+}
+
+func mustMarshalRaw(value any) json.RawMessage {
+	b, _ := json.Marshal(value)
+	return b
+}
+
+func (j *jira) fetchAllComments(issueID string, evidence *IssueEvidence) error {
+	startAt := 0
+	for {
+		commentURL := fmt.Sprintf("%s/rest/api/3/issue/%s/comment?startAt=%d&maxResults=100", j.baseURL, url.PathEscape(issueID), startAt)
+		req, _ := http.NewRequest("GET", commentURL, nil)
+		j.setHeaders(req)
+		resp, err := j.client.Do(req)
+		if err != nil {
+			return fmt.Errorf("getting Jira comments: %w", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			return fmt.Errorf("jira comments API returned %d: %s", resp.StatusCode, string(body))
+		}
+		var page struct {
+			StartAt, MaxResults, Total int
+			Comments                   []struct {
+				ID, Created, Updated string
+				Author               struct {
+					DisplayName string `json:"displayName"`
+				}
+				Body json.RawMessage
+			}
+		}
+		err = json.NewDecoder(resp.Body).Decode(&page)
+		resp.Body.Close()
+		if err != nil {
+			return fmt.Errorf("decoding Jira comments: %w", err)
+		}
+		for _, c := range page.Comments {
+			evidence.Comments = append(evidence.Comments, EvidenceComment{
+				ID: c.ID, Author: c.Author.DisplayName, Created: c.Created, Updated: c.Updated,
+				Text: extractADFText(c.Body), RawBody: c.Body,
+			})
+		}
+		startAt += len(page.Comments)
+		if len(page.Comments) == 0 || startAt >= page.Total {
+			return nil
+		}
+	}
+}
+
+func (j *jira) DownloadEvidenceAttachment(contentURL string) ([]byte, error) {
+	attachmentURL, err := url.Parse(contentURL)
+	if err != nil {
+		return nil, fmt.Errorf("parsing Jira attachment URL: %w", err)
+	}
+	configuredURL, err := url.Parse(j.baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("parsing configured Jira URL: %w", err)
+	}
+	if !strings.EqualFold(attachmentURL.Scheme, configuredURL.Scheme) || !strings.EqualFold(attachmentURL.Host, configuredURL.Host) {
+		return nil, fmt.Errorf("refusing attachment URL outside configured Jira host")
+	}
+	req, err := http.NewRequest("GET", attachmentURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	j.setHeaders(req)
+	resp, err := j.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("downloading Jira attachment: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Jira attachment returned %d", resp.StatusCode)
+	}
+	return io.ReadAll(resp.Body)
+}
+
 // parseIssueRaw parses a raw Jira issue JSON object into an Issue.
 func (j *jira) parseIssueRaw(raw map[string]json.RawMessage) (*Issue, error) {
 	var key string
@@ -928,15 +1072,18 @@ func (j *jira) setHeaders(req *http.Request) {
 // defaultSearchLimit is the default max issues returned when no limit is specified.
 const defaultSearchLimit = 50
 
-// maxSearchLimit is the safety cap to prevent runaway pagination against huge projects.
-// Users can override with --limit but this prevents accidental full-project dumps.
-const maxSearchLimit = 500
+// maxSearchLimit is the per-query safety cap. Imports commonly run one query
+// per work type, and real Jira projects can carry well over 500 active bugs.
+// Keep the guard high enough for a complete type pass instead of silently
+// turning a requested 1,000+ issue sync into a 500-item sample.
+const maxSearchLimit = 5000
 
 func (j *jira) ListIssues(label string, limit int) ([]Issue, error) {
 	if limit <= 0 {
 		limit = defaultSearchLimit
 	}
 	if limit > maxSearchLimit {
+		fmt.Fprintf(os.Stderr, "Warning: requested Jira limit %d exceeds the %d-issue per-query safety cap; results may be incomplete.\n", limit, maxSearchLimit)
 		limit = maxSearchLimit
 	}
 
@@ -945,7 +1092,7 @@ func (j *jira) ListIssues(label string, limit int) ([]Issue, error) {
 		jql += fmt.Sprintf(" AND labels = %q", label)
 	}
 
-	listFields := "key,summary,status,priority,assignee,labels,issuetype,created,updated"
+	listFields := "key,summary,status,priority,assignee,labels,issuetype,created,updated,reporter,description"
 	for _, cfID := range j.customFieldIDs() {
 		listFields += "," + cfID
 	}
@@ -960,6 +1107,7 @@ func (j *jira) Search(query SearchQuery) ([]Issue, error) {
 		limit = defaultSearchLimit
 	}
 	if limit > maxSearchLimit {
+		fmt.Fprintf(os.Stderr, "Warning: requested Jira limit %d exceeds the %d-issue per-query safety cap; results may be incomplete.\n", limit, maxSearchLimit)
 		limit = maxSearchLimit
 	}
 
@@ -1091,10 +1239,10 @@ func (j *jira) searchIssues(jql string, limit int, fields string) ([]Issue, erro
 		if err != nil {
 			return nil, fmt.Errorf("searching issues: %w", err)
 		}
-		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
 			respBody, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
 			return nil, fmt.Errorf("jira API returned %d: %s", resp.StatusCode, string(respBody))
 		}
 
@@ -1103,8 +1251,10 @@ func (j *jira) searchIssues(jql string, limit int, fields string) ([]Issue, erro
 			NextPageToken string                       `json:"nextPageToken"`
 		}
 		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			resp.Body.Close()
 			return nil, fmt.Errorf("decoding response: %w", err)
 		}
+		resp.Body.Close()
 
 		for _, raw := range result.Issues {
 			issue, err := j.parseIssueRaw(raw)
@@ -1117,6 +1267,9 @@ func (j *jira) searchIssues(jql string, limit int, fields string) ([]Issue, erro
 		// Trim to limit if we overshot (page may contain more than remaining).
 		if limit > 0 && len(allIssues) >= limit {
 			allIssues = allIssues[:limit]
+			if result.NextPageToken != "" {
+				fmt.Fprintf(os.Stderr, "Warning: Jira query reached its %d-issue safety limit and more pages remain; results are incomplete. JQL: %s\n", limit, jql)
+			}
 			break
 		}
 

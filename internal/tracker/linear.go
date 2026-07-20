@@ -445,9 +445,6 @@ func (l *linear) Search(query SearchQuery) ([]Issue, error) {
 	if limit <= 0 {
 		limit = 30
 	}
-	if limit > 100 {
-		limit = 100
-	}
 
 	// Linear uses GraphQL filters — build the filter object.
 	// Status: default excludes completed/canceled. A specific status
@@ -512,9 +509,13 @@ func (l *linear) Search(query SearchQuery) ([]Issue, error) {
 		orderBy = "priority"
 	}
 
-	graphqlQuery := fmt.Sprintf(`query ListIssues($teamKey: String!, $first: Int!) {
+	graphqlQuery := fmt.Sprintf(`query ListIssues($teamKey: String!, $first: Int!, $after: String) {
 		team(id: $teamKey) {
-			issues(first: $first, orderBy: %s, filter: { %s }) {
+			issues(first: $first, after: $after, orderBy: %s, filter: { %s }) {
+				pageInfo {
+					hasNextPage
+					endCursor
+				}
 				nodes {
 					id
 					identifier
@@ -543,30 +544,51 @@ func (l *linear) Search(query SearchQuery) ([]Issue, error) {
 		}
 	}`, orderBy, filter)
 
-	variables := map[string]interface{}{
-		"teamKey": l.teamKey,
-		"first":   limit,
-	}
-
-	result, err := l.graphql(graphqlQuery, variables)
-	if err != nil {
-		return nil, fmt.Errorf("listing issues: %w", err)
-	}
-
-	team, ok := result["team"].(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("team not found: %s", l.teamKey)
-	}
-	issuesData, ok := team["issues"].(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("unexpected response shape")
-	}
-	nodes, ok := issuesData["nodes"].([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("unexpected nodes shape")
-	}
-
 	var issues []Issue
+	var after interface{}
+	for len(issues) < limit {
+		variables := map[string]interface{}{
+			"teamKey": l.teamKey,
+			"first":   min(limit-len(issues), 100),
+			"after":   after,
+		}
+		result, err := l.graphql(graphqlQuery, variables)
+		if err != nil {
+			return nil, fmt.Errorf("listing issues: %w", err)
+		}
+		team, ok := result["team"].(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("team not found: %s", l.teamKey)
+		}
+		issuesData, ok := team["issues"].(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("unexpected response shape")
+		}
+		nodes, ok := issuesData["nodes"].([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("unexpected nodes shape")
+		}
+		issues = append(issues, l.parseIssueNodes(nodes)...)
+		pageInfo, _ := issuesData["pageInfo"].(map[string]interface{})
+		hasNext, _ := pageInfo["hasNextPage"].(bool)
+		endCursor, _ := pageInfo["endCursor"].(string)
+		if len(issues) >= limit {
+			issues = issues[:limit]
+			if hasNext {
+				fmt.Fprintf(os.Stderr, "Warning: Linear query reached its %d-issue limit and more pages remain; results are incomplete.\n", limit)
+			}
+			break
+		}
+		if !hasNext || endCursor == "" || len(nodes) == 0 {
+			break
+		}
+		after = endCursor
+	}
+	return issues, nil
+}
+
+func (l *linear) parseIssueNodes(nodes []interface{}) []Issue {
+	issues := make([]Issue, 0, len(nodes))
 	for _, n := range nodes {
 		node, ok := n.(map[string]interface{})
 		if !ok {
@@ -627,7 +649,7 @@ func (l *linear) Search(query SearchQuery) ([]Issue, error) {
 			Title:       title,
 			Status:      statusName,
 			URL:         url,
-			Description: truncateDescription(description, 500),
+			Description: description,
 			CreatedAt:   createdAt,
 			UpdatedAt:   updatedAt,
 			Assignee:    assigneeName,
@@ -637,7 +659,7 @@ func (l *linear) Search(query SearchQuery) ([]Issue, error) {
 			IssueType:   l.heroIssueType(labels),
 		})
 	}
-	return issues, nil
+	return issues
 }
 
 // quoteStrings formats a slice of strings as quoted, comma-separated values for GraphQL.

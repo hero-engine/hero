@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/hero-engine/hero/internal/config"
@@ -14,6 +15,26 @@ import (
 type byTypeMockTracker struct {
 	queries []tracker.SearchQuery
 	byType  map[string][]tracker.Issue
+}
+
+func TestFetchByTypeUnion_ReportsEffectiveRawJQLAndCounts(t *testing.T) {
+	jql := "project = MORPH AND issuetype = Bug AND status NOT IN (Done, Rejected, Cancelled)"
+	cfg := config.Config{Import: &config.ImportConfig{ByType: map[string]*config.ImportFilter{
+		"bug": {JQL: jql},
+	}}}
+	mock := &byTypeMockTracker{byType: map[string][]tracker.Issue{
+		"Bug": {{ID: "MORPH-1"}, {ID: "MORPH-2"}},
+	}}
+
+	out := captureStdout(func() {
+		_, _ = fetchByTypeUnion(cfg, mock, 5000)
+	})
+	if !strings.Contains(out, "JQL: "+jql) || !strings.Contains(out, "Matched: 2, added after dedup: 2") {
+		t.Fatalf("per-type output did not expose effective JQL and count:\n%s", out)
+	}
+	if strings.Contains(out, "Assignee: unassigned") || strings.Contains(out, "Status: New") {
+		t.Fatalf("raw JQL output misleadingly displayed ignored synthesized filters:\n%s", out)
+	}
 }
 
 func (m *byTypeMockTracker) Search(q tracker.SearchQuery) ([]tracker.Issue, error) {
@@ -87,8 +108,9 @@ func TestFetchByTypeUnion_UnionsAndDedups(t *testing.T) {
 	}
 }
 
-// TestFetchByTypeUnion_RespectsLimit caps the unioned result set.
-func TestFetchByTypeUnion_RespectsLimit(t *testing.T) {
+// TestFetchByTypeUnion_AppliesLimitPerType ensures one large type cannot consume
+// a global union budget and prevent later configured type passes from running.
+func TestFetchByTypeUnion_AppliesLimitPerType(t *testing.T) {
 	cfg := config.Config{Import: &config.ImportConfig{
 		ByType: map[string]*config.ImportFilter{
 			"bug":  {IssueType: "bug"},
@@ -103,8 +125,11 @@ func TestFetchByTypeUnion_RespectsLimit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(issues) != 2 {
-		t.Errorf("union size = %d, want 2 (limit cap)", len(issues))
+	if len(issues) != 5 {
+		t.Errorf("union size = %d, want 5 (limit applies independently to each type query)", len(issues))
+	}
+	if len(mock.queries) != 2 || mock.queries[0].Limit != 2 || mock.queries[1].Limit != 2 {
+		t.Fatalf("per-type query limits = %+v, want two independent limit=2 queries", mock.queries)
 	}
 }
 

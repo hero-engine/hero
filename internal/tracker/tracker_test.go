@@ -6,14 +6,39 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/spec"
 )
+
+var trackerStderrMu sync.Mutex
+
+func captureTrackerStderr(t *testing.T, run func()) string {
+	t.Helper()
+	trackerStderrMu.Lock()
+	defer trackerStderrMu.Unlock()
+	old := os.Stderr
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	os.Stderr = w
+	run()
+	_ = w.Close()
+	os.Stderr = old
+	out, err := io.ReadAll(r)
+	_ = r.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(out)
+}
 
 // --- Factory tests ---
 
@@ -575,9 +600,40 @@ func TestJira_ListSearchActivityTimestampParity(t *testing.T) {
 		}
 	}
 	for _, fields := range requested {
-		if !containsString(fields, "created") || !containsString(fields, "updated") {
-			t.Errorf("fields = %q, want created and updated", fields)
+		if !containsString(fields, "created") || !containsString(fields, "updated") || !containsString(fields, "description") {
+			t.Errorf("fields = %q, want created, updated, and description", fields)
 		}
+	}
+}
+
+func TestJira_SearchAllowsMoreThanLegacyFiveHundredCap(t *testing.T) {
+	page := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		page++
+		issues := make([]map[string]interface{}, 100)
+		for i := range issues {
+			issues[i] = map[string]interface{}{
+				"key":    fmt.Sprintf("PROJ-%d", (page-1)*100+i),
+				"fields": map[string]interface{}{"summary": "Issue"},
+			}
+		}
+		result := map[string]interface{}{"issues": issues}
+		if page < 6 {
+			result["nextPageToken"] = fmt.Sprintf("page-%d", page+1)
+		}
+		json.NewEncoder(w).Encode(result)
+	}))
+	defer srv.Close()
+
+	j, _ := newJira("PROJ", "test-token", "user@example.com", srv.URL)
+	j.fieldDiscoveryDone = true
+	j.resolvedCustom = map[string]string{}
+	issues, err := j.Search(SearchQuery{RawQuery: "project = PROJ", Limit: 600})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(issues) != 600 {
+		t.Fatalf("issues = %d, want 600; request was silently capped", len(issues))
 	}
 }
 
@@ -619,6 +675,90 @@ func TestJira_GetIssue_ADFDescription(t *testing.T) {
 	}
 	if issue.Description != "First paragraph.\n\nSecond paragraph." {
 		t.Errorf("Description = %q, want %q", issue.Description, "First paragraph.\n\nSecond paragraph.")
+	}
+}
+
+func TestJira_GetIssueEvidence_FullFieldsCommentsAndAttachment(t *testing.T) {
+	var baseURL string
+	commentCalls := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.URL.Path == "/rest/api/3/issue/MORPH-14171":
+			if r.URL.Query().Get("fields") != "*all" || !strings.Contains(r.URL.Query().Get("expand"), "changelog") {
+				t.Errorf("full evidence query = %q, want all fields and changelog", r.URL.RawQuery)
+			}
+			json.NewEncoder(w).Encode(map[string]any{
+				"key":       "MORPH-14171",
+				"changelog": map[string]any{"total": 1, "histories": []any{map[string]any{"id": "h1"}}},
+				"names":     map[string]string{"customfield_123": "Environment"},
+				"fields": map[string]any{
+					"summary": "Unknown after HA",
+					"description": map[string]any{
+						"type": "doc", "version": 1,
+						"content": []any{map[string]any{
+							"type":    "paragraph",
+							"content": []any{map[string]any{"type": "text", "text": "Full description"}},
+						}},
+					},
+					"customfield_123": "lab-a",
+					"attachment":      []any{map[string]any{"id": "9", "filename": "screen.png", "mimeType": "image/png", "size": 3, "content": baseURL + "/attachment/9"}},
+				},
+			})
+		case r.URL.Path == "/rest/api/3/issue/MORPH-14171/comment":
+			commentCalls++
+			start := r.URL.Query().Get("startAt")
+			startAt := 1
+			commentID := "2"
+			commentText := "Second comment"
+			if start == "0" {
+				startAt = 0
+				commentID = "1"
+				commentText = "First comment"
+			}
+			json.NewEncoder(w).Encode(map[string]any{
+				"startAt": startAt, "maxResults": 1, "total": 2,
+				"comments": []any{map[string]any{
+					"id": commentID,
+					"body": map[string]any{
+						"type": "doc", "version": 1,
+						"content": []any{map[string]any{
+							"type":    "paragraph",
+							"content": []any{map[string]any{"type": "text", "text": commentText}},
+						}},
+					},
+				}},
+			})
+		case r.URL.Path == "/attachment/9":
+			w.Write([]byte{1, 2, 3})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+	baseURL = srv.URL
+
+	j, _ := newJira("MORPH", "test-token", "user@example.com", srv.URL)
+	j.fieldDiscoveryDone = true
+	j.resolvedCustom = map[string]string{"environment": "customfield_123"}
+	evidence, err := j.GetIssueEvidence("MORPH-14171")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if evidence.Normalized.Description != "Full description" || len(evidence.RawFields) < 3 || len(evidence.Changelog) == 0 {
+		t.Fatalf("incomplete full-ticket evidence: %+v", evidence)
+	}
+	if len(evidence.Comments) != 2 || commentCalls != 2 {
+		t.Fatalf("comments=%d calls=%d, want two paginated comments", len(evidence.Comments), commentCalls)
+	}
+	if len(evidence.Attachments) != 1 || evidence.Attachments[0].Filename != "screen.png" {
+		t.Fatalf("attachments = %+v", evidence.Attachments)
+	}
+	data, err := j.DownloadEvidenceAttachment(evidence.Attachments[0].Content)
+	if err != nil || len(data) != 3 {
+		t.Fatalf("attachment download len=%d err=%v", len(data), err)
+	}
+	if _, err := j.DownloadEvidenceAttachment(srv.URL + ".evil.example/attachment/9"); err == nil {
+		t.Fatal("lookalike attachment host was not rejected")
 	}
 }
 
@@ -1235,7 +1375,8 @@ func TestGitHub_Search_Labels(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Search failed: %v", err)
 	}
-	if !containsString(capturedURL, "labels=bug,urgent") {
+	parsedURL, _ := url.Parse(capturedURL)
+	if parsedURL.Query().Get("labels") != "bug,urgent" {
 		t.Errorf("URL should contain labels=bug,urgent, got %q", capturedURL)
 	}
 	if len(issues) != 1 {
@@ -1298,6 +1439,124 @@ func TestGitHub_Search_RawQuery(t *testing.T) {
 	if len(issues[0].Labels) != 1 || issues[0].Labels[0] != "search-hit" {
 		t.Errorf("Labels = %v, want [search-hit]", issues[0].Labels)
 	}
+}
+
+func TestGitHub_ListIssues_PaginatesBeyondOneHundredAndPreservesBody(t *testing.T) {
+	var baseURL string
+	pageCalls := 0
+	longBody := strings.Repeat("complete body ", 60)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		pageCalls++
+		page := r.URL.Query().Get("page")
+		if page == "" {
+			w.Header().Set("Link", `<`+baseURL+`/repos/acme/widgets/issues?state=open&per_page=100&page=2>; rel="next"`)
+			json.NewEncoder(w).Encode([]map[string]any{{
+				"number": 1, "title": "First", "state": "open", "body": longBody,
+			}})
+			return
+		}
+		json.NewEncoder(w).Encode([]map[string]any{{
+			"number": 2, "title": "Second", "state": "open", "body": "second body",
+		}})
+	}))
+	defer srv.Close()
+	baseURL = srv.URL
+
+	g, _ := newGitHub("acme/widgets", "test-token", srv.URL)
+	issues, err := g.ListIssues("", 150)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pageCalls != 2 || len(issues) != 2 {
+		t.Fatalf("pageCalls=%d issues=%d, want two pages and two issues", pageCalls, len(issues))
+	}
+	if issues[0].Description != longBody {
+		t.Fatalf("GitHub body was truncated to %d of %d bytes", len(issues[0].Description), len(longBody))
+	}
+}
+
+func TestLinear_Search_PaginatesBeyondOneHundredAndPreservesDescription(t *testing.T) {
+	pageCalls := 0
+	longDescription := strings.Repeat("full Linear description ", 30)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		pageCalls++
+		var payload struct {
+			Variables map[string]any `json:"variables"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&payload)
+		after, _ := payload.Variables["after"].(string)
+		if after == "" {
+			json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"team": map[string]any{"issues": map[string]any{
+				"pageInfo": map[string]any{"hasNextPage": true, "endCursor": "cursor-2"},
+				"nodes":    []any{map[string]any{"identifier": "ENG-1", "title": "First", "description": longDescription}},
+			}}}})
+			return
+		}
+		json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"team": map[string]any{"issues": map[string]any{
+			"pageInfo": map[string]any{"hasNextPage": false, "endCursor": nil},
+			"nodes":    []any{map[string]any{"identifier": "ENG-2", "title": "Second", "description": "second"}},
+		}}}})
+	}))
+	defer srv.Close()
+
+	l, _ := newLinear("ENG", "test-token", srv.URL)
+	issues, err := l.Search(SearchQuery{Limit: 150})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pageCalls != 2 || len(issues) != 2 {
+		t.Fatalf("pageCalls=%d issues=%d, want two pages and two issues", pageCalls, len(issues))
+	}
+	if issues[0].Description != longDescription {
+		t.Fatalf("Linear description was truncated to %d of %d bytes", len(issues[0].Description), len(longDescription))
+	}
+}
+
+func TestGitHubAndLinear_ReportIncompleteLimitedResults(t *testing.T) {
+	t.Run("github", func(t *testing.T) {
+		var baseURL string
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Link", `<`+baseURL+`/repos/acme/widgets/issues?page=2>; rel="next"`)
+			json.NewEncoder(w).Encode([]map[string]any{{"number": 1, "title": "one", "state": "open"}})
+		}))
+		defer srv.Close()
+		baseURL = srv.URL
+		g, _ := newGitHub("acme/widgets", "test-token", srv.URL)
+		stderr := captureTrackerStderr(t, func() { _, _ = g.ListIssues("", 1) })
+		if !strings.Contains(stderr, "results are incomplete") {
+			t.Fatalf("GitHub limit warning missing: %q", stderr)
+		}
+	})
+
+	t.Run("github limit cuts through final page", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			json.NewEncoder(w).Encode([]map[string]any{
+				{"number": 1, "title": "one", "state": "open"},
+				{"number": 2, "title": "two", "state": "open"},
+			})
+		}))
+		defer srv.Close()
+		g, _ := newGitHub("acme/widgets", "test-token", srv.URL)
+		stderr := captureTrackerStderr(t, func() { _, _ = g.ListIssues("", 1) })
+		if !strings.Contains(stderr, "results are incomplete") {
+			t.Fatalf("GitHub within-page limit warning missing: %q", stderr)
+		}
+	})
+
+	t.Run("linear", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"team": map[string]any{"issues": map[string]any{
+				"pageInfo": map[string]any{"hasNextPage": true, "endCursor": "cursor-2"},
+				"nodes":    []any{map[string]any{"identifier": "ENG-1", "title": "one"}},
+			}}}})
+		}))
+		defer srv.Close()
+		l, _ := newLinear("ENG", "test-token", srv.URL)
+		stderr := captureTrackerStderr(t, func() { _, _ = l.Search(SearchQuery{Limit: 1}) })
+		if !strings.Contains(stderr, "results are incomplete") {
+			t.Fatalf("Linear limit warning missing: %q", stderr)
+		}
+	})
 }
 
 // --- Jira pagination tests ---
@@ -1396,9 +1655,16 @@ func TestJira_Search_PaginationRespectsLimit(t *testing.T) {
 
 	j, _ := newJira("PROJ", "test-token", "user@example.com", srv.URL)
 	j.fieldDiscoveryDone = true // skip field discovery HTTP call in test
-	issues, err := j.Search(SearchQuery{RawQuery: "project = PROJ", Limit: 3})
+	var issues []Issue
+	var err error
+	stderr := captureTrackerStderr(t, func() {
+		issues, err = j.Search(SearchQuery{RawQuery: "project = PROJ", Limit: 3})
+	})
 	if err != nil {
 		t.Fatalf("Search failed: %v", err)
+	}
+	if !strings.Contains(stderr, "results are incomplete") {
+		t.Fatalf("limit warning missing from stderr: %q", stderr)
 	}
 	if len(issues) > 3 {
 		t.Errorf("got %d issues, want at most 3 (limit should be respected)", len(issues))

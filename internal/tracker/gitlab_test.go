@@ -262,14 +262,16 @@ func TestGitLab_ListIssues_PaginationToExhaustion(t *testing.T) {
 }
 
 func TestGitLab_SearchProjectsActivityTimestamps(t *testing.T) {
+	longDescription := strings.Repeat("complete GitLab description ", 30)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode([]gitLabIssue{{
-			ID:        1001,
-			IID:       42,
-			Title:     "Activity",
-			State:     "opened",
-			CreatedAt: "2026-07-19T10:20:30.123Z",
-			UpdatedAt: "2026-07-20T11:22:33.456Z",
+			ID:          1001,
+			IID:         42,
+			Title:       "Activity",
+			State:       "opened",
+			Description: longDescription,
+			CreatedAt:   "2026-07-19T10:20:30.123Z",
+			UpdatedAt:   "2026-07-20T11:22:33.456Z",
 		}})
 	}))
 	defer srv.Close()
@@ -284,6 +286,9 @@ func TestGitLab_SearchProjectsActivityTimestamps(t *testing.T) {
 	}
 	if issues[0].CreatedAt != "2026-07-19T10:20:30.123Z" || issues[0].UpdatedAt != "2026-07-20T11:22:33.456Z" {
 		t.Errorf("timestamps = %q/%q, want native GitLab values", issues[0].CreatedAt, issues[0].UpdatedAt)
+	}
+	if issues[0].Description != longDescription {
+		t.Fatalf("GitLab description was truncated to %d of %d bytes", len(issues[0].Description), len(longDescription))
 	}
 }
 
@@ -301,6 +306,18 @@ func TestGitLab_ListIssues_SinglePageNoLink(t *testing.T) {
 	}
 	if len(issues) != 2 {
 		t.Errorf("got %d issues, want 2", len(issues))
+	}
+}
+
+func TestGitLab_ListIssues_ReportsIncompleteLimit(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode([]gitLabIssue{{IID: 1, Title: "One"}, {IID: 2, Title: "Two"}})
+	}))
+	defer srv.Close()
+	g, _ := newGitLab("group/proj", "test-token", srv.URL)
+	stderr := captureTrackerStderr(t, func() { _, _ = g.ListIssues("", 1) })
+	if !strings.Contains(stderr, "results are incomplete") {
+		t.Fatalf("GitLab limit warning missing: %q", stderr)
 	}
 }
 

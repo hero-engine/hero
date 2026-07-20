@@ -535,8 +535,9 @@ func isEmptyFilter(f *config.ImportFilter) bool {
 
 // fetchByTypeUnion runs each configured by_type filter's effective query
 // (base ⊕ by_type[type]) through the tracker's Search and unions the
-// results, deduping by external id (Issue.ID). Limit caps the total
-// unioned result set. Types with no by_type entry are not enumerated
+// results, deduping by external id (Issue.ID). Limit applies independently
+// to every type query so one large corpus cannot starve later types. Types with
+// no by_type entry are not enumerated
 // here — an unconfigured type contributes nothing to the union (its
 // issues still land correctly when caught by another type's filter, or
 // via a plain per-type import). The first Search error aborts.
@@ -556,16 +557,16 @@ func fetchByTypeUnion(cfg config.Config, t tracker.Tracker, limit int) ([]tracke
 		if err != nil {
 			return nil, fmt.Errorf("searching %s for %s: %w", t.Name(), specType, err)
 		}
+		added := 0
 		for _, iss := range found {
 			if seen[iss.ID] {
 				continue
 			}
 			seen[iss.ID] = true
 			union = append(union, iss)
-			if limit > 0 && len(union) >= limit {
-				return union, nil
-			}
+			added++
 		}
+		fmt.Printf("  Matched: %d, added after dedup: %d\n", len(found), added)
 	}
 	return union, nil
 }
@@ -626,6 +627,14 @@ func resolveInventoryPath(cfg config.Config, heroDir, specType string) string {
 
 // printQuerySummary prints a human-readable summary of the query filters.
 func printQuerySummary(query tracker.SearchQuery) {
+	if query.RawQuery != "" {
+		fmt.Printf("  JQL: %s\n", query.RawQuery)
+		return
+	}
+	if query.FilterID != "" {
+		fmt.Printf("  Saved filter: %s\n", query.FilterID)
+		return
+	}
 	if query.IssueType != "" {
 		fmt.Printf("  Issue type: %s\n", query.IssueType)
 	}
@@ -731,17 +740,16 @@ func refreshImportedSpecs(cfg config.Config, heroDir string, t tracker.Tracker, 
 
 		stats.total++
 
-		// Use already-fetched issue if available, otherwise fetch individually.
+		// Refresh is a bulk operation: only use issues returned by the bulk
+		// query. Never fan out to GetIssue for records outside that result set;
+		// filtered and terminal-state reconciliation needs its own bulk query.
 		issue, ok := issueByID[s.TrackerID]
 		if !ok {
-			fetched, err := t.GetIssue(s.TrackerID)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "  Warning: could not fetch %s: %v\n", s.TrackerID, err)
-				stats.errors++
-				continue
-			}
-			issue = fetched
+			continue
 		}
+
+		content := readSpecContent(s.Path)
+		placeholder := importedBodyPlaceholder(s.Type)
 
 		changed := false
 
@@ -750,7 +758,6 @@ func refreshImportedSpecs(cfg config.Config, heroDir string, t tracker.Tracker, 
 			trackerName := t.Name()
 			desired := specFieldsFromIssue(*issue, trackerName)
 
-			content := readSpecContent(s.Path)
 			updated := false
 
 			// Walk desired fields: set any that are missing or different on the spec.
@@ -763,8 +770,18 @@ func refreshImportedSpecs(cfg config.Config, heroDir string, t tracker.Tracker, 
 				}
 			}
 
+			if issue.Description != "" && placeholder != "" && strings.Contains(content, placeholder) {
+				content = strings.Replace(content, placeholder, strings.TrimSpace(issue.Description), 1)
+				updated = true
+			}
+
 			if updated {
 				_ = os.WriteFile(s.Path, []byte(content), 0o644)
+				if issue.Description != "" {
+					if berr := seedBaselineFromIssue(heroDir, s.Slug, issue); berr != nil {
+						fmt.Fprintf(os.Stderr, "  Warning: could not update sync baseline for %s: %v\n", s.Slug, berr)
+					}
+				}
 				stats.updated++
 				changed = true
 			}
@@ -1371,12 +1388,6 @@ func generateImportedSpec(issue tracker.Issue, specType, trackerName, slug strin
 	var body strings.Builder
 	fmt.Fprintf(&body, "# %s\n\n", title)
 
-	// Description: 2-3 sentence summary from tracker
-	if issue.Description != "" {
-		desc := summarizeDescription(issue.Description, 400)
-		fmt.Fprintf(&body, "> %s\n\n", desc)
-	}
-
 	// Kickoff placeholder — every work spec needs a `## Kickoff`
 	// before /deliver will accept it. Imported specs land kickoff-less
 	// by default, so we scaffold an explicit TODO that fails loudly
@@ -1388,7 +1399,12 @@ func generateImportedSpec(issue tracker.Issue, specType, trackerName, slug strin
 	switch specType {
 	case "bug":
 		body.WriteString("## Problem\n\n")
-		body.WriteString("<!-- Imported from tracker. Describe the bug. -->\n\n")
+		if issue.Description != "" {
+			body.WriteString(strings.TrimSpace(issue.Description))
+			body.WriteString("\n\n")
+		} else {
+			body.WriteString("<!-- Imported from tracker. Describe the bug. -->\n\n")
+		}
 		body.WriteString("## Root Cause\n\n")
 		body.WriteString("<!-- To be investigated. -->\n\n")
 		body.WriteString("## Fix\n\n")
@@ -1397,7 +1413,12 @@ func generateImportedSpec(issue tracker.Issue, specType, trackerName, slug strin
 		body.WriteString("<!-- Files to modify. -->\n")
 	default:
 		body.WriteString("## Goal\n\n")
-		body.WriteString("<!-- Imported from tracker. Describe the goal. -->\n\n")
+		if issue.Description != "" {
+			body.WriteString(strings.TrimSpace(issue.Description))
+			body.WriteString("\n\n")
+		} else {
+			body.WriteString("<!-- Imported from tracker. Describe the goal. -->\n\n")
+		}
 		body.WriteString("## Design\n\n")
 		body.WriteString("<!-- To be designed. -->\n\n")
 		body.WriteString("## Changes\n\n")
@@ -1407,6 +1428,16 @@ func generateImportedSpec(issue tracker.Issue, specType, trackerName, slug strin
 	}
 
 	return fm.String() + body.String()
+}
+
+func importedBodyPlaceholder(specType spec.Type) string {
+	if specType == spec.TypeBug {
+		return "<!-- Imported from tracker. Describe the bug. -->"
+	}
+	if specType == spec.TypeFeature {
+		return "<!-- Imported from tracker. Describe the goal. -->"
+	}
+	return ""
 }
 
 // severityLikeNames matches the auto-discovered severity field names from the tracker package.

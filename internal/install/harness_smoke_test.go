@@ -211,6 +211,38 @@ func TestHarness_DesignClosingUsesProgressiveACDisclosureForAllTargets(t *testin
 	}
 }
 
+func TestHarness_DiagnosePullsCredentialSafeTrackerDescriptionForAllTargets(t *testing.T) {
+	tests := []struct {
+		name   string
+		target Target
+		path   string
+	}{
+		{"opencode", TargetOpenCode, ".opencode/commands/diagnose.md"},
+		{"cursor", TargetCursor, ".cursor/rules/commands/diagnose.md"},
+		{"claude", TargetClaude, ".claude/commands/diagnose.md"},
+		{"copilot", TargetCopilot, ".github/prompts/commands/diagnose.prompt.md"},
+		{"codex", TargetCodex, ".agents/skills/command-diagnose/SKILL.md"},
+		{"generic", TargetGeneric, ".ai/commands/diagnose.md"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := runOverlayInstall(t, tt.target, "engineering")
+			content, err := os.ReadFile(filepath.Join(dir, tt.path))
+			if err != nil {
+				t.Fatalf("read installed diagnose command: %v", err)
+			}
+			body := string(content)
+			if !strings.Contains(body, "hero sync evidence <slug>") {
+				t.Errorf("%s missing full-ticket evidence preflight", tt.path)
+			}
+			if !strings.Contains(body, "Never claim") {
+				t.Errorf("%s missing remote-emptiness truth constraint", tt.path)
+			}
+		})
+	}
+}
+
 // TestHarness_RenderDirect_NoCanonicalMirror confirms the
 // render-direct-install architecture: agents/commands/skills land
 // directly at each harness's documented destination, and there is

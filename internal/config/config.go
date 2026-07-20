@@ -694,7 +694,7 @@ type ImportConfig struct {
 	// DefaultType is the spec type for imported issues: "feature" or "bug" (default: "feature").
 	DefaultType string `json:"default_type"`
 
-	// Limit is the default maximum number of issues to fetch (default: 30, max: 100).
+	// Limit is the default maximum number of issues to fetch per configured type query (default: 100).
 	Limit int `json:"limit"`
 
 	// BaseFilter defines the base query that always applies when importing issues.

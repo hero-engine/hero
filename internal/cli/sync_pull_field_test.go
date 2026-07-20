@@ -14,7 +14,7 @@ import (
 // field-level pull path. Only GetFields / Name carry behavior; the rest
 // satisfy the interface and are never called by the pull path.
 type mockPullTracker struct {
-	fields  map[string]tracker.Value
+	fields    map[string]tracker.Value
 	fieldsErr error
 }
 
@@ -29,10 +29,10 @@ func (m *mockPullTracker) Name() string { return "mock" }
 
 // --- unused interface methods (never hit by the pull path) ---
 
-func (m *mockPullTracker) CreateIssue(s *spec.Spec) (string, error)            { return "", nil }
+func (m *mockPullTracker) CreateIssue(s *spec.Spec) (string, error)              { return "", nil }
 func (m *mockPullTracker) UpdateStatus(issueID string, status spec.Status) error { return nil }
-func (m *mockPullTracker) UpdateSize(issueID, localTier string) error          { return nil }
-func (m *mockPullTracker) GetIssue(issueID string) (*tracker.Issue, error)     { return nil, nil }
+func (m *mockPullTracker) UpdateSize(issueID, localTier string) error            { return nil }
+func (m *mockPullTracker) GetIssue(issueID string) (*tracker.Issue, error)       { return nil, nil }
 func (m *mockPullTracker) UpdateFields(issueID string, f map[string]tracker.Value) error {
 	return nil
 }
@@ -43,8 +43,8 @@ func (m *mockPullTracker) Search(q tracker.SearchQuery) ([]tracker.Issue, error)
 func (m *mockPullTracker) AddComment(issueID, body string) error                 { return nil }
 func (m *mockPullTracker) AttachFile(issueID, filePath, fileName string) error   { return nil }
 func (m *mockPullTracker) SupportsHierarchy() bool                               { return false }
-func (m *mockPullTracker) MapSize(localTier string) (string, error)             { return "", nil }
-func (m *mockPullTracker) ReverseMapSize(trackerValue string) (string, error)   { return "", nil }
+func (m *mockPullTracker) MapSize(localTier string) (string, error)              { return "", nil }
+func (m *mockPullTracker) ReverseMapSize(trackerValue string) (string, error)    { return "", nil }
 
 // withMockTracker swaps the pull tracker factory for a mock and restores
 // it on cleanup. Returns the mock so the test can program its fields.
@@ -106,6 +106,26 @@ func TestSyncPull_Field_ReturnsTrackerValue(t *testing.T) {
 	}
 	if got.Value == nil || *got.Value != "P0" {
 		t.Fatalf("value = %v, want \"P0\"", got.Value)
+	}
+}
+
+func TestSyncPull_Field_ReturnsFullTrackerDescription(t *testing.T) {
+	env := newTestEnv(t)
+	addTrackerBackedSpec(env, "morph-14171", "MORPH-14171")
+	description := "## Environment\n\n" + strings.Repeat("Complete Jira evidence. ", 80)
+	withMockTracker(t, &mockPullTracker{
+		fields: map[string]tracker.Value{
+			"description": tracker.StringValue(description),
+		},
+	})
+
+	out, err := runCmd("sync", "pull", "morph-14171", "--field", "description", "--json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := decodePullEnvelope(t, out)
+	if got.Value == nil || *got.Value != description {
+		t.Fatal("description pull did not return the complete tracker body")
 	}
 }
 

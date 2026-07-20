@@ -9,6 +9,16 @@ Route this bug investigation to the `debug-investigator` agent.
 
 Pass the bug report and any spec path or tracker ID to the agent. The `debug-investigator` handles the complete diagnosis workflow: pre-flight status check, investigation, root cause classification, fix planning, spec writing, and tracker posting.
 
+**Tracker evidence preflight.** When the bug spec has a `tracker_id`, do not
+infer remote evidence from the imported scaffold. Before root-cause work, run
+`hero sync evidence <slug>`. This read-only helper uses Hero's configured
+tracker credential; the model never needs or receives the secret. Read the
+structured full-ticket response and inspect downloaded local attachment paths,
+including screenshots. Distinguish a successful empty field, an explicitly
+reported omission, authentication failure, and helper failure. Never claim
+that Jira or another tracker lacks evidence merely because the local spec body
+is empty. This is an on-demand diagnosis call, not part of bulk tracker sync.
+
 **Before starting work**, emit `hero next ask` to capture the bug report
 the user pasted in. This preserves session intent across compaction — see
 the `next-handoff-emit` skill for the full pattern.

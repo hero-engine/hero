@@ -24,6 +24,7 @@ Subverbs:
   sync jira      bulk push status transitions to Jira
   sync link      link a spec to an existing tracker issue
   sync import    bulk-import open issues as spec scaffolds
+  sync evidence  fetch one complete tracker ticket for diagnosis
   sync comment   post a comment to a tracker issue
   sync attach    attach a file to a tracker issue
   sync spec      sync a single spec to the tracker (creates if no tracker_id)
@@ -49,8 +50,7 @@ in hero.json). Dry-run by default; add --push to apply.
 
 Examples:
   hero sync jira                        # dry-run
-  hero sync jira --push                 # perform transitions
-  hero sync jira --push --status delivering`,
+  hero sync jira --push --status delivering # perform one explicit transition cohort`,
 	RunE: runSyncJira,
 }
 
@@ -175,6 +175,9 @@ func runSyncJira(cmd *cobra.Command, args []string) error {
 	if cfg.Tracker == nil || cfg.Tracker.Type != "jira" {
 		return fmt.Errorf("hero sync jira requires tracker.type = jira in hero.json")
 	}
+	if err := validateJiraBulkPush(cfg, syncJiraPush, syncJiraStatusFilter); err != nil {
+		return err
+	}
 
 	t, err := tracker.NewWithJiraConfig(cfg.Tracker, cfg.Jira, cfg.TrackerKnowledgeDir(projectRoot))
 	if err != nil {
@@ -222,6 +225,19 @@ func runSyncJira(cmd *cobra.Command, args []string) error {
 		fmt.Printf("\nPushed: %d, Skipped: %d, Failed: %d\n", pushed, skipped, failed)
 	} else {
 		fmt.Printf("\n%d spec(s) would be synced. Run with --push to apply.\n", pushed)
+	}
+	return nil
+}
+
+func validateJiraBulkPush(cfg config.Config, push bool, statusFilter string) error {
+	if !push {
+		return nil
+	}
+	if statusFilter == "" {
+		return fmt.Errorf("bulk Jira --push requires an explicit --status cohort; refusing an unbounded all-spec write")
+	}
+	if cfg.Jira == nil || cfg.Jira.PushStatusTransitions[statusFilter] == "" {
+		return fmt.Errorf("bulk Jira --push requires jira.push_status_transitions[%q]; refusing comment-only fallback across a cohort", statusFilter)
 	}
 	return nil
 }

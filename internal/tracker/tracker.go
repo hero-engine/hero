@@ -4,6 +4,7 @@
 package tracker
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -11,6 +12,52 @@ import (
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/spec"
 )
+
+// IssueEvidence is the lossless, read-only tracker payload used by diagnosis
+// preflight. Normalized carries Hero's common fields; RawFields preserves every
+// provider field returned by the full issue endpoint. Comments are fetched to
+// exhaustion separately because Jira paginates them independently.
+type IssueEvidence struct {
+	Tracker     string                     `json:"tracker"`
+	IssueID     string                     `json:"issue_id"`
+	URL         string                     `json:"url"`
+	RetrievedAt string                     `json:"retrieved_at"`
+	Normalized  *Issue                     `json:"normalized"`
+	FieldNames  map[string]string          `json:"field_names,omitempty"`
+	RawFields   map[string]json.RawMessage `json:"raw_fields"`
+	Changelog   json.RawMessage            `json:"changelog,omitempty"`
+	Comments    []EvidenceComment          `json:"comments"`
+	Attachments []EvidenceAttachment       `json:"attachments"`
+	Omissions   []string                   `json:"omissions,omitempty"`
+}
+
+type EvidenceComment struct {
+	ID      string          `json:"id"`
+	Author  string          `json:"author,omitempty"`
+	Created string          `json:"created,omitempty"`
+	Updated string          `json:"updated,omitempty"`
+	Text    string          `json:"text"`
+	RawBody json.RawMessage `json:"raw_body,omitempty"`
+}
+
+type EvidenceAttachment struct {
+	ID        string `json:"id"`
+	Filename  string `json:"filename"`
+	MIMEType  string `json:"mime_type,omitempty"`
+	Size      int64  `json:"size,omitempty"`
+	Author    string `json:"author,omitempty"`
+	Created   string `json:"created,omitempty"`
+	Content   string `json:"content_url,omitempty"`
+	LocalPath string `json:"local_path,omitempty"`
+}
+
+// EvidenceTracker is an optional provider capability. Keeping it separate from
+// Tracker lets providers add full-ticket evidence without stubbing a lossy
+// implementation. Callers must report unsupported providers explicitly.
+type EvidenceTracker interface {
+	GetIssueEvidence(issueID string) (*IssueEvidence, error)
+	DownloadEvidenceAttachment(contentURL string) ([]byte, error)
+}
 
 // ErrSizeUpdateNotSupported is returned by adapters that don't write
 // size values back to the tracker. Real adapters (jira/linear/github)

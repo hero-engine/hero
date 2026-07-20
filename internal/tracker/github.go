@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -331,16 +333,14 @@ func (g *gitHub) ListIssues(label string, limit int) ([]Issue, error) {
 	if limit <= 0 {
 		limit = 30
 	}
-	if limit > 100 {
-		limit = 100
-	}
 
-	url := fmt.Sprintf("%s/repos/%s/%s/issues?state=open&per_page=%d", g.baseURL, g.owner, g.repo, limit)
+	pageSize := min(limit, 100)
+	listURL := fmt.Sprintf("%s/repos/%s/%s/issues?state=open&per_page=%d", g.baseURL, g.owner, g.repo, pageSize)
 	if label != "" {
-		url += "&labels=" + label
+		listURL += "&labels=" + url.QueryEscape(label)
 	}
 
-	return g.fetchIssueList(url)
+	return g.fetchIssueList(listURL, limit)
 }
 
 // Search fetches issues from GitHub using a structured query.
@@ -354,9 +354,6 @@ func (g *gitHub) Search(query SearchQuery) ([]Issue, error) {
 	limit := query.Limit
 	if limit <= 0 {
 		limit = 30
-	}
-	if limit > 100 {
-		limit = 100
 	}
 	if query.FilterID != "" {
 		fmt.Fprintln(os.Stderr, "Note: GitHub ignores --filter (Jira saved-filter ID is Jira-only).")
@@ -379,7 +376,8 @@ func (g *gitHub) Search(query SearchQuery) ([]Issue, error) {
 		}
 	}
 
-	url := fmt.Sprintf("%s/repos/%s/%s/issues?state=%s&per_page=%d", g.baseURL, g.owner, g.repo, state, limit)
+	pageSize := min(limit, 100)
+	listURL := fmt.Sprintf("%s/repos/%s/%s/issues?state=%s&per_page=%d", g.baseURL, g.owner, g.repo, state, pageSize)
 
 	// Labels: user labels plus, when IssueType is set, the type-label
 	// convention (Bug/epic/initiative), and when Priority is set the
@@ -392,16 +390,16 @@ func (g *gitHub) Search(query SearchQuery) ([]Issue, error) {
 		labels = append(labels, "priority::"+strings.ToLower(query.Priority))
 	}
 	if len(labels) > 0 {
-		url += "&labels=" + strings.Join(labels, ",")
+		listURL += "&labels=" + url.QueryEscape(strings.Join(labels, ","))
 	}
 
 	// Assignee
 	if query.Assignee != "" {
 		switch strings.ToLower(query.Assignee) {
 		case "unassigned", "none", "empty":
-			url += "&assignee=none"
+			listURL += "&assignee=none"
 		default:
-			url += "&assignee=" + query.Assignee
+			listURL += "&assignee=" + url.QueryEscape(query.Assignee)
 		}
 	}
 
@@ -409,18 +407,18 @@ func (g *gitHub) Search(query SearchQuery) ([]Issue, error) {
 	if query.OrderBy != "" {
 		switch strings.ToLower(query.OrderBy) {
 		case "created", "created desc", "created asc":
-			url += "&sort=created"
+			listURL += "&sort=created"
 		case "updated", "updated desc", "updated asc":
-			url += "&sort=updated"
+			listURL += "&sort=updated"
 		case "comments", "comments desc", "comments asc":
-			url += "&sort=comments"
+			listURL += "&sort=comments"
 		}
 		if strings.HasSuffix(strings.ToLower(query.OrderBy), " asc") {
-			url += "&direction=asc"
+			listURL += "&direction=asc"
 		}
 	}
 
-	return g.fetchIssueList(url)
+	return g.fetchIssueList(listURL, limit)
 }
 
 // searchIssues uses the GitHub search API for raw queries.
@@ -429,29 +427,9 @@ func (g *gitHub) searchIssues(rawQuery string, limit int) ([]Issue, error) {
 	q := fmt.Sprintf("repo:%s/%s %s", g.owner, g.repo, rawQuery)
 	searchURL := fmt.Sprintf("%s/search/issues", g.baseURL)
 
-	req, err := http.NewRequest("GET", searchURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("creating request: %w", err)
-	}
-	params := req.URL.Query()
-	params.Set("q", q)
-	params.Set("per_page", fmt.Sprintf("%d", limit))
-	req.URL.RawQuery = params.Encode()
-	g.setHeaders(req)
-
-	resp, err := g.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("searching issues: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		respBody, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("github API returned %d: %s", resp.StatusCode, string(respBody))
-	}
-
-	var result struct {
-		Items []struct {
+	type searchResult struct {
+		TotalCount int `json:"total_count"`
+		Items      []struct {
 			Number    int    `json:"number"`
 			Title     string `json:"title"`
 			State     string `json:"state"`
@@ -470,30 +448,63 @@ func (g *gitHub) searchIssues(rawQuery string, limit int) ([]Issue, error) {
 			} `json:"labels"`
 		} `json:"items"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("decoding response: %w", err)
-	}
 
-	issues := make([]Issue, 0, len(result.Items))
-	for _, r := range result.Items {
-		issue := Issue{
-			ID:          fmt.Sprintf("%d", r.Number),
-			Title:       r.Title,
-			Status:      r.State,
-			URL:         r.URL,
-			Reporter:    r.User.Login,
-			CreatedAt:   r.CreatedAt,
-			UpdatedAt:   r.UpdatedAt,
-			Description: truncateDescription(r.Body, 500),
+	var issues []Issue
+	page := 1
+	totalCount := 0
+	for len(issues) < limit {
+		req, err := http.NewRequest("GET", searchURL, nil)
+		if err != nil {
+			return nil, fmt.Errorf("creating request: %w", err)
 		}
-		if r.Assignee != nil {
-			issue.Assignee = r.Assignee.Login
+		params := req.URL.Query()
+		params.Set("q", q)
+		params.Set("per_page", fmt.Sprintf("%d", min(limit-len(issues), 100)))
+		params.Set("page", strconv.Itoa(page))
+		req.URL.RawQuery = params.Encode()
+		g.setHeaders(req)
+
+		resp, err := g.client.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("searching issues: %w", err)
 		}
-		for _, l := range r.Labels {
-			issue.Labels = append(issue.Labels, l.Name)
+		if resp.StatusCode != http.StatusOK {
+			respBody, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			return nil, fmt.Errorf("github API returned %d: %s", resp.StatusCode, string(respBody))
 		}
-		issue.IssueType = githubIssueType(issue.Labels)
-		issues = append(issues, issue)
+		var result searchResult
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			resp.Body.Close()
+			return nil, fmt.Errorf("decoding response: %w", err)
+		}
+		resp.Body.Close()
+		totalCount = result.TotalCount
+		for _, r := range result.Items {
+			issue := Issue{
+				ID: fmt.Sprintf("%d", r.Number), Title: r.Title, Status: r.State,
+				URL: r.URL, Reporter: r.User.Login, CreatedAt: r.CreatedAt,
+				UpdatedAt: r.UpdatedAt, Description: r.Body,
+			}
+			if r.Assignee != nil {
+				issue.Assignee = r.Assignee.Login
+			}
+			for _, l := range r.Labels {
+				issue.Labels = append(issue.Labels, l.Name)
+			}
+			issue.IssueType = githubIssueType(issue.Labels)
+			issues = append(issues, issue)
+			if len(issues) == limit {
+				break
+			}
+		}
+		if len(result.Items) == 0 || len(issues) >= totalCount {
+			break
+		}
+		page++
+	}
+	if len(issues) == limit && totalCount > len(issues) {
+		fmt.Fprintf(os.Stderr, "Warning: GitHub search reached its %d-issue limit and %d results remain; results are incomplete.\n", limit, totalCount-len(issues))
 	}
 	return issues, nil
 }
@@ -512,25 +523,8 @@ func githubIssueType(labels []string) string {
 }
 
 // fetchIssueList fetches issues from a GitHub list endpoint URL.
-func (g *gitHub) fetchIssueList(url string) ([]Issue, error) {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("creating request: %w", err)
-	}
-	g.setHeaders(req)
-
-	resp, err := g.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("listing issues: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		respBody, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("github API returned %d: %s", resp.StatusCode, string(respBody))
-	}
-
-	var results []struct {
+func (g *gitHub) fetchIssueList(firstURL string, limit int) ([]Issue, error) {
+	type issueResult struct {
 		Number    int    `json:"number"`
 		Title     string `json:"title"`
 		State     string `json:"state"`
@@ -548,32 +542,57 @@ func (g *gitHub) fetchIssueList(url string) ([]Issue, error) {
 			Name string `json:"name"`
 		} `json:"labels"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
-		return nil, fmt.Errorf("decoding response: %w", err)
-	}
-
-	issues := make([]Issue, 0, len(results))
-	for _, r := range results {
-		issue := Issue{
-			ID:          fmt.Sprintf("%d", r.Number),
-			Title:       r.Title,
-			Status:      r.State,
-			URL:         r.URL,
-			CreatedAt:   r.CreatedAt,
-			UpdatedAt:   r.UpdatedAt,
-			Description: truncateDescription(r.Body, 500),
+	var issues []Issue
+	next := firstURL
+	for next != "" && len(issues) < limit {
+		req, err := http.NewRequest("GET", next, nil)
+		if err != nil {
+			return nil, fmt.Errorf("creating request: %w", err)
 		}
-		if r.User != nil {
-			issue.Reporter = r.User.Login
+		g.setHeaders(req)
+		resp, err := g.client.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("listing issues: %w", err)
 		}
-		if r.Assignee != nil {
-			issue.Assignee = r.Assignee.Login
+		if resp.StatusCode != http.StatusOK {
+			respBody, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			return nil, fmt.Errorf("github API returned %d: %s", resp.StatusCode, string(respBody))
 		}
-		for _, l := range r.Labels {
-			issue.Labels = append(issue.Labels, l.Name)
+		var results []issueResult
+		if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
+			resp.Body.Close()
+			return nil, fmt.Errorf("decoding response: %w", err)
 		}
-		issue.IssueType = githubIssueType(issue.Labels)
-		issues = append(issues, issue)
+		nextLink := nextLink(resp.Header.Get("Link"))
+		resp.Body.Close()
+		remaining := limit - len(issues)
+		truncatedCurrentPage := len(results) > remaining
+		for _, r := range results {
+			issue := Issue{
+				ID: fmt.Sprintf("%d", r.Number), Title: r.Title, Status: r.State,
+				URL: r.URL, CreatedAt: r.CreatedAt, UpdatedAt: r.UpdatedAt,
+				Description: r.Body,
+			}
+			if r.User != nil {
+				issue.Reporter = r.User.Login
+			}
+			if r.Assignee != nil {
+				issue.Assignee = r.Assignee.Login
+			}
+			for _, l := range r.Labels {
+				issue.Labels = append(issue.Labels, l.Name)
+			}
+			issue.IssueType = githubIssueType(issue.Labels)
+			issues = append(issues, issue)
+			if len(issues) == limit {
+				break
+			}
+		}
+		if len(issues) == limit && (truncatedCurrentPage || nextLink != "") {
+			fmt.Fprintf(os.Stderr, "Warning: GitHub list reached its %d-issue limit and more results remain; results are incomplete.\n", limit)
+		}
+		next = nextLink
 	}
 	return issues, nil
 }

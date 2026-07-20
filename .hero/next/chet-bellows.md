@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-20T18:19:00Z
+updated: 2026-07-20T22:40:37Z
 repo: hero-engine/hero
 ---
 
@@ -22,11 +22,11 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Commit the entire current worktree to main and create a new tagged release
+> Diagnose Morpheus MORPH-14171 losing its substantial Jira description during import/refresh, causing a title-only diagnosis that falsely claimed Jira was empty, and separately diagnose why Hero Code chat and quick chat text cannot be copied.
 
 ## Suggested next prompt
 
-> let's wire Hero Code's tracker activity display to tracker_updated_at and treat missing or invalid values as unknown
+> let's dogfood the next substantial /design loop and see whether the compact AC recap feels right in practice
 
 ## Recent reflections
 

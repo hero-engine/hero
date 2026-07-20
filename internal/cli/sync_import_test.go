@@ -9,6 +9,7 @@ import (
 
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/spec"
+	syncpkg "github.com/hero-engine/hero/internal/sync"
 	"github.com/hero-engine/hero/internal/tracker"
 )
 
@@ -287,6 +288,20 @@ func TestGenerateImportedSpec_Bug(t *testing.T) {
 	}
 }
 
+func TestGenerateImportedSpec_PreservesFullDescriptionInProblem(t *testing.T) {
+	description := "## Environment\n\n- Host A\n- Host B\n\n## Reproduction\n\n" + strings.Repeat("Detailed evidence. ", 40)
+	content := generateImportedSpec(tracker.Issue{
+		ID: "MORPH-14171", Title: "Unknown after HA", Description: description,
+	}, "bug", "jira", "morph-14171")
+
+	if !strings.Contains(content, strings.TrimSpace(description)) {
+		t.Fatal("generated bug spec did not preserve the full Jira description")
+	}
+	if strings.Contains(content, "Imported from tracker. Describe the bug") {
+		t.Fatal("generated bug spec retained the empty placeholder despite a Jira description")
+	}
+}
+
 func TestGenerateImportedSpec_TrackerActivityTimestamps(t *testing.T) {
 	issue := tracker.Issue{
 		ID:        "PROJ-42",
@@ -346,11 +361,13 @@ func TestSpecFieldsFromIssue_ProviderTimestampEvidence(t *testing.T) {
 
 type activityMockTracker struct {
 	byTypeMockTracker
-	issue tracker.Issue
+	issue         tracker.Issue
+	getIssueCalls int
 }
 
 func (m *activityMockTracker) Name() string { return "jira" }
 func (m *activityMockTracker) GetIssue(string) (*tracker.Issue, error) {
+	m.getIssueCalls++
 	issue := m.issue
 	return &issue, nil
 }
@@ -378,7 +395,7 @@ jira_updated_at: 2026-07-20T10:15:30.123-0600
 		UpdatedAt: "2026-07-21T09:08:07.123456-0600",
 	}}
 
-	first := refreshImportedSpecs(config.Config{}, env.heroDir, mock, nil)
+	first := refreshImportedSpecs(config.Config{}, env.heroDir, mock, []tracker.Issue{mock.issue})
 	if first.updated != 1 {
 		t.Fatalf("first refresh updated = %d, want 1", first.updated)
 	}
@@ -395,7 +412,7 @@ jira_updated_at: 2026-07-20T10:15:30.123-0600
 		}
 	}
 
-	second := refreshImportedSpecs(config.Config{}, env.heroDir, mock, nil)
+	second := refreshImportedSpecs(config.Config{}, env.heroDir, mock, []tracker.Issue{mock.issue})
 	afterSecond, err := os.ReadFile(specPath)
 	if err != nil {
 		t.Fatal(err)
@@ -409,7 +426,7 @@ jira_updated_at: 2026-07-20T10:15:30.123-0600
 
 	mock.issue.CreatedAt = "malformed"
 	mock.issue.UpdatedAt = ""
-	third := refreshImportedSpecs(config.Config{}, env.heroDir, mock, nil)
+	third := refreshImportedSpecs(config.Config{}, env.heroDir, mock, []tracker.Issue{mock.issue})
 	afterThird, err := os.ReadFile(specPath)
 	if err != nil {
 		t.Fatal(err)
@@ -419,6 +436,111 @@ jira_updated_at: 2026-07-20T10:15:30.123-0600
 	}
 	if string(afterThird) != string(afterSecond) {
 		t.Error("malformed/missing refresh cleared or replaced valid timestamps")
+	}
+	if mock.getIssueCalls != 0 {
+		t.Fatalf("bulk refresh unexpectedly called GetIssue %d time(s)", mock.getIssueCalls)
+	}
+}
+
+func TestRefreshImportedSpecs_RepairsUntouchedImportedProblem(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("planning/bugs/morph-14171/spec.md", `---
+title: Unknown after HA
+slug: morph-14171
+type: bug
+status: planning
+tracker_id: MORPH-14171
+---
+# Unknown after HA
+
+## Problem
+
+<!-- Imported from tracker. Describe the bug. -->
+
+## Root Cause
+
+<!-- To be investigated. -->
+`)
+	mock := &activityMockTracker{}
+	stats := refreshImportedSpecs(config.Config{}, env.heroDir, mock, []tracker.Issue{{
+		ID: "MORPH-14171", Title: "Unknown after HA", Description: "Full Jira reproduction evidence.",
+	}})
+	if stats.updated != 1 {
+		t.Fatalf("updated = %d, want 1", stats.updated)
+	}
+	content, err := os.ReadFile(filepath.Join(env.heroDir, "planning", "bugs", "morph-14171", "spec.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(content), "Full Jira reproduction evidence.") {
+		t.Fatalf("refresh did not repair Problem section:\n%s", content)
+	}
+	baseline, err := syncpkg.ReadBaseline(env.heroDir, "morph-14171")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if baseline == nil {
+		t.Fatal("refresh did not repair the sync baseline")
+	}
+	if baseline.TrackerID != "MORPH-14171" {
+		t.Errorf("baseline tracker ID = %q, want MORPH-14171", baseline.TrackerID)
+	}
+	if got := baseline.Base["body"].Text; got != "Full Jira reproduction evidence." {
+		t.Errorf("baseline body = %q, want full Jira reproduction evidence", got)
+	}
+	if mock.getIssueCalls != 0 {
+		t.Fatalf("bulk refresh fanned out to GetIssue %d time(s); descriptions must come from the bulk page", mock.getIssueCalls)
+	}
+}
+
+func TestRefreshImportedSpecs_PreservesAuthoredProblem(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("planning/bugs/authored/spec.md", `---
+title: Authored
+slug: authored
+type: bug
+status: planning
+tracker_id: PROJ-9
+---
+# Authored
+
+## Problem
+
+Locally investigated evidence that must survive.
+`)
+	mock := &activityMockTracker{issue: tracker.Issue{
+		ID: "PROJ-9", Title: "Authored", Description: "Remote Jira description.",
+	}}
+	refreshImportedSpecs(config.Config{}, env.heroDir, mock, []tracker.Issue{{
+		ID: "PROJ-9", Title: "Authored", Description: "Remote Jira description.",
+	}})
+	content, err := os.ReadFile(filepath.Join(env.heroDir, "planning", "bugs", "authored", "spec.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(content), "Locally investigated evidence that must survive.") || strings.Contains(string(content), "Remote Jira description.") {
+		t.Fatalf("refresh overwrote authored Problem content:\n%s", content)
+	}
+}
+
+func TestRefreshImportedSpecs_DoesNotFetchMissingIssuesIndividually(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("planning/bugs/not-in-bulk/spec.md", `---
+title: Not in bulk result
+slug: not-in-bulk
+type: bug
+status: planning
+tracker_id: PROJ-404
+---
+# Not in bulk result
+`)
+	mock := &activityMockTracker{issue: tracker.Issue{ID: "PROJ-404"}}
+	stats := refreshImportedSpecs(config.Config{}, env.heroDir, mock, nil)
+	if stats.total != 1 {
+		t.Fatalf("total = %d, want 1 discovered linked spec", stats.total)
+	}
+	if mock.getIssueCalls != 0 {
+		t.Fatalf("bulk refresh called GetIssue %d time(s) for an issue outside the bulk result", mock.getIssueCalls)
 	}
 }
 
@@ -456,7 +578,7 @@ jira_id: PROJ-42
 		CreatedAt: "2026-07-19T23:30:40.123-0600",
 	}}
 
-	stats := refreshImportedSpecs(config.Config{}, env.heroDir, mock, nil)
+	stats := refreshImportedSpecs(config.Config{}, env.heroDir, mock, []tracker.Issue{mock.issue})
 	if stats.updated != 1 {
 		t.Fatalf("refresh updated = %d, want 1", stats.updated)
 	}

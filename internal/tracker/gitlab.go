@@ -141,7 +141,7 @@ func (g *gitLab) toIssue(gi gitLabIssue) Issue {
 		IssueType:    heroIssueType(gi.IssueType, gi.Labels),
 		CreatedAt:    gi.CreatedAt,
 		UpdatedAt:    gi.UpdatedAt,
-		Description:  truncateDescription(gi.Description, 500),
+		Description:  gi.Description,
 		Priority:     priorityFromLabels(gi.Labels),
 		CustomFields: map[string]string{},
 	}
@@ -532,9 +532,12 @@ func (g *gitLab) fetchIssuePages(firstURL string, limit int) ([]Issue, error) {
 		linkNext := nextLink(resp.Header.Get("Link"))
 		resp.Body.Close()
 
-		for _, gi := range page {
+		for i, gi := range page {
 			out = append(out, g.toIssue(gi))
 			if limit > 0 && len(out) >= limit {
+				if linkNext != "" || i+1 < len(page) {
+					fmt.Fprintf(os.Stderr, "Warning: GitLab query reached its %d-issue limit and more results remain; results are incomplete.\n", limit)
+				}
 				return out, nil
 			}
 		}
