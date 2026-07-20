@@ -144,8 +144,15 @@ Control how issues are imported with the `import` section:
 | `default_type` | Spec type assigned to imported issues (`"bug"`, `"feature"`, `"chore"`) |
 | `limit` | Max issues imported per run |
 | `filter` | Tracker-native query — JQL for Jira, search syntax for GitHub, filter syntax for Linear |
-| `auto_refresh` | Re-sync imported specs from the tracker periodically |
-| `refresh_interval` | Refresh frequency (e.g. `"15m"`, `"1h"`) |
+| `auto_refresh` | While `hero serve` runs, periodically run the canonical bulk import-and-refresh workflow |
+| `refresh_interval` | Bulk refresh frequency (minimum `"5m"`; examples: `"15m"`, `"1h"`) |
+
+Auto-refresh uses the same configured filters, independent `by_type` queries,
+and per-query limit as `hero sync import --refresh`. It can discover new matching
+issues and refresh linked specs present in those bulk results. It does not call
+the tracker once per issue and does not fetch comments, attachments, changelog,
+or other deep evidence. Load that material explicitly for one linked spec with
+`hero sync evidence <spec-slug>` when an investigation needs it.
 
 ### Filter examples
 
@@ -248,7 +255,16 @@ Or refresh all imported specs:
 hero sync import --refresh
 ```
 
-With `auto_refresh: true`, Hero refreshes specs in the background at the configured interval.
+With `auto_refresh: true`, `hero serve` runs the same bulk workflow in the
+background at the configured interval:
+
+```bash
+hero sync import --refresh --no-report
+```
+
+The background path never expands issues one at a time. Full ticket evidence is
+an explicit, single-ticket operation (`hero sync evidence <spec-slug>`), not part
+of import or auto-refresh.
 
 ---
 

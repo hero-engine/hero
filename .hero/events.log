@@ -415,3 +415,5 @@
 {"ts":"2026-07-20T22:31:17.134157Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"tracker-diagnosis-full-ticket-evidence","message":"status -\u003e completed"}
 {"ts":"2026-07-20T22:39:47.426Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"jira-import-per-type-filter-and-body-parity","message":"\"Tracker bulk import truncates work, drops bodies, and risks request fan-out\""}
 {"ts":"2026-07-20T22:39:47.426084Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"jira-import-per-type-filter-and-body-parity","message":"status -\u003e completed"}
+{"ts":"2026-07-20T23:53:00.919064Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"serve-auto-refresh-bypasses-bulk-import","message":"\"hero serve auto-refresh bypasses the bulk importer\""}
+{"ts":"2026-07-20T23:53:00.919178Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"serve-auto-refresh-bypasses-bulk-import","message":"status -\u003e completed"}

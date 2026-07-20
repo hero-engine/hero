@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-20T22:40:37Z · projected from 571 source nodes_
+_Last refreshed: 2026-07-20T23:53:41Z · projected from 572 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 2h ago | satellite-corpus-integration |
+| core | building | cmd/, internal/ | 3h ago | satellite-corpus-integration |
 | docs | maturing | web/docs/ | 7d ago | — |
 | domains/chat | maturing | domains/chat/ | 2d ago | — |
 | domains/engineering | maturing | domains/engineering/ | 9d ago | — |
@@ -16,7 +16,7 @@ _Last refreshed: 2026-07-20T22:40:37Z · projected from 571 source nodes_
 | domains/sales | maturing | domains/sales/ | 11d ago | — |
 | landing | building | web/landing/ | 9d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 4d ago | agent-outposts |
+| serve | building | internal/serve/ | <1m ago | agent-outposts |
 | (unassigned) | — | — | — | 234 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -54,10 +54,11 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — jira-import-per-type-filter-and-body-parity, tracker-diagnosis-full-ticket-evidence, chat-slim-to-basic-research-seed, pm-foundation-delivery, pm-pack-completion, discovery-framing-coverage-skills, exec-narrative-and-evidence-synthesis
+- **(unassigned)** — jira-import-per-type-filter-and-body-parity, tracker-diagnosis-full-ticket-evidence, chat-slim-to-basic-research-seed, pm-foundation-delivery, pm-pack-completion, discovery-framing-coverage-skills
 - **core** — progressive-design-ac-recap, tracker-issue-activity-timestamps
 - **domains/chat** — chat-canonical-research
 - **domains/pm** — story-queue-planning-backing, remaining-roles-scrubbers-and-launch
+- **serve** — serve-auto-refresh-bypasses-bulk-import
 
 ## Next up across surfaces
 
@@ -77,6 +78,6 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 199/433 (45%)
-- Projection generation: 1ms · Source nodes: 571
+- Specs covered: 200/434 (46%)
+- Projection generation: 1ms · Source nodes: 572
 

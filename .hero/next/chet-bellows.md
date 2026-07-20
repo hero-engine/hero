@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-20T22:40:37Z
+updated: 2026-07-20T23:53:41Z
 repo: hero-engine/hero
 ---
 
@@ -20,13 +20,19 @@ repo: hero-engine/hero
 > - Origin workspace: hero-code (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
 > - Target alias on cal…
 
+_possibly stale — 3 commit(s) since, last set 1d 2h ago_
+
 ## Last user ask
 
-> Diagnose Morpheus MORPH-14171 losing its substantial Jira description during import/refresh, causing a title-only diagnosis that falsely claimed Jira was empty, and separately diagnose why Hero Code chat and quick chat text cannot be copied.
+> Fix Core tracker auto-refresh so no periodic or bulk sync path performs per-ticket GetIssue calls; preserve explicit deep evidence loading only for model-requested issue investigation, and align Core vs Hero Code lifecycle semantics.
 
 ## Suggested next prompt
 
-> let's dogfood the next substantial /design loop and see whether the compact AC recap feels right in practice
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 

@@ -195,8 +195,14 @@ Controls how `/import` and `hero sync import` pull issues from the tracker.
 | `default_type` | `string` | `"bug"` | Default spec type for imported issues: `"bug"`, `"feature"`, `"chore"` |
 | `limit` | `int` | `25` | Maximum number of issues to import per run |
 | `filter` | `string` | — | Tracker-native filter query (JQL for Jira, search query for GitHub) |
-| `auto_refresh` | `bool` | `false` | Automatically refresh imported specs from the tracker |
-| `refresh_interval` | `string` | `"30m"` | How often to auto-refresh (e.g. `"15m"`, `"1h"`) |
+| `auto_refresh` | `bool` | `false` | While `hero serve` runs, periodically execute the canonical bulk `hero sync import --refresh` workflow. This discovers new matching issues and refreshes linked specs from the configured bulk result; it never loads full ticket evidence per issue. |
+| `refresh_interval` | `string` | `"30m"` | How often to run the bulk auto-refresh (minimum `"5m"`; examples: `"15m"`, `"1h"`) |
+
+Because auto-refresh delegates to the canonical importer, it honors the same
+configured filters, independent `by_type` queries, and per-query `limit`. It
+never expands the bulk result with per-ticket API calls; use
+`hero sync evidence <spec-slug>` explicitly when an investigation needs
+comments, attachments, changelog, or the full field envelope for one ticket.
 
 ---
 

@@ -370,7 +370,7 @@ func (s *Server) Run(ctx context.Context) error {
 		}
 		// Start auto-refresh if configured
 		if pc.refresher == nil {
-			pc.refresher = StartImportRefresher(pc.Path, pc.HeroDir, pc.Slug, s.bus)
+			pc.refresher = StartImportRefresher(pc.Path, pc.Slug, s.bus)
 		}
 	}
 	s.mu.RUnlock()

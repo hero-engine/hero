@@ -1,85 +1,153 @@
 package serve
 
 import (
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
-
-	"github.com/hero-engine/hero/internal/spec"
+	"time"
 )
 
-// TestUpdateSpecFrontmatterField_StampsCompletedAtOnStatusComplete covers the
-// auto-resolve writer site at refresh.go:136. When a tracker auto-resolves to
-// Done and we flip status to "completed" here, the same write must stamp
-// completed_at: so the peer contract — every Go writer that flips status to
-// completed produces a parseable completed_at in the same write — holds at
-// this site too. The auto-archive safety net catches missed stamps later,
-// but the contract is "same write."
-func TestUpdateSpecFrontmatterField_StampsCompletedAtOnStatusComplete(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "spec.md")
-	original := "---\ntitle: t\nslug: t\ntype: feature\nstatus: delivering\n---\n# body\n"
-	if err := os.WriteFile(path, []byte(original), 0o644); err != nil {
-		t.Fatalf("WriteFile: %v", err)
+func TestNewBulkImportCommandUsesCanonicalBulkRefresh(t *testing.T) {
+	projectRoot := t.TempDir()
+	cmd := newBulkImportCommand(context.Background(), "/opt/hero/current", projectRoot)
+
+	wantArgs := []string{"/opt/hero/current", "sync", "import", "--refresh", "--no-report"}
+	if !reflect.DeepEqual(cmd.Args, wantArgs) {
+		t.Fatalf("command args = %#v, want %#v", cmd.Args, wantArgs)
+	}
+	if cmd.Dir != projectRoot {
+		t.Fatalf("command dir = %q, want %q", cmd.Dir, projectRoot)
+	}
+}
+
+func TestImportRefresherRefreshRunsOneBulkImportAndPublishes(t *testing.T) {
+	bus := NewEventBus()
+	id, events := bus.Subscribe(1)
+	defer bus.Unsubscribe(id)
+
+	var calls int
+	r := &ImportRefresher{
+		projectRoot: "/workspace/project",
+		slug:        "project",
+		bus:         bus,
+		runImport: func(_ context.Context, root string) (string, error) {
+			calls++
+			if root != "/workspace/project" {
+				t.Fatalf("project root = %q", root)
+			}
+			return "Imported: 2, Skipped: 8", nil
+		},
 	}
 
-	updateSpecFrontmatterField(path, "status", "completed")
+	r.refresh(context.Background())
 
-	data, err := os.ReadFile(path)
+	if calls != 1 {
+		t.Fatalf("bulk import calls = %d, want 1", calls)
+	}
+	select {
+	case event := <-events:
+		if event.Type != EventIndexRebuilt || event.Project != "project" {
+			t.Fatalf("event = %+v", event)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("expected index rebuilt event after successful bulk import")
+	}
+}
+
+func TestImportRefresherRefreshFailureDoesNotPublish(t *testing.T) {
+	bus := NewEventBus()
+	id, events := bus.Subscribe(1)
+	defer bus.Unsubscribe(id)
+
+	r := &ImportRefresher{
+		projectRoot: t.TempDir(),
+		slug:        "project",
+		bus:         bus,
+		runImport: func(context.Context, string) (string, error) {
+			return "jira unavailable", errors.New("exit status 1")
+		},
+	}
+
+	r.refresh(context.Background())
+
+	select {
+	case event := <-events:
+		t.Fatalf("unexpected success event after failed import: %+v", event)
+	default:
+	}
+}
+
+func TestImportRefresherRunStopsAndCancelsInFlightImport(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	started := make(chan struct{})
+	stopped := make(chan struct{})
+	r := &ImportRefresher{
+		projectRoot: t.TempDir(),
+		slug:        "project",
+		interval:    time.Hour,
+		runImport: func(ctx context.Context, _ string) (string, error) {
+			close(started)
+			<-ctx.Done()
+			close(stopped)
+			return "", ctx.Err()
+		},
+	}
+
+	done := make(chan struct{})
+	go func() {
+		r.run(ctx)
+		close(done)
+	}()
+
+	select {
+	case <-started:
+	case <-time.After(time.Second):
+		t.Fatal("bulk import did not start")
+	}
+	cancel()
+
+	select {
+	case <-stopped:
+	case <-time.After(time.Second):
+		t.Fatal("in-flight bulk import was not cancelled")
+	}
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("refresh loop did not stop")
+	}
+}
+
+func TestServerAutoRefreshHasNoPerTicketTrackerPath(t *testing.T) {
+	path := filepath.Join("refresh.go")
+	content, err := os.ReadFile(path)
 	if err != nil {
-		t.Fatalf("ReadFile: %v", err)
-	}
-	got := string(data)
-	if !strings.Contains(got, "status: completed") {
-		t.Errorf("expected status: completed in frontmatter, got: %s", got)
-	}
-	if !strings.Contains(got, "completed_at:") {
-		t.Errorf("expected completed_at: to be stamped in same write, got: %s", got)
-	}
-}
-
-// TestUpdateSpecFrontmatterField_NoStampOnOtherFields confirms the stamping
-// is gated on the status→completed transition and does not fire on unrelated
-// writes (e.g. claimed_by, tags, or a status flip to anything other than
-// completed). Without this, the auto-resolve refresher would over-stamp.
-func TestUpdateSpecFrontmatterField_NoStampOnOtherFields(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "spec.md")
-	original := "---\ntitle: t\nslug: t\ntype: feature\nstatus: planning\n---\n# body\n"
-	if err := os.WriteFile(path, []byte(original), 0o644); err != nil {
-		t.Fatalf("WriteFile: %v", err)
+		t.Fatalf("read %s: %v", path, err)
 	}
 
-	updateSpecFrontmatterField(path, "claimed_by", "agent-x")
-	updateSpecFrontmatterField(path, "status", "delivering")
-
-	data, _ := os.ReadFile(path)
-	if strings.Contains(string(data), "completed_at:") {
-		t.Errorf("completed_at: should not be stamped on non-complete writes, got: %s", string(data))
+	source := string(content)
+	for _, forbidden := range []string{
+		"internal/tracker",
+		"GetIssue(",
+		"spec.Discover(",
+	} {
+		if strings.Contains(source, forbidden) {
+			t.Errorf("server auto-refresh must not contain private per-ticket sync path %q", forbidden)
+		}
 	}
 }
 
-// TestUpdateSpecFrontmatterField_IdempotentOnAlreadyStamped confirms that
-// re-flipping an already-stamped spec leaves the original timestamp alone.
-// Same idempotency contract as spec.StampCompletedAt itself; verified at
-// this writer site because the helper short-circuits on the existing field.
-func TestUpdateSpecFrontmatterField_IdempotentOnAlreadyStamped(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "spec.md")
-	original := "---\ntitle: t\nslug: t\ntype: feature\nstatus: completed\ncompleted_at: 2025-01-01T00:00:00Z\n---\n# body\n"
-	if err := os.WriteFile(path, []byte(original), 0o644); err != nil {
-		t.Fatalf("WriteFile: %v", err)
+func TestFormatImportOutputBoundsDaemonLogs(t *testing.T) {
+	if got := formatImportOutput("  "); got != "" {
+		t.Fatalf("empty output formatted as %q", got)
 	}
-
-	updateSpecFrontmatterField(path, "status", "completed")
-
-	data, _ := os.ReadFile(path)
-	if !strings.Contains(string(data), "completed_at: 2025-01-01T00:00:00Z") {
-		t.Errorf("expected original completed_at preserved, got: %s", string(data))
+	long := strings.Repeat("x", 2100)
+	got := formatImportOutput(long)
+	if len(got) != 2001 || !strings.HasPrefix(got, "\n") {
+		t.Fatalf("bounded output length = %d, want 2001", len(got))
 	}
 }
-
-// silence unused-import false alarm for the spec helper used elsewhere in
-// this package's tests via the production code under test.
-var _ = spec.StampCompletedAt
