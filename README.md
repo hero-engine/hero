@@ -127,7 +127,7 @@ Current installed content counts:
 | Slash command definitions | 29 |
 | Agent definitions | 35 |
 | Skill definitions | 55 |
-| MCP tools | 42 |
+| MCP tools | 48 |
 
 Run `hero docs check` to validate these counts against the repo.
 

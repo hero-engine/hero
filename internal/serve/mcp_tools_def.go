@@ -7,6 +7,49 @@ package serve
 func (s *MCPServer) toolDefinitions() []ToolDefinition {
 	return []ToolDefinition{
 		{
+			Name:        "hero_tracker_get_issue",
+			Description: "Fetch a full provider-native issue ID through Hero's configured credential broker. Returns tracker-broker/v1 JSON; does not require a local spec.",
+			InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{
+				"connection_id": {Type: "string", Description: "Stable tracker connection ID; omit only when exactly one tracker connection exists"},
+				"issue_id":      {Type: "string", Description: "Full provider-native issue identifier"},
+				"detail":        {Type: "string", Description: "normalized (default) or evidence"},
+			}, Required: []string{"issue_id"}},
+		},
+		{
+			Name:        "hero_tracker_search",
+			Description: "Run a provider-native broad tracker query unchanged through Hero's configured credential broker. Returns one bounded tracker-broker/v1 page and an opaque cursor.",
+			InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{
+				"connection_id": {Type: "string", Description: "Stable tracker connection ID; omit only when exactly one tracker connection exists"},
+				"query":         {Type: "string", Description: "Provider-native query text, preserved exactly"},
+				"limit":         {Type: "number", Description: "Item limit from 1 through 100"},
+				"cursor":        {Type: "string", Description: "Opaque next_cursor from a prior identical search"},
+			}, Required: []string{"query"}},
+		},
+		{
+			Name:        "hero_tracker_request",
+			Description: "Make a bounded same-origin tracker HTTP request with internally injected authentication. Returns tracker-broker/v1 JSON with an authoritative effect classification.",
+			InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{
+				"connection_id": {Type: "string", Description: "Stable tracker connection ID; omit only when exactly one tracker connection exists"},
+				"method":        {Type: "string", Description: "GET, HEAD, OPTIONS, POST, PUT, PATCH, or DELETE"},
+				"relative_path": {Type: "string", Description: "Strictly relative provider API path"},
+				"query":         {Type: "object", Description: "Query map whose values are arrays of strings"},
+				"headers":       {Type: "object", Description: "Non-authentication request headers"},
+				"body":          {Type: "string", Description: "Request body"},
+				"output_limit":  {Type: "number", Description: "Maximum response bytes, at most 1048576"},
+			}, Required: []string{"method", "relative_path"}},
+		},
+		{
+			Name:        "hero_tracker_cli",
+			Description: "Execute a provider-declared CLI with exact argv and child-only credentials. Returns bounded tracker-broker/v1 output and an authoritative effect classification.",
+			InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{
+				"connection_id": {Type: "string", Description: "Stable tracker connection ID; omit only when exactly one tracker connection exists"},
+				"executable":    {Type: "string", Description: "Provider-declared bare executable identity"},
+				"arguments":     {Type: "array", Description: "Exact argument vector", Items: &PropSchema{Type: "string"}},
+				"stdin":         {Type: "string", Description: "Optional child stdin"},
+				"output_limit":  {Type: "number", Description: "Maximum bytes per output stream, at most 1048576"},
+			}, Required: []string{"executable"}},
+		},
+		{
 			Name:        "hero_context",
 			Description: "Get conventions, rules, past work, decisions, and known risks for the given file paths. Returns a structured context block that helps AI agents understand project constraints. Pass `compact: true` to receive a [hero envelope] summary plus ref_id only — call hero_expand to retrieve the full bundle.",
 			InputSchema: InputSchema{
@@ -523,7 +566,7 @@ func (s *MCPServer) toolDefinitions() []ToolDefinition {
 			},
 		},
 		{
-			Name: "hero_expand",
+			Name:        "hero_expand",
 			Description: "Rehydrate a previously-returned compact ref into its full content. Read-side tools called with `compact: true` return a [hero envelope] block containing a `ref_id`. Pass that ref_id (or an array of ref_ids in `ref_ids`) to expand back to verbatim content. Stable kinds (spec, convention, decision, rule) resolve identically across sessions; query kinds (search, context, recap, why, blocked, feed) are session-scoped. Unknown or expired refs return a structured error with a rehydrate hint naming the producing tool.",
 			InputSchema: InputSchema{
 				Type: "object",

@@ -267,3 +267,58 @@ func fileExistsTest(path string) bool {
 	info, err := os.Stat(path)
 	return err == nil && !info.IsDir()
 }
+
+func TestResolveTrackerConnectionRequiresUnambiguousSelection(t *testing.T) {
+	setting := func(value string) json.RawMessage {
+		b, _ := json.Marshal(value)
+		return b
+	}
+	cfg := Config{Integrations: &IntegrationsConfig{
+		Default: "jira-a",
+		Roles:   map[string]string{"delivery": "jira-a"},
+		Connections: map[string]IntegrationConfig{
+			"jira-a":   {Provider: "jira", Settings: map[string]json.RawMessage{"project": setting("A"), "base_url": setting("https://a.example")}},
+			"github-b": {Provider: "github", Settings: map[string]json.RawMessage{"project": setting("o/r")}},
+			"docs":     {Provider: "confluence", Settings: map[string]json.RawMessage{"space_key": setting("D"), "base_url": setting("https://docs.example")}},
+		},
+	}}
+	if _, err := cfg.ResolveTrackerConnection(""); err == nil || !strings.Contains(err.Error(), "connection_id is required") {
+		t.Fatalf("expected ambiguity despite default/role, got %v", err)
+	}
+	got, err := cfg.ResolveTrackerConnection("github-b")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ID != "github-b" || got.Provider != "github" || got.Project != "o/r" {
+		t.Fatalf("connection = %+v", got)
+	}
+}
+
+func TestResolveTrackerConnectionInfersOnlyTracker(t *testing.T) {
+	project, _ := json.Marshal("A")
+	base, _ := json.Marshal("https://a.example")
+	cfg := Config{Integrations: &IntegrationsConfig{Connections: map[string]IntegrationConfig{
+		"jira-a": {Provider: "jira", Settings: map[string]json.RawMessage{"project": project, "base_url": base}, Auth: &IntegrationAuth{Token: Secret("canary")}},
+	}}}
+	got, err := cfg.ResolveTrackerConnection("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ID != "jira-a" || got.Token.Reveal() != "canary" {
+		t.Fatalf("connection = %+v", got)
+	}
+}
+
+func TestResolveTrackerConnectionPreservesLegacySingleTracker(t *testing.T) {
+	cfg := Config{Tracker: &TrackerConfig{Type: "jira", Project: "P", BaseURL: "https://jira.example", Token: "canary"}}
+	got, err := cfg.ResolveTrackerConnection("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ID != "legacy" || got.Provider != "jira" || got.Token.Reveal() != "canary" {
+		t.Fatalf("connection = %+v", got)
+	}
+	if _, err := cfg.ResolveTrackerConnection("other"); err == nil {
+		t.Fatal("explicit non-legacy ID unexpectedly selected legacy tracker")
+	}
+}

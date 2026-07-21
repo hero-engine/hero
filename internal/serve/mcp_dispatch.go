@@ -19,6 +19,7 @@ type toolHandler func(args map[string]interface{}) (string, error)
 //   - read   (no state change; returns data)
 //   - mutate (writes state)
 //   - analyze (computes a derived view)
+//
 // Some tools straddle (toolActive, toolCode) — placed where their
 // primary action sits.
 func (s *MCPServer) toolHandlers() map[string]toolHandler {
@@ -52,14 +53,18 @@ func (s *MCPServer) toolHandlers() map[string]toolHandler {
 		"hero_snapshot":  s.toolSnapshot,
 
 		// mutate
-		"hero_event":         s.toolEvent,
-		"hero_claim":         s.toolClaim,
-		"hero_skill_run":     s.toolSkillRun,
-		"hero_test_generate": s.toolTestGenerate,
-		"hero_demo_record":   s.toolDemoRecord,
-		"hero_code":          s.toolCode,
-		"hero_enrich":        s.toolEnrich,
-		"hero_synthesize":    s.toolSynthesize,
+		"hero_tracker_get_issue": s.toolTrackerGetIssue,
+		"hero_tracker_search":    s.toolTrackerSearch,
+		"hero_tracker_request":   s.toolTrackerRequest,
+		"hero_tracker_cli":       s.toolTrackerCLI,
+		"hero_event":             s.toolEvent,
+		"hero_claim":             s.toolClaim,
+		"hero_skill_run":         s.toolSkillRun,
+		"hero_test_generate":     s.toolTestGenerate,
+		"hero_demo_record":       s.toolDemoRecord,
+		"hero_code":              s.toolCode,
+		"hero_enrich":            s.toolEnrich,
+		"hero_synthesize":        s.toolSynthesize,
 
 		// analyze
 		"hero_drift":         s.toolDrift,

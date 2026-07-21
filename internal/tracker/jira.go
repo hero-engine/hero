@@ -2,6 +2,7 @@ package tracker
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -647,7 +648,7 @@ func (j *jira) GetIssue(issueID string) (*Issue, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		respBody, _ := io.ReadAll(resp.Body)
+		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 64*1024))
 		return nil, fmt.Errorf("jira API returned %d: %s", resp.StatusCode, string(respBody))
 	}
 
@@ -1204,8 +1205,6 @@ func (j *jira) searchIssues(jql string, limit int, fields string) ([]Issue, erro
 
 	var allIssues []Issue
 	nextPageToken := ""
-	searchURL := fmt.Sprintf("%s/rest/api/3/search/jql", j.baseURL)
-
 	// Page size: fetch up to 100 per request, but respect the total limit.
 	const maxPageSize = 100
 
@@ -1221,66 +1220,75 @@ func (j *jira) searchIssues(jql string, limit int, fields string) ([]Issue, erro
 			}
 		}
 
-		req, err := http.NewRequest("GET", searchURL, nil)
+		page, token, rawCount, err := j.searchIssuesPage(context.Background(), jql, pageSize, fields, nextPageToken)
 		if err != nil {
-			return nil, fmt.Errorf("creating request: %w", err)
+			return nil, err
 		}
-		q := req.URL.Query()
-		q.Set("jql", jql)
-		q.Set("maxResults", fmt.Sprintf("%d", pageSize))
-		q.Set("fields", fields)
-		if nextPageToken != "" {
-			q.Set("nextPageToken", nextPageToken)
-		}
-		req.URL.RawQuery = q.Encode()
-		j.setHeaders(req)
-
-		resp, err := j.client.Do(req)
-		if err != nil {
-			return nil, fmt.Errorf("searching issues: %w", err)
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			respBody, _ := io.ReadAll(resp.Body)
-			resp.Body.Close()
-			return nil, fmt.Errorf("jira API returned %d: %s", resp.StatusCode, string(respBody))
-		}
-
-		var result struct {
-			Issues        []map[string]json.RawMessage `json:"issues"`
-			NextPageToken string                       `json:"nextPageToken"`
-		}
-		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-			resp.Body.Close()
-			return nil, fmt.Errorf("decoding response: %w", err)
-		}
-		resp.Body.Close()
-
-		for _, raw := range result.Issues {
-			issue, err := j.parseIssueRaw(raw)
-			if err != nil {
-				continue
-			}
-			allIssues = append(allIssues, *issue)
-		}
+		allIssues = append(allIssues, page...)
 
 		// Trim to limit if we overshot (page may contain more than remaining).
 		if limit > 0 && len(allIssues) >= limit {
 			allIssues = allIssues[:limit]
-			if result.NextPageToken != "" {
+			if token != "" {
 				fmt.Fprintf(os.Stderr, "Warning: Jira query reached its %d-issue safety limit and more pages remain; results are incomplete. JQL: %s\n", limit, jql)
 			}
 			break
 		}
 
 		// Stop if no more pages.
-		if result.NextPageToken == "" || len(result.Issues) == 0 {
+		if token == "" || rawCount == 0 {
 			break
 		}
-		nextPageToken = result.NextPageToken
+		nextPageToken = token
 	}
 
 	return allIssues, nil
+}
+
+// searchIssuesPage is the one-page primitive shared by normal Jira pagination
+// and the credential broker. It deliberately accepts JQL verbatim.
+func (j *jira) searchIssuesPage(ctx context.Context, jql string, limit int, fields, nextPageToken string) ([]Issue, string, int, error) {
+	if fields == "" {
+		fields = "key,summary,status"
+	}
+	searchURL := fmt.Sprintf("%s/rest/api/3/search/jql", j.baseURL)
+	req, err := http.NewRequestWithContext(ctx, "GET", searchURL, nil)
+	if err != nil {
+		return nil, "", 0, fmt.Errorf("creating request: %w", err)
+	}
+	q := req.URL.Query()
+	q.Set("jql", jql)
+	q.Set("maxResults", strconv.Itoa(limit))
+	q.Set("fields", fields)
+	if nextPageToken != "" {
+		q.Set("nextPageToken", nextPageToken)
+	}
+	req.URL.RawQuery = q.Encode()
+	j.setHeaders(req)
+	resp, err := j.client.Do(req)
+	if err != nil {
+		return nil, "", 0, fmt.Errorf("searching issues: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 64*1024))
+		return nil, "", 0, fmt.Errorf("jira API returned %d: %s", resp.StatusCode, string(respBody))
+	}
+	var result struct {
+		Issues        []map[string]json.RawMessage `json:"issues"`
+		NextPageToken string                       `json:"nextPageToken"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, "", 0, fmt.Errorf("decoding response: %w", err)
+	}
+	issues := make([]Issue, 0, len(result.Issues))
+	for _, raw := range result.Issues {
+		issue, err := j.parseIssueRaw(raw)
+		if err == nil {
+			issues = append(issues, *issue)
+		}
+	}
+	return issues, result.NextPageToken, len(result.Issues), nil
 }
 
 // jiraIssueType maps spec types to Jira issue type names.

@@ -1,0 +1,67 @@
+{
+  "version": "tracker-broker/v1",
+  "responses": {
+    "get_issue": {
+      "version": "tracker-broker/v1",
+      "operation": "get_issue",
+      "provider": "jira",
+      "connection_id": "work-jira",
+      "effect": "read",
+      "result": {"id":"PCS-1339","title":"Example issue","status":"Open"},
+      "truncated": false,
+      "duration_ms": 12
+    },
+    "search": {
+      "version": "tracker-broker/v1",
+      "operation": "search",
+      "provider": "jira",
+      "connection_id": "work-jira",
+      "effect": "read",
+      "result": {"items":[{"id":"OTHER-7","title":"Cross-project result","status":"Open"}]},
+      "truncated": false,
+      "duration_ms": 18,
+      "next_cursor": "opaque-provider-cursor"
+    },
+    "request": {
+      "version": "tracker-broker/v1",
+      "operation": "request",
+      "provider": "jira",
+      "connection_id": "work-jira",
+      "effect": "write_non_idempotent",
+      "status_code": 201,
+      "body": "{\"id\":\"10001\"}",
+      "truncated": false,
+      "duration_ms": 24
+    },
+    "cli": {
+      "version": "tracker-broker/v1",
+      "operation": "cli",
+      "provider": "github",
+      "connection_id": "work-github",
+      "effect": "read",
+      "exit_code": 0,
+      "stdout": "[{\"number\":7}]\n",
+      "truncated": false,
+      "duration_ms": 31
+    },
+    "error": {
+      "version": "tracker-broker/v1",
+      "operation": "request",
+      "effect": "read",
+      "truncated": false,
+      "duration_ms": 0,
+      "error": {"code":"ambiguous_connection","message":"connection_id is required when multiple tracker connections are configured","retryable":false}
+    },
+    "truncated": {
+      "version": "tracker-broker/v1",
+      "operation": "cli",
+      "provider": "gitlab",
+      "connection_id": "work-gitlab",
+      "effect": "read",
+      "exit_code": 0,
+      "stdout": "bounded preview",
+      "truncated": true,
+      "duration_ms": 40
+    }
+  }
+}

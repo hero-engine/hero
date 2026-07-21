@@ -129,6 +129,7 @@ func init() {
 	rootCmd.AddCommand(jobRunCmd)
 	rootCmd.AddCommand(specCmd)
 	rootCmd.AddCommand(domainCmd)
+	rootCmd.AddCommand(trackerCmd)
 	// Top-level aliases for the core-loop verbs (canonical paths
 	// live under `hero spec`, but these stay one keystroke away).
 	rootCmd.AddCommand(deliverAliasCmd)

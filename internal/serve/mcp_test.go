@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	brokercontract "github.com/hero-engine/hero/contracts/trackerbroker"
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/index"
 	"github.com/hero-engine/hero/internal/spec"
@@ -40,6 +43,41 @@ func sendRecv(t *testing.T, srv *MCPServer, req JSONRPCRequest) JSONRPCResponse 
 		t.Fatalf("unmarshal response: %v\nraw: %s", err, out.String())
 	}
 	return resp
+}
+
+func TestMCPTrackerRequestUsesVersionedBrokerContract(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got := r.Header.Get("Authorization"); !strings.HasPrefix(got, "Basic ") {
+			t.Errorf("missing broker auth: %q", got)
+		}
+		fmt.Fprint(w, `{"ok":true}`)
+	}))
+	defer server.Close()
+	root := t.TempDir()
+	heroDir := filepath.Join(root, ".hero")
+	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	committed := fmt.Sprintf(`{"integrations":{"connections":{"jira":{"provider":"jira","settings":{"project":"P","base_url":%q,"user_email":"agent@example.com"}}}}}`, server.URL)
+	local := `{"integrations":{"connections":{"jira":{"auth":{"token":"MCP-CANARY"}}}}}`
+	if err := os.WriteFile(filepath.Join(heroDir, "hero.json"), []byte(committed), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(heroDir, "hero.local.json"), []byte(local), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	srv := NewMCPServer(heroDir, root, "test")
+	out, err := srv.toolTrackerRequest(map[string]interface{}{"method": "GET", "relative_path": "/rest/api/3/myself", "output_limit": 128})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var response brokercontract.Response
+	if err := json.Unmarshal([]byte(out), &response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Version != brokercontract.Version || response.Operation != brokercontract.OperationRequest || response.Provider != "jira" || response.ConnectionID != "jira" || response.Error != nil {
+		t.Fatalf("response = %+v", response)
+	}
 }
 
 // sendMulti sends multiple requests (newline-separated) and returns all responses.
@@ -365,8 +403,8 @@ func TestMCP_ToolsList(t *testing.T) {
 		t.Fatalf("decode result: %v", err)
 	}
 
-	if len(result.Tools) != 44 {
-		t.Errorf("expected 44 tools, got %d", len(result.Tools))
+	if len(result.Tools) != 48 {
+		t.Errorf("expected 48 tools, got %d", len(result.Tools))
 	}
 
 	expectedNames := map[string]bool{
@@ -379,31 +417,35 @@ func TestMCP_ToolsList(t *testing.T) {
 		"hero_pulse": true, "hero_skill_run": true,
 		"hero_claim": true, "hero_velocity": true,
 		"hero_test_generate": true, "hero_demo_record": true,
-		"hero_code":          true,
-		"hero_error_pattern": true,
-		"hero_enrich":        true,
-		"hero_synthesize":    true,
-		"hero_diagnose":      true,
-		"hero_score":         true,
-		"hero_verify":        true,
-		"hero_conflicts":     true,
-		"hero_sequence":      true,
-		"hero_warnings":      true,
-		"hero_insights":      true,
-		"hero_drift":         true,
-		"hero_plan":          true,
-		"hero_contract":      true,
-		"hero_impact":        true,
-		"hero_recap":         true,
-		"hero_active":        true,
-		"hero_coverage":      true,
-		"hero_ci":            true,
-		"hero_feed":          true,
-		"hero_event":         true,
-		"hero_why":           true,
-		"hero_blocked":       true,
-		"hero_expand":        true,
-		"hero_snapshot":      true,
+		"hero_code":              true,
+		"hero_error_pattern":     true,
+		"hero_enrich":            true,
+		"hero_synthesize":        true,
+		"hero_diagnose":          true,
+		"hero_score":             true,
+		"hero_verify":            true,
+		"hero_conflicts":         true,
+		"hero_sequence":          true,
+		"hero_warnings":          true,
+		"hero_insights":          true,
+		"hero_drift":             true,
+		"hero_plan":              true,
+		"hero_contract":          true,
+		"hero_impact":            true,
+		"hero_recap":             true,
+		"hero_active":            true,
+		"hero_coverage":          true,
+		"hero_ci":                true,
+		"hero_feed":              true,
+		"hero_event":             true,
+		"hero_why":               true,
+		"hero_blocked":           true,
+		"hero_expand":            true,
+		"hero_snapshot":          true,
+		"hero_tracker_get_issue": true,
+		"hero_tracker_search":    true,
+		"hero_tracker_request":   true,
+		"hero_tracker_cli":       true,
 	}
 	for _, tool := range result.Tools {
 		if !expectedNames[tool.Name] {

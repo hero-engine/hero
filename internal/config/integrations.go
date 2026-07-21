@@ -29,6 +29,42 @@ type IntegrationAuth struct {
 	TokenEnv string `json:"token_env,omitempty"`
 }
 
+// TrackerConnection is the credential-safe metadata a broker needs for one
+// configured tracker connection. Token remains a Secret until the adapter or
+// child process boundary explicitly reveals it.
+type TrackerConnection struct {
+	ID        string
+	Provider  string
+	Project   string
+	BaseURL   string
+	UserEmail string
+	Token     Secret
+	TokenEnv  string
+}
+
+func (c TrackerConnection) TrackerConfig() *TrackerConfig {
+	return &TrackerConfig{
+		Type:      c.Provider,
+		Project:   c.Project,
+		BaseURL:   c.BaseURL,
+		UserEmail: c.UserEmail,
+		Token:     c.Token.Reveal(),
+		TokenEnv:  c.TokenEnv,
+	}
+}
+
+func (c TrackerConnection) ResolveToken() (Secret, error) {
+	if c.Token != "" {
+		return c.Token, nil
+	}
+	if c.TokenEnv != "" {
+		if token := os.Getenv(c.TokenEnv); token != "" {
+			return Secret(token), nil
+		}
+	}
+	return "", fmt.Errorf("integration %q has no usable credential", c.ID)
+}
+
 // Secret deliberately redacts all generic formatting and JSON serialization.
 type Secret string
 
@@ -452,6 +488,60 @@ func (r *ResolvedIntegrations) DeliveryTracker() (*TrackerConfig, bool) {
 		t.TokenEnv = c.Auth.TokenEnv
 	}
 	return t, true
+}
+
+// ResolveTrackerConnection selects a broker connection without consulting the
+// delivery/default role. Broad agent access must never silently inherit a
+// project-oriented default when more than one tracker exists.
+func (c Config) ResolveTrackerConnection(explicit string) (TrackerConnection, error) {
+	if c.Integrations == nil {
+		if explicit != "" && explicit != "legacy" {
+			return TrackerConnection{}, fmt.Errorf("integration %q not found", explicit)
+		}
+		if c.Tracker == nil || c.Tracker.Type == "" || c.Tracker.Type == "none" {
+			return TrackerConnection{}, fmt.Errorf("no tracker connection configured")
+		}
+		return TrackerConnection{
+			ID: "legacy", Provider: c.Tracker.Type, Project: c.Tracker.Project,
+			BaseURL: c.Tracker.BaseURL, UserEmail: c.Tracker.UserEmail,
+			Token: Secret(c.Tracker.Token), TokenEnv: c.Tracker.TokenEnv,
+		}, nil
+	}
+
+	trackerIDs := make([]string, 0, len(c.Integrations.Connections))
+	for id, cn := range c.Integrations.Connections {
+		if cn.Provider != "confluence" {
+			trackerIDs = append(trackerIDs, id)
+		}
+	}
+	sort.Strings(trackerIDs)
+	id := strings.TrimSpace(explicit)
+	if id == "" {
+		switch len(trackerIDs) {
+		case 0:
+			return TrackerConnection{}, fmt.Errorf("no tracker connection configured")
+		case 1:
+			id = trackerIDs[0]
+		default:
+			return TrackerConnection{}, fmt.Errorf("connection_id is required when multiple tracker connections are configured")
+		}
+	}
+	cn, ok := c.Integrations.Connections[id]
+	if !ok {
+		return TrackerConnection{}, fmt.Errorf("integration %q not found", id)
+	}
+	if cn.Provider == "confluence" {
+		return TrackerConnection{}, fmt.Errorf("integration %q is not a tracker connection", id)
+	}
+	out := TrackerConnection{
+		ID: id, Provider: cn.Provider, Project: rawString(cn.Settings, "project"),
+		BaseURL: rawString(cn.Settings, "base_url"), UserEmail: rawString(cn.Settings, "user_email"),
+	}
+	if cn.Auth != nil {
+		out.Token = cn.Auth.Token
+		out.TokenEnv = cn.Auth.TokenEnv
+	}
+	return out, nil
 }
 func (r *ResolvedIntegrations) DocsConfluence() (*ConfluenceConfig, bool) {
 	_, c, e := r.Select("", "docs")
