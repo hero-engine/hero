@@ -11,8 +11,8 @@ promotion results, user-global access, schemas, manifest/checksums, and golden
 fixtures in the upstream `durable-attention` initiative and its four blocking
 children.
 
-Use these proposed v1 decisions until a child `/design` pass produces a more
-specific contract:
+All seven Hero child designs are now complete. The following are locked v1
+compatibility decisions for the consumer implementation:
 
 1. **`do_next`**
    - Hero atomically accepts the suggestion into a durable Personal Focus item
@@ -38,10 +38,11 @@ specific contract:
      from harness todo state.
 
 4. **Global client boundary**
-   - Hero will publish exactly one boundary usable before a project is open.
-   - `durable-attention-contracts` must inspect current Serve/MCP/runtime
-     ownership before selecting it. Hero Code should keep transport behind
-     `AttentionClient` and must not implement both MCP and HTTP/SSE.
+   - Hero publishes exactly one boundary usable before a project is open:
+     Hero Serve HTTP under `/api/attention/v1`.
+   - Hero-side CLI and project-scoped MCP adapters call the same projection
+     service, but Hero Code implements only the HTTP boundary behind
+     `AttentionClient`.
 
 5. **Refresh versus streaming**
    - V1 guarantees an authoritative versioned snapshot, revision/change token,
@@ -63,6 +64,6 @@ The terminology migration is accepted in principle:
   Hero contracts.
 
 Please update the consumer spec's dependency statement and AC-12/refresh design
-to make streaming optional. Report whether that reduces the declared `large`
-scope or whether the terminology migration and cross-project launch coordinator
-still justify `large`.
+to make streaming optional and replace the four generic planning blockers with
+the now-designed v1 contracts. The terminology migration and cross-project
+launch coordinator may still justify `large`; streaming does not.

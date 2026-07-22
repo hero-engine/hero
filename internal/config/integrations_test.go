@@ -89,6 +89,25 @@ func TestStableIDsAndExplicitSelection(t *testing.T) {
 	}
 }
 
+func TestJiraBoardSettingFlowsThroughTrackerResolution(t *testing.T) {
+	b := []byte(`{"integrations":{"default":"jira","roles":{"delivery":"jira"},"connections":{"jira":{"provider":"jira","settings":{"project":"MORPH","board":"MORPH board","base_url":"https://jira"}}}}}`)
+	r, err := ResolveIntegrationDocuments("hero.json", b, "local", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tracker, ok := r.DeliveryTracker()
+	if !ok || tracker.Board != "MORPH board" {
+		t.Fatalf("delivery tracker = %+v, ok = %v", tracker, ok)
+	}
+	connection, err := (Config{Integrations: r.Config}).ResolveTrackerConnection("jira")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if connection.Board != "MORPH board" || connection.TrackerConfig().Board != "MORPH board" {
+		t.Fatalf("connection = %+v, tracker = %+v", connection, connection.TrackerConfig())
+	}
+}
+
 func TestPatchLocalIntegrationsPreservesKeysAndMode(t *testing.T) {
 	root := t.TempDir()
 	dir := filepath.Join(root, ".hero")
@@ -167,9 +186,11 @@ func TestLoadMutateSaveNeverCommitsEffectiveTrackerOrConfluenceSecrets(t *testin
 func TestProviderSettingsValidationIsSpecificAndTypeStrict(t *testing.T) {
 	cases := []struct{ name, provider, settings, want string }{
 		{"github-inapplicable", "github", `{"project":"o/r","user_email":"x@y"}`, "settings.user_email"},
+		{"github-inapplicable-board", "github", `{"project":"o/r","board":"Roadmap"}`, "settings.board"},
 		{"github-wrong-project", "github", `{"project":7}`, "settings.project: expected string"},
 		{"linear-null-project", "linear", `{"project":null}`, "settings.project: expected string"},
 		{"jira-empty-project", "jira", `{"project":"","base_url":"https://jira"}`, "settings.project must not be empty"},
+		{"jira-empty-board", "jira", `{"project":"P","board":"","base_url":"https://jira"}`, "settings.board must not be empty"},
 		{"jira-wrong-bool", "jira", `{"project":"P","base_url":"https://jira","post_on_design":"yes"}`, "settings.post_on_design: expected boolean"},
 		{"gitlab-missing-base", "gitlab", `{"project":"g/p"}`, "settings.base_url is required"},
 		{"gitlab-inapplicable-email", "gitlab", `{"project":"g/p","base_url":"https://gitlab","user_email":"x@y"}`, "settings.user_email"},
@@ -201,6 +222,7 @@ func TestValidateConnectionSettings(t *testing.T) {
 		{"gitlab-user-email", "gitlab", map[string]any{"project": "g/p", "base_url": "https://gitlab", "user_email": "x@y"}, "settings.user_email"},
 		{"gitlab-ok", "gitlab", map[string]any{"project": "g/p", "base_url": "https://gitlab"}, ""},
 		{"jira-user-email-ok", "jira", map[string]any{"project": "P", "base_url": "https://jira", "user_email": "x@y"}, ""},
+		{"jira-board-ok", "jira", map[string]any{"project": "P", "board": "P board", "base_url": "https://jira"}, ""},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -310,12 +332,12 @@ func TestResolveTrackerConnectionInfersOnlyTracker(t *testing.T) {
 }
 
 func TestResolveTrackerConnectionPreservesLegacySingleTracker(t *testing.T) {
-	cfg := Config{Tracker: &TrackerConfig{Type: "jira", Project: "P", BaseURL: "https://jira.example", Token: "canary"}}
+	cfg := Config{Tracker: &TrackerConfig{Type: "jira", Project: "P", Board: "P board", BaseURL: "https://jira.example", Token: "canary"}}
 	got, err := cfg.ResolveTrackerConnection("")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.ID != "legacy" || got.Provider != "jira" || got.Token.Reveal() != "canary" {
+	if got.ID != "legacy" || got.Provider != "jira" || got.Board != "P board" || got.TrackerConfig().Board != "P board" || got.Token.Reveal() != "canary" {
 		t.Fatalf("connection = %+v", got)
 	}
 	if _, err := cfg.ResolveTrackerConnection("other"); err == nil {

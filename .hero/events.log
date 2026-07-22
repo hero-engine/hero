@@ -417,3 +417,23 @@
 {"ts":"2026-07-20T22:39:47.426084Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"jira-import-per-type-filter-and-body-parity","message":"status -\u003e completed"}
 {"ts":"2026-07-20T23:53:00.919064Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"serve-auto-refresh-bypasses-bulk-import","message":"\"hero serve auto-refresh bypasses the bulk importer\""}
 {"ts":"2026-07-20T23:53:00.919178Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"serve-auto-refresh-bypasses-bulk-import","message":"status -\u003e completed"}
+{"ts":"2026-07-21T15:07:50.797844Z","type":"peer.handoff.received","agent":"hero","slug":"jira-adf-description-fidelity-loss","message":"received from hero-code/jira-adf-description-fidelity-loss (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)"}
+{"ts":"2026-07-21T23:09:05.438714Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"brokered-tracker-agent-access","message":"\"Brokered tracker agent access\""}
+{"ts":"2026-07-21T23:09:05.438813Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"brokered-tracker-agent-access","message":"status -\u003e completed"}
+{"ts":"2026-07-22T00:34:58.617967Z","type":"drive.pause_outcome","agent":"human","slug":"tracker-source-fidelity-and-evidence","message":"drive pause Supervised resolved: approved"}
+{"ts":"2026-07-22T00:57:22.750427Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"jira-adf-description-fidelity-loss","message":"\"Jira ADF descriptions lose structure during import\""}
+{"ts":"2026-07-22T00:57:22.750556Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"jira-adf-description-fidelity-loss","message":"status -\u003e completed"}
+{"ts":"2026-07-22T00:59:33.600082Z","type":"drive.pause_outcome","agent":"human","slug":"tracker-source-fidelity-and-evidence","message":"drive pause Supervised resolved: approved"}
+{"ts":"2026-07-22T01:00:38.480725Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"broker-issue-id-validator-raw-string-regression","message":"\"Tracker broker issue IDs are rejected by a raw-string validator typo\""}
+{"ts":"2026-07-22T01:00:38.480811Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"broker-issue-id-validator-raw-string-regression","message":"status -\u003e completed"}
+{"ts":"2026-07-22T01:41:25.836419Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"lazy-tracker-evidence-sidecar","message":"\"Lazy Tracker Evidence Sidecar — Explicit Full-Details Provenance\""}
+{"ts":"2026-07-22T01:41:25.836542Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"lazy-tracker-evidence-sidecar","message":"status -\u003e completed"}
+{"ts":"2026-07-22T01:41:27.573454Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"tracker-source-fidelity-and-evidence","message":"\"Tracker Source Fidelity — Canonical Jira Markdown and Lazy Evidence Provenance\""}
+{"ts":"2026-07-22T01:41:27.573594Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"tracker-source-fidelity-and-evidence","message":"status -\u003e completed"}
+{"ts":"2026-07-22T01:50:33.783254Z","type":"peer.call.invoked","agent":"hero","slug":"tracker-source-fidelity-and-evidence","message":"peer call spec-out mode=spec-out target=hero-code call_id=18c47995229b86e8a75dfe703578bf38"}
+{"ts":"2026-07-22T01:54:10.906126Z","type":"peer.handoff.sent","agent":"hero","slug":"lazy-tracker-evidence-sidecar","message":"handed off to hero-code/lazy-tracker-evidence-sidecar (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)"}
+{"ts":"2026-07-22T01:54:16.184779Z","type":"peer.call.completed","agent":"hero","slug":"tracker-source-fidelity-and-evidence","message":"peer call result unparseable: no \u003cpeer-call-result\u003e fence in subagent output (first 800 bytes: Execution error) (call_id 18c47995229b86e8a75dfe703578bf38)"}
+{"ts":"2026-07-22T20:30:26.117357Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"tracker-project-snapshot-contract","message":"\"Tracker project snapshot contract\""}
+{"ts":"2026-07-22T20:30:26.117464Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"tracker-project-snapshot-contract","message":"status -\u003e completed"}
+{"ts":"2026-07-22T20:30:28.230649Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"tracker-source-reconciliation","message":"\"Tracker import fidelity and render-safe reconciliation\""}
+{"ts":"2026-07-22T20:30:28.230745Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"tracker-source-reconciliation","message":"status -\u003e completed"}

@@ -185,7 +185,7 @@ func TestJiraADFMarkdown_IsIdenticalAcrossReadSurfaces(t *testing.T) {
 	sprint.fieldDiscoveryDone = true
 	sprint.resolvedCustom = map[string]string{}
 	items, err := sprint.loadSprintItems("42", "Sprint 42")
-	if err != nil || len(items) != 1 || items[0].Description != want {
+	if err != nil || len(items) != 2 || items[0].Description != want || items[1].Description != want {
 		t.Fatalf("sprint description mismatch: err=%v items=%+v", err, items)
 	}
 }

@@ -7,9 +7,11 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 
+	projectcontract "github.com/hero-engine/hero/contracts/trackerproject"
 	"github.com/hero-engine/hero/internal/config"
 )
 
@@ -20,6 +22,7 @@ type SprintItem struct {
 	Description        string // body / description from tracker
 	Type               string // "story", "bug", "task", "epic", "subtask"
 	Status             string // tracker-native status string
+	StatusCategory     string // normalized provider category: todo, in-progress, done, unknown
 	Priority           string // "highest", "high", "medium", "low", "lowest" (built-in priority)
 	Severity           string // convenience: first severity-like value found in CustomFields
 	Assignee           string
@@ -62,6 +65,25 @@ type SprintLoader interface {
 
 	// LoadIteration loads all items in a Linear iteration (date-based ref like "2026-04-14").
 	LoadIteration(iterationRef string) ([]SprintItem, *SprintInfo, error)
+}
+
+// ProjectSnapshotLoader exposes bounded project scheduling truth for UI consumers.
+// Implementations must not include issue descriptions, comments, or attachments.
+type ProjectSnapshotLoader interface {
+	LoadProjectSnapshot(boardRef string) (*projectcontract.Snapshot, error)
+}
+
+// NewProjectSnapshotLoader creates the read-only project snapshot surface.
+func NewProjectSnapshotLoader(cfg *config.TrackerConfig, jiraCfg *config.JiraConfig, trackerKnowledgeDir string) (ProjectSnapshotLoader, error) {
+	loader, err := NewSprintLoader(cfg, jiraCfg, trackerKnowledgeDir)
+	if err != nil {
+		return nil, err
+	}
+	projectLoader, ok := loader.(ProjectSnapshotLoader)
+	if !ok {
+		return nil, fmt.Errorf("project snapshots are not supported for tracker type %q", cfg.Type)
+	}
+	return projectLoader, nil
 }
 
 // NewSprintLoader creates a SprintLoader for the given tracker config.
@@ -293,6 +315,251 @@ func (j *jiraSprintLoader) LoadIteration(ref string) ([]SprintItem, *SprintInfo,
 	return nil, nil, fmt.Errorf("use LoadSprint or LoadActiveSprint for Jira; LoadIteration is for Linear")
 }
 
+// LoadProjectSnapshot loads active and future Jira sprint membership for one board.
+func (j *jiraSprintLoader) LoadProjectSnapshot(boardRef string) (*projectcontract.Snapshot, error) {
+	boardID, boardName, err := j.resolveBoard(boardRef)
+	if err != nil {
+		return nil, err
+	}
+	iterations, err := j.listBoardSprints(boardID, "active,future")
+	if err != nil {
+		return nil, err
+	}
+	sort.Slice(iterations, func(a, b int) bool {
+		left, right := iterations[a], iterations[b]
+		if left.State != right.State {
+			leftOrder, rightOrder := sprintStateOrder(left.State), sprintStateOrder(right.State)
+			if leftOrder != rightOrder {
+				return leftOrder < rightOrder
+			}
+			return left.State < right.State
+		}
+		if left.Start != right.Start {
+			return left.Start < right.Start
+		}
+		if left.End != right.End {
+			return left.End < right.End
+		}
+		if left.Name != right.Name {
+			return left.Name < right.Name
+		}
+		return left.ID < right.ID
+	})
+
+	snapshot := &projectcontract.Snapshot{
+		Version:     projectcontract.Version,
+		Provider:    "jira",
+		Project:     projectcontract.Project{ID: j.projectKey, Name: j.projectKey},
+		Board:       &projectcontract.Board{ID: boardID, Name: boardName},
+		Iterations:  []projectcontract.Iteration{},
+		Items:       []projectcontract.Item{},
+		GeneratedAt: time.Now().UTC(),
+		Complete:    true,
+	}
+	itemIndexes := map[string]int{}
+	for _, iteration := range iterations {
+		snapshot.Iterations = append(snapshot.Iterations, projectcontract.Iteration{
+			ID: iteration.ID, Name: iteration.Name, Goal: iteration.Goal,
+			State: iteration.State, Start: iteration.Start, End: iteration.End,
+		})
+		items, loadErr := j.loadProjectSnapshotItems(iteration.ID)
+		if loadErr != nil {
+			return nil, fmt.Errorf("loading sprint %s: %w", iteration.Name, loadErr)
+		}
+		for rank, item := range items {
+			if index, exists := itemIndexes[item.ID]; exists {
+				snapshot.Items[index].IterationIDs = append(snapshot.Items[index].IterationIDs, iteration.ID)
+				continue
+			}
+			itemIndexes[item.ID] = len(snapshot.Items)
+			snapshot.Items = append(snapshot.Items, projectcontract.Item{
+				TrackerID: item.ID, Title: item.Title, Type: item.Type,
+				NativeStatus: item.Status, StatusCategory: item.StatusCategory,
+				Assignee: item.Assignee, Rank: rank, IterationIDs: []string{iteration.ID}, URL: item.URL,
+			})
+		}
+	}
+	return snapshot, nil
+}
+
+// loadProjectSnapshotItems fetches only the fields needed by scheduling views.
+// Keeping this separate from loadSprintItems prevents a project snapshot from
+// hydrating descriptions, acceptance criteria, links, or custom fields for
+// every issue in a large sprint.
+func (j *jiraSprintLoader) loadProjectSnapshotItems(sprintID string) ([]SprintItem, error) {
+	jql := fmt.Sprintf(`project = %q AND sprint = %s ORDER BY rank ASC`, j.projectKey, sprintID)
+	const fieldList = "summary,issuetype,status,assignee"
+	type rawIssue struct {
+		Key    string `json:"key"`
+		Fields struct {
+			Summary   string `json:"summary"`
+			IssueType struct {
+				Name string `json:"name"`
+			} `json:"issuetype"`
+			Status struct {
+				Name     string `json:"name"`
+				Category struct {
+					Key string `json:"key"`
+				} `json:"statusCategory"`
+			} `json:"status"`
+			Assignee *struct {
+				DisplayName string `json:"displayName"`
+			} `json:"assignee"`
+		} `json:"fields"`
+	}
+
+	var items []SprintItem
+	nextPageToken := ""
+	for {
+		apiURL := fmt.Sprintf("%s/rest/api/3/search/jql?jql=%s&maxResults=100&fields=%s",
+			j.baseURL, url.QueryEscape(jql), fieldList)
+		if nextPageToken != "" {
+			apiURL += "&nextPageToken=" + url.QueryEscape(nextPageToken)
+		}
+		var result struct {
+			Issues        []rawIssue `json:"issues"`
+			NextPageToken string     `json:"nextPageToken"`
+		}
+		if err := j.get(apiURL, &result); err != nil {
+			return nil, fmt.Errorf("fetching project snapshot issues: %w", err)
+		}
+		for _, issue := range result.Issues {
+			assignee := ""
+			if issue.Fields.Assignee != nil {
+				assignee = issue.Fields.Assignee.DisplayName
+			}
+			items = append(items, SprintItem{
+				ID:             issue.Key,
+				Title:          issue.Fields.Summary,
+				Type:           strings.ToLower(issue.Fields.IssueType.Name),
+				Status:         issue.Fields.Status.Name,
+				StatusCategory: normalizeStatusCategory(issue.Fields.Status.Category.Key, issue.Fields.Status.Name),
+				Assignee:       assignee,
+				URL:            fmt.Sprintf("%s/browse/%s", j.baseURL, issue.Key),
+			})
+		}
+		if result.NextPageToken == "" || len(result.Issues) == 0 {
+			break
+		}
+		nextPageToken = result.NextPageToken
+	}
+	return items, nil
+}
+
+type jiraBoard struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+func (j *jiraSprintLoader) resolveBoard(boardRef string) (string, string, error) {
+	projectBoards, err := j.listProjectBoards()
+	if err != nil {
+		return "", "", err
+	}
+	for _, board := range projectBoards {
+		if fmt.Sprint(board.ID) == boardRef || strings.EqualFold(board.Name, boardRef) {
+			return fmt.Sprint(board.ID), board.Name, nil
+		}
+	}
+	if boardRef != "" {
+		return "", "", fmt.Errorf("no board found for project %q matching %q", j.projectKey, boardRef)
+	}
+	for _, canonicalName := range []string{j.projectKey + " board", j.projectKey} {
+		for _, board := range projectBoards {
+			if board.Name == canonicalName {
+				return fmt.Sprint(board.ID), board.Name, nil
+			}
+		}
+	}
+	if len(projectBoards) == 1 {
+		return fmt.Sprint(projectBoards[0].ID), projectBoards[0].Name, nil
+	}
+	if len(projectBoards) == 0 {
+		return "", "", fmt.Errorf("no boards found for project %q; configure tracker.board or pass --board", j.projectKey)
+	}
+	boards := make([]string, 0, len(projectBoards))
+	for _, board := range projectBoards {
+		boards = append(boards, fmt.Sprintf("%d (%s)", board.ID, board.Name))
+	}
+	sort.Strings(boards)
+	return "", "", fmt.Errorf("multiple boards found for project %q: %s; configure tracker.board or pass --board with a board ID or exact name", j.projectKey, strings.Join(boards, ", "))
+}
+
+func (j *jiraSprintLoader) listProjectBoards() ([]jiraBoard, error) {
+	var boards []jiraBoard
+	startAt := 0
+	for {
+		apiURL := fmt.Sprintf("%s/rest/agile/1.0/board?projectKeyOrId=%s&startAt=%d&maxResults=50", j.baseURL, url.QueryEscape(j.projectKey), startAt)
+		var result struct {
+			MaxResults int         `json:"maxResults"`
+			Total      int         `json:"total"`
+			IsLast     bool        `json:"isLast"`
+			Values     []jiraBoard `json:"values"`
+		}
+		if err := j.get(apiURL, &result); err != nil {
+			return nil, fmt.Errorf("listing boards: %w", err)
+		}
+		boards = append(boards, result.Values...)
+		if result.IsLast || len(result.Values) == 0 || (result.Total > 0 && len(boards) >= result.Total) || (result.MaxResults == 0 && result.Total == 0) {
+			break
+		}
+		step := result.MaxResults
+		if step <= 0 {
+			step = len(result.Values)
+		}
+		startAt += step
+	}
+	return boards, nil
+}
+
+func sprintStateOrder(state string) int {
+	switch strings.ToLower(state) {
+	case "active":
+		return 0
+	case "future":
+		return 1
+	default:
+		return 2
+	}
+}
+
+func (j *jiraSprintLoader) listBoardSprints(boardID, states string) ([]SprintInfo, error) {
+	var iterations []SprintInfo
+	startAt := 0
+	for {
+		apiURL := fmt.Sprintf("%s/rest/agile/1.0/board/%s/sprint?state=%s&startAt=%d&maxResults=50", j.baseURL, boardID, url.QueryEscape(states), startAt)
+		var result struct {
+			StartAt    int  `json:"startAt"`
+			MaxResults int  `json:"maxResults"`
+			Total      int  `json:"total"`
+			IsLast     bool `json:"isLast"`
+			Values     []struct {
+				ID    int    `json:"id"`
+				Name  string `json:"name"`
+				Goal  string `json:"goal"`
+				Start string `json:"startDate"`
+				End   string `json:"endDate"`
+				State string `json:"state"`
+			} `json:"values"`
+		}
+		if err := j.get(apiURL, &result); err != nil {
+			return nil, fmt.Errorf("listing board sprints: %w", err)
+		}
+		for _, value := range result.Values {
+			iterations = append(iterations, SprintInfo{ID: fmt.Sprint(value.ID), Name: value.Name, Goal: value.Goal, Start: value.Start, End: value.End, State: value.State})
+		}
+		if result.IsLast || len(result.Values) == 0 || (result.Total > 0 && len(iterations) >= result.Total) {
+			break
+		}
+		step := result.MaxResults
+		if step <= 0 {
+			step = len(result.Values)
+		}
+		startAt += step
+	}
+	return iterations, nil
+}
+
 // resolveBoardID resolves a board name to its numeric ID using the Agile API.
 func (j *jiraSprintLoader) resolveBoardID(boardRef string) (string, error) {
 	apiURL := fmt.Sprintf("%s/rest/agile/1.0/board?projectKeyOrId=%s",
@@ -451,22 +718,34 @@ func (j *jiraSprintLoader) loadSprintItems(sprintID, sprintName string) ([]Sprin
 	for _, cfID := range j.customFieldIDs() {
 		fieldList += "," + cfID
 	}
-	apiURL := fmt.Sprintf("%s/rest/api/3/search/jql?jql=%s&maxResults=100&fields=%s",
-		j.baseURL, url.QueryEscape(jql), fieldList)
-
-	var result struct {
-		Issues []struct {
-			Key    string          `json:"key"`
-			Fields json.RawMessage `json:"fields"`
-		} `json:"issues"`
+	type rawIssue struct {
+		Key    string          `json:"key"`
+		Fields json.RawMessage `json:"fields"`
 	}
-
-	if err := j.get(apiURL, &result); err != nil {
-		return nil, fmt.Errorf("fetching sprint issues: %w", err)
+	var rawIssues []rawIssue
+	nextPageToken := ""
+	for {
+		apiURL := fmt.Sprintf("%s/rest/api/3/search/jql?jql=%s&maxResults=100&fields=%s",
+			j.baseURL, url.QueryEscape(jql), fieldList)
+		if nextPageToken != "" {
+			apiURL += "&nextPageToken=" + url.QueryEscape(nextPageToken)
+		}
+		var result struct {
+			Issues        []rawIssue `json:"issues"`
+			NextPageToken string     `json:"nextPageToken"`
+		}
+		if err := j.get(apiURL, &result); err != nil {
+			return nil, fmt.Errorf("fetching sprint issues: %w", err)
+		}
+		rawIssues = append(rawIssues, result.Issues...)
+		if result.NextPageToken == "" || len(result.Issues) == 0 {
+			break
+		}
+		nextPageToken = result.NextPageToken
 	}
 
 	var items []SprintItem
-	for _, issue := range result.Issues {
+	for _, issue := range rawIssues {
 		// Parse known fields via struct.
 		var f struct {
 			Summary     string          `json:"summary"`
@@ -475,7 +754,10 @@ func (j *jiraSprintLoader) loadSprintItems(sprintID, sprintName string) ([]Sprin
 				Name string `json:"name"`
 			} `json:"issuetype"`
 			Status struct {
-				Name string `json:"name"`
+				Name     string `json:"name"`
+				Category struct {
+					Key string `json:"key"`
+				} `json:"statusCategory"`
 			} `json:"status"`
 			Priority struct {
 				Name string `json:"name"`
@@ -525,13 +807,14 @@ func (j *jiraSprintLoader) loadSprintItems(sprintID, sprintName string) ([]Sprin
 		}
 
 		item := SprintItem{
-			ID:         issue.Key,
-			Title:      f.Summary,
-			Type:       jiraTypeToHero(f.IssueType.Name),
-			Status:     f.Status.Name,
-			Priority:   strings.ToLower(f.Priority.Name),
-			SprintName: sprintName,
-			URL:        fmt.Sprintf("%s/browse/%s", j.baseURL, issue.Key),
+			ID:             issue.Key,
+			Title:          f.Summary,
+			Type:           jiraTypeToHero(f.IssueType.Name),
+			Status:         f.Status.Name,
+			StatusCategory: normalizeStatusCategory(f.Status.Category.Key, f.Status.Name),
+			Priority:       strings.ToLower(f.Priority.Name),
+			SprintName:     sprintName,
+			URL:            fmt.Sprintf("%s/browse/%s", j.baseURL, issue.Key),
 		}
 
 		if f.Assignee != nil {
@@ -618,6 +901,28 @@ func (j *jiraSprintLoader) loadSprintItems(sprintID, sprintName string) ([]Sprin
 	}
 
 	return items, nil
+}
+
+func normalizeStatusCategory(category, status string) string {
+	switch strings.ToLower(strings.TrimSpace(category)) {
+	case "new", "to do", "todo", "backlog":
+		return "todo"
+	case "indeterminate", "in progress", "in-progress":
+		return "in-progress"
+	case "done", "complete", "completed":
+		return "done"
+	}
+	lower := strings.ToLower(status)
+	if strings.Contains(lower, "done") || strings.Contains(lower, "closed") || strings.Contains(lower, "resolved") {
+		return "done"
+	}
+	if strings.Contains(lower, "progress") || strings.Contains(lower, "test") || strings.Contains(lower, "review") {
+		return "in-progress"
+	}
+	if lower != "" {
+		return "todo"
+	}
+	return "unknown"
 }
 
 func (j *jiraSprintLoader) get(apiURL string, out interface{}) error {

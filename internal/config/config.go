@@ -1033,6 +1033,7 @@ type TeamConfig struct {
 type TrackerConfig struct {
 	Type          string `json:"type"`            // github, jira, linear, gitlab, none
 	Project       string `json:"project"`         // project identifier (e.g. "owner/repo" for GitHub, project key for Jira, team key for Linear, "namespace/project" or numeric ID for GitLab)
+	Board         string `json:"board,omitempty"` // canonical Jira board ID or name used by project scheduling snapshots
 	Token         string `json:"token,omitempty"` // literal API token (set in hero.local.json or credentials store; never in hero.json)
 	TokenEnv      string `json:"token_env"`       // env var name holding the API token (e.g. "GITHUB_TOKEN")
 	BaseURL       string `json:"base_url"`        // API base URL (required for Jira and GitLab, optional override for GitHub/Linear)
@@ -1656,6 +1657,9 @@ func MergeLocal(base, local Config) Config {
 		}
 		if local.Tracker.Project != "" {
 			base.Tracker.Project = local.Tracker.Project
+		}
+		if local.Tracker.Board != "" {
+			base.Tracker.Board = local.Tracker.Board
 		}
 		if local.Tracker.Token != "" {
 			base.Tracker.Token = local.Tracker.Token

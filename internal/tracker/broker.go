@@ -199,7 +199,7 @@ func splitProjectIssue(value string) (project, issue string, ok bool) {
 }
 
 func validateBrokerIssueID(provider, issueID string) error {
-	if issueID == "" || strings.ContainsAny(issueID, `/\\?#\r\n\x00`) || strings.Contains(issueID, "..") {
+	if issueID == "" || strings.ContainsAny(issueID, "/\\?#\r\n\x00") || strings.Contains(issueID, "..") {
 		return errors.New("issue_id contains path or control characters")
 	}
 	if provider == "github" || provider == "gitlab" {

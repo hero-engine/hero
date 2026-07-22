@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-20T23:53:41Z
+updated: 2026-07-22T23:56:18Z
 repo: hero-engine/hero
 ---
 
@@ -20,11 +20,11 @@ repo: hero-engine/hero
 > - Origin workspace: hero-code (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
 > - Target alias on cal…
 
-_possibly stale — 3 commit(s) since, last set 1d 2h ago_
+_possibly stale — 4 commit(s) since, last set 3d 2h ago_
 
 ## Last user ask
 
-> Fix Core tracker auto-refresh so no periodic or bulk sync path performs per-ticket GetIssue calls; preserve explicit deep evidence loading only for model-requested issue investigation, and align Core vs Hero Code lifecycle semantics.
+> Commit the current main working tree, push it to origin, then continue the durable-attention initiative on feature/hero-inbox
 
 ## Suggested next prompt
 

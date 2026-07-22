@@ -49,7 +49,9 @@ work across projects without turning harness task lists into a personal planner.
 Both surfaces remain useful from the CLI and API before any desktop UI or
 always-on runtime exists.
 
-## Ownership model
+## Design
+
+### Ownership model
 
 The initiative deliberately keeps six lifecycles distinct:
 
@@ -82,28 +84,29 @@ never authorizes execution.
 
 | Wave | Child | Priority | Size | Outcome |
 |---:|---|---|---|---|
-| 0 | `durable-attention-contracts` | critical | medium | Versioned, separate Mail and Focus contracts plus ownership, storage, compatibility, and trust rules |
-| 1 | `project-mail-core` | high | medium | Project-addressed immutable mail, local transport, threading, acknowledgement, and CLI |
-| 1 | `personal-focus-core` | high | medium | User-global prompt-backed Focus lifecycle and CLI/API |
-| 2 | `project-mail-triage-and-provenance` | high | medium | Explicit promotion, provenance, unread surfaces, graph events, and MCP/API actions |
-| 2 | `deferred-work-suggestion-contract` | medium | medium | Harness-neutral model suggestion with explicit user acceptance into Focus |
-| 2 | `attention-read-model-v1` | medium | medium | Consumer-safe combined read projection, advertised actions, schema, and fixtures |
-| 3 | `peering-over-project-mail` | medium | medium | Existing peering identity and entry points reframed over asynchronous mail |
+| 0 | `durable-attention-contracts` | critical | large | Versioned, separate Mail and Focus contracts plus ownership, storage, compatibility, and trust rules |
+| 1 | `project-mail-core` | high | large | Project-addressed immutable mail, local transport, threading, acknowledgement, and CLI |
+| 1 | `personal-focus-core` | high | large | User-global prompt-backed Focus lifecycle and CLI/API |
+| 2 | `project-mail-triage-and-provenance` | high | large | Explicit promotion, provenance, unread surfaces, graph events, and MCP/API actions |
+| 2 | `deferred-work-suggestion-contract` | medium | large | Harness-neutral model suggestion with explicit user acceptance into Focus |
+| 2 | `attention-read-model-v1` | medium | large | Consumer-safe combined read projection, advertised actions, schema, and fixtures |
+| 3 | `peering-over-project-mail` | medium | large | Existing peering identity and entry points reframed over asynchronous mail |
 
-Every child has a folder-per-spec stub beside this initiative and is ready for an
-individual `/design` pass.
+Every child now has a full implementation design, file-level change plan,
+numbered acceptance criteria, risk boundaries, and validation strategy.
 
 ## Dependencies and delivery order
 
 ```text
 durable-attention-contracts
   ├─ project-mail-core
-  │    └─ project-mail-triage-and-provenance
+  │    └─ project-mail-triage-and-provenance ─┐
   │          ├─ attention-read-model-v1
   │          └─ peering-over-project-mail
   └─ personal-focus-core
-       ├─ deferred-work-suggestion-contract
-       └─ attention-read-model-v1
+       ├─ project-mail-triage-and-provenance
+       └─ deferred-work-suggestion-contract ──┤
+                                              └─ attention-read-model-v1
 ```
 
 `project-mail-triage-and-provenance` also depends on
@@ -114,10 +117,14 @@ Wave 1 must be usable without Hero Code, a daemon, a watcher, a model launcher,
 or Always-On Runtime. Wave 2 publishes the stable consumer seam Hero Code can
 implement against. Wave 3 changes peering only after mail and triage are real.
 
-There are no same-file overlap seams between dependency-ready children at this
-composition level, so no `conflicts-with` relations are required. Later design
-passes must add reciprocal conflict relations if concrete file plans introduce
-parallel overlap.
+Two concrete same-file seams are declared as reciprocal `conflicts-with` soft
+mutexes for `/drive`:
+
+- `project-mail-core` and `personal-focus-core` both register new root CLI
+  command families and may update shared completion/reference fixtures.
+- `project-mail-triage-and-provenance` and
+  `deferred-work-suggestion-contract` both extend MCP definitions/dispatch and
+  install/reference surfaces.
 
 ## Existing work disposition
 
@@ -211,9 +218,9 @@ The upstream Hero contract must provide:
 Cross-repo dependency names remain prose here because the local graph cannot
 resolve a peer repository's spec slug.
 
-### Proposed compatibility defaults
+### Locked compatibility decisions
 
-The child `/design` passes should confirm or revise these defaults explicitly:
+The child designs lock these v1 decisions:
 
 1. `do_next` atomically accepts the suggestion into a durable `today` Focus
    item and returns a launch intent. Creating a desktop session is a separate
@@ -224,9 +231,9 @@ The child `/design` passes should confirm or revise these defaults explicitly:
 3. Focus launch does not require persisted session correlation in v1. If
    observability needs it, return a typed launch context; never overload a spec
    slug or infer completion from harness todos.
-4. Hero publishes exactly one user-global client boundary. The transport is
-   selected by design after inspecting existing Serve/MCP/runtime ownership;
-   Hero Code must not implement both.
+4. Hero publishes exactly one user-global client boundary: Hero Serve HTTP at
+   `/api/attention/v1`. CLI and MCP are Hero-side adapters over the same service;
+   Hero Code implements only HTTP.
 5. V1 requires an authoritative snapshot plus explicit refresh after foreground,
    reconnect, and mutations. A streaming event cursor is optional scope and
    must justify its daemon/service and recovery complexity before becoming a
@@ -244,7 +251,7 @@ The child `/design` passes should confirm or revise these defaults explicitly:
 - **AC-8:** WHERE deferred-work guidance is installed THE SYSTEM SHALL provide self-contained, harness-neutral behavior across `opencode`, `cursor`, `claude`, `copilot`, `codex`, and `generic`.
 - **AC-9:** WHEN peering is reframed over Project Mail THE SYSTEM SHALL preserve peer identity, alias/path resolution, manifests, provenance, and compatible user entry points.
 
-## Boundaries
+## Non-Goals
 
 - No calendar, due dates, estimates, assignments, priority scores, subtasks, or
   general-purpose personal task manager.
@@ -274,21 +281,56 @@ The child `/design` passes should confirm or revise these defaults explicitly:
 - **Name collision:** Hero Code's existing Focus/NeedsAttention presentation
   types could be mistaken for the new durable domain model.
 
+## Test Strategy
+
+Each child owns its detailed acceptance criteria and focused tests after its
+progressive `/design` pass. The initiative closes only when all seven children
+pass their delivery audit and `hero spec verify` gate.
+
+Cross-child validation must cover these initiative invariants:
+
+- **Contract fixtures:** generated JSON Schemas, manifests, checksums, and
+  golden fixtures decode through both Hero's contract tests and Hero Code's
+  consumer tests without direct storage access.
+- **Ownership isolation:** Mail mutations never change Focus lifecycle directly;
+  Focus mutations never change Mail lifecycle; harness task state never writes
+  either store.
+- **Local delivery:** repeated and interrupted sibling delivery is atomic and
+  idempotent and does not dirty the recipient project's tracked worktree.
+- **Explicit promotion:** Mail-to-Intake/Spec and Mail-to-Today operations are
+  idempotent, retain source provenance, and return authoritative artifact/Focus
+  references.
+- **Untrusted input:** executable-looking Mail content is stored and displayed
+  as data and cannot trigger a model, command, Job/Run, or client session on
+  receipt.
+- **Consumer compatibility:** snapshot refresh, unknown additive fields/source
+  kinds/actions, absent capabilities, structured failures, stale data, and
+  missing projects behave according to the published v1 fixtures.
+- **Peering regression:** existing peer identity, manifests, aliases, and legacy
+  trails remain readable while communication works with no model CLI installed.
+- **Harness parity:** deferred-work guidance is generated and verified for all
+  six install targets.
+
+Before the initiative completes, run the full Go suite, focused CLI/MCP/peering
+integration tests, fixture compatibility checks, all-target install tests, and
+the Hero Code consumer suite against the released fixture manifest. Optional
+streaming tests are required only if a child design deliberately includes the
+streaming capability in v1.
+
 ## Progress
 
-Composed. No child has been designed or delivered. Begin with
-`durable-attention-contracts`; after it is accepted,
-`project-mail-core` and `personal-focus-core` can proceed in parallel.
+Composition and progressive design are complete. All seven children are
+implementation-ready and score Grade A. Begin delivery with
+`durable-attention-contracts`; `/drive` must honor the declared dependencies and
+reciprocal same-file soft mutexes.
 
 ## Kickoff
 
-Compose is complete for `durable-attention`. The architecture is one durable
-attention layer with separate ownership: project Mail, personal Focus, run-owned
-harness tasks, project Intake/Specs, and runtime Jobs/Runs.
-
-**Pick up at:** `/design durable-attention-contracts`. Lock the two separate
-versioned contracts, Hero-owned storage boundaries, compatibility rules, and
-untrusted-input policy before implementing either store.
+Design is complete for `durable-attention`. Drive the initiative from
+`durable-attention-contracts`, then follow the frontmatter dependencies and
+`conflicts-with` soft mutexes. Each child contains concrete files, numbered EARS
+criteria, failure boundaries, and validation commands; do not reopen locked v1
+decisions unless implementation evidence contradicts them.
 
 **Do not:** launch models from mailbox core, create receiver specs on delivery,
 merge Mail and Focus writes, or let Hero Code invent parallel persistence.

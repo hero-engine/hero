@@ -36,6 +36,7 @@ type TrackerConnection struct {
 	ID        string
 	Provider  string
 	Project   string
+	Board     string
 	BaseURL   string
 	UserEmail string
 	Token     Secret
@@ -46,6 +47,7 @@ func (c TrackerConnection) TrackerConfig() *TrackerConfig {
 	return &TrackerConfig{
 		Type:      c.Provider,
 		Project:   c.Project,
+		Board:     c.Board,
 		BaseURL:   c.BaseURL,
 		UserEmail: c.UserEmail,
 		Token:     c.Token.Reveal(),
@@ -261,7 +263,7 @@ func validateLegacyUnknown(path string, data []byte) error {
 	if r := d["tracker"]; len(r) > 0 {
 		var m map[string]json.RawMessage
 		if json.Unmarshal(r, &m) == nil {
-			allowed := map[string]bool{"type": true, "project": true, "token": true, "token_env": true, "base_url": true, "user_email": true, "post_on_design": true, "post_on_deliver": true, "size_mapping": true}
+			allowed := map[string]bool{"type": true, "project": true, "board": true, "token": true, "token_env": true, "base_url": true, "user_email": true, "post_on_design": true, "post_on_deliver": true, "size_mapping": true}
 			for k := range m {
 				if !allowed[k] {
 					return fmt.Errorf("%s $.tracker.%s: unknown field; provider-keyed credentials are not supported here — define $.integrations.connections.<id> or run 'hero connect jira --integration-id <id> --project <key> --token-stdin'", path, k)
@@ -301,7 +303,7 @@ func (r *ResolvedIntegrations) validate(committedPath, localPath string) error {
 	return nil
 }
 func validateProviderSettings(id string, c IntegrationConfig) error {
-	stringFields := map[string]bool{"project": true, "base_url": true, "user_email": true, "space_key": true}
+	stringFields := map[string]bool{"project": true, "board": true, "base_url": true, "user_email": true, "space_key": true}
 	commonTracker := map[string]string{"project": "string", "base_url": "string", "post_on_design": "bool", "post_on_deliver": "bool", "size_mapping": "object"}
 	schema := map[string]string{}
 	required := []string{}
@@ -315,6 +317,7 @@ func validateProviderSettings(id string, c IntegrationConfig) error {
 		for k, v := range commonTracker {
 			schema[k] = v
 		}
+		schema["board"] = "string"
 		schema["user_email"] = "string"
 		required = []string{"project", "base_url"}
 	case "gitlab":
@@ -387,6 +390,13 @@ func validateProviderSettings(id string, c IntegrationConfig) error {
 		}
 	}
 	if c.Provider == "jira" {
+		if raw, ok := c.Settings["board"]; ok {
+			var v string
+			_ = json.Unmarshal(raw, &v)
+			if strings.TrimSpace(v) == "" {
+				return fmt.Errorf("$.integrations.connections.%s.settings.board must not be empty when provided", id)
+			}
+		}
 		if raw, ok := c.Settings["user_email"]; ok {
 			var v string
 			_ = json.Unmarshal(raw, &v)
@@ -482,7 +492,7 @@ func (r *ResolvedIntegrations) DeliveryTracker() (*TrackerConfig, bool) {
 	if e != nil || c.Provider == "confluence" {
 		return nil, false
 	}
-	t := &TrackerConfig{Type: c.Provider, Project: rawString(c.Settings, "project"), BaseURL: rawString(c.Settings, "base_url"), UserEmail: rawString(c.Settings, "user_email")}
+	t := &TrackerConfig{Type: c.Provider, Project: rawString(c.Settings, "project"), Board: rawString(c.Settings, "board"), BaseURL: rawString(c.Settings, "base_url"), UserEmail: rawString(c.Settings, "user_email")}
 	if c.Auth != nil {
 		t.Token = c.Auth.Token.Reveal()
 		t.TokenEnv = c.Auth.TokenEnv
@@ -502,7 +512,7 @@ func (c Config) ResolveTrackerConnection(explicit string) (TrackerConnection, er
 			return TrackerConnection{}, fmt.Errorf("no tracker connection configured")
 		}
 		return TrackerConnection{
-			ID: "legacy", Provider: c.Tracker.Type, Project: c.Tracker.Project,
+			ID: "legacy", Provider: c.Tracker.Type, Project: c.Tracker.Project, Board: c.Tracker.Board,
 			BaseURL: c.Tracker.BaseURL, UserEmail: c.Tracker.UserEmail,
 			Token: Secret(c.Tracker.Token), TokenEnv: c.Tracker.TokenEnv,
 		}, nil
@@ -534,7 +544,7 @@ func (c Config) ResolveTrackerConnection(explicit string) (TrackerConnection, er
 		return TrackerConnection{}, fmt.Errorf("integration %q is not a tracker connection", id)
 	}
 	out := TrackerConnection{
-		ID: id, Provider: cn.Provider, Project: rawString(cn.Settings, "project"),
+		ID: id, Provider: cn.Provider, Project: rawString(cn.Settings, "project"), Board: rawString(cn.Settings, "board"),
 		BaseURL: rawString(cn.Settings, "base_url"), UserEmail: rawString(cn.Settings, "user_email"),
 	}
 	if cn.Auth != nil {

@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-20T23:53:42Z · 88 ready specs_
+_Generated: 2026-07-22T23:56:19Z · 88 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -624,9 +624,12 @@ model execution part of the communication contract.
 ## durable-attention-contracts — "Durable Attention Contracts — Ownership, Storage, Compatibility, and Trust"
 _feature · planning · horizon: next_
 
-Inspect existing contracts, local-state conventions, peer identity, graph/event
-IDs, JSON Schema generation, and client fixture patterns. Design the smallest
-contract foundation that preserves separate Mail and Focus ownership.
+Implement the v1 durable-attention contract exactly as designed here. Keep
+`contracts/attention` leaf-only, validate untrusted Mail at the boundary, and
+preserve separate Mail and Focus write models. Publish schemas and checksumed
+golden fixtures before store work. Treat Hero Serve's global HTTP endpoint as
+the Hero Code boundary, with snapshot refresh required and events explicitly
+optional.
 
 ---
 

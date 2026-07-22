@@ -49,23 +49,113 @@ func TestBrokerGetIssueAcceptsFullJiraKeyWithoutProjectConstraint(t *testing.T) 
 			t.Error("missing requested fields")
 		}
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, `{"key":"PCS-1339","fields":{"summary":"Direct key","status":{"name":"Open"},"created":"2026-01-01T00:00:00Z","updated":"2026-02-01T00:00:00Z"}}`)
+		fmt.Fprint(w, `{"key":"ACME-103","fields":{"summary":"Direct key","status":{"name":"Open"},"created":"2026-01-01T00:00:00Z","updated":"2026-02-01T00:00:00Z"}}`)
 	}))
 	defer server.Close()
 
-	resp := testBroker(brokerTestConfig("jira", "CONFIGURED", server.URL)).GetIssue(context.Background(), brokercontract.GetIssueRequest{IssueID: "PCS-1339"})
+	resp := testBroker(brokerTestConfig("jira", "CONFIGURED", server.URL)).GetIssue(context.Background(), brokercontract.GetIssueRequest{IssueID: "ACME-103"})
 	if resp.Error != nil {
 		t.Fatalf("response error: %+v", resp.Error)
 	}
-	if path != "/rest/api/3/issue/PCS-1339" {
+	if path != "/rest/api/3/issue/ACME-103" {
 		t.Fatalf("path = %q", path)
 	}
 	var issue brokercontract.Issue
 	if err := json.Unmarshal(resp.Result, &issue); err != nil {
 		t.Fatal(err)
 	}
-	if issue.ID != "PCS-1339" || issue.CreatedAt != "2026-01-01T00:00:00Z" || issue.UpdatedAt != "2026-02-01T00:00:00Z" {
+	if issue.ID != "ACME-103" || issue.CreatedAt != "2026-01-01T00:00:00Z" || issue.UpdatedAt != "2026-02-01T00:00:00Z" {
 		t.Fatalf("issue = %+v", issue)
+	}
+}
+
+func TestBrokerGetIssueEvidenceAcceptsACME103(t *testing.T) {
+	var issueCalls, commentCalls int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/rest/api/3/field":
+			fmt.Fprint(w, `[]`)
+		case "/rest/api/3/issue/ACME-103":
+			atomic.AddInt32(&issueCalls, 1)
+			if r.URL.Query().Get("fields") != "*all" || r.URL.Query().Get("expand") != "names,changelog" {
+				t.Errorf("evidence query = %q", r.URL.RawQuery)
+			}
+			fmt.Fprint(w, `{"key":"ACME-103","fields":{"summary":"Evidence key","description":"Full description","status":{"name":"Open"}},"names":{"summary":"Summary"},"changelog":{"histories":[]}}`)
+		case "/rest/api/3/issue/ACME-103/comment":
+			atomic.AddInt32(&commentCalls, 1)
+			fmt.Fprint(w, `{"startAt":0,"maxResults":100,"total":0,"comments":[]}`)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	resp := testBroker(brokerTestConfig("jira", "CONFIGURED", server.URL)).GetIssue(
+		context.Background(),
+		brokercontract.GetIssueRequest{IssueID: "ACME-103", Detail: brokercontract.DetailEvidence},
+	)
+	if resp.Error != nil {
+		t.Fatalf("response = %+v", resp)
+	}
+	if atomic.LoadInt32(&issueCalls) != 1 || atomic.LoadInt32(&commentCalls) != 1 {
+		t.Fatalf("issue calls=%d comment calls=%d", issueCalls, commentCalls)
+	}
+	var evidence IssueEvidence
+	if err := json.Unmarshal(resp.Result, &evidence); err != nil {
+		t.Fatal(err)
+	}
+	if evidence.IssueID != "ACME-103" || evidence.Normalized == nil || evidence.Normalized.Title != "Evidence key" {
+		t.Fatalf("evidence = %+v", evidence)
+	}
+}
+
+func TestValidateBrokerIssueIDAcceptsOrdinaryProviderIDsAndRejectsPathControls(t *testing.T) {
+	for _, tc := range []struct {
+		provider string
+		issueID  string
+	}{
+		{provider: "jira", issueID: "MORPH-297"},
+		{provider: "jira", issueID: "ACME-103"},
+		{provider: "jira", issueID: "ZERO-10"},
+		{provider: "linear", issueID: "runtime-nx-10"},
+		{provider: "github", issueID: "10"},
+		{provider: "gitlab", issueID: "10"},
+	} {
+		t.Run("valid/"+tc.provider+"/"+tc.issueID, func(t *testing.T) {
+			if err := validateBrokerIssueID(tc.provider, tc.issueID); err != nil {
+				t.Fatalf("validateBrokerIssueID(%q, %q) = %v", tc.provider, tc.issueID, err)
+			}
+		})
+	}
+
+	for name, issueID := range map[string]string{
+		"slash":     "ACME/103",
+		"backslash": `ACME\103`,
+		"query":     "ACME?103",
+		"fragment":  "ACME#103",
+		"traversal": "ACME..103",
+		"carriage":  "ACME\r103",
+		"newline":   "ACME\n103",
+		"nul":       "ACME\x00103",
+	} {
+		t.Run("invalid/"+name, func(t *testing.T) {
+			if err := validateBrokerIssueID("jira", issueID); err == nil {
+				t.Fatalf("validateBrokerIssueID accepted unsafe ID %q", issueID)
+			}
+		})
+	}
+
+	for _, tc := range []struct {
+		provider string
+		issueID  string
+	}{
+		{provider: "github", issueID: "not-10"},
+		{provider: "gitlab", issueID: "not-10"},
+	} {
+		if err := validateBrokerIssueID(tc.provider, tc.issueID); err == nil {
+			t.Fatalf("validateBrokerIssueID(%q, %q) accepted a non-numeric issue number", tc.provider, tc.issueID)
+		}
 	}
 }
 
@@ -206,6 +296,9 @@ func TestBrokerRejectsIssueIDPathConfusionBeforeProviderRequest(t *testing.T) {
 		{"github", "owner/repo", "https://evil.example/repo#7"},
 		{"github", "owner/repo", "owner/repo#not-a-number"},
 		{"gitlab", "owner/repo", "/owner/repo#7"},
+		{"jira", "P", "ACME\r103"},
+		{"jira", "P", "ACME\n103"},
+		{"jira", "P", "ACME\x00103"},
 	} {
 		resp := testBroker(brokerTestConfig(tc.provider, tc.project, server.URL)).GetIssue(context.Background(), brokercontract.GetIssueRequest{IssueID: tc.issueID})
 		if resp.Error == nil || resp.Error.Code != "invalid_issue_id" {
