@@ -117,7 +117,7 @@ func (j *jira) GetFields(issueID string) (map[string]Value, error) {
 		}
 	}
 	if v, ok := raw.Fields["description"]; ok {
-		if s := adfToText(v); s != "" {
+		if s := jiraADFToMarkdown(v); s != "" {
 			out["description"] = StringValue(s)
 		}
 	}
@@ -142,37 +142,4 @@ func (j *jira) GetFields(issueID string) (map[string]Value, error) {
 		}
 	}
 	return out, nil
-}
-
-// adfToText extracts plain text from a Jira ADF (Atlassian Document
-// Format) description or a plain string. Best-effort: it concatenates
-// the text runs from the first paragraph layer. Used only for diff
-// comparison, where we compare the local plain-text body against the
-// tracker's rendered text. Returns "" if nothing extractable.
-func adfToText(raw json.RawMessage) string {
-	// Plain string description (Jira Server / older payloads).
-	var s string
-	if json.Unmarshal(raw, &s) == nil {
-		return s
-	}
-	var doc struct {
-		Content []struct {
-			Content []struct {
-				Text string `json:"text"`
-			} `json:"content"`
-		} `json:"content"`
-	}
-	if json.Unmarshal(raw, &doc) != nil {
-		return ""
-	}
-	var buf bytes.Buffer
-	for i, block := range doc.Content {
-		if i > 0 {
-			buf.WriteString("\n")
-		}
-		for _, run := range block.Content {
-			buf.WriteString(run.Text)
-		}
-	}
-	return buf.String()
 }

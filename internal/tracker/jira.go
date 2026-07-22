@@ -765,7 +765,7 @@ func (j *jira) fetchAllComments(issueID string, evidence *IssueEvidence) error {
 		for _, c := range page.Comments {
 			evidence.Comments = append(evidence.Comments, EvidenceComment{
 				ID: c.ID, Author: c.Author.DisplayName, Created: c.Created, Updated: c.Updated,
-				Text: extractADFText(c.Body), RawBody: c.Body,
+				Text: jiraADFToMarkdown(c.Body), RawBody: c.Body,
 			})
 		}
 		startAt += len(page.Comments)
@@ -941,7 +941,7 @@ func (j *jira) parseIssueRaw(raw map[string]json.RawMessage) (*Issue, error) {
 
 	// Description (v3 returns ADF, v2 returns plain text — handle both)
 	if v, ok := fields["description"]; ok {
-		issue.Description = extractADFText(v)
+		issue.Description = jiraADFToMarkdown(v)
 	}
 
 	// Sprint (custom field — Jira Cloud: customfield_10020). Value is an array.
@@ -1001,7 +1001,7 @@ func parseCustomFieldValue(raw json.RawMessage) string {
 	}
 
 	// Try ADF (unlikely for severity, but be safe).
-	if text := extractADFText(raw); text != "" {
+	if text := jiraADFToMarkdown(raw); text != "" {
 		return strings.ToLower(text)
 	}
 
@@ -1350,43 +1350,4 @@ func textToADF(text string) map[string]interface{} {
 		"version": 1,
 		"content": content,
 	}
-}
-
-// extractADFText extracts plain text from an ADF (Atlassian Document Format) document.
-// Handles the v3 description format which returns ADF instead of plain text.
-func extractADFText(v json.RawMessage) string {
-	// Try plain string first (v2 format)
-	var plainText string
-	if err := json.Unmarshal(v, &plainText); err == nil {
-		return plainText
-	}
-
-	// Try ADF document format (v3)
-	var doc struct {
-		Type    string `json:"type"`
-		Content []struct {
-			Type    string `json:"type"`
-			Content []struct {
-				Type string `json:"type"`
-				Text string `json:"text"`
-			} `json:"content"`
-		} `json:"content"`
-	}
-	if err := json.Unmarshal(v, &doc); err != nil {
-		return ""
-	}
-
-	var parts []string
-	for _, block := range doc.Content {
-		var blockText []string
-		for _, inline := range block.Content {
-			if inline.Text != "" {
-				blockText = append(blockText, inline.Text)
-			}
-		}
-		if len(blockText) > 0 {
-			parts = append(parts, strings.Join(blockText, ""))
-		}
-	}
-	return strings.Join(parts, "\n\n")
 }

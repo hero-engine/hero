@@ -1,0 +1,113 @@
+{
+  "type": "doc",
+  "version": 1,
+  "content": [
+    {
+      "type": "paragraph",
+      "content": [{"type": "text", "text": "Pre-Req:"}]
+    },
+    {
+      "type": "orderedList",
+      "attrs": {"order": 1},
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {"type": "text", "text": "Provision a "},
+                {"type": "text", "text": "stopped", "marks": [{"type": "strong"}]},
+                {"type": "text", "text": " VM."}
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {"type": "text", "text": "Open "},
+                {"type": "text", "text": "Discover", "marks": [{"type": "link", "attrs": {"href": "https://example.atlassian.net/browse/MORPH-297"}}]},
+                {"type": "text", "text": " and run "},
+                {"type": "text", "text": "hero scan", "marks": [{"type": "code"}]},
+                {"type": "text", "text": "."}
+              ]
+            },
+            {
+              "type": "bulletList",
+              "content": [
+                {
+                  "type": "listItem",
+                  "content": [
+                    {"type": "paragraph", "content": [{"type": "text", "text": "Select all VMs."}]}
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [{"type": "text", "text": "Steps:"}]
+    },
+    {
+      "type": "orderedList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Click Bulk Start."}]}]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {"type": "text", "text": "Expected:", "marks": [{"type": "strong"}]},
+                {"type": "text", "text": " Every selected VM starts."},
+                {"type": "hardBreak"},
+                {"type": "text", "text": "Actual:", "marks": [{"type": "strong"}]},
+                {"type": "text", "text": " None starts — "},
+                {"type": "status", "attrs": {"text": "FAILED", "color": "red"}},
+                {"type": "text", "text": " "},
+                {"type": "emoji", "attrs": {"text": "🚨", "shortName": ":rotating_light:"}}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [{"type": "text", "text": "Logs:"}]
+    },
+    {
+      "type": "codeBlock",
+      "attrs": {"language": "bash"},
+      "content": [{"type": "text", "text": "hero start --all\n``unexpected``\nexit 1"}]
+    },
+    {
+      "type": "extension-node-added-later",
+      "content": [
+        {"type": "paragraph", "content": [{"type": "text", "text": "Preserved extension text."}]}
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {"level": 3},
+      "content": [{"type": "text", "text": "Notes"}]
+    },
+    {
+      "type": "blockquote",
+      "content": [
+        {"type": "paragraph", "content": [{"type": "text", "text": "This fails every time."}]}
+      ]
+    },
+    {"type": "rule"}
+  ]
+}

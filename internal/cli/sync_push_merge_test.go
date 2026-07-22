@@ -377,10 +377,11 @@ func TestSyncImport_SeedsBaseline(t *testing.T) {
 	writeTrackerConfig(env, "github", "acme/widgets")
 	env.t.Setenv("HERO_TEST_TOKEN", "fake-token")
 
+	description := jiraADFMarkdownFixture(t)
 	issue := tracker.Issue{
 		ID:          "101",
 		Title:       "Imported issue title",
-		Description: "the body",
+		Description: description,
 		Labels:      []string{"imported", "bug"},
 		IssueType:   "Bug",
 	}
@@ -395,11 +396,73 @@ func TestSyncImport_SeedsBaseline(t *testing.T) {
 	if b.Base["title"].Text != "Imported issue title" {
 		t.Errorf("title base = %q", b.Base["title"].Text)
 	}
-	if b.Base["body"].Text != "the body" {
-		t.Errorf("body base = %q", b.Base["body"].Text)
+	if b.Base["body"].Text != description {
+		t.Errorf("body baseline did not preserve canonical Jira Markdown exactly")
 	}
 	if len(b.Base["tags"].Tags) != 2 {
 		t.Errorf("tags base = %v", b.Base["tags"].Tags)
+	}
+}
+
+func TestMergeSharedFields_RendererUpgradeNeverPushesFlattenedDescription(t *testing.T) {
+	env := newTestEnv(t)
+	const slug = "renderer-upgrade"
+	const flattened = "Pre-Req: Steps: Logs:"
+	canonical := jiraADFMarkdownFixture(t)
+	if err := syncpkg.WriteBaseline(env.heroDir, slug, &syncpkg.Baseline{
+		TrackerID: "MORPH-297",
+		Base:      map[string]syncpkg.Base{"body": syncpkg.TextBase(flattened)},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	s := &spec.Spec{Slug: slug, TrackerID: "MORPH-297"}
+	push, writeback, updated, _, err := mergeSharedFields(
+		env.heroDir,
+		s,
+		map[string]tracker.Value{"description": tracker.StringValue(flattened)},
+		map[string]tracker.Value{"description": tracker.StringValue(canonical)},
+		map[string]bool{"description": true},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := push["description"]; ok {
+		t.Fatal("renderer upgrade attempted to push the stale flattened description back to Jira")
+	}
+	if got := writeback["description"].Str; got != canonical {
+		t.Fatalf("local description did not converge to canonical remote Markdown")
+	}
+	if got := updated["body"].Text; got != canonical {
+		t.Fatalf("baseline did not advance to canonical remote Markdown")
+	}
+}
+
+func TestMergeSharedFields_CanonicalDescriptionsEmitNoPatch(t *testing.T) {
+	env := newTestEnv(t)
+	const slug = "canonical-no-diff"
+	canonical := jiraADFMarkdownFixture(t)
+	if err := syncpkg.WriteBaseline(env.heroDir, slug, &syncpkg.Baseline{
+		TrackerID: "MORPH-297",
+		Base:      map[string]syncpkg.Base{"body": syncpkg.TextBase(canonical)},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	s := &spec.Spec{Slug: slug, TrackerID: "MORPH-297"}
+	push, writeback, updated, _, err := mergeSharedFields(
+		env.heroDir,
+		s,
+		map[string]tracker.Value{"description": tracker.StringValue(canonical)},
+		map[string]tracker.Value{"description": tracker.StringValue(canonical)},
+		map[string]bool{"description": true},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(push) != 0 || len(writeback) != 0 {
+		t.Fatalf("canonical equality emitted changes: push=%+v writeback=%+v", push, writeback)
+	}
+	if got := updated["body"].Text; got != canonical {
+		t.Fatal("canonical equality did not retain the exact baseline bytes")
 	}
 }
 

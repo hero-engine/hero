@@ -3,6 +3,7 @@ package cli
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -289,7 +290,7 @@ func TestGenerateImportedSpec_Bug(t *testing.T) {
 }
 
 func TestGenerateImportedSpec_PreservesFullDescriptionInProblem(t *testing.T) {
-	description := "## Environment\n\n- Host A\n- Host B\n\n## Reproduction\n\n" + strings.Repeat("Detailed evidence. ", 40)
+	description := jiraADFMarkdownFixture(t)
 	content := generateImportedSpec(tracker.Issue{
 		ID: "MORPH-14171", Title: "Unknown after HA", Description: description,
 	}, "bug", "jira", "morph-14171")
@@ -461,9 +462,10 @@ tracker_id: MORPH-14171
 
 <!-- To be investigated. -->
 `)
+	description := jiraADFMarkdownFixture(t)
 	mock := &activityMockTracker{}
 	stats := refreshImportedSpecs(config.Config{}, env.heroDir, mock, []tracker.Issue{{
-		ID: "MORPH-14171", Title: "Unknown after HA", Description: "Full Jira reproduction evidence.",
+		ID: "MORPH-14171", Title: "Unknown after HA", Description: description,
 	}})
 	if stats.updated != 1 {
 		t.Fatalf("updated = %d, want 1", stats.updated)
@@ -472,7 +474,7 @@ tracker_id: MORPH-14171
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(content), "Full Jira reproduction evidence.") {
+	if !strings.Contains(string(content), description) {
 		t.Fatalf("refresh did not repair Problem section:\n%s", content)
 	}
 	baseline, err := syncpkg.ReadBaseline(env.heroDir, "morph-14171")
@@ -485,12 +487,25 @@ tracker_id: MORPH-14171
 	if baseline.TrackerID != "MORPH-14171" {
 		t.Errorf("baseline tracker ID = %q, want MORPH-14171", baseline.TrackerID)
 	}
-	if got := baseline.Base["body"].Text; got != "Full Jira reproduction evidence." {
-		t.Errorf("baseline body = %q, want full Jira reproduction evidence", got)
+	if got := baseline.Base["body"].Text; got != description {
+		t.Errorf("baseline body did not preserve canonical Jira Markdown exactly")
 	}
 	if mock.getIssueCalls != 0 {
 		t.Fatalf("bulk refresh fanned out to GetIssue %d time(s); descriptions must come from the bulk page", mock.getIssueCalls)
 	}
+}
+
+func jiraADFMarkdownFixture(t *testing.T) string {
+	t.Helper()
+	_, source, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("cannot resolve test source path")
+	}
+	data, err := os.ReadFile(filepath.Join(filepath.Dir(source), "..", "tracker", "testdata", "jira", "morph-297-description.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return strings.TrimSpace(string(data))
 }
 
 func TestRefreshImportedSpecs_PreservesAuthoredProblem(t *testing.T) {

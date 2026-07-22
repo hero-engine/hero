@@ -260,6 +260,13 @@ hero serve --add .
 Use the grouped forms above for spec lifecycle, tracker sync, publishing,
 and headless execution.
 
+Jira descriptions imported before canonical ADF-to-Markdown rendering may
+already be missing nested lists or formatting in both the spec and its sync
+baseline. Hero does not migrate or overwrite authored problem text. Repair an
+affected item explicitly from Jira (re-import it, or inspect the current remote
+value with `hero sync pull <slug> --field description --json`); normal refresh
+only replaces Hero's untouched imported placeholder.
+
 ---
 
 ## MCP Tools

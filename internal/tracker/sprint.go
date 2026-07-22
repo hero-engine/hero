@@ -572,7 +572,7 @@ func (j *jiraSprintLoader) loadSprintItems(sprintID, sprintName string) ([]Sprin
 		}
 
 		if f.Description != nil {
-			item.Description = extractADFText(f.Description)
+			item.Description = jiraADFToMarkdown(f.Description)
 		}
 
 		// Extract custom fields by configurable ID.
