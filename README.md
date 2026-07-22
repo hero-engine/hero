@@ -127,7 +127,7 @@ Current installed content counts:
 | Slash command definitions | 29 |
 | Agent definitions | 35 |
 | Skill definitions | 55 |
-| MCP tools | 48 |
+| MCP tools | 49 |
 
 Run `hero docs check` to validate these counts against the repo.
 
@@ -284,7 +284,9 @@ tool set is:
 `hero_insights`, `hero_contract`, `hero_plan`, `hero_impact`,
 `hero_recap`, `hero_drift`, `hero_ci`, `hero_feed`, `hero_event`,
 `hero_active`, `hero_coverage`, `hero_why`, `hero_blocked`,
-`hero_expand`, `hero_snapshot`, `hero_synthesize`.
+`hero_expand`, `hero_snapshot`, `hero_synthesize`,
+`hero_tracker_get_issue`, `hero_tracker_search`, `hero_tracker_request`,
+`hero_tracker_cli`, `hero_tracker_load_evidence`.
 
 Most tools are read-only. Tools that intentionally mutate local state
 include claim/event/plan/enrich/test/demo helpers. `hero_synthesize`

@@ -1,0 +1,144 @@
+{
+  "version": "tracker-evidence/v1",
+  "request": {
+    "spec_slug": "example-tracker-issue",
+    "connection_id": "jira-main",
+    "include_attachments": true,
+    "force_refresh": false
+  },
+  "statuses": {
+    "fetched": {
+      "version": "tracker-evidence/v1",
+      "status": "fetched",
+      "provider": "jira",
+      "connection_id": "jira-main",
+      "spec_slug": "example-tracker-issue",
+      "issue_id": "MORPH-297",
+      "tracker_updated_at": "2026-07-20T17:42:19.123-0600",
+      "content_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "manifest_path": ".hero/planning/bugs/example/tracker-evidence.json",
+      "evidence_path": ".hero/planning/bugs/example/.tracker-evidence/evidence.json",
+      "attachment_count": 2,
+      "omission_count": 0,
+      "cache_hit": false
+    },
+    "refreshed": {
+      "version": "tracker-evidence/v1",
+      "status": "refreshed",
+      "provider": "jira",
+      "connection_id": "jira-main",
+      "spec_slug": "example-tracker-issue",
+      "issue_id": "MORPH-297",
+      "tracker_updated_at": "2026-07-21T08:03:04.005-0600",
+      "content_sha256": "123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0",
+      "manifest_path": ".hero/planning/bugs/example/tracker-evidence.json",
+      "evidence_path": ".hero/planning/bugs/example/.tracker-evidence/evidence.json",
+      "attachment_count": 3,
+      "omission_count": 1,
+      "cache_hit": false
+    },
+    "current": {
+      "version": "tracker-evidence/v1",
+      "status": "current",
+      "provider": "jira",
+      "connection_id": "jira-main",
+      "spec_slug": "example-tracker-issue",
+      "issue_id": "MORPH-297",
+      "tracker_updated_at": "2026-07-20T17:42:19.123-0600",
+      "content_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "manifest_path": ".hero/planning/bugs/example/tracker-evidence.json",
+      "evidence_path": ".hero/planning/bugs/example/.tracker-evidence/evidence.json",
+      "attachment_count": 2,
+      "omission_count": 0,
+      "cache_hit": true
+    },
+    "unsupported": {
+      "version": "tracker-evidence/v1",
+      "status": "unsupported",
+      "provider": "github",
+      "connection_id": "github-main",
+      "spec_slug": "example-tracker-issue",
+      "issue_id": "42",
+      "attachment_count": 0,
+      "omission_count": 0,
+      "cache_hit": false,
+      "error": {
+        "code": "unsupported_provider",
+        "message": "the selected provider does not support full evidence",
+        "retryable": false
+      }
+    },
+    "unavailable": {
+      "version": "tracker-evidence/v1",
+      "status": "unavailable",
+      "provider": "jira",
+      "connection_id": "jira-main",
+      "spec_slug": "example-tracker-issue",
+      "issue_id": "MORPH-297",
+      "tracker_updated_at": "2026-07-20T17:42:19.123-0600",
+      "content_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "manifest_path": ".hero/planning/bugs/example/tracker-evidence.json",
+      "evidence_path": ".hero/planning/bugs/example/.tracker-evidence/evidence.json",
+      "attachment_count": 2,
+      "omission_count": 0,
+      "cache_hit": false,
+      "error": {
+        "code": "provider_unavailable",
+        "message": "tracker evidence is temporarily unavailable",
+        "retryable": true
+      }
+    }
+  },
+  "errors": {
+    "spec_not_found": {
+      "code": "spec_not_found",
+      "message": "the requested spec was not found",
+      "retryable": false
+    },
+    "tracker_unlinked": {
+      "code": "tracker_unlinked",
+      "message": "the requested spec is not linked to a tracker issue",
+      "retryable": false
+    },
+    "ambiguous_connection": {
+      "code": "ambiguous_connection",
+      "message": "connection_id is required when multiple tracker connections match",
+      "retryable": false
+    },
+    "unsupported_provider": {
+      "code": "unsupported_provider",
+      "message": "the selected provider does not support full evidence",
+      "retryable": false
+    },
+    "provider_unavailable": {
+      "code": "provider_unavailable",
+      "message": "tracker evidence is temporarily unavailable",
+      "retryable": true
+    },
+    "invalid_manifest": {
+      "code": "invalid_manifest",
+      "message": "the evidence manifest is invalid",
+      "retryable": true
+    },
+    "payload_missing": {
+      "code": "payload_missing",
+      "message": "the private evidence snapshot is missing",
+      "retryable": true
+    },
+    "payload_corrupt": {
+      "code": "payload_corrupt",
+      "message": "the private evidence snapshot is corrupt",
+      "retryable": true
+    },
+    "cancelled": {
+      "code": "cancelled",
+      "message": "the evidence load was cancelled",
+      "retryable": true
+    },
+    "write_failed": {
+      "code": "write_failed",
+      "message": "the evidence snapshot could not be saved",
+      "retryable": true
+    }
+  }
+}

@@ -7,6 +7,16 @@ package serve
 func (s *MCPServer) toolDefinitions() []ToolDefinition {
 	return []ToolDefinition{
 		{
+			Name:        "hero_tracker_load_evidence",
+			Description: "Explicitly load or validate full evidence for a tracker-linked spec. Returns bounded tracker-evidence/v1 status; private evidence stays in the ignored adjacent sidecar.",
+			InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{
+				"spec_slug":           {Type: "string", Description: "Linked local Hero spec slug"},
+				"connection_id":       {Type: "string", Description: "Stable tracker connection ID; omit only when exactly one tracker connection exists"},
+				"include_attachments": {Type: "boolean", Description: "Download attachments into the private sidecar; defaults true"},
+				"force_refresh":       {Type: "boolean", Description: "Bypass a current snapshot and explicitly refetch"},
+			}, Required: []string{"spec_slug"}},
+		},
+		{
 			Name:        "hero_tracker_get_issue",
 			Description: "Fetch a full provider-native issue ID through Hero's configured credential broker. Returns tracker-broker/v1 JSON; does not require a local spec.",
 			InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{

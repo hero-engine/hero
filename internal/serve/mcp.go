@@ -2,6 +2,7 @@
 package serve
 
 import (
+	"context"
 	"io"
 	"os"
 
@@ -37,6 +38,7 @@ type MCPServer struct {
 	filter      *ToolFilter // optional tool filter; nil = allow all
 	profile     string      // active tool profile (set during initialize)
 	debugLog    *os.File    // optional debug log file; nil = no logging
+	ctx         context.Context
 
 	// Two-tier MCP responses (spec: two-tier-mcp-responses).
 	// refsStore is opened lazily on first use; refsRegistry holds
@@ -65,11 +67,21 @@ func NewMCPServer(heroDir, projectRoot, version string) *MCPServer {
 		graphSchema:  graphSchema,
 		input:        os.Stdin,
 		output:       os.Stdout,
+		ctx:          context.Background(),
 		refsRegistry: refs.NewRegistry(),
 		sessionID:    refs.SessionID(projectRoot, os.Getpid()),
 	}
 	s.setupResolvers()
 	return s
+}
+
+// SetContext supplies the MCP process lifetime context. Foreground provider
+// work uses it so process cancellation stops in-flight network requests.
+func (s *MCPServer) SetContext(ctx context.Context) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	s.ctx = ctx
 }
 
 // NewMCPServerWithFilter creates an MCP server with a tool filter.

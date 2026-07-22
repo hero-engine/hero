@@ -9,7 +9,7 @@ The canonical Go types and golden fixture live under
 `contracts/trackerbroker/`. A released binary prints the exact fixture:
 
 ```bash
-hero tracker contract
+hero tracker contract tracker-broker
 ```
 
 ## Operations
@@ -75,5 +75,5 @@ propagates to HTTP requests and child processes.
 The v1 contract is additive: consumers must ignore unknown fields and error
 codes. Removing or renaming fields, changing effect semantics, weakening
 connection selection, or changing cursor binding requires a new contract
-version. Hero Code should validate its decoder against `hero tracker contract`
+version. Hero Code should validate its decoder against `hero tracker contract tracker-broker`
 from the released binary before enabling brokered tools.

@@ -1,0 +1,11 @@
+{
+  "version": "tracker-evidence/v1",
+  "provider": "jira",
+  "issue_id": "MORPH-297",
+  "tracker_updated_at": "2026-07-20T17:42:19.123-0600",
+  "content_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "evidence_path": ".hero/planning/bugs/example/.tracker-evidence/evidence.json",
+  "attachment_count": 2,
+  "omission_count": 0,
+  "retrieved_at": "2026-07-21T15:30:00Z"
+}

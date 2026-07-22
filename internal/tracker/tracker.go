@@ -4,6 +4,7 @@
 package tracker
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -57,6 +58,14 @@ type EvidenceAttachment struct {
 type EvidenceTracker interface {
 	GetIssueEvidence(issueID string) (*IssueEvidence, error)
 	DownloadEvidenceAttachment(contentURL string) ([]byte, error)
+}
+
+// ContextEvidenceTracker is the cancellation-aware evidence capability used by
+// explicit foreground loads. Providers retain EvidenceTracker for compatibility.
+type ContextEvidenceTracker interface {
+	GetEvidenceMetadataContext(ctx context.Context, issueID string) (*Issue, error)
+	GetIssueEvidenceContext(ctx context.Context, issueID string) (*IssueEvidence, error)
+	DownloadEvidenceAttachmentContext(ctx context.Context, contentURL string) ([]byte, error)
 }
 
 // ErrSizeUpdateNotSupported is returned by adapters that don't write

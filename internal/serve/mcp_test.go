@@ -2,6 +2,7 @@ package serve
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	brokercontract "github.com/hero-engine/hero/contracts/trackerbroker"
+	evidencecontract "github.com/hero-engine/hero/contracts/trackerevidence"
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/index"
 	"github.com/hero-engine/hero/internal/spec"
@@ -403,8 +405,8 @@ func TestMCP_ToolsList(t *testing.T) {
 		t.Fatalf("decode result: %v", err)
 	}
 
-	if len(result.Tools) != 48 {
-		t.Errorf("expected 48 tools, got %d", len(result.Tools))
+	if len(result.Tools) != 49 {
+		t.Errorf("expected 49 tools, got %d", len(result.Tools))
 	}
 
 	expectedNames := map[string]bool{
@@ -417,35 +419,36 @@ func TestMCP_ToolsList(t *testing.T) {
 		"hero_pulse": true, "hero_skill_run": true,
 		"hero_claim": true, "hero_velocity": true,
 		"hero_test_generate": true, "hero_demo_record": true,
-		"hero_code":              true,
-		"hero_error_pattern":     true,
-		"hero_enrich":            true,
-		"hero_synthesize":        true,
-		"hero_diagnose":          true,
-		"hero_score":             true,
-		"hero_verify":            true,
-		"hero_conflicts":         true,
-		"hero_sequence":          true,
-		"hero_warnings":          true,
-		"hero_insights":          true,
-		"hero_drift":             true,
-		"hero_plan":              true,
-		"hero_contract":          true,
-		"hero_impact":            true,
-		"hero_recap":             true,
-		"hero_active":            true,
-		"hero_coverage":          true,
-		"hero_ci":                true,
-		"hero_feed":              true,
-		"hero_event":             true,
-		"hero_why":               true,
-		"hero_blocked":           true,
-		"hero_expand":            true,
-		"hero_snapshot":          true,
-		"hero_tracker_get_issue": true,
-		"hero_tracker_search":    true,
-		"hero_tracker_request":   true,
-		"hero_tracker_cli":       true,
+		"hero_code":                  true,
+		"hero_error_pattern":         true,
+		"hero_enrich":                true,
+		"hero_synthesize":            true,
+		"hero_diagnose":              true,
+		"hero_score":                 true,
+		"hero_verify":                true,
+		"hero_conflicts":             true,
+		"hero_sequence":              true,
+		"hero_warnings":              true,
+		"hero_insights":              true,
+		"hero_drift":                 true,
+		"hero_plan":                  true,
+		"hero_contract":              true,
+		"hero_impact":                true,
+		"hero_recap":                 true,
+		"hero_active":                true,
+		"hero_coverage":              true,
+		"hero_ci":                    true,
+		"hero_feed":                  true,
+		"hero_event":                 true,
+		"hero_why":                   true,
+		"hero_blocked":               true,
+		"hero_expand":                true,
+		"hero_snapshot":              true,
+		"hero_tracker_get_issue":     true,
+		"hero_tracker_search":        true,
+		"hero_tracker_request":       true,
+		"hero_tracker_cli":           true,
+		"hero_tracker_load_evidence": true,
 	}
 	for _, tool := range result.Tools {
 		if !expectedNames[tool.Name] {
@@ -457,6 +460,58 @@ func TestMCP_ToolsList(t *testing.T) {
 		if tool.InputSchema.Type != "object" {
 			t.Errorf("tool %s input schema type = %q, want object", tool.Name, tool.InputSchema.Type)
 		}
+	}
+}
+
+func TestMCPTrackerLoadEvidenceUsesVersionedStatusWithoutPrivatePayload(t *testing.T) {
+	root := t.TempDir()
+	heroDir := filepath.Join(root, ".hero")
+	specDir := filepath.Join(heroDir, "planning", "bugs", "issue-7")
+	if err := os.MkdirAll(specDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	committed := `{"integrations":{"connections":{"github-main":{"provider":"github","settings":{"project":"acme/widgets","base_url":"https://private.example"}}}}}`
+	if err := os.WriteFile(filepath.Join(heroDir, "hero.json"), []byte(committed), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(specDir, "spec.md"), []byte("---\ntitle: Issue 7\nslug: issue-7\ntype: bug\nstatus: planning\ntracker_id: 7\n---\n# Issue 7\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	srv := NewMCPServer(heroDir, root, "test")
+	out, err := srv.toolTrackerLoadEvidence(map[string]interface{}{"spec_slug": "issue-7", "future_field": true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var status evidencecontract.Status
+	if err := json.Unmarshal([]byte(out), &status); err != nil {
+		t.Fatal(err)
+	}
+	if status.Version != evidencecontract.Version || status.Status != evidencecontract.StateUnsupported || status.Error == nil || status.Error.Code != evidencecontract.ErrorUnsupportedProvider {
+		t.Fatalf("status = %+v", status)
+	}
+	if strings.Contains(out, "private.example") || strings.Contains(out, "tracker_id") || strings.Contains(out, "Issue 7") {
+		t.Fatalf("bounded MCP status leaked private evidence: %s", out)
+	}
+	if _, err := os.Stat(filepath.Join(specDir, "tracker-evidence.json")); !os.IsNotExist(err) {
+		t.Fatal("unsupported MCP load created a manifest")
+	}
+}
+
+func TestMCPTrackerLoadEvidenceUsesServerCancellationContext(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	srv := NewMCPServer(t.TempDir(), t.TempDir(), "test")
+	srv.SetContext(ctx)
+	out, err := srv.toolTrackerLoadEvidence(map[string]interface{}{"spec_slug": "anything"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var status evidencecontract.Status
+	if err := json.Unmarshal([]byte(out), &status); err != nil {
+		t.Fatal(err)
+	}
+	if status.Status != evidencecontract.StateUnavailable || status.Error == nil || status.Error.Code != evidencecontract.ErrorCancelled {
+		t.Fatalf("status = %+v", status)
 	}
 }
 

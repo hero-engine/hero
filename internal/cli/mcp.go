@@ -59,5 +59,6 @@ func runMCP(cmd *cobra.Command, args []string) error {
 	}
 
 	mcpSrv := serve.NewMCPServerWithFilter(heroDir, projectRoot, version, filter)
+	mcpSrv.SetContext(cmd.Context())
 	return mcpSrv.Run()
 }

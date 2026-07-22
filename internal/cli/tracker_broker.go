@@ -7,6 +7,7 @@ import (
 	"os"
 
 	brokercontract "github.com/hero-engine/hero/contracts/trackerbroker"
+	evidencecontract "github.com/hero-engine/hero/contracts/trackerevidence"
 	"github.com/hero-engine/hero/internal/tracker"
 	"github.com/spf13/cobra"
 )
@@ -63,11 +64,24 @@ var trackerBrokerCmd = &cobra.Command{
 }
 
 var trackerContractCmd = &cobra.Command{
-	Use:   "contract",
-	Short: "Print the embedded tracker-broker/v1 consumer fixture",
-	Args:  cobra.NoArgs,
+	Use:   "contract [tracker-broker|tracker-evidence]",
+	Short: "Print an embedded tracker consumer fixture",
+	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fixture, err := brokercontract.ConsumerFixture()
+		contract := "tracker-broker"
+		if len(args) == 1 {
+			contract = args[0]
+		}
+		var fixture []byte
+		var err error
+		switch contract {
+		case "tracker-broker":
+			fixture, err = brokercontract.ConsumerFixture()
+		case "tracker-evidence":
+			fixture, err = evidencecontract.ConsumerFixture()
+		default:
+			return fmt.Errorf("unknown tracker contract %q", contract)
+		}
 		if err != nil {
 			return err
 		}

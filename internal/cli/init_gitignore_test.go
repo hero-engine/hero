@@ -33,6 +33,7 @@ func TestEnsureManagedGitignoreBlock_CreatesWhenMissing(t *testing.T) {
 		".hero/knowledge/code/",
 		".hero/satellites.local.json",
 		".hero/cache/",
+		".hero/**/.tracker-evidence/",
 		".hero/sessions/",
 		".hero/install-state.json",
 	} {
@@ -127,7 +128,7 @@ func TestEnsureManagedGitignoreBlock_RefreshesUpdatedEntries(t *testing.T) {
 	// An existing install re-running `hero init` must gain the machine-local
 	// entries added after its managed block was first written — this is the
 	// zero-migration rollout guarantee.
-	for _, want := range []string{".hero/cache/", ".hero/sessions/", ".hero/install-state.json"} {
+	for _, want := range []string{".hero/cache/", ".hero/**/.tracker-evidence/", ".hero/sessions/", ".hero/install-state.json"} {
 		if !strings.Contains(string(got), want) {
 			t.Errorf("entry %q missing after refresh (rollout gap):\n%s", want, got)
 		}

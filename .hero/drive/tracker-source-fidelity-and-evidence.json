@@ -1,6 +1,7 @@
 {
   "initiative": "tracker-source-fidelity-and-evidence",
   "answered": {
-    "jira-adf-description-fidelity-loss": "User explicitly authorized composing and delivering the whole initiative in this task."
+    "jira-adf-description-fidelity-loss": "User explicitly authorized composing and delivering the whole initiative in this task.",
+    "lazy-tracker-evidence-sidecar": "User explicitly authorized composing and delivering the whole initiative in this task."
   }
 }

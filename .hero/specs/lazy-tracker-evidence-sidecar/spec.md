@@ -2,7 +2,7 @@
 title: "Lazy Tracker Evidence Sidecar — Explicit Full-Details Provenance"
 slug: lazy-tracker-evidence-sidecar
 type: enhancement
-status: planning
+status: completed
 domain: engineering
 surface: hero-engine-tracker
 parent: tracker-source-fidelity-and-evidence
@@ -14,6 +14,8 @@ tags: [tracker, evidence, provenance, cache, jira, attachments, mcp, hero-code]
 relations:
   - target: jira-adf-description-fidelity-loss
     kind: conflicts-with
+delivery_method: manual
+completed_at: 2026-07-22T01:41:23Z
 ---
 
 # Lazy Tracker Evidence Sidecar — Explicit Full-Details Provenance
@@ -227,37 +229,40 @@ Hero-managed gitignore updates on init/upgrade. A manifest may travel to another
 
 | # | Criterion (abbreviated) | Status | Note |
 |---|---|---|---|
-| 1 | First explicit Jira load publishes sidecar | PARTIAL | Design complete; implementation pending. |
-| 2 | Five-part valid cache returns current | PARTIAL | Algorithm specified; implementation pending. |
-| 3 | Invalid cache refetches atomically | PARTIAL | Algorithm specified; implementation pending. |
-| 4 | Cache hits never churn files | PARTIAL | Exact assertion specified; implementation pending. |
-| 5 | Sensitive payload remains private | PARTIAL | Allowlists specified; implementation pending. |
-| 6 | Restrictive atomic writes + rollback | PARTIAL | Protocol specified; implementation pending. |
-| 7 | Hash covers attachments and omissions | PARTIAL | Hash contract specified; implementation pending. |
-| 8 | Missing timestamp never becomes current | PARTIAL | Freshness rule specified; implementation pending. |
-| 9 | Provider unavailable preserves stale snapshot | PARTIAL | Status behavior specified; implementation pending. |
-| 10 | Unsupported provider creates nothing | PARTIAL | Jira-first contract specified; implementation pending. |
-| 11 | No explicit load means no fetch/write | PARTIAL | Negative-path matrix specified; tests pending. |
-| 12 | In-process/CLI/MCP status parity | PARTIAL | Contract specified; adapters pending. |
-| 13 | Default CLI evidence JSON remains compatible | PARTIAL | Compatibility decision locked; tests pending. |
-| 14 | Hero Code fixtures cover status/errors | PARTIAL | Fixture matrix specified; files pending. |
-| 15 | Existing broker/security/evidence behavior preserved | PARTIAL | Full regression validation pending. |
+| 1 | First explicit Jira load publishes sidecar | DONE | `EvidenceLoader.Load` fetches `IssueEvidence`, paginated Jira comments and optional attachments, then publishes adjacent state; loader and Jira adapter suites pass. |
+| 2 | Five-part valid cache returns current | DONE | Snapshot validation checks version/provider/issue/timestamp/hash and the cache-hit test proves no full fetch or download. |
+| 3 | Invalid cache refetches atomically | DONE | Payload, attachment, version, provider, issue and timestamp mismatches all refetch and replace only after publication succeeds. |
+| 4 | Cache hits never churn files | DONE | Test asserts exact bytes and mtimes are unchanged on `current`. |
+| 5 | Sensitive payload remains private | DONE | Manifest/status allowlists and credential-canary tests exclude evidence, identities, URLs, filenames and auth; private path is ignored. |
+| 6 | Restrictive atomic writes + rollback | DONE | Candidate/backup/manifest-last flow uses 0700/0600; injected backup/candidate/manifest failures, mid-publication cancellation, and crash recovery preserve committed state. |
+| 7 | Hash covers attachments and omissions | DONE | Domain-separated hash includes exact evidence bytes plus sorted attachment paths/bytes; missing attachment and corruption force refresh. |
+| 8 | Missing timestamp never becomes current | DONE | Invalid provider-native timestamps are retained verbatim and force every explicit load to refresh. |
+| 9 | Provider unavailable preserves stale snapshot | DONE | Safe `unavailable` result retains validated hash/paths without claiming a cache hit or changing files. |
+| 10 | Unsupported provider creates nothing | DONE | Non-Jira providers return `unsupported_provider` before credential or adapter access and leave no sidecar. |
+| 11 | No explicit load means no fetch/write | DONE | Loader construction exists only in the explicit CLI and MCP handlers; import, refresh, serve startup, discovery, queue and broker paths are unchanged. |
+| 12 | In-process/CLI/MCP status parity | DONE | All adapters use `contracts/trackerevidence.Request` and `Status`; focused CLI/MCP tests pass. |
+| 13 | Default CLI evidence JSON remains compatible | DONE | Default command decodes the validated snapshot and prints the existing `IssueEvidence`; `--status` is opt-in. |
+| 14 | Hero Code fixtures cover status/errors | DONE | Embedded fixture contains every v1 state/error and is available from the released binary with `hero tracker contract tracker-evidence`. |
+| 15 | Existing broker/security/evidence behavior preserved | DONE | Full `go test ./...`, focused race tests, vet, docs and lint pass, including existing Jira/broker security tests. |
 
 ### Changes
 
 | # | Changes item (abbreviated) | Status | Note |
 |---|---|---|---|
-| 1 | Shared contract + consumer fixtures | PARTIAL | Design complete; code/fixtures pending. |
-| 2 | Shared loader/store | PARTIAL | Detailed algorithm complete; implementation pending. |
-| 3 | CLI compatibility + status adapters | PARTIAL | Flags/output contract complete; implementation pending. |
-| 4 | MCP adapter | PARTIAL | Tool contract complete; implementation pending. |
-| 5 | Managed ignore rule | PARTIAL | Pattern and tests specified; implementation pending. |
-| 6 | End-to-end/failure coverage | PARTIAL | Validation matrix complete; tests pending. |
+| 1 | Shared contract + consumer fixtures | DONE | Added `contracts/trackerevidence`, schema tests, fixtures and binary fixture output. |
+| 2 | Shared loader/store | DONE | Added provider-neutral loader, freshness validator, private atomic store and trusted snapshot reader. |
+| 3 | CLI compatibility + status adapters | DONE | Shared service now backs default output, `--status`, `--force`, `--no-attachments` and connection selection. |
+| 4 | MCP adapter | DONE | Registered `hero_tracker_load_evidence` with shared status-only request/response behavior. |
+| 5 | Managed ignore rule | DONE | Added recursive private-sidecar rule to root and managed gitignore plus idempotency tests. |
+| 6 | End-to-end/failure coverage | DONE | Added real Jira-like CLI exercise plus cache, corruption, attachment-byte, omission, timestamp, in-flight cancellation, publication-stage, concurrency and surface tests. |
 
 ### Exercise-the-feature check
 
-- [ ] Cannot be exercised yet because this enhancement is designed but not delivered.
+- [x] `go run ./cmd/hero tracker contract tracker-evidence` emits the released-binary consumer fixture.
+- [x] Focused service/CLI/MCP suites exercise fetched, current, refreshed, unsupported and unavailable outcomes.
+- [x] An isolated authenticated Jira-like server exercises first load, no-churn cache hit, source update, comments, attachment download, and legacy CLI JSON.
+- [x] `git check-ignore -v --no-index` proves nested `.tracker-evidence/evidence.json` is ignored while adjacent `tracker-evidence.json` is trackable.
 
 ### Excellence Bar self-check
 
-No — the privacy, atomicity, and compatibility design is ready, but implementation, failure exercise, cold audit, and verification remain.
+Yes — the explicit-load behavior is shared rather than adapter-duplicated, privacy and atomicity failure paths are exercised, CLI compatibility is retained, the consumer contract ships from the binary, and the full repository validation suite passes. Cold audit and Hero verification remain the independent closing gates.

@@ -2,7 +2,7 @@
 title: "Tracker Source Fidelity — Canonical Jira Markdown and Lazy Evidence Provenance"
 slug: tracker-source-fidelity-and-evidence
 type: initiative
-status: planning
+status: completed
 domain: engineering
 size: large
 priority: critical
@@ -11,6 +11,7 @@ tags: [tracker, jira, adf, evidence, provenance, fidelity, hero-code]
 child:
   - jira-adf-description-fidelity-loss
   - lazy-tracker-evidence-sidecar
+completed_at: 2026-07-22T01:41:25Z
 ---
 
 # Tracker Source Fidelity — Canonical Jira Markdown and Lazy Evidence Provenance

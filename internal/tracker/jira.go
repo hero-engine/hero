@@ -660,12 +660,49 @@ func (j *jira) GetIssue(issueID string) (*Issue, error) {
 	return j.parseIssueRaw(raw)
 }
 
+// GetEvidenceMetadataContext fetches only the provider-native identity and
+// update timestamp needed for evidence freshness, with cancellation propagated
+// to the HTTP request and no custom-field discovery.
+func (j *jira) GetEvidenceMetadataContext(ctx context.Context, issueID string) (*Issue, error) {
+	issueURL := fmt.Sprintf("%s/rest/api/3/issue/%s?fields=key,updated", j.baseURL, url.PathEscape(issueID))
+	req, err := http.NewRequestWithContext(ctx, "GET", issueURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("creating evidence metadata request: %w", err)
+	}
+	j.setHeaders(req)
+	resp, err := j.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("getting evidence metadata: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 64*1024))
+		return nil, fmt.Errorf("jira API returned %d: %s", resp.StatusCode, string(body))
+	}
+	var raw struct {
+		Key    string `json:"key"`
+		Fields struct {
+			Updated string `json:"updated"`
+		} `json:"fields"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
+		return nil, fmt.Errorf("decoding evidence metadata: %w", err)
+	}
+	return &Issue{ID: raw.Key, URL: fmt.Sprintf("%s/browse/%s", j.baseURL, raw.Key), UpdatedAt: raw.Fields.Updated}, nil
+}
+
 // GetIssueEvidence retrieves the lossless Jira issue payload plus every comment
 // page. It is intentionally read-only and authenticated through Hero's existing
 // Jira adapter; callers never handle the credential themselves.
 func (j *jira) GetIssueEvidence(issueID string) (*IssueEvidence, error) {
+	return j.GetIssueEvidenceContext(context.Background(), issueID)
+}
+
+// GetIssueEvidenceContext retrieves full evidence with cancellation propagated
+// through the issue request and every comment page.
+func (j *jira) GetIssueEvidenceContext(ctx context.Context, issueID string) (*IssueEvidence, error) {
 	issueURL := fmt.Sprintf("%s/rest/api/3/issue/%s?fields=*all&expand=names,changelog", j.baseURL, url.PathEscape(issueID))
-	req, err := http.NewRequest("GET", issueURL, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", issueURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating evidence request: %w", err)
 	}
@@ -721,7 +758,7 @@ func (j *jira) GetIssueEvidence(issueID string) (*IssueEvidence, error) {
 			}
 		}
 	}
-	if err := j.fetchAllComments(issueID, evidence); err != nil {
+	if err := j.fetchAllCommentsContext(ctx, issueID, evidence); err != nil {
 		return nil, err
 	}
 	return evidence, nil
@@ -733,10 +770,14 @@ func mustMarshalRaw(value any) json.RawMessage {
 }
 
 func (j *jira) fetchAllComments(issueID string, evidence *IssueEvidence) error {
+	return j.fetchAllCommentsContext(context.Background(), issueID, evidence)
+}
+
+func (j *jira) fetchAllCommentsContext(ctx context.Context, issueID string, evidence *IssueEvidence) error {
 	startAt := 0
 	for {
 		commentURL := fmt.Sprintf("%s/rest/api/3/issue/%s/comment?startAt=%d&maxResults=100", j.baseURL, url.PathEscape(issueID), startAt)
-		req, _ := http.NewRequest("GET", commentURL, nil)
+		req, _ := http.NewRequestWithContext(ctx, "GET", commentURL, nil)
 		j.setHeaders(req)
 		resp, err := j.client.Do(req)
 		if err != nil {
@@ -776,6 +817,12 @@ func (j *jira) fetchAllComments(issueID string, evidence *IssueEvidence) error {
 }
 
 func (j *jira) DownloadEvidenceAttachment(contentURL string) ([]byte, error) {
+	return j.DownloadEvidenceAttachmentContext(context.Background(), contentURL)
+}
+
+// DownloadEvidenceAttachmentContext preserves the same-origin boundary while
+// allowing explicit evidence loads to cancel an in-flight download.
+func (j *jira) DownloadEvidenceAttachmentContext(ctx context.Context, contentURL string) ([]byte, error) {
 	attachmentURL, err := url.Parse(contentURL)
 	if err != nil {
 		return nil, fmt.Errorf("parsing Jira attachment URL: %w", err)
@@ -787,7 +834,7 @@ func (j *jira) DownloadEvidenceAttachment(contentURL string) ([]byte, error) {
 	if !strings.EqualFold(attachmentURL.Scheme, configuredURL.Scheme) || !strings.EqualFold(attachmentURL.Host, configuredURL.Host) {
 		return nil, fmt.Errorf("refusing attachment URL outside configured Jira host")
 	}
-	req, err := http.NewRequest("GET", attachmentURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", attachmentURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}

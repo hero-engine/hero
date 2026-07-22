@@ -6,8 +6,32 @@ import (
 	"encoding/json"
 
 	brokercontract "github.com/hero-engine/hero/contracts/trackerbroker"
+	evidencecontract "github.com/hero-engine/hero/contracts/trackerevidence"
 	"github.com/hero-engine/hero/internal/tracker"
 )
+
+func (s *MCPServer) toolTrackerLoadEvidence(args map[string]interface{}) (string, error) {
+	var request evidencecontract.Request
+	data, err := json.Marshal(args)
+	if err == nil {
+		err = json.Unmarshal(data, &request)
+	}
+	if err != nil {
+		status := evidencecontract.Status{
+			Version: evidencecontract.Version,
+			Status:  evidencecontract.StateUnavailable,
+			Error:   &evidencecontract.Error{Code: evidencecontract.ErrorProviderUnavailable, Message: "invalid evidence load request"},
+		}
+		out, _ := json.Marshal(status)
+		return string(out), nil
+	}
+	status := tracker.NewEvidenceLoader(s.projectRoot).Load(s.ctx, request)
+	out, err := json.Marshal(status)
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
+}
 
 func (s *MCPServer) toolTrackerGetIssue(args map[string]interface{}) (string, error) {
 	var request brokercontract.GetIssueRequest

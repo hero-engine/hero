@@ -21,6 +21,7 @@ index.db-shm
 # Cross-language contract caches (regenerated on every hero invocation
 # from core/spec-types/ + domains/<active>/spec-types/)
 .hero/cache/
+.hero/**/.tracker-evidence/
 
 # MCP daemon runtime state (per-process singleton pidfile + debug log) — ephemeral
 .hero/mcp-*.pid

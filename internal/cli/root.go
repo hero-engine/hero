@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -28,6 +29,12 @@ func SetVersion(v string) {
 // Execute runs the root command.
 func Execute() error {
 	return rootCmd.Execute()
+}
+
+// ExecuteContext runs the CLI with cancellation propagated to commands that
+// perform foreground network or filesystem work.
+func ExecuteContext(ctx context.Context) error {
+	return rootCmd.ExecuteContext(ctx)
 }
 
 func init() {

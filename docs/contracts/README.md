@@ -1,13 +1,13 @@
 # Hero Cross-Language Contracts
 
-Hero exposes five load-bearing contracts that any non-Go consumer — the
+Hero exposes seven load-bearing contracts that any non-Go consumer — the
 hero-code Rust dashboard, IDE plugins, peer Hero installations — reads
 to render and reason about a Hero workspace without coupling to the Go
-implementation. Three of them describe the **dialect** of a workspace
+implementation. Four of them describe the **dialect** of a workspace
 (which work-tracking types exist, what they're called, how their
 lifecycles run), one describes the **inline-propose** wire protocol between
-Hero agents and the local daemon, and one defines credential-safe tracker
-brokerage. Together they pin
+Hero agents and the local daemon, and two define credential-safe tracker
+boundaries. Together they pin
 the shapes that have to stay stable across language boundaries.
 
 ## At a glance
@@ -20,6 +20,7 @@ the shapes that have to stay stable across language boundaries.
 | Methodologies | `core/methodologies/*.yaml` (static) | profile v1 | Hero (Go) | Profile names stable; fields additive |
 | Inline-propose wire | `docs/contracts/inline-propose-v1.md` | `1.0` | Hero (Go) | Additive in `1.x`; breaking → `2.0` |
 | Tracker broker | `docs/contracts/tracker-broker-v1.md` | `tracker-broker/v1` | Hero (Go) | Additive in v1; breaking → v2 |
+| Tracker evidence | `docs/contracts/tracker-evidence-v1.md` | `tracker-evidence/v1` | Hero (Go) | Additive in v1; breaking → v2 |
 
 ## Spec-type registry
 
@@ -112,6 +113,8 @@ top-down:
    the registry's type names in proposal envelopes.
 5. **Tracker broker** — only relevant for clients that need broad tracker
    operations while Hero retains the configured credential.
+6. **Tracker evidence** — explicit per-spec full-details loading with a safe
+   tracked manifest and validated private snapshot.
 
 Then read `docs/contracts/active-dialect.md` for the resolver
 precedence chain (explicit → methodology-derived → tracker-inferred
@@ -134,6 +137,8 @@ precedence chain (explicit → methodology-derived → tracker-inferred
   for the proposal protocol.
 - [`tracker-broker-v1.md`](./tracker-broker-v1.md) — credential-safe
   broad tracker operations, response envelope, effects, and consumer fixture.
+- [`tracker-evidence-v1.md`](./tracker-evidence-v1.md) — explicit full-details
+  loading, cache validation, private sidecar storage, and consumer fixture.
 - [`../../examples/scrum-workspace/`](../../examples/scrum-workspace/)
   — runnable sample workspace declaring `methodology: scrum` +
   `vocabulary: agile-scrum`, with specs across lifecycle states.
