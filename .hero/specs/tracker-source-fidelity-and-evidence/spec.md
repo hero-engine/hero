@@ -126,27 +126,30 @@ Hero Code must consume the released contract version, treat status/error codes a
 
 | # | Criterion (abbreviated) | Status | Note |
 |---|---|---|---|
-| 1 | Rich ADF preserved before every consumer | PARTIAL | Planning complete; Wave 1 implementation and verification pending. |
-| 2 | One renderer; no raw ADF in normal fields | PARTIAL | Planning complete; Wave 1 implementation and verification pending. |
-| 3 | Explicit load persists private evidence + safe manifest | PARTIAL | Planning complete; Wave 2 implementation and verification pending. |
-| 4 | No explicit request means no evidence fetch | PARTIAL | Planning complete; Wave 2 implementation and verification pending. |
-| 5 | Five-part cache-current validation | PARTIAL | Planning complete; Wave 2 implementation and verification pending. |
-| 6 | Shared versioned status + fixture | PARTIAL | Planning complete; Wave 2 implementation and verification pending. |
-| 7 | Unsupported providers create nothing | PARTIAL | Planning complete; Wave 2 implementation and verification pending. |
-| 8 | Existing tracker/write contracts preserved | PARTIAL | Cross-child regression verification pending. |
+| 1 | Rich ADF preserved before every consumer | DONE | Canonical recursive Jira renderer is used by GetIssue, ListIssues, Search, evidence, custom fields, sprint, import, refresh, baseline and merge paths; child verified 15/15. |
+| 2 | One renderer; no raw ADF in normal fields | DONE | Duplicate shallow renderers were removed; exact MORPH-297 JSON/Markdown golden and tolerance tests pass. |
+| 3 | Explicit load persists private evidence + safe manifest | DONE | Shared loader publishes ignored 0700/0600 evidence plus an allowlisted adjacent manifest only on CLI/MCP foreground request; child verified 15/15. |
+| 4 | No explicit request means no evidence fetch | DONE | Loader construction is limited to explicit `sync evidence` and MCP load handlers; imports, refresh, broker, browsing, queue and startup paths remain unchanged. |
+| 5 | Five-part cache-current validation | DONE | Version/provider/issue/native timestamp/whole-snapshot hash plus required attachments gate `current`; mismatch and corruption coverage passes. |
+| 6 | Shared versioned status + fixture | DONE | `tracker-evidence/v1` is shared in-process/CLI/MCP and the release candidate exposes the Hero Code fixture with `hero tracker contract tracker-evidence`. |
+| 7 | Unsupported providers create nothing | DONE | GitHub/GitLab/Linear evidence loads return structured unsupported status before credentials/adapters/filesystem writes. |
+| 8 | Existing tracker/write contracts preserved | DONE | Both child cold audits are clean; full repository tests, vet, docs, lint, broker compatibility fixture and released-binary candidate checks pass. |
 
 ### Changes
 
 | # | Changes item (abbreviated) | Status | Note |
 |---|---|---|---|
-| 1 | Deliver canonical Jira normalization child | PARTIAL | Child is implementation-ready; no code has landed. |
-| 2 | Deliver lazy evidence sidecar child | PARTIAL | Child is implementation-ready and blocked on Wave 1. |
-| 3 | Audit, verify, release, coordinate consumer | PARTIAL | Runs after both children complete. |
+| 1 | Deliver canonical Jira normalization child | DONE | `jira-adf-description-fidelity-loss` is archived, cold-audited SHIP and Hero-verified. |
+| 2 | Deliver lazy evidence sidecar child | DONE | `lazy-tracker-evidence-sidecar` is archived, cold-audited SHIP and Hero-verified. |
+| 3 | Audit, verify, release, coordinate consumer | DONE | Annotated `v0.29.0` is published at `3f675c6`; Hero Code received `lazy-tracker-evidence-sidecar` at its native planning path from that exact commit. |
 
 ### Exercise-the-feature check
 
-- [ ] Cannot be exercised yet because this initiative is in planning and neither child has been delivered.
+- [x] Exact Jira ADF golden parity is exercised across every inbound consumer and local persistence/refresh path.
+- [x] An authenticated Jira-like CLI run exercises evidence `fetched` → `current` → `refreshed`, comments, attachments and legacy JSON.
+- [x] `/private/tmp/hero-v0.29.0-rc.1 tracker contract tracker-evidence` validates the complete `tracker-evidence/v1` Hero Code fixture; the no-argument broker fixture remains `tracker-broker/v1`.
+- [x] Remote tag `v0.29.0^{}` resolves to `3f675c67646afd481cd18bb2a42b34cfa61bdad5`, and the consumer handoff records `at_commit: 3f675c6` in Hero Code.
 
 ### Excellence Bar self-check
 
-No — the design is ready, but production code, end-to-end exercise, cold audits, and release evidence are still required.
+Yes — both sequenced children passed independent clean cold audits and Hero verification, all privacy/cancellation/atomicity failures are exercised at their real boundaries, cross-child regression checks are green, and the versioned release candidate proves the consumer contract from the binary Hero Code will run.

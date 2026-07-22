@@ -266,3 +266,11 @@ Hero-managed gitignore updates on init/upgrade. A manifest may travel to another
 ### Excellence Bar self-check
 
 Yes — the explicit-load behavior is shared rather than adapter-duplicated, privacy and atomicity failure paths are exercised, CLI compatibility is retained, the consumer contract ships from the binary, and the full repository validation suite passes. Cold audit and Hero verification remain the independent closing gates.
+
+## Handoff Trail
+
+- 2026-07-22T01:54:10Z — out → hero-code (peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
+  mode: async-drop
+  originating_spec: lazy-tracker-evidence-sidecar
+  peer_spec: hero-code/lazy-tracker-evidence-sidecar
+  at_commit: 3f675c6
