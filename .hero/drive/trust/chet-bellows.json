@@ -1,3 +1,9 @@
 {
-  "user": "chet-bellows"
+  "user": "chet-bellows",
+  "categories": {
+    "SeamDetected": {
+      "streak": 1,
+      "promoted": false
+    }
+  }
 }

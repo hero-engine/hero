@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-23T04:19:58Z
+updated: 2026-07-23T04:23:19Z
 repo: hero-engine/hero
 ---
 
@@ -20,15 +20,21 @@ repo: hero-engine/hero
 > - Origin workspace: hero-code (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
 > - Target alias on cal…
 
-_possibly stale — 25 commit(s) since, last set 3d 6h ago_
+_possibly stale — 26 commit(s) since, last set 3d 6h ago_
 
 ## Last user ask
 
 > Continue the durable-attention drive autonomously without supervised pauses
 
+_possibly stale — 1 commit(s) since, last set 23m ago_
+
 ## Suggested next prompt
 
-> let's keep driving durable-attention and deliver peering-over-project-mail next
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 
