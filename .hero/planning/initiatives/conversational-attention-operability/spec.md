@@ -3,6 +3,7 @@ title: "Conversational Attention Operability — Safe Chat-Loop Access to Mail a
 slug: conversational-attention-operability
 type: initiative
 status: planning
+autonomy: autonomous
 domain: engineering
 priority: high
 size: x-large

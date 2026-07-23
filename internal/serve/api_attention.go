@@ -7,7 +7,7 @@ import (
 	"github.com/hero-engine/hero/contracts/attention"
 )
 
-const attentionFixtureManifestSHA256 = "f632733b4625c57983bdba98e4a9f58818f76ce571bf05c91722d8620b4697f6"
+const attentionFixtureManifestSHA256 = "0ca71a2f3b365f9ad38536a143a98d6d691dff6376debde96881eb8bc57f5570"
 
 func (a *API) handleAttentionSnapshot(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {

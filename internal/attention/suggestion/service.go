@@ -264,8 +264,17 @@ func present(item Item) Presented {
 	if item.State != StatePending {
 		return result
 	}
-	for _, action := range []struct{ id, label string }{{DecisionToday, "Accept for Today"}, {DecisionLater, "Accept for Later"}, {DecisionDoNext, "Accept and Do Next"}, {DecisionDismiss, "Dismiss"}} {
-		result.Actions = append(result.Actions, attention.ActionDescriptor{ID: action.id, Label: action.label, RequiredRowRevision: item.Revision, RequiresIdempotency: true})
+	for _, action := range []struct{ operationID, id, label string }{
+		{attention.OperationSuggestionToday, DecisionToday, "Accept for Today"},
+		{attention.OperationSuggestionLater, DecisionLater, "Accept for Later"},
+		{attention.OperationSuggestionDoNext, DecisionDoNext, "Accept and Do Next"},
+		{attention.OperationSuggestionDismiss, DecisionDismiss, "Dismiss"},
+	} {
+		descriptor, ok := attention.AnnotateActionDescriptor(attention.ActionDescriptor{ID: action.id, Label: action.label, RequiredRowRevision: item.Revision, RequiresIdempotency: true}, action.operationID)
+		if !ok {
+			panic("unknown Attention operation policy: " + action.operationID)
+		}
+		result.Actions = append(result.Actions, descriptor)
 	}
 	return result
 }

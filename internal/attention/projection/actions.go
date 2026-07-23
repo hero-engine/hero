@@ -13,31 +13,35 @@ var (
 	promoteInput = json.RawMessage(`{"type":"object","properties":{"artifact_type":{"type":"string"}},"required":["artifact_type"],"additionalProperties":false}`)
 )
 
-func action(id, label string, revision int64, schema json.RawMessage) attention.ActionDescriptor {
-	return attention.ActionDescriptor{
+func action(operationID, id, label string, revision int64, schema json.RawMessage) attention.ActionDescriptor {
+	descriptor, ok := attention.AnnotateActionDescriptor(attention.ActionDescriptor{
 		ID: id, Label: label, RequiredRowRevision: revision,
 		RequiresIdempotency: true, InputSchema: schema,
+	}, operationID)
+	if !ok {
+		panic("unknown Attention operation policy: " + operationID)
 	}
+	return descriptor
 }
 
 func mailActions(revision int64) []attention.ActionDescriptor {
 	return []attention.ActionDescriptor{
-		action("mark_read", "Mark Read", revision, noInput),
-		action("acknowledge", "Acknowledge", revision, noteInput),
-		action("dismiss", "Dismiss", revision, noInput),
-		action("promote", "Promote", revision, promoteInput),
-		action("add_to_today", "Add to Today", revision, noInput),
+		action(attention.OperationMailMarkRead, "mark_read", "Mark Read", revision, noInput),
+		action(attention.OperationMailAcknowledge, "acknowledge", "Acknowledge", revision, noteInput),
+		action(attention.OperationMailDismiss, "dismiss", "Dismiss", revision, noInput),
+		action(attention.OperationMailPromote, "promote", "Promote", revision, promoteInput),
+		action(attention.OperationMailAddToToday, "add_to_today", "Add to Today", revision, noInput),
 	}
 }
 
 func focusActions(revision int64, available bool) []attention.ActionDescriptor {
 	out := []attention.ActionDescriptor{
-		action("move_inbox", "Move to Inbox", revision, noInput),
-		action("move_later", "Move to Later", revision, noInput),
-		action("complete", "Complete", revision, noInput),
+		action(attention.OperationFocusMoveInbox, "move_inbox", "Move to Inbox", revision, noInput),
+		action(attention.OperationFocusMoveLater, "move_later", "Move to Later", revision, noInput),
+		action(attention.OperationFocusComplete, "complete", "Complete", revision, noInput),
 	}
 	if available {
-		out = append([]attention.ActionDescriptor{action("launch", "Launch", revision, noInput)}, out...)
+		out = append([]attention.ActionDescriptor{action(attention.OperationFocusLaunch, "launch", "Launch", revision, noInput)}, out...)
 	}
 	return out
 }

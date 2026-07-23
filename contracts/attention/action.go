@@ -16,6 +16,9 @@ type ActionDescriptor struct {
 	Label               string          `json:"label"`
 	Style               string          `json:"style,omitempty"`
 	Confirmation        string          `json:"confirmation,omitempty"`
+	OperationID         string          `json:"operation_id,omitempty"`
+	Effect              string          `json:"effect,omitempty"`
+	Consent             string          `json:"consent,omitempty"`
 	InputSchema         json.RawMessage `json:"input_schema,omitempty"`
 	RequiredRowRevision int64           `json:"required_row_revision"`
 	RequiresIdempotency bool            `json:"requires_idempotency"`

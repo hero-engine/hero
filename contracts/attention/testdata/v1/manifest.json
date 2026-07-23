@@ -13,12 +13,13 @@
     {"path":"error-validation.json","purpose":"structured input-validation failure","schema":"action-result.schema.json","sha256":"550a0e28fe52fc2513a52109fd70cb6b01334095a8f434a709a59dbc1d6398d5"},
     {"path":"error.json","purpose":"structured stale action error","schema":"action-result.schema.json","sha256":"457304b0bb2b3f1fc77426244371f5d0b7c4c6f56ba1547729135c53de9d9a22"},
     {"path":"focus-item.json","purpose":"canonical private focus item","schema":"focus-item.schema.json","sha256":"5c09745f56f64f1d4941222cbda83bc514fc22f47e3fb07fd9c538d782966d31"},
+    {"path":"interaction-policy.json","purpose":"canonical operation policy and conversational conformance cases","schema":"interaction-policy.schema.json","sha256":"dd256d53241694aeaaf04b490a04f8e7188c53fa08db54f1d09d581d3ec9a5fd"},
     {"path":"mail-envelope.json","purpose":"canonical untrusted project mail envelope","schema":"mail-envelope.schema.json","sha256":"5f54416e716c337aed03d1a700d72a75ab18e1b2bcdcb5c729af7d117fdb7d73"},
     {"path":"launch-result.json","purpose":"typed Focus launch intent with authoritative source","schema":"action-result.schema.json","sha256":"c27c1c43602d1b1dfcd76303eecdeb0e27eb9f25c97b5cf0f7d50b52b7fdd470"},
     {"path":"missing-project-snapshot.json","purpose":"missing project remains visible but launch is not advertised","schema":"attention-snapshot.schema.json","sha256":"eaf1a97137cd8abf7125a4ab1a81bd5aaf24da9e102c3595672f4e17c69b3be6"},
     {"path":"promotion-result.json","purpose":"Mail promotion navigation and row invalidation","schema":"action-result.schema.json","sha256":"82d6f097b0e93ed4a6ba9a3c044cfc41d330e55f03e4411458d652db82f54a6c"},
     {"path":"suggestion-after-acceptance.json","purpose":"suggestion acceptance creates Focus and removes projection row","schema":"action-result.schema.json","sha256":"31ca26906fb2367e168a0ede7e314d0ef3a9c482ebeec13cf07350bffa98ea0d"},
     {"path":"suggestion.json","purpose":"deferred work proposal before focus acceptance","schema":"suggestion.schema.json","sha256":"cbc20a20838148faa763b3b798e10f7cc83a2bc89a3bbfb40ee4f590a34ca5a7"},
-    {"path":"unknown-fields.json","purpose":"forward-compatible unknown fields, source kind, style, and action ID","schema":"attention-snapshot.schema.json","sha256":"7cffbe2f5a0945486ed77ce9c8e78e42fd663a3fb6eb15b04add9b3dc74936c3"}
+    {"path":"unknown-fields.json","purpose":"forward-compatible unknown fields, source kind, style, operation metadata, and action ID","schema":"attention-snapshot.schema.json","sha256":"ad5d36672587c6bf72e5de2a632f9199d2556b760d7cd2210c9277b4977b602c"}
   ]
 }

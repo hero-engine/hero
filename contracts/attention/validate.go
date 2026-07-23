@@ -242,6 +242,108 @@ func ValidateActionRequest(v ActionRequest, descriptor ActionDescriptor) *Contra
 	return nil
 }
 
+func ValidateOperationPolicies(values []OperationPolicy) *ContractError {
+	seen := make(map[string]bool, len(values))
+	for i, policy := range values {
+		field := fmt.Sprintf("operations[%d]", i)
+		if strings.TrimSpace(policy.ID) == "" {
+			return invalid(field+".id", "is required")
+		}
+		if seen[policy.ID] {
+			return invalid(field+".id", "must be unique")
+		}
+		seen[policy.ID] = true
+		if strings.TrimSpace(policy.ToolName) == "" && strings.TrimSpace(policy.ActionID) == "" {
+			return invalid(field, "must name a tool or advertised action")
+		}
+		if !validInteractionEffect(policy.Effect) {
+			return invalid(field+".effect", "is not a stable v1 interaction effect")
+		}
+		if !validConsentRequirement(policy.Consent) {
+			return invalid(field+".consent", "is not a stable v1 consent requirement")
+		}
+		switch policy.Effect {
+		case EffectRead:
+			if policy.Consent != ConsentNone {
+				return invalid(field+".consent", "read operations must use consent none")
+			}
+		case EffectAdvisoryWrite:
+			if policy.Consent != ConsentNone {
+				return invalid(field+".consent", "advisory writes must use consent none")
+			}
+		case EffectStateWrite:
+			if policy.Consent != ConsentExplicitUser {
+				return invalid(field+".consent", "state writes require explicit user consent")
+			}
+		case EffectExternalWrite:
+			if policy.Consent != ConsentExplicitUser {
+				return invalid(field+".consent", "external writes require explicit user consent")
+			}
+		case EffectCommitment:
+			if policy.Consent != ConsentExplicitUser && policy.Consent != ConsentExplicitAcceptance {
+				return invalid(field+".consent", "commitments require explicit user consent or acceptance")
+			}
+		}
+		if policy.Effect != EffectRead && !policy.ReplaySafe {
+			return invalid(field+".replay_safe", "writes must be replay-safe through idempotency")
+		}
+	}
+	return nil
+}
+
+func ValidateInteractionPolicyFixture(v InteractionPolicyFixture) *ContractError {
+	if err := validateVersion(v.SchemaVersion); err != nil {
+		return err
+	}
+	if err := ValidateOperationPolicies(v.Operations); err != nil {
+		return err
+	}
+	operations := make(map[string]OperationPolicy, len(v.Operations))
+	for _, policy := range v.Operations {
+		operations[policy.ID] = policy
+	}
+	seen := make(map[string]bool, len(v.Cases))
+	for i, interactionCase := range v.Cases {
+		field := fmt.Sprintf("cases[%d]", i)
+		if strings.TrimSpace(interactionCase.ID) == "" || seen[interactionCase.ID] {
+			return invalid(field+".id", "is required and must be unique")
+		}
+		seen[interactionCase.ID] = true
+		if !validInteractionSource(interactionCase.Source) {
+			return invalid(field+".source", "is not a stable v1 interaction source")
+		}
+		if strings.TrimSpace(interactionCase.Utterance) == "" {
+			return invalid(field+".utterance", "is required")
+		}
+		if !validInteractionDisposition(interactionCase.Disposition) {
+			return invalid(field+".disposition", "is not a stable v1 disposition")
+		}
+		if interactionCase.Source == SourceMailContent && interactionCase.Disposition != DispositionIgnoreUntrusted {
+			return invalid(field+".disposition", "mail content must be ignored as untrusted authorization")
+		}
+		if interactionCase.Disposition == DispositionClarify || interactionCase.Disposition == DispositionIgnoreUntrusted {
+			if interactionCase.ExpectedOperation != "" || interactionCase.ExpectedEffect != "" || interactionCase.ExpectedConsent != "" {
+				return invalid(field+".expected_operation", "non-dispatch cases must not name an operation")
+			}
+			continue
+		}
+		policy, ok := operations[interactionCase.ExpectedOperation]
+		if !ok {
+			return invalid(field+".expected_operation", "must reference a published operation")
+		}
+		if interactionCase.ExpectedEffect != policy.Effect || interactionCase.ExpectedConsent != policy.Consent {
+			return invalid(field, "expected effect and consent must match the operation policy")
+		}
+		if policy.RequiresUniqueTarget && interactionCase.Resolution.CandidateCount != 1 {
+			return invalid(field+".resolution.candidate_count", "must be exactly one for the expected operation")
+		}
+		if interactionCase.Source == SourceModel && policy.ID == OperationFocusCreate {
+			return invalid(field+".expected_operation", "model-originated work must use Focus suggestion")
+		}
+	}
+	return nil
+}
+
 func ValidateActionResult(v ActionResult) *ContractError {
 	if err := validateVersion(v.SchemaVersion); err != nil {
 		return err
@@ -347,6 +449,22 @@ func validLifecycle(v string) bool {
 
 func validErrorCode(v string) bool {
 	return v == ErrorValidation || v == ErrorStale || v == ErrorUnsupported || v == ErrorMissing || v == ErrorIncompatibleVersion || v == ErrorUnavailable
+}
+
+func validInteractionEffect(v InteractionEffect) bool {
+	return v == EffectRead || v == EffectAdvisoryWrite || v == EffectStateWrite || v == EffectExternalWrite || v == EffectCommitment
+}
+
+func validConsentRequirement(v ConsentRequirement) bool {
+	return v == ConsentNone || v == ConsentExplicitUser || v == ConsentExplicitAcceptance
+}
+
+func validInteractionDisposition(v InteractionDisposition) bool {
+	return v == DispositionDispatch || v == DispositionSuggest || v == DispositionClarify || v == DispositionIgnoreUntrusted
+}
+
+func validInteractionSource(v InteractionSource) bool {
+	return v == SourceUser || v == SourceModel || v == SourceMailContent
 }
 
 func validateProvenance(values []ProvenanceReference) *ContractError {

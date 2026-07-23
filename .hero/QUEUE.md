@@ -6,7 +6,28 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-23T21:11:55Z · 87 ready specs_
+_Generated: 2026-07-23T21:33:48Z · 87 ready specs_
+
+## attention-interaction-consent-contract — "Attention Interaction Consent Contract — Explicit Intent, Ambiguity, and Effects"
+_feature · delivering · horizon: now_
+
+Defines when chat language permits an Attention read or mutation and when the
+agent must clarify, suggest, or do nothing.
+
+**Status:** in-review — contracts, schemas, fixtures, producer metadata, and
+tests are implemented; focused and full Go suites pass.
+
+**Pick up at:** cold-audit the Completion Ledger, repair any HOLD, then run the
+verify gate and archive.
+
+→ `hero spec verify attention-interaction-consent-contract`
+
+**Files:** `contracts/attention/interaction.go`, `contracts/attention/action.go`,
+`contracts/attention/validate.go`, `contracts/attention/contract_test.go`,
+`contracts/attention/testdata/v1/manifest.json`
+**Skip:** treating harness approval mode as a substitute for semantic consent.
+
+---
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -33,26 +54,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
-
----
-
-## attention-interaction-consent-contract — "Attention Interaction Consent Contract — Explicit Intent, Ambiguity, and Effects"
-_feature · planning · horizon: now_
-
-Defines when chat language permits an Attention read or mutation and when the
-agent must clarify, suggest, or do nothing.
-
-**Status:** planning — initiative policy is agreed; the canonical artifact and
-conformance representation still need design.
-
-**Pick up at:** design the intent/effect matrix and choose the single source
-from which Go tests, installed guidance, and Hero Code fixtures can derive.
-
-→ `/design attention-interaction-consent-contract`
-
-**Files:** `contracts/attention/`, `contracts/attention/testdata/v1/`,
-`domains/engineering/skills/deferred-work-suggestions/SKILL.md`
-**Skip:** treating harness approval mode as a substitute for semantic consent.
 
 ---
 

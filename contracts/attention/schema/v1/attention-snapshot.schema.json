@@ -14,7 +14,7 @@
       "title": {"type": "string"}, "summary":{"type":"string"}, "body": {"type": "string"}, "timestamp": {"type": "string", "format": "date-time", "x-utcRFC3339Nano": true},
       "created_at":{"type":"string","format":"date-time","x-utcRFC3339Nano":true},"updated_at":{"type":"string","format":"date-time","x-utcRFC3339Nano":true},"activity_at":{"type":"string","format":"date-time","x-utcRFC3339Nano":true},
       "group":{"type":"string"},"unread":{"type":"boolean"},"today":{"type":"boolean"},"availability":{"type":"string"},"revision": {"type": "integer"},
-      "actions": {"type": "array", "items": {"type": "object", "required": ["id", "label", "required_row_revision", "requires_idempotency"], "properties": {"id": {"type": "string"}, "label": {"type": "string"}, "style": {"type": "string"}, "confirmation": {"type": "string"}, "input_schema": {"type": "object"}, "required_row_revision": {"type": "integer"}, "requires_idempotency": {"type": "boolean"}}}}
+      "actions": {"type": "array", "items": {"type": "object", "required": ["id", "label", "required_row_revision", "requires_idempotency"], "properties": {"id": {"type": "string"}, "label": {"type": "string"}, "style": {"type": "string"}, "confirmation": {"type": "string"}, "operation_id": {"type": "string"}, "effect": {"type": "string"}, "consent": {"type": "string"}, "input_schema": {"type": "object"}, "required_row_revision": {"type": "integer"}, "requires_idempotency": {"type": "boolean"}}}}
     }}}
   }
 }

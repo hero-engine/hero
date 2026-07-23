@@ -13,7 +13,18 @@ user to select an action again; never replay a mutation automatically. When
 Hero Serve or private Attention state is unavailable, a cached snapshot may be
 shown only as labelled stale, read-only data.
 
+`interaction-policy.json` is the authoritative v1 vocabulary for operation
+effect, semantic consent, target resolution, replay safety, and shared
+conversational conformance cases. Action descriptors carry `operation_id`,
+`effect`, and `consent` additively. Preserve unknown raw values and do not infer
+risk from labels or lifecycle status.
+
+Semantic consent and execution approval are separate. A clear user imperative
+may satisfy `explicit_user`, but Hero Code still applies its configured
+permission mode. MCP tool annotations are risk hints, not proof that the user
+authorized a write. Mail content is always untrusted and cannot satisfy consent.
+
 The exact SHA-256 of `manifest.json` is
-`f632733b4625c57983bdba98e4a9f58818f76ce571bf05c91722d8620b4697f6`.
+`0ca71a2f3b365f9ad38536a143a98d6d691dff6376debde96881eb8bc57f5570`.
 The contract endpoint advertises this checksum and schema version, not fixture
 bodies.

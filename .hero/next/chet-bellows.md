@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-23T21:11:55Z
+updated: 2026-07-23T21:33:48Z
 repo: hero-engine/hero
 ---
 
@@ -20,13 +20,11 @@ repo: hero-engine/hero
 > - Origin workspace: hero-code (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
 > - Target alias on cal…
 
-_possibly stale — 27 commit(s) since, last set 3d 23h ago_
+_possibly stale — 28 commit(s) since, last set 4d ago_
 
 ## Last user ask
 
-> Continue the durable-attention drive autonomously without supervised pauses
-
-_possibly stale — 2 commit(s) since, last set 17h 11m ago_
+> drive conversational-attention-operability auto style until every child verifies or a real needs_me pause fires
 
 ## Suggested next prompt
 
