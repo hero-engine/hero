@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-23T01:34:36Z · 89 ready specs_
+_Generated: 2026-07-23T01:59:16Z · 88 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -618,17 +618,6 @@ Deliver local-first Project Mail and user-global Personal Focus as distinct,
 Hero-owned durable primitives; expose them through CLI/API and one stable
 consumer read model; and reframe peering over asynchronous mail without making
 model execution part of the communication contract.
-
----
-
-## project-mail-core — "Project Mail Core — Local Asynchronous Project Messaging"
-_feature · planning · horizon: next_
-
-Implement Project Mail on the durable-attention contracts and injected global
-state root. Reuse peer identity, manifest, and alias resolution, but do not call
-the peer-call launcher or write into the recipient repository. Make delivery an
-atomic immutable-envelope write, keep receipts separate, expose stable JSON
-output, and prove retries cannot duplicate messages.
 
 ---
 

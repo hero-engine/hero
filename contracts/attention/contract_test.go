@@ -117,6 +117,20 @@ func TestValidationContract(t *testing.T) {
 		t.Fatalf("subject error = %#v", err)
 	}
 	invalid = valid
+	invalid.Kind = strings.Repeat("k", 65)
+	if err := ValidateMailEnvelope(invalid); err == nil || err.Field != "kind" {
+		t.Fatalf("kind error = %#v", err)
+	}
+	invalid = valid
+	invalid.ThreadID = "mail_thread"
+	invalid.InReplyTo = "mail_parent"
+	invalid.Kind = "future-kind"
+	invalid.Revision = 4
+	invalid.IdempotencyKey = "retry-1"
+	if err := ValidateMailEnvelope(invalid); err != nil {
+		t.Fatalf("extended envelope: %v", err)
+	}
+	invalid = valid
 	invalid.Provenance = []ProvenanceReference{{Kind: "link", SourceID: "x", CreatedAt: "not-a-time"}}
 	if err := ValidateMailEnvelope(invalid); err == nil || err.Field != "provenance[0].created_at" {
 		t.Fatalf("optional timestamp error = %#v", err)

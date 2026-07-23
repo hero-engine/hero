@@ -11,6 +11,11 @@
     "sender": {"$ref": "#/$defs/project"},
     "subject": {"type": "string", "maxLength": 200},
     "body": {"type": "string", "x-maxBytes": 65536},
+    "kind": {"type": "string", "maxLength": 64},
+    "thread_id": {"type": "string", "minLength": 1},
+    "in_reply_to": {"type": "string", "minLength": 1},
+    "revision": {"type": "integer", "minimum": 0},
+    "idempotency_key": {"type": "string", "maxLength": 512},
     "created_at": {"type": "string", "format": "date-time", "x-utcRFC3339Nano": true},
     "provenance": {"type": "array", "maxItems": 32, "items": {"$ref": "#/$defs/provenance"}}
   },

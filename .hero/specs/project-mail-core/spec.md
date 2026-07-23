@@ -2,7 +2,7 @@
 title: "Project Mail Core — Local Asynchronous Project Messaging"
 slug: project-mail-core
 type: feature
-status: planning
+status: completed
 domain: engineering
 priority: high
 size: large
@@ -12,6 +12,8 @@ parent: durable-attention
 depends-on: [durable-attention-contracts]
 conflicts-with: [personal-focus-core]
 tags: [mail, peering, local-first, cli]
+delivery_method: manual
+completed_at: 2026-07-23T01:57:32Z
 ---
 
 # Project Mail Core — Local Asynchronous Project Messaging
@@ -32,11 +34,18 @@ acknowledge mail safely and idempotently.
 
 ## Kickoff
 
-Implement Project Mail on the durable-attention contracts and injected global
-state root. Reuse peer identity, manifest, and alias resolution, but do not call
-the peer-call launcher or write into the recipient repository. Make delivery an
-atomic immutable-envelope write, keep receipts separate, expose stable JSON
-output, and prove retries cannot duplicate messages.
+Adds private, local-first Project Mail with immutable envelopes, separate
+receipts, safe retries, replies, and a complete `hero mail` CLI.
+
+**Status:** completed — Hero verification passed all four gates, wrote back
+10/10 criterion evidence, and archived the clean SHIP delivery.
+
+**Pick up at:** use this archived spec and its delivery audit as the contract
+for dependent Project Mail read-model, triage, and peering work.
+
+→ `.hero/specs/project-mail-core/spec.md`
+
+**Files:** `internal/attention/mail/store.go`, `internal/attention/mail/service.go`, `internal/cli/mail.go`, `internal/attention/mail/service_test.go`, `internal/cli/mail_test.go`
 
 ## Problem
 
@@ -170,3 +179,40 @@ codes.
 - End-to-end two-project test with no `claude` executable and no running server.
 - Git-status assertion proving receiver-tree non-mutation.
 - `go test ./...` for peering and CLI regressions.
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Valid delivery atomically persists immutable envelope and outbound receipt | DONE | `internal/attention/mail/store.go` — private locked layout with fsynced atomic writes; store tests verify both artifacts and permissions |
+| 2 | Equivalent idempotency retry returns original delivery without duplication | DONE | `internal/attention/mail/store.go`, `service_test.go` — normalized replay returns the original message ID and corrupt outbound state fails closed |
+| 3 | Reused key or message ID with different content returns `idempotency_conflict` | DONE | `internal/attention/mail/store.go`, `store_test.go` — key/content/recipient conflicts preserve the original envelope |
+| 4 | Root and reply identity is valid; missing/cross-thread targets are rejected | DONE | `internal/attention/mail/service.go`, `service_test.go` — root/reply, missing-target, cross-thread, and peer identity cases are exercised |
+| 5 | Inbox, show, reply, and ack JSON use contract shapes and structured errors | DONE | `internal/cli/mail.go`, `mail_test.go` — all JSON commands and stable nonzero `missing` error output are exercised |
+| 6 | Show and ack update separate atomic receipt without rewriting envelope | DONE | Receipt locking/concurrency, first-ack idempotency, acknowledgement preservation, and envelope immutability are tested |
+| 7 | Alias, manifest, peer ID, or path resolution fails before mailbox writes | DONE | Address resolution and manifest identity validation precede Store delivery; missing peers leave no state |
+| 8 | Mail invokes no model/server and never writes recipient repositories | DONE | Implementation depends only on config, manifests, and injected state; two committed temporary worktrees remain clean |
+| 9 | Invalid limits and forbidden payloads are rejected without partial delivery | DONE | Contract/path validation plus malformed-envelope, traversal, corrupt-outbound, and corrupt-receipt regressions fail closed |
+| 10 | Two temporary git projects remain byte-for-byte clean after exchange | DONE | End-to-end test commits both repositories, delivers through global state, and asserts both `git status --porcelain` outputs are empty |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Add mail store, lock, and store tests | DONE | Added private layout, cross-process lock, fsynced atomic writes, immutable envelopes, receipts, listing, validation, and concurrency tests |
+| 2 | Add service and service tests | DONE | Added addressing, validation, idempotency, threads, replies, inbox/show, acknowledgement, and fail-closed receipt behavior |
+| 3 | Reuse peering identity, resolve, and manifest APIs | DONE | Reused `Config.ResolveRepoPath`, `peering.ReadPeerManifest`, config peer IDs, and manifest identities without a duplicate parser |
+| 4 | Add and register `hero mail` CLI | DONE | Added send, inbox, show, reply, and ack, then registered `mailCmd` beside `focusCmd` |
+| 5 | Add only necessary JSON result/error structs | DONE | Reused attention DTOs; added delivery/receipt contract fields and the minimal CLI error DTO |
+| 6 | Add two-project end-to-end non-mutation test | DONE | Real temporary git worktrees are committed, mail is delivered through global state, and both remain clean |
+| 7 | Update CLI reference and completion coverage | DONE | Updated README, added the Project Mail docs/nav, and tested the dynamic Cobra completion command tree because no static snapshots exist |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end: `TestMailCLIJSONCommandsAndErrors` sends, lists, shows without marking read, acknowledges, replies, and checks structured failure output across two projects; `TestServiceEndToEndDoesNotMutateProjects` proves global-only transport between clean git worktrees.
+
+### Excellence Bar self-check
+
+Yes — the implementation is private by default, narrowly scoped, fail-closed on malformed state, immutable where promised, concurrency-safe for receipts, fully exercised through the CLI, and clean under focused, race, full-suite, drift, and strict-documentation validation.

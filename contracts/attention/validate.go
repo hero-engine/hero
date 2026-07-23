@@ -35,6 +35,25 @@ func ValidateMailEnvelope(v MailEnvelope) *ContractError {
 	if !utf8.ValidString(v.Body) || len(v.Body) > MaxBodyBytes {
 		return invalid("body", "must be valid UTF-8 and at most 65536 bytes")
 	}
+	if v.Kind != "" && (!utf8.ValidString(v.Kind) || len(v.Kind) > 64) {
+		return invalid("kind", "must be valid UTF-8 and at most 64 bytes")
+	}
+	if v.ThreadID != "" {
+		if err := validateID("thread_id", v.ThreadID); err != nil {
+			return err
+		}
+	}
+	if v.InReplyTo != "" {
+		if err := validateID("in_reply_to", v.InReplyTo); err != nil {
+			return err
+		}
+	}
+	if v.Revision < 0 {
+		return invalid("revision", "must not be negative")
+	}
+	if !utf8.ValidString(v.IdempotencyKey) || len(v.IdempotencyKey) > 512 {
+		return invalid("idempotency_key", "must be valid UTF-8 and at most 512 bytes")
+	}
 	if len(v.Provenance) > MaxProvenance {
 		return invalid("provenance", "must contain at most 32 references")
 	}
@@ -67,10 +86,22 @@ func ValidateMailReceipt(v MailReceipt) *ContractError {
 	if err := validateProject("recipient", v.Recipient); err != nil {
 		return err
 	}
-	if v.Kind != ReceiptRead && v.Kind != ReceiptAcknowledged && v.Kind != ReceiptDismissed && v.Kind != ReceiptPromoted {
+	if v.Kind != "" && v.Kind != ReceiptRead && v.Kind != ReceiptAcknowledged && v.Kind != ReceiptDismissed && v.Kind != ReceiptPromoted {
 		return invalid("kind", "must be read, acknowledged, dismissed, or promoted")
 	}
-	return validateTimestamp("created_at", v.CreatedAt, true)
+	if err := validateTimestamp("created_at", v.CreatedAt, true); err != nil {
+		return err
+	}
+	if err := validateTimestamp("read_at", v.ReadAt, false); err != nil {
+		return err
+	}
+	if err := validateTimestamp("acknowledged_at", v.AcknowledgedAt, false); err != nil {
+		return err
+	}
+	if !utf8.ValidString(v.AcknowledgementNote) || utf8.RuneCountInString(v.AcknowledgementNote) > 500 {
+		return invalid("acknowledgement_note", "must be valid UTF-8 and at most 500 characters")
+	}
+	return nil
 }
 
 func ValidateCreateFocus(v CreateFocusRequest) *ContractError {

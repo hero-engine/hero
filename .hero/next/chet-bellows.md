@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-23T01:34:36Z
+updated: 2026-07-23T01:59:16Z
 repo: hero-engine/hero
 ---
 
@@ -20,11 +20,11 @@ repo: hero-engine/hero
 > - Origin workspace: hero-code (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
 > - Target alias on cal…
 
-_possibly stale — 16 commit(s) since, last set 3d 4h ago_
+_possibly stale — 17 commit(s) since, last set 3d 4h ago_
 
 ## Last user ask
 
-> Continue autonomously and deliver personal-focus-core as the next child of the durable-attention initiative
+> Continue the durable-attention initiative autonomously and deliver every remaining child without supervised pauses
 
 ## Suggested next prompt
 

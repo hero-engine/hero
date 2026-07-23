@@ -93,6 +93,7 @@ nav:
   - CLI Reference:
     - Overview: cli/overview.md
     - Personal Focus: cli/focus.md
+    - Project Mail: cli/mail.md
     - Spec Management: cli/spec-management.md
     - Search & Context: cli/search-and-context.md
     - Import: cli/import.md

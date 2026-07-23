@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-23T01:34:36Z · projected from 582 source nodes_
+_Last refreshed: 2026-07-23T01:59:16Z · projected from 582 source nodes_
 
 ## Surfaces
 
@@ -11,12 +11,12 @@ _Last refreshed: 2026-07-23T01:34:36Z · projected from 582 source nodes_
 | core | building | cmd/, internal/ | <1m ago | satellite-corpus-integration |
 | docs | maturing | web/docs/ | 10d ago | — |
 | domains/chat | maturing | domains/chat/ | 4d ago | — |
-| domains/engineering | maturing | domains/engineering/ | 1h ago | deferred-work-suggestion-contract |
+| domains/engineering | maturing | domains/engineering/ | 2h ago | deferred-work-suggestion-contract |
 | domains/pm | maturing | domains/pm/ | 5d ago | — |
 | domains/sales | maturing | domains/sales/ | 14d ago | — |
 | landing | building | web/landing/ | 11d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 1h ago | agent-outposts |
+| serve | building | internal/serve/ | 2h ago | agent-outposts |
 | (unassigned) | — | — | — | 231 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -29,7 +29,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **"Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use"** (surface: core) — 2/2 specs done
 - **"Concurrent-Session Branching & Worktree Isolation"** (surface: —) — 0/0 specs done
 - **"Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"** (surface: —) — 4/8 specs done
-- **"Durable Attention — Project Mail, Personal Focus, and Explicit Promotion"** (surface: core, domains/engineering, serve) — 2/7 specs done
+- **"Durable Attention — Project Mail, Personal Focus, and Explicit Promotion"** (surface: core, domains/engineering, serve) — 3/7 specs done
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
 - **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 7/11 specs done
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 13/17 specs done
@@ -54,8 +54,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — tracker-source-reconciliation, tracker-project-snapshot-contract, tracker-source-fidelity-and-evidence, brokered-tracker-agent-access, jira-import-per-type-filter-and-body-parity, tracker-diagnosis-full-ticket-evidence
-- **core** — personal-focus-core, durable-attention-contracts, broker-issue-id-validator-raw-string-regression
+- **(unassigned)** — tracker-source-reconciliation, tracker-project-snapshot-contract, tracker-source-fidelity-and-evidence, brokered-tracker-agent-access, jira-import-per-type-filter-and-body-parity
+- **core** — project-mail-core, personal-focus-core, durable-attention-contracts, broker-issue-id-validator-raw-string-regression
 - **hero-engine-tracker** — lazy-tracker-evidence-sidecar, jira-adf-description-fidelity-loss
 - **serve** — serve-auto-refresh-bypasses-bulk-import
 
@@ -69,7 +69,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Open risks & blockers
 
-- **Blocked specs (16):** `attention-read-model-v1` (waits on project-mail-triage-and-provenance, deferred-work-suggestion-contract); `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `peering-over-project-mail` (waits on project-mail-triage-and-provenance); `project-mail-triage-and-provenance` (waits on project-mail-core, hero-idea-primitive-core); `timely-briefs` (waits on retrieval-contradiction-detection); `wire-checks-to-boundaries` (waits on spec-contract-enums-unified).
+- **Blocked specs (16):** `attention-read-model-v1` (waits on project-mail-triage-and-provenance, deferred-work-suggestion-contract); `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `peering-over-project-mail` (waits on project-mail-triage-and-provenance); `project-mail-triage-and-provenance` (waits on hero-idea-primitive-core); `timely-briefs` (waits on retrieval-contradiction-detection); `wire-checks-to-boundaries` (waits on spec-contract-enums-unified).
 - **Stale-in-flight (2):** `hero-landing-page` (65d), `hero-team-server` (65d).
 - **Aged open bugs (9):** `install-target-emits-both-claude-and-agents-md` (open 69d), `next-project-file-conflict-not-regenerated` (open 50d), `desktop-sidebar-mcp-not-running` (open 49d), `hihcp-agent-loop-error-recovery` (open 44d), `hihcp-agents-md-harness-agnostic` (open 44d), `hihcp-mcp-auto-reconnect` (open 44d), `hihcp-mcp-first-turn-readiness` (open 44d), `hihcp-permission-bridge-validation` (open 44d), `hihcp-rgignore` (open 44d).
 - **Unassigned specs (231) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.

@@ -442,3 +442,5 @@
 {"ts":"2026-07-23T00:20:27.013619Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"durable-attention-contracts","message":"status -\u003e completed"}
 {"ts":"2026-07-23T01:33:55.371661Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"personal-focus-core","message":"\"Personal Focus Core — Prompt-Backed Work Across Projects\""}
 {"ts":"2026-07-23T01:33:55.371775Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"personal-focus-core","message":"status -\u003e completed"}
+{"ts":"2026-07-23T01:57:33.833816Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"project-mail-core","message":"\"Project Mail Core — Local Asynchronous Project Messaging\""}
+{"ts":"2026-07-23T01:57:33.833887Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"project-mail-core","message":"status -\u003e completed"}
