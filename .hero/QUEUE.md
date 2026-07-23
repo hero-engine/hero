@@ -6,28 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-23T21:33:48Z · 87 ready specs_
-
-## attention-interaction-consent-contract — "Attention Interaction Consent Contract — Explicit Intent, Ambiguity, and Effects"
-_feature · delivering · horizon: now_
-
-Defines when chat language permits an Attention read or mutation and when the
-agent must clarify, suggest, or do nothing.
-
-**Status:** in-review — contracts, schemas, fixtures, producer metadata, and
-tests are implemented; focused and full Go suites pass.
-
-**Pick up at:** cold-audit the Completion Ledger, repair any HOLD, then run the
-verify gate and archive.
-
-→ `hero spec verify attention-interaction-consent-contract`
-
-**Files:** `contracts/attention/interaction.go`, `contracts/attention/action.go`,
-`contracts/attention/validate.go`, `contracts/attention/contract_test.go`,
-`contracts/attention/testdata/v1/manifest.json`
-**Skip:** treating harness approval mode as a substitute for semantic consent.
-
----
+_Generated: 2026-07-23T21:38:46Z · 88 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -67,6 +46,48 @@ loop. Models should recognize Mail and Focus intent, use a complete MCP surface,
 surface bounded Attention state at useful lifecycle boundaries, and behave the
 same way across all six installed harnesses and Hero Code—without silently
 creating commitments or treating incoming mail as authorization to execute.
+
+---
+
+## attention-lifecycle-read-awareness — "Attention Lifecycle Read Awareness — Bounded Context at Chat Boundaries"
+_feature · planning · horizon: now_
+
+Defines when a Hero-aware chat inspects Attention and how it summarizes that
+state without mutating or flooding context.
+
+**Status:** planning — the existing snapshot tool is sufficient; lifecycle
+points, limits, unavailable behavior, and all-target guidance need design.
+
+**Pick up at:** choose the smallest deterministic boundary set and bounded
+summary shape, anchored on the existing `hero_attention_snapshot` contract.
+
+→ `/design attention-lifecycle-read-awareness`
+
+**Files:** `domains/engineering/commands/resume.md`,
+`domains/engineering/skills/`, `internal/install/content_test.go`,
+`internal/serve/mcp_tools_attention.go`
+**Skip:** per-turn polling, full Mail bodies, or acknowledgment on inspection.
+
+---
+
+## attention-mcp-action-tools — "Attention MCP Actions — Mail Send, Mail Reply, and Focus Create"
+_feature · planning · horizon: now_
+
+Completes the MCP write surface so a chat model can send/reply to Mail and
+create a user-requested Focus item without a generic Attention mutation.
+
+**Status:** planning — missing operations and existing source services are
+identified; schemas await the consent contract.
+
+**Pick up at:** design the three input/result schemas against existing Mail and
+Focus service methods, then map their effect classes into MCP profiles.
+
+→ `/design attention-mcp-action-tools`
+
+**Files:** `internal/serve/mcp_tools_def.go`, `internal/serve/mcp_dispatch.go`,
+`internal/serve/mcp_tools_mail.go`, `internal/serve/mcp_tools_focus.go`,
+`contracts/attention/`
+**Skip:** a generic `hero_attention_write` tool or direct storage access.
 
 ---
 

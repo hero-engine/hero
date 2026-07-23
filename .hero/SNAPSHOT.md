@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-23T21:33:48Z · projected from 587 source nodes_
+_Last refreshed: 2026-07-23T21:38:46Z · projected from 587 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 1m ago | satellite-corpus-integration |
+| core | building | cmd/, internal/ | <1m ago | satellite-corpus-integration |
 | docs | maturing | web/docs/ | 10d ago | — |
 | domains/chat | maturing | domains/chat/ | 5d ago | — |
 | domains/engineering | maturing | domains/engineering/ | 17h ago | — |
@@ -29,7 +29,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **"Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use"** (surface: core) — 2/2 specs done
 - **"Concurrent-Session Branching & Worktree Isolation"** (surface: —) — 0/0 specs done
 - **"Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"** (surface: —) — 4/8 specs done
-- **"Conversational Attention Operability — Safe Chat-Loop Access to Mail and Focus"** (surface: core) — 0/4 specs done; in flight: attention-interaction-consent-contract
+- **"Conversational Attention Operability — Safe Chat-Loop Access to Mail and Focus"** (surface: core) — 1/4 specs done
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
 - **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 7/11 specs done
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 13/17 specs done
@@ -54,23 +54,23 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — durable-attention, tracker-source-reconciliation, tracker-project-snapshot-contract, tracker-source-fidelity-and-evidence
-- **core** — project-mail-core, personal-focus-core, durable-attention-contracts
+- **(unassigned)** — durable-attention, tracker-source-reconciliation, tracker-project-snapshot-contract
+- **core** — attention-interaction-consent-contract, project-mail-core, personal-focus-core, durable-attention-contracts
 - **domains/engineering** — peering-over-project-mail, deferred-work-suggestion-contract
 - **serve** — attention-read-model-v1, project-mail-triage-and-provenance, hero-idea-primitive-core
 
 ## Next up across surfaces
 
-1. **core** — `attention-interaction-consent-contract` (critical, delivering)
-2. **landing** — `hero-landing-page` (P0, delivering)
-3. **serve** — `hero-team-server` (P1, delivering)
-4. **core** — `satellite-corpus-integration` (high, delivering)
-5. **serve** — `agent-outposts` (medium, delivering)
+1. **landing** — `hero-landing-page` (P0, delivering)
+2. **serve** — `hero-team-server` (P1, delivering)
+3. **core** — `satellite-corpus-integration` (high, delivering)
+4. **serve** — `agent-outposts` (medium, delivering)
+5. **serve** — `retrieval-contradiction-detection` (—, delivering)
 
 ## Open risks & blockers
 
-- **Blocked specs (16):** `attention-conversational-routes` (waits on attention-interaction-consent-contract, attention-mcp-action-tools, attention-lifecycle-read-awareness, portable-routing-rules); `attention-lifecycle-read-awareness` (waits on attention-interaction-consent-contract); `attention-mcp-action-tools` (waits on attention-interaction-consent-contract); `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection); `wire-checks-to-boundaries` (waits on spec-contract-enums-unified).
-- **Stale-in-flight (2):** `hero-landing-page` (66d), `hero-team-server` (65d).
+- **Blocked specs (14):** `attention-conversational-routes` (waits on attention-mcp-action-tools, attention-lifecycle-read-awareness, portable-routing-rules); `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection); `wire-checks-to-boundaries` (waits on spec-contract-enums-unified).
+- **Stale-in-flight (2):** `hero-landing-page` (66d), `hero-team-server` (66d).
 - **Aged open bugs (9):** `install-target-emits-both-claude-and-agents-md` (open 69d), `next-project-file-conflict-not-regenerated` (open 50d), `desktop-sidebar-mcp-not-running` (open 49d), `hihcp-agent-loop-error-recovery` (open 44d), `hihcp-agents-md-harness-agnostic` (open 44d), `hihcp-mcp-auto-reconnect` (open 44d), `hihcp-mcp-first-turn-readiness` (open 44d), `hihcp-permission-bridge-validation` (open 44d), `hihcp-rgignore` (open 44d).
 - **Unassigned specs (235) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 

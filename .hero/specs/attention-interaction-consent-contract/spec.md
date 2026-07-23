@@ -2,7 +2,7 @@
 title: "Attention Interaction Consent Contract — Explicit Intent, Ambiguity, and Effects"
 slug: attention-interaction-consent-contract
 type: feature
-status: delivering
+status: completed
 domain: engineering
 priority: critical
 size: medium
@@ -18,6 +18,7 @@ relations:
 claimed_by: codex
 claimed_at: 2026-07-23T15:24:36-06:00
 delivery_method: manual
+completed_at: 2026-07-23T21:38:05Z
 ---
 
 # Attention Interaction Consent Contract — Explicit Intent, Ambiguity, and Effects
