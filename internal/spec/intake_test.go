@@ -68,6 +68,16 @@ func TestIntakeNotReady(t *testing.T) {
 	if !IsReady(feature, bySlug) {
 		t.Error("a planning feature with no deps should be ready (sanity check)")
 	}
+
+	initiative := &Spec{Slug: "container", Type: TypeInitiative, Status: StatusPlanning}
+	if !IsReady(initiative, bySlug) {
+		t.Error("a planning initiative with no deps should retain queue eligibility")
+	}
+
+	note := &Spec{Slug: "reference", Type: TypeNote, Status: StatusPlanning}
+	if IsReady(note, bySlug) {
+		t.Error("knowledge must not become queue-eligible")
+	}
 }
 
 // TestParseHonorsIntakeFrontmatterType confirms an explicit `type: intake`

@@ -91,6 +91,9 @@ func TestIntakePromoteCreatesFeatureWithProvenance(t *testing.T) {
 	if !strings.Contains(intake, "promoted_to: csv-export") {
 		t.Errorf("intake missing promoted_to:\n%s", intake)
 	}
+	if !strings.Contains(intake, "kind: promotes_to") || !strings.Contains(intake, "target: csv-export") {
+		t.Errorf("intake missing promotes_to relation:\n%s", intake)
+	}
 }
 
 func TestIntakePromoteBugType(t *testing.T) {

@@ -446,3 +446,5 @@
 {"ts":"2026-07-23T01:57:33.833887Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"project-mail-core","message":"status -\u003e completed"}
 {"ts":"2026-07-23T02:25:24.454758Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"deferred-work-suggestion-contract","message":"\"Deferred Work Suggestion Contract — Explicitly Accepted Focus\""}
 {"ts":"2026-07-23T02:25:24.454854Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"deferred-work-suggestion-contract","message":"status -\u003e completed"}
+{"ts":"2026-07-23T02:38:49.807472Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-idea-primitive-core","message":"\"Intake primitive — Go engine recognition, committed-work predicate, CLI \u0026 MCP\""}
+{"ts":"2026-07-23T02:38:49.807555Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-idea-primitive-core","message":"status -\u003e completed"}

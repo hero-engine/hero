@@ -1,7 +1,7 @@
 ---
 title: "Intake primitive — Go engine recognition, committed-work predicate, CLI & MCP"
 type: feature
-status: in-review
+status: completed
 priority: P1
 claimed_by: bdwheeler
 created: 2026-06-26
@@ -17,6 +17,7 @@ received_from:
   reason: "Engine-side delivery of the 'idea' primitive (decision: hero-idea-primitive, recorded in hero-code). ALREADY SHIPPED in hero-code (Swift desktop app): idea SpecType + .hero/planning/ideas/ routing, intake-funnel projection from SpecStore, triage accept/reject/merge/promote persisted via SpecWriteService writing only FieldOwnership .local fields (intake_status, classifications, merged_into, promoted_to, intake_sources), and the terminal 'rejected' state. NEEDED in hero (core/CLI/MCP/workflows, owned by this peer): (1) spec_index walks .hero/planning/ideas/ and recognizes idea as pre-commitment; (2) one shared is_committed_work() predicate so status/queue/active/velocity/snapshot exclude ideas; (3) 'hero idea' capture/promote/reject/list verbs (promote = create roadmap spec + derived_from edge); (4) MCP: ideas in hero_search/hero_why, excluded from in-flight tools; (5) recognize intake_status: rejected in core. Full Goal/Approach/AC/Test-Plan/Changes/Risks are in the spec body."
 relations:
   - { kind: implements, target_type: decision, target: hero-idea-primitive }
+completed_at: 2026-07-23T02:38:48Z
 ---
 
 # Intake primitive — Go engine recognition, committed-work predicate, CLI & MCP
@@ -212,7 +213,7 @@ usable end-to-end via the CLI. Tracked as a follow-on, not delivered here.
 | `internal/spec/spec.go` | Add `TypeIntake` + intake `Status` consts; `/intake/` case in `typeFromPath`; add `IsPreCommitment()`; keep `IsWorkSpec()` as committed-work predicate | M |
 | `internal/spec/select.go` | `IsReady()` gate → `IsWorkSpec()` allow-list (was `!IsKnowledge()`); recognize `intake` in `Filter.Types` | S |
 | `internal/cli/status.go` | Segregate `intake` into a pre-commitment section; route work buckets through `IsWorkSpec()` | M |
-| `internal/cli/pipeline.go` (L83), `deliver.go` (L300), `synthesize/detect.go` (L93), `snapshot/rollup.go` (L486) | Replace inline `Type != Feature && Type != Bug` with `IsWorkSpec()` | M |
+| `internal/cli/pipeline.go`, `internal/cli/deliver.go`, `internal/synthesize/detect.go`, `internal/snapshot/rollup.go` | Replace inline `Type != Feature && Type != Bug` with `IsWorkSpec()` | M |
 | `internal/cli/intake.go` (new) | `hero intake` capture / promote / reject / list (mirror `note.go`); register in `root.go` | L |
 | `internal/serve/mcp_tools.go` | Verify `hero_search`/`hero_why` surface intakes + provenance; add `intake` to type filters; confirm `hero_queue` inherits the `IsReady` fix | M |
 | `core/spec-types/intake.md` | Reconcile prose lifecycle (`new → triaged → linked`) with the authoritative frontmatter (`planning → triaged → promoted/rejected/merged`) — prose is stale | S |
@@ -248,19 +249,42 @@ usable end-to-end via the CLI. Tracked as a follow-on, not delivered here.
 
 ## Completion Ledger
 
-| Acceptance criterion | Status | Evidence |
-|---|---|---|
-| Core indexes `.hero/planning/intake/**` as `TypeIntake` | DONE | `typeFromPath`/`Parse` recognize intake — `TestTypeFromPath`, `TestParseHonorsIntakeFrontmatterType` |
-| Committed-work rollups exclude intake via `IsWorkSpec()` allow-list | DONE | select.go `IsReady`, status.go, deliver.go, pipeline.go, detect.go, snapshot/rollup.go routed through predicate; `TestIntakeNotReady` |
-| `status: planning` intake never in the work "planning" bucket | DONE | status.go pre-commitment section — `TestIntakeAbsentFromStatusWorkBuckets` + e2e smoke |
-| `hero intake "<text>"` scaffolds a valid intake | DONE | intake.go `runIntakeCapture` — `TestIntakeCaptureCreatesSpec` |
-| `hero intake promote` creates roadmap spec + provenance + sets promoted | DONE | `runIntakePromote` — `TestIntakePromoteCreatesFeatureWithProvenance`, `TestIntakePromoteBugType` |
-| `hero intake reject` sets terminal rejected | DONE | `runIntakeReject` — `TestIntakeReject` |
-| `hero why` traverses provenance back to the intake | DONE | graph node + `derived_from` edge — `TestSpecWriteGraphIntakeProvenance` + e2e `hero why` shows `→ Intake` |
-| `hero_queue` never returns intake | DONE | `IsReady` excludes pre-commitment — `TestIntakeNotReady` |
-| Existing feature/bug/initiative/knowledge rollups unchanged | DONE | full `go test ./...` green; allow-list refactor behavior-preserving |
+### Acceptance Criteria
 
-All AC DONE. Build clean, `go vet` clean, full suite green. Deferred (per spec, not in scope): the `/discover`→`/design` workflow loop, and hero-code's Swift `idea→intake` rename follow-on.
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Core discovers intake as `TypeIntake`; search/list can filter it | DONE | `internal/spec/spec.go`, `TestTypeFromPath`, `TestParseHonorsIntakeFrontmatterType` |
+| 2 | Committed-work rollups exclude intake through `IsWorkSpec()` | DONE | `internal/spec/select.go`, `internal/cli/status.go`, `internal/snapshot/rollup.go`, deliver/pipeline/synthesize sites; `TestIntakeNotReady`, `TestBuildAssignmentsUseCommittedWorkAllowList` |
+| 3 | Planning intake appears only in status pre-commitment listing | DONE | `TestIntakeAbsentFromStatusWorkBuckets` |
+| 4 | `hero intake "<text>"` scaffolds a valid intake | DONE | `TestIntakeCaptureCreatesSpec`; end-to-end capture/promote exercise passed |
+| 5 | Promotion creates roadmap spec, both provenance relations, and terminal state | DONE | `TestIntakePromoteCreatesFeatureWithProvenance`, `TestIntakePromoteBugType`, `TestSpecWriteGraphIntakeProvenance`; end-to-end exercise showed `promotes_to` + `derived_from` |
+| 6 | Reject sets terminal `rejected` | DONE | `TestIntakeReject` |
+| 7 | `hero why` traverses promoted-spec provenance to intake | DONE | `TestSpecWriteGraphIntakeProvenance` and existing end-to-end why evidence |
+| 8 | `hero_queue` never returns intake | DONE | `IsReady` committed-work allow-list; `TestIntakeNotReady` |
+| 9 | Existing work, initiative, and knowledge rollups remain unchanged | DONE | Explicit initiative branches plus allow-list tests; `go test ./...` and `go vet ./...` pass |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Model intake type, statuses, path, and predicate | DONE | `internal/spec/spec.go`; modeling/predicate tests pass |
+| 2 | Route selection through committed-work allow-list | DONE | `internal/spec/select.go`; feature and initiative remain ready, knowledge/intake excluded |
+| 3 | Segregate status intake and gate work buckets canonically | DONE | `internal/cli/status.go`; status regression passes |
+| 4 | Convert pipeline/deliver/synthesize/snapshot rollups | DONE | All named sites use `IsWorkSpec()`; snapshot has direct allow-list regression |
+| 5 | Add intake capture/promote/reject/list CLI | DONE | `internal/cli/intake.go`; CLI regressions and exercise pass |
+| 6 | Preserve MCP search/why visibility and queue exclusion | DONE | Generic filters remain type-agnostic; graph provenance and queue regressions pass |
+| 7 | Reconcile intake lifecycle documentation | DONE | `core/spec-types/intake.md` matches implemented lifecycle |
+| 8 | Add modeling, no-leak, CLI, provenance, and regression tests | DONE | Focused packages and full suite pass |
+
+### Exercise-the-feature check
+
+- [x] Built a temporary Hero binary, captured `exercise promotion`, promoted it, and observed the intake with `status: promoted` plus `promotes_to`, and the feature with `derived_from`.
+
+### Excellence Bar self-check
+
+- [x] Yes — the canonical allow-list now controls all named committed-work rollups, both promotion directions are durable graph relations, and focused plus full validation is green.
+
+Deferred per the spec: the `/discover`→`/design` workflow loop and hero-code's Swift `idea→intake` rename follow-on.
 ## Handoff Trail
 
 - 2026-06-26T18:22:51Z — in ← hero-code (peer_id: cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
@@ -283,4 +307,3 @@ All AC DONE. Build clean, `go vet` clean, full suite green. Deferred (per spec, 
   at_commit: 386ab1e
   result_ref: private-peer-result-excluded
   reason: "Notify originator: the engine-side slice of hero-idea-primitive-core is delivered (mapped onto the existing 'intake' type, not a new 'idea' type). Surfaces the Swift idea→intake rename/migration follow-on that hero-code owns."
-

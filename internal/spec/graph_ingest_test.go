@@ -153,6 +153,9 @@ func TestSpecWriteGraphIntakeProvenance(t *testing.T) {
 			Type: TypeIntake, Status: StatusPromoted,
 			Path:       "/repo/.hero/planning/intake/csv-export/spec.md",
 			ModifiedAt: time.Now(),
+			Relations: []Relation{
+				{Target: "csv-export", Kind: "promotes_to"},
+			},
 		},
 		{
 			Slug: "csv-export", Title: "Export to CSV",
@@ -174,6 +177,9 @@ func TestSpecWriteGraphIntakeProvenance(t *testing.T) {
 	if stats.EdgesByType["derived_from"] != 1 {
 		t.Errorf("derived_from edges = %d, want 1 (provenance edge not materialized)", stats.EdgesByType["derived_from"])
 	}
+	if stats.EdgesByType["promotes_to"] != 1 {
+		t.Errorf("promotes_to edges = %d, want 1 (forward provenance edge not materialized)", stats.EdgesByType["promotes_to"])
+	}
 
 	// The edge must point at the Intake node, not self-loop back to the
 	// Feature (the intake and feature share the slug "csv-export").
@@ -186,6 +192,16 @@ func TestSpecWriteGraphIntakeProvenance(t *testing.T) {
 	}
 	if toType != "Intake" {
 		t.Errorf("derived_from points at %q, want Intake (self-loop bug)", toType)
+	}
+
+	if err := store.DB().QueryRow(
+		`SELECT n.type FROM edges e JOIN nodes n ON n.id = e.to_id
+		  WHERE e.type = 'promotes_to' AND e.valid_to IS NULL LIMIT 1`,
+	).Scan(&toType); err != nil {
+		t.Fatalf("querying promotes_to target: %v", err)
+	}
+	if toType != "Feature" {
+		t.Errorf("promotes_to points at %q, want Feature (self-loop bug)", toType)
 	}
 }
 

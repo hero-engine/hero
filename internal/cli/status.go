@@ -110,7 +110,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 	var intake []*spec.Spec
 	for _, s := range specs {
 		switch {
-		case s.Type == spec.TypeIntake:
+		case s.IsPreCommitment():
 			// Pre-commitment: never enters the work status buckets.
 			intake = append(intake, s)
 		case s.Type == spec.TypeConvention:
@@ -125,7 +125,9 @@ func runStatus(cmd *cobra.Command, args []string) error {
 			context = append(context, s)
 		case s.Type == spec.TypeNote:
 			notes = append(notes, s)
-		default:
+		case s.IsWorkSpec(), s.Type == spec.TypeInitiative:
+			// Work buckets are driven by the canonical committed-work
+			// predicate. Initiatives retain their existing container behavior.
 			if !keep(s) {
 				continue
 			}

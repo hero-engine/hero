@@ -114,9 +114,11 @@ func (sel Selector) Apply(all []*Spec) []*Spec {
 // (not blocking) since absent specs aren't a dependency the user can
 // satisfy. Knowledge entries (notes, contexts, conventions, explainers,
 // …) are never ready: they carry no delivery lifecycle, so the queue
-// must not nag them for a `## Kickoff` section.
+// must not nag them for a `## Kickoff` section. Initiatives remain eligible
+// containers, preserving their existing queue behavior without broadening the
+// canonical committed-work allow-list.
 func IsReady(s *Spec, bySlug map[string]*Spec) bool {
-	if s.IsKnowledge() || s.IsPreCommitment() {
+	if !s.IsWorkSpec() && s.Type != TypeInitiative {
 		return false
 	}
 	if !isOpenStatus(s.Status) {

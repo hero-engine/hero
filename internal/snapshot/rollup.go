@@ -109,9 +109,10 @@ func Build(opts BuildOptions, allSpecs []*spec.Spec, override SurfacesOverride, 
 		if s == nil {
 			continue
 		}
-		// Knowledge entries and pre-commitment intakes don't surface on
-		// the snapshot — only committed work shapes the project rollup.
-		if s.IsKnowledge() || s.IsPreCommitment() {
+		// Only committed work and initiative containers shape the snapshot.
+		// Keep the initiative branch explicit because initiatives are not
+		// delivery-lifecycle work specs.
+		if !s.IsWorkSpec() && s.Type != spec.TypeInitiative {
 			continue
 		}
 		sa := SpecAssignment{Spec: s}

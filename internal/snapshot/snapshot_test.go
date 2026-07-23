@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/hero-engine/hero/internal/spec"
 )
 
 // TestBuild_OnHeroRepo is a smoke test against the live hero-engine
@@ -73,6 +75,37 @@ func TestBuild_OnHeroRepo(t *testing.T) {
 	}
 	if !strings.Contains(string(js), `"project_name": "hero"`) {
 		t.Errorf("JSON missing project_name; got: %s", string(js[:min(200, len(js))]))
+	}
+}
+
+func TestBuildAssignmentsUseCommittedWorkAllowList(t *testing.T) {
+	root := t.TempDir()
+	all := []*spec.Spec{
+		{Slug: "feature", Type: spec.TypeFeature, Status: spec.StatusPlanning},
+		{Slug: "initiative", Type: spec.TypeInitiative, Status: spec.StatusPlanning},
+		{Slug: "intake", Type: spec.TypeIntake, Status: spec.StatusPlanning},
+		{Slug: "note", Type: spec.TypeNote, Status: spec.StatusPlanning},
+	}
+
+	snap, err := Build(BuildOptions{
+		ProjectRoot: root,
+		HeroDir:     filepath.Join(root, ".hero"),
+		ProjectName: "test",
+		Now:         time.Now(),
+	}, all, SurfacesOverride{}, nil)
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+
+	got := map[string]bool{}
+	for _, assignment := range snap.Assignments {
+		got[assignment.Spec.Slug] = true
+	}
+	if !got["feature"] || !got["initiative"] {
+		t.Fatalf("committed work and initiative must remain assigned: %#v", got)
+	}
+	if got["intake"] || got["note"] {
+		t.Fatalf("pre-commitment and knowledge leaked into snapshot: %#v", got)
 	}
 }
 

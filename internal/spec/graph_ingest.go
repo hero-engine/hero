@@ -240,6 +240,10 @@ func graphEdgeForRelation(kind string) string {
 		// Promoted roadmap spec → originating intake. `hero why` walks
 		// this in reverse to surface an intake's provenance.
 		return "derived_from"
+	case "promotes_to", "promotes-to":
+		// Intake → promoted roadmap spec. This is the forward half of
+		// the promotion provenance contract; derived_from is its reverse.
+		return "promotes_to"
 	case "child":
 		// Inverse of parent — emitted from the child's side, so skip here
 		// to avoid duplicate edges.

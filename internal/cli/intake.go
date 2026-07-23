@@ -211,13 +211,15 @@ func runIntakePromote(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("writing %s spec: %w", newType, err)
 	}
 
-	// Mark the intake promoted and record where it went.
+	// Mark the intake promoted and record where it went. The scalar is
+	// retained for field-level consumers; the relation is the graph contract.
 	data, err := os.ReadFile(in.Path)
 	if err != nil {
 		return fmt.Errorf("reading intake: %w", err)
 	}
 	updated := spec.SetFrontmatterField(string(data), "status", string(spec.StatusPromoted))
 	updated = spec.SetFrontmatterField(updated, "promoted_to", slug)
+	updated = injectRelationBlock(updated, "promotes_to", slug)
 	if err := spec.AtomicWriteFile(in.Path, []byte(updated), 0o644); err != nil {
 		return fmt.Errorf("updating intake: %w", err)
 	}

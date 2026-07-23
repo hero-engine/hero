@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-23T02:26:36Z · 87 ready specs_
+_Generated: 2026-07-23T02:39:49Z · 87 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -33,13 +33,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
-
----
-
-## hero-idea-primitive-core — "Intake primitive — Go engine recognition, committed-work predicate, CLI & MCP"
-_feature · in-review · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-idea-primitive-core/spec.md)_
 
 ---
 
@@ -618,6 +611,18 @@ Deliver local-first Project Mail and user-global Personal Focus as distinct,
 Hero-owned durable primitives; expose them through CLI/API and one stable
 consumer read model; and reframe peering over asynchronous mail without making
 model execution part of the communication contract.
+
+---
+
+## project-mail-triage-and-provenance — "Project Mail Triage and Provenance — From Signal to Explicit Work"
+_feature · planning · horizon: next_
+
+Implement triage as service calls over immutable Mail and separate receipts.
+First extract Intake capture/promotion from Cobra into a reusable internal
+service with parity tests. Make promotion and Add to Today idempotent, return
+authoritative artifact/Focus references, emit provenance, and expose only
+project-scoped MCP capabilities here; the global Hero Code API belongs to the
+read-model child.
 
 ---
 
