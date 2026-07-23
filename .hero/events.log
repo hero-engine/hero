@@ -458,3 +458,4 @@
 {"ts":"2026-07-23T04:18:38.957362Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"peering-over-project-mail","message":"status -\u003e completed"}
 {"ts":"2026-07-23T04:18:40.62995Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"durable-attention","message":"\"Durable Attention — Project Mail, Personal Focus, and Explicit Promotion\""}
 {"ts":"2026-07-23T04:18:40.630043Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"durable-attention","message":"status -\u003e completed"}
+{"ts":"2026-07-23T21:10:12.644204Z","type":"spec_created","agent":"mcp/hero","slug":"conversational-attention-operability","message":"Composed Conversational Attention Operability with four Hero-owned child stubs, consent-first sequencing, portable-routing dependency, six-harness conformance gates, and a Hero Code peer-native spec-out brief."}

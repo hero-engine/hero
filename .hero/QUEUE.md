@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-23T04:23:20Z · 85 ready specs_
+_Generated: 2026-07-23T21:11:55Z · 87 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -33,6 +33,39 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
+
+---
+
+## attention-interaction-consent-contract — "Attention Interaction Consent Contract — Explicit Intent, Ambiguity, and Effects"
+_feature · planning · horizon: now_
+
+Defines when chat language permits an Attention read or mutation and when the
+agent must clarify, suggest, or do nothing.
+
+**Status:** planning — initiative policy is agreed; the canonical artifact and
+conformance representation still need design.
+
+**Pick up at:** design the intent/effect matrix and choose the single source
+from which Go tests, installed guidance, and Hero Code fixtures can derive.
+
+→ `/design attention-interaction-consent-contract`
+
+**Files:** `contracts/attention/`, `contracts/attention/testdata/v1/`,
+`domains/engineering/skills/deferred-work-suggestions/SKILL.md`
+**Skip:** treating harness approval mode as a substitute for semantic consent.
+
+---
+
+## conversational-attention-operability — "Conversational Attention Operability — Safe Chat-Loop Access to Mail and Focus"
+_initiative · planning · horizon: now_
+
+_Run opener — arm with `/drive conversational-attention-operability`_
+
+Make the completed Durable Attention foundation naturally operable from a chat
+loop. Models should recognize Mail and Focus intent, use a complete MCP surface,
+surface bounded Attention state at useful lifecycle boundaries, and behave the
+same way across all six installed harnesses and Hero Code—without silently
+creating commitments or treating incoming mail as authorization to execute.
 
 ---
 
