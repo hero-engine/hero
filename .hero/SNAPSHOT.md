@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-23T03:57:43Z · projected from 582 source nodes_
+_Last refreshed: 2026-07-23T03:58:53Z · projected from 582 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 1h ago | satellite-corpus-integration |
+| core | building | cmd/, internal/ | 2h ago | satellite-corpus-integration |
 | docs | maturing | web/docs/ | 10d ago | — |
 | domains/chat | maturing | domains/chat/ | 4d ago | — |
 | domains/engineering | maturing | domains/engineering/ | 1h ago | peering-over-project-mail |
@@ -29,7 +29,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **"Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use"** (surface: core) — 2/2 specs done
 - **"Concurrent-Session Branching & Worktree Isolation"** (surface: —) — 0/0 specs done
 - **"Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"** (surface: —) — 4/8 specs done
-- **"Durable Attention — Project Mail, Personal Focus, and Explicit Promotion"** (surface: core, domains/engineering, serve) — 5/7 specs done; in flight: attention-read-model-v1
+- **"Durable Attention — Project Mail, Personal Focus, and Explicit Promotion"** (surface: core, domains/engineering, serve) — 6/7 specs done
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
 - **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 7/11 specs done
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 13/17 specs done
@@ -57,8 +57,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **(unassigned)** — tracker-source-reconciliation, tracker-project-snapshot-contract, tracker-source-fidelity-and-evidence
 - **core** — project-mail-core, personal-focus-core, durable-attention-contracts, broker-issue-id-validator-raw-string-regression
 - **domains/engineering** — deferred-work-suggestion-contract
-- **hero-engine-tracker** — lazy-tracker-evidence-sidecar, jira-adf-description-fidelity-loss
-- **serve** — project-mail-triage-and-provenance, hero-idea-primitive-core
+- **hero-engine-tracker** — lazy-tracker-evidence-sidecar
+- **serve** — attention-read-model-v1, project-mail-triage-and-provenance, hero-idea-primitive-core
 
 ## Next up across surfaces
 
@@ -66,7 +66,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 2. **serve** — `hero-team-server` (P1, delivering)
 3. **core** — `satellite-corpus-integration` (high, delivering)
 4. **serve** — `agent-outposts` (medium, delivering)
-5. **serve** — `attention-read-model-v1` (medium, delivering)
+5. **serve** — `retrieval-contradiction-detection` (—, delivering)
 
 ## Open risks & blockers
 

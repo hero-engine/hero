@@ -2,7 +2,7 @@
 title: "Attention Read Model v1 — Consumer-Safe Mail and Focus Projection"
 slug: attention-read-model-v1
 type: feature
-status: delivering
+status: completed
 domain: engineering
 priority: medium
 size: large
@@ -12,6 +12,7 @@ parent: durable-attention
 depends-on: [personal-focus-core, project-mail-triage-and-provenance, deferred-work-suggestion-contract]
 tags: [attention, projection, api, schema, hero-code]
 delivery_method: manual
+completed_at: 2026-07-23T03:58:18Z
 ---
 
 # Attention Read Model v1 — Consumer-Safe Mail and Focus Projection
