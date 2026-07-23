@@ -246,12 +246,15 @@ func ValidateActionResult(v ActionResult) *ContractError {
 	if err := validateVersion(v.SchemaVersion); err != nil {
 		return err
 	}
-	hasSuccess := v.Row != nil || v.Navigation != nil || v.Launch != nil
-	if hasSuccess == (v.Error != nil) {
-		return invalid("result", "must contain either an authoritative result or an error")
+	if v.Error != nil {
+		if !validErrorCode(v.Error.Code) {
+			return invalid("error.code", "is not a stable v1 error code")
+		}
+		return nil // current Row is allowed as refresh context on safe failures.
 	}
-	if v.Error != nil && !validErrorCode(v.Error.Code) {
-		return invalid("error.code", "is not a stable v1 error code")
+	hasSuccess := v.Row != nil || v.RemovedRowID != "" || len(v.Source) != 0 || v.Navigation != nil || v.Launch != nil
+	if !hasSuccess {
+		return invalid("result", "must contain an authoritative result")
 	}
 	return nil
 }
@@ -268,6 +271,9 @@ func ValidateAttentionRow(v AttentionRow) *ContractError {
 	}
 	if strings.TrimSpace(v.SourceKind) == "" {
 		return invalid("source_kind", "is required")
+	}
+	if v.ID != v.SourceKind+":"+v.SourceID {
+		return invalid("id", "must equal <source_kind>:<source_id>")
 	}
 	if err := validateProject("project", v.Project); err != nil {
 		return err

@@ -13,10 +13,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hero-engine/hero/internal/attention/focus"
+	"github.com/hero-engine/hero/internal/attention/projection"
+	attentionstate "github.com/hero-engine/hero/internal/attention/state"
+	"github.com/hero-engine/hero/internal/attention/suggestion"
 	"github.com/hero-engine/hero/internal/cloud"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/index"
+	"github.com/hero-engine/hero/internal/projectregistry"
 	"github.com/hero-engine/hero/internal/serve/api"
 	"github.com/hero-engine/hero/internal/serve/chat"
 	"github.com/hero-engine/hero/internal/serve/edition"
@@ -163,6 +168,7 @@ func NewServer(cfg ServerConfig) *Server {
 	// Create the API with multi-project support. The shell (top-nav
 	// home routing, /-redirect) is composed in Run.
 	s.api = NewAPI(s, bus)
+	s.api.SetAttentionService(s.newAttentionProjectionService)
 
 	// OpsRunner backs the lifecycle-ops buttons on the Project page.
 	// Constructed before per-project Deps are built so both the API
@@ -202,6 +208,39 @@ func NewServer(cfg ServerConfig) *Server {
 	}
 
 	return s
+}
+
+func (s *Server) newAttentionProjectionService() (*projection.Service, error) {
+	root, err := attentionstate.Ensure(attentionstate.Options{ProjectRoot: s.projectRoot})
+	if err != nil {
+		return nil, err
+	}
+	registry := s.registry
+	if registry == nil {
+		registry, err = projectregistry.Load()
+		if err != nil {
+			return nil, err
+		}
+	}
+	mailSource, err := projection.NewRegistryMailSource(root, registry)
+	if err != nil {
+		return nil, err
+	}
+	resolver := focus.NewRegistryResolver(registry)
+	focusStore, err := focus.NewStore(root)
+	if err != nil {
+		return nil, err
+	}
+	focusService := focus.NewService(focusStore, resolver)
+	suggestionStore, err := suggestion.NewStore(root)
+	if err != nil {
+		return nil, err
+	}
+	return projection.NewService(
+		mailSource,
+		focusService,
+		suggestion.NewService(suggestionStore, focusService, resolver),
+	), nil
 }
 
 // startCloudSync starts the background sync daemon if a team connection

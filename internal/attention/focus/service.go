@@ -149,6 +149,13 @@ func (s *Service) LaunchIntent(id string) (LaunchIntent, error) {
 	return LaunchIntent{ID: listed.ID, Revision: listed.Revision, Prompt: listed.Prompt, Project: *resolved.Reference, Path: resolved.Path}, nil
 }
 
+// ProjectAvailability exposes the same registry-backed availability used by
+// Focus presentation without exposing registry or filesystem state to
+// projection consumers.
+func (s *Service) ProjectAvailability(project *attention.ProjectReference) string {
+	return s.resolver.ResolveReference(project).Availability
+}
+
 func (s *Service) newItem(req CreateRequest) (Item, error) {
 	if strings.TrimSpace(req.Title) == "" {
 		return Item{}, errors.New("title is required")

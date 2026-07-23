@@ -7,6 +7,22 @@ package serve
 func (s *MCPServer) toolDefinitions() []ToolDefinition {
 	return []ToolDefinition{
 		{
+			Name:        "hero_attention_snapshot",
+			Description: "Return the user-global v1 Attention snapshot from Mail, Today Focus, and pending suggestions.",
+			InputSchema: InputSchema{Type: "object"},
+		},
+		{
+			Name:        "hero_attention_action",
+			Description: "Dispatch one capability advertised by a v1 Attention row and return authoritative source and refresh state.",
+			InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{
+				"row_id":          {Type: "string", Description: "Stable <source-kind>:<source-id> row ID"},
+				"action_id":       {Type: "string", Description: "Advertised action ID"},
+				"row_revision":    {Type: "string", Description: "Required source revision as a decimal string"},
+				"idempotency_key": {Type: "string", Description: "Stable retry key"},
+				"input":           {Type: "object", Description: "Action-specific input matching the advertised JSON schema"},
+			}, Required: []string{"row_id", "action_id", "row_revision"}},
+		},
+		{
 			Name:        "hero_mail_list",
 			Description: "List Project Mail for this workspace with receipt state and advertised triage actions.",
 			InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{

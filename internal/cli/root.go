@@ -115,6 +115,7 @@ func init() {
 	rootCmd.AddCommand(intakeCmd)
 	rootCmd.AddCommand(focusCmd)
 	rootCmd.AddCommand(mailCmd)
+	rootCmd.AddCommand(attentionCmd)
 	rootCmd.AddCommand(scanCmd)
 	rootCmd.AddCommand(doCmd)
 	rootCmd.AddCommand(watchCmd)

@@ -7,12 +7,15 @@
   "properties": {
     "schema_version": {"const": 1},
     "row": {"type": "object"},
+    "removed_row_id": {"type": "string"},
+    "snapshot_revision": {"type": "string"},
+    "source": {},
     "navigation": {"type": "object"},
     "launch": {"type": "object"},
     "error": {"type": "object", "required": ["code", "message"], "properties": {"code": {"enum": ["validation", "stale", "unsupported", "missing", "incompatible_version", "unavailable"]}, "message": {"type": "string"}, "field": {"type": "string"}, "details": {"type": "object"}}}
   },
-  "oneOf": [
-    {"required": ["error"], "not": {"anyOf": [{"required": ["row"]}, {"required": ["navigation"]}, {"required": ["launch"]}]}},
-    {"not": {"required": ["error"]}, "anyOf": [{"required": ["row"]}, {"required": ["navigation"]}, {"required": ["launch"]}]}
+  "anyOf": [
+    {"required": ["error"]},
+    {"anyOf": [{"required": ["row"]}, {"required": ["removed_row_id"]}, {"required": ["source"]}, {"required": ["navigation"]}, {"required": ["launch"]}]}
   ]
 }

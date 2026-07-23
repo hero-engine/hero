@@ -41,11 +41,14 @@ type LaunchIntent struct {
 }
 
 type ActionResult struct {
-	SchemaVersion int                  `json:"schema_version"`
-	Row           *AttentionRow        `json:"row,omitempty"`
-	Navigation    *NavigationReference `json:"navigation,omitempty"`
-	Launch        *LaunchIntent        `json:"launch,omitempty"`
-	Error         *ContractError       `json:"error,omitempty"`
+	SchemaVersion    int                  `json:"schema_version"`
+	Row              *AttentionRow        `json:"row,omitempty"`
+	RemovedRowID     string               `json:"removed_row_id,omitempty"`
+	SnapshotRevision string               `json:"snapshot_revision,omitempty"`
+	Source           json.RawMessage      `json:"source,omitempty"`
+	Navigation       *NavigationReference `json:"navigation,omitempty"`
+	Launch           *LaunchIntent        `json:"launch,omitempty"`
+	Error            *ContractError       `json:"error,omitempty"`
 }
 
 type ContractError struct {

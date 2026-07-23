@@ -2,7 +2,7 @@
 title: "Attention Read Model v1 — Consumer-Safe Mail and Focus Projection"
 slug: attention-read-model-v1
 type: feature
-status: planning
+status: delivering
 domain: engineering
 priority: medium
 size: large
@@ -11,6 +11,7 @@ created: 2026-07-20
 parent: durable-attention
 depends-on: [personal-focus-core, project-mail-triage-and-provenance, deferred-work-suggestion-contract]
 tags: [attention, projection, api, schema, hero-code]
+delivery_method: manual
 ---
 
 # Attention Read Model v1 — Consumer-Safe Mail and Focus Projection
@@ -35,12 +36,19 @@ by their owning services and the v1 contracts.
 
 ## Kickoff
 
-Implement one projection service and mount its global HTTP handlers before the
-generic project router. Hero Code's canonical transport is
-`/api/attention/v1`; CLI and MCP are adapters over the same service. Build rows
-only from source authorities, advertise only valid actions, return
-authoritative post-action state, and require snapshot refresh rather than event
-streaming for v1 correctness.
+Publishes one consumer-safe Today projection over Mail, Focus, and deferred
+suggestions through HTTP, CLI, and MCP.
+
+**Status:** in-review — implementation and full regression validation pass;
+the fresh cold audit returned SHIP with a clean surface.
+
+**Pick up at:** commit the audited delivery atomically, then run
+`hero spec verify attention-read-model-v1` and repair any gate failure.
+
+→ `.hero/planning/initiatives/durable-attention/attention-read-model-v1/spec.md`
+
+**Files:** `internal/attention/projection/service.go`, `internal/serve/api_attention.go`, `internal/cli/attention.go`, `contracts/attention/testdata/v1/manifest.json`
+**Skip:** event streaming and generic Attention writes are explicitly outside v1.
 
 ## Problem
 
@@ -132,8 +140,8 @@ be designed later as an additive capability.
 
 1. Add `internal/attention/projection/service.go`, `ordering.go`,
    `actions.go`, and focused tests with source service interfaces/fakes.
-2. Add `internal/serve/api/attention.go` or the repository's equivalent handler
-   package for snapshot, action, and contract endpoints.
+2. Add `internal/serve/api_attention.go` for snapshot, action, and contract
+   endpoints.
 3. Mount `/api/attention/v1/*` in `internal/serve/api.go` before the generic
    `/api/{project}` router and wire global state/registry dependencies from
    `internal/serve/server.go`.
@@ -195,3 +203,42 @@ be designed later as an additive capability.
 - Refresh convergence tests after mutation/stale error and explicit assertion
   that no Attention SSE dependency exists.
 - `go test ./...` for Serve, MCP, contracts, and source-service regressions.
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Project active Mail, Today Focus, and pending suggestions with stable consumer fields/actions | DONE | `internal/attention/projection/service.go`, `mail_source.go`, `service_test.go` cover source-owned rows, summaries, provenance, availability, counts, and capabilities. |
+| 2 | Keep snapshot revision stable when source state is unchanged | DONE | `TestSnapshotOrderingRevisionAndCounts` changes `generated_at` while asserting identical revision and refresh token. |
+| 3 | Order deterministically by group, activity direction, missing-last, and source ID | DONE | `internal/attention/projection/ordering.go`; `TestSnapshotOrderingRevisionAndCounts`. |
+| 4 | Validate version, identity, capability, revision, input, and idempotency before delegation | DONE | `Dispatch`, `ValidateActionRequest`, `validateInput`; projection and contract tests assert rejected requests do not delegate. |
+| 5 | Return authoritative source, projected row/invalidation, revision, navigation, or launch | DONE | `dispatchSource` plus post-action `Snapshot`; focused dispatch tests and action-result fixtures cover typed outcomes. |
+| 6 | Return structured stale/unsupported/missing/invalid/incompatible/unavailable errors without replay | DONE | `translateError`, `attentionStatus`, six v1 error fixtures, stale/current-row tests, and invalid-input no-delegation test. |
+| 7 | Serve the global snapshot without an open project | DONE | Global routes precede `routeProject`; `TestAttentionRouteWinsWithoutSelectedProject` and unavailable test cover registry/global behavior. |
+| 8 | Keep CLI, MCP, and HTTP semantically identical over one service | DONE | All adapters instantiate `projection.Service`; `TestAttentionTodayJSONMatchesProjectionService` and `TestAttentionHTTPAndMCPReturnTheSameProjectionRecords` assert semantic parity. |
+| 9 | Converge by authoritative snapshot refresh without event streaming | DONE | Every successful dispatch re-snapshots; stale/validation failures return refresh context without retry; no `/api/events` dependency was added. |
+| 10 | Decode golden fixtures with additive unknown values and exact documented fields | DONE | `contracts/attention/contract_test.go` validates the 19-entry checksum manifest including unknown fields/kinds/actions. |
+| 11 | Expose no generic write or client-manufactured source action | DONE | Only advertised row actions dispatch; HTTP/CLI/MCP expose snapshot plus capability dispatch and no generic mutation. |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Add projection service, ordering, actions, source interfaces/fakes, and tests | DONE | Added `internal/attention/projection/{service.go,ordering.go,actions.go,mail_source.go,service_test.go}`. |
+| 2 | Add snapshot/action/contract HTTP handlers | DONE | Added `internal/serve/api_attention.go` with focused route, error, contract, and parity tests. |
+| 3 | Mount global routes before project routing and wire registry/global stores | DONE | Updated `internal/serve/api.go` and `server.go`; registry-wide Mail facade aggregates distinct registered peer IDs. |
+| 4 | Add and register Attention CLI | DONE | Added `internal/cli/attention.go` and parity test; registered surgically in `root.go`. |
+| 5 | Add MCP definitions, dispatch, and handlers over projection service | DONE | Added `mcp_tools_attention.go`; updated definitions, dispatch, inventory, and shared-service parity coverage. |
+| 6 | Complete v1 fixture set and manifest | DONE | 19 fixtures cover empty/mixed/all actions/errors/missing projects/unknowns/promotions/launch/suggestion lifecycle; manifest entries pin every fixture checksum. |
+| 7 | Add Hero Code handoff with exact manifest checksum | DONE | `contracts/attention/testdata/v1/HERO-CODE-HANDOFF.md` documents `/api/attention/v1`, snapshot refresh, and `f632733b4625c57983bdba98e4a9f58818f76ce571bf05c91722d8620b4697f6`. |
+| 8 | Update Serve and CLI/MCP documentation | DONE | Added `docs/serve.md`; updated README command/tool references and MCP count. |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end: `XDG_STATE_HOME=/private/tmp/hero-attention-read-model-exercise go run ./cmd/hero attention today --json` returned a valid empty v1 snapshot with stable empty SHA-256 revision, matching refresh token, zero counts, and `rows: []`.
+
+### Excellence Bar self-check
+
+- [x] Yes — the implementation preserves source ownership, keeps the global transport capability-driven and snapshot-convergent, pins compatibility fixtures, adds explicit cross-adapter parity coverage, passes the full regression suite, and contains no unrelated formatting drift.

@@ -6,10 +6,14 @@
   "required": ["schema_version", "generated_at", "revision", "rows"],
   "properties": {
     "schema_version": {"const": 1}, "generated_at": {"type": "string", "format": "date-time", "x-utcRFC3339Nano": true}, "revision": {"type": "string"},
+    "refresh_token": {"type": "string"},
+    "counts": {"type":"object","properties":{"mail":{"type":"integer"},"focus":{"type":"integer"},"suggestion":{"type":"integer"},"total":{"type":"integer"}}},
     "rows": {"type": "array", "items": {"type": "object", "required": ["schema_version", "id", "source_kind", "source_id", "project", "title", "timestamp", "revision"], "properties": {
       "schema_version": {"const": 1}, "id": {"type": "string"}, "source_kind": {"type": "string"}, "source_id": {"type": "string"},
       "project": {"type": "object", "required": ["peer_id", "display_name"], "properties": {"peer_id": {"type": "string"}, "registry_slug": {"type": "string"}, "display_name": {"type": "string"}}},
-      "title": {"type": "string"}, "body": {"type": "string"}, "timestamp": {"type": "string", "format": "date-time", "x-utcRFC3339Nano": true}, "revision": {"type": "integer"},
+      "title": {"type": "string"}, "summary":{"type":"string"}, "body": {"type": "string"}, "timestamp": {"type": "string", "format": "date-time", "x-utcRFC3339Nano": true},
+      "created_at":{"type":"string","format":"date-time","x-utcRFC3339Nano":true},"updated_at":{"type":"string","format":"date-time","x-utcRFC3339Nano":true},"activity_at":{"type":"string","format":"date-time","x-utcRFC3339Nano":true},
+      "group":{"type":"string"},"unread":{"type":"boolean"},"today":{"type":"boolean"},"availability":{"type":"string"},"revision": {"type": "integer"},
       "actions": {"type": "array", "items": {"type": "object", "required": ["id", "label", "required_row_revision", "requires_idempotency"], "properties": {"id": {"type": "string"}, "label": {"type": "string"}, "style": {"type": "string"}, "confirmation": {"type": "string"}, "input_schema": {"type": "object"}, "required_row_revision": {"type": "integer"}, "requires_idempotency": {"type": "boolean"}}}}
     }}}
   }

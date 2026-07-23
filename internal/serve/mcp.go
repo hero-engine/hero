@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/hero-engine/hero/internal/attention/focus"
+	"github.com/hero-engine/hero/internal/attention/projection"
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/refs"
 	"github.com/hero-engine/hero/internal/serve/chat"
@@ -58,6 +59,7 @@ type MCPServer struct {
 	// user-state tools. Production resolves the standard global state root.
 	attentionStateRoot string
 	attentionResolver  focus.ProjectResolver
+	attentionService   func() (*projection.Service, error)
 }
 
 // NewMCPServer creates an MCP server for the given hero workspace.

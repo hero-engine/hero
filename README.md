@@ -127,7 +127,7 @@ Current installed content counts:
 | Slash command definitions | 29 |
 | Agent definitions | 35 |
 | Skill definitions | 56 |
-| MCP tools | 52 |
+| MCP tools | 57 |
 
 Run `hero docs check` to validate these counts against the repo.
 
@@ -228,7 +228,7 @@ The binary is organized around a few stable groups.
 | Graph and retrieval | `hero scan`, `hero graph`, `hero extract`, `hero impact`, `hero why`, `hero blocked`, `hero snapshot`, `hero synthesize`, `hero embeddings` |
 | Tracker and sync | `hero sync connect`, `hero sync import`, `hero sync pull`, `hero sync spec`, `hero sync link`, `hero sync comment`, `hero sync attach`, `hero sync graph` |
 | Cross-repo peering | `hero admin repos`, `hero peer manifest`, `hero peer list`, `hero peer show`, `hero peer call`, `hero handoff`, `hero handoff status`, `hero handoff accept`, `hero context imports` |
-| Personal attention | `hero focus`, `hero mail send`, `hero mail inbox`, `hero mail show`, `hero mail reply`, `hero mail ack` |
+| Personal attention | `hero attention today`, `hero attention act`, `hero focus`, `hero mail send`, `hero mail inbox`, `hero mail show`, `hero mail reply`, `hero mail ack` |
 | Automation and headless work | `hero agent run`, `hero agent jobs`, `hero agent approve`, `hero agent automate`, `hero pipeline`, `hero watch` |
 | Publishing and server | `hero serve`, `hero mcp`, `hero publish wiki`, `hero publish pages`, `hero login`, `hero logout` |
 | Installation | `hero install`, `hero install satellites`, `hero upgrade`, `hero uninstall`, `hero verify-install`, `hero trust`, `hero domain` |
@@ -286,6 +286,7 @@ tool set is:
 `hero_recap`, `hero_drift`, `hero_ci`, `hero_feed`, `hero_event`,
 `hero_active`, `hero_coverage`, `hero_why`, `hero_blocked`,
 `hero_expand`, `hero_snapshot`, `hero_synthesize`,
+`hero_attention_snapshot`, `hero_attention_action`,
 `hero_tracker_get_issue`, `hero_tracker_search`, `hero_tracker_request`,
 `hero_tracker_cli`, `hero_tracker_load_evidence`.
 

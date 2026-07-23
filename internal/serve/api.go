@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hero-engine/hero/internal/attention/projection"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/index"
 	"github.com/hero-engine/hero/internal/serve/healthcache"
@@ -42,7 +43,8 @@ type API struct {
 	// /peers/{alias}/probe endpoints. Phase 5 of
 	// hero-serve-project-section. Nil-tolerant — endpoints return 503
 	// when unset.
-	healthCache *healthcache.Cache
+	healthCache      *healthcache.Cache
+	attentionService func() (*projection.Service, error)
 }
 
 // NewAPI creates a new API instance backed by a multi-project server.
@@ -65,6 +67,13 @@ func (a *API) OpsRunner() *opsrunner.Runner { return a.opsRunner }
 // SetHealthCache wires the in-process health/peer cache into the API.
 // Called by Server.NewServer after the cache is constructed.
 func (a *API) SetHealthCache(c *healthcache.Cache) { a.healthCache = c }
+
+// SetAttentionService wires the process-global projection factory. The
+// factory is lazy so starting Hero Serve never turns an unavailable private
+// state store into an empty snapshot.
+func (a *API) SetAttentionService(factory func() (*projection.Service, error)) {
+	a.attentionService = factory
+}
 
 // Handler returns a configured http.Handler with the API routes. The
 // shell router is layered on top of this handler in Server.Run.
@@ -95,6 +104,13 @@ func (a *API) Handler() http.Handler {
 	// SSE events (all projects, filterable by ?project=)
 	mux.HandleFunc("/api/events", SSEHandler(a.bus))
 
+	// User-global Attention is not project namespaced. Register it before the
+	// generic project router so "attention" can never be interpreted as a
+	// project slug.
+	mux.HandleFunc("/api/attention/v1/snapshot", a.handleAttentionSnapshot)
+	mux.HandleFunc("/api/attention/v1/actions", a.handleAttentionAction)
+	mux.HandleFunc("/api/attention/v1/contract", a.handleAttentionContract)
+
 	// Project-namespaced endpoints: /api/{project}/...
 	mux.HandleFunc("/api/", a.routeProject)
 
@@ -104,7 +120,7 @@ func (a *API) Handler() http.Handler {
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
@@ -1001,13 +1017,13 @@ func (a *API) handleDaemonOps(w http.ResponseWriter, r *http.Request) {
 // GET /api/{slug}/health. Mirrors the on-disk schema with the addition
 // of age_seconds + stale, computed at request time.
 type healthSnapshotResponse struct {
-	Slug        string                 `json:"slug"`
-	CapturedAt  *time.Time             `json:"captured_at,omitempty"`
+	Slug        string                  `json:"slug"`
+	CapturedAt  *time.Time              `json:"captured_at,omitempty"`
 	Rows        []healthcache.HealthRow `json:"rows"`
-	FromDisk    bool                   `json:"from_disk"`
-	AgeSeconds  *int64                 `json:"age_seconds,omitempty"`
-	Stale       bool                   `json:"stale"`
-	TTLSeconds  int64                  `json:"ttl_seconds"`
+	FromDisk    bool                    `json:"from_disk"`
+	AgeSeconds  *int64                  `json:"age_seconds,omitempty"`
+	Stale       bool                    `json:"stale"`
+	TTLSeconds  int64                   `json:"ttl_seconds"`
 }
 
 // routeHealthCache dispatches /api/{slug}/health and

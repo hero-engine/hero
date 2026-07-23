@@ -30,7 +30,7 @@ func TestGoldenFixturesSchemasDTOsAndChecksums(t *testing.T) {
 	if manifest.SchemaVersion != SchemaVersion {
 		t.Fatalf("manifest version = %d", manifest.SchemaVersion)
 	}
-	if len(manifest.Fixtures) != 8 {
+	if len(manifest.Fixtures) != 19 {
 		t.Fatalf("fixture count = %d", len(manifest.Fixtures))
 	}
 
@@ -74,11 +74,11 @@ func decodeFixture(name string, data []byte) error {
 		target = &FocusItem{}
 	case "suggestion.json":
 		target = &DeferredWorkSuggestion{}
-	case "attention-snapshot.json", "unknown-fields.json":
+	case "attention-snapshot.json", "empty-snapshot.json", "all-actions-snapshot.json", "missing-project-snapshot.json", "unknown-fields.json":
 		target = &AttentionSnapshot{}
 	case "action-request.json":
 		target = &ActionRequest{}
-	case "action-result.json", "error.json":
+	case "action-result.json", "error.json", "error-validation.json", "error-unsupported.json", "error-missing.json", "error-incompatible-version.json", "error-unavailable.json", "promotion-result.json", "launch-result.json", "suggestion-after-acceptance.json":
 		target = &ActionResult{}
 	default:
 		return fmt.Errorf("fixture %q has no DTO mapping", name)
@@ -225,7 +225,7 @@ func TestExactUTCTimestampsAcrossRecordsAndSchemas(t *testing.T) {
 	if err := ValidateFocusItem(focus); err == nil || err.Field != "created_at" {
 		t.Fatalf("FocusItem offset error = %#v", err)
 	}
-	row := AttentionRow{SchemaVersion: 1, ID: "row_1", SourceKind: "focus", SourceID: "focus_1", Project: project, Timestamp: "2026-07-22T12:00:00-06:00"}
+	row := AttentionRow{SchemaVersion: 1, ID: "focus:focus_1", SourceKind: "focus", SourceID: "focus_1", Project: project, Timestamp: "2026-07-22T12:00:00-06:00"}
 	if err := ValidateAttentionRow(row); err == nil || err.Field != "timestamp" {
 		t.Fatalf("AttentionRow offset error = %#v", err)
 	}
@@ -254,12 +254,11 @@ func TestExactUTCTimestampsAcrossRecordsAndSchemas(t *testing.T) {
 	}
 }
 
-func TestActionResultRequiresExactlyOneOutcome(t *testing.T) {
+func TestActionResultRequiresAnOutcomeAndAllowsSafeRefreshRow(t *testing.T) {
 	row := &AttentionRow{SchemaVersion: 1, ID: "row_1"}
 	contractErr := &ContractError{Code: ErrorStale, Message: "stale"}
 	for name, result := range map[string]ActionResult{
 		"none": {SchemaVersion: 1},
-		"both": {SchemaVersion: 1, Row: row, Error: contractErr},
 	} {
 		t.Run(name, func(t *testing.T) {
 			if err := ValidateActionResult(result); err == nil || err.Field != "result" {
@@ -268,8 +267,9 @@ func TestActionResultRequiresExactlyOneOutcome(t *testing.T) {
 		})
 	}
 	for name, result := range map[string]ActionResult{
-		"success": {SchemaVersion: 1, Row: row},
-		"error":   {SchemaVersion: 1, Error: contractErr},
+		"success":                {SchemaVersion: 1, Row: row},
+		"error":                  {SchemaVersion: 1, Error: contractErr},
+		"error-with-current-row": {SchemaVersion: 1, Row: row, Error: contractErr},
 	} {
 		t.Run(name, func(t *testing.T) {
 			if err := ValidateActionResult(result); err != nil {
@@ -288,7 +288,6 @@ func TestActionResultRequiresExactlyOneOutcome(t *testing.T) {
 	}
 	for name, document := range map[string]string{
 		"none": `{"schema_version":1}`,
-		"both": `{"schema_version":1,"row":{},"error":{"code":"stale","message":"stale"}}`,
 	} {
 		t.Run("schema_"+name, func(t *testing.T) {
 			var value any

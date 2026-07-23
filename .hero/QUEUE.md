@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-23T03:24:27Z · 88 ready specs_
+_Generated: 2026-07-23T03:57:43Z · 88 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -26,6 +26,25 @@ Resume by reading `.hero/planning/features/satellite-corpus-integration/spec.md`
 _feature · delivering · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/specs/retrieval-contradiction-detection/spec.md)_
+
+---
+
+## attention-read-model-v1 — "Attention Read Model v1 — Consumer-Safe Mail and Focus Projection"
+_feature · delivering · horizon: next_
+
+Publishes one consumer-safe Today projection over Mail, Focus, and deferred
+suggestions through HTTP, CLI, and MCP.
+
+**Status:** in-review — implementation and full regression validation pass;
+the fresh cold audit returned SHIP with a clean surface.
+
+**Pick up at:** commit the audited delivery atomically, then run
+`hero spec verify attention-read-model-v1` and repair any gate failure.
+
+→ `.hero/planning/initiatives/durable-attention/attention-read-model-v1/spec.md`
+
+**Files:** `internal/attention/projection/service.go`, `internal/serve/api_attention.go`, `internal/cli/attention.go`, `contracts/attention/testdata/v1/manifest.json`
+**Skip:** event streaming and generic Attention writes are explicitly outside v1.
 
 ---
 
@@ -622,18 +641,6 @@ Preserve peer resolution, manifests, and legacy trail/status readers, but stop
 writing receiver specs or launching `claude`. Make calls async by default with
 optional reply polling, keep old history visible, update installed peering
 guidance, and supersede `peer-call-multi-cli` only after validation passes.
-
----
-
-## attention-read-model-v1 — "Attention Read Model v1 — Consumer-Safe Mail and Focus Projection"
-_feature · planning · horizon: next_
-
-Implement one projection service and mount its global HTTP handlers before the
-generic project router. Hero Code's canonical transport is
-`/api/attention/v1`; CLI and MCP are adapters over the same service. Build rows
-only from source authorities, advertise only valid actions, return
-authoritative post-action state, and require snapshot refresh rather than event
-streaming for v1 correctness.
 
 ---
 

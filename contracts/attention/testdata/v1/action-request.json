@@ -1,1 +1,1 @@
-{"schema_version":1,"row_id":"row_mail_01JYX","action_id":"mail.acknowledge","row_revision":2,"idempotency_key":"idem_01JYX","input":{}}
+{"schema_version":1,"row_id":"mail:mail_01JYX","action_id":"acknowledge","row_revision":2,"idempotency_key":"idem_01JYX","input":{}}

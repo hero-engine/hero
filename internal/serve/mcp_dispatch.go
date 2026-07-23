@@ -23,7 +23,7 @@ type toolHandler func(args map[string]interface{}) (string, error)
 // Some tools straddle (toolActive, toolCode) — placed where their
 // primary action sits.
 func (s *MCPServer) toolHandlers() map[string]toolHandler {
-	return map[string]toolHandler{
+	handlers := map[string]toolHandler{
 		// read
 		"hero_context":           s.toolContext,
 		"hero_search":            s.toolSearch,
@@ -85,6 +85,9 @@ func (s *MCPServer) toolHandlers() map[string]toolHandler {
 		"hero_warnings":      s.toolWarnings,
 		"hero_insights":      s.toolInsights,
 	}
+	handlers["hero_attention_snapshot"] = s.toolAttentionSnapshot
+	handlers["hero_attention_action"] = s.toolAttentionAction
+	return handlers
 }
 
 // handleToolsCall validates the call, looks up the handler in the

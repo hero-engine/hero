@@ -1,0 +1,1 @@
+{"schema_version":1,"removed_row_id":"mail:mail_1","snapshot_revision":"after-promotion","source":{"action":"promote","artifact":{"slug":"review-inbox","type":"feature","status":"planning"}},"navigation":{"project":{"peer_id":"peer_hero","display_name":"Hero"},"target":"review-inbox"}}

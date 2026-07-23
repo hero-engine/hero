@@ -1,13 +1,24 @@
 {
   "schema_version": 1,
   "fixtures": [
-    {"path":"action-request.json","purpose":"canonical action request","schema":"action.schema.json","sha256":"feeed58cfe2e8451aae4cb55a8aa82fb07a2d3be31008e2220e1913f7314202a"},
-    {"path":"action-result.json","purpose":"successful authoritative result and launch intent","schema":"action-result.schema.json","sha256":"a4cde6a9dc6dfca43a31e6cefc825842e06b9e2d692a080eb0efb68ba4502597"},
-    {"path":"attention-snapshot.json","purpose":"canonical shared read projection","schema":"attention-snapshot.schema.json","sha256":"4a43e80109d4e46258b7ddea757ccbaf963c25a99629821792e8910b6aad1749"},
+    {"path":"action-request.json","purpose":"canonical action request","schema":"action.schema.json","sha256":"c0089cc33314d58e40e2f0b6488cf3e971a150dfa964727a45922599a1460d9c"},
+    {"path":"action-result.json","purpose":"successful authoritative result and launch intent","schema":"action-result.schema.json","sha256":"b49ef825caa8391b08ce50908d4247ab561fabd17d0c6d28031c429f5cf213c4"},
+    {"path":"all-actions-snapshot.json","purpose":"every v1 source state and advertised action","schema":"attention-snapshot.schema.json","sha256":"cc8077fdd673bd3dc45e5e99b40f398fb29052166e2c8ac81195ab98a8ecfe09"},
+    {"path":"attention-snapshot.json","purpose":"canonical shared read projection","schema":"attention-snapshot.schema.json","sha256":"224cd7277b18e3470ecaddd9acdf1a20515bbb13127dc5f56d59167d1b42394f"},
+    {"path":"empty-snapshot.json","purpose":"valid empty active projection","schema":"attention-snapshot.schema.json","sha256":"5a52c4f33fbdb455921795f0c9962a7a29dee4a68a6fdc4b84f1d96aba9000d3"},
+    {"path":"error-incompatible-version.json","purpose":"structured incompatible-version failure","schema":"action-result.schema.json","sha256":"9ab025efc32c149389029d98a621a34a1688e20c8ea9eaa284ad40e906a9430a"},
+    {"path":"error-missing.json","purpose":"structured missing-row failure","schema":"action-result.schema.json","sha256":"3231bc7ad0cddd6f55eb48e7ce5cda85091a4daa964ee21cbc724d3af9e86e90"},
+    {"path":"error-unavailable.json","purpose":"structured unavailable-state failure","schema":"action-result.schema.json","sha256":"d7e225f03db41fb96b63f2d7aebdf7030001b5b7dd6fc84823d50657a2465984"},
+    {"path":"error-unsupported.json","purpose":"structured unsupported-action failure","schema":"action-result.schema.json","sha256":"074861722dc28e563c0ae4a9a0155a3ed107602a9b726061faa8dd01fa5f549d"},
+    {"path":"error-validation.json","purpose":"structured input-validation failure","schema":"action-result.schema.json","sha256":"550a0e28fe52fc2513a52109fd70cb6b01334095a8f434a709a59dbc1d6398d5"},
     {"path":"error.json","purpose":"structured stale action error","schema":"action-result.schema.json","sha256":"457304b0bb2b3f1fc77426244371f5d0b7c4c6f56ba1547729135c53de9d9a22"},
     {"path":"focus-item.json","purpose":"canonical private focus item","schema":"focus-item.schema.json","sha256":"5c09745f56f64f1d4941222cbda83bc514fc22f47e3fb07fd9c538d782966d31"},
     {"path":"mail-envelope.json","purpose":"canonical untrusted project mail envelope","schema":"mail-envelope.schema.json","sha256":"5f54416e716c337aed03d1a700d72a75ab18e1b2bcdcb5c729af7d117fdb7d73"},
+    {"path":"launch-result.json","purpose":"typed Focus launch intent with authoritative source","schema":"action-result.schema.json","sha256":"c27c1c43602d1b1dfcd76303eecdeb0e27eb9f25c97b5cf0f7d50b52b7fdd470"},
+    {"path":"missing-project-snapshot.json","purpose":"missing project remains visible but launch is not advertised","schema":"attention-snapshot.schema.json","sha256":"eaf1a97137cd8abf7125a4ab1a81bd5aaf24da9e102c3595672f4e17c69b3be6"},
+    {"path":"promotion-result.json","purpose":"Mail promotion navigation and row invalidation","schema":"action-result.schema.json","sha256":"82d6f097b0e93ed4a6ba9a3c044cfc41d330e55f03e4411458d652db82f54a6c"},
+    {"path":"suggestion-after-acceptance.json","purpose":"suggestion acceptance creates Focus and removes projection row","schema":"action-result.schema.json","sha256":"31ca26906fb2367e168a0ede7e314d0ef3a9c482ebeec13cf07350bffa98ea0d"},
     {"path":"suggestion.json","purpose":"deferred work proposal before focus acceptance","schema":"suggestion.schema.json","sha256":"cbc20a20838148faa763b3b798e10f7cc83a2bc89a3bbfb40ee4f590a34ca5a7"},
-    {"path":"unknown-fields.json","purpose":"forward-compatible unknown fields, source kind, style, and action ID","schema":"attention-snapshot.schema.json","sha256":"a3d4cbd0aa1f50c702170713e333ad20caadeef1160680498ce5bd6da01575e6"}
+    {"path":"unknown-fields.json","purpose":"forward-compatible unknown fields, source kind, style, and action ID","schema":"attention-snapshot.schema.json","sha256":"7cffbe2f5a0945486ed77ce9c8e78e42fd663a3fb6eb15b04add9b3dc74936c3"}
   ]
 }

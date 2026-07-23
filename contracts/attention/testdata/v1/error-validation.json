@@ -1,0 +1,1 @@
+{"schema_version":1,"error":{"code":"validation","message":"artifact_type is required","field":"input.artifact_type"}}
