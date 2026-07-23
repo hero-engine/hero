@@ -2,7 +2,8 @@
 title: "Durable Attention — Project Mail, Personal Focus, and Explicit Promotion"
 slug: durable-attention
 type: initiative
-status: planning
+status: completed
+autonomy: autonomous
 domain: engineering
 priority: high
 size: giant
@@ -29,6 +30,7 @@ relations:
     kind: related
   - target: job-run-contract-v1
     kind: related
+completed_at: 2026-07-23T04:18:39Z
 ---
 
 # Durable Attention — Project Mail, Personal Focus, and Explicit Promotion

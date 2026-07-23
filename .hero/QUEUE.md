@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-23T04:18:29Z · 87 ready specs_
+_Generated: 2026-07-23T04:19:59Z · 85 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -26,28 +26,6 @@ Resume by reading `.hero/planning/features/satellite-corpus-integration/spec.md`
 _feature · delivering · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/specs/retrieval-contradiction-detection/spec.md)_
-
----
-
-## peering-over-project-mail — "Peering over Project Mail — Async First, Execution Optional"
-_feature · delivering · horizon: next_
-
-Routes peer calls and work transfers through durable Project Mail with explicit
-receiver-owned promotion and no core model execution.
-
-**Status:** in-review — implementation, full tests, all-six harness guidance,
-and supported supersession are complete.
-
-**Pick up at:** cold-audit the delivery evidence, repair any HOLD, then run the
-verify gate and archive.
-
-→ `hero spec verify peering-over-project-mail`
-
-**Files:** `internal/peering/peercall.go`, `internal/peering/handoff.go`,
-`internal/peering/receive.go`, `internal/cli/peer.go`,
-`domains/engineering/skills/cross-repo-peering/SKILL.md`
-**Skip:** restoring subprocess/result-fence dispatch — Project Mail is the
-authority boundary.
 
 ---
 
@@ -621,18 +599,6 @@ catalogs, and LLM-call wrapping mechanics — all are out of scope here.
 _feature · planning · horizon: now_
 
 > Read `.hero/planning/features/document-vocabulary-auto-select-schema/spec.md` (this file). Inspect `internal/vocabulary/vocabulary.go` and `internal/vocabulary/resolver.go` for the auto_select rule struct shape, allowed-value set, and match semantics — these are the authoritative source. Check existing presets: `core/vocabularies/agile-scrum.yaml`, `core/vocabularies/kanban.yaml`, `core/vocabularies/shape-up.yaml`, `core/vocabularies/default.yaml`, `core/vocabularies/jira.yaml`, `core/vocabularies/linear.yaml` for what auto_select blocks already exist. Author `docs/contracts/vocabulary-auto-select.md` per the six sections in this spec's Design. Update `docs/contracts/active-dialect.md` §3 with a cross-link and add a row to `docs/contracts/README.md`'s table. Keep the doc under 250 lines. Run `go build ./...` (should be unchanged). Report what shipped, the auto_select rule fields you documented, and any code-vs-prose discrepancies you spotted, under 250 words.
-
----
-
-## durable-attention — "Durable Attention — Project Mail, Personal Focus, and Explicit Promotion"
-_initiative · planning · horizon: next_
-
-_Run opener — arm with `/drive durable-attention`_
-
-Deliver local-first Project Mail and user-global Personal Focus as distinct,
-Hero-owned durable primitives; expose them through CLI/API and one stable
-consumer read model; and reframe peering over asynchronous mail without making
-model execution part of the communication contract.
 
 ---
 

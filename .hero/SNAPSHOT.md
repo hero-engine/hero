@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-23T04:18:29Z · projected from 582 source nodes_
+_Last refreshed: 2026-07-23T04:19:58Z · projected from 582 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 3m ago | satellite-corpus-integration |
+| core | building | cmd/, internal/ | 5m ago | satellite-corpus-integration |
 | docs | maturing | web/docs/ | 10d ago | — |
 | domains/chat | maturing | domains/chat/ | 4d ago | — |
-| domains/engineering | building | domains/engineering/ | 3m ago | peering-over-project-mail |
+| domains/engineering | maturing | domains/engineering/ | 1m ago | — |
 | domains/pm | maturing | domains/pm/ | 5d ago | — |
 | domains/sales | maturing | domains/sales/ | 14d ago | — |
 | landing | building | web/landing/ | 11d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 20m ago | agent-outposts |
+| serve | building | internal/serve/ | 21m ago | agent-outposts |
 | (unassigned) | — | — | — | 231 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -29,7 +29,6 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **"Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use"** (surface: core) — 2/2 specs done
 - **"Concurrent-Session Branching & Worktree Isolation"** (surface: —) — 0/0 specs done
 - **"Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"** (surface: —) — 4/8 specs done
-- **"Durable Attention — Project Mail, Personal Focus, and Explicit Promotion"** (surface: core, domains/engineering, serve) — 6/7 specs done; in flight: peering-over-project-mail
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
 - **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 7/11 specs done
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 13/17 specs done
@@ -48,16 +47,15 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ### Recently completed initiatives
 
+- **"Durable Attention — Project Mail, Personal Focus, and Explicit Promotion"** (surface: core, domains/engineering, serve) — 7/7 specs done · COMPLETED 2026-07-23
 - **"Tracker Source Fidelity — Canonical Jira Markdown and Lazy Evidence Provenance"** (surface: hero-engine-tracker) — 2/2 specs done · COMPLETED 2026-07-22
 - **"PM Pack Completion — Author the Deferred Roster and Reframe Around Critics + Corpus-Grounding"** (surface: domains/pm) — 10/10 specs done · COMPLETED 2026-07-18
-- **"Knowledge Surfacing — Everything Captured Is Retrievable and Fed at the Right Time"** (surface: core) — 4/4 specs done · COMPLETED 2026-07-10
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — tracker-source-reconciliation, tracker-project-snapshot-contract, tracker-source-fidelity-and-evidence
-- **core** — project-mail-core, personal-focus-core, durable-attention-contracts, broker-issue-id-validator-raw-string-regression
-- **domains/engineering** — deferred-work-suggestion-contract
-- **hero-engine-tracker** — lazy-tracker-evidence-sidecar
+- **(unassigned)** — durable-attention, tracker-source-reconciliation, tracker-project-snapshot-contract, tracker-source-fidelity-and-evidence
+- **core** — project-mail-core, personal-focus-core, durable-attention-contracts
+- **domains/engineering** — peering-over-project-mail, deferred-work-suggestion-contract
 - **serve** — attention-read-model-v1, project-mail-triage-and-provenance, hero-idea-primitive-core
 
 ## Next up across surfaces
@@ -66,7 +64,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 2. **serve** — `hero-team-server` (P1, delivering)
 3. **core** — `satellite-corpus-integration` (high, delivering)
 4. **serve** — `agent-outposts` (medium, delivering)
-5. **domains/engineering** — `peering-over-project-mail` (medium, delivering)
+5. **serve** — `retrieval-contradiction-detection` (—, delivering)
 
 ## Open risks & blockers
 

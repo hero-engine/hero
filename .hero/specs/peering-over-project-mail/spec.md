@@ -2,7 +2,7 @@
 title: "Peering over Project Mail — Async First, Execution Optional"
 slug: peering-over-project-mail
 type: feature
-status: delivering
+status: completed
 domain: engineering
 priority: medium
 size: large
@@ -15,6 +15,7 @@ claimed_by: feature-delivery-lead
 claimed_at: 2026-07-22T22:00:34-06:00
 delivery_method: manual
 supersedes: [peer-call-multi-cli]
+completed_at: 2026-07-23T04:18:37Z
 ---
 
 # Peering over Project Mail — Async First, Execution Optional

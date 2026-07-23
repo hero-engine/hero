@@ -454,3 +454,7 @@
 {"ts":"2026-07-23T03:58:20.040856Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"attention-read-model-v1","message":"\"Attention Read Model v1 — Consumer-Safe Mail and Focus Projection\""}
 {"ts":"2026-07-23T03:58:20.041016Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"attention-read-model-v1","message":"status -\u003e completed"}
 {"event":"claimed","slug":"peering-over-project-mail","agent":"feature-delivery-lead","at":"2026-07-22T22:00:34.935884-06:00"}
+{"ts":"2026-07-23T04:18:38.957259Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"peering-over-project-mail","message":"\"Peering over Project Mail — Async First, Execution Optional\""}
+{"ts":"2026-07-23T04:18:38.957362Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"peering-over-project-mail","message":"status -\u003e completed"}
+{"ts":"2026-07-23T04:18:40.62995Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"durable-attention","message":"\"Durable Attention — Project Mail, Personal Focus, and Explicit Promotion\""}
+{"ts":"2026-07-23T04:18:40.630043Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"durable-attention","message":"status -\u003e completed"}
