@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-23T00:21:24Z · 89 ready specs_
+_Generated: 2026-07-23T01:34:36Z · 89 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -632,14 +632,14 @@ output, and prove retries cannot duplicate messages.
 
 ---
 
-## personal-focus-core — "Personal Focus Core — Prompt-Backed Work Across Projects"
+## deferred-work-suggestion-contract — "Deferred Work Suggestion Contract — Explicitly Accepted Focus"
 _feature · planning · horizon: next_
 
-Build Personal Focus on the contract state root with atomic per-item updates and
-optimistic revisions. Keep it independent of project specs and harness todos.
-Manual creation is durable; project-derived creation requires an idempotency
-source key. Return launch intents containing the saved prompt and resolved
-project, but never create a session or infer completion.
+Implement deferred suggestions as a distinct proposal store and service, not as
+Focus state. Expose propose/accept/dismiss through CLI and MCP, then add one
+canonical harness skill that installs to all six targets. Acceptance alone may
+create Focus; `do_next` atomically accepts into Today and returns a launch intent
+without starting a session.
 
 ---
 

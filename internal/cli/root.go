@@ -113,6 +113,7 @@ func init() {
 	rootCmd.AddCommand(uninstallCmd)
 	rootCmd.AddCommand(noteCmd)
 	rootCmd.AddCommand(intakeCmd)
+	rootCmd.AddCommand(focusCmd)
 	rootCmd.AddCommand(scanCmd)
 	rootCmd.AddCommand(doCmd)
 	rootCmd.AddCommand(watchCmd)
