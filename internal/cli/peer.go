@@ -2,10 +2,12 @@ package cli
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -22,18 +24,18 @@ import (
 //	hero peer manifest [--out <path>]   regenerate the peer manifest
 //	hero peer list                       configured peers + status snapshot
 //	hero peer show <alias>               detailed view of one peer
-//	hero peer call <alias> --mode=...   sync peer call (advisory | spec-out)
+//	hero peer call <alias> --mode=...   asynchronous Mail request
 
 var peerCmd = &cobra.Command{
 	Use:   "peer",
-	Short: "Cross-repo peering — manifest, list, show, sync calls",
+	Short: "Cross-repo peering — manifest, list, show, Mail requests",
 	Long: `Cross-repo peering operations beyond async handoff.
 
 Subcommands:
   manifest      Regenerate this workspace's peer-manifest.yaml
   list          List configured peers and their reachability + reciprocity
   show          Inspect one peer (manifest contents, in-flight handoffs)
-  call          Sync peer call — spawn a subagent in the peer's workspace`,
+  call          Send an asynchronous Project Mail request`,
 }
 
 // --- hero peer manifest -----------------------------------------------
@@ -73,36 +75,38 @@ var peerShowCmd = &cobra.Command{
 // --- hero peer call ---------------------------------------------------
 
 var (
-	peerCallMode         string
-	peerCallBudgetTurns  int
-	peerCallBudgetTokens int
-	peerCallRelatedSpec  string
-	peerCallReason       string
-	peerCallDryRun       bool
+	peerCallMode           string
+	peerCallBudgetTurns    int
+	peerCallBudgetTokens   int
+	peerCallRelatedSpec    string
+	peerCallReason         string
+	peerCallDryRun         bool
+	peerCallWait           time.Duration
+	peerCallPromptFile     string
+	peerCallJSON           bool
+	peerCallIdempotencyKey string
 )
 
 var peerCallCmd = &cobra.Command{
-	Use:   "call <alias> \"<prompt>\"",
-	Short: "Sync peer call: spawn a subagent in the peer workspace",
-	Long: `Spawns a subagent in the named peer's workspace and runs the given
-prompt with that workspace's Hero context loaded.
+	Use:   "call <alias> [prompt]",
+	Short: "Send an asynchronous Project Mail request to a peer",
+	Long: `Sends a durable Project Mail request to the named peer and returns
+the message/thread identity. Hero core does not launch a model or write the
+peer workspace. Use --wait to poll for an external same-thread response.
 
 Modes:
-  --mode=advisory    Investigate and return findings. No writes on the
-                     peer side. Default budget: ` + fmt.Sprintf("%d turns / %d tokens", peering.DefaultAdvisoryTurns, peering.DefaultAdvisoryTokens) + `.
-  --mode=spec-out    Run the peer's /design flow under the subagent.
-                     The subagent writes a planning-status spec on the
-                     peer side with a received_from block. Default budget:
-                     ` + fmt.Sprintf("%d turns / %d tokens", peering.DefaultSpecOutTurns, peering.DefaultSpecOutTokens) + `.
+  --mode=advisory    Ask for findings.
+  --mode=spec-out    Ask the receiver to design work explicitly.
 
 Examples:
   hero peer call app --mode=advisory "What's your error envelope shape?"
   hero peer call app --mode=spec-out --related-spec=order-failure-display "Design the fix"
-  hero peer call app --mode=advisory --dry-run "..."   # show envelope only
+  hero peer call app --mode=advisory --wait=30s "..."
+  hero peer call app --prompt-file=- --json
 
-The subagent CLI is configured in hero.json under peering.subagent
-(default: claude).`,
-	Args: cobra.MinimumNArgs(2),
+Budget flags are accepted as advisory metadata only. Any peering.subagent
+configuration is deprecated and ignored.`,
+	Args: cobra.RangeArgs(1, 2),
 	RunE: runPeerCall,
 }
 
@@ -110,11 +114,15 @@ func init() {
 	peerManifestCmd.Flags().StringVar(&peerManifestOut, "out", "", "alternate output path (default: .hero/peer-manifest.yaml)")
 
 	peerCallCmd.Flags().StringVar(&peerCallMode, "mode", "advisory", "call mode: advisory | spec-out")
-	peerCallCmd.Flags().IntVar(&peerCallBudgetTurns, "budget-turns", 0, "max turns the subagent may consume (0 = default per mode)")
-	peerCallCmd.Flags().IntVar(&peerCallBudgetTokens, "budget-tokens", 0, "max tokens the subagent may consume (0 = default per mode)")
+	peerCallCmd.Flags().IntVar(&peerCallBudgetTurns, "budget-turns", 0, "advisory turn hint for an external responder")
+	peerCallCmd.Flags().IntVar(&peerCallBudgetTokens, "budget-tokens", 0, "advisory token hint for an external responder")
 	peerCallCmd.Flags().StringVar(&peerCallRelatedSpec, "related-spec", "", "originator-side spec slug to record the call against")
 	peerCallCmd.Flags().StringVar(&peerCallReason, "reason", "", "rationale for the call (recorded in trail entry)")
-	peerCallCmd.Flags().BoolVar(&peerCallDryRun, "dry-run", false, "print the envelope that would be sent without dispatching the subagent")
+	peerCallCmd.Flags().BoolVar(&peerCallDryRun, "dry-run", false, "print the normalized Mail envelope without sending")
+	peerCallCmd.Flags().DurationVar(&peerCallWait, "wait", 0, "poll for a same-thread response up to this duration")
+	peerCallCmd.Flags().StringVar(&peerCallPromptFile, "prompt-file", "", "read prompt from file, or - for stdin")
+	peerCallCmd.Flags().BoolVar(&peerCallJSON, "json", false, "emit structured JSON")
+	peerCallCmd.Flags().StringVar(&peerCallIdempotencyKey, "idempotency-key", "", "stable retry key")
 
 	peerCmd.AddCommand(peerManifestCmd)
 	peerCmd.AddCommand(peerListCmd)
@@ -335,6 +343,19 @@ func runPeerCall(cmd *cobra.Command, args []string) error {
 	// Everything after the alias is the prompt — join remaining args
 	// with a space so quoted prompts and unquoted prompts both work.
 	prompt := strings.Join(args[1:], " ")
+	if peerCallPromptFile != "" {
+		var data []byte
+		var err error
+		if peerCallPromptFile == "-" {
+			data, err = io.ReadAll(cmd.InOrStdin())
+		} else {
+			data, err = os.ReadFile(peerCallPromptFile)
+		}
+		if err != nil {
+			return fmt.Errorf("read prompt: %w", err)
+		}
+		prompt = string(data)
+	}
 
 	mode := contractpeering.PeerCallMode(peerCallMode)
 	switch mode {
@@ -355,37 +376,31 @@ func runPeerCall(cmd *cobra.Command, args []string) error {
 			Turns:  contractpeering.ApproxInt(peerCallBudgetTurns),
 			Tokens: contractpeering.ApproxInt(peerCallBudgetTokens),
 		},
-		RelatedSpec: peerCallRelatedSpec,
-		Reason:      peerCallReason,
-		DryRun:      peerCallDryRun,
+		RelatedSpec:    peerCallRelatedSpec,
+		Reason:         peerCallReason,
+		DryRun:         peerCallDryRun,
+		Wait:           peerCallWait,
+		IdempotencyKey: peerCallIdempotencyKey,
+		Stdout:         cmd.OutOrStdout(),
 	})
 	if err != nil {
 		return err
 	}
 
 	w := cmd.OutOrStdout()
-	fmt.Fprintf(w, "Peer call ok  mode=%s  alias=%s  call_id=%s\n", mode, alias, res.CallID)
+	if peerCallJSON {
+		return writeMailJSON(w, res)
+	}
+	if res.DeprecatedConfigIgnored {
+		fmt.Fprintln(cmd.ErrOrStderr(), "warning: peering.subagent is deprecated and ignored; Hero core does not execute model CLIs")
+	}
+	fmt.Fprintf(w, "Peer request %s  mode=%s  alias=%s\n", res.Status, mode, alias)
 	fmt.Fprintf(w, "  peer_id: %s\n", res.PeerID)
-	fmt.Fprintf(w, "  result_kind: %s\n", res.Result.Kind)
-	if res.ArtifactPath != "" {
-		fmt.Fprintf(w, "  artifact: %s\n", res.ArtifactPath)
+	if res.MessageID != "" {
+		fmt.Fprintf(w, "  message_id: %s\n  thread_id: %s\n", res.MessageID, res.ThreadID)
 	}
-	if res.Result.SpecSlug != "" {
-		fmt.Fprintf(w, "  peer_spec: %s/%s (status=%s)\n", alias, res.Result.SpecSlug, res.Result.PeerStatus)
-	}
-	if res.Result.Findings != "" && !peerCallDryRun {
-		findings := strings.TrimRight(res.Result.Findings, "\n")
-		fmt.Fprintf(w, "  findings:\n    %s\n", strings.ReplaceAll(findings, "\n", "\n    "))
-	}
-	if res.Result.BudgetConsumed.Turns != 0 || res.Result.BudgetConsumed.Tokens != 0 {
-		fmt.Fprintf(w, "  budget_consumed: %d turns / %d tokens\n",
-			res.Result.BudgetConsumed.Turns, res.Result.BudgetConsumed.Tokens)
-	}
-	if peerCallRelatedSpec != "" {
-		fmt.Fprintf(w, "  trail entry appended to spec %s\n", peerCallRelatedSpec)
-		if mode == contractpeering.PeerCallSpecOut {
-			fmt.Fprintf(w, "  status: awaiting_peer\n")
-		}
+	if res.Response != nil {
+		fmt.Fprintf(w, "  response: %s\n", res.Response.Body)
 	}
 	return nil
 }

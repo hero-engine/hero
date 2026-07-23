@@ -2,7 +2,7 @@
 title: "Peering over Project Mail — Async First, Execution Optional"
 slug: peering-over-project-mail
 type: feature
-status: planning
+status: delivering
 domain: engineering
 priority: medium
 size: large
@@ -11,6 +11,10 @@ created: 2026-07-20
 parent: durable-attention
 depends-on: [project-mail-triage-and-provenance]
 tags: [peering, mail, handoff, compatibility]
+claimed_by: feature-delivery-lead
+claimed_at: 2026-07-22T22:00:34-06:00
+delivery_method: manual
+supersedes: [peer-call-multi-cli]
 ---
 
 # Peering over Project Mail — Async First, Execution Optional
@@ -35,11 +39,22 @@ creates work in another project.
 
 ## Kickoff
 
-Refactor `hero peer call` and new handoffs into adapters over Project Mail.
-Preserve peer resolution, manifests, and legacy trail/status readers, but stop
-writing receiver specs or launching `claude`. Make calls async by default with
-optional reply polling, keep old history visible, update installed peering
-guidance, and supersede `peer-call-multi-cli` only after validation passes.
+Routes peer calls and work transfers through durable Project Mail with explicit
+receiver-owned promotion and no core model execution.
+
+**Status:** in-review — implementation, full tests, all-six harness guidance,
+and supported supersession are complete.
+
+**Pick up at:** cold-audit the delivery evidence, repair any HOLD, then run the
+verify gate and archive.
+
+→ `hero spec verify peering-over-project-mail`
+
+**Files:** `internal/peering/peercall.go`, `internal/peering/handoff.go`,
+`internal/peering/receive.go`, `internal/cli/peer.go`,
+`domains/engineering/skills/cross-repo-peering/SKILL.md`
+**Skip:** restoring subprocess/result-fence dispatch — Project Mail is the
+authority boundary.
 
 ## Problem
 
@@ -196,3 +211,47 @@ the old spec's frontmatter by hand.
   active peering code no longer invokes `os/exec` or parses result fences.
 - `hero supersede peer-call-multi-cli --by peering-over-project-mail`, followed
   by `hero check`, `hero index --if-stale -q`, and `go test ./...`.
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Peer call delivers typed Mail without model launch | DONE | `internal/peering/peercall.go`; `TestCallDeliversTypedMailWithoutReceiverTreeWrite` |
+| 2 | Wait returns same-thread response or pending timeout | DONE | `TestCallIdempotentAndWaitsForSameThreadReply`; `TestCallTimeoutIsStructuredPending` |
+| 3 | Handoff sends Mail without receiver/status mutation | DONE | `TestHandoffSendsMailWithoutChangingEitherSpecTree`; `TestHandoffDismissCreatesNoWork` |
+| 4 | Explicit receive promotes through Mail/Intake and replies | DONE | `internal/peering/receive.go`; `TestReceivePromotesOnceAndReplies` |
+| 5 | Call and receive retries are idempotent | DONE | `TestCallIdempotentAndWaitsForSameThreadReply`; `TestReceivePromotesOnceAndReplies` |
+| 6 | Legacy carriers, trails, artifacts, and provenance remain readable | DONE | `internal/peering/resolve.go`; `TestLegacyTrailAndReceivedFromRemainReadable`; existing resolve/trail tests |
+| 7 | Legacy handoff accept remains supported | DONE | `internal/cli/handoff.go:runHandoffAccept` remains intact; full CLI suite passes |
+| 8 | Old subagent config loads, warns once, and cannot execute | DONE | `TestLoadWarnsOnceForIgnoredPeeringSubagent`; `TestDeprecatedSubagentConfigIsIgnored` |
+| 9 | Local Mail works without model CLI or Serve | DONE | two-project peering tests use only filesystem Mail state and pass |
+| 10 | All six harnesses install async/explicit-promotion guidance | DONE | `TestAllTargetsInstallAsyncPeeringGuidance` passes for opencode, cursor, claude, copilot, codex, generic |
+| 11 | Old multi-CLI spec superseded through supported command | DONE | `hero supersede peer-call-multi-cli --by peering-over-project-mail` completed and reindexed |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Replace peer-call subprocess path with Mail adapter | DONE | `internal/peering/peercall.go`; active-path search has no exec/result-fence symbols |
+| 2 | Refactor handoff and add receiver promotion | DONE | `internal/peering/handoff.go`, `internal/peering/receive.go` |
+| 3 | Add additive Mail fields to peering contracts | DONE | `contracts/peering/peercall.go`, `contracts/peering/handoff.go`, compatibility tests pass |
+| 4 | Async peer CLI, wait, prompt files, JSON, budget hints | DONE | `internal/cli/peer.go`; full CLI suite passes |
+| 5 | Handoff request, receive, combined status, legacy accept | DONE | `internal/cli/handoff.go`; focused and full CLI suites pass |
+| 6 | Preserve legacy read/reconcile without new peering statuses | DONE | legacy implementation retained; new adapters never edit spec status |
+| 7 | Replace subprocess tests with Mail lifecycle coverage | DONE | peering tests cover delivery, polling, timeout, reply, receive, dismiss, replay, and tree mutation boundary |
+| 8 | Update canonical skills, command, AGENTS, help, and docs | DONE | engineering content, README, GETTING-STARTED, CROSS-REPO-PEERING, installer output updated |
+| 9 | Add ignored subagent config deprecation test | DONE | `internal/config/peering_deprecation_test.go` |
+| 10 | Supersede multi-CLI spec and include projections | DONE | supported command updated both spec relations and index projections |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end: exact focused suites,
+  six-target install test, and `go test ./...` all passed; two-project tests
+  sent/replied/received/dismissed Mail and asserted the receiver-tree boundary.
+
+### Excellence Bar self-check
+
+- [x] Yes — the change removes the unsafe runtime/write authority, preserves
+  history, tests the real local transport, and updates every supported harness.

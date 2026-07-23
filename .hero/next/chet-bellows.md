@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-23T03:58:53Z
+updated: 2026-07-23T04:18:29Z
 repo: hero-engine/hero
 ---
 
@@ -20,15 +20,15 @@ repo: hero-engine/hero
 > - Origin workspace: hero-code (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
 > - Target alias on cal…
 
-_possibly stale — 23 commit(s) since, last set 3d 6h ago_
+_possibly stale — 24 commit(s) since, last set 3d 6h ago_
 
 ## Last user ask
 
-> Continue autonomously and deliver the durable-attention initiative, starting with attention-read-model-v1
+> Continue the durable-attention drive autonomously without supervised pauses
 
 ## Suggested next prompt
 
-> continue the durable-attention drive with its next dependency-ready child
+> let's keep driving durable-attention and deliver peering-over-project-mail next
 
 ## Recent reflections
 

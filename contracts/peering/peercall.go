@@ -10,7 +10,7 @@ import (
 )
 
 // ApproxInt is a non-negative integer field that tolerates a few
-// approximation forms peers (especially LLM subagents) naturally emit
+// approximation forms historical peers and external responders may emit
 // when reporting estimates:
 //
 //   - plain int:        22000        -> 22000
@@ -95,7 +95,7 @@ func (a ApproxInt) MarshalJSON() ([]byte, error) {
 	return []byte(strconv.Itoa(int(a))), nil
 }
 
-// PeerCallMode classifies a sync peer call by its allowed effects.
+// PeerCallMode classifies an asynchronous Project Mail request.
 type PeerCallMode string
 
 const (
@@ -103,8 +103,8 @@ const (
 	// on the peer side beyond the call record. v1.
 	PeerCallAdvisory PeerCallMode = "advisory"
 
-	// PeerCallSpecOut — run the peer's /design flow under a subagent
-	// and persist a spec on the peer side with `received_from`. v1.
+	// PeerCallSpecOut asks the receiver to design work. The request itself
+	// creates no work; receiver promotion is explicit.
 	PeerCallSpecOut PeerCallMode = "spec-out"
 
 	// PeerCallFull — design AND deliver on the peer side. Gated by
@@ -112,7 +112,7 @@ const (
 	PeerCallFull PeerCallMode = "full"
 )
 
-// BudgetSpec caps how much work a peer call may consume.
+// BudgetSpec is non-enforced advisory metadata for an external responder.
 type BudgetSpec struct {
 	Turns  ApproxInt `yaml:"turns,omitempty" json:"turns,omitempty"`
 	Tokens ApproxInt `yaml:"tokens,omitempty" json:"tokens,omitempty"`
@@ -124,8 +124,8 @@ type BudgetConsumed struct {
 	Tokens ApproxInt `yaml:"tokens" json:"tokens"`
 }
 
-// PeerCallRequest is the envelope a caller in A sends to B's
-// peer-call subagent.
+// PeerCallRequest is the legacy-compatible peering request shape. New transport
+// uses contracts/attention MailEnvelope and retains this shape for history.
 type PeerCallRequest struct {
 	// ContractsVersion is the PeeringContractsVersion at call time.
 	ContractsVersion int `json:"contracts_version" yaml:"contracts_version"`
@@ -142,7 +142,7 @@ type PeerCallRequest struct {
 	// Mode is the interaction mode.
 	Mode PeerCallMode `json:"mode" yaml:"mode"`
 
-	// Prompt is the user-supplied prompt for the peer's subagent.
+	// Prompt is the user-supplied prompt for the receiving project.
 	Prompt string `json:"prompt" yaml:"prompt"`
 
 	// Budget caps consumption. Zero values mean "use default".
@@ -160,6 +160,11 @@ type PeerCallRequest struct {
 
 	// AtCommit is the originator's git commit SHA at call time.
 	AtCommit string `json:"at_commit,omitempty" yaml:"at_commit,omitempty"`
+
+	Transport      string `json:"transport,omitempty" yaml:"transport,omitempty"`
+	MessageID      string `json:"message_id,omitempty" yaml:"message_id,omitempty"`
+	ThreadID       string `json:"thread_id,omitempty" yaml:"thread_id,omitempty"`
+	IdempotencyKey string `json:"idempotency_key,omitempty" yaml:"idempotency_key,omitempty"`
 }
 
 // PeerCallResultKind enumerates the result shapes a peer call returns.
@@ -174,7 +179,7 @@ const (
 	ResultCommitRef PeerCallResultKind = "commit-ref"
 )
 
-// PeerCallResult is the envelope the peer subagent returns.
+// PeerCallResult is retained for historical artifacts and external responses.
 type PeerCallResult struct {
 	// ContractsVersion is the PeeringContractsVersion at return time.
 	ContractsVersion int `json:"contracts_version" yaml:"contracts_version,omitempty"`
@@ -211,4 +216,10 @@ type PeerCallResult struct {
 
 	// Error is non-empty when the call failed to complete.
 	Error string `json:"error,omitempty" yaml:"error,omitempty"`
+
+	Transport string `json:"transport,omitempty" yaml:"transport,omitempty"`
+	MessageID string `json:"message_id,omitempty" yaml:"message_id,omitempty"`
+	ThreadID  string `json:"thread_id,omitempty" yaml:"thread_id,omitempty"`
+	Status    string `json:"status,omitempty" yaml:"status,omitempty"`
+	ResultRef string `json:"result_ref,omitempty" yaml:"result_ref,omitempty"`
 }

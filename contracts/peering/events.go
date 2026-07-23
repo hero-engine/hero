@@ -8,11 +8,11 @@ type EventKind string
 
 const (
 	// EventHandoffSent fires on the originator after an async drop or
-	// spec-out call writes the receiver-side scaffold.
+	// Historical spec-out call wrote the receiver-side scaffold.
 	EventHandoffSent EventKind = "peer.handoff.sent"
 
 	// EventHandoffReceived fires on the receiver when a peer drops a
-	// scaffolded spec.
+	// historical scaffolded spec.
 	EventHandoffReceived EventKind = "peer.handoff.received"
 
 	// EventHandoffBounced fires when the receiver explicitly returns
@@ -40,31 +40,31 @@ const (
 // HandoffEvent is the payload for peer.handoff.{sent,received,bounced,
 // accepted}.
 type HandoffEvent struct {
-	ContractsVersion int            `json:"contracts_version"`
-	Kind             EventKind      `json:"kind"`
-	OccurredAt       time.Time      `json:"occurred_at"`
-	OriginPeerID     string         `json:"origin_peer_id"`
-	OriginSlug       string         `json:"origin_slug"`
-	TargetPeerID     string         `json:"target_peer_id"`
-	TargetSlug       string         `json:"target_slug"`
-	Mode             TrailMode      `json:"mode"`
-	AtCommit         string         `json:"at_commit,omitempty"`
-	Reason           string         `json:"reason,omitempty"`
+	ContractsVersion int       `json:"contracts_version"`
+	Kind             EventKind `json:"kind"`
+	OccurredAt       time.Time `json:"occurred_at"`
+	OriginPeerID     string    `json:"origin_peer_id"`
+	OriginSlug       string    `json:"origin_slug"`
+	TargetPeerID     string    `json:"target_peer_id"`
+	TargetSlug       string    `json:"target_slug"`
+	Mode             TrailMode `json:"mode"`
+	AtCommit         string    `json:"at_commit,omitempty"`
+	Reason           string    `json:"reason,omitempty"`
 }
 
 // CallEvent is the payload for peer.call.{invoked,completed}.
 type CallEvent struct {
-	ContractsVersion int             `json:"contracts_version"`
-	Kind             EventKind       `json:"kind"`
-	OccurredAt       time.Time       `json:"occurred_at"`
-	CallID           string          `json:"call_id"`
-	OriginPeerID     string          `json:"origin_peer_id"`
-	TargetPeerID     string          `json:"target_peer_id"`
-	Mode             PeerCallMode    `json:"mode"`
-	RelatedSpec     string          `json:"related_spec,omitempty"`
+	ContractsVersion int                `json:"contracts_version"`
+	Kind             EventKind          `json:"kind"`
+	OccurredAt       time.Time          `json:"occurred_at"`
+	CallID           string             `json:"call_id"`
+	OriginPeerID     string             `json:"origin_peer_id"`
+	TargetPeerID     string             `json:"target_peer_id"`
+	Mode             PeerCallMode       `json:"mode"`
+	RelatedSpec      string             `json:"related_spec,omitempty"`
 	ResultKind       PeerCallResultKind `json:"result_kind,omitempty"`
-	BudgetConsumed   BudgetConsumed  `json:"budget_consumed,omitempty"`
-	Error            string          `json:"error,omitempty"`
+	BudgetConsumed   BudgetConsumed     `json:"budget_consumed,omitempty"`
+	Error            string             `json:"error,omitempty"`
 }
 
 // PeerIDMintedEvent is the payload for workspace.peer_id_minted.

@@ -120,6 +120,10 @@ type TrailEntry struct {
 
 	// Reason is the free-form rationale captured at event time.
 	Reason string `yaml:"reason,omitempty" json:"reason,omitempty"`
+
+	Transport string `yaml:"transport,omitempty" json:"transport,omitempty"`
+	MessageID string `yaml:"message_id,omitempty" json:"message_id,omitempty"`
+	ThreadID  string `yaml:"thread_id,omitempty" json:"thread_id,omitempty"`
 }
 
 // HandoffRecord is the wire shape for a complete handoff operation,
@@ -157,4 +161,9 @@ type HandoffRecord struct {
 
 	// Reason is the rationale captured at handoff.
 	Reason string `json:"reason,omitempty"`
+
+	Transport string `json:"transport,omitempty"`
+	MessageID string `json:"message_id,omitempty"`
+	ThreadID  string `json:"thread_id,omitempty"`
+	ResultRef string `json:"result_ref,omitempty"`
 }

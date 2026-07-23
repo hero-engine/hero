@@ -17,11 +17,20 @@ const (
 	LocalConfigFileName = "hero.local.json"
 )
 
-var legacyIntegrationWarning sync.Once
+var (
+	legacyIntegrationWarning sync.Once
+	legacySubagentWarning    sync.Once
+)
 
 func warnLegacyIntegrations() {
 	legacyIntegrationWarning.Do(func() {
 		fmt.Fprintln(os.Stderr, "hero: legacy tracker/confluence config is deprecated; define stable IDs under integrations.connections (no files were rewritten)")
+	})
+}
+
+func warnLegacySubagent() {
+	legacySubagentWarning.Do(func() {
+		fmt.Fprintln(os.Stderr, "hero: peering.subagent is deprecated and ignored; Hero core does not execute model CLIs")
 	})
 }
 
@@ -302,16 +311,13 @@ type PeeringConfig struct {
 	// publish set is empty by default.
 	PublishConventions []string `json:"publish_conventions,omitempty"`
 
-	// Subagent configures the LLM CLI used by `hero peer call` to
-	// spawn a subagent in a peer workspace. Nil → use built-in
-	// defaults (claude CLI). See SubagentConfig for the contract.
+	// Subagent is a deprecated compatibility key. It is decoded so old
+	// workspaces keep loading, but Hero ignores it and never executes it.
 	Subagent *SubagentConfig `json:"subagent,omitempty"`
 }
 
-// SubagentConfig configures the local LLM CLI invocation used by
-// `hero peer call`. Hero shells out to Command + Args with the peer
-// workspace as cwd, pipes the prompt envelope on stdin, and parses a
-// structured `<peer-call-result>` block out of stdout.
+// SubagentConfig is the retired model-runner shape retained for config
+// compatibility only. New peer calls serialize budget hints into Mail.
 type SubagentConfig struct {
 	// Command is the executable to invoke. Default: "claude".
 	Command string `json:"command,omitempty"`
@@ -1431,6 +1437,9 @@ func Load(projectRoot string) (Config, error) {
 					return cfg, aerr
 				}
 			}
+			if cfg.Peering != nil && cfg.Peering.Subagent != nil {
+				warnLegacySubagent()
+			}
 			return cfg, nil
 		}
 		return cfg, err
@@ -1533,6 +1542,9 @@ func Load(projectRoot string) (Config, error) {
 		if aerr != nil {
 			return cfg, aerr
 		}
+	}
+	if cfg.Peering != nil && cfg.Peering.Subagent != nil {
+		warnLegacySubagent()
 	}
 
 	return cfg, nil

@@ -142,6 +142,53 @@ func TestAllTargetsInstallMailSourceDedupGuidance(t *testing.T) {
 	}
 }
 
+// AC-10
+func TestAllTargetsInstallAsyncPeeringGuidance(t *testing.T) {
+	sourceBody, err := os.ReadFile(filepath.Join("..", "..", "domains", "engineering", "skills", "cross-repo-peering", "SKILL.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	markers := []string{
+		"Peering is durable Project Mail, not model execution",
+		"hero handoff receive <message-id>",
+		"receiver-owned artifact",
+		"peering.subagent",
+	}
+	cases := []struct {
+		target Target
+		path   string
+	}{
+		{TargetOpenCode, ".opencode/skills/cross-repo-peering/SKILL.md"},
+		{TargetCursor, ".cursor/rules/skills/cross-repo-peering.md"},
+		{TargetClaude, ".claude/skills/cross-repo-peering/SKILL.md"},
+		{TargetCopilot, ".github/skills/cross-repo-peering/SKILL.md"},
+		{TargetCodex, ".agents/skills/cross-repo-peering/SKILL.md"},
+		{TargetGeneric, ".ai/skills/cross-repo-peering/SKILL.md"},
+	}
+	for _, testCase := range cases {
+		t.Run(string(testCase.target), func(t *testing.T) {
+			h := newInstallHarness(t)
+			source := filepath.Join(h.SourceDir, "skills", "cross-repo-peering", "SKILL.md")
+			if err := os.MkdirAll(filepath.Dir(source), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(source, sourceBody, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			h.Run(testCase.target, nil)
+			installed, err := os.ReadFile(filepath.Join(h.TargetDir, testCase.path))
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, marker := range markers {
+				if !strings.Contains(string(installed), marker) {
+					t.Errorf("%s missing async peering guidance %q", testCase.target, marker)
+				}
+			}
+		})
+	}
+}
+
 // TestInstall_ExcludesContentReadmes asserts that README.md files in the
 // source content tree (documentation for humans browsing agents/,
 // commands/, skills/ — the pm and sales domains ship them) are never

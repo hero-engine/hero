@@ -1,6 +1,6 @@
 // Package peering implements the cross-repo peering primitives —
 // peer identity (UUID minting + migration), manifest generation,
-// handoff lifecycle, trail read/write, and peer call dispatch.
+// legacy handoff lifecycle, trail read/write, and Project Mail routing.
 //
 // Wire shapes live in contracts/peering. This package is the CLI-side
 // implementation that produces and consumes those shapes against the

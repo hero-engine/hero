@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-23T03:58:54Z · 87 ready specs_
+_Generated: 2026-07-23T04:18:29Z · 87 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -29,10 +29,39 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
+## peering-over-project-mail — "Peering over Project Mail — Async First, Execution Optional"
+_feature · delivering · horizon: next_
+
+Routes peer calls and work transfers through durable Project Mail with explicit
+receiver-owned promotion and no core model execution.
+
+**Status:** in-review — implementation, full tests, all-six harness guidance,
+and supported supersession are complete.
+
+**Pick up at:** cold-audit the delivery evidence, repair any HOLD, then run the
+verify gate and archive.
+
+→ `hero spec verify peering-over-project-mail`
+
+**Files:** `internal/peering/peercall.go`, `internal/peering/handoff.go`,
+`internal/peering/receive.go`, `internal/cli/peer.go`,
+`domains/engineering/skills/cross-repo-peering/SKILL.md`
+**Skip:** restoring subprocess/result-fence dispatch — Project Mail is the
+authority boundary.
+
+---
+
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
+
+---
+
+## peer-call-multi-cli — "Peer Call Multi-CLI — Pluggable Subagent Backends"
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/peer-call-multi-cli/spec.md)_
 
 ---
 
@@ -390,13 +419,6 @@ Cold-start prompt:
 
 ---
 
-## peer-call-multi-cli — "Peer Call Multi-CLI — Pluggable Subagent Backends"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/peer-call-multi-cli/spec.md)_
-
----
-
 ## agent-safety-conventions — "Agent Safety Conventions — Harness-Agnostic Behavioral Guardrails"
 _feature · planning · horizon: now_
 
@@ -611,17 +633,6 @@ Deliver local-first Project Mail and user-global Personal Focus as distinct,
 Hero-owned durable primitives; expose them through CLI/API and one stable
 consumer read model; and reframe peering over asynchronous mail without making
 model execution part of the communication contract.
-
----
-
-## peering-over-project-mail — "Peering over Project Mail — Async First, Execution Optional"
-_feature · planning · horizon: next_
-
-Refactor `hero peer call` and new handoffs into adapters over Project Mail.
-Preserve peer resolution, manifests, and legacy trail/status readers, but stop
-writing receiver specs or launching `claude`. Make calls async by default with
-optional reply polling, keep old history visible, update installed peering
-guidance, and supersede `peer-call-multi-cli` only after validation passes.
 
 ---
 

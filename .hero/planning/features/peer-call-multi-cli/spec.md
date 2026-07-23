@@ -5,6 +5,7 @@ type: feature
 status: planning
 created: 2026-06-24
 tags: [peering, subagent, cli, config]
+superseded_by: peering-over-project-mail
 ---
 # Peer Call Multi-CLI — Pluggable Subagent Backends
 

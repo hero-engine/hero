@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -15,10 +16,11 @@ import (
 	"unicode/utf8"
 
 	"github.com/hero-engine/hero/contracts/attention"
+	contractpeering "github.com/hero-engine/hero/contracts/peering"
 	"github.com/hero-engine/hero/internal/attention/focus"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/intake"
-	"github.com/hero-engine/hero/internal/peering"
+	"gopkg.in/yaml.v3"
 )
 
 type SendRequest struct{ RecipientAlias, Subject, Body, Kind, MessageID, IdempotencyKey string }
@@ -75,7 +77,7 @@ func (s *Service) Send(req SendRequest) (attention.MailDelivery, error) {
 	if _, err := filepath.Abs(path); err != nil {
 		return attention.MailDelivery{}, fmt.Errorf("resolve recipient path: %w", err)
 	}
-	manifest, err := peering.ReadPeerManifest(path, s.cfg.Folder)
+	manifest, err := readPeerManifest(path, s.cfg.Folder)
 	if err != nil {
 		return attention.MailDelivery{}, err
 	}
@@ -138,7 +140,7 @@ func (s *Service) Reply(req ReplyRequest) (attention.MailDelivery, error) {
 			if e != nil {
 				continue
 			}
-			m, e := peering.ReadPeerManifest(p, s.cfg.Folder)
+			m, e := readPeerManifest(p, s.cfg.Folder)
 			if e == nil && m.Repo.PeerID == original.Sender.PeerID {
 				alias = candidate
 				break
@@ -152,7 +154,7 @@ func (s *Service) Reply(req ReplyRequest) (attention.MailDelivery, error) {
 	if err != nil {
 		return attention.MailDelivery{}, err
 	}
-	manifest, err := peering.ReadPeerManifest(path, s.cfg.Folder)
+	manifest, err := readPeerManifest(path, s.cfg.Folder)
 	if err != nil {
 		return attention.MailDelivery{}, err
 	}
@@ -230,7 +232,7 @@ func (s *Service) Inbox(project string, unread bool) ([]ListedMessage, error) {
 			if err != nil {
 				return nil, err
 			}
-			manifest, err := peering.ReadPeerManifest(path, s.cfg.Folder)
+			manifest, err := readPeerManifest(path, s.cfg.Folder)
 			if err != nil {
 				return nil, err
 			}
@@ -263,6 +265,18 @@ func (s *Service) Inbox(project string, unread bool) ([]ListedMessage, error) {
 		out = append(out, ListedMessage{MailEnvelope: env, Receipt: rp})
 	}
 	return out, nil
+}
+
+func readPeerManifest(projectRoot, folder string) (*contractpeering.PeerManifest, error) {
+	data, err := os.ReadFile(filepath.Join(projectRoot, folder, "peer-manifest.yaml"))
+	if err != nil {
+		return nil, fmt.Errorf("read peer manifest: %w", err)
+	}
+	var manifest contractpeering.PeerManifest
+	if err := yaml.Unmarshal(data, &manifest); err != nil {
+		return nil, fmt.Errorf("decode peer manifest: %w", err)
+	}
+	return &manifest, nil
 }
 
 func (s *Service) UnreadSummary(limit int) (UnreadSummary, error) {

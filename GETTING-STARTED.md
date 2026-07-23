@@ -263,17 +263,19 @@ hero ac status
 ```
 
 Working across sibling repos (backend + web client + desktop, etc.):
-register each peer and use sync calls or async handoffs to coordinate
-across workspaces.
+register each peer and use asynchronous Project Mail requests to coordinate.
+Sending never launches a model or writes the receiver checkout.
 
 ```bash
 hero admin repos add app ../app
 hero peer call app --mode=advisory "What's your error envelope?"
 hero handoff order-failure app --reason "Root cause is the API"
+# receiver reviews the Mail request, then explicitly promotes it:
+hero handoff receive <message-id> --type bug
 ```
 
 See [CROSS-REPO-PEERING.md](CROSS-REPO-PEERING.md) for the full setup
-and three-tier ladder.
+and async request/receiver-promotion lifecycle.
 
 ---
 

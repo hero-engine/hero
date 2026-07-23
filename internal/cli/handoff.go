@@ -24,17 +24,21 @@ import (
 // `accept` are subcommands.
 
 var (
-	handoffTitle  string
-	handoffType   string
-	handoffReason string
+	handoffTitle          string
+	handoffType           string
+	handoffReason         string
+	handoffIdempotencyKey string
+	handoffOutputJSON     bool
+	handoffReceiveType    string
+	handoffReceiveKey     string
 )
 
 var handoffCmd = &cobra.Command{
 	Use:   "handoff <slug> <peer-alias>",
-	Short: "Hand off a local spec to a peer workspace (async drop)",
-	Long: `Async-drop a local spec onto a peer workspace. The receiving workspace
-gets a scaffolded spec stamped with provenance (` + "`received_from`" + `), and
-this side's spec status moves to handed_off with a Handoff Trail entry.
+	Short: "Request a work transfer over Project Mail",
+	Long: `Send a durable work-transfer request over Project Mail. Sending does
+not write the receiver workspace or change the origin spec status. The receiver
+must explicitly run hero handoff receive to promote the request through Intake.
 
 Examples:
   hero handoff order-failure-error-display app --reason "Backend job"
@@ -43,7 +47,8 @@ Examples:
 
 Subcommands:
   hero handoff status [<slug>]    Show handoff state (one spec or all)
-  hero handoff accept <slug>      Pick up a handed_back spec`,
+  hero handoff receive <message-id>  Explicitly promote a Mail request
+  hero handoff accept <slug>         Pick up a legacy handed_back spec`,
 	Args: cobra.ExactArgs(2),
 	RunE: runHandoff,
 }
@@ -62,13 +67,26 @@ var handoffAcceptCmd = &cobra.Command{
 	RunE:  runHandoffAccept,
 }
 
+var handoffReceiveCmd = &cobra.Command{
+	Use:   "receive <message-id>",
+	Short: "Promote a work-transfer Mail request through receiver-owned Intake",
+	Args:  cobra.ExactArgs(1),
+	RunE:  runHandoffReceive,
+}
+
 func init() {
 	handoffCmd.Flags().StringVar(&handoffTitle, "title", "", "override the receiver-side spec title")
 	handoffCmd.Flags().StringVar(&handoffType, "type", "", "override the receiver-side spec type (feature, bug, …)")
 	handoffCmd.Flags().StringVar(&handoffReason, "reason", "", "rationale for the handoff (recorded in trail + receiver provenance)")
+	handoffCmd.Flags().StringVar(&handoffIdempotencyKey, "idempotency-key", "", "stable retry key")
+	handoffCmd.Flags().BoolVar(&handoffOutputJSON, "json", false, "emit structured JSON")
+	handoffReceiveCmd.Flags().StringVar(&handoffReceiveType, "type", "", "receiver artifact type: feature or bug")
+	handoffReceiveCmd.Flags().StringVar(&handoffReceiveKey, "idempotency-key", "", "stable retry key")
+	handoffReceiveCmd.Flags().BoolVar(&handoffOutputJSON, "json", false, "emit structured JSON")
 
 	handoffCmd.AddCommand(handoffStatusCmd)
 	handoffCmd.AddCommand(handoffAcceptCmd)
+	handoffCmd.AddCommand(handoffReceiveCmd)
 }
 
 func runHandoff(cmd *cobra.Command, args []string) error {
@@ -91,22 +109,37 @@ func runHandoff(cmd *cobra.Command, args []string) error {
 	}
 
 	res, err := peering.Handoff(projectRoot, slug, peering.HandoffOptions{
-		PeerAlias: peerAlias,
-		Title:     handoffTitle,
-		Type:      handoffType,
-		Reason:    handoffReason,
+		PeerAlias:      peerAlias,
+		Title:          handoffTitle,
+		Type:           handoffType,
+		Reason:         handoffReason,
+		IdempotencyKey: handoffIdempotencyKey,
 	})
 	if err != nil {
 		return err
 	}
 
-	fmt.Fprintf(cmd.OutOrStdout(),
-		"Handed off %s to %s (peer_id %s)\n  peer slug: %s\n  peer path: %s\n",
-		slug, peerAlias, res.PeerID, res.PeerSlug, res.PeerPath)
-	if res.PeerSlug != slug {
-		fmt.Fprintf(cmd.OutOrStdout(),
-			"  note: slug collided on peer side — used %q instead\n", res.PeerSlug)
+	if handoffOutputJSON {
+		return writeMailJSON(cmd.OutOrStdout(), res)
 	}
+	fmt.Fprintf(cmd.OutOrStdout(),
+		"Work transfer queued for %s (peer_id %s)\n  message_id: %s\n  thread_id: %s\n",
+		peerAlias, res.PeerID, res.MessageID, res.ThreadID)
+	return nil
+}
+
+func runHandoffReceive(cmd *cobra.Command, args []string) error {
+	res, err := peering.Receive(findProjectRoot(), args[0], peering.ReceiveOptions{
+		Type: handoffReceiveType, IdempotencyKey: handoffReceiveKey,
+	})
+	if err != nil {
+		return err
+	}
+	if handoffOutputJSON {
+		return writeMailJSON(cmd.OutOrStdout(), res)
+	}
+	fmt.Fprintf(cmd.OutOrStdout(), "Accepted %s → %s %s\n  reply_id: %s\n",
+		res.MessageID, res.Artifact.Type, res.Artifact.Slug, res.ReplyID)
 	return nil
 }
 
@@ -124,6 +157,30 @@ func runHandoffStatus(cmd *cobra.Command, args []string) error {
 
 	if len(args) == 1 {
 		slug := args[0]
+		if strings.HasPrefix(slug, "mail_") {
+			svc, err := mailService()
+			if err != nil {
+				return err
+			}
+			item, err := svc.Show(slug, false)
+			if err != nil {
+				return err
+			}
+			state := "queued"
+			if item.Receipt != nil {
+				switch {
+				case item.Receipt.PromotedArtifact != nil:
+					state = "accepted"
+				case item.Receipt.DismissedAt != "":
+					state = "dismissed"
+				case item.Receipt.ReadAt != "":
+					state = "read"
+				}
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "%s  [%s]\n  thread_id: %s\n  kind: %s\n",
+				item.ID, state, item.ThreadID, item.Kind)
+			return nil
+		}
 		for _, s := range specs {
 			if s.Slug == slug {
 				return renderHandoffStatusOne(cmd, s)

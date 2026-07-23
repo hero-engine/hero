@@ -188,13 +188,13 @@ client — they can work as a tag team. A session in one repo can ask
 another's Hero a question, hand off a spec, or pull peer-surface
 conventions into context. Provenance travels with every operation.
 
-Three interaction modes, plus a passive boundary detector:
+Three asynchronous request modes, plus a passive boundary detector:
 
 | Mode | Writes? | Pick when |
 |---|---|---|
-| Sync peer call — advisory | Nothing | You need a fact from peer B: "does this break you?", "what's your convention for X?" |
-| Sync peer call — spec-out | Spec on B | The work is really B's. B's Hero designs the spec natively; its conventions kick in. |
-| Async handoff | Spec on B (scaffolded) | You already did the investigation; drop it on B's queue. |
+| Mail call — advisory | Mail only | You need a fact from peer B: "does this break you?", "what's your convention for X?" |
+| Mail call — spec-out | Mail only | Ask B to design work; B explicitly decides whether to promote it. |
+| Work-transfer request | Mail only | Offer investigated work without writing B's roadmap. |
 | Convention import (fallback) | Nothing | Work stays in A but must respect B's surface. |
 
 Quick cheat sheet:
@@ -204,11 +204,14 @@ hero init                                # mints a stable peer_id UUID
 hero admin repos add app ../app          # register a sibling peer
 hero peer call app --mode=advisory "What's your error envelope?"
 hero handoff order-failure app --reason "Root cause is the API"
+# on the receiving side, after review:
+hero handoff receive <message-id> --type bug
 ```
 
-V1 runs on a developer laptop with three sibling checkouts and no
-cloud. Full-delivery peer calls, boundary nudges, and cloud transport
-are deferred.
+Calls return immediately with Project Mail message/thread IDs. `--wait`
+optionally polls for an external response; Hero core never launches a model.
+Receiver promotion through Mail and Intake is the first receiver-tree write.
+V1 runs on sibling checkouts with no daemon, model CLI, or cloud.
 
 See [CROSS-REPO-PEERING.md](CROSS-REPO-PEERING.md) for setup, the full
 ladder, lifecycle reference, troubleshooting, and the dogfood checklist.

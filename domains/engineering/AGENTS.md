@@ -42,6 +42,7 @@ When the user describes what they want in natural language, route to the appropr
 | Ask sibling/peer repo a question, check with peer | `hero peer call <alias> --mode=advisory "..."` |
 | Have peer design something, let peer handle design | `hero peer call <alias> --mode=spec-out "..."` |
 | Hand off a spec to a peer repo, drop on peer's queue, transfer to sibling | `hero handoff <spec> <alias>` |
+| Accept an incoming Mail work transfer into receiver-owned planning | `hero handoff receive <message-id>` |
 | Pick up handed-back spec, accept the handoff, peer finished | `hero handoff accept <spec>` |
 | What peers do we have, list siblings, which repos are linked | `hero peer list` |
 | What does peer expose, peer surface, peer conventions, inspect peer | `hero peer show <alias>` |
@@ -110,9 +111,10 @@ These are run in the terminal, not as slash commands:
 - `hero check` — health check
 - `hero peer list` — list registered sibling repos with reachability + manifest status
 - `hero peer show <alias>` — inspect one peer (manifest contents, in-flight handoffs)
-- `hero peer call <alias> --mode=advisory "..."` — ask peer's Hero a question (no writes on peer)
-- `hero peer call <alias> --mode=spec-out "..."` — have peer's Hero design a spec natively on its side
-- `hero handoff <spec> <alias>` — async-drop a local spec on peer's queue
+- `hero peer call <alias> --mode=advisory "..."` — send an asynchronous Project Mail question (no model launch or receiver-tree write)
+- `hero peer call <alias> --mode=spec-out "..."` — request peer-side design over Mail; receiver promotion is explicit
+- `hero handoff <spec> <alias>` — send a work-transfer Mail request without changing either spec tree
+- `hero handoff receive <message-id>` — receiver explicitly promotes Mail through Intake and replies with its artifact
 - `hero handoff status` / `hero handoff accept <spec>` — track handoffs across the boundary
 - `hero admin repos add <alias> <path>` — register a sibling repo as a peer (one-time setup)
 
