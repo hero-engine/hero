@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -37,7 +38,7 @@ func testService(t *testing.T) (*Service, *Store, string, string) {
 }
 
 func TestServiceSendReplayConflictAndReceipts(t *testing.T) {
-	svc, s, _, _ := testService(t)
+	svc, s, _, b := testService(t)
 	req := SendRequest{RecipientAlias: "b", Subject: "Question", Body: "Body", Kind: "future-kind", IdempotencyKey: "retry"}
 	first, err := svc.Send(req)
 	if err != nil {
@@ -54,7 +55,7 @@ func TestServiceSendReplayConflictAndReceipts(t *testing.T) {
 	if _, err := svc.Send(req); err != ErrIdempotencyConflict {
 		t.Fatalf("want idempotency_conflict, got %v", err)
 	}
-	peerSvc := NewService(s, "/peer", config.Config{PeerID: "peer_b"})
+	peerSvc := NewService(s, b, config.Config{Folder: ".hero", PeerID: "peer_b"})
 	peerSvc.now = func() time.Time { return time.Date(2026, 7, 22, 18, 1, 0, 0, time.UTC) }
 	shown, err := peerSvc.Show(first.MessageID, true)
 	if err != nil {
@@ -83,6 +84,10 @@ func TestServiceSendReplayConflictAndReceipts(t *testing.T) {
 	}
 	if shownAfterAck.Receipt.Kind != "acknowledged" || shownAfterAck.Receipt.ReadAt == "" {
 		t.Fatalf("show lost acknowledgement: %#v", shownAfterAck.Receipt)
+	}
+	events, err := os.ReadFile(filepath.Join(b, ".hero", "events.log"))
+	if err != nil || !strings.Contains(string(events), `"type":"mail.read"`) || !strings.Contains(string(events), `"type":"mail.acknowledge"`) {
+		t.Fatalf("shared triage events missing: %s, %v", events, err)
 	}
 	after, _ := s.Get("peer_b", first.MessageID)
 	if !reflect.DeepEqual(before, after) {

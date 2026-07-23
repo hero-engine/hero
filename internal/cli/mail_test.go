@@ -3,12 +3,14 @@ package cli
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/hero-engine/hero/contracts/attention"
+	"github.com/hero-engine/hero/internal/attention/mail"
 )
 
 func TestMailCLIJSONCommandsAndErrors(t *testing.T) {
@@ -68,6 +70,29 @@ func TestMailCLIJSONCommandsAndErrors(t *testing.T) {
 	if json.Unmarshal([]byte(out), &inbox) != nil || len(inbox) != 1 {
 		t.Fatalf("inbox JSON: %s", out)
 	}
+	if err := os.Chdir(b); err != nil {
+		t.Fatal(err)
+	}
+	statusOut, err := runCmd("status", "--json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var statusPayload map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(statusOut), &statusPayload); err != nil || statusPayload["specs"] == nil || statusPayload["mail"] == nil {
+		t.Fatalf("status JSON missing existing/mail fields: %s, %v", statusOut, err)
+	}
+	var summary mail.UnreadSummary
+	if err := json.Unmarshal(statusPayload["mail"], &summary); err != nil || summary.Count != 1 || len(summary.Items) != 1 {
+		t.Fatalf("status mail summary = %#v, %v", summary, err)
+	}
+	resumeOut, err := runCmd("resume", "--json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var resumePayload map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(resumeOut), &resumePayload); err != nil || resumePayload["mail"] == nil {
+		t.Fatalf("resume JSON missing mail: %s, %v", resumeOut, err)
+	}
 	out, err = run(b, []string{"show", delivery.MessageID, "--no-mark-read", "--json"}, "")
 	if err != nil {
 		t.Fatal(err)
@@ -81,6 +106,34 @@ func TestMailCLIJSONCommandsAndErrors(t *testing.T) {
 	}
 	if !json.Valid([]byte(out)) {
 		t.Fatalf("ack JSON: %s", out)
+	}
+	var acknowledged mail.ActionResult
+	if err := json.Unmarshal([]byte(out), &acknowledged); err != nil {
+		t.Fatal(err)
+	}
+	out, err = run(b, []string{"dismiss", delivery.MessageID, "--revision", fmt.Sprint(acknowledged.Receipt.Revision), "--idempotency-key", "dismiss-1", "--json"}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var dismissed mail.ActionResult
+	if err := json.Unmarshal([]byte(out), &dismissed); err != nil || dismissed.Receipt.DismissedAt == "" {
+		t.Fatalf("dismiss JSON: %s, %v", out, err)
+	}
+	out, err = run(b, []string{"promote", delivery.MessageID, "--revision", fmt.Sprint(dismissed.Receipt.Revision), "--idempotency-key", "promote-1", "--type", "intake", "--json"}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var promoted mail.ActionResult
+	if err := json.Unmarshal([]byte(out), &promoted); err != nil || promoted.Artifact == nil {
+		t.Fatalf("promote JSON: %s, %v", out, err)
+	}
+	out, err = run(b, []string{"add-to-today", delivery.MessageID, "--revision", fmt.Sprint(promoted.Receipt.Revision), "--idempotency-key", "today-1", "--json"}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var today mail.ActionResult
+	if err := json.Unmarshal([]byte(out), &today); err != nil || today.FocusItemID == "" {
+		t.Fatalf("today JSON: %s, %v", out, err)
 	}
 	out, err = run(b, []string{"reply", delivery.MessageID, "--body-file", "-", "--json"}, "answer")
 	if err != nil {
@@ -106,7 +159,7 @@ func TestMailCommandTreeFeedsDynamicShellCompletion(t *testing.T) {
 	for _, child := range cmd.Commands() {
 		got[child.Name()] = true
 	}
-	for _, name := range []string{"send", "inbox", "show", "reply", "ack"} {
+	for _, name := range []string{"send", "inbox", "show", "reply", "ack", "read", "dismiss", "promote", "add-to-today"} {
 		if !got[name] {
 			t.Errorf("dynamic completion tree missing mail %s", name)
 		}

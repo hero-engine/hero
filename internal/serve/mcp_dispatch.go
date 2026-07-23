@@ -52,6 +52,8 @@ func (s *MCPServer) toolHandlers() map[string]toolHandler {
 		"hero_expand":            s.toolExpand,
 		"hero_snapshot":          s.toolSnapshot,
 		"hero_focus_suggestions": s.toolFocusSuggestions,
+		"hero_mail_list":         s.toolMailList,
+		"hero_mail_show":         s.toolMailShow,
 
 		// mutate
 		"hero_tracker_get_issue":       s.toolTrackerGetIssue,
@@ -69,6 +71,7 @@ func (s *MCPServer) toolHandlers() map[string]toolHandler {
 		"hero_synthesize":              s.toolSynthesize,
 		"hero_focus_suggest":           s.toolFocusSuggest,
 		"hero_focus_suggestion_action": s.toolFocusSuggestionAction,
+		"hero_mail_action":             s.toolMailAction,
 
 		// analyze
 		"hero_drift":         s.toolDrift,

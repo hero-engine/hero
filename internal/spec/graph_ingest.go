@@ -172,6 +172,42 @@ func WriteGraph(specs []*Spec, repoKey, fallbackDomain string, store *graph.Stor
 		}
 	}
 
+	// Fourth pass: typed external sources owned by specs. Mail bodies remain
+	// private; only stable routing/provenance identity enters the graph.
+	for _, s := range specs {
+		if s.Type != TypeIntake || s.Source == nil || s.Source.Kind != "mail" || s.Source.ID == "" {
+			continue
+		}
+		fromID, ok := idByTypeKey["Intake:"+s.Slug]
+		if !ok {
+			continue
+		}
+		domain := s.Domain
+		if domain == "" {
+			domain = fallbackDomain
+		}
+		sourceID, err := store.UpsertNode(&graph.Node{
+			Type: "MailSource", Key: s.Source.ID, Domain: domain, Repo: repoKey,
+			Props: map[string]any{
+				"message_id":        s.Source.ID,
+				"thread_id":         s.Source.ThreadID,
+				"sender_peer_id":    s.Source.SenderPeerID,
+				"recipient_peer_id": s.Source.RecipientPeerID,
+			},
+			Source: map[string]any{"kind": "mail", "path": s.Path},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("upsert MailSource/%s: %w", s.Source.ID, err)
+		}
+		if _, err := store.UpsertEdge(&graph.Edge{
+			FromID: fromID, ToID: sourceID, Type: "mail_source", Repo: repoKey,
+			Source: map[string]any{"kind": "mail", "path": s.Path},
+		}); err != nil {
+			return nil, fmt.Errorf("upsert Intake→MailSource edge: %w", err)
+		}
+		summary.Edges++
+	}
+
 	return summary, nil
 }
 

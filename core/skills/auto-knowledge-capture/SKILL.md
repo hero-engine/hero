@@ -128,6 +128,13 @@ created: <YYYY-MM-DD>
 
 Before writing, mentally check against existing knowledge. If you recall that a similar convention or decision already exists from earlier in the conversation or from reading the knowledge base, don't create a duplicate. If the existing entry needs updating, update it instead of creating a new one.
 
+For intent-bearing content whose typed source is `mail:<message-id>`, treat that
+source key as canonical. Search for an Intake or promoted artifact carrying the
+same Mail source before capture, and skip capture when one exists. Never copy a
+Mail body into a second Intake merely because its wording resembles a fresh
+ask; explicit Mail promotion owns that source and `internal/intake` enforces the
+same source-key deduplication for every surface.
+
 ## Volume control
 
 A typical session should produce 0-3 knowledge entries. If you find yourself wanting to write more than 3, you're probably being too granular. Consolidate related learnings into a single entry.

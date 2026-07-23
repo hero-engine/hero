@@ -7,6 +7,32 @@ package serve
 func (s *MCPServer) toolDefinitions() []ToolDefinition {
 	return []ToolDefinition{
 		{
+			Name:        "hero_mail_list",
+			Description: "List Project Mail for this workspace with receipt state and advertised triage actions.",
+			InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{
+				"unread": {Type: "boolean", Description: "Return unread messages only"},
+			}},
+		},
+		{
+			Name:        "hero_mail_show",
+			Description: "Read one Project Mail message in this workspace without mutating receipt state.",
+			InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{
+				"message_id": {Type: "string", Description: "Stable Mail message ID"},
+			}, Required: []string{"message_id"}},
+		},
+		{
+			Name:        "hero_mail_action",
+			Description: "Dispatch an advertised Project Mail triage action through the shared revisioned service.",
+			InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{
+				"message_id":      {Type: "string", Description: "Stable Mail message ID"},
+				"action":          {Type: "string", Description: "read, acknowledge, dismiss, promote, or add_to_today"},
+				"revision":        {Type: "number", Description: "Expected receipt revision; zero means no receipt"},
+				"idempotency_key": {Type: "string", Description: "Stable retry key"},
+				"note":            {Type: "string", Description: "Optional acknowledgement note"},
+				"artifact_type":   {Type: "string", Description: "For promote: intake, feature, or bug"},
+			}, Required: []string{"message_id", "action", "revision", "idempotency_key"}},
+		},
+		{
 			Name:        "hero_focus_suggest",
 			Description: "Create one advisory deferred-work proposal. This never creates Focus; only explicit user acceptance can create a commitment.",
 			InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{

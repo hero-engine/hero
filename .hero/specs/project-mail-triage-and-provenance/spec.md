@@ -2,7 +2,7 @@
 title: "Project Mail Triage and Provenance — From Signal to Explicit Work"
 slug: project-mail-triage-and-provenance
 type: feature
-status: planning
+status: completed
 domain: engineering
 priority: high
 size: large
@@ -12,6 +12,8 @@ parent: durable-attention
 depends-on: [project-mail-core, personal-focus-core, hero-idea-primitive-core]
 conflicts-with: [deferred-work-suggestion-contract]
 tags: [mail, intake, provenance, graph, mcp]
+delivery_method: manual
+completed_at: 2026-07-23T03:23:06Z
 ---
 
 # Project Mail Triage and Provenance — From Signal to Explicit Work
@@ -36,12 +38,20 @@ through existing Hero CLI and MCP read paths.
 
 ## Kickoff
 
-Implement triage as service calls over immutable Mail and separate receipts.
-First extract Intake capture/promotion from Cobra into a reusable internal
-service with parity tests. Make promotion and Add to Today idempotent, return
-authoritative artifact/Focus references, emit provenance, and expose only
-project-scoped MCP capabilities here; the global Hero Code API belongs to the
-read-model child.
+Adds explicit Project Mail triage, promotion, and Add-to-Today actions with
+retry-safe receipts and traceable provenance.
+
+**Status:** completed — all 10 criteria passed, the cold audit returned SHIP,
+and Hero archived the verified delivery.
+
+**Pick up at:** use this completed contract as the project-scoped foundation
+when building the combined Attention read model.
+
+→ `.hero/planning/initiatives/durable-attention/attention-read-model-v1/spec.md`
+
+**Files:** `internal/attention/mail/triage.go`,
+`internal/attention/mail/promotion.go`, `internal/intake/service.go`,
+`internal/serve/mcp_tools_mail.go`
 
 ## Problem
 
@@ -179,3 +189,49 @@ already represented by Intake or a promoted artifact.
 - MCP tests for advertised actions, stale revisions, missing sources, and exact
   promotion/Add-to-Today replay.
 - `go test ./...` for resume, status, graph, feed, Intake, Focus, and MCP regressions.
+
+## Completion Ledger
+
+Implementation keeps Mail envelopes immutable, moves all work creation through
+the extracted Intake and existing Focus authorities, and records every
+cross-authority promotion step in the revisioned receipt. Validation included
+the full Go suite, focused failure-injection and CLI/MCP exercises, graph
+traversal, and the six-target harness propagation matrix.
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Read, acknowledge, and dismiss update only revisioned receipts | DONE | `internal/attention/mail/triage.go:51` and `triage_test.go:43` — CAS receipt actions preserve the immutable envelope and return authoritative rows |
+| 2 | Promotion reuses Intake/roadmap authority with typed Mail provenance | DONE | `internal/attention/mail/promotion.go:20` and `internal/intake/service.go:66` — deterministic source-aware capture and promotion use the extracted authority |
+| 3 | Partial and exact promotion retries never duplicate work | DONE | `internal/attention/mail/promotion.go:61` and `triage_test.go:138` — receipt-recorded steps resume after injected failures at every boundary |
+| 4 | Promotion returns artifact, project, source, and navigation identity | DONE | `internal/attention/mail/triage.go:40` and `promotion.go:153` — result carries artifact, project, message/thread, and client-safe spec navigation |
+| 5 | Add to Today is idempotent and orthogonal | DONE | `internal/attention/mail/promotion.go:162` and `triage_test.go:71` — Focus `CreateOrGet` returns one Today item without changing other triage fields |
+| 6 | Why traverses artifact → Intake → Mail without body metadata | DONE | `internal/spec/graph_ingest.go:175` and `triage_test.go:177` — body-free `MailSource` plus `derived_from`/`mail_source` traversal is asserted |
+| 7 | Resume/status expose bounded deterministic unread summaries | DONE | `internal/cli/brief.go:137`, `status.go:288`, and `triage_test.go:110` — text/JSON paths preserve existing data and add five oldest IDs/subjects |
+| 8 | Project-scoped MCP Mail tools return shaped success/failure | DONE | `internal/serve/mcp_tools_mail.go:51` and `mcp_tools_mail_test.go` — advertised action descriptors and JSON failures cover list/show/action |
+| 9 | Stale, missing, and unsupported requests do not mutate | DONE | `internal/attention/mail/store.go` CAS stale result, `triage.go:58`, and MCP structured-failure tests cover authoritative current rows |
+| 10 | Mail content is never executed and work stays in Intake/Focus | DONE | `internal/intake/service.go:173` quotes untrusted frontmatter; promotion and Today adapters call only Intake/Focus, with no spec-status side channel |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Extract Intake storage authority from Cobra | DONE | `internal/intake/service.go`, `repository.go`, and retained `internal/cli/intake_test.go` characterization coverage |
+| 2 | Add revisioned receipt persistence and triage service | DONE | `contracts/attention/mail.go`, `internal/attention/mail/store.go`, and `triage.go` |
+| 3 | Add promotion, Focus, graph, and feed adapters | DONE | `internal/attention/mail/promotion.go`, resumable event handling, and body-free graph ingestion |
+| 4 | Add Mail CLI triage commands and shared ack/read paths | DONE | `internal/cli/mail.go` plus end-to-end command exercise in `mail_test.go:16` |
+| 5 | Extend resume/status text and JSON aggregation | DONE | `internal/cli/brief.go`, `status.go`, and bounded summary service |
+| 6 | Add MCP definitions, dispatch, and Mail handlers | DONE | `internal/serve/mcp_tools_def.go`, `mcp_dispatch.go`, `mcp_tools_mail.go`, and tool inventory coverage |
+| 7 | Extend graph/event vocabulary and why coverage | DONE | `internal/feed/feed.go`, `internal/graph/edge.go`, `internal/traversal/why.go`, and traversal assertions |
+| 8 | Deduplicate canonical Mail sources in capture guidance/implementation | DONE | `internal/intake/service.go:70`, `core/skills/auto-knowledge-capture/SKILL.md`, and six-target propagation test `internal/install/content_test.go:103` |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end: `go test ./internal/cli -run '^(TestIntake|TestMail)' -count=1` sent Mail, rendered status/resume JSON, acknowledged, dismissed, promoted, added to Today, replied, and checked structured errors.
+- [x] Full regression suite passed: `GOCACHE=/private/tmp/hero-mail-gocache go test ./...`.
+- [x] Cross-harness guidance propagation passed for `opencode|cursor|claude|copilot|codex|generic`: `go test ./internal/install -run '^TestAllTargetsInstallMailSourceDedupGuidance$' -count=1`.
+
+### Excellence Bar self-check
+
+- [x] Yes — the implementation is authority-preserving, retry-safe at every external write boundary, explicit about structured failures, hardened against untrusted Mail frontmatter injection, fully traversable through provenance, and covered end-to-end plus by the full repository suite.

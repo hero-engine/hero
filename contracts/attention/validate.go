@@ -98,6 +98,12 @@ func ValidateMailReceipt(v MailReceipt) *ContractError {
 	if err := validateTimestamp("acknowledged_at", v.AcknowledgedAt, false); err != nil {
 		return err
 	}
+	if err := validateTimestamp("dismissed_at", v.DismissedAt, false); err != nil {
+		return err
+	}
+	if v.Revision < 0 {
+		return invalid("revision", "must not be negative")
+	}
 	if !utf8.ValidString(v.AcknowledgementNote) || utf8.RuneCountInString(v.AcknowledgementNote) > 500 {
 		return invalid("acknowledgement_note", "must be valid UTF-8 and at most 500 characters")
 	}

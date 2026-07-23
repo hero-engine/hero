@@ -59,6 +59,7 @@ var originEdgeTypes = []string{
 	"mentions",
 	"depends_on",
 	"derived_from",
+	"mail_source",
 	"originated_in",
 	"closes",
 	"fixes",

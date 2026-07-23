@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-23T02:40:42Z · 87 ready specs_
+_Generated: 2026-07-23T03:24:27Z · 88 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -614,15 +614,26 @@ model execution part of the communication contract.
 
 ---
 
-## project-mail-triage-and-provenance — "Project Mail Triage and Provenance — From Signal to Explicit Work"
+## peering-over-project-mail — "Peering over Project Mail — Async First, Execution Optional"
 _feature · planning · horizon: next_
 
-Implement triage as service calls over immutable Mail and separate receipts.
-First extract Intake capture/promotion from Cobra into a reusable internal
-service with parity tests. Make promotion and Add to Today idempotent, return
-authoritative artifact/Focus references, emit provenance, and expose only
-project-scoped MCP capabilities here; the global Hero Code API belongs to the
-read-model child.
+Refactor `hero peer call` and new handoffs into adapters over Project Mail.
+Preserve peer resolution, manifests, and legacy trail/status readers, but stop
+writing receiver specs or launching `claude`. Make calls async by default with
+optional reply polling, keep old history visible, update installed peering
+guidance, and supersede `peer-call-multi-cli` only after validation passes.
+
+---
+
+## attention-read-model-v1 — "Attention Read Model v1 — Consumer-Safe Mail and Focus Projection"
+_feature · planning · horizon: next_
+
+Implement one projection service and mount its global HTTP handlers before the
+generic project router. Hero Code's canonical transport is
+`/api/attention/v1`; CLI and MCP are adapters over the same service. Build rows
+only from source authorities, advertise only valid actions, return
+authoritative post-action state, and require snapshot refresh rather than event
+streaming for v1 correctness.
 
 ---
 

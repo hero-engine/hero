@@ -29,6 +29,11 @@ var ValidTypes = []string{
 	"delivery_complete",
 	"subproject_changed",
 	"drive.pause_outcome",
+	"mail.read",
+	"mail.acknowledge",
+	"mail.dismiss",
+	"mail.promote",
+	"mail.add_to_today",
 
 	// cross-repo-peering (Phase 0+1)
 	"workspace.peer_id_minted",

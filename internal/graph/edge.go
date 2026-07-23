@@ -42,6 +42,7 @@ var ErrEdgeDomainRequired = errors.New("graph: edge.Domain required (from-node i
 var crossDomainAllowedKinds = map[string]struct{}{
 	"handoff":      {}, // PM Story → engineering Feature
 	"derived_from": {}, // engineering Feature → PM Story (reverse pointer)
+	"mail_source":  {}, // Intake → immutable Project Mail source identity
 	"realizes":     {}, // engineering Feature → PM PRD (no story-level handoff)
 }
 

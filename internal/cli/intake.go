@@ -3,11 +3,11 @@ package cli
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/intake"
 	"github.com/hero-engine/hero/internal/spec"
 	"github.com/spf13/cobra"
 )
@@ -82,16 +82,7 @@ func intakeWorkspace() (cfg config.Config, projectRoot, heroDir string, err erro
 // TypeIntake keeps promote/reject unambiguous even after a promotion
 // leaves a roadmap spec sharing the same slug.
 func resolveIntakeBySlug(heroDir, slug string) (*spec.Spec, error) {
-	specs, err := spec.Discover(heroDir)
-	if err != nil {
-		return nil, fmt.Errorf("discovering specs: %w", err)
-	}
-	for _, s := range specs {
-		if s.Slug == slug && s.Type == spec.TypeIntake {
-			return s, nil
-		}
-	}
-	return nil, fmt.Errorf("intake %q not found", slug)
+	return intake.NewService(heroDir).Resolve(slug)
 }
 
 func runIntakeCapture(cmd *cobra.Command, args []string) error {
@@ -101,7 +92,6 @@ func runIntakeCapture(cmd *cobra.Command, args []string) error {
 	}
 
 	now := time.Now()
-	date := now.Format("2006-01-02")
 
 	// Slug / inline-text derivation mirrors `hero note`.
 	var slug, inlineText string
@@ -122,12 +112,6 @@ func runIntakeCapture(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid slug %q — use lowercase-kebab-case without slashes", slug)
 	}
 
-	targetDir := filepath.Join(heroDir, "planning", "intake", slug)
-	specPath := filepath.Join(targetDir, "spec.md")
-	if _, statErr := os.Stat(specPath); statErr == nil {
-		return fmt.Errorf("intake already exists: %s", specPath)
-	}
-
 	title := slugToTitle(slug)
 	if inlineText != "" {
 		title = inlineText
@@ -136,11 +120,10 @@ func runIntakeCapture(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if err := os.MkdirAll(targetDir, 0o755); err != nil {
-		return fmt.Errorf("creating directory: %w", err)
-	}
-	if err := os.WriteFile(specPath, []byte(generateIntakeContent(title, slug, date, inlineText)), 0o644); err != nil {
-		return fmt.Errorf("writing intake: %w", err)
+	service := intake.NewService(heroDir)
+	specPath, err := service.Capture(intake.CaptureRequest{Slug: slug, Title: title, Body: inlineText})
+	if err != nil {
+		return err
 	}
 
 	fmt.Printf("Created intake: %s\n", specPath)
@@ -150,26 +133,7 @@ func runIntakeCapture(cmd *cobra.Command, args []string) error {
 // generateIntakeContent scaffolds an intake spec. status:planning is the
 // declared initial state in core/spec-types/intake.md.
 func generateIntakeContent(title, slug, date, body string) string {
-	var sb strings.Builder
-	sb.WriteString("---\n")
-	sb.WriteString(fmt.Sprintf("title: %s\n", title))
-	sb.WriteString(fmt.Sprintf("slug: %s\n", slug))
-	sb.WriteString("type: intake\n")
-	sb.WriteString("status: planning\n")
-	sb.WriteString(fmt.Sprintf("created: %s\n", date))
-	sb.WriteString("tags: []\n")
-	sb.WriteString("---\n")
-	sb.WriteString(fmt.Sprintf("# %s\n\n## Signal\n\n", title))
-	if body != "" {
-		sb.WriteString(body)
-		if !strings.HasSuffix(body, "\n") {
-			sb.WriteString("\n")
-		}
-	} else {
-		sb.WriteString("<!-- What is the idea or inbound signal? Capture it in its own words. -->\n")
-	}
-	sb.WriteString("\n## Notes\n\n<!-- Triage thoughts, links, who asked. Promote with `hero intake promote`. -->\n")
-	return sb.String()
+	return intake.GenerateContent(title, slug, date, body, nil, intake.SourceMetadata{})
 }
 
 func runIntakePromote(cmd *cobra.Command, args []string) error {
@@ -179,52 +143,12 @@ func runIntakePromote(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	in, err := resolveIntakeBySlug(heroDir, slug)
-	if err != nil {
-		return err
-	}
-	if in.Status == spec.StatusPromoted {
-		return fmt.Errorf("intake %q is already promoted", slug)
-	}
-
 	newType := strings.ToLower(intakePromoteType)
-	if newType != "feature" && newType != "bug" {
-		return fmt.Errorf("--type must be feature or bug, got %q", newType)
-	}
-
-	newDir, err := specTargetDir(heroDir, newType, slug)
+	result, err := intake.NewService(heroDir).Promote(intake.PromoteRequest{Slug: slug, Type: newType, GenerateTemplate: generateSpecTemplate})
 	if err != nil {
 		return err
 	}
-	newPath := filepath.Join(newDir, "spec.md")
-	if _, statErr := os.Stat(newPath); statErr == nil {
-		return fmt.Errorf("%s spec already exists: %s", newType, newPath)
-	}
-
-	// Create the roadmap spec with a derived_from relation back to the
-	// intake — the edge `hero why` walks for provenance.
-	content := injectRelationBlock(generateSpecTemplate(slug, newType), "derived_from", slug)
-	if err := os.MkdirAll(newDir, 0o755); err != nil {
-		return fmt.Errorf("creating directory: %w", err)
-	}
-	if err := spec.AtomicWriteFile(newPath, []byte(content), 0o644); err != nil {
-		return fmt.Errorf("writing %s spec: %w", newType, err)
-	}
-
-	// Mark the intake promoted and record where it went. The scalar is
-	// retained for field-level consumers; the relation is the graph contract.
-	data, err := os.ReadFile(in.Path)
-	if err != nil {
-		return fmt.Errorf("reading intake: %w", err)
-	}
-	updated := spec.SetFrontmatterField(string(data), "status", string(spec.StatusPromoted))
-	updated = spec.SetFrontmatterField(updated, "promoted_to", slug)
-	updated = injectRelationBlock(updated, "promotes_to", slug)
-	if err := spec.AtomicWriteFile(in.Path, []byte(updated), 0o644); err != nil {
-		return fmt.Errorf("updating intake: %w", err)
-	}
-
-	fmt.Printf("Promoted intake %q → %s spec: %s\n", slug, newType, newPath)
+	fmt.Printf("Promoted intake %q → %s spec: %s\n", slug, newType, result.Path)
 	return nil
 }
 
@@ -235,22 +159,13 @@ func runIntakeReject(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	in, err := resolveIntakeBySlug(heroDir, slug)
+	changed, err := intake.NewService(heroDir).Reject(slug)
 	if err != nil {
 		return err
 	}
-	if in.Status == spec.StatusRejected {
+	if !changed {
 		fmt.Printf("intake %q is already rejected\n", slug)
 		return nil
-	}
-
-	data, err := os.ReadFile(in.Path)
-	if err != nil {
-		return fmt.Errorf("reading intake: %w", err)
-	}
-	updated := spec.SetFrontmatterField(string(data), "status", string(spec.StatusRejected))
-	if err := spec.AtomicWriteFile(in.Path, []byte(updated), 0o644); err != nil {
-		return fmt.Errorf("updating intake: %w", err)
 	}
 
 	fmt.Printf("Rejected intake %q\n", slug)
@@ -290,20 +205,5 @@ func runIntakeList(cmd *cobra.Command, args []string) error {
 // spec's frontmatter, immediately before the closing `---`. The block
 // shape matches parseRelationsBlock (target:/kind: lines).
 func injectRelationBlock(content, kind, target string) string {
-	block := fmt.Sprintf("relations:\n  - target: %s\n    kind: %s", target, kind)
-	lines := strings.Split(content, "\n")
-	fences := 0
-	for i, l := range lines {
-		if strings.TrimSpace(l) == "---" {
-			fences++
-			if fences == 2 {
-				out := make([]string, 0, len(lines)+1)
-				out = append(out, lines[:i]...)
-				out = append(out, block)
-				out = append(out, lines[i:]...)
-				return strings.Join(out, "\n")
-			}
-		}
-	}
-	return content
+	return intake.InjectRelation(content, kind, target)
 }

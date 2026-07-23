@@ -277,6 +277,11 @@ func resetFlags() {
 	// Reset smoke flag
 	globalSmoke = false
 
+	statusAll = false
+	statusHorizon = ""
+	statusJSON = false
+	resumeJSON = false
+
 	// Reset smoke command flags
 	smokeRunAll = false
 	smokeRunArea = ""

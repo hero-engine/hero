@@ -100,6 +100,48 @@ Never create Focus directly. Only the user may accept Today, Later, or Do Next.
 	}
 }
 
+func TestAllTargetsInstallMailSourceDedupGuidance(t *testing.T) {
+	sourceBody, err := os.ReadFile(filepath.Join("..", "..", "core", "skills", "auto-knowledge-capture", "SKILL.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	const marker = "For intent-bearing content whose typed source is `mail:<message-id>`"
+	if !strings.Contains(string(sourceBody), marker) {
+		t.Fatalf("canonical skill missing marker %q", marker)
+	}
+	cases := []struct {
+		target Target
+		path   string
+	}{
+		{TargetOpenCode, ".opencode/skills/auto-knowledge-capture/SKILL.md"},
+		{TargetCursor, ".cursor/rules/skills/auto-knowledge-capture.md"},
+		{TargetClaude, ".claude/skills/auto-knowledge-capture/SKILL.md"},
+		{TargetCopilot, ".github/skills/auto-knowledge-capture/SKILL.md"},
+		{TargetCodex, ".agents/skills/auto-knowledge-capture/SKILL.md"},
+		{TargetGeneric, ".ai/skills/auto-knowledge-capture/SKILL.md"},
+	}
+	for _, testCase := range cases {
+		t.Run(string(testCase.target), func(t *testing.T) {
+			h := newInstallHarness(t)
+			source := filepath.Join(h.SourceDir, "skills", "auto-knowledge-capture", "SKILL.md")
+			if err := os.MkdirAll(filepath.Dir(source), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(source, sourceBody, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			h.Run(testCase.target, nil)
+			installed, err := os.ReadFile(filepath.Join(h.TargetDir, testCase.path))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(string(installed), marker) {
+				t.Fatalf("%s did not receive canonical Mail dedup guidance", testCase.target)
+			}
+		})
+	}
+}
+
 // TestInstall_ExcludesContentReadmes asserts that README.md files in the
 // source content tree (documentation for humans browsing agents/,
 // commands/, skills/ — the pm and sales domains ship them) are never

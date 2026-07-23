@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -20,6 +21,7 @@ import (
 var (
 	statusAll     bool
 	statusHorizon string
+	statusJSON    bool
 )
 
 var statusCmd = &cobra.Command{
@@ -37,6 +39,7 @@ footer so you know they're there.`,
 func init() {
 	statusCmd.Flags().BoolVar(&statusAll, "all", false, "include someday/parking specs in the listing")
 	statusCmd.Flags().StringVar(&statusHorizon, "horizon", "", "show only specs at this horizon (now/next/someday/parking)")
+	statusCmd.Flags().BoolVar(&statusJSON, "json", false, "emit typed JSON")
 
 	RegisterSmoke(statusCmd, func(cmd *cobra.Command) error {
 		return runStatus(cmd, nil)
@@ -54,6 +57,9 @@ func runStatus(cmd *cobra.Command, args []string) error {
 	if _, err := os.Stat(heroDir); os.IsNotExist(err) {
 		return fmt.Errorf("no hero workspace found (run 'hero init' first)")
 	}
+	if statusJSON {
+		return renderStatusJSON(projectRoot, heroDir)
+	}
 
 	// Surface workspace location and active scope when running from a
 	// satellite or subfolder. Quiet when at root with no scope.
@@ -66,6 +72,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 		fmt.Println(line)
 		fmt.Println()
 	}
+	printProjectMailSummary()
 
 	// Auto-fire peer-side completion: any awaiting_peer spec whose
 	// peer counterpart has reached completed is flipped to handed_back
@@ -268,6 +275,42 @@ func runStatus(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+type statusJSONSpec struct {
+	Slug    string `json:"slug"`
+	Title   string `json:"title"`
+	Type    string `json:"type"`
+	Status  string `json:"status"`
+	Horizon string `json:"horizon"`
+}
+
+func renderStatusJSON(projectRoot, heroDir string) error {
+	specs, err := spec.Discover(heroDir)
+	if err != nil {
+		return fmt.Errorf("discovering specs: %w", err)
+	}
+	items := make([]statusJSONSpec, 0, len(specs))
+	for _, item := range specs {
+		if item.IsWorkSpec() {
+			if statusHorizon != "" && item.EffectiveHorizon() != spec.Horizon(statusHorizon) {
+				continue
+			}
+			if statusHorizon == "" && !statusAll && !item.IsActiveHorizon() {
+				continue
+			}
+		}
+		items = append(items, statusJSONSpec{Slug: item.Slug, Title: item.Title, Type: string(item.Type), Status: string(item.Status), Horizon: string(item.EffectiveHorizon())})
+	}
+	payload := map[string]any{
+		"workspace": projectRoot,
+		"hero_dir":  heroDir,
+		"specs":     items,
+	}
+	if summary, summaryErr := projectMailSummary(); summaryErr == nil {
+		payload["mail"] = summary
+	}
+	return json.NewEncoder(os.Stdout).Encode(payload)
 }
 
 func printSpecGroup(label string, specs []*spec.Spec, projectRoot string, showAge bool, vocab *vocabulary.Vocabulary) {

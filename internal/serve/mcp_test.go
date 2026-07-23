@@ -405,8 +405,8 @@ func TestMCP_ToolsList(t *testing.T) {
 		t.Fatalf("decode result: %v", err)
 	}
 
-	if len(result.Tools) != 52 {
-		t.Errorf("expected 52 tools, got %d", len(result.Tools))
+	if len(result.Tools) != 55 {
+		t.Errorf("expected 55 tools, got %d", len(result.Tools))
 	}
 
 	expectedNames := map[string]bool{
@@ -452,6 +452,9 @@ func TestMCP_ToolsList(t *testing.T) {
 		"hero_focus_suggest":           true,
 		"hero_focus_suggestions":       true,
 		"hero_focus_suggestion_action": true,
+		"hero_mail_list":               true,
+		"hero_mail_show":               true,
+		"hero_mail_action":             true,
 	}
 	for _, tool := range result.Tools {
 		if !expectedNames[tool.Name] {

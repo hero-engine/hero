@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/hero-engine/hero/contracts/attention"
 	"github.com/hero-engine/hero/internal/attention/mail"
@@ -19,7 +20,8 @@ var mailCmd = newMailCommand()
 
 func newMailCommand() *cobra.Command {
 	cmd := &cobra.Command{Use: "mail", Short: "Exchange private asynchronous mail with local Hero projects", SilenceErrors: true, SilenceUsage: true}
-	cmd.AddCommand(newMailSendCommand(), newMailInboxCommand(), newMailShowCommand(), newMailReplyCommand(), newMailAckCommand())
+	cmd.AddCommand(newMailSendCommand(), newMailInboxCommand(), newMailShowCommand(), newMailReplyCommand(), newMailAckCommand(),
+		newMailActionCommand("read"), newMailActionCommand("dismiss"), newMailPromoteCommand(), newMailActionCommand("add-to-today"))
 	return cmd
 }
 
@@ -134,14 +136,24 @@ func newMailReplyCommand() *cobra.Command {
 	return cmd
 }
 func newMailAckCommand() *cobra.Command {
-	var note string
+	var note, key string
+	var revision int64
 	var jsonOut bool
 	cmd := &cobra.Command{Use: "ack <message-id>", Short: "Acknowledge a message", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
 		svc, e := mailService()
 		if e != nil {
 			return writeMailError(cmd, jsonOut, e)
 		}
-		v, e := svc.Ack(args[0], note)
+		if revision == 0 {
+			revision, e = mailCurrentRevision(svc, args[0])
+			if e != nil {
+				return writeMailError(cmd, jsonOut, e)
+			}
+		}
+		if key == "" {
+			key = "ack:" + args[0] + ":" + note
+		}
+		v, e := svc.Action(mail.ActionRequest{MessageID: args[0], Action: mail.ActionAcknowledge, ExpectedRevision: revision, IdempotencyKey: key, Note: note})
 		if e != nil {
 			return writeMailError(cmd, jsonOut, e)
 		}
@@ -152,8 +164,99 @@ func newMailAckCommand() *cobra.Command {
 		return nil
 	}}
 	cmd.Flags().StringVar(&note, "note", "", "short acknowledgement note")
+	cmd.Flags().Int64Var(&revision, "revision", 0, "expected receipt revision (defaults to current)")
+	cmd.Flags().StringVar(&key, "idempotency-key", "", "stable retry key")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit JSON")
 	return cmd
+}
+
+func newMailActionCommand(name string) *cobra.Command {
+	var revision int64
+	var key string
+	var jsonOut bool
+	action := strings.ReplaceAll(name, "-", "_")
+	cmd := &cobra.Command{Use: name + " <message-id>", Short: strings.Title(strings.ReplaceAll(name, "-", " ")) + " a message", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
+		svc, err := mailService()
+		if err != nil {
+			return writeMailError(cmd, jsonOut, err)
+		}
+		result, err := svc.Action(mail.ActionRequest{MessageID: args[0], Action: action, ExpectedRevision: revision, IdempotencyKey: key})
+		if err != nil {
+			return writeMailError(cmd, jsonOut, err)
+		}
+		if jsonOut {
+			return writeMailJSON(cmd.OutOrStdout(), result)
+		}
+		if result.FocusItemID != "" {
+			fmt.Fprintf(cmd.OutOrStdout(), "Added %s to Today as %s\n", args[0], result.FocusItemID)
+		} else {
+			fmt.Fprintf(cmd.OutOrStdout(), "%s %s (revision %d)\n", strings.Title(name), args[0], result.Receipt.Revision)
+		}
+		return nil
+	}}
+	cmd.Flags().Int64Var(&revision, "revision", 0, "expected receipt revision (zero for no receipt)")
+	cmd.Flags().StringVar(&key, "idempotency-key", "", "stable retry key (required)")
+	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit JSON")
+	_ = cmd.MarkFlagRequired("idempotency-key")
+	return cmd
+}
+
+func newMailPromoteCommand() *cobra.Command {
+	var revision int64
+	var key, artifactType string
+	var jsonOut bool
+	cmd := &cobra.Command{Use: "promote <message-id>", Short: "Promote mail through Intake", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
+		svc, err := mailService()
+		if err != nil {
+			return writeMailError(cmd, jsonOut, err)
+		}
+		result, err := svc.Action(mail.ActionRequest{MessageID: args[0], Action: mail.ActionPromote, ArtifactType: artifactType, ExpectedRevision: revision, IdempotencyKey: key})
+		if err != nil {
+			return writeMailError(cmd, jsonOut, err)
+		}
+		if jsonOut {
+			return writeMailJSON(cmd.OutOrStdout(), result)
+		}
+		fmt.Fprintf(cmd.OutOrStdout(), "Promoted %s → %s %s\n", args[0], result.Artifact.Type, result.Artifact.Slug)
+		return nil
+	}}
+	cmd.Flags().StringVar(&artifactType, "type", "intake", "artifact type: intake, feature, or bug")
+	cmd.Flags().Int64Var(&revision, "revision", 0, "expected receipt revision (zero for no receipt)")
+	cmd.Flags().StringVar(&key, "idempotency-key", "", "stable retry key (required)")
+	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit JSON")
+	_ = cmd.MarkFlagRequired("idempotency-key")
+	return cmd
+}
+
+func mailCurrentRevision(svc *mail.Service, id string) (int64, error) {
+	listed, err := svc.Show(id, false)
+	if err != nil {
+		return 0, err
+	}
+	if listed.Receipt == nil {
+		return 0, nil
+	}
+	return listed.Receipt.Revision, nil
+}
+
+func projectMailSummary() (mail.UnreadSummary, error) {
+	service, err := mailService()
+	if err != nil {
+		return mail.UnreadSummary{}, err
+	}
+	return service.UnreadSummary(5)
+}
+
+func printProjectMailSummary() {
+	summary, err := projectMailSummary()
+	if err != nil || summary.Count == 0 {
+		return
+	}
+	fmt.Printf("\nProject Mail — unread (%d):\n", summary.Count)
+	for _, item := range summary.Items {
+		fmt.Printf("  %s  %s\n", item.ID, item.Subject)
+	}
+	fmt.Println()
 }
 
 func mailService() (*mail.Service, error) {

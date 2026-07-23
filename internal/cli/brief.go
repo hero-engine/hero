@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -138,10 +139,22 @@ func runResume(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Println(string(b))
+		var payload map[string]any
+		if err := json.Unmarshal(b, &payload); err != nil {
+			return err
+		}
+		if summary, summaryErr := projectMailSummary(); summaryErr == nil {
+			payload["mail"] = summary
+		}
+		encoded, err := json.Marshal(payload)
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(encoded))
 		return nil
 	}
 	fmt.Print(brief.Markdown())
+	printProjectMailSummary()
 
 	// Phase 3 cross-repo-peering: passive surface peer-owned contract
 	// imports in the changed-files set. Best-effort — never fail

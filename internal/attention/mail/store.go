@@ -3,6 +3,8 @@ package mail
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,14 +19,22 @@ import (
 
 var (
 	ErrNotFound            = errors.New("mail message not found")
+	ErrStale               = errors.New("stale mail receipt revision")
 	ErrIdempotencyConflict = errors.New("idempotency_conflict")
 )
 
-type Store struct{ root, boxes, outbound, lockPath string }
+type StaleError struct {
+	Current attention.MailReceipt
+}
+
+func (e *StaleError) Error() string { return ErrStale.Error() }
+func (e *StaleError) Unwrap() error { return ErrStale }
+
+type Store struct{ stateRoot, root, boxes, outbound, lockPath string }
 
 func NewStore(stateRoot string) (*Store, error) {
 	root := filepath.Join(stateRoot, attentionstate.MailDirectory)
-	s := &Store{root: root, boxes: filepath.Join(root, "boxes"), outbound: filepath.Join(root, "outbound"), lockPath: filepath.Join(root, ".lock")}
+	s := &Store{stateRoot: stateRoot, root: root, boxes: filepath.Join(root, "boxes"), outbound: filepath.Join(root, "outbound"), lockPath: filepath.Join(root, ".lock")}
 	for _, p := range []string{s.root, s.boxes, s.outbound} {
 		if err := secureDir(p); err != nil {
 			return nil, err
@@ -221,6 +231,7 @@ func (s *Store) UpdateReceipt(recipient, id string, revision int64, change func(
 		return attention.MailReceipt{}, err
 	}
 	change(&r)
+	r.Revision = receiptRevision(r)
 	if invalid := attention.ValidateMailReceipt(r); invalid != nil {
 		return r, invalid
 	}
@@ -232,6 +243,59 @@ func (s *Store) UpdateReceipt(recipient, id string, revision int64, change func(
 		return r, err
 	}
 	return r, nil
+}
+
+// MutateReceipt performs a receipt-only compare-and-swap. An absent receipt has
+// revision zero. Stale callers receive the authoritative current row.
+func (s *Store) MutateReceipt(recipient, id string, expected int64, change func(*attention.MailReceipt) error) (attention.MailReceipt, error) {
+	if !validPathID(recipient) || !validMailID(id) {
+		return attention.MailReceipt{}, errors.New("invalid mail storage identifier")
+	}
+	lock, err := acquireLock(s.lockPath)
+	if err != nil {
+		return attention.MailReceipt{}, err
+	}
+	defer lock.Close()
+	env, err := s.Get(recipient, id)
+	if err != nil {
+		return attention.MailReceipt{}, err
+	}
+	r, err := s.Receipt(recipient, id)
+	if errors.Is(err, ErrNotFound) {
+		r = attention.MailReceipt{SchemaVersion: attention.SchemaVersion, ID: "receipt_" + id, EnvelopeID: id, Recipient: env.Recipient, CreatedAt: env.CreatedAt, EnvelopeRevision: env.Revision}
+	} else if err != nil {
+		return attention.MailReceipt{}, err
+	}
+	if r.Revision != expected {
+		return r, &StaleError{Current: r}
+	}
+	before := r
+	if err := change(&r); err != nil {
+		return before, err
+	}
+	r.Revision = receiptRevision(r)
+	if invalid := attention.ValidateMailReceipt(r); invalid != nil {
+		return before, invalid
+	}
+	path := filepath.Join(s.boxes, recipient, "receipts", id+".json")
+	if err := secureDir(filepath.Dir(path)); err != nil {
+		return before, err
+	}
+	if err := atomicReplace(path, r); err != nil {
+		return before, err
+	}
+	return r, nil
+}
+
+func receiptRevision(r attention.MailReceipt) int64 {
+	r.Revision = 0
+	b, _ := json.Marshal(r)
+	sum := sha256.Sum256(b)
+	n := int64(binary.BigEndian.Uint64(sum[:8]) & (1<<63 - 1))
+	if n == 0 {
+		n = 1
+	}
+	return n
 }
 
 func secureDir(p string) error {

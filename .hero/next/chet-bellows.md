@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-23T02:40:42Z
+updated: 2026-07-23T03:24:27Z
 repo: hero-engine/hero
 ---
 
@@ -20,13 +20,11 @@ repo: hero-engine/hero
 > - Origin workspace: hero-code (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
 > - Target alias on cal…
 
-_possibly stale — 20 commit(s) since, last set 3d 5h ago_
+_possibly stale — 21 commit(s) since, last set 3d 5h ago_
 
 ## Last user ask
 
-> Continue autonomously and deliver the deferred-work-suggestion-contract child of the durable-attention initiative
-
-_possibly stale — 1 commit(s) since, last set 39m ago_
+> Continue durable-attention autonomously; deliver and verify project-mail-triage-and-provenance without supervised pauses
 
 ## Suggested next prompt
 

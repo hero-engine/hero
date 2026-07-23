@@ -9,12 +9,15 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 	"unicode/utf8"
 
 	"github.com/hero-engine/hero/contracts/attention"
+	"github.com/hero-engine/hero/internal/attention/focus"
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/intake"
 	"github.com/hero-engine/hero/internal/peering"
 )
 
@@ -25,16 +28,40 @@ type ListedMessage struct {
 	Receipt *attention.MailReceipt `json:"receipt,omitempty"`
 }
 
+type UnreadSummary struct {
+	Count int                 `json:"count"`
+	Items []UnreadSummaryItem `json:"items"`
+}
+
+type UnreadSummaryItem struct {
+	ID      string `json:"id"`
+	Subject string `json:"subject"`
+}
+
 type Service struct {
-	store *Store
-	root  string
-	cfg   config.Config
-	now   func() time.Time
-	newID func() (string, error)
+	store     *Store
+	root      string
+	cfg       config.Config
+	now       func() time.Time
+	newID     func() (string, error)
+	intake    *intake.Service
+	focus     *focus.Service
+	failAfter func(string) error
 }
 
 func NewService(store *Store, projectRoot string, cfg config.Config) *Service {
-	return &Service{store: store, root: projectRoot, cfg: cfg, now: time.Now, newID: randomMailID}
+	service := &Service{store: store, root: projectRoot, cfg: cfg, now: time.Now, newID: randomMailID}
+	service.intake = intake.NewService(cfg.HeroDir(projectRoot))
+	if focusStore, err := focus.NewStore(store.stateRoot); err == nil {
+		if resolver, resolverErr := focus.LoadRegistryResolver(projectRoot); resolverErr == nil {
+			service.focus = focus.NewService(focusStore, resolver)
+		}
+	}
+	return service
+}
+
+func (s *Service) SetFailureInjector(inject func(step string) error) {
+	s.failAfter = inject
 }
 
 func (s *Service) Send(req SendRequest) (attention.MailDelivery, error) {
@@ -227,12 +254,39 @@ func (s *Service) Inbox(project string, unread bool) ([]ListedMessage, error) {
 		} else if !errors.Is(e, ErrNotFound) {
 			return nil, e
 		}
+		if rp != nil && rp.DismissedAt != "" {
+			continue
+		}
 		if unread && rp != nil && rp.ReadAt != "" {
 			continue
 		}
 		out = append(out, ListedMessage{MailEnvelope: env, Receipt: rp})
 	}
 	return out, nil
+}
+
+func (s *Service) UnreadSummary(limit int) (UnreadSummary, error) {
+	items, err := s.Inbox("", true)
+	if err != nil {
+		return UnreadSummary{}, err
+	}
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].CreatedAt != items[j].CreatedAt {
+			return items[i].CreatedAt < items[j].CreatedAt
+		}
+		return items[i].ID < items[j].ID
+	})
+	summary := UnreadSummary{Count: len(items)}
+	if limit < 0 {
+		limit = 0
+	}
+	for i, item := range items {
+		if i >= limit {
+			break
+		}
+		summary.Items = append(summary.Items, UnreadSummaryItem{ID: item.ID, Subject: item.Subject})
+	}
+	return summary, nil
 }
 
 func (s *Service) Show(id string, markRead bool) (ListedMessage, error) {
@@ -242,18 +296,15 @@ func (s *Service) Show(id string, markRead bool) (ListedMessage, error) {
 	}
 	var rp *attention.MailReceipt
 	if markRead {
-		r, e := s.store.UpdateReceipt(s.cfg.PeerID, id, env.Revision, func(r *attention.MailReceipt) {
-			if r.ReadAt == "" {
-				r.ReadAt = s.now().UTC().Format(time.RFC3339Nano)
-			}
-			if r.Kind == "" {
-				r.Kind = attention.ReceiptRead
-			}
-		})
+		current, e := currentReceipt(s.store, s.cfg.PeerID, id)
 		if e != nil {
 			return ListedMessage{}, e
 		}
-		rp = &r
+		result, e := s.Action(ActionRequest{MessageID: id, Action: ActionRead, ExpectedRevision: current.Revision, IdempotencyKey: legacyActionKey("show-read", id)})
+		if e != nil {
+			return ListedMessage{}, e
+		}
+		rp = &result.Receipt
 	} else if r, e := s.store.Receipt(s.cfg.PeerID, id); e == nil {
 		rp = &r
 	} else if !errors.Is(e, ErrNotFound) {
@@ -265,17 +316,21 @@ func (s *Service) Ack(id, note string) (attention.MailReceipt, error) {
 	if !utf8.ValidString(note) || utf8.RuneCountInString(note) > 500 {
 		return attention.MailReceipt{}, errors.New("acknowledgement note must be valid UTF-8 and at most 500 characters")
 	}
-	env, err := s.store.Get(s.cfg.PeerID, id)
+	current, err := currentReceipt(s.store, s.cfg.PeerID, id)
 	if err != nil {
 		return attention.MailReceipt{}, err
 	}
-	return s.store.UpdateReceipt(s.cfg.PeerID, id, env.Revision, func(r *attention.MailReceipt) {
-		if r.AcknowledgedAt == "" {
-			r.AcknowledgedAt = s.now().UTC().Format(time.RFC3339Nano)
-			r.AcknowledgementNote = note
-		}
-		r.Kind = attention.ReceiptAcknowledged
-	})
+	result, err := s.Action(ActionRequest{MessageID: id, Action: ActionAcknowledge, ExpectedRevision: current.Revision, IdempotencyKey: legacyActionKey("ack", id, note), Note: note})
+	return result.Receipt, err
+}
+
+func legacyActionKey(parts ...string) string {
+	hash := sha256.New()
+	for _, part := range parts {
+		_, _ = hash.Write([]byte(part))
+		_, _ = hash.Write([]byte{0})
+	}
+	return fmt.Sprintf("legacy:%x", hash.Sum(nil))
 }
 
 func validMailID(id string) bool {

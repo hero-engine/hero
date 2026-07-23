@@ -197,6 +197,7 @@ type Spec struct {
 	// cross-repo handoff or spec-out peer call. peer_id is the
 	// canonical join key back to the originating workspace.
 	ReceivedFrom *ReceivedFromBlock
+	Source       *SourceBlock
 
 	// Tracker metadata — populated from tracker-prefixed frontmatter fields
 	// (e.g. jira_status, github_assignee, linear_priority).
@@ -270,6 +271,14 @@ type ReceivedFromBlock struct {
 	HandedOffAt      time.Time
 	AtCommit         string
 	Reason           string
+}
+
+type SourceBlock struct {
+	Kind            string
+	ID              string
+	SenderPeerID    string
+	RecipientPeerID string
+	ThreadID        string
 }
 
 // SmokeConfig holds the smoke: frontmatter block for a spec.
@@ -686,6 +695,10 @@ func (s *Spec) parseFrontmatter(content string) string {
 			rf, consumed := parseReceivedFromBlock(lines, i+1, closeIdx)
 			s.ReceivedFrom = rf
 			i = consumed - 1
+		case "source":
+			source, consumed := parseSourceBlock(lines, i+1, closeIdx)
+			s.Source = source
+			i = consumed - 1
 		default:
 			// Parse tracker-prefixed fields: jira_*, github_*, linear_*, gitlab_*
 			for _, prefix := range []string{"jira_", "github_", "linear_", "gitlab_"} {
@@ -906,6 +919,39 @@ func parseReceivedFromBlock(lines []string, start, end int) (*ReceivedFromBlock,
 			out.AtCommit = v
 		case "reason":
 			out.Reason = v
+		}
+	}
+	return out, idx
+}
+
+func parseSourceBlock(lines []string, start, end int) (*SourceBlock, int) {
+	out := &SourceBlock{}
+	idx := start
+	for ; idx < end; idx++ {
+		raw := lines[idx]
+		trimmed := strings.TrimSpace(raw)
+		if trimmed == "" {
+			continue
+		}
+		if leadingSpaceCount(raw) == 0 {
+			break
+		}
+		key, value, ok := strings.Cut(trimmed, ":")
+		if !ok {
+			continue
+		}
+		value = strings.Trim(strings.TrimSpace(value), `"`)
+		switch strings.TrimSpace(key) {
+		case "kind":
+			out.Kind = value
+		case "id":
+			out.ID = value
+		case "sender_peer_id":
+			out.SenderPeerID = value
+		case "recipient_peer_id":
+			out.RecipientPeerID = value
+		case "thread_id":
+			out.ThreadID = value
 		}
 	}
 	return out, idx

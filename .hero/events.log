@@ -448,3 +448,5 @@
 {"ts":"2026-07-23T02:25:24.454854Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"deferred-work-suggestion-contract","message":"status -\u003e completed"}
 {"ts":"2026-07-23T02:38:49.807472Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-idea-primitive-core","message":"\"Intake primitive — Go engine recognition, committed-work predicate, CLI \u0026 MCP\""}
 {"ts":"2026-07-23T02:38:49.807555Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-idea-primitive-core","message":"status -\u003e completed"}
+{"ts":"2026-07-23T03:23:08.332782Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"project-mail-triage-and-provenance","message":"\"Project Mail Triage and Provenance — From Signal to Explicit Work\""}
+{"ts":"2026-07-23T03:23:08.332857Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"project-mail-triage-and-provenance","message":"status -\u003e completed"}
