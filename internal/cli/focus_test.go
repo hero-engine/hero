@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/hero-engine/hero/contracts/attention"
 	"github.com/hero-engine/hero/internal/attention/focus"
+	"github.com/hero-engine/hero/internal/attention/suggestion"
 )
 
 type cliFocusResolver struct {
@@ -156,6 +158,51 @@ func TestFocusCLIAutoBindsRegisteredCurrentWorkspace(t *testing.T) {
 	}
 	if item.Project == nil || item.Project.PeerID != ref.PeerID || item.Project.RegistrySlug != ref.RegistrySlug {
 		t.Fatalf("auto-bound project = %#v", item.Project)
+	}
+}
+
+func TestFocusSuggestionCLIEndToEndAndStructuredErrors(t *testing.T) {
+	ref := &attention.ProjectReference{PeerID: "peer-demo", RegistrySlug: "demo", DisplayName: "Demo"}
+	projectPath := filepath.Join(t.TempDir(), "demo")
+	withFocusCLI(t, cliFocusResolver{ref: ref, path: projectPath})
+	prompt := "Investigate the separate cache issue.\n"
+	reasonFile := filepath.Join(t.TempDir(), "reason.txt")
+	if err := os.WriteFile(reasonFile, []byte("It is outside the accepted delivery"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runFocusCommand(t, prompt, "suggest", "--title", "Cache issue", "--reason-file", reasonFile, "--prompt-file", "-", "--project", "demo", "--source-kind", "run", "--source-id", "run-1", "--idempotency-key", "run-1:cache")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var created suggestion.Presented
+	if err := json.Unmarshal([]byte(out), &created); err != nil || created.State != suggestion.StatePending || len(created.Actions) != 4 {
+		t.Fatalf("suggest = %q, %v", out, err)
+	}
+
+	out, err = runFocusCommand(t, "", "suggestions", "--pending", "--json")
+	if err != nil || !strings.Contains(out, created.ID) || !strings.Contains(out, `"reason":"It is outside the accepted delivery"`) {
+		t.Fatalf("suggestions = %q, %v", out, err)
+	}
+
+	out, err = runFocusCommand(t, "", "suggestion", created.ID, "do-next", "--revision", fmtRevision(created.Revision), "--idempotency-key", "accept-1", "--json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var result suggestion.ActionResult
+	if err := json.Unmarshal([]byte(out), &result); err != nil || result.Focus == nil || result.Focus.Lifecycle != attention.FocusToday || result.Launch == nil || result.Launch.Path != projectPath {
+		t.Fatalf("action = %q, %v", out, err)
+	}
+
+	replayed, err := runFocusCommand(t, "", "suggestion", created.ID, "do-next", "--revision", fmtRevision(created.Revision), "--idempotency-key", "accept-1", "--json")
+	if err != nil || replayed != out {
+		t.Fatalf("replay = %q, %v; want %q", replayed, err, out)
+	}
+
+	if _, err := runFocusCommand(t, "", "suggestion", created.ID, "today", "--revision", fmtRevision(created.Revision), "--idempotency-key", "different"); err == nil || !strings.Contains(err.Error(), "stale:") {
+		t.Fatalf("stale error = %v", err)
+	}
+	if _, err := runFocusCommand(t, "", "suggestion", "suggestion_missing", "today", "--revision", "1", "--idempotency-key", "missing"); err == nil || !strings.Contains(err.Error(), "missing:") {
+		t.Fatalf("missing error = %v", err)
 	}
 }
 

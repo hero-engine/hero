@@ -180,6 +180,15 @@ func ValidateDeferredWorkSuggestion(v DeferredWorkSuggestion) *ContractError {
 	if !utf8.ValidString(v.Prompt) || len(v.Prompt) > MaxFocusPromptBytes {
 		return invalid("prompt", "must be valid UTF-8 and at most 65536 bytes")
 	}
+	if v.State != "" && v.State != "pending" && v.State != "accepted" && v.State != "dismissed" && v.State != "expired" {
+		return invalid("state", "must be pending, accepted, dismissed, or expired")
+	}
+	if v.Revision < 0 {
+		return invalid("revision", "must not be negative")
+	}
+	if err := validateTimestamp("expires_at", v.ExpiresAt, false); err != nil {
+		return err
+	}
 	if len(v.Provenance) > MaxProvenance {
 		return invalid("provenance", "must contain at most 32 references")
 	}
@@ -196,8 +205,11 @@ func ValidateSuggestionDecision(v SuggestionDecisionRequest) *ContractError {
 	if err := validateID("suggestion_id", v.SuggestionID); err != nil {
 		return err
 	}
-	if v.Decision != "accept" && v.Decision != "dismiss" {
-		return invalid("decision", "must be accept or dismiss")
+	if v.Decision != "accept" && v.Decision != "today" && v.Decision != "later" && v.Decision != "do_next" && v.Decision != "dismiss" {
+		return invalid("decision", "must be accept, today, later, do_next, or dismiss")
+	}
+	if v.Revision < 0 {
+		return invalid("revision", "must not be negative")
 	}
 	if err := validateID("idempotency_key", v.IdempotencyKey); err != nil {
 		return err

@@ -7,7 +7,7 @@ import (
 
 	"github.com/hero-engine/hero/contracts/attention"
 	"github.com/hero-engine/hero/internal/config"
-	"github.com/hero-engine/hero/internal/serve"
+	"github.com/hero-engine/hero/internal/projectregistry"
 )
 
 const (
@@ -28,17 +28,17 @@ type ProjectResolver interface {
 }
 
 type RegistryResolver struct {
-	registry           *serve.Registry
+	registry           *projectregistry.Registry
 	peers              map[string]string
 	currentProjectRoot string
 }
 
-func NewRegistryResolver(registry *serve.Registry) *RegistryResolver {
+func NewRegistryResolver(registry *projectregistry.Registry) *RegistryResolver {
 	return &RegistryResolver{registry: registry, peers: make(map[string]string)}
 }
 
 func LoadRegistryResolver(projectRoot string) (*RegistryResolver, error) {
-	registry, err := serve.LoadRegistry()
+	registry, err := projectregistry.Load()
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func (r *RegistryResolver) ResolveInput(value string) (*attention.ProjectReferen
 		return nil, nil
 	}
 	var slug string
-	var entry *serve.ProjectEntry
+	var entry *projectregistry.ProjectEntry
 	if value == "." || filepath.IsAbs(value) {
 		path := value
 		if value == "." {
@@ -145,7 +145,7 @@ func (r *RegistryResolver) ResolveInput(value string) (*attention.ProjectReferen
 		slug, entry = value, r.registry.Get(value)
 		if entry == nil {
 			if path, ok := r.peers[value]; ok {
-				entry = &serve.ProjectEntry{Path: path}
+				entry = &projectregistry.ProjectEntry{Path: path}
 			}
 		}
 	}

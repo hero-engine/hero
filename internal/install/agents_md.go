@@ -625,6 +625,7 @@ func generateEngineeringAgentsMdBody(paths contentPathsForBody) string {
 	sb.WriteString("- **Cross-repo & reporting:** cross-repo-peering, deep-code-enrichment, issue-list-report — peer calls, enrichment passes, report formatting.\n")
 	sb.WriteString("- **Roadmap & performance:** performance-optimization, roadmap-review — perf tuning and roadmap-shape triage.\n")
 	sb.WriteString("- **Migration:** migration-safety — safe migration/refactor patterns.\n")
+	sb.WriteString("- **Attention:** deferred-work-suggestions — propose meaningful out-of-scope work without bypassing user consent or current delivery obligations.\n")
 	sb.WriteString("- **Core (installed with every pack):** agent-reliability, auto-knowledge-capture, completion-ledger, context-injection, convention-writing, documentation-practices, executive-report, explainer-format, kickoff-prompt, knowledge-flywheel, next-handoff-emit, next-md, note-capture, nudge-awareness, project-context-generation, spec-format.\n\n")
 
 	sb.WriteString("### CLI Commands\n\n")

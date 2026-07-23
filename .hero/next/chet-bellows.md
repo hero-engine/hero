@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-23T01:59:16Z
+updated: 2026-07-23T02:26:35Z
 repo: hero-engine/hero
 ---
 
@@ -20,15 +20,19 @@ repo: hero-engine/hero
 > - Origin workspace: hero-code (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
 > - Target alias on cal…
 
-_possibly stale — 17 commit(s) since, last set 3d 4h ago_
+_possibly stale — 18 commit(s) since, last set 3d 4h ago_
 
 ## Last user ask
 
-> Continue the durable-attention initiative autonomously and deliver every remaining child without supervised pauses
+> Continue autonomously and deliver the deferred-work-suggestion-contract child of the durable-attention initiative
 
 ## Suggested next prompt
 
-> keep driving durable-attention autonomously through the next ready child
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 

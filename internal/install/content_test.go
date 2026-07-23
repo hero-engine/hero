@@ -51,6 +51,55 @@ func TestAllTargets_ShipSkills(t *testing.T) {
 	}
 }
 
+func TestAllTargetsInstallIdenticalDeferredWorkConsentGuidance(t *testing.T) {
+	const body = `---
+name: deferred-work-suggestions
+description: Consent-bound deferred work.
+---
+Suggestions are advisory output, not Focus and not a personal commitment.
+Never turn unfinished required steps, acceptance criteria, Completion Ledger items, or harness todos into suggestions.
+Invoke hero_focus_suggest once, then continue and finish the current task.
+Never create Focus directly. Only the user may accept Today, Later, or Do Next.
+`
+	cases := []struct {
+		target Target
+		path   string
+	}{
+		{TargetOpenCode, ".opencode/skills/deferred-work-suggestions/SKILL.md"},
+		{TargetCursor, ".cursor/rules/skills/deferred-work-suggestions.md"},
+		{TargetClaude, ".claude/skills/deferred-work-suggestions/SKILL.md"},
+		{TargetCopilot, ".github/skills/deferred-work-suggestions/SKILL.md"},
+		{TargetCodex, ".agents/skills/deferred-work-suggestions/SKILL.md"},
+		{TargetGeneric, ".ai/skills/deferred-work-suggestions/SKILL.md"},
+	}
+	for _, tc := range cases {
+		t.Run(string(tc.target), func(t *testing.T) {
+			h := newInstallHarness(t)
+			source := filepath.Join(h.SourceDir, "skills", "deferred-work-suggestions", "SKILL.md")
+			if err := os.MkdirAll(filepath.Dir(source), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(source, []byte(body), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			h.Run(tc.target, nil)
+			h.mustBeRegularFile(tc.path)
+			installed, err := os.ReadFile(filepath.Join(h.TargetDir, tc.path))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(installed) != body {
+				t.Fatalf("%s guidance drifted:\n%s", tc.target, installed)
+			}
+			for _, phrase := range []string{"advisory output, not Focus", "unfinished required steps", "hero_focus_suggest once", "Only the user may accept"} {
+				if !strings.Contains(string(installed), phrase) {
+					t.Errorf("%s missing semantic boundary %q", tc.target, phrase)
+				}
+			}
+		})
+	}
+}
+
 // TestInstall_ExcludesContentReadmes asserts that README.md files in the
 // source content tree (documentation for humans browsing agents/,
 // commands/, skills/ — the pm and sales domains ship them) are never

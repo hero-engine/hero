@@ -7,6 +7,36 @@ package serve
 func (s *MCPServer) toolDefinitions() []ToolDefinition {
 	return []ToolDefinition{
 		{
+			Name:        "hero_focus_suggest",
+			Description: "Create one advisory deferred-work proposal. This never creates Focus; only explicit user acceptance can create a commitment.",
+			InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{
+				"title":           {Type: "string", Description: "Short proposal title"},
+				"reason":          {Type: "string", Description: "Why this out-of-scope work is worth revisiting"},
+				"prompt":          {Type: "string", Description: "Exact executable resume prompt"},
+				"project":         {Type: "string", Description: "Optional registered project slug, path, or ."},
+				"source_kind":     {Type: "string", Description: "Typed provenance kind: run or session"},
+				"source_id":       {Type: "string", Description: "Source run/session identifier"},
+				"idempotency_key": {Type: "string", Description: "Stable proposal replay key"},
+			}, Required: []string{"title", "reason", "prompt", "source_kind", "source_id", "idempotency_key"}},
+		},
+		{
+			Name:        "hero_focus_suggestions",
+			Description: "List structured deferred-work proposals and their advertised actions without parsing assistant prose.",
+			InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{
+				"pending": {Type: "boolean", Description: "Return only pending proposals"},
+			}},
+		},
+		{
+			Name:        "hero_focus_suggestion_action",
+			Description: "Explicitly accept a proposal into Focus as today, later, or do_next, or dismiss it. do_next returns a launch intent but never starts a session.",
+			InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{
+				"suggestion_id":   {Type: "string", Description: "Suggestion identifier"},
+				"action":          {Type: "string", Description: "today, later, do_next, or dismiss"},
+				"revision":        {Type: "string", Description: "Required suggestion revision as a decimal string"},
+				"idempotency_key": {Type: "string", Description: "Stable action replay key"},
+			}, Required: []string{"suggestion_id", "action", "revision", "idempotency_key"}},
+		},
+		{
 			Name:        "hero_tracker_load_evidence",
 			Description: "Explicitly load or validate full evidence for a tracker-linked spec. Returns bounded tracker-evidence/v1 status; private evidence stays in the ignored adjacent sidecar.",
 			InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{

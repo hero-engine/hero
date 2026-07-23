@@ -2,7 +2,7 @@
 title: "Deferred Work Suggestion Contract — Explicitly Accepted Focus"
 slug: deferred-work-suggestion-contract
 type: feature
-status: planning
+status: completed
 domain: engineering
 priority: medium
 size: large
@@ -12,6 +12,8 @@ parent: durable-attention
 depends-on: [personal-focus-core]
 conflicts-with: [project-mail-triage-and-provenance]
 tags: [focus, harness, suggestions, prompts]
+delivery_method: manual
+completed_at: 2026-07-23T02:25:22Z
 ---
 
 # Deferred Work Suggestion Contract — Explicitly Accepted Focus
@@ -36,11 +38,19 @@ Next, with deterministic replay and a safe launch intent.
 
 ## Kickoff
 
-Implement deferred suggestions as a distinct proposal store and service, not as
-Focus state. Expose propose/accept/dismiss through CLI and MCP, then add one
-canonical harness skill that installs to all six targets. Acceptance alone may
-create Focus; `do_next` atomically accepts into Today and returns a launch intent
-without starting a session.
+Adds consent-bound deferred suggestions as advisory records distinct from Focus,
+with explicit user acceptance through CLI and MCP.
+
+**Status:** completed — proposal storage, explicit Focus acceptance, CLI/MCP
+surfaces, six-harness guidance, and all delivery gates passed.
+
+**Pick up at:** consume the structured suggestion actions from a client while
+preserving Hero's user-consent and client-owned session-launch boundaries.
+
+→ `.hero/specs/deferred-work-suggestion-contract/spec.md`
+
+**Files:** `internal/attention/suggestion/service.go`, `internal/cli/focus.go`, `internal/serve/mcp_tools_focus.go`, `domains/engineering/skills/deferred-work-suggestions/SKILL.md`
+**Skip:** direct model-created Focus, prose parsing, and target-specific hooks are forbidden.
 
 ## Problem
 
@@ -180,3 +190,40 @@ consumers use DTOs; no surface parses assistant prose.
 - Repository search assertion that no target-specific deferred-work hook or
   assistant-prose parser was added.
 - `go test ./...` for installer, MCP, Focus, and CLI regressions.
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Structured proposal persists pending without Focus | DONE | `TestProposalPersistsPrivatelyWithoutCreatingFocusAndReplays` and `TestMCPFocusSuggestionToolsAreStructuredAndConsentBounded` assert private proposal persistence and zero Focus rows. |
+| 2 | Same proposal key and normalized payload replays exactly once | DONE | `Store.CreateOrGet` compares normalized proposal content; service and CLI replay tests assert the original suggestion ID/JSON. |
+| 3 | Today/Later acceptance creates or reuses one source-linked Focus row | DONE | `TestAcceptTodayLaterDoNextAndDismiss` covers both states and exact action replay; Focus uses deterministic `deferred_suggestion:<id>` origin keys. |
+| 4 | Do Next accepts into Today and returns launch intent without session creation | DONE | Service, CLI, and MCP end-to-end tests assert Today plus exact prompt/project/path launch intent; no session API is imported or invoked. |
+| 5 | Failed/cancelled client leaves accepted Do Next Focus in Today | DONE | Do Next tests stop after the response and verify the durable Focus row remains Today; the action has no rollback or completion inference. |
+| 6 | Dismiss creates no Focus and returns authoritative dismissed proposal | DONE | Dismiss subtest asserts dismissed state and an empty Focus store. |
+| 7 | Stale, unsupported, missing, expired, and invalid actions are structured and create no commitment | DONE | `TestActionErrorsMakeNoCommitment`, CLI error assertions, and MCP JSON error assertion cover all named error classes with zero Focus rows. |
+| 8 | Every supported harness gets the same consent/invocation guidance with no hook | DONE | `TestAllTargetsInstallIdenticalDeferredWorkConsentGuidance` verifies byte-identical native installs for opencode, cursor, claude, copilot, codex, and generic. |
+| 9 | Required current work is never auto-converted into a suggestion | DONE | Canonical skill explicitly forbids unfinished required steps, ACs, ledgers, and harness todos; implementation exposes only explicit invocation and adds no hook/watcher. |
+| 10 | Consumers receive structured records and advertised actions without prose parsing | DONE | DTOs include state/revision/actions; CLI JSON and all three MCP tools are exercised as structured data, with no assistant-prose parser. |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Add suggestion store/service and persistence tests | DONE | Added `internal/attention/suggestion/store.go`, `service.go`, and comprehensive service/store-backed tests for pending, expiry, retention, replay, permissions, and actions. |
+| 2 | Extend Focus CLI with suggest/list/action and JSON | DONE | Added `focus suggest`, `focus suggestions`, and `focus suggestion`; prompt/reason bodies stay out of argv, legacy `registered: auto` project registries remain readable, and CLI tests cover JSON/replay/errors. |
+| 3 | Add three MCP suggestion tools and dispatch | DONE | Added canonical definitions, read/mutate dispatch, `mcp_tools_focus.go`, decimal-string revisions, and structured MCP tests. |
+| 4 | Add canonical harness skill and Skills Reference | DONE | Added `domains/engineering/skills/deferred-work-suggestions/SKILL.md` plus managed source/generated Skills Reference entries. |
+| 5 | Verify all six harness target installations | DONE | Six-target fixture test asserts native paths, identical bytes, and semantic consent boundary phrases. |
+| 6 | Add Focus-create / receipt-commit failure injection recovery | DONE | `TestReceiptWriteFailureRecoversIdempotently` proves one Focus row remains after injected receipt failure and retry completes the proposal receipt without duplication. |
+| 7 | Document advisory/ledger boundary | DONE | Canonical skill states suggestions are advisory, not Focus, not a Completion Ledger item, and never a replacement for required delivery work. |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end: focused CLI/MCP tests passed, then real `go run ./cmd/hero focus suggest ...` and `focus suggestion <id> do-next ... --json` commands against an isolated state root returned a pending proposal, authoritative Today Focus row, and exact project launch intent.
+
+### Excellence Bar self-check
+
+- [x] Yes — the implementation keeps proposals and commitments separate, makes every mutation replay-safe, preserves exact prompts and revisions across JSON, and proves identical consent guidance across every supported harness.

@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/hero-engine/hero/internal/attention/focus"
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/refs"
 	"github.com/hero-engine/hero/internal/serve/chat"
@@ -52,6 +53,11 @@ type MCPServer struct {
 	// Optional — leaving it nil disables the dispatch surface and
 	// MCP behaves exactly as it did before the chat spec landed.
 	chatRegistry *chat.Registry
+
+	// attentionStateRoot and attentionResolver are test seams for private
+	// user-state tools. Production resolves the standard global state root.
+	attentionStateRoot string
+	attentionResolver  focus.ProjectResolver
 }
 
 // NewMCPServer creates an MCP server for the given hero workspace.

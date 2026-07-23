@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-23T01:59:16Z · 88 ready specs_
+_Generated: 2026-07-23T02:26:36Z · 87 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -618,17 +618,6 @@ Deliver local-first Project Mail and user-global Personal Focus as distinct,
 Hero-owned durable primitives; expose them through CLI/API and one stable
 consumer read model; and reframe peering over asynchronous mail without making
 model execution part of the communication contract.
-
----
-
-## deferred-work-suggestion-contract — "Deferred Work Suggestion Contract — Explicitly Accepted Focus"
-_feature · planning · horizon: next_
-
-Implement deferred suggestions as a distinct proposal store and service, not as
-Focus state. Expose propose/accept/dismiss through CLI and MCP, then add one
-canonical harness skill that installs to all six targets. Acceptance alone may
-create Focus; `do_next` atomically accepts into Today and returns a launch intent
-without starting a session.
 
 ---
 

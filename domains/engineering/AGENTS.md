@@ -95,6 +95,7 @@ Grouped by concern (every installed skill, no links):
 - **Cross-repo & reporting:** cross-repo-peering, deep-code-enrichment, issue-list-report — peer calls, enrichment passes, report formatting.
 - **Roadmap & performance:** performance-optimization, roadmap-review — perf tuning and roadmap-shape triage.
 - **Migration:** migration-safety — safe migration/refactor patterns.
+- **Attention:** deferred-work-suggestions — propose meaningful out-of-scope work without bypassing user consent or current delivery obligations.
 - **Core (installed with every pack):** agent-reliability, auto-knowledge-capture, completion-ledger, context-injection, convention-writing, documentation-practices, executive-report, explainer-format, kickoff-prompt, knowledge-flywheel, next-handoff-emit, next-md, note-capture, nudge-awareness, project-context-generation, spec-format.
 
 ### CLI Commands

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/hero-engine/hero/contracts/attention"
-	"github.com/hero-engine/hero/internal/serve"
+	"github.com/hero-engine/hero/internal/projectregistry"
 )
 
 func TestRegistryResolverUsesPeerIDAsCanonicalIdentity(t *testing.T) {
@@ -18,7 +18,7 @@ func TestRegistryResolverUsesPeerIDAsCanonicalIdentity(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(project, ".hero", "hero.json"), []byte(`{"peer_id":"peer-canonical","peering":{"display":"Renamed Project"}}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	registry, err := serve.LoadRegistryFrom(filepath.Join(base, "projects.json"))
+	registry, err := projectregistry.LoadFrom(filepath.Join(base, "projects.json"))
 	if err != nil {
 		t.Fatal(err)
 	}

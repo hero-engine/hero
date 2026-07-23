@@ -11,6 +11,7 @@ import (
 	"github.com/hero-engine/hero/contracts/attention"
 	"github.com/hero-engine/hero/internal/attention/focus"
 	attentionstate "github.com/hero-engine/hero/internal/attention/state"
+	"github.com/hero-engine/hero/internal/attention/suggestion"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +24,132 @@ var focusCmd = newFocusCommand()
 
 func newFocusCommand() *cobra.Command {
 	cmd := &cobra.Command{Use: "focus", Short: "Manage private prompt-backed intentions across projects"}
-	cmd.AddCommand(newFocusAddCommand(), newFocusListCommand(), newFocusShowCommand(), newFocusMoveCommand(), newFocusDoneCommand(), newFocusLaunchCommand())
+	cmd.AddCommand(newFocusAddCommand(), newFocusListCommand(), newFocusShowCommand(), newFocusMoveCommand(), newFocusDoneCommand(), newFocusLaunchCommand(), newFocusSuggestCommand(), newFocusSuggestionsCommand(), newFocusSuggestionActionCommand())
+	return cmd
+}
+
+func newFocusSuggestCommand() *cobra.Command {
+	var title, reasonFile, promptFile, project, sourceKind, sourceID, idempotencyKey string
+	cmd := &cobra.Command{
+		Use: "suggest", Short: "Propose advisory deferred work without creating Focus", Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if promptFile == "" {
+				return errors.New("--prompt-file is required (use - for stdin)")
+			}
+			if reasonFile == "" || reasonFile == "-" {
+				return errors.New("--reason-file must name a file (stdin is reserved for --prompt-file -)")
+			}
+			prompt, err := readFocusPrompt(cmd.InOrStdin(), promptFile)
+			if err != nil {
+				return err
+			}
+			reason, err := readFocusPrompt(cmd.InOrStdin(), reasonFile)
+			if err != nil {
+				return fmt.Errorf("read suggestion reason: %w", err)
+			}
+			service, resolver, err := suggestionService()
+			if err != nil {
+				return err
+			}
+			var ref *attention.ProjectReference
+			if project == "" {
+				ref, err = resolver.ResolveCurrent()
+			} else {
+				ref, err = resolver.ResolveInput(project)
+			}
+			if err != nil {
+				return err
+			}
+			item, err := service.Create(suggestion.CreateRequest{Title: title, Reason: reason, Prompt: prompt, Project: ref, Provenance: &attention.ProvenanceReference{Kind: sourceKind, SourceID: sourceID}, IdempotencyKey: idempotencyKey})
+			if err != nil {
+				return suggestionCLIError(err)
+			}
+			return writeFocusJSON(cmd.OutOrStdout(), item)
+		},
+	}
+	cmd.Flags().StringVar(&title, "title", "", "short proposal title (required)")
+	cmd.Flags().StringVar(&reasonFile, "reason-file", "", "file containing why this work is worth revisiting (required)")
+	cmd.Flags().StringVar(&promptFile, "prompt-file", "", "exact executable prompt file, or - for stdin (required)")
+	cmd.Flags().StringVar(&project, "project", "", "registered project slug, absolute path, or .")
+	cmd.Flags().StringVar(&sourceKind, "source-kind", "", "typed source: run or session (required)")
+	cmd.Flags().StringVar(&sourceID, "source-id", "", "source run/session identifier (required)")
+	cmd.Flags().StringVar(&idempotencyKey, "idempotency-key", "", "proposal replay key (required)")
+	for _, name := range []string{"title", "reason-file", "source-kind", "source-id", "idempotency-key"} {
+		_ = cmd.MarkFlagRequired(name)
+	}
+	return cmd
+}
+
+func newFocusSuggestionsCommand() *cobra.Command {
+	var pending, jsonOutput bool
+	cmd := &cobra.Command{
+		Use: "suggestions", Short: "List deferred-work proposals", Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			service, _, err := suggestionService()
+			if err != nil {
+				return err
+			}
+			items, err := service.List(pending)
+			if err != nil {
+				return suggestionCLIError(err)
+			}
+			if jsonOutput {
+				return writeFocusJSON(cmd.OutOrStdout(), items)
+			}
+			for _, item := range items {
+				project := "unbound"
+				if item.Project != nil {
+					project = item.Project.DisplayName
+				}
+				fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\trev:%d\n  %s\n", item.ID, item.State, item.Title, project, item.Revision, item.Reason)
+				if item.State == suggestion.StatePending {
+					fmt.Fprintf(cmd.OutOrStdout(), "  hero focus suggestion %s today|later|do-next|dismiss --revision %d --idempotency-key <key>\n", item.ID, item.Revision)
+				}
+			}
+			return nil
+		},
+	}
+	cmd.Flags().BoolVar(&pending, "pending", false, "show only pending proposals")
+	cmd.Flags().BoolVar(&jsonOutput, "json", false, "emit JSON")
+	return cmd
+}
+
+func newFocusSuggestionActionCommand() *cobra.Command {
+	var revision int64
+	var idempotencyKey string
+	var jsonOutput bool
+	cmd := &cobra.Command{
+		Use: "suggestion <id> <today|later|do-next|dismiss>", Short: "Accept or dismiss a deferred-work proposal", Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			service, _, err := suggestionService()
+			if err != nil {
+				return err
+			}
+			result, err := service.Act(args[0], args[1], revision, idempotencyKey)
+			if err != nil {
+				return suggestionCLIError(err)
+			}
+			if jsonOutput {
+				return writeFocusJSON(cmd.OutOrStdout(), result)
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "%s %s (revision %d)\n", result.Suggestion.ID, result.Suggestion.State, result.Suggestion.Revision)
+			if result.Focus != nil {
+				fmt.Fprintf(cmd.OutOrStdout(), "Focus: %s [%s] revision %d\n", result.Focus.ID, result.Focus.Lifecycle, result.Focus.Revision)
+			}
+			if result.Launch != nil {
+				fmt.Fprintf(cmd.OutOrStdout(), "Project: %s\nPath: %s\nPrompt:\n%s", result.Launch.Project.DisplayName, result.Launch.Path, result.Launch.Prompt)
+				if !strings.HasSuffix(result.Launch.Prompt, "\n") {
+					fmt.Fprintln(cmd.OutOrStdout())
+				}
+			}
+			return nil
+		},
+	}
+	cmd.Flags().Int64Var(&revision, "revision", 0, "expected suggestion revision (required)")
+	cmd.Flags().StringVar(&idempotencyKey, "idempotency-key", "", "action replay key (required)")
+	cmd.Flags().BoolVar(&jsonOutput, "json", false, "emit JSON")
+	_ = cmd.MarkFlagRequired("revision")
+	_ = cmd.MarkFlagRequired("idempotency-key")
 	return cmd
 }
 
@@ -232,6 +358,32 @@ func focusService() (*focus.Service, focus.ProjectResolver, error) {
 	return focus.NewService(store, resolver), resolver, nil
 }
 
+func suggestionService() (*suggestion.Service, focus.ProjectResolver, error) {
+	root := focusStateRootOverride
+	var err error
+	if root == "" {
+		root, err = attentionstate.Ensure(attentionstate.Options{ProjectRoot: findProjectRoot()})
+	} else {
+		root, err = attentionstate.Ensure(attentionstate.Options{Root: root})
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+	proposalStore, err := suggestion.NewStore(root)
+	if err != nil {
+		return nil, nil, err
+	}
+	focusStore, err := focus.NewStore(root)
+	if err != nil {
+		return nil, nil, err
+	}
+	resolver, err := focusResolverLoader()
+	if err != nil {
+		return nil, nil, err
+	}
+	return suggestion.NewService(proposalStore, focus.NewService(focusStore, resolver), resolver), resolver, nil
+}
+
 func readFocusPrompt(stdin io.Reader, path string) (string, error) {
 	var b []byte
 	var err error
@@ -269,6 +421,23 @@ func focusCLIError(err error) error {
 	case errors.Is(err, focus.ErrIdempotencyConflict):
 		return fmt.Errorf("idempotency_conflict: %w", err)
 	case errors.Is(err, focus.ErrNotFound):
+		return fmt.Errorf("missing: %w", err)
+	default:
+		return err
+	}
+}
+
+func suggestionCLIError(err error) error {
+	var operationError *suggestion.Error
+	if errors.As(err, &operationError) {
+		return fmt.Errorf("%s: %s", operationError.Code, operationError.Message)
+	}
+	switch {
+	case errors.Is(err, suggestion.ErrStale):
+		return fmt.Errorf("stale: %w", err)
+	case errors.Is(err, suggestion.ErrIdempotencyConflict):
+		return fmt.Errorf("validation: %w", err)
+	case errors.Is(err, suggestion.ErrNotFound):
 		return fmt.Errorf("missing: %w", err)
 	default:
 		return err

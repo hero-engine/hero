@@ -184,6 +184,13 @@ func TestEveryWriteContractHasBoundaryValidation(t *testing.T) {
 	if err := ValidateSuggestionDecision(decision); err == nil || err.Field != "decision" {
 		t.Fatalf("decision error = %#v", err)
 	}
+	for _, mode := range []string{"today", "later", "do_next", "dismiss"} {
+		decision.Decision = mode
+		decision.Revision = 42
+		if err := ValidateSuggestionDecision(decision); err != nil {
+			t.Fatalf("valid decision %s: %v", mode, err)
+		}
+	}
 }
 
 func TestSchemaByteLimitsMatchGoValidation(t *testing.T) {

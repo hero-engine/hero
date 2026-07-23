@@ -300,7 +300,7 @@ func (a *API) handleRegistryRefresh(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 		if a.server.registry != nil {
-			reloaded, rerr := LoadRegistryFrom(a.server.registry.path)
+			reloaded, rerr := LoadRegistryFrom(a.server.registry.FilePath())
 			if rerr != nil {
 				resp.Error = rerr.Error()
 			} else {
