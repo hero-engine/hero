@@ -437,3 +437,6 @@
 {"ts":"2026-07-22T20:30:26.117464Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"tracker-project-snapshot-contract","message":"status -\u003e completed"}
 {"ts":"2026-07-22T20:30:28.230649Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"tracker-source-reconciliation","message":"\"Tracker import fidelity and render-safe reconciliation\""}
 {"ts":"2026-07-22T20:30:28.230745Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"tracker-source-reconciliation","message":"status -\u003e completed"}
+{"event":"claimed","slug":"durable-attention-contracts","agent":"codex","at":"2026-07-22T17:56:51.006028-06:00"}
+{"ts":"2026-07-23T00:20:27.013544Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"durable-attention-contracts","message":"\"Durable Attention Contracts — Ownership, Storage, Compatibility, and Trust\""}
+{"ts":"2026-07-23T00:20:27.013619Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"durable-attention-contracts","message":"status -\u003e completed"}

@@ -146,6 +146,18 @@ Useful endpoints:
 | `GET` | `/api/{project}/knowledge` |
 | `GET` | `/api/events` |
 
+### Durable attention contract
+
+Hero Code's v1 desktop boundary is the user-global HTTP API rooted at
+`/api/attention/v1`. It is available before a project is selected and exposes
+authoritative snapshots plus advertised row actions. Mail and Focus retain
+separate mutation contracts; there is no generic mutable Attention endpoint.
+
+Clients refresh the authoritative snapshot on mount, foreground, reconnect,
+and after every successful mutation. Streaming events are optional: v1 clients
+must remain correct using snapshot refresh alone. The portable schemas and
+checksum manifest live under `contracts/attention/{schema,testdata}/v1`.
+
 ## Team Mode
 
 ```bash

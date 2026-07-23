@@ -8,7 +8,8 @@ import (
 )
 
 // TestContractsImportBoundary walks every package under contracts/... and
-// confirms none of them import from anywhere else inside this repository.
+// confirms none of them, including the portable attention contract, import
+// from anywhere else inside this repository.
 // The contracts package must remain a leaf so a future external consumer
 // (notably the hero-cloud repo) can depend on it without dragging the
 // rest of hero along.
@@ -18,8 +19,8 @@ import (
 // with a message naming the offending file and import.
 func TestContractsImportBoundary(t *testing.T) {
 	const (
-		modulePrefix    = "github.com/hero-engine/hero"
-		allowedSubtree  = "github.com/hero-engine/hero/contracts"
+		modulePrefix   = "github.com/hero-engine/hero"
+		allowedSubtree = "github.com/hero-engine/hero/contracts"
 	)
 
 	out, err := exec.Command("go", "list", "-deps", "-json", "./...").Output()

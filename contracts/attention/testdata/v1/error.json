@@ -1,0 +1,1 @@
+{"schema_version":1,"error":{"code":"stale","message":"row revision is stale","field":"row_revision","details":{"expected":"3","actual":"2"}}}

@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/v1/action.schema.json",
+  "title": "ActionRequest",
+  "type": "object",
+  "required": ["schema_version", "row_id", "action_id", "row_revision"],
+  "properties": {"schema_version": {"const": 1}, "row_id": {"type": "string"}, "action_id": {"type": "string"}, "row_revision": {"type": "integer"}, "idempotency_key": {"type": "string"}, "input": {"type": "object"}}
+}

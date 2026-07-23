@@ -2,7 +2,7 @@
 title: "Durable Attention Contracts — Ownership, Storage, Compatibility, and Trust"
 slug: durable-attention-contracts
 type: feature
-status: planning
+status: completed
 domain: engineering
 priority: critical
 size: large
@@ -10,6 +10,10 @@ horizon: next
 created: 2026-07-20
 parent: durable-attention
 tags: [attention, contract, storage, security]
+claimed_by: codex
+claimed_at: 2026-07-22T17:56:51-06:00
+delivery_method: manual
+completed_at: 2026-07-23T00:20:25Z
 ---
 
 # Durable Attention Contracts — Ownership, Storage, Compatibility, and Trust
@@ -34,12 +38,18 @@ Code can implement independently without sharing storage models.
 
 ## Kickoff
 
-Implement the v1 durable-attention contract exactly as designed here. Keep
-`contracts/attention` leaf-only, validate untrusted Mail at the boundary, and
-preserve separate Mail and Focus write models. Publish schemas and checksumed
-golden fixtures before store work. Treat Hero Serve's global HTTP endpoint as
-the Hero Code boundary, with snapshot refresh required and events explicitly
-optional.
+Defines portable Mail, Focus, suggestion, action, and read-projection contracts
+before any durable stores or HTTP handlers are built.
+
+**Status:** completed — DTOs, validation, schemas, fixtures, state-root resolver,
+documentation, and tests shipped; all verification gates passed.
+
+**Pick up at:** use these contracts as the stable seam for the next durable
+attention child without changing the v1 write/read authority split.
+
+→ `.hero/specs/durable-attention-contracts/spec.md`
+
+**Files:** `contracts/attention/contract_test.go`, `contracts/attention/validate.go`, `internal/attention/state/root.go`, `web/docs/src/cli/server-and-mcp.md`
 
 ## Problem
 
@@ -133,15 +143,15 @@ spec prose.
    navigation references, and structured errors.
 4. Add `contracts/attention/validate.go` for enum-independent structural limits,
    RFC3339 validation, IDs, and untrusted text limits.
-5. Add `contracts/attention/schema/v1/*.schema.json` and
-   `contracts/attention/testdata/v1/{manifest.json,*.json}`.
+5. Add versioned schemas under `contracts/attention/schema/v1/` and checksumed
+   golden fixtures under `contracts/attention/testdata/v1/`.
 6. Extend `contracts/contracts_boundary_test.go` and add
    `contracts/attention/contract_test.go` to enforce the leaf boundary, schema
    parity, fixtures, checksums, and forward decoding.
 7. Add `internal/attention/state/root.go` and tests for XDG/default resolution,
    injected roots, permissions, and the prohibition on project-tree storage.
 8. Document `/api/attention/v1` as the one desktop consumer transport in
-   `docs/serve.md`; implementation of its handlers belongs to
+   `web/docs/src/cli/server-and-mcp.md`; implementation of its handlers belongs to
    `attention-read-model-v1`.
 
 ## Acceptance Criteria
@@ -204,3 +214,46 @@ Attention write endpoint.
 - Permission and path tests under injected XDG and default-home layouts.
 - Boundary test proving `contracts/attention` remains leaf-only.
 - `go test ./...` after downstream specs implement the shared DTOs.
+
+## Completion Ledger
+
+Implemented the Go 1.26 contract seam with standard-library-only DTO and
+validation code. Validation ran through the focused contract/state suites and
+the repository suite; one unrelated existing CLI test requires excluding the
+active desktop session registry, documented below.
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Records carry v1, opaque IDs, UTC timestamps, typed references, no paths | DONE | DTOs expose only portable references; record validators plus executable `x-utcRFC3339Nano` schemas reject non-UTC offsets, with coverage in `TestExactUTCTimestampsAcrossRecordsAndSchemas`. |
+| 2 | Unknown additive fields, source kinds, and action IDs remain compatible | DONE | `contracts/attention/contract_test.go:89` decodes the forward fixture and asserts raw future values. |
+| 3 | Invalid writes return stable structured validation errors with no state | DONE | `contracts/attention/validate.go` validates every v1 write DTO, including receipts, without mutation; `TestValidationContract` and `TestEveryWriteContractHasBoundaryValidation` cover limits, timestamps, receipt/lifecycle/decision values, revisions, and idempotency. |
+| 4 | Resolve injected/XDG/default state roots privately and outside forbidden roots | DONE | `internal/attention/state/root.go:26` and `root_test.go:11` cover precedence, prohibited roots, `0700` directories, `0600` files, and separate Mail/Focus directories. |
+| 5 | Actions expose raw metadata, input schema, revision, and idempotency | DONE | `contracts/attention/action.go:14` defines the complete advertised descriptor; fixture schema validates it. |
+| 6 | Actions return authoritative results or stable structured errors | DONE | `ValidateActionResult`, `action-result.schema.json`, and `TestActionResultRequiresExactlyOneOutcome` enforce exactly one success/error outcome and the six stable error codes. |
+| 7 | Fixture suite validates schemas, DTOs, and every manifest SHA-256 | DONE | `contracts/attention/contract_test.go` validates all eight manifest entries after reading the checked-in artifacts and proves schema byte limits match Go for multibyte text. |
+| 8 | One global `/api/attention/v1` HTTP contract; events optional | DONE | `web/docs/src/cli/server-and-mcp.md:149` documents the desktop boundary, refresh cadence, and optional streaming. |
+| 9 | Mail and Focus share projection but retain separate mutations/lifecycles | DONE | Separate DTO files and lifecycle constants feed only `AttentionRow`; docs explicitly prohibit a generic mutable Attention endpoint. |
+| 10 | `contracts/attention` stays leaf-only | DONE | `contracts/contracts_boundary_test.go` audits dependencies; `go test ./contracts/...` passes. |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Add schema version and policy | DONE | Added `contracts/attention/version.go` with v1 and additive compatibility policy. |
+| 2 | Add separate Mail, Focus, suggestion, and projection DTOs | DONE | Added `mail.go`, `focus.go`, `suggestion.go`, and `projection.go`. |
+| 3 | Add action/result/navigation/error contracts | DONE | Added `action.go` with advertised descriptors, requests, authoritative results, launch/navigation, and errors. |
+| 4 | Add structural boundary validation | DONE | Added `validate.go` with validators for every write DTO plus v1, ID, timestamp, UTF-8, size, provenance, lifecycle, decision, outcome, revision, and idempotency checks. |
+| 5 | Add schemas, golden fixtures, and checksum manifest | DONE | Added six schemas and eight fixture cases under the versioned contract directories. |
+| 6 | Enforce leaf boundary, schema parity, fixtures, checksums, forward decode | DONE | Extended the boundary test and added `contract_test.go` with executable schema checks, byte-limit parity coverage, and DTO decoding. |
+| 7 | Add shared state-root resolver and permission/path tests | DONE | Added `internal/attention/state/root.go` and `root_test.go`; no store implementation was introduced. |
+| 8 | Document the desktop HTTP boundary | DONE | Updated the canonical Serve documentation at `web/docs/src/cli/server-and-mcp.md`. |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end: `GOCACHE=/private/tmp/hero-attention-gocache go test ./contracts/... ./internal/attention/state/...` passed, validating all vendorable fixtures/schemas/checksums and creating private state directories/files in temporary layouts.
+
+### Excellence Bar self-check
+
+Yes — the contract is portable, standard-library-only, fixture-backed, boundary-tested, and stays within the no-store/no-handler scope.

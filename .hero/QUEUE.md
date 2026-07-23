@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-22T23:56:19Z · 88 ready specs_
+_Generated: 2026-07-23T00:21:24Z · 89 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -621,15 +621,25 @@ model execution part of the communication contract.
 
 ---
 
-## durable-attention-contracts — "Durable Attention Contracts — Ownership, Storage, Compatibility, and Trust"
+## project-mail-core — "Project Mail Core — Local Asynchronous Project Messaging"
 _feature · planning · horizon: next_
 
-Implement the v1 durable-attention contract exactly as designed here. Keep
-`contracts/attention` leaf-only, validate untrusted Mail at the boundary, and
-preserve separate Mail and Focus write models. Publish schemas and checksumed
-golden fixtures before store work. Treat Hero Serve's global HTTP endpoint as
-the Hero Code boundary, with snapshot refresh required and events explicitly
-optional.
+Implement Project Mail on the durable-attention contracts and injected global
+state root. Reuse peer identity, manifest, and alias resolution, but do not call
+the peer-call launcher or write into the recipient repository. Make delivery an
+atomic immutable-envelope write, keep receipts separate, expose stable JSON
+output, and prove retries cannot duplicate messages.
+
+---
+
+## personal-focus-core — "Personal Focus Core — Prompt-Backed Work Across Projects"
+_feature · planning · horizon: next_
+
+Build Personal Focus on the contract state root with atomic per-item updates and
+optimistic revisions. Keep it independent of project specs and harness todos.
+Manual creation is durable; project-derived creation requires an idempotency
+source key. Return launch intents containing the saved prompt and resolved
+project, but never create a session or infer completion.
 
 ---
 

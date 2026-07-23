@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/v1/action-result.schema.json",
+  "title": "ActionResult",
+  "type": "object",
+  "required": ["schema_version"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "row": {"type": "object"},
+    "navigation": {"type": "object"},
+    "launch": {"type": "object"},
+    "error": {"type": "object", "required": ["code", "message"], "properties": {"code": {"enum": ["validation", "stale", "unsupported", "missing", "incompatible_version", "unavailable"]}, "message": {"type": "string"}, "field": {"type": "string"}, "details": {"type": "object"}}}
+  },
+  "oneOf": [
+    {"required": ["error"], "not": {"anyOf": [{"required": ["row"]}, {"required": ["navigation"]}, {"required": ["launch"]}]}},
+    {"not": {"required": ["error"]}, "anyOf": [{"required": ["row"]}, {"required": ["navigation"]}, {"required": ["launch"]}]}
+  ]
+}

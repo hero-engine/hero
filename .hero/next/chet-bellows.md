@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-22T23:56:18Z
+updated: 2026-07-23T00:21:24Z
 repo: hero-engine/hero
 ---
 
@@ -20,19 +20,17 @@ repo: hero-engine/hero
 > - Origin workspace: hero-code (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
 > - Target alias on cal…
 
-_possibly stale — 4 commit(s) since, last set 3d 2h ago_
+_possibly stale — 15 commit(s) since, last set 3d 2h ago_
 
 ## Last user ask
 
-> Commit the current main working tree, push it to origin, then continue the durable-attention initiative on feature/hero-inbox
+> Deliver the durable-attention initiative on feature/hero-inbox, starting with durable-attention-contracts
+
+_possibly stale — 4 commit(s) since, last set 24m ago_
 
 ## Suggested next prompt
 
-> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
-
-_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
-
-_Source: auto-derived from open feature — `hero next suggest "..."` to override._
+> let's deliver project-mail-core next and keep following the durable-attention dependency order
 
 ## Recent reflections
 

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/v1/attention-snapshot.schema.json",
+  "title": "AttentionSnapshot",
+  "type": "object",
+  "required": ["schema_version", "generated_at", "revision", "rows"],
+  "properties": {
+    "schema_version": {"const": 1}, "generated_at": {"type": "string", "format": "date-time", "x-utcRFC3339Nano": true}, "revision": {"type": "string"},
+    "rows": {"type": "array", "items": {"type": "object", "required": ["schema_version", "id", "source_kind", "source_id", "project", "title", "timestamp", "revision"], "properties": {
+      "schema_version": {"const": 1}, "id": {"type": "string"}, "source_kind": {"type": "string"}, "source_id": {"type": "string"},
+      "project": {"type": "object", "required": ["peer_id", "display_name"], "properties": {"peer_id": {"type": "string"}, "registry_slug": {"type": "string"}, "display_name": {"type": "string"}}},
+      "title": {"type": "string"}, "body": {"type": "string"}, "timestamp": {"type": "string", "format": "date-time", "x-utcRFC3339Nano": true}, "revision": {"type": "integer"},
+      "actions": {"type": "array", "items": {"type": "object", "required": ["id", "label", "required_row_revision", "requires_idempotency"], "properties": {"id": {"type": "string"}, "label": {"type": "string"}, "style": {"type": "string"}, "confirmation": {"type": "string"}, "input_schema": {"type": "object"}, "required_row_revision": {"type": "integer"}, "requires_idempotency": {"type": "boolean"}}}}
+    }}}
+  }
+}

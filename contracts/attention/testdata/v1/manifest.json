@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "fixtures": [
+    {"path":"action-request.json","purpose":"canonical action request","schema":"action.schema.json","sha256":"feeed58cfe2e8451aae4cb55a8aa82fb07a2d3be31008e2220e1913f7314202a"},
+    {"path":"action-result.json","purpose":"successful authoritative result and launch intent","schema":"action-result.schema.json","sha256":"a4cde6a9dc6dfca43a31e6cefc825842e06b9e2d692a080eb0efb68ba4502597"},
+    {"path":"attention-snapshot.json","purpose":"canonical shared read projection","schema":"attention-snapshot.schema.json","sha256":"4a43e80109d4e46258b7ddea757ccbaf963c25a99629821792e8910b6aad1749"},
+    {"path":"error.json","purpose":"structured stale action error","schema":"action-result.schema.json","sha256":"457304b0bb2b3f1fc77426244371f5d0b7c4c6f56ba1547729135c53de9d9a22"},
+    {"path":"focus-item.json","purpose":"canonical private focus item","schema":"focus-item.schema.json","sha256":"5c09745f56f64f1d4941222cbda83bc514fc22f47e3fb07fd9c538d782966d31"},
+    {"path":"mail-envelope.json","purpose":"canonical untrusted project mail envelope","schema":"mail-envelope.schema.json","sha256":"5f54416e716c337aed03d1a700d72a75ab18e1b2bcdcb5c729af7d117fdb7d73"},
+    {"path":"suggestion.json","purpose":"deferred work proposal before focus acceptance","schema":"suggestion.schema.json","sha256":"cbc20a20838148faa763b3b798e10f7cc83a2bc89a3bbfb40ee4f590a34ca5a7"},
+    {"path":"unknown-fields.json","purpose":"forward-compatible unknown fields, source kind, style, and action ID","schema":"attention-snapshot.schema.json","sha256":"a3d4cbd0aa1f50c702170713e333ad20caadeef1160680498ce5bd6da01575e6"}
+  ]
+}
