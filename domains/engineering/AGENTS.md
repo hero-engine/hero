@@ -6,63 +6,6 @@ This project uses **Hero** for spec-driven engineering workflows. Hero manages s
 
 On the **first interaction** of every session, set a concise, descriptive session title that reflects what the user is working on (e.g. "design: auth flow", "fix: cart total rounding", "deliver: export-csv"). This keeps the session list navigable.
 
-### Natural Language Routing
-
-When the user describes what they want in natural language, route to the appropriate Hero slash command. **Run the command — don't just suggest it.**
-
-| User intent | Command |
-|---|---|
-| Bug, error, broken, fix, investigate, diagnose | `/diagnose` |
-| New feature, build, design, add, plan | `/design` |
-| Implement, deliver, ship, code, execute | `/deliver` |
-| Autopilot/run a whole initiative, "put X on autopilot", "drive the initiative", keep working autonomously | `/drive <initiative>` |
-| Review, PR, pull request, code review | `/review` |
-| Break down, decompose, epic, sequence | `/compose` |
-| Convention, pattern, standard, style | `/convention` |
-| Decision, tradeoff, compare, choose, ADR | `/decide` |
-| Explore, brainstorm, roadmap, ideate | `/discover` |
-| Mockup, mock, wireframe, prototype, visualize a screen, "what would X look like", "is that a swift mock?" | `/mock` |
-| Document, docs, explain, write docs | `/docs` |
-| Release, deploy, version, ship | `/release` |
-| Retro, postmortem, lessons learned | `/retro` |
-| Note, capture, remember, save thought | `/note` |
-| Scan, detect, onboard, stack analysis | `/scan` |
-| Check, health, validate workspace | `/check` |
-| Sprint, iteration, load sprint | `/sprint` |
-| Import, pull issues, fetch from tracker, sync issues | `/import` |
-| What's stuck, blocked items, dependencies, can't move forward | `/blocked` |
-| Capture, extract learnings, persist session knowledge to the knowledge base | `/capture` |
-| Challenge or revise a diagnosis, push back on root cause with new context | `/challenge` |
-| Start of session, load ranked context, what's in flight | `/resume` |
-| Roadmap drift triage, "review the roadmap for staleness" | `/roadmap-review` |
-| Scrub the codebase — dead code, weak types, duplication, bad comments, legacy cruft | `/scrub` |
-| Break a large spec into smaller, independently deliverable child specs | `/split` |
-| Trace where something came from, chain of decisions/specs/commits | `/why` |
-| Not sure which command to use, route my request | `/hero` |
-| Ask sibling/peer repo a question, check with peer | `hero peer call <alias> --mode=advisory "..."` |
-| Have peer design something, let peer handle design | `hero peer call <alias> --mode=spec-out "..."` |
-| Hand off a spec to a peer repo, drop on peer's queue, transfer to sibling | `hero handoff <spec> <alias>` |
-| Accept an incoming Mail work transfer into receiver-owned planning | `hero handoff receive <message-id>` |
-| Pick up handed-back spec, accept the handoff, peer finished | `hero handoff accept <spec>` |
-| What peers do we have, list siblings, which repos are linked | `hero peer list` |
-| What does peer expose, peer surface, peer conventions, inspect peer | `hero peer show <alias>` |
-| Cross-repo peering front door (session-level; picks advisory/spec-out/handoff/list/show for you) | `/peer` |
-| Force-refresh NEXT.md/QUEUE.md before switching tools (session-level; distinct from the cross-repo rows above) | `/handoff` |
-
-When routing, pass the user's original context as arguments to the command. If the intent is ambiguous, present the top 2-3 options and ask.
-
-**Slash commands ≠ CLI subcommands.** Slash commands (e.g. `/discover`, `/convention`) run inside the AI tool's session only — they are **not** `hero discover` or `hero convention` terminal commands. Some commands exist on both surfaces, but many are slash-only. Do not hallucinate CLI subcommands from slash command names. <!-- drift-test:ignore (illustrative: `hero discover`/`hero convention` above are explicitly non-existent subcommands) -->
-
-| Surface | Commands |
-|---|---|
-| **Slash-only** (no `hero <name>` equivalent) | `/capture`, `/challenge`, `/compose`, `/convention`, `/decide`, `/discover`, `/drive`, `/mock`, `/release`, `/retro`, `/review`, `/roadmap-review`, `/scrub`, `/split` |
-| **Both slash and CLI** | `/blocked`, `/check`, `/deliver`, `/design`, `/diagnose`, `/docs`, `/handoff` (slash = NEXT.md refresh; CLI `hero handoff <spec> <alias>` = cross-repo drop to a peer), `/hero` ("which command do I use" meta-help; CLI equivalent `hero do <request>`), `/import` (slash = tracker import via `hero sync import`; root `hero import` is unrelated knowledge-base ingestion), `/note`, `/peer`, `/resume`, `/scan`, `/sprint`, `/why` |
-| **CLI-only** (see CLI Commands below) | `hero status`, `hero search`, `hero ask`, `hero list`, `hero queue`, `hero spec verify`, `hero spec score`, `hero diff`, `hero drift`, etc. |
-
-**Mockup routing.** Any request to mock, wireframe, prototype, or visualize a screen — including casual questions like "what would this look like?" or "is that a swift mock?" — routes to `/mock`. **Never hand-generate a mockup outside that command, and never pick the format yourself.** `/mock` runs `hero spec mock detect`, which chooses the renderer (HTML vs. native SwiftUI) deterministically from the repo's stack and announces it before generating. There is **no "HTML-first, then port to SwiftUI" workflow** — that is a confabulation, not a real Hero pattern. In a native app you produce a native SwiftUI mockup directly (compiled, with real screenshots); in a web app you produce HTML. Do **not** generate an HTML approximation "to iterate faster" on a native project. Always end your response with the clickable file inventory `/mock` surfaces — never make the user ask for the links.
-
-**Cross-repo peering disambiguation.** The session-level `/handoff` slash command (force-refresh NEXT.md) and the cross-repo `hero handoff <spec> <alias>` command share a verb but do different things. Disambiguate by whether the user names a peer alias: if they do, it's cross-repo; if not, it's session handoff. When a user says "ask hero-code about X" or "hand off to hero-cloud," route to the cross-repo command and **compose the prompt yourself** — don't paraphrase the user's words verbatim. A good peer-call prompt names the specific question, references the active spec via `--related-spec <slug>` when one exists, and includes `--reason` explaining why the call is happening. Pick the mode: **advisory** (need a fact, peer writes nothing), **spec-out** (peer designs the fix on its side), or **handoff** (you already did the investigation, dropping it on peer's queue).
-
 ### Key Workflow
 
 1. **Design first**: Use `/design` to create a spec before building anything
@@ -96,7 +39,7 @@ Grouped by concern (every installed skill, no links):
 - **Cross-repo & reporting:** cross-repo-peering, deep-code-enrichment, issue-list-report — peer calls, enrichment passes, report formatting.
 - **Roadmap & performance:** performance-optimization, roadmap-review — perf tuning and roadmap-shape triage.
 - **Migration:** migration-safety — safe migration/refactor patterns.
-- **Attention:** deferred-work-suggestions — propose meaningful out-of-scope work without bypassing user consent or current delivery obligations.
+- **Attention:** attention-lifecycle-awareness, deferred-work-suggestions — read bounded state at chat boundaries and propose meaningful out-of-scope work without bypassing user consent or current delivery obligations.
 - **Core (installed with every pack):** agent-reliability, auto-knowledge-capture, completion-ledger, context-injection, convention-writing, documentation-practices, executive-report, explainer-format, kickoff-prompt, knowledge-flywheel, next-handoff-emit, next-md, note-capture, nudge-awareness, project-context-generation, spec-format.
 
 ### CLI Commands

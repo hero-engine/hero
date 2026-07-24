@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-23T21:38:46Z · 88 ready specs_
+_Generated: 2026-07-24T04:18:44Z · 84 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -33,61 +33,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
-
----
-
-## conversational-attention-operability — "Conversational Attention Operability — Safe Chat-Loop Access to Mail and Focus"
-_initiative · planning · horizon: now_
-
-_Run opener — arm with `/drive conversational-attention-operability`_
-
-Make the completed Durable Attention foundation naturally operable from a chat
-loop. Models should recognize Mail and Focus intent, use a complete MCP surface,
-surface bounded Attention state at useful lifecycle boundaries, and behave the
-same way across all six installed harnesses and Hero Code—without silently
-creating commitments or treating incoming mail as authorization to execute.
-
----
-
-## attention-lifecycle-read-awareness — "Attention Lifecycle Read Awareness — Bounded Context at Chat Boundaries"
-_feature · planning · horizon: now_
-
-Defines when a Hero-aware chat inspects Attention and how it summarizes that
-state without mutating or flooding context.
-
-**Status:** planning — the existing snapshot tool is sufficient; lifecycle
-points, limits, unavailable behavior, and all-target guidance need design.
-
-**Pick up at:** choose the smallest deterministic boundary set and bounded
-summary shape, anchored on the existing `hero_attention_snapshot` contract.
-
-→ `/design attention-lifecycle-read-awareness`
-
-**Files:** `domains/engineering/commands/resume.md`,
-`domains/engineering/skills/`, `internal/install/content_test.go`,
-`internal/serve/mcp_tools_attention.go`
-**Skip:** per-turn polling, full Mail bodies, or acknowledgment on inspection.
-
----
-
-## attention-mcp-action-tools — "Attention MCP Actions — Mail Send, Mail Reply, and Focus Create"
-_feature · planning · horizon: now_
-
-Completes the MCP write surface so a chat model can send/reply to Mail and
-create a user-requested Focus item without a generic Attention mutation.
-
-**Status:** planning — missing operations and existing source services are
-identified; schemas await the consent contract.
-
-**Pick up at:** design the three input/result schemas against existing Mail and
-Focus service methods, then map their effect classes into MCP profiles.
-
-→ `/design attention-mcp-action-tools`
-
-**Files:** `internal/serve/mcp_tools_def.go`, `internal/serve/mcp_dispatch.go`,
-`internal/serve/mcp_tools_mail.go`, `internal/serve/mcp_tools_focus.go`,
-`contracts/attention/`
-**Skip:** a generic `hero_attention_write` tool or direct storage access.
 
 ---
 
@@ -349,21 +294,6 @@ host filesystem allows. `hero install` and `hero upgrade` are the only
 operations that touch harness directories, and both are idempotent,
 non-destructive of user content, and capable of cleaning up legacy
 messy installs.
-
----
-
-## portable-routing-rules — "Portable Routing Rules — One `routing.md`, Every Harness Gets It Natively"
-_feature · planning · horizon: now_
-
-Portable routing rules: extract the natural-language → slash-command table out of `internal/install/agents_md.go` into one `routing.md`, then render per-target include directives so every harness loads it natively.
-
-**Status:** planning — spec just landed, no code yet.
-
-**Pick up at:** map the per-target rendering matrix. Start at `internal/install/agents_md.go:224` (`generateAgentsMdBody`) to see the content that's moving, then walk each `target_*.go` to confirm the native include idiom (Cursor `.mdc` frontmatter, Aider `read:`, Cline `.clinerules/`, opencode `instructions:`). Bucket A = native include; Bucket B = inline at install time.
-
-→ `.hero/planning/portable-routing-rules.md`
-
-**Files:** `internal/install/agents_md.go:224-313`, `internal/install/target_claude.go`, `internal/install/target_opencode.go`, `internal/install/target_cursor.go`, `internal/install/target_copilot.go`, `internal/install/target_codex.go`
 
 ---
 

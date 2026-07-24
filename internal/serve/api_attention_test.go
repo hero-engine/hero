@@ -19,12 +19,18 @@ import (
 	"github.com/hero-engine/hero/internal/attention/suggestion"
 )
 
-type attentionHTTPMail struct{ items []mail.ListedMessage }
+type attentionHTTPMail struct {
+	items       []mail.ListedMessage
+	inboxCalls  int
+	actionCalls int
+}
 
 func (f *attentionHTTPMail) Inbox(string, bool) ([]mail.ListedMessage, error) {
+	f.inboxCalls++
 	return f.items, nil
 }
 func (f *attentionHTTPMail) Action(mail.ActionRequest) (mail.ActionResult, error) {
+	f.actionCalls++
 	return mail.ActionResult{}, nil
 }
 
@@ -92,7 +98,7 @@ func TestAttentionUnavailableIsStructuredAndNotEmptySnapshot(t *testing.T) {
 	}
 }
 
-func TestAttentionContractAdvertisesFixtureManifestChecksum(t *testing.T) {
+func TestAttentionContractAdvertisesFixtureAndBundleChecksumsAcrossHTTPAndMCP(t *testing.T) {
 	manifest, err := os.ReadFile("../../contracts/attention/testdata/v1/manifest.json")
 	if err != nil {
 		t.Fatal(err)
@@ -100,16 +106,37 @@ func TestAttentionContractAdvertisesFixtureManifestChecksum(t *testing.T) {
 	if got := fmt.Sprintf("%x", sha256.Sum256(manifest)); got != attentionFixtureManifestSHA256 {
 		t.Fatalf("compiled checksum = %s, manifest = %s", attentionFixtureManifestSHA256, got)
 	}
+	bundleManifest, err := os.ReadFile("../../contracts/attention/conformance/v1/manifest.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := fmt.Sprintf("%x", sha256.Sum256(bundleManifest)); got != attentionBundleManifestSHA256 {
+		t.Fatalf("compiled bundle checksum = %s, manifest = %s", attentionBundleManifestSHA256, got)
+	}
 	api := NewAPI(&Server{}, NewEventBus())
 	request := httptest.NewRequest(http.MethodGet, "/api/attention/v1/contract", nil)
 	response := httptest.NewRecorder()
 	api.Handler().ServeHTTP(response, request)
-	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), attentionFixtureManifestSHA256) {
+	if response.Code != http.StatusOK ||
+		!strings.Contains(response.Body.String(), attentionFixtureManifestSHA256) ||
+		!strings.Contains(response.Body.String(), attentionBundleManifestSHA256) ||
+		!strings.Contains(response.Body.String(), attentionBundlePath) {
 		t.Fatalf("response = %d %s", response.Code, response.Body.String())
+	}
+
+	server := NewMCPServer(t.TempDir(), t.TempDir(), "test")
+	mcpResult, err := server.toolAttentionContract(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(mcpResult, attentionFixtureManifestSHA256) ||
+		!strings.Contains(mcpResult, attentionBundleManifestSHA256) ||
+		!strings.Contains(mcpResult, attentionBundlePath) {
+		t.Fatalf("MCP contract = %s", mcpResult)
 	}
 }
 
-func TestAttentionHTTPAndMCPReturnTheSameProjectionRecords(t *testing.T) {
+func TestAttentionMCPReturnsCompactWindowFromHTTPProjectionAuthority(t *testing.T) {
 	project := attention.ProjectReference{PeerID: "peer", DisplayName: "Project"}
 	service := projection.NewService(
 		&attentionHTTPMail{items: []mail.ListedMessage{{MailEnvelope: attention.MailEnvelope{
@@ -144,16 +171,120 @@ func TestAttentionHTTPAndMCPReturnTheSameProjectionRecords(t *testing.T) {
 	if err := json.Unmarshal([]byte(mcpJSON), &mcpSnapshot); err != nil {
 		t.Fatal(err)
 	}
-	// generated_at is intentionally volatile and excluded from revision
-	// identity; semantic records and opaque revisions must remain identical.
-	httpSnapshot.GeneratedAt = ""
-	mcpSnapshot.GeneratedAt = ""
-	httpCanonical, _ := json.Marshal(httpSnapshot)
-	mcpCanonical, _ := json.Marshal(mcpSnapshot)
-	var httpValue, mcpValue any
-	_ = json.Unmarshal(httpCanonical, &httpValue)
-	_ = json.Unmarshal(mcpCanonical, &mcpValue)
-	if !reflect.DeepEqual(httpValue, mcpValue) {
-		t.Fatalf("HTTP = %#v\nMCP = %#v", httpSnapshot, mcpSnapshot)
+	if mcpSnapshot.Revision != httpSnapshot.Revision ||
+		!reflect.DeepEqual(mcpSnapshot.Counts, httpSnapshot.Counts) {
+		t.Fatalf("MCP lost projection authority: HTTP = %#v MCP = %#v", httpSnapshot, mcpSnapshot)
+	}
+	if mcpSnapshot.Window == nil ||
+		mcpSnapshot.Window.Limit != projection.DefaultAwarenessLimit ||
+		mcpSnapshot.Window.Returned != 1 ||
+		mcpSnapshot.Window.Truncated {
+		t.Fatalf("MCP window = %#v", mcpSnapshot.Window)
+	}
+	if mcpSnapshot.Rows[0].Body != "" || mcpSnapshot.Rows[0].Summary != "" {
+		t.Fatalf("MCP exposed Mail body content: %#v", mcpSnapshot.Rows[0])
+	}
+	if httpSnapshot.Rows[0].Body != "Same service record" {
+		t.Fatalf("HTTP full projection was unexpectedly compacted: %#v", httpSnapshot.Rows[0])
+	}
+}
+
+func TestAttentionMCPLimitValidationAndUnavailableAreStructured(t *testing.T) {
+	mcp := NewMCPServer(t.TempDir(), t.TempDir(), "test")
+	for _, value := range []any{0, -1, 21, 1.5} {
+		raw, err := mcp.toolAttentionSnapshot(map[string]any{"limit": value})
+		if err != nil {
+			t.Fatal(err)
+		}
+		var result attention.ActionResult
+		if err := json.Unmarshal([]byte(raw), &result); err != nil {
+			t.Fatal(err)
+		}
+		if result.Error == nil || result.Error.Code != attention.ErrorValidation || result.Error.Field != "limit" {
+			t.Fatalf("limit %#v result = %#v", value, result)
+		}
+	}
+
+	project := attention.ProjectReference{PeerID: "peer", DisplayName: "Project"}
+	items := make([]mail.ListedMessage, 22)
+	for i := range items {
+		items[i] = mail.ListedMessage{MailEnvelope: attention.MailEnvelope{
+			ID:        fmt.Sprintf("mail_%02d", i),
+			Recipient: project,
+			Subject:   fmt.Sprintf("Subject %02d", i),
+			Body:      "private body",
+			CreatedAt: fmt.Sprintf("2026-07-22T18:%02d:00Z", i),
+		}}
+	}
+	mailSource := &attentionHTTPMail{items: items}
+	service := projection.NewService(
+		mailSource,
+		&attentionHTTPFocus{},
+		&attentionHTTPSuggestions{},
+	)
+	mcp.attentionService = func() (*projection.Service, error) { return service, nil }
+	for _, testCase := range []struct {
+		args  map[string]any
+		limit int
+	}{
+		{nil, projection.DefaultAwarenessLimit},
+		{map[string]any{"limit": 1}, 1},
+		{map[string]any{"limit": 20}, 20},
+	} {
+		raw, err := mcp.toolAttentionSnapshot(testCase.args)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var snapshot attention.AttentionSnapshot
+		if err := json.Unmarshal([]byte(raw), &snapshot); err != nil {
+			t.Fatal(err)
+		}
+		if snapshot.Window == nil || snapshot.Window.Limit != testCase.limit ||
+			snapshot.Window.Returned != testCase.limit || !snapshot.Window.Truncated ||
+			len(snapshot.Rows) != testCase.limit || snapshot.Counts.Total != len(items) {
+			t.Fatalf("limit %d snapshot = %#v", testCase.limit, snapshot)
+		}
+		for _, row := range snapshot.Rows {
+			if row.Body != "" || row.Summary != "" {
+				t.Fatalf("Mail content escaped compact snapshot: %#v", row)
+			}
+		}
+	}
+	if mailSource.inboxCalls != 3 || mailSource.actionCalls != 0 {
+		t.Fatalf("awareness source calls = inbox %d action %d", mailSource.inboxCalls, mailSource.actionCalls)
+	}
+
+	emptyService := projection.NewService(
+		&attentionHTTPMail{},
+		&attentionHTTPFocus{},
+		&attentionHTTPSuggestions{},
+	)
+	mcp.attentionService = func() (*projection.Service, error) { return emptyService, nil }
+	raw, err := mcp.toolAttentionSnapshot(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var empty attention.AttentionSnapshot
+	if err := json.Unmarshal([]byte(raw), &empty); err != nil {
+		t.Fatal(err)
+	}
+	if empty.Window == nil || empty.Window.State != attention.AttentionStateEmpty ||
+		empty.Counts.Total != 0 {
+		t.Fatalf("empty snapshot = %#v", empty)
+	}
+
+	mcp.attentionService = func() (*projection.Service, error) {
+		return nil, errors.New("authority offline")
+	}
+	raw, err = mcp.toolAttentionSnapshot(map[string]any{"limit": 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var unavailable attention.ActionResult
+	if err := json.Unmarshal([]byte(raw), &unavailable); err != nil {
+		t.Fatal(err)
+	}
+	if unavailable.Error == nil || unavailable.Error.Code != attention.ErrorUnavailable {
+		t.Fatalf("unavailable result = %#v", unavailable)
 	}
 }

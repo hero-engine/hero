@@ -4,10 +4,96 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/hero-engine/hero/contracts/attention"
 	"github.com/hero-engine/hero/internal/attention/mail"
 	attentionstate "github.com/hero-engine/hero/internal/attention/state"
 	"github.com/hero-engine/hero/internal/config"
 )
+
+func (s *MCPServer) toolMailSend(args map[string]interface{}) (string, error) {
+	version, versionErr := directActionVersion(args)
+	if versionErr != nil {
+		return directActionFailure(versionErr)
+	}
+	request := attention.MailSendActionRequest{
+		SchemaVersion: version, IntentSource: stringArg(args, "intent_source"),
+		Recipient: stringArg(args, "recipient"), RecipientPeerID: stringArg(args, "recipient_peer_id"),
+		Subject: stringArg(args, "subject"), Body: stringArg(args, "body"), Kind: stringArg(args, "kind"),
+		SourceKind: stringArg(args, "source_kind"), SourceID: stringArg(args, "source_id"),
+		IdempotencyKey: stringArg(args, "idempotency_key"),
+	}
+	if contractErr := attention.ValidateMailSendActionRequest(request); contractErr != nil {
+		return directActionFailure(contractErr)
+	}
+	service, err := s.mailService()
+	if err != nil {
+		return directActionUnavailable(err)
+	}
+	result, err := service.Send(mail.SendRequest{
+		RecipientAlias: request.Recipient, ExpectedRecipientPeer: request.RecipientPeerID,
+		Subject: request.Subject, Body: request.Body, Kind: request.Kind, IdempotencyKey: request.IdempotencyKey,
+		Provenance: directActionProvenance(request.SourceKind, request.SourceID),
+	})
+	if err != nil {
+		return directActionFailure(directMailError(err, false))
+	}
+	return directActionSuccess(result)
+}
+
+func (s *MCPServer) toolMailReply(args map[string]interface{}) (string, error) {
+	version, versionErr := directActionVersion(args)
+	if versionErr != nil {
+		return directActionFailure(versionErr)
+	}
+	request := attention.MailReplyActionRequest{
+		SchemaVersion: version, IntentSource: stringArg(args, "intent_source"),
+		MessageID: stringArg(args, "message_id"), ThreadID: stringArg(args, "thread_id"),
+		Subject: stringArg(args, "subject"), Body: stringArg(args, "body"), Kind: stringArg(args, "kind"),
+		SourceKind: stringArg(args, "source_kind"), SourceID: stringArg(args, "source_id"),
+		IdempotencyKey: stringArg(args, "idempotency_key"),
+	}
+	if contractErr := attention.ValidateMailReplyActionRequest(request); contractErr != nil {
+		return directActionFailure(contractErr)
+	}
+	service, err := s.mailService()
+	if err != nil {
+		return directActionUnavailable(err)
+	}
+	result, err := service.Reply(mail.ReplyRequest{
+		MessageID: request.MessageID, ExpectedThread: request.ThreadID,
+		Subject: request.Subject, Body: request.Body, Kind: request.Kind, IdempotencyKey: request.IdempotencyKey,
+		Provenance: directActionProvenance(request.SourceKind, request.SourceID),
+	})
+	if err != nil {
+		return directActionFailure(directMailError(err, true))
+	}
+	return directActionSuccess(result)
+}
+
+func directMailError(err error, reply bool) *attention.ContractError {
+	var contractErr *attention.ContractError
+	switch {
+	case errors.As(err, &contractErr):
+		return contractErr
+	case errors.Is(err, mail.ErrIdempotencyConflict):
+		return &attention.ContractError{Code: attention.ErrorIdempotencyConflict, Message: err.Error(), Field: "idempotency_key"}
+	case errors.Is(err, mail.ErrRecipientMismatch):
+		return &attention.ContractError{Code: attention.ErrorValidation, Message: err.Error(), Field: "recipient_peer_id"}
+	case errors.Is(err, mail.ErrThreadMismatch):
+		return &attention.ContractError{Code: attention.ErrorStale, Message: err.Error(), Field: "thread_id"}
+	case errors.Is(err, mail.ErrNotFound):
+		return &attention.ContractError{Code: attention.ErrorMissing, Message: err.Error(), Field: "message_id"}
+	case errors.Is(err, mail.ErrRecipientMissing):
+		field := "recipient"
+		if reply {
+			field = "message_id"
+		}
+		return &attention.ContractError{Code: attention.ErrorMissing, Message: err.Error(), Field: field}
+	case errors.Is(err, mail.ErrUnavailable):
+		return &attention.ContractError{Code: attention.ErrorUnavailable, Message: err.Error()}
+	}
+	return &attention.ContractError{Code: attention.ErrorUnavailable, Message: err.Error()}
+}
 
 type mailMCPMessage struct {
 	mail.ListedMessage

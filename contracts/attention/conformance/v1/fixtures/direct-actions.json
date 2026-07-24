@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "send-to-resolved-peer",
+      "operation_id": "mail.send",
+      "request": {
+        "schema_version": 1,
+        "intent_source": "user",
+        "recipient": "hero-code",
+        "recipient_peer_id": "peer_hero_code",
+        "subject": "Confirm the Attention contract",
+        "body": "Please confirm the pinned fixture checksum.",
+        "kind": "request",
+        "source_kind": "session",
+        "source_id": "session_01JYX",
+        "idempotency_key": "session_01JYX:send-contract"
+      },
+      "expected_source_kind": "mail_delivery"
+    },
+    {
+      "id": "reply-to-resolved-thread",
+      "operation_id": "mail.reply",
+      "request": {
+        "schema_version": 1,
+        "intent_source": "user",
+        "message_id": "mail_01JYX",
+        "thread_id": "mail_01JYX",
+        "body": "Friday works.",
+        "kind": "response",
+        "idempotency_key": "session_01JYX:reply-friday"
+      },
+      "expected_source_kind": "mail_delivery"
+    },
+    {
+      "id": "create-bound-focus",
+      "operation_id": "focus.create",
+      "request": {
+        "schema_version": 1,
+        "intent_source": "user",
+        "title": "Finish the Attention routes",
+        "prompt": "Deliver attention-conversational-routes and verify every acceptance criterion.",
+        "lifecycle": "today",
+        "project": "hero",
+        "project_peer_id": "peer_hero",
+        "source_id": "session_01JYX",
+        "idempotency_key": "session_01JYX:focus-routes"
+      },
+      "expected_source_kind": "focus_item"
+    }
+  ]
+}

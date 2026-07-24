@@ -90,9 +90,21 @@ type InitializeResult struct {
 
 // ToolDefinition describes a single MCP tool.
 type ToolDefinition struct {
-	Name        string      `json:"name"`
-	Description string      `json:"description"`
-	InputSchema InputSchema `json:"inputSchema"`
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
+	InputSchema InputSchema            `json:"inputSchema"`
+	Annotations *ToolAnnotations       `json:"annotations,omitempty"`
+	Meta        map[string]interface{} `json:"_meta,omitempty"`
+}
+
+// ToolAnnotations are MCP's advisory tool-behavior hints. They help clients
+// present and route calls but are never treated as authorization.
+type ToolAnnotations struct {
+	Title           string `json:"title,omitempty"`
+	ReadOnlyHint    *bool  `json:"readOnlyHint,omitempty"`
+	DestructiveHint *bool  `json:"destructiveHint,omitempty"`
+	IdempotentHint  *bool  `json:"idempotentHint,omitempty"`
+	OpenWorldHint   *bool  `json:"openWorldHint,omitempty"`
 }
 
 // InputSchema is a JSON Schema for tool input.

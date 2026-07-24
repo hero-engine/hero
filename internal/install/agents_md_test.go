@@ -74,7 +74,12 @@ func TestEngineeringAgentsMdRosterComplete(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read %s: %v", agentsMdPath, err)
 	}
-	content := string(raw)
+	routingPath := filepath.Join(repoRoot, "domains", "engineering", "routing.md")
+	routing, err := os.ReadFile(routingPath)
+	if err != nil {
+		t.Fatalf("read %s: %v", routingPath, err)
+	}
+	content := string(raw) + "\n" + string(routing)
 
 	var missing []string
 

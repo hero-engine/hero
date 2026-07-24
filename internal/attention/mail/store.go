@@ -21,6 +21,10 @@ var (
 	ErrNotFound            = errors.New("mail message not found")
 	ErrStale               = errors.New("stale mail receipt revision")
 	ErrIdempotencyConflict = errors.New("idempotency_conflict")
+	ErrRecipientMismatch   = errors.New("mail recipient identity mismatch")
+	ErrThreadMismatch      = errors.New("mail thread identity mismatch")
+	ErrRecipientMissing    = errors.New("mail recipient is missing")
+	ErrUnavailable         = errors.New("mail authority unavailable")
 )
 
 type StaleError struct {

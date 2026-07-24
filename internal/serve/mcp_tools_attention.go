@@ -11,7 +11,14 @@ import (
 	"github.com/hero-engine/hero/internal/projectregistry"
 )
 
-func (s *MCPServer) toolAttentionSnapshot(map[string]interface{}) (string, error) {
+func (s *MCPServer) toolAttentionSnapshot(args map[string]interface{}) (string, error) {
+	limit, validationErr := attentionSnapshotLimit(args)
+	if validationErr != nil {
+		return marshalSuggestion(attention.ActionResult{
+			SchemaVersion: attention.SchemaVersion,
+			Error:         validationErr,
+		})
+	}
 	service, err := s.attentionProjectionService()
 	if err != nil {
 		return marshalSuggestion(attention.ActionResult{
@@ -26,7 +33,27 @@ func (s *MCPServer) toolAttentionSnapshot(map[string]interface{}) (string, error
 		}
 		return "", err
 	}
-	return marshalSuggestion(result)
+	return marshalSuggestion(projection.Compact(result, limit))
+}
+
+func attentionSnapshotLimit(args map[string]interface{}) (int, *attention.ContractError) {
+	if _, ok := args["limit"]; !ok {
+		return projection.DefaultAwarenessLimit, nil
+	}
+	value, err := int64Arg(args, "limit")
+	if err != nil {
+		return 0, &attention.ContractError{
+			Code: attention.ErrorValidation, Message: err.Error(), Field: "limit",
+		}
+	}
+	if value < 1 || value > projection.MaxAwarenessLimit {
+		return 0, &attention.ContractError{
+			Code:    attention.ErrorValidation,
+			Message: "limit must be between 1 and 20",
+			Field:   "limit",
+		}
+	}
+	return int(value), nil
 }
 
 func (s *MCPServer) toolAttentionAction(args map[string]interface{}) (string, error) {

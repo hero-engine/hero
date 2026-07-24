@@ -71,7 +71,7 @@ hero install project . --target copilot
 hero install project . --target generic
 ```
 
-The installer copies 29 slash command definitions, 35 agents, and 56
+The installer copies 29 slash command definitions, 35 agents, and 57
 skills from the active **domain pack**, then registers the `hero mcp`
 server so the harness can call Hero's 52 MCP tools.
 

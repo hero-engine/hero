@@ -23,8 +23,25 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type SendRequest struct{ RecipientAlias, Subject, Body, Kind, MessageID, IdempotencyKey string }
-type ReplyRequest struct{ MessageID, Subject, Body, Kind, IdempotencyKey string }
+type SendRequest struct {
+	RecipientAlias        string
+	ExpectedRecipientPeer string
+	Subject               string
+	Body                  string
+	Kind                  string
+	MessageID             string
+	IdempotencyKey        string
+	Provenance            []attention.ProvenanceReference
+}
+type ReplyRequest struct {
+	MessageID      string
+	ExpectedThread string
+	Subject        string
+	Body           string
+	Kind           string
+	IdempotencyKey string
+	Provenance     []attention.ProvenanceReference
+}
 type ListedMessage struct {
 	attention.MailEnvelope
 	Receipt *attention.MailReceipt `json:"receipt,omitempty"`
@@ -72,23 +89,29 @@ func (s *Service) Send(req SendRequest) (attention.MailDelivery, error) {
 	}
 	path, err := s.cfg.ResolveRepoPath(s.root, req.RecipientAlias)
 	if err != nil {
-		return attention.MailDelivery{}, err
+		return attention.MailDelivery{}, fmt.Errorf("%w: %v", ErrRecipientMissing, err)
 	}
 	if _, err := filepath.Abs(path); err != nil {
-		return attention.MailDelivery{}, fmt.Errorf("resolve recipient path: %w", err)
+		return attention.MailDelivery{}, fmt.Errorf("%w: resolve recipient path: %v", ErrUnavailable, err)
 	}
 	manifest, err := readPeerManifest(path, s.cfg.Folder)
 	if err != nil {
-		return attention.MailDelivery{}, err
+		if errors.Is(err, os.ErrNotExist) {
+			return attention.MailDelivery{}, fmt.Errorf("%w: %v", ErrRecipientMissing, err)
+		}
+		return attention.MailDelivery{}, fmt.Errorf("%w: %v", ErrUnavailable, err)
 	}
 	if strings.TrimSpace(s.cfg.PeerID) == "" {
-		return attention.MailDelivery{}, errors.New("sender peer_id is required")
+		return attention.MailDelivery{}, fmt.Errorf("%w: sender peer_id is required", ErrUnavailable)
 	}
 	if strings.TrimSpace(manifest.Repo.PeerID) == "" {
-		return attention.MailDelivery{}, errors.New("recipient peer manifest has no peer_id")
+		return attention.MailDelivery{}, fmt.Errorf("%w: recipient peer manifest has no peer_id", ErrUnavailable)
+	}
+	if req.ExpectedRecipientPeer != "" && manifest.Repo.PeerID != req.ExpectedRecipientPeer {
+		return attention.MailDelivery{}, ErrRecipientMismatch
 	}
 	if !validPathID(manifest.Repo.PeerID) || !validPathID(s.cfg.PeerID) {
-		return attention.MailDelivery{}, errors.New("peer_id contains forbidden path characters")
+		return attention.MailDelivery{}, fmt.Errorf("%w: peer_id contains forbidden path characters", ErrUnavailable)
 	}
 	senderName := filepath.Base(s.root)
 	if s.cfg.Peering != nil && s.cfg.Peering.Display != "" {
@@ -107,15 +130,21 @@ func (s *Service) Send(req SendRequest) (attention.MailDelivery, error) {
 func (s *Service) Reply(req ReplyRequest) (attention.MailDelivery, error) {
 	original, err := s.store.Get(s.cfg.PeerID, req.MessageID)
 	if err != nil {
+		if !errors.Is(err, ErrNotFound) {
+			return attention.MailDelivery{}, fmt.Errorf("%w: %v", ErrUnavailable, err)
+		}
 		return attention.MailDelivery{}, err
 	}
 	if original.ThreadID == "" {
 		original.ThreadID = original.ID
 	}
+	if req.ExpectedThread != "" && original.ThreadID != req.ExpectedThread {
+		return attention.MailDelivery{}, ErrThreadMismatch
+	}
 	if original.InReplyTo != "" {
 		target, err := s.store.Get(s.cfg.PeerID, original.InReplyTo)
 		if err != nil {
-			return attention.MailDelivery{}, errors.New("reply target is missing")
+			return attention.MailDelivery{}, fmt.Errorf("%w: reply target is missing", ErrUnavailable)
 		}
 		targetThread := target.ThreadID
 		if targetThread == "" {
@@ -148,15 +177,18 @@ func (s *Service) Reply(req ReplyRequest) (attention.MailDelivery, error) {
 		}
 	}
 	if alias == "" {
-		return attention.MailDelivery{}, errors.New("original sender is not a configured peer")
+		return attention.MailDelivery{}, fmt.Errorf("%w: original sender is not a configured peer", ErrRecipientMissing)
 	}
 	path, err := s.cfg.ResolveRepoPath(s.root, alias)
 	if err != nil {
-		return attention.MailDelivery{}, err
+		return attention.MailDelivery{}, fmt.Errorf("%w: %v", ErrRecipientMissing, err)
 	}
 	manifest, err := readPeerManifest(path, s.cfg.Folder)
 	if err != nil {
-		return attention.MailDelivery{}, err
+		if errors.Is(err, os.ErrNotExist) {
+			return attention.MailDelivery{}, fmt.Errorf("%w: %v", ErrRecipientMissing, err)
+		}
+		return attention.MailDelivery{}, fmt.Errorf("%w: %v", ErrUnavailable, err)
 	}
 	if manifest.Repo.PeerID != original.Sender.PeerID {
 		return attention.MailDelivery{}, errors.New("original sender peer_id no longer matches configured peer")
@@ -173,7 +205,9 @@ func (s *Service) Reply(req ReplyRequest) (attention.MailDelivery, error) {
 	if s.cfg.Peering != nil && s.cfg.Peering.Display != "" {
 		senderName = s.cfg.Peering.Display
 	}
-	return s.deliver(SendRequest{Subject: subject, Body: req.Body, Kind: kind, IdempotencyKey: req.IdempotencyKey}, attention.ProjectReference{PeerID: s.cfg.PeerID, DisplayName: senderName}, original.Sender, original.ThreadID, original.ID)
+	return s.deliver(SendRequest{
+		Subject: subject, Body: req.Body, Kind: kind, IdempotencyKey: req.IdempotencyKey, Provenance: req.Provenance,
+	}, attention.ProjectReference{PeerID: s.cfg.PeerID, DisplayName: senderName}, original.Sender, original.ThreadID, original.ID)
 }
 
 func (s *Service) deliver(req SendRequest, sender, recipient attention.ProjectReference, threadID, inReplyTo string) (attention.MailDelivery, error) {
@@ -214,14 +248,25 @@ func (s *Service) deliver(req SendRequest, sender, recipient attention.ProjectRe
 		threadID = id
 	}
 	now := s.now().UTC().Format(time.RFC3339Nano)
-	env := attention.MailEnvelope{SchemaVersion: attention.SchemaVersion, ID: id, Recipient: recipient, Sender: sender, Subject: req.Subject, Body: req.Body, Kind: req.Kind, ThreadID: threadID, InReplyTo: inReplyTo, IdempotencyKey: key, CreatedAt: now}
+	env := attention.MailEnvelope{
+		SchemaVersion: attention.SchemaVersion, ID: id, Recipient: recipient, Sender: sender,
+		Subject: req.Subject, Body: req.Body, Kind: req.Kind, ThreadID: threadID, InReplyTo: inReplyTo,
+		IdempotencyKey: key, CreatedAt: now, Provenance: req.Provenance,
+	}
 	env.Revision = envelopeRevision(env)
 	if cerr := attention.ValidateMailEnvelope(env); cerr != nil {
 		return attention.MailDelivery{}, cerr
 	}
 	d := attention.MailDelivery{SchemaVersion: attention.SchemaVersion, MessageID: id, ThreadID: threadID, Sender: sender, Recipient: recipient, IdempotencyKey: key, DeliveredAt: now}
 	result, _, err := s.store.Deliver(env, d)
-	return result, err
+	if err == nil || errors.Is(err, ErrIdempotencyConflict) {
+		return result, err
+	}
+	var contractErr *attention.ContractError
+	if errors.As(err, &contractErr) {
+		return result, err
+	}
+	return result, fmt.Errorf("%w: %v", ErrUnavailable, err)
 }
 
 func (s *Service) Inbox(project string, unread bool) ([]ListedMessage, error) {

@@ -9,6 +9,8 @@ const (
 	ErrorMissing             = "missing"
 	ErrorIncompatibleVersion = "incompatible_version"
 	ErrorUnavailable         = "unavailable"
+	ErrorIdempotencyConflict = "idempotency_conflict"
+	ErrorPermission          = "permission"
 )
 
 type ActionDescriptor struct {

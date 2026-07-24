@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/v1/focus-item.schema.json",
+  "title": "FocusItem",
+  "type": "object",
+  "required": ["schema_version", "id", "project", "title", "prompt", "lifecycle", "revision", "created_at", "updated_at"],
+  "properties": {
+    "schema_version": {"const": 1}, "id": {"type": "string", "minLength": 1},
+    "project": {"type": "object", "required": ["peer_id", "display_name"], "properties": {"peer_id": {"type": "string", "minLength": 1}, "registry_slug": {"type": "string"}, "display_name": {"type": "string", "minLength": 1}}},
+    "title": {"type": "string"}, "prompt": {"type": "string", "x-maxBytes": 65536},
+    "lifecycle": {"enum": ["inbox", "today", "later", "done"]}, "revision": {"type": "integer", "minimum": 0},
+    "created_at": {"type": "string", "format": "date-time", "x-utcRFC3339Nano": true}, "updated_at": {"type": "string", "format": "date-time", "x-utcRFC3339Nano": true}
+  }
+}

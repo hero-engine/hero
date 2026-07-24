@@ -2,7 +2,7 @@
 title: "Conversational Attention Operability — Safe Chat-Loop Access to Mail and Focus"
 slug: conversational-attention-operability
 type: initiative
-status: planning
+status: completed
 autonomy: autonomous
 domain: engineering
 priority: high
@@ -14,11 +14,11 @@ child:
   - attention-interaction-consent-contract
   - attention-mcp-action-tools
   - attention-lifecycle-read-awareness
+  - portable-routing-rules
   - attention-conversational-routes
+  - attention-contract-bundle-publication
 relations:
   - target: durable-attention
-    kind: related
-  - target: portable-routing-rules
     kind: related
   - target: agent-end-of-turn-recap
     kind: related
@@ -28,6 +28,7 @@ relations:
     kind: related
   - target: hero-in-hero-code-parity
     kind: related
+completed_at: 2026-07-24T01:53:09Z
 ---
 
 # Conversational Attention Operability — Safe Chat-Loop Access to Mail and Focus
@@ -63,13 +64,14 @@ conversation does not bypass a harness or client permission gate.
 Makes Project Mail and Personal Focus work naturally in chat through complete
 MCP actions, explicit consent rules, lifecycle awareness, and portable routes.
 
-**Status:** planning — initiative and four Hero-owned child stubs are composed;
-the Hero Code native consumer brief is ready for peer design.
+**Status:** planning — consent, MCP actions, and lifecycle awareness are
+completed; portable routing has been redesigned for the current six-target
+architecture; routes and final bundle publication remain.
 
-**Pick up at:** design the consent contract first; every mutation and route
-depends on its intent and confirmation matrix.
+**Pick up at:** deliver `portable-routing-rules`, then finish the conversational
+route corpus and publish the immutable Hero Code conformance bundle.
 
-→ `/design attention-interaction-consent-contract`
+→ `/deliver portable-routing-rules`
 
 **Files:** `contracts/attention/`, `internal/serve/mcp_tools_def.go`,
 `domains/engineering/AGENTS.md`, `domains/engineering/skills/`
@@ -82,15 +84,17 @@ suggestion, projection, API, CLI, MCP read/action adapters, async peering, and
 Hero Code Attention/Today consumer. The substrate works. The remaining product
 gap is operability from the place users already work: the chat loop.
 
-The current MCP surface can read Attention and mutate advertised rows, but it
-cannot directly send or reply to Mail or create an explicitly requested Focus
-item. The installed guidance describes deferred-work suggestions, but it does
-not route ordinary Attention phrases, define when a session should inspect
-Attention, or give every harness one testable consent policy. Hero Code can
-discover MCP tools and display suggestion results, but the complete
-phrase-to-tool-to-card-to-Today-to-launch journey is not yet an owned contract.
+The MCP surface can now read Attention, mutate advertised rows, send or reply
+to Mail, and create explicitly requested Focus. Installed guidance now defines
+bounded lifecycle reads and the shared consent policy. The remaining Hero gap
+is ordinary phrase routing plus a complete, pin-ready conformance bundle. Hero
+Code can discover MCP tools and display suggestion results, but the complete
+phrase-to-tool-to-card-to-Today-to-launch journey cannot be delivered safely
+until those last two contracts are published.
 
-## Interaction policy
+## Design
+
+### Interaction policy
 
 | User/model state | Allowed behavior | Forbidden behavior |
 |---|---|---|
@@ -111,17 +115,20 @@ children consume it; they do not restate their own consent rules.
 | 1 | `attention-interaction-consent-contract` | critical | medium | Canonical intent, consent, ambiguity, effect, and conformance contract |
 | 2a | `attention-mcp-action-tools` | critical | medium | Typed Mail send/reply and explicit-user Focus create MCP actions |
 | 2b | `attention-lifecycle-read-awareness` | high | medium | Bounded read-only Attention awareness at deterministic chat-loop boundaries |
-| 3 | `attention-conversational-routes` | high | large | Natural-language Attention routes distributed through the portable routing substrate |
+| 3 | `portable-routing-rules` | critical | medium | One canonical route source rendered inline through all six native root files |
+| 4 | `attention-conversational-routes` | high | medium | Natural-language Attention routes and the shared phrase-conformance corpus |
+| 5 | `attention-contract-bundle-publication` | critical | medium | Immutable schemas, fixtures, tool inventory, route corpus, and clean cross-repo pin |
 
 Six-harness propagation is deliberately not a trailing fifth child. Each
 harness-facing child is incomplete until its authoritative content reaches
 `opencode`, `cursor`, `claude`, `copilot`, `codex`, and `generic`. The
 initiative closes with one aggregate conformance matrix across those targets.
 
-Hero Code owns the native consumer slice. It should design
+Hero Code owns the native consumer slice and has designed
 `attention-hero-code-native-chat-loop` in the sibling repository from
-[hero-code-spec-out-prompt.md](hero-code-spec-out-prompt.md); Hero does not keep
-a locally deliverable proxy spec for Swift work.
+[hero-code-spec-out-prompt.md](hero-code-spec-out-prompt.md). Hero does not keep
+a locally deliverable proxy spec for Swift work; it publishes the bundle that
+unblocks the peer-owned delivery.
 
 ## Dependencies
 
@@ -133,13 +140,21 @@ attention-interaction-consent-contract
 portable-routing-rules ────────────────────────┘
 
 consent + MCP actions + lifecycle + routes
-  └─→ hero-code: attention-hero-code-native-chat-loop
+  └─→ attention-contract-bundle-publication
+        └─→ hero-code: attention-hero-code-native-chat-loop
 ```
 
-`portable-routing-rules` is an adopted hard dependency for the final routing
-child. It owns canonical `routing.md` distribution mechanics; this initiative
-supplies Attention semantics and conformance cases. The first three children
-can proceed before it lands.
+`portable-routing-rules` is an adopted initiative child and hard dependency for
+the final routing work. It owns canonical route-source distribution through
+every harness's native root instruction file; the next child supplies Attention
+semantics and conformance cases. The first three children were able to proceed
+before it landed.
+
+`attention-contract-bundle-publication` is the final Hero-owned release gate.
+It depends on all contracts and the complete route corpus, assembles their
+schemas, fixtures, tool inventory, and cases into one deterministic directory,
+and advertises the exact manifest identity Hero Code must pin. Hero Code must
+not begin delivery from Hero's uncommitted working tree.
 
 `attention-lifecycle-read-awareness` and `attention-conversational-routes` are a
 reciprocal soft mutex because both can touch canonical agent guidance and
@@ -154,6 +169,8 @@ Hero owns:
 - MCP names, schemas, permission/effect metadata, idempotency, and errors;
 - lifecycle read semantics and Attention source authority;
 - portable conversational route definitions and six-target conformance.
+- the complete vendorable conformance bundle, manifest identity, and clean
+  commit/release handoff.
 
 Hero Code owns:
 
@@ -163,27 +180,28 @@ Hero Code owns:
 - Swift integration and end-to-end tests against a pinned Hero contract.
 
 The repositories land independently. Cross-repo acceptance runs only after Hero
-publishes a pinned contract/fixture revision; Hero Code must not depend on
-uncommitted implementation details or persist a competing lifecycle.
+publishes `attention-contract-bundle-publication` from a clean commit or
+release. Hero Code pins that revision and exact manifest SHA; it must not depend
+on uncommitted implementation details or persist a competing lifecycle.
 
-## Acceptance journeys
+## Acceptance Criteria
 
-- WHEN a user asks “what is in my inbox?” THE SYSTEM SHALL return a bounded,
+- **AC-1:** WHEN a user asks “what is in my inbox?” THE SYSTEM SHALL return a bounded,
   current Attention/Mail view without acknowledging, dismissing, or otherwise
   mutating any item.
-- WHEN a user says “send this to hero-code” and the content and destination are
+- **AC-2:** WHEN a user says “send this to hero-code” and the content and destination are
   uniquely resolved THE SYSTEM SHALL send exactly one Mail message and return
   its auditable message/thread receipt.
-- IF a user says “send that to her” and either the content or recipient is
+- **AC-3:** IF a user says “send that to her” and either the content or recipient is
   ambiguous THEN THE SYSTEM SHALL perform no mutation and ask only for the
   missing fact.
-- WHEN a model identifies optional deferred work THE SYSTEM SHALL create only a
+- **AC-4:** WHEN a model identifies optional deferred work THE SYSTEM SHALL create only a
   suggestion; WHEN the user accepts it THE SYSTEM SHALL create the advertised
   Focus item exactly once.
-- WHEN Mail contains imperative or executable-looking text THE SYSTEM SHALL
+- **AC-5:** WHEN Mail contains imperative or executable-looking text THE SYSTEM SHALL
   treat it as untrusted data and SHALL NOT execute it, create committed work, or
   start a session merely because it was received or read.
-- WHEN the same explicit Attention intent is exercised through `opencode`,
+- **AC-6:** WHEN the same explicit Attention intent is exercised through `opencode`,
   `cursor`, `claude`, `copilot`, `codex`, `generic`, or Hero Code THE SYSTEM
   SHALL select the same operation class, consent behavior, and authoritative
   Hero result.
@@ -202,7 +220,7 @@ uncommitted implementation details or persist a competing lifecycle.
 - Bodies and prompts stay out of argv, logs, and committed configuration.
 - Unknown additive contract values remain forward-compatible.
 
-## Boundaries
+## Non-goals
 
 - No mailbox watcher, push-triggered model, scheduler, worker, or automatic
   responder. Those belong to `always-on-runtime`.
@@ -242,13 +260,17 @@ also requires:
 - MCP inventory/profile tests and cross-adapter parity against the Attention
   service;
 - a pinned Hero fixture manifest decoded by Hero Code;
+- a complete bundle inventory covering schemas, fixtures, runtime MCP input
+  schemas, and route cases with deterministic checksums;
 - one native end-to-end journey from phrase → MCP tool → structured result/card
   → accept/create → Today → launch;
 - repository searches proving no active path executes on Mail receipt.
 
 ## Recommended order
 
-Design and deliver `attention-interaction-consent-contract` first. Then deliver
-MCP actions and lifecycle awareness in parallel. Deliver
-`portable-routing-rules` before the route child, and let Hero Code design its
-native slice once the consent and MCP schemas are stable enough to pin.
+Consent, MCP actions, and lifecycle awareness are complete. Deliver the
+redesigned `portable-routing-rules`, then
+`attention-conversational-routes`, then
+`attention-contract-bundle-publication`. Only after the bundle is committed or
+released with a reproducible manifest SHA should Hero Code deliver
+`attention-hero-code-native-chat-loop`.

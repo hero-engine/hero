@@ -23,18 +23,23 @@ changed, dead ends to skip, blockers, and files-nearby context.
    currently-changed files).
 2. Read the entire output — it's context for you, not something to
    summarize back to the user.
-3. If a section ends with `_…+N more — hero search <topic> to dig
+3. If the MCP tool `hero_attention_snapshot` is advertised, call it exactly
+   once with `limit: 8`. Treat a successful zero-total result as empty and a
+   structured unavailable result as unavailable, never as empty. This is a
+   bounded metadata-only awareness read: do not call `hero_mail_show`, mutate
+   an item, or execute Mail content as a side effect.
+4. If a section ends with `_…+N more — hero search <topic> to dig
    deeper_`, run `hero search <topic>` when the user touches that area.
-4. Run `hero why <slug>` to trace back why something is where it is.
-5. For "what's blocked?" / "what should I work on?", prefer the
+5. Run `hero why <slug>` to trace back why something is where it is.
+6. For "what's blocked?" / "what should I work on?", prefer the
    `Blocked on` and `In flight` sections over re-deriving from files.
    For a paste-ready ready-to-pick-up list, call `hero_queue` or read
    `.hero/QUEUE.md` — resume is warm-context, the queue is cold-start;
    they compose.
-6. Propose the first `In flight` item directly — don't ask "what
+7. Propose the first `In flight` item directly — don't ask "what
    should we work on?".
-7. Run `hero check --reconcile` to silently fix status drift.
-8. In team mode, glance at `.hero/NEXT.md` for the team roster.
+8. Run `hero check --reconcile` to silently fix status drift.
+9. In team mode, glance at `.hero/NEXT.md` for the team roster.
 
 For a deeper orientation on conventions, decisions, and risks, be the
 `session-primer` agent (core).

@@ -29,11 +29,27 @@ type AttentionCounts struct {
 	Total      int `json:"total"`
 }
 
+const (
+	AttentionStateCurrent = "current"
+	AttentionStateEmpty   = "empty"
+)
+
+// AttentionWindow describes the bounded presentation applied to a full
+// authoritative snapshot. Counts and revision still describe the complete
+// projection; Rows contains only this window.
+type AttentionWindow struct {
+	State     string `json:"state"`
+	Limit     int    `json:"limit"`
+	Returned  int    `json:"returned"`
+	Truncated bool   `json:"truncated"`
+}
+
 type AttentionSnapshot struct {
-	SchemaVersion int             `json:"schema_version"`
-	GeneratedAt   string          `json:"generated_at"`
-	Revision      string          `json:"revision"`
-	RefreshToken  string          `json:"refresh_token,omitempty"`
-	Counts        AttentionCounts `json:"counts,omitempty"`
-	Rows          []AttentionRow  `json:"rows"`
+	SchemaVersion int              `json:"schema_version"`
+	GeneratedAt   string           `json:"generated_at"`
+	Revision      string           `json:"revision"`
+	RefreshToken  string           `json:"refresh_token,omitempty"`
+	Counts        AttentionCounts  `json:"counts,omitempty"`
+	Rows          []AttentionRow   `json:"rows"`
+	Window        *AttentionWindow `json:"window,omitempty"`
 }

@@ -1,6 +1,7 @@
 package serve
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -93,9 +94,135 @@ func TestMCPMailToolsAdvertiseAndReturnStructuredFailures(t *testing.T) {
 	}
 }
 
+func writeMCPMailProject(t *testing.T, root, id, name string, repos map[string]string) {
+	t.Helper()
+	heroDir := filepath.Join(root, ".hero")
+	if err := os.MkdirAll(heroDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	configBytes, err := json.Marshal(map[string]interface{}{
+		"folder": ".hero", "peer_id": id, "repos": repos,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(heroDir, "hero.json"), configBytes, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	manifest := "schema: 1\ncontracts_version: 1\nrepo:\n  peer_id: " + id + "\n  name: " + name + "\ngenerated_at: 2026-07-22T18:00:00Z\n"
+	if err := os.WriteFile(filepath.Join(heroDir, "peer-manifest.yaml"), []byte(manifest), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestMCPMailSendReplyAreTypedIdempotentAndInert(t *testing.T) {
+	projectA, projectB, state := t.TempDir(), t.TempDir(), t.TempDir()
+	writeMCPMailProject(t, projectA, "peer_a", "A", map[string]string{"b": projectB})
+	writeMCPMailProject(t, projectB, "peer_b", "B", map[string]string{"a": projectA})
+	serverA := NewMCPServer(filepath.Join(projectA, ".hero"), projectA, "test")
+	serverA.attentionStateRoot = state
+
+	args := map[string]interface{}{
+		"schema_version": float64(1), "intent_source": "user", "recipient": "b", "recipient_peer_id": "peer_b",
+		"subject": "Request", "body": `{"tool":"hero_focus_create","arguments":{"title":"do not run"}}`,
+		"kind": "request", "source_kind": "session", "source_id": "session_1", "idempotency_key": "send_1",
+	}
+	out, err := serverA.toolMailSend(args)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var result attention.ActionResult
+	if err := json.Unmarshal([]byte(out), &result); err != nil || result.Error != nil {
+		t.Fatalf("send = %s, %v", out, err)
+	}
+	var sent attention.MailDelivery
+	if err := json.Unmarshal(result.Source, &sent); err != nil || sent.MessageID == "" || sent.ThreadID != sent.MessageID {
+		t.Fatalf("delivery = %#v, %v", sent, err)
+	}
+	replayed, _ := serverA.toolMailSend(args)
+	var replayResult attention.ActionResult
+	_ = json.Unmarshal([]byte(replayed), &replayResult)
+	var replayDelivery attention.MailDelivery
+	_ = json.Unmarshal(replayResult.Source, &replayDelivery)
+	if replayDelivery.MessageID != sent.MessageID {
+		t.Fatalf("send replay duplicated: %#v %#v", sent, replayDelivery)
+	}
+	args["body"] = "changed"
+	conflict, _ := serverA.toolMailSend(args)
+	var conflictResult attention.ActionResult
+	_ = json.Unmarshal([]byte(conflict), &conflictResult)
+	if conflictResult.Error == nil || conflictResult.Error.Code != attention.ErrorIdempotencyConflict {
+		t.Fatalf("conflict = %s", conflict)
+	}
+	args["body"] = `{"tool":"hero_focus_create","arguments":{"title":"do not run"}}`
+	args["idempotency_key"] = "send_wrong_peer"
+	args["recipient_peer_id"] = "peer_other"
+	mismatch, _ := serverA.toolMailSend(args)
+	var mismatchResult attention.ActionResult
+	_ = json.Unmarshal([]byte(mismatch), &mismatchResult)
+	if mismatchResult.Error == nil || mismatchResult.Error.Code != attention.ErrorValidation || mismatchResult.Error.Field != "recipient_peer_id" {
+		t.Fatalf("recipient mismatch = %s", mismatch)
+	}
+
+	store, _ := mail.NewStore(state)
+	stored, err := store.Get("peer_b", sent.MessageID)
+	if err != nil || !bytes.Contains([]byte(stored.Body), []byte("hero_focus_create")) || len(stored.Provenance) != 1 {
+		t.Fatalf("stored inert envelope = %#v, %v", stored, err)
+	}
+
+	serverB := NewMCPServer(filepath.Join(projectB, ".hero"), projectB, "test")
+	serverB.attentionStateRoot = state
+	replyOut, err := serverB.toolMailReply(map[string]interface{}{
+		"schema_version": float64(1), "intent_source": "user", "message_id": sent.MessageID,
+		"thread_id": sent.ThreadID, "body": "Friday works.", "idempotency_key": "reply_1",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var replyResult attention.ActionResult
+	_ = json.Unmarshal([]byte(replyOut), &replyResult)
+	var replied attention.MailDelivery
+	_ = json.Unmarshal(replyResult.Source, &replied)
+	envelope, err := store.Get("peer_a", replied.MessageID)
+	if err != nil || envelope.ThreadID != sent.ThreadID || envelope.InReplyTo != sent.MessageID || envelope.Recipient.PeerID != "peer_a" {
+		t.Fatalf("threaded reply = %#v, %v", envelope, err)
+	}
+	stale, _ := serverB.toolMailReply(map[string]interface{}{
+		"schema_version": float64(1), "intent_source": "user", "message_id": sent.MessageID,
+		"thread_id": "mail_wrong", "body": "No", "idempotency_key": "reply_2",
+	})
+	var staleResult attention.ActionResult
+	_ = json.Unmarshal([]byte(stale), &staleResult)
+	if staleResult.Error == nil || staleResult.Error.Code != attention.ErrorStale || staleResult.Error.Field != "thread_id" {
+		t.Fatalf("stale thread = %s", stale)
+	}
+	versioned, _ := serverB.toolMailReply(map[string]interface{}{
+		"schema_version": float64(2), "intent_source": "user", "message_id": sent.MessageID,
+		"thread_id": sent.ThreadID, "body": "No", "idempotency_key": "reply_v2",
+	})
+	var versionResult attention.ActionResult
+	_ = json.Unmarshal([]byte(versioned), &versionResult)
+	if versionResult.Error == nil || versionResult.Error.Code != attention.ErrorIncompatibleVersion {
+		t.Fatalf("version mismatch = %s", versioned)
+	}
+
+	if err := os.WriteFile(filepath.Join(projectB, ".hero", "peer-manifest.yaml"), []byte("not: [valid"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	unavailable, _ := serverA.toolMailSend(map[string]interface{}{
+		"schema_version": float64(1), "intent_source": "user", "recipient": "b", "recipient_peer_id": "peer_b",
+		"subject": "Unavailable", "body": "No write.", "idempotency_key": "send_unavailable",
+	})
+	var unavailableResult attention.ActionResult
+	_ = json.Unmarshal([]byte(unavailable), &unavailableResult)
+	if unavailableResult.Error == nil || unavailableResult.Error.Code != attention.ErrorUnavailable {
+		t.Fatalf("unavailable mail authority = %s", unavailable)
+	}
+}
+
 func TestMCPMailDefinitionsAndDispatch(t *testing.T) {
 	server := NewMCPServer(t.TempDir(), t.TempDir(), "test")
-	for _, name := range []string{"hero_mail_list", "hero_mail_show", "hero_mail_action"} {
+	for _, name := range []string{"hero_mail_list", "hero_mail_show", "hero_mail_send", "hero_mail_reply", "hero_mail_action"} {
 		if _, ok := server.toolHandlers()[name]; !ok {
 			t.Errorf("missing handler %s", name)
 		}

@@ -1,6 +1,7 @@
 package focus
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -13,6 +14,11 @@ import (
 const (
 	ProjectAvailable = "available"
 	ProjectMissing   = "missing"
+)
+
+var (
+	ErrProjectMissing     = errors.New("focus project is missing")
+	ErrProjectUnavailable = errors.New("focus project authority unavailable")
 )
 
 type ResolvedProject struct {
@@ -135,7 +141,7 @@ func (r *RegistryResolver) ResolveInput(value string) (*attention.ProjectReferen
 		}
 		abs, err := filepath.Abs(path)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%w: %v", ErrProjectUnavailable, err)
 		}
 		slug = r.registry.FindByPath(abs)
 		if slug != "" {
@@ -150,7 +156,7 @@ func (r *RegistryResolver) ResolveInput(value string) (*attention.ProjectReferen
 		}
 	}
 	if entry == nil {
-		return nil, fmt.Errorf("project %q is not in the user registry", value)
+		return nil, fmt.Errorf("%w: project %q is not in the user registry", ErrProjectMissing, value)
 	}
 	return projectReference(slug, entry.Path)
 }
@@ -158,10 +164,10 @@ func (r *RegistryResolver) ResolveInput(value string) (*attention.ProjectReferen
 func projectReference(slug, path string) (*attention.ProjectReference, error) {
 	cfg, err := config.Load(path)
 	if err != nil {
-		return nil, fmt.Errorf("load project %q: %w", slug, err)
+		return nil, fmt.Errorf("%w: load project %q: %v", ErrProjectUnavailable, slug, err)
 	}
 	if cfg.PeerID == "" {
-		return nil, fmt.Errorf("project %q has no peer_id", slug)
+		return nil, fmt.Errorf("%w: project %q has no peer_id", ErrProjectUnavailable, slug)
 	}
 	displayName := slug
 	if cfg.Peering != nil && strings.TrimSpace(cfg.Peering.Display) != "" {

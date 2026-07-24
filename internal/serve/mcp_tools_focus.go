@@ -38,6 +38,59 @@ func (s *MCPServer) toolFocusSuggest(args map[string]interface{}) (string, error
 	return marshalSuggestion(result)
 }
 
+func (s *MCPServer) toolFocusCreate(args map[string]interface{}) (string, error) {
+	version, versionErr := directActionVersion(args)
+	if versionErr != nil {
+		return directActionFailure(versionErr)
+	}
+	request := attention.FocusCreateActionRequest{
+		SchemaVersion: version, IntentSource: stringArg(args, "intent_source"),
+		Title: stringArg(args, "title"), Prompt: stringArg(args, "prompt"), Lifecycle: stringArg(args, "lifecycle"),
+		Project: stringArg(args, "project"), ProjectPeerID: stringArg(args, "project_peer_id"),
+		SourceID: stringArg(args, "source_id"), IdempotencyKey: stringArg(args, "idempotency_key"),
+	}
+	if contractErr := attention.ValidateFocusCreateActionRequest(request); contractErr != nil {
+		return directActionFailure(contractErr)
+	}
+	service, resolver, err := s.directFocusService()
+	if err != nil {
+		return directActionUnavailable(err)
+	}
+	var project *attention.ProjectReference
+	if request.Project != "" {
+		project, err = resolver.ResolveInput(request.Project)
+		if err != nil || project == nil {
+			if err == nil {
+				err = focus.ErrProjectMissing
+			}
+			code := attention.ErrorUnavailable
+			if errors.Is(err, focus.ErrProjectMissing) {
+				code = attention.ErrorMissing
+			}
+			return directActionFailure(&attention.ContractError{Code: code, Message: err.Error(), Field: "project"})
+		}
+		if project.PeerID != request.ProjectPeerID {
+			return directActionFailure(&attention.ContractError{
+				Code: attention.ErrorValidation, Message: "project peer_id no longer matches the resolved target", Field: "project_peer_id",
+			})
+		}
+	}
+	item, _, err := service.CreateOrGet(focus.CreateRequest{
+		Title: request.Title, Prompt: request.Prompt, Lifecycle: request.Lifecycle, Project: project,
+		Origin:    &attention.ProvenanceReference{Kind: attention.IntentSourceUser, SourceID: request.SourceID},
+		OriginKey: directActionOriginKey(attention.OperationFocusCreate, request.IdempotencyKey),
+	})
+	if err != nil {
+		if errors.Is(err, focus.ErrIdempotencyConflict) {
+			return directActionFailure(&attention.ContractError{
+				Code: attention.ErrorIdempotencyConflict, Message: err.Error(), Field: "idempotency_key",
+			})
+		}
+		return directActionUnavailable(err)
+	}
+	return directActionSuccess(item)
+}
+
 func (s *MCPServer) toolFocusSuggestions(args map[string]interface{}) (string, error) {
 	service, _, err := s.suggestionService()
 	if err != nil {
@@ -94,6 +147,31 @@ func (s *MCPServer) suggestionService() (*suggestion.Service, focus.ProjectResol
 		return nil, nil, err
 	}
 	return suggestion.NewService(proposalStore, focus.NewService(focusStore, resolver), resolver), resolver, nil
+}
+
+func (s *MCPServer) directFocusService() (*focus.Service, focus.ProjectResolver, error) {
+	root := s.attentionStateRoot
+	var err error
+	if root == "" {
+		root, err = attentionstate.Ensure(attentionstate.Options{ProjectRoot: s.projectRoot})
+	} else {
+		root, err = attentionstate.Ensure(attentionstate.Options{Root: root})
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+	resolver := s.attentionResolver
+	if resolver == nil {
+		resolver, err = focus.LoadRegistryResolver(s.projectRoot)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	store, err := focus.NewStore(root)
+	if err != nil {
+		return nil, nil, err
+	}
+	return focus.NewService(store, resolver), resolver, nil
 }
 
 func stringArg(args map[string]interface{}, key string) string {

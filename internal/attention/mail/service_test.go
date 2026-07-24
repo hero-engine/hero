@@ -1,6 +1,7 @@
 package mail
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -10,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hero-engine/hero/contracts/attention"
 	"github.com/hero-engine/hero/internal/config"
 )
 
@@ -92,6 +94,50 @@ func TestServiceSendReplayConflictAndReceipts(t *testing.T) {
 	after, _ := s.Get("peer_b", first.MessageID)
 	if !reflect.DeepEqual(before, after) {
 		t.Fatal("receipt operation changed envelope")
+	}
+}
+
+func TestServiceDirectActionIdentityGuardsAndProvenance(t *testing.T) {
+	svc, store, a, b := testService(t)
+	writePeer(t, a, "peer_a", "A")
+	provenance := []attention.ProvenanceReference{{Kind: "session", SourceID: "session_1"}}
+	request := SendRequest{
+		RecipientAlias: "b", ExpectedRecipientPeer: "peer_b", Subject: "Question", Body: "Body",
+		IdempotencyKey: "guarded-send", Provenance: provenance,
+	}
+	sent, err := svc.Send(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	envelope, err := store.Get("peer_b", sent.MessageID)
+	if err != nil || !reflect.DeepEqual(envelope.Provenance, provenance) {
+		t.Fatalf("provenance = %#v, %v", envelope.Provenance, err)
+	}
+	request.IdempotencyKey = "wrong-peer"
+	request.ExpectedRecipientPeer = "peer_other"
+	if _, err := svc.Send(request); !errors.Is(err, ErrRecipientMismatch) {
+		t.Fatalf("recipient guard = %v", err)
+	}
+
+	replier := NewService(store, b, config.Config{
+		Folder: ".hero", PeerID: "peer_b", Repos: map[string]string{"a": a},
+		RepoMeta: map[string]config.RepoMetaEntry{"a": {PeerID: "peer_a"}},
+	})
+	if _, err := replier.Reply(ReplyRequest{
+		MessageID: sent.MessageID, ExpectedThread: "mail_wrong", Body: "answer", IdempotencyKey: "wrong-thread",
+	}); !errors.Is(err, ErrThreadMismatch) {
+		t.Fatalf("thread guard = %v", err)
+	}
+	reply, err := replier.Reply(ReplyRequest{
+		MessageID: sent.MessageID, ExpectedThread: sent.ThreadID, Body: "answer",
+		IdempotencyKey: "guarded-reply", Provenance: provenance,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	replyEnvelope, err := store.Get("peer_a", reply.MessageID)
+	if err != nil || !reflect.DeepEqual(replyEnvelope.Provenance, provenance) {
+		t.Fatalf("reply provenance = %#v, %v", replyEnvelope.Provenance, err)
 	}
 }
 

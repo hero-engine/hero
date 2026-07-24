@@ -402,6 +402,29 @@ func ValidateAttentionSnapshot(v AttentionSnapshot) *ContractError {
 			return err
 		}
 	}
+	if v.Window != nil {
+		if v.Window.State != AttentionStateCurrent && v.Window.State != AttentionStateEmpty {
+			return invalid("window.state", "must be current or empty")
+		}
+		if v.Window.Limit < 1 {
+			return invalid("window.limit", "must be positive")
+		}
+		if v.Window.Returned != len(v.Rows) {
+			return invalid("window.returned", "must equal the number of returned rows")
+		}
+		if v.Window.Returned > v.Window.Limit {
+			return invalid("window.returned", "must not exceed the window limit")
+		}
+		if v.Counts.Total < v.Window.Returned {
+			return invalid("counts.total", "must not be less than returned rows")
+		}
+		if v.Window.Truncated != (v.Counts.Total > v.Window.Returned) {
+			return invalid("window.truncated", "must match the authoritative total")
+		}
+		if (v.Counts.Total == 0) != (v.Window.State == AttentionStateEmpty) {
+			return invalid("window.state", "must match whether the authoritative snapshot is empty")
+		}
+	}
 	return nil
 }
 
@@ -448,7 +471,7 @@ func validLifecycle(v string) bool {
 }
 
 func validErrorCode(v string) bool {
-	return v == ErrorValidation || v == ErrorStale || v == ErrorUnsupported || v == ErrorMissing || v == ErrorIncompatibleVersion || v == ErrorUnavailable
+	return v == ErrorValidation || v == ErrorStale || v == ErrorUnsupported || v == ErrorMissing || v == ErrorIncompatibleVersion || v == ErrorUnavailable || v == ErrorIdempotencyConflict || v == ErrorPermission
 }
 
 func validInteractionEffect(v InteractionEffect) bool {

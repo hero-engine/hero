@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/v1/interaction-policy.schema.json",
+  "title": "InteractionPolicyFixture",
+  "type": "object",
+  "required": ["schema_version", "operations", "cases"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "operations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "effect", "consent", "requires_unique_target", "replay_safe", "open_world"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "tool_name": {"type": "string"},
+          "action_id": {"type": "string"},
+          "effect": {"type": "string"},
+          "consent": {"type": "string"},
+          "requires_unique_target": {"type": "boolean"},
+          "replay_safe": {"type": "boolean"},
+          "open_world": {"type": "boolean"}
+        }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "source", "utterance", "disposition"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "source": {"type": "string"},
+          "utterance": {"type": "string", "minLength": 1},
+          "resolution": {
+            "type": "object",
+            "properties": {
+              "candidate_count": {"type": "integer", "minimum": 0}
+            }
+          },
+          "disposition": {"type": "string"},
+          "expected_operation": {"type": "string"},
+          "expected_effect": {"type": "string"},
+          "expected_consent": {"type": "string"}
+        }
+      }
+    }
+  }
+}

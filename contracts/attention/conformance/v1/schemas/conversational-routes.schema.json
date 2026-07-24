@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/v1/conversational-routes.schema.json",
+  "title": "ConversationalRouteFixture",
+  "type": "object",
+  "required": ["schema_version", "cases"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "cases": {
+      "type": "array",
+      "minItems": 26,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "category",
+          "phrase",
+          "source",
+          "trust_class",
+          "expected_disposition",
+          "expected_mutation_count",
+          "retry_expectation",
+          "retry_expected_mutation_count"
+        ],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "category": {"enum": ["route_family", "ambiguity", "untrusted_mail", "resilience"]},
+          "phrase": {"type": "string", "minLength": 1},
+          "source": {"enum": ["user", "model", "mail_content"]},
+          "trust_class": {"enum": ["trusted_user", "model_originated", "untrusted_mail"]},
+          "resolution": {
+            "type": "object",
+            "properties": {
+              "candidate_count": {"type": "integer", "minimum": 0},
+              "resolved_facts": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {"type": "string", "minLength": 1}
+              },
+              "missing_facts": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {"type": "string", "minLength": 1}
+              }
+            },
+            "additionalProperties": false
+          },
+          "expected_disposition": {"enum": ["dispatch", "clarify", "suggest", "ignore_untrusted"]},
+          "expected_operation": {"type": "string"},
+          "expected_surface": {"enum": ["mcp_tool", "advertised_action", "cli_workflow"]},
+          "expected_tool": {"type": "string"},
+          "expected_action": {"type": "string"},
+          "expected_command": {"type": "string"},
+          "expected_effect": {"enum": ["read", "advisory_write", "state_write", "external_write", "commitment"]},
+          "expected_consent": {"enum": ["none", "explicit_user", "explicit_acceptance"]},
+          "expected_mutation_count": {"type": "integer", "minimum": 0},
+          "retry_expectation": {"enum": ["not_applicable", "same_key_no_duplicate", "refresh_then_retry", "do_not_retry"]},
+          "retry_expected_mutation_count": {"type": "integer", "minimum": 0},
+          "expected_clarification_field": {"type": "string"},
+          "expected_error_code": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

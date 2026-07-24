@@ -1,0 +1,275 @@
+{
+  "bundle_version": 1,
+  "schema_version": 1,
+  "compatibility": "Unknown additive fields and identifiers must remain inert but decodable; never grant executable behavior from an unknown value.",
+  "artifacts": [
+    {
+      "path": "fixtures/action-request.json",
+      "kind": "fixture",
+      "purpose": "canonical action request",
+      "media_type": "application/json",
+      "sha256": "c0089cc33314d58e40e2f0b6488cf3e971a150dfa964727a45922599a1460d9c",
+      "schema": "schemas/action.schema.json"
+    },
+    {
+      "path": "fixtures/action-result.json",
+      "kind": "fixture",
+      "purpose": "successful authoritative result and launch intent",
+      "media_type": "application/json",
+      "sha256": "b49ef825caa8391b08ce50908d4247ab561fabd17d0c6d28031c429f5cf213c4",
+      "schema": "schemas/action-result.schema.json"
+    },
+    {
+      "path": "fixtures/all-actions-snapshot.json",
+      "kind": "fixture",
+      "purpose": "every v1 source state and advertised action",
+      "media_type": "application/json",
+      "sha256": "cc8077fdd673bd3dc45e5e99b40f398fb29052166e2c8ac81195ab98a8ecfe09",
+      "schema": "schemas/attention-snapshot.schema.json"
+    },
+    {
+      "path": "fixtures/attention-snapshot.json",
+      "kind": "fixture",
+      "purpose": "canonical shared read projection",
+      "media_type": "application/json",
+      "sha256": "224cd7277b18e3470ecaddd9acdf1a20515bbb13127dc5f56d59167d1b42394f",
+      "schema": "schemas/attention-snapshot.schema.json"
+    },
+    {
+      "path": "fixtures/conversational-routes.json",
+      "kind": "route-corpus",
+      "purpose": "canonical natural-language routing and safety conformance corpus",
+      "media_type": "application/json",
+      "sha256": "a91063417b3e31da7237fdac2e73a55d60686e24bdcb32a505ebe5f0a8abaf73",
+      "schema": "schemas/conversational-routes.schema.json"
+    },
+    {
+      "path": "fixtures/direct-actions.json",
+      "kind": "fixture",
+      "purpose": "canonical typed Mail send, Mail reply, and explicit-user Focus create requests",
+      "media_type": "application/json",
+      "sha256": "1b46dc6b8fe11f84905605735fc32798d43b8793bc62c732c78803680c8ef0bb",
+      "schema": "schemas/direct-action.schema.json"
+    },
+    {
+      "path": "fixtures/empty-snapshot.json",
+      "kind": "fixture",
+      "purpose": "valid empty active projection",
+      "media_type": "application/json",
+      "sha256": "5a52c4f33fbdb455921795f0c9962a7a29dee4a68a6fdc4b84f1d96aba9000d3",
+      "schema": "schemas/attention-snapshot.schema.json"
+    },
+    {
+      "path": "fixtures/error-incompatible-version.json",
+      "kind": "fixture",
+      "purpose": "structured incompatible-version failure",
+      "media_type": "application/json",
+      "sha256": "9ab025efc32c149389029d98a621a34a1688e20c8ea9eaa284ad40e906a9430a",
+      "schema": "schemas/action-result.schema.json"
+    },
+    {
+      "path": "fixtures/error-missing.json",
+      "kind": "fixture",
+      "purpose": "structured missing-row failure",
+      "media_type": "application/json",
+      "sha256": "3231bc7ad0cddd6f55eb48e7ce5cda85091a4daa964ee21cbc724d3af9e86e90",
+      "schema": "schemas/action-result.schema.json"
+    },
+    {
+      "path": "fixtures/error-unavailable.json",
+      "kind": "fixture",
+      "purpose": "structured unavailable-state failure",
+      "media_type": "application/json",
+      "sha256": "d7e225f03db41fb96b63f2d7aebdf7030001b5b7dd6fc84823d50657a2465984",
+      "schema": "schemas/action-result.schema.json"
+    },
+    {
+      "path": "fixtures/error-unsupported.json",
+      "kind": "fixture",
+      "purpose": "structured unsupported-action failure",
+      "media_type": "application/json",
+      "sha256": "074861722dc28e563c0ae4a9a0155a3ed107602a9b726061faa8dd01fa5f549d",
+      "schema": "schemas/action-result.schema.json"
+    },
+    {
+      "path": "fixtures/error-validation.json",
+      "kind": "fixture",
+      "purpose": "structured input-validation failure",
+      "media_type": "application/json",
+      "sha256": "550a0e28fe52fc2513a52109fd70cb6b01334095a8f434a709a59dbc1d6398d5",
+      "schema": "schemas/action-result.schema.json"
+    },
+    {
+      "path": "fixtures/error.json",
+      "kind": "fixture",
+      "purpose": "structured stale action error",
+      "media_type": "application/json",
+      "sha256": "457304b0bb2b3f1fc77426244371f5d0b7c4c6f56ba1547729135c53de9d9a22",
+      "schema": "schemas/action-result.schema.json"
+    },
+    {
+      "path": "fixtures/focus-item.json",
+      "kind": "fixture",
+      "purpose": "canonical private focus item",
+      "media_type": "application/json",
+      "sha256": "5c09745f56f64f1d4941222cbda83bc514fc22f47e3fb07fd9c538d782966d31",
+      "schema": "schemas/focus-item.schema.json"
+    },
+    {
+      "path": "fixtures/interaction-policy.json",
+      "kind": "fixture",
+      "purpose": "canonical operation policy and conversational conformance cases",
+      "media_type": "application/json",
+      "sha256": "dd256d53241694aeaaf04b490a04f8e7188c53fa08db54f1d09d581d3ec9a5fd",
+      "schema": "schemas/interaction-policy.schema.json"
+    },
+    {
+      "path": "fixtures/launch-result.json",
+      "kind": "fixture",
+      "purpose": "typed Focus launch intent with authoritative source",
+      "media_type": "application/json",
+      "sha256": "c27c1c43602d1b1dfcd76303eecdeb0e27eb9f25c97b5cf0f7d50b52b7fdd470",
+      "schema": "schemas/action-result.schema.json"
+    },
+    {
+      "path": "fixtures/mail-envelope.json",
+      "kind": "fixture",
+      "purpose": "canonical untrusted project mail envelope",
+      "media_type": "application/json",
+      "sha256": "5f54416e716c337aed03d1a700d72a75ab18e1b2bcdcb5c729af7d117fdb7d73",
+      "schema": "schemas/mail-envelope.schema.json"
+    },
+    {
+      "path": "fixtures/manifest.json",
+      "kind": "fixture-manifest",
+      "purpose": "Canonical fixture inventory retained for existing consumers",
+      "media_type": "application/json",
+      "sha256": "059b5418cc2005d506b0ca718df1ed25109ed022e385c7b16bca3e3c4a0d8e07"
+    },
+    {
+      "path": "fixtures/missing-project-snapshot.json",
+      "kind": "fixture",
+      "purpose": "missing project remains visible but launch is not advertised",
+      "media_type": "application/json",
+      "sha256": "eaf1a97137cd8abf7125a4ab1a81bd5aaf24da9e102c3595672f4e17c69b3be6",
+      "schema": "schemas/attention-snapshot.schema.json"
+    },
+    {
+      "path": "fixtures/promotion-result.json",
+      "kind": "fixture",
+      "purpose": "Mail promotion navigation and row invalidation",
+      "media_type": "application/json",
+      "sha256": "82d6f097b0e93ed4a6ba9a3c044cfc41d330e55f03e4411458d652db82f54a6c",
+      "schema": "schemas/action-result.schema.json"
+    },
+    {
+      "path": "fixtures/suggestion-after-acceptance.json",
+      "kind": "fixture",
+      "purpose": "suggestion acceptance creates Focus and removes projection row",
+      "media_type": "application/json",
+      "sha256": "31ca26906fb2367e168a0ede7e314d0ef3a9c482ebeec13cf07350bffa98ea0d",
+      "schema": "schemas/action-result.schema.json"
+    },
+    {
+      "path": "fixtures/suggestion.json",
+      "kind": "fixture",
+      "purpose": "deferred work proposal before focus acceptance",
+      "media_type": "application/json",
+      "sha256": "cbc20a20838148faa763b3b798e10f7cc83a2bc89a3bbfb40ee4f590a34ca5a7",
+      "schema": "schemas/suggestion.schema.json"
+    },
+    {
+      "path": "fixtures/unknown-fields.json",
+      "kind": "fixture",
+      "purpose": "forward-compatible unknown fields, source kind, style, operation metadata, and action ID",
+      "media_type": "application/json",
+      "sha256": "ad5d36672587c6bf72e5de2a632f9199d2556b760d7cd2210c9277b4977b602c",
+      "schema": "schemas/attention-snapshot.schema.json"
+    },
+    {
+      "path": "mcp-tools.json",
+      "kind": "mcp-tool-inventory",
+      "purpose": "Model-facing Attention MCP tools generated from Hero's runtime registry",
+      "media_type": "application/json",
+      "sha256": "ffd9b4acb4eb10c6b6c797e903b56948ce15e32ca5cccdc32463f1a021e29162",
+      "schema": "schemas/mcp-tool-inventory.schema.json"
+    },
+    {
+      "path": "schemas/action-result.schema.json",
+      "kind": "schema",
+      "purpose": "Published Attention v1 JSON Schema: action-result.schema.json",
+      "media_type": "application/json",
+      "sha256": "0bb842733caf821f55d0da4412f14b6fc664c73c46bfb5f93c27035a18b44f1a"
+    },
+    {
+      "path": "schemas/action.schema.json",
+      "kind": "schema",
+      "purpose": "Published Attention v1 JSON Schema: action.schema.json",
+      "media_type": "application/json",
+      "sha256": "f51d6d5fc654e7c7f4623e30055d4773febb494cebc2b9b7f5814e4538e62351"
+    },
+    {
+      "path": "schemas/attention-snapshot.schema.json",
+      "kind": "schema",
+      "purpose": "Published Attention v1 JSON Schema: attention-snapshot.schema.json",
+      "media_type": "application/json",
+      "sha256": "030605d891c23adba6e432659373fef9b8aad21c9a9c1ea8db7342960c1304fd"
+    },
+    {
+      "path": "schemas/conformance-bundle-manifest.schema.json",
+      "kind": "schema",
+      "purpose": "Published Attention v1 JSON Schema: conformance-bundle-manifest.schema.json",
+      "media_type": "application/json",
+      "sha256": "4d48f099a320975c577f8ba1dda19d877122079252b01531ad764896e04d3148"
+    },
+    {
+      "path": "schemas/conversational-routes.schema.json",
+      "kind": "schema",
+      "purpose": "Published Attention v1 JSON Schema: conversational-routes.schema.json",
+      "media_type": "application/json",
+      "sha256": "bcc7644ee4854a80be78f398bd94962c0a5359a01ba2155ebabe52b15c9e6989"
+    },
+    {
+      "path": "schemas/direct-action.schema.json",
+      "kind": "schema",
+      "purpose": "Published Attention v1 JSON Schema: direct-action.schema.json",
+      "media_type": "application/json",
+      "sha256": "bc1a9f1f93b6253029af7b2528272b50f69cf02ad4bc9e291e9ee3fcaa5433d2"
+    },
+    {
+      "path": "schemas/focus-item.schema.json",
+      "kind": "schema",
+      "purpose": "Published Attention v1 JSON Schema: focus-item.schema.json",
+      "media_type": "application/json",
+      "sha256": "32b1589723db71144a0cac103cdb9859d7a4b077596a6971792602c4f0353119"
+    },
+    {
+      "path": "schemas/interaction-policy.schema.json",
+      "kind": "schema",
+      "purpose": "Published Attention v1 JSON Schema: interaction-policy.schema.json",
+      "media_type": "application/json",
+      "sha256": "194158fa41a352902627e1bc6d814acb6da681043a69ac60abbab73ab077e256"
+    },
+    {
+      "path": "schemas/mail-envelope.schema.json",
+      "kind": "schema",
+      "purpose": "Published Attention v1 JSON Schema: mail-envelope.schema.json",
+      "media_type": "application/json",
+      "sha256": "7d99a6ad5ce7ece81a1699f6a513514beab472f813d47ca09719520a013f0ad4"
+    },
+    {
+      "path": "schemas/mcp-tool-inventory.schema.json",
+      "kind": "schema",
+      "purpose": "Published Attention v1 JSON Schema: mcp-tool-inventory.schema.json",
+      "media_type": "application/json",
+      "sha256": "2996f7dd25f4c68b73fe43efe585e70461a1a0a10e4ce43350651b637c830f7d"
+    },
+    {
+      "path": "schemas/suggestion.schema.json",
+      "kind": "schema",
+      "purpose": "Published Attention v1 JSON Schema: suggestion.schema.json",
+      "media_type": "application/json",
+      "sha256": "c634d5d10267cf0b3d118b5bf4ac87aff3729bd6e98262ed55cd4f07f1264dbd"
+    }
+  ]
+}

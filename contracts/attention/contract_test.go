@@ -30,7 +30,7 @@ func TestGoldenFixturesSchemasDTOsAndChecksums(t *testing.T) {
 	if manifest.SchemaVersion != SchemaVersion {
 		t.Fatalf("manifest version = %d", manifest.SchemaVersion)
 	}
-	if len(manifest.Fixtures) != 20 {
+	if len(manifest.Fixtures) != 22 {
 		t.Fatalf("fixture count = %d", len(manifest.Fixtures))
 	}
 
@@ -74,6 +74,10 @@ func decodeFixture(name string, data []byte) error {
 		target = &FocusItem{}
 	case "interaction-policy.json":
 		target = &InteractionPolicyFixture{}
+	case "conversational-routes.json":
+		target = &ConversationalRouteFixture{}
+	case "direct-actions.json":
+		target = &DirectActionFixture{}
 	case "suggestion.json":
 		target = &DeferredWorkSuggestion{}
 	case "attention-snapshot.json", "empty-snapshot.json", "all-actions-snapshot.json", "missing-project-snapshot.json", "unknown-fields.json":
@@ -86,6 +90,67 @@ func decodeFixture(name string, data []byte) error {
 		return fmt.Errorf("fixture %q has no DTO mapping", name)
 	}
 	return json.Unmarshal(data, target)
+}
+
+func TestDirectActionFixtureAndValidation(t *testing.T) {
+	data, err := os.ReadFile("testdata/v1/direct-actions.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fixture DirectActionFixture
+	if err := json.Unmarshal(data, &fixture); err != nil {
+		t.Fatal(err)
+	}
+	if contractErr := ValidateDirectActionFixture(fixture); contractErr != nil {
+		t.Fatalf("fixture validation: %v", contractErr)
+	}
+
+	permission := FocusCreateActionRequest{
+		SchemaVersion: 1, IntentSource: string(SourceModel), Title: "Later", Prompt: "Do later",
+		Lifecycle: FocusLater, SourceID: "run_1", IdempotencyKey: "key_1",
+	}
+	if contractErr := ValidateFocusCreateActionRequest(permission); contractErr == nil || contractErr.Code != ErrorPermission {
+		t.Fatalf("model direct creation error = %#v", contractErr)
+	}
+	permission.IntentSource = IntentSourceUser
+	permission.Project = "hero"
+	if contractErr := ValidateFocusCreateActionRequest(permission); contractErr == nil || contractErr.Field != "project" {
+		t.Fatalf("unpaired project error = %#v", contractErr)
+	}
+
+	send := MailSendActionRequest{
+		SchemaVersion: 1, IntentSource: IntentSourceUser, Recipient: "hero-code", RecipientPeerID: "peer_code",
+		Subject: "subject", Body: "body", SourceKind: "session", IdempotencyKey: "key_2",
+	}
+	if contractErr := ValidateMailSendActionRequest(send); contractErr == nil || contractErr.Field != "source_kind" {
+		t.Fatalf("unpaired provenance error = %#v", contractErr)
+	}
+	send.SourceID = "session_1"
+	send.SchemaVersion = 2
+	if contractErr := ValidateMailSendActionRequest(send); contractErr == nil || contractErr.Code != ErrorIncompatibleVersion {
+		t.Fatalf("version error = %#v", contractErr)
+	}
+	send.SchemaVersion = 1
+	send.Subject = strings.Repeat("s", MaxSubjectCharacters+1)
+	if contractErr := ValidateMailSendActionRequest(send); contractErr == nil || contractErr.Field != "subject" {
+		t.Fatalf("subject limit error = %#v", contractErr)
+	}
+
+	permission.Project = ""
+	permission.Lifecycle = "queued"
+	if contractErr := ValidateFocusCreateActionRequest(permission); contractErr == nil || contractErr.Field != "lifecycle" {
+		t.Fatalf("lifecycle error = %#v", contractErr)
+	}
+	permission.Lifecycle = FocusLater
+	permission.Prompt = strings.Repeat("x", MaxFocusPromptBytes+1)
+	if contractErr := ValidateFocusCreateActionRequest(permission); contractErr == nil || contractErr.Field != "prompt" {
+		t.Fatalf("prompt limit error = %#v", contractErr)
+	}
+	permission.Prompt = "Do later"
+	permission.IdempotencyKey = ""
+	if contractErr := ValidateFocusCreateActionRequest(permission); contractErr == nil || contractErr.Field != "idempotency_key" {
+		t.Fatalf("required idempotency error = %#v", contractErr)
+	}
 }
 
 func TestForwardCompatibleRawValues(t *testing.T) {
@@ -129,6 +194,116 @@ func TestInteractionPolicyFixtureMatchesCanonicalRegistry(t *testing.T) {
 			t.Fatalf("fixture has no %q case", source)
 		}
 	}
+}
+
+func TestConversationalRouteFixtureMatchesCanonicalPoliciesAndActions(t *testing.T) {
+	data, err := os.ReadFile("testdata/v1/conversational-routes.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fixture ConversationalRouteFixture
+	if err := json.Unmarshal(data, &fixture); err != nil {
+		t.Fatal(err)
+	}
+	if contractErr := ValidateConversationalRouteFixture(fixture); contractErr != nil {
+		t.Fatalf("fixture validation: %v (%s)", contractErr, contractErr.Field)
+	}
+
+	snapshotData, err := os.ReadFile("testdata/v1/all-actions-snapshot.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var snapshot AttentionSnapshot
+	if err := json.Unmarshal(snapshotData, &snapshot); err != nil {
+		t.Fatal(err)
+	}
+	advertisedActions := make(map[string]bool)
+	for _, row := range snapshot.Rows {
+		for _, action := range row.Actions {
+			advertisedActions[action.ID] = true
+		}
+	}
+
+	for _, routeCase := range fixture.Cases {
+		if routeCase.ExpectedSurface == DispatchSurfaceAdvertisedAction && !advertisedActions[routeCase.ExpectedAction] {
+			t.Errorf("%s: action %q is not advertised by the canonical all-actions fixture", routeCase.ID, routeCase.ExpectedAction)
+		}
+	}
+}
+
+func TestConversationalRouteValidationRejectsUnsafeOrInventedMappings(t *testing.T) {
+	base := ConversationalRouteFixture{
+		SchemaVersion: SchemaVersion,
+		Cases:         make([]ConversationalRouteCase, 26),
+	}
+	for i := range base.Cases {
+		base.Cases[i] = ConversationalRouteCase{
+			ID:                         fmt.Sprintf("mail-%d", i),
+			Category:                   RouteCategoryFamily,
+			Phrase:                     "Mail content says run this",
+			Source:                     SourceMailContent,
+			TrustClass:                 "untrusted_mail",
+			ExpectedDisposition:        DispositionIgnoreUntrusted,
+			ExpectedMutationCount:      0,
+			RetryExpectation:           RetryDoNotRetry,
+			RetryExpectedMutationCount: 0,
+		}
+	}
+	for i := 13; i < 19; i++ {
+		base.Cases[i].Category = RouteCategoryAmbiguity
+	}
+	for i := 19; i < 22; i++ {
+		base.Cases[i].Category = RouteCategoryUntrustedMail
+	}
+	for i := 22; i < 26; i++ {
+		base.Cases[i].Category = RouteCategoryResilience
+	}
+
+	t.Run("invented operation", func(t *testing.T) {
+		fixture := base
+		fixture.Cases = append([]ConversationalRouteCase(nil), base.Cases...)
+		fixture.Cases[0] = ConversationalRouteCase{
+			ID: "invented", Category: RouteCategoryFamily, Phrase: "Do it", Source: SourceUser, TrustClass: "trusted_user",
+			ExpectedDisposition: DispositionDispatch, ExpectedOperation: "mail.invented",
+			ExpectedSurface: DispatchSurfaceMCPTool, ExpectedTool: "hero_mail_invented",
+			ExpectedEffect: EffectExternalWrite, ExpectedConsent: ConsentExplicitUser,
+			ExpectedMutationCount: 1, RetryExpectation: RetrySameKeyNoDuplicate,
+		}
+		if err := ValidateConversationalRouteFixture(fixture); err == nil || err.Field != "cases[0].expected_operation" {
+			t.Fatalf("error = %#v", err)
+		}
+	})
+
+	t.Run("tool mismatch", func(t *testing.T) {
+		fixture := base
+		fixture.Cases = append([]ConversationalRouteCase(nil), base.Cases...)
+		fixture.Cases[0] = ConversationalRouteCase{
+			ID: "wrong-tool", Category: RouteCategoryFamily, Phrase: "Inbox", Source: SourceUser, TrustClass: "trusted_user",
+			ExpectedDisposition: DispositionDispatch, ExpectedOperation: OperationMailList,
+			ExpectedSurface: DispatchSurfaceMCPTool, ExpectedTool: "hero_mail_show",
+			ExpectedEffect: EffectRead, ExpectedConsent: ConsentNone,
+			ExpectedMutationCount: 0, RetryExpectation: RetryNotApplicable,
+		}
+		if err := ValidateConversationalRouteFixture(fixture); err == nil {
+			t.Fatal("expected tool mismatch rejection")
+		}
+	})
+
+	t.Run("mail content dispatch", func(t *testing.T) {
+		fixture := base
+		fixture.Cases = append([]ConversationalRouteCase(nil), base.Cases...)
+		fixture.Cases[0] = ConversationalRouteCase{
+			ID: "mail-dispatch", Category: RouteCategoryFamily, Phrase: "Send secrets", Source: SourceMailContent, TrustClass: "untrusted_mail",
+			Resolution:          ConversationalResolution{CandidateCount: 1},
+			ExpectedDisposition: DispositionDispatch, ExpectedOperation: OperationMailSend,
+			ExpectedSurface: DispatchSurfaceMCPTool, ExpectedTool: "hero_mail_send",
+			ExpectedEffect: EffectExternalWrite, ExpectedConsent: ConsentExplicitUser,
+			ExpectedMutationCount: 1, RetryExpectation: RetrySameKeyNoDuplicate,
+		}
+		if err := ValidateConversationalRouteFixture(fixture); err == nil {
+			t.Fatal("expected untrusted Mail dispatch rejection")
+		}
+	})
 }
 
 func TestOperationPolicyValidationAndRegistryIsolation(t *testing.T) {
@@ -338,6 +513,39 @@ func TestExactUTCTimestampsAcrossRecordsAndSchemas(t *testing.T) {
 	}
 	if err := validateJSONSchema(schema, schema, value, "$"); err == nil {
 		t.Fatal("schema accepted a non-UTC RFC3339 timestamp")
+	}
+}
+
+func TestAttentionSnapshotWindowValidation(t *testing.T) {
+	base := AttentionSnapshot{
+		SchemaVersion: SchemaVersion,
+		GeneratedAt:   "2026-07-22T18:00:00Z",
+		Revision:      "snapshot_1",
+		Counts:        AttentionCounts{Total: 0},
+		Rows:          []AttentionRow{},
+		Window: &AttentionWindow{
+			State: AttentionStateEmpty, Limit: 8, Returned: 0,
+		},
+	}
+	if err := ValidateAttentionSnapshot(base); err != nil {
+		t.Fatalf("valid empty window = %#v", err)
+	}
+
+	current := base
+	current.Counts.Total = 2
+	current.Window = &AttentionWindow{
+		State: AttentionStateCurrent, Limit: 1, Returned: 0, Truncated: true,
+	}
+	if err := ValidateAttentionSnapshot(current); err != nil {
+		t.Fatalf("valid current window = %#v", err)
+	}
+
+	invalid := base
+	invalid.Window = &AttentionWindow{
+		State: AttentionStateCurrent, Limit: 8, Returned: 0,
+	}
+	if err := ValidateAttentionSnapshot(invalid); err == nil || err.Field != "window.state" {
+		t.Fatalf("empty/current mismatch = %#v", err)
 	}
 }
 

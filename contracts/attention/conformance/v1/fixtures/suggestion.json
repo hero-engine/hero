@@ -1,0 +1,1 @@
+{"schema_version":1,"id":"suggestion_01JYX","project":{"peer_id":"peer_hero","registry_slug":"hero","display_name":"Hero"},"title":"Revisit streaming events","prompt":"Evaluate optional SSE after snapshot correctness has shipped.","created_at":"2026-07-22T18:04:00Z","provenance":[{"kind":"spec","source_id":"durable-attention-contracts","label":"Deferred from v1"}]}

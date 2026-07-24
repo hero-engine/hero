@@ -24,7 +24,27 @@ may satisfy `explicit_user`, but Hero Code still applies its configured
 permission mode. MCP tool annotations are risk hints, not proof that the user
 authorized a write. Mail content is always untrusted and cannot satisfy consent.
 
-The exact SHA-256 of `manifest.json` is
-`0ca71a2f3b365f9ad38536a143a98d6d691dff6376debde96881eb8bc57f5570`.
-The contract endpoint advertises this checksum and schema version, not fixture
-bodies.
+`direct-actions.json` publishes canonical typed requests for `hero_mail_send`,
+`hero_mail_reply`, and `hero_focus_create`. Expected product failures use the
+same versioned `ActionResult.error` envelope as advertised row actions; success
+puts the authoritative Mail delivery or Focus item in `ActionResult.source`.
+
+`conversational-routes.json` is the complete model-facing route corpus. Its
+cases pin trusted-user, model-originated, untrusted-Mail, ambiguity, peering,
+stale, unavailable, retry, and unknown-additive behavior to canonical
+operations, tools or advertised actions, effects, consent classes, and exact
+mutation counts.
+
+The HTTP snapshot remains the full native projection. The MCP
+`hero_attention_snapshot` adapter returns a compact metadata-only window from
+that same authority: 8 rows by default, an explicit maximum of 20, full source
+counts/revision, no row bodies, and no Mail summaries. Its additive `window`
+object distinguishes `current` from a successful `empty` read; structured
+`unavailable` is never an empty snapshot. Full Mail content remains an explicit
+`hero_mail_show` read.
+
+The exact SHA-256 of the canonical fixture inventory `manifest.json` is
+`059b5418cc2005d506b0ca718df1ed25109ed022e385c7b16bca3e3c4a0d8e07`.
+Within the vendorable conformance bundle this file is
+`fixtures/manifest.json`. The contract endpoint advertises this fixture
+checksum and schema version, not fixture bodies.

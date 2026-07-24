@@ -7,7 +7,10 @@ import (
 	"github.com/hero-engine/hero/contracts/attention"
 )
 
-const attentionFixtureManifestSHA256 = "0ca71a2f3b365f9ad38536a143a98d6d691dff6376debde96881eb8bc57f5570"
+const attentionFixtureManifestSHA256 = "059b5418cc2005d506b0ca718df1ed25109ed022e385c7b16bca3e3c4a0d8e07"
+const attentionBundleVersion = 1
+const attentionBundleManifestSHA256 = "bf5dc3524809dfdaf87935bbcfb28c0751f0493da7ed61eabb2fda3561598da5"
+const attentionBundlePath = "contracts/attention/conformance/v1"
 
 func (a *API) handleAttentionSnapshot(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -60,11 +63,19 @@ func (a *API) handleAttentionContract(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
+	writeJSON(w, http.StatusOK, attentionContractMetadata())
+}
+
+func attentionContractMetadata() map[string]any {
+	return map[string]any{
 		"schema_version":          attention.SchemaVersion,
 		"fixture_manifest_sha256": attentionFixtureManifestSHA256,
+		"bundle_version":          attentionBundleVersion,
+		"bundle_manifest_sha256":  attentionBundleManifestSHA256,
+		"bundle_path":             attentionBundlePath,
+		"compatibility":           "Unknown additive fields and identifiers remain inert but decodable and never grant executable behavior.",
 		"synchronization":         "snapshot_refresh",
-	})
+	}
 }
 
 func (a *API) loadAttentionService() (interface {
