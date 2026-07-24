@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-24T04:18:43Z
+updated: 2026-07-24T04:20:16Z
 repo: hero-engine/hero
 ---
 
@@ -20,11 +20,13 @@ repo: hero-engine/hero
 > - Origin workspace: hero-code (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
 > - Target alias on cal…
 
-_possibly stale — 30 commit(s) since, last set 4d 6h ago_
+_possibly stale — 32 commit(s) since, last set 4d 6h ago_
 
 ## Last user ask
 
 > Drive conversational-attention-operability autonomously through all remaining Hero-owned children
+
+_possibly stale — 1 commit(s) since, last set 3h 36m ago_
 
 ## Suggested next prompt
 
