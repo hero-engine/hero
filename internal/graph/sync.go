@@ -17,12 +17,12 @@ import (
 // the org-scoped base (…/api/v1/orgs/<org>); Push/Pull append the
 // graph route onto it:
 //
-//   POST <ServerURL>/graph/push?repo=<repo>
-//     body: PushRequest
-//     resp: PushResponse
+//	POST <ServerURL>/graph/push?repo=<repo>
+//	  body: PushRequest
+//	  resp: PushResponse
 //
-//   GET  <ServerURL>/graph/pull?repo=<repo>&since=<cursor>&include=team,unit
-//     resp: PullResponse
+//	GET  <ServerURL>/graph/pull?repo=<repo>&since=<cursor>&include=team,unit
+//	  resp: PullResponse
 //
 // All bodies are JSON. Auth is handled by the caller injecting an
 // HTTP roundtripper that adds the right credentials.
@@ -64,12 +64,12 @@ type PushResponse struct {
 // from the server's current row. Resolution strategy is decided by
 // the caller — Phase 6a's conflict UI is the natural surface.
 type SyncConflict struct {
-	NodeType  string `json:"node_type,omitempty"` // empty for edge conflicts
-	NodeKey   string `json:"node_key,omitempty"`
-	EdgeFrom  string `json:"edge_from,omitempty"`
-	EdgeTo    string `json:"edge_to,omitempty"`
-	EdgeType  string `json:"edge_type,omitempty"`
-	Reason    string `json:"reason"`
+	NodeType string `json:"node_type,omitempty"` // empty for edge conflicts
+	NodeKey  string `json:"node_key,omitempty"`
+	EdgeFrom string `json:"edge_from,omitempty"`
+	EdgeTo   string `json:"edge_to,omitempty"`
+	EdgeType string `json:"edge_type,omitempty"`
+	Reason   string `json:"reason"`
 }
 
 // PullResponse is the server's reply to /pull.
@@ -191,6 +191,11 @@ func (s *Store) ApplyPull(nodes []Node, edges []Edge) (nodesApplied, edgesApplie
 	// Resolve edges by (type, key) of their endpoints. The pull
 	// response includes endpoint identifiers in the edge props so
 	// resolution doesn't depend on shared row ids.
+	//
+	// Scoped to the edge's own repo partition: since node identity became
+	// (type, key, repo), two repos can hold live nodes for one slug, and an
+	// unscoped lookup would bind a pulled edge to whichever partition came
+	// back first — silently wiring a federated edge into the wrong repo.
 	for i := range edges {
 		e := edges[i]
 		fromKey := StringProp(e.Props, "_from_key")
@@ -198,12 +203,12 @@ func (s *Store) ApplyPull(nodes []Node, edges []Edge) (nodesApplied, edgesApplie
 		toKey := StringProp(e.Props, "_to_key")
 		toType := StringProp(e.Props, "_to_type")
 
-		fromID, err := s.GetNodeID(fromType, fromKey)
+		fromID, err := s.GetNodeID(fromType, fromKey, e.Repo)
 		if err != nil {
 			edgesDeferred++
 			continue
 		}
-		toID, err := s.GetNodeID(toType, toKey)
+		toID, err := s.GetNodeID(toType, toKey, e.Repo)
 		if err != nil {
 			edgesDeferred++
 			continue

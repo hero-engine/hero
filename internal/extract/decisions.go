@@ -80,7 +80,7 @@ func (x *DecisionExtractor) ExtractFromSource(
 	}
 
 	// Resolve the source node so we can attach edges.
-	sourceID, err := store.GetNodeID(sourceType, sourceKey)
+	sourceID, err := store.GetNodeID(sourceType, sourceKey, repoKey)
 	if err != nil {
 		return nil, fmt.Errorf("source %s/%s not in graph: %w", sourceType, sourceKey, err)
 	}

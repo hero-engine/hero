@@ -112,11 +112,19 @@ func (s *Store) UpsertNode(n *Node) (int64, error) {
 		existingUnit   string
 		existingDomain string
 	)
+	// Scoped to this node's partition. Without the scope, ingesting a
+	// sibling repo's copy of a slug matched the LOCAL row, saw a differing
+	// partition, and invalidated-and-reinserted it under the sibling's
+	// repoKey — permanently tombstoning the local node. The legacy
+	// repo = '' fallback keeps the v1→v2 backfill working: an
+	// unpartitioned row is still upgraded in place by a writer that now
+	// stamps a repoKey, rather than left behind as a duplicate live row.
+	upsertTail, upsertArgs := repoWriteScope(n.Repo)
 	err = tx.QueryRow(
 		`SELECT id, content_hash, props, repo, unit, domain
 		   FROM nodes
-		  WHERE type = ? AND key = ? AND valid_to IS NULL`,
-		n.Type, n.Key,
+		  WHERE type = ? AND key = ? AND valid_to IS NULL`+upsertTail,
+		append([]any{n.Type, n.Key}, upsertArgs...)...,
 	).Scan(&existingID, &existingHash, &existingProps, &existingRepo, &existingUnit, &existingDomain)
 
 	switch {
@@ -205,6 +213,68 @@ func (s *Store) UpsertNode(n *Node) (int64, error) {
 	return id, nil
 }
 
+// Node identity is (type, key, repo). Two repos may legitimately own the
+// same slug — that is the federation case — so every current-row lookup has
+// to say which partition it means. repoPredicate and repoOrder build the two
+// halves of that scoping; repoScope is the common combination.
+//
+//   - repo != "": match this repo's row, or an unpartitioned (repo = ”)
+//     row left by a legacy or global writer, preferring this repo's. NEVER
+//     matches a different repo's row — this is what stops a sibling ingest
+//     from tombstoning the local node.
+//   - repo == "": the caller genuinely doesn't know its partition. Match
+//     any, preferring a repo-stamped row so the choice is at least
+//     deterministic. Preserves pre-v5 behavior for such callers, so scoping
+//     can be adopted per-caller rather than in one flag day.
+//
+// Returned args are appended after the caller's own leading args.
+func repoPredicate(repo string) (string, []any) {
+	if repo == "" {
+		return "", nil
+	}
+	return " AND (repo = ? OR repo = '')", []any{repo}
+}
+
+// repoOrder picks among the partitions repoPredicate admitted.
+func repoOrder(repo string) (string, []any) {
+	if repo == "" {
+		return " ORDER BY (repo <> '') DESC, repo ASC LIMIT 1", nil
+	}
+	return " ORDER BY (repo = ?) DESC LIMIT 1", []any{repo}
+}
+
+// repoScope is repoPredicate followed by repoOrder — the tail for a READ
+// that wants a single best-matching current row.
+func repoScope(repo string) (string, []any) {
+	pred, pargs := repoPredicate(repo)
+	ord, oargs := repoOrder(repo)
+	return pred + ord, append(pargs, oargs...)
+}
+
+// repoWriteScope is the upsert's current-row lookup, and it is deliberately
+// stricter than repoScope in the repo == "" case.
+//
+// A read with no repo may fall back to any partition — it is only choosing
+// what to show. A WRITE with no repo must not: matching a repo-stamped row
+// would make the upsert invalidate-and-reinsert it under repo = ”,
+// tombstoning a partitioned node — the very bug repo-scoping exists to stop,
+// just approached from the unpartitioned side. Ten production writers still
+// upsert without stamping a Repo, so this path is reachable, not theoretical.
+//
+// It also prevents a hard failure that the read rule would produce: tombstone
+// the stamped row, then insert repo = ” while a live repo = ” row already
+// exists for the key → UNIQUE violation on (type, key, repo).
+//
+// The repo != "" case is unchanged: match this partition or a legacy
+// repo = ” row, preferring this one, so the v1→v2 backfill still upgrades
+// unpartitioned rows in place.
+func repoWriteScope(repo string) (string, []any) {
+	if repo == "" {
+		return " AND repo = '' LIMIT 1", nil
+	}
+	return repoScope(repo)
+}
+
 // GetNodeAt returns the row that was current for (type, key) at the
 // given RFC3339 timestamp — the bitemporal "what was true at time t"
 // query. A row is considered current at t when valid_from ≤ t and
@@ -213,40 +283,50 @@ func (s *Store) UpsertNode(n *Node) (int64, error) {
 // Returns ErrNotFound when no row matched (e.g. asking before the
 // node ever existed). Useful for verifying that a status flip was
 // recorded with bitemporal correctness.
-func (s *Store) GetNodeAt(typ, key, at string) (*Node, error) {
-	row := s.db.QueryRow(
-		`SELECT id, type, key, props, scope, repo, unit, domain, content_hash, source,
-		        valid_from, valid_to, ingested_at
-		   FROM nodes
-		  WHERE type = ? AND key = ?
-		    AND valid_from <= ?
-		    AND (valid_to IS NULL OR valid_to > ?)
-		  ORDER BY valid_from DESC
-		  LIMIT 1`,
-		typ, key, at, at,
-	)
-	return scanNode(row)
+func (s *Store) GetNodeAt(typ, key, at, repo string) (*Node, error) {
+	// The exact partition outranks recency: a scoped query asks what was
+	// true in THIS repo at t, so a newer legacy repo = '' row must not
+	// answer for it. Within a partition, bitemporal recency decides.
+	pred, args := repoPredicate(repo)
+	order := " ORDER BY valid_from DESC"
+	if repo != "" {
+		order = " ORDER BY (repo = ?) DESC, valid_from DESC"
+		args = append(args, repo)
+	}
+	q := `SELECT id, type, key, props, scope, repo, unit, domain, content_hash, source,
+	             valid_from, valid_to, ingested_at
+	        FROM nodes
+	       WHERE type = ? AND key = ?
+	         AND valid_from <= ?
+	         AND (valid_to IS NULL OR valid_to > ?)` + pred + order + `
+	       LIMIT 1`
+	return scanNode(s.db.QueryRow(q, append([]any{typ, key, at, at}, args...)...))
 }
 
-// GetNode returns the current row for (type, key), or ErrNotFound.
-func (s *Store) GetNode(typ, key string) (*Node, error) {
-	row := s.db.QueryRow(
-		`SELECT id, type, key, props, scope, repo, unit, domain, content_hash, source,
-		        valid_from, valid_to, ingested_at
-		   FROM nodes
-		  WHERE type = ? AND key = ? AND valid_to IS NULL`,
-		typ, key,
-	)
-	return scanNode(row)
+// GetNode returns the current row for (type, key) in the given repo
+// partition, or ErrNotFound. See repoScope for how repo is interpreted;
+// pass "" only when the caller genuinely cannot know its partition.
+func (s *Store) GetNode(typ, key, repo string) (*Node, error) {
+	tail, args := repoScope(repo)
+	q := `SELECT id, type, key, props, scope, repo, unit, domain, content_hash, source,
+	             valid_from, valid_to, ingested_at
+	        FROM nodes
+	       WHERE type = ? AND key = ? AND valid_to IS NULL` + tail
+	return scanNode(s.db.QueryRow(q, append([]any{typ, key}, args...)...))
 }
 
-// GetNodeID returns the current node's row id for (type, key).
-func (s *Store) GetNodeID(typ, key string) (int64, error) {
+// GetNodeID returns the current node's row id for (type, key) in the given
+// repo partition. See repoScope for how repo is interpreted.
+//
+// Passing the caller's own repoKey is what keeps an edge from binding to a
+// sibling repo's node when both own the same slug.
+func (s *Store) GetNodeID(typ, key, repo string) (int64, error) {
+	tail, args := repoScope(repo)
 	var id int64
 	err := s.db.QueryRow(
 		`SELECT id FROM nodes
-		  WHERE type = ? AND key = ? AND valid_to IS NULL`,
-		typ, key,
+		  WHERE type = ? AND key = ? AND valid_to IS NULL`+tail,
+		append([]any{typ, key}, args...)...,
 	).Scan(&id)
 	if err == sql.ErrNoRows {
 		return 0, ErrNotFound
@@ -254,14 +334,21 @@ func (s *Store) GetNodeID(typ, key string) (int64, error) {
 	return id, err
 }
 
-// InvalidateNode marks the current row for (type, key) as no longer
-// valid. Returns ErrNotFound if no current row exists.
-func (s *Store) InvalidateNode(typ, key string) error {
+// InvalidateNode marks the current row for (type, key) in the given repo
+// partition as no longer valid. Returns ErrNotFound if no current row
+// exists there. See repoScope for how repo is interpreted.
+//
+// Scoped by id via a subquery: SQLite's UPDATE has no ORDER BY/LIMIT
+// without a build option, and an unscoped UPDATE would tombstone every
+// partition's row for this key.
+func (s *Store) InvalidateNode(typ, key, repo string) error {
 	now := nowRFC3339()
+	tail, args := repoScope(repo)
 	res, err := s.db.Exec(
 		`UPDATE nodes SET valid_to = ?
-		  WHERE type = ? AND key = ? AND valid_to IS NULL`,
-		now, typ, key,
+		  WHERE id = (SELECT id FROM nodes
+		               WHERE type = ? AND key = ? AND valid_to IS NULL`+tail+`)`,
+		append([]any{now, typ, key}, args...)...,
 	)
 	if err != nil {
 		return err
@@ -333,12 +420,12 @@ func scanNode(r interface {
 	Scan(...any) error
 }) (*Node, error) {
 	var (
-		n            Node
-		propsJSON    string
-		sourceJSON   string
-		contentHash  sql.NullString
-		validToNS    sql.NullString
-		scopeStr     string
+		n           Node
+		propsJSON   string
+		sourceJSON  string
+		contentHash sql.NullString
+		validToNS   sql.NullString
+		scopeStr    string
 	)
 	err := r.Scan(
 		&n.ID, &n.Type, &n.Key, &propsJSON, &scopeStr,

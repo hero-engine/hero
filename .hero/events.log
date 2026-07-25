@@ -480,3 +480,7 @@
 {"ts":"2026-07-24T01:53:10.938634Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"conversational-attention-operability","message":"status -\u003e completed"}
 {"ts":"2026-07-25T16:26:10.430019Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"initiative-autocomplete-ignores-declared-children","message":"\"Initiative auto-completion ignores declared-but-unscaffolded children\""}
 {"ts":"2026-07-25T16:26:10.43032Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"initiative-autocomplete-ignores-declared-children","message":"status -\u003e completed"}
+{"ts":"2026-07-25T19:24:08.298926Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"graph-node-identity-repo-scoped","message":"\"Graph node identity is (type, key) — a sibling-repo ingest tombstones the local node\""}
+{"ts":"2026-07-25T19:24:08.299064Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"graph-node-identity-repo-scoped","message":"status -\u003e completed"}
+{"ts":"2026-07-25T19:30:57.766408Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"graph-why-resolution-and-peer-spec-indexing","message":"\"hero why fails to resolve specs that hero graph resolves — graph substrate stale + repoKey divergence\""}
+{"ts":"2026-07-25T19:30:57.766575Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"graph-why-resolution-and-peer-spec-indexing","message":"status -\u003e completed"}

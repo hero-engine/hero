@@ -12,6 +12,7 @@ import (
 	"github.com/hero-engine/hero/contracts/attention"
 	"github.com/hero-engine/hero/internal/attention/focus"
 	"github.com/hero-engine/hero/internal/feed"
+	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/intake"
 	"github.com/hero-engine/hero/internal/spec"
@@ -277,13 +278,19 @@ func (s *Service) writeMailProvenance(env attention.MailEnvelope, intakeSlug str
 	if domain == "" {
 		domain = "engineering"
 	}
-	if _, err := spec.WriteGraph(specs, s.cfg.PeerID, domain, store); err != nil {
+	// repoKey must be gitutil.RepoKey — the partition every graph reader
+	// filters on. This wrote spec nodes under cfg.PeerID (a UUID), so the
+	// nodes landed in a partition nothing queries. Same divergence class as
+	// the filepath.Base(projectRoot) writers fixed in
+	// graph-why-resolution-and-peer-spec-indexing, one derivation over.
+	repoKey := gitutil.RepoKey(s.root)
+	if _, err := spec.WriteGraph(specs, repoKey, domain, store); err != nil {
 		return err
 	}
-	if _, err := store.GetNode("Intake", intakeSlug); err != nil {
+	if _, err := store.GetNode("Intake", intakeSlug, repoKey); err != nil {
 		return err
 	}
-	_, err = store.GetNode("MailSource", env.ID)
+	_, err = store.GetNode("MailSource", env.ID, repoKey)
 	return err
 }
 

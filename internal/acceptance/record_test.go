@@ -74,7 +74,7 @@ func TestRecord_BitemporalHistoryQuery(t *testing.T) {
 
 	// At a moment between seed and flip, the seed row is current.
 	betweenSeedAndFlip := time.Now().UTC().Add(-1 * time.Hour).Format(time.RFC3339)
-	past1, err := store.GetNodeAt("Criterion", "feat-x:AC-1", betweenSeedAndFlip)
+	past1, err := store.GetNodeAt("Criterion", "feat-x:AC-1", betweenSeedAndFlip, "")
 	if err != nil {
 		t.Fatalf("GetNodeAt(between): %v", err)
 	}
@@ -83,7 +83,7 @@ func TestRecord_BitemporalHistoryQuery(t *testing.T) {
 	}
 
 	// Now: the flipped row is current.
-	current, err := store.GetNode("Criterion", "feat-x:AC-1")
+	current, err := store.GetNode("Criterion", "feat-x:AC-1", "")
 	if err != nil {
 		t.Fatalf("GetNode current: %v", err)
 	}
@@ -182,7 +182,7 @@ func seedCriterionAt(t *testing.T, store *graph.Store, key, statement, status, v
 
 func getStatus(t *testing.T, store *graph.Store, key string) string {
 	t.Helper()
-	n, err := store.GetNode("Criterion", key)
+	n, err := store.GetNode("Criterion", key, "")
 	if err != nil {
 		t.Fatalf("GetNode(%s): %v", key, err)
 	}

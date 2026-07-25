@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/hero-engine/hero/internal/config"
-	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/spec"
 	"github.com/hero-engine/hero/internal/tasks"
@@ -199,9 +198,8 @@ func runTaskAdd(cmd *cobra.Command, args []string) error {
 	// Re-scan into the graph so the new task lands as a Task node
 	// without waiting for the next full `hero scan`. Best-effort: a
 	// write failure on the graph side doesn't undo the file edit.
-	if parentID, ok := resolveSpecGraphID(store, sp); ok {
-		projectRoot := findProjectRoot()
-		repoKey := gitutil.RepoKey(projectRoot)
+	repoKey := graphRepoKey(findProjectRoot())
+	if parentID, ok := resolveSpecGraphID(store, sp, repoKey); ok {
 		_, _ = tasks.Write(parentNodeType(sp.Type), sp.Slug, parentID, updated, repoKey, store)
 	}
 
@@ -308,9 +306,8 @@ func runTaskTransition(target string) func(*cobra.Command, []string) error {
 			return err
 		}
 
-		if parentID, ok := resolveSpecGraphID(store, sp); ok {
-			projectRoot := findProjectRoot()
-			repoKey := gitutil.RepoKey(projectRoot)
+		repoKey := graphRepoKey(findProjectRoot())
+		if parentID, ok := resolveSpecGraphID(store, sp, repoKey); ok {
 			_, _ = tasks.Write(parentNodeType(sp.Type), sp.Slug, parentID, updated, repoKey, store)
 		}
 
@@ -397,12 +394,12 @@ func runTaskStatus(cmd *cobra.Command, args []string) error {
 // can wire its belongs_to edge. A later full `hero scan` pass
 // overwrites the stub with the full spec properties — content hash
 // drives idempotency.
-func resolveSpecGraphID(store *graph.Store, s *spec.Spec) (int64, bool) {
+func resolveSpecGraphID(store *graph.Store, s *spec.Spec, repoKey string) (int64, bool) {
 	nodeType := parentNodeType(s.Type)
 	if nodeType == "" {
 		return 0, false
 	}
-	if id, err := store.GetNodeID(nodeType, s.Slug); err == nil {
+	if id, err := store.GetNodeID(nodeType, s.Slug, repoKey); err == nil {
 		return id, true
 	}
 	// Upsert a minimal parent so tasks can attach. Keeping the stub
@@ -417,6 +414,7 @@ func resolveSpecGraphID(store *graph.Store, s *spec.Spec) (int64, bool) {
 			"status": string(s.Status),
 			"stub":   true,
 		},
+		Repo:        repoKey,
 		ContentHash: "task-parent-stub-" + s.Slug,
 		Source:      map[string]any{"kind": "task-cli-stub", "path": s.Path},
 	})

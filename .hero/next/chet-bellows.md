@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-25T16:26:44Z
+updated: 2026-07-25T17:28:58Z
 repo: hero-engine/hero
 ---
 
@@ -12,7 +12,11 @@ repo: hero-engine/hero
 
 ## Suggested next prompt
 
-> Deliver graph-why-resolution-and-peer-spec-indexing — the other open hero-core bug received cross-repo; hero why fails to resolve specs that hero graph resolves (graph substrate stale + repoKey divergence)
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 

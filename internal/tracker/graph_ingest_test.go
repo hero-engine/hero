@@ -150,7 +150,7 @@ func TestWriteSprintGraph_MergesWithCommitStubIssue(t *testing.T) {
 		t.Errorf("Issue current = %d, want 4 (3 in batch + 1 epic stub)", stats.NodesByType["Issue"])
 	}
 	// Get the current PROJ-101 — should now have title from the sprint ingest.
-	n, err := store.GetNode("Issue", "PROJ-101")
+	n, err := store.GetNode("Issue", "PROJ-101", "")
 	if err != nil {
 		t.Fatalf("GetNode: %v", err)
 	}
@@ -212,11 +212,11 @@ func TestWriteIssuesGraph_Idempotent(t *testing.T) {
 	if _, err := WriteIssuesGraph(issues, "repo-x", store); err != nil {
 		t.Fatalf("first: %v", err)
 	}
-	first, _ := store.GetNodeID("Issue", "PROJ-300")
+	first, _ := store.GetNodeID("Issue", "PROJ-300", "")
 	if _, err := WriteIssuesGraph(issues, "repo-x", store); err != nil {
 		t.Fatalf("second: %v", err)
 	}
-	second, _ := store.GetNodeID("Issue", "PROJ-300")
+	second, _ := store.GetNodeID("Issue", "PROJ-300", "")
 	if first != second {
 		t.Errorf("expected idempotent upsert, got node id %d → %d", first, second)
 	}

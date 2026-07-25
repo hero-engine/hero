@@ -66,7 +66,7 @@ func TestUpsertNodeSelfHealsGlobalDomain(t *testing.T) {
 	}
 
 	// Verify the current node has empty domain.
-	node, err := s.GetNode("Repo", "acme/app")
+	node, err := s.GetNode("Repo", "acme/app", "")
 	if err != nil {
 		t.Fatalf("GetCurrentNode: %v", err)
 	}

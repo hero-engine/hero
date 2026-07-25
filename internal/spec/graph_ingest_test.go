@@ -77,11 +77,11 @@ func TestSpecWriteGraph_PerSpecDomainOverridesFallback(t *testing.T) {
 	if _, err := WriteGraph(specs, "test-repo", "engineering", store); err != nil {
 		t.Fatalf("WriteGraph: %v", err)
 	}
-	pm, _ := store.GetNode("Feature", "pm-story")
+	pm, _ := store.GetNode("Feature", "pm-story", "")
 	if pm == nil || pm.Domain != "pm" {
 		t.Errorf("pm-story.Domain = %q, want pm", domainOrEmpty(pm))
 	}
-	legacy, _ := store.GetNode("Feature", "legacy-eng")
+	legacy, _ := store.GetNode("Feature", "legacy-eng", "")
 	if legacy == nil || legacy.Domain != "engineering" {
 		t.Errorf("legacy-eng.Domain = %q, want engineering (fallback)", domainOrEmpty(legacy))
 	}

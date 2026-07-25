@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-25T17:04:20Z · 84 ready specs_
+_Generated: 2026-07-25T19:32:06Z · 81 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -33,6 +33,45 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
+
+---
+
+## graph-unpartitioned-writers-duplicate-nodes — "Ten graph writers omit Repo, so repo-scoped identity lets '' and stamped nodes coexist forever"
+_bug · planning · horizon: now_
+
+Paste into a fresh session to start delivery:
+
+> Deliver `graph-unpartitioned-writers-duplicate-nodes`. Ten production
+> `UpsertNode` call sites build their node without a `Repo` field, so they
+> write into the unpartitioned (`repo = ''`) bucket. Since
+> `graph-node-identity-repo-scoped` made identity `(type, key, repo)` and gave
+> the write path `repoWriteScope` (an unpartitioned write matches only
+> `repo = ''`, so it can never tombstone a stamped node), an unpartitioned
+> writer and a stamped writer targeting the same key now leave two live rows
+> that neither will ever retire. Stamp `Repo: repoKey` at each of the ten
+> sites listed in **Key Files**, then decide what to do with the rows already
+> in the `''` bucket. Start by reading **Key Files**, then work the Acceptance
+> Criteria in order. Close with the cold delivery audit and `hero spec verify`.
+
+---
+
+## ledger-signoff-substring-match-fails-open — "Completion Ledger sign-off gate fails open — any note mentioning [signed-off] self-approves"
+_bug · planning · horizon: now_
+
+Paste into a fresh session to start delivery:
+
+> Deliver `ledger-signoff-substring-match-fails-open`. `hero spec verify`
+> Gate 1 decides whether a SKIPPED/BLOCKED ledger row carries human sign-off
+> with a bare substring test — `strings.Contains(noteLower, "[signed-off]")`
+> at `internal/spec/ledger.go:216`. A note that *denies* sign-off
+> ("[signed-off] NOT yet given", "needs [signed-off] from the owner") contains
+> the literal marker and therefore grants it. The gate fails open: the agent
+> writing the ledger can self-approve its own descope while appearing to
+> escalate. Replace the substring test with anchored parsing that only honors
+> the marker as a standalone token, and add regression tests for the
+> negative-sentence cases. Start by reading **Key Files**, then work the
+> Acceptance Criteria in order. Close with the cold delivery audit and
+> `hero spec verify`.
 
 ---
 
@@ -145,14 +184,6 @@ canonical workflow's postback step.
 > idempotency subsystem, or stable-integration migration. Verify focused Swift
 > executor/permission tests, Hero diagnose-output tests, and installed-content
 > parity.
-
----
-
-## graph-why-resolution-and-peer-spec-indexing — "hero why fails to resolve specs that hero graph resolves — graph substrate stale + repoKey divergence"
-_bug · planning · horizon: now_
-
-Paste into a fresh session to fix:
-> Fix the `hero why` vs `hero graph` resolution divergence per `.hero/planning/bugs/graph-why-resolution-and-peer-spec-indexing/spec.md`. Two changes: (1) add a disk→graph reconcile to `runWhy` in `internal/cli/brief.go` mirroring `runBlocked` (brief.go:577-581) — extract a shared `reconcileSpecGraph(store, repoKey)` helper; (2) replace `filepath.Base(projectRoot)` with `gitutil.RepoKey(projectRoot)` as the graph partition key in `internal/cli/graph_memory.go:195`, `sprint.go:230`, `extract.go:88`, `publish_pages.go:56`, `next_project.go:58`, routed through one helper. Add the prioritized regression tests from the spec's Test Plan (start with `TestWhyResolvesSpecCreatedSinceLastIngest` and `TestGraphReingestUsesGitRemoteRepoKey`). Do NOT change `resolveTarget`'s repo filter — the reader is correct; the writers and the missing reconcile are the bug.
 
 ---
 
@@ -443,28 +474,6 @@ initiative delivers net-new git *mutation* on top of today's read-only
 `gitutil`, generalizes the primitives the async runner already needs, and
 guarantees that nothing Hero does ever silently rewrites, rebases, or deletes
 work — orphaned and stale state is *surfaced*, never auto-removed.
-
----
-
-## cli-test-isolation-stray-workspace-boundary — "Harden CLI test isolation against stray hero workspaces"
-_enhancement · planning · horizon: now_
-
-Stops the CLI test suite from discovering a stray `/tmp/.hero` by wiring an
-env-var boundary into the workspace upward-walk and setting it from the test
-harness.
-
-**Status:** planning — spec just landed, no code yet. Boundary machinery
-(`WithStopAt`) already exists; `LocateFromCWD` never passes it.
-
-**Pick up at:** add a `HERO_WORKSPACE_BOUNDARY` env read inside
-`LocateFromCWD` (locate.go:159) that forwards to `WithStopAt`, then have
-`newTestEnv`/`newTestEnvEmpty` set it via `t.Setenv` to the temp dir. Add the
-parent-stray regression test last.
-
-→ `.hero/planning/features/cli-test-isolation-stray-workspace-boundary/spec.md`
-
-**Files:** `internal/workspace/locate.go:85,145,159`, `internal/cli/root.go:226`, `internal/cli/helpers_test.go:26,87`, `internal/cli/scan_test.go:183`
-**Skip:** building new boundary infra — `WithStopAt` already exists. Changing prod discovery semantics — out of scope unless clearly safe.
 
 ---
 
@@ -795,13 +804,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## execution-plan — "Execution Plan — Local Finish + Cloud Launch"
-_plan · active · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/execution-plan/spec.md)_
-
----
-
 ## multi-domain-core — "Multi-Domain Core Engine"
 _feature · draft · horizon: next_
 
@@ -958,20 +960,6 @@ _feature · designed · horizon: now_
 Lock the work-tracking foundation for Hero so PM ships as an additive domain pack and engineering keeps doing what it's doing. **Nine canonical types using names every tool already uses** (`initiative`, `prd`, `epic`, `feature`, `bug`, `chore`, `intake`, `release`, `sprint`). Sub-typing via `kind`. Two independent adaptation layers — methodology profile (lifecycle, time-box, estimation, rituals, rollups) and vocabulary preset (display names, tracker mappings). **No migration**: existing engineering specs and folders unchanged; the registry registers what's already there plus the new PM-led and time-box types. AC infrastructure untouched. Tasks ships additively with its own package. Cross-domain handoff is an owner flip on the same artifact, not a separate spec creation.
 
 → Drives `spec-type-registry`, the PM pack delivery, the new `core/methodologies/` system, and Phase A of the `hero-domains` initiative.
-
----
-
-## handoff-to-hero-code — Hero QA — Handoff to hero-code for implementation kickoff
-_reference · handoff · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-qa/handoff-to-hero-code.md)_
-
----
-
-## handoff-to-hero-code — Hero PM — Handoff to hero-code for implementation kickoff
-_reference · handoff · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-pm/handoff-to-hero-code.md)_
 
 ---
 

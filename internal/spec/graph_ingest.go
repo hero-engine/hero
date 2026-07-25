@@ -100,7 +100,7 @@ func WriteGraph(specs []*Spec, repoKey, fallbackDomain string, store *graph.Stor
 			// value was a Phase-1 placeholder; treat it as default
 			// so existing nodes graduate to "proposed" on next scan.
 			status := "proposed"
-			if existing, err := store.GetNode("Criterion", critKey); err == nil && existing != nil {
+			if existing, err := store.GetNode("Criterion", critKey, repoKey); err == nil && existing != nil {
 				if s, ok := existing.Props["status"].(string); ok && isRecordedStatus(s) {
 					status = s
 				}

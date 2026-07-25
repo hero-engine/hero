@@ -72,7 +72,7 @@ func Write(parentType, parentSlug string, parentID int64, parsed []Task, repoKey
 		// Detect "was there a flip" before the upsert so we can report
 		// it accurately. Re-upserting the same hash is a no-op.
 		var prevStatus string
-		if existing, err := store.GetNode("Task", key); err == nil && existing != nil {
+		if existing, err := store.GetNode("Task", key, repoKey); err == nil && existing != nil {
 			if s, ok := existing.Props["status"].(string); ok {
 				prevStatus = s
 			}
@@ -109,7 +109,7 @@ func Write(parentType, parentSlug string, parentID int64, parsed []Task, repoKey
 		summary.BelongsTo++
 
 		if t.DiscoveredAgainst != "" {
-			targetID, ok := resolveSpecNodeID(store, t.DiscoveredAgainst)
+			targetID, ok := resolveSpecNodeID(store, t.DiscoveredAgainst, repoKey)
 			if ok {
 				if _, err := store.UpsertEdge(&graph.Edge{
 					FromID: taskID,
@@ -151,7 +151,7 @@ func Write(parentType, parentSlug string, parentID int64, parsed []Task, repoKey
 // keyed by slug. Tasks discovered_against another spec don't know the
 // target's type, only its slug — mirrors how spec.WriteGraph resolves
 // relation targets.
-func resolveSpecNodeID(store *graph.Store, slug string) (int64, bool) {
+func resolveSpecNodeID(store *graph.Store, slug, repoKey string) (int64, bool) {
 	slug = strings.TrimSpace(slug)
 	if slug == "" {
 		return 0, false
@@ -162,7 +162,7 @@ func resolveSpecNodeID(store *graph.Store, slug string) (int64, bool) {
 		slug = slug[idx+1:]
 	}
 	for _, t := range []string{"Feature", "Bug", "Initiative", "Decision", "Convention"} {
-		if id, err := store.GetNodeID(t, slug); err == nil {
+		if id, err := store.GetNodeID(t, slug, repoKey); err == nil {
 			return id, true
 		}
 	}
@@ -173,7 +173,7 @@ func resolveSpecNodeID(store *graph.Store, slug string) (int64, bool) {
 // string. Keyed by the assignee literal (handle / email / display
 // name). Stays lightweight — no schema beyond {name: <key>}.
 func upsertPerson(store *graph.Store, assignee, repoKey string) (int64, error) {
-	if id, err := store.GetNodeID("Person", assignee); err == nil {
+	if id, err := store.GetNodeID("Person", assignee, repoKey); err == nil {
 		return id, nil
 	}
 	return store.UpsertNode(&graph.Node{

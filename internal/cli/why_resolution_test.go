@@ -1,11 +1,14 @@
 package cli
 
 import (
+	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/graph"
@@ -172,35 +175,222 @@ depends-on: child-a
 	}
 }
 
-// TestNoFilepathBaseRepoKey keeps the fix from regressing: no graph-writer
-// in internal/cli may derive its repo partition key via
+// TestNoFilepathBaseRepoKey keeps the fix from regressing: no graph writer
+// anywhere under internal/ may derive its repo partition key via
 // filepath.Base(projectRoot). All must route through graphRepoKey /
-// gitutil.RepoKey. This is a source-level guard so a 6th site can't
+// gitutil.RepoKey. This is a source-level guard so another site can't
 // silently reintroduce the divergence. (filepath.Base(projectRoot) used
 // for a display projectName — e.g. checkpoint.go, report.go — is fine and
 // deliberately not matched.)
+//
+// The sweep covers the whole internal/ tree, not just this package: the
+// peer-receive write path is a graph writer outside internal/cli, so a
+// package-local guard would have left it unguarded.
 func TestNoFilepathBaseRepoKey(t *testing.T) {
 	// Matches a repoKey/RepoKey assignment fed by filepath.Base(projectRoot).
 	offender := regexp.MustCompile(`(?i)repokey\s*:?=?\s*filepath\.Base\(projectRoot\)|RepoKey:\s*filepath\.Base\(projectRoot\)`)
 
-	entries, err := os.ReadDir(".")
-	if err != nil {
-		t.Fatalf("read internal/cli dir: %v", err)
-	}
-	for _, e := range entries {
-		name := e.Name()
-		if e.IsDir() || !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
-			continue
-		}
-		data, err := os.ReadFile(name)
+	root := ".."
+	scanned := 0
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			t.Fatalf("read %s: %v", name, err)
+			return err
 		}
+		name := d.Name()
+		if d.IsDir() || !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
+			return nil
+		}
+		data, readErr := os.ReadFile(path)
+		if readErr != nil {
+			return readErr
+		}
+		scanned++
 		for i, line := range strings.Split(string(data), "\n") {
 			if offender.MatchString(line) {
-				t.Errorf("%s:%d derives a graph repoKey via filepath.Base(projectRoot); use graphRepoKey(projectRoot) instead:\n\t%s",
-					name, i+1, strings.TrimSpace(line))
+				t.Errorf("%s:%d derives a graph repoKey via filepath.Base(projectRoot); use gitutil.RepoKey(projectRoot) instead:\n\t%s",
+					path, i+1, strings.TrimSpace(line))
 			}
 		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("walk internal/: %v", err)
+	}
+	if scanned < 100 {
+		t.Fatalf("guard scanned only %d files under internal/ — the sweep is not reaching the tree", scanned)
+	}
+}
+
+// TestGraphSelfHealsColdIndex covers the third secondary defect in the spec:
+// `hero graph` read index.db without ever refreshing it, so it only resolved
+// a freshly-written spec when some earlier command (search / list / ask)
+// happened to self-heal the index first. On a genuinely cold index it missed
+// — the same staleness class as the `hero why` bug, one store over.
+//
+// The test deliberately never calls indexAll(): the specs exist only on
+// disk, which is exactly the state a fresh clone or a just-received peer
+// spec is in.
+func TestGraphSelfHealsColdIndex(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("planning/initiatives/payments/spec.md", `---
+title: Payments
+type: initiative
+status: planning
+slug: payments
+---
+# Payments
+`)
+	env.addSpec("planning/features/refunds/spec.md", `---
+title: Refunds
+type: feature
+status: planning
+slug: refunds
+parent: payments
+---
+# Refunds
+`)
+
+	output, err := runCmd("graph", "refunds")
+	if err != nil {
+		t.Fatalf("graph errored: %v", err)
+	}
+	if !strings.Contains(output, "payments") {
+		t.Errorf("hero graph should resolve a relation from a cold index without a manual `hero index`; got: %q", output)
+	}
+}
+
+// TestWhyReconcileStaysWithinBudgetAtCorpusScale is the regression check the
+// spec's "Regression scope" calls for and that the earlier landing left
+// unwritten. Change 1 put spec.Discover + spec.WriteGraph on `hero why`'s hot
+// path; the existing budget test (TestWhy_DepthFourUnder200ms) calls
+// traversal.Why directly against a hand-seeded in-memory store and never
+// enters runWhy, so the added reconcile cost had no coverage at all.
+//
+// This drives the real command over a corpus large enough that a per-spec
+// regression would show, and asserts both halves of the contract: the
+// reconcile makes an un-ingested spec resolvable, and it does so within
+// budget. The budget is an order-of-magnitude guard, not a benchmark: it has
+// to catch a real regression (e.g. reconciling once per hop rather than once
+// per run) without becoming a flaky timing assertion on a slow runner.
+func TestWhyReconcileStaysWithinBudgetAtCorpusScale(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("planning/initiatives/platform/spec.md", `---
+title: Platform
+type: initiative
+status: planning
+slug: platform
+---
+# Platform
+`)
+	const corpus = 200
+	for i := 0; i < corpus; i++ {
+		slug := fmt.Sprintf("leaf-%03d", i)
+		env.addSpec("planning/features/"+slug+"/spec.md", `---
+title: Leaf `+slug+`
+type: feature
+status: planning
+slug: `+slug+`
+parent: platform
+---
+# Leaf `+slug+`
+`)
+	}
+	// Deliberately no indexAll() and no scan: the corpus exists only on disk,
+	// which is the state the read-side reconcile has to cope with.
+
+	start := time.Now()
+	output, err := runCmd("why", "leaf-199")
+	elapsed := time.Since(start)
+	if err != nil {
+		t.Fatalf("why errored: %v", err)
+	}
+	if !strings.Contains(output, "leaf-199") {
+		t.Fatalf("why should resolve a spec that was never ingested; got: %q", output)
+	}
+
+	// 2s: measured runs land at 50-215ms, so this is still ~10x headroom
+	// against a slow runner while staying tight enough to catch a real
+	// regression (e.g. reconciling once per hop rather than once per run).
+	const budget = 2 * time.Second
+	if elapsed > budget {
+		t.Errorf("hero why over a %d-spec cold corpus took %v, budget %v — "+
+			"the read-side reconcile has regressed beyond a one-shot cost",
+			corpus, elapsed, budget)
+	}
+	t.Logf("hero why over %d cold specs: %v (budget %v)", corpus, elapsed, budget)
+}
+
+// TestWhySurvivesSiblingRepoIngest is AC-6 of graph-node-identity-repo-scoped,
+// asserted end-to-end through the real command: the team-oauth failure.
+//
+// A federated/sibling ingest writes the same slug under its own repoKey. With
+// node identity keyed on (type, key) alone that tombstoned the local node and
+// re-keyed it to the sibling, so `hero why <local-slug>` — which filters on
+// the local repoKey — failed outright. Repo-scoped identity keeps both live.
+//
+// The store assertion between the two `hero why` runs is load-bearing. A cold
+// audit caught the first version of this test passing against the BROKEN code:
+// `hero why` reconciles the spec subgraph from disk before resolving, so the
+// second run re-asserted the local node and the command succeeded even while
+// the sibling ingest had tombstoned it. Checking the graph directly is what
+// actually exercises identity; the command assertions then cover the composed
+// behavior on top.
+func TestWhySurvivesSiblingRepoIngest(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("planning/features/team-oauth/spec.md", `---
+title: Team OAuth
+type: feature
+status: planning
+slug: team-oauth
+---
+# Team OAuth
+`)
+
+	// Resolve once so the read-side reconcile writes the local node.
+	if _, err := runCmd("why", "team-oauth"); err != nil {
+		t.Fatalf("why (before sibling ingest) errored: %v", err)
+	}
+
+	// A sibling repo ingests its own copy of the slug.
+	store, err := graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatalf("graph.Open: %v", err)
+	}
+	if _, err := store.UpsertNode(&graph.Node{
+		Type:        "Feature",
+		Domain:      "engineering",
+		Key:         "team-oauth",
+		Props:       map[string]any{"title": "Peer Team OAuth"},
+		Repo:        "hero-engine/hero-cloud",
+		ContentHash: "peer-copy",
+		Source:      map[string]any{"kind": "sibling-scan"},
+	}); err != nil {
+		t.Fatalf("sibling upsert: %v", err)
+	}
+	// Before any reconcile can heal it: the local node must still be live.
+	// This is the assertion that fails on the pre-fix code.
+	var localLive int
+	if err := store.DB().QueryRow(
+		`SELECT count(*) FROM nodes
+		  WHERE type = 'Feature' AND key = 'team-oauth'
+		    AND repo = ? AND valid_to IS NULL`,
+		gitutil.RepoKey(env.dir),
+	).Scan(&localLive); err != nil {
+		t.Fatalf("count local live rows: %v", err)
+	}
+	store.Close()
+	if localLive != 1 {
+		t.Fatalf("local live rows = %d, want 1 — the sibling ingest tombstoned the local node", localLive)
+	}
+
+	output, err := runCmd("why", "team-oauth")
+	if err != nil {
+		t.Fatalf("a sibling repo's copy broke local resolution: %v", err)
+	}
+	if strings.Contains(output, "Peer Team OAuth") {
+		t.Errorf("hero why resolved the SIBLING's node for a local query: %q", output)
+	}
+	if !strings.Contains(output, "team-oauth") {
+		t.Errorf("hero why should still resolve the local spec; got: %q", output)
 	}
 }

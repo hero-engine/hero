@@ -8,7 +8,7 @@ func TestResolveAliasReturnsSelfWhenNoAlias(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UpsertNode: %v", err)
 	}
-	got, err := s.ResolveAlias("Feature", "x")
+	got, err := s.ResolveAlias("Feature", "x", "")
 	if err != nil {
 		t.Fatalf("ResolveAlias: %v", err)
 	}
@@ -27,11 +27,11 @@ func TestMakeAliasAndResolve(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := s.MakeAlias("Feature", "old-name", "Feature", "new-name"); err != nil {
+	if err := s.MakeAlias("Feature", "old-name", "Feature", "new-name", ""); err != nil {
 		t.Fatalf("MakeAlias: %v", err)
 	}
 
-	got, err := s.ResolveAlias("Feature", "old-name")
+	got, err := s.ResolveAlias("Feature", "old-name", "")
 	if err != nil {
 		t.Fatalf("ResolveAlias: %v", err)
 	}
@@ -47,14 +47,14 @@ func TestResolveAliasFollowsChain(t *testing.T) {
 	_, _ = s.UpsertNode(&Node{Type: "Feature", Key: "b", Domain: "engineering", ContentHash: "h"})
 	c, _ := s.UpsertNode(&Node{Type: "Feature", Key: "c", Domain: "engineering", ContentHash: "h"})
 
-	if err := s.MakeAlias("Feature", "a", "Feature", "b"); err != nil {
+	if err := s.MakeAlias("Feature", "a", "Feature", "b", ""); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.MakeAlias("Feature", "b", "Feature", "c"); err != nil {
+	if err := s.MakeAlias("Feature", "b", "Feature", "c", ""); err != nil {
 		t.Fatal(err)
 	}
 
-	got, err := s.ResolveAlias("Feature", "a")
+	got, err := s.ResolveAlias("Feature", "a", "")
 	if err != nil {
 		t.Fatalf("ResolveAlias: %v", err)
 	}
@@ -69,14 +69,14 @@ func TestResolveAliasHandlesCycleGracefully(t *testing.T) {
 	b, _ := s.UpsertNode(&Node{Type: "Feature", Key: "b", Domain: "engineering", ContentHash: "h"})
 	_ = a
 	_ = b
-	if err := s.MakeAlias("Feature", "a", "Feature", "b"); err != nil {
+	if err := s.MakeAlias("Feature", "a", "Feature", "b", ""); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.MakeAlias("Feature", "b", "Feature", "a"); err != nil {
+	if err := s.MakeAlias("Feature", "b", "Feature", "a", ""); err != nil {
 		t.Fatal(err)
 	}
 	// No infinite loop, no error — returns *some* id from the cycle.
-	got, err := s.ResolveAlias("Feature", "a")
+	got, err := s.ResolveAlias("Feature", "a", "")
 	if err != nil {
 		t.Fatalf("ResolveAlias on cycle: %v", err)
 	}

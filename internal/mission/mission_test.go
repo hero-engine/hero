@@ -75,7 +75,7 @@ func TestWriteGraph_RoundTrip(t *testing.T) {
 	if err := m.WriteGraph("repo-x", store); err != nil {
 		t.Fatalf("WriteGraph: %v", err)
 	}
-	node, err := store.GetNode("Mission", "core")
+	node, err := store.GetNode("Mission", "core", "")
 	if err != nil {
 		t.Fatalf("GetNode: %v", err)
 	}
@@ -96,11 +96,11 @@ func TestWriteGraph_Idempotent(t *testing.T) {
 	if err := m.WriteGraph("repo-x", store); err != nil {
 		t.Fatalf("first: %v", err)
 	}
-	first, _ := store.GetNodeID("Mission", "core")
+	first, _ := store.GetNodeID("Mission", "core", "")
 	if err := m.WriteGraph("repo-x", store); err != nil {
 		t.Fatalf("second: %v", err)
 	}
-	second, _ := store.GetNodeID("Mission", "core")
+	second, _ := store.GetNodeID("Mission", "core", "")
 	if first != second {
 		t.Errorf("re-ingest invalidated node: %d → %d", first, second)
 	}

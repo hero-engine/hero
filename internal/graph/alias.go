@@ -10,12 +10,14 @@ const MaxAliasDepth = 5
 
 // ResolveAlias follows `alias_of` edges from (typ, key) to the
 // canonical node and returns its id. If the input is already canonical
-// (no outgoing alias_of edge), its own id is returned. Unknown nodes
+// (no outgoing alias_of edge), its own id is returned. repo scopes the
+// starting node to a partition (see repoPredicate); alias_of edges are then
+// followed by row id, which is already partition-unambiguous. Unknown nodes
 // produce ErrNotFound. Cycles or chains exceeding MaxAliasDepth return
 // the last seen id with no error — the partial answer is still useful
 // and the caller can decide whether to flag the chain.
-func (s *Store) ResolveAlias(typ, key string) (int64, error) {
-	id, err := s.GetNodeID(typ, key)
+func (s *Store) ResolveAlias(typ, key, repo string) (int64, error) {
+	id, err := s.GetNodeID(typ, key, repo)
 	if err != nil {
 		return 0, err
 	}
@@ -45,15 +47,15 @@ func (s *Store) ResolveAlias(typ, key string) (int64, error) {
 }
 
 // MakeAlias declares (fromType, fromKey) as an alias of (toType, toKey).
-// Both nodes must already exist. Idempotent — re-declaring the same
+// Both nodes must already exist in the given repo partition. Idempotent — re-declaring the same
 // alias is a no-op. Updating to point at a different canonical
 // invalidates the prior alias_of edge.
-func (s *Store) MakeAlias(fromType, fromKey, toType, toKey string) error {
-	fromID, err := s.GetNodeID(fromType, fromKey)
+func (s *Store) MakeAlias(fromType, fromKey, toType, toKey, repo string) error {
+	fromID, err := s.GetNodeID(fromType, fromKey, repo)
 	if err != nil {
 		return fmt.Errorf("alias source %s/%s: %w", fromType, fromKey, err)
 	}
-	toID, err := s.GetNodeID(toType, toKey)
+	toID, err := s.GetNodeID(toType, toKey, repo)
 	if err != nil {
 		return fmt.Errorf("alias target %s/%s: %w", toType, toKey, err)
 	}

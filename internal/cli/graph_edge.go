@@ -100,14 +100,15 @@ func runGraphEdgeAdd(cmd *cobra.Command, args []string) error {
 	}
 	defer store.Close()
 
-	fromNode, err := store.GetNode(fromType, fromKey)
+	repoKey := graphRepoKey(projectRoot)
+	fromNode, err := store.GetNode(fromType, fromKey, repoKey)
 	if err != nil {
 		if errors.Is(err, graph.ErrNotFound) {
 			return fmt.Errorf("from-node not found: %s:%s", fromType, fromKey)
 		}
 		return fmt.Errorf("resolving from-node %s:%s: %w", fromType, fromKey, err)
 	}
-	toNode, err := store.GetNode(toType, toKey)
+	toNode, err := store.GetNode(toType, toKey, repoKey)
 	if err != nil {
 		if errors.Is(err, graph.ErrNotFound) {
 			return fmt.Errorf("to-node not found: %s:%s", toType, toKey)

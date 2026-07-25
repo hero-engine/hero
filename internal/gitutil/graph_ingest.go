@@ -166,7 +166,7 @@ func WriteGitLogGraph(repoDir, repoKey string, limit int, store *graph.Store) (*
 		// nodes that would confuse the code subgraph.
 		for _, fp := range files {
 			fileKey := repoKey + ":" + filepath.ToSlash(fp)
-			fileID, err := store.GetNodeID("File", fileKey)
+			fileID, err := store.GetNodeID("File", fileKey, repoKey)
 			if err != nil {
 				continue
 			}

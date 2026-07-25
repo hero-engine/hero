@@ -47,6 +47,15 @@ func runGraph(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no hero workspace found (run 'hero init' first)")
 	}
 
+	// Self-heal before querying, like search/list/ask already do. Without
+	// this, `hero graph` only resolves a freshly-written spec because some
+	// earlier command happened to refresh index.db — on a cold index it
+	// misses, which is the same staleness class as the `hero why` bug this
+	// spec fixes. Best-effort: on error, query whatever the index holds.
+	if _, err := index.RefreshIfStale(heroDir); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: index refresh failed: %v\n", err)
+	}
+
 	idx, err := index.Open(heroDir)
 	if err != nil {
 		return fmt.Errorf("opening index: %w", err)

@@ -183,8 +183,8 @@ func TestNextMD_Blockers(t *testing.T) {
 	seedRepo(t, store)
 
 	// Make phase-6-jira depend on phase-5-queries
-	fromID, _ := store.GetNodeID("Feature", "phase-6-jira")
-	toID, _ := store.GetNodeID("Feature", "phase-5-queries")
+	fromID, _ := store.GetNodeID("Feature", "phase-6-jira", "")
+	toID, _ := store.GetNodeID("Feature", "phase-5-queries", "")
 	if _, err := store.UpsertEdge(&graph.Edge{
 		FromID: fromID, ToID: toID, Type: "depends_on", Repo: "test-repo",
 	}); err != nil {

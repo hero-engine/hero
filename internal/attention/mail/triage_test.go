@@ -12,6 +12,7 @@ import (
 	"github.com/hero-engine/hero/contracts/attention"
 	"github.com/hero-engine/hero/internal/attention/focus"
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/traversal"
 )
@@ -179,7 +180,7 @@ func TestPromotionResumesAfterEveryStepAndWritesBodyFreeProvenance(t *testing.T)
 				t.Fatal(err)
 			}
 			defer graphStore.Close()
-			node, err := graphStore.GetNode("MailSource", env.ID)
+			node, err := graphStore.GetNode("MailSource", env.ID, "")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -187,7 +188,15 @@ func TestPromotionResumesAfterEveryStepAndWritesBodyFreeProvenance(t *testing.T)
 			if strings.Contains(props, env.Body) || !strings.Contains(props, env.ThreadID) {
 				t.Fatalf("unsafe/incomplete graph props: %s", props)
 			}
-			trace, err := traversal.Why(graphStore, "peer_b", result.Artifact.Slug, 4)
+			// Spec provenance nodes live in the repo partition every graph
+			// reader filters on (gitutil.RepoKey), NOT the peer id. This
+			// asserted "peer_b" while writeMailProvenance keyed by
+			// cfg.PeerID — a partition `hero why` never queries, so the
+			// provenance chain was unreachable in production. Now that node
+			// identity is (type, key, repo), a mis-keyed write no longer
+			// even clobbers the correctly-keyed one; it just sits in a
+			// partition nobody reads.
+			trace, err := traversal.Why(graphStore, gitutil.RepoKey(project), result.Artifact.Slug, 4)
 			if err != nil {
 				t.Fatal(err)
 			}

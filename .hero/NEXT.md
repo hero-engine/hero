@@ -5,7 +5,7 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-07-25T17:04:19Z
+updated: 2026-07-25T19:32:05Z
 repo: hero-engine/hero
 ---
 
@@ -21,11 +21,7 @@ Run `git log --oneline -10` for recent commits.
 
 ## Blocked on
 
-- **attention-read-model-v1** ← waiting on `deferred-work-suggestion-contract` (planning)
-- **attention-read-model-v1** ← waiting on `personal-focus-core` (planning)
-- **attention-read-model-v1** ← waiting on `project-mail-triage-and-provenance` (planning)
 - **core-vertical-layering** ← waiting on `project-charter` (planning)
-- **deferred-work-suggestion-contract** ← waiting on `personal-focus-core` (planning)
 - **e2e-area-suites** ← waiting on `project-charter` (planning)
 - **hero-community-edition** ← waiting on `hero-governance` (planning)
 - **hero-content-engine** ← waiting on `hero-docs-site` (planning)
@@ -40,12 +36,6 @@ Run `git log --oneline -10` for recent commits.
 - **hero-launch-playbook** ← waiting on `hero-landing-page` (delivering)
 - **hero-launch-playbook** ← waiting on `hero-positioning` (planning)
 - **hero-team-server** ← waiting on `hero-runner` (planning)
-- **peering-over-project-mail** ← waiting on `project-mail-triage-and-provenance` (planning)
-- **personal-focus-core** ← waiting on `durable-attention-contracts` (planning)
-- **project-mail-core** ← waiting on `durable-attention-contracts` (planning)
-- **project-mail-triage-and-provenance** ← waiting on `hero-idea-primitive-core` (in-review)
-- **project-mail-triage-and-provenance** ← waiting on `personal-focus-core` (planning)
-- **project-mail-triage-and-provenance** ← waiting on `project-mail-core` (planning)
 - **timely-briefs** ← waiting on `retrieval-contradiction-detection` (delivering)
 - **wire-checks-to-boundaries** ← waiting on `spec-contract-enums-unified` (planning)
 

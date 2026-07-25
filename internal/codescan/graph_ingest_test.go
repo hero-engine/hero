@@ -149,11 +149,11 @@ func TestImportsEdgeResolvesPackageIDs(t *testing.T) {
 	if _, err := WriteGraph(sampleResult(), store, "engineering"); err != nil {
 		t.Fatalf("WriteGraph: %v", err)
 	}
-	cliID, err := store.GetNodeID("Package", "example-repo:internal/cli")
+	cliID, err := store.GetNodeID("Package", "example-repo:internal/cli", "")
 	if err != nil {
 		t.Fatalf("GetNodeID cli: %v", err)
 	}
-	cfgID, err := store.GetNodeID("Package", "example-repo:internal/config")
+	cfgID, err := store.GetNodeID("Package", "example-repo:internal/config", "")
 	if err != nil {
 		t.Fatalf("GetNodeID config: %v", err)
 	}

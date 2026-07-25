@@ -6,16 +6,19 @@ import "testing"
 // federation-scoping edge from graph-why-resolution-and-peer-spec-indexing
 // (the team-oauth case).
 //
-// The graph enforces a single live node per (type, key) across all repos,
-// so a federated peer scan that ingests a slug under its own repoKey
-// tombstones the local partition's copy. resolveTarget must:
+// Node identity is (type, key, repo), so a federated peer scan that ingests
+// a slug under its own repoKey leaves the local partition's copy live
+// alongside it. resolveTarget must:
 //
-//   - return the LOCAL node when it is live (never a peer copy), and
-//   - refuse to answer a local-repo query with a peer-only live node — a
-//     sibling repo's copy does not "shadow" (masquerade as) the local one.
+//   - return the LOCAL node when it is live, never a peer copy, and
+//   - keep doing so after a sibling ingest of the same slug — a peer copy
+//     neither shadows (masquerades as) nor tombstones the local one.
 //
-// The read-side reconcile on hero why is what keeps the local node live at
-// query time; this test documents the scoping resolveTarget relies on.
+// This test previously characterized the OPPOSITE, because identity was
+// (type, key) alone: the sibling ingest tombstoned the local node, and the
+// test asserted that a local query then failed. That was the team-oauth
+// bug, pinned as if it were the contract. Repo-scoped identity is what
+// makes the wished-for behavior in the bullets above actually true.
 func TestResolveTarget_FederatedPeerCopyDoesNotShadowLocal(t *testing.T) {
 	const (
 		localRepo = "hero-engine/hero"
@@ -39,13 +42,23 @@ func TestResolveTarget_FederatedPeerCopyDoesNotShadowLocal(t *testing.T) {
 	}
 
 	// A federated peer scan ingests the same slug under the peer repoKey.
-	// The single-live-node-per-key invariant tombstones the local copy.
-	seedNode(t, store, "Feature", slug, "Peer Team OAuth", peerRepo)
+	peerID := seedNode(t, store, "Feature", slug, "Peer Team OAuth", peerRepo)
+	if peerID == localID {
+		t.Fatalf("peer ingest reused the local node id %d — identity is not repo-scoped", localID)
+	}
 
-	// resolveTarget scoped to the local repo must NOT return the peer copy:
-	// a sibling repo's node does not shadow the local partition.
-	if _, _, err := resolveTarget(store, localRepo, slug); err == nil {
-		t.Errorf("resolveTarget(local) returned a peer-only node as if it were local; a federated copy must not shadow the local partition")
+	// The local node must still be live and still be what a local query
+	// resolves to. Before repo-scoped identity the sibling ingest tombstoned
+	// it and this query failed outright.
+	hop, gotID, err = resolveTarget(store, localRepo, slug)
+	if err != nil {
+		t.Fatalf("a sibling ingest tombstoned the local node: %v", err)
+	}
+	if gotID != localID {
+		t.Errorf("resolved id = %d, want the local id %d — a peer copy shadowed the local partition", gotID, localID)
+	}
+	if hop.NodeTitle != "Local Team OAuth" {
+		t.Errorf("resolved title = %q, want the local node's title", hop.NodeTitle)
 	}
 
 	// The peer repo, of course, still resolves its own copy.

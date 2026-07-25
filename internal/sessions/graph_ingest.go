@@ -68,7 +68,7 @@ func WriteGraph(sess []*Session, repoKey string, store *graph.Store) (*GraphWrit
 		summary.Sessions++
 
 		if s.SpecSlug != "" {
-			if specID, ok := resolveSpecBySlug(store, s.SpecSlug); ok {
+			if specID, ok := resolveSpecBySlug(store, s.SpecSlug, repoKey); ok {
 				if _, err := store.UpsertEdge(&graph.Edge{
 					FromID: sessID, ToID: specID, Type: "mentions",
 					Repo:   repoKey,
@@ -89,11 +89,13 @@ type GraphWriteSummary struct {
 	Edges    int
 }
 
-// resolveSpecBySlug looks up any spec-typed node with the given slug.
-func resolveSpecBySlug(store *graph.Store, slug string) (int64, bool) {
+// resolveSpecBySlug looks up any spec-typed node with the given slug in the
+// given repo partition. Scoped so a sibling repo's spec of the same slug
+// can't capture this repo's session edge.
+func resolveSpecBySlug(store *graph.Store, slug, repoKey string) (int64, bool) {
 	for _, t := range []string{"Feature", "Initiative", "Bug", "Decision",
 		"Convention", "Rule", "ContextDoc", "Note", "External"} {
-		if id, err := store.GetNodeID(t, slug); err == nil {
+		if id, err := store.GetNodeID(t, slug, repoKey); err == nil {
 			return id, true
 		}
 	}

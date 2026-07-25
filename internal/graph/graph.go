@@ -147,7 +147,16 @@ func (s *Store) DB() *sql.DB { return s.db }
 //	concurrent pushes from different install IDs can be detected
 //	via FindGraphConflicts. DEFAULT '' is safe for existing rows
 //	(they pre-date federation push and have no client provenance).
-const schemaVersion = "4"
+//
+// v5: repo-scoped node identity — the live-row unique index moves from
+//
+//	(type, key) to (type, key, repo). Identity had ignored the
+//	partition column added in v2, so a sibling repo's ingest of a
+//	slug the local repo also owned matched the local live row,
+//	saw a differing partition, and invalidated-and-reinserted it
+//	under the sibling's repoKey. Widening a unique index cannot
+//	fail on existing data.
+const schemaVersion = "5"
 
 // migration is one ordered, idempotent step in the schema timeline.
 // version is the resulting schema_version after the step applies.
@@ -176,6 +185,9 @@ var migrations = []migration{
 				valid_to     TEXT,
 				ingested_at  TEXT    NOT NULL
 			)`,
+			// Superseded by v5, which repo-scopes this. Kept as-is so the
+			// v1 step still describes v1: migrations replay in order and
+			// each must be valid at its own point in the timeline.
 			`CREATE UNIQUE INDEX IF NOT EXISTS idx_nodes_current
 				ON nodes(type, key) WHERE valid_to IS NULL`,
 			`CREATE INDEX IF NOT EXISTS idx_nodes_type     ON nodes(type)`,
@@ -249,6 +261,24 @@ var migrations = []migration{
 		statements: []string{
 			`ALTER TABLE nodes ADD COLUMN client_id TEXT NOT NULL DEFAULT ''`,
 			`CREATE INDEX IF NOT EXISTS idx_nodes_client ON nodes(client_id)`,
+		},
+	},
+	{
+		// v5: repo-scoped node identity. v1 made (type, key) unique among
+		// live rows across EVERY repo partition, which predates the repo
+		// column entirely (v2). The result was that federation could not
+		// hold two repos' copies of one slug: ingesting a sibling's copy
+		// tombstoned the local node and re-keyed it to the sibling, so
+		// every reader filtering on the local repoKey found nothing.
+		//
+		// Dropping and recreating is safe on existing data — the new index
+		// is strictly weaker, so any row set that satisfied (type, key)
+		// also satisfies (type, key, repo).
+		version: "5",
+		statements: []string{
+			`DROP INDEX IF EXISTS idx_nodes_current`,
+			`CREATE UNIQUE INDEX IF NOT EXISTS idx_nodes_current
+				ON nodes(type, key, repo) WHERE valid_to IS NULL`,
 		},
 	},
 }
@@ -328,7 +358,7 @@ func schemaLess(a, b string) bool {
 // checkSchemaMismatch reconciles the graph's stored schema (graphSchema)
 // with this binary's compiled schema (binarySchema). It returns a
 // warning to print when the graph is NEWER than the binary (tolerated —
-// migrations are additive, so an older binary can still read the extra
+// migrations were additive through v4, so an older binary can still read the extra
 // columns) and an error when the binary is NEWER than the graph.
 //
 // Both messages name the running binary via os.Executable() so the
@@ -345,6 +375,17 @@ func checkSchemaMismatch(binarySchema, graphSchema string) (warning string, err 
 		exe = "unknown"
 	}
 	if schemaLess(binarySchema, graphSchema) {
+		// Stays a warning rather than a hard error: an older binary can still
+		// READ a newer graph, and graph.db is a regenerable cache.
+		//
+		// NOTE: v5 is the first non-additive step — it changed node identity
+		// from (type, key) to (type, key, repo) — so a pre-v5 binary WRITING
+		// here reintroduces cross-partition tombstoning. This function cannot
+		// warn about that: binarySchema is always the compile-time constant,
+		// and the binary that would do the damage is running its own older
+		// copy of this code. A real guard has to live on the write path of a
+		// v5+ binary, or in provenance on the rows themselves. Tracked in
+		// graph-node-identity-repo-scoped's follow-ups.
 		return fmt.Sprintf(
 			"Warning: graph schema is newer than this hero binary.\n"+
 				"  running binary: %s (schema %s)\n"+

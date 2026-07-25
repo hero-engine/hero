@@ -779,7 +779,7 @@ func nearbySection(store *graph.Store, opts Options, budget int) (BriefSection, 
 		var lines []string
 		for _, f := range opts.FocusFiles {
 			fileKey := opts.RepoKey + ":" + filepath.ToSlash(f)
-			fileID, err := store.GetNodeID("File", fileKey)
+			fileID, err := store.GetNodeID("File", fileKey, opts.RepoKey)
 			if err != nil {
 				continue
 			}

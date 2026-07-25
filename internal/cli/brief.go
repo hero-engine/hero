@@ -761,6 +761,9 @@ func openRepoStore() (*graph.Store, string, error) {
 // gitutil.RepoKey ("hero-engine/hero") whenever an origin remote is set,
 // silently partitioning writes into a subgraph the reader never queries.
 // (See graph-why-resolution-and-peer-spec-indexing/spec.md.)
+// Non-CLI graph writers (the peer-receive ingest path) call
+// gitutil.RepoKey directly — same derivation, since gitutil cannot be
+// wrapped in package graph without an import cycle.
 func graphRepoKey(projectRoot string) string {
 	return gitutil.RepoKey(projectRoot)
 }

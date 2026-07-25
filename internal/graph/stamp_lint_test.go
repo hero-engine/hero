@@ -24,15 +24,15 @@ func TestNoUnstampedUpsertCalls(t *testing.T) {
 	// Files allowed to use bare composite literals — they exercise the
 	// invariant rather than rely on it.
 	allowList := map[string]bool{
-		"internal/graph/node.go":                 true, // defines the invariant
-		"internal/graph/edge.go":                 true, // defines the invariant
-		"internal/graph/sync.go":                 true, // hand-built node from federation payload
-		"internal/graph/alias.go":                true, // edge inherits from from-node by design
-		"internal/graph/domain_test.go":          true,
+		"internal/graph/node.go":                  true, // defines the invariant
+		"internal/graph/edge.go":                  true, // defines the invariant
+		"internal/graph/sync.go":                  true, // hand-built node from federation payload
+		"internal/graph/alias.go":                 true, // edge inherits from from-node by design
+		"internal/graph/domain_test.go":           true,
 		"internal/graph/write_invariants_test.go": true,
-		"internal/graph/graph_test.go":           true,
-		"internal/graph/alias_test.go":           true,
-		"internal/graph/sync_test.go":            true,
+		"internal/graph/graph_test.go":            true,
+		"internal/graph/alias_test.go":            true,
+		"internal/graph/sync_test.go":             true,
 	}
 
 	root := findModuleRoot(t)

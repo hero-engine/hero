@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/graph"
 )
 
@@ -420,7 +421,13 @@ func writeVerifyFile(t *testing.T, path, content string) {
 }
 
 // seedGraphCriterion inserts a Criterion node into the graph at heroDir.
-func seedGraphCriterion(t *testing.T, store *graph.Store, key, statement, status string) {
+// seedGraphCriterion seeds a Criterion node in the partition production
+// actually writes and reads. repo must be gitutil.RepoKey(projectRoot) —
+// the key acceptance.Record and spec.WriteGraph both use. This previously
+// hard-coded "test-repo", which only worked because the graph's Criterion
+// lookup was unscoped; once node identity became (type, key, repo) the
+// fixture was seeding a partition production never queries.
+func seedGraphCriterion(t *testing.T, store *graph.Store, key, statement, status, repo string) {
 	t.Helper()
 	sum := sha256.Sum256([]byte(key + "|" + statement + "|" + status))
 	hash := hex.EncodeToString(sum[:])
@@ -434,7 +441,7 @@ func seedGraphCriterion(t *testing.T, store *graph.Store, key, statement, status
 			"status":    status,
 			"parent":    strings.SplitN(key, ":", 2)[0],
 		},
-		Repo:        "test-repo",
+		Repo:        repo,
 		ContentHash: hash,
 	})
 	if err != nil {
@@ -444,7 +451,7 @@ func seedGraphCriterion(t *testing.T, store *graph.Store, key, statement, status
 
 func getGraphCriterionStatus(t *testing.T, store *graph.Store, key string) string {
 	t.Helper()
-	n, err := store.GetNode("Criterion", key)
+	n, err := store.GetNode("Criterion", key, "")
 	if err != nil {
 		t.Fatalf("GetNode(%s): %v", key, err)
 	}
@@ -493,9 +500,9 @@ slug: writeback-test
 	if err != nil {
 		t.Fatalf("graph.Open: %v", err)
 	}
-	seedGraphCriterion(t, store, "writeback-test:AC-1", "THE SYSTEM SHALL handle X", "proposed")
-	seedGraphCriterion(t, store, "writeback-test:AC-2", "THE SYSTEM SHALL handle Y", "proposed")
-	seedGraphCriterion(t, store, "writeback-test:AC-3", "THE SYSTEM SHALL handle Z", "proposed")
+	seedGraphCriterion(t, store, "writeback-test:AC-1", "THE SYSTEM SHALL handle X", "proposed", gitutil.RepoKey(env.dir))
+	seedGraphCriterion(t, store, "writeback-test:AC-2", "THE SYSTEM SHALL handle Y", "proposed", gitutil.RepoKey(env.dir))
+	seedGraphCriterion(t, store, "writeback-test:AC-3", "THE SYSTEM SHALL handle Z", "proposed", gitutil.RepoKey(env.dir))
 	store.Close()
 
 	output, err := runCmd("spec", "verify", "--skip-tests", "--json", "writeback-test")
@@ -898,9 +905,9 @@ slug: mismatch-test
 	if err != nil {
 		t.Fatalf("graph.Open: %v", err)
 	}
-	seedGraphCriterion(t, store, "mismatch-test:AC-1", "handle A", "proposed")
-	seedGraphCriterion(t, store, "mismatch-test:AC-3", "handle C", "proposed")
-	seedGraphCriterion(t, store, "mismatch-test:AC-5", "handle E", "proposed")
+	seedGraphCriterion(t, store, "mismatch-test:AC-1", "handle A", "proposed", gitutil.RepoKey(env.dir))
+	seedGraphCriterion(t, store, "mismatch-test:AC-3", "handle C", "proposed", gitutil.RepoKey(env.dir))
+	seedGraphCriterion(t, store, "mismatch-test:AC-5", "handle E", "proposed", gitutil.RepoKey(env.dir))
 	store.Close()
 
 	output, err := runCmd("spec", "verify", "--skip-tests", "--json", "mismatch-test")

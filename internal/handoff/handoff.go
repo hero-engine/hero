@@ -161,7 +161,7 @@ func RecordAsk(store *graph.Store, repoKey string, ask UserAsk) error {
 	key := singletonKey(ask.User, domain)
 	if ask.Text == "" {
 		// Clearing the ask: invalidate the current row if any.
-		return store.InvalidateNode(NodeUserAsk, key)
+		return store.InvalidateNode(NodeUserAsk, key, repoKey)
 	}
 	props := map[string]any{
 		"text":       ask.Text,
@@ -201,7 +201,7 @@ func RecordGoal(store *graph.Store, repoKey string, goal SessionGoal) error {
 	key := singletonKey(goal.User, domain)
 	if goal.Text == "" {
 		// Clearing the goal: invalidate the current row if any.
-		return store.InvalidateNode(NodeSessionGoal, key)
+		return store.InvalidateNode(NodeSessionGoal, key, repoKey)
 	}
 	if goal.Source == "" {
 		goal.Source = GoalSourceAutoWindow
@@ -247,7 +247,7 @@ func RecordSuggestion(store *graph.Store, repoKey string, sug NextSuggestion) er
 	domain := resolveDomain(sug.Domain)
 	key := singletonKey(sug.User, domain)
 	if sug.Text == "" {
-		return store.InvalidateNode(NodeNextSuggestion, key)
+		return store.InvalidateNode(NodeNextSuggestion, key, repoKey)
 	}
 	props := map[string]any{
 		"text":       sug.Text,

@@ -52,9 +52,9 @@ func TestUpsertNodeInsertAndIdempotency(t *testing.T) {
 	// Same content_hash → no-op, same id back, history depth = 1
 	id2, err := s.UpsertNode(&Node{
 		Type: "Package", Key: "internal/cli", Domain: "engineering",
-		Props: map[string]any{"language": "go", "files": 85},
+		Props:       map[string]any{"language": "go", "files": 85},
 		ContentHash: "hash-1",
-		Source: map[string]any{"kind": "codescan"},
+		Source:      map[string]any{"kind": "codescan"},
 	})
 	if err != nil {
 		t.Fatalf("UpsertNode (idempotent): %v", err)
@@ -85,7 +85,7 @@ func TestUpsertNodeInvalidatesAndAppends(t *testing.T) {
 		t.Errorf("update should produce a new row id")
 	}
 	// Current row is the second one.
-	got, err := s.GetNode("Package", "internal/cli")
+	got, err := s.GetNode("Package", "internal/cli", "")
 	if err != nil {
 		t.Fatalf("GetNode: %v", err)
 	}
@@ -159,7 +159,7 @@ func TestNodeUpdateInvalidatesEdges(t *testing.T) {
 
 func TestGetNodeNotFound(t *testing.T) {
 	s := openTestStore(t)
-	_, err := s.GetNode("Package", "nonexistent")
+	_, err := s.GetNode("Package", "nonexistent", "")
 	if err != ErrNotFound {
 		t.Errorf("got %v, want ErrNotFound", err)
 	}
@@ -170,13 +170,13 @@ func TestInvalidateNode(t *testing.T) {
 	if _, err := s.UpsertNode(&Node{Type: "Feature", Key: "x", Domain: "engineering", ContentHash: "h"}); err != nil {
 		t.Fatalf("UpsertNode: %v", err)
 	}
-	if err := s.InvalidateNode("Feature", "x"); err != nil {
+	if err := s.InvalidateNode("Feature", "x", ""); err != nil {
 		t.Fatalf("InvalidateNode: %v", err)
 	}
-	if _, err := s.GetNode("Feature", "x"); err != ErrNotFound {
+	if _, err := s.GetNode("Feature", "x", ""); err != ErrNotFound {
 		t.Errorf("after invalidate, got %v want ErrNotFound", err)
 	}
-	if err := s.InvalidateNode("Feature", "x"); err != ErrNotFound {
+	if err := s.InvalidateNode("Feature", "x", ""); err != ErrNotFound {
 		t.Errorf("invalidate twice should ErrNotFound, got %v", err)
 	}
 }

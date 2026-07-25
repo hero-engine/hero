@@ -26,7 +26,7 @@ func TestWrite_UpsertsTaskNodes(t *testing.T) {
 		t.Errorf("BelongsTo = %d, want 2", summary.BelongsTo)
 	}
 
-	got, err := store.GetNode("Task", "checkout-flow:T-1")
+	got, err := store.GetNode("Task", "checkout-flow:T-1", "")
 	if err != nil || got == nil {
 		t.Fatalf("Task node not found: %v", err)
 	}
@@ -54,7 +54,7 @@ func TestWrite_DiscoveredAgainstWiresEdge(t *testing.T) {
 		t.Errorf("DiscoveredAgainst edges = %d, want 1", summary.DiscoveredAgainst)
 	}
 
-	taskID, err := store.GetNodeID("Task", "qa-suite:T-1")
+	taskID, err := store.GetNodeID("Task", "qa-suite:T-1", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +82,7 @@ func TestWrite_DiscoveredAgainstUnknownTargetSkipped(t *testing.T) {
 		t.Errorf("DiscoveredAgainst edges = %d, want 0", summary.DiscoveredAgainst)
 	}
 	// Task node still landed.
-	if _, err := store.GetNodeID("Task", "qa-suite:T-1"); err != nil {
+	if _, err := store.GetNodeID("Task", "qa-suite:T-1", ""); err != nil {
 		t.Errorf("Task node missing: %v", err)
 	}
 }
@@ -101,7 +101,7 @@ func TestWrite_AssigneeUpsertsPerson(t *testing.T) {
 	if summary.AssignedTo != 1 {
 		t.Errorf("AssignedTo = %d, want 1", summary.AssignedTo)
 	}
-	if _, err := store.GetNodeID("Person", "bwheeler"); err != nil {
+	if _, err := store.GetNodeID("Person", "bwheeler", ""); err != nil {
 		t.Errorf("Person node missing: %v", err)
 	}
 }

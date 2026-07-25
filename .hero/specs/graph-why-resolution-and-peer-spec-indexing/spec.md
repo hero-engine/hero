@@ -2,13 +2,15 @@
 title: "hero why fails to resolve specs that hero graph resolves — graph substrate stale + repoKey divergence"
 slug: graph-why-resolution-and-peer-spec-indexing
 type: bug
-status: planning
+status: completed
 priority: P1
 domain: engineering
 severity: high
 root_cause_class: design   # two-store design gap + a code repoKey-derivation bug
 tags: [graph, index, why, traversal, repoKey, peer-spec, ingest, reliability]
 created: 2026-07-18
+delivery_method: manual
+completed_at: 2026-07-25T19:30:54Z
 ---
 
 ## Summary
@@ -280,6 +282,90 @@ repoKey := gitutil.RepoKey(projectRoot)
 
 ---
 
+## Acceptance Criteria
+
+Derived from **Suggested Fix Approach** (Changes 1–4), **Secondary Defects**,
+and the **Test Plan**. Each names where it was delivered: `cf6ebc2` is the
+earlier landing of Changes 1–3; the rest closes the residual tail.
+
+- **AC-1:** WHEN `hero why <slug>` runs against a spec that exists on disk but
+  has not been graph-ingested since it was written THE SYSTEM SHALL reconcile
+  the spec subgraph on the read path and resolve the slug, rather than
+  returning `no node with key`. *(Change 1 — landed in `cf6ebc2`.)*
+- **AC-2:** THE SYSTEM SHALL derive the graph partition key from
+  `gitutil.RepoKey(projectRoot)` at every graph writer, so no writer stamps
+  nodes into a partition the reader never queries. *(Change 2 — landed in
+  `cf6ebc2`.)*
+- **AC-3:** WHEN a slug has a live node under a peer repoKey and one under the
+  local repoKey THE SYSTEM SHALL resolve the local node, so a federated peer
+  copy cannot shadow the local partition on the **read** path. *(Change 3,
+  reader half — landed in `cf6ebc2`; `resolveTarget`'s
+  `ORDER BY (repo = ?) DESC`.)*
+- **AC-3b:** WHEN a sibling repo ingests a slug the local repo also owns THE
+  SYSTEM SHALL leave the local partition's node live and resolvable. *(Change
+  3, write half — delivered via the child spec
+  `graph-node-identity-repo-scoped`, in this session.)*
+- **AC-4:** WHEN a peer handoff is received THE SYSTEM SHALL write the promoted
+  spec into the graph substrate under the local repo partition before the
+  receive returns, so the spec is resolvable with no separate ingest.
+  *(Change 4.)*
+- **AC-5:** WHEN the same peer transfer is received twice THE SYSTEM SHALL NOT
+  change the number of live graph nodes for the promoted slug, and a receive
+  SHALL NOT fail because the graph could not be written. *(Change 4,
+  best-effort contract.)*
+- **AC-6:** WHEN `hero graph <slug>` runs against a cold `index.db` THE SYSTEM
+  SHALL self-heal the index before querying, so a spec written since the last
+  index refresh resolves without a manual `hero index`. *(Secondary defect 3.)*
+- **AC-7:** THE SYSTEM SHALL fail a source-level guard if any file under
+  `internal/` derives a graph repo partition key via
+  `filepath.Base(projectRoot)`, covering graph writers outside `internal/cli`.
+  *(Test 4, widened for Change 4.)*
+
+## Change 3's Write Half — Split to a Child Spec, Then Delivered
+
+The write half of Change 3 (AC-3b) was initially deferred, then delivered in
+the same session at the user's direction. It lives in the child spec
+`graph-node-identity-repo-scoped` — which carries its own diagnosis, ACs,
+ledger, and audit — rather than being folded in here, so the two fixes stay
+separately traceable.
+
+**Why it warranted its own spec.** The spec diagnosed the
+`team-oauth` tombstoning as something to fix by auditing the cross-repo scan
+path. It is not: `UpsertNode` finds the current row by `(type, key)` alone
+(`internal/graph/node.go:105-113`), and the schema *enforces* that with
+`CREATE UNIQUE INDEX idx_nodes_current ON nodes(type, key) WHERE valid_to IS
+NULL`. A sibling ingest carrying the same slug therefore matches the local
+row, sees a differing partition, and invalidates-and-reinserts it under the
+sibling's repoKey — exactly the reported state (every local `team-oauth` row
+tombstoned, the only live row under `hero-engine/hero-cloud`).
+
+Repo-scoping node identity means changing that unique index and then making a
+repo decision at every unscoped accessor — `GetNodeID`, `GetNode`,
+`GetNodeAt`, `InvalidateNode`, and edge resolution in `graph/sync.go` — each
+of which would otherwise bind to an arbitrary repo's node once two live rows
+can coexist. That is a migration of the graph substrate's identity model
+across ~8 call sites, not a tail-end patch, and rushing it into an unrelated
+delivery is how this subsystem earned its reliability reputation.
+
+**Outcome.** Delivered: node identity is now `(type, key, repo)` (graph schema
+migration v5), the upsert and every accessor are partition-scoped, and
+`hero why team-oauth` — the exact command from the report — resolves against
+this repo's real graph, where the local partition previously had every row
+tombstoned. See that spec's Completion Ledger.
+
+## Changes
+
+- `internal/peering/receive.go` — ingest the promoted spec into the graph
+  substrate at the end of `Receive`, keyed by `gitutil.RepoKey`, best-effort.
+- `internal/cli/graph.go` — `index.RefreshIfStale` before querying, matching
+  `search`/`list`/`ask`.
+- `internal/cli/brief.go` — document that non-CLI graph writers share
+  `gitutil.RepoKey` as the one derivation.
+- `internal/cli/why_resolution_test.go` — widen the `filepath.Base` guard from
+  `internal/cli` to the whole `internal/` tree; add the cold-index test.
+- `internal/peering/receive_graph_test.go` (new) — Test 6 plus the idempotency
+  and best-effort guards.
+
 ## Test Plan
 
 ### Existing test review
@@ -323,3 +409,135 @@ repoKey := gitutil.RepoKey(projectRoot)
 ## Kickoff
 Paste into a fresh session to fix:
 > Fix the `hero why` vs `hero graph` resolution divergence per `.hero/planning/bugs/graph-why-resolution-and-peer-spec-indexing/spec.md`. Two changes: (1) add a disk→graph reconcile to `runWhy` in `internal/cli/brief.go` mirroring `runBlocked` (brief.go:577-581) — extract a shared `reconcileSpecGraph(store, repoKey)` helper; (2) replace `filepath.Base(projectRoot)` with `gitutil.RepoKey(projectRoot)` as the graph partition key in `internal/cli/graph_memory.go:195`, `sprint.go:230`, `extract.go:88`, `publish_pages.go:56`, `next_project.go:58`, routed through one helper. Add the prioritized regression tests from the spec's Test Plan (start with `TestWhyResolvesSpecCreatedSinceLastIngest` and `TestGraphReingestUsesGitRemoteRepoKey`). Do NOT change `resolveTarget`'s repo filter — the reader is correct; the writers and the missing reconcile are the bug.
+
+## Completion Ledger
+
+**Task as executed.** This spec was ~80% delivered before this session:
+commit `cf6ebc2` ("heal hero why on read + fix repoKey drift across graph
+writers", PR #2) landed Changes 1–3 and Test Plan items 1–5, but the spec was
+never flipped out of `planning`. This delivery closes the residual tail —
+Change 4 (peer-spec write-time ingest), Secondary Defect 3 (`hero graph` cold
+index), and Test Plan item 6 — and audits the already-landed work rather than
+redoing it.
+
+**Stack:** Go. Skills: go-stack, implementation-principles, testing-and-validation.
+
+**Verification of the already-landed work** (read on disk, not assumed):
+`runWhy` calls `reconcileSpecGraph` (`brief.go`), the helper is shared with
+`runBlocked`, all five writers named in the spec (`graph_memory.go:194`,
+`extract.go:88`, `publish_pages.go:55`, `sprint.go:230`, `next_project.go:58`)
+route through `graphRepoKey`, and `why_resolution_test.go` +
+`why_federation_test.go` carry Tests 1–5.
+
+**Validation performed.**
+- `go build ./...` — clean. `go test ./...` — green, no regressions.
+- `gofmt -l` on every touched file — clean.
+- **Pre-fix falsification of each new behavior** (the fix removed, tests re-run):
+  - Removing the `ingestPromotedSpec` call → `TestReceivedSpecIsGraphVisible`
+    fails with *"has no live graph node in repo … it would be invisible to
+    `hero why`"*.
+  - Removing `index.RefreshIfStale` from `runGraph` →
+    `TestGraphSelfHealsColdIndex` fails with *"No relationships found for
+    refunds."*
+  - Planting a `repoKey := filepath.Base(projectRoot)` in `internal/peering` →
+    the widened guard fails, naming `../peering/…:6`. The pre-existing
+    package-local guard would not have caught it.
+
+**Two of my own tests were wrong and were corrected, not the code.**
+- An idempotency assertion of "exactly 1 live node" failed at 2. Probing the
+  store showed a promoted transfer legitimately produces an `Intake` and a
+  `Feature` node sharing one slug — the provenance chain `hero why` walks.
+  The assertion now pins *unchanged across replays* rather than a literal.
+- A fault-injection test made `graph.db` a directory to prove the best-effort
+  contract; that broke the mail service itself (which legitimately needs the
+  graph), not the ingest. Replaced with a direct test of the guard clauses.
+
+**Deviation from the Suggested Fix Approach.** Change 2 suggested routing the
+partition key through `graph.RepoKeyFor`. That is not buildable:
+`internal/gitutil` imports `internal/graph`, so `graph` importing `gitutil`
+is an import cycle. `gitutil.RepoKey` is already the single derivation;
+`cli.graphRepoKey` is a documented alias and `peering` calls `gitutil.RepoKey`
+directly. The invariant is enforced by AC-7's guard, now tree-wide, rather
+than by a wrapper that cannot exist.
+
+**Post-audit corrections.** The cold audit returned **HOLD** on two gaps, both
+legitimate and both since addressed:
+1. **AC-3 was authored narrower than the Change it cites.** *(Initially
+   resolved by deferring; the user then directed that it be implemented in
+   this session, and it was — see AC-3b and the child spec.)* The auditor found
+   AC-3 captured only Change 3's reader half — which was already true before
+   `cf6ebc2` — while the write half (a sibling ingest must not tombstone the
+   local node) was undelivered and the defect still live. That is correct. On
+   investigation the mechanism is not the scan path the spec hypothesized: node
+   identity is `(type, key)` at the schema level
+   (`idx_nodes_current`), so single-live-row-per-slug is a database invariant.
+   Repo-scoping it means a substrate migration plus a repo decision at ~8
+   unscoped accessors. Rather than shape the AC around what shipped or rush a
+   graph-core migration into an unrelated delivery, it is now stated explicitly
+   as **AC-3b**, with a section giving the real mechanism, and a full child
+   spec `graph-node-identity-repo-scoped` carrying the diagnosis, ACs, and
+   risks. The descope was surfaced to the user rather than self-approved; the
+   user chose to implement it in-session, and AC-3b is now delivered through
+   that child spec.
+2. **The corpus-scale latency regression check the spec's Regression scope
+   required was missing.** The auditor is right that
+   `TestWhy_DepthFourUnder200ms` never enters `runWhy`, so the reconcile added
+   to the hot path had zero coverage. Added
+   `TestWhyReconcileStaysWithinBudgetAtCorpusScale`: drives the real command
+   over a 200-spec cold corpus (no index, no scan). Measured 208ms.
+
+**Follow-ups.**
+- `hero peer call --mode=spec-out` designs a spec on the *peer* side; that
+  peer's own write path is out of this repo's reach. The read-side reconcile
+  (AC-1) remains the backstop there.
+- The `team-oauth` federated-tombstone provenance was never traced to the exact
+  ingest that re-keyed it. The spec scoped that out, and the mechanism is now
+  understood and specced (`graph-node-identity-repo-scoped`) even though the
+  triggering run was never identified.
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | `hero why` resolves a spec on disk but not yet graph-ingested (read-side reconcile) | DONE | `internal/cli/brief.go` — `runWhy` calls `reconcileSpecGraph`; helper shared with `runBlocked`. Landed `cf6ebc2`; verified on disk this session. Test: `TestWhyResolvesSpecCreatedSinceLastIngest` |
+| 2 | Every graph writer derives the partition key from `gitutil.RepoKey` | DONE | The five `filepath.Base(projectRoot)` sites route through `graphRepoKey` (`brief.go`), landed `cf6ebc2`. Tests: `TestGraphReingestUsesGitRemoteRepoKey`, `TestNoFilepathBaseRepoKey`. **Correction:** this row was FALSE when first marked DONE. A cold audit found a *sixth* mis-keyed writer — `internal/attention/mail/promotion.go` called `spec.WriteGraph(specs, cfg.PeerID, …)`, stamping the whole local spec corpus under a UUID, a partition no reader queries. It was live until this session and is fixed here (see the child spec's ledger). Two limits worth stating plainly: (a) AC-7's guard structurally CANNOT catch this class — it greps for `filepath.Base(projectRoot)`, and a wrong derivation of any other shape walks straight past it, so AC-7 is a partial enforcement mechanism for AC-2, not a complete one; (b) ten `UpsertNode` sites still stamp no `Repo` at all, which satisfies AC-2's rationale (the `repo = ''` legacy fallback is queried) but not its literal "every graph writer" — tracked in `graph-unpartitioned-writers-duplicate-nodes` |
+| 3 | A federated peer copy does not shadow the local partition on the READ path | DONE | Landed `cf6ebc2` — `resolveTarget`'s `ORDER BY (repo = ?) DESC`. Test: `TestResolveTarget_*PeerCopyDoesNotShadowLocal` (`internal/traversal/why_federation_test.go`). Note: pre-dates `cf6ebc2`; that commit added the characterization test, not the behavior |
+| 3b | Sibling ingest must not tombstone the local node (WRITE half of Change 3) | DONE | Delivered via the child spec `graph-node-identity-repo-scoped` in this session: graph schema migration v5 repo-scopes node identity to `(type, key, repo)`, and the upsert plus all four accessors are partition-scoped. Verified live — `team-oauth` regained a live node in `hero-engine/hero` and `hero why team-oauth` resolves. Tests: `TestSiblingRepoIngestDoesNotTombstoneLocal`, `TestWhySurvivesSiblingRepoIngest`, `TestMigrationV5RepoScopesExistingDatabase` |
+| 4 | A received peer handoff is graph-resolvable in the local partition before `Receive` returns | DONE | `internal/peering/receive.go` — `ingestPromotedSpec` at the end of `Receive`. Test: `TestReceivedSpecIsGraphVisible` (falsified against pre-fix) |
+| 5 | Replayed receive does not change live node count; receive never fails on a graph write error | DONE | Guard clauses in `ingestPromotedSpec`; `spec.WriteGraph` upserts. Tests: `TestReceivedSpecGraphIngestIsIdempotent`, `TestIngestPromotedSpecIsBestEffort` |
+| 6 | `hero graph <slug>` self-heals a cold index before querying | DONE | `internal/cli/graph.go` — `index.RefreshIfStale` before `index.Open`, mirroring `search.go:86`. Test: `TestGraphSelfHealsColdIndex` (falsified against pre-fix) |
+| 7 | Source-level guard rejects `filepath.Base(projectRoot)` as a repoKey anywhere under `internal/` | DONE | `internal/cli/why_resolution_test.go` — `TestNoFilepathBaseRepoKey` now walks the whole tree with a floor on files scanned so a broken walk can't pass vacuously. Verified with a planted offender in `internal/peering` |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | `internal/peering/receive.go` — ingest promoted spec, keyed by `gitutil.RepoKey`, best-effort | DONE | `ingestPromotedSpec`; writes only the promoted spec (WriteGraph upserts and resolves targets against nodes already in the store) |
+| 2 | `internal/cli/graph.go` — `RefreshIfStale` before querying | DONE | Placed before `index.Open`, matching `search.go`'s ordering and warning behavior |
+| 3 | `internal/cli/brief.go` — document the shared repoKey derivation | DONE | `graphRepoKey` comment records why the wrapper lives in `gitutil`, not `graph` (import cycle) |
+| 4 | `internal/cli/why_resolution_test.go` — widen the guard tree-wide; add cold-index test | DONE | Guard walks `..` with a `scanned < 100` floor; `TestGraphSelfHealsColdIndex` added |
+| 5 | `internal/peering/receive_graph_test.go` (new) — Test 6 + idempotency + best-effort | DONE | Three tests over the existing `peerMailFixture` harness |
+| 6 | Corpus-scale latency guard for the reconcile added to `hero why`'s hot path (spec Regression scope) | DONE | `TestWhyReconcileStaysWithinBudgetAtCorpusScale` — real `runCmd("why", …)` over 200 cold specs, no index/scan; measured 208ms against a deliberately loose 10s order-of-magnitude guard |
+
+### Exercise-the-feature check
+
+- [x] Exercised through the real receive path end-to-end, not a stub:
+  `TestReceivedSpecIsGraphVisible` runs a genuine `Handoff` → `Receive` across
+  two fixture workspaces and then queries `graph.db` with the *same* predicate
+  `traversal.resolveTarget` uses (`key = ? AND repo = ? AND valid_to IS NULL`),
+  so a pass means `hero why` would resolve it. Removing the fix reproduces the
+  reported failure verbatim.
+- [x] `hero graph` exercised against a genuinely cold index via `runCmd`
+  (`TestGraphSelfHealsColdIndex` never calls `indexAll()`); pre-fix it prints
+  "No relationships found", post-fix it resolves the parent.
+
+### Excellence Bar self-check
+
+Yes. The honest finding here was that most of the spec had already shipped, so
+the valuable work was verifying that on disk and closing the tail rather than
+re-delivering it. Each new behavior was falsified against the pre-fix code, the
+repoKey guard was widened precisely because Change 4 added the first graph
+writer outside `internal/cli` — and that widening was itself proven with a
+planted offender. Two of my own assertions turned out to be wrong about the
+system; I probed the store, learned the intake/feature pair is by design, and
+corrected the tests instead of bending the code to match them.

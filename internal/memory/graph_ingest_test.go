@@ -83,12 +83,12 @@ content`)
 	if _, err := WriteGraph(dir, "repo-x", store); err != nil {
 		t.Fatalf("first WriteGraph: %v", err)
 	}
-	first, _ := store.GetNodeID("Memory", "a")
+	first, _ := store.GetNodeID("Memory", "a", "")
 
 	if _, err := WriteGraph(dir, "repo-x", store); err != nil {
 		t.Fatalf("second WriteGraph: %v", err)
 	}
-	second, _ := store.GetNodeID("Memory", "a")
+	second, _ := store.GetNodeID("Memory", "a", "")
 
 	if first != second {
 		t.Fatalf("expected idempotent re-ingest, got node id %d → %d", first, second)

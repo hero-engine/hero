@@ -76,7 +76,7 @@ func Record(results []RunResult, repoKey string, store *graph.Store) (*RecordSum
 			continue
 		}
 
-		existing, err := store.GetNode("Criterion", key)
+		existing, err := store.GetNode("Criterion", key, repoKey)
 		if err != nil || existing == nil {
 			summary.Unknown++
 			continue
@@ -131,7 +131,7 @@ func Record(results []RunResult, repoKey string, store *graph.Store) (*RecordSum
 		// Resolve the Commit node by SHA. Commit nodes are keyed by
 		// full SHA in gitutil.WriteGitLogGraph; tolerate short SHAs by
 		// upserting a stub if not found, so the edge always lands.
-		commitID, err := resolveOrStubCommit(store, r.SHA)
+		commitID, err := resolveOrStubCommit(store, r.SHA, repoKey)
 		if err != nil {
 			return summary, fmt.Errorf("resolve commit %s: %w", r.SHA, err)
 		}
@@ -205,8 +205,8 @@ func mapRunStatus(s string) (string, bool) {
 // stub eagerly on any non-exact match, producing parallel "abc1234"
 // and "abc1234...full" nodes — which broke the AC participation join
 // because the stub had no touches edges.
-func resolveOrStubCommit(store *graph.Store, sha string) (int64, error) {
-	if id, err := store.GetNodeID("Commit", sha); err == nil {
+func resolveOrStubCommit(store *graph.Store, sha, repoKey string) (int64, error) {
+	if id, err := store.GetNodeID("Commit", sha, repoKey); err == nil {
 		return id, nil
 	}
 	// Prefix match: a short SHA in the run-result file lands on the
