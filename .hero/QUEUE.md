@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-25T19:32:06Z · 81 ready specs_
+_Generated: 2026-07-25T20:01:03Z · 81 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -36,25 +36,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## graph-unpartitioned-writers-duplicate-nodes — "Ten graph writers omit Repo, so repo-scoped identity lets '' and stamped nodes coexist forever"
-_bug · planning · horizon: now_
-
-Paste into a fresh session to start delivery:
-
-> Deliver `graph-unpartitioned-writers-duplicate-nodes`. Ten production
-> `UpsertNode` call sites build their node without a `Repo` field, so they
-> write into the unpartitioned (`repo = ''`) bucket. Since
-> `graph-node-identity-repo-scoped` made identity `(type, key, repo)` and gave
-> the write path `repoWriteScope` (an unpartitioned write matches only
-> `repo = ''`, so it can never tombstone a stamped node), an unpartitioned
-> writer and a stamped writer targeting the same key now leave two live rows
-> that neither will ever retire. Stamp `Repo: repoKey` at each of the ten
-> sites listed in **Key Files**, then decide what to do with the rows already
-> in the `''` bucket. Start by reading **Key Files**, then work the Acceptance
-> Criteria in order. Close with the cold delivery audit and `hero spec verify`.
-
----
-
 ## ledger-signoff-substring-match-fails-open — "Completion Ledger sign-off gate fails open — any note mentioning [signed-off] self-approves"
 _bug · planning · horizon: now_
 
@@ -72,6 +53,25 @@ Paste into a fresh session to start delivery:
 > negative-sentence cases. Start by reading **Key Files**, then work the
 > Acceptance Criteria in order. Close with the cold delivery audit and
 > `hero spec verify`.
+
+---
+
+## graph-unpartitioned-writers-duplicate-nodes — "Ten graph writers omit Repo, so repo-scoped identity lets '' and stamped nodes coexist forever"
+_bug · planning · horizon: now_
+
+Paste into a fresh session to start delivery:
+
+> Deliver `graph-unpartitioned-writers-duplicate-nodes`. Ten production
+> `UpsertNode` call sites build their node without a `Repo` field, so they
+> write into the unpartitioned (`repo = ''`) bucket. Since
+> `graph-node-identity-repo-scoped` made identity `(type, key, repo)` and gave
+> the write path `repoWriteScope` (an unpartitioned write matches only
+> `repo = ''`, so it can never tombstone a stamped node), an unpartitioned
+> writer and a stamped writer targeting the same key now leave two live rows
+> that neither will ever retire. Stamp `Repo: repoKey` at each of the ten
+> sites listed in **Key Files**, then decide what to do with the rows already
+> in the `''` bucket. Start by reading **Key Files**, then work the Acceptance
+> Criteria in order. Close with the cold delivery audit and `hero spec verify`.
 
 ---
 

@@ -66,3 +66,33 @@ func TestResolveTarget_FederatedPeerCopyDoesNotShadowLocal(t *testing.T) {
 		t.Errorf("resolveTarget(peer) should resolve the peer's own live copy: %v", err)
 	}
 }
+
+// TestResolveTarget_PeerOnlyNodeDoesNotAnswerLocalQuery keeps the second guard
+// the original version of the test above carried: when a slug exists ONLY in a
+// peer partition, a local-repo query must refuse it rather than hand back the
+// peer's node.
+//
+// The original asserted this via the tombstoned state — after a sibling ingest
+// the local node was gone, so a local query failed. Repo-scoped identity
+// removed that state, and rewriting the test above for the new behavior
+// dropped this guard with it. The guard itself is still meaningful and still
+// holds: a slug only the peer owns is a real case, independent of tombstoning.
+func TestResolveTarget_PeerOnlyNodeDoesNotAnswerLocalQuery(t *testing.T) {
+	const (
+		localRepo = "hero-engine/hero"
+		peerRepo  = "hero-engine/hero-cloud"
+		slug      = "peer-only-spec"
+	)
+
+	store := openStore(t)
+	seedNode(t, store, "Feature", slug, "Peer Only Spec", peerRepo)
+
+	if _, _, err := resolveTarget(store, localRepo, slug); err == nil {
+		t.Error("resolveTarget(local) returned a peer-only node as if it were local; " +
+			"a federated copy must not shadow the local partition")
+	}
+	// And the peer's own query still finds it.
+	if _, _, err := resolveTarget(store, peerRepo, slug); err != nil {
+		t.Errorf("resolveTarget(peer) should resolve its own node: %v", err)
+	}
+}

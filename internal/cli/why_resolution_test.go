@@ -308,10 +308,18 @@ parent: platform
 		t.Fatalf("why should resolve a spec that was never ingested; got: %q", output)
 	}
 
-	// 2s: measured runs land at 50-215ms, so this is still ~10x headroom
-	// against a slow runner while staying tight enough to catch a real
-	// regression (e.g. reconciling once per hop rather than once per run).
-	const budget = 2 * time.Second
+	// The budget is sized to the failure mode, not to a stopwatch. The
+	// regression this guards is reconciling once per hop instead of once per
+	// run — on a 200-spec corpus that is a ~200x blowup, i.e. minutes. 30s
+	// catches that with room to spare while staying immune to runner speed.
+	//
+	// A tighter number is a trap: local runs land at 50-215ms, so 2s looked
+	// like 10x headroom and still failed CI at 2.15s. A wall-clock assertion
+	// tuned to the dev machine is a flake, not a guard — the same mistake as
+	// TestSpecWriteGraphIsIdempotent, fixed in the initiative-autocomplete
+	// delivery. The timing is logged either way, so a slow-but-passing run is
+	// still visible.
+	const budget = 30 * time.Second
 	if elapsed > budget {
 		t.Errorf("hero why over a %d-spec cold corpus took %v, budget %v — "+
 			"the read-side reconcile has regressed beyond a one-shot cost",
