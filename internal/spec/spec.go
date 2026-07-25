@@ -213,6 +213,12 @@ type Spec struct {
 	RawContent             string // full file content including frontmatter
 	ThreeFile              bool   // true if loaded from three-file layout
 
+	// UnknownKeys are top-level frontmatter keys the parser recognized as
+	// neither a known field nor a tracker-prefixed one, in file order. The
+	// parser still ignores their values; keeping the names lets `hero check`
+	// flag a near-miss of a relation key instead of dropping it in silence.
+	UnknownKeys []string
+
 	// Surface is the project-shape facet a work spec belongs to,
 	// inferred from repo structure by internal/snapshot or set
 	// explicitly via the `surface:` frontmatter field. Empty means
@@ -630,15 +636,23 @@ func (s *Spec) parseFrontmatter(content string) string {
 			s.SynthesizedFrom = targets
 		case "last_synthesized":
 			s.LastSynthesized = val
-		case "relates-to", "depends-on", "depends_on", "supersedes", "parent", "child", "initiative", "conflicts-with", "conflicts_with":
+		case "relates-to", "depends-on", "depends_on", "supersedes", "parent", "child", "children",
+			"child-of", "child_of", "initiative", "conflicts-with", "conflicts_with":
 			// Accept the shorthands first-use sessions reach for:
-			// `initiative:` (a parent) and `depends_on:` (underscore
-			// variant). Normalize to canonical kinds so they form graph
-			// edges instead of silently dropping.
+			// `initiative:` (a parent), `depends_on:` (underscore
+			// variant), `children:` (the plural an author naturally
+			// writes for a list) and `child-of:`/`child_of:` (a parent
+			// pointer, matching how every consumer reads that kind).
+			// Normalize to canonical kinds so they form graph edges
+			// instead of silently dropping — a dropped `children:` list
+			// starves the initiative completion roster gate, which then
+			// auto-completes an initiative whose children were never built.
 			relKind := key
 			switch key {
-			case "initiative":
+			case "initiative", "child-of", "child_of":
 				relKind = "parent"
+			case "children":
+				relKind = "child"
 			case "depends_on":
 				relKind = "depends-on"
 			case "conflicts_with":
@@ -701,8 +715,10 @@ func (s *Spec) parseFrontmatter(content string) string {
 			i = consumed - 1
 		default:
 			// Parse tracker-prefixed fields: jira_*, github_*, linear_*, gitlab_*
+			tracker := false
 			for _, prefix := range []string{"jira_", "github_", "linear_", "gitlab_"} {
 				if strings.HasPrefix(key, prefix) {
+					tracker = true
 					trackerName := strings.TrimSuffix(prefix, "_")
 					field := strings.TrimPrefix(key, prefix)
 					if s.TrackerName == "" {
@@ -732,6 +748,13 @@ func (s *Spec) parseFrontmatter(content string) string {
 					}
 					break
 				}
+			}
+			if !tracker {
+				// Record the key rather than dropping it without a trace.
+				// `hero check` reads this to warn when an unrecognized key
+				// is a near-miss of a relation key — the class of typo that
+				// silently costs an initiative its child roster.
+				s.UnknownKeys = append(s.UnknownKeys, key)
 			}
 		}
 	}

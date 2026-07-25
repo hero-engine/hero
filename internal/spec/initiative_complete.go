@@ -11,11 +11,10 @@ package spec
 //     archived (no child verified in the current process).
 //
 // Keeping the gate in one place guarantees the two paths can never diverge.
-// The logic is unchanged from the original inline gate in
-// autoCompleteParentIfReady: a roster gate (every declared block-style
-// `child:` entry must resolve to a completed spec) and a child-count gate
-// (at least one materialized spec must declare this initiative as its parent,
-// and all such specs must be completed).
+// Two gates run: a roster gate (every child the initiative declares — see
+// DeclaredChildren — must resolve to a materialized, finished spec) and a
+// child-count gate (at least one materialized spec must declare this
+// initiative as its parent, and all such specs must be completed).
 //
 // It returns false for a nil parent, a non-initiative, or an already-completed
 // initiative — so callers can pass any candidate without pre-filtering.
@@ -32,27 +31,28 @@ func InitiativeReadyToComplete(parent *Spec, allSpecs []*Spec) bool {
 		statusBySlug[s.Slug] = s.Status
 	}
 
-	// Roster gate: if the initiative declares children (block-style `child:`
-	// lists parse to child relations), every declared child must resolve to a
-	// materialized, completed spec — otherwise delivering a single child would
-	// wrongly complete an initiative whose other children are unbuilt stubs.
-	declaredCount := 0
-	declaredComplete := true
-	for _, r := range parent.Relations {
-		if r.Kind != "child" && r.Kind != "child-of" {
-			continue
+	// Roster gate: every child the initiative declares must resolve to a
+	// materialized spec that is finished — otherwise delivering a single child
+	// would wrongly complete an initiative whose other children are unbuilt
+	// stubs. The roster comes from DeclaredChildren, the same union of
+	// frontmatter relations and `## Child Specs & Sequence` table links that
+	// drive's child-set builder consumes, so this gate and `hero goal --check`
+	// cannot disagree about which children remain.
+	//
+	// A declared child with no spec on disk blocks: not-yet-scaffolded is the
+	// starved case this gate exists for, and a governance initiative whose
+	// unbuilt child is a safety invariant must never read as delivered. To
+	// intentionally drop a child the operator removes it from the declaration
+	// or marks it `superseded`, which counts as finished.
+	for _, slug := range DeclaredChildren(parent) {
+		st, ok := statusBySlug[slug]
+		if !ok || !childFinished(st) {
+			return false
 		}
-		declaredCount++
-		if statusBySlug[normalizeRelTarget(r.Target)] != StatusCompleted {
-			declaredComplete = false
-		}
-	}
-	if declaredCount > 0 && !declaredComplete {
-		return false
 	}
 
 	// Child-count gate: at least one materialized spec must declare this
-	// initiative as its parent, and all such children must be completed.
+	// initiative as its parent, and all such children must be finished.
 	allDone := true
 	childCount := 0
 	for _, s := range allSpecs {
@@ -60,7 +60,7 @@ func InitiativeReadyToComplete(parent *Spec, allSpecs []*Spec) bool {
 			if (r.Kind == "parent" || r.Kind == "child-of") &&
 				normalizeRelTarget(r.Target) == parent.Slug {
 				childCount++
-				if s.Status != StatusCompleted {
+				if !childFinished(s.Status) {
 					allDone = false
 				}
 				break
@@ -72,4 +72,12 @@ func InitiativeReadyToComplete(parent *Spec, allSpecs []*Spec) bool {
 	}
 
 	return true
+}
+
+// childFinished reports whether a child's status means the initiative has
+// nothing left to wait on. Superseded counts alongside completed: it is the
+// documented way to drop a child the initiative no longer intends to build,
+// and both gates have to agree on that or the escape hatch doesn't work.
+func childFinished(st Status) bool {
+	return st == StatusCompleted || st == StatusSuperseded
 }

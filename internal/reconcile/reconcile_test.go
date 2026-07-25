@@ -453,3 +453,38 @@ func TestFinding_CanAutoFix(t *testing.T) {
 		}
 	}
 }
+
+// TestReconcile_NegativeGuard_PluralChildrenRoster is the AC-8 guard: the
+// standalone re-check runs through the same shared predicate, so an initiative
+// declaring four children via `children:` with only one delivered on disk must
+// not be flagged for completion here either. Before the fix the plural key
+// parsed to nothing, the roster gate was skipped, and this path agreed with
+// `hero spec verify` that a 1-of-4 initiative was done.
+func TestReconcile_NegativeGuard_PluralChildrenRoster(t *testing.T) {
+	projectRoot, heroDir := initGitRepo(t)
+	addSpec(t, heroDir, "planning/initiatives/hero-ops-governance/spec.md", `---
+title: Hero Ops Governance
+type: initiative
+status: planning
+slug: hero-ops-governance
+children: [blast-radius-tiers, financial-action-gate, earned-autonomy, governance-gate]
+---
+# Hero Ops Governance
+`)
+	addSpec(t, heroDir, "specs/blast-radius-tiers/spec.md", `---
+title: blast-radius-tiers
+type: feature
+status: completed
+slug: blast-radius-tiers
+relations:
+  - { target: hero-ops-governance, kind: parent }
+---
+# blast-radius-tiers
+`)
+
+	for _, f := range Reconcile(heroDir, projectRoot) {
+		if f.Kind == FindingInitiativeComplete && f.Spec.Slug == "hero-ops-governance" {
+			t.Fatalf("initiative with 3 unbuilt declared children must not be completed: %+v", f)
+		}
+	}
+}

@@ -125,11 +125,17 @@ func TestSpecWriteGraphInsertsNodesAndEdges(t *testing.T) {
 
 func TestSpecWriteGraphIsIdempotent(t *testing.T) {
 	store := openSpecTestStore(t)
-	if _, err := WriteGraph(sampleSpecs(), "test-repo", "engineering", store); err != nil {
+	// One fixture for both writes. sampleSpecs() stamps ModifiedAt from the
+	// wall clock and node props carry it at second resolution, so calling it
+	// twice makes the second write see genuinely different props whenever the
+	// two calls straddle a second boundary — that tests the clock, not
+	// idempotency, and flakes on a slow runner.
+	specs := sampleSpecs()
+	if _, err := WriteGraph(specs, "test-repo", "engineering", store); err != nil {
 		t.Fatalf("first WriteGraph: %v", err)
 	}
 	before, _ := store.Stats()
-	if _, err := WriteGraph(sampleSpecs(), "test-repo", "engineering", store); err != nil {
+	if _, err := WriteGraph(specs, "test-repo", "engineering", store); err != nil {
 		t.Fatalf("second WriteGraph: %v", err)
 	}
 	after, _ := store.Stats()

@@ -1,40 +1,18 @@
 ---
 user: chet-bellows
-updated: 2026-07-24T04:20:16Z
+updated: 2026-07-25T16:26:44Z
 repo: hero-engine/hero
 ---
 
 # chet-bellows's handoff
 
-## Session goal
-
-> Session opened with — # Hero peer call
-> 
-> You are running as a subagent invoked by `hero peer call` from a sibling
-> Hero workspace. Your cwd is **this peer workspace**. Load this workspace's
-> Hero context (conventions, decisions, code knowledge) — use `hero context`,
-> `hero search`, and the local files as needed.
-> 
-> ## Caller
-> 
-> - Origin workspace: hero-code (peer_id cd8dd06d-3df1-4878-a88f-24593dcbb4b3)
-> - Target alias on cal…
-
-_possibly stale — 32 commit(s) since, last set 4d 6h ago_
-
 ## Last user ask
 
-> Drive conversational-attention-operability autonomously through all remaining Hero-owned children
-
-_possibly stale — 1 commit(s) since, last set 3h 36m ago_
+> Deliver initiative-autocomplete-ignores-declared-children. An initiative auto-completes when only some of its declared children have shipped, because the completion gate's roster is fed from an incomplete source. Two compounding defects: (1) children: (plural) frontmatter is silently dropped by the relation parser (internal/spec/spec.go:633), so declared children never become child edges and the r…
 
 ## Suggested next prompt
 
-> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
-
-_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
-
-_Source: auto-derived from open feature — `hero next suggest "..."` to override._
+> Deliver graph-why-resolution-and-peer-spec-indexing — the other open hero-core bug received cross-repo; hero why fails to resolve specs that hero graph resolves (graph substrate stale + repoKey divergence)
 
 ## Recent reflections
 

@@ -344,3 +344,66 @@ opener.
 		t.Errorf("flagged %q, want no-goal (only the goalless initiative)", missing[0].Slug)
 	}
 }
+
+// TestCheck_NearMissRelationKeyWarning covers AC-6 at the CLI surface: a
+// frontmatter key that reads like a relation but forms no edge is named in the
+// report rather than dropped in silence.
+func TestCheck_NearMissRelationKeyWarning(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("planning/initiatives/gov/spec.md", `---
+title: Governance
+type: initiative
+status: planning
+slug: gov
+subspecs: [alpha, bravo]
+---
+# Governance
+
+## Kickoff
+
+Pick up here.
+`)
+	env.indexAll()
+
+	output, err := runCmd("check")
+	if err != nil {
+		t.Fatalf("check errored: %v", err)
+	}
+	if !strings.Contains(output, "look like relations") {
+		t.Errorf("check should warn about near-miss relation keys: %q", output)
+	}
+	if !strings.Contains(output, "subspecs") {
+		t.Errorf("check should name the offending key: %q", output)
+	}
+	if !strings.Contains(output, `"child"`) {
+		t.Errorf("check should name the likely intended relation: %q", output)
+	}
+}
+
+// TestCheck_NoNearMissWarningForAcceptedKeys guards the other half: keys the
+// parser accepts must not be reported, or the warning becomes noise.
+func TestCheck_NoNearMissWarningForAcceptedKeys(t *testing.T) {
+	env := newTestEnv(t)
+	env.addSpec("planning/initiatives/gov2/spec.md", `---
+title: Governance Two
+type: initiative
+status: planning
+slug: gov2
+children: [alpha, bravo]
+---
+# Governance Two
+
+## Kickoff
+
+Pick up here.
+`)
+	env.indexAll()
+
+	output, err := runCmd("check")
+	if err != nil {
+		t.Fatalf("check errored: %v", err)
+	}
+	if strings.Contains(output, "look like relations") {
+		t.Errorf("children: is accepted and must not be reported as a near miss: %q", output)
+	}
+}

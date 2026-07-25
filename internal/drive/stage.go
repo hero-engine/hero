@@ -1,7 +1,6 @@
 package drive
 
 import (
-	"regexp"
 	"strings"
 
 	"github.com/hero-engine/hero/internal/spec"
@@ -55,36 +54,19 @@ func ActionForStage(s Stage) string {
 	return ActionDesign // needs-design and needs-scaffold both design first
 }
 
-var childLinkRe = regexp.MustCompile(`\[([a-z0-9][a-z0-9-]*)\]\((?:\./)?([a-z0-9-]+)/spec\.md\)`)
-
-// declaredChildSlugs parses the child slugs an initiative declares in its
-// `## Child Specs` / sequence table (links of the form `[slug](slug/spec.md)`).
-// This is the supplementary completeness signal: a child named in the table
-// but not yet materialized on disk is needs-scaffold, not absent — so the run
-// can't short-circuit to done. Parent relations remain the spine; this only
-// adds declared-but-undiscovered children.
+// declaredChildSlugs returns the child slugs an initiative declares, via
+// spec.DeclaredChildren — the same roster the completion gate
+// (spec.InitiativeReadyToComplete) consumes. Sharing one function is what
+// keeps `hero goal --check` and `hero spec verify` auto-completion from
+// disagreeing about which children remain; when the two derived the roster
+// from different sources, a check could report done while declared children
+// were still unbuilt.
+//
+// This is the supplementary completeness signal: a child declared in
+// frontmatter or the sequence table but not yet materialized on disk is
+// needs-scaffold, not absent — so the run can't short-circuit to done. Parent
+// relations remain the spine; this only adds declared-but-undiscovered
+// children.
 func declaredChildSlugs(init *spec.Spec) []string {
-	body := init.Sections["child specs & sequence"]
-	if body == "" {
-		// Fall back to any section whose header starts with "child".
-		for k, v := range init.Sections {
-			if strings.HasPrefix(k, "child") {
-				body = v
-				break
-			}
-		}
-	}
-	if body == "" {
-		return nil
-	}
-	seen := map[string]bool{}
-	var out []string
-	for _, m := range childLinkRe.FindAllStringSubmatch(body, -1) {
-		slug := m[1]
-		if slug == m[2] && !seen[slug] { // link text matches the folder slug
-			seen[slug] = true
-			out = append(out, slug)
-		}
-	}
-	return out
+	return spec.DeclaredChildren(init)
 }

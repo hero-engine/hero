@@ -478,3 +478,5 @@
 {"ts":"2026-07-24T01:53:09.071111Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"attention-contract-bundle-publication","message":"status -\u003e completed"}
 {"ts":"2026-07-24T01:53:10.938526Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"conversational-attention-operability","message":"\"Conversational Attention Operability — Safe Chat-Loop Access to Mail and Focus\""}
 {"ts":"2026-07-24T01:53:10.938634Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"conversational-attention-operability","message":"status -\u003e completed"}
+{"ts":"2026-07-25T16:26:10.430019Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"initiative-autocomplete-ignores-declared-children","message":"\"Initiative auto-completion ignores declared-but-unscaffolded children\""}
+{"ts":"2026-07-25T16:26:10.43032Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"initiative-autocomplete-ignores-declared-children","message":"status -\u003e completed"}

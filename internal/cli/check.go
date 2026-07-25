@@ -527,6 +527,33 @@ func runCheck(cmd *cobra.Command, args []string) error {
 		addRow("wikilink-edges", "pass", "no edge-intent wikilinks in spec bodies")
 	}
 
+	// Near-miss relation keys — an unrecognized frontmatter key that reads
+	// like a relation (`subspecs:`, `depends:`, `blocks:`) parses to nothing.
+	// Silent is the dangerous part: a dropped child roster lets an initiative
+	// auto-complete with children that were never built.
+	if hits, err := specsWithNearMissRelationKeys(heroDir); err == nil && len(hits) > 0 {
+		issues += len(hits)
+		fmt.Printf("Specs with frontmatter keys that look like relations but form no edges (%d):\n", len(hits))
+		const nearMissShowMax = 5
+		for i, h := range hits {
+			if i >= nearMissShowMax {
+				fmt.Printf("  … and %d more.\n", len(hits)-nearMissShowMax)
+				break
+			}
+			var parts []string
+			for _, m := range h.Misses {
+				parts = append(parts, fmt.Sprintf("%s: → did you mean %q?", m.Key, m.Meant))
+			}
+			fmt.Printf("  %-30s  %s\n", h.Slug, strings.Join(parts, "; "))
+		}
+		fmt.Println("  These keys are dropped at parse time. Use a recognized key")
+		fmt.Println("  (`parent:`, `child:`/`children:`, `depends-on:`) or a relations: block.")
+		fmt.Println()
+		addRow("relation-key-near-miss", "warn", fmt.Sprintf("%d spec(s) use frontmatter keys that look like relations but form no edges", len(hits)))
+	} else {
+		addRow("relation-key-near-miss", "pass", "no near-miss relation keys in spec frontmatter")
+	}
+
 	// Status truthfulness — one-line summary plus an issue count
 	// bump for any spec lying about being completed. Run `hero check
 	// status` for the full breakdown.
@@ -782,6 +809,28 @@ func specsWithWikilinks(heroDir string) ([]wikilinkHit, error) {
 			}
 		}
 		out = append(out, wikilinkHit{Slug: s.Slug, Links: links})
+	}
+	return out, nil
+}
+
+type nearMissHit struct {
+	Slug   string
+	Misses []spec.RelationKeyNearMiss
+}
+
+// specsWithNearMissRelationKeys returns specs whose frontmatter carries an
+// unrecognized key that reads like a relation. Unlike the wikilink nudge this
+// covers every spec type, since any spec can declare relations.
+func specsWithNearMissRelationKeys(heroDir string) ([]nearMissHit, error) {
+	specs, err := spec.Discover(heroDir)
+	if err != nil {
+		return nil, err
+	}
+	var out []nearMissHit
+	for _, s := range specs {
+		if misses := spec.NearMissRelationKeys(s); len(misses) > 0 {
+			out = append(out, nearMissHit{Slug: s.Slug, Misses: misses})
+		}
 	}
 	return out, nil
 }

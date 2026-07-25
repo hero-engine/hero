@@ -515,3 +515,75 @@ func TestCheckBackwardCompatSlugOrder(t *testing.T) {
 		t.Errorf("completed=%v, want [charlie]", res.Completed)
 	}
 }
+
+// TestCheckHonorsFrontmatterDeclaredChildren covers AC-5: a child declared in
+// the initiative's frontmatter but never scaffolded is remaining, and the run
+// is not done. Before the roster unification `declaredChildSlugs` read only
+// the body table, so a frontmatter-only declaration was invisible here.
+func TestCheckHonorsFrontmatterDeclaredChildren(t *testing.T) {
+	init := mkInit("gov", "guided")
+	init.Relations = []spec.Relation{
+		{Kind: "child", Target: "blast-radius-tiers"},
+		{Kind: "child", Target: "financial-action-gate"},
+	}
+	all := []*spec.Spec{init, mkChild("blast-radius-tiers", "gov", spec.StatusCompleted)}
+
+	res := Check(init, all, nil, nil)
+	if res.Verdict == "done" {
+		t.Fatalf("must not be done with financial-action-gate unbuilt, got %+v", res)
+	}
+	if len(res.Remaining) != 1 || res.Remaining[0] != "financial-action-gate" {
+		t.Fatalf("Remaining = %v, want [financial-action-gate]", res.Remaining)
+	}
+	if res.Action != ActionDesign {
+		t.Errorf("action = %q, want design (the child has no spec on disk yet)", res.Action)
+	}
+}
+
+// TestCheckAndCompletionGateAgreeOnRoster is the AC-4 invariant, asserted
+// end-to-end rather than by inspection: for the same initiative, `goal --check`
+// reports nothing remaining exactly when the completion gate is willing to
+// auto-complete. Both now read spec.DeclaredChildren, so they cannot drift.
+func TestCheckAndCompletionGateAgreeOnRoster(t *testing.T) {
+	newInit := func() *spec.Spec {
+		s := mkInit("gov", "guided")
+		s.Relations = []spec.Relation{{Kind: "child", Target: "alpha"}}
+		// alpha is declared in frontmatter only, bravo in the table only —
+		// the exact split that let the two paths derive different rosters.
+		s.Sections = map[string]string{
+			"child specs & sequence": "1. **[bravo](bravo/spec.md)**\n",
+		}
+		return s
+	}
+
+	cases := []struct {
+		name string
+		all  func(init *spec.Spec) []*spec.Spec
+	}{
+		{"nothing scaffolded", func(i *spec.Spec) []*spec.Spec { return []*spec.Spec{i} }},
+		{"frontmatter child only", func(i *spec.Spec) []*spec.Spec {
+			return []*spec.Spec{i, mkChild("alpha", "gov", spec.StatusCompleted)}
+		}},
+		{"table child only", func(i *spec.Spec) []*spec.Spec {
+			return []*spec.Spec{i, mkChild("bravo", "gov", spec.StatusCompleted)}
+		}},
+		{"one delivered one open", func(i *spec.Spec) []*spec.Spec {
+			return []*spec.Spec{i, mkChild("alpha", "gov", spec.StatusCompleted), mkChild("bravo", "gov", spec.StatusDelivering)}
+		}},
+		{"both delivered", func(i *spec.Spec) []*spec.Spec {
+			return []*spec.Spec{i, mkChild("alpha", "gov", spec.StatusCompleted), mkChild("bravo", "gov", spec.StatusCompleted)}
+		}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			init := newInit()
+			all := c.all(init)
+			checkSaysDone := len(Check(init, all, nil, nil).Remaining) == 0
+			gateSaysDone := spec.InitiativeReadyToComplete(init, all)
+			if checkSaysDone != gateSaysDone {
+				t.Fatalf("rosters disagree: goal --check remaining-empty=%v, completion gate=%v",
+					checkSaysDone, gateSaysDone)
+			}
+		})
+	}
+}
