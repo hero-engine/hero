@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-26T02:22:18Z · 82 ready specs_
+_Generated: 2026-07-26T02:39:39Z · 83 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -33,6 +33,25 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
+
+---
+
+## status-actionable-summary — "Actionable Status Summary — In Progress, Upcoming, and Recently Completed"
+_feature · planning · horizon: now_
+
+Reworks human-readable `hero status` around counts, current work, ranked
+upcoming work, and five recent completions instead of dumping the corpus.
+
+**Status:** planning — output contract is designed; no implementation yet.
+
+**Pick up at:** introduce a collected human status view in `status.go`, then
+lock its grouping, bounds, ordering, and compatibility in focused tests.
+
+→ `/deliver status-actionable-summary`
+
+**Files:** `internal/cli/status.go`, `internal/cli/status_test.go`,
+`internal/spec/select.go`, `web/docs/src/cli/search-and-context.md`
+**Skip:** changing `status --json` or redefining `--all`; both remain compatible.
 
 ---
 
