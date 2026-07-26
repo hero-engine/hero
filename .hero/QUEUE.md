@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-26T02:17:13Z · 85 ready specs_
+_Generated: 2026-07-26T02:22:18Z · 82 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -33,6 +33,44 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
+
+---
+
+## embeddings-never-refresh-on-commit — "Semantic embeddings never refresh on commit — the vector index only moves when someone runs `hero scan` by hand"
+_bug · planning · horizon: now_
+
+Paste into a fresh session to start delivery:
+
+> Deliver `embeddings-never-refresh-on-commit`. The vector index in
+> `vec_chunks` only updates when a human runs `hero scan` or
+> `hero embeddings rebuild` — no git hook, no automation. This repo's
+> embeddings are frozen at 2026-07-16 while HEAD is 2026-07-25 (76 commits,
+> 615 files). `embedded-inference` AC-9 designed the pre-commit trigger and
+> its own ledger marks it PARTIAL; the spec was closed anyway. Fix: make the
+> no-op refresh cheap (hash-check *before* `model.Embed`, currently line 73-74
+> of `refresh.go` embeds every chunk unconditionally), add
+> `hero embeddings refresh --if-stale --deadline`, wire it into the managed
+> **git** pre-commit block, and add a `hero check` staleness row. Start by
+> reading **Key Files**, then work the Acceptance Criteria in order. Close
+> with the cold delivery audit and `hero spec verify`.
+
+**Status:** planning — investigation complete, root cause confirmed with
+measurements; no code written.
+
+**Pick up at:** AC-1 first (move the `textHash` comparison ahead of
+`model.Embed` in `internal/embeddings/refresh.go`). Everything else depends
+on the no-op refresh being cheap enough to sit in a git hook.
+
+→ `.hero/planning/bugs/embeddings-never-refresh-on-commit/spec.md`
+
+**Files:** `internal/embeddings/refresh.go:69`, `internal/embeddings/storage.go:80`,
+`internal/cli/next_hooks.go:314`, `internal/cli/embeddings.go:39`,
+`internal/cli/check.go:223`
+**Skip:** a Claude Stop/PreCompact hook (4 of 6 harness targets have no session
+hook at all — tripwire `harness-changes-cover-all-targets`); a watcher daemon;
+extending `Refresh`'s `scope []string` to file-level scoping.
+
+---
 
 ---
 
@@ -477,28 +515,6 @@ work — orphaned and stale state is *surfaced*, never auto-removed.
 
 ---
 
-## cli-test-isolation-stray-workspace-boundary — "Harden CLI test isolation against stray hero workspaces"
-_enhancement · planning · horizon: now_
-
-Stops the CLI test suite from discovering a stray `/tmp/.hero` by wiring an
-env-var boundary into the workspace upward-walk and setting it from the test
-harness.
-
-**Status:** planning — spec just landed, no code yet. Boundary machinery
-(`WithStopAt`) already exists; `LocateFromCWD` never passes it.
-
-**Pick up at:** add a `HERO_WORKSPACE_BOUNDARY` env read inside
-`LocateFromCWD` (locate.go:159) that forwards to `WithStopAt`, then have
-`newTestEnv`/`newTestEnvEmpty` set it via `t.Setenv` to the temp dir. Add the
-parent-stray regression test last.
-
-→ `.hero/planning/features/cli-test-isolation-stray-workspace-boundary/spec.md`
-
-**Files:** `internal/workspace/locate.go:85,145,159`, `internal/cli/root.go:226`, `internal/cli/helpers_test.go:26,87`, `internal/cli/scan_test.go:183`
-**Skip:** building new boundary infra — `WithStopAt` already exists. Changing prod discovery semantics — out of scope unless clearly safe.
-
----
-
 ## hero-surface-architecture — Hero Surface Architecture — One Surface, Every Layer, Every Role
 _initiative · planning · horizon: now_
 
@@ -826,13 +842,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## execution-plan — "Execution Plan — Local Finish + Cloud Launch"
-_plan · active · horizon: next_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/execution-plan/spec.md)_
-
----
-
 ## multi-domain-core — "Multi-Domain Core Engine"
 _feature · draft · horizon: next_
 
@@ -989,20 +998,6 @@ _feature · designed · horizon: now_
 Lock the work-tracking foundation for Hero so PM ships as an additive domain pack and engineering keeps doing what it's doing. **Nine canonical types using names every tool already uses** (`initiative`, `prd`, `epic`, `feature`, `bug`, `chore`, `intake`, `release`, `sprint`). Sub-typing via `kind`. Two independent adaptation layers — methodology profile (lifecycle, time-box, estimation, rituals, rollups) and vocabulary preset (display names, tracker mappings). **No migration**: existing engineering specs and folders unchanged; the registry registers what's already there plus the new PM-led and time-box types. AC infrastructure untouched. Tasks ships additively with its own package. Cross-domain handoff is an owner flip on the same artifact, not a separate spec creation.
 
 → Drives `spec-type-registry`, the PM pack delivery, the new `core/methodologies/` system, and Phase A of the `hero-domains` initiative.
-
----
-
-## handoff-to-hero-code — Hero QA — Handoff to hero-code for implementation kickoff
-_reference · handoff · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-qa/handoff-to-hero-code.md)_
-
----
-
-## handoff-to-hero-code — Hero PM — Handoff to hero-code for implementation kickoff
-_reference · handoff · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-pm/handoff-to-hero-code.md)_
 
 ---
 
