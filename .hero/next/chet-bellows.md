@@ -1,14 +1,20 @@
 ---
 user: chet-bellows
-updated: 2026-07-25T17:28:58Z
+updated: 2026-07-26T02:17:13Z
 repo: hero-engine/hero
 ---
 
 # chet-bellows's handoff
 
+## Session goal
+
+> Session opened with — Deliver initiative-autocomplete-ignores-declared-children. An initiative auto-completes when only some of its declared children have shipped, because the completion gate's roster is fed from an incomplete source. Two compounding defects: (1) children: (plural) frontmatter is silently dropped by the relation parser (internal/spec/spec.go:633), so declared children never become child edges and the r…
+
+_possibly stale — 5 commit(s) since, last set 9h 50m ago_
+
 ## Last user ask
 
-> Deliver initiative-autocomplete-ignores-declared-children. An initiative auto-completes when only some of its declared children have shipped, because the completion gate's roster is fed from an incomplete source. Two compounding defects: (1) children: (plural) frontmatter is silently dropped by the relation parser (internal/spec/spec.go:633), so declared children never become child edges and the r…
+> Diagnose why the semantic embedding index (vec_chunks) goes stale — embeddings.Refresh is not wired into any git hook, so BM25 stays fresh on every commit while vectors for spec/knowledge/code freeze at the last manual hero scan. Design the fix: inline vs detached vs watcher, plus a staleness guard.
 
 ## Suggested next prompt
 
