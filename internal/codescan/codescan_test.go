@@ -1,6 +1,8 @@
 package codescan
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,6 +12,13 @@ import (
 
 	"github.com/hero-engine/hero/internal/config"
 )
+
+type failingParser struct{}
+
+func (failingParser) Languages() []string { return []string{"go"} }
+func (failingParser) ParseFile(string, []byte) (*FileInfo, error) {
+	return nil, errors.New("injected parse failure")
+}
 
 func TestGoParser(t *testing.T) {
 	src := []byte(`package example
@@ -236,7 +245,7 @@ export default Footer;
 		"App":     true,
 		"useAuth": true,
 		"Button":  true,
-		"useCart":  true,
+		"useCart": true,
 		"Footer":  true,
 	}
 
@@ -548,6 +557,149 @@ export interface ApiConfig {
 	}
 	if len(result2.Checksums) != 2 {
 		t.Errorf("Incremental checksums = %d, want 2", len(result2.Checksums))
+	}
+}
+
+func TestScanContextAccountsForChangesAndEndpointOnlySources(t *testing.T) {
+	dir := t.TempDir()
+	goPath := filepath.Join(dir, "main.go")
+	protoPath := filepath.Join(dir, "service.proto")
+	if err := os.WriteFile(goPath, []byte("package main\nfunc Main() {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(protoPath, []byte("service Greeter { rpc Hello (Req) returns (Resp); }\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	scanner := NewScanner(config.DefaultCodeScanConfig(), dir)
+	first, err := scanner.ScanContext(context.Background(), nil, nil)
+	if err != nil {
+		t.Fatalf("first scan: %v", err)
+	}
+	if !first.Complete {
+		t.Fatalf("first scan incomplete: %+v", first.Diagnostics)
+	}
+	if first.Stats.FilesInventoried != 2 || first.Stats.Reparsed != 2 || first.Stats.Added != 2 {
+		t.Fatalf("first stats = %+v, want two inventoried/reparsed/added", first.Stats)
+	}
+	if len(first.Checksums) != 2 {
+		t.Fatalf("checksums = %v, endpoint-only source was not inventoried", first.Checksums)
+	}
+
+	second, err := scanner.ScanContext(context.Background(), first.Checksums, BuildScanCache(first))
+	if err != nil {
+		t.Fatalf("unchanged scan: %v", err)
+	}
+	if second.Stats.Reparsed != 0 || second.Stats.Unchanged != 2 {
+		t.Fatalf("unchanged stats = %+v, want zero reparsed and two unchanged", second.Stats)
+	}
+
+	if err := os.WriteFile(goPath, []byte("package main\nfunc Main() {}\nfunc Added() {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(protoPath); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "schema.graphql"), []byte("type Query { hero: String }\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	third, err := scanner.ScanContext(context.Background(), second.Checksums, BuildScanCache(second))
+	if err != nil {
+		t.Fatalf("changed scan: %v", err)
+	}
+	if third.Stats.Added != 1 || third.Stats.Changed != 1 || third.Stats.Deleted != 1 || third.Stats.Reparsed != 2 {
+		t.Fatalf("changed stats = %+v, want add/change/delete=1 and reparsed=2", third.Stats)
+	}
+}
+
+func TestScanContextMarksParseFailureIncomplete(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "main.go"), []byte("package main\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	scanner := NewScanner(config.DefaultCodeScanConfig(), dir)
+	scanner.parsers["go"] = failingParser{}
+	result, err := scanner.ScanContext(context.Background(), nil, nil)
+	if err != nil {
+		t.Fatalf("ScanContext: %v", err)
+	}
+	if result.Complete {
+		t.Fatal("parse failure must make the source snapshot incomplete")
+	}
+	if len(result.Diagnostics) != 1 || result.Diagnostics[0].Phase != "parse" {
+		t.Fatalf("diagnostics = %+v, want one parse failure", result.Diagnostics)
+	}
+	codeDir := filepath.Join(dir, ".hero", "knowledge", "code")
+	if err := GenerateKnowledgeContext(context.Background(), result, codeDir); err == nil {
+		t.Fatal("incomplete result must not generate authoritative knowledge")
+	}
+	if err := CommitScanState(result, codeDir, "heuristic"); err == nil {
+		t.Fatal("incomplete result must not advance scan state")
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, err := scanner.ScanContext(ctx, nil, nil); !errors.Is(err, context.Canceled) {
+		t.Fatalf("canceled ScanContext error = %v, want context.Canceled", err)
+	}
+}
+
+func TestScanStateRejectsSplitGenerationAndParserMismatch(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "main.go"), []byte("package main\nfunc Main() {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	result, err := NewScanner(config.DefaultCodeScanConfig(), dir).Scan(nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	codeDir := filepath.Join(dir, ".hero", "knowledge", "code")
+	if err := CommitScanState(result, codeDir, "heuristic"); err != nil {
+		t.Fatalf("CommitScanState: %v", err)
+	}
+	checksums, cache, usable, err := LoadScanState(codeDir, "heuristic")
+	if err != nil || !usable || cache == nil || len(checksums) != 1 {
+		t.Fatalf("LoadScanState = (%v, %+v, %v, %v), want usable pair", checksums, cache, usable, err)
+	}
+	if cache.Generation == "" || cache.ChecksumsHash == "" {
+		t.Fatalf("cache manifest missing generation/hash: %+v", cache)
+	}
+
+	if err := SaveChecksums(codeDir, map[string]string{"main.go": "split"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, usable, err := LoadScanState(codeDir, "heuristic"); err != nil || usable {
+		t.Fatalf("split pair usable=%v err=%v, want rejected without load error", usable, err)
+	}
+
+	if err := CommitScanState(result, codeDir, "heuristic"); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, usable, err := LoadScanState(codeDir, "treesitter"); err != nil || usable {
+		t.Fatalf("parser-mismatched pair usable=%v err=%v, want rejected", usable, err)
+	}
+}
+
+func TestGenerateKnowledgeContextCommitsStateSeparately(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "main.go"), []byte("package main\nfunc Main() {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	result, err := NewScanner(config.DefaultCodeScanConfig(), dir).Scan(nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	codeDir := filepath.Join(dir, ".hero", "knowledge", "code")
+	if err := GenerateKnowledgeContext(context.Background(), result, codeDir); err != nil {
+		t.Fatalf("GenerateKnowledgeContext: %v", err)
+	}
+	for _, name := range []string{".checksums.json", ".scan-cache.json"} {
+		if _, err := os.Stat(filepath.Join(codeDir, name)); !os.IsNotExist(err) {
+			t.Fatalf("%s exists before state commit (err=%v)", name, err)
+		}
+	}
+	if err := CommitScanState(result, codeDir, "heuristic"); err != nil {
+		t.Fatalf("CommitScanState: %v", err)
 	}
 }
 

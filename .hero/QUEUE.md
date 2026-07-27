@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-27T14:24:44Z · 82 ready specs_
+_Generated: 2026-07-27T19:38:51Z · 83 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -36,41 +36,40 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## embeddings-never-refresh-on-commit — "Semantic embeddings never refresh on commit — the vector index only moves when someone runs `hero scan` by hand"
-_bug · planning · horizon: now_
+## continuous-code-index-freshness — "Continuous Code-Index Freshness"
+_initiative · planning · horizon: now_
 
-Paste into a fresh session to start delivery:
+_Run opener — arm with `/drive continuous-code-index-freshness`_
 
-> Deliver `embeddings-never-refresh-on-commit`. The vector index in
-> `vec_chunks` only updates when a human runs `hero scan` or
-> `hero embeddings rebuild` — no git hook, no automation. This repo's
-> embeddings are frozen at 2026-07-16 while HEAD is 2026-07-25 (76 commits,
-> 615 files). `embedded-inference` AC-9 designed the pre-commit trigger and
-> its own ledger marks it PARTIAL; the spec was closed anyway. Fix: make the
-> no-op refresh cheap (hash-check *before* `model.Embed`, currently line 73-74
-> of `refresh.go` embeds every chunk unconditionally), add
-> `hero embeddings refresh --if-stale --deadline`, wire it into the managed
-> **git** pre-commit block, and add a `hero check` staleness row. Start by
-> reading **Key Files**, then work the Acceptance Criteria in order. Close
-> with the cold delivery audit and `hero spec verify`.
-
-**Status:** planning — investigation complete, root cause confirmed with
-measurements; no code written.
-
-**Pick up at:** AC-1 first (move the `textHash` comparison ahead of
-`model.Embed` in `internal/embeddings/refresh.go`). Everything else depends
-on the no-op refresh being cheap enough to sit in a git hook.
-
-→ `.hero/planning/bugs/embeddings-never-refresh-on-commit/spec.md`
-
-**Files:** `internal/embeddings/refresh.go:69`, `internal/embeddings/storage.go:80`,
-`internal/cli/next_hooks.go:314`, `internal/cli/embeddings.go:39`,
-`internal/cli/check.go:223`
-**Skip:** a Claude Stop/PreCompact hook (4 of 6 harness targets have no session
-hook at all — tripwire `harness-changes-cover-all-targets`); a watcher daemon;
-extending `Refresh`'s `scope []string` to file-level scoping.
+After local commits and merges, code symbols, lexical graph projection, and
+code embeddings reflect the configured source tree without manual
+`hero scan`. The implementation reuses the existing scanner, cache, graph,
+embedding, hook, and health surfaces; hook failures remain best-effort and
+never block git.
 
 ---
+
+## embeddings-never-refresh-on-commit — "Semantic embeddings never refresh on commit"
+_bug · planning · horizon: now_
+
+Fixes the vector engine behind the continuous code-index pipeline: hash before
+embed, batch transactional writes, explicit extraction authority, and
+configured-scope refresh including `code`.
+
+**Status:** planning — root cause and measurements are preserved; hook/check
+ownership has moved to child 3.
+
+**Pick up at:** change the storage/refresh contract so known hashes are read
+before embedding and each corpus extraction reports complete, authoritative,
+unavailable, or partial.
+
+→ `.hero/planning/initiatives/continuous-code-index-freshness/embeddings-never-refresh-on-commit/spec.md`
+
+**Files:** `internal/embeddings/refresh.go`,
+`internal/embeddings/storage.go`, `internal/embeddings/chunker.go`,
+`internal/cli/embeddings.go`, `internal/cli/scan.go`
+**Skip:** hook templates, `hero check`, status rendering, event chunker fixes,
+search-time writes, and file-level embedding scope.
 
 ---
 

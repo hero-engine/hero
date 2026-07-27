@@ -290,6 +290,10 @@ func resetFlags() {
 	// Reset scan flags
 	scanDryRun = false
 	scanForce = false
+	scanCodeOnly = false
+	scanIncremental = false
+	scanDeadline = defaultIncrementalScanDeadline
+	scanQuiet = false
 
 	// Reset watch flags
 	watchMode = "local"

@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-27T14:24:44Z
+updated: 2026-07-27T19:38:50Z
 repo: hero-engine/hero
 ---
 
@@ -10,15 +10,15 @@ repo: hero-engine/hero
 
 > Session opened with — Deliver initiative-autocomplete-ignores-declared-children. An initiative auto-completes when only some of its declared children have shipped, because the completion gate's roster is fed from an incomplete source. Two compounding defects: (1) children: (plural) frontmatter is silently dropped by the relation parser (internal/spec/spec.go:633), so declared children never become child edges and the r…
 
-_possibly stale — 7 commit(s) since, last set 1d 21h ago_
+_possibly stale — 8 commit(s) since, last set 2d 3h ago_
 
 ## Last user ask
 
-> Deliver status-actionable-summary: compact hero status into counts, In progress, ranked Upcoming, Waiting, and five recent completions.
+> Drive continuous-code-index-freshness, beginning with incremental-code-graph-refresh
 
 ## Suggested next prompt
 
-> Let’s commit and push the completed status-actionable-summary delivery.
+> let's deliver embeddings-never-refresh-on-commit next, reusing the completed incremental code refresh seam
 
 ## Recent reflections
 

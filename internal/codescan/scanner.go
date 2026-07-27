@@ -1,6 +1,7 @@
 package codescan
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/scan"
@@ -105,26 +107,26 @@ func (s *Scanner) RegisterExtension(ext, lang string) {
 // enough to keep GSP files visible in the code graph.
 func languageForExt(ext string) string {
 	m := map[string]string{
-		".go":    "go",
-		".js":    "javascript",
-		".jsx":   "javascript",
-		".mjs":   "javascript",
-		".cjs":   "javascript",
-		".ts":    "typescript",
-		".tsx":   "typescript",
-		".mts":   "typescript",
-		".py":    "python",
-		".pyw":   "python",
-		".java":  "java",
-		".rs":    "rust",
-		".c":     "c",
-		".h":     "c",
-		".cpp":   "cpp",
-		".cc":    "cpp",
-		".cxx":   "cpp",
-		".hpp":   "cpp",
-		".hxx":   "cpp",
-		".rb":    "ruby",
+		".go":     "go",
+		".js":     "javascript",
+		".jsx":    "javascript",
+		".mjs":    "javascript",
+		".cjs":    "javascript",
+		".ts":     "typescript",
+		".tsx":    "typescript",
+		".mts":    "typescript",
+		".py":     "python",
+		".pyw":    "python",
+		".java":   "java",
+		".rs":     "rust",
+		".c":      "c",
+		".h":      "c",
+		".cpp":    "cpp",
+		".cc":     "cpp",
+		".cxx":    "cpp",
+		".hpp":    "cpp",
+		".hxx":    "cpp",
+		".rb":     "ruby",
 		".groovy": "groovy",
 		".gvy":    "groovy",
 		".gsp":    "groovy",
@@ -147,16 +149,32 @@ func isEndpointOnlyExt(ext string) bool {
 // files are carried forward from prevCache so the merged Result stays complete.
 // A nil prevCache (missing/corrupt/legacy) degrades gracefully to a full re-parse.
 func (s *Scanner) Scan(prevChecksums map[string]string, prevCache *ScanCache) (*Result, error) {
+	return s.ScanContext(context.Background(), prevChecksums, prevCache)
+}
+
+// ScanContext is Scan with cancellation propagated through inventory and parse
+// boundaries. A returned incomplete Result is diagnostic-only and must not be
+// used as an authoritative deletion keep-set.
+func (s *Scanner) ScanContext(ctx context.Context, prevChecksums map[string]string, prevCache *ScanCache) (*Result, error) {
+	start := time.Now()
 	result := &Result{
 		ProjectRoot: s.projectRoot,
 		Checksums:   make(map[string]string),
+		Complete:    true,
 	}
 
 	var files []FileInfo
 
 	err := filepath.WalkDir(s.projectRoot, func(path string, d fs.DirEntry, err error) error {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return ctxErr
+		}
 		if err != nil {
-			return nil // skip errors
+			result.Complete = false
+			result.Diagnostics = append(result.Diagnostics, ScanDiagnostic{
+				Path: path, Phase: "walk", Error: err.Error(),
+			})
+			return nil
 		}
 
 		if d.IsDir() {
@@ -173,62 +191,78 @@ func (s *Scanner) Scan(prevChecksums map[string]string, prevCache *ScanCache) (*
 
 		ext := strings.ToLower(filepath.Ext(path))
 		lang := languageForExt(ext)
-
-		// Files with no language parser may still have endpoint-only extraction
-		// (e.g. .proto, .graphql, .gql files)
-		if lang == "" {
-			if isEndpointOnlyExt(ext) {
-				relPath, _ := filepath.Rel(s.projectRoot, path)
-				content, err := os.ReadFile(path)
-				if err != nil {
-					return nil
-				}
-				endpoints := ExtractEndpoints(relPath, content, "")
-				if len(endpoints) > 0 {
-					result.Endpoints = append(result.Endpoints, endpoints...)
-				}
+		endpointOnly := lang == "" && isEndpointOnlyExt(ext)
+		if lang == "" && !endpointOnly {
+			return nil
+		}
+		if lang != "" {
+			if _, ok := s.parsers[lang]; !ok {
+				return nil
 			}
-			return nil
 		}
 
-		parser, ok := s.parsers[lang]
-		if !ok {
+		relPath, err := filepath.Rel(s.projectRoot, path)
+		if err != nil {
+			result.Complete = false
+			result.Diagnostics = append(result.Diagnostics, ScanDiagnostic{
+				Path: path, Phase: "path", Error: err.Error(),
+			})
 			return nil
 		}
+		result.Stats.FilesInventoried++
 
-		relPath, _ := filepath.Rel(s.projectRoot, path)
-
-		// Read file
 		content, err := os.ReadFile(path)
 		if err != nil {
-			return nil // skip unreadable files
+			result.Complete = false
+			result.Diagnostics = append(result.Diagnostics, ScanDiagnostic{
+				Path: relPath, Phase: "read", Error: err.Error(),
+			})
+			return nil
+		}
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return ctxErr
 		}
 
-		// Checksum for incremental scanning
 		sum := fmt.Sprintf("%x", sha256.Sum256(content))
 		result.Checksums[relPath] = sum
 
-		// Unchanged file: carry its prior parse result forward from the cache so
-		// the merged Result stays complete without re-parsing. If the cache lacks
-		// an entry (missing/partial/legacy cache), fall through and parse fresh —
-		// never drop the file.
 		if prevChecksums != nil {
 			if prev, ok := prevChecksums[relPath]; ok && prev == sum {
 				if prevCache != nil {
+					if endpointOnly {
+						result.ConfigVars = append(result.ConfigVars, prevCache.ConfigVars[relPath]...)
+						result.Endpoints = append(result.Endpoints, prevCache.Endpoints[relPath]...)
+						result.Stats.Unchanged++
+						return nil
+					}
 					if fi, ok := prevCache.Files[relPath]; ok {
 						files = append(files, fi)
 						result.ConfigVars = append(result.ConfigVars, prevCache.ConfigVars[relPath]...)
 						result.Endpoints = append(result.Endpoints, prevCache.Endpoints[relPath]...)
+						result.Stats.Unchanged++
 						return nil
 					}
 				}
-				// no cached entry — fall through to parse fresh
 			}
 		}
 
+		result.Stats.Reparsed++
+		if endpointOnly {
+			result.Endpoints = append(result.Endpoints, ExtractEndpoints(relPath, content, "")...)
+			return nil
+		}
+
+		parser := s.parsers[lang]
 		fi, err := parser.ParseFile(relPath, content)
 		if err != nil {
-			return nil // skip parse errors
+			result.Complete = false
+			result.Diagnostics = append(result.Diagnostics, ScanDiagnostic{
+				Path: relPath, Phase: "parse", Error: err.Error(),
+			})
+			return nil
+		}
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return ctxErr
 		}
 
 		files = append(files, *fi)
@@ -251,6 +285,21 @@ func (s *Scanner) Scan(prevChecksums map[string]string, prevCache *ScanCache) (*
 		return nil, fmt.Errorf("walking project: %w", err)
 	}
 
+	for path, sum := range result.Checksums {
+		prev, existed := prevChecksums[path]
+		switch {
+		case !existed:
+			result.Stats.Added++
+		case prev != sum:
+			result.Stats.Changed++
+		}
+	}
+	for path := range prevChecksums {
+		if _, exists := result.Checksums[path]; !exists {
+			result.Stats.Deleted++
+		}
+	}
+
 	result.Files = files
 
 	// Aggregate files into packages
@@ -266,6 +315,7 @@ func (s *Scanner) Scan(prevChecksums map[string]string, prevCache *ScanCache) (*
 	if mm := scan.DetectMultiModule(s.projectRoot); mm != nil {
 		result.Modules = s.mapModules(mm, result.Packages)
 	}
+	result.Stats.Elapsed = time.Since(start)
 
 	return result, nil
 }
@@ -435,5 +485,5 @@ func SaveChecksums(codeDir string, checksums map[string]string) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(codeDir, ".checksums.json"), data, 0o644)
+	return atomicWriteFile(filepath.Join(codeDir, ".checksums.json"), data, 0o644)
 }

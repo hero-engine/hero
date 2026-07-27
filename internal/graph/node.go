@@ -1,6 +1,7 @@
 package graph
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -72,6 +73,27 @@ func IsGlobalNodeType(typ string) bool {
 // optionally n.ContentHash. valid_from / ingested_at default to now
 // if empty. ID and valid_to are managed by the store.
 func (s *Store) UpsertNode(n *Node) (int64, error) {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return 0, fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback()
+	id, err := upsertNode(context.Background(), tx, n)
+	if err != nil {
+		return 0, err
+	}
+	if err := tx.Commit(); err != nil {
+		return 0, fmt.Errorf("commit: %w", err)
+	}
+	return id, nil
+}
+
+type graphQueryExecer interface {
+	QueryRowContext(context.Context, string, ...any) *sql.Row
+	ExecContext(context.Context, string, ...any) (sql.Result, error)
+}
+
+func upsertNode(ctx context.Context, q graphQueryExecer, n *Node) (int64, error) {
 	if n.Type == "" || n.Key == "" {
 		return 0, fmt.Errorf("graph: node requires type and key")
 	}
@@ -97,12 +119,6 @@ func (s *Store) UpsertNode(n *Node) (int64, error) {
 		return 0, fmt.Errorf("marshalling source: %w", err)
 	}
 
-	tx, err := s.db.Begin()
-	if err != nil {
-		return 0, fmt.Errorf("begin tx: %w", err)
-	}
-	defer tx.Rollback()
-
 	// Look up the current row, if any.
 	var (
 		existingID     int64
@@ -120,7 +136,7 @@ func (s *Store) UpsertNode(n *Node) (int64, error) {
 	// unpartitioned row is still upgraded in place by a writer that now
 	// stamps a repoKey, rather than left behind as a duplicate live row.
 	upsertTail, upsertArgs := repoWriteScope(n.Repo)
-	err = tx.QueryRow(
+	err = q.QueryRowContext(ctx,
 		`SELECT id, content_hash, props, repo, unit, domain
 		   FROM nodes
 		  WHERE type = ? AND key = ? AND valid_to IS NULL`+upsertTail,
@@ -161,19 +177,13 @@ func (s *Store) UpsertNode(n *Node) (int64, error) {
 			existingDomain == n.Domain
 
 		if partitionUnchanged && n.ContentHash != "" && existingHash.Valid && existingHash.String == n.ContentHash {
-			if err := tx.Commit(); err != nil {
-				return 0, fmt.Errorf("commit (no-op): %w", err)
-			}
 			return existingID, nil
 		}
 		if partitionUnchanged && n.ContentHash == "" && !existingHash.Valid && propsEqual(existingProps, propsJSON) {
-			if err := tx.Commit(); err != nil {
-				return 0, fmt.Errorf("commit (no-op): %w", err)
-			}
 			return existingID, nil
 		}
 		// Otherwise invalidate the prior row.
-		if _, err := tx.Exec(
+		if _, err := q.ExecContext(ctx,
 			`UPDATE nodes SET valid_to = ? WHERE id = ?`,
 			n.IngestedAt, existingID,
 		); err != nil {
@@ -181,7 +191,7 @@ func (s *Store) UpsertNode(n *Node) (int64, error) {
 		}
 		// Also invalidate any edges hanging off the prior version.
 		// (Edges are re-asserted by the next ingest pass.)
-		if _, err := tx.Exec(
+		if _, err := q.ExecContext(ctx,
 			`UPDATE edges SET valid_to = ?
 			  WHERE valid_to IS NULL AND (from_id = ? OR to_id = ?)`,
 			n.IngestedAt, existingID, existingID,
@@ -190,7 +200,7 @@ func (s *Store) UpsertNode(n *Node) (int64, error) {
 		}
 	}
 
-	res, err := tx.Exec(
+	res, err := q.ExecContext(ctx,
 		`INSERT INTO nodes
 		 (type, key, props, scope, repo, unit, domain, content_hash, source, valid_from, valid_to, ingested_at)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)`,
@@ -205,9 +215,6 @@ func (s *Store) UpsertNode(n *Node) (int64, error) {
 	id, err := res.LastInsertId()
 	if err != nil {
 		return 0, fmt.Errorf("last insert id: %w", err)
-	}
-	if err := tx.Commit(); err != nil {
-		return 0, fmt.Errorf("commit: %w", err)
 	}
 	n.ID = id
 	return id, nil

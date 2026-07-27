@@ -1,6 +1,7 @@
 package index
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -12,11 +13,17 @@ import (
 // database and upserts them into fts_nodes + node_index. Returns the number of
 // nodes projected.
 func (idx *DB) ProjectGraphNodes(graphDB *sql.DB) (int, error) {
+	return idx.ProjectGraphNodesContext(context.Background(), graphDB)
+}
+
+// ProjectGraphNodesContext is ProjectGraphNodes with cancellation propagated
+// through both graph reads and the transactional FTS rebuild.
+func (idx *DB) ProjectGraphNodesContext(ctx context.Context, graphDB *sql.DB) (int, error) {
 	if graphDB == nil {
 		return 0, nil
 	}
 
-	rows, err := graphDB.Query(`
+	rows, err := graphDB.QueryContext(ctx, `
 		SELECT type, key, props, valid_from, COALESCE(
 			(SELECT GROUP_CONCAT(e.type || ':' || n2.key, ',')
 			 FROM edges e JOIN nodes n2 ON n2.id = e.to_id
@@ -30,7 +37,7 @@ func (idx *DB) ProjectGraphNodes(graphDB *sql.DB) (int, error) {
 	}
 	defer rows.Close()
 
-	tx, err := idx.db.Begin()
+	tx, err := idx.db.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, fmt.Errorf("begin tx: %w", err)
 	}
@@ -38,18 +45,18 @@ func (idx *DB) ProjectGraphNodes(graphDB *sql.DB) (int, error) {
 
 	// Clear existing projected data.
 	for _, table := range []string{"fts_nodes", "node_index"} {
-		if _, err := tx.Exec(fmt.Sprintf("DELETE FROM %s", table)); err != nil {
+		if _, err := tx.ExecContext(ctx, fmt.Sprintf("DELETE FROM %s", table)); err != nil {
 			return 0, fmt.Errorf("clearing %s: %w", table, err)
 		}
 	}
 
-	insertFTS, err := tx.Prepare("INSERT INTO fts_nodes(rowid, title, body) VALUES (?, ?, ?)")
+	insertFTS, err := tx.PrepareContext(ctx, "INSERT INTO fts_nodes(rowid, title, body) VALUES (?, ?, ?)")
 	if err != nil {
 		return 0, fmt.Errorf("prepare fts insert: %w", err)
 	}
 	defer insertFTS.Close()
 
-	insertMeta, err := tx.Prepare(`INSERT INTO node_index(rowid, node_type, key, tags, valid_from)
+	insertMeta, err := tx.PrepareContext(ctx, `INSERT INTO node_index(rowid, node_type, key, tags, valid_from)
 		VALUES (?, ?, ?, ?, ?)`)
 	if err != nil {
 		return 0, fmt.Errorf("prepare meta insert: %w", err)
@@ -86,10 +93,10 @@ func (idx *DB) ProjectGraphNodes(graphDB *sql.DB) (int, error) {
 			body = graph.StringProp(props, "content")
 		}
 
-		if _, err := insertFTS.Exec(rowID, title, body); err != nil {
+		if _, err := insertFTS.ExecContext(ctx, rowID, title, body); err != nil {
 			return count, fmt.Errorf("insert fts node %s/%s: %w", nodeType, key, err)
 		}
-		if _, err := insertMeta.Exec(rowID, nodeType, key, tags, validFrom); err != nil {
+		if _, err := insertMeta.ExecContext(ctx, rowID, nodeType, key, tags, validFrom); err != nil {
 			return count, fmt.Errorf("insert node_index %s/%s: %w", nodeType, key, err)
 		}
 
@@ -107,4 +114,3 @@ func (idx *DB) ProjectGraphNodes(graphDB *sql.DB) (int, error) {
 
 	return count, nil
 }
-

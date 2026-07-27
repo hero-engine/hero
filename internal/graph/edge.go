@@ -1,6 +1,7 @@
 package graph
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -66,6 +67,22 @@ func IsCrossDomainAllowedKind(kind string) bool {
 // to catch the trap where a global node's outgoing edge would
 // silently land outside any per-domain query.
 func (s *Store) UpsertEdge(e *Edge) (int64, error) {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return 0, fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback()
+	id, err := upsertEdge(context.Background(), tx, e)
+	if err != nil {
+		return 0, err
+	}
+	if err := tx.Commit(); err != nil {
+		return 0, fmt.Errorf("commit: %w", err)
+	}
+	return id, nil
+}
+
+func upsertEdge(ctx context.Context, q graphQueryExecer, e *Edge) (int64, error) {
 	if e.FromID == 0 || e.ToID == 0 || e.Type == "" {
 		return 0, fmt.Errorf("graph: edge requires from_id, to_id, type")
 	}
@@ -85,7 +102,7 @@ func (s *Store) UpsertEdge(e *Edge) (int64, error) {
 	if e.Domain == "" {
 		var fromDomain string
 		fromType := ""
-		err := s.db.QueryRow(
+		err := q.QueryRowContext(ctx,
 			`SELECT type, domain FROM nodes WHERE id = ? AND valid_to IS NULL`,
 			e.FromID,
 		).Scan(&fromType, &fromDomain)
@@ -108,12 +125,6 @@ func (s *Store) UpsertEdge(e *Edge) (int64, error) {
 		return 0, fmt.Errorf("marshalling source: %w", err)
 	}
 
-	tx, err := s.db.Begin()
-	if err != nil {
-		return 0, fmt.Errorf("begin tx: %w", err)
-	}
-	defer tx.Rollback()
-
 	var (
 		existingID     int64
 		existingProps  string
@@ -121,7 +132,7 @@ func (s *Store) UpsertEdge(e *Edge) (int64, error) {
 		existingUnit   string
 		existingDomain string
 	)
-	err = tx.QueryRow(
+	err = q.QueryRowContext(ctx,
 		`SELECT id, props, repo, unit, domain FROM edges
 		  WHERE from_id = ? AND type = ? AND to_id = ? AND valid_to IS NULL`,
 		e.FromID, e.Type, e.ToID,
@@ -137,12 +148,9 @@ func (s *Store) UpsertEdge(e *Edge) (int64, error) {
 			existingUnit == e.Unit &&
 			existingDomain == e.Domain
 		if partitionUnchanged && propsEqual(existingProps, propsJSON) {
-			if err := tx.Commit(); err != nil {
-				return 0, fmt.Errorf("commit (no-op): %w", err)
-			}
 			return existingID, nil
 		}
-		if _, err := tx.Exec(
+		if _, err := q.ExecContext(ctx,
 			`UPDATE edges SET valid_to = ? WHERE id = ?`,
 			e.IngestedAt, existingID,
 		); err != nil {
@@ -150,7 +158,7 @@ func (s *Store) UpsertEdge(e *Edge) (int64, error) {
 		}
 	}
 
-	res, err := tx.Exec(
+	res, err := q.ExecContext(ctx,
 		`INSERT INTO edges
 		 (from_id, to_id, type, props, scope, repo, unit, domain, source, valid_from, valid_to, ingested_at)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)`,
@@ -164,9 +172,6 @@ func (s *Store) UpsertEdge(e *Edge) (int64, error) {
 	id, err := res.LastInsertId()
 	if err != nil {
 		return 0, fmt.Errorf("last insert id: %w", err)
-	}
-	if err := tx.Commit(); err != nil {
-		return 0, fmt.Errorf("commit: %w", err)
 	}
 	e.ID = id
 	return id, nil

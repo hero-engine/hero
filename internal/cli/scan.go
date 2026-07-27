@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -34,13 +35,19 @@ import (
 	"github.com/hero-engine/hero/internal/spec"
 	"github.com/hero-engine/hero/internal/tracker"
 	"github.com/spf13/cobra"
+	"golang.org/x/sys/unix"
 )
 
+const defaultIncrementalScanDeadline = 10 * time.Second
+
 var (
-	scanDryRun   bool
-	scanForce    bool
-	scanCodeOnly bool
-	scanNoHooks  bool
+	scanDryRun      bool
+	scanForce       bool
+	scanCodeOnly    bool
+	scanNoHooks     bool
+	scanIncremental bool
+	scanDeadline    time.Duration
+	scanQuiet       bool
 )
 
 // activeDomain returns the workspace's active domain pack, defaulting
@@ -77,6 +84,7 @@ Code scanning depth is controlled by code_scan.depth in hero.json:
 Examples:
   hero scan              # full scan (stack + code)
   hero scan --code       # code intelligence only
+  hero scan --code --incremental --deadline 10s -q
   hero scan --dry-run    # show what would be generated
   hero scan --force      # overwrite existing entries`,
 	RunE: runScan,
@@ -86,6 +94,9 @@ func init() {
 	scanCmd.Flags().BoolVar(&scanDryRun, "dry-run", false, "show what would be generated without writing")
 	scanCmd.Flags().BoolVar(&scanForce, "force", false, "overwrite existing knowledge entries")
 	scanCmd.Flags().BoolVar(&scanCodeOnly, "code", false, "run code intelligence scan only")
+	scanCmd.Flags().BoolVar(&scanIncremental, "incremental", false, "refresh changed code intelligence only")
+	scanCmd.Flags().DurationVar(&scanDeadline, "deadline", defaultIncrementalScanDeadline, "maximum incremental refresh duration")
+	scanCmd.Flags().BoolVarP(&scanQuiet, "quiet", "q", false, "suppress output and normalize incremental failures for hooks")
 	scanCmd.Flags().BoolVar(&scanNoHooks, "no-hooks", false, "deprecated no-op — hook install moved to 'hero init'; kept for backwards compatibility")
 
 	RegisterSmoke(scanCmd, func(cmd *cobra.Command) error {
@@ -94,7 +105,20 @@ func init() {
 	})
 }
 
-func runScan(cmd *cobra.Command, args []string) error {
+func runScan(cmd *cobra.Command, args []string) (retErr error) {
+	if scanIncremental && !scanCodeOnly {
+		return fmt.Errorf("--incremental requires --code")
+	}
+	if scanQuiet && !scanIncremental {
+		return fmt.Errorf("--quiet is only supported with --code --incremental")
+	}
+	if scanIncremental && scanQuiet {
+		defer func() {
+			if retErr != nil {
+				retErr = nil
+			}
+		}()
+	}
 	projectRoot := findProjectRoot()
 	cfg, err := config.Load(projectRoot)
 	if err != nil {
@@ -132,7 +156,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 		Flags:       map[string]any{"code": scanCodeOnly, "dry-run": scanDryRun, "force": scanForce},
 		DryRun:      scanDryRun,
 		Force:       scanForce,
-		Reporter:    scan.StdoutReporter(os.Stdout),
+		Reporter:    scan.StdoutReporter(scanOutput()),
 	}
 	if _, err := scan.Dispatch("scan", scanOpts); err != nil {
 		if errors.Is(err, scan.ErrScannerNotFound) {
@@ -147,7 +171,11 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	// Code-only mode
 	if scanCodeOnly {
-		return runCodeScan(cfg, projectRoot, heroDir)
+		err := runCodeScanContext(cmd.Context(), cfg, projectRoot, heroDir)
+		if scanIncremental && scanQuiet {
+			return nil
+		}
+		return err
 	}
 
 	// Run stack analysis
@@ -248,39 +276,50 @@ func runScan(cmd *cobra.Command, args []string) error {
 }
 
 func runCodeScan(cfg config.Config, projectRoot, heroDir string) error {
+	return runCodeScanContext(context.Background(), cfg, projectRoot, heroDir)
+}
+
+func runCodeScanContext(parent context.Context, cfg config.Config, projectRoot, heroDir string) error {
 	if cfg.CodeScan.IsDisabled() {
-		fmt.Println("Code scanning is disabled (code_scan.depth: disabled)")
+		if !scanQuiet {
+			fmt.Fprintln(scanOutput(), "Code scanning is disabled (code_scan.depth: disabled)")
+		}
 		return nil
 	}
 
-	codeDir := cfg.CodeDir(projectRoot)
-
-	// Load previous checksums for incremental scanning
-	prevChecksums, err := codescan.LoadChecksums(codeDir)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: could not load previous checksums: %v\n", err)
+	ctx := parent
+	cancel := func() {}
+	if scanIncremental {
+		if scanDeadline <= 0 {
+			return fmt.Errorf("incremental deadline must be greater than zero")
+		}
+		ctx, cancel = context.WithTimeout(parent, scanDeadline)
 	}
+	defer cancel()
 
-	// Load the prior scan cache so unchanged files can be carried forward.
-	prevCache, err := codescan.LoadScanCache(codeDir)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: could not load scan cache, re-parsing all files: %v\n", err)
-		prevCache = nil
+	parser := resolveParserQuiet(cfg.CodeScan.Parser, scanQuiet)
+	if !scanQuiet {
+		fmt.Fprintf(scanOutput(), "Scanning code structure (depth: %s, parser: %s)...\n", cfg.CodeScan.Depth, parser)
 	}
-
-	fmt.Printf("Scanning code structure (depth: %s, parser: %s)...\n", cfg.CodeScan.Depth, resolveParser(cfg.CodeScan.Parser))
-	start := time.Now()
-
-	scanner := codescan.NewScannerWithMode(cfg.CodeScan, projectRoot, resolveParser(cfg.CodeScan.Parser))
-	result, err := scanner.Scan(prevChecksums, prevCache)
+	stats, err := refreshCodeIndex(ctx, cfg, projectRoot, heroDir, codeRefreshOptions{
+		Incremental: scanIncremental,
+		Quiet:       scanQuiet,
+		DryRun:      scanDryRun,
+		Parser:      parser,
+	})
 	if err != nil {
-		return fmt.Errorf("code scan failed: %w", err)
+		return err
 	}
-
-	// Detect hot files
-	result.HotFiles = codescan.DetectHotFiles(result, projectRoot)
-
-	elapsed := time.Since(start)
+	if stats.Skipped {
+		if !scanQuiet {
+			fmt.Fprintf(scanOutput(), "Code refresh skipped: %s\n", stats.SkipReason)
+		}
+		return nil
+	}
+	result := stats.Result
+	if result == nil {
+		return fmt.Errorf("code refresh returned no result")
+	}
 
 	// Summary
 	totalFiles := 0
@@ -294,137 +333,264 @@ func runCodeScan(cfg config.Config, projectRoot, heroDir string) error {
 		}
 	}
 
-	fmt.Printf("Found %d packages, %d files, %d exported symbols (%s)\n",
-		len(result.Packages), totalFiles, totalSymbols, elapsed.Round(time.Millisecond))
+	if !scanQuiet {
+		fmt.Fprintf(scanOutput(), "Found %d packages, %d files, %d exported symbols (%s)\n",
+			len(result.Packages), totalFiles, totalSymbols, stats.Elapsed.Round(time.Millisecond))
 
-	if len(result.DepGraph) > 0 {
-		fmt.Printf("Dependency edges: %d\n", len(result.DepGraph))
-	}
-	if len(result.HotFiles) > 0 {
-		fmt.Printf("Hot files identified: %d\n", len(result.HotFiles))
+		if len(result.DepGraph) > 0 {
+			fmt.Fprintf(scanOutput(), "Dependency edges: %d\n", len(result.DepGraph))
+		}
+		if len(result.HotFiles) > 0 {
+			fmt.Fprintf(scanOutput(), "Hot files identified: %d\n", len(result.HotFiles))
+		}
 	}
 
 	if scanDryRun {
-		fmt.Println("\nDry run — no code knowledge files written.")
+		fmt.Fprintln(scanOutput(), "\nDry run — no code knowledge files written.")
 		// Print package list
 		for _, pkg := range result.Packages {
-			fmt.Printf("  [%s] %s (%d files, %d symbols)\n",
+			fmt.Fprintf(scanOutput(), "  [%s] %s (%d files, %d symbols)\n",
 				pkg.Language, pkg.Path, pkg.FileCount, len(pkg.Symbols))
 		}
 		return nil
 	}
 
-	// Generate knowledge files
-	if err := codescan.GenerateKnowledge(result, codeDir); err != nil {
-		return fmt.Errorf("generating code knowledge: %w", err)
-	}
-
-	fmt.Printf("Code knowledge written to %s\n", codeDir)
-
-	// Additively populate the unified knowledge graph. Failure here must
-	// not break scan — the markdown output above is still authoritative.
-	if err := writeCodeSubgraph(cfg, result, projectRoot, heroDir); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: graph ingest failed: %v\n", err)
+	if !scanQuiet {
+		if stats.Wrote {
+			fmt.Fprintf(scanOutput(), "Code knowledge written to %s\n", cfg.CodeDir(projectRoot))
+		} else {
+			fmt.Fprintln(scanOutput(), "Code knowledge is current; no writes needed.")
+		}
 	}
 
 	// Tour: tell the user what they have now and where to look first.
 	// New users land on a workspace full of generated content with no
 	// obvious entry point — these three pointers are the highest-value
 	// next reads.
-	fmt.Println()
-	fmt.Println("What's next:")
-	fmt.Println("  hero status                     — overview of specs and knowledge")
-	fmt.Println("  hero suggest                    — high-churn files without spec coverage")
-	fmt.Println("  hero ask 'how does X work'      — answer questions from the indexed corpus")
-	fmt.Println("  hero design <slug>              — start writing a feature spec")
-	fmt.Println("  Review the stubs in .hero/knowledge/ and AGENTS.md — they're starting points, enrich them.")
+	if !scanQuiet {
+		fmt.Fprintln(scanOutput())
+		fmt.Fprintln(scanOutput(), "What's next:")
+		fmt.Fprintln(scanOutput(), "  hero status                     — overview of specs and knowledge")
+		fmt.Fprintln(scanOutput(), "  hero suggest                    — high-churn files without spec coverage")
+		fmt.Fprintln(scanOutput(), "  hero ask 'how does X work'      — answer questions from the indexed corpus")
+		fmt.Fprintln(scanOutput(), "  hero design <slug>              — start writing a feature spec")
+		fmt.Fprintln(scanOutput(), "  Review the stubs in .hero/knowledge/ and AGENTS.md — they're starting points, enrich them.")
+	}
 	return nil
 }
 
-// writeCodeSubgraph opens (or creates) the graph DB and writes the
-// code subgraph plus the work subgraph (specs, sessions, git log).
-// Errors are returned so the caller can log a warning without failing
-// the whole scan.
-//
-// Per master-ingest-restore AC-6, the per-step "Graph X: …" prints
-// are replaced by a single structured "Graph ingest summary" block
-// emitted at the end. Each step contributes a stepResult to the
-// shared report; failures and skips are first-class outcomes (per
-// AC-8 — no step blocks any other).
-func writeCodeSubgraph(cfg config.Config, result *codescan.Result, projectRoot, heroDir string) error {
+type codeRefreshOptions struct {
+	Incremental bool
+	Quiet       bool
+	DryRun      bool
+	Parser      string
+}
+
+type codeRefreshStats struct {
+	Result             *codescan.Result
+	Graph              codescan.GraphWriteSummary
+	Projected          int
+	Changed            bool
+	Wrote              bool
+	Complete           bool
+	Skipped            bool
+	SkipReason         string
+	Phase              string
+	PostStructureReady bool
+	Elapsed            time.Duration
+}
+
+func refreshCodeIndex(ctx context.Context, cfg config.Config, projectRoot, heroDir string, opts codeRefreshOptions) (codeRefreshStats, error) {
+	start := time.Now()
+	stats := codeRefreshStats{Phase: "lock"}
+	lock, busy, err := acquireCodeRefreshLock(heroDir)
+	if err != nil {
+		return stats, fmt.Errorf("acquire code refresh lock: %w", err)
+	}
+	if busy {
+		stats.Skipped = true
+		stats.SkipReason = "another code refresh owns the workspace lock"
+		stats.Elapsed = time.Since(start)
+		return stats, nil
+	}
+	defer lock.Close()
+
+	codeDir := cfg.CodeDir(projectRoot)
+	stats.Phase = "load-state"
+	prevChecksums, prevCache, cacheUsable, err := codescan.LoadScanState(codeDir, opts.Parser)
+	if err != nil {
+		if opts.Incremental {
+			stats.Skipped = true
+			stats.SkipReason = "scan cache is unavailable; run hero scan --code to rebuild it"
+			stats.Elapsed = time.Since(start)
+			return stats, nil
+		}
+		prevChecksums, prevCache = nil, nil
+	}
+	if opts.Incremental && !cacheUsable {
+		stats.Skipped = true
+		stats.SkipReason = "scan cache is unavailable; run hero scan --code to rebuild it"
+		stats.Elapsed = time.Since(start)
+		return stats, nil
+	}
+	if !cacheUsable {
+		prevChecksums, prevCache = nil, nil
+	}
+
+	stats.Phase = "scan"
+	scanner := codescan.NewScannerWithMode(cfg.CodeScan, projectRoot, opts.Parser)
+	result, err := scanner.ScanContext(ctx, prevChecksums, prevCache)
+	if err != nil {
+		return stats, fmt.Errorf("code scan failed: %w", err)
+	}
+	stats.Result = result
+	stats.Complete = result.Complete
+	stats.Changed = result.Stats.Added+result.Stats.Changed+result.Stats.Deleted > 0 ||
+		(cacheUsable && result.Stats.Reparsed > 0)
+	if !result.Complete {
+		return stats, fmt.Errorf("code scan incomplete: %d source error(s)", len(result.Diagnostics))
+	}
+	if opts.Incremental && cacheUsable && !stats.Changed {
+		stats.Phase = "post-structure"
+		stats.PostStructureReady = true
+		stats.Elapsed = time.Since(start)
+		return stats, nil
+	}
+
+	result.HotFiles = codescan.DetectHotFiles(result, projectRoot)
+	if opts.DryRun {
+		stats.Phase = "complete"
+		stats.Elapsed = time.Since(start)
+		return stats, nil
+	}
+	if err := ctx.Err(); err != nil {
+		return stats, err
+	}
+
+	stats.Phase = "graph"
 	store, err := graph.Open(heroDir)
 	if err != nil {
-		return fmt.Errorf("opening graph: %w", err)
+		return stats, fmt.Errorf("opening graph: %w", err)
 	}
 	defer store.Close()
+	graphSummary, err := codescan.WriteGraphContext(ctx, result, store, activeDomain(cfg))
+	if err != nil {
+		return stats, fmt.Errorf("reconciling code graph: %w", err)
+	}
+	stats.Graph = *graphSummary
 
 	report := &ingestReport{}
-
-	codeSummary, err := codescan.WriteGraph(result, store, activeDomain(cfg))
-	if err != nil {
-		report.add(stepResult{name: "code", failed: true, err: err})
-	} else {
-		report.add(stepResult{
-			name: "code",
-			ok:   true,
-			detail: fmt.Sprintf("%d packages, %d files, %d symbols, %d edges",
-				codeSummary.Packages, codeSummary.Files, codeSummary.Symbols, codeSummary.Edges),
-		})
-	}
-
-	// Work subgraph — best-effort, never fail the scan. Each substep
-	// adds its own row to the shared report; only the outermost wrap
-	// prints a Warning if the whole subgraph blew up.
-	if err := writeWorkSubgraph(cfg, projectRoot, heroDir, store, report); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: work-subgraph ingest failed: %v\n", err)
-	}
-
-	// Sibling repos configured in hero.json — ingest their specs into our
-	// local graph.db so unified search surfaces them without a flag.
-	// Best-effort: skip inaccessible repos, log per-repo failures.
-	if err := writeSiblingSubgraphs(cfg, projectRoot, store, report); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: sibling-repo ingest failed: %v\n", err)
-	}
-
-	// Project graph nodes into the unified FTS5 search index.
-	idx, idxErr := index.Open(heroDir)
-	if idxErr == nil {
-		n, projErr := idx.ProjectGraphNodes(store.DB())
-		if projErr != nil {
-			report.add(stepResult{name: "fts-project", failed: true, err: projErr})
-		} else {
-			report.add(stepResult{name: "fts-project", ok: true,
-				detail: fmt.Sprintf("%d nodes projected into search index", n)})
+	report.add(stepResult{
+		name: "code", ok: true,
+		detail: fmt.Sprintf("%d packages, %d files, %d symbols, %d edges",
+			graphSummary.Packages, graphSummary.Files, graphSummary.Symbols, graphSummary.Edges),
+	})
+	if !opts.Incremental {
+		if err := writeWorkSubgraph(cfg, projectRoot, heroDir, store, report); err != nil {
+			report.add(stepResult{name: "work", failed: true, err: err})
 		}
-		idx.Close()
+		if err := writeSiblingSubgraphs(cfg, projectRoot, store, report); err != nil {
+			report.add(stepResult{name: "sibling-repos", failed: true, err: err})
+		}
+	}
+	if err := ctx.Err(); err != nil {
+		return stats, err
 	}
 
-	// Refresh semantic embeddings index.
-	if cfg.IsEmbeddingsEnabled() {
+	stats.Phase = "projection"
+	idx, err := index.Open(heroDir)
+	if err != nil {
+		return stats, fmt.Errorf("opening search index: %w", err)
+	}
+	projected, err := idx.ProjectGraphNodesContext(ctx, store.DB())
+	if err != nil {
+		idx.Close()
+		return stats, fmt.Errorf("projecting graph nodes: %w", err)
+	}
+	stats.Projected = projected
+	report.add(stepResult{name: "fts-project", ok: true,
+		detail: fmt.Sprintf("%d nodes projected into search index", projected)})
+
+	stats.Phase = "knowledge"
+	if err := codescan.GenerateKnowledgeContext(ctx, result, codeDir); err != nil {
+		idx.Close()
+		return stats, fmt.Errorf("generating code knowledge: %w", err)
+	}
+
+	stats.Phase = "post-structure"
+	stats.PostStructureReady = true
+	if !opts.Incremental && cfg.IsEmbeddingsEnabled() {
 		embModel, embErr := embeddings.LoadModelFromConfig(cfg.EmbeddingsModel())
 		if embErr != nil {
-			report.add(stepResult{name: "embeddings", failed: true, err: embErr})
-		} else if embModel != nil {
-			embIdx, embIdxErr := index.Open(heroDir)
-			if embIdxErr != nil {
-				report.add(stepResult{name: "embeddings", failed: true, err: embIdxErr})
-			} else {
-				embStats, refreshErr := embeddings.Refresh(heroDir, embModel, embIdx.RawDB(), store.DB(), cfg.EmbeddingsScope())
-				embIdx.Close()
-				if refreshErr != nil {
-					report.add(stepResult{name: "embeddings", failed: true, err: refreshErr})
-				} else {
-					report.add(stepResult{name: "embeddings", ok: true,
-						detail: fmt.Sprintf("embeddings %s", embStats)})
-				}
+			idx.Close()
+			return stats, fmt.Errorf("loading embeddings model: %w", embErr)
+		}
+		if embModel != nil {
+			embStats, refreshErr := embeddings.Refresh(heroDir, embModel, idx.RawDB(), store.DB(), cfg.EmbeddingsScope())
+			if refreshErr != nil {
+				idx.Close()
+				return stats, fmt.Errorf("refreshing embeddings: %w", refreshErr)
 			}
+			report.add(stepResult{name: "embeddings", ok: true, detail: fmt.Sprintf("embeddings %s", embStats)})
 		} else {
 			report.add(stepResult{name: "embeddings", skipped: true, reason: "no embedding model available"})
 		}
 	}
+	if err := idx.Close(); err != nil {
+		return stats, fmt.Errorf("closing search index: %w", err)
+	}
+	if err := ctx.Err(); err != nil {
+		return stats, err
+	}
 
-	report.print()
-	return nil
+	stats.Phase = "state"
+	if err := codescan.CommitScanStateContext(ctx, result, codeDir, opts.Parser); err != nil {
+		return stats, fmt.Errorf("committing scan state: %w", err)
+	}
+	stats.Wrote = true
+	stats.Phase = "complete"
+	stats.Elapsed = time.Since(start)
+	if !opts.Quiet {
+		report.print()
+	}
+	return stats, nil
+}
+
+type codeRefreshLock struct {
+	file *os.File
+}
+
+func acquireCodeRefreshLock(heroDir string) (*codeRefreshLock, bool, error) {
+	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+		return nil, false, err
+	}
+	f, err := os.OpenFile(filepath.Join(heroDir, "code-refresh.lock"), os.O_CREATE|os.O_RDWR, 0o644)
+	if err != nil {
+		return nil, false, err
+	}
+	if err := unix.Flock(int(f.Fd()), unix.LOCK_EX|unix.LOCK_NB); err != nil {
+		f.Close()
+		if errors.Is(err, unix.EWOULDBLOCK) || errors.Is(err, unix.EAGAIN) {
+			return nil, true, nil
+		}
+		return nil, false, err
+	}
+	return &codeRefreshLock{file: f}, false, nil
+}
+
+func (l *codeRefreshLock) Close() error {
+	if l == nil || l.file == nil {
+		return nil
+	}
+	_ = unix.Flock(int(l.file.Fd()), unix.LOCK_UN)
+	return l.file.Close()
+}
+
+func scanOutput() io.Writer {
+	if scanQuiet {
+		return io.Discard
+	}
+	return os.Stdout
 }
 
 // stepResult is the outcome of one ingest step. Exactly one of ok /
@@ -730,11 +896,15 @@ func writeWorkSubgraph(cfg config.Config, projectRoot, heroDir string, store *gr
 
 // resolveParser returns the actual parser backend that will be used.
 func resolveParser(parser string) string {
+	return resolveParserQuiet(parser, false)
+}
+
+func resolveParserQuiet(parser string, quiet bool) string {
 	if parser == "auto" || parser == "treesitter" {
 		if _, err := exec.LookPath("tree-sitter"); err == nil {
 			return "treesitter"
 		}
-		if parser == "treesitter" {
+		if parser == "treesitter" && !quiet {
 			fmt.Fprintf(os.Stderr, "Warning: tree-sitter CLI not found on PATH, falling back to heuristic parser\n")
 		}
 		return "heuristic"

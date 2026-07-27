@@ -1,6 +1,7 @@
 package codescan
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +13,18 @@ import (
 // GenerateKnowledge writes code intelligence results to .hero/knowledge/code/.
 // It removes stale package directories from previous runs.
 func GenerateKnowledge(result *Result, codeDir string) error {
+	if err := GenerateKnowledgeContext(context.Background(), result, codeDir); err != nil {
+		return err
+	}
+	return CommitScanState(result, codeDir, "")
+}
+
+// GenerateKnowledgeContext writes generated knowledge without advancing scan
+// state. Coordinators call CommitScanState only after every required phase.
+func GenerateKnowledgeContext(ctx context.Context, result *Result, codeDir string) error {
+	if result == nil || !result.Complete {
+		return fmt.Errorf("generating code knowledge requires a complete scan result")
+	}
 	if err := os.MkdirAll(codeDir, 0o755); err != nil {
 		return fmt.Errorf("creating code dir: %w", err)
 	}
@@ -21,6 +34,9 @@ func GenerateKnowledge(result *Result, codeDir string) error {
 
 	// Write per-package files
 	for _, pkg := range result.Packages {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		if err := writePackageSpec(pkg, codeDir); err != nil {
 			return fmt.Errorf("writing package %s: %w", pkg.Name, err)
 		}
@@ -28,6 +44,9 @@ func GenerateKnowledge(result *Result, codeDir string) error {
 	}
 
 	// Write the index/overview
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	if err := writeCodeIndex(result, codeDir); err != nil {
 		return fmt.Errorf("writing index: %w", err)
 	}
@@ -49,17 +68,8 @@ func GenerateKnowledge(result *Result, codeDir string) error {
 	}
 
 	// Remove stale directories from previous runs
-	pruneStaleDirectories(codeDir, keep)
-
-	// Save checksums for incremental scanning
-	if err := SaveChecksums(codeDir, result.Checksums); err != nil {
-		return fmt.Errorf("saving checksums: %w", err)
-	}
-
-	// Save the per-file scan cache built from the complete result so the next
-	// incremental scan can carry unchanged files forward.
-	if err := BuildScanCache(result).Save(codeDir); err != nil {
-		return fmt.Errorf("saving scan cache: %w", err)
+	if err := pruneStaleDirectoriesContext(ctx, codeDir, keep); err != nil {
+		return err
 	}
 
 	return nil
@@ -67,19 +77,25 @@ func GenerateKnowledge(result *Result, codeDir string) error {
 
 // pruneStaleDirectories removes subdirectories in codeDir that were not written
 // in the current run. Preserves top-level files like .checksums.json.
-func pruneStaleDirectories(codeDir string, keep map[string]bool) {
+func pruneStaleDirectoriesContext(ctx context.Context, codeDir string, keep map[string]bool) error {
 	entries, err := os.ReadDir(codeDir)
 	if err != nil {
-		return
+		return err
 	}
 	for _, e := range entries {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		if !e.IsDir() {
 			continue
 		}
 		if !keep[e.Name()] {
-			os.RemoveAll(filepath.Join(codeDir, e.Name()))
+			if err := os.RemoveAll(filepath.Join(codeDir, e.Name())); err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
 func writePackageSpec(pkg Package, codeDir string) error {
