@@ -1,10 +1,13 @@
 package embeddings
 
 import (
+	"context"
 	"database/sql"
 	"math"
 	"path/filepath"
+	"strconv"
 	"testing"
+	"time"
 
 	_ "modernc.org/sqlite"
 )
@@ -496,6 +499,123 @@ func TestStorageWithExistingDB(t *testing.T) {
 	}
 }
 
+func TestStoredHashes_BatchesLargeKeepSet(t *testing.T) {
+	s := setupTestStorage(t)
+	ids := make([]string, 0, 1100)
+	for i := 0; i < 1100; i++ {
+		id := "spec:" + strconv.Itoa(i)
+		ids = append(ids, id)
+		if _, err := s.Upsert(Chunk{
+			ID: id, Corpus: "spec", SourceID: id,
+			TextHash: "hash-" + strconv.Itoa(i), Vector: []float32{1},
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	hashes, err := s.StoredHashes(context.Background(), ids)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(hashes) != len(ids) || hashes["spec:1099"] != "hash-1099" {
+		t.Fatalf("batched hashes returned %d rows", len(hashes))
+	}
+}
+
+func TestReconcileCorpus_RollsBackAllWritesOnBatchFailure(t *testing.T) {
+	s := setupTestStorage(t)
+	_, err := s.ReconcileCorpus(context.Background(), "spec", []Chunk{
+		{ID: "spec:valid", Corpus: "spec", SourceID: "valid", TextHash: "a", Vector: []float32{1}},
+		{ID: "code:wrong", Corpus: "code", SourceID: "wrong", TextHash: "b", Vector: []float32{1}},
+	}, []string{"spec:valid"}, true)
+	if err == nil {
+		t.Fatal("expected mixed-corpus batch to fail")
+	}
+	stats, err := s.Stats()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stats.Total != 0 {
+		t.Fatalf("failed batch committed %d chunk(s)", stats.Total)
+	}
+	if !stats.Corpora["spec"].SuccessfulExtractionAt.IsZero() {
+		t.Fatal("failed batch advanced the successful generation")
+	}
+}
+
+func TestReconcileCorpus_DeadlineLockPreservesGeneration(t *testing.T) {
+	dir := t.TempDir()
+	dbPath := filepath.Join(dir, "index.db")
+	db, err := sql.Open("sqlite", dbPath+"?_pragma=busy_timeout(5000)")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	s, err := OpenStorage(db)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.ReconcileCorpus(context.Background(), "spec", []Chunk{
+		{ID: "spec:old", Corpus: "spec", SourceID: "old", TextHash: "old", Vector: []float32{1}},
+	}, []string{"spec:old"}, true); err != nil {
+		t.Fatal(err)
+	}
+	before, err := s.Stats()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	locker, err := sql.Open("sqlite", dbPath+"?_pragma=busy_timeout(5000)")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer locker.Close()
+	conn, err := locker.Conn(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	if _, err := conn.ExecContext(context.Background(), "BEGIN IMMEDIATE"); err != nil {
+		t.Fatal(err)
+	}
+	defer conn.ExecContext(context.Background(), "ROLLBACK")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+	if _, err := s.ReconcileCorpus(ctx, "spec", []Chunk{
+		{ID: "spec:new", Corpus: "spec", SourceID: "new", TextHash: "new", Vector: []float32{1}},
+	}, []string{"spec:new"}, true); err == nil {
+		t.Fatal("expected locked reconcile to honor deadline")
+	}
+	after, err := s.Stats()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if after.ByCorpus["spec"] != 1 || after.Corpora["spec"].SuccessfulExtractionAt != before.Corpora["spec"].SuccessfulExtractionAt {
+		t.Fatalf("locked reconcile changed prior generation: before=%+v after=%+v", before, after)
+	}
+}
+
+func TestStats_PerCorpusNewestAndGeneration(t *testing.T) {
+	s := setupTestStorage(t)
+	if _, err := s.ReconcileCorpus(context.Background(), "code", []Chunk{
+		{ID: "code:One", Corpus: "code", SourceID: "One", TextHash: "one", Vector: []float32{1}},
+	}, []string{"code:One"}, true); err != nil {
+		t.Fatal(err)
+	}
+	stats, err := s.Stats()
+	if err != nil {
+		t.Fatal(err)
+	}
+	code := stats.Corpora["code"]
+	if code.Count != 1 || code.NewestEmbeddedAt.IsZero() ||
+		code.SuccessfulExtractionAt.IsZero() || code.ExtractionOutcome != "complete" {
+		t.Fatalf("code stats = %+v", code)
+	}
+	if _, ok := stats.Corpora["event"]; !ok {
+		t.Fatal("empty known corpus missing from stats")
+	}
+}
+
 // --- Helpers ---
 
 // normalizeVec returns a new L2-normalized copy of vec.
@@ -512,4 +632,3 @@ func normalizeVec(vec []float32) []float32 {
 	}
 	return out
 }
-

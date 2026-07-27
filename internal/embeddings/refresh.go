@@ -1,19 +1,33 @@
 package embeddings
 
 import (
+	"context"
 	"crypto/sha256"
 	"database/sql"
 	"fmt"
 	"time"
 )
 
-// RefreshStats reports what the refresh operation did.
-type RefreshStats struct {
+// CorpusRefreshStats reports the outcome of one configured corpus.
+type CorpusRefreshStats struct {
+	Corpus  string
+	Outcome string
+	Reason  string
 	Added   int
 	Updated int
 	Pruned  int
-	Skipped int // unchanged (hash match)
-	Elapsed time.Duration
+	Skipped int
+}
+
+// RefreshStats reports what the refresh operation did.
+type RefreshStats struct {
+	Added       int
+	Updated     int
+	Pruned      int
+	Skipped     int // unchanged (hash match)
+	Corpora     map[string]CorpusRefreshStats
+	Unavailable bool
+	Elapsed     time.Duration
 }
 
 func (s RefreshStats) String() string {
@@ -21,107 +35,157 @@ func (s RefreshStats) String() string {
 		s.Added, s.Updated, s.Pruned, s.Skipped, s.Elapsed.Round(time.Millisecond))
 }
 
-// Refresh walks the enabled corpora, computes text hashes, and re-embeds
-// only chunks whose content changed or are missing. Prunes chunks whose
-// source was deleted.
-//
-// The heroDir is the .hero directory path. The model is the loaded embedding
-// model. The indexDB is the *sql.DB for index.db. The graphDB may be nil
-// if graph.db is not available (events and code symbols are skipped).
-// The scope controls which corpora to process.
+// Refresh walks the enabled corpora using a background context.
 func Refresh(heroDir string, model *Model, indexDB *sql.DB, graphDB *sql.DB, scope []string) (*RefreshStats, error) {
+	return RefreshContext(context.Background(), heroDir, model, indexDB, graphDB, scope)
+}
+
+// RefreshContext walks the enabled corpora, reads stored hashes before
+// embedding, and reconciles each complete authoritative corpus atomically.
+func RefreshContext(
+	ctx context.Context,
+	heroDir string,
+	model *Model,
+	indexDB *sql.DB,
+	graphDB *sql.DB,
+	scope []string,
+) (*RefreshStats, error) {
+	if model == nil {
+		return nil, fmt.Errorf("embedding model is unavailable")
+	}
+	return refreshWithEmbedder(ctx, heroDir, model, indexDB, graphDB, scope)
+}
+
+type embedder interface {
+	Embed(string) []float32
+}
+
+func refreshWithEmbedder(
+	ctx context.Context,
+	heroDir string,
+	model embedder,
+	indexDB *sql.DB,
+	graphDB *sql.DB,
+	scope []string,
+) (stats *RefreshStats, retErr error) {
 	start := time.Now()
-	stats := &RefreshStats{}
+	stats = &RefreshStats{Corpora: make(map[string]CorpusRefreshStats)}
+	defer func() { stats.Elapsed = time.Since(start) }()
 
-	storage, err := OpenStorage(indexDB)
+	if model == nil {
+		return stats, fmt.Errorf("embedding model is unavailable")
+	}
+	if indexDB == nil {
+		return stats, fmt.Errorf("embedding index database is unavailable")
+	}
+	if err := ctx.Err(); err != nil {
+		return stats, err
+	}
+
+	storage, err := OpenStorageContext(ctx, indexDB)
 	if err != nil {
-		return nil, fmt.Errorf("opening storage: %w", err)
+		return stats, fmt.Errorf("opening storage: %w", err)
 	}
 
-	scopeSet := make(map[string]bool, len(scope))
-	for _, s := range scope {
-		scopeSet[s] = true
-	}
-
-	type corpusExtractor struct {
-		name    string
-		extract func() ([]TextChunk, error)
-	}
-
-	extractors := []corpusExtractor{
-		{"spec", func() ([]TextChunk, error) { return ChunkSpecs(heroDir) }},
-		{"knowledge", func() ([]TextChunk, error) { return ChunkKnowledge(heroDir) }},
-		{"convention", func() ([]TextChunk, error) { return ChunkConventions(heroDir) }},
-		{"event", func() ([]TextChunk, error) { return ChunkEvents(graphDB) }},
-		{"code", func() ([]TextChunk, error) { return ChunkCodeSymbols(graphDB) }},
-	}
-
-	for _, ext := range extractors {
-		if !scopeSet[ext.name] {
+	seen := make(map[string]bool, len(scope))
+	for _, corpus := range scope {
+		if seen[corpus] {
 			continue
 		}
-
-		chunks, err := ext.extract()
+		seen[corpus] = true
+		corpusStats := CorpusRefreshStats{Corpus: corpus}
+		extraction, err := ExtractCorpus(ctx, heroDir, graphDB, corpus)
 		if err != nil {
-			return nil, fmt.Errorf("extracting %s chunks: %w", ext.name, err)
+			corpusStats.Outcome = "partial"
+			corpusStats.Reason = extraction.Reason
+			stats.Corpora[corpus] = corpusStats
+			return stats, fmt.Errorf("extracting %s chunks: %w", corpus, err)
+		}
+		if extraction.Unavailable {
+			corpusStats.Outcome = "unavailable"
+			corpusStats.Reason = extraction.Reason
+			stats.Corpora[corpus] = corpusStats
+			stats.Unavailable = true
+			continue
+		}
+		if !extraction.Complete || !extraction.Authoritative {
+			corpusStats.Outcome = "partial"
+			corpusStats.Reason = extraction.Reason
+			stats.Corpora[corpus] = corpusStats
+			continue
+		}
+		if err := ctx.Err(); err != nil {
+			corpusStats.Outcome = "partial"
+			corpusStats.Reason = err.Error()
+			stats.Corpora[corpus] = corpusStats
+			return stats, err
 		}
 
-		keepIDs := make([]string, 0, len(chunks))
-		for _, tc := range chunks {
+		keepIDs := make([]string, 0, len(extraction.Chunks))
+		hashByID := make(map[string]string, len(extraction.Chunks))
+		for _, tc := range extraction.Chunks {
 			keepIDs = append(keepIDs, tc.ID)
+			hashByID[tc.ID] = textHash(tc.Text)
+		}
+		storedHashes, err := storage.StoredHashes(ctx, keepIDs)
+		if err != nil {
+			corpusStats.Outcome = "partial"
+			corpusStats.Reason = err.Error()
+			stats.Corpora[corpus] = corpusStats
+			return stats, fmt.Errorf("reading %s hashes: %w", corpus, err)
+		}
 
-			hash := textHash(tc.Text)
-			vec := model.Embed(tc.Text)
-
-			chunk := Chunk{
+		changed := make([]Chunk, 0, len(extraction.Chunks))
+		for _, tc := range extraction.Chunks {
+			hash := hashByID[tc.ID]
+			if storedHash, exists := storedHashes[tc.ID]; exists && storedHash == hash {
+				corpusStats.Skipped++
+				continue
+			}
+			if err := ctx.Err(); err != nil {
+				corpusStats.Outcome = "partial"
+				corpusStats.Reason = err.Error()
+				stats.Corpora[corpus] = corpusStats
+				return stats, err
+			}
+			vector := model.Embed(tc.Text)
+			if err := ctx.Err(); err != nil {
+				corpusStats.Outcome = "partial"
+				corpusStats.Reason = err.Error()
+				stats.Corpora[corpus] = corpusStats
+				return stats, err
+			}
+			changed = append(changed, Chunk{
 				ID:       tc.ID,
 				Corpus:   tc.Corpus,
 				SourceID: tc.SourceID,
 				Section:  tc.Section,
 				TextHash: hash,
-				Vector:   vec,
-			}
-
-			changed, err := storage.Upsert(chunk)
-			if err != nil {
-				return nil, fmt.Errorf("upserting chunk %q: %w", tc.ID, err)
-			}
-
-			if changed {
-				// Determine if this was an add or an update by checking
-				// whether the chunk existed before. Upsert returns
-				// changed=true for both new inserts and hash-changed
-				// updates. We detect "update" by the fact that the old
-				// hash was different (not that no row existed). Since
-				// Upsert handles this internally and we only get a bool,
-				// we count new-to-this-refresh-pass as added and treat
-				// re-embedded as updated. For simplicity, we track adds
-				// during the first pass; the storage layer's hash check
-				// handles the distinction.
-				//
-				// In practice, the stats distinction is informational.
-				// We mark everything changed as "added" on first run and
-				// "updated" on subsequent runs based on whether the chunk
-				// was already in the keep set from a prior corpus pass.
-				// Since we process one corpus at a time and the storage
-				// layer distinguishes insert vs update internally, we
-				// simply count all changed chunks. A more precise split
-				// would require querying before upserting, which is not
-				// worth the extra round-trip.
-				stats.Added++
+				Vector:   vector,
+			})
+			if _, exists := storedHashes[tc.ID]; exists {
+				corpusStats.Updated++
 			} else {
-				stats.Skipped++
+				corpusStats.Added++
 			}
 		}
 
-		pruned, err := storage.PruneCorpus(ext.name, keepIDs)
+		reconciled, err := storage.ReconcileCorpus(ctx, corpus, changed, keepIDs, true)
 		if err != nil {
-			return nil, fmt.Errorf("pruning %s corpus: %w", ext.name, err)
+			corpusStats.Outcome = "partial"
+			corpusStats.Reason = err.Error()
+			stats.Corpora[corpus] = corpusStats
+			return stats, fmt.Errorf("reconciling %s corpus: %w", corpus, err)
 		}
-		stats.Pruned += pruned
+		corpusStats.Pruned = reconciled.Pruned
+		corpusStats.Outcome = "complete"
+		stats.Corpora[corpus] = corpusStats
+		stats.Added += corpusStats.Added
+		stats.Updated += corpusStats.Updated
+		stats.Pruned += corpusStats.Pruned
+		stats.Skipped += corpusStats.Skipped
 	}
 
-	stats.Elapsed = time.Since(start)
 	return stats, nil
 }
 

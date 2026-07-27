@@ -1,6 +1,7 @@
 package embeddings
 
 import (
+	"context"
 	"database/sql"
 	"os"
 	"path/filepath"
@@ -143,11 +144,140 @@ Add caching with Redis backend.
 	if err != nil {
 		t.Fatalf("third Refresh: %v", err)
 	}
-	if stats3.Added != 1 {
-		t.Errorf("third: Added = %d, want 1 (updated chunk)", stats3.Added)
+	if stats3.Updated != 1 {
+		t.Errorf("third: Updated = %d, want 1", stats3.Updated)
 	}
 	if stats3.Skipped != 0 {
 		t.Errorf("third: Skipped = %d, want 0", stats3.Skipped)
+	}
+}
+
+type countingEmbedder struct {
+	model *Model
+	calls int
+}
+
+func (m *countingEmbedder) Embed(text string) []float32 {
+	m.calls++
+	return m.model.Embed(text)
+}
+
+func TestRefresh_HashMatchSkipsEmbed(t *testing.T) {
+	heroDir, model, indexDB := setupRefreshEnv(t)
+	writeSpecFile(t, heroDir, "planning/features/hash-skip", `---
+title: Hash Skip
+slug: hash-skip
+type: feature
+status: planning
+---
+## Goal
+Skip unchanged embeddings.
+`)
+	counter := &countingEmbedder{model: model}
+	if _, err := refreshWithEmbedder(context.Background(), heroDir, counter, indexDB, nil, []string{"spec"}); err != nil {
+		t.Fatal(err)
+	}
+	firstCalls := counter.calls
+	stats, err := refreshWithEmbedder(context.Background(), heroDir, counter, indexDB, nil, []string{"spec"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if counter.calls != firstCalls {
+		t.Fatalf("unchanged refresh called Embed %d additional time(s)", counter.calls-firstCalls)
+	}
+	if stats.Added != 0 || stats.Updated != 0 || stats.Pruned != 0 || stats.Skipped != 1 {
+		t.Fatalf("unchanged stats = %+v", stats)
+	}
+}
+
+func TestRefresh_DeduplicatesConfiguredScopeInOrder(t *testing.T) {
+	heroDir, model, indexDB := setupRefreshEnv(t)
+	writeSpecFile(t, heroDir, "planning/features/dedup", `---
+title: Dedup
+slug: dedup
+type: feature
+status: planning
+---
+## Goal
+Process each configured corpus once.
+`)
+	stats, err := RefreshContext(context.Background(), heroDir, model, indexDB, nil, []string{"spec", "spec"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stats.Added != 1 || stats.Skipped != 0 || len(stats.Corpora) != 1 {
+		t.Fatalf("duplicate scope stats = %+v", stats)
+	}
+}
+
+func TestRefresh_NilModelReturnsUnavailableError(t *testing.T) {
+	heroDir, _, indexDB := setupRefreshEnv(t)
+	if _, err := RefreshContext(context.Background(), heroDir, nil, indexDB, nil, []string{"spec"}); err == nil {
+		t.Fatal("expected nil model to return an error")
+	}
+}
+
+func TestRefresh_UnavailableGraphPreservesCodeCorpus(t *testing.T) {
+	heroDir, model, indexDB := setupRefreshEnv(t)
+	storage, err := OpenStorage(indexDB)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := storage.Upsert(Chunk{
+		ID: "code:stale.Symbol", Corpus: "code", SourceID: "stale.Symbol",
+		TextHash: "old", Vector: []float32{1},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	stats, err := RefreshContext(context.Background(), heroDir, model, indexDB, nil, []string{"code"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !stats.Unavailable || stats.Corpora["code"].Outcome != "unavailable" {
+		t.Fatalf("code outcome = %+v", stats.Corpora["code"])
+	}
+	stored, err := storage.Stats()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored.ByCorpus["code"] != 1 {
+		t.Fatalf("unavailable extraction pruned code corpus: %+v", stored)
+	}
+}
+
+func TestRefresh_AuthoritativeEmptyAndDeletedCodePrune(t *testing.T) {
+	heroDir, model, indexDB := setupRefreshEnv(t)
+	graphDB := setupGraphTestDB(t)
+	insertTestSymbol(t, graphDB, "pkg.Removed", "func", "func Removed()", "", "func Removed() {}", "pkg/removed.go")
+
+	first, err := RefreshContext(context.Background(), heroDir, model, indexDB, graphDB, []string{"code"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.Added != 1 {
+		t.Fatalf("first stats = %+v", first)
+	}
+	if _, err := graphDB.Exec(`UPDATE nodes SET valid_to = datetime('now') WHERE type = 'Symbol'`); err != nil {
+		t.Fatal(err)
+	}
+	second, err := RefreshContext(context.Background(), heroDir, model, indexDB, graphDB, []string{"code"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if second.Pruned != 1 || second.Corpora["code"].Outcome != "complete" {
+		t.Fatalf("authoritative empty stats = %+v", second)
+	}
+	storage, err := OpenStorage(indexDB)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stored, err := storage.Stats()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored.ByCorpus["code"] != 0 {
+		t.Fatalf("deleted code chunk survived: %+v", stored)
 	}
 }
 

@@ -1,6 +1,7 @@
 package embeddings
 
 import (
+	"context"
 	"database/sql"
 	"encoding/binary"
 	"fmt"
@@ -36,7 +37,22 @@ type ScoredChunk struct {
 // StorageStats reports chunk counts by corpus and total.
 type StorageStats struct {
 	ByCorpus map[string]int
+	Corpora  map[string]CorpusStorageStats
 	Total    int
+}
+
+// CorpusStorageStats reports persisted coverage metadata for one corpus.
+type CorpusStorageStats struct {
+	Count                  int
+	NewestEmbeddedAt       time.Time
+	SuccessfulExtractionAt time.Time
+	ExtractionOutcome      string
+}
+
+// ReconcileStats reports the writes committed by one corpus transaction.
+type ReconcileStats struct {
+	Written int
+	Pruned  int
 }
 
 // RawDB returns the underlying *sql.DB.
@@ -45,14 +61,27 @@ func (s *Storage) RawDB() *sql.DB { return s.db }
 // OpenStorage opens the vector storage, creating tables if needed. The db
 // argument must be an already-open *sql.DB pointing at the shared index.db.
 func OpenStorage(db *sql.DB) (*Storage, error) {
+	return OpenStorageContext(context.Background(), db)
+}
+
+// OpenStorageContext opens vector storage using context-aware migrations.
+func OpenStorageContext(ctx context.Context, db *sql.DB) (*Storage, error) {
 	s := &Storage{db: db}
-	if err := s.migrate(); err != nil {
+	conn, err := db.Conn(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("embeddings: acquiring migration connection: %w", err)
+	}
+	defer conn.Close()
+	if err := setDeadlineBusyTimeout(ctx, conn); err != nil {
+		return nil, fmt.Errorf("embeddings: configuring migration deadline: %w", err)
+	}
+	if err := s.migrate(ctx, conn); err != nil {
 		return nil, fmt.Errorf("embeddings: migrating storage schema: %w", err)
 	}
 	return s, nil
 }
 
-func (s *Storage) migrate() error {
+func (s *Storage) migrate(ctx context.Context, execer contextExecer) error {
 	migrations := []string{
 		`CREATE TABLE IF NOT EXISTS vec_chunks (
 			chunk_id    TEXT PRIMARY KEY,
@@ -66,9 +95,14 @@ func (s *Storage) migrate() error {
 		`CREATE INDEX IF NOT EXISTS idx_vec_chunks_corpus ON vec_chunks(corpus)`,
 		`CREATE INDEX IF NOT EXISTS idx_vec_chunks_source ON vec_chunks(source_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_vec_chunks_hash ON vec_chunks(text_hash)`,
+		`CREATE TABLE IF NOT EXISTS vec_corpus_generations (
+			corpus       TEXT PRIMARY KEY,
+			outcome      TEXT NOT NULL,
+			completed_at TEXT NOT NULL
+		)`,
 	}
 	for _, m := range migrations {
-		if _, err := s.db.Exec(m); err != nil {
+		if _, err := execer.ExecContext(ctx, m); err != nil {
 			return fmt.Errorf("executing migration: %w\nSQL: %s", err, m)
 		}
 	}
@@ -78,21 +112,100 @@ func (s *Storage) migrate() error {
 // Upsert inserts or updates a chunk. If an existing chunk has the same
 // text_hash the write is skipped and changed=false is returned.
 func (s *Storage) Upsert(chunk Chunk) (changed bool, err error) {
-	// Check existing hash to avoid redundant writes.
-	var existingHash string
-	err = s.db.QueryRow(
-		`SELECT text_hash FROM vec_chunks WHERE chunk_id = ?`,
-		chunk.ID,
-	).Scan(&existingHash)
-
-	if err == nil && existingHash == chunk.TextHash {
+	hashes, err := s.StoredHashes(context.Background(), []string{chunk.ID})
+	if err != nil {
+		return false, err
+	}
+	if hashes[chunk.ID] == chunk.TextHash {
 		return false, nil // no change
 	}
+	_, err = s.ReconcileCorpus(context.Background(), chunk.Corpus, []Chunk{chunk}, nil, false)
+	if err != nil {
+		return false, fmt.Errorf("upserting chunk %q: %w", chunk.ID, err)
+	}
+	return true, nil
+}
 
-	blob := encodeVector(chunk.Vector)
-	now := time.Now().UTC().Format(time.RFC3339)
+// StoredHashes returns existing text hashes for the requested chunk IDs.
+// Reads are bounded to stay below SQLite's variable limit.
+func (s *Storage) StoredHashes(ctx context.Context, chunkIDs []string) (map[string]string, error) {
+	const batchSize = 500
+	hashes := make(map[string]string, len(chunkIDs))
+	for start := 0; start < len(chunkIDs); start += batchSize {
+		end := start + batchSize
+		if end > len(chunkIDs) {
+			end = len(chunkIDs)
+		}
+		placeholders := make([]string, end-start)
+		args := make([]any, end-start)
+		for i, id := range chunkIDs[start:end] {
+			placeholders[i] = "?"
+			args[i] = id
+		}
+		conn, err := s.db.Conn(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("acquiring stored-hash connection: %w", err)
+		}
+		if err := setDeadlineBusyTimeout(ctx, conn); err != nil {
+			conn.Close()
+			return nil, err
+		}
+		rows, err := conn.QueryContext(ctx,
+			`SELECT chunk_id, text_hash FROM vec_chunks WHERE chunk_id IN (`+strings.Join(placeholders, ",")+`)`,
+			args...,
+		)
+		if err != nil {
+			conn.Close()
+			return nil, fmt.Errorf("reading stored chunk hashes: %w", err)
+		}
+		for rows.Next() {
+			var id, hash string
+			if err := rows.Scan(&id, &hash); err != nil {
+				rows.Close()
+				conn.Close()
+				return nil, fmt.Errorf("scanning stored chunk hash: %w", err)
+			}
+			hashes[id] = hash
+		}
+		if err := rows.Err(); err != nil {
+			rows.Close()
+			conn.Close()
+			return nil, fmt.Errorf("iterating stored chunk hashes: %w", err)
+		}
+		rows.Close()
+		conn.Close()
+	}
+	return hashes, nil
+}
 
-	_, err = s.db.Exec(`
+// ReconcileCorpus atomically writes changed chunks and, when authoritative,
+// prunes chunks absent from keepIDs and records a successful generation.
+func (s *Storage) ReconcileCorpus(
+	ctx context.Context,
+	corpus string,
+	changed []Chunk,
+	keepIDs []string,
+	authoritative bool,
+) (stats ReconcileStats, err error) {
+	conn, err := s.db.Conn(ctx)
+	if err != nil {
+		return stats, fmt.Errorf("acquiring %q corpus connection: %w", corpus, err)
+	}
+	defer conn.Close()
+	if err := setDeadlineBusyTimeout(ctx, conn); err != nil {
+		return stats, fmt.Errorf("configuring %q corpus deadline: %w", corpus, err)
+	}
+	tx, err := conn.BeginTx(ctx, nil)
+	if err != nil {
+		return stats, fmt.Errorf("beginning %q corpus transaction: %w", corpus, err)
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	stmt, err := tx.PrepareContext(ctx, `
 		INSERT INTO vec_chunks (chunk_id, corpus, source_id, section, text_hash, vector, embedded_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(chunk_id) DO UPDATE SET
@@ -102,11 +215,46 @@ func (s *Storage) Upsert(chunk Chunk) (changed bool, err error) {
 			text_hash=excluded.text_hash,
 			vector=excluded.vector,
 			embedded_at=excluded.embedded_at
-	`, chunk.ID, chunk.Corpus, chunk.SourceID, chunk.Section, chunk.TextHash, blob, now)
+	`)
 	if err != nil {
-		return false, fmt.Errorf("upserting chunk %q: %w", chunk.ID, err)
+		return stats, fmt.Errorf("preparing %q corpus upsert: %w", corpus, err)
 	}
-	return true, nil
+	defer stmt.Close()
+
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	for _, chunk := range changed {
+		if chunk.Corpus != corpus {
+			return stats, fmt.Errorf("chunk %q belongs to corpus %q, not %q", chunk.ID, chunk.Corpus, corpus)
+		}
+		if _, err = stmt.ExecContext(ctx,
+			chunk.ID, chunk.Corpus, chunk.SourceID, chunk.Section,
+			chunk.TextHash, encodeVector(chunk.Vector), now,
+		); err != nil {
+			return stats, fmt.Errorf("upserting chunk %q: %w", chunk.ID, err)
+		}
+		stats.Written++
+	}
+
+	if authoritative {
+		stats.Pruned, err = pruneCorpus(ctx, tx, corpus, keepIDs)
+		if err != nil {
+			return stats, err
+		}
+		if _, err = tx.ExecContext(ctx, `
+			INSERT INTO vec_corpus_generations (corpus, outcome, completed_at)
+			VALUES (?, 'complete', ?)
+			ON CONFLICT(corpus) DO UPDATE SET
+				outcome=excluded.outcome,
+				completed_at=excluded.completed_at
+		`, corpus, now); err != nil {
+			return stats, fmt.Errorf("recording %q corpus generation: %w", corpus, err)
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		return stats, fmt.Errorf("committing %q corpus transaction: %w", corpus, err)
+	}
+	return stats, nil
 }
 
 // Delete removes a chunk by ID.
@@ -120,9 +268,34 @@ func (s *Storage) Delete(chunkID string) error {
 
 // PruneCorpus removes all chunks for a corpus not in the given set of IDs.
 func (s *Storage) PruneCorpus(corpus string, keepIDs []string) (pruned int, err error) {
+	return pruneCorpus(context.Background(), s.db, corpus, keepIDs)
+}
+
+type contextExecer interface {
+	ExecContext(context.Context, string, ...any) (sql.Result, error)
+}
+
+func setDeadlineBusyTimeout(ctx context.Context, execer contextExecer) error {
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		return nil
+	}
+	remaining := time.Until(deadline)
+	if remaining <= 0 {
+		return context.DeadlineExceeded
+	}
+	milliseconds := remaining.Milliseconds()
+	if milliseconds < 1 {
+		milliseconds = 1
+	}
+	_, err := execer.ExecContext(ctx, fmt.Sprintf("PRAGMA busy_timeout = %d", milliseconds))
+	return err
+}
+
+func pruneCorpus(ctx context.Context, execer contextExecer, corpus string, keepIDs []string) (pruned int, err error) {
 	if len(keepIDs) == 0 {
 		// Remove all chunks for this corpus.
-		res, err := s.db.Exec(`DELETE FROM vec_chunks WHERE corpus = ?`, corpus)
+		res, err := execer.ExecContext(ctx, `DELETE FROM vec_chunks WHERE corpus = ?`, corpus)
 		if err != nil {
 			return 0, fmt.Errorf("pruning corpus %q: %w", corpus, err)
 		}
@@ -143,7 +316,7 @@ func (s *Storage) PruneCorpus(corpus string, keepIDs []string) (pruned int, err 
 		`DELETE FROM vec_chunks WHERE corpus = ? AND chunk_id NOT IN (%s)`,
 		strings.Join(placeholders, ","),
 	)
-	res, err := s.db.Exec(query, args...)
+	res, err := execer.ExecContext(ctx, query, args...)
 	if err != nil {
 		return 0, fmt.Errorf("pruning corpus %q: %w", corpus, err)
 	}
@@ -213,7 +386,11 @@ func (s *Storage) QuerySimilar(queryVec []float32, topK int, corpora []string) (
 
 // Stats returns chunk counts per corpus and total index size.
 func (s *Storage) Stats() (*StorageStats, error) {
-	rows, err := s.db.Query(`SELECT corpus, COUNT(*) FROM vec_chunks GROUP BY corpus`)
+	rows, err := s.db.Query(`
+		SELECT corpus, COUNT(*), COALESCE(MAX(embedded_at), '')
+		FROM vec_chunks
+		GROUP BY corpus
+	`)
 	if err != nil {
 		return nil, fmt.Errorf("querying vec_chunks stats: %w", err)
 	}
@@ -221,19 +398,47 @@ func (s *Storage) Stats() (*StorageStats, error) {
 
 	stats := &StorageStats{
 		ByCorpus: make(map[string]int),
+		Corpora:  make(map[string]CorpusStorageStats),
+	}
+	for _, corpus := range []string{"spec", "knowledge", "convention", "event", "code"} {
+		stats.Corpora[corpus] = CorpusStorageStats{}
 	}
 
 	for rows.Next() {
 		var corpus string
 		var count int
-		if err := rows.Scan(&corpus, &count); err != nil {
+		var newest string
+		if err := rows.Scan(&corpus, &count, &newest); err != nil {
 			return nil, err
 		}
 		stats.ByCorpus[corpus] = count
+		corpusStats := stats.Corpora[corpus]
+		corpusStats.Count = count
+		corpusStats.NewestEmbeddedAt, _ = time.Parse(time.RFC3339Nano, newest)
+		stats.Corpora[corpus] = corpusStats
 		stats.Total += count
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	rows.Close()
 
-	return stats, rows.Err()
+	generations, err := s.db.Query(`SELECT corpus, outcome, completed_at FROM vec_corpus_generations`)
+	if err != nil {
+		return nil, fmt.Errorf("querying corpus generation stats: %w", err)
+	}
+	defer generations.Close()
+	for generations.Next() {
+		var corpus, outcome, completedAt string
+		if err := generations.Scan(&corpus, &outcome, &completedAt); err != nil {
+			return nil, err
+		}
+		corpusStats := stats.Corpora[corpus]
+		corpusStats.ExtractionOutcome = outcome
+		corpusStats.SuccessfulExtractionAt, _ = time.Parse(time.RFC3339Nano, completedAt)
+		stats.Corpora[corpus] = corpusStats
+	}
+	return stats, generations.Err()
 }
 
 // encodeVector serializes a float32 slice as raw little-endian bytes.

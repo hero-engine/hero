@@ -2,7 +2,7 @@
 title: "Semantic embeddings never refresh on commit"
 slug: embeddings-never-refresh-on-commit
 type: bug
-status: planning
+status: completed
 domain: engineering
 size: medium
 priority: high
@@ -16,6 +16,8 @@ conflicts-with:
   - incremental-code-graph-refresh
 root_cause_class: code
 tags: [embeddings, retrieval, semantic-search, staleness, incremental, code-index]
+delivery_method: manual
+completed_at: 2026-07-27T20:03:04Z
 ---
 
 # Semantic embeddings never refresh on commit
@@ -151,21 +153,18 @@ turn a partial pass into deletion.
 
 ## Kickoff
 
-Fixes the vector engine behind the continuous code-index pipeline: hash before
-embed, batch transactional writes, explicit extraction authority, and
-configured-scope refresh including `code`.
+Makes the vector engine refresh safely after code-index reconciliation: hash
+before embed, one transaction per corpus, and no prune from partial sources.
 
-**Status:** planning — root cause and measurements are preserved; hook/check
-ownership has moved to child 3.
+**Status:** completed — engine, CLI integration, tests, compiled-CLI
+exercises, cold audit, and the delivery verification gate all pass.
 
-**Pick up at:** change the storage/refresh contract so known hashes are read
-before embedding and each corpus extraction reports complete, authoritative,
-unavailable, or partial.
+**Pick up at:** deliver `hook-driven-index-freshness` to activate these
+primitives through the existing repository-managed git hooks.
 
-→ `.hero/planning/initiatives/continuous-code-index-freshness/embeddings-never-refresh-on-commit/spec.md`
+→ `.hero/planning/initiatives/continuous-code-index-freshness/hook-driven-index-freshness/spec.md`
 
-**Files:** `internal/embeddings/refresh.go`,
-`internal/embeddings/storage.go`, `internal/embeddings/chunker.go`,
+**Files:** `internal/embeddings/refresh.go`, `internal/embeddings/storage.go`,
 `internal/cli/embeddings.go`, `internal/cli/scan.go`
 **Skip:** hook templates, `hero check`, status rendering, event chunker fixes,
 search-time writes, and file-level embedding scope.
@@ -285,40 +284,27 @@ IDs and text hashes.
 
 ## Changes
 
-1. Update `internal/embeddings/refresh.go`.
-   - Add nil-model and context/deadline guards.
-   - Read hashes before embedding.
-   - Track explicit corpus extraction outcomes.
-   - Prune only authoritative, complete corpus transactions.
-   - Return structured per-corpus stats.
-2. Update `internal/embeddings/storage.go`.
-   - Add bounded batched hash reads and transactional changed writes.
-   - Keep single-chunk `Upsert` compatibility through shared semantics.
-   - Keep writes and authoritative prune in one corpus transaction.
-   - Extend stats data with per-corpus count/newest timestamp.
-3. Update `internal/embeddings/chunker.go`.
-   - Wrap current chunkers with explicit complete/authoritative/unavailable
-     results.
-   - Distinguish unavailable `graph.db` from authoritative empty code/event.
-   - Do not fix event property keys in this child.
-4. Update `internal/cli/embeddings.go`.
-   - Add the focused refresh CLI and reusable phase function.
-   - Honor configured embedding enablement, model, and scope.
-   - Implement quiet/deadline behavior without hiding phase outcome from the
-     shared coordinator.
-5. Update the child-1 integration seam in `internal/cli/scan.go`.
-   - Run embeddings only after authoritative code graph reconciliation and FTS
-     projection.
-   - Pass one aggregate deadline/context.
-   - Commit scan cache/checksum state only after configured embedding phases
-     required by the coordinator complete or return an intentional skipped
-     outcome.
-6. Extend `internal/embeddings/refresh_test.go`,
-   `storage_test.go`, `chunker_test.go`, and add focused CLI tests.
-   - Falsify unconditional embed calls with a counting model.
-   - Cover transaction rollback, nil model, unavailable source, authoritative
-     empty, deadline/lock contention, code deletion prune, configured scope,
-     and per-corpus stats.
+1. `internal/embeddings/refresh.go` — add context-aware, hash-first refresh,
+   de-duplicated configured scope, explicit per-corpus outcomes, nil-model
+   protection, and authoritative transactional reconciliation.
+2. `internal/embeddings/storage.go` — add bounded hash reads, deadline-aware
+   per-corpus write/prune transactions, compatibility `Upsert`, successful
+   generation metadata, and per-corpus count/newest timestamp stats.
+3. `internal/embeddings/chunker.go` — wrap existing extractors with explicit
+   complete/authoritative/unavailable results and make traversal/read failures
+   non-authoritative without changing event property keys.
+4. `internal/cli/embeddings.go` — add the reusable truthful phase and
+   `hero embeddings refresh --if-stale --deadline <duration> -q`, including
+   byte-silent quiet failure normalization.
+5. `internal/cli/scan.go` — run configured embedding coverage after current
+   graph/FTS reconciliation and on structurally unchanged retries, before scan
+   state advances.
+6. `internal/embeddings/refresh_test.go`,
+   `internal/embeddings/storage_test.go`,
+   `internal/embeddings/chunker_test.go`, and
+   `internal/cli/embeddings_test.go` — cover hash skips, scope de-duplication,
+   rollback, nil/unavailable/partial extraction, authoritative-empty deletion,
+   deadlines/locks, configured scope, per-corpus stats, and Cobra silence.
 
 ## Boundaries
 
@@ -366,3 +352,43 @@ IDs and text hashes.
 - **AC-7:** WHEN `Refresh` writes changed chunks THE SYSTEM SHALL batch stored-hash reads and commit additions, updates, and any authoritative prune in one transaction per corpus
 - **AC-9:** WHEN embedding storage stats are queried THE SYSTEM SHALL return newest `embedded_at` and chunk count per corpus for child 3 to render
 - **AC-10:** IF an extractor cannot reach its source or cannot prove a complete traversal THEN THE SYSTEM SHALL mark that corpus unavailable or partial and preserve every existing chunk in it
+
+## Completion Ledger
+
+Implemented a context-aware Go/SQLite corpus reconciliation path and integrated
+it with the current Wave-1 coordinator. Loaded `stack-detection`, `go-stack`,
+`implementation-principles`, `testing-and-validation`, `agent-reliability`,
+`completion-ledger`, and `kickoff-prompt`. Focused packages, full Go suite,
+compiled CLI exercises, and diff checks pass.
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Matching stored text hash skips `model.Embed` and counts skipped | DONE | `internal/embeddings/refresh.go:63`, `internal/embeddings/refresh_test.go:165` — hash lookup precedes the counting embedder; unchanged rerun makes zero new calls |
+| 2 | Shared incremental command refreshes configured scope, including unchanged code | DONE | `internal/cli/scan.go:403`, `internal/cli/embeddings_test.go:19` — changed and structurally unchanged paths refresh configured `code` and `knowledge`; unchanged code reports zero writes/prunes |
+| 4 | Complete authoritative extraction prunes atomically; unsafe extraction never prunes | DONE | `internal/embeddings/storage.go:183`, `internal/embeddings/refresh_test.go:249` — code deletion and authoritative-empty prune share the corpus transaction; unavailable/partial paths preserve rows |
+| 5 | Quiet deadline/model/lock/extraction failures preserve generation and do not block git | DONE | `internal/cli/embeddings.go:277`, `internal/cli/embeddings_test.go:91`, `internal/embeddings/storage_test.go:545` — locked 50ms refresh is byte-silent, returns success at Cobra, and leaves count/generation unchanged |
+| 6 | Nil model returns descriptive unavailable/error outcome | DONE | `internal/embeddings/refresh.go:45`, `internal/embeddings/refresh_test.go:213` — nil is rejected before storage or Embed access |
+| 7 | Hash reads are batched; changed writes and prune commit once per corpus | DONE | `internal/embeddings/storage.go:131`, `internal/embeddings/storage.go:183`, `internal/embeddings/storage_test.go:524` — 1,100-ID read batches and mixed-corpus failure rollback are tested |
+| 9 | Storage stats return count and newest embedded timestamp per corpus | DONE | `internal/embeddings/storage.go:388`, `internal/embeddings/storage_test.go:598` — known corpora include count, newest timestamp, and successful extraction generation/outcome |
+| 10 | Unavailable or incomplete extractor preserves existing corpus | DONE | `internal/embeddings/chunker.go:35`, `internal/embeddings/chunker_test.go:432`, `internal/embeddings/refresh_test.go:220` — nil graph is unavailable, authoritative empty is distinct, cancellation is partial, and stale code remains |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Update `internal/embeddings/refresh.go` | DONE | Added context/nil guards, pre-Embed hashes, unique configured scope, structured outcomes/stats, and authoritative reconciliation |
+| 2 | Update `internal/embeddings/storage.go` | DONE | Added bounded hash reads, one deadline-aware transaction per corpus, shared `Upsert`, generation metadata, and extended stats |
+| 3 | Update `internal/embeddings/chunker.go` | DONE | Added explicit extraction authority/completion/unavailability and context-aware graph queries; event keys remain unchanged |
+| 4 | Update `internal/cli/embeddings.go` | DONE | Added reusable phase plus focused stale-only refresh command with aggregate deadline and byte-silent quiet behavior |
+| 5 | Update Wave-1 seam in `internal/cli/scan.go` | DONE | Embeddings run after graph/FTS and on unchanged retries; state commits only after successful or intentional-disabled phase |
+| 6 | Extend focused engine/storage/chunker/CLI tests | DONE | Four focused test surfaces cover every specified success and failure mode, plus compiled CLI exercises |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end: built `./cmd/hero`; a real temp workspace reported `added=0 updated=0 pruned=0 skipped=6` on unchanged refresh, pruned a deleted code chunk from 2→1, preserved count/generation with missing `graph.db`, and emitted 0 bytes while a locked index exceeded a 50ms quiet deadline.
+
+### Excellence Bar self-check
+
+- [x] Honest answer to "would a senior engineer who cares about this codebase be proud to ship this?" — yes; the implementation preserves compatibility, keeps the transaction/generation invariant explicit, restores scope de-duplication, makes CLI ordering deterministic, and validates both happy and destructive failure paths.

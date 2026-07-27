@@ -14,7 +14,6 @@ import (
 	"github.com/hero-engine/hero/internal/acceptance"
 	"github.com/hero-engine/hero/internal/codescan"
 	"github.com/hero-engine/hero/internal/config"
-	"github.com/hero-engine/hero/internal/embeddings"
 	"github.com/hero-engine/hero/internal/extract"
 	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/graph"
@@ -389,6 +388,7 @@ type codeRefreshOptions struct {
 type codeRefreshStats struct {
 	Result             *codescan.Result
 	Graph              codescan.GraphWriteSummary
+	Embeddings         embeddingPhaseOutcome
 	Projected          int
 	Changed            bool
 	Wrote              bool
@@ -453,6 +453,14 @@ func refreshCodeIndex(ctx context.Context, cfg config.Config, projectRoot, heroD
 	if opts.Incremental && cacheUsable && !stats.Changed {
 		stats.Phase = "post-structure"
 		stats.PostStructureReady = true
+		if !opts.DryRun {
+			stats.Phase = "embeddings"
+			stats.Embeddings, err = runWorkspaceEmbeddingPhase(ctx, cfg, heroDir)
+			if err != nil {
+				return stats, fmt.Errorf("refreshing embeddings: %w", err)
+			}
+			stats.Phase = "post-structure"
+		}
 		stats.Elapsed = time.Since(start)
 		return stats, nil
 	}
@@ -519,22 +527,16 @@ func refreshCodeIndex(ctx context.Context, cfg config.Config, projectRoot, heroD
 
 	stats.Phase = "post-structure"
 	stats.PostStructureReady = true
-	if !opts.Incremental && cfg.IsEmbeddingsEnabled() {
-		embModel, embErr := embeddings.LoadModelFromConfig(cfg.EmbeddingsModel())
-		if embErr != nil {
-			idx.Close()
-			return stats, fmt.Errorf("loading embeddings model: %w", embErr)
-		}
-		if embModel != nil {
-			embStats, refreshErr := embeddings.Refresh(heroDir, embModel, idx.RawDB(), store.DB(), cfg.EmbeddingsScope())
-			if refreshErr != nil {
-				idx.Close()
-				return stats, fmt.Errorf("refreshing embeddings: %w", refreshErr)
-			}
-			report.add(stepResult{name: "embeddings", ok: true, detail: fmt.Sprintf("embeddings %s", embStats)})
-		} else {
-			report.add(stepResult{name: "embeddings", skipped: true, reason: "no embedding model available"})
-		}
+	stats.Phase = "embeddings"
+	stats.Embeddings, err = runEmbeddingPhase(ctx, cfg, heroDir, idx.RawDB(), store.DB())
+	if err != nil {
+		idx.Close()
+		return stats, fmt.Errorf("refreshing embeddings: %w", err)
+	}
+	if stats.Embeddings.Skipped {
+		report.add(stepResult{name: "embeddings", skipped: true, reason: stats.Embeddings.Reason})
+	} else {
+		report.add(stepResult{name: "embeddings", ok: true, detail: fmt.Sprintf("embeddings %s", stats.Embeddings.Stats)})
 	}
 	if err := idx.Close(); err != nil {
 		return stats, fmt.Errorf("closing search index: %w", err)

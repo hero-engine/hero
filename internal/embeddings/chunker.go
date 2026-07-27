@@ -1,6 +1,7 @@
 package embeddings
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
@@ -12,8 +13,12 @@ import (
 
 // ChunkResult holds extracted chunks for a single corpus.
 type ChunkResult struct {
-	Chunks []TextChunk
-	Corpus string
+	Chunks        []TextChunk
+	Corpus        string
+	Complete      bool
+	Authoritative bool
+	Unavailable   bool
+	Reason        string
 }
 
 // TextChunk is a pre-embedding chunk with its text and metadata.
@@ -23,6 +28,76 @@ type TextChunk struct {
 	SourceID string
 	Section  string
 	Text     string
+}
+
+// ExtractCorpus extracts one corpus and reports whether its keep-set is safe
+// to use for pruning.
+func ExtractCorpus(ctx context.Context, heroDir string, graphDB *sql.DB, corpus string) (ChunkResult, error) {
+	result := ChunkResult{Corpus: corpus}
+	if err := ctx.Err(); err != nil {
+		result.Reason = err.Error()
+		return result, err
+	}
+
+	if (corpus == "event" || corpus == "code") && graphDB == nil {
+		result.Unavailable = true
+		result.Reason = "graph database is unavailable"
+		return result, nil
+	}
+
+	var (
+		chunks []TextChunk
+		err    error
+	)
+	switch corpus {
+	case "spec":
+		err = validateSpecSources(heroDir)
+		if err == nil {
+			chunks, err = ChunkSpecs(heroDir)
+		}
+	case "knowledge":
+		chunks, err = ChunkKnowledge(heroDir)
+	case "convention":
+		err = validateSpecSources(heroDir)
+		if err == nil {
+			chunks, err = ChunkConventions(heroDir)
+		}
+	case "event":
+		chunks, err = chunkEventsContext(ctx, graphDB)
+	case "code":
+		chunks, err = chunkCodeSymbolsContext(ctx, graphDB)
+	default:
+		result.Reason = "unknown corpus"
+		return result, fmt.Errorf("unknown embedding corpus %q", corpus)
+	}
+	if err != nil {
+		result.Reason = err.Error()
+		return result, err
+	}
+	if err := ctx.Err(); err != nil {
+		result.Reason = err.Error()
+		return result, err
+	}
+
+	result.Chunks = chunks
+	result.Complete = true
+	result.Authoritative = true
+	return result, nil
+}
+
+func validateSpecSources(heroDir string) error {
+	return filepath.Walk(heroDir, func(path string, info os.FileInfo, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if info.IsDir() || info.Name() != "spec.md" {
+			return nil
+		}
+		if _, err := spec.ParseFile(path); err != nil {
+			return fmt.Errorf("parsing %s: %w", path, err)
+		}
+		return nil
+	})
 }
 
 // ChunkSpecs extracts chunks from all specs in the hero directory.
@@ -87,7 +162,7 @@ func ChunkKnowledge(heroDir string) ([]TextChunk, error) {
 	var chunks []TextChunk
 	err := filepath.Walk(knowledgeDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return nil // skip inaccessible paths
+			return err
 		}
 		if info.IsDir() {
 			return nil
@@ -102,7 +177,7 @@ func ChunkKnowledge(heroDir string) ([]TextChunk, error) {
 
 		data, readErr := os.ReadFile(path)
 		if readErr != nil {
-			return nil // skip unreadable files
+			return readErr
 		}
 		text := strings.TrimSpace(string(data))
 		if text == "" {
@@ -171,8 +246,11 @@ func ChunkEvents(graphDB *sql.DB) ([]TextChunk, error) {
 	if graphDB == nil {
 		return nil, nil
 	}
+	return chunkEventsContext(context.Background(), graphDB)
+}
 
-	rows, err := graphDB.Query(`
+func chunkEventsContext(ctx context.Context, graphDB *sql.DB) ([]TextChunk, error) {
+	rows, err := graphDB.QueryContext(ctx, `
 		SELECT id, type, key,
 		       COALESCE(json_extract(props, '$.body'), '') AS body,
 		       COALESCE(json_extract(props, '$.subject'), '') AS subject
@@ -223,8 +301,11 @@ func ChunkCodeSymbols(graphDB *sql.DB) ([]TextChunk, error) {
 	if graphDB == nil {
 		return nil, nil
 	}
+	return chunkCodeSymbolsContext(context.Background(), graphDB)
+}
 
-	rows, err := graphDB.Query(`
+func chunkCodeSymbolsContext(ctx context.Context, graphDB *sql.DB) ([]TextChunk, error) {
+	rows, err := graphDB.QueryContext(ctx, `
 		SELECT id, key,
 		       COALESCE(json_extract(props, '$.signature'), '') AS signature,
 		       COALESCE(json_extract(props, '$.doc_comment'), '') AS doc,

@@ -1,6 +1,7 @@
 package embeddings
 
 import (
+	"context"
 	"database/sql"
 	"os"
 	"path/filepath"
@@ -425,6 +426,36 @@ func TestChunkCodeSymbols_NilDB(t *testing.T) {
 	}
 	if len(chunks) != 0 {
 		t.Errorf("expected 0 chunks for nil DB, got %d", len(chunks))
+	}
+}
+
+func TestExtractCorpus_DistinguishesUnavailableAndAuthoritativeEmpty(t *testing.T) {
+	unavailable, err := ExtractCorpus(context.Background(), t.TempDir(), nil, "code")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !unavailable.Unavailable || unavailable.Complete || unavailable.Authoritative {
+		t.Fatalf("nil graph result = %+v", unavailable)
+	}
+
+	empty, err := ExtractCorpus(context.Background(), t.TempDir(), setupGraphTestDB(t), "code")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if empty.Unavailable || !empty.Complete || !empty.Authoritative || len(empty.Chunks) != 0 {
+		t.Fatalf("empty graph result = %+v", empty)
+	}
+}
+
+func TestExtractCorpus_CanceledTraversalIsPartial(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	result, err := ExtractCorpus(ctx, t.TempDir(), nil, "spec")
+	if err == nil {
+		t.Fatal("expected canceled extraction to fail")
+	}
+	if result.Complete || result.Authoritative || result.Unavailable || result.Reason == "" {
+		t.Fatalf("canceled extraction result = %+v", result)
 	}
 }
 

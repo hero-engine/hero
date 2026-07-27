@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-27T19:38:50Z · projected from 597 source nodes_
+_Last refreshed: 2026-07-27T20:04:08Z · projected from 597 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 1h ago | satellite-corpus-integration |
+| core | building | cmd/, internal/ | <1m ago | satellite-corpus-integration |
 | docs | maturing | web/docs/ | 14d ago | — |
 | domains/chat | maturing | domains/chat/ | 9d ago | — |
 | domains/engineering | maturing | domains/engineering/ | 3d ago | — |
@@ -29,7 +29,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **"Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use"** (surface: core) — 2/2 specs done
 - **"Concurrent-Session Branching & Worktree Isolation"** (surface: —) — 0/0 specs done
 - **"Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"** (surface: —) — 4/8 specs done
-- **"Continuous Code-Index Freshness"** (surface: core) — 1/3 specs done
+- **"Continuous Code-Index Freshness"** (surface: core) — 2/3 specs done
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
 - **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 7/11 specs done
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 13/17 specs done
@@ -54,8 +54,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — conversational-attention-operability, attention-contract-bundle-publication, attention-conversational-routes, attention-lifecycle-read-awareness, attention-mcp-action-tools, durable-attention
-- **core** — status-actionable-summary, graph-why-resolution-and-peer-spec-indexing, graph-node-identity-repo-scoped, initiative-autocomplete-ignores-declared-children, attention-interaction-consent-contract
+- **(unassigned)** — conversational-attention-operability, attention-contract-bundle-publication, attention-conversational-routes, attention-lifecycle-read-awareness, attention-mcp-action-tools
+- **core** — embeddings-never-refresh-on-commit, status-actionable-summary, graph-why-resolution-and-peer-spec-indexing, graph-node-identity-repo-scoped, initiative-autocomplete-ignores-declared-children, attention-interaction-consent-contract
 - **domains/engineering** — portable-routing-rules
 
 ## Next up across surfaces

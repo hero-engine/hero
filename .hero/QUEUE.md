@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-27T19:38:51Z · 83 ready specs_
+_Generated: 2026-07-27T20:04:09Z · 82 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -46,30 +46,6 @@ code embeddings reflect the configured source tree without manual
 `hero scan`. The implementation reuses the existing scanner, cache, graph,
 embedding, hook, and health surfaces; hook failures remain best-effort and
 never block git.
-
----
-
-## embeddings-never-refresh-on-commit — "Semantic embeddings never refresh on commit"
-_bug · planning · horizon: now_
-
-Fixes the vector engine behind the continuous code-index pipeline: hash before
-embed, batch transactional writes, explicit extraction authority, and
-configured-scope refresh including `code`.
-
-**Status:** planning — root cause and measurements are preserved; hook/check
-ownership has moved to child 3.
-
-**Pick up at:** change the storage/refresh contract so known hashes are read
-before embedding and each corpus extraction reports complete, authoritative,
-unavailable, or partial.
-
-→ `.hero/planning/initiatives/continuous-code-index-freshness/embeddings-never-refresh-on-commit/spec.md`
-
-**Files:** `internal/embeddings/refresh.go`,
-`internal/embeddings/storage.go`, `internal/embeddings/chunker.go`,
-`internal/cli/embeddings.go`, `internal/cli/scan.go`
-**Skip:** hook templates, `hero check`, status rendering, event chunker fixes,
-search-time writes, and file-level embedding scope.
 
 ---
 
