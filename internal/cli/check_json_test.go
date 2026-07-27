@@ -69,6 +69,7 @@ func TestCheckJSON_WritesCacheArtifact(t *testing.T) {
 	if len(doc.Rows) == 0 {
 		t.Fatal("expected at least one row in health.json")
 	}
+	freshnessRows := map[string]bool{}
 	for _, r := range doc.Rows {
 		if r.Name == "" {
 			t.Errorf("row missing name: %+v", r)
@@ -77,6 +78,17 @@ func TestCheckJSON_WritesCacheArtifact(t *testing.T) {
 		case "pass", "warn", "fail":
 		default:
 			t.Errorf("row %q has unexpected status %q", r.Name, r.Status)
+		}
+		if r.Name == "code-index-freshness" || r.Name == "embeddings-freshness" {
+			if r.Message == "" {
+				t.Errorf("freshness row %q has no coverage detail", r.Name)
+			}
+			freshnessRows[r.Name] = true
+		}
+	}
+	for _, name := range []string{"code-index-freshness", "embeddings-freshness"} {
+		if !freshnessRows[name] {
+			t.Errorf("health.json missing categorized %q row", name)
 		}
 	}
 }

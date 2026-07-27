@@ -490,3 +490,7 @@
 {"ts":"2026-07-27T19:37:20.535444Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"incremental-code-graph-refresh","message":"status -\u003e completed"}
 {"ts":"2026-07-27T20:03:06.620583Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"embeddings-never-refresh-on-commit","message":"\"Semantic embeddings never refresh on commit\""}
 {"ts":"2026-07-27T20:03:06.620717Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"embeddings-never-refresh-on-commit","message":"status -\u003e completed"}
+{"ts":"2026-07-27T20:36:47.68749Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hook-driven-index-freshness","message":"\"Hook-Driven Index Freshness\""}
+{"ts":"2026-07-27T20:36:47.687594Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hook-driven-index-freshness","message":"status -\u003e completed"}
+{"ts":"2026-07-27T20:36:49.963895Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"continuous-code-index-freshness","message":"\"Continuous Code-Index Freshness\""}
+{"ts":"2026-07-27T20:36:49.964017Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"continuous-code-index-freshness","message":"status -\u003e completed"}

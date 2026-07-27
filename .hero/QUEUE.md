@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-27T20:04:09Z · 82 ready specs_
+_Generated: 2026-07-27T20:38:02Z · 81 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -33,19 +33,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
-
----
-
-## continuous-code-index-freshness — "Continuous Code-Index Freshness"
-_initiative · planning · horizon: now_
-
-_Run opener — arm with `/drive continuous-code-index-freshness`_
-
-After local commits and merges, code symbols, lexical graph projection, and
-code embeddings reflect the configured source tree without manual
-`hero scan`. The implementation reuses the existing scanner, cache, graph,
-embedding, hook, and health surfaces; hook failures remain best-effort and
-never block git.
 
 ---
 

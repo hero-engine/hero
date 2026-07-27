@@ -2,7 +2,7 @@
 title: "Continuous Code-Index Freshness"
 slug: continuous-code-index-freshness
 type: initiative
-status: planning
+status: completed
 domain: engineering
 size: large
 priority: high
@@ -14,6 +14,7 @@ child:
   - incremental-code-graph-refresh
   - embeddings-never-refresh-on-commit
   - hook-driven-index-freshness
+completed_at: 2026-07-27T20:36:47Z
 ---
 
 # Continuous Code-Index Freshness
@@ -39,13 +40,13 @@ Makes Hero's code graph, lexical projection, and configured embeddings refresh
 automatically after commits and merges using the existing incremental scanner
 and repository-managed git hooks.
 
-**Status:** planning — the initiative and all three child contracts are
-materialized; delivery starts with the code-graph primitive.
+**Status:** completed — all three children passed their delivery gates and the
+initiative auto-completed after hook-driven freshness verified cleanly.
 
-**Pick up at:** deliver `incremental-code-graph-refresh`, then the embeddings
-engine child, and wire both into hooks only after their quiet paths are safe.
+**Pick up at:** run the final local build and commit the complete initiative to
+main.
 
-→ `.hero/planning/initiatives/continuous-code-index-freshness/spec.md`
+→ `.hero/specs/continuous-code-index-freshness/spec.md`
 
 **Files:** `internal/cli/scan.go`, `internal/codescan/scanner.go`,
 `internal/codescan/graph_ingest.go`, `internal/embeddings/refresh.go`,

@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -230,5 +231,50 @@ func TestEmbeddingRefreshDeadlineFlagRejectsNonPositive(t *testing.T) {
 	}
 	if time.Since(start) > time.Second {
 		t.Fatal("invalid deadline did not fail promptly")
+	}
+}
+
+func TestEmbeddingsStatusRendersEveryCorpusInStableOrderWithNewestTimestamp(t *testing.T) {
+	env := newTestEnv(t)
+	idx, err := index.Open(env.heroDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := embeddings.OpenStorage(idx.RawDB())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.ReconcileCorpus(context.Background(), "knowledge", []embeddings.Chunk{{
+		ID: "knowledge:status.md", Corpus: "knowledge", SourceID: "status.md",
+		TextHash: "hash", Vector: []float32{1},
+	}}, []string{"knowledge:status.md"}, true); err != nil {
+		t.Fatal(err)
+	}
+	if err := idx.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := runCmd("embeddings", "status")
+	if err != nil {
+		t.Fatalf("embeddings status: %v", err)
+	}
+	last := -1
+	for _, corpus := range []string{"spec:", "knowledge:", "convention:", "event:", "code:"} {
+		at := strings.Index(out, corpus)
+		if at < 0 {
+			t.Fatalf("status missing corpus %q:\n%s", corpus, out)
+		}
+		if at <= last {
+			t.Fatalf("status corpus %q is out of stable order:\n%s", corpus, out)
+		}
+		last = at
+	}
+	knowledgeLine := out[strings.Index(out, "knowledge:"):]
+	knowledgeLine = strings.SplitN(knowledgeLine, "\n", 2)[0]
+	if !strings.Contains(knowledgeLine, "count=1") || strings.Contains(knowledgeLine, "newest=never") {
+		t.Fatalf("knowledge status lacks count/newest timestamp: %q", knowledgeLine)
+	}
+	if !strings.Contains(out, "spec:") || !strings.Contains(out, "count=0 newest=never") {
+		t.Fatalf("empty corpora must show zero count and never timestamp:\n%s", out)
 	}
 }

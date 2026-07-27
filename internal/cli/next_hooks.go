@@ -58,16 +58,13 @@ var nextInstallHooksCmd = &cobra.Command{
 	Short: "Install git hooks + .gitattributes merge strategy for projection-based NEXT files",
 	Long: `Writes:
 
-  .git/hooks/pre-commit       — runs 'hero next checkpoint -q' before
-                                each commit so the projected files
-                                reflect graph state at commit time,
-                                then 'git add' the projected files so
-                                they travel with the commit (prevents
-                                agents from stranding handoff state
-                                on the local machine).
-  .git/hooks/post-merge       — runs 'hero next checkpoint -q' after
-                                a merge so the merged result is regen
-                                from graph.
+  .git/hooks/pre-commit       — refreshes the lexical and code indexes,
+                                checkpoints NEXT, writes QUEUE, then stages
+                                projected handoff files so they travel with
+                                the commit.
+  .git/hooks/post-merge       — runs the same best-effort index refresh and
+                                NEXT checkpoint after a merge, without
+                                writing QUEUE or staging files.
   .gitattributes              — adds 'merge=union' for the projected
                                 files (idempotent — adds a marker
                                 block; preserves user content). 'union'
@@ -77,7 +74,13 @@ var nextInstallHooksCmd = &cobra.Command{
                                 CI resolve these merges marker-free.
 
 All writes are marker-delimited and idempotent — re-run safely. To
-remove, delete the marker blocks.`,
+remove, delete the marker blocks.
+
+Index refreshes are quiet, best-effort, and limited to one 10-second
+aggregate deadline so git operations remain non-blocking. Run 'hero check'
+to inspect actual source coverage. To recover manually, run:
+
+  hero scan --code`,
 	RunE: runNextInstallHooks,
 }
 
@@ -313,15 +316,10 @@ func writeHookFile(path, managedBlock string) error {
 // pre-commit-auto-stage-next.
 func hookScript(kind string) string {
 	queueRefresh := ""
-	indexRefresh := ""
 	stage := ""
 	if kind == "pre-commit" {
-		// Index sync first so the queue write reads from a current
-		// index. All three calls are best-effort.
-		indexRefresh = `
-  hero index --if-stale -q || true`
 		queueRefresh = `
-  hero queue write -q || true`
+  hero queue write -q >/dev/null 2>&1 || true`
 		// Stage each projected handoff path independently. A single
 		// combined `git add -- a b c` aborts the WHOLE add (and stages
 		// nothing) the moment any pathspec matches no file — e.g. a
@@ -338,14 +336,15 @@ func hookScript(kind string) string {
   done`, strings.Join(handoffFilePaths, " "))
 	}
 	return fmt.Sprintf(`%s
-# Refresh projected NEXT files, sync the search index against any
-# spec edits in this commit, and regenerate the QUEUE.md snapshot
-# so the commit / merge reflects current state. Best-effort: a hero
-# failure shouldn't block git operations.
+# Refresh lexical state, then code graph/FTS/embeddings under one aggregate
+# deadline, then checkpoint projected NEXT state. Best-effort and quiet:
+# freshness work must never block or add noise to git operations.
 if command -v hero >/dev/null 2>&1; then
-  hero next checkpoint -q || true%s%s%s
+  hero index --if-stale -q >/dev/null 2>&1 || true
+  hero scan --code --incremental --deadline 10s -q >/dev/null 2>&1 || true
+  hero next checkpoint -q >/dev/null 2>&1 || true%s%s
 fi
-%s`, hookMarkerStart, indexRefresh, queueRefresh, stage, hookMarkerEnd)
+%s`, hookMarkerStart, queueRefresh, stage, hookMarkerEnd)
 }
 
 // mergeMarkerBlock either replaces the existing managed block in src

@@ -2,7 +2,7 @@
 title: "Hook-Driven Index Freshness"
 slug: hook-driven-index-freshness
 type: enhancement
-status: planning
+status: completed
 domain: engineering
 size: medium
 priority: medium
@@ -13,6 +13,8 @@ depends-on:
   - incremental-code-graph-refresh
   - embeddings-never-refresh-on-commit
 tags: [git-hooks, freshness, check, embeddings-status, integration-tests]
+delivery_method: manual
+completed_at: 2026-07-27T20:36:46Z
 ---
 
 # Hook-Driven Index Freshness
@@ -47,17 +49,20 @@ Activates the completed code-graph and embedding primitives in Hero's existing
 pre-commit/post-merge managed block and makes freshness observable and
 end-to-end tested.
 
-**Status:** planning — blocked on both engine children; hook/check ownership is
-isolated here.
+**Status:** completed — implementation, audit corrections, focused/affected
+tests, compiled lifecycle exercise, clean cold re-audit, and delivery
+verification all pass.
 
-**Pick up at:** after both dependencies pass, regenerate `hookScript` with the
-ordered pipeline and extend exact-template tests before adding health rows.
+**Pick up at:** the parent `continuous-code-index-freshness` initiative is
+complete; validate the combined initiative in the final local build.
 
-→ `.hero/planning/initiatives/continuous-code-index-freshness/hook-driven-index-freshness/spec.md`
+→ `.hero/specs/hook-driven-index-freshness/spec.md`
 
 **Files:** `internal/cli/next_hooks.go`, `internal/cli/next_hooks_test.go`,
-`internal/cli/check.go`, `internal/cli/embeddings.go`,
-`internal/cli/scan_test.go`
+`internal/cli/check.go`, `internal/cli/check_test.go`,
+`internal/cli/check_json_test.go`, `internal/cli/embeddings.go`,
+`internal/cli/embeddings_test.go`,
+`internal/cli/index_freshness_integration_test.go`
 **Skip:** post-commit hooks, harness session hooks, a watcher, search-time
 refresh, scanner/graph rewrites, and embedding-engine changes.
 
@@ -185,16 +190,17 @@ survives, and `hero check` reports real remaining coverage.
      command in both hook kinds.
    - Preserve markers, install/upgrade flow, user content, queue/staging
      differences, and best-effort shell behavior.
-2. Extend `internal/cli/next_hooks_test.go` and
-   `install_hooks_test.go`.
+2. Extend `internal/cli/next_hooks_test.go`.
    - Assert exact command order, deadline/quiet flags, post-merge behavior,
      stale/current comparison, upgrade refresh, idempotence, and user opt-out.
-3. Update `internal/cli/check.go` and its human/JSON tests.
+3. Update `internal/cli/check.go`, `internal/cli/check_test.go`, and
+   `internal/cli/check_json_test.go`.
    - Add code-index and embeddings coverage rows using child APIs.
    - Report changed/missing/deleted or partial/unavailable coverage, never
      HEAD-time guesses.
    - Keep the check read-only.
-4. Update `internal/cli/embeddings.go` and focused CLI tests.
+4. Update `internal/cli/embeddings.go` and
+   `internal/cli/embeddings_test.go`.
    - Render newest timestamp and count per corpus from storage stats.
    - Use deterministic ordering and preserve existing enabled/model/scope
      output.
@@ -257,3 +263,60 @@ survives, and `hero check` reports real remaining coverage.
 - **AC-8:** WHEN `hero embeddings status` runs THE SYSTEM SHALL show newest `embedded_at` and chunk count for every corpus in stable order without presenting timestamp alone as proof of freshness
 - **AC-9:** WHEN an exported symbol is added, changed, or deleted and the pre-commit hook runs THE SYSTEM SHALL converge current graph lookup, FTS/lexical retrieval, vector retrieval, and hybrid retrieval without a post-change manual `hero scan`
 - **AC-10:** WHEN an exported symbol is added, changed, or deleted by a merged branch and the post-merge hook runs THE SYSTEM SHALL converge current graph lookup, FTS/lexical retrieval, vector retrieval, and hybrid retrieval without a post-change manual `hero scan`
+
+## Implementation Notes
+
+The scanner package does not expose a checksum-inventory-only operation.
+Within this child's boundary, `hero check` therefore calls the existing
+`Scanner.ScanContext` with the persisted complete checksum/cache pair.
+Unchanged files carry forward without symbol parsing (`reparsed=0`, covered by
+test); changed and newly discovered files are parsed while their checksums are
+collected. The check remains read-only and never writes scan state or computes
+vectors. Eliminating parsing for changed/new files would require a new
+inventory seam in `internal/codescan/**`, which this spec explicitly excludes.
+
+## Completion Ledger
+
+Implemented the harness-neutral repository hook activation on Go/Cobra using
+the existing incremental scanner and embedding coordinator. Loaded
+`agent-reliability`, `context-injection`, and `completion-ledger`. Validation
+included exact hook-template tests, human/JSON health tests, stable status
+tests, a test-built CLI git lifecycle exercise, affected packages, and the
+full repository suite.
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Pre-commit runs lexical, aggregate code refresh, checkpoint, queue, staging in order | DONE | `internal/cli/next_hooks.go:317`, `internal/cli/next_hooks_test.go:175` — exact quiet/best-effort command order asserted |
+| 2 | Post-merge runs lexical, aggregate code refresh, checkpoint only | DONE | `internal/cli/next_hooks.go:317`, `internal/cli/next_hooks_test.go:175` — exact order asserted with no queue or staging |
+| 3 | Refresh failures remain silent/non-blocking and health-visible | DONE | `internal/cli/next_hooks.go:317`, `internal/cli/next_hooks_test.go:222`, `internal/cli/index_freshness_integration_test.go:17` — every managed Hero command redirects stdout/stderr before `|| true`; a deterministic failing stub stays silent while commit succeeds, and a held real lock remains health-visible |
+| 4 | Existing repository installer only; no post-commit/harness hook | DONE | `internal/cli/next_hooks.go:82` — only existing pre-commit/post-merge writer changed; boundary diff contains no target or harness files |
+| 5 | Old block stale; regenerated hooks current | DONE | `internal/cli/next_hooks_test.go:351`, `internal/cli/next_hooks_test.go:385` — stale detector plus existing refresh path regenerates both hooks with the current command |
+| 6 | Check reports actual changed/missing/deleted source coverage | DONE | `internal/cli/check.go:736`, `internal/cli/check_test.go:440` — checksum/cache comparison reports all three and reuses unchanged cached parse products (`reparsed=0`); changed/new parsing limitation is documented above |
+| 7 | Check reports per-corpus embedding gaps read-only | DONE | `internal/cli/check.go:797`, `internal/cli/check_test.go:486`, `internal/cli/check_test.go:565` — missing, mismatch, authoritative orphan, unavailable, globally disabled, and code-scan-disabled/nil code-corpus skip covered while other corpora remain checked; JSON rows and row-count non-mutation asserted |
+| 8 | Embeddings status shows stable per-corpus count/newest | DONE | `internal/cli/embeddings.go:123`, `internal/cli/embeddings_test.go:237` — all five corpora render canonically; empty is `count=0 newest=never` |
+| 9 | Pre-commit add/change/delete converges graph/FTS/vector/hybrid | DONE | `internal/cli/index_freshness_integration_test.go:17` — real installed hook and test-built binary exercised all three transitions without post-bootstrap manual scan |
+| 10 | Post-merge add/change/delete converges graph/FTS/vector/hybrid | DONE | `internal/cli/index_freshness_integration_test.go:17` — no-verify branch commits followed by real merges exercised all three transitions and four retrieval surfaces |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Update `internal/cli/next_hooks.go` managed blocks | DONE | Both hooks share lexical → aggregate incremental scan → checkpoint; pre-commit alone writes queue/stages, and all managed Hero commands redirect both output streams before best-effort normalization |
+| 2 | Extend hook template/currency tests | DONE | `internal/cli/next_hooks_test.go` asserts exact order/redirection, real error silence with successful git commit, post-merge exclusions, stale/current regeneration, and existing preservation tests remain green |
+| 3 | Add human/JSON code and embedding freshness rows | DONE | `internal/cli/check.go`, `check_test.go`, `check_json_test.go` implement categorized, read-only coverage with actual hashes/inventory and intentionally omit code-vector demand when code scanning is disabled/nil; inventory-only engine limitation is documented above |
+| 4 | Extend embeddings status observability | DONE | `internal/cli/embeddings.go`, `embeddings_test.go` render stable corpus counts and newest timestamps without freshness claims |
+| 5 | Add git lifecycle end-to-end coverage | DONE | `internal/cli/index_freshness_integration_test.go` builds Hero, installs hooks, covers commit/merge add/change/delete plus held-lock behavior |
+| 6 | Update existing CLI help | DONE | Hook install help documents automatic best-effort deadline and the cache-rebuilding `hero scan --code` recovery command, with focused regression; embeddings status help distinguishes timestamps from freshness |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end: `go test ./internal/cli -run TestManagedHooksConvergeCodeIndexesAcrossCommitAndMerge -count=1 -v` built the CLI, installed generated hooks, committed/merged add-change-delete transitions, asserted graph/FTS/vector/hybrid identity, and proved a held lock leaves git successful with `hero check` warning. `TestManagedPreCommitSuppressesFailingHeroOutputAndAllowsCommit` additionally ran the installed block against a stdout/stderr-emitting failing Hero stub and observed a successful, noise-free commit.
+
+### Excellence Bar self-check
+
+- [x] Yes — the change reuses the existing managed hook and aggregate refresh
+  seams, stays inside the declared source-code boundaries, exposes source truth
+  rather than timestamps, and documents the scanner's missing
+  inventory-only seam instead of hiding it.

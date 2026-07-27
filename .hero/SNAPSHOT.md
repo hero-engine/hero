@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-27T20:04:08Z · projected from 597 source nodes_
+_Last refreshed: 2026-07-27T20:38:01Z · projected from 597 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | <1m ago | satellite-corpus-integration |
+| core | building | cmd/, internal/ | 34m ago | satellite-corpus-integration |
 | docs | maturing | web/docs/ | 14d ago | — |
 | domains/chat | maturing | domains/chat/ | 9d ago | — |
 | domains/engineering | maturing | domains/engineering/ | 3d ago | — |
@@ -29,7 +29,6 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **"Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use"** (surface: core) — 2/2 specs done
 - **"Concurrent-Session Branching & Worktree Isolation"** (surface: —) — 0/0 specs done
 - **"Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"** (surface: —) — 4/8 specs done
-- **"Continuous Code-Index Freshness"** (surface: core) — 2/3 specs done
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
 - **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 7/11 specs done
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 13/17 specs done
@@ -48,14 +47,14 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ### Recently completed initiatives
 
+- **"Continuous Code-Index Freshness"** (surface: core) — 3/3 specs done · COMPLETED 2026-07-27
 - **"Conversational Attention Operability — Safe Chat-Loop Access to Mail and Focus"** (surface: core, domains/engineering) — 6/6 specs done · COMPLETED 2026-07-24
 - **"Durable Attention — Project Mail, Personal Focus, and Explicit Promotion"** (surface: core, domains/engineering, serve) — 7/7 specs done · COMPLETED 2026-07-23
-- **"Tracker Source Fidelity — Canonical Jira Markdown and Lazy Evidence Provenance"** (surface: hero-engine-tracker) — 2/2 specs done · COMPLETED 2026-07-22
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — conversational-attention-operability, attention-contract-bundle-publication, attention-conversational-routes, attention-lifecycle-read-awareness, attention-mcp-action-tools
-- **core** — embeddings-never-refresh-on-commit, status-actionable-summary, graph-why-resolution-and-peer-spec-indexing, graph-node-identity-repo-scoped, initiative-autocomplete-ignores-declared-children, attention-interaction-consent-contract
+- **(unassigned)** — continuous-code-index-freshness, conversational-attention-operability, attention-contract-bundle-publication, attention-conversational-routes, attention-lifecycle-read-awareness, attention-mcp-action-tools
+- **core** — embeddings-never-refresh-on-commit, status-actionable-summary, graph-why-resolution-and-peer-spec-indexing, graph-node-identity-repo-scoped, initiative-autocomplete-ignores-declared-children
 - **domains/engineering** — portable-routing-rules
 
 ## Next up across surfaces

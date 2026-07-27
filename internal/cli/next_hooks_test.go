@@ -172,6 +172,98 @@ func TestHookScript_PreCommit_RefreshesIndex(t *testing.T) {
 	}
 }
 
+func TestHookScript_IndexFreshnessPipelineOrder(t *testing.T) {
+	tests := []struct {
+		kind string
+		want []string
+	}{
+		{
+			kind: "pre-commit",
+			want: []string{
+				"hero index --if-stale -q >/dev/null 2>&1 || true",
+				"hero scan --code --incremental --deadline 10s -q >/dev/null 2>&1 || true",
+				"hero next checkpoint -q >/dev/null 2>&1 || true",
+				"hero queue write -q >/dev/null 2>&1 || true",
+				"git add -- \"$p\" 2>/dev/null || true",
+			},
+		},
+		{
+			kind: "post-merge",
+			want: []string{
+				"hero index --if-stale -q >/dev/null 2>&1 || true",
+				"hero scan --code --incremental --deadline 10s -q >/dev/null 2>&1 || true",
+				"hero next checkpoint -q >/dev/null 2>&1 || true",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.kind, func(t *testing.T) {
+			body := hookScript(tt.kind)
+			last := -1
+			for _, command := range tt.want {
+				at := strings.Index(body, command)
+				if at < 0 {
+					t.Fatalf("%s hook missing %q:\n%s", tt.kind, command, body)
+				}
+				if at <= last {
+					t.Fatalf("%s hook command %q is out of order:\n%s", tt.kind, command, body)
+				}
+				last = at
+			}
+			if tt.kind == "post-merge" {
+				if strings.Contains(body, "hero queue write") || strings.Contains(body, "git add") {
+					t.Fatalf("post-merge must not write queue or stage files:\n%s", body)
+				}
+			}
+		})
+	}
+}
+
+func TestManagedPreCommitSuppressesFailingHeroOutputAndAllowsCommit(t *testing.T) {
+	repo := initTestGitRepo(t)
+	_ = exec.Command("git", "-C", repo, "config", "user.name", "Hook Test").Run()
+	_ = exec.Command("git", "-C", repo, "config", "user.email", "hook@example.com").Run()
+	if err := installNextHooksQuiet(repo); err != nil {
+		t.Fatalf("install hooks: %v", err)
+	}
+
+	binDir := t.TempDir()
+	stub := filepath.Join(binDir, "hero")
+	if err := os.WriteFile(stub, []byte(`#!/usr/bin/env sh
+echo "stub hero stdout"
+echo "stub hero stderr" >&2
+exit 41
+`), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "tracked.txt"), []byte("commit me\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if out, err := exec.Command("git", "-C", repo, "add", "tracked.txt").CombinedOutput(); err != nil {
+		t.Fatalf("git add: %v\n%s", err, out)
+	}
+	commit := exec.Command("git", "-C", repo, "commit", "-m", "silent hook")
+	commit.Env = append(os.Environ(),
+		"PATH="+binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	out, err := commit.CombinedOutput()
+	if err != nil {
+		t.Fatalf("git commit must survive failing Hero commands: %v\n%s", err, out)
+	}
+	if strings.Contains(string(out), "stub hero stdout") ||
+		strings.Contains(string(out), "stub hero stderr") {
+		t.Fatalf("managed hook leaked failing command output:\n%s", out)
+	}
+}
+
+func TestInstallHooksHelpUsesFullScanForManualRecovery(t *testing.T) {
+	if !strings.Contains(nextInstallHooksCmd.Long, "hero scan --code") {
+		t.Fatalf("install-hooks help missing full-scan recovery command:\n%s", nextInstallHooksCmd.Long)
+	}
+	if strings.Contains(nextInstallHooksCmd.Long, "hero scan --code --incremental") {
+		t.Fatalf("incremental scan cannot recover a missing cache:\n%s", nextInstallHooksCmd.Long)
+	}
+}
+
 // TestHandoffFileList_SingleSourceOfTruth is the single-list invariant
 // (Secondary Defect 2): the staging `git add` pathspec and the
 // .gitattributes merge=union block must cover the exact same set of
@@ -308,6 +400,18 @@ func TestRefreshHooksIfPresent_RefreshesStale(t *testing.T) {
 	}
 	if !strings.Contains(string(body), "hero queue write -q") {
 		t.Errorf("post-refresh hook missing new content:\n%s", body)
+	}
+	postMerge, err := os.ReadFile(filepath.Join(repo, ".git", "hooks", "post-merge"))
+	if err != nil {
+		t.Fatalf("read regenerated post-merge hook: %v", err)
+	}
+	for _, generated := range []string{string(body), string(postMerge)} {
+		if !strings.Contains(generated, "hero scan --code --incremental --deadline 10s -q >/dev/null 2>&1 || true") {
+			t.Errorf("regenerated hook missing index freshness command:\n%s", generated)
+		}
+	}
+	if stale, err := preCommitHookStale(repo); err != nil || stale {
+		t.Fatalf("regenerated pre-commit current = %v, err=%v", !stale, err)
 	}
 }
 

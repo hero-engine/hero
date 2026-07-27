@@ -1,16 +1,23 @@
 package cli
 
 import (
+	"context"
+	"crypto/sha256"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
 	hero "github.com/hero-engine/hero"
+	"github.com/hero-engine/hero/internal/codescan"
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/embeddings"
+	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/index"
 	"github.com/hero-engine/hero/internal/install"
 	"github.com/hero-engine/hero/internal/reconcile"
@@ -463,6 +470,20 @@ func runCheck(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	codeFreshness := inspectCodeIndexFreshness(cfg, projectRoot, heroDir)
+	addRow("code-index-freshness", codeFreshness.Status, codeFreshness.Message)
+	if codeFreshness.Status == "warn" {
+		issues++
+		fmt.Printf("Code index freshness: %s\n\n", codeFreshness.Message)
+	}
+
+	embeddingFreshness := inspectEmbeddingFreshness(cfg, heroDir, idx.RawDB())
+	addRow("embeddings-freshness", embeddingFreshness.Status, embeddingFreshness.Message)
+	if embeddingFreshness.Status == "warn" {
+		issues++
+		fmt.Printf("Embeddings freshness: %s\n\n", embeddingFreshness.Message)
+	}
+
 	// Kickoff section coverage — every non-completed work spec should
 	// carry a `## Kickoff` section so it surfaces in `hero queue` and
 	// gives the user a paste-ready cold-start prompt for that spec.
@@ -705,6 +726,216 @@ func runCheck(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+type freshnessHealth struct {
+	Status  string
+	Message string
+}
+
+func inspectCodeIndexFreshness(cfg config.Config, projectRoot, heroDir string) freshnessHealth {
+	if cfg.CodeScan == nil || cfg.CodeScan.IsDisabled() {
+		return freshnessHealth{Status: "pass", Message: "skipped: code scanning is disabled"}
+	}
+
+	parser := resolveParserQuiet(cfg.CodeScan.Parser, true)
+	codeDir := cfg.CodeDir(projectRoot)
+	persisted, err := codescan.LoadChecksums(codeDir)
+	if err != nil {
+		return freshnessHealth{Status: "warn", Message: "persisted source checksums are unavailable: " + err.Error()}
+	}
+	persistedCache, cacheErr := codescan.LoadScanCache(codeDir)
+	if cacheErr != nil {
+		return freshnessHealth{Status: "warn", Message: "persisted source cache is unavailable: " + cacheErr.Error()}
+	}
+	prevChecksums, prevCache, usable, stateErr := codescan.LoadScanState(codeDir, parser)
+	if stateErr != nil {
+		return freshnessHealth{Status: "warn", Message: "persisted scan generation is unavailable: " + stateErr.Error()}
+	}
+	if !usable {
+		prevChecksums, prevCache = nil, nil
+	}
+	current, err := codescan.NewScannerWithMode(cfg.CodeScan, projectRoot, parser).
+		ScanContext(context.Background(), prevChecksums, prevCache)
+	if err != nil || current == nil || !current.Complete {
+		detail := "current source inventory is unavailable"
+		if err != nil {
+			detail += ": " + err.Error()
+		}
+		return freshnessHealth{Status: "warn", Message: detail}
+	}
+
+	missing, changed, deleted := 0, 0, 0
+	for path, checksum := range current.Checksums {
+		old, ok := persisted[path]
+		switch {
+		case !ok || persistedCache == nil || !persistedCache.Sources[path]:
+			missing++
+		case old != checksum:
+			changed++
+		}
+	}
+	for path := range persisted {
+		if _, ok := current.Checksums[path]; !ok {
+			deleted++
+		}
+	}
+	if len(current.Checksums) == 0 && len(persisted) == 0 {
+		return freshnessHealth{Status: "pass", Message: "no configured source files"}
+	}
+	message := fmt.Sprintf("changed=%d missing=%d deleted=%d reparsed=%d",
+		changed, missing, deleted, current.Stats.Reparsed)
+	if !usable {
+		message += " partial: no complete persisted scan generation"
+	}
+	if changed+missing+deleted > 0 || !usable {
+		return freshnessHealth{Status: "warn", Message: message}
+	}
+	return freshnessHealth{Status: "pass", Message: message}
+}
+
+func inspectEmbeddingFreshness(cfg config.Config, heroDir string, indexDB *sql.DB) freshnessHealth {
+	if !cfg.IsEmbeddingsEnabled() {
+		return freshnessHealth{Status: "pass", Message: "skipped: embeddings are disabled"}
+	}
+
+	configuredScope := cfg.EmbeddingsScope()
+	codeSkipped := cfg.CodeScan == nil || cfg.CodeScan.IsDisabled()
+	if codeSkipped {
+		filtered := make([]string, 0, len(configuredScope))
+		for _, corpus := range configuredScope {
+			if corpus != "code" {
+				filtered = append(filtered, corpus)
+			}
+		}
+		configuredScope = filtered
+	}
+	scope := uniqueSortedStrings(configuredScope)
+	var details []string
+	if codeSkipped {
+		details = append(details, "code skipped=\"code scanning is disabled\"")
+	}
+	if len(scope) == 0 {
+		return freshnessHealth{Status: "pass", Message: strings.Join(details, "; ")}
+	}
+
+	var graphDB *sql.DB
+	if scopeNeedsGraph(scope) {
+		graphPath := filepath.Join(heroDir, graph.FileName)
+		if _, err := os.Stat(graphPath); err == nil {
+			graphDB, _ = sql.Open("sqlite", graphPath)
+			if graphDB != nil {
+				defer graphDB.Close()
+			}
+		}
+	}
+
+	hasChunkTable := false
+	if indexDB != nil {
+		var count int
+		if err := indexDB.QueryRow(`
+			SELECT COUNT(*) FROM sqlite_master
+			WHERE type = 'table' AND name = 'vec_chunks'
+		`).Scan(&count); err == nil {
+			hasChunkTable = count > 0
+		}
+	}
+
+	ctx := context.Background()
+	stale := false
+	for _, corpus := range scope {
+		extracted, err := embeddings.ExtractCorpus(ctx, heroDir, graphDB, corpus)
+		if err != nil || extracted.Unavailable || !extracted.Complete || !extracted.Authoritative {
+			stale = true
+			reason := extracted.Reason
+			if reason == "" && err != nil {
+				reason = err.Error()
+			}
+			if reason == "" {
+				reason = "partial extraction"
+			}
+			details = append(details, fmt.Sprintf("%s unavailable=%q", corpus, reason))
+			continue
+		}
+
+		currentHashes := make(map[string]string, len(extracted.Chunks))
+		for _, chunk := range extracted.Chunks {
+			sum := sha256.Sum256([]byte(chunk.Text))
+			currentHashes[chunk.ID] = fmt.Sprintf("%x", sum)
+		}
+		storedHashes := map[string]string{}
+		if hasChunkTable {
+			rows, queryErr := indexDB.Query(
+				`SELECT chunk_id, text_hash FROM vec_chunks WHERE corpus = ?`, corpus,
+			)
+			if queryErr != nil {
+				stale = true
+				details = append(details, fmt.Sprintf("%s unavailable=%q", corpus, queryErr.Error()))
+				continue
+			}
+			for rows.Next() {
+				var id, hash string
+				if scanErr := rows.Scan(&id, &hash); scanErr != nil {
+					rows.Close()
+					stale = true
+					details = append(details, fmt.Sprintf("%s unavailable=%q", corpus, scanErr.Error()))
+					storedHashes = nil
+					break
+				}
+				storedHashes[id] = hash
+			}
+			rowsErr := rows.Err()
+			rows.Close()
+			if storedHashes == nil {
+				continue
+			}
+			if rowsErr != nil {
+				stale = true
+				details = append(details, fmt.Sprintf("%s unavailable=%q", corpus, rowsErr.Error()))
+				continue
+			}
+		}
+
+		missing, mismatched, orphaned := 0, 0, 0
+		for id, hash := range currentHashes {
+			stored, ok := storedHashes[id]
+			switch {
+			case !ok:
+				missing++
+			case stored != hash:
+				mismatched++
+			}
+		}
+		for id := range storedHashes {
+			if _, ok := currentHashes[id]; !ok {
+				orphaned++
+			}
+		}
+		if missing+mismatched+orphaned > 0 {
+			stale = true
+		}
+		details = append(details,
+			fmt.Sprintf("%s missing=%d mismatched=%d orphaned=%d", corpus, missing, mismatched, orphaned))
+	}
+
+	status := "pass"
+	if stale {
+		status = "warn"
+	}
+	return freshnessHealth{Status: status, Message: strings.Join(details, "; ")}
+}
+
+func uniqueSortedStrings(values []string) []string {
+	seen := make(map[string]bool, len(values))
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		if value != "" && !seen[value] {
+			seen[value] = true
+			out = append(out, value)
+		}
+	}
+	sort.Strings(out)
+	return out
 }
 
 // reportSnapshotHealth validates the project-snapshot subsystem:

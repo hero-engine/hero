@@ -1,15 +1,29 @@
 package cli
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/embeddings"
+	"github.com/hero-engine/hero/internal/index"
 )
 
 func TestCheckEmpty(t *testing.T) {
 	env := newTestEnv(t)
+	cfg, err := config.Load(env.dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	disabled := false
+	cfg.Embeddings = &config.EmbeddingsConfig{Enabled: &disabled}
+	if err := cfg.Save(env.dir); err != nil {
+		t.Fatal(err)
+	}
 	env.indexAll()
 
 	output, err := runCmd("check")
@@ -23,6 +37,21 @@ func TestCheckEmpty(t *testing.T) {
 
 	if !strings.Contains(output, "No issues found") {
 		t.Errorf("check should report no issues for empty workspace: %q", output)
+	}
+}
+
+func TestCheckReportsUnavailableConfiguredEmbeddingSources(t *testing.T) {
+	env := newTestEnv(t)
+	env.indexAll()
+
+	output, err := runCmd("check")
+	if err != nil {
+		t.Fatalf("check returned error: %v", err)
+	}
+	if !strings.Contains(output, "Embeddings freshness:") ||
+		!strings.Contains(output, "code unavailable=") ||
+		!strings.Contains(output, "event unavailable=") {
+		t.Fatalf("check must truthfully report configured graph corpora unavailable:\n%s", output)
 	}
 }
 
@@ -405,5 +434,160 @@ Pick up here.
 	}
 	if strings.Contains(output, "look like relations") {
 		t.Errorf("children: is accepted and must not be reported as a near miss: %q", output)
+	}
+}
+
+func TestInspectCodeIndexFreshnessReportsActualChangedMissingDeletedSources(t *testing.T) {
+	root := t.TempDir()
+	heroDir := filepath.Join(root, ".hero")
+	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	a := filepath.Join(root, "a.go")
+	b := filepath.Join(root, "b.go")
+	if err := os.WriteFile(a, []byte("package sample\nfunc Alpha() {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(b, []byte("package sample\nfunc Bravo() {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg := config.DefaultConfig()
+	cfg.CodeScan.Parser = "heuristic"
+	disabled := false
+	cfg.Embeddings = &config.EmbeddingsConfig{Enabled: &disabled}
+	if _, err := refreshCodeIndex(context.Background(), cfg, root, heroDir,
+		codeRefreshOptions{Parser: "heuristic"}); err != nil {
+		t.Fatalf("bootstrap code refresh: %v", err)
+	}
+	if got := inspectCodeIndexFreshness(cfg, root, heroDir); got.Status != "pass" ||
+		!strings.Contains(got.Message, "reparsed=0") {
+		t.Fatalf("fresh code coverage = %+v", got)
+	}
+
+	if err := os.WriteFile(a, []byte("package sample\nfunc AlphaChanged() {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(b); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "c.go"), []byte("package sample\nfunc Charlie() {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	got := inspectCodeIndexFreshness(cfg, root, heroDir)
+	if got.Status != "warn" ||
+		!strings.Contains(got.Message, "changed=1") ||
+		!strings.Contains(got.Message, "missing=1") ||
+		!strings.Contains(got.Message, "deleted=1") {
+		t.Fatalf("stale code coverage = %+v", got)
+	}
+}
+
+func TestInspectEmbeddingFreshnessReportsCoverageWithoutMutatingVectors(t *testing.T) {
+	root := t.TempDir()
+	heroDir := filepath.Join(root, ".hero")
+	knowledgeDir := filepath.Join(heroDir, "knowledge")
+	if err := os.MkdirAll(knowledgeDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	note := filepath.Join(knowledgeDir, "one.md")
+	if err := os.WriteFile(note, []byte("Knowledge: initial"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg := config.DefaultConfig()
+	enabled := true
+	cfg.Embeddings = &config.EmbeddingsConfig{Enabled: &enabled, Scope: []string{"knowledge"}}
+	idx, err := index.Open(heroDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer idx.Close()
+	model, err := embeddings.LoadModelFromConfig(cfg.EmbeddingsModel())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := embeddings.Refresh(heroDir, model, idx.RawDB(), nil, cfg.EmbeddingsScope()); err != nil {
+		t.Fatalf("bootstrap embeddings: %v", err)
+	}
+	if got := inspectEmbeddingFreshness(cfg, heroDir, idx.RawDB()); got.Status != "pass" {
+		t.Fatalf("fresh embedding coverage = %+v", got)
+	}
+
+	if err := os.WriteFile(note, []byte("Knowledge: changed"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(knowledgeDir, "two.md"), []byte("Knowledge: new"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := idx.RawDB().Exec(`
+		INSERT INTO vec_chunks
+			(chunk_id, corpus, source_id, section, text_hash, vector, embedded_at)
+		VALUES ('knowledge:orphan.md', 'knowledge', 'orphan.md', '', 'old', X'', '2026-01-01T00:00:00Z')
+	`); err != nil {
+		t.Fatal(err)
+	}
+	var before int
+	if err := idx.RawDB().QueryRow(`SELECT COUNT(*) FROM vec_chunks`).Scan(&before); err != nil {
+		t.Fatal(err)
+	}
+	got := inspectEmbeddingFreshness(cfg, heroDir, idx.RawDB())
+	if got.Status != "warn" ||
+		!strings.Contains(got.Message, "missing=1") ||
+		!strings.Contains(got.Message, "mismatched=1") ||
+		!strings.Contains(got.Message, "orphaned=1") {
+		t.Fatalf("stale embedding coverage = %+v", got)
+	}
+	var after int
+	if err := idx.RawDB().QueryRow(`SELECT COUNT(*) FROM vec_chunks`).Scan(&after); err != nil {
+		t.Fatal(err)
+	}
+	if after != before {
+		t.Fatalf("read-only freshness check changed vector rows: before=%d after=%d", before, after)
+	}
+}
+
+func TestInspectEmbeddingFreshnessReportsUnavailableGraphCorpus(t *testing.T) {
+	heroDir := t.TempDir()
+	idx, err := index.Open(heroDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer idx.Close()
+	cfg := config.DefaultConfig()
+	enabled := true
+	cfg.Embeddings = &config.EmbeddingsConfig{Enabled: &enabled, Scope: []string{"code"}}
+	got := inspectEmbeddingFreshness(cfg, heroDir, idx.RawDB())
+	if got.Status != "warn" || !strings.Contains(got.Message, "unavailable") {
+		t.Fatalf("unavailable code corpus = %+v", got)
+	}
+}
+
+func TestInspectEmbeddingFreshnessSkipsCodeWhenCodeScanDisabled(t *testing.T) {
+	heroDir := t.TempDir()
+	idx, err := index.Open(heroDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer idx.Close()
+	cfg := config.DefaultConfig()
+	cfg.CodeScan.Depth = "disabled"
+	enabled := true
+	cfg.Embeddings = &config.EmbeddingsConfig{
+		Enabled: &enabled,
+		Scope:   []string{"code", "knowledge"},
+	}
+	got := inspectEmbeddingFreshness(cfg, heroDir, idx.RawDB())
+	if got.Status != "pass" ||
+		!strings.Contains(got.Message, "code skipped=") ||
+		!strings.Contains(got.Message, "knowledge missing=0") ||
+		strings.Contains(got.Message, "code unavailable=") {
+		t.Fatalf("disabled code-scan embedding coverage = %+v", got)
+	}
+	cfg.CodeScan = nil
+	got = inspectEmbeddingFreshness(cfg, heroDir, idx.RawDB())
+	if got.Status != "pass" ||
+		!strings.Contains(got.Message, "code skipped=") ||
+		strings.Contains(got.Message, "code unavailable=") {
+		t.Fatalf("nil code-scan embedding coverage = %+v", got)
 	}
 }

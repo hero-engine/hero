@@ -33,7 +33,10 @@ Subcommands:
 var embeddingsStatusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Print embedding index status",
-	RunE:  runEmbeddingsStatus,
+	Long: `Print embedding model configuration plus stable per-corpus chunk counts
+and newest embedding timestamps. Timestamps are operational history, not proof
+of current source coverage; use 'hero check' for freshness.`,
+	RunE: runEmbeddingsStatus,
 }
 
 var embeddingsRebuildCmd = &cobra.Command{
@@ -117,11 +120,36 @@ func runEmbeddingsStatus(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("\nIndex stats:\n")
 	fmt.Printf("  Total chunks: %d\n", stats.Total)
-	for corpus, count := range stats.ByCorpus {
-		fmt.Printf("  %-14s %d\n", corpus+":", count)
+	for _, corpus := range embeddingCorpusOrder(stats.Corpora) {
+		corpusStats := stats.Corpora[corpus]
+		newest := "never"
+		if !corpusStats.NewestEmbeddedAt.IsZero() {
+			newest = corpusStats.NewestEmbeddedAt.UTC().Format(time.RFC3339Nano)
+		}
+		fmt.Printf("  %-14s count=%d newest=%s\n", corpus+":", corpusStats.Count, newest)
 	}
 
 	return nil
+}
+
+func embeddingCorpusOrder(stats map[string]embeddings.CorpusStorageStats) []string {
+	canonical := []string{"spec", "knowledge", "convention", "event", "code"}
+	seen := make(map[string]bool, len(stats))
+	out := make([]string, 0, len(stats))
+	for _, corpus := range canonical {
+		if _, ok := stats[corpus]; ok {
+			out = append(out, corpus)
+			seen[corpus] = true
+		}
+	}
+	var extra []string
+	for corpus := range stats {
+		if !seen[corpus] {
+			extra = append(extra, corpus)
+		}
+	}
+	sort.Strings(extra)
+	return append(out, extra...)
 }
 
 func runEmbeddingsRebuild(cmd *cobra.Command, args []string) error {

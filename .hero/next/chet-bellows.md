@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-27T20:04:08Z
+updated: 2026-07-27T20:38:01Z
 repo: hero-engine/hero
 ---
 
@@ -10,7 +10,7 @@ repo: hero-engine/hero
 
 > Session opened with — Deliver initiative-autocomplete-ignores-declared-children. An initiative auto-completes when only some of its declared children have shipped, because the completion gate's roster is fed from an incomplete source. Two compounding defects: (1) children: (plural) frontmatter is silently dropped by the relation parser (internal/spec/spec.go:633), so declared children never become child edges and the r…
 
-_possibly stale — 9 commit(s) since, last set 2d 3h ago_
+_possibly stale — 10 commit(s) since, last set 2d 4h ago_
 
 ## Last user ask
 
@@ -18,7 +18,7 @@ _possibly stale — 9 commit(s) since, last set 2d 3h ago_
 
 ## Suggested next prompt
 
-> Deliver hook-driven-index-freshness next to activate the completed code-graph and embedding primitives through Hero's existing repository-managed pre-commit and post-merge hooks.
+> Run the final local build, review the complete initiative diff, and commit the completed continuous code-index freshness initiative to main.
 
 ## Recent reflections
 
