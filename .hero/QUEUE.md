@@ -6,7 +6,25 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-27T20:50:31Z · 81 ready specs_
+_Generated: 2026-07-27T21:33:01Z · 82 ready specs_
+
+## windows-file-lock-cross-build — "Unix-only file locks break Windows release builds"
+_bug · delivering · horizon: now_
+
+Makes Hero's existing file locks portable so the six-platform release build
+can complete without weakening Attention serialization or hook busy-skip.
+
+**Status:** delivering — portable locks and the CI cross-build gate are implemented; all release rehearsal gates pass.
+
+**Pick up at:** cold-audit the delivery evidence, address any findings, then run
+`hero spec verify windows-file-lock-cross-build`.
+
+→ `.hero/planning/bugs/windows-file-lock-cross-build/spec.md`
+
+**Files:** `internal/attention/focus/lock.go`, `internal/attention/mail/lock.go`, `internal/attention/suggestion/store.go`, `internal/cli/scan.go`, `.goreleaser.yaml`
+**Skip:** disabling Windows artifacts or replacing locks with process-local mutexes.
+
+---
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_

@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-27T20:50:31Z
+updated: 2026-07-27T21:33:01Z
 repo: hero-engine/hero
 ---
 
@@ -13,9 +13,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Continue driving continuous-code-index-freshness with embeddings-never-refresh-on-commit
-
-_possibly stale — 2 commit(s) since, last set 1h 10m ago_
+> Cut a tagged build after continuous code-index freshness; release snapshot exposed Windows cross-compilation failures from Unix-only syscall.Flock in Attention persistence locks, so diagnose and fix the release blocker before tagging.
 
 ## Suggested next prompt
 

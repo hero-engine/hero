@@ -12,11 +12,11 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/hero-engine/hero/contracts/attention"
 	attentionstate "github.com/hero-engine/hero/internal/attention/state"
+	"github.com/hero-engine/hero/internal/filelock"
 )
 
 var (
@@ -311,29 +311,19 @@ func validateID(id string) error {
 
 func utcNow(now time.Time) string { return now.UTC().Format(time.RFC3339Nano) }
 
-type fileLock struct{ file *os.File }
+type fileLock struct{ lock *filelock.Lock }
 
 func acquireLock(path string) (*fileLock, error) {
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o600)
+	lock, err := filelock.Acquire(path, 0o600)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("lock suggestion store: %w", err)
 	}
-	if err := f.Chmod(0o600); err != nil {
-		_ = f.Close()
-		return nil, err
-	}
-	if err := syscall.Flock(int(f.Fd()), syscall.LOCK_EX); err != nil {
-		_ = f.Close()
-		return nil, err
-	}
-	return &fileLock{file: f}, nil
+	return &fileLock{lock: lock}, nil
 }
 
 func (l *fileLock) Close() error {
-	unlockErr := syscall.Flock(int(l.file.Fd()), syscall.LOCK_UN)
-	closeErr := l.file.Close()
-	if unlockErr != nil {
-		return unlockErr
+	if err := l.lock.Close(); err != nil {
+		return fmt.Errorf("close suggestion store lock: %w", err)
 	}
-	return closeErr
+	return nil
 }

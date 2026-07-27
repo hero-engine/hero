@@ -15,6 +15,7 @@ import (
 	"github.com/hero-engine/hero/internal/codescan"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/extract"
+	"github.com/hero-engine/hero/internal/filelock"
 	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/handoff"
@@ -34,7 +35,6 @@ import (
 	"github.com/hero-engine/hero/internal/spec"
 	"github.com/hero-engine/hero/internal/tracker"
 	"github.com/spf13/cobra"
-	"golang.org/x/sys/unix"
 )
 
 const defaultIncrementalScanDeadline = 10 * time.Second
@@ -559,7 +559,7 @@ func refreshCodeIndex(ctx context.Context, cfg config.Config, projectRoot, heroD
 }
 
 type codeRefreshLock struct {
-	file *os.File
+	lock *filelock.Lock
 }
 
 func acquireCodeRefreshLock(heroDir string) (*codeRefreshLock, bool, error) {
@@ -567,26 +567,24 @@ func acquireCodeRefreshLock(heroDir string) (*codeRefreshLock, bool, error) {
 	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
 		return nil, false, err
 	}
-	f, err := os.OpenFile(filepath.Join(cacheDir, "code-refresh.lock"), os.O_CREATE|os.O_RDWR, 0o644)
+	lock, busy, err := filelock.TryAcquire(filepath.Join(cacheDir, "code-refresh.lock"), 0o644)
 	if err != nil {
-		return nil, false, err
+		return nil, false, fmt.Errorf("acquire code refresh lock: %w", err)
 	}
-	if err := unix.Flock(int(f.Fd()), unix.LOCK_EX|unix.LOCK_NB); err != nil {
-		f.Close()
-		if errors.Is(err, unix.EWOULDBLOCK) || errors.Is(err, unix.EAGAIN) {
-			return nil, true, nil
-		}
-		return nil, false, err
+	if busy {
+		return nil, true, nil
 	}
-	return &codeRefreshLock{file: f}, false, nil
+	return &codeRefreshLock{lock: lock}, false, nil
 }
 
 func (l *codeRefreshLock) Close() error {
-	if l == nil || l.file == nil {
+	if l == nil || l.lock == nil {
 		return nil
 	}
-	_ = unix.Flock(int(l.file.Fd()), unix.LOCK_UN)
-	return l.file.Close()
+	if err := l.lock.Close(); err != nil {
+		return fmt.Errorf("close code refresh lock: %w", err)
+	}
+	return nil
 }
 
 func scanOutput() io.Writer {
