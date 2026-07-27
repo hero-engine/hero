@@ -190,5 +190,9 @@ knowledge, FTS, or vector writes.
 ## Progress
 
 - Initiative composed and all three child specs fully designed on 2026-07-27.
-- No production code has been implemented.
-- Next: Wave 1, `incremental-code-graph-refresh`.
+- All three children passed their delivery gates and the initiative
+  auto-completed on 2026-07-27.
+- Final compiled-binary rollout validation moved the workspace refresh lock
+  from tracked `.hero/code-refresh.lock` to the existing ignored
+  `.hero/cache/code-refresh.lock` seam. Focused lifecycle, affected-package,
+  and serial uncached full-suite validation pass after the amendment.

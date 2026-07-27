@@ -275,6 +275,14 @@ collected. The check remains read-only and never writes scan state or computes
 vectors. Eliminating parsing for changed/new files would require a new
 inventory seam in `internal/codescan/**`, which this spec explicitly excludes.
 
+Final compiled-binary rollout validation also found that the child-1 refresh
+lock created `.hero/code-refresh.lock`, leaving a real repository dirty after
+the hook ran. The lock now uses the existing ignored
+`.hero/cache/code-refresh.lock` seam. Focused coverage proves the ignored lock
+exists, the old root lock does not, and contention remains non-blocking; the
+compiled hook lifecycle, affected packages, and serial uncached full suite all
+pass with the amendment.
+
 ## Completion Ledger
 
 Implemented the harness-neutral repository hook activation on Go/Cobra using
@@ -290,7 +298,7 @@ full repository suite.
 |---|---|---|---|
 | 1 | Pre-commit runs lexical, aggregate code refresh, checkpoint, queue, staging in order | DONE | `internal/cli/next_hooks.go:317`, `internal/cli/next_hooks_test.go:175` — exact quiet/best-effort command order asserted |
 | 2 | Post-merge runs lexical, aggregate code refresh, checkpoint only | DONE | `internal/cli/next_hooks.go:317`, `internal/cli/next_hooks_test.go:175` — exact order asserted with no queue or staging |
-| 3 | Refresh failures remain silent/non-blocking and health-visible | DONE | `internal/cli/next_hooks.go:317`, `internal/cli/next_hooks_test.go:222`, `internal/cli/index_freshness_integration_test.go:17` — every managed Hero command redirects stdout/stderr before `|| true`; a deterministic failing stub stays silent while commit succeeds, and a held real lock remains health-visible |
+| 3 | Refresh failures remain silent/non-blocking and health-visible | DONE | `internal/cli/next_hooks.go:317`, `internal/cli/next_hooks_test.go:222`, `internal/cli/index_freshness_integration_test.go:17`, `internal/cli/scan_test.go:535` — every managed Hero command redirects stdout/stderr before `|| true`; a failing stub stays silent, a held lock remains health-visible, and the lock uses ignored `.hero/cache/` without dirtying the repository |
 | 4 | Existing repository installer only; no post-commit/harness hook | DONE | `internal/cli/next_hooks.go:82` — only existing pre-commit/post-merge writer changed; boundary diff contains no target or harness files |
 | 5 | Old block stale; regenerated hooks current | DONE | `internal/cli/next_hooks_test.go:351`, `internal/cli/next_hooks_test.go:385` — stale detector plus existing refresh path regenerates both hooks with the current command |
 | 6 | Check reports actual changed/missing/deleted source coverage | DONE | `internal/cli/check.go:736`, `internal/cli/check_test.go:440` — checksum/cache comparison reports all three and reuses unchanged cached parse products (`reparsed=0`); changed/new parsing limitation is documented above |

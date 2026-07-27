@@ -324,6 +324,19 @@ honor deep mode.
 - **AC-17:** WHEN a package's imports change THE SYSTEM SHALL invalidate and rebuild its current package and `imports` edge projection even if its other package fields are unchanged
 - **AC-18:** WHEN structural source is unchanged but a configured embedding corpus remains missing, mismatched, or previously unavailable THE SYSTEM SHALL preserve the post-structure seam for child 2 to retry embeddings without rewriting graph or generated code knowledge
 
+## Post-Delivery Amendment
+
+Final compiled-binary rollout validation found that the refresh lock was
+created at `.hero/code-refresh.lock`, which made a clean repository appear
+dirty after hook execution. The lock now uses the existing ignored
+`.hero/cache/code-refresh.lock` seam without changing fail-fast flock
+semantics. `TestIncrementalCodeRefreshSkipsUnusableCacheAndBusyLock` proves the
+cache lock exists, the old workspace-root lock does not, and contention still
+skips without mutation.
+
+The amended focused lifecycle tests, affected packages, and serial uncached
+full repository suite pass.
+
 ## Completion Ledger
 
 Implemented the Go incremental refresh by reusing the existing config, parser,
@@ -349,7 +362,7 @@ were touched.
 | 11 | Walk/read/parse skips make the snapshot incomplete and non-authoritative | DONE | `internal/codescan/scanner.go:158`, `internal/codescan/graph_ingest.go:41`, `internal/codescan/graph_ingest_test.go:330` — explicit diagnostics plus generation/state/graph rejection tested; direct incomplete graph input leaves current rows and history unchanged |
 | 12 | Graph upsert-and-retire commits atomically or rolls back | DONE | `internal/graph/transaction.go:19`, `internal/codescan/graph_ingest_test.go:303` — injected reconcile failure rolls back prior upserts |
 | 13 | Split checksum/cache generations are rejected | DONE | `internal/codescan/scancache.go:117`, `internal/codescan/codescan_test.go:647` — manifest mismatch is unusable |
-| 14 | Busy refresh lock skips without mutation | DONE | `internal/cli/scan.go:563`, `internal/cli/scan_test.go:535` — fail-fast flock contention returns structured skip before state load |
+| 14 | Busy refresh lock skips without mutation | DONE | `internal/cli/scan.go:563`, `internal/cli/scan_test.go:535` — fail-fast flock contention returns a structured skip before state load, and the lock lives under ignored `.hero/cache/` rather than dirtying the workspace root |
 | 15 | Endpoint-only sources participate in change accounting | DONE | `internal/codescan/codescan_test.go:563` — proto deletion and GraphQL addition produce add/delete accounting and reparsing |
 | 16 | Parser identity mismatch rejects cached products | DONE | `internal/codescan/scancache.go:117`, `internal/codescan/codescan_test.go:647` — heuristic cache rejected for treesitter |
 | 17 | Import-only package changes rebuild package/imports projection | DONE | `internal/codescan/graph_ingest.go:332`, `internal/codescan/graph_ingest_test.go:258` — package ID changes and imports edge retargets |
@@ -359,7 +372,7 @@ were touched.
 
 | # | Changes item (abbreviated) | Status | Note |
 |---|---|---|---|
-| 1 | Factor CLI coordinator and flags | DONE | `internal/cli/scan.go`, `internal/cli/scan_test.go`, `internal/cli/helpers_test.go` — incremental/deadline/quiet, lock, stats, manual wrapper, and end-to-end tests |
+| 1 | Factor CLI coordinator and flags | DONE | `internal/cli/scan.go`, `internal/cli/scan_test.go`, `internal/cli/helpers_test.go` — incremental/deadline/quiet, ignored cache-local lock, stats, manual wrapper, and end-to-end tests |
 | 2 | Add scanner accounting and paired cache state | DONE | `internal/codescan/scanner.go`, `internal/codescan/types.go`, `internal/codescan/scancache.go`, `internal/codescan/codescan_test.go` — context, completeness, endpoint inventory, manifests, parser identity |
 | 3 | Add transactional graph reconciliation | DONE | `internal/codescan/graph_ingest.go`, `internal/codescan/graph_ingest_test.go`, `internal/graph/node.go`, `internal/graph/edge.go`, `internal/graph/transaction.go` — canonical transactional upsert plus scoped retirement |
 | 4 | Keep and context-enable lexical projection | DONE | `internal/index/project.go` — existing projector now uses context-aware graph reads and index transaction operations; deletion verified through CLI integration test |

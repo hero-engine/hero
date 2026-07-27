@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-27T20:38:01Z
+updated: 2026-07-27T20:50:31Z
 repo: hero-engine/hero
 ---
 
@@ -9,16 +9,17 @@ repo: hero-engine/hero
 ## Session goal
 
 > Session opened with — Deliver initiative-autocomplete-ignores-declared-children. An initiative auto-completes when only some of its declared children have shipped, because the completion gate's roster is fed from an incomplete source. Two compounding defects: (1) children: (plural) frontmatter is silently dropped by the relation parser (internal/spec/spec.go:633), so declared children never become child edges and the r…
-
-_possibly stale — 10 commit(s) since, last set 2d 4h ago_
+> _possibly stale — 10 commit(s) since, last set 2d 4h ago_
 
 ## Last user ask
 
 > Continue driving continuous-code-index-freshness with embeddings-never-refresh-on-commit
 
+_possibly stale — 2 commit(s) since, last set 1h 10m ago_
+
 ## Suggested next prompt
 
-> Run the final local build, review the complete initiative diff, and commit the completed continuous code-index freshness initiative to main.
+> Commit the audited cache-local code-refresh lock amendment with the completed continuous code-index freshness initiative, then push main for the test build.
 
 ## Recent reflections
 

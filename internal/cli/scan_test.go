@@ -560,6 +560,12 @@ func TestIncrementalCodeRefreshSkipsUnusableCacheAndBusyLock(t *testing.T) {
 		t.Fatalf("acquire first lock = busy %v err %v", busy, err)
 	}
 	defer lock.Close()
+	if _, err := os.Stat(filepath.Join(heroDir, "cache", "code-refresh.lock")); err != nil {
+		t.Fatalf("ignored cache lock missing: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(heroDir, "code-refresh.lock")); !os.IsNotExist(err) {
+		t.Fatalf("refresh lock dirtied workspace root, stat err=%v", err)
+	}
 	contended, err := refreshCodeIndex(context.Background(), cfg, root, heroDir, codeRefreshOptions{
 		Incremental: true, Quiet: true, Parser: "heuristic",
 	})

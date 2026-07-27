@@ -563,10 +563,11 @@ type codeRefreshLock struct {
 }
 
 func acquireCodeRefreshLock(heroDir string) (*codeRefreshLock, bool, error) {
-	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+	cacheDir := filepath.Join(heroDir, "cache")
+	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
 		return nil, false, err
 	}
-	f, err := os.OpenFile(filepath.Join(heroDir, "code-refresh.lock"), os.O_CREATE|os.O_RDWR, 0o644)
+	f, err := os.OpenFile(filepath.Join(cacheDir, "code-refresh.lock"), os.O_CREATE|os.O_RDWR, 0o644)
 	if err != nil {
 		return nil, false, err
 	}
