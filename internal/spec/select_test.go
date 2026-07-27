@@ -151,6 +151,23 @@ func TestPrioritySortStatusBeatsHorizon(t *testing.T) {
 	}
 }
 
+func TestSortByPriorityMatchesSelector(t *testing.T) {
+	all := []*Spec{
+		makeSpec("planning-next", "PN", TypeFeature, StatusPlanning, withHorizon(HorizonNext)),
+		makeSpec("planning-now", "P0", TypeFeature, StatusPlanning, withHorizon(HorizonNow)),
+		makeSpec("planning-pinned", "PP", TypeFeature, StatusPlanning, withHorizon(HorizonParking), withPinned()),
+	}
+	direct := append([]*Spec(nil), all...)
+	SortByPriority(direct)
+	selected := Selector{
+		Filter: Filter{ExcludeClosedDefault: true},
+		Sort:   SortPriority,
+	}.Apply(all)
+	if diff := slugDiff(slugs(direct), slugs(selected)); diff != "" {
+		t.Errorf("SortByPriority drifted from Selector: %s", diff)
+	}
+}
+
 func TestExcludeClosedDefault(t *testing.T) {
 	all := []*Spec{
 		makeSpec("done", "Done", TypeFeature, StatusCompleted),

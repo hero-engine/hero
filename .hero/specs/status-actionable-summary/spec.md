@@ -2,13 +2,15 @@
 title: "Actionable Status Summary — In Progress, Upcoming, and Recently Completed"
 slug: status-actionable-summary
 type: feature
-status: planning
+status: completed
 domain: engineering
 size: medium
 priority: medium
 horizon: now
 tags: [cli, status, workflow, usability]
 created: 2026-07-25
+delivery_method: manual
+completed_at: 2026-07-27T02:36:04Z
 ---
 
 # Actionable Status Summary — In Progress, Upcoming, and Recently Completed
@@ -50,19 +52,22 @@ existing JSON and horizon-filter contracts remain compatible.
 
 ## Kickoff
 
-Reworks human-readable `hero status` around counts, current work, ranked
-upcoming work, and five recent completions instead of dumping the corpus.
+Makes human-readable `hero status` a compact briefing of current work, ranked
+upcoming work, waiting work, and five recent completions.
 
-**Status:** planning — output contract is designed; no implementation yet.
+**Status:** completed — cold audit returned SHIP and the Hero delivery gate
+verified all 13 acceptance criteria before archiving the spec.
 
-**Pick up at:** introduce a collected human status view in `status.go`, then
-lock its grouping, bounds, ordering, and compatibility in focused tests.
+**Pick up at:** no delivery work remains; run `hero status` to use the compact
+operational briefing.
 
-→ `/deliver status-actionable-summary`
+→ `.hero/specs/status-actionable-summary/spec.md`
 
 **Files:** `internal/cli/status.go`, `internal/cli/status_test.go`,
-`internal/spec/select.go`, `web/docs/src/cli/search-and-context.md`
-**Skip:** changing `status --json` or redefining `--all`; both remain compatible.
+`internal/cli/mail_test.go`,
+`internal/spec/select.go`, `internal/spec/select_test.go`,
+`web/docs/src/cli/search-and-context.md`
+**Skip:** changing the JSON schema or repairing archive inconsistencies; both remain outside this presentation change.
 
 ## Problem
 
@@ -335,3 +340,56 @@ support the exact status/type/sort spellings printed to users.
    view.
 8. Run `hero status --json` before and after the change against the same
    fixture and compare schemas and item counts.
+
+## Completion Ledger
+
+Implemented the compact human status briefing in Go while leaving the JSON
+renderer unchanged. Loaded the delivery, reliability, implementation, Go,
+testing, Completion Ledger, and Kickoff contracts. Validation completed:
+
+- `go test ./internal/cli -run '^TestStatus|^TestFormatAge'`
+- `go test ./internal/cli -run 'TestStatusPreserves|TestMailCLIJSONCommandsAndErrors' -count=1`
+- `go test ./internal/spec -run 'TestSortByPriority|TestPrioritySort|TestSelectorReady|TestSelectorBlocked'`
+- `go test ./internal/spec`
+- `go test ./internal/cli` (full affected package; passed with localhost access)
+- `go test ./...` (full repository; passed after retained-signal coverage)
+- `go run ./cmd/hero status`
+- `go run ./cmd/hero status --json` with schema/count inspection through `jq`
+- every `hero list` hint printed by the real workspace status view
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Print work, corpus, and horizon-hidden counts before lists | DONE | `internal/cli/status.go:269` builds both count lines from one view; `TestStatusMixedViewCountsOrderingAndSuppression` and `TestStatusHorizonOptionsOnlyFilterOpenWork` verify exact counts. |
+| 2 | Render all handed-back, delivering, and in-review work in precedence order | DONE | `internal/cli/status.go:210` partitions the lifecycle groups and `internal/cli/status.go:228` ranks then appends them in required order; `TestStatusMixedViewCountsOrderingAndSuppression` verifies precedence. |
+| 3 | Bound Upcoming to ten, ready before blocked, canonical priority within partitions | DONE | `internal/cli/status.go:217` uses canonical dependency predicates, `internal/cli/status.go:228` uses `spec.SortByPriority`, and `internal/cli/status.go:290` joins ready before blocked; mixed and bounds tests verify behavior. |
+| 4 | Print omitted counts and runnable full-list commands | DONE | `internal/cli/status.go:316` implements bounded sections and hints; `TestStatusBoundsUpcomingAndWaiting` verifies both ten-row limits and exact commands. |
+| 5 | Show five newest authoritative completions with deterministic ties | DONE | `internal/cli/status.go:237` sorts `CompletedAt` descending then slug ascending and `internal/cli/status.go:342` caps at five; `TestStatusRecentlyCompletedUsesAuthoritativeTimestamp` verifies ordering and bounds. |
+| 6 | Count undated completions without fabricating recency | DONE | `internal/cli/status.go:188` increments every completed work item but only admits non-zero `CompletedAt` to recent history; the recent-completion and mixed-view tests cover missing timestamps. |
+| 7 | Summarize intake and knowledge without exhaustive rows | DONE | `internal/cli/status.go:172` collects workspace-wide corpus counts and `internal/cli/status.go:302` emits browse hints only; `TestStatusMixedViewCountsOrderingAndSuppression` proves entry titles stay hidden. |
+| 8 | Preserve operational signals | DONE | `internal/cli/status.go:67` through `internal/cli/status.go:138` retains workspace/dialect, Mail, peer reconciliation, smoke, async, connection, and version paths around the new view; focused tests now exercise human Mail, peer transition, async, connection, version mismatch, smoke, and existing dialect behavior. |
+| 9 | Exclude archive-path mismatches from active work and warn once | DONE | `internal/cli/status.go:186` classifies resolved planning/archive paths and `internal/cli/status.go:282` renders one warning; `TestStatusArchiveInconsistencies` covers both mismatch directions. |
+| 10 | Apply `--all`/`--horizon` only to open work | DONE | Completed/corpus counts are collected before `statusHorizonMatches` at `internal/cli/status.go:188`; `TestStatusHorizonOptionsOnlyFilterOpenWork` verifies default, all, and explicit-horizon semantics. |
+| 11 | Preserve unbounded `status --json` schema and filtering | DONE | `internal/cli/status.go:369` remains the separate existing JSON path; `TestStatusJSONContractRemainsUnbounded` verifies exact top-level/per-spec fields, 12-plus unbounded rows, and horizon behavior. |
+| 12 | Render concise zero-count empty state | DONE | `internal/cli/status.go:286` emits one empty-state line without empty sections; `TestStatusEmpty` verifies zero counts and absent headings. |
+| 13 | Validate every emitted full-list command against Cobra | DONE | `TestStatusEmittedListHintsResolve` executes all five emitted `hero list` forms; the real-workspace Upcoming, Waiting, Completed, and Knowledge hints also exited successfully. |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Refactor human status collection | DONE | `internal/cli/status.go:143` adds the collected view, canonical dependency partitioning, horizon semantics, completion history, corpus counts, and resolved-path integrity detection. |
+| 2 | Replace exhaustive corpus rendering | DONE | `internal/cli/status.go:269` renders the count block and four operational sections with fixed bounds and browse hints while retaining operational preamble/footer signals. |
+| 3 | Reuse canonical selection semantics | DONE | `internal/spec/select.go:238` exposes the narrow in-place priority sorter used by both Selector and Status; `internal/spec/select_test.go:154` guards parity. |
+| 4 | Expand human status tests | DONE | `internal/cli/status_test.go` covers counts, grouping, priority, bounds, completion timestamps/ties, suppression, archive integrity, empty state, horizons, hints, smoke, help, peer reconciliation, async, connection, and version mismatch; `internal/cli/mail_test.go` verifies the retained human unread-Mail summary. |
+| 5 | Protect JSON contract | DONE | `internal/cli/status_test.go:250` asserts unbounded JSON, exact existing fields, and unchanged horizon filtering; the real workspace returned 583 items with the expected schema. |
+| 6 | Update help and user documentation | DONE | `internal/cli/status.go:28`, `web/docs/src/cli/search-and-context.md:289`, and `README.md:239` describe the compact default, stable JSON path, full-list escapes, and representative output. |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end: `go run ./cmd/hero status` rendered 6 in progress, 58 upcoming (ten shown), 9 waiting, 322 completed (five shown), 141 summarized knowledge entries, 13 horizon-hidden items, and one archive-integrity warning; all four printed `hero list` hints ran successfully. `go run ./cmd/hero status --json` returned the unchanged fields with 583 unbounded items. Focused command tests additionally exercised human Mail, peer reconciliation, active async delivery, connection health, and workspace-version mismatch output.
+
+### Excellence Bar self-check
+
+- [x] Yes — the implementation centralizes counts and lists, reuses canonical queue ordering, exercises the real command tree, preserves compatibility paths, and has focused plus full-package coverage.

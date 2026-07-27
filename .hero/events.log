@@ -484,3 +484,5 @@
 {"ts":"2026-07-25T19:24:08.299064Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"graph-node-identity-repo-scoped","message":"status -\u003e completed"}
 {"ts":"2026-07-25T19:30:57.766408Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"graph-why-resolution-and-peer-spec-indexing","message":"\"hero why fails to resolve specs that hero graph resolves — graph substrate stale + repoKey divergence\""}
 {"ts":"2026-07-25T19:30:57.766575Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"graph-why-resolution-and-peer-spec-indexing","message":"status -\u003e completed"}
+{"ts":"2026-07-27T02:36:06.261022Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"status-actionable-summary","message":"\"Actionable Status Summary — In Progress, Upcoming, and Recently Completed\""}
+{"ts":"2026-07-27T02:36:06.261174Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"status-actionable-summary","message":"status -\u003e completed"}

@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-26T02:39:30Z · projected from 594 source nodes_
+_Last refreshed: 2026-07-27T14:24:44Z · projected from 594 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | <1m ago | satellite-corpus-integration |
-| docs | maturing | web/docs/ | 13d ago | — |
-| domains/chat | maturing | domains/chat/ | 7d ago | — |
-| domains/engineering | maturing | domains/engineering/ | 1d ago | — |
-| domains/pm | maturing | domains/pm/ | 8d ago | — |
-| domains/sales | maturing | domains/sales/ | 17d ago | — |
-| landing | building | web/landing/ | 14d ago | hero-landing-page |
+| core | building | cmd/, internal/ | 11h ago | satellite-corpus-integration |
+| docs | maturing | web/docs/ | 14d ago | — |
+| domains/chat | maturing | domains/chat/ | 8d ago | — |
+| domains/engineering | maturing | domains/engineering/ | 3d ago | — |
+| domains/pm | maturing | domains/pm/ | 9d ago | — |
+| domains/sales | maturing | domains/sales/ | 18d ago | — |
+| landing | building | web/landing/ | 15d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 1d ago | agent-outposts |
+| serve | building | internal/serve/ | 3d ago | agent-outposts |
 | (unassigned) | — | — | — | 228 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -54,8 +54,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Recently completed (last 14 days)
 
 - **(unassigned)** — conversational-attention-operability, attention-contract-bundle-publication, attention-conversational-routes, attention-lifecycle-read-awareness, attention-mcp-action-tools, durable-attention
-- **core** — graph-why-resolution-and-peer-spec-indexing, graph-node-identity-repo-scoped, initiative-autocomplete-ignores-declared-children, attention-interaction-consent-contract
-- **domains/engineering** — portable-routing-rules, peering-over-project-mail
+- **core** — status-actionable-summary, graph-why-resolution-and-peer-spec-indexing, graph-node-identity-repo-scoped, initiative-autocomplete-ignores-declared-children, attention-interaction-consent-contract
+- **domains/engineering** — portable-routing-rules
 
 ## Next up across surfaces
 
@@ -68,8 +68,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Open risks & blockers
 
 - **Blocked specs (13):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection); `wire-checks-to-boundaries` (waits on spec-contract-enums-unified).
-- **Stale-in-flight (6):** `hero-landing-page` (68d), `hero-team-server` (68d), `retrieval-contradiction-detection` (15d), `agent-outposts` (14d), `satellite-corpus-integration` (14d), `team-connect` (14d).
-- **Aged open bugs (9):** `install-target-emits-both-claude-and-agents-md` (open 72d), `next-project-file-conflict-not-regenerated` (open 53d), `desktop-sidebar-mcp-not-running` (open 52d), `hihcp-agent-loop-error-recovery` (open 47d), `hihcp-agents-md-harness-agnostic` (open 47d), `hihcp-mcp-auto-reconnect` (open 47d), `hihcp-mcp-first-turn-readiness` (open 47d), `hihcp-permission-bridge-validation` (open 47d), `hihcp-rgignore` (open 47d).
+- **Stale-in-flight (6):** `hero-landing-page` (69d), `hero-team-server` (69d), `retrieval-contradiction-detection` (17d), `agent-outposts` (15d), `satellite-corpus-integration` (15d), `team-connect` (15d).
+- **Aged open bugs (9):** `install-target-emits-both-claude-and-agents-md` (open 73d), `next-project-file-conflict-not-regenerated` (open 54d), `desktop-sidebar-mcp-not-running` (open 53d), `hihcp-agent-loop-error-recovery` (open 48d), `hihcp-agents-md-harness-agnostic` (open 48d), `hihcp-mcp-auto-reconnect` (open 48d), `hihcp-mcp-first-turn-readiness` (open 48d), `hihcp-permission-bridge-validation` (open 48d), `hihcp-rgignore` (open 48d).
 - **Unassigned specs (228) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health

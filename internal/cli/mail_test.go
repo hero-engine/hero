@@ -85,6 +85,14 @@ func TestMailCLIJSONCommandsAndErrors(t *testing.T) {
 	if err := json.Unmarshal(statusPayload["mail"], &summary); err != nil || summary.Count != 1 || len(summary.Items) != 1 {
 		t.Fatalf("status mail summary = %#v, %v", summary, err)
 	}
+	statusOut, err = runCmd("status")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(statusOut, "Project Mail — unread (1):") ||
+		!strings.Contains(statusOut, "Hello") {
+		t.Fatalf("human status missing unread Project Mail summary: %s", statusOut)
+	}
 	resumeOut, err := runCmd("resume", "--json")
 	if err != nil {
 		t.Fatal(err)

@@ -224,14 +224,21 @@ func rankSpecs(specs []*Spec, sortKey Sort) {
 			return specs[i].Slug < specs[j].Slug
 		})
 	case SortPriority:
-		sort.SliceStable(specs, func(i, j int) bool {
-			return priorityLess(specs[i], specs[j])
-		})
+		SortByPriority(specs)
 	case SortRecency, "":
 		sort.SliceStable(specs, func(i, j int) bool {
 			return refTime(specs[i]).After(refTime(specs[j]))
 		})
 	}
+}
+
+// SortByPriority orders specs in place using the canonical `hero queue`
+// ranking. Callers that partition a population before ranking can use this
+// helper without duplicating the queue policy.
+func SortByPriority(specs []*Spec) {
+	sort.SliceStable(specs, func(i, j int) bool {
+		return priorityLess(specs[i], specs[j])
+	})
 }
 
 // priorityLess implements the `hero queue` ranking: pinned first,

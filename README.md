@@ -239,7 +239,9 @@ The binary is organized around a few stable groups.
 Useful examples:
 
 ```bash
-hero status --all
+hero status                         # compact current/upcoming/recent briefing
+hero status --all                   # include someday and parking work
+hero status --json                  # stable, unbounded automation surface
 hero list --ready --sort priority
 hero queue --format kickoff
 hero spec new csv-export

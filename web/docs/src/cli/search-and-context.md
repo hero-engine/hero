@@ -297,4 +297,46 @@ hero docs check
 ```
 
 `hero status` shows actionable work by horizon. Use `--all` to include
-`someday` and `parking` work.
+`someday` and `parking` work. The default human view is a compact operational
+briefing: all work in progress, up to ten priority-ranked upcoming items, up
+to ten items waiting on peers, and the five newest completions that carry an
+authoritative `completed_at` timestamp.
+
+```text
+Work: 3 in progress · 2 upcoming (1 ready, 1 blocked) · 1 waiting · 6 completed
+Other: 4 intake · 17 knowledge · 6 hidden by horizon
+
+In progress (3):
+  returned-export                 feature     handed_back    Return Export
+  fix-login                       bug         delivering     Fix Login
+  review-billing                  feature     in-review      Review Billing
+
+Upcoming (2):
+  csv-export                      feature     planning       CSV Export
+  retry-policy                    feature     planning       Retry Policy  [blocked]
+
+Waiting (1):
+  mobile-client                   feature     awaiting_peer  Mobile Client
+
+Recently completed (6):
+  audit-log                       feature     3h ago          Audit Log
+  search-refresh                  bug         5h ago          Search Refresh
+  team-signup                     feature     1 day ago       Team Signup
+  retry-fix                       bug         2 days ago      Retry Fix
+  docs-refresh                    feature     3 days ago      Docs Refresh
+  … 1 more — `hero list --status completed --sort recency`
+```
+
+Completed, intake, and knowledge totals are workspace-wide and are not dumped
+entry by entry. Use `hero list` for the full corpus:
+
+```bash
+hero list --status planning --sort priority
+hero list --status handed_off,awaiting_peer --sort priority
+hero list --status completed --sort recency
+hero list --type intake
+hero list --type convention,decision,rule,external,context,note
+```
+
+Use `hero status --json` for automation; its unbounded schema is independent
+of the human view's row limits.
