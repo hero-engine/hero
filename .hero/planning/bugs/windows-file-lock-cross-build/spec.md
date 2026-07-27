@@ -157,26 +157,23 @@ the complete GoReleaser snapshot succeed for all six release targets.
 
 ## Acceptance Criteria
 
-- WHEN Hero builds for Windows amd64 or arm64 THE SYSTEM SHALL compile Focus,
-   Mail, Suggestions, code-index refresh, and `cmd/hero` without Unix-only
-   symbol errors.
-- WHEN Focus, Mail, or Suggestions acquires a state lock THE SYSTEM SHALL hold
-   an exclusive cross-process lock until `Close`, preserving the existing
-   blocking serialization contract on Unix and Windows.
+- WHEN Hero builds for Windows amd64 or arm64 THE SYSTEM SHALL compile Focus, Mail, Suggestions, code-index refresh, and `cmd/hero` without Unix-only symbol errors.
+  verified_by: .github/workflows/test.yml::Windows cross-build
+- WHEN Focus, Mail, or Suggestions acquires a state lock THE SYSTEM SHALL hold an exclusive cross-process lock until `Close`, preserving the existing blocking serialization contract on Unix and Windows.
+  verified_by: internal/filelock/lock_test.go::TestAcquireBlocksUntilRelease
 - WHEN an Attention state lock is contended THE SYSTEM SHALL preserve the existing no-lost-update and stale-revision behavior.
-- WHEN code-index refresh finds its lock already held THE SYSTEM SHALL return
-   the existing busy result immediately without mutating refresh state on Unix
-   and Windows.
-- WHEN a lock acquisition fails THE SYSTEM SHALL close the opened file and
-   return the underlying failure without reporting ownership.
-- WHEN a held lock closes THE SYSTEM SHALL attempt to unlock before closing
-   the file and SHALL return a meaningful unlock or close error.
-- THE SYSTEM SHALL centralize operating-system-specific file locking behind
-   build-tagged implementations and SHALL leave no direct `syscall.Flock` or
-   `x/sys/unix` lock dependency in portable Attention or CLI files.
-- WHEN the release snapshot runs THE SYSTEM SHALL pass native tests and build
-   archives plus checksums for all configured Darwin, Linux, and Windows
-   targets.
+  verified_by: internal/attention/focus/store_test.go::TestStoreConcurrentReplaceDoesNotLoseUpdate
+  verified_by: internal/attention/mail/store_test.go::TestStoreConcurrentReceiptUpdatesPreserveState
+- WHEN code-index refresh finds its lock already held THE SYSTEM SHALL return the existing busy result immediately without mutating refresh state on Unix and Windows.
+  verified_by: internal/cli/scan_test.go::TestIncrementalCodeRefreshSkipsUnusableCacheAndBusyLock
+- WHEN a lock acquisition fails THE SYSTEM SHALL close the opened file and return the underlying failure without reporting ownership.
+  verified_by: internal/filelock/lock_test.go::TestAcquirePreservesOpenFailure
+- WHEN a held lock closes THE SYSTEM SHALL attempt to unlock before closing the file and SHALL return a meaningful unlock or close error.
+  verified_by: internal/filelock/lock_test.go::TestTryAcquireReportsCrossProcessContentionAndRelease
+- THE SYSTEM SHALL centralize operating-system-specific file locking behind build-tagged implementations and SHALL leave no direct `syscall.Flock` or `x/sys/unix` lock dependency in portable Attention or CLI files.
+  verified_by: .github/workflows/test.yml::Windows cross-build
+- WHEN the release snapshot runs THE SYSTEM SHALL pass native tests and build archives plus checksums for all configured Darwin, Linux, and Windows targets.
+  verified_by: .github/workflows/test.yml::Windows cross-build
 
 ## Changes
 

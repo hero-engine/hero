@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-27T21:33:01Z
+updated: 2026-07-27T21:34:14Z
 repo: hero-engine/hero
 ---
 
@@ -11,13 +11,19 @@ repo: hero-engine/hero
 > Session opened with — Deliver initiative-autocomplete-ignores-declared-children. An initiative auto-completes when only some of its declared children have shipped, because the completion gate's roster is fed from an incomplete source. Two compounding defects: (1) children: (plural) frontmatter is silently dropped by the relation parser (internal/spec/spec.go:633), so declared children never become child edges and the r…
 > _possibly stale — 10 commit(s) since, last set 2d 4h ago_
 
+_possibly stale — 1 commit(s) since, last set 54m ago_
+
 ## Last user ask
 
 > Cut a tagged build after continuous code-index freshness; release snapshot exposed Windows cross-compilation failures from Unix-only syscall.Flock in Attention persistence locks, so diagnose and fix the release blocker before tagging.
 
 ## Suggested next prompt
 
-> Commit the audited cache-local code-refresh lock amendment with the completed continuous code-index freshness initiative, then push main for the test build.
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 
