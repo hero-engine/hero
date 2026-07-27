@@ -2,7 +2,7 @@
 title: "Unix-only file locks break Windows release builds"
 slug: windows-file-lock-cross-build
 type: bug
-status: delivering
+status: completed
 domain: engineering
 size: medium
 priority: critical
@@ -11,6 +11,7 @@ root_cause_class: code
 created: 2026-07-27
 tags: [release, windows, file-locking, attention, code-index]
 delivery_method: manual
+completed_at: 2026-07-27T21:42:51Z
 ---
 
 # Unix-only file locks break Windows release builds
@@ -54,12 +55,11 @@ try-lock/busy semantics for hook-driven code refresh.
 Makes Hero's existing file locks portable so the six-platform release build
 can complete without weakening Attention serialization or hook busy-skip.
 
-**Status:** delivering — portable locks and the CI cross-build gate are implemented; all release rehearsal gates pass.
+**Status:** completed — 8/8 criteria verified after a clean cold audit; the final six-target release rehearsal passes.
 
-**Pick up at:** cold-audit the delivery evidence, address any findings, then run
-`hero spec verify windows-file-lock-cross-build`.
+**Pick up at:** no implementation remains; use the archived audit and snapshot evidence while cutting `v0.30.0`.
 
-→ `.hero/planning/bugs/windows-file-lock-cross-build/spec.md`
+→ `.hero/specs/windows-file-lock-cross-build/delivery-audit.md`
 
 **Files:** `internal/attention/focus/lock.go`, `internal/attention/mail/lock.go`, `internal/attention/suggestion/store.go`, `internal/cli/scan.go`, `.goreleaser.yaml`
 **Skip:** disabling Windows artifacts or replacing locks with process-local mutexes.

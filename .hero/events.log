@@ -494,3 +494,5 @@
 {"ts":"2026-07-27T20:36:47.687594Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hook-driven-index-freshness","message":"status -\u003e completed"}
 {"ts":"2026-07-27T20:36:49.963895Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"continuous-code-index-freshness","message":"\"Continuous Code-Index Freshness\""}
 {"ts":"2026-07-27T20:36:49.964017Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"continuous-code-index-freshness","message":"status -\u003e completed"}
+{"ts":"2026-07-27T21:42:52.685336Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"windows-file-lock-cross-build","message":"\"Unix-only file locks break Windows release builds\""}
+{"ts":"2026-07-27T21:42:52.685478Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"windows-file-lock-cross-build","message":"status -\u003e completed"}

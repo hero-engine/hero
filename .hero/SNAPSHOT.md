@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-27T21:40:37Z · projected from 598 source nodes_
+_Last refreshed: 2026-07-27T21:43:28Z · projected from 598 source nodes_
 
 ## Surfaces
 
@@ -53,17 +53,17 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — continuous-code-index-freshness, conversational-attention-operability, attention-contract-bundle-publication, attention-conversational-routes, attention-lifecycle-read-awareness, attention-mcp-action-tools
+- **(unassigned)** — windows-file-lock-cross-build, continuous-code-index-freshness, conversational-attention-operability, attention-contract-bundle-publication, attention-conversational-routes, attention-lifecycle-read-awareness
 - **core** — embeddings-never-refresh-on-commit, status-actionable-summary, graph-why-resolution-and-peer-spec-indexing, graph-node-identity-repo-scoped, initiative-autocomplete-ignores-declared-children
 - **domains/engineering** — portable-routing-rules
 
 ## Next up across surfaces
 
 1. **landing** — `hero-landing-page` (P0, delivering)
-2. **(unassigned)** — `windows-file-lock-cross-build` (critical, delivering)
-3. **serve** — `hero-team-server` (P1, delivering)
-4. **core** — `satellite-corpus-integration` (high, delivering)
-5. **serve** — `agent-outposts` (medium, delivering)
+2. **serve** — `hero-team-server` (P1, delivering)
+3. **core** — `satellite-corpus-integration` (high, delivering)
+4. **serve** — `agent-outposts` (medium, delivering)
+5. **serve** — `retrieval-contradiction-detection` (—, delivering)
 
 ## Open risks & blockers
 
