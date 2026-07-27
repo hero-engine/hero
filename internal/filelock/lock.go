@@ -12,6 +12,8 @@ type Lock struct {
 	file *os.File
 }
 
+type lockOperation func(file *os.File, nonBlocking bool) (busy bool, err error)
+
 // Acquire opens path and blocks until it holds an exclusive lock.
 func Acquire(path string, perm fs.FileMode) (*Lock, error) {
 	lock, busy, err := acquire(path, perm, false)
@@ -31,6 +33,10 @@ func TryAcquire(path string, perm fs.FileMode) (*Lock, bool, error) {
 }
 
 func acquire(path string, perm fs.FileMode, nonBlocking bool) (*Lock, bool, error) {
+	return acquireWith(path, perm, nonBlocking, lockFile)
+}
+
+func acquireWith(path string, perm fs.FileMode, nonBlocking bool, operation lockOperation) (*Lock, bool, error) {
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, perm)
 	if err != nil {
 		return nil, false, fmt.Errorf("open lock file: %w", err)
@@ -38,7 +44,7 @@ func acquire(path string, perm fs.FileMode, nonBlocking bool) (*Lock, bool, erro
 	if err := file.Chmod(perm); err != nil {
 		return nil, false, closeAfterFailure(file, fmt.Errorf("set lock file permissions: %w", err))
 	}
-	busy, err := lockFile(file, nonBlocking)
+	busy, err := operation(file, nonBlocking)
 	if err != nil {
 		return nil, false, closeAfterFailure(file, fmt.Errorf("lock file: %w", err))
 	}
@@ -53,12 +59,16 @@ func acquire(path string, perm fs.FileMode, nonBlocking bool) (*Lock, bool, erro
 
 // Close releases the lock before closing its file.
 func (l *Lock) Close() error {
+	return l.closeWith(unlockFile)
+}
+
+func (l *Lock) closeWith(unlock func(*os.File) error) error {
 	if l == nil || l.file == nil {
 		return nil
 	}
 	file := l.file
 	l.file = nil
-	unlockErr := unlockFile(file)
+	unlockErr := unlock(file)
 	closeErr := file.Close()
 	if unlockErr != nil && closeErr != nil {
 		return errors.Join(

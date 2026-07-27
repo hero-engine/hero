@@ -168,8 +168,11 @@ the complete GoReleaser snapshot succeed for all six release targets.
   verified_by: internal/cli/scan_test.go::TestIncrementalCodeRefreshSkipsUnusableCacheAndBusyLock
 - WHEN a lock acquisition fails THE SYSTEM SHALL close the opened file and return the underlying failure without reporting ownership.
   verified_by: internal/filelock/lock_test.go::TestAcquirePreservesOpenFailure
+  verified_by: internal/filelock/lock_test.go::TestAcquireClosesFileAfterLockFailure
 - WHEN a held lock closes THE SYSTEM SHALL attempt to unlock before closing the file and SHALL return a meaningful unlock or close error.
   verified_by: internal/filelock/lock_test.go::TestTryAcquireReportsCrossProcessContentionAndRelease
+  verified_by: internal/filelock/lock_test.go::TestCloseReportsUnlockErrorAndStillClosesFile
+  verified_by: internal/filelock/lock_test.go::TestCloseReportsFileCloseError
 - THE SYSTEM SHALL centralize operating-system-specific file locking behind build-tagged implementations and SHALL leave no direct `syscall.Flock` or `x/sys/unix` lock dependency in portable Attention or CLI files.
   verified_by: .github/workflows/test.yml::Windows cross-build
 - WHEN the release snapshot runs THE SYSTEM SHALL pass native tests and build archives plus checksums for all configured Darwin, Linux, and Windows targets.
@@ -239,8 +242,8 @@ Windows command builds, and the exact six-target GoReleaser snapshot.
 | 2 | Attention locks remain exclusive and blocking | DONE | `internal/filelock/lock.go`, platform backends, and `TestAcquireBlocksUntilRelease` preserve blocking cross-process exclusivity. |
 | 3 | Concurrent Attention updates remain correct | DONE | Existing Focus concurrent replace and Mail concurrent receipt tests pass in `go test -race -count=1 ./...`. |
 | 4 | Code refresh keeps immediate busy semantics | DONE | `TryAcquire` maps only platform contention to `busy`; cross-process helper coverage and existing code-refresh contention tests pass. |
-| 5 | Failed acquire closes file | DONE | `internal/filelock/lock.go` funnels permission/lock failures through `closeAfterFailure`; open failure propagation has regression coverage. |
-| 6 | Close unlocks and reports errors | DONE | `Lock.Close` unlocks before close and preserves either or both errors with `errors.Join`; release/reacquire tests pass. |
+| 5 | Failed acquire closes file | DONE | `TestAcquireClosesFileAfterLockFailure` injects a post-open lock failure, verifies the cause survives, and proves the opened handle is closed. |
+| 6 | Close unlocks and reports errors | DONE | `TestCloseReportsUnlockErrorAndStillClosesFile` and `TestCloseReportsFileCloseError` directly verify both error paths and cleanup. |
 | 7 | Platform details live behind build tags | DONE | OS calls exist only in `lock_unix.go` and `lock_windows.go`; portable Attention/CLI files contain no direct Flock/unix imports. |
 | 8 | Full release snapshot succeeds | DONE | `goreleaser release --snapshot --clean` passed, creating six archives and `checksums.txt`; every checksum verified. |
 
@@ -251,7 +254,7 @@ Windows command builds, and the exact six-target GoReleaser snapshot.
 | 1 | Add shared platform file-lock package | DONE | Added `internal/filelock/lock.go`, `lock_unix.go`, and `lock_windows.go` with blocking and try-acquire operations. |
 | 2 | Migrate Attention locks | DONE | Focus, Mail, and Suggestion wrappers now reuse `internal/filelock` and retain operation-specific error context. |
 | 3 | Migrate code-refresh try-lock | DONE | `internal/cli/scan.go` uses `TryAcquire` while preserving `(lock, busy, error)` and the cache-local path. |
-| 4 | Add lock regression tests | DONE | Added blocking, cross-process busy, release/reacquire, and open-failure tests; existing store/refresh contention tests remain green. |
+| 4 | Add lock regression tests | DONE | Added blocking, cross-process busy, release/reacquire, post-open failure cleanup, unlock-error, and close-error tests; existing store/refresh contention tests remain green. |
 | 5 | Add Windows cross-build gate and rehearse release | DONE | `.github/workflows/test.yml` now builds both Windows architectures; local Windows builds and the complete snapshot passed. |
 
 ### Exercise-the-feature check

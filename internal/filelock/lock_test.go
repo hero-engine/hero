@@ -97,6 +97,61 @@ func TestAcquirePreservesOpenFailure(t *testing.T) {
 	}
 }
 
+func TestAcquireClosesFileAfterLockFailure(t *testing.T) {
+	cause := errors.New("injected lock failure")
+	var opened *os.File
+	lock, busy, err := acquireWith(
+		filepath.Join(t.TempDir(), "state.lock"),
+		0o600,
+		false,
+		func(file *os.File, _ bool) (bool, error) {
+			opened = file
+			return false, cause
+		},
+	)
+	if lock != nil || busy {
+		t.Fatalf("lock=%v busy=%v, want nil false", lock, busy)
+	}
+	if !errors.Is(err, cause) {
+		t.Fatalf("error = %v, want injected cause", err)
+	}
+	if opened == nil {
+		t.Fatal("lock operation did not receive the opened file")
+	}
+	if _, statErr := opened.Stat(); !errors.Is(statErr, os.ErrClosed) {
+		t.Fatalf("opened file remains usable after lock failure: %v", statErr)
+	}
+}
+
+func TestCloseReportsUnlockErrorAndStillClosesFile(t *testing.T) {
+	file, err := os.OpenFile(filepath.Join(t.TempDir(), "state.lock"), os.O_CREATE|os.O_RDWR, 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cause := errors.New("injected unlock failure")
+	lock := &Lock{file: file}
+	if err := lock.closeWith(func(*os.File) error { return cause }); !errors.Is(err, cause) {
+		t.Fatalf("Close error = %v, want injected cause", err)
+	}
+	if _, statErr := file.Stat(); !errors.Is(statErr, os.ErrClosed) {
+		t.Fatalf("file remains usable after unlock failure: %v", statErr)
+	}
+}
+
+func TestCloseReportsFileCloseError(t *testing.T) {
+	file, err := os.OpenFile(filepath.Join(t.TempDir(), "state.lock"), os.O_CREATE|os.O_RDWR, 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := file.Close(); err != nil {
+		t.Fatal(err)
+	}
+	lock := &Lock{file: file}
+	if err := lock.closeWith(func(*os.File) error { return nil }); !errors.Is(err, os.ErrClosed) {
+		t.Fatalf("Close error = %v, want os.ErrClosed", err)
+	}
+}
+
 func runTryAcquireHelper(t *testing.T, path string) string {
 	t.Helper()
 	cmd := exec.Command(os.Args[0], "-test.run=^TestTryAcquireHelper$", "--", path)
