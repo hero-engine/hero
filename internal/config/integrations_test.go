@@ -431,6 +431,37 @@ func TestOmittedCapabilitiesPreserveLegacyTrackerOnly(t *testing.T) {
 	}
 }
 
+func TestResolveCodeHostExplicitIDOverridesAllSelectors(t *testing.T) {
+	project := func(value string) json.RawMessage {
+		raw, _ := json.Marshal(value)
+		return raw
+	}
+	cfg := Config{Integrations: &IntegrationsConfig{
+		Default: "github-default",
+		Roles: map[string]string{
+			"delivery":  "github-default",
+			"code-host": "github-default",
+		},
+		Connections: map[string]IntegrationConfig{
+			"github-default": {
+				Provider: "github", Capabilities: []IntegrationCapability{CapabilityTracker, CapabilityCodeHost},
+				Settings: map[string]json.RawMessage{"project": project("hero-engine/default")},
+			},
+			"github-explicit": {
+				Provider: "github", Capabilities: []IntegrationCapability{CapabilityCodeHost},
+				Settings: map[string]json.RawMessage{"project": project("hero-engine/explicit")},
+			},
+		},
+	}}
+	host, err := cfg.ResolveCodeHostConnection("github-explicit")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if host.ID != "github-explicit" || host.Project != "hero-engine/explicit" {
+		t.Fatalf("explicit resolution used another selector: %+v", host)
+	}
+}
+
 func TestCodeHostOnlyConnectionDoesNotCreateTrackerAmbiguity(t *testing.T) {
 	setting := func(value string) json.RawMessage {
 		b, _ := json.Marshal(value)
@@ -488,6 +519,11 @@ func TestConnectionCapabilityValidationAndRepositoryBounds(t *testing.T) {
 			doc:  `{"integrations":{"connections":{"main":{"provider":"github","capabilities":["code-host"],"settings":{"project":"hero-engine/hero","repositories":["Hero-Engine/Hero-Code","hero-engine/hero-code"]}}}}}`,
 			want: "duplicate repository",
 		},
+		{
+			name: "github nested namespace",
+			doc:  `{"integrations":{"connections":{"main":{"provider":"github","capabilities":["code-host"],"settings":{"project":"hero-engine/hero","repositories":["group/subgroup/repo"]}}}}}`,
+			want: "invalid repository name",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -496,6 +532,36 @@ func TestConnectionCapabilityValidationAndRepositoryBounds(t *testing.T) {
 				t.Fatalf("error=%v want=%q", err, tc.want)
 			}
 		})
+	}
+}
+
+func TestGitLabCodeHostResolvesBeforeAdapterExists(t *testing.T) {
+	doc := []byte(`{
+		"integrations": {
+			"roles": {"code-host": "gitlab-main"},
+			"connections": {
+				"gitlab-main": {
+					"provider": "gitlab",
+					"capabilities": ["code-host"],
+					"settings": {
+						"project": "group/subgroup/repo",
+						"base_url": "https://gitlab.example",
+						"repositories": ["group/other/repo"]
+					}
+				}
+			}
+		}
+	}`)
+	resolved, err := ResolveIntegrationDocuments("hero.json", doc, "hero.local.json", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	host, err := (Config{Integrations: resolved.Config}).ResolveCodeHostConnection("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if host.Provider != "gitlab" || host.ID != "gitlab-main" || len(host.Repositories) != 2 {
+		t.Fatalf("host=%+v", host)
 	}
 }
 
@@ -526,5 +592,27 @@ func TestCodeHostConnectionUsesExistingCredentialResolution(t *testing.T) {
 	}
 	if rendered := fmt.Sprintf("%v/%#v", host.Token, host.Token); strings.Contains(rendered, "CANARY") {
 		t.Fatal("code-host token leaked through formatting")
+	}
+}
+
+func TestCodeHostMissingCredentialReturnsTypedError(t *testing.T) {
+	project, _ := json.Marshal("hero-engine/hero")
+	cfg := Config{Integrations: &IntegrationsConfig{
+		Roles: map[string]string{"code-host": "github-main"},
+		Connections: map[string]IntegrationConfig{
+			"github-main": {
+				Provider: "github", Capabilities: []IntegrationCapability{CapabilityCodeHost},
+				Settings: map[string]json.RawMessage{"project": project},
+			},
+		},
+	}}
+	host, err := cfg.ResolveCodeHostConnection("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = host.ResolveToken()
+	var resolution *IntegrationResolutionError
+	if !errors.As(err, &resolution) || resolution.Code != "credential_unavailable" || resolution.ConnectionID != "github-main" {
+		t.Fatalf("error=%T %v", err, err)
 	}
 }

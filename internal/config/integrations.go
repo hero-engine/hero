@@ -113,7 +113,9 @@ func (c IntegrationConnection) ResolveToken() (Secret, error) {
 			return Secret(token), nil
 		}
 	}
-	return "", fmt.Errorf("integration %q has no usable credential", c.ID)
+	return "", &IntegrationResolutionError{
+		Code: "credential_unavailable", ConnectionID: c.ID, Provider: c.Provider,
+	}
 }
 
 // TrackerConnection is the credential-safe metadata a broker needs for one
@@ -162,6 +164,8 @@ func (e *IntegrationResolutionError) Error() string {
 		return "no code-host integration selected; set integrations.roles.code-host or pass connection_id"
 	case "wrong_connection_capability":
 		return fmt.Sprintf("integration %q provider %q does not declare capability %q", e.ConnectionID, e.Provider, e.Capability)
+	case "credential_unavailable":
+		return fmt.Sprintf("integration %q has no usable credential", e.ConnectionID)
 	default:
 		return "integration resolution failed"
 	}
@@ -538,7 +542,7 @@ func validateProviderSettings(id string, c IntegrationConfig) error {
 			}
 			seen := map[string]bool{}
 			for i, value := range values {
-				if !validRepositoryName(value) {
+				if !validRepositoryName(c.Provider, value) {
 					return fmt.Errorf("%s.%d: invalid repository name %q", path, i, value)
 				}
 				key := strings.ToLower(value)
@@ -598,8 +602,15 @@ func validateProviderSettings(id string, c IntegrationConfig) error {
 
 var repositoryNameRE = regexp.MustCompile(`^[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)+$`)
 
-func validRepositoryName(value string) bool {
-	return value == strings.TrimSpace(value) && repositoryNameRE.MatchString(value)
+func validRepositoryName(provider, value string) bool {
+	if value != strings.TrimSpace(value) || !repositoryNameRE.MatchString(value) {
+		return false
+	}
+	segments := strings.Split(value, "/")
+	if provider == "github" {
+		return len(segments) == 2
+	}
+	return provider == "gitlab" && len(segments) >= 2
 }
 
 // ValidateConnectionSettings checks an assembled settings map against the

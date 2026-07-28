@@ -154,7 +154,7 @@ connection ID may appear under both delivery and code-host roles.
 - **AC-7:** THE SYSTEM SHALL retain credentials as `config.Secret` until the provider adapter boundary and SHALL redact them from generic formatting, JSON, status, errors, and tests.
 - **AC-8:** WHEN `settings.repositories` is present THE SYSTEM SHALL accept only a bounded unique set of provider-valid repository names and preserve `settings.project` as the default repository.
 - **AC-9:** WHEN existing tracker and docs configuration, selection, connect, credential, and broker tests run THE SYSTEM SHALL preserve their behavior and legacy compatibility.
-- **AC-10:** WHEN GitLab is selected as code host before a runtime adapter exists THE SYSTEM SHALL preserve the valid role binding while later runtime capability discovery reports no implemented PR operations.
+- **AC-10:** WHEN GitLab is selected as code host before a runtime adapter exists THE SYSTEM SHALL preserve the valid role binding and resolve credential-safe connection metadata without claiming any implemented PR operation.
 - **AC-11:** WHEN an existing connection omits `capabilities` THE SYSTEM SHALL infer its legacy tracker/docs capability only; a GitHub tracker SHALL NOT silently become selectable as a code host.
 - **AC-12:** WHEN a GitHub or GitLab connection declares only `code-host` THE SYSTEM SHALL exclude it from tracker-broker ambiguity and delivery selection.
 
@@ -190,3 +190,59 @@ connection ID may appear under both delivery and code-host roles.
   values, and compatibility with the default project.
 - Run `go test ./internal/config ./internal/cli ./internal/tracker`, then
   `go test ./...` and `go vet ./...`.
+
+## Completion Ledger
+
+Implementation commit: `84c90c4`.
+
+Validation performed:
+
+- `go test ./internal/config ./internal/cli ./internal/tracker -count=1`
+- `go test ./... -count=1`
+- `go vet ./...`
+- release-shaped local binary exercise using `hero connect github --role
+  code-host --token-stdin --local-only --no-verify --json`, followed by
+  `hero connect --list --json`
+- `hero drift code-host-integration-capability-model --since 3b68f46`
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | GitHub/GitLab code-host binding preserves stable ID | DONE | `internal/config/integrations.go:375`, `internal/config/integrations_test.go:349` |
+| 2 | One connection serves tracker and code-host roles | DONE | `internal/config/integrations.go:64`, `internal/config/integrations_test.go:349` |
+| 3 | Tracker/docs-only providers reject code-host role | DONE | `internal/config/integrations.go:397`, `internal/config/integrations_test.go:383` |
+| 4 | Explicit eligible code-host connection wins | DONE | `internal/config/integrations.go:789`, `TestResolveCodeHostExplicitIDOverridesAllSelectors` |
+| 5 | Missing ID resolves only roles.code-host | DONE | `internal/config/integrations.go:779`, `internal/config/integrations_test.go:404` |
+| 6 | Existing credential precedence is reused | DONE | `internal/config/integrations.go:94`, `internal/config/integrations_test.go:502` |
+| 7 | Credentials remain Secret and redacted | DONE | `internal/config/integrations.go:94`, `internal/config/integrations_test.go:502` |
+| 8 | Repository scopes are bounded, unique, and provider-valid | DONE | `internal/config/integrations.go:481`, `TestConnectionCapabilityValidationAndRepositoryBounds` covers GitHub exact owner/repo and GitLab nested namespace shapes |
+| 9 | Existing tracker/docs behavior remains compatible | DONE | Full uncached repository suite passed; focused tracker suite passed |
+| 10 | GitLab binding resolves metadata without claiming operations | DONE | `internal/config/integrations.go:46`, `TestGitLabCodeHostResolvesBeforeAdapterExists`; operation claims remain absent until the broker children |
+| 11 | Omitted capabilities infer legacy behavior only | DONE | `internal/config/integrations.go:64`, `internal/config/integrations_test.go:404` |
+| 12 | Code-host-only connection is excluded from tracker selection | DONE | `internal/config/integrations.go:719`, `internal/config/integrations_test.go:434` |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Provider and connection capability declarations | DONE | `internal/config/integrations.go:33` adds typed registry, inference, validation, and repository bounds |
+| 2 | Register and validate roles.code-host | DONE | `internal/config/integrations.go:53`, `internal/config/integrations.go:397` |
+| 3 | Add repository-scope settings | DONE | `internal/config/integrations.go:481`, `internal/config/integrations.go:750` |
+| 4 | Extract credential-safe runtime connection | DONE | `internal/config/integrations.go:93` shared by typed tracker/code-host projections |
+| 5 | Add ResolveCodeHostConnection | DONE | `internal/config/integrations.go:789` with typed selection, capability, and credential failures; `TestCodeHostMissingCredentialReturnsTypedError` |
+| 6 | Extend connect/status behavior | DONE | `internal/cli/connect.go:127`, `internal/cli/connect.go:206`, CLI tests at `internal/cli/connect_integrations_test.go:113` |
+| 7 | Add config, credential, connect, compatibility tests | DONE | New focused tests in `internal/config/integrations_test.go:349` and `internal/cli/connect_integrations_test.go:113` |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end with a release-shaped
+  local Hero binary. Code-host connect returned capability `code-host`, kept
+  `default` empty, selected `roles.code-host`, reported local credential
+  readiness, and emitted no credential.
+
+### Excellence Bar self-check
+
+Yes — the change makes capability selection explicit without creating a second
+connection or credential system, preserves legacy tracker behavior under the
+full test suite, and exercises the actual CLI boundary.
