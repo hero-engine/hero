@@ -160,12 +160,12 @@ formatting, and diff hygiene.
 | 2 | Require qualified PR, head, intent, idempotency, and revisions | DONE | V1 validation, strict operation payload decoding, and `PrepareStateTransition` require every safety field and provider-backed lifecycle evidence before dispatch. |
 | 3 | Retarget requires observed current and explicit existing new base | DONE | Scope validation binds both refs to the PR repository; preflight exact-matches the current base and resolves the named target branch at its supplied SHA. |
 | 4 | Reject incompatible permission, revision, head, lifecycle, and base changes | DONE | Force pushes, base changes, target movement, permission races, capability drift, observation drift, invalid lifecycle sources, and missing branches return typed errors with zero writes. |
-| 5 | Exact desired state returns external completion | DONE | Operation-specific comparators recognize ready, exact retarget, closed-unmerged, and reopened states and return `externally_completed` with no provider transition. |
-| 6 | Lost responses reconcile from authoritative desired state | DONE | Detached bounded read-back returns `reconciled_applied` only for the exact desired state; delayed/unavailable proof remains `ambiguous`, and definite provider rejection remains `not_applied`. |
+| 5 | Exact desired state returns external completion | DONE | Operation-specific comparators recognize ready, repository/ref/SHA-exact retarget, closed-unmerged, and reopened states and return `externally_completed` with no provider transition. |
+| 6 | Lost responses reconcile from authoritative desired state | DONE | Detached bounded read-back returns `reconciled_applied` only for the exact desired state, including retarget target SHA; delayed, moved-target, or unavailable proof remains `ambiguous`, and definite provider rejection remains `not_applied`. |
 | 7 | Preserve merged as an immutable terminal state | DONE | Normalization distinguishes merged from closed-unmerged, and every transition rejects a merged PR before dispatch and during reconciliation. |
 | 8 | Same-key retries perform at most one provider transition | DONE | Sequential and concurrent retries for all four operations share the existing durable connection-scoped journal, file lock, receipt, and one provider attempt. |
 | 9 | Changed operation, PR, head, base, or desired target conflicts | DONE | The canonical lifecycle payload digest binds every required dimension beneath the stable idempotency key and returns `idempotency_conflict` before another write. |
-| 10 | Success returns a new observation and invalidates prior readiness evidence | DONE | Post-transition revisions include qualified identity, base/head, lifecycle state, draft/merged state, and provider update evidence and differ from both preparation and prior readiness revisions. |
+| 10 | Success returns a new observation and invalidates prior readiness evidence | DONE | Post-transition results return a new lifecycle observation plus typed `invalidated_operations: [get_merge_readiness]`; the v1 validator and canonical consumer fixture preserve that provider-neutral invalidation signal. |
 | 11 | Respect pre- and post-dispatch cancellation boundaries | DONE | Pre-dispatch cancellation records `not_applied` with zero writes; cancellation after application enters exact desired-state reconciliation for all four operations. |
 | 12 | Exercise required transition hazards through the fake | DONE | `internal/mockcodehost` covers external completion, stale head/base, missing and moving branches, permission races, delayed visibility, force pushes, merged terminal state, duplicate retry, provider denial, cancellation, and lost response. |
 
@@ -173,13 +173,13 @@ formatting, and diff hygiene.
 
 | # | Changes item (abbreviated) | Status | Note |
 |---|---|---|---|
-| 1 | Add validation and desired-state comparators | DONE | `github_state.go` strictly decodes lifecycle payloads and models open-draft, open-ready, closed-unmerged, and merged source/desired combinations. |
+| 1 | Add validation and desired-state comparators | DONE | `github_state.go` strictly decodes lifecycle payloads and models open-draft, open-ready, closed-unmerged, and merged source/desired combinations, with repository/ref/SHA-exact retarget matching. |
 | 2 | Add lifecycle and target preflight | DONE | Common preflight verifies identity, head, lifecycle, current base, target ref/SHA, actor, permission, capability, and observation revisions. |
 | 3 | Implement typed GitHub transition routes | DONE | Mark-ready uses the typed GraphQL mutation; retarget, close, and reopen use bounded REST patches, all followed by authoritative PR read-back. |
-| 4 | Extend journal and desired-state reconciliation | DONE | Safe base/state material extends the existing locked journal and shared dispatch/retry/ambiguous-response state machine without storing provider bodies or credentials. |
+| 4 | Extend journal and desired-state reconciliation | DONE | Safe base/state material extends the existing locked journal and shared dispatch/retry/ambiguous-response state machine; post-write target movement remains ambiguous, and no provider bodies or credentials are stored. |
 | 5 | Distinguish normalized lifecycle states | DONE | `normalizedLifecycleState` keeps merged, closed-unmerged, open-draft, and open-ready separate and comparators reject unknown or invalid sources. |
 | 6 | Extend the deterministic GitHub fake | DONE | Mutable fake state models typed routes, branch resolution/movement, permissions, delayed visibility, merged state, lost/cancelled responses, and attempt accounting. |
-| 7 | Add effect, stale-state, receipt, and conformance tests | DONE | `github_state_test.go` covers policies, state matrices, preflight gates, revisions, external completion, concurrency, idempotency conflicts, cancellation, exact recovery, journal safety, and provider rejection. |
+| 7 | Add effect, stale-state, receipt, and conformance tests | DONE | `github_state_test.go` covers policies, SHA-exact state matrices, pre/post-write branch movement, typed readiness invalidation, preflight gates, external completion, concurrency, conflicts, cancellation, recovery, journal safety, and provider rejection. |
 
 ### Exercise-the-feature check
 

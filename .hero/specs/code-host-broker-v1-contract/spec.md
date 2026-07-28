@@ -238,7 +238,7 @@ code-host-broker-v1-contract --since 1e3fa83 --format json`.
 | 10 | Publish closed errors and retries without raw provider bodies | DONE | `contracts/codehostbroker/policy.go:157`, `contract_test.go:213`, and `docs/contracts/code-host-broker-v1.md:184` publish and cross-check all 26 errors and five retry values. |
 | 11 | Ignore additive fields and fail closed on major version | DONE | The advertised operations array includes an unknown future operation, the independent consumer ignores it, unknown envelope fields decode, and a v2 request fails closed. |
 | 12 | Enforce explicit input and output bounds | DONE | `policy.go` declares every bound; request/result/envelope validators and boundary tests cover repository scopes, page/item counts, all text/body/diff dimensions, partial failures, error detail, duration, redirects, journal entries, rate values, cursors, and idempotency material. |
-| 13 | Produce byte-stable fixture and digest | DONE | `fixture.go`, its generator, and the golden test prove repeated generation matches embedded bytes and current SHA `49156d4a15aacb64f09c5a64a107e8fafc323db4441aa6fb15a8f87b39c00903`. |
+| 13 | Produce byte-stable fixture and digest | DONE | `fixture.go`, its generator, and the golden test prove repeated generation matches embedded bytes and current SHA `f35203f1a3656b4d591e30def627d6d9d9cf4f2c688b61b45dca225fd4f92cd3`. |
 | 14 | Exclude credentials, raw bodies, and mutation text from safe material | DONE | Receipts contain IDs only, reconciliation has no free-form body field, fixture mutation text is the literal `[redacted]` sentinel, and tests reject credential canaries and previous example text. |
 
 ### Changes
@@ -257,7 +257,7 @@ code-host-broker-v1-contract --since 1e3fa83 --format json`.
 
 - [x] User-visible behavior was exercised end-to-end: `go generate
   ./contracts/codehostbroker` emitted digest
-  `49156d4a15aacb64f09c5a64a107e8fafc323db4441aa6fb15a8f87b39c00903`;
+  `f35203f1a3656b4d591e30def627d6d9d9cf4f2c688b61b45dca225fd4f92cd3`;
   `sha256sum` matched the published sidecar, and every generated request and
   response decoded and validated through the canonical contract tests.
 
@@ -273,5 +273,6 @@ credential system.
 - 2026-07-27 — `github-pull-request-collaboration-broker` added optional typed
   `MutationResult.actor` for actor-attributed collaboration effects. This is an
   additive v1 evolution; the canonical fixture exercises both absent and
-  present actor forms and now publishes SHA-256
-  `49156d4a15aacb64f09c5a64a107e8fafc323db4441aa6fb15a8f87b39c00903`.
+  present actor forms. The later lifecycle amendment added typed readiness
+  invalidations for state transitions. The canonical fixture now publishes
+  SHA-256 `f35203f1a3656b4d591e30def627d6d9d9cf4f2c688b61b45dca225fd4f92cd3`.

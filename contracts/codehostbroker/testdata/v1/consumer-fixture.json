@@ -3496,7 +3496,10 @@
             "created_at": "2026-07-27T20:00:00Z",
             "updated_at": "2026-07-27T20:30:00Z"
           },
-          "outcome": "fixture"
+          "outcome": "fixture",
+          "invalidated_operations": [
+            "get_merge_readiness"
+          ]
         },
         "receipt": {
           "provider_receipt_id": "receipt-mark_ready",
@@ -3687,7 +3690,10 @@
             "created_at": "2026-07-27T20:00:00Z",
             "updated_at": "2026-07-27T20:30:00Z"
           },
-          "outcome": "fixture"
+          "outcome": "fixture",
+          "invalidated_operations": [
+            "get_merge_readiness"
+          ]
         },
         "receipt": {
           "provider_receipt_id": "receipt-retarget",
@@ -3856,7 +3862,10 @@
             "created_at": "2026-07-27T20:00:00Z",
             "updated_at": "2026-07-27T20:30:00Z"
           },
-          "outcome": "fixture"
+          "outcome": "fixture",
+          "invalidated_operations": [
+            "get_merge_readiness"
+          ]
         },
         "receipt": {
           "provider_receipt_id": "receipt-close",
@@ -4025,7 +4034,10 @@
             "created_at": "2026-07-27T20:00:00Z",
             "updated_at": "2026-07-27T20:30:00Z"
           },
-          "outcome": "fixture"
+          "outcome": "fixture",
+          "invalidated_operations": [
+            "get_merge_readiness"
+          ]
         },
         "receipt": {
           "provider_receipt_id": "receipt-reopen",

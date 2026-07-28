@@ -51,6 +51,8 @@ func TestStateTransitionOperationsAdvertisedAppliedAndReplayed(t *testing.T) {
 			if result.Outcome != "applied" || result.Actor == nil ||
 				result.Actor.Login != "hero-user" || result.Actor.ProviderID != "U_99" ||
 				!stateTransitionDesired(operation, result.PullRequest, stateDesiredBase(fixture, operation)) ||
+				len(result.InvalidatedOperations) != 1 ||
+				result.InvalidatedOperations[0] != codehostbroker.OperationGetMergeReadiness ||
 				response.Receipt.ProviderReceiptID != "PR_42" {
 				t.Fatalf("result=%+v receipt=%+v", result, response.Receipt)
 			}
@@ -183,6 +185,7 @@ func TestStateTransitionDesiredStateMatrix(t *testing.T) {
 		{"retarget_ready_pending", codehostbroker.OperationRetarget, "open", false, main, &release, false},
 		{"retarget_draft_done", codehostbroker.OperationRetarget, "open", true, release, &release, true},
 		{"retarget_ready_done", codehostbroker.OperationRetarget, "open", false, release, &release, true},
+		{"retarget_moved_target", codehostbroker.OperationRetarget, "open", false, codehostbroker.RefIdentity{Repository: repository, Name: "release", SHA: forcedSHAForTest}, &release, false},
 		{"retarget_closed", codehostbroker.OperationRetarget, "closed", false, release, &release, false},
 		{"retarget_merged", codehostbroker.OperationRetarget, "merged", false, release, &release, false},
 		{"close_open_draft", codehostbroker.OperationClose, "open", true, main, nil, false},
@@ -244,6 +247,16 @@ func TestStateTransitionStalePermissionAndTargetGates(t *testing.T) {
 	if targetResponse.Error == nil || targetResponse.Error.Code != codehostbroker.ErrorStaleObservation ||
 		targetFake.StateAttempts() != 0 {
 		t.Fatalf("target move=%+v attempts=%d", targetResponse, targetFake.StateAttempts())
+	}
+
+	postWriteFixture, postWriteFake, postWriteBroker := createTestBroker(t, mockcodehost.StateTargetMovesAfterWriteScenario(), "acme/widgets")
+	postWriteRequest := preparedStateTransitionRequest(t, postWriteFixture, postWriteBroker, codehostbroker.OperationRetarget, "state-target-move-after-write")
+	postWriteResponse := postWriteBroker.Execute(context.Background(), postWriteRequest)
+	requireValidResponse(t, postWriteResponse)
+	if postWriteResponse.Error == nil || postWriteResponse.Error.Code != codehostbroker.ErrorAmbiguousResult ||
+		postWriteResponse.Reconciliation == nil || postWriteResponse.Reconciliation.Status != codehostbroker.ReconciliationAmbiguous ||
+		postWriteFake.StateAttempts() != 1 {
+		t.Fatalf("target move after write=%+v attempts=%d", postWriteResponse, postWriteFake.StateAttempts())
 	}
 
 	missingFixture, missingFake, missingBroker := createTestBroker(t, mockcodehost.StateMissingTargetBranchScenario(), "acme/widgets")

@@ -310,6 +310,9 @@ func successfulMutationResult(request codehostbroker.Request, entry *journalEntr
 		actor := *entry.Receipt.Actor
 		result.Actor = &actor
 	}
+	if isStateTransitionOperation(request.Operation) {
+		result.InvalidatedOperations = []codehostbroker.Operation{codehostbroker.OperationGetMergeReadiness}
+	}
 	return adapterResult{
 		result:         result,
 		pullRequest:    &pullRequest,

@@ -101,6 +101,7 @@ func TestCanonicalFixtureCoversAndValidatesEveryOperation(t *testing.T) {
 	seen := map[Operation]bool{}
 	statuses := map[ReconciliationStatus]bool{}
 	actorResults := map[Operation]bool{}
+	invalidationResults := map[Operation]bool{}
 	for _, fixtureCase := range fixture.Cases {
 		if fixtureCase.Name != string(fixtureCase.Request.Operation) || fixtureCase.Request.Operation != fixtureCase.Response.Operation {
 			t.Fatalf("case identity mismatch: %+v", fixtureCase)
@@ -128,9 +129,23 @@ func TestCanonicalFixtureCoversAndValidatesEveryOperation(t *testing.T) {
 			}
 			actorResults[fixtureCase.Request.Operation] = true
 		}
+		if fixtureCase.Request.Operation == OperationMarkReady ||
+			fixtureCase.Request.Operation == OperationRetarget ||
+			fixtureCase.Request.Operation == OperationClose ||
+			fixtureCase.Request.Operation == OperationReopen {
+			var result MutationResult
+			if err := json.Unmarshal(fixtureCase.Response.Result, &result); err != nil {
+				t.Fatalf("%s mutation result: %v", fixtureCase.Name, err)
+			}
+			if len(result.InvalidatedOperations) != 1 ||
+				result.InvalidatedOperations[0] != OperationGetMergeReadiness {
+				t.Fatalf("%s fixture lacks readiness invalidation: %+v", fixtureCase.Name, result)
+			}
+			invalidationResults[fixtureCase.Request.Operation] = true
+		}
 	}
-	if len(seen) != 20 || len(statuses) != 7 || len(actorResults) != 4 {
-		t.Fatalf("coverage operations=%d reconciliation=%v actors=%v", len(seen), statuses, actorResults)
+	if len(seen) != 20 || len(statuses) != 7 || len(actorResults) != 4 || len(invalidationResults) != 4 {
+		t.Fatalf("coverage operations=%d reconciliation=%v actors=%v invalidations=%v", len(seen), statuses, actorResults, invalidationResults)
 	}
 	if len(fixture.Errors) != len(ErrorCodes()) || len(fixture.UnknownFields) == 0 {
 		t.Fatalf("errors=%d unknown=%d", len(fixture.Errors), len(fixture.UnknownFields))
@@ -395,6 +410,15 @@ func TestOperationSpecificResultsRejectInvalidShapesAndBounds(t *testing.T) {
 	mutation.Result, _ = json.Marshal(mutationResult)
 	if err := ValidateResponse(mutation); err == nil || err.Code != ErrorInvalidInput {
 		t.Fatalf("incomplete mutation actor accepted: %v", err)
+	}
+	mutation = mustResponse(t, OperationComment)
+	if err := json.Unmarshal(mutation.Result, &mutationResult); err != nil {
+		t.Fatal(err)
+	}
+	mutationResult.InvalidatedOperations = []Operation{OperationMerge}
+	mutation.Result, _ = json.Marshal(mutationResult)
+	if err := ValidateResponse(mutation); err == nil || err.Code != ErrorInvalidInput {
+		t.Fatalf("mutation invalidation accepted a write operation: %v", err)
 	}
 }
 
@@ -888,9 +912,10 @@ func decodeIndependentConsumerResult(operation string, raw json.RawMessage) erro
 		return strictConsumerDecode(raw, &value)
 	default:
 		var value struct {
-			PullRequest consumerPullRequest `json:"pull_request"`
-			Outcome     string              `json:"outcome"`
-			Actor       *consumerActor      `json:"actor,omitempty"`
+			PullRequest           consumerPullRequest `json:"pull_request"`
+			Outcome               string              `json:"outcome"`
+			Actor                 *consumerActor      `json:"actor,omitempty"`
+			InvalidatedOperations []string            `json:"invalidated_operations,omitempty"`
 		}
 		return strictConsumerDecode(raw, &value)
 	}

@@ -51,6 +51,7 @@ func TestScenarioBuildersCoverDeclaredBehaviors(t *testing.T) {
 		StatePermissionRaceScenario("close"),
 		StateMissingTargetBranchScenario(),
 		StateTargetMovesScenario(),
+		StateTargetMovesAfterWriteScenario(),
 		StateBaseChangesScenario(),
 		StateForcePushScenario("close"),
 		StateMergedScenario("close"),

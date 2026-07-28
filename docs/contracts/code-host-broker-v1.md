@@ -230,7 +230,8 @@ Success result schemas are operation-specific and strictly decoded:
 `PullRequest`, `CommitsResult.commits`, `DiffResult.files`,
 `ChecksResult.checks`, `ReviewsResult.reviews`, `CommentsResult.comments`,
 `MergeReadiness`, or `MutationResult` with required `pull_request` and
-`outcome` plus an optional typed `actor` for actor-attributed mutations.
+`outcome`, an optional typed `actor` for actor-attributed mutations, and
+optional `invalidated_operations` naming read evidence consumers must discard.
 Hero's producer-side validator rejects non-canonical adapter results;
 independent consumers ignore unknown additive result fields and unknown
 advertised capability entries while preserving all known values.
@@ -328,7 +329,7 @@ The canonical fixture is:
 
 Its SHA-256 digest is published beside it in
 `consumer-fixture.sha256`. The current digest is
-`49156d4a15aacb64f09c5a64a107e8fafc323db4441aa6fb15a8f87b39c00903`.
+`f35203f1a3656b4d591e30def627d6d9d9cf4f2c688b61b45dca225fd4f92cd3`.
 Regenerate both deterministically with:
 
 ```bash

@@ -64,6 +64,7 @@ type Scenario struct {
 	StateWriteDenied                bool
 	StateMissingTargetBranch        bool
 	StateTargetMoves                bool
+	StateTargetMovesAfterWrite      bool
 	StateBaseChanges                bool
 	StateMerged                     bool
 	StateResponseDelay              time.Duration
@@ -255,6 +256,13 @@ func StateTargetMovesScenario() Scenario {
 	scenario := StateScenario("retarget")
 	scenario.Name = "state-retarget-target-moves"
 	scenario.StateTargetMoves = true
+	return scenario
+}
+
+func StateTargetMovesAfterWriteScenario() Scenario {
+	scenario := StateScenario("retarget")
+	scenario.Name = "state-retarget-target-moves-after-write"
+	scenario.StateTargetMovesAfterWrite = true
 	return scenario
 }
 
@@ -802,6 +810,9 @@ func (s *Server) applyStateTransition(writer http.ResponseWriter, operation stri
 		return false
 	}
 	desired := desiredLifecycleState(s.stateCurrent, operation)
+	if operation == "retarget" && s.scenario.StateTargetMovesAfterWrite {
+		desired.BaseSHA = forcedHeadSHA
+	}
 	desired.UpdatedAt = "2026-07-27T20:40:00Z"
 	if s.scenario.StateVisibilityDelay > 0 {
 		s.statePending = &desired

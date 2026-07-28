@@ -193,6 +193,14 @@ func fixtureResult(operation Operation, pullRequest PullRequest) any {
 	case OperationComment, OperationSubmitReview, OperationApprove, OperationRequestChanges:
 		actor := pullRequest.Author
 		return MutationResult{PullRequest: pullRequest, Outcome: "fixture", Actor: &actor}
+	case OperationMarkReady, OperationRetarget, OperationClose, OperationReopen:
+		return MutationResult{
+			PullRequest: pullRequest,
+			Outcome:     "fixture",
+			InvalidatedOperations: []Operation{
+				OperationGetMergeReadiness,
+			},
+		}
 	default:
 		return MutationResult{PullRequest: pullRequest, Outcome: "fixture"}
 	}

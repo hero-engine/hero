@@ -526,6 +526,16 @@ func validateOperationResult(operation Operation, raw json.RawMessage, bounds Bo
 				return err
 			}
 		}
+		if len(result.InvalidatedOperations) > bounds.Items {
+			return tooLarge("result.invalidated_operations", "mutation invalidation count exceeds its bound")
+		}
+		invalidated := map[Operation]bool{}
+		for i, operation := range result.InvalidatedOperations {
+			if invalidated[operation] || !IsRead(operation) {
+				return invalid(fmt.Sprintf("result.invalidated_operations.%d", i), "mutation invalidations must name unique read operations")
+			}
+			invalidated[operation] = true
+		}
 		return validatePullRequest(result.PullRequest, "result.pull_request")
 	}
 	return nil

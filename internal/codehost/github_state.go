@@ -374,7 +374,8 @@ func stateTransitionDesired(operation codehostbroker.Operation, pullRequest code
 		return (lifecycle == "open_draft" || lifecycle == "open_ready") &&
 			desiredBase != nil &&
 			equalRepository(pullRequest.Base.Repository, desiredBase.Repository) &&
-			pullRequest.Base.Name == desiredBase.Name
+			pullRequest.Base.Name == desiredBase.Name &&
+			pullRequest.Base.SHA == desiredBase.SHA
 	case codehostbroker.OperationClose:
 		return lifecycle == "closed_unmerged"
 	case codehostbroker.OperationReopen:
