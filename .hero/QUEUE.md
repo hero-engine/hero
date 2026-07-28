@@ -6,7 +6,26 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-28T02:24:56Z · 83 ready specs_
+_Generated: 2026-07-28T02:52:01Z · 83 ready specs_
+
+## github-pull-request-collaboration-broker — "GitHub pull-request collaboration broker"
+_feature · delivering · horizon: now_
+
+Add brokered PR discussion and review writes without allowing retries to post
+duplicate comments or reviews.
+
+**Status:** in review — all four collaboration operations, shared mutation
+reconciliation, and deterministic provider scenarios are implemented and
+validated.
+
+**Pick up at:** cold-audit the completed delivery and verify the spec.
+
+→ `/deliver github-pull-request-collaboration-broker`
+
+**Files:** `internal/codehost/github_collaboration.go`, `internal/codehost/reconcile.go`, `internal/mockcodehost/reviews.go`
+**Skip:** do not change PR lifecycle state, retarget, merge, or infer user intent from message text.
+
+---
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -53,25 +72,6 @@ surfaces:
    ambiguous-outcome recovery; and
 5. one in-process implementation surfaced through JSON CLI and typed MCP tools
    that Hero Code can validate against a released Hero binary.
-
----
-
-## github-pull-request-collaboration-broker — "GitHub pull-request collaboration broker"
-_feature · planning · horizon: now_
-
-Add brokered PR discussion and review writes without allowing retries to post
-duplicate comments or reviews.
-
-**Status:** planning — GitHub review states, comment identities, mutation
-journal, and ambiguous-response requirements are mapped.
-
-**Pick up at:** define one collaboration reconciliation marker and normalized
-review receipt, then extend the mutation state machine operation by operation.
-
-→ `/deliver github-pull-request-collaboration-broker`
-
-**Files:** `internal/codehost/github_collaboration.go`, `internal/codehost/reconcile.go`, `internal/mockcodehost/reviews.go`
-**Skip:** do not change PR lifecycle state, retarget, merge, or infer user intent from message text.
 
 ---
 

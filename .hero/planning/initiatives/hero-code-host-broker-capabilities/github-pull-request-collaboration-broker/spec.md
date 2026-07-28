@@ -2,7 +2,7 @@
 title: "GitHub pull-request collaboration broker"
 slug: github-pull-request-collaboration-broker
 type: feature
-status: planning
+status: delivering
 domain: engineering
 priority: high
 size: medium
@@ -14,6 +14,7 @@ conflicts-with:
   - github-pull-request-create-broker
   - github-pull-request-state-transition-broker
 tags: [github, pull-request, comments, reviews, idempotency, permissions]
+delivery_method: manual
 ---
 
 # GitHub pull-request collaboration broker
@@ -39,11 +40,11 @@ enforcement, and externally completed action recognition.
 Add brokered PR discussion and review writes without allowing retries to post
 duplicate comments or reviews.
 
-**Status:** planning — GitHub review states, comment identities, mutation
-journal, and ambiguous-response requirements are mapped.
+**Status:** in review — all four collaboration operations, shared mutation
+reconciliation, and deterministic provider scenarios are implemented and
+validated.
 
-**Pick up at:** define one collaboration reconciliation marker and normalized
-review receipt, then extend the mutation state machine operation by operation.
+**Pick up at:** cold-audit the completed delivery and verify the spec.
 
 → `/deliver github-pull-request-collaboration-broker`
 
@@ -153,3 +154,49 @@ identical human comments, are not claimed as this operation.
   lookalikes, and provider round trips.
 - Verify journal snapshots contain only digests and safe identifiers.
 - Run code-host/fake tests, then `go test ./...` and `go vet ./...`.
+
+## Completion Ledger
+
+Implemented on the existing in-process broker, GitHub transport, connection
+resolver, durable mutation journal, file lock, and deterministic provider fake.
+Validation included focused broker/fake/file-lock tests, race detection, marker
+fuzzing, the full repository suite, full `go vet`, formatting, and diff hygiene.
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Require qualified PR, head, intent, idempotency, and revisions | DONE | Contract validation plus `decodeCollaborationPayload` and `PrepareCollaboration` require repository-qualified identity, expected head, explicit user intent/consent, stable keys, and capability/observation evidence. |
+| 2 | Advertise four separate explicit-user external writes | DONE | The capability registry exposes `comment`, `submit_review`, `approve`, and `request_changes` using the authoritative v1 policies. |
+| 3 | Reject unsupported, closed, stale, and forbidden writes before dispatch | DONE | Common preflight verifies operation, scope, open PR, provider identity, exact head, permission, capability revision, and observation revision before incrementing provider attempts. |
+| 4 | Dispatch one bounded opaque content-free marker | DONE | `collaborationMarker` derives one fixed-size lowercase-hex marker from the stable operation identity; payload validation reserves the marker bytes and rejects caller-supplied valid markers. |
+| 5 | Persist and return exact safe collaboration receipts | DONE | Success records the provider receipt ID, qualified PR identity, authenticated actor, and head SHA without body text, then returns an `applied` v1 mutation result. |
+| 6 | Reconcile lost responses by exact marker, actor, head, and review state | DONE | Detached bounded read-back matches the same marker and actor; reviews additionally require the expected head and requested state before returning `reconciled_applied`. |
+| 7 | Preserve ambiguity when exact proof is absent | DONE | Missing, delayed, colliding, partial, or mismatched-state read-back records `ambiguous` and never redispatches under a different key. |
+| 8 | Recognize current-actor/current-head approval decisions | DONE | Preflight returns `externally_completed` for the authenticated actor's authoritative current-head `APPROVED` or `CHANGES_REQUESTED` state with zero writes. |
+| 9 | Exclude old-head, dismissed, and other-actor reviews | DONE | Deterministic scenarios prove those reviews do not qualify for external completion and produce one requested effect instead. |
+| 10 | Same-key retries produce at most one provider effect | DONE | The existing cross-platform journal lock and shared reconciliation state machine serialize sequential and concurrent retries across all four operations. |
+| 11 | Conflicting key reuse fails before another effect | DONE | The connection-scoped journal key plus canonical collaboration digest binds operation, target, head, body digest, intent, consent, and reconciliation key. |
+| 12 | Strip only syntactically valid Hero markers | DONE | Normalized comment/review bodies remove the exact bounded marker grammar while preserving surrounding text and malformed lookalikes; fuzzing checks the parser invariant. |
+| 13 | Respect pre- and post-dispatch cancellation boundaries | DONE | Pre-dispatch cancellation records `not_applied` with zero writes; cancellation after application uses detached exact reconciliation without replay. |
+| 14 | Exercise required provider hazards through the fake | DONE | `internal/mockcodehost` covers permissions and changes, duplicates, delayed visibility, lost/ambiguous responses, marker collisions, mismatched review state, old/dismissed/other-actor reviews, external completion, force pushes, cancellation, and partial read-back. |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Extend the mutation journal with safe collaboration identity | DONE | Journal targets and receipts retain only digests, marker, qualified identifiers, actor, provider receipt, and expected head; canary tests reject body and credential persistence. |
+| 2 | Add common collaboration validation and preflight | DONE | `collaboration.go` and `PrepareCollaboration` provide strict payload bounds plus provider-backed PR/head/actor/permission revisions. |
+| 3 | Implement GitHub issue-comment creation | DONE | `dispatchCollaboration` uses the existing authorized transport and validates the returned marker and authenticated actor. |
+| 4 | Implement neutral and decision review submission | DONE | Review dispatch maps only the explicit operation to `COMMENT`, `APPROVE`, or `REQUEST_CHANGES`, pins `commit_id`, and validates the returned state. |
+| 5 | Add exact marker recovery and normalization | DONE | Marker injection, read-back, strict stripping, safe receipts, and current-head external-completion logic share one bounded implementation. |
+| 6 | Extend the deterministic GitHub fake | DONE | Fake scenarios model write denial, permission changes, response loss, delayed/failed visibility, collisions, state mismatch, external decisions, force pushes, and cancellation. |
+| 7 | Add conformance, concurrency, cancellation, and redaction tests | DONE | Collaboration tests validate every response contract, all four operations, stable-key semantics, crash-safe recovery, body bounds, marker fuzzing, and journal canaries. |
+
+### Exercise-the-feature check
+
+- [x] All four writes were exercised end-to-end against the deterministic GitHub HTTP fake with focused and race-enabled code-host tests; marker parsing completed 130,125 fuzz executions, and `go test ./... -count=1` plus `go vet ./...` passed.
+
+### Excellence Bar self-check
+
+- [x] Yes — the delivery is fail-closed, provider-neutral at the broker boundary, credential-safe, head- and actor-bound, exact-state-aware, bounded, crash-aware, and built by extending Hero's existing integration, transport, journal, lock, and fake paths.

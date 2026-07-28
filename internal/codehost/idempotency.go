@@ -64,18 +64,24 @@ type journalEntry struct {
 // mutationTarget is deliberately content-free: it is sufficient to query the
 // provider for the exact effect, but cannot reveal a PR title or body.
 type mutationTarget struct {
-	ConnectionID string                            `json:"connection_id"`
-	Repository   codehostbroker.RepositoryIdentity `json:"repository"`
-	Base         codehostbroker.RefIdentity        `json:"base"`
-	Head         codehostbroker.RefIdentity        `json:"head"`
+	ConnectionID    string                              `json:"connection_id"`
+	Repository      codehostbroker.RepositoryIdentity   `json:"repository"`
+	Base            codehostbroker.RefIdentity          `json:"base"`
+	Head            codehostbroker.RefIdentity          `json:"head"`
+	PullRequest     *codehostbroker.PullRequestIdentity `json:"pull_request,omitempty"`
+	ExpectedHeadSHA string                              `json:"expected_head_sha,omitempty"`
+	Marker          string                              `json:"marker,omitempty"`
 }
 
 // journalReceipt retains only provider identity and revisions. The normalized
 // PR is read back when a response must be replayed.
 type journalReceipt struct {
-	Identity codehostbroker.PullRequestIdentity `json:"identity"`
-	Base     codehostbroker.RefIdentity         `json:"base"`
-	Head     codehostbroker.RefIdentity         `json:"head"`
+	Identity          codehostbroker.PullRequestIdentity `json:"identity"`
+	Base              codehostbroker.RefIdentity         `json:"base"`
+	Head              codehostbroker.RefIdentity         `json:"head"`
+	ProviderReceiptID string                             `json:"provider_receipt_id,omitempty"`
+	Actor             *codehostbroker.Actor              `json:"actor,omitempty"`
+	HeadSHA           string                             `json:"head_sha,omitempty"`
 }
 
 func newMutationJournal(projectRoot string, now func() time.Time) *mutationJournal {

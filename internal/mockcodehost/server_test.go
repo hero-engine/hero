@@ -28,6 +28,21 @@ func TestScenarioBuildersCoverDeclaredBehaviors(t *testing.T) {
 		CreateAmbiguousScenario(),
 		CreateStaleHeadScenario(),
 		CreateCancelledAfterApplyScenario(time.Millisecond),
+		CollaborationLostResponseScenario(),
+		CollaborationAmbiguousScenario(),
+		CollaborationDelayedVisibilityScenario(1),
+		CollaborationPermissionDeniedScenario(),
+		CollaborationPermissionChangeScenario(),
+		CollaborationWriteDeniedScenario(),
+		CollaborationMarkerCollisionScenario(),
+		CollaborationExternallyCompletedScenario("APPROVED"),
+		CollaborationOldHeadReviewScenario("APPROVED"),
+		CollaborationDismissedReviewScenario("APPROVED"),
+		CollaborationOtherActorReviewScenario("APPROVED"),
+		CollaborationUnmarkedCommentScenario("same body"),
+		CollaborationMismatchedReviewStateScenario(),
+		CollaborationCancelledAfterApplyScenario(time.Millisecond),
+		CollaborationClosedScenario(),
 	}
 	seen := map[string]bool{}
 	for _, scenario := range scenarios {

@@ -21,24 +21,38 @@ const (
 
 // Scenario controls one deterministic provider behavior.
 type Scenario struct {
-	Name                      string
-	ForcedPageSize            int
-	DeniedSections            map[string]int
-	RateLimitedSections       map[string]int
-	ForkHead                  bool
-	ForcePush                 bool
-	GraphQLPartial            bool
-	MergeabilitySequence      []string
-	OversizedDiff             bool
-	CrossOriginNext           string
-	Delay                     time.Duration
-	CreatePermissionDenied    bool
-	CreateWriteDenied         bool
-	CreateLostResponse        bool
-	CreateExternallyCompleted bool
-	CreateAmbiguousReadback   bool
-	CreateStaleHead           bool
-	CreateResponseDelay       time.Duration
+	Name                            string
+	ForcedPageSize                  int
+	DeniedSections                  map[string]int
+	RateLimitedSections             map[string]int
+	ForkHead                        bool
+	ForcePush                       bool
+	GraphQLPartial                  bool
+	MergeabilitySequence            []string
+	OversizedDiff                   bool
+	CrossOriginNext                 string
+	Delay                           time.Duration
+	CreatePermissionDenied          bool
+	CreateWriteDenied               bool
+	CreateLostResponse              bool
+	CreateExternallyCompleted       bool
+	CreateAmbiguousReadback         bool
+	CreateStaleHead                 bool
+	CreateResponseDelay             time.Duration
+	CollaborationLostResponse       bool
+	CollaborationAmbiguousReadback  bool
+	CollaborationVisibilityDelay    int
+	CollaborationPermissionSequence []bool
+	CollaborationWriteDenied        bool
+	CollaborationCollisionOnly      bool
+	CollaborationExternalState      string
+	CollaborationExternalOldHead    bool
+	CollaborationExternalDismissed  bool
+	CollaborationExternalOtherActor bool
+	CollaborationUnmarkedComment    string
+	CollaborationForcedReviewState  string
+	CollaborationResponseDelay      time.Duration
+	CollaborationClosed             bool
 }
 
 func DefaultScenario() Scenario { return Scenario{Name: "default"} }
@@ -113,6 +127,70 @@ func CreateCancelledAfterApplyScenario(delay time.Duration) Scenario {
 	return Scenario{Name: "create-cancelled-after-apply", CreateResponseDelay: delay}
 }
 
+func CollaborationLostResponseScenario() Scenario {
+	return Scenario{Name: "collaboration-lost-response", CollaborationLostResponse: true}
+}
+
+func CollaborationAmbiguousScenario() Scenario {
+	return Scenario{Name: "collaboration-ambiguous", CollaborationLostResponse: true, CollaborationAmbiguousReadback: true}
+}
+
+func CollaborationDelayedVisibilityScenario(reads int) Scenario {
+	return Scenario{Name: "collaboration-delayed-visibility", CollaborationLostResponse: true, CollaborationVisibilityDelay: reads}
+}
+
+func CollaborationPermissionDeniedScenario() Scenario {
+	return Scenario{Name: "collaboration-permission-denied", CollaborationPermissionSequence: []bool{false}}
+}
+
+func CollaborationPermissionChangeScenario() Scenario {
+	return Scenario{Name: "collaboration-permission-change", CollaborationPermissionSequence: []bool{true, false}}
+}
+
+func CollaborationWriteDeniedScenario() Scenario {
+	return Scenario{Name: "collaboration-write-denied", CollaborationWriteDenied: true}
+}
+
+func CollaborationMarkerCollisionScenario() Scenario {
+	return Scenario{Name: "collaboration-marker-collision", CollaborationLostResponse: true, CollaborationCollisionOnly: true}
+}
+
+func CollaborationExternallyCompletedScenario(state string) Scenario {
+	return Scenario{Name: "collaboration-external-" + strings.ToLower(state), CollaborationExternalState: state}
+}
+
+func CollaborationOldHeadReviewScenario(state string) Scenario {
+	return Scenario{Name: "collaboration-old-head-" + strings.ToLower(state), CollaborationExternalState: state, CollaborationExternalOldHead: true}
+}
+
+func CollaborationDismissedReviewScenario(state string) Scenario {
+	return Scenario{Name: "collaboration-dismissed-" + strings.ToLower(state), CollaborationExternalState: state, CollaborationExternalDismissed: true}
+}
+
+func CollaborationOtherActorReviewScenario(state string) Scenario {
+	return Scenario{Name: "collaboration-other-actor-" + strings.ToLower(state), CollaborationExternalState: state, CollaborationExternalOtherActor: true}
+}
+
+func CollaborationUnmarkedCommentScenario(body string) Scenario {
+	return Scenario{Name: "collaboration-unmarked-comment", CollaborationUnmarkedComment: body}
+}
+
+func CollaborationMismatchedReviewStateScenario() Scenario {
+	return Scenario{
+		Name:                           "collaboration-mismatched-review-state",
+		CollaborationLostResponse:      true,
+		CollaborationForcedReviewState: "COMMENTED",
+	}
+}
+
+func CollaborationCancelledAfterApplyScenario(delay time.Duration) Scenario {
+	return Scenario{Name: "collaboration-cancelled-after-apply", CollaborationResponseDelay: delay}
+}
+
+func CollaborationClosedScenario() Scenario {
+	return Scenario{Name: "collaboration-closed", CollaborationClosed: true}
+}
+
 // Request records only non-sensitive request metadata.
 type Request struct {
 	Method string
@@ -122,13 +200,18 @@ type Request struct {
 
 // Server implements the GitHub REST and GraphQL routes used by codehost.
 type Server struct {
-	scenario       Scenario
-	mu             sync.Mutex
-	requests       []Request
-	prReads        int
-	graphQL        int
-	created        []map[string]any
-	createAttempts int
+	scenario              Scenario
+	mu                    sync.Mutex
+	requests              []Request
+	prReads               int
+	graphQL               int
+	created               []map[string]any
+	createAttempts        int
+	collaborationComments []map[string]any
+	collaborationReviews  []map[string]any
+	collaborationAttempts int
+	collaborationReads    int
+	permissionReads       int
 }
 
 // NewServer returns a freshly initialized deterministic fake.
@@ -139,6 +222,33 @@ func NewServer(scenario Scenario) *Server {
 	server := &Server{scenario: scenario}
 	if scenario.CreateExternallyCompleted {
 		server.created = append(server.created, server.createdPullRequest("acme", "widgets", "acme", "feature/create", 45, "Create broker PR", "CREATE-BODY-CANARY create body", false))
+	}
+	if scenario.CollaborationExternalState != "" {
+		head := currentHeadSHA
+		if scenario.CollaborationExternalOldHead {
+			head = baseSHA
+		}
+		actor := "hero-user"
+		actorID := int64(99)
+		if scenario.CollaborationExternalOtherActor {
+			actor, actorID = "other-reviewer", 98
+		}
+		server.collaborationReviews = append(server.collaborationReviews, map[string]any{
+			"id": 90, "node_id": "REVIEW_90", "user": user(actor, actorID), "body": "external review",
+			"state": strings.ToUpper(scenario.CollaborationExternalState), "commit_id": head, "submitted_at": "2026-07-27T20:25:00Z",
+		})
+		if scenario.CollaborationExternalDismissed {
+			server.collaborationReviews = append(server.collaborationReviews, map[string]any{
+				"id": 91, "node_id": "REVIEW_91", "user": user(actor, actorID), "body": "dismissed review",
+				"state": "DISMISSED", "commit_id": head, "submitted_at": "2026-07-27T20:26:00Z",
+			})
+		}
+	}
+	if scenario.CollaborationUnmarkedComment != "" {
+		server.collaborationComments = append(server.collaborationComments, map[string]any{
+			"id": 92, "node_id": "COMMENT_92", "user": user("hero-user", 99), "body": scenario.CollaborationUnmarkedComment,
+			"html_url": "https://example.invalid/comment/92", "created_at": "2026-07-27T20:27:00Z", "updated_at": "2026-07-27T20:27:00Z",
+		})
 	}
 	return server
 }
@@ -160,6 +270,25 @@ func (s *Server) CreateAttempts() int {
 	return s.createAttempts
 }
 
+func (s *Server) CollaborationAttempts() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.collaborationAttempts
+}
+
+func (s *Server) CollaborationBodies() []string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	bodies := make([]string, 0, len(s.collaborationComments)+len(s.collaborationReviews))
+	for _, item := range s.collaborationComments {
+		bodies = append(bodies, fmt.Sprint(item["body"]))
+	}
+	for _, item := range s.collaborationReviews {
+		bodies = append(bodies, fmt.Sprint(item["body"]))
+	}
+	return bodies
+}
+
 func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	s.record(request)
 	if strings.TrimSpace(request.Header.Get("Authorization")) == "" {
@@ -176,6 +305,10 @@ func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	setRateHeaders(writer, "core", 5000, 4999, 0)
 
 	path := request.URL.Path
+	if path == "/user" && request.Method == http.MethodGet {
+		writeJSON(writer, http.StatusOK, user("hero-user", 99))
+		return
+	}
 	if strings.HasSuffix(path, "/graphql") {
 		s.handleGraphQL(writer, request)
 		return
@@ -224,8 +357,12 @@ func (s *Server) handleRepository(writer http.ResponseWriter, request *http.Requ
 		s.listDiffFiles(writer, request)
 	case len(parts) == 6 && parts[3] == "pulls" && parts[5] == "reviews" && request.Method == http.MethodGet:
 		s.listReviews(writer, request)
+	case len(parts) == 6 && parts[3] == "pulls" && parts[5] == "reviews" && request.Method == http.MethodPost:
+		s.createReview(writer, request)
 	case len(parts) == 6 && parts[3] == "issues" && parts[5] == "comments" && request.Method == http.MethodGet:
 		s.listComments(writer, request)
+	case len(parts) == 6 && parts[3] == "issues" && parts[5] == "comments" && request.Method == http.MethodPost:
+		s.createComment(writer, request)
 	case len(parts) == 6 && parts[3] == "commits" && parts[5] == "check-runs" && request.Method == http.MethodGet:
 		s.listChecks(writer, request)
 	default:
@@ -234,8 +371,16 @@ func (s *Server) handleRepository(writer http.ResponseWriter, request *http.Requ
 }
 
 func (s *Server) getRepository(writer http.ResponseWriter) {
+	allowed := true
+	s.mu.Lock()
+	if len(s.scenario.CollaborationPermissionSequence) > 0 {
+		index := min(s.permissionReads, len(s.scenario.CollaborationPermissionSequence)-1)
+		allowed = s.scenario.CollaborationPermissionSequence[index]
+		s.permissionReads++
+	}
+	s.mu.Unlock()
 	writeJSON(writer, http.StatusOK, map[string]any{
-		"permissions": map[string]bool{"pull": !s.scenario.CreatePermissionDenied},
+		"permissions": map[string]bool{"pull": !s.scenario.CreatePermissionDenied && allowed, "push": allowed},
 	})
 }
 
@@ -359,6 +504,10 @@ func (s *Server) pullRequest(owner, repository string, number int64, headSHA str
 	if s.scenario.ForkHead {
 		headOwner = "contributor"
 	}
+	state := "open"
+	if s.scenario.CollaborationClosed {
+		state = "closed"
+	}
 	return map[string]any{
 		"id":         1000 + number,
 		"node_id":    fmt.Sprintf("PR_%d", number),
@@ -366,7 +515,7 @@ func (s *Server) pullRequest(owner, repository string, number int64, headSHA str
 		"title":      fmt.Sprintf("Pull request %d", number),
 		"body":       "deterministic code-host fixture",
 		"html_url":   fmt.Sprintf("https://example.invalid/%s/%s/pull/%d", owner, repository, number),
-		"state":      "open",
+		"state":      state,
 		"draft":      false,
 		"merged":     false,
 		"created_at": "2026-07-27T20:00:00Z",
@@ -469,10 +618,18 @@ func (s *Server) listReviews(writer http.ResponseWriter, request *http.Request) 
 	if s.rateLimit(writer, "reviews") || s.deny(writer, "reviews") {
 		return
 	}
+	if s.collaborationReadbackUnavailable(writer) {
+		return
+	}
 	items := []map[string]any{
 		{"id": 1, "node_id": "REVIEW_1", "user": user("reviewer", 8), "body": "approved", "state": "APPROVED", "commit_id": currentHeadSHA, "submitted_at": "2026-07-27T20:20:00Z"},
 		{"id": 2, "node_id": "REVIEW_2", "user": user("reviewer", 8), "body": "stale", "state": "CHANGES_REQUESTED", "commit_id": baseSHA, "submitted_at": "2026-07-27T20:10:00Z"},
 	}
+	s.mu.Lock()
+	if s.collaborationVisibleLocked() {
+		items = append(items, s.collaborationReviews...)
+	}
+	s.mu.Unlock()
 	start, end, hasNext, page, perPage := s.page(items, request.URL.Query())
 	if hasNext {
 		s.setNext(writer, request, page+1, perPage)
@@ -484,15 +641,147 @@ func (s *Server) listComments(writer http.ResponseWriter, request *http.Request)
 	if s.rateLimit(writer, "comments") || s.deny(writer, "comments") {
 		return
 	}
+	if s.collaborationReadbackUnavailable(writer) {
+		return
+	}
 	items := []map[string]any{
 		{"id": 1, "node_id": "COMMENT_1", "user": user("commenter", 9), "body": "first", "html_url": "https://example.invalid/comment/1", "created_at": "2026-07-27T20:00:00Z", "updated_at": "2026-07-27T20:00:00Z"},
 		{"id": 2, "node_id": "COMMENT_2", "user": user("commenter", 9), "body": "second", "html_url": "https://example.invalid/comment/2", "created_at": "2026-07-27T20:01:00Z", "updated_at": "2026-07-27T20:01:00Z"},
 	}
+	s.mu.Lock()
+	if s.collaborationVisibleLocked() {
+		items = append(items, s.collaborationComments...)
+	}
+	s.mu.Unlock()
 	start, end, hasNext, page, perPage := s.page(items, request.URL.Query())
 	if hasNext {
 		s.setNext(writer, request, page+1, perPage)
 	}
 	writeJSON(writer, http.StatusOK, items[start:end])
+}
+
+func (s *Server) createComment(writer http.ResponseWriter, request *http.Request) {
+	var payload struct {
+		Body string `json:"body"`
+	}
+	if !s.decodeCollaborationWrite(writer, request, &payload) || payload.Body == "" {
+		return
+	}
+	s.mu.Lock()
+	s.collaborationAttempts++
+	id := int64(100 + s.collaborationAttempts)
+	actor := "hero-user"
+	actorID := int64(99)
+	if s.scenario.CollaborationCollisionOnly {
+		actor, actorID = "other-reviewer", 98
+	}
+	comment := map[string]any{
+		"id": id, "node_id": fmt.Sprintf("COMMENT_%d", id), "user": user(actor, actorID),
+		"body": payload.Body, "html_url": fmt.Sprintf("https://example.invalid/comment/%d", id),
+		"created_at": "2026-07-27T20:40:00Z", "updated_at": "2026-07-27T20:40:00Z",
+	}
+	s.collaborationComments = append(s.collaborationComments, comment)
+	s.mu.Unlock()
+	if s.finishCollaborationWrite(writer, request) {
+		return
+	}
+	writeJSON(writer, http.StatusCreated, comment)
+}
+
+func (s *Server) createReview(writer http.ResponseWriter, request *http.Request) {
+	var payload struct {
+		Body     string `json:"body"`
+		Event    string `json:"event"`
+		CommitID string `json:"commit_id"`
+	}
+	if !s.decodeCollaborationWrite(writer, request, &payload) || payload.Body == "" || payload.CommitID == "" {
+		return
+	}
+	state := "COMMENTED"
+	switch payload.Event {
+	case "APPROVE":
+		state = "APPROVED"
+	case "REQUEST_CHANGES":
+		state = "CHANGES_REQUESTED"
+	case "COMMENT":
+	default:
+		writeError(writer, http.StatusUnprocessableEntity, "invalid review event")
+		return
+	}
+	if s.scenario.CollaborationForcedReviewState != "" {
+		state = s.scenario.CollaborationForcedReviewState
+	}
+	s.mu.Lock()
+	s.collaborationAttempts++
+	id := int64(100 + s.collaborationAttempts)
+	actor := "hero-user"
+	actorID := int64(99)
+	if s.scenario.CollaborationCollisionOnly {
+		actor, actorID = "other-reviewer", 98
+	}
+	review := map[string]any{
+		"id": id, "node_id": fmt.Sprintf("REVIEW_%d", id), "user": user(actor, actorID),
+		"body": payload.Body, "state": state, "commit_id": payload.CommitID, "submitted_at": "2026-07-27T20:40:00Z",
+	}
+	s.collaborationReviews = append(s.collaborationReviews, review)
+	s.mu.Unlock()
+	if s.finishCollaborationWrite(writer, request) {
+		return
+	}
+	writeJSON(writer, http.StatusOK, review)
+}
+
+func (s *Server) decodeCollaborationWrite(writer http.ResponseWriter, request *http.Request, target any) bool {
+	if s.scenario.CollaborationWriteDenied {
+		s.mu.Lock()
+		s.collaborationAttempts++
+		s.mu.Unlock()
+		writeError(writer, http.StatusForbidden, "fixture collaboration denied")
+		return false
+	}
+	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 1<<20))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(target); err != nil {
+		writeError(writer, http.StatusUnprocessableEntity, "invalid collaboration payload")
+		return false
+	}
+	return true
+}
+
+func (s *Server) finishCollaborationWrite(writer http.ResponseWriter, request *http.Request) bool {
+	if s.scenario.CollaborationResponseDelay > 0 {
+		select {
+		case <-request.Context().Done():
+			return true
+		case <-time.After(s.scenario.CollaborationResponseDelay):
+		}
+	}
+	if s.scenario.CollaborationLostResponse {
+		writer.Header().Set("Content-Type", "application/json")
+		writer.WriteHeader(http.StatusCreated)
+		_, _ = writer.Write([]byte(`{"incomplete":`))
+		return true
+	}
+	return false
+}
+
+func (s *Server) collaborationReadbackUnavailable(writer http.ResponseWriter) bool {
+	s.mu.Lock()
+	unavailable := s.scenario.CollaborationAmbiguousReadback && s.collaborationAttempts > 0
+	s.mu.Unlock()
+	if unavailable {
+		writeError(writer, http.StatusServiceUnavailable, "fixture collaboration read-back unavailable")
+		return true
+	}
+	return false
+}
+
+func (s *Server) collaborationVisibleLocked() bool {
+	if s.collaborationAttempts == 0 {
+		return true
+	}
+	s.collaborationReads++
+	return s.collaborationReads > s.scenario.CollaborationVisibilityDelay
 }
 
 func (s *Server) handleGraphQL(writer http.ResponseWriter, request *http.Request) {

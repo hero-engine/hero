@@ -34,7 +34,13 @@ var readOperations = []codehostbroker.Operation{
 	codehostbroker.OperationGetMergeReadiness,
 }
 
-var availableOperations = append(append([]codehostbroker.Operation(nil), readOperations...), codehostbroker.OperationCreatePullRequest)
+var availableOperations = append(append([]codehostbroker.Operation(nil), readOperations...),
+	codehostbroker.OperationCreatePullRequest,
+	codehostbroker.OperationComment,
+	codehostbroker.OperationSubmitReview,
+	codehostbroker.OperationApprove,
+	codehostbroker.OperationRequestChanges,
+)
 
 // Broker is the in-process code-host credential boundary.
 type Broker struct {
@@ -91,14 +97,24 @@ func (b *Broker) Execute(ctx context.Context, request codehostbroker.Request) co
 		response.Error = err
 		return b.finish(response, start)
 	}
-	if !codehostbroker.IsRead(request.Operation) && request.Operation != codehostbroker.OperationCreatePullRequest {
+	if !codehostbroker.IsRead(request.Operation) &&
+		request.Operation != codehostbroker.OperationCreatePullRequest &&
+		!isCollaborationOperation(request.Operation) {
 		response.Error = contractError(codehostbroker.ErrorUnsupportedOperation, "the selected adapter does not implement the operation", "operation")
 		return b.finish(response, start)
 	}
 	var creation createPayload
+	var collaboration collaborationPayload
 	if request.Operation == codehostbroker.OperationCreatePullRequest {
 		var payloadErr *codehostbroker.ContractError
 		creation, payloadErr = decodeCreatePayload(request.Payload)
+		if payloadErr != nil {
+			response.Error = payloadErr
+			return b.finish(response, start)
+		}
+	} else if isCollaborationOperation(request.Operation) {
+		var payloadErr *codehostbroker.ContractError
+		collaboration, payloadErr = decodeCollaborationPayload(request)
 		if payloadErr != nil {
 			response.Error = payloadErr
 			return b.finish(response, start)
@@ -140,6 +156,12 @@ func (b *Broker) Execute(ctx context.Context, request codehostbroker.Request) co
 		if creation.Head.Repository != creation.Base.Repository {
 			scope = append(scope, creation.Head.Repository)
 		}
+	} else if isCollaborationOperation(request.Operation) {
+		if scopeErr := validateCollaborationScope(connection, request); scopeErr != nil {
+			response.Error = scopeErr
+			return b.finish(response, start)
+		}
+		scope = []codehostbroker.RepositoryIdentity{request.Repository}
 	} else {
 		var scopeErr *codehostbroker.ContractError
 		scope, scopeErr = validateRepositoryScope(connection, request)
@@ -176,6 +198,8 @@ func (b *Broker) Execute(ctx context.Context, request codehostbroker.Request) co
 	var dispatchErr error
 	if request.Operation == codehostbroker.OperationCreatePullRequest {
 		out, dispatchErr = b.executeCreate(ctx, request, creation, connection, &adapter)
+	} else if isCollaborationOperation(request.Operation) {
+		out, dispatchErr = b.executeCollaboration(ctx, request, collaboration, connection, &adapter)
 	} else {
 		out, dispatchErr = adapter.execute(ctx, request, scope)
 	}

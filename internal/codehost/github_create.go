@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"time"
 
 	"github.com/hero-engine/hero/contracts/codehostbroker"
 	"github.com/hero-engine/hero/internal/config"
@@ -19,6 +18,7 @@ type createPreflight struct {
 type githubRepositoryPermission struct {
 	Permissions struct {
 		Pull bool `json:"pull"`
+		Push bool `json:"push"`
 	} `json:"permissions"`
 }
 
@@ -248,209 +248,60 @@ func (g *githubAdapter) createPullRequest(ctx context.Context, payload createPay
 }
 
 func (b *Broker) executeCreate(ctx context.Context, request codehostbroker.Request, payload createPayload, connection config.CodeHostConnection, adapter *githubAdapter) (adapterResult, error) {
-	journal := newMutationJournal(b.projectRoot, b.now)
-	key := journalKeyDigest(request)
-	digest := canonicalCreateDigest(request, payload)
-	var out adapterResult
-	var executionErr error
-	err := journal.withLock(func(document *journalDocument) error {
-		entry := document.Entries[key]
-		if entry != nil && entry.PayloadDigest != digest {
-			out = mutationErrorResult(request, entry, document, codehostbroker.ReconciliationNotApplied)
-			executionErr = &providerError{code: codehostbroker.ErrorIdempotencyConflict, message: "idempotency key was already used for a different creation payload"}
-			return nil
-		}
-		if entry == nil {
-			if len(document.Entries) >= journal.maxEntries {
-				executionErr = &providerError{code: codehostbroker.ErrorProviderUnavailable, message: "mutation journal is full of unresolved safety records"}
-				return nil
-			}
-			timestamp := journal.timestamp()
-			entry = &journalEntry{
-				KeyDigest:     key,
-				PayloadDigest: digest,
-				OperationID:   operationID(request),
-				Target: mutationTarget{
-					ConnectionID: request.ConnectionID,
-					Repository:   request.Repository,
-					Base:         payload.Base,
-					Head:         payload.Head,
-				},
-				State:     journalInProgress,
-				CreatedAt: timestamp,
-				UpdatedAt: timestamp,
-			}
-			document.Entries[key] = entry
-			if saveErr := journal.save(document); saveErr != nil {
-				return saveErr
-			}
-		} else {
-			replayed, replayErr, decisive := b.reconcileExistingCreate(ctx, request, payload, adapter, entry, document)
-			if decisive {
-				out = replayed
-				executionErr = replayErr
-				return nil
-			}
-			if saveErr := journal.save(document); saveErr != nil {
-				return saveErr
-			}
-		}
-
-		out.receipt = createReceipt(entry, nil)
-		out.reconciliation = &codehostbroker.Reconciliation{Status: codehostbroker.ReconciliationInProgress, Key: request.ReconciliationKey}
-		out.journalEntries = len(document.Entries)
-		expectedCapability := capabilityRevision(connection, nil)
-		out.capabilityRevision = expectedCapability
-		if request.CapabilityRevision != expectedCapability {
-			entry.State = journalNotApplied
-			entry.UpdatedAt = journal.timestamp()
-			out.reconciliation.Status = codehostbroker.ReconciliationNotApplied
-			executionErr = &providerError{code: codehostbroker.ErrorCapabilityChanged, message: "code-host capability revision changed before creation"}
-			return nil
-		}
-		if err := ctx.Err(); err != nil {
-			entry.State = journalNotApplied
-			entry.UpdatedAt = journal.timestamp()
-			out.reconciliation.Status = codehostbroker.ReconciliationNotApplied
-			executionErr = err
-			return nil
-		}
-		preflight, preflightErr := adapter.observeCreatePreflight(ctx, payload)
-		out.rateLimit = adapter.transport.rateLimit
-		out.redirects = adapter.transport.redirects
-		if preflightErr != nil {
-			entry.State = journalNotApplied
-			entry.UpdatedAt = journal.timestamp()
-			out.reconciliation.Status = codehostbroker.ReconciliationNotApplied
-			executionErr = preflightErr
-			return nil
-		}
-		out.observationRevision = preflight.revision
-		if request.ObservationRevision != preflight.revision {
-			entry.State = journalNotApplied
-			entry.UpdatedAt = journal.timestamp()
-			out.reconciliation.Status = codehostbroker.ReconciliationNotApplied
-			executionErr = &providerError{code: codehostbroker.ErrorStaleObservation, message: "creation preflight observation is stale"}
-			return nil
+	plan := mutationPlan{
+		request:       request,
+		payloadDigest: canonicalCreateDigest(request, payload),
+		target: mutationTarget{
+			ConnectionID: request.ConnectionID,
+			Repository:   request.Repository,
+			Base:         payload.Base,
+			Head:         payload.Head,
+		},
+		connection: connection,
+		adapter:    adapter,
+	}
+	plan.preflight = func(ctx context.Context) (mutationPreflight, error) {
+		preflight, err := adapter.observeCreatePreflight(ctx, payload)
+		if err != nil {
+			return mutationPreflight{}, err
 		}
 		if len(preflight.existing) > 0 {
-			if len(preflight.existing) == 1 && satisfiesCreate(preflight.existing[0], payload) {
-				pullRequest := preflight.existing[0]
-				entry.State = journalExternal
-				entry.Receipt = safeJournalReceipt(pullRequest)
-				entry.UpdatedAt = journal.timestamp()
-				entry.ReconciledAt = entry.UpdatedAt
-				out = successfulMutationResult(request, entry, document, pullRequest, codehostbroker.ReconciliationExternallyCompleted, "externally_completed")
-				out = withTransportMetadata(out, adapter)
-				return nil
+			if len(preflight.existing) != 1 || !satisfiesCreate(preflight.existing[0], payload) {
+				return mutationPreflight{}, &providerError{code: codehostbroker.ErrorConflict, message: "an open pull request already uses the exact base and head target"}
 			}
-			entry.State = journalNotApplied
-			entry.UpdatedAt = journal.timestamp()
-			out.reconciliation.Status = codehostbroker.ReconciliationNotApplied
-			executionErr = &providerError{code: codehostbroker.ErrorConflict, message: "an open pull request already uses the exact base and head target"}
-			return nil
+			pullRequest := preflight.existing[0]
+			return mutationPreflight{
+				observationRevision: preflight.revision,
+				external: &mutationEffect{
+					pullRequest: pullRequest,
+					receipt:     safeJournalReceipt(pullRequest),
+				},
+			}, nil
 		}
-
-		entry.State = journalDispatched
-		entry.ProviderAttempts++
-		entry.UpdatedAt = journal.timestamp()
-		if saveErr := journal.save(document); saveErr != nil {
-			return saveErr
-		}
-		pullRequest, createErr := adapter.createPullRequest(ctx, payload)
-		out.rateLimit = adapter.transport.rateLimit
-		out.redirects = adapter.transport.redirects
-		if createErr == nil {
-			entry.State = journalApplied
-			entry.Receipt = safeJournalReceipt(pullRequest)
-			entry.UpdatedAt = journal.timestamp()
-			out = successfulMutationResult(request, entry, document, pullRequest, codehostbroker.ReconciliationApplied, "applied")
-			out = withTransportMetadata(out, adapter)
-			return nil
-		}
-		if !ambiguousProviderFailure(createErr) {
-			entry.State = journalNotApplied
-			entry.UpdatedAt = journal.timestamp()
-			entry.FailureCode = normalizeProviderError(createErr).Code
-			out = mutationErrorResult(request, entry, document, codehostbroker.ReconciliationNotApplied)
-			out = withTransportMetadata(out, adapter)
-			executionErr = createErr
-			return nil
-		}
-
-		reconcileContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
-		defer cancel()
-		matches, reconcileErr := adapter.findExactPullRequests(reconcileContext, payload)
-		entry.ReconciledAt = journal.timestamp()
-		if reconcileErr == nil && len(matches) == 1 && satisfiesCreate(matches[0], payload) {
-			pullRequest = matches[0]
-			entry.State = journalApplied
-			entry.Receipt = safeJournalReceipt(pullRequest)
-			entry.UpdatedAt = journal.timestamp()
-			out = successfulMutationResult(request, entry, document, pullRequest, codehostbroker.ReconciliationReconciledApplied, "reconciled_applied")
-			out = withTransportMetadata(out, adapter)
-			return nil
-		}
-		entry.State = journalAmbiguous
-		entry.UpdatedAt = journal.timestamp()
-		out = mutationErrorResult(request, entry, document, codehostbroker.ReconciliationAmbiguous)
-		out = withTransportMetadata(out, adapter)
-		out.observationRevision = preflight.revision
-		executionErr = &providerError{code: codehostbroker.ErrorAmbiguousResult, message: "GitHub creation outcome is ambiguous"}
-		return nil
-	})
-	if err != nil {
-		return adapterResult{}, &providerError{code: codehostbroker.ErrorProviderUnavailable, message: "mutation journal is unavailable"}
+		return mutationPreflight{observationRevision: preflight.revision}, nil
 	}
-	return out, executionErr
-}
-
-func (b *Broker) reconcileExistingCreate(ctx context.Context, request codehostbroker.Request, payload createPayload, adapter *githubAdapter, entry *journalEntry, document *journalDocument) (adapterResult, error, bool) {
-	reconcileContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
-	defer cancel()
-	matches, err := adapter.findExactPullRequests(reconcileContext, payload)
-	entry.ReconciledAt = b.now().UTC().Format(time.RFC3339Nano)
-	if err == nil && len(matches) == 1 && satisfiesCreate(matches[0], payload) {
+	plan.dispatch = func(ctx context.Context) (mutationEffect, error) {
+		pullRequest, err := adapter.createPullRequest(ctx, payload)
+		if err != nil {
+			return mutationEffect{}, err
+		}
+		return mutationEffect{pullRequest: pullRequest, receipt: safeJournalReceipt(pullRequest)}, nil
+	}
+	plan.reconcile = func(ctx context.Context) (*mutationEffect, error) {
+		matches, err := adapter.findExactPullRequests(ctx, payload)
+		if err != nil {
+			return nil, err
+		}
+		if len(matches) == 0 {
+			return nil, nil
+		}
+		if len(matches) != 1 || !satisfiesCreate(matches[0], payload) {
+			return nil, &providerError{code: codehostbroker.ErrorConflict, message: "creation target cannot be reconciled uniquely"}
+		}
 		pullRequest := matches[0]
-		status := codehostbroker.ReconciliationReplayed
-		outcome := "replayed"
-		if entry.State == journalDispatched || entry.State == journalAmbiguous {
-			status = codehostbroker.ReconciliationReconciledApplied
-			outcome = "reconciled_applied"
-		}
-		entry.State = journalApplied
-		entry.Receipt = safeJournalReceipt(pullRequest)
-		entry.UpdatedAt = entry.ReconciledAt
-		return withTransportMetadata(successfulMutationResult(request, entry, document, pullRequest, status, outcome), adapter), nil, true
+		return &mutationEffect{pullRequest: pullRequest, receipt: safeJournalReceipt(pullRequest)}, nil
 	}
-	switch entry.State {
-	case journalApplied, journalExternal, journalDispatched, journalAmbiguous:
-		entry.State = journalAmbiguous
-		entry.UpdatedAt = entry.ReconciledAt
-		out := mutationErrorResult(request, entry, document, codehostbroker.ReconciliationAmbiguous)
-		return withTransportMetadata(out, adapter), &providerError{code: codehostbroker.ErrorAmbiguousResult, message: "recorded GitHub creation cannot be reconciled safely"}, true
-	case journalInProgress:
-		if err != nil || len(matches) > 0 {
-			entry.State = journalAmbiguous
-			entry.UpdatedAt = entry.ReconciledAt
-			out := mutationErrorResult(request, entry, document, codehostbroker.ReconciliationAmbiguous)
-			return withTransportMetadata(out, adapter), &providerError{code: codehostbroker.ErrorAmbiguousResult, message: "interrupted GitHub creation cannot be reconciled safely"}, true
-		}
-		entry.State = journalNotApplied
-		entry.UpdatedAt = entry.ReconciledAt
-		return adapterResult{}, nil, false
-	case journalNotApplied:
-		if entry.ProviderAttempts > 0 {
-			out := mutationErrorResult(request, entry, document, codehostbroker.ReconciliationNotApplied)
-			return withTransportMetadata(out, adapter), replayedCreateFailure(entry.FailureCode), true
-		}
-		return adapterResult{}, nil, false
-	default:
-		entry.State = journalAmbiguous
-		entry.UpdatedAt = entry.ReconciledAt
-		out := mutationErrorResult(request, entry, document, codehostbroker.ReconciliationAmbiguous)
-		return withTransportMetadata(out, adapter), &providerError{code: codehostbroker.ErrorAmbiguousResult, message: "mutation journal state cannot be reconciled safely"}, true
-	}
+	return b.executeMutation(ctx, plan)
 }
 
 func successfulMutationResult(request codehostbroker.Request, entry *journalEntry, document *journalDocument, pullRequest codehostbroker.PullRequest, status codehostbroker.ReconciliationStatus, outcome string) adapterResult {

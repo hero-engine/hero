@@ -244,7 +244,7 @@ func normalizeReview(item githubReview) codehostbroker.Review {
 		ProviderID:  providerID(item.Node, item.ID),
 		Author:      normalizeActor(item.User),
 		State:       boundedText(strings.ToLower(item.State), 128),
-		Body:        boundedText(item.Body, codehostbroker.MaxBodyBytes),
+		Body:        boundedText(stripHeroMarkers(item.Body), codehostbroker.MaxBodyBytes),
 		HeadSHA:     boundedText(item.CommitID, 128),
 		SubmittedAt: boundedText(item.SubmittedAt, 64),
 	}
@@ -254,7 +254,7 @@ func normalizeComment(item githubComment) codehostbroker.Comment {
 	return codehostbroker.Comment{
 		ProviderID: providerID(item.Node, item.ID),
 		Author:     normalizeActor(item.User),
-		Body:       boundedText(item.Body, codehostbroker.MaxBodyBytes),
+		Body:       boundedText(stripHeroMarkers(item.Body), codehostbroker.MaxBodyBytes),
 		URL:        boundedText(item.HTMLURL, 2048),
 		CreatedAt:  boundedText(item.CreatedAt, 64),
 		UpdatedAt:  boundedText(item.UpdatedAt, 64),
