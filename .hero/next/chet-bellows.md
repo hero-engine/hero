@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-28T00:28:57Z
+updated: 2026-07-28T00:40:29Z
 repo: hero-engine/hero
 ---
 
@@ -11,13 +11,13 @@ repo: hero-engine/hero
 > Session opened with — Deliver initiative-autocomplete-ignores-declared-children. An initiative auto-completes when only some of its declared children have shipped, because the completion gate's roster is fed from an incomplete source. Two compounding defects: (1) children: (plural) frontmatter is silently dropped by the relation parser (internal/spec/spec.go:633), so declared children never become child edges and the r…
 > _possibly stale — 10 commit(s) since, last set 2d 4h ago_
 
-_possibly stale — 8 commit(s) since, last set 3h 49m ago_
+_possibly stale — 9 commit(s) since, last set 4h ago_
 
 ## Last user ask
 
 > Drive hero-code-host-broker-capabilities autonomously through implementation, cold audits, and verification for all eight children.
 
-_possibly stale — 3 commit(s) since, last set 21m ago_
+_possibly stale — 4 commit(s) since, last set 32m ago_
 
 ## Suggested next prompt
 

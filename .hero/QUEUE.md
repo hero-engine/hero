@@ -6,7 +6,27 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-28T00:28:57Z · 83 ready specs_
+_Generated: 2026-07-28T00:40:29Z · 83 ready specs_
+
+## code-host-broker-v1-contract — "Code-host broker v1 contract"
+_feature · delivering · horizon: now_
+
+Freeze the Hero-owned wire boundary and canonical fixture that every code-host
+adapter and Hero Code decoder must share.
+
+**Status:** closing — contract types, policy registry, validation, canonical
+fixture, digest, tests, and consumer documentation are implemented and the
+full Go test and vet suites pass.
+
+**Pick up at:** run the cold delivery audit, close any findings, then pass
+`hero spec verify code-host-broker-v1-contract`.
+
+→ `/deliver code-host-broker-v1-contract`
+
+**Files:** `contracts/codehostbroker/contract.go`, `contracts/codehostbroker/testdata/v1/consumer-fixture.json`, `docs/contracts/code-host-broker-v1.md`
+**Skip:** do not add transport handlers or reuse tracker issue DTOs.
+
+---
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -53,25 +73,6 @@ surfaces:
    ambiguous-outcome recovery; and
 5. one in-process implementation surfaced through JSON CLI and typed MCP tools
    that Hero Code can validate against a released Hero binary.
-
----
-
-## code-host-broker-v1-contract — "Code-host broker v1 contract"
-_feature · planning · horizon: now_
-
-Freeze the Hero-owned wire boundary and canonical fixture that every code-host
-adapter and Hero Code decoder must share.
-
-**Status:** planning — existing broker, permission, credential, pagination, and
-Hero Code decoder conventions have been mapped.
-
-**Pick up at:** write the operation/policy registry and canonical identity
-types, then generate a fixture containing every response and error variant.
-
-→ `/deliver code-host-broker-v1-contract`
-
-**Files:** `contracts/codehostbroker/contract.go`, `contracts/codehostbroker/testdata/v1/consumer-fixture.json`, `docs/contracts/code-host-broker-v1.md`
-**Skip:** do not add transport handlers or reuse tracker issue DTOs.
 
 ---
 

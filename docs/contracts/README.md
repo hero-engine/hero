@@ -1,13 +1,14 @@
 # Hero Cross-Language Contracts
 
-Hero exposes seven load-bearing contracts that any non-Go consumer — the
+Hero exposes eight load-bearing contracts that any non-Go consumer — the
 hero-code Rust dashboard, IDE plugins, peer Hero installations — reads
 to render and reason about a Hero workspace without coupling to the Go
 implementation. Four of them describe the **dialect** of a workspace
 (which work-tracking types exist, what they're called, how their
 lifecycles run), one describes the **inline-propose** wire protocol between
 Hero agents and the local daemon, and two define credential-safe tracker
-boundaries. Together they pin
+boundaries, while one defines a credential-safe code-host boundary. Together
+they pin
 the shapes that have to stay stable across language boundaries.
 
 ## At a glance
@@ -21,6 +22,7 @@ the shapes that have to stay stable across language boundaries.
 | Inline-propose wire | `docs/contracts/inline-propose-v1.md` | `1.0` | Hero (Go) | Additive in `1.x`; breaking → `2.0` |
 | Tracker broker | `docs/contracts/tracker-broker-v1.md` | `tracker-broker/v1` | Hero (Go) | Additive in v1; breaking → v2 |
 | Tracker evidence | `docs/contracts/tracker-evidence-v1.md` | `tracker-evidence/v1` | Hero (Go) | Additive in v1; breaking → v2 |
+| Code-host broker | `docs/contracts/code-host-broker-v1.md` | `code-host-broker/v1` | Hero (Go) | Additive in v1; breaking → v2 |
 
 ## Spec-type registry
 
@@ -115,6 +117,8 @@ top-down:
    operations while Hero retains the configured credential.
 6. **Tracker evidence** — explicit per-spec full-details loading with a safe
    tracked manifest and validated private snapshot.
+7. **Code-host broker** — provider-neutral pull-request lifecycle operations
+   for clients while Hero retains the selected code-host credential.
 
 Then read `docs/contracts/active-dialect.md` for the resolver
 precedence chain (explicit → methodology-derived → tracker-inferred
@@ -139,6 +143,9 @@ precedence chain (explicit → methodology-derived → tracker-inferred
   broad tracker operations, response envelope, effects, and consumer fixture.
 - [`tracker-evidence-v1.md`](./tracker-evidence-v1.md) — explicit full-details
   loading, cache validation, private sidecar storage, and consumer fixture.
+- [`code-host-broker-v1.md`](./code-host-broker-v1.md) — repository-qualified
+  pull-request operations, effects, idempotency, reconciliation, bounds, and
+  canonical cross-language fixture.
 - [`../../examples/scrum-workspace/`](../../examples/scrum-workspace/)
   — runnable sample workspace declaring `methodology: scrum` +
   `vocabulary: agile-scrum`, with specs across lifecycle states.

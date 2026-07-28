@@ -1,0 +1,4233 @@
+{
+  "version": "code-host-broker/v1",
+  "operations": [
+    {
+      "policy": {
+        "operation": "capabilities",
+        "effect": "read",
+        "consent": "none",
+        "requires_unique_target": false,
+        "requires_idempotency": false,
+        "requires_fresh_observation": false,
+        "requires_reconciliation": false,
+        "replay_safe": true,
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        }
+      },
+      "available": true
+    },
+    {
+      "policy": {
+        "operation": "list_pull_requests",
+        "effect": "read",
+        "consent": "none",
+        "requires_unique_target": false,
+        "requires_idempotency": false,
+        "requires_fresh_observation": false,
+        "requires_reconciliation": false,
+        "replay_safe": true,
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        }
+      },
+      "available": true
+    },
+    {
+      "policy": {
+        "operation": "search_pull_requests",
+        "effect": "read",
+        "consent": "none",
+        "requires_unique_target": false,
+        "requires_idempotency": false,
+        "requires_fresh_observation": false,
+        "requires_reconciliation": false,
+        "replay_safe": true,
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        }
+      },
+      "available": true
+    },
+    {
+      "policy": {
+        "operation": "get_pull_request",
+        "effect": "read",
+        "consent": "none",
+        "requires_unique_target": true,
+        "requires_idempotency": false,
+        "requires_fresh_observation": false,
+        "requires_reconciliation": false,
+        "replay_safe": true,
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        }
+      },
+      "available": true
+    },
+    {
+      "policy": {
+        "operation": "get_commits",
+        "effect": "read",
+        "consent": "none",
+        "requires_unique_target": true,
+        "requires_idempotency": false,
+        "requires_fresh_observation": false,
+        "requires_reconciliation": false,
+        "replay_safe": true,
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        }
+      },
+      "available": true
+    },
+    {
+      "policy": {
+        "operation": "get_diff",
+        "effect": "read",
+        "consent": "none",
+        "requires_unique_target": true,
+        "requires_idempotency": false,
+        "requires_fresh_observation": false,
+        "requires_reconciliation": false,
+        "replay_safe": true,
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        }
+      },
+      "available": true
+    },
+    {
+      "policy": {
+        "operation": "get_checks",
+        "effect": "read",
+        "consent": "none",
+        "requires_unique_target": true,
+        "requires_idempotency": false,
+        "requires_fresh_observation": false,
+        "requires_reconciliation": false,
+        "replay_safe": true,
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        }
+      },
+      "available": true
+    },
+    {
+      "policy": {
+        "operation": "get_reviews",
+        "effect": "read",
+        "consent": "none",
+        "requires_unique_target": true,
+        "requires_idempotency": false,
+        "requires_fresh_observation": false,
+        "requires_reconciliation": false,
+        "replay_safe": true,
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        }
+      },
+      "available": true
+    },
+    {
+      "policy": {
+        "operation": "get_comments",
+        "effect": "read",
+        "consent": "none",
+        "requires_unique_target": true,
+        "requires_idempotency": false,
+        "requires_fresh_observation": false,
+        "requires_reconciliation": false,
+        "replay_safe": true,
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        }
+      },
+      "available": true
+    },
+    {
+      "policy": {
+        "operation": "get_merge_readiness",
+        "effect": "read",
+        "consent": "none",
+        "requires_unique_target": true,
+        "requires_idempotency": false,
+        "requires_fresh_observation": false,
+        "requires_reconciliation": false,
+        "replay_safe": true,
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        }
+      },
+      "available": true
+    },
+    {
+      "policy": {
+        "operation": "create_pull_request",
+        "effect": "external_write",
+        "consent": "explicit_user",
+        "requires_unique_target": true,
+        "requires_idempotency": true,
+        "requires_fresh_observation": true,
+        "requires_reconciliation": true,
+        "replay_safe": true,
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        }
+      },
+      "available": true
+    },
+    {
+      "policy": {
+        "operation": "comment",
+        "effect": "external_write",
+        "consent": "explicit_user",
+        "requires_unique_target": true,
+        "requires_idempotency": true,
+        "requires_fresh_observation": true,
+        "requires_reconciliation": true,
+        "replay_safe": true,
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        }
+      },
+      "available": true
+    },
+    {
+      "policy": {
+        "operation": "submit_review",
+        "effect": "external_write",
+        "consent": "explicit_user",
+        "requires_unique_target": true,
+        "requires_idempotency": true,
+        "requires_fresh_observation": true,
+        "requires_reconciliation": true,
+        "replay_safe": true,
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        }
+      },
+      "available": true
+    },
+    {
+      "policy": {
+        "operation": "approve",
+        "effect": "external_write",
+        "consent": "explicit_user",
+        "requires_unique_target": true,
+        "requires_idempotency": true,
+        "requires_fresh_observation": true,
+        "requires_reconciliation": true,
+        "replay_safe": true,
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        }
+      },
+      "available": true
+    },
+    {
+      "policy": {
+        "operation": "request_changes",
+        "effect": "external_write",
+        "consent": "explicit_user",
+        "requires_unique_target": true,
+        "requires_idempotency": true,
+        "requires_fresh_observation": true,
+        "requires_reconciliation": true,
+        "replay_safe": true,
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        }
+      },
+      "available": true
+    },
+    {
+      "policy": {
+        "operation": "mark_ready",
+        "effect": "external_write",
+        "consent": "explicit_user",
+        "requires_unique_target": true,
+        "requires_idempotency": true,
+        "requires_fresh_observation": true,
+        "requires_reconciliation": true,
+        "replay_safe": true,
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        }
+      },
+      "available": true
+    },
+    {
+      "policy": {
+        "operation": "retarget",
+        "effect": "external_write",
+        "consent": "explicit_user",
+        "requires_unique_target": true,
+        "requires_idempotency": true,
+        "requires_fresh_observation": true,
+        "requires_reconciliation": true,
+        "replay_safe": true,
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        }
+      },
+      "available": true
+    },
+    {
+      "policy": {
+        "operation": "close",
+        "effect": "external_write",
+        "consent": "explicit_user",
+        "requires_unique_target": true,
+        "requires_idempotency": true,
+        "requires_fresh_observation": true,
+        "requires_reconciliation": true,
+        "replay_safe": true,
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        }
+      },
+      "available": true
+    },
+    {
+      "policy": {
+        "operation": "reopen",
+        "effect": "external_write",
+        "consent": "explicit_user",
+        "requires_unique_target": true,
+        "requires_idempotency": true,
+        "requires_fresh_observation": true,
+        "requires_reconciliation": true,
+        "replay_safe": true,
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        }
+      },
+      "available": true
+    },
+    {
+      "policy": {
+        "operation": "merge",
+        "effect": "commitment",
+        "consent": "explicit_acceptance",
+        "requires_unique_target": true,
+        "requires_idempotency": true,
+        "requires_fresh_observation": true,
+        "requires_reconciliation": true,
+        "replay_safe": true,
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        }
+      },
+      "available": true
+    }
+  ],
+  "cases": [
+    {
+      "name": "capabilities",
+      "request": {
+        "version": "code-host-broker/v1",
+        "operation": "capabilities",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        }
+      },
+      "response": {
+        "version": "code-host-broker/v1",
+        "operation": "capabilities",
+        "provider": "github",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "policy": {
+          "operation": "capabilities",
+          "effect": "read",
+          "consent": "none",
+          "requires_unique_target": false,
+          "requires_idempotency": false,
+          "requires_fresh_observation": false,
+          "requires_reconciliation": false,
+          "replay_safe": true,
+          "bounds": {
+            "repository_scopes": 100,
+            "page_size": 100,
+            "items": 100,
+            "text_bytes": 65536,
+            "body_bytes": 262144,
+            "diff_bytes": 2097152,
+            "diff_files": 300,
+            "diff_hunks": 2000,
+            "partial_failures": 20,
+            "error_detail_bytes": 4096,
+            "duration_ms": 120000,
+            "redirects": 3,
+            "journal_entries": 10000,
+            "idempotency_bytes": 512
+          }
+        },
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "observed_at": "2026-07-27T20:31:00Z",
+        "freshness": "current",
+        "rate_limit": {
+          "resource": "core",
+          "limit": 5000,
+          "remaining": 4999,
+          "reset_at": "2026-07-27T21:00:00Z",
+          "observed_at": "2026-07-27T20:31:00Z"
+        },
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        },
+        "completeness": "complete",
+        "page": {
+          "limit": 25,
+          "count": 1,
+          "next_cursor": "cursor:opaque-fixture"
+        },
+        "partial_failures": [],
+        "result": {
+          "capabilities": [
+            {
+              "policy": {
+                "operation": "capabilities",
+                "effect": "read",
+                "consent": "none",
+                "requires_unique_target": false,
+                "requires_idempotency": false,
+                "requires_fresh_observation": false,
+                "requires_reconciliation": false,
+                "replay_safe": true,
+                "bounds": {
+                  "repository_scopes": 100,
+                  "page_size": 100,
+                  "items": 100,
+                  "text_bytes": 65536,
+                  "body_bytes": 262144,
+                  "diff_bytes": 2097152,
+                  "diff_files": 300,
+                  "diff_hunks": 2000,
+                  "partial_failures": 20,
+                  "error_detail_bytes": 4096,
+                  "duration_ms": 120000,
+                  "redirects": 3,
+                  "journal_entries": 10000,
+                  "idempotency_bytes": 512
+                }
+              },
+              "available": true
+            },
+            {
+              "policy": {
+                "operation": "list_pull_requests",
+                "effect": "read",
+                "consent": "none",
+                "requires_unique_target": false,
+                "requires_idempotency": false,
+                "requires_fresh_observation": false,
+                "requires_reconciliation": false,
+                "replay_safe": true,
+                "bounds": {
+                  "repository_scopes": 100,
+                  "page_size": 100,
+                  "items": 100,
+                  "text_bytes": 65536,
+                  "body_bytes": 262144,
+                  "diff_bytes": 2097152,
+                  "diff_files": 300,
+                  "diff_hunks": 2000,
+                  "partial_failures": 20,
+                  "error_detail_bytes": 4096,
+                  "duration_ms": 120000,
+                  "redirects": 3,
+                  "journal_entries": 10000,
+                  "idempotency_bytes": 512
+                }
+              },
+              "available": true
+            },
+            {
+              "policy": {
+                "operation": "search_pull_requests",
+                "effect": "read",
+                "consent": "none",
+                "requires_unique_target": false,
+                "requires_idempotency": false,
+                "requires_fresh_observation": false,
+                "requires_reconciliation": false,
+                "replay_safe": true,
+                "bounds": {
+                  "repository_scopes": 100,
+                  "page_size": 100,
+                  "items": 100,
+                  "text_bytes": 65536,
+                  "body_bytes": 262144,
+                  "diff_bytes": 2097152,
+                  "diff_files": 300,
+                  "diff_hunks": 2000,
+                  "partial_failures": 20,
+                  "error_detail_bytes": 4096,
+                  "duration_ms": 120000,
+                  "redirects": 3,
+                  "journal_entries": 10000,
+                  "idempotency_bytes": 512
+                }
+              },
+              "available": true
+            },
+            {
+              "policy": {
+                "operation": "get_pull_request",
+                "effect": "read",
+                "consent": "none",
+                "requires_unique_target": true,
+                "requires_idempotency": false,
+                "requires_fresh_observation": false,
+                "requires_reconciliation": false,
+                "replay_safe": true,
+                "bounds": {
+                  "repository_scopes": 100,
+                  "page_size": 100,
+                  "items": 100,
+                  "text_bytes": 65536,
+                  "body_bytes": 262144,
+                  "diff_bytes": 2097152,
+                  "diff_files": 300,
+                  "diff_hunks": 2000,
+                  "partial_failures": 20,
+                  "error_detail_bytes": 4096,
+                  "duration_ms": 120000,
+                  "redirects": 3,
+                  "journal_entries": 10000,
+                  "idempotency_bytes": 512
+                }
+              },
+              "available": true
+            },
+            {
+              "policy": {
+                "operation": "get_commits",
+                "effect": "read",
+                "consent": "none",
+                "requires_unique_target": true,
+                "requires_idempotency": false,
+                "requires_fresh_observation": false,
+                "requires_reconciliation": false,
+                "replay_safe": true,
+                "bounds": {
+                  "repository_scopes": 100,
+                  "page_size": 100,
+                  "items": 100,
+                  "text_bytes": 65536,
+                  "body_bytes": 262144,
+                  "diff_bytes": 2097152,
+                  "diff_files": 300,
+                  "diff_hunks": 2000,
+                  "partial_failures": 20,
+                  "error_detail_bytes": 4096,
+                  "duration_ms": 120000,
+                  "redirects": 3,
+                  "journal_entries": 10000,
+                  "idempotency_bytes": 512
+                }
+              },
+              "available": true
+            },
+            {
+              "policy": {
+                "operation": "get_diff",
+                "effect": "read",
+                "consent": "none",
+                "requires_unique_target": true,
+                "requires_idempotency": false,
+                "requires_fresh_observation": false,
+                "requires_reconciliation": false,
+                "replay_safe": true,
+                "bounds": {
+                  "repository_scopes": 100,
+                  "page_size": 100,
+                  "items": 100,
+                  "text_bytes": 65536,
+                  "body_bytes": 262144,
+                  "diff_bytes": 2097152,
+                  "diff_files": 300,
+                  "diff_hunks": 2000,
+                  "partial_failures": 20,
+                  "error_detail_bytes": 4096,
+                  "duration_ms": 120000,
+                  "redirects": 3,
+                  "journal_entries": 10000,
+                  "idempotency_bytes": 512
+                }
+              },
+              "available": true
+            },
+            {
+              "policy": {
+                "operation": "get_checks",
+                "effect": "read",
+                "consent": "none",
+                "requires_unique_target": true,
+                "requires_idempotency": false,
+                "requires_fresh_observation": false,
+                "requires_reconciliation": false,
+                "replay_safe": true,
+                "bounds": {
+                  "repository_scopes": 100,
+                  "page_size": 100,
+                  "items": 100,
+                  "text_bytes": 65536,
+                  "body_bytes": 262144,
+                  "diff_bytes": 2097152,
+                  "diff_files": 300,
+                  "diff_hunks": 2000,
+                  "partial_failures": 20,
+                  "error_detail_bytes": 4096,
+                  "duration_ms": 120000,
+                  "redirects": 3,
+                  "journal_entries": 10000,
+                  "idempotency_bytes": 512
+                }
+              },
+              "available": true
+            },
+            {
+              "policy": {
+                "operation": "get_reviews",
+                "effect": "read",
+                "consent": "none",
+                "requires_unique_target": true,
+                "requires_idempotency": false,
+                "requires_fresh_observation": false,
+                "requires_reconciliation": false,
+                "replay_safe": true,
+                "bounds": {
+                  "repository_scopes": 100,
+                  "page_size": 100,
+                  "items": 100,
+                  "text_bytes": 65536,
+                  "body_bytes": 262144,
+                  "diff_bytes": 2097152,
+                  "diff_files": 300,
+                  "diff_hunks": 2000,
+                  "partial_failures": 20,
+                  "error_detail_bytes": 4096,
+                  "duration_ms": 120000,
+                  "redirects": 3,
+                  "journal_entries": 10000,
+                  "idempotency_bytes": 512
+                }
+              },
+              "available": true
+            },
+            {
+              "policy": {
+                "operation": "get_comments",
+                "effect": "read",
+                "consent": "none",
+                "requires_unique_target": true,
+                "requires_idempotency": false,
+                "requires_fresh_observation": false,
+                "requires_reconciliation": false,
+                "replay_safe": true,
+                "bounds": {
+                  "repository_scopes": 100,
+                  "page_size": 100,
+                  "items": 100,
+                  "text_bytes": 65536,
+                  "body_bytes": 262144,
+                  "diff_bytes": 2097152,
+                  "diff_files": 300,
+                  "diff_hunks": 2000,
+                  "partial_failures": 20,
+                  "error_detail_bytes": 4096,
+                  "duration_ms": 120000,
+                  "redirects": 3,
+                  "journal_entries": 10000,
+                  "idempotency_bytes": 512
+                }
+              },
+              "available": true
+            },
+            {
+              "policy": {
+                "operation": "get_merge_readiness",
+                "effect": "read",
+                "consent": "none",
+                "requires_unique_target": true,
+                "requires_idempotency": false,
+                "requires_fresh_observation": false,
+                "requires_reconciliation": false,
+                "replay_safe": true,
+                "bounds": {
+                  "repository_scopes": 100,
+                  "page_size": 100,
+                  "items": 100,
+                  "text_bytes": 65536,
+                  "body_bytes": 262144,
+                  "diff_bytes": 2097152,
+                  "diff_files": 300,
+                  "diff_hunks": 2000,
+                  "partial_failures": 20,
+                  "error_detail_bytes": 4096,
+                  "duration_ms": 120000,
+                  "redirects": 3,
+                  "journal_entries": 10000,
+                  "idempotency_bytes": 512
+                }
+              },
+              "available": true
+            },
+            {
+              "policy": {
+                "operation": "create_pull_request",
+                "effect": "external_write",
+                "consent": "explicit_user",
+                "requires_unique_target": true,
+                "requires_idempotency": true,
+                "requires_fresh_observation": true,
+                "requires_reconciliation": true,
+                "replay_safe": true,
+                "bounds": {
+                  "repository_scopes": 100,
+                  "page_size": 100,
+                  "items": 100,
+                  "text_bytes": 65536,
+                  "body_bytes": 262144,
+                  "diff_bytes": 2097152,
+                  "diff_files": 300,
+                  "diff_hunks": 2000,
+                  "partial_failures": 20,
+                  "error_detail_bytes": 4096,
+                  "duration_ms": 120000,
+                  "redirects": 3,
+                  "journal_entries": 10000,
+                  "idempotency_bytes": 512
+                }
+              },
+              "available": true
+            },
+            {
+              "policy": {
+                "operation": "comment",
+                "effect": "external_write",
+                "consent": "explicit_user",
+                "requires_unique_target": true,
+                "requires_idempotency": true,
+                "requires_fresh_observation": true,
+                "requires_reconciliation": true,
+                "replay_safe": true,
+                "bounds": {
+                  "repository_scopes": 100,
+                  "page_size": 100,
+                  "items": 100,
+                  "text_bytes": 65536,
+                  "body_bytes": 262144,
+                  "diff_bytes": 2097152,
+                  "diff_files": 300,
+                  "diff_hunks": 2000,
+                  "partial_failures": 20,
+                  "error_detail_bytes": 4096,
+                  "duration_ms": 120000,
+                  "redirects": 3,
+                  "journal_entries": 10000,
+                  "idempotency_bytes": 512
+                }
+              },
+              "available": true
+            },
+            {
+              "policy": {
+                "operation": "submit_review",
+                "effect": "external_write",
+                "consent": "explicit_user",
+                "requires_unique_target": true,
+                "requires_idempotency": true,
+                "requires_fresh_observation": true,
+                "requires_reconciliation": true,
+                "replay_safe": true,
+                "bounds": {
+                  "repository_scopes": 100,
+                  "page_size": 100,
+                  "items": 100,
+                  "text_bytes": 65536,
+                  "body_bytes": 262144,
+                  "diff_bytes": 2097152,
+                  "diff_files": 300,
+                  "diff_hunks": 2000,
+                  "partial_failures": 20,
+                  "error_detail_bytes": 4096,
+                  "duration_ms": 120000,
+                  "redirects": 3,
+                  "journal_entries": 10000,
+                  "idempotency_bytes": 512
+                }
+              },
+              "available": true
+            },
+            {
+              "policy": {
+                "operation": "approve",
+                "effect": "external_write",
+                "consent": "explicit_user",
+                "requires_unique_target": true,
+                "requires_idempotency": true,
+                "requires_fresh_observation": true,
+                "requires_reconciliation": true,
+                "replay_safe": true,
+                "bounds": {
+                  "repository_scopes": 100,
+                  "page_size": 100,
+                  "items": 100,
+                  "text_bytes": 65536,
+                  "body_bytes": 262144,
+                  "diff_bytes": 2097152,
+                  "diff_files": 300,
+                  "diff_hunks": 2000,
+                  "partial_failures": 20,
+                  "error_detail_bytes": 4096,
+                  "duration_ms": 120000,
+                  "redirects": 3,
+                  "journal_entries": 10000,
+                  "idempotency_bytes": 512
+                }
+              },
+              "available": true
+            },
+            {
+              "policy": {
+                "operation": "request_changes",
+                "effect": "external_write",
+                "consent": "explicit_user",
+                "requires_unique_target": true,
+                "requires_idempotency": true,
+                "requires_fresh_observation": true,
+                "requires_reconciliation": true,
+                "replay_safe": true,
+                "bounds": {
+                  "repository_scopes": 100,
+                  "page_size": 100,
+                  "items": 100,
+                  "text_bytes": 65536,
+                  "body_bytes": 262144,
+                  "diff_bytes": 2097152,
+                  "diff_files": 300,
+                  "diff_hunks": 2000,
+                  "partial_failures": 20,
+                  "error_detail_bytes": 4096,
+                  "duration_ms": 120000,
+                  "redirects": 3,
+                  "journal_entries": 10000,
+                  "idempotency_bytes": 512
+                }
+              },
+              "available": true
+            },
+            {
+              "policy": {
+                "operation": "mark_ready",
+                "effect": "external_write",
+                "consent": "explicit_user",
+                "requires_unique_target": true,
+                "requires_idempotency": true,
+                "requires_fresh_observation": true,
+                "requires_reconciliation": true,
+                "replay_safe": true,
+                "bounds": {
+                  "repository_scopes": 100,
+                  "page_size": 100,
+                  "items": 100,
+                  "text_bytes": 65536,
+                  "body_bytes": 262144,
+                  "diff_bytes": 2097152,
+                  "diff_files": 300,
+                  "diff_hunks": 2000,
+                  "partial_failures": 20,
+                  "error_detail_bytes": 4096,
+                  "duration_ms": 120000,
+                  "redirects": 3,
+                  "journal_entries": 10000,
+                  "idempotency_bytes": 512
+                }
+              },
+              "available": true
+            },
+            {
+              "policy": {
+                "operation": "retarget",
+                "effect": "external_write",
+                "consent": "explicit_user",
+                "requires_unique_target": true,
+                "requires_idempotency": true,
+                "requires_fresh_observation": true,
+                "requires_reconciliation": true,
+                "replay_safe": true,
+                "bounds": {
+                  "repository_scopes": 100,
+                  "page_size": 100,
+                  "items": 100,
+                  "text_bytes": 65536,
+                  "body_bytes": 262144,
+                  "diff_bytes": 2097152,
+                  "diff_files": 300,
+                  "diff_hunks": 2000,
+                  "partial_failures": 20,
+                  "error_detail_bytes": 4096,
+                  "duration_ms": 120000,
+                  "redirects": 3,
+                  "journal_entries": 10000,
+                  "idempotency_bytes": 512
+                }
+              },
+              "available": true
+            },
+            {
+              "policy": {
+                "operation": "close",
+                "effect": "external_write",
+                "consent": "explicit_user",
+                "requires_unique_target": true,
+                "requires_idempotency": true,
+                "requires_fresh_observation": true,
+                "requires_reconciliation": true,
+                "replay_safe": true,
+                "bounds": {
+                  "repository_scopes": 100,
+                  "page_size": 100,
+                  "items": 100,
+                  "text_bytes": 65536,
+                  "body_bytes": 262144,
+                  "diff_bytes": 2097152,
+                  "diff_files": 300,
+                  "diff_hunks": 2000,
+                  "partial_failures": 20,
+                  "error_detail_bytes": 4096,
+                  "duration_ms": 120000,
+                  "redirects": 3,
+                  "journal_entries": 10000,
+                  "idempotency_bytes": 512
+                }
+              },
+              "available": true
+            },
+            {
+              "policy": {
+                "operation": "reopen",
+                "effect": "external_write",
+                "consent": "explicit_user",
+                "requires_unique_target": true,
+                "requires_idempotency": true,
+                "requires_fresh_observation": true,
+                "requires_reconciliation": true,
+                "replay_safe": true,
+                "bounds": {
+                  "repository_scopes": 100,
+                  "page_size": 100,
+                  "items": 100,
+                  "text_bytes": 65536,
+                  "body_bytes": 262144,
+                  "diff_bytes": 2097152,
+                  "diff_files": 300,
+                  "diff_hunks": 2000,
+                  "partial_failures": 20,
+                  "error_detail_bytes": 4096,
+                  "duration_ms": 120000,
+                  "redirects": 3,
+                  "journal_entries": 10000,
+                  "idempotency_bytes": 512
+                }
+              },
+              "available": true
+            },
+            {
+              "policy": {
+                "operation": "merge",
+                "effect": "commitment",
+                "consent": "explicit_acceptance",
+                "requires_unique_target": true,
+                "requires_idempotency": true,
+                "requires_fresh_observation": true,
+                "requires_reconciliation": true,
+                "replay_safe": true,
+                "bounds": {
+                  "repository_scopes": 100,
+                  "page_size": 100,
+                  "items": 100,
+                  "text_bytes": 65536,
+                  "body_bytes": 262144,
+                  "diff_bytes": 2097152,
+                  "diff_files": 300,
+                  "diff_hunks": 2000,
+                  "partial_failures": 20,
+                  "error_detail_bytes": 4096,
+                  "duration_ms": 120000,
+                  "redirects": 3,
+                  "journal_entries": 10000,
+                  "idempotency_bytes": 512
+                }
+              },
+              "available": true
+            }
+          ]
+        },
+        "truncated": false,
+        "duration_ms": 42,
+        "error": null
+      }
+    },
+    {
+      "name": "list_pull_requests",
+      "request": {
+        "version": "code-host-broker/v1",
+        "operation": "list_pull_requests",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "query": "state:open",
+        "order": "updated_desc",
+        "limit": 25
+      },
+      "response": {
+        "version": "code-host-broker/v1",
+        "operation": "list_pull_requests",
+        "provider": "github",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "policy": {
+          "operation": "list_pull_requests",
+          "effect": "read",
+          "consent": "none",
+          "requires_unique_target": false,
+          "requires_idempotency": false,
+          "requires_fresh_observation": false,
+          "requires_reconciliation": false,
+          "replay_safe": true,
+          "bounds": {
+            "repository_scopes": 100,
+            "page_size": 100,
+            "items": 100,
+            "text_bytes": 65536,
+            "body_bytes": 262144,
+            "diff_bytes": 2097152,
+            "diff_files": 300,
+            "diff_hunks": 2000,
+            "partial_failures": 20,
+            "error_detail_bytes": 4096,
+            "duration_ms": 120000,
+            "redirects": 3,
+            "journal_entries": 10000,
+            "idempotency_bytes": 512
+          }
+        },
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "observed_at": "2026-07-27T20:31:00Z",
+        "freshness": "current",
+        "rate_limit": {
+          "resource": "core",
+          "limit": 5000,
+          "remaining": 4999,
+          "reset_at": "2026-07-27T21:00:00Z",
+          "observed_at": "2026-07-27T20:31:00Z"
+        },
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        },
+        "completeness": "complete",
+        "page": {
+          "limit": 25,
+          "count": 1,
+          "next_cursor": "cursor:opaque-fixture"
+        },
+        "partial_failures": [],
+        "result": {
+          "pull_requests": [
+            {
+              "identity": {
+                "connection_id": "github-code-host",
+                "repository": {
+                  "host": "github.com",
+                  "provider_id": "R_hero",
+                  "owner": "hero-engine",
+                  "name": "hero",
+                  "full_name": "hero-engine/hero"
+                },
+                "provider_id": "PR_kwDO_fixture",
+                "number": 42
+              },
+              "title": "Add code-host broker",
+              "body": "Bounded fixture body",
+              "url": "https://github.com/hero-engine/hero/pull/42",
+              "state": "open",
+              "draft": false,
+              "author": {
+                "provider_id": "U_fixture",
+                "login": "contributor"
+              },
+              "base": {
+                "repository": {
+                  "host": "github.com",
+                  "provider_id": "R_hero",
+                  "owner": "hero-engine",
+                  "name": "hero",
+                  "full_name": "hero-engine/hero"
+                },
+                "name": "main",
+                "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "head": {
+                "repository": {
+                  "host": "github.com",
+                  "provider_id": "R_fork",
+                  "owner": "contributor",
+                  "name": "hero",
+                  "full_name": "contributor/hero"
+                },
+                "name": "feature/code-host",
+                "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              "created_at": "2026-07-27T20:00:00Z",
+              "updated_at": "2026-07-27T20:30:00Z"
+            }
+          ]
+        },
+        "truncated": false,
+        "duration_ms": 42,
+        "error": null
+      }
+    },
+    {
+      "name": "search_pull_requests",
+      "request": {
+        "version": "code-host-broker/v1",
+        "operation": "search_pull_requests",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "query": "state:open",
+        "order": "updated_desc",
+        "limit": 25
+      },
+      "response": {
+        "version": "code-host-broker/v1",
+        "operation": "search_pull_requests",
+        "provider": "github",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "policy": {
+          "operation": "search_pull_requests",
+          "effect": "read",
+          "consent": "none",
+          "requires_unique_target": false,
+          "requires_idempotency": false,
+          "requires_fresh_observation": false,
+          "requires_reconciliation": false,
+          "replay_safe": true,
+          "bounds": {
+            "repository_scopes": 100,
+            "page_size": 100,
+            "items": 100,
+            "text_bytes": 65536,
+            "body_bytes": 262144,
+            "diff_bytes": 2097152,
+            "diff_files": 300,
+            "diff_hunks": 2000,
+            "partial_failures": 20,
+            "error_detail_bytes": 4096,
+            "duration_ms": 120000,
+            "redirects": 3,
+            "journal_entries": 10000,
+            "idempotency_bytes": 512
+          }
+        },
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "observed_at": "2026-07-27T20:31:00Z",
+        "freshness": "current",
+        "rate_limit": {
+          "resource": "core",
+          "limit": 5000,
+          "remaining": 4999,
+          "reset_at": "2026-07-27T21:00:00Z",
+          "observed_at": "2026-07-27T20:31:00Z"
+        },
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        },
+        "completeness": "complete",
+        "page": {
+          "limit": 25,
+          "count": 1,
+          "next_cursor": "cursor:opaque-fixture"
+        },
+        "partial_failures": [],
+        "result": {
+          "pull_requests": [
+            {
+              "identity": {
+                "connection_id": "github-code-host",
+                "repository": {
+                  "host": "github.com",
+                  "provider_id": "R_hero",
+                  "owner": "hero-engine",
+                  "name": "hero",
+                  "full_name": "hero-engine/hero"
+                },
+                "provider_id": "PR_kwDO_fixture",
+                "number": 42
+              },
+              "title": "Add code-host broker",
+              "body": "Bounded fixture body",
+              "url": "https://github.com/hero-engine/hero/pull/42",
+              "state": "open",
+              "draft": false,
+              "author": {
+                "provider_id": "U_fixture",
+                "login": "contributor"
+              },
+              "base": {
+                "repository": {
+                  "host": "github.com",
+                  "provider_id": "R_hero",
+                  "owner": "hero-engine",
+                  "name": "hero",
+                  "full_name": "hero-engine/hero"
+                },
+                "name": "main",
+                "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "head": {
+                "repository": {
+                  "host": "github.com",
+                  "provider_id": "R_fork",
+                  "owner": "contributor",
+                  "name": "hero",
+                  "full_name": "contributor/hero"
+                },
+                "name": "feature/code-host",
+                "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              "created_at": "2026-07-27T20:00:00Z",
+              "updated_at": "2026-07-27T20:30:00Z"
+            }
+          ]
+        },
+        "truncated": false,
+        "duration_ms": 42,
+        "error": null
+      }
+    },
+    {
+      "name": "get_pull_request",
+      "request": {
+        "version": "code-host-broker/v1",
+        "operation": "get_pull_request",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "pull_request": {
+          "connection_id": "github-code-host",
+          "repository": {
+            "host": "github.com",
+            "provider_id": "R_hero",
+            "owner": "hero-engine",
+            "name": "hero",
+            "full_name": "hero-engine/hero"
+          },
+          "provider_id": "PR_kwDO_fixture",
+          "number": 42
+        }
+      },
+      "response": {
+        "version": "code-host-broker/v1",
+        "operation": "get_pull_request",
+        "provider": "github",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "policy": {
+          "operation": "get_pull_request",
+          "effect": "read",
+          "consent": "none",
+          "requires_unique_target": true,
+          "requires_idempotency": false,
+          "requires_fresh_observation": false,
+          "requires_reconciliation": false,
+          "replay_safe": true,
+          "bounds": {
+            "repository_scopes": 100,
+            "page_size": 100,
+            "items": 100,
+            "text_bytes": 65536,
+            "body_bytes": 262144,
+            "diff_bytes": 2097152,
+            "diff_files": 300,
+            "diff_hunks": 2000,
+            "partial_failures": 20,
+            "error_detail_bytes": 4096,
+            "duration_ms": 120000,
+            "redirects": 3,
+            "journal_entries": 10000,
+            "idempotency_bytes": 512
+          }
+        },
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "observed_at": "2026-07-27T20:31:00Z",
+        "freshness": "current",
+        "rate_limit": {
+          "resource": "core",
+          "limit": 5000,
+          "remaining": 4999,
+          "reset_at": "2026-07-27T21:00:00Z",
+          "observed_at": "2026-07-27T20:31:00Z"
+        },
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        },
+        "completeness": "complete",
+        "partial_failures": [],
+        "result": {
+          "identity": {
+            "connection_id": "github-code-host",
+            "repository": {
+              "host": "github.com",
+              "provider_id": "R_hero",
+              "owner": "hero-engine",
+              "name": "hero",
+              "full_name": "hero-engine/hero"
+            },
+            "provider_id": "PR_kwDO_fixture",
+            "number": 42
+          },
+          "title": "Add code-host broker",
+          "body": "Bounded fixture body",
+          "url": "https://github.com/hero-engine/hero/pull/42",
+          "state": "open",
+          "draft": false,
+          "author": {
+            "provider_id": "U_fixture",
+            "login": "contributor"
+          },
+          "base": {
+            "repository": {
+              "host": "github.com",
+              "provider_id": "R_hero",
+              "owner": "hero-engine",
+              "name": "hero",
+              "full_name": "hero-engine/hero"
+            },
+            "name": "main",
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "head": {
+            "repository": {
+              "host": "github.com",
+              "provider_id": "R_fork",
+              "owner": "contributor",
+              "name": "hero",
+              "full_name": "contributor/hero"
+            },
+            "name": "feature/code-host",
+            "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "created_at": "2026-07-27T20:00:00Z",
+          "updated_at": "2026-07-27T20:30:00Z"
+        },
+        "truncated": false,
+        "duration_ms": 42,
+        "error": null
+      }
+    },
+    {
+      "name": "get_commits",
+      "request": {
+        "version": "code-host-broker/v1",
+        "operation": "get_commits",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "pull_request": {
+          "connection_id": "github-code-host",
+          "repository": {
+            "host": "github.com",
+            "provider_id": "R_hero",
+            "owner": "hero-engine",
+            "name": "hero",
+            "full_name": "hero-engine/hero"
+          },
+          "provider_id": "PR_kwDO_fixture",
+          "number": 42
+        }
+      },
+      "response": {
+        "version": "code-host-broker/v1",
+        "operation": "get_commits",
+        "provider": "github",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "policy": {
+          "operation": "get_commits",
+          "effect": "read",
+          "consent": "none",
+          "requires_unique_target": true,
+          "requires_idempotency": false,
+          "requires_fresh_observation": false,
+          "requires_reconciliation": false,
+          "replay_safe": true,
+          "bounds": {
+            "repository_scopes": 100,
+            "page_size": 100,
+            "items": 100,
+            "text_bytes": 65536,
+            "body_bytes": 262144,
+            "diff_bytes": 2097152,
+            "diff_files": 300,
+            "diff_hunks": 2000,
+            "partial_failures": 20,
+            "error_detail_bytes": 4096,
+            "duration_ms": 120000,
+            "redirects": 3,
+            "journal_entries": 10000,
+            "idempotency_bytes": 512
+          }
+        },
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "observed_at": "2026-07-27T20:31:00Z",
+        "freshness": "current",
+        "rate_limit": {
+          "resource": "core",
+          "limit": 5000,
+          "remaining": 4999,
+          "reset_at": "2026-07-27T21:00:00Z",
+          "observed_at": "2026-07-27T20:31:00Z"
+        },
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        },
+        "completeness": "complete",
+        "page": {
+          "limit": 25,
+          "count": 1,
+          "next_cursor": "cursor:opaque-fixture"
+        },
+        "partial_failures": [],
+        "result": {
+          "commits": [
+            {
+              "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "message": "fixture",
+              "author": {
+                "provider_id": "U_fixture",
+                "login": "contributor"
+              }
+            }
+          ]
+        },
+        "truncated": false,
+        "duration_ms": 42,
+        "error": null
+      }
+    },
+    {
+      "name": "get_diff",
+      "request": {
+        "version": "code-host-broker/v1",
+        "operation": "get_diff",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "pull_request": {
+          "connection_id": "github-code-host",
+          "repository": {
+            "host": "github.com",
+            "provider_id": "R_hero",
+            "owner": "hero-engine",
+            "name": "hero",
+            "full_name": "hero-engine/hero"
+          },
+          "provider_id": "PR_kwDO_fixture",
+          "number": 42
+        }
+      },
+      "response": {
+        "version": "code-host-broker/v1",
+        "operation": "get_diff",
+        "provider": "github",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "policy": {
+          "operation": "get_diff",
+          "effect": "read",
+          "consent": "none",
+          "requires_unique_target": true,
+          "requires_idempotency": false,
+          "requires_fresh_observation": false,
+          "requires_reconciliation": false,
+          "replay_safe": true,
+          "bounds": {
+            "repository_scopes": 100,
+            "page_size": 100,
+            "items": 100,
+            "text_bytes": 65536,
+            "body_bytes": 262144,
+            "diff_bytes": 2097152,
+            "diff_files": 300,
+            "diff_hunks": 2000,
+            "partial_failures": 20,
+            "error_detail_bytes": 4096,
+            "duration_ms": 120000,
+            "redirects": 3,
+            "journal_entries": 10000,
+            "idempotency_bytes": 512
+          }
+        },
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "observed_at": "2026-07-27T20:31:00Z",
+        "freshness": "current",
+        "rate_limit": {
+          "resource": "core",
+          "limit": 5000,
+          "remaining": 4999,
+          "reset_at": "2026-07-27T21:00:00Z",
+          "observed_at": "2026-07-27T20:31:00Z"
+        },
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        },
+        "completeness": "truncated",
+        "partial_failures": [],
+        "result": {
+          "files": [
+            {
+              "path": "contracts/codehostbroker/contract.go",
+              "status": "modified",
+              "additions": 1,
+              "deletions": 0,
+              "hunks": [
+                {
+                  "header": "@@ -1 +1 @@",
+                  "patch": "+fixture"
+                }
+              ],
+              "truncated": true
+            }
+          ]
+        },
+        "truncated": true,
+        "duration_ms": 42,
+        "error": null
+      }
+    },
+    {
+      "name": "get_checks",
+      "request": {
+        "version": "code-host-broker/v1",
+        "operation": "get_checks",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "pull_request": {
+          "connection_id": "github-code-host",
+          "repository": {
+            "host": "github.com",
+            "provider_id": "R_hero",
+            "owner": "hero-engine",
+            "name": "hero",
+            "full_name": "hero-engine/hero"
+          },
+          "provider_id": "PR_kwDO_fixture",
+          "number": 42
+        }
+      },
+      "response": {
+        "version": "code-host-broker/v1",
+        "operation": "get_checks",
+        "provider": "github",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "policy": {
+          "operation": "get_checks",
+          "effect": "read",
+          "consent": "none",
+          "requires_unique_target": true,
+          "requires_idempotency": false,
+          "requires_fresh_observation": false,
+          "requires_reconciliation": false,
+          "replay_safe": true,
+          "bounds": {
+            "repository_scopes": 100,
+            "page_size": 100,
+            "items": 100,
+            "text_bytes": 65536,
+            "body_bytes": 262144,
+            "diff_bytes": 2097152,
+            "diff_files": 300,
+            "diff_hunks": 2000,
+            "partial_failures": 20,
+            "error_detail_bytes": 4096,
+            "duration_ms": 120000,
+            "redirects": 3,
+            "journal_entries": 10000,
+            "idempotency_bytes": 512
+          }
+        },
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "observed_at": "2026-07-27T20:31:00Z",
+        "freshness": "current",
+        "rate_limit": {
+          "resource": "core",
+          "limit": 5000,
+          "remaining": 4999,
+          "reset_at": "2026-07-27T21:00:00Z",
+          "observed_at": "2026-07-27T20:31:00Z"
+        },
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        },
+        "completeness": "partial",
+        "partial_failures": [
+          {
+            "section": "branch_protection",
+            "code": "forbidden",
+            "message": "section unavailable"
+          }
+        ],
+        "result": {
+          "checks": [
+            {
+              "provider_id": "check-1",
+              "name": "test",
+              "status": "completed",
+              "conclusion": "success",
+              "availability": "available"
+            }
+          ]
+        },
+        "truncated": false,
+        "duration_ms": 42,
+        "error": null
+      }
+    },
+    {
+      "name": "get_reviews",
+      "request": {
+        "version": "code-host-broker/v1",
+        "operation": "get_reviews",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "pull_request": {
+          "connection_id": "github-code-host",
+          "repository": {
+            "host": "github.com",
+            "provider_id": "R_hero",
+            "owner": "hero-engine",
+            "name": "hero",
+            "full_name": "hero-engine/hero"
+          },
+          "provider_id": "PR_kwDO_fixture",
+          "number": 42
+        }
+      },
+      "response": {
+        "version": "code-host-broker/v1",
+        "operation": "get_reviews",
+        "provider": "github",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "policy": {
+          "operation": "get_reviews",
+          "effect": "read",
+          "consent": "none",
+          "requires_unique_target": true,
+          "requires_idempotency": false,
+          "requires_fresh_observation": false,
+          "requires_reconciliation": false,
+          "replay_safe": true,
+          "bounds": {
+            "repository_scopes": 100,
+            "page_size": 100,
+            "items": 100,
+            "text_bytes": 65536,
+            "body_bytes": 262144,
+            "diff_bytes": 2097152,
+            "diff_files": 300,
+            "diff_hunks": 2000,
+            "partial_failures": 20,
+            "error_detail_bytes": 4096,
+            "duration_ms": 120000,
+            "redirects": 3,
+            "journal_entries": 10000,
+            "idempotency_bytes": 512
+          }
+        },
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "observed_at": "2026-07-27T20:31:00Z",
+        "freshness": "current",
+        "rate_limit": {
+          "resource": "core",
+          "limit": 5000,
+          "remaining": 4999,
+          "reset_at": "2026-07-27T21:00:00Z",
+          "observed_at": "2026-07-27T20:31:00Z"
+        },
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        },
+        "completeness": "complete",
+        "page": {
+          "limit": 25,
+          "count": 1,
+          "next_cursor": "cursor:opaque-fixture"
+        },
+        "partial_failures": [],
+        "result": {
+          "reviews": [
+            {
+              "provider_id": "review-1",
+              "author": {
+                "provider_id": "U_fixture",
+                "login": "contributor"
+              },
+              "state": "approved",
+              "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ]
+        },
+        "truncated": false,
+        "duration_ms": 42,
+        "error": null
+      }
+    },
+    {
+      "name": "get_comments",
+      "request": {
+        "version": "code-host-broker/v1",
+        "operation": "get_comments",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "pull_request": {
+          "connection_id": "github-code-host",
+          "repository": {
+            "host": "github.com",
+            "provider_id": "R_hero",
+            "owner": "hero-engine",
+            "name": "hero",
+            "full_name": "hero-engine/hero"
+          },
+          "provider_id": "PR_kwDO_fixture",
+          "number": 42
+        }
+      },
+      "response": {
+        "version": "code-host-broker/v1",
+        "operation": "get_comments",
+        "provider": "github",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "policy": {
+          "operation": "get_comments",
+          "effect": "read",
+          "consent": "none",
+          "requires_unique_target": true,
+          "requires_idempotency": false,
+          "requires_fresh_observation": false,
+          "requires_reconciliation": false,
+          "replay_safe": true,
+          "bounds": {
+            "repository_scopes": 100,
+            "page_size": 100,
+            "items": 100,
+            "text_bytes": 65536,
+            "body_bytes": 262144,
+            "diff_bytes": 2097152,
+            "diff_files": 300,
+            "diff_hunks": 2000,
+            "partial_failures": 20,
+            "error_detail_bytes": 4096,
+            "duration_ms": 120000,
+            "redirects": 3,
+            "journal_entries": 10000,
+            "idempotency_bytes": 512
+          }
+        },
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "observed_at": "2026-07-27T20:31:00Z",
+        "freshness": "current",
+        "rate_limit": {
+          "resource": "core",
+          "limit": 5000,
+          "remaining": 4999,
+          "reset_at": "2026-07-27T21:00:00Z",
+          "observed_at": "2026-07-27T20:31:00Z"
+        },
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        },
+        "completeness": "complete",
+        "page": {
+          "limit": 25,
+          "count": 1,
+          "next_cursor": "cursor:opaque-fixture"
+        },
+        "partial_failures": [],
+        "result": {
+          "comments": [
+            {
+              "provider_id": "comment-1",
+              "author": {
+                "provider_id": "U_fixture",
+                "login": "contributor"
+              },
+              "body": "fixture comment"
+            }
+          ]
+        },
+        "truncated": false,
+        "duration_ms": 42,
+        "error": null
+      }
+    },
+    {
+      "name": "get_merge_readiness",
+      "request": {
+        "version": "code-host-broker/v1",
+        "operation": "get_merge_readiness",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "pull_request": {
+          "connection_id": "github-code-host",
+          "repository": {
+            "host": "github.com",
+            "provider_id": "R_hero",
+            "owner": "hero-engine",
+            "name": "hero",
+            "full_name": "hero-engine/hero"
+          },
+          "provider_id": "PR_kwDO_fixture",
+          "number": 42
+        }
+      },
+      "response": {
+        "version": "code-host-broker/v1",
+        "operation": "get_merge_readiness",
+        "provider": "github",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "policy": {
+          "operation": "get_merge_readiness",
+          "effect": "read",
+          "consent": "none",
+          "requires_unique_target": true,
+          "requires_idempotency": false,
+          "requires_fresh_observation": false,
+          "requires_reconciliation": false,
+          "replay_safe": true,
+          "bounds": {
+            "repository_scopes": 100,
+            "page_size": 100,
+            "items": 100,
+            "text_bytes": 65536,
+            "body_bytes": 262144,
+            "diff_bytes": 2097152,
+            "diff_files": 300,
+            "diff_hunks": 2000,
+            "partial_failures": 20,
+            "error_detail_bytes": 4096,
+            "duration_ms": 120000,
+            "redirects": 3,
+            "journal_entries": 10000,
+            "idempotency_bytes": 512
+          }
+        },
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "observed_at": "2026-07-27T20:31:00Z",
+        "freshness": "current",
+        "rate_limit": {
+          "resource": "core",
+          "limit": 5000,
+          "remaining": 4999,
+          "reset_at": "2026-07-27T21:00:00Z",
+          "observed_at": "2026-07-27T20:31:00Z"
+        },
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        },
+        "completeness": "complete",
+        "partial_failures": [],
+        "result": {
+          "state": "ready",
+          "checks": "available",
+          "reviews": "available",
+          "branch_protection": "available",
+          "permissions": "available",
+          "mergeability": "available",
+          "queue": "unavailable",
+          "reasons": []
+        },
+        "truncated": false,
+        "duration_ms": 42,
+        "error": null
+      }
+    },
+    {
+      "name": "create_pull_request",
+      "request": {
+        "version": "code-host-broker/v1",
+        "operation": "create_pull_request",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "intent_source": "user",
+        "consent": "explicit_user",
+        "idempotency_key": "fixture-create_pull_request",
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "reconciliation_key": "reconcile:create_pull_request",
+        "payload": {
+          "base": {
+            "repository": {
+              "host": "github.com",
+              "provider_id": "R_hero",
+              "owner": "hero-engine",
+              "name": "hero",
+              "full_name": "hero-engine/hero"
+            },
+            "name": "main",
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "head": {
+            "repository": {
+              "host": "github.com",
+              "provider_id": "R_fork",
+              "owner": "contributor",
+              "name": "hero",
+              "full_name": "contributor/hero"
+            },
+            "name": "feature/code-host",
+            "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "title": "Add code-host broker",
+          "body": "Bounded fixture body",
+          "draft": false
+        }
+      },
+      "response": {
+        "version": "code-host-broker/v1",
+        "operation": "create_pull_request",
+        "provider": "github",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "policy": {
+          "operation": "create_pull_request",
+          "effect": "external_write",
+          "consent": "explicit_user",
+          "requires_unique_target": true,
+          "requires_idempotency": true,
+          "requires_fresh_observation": true,
+          "requires_reconciliation": true,
+          "replay_safe": true,
+          "bounds": {
+            "repository_scopes": 100,
+            "page_size": 100,
+            "items": 100,
+            "text_bytes": 65536,
+            "body_bytes": 262144,
+            "diff_bytes": 2097152,
+            "diff_files": 300,
+            "diff_hunks": 2000,
+            "partial_failures": 20,
+            "error_detail_bytes": 4096,
+            "duration_ms": 120000,
+            "redirects": 3,
+            "journal_entries": 10000,
+            "idempotency_bytes": 512
+          }
+        },
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "observed_at": "2026-07-27T20:31:00Z",
+        "freshness": "current",
+        "rate_limit": {
+          "resource": "core",
+          "limit": 5000,
+          "remaining": 4999,
+          "reset_at": "2026-07-27T21:00:00Z",
+          "observed_at": "2026-07-27T20:31:00Z"
+        },
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        },
+        "completeness": "complete",
+        "partial_failures": [],
+        "result": {
+          "outcome": "fixture",
+          "pull_request": {
+            "identity": {
+              "connection_id": "github-code-host",
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_hero",
+                "owner": "hero-engine",
+                "name": "hero",
+                "full_name": "hero-engine/hero"
+              },
+              "provider_id": "PR_kwDO_fixture",
+              "number": 42
+            },
+            "title": "Add code-host broker",
+            "body": "Bounded fixture body",
+            "url": "https://github.com/hero-engine/hero/pull/42",
+            "state": "open",
+            "draft": false,
+            "author": {
+              "provider_id": "U_fixture",
+              "login": "contributor"
+            },
+            "base": {
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_hero",
+                "owner": "hero-engine",
+                "name": "hero",
+                "full_name": "hero-engine/hero"
+              },
+              "name": "main",
+              "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            "head": {
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_fork",
+                "owner": "contributor",
+                "name": "hero",
+                "full_name": "contributor/hero"
+              },
+              "name": "feature/code-host",
+              "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            "created_at": "2026-07-27T20:00:00Z",
+            "updated_at": "2026-07-27T20:30:00Z"
+          }
+        },
+        "receipt": {
+          "provider_receipt_id": "receipt-create_pull_request",
+          "operation_id": "operation-create_pull_request",
+          "target_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "reconciliation": {
+          "status": "applied",
+          "key": "reconcile:create_pull_request"
+        },
+        "truncated": false,
+        "duration_ms": 42,
+        "error": null
+      }
+    },
+    {
+      "name": "comment",
+      "request": {
+        "version": "code-host-broker/v1",
+        "operation": "comment",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "pull_request": {
+          "connection_id": "github-code-host",
+          "repository": {
+            "host": "github.com",
+            "provider_id": "R_hero",
+            "owner": "hero-engine",
+            "name": "hero",
+            "full_name": "hero-engine/hero"
+          },
+          "provider_id": "PR_kwDO_fixture",
+          "number": 42
+        },
+        "intent_source": "user",
+        "consent": "explicit_user",
+        "idempotency_key": "fixture-comment",
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "reconciliation_key": "reconcile:comment",
+        "payload": {
+          "expected_head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "body": "Fixture comment"
+        }
+      },
+      "response": {
+        "version": "code-host-broker/v1",
+        "operation": "comment",
+        "provider": "github",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "policy": {
+          "operation": "comment",
+          "effect": "external_write",
+          "consent": "explicit_user",
+          "requires_unique_target": true,
+          "requires_idempotency": true,
+          "requires_fresh_observation": true,
+          "requires_reconciliation": true,
+          "replay_safe": true,
+          "bounds": {
+            "repository_scopes": 100,
+            "page_size": 100,
+            "items": 100,
+            "text_bytes": 65536,
+            "body_bytes": 262144,
+            "diff_bytes": 2097152,
+            "diff_files": 300,
+            "diff_hunks": 2000,
+            "partial_failures": 20,
+            "error_detail_bytes": 4096,
+            "duration_ms": 120000,
+            "redirects": 3,
+            "journal_entries": 10000,
+            "idempotency_bytes": 512
+          }
+        },
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "observed_at": "2026-07-27T20:31:00Z",
+        "freshness": "current",
+        "rate_limit": {
+          "resource": "core",
+          "limit": 5000,
+          "remaining": 4999,
+          "reset_at": "2026-07-27T21:00:00Z",
+          "observed_at": "2026-07-27T20:31:00Z"
+        },
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        },
+        "completeness": "complete",
+        "partial_failures": [],
+        "result": {
+          "outcome": "fixture",
+          "pull_request": {
+            "identity": {
+              "connection_id": "github-code-host",
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_hero",
+                "owner": "hero-engine",
+                "name": "hero",
+                "full_name": "hero-engine/hero"
+              },
+              "provider_id": "PR_kwDO_fixture",
+              "number": 42
+            },
+            "title": "Add code-host broker",
+            "body": "Bounded fixture body",
+            "url": "https://github.com/hero-engine/hero/pull/42",
+            "state": "open",
+            "draft": false,
+            "author": {
+              "provider_id": "U_fixture",
+              "login": "contributor"
+            },
+            "base": {
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_hero",
+                "owner": "hero-engine",
+                "name": "hero",
+                "full_name": "hero-engine/hero"
+              },
+              "name": "main",
+              "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            "head": {
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_fork",
+                "owner": "contributor",
+                "name": "hero",
+                "full_name": "contributor/hero"
+              },
+              "name": "feature/code-host",
+              "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            "created_at": "2026-07-27T20:00:00Z",
+            "updated_at": "2026-07-27T20:30:00Z"
+          }
+        },
+        "receipt": {
+          "provider_receipt_id": "receipt-comment",
+          "operation_id": "operation-comment",
+          "target_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "reconciliation": {
+          "status": "replayed",
+          "key": "reconcile:comment"
+        },
+        "truncated": false,
+        "duration_ms": 42,
+        "error": null
+      }
+    },
+    {
+      "name": "submit_review",
+      "request": {
+        "version": "code-host-broker/v1",
+        "operation": "submit_review",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "pull_request": {
+          "connection_id": "github-code-host",
+          "repository": {
+            "host": "github.com",
+            "provider_id": "R_hero",
+            "owner": "hero-engine",
+            "name": "hero",
+            "full_name": "hero-engine/hero"
+          },
+          "provider_id": "PR_kwDO_fixture",
+          "number": 42
+        },
+        "intent_source": "user",
+        "consent": "explicit_user",
+        "idempotency_key": "fixture-submit_review",
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "reconciliation_key": "reconcile:submit_review",
+        "payload": {
+          "expected_head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "body": "Fixture review"
+        }
+      },
+      "response": {
+        "version": "code-host-broker/v1",
+        "operation": "submit_review",
+        "provider": "github",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "policy": {
+          "operation": "submit_review",
+          "effect": "external_write",
+          "consent": "explicit_user",
+          "requires_unique_target": true,
+          "requires_idempotency": true,
+          "requires_fresh_observation": true,
+          "requires_reconciliation": true,
+          "replay_safe": true,
+          "bounds": {
+            "repository_scopes": 100,
+            "page_size": 100,
+            "items": 100,
+            "text_bytes": 65536,
+            "body_bytes": 262144,
+            "diff_bytes": 2097152,
+            "diff_files": 300,
+            "diff_hunks": 2000,
+            "partial_failures": 20,
+            "error_detail_bytes": 4096,
+            "duration_ms": 120000,
+            "redirects": 3,
+            "journal_entries": 10000,
+            "idempotency_bytes": 512
+          }
+        },
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "observed_at": "2026-07-27T20:31:00Z",
+        "freshness": "current",
+        "rate_limit": {
+          "resource": "core",
+          "limit": 5000,
+          "remaining": 4999,
+          "reset_at": "2026-07-27T21:00:00Z",
+          "observed_at": "2026-07-27T20:31:00Z"
+        },
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        },
+        "completeness": "complete",
+        "partial_failures": [],
+        "result": {
+          "outcome": "fixture",
+          "pull_request": {
+            "identity": {
+              "connection_id": "github-code-host",
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_hero",
+                "owner": "hero-engine",
+                "name": "hero",
+                "full_name": "hero-engine/hero"
+              },
+              "provider_id": "PR_kwDO_fixture",
+              "number": 42
+            },
+            "title": "Add code-host broker",
+            "body": "Bounded fixture body",
+            "url": "https://github.com/hero-engine/hero/pull/42",
+            "state": "open",
+            "draft": false,
+            "author": {
+              "provider_id": "U_fixture",
+              "login": "contributor"
+            },
+            "base": {
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_hero",
+                "owner": "hero-engine",
+                "name": "hero",
+                "full_name": "hero-engine/hero"
+              },
+              "name": "main",
+              "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            "head": {
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_fork",
+                "owner": "contributor",
+                "name": "hero",
+                "full_name": "contributor/hero"
+              },
+              "name": "feature/code-host",
+              "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            "created_at": "2026-07-27T20:00:00Z",
+            "updated_at": "2026-07-27T20:30:00Z"
+          }
+        },
+        "receipt": {
+          "provider_receipt_id": "receipt-submit_review",
+          "operation_id": "operation-submit_review",
+          "target_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "reconciliation": {
+          "status": "reconciled_applied",
+          "key": "reconcile:submit_review"
+        },
+        "truncated": false,
+        "duration_ms": 42,
+        "error": null
+      }
+    },
+    {
+      "name": "approve",
+      "request": {
+        "version": "code-host-broker/v1",
+        "operation": "approve",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "pull_request": {
+          "connection_id": "github-code-host",
+          "repository": {
+            "host": "github.com",
+            "provider_id": "R_hero",
+            "owner": "hero-engine",
+            "name": "hero",
+            "full_name": "hero-engine/hero"
+          },
+          "provider_id": "PR_kwDO_fixture",
+          "number": 42
+        },
+        "intent_source": "user",
+        "consent": "explicit_user",
+        "idempotency_key": "fixture-approve",
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "reconciliation_key": "reconcile:approve",
+        "payload": {
+          "expected_head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "body": "Fixture review"
+        }
+      },
+      "response": {
+        "version": "code-host-broker/v1",
+        "operation": "approve",
+        "provider": "github",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "policy": {
+          "operation": "approve",
+          "effect": "external_write",
+          "consent": "explicit_user",
+          "requires_unique_target": true,
+          "requires_idempotency": true,
+          "requires_fresh_observation": true,
+          "requires_reconciliation": true,
+          "replay_safe": true,
+          "bounds": {
+            "repository_scopes": 100,
+            "page_size": 100,
+            "items": 100,
+            "text_bytes": 65536,
+            "body_bytes": 262144,
+            "diff_bytes": 2097152,
+            "diff_files": 300,
+            "diff_hunks": 2000,
+            "partial_failures": 20,
+            "error_detail_bytes": 4096,
+            "duration_ms": 120000,
+            "redirects": 3,
+            "journal_entries": 10000,
+            "idempotency_bytes": 512
+          }
+        },
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "observed_at": "2026-07-27T20:31:00Z",
+        "freshness": "current",
+        "rate_limit": {
+          "resource": "core",
+          "limit": 5000,
+          "remaining": 4999,
+          "reset_at": "2026-07-27T21:00:00Z",
+          "observed_at": "2026-07-27T20:31:00Z"
+        },
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        },
+        "completeness": "complete",
+        "partial_failures": [],
+        "result": {
+          "outcome": "fixture",
+          "pull_request": {
+            "identity": {
+              "connection_id": "github-code-host",
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_hero",
+                "owner": "hero-engine",
+                "name": "hero",
+                "full_name": "hero-engine/hero"
+              },
+              "provider_id": "PR_kwDO_fixture",
+              "number": 42
+            },
+            "title": "Add code-host broker",
+            "body": "Bounded fixture body",
+            "url": "https://github.com/hero-engine/hero/pull/42",
+            "state": "open",
+            "draft": false,
+            "author": {
+              "provider_id": "U_fixture",
+              "login": "contributor"
+            },
+            "base": {
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_hero",
+                "owner": "hero-engine",
+                "name": "hero",
+                "full_name": "hero-engine/hero"
+              },
+              "name": "main",
+              "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            "head": {
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_fork",
+                "owner": "contributor",
+                "name": "hero",
+                "full_name": "contributor/hero"
+              },
+              "name": "feature/code-host",
+              "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            "created_at": "2026-07-27T20:00:00Z",
+            "updated_at": "2026-07-27T20:30:00Z"
+          }
+        },
+        "receipt": {
+          "provider_receipt_id": "receipt-approve",
+          "operation_id": "operation-approve",
+          "target_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "reconciliation": {
+          "status": "externally_completed",
+          "key": "reconcile:approve"
+        },
+        "truncated": false,
+        "duration_ms": 42,
+        "error": null
+      }
+    },
+    {
+      "name": "request_changes",
+      "request": {
+        "version": "code-host-broker/v1",
+        "operation": "request_changes",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "pull_request": {
+          "connection_id": "github-code-host",
+          "repository": {
+            "host": "github.com",
+            "provider_id": "R_hero",
+            "owner": "hero-engine",
+            "name": "hero",
+            "full_name": "hero-engine/hero"
+          },
+          "provider_id": "PR_kwDO_fixture",
+          "number": 42
+        },
+        "intent_source": "user",
+        "consent": "explicit_user",
+        "idempotency_key": "fixture-request_changes",
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "reconciliation_key": "reconcile:request_changes",
+        "payload": {
+          "expected_head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "body": "Fixture review"
+        }
+      },
+      "response": {
+        "version": "code-host-broker/v1",
+        "operation": "request_changes",
+        "provider": "github",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "policy": {
+          "operation": "request_changes",
+          "effect": "external_write",
+          "consent": "explicit_user",
+          "requires_unique_target": true,
+          "requires_idempotency": true,
+          "requires_fresh_observation": true,
+          "requires_reconciliation": true,
+          "replay_safe": true,
+          "bounds": {
+            "repository_scopes": 100,
+            "page_size": 100,
+            "items": 100,
+            "text_bytes": 65536,
+            "body_bytes": 262144,
+            "diff_bytes": 2097152,
+            "diff_files": 300,
+            "diff_hunks": 2000,
+            "partial_failures": 20,
+            "error_detail_bytes": 4096,
+            "duration_ms": 120000,
+            "redirects": 3,
+            "journal_entries": 10000,
+            "idempotency_bytes": 512
+          }
+        },
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "observed_at": "2026-07-27T20:31:00Z",
+        "freshness": "current",
+        "rate_limit": {
+          "resource": "core",
+          "limit": 5000,
+          "remaining": 4999,
+          "reset_at": "2026-07-27T21:00:00Z",
+          "observed_at": "2026-07-27T20:31:00Z"
+        },
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        },
+        "completeness": "complete",
+        "partial_failures": [],
+        "result": {
+          "outcome": "fixture",
+          "pull_request": {
+            "identity": {
+              "connection_id": "github-code-host",
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_hero",
+                "owner": "hero-engine",
+                "name": "hero",
+                "full_name": "hero-engine/hero"
+              },
+              "provider_id": "PR_kwDO_fixture",
+              "number": 42
+            },
+            "title": "Add code-host broker",
+            "body": "Bounded fixture body",
+            "url": "https://github.com/hero-engine/hero/pull/42",
+            "state": "open",
+            "draft": false,
+            "author": {
+              "provider_id": "U_fixture",
+              "login": "contributor"
+            },
+            "base": {
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_hero",
+                "owner": "hero-engine",
+                "name": "hero",
+                "full_name": "hero-engine/hero"
+              },
+              "name": "main",
+              "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            "head": {
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_fork",
+                "owner": "contributor",
+                "name": "hero",
+                "full_name": "contributor/hero"
+              },
+              "name": "feature/code-host",
+              "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            "created_at": "2026-07-27T20:00:00Z",
+            "updated_at": "2026-07-27T20:30:00Z"
+          }
+        },
+        "receipt": {
+          "provider_receipt_id": "receipt-request_changes",
+          "operation_id": "operation-request_changes",
+          "target_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "reconciliation": {
+          "status": "not_applied",
+          "key": "reconcile:request_changes"
+        },
+        "truncated": false,
+        "duration_ms": 42,
+        "error": null
+      }
+    },
+    {
+      "name": "mark_ready",
+      "request": {
+        "version": "code-host-broker/v1",
+        "operation": "mark_ready",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "pull_request": {
+          "connection_id": "github-code-host",
+          "repository": {
+            "host": "github.com",
+            "provider_id": "R_hero",
+            "owner": "hero-engine",
+            "name": "hero",
+            "full_name": "hero-engine/hero"
+          },
+          "provider_id": "PR_kwDO_fixture",
+          "number": 42
+        },
+        "intent_source": "user",
+        "consent": "explicit_user",
+        "idempotency_key": "fixture-mark_ready",
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "reconciliation_key": "reconcile:mark_ready",
+        "payload": {
+          "expected_head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      },
+      "response": {
+        "version": "code-host-broker/v1",
+        "operation": "mark_ready",
+        "provider": "github",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "policy": {
+          "operation": "mark_ready",
+          "effect": "external_write",
+          "consent": "explicit_user",
+          "requires_unique_target": true,
+          "requires_idempotency": true,
+          "requires_fresh_observation": true,
+          "requires_reconciliation": true,
+          "replay_safe": true,
+          "bounds": {
+            "repository_scopes": 100,
+            "page_size": 100,
+            "items": 100,
+            "text_bytes": 65536,
+            "body_bytes": 262144,
+            "diff_bytes": 2097152,
+            "diff_files": 300,
+            "diff_hunks": 2000,
+            "partial_failures": 20,
+            "error_detail_bytes": 4096,
+            "duration_ms": 120000,
+            "redirects": 3,
+            "journal_entries": 10000,
+            "idempotency_bytes": 512
+          }
+        },
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "observed_at": "2026-07-27T20:31:00Z",
+        "freshness": "current",
+        "rate_limit": {
+          "resource": "core",
+          "limit": 5000,
+          "remaining": 4999,
+          "reset_at": "2026-07-27T21:00:00Z",
+          "observed_at": "2026-07-27T20:31:00Z"
+        },
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        },
+        "completeness": "complete",
+        "partial_failures": [],
+        "result": {
+          "outcome": "fixture",
+          "pull_request": {
+            "identity": {
+              "connection_id": "github-code-host",
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_hero",
+                "owner": "hero-engine",
+                "name": "hero",
+                "full_name": "hero-engine/hero"
+              },
+              "provider_id": "PR_kwDO_fixture",
+              "number": 42
+            },
+            "title": "Add code-host broker",
+            "body": "Bounded fixture body",
+            "url": "https://github.com/hero-engine/hero/pull/42",
+            "state": "open",
+            "draft": false,
+            "author": {
+              "provider_id": "U_fixture",
+              "login": "contributor"
+            },
+            "base": {
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_hero",
+                "owner": "hero-engine",
+                "name": "hero",
+                "full_name": "hero-engine/hero"
+              },
+              "name": "main",
+              "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            "head": {
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_fork",
+                "owner": "contributor",
+                "name": "hero",
+                "full_name": "contributor/hero"
+              },
+              "name": "feature/code-host",
+              "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            "created_at": "2026-07-27T20:00:00Z",
+            "updated_at": "2026-07-27T20:30:00Z"
+          }
+        },
+        "receipt": {
+          "provider_receipt_id": "receipt-mark_ready",
+          "operation_id": "operation-mark_ready",
+          "target_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "reconciliation": {
+          "status": "in_progress",
+          "key": "reconcile:mark_ready"
+        },
+        "truncated": false,
+        "duration_ms": 42,
+        "error": null
+      }
+    },
+    {
+      "name": "retarget",
+      "request": {
+        "version": "code-host-broker/v1",
+        "operation": "retarget",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "pull_request": {
+          "connection_id": "github-code-host",
+          "repository": {
+            "host": "github.com",
+            "provider_id": "R_hero",
+            "owner": "hero-engine",
+            "name": "hero",
+            "full_name": "hero-engine/hero"
+          },
+          "provider_id": "PR_kwDO_fixture",
+          "number": 42
+        },
+        "intent_source": "user",
+        "consent": "explicit_user",
+        "idempotency_key": "fixture-retarget",
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "reconciliation_key": "reconcile:retarget",
+        "payload": {
+          "expected_head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "current_base": {
+            "repository": {
+              "host": "github.com",
+              "provider_id": "R_hero",
+              "owner": "hero-engine",
+              "name": "hero",
+              "full_name": "hero-engine/hero"
+            },
+            "name": "main",
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "new_base": {
+            "repository": {
+              "host": "github.com",
+              "provider_id": "R_hero",
+              "owner": "hero-engine",
+              "name": "hero",
+              "full_name": "hero-engine/hero"
+            },
+            "name": "release",
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        }
+      },
+      "response": {
+        "version": "code-host-broker/v1",
+        "operation": "retarget",
+        "provider": "github",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "policy": {
+          "operation": "retarget",
+          "effect": "external_write",
+          "consent": "explicit_user",
+          "requires_unique_target": true,
+          "requires_idempotency": true,
+          "requires_fresh_observation": true,
+          "requires_reconciliation": true,
+          "replay_safe": true,
+          "bounds": {
+            "repository_scopes": 100,
+            "page_size": 100,
+            "items": 100,
+            "text_bytes": 65536,
+            "body_bytes": 262144,
+            "diff_bytes": 2097152,
+            "diff_files": 300,
+            "diff_hunks": 2000,
+            "partial_failures": 20,
+            "error_detail_bytes": 4096,
+            "duration_ms": 120000,
+            "redirects": 3,
+            "journal_entries": 10000,
+            "idempotency_bytes": 512
+          }
+        },
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "observed_at": "2026-07-27T20:31:00Z",
+        "freshness": "current",
+        "rate_limit": {
+          "resource": "core",
+          "limit": 5000,
+          "remaining": 4999,
+          "reset_at": "2026-07-27T21:00:00Z",
+          "observed_at": "2026-07-27T20:31:00Z"
+        },
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        },
+        "completeness": "complete",
+        "partial_failures": [],
+        "result": {
+          "outcome": "fixture",
+          "pull_request": {
+            "identity": {
+              "connection_id": "github-code-host",
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_hero",
+                "owner": "hero-engine",
+                "name": "hero",
+                "full_name": "hero-engine/hero"
+              },
+              "provider_id": "PR_kwDO_fixture",
+              "number": 42
+            },
+            "title": "Add code-host broker",
+            "body": "Bounded fixture body",
+            "url": "https://github.com/hero-engine/hero/pull/42",
+            "state": "open",
+            "draft": false,
+            "author": {
+              "provider_id": "U_fixture",
+              "login": "contributor"
+            },
+            "base": {
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_hero",
+                "owner": "hero-engine",
+                "name": "hero",
+                "full_name": "hero-engine/hero"
+              },
+              "name": "main",
+              "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            "head": {
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_fork",
+                "owner": "contributor",
+                "name": "hero",
+                "full_name": "contributor/hero"
+              },
+              "name": "feature/code-host",
+              "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            "created_at": "2026-07-27T20:00:00Z",
+            "updated_at": "2026-07-27T20:30:00Z"
+          }
+        },
+        "receipt": {
+          "provider_receipt_id": "receipt-retarget",
+          "operation_id": "operation-retarget",
+          "target_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "reconciliation": {
+          "status": "ambiguous",
+          "key": "reconcile:retarget"
+        },
+        "truncated": false,
+        "duration_ms": 42,
+        "error": null
+      }
+    },
+    {
+      "name": "close",
+      "request": {
+        "version": "code-host-broker/v1",
+        "operation": "close",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "pull_request": {
+          "connection_id": "github-code-host",
+          "repository": {
+            "host": "github.com",
+            "provider_id": "R_hero",
+            "owner": "hero-engine",
+            "name": "hero",
+            "full_name": "hero-engine/hero"
+          },
+          "provider_id": "PR_kwDO_fixture",
+          "number": 42
+        },
+        "intent_source": "user",
+        "consent": "explicit_user",
+        "idempotency_key": "fixture-close",
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "reconciliation_key": "reconcile:close",
+        "payload": {
+          "expected_head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      },
+      "response": {
+        "version": "code-host-broker/v1",
+        "operation": "close",
+        "provider": "github",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "policy": {
+          "operation": "close",
+          "effect": "external_write",
+          "consent": "explicit_user",
+          "requires_unique_target": true,
+          "requires_idempotency": true,
+          "requires_fresh_observation": true,
+          "requires_reconciliation": true,
+          "replay_safe": true,
+          "bounds": {
+            "repository_scopes": 100,
+            "page_size": 100,
+            "items": 100,
+            "text_bytes": 65536,
+            "body_bytes": 262144,
+            "diff_bytes": 2097152,
+            "diff_files": 300,
+            "diff_hunks": 2000,
+            "partial_failures": 20,
+            "error_detail_bytes": 4096,
+            "duration_ms": 120000,
+            "redirects": 3,
+            "journal_entries": 10000,
+            "idempotency_bytes": 512
+          }
+        },
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "observed_at": "2026-07-27T20:31:00Z",
+        "freshness": "current",
+        "rate_limit": {
+          "resource": "core",
+          "limit": 5000,
+          "remaining": 4999,
+          "reset_at": "2026-07-27T21:00:00Z",
+          "observed_at": "2026-07-27T20:31:00Z"
+        },
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        },
+        "completeness": "complete",
+        "partial_failures": [],
+        "result": {
+          "outcome": "fixture",
+          "pull_request": {
+            "identity": {
+              "connection_id": "github-code-host",
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_hero",
+                "owner": "hero-engine",
+                "name": "hero",
+                "full_name": "hero-engine/hero"
+              },
+              "provider_id": "PR_kwDO_fixture",
+              "number": 42
+            },
+            "title": "Add code-host broker",
+            "body": "Bounded fixture body",
+            "url": "https://github.com/hero-engine/hero/pull/42",
+            "state": "open",
+            "draft": false,
+            "author": {
+              "provider_id": "U_fixture",
+              "login": "contributor"
+            },
+            "base": {
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_hero",
+                "owner": "hero-engine",
+                "name": "hero",
+                "full_name": "hero-engine/hero"
+              },
+              "name": "main",
+              "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            "head": {
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_fork",
+                "owner": "contributor",
+                "name": "hero",
+                "full_name": "contributor/hero"
+              },
+              "name": "feature/code-host",
+              "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            "created_at": "2026-07-27T20:00:00Z",
+            "updated_at": "2026-07-27T20:30:00Z"
+          }
+        },
+        "receipt": {
+          "provider_receipt_id": "receipt-close",
+          "operation_id": "operation-close",
+          "target_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "reconciliation": {
+          "status": "applied",
+          "key": "reconcile:close"
+        },
+        "truncated": false,
+        "duration_ms": 42,
+        "error": null
+      }
+    },
+    {
+      "name": "reopen",
+      "request": {
+        "version": "code-host-broker/v1",
+        "operation": "reopen",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "pull_request": {
+          "connection_id": "github-code-host",
+          "repository": {
+            "host": "github.com",
+            "provider_id": "R_hero",
+            "owner": "hero-engine",
+            "name": "hero",
+            "full_name": "hero-engine/hero"
+          },
+          "provider_id": "PR_kwDO_fixture",
+          "number": 42
+        },
+        "intent_source": "user",
+        "consent": "explicit_user",
+        "idempotency_key": "fixture-reopen",
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "reconciliation_key": "reconcile:reopen",
+        "payload": {
+          "expected_head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      },
+      "response": {
+        "version": "code-host-broker/v1",
+        "operation": "reopen",
+        "provider": "github",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "policy": {
+          "operation": "reopen",
+          "effect": "external_write",
+          "consent": "explicit_user",
+          "requires_unique_target": true,
+          "requires_idempotency": true,
+          "requires_fresh_observation": true,
+          "requires_reconciliation": true,
+          "replay_safe": true,
+          "bounds": {
+            "repository_scopes": 100,
+            "page_size": 100,
+            "items": 100,
+            "text_bytes": 65536,
+            "body_bytes": 262144,
+            "diff_bytes": 2097152,
+            "diff_files": 300,
+            "diff_hunks": 2000,
+            "partial_failures": 20,
+            "error_detail_bytes": 4096,
+            "duration_ms": 120000,
+            "redirects": 3,
+            "journal_entries": 10000,
+            "idempotency_bytes": 512
+          }
+        },
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "observed_at": "2026-07-27T20:31:00Z",
+        "freshness": "current",
+        "rate_limit": {
+          "resource": "core",
+          "limit": 5000,
+          "remaining": 4999,
+          "reset_at": "2026-07-27T21:00:00Z",
+          "observed_at": "2026-07-27T20:31:00Z"
+        },
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        },
+        "completeness": "complete",
+        "partial_failures": [],
+        "result": {
+          "outcome": "fixture",
+          "pull_request": {
+            "identity": {
+              "connection_id": "github-code-host",
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_hero",
+                "owner": "hero-engine",
+                "name": "hero",
+                "full_name": "hero-engine/hero"
+              },
+              "provider_id": "PR_kwDO_fixture",
+              "number": 42
+            },
+            "title": "Add code-host broker",
+            "body": "Bounded fixture body",
+            "url": "https://github.com/hero-engine/hero/pull/42",
+            "state": "open",
+            "draft": false,
+            "author": {
+              "provider_id": "U_fixture",
+              "login": "contributor"
+            },
+            "base": {
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_hero",
+                "owner": "hero-engine",
+                "name": "hero",
+                "full_name": "hero-engine/hero"
+              },
+              "name": "main",
+              "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            "head": {
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_fork",
+                "owner": "contributor",
+                "name": "hero",
+                "full_name": "contributor/hero"
+              },
+              "name": "feature/code-host",
+              "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            "created_at": "2026-07-27T20:00:00Z",
+            "updated_at": "2026-07-27T20:30:00Z"
+          }
+        },
+        "receipt": {
+          "provider_receipt_id": "receipt-reopen",
+          "operation_id": "operation-reopen",
+          "target_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "reconciliation": {
+          "status": "replayed",
+          "key": "reconcile:reopen"
+        },
+        "truncated": false,
+        "duration_ms": 42,
+        "error": null
+      }
+    },
+    {
+      "name": "merge",
+      "request": {
+        "version": "code-host-broker/v1",
+        "operation": "merge",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "pull_request": {
+          "connection_id": "github-code-host",
+          "repository": {
+            "host": "github.com",
+            "provider_id": "R_hero",
+            "owner": "hero-engine",
+            "name": "hero",
+            "full_name": "hero-engine/hero"
+          },
+          "provider_id": "PR_kwDO_fixture",
+          "number": 42
+        },
+        "intent_source": "user",
+        "consent": "explicit_acceptance",
+        "idempotency_key": "fixture-merge",
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "reconciliation_key": "reconcile:merge",
+        "payload": {
+          "expected_head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "observed_base": {
+            "repository": {
+              "host": "github.com",
+              "provider_id": "R_hero",
+              "owner": "hero-engine",
+              "name": "hero",
+              "full_name": "hero-engine/hero"
+            },
+            "name": "main",
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "method": "squash",
+          "commit_title": "Merge fixture"
+        }
+      },
+      "response": {
+        "version": "code-host-broker/v1",
+        "operation": "merge",
+        "provider": "github",
+        "connection_id": "github-code-host",
+        "repository": {
+          "host": "github.com",
+          "provider_id": "R_hero",
+          "owner": "hero-engine",
+          "name": "hero",
+          "full_name": "hero-engine/hero"
+        },
+        "policy": {
+          "operation": "merge",
+          "effect": "commitment",
+          "consent": "explicit_acceptance",
+          "requires_unique_target": true,
+          "requires_idempotency": true,
+          "requires_fresh_observation": true,
+          "requires_reconciliation": true,
+          "replay_safe": true,
+          "bounds": {
+            "repository_scopes": 100,
+            "page_size": 100,
+            "items": 100,
+            "text_bytes": 65536,
+            "body_bytes": 262144,
+            "diff_bytes": 2097152,
+            "diff_files": 300,
+            "diff_hunks": 2000,
+            "partial_failures": 20,
+            "error_detail_bytes": 4096,
+            "duration_ms": 120000,
+            "redirects": 3,
+            "journal_entries": 10000,
+            "idempotency_bytes": 512
+          }
+        },
+        "capability_revision": "cap:fixture",
+        "observation_revision": "obs:fixture",
+        "observed_at": "2026-07-27T20:31:00Z",
+        "freshness": "current",
+        "rate_limit": {
+          "resource": "core",
+          "limit": 5000,
+          "remaining": 4999,
+          "reset_at": "2026-07-27T21:00:00Z",
+          "observed_at": "2026-07-27T20:31:00Z"
+        },
+        "bounds": {
+          "repository_scopes": 100,
+          "page_size": 100,
+          "items": 100,
+          "text_bytes": 65536,
+          "body_bytes": 262144,
+          "diff_bytes": 2097152,
+          "diff_files": 300,
+          "diff_hunks": 2000,
+          "partial_failures": 20,
+          "error_detail_bytes": 4096,
+          "duration_ms": 120000,
+          "redirects": 3,
+          "journal_entries": 10000,
+          "idempotency_bytes": 512
+        },
+        "completeness": "complete",
+        "partial_failures": [],
+        "result": {
+          "outcome": "fixture",
+          "pull_request": {
+            "identity": {
+              "connection_id": "github-code-host",
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_hero",
+                "owner": "hero-engine",
+                "name": "hero",
+                "full_name": "hero-engine/hero"
+              },
+              "provider_id": "PR_kwDO_fixture",
+              "number": 42
+            },
+            "title": "Add code-host broker",
+            "body": "Bounded fixture body",
+            "url": "https://github.com/hero-engine/hero/pull/42",
+            "state": "open",
+            "draft": false,
+            "author": {
+              "provider_id": "U_fixture",
+              "login": "contributor"
+            },
+            "base": {
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_hero",
+                "owner": "hero-engine",
+                "name": "hero",
+                "full_name": "hero-engine/hero"
+              },
+              "name": "main",
+              "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            "head": {
+              "repository": {
+                "host": "github.com",
+                "provider_id": "R_fork",
+                "owner": "contributor",
+                "name": "hero",
+                "full_name": "contributor/hero"
+              },
+              "name": "feature/code-host",
+              "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            "created_at": "2026-07-27T20:00:00Z",
+            "updated_at": "2026-07-27T20:30:00Z"
+          }
+        },
+        "receipt": {
+          "provider_receipt_id": "receipt-merge",
+          "operation_id": "operation-merge",
+          "target_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "reconciliation": {
+          "status": "reconciled_applied",
+          "key": "reconcile:merge"
+        },
+        "truncated": false,
+        "duration_ms": 42,
+        "error": null
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": "invalid_input",
+      "message": "bounded normalized fixture error",
+      "retry": "none"
+    },
+    {
+      "code": "incompatible_version",
+      "message": "bounded normalized fixture error",
+      "retry": "none"
+    },
+    {
+      "code": "connection_not_found",
+      "message": "bounded normalized fixture error",
+      "retry": "none"
+    },
+    {
+      "code": "code_host_role_missing",
+      "message": "bounded normalized fixture error",
+      "retry": "none"
+    },
+    {
+      "code": "wrong_connection_capability",
+      "message": "bounded normalized fixture error",
+      "retry": "none"
+    },
+    {
+      "code": "credential_unavailable",
+      "message": "bounded normalized fixture error",
+      "retry": "none"
+    },
+    {
+      "code": "unauthorized",
+      "message": "bounded normalized fixture error",
+      "retry": "none"
+    },
+    {
+      "code": "forbidden",
+      "message": "bounded normalized fixture error",
+      "retry": "none"
+    },
+    {
+      "code": "unsupported_provider",
+      "message": "bounded normalized fixture error",
+      "retry": "none"
+    },
+    {
+      "code": "unsupported_operation",
+      "message": "bounded normalized fixture error",
+      "retry": "none"
+    },
+    {
+      "code": "not_found",
+      "message": "bounded normalized fixture error",
+      "retry": "none"
+    },
+    {
+      "code": "stale_observation",
+      "message": "bounded normalized fixture error",
+      "retry": "refresh_then_retry"
+    },
+    {
+      "code": "capability_changed",
+      "message": "bounded normalized fixture error",
+      "retry": "refresh_then_retry"
+    },
+    {
+      "code": "conflict",
+      "message": "bounded normalized fixture error",
+      "retry": "refresh_then_retry"
+    },
+    {
+      "code": "rate_limited",
+      "message": "bounded normalized fixture error",
+      "retry": "retry_after"
+    },
+    {
+      "code": "cursor_mismatch",
+      "message": "bounded normalized fixture error",
+      "retry": "none"
+    },
+    {
+      "code": "idempotency_conflict",
+      "message": "bounded normalized fixture error",
+      "retry": "same_key"
+    },
+    {
+      "code": "operation_in_progress",
+      "message": "bounded normalized fixture error",
+      "retry": "same_key"
+    },
+    {
+      "code": "ambiguous_result",
+      "message": "bounded normalized fixture error",
+      "retry": "reconcile"
+    },
+    {
+      "code": "provider_unavailable",
+      "message": "bounded normalized fixture error",
+      "retry": "none"
+    },
+    {
+      "code": "provider_error",
+      "message": "bounded normalized fixture error",
+      "retry": "none"
+    },
+    {
+      "code": "partial_failure",
+      "message": "bounded normalized fixture error",
+      "retry": "none"
+    },
+    {
+      "code": "input_too_large",
+      "message": "bounded normalized fixture error",
+      "retry": "none"
+    },
+    {
+      "code": "output_too_large",
+      "message": "bounded normalized fixture error",
+      "retry": "none"
+    },
+    {
+      "code": "cancelled",
+      "message": "bounded normalized fixture error",
+      "retry": "none"
+    },
+    {
+      "code": "encoding_error",
+      "message": "bounded normalized fixture error",
+      "retry": "none"
+    }
+  ],
+  "future_additive": {
+    "future_capability": {
+      "operation": "future_operation",
+      "effect": "future_effect"
+    },
+    "future_field": {
+      "nested": true
+    }
+  }
+}

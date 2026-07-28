@@ -2,7 +2,7 @@
 title: "Code-host broker v1 contract"
 slug: code-host-broker-v1-contract
 type: feature
-status: planning
+status: delivering
 domain: engineering
 priority: critical
 size: large
@@ -14,6 +14,7 @@ relates-to:
   - brokered-tracker-agent-access
   - integration-config-uses-stable-ids
 tags: [code-host, contract, pull-request, versioning, fixtures, permissions]
+delivery_method: manual
 ---
 
 # Code-host broker v1 contract
@@ -42,11 +43,12 @@ idempotency, reconciliation, and normalized errors.
 Freeze the Hero-owned wire boundary and canonical fixture that every code-host
 adapter and Hero Code decoder must share.
 
-**Status:** planning — existing broker, permission, credential, pagination, and
-Hero Code decoder conventions have been mapped.
+**Status:** closing — contract types, policy registry, validation, canonical
+fixture, digest, tests, and consumer documentation are implemented and the
+full Go test and vet suites pass.
 
-**Pick up at:** write the operation/policy registry and canonical identity
-types, then generate a fixture containing every response and error variant.
+**Pick up at:** run the cold delivery audit, close any findings, then pass
+`hero spec verify code-host-broker-v1-contract`.
 
 → `/deliver code-host-broker-v1-contract`
 
