@@ -521,6 +521,11 @@ func validateOperationResult(operation Operation, raw json.RawMessage, bounds Bo
 		if result.Outcome == "" || tooLong(result.Outcome, 128) {
 			return invalid("result.outcome", "bounded mutation outcome is required")
 		}
+		if result.Actor != nil {
+			if err := validateActor(*result.Actor, "result.actor"); err != nil {
+				return err
+			}
+		}
 		return validatePullRequest(result.PullRequest, "result.pull_request")
 	}
 	return nil

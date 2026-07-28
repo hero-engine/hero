@@ -190,6 +190,9 @@ func fixtureResult(operation Operation, pullRequest PullRequest) any {
 		return CommentsResult{Comments: []Comment{{ProviderID: "comment-1", Author: pullRequest.Author, Body: redactedFixtureText}}}
 	case OperationGetMergeReadiness:
 		return MergeReadiness{State: "unknown", Checks: AvailabilityAvailable, Reviews: AvailabilityPartial, BranchProtection: AvailabilityUnavailable, Permissions: AvailabilityAvailable, Mergeability: AvailabilityUnknown, Queue: AvailabilityUnavailable, Reasons: []string{redactedFixtureText}}
+	case OperationComment, OperationSubmitReview, OperationApprove, OperationRequestChanges:
+		actor := pullRequest.Author
+		return MutationResult{PullRequest: pullRequest, Outcome: "fixture", Actor: &actor}
 	default:
 		return MutationResult{PullRequest: pullRequest, Outcome: "fixture"}
 	}

@@ -100,6 +100,7 @@ func TestCanonicalFixtureCoversAndValidatesEveryOperation(t *testing.T) {
 	}
 	seen := map[Operation]bool{}
 	statuses := map[ReconciliationStatus]bool{}
+	actorResults := map[Operation]bool{}
 	for _, fixtureCase := range fixture.Cases {
 		if fixtureCase.Name != string(fixtureCase.Request.Operation) || fixtureCase.Request.Operation != fixtureCase.Response.Operation {
 			t.Fatalf("case identity mismatch: %+v", fixtureCase)
@@ -114,9 +115,22 @@ func TestCanonicalFixtureCoversAndValidatesEveryOperation(t *testing.T) {
 		if fixtureCase.Response.Reconciliation != nil {
 			statuses[fixtureCase.Response.Reconciliation.Status] = true
 		}
+		if fixtureCase.Request.Operation == OperationComment ||
+			fixtureCase.Request.Operation == OperationSubmitReview ||
+			fixtureCase.Request.Operation == OperationApprove ||
+			fixtureCase.Request.Operation == OperationRequestChanges {
+			var result MutationResult
+			if err := json.Unmarshal(fixtureCase.Response.Result, &result); err != nil {
+				t.Fatalf("%s mutation result: %v", fixtureCase.Name, err)
+			}
+			if result.Actor == nil || result.Actor.ProviderID == "" || result.Actor.Login == "" {
+				t.Fatalf("%s fixture lacks typed actor: %+v", fixtureCase.Name, result)
+			}
+			actorResults[fixtureCase.Request.Operation] = true
+		}
 	}
-	if len(seen) != 20 || len(statuses) != 7 {
-		t.Fatalf("coverage operations=%d reconciliation=%v", len(seen), statuses)
+	if len(seen) != 20 || len(statuses) != 7 || len(actorResults) != 4 {
+		t.Fatalf("coverage operations=%d reconciliation=%v actors=%v", len(seen), statuses, actorResults)
 	}
 	if len(fixture.Errors) != len(ErrorCodes()) || len(fixture.UnknownFields) == 0 {
 		t.Fatalf("errors=%d unknown=%d", len(fixture.Errors), len(fixture.UnknownFields))
@@ -370,6 +384,17 @@ func TestOperationSpecificResultsRejectInvalidShapesAndBounds(t *testing.T) {
 	}}})
 	if err := ValidateResponse(diff); err == nil || err.Code != ErrorInputTooLarge {
 		t.Fatalf("diff hunk bound error=%v", err)
+	}
+
+	mutation := mustResponse(t, OperationComment)
+	var mutationResult MutationResult
+	if err := json.Unmarshal(mutation.Result, &mutationResult); err != nil {
+		t.Fatal(err)
+	}
+	mutationResult.Actor = &Actor{}
+	mutation.Result, _ = json.Marshal(mutationResult)
+	if err := ValidateResponse(mutation); err == nil || err.Code != ErrorInvalidInput {
+		t.Fatalf("incomplete mutation actor accepted: %v", err)
 	}
 }
 
@@ -865,6 +890,7 @@ func decodeIndependentConsumerResult(operation string, raw json.RawMessage) erro
 		var value struct {
 			PullRequest consumerPullRequest `json:"pull_request"`
 			Outcome     string              `json:"outcome"`
+			Actor       *consumerActor      `json:"actor,omitempty"`
 		}
 		return strictConsumerDecode(raw, &value)
 	}

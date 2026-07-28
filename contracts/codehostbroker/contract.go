@@ -310,6 +310,7 @@ type CommentsResult struct {
 type MutationResult struct {
 	PullRequest PullRequest `json:"pull_request"`
 	Outcome     string      `json:"outcome"`
+	Actor       *Actor      `json:"actor,omitempty"`
 }
 
 type Response struct {

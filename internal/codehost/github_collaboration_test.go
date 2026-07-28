@@ -43,9 +43,9 @@ func TestCollaborationOperationsAdvertisedAndApplied(t *testing.T) {
 			decodeResult(t, response, &result)
 			if result.Outcome != "applied" || result.PullRequest.Identity.Number != 42 ||
 				result.PullRequest.Head.SHA != headSHAForTest ||
+				result.Actor == nil || result.Actor.Login != "hero-user" || result.Actor.ProviderID != "U_99" ||
 				response.Receipt.ProviderReceiptID == "" ||
-				!strings.Contains(response.Receipt.TargetRevision, "head:"+headSHAForTest) ||
-				!strings.Contains(response.Receipt.TargetRevision, "actor:hero-user") {
+				!strings.HasPrefix(response.Receipt.TargetRevision, "collaboration-target:") {
 				t.Fatalf("result=%+v receipt=%+v", result, response.Receipt)
 			}
 			bodies := fake.CollaborationBodies()

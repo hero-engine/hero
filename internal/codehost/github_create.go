@@ -305,8 +305,13 @@ func (b *Broker) executeCreate(ctx context.Context, request codehostbroker.Reque
 }
 
 func successfulMutationResult(request codehostbroker.Request, entry *journalEntry, document *journalDocument, pullRequest codehostbroker.PullRequest, status codehostbroker.ReconciliationStatus, outcome string) adapterResult {
+	result := createMutationResult(pullRequest, outcome)
+	if entry.Receipt != nil && entry.Receipt.Actor != nil {
+		actor := *entry.Receipt.Actor
+		result.Actor = &actor
+	}
 	return adapterResult{
-		result:              createMutationResult(pullRequest, outcome),
+		result:              result,
 		pullRequest:         &pullRequest,
 		completeness:        codehostbroker.CompletenessComplete,
 		receipt:             createReceipt(entry, &pullRequest),
