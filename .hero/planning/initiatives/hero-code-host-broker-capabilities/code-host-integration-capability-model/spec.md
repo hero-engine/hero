@@ -193,7 +193,7 @@ connection ID may appear under both delivery and code-host roles.
 
 ## Completion Ledger
 
-Implementation commit: `84c90c4`.
+Implementation commits: `84c90c4`, `fb41993`.
 
 Validation performed:
 

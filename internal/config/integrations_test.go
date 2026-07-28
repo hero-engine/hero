@@ -515,6 +515,11 @@ func TestConnectionCapabilityValidationAndRepositoryBounds(t *testing.T) {
 			want: "invalid repository name",
 		},
 		{
+			name: "empty repositories",
+			doc:  `{"integrations":{"connections":{"main":{"provider":"github","capabilities":["code-host"],"settings":{"project":"hero-engine/hero","repositories":[]}}}}}`,
+			want: "expected 1 to 100 repositories",
+		},
+		{
 			name: "duplicate repository",
 			doc:  `{"integrations":{"connections":{"main":{"provider":"github","capabilities":["code-host"],"settings":{"project":"hero-engine/hero","repositories":["Hero-Engine/Hero-Code","hero-engine/hero-code"]}}}}}`,
 			want: "duplicate repository",
@@ -532,6 +537,26 @@ func TestConnectionCapabilityValidationAndRepositoryBounds(t *testing.T) {
 				t.Fatalf("error=%v want=%q", err, tc.want)
 			}
 		})
+	}
+
+	repositories := make([]string, 101)
+	for i := range repositories {
+		repositories[i] = fmt.Sprintf("hero-engine/repo-%03d", i)
+	}
+	rawRepositories, err := json.Marshal(repositories)
+	if err != nil {
+		t.Fatal(err)
+	}
+	project, _ := json.Marshal("hero-engine/hero")
+	err = validateProviderSettings("main", IntegrationConfig{
+		Provider: "github",
+		Settings: map[string]json.RawMessage{
+			"project":      project,
+			"repositories": rawRepositories,
+		},
+	})
+	if err == nil || !strings.Contains(err.Error(), "expected 1 to 100 repositories") {
+		t.Fatalf("excessive repositories error=%v", err)
 	}
 }
 
