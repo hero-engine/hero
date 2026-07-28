@@ -6,7 +6,26 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-27T21:43:37Z · 81 ready specs_
+_Generated: 2026-07-28T00:16:16Z · 83 ready specs_
+
+## code-host-integration-capability-model — "Code-host integration capability model"
+_feature · delivering · horizon: now_
+
+Teach the existing integration registry which providers can host repositories
+and resolve `roles.code-host` independently from tracker delivery.
+
+**Status:** delivering — capability declarations, role validation, typed
+runtime projections, connect behavior, and compatibility tests are implemented.
+
+**Pick up at:** validate the Completion Ledger and cold audit, then run
+`hero spec verify code-host-integration-capability-model`.
+
+→ `/deliver code-host-integration-capability-model`
+
+**Files:** `internal/config/integrations.go`, `internal/config/credentials.go`, `internal/config/integrations_test.go`, `internal/cli/connect.go`
+**Skip:** do not add a code-host token field/store or fall back from `code-host` to `delivery`.
+
+---
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -33,6 +52,26 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
+
+---
+
+## hero-code-host-broker-capabilities — "Code Host Broker Capabilities — Hero-owned PR lifecycle boundary"
+_initiative · planning · horizon: now_
+
+_Run opener — arm with `/drive hero-code-host-broker-capabilities`_
+
+Deliver `code-host-broker/v1` from configuration through released consumer
+surfaces:
+
+1. provider capability declarations and unambiguous `code-host` role selection;
+2. a frozen repository-qualified PR contract and cross-language fixture;
+3. bounded GitHub read operations with pagination, freshness, rate limits, and
+   partial-result truth;
+4. independently deliverable creation, collaboration, state-transition, and
+   merge operations with operation-specific stale-state, idempotency, and
+   ambiguous-outcome recovery; and
+5. one in-process implementation surfaced through JSON CLI and typed MCP tools
+   that Hero Code can validate against a released Hero binary.
 
 ---
 
