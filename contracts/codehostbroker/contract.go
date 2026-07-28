@@ -232,7 +232,6 @@ type Receipt struct {
 type Reconciliation struct {
 	Status ReconciliationStatus `json:"status"`
 	Key    string               `json:"key"`
-	Detail string               `json:"detail,omitempty"`
 }
 
 type ContractError struct {
@@ -280,6 +279,39 @@ type Capability struct {
 	Reason    string          `json:"reason,omitempty"`
 }
 
+type CapabilitiesResult struct {
+	Capabilities []Capability `json:"capabilities"`
+}
+
+type PullRequestsResult struct {
+	PullRequests []PullRequest `json:"pull_requests"`
+}
+
+type CommitsResult struct {
+	Commits []Commit `json:"commits"`
+}
+
+type DiffResult struct {
+	Files []DiffFile `json:"files"`
+}
+
+type ChecksResult struct {
+	Checks []Check `json:"checks"`
+}
+
+type ReviewsResult struct {
+	Reviews []Review `json:"reviews"`
+}
+
+type CommentsResult struct {
+	Comments []Comment `json:"comments"`
+}
+
+type MutationResult struct {
+	PullRequest PullRequest `json:"pull_request"`
+	Outcome     string      `json:"outcome"`
+}
+
 type Response struct {
 	Version             string             `json:"version"`
 	Operation           Operation          `json:"operation"`
@@ -301,6 +333,8 @@ type Response struct {
 	Reconciliation      *Reconciliation    `json:"reconciliation,omitempty"`
 	Truncated           bool               `json:"truncated"`
 	DurationMS          int64              `json:"duration_ms"`
+	Redirects           int                `json:"redirects"`
+	JournalEntries      int                `json:"journal_entries"`
 	Error               *ContractError     `json:"error"`
 }
 
@@ -309,6 +343,7 @@ type Request struct {
 	Operation           Operation            `json:"operation"`
 	ConnectionID        string               `json:"connection_id"`
 	Repository          RepositoryIdentity   `json:"repository"`
+	Repositories        []RepositoryIdentity `json:"repositories,omitempty"`
 	PullRequest         *PullRequestIdentity `json:"pull_request,omitempty"`
 	IntentSource        string               `json:"intent_source,omitempty"`
 	Consent             Consent              `json:"consent,omitempty"`
@@ -368,6 +403,11 @@ type CursorMaterial struct {
 	Query        string    `json:"query"`
 	Order        string    `json:"order"`
 	Position     string    `json:"position"`
+}
+
+type CursorEnvelope struct {
+	Material    CursorMaterial `json:"material"`
+	Fingerprint string         `json:"fingerprint"`
 }
 
 type RevisionMaterial struct {

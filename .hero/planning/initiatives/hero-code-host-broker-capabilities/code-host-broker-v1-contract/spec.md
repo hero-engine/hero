@@ -216,7 +216,7 @@ versions fail closed. Removing or changing the meaning of a field requires v2.
 
 Implemented in Go with the `go-stack`, `implementation-principles`,
 `api-design-and-contracts`, and `integration-boundaries` guidance. Validation:
-focused contract tests, a two-second identity-validator fuzz run, deterministic
+focused contract tests, two-second identity and cursor fuzz runs, deterministic
 fixture generation and SHA comparison, `go test ./... -count=1`, `go vet
 ./...`, `git diff --check`, and `hero drift
 code-host-broker-v1-contract --since 1e3fa83 --format json`.
@@ -228,35 +228,35 @@ code-host-broker-v1-contract --since 1e3fa83 --format json`.
 | 1 | Define exactly twenty operations with authoritative policy | DONE | `contracts/codehostbroker/policy.go:37` and `contract_test.go:11` define and test the exact inventory and every policy field. |
 | 2 | Require repository-qualified PR identity | DONE | `contracts/codehostbroker/contract.go:103` and `validate.go:31` require connection, repository, provider ID, and number; `contract_test.go:45` rejects missing members. |
 | 3 | Preserve fork base/head repositories, refs, and SHAs | DONE | `contracts/codehostbroker/contract.go:111` models independent refs and `contract_test.go:66` round-trips a fork without collapse. |
-| 4 | Include complete versioned response envelope | DONE | `contracts/codehostbroker/contract.go:283` defines the envelope and `validate.go:122` validates policy, revisions, freshness, rate limit, bounds, completeness, and result/error state. |
+| 4 | Include complete versioned response envelope | DONE | `contracts/codehostbroker/contract.go` defines typed result DTOs and the envelope; `validate.go` strictly decodes the operation-specific result and validates policy, revisions, freshness, rate limits, bounds, completeness, and result/error state. |
 | 5 | Preserve partial results and bounded section failures | DONE | `contracts/codehostbroker/contract.go:220` and `validate.go:154` retain bounded failures; `contract_test.go:154` proves partial checks remain non-empty. |
-| 6 | Bind opaque cursors and reject mismatches | DONE | `contracts/codehostbroker/contract.go:362`, `validate.go:194`, and `contract_test.go:179` bind and mismatch-test version, scope, operation, query, and order. |
+| 6 | Bind opaque cursors and reject mismatches | DONE | `CursorEnvelope`, `EncodeCursor`, `DecodeCursor`, request/response cursor validation, tamper tests, and a cursor round-trip fuzz target bind version, provider, scope, operation, query, order, and position. |
 | 7 | Require mutation intent, consent, idempotency, revisions, and reconciliation | DONE | `contracts/codehostbroker/validate.go:93` enforces all fields across every mutation; `contract_test.go:124` removes each field and asserts rejection. |
 | 8 | Classify read, write, and merge effects and consent | DONE | `contracts/codehostbroker/policy.go:121` derives the three policy classes; `contract_test.go:11` checks every operation. |
-| 9 | Represent ambiguous outcomes without unsafe new-key retry | DONE | `contracts/codehostbroker/contract.go:91` defines all reconciliation states and `docs/contracts/code-host-broker-v1.md:161` documents same-key reconciliation and cancellation semantics. |
+| 9 | Represent ambiguous outcomes without unsafe new-key retry | DONE | All successful mutations require receipt and reconciliation; `ambiguous_result` requires `ambiguous` state plus exact `reconcile` guidance, and tests reject unsafe retry mappings. |
 | 10 | Publish closed errors and retries without raw provider bodies | DONE | `contracts/codehostbroker/policy.go:157`, `contract_test.go:213`, and `docs/contracts/code-host-broker-v1.md:184` publish and cross-check all 26 errors and five retry values. |
-| 11 | Ignore additive fields and fail closed on major version | DONE | Fixture additive members plus `contracts/codehostbroker/contract_test.go:256` verify tolerant decoding and v2 rejection; compatibility is documented at `docs/contracts/code-host-broker-v1.md:15`. |
-| 12 | Enforce explicit input and output bounds | DONE | `contracts/codehostbroker/policy.go:3` declares every bound and `validate.go:62` plus `validate.go:122` enforce request and response limits. |
-| 13 | Produce byte-stable fixture and digest | DONE | `contracts/codehostbroker/fixture.go`, its generator, and `contract_test.go:227` prove repeated generation matches embedded bytes and SHA `140bd924ccafbfaca3a1e88609c37b584ddfc4625d5079702c942548e733950e`. |
-| 14 | Exclude credentials, raw bodies, and mutation text from safe material | DONE | Contract receipts/reconciliation contain identifiers only; `contracts/codehostbroker/contract_test.go:277` scans the canonical fixture for credential canaries and the security boundary is documented. |
+| 11 | Ignore additive fields and fail closed on major version | DONE | The advertised operations array includes an unknown future operation, the independent consumer ignores it, unknown envelope fields decode, and a v2 request fails closed. |
+| 12 | Enforce explicit input and output bounds | DONE | `policy.go` declares every bound; request/result/envelope validators and boundary tests cover repository scopes, page/item counts, all text/body/diff dimensions, partial failures, error detail, duration, redirects, journal entries, rate values, cursors, and idempotency material. |
+| 13 | Produce byte-stable fixture and digest | DONE | `fixture.go`, its generator, and the golden test prove repeated generation matches embedded bytes and SHA `e96d4ea5e60c8707698188db3096477a320ec4ccf3417dd8faf4983f37640bb5`. |
+| 14 | Exclude credentials, raw bodies, and mutation text from safe material | DONE | Receipts contain IDs only, reconciliation has no free-form body field, fixture mutation text is the literal `[redacted]` sentinel, and tests reject credential canaries and previous example text. |
 
 ### Changes
 
 | # | Changes item (abbreviated) | Status | Note |
 |---|---|---|---|
-| 1 | Add canonical contract types and validation | DONE | Added `contract.go` and `validate.go` with typed identities, results, request payloads, envelope, fingerprints, and fail-closed validation. |
+| 1 | Add canonical contract types and validation | DONE | Added typed identities, operation-specific results, request payloads, envelope, strict decoders, fingerprints, availability/nullability validation, and fail-closed bounds. |
 | 2 | Add a single operation-policy registry | DONE | Added `policy.go` with one ordered inventory, derived capabilities, effects, consent, bounds, error, and retry values. |
-| 3 | Define cursor and revision material | DONE | Added bounded fingerprint inputs and deterministic SHA-256 fingerprints with explicit cursor mismatch errors. |
+| 3 | Define cursor and revision material | DONE | Added opaque base64url cursor envelopes, bounded material, SHA-256 integrity, request/response binding, tamper rejection, and deterministic revision fingerprints. |
 | 4 | Define mutation receipt and reconciliation outcomes | DONE | Added safe receipts and seven typed outcomes, fixture coverage, and lifecycle documentation. |
-| 5 | Publish the contract documentation | DONE | Added `docs/contracts/code-host-broker-v1.md` and registered it in `docs/contracts/README.md`. |
-| 6 | Generate canonical consumer fixture and digest | DONE | Added deterministic generator plus committed JSON fixture and SHA-256 digest under `contracts/codehostbroker/testdata/v1/`. |
-| 7 | Add validation, round-trip, fuzz, bounds, golden, and redaction tests | DONE | Added `contract_test.go`; focused, fuzz, full repository, and vet runs pass. |
+| 5 | Publish the contract documentation | DONE | Added the full operation, DTO field/nullability, result schema, cursor, effect, retry, bound, reconciliation, fixture, compatibility, and security contract and registered it in the contract index. |
+| 6 | Generate canonical consumer fixture and digest | DONE | The deterministic fixture covers twenty known plus one unknown advertised operation, every availability/completeness/reconciliation state, terminal/non-terminal pages, redacted mutation fields, errors, and SHA sidecar. |
+| 7 | Add validation, round-trip, fuzz, bounds, golden, and redaction tests | DONE | Tests include a strict independent result decoder, every declared bound, exact retry/reconciliation rules, actual cursor wire binding, availability/page coverage, redaction canaries, golden bytes, and meaningful identity/cursor fuzz invariants. |
 
 ### Exercise-the-feature check
 
 - [x] User-visible behavior was exercised end-to-end: `go generate
   ./contracts/codehostbroker` emitted digest
-  `140bd924ccafbfaca3a1e88609c37b584ddfc4625d5079702c942548e733950e`;
+  `e96d4ea5e60c8707698188db3096477a320ec4ccf3417dd8faf4983f37640bb5`;
   `sha256sum` matched the published sidecar, and every generated request and
   response decoded and validated through the canonical contract tests.
 

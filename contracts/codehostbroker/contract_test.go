@@ -3,6 +3,8 @@ package codehostbroker
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"reflect"
 	"strings"
 	"testing"
@@ -93,7 +95,7 @@ func TestCanonicalFixtureCoversAndValidatesEveryOperation(t *testing.T) {
 	if err := json.Unmarshal(data, &fixture); err != nil {
 		t.Fatal(err)
 	}
-	if fixture.Version != Version || len(fixture.Cases) != len(Operations()) || len(fixture.Operations) != len(Operations()) {
+	if fixture.Version != Version || len(fixture.Cases) != len(Operations()) || len(fixture.Operations) != len(Operations())+1 {
 		t.Fatalf("fixture inventory: version=%q cases=%d operations=%d", fixture.Version, len(fixture.Cases), len(fixture.Operations))
 	}
 	seen := map[Operation]bool{}
@@ -196,6 +198,25 @@ func TestCursorAndRevisionFingerprintsBindMutableMaterial(t *testing.T) {
 	if mismatch := ValidateCursorFingerprint(first, second); mismatch == nil || mismatch.Code != ErrorCursorMismatch {
 		t.Fatalf("mismatch=%v", mismatch)
 	}
+	encoded, contractErr := EncodeCursor(material)
+	if contractErr != nil {
+		t.Fatal(contractErr)
+	}
+	request := Request{
+		Version: Version, Operation: material.Operation, ConnectionID: material.ConnectionID,
+		Repository: fixtureRepository(), Query: material.Query, Order: material.Order, Cursor: encoded,
+	}
+	if contractErr := ValidateRequest(request); contractErr != nil {
+		t.Fatal(contractErr)
+	}
+	request.Query = "different"
+	if contractErr := ValidateRequest(request); contractErr == nil || contractErr.Code != ErrorCursorMismatch {
+		t.Fatalf("query mismatch=%v", contractErr)
+	}
+	tampered := encoded[:len(encoded)-1] + "A"
+	if _, contractErr := DecodeCursor(tampered); contractErr == nil || contractErr.Code != ErrorCursorMismatch {
+		t.Fatalf("tampered cursor error=%v", contractErr)
+	}
 
 	repository := fixtureRepository()
 	head := RefIdentity{Repository: repository, Name: "feature", SHA: strings.Repeat("a", 40)}
@@ -267,6 +288,19 @@ func TestUnknownAdditiveFieldsDecodeAndMajorVersionFailsClosed(t *testing.T) {
 	if err := json.Unmarshal(data, &known); err != nil || known.Version != Version || len(known.Cases) != 20 {
 		t.Fatalf("known decode=%+v err=%v", known, err)
 	}
+	fixture := mustFixture(t)
+	knownCapabilities := 0
+	unknownCapabilities := 0
+	for _, capability := range fixture.Operations {
+		if IsOperation(capability.Policy.Operation) {
+			knownCapabilities++
+		} else {
+			unknownCapabilities++
+		}
+	}
+	if knownCapabilities != 20 || unknownCapabilities != 1 {
+		t.Fatalf("known capabilities=%d unknown=%d", knownCapabilities, unknownCapabilities)
+	}
 	request := mustFixture(t).Cases[0].Request
 	request.Version = "code-host-broker/v2"
 	if contractErr := ValidateRequest(request); contractErr == nil || contractErr.Code != ErrorIncompatibleVersion {
@@ -285,6 +319,248 @@ func TestFixtureAndErrorsContainNoCredentialCanaries(t *testing.T) {
 			t.Fatalf("fixture contains forbidden credential material %q", forbidden)
 		}
 	}
+	for _, forbidden := range []string{"bounded fixture body", "fixture comment", "fixture review", "merge fixture", "add code-host broker"} {
+		if strings.Contains(lower, forbidden) {
+			t.Fatalf("fixture contains mutation text %q", forbidden)
+		}
+	}
+	if !strings.Contains(lower, redactedFixtureText) {
+		t.Fatal("fixture does not demonstrate redacted text placeholders")
+	}
+}
+
+func TestOperationSpecificResultsRejectInvalidShapesAndBounds(t *testing.T) {
+	pullRequests := mustResponse(t, OperationListPullRequests)
+	pullRequests.Result = json.RawMessage(`{"pull_requests":"not-an-array"}`)
+	if err := ValidateResponse(pullRequests); err == nil || err.Code != ErrorInvalidInput {
+		t.Fatalf("untyped pull request result accepted: %v", err)
+	}
+
+	checks := mustResponse(t, OperationGetChecks)
+	checks.Result = json.RawMessage(`{"checks":[{"name":"bad","status":"done","availability":"invented"}]}`)
+	if err := ValidateResponse(checks); err == nil || err.Code != ErrorInvalidInput {
+		t.Fatalf("invalid availability accepted: %v", err)
+	}
+
+	comments := mustResponse(t, OperationGetComments)
+	tooMany := CommentsResult{Comments: make([]Comment, MaxItems+1)}
+	comments.Result, _ = json.Marshal(tooMany)
+	if err := ValidateResponse(comments); err == nil || err.Code != ErrorInputTooLarge {
+		t.Fatalf("item bound error=%v", err)
+	}
+
+	diff := mustResponse(t, OperationGetDiff)
+	tooManyFiles := DiffResult{Files: make([]DiffFile, MaxDiffFiles+1)}
+	diff.Result, _ = json.Marshal(tooManyFiles)
+	if err := ValidateResponse(diff); err == nil || err.Code != ErrorInputTooLarge {
+		t.Fatalf("diff file bound error=%v", err)
+	}
+	diff.Result, _ = json.Marshal(DiffResult{Files: []DiffFile{{
+		Path: "file.go", Status: "modified", Hunks: make([]DiffHunk, MaxDiffHunks+1),
+	}}})
+	if err := ValidateResponse(diff); err == nil || err.Code != ErrorInputTooLarge {
+		t.Fatalf("diff hunk bound error=%v", err)
+	}
+}
+
+func TestMutationResponsesRequireReconciliationAndExactRetry(t *testing.T) {
+	response := mustResponse(t, OperationComment)
+	response.Receipt = nil
+	if err := ValidateResponse(response); err == nil {
+		t.Fatal("successful mutation without receipt accepted")
+	}
+	response = mustResponse(t, OperationComment)
+	response.Reconciliation = nil
+	if err := ValidateResponse(response); err == nil {
+		t.Fatal("successful mutation without reconciliation accepted")
+	}
+	response = mustResponse(t, OperationComment)
+	response.Result = nil
+	response.Receipt = nil
+	response.Error = &ContractError{Code: ErrorAmbiguousResult, Message: "outcome unknown", Retry: RetrySameKey}
+	response.Reconciliation = &Reconciliation{Status: ReconciliationAmbiguous, Key: "same-key"}
+	if err := ValidateResponse(response); err == nil {
+		t.Fatal("ambiguous result with unsafe retry guidance accepted")
+	}
+	response.Error.Retry = RetryReconcile
+	if err := ValidateResponse(response); err != nil {
+		t.Fatalf("valid ambiguous response rejected: %v", err)
+	}
+	response.Reconciliation.Status = ReconciliationNotApplied
+	if err := ValidateResponse(response); err == nil {
+		t.Fatal("ambiguous error without ambiguous reconciliation accepted")
+	}
+}
+
+func TestEveryPublishedBoundHasEnforcementEvidence(t *testing.T) {
+	request := mustFixture(t).Cases[1].Request
+	request.Repositories = make([]RepositoryIdentity, MaxRepositoryScopes+1)
+	if err := ValidateRequest(request); err == nil || err.Code != ErrorInputTooLarge {
+		t.Fatalf("repository scope bound error=%v", err)
+	}
+	request = mustFixture(t).Cases[1].Request
+	request.Limit = MaxPageSize + 1
+	if err := ValidateRequest(request); err == nil {
+		t.Fatal("page size bound accepted")
+	}
+	request = mustFixture(t).Cases[1].Request
+	request.Query = strings.Repeat("x", MaxTextBytes+1)
+	if err := ValidateRequest(request); err == nil || err.Code != ErrorInputTooLarge {
+		t.Fatalf("text bound error=%v", err)
+	}
+	request = mustFixture(t).Cases[10].Request
+	request.Payload = json.RawMessage(`"` + strings.Repeat("x", MaxBodyBytes+1) + `"`)
+	if err := ValidateRequest(request); err == nil || err.Code != ErrorInputTooLarge {
+		t.Fatalf("body bound error=%v", err)
+	}
+	request = mustFixture(t).Cases[10].Request
+	request.IdempotencyKey = strings.Repeat("x", MaxIdempotencyBytes+1)
+	if err := ValidateRequest(request); err == nil {
+		t.Fatal("idempotency bound accepted")
+	}
+	response := mustResponse(t, OperationGetPullRequest)
+	response.Redirects = MaxRedirects + 1
+	if err := ValidateResponse(response); err == nil || err.Code != ErrorInputTooLarge {
+		t.Fatalf("redirect bound error=%v", err)
+	}
+	response = mustResponse(t, OperationComment)
+	response.JournalEntries = MaxJournalEntries + 1
+	if err := ValidateResponse(response); err == nil || err.Code != ErrorInputTooLarge {
+		t.Fatalf("journal bound error=%v", err)
+	}
+	response = mustResponse(t, OperationGetComments)
+	response.Page.NextCursor = strings.Repeat("x", MaxTextBytes+1)
+	if err := ValidateResponse(response); err == nil {
+		t.Fatal("unbounded page cursor accepted")
+	}
+	response = mustResponse(t, OperationGetPullRequest)
+	response.RateLimit.Remaining = response.RateLimit.Limit + 1
+	if err := ValidateResponse(response); err == nil {
+		t.Fatal("inconsistent rate limit accepted")
+	}
+	response = mustResponse(t, OperationGetPullRequest)
+	response.DurationMS = MaxDurationMS + 1
+	if err := ValidateResponse(response); err == nil {
+		t.Fatal("duration bound accepted")
+	}
+	response = mustResponse(t, OperationGetChecks)
+	response.PartialFailures = make([]PartialFailure, MaxPartialFailures+1)
+	if err := ValidateResponse(response); err == nil {
+		t.Fatal("partial-failure bound accepted")
+	}
+	response = mustResponse(t, OperationGetPullRequest)
+	response.Result = nil
+	response.Error = &ContractError{
+		Code: ErrorProvider, Message: strings.Repeat("x", MaxErrorDetailBytes+1), Retry: RetryNone,
+	}
+	if err := ValidateResponse(response); err == nil {
+		t.Fatal("error-detail bound accepted")
+	}
+}
+
+func TestFixtureCoversAvailabilityCompletenessAndPaginationStates(t *testing.T) {
+	fixture := mustFixture(t)
+	availability := map[Availability]bool{}
+	completeness := map[Completeness]bool{}
+	hasNext := false
+	hasTerminal := false
+	for _, fixtureCase := range fixture.Cases {
+		completeness[fixtureCase.Response.Completeness] = true
+		if fixtureCase.Response.Page != nil {
+			if fixtureCase.Response.Page.NextCursor == "" {
+				hasTerminal = true
+			} else {
+				hasNext = true
+				if _, err := DecodeCursor(fixtureCase.Response.Page.NextCursor); err != nil {
+					t.Fatalf("%s cursor: %v", fixtureCase.Name, err)
+				}
+			}
+		}
+		if fixtureCase.Response.Operation == OperationGetChecks {
+			var result ChecksResult
+			if err := json.Unmarshal(fixtureCase.Response.Result, &result); err != nil {
+				t.Fatal(err)
+			}
+			for _, check := range result.Checks {
+				availability[check.Availability] = true
+			}
+		}
+	}
+	for _, value := range []Availability{AvailabilityAvailable, AvailabilityPartial, AvailabilityUnavailable, AvailabilityUnknown} {
+		if !availability[value] {
+			t.Fatalf("missing availability %q", value)
+		}
+	}
+	for _, value := range []Completeness{CompletenessComplete, CompletenessPartial, CompletenessTruncated, CompletenessUnavailable} {
+		if !completeness[value] {
+			t.Fatalf("missing completeness %q", value)
+		}
+	}
+	if !hasNext || !hasTerminal {
+		t.Fatalf("pagination next=%v terminal=%v", hasNext, hasTerminal)
+	}
+}
+
+func TestFixtureDecodesWithIndependentConsumerShapes(t *testing.T) {
+	data, err := ConsumerFixture()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var consumer struct {
+		Version    string `json:"version"`
+		Operations []struct {
+			Policy struct {
+				Operation string `json:"operation"`
+				Effect    string `json:"effect"`
+			} `json:"policy"`
+			Available bool `json:"available"`
+		} `json:"operations"`
+		Cases []struct {
+			Name    string `json:"name"`
+			Request struct {
+				Version      string `json:"version"`
+				Operation    string `json:"operation"`
+				ConnectionID string `json:"connection_id"`
+			} `json:"request"`
+			Response struct {
+				Version      string          `json:"version"`
+				Operation    string          `json:"operation"`
+				Provider     string          `json:"provider"`
+				ConnectionID string          `json:"connection_id"`
+				Result       json.RawMessage `json:"result"`
+			} `json:"response"`
+		} `json:"cases"`
+	}
+	if err := json.Unmarshal(data, &consumer); err != nil {
+		t.Fatal(err)
+	}
+	if consumer.Version != Version || len(consumer.Operations) != 21 || len(consumer.Cases) != 20 {
+		t.Fatalf("independent decoder inventory=%+v", consumer)
+	}
+	for _, fixtureCase := range consumer.Cases {
+		if fixtureCase.Name == "" || fixtureCase.Request.Version != Version ||
+			fixtureCase.Request.Operation != fixtureCase.Response.Operation ||
+			fixtureCase.Response.Version != Version || fixtureCase.Response.Provider == "" ||
+			fixtureCase.Request.ConnectionID != fixtureCase.Response.ConnectionID || !json.Valid(fixtureCase.Response.Result) {
+			t.Fatalf("independent decoder rejected case %+v", fixtureCase)
+		}
+		if err := decodeIndependentConsumerResult(fixtureCase.Response.Operation, fixtureCase.Response.Result); err != nil {
+			t.Fatalf("%s independent result decoder: %v", fixtureCase.Name, err)
+		}
+	}
+	pullRequest := mustResponse(t, OperationGetPullRequest).Result
+	var additive map[string]any
+	if err := json.Unmarshal(pullRequest, &additive); err != nil {
+		t.Fatal(err)
+	}
+	additive["future_result_field"] = map[string]any{"nested": true}
+	withAdditive, err := json.Marshal(additive)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := decodeIndependentConsumerResult(string(OperationGetPullRequest), withAdditive); err != nil {
+		t.Fatalf("independent consumer rejected additive result field: %v", err)
+	}
 }
 
 func FuzzValidatePullRequestIdentity(f *testing.F) {
@@ -298,6 +574,30 @@ func FuzzValidatePullRequestIdentity(f *testing.F) {
 			Number:       number,
 		}
 		_ = ValidatePullRequestIdentity(value)
+	})
+}
+
+func FuzzCursorRoundTrip(f *testing.F) {
+	f.Add("github", "connection", "owner/repo", "state:open", "updated_desc", "position")
+	f.Fuzz(func(t *testing.T, provider, connection, repository, query, order, position string) {
+		material := CursorMaterial{
+			Version: Version, Provider: provider, ConnectionID: connection,
+			Repositories: []string{repository}, Operation: OperationListPullRequests,
+			Query: query, Order: order, Position: position,
+		}
+		encoded, err := EncodeCursor(material)
+		if err != nil {
+			return
+		}
+		decoded, err := DecodeCursor(encoded)
+		if err != nil {
+			t.Fatalf("encoded cursor did not decode: %v", err)
+		}
+		want := material
+		want.Repositories = normalizedRepositoryScope(want.Repositories)
+		if !reflect.DeepEqual(decoded.Material, want) {
+			t.Fatalf("cursor material drifted: got=%+v want=%+v", decoded.Material, want)
+		}
 	})
 }
 
@@ -349,4 +649,192 @@ func sortedStrings(values []string) []string {
 		}
 	}
 	return out
+}
+
+type consumerRepository struct {
+	Host       string `json:"host"`
+	ProviderID string `json:"provider_id,omitempty"`
+	Owner      string `json:"owner"`
+	Name       string `json:"name"`
+	FullName   string `json:"full_name"`
+}
+
+type consumerRef struct {
+	Repository consumerRepository `json:"repository"`
+	Name       string             `json:"name"`
+	SHA        string             `json:"sha"`
+}
+
+type consumerIdentity struct {
+	ConnectionID string             `json:"connection_id"`
+	Repository   consumerRepository `json:"repository"`
+	ProviderID   string             `json:"provider_id"`
+	Number       int64              `json:"number"`
+}
+
+type consumerActor struct {
+	ProviderID string `json:"provider_id,omitempty"`
+	Login      string `json:"login"`
+	Display    string `json:"display,omitempty"`
+}
+
+type consumerPullRequest struct {
+	Identity  consumerIdentity `json:"identity"`
+	Title     string           `json:"title"`
+	Body      string           `json:"body,omitempty"`
+	URL       string           `json:"url"`
+	State     string           `json:"state"`
+	Draft     bool             `json:"draft"`
+	Author    consumerActor    `json:"author"`
+	Base      consumerRef      `json:"base"`
+	Head      consumerRef      `json:"head"`
+	CreatedAt string           `json:"created_at,omitempty"`
+	UpdatedAt string           `json:"updated_at,omitempty"`
+	MergedAt  string           `json:"merged_at,omitempty"`
+}
+
+type consumerBounds struct {
+	RepositoryScopes int `json:"repository_scopes"`
+	PageSize         int `json:"page_size"`
+	Items            int `json:"items"`
+	TextBytes        int `json:"text_bytes"`
+	BodyBytes        int `json:"body_bytes"`
+	DiffBytes        int `json:"diff_bytes"`
+	DiffFiles        int `json:"diff_files"`
+	DiffHunks        int `json:"diff_hunks"`
+	PartialFailures  int `json:"partial_failures"`
+	ErrorDetailBytes int `json:"error_detail_bytes"`
+	DurationMS       int `json:"duration_ms"`
+	Redirects        int `json:"redirects"`
+	JournalEntries   int `json:"journal_entries"`
+	IdempotencyBytes int `json:"idempotency_bytes"`
+}
+
+type consumerPolicy struct {
+	Operation                string         `json:"operation"`
+	Effect                   string         `json:"effect"`
+	Consent                  string         `json:"consent"`
+	RequiresUniqueTarget     bool           `json:"requires_unique_target"`
+	RequiresIdempotency      bool           `json:"requires_idempotency"`
+	RequiresFreshObservation bool           `json:"requires_fresh_observation"`
+	RequiresReconciliation   bool           `json:"requires_reconciliation"`
+	ReplaySafe               bool           `json:"replay_safe"`
+	Bounds                   consumerBounds `json:"bounds"`
+}
+
+func decodeIndependentConsumerResult(operation string, raw json.RawMessage) error {
+	switch Operation(operation) {
+	case OperationCapabilities:
+		var value struct {
+			Capabilities []struct {
+				Policy    consumerPolicy `json:"policy"`
+				Available bool           `json:"available"`
+				Reason    string         `json:"reason,omitempty"`
+			} `json:"capabilities"`
+		}
+		return strictConsumerDecode(raw, &value)
+	case OperationListPullRequests, OperationSearchPullRequests:
+		var value struct {
+			PullRequests []consumerPullRequest `json:"pull_requests"`
+		}
+		return strictConsumerDecode(raw, &value)
+	case OperationGetPullRequest:
+		var value consumerPullRequest
+		return strictConsumerDecode(raw, &value)
+	case OperationGetCommits:
+		var value struct {
+			Commits []struct {
+				SHA        string        `json:"sha"`
+				Message    string        `json:"message"`
+				Author     consumerActor `json:"author"`
+				AuthoredAt string        `json:"authored_at,omitempty"`
+				URL        string        `json:"url,omitempty"`
+			} `json:"commits"`
+		}
+		return strictConsumerDecode(raw, &value)
+	case OperationGetDiff:
+		var value struct {
+			Files []struct {
+				Path      string `json:"path"`
+				Status    string `json:"status"`
+				Additions int    `json:"additions"`
+				Deletions int    `json:"deletions"`
+				Hunks     []struct {
+					Header string `json:"header"`
+					Patch  string `json:"patch"`
+				} `json:"hunks"`
+				Truncated bool `json:"truncated"`
+			} `json:"files"`
+		}
+		return strictConsumerDecode(raw, &value)
+	case OperationGetChecks:
+		var value struct {
+			Checks []struct {
+				ProviderID   string `json:"provider_id,omitempty"`
+				Name         string `json:"name"`
+				Status       string `json:"status"`
+				Conclusion   string `json:"conclusion,omitempty"`
+				URL          string `json:"url,omitempty"`
+				Availability string `json:"availability"`
+			} `json:"checks"`
+		}
+		return strictConsumerDecode(raw, &value)
+	case OperationGetReviews:
+		var value struct {
+			Reviews []struct {
+				ProviderID  string        `json:"provider_id"`
+				Author      consumerActor `json:"author"`
+				State       string        `json:"state"`
+				Body        string        `json:"body,omitempty"`
+				HeadSHA     string        `json:"head_sha"`
+				SubmittedAt string        `json:"submitted_at,omitempty"`
+			} `json:"reviews"`
+		}
+		return strictConsumerDecode(raw, &value)
+	case OperationGetComments:
+		var value struct {
+			Comments []struct {
+				ProviderID string        `json:"provider_id"`
+				Author     consumerActor `json:"author"`
+				Body       string        `json:"body"`
+				URL        string        `json:"url,omitempty"`
+				CreatedAt  string        `json:"created_at,omitempty"`
+				UpdatedAt  string        `json:"updated_at,omitempty"`
+			} `json:"comments"`
+		}
+		return strictConsumerDecode(raw, &value)
+	case OperationGetMergeReadiness:
+		var value struct {
+			State            string   `json:"state"`
+			Checks           string   `json:"checks"`
+			Reviews          string   `json:"reviews"`
+			BranchProtection string   `json:"branch_protection"`
+			Permissions      string   `json:"permissions"`
+			Mergeability     string   `json:"mergeability"`
+			Queue            string   `json:"queue"`
+			Reasons          []string `json:"reasons"`
+		}
+		return strictConsumerDecode(raw, &value)
+	default:
+		var value struct {
+			PullRequest consumerPullRequest `json:"pull_request"`
+			Outcome     string              `json:"outcome"`
+		}
+		return strictConsumerDecode(raw, &value)
+	}
+}
+
+func strictConsumerDecode(raw json.RawMessage, target any) error {
+	decoder := json.NewDecoder(strings.NewReader(string(raw)))
+	if err := decoder.Decode(target); err != nil {
+		return err
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		if err == nil {
+			return fmt.Errorf("trailing JSON value")
+		}
+		return err
+	}
+	return nil
 }

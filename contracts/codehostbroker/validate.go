@@ -2,11 +2,14 @@ package codehostbroker
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"reflect"
+	"sort"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -73,11 +76,25 @@ func ValidateRequest(request Request) *ContractError {
 	if err := ValidateRepository(request.Repository); err != nil {
 		return err
 	}
+	if len(request.Repositories) > policy.Bounds.RepositoryScopes {
+		return tooLarge("repositories", "repository scope count exceeds the operation bound")
+	}
+	for i, repository := range request.Repositories {
+		if err := ValidateRepository(repository); err != nil {
+			err.Field = fmt.Sprintf("repositories.%d.%s", i, err.Field)
+			return err
+		}
+	}
 	if request.Limit < 0 || request.Limit > policy.Bounds.PageSize {
 		return invalid("limit", "page limit exceeds the operation bound")
 	}
 	if tooLong(request.Query, MaxTextBytes) || tooLong(request.Order, 128) || tooLong(request.Cursor, MaxTextBytes) {
 		return tooLarge("query", "query, order, or cursor exceeds its bound")
+	}
+	if request.Cursor != "" {
+		if err := validateRequestCursor(request); err != nil {
+			return err
+		}
 	}
 	if requiresPullRequest(request.Operation) {
 		if request.PullRequest == nil {
@@ -151,16 +168,33 @@ func ValidateResponse(response Response) *ContractError {
 	if response.DurationMS < 0 || response.DurationMS > int64(policy.Bounds.DurationMS) {
 		return tooLarge("duration_ms", "duration exceeds the operation bound")
 	}
+	if response.Redirects < 0 || response.Redirects > policy.Bounds.Redirects {
+		return tooLarge("redirects", "redirect count exceeds the operation bound")
+	}
+	if response.JournalEntries < 0 || response.JournalEntries > policy.Bounds.JournalEntries {
+		return tooLarge("journal_entries", "journal entry count exceeds the operation bound")
+	}
+	if response.RateLimit.Limit < 0 || response.RateLimit.Remaining < 0 || response.RateLimit.RetryAfter < 0 ||
+		(response.RateLimit.Limit > 0 && response.RateLimit.Remaining > response.RateLimit.Limit) {
+		return invalid("rate_limit", "rate-limit values must be non-negative and internally consistent")
+	}
 	if len(response.PartialFailures) > policy.Bounds.PartialFailures {
 		return tooLarge("partial_failures", "partial failure count exceeds the operation bound")
 	}
 	for i, failure := range response.PartialFailures {
-		if failure.Section == "" || failure.Code == "" || tooLong(failure.Message, policy.Bounds.ErrorDetailBytes) {
+		if failure.Section == "" || tooLong(failure.Section, 256) || !containsString(errorCodes, failure.Code) || tooLong(failure.Message, policy.Bounds.ErrorDetailBytes) {
 			return invalid(fmt.Sprintf("partial_failures.%d", i), "partial failure is incomplete or unbounded")
 		}
 	}
-	if response.Page != nil && (response.Page.Limit < 0 || response.Page.Limit > policy.Bounds.PageSize || response.Page.Count < 0 || response.Page.Count > policy.Bounds.Items) {
-		return invalid("page", "page metadata exceeds the operation bound")
+	if response.Page != nil {
+		if response.Page.Limit < 0 || response.Page.Limit > policy.Bounds.PageSize || response.Page.Count < 0 || response.Page.Count > policy.Bounds.Items || tooLong(response.Page.NextCursor, MaxTextBytes) {
+			return invalid("page", "page metadata exceeds the operation bound")
+		}
+		if response.Page.NextCursor != "" {
+			if err := validateResponseCursor(response, response.Page.NextCursor); err != nil {
+				return err
+			}
+		}
 	}
 	if response.Error == nil && len(response.Result) == 0 {
 		return invalid("result", "result is required when error is null")
@@ -179,14 +213,26 @@ func ValidateResponse(response Response) *ContractError {
 		if !containsString(errorCodes, response.Error.Code) || !containsRetry(RetryGuidanceValues(), response.Error.Retry) || tooLong(response.Error.Message, policy.Bounds.ErrorDetailBytes) {
 			return invalid("error", "error code, retry guidance, and detail must be bounded declared values")
 		}
+		if response.Error.Retry != RetryForError(response.Error.Code) {
+			return invalid("error.retry", "retry guidance does not match the normalized error code")
+		}
+		if response.Error.Code == ErrorAmbiguousResult &&
+			(response.Reconciliation == nil || response.Reconciliation.Status != ReconciliationAmbiguous) {
+			return invalid("reconciliation", "ambiguous_result requires ambiguous reconciliation state")
+		}
+	} else if err := validateOperationResult(response.Operation, response.Result, policy.Bounds); err != nil {
+		return err
 	}
 	if response.Reconciliation != nil {
-		if !validReconciliation(response.Reconciliation.Status) || response.Reconciliation.Key == "" || tooLong(response.Reconciliation.Key, 512) || tooLong(response.Reconciliation.Detail, policy.Bounds.ErrorDetailBytes) {
+		if !validReconciliation(response.Reconciliation.Status) || response.Reconciliation.Key == "" || tooLong(response.Reconciliation.Key, 512) {
 			return invalid("reconciliation", "reconciliation state is invalid or unbounded")
 		}
 	}
 	if response.Receipt != nil && (response.Receipt.OperationID == "" || tooLong(response.Receipt.OperationID, 512) || tooLong(response.Receipt.ProviderReceiptID, 512) || tooLong(response.Receipt.TargetRevision, 512)) {
 		return invalid("receipt", "receipt is incomplete or unbounded")
+	}
+	if IsMutation(response.Operation) && response.Error == nil && (response.Receipt == nil || response.Reconciliation == nil) {
+		return invalid("reconciliation", "successful mutation responses require receipt and reconciliation state")
 	}
 	return nil
 }
@@ -199,13 +245,62 @@ func ValidateCursorFingerprint(expected, actual string) *ContractError {
 }
 
 func CursorFingerprint(material CursorMaterial) (string, *ContractError) {
-	if material.Version != Version || material.Provider == "" || material.ConnectionID == "" || !IsOperation(material.Operation) {
+	material.Repositories = normalizedRepositoryScope(material.Repositories)
+	if material.Version != Version || material.Provider == "" || tooLong(material.Provider, 64) ||
+		material.ConnectionID == "" || tooLong(material.ConnectionID, 128) || !IsOperation(material.Operation) {
 		return "", invalid("cursor", "cursor material is incomplete")
 	}
 	if len(material.Repositories) == 0 || len(material.Repositories) > MaxRepositoryScopes || tooLong(material.Query, MaxTextBytes) || tooLong(material.Order, 128) || tooLong(material.Position, 512) {
 		return "", tooLarge("cursor", "cursor material exceeds its bound")
 	}
+	for _, repository := range material.Repositories {
+		if repository == "" || tooLong(repository, 512) {
+			return "", tooLarge("cursor.repositories", "cursor repository identity is empty or unbounded")
+		}
+	}
 	return fingerprint("cursor", material)
+}
+
+func EncodeCursor(material CursorMaterial) (string, *ContractError) {
+	material.Repositories = normalizedRepositoryScope(material.Repositories)
+	fingerprintValue, err := CursorFingerprint(material)
+	if err != nil {
+		return "", err
+	}
+	data, encodeErr := json.Marshal(CursorEnvelope{Material: material, Fingerprint: fingerprintValue})
+	if encodeErr != nil {
+		return "", &ContractError{Code: ErrorEncoding, Message: "could not encode cursor", Retry: RetryNone}
+	}
+	encoded := base64.RawURLEncoding.EncodeToString(data)
+	if tooLong(encoded, MaxTextBytes) {
+		return "", tooLarge("cursor", "encoded cursor exceeds its bound")
+	}
+	return encoded, nil
+}
+
+func DecodeCursor(encoded string) (CursorEnvelope, *ContractError) {
+	if encoded == "" || tooLong(encoded, MaxTextBytes) {
+		return CursorEnvelope{}, &ContractError{Code: ErrorCursorMismatch, Message: "cursor is empty or unbounded", Field: "cursor", Retry: RetryNone}
+	}
+	data, err := base64.RawURLEncoding.DecodeString(encoded)
+	if err != nil {
+		return CursorEnvelope{}, &ContractError{Code: ErrorCursorMismatch, Message: "cursor encoding is invalid", Field: "cursor", Retry: RetryNone}
+	}
+	var envelope CursorEnvelope
+	decoder := json.NewDecoder(strings.NewReader(string(data)))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&envelope); err != nil {
+		return CursorEnvelope{}, &ContractError{Code: ErrorCursorMismatch, Message: "cursor envelope is invalid", Field: "cursor", Retry: RetryNone}
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return CursorEnvelope{}, &ContractError{Code: ErrorCursorMismatch, Message: "cursor envelope contains trailing data", Field: "cursor", Retry: RetryNone}
+	}
+	envelope.Material.Repositories = normalizedRepositoryScope(envelope.Material.Repositories)
+	expected, contractErr := CursorFingerprint(envelope.Material)
+	if contractErr != nil || ValidateCursorFingerprint(expected, envelope.Fingerprint) != nil {
+		return CursorEnvelope{}, &ContractError{Code: ErrorCursorMismatch, Message: "cursor fingerprint is invalid", Field: "cursor", Retry: RetryNone}
+	}
+	return envelope, nil
 }
 
 func RevisionFingerprint(kind string, material RevisionMaterial) (string, *ContractError) {
@@ -231,6 +326,279 @@ func RevisionFingerprint(kind string, material RevisionMaterial) (string, *Contr
 		}
 	}
 	return fingerprint(kind, material)
+}
+
+func RetryForError(code string) RetryGuidance {
+	switch code {
+	case ErrorRateLimited:
+		return RetryAfter
+	case ErrorStaleObservation, ErrorCapabilityChanged, ErrorConflict:
+		return RetryRefreshThenRetry
+	case ErrorIdempotencyConflict, ErrorOperationInProgress:
+		return RetrySameKey
+	case ErrorAmbiguousResult:
+		return RetryReconcile
+	default:
+		return RetryNone
+	}
+}
+
+func validateOperationResult(operation Operation, raw json.RawMessage, bounds Bounds) *ContractError {
+	if !json.Valid(raw) {
+		return invalid("result", "result must be valid JSON")
+	}
+	switch operation {
+	case OperationCapabilities:
+		var result CapabilitiesResult
+		if err := decodeResult(raw, &result); err != nil {
+			return err
+		}
+		if len(result.Capabilities) > bounds.Items {
+			return tooLarge("result.capabilities", "capability count exceeds the operation bound")
+		}
+		for i, capability := range result.Capabilities {
+			if capability.Policy.Operation == "" || tooLong(string(capability.Policy.Operation), 128) || tooLong(capability.Reason, bounds.ErrorDetailBytes) {
+				return invalid(fmt.Sprintf("result.capabilities.%d", i), "capability is incomplete or unbounded")
+			}
+			if policy, known := Policy(capability.Policy.Operation); known && !reflect.DeepEqual(capability.Policy, policy) {
+				return invalid(fmt.Sprintf("result.capabilities.%d.policy", i), "known capability policy does not match the authoritative registry")
+			}
+		}
+	case OperationListPullRequests, OperationSearchPullRequests:
+		var result PullRequestsResult
+		if err := decodeResult(raw, &result); err != nil {
+			return err
+		}
+		if len(result.PullRequests) > bounds.Items {
+			return tooLarge("result.pull_requests", "pull request count exceeds the operation bound")
+		}
+		for i := range result.PullRequests {
+			if err := validatePullRequest(result.PullRequests[i], fmt.Sprintf("result.pull_requests.%d", i)); err != nil {
+				return err
+			}
+		}
+	case OperationGetPullRequest:
+		var result PullRequest
+		if err := decodeResult(raw, &result); err != nil {
+			return err
+		}
+		return validatePullRequest(result, "result")
+	case OperationGetCommits:
+		var result CommitsResult
+		if err := decodeResult(raw, &result); err != nil {
+			return err
+		}
+		if len(result.Commits) > bounds.Items {
+			return tooLarge("result.commits", "commit count exceeds the operation bound")
+		}
+		for i, commit := range result.Commits {
+			if commit.SHA == "" || tooLong(commit.SHA, 128) || commit.Message == "" || tooLong(commit.Message, bounds.TextBytes) ||
+				tooLong(commit.AuthoredAt, 64) || tooLong(commit.URL, 2048) {
+				return invalid(fmt.Sprintf("result.commits.%d", i), "commit is incomplete or unbounded")
+			}
+			if err := validateActor(commit.Author, fmt.Sprintf("result.commits.%d.author", i)); err != nil {
+				return err
+			}
+		}
+	case OperationGetDiff:
+		var result DiffResult
+		if err := decodeResult(raw, &result); err != nil {
+			return err
+		}
+		if len(result.Files) > bounds.DiffFiles {
+			return tooLarge("result.files", "diff file count exceeds the operation bound")
+		}
+		hunks := 0
+		for i, file := range result.Files {
+			hunks += len(file.Hunks)
+			if file.Path == "" || tooLong(file.Path, 4096) || file.Status == "" || tooLong(file.Status, 64) ||
+				file.Additions < 0 || file.Deletions < 0 {
+				return invalid(fmt.Sprintf("result.files.%d", i), "diff file is incomplete, negative, or unbounded")
+			}
+			for j, hunk := range file.Hunks {
+				if hunk.Header == "" || tooLong(hunk.Header, bounds.TextBytes) || tooLong(hunk.Patch, bounds.DiffBytes) {
+					return tooLarge(fmt.Sprintf("result.files.%d.hunks.%d", i, j), "diff hunk is empty or unbounded")
+				}
+			}
+		}
+		if hunks > bounds.DiffHunks {
+			return tooLarge("result.files.hunks", "diff hunk count exceeds the operation bound")
+		}
+	case OperationGetChecks:
+		var result ChecksResult
+		if err := decodeResult(raw, &result); err != nil {
+			return err
+		}
+		if len(result.Checks) > bounds.Items {
+			return tooLarge("result.checks", "check count exceeds the operation bound")
+		}
+		for i, check := range result.Checks {
+			if check.Name == "" || tooLong(check.ProviderID, 512) || tooLong(check.Name, bounds.TextBytes) ||
+				check.Status == "" || tooLong(check.Status, 128) || tooLong(check.Conclusion, 128) ||
+				tooLong(check.URL, 2048) || !validAvailability(check.Availability) {
+				return invalid(fmt.Sprintf("result.checks.%d", i), "check is incomplete, unbounded, or has invalid availability")
+			}
+		}
+	case OperationGetReviews:
+		var result ReviewsResult
+		if err := decodeResult(raw, &result); err != nil {
+			return err
+		}
+		if len(result.Reviews) > bounds.Items {
+			return tooLarge("result.reviews", "review count exceeds the operation bound")
+		}
+		for i, review := range result.Reviews {
+			if review.ProviderID == "" || tooLong(review.ProviderID, 512) || review.State == "" ||
+				tooLong(review.State, 128) || tooLong(review.Body, bounds.BodyBytes) ||
+				review.HeadSHA == "" || tooLong(review.HeadSHA, 128) || tooLong(review.SubmittedAt, 64) {
+				return invalid(fmt.Sprintf("result.reviews.%d", i), "review is incomplete or unbounded")
+			}
+			if err := validateActor(review.Author, fmt.Sprintf("result.reviews.%d.author", i)); err != nil {
+				return err
+			}
+		}
+	case OperationGetComments:
+		var result CommentsResult
+		if err := decodeResult(raw, &result); err != nil {
+			return err
+		}
+		if len(result.Comments) > bounds.Items {
+			return tooLarge("result.comments", "comment count exceeds the operation bound")
+		}
+		for i, comment := range result.Comments {
+			if comment.ProviderID == "" || tooLong(comment.ProviderID, 512) || comment.Body == "" ||
+				tooLong(comment.Body, bounds.BodyBytes) || tooLong(comment.URL, 2048) ||
+				tooLong(comment.CreatedAt, 64) || tooLong(comment.UpdatedAt, 64) {
+				return invalid(fmt.Sprintf("result.comments.%d", i), "comment is incomplete or unbounded")
+			}
+			if err := validateActor(comment.Author, fmt.Sprintf("result.comments.%d.author", i)); err != nil {
+				return err
+			}
+		}
+	case OperationGetMergeReadiness:
+		var result MergeReadiness
+		if err := decodeResult(raw, &result); err != nil {
+			return err
+		}
+		if result.State == "" || tooLong(result.State, 128) ||
+			!validAvailability(result.Checks) || !validAvailability(result.Reviews) ||
+			!validAvailability(result.BranchProtection) || !validAvailability(result.Permissions) ||
+			!validAvailability(result.Mergeability) || !validAvailability(result.Queue) ||
+			len(result.Reasons) > bounds.Items {
+			return invalid("result", "merge readiness is incomplete, unbounded, or has invalid availability")
+		}
+		for i, reason := range result.Reasons {
+			if reason == "" || tooLong(reason, bounds.TextBytes) {
+				return tooLarge(fmt.Sprintf("result.reasons.%d", i), "merge-readiness reason is empty or unbounded")
+			}
+		}
+	default:
+		if !IsMutation(operation) {
+			return &ContractError{Code: ErrorUnsupportedOperation, Message: "result operation is unsupported", Field: "operation", Retry: RetryNone}
+		}
+		var result MutationResult
+		if err := decodeResult(raw, &result); err != nil {
+			return err
+		}
+		if result.Outcome == "" || tooLong(result.Outcome, 128) {
+			return invalid("result.outcome", "bounded mutation outcome is required")
+		}
+		return validatePullRequest(result.PullRequest, "result.pull_request")
+	}
+	return nil
+}
+
+func decodeResult(raw json.RawMessage, target any) *ContractError {
+	decoder := json.NewDecoder(strings.NewReader(string(raw)))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(target); err != nil {
+		return invalid("result", "result does not match the operation schema")
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return invalid("result", "result contains trailing JSON values")
+	}
+	return nil
+}
+
+func validatePullRequest(pullRequest PullRequest, field string) *ContractError {
+	if err := ValidatePullRequestIdentity(pullRequest.Identity); err != nil {
+		err.Field = field + "." + err.Field
+		return err
+	}
+	if pullRequest.Title == "" || tooLong(pullRequest.Title, MaxTextBytes) || tooLong(pullRequest.Body, MaxBodyBytes) ||
+		pullRequest.URL == "" || tooLong(pullRequest.URL, 2048) || pullRequest.State == "" || tooLong(pullRequest.State, 128) ||
+		tooLong(pullRequest.CreatedAt, 64) || tooLong(pullRequest.UpdatedAt, 64) || tooLong(pullRequest.MergedAt, 64) {
+		return invalid(field, "pull request is incomplete or unbounded")
+	}
+	if err := validateActor(pullRequest.Author, field+".author"); err != nil {
+		return err
+	}
+	if err := ValidateRef(pullRequest.Base, field+".base"); err != nil {
+		return err
+	}
+	return ValidateRef(pullRequest.Head, field+".head")
+}
+
+func validateActor(actor Actor, field string) *ContractError {
+	if actor.Login == "" || tooLong(actor.Login, 255) || tooLong(actor.ProviderID, 512) || tooLong(actor.Display, MaxTextBytes) {
+		return invalid(field, "actor is incomplete or unbounded")
+	}
+	return nil
+}
+
+func validateRequestCursor(request Request) *ContractError {
+	envelope, err := DecodeCursor(request.Cursor)
+	if err != nil {
+		return err
+	}
+	material := envelope.Material
+	scope := requestRepositoryScope(request)
+	if material.Version != Version || material.ConnectionID != request.ConnectionID ||
+		material.Operation != request.Operation || material.Query != request.Query ||
+		material.Order != request.Order || !reflect.DeepEqual(material.Repositories, scope) {
+		return &ContractError{Code: ErrorCursorMismatch, Message: "cursor does not match request scope, operation, query, or ordering", Field: "cursor", Retry: RetryNone}
+	}
+	return nil
+}
+
+func validateResponseCursor(response Response, encoded string) *ContractError {
+	envelope, err := DecodeCursor(encoded)
+	if err != nil {
+		return err
+	}
+	material := envelope.Material
+	if material.Version != Version || material.Provider != response.Provider ||
+		material.ConnectionID != response.ConnectionID || material.Operation != response.Operation ||
+		!containsString(material.Repositories, response.Repository.FullName) {
+		return &ContractError{Code: ErrorCursorMismatch, Message: "response cursor does not match operation identity", Field: "page.next_cursor", Retry: RetryNone}
+	}
+	return nil
+}
+
+func requestRepositoryScope(request Request) []string {
+	scope := make([]string, 0, len(request.Repositories)+1)
+	scope = append(scope, request.Repository.FullName)
+	for _, repository := range request.Repositories {
+		scope = append(scope, repository.FullName)
+	}
+	return normalizedRepositoryScope(scope)
+}
+
+func normalizedRepositoryScope(scope []string) []string {
+	seen := make(map[string]struct{}, len(scope))
+	out := make([]string, 0, len(scope))
+	for _, repository := range scope {
+		if repository == "" {
+			continue
+		}
+		if _, ok := seen[repository]; ok {
+			continue
+		}
+		seen[repository] = struct{}{}
+		out = append(out, repository)
+	}
+	sort.Strings(out)
+	return out
 }
 
 func requiresPullRequest(operation Operation) bool {
@@ -317,6 +685,9 @@ func decodePayload(raw json.RawMessage, target any) *ContractError {
 	if err := decoder.Decode(target); err != nil {
 		return invalid("payload", "payload does not match operation schema")
 	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return invalid("payload", "payload contains trailing JSON values")
+	}
 	return nil
 }
 
@@ -360,6 +731,10 @@ func validFreshness(value Freshness) bool {
 
 func validCompleteness(value Completeness) bool {
 	return containsString([]Completeness{CompletenessComplete, CompletenessPartial, CompletenessTruncated, CompletenessUnavailable}, value)
+}
+
+func validAvailability(value Availability) bool {
+	return containsString([]Availability{AvailabilityAvailable, AvailabilityPartial, AvailabilityUnavailable, AvailabilityUnknown}, value)
 }
 
 func validReconciliation(value ReconciliationStatus) bool {

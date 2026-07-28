@@ -8,6 +8,8 @@ import (
 
 //go:generate go run ./cmd/generate
 
+const redactedFixtureText = "[redacted]"
+
 func CanonicalFixture() ([]byte, error) {
 	repository := RepositoryIdentity{
 		Host: "github.com", ProviderID: "R_hero", Owner: "hero-engine", Name: "hero", FullName: "hero-engine/hero",
@@ -21,7 +23,7 @@ func CanonicalFixture() ([]byte, error) {
 		ConnectionID: "github-code-host", Repository: repository, ProviderID: "PR_kwDO_fixture", Number: 42,
 	}
 	pullRequest := PullRequest{
-		Identity: identity, Title: "Add code-host broker", Body: "Bounded fixture body", URL: "https://github.com/hero-engine/hero/pull/42",
+		Identity: identity, Title: redactedFixtureText, Body: redactedFixtureText, URL: "https://github.com/hero-engine/hero/pull/42",
 		State: "open", Draft: false, Author: Actor{ProviderID: "U_fixture", Login: "contributor"}, Base: base, Head: head,
 		CreatedAt: "2026-07-27T20:00:00Z", UpdatedAt: "2026-07-27T20:30:00Z",
 	}
@@ -69,8 +71,25 @@ func CanonicalFixture() ([]byte, error) {
 			Bounds:    policy.Bounds, Completeness: CompletenessComplete, PartialFailures: []PartialFailure{},
 			Result: result, Truncated: false, DurationMS: 42,
 		}
-		if collectionOperations[operation] || operation == OperationGetCommits || operation == OperationGetReviews || operation == OperationGetComments {
-			response.Page = &Page{Limit: 25, Count: 1, NextCursor: "cursor:opaque-fixture"}
+		if operation == OperationListPullRequests || operation == OperationSearchPullRequests ||
+			operation == OperationGetCommits || operation == OperationGetReviews || operation == OperationGetComments {
+			cursor, err := EncodeCursor(CursorMaterial{
+				Version: Version, Provider: "github", ConnectionID: identity.ConnectionID,
+				Repositories: []string{repository.FullName}, Operation: operation,
+				Query: request.Query, Order: request.Order, Position: "page-2",
+			})
+			if err != nil {
+				return nil, err
+			}
+			response.Page = &Page{Limit: 25, Count: 1, NextCursor: cursor}
+			if operation == OperationGetReviews {
+				response.Completeness = CompletenessUnavailable
+				response.Page.Count = 0
+				response.Page.NextCursor = ""
+			}
+			if operation == OperationGetComments {
+				response.Page.NextCursor = ""
+			}
 		}
 		if operation == OperationGetChecks {
 			response.Completeness = CompletenessPartial
@@ -87,6 +106,7 @@ func CanonicalFixture() ([]byte, error) {
 				ProviderReceiptID: "receipt-" + string(operation), OperationID: "operation-" + string(operation), TargetRevision: head.SHA,
 			}
 			response.Reconciliation = &Reconciliation{Status: status, Key: request.ReconciliationKey}
+			response.JournalEntries = 1
 		}
 		cases = append(cases, FixtureCase{Name: string(operation), Request: request, Response: response})
 	}
@@ -97,9 +117,11 @@ func CanonicalFixture() ([]byte, error) {
 			Code: code, Message: "bounded normalized fixture error", Retry: fixtureRetry(code),
 		})
 	}
+	advertised := Capabilities(allOperationsAvailable())
+	advertised = append(advertised, futureCapability())
 	bundle := ConsumerFixtureBundle{
 		Version:    Version,
-		Operations: Capabilities(allOperationsAvailable()),
+		Operations: advertised,
 		Cases:      cases,
 		Errors:     errors,
 		UnknownFields: map[string]json.RawMessage{
@@ -127,17 +149,17 @@ func fixturePayload(operation Operation, base, head RefIdentity) json.RawMessage
 	var payload any
 	switch operation {
 	case OperationCreatePullRequest:
-		payload = CreatePullRequestPayload{Base: base, Head: head, Title: "Add code-host broker", Body: "Bounded fixture body"}
+		payload = CreatePullRequestPayload{Base: base, Head: head, Title: redactedFixtureText, Body: redactedFixtureText}
 	case OperationComment:
-		payload = CommentPayload{ExpectedHeadSHA: head.SHA, Body: "Fixture comment"}
+		payload = CommentPayload{ExpectedHeadSHA: head.SHA, Body: redactedFixtureText}
 	case OperationSubmitReview, OperationApprove, OperationRequestChanges:
-		payload = ReviewPayload{ExpectedHeadSHA: head.SHA, Body: "Fixture review"}
+		payload = ReviewPayload{ExpectedHeadSHA: head.SHA, Body: redactedFixtureText}
 	case OperationRetarget:
 		payload = RetargetPayload{ExpectedHeadSHA: head.SHA, CurrentBase: base, NewBase: RefIdentity{Repository: base.Repository, Name: "release", SHA: base.SHA}}
 	case OperationMarkReady, OperationClose, OperationReopen:
 		payload = LifecyclePayload{ExpectedHeadSHA: head.SHA}
 	case OperationMerge:
-		payload = MergePayload{ExpectedHeadSHA: head.SHA, ObservedBase: base, Method: "squash", CommitTitle: "Merge fixture"}
+		payload = MergePayload{ExpectedHeadSHA: head.SHA, ObservedBase: base, Method: "squash", CommitTitle: redactedFixtureText, CommitMessage: redactedFixtureText}
 	}
 	data, _ := json.Marshal(payload)
 	return data
@@ -146,41 +168,35 @@ func fixturePayload(operation Operation, base, head RefIdentity) json.RawMessage
 func fixtureResult(operation Operation, pullRequest PullRequest) any {
 	switch operation {
 	case OperationCapabilities:
-		return map[string]any{"capabilities": Capabilities(allOperationsAvailable())}
+		return CapabilitiesResult{Capabilities: append(Capabilities(allOperationsAvailable()), futureCapability())}
 	case OperationListPullRequests, OperationSearchPullRequests:
 		return map[string]any{"pull_requests": []PullRequest{pullRequest}}
 	case OperationGetPullRequest:
 		return pullRequest
 	case OperationGetCommits:
-		return map[string]any{"commits": []Commit{{SHA: pullRequest.Head.SHA, Message: "fixture", Author: pullRequest.Author}}}
+		return CommitsResult{Commits: []Commit{{SHA: pullRequest.Head.SHA, Message: redactedFixtureText, Author: pullRequest.Author}}}
 	case OperationGetDiff:
 		return map[string]any{"files": []DiffFile{{Path: "contracts/codehostbroker/contract.go", Status: "modified", Additions: 1, Hunks: []DiffHunk{{Header: "@@ -1 +1 @@", Patch: "+fixture"}}, Truncated: true}}}
 	case OperationGetChecks:
-		return map[string]any{"checks": []Check{{ProviderID: "check-1", Name: "test", Status: "completed", Conclusion: "success", Availability: AvailabilityAvailable}}}
+		return ChecksResult{Checks: []Check{
+			{ProviderID: "check-1", Name: "available", Status: "completed", Conclusion: "success", Availability: AvailabilityAvailable},
+			{ProviderID: "check-2", Name: "partial", Status: "in_progress", Availability: AvailabilityPartial},
+			{ProviderID: "check-3", Name: "unavailable", Status: "unknown", Availability: AvailabilityUnavailable},
+			{ProviderID: "check-4", Name: "unknown", Status: "unknown", Availability: AvailabilityUnknown},
+		}}
 	case OperationGetReviews:
-		return map[string]any{"reviews": []Review{{ProviderID: "review-1", Author: pullRequest.Author, State: "approved", HeadSHA: pullRequest.Head.SHA}}}
+		return ReviewsResult{Reviews: []Review{}}
 	case OperationGetComments:
-		return map[string]any{"comments": []Comment{{ProviderID: "comment-1", Author: pullRequest.Author, Body: "fixture comment"}}}
+		return CommentsResult{Comments: []Comment{{ProviderID: "comment-1", Author: pullRequest.Author, Body: redactedFixtureText}}}
 	case OperationGetMergeReadiness:
-		return MergeReadiness{State: "ready", Checks: AvailabilityAvailable, Reviews: AvailabilityAvailable, BranchProtection: AvailabilityAvailable, Permissions: AvailabilityAvailable, Mergeability: AvailabilityAvailable, Queue: AvailabilityUnavailable, Reasons: []string{}}
+		return MergeReadiness{State: "unknown", Checks: AvailabilityAvailable, Reviews: AvailabilityPartial, BranchProtection: AvailabilityUnavailable, Permissions: AvailabilityAvailable, Mergeability: AvailabilityUnknown, Queue: AvailabilityUnavailable, Reasons: []string{redactedFixtureText}}
 	default:
-		return map[string]any{"pull_request": pullRequest, "outcome": "fixture"}
+		return MutationResult{PullRequest: pullRequest, Outcome: "fixture"}
 	}
 }
 
 func fixtureRetry(code string) RetryGuidance {
-	switch code {
-	case ErrorRateLimited:
-		return RetryAfter
-	case ErrorStaleObservation, ErrorCapabilityChanged, ErrorConflict:
-		return RetryRefreshThenRetry
-	case ErrorIdempotencyConflict, ErrorOperationInProgress:
-		return RetrySameKey
-	case ErrorAmbiguousResult:
-		return RetryReconcile
-	default:
-		return RetryNone
-	}
+	return RetryForError(code)
 }
 
 func allOperationsAvailable() map[Operation]bool {
@@ -189,4 +205,16 @@ func allOperationsAvailable() map[Operation]bool {
 		out[operation] = true
 	}
 	return out
+}
+
+func futureCapability() Capability {
+	return Capability{
+		Policy: OperationPolicy{
+			Operation: Operation("future_operation"),
+			Effect:    Effect("future_effect"),
+			Consent:   Consent("future_consent"),
+			Bounds:    defaultBounds,
+		},
+		Available: true,
+	}
 }

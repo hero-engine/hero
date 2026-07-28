@@ -91,7 +91,8 @@ write to stale code.
 All requests contain `version`, `operation`, `connection_id`, and
 `repository`. PR-specific operations also require `pull_request`.
 Collection operations may carry bounded `query`, `order`, `limit`, and an
-opaque `cursor`.
+opaque `cursor`. `repositories` is an optional additional repository scope;
+the primary `repository` is always part of the scope.
 
 Every mutation additionally requires:
 
@@ -127,6 +128,7 @@ Every response contains:
 - bounded pagination and section-level `partial_failures`;
 - a typed JSON `result`, or one normalized `error`, never both;
 - duration; and
+- redirect and mutation-journal entry counts; and
 - for mutations, a safe receipt and reconciliation outcome.
 
 Freshness is one of `current`, `stale`, `unknown`, or `unavailable`.
@@ -140,12 +142,105 @@ section. For example, checks may be returned while branch-protection data is
 forbidden. A diff can be explicitly truncated while still returning its
 bounded files and hunks.
 
+### Field and nullability catalog
+
+Fields described as optional use `omitempty` and may be absent. Pointer fields
+are nullable. All other fields are emitted; an operation validator decides
+whether a zero value is legal.
+
+- `RepositoryIdentity`: required `host`, `owner`, `name`, `full_name`;
+  optional `provider_id`.
+- `RefIdentity`: required `repository`, `name`, `sha`.
+- `PullRequestIdentity`: required `connection_id`, `repository`,
+  `provider_id`, positive `number`.
+- `Actor`: required `login`; optional `provider_id`, `display`.
+- `PullRequest`: required `identity`, `title`, `url`, `state`, `draft`,
+  `author`, `base`, `head`; optional `body`, `created_at`, `updated_at`,
+  `merged_at`.
+- `Commit`: required `sha`, `message`, `author`; optional `authored_at`,
+  `url`.
+- `DiffHunk`: required `header`, `patch`.
+- `DiffFile`: required `path`, `status`, non-negative `additions`,
+  non-negative `deletions`, `hunks`, `truncated`.
+- `Check`: required `name`, `status`, `availability`; optional
+  `provider_id`, `conclusion`, `url`.
+- `Review`: required `provider_id`, `author`, `state`, `head_sha`; optional
+  `body`, `submitted_at`.
+- `Comment`: required `provider_id`, `author`, `body`; optional `url`,
+  `created_at`, `updated_at`.
+- `MergeReadiness`: required `state`, six availability fields (`checks`,
+  `reviews`, `branch_protection`, `permissions`, `mergeability`, `queue`),
+  and bounded `reasons`.
+- `RateLimit`: required `observed_at`; optional/zero-when-unknown `resource`,
+  `limit`, `remaining`, `reset_at`, `retry_after_seconds`. Numeric values are
+  non-negative and remaining cannot exceed a known limit.
+- `Page`: required bounded `limit` and `count`; optional `next_cursor`.
+  Absence of `next_cursor` is the terminal page.
+- `PartialFailure`: required `section`, normalized `code`, bounded safe
+  `message`.
+- `Receipt`: required safe `operation_id`; optional
+  `provider_receipt_id`, `target_revision`.
+- `Reconciliation`: required `status` and safe `key`; it has no free-form body
+  field.
+- `ContractError`: required normalized `code`, bounded safe `message`, exact
+  `retry`; optional `field`, `retry_at`.
+- `Bounds`: required maxima for `repository_scopes`, `page_size`, `items`,
+  `text_bytes`, `body_bytes`, `diff_bytes`, `diff_files`, `diff_hunks`,
+  `partial_failures`, `error_detail_bytes`, `duration_ms`, `redirects`,
+  `journal_entries`, and `idempotency_bytes`.
+- `OperationPolicy`: required `operation`, `effect`, `consent`,
+  `requires_unique_target`, `requires_idempotency`,
+  `requires_fresh_observation`, `requires_reconciliation`, `replay_safe`,
+  and `bounds`.
+- `Capability`: required `policy`, `available`; optional `reason`.
+- `Response`: required `version`, `operation`, `provider`, `connection_id`,
+  `repository`, `policy`, both revisions, `observed_at`, `freshness`,
+  `rate_limit`, `bounds`, `completeness`, `partial_failures`, `result`,
+  `truncated`, `duration_ms`, `redirects`, `journal_entries`, and nullable
+  `error`; optional/nullable `page`, `receipt`, and `reconciliation`.
+  Successful mutations require both receipt and reconciliation. Error
+  responses carry JSON `null` as result.
+- `Request`: required `version`, `operation`, `connection_id`,
+  `repository`; optional `repositories`, `pull_request`, `intent_source`,
+  `consent`, `idempotency_key`, both revisions, `reconciliation_key`,
+  `query`, `order`, `limit`, `cursor`, and `payload`. Policy makes the
+  mutation fields and typed payload mandatory.
+- `CreatePullRequestPayload`: required `base`, `head`, `title`, `draft`;
+  optional `body`.
+- `CommentPayload`: required `expected_head_sha`, `body`.
+- `ReviewPayload`: required `expected_head_sha`; optional `body`.
+- `RetargetPayload`: required `expected_head_sha`, `current_base`, `new_base`.
+- `LifecyclePayload`: required `expected_head_sha`.
+- `MergePayload`: required `expected_head_sha`, `observed_base`, `method`;
+  optional `commit_title`, `commit_message`.
+- `CursorMaterial`: required `version`, `provider`, `connection_id`,
+  normalized `repositories`, `operation`, normalized `query`, `order`, and
+  provider `position`. `CursorEnvelope` contains that material plus required
+  `fingerprint`.
+- `RevisionMaterial`: required `connection_id`, `repository`; optional
+  `pull_request`, `base`, `head`, `state`, `updated_at`, `permissions`.
+- Fixture-only `FixtureCase`: required `name`, `request`, `response`.
+  `ConsumerFixtureBundle`: required `version`, advertised `operations`,
+  `cases`, normalized `errors`, and `future_additive`.
+
+Success result schemas are operation-specific and strictly decoded:
+`CapabilitiesResult.capabilities`, `PullRequestsResult.pull_requests`,
+`PullRequest`, `CommitsResult.commits`, `DiffResult.files`,
+`ChecksResult.checks`, `ReviewsResult.reviews`, `CommentsResult.comments`,
+`MergeReadiness`, or `MutationResult` with required `pull_request` and
+`outcome`. Hero's producer-side validator rejects non-canonical adapter
+results; independent consumers ignore unknown additive result fields and
+unknown advertised capability entries while preserving all known values.
+
 ## Pagination, revisions, and rate limits
 
-Cursors are opaque to clients. Their fingerprint binds contract version,
-provider, connection, repository scope, operation, normalized query, ordering,
-and provider position. Reuse with any different binding returns
-`cursor_mismatch`; clients never edit or transplant cursors.
+Cursors are opaque base64url-encoded envelopes. Their embedded SHA-256
+fingerprint binds contract version, provider, connection, normalized
+repository scope, operation, normalized query, ordering, and provider
+position. Both returned and requested cursors are decoded and fingerprint
+validated; a request additionally compares scope, operation, query, and order.
+Reuse with any different binding returns `cursor_mismatch`; clients never edit
+or transplant cursors.
 
 Capability revisions change when supported operations, permissions, or merge
 methods change. Observation revisions change when operation-relevant mutable
@@ -229,16 +324,21 @@ The canonical fixture is:
 `contracts/codehostbroker/testdata/v1/consumer-fixture.json`
 
 Its SHA-256 digest is published beside it in
-`consumer-fixture.sha256`. Regenerate both deterministically with:
+`consumer-fixture.sha256`. The current digest is
+`e96d4ea5e60c8707698188db3096477a320ec4ccf3417dd8faf4983f37640bb5`.
+Regenerate both deterministically with:
 
 ```bash
 go generate ./contracts/codehostbroker
 ```
 
 The fixture covers all twenty operations, every operation policy, forked refs,
-pagination, partial checks, truncated diffs, all seven reconciliation states,
-all normalized errors, and unknown additive fields. Hero and Hero Code's Swift
-decoder consume the same committed bytes and digest.
+non-terminal and terminal pagination, all availability and completeness
+states, partial checks, truncated diffs, all seven reconciliation states, all
+normalized errors, an unknown advertised operation, and unknown additive
+fields. Mutation text fields contain only the literal `[redacted]` sentinel,
+never user content. Hero and Hero Code's Swift decoder consume the same
+committed bytes and digest.
 
 ## Security and ownership boundary
 
