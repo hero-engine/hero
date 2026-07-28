@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-28T02:21:19Z · 83 ready specs_
+_Generated: 2026-07-28T02:24:39Z · 83 ready specs_
 
 ## github-pull-request-create-broker — "GitHub pull-request creation broker"
 _feature · delivering · horizon: now_
