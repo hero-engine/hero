@@ -179,8 +179,9 @@ func TestPartialResultAndBoundsTruth(t *testing.T) {
 }
 
 func TestCursorAndRevisionFingerprintsBindMutableMaterial(t *testing.T) {
+	repository := fixtureRepository()
 	material := CursorMaterial{
-		Version: Version, Provider: "github", ConnectionID: "host", Repositories: []string{"hero-engine/hero"},
+		Version: Version, Provider: "github", ConnectionID: "host", Repositories: []RepositoryIdentity{repository},
 		Operation: OperationListPullRequests, Query: "state:open", Order: "updated_desc", Position: "page-1",
 	}
 	first, err := CursorFingerprint(material)
@@ -203,7 +204,7 @@ func TestCursorAndRevisionFingerprintsBindMutableMaterial(t *testing.T) {
 		t.Fatal(contractErr)
 	}
 	request := Request{
-		Version: Version, Operation: material.Operation, ConnectionID: material.ConnectionID,
+		Version: Version, Operation: material.Operation, Provider: material.Provider, ConnectionID: material.ConnectionID,
 		Repository: fixtureRepository(), Query: material.Query, Order: material.Order, Cursor: encoded,
 	}
 	if contractErr := ValidateRequest(request); contractErr != nil {
@@ -213,12 +214,21 @@ func TestCursorAndRevisionFingerprintsBindMutableMaterial(t *testing.T) {
 	if contractErr := ValidateRequest(request); contractErr == nil || contractErr.Code != ErrorCursorMismatch {
 		t.Fatalf("query mismatch=%v", contractErr)
 	}
+	request.Query = material.Query
+	request.Provider = "gitlab"
+	if contractErr := ValidateRequest(request); contractErr == nil || contractErr.Code != ErrorCursorMismatch {
+		t.Fatalf("provider mismatch=%v", contractErr)
+	}
+	request.Provider = material.Provider
+	request.Repository.Host = "git.example.com"
+	if contractErr := ValidateRequest(request); contractErr == nil || contractErr.Code != ErrorCursorMismatch {
+		t.Fatalf("repository host mismatch=%v", contractErr)
+	}
 	tampered := encoded[:len(encoded)-1] + "A"
 	if _, contractErr := DecodeCursor(tampered); contractErr == nil || contractErr.Code != ErrorCursorMismatch {
 		t.Fatalf("tampered cursor error=%v", contractErr)
 	}
 
-	repository := fixtureRepository()
 	head := RefIdentity{Repository: repository, Name: "feature", SHA: strings.Repeat("a", 40)}
 	revision, contractErr := RevisionFingerprint("observation", RevisionMaterial{ConnectionID: "host", Repository: repository, Head: &head})
 	if contractErr != nil {
@@ -394,9 +404,9 @@ func TestMutationResponsesRequireReconciliationAndExactRetry(t *testing.T) {
 
 func TestEveryPublishedBoundHasEnforcementEvidence(t *testing.T) {
 	request := mustFixture(t).Cases[1].Request
-	request.Repositories = make([]RepositoryIdentity, MaxRepositoryScopes+1)
+	request.Repositories = make([]RepositoryIdentity, MaxRepositoryScopes)
 	if err := ValidateRequest(request); err == nil || err.Code != ErrorInputTooLarge {
-		t.Fatalf("repository scope bound error=%v", err)
+		t.Fatalf("primary plus %d additional repository scopes accepted: %v", MaxRepositoryScopes, err)
 	}
 	request = mustFixture(t).Cases[1].Request
 	request.Limit = MaxPageSize + 1
@@ -455,6 +465,37 @@ func TestEveryPublishedBoundHasEnforcementEvidence(t *testing.T) {
 	}
 	if err := ValidateResponse(response); err == nil {
 		t.Fatal("error-detail bound accepted")
+	}
+	response = mustResponse(t, OperationGetPullRequest)
+	response.CapabilityRevision = strings.Repeat("x", 513)
+	if err := ValidateResponse(response); err == nil {
+		t.Fatal("capability revision bound accepted")
+	}
+	response = mustResponse(t, OperationGetPullRequest)
+	response.ObservationRevision = strings.Repeat("x", 513)
+	if err := ValidateResponse(response); err == nil {
+		t.Fatal("observation revision bound accepted")
+	}
+	response = mustResponse(t, OperationGetPullRequest)
+	response.RateLimit.Resource = strings.Repeat("x", 129)
+	if err := ValidateResponse(response); err == nil {
+		t.Fatal("rate-limit resource bound accepted")
+	}
+	response = mustResponse(t, OperationGetPullRequest)
+	response.RateLimit.ResetAt = strings.Repeat("x", 65)
+	if err := ValidateResponse(response); err == nil {
+		t.Fatal("rate-limit reset bound accepted")
+	}
+	response = mustResponse(t, OperationGetPullRequest)
+	response.Result = nil
+	response.Error = &ContractError{Code: ErrorProvider, Message: "safe", Field: strings.Repeat("x", 513), Retry: RetryNone}
+	if err := ValidateResponse(response); err == nil {
+		t.Fatal("error field bound accepted")
+	}
+	response.Error.Field = ""
+	response.Error.RetryAt = strings.Repeat("x", 65)
+	if err := ValidateResponse(response); err == nil {
+		t.Fatal("error retry-at bound accepted")
 	}
 }
 
@@ -520,6 +561,7 @@ func TestFixtureDecodesWithIndependentConsumerShapes(t *testing.T) {
 			Request struct {
 				Version      string `json:"version"`
 				Operation    string `json:"operation"`
+				Provider     string `json:"provider"`
 				ConnectionID string `json:"connection_id"`
 			} `json:"request"`
 			Response struct {
@@ -540,6 +582,7 @@ func TestFixtureDecodesWithIndependentConsumerShapes(t *testing.T) {
 	for _, fixtureCase := range consumer.Cases {
 		if fixtureCase.Name == "" || fixtureCase.Request.Version != Version ||
 			fixtureCase.Request.Operation != fixtureCase.Response.Operation ||
+			fixtureCase.Request.Provider != fixtureCase.Response.Provider ||
 			fixtureCase.Response.Version != Version || fixtureCase.Response.Provider == "" ||
 			fixtureCase.Request.ConnectionID != fixtureCase.Response.ConnectionID || !json.Valid(fixtureCase.Response.Result) {
 			t.Fatalf("independent decoder rejected case %+v", fixtureCase)
@@ -578,11 +621,14 @@ func FuzzValidatePullRequestIdentity(f *testing.F) {
 }
 
 func FuzzCursorRoundTrip(f *testing.F) {
-	f.Add("github", "connection", "owner/repo", "state:open", "updated_desc", "position")
-	f.Fuzz(func(t *testing.T, provider, connection, repository, query, order, position string) {
+	f.Add("github", "connection", "github.com", "repo-id", "owner", "repo", "state:open", "updated_desc", "position")
+	f.Fuzz(func(t *testing.T, provider, connection, host, repositoryID, owner, name, query, order, position string) {
+		repository := RepositoryIdentity{
+			Host: host, ProviderID: repositoryID, Owner: owner, Name: name, FullName: owner + "/" + name,
+		}
 		material := CursorMaterial{
 			Version: Version, Provider: provider, ConnectionID: connection,
-			Repositories: []string{repository}, Operation: OperationListPullRequests,
+			Repositories: []RepositoryIdentity{repository}, Operation: OperationListPullRequests,
 			Query: query, Order: order, Position: position,
 		}
 		encoded, err := EncodeCursor(material)

@@ -88,8 +88,9 @@ write to stale code.
 
 ## Requests
 
-All requests contain `version`, `operation`, `connection_id`, and
-`repository`. PR-specific operations also require `pull_request`.
+All requests contain `version`, `operation`, expected `provider`,
+`connection_id`, and `repository`. Hero verifies the expected provider against
+the resolved connection. PR-specific operations also require `pull_request`.
 Collection operations may carry bounded `query`, `order`, `limit`, and an
 opaque `cursor`. `repositories` is an optional additional repository scope;
 the primary `repository` is always part of the scope.
@@ -200,7 +201,7 @@ whether a zero value is legal.
   `error`; optional/nullable `page`, `receipt`, and `reconciliation`.
   Successful mutations require both receipt and reconciliation. Error
   responses carry JSON `null` as result.
-- `Request`: required `version`, `operation`, `connection_id`,
+- `Request`: required `version`, `operation`, `provider`, `connection_id`,
   `repository`; optional `repositories`, `pull_request`, `intent_source`,
   `consent`, `idempotency_key`, both revisions, `reconciliation_key`,
   `query`, `order`, `limit`, `cursor`, and `payload`. Policy makes the
@@ -214,9 +215,10 @@ whether a zero value is legal.
 - `MergePayload`: required `expected_head_sha`, `observed_base`, `method`;
   optional `commit_title`, `commit_message`.
 - `CursorMaterial`: required `version`, `provider`, `connection_id`,
-  normalized `repositories`, `operation`, normalized `query`, `order`, and
-  provider `position`. `CursorEnvelope` contains that material plus required
-  `fingerprint`.
+  normalized complete repository identities (host, provider repository ID,
+  namespace, name, and full name), `operation`, normalized `query`, `order`,
+  and provider `position`. `CursorEnvelope` contains that material plus
+  required `fingerprint`.
 - `RevisionMaterial`: required `connection_id`, `repository`; optional
   `pull_request`, `base`, `head`, `state`, `updated_at`, `permissions`.
 - Fixture-only `FixtureCase`: required `name`, `request`, `response`.
@@ -299,7 +301,7 @@ The v1 registry publishes and validators enforce these maximums:
 
 | Material | Maximum |
 |---|---:|
-| Repository scopes | 100 |
+| Repository scopes, including the primary repository | 100 |
 | Page size | 100 |
 | Items per result | 100 |
 | Text | 64 KiB |
@@ -325,7 +327,7 @@ The canonical fixture is:
 
 Its SHA-256 digest is published beside it in
 `consumer-fixture.sha256`. The current digest is
-`e96d4ea5e60c8707698188db3096477a320ec4ccf3417dd8faf4983f37640bb5`.
+`14421657e12d8b1bc31587f0dcb7a179fd17c0671467a16cb8c30ab30998e5d3`.
 Regenerate both deterministically with:
 
 ```bash

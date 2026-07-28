@@ -42,7 +42,7 @@ func CanonicalFixture() ([]byte, error) {
 	for _, operation := range orderedOperations {
 		policy := operationPolicies[operation]
 		request := Request{
-			Version: Version, Operation: operation, ConnectionID: identity.ConnectionID, Repository: repository,
+			Version: Version, Operation: operation, Provider: "github", ConnectionID: identity.ConnectionID, Repository: repository,
 		}
 		if requiresPullRequest(operation) {
 			request.PullRequest = &identity
@@ -75,7 +75,7 @@ func CanonicalFixture() ([]byte, error) {
 			operation == OperationGetCommits || operation == OperationGetReviews || operation == OperationGetComments {
 			cursor, err := EncodeCursor(CursorMaterial{
 				Version: Version, Provider: "github", ConnectionID: identity.ConnectionID,
-				Repositories: []string{repository.FullName}, Operation: operation,
+				Repositories: []RepositoryIdentity{repository}, Operation: operation,
 				Query: request.Query, Order: request.Order, Position: "page-2",
 			})
 			if err != nil {

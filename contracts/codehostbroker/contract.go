@@ -341,6 +341,7 @@ type Response struct {
 type Request struct {
 	Version             string               `json:"version"`
 	Operation           Operation            `json:"operation"`
+	Provider            string               `json:"provider"`
 	ConnectionID        string               `json:"connection_id"`
 	Repository          RepositoryIdentity   `json:"repository"`
 	Repositories        []RepositoryIdentity `json:"repositories,omitempty"`
@@ -395,14 +396,14 @@ type MergePayload struct {
 }
 
 type CursorMaterial struct {
-	Version      string    `json:"version"`
-	Provider     string    `json:"provider"`
-	ConnectionID string    `json:"connection_id"`
-	Repositories []string  `json:"repositories"`
-	Operation    Operation `json:"operation"`
-	Query        string    `json:"query"`
-	Order        string    `json:"order"`
-	Position     string    `json:"position"`
+	Version      string               `json:"version"`
+	Provider     string               `json:"provider"`
+	ConnectionID string               `json:"connection_id"`
+	Repositories []RepositoryIdentity `json:"repositories"`
+	Operation    Operation            `json:"operation"`
+	Query        string               `json:"query"`
+	Order        string               `json:"order"`
+	Position     string               `json:"position"`
 }
 
 type CursorEnvelope struct {

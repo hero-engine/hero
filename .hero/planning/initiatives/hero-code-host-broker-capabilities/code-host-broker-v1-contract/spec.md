@@ -237,7 +237,7 @@ code-host-broker-v1-contract --since 1e3fa83 --format json`.
 | 10 | Publish closed errors and retries without raw provider bodies | DONE | `contracts/codehostbroker/policy.go:157`, `contract_test.go:213`, and `docs/contracts/code-host-broker-v1.md:184` publish and cross-check all 26 errors and five retry values. |
 | 11 | Ignore additive fields and fail closed on major version | DONE | The advertised operations array includes an unknown future operation, the independent consumer ignores it, unknown envelope fields decode, and a v2 request fails closed. |
 | 12 | Enforce explicit input and output bounds | DONE | `policy.go` declares every bound; request/result/envelope validators and boundary tests cover repository scopes, page/item counts, all text/body/diff dimensions, partial failures, error detail, duration, redirects, journal entries, rate values, cursors, and idempotency material. |
-| 13 | Produce byte-stable fixture and digest | DONE | `fixture.go`, its generator, and the golden test prove repeated generation matches embedded bytes and SHA `e96d4ea5e60c8707698188db3096477a320ec4ccf3417dd8faf4983f37640bb5`. |
+| 13 | Produce byte-stable fixture and digest | DONE | `fixture.go`, its generator, and the golden test prove repeated generation matches embedded bytes and SHA `14421657e12d8b1bc31587f0dcb7a179fd17c0671467a16cb8c30ab30998e5d3`. |
 | 14 | Exclude credentials, raw bodies, and mutation text from safe material | DONE | Receipts contain IDs only, reconciliation has no free-form body field, fixture mutation text is the literal `[redacted]` sentinel, and tests reject credential canaries and previous example text. |
 
 ### Changes
@@ -256,7 +256,7 @@ code-host-broker-v1-contract --since 1e3fa83 --format json`.
 
 - [x] User-visible behavior was exercised end-to-end: `go generate
   ./contracts/codehostbroker` emitted digest
-  `e96d4ea5e60c8707698188db3096477a320ec4ccf3417dd8faf4983f37640bb5`;
+  `14421657e12d8b1bc31587f0dcb7a179fd17c0671467a16cb8c30ab30998e5d3`;
   `sha256sum` matched the published sidecar, and every generated request and
   response decoded and validated through the canonical contract tests.
 

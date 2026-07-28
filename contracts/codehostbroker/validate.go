@@ -16,7 +16,7 @@ import (
 )
 
 func ValidateRepository(repository RepositoryIdentity) *ContractError {
-	if repository.Host == "" || len(repository.Host) > 255 || strings.Contains(repository.Host, "://") || strings.ContainsAny(repository.Host, "/?#") || net.ParseIP(repository.Host) != nil {
+	if repository.Host == "" || tooLong(repository.Host, 255) || strings.Contains(repository.Host, "://") || strings.ContainsAny(repository.Host, "/?#") || net.ParseIP(repository.Host) != nil {
 		return invalid("repository.host", "host must be a bounded DNS host name")
 	}
 	if repository.Owner == "" || repository.Name == "" {
@@ -70,13 +70,13 @@ func ValidateRequest(request Request) *ContractError {
 	if !ok {
 		return &ContractError{Code: ErrorUnsupportedOperation, Message: "unsupported code-host operation", Field: "operation", Retry: RetryNone}
 	}
-	if request.ConnectionID == "" || tooLong(request.ConnectionID, 128) {
-		return invalid("connection_id", "bounded connection_id is required")
+	if request.Provider == "" || tooLong(request.Provider, 64) || request.ConnectionID == "" || tooLong(request.ConnectionID, 128) {
+		return invalid("connection_id", "bounded provider and connection_id are required")
 	}
 	if err := ValidateRepository(request.Repository); err != nil {
 		return err
 	}
-	if len(request.Repositories) > policy.Bounds.RepositoryScopes {
+	if len(request.Repositories)+1 > policy.Bounds.RepositoryScopes {
 		return tooLarge("repositories", "repository scope count exceeds the operation bound")
 	}
 	for i, repository := range request.Repositories {
@@ -153,14 +153,23 @@ func ValidateResponse(response Response) *ContractError {
 	if err := ValidateRepository(response.Repository); err != nil {
 		return err
 	}
-	if response.CapabilityRevision == "" || response.ObservationRevision == "" {
-		return invalid("capability_revision", "capability and observation revisions are required")
+	if response.CapabilityRevision == "" || tooLong(response.CapabilityRevision, 512) ||
+		response.ObservationRevision == "" || tooLong(response.ObservationRevision, 512) {
+		return invalid("capability_revision", "bounded capability and observation revisions are required")
 	}
 	if _, err := time.Parse(time.RFC3339Nano, response.ObservedAt); err != nil {
 		return invalid("observed_at", "RFC3339 observed_at is required")
 	}
 	if _, err := time.Parse(time.RFC3339Nano, response.RateLimit.ObservedAt); err != nil {
 		return invalid("rate_limit.observed_at", "RFC3339 rate-limit observation is required")
+	}
+	if tooLong(response.RateLimit.Resource, 128) || tooLong(response.RateLimit.ResetAt, 64) {
+		return tooLarge("rate_limit", "rate-limit resource or reset time exceeds its bound")
+	}
+	if response.RateLimit.ResetAt != "" {
+		if _, err := time.Parse(time.RFC3339Nano, response.RateLimit.ResetAt); err != nil {
+			return invalid("rate_limit.reset_at", "rate-limit reset_at must be RFC3339")
+		}
 	}
 	if !validFreshness(response.Freshness) || !validCompleteness(response.Completeness) {
 		return invalid("freshness", "freshness and completeness must use declared values")
@@ -213,6 +222,14 @@ func ValidateResponse(response Response) *ContractError {
 		if !containsString(errorCodes, response.Error.Code) || !containsRetry(RetryGuidanceValues(), response.Error.Retry) || tooLong(response.Error.Message, policy.Bounds.ErrorDetailBytes) {
 			return invalid("error", "error code, retry guidance, and detail must be bounded declared values")
 		}
+		if tooLong(response.Error.Field, 512) || tooLong(response.Error.RetryAt, 64) {
+			return tooLarge("error", "error field or retry time exceeds its bound")
+		}
+		if response.Error.RetryAt != "" {
+			if _, err := time.Parse(time.RFC3339Nano, response.Error.RetryAt); err != nil {
+				return invalid("error.retry_at", "error retry_at must be RFC3339")
+			}
+		}
 		if response.Error.Retry != RetryForError(response.Error.Code) {
 			return invalid("error.retry", "retry guidance does not match the normalized error code")
 		}
@@ -254,8 +271,9 @@ func CursorFingerprint(material CursorMaterial) (string, *ContractError) {
 		return "", tooLarge("cursor", "cursor material exceeds its bound")
 	}
 	for _, repository := range material.Repositories {
-		if repository == "" || tooLong(repository, 512) {
-			return "", tooLarge("cursor.repositories", "cursor repository identity is empty or unbounded")
+		if err := ValidateRepository(repository); err != nil {
+			err.Field = "cursor.repositories." + err.Field
+			return "", err
 		}
 	}
 	return fingerprint("cursor", material)
@@ -553,7 +571,8 @@ func validateRequestCursor(request Request) *ContractError {
 	}
 	material := envelope.Material
 	scope := requestRepositoryScope(request)
-	if material.Version != Version || material.ConnectionID != request.ConnectionID ||
+	if material.Version != Version || material.Provider != request.Provider ||
+		material.ConnectionID != request.ConnectionID ||
 		material.Operation != request.Operation || material.Query != request.Query ||
 		material.Order != request.Order || !reflect.DeepEqual(material.Repositories, scope) {
 		return &ContractError{Code: ErrorCursorMismatch, Message: "cursor does not match request scope, operation, query, or ordering", Field: "cursor", Retry: RetryNone}
@@ -569,35 +588,49 @@ func validateResponseCursor(response Response, encoded string) *ContractError {
 	material := envelope.Material
 	if material.Version != Version || material.Provider != response.Provider ||
 		material.ConnectionID != response.ConnectionID || material.Operation != response.Operation ||
-		!containsString(material.Repositories, response.Repository.FullName) {
+		!containsRepository(material.Repositories, response.Repository) {
 		return &ContractError{Code: ErrorCursorMismatch, Message: "response cursor does not match operation identity", Field: "page.next_cursor", Retry: RetryNone}
 	}
 	return nil
 }
 
-func requestRepositoryScope(request Request) []string {
-	scope := make([]string, 0, len(request.Repositories)+1)
-	scope = append(scope, request.Repository.FullName)
+func containsRepository(repositories []RepositoryIdentity, candidate RepositoryIdentity) bool {
+	for _, repository := range repositories {
+		if repository == candidate {
+			return true
+		}
+	}
+	return false
+}
+
+func requestRepositoryScope(request Request) []RepositoryIdentity {
+	scope := make([]RepositoryIdentity, 0, len(request.Repositories)+1)
+	scope = append(scope, request.Repository)
 	for _, repository := range request.Repositories {
-		scope = append(scope, repository.FullName)
+		scope = append(scope, repository)
 	}
 	return normalizedRepositoryScope(scope)
 }
 
-func normalizedRepositoryScope(scope []string) []string {
+func normalizedRepositoryScope(scope []RepositoryIdentity) []RepositoryIdentity {
 	seen := make(map[string]struct{}, len(scope))
-	out := make([]string, 0, len(scope))
+	out := make([]RepositoryIdentity, 0, len(scope))
 	for _, repository := range scope {
-		if repository == "" {
+		key := repository.Host + "\x00" + repository.ProviderID + "\x00" + repository.FullName
+		if repository.Host == "" || repository.FullName == "" {
 			continue
 		}
-		if _, ok := seen[repository]; ok {
+		if _, ok := seen[key]; ok {
 			continue
 		}
-		seen[repository] = struct{}{}
+		seen[key] = struct{}{}
 		out = append(out, repository)
 	}
-	sort.Strings(out)
+	sort.Slice(out, func(i, j int) bool {
+		left := out[i].Host + "\x00" + out[i].ProviderID + "\x00" + out[i].FullName
+		right := out[j].Host + "\x00" + out[j].ProviderID + "\x00" + out[j].FullName
+		return left < right
+	})
 	return out
 }
 
