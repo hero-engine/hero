@@ -66,7 +66,7 @@ func init() {
 
 func addIntegrationConnectFlags(c *cobra.Command) {
 	c.Flags().StringVar(&connectIntegrationID, "integration-id", "", "stable integration ID")
-	c.Flags().StringVar(&connectRole, "role", "delivery", "selection role (delivery, docs, roadmap)")
+	c.Flags().StringVar(&connectRole, "role", "delivery", "selection role (delivery, docs, roadmap, code-host)")
 	c.Flags().StringVar(&connectBaseURL, "base-url", "", "provider base URL")
 	c.Flags().StringVar(&connectUserEmail, "user-email", "", "user email (Jira/Confluence Cloud only)")
 	c.Flags().BoolVar(&connectTokenStdin, "token-stdin", false, "read token from protected standard input (never argv)")
@@ -124,6 +124,7 @@ func runConnectList(w io.Writer, root string, creds config.Credentials) error {
 	type row struct {
 		ID               string            `json:"id"`
 		Provider         string            `json:"provider"`
+		Capabilities     []string          `json:"capabilities"`
 		Default          bool              `json:"default"`
 		Roles            []string          `json:"roles"`
 		CredentialSource string            `json:"credential_source"`
@@ -140,6 +141,10 @@ func runConnectList(w io.Writer, root string, creds config.Credentials) error {
 		for _, id := range config.SortedConnectionIDs(cfg.Integrations) {
 			x := cfg.Integrations.Connections[id]
 			rr := row{ID: id, Provider: x.Provider, Default: cfg.Integrations.Default == id, Verified: "not-checked", Sources: map[string]string{}}
+			for _, capability := range x.EffectiveCapabilities() {
+				rr.Capabilities = append(rr.Capabilities, string(capability))
+			}
+			sort.Strings(rr.Capabilities)
 			prefix := "$.integrations.connections." + id
 			for path, src := range cfg.IntegrationProvenance {
 				if strings.HasPrefix(path, prefix) || path == "$.integrations.default" {
@@ -186,7 +191,7 @@ func runConnectList(w io.Writer, root string, creds config.Credentials) error {
 		return nil
 	}
 	for _, r := range rows {
-		fmt.Fprintf(w, "%-24s provider=%-10s ready=%t source=%s", r.ID, r.Provider, r.Ready, r.CredentialSource)
+		fmt.Fprintf(w, "%-24s provider=%-10s capabilities=%s ready=%t source=%s", r.ID, r.Provider, strings.Join(r.Capabilities, ","), r.Ready, r.CredentialSource)
 		if r.Default {
 			fmt.Fprint(w, " default")
 		}
@@ -208,6 +213,14 @@ func runConnectNonInteractive(cmd *cobra.Command, root string, creds config.Cred
 	}
 	if connectProject == "" {
 		return fmt.Errorf("--project is required for non-interactive connect")
+	}
+	role := connectRole
+	if provider == "confluence" && role == "delivery" {
+		role = "docs"
+	}
+	requiredCapability, err := config.ValidateProviderRole(provider, role)
+	if err != nil {
+		return err
 	}
 	token := ""
 	if connectTokenStdin {
@@ -260,19 +273,40 @@ func runConnectNonInteractive(cmd *cobra.Command, root string, creds config.Cred
 	if err := config.ValidateConnectionSettings(id, provider, settings); err != nil {
 		return fmt.Errorf("cannot connect %s: %s", provider, settingErrorToFlag(err, provider))
 	}
-	role := connectRole
-	if provider == "confluence" && role == "delivery" {
-		role = "docs"
-	}
 	connection := map[string]any{"provider": provider, "settings": settings}
+	if existingCfg, loadErr := config.Load(root); loadErr != nil {
+		return loadErr
+	} else if existingCfg.Integrations != nil {
+		if existing, ok := existingCfg.Integrations.Connections[id]; ok {
+			capabilities := existing.EffectiveCapabilities()
+			present := false
+			for _, capability := range capabilities {
+				present = present || capability == requiredCapability
+			}
+			if !present {
+				capabilities = append(capabilities, requiredCapability)
+			}
+			connection["capabilities"] = capabilities
+		}
+	}
+	if _, explicit := connection["capabilities"]; !explicit && requiredCapability == config.CapabilityCodeHost {
+		connection["capabilities"] = []config.IntegrationCapability{config.CapabilityCodeHost}
+	}
+	patch := map[string]any{
+		"roles":       map[string]any{role: id},
+		"connections": map[string]any{id: connection},
+	}
+	if role != "code-host" {
+		patch["default"] = id
+	}
 	if connectLocalOnly {
 		connection["auth"] = map[string]any{"token": token}
-		p, _ := json.Marshal(map[string]any{"default": id, "roles": map[string]any{role: id}, "connections": map[string]any{id: connection}})
+		p, _ := json.Marshal(patch)
 		if err := config.PatchLocalIntegrations(root, config.DefaultFolder, p); err != nil {
 			return err
 		}
 	} else {
-		p, _ := json.Marshal(map[string]any{"default": id, "roles": map[string]any{role: id}, "connections": map[string]any{id: connection}})
+		p, _ := json.Marshal(patch)
 		if err := config.PatchCommittedIntegrations(root, config.DefaultFolder, p); err != nil {
 			return err
 		}
@@ -294,7 +328,10 @@ func runConnectNonInteractive(cmd *cobra.Command, root string, creds config.Cred
 	if connectNoVerify {
 		verification = "not-checked"
 	}
-	result := map[string]any{"id": id, "provider": provider, "role": role, "ready": token != "" || connectGlobal, "verification": verification}
+	result := map[string]any{
+		"id": id, "provider": provider, "role": role, "capability": requiredCapability,
+		"ready": token != "" || connectGlobal, "verification": verification,
+	}
 	if connectJSON {
 		b, _ := json.Marshal(result)
 		fmt.Fprintln(cmd.OutOrStdout(), string(b))

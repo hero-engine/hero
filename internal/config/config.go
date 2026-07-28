@@ -1597,7 +1597,11 @@ func (c Config) forCommittedSave() Config {
 			x.Roles[k] = v
 		}
 		for id, v := range c.Integrations.Connections {
-			n := IntegrationConfig{Provider: v.Provider, Settings: map[string]json.RawMessage{}}
+			n := IntegrationConfig{
+				Provider:     v.Provider,
+				Capabilities: append([]IntegrationCapability(nil), v.Capabilities...),
+				Settings:     map[string]json.RawMessage{},
+			}
 			for k, raw := range v.Settings {
 				n.Settings[k] = append(json.RawMessage(nil), raw...)
 			}

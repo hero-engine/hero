@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -342,5 +343,188 @@ func TestResolveTrackerConnectionPreservesLegacySingleTracker(t *testing.T) {
 	}
 	if _, err := cfg.ResolveTrackerConnection("other"); err == nil {
 		t.Fatal("explicit non-legacy ID unexpectedly selected legacy tracker")
+	}
+}
+
+func TestIntegrationCapabilitiesAllowGitHubDualRole(t *testing.T) {
+	doc := []byte(`{
+		"integrations": {
+			"roles": {"delivery": "github-main", "code-host": "github-main"},
+			"connections": {
+				"github-main": {
+					"provider": "github",
+					"capabilities": ["tracker", "code-host"],
+					"settings": {"project": "hero-engine/hero", "repositories": ["hero-engine/hero-code"]}
+				}
+			}
+		}
+	}`)
+	resolved, err := ResolveIntegrationDocuments("hero.json", doc, "hero.local.json", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg := Config{Integrations: resolved.Config}
+	tracker, err := cfg.ResolveTrackerConnection("github-main")
+	if err != nil {
+		t.Fatal(err)
+	}
+	host, err := cfg.ResolveCodeHostConnection("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tracker.ID != host.ID || host.Provider != "github" {
+		t.Fatalf("tracker=%+v host=%+v", tracker, host)
+	}
+	if got := strings.Join(host.Repositories, ","); got != "hero-engine/hero,hero-engine/hero-code" {
+		t.Fatalf("repositories=%q", got)
+	}
+}
+
+func TestCodeHostRoleRejectsTrackerOnlyProviders(t *testing.T) {
+	for _, provider := range []string{"jira", "linear", "confluence"} {
+		t.Run(provider, func(t *testing.T) {
+			settings := `{"project":"P","base_url":"https://example.invalid"}`
+			if provider == "confluence" {
+				settings = `{"space_key":"DOCS","base_url":"https://example.invalid"}`
+			}
+			doc := fmt.Sprintf(`{"integrations":{"roles":{"code-host":"main"},"connections":{"main":{"provider":%q,"settings":%s}}}}`, provider, settings)
+			_, err := ResolveIntegrationDocuments("hero.json", []byte(doc), "hero.local.json", nil)
+			if err == nil {
+				t.Fatal("expected invalid code-host binding")
+			}
+			for _, fragment := range []string{"$.integrations.roles.code-host", `"main"`, fmt.Sprintf("%q", provider), `"code-host"`} {
+				if !strings.Contains(err.Error(), fragment) {
+					t.Fatalf("error %q missing %q", err, fragment)
+				}
+			}
+		})
+	}
+}
+
+func TestOmittedCapabilitiesPreserveLegacyTrackerOnly(t *testing.T) {
+	project, _ := json.Marshal("hero-engine/hero")
+	cfg := Config{Integrations: &IntegrationsConfig{
+		Default: "github-main",
+		Roles:   map[string]string{"delivery": "github-main"},
+		Connections: map[string]IntegrationConfig{
+			"github-main": {Provider: "github", Settings: map[string]json.RawMessage{"project": project}},
+		},
+	}}
+	if _, err := cfg.ResolveTrackerConnection(""); err != nil {
+		t.Fatalf("legacy tracker no longer resolves: %v", err)
+	}
+	if _, err := cfg.ResolveCodeHostConnection(""); err == nil {
+		t.Fatal("default/delivery silently became code host")
+	} else {
+		var resolution *IntegrationResolutionError
+		if !errors.As(err, &resolution) || resolution.Code != "code_host_role_missing" {
+			t.Fatalf("unexpected error: %T %v", err, err)
+		}
+	}
+	if _, err := cfg.ResolveCodeHostConnection("github-main"); err == nil {
+		t.Fatal("omitted capabilities accepted explicit code-host selection")
+	} else {
+		var resolution *IntegrationResolutionError
+		if !errors.As(err, &resolution) || resolution.Code != "wrong_connection_capability" {
+			t.Fatalf("unexpected error: %T %v", err, err)
+		}
+	}
+}
+
+func TestCodeHostOnlyConnectionDoesNotCreateTrackerAmbiguity(t *testing.T) {
+	setting := func(value string) json.RawMessage {
+		b, _ := json.Marshal(value)
+		return b
+	}
+	cfg := Config{Integrations: &IntegrationsConfig{
+		Roles: map[string]string{"code-host": "github-host"},
+		Connections: map[string]IntegrationConfig{
+			"jira-delivery": {
+				Provider: "jira",
+				Settings: map[string]json.RawMessage{"project": setting("HERO"), "base_url": setting("https://jira.invalid")},
+			},
+			"github-host": {
+				Provider: "github", Capabilities: []IntegrationCapability{CapabilityCodeHost},
+				Settings: map[string]json.RawMessage{"project": setting("hero-engine/hero")},
+			},
+		},
+	}}
+	tracker, err := cfg.ResolveTrackerConnection("")
+	if err != nil || tracker.ID != "jira-delivery" {
+		t.Fatalf("tracker=%+v err=%v", tracker, err)
+	}
+	host, err := cfg.ResolveCodeHostConnection("")
+	if err != nil || host.ID != "github-host" {
+		t.Fatalf("host=%+v err=%v", host, err)
+	}
+	if _, err := cfg.ResolveTrackerConnection("github-host"); err == nil {
+		t.Fatal("code-host-only connection selected as tracker")
+	}
+}
+
+func TestConnectionCapabilityValidationAndRepositoryBounds(t *testing.T) {
+	cases := []struct {
+		name string
+		doc  string
+		want string
+	}{
+		{
+			name: "unsupported capability",
+			doc:  `{"integrations":{"connections":{"main":{"provider":"jira","capabilities":["code-host"],"settings":{"project":"HERO","base_url":"https://jira.invalid"}}}}}`,
+			want: "does not support capability",
+		},
+		{
+			name: "duplicate capability",
+			doc:  `{"integrations":{"connections":{"main":{"provider":"github","capabilities":["tracker","tracker"],"settings":{"project":"hero-engine/hero"}}}}}`,
+			want: "duplicate capability",
+		},
+		{
+			name: "invalid repository",
+			doc:  `{"integrations":{"connections":{"main":{"provider":"github","capabilities":["code-host"],"settings":{"project":"hero-engine/hero","repositories":["not-qualified"]}}}}}`,
+			want: "invalid repository name",
+		},
+		{
+			name: "duplicate repository",
+			doc:  `{"integrations":{"connections":{"main":{"provider":"github","capabilities":["code-host"],"settings":{"project":"hero-engine/hero","repositories":["Hero-Engine/Hero-Code","hero-engine/hero-code"]}}}}}`,
+			want: "duplicate repository",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := ResolveIntegrationDocuments("hero.json", []byte(tc.doc), "hero.local.json", nil)
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("error=%v want=%q", err, tc.want)
+			}
+		})
+	}
+}
+
+func TestCodeHostConnectionUsesExistingCredentialResolution(t *testing.T) {
+	project, _ := json.Marshal("hero-engine/hero")
+	cfg := Config{Integrations: &IntegrationsConfig{
+		Roles: map[string]string{"code-host": "github-main"},
+		Connections: map[string]IntegrationConfig{
+			"github-main": {
+				Provider: "github", Capabilities: []IntegrationCapability{CapabilityTracker, CapabilityCodeHost},
+				Settings: map[string]json.RawMessage{"project": project},
+			},
+		},
+	}}
+	resolved, err := ApplyCredentialsStrict(cfg, Credentials{
+		IntegrationCredentialKey("github-main"): {Token: "CODE-HOST-CANARY"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	host, err := resolved.ResolveCodeHostConnection("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	token, err := host.ResolveToken()
+	if err != nil || token.Reveal() != "CODE-HOST-CANARY" {
+		t.Fatalf("token=%v err=%v", token, err)
+	}
+	if rendered := fmt.Sprintf("%v/%#v", host.Token, host.Token); strings.Contains(rendered, "CANARY") {
+		t.Fatal("code-host token leaked through formatting")
 	}
 }

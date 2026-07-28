@@ -19,9 +19,10 @@ type IntegrationsConfig struct {
 }
 
 type IntegrationConfig struct {
-	Provider string                     `json:"provider,omitempty"`
-	Settings map[string]json.RawMessage `json:"settings,omitempty"`
-	Auth     *IntegrationAuth           `json:"auth,omitempty"`
+	Provider     string                     `json:"provider,omitempty"`
+	Capabilities []IntegrationCapability    `json:"capabilities,omitempty"`
+	Settings     map[string]json.RawMessage `json:"settings,omitempty"`
+	Auth         *IntegrationAuth           `json:"auth,omitempty"`
 }
 
 type IntegrationAuth struct {
@@ -29,18 +30,97 @@ type IntegrationAuth struct {
 	TokenEnv string `json:"token_env,omitempty"`
 }
 
+type IntegrationCapability string
+
+const (
+	CapabilityTracker  IntegrationCapability = "tracker"
+	CapabilityCodeHost IntegrationCapability = "code-host"
+	CapabilityDocs     IntegrationCapability = "docs"
+)
+
+type providerDescriptor struct {
+	Capabilities []IntegrationCapability
+	Legacy       IntegrationCapability
+}
+
+var providerDescriptors = map[string]providerDescriptor{
+	"github":     {Capabilities: []IntegrationCapability{CapabilityTracker, CapabilityCodeHost}, Legacy: CapabilityTracker},
+	"gitlab":     {Capabilities: []IntegrationCapability{CapabilityTracker, CapabilityCodeHost}, Legacy: CapabilityTracker},
+	"jira":       {Capabilities: []IntegrationCapability{CapabilityTracker}, Legacy: CapabilityTracker},
+	"linear":     {Capabilities: []IntegrationCapability{CapabilityTracker}, Legacy: CapabilityTracker},
+	"confluence": {Capabilities: []IntegrationCapability{CapabilityDocs}, Legacy: CapabilityDocs},
+}
+
+var roleCapabilities = map[string]IntegrationCapability{
+	"delivery":  CapabilityTracker,
+	"roadmap":   CapabilityTracker,
+	"docs":      CapabilityDocs,
+	"code-host": CapabilityCodeHost,
+}
+
+// EffectiveCapabilities returns the semantic capabilities explicitly assigned
+// to a connection. Connections authored before capability declarations infer
+// only their provider's legacy capability.
+func (c IntegrationConfig) EffectiveCapabilities() []IntegrationCapability {
+	if c.Capabilities != nil {
+		return append([]IntegrationCapability(nil), c.Capabilities...)
+	}
+	if descriptor, ok := providerDescriptors[c.Provider]; ok && descriptor.Legacy != "" {
+		return []IntegrationCapability{descriptor.Legacy}
+	}
+	return nil
+}
+
+func (c IntegrationConfig) SupportsCapability(capability IntegrationCapability) bool {
+	for _, candidate := range c.EffectiveCapabilities() {
+		if candidate == capability {
+			return true
+		}
+	}
+	return false
+}
+
+func ProviderCapabilities(provider string) []IntegrationCapability {
+	return append([]IntegrationCapability(nil), providerDescriptors[provider].Capabilities...)
+}
+
+func RoleCapability(role string) (IntegrationCapability, bool) {
+	capability, ok := roleCapabilities[role]
+	return capability, ok
+}
+
+// IntegrationConnection is credential-safe runtime metadata shared by typed
+// domain projections. Token remains a Secret until the provider boundary.
+type IntegrationConnection struct {
+	ID           string
+	Provider     string
+	Project      string
+	Board        string
+	BaseURL      string
+	UserEmail    string
+	Repositories []string
+	Capabilities []IntegrationCapability
+	Token        Secret
+	TokenEnv     string
+}
+
+func (c IntegrationConnection) ResolveToken() (Secret, error) {
+	if c.Token != "" {
+		return c.Token, nil
+	}
+	if c.TokenEnv != "" {
+		if token := os.Getenv(c.TokenEnv); token != "" {
+			return Secret(token), nil
+		}
+	}
+	return "", fmt.Errorf("integration %q has no usable credential", c.ID)
+}
+
 // TrackerConnection is the credential-safe metadata a broker needs for one
 // configured tracker connection. Token remains a Secret until the adapter or
 // child process boundary explicitly reveals it.
 type TrackerConnection struct {
-	ID        string
-	Provider  string
-	Project   string
-	Board     string
-	BaseURL   string
-	UserEmail string
-	Token     Secret
-	TokenEnv  string
+	IntegrationConnection
 }
 
 func (c TrackerConnection) TrackerConfig() *TrackerConfig {
@@ -56,15 +136,35 @@ func (c TrackerConnection) TrackerConfig() *TrackerConfig {
 }
 
 func (c TrackerConnection) ResolveToken() (Secret, error) {
-	if c.Token != "" {
-		return c.Token, nil
+	return c.IntegrationConnection.ResolveToken()
+}
+
+// CodeHostConnection is the credential-safe runtime projection used by
+// repository-host adapters. It deliberately shares identity and credential
+// resolution with tracker connections without sharing tracker semantics.
+type CodeHostConnection struct {
+	IntegrationConnection
+}
+
+type IntegrationResolutionError struct {
+	Code         string
+	Role         string
+	ConnectionID string
+	Provider     string
+	Capability   IntegrationCapability
+}
+
+func (e *IntegrationResolutionError) Error() string {
+	switch e.Code {
+	case "connection_not_found":
+		return fmt.Sprintf("integration %q not found", e.ConnectionID)
+	case "code_host_role_missing":
+		return "no code-host integration selected; set integrations.roles.code-host or pass connection_id"
+	case "wrong_connection_capability":
+		return fmt.Sprintf("integration %q provider %q does not declare capability %q", e.ConnectionID, e.Provider, e.Capability)
+	default:
+		return "integration resolution failed"
 	}
-	if c.TokenEnv != "" {
-		if token := os.Getenv(c.TokenEnv); token != "" {
-			return Secret(token), nil
-		}
-	}
-	return "", fmt.Errorf("integration %q has no usable credential", c.ID)
 }
 
 // Secret deliberately redacts all generic formatting and JSON serialization.
@@ -119,8 +219,6 @@ func (c Config) SelectTracker(explicit string) (*TrackerConfig, error) {
 }
 
 var integrationIDRE = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
-var providers = map[string]bool{"github": true, "jira": true, "linear": true, "gitlab": true, "confluence": true}
-var roles = map[string]bool{"delivery": true, "roadmap": true, "docs": true}
 
 func ResolveIntegrationDocuments(committedPath string, committed []byte, localPath string, local []byte) (*ResolvedIntegrations, error) {
 	if err := validateLegacyUnknown(committedPath, committed); err != nil {
@@ -276,14 +374,6 @@ func validateLegacyUnknown(path string, data []byte) error {
 
 func (r *ResolvedIntegrations) validate(committedPath, localPath string) error {
 	c := r.Config
-	for role, id := range c.Roles {
-		if !roles[role] {
-			return fmt.Errorf("$.integrations.roles.%s: unknown role", role)
-		}
-		if _, ok := c.Connections[id]; !ok {
-			return fmt.Errorf("$.integrations.roles.%s references missing $.integrations.connections.%s", role, id)
-		}
-	}
 	if c.Default != "" {
 		if _, ok := c.Connections[c.Default]; !ok {
 			return fmt.Errorf("$.integrations.default references missing $.integrations.connections.%s", c.Default)
@@ -293,15 +383,90 @@ func (r *ResolvedIntegrations) validate(committedPath, localPath string) error {
 		if !integrationIDRE.MatchString(id) {
 			return fmt.Errorf("$.integrations.connections.%s: invalid integration ID", id)
 		}
-		if !providers[cn.Provider] {
+		if _, ok := providerDescriptors[cn.Provider]; !ok {
 			return fmt.Errorf("$.integrations.connections.%s.provider: unknown provider %q", id, cn.Provider)
+		}
+		if err := validateConnectionCapabilities(id, cn); err != nil {
+			return err
 		}
 		if err := validateProviderSettings(id, cn); err != nil {
 			return err
 		}
 	}
+	for role, id := range c.Roles {
+		required, ok := roleCapabilities[role]
+		if !ok {
+			return fmt.Errorf("$.integrations.roles.%s: unknown role", role)
+		}
+		cn, ok := c.Connections[id]
+		if !ok {
+			return fmt.Errorf("$.integrations.roles.%s references missing $.integrations.connections.%s", role, id)
+		}
+		if !cn.SupportsCapability(required) {
+			return fmt.Errorf(
+				"$.integrations.roles.%s: integration %q provider %q does not declare capability %q (declared: %s; provider supports: %s)",
+				role, id, cn.Provider, required, formatCapabilities(cn.EffectiveCapabilities()), formatCapabilities(ProviderCapabilities(cn.Provider)),
+			)
+		}
+	}
 	return nil
 }
+
+func validateConnectionCapabilities(id string, c IntegrationConfig) error {
+	descriptor, ok := providerDescriptors[c.Provider]
+	if !ok {
+		return fmt.Errorf("$.integrations.connections.%s.provider: unknown provider %q", id, c.Provider)
+	}
+	if c.Capabilities == nil {
+		return nil
+	}
+	if len(c.Capabilities) == 0 {
+		return fmt.Errorf("$.integrations.connections.%s.capabilities must not be empty when provided", id)
+	}
+	allowed := make(map[IntegrationCapability]bool, len(descriptor.Capabilities))
+	for _, capability := range descriptor.Capabilities {
+		allowed[capability] = true
+	}
+	seen := make(map[IntegrationCapability]bool, len(c.Capabilities))
+	for i, capability := range c.Capabilities {
+		path := fmt.Sprintf("$.integrations.connections.%s.capabilities.%d", id, i)
+		if !allowed[capability] {
+			return fmt.Errorf("%s: provider %q does not support capability %q (supported: %s)", path, c.Provider, capability, formatCapabilities(descriptor.Capabilities))
+		}
+		if seen[capability] {
+			return fmt.Errorf("%s: duplicate capability %q", path, capability)
+		}
+		seen[capability] = true
+	}
+	return nil
+}
+
+func ValidateProviderRole(provider, role string) (IntegrationCapability, error) {
+	required, ok := roleCapabilities[role]
+	if !ok {
+		return "", fmt.Errorf("unknown integration role %q", role)
+	}
+	descriptor, ok := providerDescriptors[provider]
+	if !ok {
+		return "", fmt.Errorf("unknown provider %q", provider)
+	}
+	for _, capability := range descriptor.Capabilities {
+		if capability == required {
+			return required, nil
+		}
+	}
+	return "", fmt.Errorf("provider %q cannot serve role %q: requires capability %q (supported: %s)", provider, role, required, formatCapabilities(descriptor.Capabilities))
+}
+
+func formatCapabilities(capabilities []IntegrationCapability) string {
+	values := make([]string, 0, len(capabilities))
+	for _, capability := range capabilities {
+		values = append(values, string(capability))
+	}
+	sort.Strings(values)
+	return strings.Join(values, ",")
+}
+
 func validateProviderSettings(id string, c IntegrationConfig) error {
 	stringFields := map[string]bool{"project": true, "board": true, "base_url": true, "user_email": true, "space_key": true}
 	commonTracker := map[string]string{"project": "string", "base_url": "string", "post_on_design": "bool", "post_on_deliver": "bool", "size_mapping": "object"}
@@ -311,6 +476,9 @@ func validateProviderSettings(id string, c IntegrationConfig) error {
 	case "github", "linear":
 		for k, v := range commonTracker {
 			schema[k] = v
+		}
+		if c.Provider == "github" {
+			schema["repositories"] = "string_array"
 		}
 		required = []string{"project"}
 	case "jira":
@@ -324,6 +492,7 @@ func validateProviderSettings(id string, c IntegrationConfig) error {
 		for k, v := range commonTracker {
 			schema[k] = v
 		}
+		schema["repositories"] = "string_array"
 		required = []string{"project", "base_url"}
 	case "confluence":
 		schema = map[string]string{"space_key": "string", "base_url": "string", "user_email": "string"}
@@ -358,6 +527,25 @@ func validateProviderSettings(id string, c IntegrationConfig) error {
 			var v map[string]json.RawMessage
 			if err := json.Unmarshal(c.Settings[k], &v); err != nil || v == nil {
 				return fmt.Errorf("%s: expected object", path)
+			}
+		case "string_array":
+			var values []string
+			if err := json.Unmarshal(c.Settings[k], &values); err != nil || values == nil {
+				return fmt.Errorf("%s: expected string array", path)
+			}
+			if len(values) == 0 || len(values) > 100 {
+				return fmt.Errorf("%s: expected 1 to 100 repositories", path)
+			}
+			seen := map[string]bool{}
+			for i, value := range values {
+				if !validRepositoryName(value) {
+					return fmt.Errorf("%s.%d: invalid repository name %q", path, i, value)
+				}
+				key := strings.ToLower(value)
+				if seen[key] {
+					return fmt.Errorf("%s.%d: duplicate repository %q", path, i, value)
+				}
+				seen[key] = true
 			}
 		}
 	}
@@ -406,6 +594,12 @@ func validateProviderSettings(id string, c IntegrationConfig) error {
 		}
 	}
 	return nil
+}
+
+var repositoryNameRE = regexp.MustCompile(`^[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)+$`)
+
+func validRepositoryName(value string) bool {
+	return value == strings.TrimSpace(value) && repositoryNameRE.MatchString(value)
 }
 
 // ValidateConnectionSettings checks an assembled settings map against the
@@ -489,7 +683,7 @@ func rawString(m map[string]json.RawMessage, k string) string {
 }
 func (r *ResolvedIntegrations) DeliveryTracker() (*TrackerConfig, bool) {
 	_, c, e := r.Select("", "delivery")
-	if e != nil || c.Provider == "confluence" {
+	if e != nil || !c.SupportsCapability(CapabilityTracker) {
 		return nil, false
 	}
 	t := &TrackerConfig{Type: c.Provider, Project: rawString(c.Settings, "project"), Board: rawString(c.Settings, "board"), BaseURL: rawString(c.Settings, "base_url"), UserEmail: rawString(c.Settings, "user_email")}
@@ -511,16 +705,16 @@ func (c Config) ResolveTrackerConnection(explicit string) (TrackerConnection, er
 		if c.Tracker == nil || c.Tracker.Type == "" || c.Tracker.Type == "none" {
 			return TrackerConnection{}, fmt.Errorf("no tracker connection configured")
 		}
-		return TrackerConnection{
+		return TrackerConnection{IntegrationConnection: IntegrationConnection{
 			ID: "legacy", Provider: c.Tracker.Type, Project: c.Tracker.Project, Board: c.Tracker.Board,
-			BaseURL: c.Tracker.BaseURL, UserEmail: c.Tracker.UserEmail,
+			BaseURL: c.Tracker.BaseURL, UserEmail: c.Tracker.UserEmail, Capabilities: []IntegrationCapability{CapabilityTracker},
 			Token: Secret(c.Tracker.Token), TokenEnv: c.Tracker.TokenEnv,
-		}, nil
+		}}, nil
 	}
 
 	trackerIDs := make([]string, 0, len(c.Integrations.Connections))
 	for id, cn := range c.Integrations.Connections {
-		if cn.Provider != "confluence" {
+		if cn.SupportsCapability(CapabilityTracker) {
 			trackerIDs = append(trackerIDs, id)
 		}
 	}
@@ -540,18 +734,76 @@ func (c Config) ResolveTrackerConnection(explicit string) (TrackerConnection, er
 	if !ok {
 		return TrackerConnection{}, fmt.Errorf("integration %q not found", id)
 	}
-	if cn.Provider == "confluence" {
+	if !cn.SupportsCapability(CapabilityTracker) {
 		return TrackerConnection{}, fmt.Errorf("integration %q is not a tracker connection", id)
 	}
-	out := TrackerConnection{
+	return TrackerConnection{IntegrationConnection: runtimeIntegrationConnection(id, cn)}, nil
+}
+
+func runtimeIntegrationConnection(id string, cn IntegrationConfig) IntegrationConnection {
+	out := IntegrationConnection{
 		ID: id, Provider: cn.Provider, Project: rawString(cn.Settings, "project"), Board: rawString(cn.Settings, "board"),
 		BaseURL: rawString(cn.Settings, "base_url"), UserEmail: rawString(cn.Settings, "user_email"),
+		Capabilities: cn.EffectiveCapabilities(), Repositories: configuredRepositories(cn),
 	}
 	if cn.Auth != nil {
 		out.Token = cn.Auth.Token
 		out.TokenEnv = cn.Auth.TokenEnv
 	}
-	return out, nil
+	return out
+}
+
+func configuredRepositories(cn IntegrationConfig) []string {
+	values := []string{}
+	if project := rawString(cn.Settings, "project"); project != "" {
+		values = append(values, project)
+	}
+	var configured []string
+	if raw := cn.Settings["repositories"]; len(raw) > 0 {
+		_ = json.Unmarshal(raw, &configured)
+	}
+	seen := map[string]bool{}
+	out := make([]string, 0, len(values)+len(configured))
+	for _, value := range append(values, configured...) {
+		key := strings.ToLower(value)
+		if value != "" && !seen[key] {
+			seen[key] = true
+			out = append(out, value)
+		}
+	}
+	return out
+}
+
+// ResolveCodeHostConnection selects only an explicit eligible connection or
+// roles.code-host. It deliberately never falls back to delivery/default.
+func (c Config) ResolveCodeHostConnection(explicit string) (CodeHostConnection, error) {
+	if c.Integrations == nil {
+		return CodeHostConnection{}, &IntegrationResolutionError{
+			Code: "code_host_role_missing", Role: "code-host", Capability: CapabilityCodeHost,
+		}
+	}
+	id := strings.TrimSpace(explicit)
+	if id == "" {
+		id = strings.TrimSpace(c.Integrations.Roles["code-host"])
+	}
+	if id == "" {
+		return CodeHostConnection{}, &IntegrationResolutionError{
+			Code: "code_host_role_missing", Role: "code-host", Capability: CapabilityCodeHost,
+		}
+	}
+	cn, ok := c.Integrations.Connections[id]
+	if !ok {
+		return CodeHostConnection{}, &IntegrationResolutionError{
+			Code: "connection_not_found", Role: "code-host", ConnectionID: id, Capability: CapabilityCodeHost,
+		}
+	}
+	if !cn.SupportsCapability(CapabilityCodeHost) {
+		return CodeHostConnection{}, &IntegrationResolutionError{
+			Code: "wrong_connection_capability", Role: "code-host", ConnectionID: id,
+			Provider: cn.Provider, Capability: CapabilityCodeHost,
+		}
+	}
+	return CodeHostConnection{IntegrationConnection: runtimeIntegrationConnection(id, cn)}, nil
 }
 func (r *ResolvedIntegrations) DocsConfluence() (*ConfluenceConfig, bool) {
 	_, c, e := r.Select("", "docs")

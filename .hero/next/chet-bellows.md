@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-28T00:16:16Z
+updated: 2026-07-28T00:16:49Z
 repo: hero-engine/hero
 ---
 
@@ -11,7 +11,7 @@ repo: hero-engine/hero
 > Session opened with — Deliver initiative-autocomplete-ignores-declared-children. An initiative auto-completes when only some of its declared children have shipped, because the completion gate's roster is fed from an incomplete source. Two compounding defects: (1) children: (plural) frontmatter is silently dropped by the relation parser (internal/spec/spec.go:633), so declared children never become child edges and the r…
 > _possibly stale — 10 commit(s) since, last set 2d 4h ago_
 
-_possibly stale — 4 commit(s) since, last set 3h 36m ago_
+_possibly stale — 5 commit(s) since, last set 3h 37m ago_
 
 ## Last user ask
 
@@ -19,7 +19,11 @@ _possibly stale — 4 commit(s) since, last set 3h 36m ago_
 
 ## Suggested next prompt
 
-> Cut and monitor the v0.30.0 release from the verified main SHA, then confirm hero-releases, Homebrew, Scoop, and docs publication.
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 

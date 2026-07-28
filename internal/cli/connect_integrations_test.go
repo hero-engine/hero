@@ -109,3 +109,104 @@ func TestInteractivePromptsShareOneReader(t *testing.T) {
 		t.Fatalf("second=%q", got)
 	}
 }
+
+func TestNonInteractiveConnectCreatesCodeHostCapabilityWithoutChangingDefault(t *testing.T) {
+	root := t.TempDir()
+	os.MkdirAll(filepath.Join(root, ".hero"), 0755)
+	connectIntegrationID = "github-host"
+	connectProject = "hero-engine/hero"
+	connectBaseURL = ""
+	connectUserEmail = ""
+	connectRole = "code-host"
+	connectTokenStdin = true
+	connectLocalOnly = true
+	connectGlobal = false
+	connectJSON = true
+	connectNoVerify = true
+	cmd := &cobra.Command{}
+	cmd.SetIn(strings.NewReader("CODE-HOST-CONNECT-CANARY\n"))
+	var out bytes.Buffer
+	cmd.SetOut(&out)
+	if err := runConnectNonInteractive(cmd, root, config.Credentials{}, "github"); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := config.Load(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Integrations.Default != "" {
+		t.Fatalf("code-host connect changed default to %q", cfg.Integrations.Default)
+	}
+	if cfg.Integrations.Roles["code-host"] != "github-host" {
+		t.Fatalf("roles=%v", cfg.Integrations.Roles)
+	}
+	connection := cfg.Integrations.Connections["github-host"]
+	if !connection.SupportsCapability(config.CapabilityCodeHost) || connection.SupportsCapability(config.CapabilityTracker) {
+		t.Fatalf("capabilities=%v", connection.EffectiveCapabilities())
+	}
+	if strings.Contains(out.String(), "CANARY") {
+		t.Fatal("connect result leaked token")
+	}
+}
+
+func TestNonInteractiveConnectRejectsJiraCodeHostBeforePersistence(t *testing.T) {
+	root := t.TempDir()
+	os.MkdirAll(filepath.Join(root, ".hero"), 0755)
+	connectIntegrationID = "jira-host"
+	connectProject = "HERO"
+	connectBaseURL = "https://jira.invalid"
+	connectUserEmail = ""
+	connectRole = "code-host"
+	connectTokenStdin = true
+	connectLocalOnly = true
+	connectGlobal = false
+	connectJSON = true
+	connectNoVerify = true
+	cmd := &cobra.Command{}
+	cmd.SetIn(strings.NewReader("unused-canary\n"))
+	cmd.SetOut(&bytes.Buffer{})
+	err := runConnectNonInteractive(cmd, root, config.Credentials{}, "jira")
+	if err == nil || !strings.Contains(err.Error(), `provider "jira" cannot serve role "code-host"`) {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if _, statErr := os.Stat(filepath.Join(root, ".hero", config.LocalConfigFileName)); !os.IsNotExist(statErr) {
+		t.Fatalf("invalid role wrote local config: %v", statErr)
+	}
+}
+
+func TestNonInteractiveConnectUpgradesExistingGitHubToDualCapability(t *testing.T) {
+	root := t.TempDir()
+	dir := filepath.Join(root, ".hero")
+	os.MkdirAll(dir, 0755)
+	shared := `{"folder":".hero","integrations":{"default":"github-main","roles":{"delivery":"github-main"},"connections":{"github-main":{"provider":"github","settings":{"project":"hero-engine/hero"}}}}}`
+	if err := os.WriteFile(filepath.Join(dir, config.ConfigFileName), []byte(shared), 0644); err != nil {
+		t.Fatal(err)
+	}
+	connectIntegrationID = "github-main"
+	connectProject = "hero-engine/hero"
+	connectBaseURL = ""
+	connectUserEmail = ""
+	connectRole = "code-host"
+	connectTokenStdin = true
+	connectLocalOnly = false
+	connectGlobal = false
+	connectJSON = true
+	connectNoVerify = true
+	cmd := &cobra.Command{}
+	cmd.SetIn(strings.NewReader("DUAL-CAPABILITY-CANARY\n"))
+	cmd.SetOut(&bytes.Buffer{})
+	if err := runConnectNonInteractive(cmd, root, config.Credentials{}, "github"); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := config.Load(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	connection := cfg.Integrations.Connections["github-main"]
+	if !connection.SupportsCapability(config.CapabilityTracker) || !connection.SupportsCapability(config.CapabilityCodeHost) {
+		t.Fatalf("capabilities=%v", connection.EffectiveCapabilities())
+	}
+	if cfg.Integrations.Roles["delivery"] != "github-main" || cfg.Integrations.Roles["code-host"] != "github-main" {
+		t.Fatalf("roles=%v", cfg.Integrations.Roles)
+	}
+}

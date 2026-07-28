@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-28T00:16:16Z · 83 ready specs_
+_Generated: 2026-07-28T00:16:49Z · 83 ready specs_
 
 ## code-host-integration-capability-model — "Code-host integration capability model"
 _feature · delivering · horizon: now_
