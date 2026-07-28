@@ -2,7 +2,7 @@
 title: "Code-host integration capability model"
 slug: code-host-integration-capability-model
 type: feature
-status: delivering
+status: completed
 domain: engineering
 priority: critical
 size: medium
@@ -14,6 +14,7 @@ relates-to:
   - brokered-tracker-agent-access
 tags: [integrations, code-host, credentials, capabilities, github, gitlab]
 delivery_method: manual
+completed_at: 2026-07-28T00:28:43Z
 ---
 
 # Code-host integration capability model
@@ -193,7 +194,7 @@ connection ID may appear under both delivery and code-host roles.
 
 ## Completion Ledger
 
-Implementation commits: `84c90c4`, `fb41993`.
+Implementation commits: `84c90c4`, `fb41993`, `ccec849`.
 
 Validation performed:
 

@@ -6,26 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-28T00:26:27Z · 83 ready specs_
-
-## code-host-integration-capability-model — "Code-host integration capability model"
-_feature · delivering · horizon: now_
-
-Teach the existing integration registry which providers can host repositories
-and resolve `roles.code-host` independently from tracker delivery.
-
-**Status:** delivering — capability declarations, role validation, typed
-runtime projections, connect behavior, and compatibility tests are implemented.
-
-**Pick up at:** validate the Completion Ledger and cold audit, then run
-`hero spec verify code-host-integration-capability-model`.
-
-→ `/deliver code-host-integration-capability-model`
-
-**Files:** `internal/config/integrations.go`, `internal/config/credentials.go`, `internal/config/integrations_test.go`, `internal/cli/connect.go`
-**Skip:** do not add a code-host token field/store or fall back from `code-host` to `delivery`.
-
----
+_Generated: 2026-07-28T00:28:57Z · 83 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -72,6 +53,25 @@ surfaces:
    ambiguous-outcome recovery; and
 5. one in-process implementation surfaced through JSON CLI and typed MCP tools
    that Hero Code can validate against a released Hero binary.
+
+---
+
+## code-host-broker-v1-contract — "Code-host broker v1 contract"
+_feature · planning · horizon: now_
+
+Freeze the Hero-owned wire boundary and canonical fixture that every code-host
+adapter and Hero Code decoder must share.
+
+**Status:** planning — existing broker, permission, credential, pagination, and
+Hero Code decoder conventions have been mapped.
+
+**Pick up at:** write the operation/policy registry and canonical identity
+types, then generate a fixture containing every response and error variant.
+
+→ `/deliver code-host-broker-v1-contract`
+
+**Files:** `contracts/codehostbroker/contract.go`, `contracts/codehostbroker/testdata/v1/consumer-fixture.json`, `docs/contracts/code-host-broker-v1.md`
+**Skip:** do not add transport handlers or reuse tracker issue DTOs.
 
 ---
 
