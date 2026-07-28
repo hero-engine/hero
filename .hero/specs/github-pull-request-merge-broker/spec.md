@@ -2,7 +2,7 @@
 title: "GitHub pull-request merge broker"
 slug: github-pull-request-merge-broker
 type: feature
-status: delivering
+status: completed
 domain: engineering
 priority: high
 size: medium
@@ -14,6 +14,7 @@ conflicts-with:
   - github-pull-request-state-transition-broker
 tags: [github, pull-request, merge, commitment, readiness, reconciliation]
 delivery_method: manual
+completed_at: 2026-07-28T04:17:31Z
 ---
 
 # GitHub pull-request merge broker
