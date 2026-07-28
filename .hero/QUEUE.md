@@ -6,7 +6,26 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-28T01:18:30Z · 83 ready specs_
+_Generated: 2026-07-28T01:50:35Z · 83 ready specs_
+
+## github-code-host-read-adapter — "GitHub code-host read adapter"
+_feature · delivering · horizon: now_
+
+Adds Hero's credential-safe GitHub read adapter and deterministic provider fake
+without coupling pull requests to issue tracking.
+
+**Status:** in-review — all ten read/discovery operations, safety boundaries,
+fake scenarios, and conformance tests are implemented and green.
+
+**Pick up at:** cold-audit the committed adapter against all 14 criteria, then
+run `hero spec verify github-code-host-read-adapter`.
+
+→ `.hero/planning/initiatives/hero-code-host-broker-capabilities/github-code-host-read-adapter/spec.md`
+
+**Files:** `internal/codehost/broker.go`, `internal/codehost/github.go`, `internal/codehost/broker_test.go`, `internal/mockcodehost/server.go`
+**Skip:** do not add PR routes to `internal/tracker` or `internal/mocktracker`.
+
+---
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -53,25 +72,6 @@ surfaces:
    ambiguous-outcome recovery; and
 5. one in-process implementation surfaced through JSON CLI and typed MCP tools
    that Hero Code can validate against a released Hero binary.
-
----
-
-## github-code-host-read-adapter — "GitHub code-host read adapter"
-_feature · planning · horizon: now_
-
-Build the separate GitHub code-host read adapter and deterministic fake before
-any provider mutation is allowed.
-
-**Status:** planning — issue-only GitHub, tracker broker, origin validation,
-pagination, and mock-server patterns are mapped.
-
-**Pick up at:** create `internal/codehost` around the v1 operation registry,
-then implement the fake provider before wiring live GitHub read routes.
-
-→ `/deliver github-code-host-read-adapter`
-
-**Files:** `internal/codehost/broker.go`, `internal/codehost/github.go`, `internal/mockcodehost/server.go`
-**Skip:** do not add PR routes to `internal/tracker` or `internal/mocktracker`.
 
 ---
 
