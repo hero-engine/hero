@@ -1,41 +1,40 @@
 # Delivery audit — github-pull-request-collaboration-broker
 
-**Audited:** `git diff dfe781d...162e171`
-**Verdict:** HOLD
-**Surface:** noteworthy
+**Audited:** `git diff dfe781d...9653ce4`
+**Verdict:** SHIP
+**Surface:** clean
 
 ## Acceptance criteria
 
-- [✓] AC-1 — `codehostbroker.ValidateRequest`, `decodeCollaborationPayload`, and `PrepareCollaboration` require the qualified PR, head SHA, explicit user intent, stable keys, and both revisions; `TestCollaborationPreflightPermissionsStateAndFreshness` exercises the required fields.
-- [✓] AC-2 — `internal/codehost/broker.go:37` advertises the four distinct operations, and `TestCollaborationOperationsAdvertisedAndApplied` checks each operation's `external_write`/`explicit_user` policy.
-- [✓] AC-3 — `internal/codehost/github_collaboration.go:109` performs the open-state, provider-ID, head, permission, and actor preflight before `executeMutation` increments provider attempts; `TestCollaborationPreflightPermissionsStateAndFreshness` covers unsupported, closed, stale, and forbidden cases.
-- [✓] AC-4 — `internal/codehost/collaboration.go:80` derives one fixed-size marker from operation identity, `validateCollaborationPayload` reserves its bytes, and `TestCollaborationOperationsAdvertisedAndApplied` checks one exact marker in every dispatched operation.
-- [✗] AC-5 — provider receipt ID, qualified PR, head, outcome, and a structured actor are persisted, but the public mutation result has no actor field. `createReceipt` instead embeds only the actor login in the undocumented string `target_revision = "head:<sha>;actor:<login>"` (`internal/codehost/mutations.go:113`), dropping the actor provider ID. `TestCollaborationOperationsAdvertisedAndApplied` asserts string containment rather than a typed actor. This does not deliver the criterion's returned actor identity through the provider-neutral v1 contract.
-- [✓] AC-6 — `internal/codehost/github_collaboration.go:301` performs bounded marker/actor/head/state read-back, and `TestCollaborationLostDelayedAmbiguousAndCancelledResponses` proves all four lost-response paths reconcile without a second write.
-- [✓] AC-7 — `internal/codehost/reconcile.go:148` records ambiguous outcomes when exact proof is absent; delayed, unavailable, marker-collision, mismatched-state, and partial-read-back tests assert ambiguity and one provider attempt.
-- [✓] AC-8 — `internal/codehost/github_collaboration.go:134` recognizes the authenticated actor's current-head `APPROVED` or `CHANGES_REQUESTED` review, and `TestCollaborationExternallyCompletedReviewRules` asserts zero writes.
-- [✓] AC-9 — `authoritativeCurrentHeadReview` binds actor/head and rejects a terminal dismissed review; old-head, dismissed, and other-actor scenarios each assert one new requested effect.
-- [✓] AC-10 — the shared locked journal in `internal/codehost/reconcile.go` serializes retries; sequential and concurrent tests cover all four operations and assert one provider effect plus a stable receipt.
-- [✓] AC-11 — `canonicalCollaborationDigest` binds operation, qualified target, head, body digest, intent, consent, and reconciliation key beneath a connection-scoped journal key; conflict tests exercise operation/review-state, target, head, and body changes before another write.
-- [✓] AC-12 — `stripHeroMarkers` removes only the exact bounded grammar, and normalization, malformed-lookalike, and fuzz tests preserve all other content.
-- [✓] AC-13 — `executeMutation` checks cancellation before preflight/dispatch and uses a detached bounded reconciliation context after ambiguous dispatch; tests cover cancellation before and after every operation.
-- [✓] AC-14 — `internal/mockcodehost` and `github_collaboration_test.go` provide asserted scenarios for permissions and permission changes, duplicate/concurrent retries, delayed visibility, dismissed/old-head reviews, collision, external completion, force push, cancellation, lost response, and partial read-back.
+- [✓] AC-1 — `contracts/codehostbroker/validate.go:99`, `internal/codehost/collaboration.go:37`, and `internal/codehost/github_collaboration.go:34` require repository-qualified PR identity, expected head SHA, explicit user intent, stable keys, and capability/observation revisions; `TestCollaborationPreflightPermissionsStateAndFreshness` asserts the required material fails before dispatch.
+- [✓] AC-2 — `internal/codehost/broker.go:37` advertises `comment`, `submit_review`, `approve`, and `request_changes` separately, while `TestCollaborationOperationsAdvertisedAndApplied` asserts each operation's `external_write` and `explicit_user` policy.
+- [✓] AC-3 — `internal/codehost/github_collaboration.go:109` checks provider PR identity, open state, exact head, actor, and operation-specific permission before the shared state machine reaches dispatch; `TestCollaborationPreflightPermissionsStateAndFreshness` covers unsupported, closed, stale, capability-changed, observation-changed, and forbidden paths with zero writes.
+- [✓] AC-4 — `internal/codehost/collaboration.go:70` reserves marker bytes and rejects caller-supplied valid markers, while `collaborationMarker` derives one fixed-size lowercase-hex marker only from the stable operation identity; `TestCollaborationOperationsAdvertisedAndApplied` asserts exactly one marker for each operation.
+- [✓] AC-5 — `internal/codehost/idempotency.go:78` persists provider receipt, qualified PR identity, typed actor, and head SHA without body text; `internal/codehost/github_create.go:307` returns the actor through additive `MutationResult.actor`, defined at `contracts/codehostbroker/contract.go:310` and strictly validated at `contracts/codehostbroker/validate.go:517`. `TestCollaborationOperationsAdvertisedAndApplied` asserts actor login and provider ID for all four operations. The canonical consumer fixture contains typed actors in all four collaboration results, the independent consumer shape decodes them, and the published sidecar matches SHA-256 `49156d4a15aacb64f09c5a64a107e8fafc323db4441aa6fb15a8f87b39c00903`, providing the versioned Hero Code handoff artifact.
+- [✓] AC-6 — `internal/codehost/github_collaboration.go:301` reconciles by exact marker and actor, additionally binding review state and expected head; `TestCollaborationLostDelayedAmbiguousAndCancelledResponses` proves each operation recovers a lost response without a second write.
+- [✓] AC-7 — `internal/codehost/reconcile.go:148` records `ambiguous` when read-back cannot prove the exact effect, and same-key replay remains in reconciliation; delayed, unavailable, marker-collision, mismatched-state, and partial-read-back tests assert one provider attempt.
+- [✓] AC-8 — `internal/codehost/github_collaboration.go:134` recognizes only the authenticated actor's authoritative current-head `APPROVED` or `CHANGES_REQUESTED` state; `TestCollaborationExternallyCompletedReviewRules` asserts `externally_completed` and zero writes.
+- [✓] AC-9 — `internal/codehost/github_collaboration.go:386` binds the authoritative review to actor and head and treats a latest dismissed review as non-authoritative; old-head, dismissed, and other-actor scenarios each produce one requested effect rather than external completion.
+- [✓] AC-10 — `internal/codehost/reconcile.go:34` runs every mutation under the durable journal lock, and `TestCollaborationDuplicateConcurrentAndConflictSemantics` covers sequential and concurrent retries for all four operations with one provider effect and a stable receipt.
+- [✓] AC-11 — `internal/codehost/collaboration.go:112` binds operation, qualified PR target, expected head, body digest, intent, consent, and reconciliation key beneath the connection-scoped idempotency key; conflict tests vary operation/review state, target, head, and body and assert no additional write.
+- [✓] AC-12 — `internal/codehost/collaboration.go:90` strips only the exact bounded marker grammar, and `internal/codehost/normalize.go:242` applies it to normalized reviews/comments; direct malformed-lookalike assertions and `FuzzHeroMarkerStripping` preserve all other content.
+- [✓] AC-13 — `internal/codehost/reconcile.go:89` stops cancelled requests before preflight/dispatch, while `internal/codehost/reconcile.go:148` uses detached bounded reconciliation after an ambiguous dispatch; tests cover cancellation before dispatch and after application for all four operations.
+- [✓] AC-14 — `internal/mockcodehost/server.go` and `internal/codehost/github_collaboration_test.go` exercise permission denial/change, duplicate and concurrent retry, delayed/unavailable read-back, old/dismissed/other-actor reviews, marker collision, external completion, force push, cancellation, lost response, mismatched state, and partial read-back.
 
 ## Changes
 
-- [✓] Extend the mutation journal with safe collaboration identity — `internal/codehost/idempotency.go:64` adds PR/head/marker target material and structured receipt actor/provider ID/head fields; journal canaries reject body and credential persistence.
-- [✓] Add common collaboration validation and preflight — `internal/codehost/collaboration.go` and `internal/codehost/github_collaboration.go:32` add bounded decoding plus provider-backed state, head, actor, permission, and revision observation.
-- [✓] Implement GitHub issue-comment creation — `internal/codehost/github_collaboration.go:253` posts a marked comment and validates the returned actor and marker.
-- [✓] Implement neutral and decision review submission — `internal/codehost/github_collaboration.go:275` maps the three review operations to `COMMENT`, `APPROVE`, and `REQUEST_CHANGES`, pins `commit_id`, and validates state/head/actor/marker.
-- [✓] Add exact marker recovery and normalization — `internal/codehost/collaboration.go:80`, `internal/codehost/github_collaboration.go:301`, and `internal/codehost/normalize.go:244` implement injection, bounded exact recovery, and strict stripping.
-- [✓] Extend the deterministic GitHub fake — `internal/mockcodehost/server.go` adds collaboration routes and all named response/state scenarios.
-- [✓] Add conformance, concurrency, cancellation, and redaction tests — `internal/codehost/github_collaboration_test.go` covers the declared behavior, response validation, retries, cancellation, redaction, reconciliation, and marker fuzzing.
+- [✓] Extend the mutation journal with safe collaboration identity — `internal/codehost/idempotency.go:64` adds content-free qualified target/head/marker material and typed receipt actor/provider ID/head fields; `assertCollaborationJournal` verifies required fields and rejects body and credential canaries.
+- [✓] Add common collaboration validation and preflight — `internal/codehost/collaboration.go` supplies strict payload bounds and canonical identity, and `internal/codehost/github_collaboration.go:32` adds provider-backed PR/head/actor/permission revision observation.
+- [✓] Implement GitHub issue-comment creation — `internal/codehost/github_collaboration.go:253` posts one marked issue comment and validates its exact marker and authenticated actor before recording success.
+- [✓] Implement neutral and decision review submission — `internal/codehost/github_collaboration.go:275` maps only the explicit operation to `COMMENT`, `APPROVE`, or `REQUEST_CHANGES`, pins `commit_id`, and validates returned marker, state, head, and actor.
+- [✓] Add exact marker recovery and normalization — `internal/codehost/collaboration.go:80`, `internal/codehost/github_collaboration.go:301`, and `internal/codehost/normalize.go:242` implement injection, bounded actor/head/state-aware recovery, and strict normalized stripping.
+- [✓] Extend the deterministic GitHub fake — `internal/mockcodehost/server.go` adds collaboration routes and the named write, visibility, permission, review-state, collision, external-completion, force-push, and cancellation scenarios.
+- [✓] Add conformance, concurrency, cancellation, and redaction tests — `internal/codehost/github_collaboration_test.go` validates every response contract, all four operations, stable-key behavior, reconciliation, actor output, cancellation, body bounds, journal redaction, and marker fuzzing; `contracts/codehostbroker/contract_test.go` adds actor validation plus canonical and independent-consumer fixture coverage.
 
 ## Open items
 
-- None in the Completion Ledger; every row was marked DONE.
+- None in the Completion Ledger; every row is DONE with concrete implementation and test evidence.
 
 ## Audit notes
 
-- AC-5 is performative as written: the durable journal has a typed actor, but the public v1 response does not. Packing a login into opaque `target_revision` is neither the documented fixture shape nor a typed actor identity and is not a reliable cross-repo contract for the Swift consumer.
-- The ledger reports focused and race-enabled code-host tests, 130,125 marker-fuzz executions, `go test ./... -count=1`, `go vet ./...`, formatting, and diff hygiene as passing. The corresponding asserted test bodies are present in the audited commit; the cold audit did not rerun tests.
+- None.
