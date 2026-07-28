@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-28T04:12:42Z · 83 ready specs_
+_Generated: 2026-07-28T04:16:12Z · 83 ready specs_
 
 ## github-pull-request-merge-broker — "GitHub pull-request merge broker"
 _feature · delivering · horizon: now_

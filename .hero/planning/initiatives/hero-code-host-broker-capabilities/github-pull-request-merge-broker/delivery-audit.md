@@ -1,43 +1,41 @@
 # Delivery audit — github-pull-request-merge-broker
 
-**Audited:** `git diff 81cd8af..6e804ac`
-**Verdict:** HOLD
-**Surface:** noteworthy
+**Audited:** `git diff 81cd8af..9316361`
+**Verdict:** SHIP
+**Surface:** clean
 
 ## Acceptance criteria
 
-- [✓] AC-1 — repository-specific methods, queue policy, permission state, and a runtime revision are advertised by `mergeRuntimeCapability`; `TestMergeCapabilitiesAreRepositorySpecificAndQueueFailsClosed` asserts the direct and queue-required forms.
-- [✓] AC-2 — `MergePayload`, request validation, strict decoding, and `validateMergeScope` require the qualified PR, exact head/base, method, intent, keys, revisions, and acceptance material before dispatch.
-- [✓] AC-3 — the operation registry classifies merge as `commitment` / `explicit_acceptance`, and `TestMergeRequiresExplicitAcceptanceBeforeProviderAccess` proves rejection before provider access.
-- [✓] AC-4 — `observeMergePreflight` fails closed across lifecycle, draft, exact head/base, complete readiness, queue, permissions, checks, reviews, protection, mergeability, and method support; the readiness and race table asserts zero merge attempts for rejected states.
-- [✓] AC-5 — `dispatchMerge` sends the expected head as `sha`; `TestMergeDispatchesExactHeadAndReturnsTypedReceipt` and the provider-force-push case assert the request and safe conflict behavior.
-- [✗] AC-6 — the current GitHub adapter correctly advertises `queue_supported:false` and performs no direct write for queue-required bases, but the claimed future queue contract is absent. `MergeCapability` permits an available `queue_supported:true` capability (`contracts/codehostbroker/validate.go:398-402`), while `MutationResult` has only a free-form `outcome` and the response has only a generic receipt (`contracts/codehostbroker/contract.go:318-323`); no typed queued state or required queue identity/receipt is defined or validated.
-- [✗] AC-7 — the clean first-attempt external-completion path is tested, but retries after a proven no-dispatch failure can misclassify a later external merge as `replayed`. `reconcileExistingMutation` reconciles every existing entry before checking `journalNotApplied` / `ProviderAttempts == 0` and unconditionally emits `ReconciliationReplayed` for an exact effect (`internal/codehost/reconcile.go:216-229`). That violates the required `externally_completed` classification for a merge that occurred before Hero ever dispatched.
-- [✓] AC-8 — ambiguous PUT responses enter detached exact head/base/commit read-back; the lost-response and unavailable-read-back tests assert reconciled-applied versus ambiguous.
-- [✓] AC-9 — `reconcileMerge` returns conflict for different head/base evidence, and the conflicting-head test asserts no merge attempt.
-- [✓] AC-10 — the journal gates dispatch and the lost-response, ambiguity, and replay tests assert one provider merge attempt across duplicate retries.
-- [✓] AC-11 — `canonicalMergeDigest` binds PR, head/base, method, title/message, intent, consent, and reconciliation key; the changed-payload test asserts `idempotency_conflict`.
-- [✓] AC-12 — pre-dispatch cancellation and cancellation after an applied write are both asserted, with the latter entering detached reconciliation.
-- [✓] AC-13 — the committed adapter adds only repository policy/readiness reads and GitHub's pull-request merge PUT; no branch, tracker, deployment, release, or auto-merge effect was added.
-- [✓] AC-14 — the fake and focused tests cover method policy, queue-only behavior, rate limiting, force pushes, stale/partial readiness, protection and permission changes, duplicate retries, external completion, conflicting heads, cancellation, and ambiguous responses; the canonical fixture includes merge policy, payload, result, receipt, and runtime capability material.
+- [✓] AC-1 — `mergeRuntimeCapability` derives repository-permitted methods, credential permission, and exact-base queue policy into a bounded runtime revision; `TestMergeCapabilitiesAreRepositorySpecificAndQueueFailsClosed` proves both executable and queue-required unavailable forms.
+- [✓] AC-2 — `ValidateRequest`, `validateMutationPayload`, strict `decodeMergePayload`, and `validateMergeScope` require the repository-qualified PR, exact head/base, supported method, user intent, key material, revisions, and explicit acceptance before execution.
+- [✓] AC-3 — the authoritative registry declares merge `commitment` / `explicit_acceptance`; `TestMergeRequiresExplicitAcceptanceBeforeProviderAccess` proves weaker consent reaches neither credentialed provider reads nor the merge endpoint.
+- [✓] AC-4 — `observeMergePreflight` requires an open non-draft PR plus exact head/base and complete/current checks, reviews, protection, permission, mergeability, queue, and method evidence; `TestMergeReadinessUnknownBlockedPartialAndRateLimitedNeverDispatch` and the race table assert zero writes for every rejected class.
+- [✓] AC-5 — `dispatchMerge` sends the expected head as GitHub's `sha`; the direct-request assertion and provider-force-push case prove exact dispatch and safe conflict handling.
+- [✓] AC-6 — queue-required bases advertise merge unavailable with `queue_supported:false`, empty methods, and zero direct writes. `MergeMutationResult` is a closed `merged` / `queued` result, and `ValidateResponse` requires the merge-commit or queue identity to equal the safe provider receipt exactly; `TestMergeMutationResultAndReceiptAreClosedAndExact` exercises the future queued form and mismatch rejection.
+- [✓] AC-7 — exact pre-dispatch external completion returns `externally_completed` without a write. `reconcileExistingMutation` also preserves that classification when `ProviderAttempts == 0`; `TestMergeRetryAfterNoDispatchClassifiesLaterExternalCompletion` proves stale-observation failure → external merge → same-key retry remains zero-dispatch and externally completed.
+- [✓] AC-8 — ambiguous PUT responses use detached read-back that requires exact PR identity, head, base, merged state, and merge commit identity; lost-response and unavailable-read-back tests prove `reconciled_applied` versus `ambiguous`.
+- [✓] AC-9 — both preflight and reconciliation return conflict for a merge at a different head or base; the conflicting-head scenario asserts no requested effect is reported as applied.
+- [✓] AC-10 — the durable journal reconciles an existing key before runtime capability access or dispatch; lost-response, ambiguous, and permission-change retry tests each assert one provider merge attempt.
+- [✓] AC-11 — `canonicalMergeDigest` binds PR, head/base, method, title/message, intent, consent, and reconciliation key; the changed-payload same-key test asserts `idempotency_conflict` and no second write.
+- [✓] AC-12 — cancellation before dispatch records no provider effect, while cancellation after provider application enters detached reconciliation and returns the proven applied result.
+- [✓] AC-13 — the delivery adds only repository/readiness reads and GitHub's PR merge PUT; no branch update/delete, auto-merge, tracker/spec transition, deployment, or release path appears in the delivery diff.
+- [✓] AC-14 — `internal/mockcodehost` and focused broker tests cover permissions, methods, queue-only and partial queue policy, rate limits, force pushes, stale/partial checks and reviews, protection changes, duplicates, external completion, conflicting heads, cancellation, and ambiguous read-back; the canonical fixture covers the additive merge contract.
 
 ## Changes
 
-- [✓] Runtime merge capability material — `MergeCapability`, validation, canonical fixture, docs, and repository-specific discovery landed.
-- [✓] Fail-closed merge proof — `observeMergePreflight` and its readiness/race tests cover the required evidence.
-- [✓] Explicit acceptance — authoritative policy and broker validation reject weaker consent before provider access.
-- [✓] Direct GitHub merge — merge/squash/rebase dispatch with expected-head protection and bounded normalized output landed.
-- [✓] Queue unsupported boundary — queue-required repositories advertise merge unavailable and `PrepareMerge` performs no direct write.
-- [✗] Durable receipts and reconciliation — direct-merge receipts retain exact head/base/commit identity, but the future typed queued receipt/state is not modeled or validated, and a no-dispatch journal retry can label a later external merge as replayed rather than externally completed.
-- [✓] Deterministic fake — merge policies, races, response loss, external effects, and cancellation scenarios landed.
-- [✓] Contract, broker, and safety tests — focused contract/broker/fake tests and canonical fixture assertions landed.
+- [✓] Runtime merge capability material — `MergeCapability`, response validation, GitHub policy discovery, canonical fixture material, and contract documentation landed.
+- [✓] Fail-closed merge proof — exact provider identity, lifecycle, head/base, actor, readiness, queue, and runtime method evidence gate dispatch in `observeMergePreflight`.
+- [✓] Explicit acceptance — registry policy and broker request validation enforce commitment consent before adapter resolution.
+- [✓] Direct GitHub merge — merge, squash, and rebase dispatch through the bounded PUT transport with expected-head protection and post-write proof.
+- [✓] Queue unsupported boundary — exact base-branch queue discovery makes the operation unavailable and performs no direct merge write.
+- [✓] Durable receipts and reconciliation — journal targets retain exact head/base; safe receipts retain merge commit identity; typed merged/queued results must match that receipt; zero-dispatch external completion remains distinct from replay.
+- [✓] Deterministic fake — merge policy, permission/readiness races, response loss, external effects, conflicting heads, cancellation, and rate limiting are controllable scenarios with recorded merge requests.
+- [✓] Contract, broker, and safety tests — focused contract/broker/fake coverage, generated fixture digest, full suite, vet, race suite, spec lint, and diff checks are recorded as passing.
 
 ## Open items
 
-- None were declared in the Completion Ledger.
+None.
 
 ## Audit notes
 
-- AC-6 and Change 6 were marked `DONE`, but the code only implements the fail-closed unsupported-queue half. Add a closed typed queued result and exact queue identity/receipt contract (plus validation/fixture tests), or remove the future-supported branch from this spec and contract until that child is delivered.
-- AC-7 was marked `DONE`, but the journal replay path does not distinguish a zero-attempt `not_applied` entry from a previously applied entry when later reconciliation observes an exact merge. Classify that state as external completion and add a test covering no-dispatch failure → external merge → same-key retry.
-- Recorded validation evidence says `go test ./... -count=1`, `go vet ./...`, and race tests for codehost/mock/contract packages passed. Per the cold-audit instruction, tests were not rerun.
+The prior AC-6 and AC-7 HOLD findings are closed by commit `9316361`. Recorded post-fix validation passed `go test ./internal/codehost ./internal/mockcodehost ./contracts/codehostbroker`, `go test ./... -count=1`, `go vet ./...`, the focused race suite, deterministic fixture generation at SHA-256 `d32eb13200e9d36fd51b8c2240aa171f90ee9fc6c348f58ea35f695b469dde10`, 14/14 EARS lint, and `git diff --check`. Per the cold-audit contract, tests were inspected but not rerun.
