@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-28T01:50:35Z · 83 ready specs_
+_Generated: 2026-07-28T01:55:17Z · 83 ready specs_
 
 ## github-code-host-read-adapter — "GitHub code-host read adapter"
 _feature · delivering · horizon: now_
