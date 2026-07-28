@@ -1,5 +1,5 @@
 // Package mockcodehost provides a deterministic, offline GitHub protocol fake
-// for the code-host read adapter.
+// for the code-host broker.
 package mockcodehost
 
 import (
@@ -21,17 +21,24 @@ const (
 
 // Scenario controls one deterministic provider behavior.
 type Scenario struct {
-	Name                 string
-	ForcedPageSize       int
-	DeniedSections       map[string]int
-	RateLimitedSections  map[string]int
-	ForkHead             bool
-	ForcePush            bool
-	GraphQLPartial       bool
-	MergeabilitySequence []string
-	OversizedDiff        bool
-	CrossOriginNext      string
-	Delay                time.Duration
+	Name                      string
+	ForcedPageSize            int
+	DeniedSections            map[string]int
+	RateLimitedSections       map[string]int
+	ForkHead                  bool
+	ForcePush                 bool
+	GraphQLPartial            bool
+	MergeabilitySequence      []string
+	OversizedDiff             bool
+	CrossOriginNext           string
+	Delay                     time.Duration
+	CreatePermissionDenied    bool
+	CreateWriteDenied         bool
+	CreateLostResponse        bool
+	CreateExternallyCompleted bool
+	CreateAmbiguousReadback   bool
+	CreateStaleHead           bool
+	CreateResponseDelay       time.Duration
 }
 
 func DefaultScenario() Scenario { return Scenario{Name: "default"} }
@@ -78,6 +85,34 @@ func CancellationScenario(delay time.Duration) Scenario {
 	return Scenario{Name: "cancellation", Delay: delay}
 }
 
+func CreatePermissionDeniedScenario() Scenario {
+	return Scenario{Name: "create-permission-denied", CreatePermissionDenied: true}
+}
+
+func CreateWriteDeniedScenario() Scenario {
+	return Scenario{Name: "create-write-denied", CreateWriteDenied: true}
+}
+
+func CreateLostResponseScenario() Scenario {
+	return Scenario{Name: "create-lost-response", CreateLostResponse: true}
+}
+
+func CreateExternallyCompletedScenario() Scenario {
+	return Scenario{Name: "create-externally-completed", CreateExternallyCompleted: true}
+}
+
+func CreateAmbiguousScenario() Scenario {
+	return Scenario{Name: "create-ambiguous", CreateLostResponse: true, CreateAmbiguousReadback: true}
+}
+
+func CreateStaleHeadScenario() Scenario {
+	return Scenario{Name: "create-stale-head", CreateStaleHead: true}
+}
+
+func CreateCancelledAfterApplyScenario(delay time.Duration) Scenario {
+	return Scenario{Name: "create-cancelled-after-apply", CreateResponseDelay: delay}
+}
+
 // Request records only non-sensitive request metadata.
 type Request struct {
 	Method string
@@ -87,11 +122,13 @@ type Request struct {
 
 // Server implements the GitHub REST and GraphQL routes used by codehost.
 type Server struct {
-	scenario Scenario
-	mu       sync.Mutex
-	requests []Request
-	prReads  int
-	graphQL  int
+	scenario       Scenario
+	mu             sync.Mutex
+	requests       []Request
+	prReads        int
+	graphQL        int
+	created        []map[string]any
+	createAttempts int
 }
 
 // NewServer returns a freshly initialized deterministic fake.
@@ -99,7 +136,11 @@ func NewServer(scenario Scenario) *Server {
 	if scenario.Name == "" {
 		scenario.Name = "default"
 	}
-	return &Server{scenario: scenario}
+	server := &Server{scenario: scenario}
+	if scenario.CreateExternallyCompleted {
+		server.created = append(server.created, server.createdPullRequest("acme", "widgets", "acme", "feature/create", 45, "Create broker PR", "CREATE-BODY-CANARY create body", false))
+	}
+	return server
 }
 
 // Requests returns a credential-free snapshot of observed provider calls.
@@ -111,6 +152,12 @@ func (s *Server) Requests() []Request {
 
 func (s *Server) RequestCount() int {
 	return len(s.Requests())
+}
+
+func (s *Server) CreateAttempts() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.createAttempts
 }
 
 func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
@@ -155,16 +202,22 @@ func (s *Server) record(request *http.Request) {
 
 func (s *Server) handleRepository(writer http.ResponseWriter, request *http.Request, path string) {
 	parts := splitPath(path)
-	if len(parts) < 4 || parts[0] != "repos" {
+	if len(parts) < 3 || parts[0] != "repos" {
 		writeError(writer, http.StatusNotFound, "repository endpoint not implemented")
 		return
 	}
 	owner, repository := parts[1], parts[2]
 	switch {
+	case len(parts) == 3 && request.Method == http.MethodGet:
+		s.getRepository(writer)
 	case len(parts) == 4 && parts[3] == "pulls" && request.Method == http.MethodGet:
 		s.listPullRequests(writer, request, owner, repository)
+	case len(parts) == 4 && parts[3] == "pulls" && request.Method == http.MethodPost:
+		s.createPullRequest(writer, request, owner, repository)
 	case len(parts) == 5 && parts[3] == "pulls" && request.Method == http.MethodGet:
 		s.getPullRequest(writer, request, owner, repository, parts[4])
+	case len(parts) >= 7 && parts[3] == "git" && parts[4] == "ref" && parts[5] == "heads" && request.Method == http.MethodGet:
+		s.getRef(writer, owner, repository, strings.Join(parts[6:], "/"))
 	case len(parts) == 6 && parts[3] == "pulls" && parts[5] == "commits" && request.Method == http.MethodGet:
 		s.listCommits(writer, request)
 	case len(parts) == 6 && parts[3] == "pulls" && parts[5] == "files" && request.Method == http.MethodGet:
@@ -180,17 +233,109 @@ func (s *Server) handleRepository(writer http.ResponseWriter, request *http.Requ
 	}
 }
 
+func (s *Server) getRepository(writer http.ResponseWriter) {
+	writeJSON(writer, http.StatusOK, map[string]any{
+		"permissions": map[string]bool{"pull": !s.scenario.CreatePermissionDenied},
+	})
+}
+
+func (s *Server) getRef(writer http.ResponseWriter, owner, repository, name string) {
+	sha := currentHeadSHA
+	if name == "main" {
+		sha = baseSHA
+	} else if s.scenario.CreateStaleHead {
+		sha = forcedHeadSHA
+	}
+	writeJSON(writer, http.StatusOK, map[string]any{
+		"ref":        "refs/heads/" + name,
+		"object":     map[string]any{"sha": sha},
+		"repository": owner + "/" + repository,
+	})
+}
+
 func (s *Server) listPullRequests(writer http.ResponseWriter, request *http.Request, owner, repository string) {
 	items := []map[string]any{
 		s.pullRequest(owner, repository, 42, currentHeadSHA),
 		s.pullRequest(owner, repository, 43, currentHeadSHA),
 		s.pullRequest(owner, repository, 44, currentHeadSHA),
 	}
+	s.mu.Lock()
+	for _, pullRequest := range s.created {
+		items = append(items, pullRequest)
+	}
+	s.mu.Unlock()
+	if head := request.URL.Query().Get("head"); head != "" {
+		if s.scenario.CreateAmbiguousReadback && s.CreateAttempts() > 0 {
+			writeError(writer, http.StatusServiceUnavailable, "fixture creation read-back unavailable")
+			return
+		}
+		base := request.URL.Query().Get("base")
+		filtered := make([]map[string]any, 0, len(items))
+		for _, item := range items {
+			headValue, _ := item["head"].(map[string]any)
+			headRepo, _ := headValue["repo"].(map[string]any)
+			headOwner, _ := headRepo["owner"].(map[string]any)
+			baseValue, _ := item["base"].(map[string]any)
+			if fmt.Sprint(headOwner["login"])+":"+fmt.Sprint(headValue["ref"]) == head &&
+				(base == "" || fmt.Sprint(baseValue["ref"]) == base) {
+				filtered = append(filtered, item)
+			}
+		}
+		items = filtered
+	}
 	start, end, hasNext, page, perPage := s.page(items, request.URL.Query())
 	if hasNext {
 		s.setNext(writer, request, page+1, perPage)
 	}
 	writeJSON(writer, http.StatusOK, items[start:end])
+}
+
+func (s *Server) createPullRequest(writer http.ResponseWriter, request *http.Request, owner, repository string) {
+	if s.scenario.CreatePermissionDenied || s.scenario.CreateWriteDenied {
+		s.mu.Lock()
+		s.createAttempts++
+		s.mu.Unlock()
+		writeError(writer, http.StatusForbidden, "fixture creation denied")
+		return
+	}
+	var payload struct {
+		Title string `json:"title"`
+		Head  string `json:"head"`
+		Base  string `json:"base"`
+		Body  string `json:"body"`
+		Draft bool   `json:"draft"`
+	}
+	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 1<<20))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&payload); err != nil || payload.Title == "" || payload.Head == "" || payload.Base == "" {
+		writeError(writer, http.StatusUnprocessableEntity, "invalid creation payload")
+		return
+	}
+	headOwner, headRef, ok := strings.Cut(payload.Head, ":")
+	if !ok || headOwner == "" || headRef == "" {
+		writeError(writer, http.StatusUnprocessableEntity, "owner-qualified head required")
+		return
+	}
+	s.mu.Lock()
+	s.createAttempts++
+	number := int64(100 + len(s.created))
+	pullRequest := s.createdPullRequest(owner, repository, headOwner, headRef, number, payload.Title, payload.Body, payload.Draft)
+	s.created = append(s.created, pullRequest)
+	s.mu.Unlock()
+	if s.scenario.CreateResponseDelay > 0 {
+		select {
+		case <-request.Context().Done():
+			return
+		case <-time.After(s.scenario.CreateResponseDelay):
+		}
+	}
+	if s.scenario.CreateLostResponse {
+		writer.Header().Set("Content-Type", "application/json")
+		writer.WriteHeader(http.StatusCreated)
+		_, _ = writer.Write([]byte(`{"incomplete":`))
+		return
+	}
+	writeJSON(writer, http.StatusCreated, pullRequest)
 }
 
 func (s *Server) getPullRequest(writer http.ResponseWriter, _ *http.Request, owner, repository, number string) {
@@ -237,6 +382,30 @@ func (s *Server) pullRequest(owner, repository string, number int64, headSHA str
 			"ref":  "feature/code-host",
 			"sha":  headSHA,
 			"repo": repositoryValue(headOwner, repository, 2),
+		},
+	}
+}
+
+func (s *Server) createdPullRequest(owner, repository, headOwner, headRef string, number int64, title, body string, draft bool) map[string]any {
+	return map[string]any{
+		"id":         1000 + number,
+		"node_id":    fmt.Sprintf("PR_%d", number),
+		"number":     number,
+		"title":      title,
+		"body":       body,
+		"html_url":   fmt.Sprintf("https://example.invalid/%s/%s/pull/%d", owner, repository, number),
+		"state":      "open",
+		"draft":      draft,
+		"merged":     false,
+		"created_at": "2026-07-27T20:00:00Z",
+		"updated_at": "2026-07-27T20:30:00Z",
+		"merged_at":  "",
+		"user":       user("contributor", 7),
+		"base": map[string]any{
+			"ref": "main", "sha": baseSHA, "repo": repositoryValue(owner, repository, 1),
+		},
+		"head": map[string]any{
+			"ref": headRef, "sha": currentHeadSHA, "repo": repositoryValue(headOwner, repository, 2),
 		},
 	}
 }

@@ -2,7 +2,7 @@
 title: "GitHub pull-request creation broker"
 slug: github-pull-request-create-broker
 type: feature
-status: planning
+status: delivering
 domain: engineering
 priority: high
 size: medium
@@ -14,6 +14,7 @@ conflicts-with:
   - github-code-host-read-adapter
   - github-pull-request-collaboration-broker
 tags: [github, pull-request, create, idempotency, reconciliation]
+delivery_method: manual
 ---
 
 # GitHub pull-request creation broker
@@ -33,18 +34,18 @@ suppression, provider read-back reconciliation, and typed ambiguous outcomes.
 
 ## Kickoff
 
-Replace the direct creation gap with one guarded Hero-owned write that cannot
-blindly duplicate a PR after a retry or lost response.
+Adds one guarded Hero-owned GitHub PR creation path with durable duplicate
+suppression and provider read-back after uncertain outcomes.
 
-**Status:** planning — preflight, existing-PR lookup, file-lock, and broker
-effect patterns are mapped.
+**Status:** in-review — implementation, deterministic provider scenarios,
+stable-key regressions, full tests, race detection, and vet are green.
 
-**Pick up at:** implement the bounded replay journal and create preflight before
-adding the single GitHub write request.
+**Pick up at:** cold-audit the committed creation broker against all 12
+criteria, then run `hero spec verify github-pull-request-create-broker`.
 
-→ `/deliver github-pull-request-create-broker`
+→ `.hero/planning/initiatives/hero-code-host-broker-capabilities/github-pull-request-create-broker/spec.md`
 
-**Files:** `internal/codehost/mutations.go`, `internal/codehost/idempotency.go`, `internal/codehost/github_create.go`
+**Files:** `internal/codehost/github_create.go`, `internal/codehost/idempotency.go`, `internal/codehost/mutations.go`, `internal/codehost/github_create_test.go`
 **Skip:** do not push commits, choose branches, invoke `gh`, or create tracker work.
 
 ## Problem
@@ -143,3 +144,47 @@ unknown.
 - Crash at each journal transition and verify safe recovery.
 - Inspect journal and error output with credential and body canaries.
 - Run code-host and file-lock tests, then `go test ./...` and `go vet ./...`.
+
+## Completion Ledger
+
+Implemented on the existing in-process broker, GitHub transport, connection
+resolver, file lock, and durable atomic writer. Validation included focused
+creation/fake/file-lock tests, stable-key regressions, focused race detection,
+the full repository suite, full `go vet`, formatting, and diff hygiene.
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Require complete target, intent, idempotency, revisions, and explicit draft | DONE | `decodeCreatePayload` requires the raw `draft` boolean; v1 validation and `PrepareCreatePullRequest` require the remaining target and policy material before mutation. |
+| 2 | Preserve owner-qualified fork identity | DONE | Preflight, reconciliation, and create use distinct repository identities plus `owner:ref`; `TestCreateExternallyCompletedForkAndAmbiguousRecovery` exercises a configured fork. |
+| 3 | Reject permission, scope, ref, capability, and observation failures before write | DONE | `TestCreateRejectsStalePermissionScopeAndCancellationBeforeDispatch` verifies typed failures and zero create attempts across the preflight gates. |
+| 4 | Same key/payload performs at most one provider create | DONE | The connection-scoped key digest and existing cross-platform journal lock serialize ownership; duplicate, concurrent, canonical-identity, and rejected-provider retries remain one attempt. |
+| 5 | Different payload under the same key returns `idempotency_conflict` | DONE | Canonical payload digests detect title and cross-repository target changes before provider write; the regression asserts only the first target is created. |
+| 6 | Existing exact PR returns `externally_completed` | DONE | Exact base/head repository, ref, SHA, content, draft, and open state produce the qualified existing identity with zero create attempts. |
+| 7 | Lost or cancelled applied write reconciles to `reconciled_applied` | DONE | Detached bounded read-back proves both malformed/lost response and post-apply cancellation scenarios without redispatch. |
+| 8 | Unprovable result remains `ambiguous` and same-key-only | DONE | Ambiguous journal state persists with `ambiguous_result`; repeated calls reconcile and never issue another create. |
+| 9 | Pre-dispatch cancellation records `not_applied`; post-dispatch reconciles | DONE | Tests exercise a cancelled context before any effect and a response cancellation after the fake records the effect. |
+| 10 | Journal is private, atomic, locked, and content/credential-free | DONE | The journal uses 0700/0600 permissions, `filelock.Acquire`, `spec.AtomicWriteFile`, key/payload digests, safe target/receipt material, and content/token canary inspection. |
+| 11 | Retention removes only expired terminal entries | DONE | Retention tests preserve year-old ambiguous/in-progress records while expiring only terminal records; unresolved capacity fails closed. |
+| 12 | Return v1 policy, receipt, revisions, rate limits, bounds, and outcome | DONE | Every scenario passes `codehostbroker.ValidateResponse`; success asserts effect, consent, receipt, reconciliation, rate metadata, bounds, and journal count. |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Add durable mutation journal and bounded retention/locking | DONE | `internal/codehost/idempotency.go` stores private bounded digest/safety material using existing lock and atomic-write primitives. |
+| 2 | Add creation validation and preflight observation | DONE | `internal/codehost/mutations.go` and `PrepareCreatePullRequest` provide strict payload validation and provider-backed revisions. |
+| 3 | Add exact existing-PR reconciliation | DONE | `findExactPullRequests` and reconciliation state handling retain qualified identity and current head evidence. |
+| 4 | Add one typed GitHub create and normalized receipt | DONE | `createPullRequest` sends one REST request through the credential-safe transport and returns a v1 mutation result/receipt. |
+| 5 | Integrate cancellation and ambiguous recovery | DONE | Pre-dispatch cancellation is terminally not-applied; post-dispatch uncertainty uses detached bounded read-back. |
+| 6 | Extend the deterministic fake | DONE | `internal/mockcodehost` covers denial, retries, lost/cancelled responses, external completion, forks, stale heads, mutable created PRs, and attempt accounting. |
+| 7 | Add recovery, redaction, retention, and conformance tests | DONE | `github_create_test.go` covers successful and failed contract responses, concurrency, conflicts, crash states, canaries, retention, and stable canonical keys. |
+
+### Exercise-the-feature check
+
+- [x] The write lifecycle was exercised end-to-end against the deterministic GitHub HTTP fake with `go test ./internal/codehost -run '^TestCreate' -count=1 -v`; focused packages, file locks, race detection, `go test ./... -count=1`, and `go vet ./...` also passed.
+
+### Excellence Bar self-check
+
+- [x] Yes — the path is fail-closed, contract-valid, credential-safe, crash-aware, connection-scoped for stable idempotency, and reuses Hero's existing integration, lock, atomic-write, transport, and fake boundaries.

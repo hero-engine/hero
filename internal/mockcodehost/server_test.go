@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestScenarioBuildersCoverDeclaredBehaviors(t *testing.T) {
@@ -20,6 +21,13 @@ func TestScenarioBuildersCoverDeclaredBehaviors(t *testing.T) {
 		PartialFailureScenario(),
 		ChangingMergeabilityScenario(),
 		OversizedDiffScenario(),
+		CreatePermissionDeniedScenario(),
+		CreateWriteDeniedScenario(),
+		CreateLostResponseScenario(),
+		CreateExternallyCompletedScenario(),
+		CreateAmbiguousScenario(),
+		CreateStaleHeadScenario(),
+		CreateCancelledAfterApplyScenario(time.Millisecond),
 	}
 	seen := map[string]bool{}
 	for _, scenario := range scenarios {

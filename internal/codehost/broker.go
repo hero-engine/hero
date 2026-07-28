@@ -1,5 +1,5 @@
 // Package codehost implements Hero's credential-safe, provider-neutral
-// code-host read broker.
+// code-host broker.
 package codehost
 
 import (
@@ -34,6 +34,8 @@ var readOperations = []codehostbroker.Operation{
 	codehostbroker.OperationGetMergeReadiness,
 }
 
+var availableOperations = append(append([]codehostbroker.Operation(nil), readOperations...), codehostbroker.OperationCreatePullRequest)
+
 // Broker is the in-process code-host credential boundary.
 type Broker struct {
 	projectRoot string
@@ -53,14 +55,19 @@ func NewBroker(projectRoot string) *Broker {
 }
 
 type adapterResult struct {
-	result          any
-	pullRequest     *codehostbroker.PullRequest
-	page            *codehostbroker.Page
-	completeness    codehostbroker.Completeness
-	partialFailures []codehostbroker.PartialFailure
-	truncated       bool
-	rateLimit       codehostbroker.RateLimit
-	redirects       int
+	result              any
+	pullRequest         *codehostbroker.PullRequest
+	page                *codehostbroker.Page
+	completeness        codehostbroker.Completeness
+	partialFailures     []codehostbroker.PartialFailure
+	truncated           bool
+	rateLimit           codehostbroker.RateLimit
+	redirects           int
+	receipt             *codehostbroker.Receipt
+	reconciliation      *codehostbroker.Reconciliation
+	journalEntries      int
+	capabilityRevision  string
+	observationRevision string
 }
 
 // Execute validates and dispatches one provider-neutral code-host operation.
@@ -84,11 +91,20 @@ func (b *Broker) Execute(ctx context.Context, request codehostbroker.Request) co
 		response.Error = err
 		return b.finish(response, start)
 	}
-	if !codehostbroker.IsRead(request.Operation) {
-		response.Error = contractError(codehostbroker.ErrorUnsupportedOperation, "the selected adapter is read-only", "operation")
+	if !codehostbroker.IsRead(request.Operation) && request.Operation != codehostbroker.OperationCreatePullRequest {
+		response.Error = contractError(codehostbroker.ErrorUnsupportedOperation, "the selected adapter does not implement the operation", "operation")
 		return b.finish(response, start)
 	}
-	if err := ctx.Err(); err != nil {
+	var creation createPayload
+	if request.Operation == codehostbroker.OperationCreatePullRequest {
+		var payloadErr *codehostbroker.ContractError
+		creation, payloadErr = decodeCreatePayload(request.Payload)
+		if payloadErr != nil {
+			response.Error = payloadErr
+			return b.finish(response, start)
+		}
+	}
+	if err := ctx.Err(); err != nil && codehostbroker.IsRead(request.Operation) {
 		response.Error = cancelledError(err)
 		return b.finish(response, start)
 	}
@@ -110,14 +126,27 @@ func (b *Broker) Execute(ctx context.Context, request codehostbroker.Request) co
 		return b.finish(response, start)
 	}
 	if connection.Provider != "github" {
-		response.Error = contractError(codehostbroker.ErrorUnsupportedProvider, "the selected code-host provider has no read adapter", "provider")
+		response.Error = contractError(codehostbroker.ErrorUnsupportedProvider, "the selected code-host provider has no broker adapter", "provider")
 		return b.finish(response, start)
 	}
 
-	scope, scopeErr := validateRepositoryScope(connection, request)
-	if scopeErr != nil {
-		response.Error = scopeErr
-		return b.finish(response, start)
+	var scope []codehostbroker.RepositoryIdentity
+	if request.Operation == codehostbroker.OperationCreatePullRequest {
+		if scopeErr := validateCreateScope(connection, request, creation); scopeErr != nil {
+			response.Error = scopeErr
+			return b.finish(response, start)
+		}
+		scope = []codehostbroker.RepositoryIdentity{creation.Base.Repository}
+		if creation.Head.Repository != creation.Base.Repository {
+			scope = append(scope, creation.Head.Repository)
+		}
+	} else {
+		var scopeErr *codehostbroker.ContractError
+		scope, scopeErr = validateRepositoryScope(connection, request)
+		if scopeErr != nil {
+			response.Error = scopeErr
+			return b.finish(response, start)
+		}
 	}
 	token, err := connection.ResolveToken()
 	if err != nil {
@@ -130,7 +159,7 @@ func (b *Broker) Execute(ctx context.Context, request codehostbroker.Request) co
 	}
 	response.CapabilityRevision = capabilityRevision(connection, scope)
 
-	if err := ctx.Err(); err != nil {
+	if err := ctx.Err(); err != nil && codehostbroker.IsRead(request.Operation) {
 		response.Error = cancelledError(err)
 		return b.finish(response, start)
 	}
@@ -143,13 +172,25 @@ func (b *Broker) Execute(ctx context.Context, request codehostbroker.Request) co
 		return b.finish(response, start)
 	}
 	adapter := githubAdapter{connection: connection, transport: transport, now: b.now}
-	out, dispatchErr := adapter.execute(ctx, request, scope)
+	var out adapterResult
+	var dispatchErr error
+	if request.Operation == codehostbroker.OperationCreatePullRequest {
+		out, dispatchErr = b.executeCreate(ctx, request, creation, connection, &adapter)
+	} else {
+		out, dispatchErr = adapter.execute(ctx, request, scope)
+	}
 	out = boundAdapterResult(request.Operation, out, response.Bounds)
 	response.RateLimit = out.rateLimit
 	if response.RateLimit.ObservedAt == "" {
 		response.RateLimit.ObservedAt = observedAt
 	}
 	response.Redirects = out.redirects
+	response.Receipt = out.receipt
+	response.Reconciliation = out.reconciliation
+	response.JournalEntries = out.journalEntries
+	if out.capabilityRevision != "" {
+		response.CapabilityRevision = out.capabilityRevision
+	}
 	response.Page = out.page
 	response.Completeness = out.completeness
 	if response.Completeness == "" {
@@ -178,7 +219,11 @@ func (b *Broker) Execute(ctx context.Context, request codehostbroker.Request) co
 			response.Result = raw
 		}
 	}
-	response.ObservationRevision = observationRevision(request, out, response)
+	if out.observationRevision != "" {
+		response.ObservationRevision = out.observationRevision
+	} else {
+		response.ObservationRevision = observationRevision(request, out, response)
+	}
 	return b.finish(response, start)
 }
 
@@ -261,13 +306,18 @@ func repositoryHost(connection config.CodeHostConnection) (string, error) {
 	return parsed.Hostname(), nil
 }
 
-func capabilityRevision(connection config.CodeHostConnection, repositories []codehostbroker.RepositoryIdentity) string {
-	available := make([]codehostbroker.OperationPolicy, 0, len(readOperations))
-	for _, operation := range readOperations {
+func capabilityRevision(connection config.CodeHostConnection, _ []codehostbroker.RepositoryIdentity) string {
+	available := make([]codehostbroker.OperationPolicy, 0, len(availableOperations))
+	for _, operation := range availableOperations {
 		policy, _ := codehostbroker.Policy(operation)
 		available = append(available, policy)
 	}
-	return fingerprint("capability", connection.ID, connection.Provider, repositories, available)
+	repositories := append([]string(nil), connection.Repositories...)
+	sort.Slice(repositories, func(i, j int) bool {
+		return strings.ToLower(repositories[i]) < strings.ToLower(repositories[j])
+	})
+	host, _ := repositoryHost(connection)
+	return fingerprint("capability", connection.ID, connection.Provider, host, repositories, available)
 }
 
 func observationRevision(request codehostbroker.Request, out adapterResult, response codehostbroker.Response) string {
@@ -449,6 +499,9 @@ func boundAdapterResult(operation codehostbroker.Operation, out adapterResult, b
 		for len(result.Reasons) > 0 && resultSize(result) > limit {
 			result.Reasons = result.Reasons[:len(result.Reasons)-1]
 		}
+		out.result = result
+	case codehostbroker.MutationResult:
+		shrinkPullRequest(&result.PullRequest, func() bool { return resultSize(result) <= limit })
 		out.result = result
 	}
 	return out

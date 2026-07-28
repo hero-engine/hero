@@ -21,7 +21,7 @@ import (
 
 const credentialCanary = "CODEHOST-CREDENTIAL-CANARY"
 
-func TestCapabilitiesAdvertiseExactlyImplementedReads(t *testing.T) {
+func TestCapabilitiesAdvertiseExactlyImplementedOperations(t *testing.T) {
 	fixture, server, broker := testBroker(t, mockcodehost.DefaultScenario(), "acme/widgets")
 	response := broker.Execute(context.Background(), fixture.request(codehostbroker.OperationCapabilities))
 	requireValidResponse(t, response)
@@ -30,11 +30,11 @@ func TestCapabilitiesAdvertiseExactlyImplementedReads(t *testing.T) {
 	}
 	var result codehostbroker.CapabilitiesResult
 	decodeResult(t, response, &result)
-	if len(result.Capabilities) != 10 {
+	if len(result.Capabilities) != len(availableOperations) {
 		t.Fatalf("capabilities=%d", len(result.Capabilities))
 	}
 	for index, capability := range result.Capabilities {
-		if !capability.Available || capability.Policy.Operation != readOperations[index] {
+		if !capability.Available || capability.Policy.Operation != availableOperations[index] {
 			t.Fatalf("capability[%d]=%+v", index, capability)
 		}
 		want, _ := codehostbroker.Policy(capability.Policy.Operation)

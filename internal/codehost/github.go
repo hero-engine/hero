@@ -28,6 +28,9 @@ type providerError struct {
 	code    string
 	message string
 	retryAt string
+	// ambiguous is true only when a write may have reached GitHub but the
+	// provider outcome could not be decoded or observed.
+	ambiguous bool
 }
 
 func (e *providerError) Error() string { return e.message }
@@ -139,6 +142,18 @@ func (t *githubTransport) get(ctx context.Context, relative string, target any) 
 	return t.doJSON(ctx, http.MethodGet, endpoint, nil, target)
 }
 
+func (t *githubTransport) post(ctx context.Context, relative string, value, target any) (http.Header, error) {
+	endpoint, err := t.restURL(relative)
+	if err != nil {
+		return nil, &providerError{code: codehostbroker.ErrorInvalidInput, message: "GitHub request path is invalid"}
+	}
+	body, err := json.Marshal(value)
+	if err != nil {
+		return nil, &providerError{code: codehostbroker.ErrorEncoding, message: "could not encode the GitHub request"}
+	}
+	return t.doJSON(ctx, http.MethodPost, endpoint, bytes.NewReader(body), target)
+}
+
 func (t *githubTransport) graphql(ctx context.Context, query string, variables map[string]any, target any) (http.Header, error) {
 	body, err := json.Marshal(map[string]any{"query": query, "variables": variables})
 	if err != nil {
@@ -165,18 +180,25 @@ func (t *githubTransport) doJSON(ctx context.Context, method string, endpoint *u
 	response, err := t.client.Do(request)
 	if err != nil {
 		if ctx.Err() != nil {
-			return nil, ctx.Err()
+			if method == http.MethodGet {
+				return nil, ctx.Err()
+			}
+			return nil, &providerError{code: codehostbroker.ErrorCancelled, message: "GitHub write response was cancelled", ambiguous: true}
 		}
 		var provider *providerError
 		if errors.As(err, &provider) {
 			return nil, provider
 		}
-		return nil, &providerError{code: codehostbroker.ErrorProviderUnavailable, message: "GitHub is unavailable"}
+		return nil, &providerError{code: codehostbroker.ErrorProviderUnavailable, message: "GitHub is unavailable", ambiguous: method != http.MethodGet}
 	}
 	defer response.Body.Close()
 	t.observeRateLimit(response.Header)
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return response.Header.Clone(), t.httpError(response.StatusCode, response.Header)
+		providerErr := t.httpError(response.StatusCode, response.Header)
+		if method != http.MethodGet && response.StatusCode >= 500 {
+			providerErr.ambiguous = true
+		}
+		return response.Header.Clone(), providerErr
 	}
 	limited := io.LimitReader(response.Body, maxGitHubResponseBytes+1)
 	data, err := io.ReadAll(limited)
@@ -188,10 +210,10 @@ func (t *githubTransport) doJSON(ctx context.Context, method string, endpoint *u
 	}
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	if err := decoder.Decode(target); err != nil {
-		return response.Header.Clone(), &providerError{code: codehostbroker.ErrorProvider, message: "GitHub returned malformed JSON"}
+		return response.Header.Clone(), &providerError{code: codehostbroker.ErrorProvider, message: "GitHub returned malformed JSON", ambiguous: method != http.MethodGet}
 	}
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		return response.Header.Clone(), &providerError{code: codehostbroker.ErrorProvider, message: "GitHub returned trailing JSON data"}
+		return response.Header.Clone(), &providerError{code: codehostbroker.ErrorProvider, message: "GitHub returned trailing JSON data", ambiguous: method != http.MethodGet}
 	}
 	return response.Header.Clone(), nil
 }
@@ -235,7 +257,7 @@ func (t *githubTransport) observeGraphQLRateLimit(rate githubGraphQLRateLimit) {
 	}
 }
 
-func (t *githubTransport) httpError(status int, header http.Header) error {
+func (t *githubTransport) httpError(status int, header http.Header) *providerError {
 	code := codehostbroker.ErrorProvider
 	message := fmt.Sprintf("GitHub returned HTTP %d", status)
 	switch status {
@@ -352,8 +374,8 @@ func (g *githubAdapter) execute(ctx context.Context, request codehostbroker.Requ
 }
 
 func (g *githubAdapter) capabilities() codehostbroker.CapabilitiesResult {
-	capabilities := make([]codehostbroker.Capability, 0, len(readOperations))
-	for _, operation := range readOperations {
+	capabilities := make([]codehostbroker.Capability, 0, len(availableOperations))
+	for _, operation := range availableOperations {
 		policy, _ := codehostbroker.Policy(operation)
 		capabilities = append(capabilities, codehostbroker.Capability{Policy: policy, Available: true})
 	}

@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-28T01:55:36Z · projected from 608 source nodes_
+_Last refreshed: 2026-07-28T02:21:19Z · projected from 608 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 5h ago | satellite-corpus-integration |
+| core | building | cmd/, internal/ | 6h ago | satellite-corpus-integration |
 | docs | maturing | web/docs/ | 15d ago | — |
 | domains/chat | maturing | domains/chat/ | 9d ago | — |
 | domains/engineering | maturing | domains/engineering/ | 3d ago | — |
@@ -31,7 +31,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **"Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"** (surface: —) — 4/8 specs done
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
 - **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 7/11 specs done
-- **"Code Host Broker Capabilities — Hero-owned PR lifecycle boundary"** (surface: —) — 3/8 specs done
+- **"Code Host Broker Capabilities — Hero-owned PR lifecycle boundary"** (surface: —) — 3/8 specs done; in flight: github-pull-request-create-broker
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 13/17 specs done
 - **"Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"** (surface: —) — 0/9 specs done
 - **Hero Killer Features — Agent Effectiveness, Team Power, Living Specs** (surface: core, serve) — 10/11 specs done
@@ -60,10 +60,10 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Next up across surfaces
 
 1. **landing** — `hero-landing-page` (P0, delivering)
-2. **serve** — `hero-team-server` (P1, delivering)
-3. **core** — `satellite-corpus-integration` (high, delivering)
-4. **serve** — `agent-outposts` (medium, delivering)
-5. **serve** — `retrieval-contradiction-detection` (—, delivering)
+2. **(unassigned)** — `github-pull-request-create-broker` (high, delivering)
+3. **serve** — `hero-team-server` (P1, delivering)
+4. **core** — `satellite-corpus-integration` (high, delivering)
+5. **serve** — `agent-outposts` (medium, delivering)
 
 ## Open risks & blockers
 
