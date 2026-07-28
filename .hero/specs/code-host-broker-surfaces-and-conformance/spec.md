@@ -2,7 +2,7 @@
 title: "Code-host broker surfaces and conformance"
 slug: code-host-broker-surfaces-and-conformance
 type: feature
-status: delivering
+status: completed
 domain: engineering
 priority: high
 size: medium
@@ -14,6 +14,7 @@ relates-to:
   - pull-request-lifecycle-workbench
 tags: [code-host, cli, mcp, fixtures, conformance, hero-code]
 delivery_method: manual
+completed_at: 2026-07-28T05:01:05Z
 ---
 
 # Code-host broker surfaces and conformance

@@ -2,7 +2,7 @@
 title: "Code Host Broker Capabilities — Hero-owned PR lifecycle boundary"
 slug: hero-code-host-broker-capabilities
 type: initiative
-status: planning
+status: completed
 domain: engineering
 priority: critical
 size: giant
@@ -23,6 +23,7 @@ relates-to:
   - brokered-tracker-agent-access
   - pull-request-lifecycle-workbench
 tags: [code-host, pull-request, broker, github, credentials, hero-code]
+completed_at: 2026-07-28T05:01:07Z
 ---
 
 # Code Host Broker Capabilities — Hero-owned PR lifecycle boundary

@@ -6,27 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-28T04:57:51Z · 83 ready specs_
-
-## code-host-broker-surfaces-and-conformance — "Code-host broker surfaces and conformance"
-_feature · delivering · horizon: now_
-
-Finish the Hero-owned boundary by making every operation safely callable from
-Hero Desktop and model chat loops without returning credentials or weakening
-service-side policy.
-
-**Status:** planning — CLI broker, MCP registry/dispatch, permission
-annotations, request-context, fixture, and Hero Code decoder paths are mapped.
-
-**Pick up at:** add the CLI contract/dispatch adapters, then generate the MCP
-inventory from the authoritative operation-policy registry.
-
-→ `/deliver code-host-broker-surfaces-and-conformance`
-
-**Files:** `internal/cli/code_host_broker.go`, `internal/serve/mcp_tools_code_host.go`, `contracts/codehostbroker/HERO-CODE-HANDOFF.md`
-**Skip:** do not expose a token, arbitrary authenticated request, generic mixed-effect MCP tool, or `gh` fallback.
-
----
+_Generated: 2026-07-28T05:01:38Z · 81 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -53,26 +33,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
-
----
-
-## hero-code-host-broker-capabilities — "Code Host Broker Capabilities — Hero-owned PR lifecycle boundary"
-_initiative · planning · horizon: now_
-
-_Run opener — arm with `/drive hero-code-host-broker-capabilities`_
-
-Deliver `code-host-broker/v1` from configuration through released consumer
-surfaces:
-
-1. provider capability declarations and unambiguous `code-host` role selection;
-2. a frozen repository-qualified PR contract and cross-language fixture;
-3. bounded GitHub read operations with pagination, freshness, rate limits, and
-   partial-result truth;
-4. independently deliverable creation, collaboration, state-transition, and
-   merge operations with operation-specific stale-state, idempotency, and
-   ambiguous-outcome recovery; and
-5. one in-process implementation surfaced through JSON CLI and typed MCP tools
-   that Hero Code can validate against a released Hero binary.
 
 ---
 

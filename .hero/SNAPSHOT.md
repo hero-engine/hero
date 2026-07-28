@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-28T04:37:23Z · projected from 608 source nodes_
+_Last refreshed: 2026-07-28T05:01:38Z · projected from 608 source nodes_
 
 ## Surfaces
 
@@ -31,7 +31,6 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **"Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"** (surface: —) — 4/8 specs done
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
 - **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 7/11 specs done
-- **"Code Host Broker Capabilities — Hero-owned PR lifecycle boundary"** (surface: —) — 7/8 specs done; in flight: code-host-broker-surfaces-and-conformance
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 13/17 specs done
 - **"Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"** (surface: —) — 0/9 specs done
 - **Hero Killer Features — Agent Effectiveness, Team Power, Living Specs** (surface: core, serve) — 10/11 specs done
@@ -48,22 +47,22 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ### Recently completed initiatives
 
+- **"Code Host Broker Capabilities — Hero-owned PR lifecycle boundary"** (surface: —) — 8/8 specs done · COMPLETED 2026-07-28
 - **"Continuous Code-Index Freshness"** (surface: core) — 3/3 specs done · COMPLETED 2026-07-27
 - **"Conversational Attention Operability — Safe Chat-Loop Access to Mail and Focus"** (surface: core, domains/engineering) — 6/6 specs done · COMPLETED 2026-07-24
-- **"Durable Attention — Project Mail, Personal Focus, and Explicit Promotion"** (surface: core, domains/engineering, serve) — 7/7 specs done · COMPLETED 2026-07-23
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — github-pull-request-merge-broker, github-pull-request-state-transition-broker, github-pull-request-collaboration-broker, github-pull-request-create-broker, github-code-host-read-adapter, code-host-broker-v1-contract, code-host-integration-capability-model, windows-file-lock-cross-build, continuous-code-index-freshness
-- **core** — embeddings-never-refresh-on-commit, status-actionable-summary, graph-why-resolution-and-peer-spec-indexing
+- **(unassigned)** — hero-code-host-broker-capabilities, code-host-broker-surfaces-and-conformance, github-pull-request-merge-broker, github-pull-request-state-transition-broker, github-pull-request-collaboration-broker, github-pull-request-create-broker, github-code-host-read-adapter, code-host-broker-v1-contract, code-host-integration-capability-model, windows-file-lock-cross-build, continuous-code-index-freshness
+- **core** — embeddings-never-refresh-on-commit
 
 ## Next up across surfaces
 
 1. **landing** — `hero-landing-page` (P0, delivering)
-2. **(unassigned)** — `code-host-broker-surfaces-and-conformance` (high, delivering)
-3. **serve** — `hero-team-server` (P1, delivering)
-4. **core** — `satellite-corpus-integration` (high, delivering)
-5. **serve** — `agent-outposts` (medium, delivering)
+2. **serve** — `hero-team-server` (P1, delivering)
+3. **core** — `satellite-corpus-integration` (high, delivering)
+4. **serve** — `agent-outposts` (medium, delivering)
+5. **serve** — `retrieval-contradiction-detection` (—, delivering)
 
 ## Open risks & blockers
 
