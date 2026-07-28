@@ -498,3 +498,5 @@
 {"ts":"2026-07-27T21:42:52.685478Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"windows-file-lock-cross-build","message":"status -\u003e completed"}
 {"ts":"2026-07-28T00:28:44.996511Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"code-host-integration-capability-model","message":"\"Code-host integration capability model\""}
 {"ts":"2026-07-28T00:28:44.996635Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"code-host-integration-capability-model","message":"status -\u003e completed"}
+{"ts":"2026-07-28T01:18:17.122673Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"code-host-broker-v1-contract","message":"\"Code-host broker v1 contract\""}
+{"ts":"2026-07-28T01:18:17.122839Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"code-host-broker-v1-contract","message":"status -\u003e completed"}

@@ -2,7 +2,7 @@
 title: "Code-host broker v1 contract"
 slug: code-host-broker-v1-contract
 type: feature
-status: delivering
+status: completed
 domain: engineering
 priority: critical
 size: large
@@ -15,6 +15,7 @@ relates-to:
   - integration-config-uses-stable-ids
 tags: [code-host, contract, pull-request, versioning, fixtures, permissions]
 delivery_method: manual
+completed_at: 2026-07-28T01:18:15Z
 ---
 
 # Code-host broker v1 contract
