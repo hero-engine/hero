@@ -274,6 +274,51 @@ func ValidateResponse(response Response) *ContractError {
 	return nil
 }
 
+// ValidatePreparationResponse enforces the public preparation-envelope
+// contract. Successful preparation returns only the two bounded revisions;
+// failures return one normalized error and no revision material.
+func ValidatePreparationResponse(response PreparationResponse) *ContractError {
+	if response.Version != Version {
+		return &ContractError{Code: ErrorIncompatibleVersion, Message: "unsupported code-host broker version", Field: "version", Retry: RetryNone}
+	}
+	policy, ok := Policy(response.Operation)
+	if !ok {
+		return &ContractError{Code: ErrorUnsupportedOperation, Message: "unsupported code-host operation", Field: "operation", Retry: RetryNone}
+	}
+	if response.Error == nil {
+		if !IsMutation(response.Operation) {
+			return &ContractError{Code: ErrorUnsupportedOperation, Message: "read operations do not support successful preparation", Field: "operation", Retry: RetryNone}
+		}
+		if response.CapabilityRevision == "" || tooLong(response.CapabilityRevision, 512) ||
+			response.ObservationRevision == "" || tooLong(response.ObservationRevision, 512) {
+			return invalid("capability_revision", "bounded capability and observation revisions are required")
+		}
+		return nil
+	}
+	if response.CapabilityRevision != "" || response.ObservationRevision != "" {
+		return invalid("capability_revision", "preparation revisions and error are mutually exclusive")
+	}
+	if !containsString(errorCodes, response.Error.Code) ||
+		!containsRetry(RetryGuidanceValues(), response.Error.Retry) ||
+		tooLong(response.Error.Message, policy.Bounds.ErrorDetailBytes) ||
+		tooLong(response.Error.Field, 512) ||
+		tooLong(response.Error.RetryAt, 64) {
+		return invalid("error", "preparation error is invalid or exceeds its bound")
+	}
+	if response.Error.Retry != RetryForError(response.Error.Code) {
+		return invalid("error.retry", "retry guidance does not match the normalized error code")
+	}
+	if IsRead(response.Operation) && response.Error.Code != ErrorUnsupportedOperation {
+		return invalid("error.code", "read preparation rejection must use unsupported_operation")
+	}
+	if response.Error.RetryAt != "" {
+		if _, err := time.Parse(time.RFC3339Nano, response.Error.RetryAt); err != nil {
+			return invalid("error.retry_at", "retry_at must be RFC3339")
+		}
+	}
+	return nil
+}
+
 func ValidateCursorFingerprint(expected, actual string) *ContractError {
 	if expected == "" || actual == "" || expected != actual {
 		return &ContractError{Code: ErrorCursorMismatch, Message: "cursor does not match the originating operation and scope", Field: "cursor", Retry: RetryNone}

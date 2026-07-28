@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-28T04:17:44Z · projected from 608 source nodes_
+_Last refreshed: 2026-07-28T04:37:23Z · projected from 608 source nodes_
 
 ## Surfaces
 
@@ -11,12 +11,12 @@ _Last refreshed: 2026-07-28T04:17:44Z · projected from 608 source nodes_
 | core | building | cmd/, internal/ | 8h ago | satellite-corpus-integration |
 | docs | maturing | web/docs/ | 15d ago | — |
 | domains/chat | maturing | domains/chat/ | 9d ago | — |
-| domains/engineering | maturing | domains/engineering/ | 3d ago | — |
+| domains/engineering | maturing | domains/engineering/ | 4d ago | — |
 | domains/pm | maturing | domains/pm/ | 10d ago | — |
 | domains/sales | maturing | domains/sales/ | 19d ago | — |
 | landing | building | web/landing/ | 16d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 3d ago | agent-outposts |
+| serve | building | internal/serve/ | 4d ago | agent-outposts |
 | (unassigned) | — | — | — | 238 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -31,7 +31,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **"Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"** (surface: —) — 4/8 specs done
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
 - **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 7/11 specs done
-- **"Code Host Broker Capabilities — Hero-owned PR lifecycle boundary"** (surface: —) — 7/8 specs done
+- **"Code Host Broker Capabilities — Hero-owned PR lifecycle boundary"** (surface: —) — 7/8 specs done; in flight: code-host-broker-surfaces-and-conformance
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 13/17 specs done
 - **"Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"** (surface: —) — 0/9 specs done
 - **Hero Killer Features — Agent Effectiveness, Team Power, Living Specs** (surface: core, serve) — 10/11 specs done
@@ -60,10 +60,10 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Next up across surfaces
 
 1. **landing** — `hero-landing-page` (P0, delivering)
-2. **serve** — `hero-team-server` (P1, delivering)
-3. **core** — `satellite-corpus-integration` (high, delivering)
-4. **serve** — `agent-outposts` (medium, delivering)
-5. **serve** — `retrieval-contradiction-detection` (—, delivering)
+2. **(unassigned)** — `code-host-broker-surfaces-and-conformance` (high, delivering)
+3. **serve** — `hero-team-server` (P1, delivering)
+4. **core** — `satellite-corpus-integration` (high, delivering)
+5. **serve** — `agent-outposts` (medium, delivering)
 
 ## Open risks & blockers
 

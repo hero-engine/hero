@@ -6,7 +6,27 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-28T04:17:44Z · 83 ready specs_
+_Generated: 2026-07-28T04:37:23Z · 83 ready specs_
+
+## code-host-broker-surfaces-and-conformance — "Code-host broker surfaces and conformance"
+_feature · delivering · horizon: now_
+
+Finish the Hero-owned boundary by making every operation safely callable from
+Hero Desktop and model chat loops without returning credentials or weakening
+service-side policy.
+
+**Status:** planning — CLI broker, MCP registry/dispatch, permission
+annotations, request-context, fixture, and Hero Code decoder paths are mapped.
+
+**Pick up at:** add the CLI contract/dispatch adapters, then generate the MCP
+inventory from the authoritative operation-policy registry.
+
+→ `/deliver code-host-broker-surfaces-and-conformance`
+
+**Files:** `internal/cli/code_host_broker.go`, `internal/serve/mcp_tools_code_host.go`, `contracts/codehostbroker/HERO-CODE-HANDOFF.md`
+**Skip:** do not expose a token, arbitrary authenticated request, generic mixed-effect MCP tool, or `gh` fallback.
+
+---
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -53,26 +73,6 @@ surfaces:
    ambiguous-outcome recovery; and
 5. one in-process implementation surfaced through JSON CLI and typed MCP tools
    that Hero Code can validate against a released Hero binary.
-
----
-
-## code-host-broker-surfaces-and-conformance — "Code-host broker surfaces and conformance"
-_feature · planning · horizon: now_
-
-Finish the Hero-owned boundary by making every operation safely callable from
-Hero Desktop and model chat loops without returning credentials or weakening
-service-side policy.
-
-**Status:** planning — CLI broker, MCP registry/dispatch, permission
-annotations, request-context, fixture, and Hero Code decoder paths are mapped.
-
-**Pick up at:** add the CLI contract/dispatch adapters, then generate the MCP
-inventory from the authoritative operation-policy registry.
-
-→ `/deliver code-host-broker-surfaces-and-conformance`
-
-**Files:** `internal/cli/code_host_broker.go`, `internal/serve/mcp_tools_code_host.go`, `contracts/codehostbroker/HERO-CODE-HANDOFF.md`
-**Skip:** do not expose a token, arbitrary authenticated request, generic mixed-effect MCP tool, or `gh` fallback.
 
 ---
 

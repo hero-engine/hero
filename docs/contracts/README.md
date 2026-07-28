@@ -146,6 +146,9 @@ precedence chain (explicit → methodology-derived → tracker-inferred
 - [`code-host-broker-v1.md`](./code-host-broker-v1.md) — repository-qualified
   pull-request operations, effects, idempotency, reconciliation, bounds, and
   canonical cross-language fixture.
+- [`../../contracts/codehostbroker/HERO-CODE-HANDOFF.md`](../../contracts/codehostbroker/HERO-CODE-HANDOFF.md)
+  — Hero Code contract discovery, explicit prepare/execute flow, retry rules,
+  and vendoring checklist.
 - [`../../examples/scrum-workspace/`](../../examples/scrum-workspace/)
   — runnable sample workspace declaring `methodology: scrum` +
   `vocabulary: agile-scrum`, with specs across lifecycle states.

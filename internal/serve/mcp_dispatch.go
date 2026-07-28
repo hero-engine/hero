@@ -89,6 +89,12 @@ func (s *MCPServer) toolHandlers() map[string]toolHandler {
 		"hero_warnings":      s.toolWarnings,
 		"hero_insights":      s.toolInsights,
 	}
+	for _, operation := range codeHostMCPOperations() {
+		operation := operation
+		handlers[codeHostMCPToolName(operation)] = func(args map[string]interface{}) (string, error) {
+			return s.toolCodeHost(operation, args)
+		}
+	}
 	handlers["hero_attention_snapshot"] = s.toolAttentionSnapshot
 	handlers["hero_attention_action"] = s.toolAttentionAction
 	return handlers

@@ -109,16 +109,21 @@ type ToolAnnotations struct {
 
 // InputSchema is a JSON Schema for tool input.
 type InputSchema struct {
-	Type       string                `json:"type"`
-	Properties map[string]PropSchema `json:"properties,omitempty"`
-	Required   []string              `json:"required,omitempty"`
+	Type                 string                `json:"type"`
+	Properties           map[string]PropSchema `json:"properties,omitempty"`
+	Required             []string              `json:"required,omitempty"`
+	AdditionalProperties *bool                 `json:"additionalProperties,omitempty"`
 }
 
 // PropSchema describes a single property in a JSON Schema.
 type PropSchema struct {
-	Type        string      `json:"type"`
-	Description string      `json:"description,omitempty"`
-	Items       *PropSchema `json:"items,omitempty"`
+	Type                 string                `json:"type"`
+	Description          string                `json:"description,omitempty"`
+	Items                *PropSchema           `json:"items,omitempty"`
+	Properties           map[string]PropSchema `json:"properties,omitempty"`
+	Required             []string              `json:"required,omitempty"`
+	AdditionalProperties *bool                 `json:"additionalProperties,omitempty"`
+	Enum                 []string              `json:"enum,omitempty"`
 }
 
 // ToolsListResult is the response to tools/list.

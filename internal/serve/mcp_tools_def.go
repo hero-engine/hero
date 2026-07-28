@@ -732,6 +732,7 @@ func (s *MCPServer) toolDefinitions() []ToolDefinition {
 			},
 		},
 	}
+	definitions = append(definitions, CodeHostToolDefinitions()...)
 	return annotateAttentionToolDefinitions(definitions)
 }
 

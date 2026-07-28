@@ -355,6 +355,18 @@ type Response struct {
 	Error               *ContractError     `json:"error"`
 }
 
+// PreparationResponse is the bounded, non-mutating preflight result used by
+// process and MCP transports before a separately authorized mutation call.
+// The caller applies the returned revisions to its original typed request; the
+// payload is intentionally not echoed into transport output.
+type PreparationResponse struct {
+	Version             string         `json:"version"`
+	Operation           Operation      `json:"operation"`
+	CapabilityRevision  string         `json:"capability_revision,omitempty"`
+	ObservationRevision string         `json:"observation_revision,omitempty"`
+	Error               *ContractError `json:"error"`
+}
+
 type Request struct {
 	Version             string               `json:"version"`
 	Operation           Operation            `json:"operation"`
@@ -449,6 +461,7 @@ type ConsumerFixtureBundle struct {
 	Version       string                     `json:"version"`
 	Operations    []Capability               `json:"operations"`
 	Cases         []FixtureCase              `json:"cases"`
+	Preparations  []PreparationResponse      `json:"preparations"`
 	Errors        []ContractError            `json:"errors"`
 	UnknownFields map[string]json.RawMessage `json:"future_additive"`
 }

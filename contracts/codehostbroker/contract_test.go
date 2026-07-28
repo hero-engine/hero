@@ -95,8 +95,10 @@ func TestCanonicalFixtureCoversAndValidatesEveryOperation(t *testing.T) {
 	if err := json.Unmarshal(data, &fixture); err != nil {
 		t.Fatal(err)
 	}
-	if fixture.Version != Version || len(fixture.Cases) != len(Operations()) || len(fixture.Operations) != len(Operations())+1 {
-		t.Fatalf("fixture inventory: version=%q cases=%d operations=%d", fixture.Version, len(fixture.Cases), len(fixture.Operations))
+	if fixture.Version != Version || len(fixture.Cases) != len(Operations()) ||
+		len(fixture.Operations) != len(Operations())+1 || len(fixture.Preparations) != 10 {
+		t.Fatalf("fixture inventory: version=%q cases=%d operations=%d preparations=%d",
+			fixture.Version, len(fixture.Cases), len(fixture.Operations), len(fixture.Preparations))
 	}
 	seen := map[Operation]bool{}
 	statuses := map[ReconciliationStatus]bool{}
@@ -149,6 +151,63 @@ func TestCanonicalFixtureCoversAndValidatesEveryOperation(t *testing.T) {
 	}
 	if len(fixture.Errors) != len(ErrorCodes()) || len(fixture.UnknownFields) == 0 {
 		t.Fatalf("errors=%d unknown=%d", len(fixture.Errors), len(fixture.UnknownFields))
+	}
+	prepared := map[Operation]bool{}
+	for _, preparation := range fixture.Preparations {
+		if err := ValidatePreparationResponse(preparation); err != nil {
+			t.Fatalf("%s preparation: %v", preparation.Operation, err)
+		}
+		prepared[preparation.Operation] = true
+	}
+	if len(prepared) != 10 {
+		t.Fatalf("preparation coverage=%v", prepared)
+	}
+}
+
+func TestPreparationResponseIsClosedAndBounded(t *testing.T) {
+	response := PreparationResponse{
+		Version:             Version,
+		Operation:           OperationComment,
+		CapabilityRevision:  "cap:fixture",
+		ObservationRevision: "obs:fixture",
+	}
+	if err := ValidatePreparationResponse(response); err != nil {
+		t.Fatal(err)
+	}
+
+	read := response
+	read.Operation = OperationGetPullRequest
+	if err := ValidatePreparationResponse(read); err == nil || err.Code != ErrorUnsupportedOperation {
+		t.Fatalf("successful read preparation accepted: %v", err)
+	}
+	read.CapabilityRevision = ""
+	read.ObservationRevision = ""
+	read.Error = &ContractError{
+		Code: ErrorUnsupportedOperation, Message: "read operations do not support preparation", Retry: RetryNone,
+	}
+	if err := ValidatePreparationResponse(read); err != nil {
+		t.Fatalf("typed read rejection invalid: %v", err)
+	}
+
+	missing := response
+	missing.ObservationRevision = ""
+	if err := ValidatePreparationResponse(missing); err == nil || err.Code != ErrorInvalidInput {
+		t.Fatalf("missing revision accepted: %v", err)
+	}
+
+	failed := PreparationResponse{
+		Version:   Version,
+		Operation: OperationComment,
+		Error: &ContractError{
+			Code: ErrorStaleObservation, Message: "refresh and prepare again", Retry: RetryRefreshThenRetry,
+		},
+	}
+	if err := ValidatePreparationResponse(failed); err != nil {
+		t.Fatalf("normalized error rejected: %v", err)
+	}
+	failed.CapabilityRevision = "cap:leak"
+	if err := ValidatePreparationResponse(failed); err == nil || err.Code != ErrorInvalidInput {
+		t.Fatalf("error with revisions accepted: %v", err)
 	}
 }
 

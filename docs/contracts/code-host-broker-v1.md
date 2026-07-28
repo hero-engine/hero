@@ -26,6 +26,60 @@ Every request and response carries the literal version
 The fixture includes unknown top-level additive fields so independent
 decoders can prove that behavior.
 
+## Public surfaces
+
+A released Hero binary exposes the credential-free contract and the broker:
+
+```bash
+hero code-host contract
+hero code-host broker <operation> < request.json
+```
+
+`hero code-host contract` needs no workspace and resolves no credential. Its
+single JSON object contains the exact canonical fixture as a UTF-8 JSON string,
+the fixture SHA-256, authoritative ordered policies, and v1 bounds.
+
+Broker commands accept exactly one bounded request object on stdin and produce
+exactly one v1 JSON object on stdout. The command operation and
+`request.operation` must match. Provider credentials, headers, bodies, review
+text, and other request content are not argv fields. Unknown fields, trailing
+JSON, or input over the 1 MiB transport bound fail before provider dispatch.
+
+Mutations use an explicit two-call flow:
+
+```bash
+hero code-host broker comment --prepare < request.json
+hero code-host broker comment < request-with-returned-revisions.json
+```
+
+Preparation returns `PreparationResponse` containing only
+`capability_revision`, `observation_revision`, and a nullable normalized
+`error`; it never echoes the request payload and never silently executes the
+mutation. The caller copies successful revisions into its original request,
+performs its consent and permission gate, then invokes execution separately.
+Read operations reject `--prepare`.
+
+The MCP server advertises one operation-specific tool per registry entry:
+`hero_code_host_<operation>` (twenty tools in v1). There is no generic
+mixed-effect broker tool. Each tool accepts the `Request` fields as flat
+top-level arguments; `operation` is fixed by the tool name and is not an input
+selector. The top-level schema and every nested repository, pull-request,
+reference, and mutation-payload schema set `additionalProperties: false`.
+Mutation tools alone add `prepare: true` for the non-writing preflight call.
+
+Tool metadata carries the authoritative contract version, operation, effect,
+and consent. MCP annotations are conservative hints derived from the same
+policy registry: reads are read-only, only `merge` is destructive, replay-safe
+operations are idempotent, and every provider call is open-world. These hints
+do not establish user consent or bypass the client's execution-permission
+gate.
+
+Each call returns one MCP text content item whose text is exactly one
+structured v1 JSON envelope: a `Response` for reads and execution, or a
+`PreparationResponse` when a mutation is called with `prepare: true`.
+Contract failures are represented inside that envelope rather than as
+credential-bearing transport diagnostics.
+
 ## Operations and authoritative policy
 
 The operation registry is the single authority for effects, consent, replay,
@@ -212,6 +266,11 @@ whether a zero value is legal.
   `error`; optional/nullable `page`, `receipt`, and `reconciliation`.
   Successful mutations require both receipt and reconciliation. Error
   responses carry JSON `null` as result.
+- `PreparationResponse`: required `version`, `operation`, and nullable
+  `error`; optional `capability_revision` and `observation_revision`. Success
+  requires both revisions and a null error. Failure requires a normalized
+  error and omits both revisions. It never contains the request, payload,
+  provider body, receipt, reconciliation, or result.
 - `Request`: required `version`, `operation`, `provider`, `connection_id`,
   `repository`; optional `repositories`, `pull_request`, `intent_source`,
   `consent`, `idempotency_key`, both revisions, `reconciliation_key`,
@@ -234,7 +293,9 @@ whether a zero value is legal.
   `pull_request`, `base`, `head`, `state`, `updated_at`, `permissions`.
 - Fixture-only `FixtureCase`: required `name`, `request`, `response`.
   `ConsumerFixtureBundle`: required `version`, advertised `operations`,
-  `cases`, normalized `errors`, and `future_additive`.
+  `cases`, `preparations`, normalized `errors`, and `future_additive`.
+  `preparations` contains one successful `PreparationResponse` for every v1
+  mutation.
 
 Success result schemas are operation-specific and strictly decoded:
 `CapabilitiesResult.capabilities`, `PullRequestsResult.pull_requests`,
@@ -343,7 +404,7 @@ The canonical fixture is:
 
 Its SHA-256 digest is published beside it in
 `consumer-fixture.sha256`. The current digest is
-`d32eb13200e9d36fd51b8c2240aa171f90ee9fc6c348f58ea35f695b469dde10`.
+`9159b224be3c9f1dee9072b2135e01364c91c2d97800d98ee554a997d4d7f6ff`.
 Regenerate both deterministically with:
 
 ```bash
@@ -354,9 +415,12 @@ The fixture covers all twenty operations, every operation policy, forked refs,
 non-terminal and terminal pagination, all availability and completeness
 states, partial checks, truncated diffs, all seven reconciliation states, all
 normalized errors, an unknown advertised operation, and unknown additive
-fields. Mutation text fields contain only the literal `[redacted]` sentinel,
-never user content. Hero and Hero Code's Swift decoder consume the same
-committed bytes and digest.
+fields. It also includes one successful `PreparationResponse` for every
+mutation operation. Mutation text fields contain only the literal `[redacted]`
+sentinel, never user content. Hero and Hero Code's Swift decoder consume the
+same committed bytes and digest. See
+[`HERO-CODE-HANDOFF.md`](../../contracts/codehostbroker/HERO-CODE-HANDOFF.md)
+for the desktop integration checklist.
 
 ## Security and ownership boundary
 

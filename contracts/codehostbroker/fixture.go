@@ -119,11 +119,24 @@ func CanonicalFixture() ([]byte, error) {
 	}
 	advertised := fixtureCapabilities()
 	advertised = append(advertised, futureCapability())
+	preparations := make([]PreparationResponse, 0, len(orderedOperations)-len(readOperations))
+	for _, operation := range orderedOperations {
+		if !IsMutation(operation) {
+			continue
+		}
+		preparations = append(preparations, PreparationResponse{
+			Version:             Version,
+			Operation:           operation,
+			CapabilityRevision:  "cap:fixture",
+			ObservationRevision: "obs:fixture",
+		})
+	}
 	bundle := ConsumerFixtureBundle{
-		Version:    Version,
-		Operations: advertised,
-		Cases:      cases,
-		Errors:     errors,
+		Version:      Version,
+		Operations:   advertised,
+		Cases:        cases,
+		Preparations: preparations,
+		Errors:       errors,
 		UnknownFields: map[string]json.RawMessage{
 			"future_capability": json.RawMessage(`{"operation":"future_operation","effect":"future_effect"}`),
 			"future_field":      json.RawMessage(`{"nested":true}`),

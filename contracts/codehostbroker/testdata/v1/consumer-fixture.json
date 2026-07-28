@@ -4272,6 +4272,78 @@
       }
     }
   ],
+  "preparations": [
+    {
+      "version": "code-host-broker/v1",
+      "operation": "create_pull_request",
+      "capability_revision": "cap:fixture",
+      "observation_revision": "obs:fixture",
+      "error": null
+    },
+    {
+      "version": "code-host-broker/v1",
+      "operation": "comment",
+      "capability_revision": "cap:fixture",
+      "observation_revision": "obs:fixture",
+      "error": null
+    },
+    {
+      "version": "code-host-broker/v1",
+      "operation": "submit_review",
+      "capability_revision": "cap:fixture",
+      "observation_revision": "obs:fixture",
+      "error": null
+    },
+    {
+      "version": "code-host-broker/v1",
+      "operation": "approve",
+      "capability_revision": "cap:fixture",
+      "observation_revision": "obs:fixture",
+      "error": null
+    },
+    {
+      "version": "code-host-broker/v1",
+      "operation": "request_changes",
+      "capability_revision": "cap:fixture",
+      "observation_revision": "obs:fixture",
+      "error": null
+    },
+    {
+      "version": "code-host-broker/v1",
+      "operation": "mark_ready",
+      "capability_revision": "cap:fixture",
+      "observation_revision": "obs:fixture",
+      "error": null
+    },
+    {
+      "version": "code-host-broker/v1",
+      "operation": "retarget",
+      "capability_revision": "cap:fixture",
+      "observation_revision": "obs:fixture",
+      "error": null
+    },
+    {
+      "version": "code-host-broker/v1",
+      "operation": "close",
+      "capability_revision": "cap:fixture",
+      "observation_revision": "obs:fixture",
+      "error": null
+    },
+    {
+      "version": "code-host-broker/v1",
+      "operation": "reopen",
+      "capability_revision": "cap:fixture",
+      "observation_revision": "obs:fixture",
+      "error": null
+    },
+    {
+      "version": "code-host-broker/v1",
+      "operation": "merge",
+      "capability_revision": "cap:fixture",
+      "observation_revision": "obs:fixture",
+      "error": null
+    }
+  ],
   "errors": [
     {
       "code": "invalid_input",

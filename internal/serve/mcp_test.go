@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hero-engine/hero/contracts/codehostbroker"
 	brokercontract "github.com/hero-engine/hero/contracts/trackerbroker"
 	evidencecontract "github.com/hero-engine/hero/contracts/trackerevidence"
 	"github.com/hero-engine/hero/internal/graph"
@@ -405,8 +406,8 @@ func TestMCP_ToolsList(t *testing.T) {
 		t.Fatalf("decode result: %v", err)
 	}
 
-	if len(result.Tools) != 61 {
-		t.Errorf("expected 61 tools, got %d", len(result.Tools))
+	if want := 61 + len(codehostbroker.Operations()); len(result.Tools) != want {
+		t.Errorf("expected %d tools, got %d", want, len(result.Tools))
 	}
 
 	expectedNames := map[string]bool{
@@ -461,6 +462,9 @@ func TestMCP_ToolsList(t *testing.T) {
 		"hero_attention_snapshot":      true,
 		"hero_attention_action":        true,
 		"hero_attention_contract":      true,
+	}
+	for _, operation := range codehostbroker.Operations() {
+		expectedNames[codeHostMCPToolName(operation)] = true
 	}
 	for _, tool := range result.Tools {
 		if !expectedNames[tool.Name] {
