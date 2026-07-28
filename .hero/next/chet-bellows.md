@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-28T03:29:22Z
+updated: 2026-07-28T03:31:53Z
 repo: hero-engine/hero
 ---
 
@@ -11,11 +11,13 @@ repo: hero-engine/hero
 > Session opened with — Deliver initiative-autocomplete-ignores-declared-children. An initiative auto-completes when only some of its declared children have shipped, because the completion gate's roster is fed from an incomplete source. Two compounding defects: (1) children: (plural) frontmatter is silently dropped by the relation parser (internal/spec/spec.go:633), so declared children never become child edges and the r…
 > _possibly stale — 10 commit(s) since, last set 2d 4h ago_
 
-_possibly stale — 26 commit(s) since, last set 6h 49m ago_
+_possibly stale — 27 commit(s) since, last set 6h 52m ago_
 
 ## Last user ask
 
 > Drive github-pull-request-state-transition-broker autonomously after verified collaboration broker; reuse the shared journal, GitHub transport, connection scope, revisions, and deterministic fake; do not implement merge.
+
+_possibly stale — 1 commit(s) since, last set 27m ago_
 
 ## Suggested next prompt
 

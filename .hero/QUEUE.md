@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-28T03:29:22Z · 83 ready specs_
+_Generated: 2026-07-28T03:31:53Z · 83 ready specs_
 
 ## github-pull-request-state-transition-broker — "GitHub pull-request state-transition broker"
 _feature · delivering · horizon: now_
