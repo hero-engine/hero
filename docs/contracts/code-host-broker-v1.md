@@ -404,7 +404,7 @@ The canonical fixture is:
 
 Its SHA-256 digest is published beside it in
 `consumer-fixture.sha256`. The current digest is
-`9159b224be3c9f1dee9072b2135e01364c91c2d97800d98ee554a997d4d7f6ff`.
+`e66a8d5643dce518db66a5e20b2a39be1ac5766b464f2f1244c05ff6a8b43edb`.
 Regenerate both deterministically with:
 
 ```bash

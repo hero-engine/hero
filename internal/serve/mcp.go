@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"sync"
 
 	"github.com/hero-engine/hero/internal/attention/focus"
 	"github.com/hero-engine/hero/internal/attention/projection"
@@ -41,6 +42,11 @@ type MCPServer struct {
 	profile     string      // active tool profile (set during initialize)
 	debugLog    *os.File    // optional debug log file; nil = no logging
 	ctx         context.Context
+	sendMu      sync.Mutex
+	debugMu     sync.Mutex
+	requestMu   sync.Mutex
+	requests    map[string]context.CancelFunc
+	requestWG   sync.WaitGroup
 
 	// Two-tier MCP responses (spec: two-tier-mcp-responses).
 	// refsStore is opened lazily on first use; refsRegistry holds
@@ -76,6 +82,7 @@ func NewMCPServer(heroDir, projectRoot, version string) *MCPServer {
 		input:        os.Stdin,
 		output:       os.Stdout,
 		ctx:          context.Background(),
+		requests:     make(map[string]context.CancelFunc),
 		refsRegistry: refs.NewRegistry(),
 		sessionID:    refs.SessionID(projectRoot, os.Getpid()),
 	}

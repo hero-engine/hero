@@ -71,6 +71,9 @@ func CanonicalFixture() ([]byte, error) {
 			Bounds:    policy.Bounds, Completeness: CompletenessComplete, PartialFailures: []PartialFailure{},
 			Result: result, Truncated: false, DurationMS: 42,
 		}
+		if operation == OperationGetPullRequest {
+			response.Freshness = FreshnessStale
+		}
 		if operation == OperationListPullRequests || operation == OperationSearchPullRequests ||
 			operation == OperationGetCommits || operation == OperationGetReviews || operation == OperationGetComments {
 			cursor, err := EncodeCursor(CursorMaterial{

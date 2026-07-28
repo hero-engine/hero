@@ -205,7 +205,7 @@ must match the published digest and test unknown additive fields.
 Delivered the public `code-host-broker/v1` process and MCP boundary over the
 existing in-process broker. Mutation preparation is explicit, non-mutating,
 and shared by both transports. The canonical fixture digest is
-`9159b224be3c9f1dee9072b2135e01364c91c2d97800d98ee554a997d4d7f6ff`.
+`e66a8d5643dce518db66a5e20b2a39be1ac5766b464f2f1244c05ff6a8b43edb`.
 
 ### Acceptance Criteria
 
@@ -217,11 +217,11 @@ and shared by both transports. The canonical fixture digest is
 | 4 | Exactly twenty operation-specific MCP tools, mutation prepare only, no generic tool | DONE | `internal/serve/mcp_tools_code_host.go:33`, `TestCodeHostMCPInventoryAndPoliciesMatchRegistry` |
 | 5 | MCP schemas, annotations, metadata, and dispatch match registry | DONE | `internal/serve/mcp_tools_code_host.go:84`, `internal/serve/mcp_dispatch.go:92`, `TestCodeHostMCPNestedSchemasAreClosedAndOperationSpecific` |
 | 6 | Missing mutation policy material rejects or explicitly prepares without a write | DONE | `internal/codehost/prepare.go:10`, `contracts/codehostbroker/validate.go:277`, CLI/MCP explicit-prepare tests, and existing broker policy tests |
-| 7 | CLI and MCP propagate cancellation and retain broker reconciliation semantics | DONE | CLI uses `cmd.Context()`; MCP uses `s.ctx`; `TestCodeHostBrokerPrepareRejectsReadsAndContextCancellationPropagates` and `TestCodeHostMCPUsesServerCancellationContext` pass |
-| 8 | In-process, CLI, and MCP transports preserve canonical successes and errors | DONE | all twenty cases and every canonical normalized error pass `TestCodeHostBrokerMatchesEveryCanonicalFixtureCaseWithoutTranslation`, `TestCodeHostBrokerPreservesEveryCanonicalError`, `TestCodeHostMCPCanonicalFixtureParityAllOperations`, and `TestCodeHostMCPCanonicalErrorParity` |
-| 9 | Bounds return typed safe errors without unbounded output | DONE | 1 MiB transport readers, contract validators, `TestCodeHostMCPInputBoundReturnsTypedSafeEnvelope`, and CLI oversized-input coverage |
-| 10 | Credentials remain outside argv, output, diagnostics, MCP content, fixtures, and receipts | DONE | CLI and MCP credential/body canaries pass; fixture mutation text remains `[redacted]`; provider credential tests remain green |
-| 11 | Deterministic fixture/digest and exact Hero Code decoder handoff | DONE | `contracts/codehostbroker/fixture.go:122`, generated fixture/digest, `contracts/codehostbroker/HERO-CODE-HANDOFF.md`, and contract tests |
+| 7 | CLI and MCP propagate cancellation and retain broker reconciliation semantics | DONE | CLI uses `cmd.Context()`; MCP registers each code-host JSON-RPC request and handles `notifications/cancelled`; `TestCodeHostMCPRequestCancellationNotificationCancelsExactCall` proves exact-call cancellation without cancelling the server context |
+| 8 | In-process, CLI, and MCP transports preserve canonical successes and errors | DONE | all twenty cases—including an explicit stale response—and every canonical normalized error pass `TestCodeHostBrokerMatchesEveryCanonicalFixtureCaseWithoutTranslation`, `TestCodeHostBrokerPreservesEveryCanonicalError`, `TestCodeHostMCPCanonicalFixtureParityAllOperations`, and `TestCodeHostMCPCanonicalErrorParity` |
+| 9 | Bounds return typed safe errors without unbounded output | DONE | the 1 MiB argument bound has a finite 2 MiB JSON-RPC envelope; `TestCodeHostMCPRunReturnsTypedErrorBeyondArgumentBound` proves the real stdio loop returns `input_too_large` rather than terminating its scanner |
+| 10 | Credentials remain outside argv, output, diagnostics, MCP content, fixtures, and receipts | DONE | CLI and MCP credential/body canaries pass; `TestCodeHostMCPDebugLogDoesNotRecordArgumentsOrResults` proves debug logs retain only sizes/status; fixture mutation text remains `[redacted]` |
+| 11 | Deterministic fixture/digest and exact Hero Code decoder handoff | DONE | generated fixture/digest, `contracts/codehostbroker/HERO-CODE-HANDOFF.md`, and contract tests publish the exact Hero Code destination, newline-safe copy/hash commands, and `CodeHostBrokerClientTests` Swift command |
 | 12 | Release-shaped binary exercises registration, read, prepared write, and reconciliation | DONE | `TestReleasedShapeHeroBinaryExercisesContractReadAndPreparedWrite` builds `cmd/hero` and runs contract/capabilities/comment against the fake GitHub adapter |
 | 13 | Tracker and code-host role independence is documented | DONE | `docs/contracts/code-host-broker-v1.md` and the Hero Code handoff explicitly separate Jira/Linear tracker selection from GitHub code hosting and allow explicit dual-capability GitHub |
 | 14 | Tracker broker, Projects importer, and issue mocks remain unchanged | DONE | code-host commands and tools are separately registered; repository-wide tests pass with no tracker/importer/mock implementation changes |
@@ -232,10 +232,10 @@ and shared by both transports. The canonical fixture digest is
 |---|---|---|---|
 | 1 | Register `hero code-host` contract and broker commands | DONE | `internal/cli/root.go`, `internal/cli/code_host_broker.go` |
 | 2 | Add bounded CLI adapter and explicit prepare flow | DONE | exact-one decoder, path binding, typed errors, `Broker.Prepare`, cancellation, and argv rejection are covered in `internal/cli/code_host_broker_test.go` |
-| 3 | Add twenty operation-specific MCP definitions and handlers | DONE | registry-derived inventory, closed nested schemas, conservative annotations, forced operation identity, and shared broker live in `internal/serve/mcp_tools_code_host.go` |
-| 4 | Add transport parity tests | DONE | every operation, reconciliation status, partial/truncated response, and normalized error is preserved through CLI and MCP |
-| 5 | Add credential/body canaries across public surfaces | DONE | CLI argv/stdout and MCP input/content bounds and non-reflection tests pass alongside provider-boundary canaries |
-| 6 | Publish fixture, digest, docs index, and Hero Code handoff | DONE | generated fixture SHA, contract reference, docs index, and `HERO-CODE-HANDOFF.md` are synchronized |
+| 3 | Add twenty operation-specific MCP definitions and handlers | DONE | registry-derived inventory, closed nested schemas, conservative annotations, forced operation identity, request-scoped cancellation, and shared broker live in `internal/serve/mcp_tools_code_host.go` |
+| 4 | Add transport parity tests | DONE | every operation, reconciliation status, stale/partial/truncated response, normalized error, request cancellation, and the real stdio bound path are covered |
+| 5 | Add credential/body canaries across public surfaces | DONE | CLI argv/stdout, MCP content, and redacted debug-log tests pass alongside provider-boundary canaries |
+| 6 | Publish fixture, digest, docs index, and Hero Code handoff | DONE | generated fixture SHA, contract reference, docs index, exact Hero Code destination/copy commands, and Swift conformance command are synchronized |
 | 7 | Exercise a release-shaped binary | DONE | compiled binary contract/read/prepare/write/reconciliation test passes |
 
 ### Exercise-the-feature check

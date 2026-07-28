@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/hero-engine/hero/contracts/codehostbroker"
@@ -65,6 +66,15 @@ func CodeHostToolDefinitions() []ToolDefinition {
 
 func codeHostMCPToolName(operation codehostbroker.Operation) string {
 	return codeHostMCPToolPrefix + string(operation)
+}
+
+func codeHostOperationForMCPTool(name string) (codehostbroker.Operation, bool) {
+	if !strings.HasPrefix(name, codeHostMCPToolPrefix) {
+		return "", false
+	}
+	operation := codehostbroker.Operation(strings.TrimPrefix(name, codeHostMCPToolPrefix))
+	_, ok := codehostbroker.Policy(operation)
+	return operation, ok
 }
 
 func codeHostMCPOperations() []codehostbroker.Operation {
@@ -283,6 +293,10 @@ func codeHostMCPPayloadDescription(operation codehostbroker.Operation) string {
 }
 
 func (s *MCPServer) toolCodeHost(operation codehostbroker.Operation, args map[string]interface{}) (string, error) {
+	return s.toolCodeHostContext(s.ctx, operation, args)
+}
+
+func (s *MCPServer) toolCodeHostContext(ctx context.Context, operation codehostbroker.Operation, args map[string]interface{}) (string, error) {
 	request, prepare, err := decodeCodeHostMCPArgs(operation, args)
 	if err != nil {
 		code := codehostbroker.ErrorInvalidInput
@@ -302,9 +316,9 @@ func (s *MCPServer) toolCodeHost(operation codehostbroker.Operation, args map[st
 	}
 	broker := newCodeHostMCPBroker(s.projectRoot)
 	if prepare {
-		return marshalCodeHostMCP(broker.Prepare(s.ctx, request)), nil
+		return marshalCodeHostMCP(broker.Prepare(ctx, request)), nil
 	}
-	return marshalCodeHostMCP(broker.Execute(s.ctx, request)), nil
+	return marshalCodeHostMCP(broker.Execute(ctx, request)), nil
 }
 
 func decodeCodeHostMCPArgs(operation codehostbroker.Operation, args map[string]interface{}) (codehostbroker.Request, bool, error) {

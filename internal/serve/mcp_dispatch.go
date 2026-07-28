@@ -1,6 +1,7 @@
 package serve
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 )
@@ -104,6 +105,10 @@ func (s *MCPServer) toolHandlers() map[string]toolHandler {
 // dispatch table, and emits the result via finishToolCall. Adding a
 // tool no longer requires editing this function — see toolHandlers().
 func (s *MCPServer) handleToolsCall(req *JSONRPCRequest) {
+	s.handleToolsCallContext(req, s.ctx)
+}
+
+func (s *MCPServer) handleToolsCallContext(req *JSONRPCRequest, ctx context.Context) {
 	var params ToolCallParams
 	if err := json.Unmarshal(req.Params, &params); err != nil {
 		s.sendError(req.ID, ErrCodeInvalidParams, "Invalid tool call parameters")
@@ -125,6 +130,12 @@ func (s *MCPServer) handleToolsCall(req *JSONRPCRequest) {
 			s.sendError(req.ID, ErrCodeMethodNotFound, fmt.Sprintf("Tool not available: %s", params.Name))
 			return
 		}
+	}
+
+	if operation, ok := codeHostOperationForMCPTool(params.Name); ok {
+		result, toolErr := s.toolCodeHostContext(ctx, operation, params.Arguments)
+		s.finishToolCall(req.ID, result, toolErr)
+		return
 	}
 
 	handler, ok := s.toolHandlers()[params.Name]

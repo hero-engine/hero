@@ -34,7 +34,7 @@ fixtures. `policies` is the authoritative ordered operation registry and
 idempotency, or reconciliation requirements from operation names.
 
 The current canonical fixture SHA-256 is
-`9159b224be3c9f1dee9072b2135e01364c91c2d97800d98ee554a997d4d7f6ff`.
+`e66a8d5643dce518db66a5e20b2a39be1ac5766b464f2f1244c05ff6a8b43edb`.
 
 ## CLI transport
 
@@ -140,8 +140,31 @@ repository advertises merge unavailable and Hero performs no direct merge.
 
 ## Vendoring
 
-Vendor this directory's contract sources and `testdata/v1` fixture as one
-release-pinned unit, or capture the same bytes from `hero code-host contract`.
-Record the clean Hero commit or release that supplied them. Run every fixture
-case, including preparation cases, against Hero Code's Swift decoder before
-enabling the broker UI.
+Hero Code's release-pinned fixture destination is:
+
+```text
+packages/hero-swift/Tests/HeroSharedApplicationTests/Fixtures/CodeHost/code-host-broker-v1.json
+```
+
+From the Hero Code repository root, use the released or clean locally built
+Hero binary to copy and verify the exact decoded bytes:
+
+```bash
+contract_tmp="$(mktemp)"
+hero code-host contract > "$contract_tmp"
+jq -jr '.fixture' "$contract_tmp" > packages/hero-swift/Tests/HeroSharedApplicationTests/Fixtures/CodeHost/code-host-broker-v1.json
+expected="$(jq -r '.sha256' "$contract_tmp")"
+actual="$(shasum -a 256 packages/hero-swift/Tests/HeroSharedApplicationTests/Fixtures/CodeHost/code-host-broker-v1.json | awk '{print $1}')"
+test "$actual" = "$expected"
+```
+
+The `-j` flag is required: appending a newline changes the canonical digest.
+Record the clean Hero commit or release that supplied the fixture, then run the
+consumer conformance test exactly:
+
+```bash
+swift test --package-path packages/hero-swift --filter CodeHostBrokerClientTests
+```
+
+Run every fixture case, including preparation, stale-freshness, additive
+unknown-field, error, and reconciliation cases, before enabling the broker UI.

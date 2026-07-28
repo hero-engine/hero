@@ -2,6 +2,7 @@ package serve
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -16,6 +17,8 @@ import (
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/serve/chat"
 )
+
+const maxMCPMessageBytes = 2 << 20
 
 // Run starts the MCP server, reading from input and writing to output.
 // It blocks until the input is closed.
@@ -81,8 +84,10 @@ func (s *MCPServer) Run() error {
 	}
 
 	scanner := bufio.NewScanner(s.input)
-	// Allow large messages (1MB)
-	scanner.Buffer(make([]byte, 1024*1024), 1024*1024)
+	// The code-host argument contract is bounded at 1 MiB. Keep enough
+	// transport headroom for the JSON-RPC and tools/call envelope while
+	// retaining a finite stdio message limit.
+	scanner.Buffer(make([]byte, 64*1024), maxMCPMessageBytes)
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -92,23 +97,48 @@ func (s *MCPServer) Run() error {
 
 		var req JSONRPCRequest
 		if err := json.Unmarshal([]byte(line), &req); err != nil {
-			s.logDebug("→ PARSE ERROR: %s", line)
+			s.logDebug("request parse_error bytes=%d", len(line))
 			s.sendError(nil, ErrCodeParse, "Parse error")
 			continue
 		}
 
-		s.logDebug("→ %s (id=%s)", req.Method, string(req.ID))
+		s.logDebug("request method=%s has_id=%t", req.Method, len(req.ID) > 0)
 		if req.Params != nil {
-			s.logDebug("  params: %s", string(req.Params))
+			s.logDebug("request params_bytes=%d", len(req.Params))
 		}
 
+		if req.Method == "notifications/cancelled" {
+			s.handleCancelledNotification(&req)
+			continue
+		}
+		if req.Method == "tools/call" && s.isCodeHostToolCall(req.Params) && len(req.ID) > 0 {
+			requestCtx, finish, ok := s.beginRequest(req.ID)
+			if !ok {
+				s.sendError(req.ID, ErrCodeInvalidRequest, "Duplicate request id")
+				continue
+			}
+			reqCopy := req
+			s.requestWG.Add(1)
+			go func() {
+				defer s.requestWG.Done()
+				defer finish()
+				s.handleRequestContext(&reqCopy, requestCtx)
+			}()
+			continue
+		}
 		s.handleRequest(&req)
 	}
 
+	s.cancelRequests()
+	s.requestWG.Wait()
 	return scanner.Err()
 }
 
 func (s *MCPServer) handleRequest(req *JSONRPCRequest) {
+	s.handleRequestContext(req, s.ctx)
+}
+
+func (s *MCPServer) handleRequestContext(req *JSONRPCRequest, ctx context.Context) {
 	// Defense in depth: a panic in any tool handler would otherwise
 	// unwind through Run()'s scan loop and crash the whole process —
 	// a "transport closed" for every tool, not just the failing call.
@@ -116,8 +146,8 @@ func (s *MCPServer) handleRequest(req *JSONRPCRequest) {
 	// panic trigger is known today; this is cheap insurance.
 	defer func() {
 		if r := recover(); r != nil {
-			s.logDebug("PANIC in %s: %v", req.Method, r)
-			s.sendError(req.ID, ErrCodeInternal, fmt.Sprintf("internal error: %v", r))
+			s.logDebug("request panic method=%s", req.Method)
+			s.sendError(req.ID, ErrCodeInternal, "internal error")
 		}
 	}()
 	switch req.Method {
@@ -134,11 +164,86 @@ func (s *MCPServer) handleRequest(req *JSONRPCRequest) {
 	case "tools/list":
 		s.handleToolsList(req)
 	case "tools/call":
-		s.handleToolsCall(req)
+		s.handleToolsCallContext(req, ctx)
 	case "ping":
 		s.sendResult(req.ID, map[string]interface{}{})
 	default:
 		s.sendError(req.ID, ErrCodeMethodNotFound, fmt.Sprintf("Method not found: %s", req.Method))
+	}
+}
+
+func (s *MCPServer) isCodeHostToolCall(raw json.RawMessage) bool {
+	var params struct {
+		Name string `json:"name"`
+	}
+	if json.Unmarshal(raw, &params) != nil {
+		return false
+	}
+	_, ok := codeHostOperationForMCPTool(params.Name)
+	return ok
+}
+
+func requestIDKey(id json.RawMessage) (string, bool) {
+	if len(id) == 0 {
+		return "", false
+	}
+	var compact bytes.Buffer
+	if err := json.Compact(&compact, id); err != nil {
+		return "", false
+	}
+	return compact.String(), true
+}
+
+func (s *MCPServer) beginRequest(id json.RawMessage) (context.Context, func(), bool) {
+	key, ok := requestIDKey(id)
+	if !ok {
+		return nil, nil, false
+	}
+	ctx, cancel := context.WithCancel(s.ctx)
+	s.requestMu.Lock()
+	if _, exists := s.requests[key]; exists {
+		s.requestMu.Unlock()
+		cancel()
+		return nil, nil, false
+	}
+	s.requests[key] = cancel
+	s.requestMu.Unlock()
+	return ctx, func() {
+		s.requestMu.Lock()
+		delete(s.requests, key)
+		s.requestMu.Unlock()
+		cancel()
+	}, true
+}
+
+func (s *MCPServer) handleCancelledNotification(req *JSONRPCRequest) {
+	var params struct {
+		RequestID json.RawMessage `json:"requestId"`
+	}
+	if json.Unmarshal(req.Params, &params) != nil {
+		return
+	}
+	key, ok := requestIDKey(params.RequestID)
+	if !ok {
+		return
+	}
+	s.requestMu.Lock()
+	cancel := s.requests[key]
+	s.requestMu.Unlock()
+	if cancel != nil {
+		cancel()
+	}
+}
+
+func (s *MCPServer) cancelRequests() {
+	s.requestMu.Lock()
+	cancels := make([]context.CancelFunc, 0, len(s.requests))
+	for _, cancel := range s.requests {
+		cancels = append(cancels, cancel)
+	}
+	s.requestMu.Unlock()
+	for _, cancel := range cancels {
+		cancel()
 	}
 }
 
@@ -235,7 +340,13 @@ func (s *MCPServer) send(resp JSONRPCResponse) {
 		fmt.Fprintf(os.Stderr, "hero mcp: marshal error: %v\n", err)
 		return
 	}
-	s.logDebug("← %s", string(data))
+	status := "result"
+	if resp.Error != nil {
+		status = "error"
+	}
+	s.logDebug("response status=%s bytes=%d", status, len(data))
+	s.sendMu.Lock()
+	defer s.sendMu.Unlock()
 	fmt.Fprintf(s.output, "%s\n", data)
 }
 
@@ -316,5 +427,7 @@ func (s *MCPServer) logDebug(format string, args ...interface{}) {
 		return
 	}
 	msg := fmt.Sprintf(format, args...)
+	s.debugMu.Lock()
+	defer s.debugMu.Unlock()
 	fmt.Fprintf(s.debugLog, "%s  %s\n", time.Now().Format("15:04:05.000"), msg)
 }

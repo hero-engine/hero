@@ -4,9 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
+	"os"
+	"path/filepath"
 	"reflect"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/hero-engine/hero/contracts/codehostbroker"
@@ -175,6 +179,166 @@ func TestCodeHostMCPUsesServerCancellationContext(t *testing.T) {
 	if response.Operation != codehostbroker.OperationCapabilities ||
 		response.Error == nil || response.Error.Code != codehostbroker.ErrorCancelled {
 		t.Fatalf("cancelled response = %#v", response)
+	}
+}
+
+func TestCodeHostMCPRequestCancellationNotificationCancelsExactCall(t *testing.T) {
+	originalFactory := newCodeHostMCPBroker
+	t.Cleanup(func() { newCodeHostMCPBroker = originalFactory })
+	broker := &cancellableCodeHostMCPBroker{started: make(chan struct{})}
+	newCodeHostMCPBroker = func(string) codeHostMCPBroker { return broker }
+
+	inputReader, inputWriter := io.Pipe()
+	outputReader, outputWriter := io.Pipe()
+	server := NewMCPServer(t.TempDir(), t.TempDir(), "test")
+	server.SetIO(inputReader, outputWriter)
+	baseCtx := context.Background()
+	server.SetContext(baseCtx)
+	runErr := make(chan error, 1)
+	go func() { runErr <- server.Run() }()
+
+	encoder := json.NewEncoder(inputWriter)
+	params, err := json.Marshal(ToolCallParams{
+		Name:      codeHostMCPToolName(codehostbroker.OperationCapabilities),
+		Arguments: codeHostMCPReadArgs(),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := encoder.Encode(JSONRPCRequest{
+		JSONRPC: "2.0", ID: json.RawMessage(`73`), Method: "tools/call", Params: params,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	<-broker.started
+	if err := encoder.Encode(JSONRPCRequest{
+		JSONRPC: "2.0", Method: "notifications/cancelled",
+		Params: json.RawMessage(`{"requestId":73,"reason":"user stopped review"}`),
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	var response JSONRPCResponse
+	if err := json.NewDecoder(outputReader).Decode(&response); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := json.Marshal(response.Result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var call ToolCallResult
+	if err := json.Unmarshal(raw, &call); err != nil {
+		t.Fatal(err)
+	}
+	if len(call.Content) != 1 {
+		t.Fatalf("tool result = %#v", call)
+	}
+	var envelope codehostbroker.Response
+	if err := json.Unmarshal([]byte(call.Content[0].Text), &envelope); err != nil {
+		t.Fatal(err)
+	}
+	if envelope.Error == nil || envelope.Error.Code != codehostbroker.ErrorCancelled {
+		t.Fatalf("cancelled response = %#v", envelope)
+	}
+	if baseCtx.Err() != nil {
+		t.Fatalf("request cancellation cancelled server context: %v", baseCtx.Err())
+	}
+	if err := inputWriter.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := <-runErr; err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestCodeHostMCPRunReturnsTypedErrorBeyondArgumentBound(t *testing.T) {
+	args := codeHostMCPReadArgs()
+	args["query"] = strings.Repeat("x", maxCodeHostMCPInput)
+	params, err := json.Marshal(ToolCallParams{
+		Name:      codeHostMCPToolName(codehostbroker.OperationListPullRequests),
+		Arguments: args,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	request, err := json.Marshal(JSONRPCRequest{
+		JSONRPC: "2.0", ID: json.RawMessage(`91`), Method: "tools/call", Params: params,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(request) <= maxCodeHostMCPInput || len(request) >= maxMCPMessageBytes {
+		t.Fatalf("test request size = %d, want argument bound < size < message bound", len(request))
+	}
+
+	var output bytes.Buffer
+	server := NewMCPServer(t.TempDir(), t.TempDir(), "test")
+	server.SetIO(bytes.NewReader(append(request, '\n')), &output)
+	if err := server.Run(); err != nil {
+		t.Fatalf("MCP transport rejected bounded-envelope request: %v", err)
+	}
+	var response JSONRPCResponse
+	if err := json.Unmarshal(output.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := json.Marshal(response.Result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var call ToolCallResult
+	if err := json.Unmarshal(raw, &call); err != nil {
+		t.Fatal(err)
+	}
+	var envelope codehostbroker.Response
+	if len(call.Content) != 1 || json.Unmarshal([]byte(call.Content[0].Text), &envelope) != nil {
+		t.Fatalf("tool result = %#v", call)
+	}
+	if envelope.Error == nil || envelope.Error.Code != codehostbroker.ErrorInputTooLarge {
+		t.Fatalf("oversized input response = %#v", envelope)
+	}
+}
+
+func TestCodeHostMCPDebugLogDoesNotRecordArgumentsOrResults(t *testing.T) {
+	t.Setenv("HERO_MCP_DEBUG", "1")
+	const (
+		bodyCanary       = "MUTATION-BODY-DEBUG-CANARY"
+		credentialCanary = "AUTHORIZATION-DEBUG-CANARY"
+	)
+	args := codeHostMCPCommentArgs(bodyCanary)
+	args["prepare"] = true
+	args["authorization"] = credentialCanary
+	params, err := json.Marshal(ToolCallParams{
+		Name: codeHostMCPToolName(codehostbroker.OperationComment), Arguments: args,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	request, err := json.Marshal(JSONRPCRequest{
+		JSONRPC: "2.0", ID: json.RawMessage(`101`), Method: "tools/call", Params: params,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	heroDir := t.TempDir()
+	var output bytes.Buffer
+	server := NewMCPServer(heroDir, t.TempDir(), "test")
+	server.SetIO(bytes.NewReader(append(request, '\n')), &output)
+	if err := server.Run(); err != nil {
+		t.Fatal(err)
+	}
+	logData, err := os.ReadFile(filepath.Join(heroDir, "mcp-debug.log"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, canary := range []string{bodyCanary, credentialCanary, `"result"`, `"arguments"`, `"authorization"`} {
+		if strings.Contains(string(logData), canary) {
+			t.Fatalf("debug log leaked %q: %s", canary, logData)
+		}
+	}
+	if !strings.Contains(string(logData), "request params_bytes=") ||
+		!strings.Contains(string(logData), "response status=") {
+		t.Fatalf("debug log omitted safe diagnostics: %s", logData)
 	}
 }
 
@@ -412,6 +576,36 @@ func TestCodeHostMCPCanonicalErrorParity(t *testing.T) {
 type fixtureCodeHostMCPBroker struct {
 	response codehostbroker.Response
 	requests []codehostbroker.Request
+}
+
+type cancellableCodeHostMCPBroker struct {
+	started chan struct{}
+	once    sync.Once
+}
+
+func (b *cancellableCodeHostMCPBroker) Execute(ctx context.Context, request codehostbroker.Request) codehostbroker.Response {
+	b.once.Do(func() { close(b.started) })
+	<-ctx.Done()
+	return codeHostMCPErrorResponse(
+		request.Operation,
+		codehostbroker.ErrorCancelled,
+		"request cancelled",
+		"",
+	)
+}
+
+func (b *cancellableCodeHostMCPBroker) Prepare(ctx context.Context, request codehostbroker.Request) codehostbroker.PreparationResponse {
+	b.once.Do(func() { close(b.started) })
+	<-ctx.Done()
+	return codehostbroker.PreparationResponse{
+		Version:   codehostbroker.Version,
+		Operation: request.Operation,
+		Error: &codehostbroker.ContractError{
+			Code:    codehostbroker.ErrorCancelled,
+			Message: "request cancelled",
+			Retry:   codehostbroker.RetryForError(codehostbroker.ErrorCancelled),
+		},
+	}
 }
 
 func (b *fixtureCodeHostMCPBroker) Execute(_ context.Context, request codehostbroker.Request) codehostbroker.Response {

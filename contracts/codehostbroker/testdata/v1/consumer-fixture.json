@@ -1698,7 +1698,7 @@
         "capability_revision": "cap:fixture",
         "observation_revision": "obs:fixture",
         "observed_at": "2026-07-27T20:31:00Z",
-        "freshness": "current",
+        "freshness": "stale",
         "rate_limit": {
           "resource": "core",
           "limit": 5000,

@@ -104,6 +104,7 @@ func TestCanonicalFixtureCoversAndValidatesEveryOperation(t *testing.T) {
 	statuses := map[ReconciliationStatus]bool{}
 	actorResults := map[Operation]bool{}
 	invalidationResults := map[Operation]bool{}
+	hasStaleResponse := false
 	for _, fixtureCase := range fixture.Cases {
 		if fixtureCase.Name != string(fixtureCase.Request.Operation) || fixtureCase.Request.Operation != fixtureCase.Response.Operation {
 			t.Fatalf("case identity mismatch: %+v", fixtureCase)
@@ -115,6 +116,9 @@ func TestCanonicalFixtureCoversAndValidatesEveryOperation(t *testing.T) {
 			t.Fatalf("%s response: %v", fixtureCase.Name, err)
 		}
 		seen[fixtureCase.Request.Operation] = true
+		if fixtureCase.Response.Freshness == FreshnessStale {
+			hasStaleResponse = true
+		}
 		if fixtureCase.Response.Reconciliation != nil {
 			statuses[fixtureCase.Response.Reconciliation.Status] = true
 		}
@@ -146,8 +150,8 @@ func TestCanonicalFixtureCoversAndValidatesEveryOperation(t *testing.T) {
 			invalidationResults[fixtureCase.Request.Operation] = true
 		}
 	}
-	if len(seen) != 20 || len(statuses) != 7 || len(actorResults) != 4 || len(invalidationResults) != 4 {
-		t.Fatalf("coverage operations=%d reconciliation=%v actors=%v invalidations=%v", len(seen), statuses, actorResults, invalidationResults)
+	if len(seen) != 20 || len(statuses) != 7 || len(actorResults) != 4 || len(invalidationResults) != 4 || !hasStaleResponse {
+		t.Fatalf("coverage operations=%d reconciliation=%v actors=%v invalidations=%v stale=%t", len(seen), statuses, actorResults, invalidationResults, hasStaleResponse)
 	}
 	if len(fixture.Errors) != len(ErrorCodes()) || len(fixture.UnknownFields) == 0 {
 		t.Fatalf("errors=%d unknown=%d", len(fixture.Errors), len(fixture.UnknownFields))
