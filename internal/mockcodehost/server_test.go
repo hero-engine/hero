@@ -43,6 +43,19 @@ func TestScenarioBuildersCoverDeclaredBehaviors(t *testing.T) {
 		CollaborationMismatchedReviewStateScenario(),
 		CollaborationCancelledAfterApplyScenario(time.Millisecond),
 		CollaborationClosedScenario(),
+		StateScenario("close"),
+		StateExternallyCompletedScenario("close"),
+		StateLostResponseScenario("close"),
+		StateAmbiguousScenario("close"),
+		StateDelayedVisibilityScenario("close", 1),
+		StatePermissionRaceScenario("close"),
+		StateMissingTargetBranchScenario(),
+		StateTargetMovesScenario(),
+		StateBaseChangesScenario(),
+		StateForcePushScenario("close"),
+		StateMergedScenario("close"),
+		StateWriteDeniedScenario("close"),
+		StateCancelledAfterApplyScenario("close", time.Millisecond),
 	}
 	seen := map[string]bool{}
 	for _, scenario := range scenarios {

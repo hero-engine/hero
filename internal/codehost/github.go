@@ -154,6 +154,18 @@ func (t *githubTransport) post(ctx context.Context, relative string, value, targ
 	return t.doJSON(ctx, http.MethodPost, endpoint, bytes.NewReader(body), target)
 }
 
+func (t *githubTransport) patch(ctx context.Context, relative string, value, target any) (http.Header, error) {
+	endpoint, err := t.restURL(relative)
+	if err != nil {
+		return nil, &providerError{code: codehostbroker.ErrorInvalidInput, message: "GitHub request path is invalid"}
+	}
+	body, err := json.Marshal(value)
+	if err != nil {
+		return nil, &providerError{code: codehostbroker.ErrorEncoding, message: "could not encode the GitHub request"}
+	}
+	return t.doJSON(ctx, http.MethodPatch, endpoint, bytes.NewReader(body), target)
+}
+
 func (t *githubTransport) graphql(ctx context.Context, query string, variables map[string]any, target any) (http.Header, error) {
 	body, err := json.Marshal(map[string]any{"query": query, "variables": variables})
 	if err != nil {

@@ -71,6 +71,8 @@ type mutationTarget struct {
 	PullRequest     *codehostbroker.PullRequestIdentity `json:"pull_request,omitempty"`
 	ExpectedHeadSHA string                              `json:"expected_head_sha,omitempty"`
 	Marker          string                              `json:"marker,omitempty"`
+	CurrentBase     *codehostbroker.RefIdentity         `json:"current_base,omitempty"`
+	DesiredBase     *codehostbroker.RefIdentity         `json:"desired_base,omitempty"`
 }
 
 // journalReceipt retains only provider identity and revisions. The normalized
@@ -82,6 +84,8 @@ type journalReceipt struct {
 	ProviderReceiptID string                             `json:"provider_receipt_id,omitempty"`
 	Actor             *codehostbroker.Actor              `json:"actor,omitempty"`
 	HeadSHA           string                             `json:"head_sha,omitempty"`
+	State             string                             `json:"state,omitempty"`
+	Draft             bool                               `json:"draft,omitempty"`
 }
 
 func newMutationJournal(projectRoot string, now func() time.Time) *mutationJournal {

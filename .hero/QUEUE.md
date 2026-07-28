@@ -6,7 +6,26 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-28T03:03:43Z · 83 ready specs_
+_Generated: 2026-07-28T03:22:56Z · 83 ready specs_
+
+## github-pull-request-state-transition-broker — "GitHub pull-request state-transition broker"
+_feature · delivering · horizon: now_
+
+Add idempotent PR lifecycle transitions while keeping them distinct from
+review collaboration and merge commitment.
+
+**Status:** in review — all four lifecycle transitions, desired-state
+reconciliation, and deterministic provider hazards are implemented and
+validated.
+
+**Pick up at:** cold-audit the completed delivery and verify the spec.
+
+→ `/deliver github-pull-request-state-transition-broker`
+
+**Files:** `internal/codehost/github_state.go`, `internal/codehost/reconcile.go`, `internal/mockcodehost/state.go`
+**Skip:** do not merge, enable auto-merge, update branches, or complete tracker/spec work.
+
+---
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -53,25 +72,6 @@ surfaces:
    ambiguous-outcome recovery; and
 5. one in-process implementation surfaced through JSON CLI and typed MCP tools
    that Hero Code can validate against a released Hero binary.
-
----
-
-## github-pull-request-state-transition-broker — "GitHub pull-request state-transition broker"
-_feature · planning · horizon: now_
-
-Add idempotent PR lifecycle transitions while keeping them distinct from
-review collaboration and merge commitment.
-
-**Status:** planning — lifecycle fields, observation revisions, GitHub
-REST/GraphQL routes, and shared mutation state are mapped.
-
-**Pick up at:** define operation-specific desired-state comparators, then wire
-preflight and one provider transition per operation.
-
-→ `/deliver github-pull-request-state-transition-broker`
-
-**Files:** `internal/codehost/github_state.go`, `internal/codehost/reconcile.go`, `internal/mockcodehost/state.go`
-**Skip:** do not merge, enable auto-merge, update branches, or complete tracker/spec work.
 
 ---
 

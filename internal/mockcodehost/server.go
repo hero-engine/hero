@@ -17,6 +17,7 @@ const (
 	currentHeadSHA = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 	forcedHeadSHA  = "cccccccccccccccccccccccccccccccccccccccc"
 	baseSHA        = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	releaseSHA     = "dddddddddddddddddddddddddddddddddddddddd"
 )
 
 // Scenario controls one deterministic provider behavior.
@@ -53,6 +54,19 @@ type Scenario struct {
 	CollaborationForcedReviewState  string
 	CollaborationResponseDelay      time.Duration
 	CollaborationClosed             bool
+	StateEnabled                    bool
+	StateOperation                  string
+	StateExternallyCompleted        bool
+	StateLostResponse               bool
+	StateAmbiguousReadback          bool
+	StateVisibilityDelay            int
+	StatePermissionSequence         []bool
+	StateWriteDenied                bool
+	StateMissingTargetBranch        bool
+	StateTargetMoves                bool
+	StateBaseChanges                bool
+	StateMerged                     bool
+	StateResponseDelay              time.Duration
 }
 
 func DefaultScenario() Scenario { return Scenario{Name: "default"} }
@@ -191,6 +205,94 @@ func CollaborationClosedScenario() Scenario {
 	return Scenario{Name: "collaboration-closed", CollaborationClosed: true}
 }
 
+func StateScenario(operation string) Scenario {
+	return Scenario{Name: "state-" + operation, StateEnabled: true, StateOperation: operation}
+}
+
+func StateExternallyCompletedScenario(operation string) Scenario {
+	scenario := StateScenario(operation)
+	scenario.Name += "-external"
+	scenario.StateExternallyCompleted = true
+	return scenario
+}
+
+func StateLostResponseScenario(operation string) Scenario {
+	scenario := StateScenario(operation)
+	scenario.Name += "-lost-response"
+	scenario.StateLostResponse = true
+	return scenario
+}
+
+func StateAmbiguousScenario(operation string) Scenario {
+	scenario := StateLostResponseScenario(operation)
+	scenario.Name = "state-" + operation + "-ambiguous"
+	scenario.StateAmbiguousReadback = true
+	return scenario
+}
+
+func StateDelayedVisibilityScenario(operation string, reads int) Scenario {
+	scenario := StateLostResponseScenario(operation)
+	scenario.Name = "state-" + operation + "-delayed-visibility"
+	scenario.StateVisibilityDelay = reads
+	return scenario
+}
+
+func StatePermissionRaceScenario(operation string) Scenario {
+	scenario := StateScenario(operation)
+	scenario.Name += "-permission-race"
+	scenario.StatePermissionSequence = []bool{true, false}
+	return scenario
+}
+
+func StateMissingTargetBranchScenario() Scenario {
+	scenario := StateScenario("retarget")
+	scenario.Name = "state-retarget-missing-target"
+	scenario.StateMissingTargetBranch = true
+	return scenario
+}
+
+func StateTargetMovesScenario() Scenario {
+	scenario := StateScenario("retarget")
+	scenario.Name = "state-retarget-target-moves"
+	scenario.StateTargetMoves = true
+	return scenario
+}
+
+func StateBaseChangesScenario() Scenario {
+	scenario := StateScenario("retarget")
+	scenario.Name = "state-retarget-base-changes"
+	scenario.StateBaseChanges = true
+	return scenario
+}
+
+func StateForcePushScenario(operation string) Scenario {
+	scenario := StateScenario(operation)
+	scenario.Name += "-force-push"
+	scenario.ForcePush = true
+	return scenario
+}
+
+func StateMergedScenario(operation string) Scenario {
+	scenario := StateScenario(operation)
+	scenario.Name += "-merged"
+	scenario.StateMerged = true
+	return scenario
+}
+
+func StateWriteDeniedScenario(operation string) Scenario {
+	scenario := StateScenario(operation)
+	scenario.Name += "-write-denied"
+	scenario.StateWriteDenied = true
+	return scenario
+}
+
+func StateCancelledAfterApplyScenario(operation string, delay time.Duration) Scenario {
+	scenario := StateScenario(operation)
+	scenario.Name += "-cancelled-after-apply"
+	scenario.StateResponseDelay = delay
+	return scenario
+}
+
 // Request records only non-sensitive request metadata.
 type Request struct {
 	Method string
@@ -212,6 +314,21 @@ type Server struct {
 	collaborationAttempts int
 	collaborationReads    int
 	permissionReads       int
+	stateCurrent          lifecycleState
+	statePending          *lifecycleState
+	stateAttempts         int
+	stateReads            int
+	statePermissionReads  int
+	stateTargetReads      int
+}
+
+type lifecycleState struct {
+	State     string
+	Draft     bool
+	Merged    bool
+	Base      string
+	BaseSHA   string
+	UpdatedAt string
 }
 
 // NewServer returns a freshly initialized deterministic fake.
@@ -220,6 +337,24 @@ func NewServer(scenario Scenario) *Server {
 		scenario.Name = "default"
 	}
 	server := &Server{scenario: scenario}
+	server.stateCurrent = lifecycleState{
+		State: "open", Base: "main", BaseSHA: baseSHA, UpdatedAt: "2026-07-27T20:30:00Z",
+	}
+	if scenario.StateEnabled {
+		switch scenario.StateOperation {
+		case "mark_ready":
+			server.stateCurrent.Draft = true
+		case "reopen":
+			server.stateCurrent.State = "closed"
+		}
+		if scenario.StateExternallyCompleted {
+			server.stateCurrent = desiredLifecycleState(server.stateCurrent, scenario.StateOperation)
+		}
+		if scenario.StateMerged {
+			server.stateCurrent.State = "closed"
+			server.stateCurrent.Merged = true
+		}
+	}
 	if scenario.CreateExternallyCompleted {
 		server.created = append(server.created, server.createdPullRequest("acme", "widgets", "acme", "feature/create", 45, "Create broker PR", "CREATE-BODY-CANARY create body", false))
 	}
@@ -289,6 +424,12 @@ func (s *Server) CollaborationBodies() []string {
 	return bodies
 }
 
+func (s *Server) StateAttempts() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.stateAttempts
+}
+
 func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	s.record(request)
 	if strings.TrimSpace(request.Header.Get("Authorization")) == "" {
@@ -349,6 +490,8 @@ func (s *Server) handleRepository(writer http.ResponseWriter, request *http.Requ
 		s.createPullRequest(writer, request, owner, repository)
 	case len(parts) == 5 && parts[3] == "pulls" && request.Method == http.MethodGet:
 		s.getPullRequest(writer, request, owner, repository, parts[4])
+	case len(parts) == 5 && parts[3] == "pulls" && request.Method == http.MethodPatch:
+		s.updatePullRequest(writer, request, owner, repository, parts[4])
 	case len(parts) >= 7 && parts[3] == "git" && parts[4] == "ref" && parts[5] == "heads" && request.Method == http.MethodGet:
 		s.getRef(writer, owner, repository, strings.Join(parts[6:], "/"))
 	case len(parts) == 6 && parts[3] == "pulls" && parts[5] == "commits" && request.Method == http.MethodGet:
@@ -373,7 +516,11 @@ func (s *Server) handleRepository(writer http.ResponseWriter, request *http.Requ
 func (s *Server) getRepository(writer http.ResponseWriter) {
 	allowed := true
 	s.mu.Lock()
-	if len(s.scenario.CollaborationPermissionSequence) > 0 {
+	if s.scenario.StateEnabled && len(s.scenario.StatePermissionSequence) > 0 {
+		index := min(s.statePermissionReads, len(s.scenario.StatePermissionSequence)-1)
+		allowed = s.scenario.StatePermissionSequence[index]
+		s.statePermissionReads++
+	} else if len(s.scenario.CollaborationPermissionSequence) > 0 {
 		index := min(s.permissionReads, len(s.scenario.CollaborationPermissionSequence)-1)
 		allowed = s.scenario.CollaborationPermissionSequence[index]
 		s.permissionReads++
@@ -388,6 +535,19 @@ func (s *Server) getRef(writer http.ResponseWriter, owner, repository, name stri
 	sha := currentHeadSHA
 	if name == "main" {
 		sha = baseSHA
+	} else if name == "release" {
+		if s.scenario.StateMissingTargetBranch {
+			writeError(writer, http.StatusNotFound, "fixture target branch missing")
+			return
+		}
+		s.mu.Lock()
+		s.stateTargetReads++
+		moved := s.scenario.StateTargetMoves && s.stateTargetReads > 1
+		s.mu.Unlock()
+		sha = releaseSHA
+		if moved {
+			sha = forcedHeadSHA
+		}
 	} else if s.scenario.CreateStaleHead {
 		sha = forcedHeadSHA
 	}
@@ -492,21 +652,57 @@ func (s *Server) getPullRequest(writer http.ResponseWriter, _ *http.Request, own
 	head := currentHeadSHA
 	s.mu.Lock()
 	s.prReads++
+	reads := s.prReads
+	unavailable := s.scenario.StateEnabled && s.scenario.StateAmbiguousReadback && s.stateAttempts > 0
 	if s.scenario.ForcePush && s.prReads > 1 {
 		head = forcedHeadSHA
 	}
 	s.mu.Unlock()
-	writeJSON(writer, http.StatusOK, s.pullRequest(owner, repository, value, head))
+	if unavailable {
+		writeError(writer, http.StatusServiceUnavailable, "fixture state read-back unavailable")
+		return
+	}
+	writeJSON(writer, http.StatusOK, s.pullRequestAtRead(owner, repository, value, head, reads))
 }
 
 func (s *Server) pullRequest(owner, repository string, number int64, headSHA string) map[string]any {
+	return s.pullRequestAtRead(owner, repository, number, headSHA, 0)
+}
+
+func (s *Server) pullRequestAtRead(owner, repository string, number int64, headSHA string, reads int) map[string]any {
 	headOwner := owner
 	if s.scenario.ForkHead {
 		headOwner = "contributor"
 	}
 	state := "open"
+	draft := false
+	merged := false
+	base := "main"
+	baseValueSHA := baseSHA
+	updatedAt := "2026-07-27T20:30:00Z"
 	if s.scenario.CollaborationClosed {
 		state = "closed"
+	}
+	if s.scenario.StateEnabled {
+		s.mu.Lock()
+		if s.statePending != nil && reads > 0 {
+			s.stateReads++
+			if s.stateReads > s.scenario.StateVisibilityDelay {
+				s.stateCurrent = *s.statePending
+				s.statePending = nil
+			}
+		}
+		current := s.stateCurrent
+		s.mu.Unlock()
+		state, draft, merged = current.State, current.Draft, current.Merged
+		base, baseValueSHA, updatedAt = current.Base, current.BaseSHA, current.UpdatedAt
+		if s.scenario.StateBaseChanges && reads > 1 {
+			base, baseValueSHA = "develop", forcedHeadSHA
+		}
+	}
+	mergedAt := ""
+	if merged {
+		mergedAt = "2026-07-27T20:35:00Z"
 	}
 	return map[string]any{
 		"id":         1000 + number,
@@ -516,15 +712,15 @@ func (s *Server) pullRequest(owner, repository string, number int64, headSHA str
 		"body":       "deterministic code-host fixture",
 		"html_url":   fmt.Sprintf("https://example.invalid/%s/%s/pull/%d", owner, repository, number),
 		"state":      state,
-		"draft":      false,
-		"merged":     false,
+		"draft":      draft,
+		"merged":     merged,
 		"created_at": "2026-07-27T20:00:00Z",
-		"updated_at": "2026-07-27T20:30:00Z",
-		"merged_at":  "",
+		"updated_at": updatedAt,
+		"merged_at":  mergedAt,
 		"user":       user("contributor", 7),
 		"base": map[string]any{
-			"ref":  "main",
-			"sha":  baseSHA,
+			"ref":  base,
+			"sha":  baseValueSHA,
 			"repo": repositoryValue(owner, repository, 1),
 		},
 		"head": map[string]any{
@@ -557,6 +753,96 @@ func (s *Server) createdPullRequest(owner, repository, headOwner, headRef string
 			"ref": headRef, "sha": currentHeadSHA, "repo": repositoryValue(headOwner, repository, 2),
 		},
 	}
+}
+
+func (s *Server) updatePullRequest(writer http.ResponseWriter, request *http.Request, _, _ string, number string) {
+	if number != "42" {
+		writeError(writer, http.StatusNotFound, "pull request not found")
+		return
+	}
+	var payload struct {
+		State string `json:"state"`
+		Base  string `json:"base"`
+	}
+	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 1<<20))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&payload); err != nil ||
+		(payload.State == "" && payload.Base == "") ||
+		(payload.State != "" && payload.Base != "") {
+		writeError(writer, http.StatusUnprocessableEntity, "invalid state-transition payload")
+		return
+	}
+	operation := "retarget"
+	if payload.State == "closed" {
+		operation = "close"
+	} else if payload.State == "open" {
+		operation = "reopen"
+	} else if payload.State != "" || payload.Base != "release" {
+		writeError(writer, http.StatusUnprocessableEntity, "unsupported state transition")
+		return
+	}
+	if !s.applyStateTransition(writer, operation) {
+		return
+	}
+	if s.finishStateWrite(writer, request, http.StatusOK, map[string]any{"node_id": "PR_42"}) {
+		return
+	}
+}
+
+func (s *Server) applyStateTransition(writer http.ResponseWriter, operation string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.stateAttempts++
+	if s.scenario.StateWriteDenied {
+		writeError(writer, http.StatusForbidden, "fixture state transition denied")
+		return false
+	}
+	if s.stateCurrent.Merged {
+		writeError(writer, http.StatusConflict, "merged pull request is terminal")
+		return false
+	}
+	desired := desiredLifecycleState(s.stateCurrent, operation)
+	desired.UpdatedAt = "2026-07-27T20:40:00Z"
+	if s.scenario.StateVisibilityDelay > 0 {
+		s.statePending = &desired
+	} else {
+		s.stateCurrent = desired
+	}
+	return true
+}
+
+func desiredLifecycleState(current lifecycleState, operation string) lifecycleState {
+	switch operation {
+	case "mark_ready":
+		current.State = "open"
+		current.Draft = false
+	case "retarget":
+		current.Base = "release"
+		current.BaseSHA = releaseSHA
+	case "close":
+		current.State = "closed"
+	case "reopen":
+		current.State = "open"
+	}
+	return current
+}
+
+func (s *Server) finishStateWrite(writer http.ResponseWriter, request *http.Request, status int, response any) bool {
+	if s.scenario.StateResponseDelay > 0 {
+		select {
+		case <-request.Context().Done():
+			return true
+		case <-time.After(s.scenario.StateResponseDelay):
+		}
+	}
+	if s.scenario.StateLostResponse {
+		writer.Header().Set("Content-Type", "application/json")
+		writer.WriteHeader(status)
+		_, _ = writer.Write([]byte(`{"incomplete":`))
+		return true
+	}
+	writeJSON(writer, status, response)
+	return true
 }
 
 func (s *Server) listCommits(writer http.ResponseWriter, request *http.Request) {
@@ -790,6 +1076,34 @@ func (s *Server) handleGraphQL(writer http.ResponseWriter, request *http.Request
 		return
 	}
 	if s.rateLimit(writer, "graphql") || s.deny(writer, "graphql") {
+		return
+	}
+	var envelope struct {
+		Query     string         `json:"query"`
+		Variables map[string]any `json:"variables"`
+	}
+	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 1<<20))
+	if err := decoder.Decode(&envelope); err != nil || envelope.Query == "" {
+		writeError(writer, http.StatusUnprocessableEntity, "invalid GraphQL request")
+		return
+	}
+	if strings.Contains(envelope.Query, "markPullRequestReadyForReview") {
+		if fmt.Sprint(envelope.Variables["pullRequestId"]) != "PR_42" {
+			writeError(writer, http.StatusNotFound, "pull request not found")
+			return
+		}
+		if !s.applyStateTransition(writer, "mark_ready") {
+			return
+		}
+		setRateHeaders(writer, "graphql", 5000, 4998, 0)
+		s.finishStateWrite(writer, request, http.StatusOK, map[string]any{
+			"data": map[string]any{
+				"markPullRequestReadyForReview": map[string]any{
+					"pullRequest": map[string]any{"id": "PR_42"},
+				},
+			},
+			"errors": []any{},
+		})
 		return
 	}
 	s.mu.Lock()

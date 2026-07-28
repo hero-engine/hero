@@ -311,13 +311,22 @@ func successfulMutationResult(request codehostbroker.Request, entry *journalEntr
 		result.Actor = &actor
 	}
 	return adapterResult{
-		result:              result,
-		pullRequest:         &pullRequest,
-		completeness:        codehostbroker.CompletenessComplete,
-		receipt:             createReceipt(entry, &pullRequest),
-		reconciliation:      &codehostbroker.Reconciliation{Status: status, Key: request.ReconciliationKey},
-		journalEntries:      len(document.Entries),
-		observationRevision: fingerprint("observation", pullRequest.Identity, pullRequest.Base, pullRequest.Head, pullRequest.State, pullRequest.UpdatedAt),
+		result:         result,
+		pullRequest:    &pullRequest,
+		completeness:   codehostbroker.CompletenessComplete,
+		receipt:        createReceipt(entry, &pullRequest),
+		reconciliation: &codehostbroker.Reconciliation{Status: status, Key: request.ReconciliationKey},
+		journalEntries: len(document.Entries),
+		observationRevision: fingerprint(
+			"observation",
+			pullRequest.Identity,
+			pullRequest.Base,
+			pullRequest.Head,
+			pullRequest.State,
+			pullRequest.Draft,
+			pullRequest.MergedAt,
+			pullRequest.UpdatedAt,
+		),
 	}
 }
 

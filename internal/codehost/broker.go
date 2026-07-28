@@ -40,6 +40,10 @@ var availableOperations = append(append([]codehostbroker.Operation(nil), readOpe
 	codehostbroker.OperationSubmitReview,
 	codehostbroker.OperationApprove,
 	codehostbroker.OperationRequestChanges,
+	codehostbroker.OperationMarkReady,
+	codehostbroker.OperationRetarget,
+	codehostbroker.OperationClose,
+	codehostbroker.OperationReopen,
 )
 
 // Broker is the in-process code-host credential boundary.
@@ -99,12 +103,14 @@ func (b *Broker) Execute(ctx context.Context, request codehostbroker.Request) co
 	}
 	if !codehostbroker.IsRead(request.Operation) &&
 		request.Operation != codehostbroker.OperationCreatePullRequest &&
-		!isCollaborationOperation(request.Operation) {
+		!isCollaborationOperation(request.Operation) &&
+		!isStateTransitionOperation(request.Operation) {
 		response.Error = contractError(codehostbroker.ErrorUnsupportedOperation, "the selected adapter does not implement the operation", "operation")
 		return b.finish(response, start)
 	}
 	var creation createPayload
 	var collaboration collaborationPayload
+	var stateTransition stateTransitionPayload
 	if request.Operation == codehostbroker.OperationCreatePullRequest {
 		var payloadErr *codehostbroker.ContractError
 		creation, payloadErr = decodeCreatePayload(request.Payload)
@@ -115,6 +121,13 @@ func (b *Broker) Execute(ctx context.Context, request codehostbroker.Request) co
 	} else if isCollaborationOperation(request.Operation) {
 		var payloadErr *codehostbroker.ContractError
 		collaboration, payloadErr = decodeCollaborationPayload(request)
+		if payloadErr != nil {
+			response.Error = payloadErr
+			return b.finish(response, start)
+		}
+	} else if isStateTransitionOperation(request.Operation) {
+		var payloadErr *codehostbroker.ContractError
+		stateTransition, payloadErr = decodeStateTransitionPayload(request)
 		if payloadErr != nil {
 			response.Error = payloadErr
 			return b.finish(response, start)
@@ -162,6 +175,12 @@ func (b *Broker) Execute(ctx context.Context, request codehostbroker.Request) co
 			return b.finish(response, start)
 		}
 		scope = []codehostbroker.RepositoryIdentity{request.Repository}
+	} else if isStateTransitionOperation(request.Operation) {
+		if scopeErr := validateStateTransitionScope(connection, request, stateTransition); scopeErr != nil {
+			response.Error = scopeErr
+			return b.finish(response, start)
+		}
+		scope = []codehostbroker.RepositoryIdentity{request.Repository}
 	} else {
 		var scopeErr *codehostbroker.ContractError
 		scope, scopeErr = validateRepositoryScope(connection, request)
@@ -200,6 +219,8 @@ func (b *Broker) Execute(ctx context.Context, request codehostbroker.Request) co
 		out, dispatchErr = b.executeCreate(ctx, request, creation, connection, &adapter)
 	} else if isCollaborationOperation(request.Operation) {
 		out, dispatchErr = b.executeCollaboration(ctx, request, collaboration, connection, &adapter)
+	} else if isStateTransitionOperation(request.Operation) {
+		out, dispatchErr = b.executeStateTransition(ctx, request, stateTransition, connection, &adapter)
 	} else {
 		out, dispatchErr = adapter.execute(ctx, request, scope)
 	}

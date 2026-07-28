@@ -279,14 +279,22 @@ func TestCollaborationPreflightPermissionsStateAndFreshness(t *testing.T) {
 		})
 	}
 
-	unsupported := requiredFixture.request(codehostbroker.OperationMarkReady)
+	unsupported := requiredFixture.request(codehostbroker.OperationMerge)
 	unsupported.IntentSource = "user"
-	unsupported.Consent = codehostbroker.ConsentExplicitUser
+	unsupported.Consent = codehostbroker.ConsentExplicitAcceptance
 	unsupported.IdempotencyKey = "unsupported"
 	unsupported.CapabilityRevision = "capability"
 	unsupported.ObservationRevision = "observation"
 	unsupported.ReconciliationKey = "reconcile:unsupported"
-	unsupported.Payload, _ = json.Marshal(codehostbroker.LifecyclePayload{ExpectedHeadSHA: headSHAForTest})
+	unsupported.Payload, _ = json.Marshal(codehostbroker.MergePayload{
+		ExpectedHeadSHA: headSHAForTest,
+		ObservedBase: codehostbroker.RefIdentity{
+			Repository: requiredFixture.repository("acme/widgets"),
+			Name:       "main",
+			SHA:        baseSHAForTest,
+		},
+		Method: "squash",
+	})
 	unsupportedResponse := requiredBroker.Execute(context.Background(), unsupported)
 	requireValidResponse(t, unsupportedResponse)
 	if unsupportedResponse.Error == nil || unsupportedResponse.Error.Code != codehostbroker.ErrorUnsupportedOperation ||

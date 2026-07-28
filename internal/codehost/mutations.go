@@ -114,7 +114,23 @@ func createReceipt(entry *journalEntry, pullRequest *codehostbroker.PullRequest)
 	receipt := &codehostbroker.Receipt{OperationID: entry.OperationID}
 	if entry.Receipt != nil && entry.Receipt.ProviderReceiptID != "" {
 		receipt.ProviderReceiptID = entry.Receipt.ProviderReceiptID
-		receipt.TargetRevision = fingerprint("collaboration-target", entry.Receipt.Actor, entry.Receipt.HeadSHA, entry.Receipt.Identity)
+		if entry.Receipt.State != "" {
+			receipt.TargetRevision = fingerprint(
+				"state-target",
+				entry.Receipt.Identity,
+				entry.Receipt.Base,
+				entry.Receipt.Head,
+				entry.Receipt.Actor,
+				entry.Receipt.HeadSHA,
+				entry.Receipt.State,
+				entry.Receipt.Draft,
+			)
+		} else {
+			receipt.TargetRevision = fingerprint("collaboration-target", entry.Receipt.Actor, entry.Receipt.HeadSHA, entry.Receipt.Identity)
+		}
+		if receipt.TargetRevision == "" || len(receipt.TargetRevision) > 512 {
+			receipt.TargetRevision = fingerprint("mutation-target", entry.Receipt)
+		}
 	} else if pullRequest != nil {
 		receipt.ProviderReceiptID = pullRequest.Identity.ProviderID
 		receipt.TargetRevision = fingerprint("target", pullRequest.Identity, pullRequest.Base, pullRequest.Head, pullRequest.State)
