@@ -215,6 +215,34 @@ func TestMergeExternalCompletionAndConflictingHead(t *testing.T) {
 	}
 }
 
+func TestMergeRetryAfterNoDispatchClassifiesLaterExternalCompletion(t *testing.T) {
+	fixture, fake, broker := createTestBroker(t, mockcodehost.MergeScenario(), "acme/widgets")
+	request := preparedMergeRequest(t, fixture, broker, "external-after-no-dispatch")
+	request.ObservationRevision = "observation:stale"
+	first := broker.Execute(context.Background(), request)
+	requireValidResponse(t, first)
+	if first.Error == nil || first.Error.Code != codehostbroker.ErrorStaleObservation ||
+		first.Reconciliation == nil || first.Reconciliation.Status != codehostbroker.ReconciliationNotApplied ||
+		fake.MergeAttempts() != 0 {
+		t.Fatalf("first response=%+v attempts=%d", first, fake.MergeAttempts())
+	}
+
+	fake.CompleteMergeExternally(false)
+	second := broker.Execute(context.Background(), request)
+	requireValidResponse(t, second)
+	if second.Error != nil || second.Reconciliation == nil ||
+		second.Reconciliation.Status != codehostbroker.ReconciliationExternallyCompleted ||
+		fake.MergeAttempts() != 0 {
+		t.Fatalf("second response=%+v attempts=%d", second, fake.MergeAttempts())
+	}
+	var result codehostbroker.MutationResult
+	decodeResult(t, second, &result)
+	if result.Outcome != "externally_completed" || result.Merge == nil ||
+		result.Merge.State != "merged" || result.Merge.MergeCommitID == "" {
+		t.Fatalf("external result=%+v", result)
+	}
+}
+
 func TestMergeLostResponseReconcilesAndDuplicateRetryDoesNotRedispatch(t *testing.T) {
 	fixture, fake, broker := createTestBroker(t, mockcodehost.MergeLostResponseScenario(), "acme/widgets")
 	request := preparedMergeRequest(t, fixture, broker, "lost-response")

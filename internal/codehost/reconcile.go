@@ -218,11 +218,17 @@ func (b *Broker) reconcileExistingMutation(ctx context.Context, plan mutationPla
 	if err == nil && effect != nil {
 		status := codehostbroker.ReconciliationReplayed
 		outcome := "replayed"
-		if entry.State == journalDispatched || entry.State == journalAmbiguous {
+		if entry.ProviderAttempts == 0 && entry.State != journalExternal {
+			status = codehostbroker.ReconciliationExternallyCompleted
+			outcome = "externally_completed"
+			entry.State = journalExternal
+		} else if entry.State == journalDispatched || entry.State == journalAmbiguous {
 			status = codehostbroker.ReconciliationReconciledApplied
 			outcome = "reconciled_applied"
+			entry.State = journalApplied
+		} else {
+			entry.State = journalApplied
 		}
-		entry.State = journalApplied
 		entry.Receipt = effect.receipt
 		entry.UpdatedAt = entry.ReconciledAt
 		out := successfulMutationResult(plan.request, entry, document, effect.pullRequest, status, outcome)

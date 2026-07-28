@@ -251,6 +251,26 @@ func ValidateResponse(response Response) *ContractError {
 	if IsMutation(response.Operation) && response.Error == nil && (response.Receipt == nil || response.Reconciliation == nil) {
 		return invalid("reconciliation", "successful mutation responses require receipt and reconciliation state")
 	}
+	if response.Operation == OperationMerge && response.Error == nil {
+		var result MutationResult
+		if err := decodeResult(response.Result, &result); err != nil {
+			return err
+		}
+		providerReceiptID := ""
+		if response.Receipt != nil {
+			providerReceiptID = response.Receipt.ProviderReceiptID
+		}
+		switch result.Merge.State {
+		case "merged":
+			if providerReceiptID == "" || providerReceiptID != result.Merge.MergeCommitID {
+				return invalid("receipt.provider_receipt_id", "merged receipt must exactly match the merge commit identity")
+			}
+		case "queued":
+			if providerReceiptID == "" || providerReceiptID != result.Merge.QueueID {
+				return invalid("receipt.provider_receipt_id", "queued receipt must exactly match the queue identity")
+			}
+		}
+	}
 	return nil
 }
 
@@ -548,6 +568,30 @@ func validateOperationResult(operation Operation, raw json.RawMessage, bounds Bo
 			if err := validateActor(*result.Actor, "result.actor"); err != nil {
 				return err
 			}
+		}
+		if operation == OperationMerge {
+			if result.Merge == nil {
+				return invalid("result.merge", "merge mutation requires a typed merged or queued result")
+			}
+			if tooLong(result.Merge.MergeCommitID, 512) || tooLong(result.Merge.QueueID, 512) {
+				return tooLarge("result.merge", "merge commit or queue identity exceeds its bound")
+			}
+			switch result.Merge.State {
+			case "merged":
+				if result.Merge.MergeCommitID == "" || result.Merge.QueueID != "" ||
+					result.PullRequest.State != "merged" || result.PullRequest.MergedAt == "" {
+					return invalid("result.merge", "merged result requires only a merge commit identity and authoritative merged pull request")
+				}
+			case "queued":
+				if result.Merge.QueueID == "" || result.Merge.MergeCommitID != "" ||
+					result.PullRequest.State == "merged" || result.PullRequest.MergedAt != "" {
+					return invalid("result.merge", "queued result requires only a queue identity and an unmerged pull request")
+				}
+			default:
+				return invalid("result.merge.state", "merge result state must be merged or queued")
+			}
+		} else if result.Merge != nil {
+			return invalid("result.merge", "merge result material is attached to a non-merge operation")
 		}
 		if len(result.InvalidatedOperations) > bounds.Items {
 			return tooLarge("result.invalidated_operations", "mutation invalidation count exceeds its bound")

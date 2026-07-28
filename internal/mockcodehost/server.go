@@ -606,6 +606,16 @@ func (s *Server) MergeRequests() []MergeRequest {
 	return append([]MergeRequest(nil), s.mergeRequests...)
 }
 
+func (s *Server) CompleteMergeExternally(differentHead bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.mergeApplied = true
+	s.mergeHeadSHA = currentHeadSHA
+	if differentHead {
+		s.mergeHeadSHA = forcedHeadSHA
+	}
+}
+
 func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	s.record(request)
 	if strings.TrimSpace(request.Header.Get("Authorization")) == "" {

@@ -243,6 +243,9 @@ Success result schemas are operation-specific and strictly decoded:
 `MergeReadiness`, or `MutationResult` with required `pull_request` and
 `outcome`, an optional typed `actor` for actor-attributed mutations, and
 optional `invalidated_operations` naming read evidence consumers must discard.
+Merge mutations additionally require `merge` with the closed state `merged`
+or `queued`. `merged` requires only `merge_commit_id`; `queued` requires only
+`queue_id`; that identity must exactly equal the safe provider receipt ID.
 Hero's producer-side validator rejects non-canonical adapter results;
 independent consumers ignore unknown additive result fields and unknown
 advertised capability entries while preserving all known values.
@@ -340,7 +343,7 @@ The canonical fixture is:
 
 Its SHA-256 digest is published beside it in
 `consumer-fixture.sha256`. The current digest is
-`c8918b94c9b8debefd933eff5f53ca721504a27b95a4134e53dc8fc81252e987`.
+`d32eb13200e9d36fd51b8c2240aa171f90ee9fc6c348f58ea35f695b469dde10`.
 Regenerate both deterministically with:
 
 ```bash

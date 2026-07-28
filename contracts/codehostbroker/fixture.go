@@ -203,10 +203,16 @@ func fixtureResult(operation Operation, pullRequest PullRequest) any {
 		}
 	case OperationMerge:
 		actor := pullRequest.Author
+		pullRequest.State = "merged"
+		pullRequest.MergedAt = "2026-07-27T20:31:00Z"
 		return MutationResult{
 			PullRequest: pullRequest,
 			Outcome:     "fixture",
 			Actor:       &actor,
+			Merge: &MergeMutationResult{
+				State:         "merged",
+				MergeCommitID: "receipt-merge",
+			},
 			InvalidatedOperations: []Operation{
 				OperationGetPullRequest,
 				OperationGetMergeReadiness,

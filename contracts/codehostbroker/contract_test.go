@@ -191,6 +191,42 @@ func TestMergeCapabilityValidationFailsClosed(t *testing.T) {
 	}
 }
 
+func TestMergeMutationResultAndReceiptAreClosedAndExact(t *testing.T) {
+	response := mustResponse(t, OperationMerge)
+	if err := ValidateResponse(response); err != nil {
+		t.Fatal(err)
+	}
+	var merged MutationResult
+	if err := json.Unmarshal(response.Result, &merged); err != nil {
+		t.Fatal(err)
+	}
+	if merged.Merge == nil || merged.Merge.State != "merged" ||
+		merged.Merge.MergeCommitID != response.Receipt.ProviderReceiptID {
+		t.Fatalf("merged result=%+v receipt=%+v", merged.Merge, response.Receipt)
+	}
+
+	queued := merged
+	queued.PullRequest.State = "open"
+	queued.PullRequest.MergedAt = ""
+	queued.Merge = &MergeMutationResult{State: "queued", QueueID: "QUEUE_42"}
+	response.Result, _ = json.Marshal(queued)
+	response.Receipt.ProviderReceiptID = "QUEUE_42"
+	if err := ValidateResponse(response); err != nil {
+		t.Fatalf("typed queued result rejected: %v", err)
+	}
+
+	response.Receipt.ProviderReceiptID = "QUEUE_other"
+	if err := ValidateResponse(response); err == nil || err.Code != ErrorInvalidInput {
+		t.Fatalf("mismatched queue receipt accepted: %v", err)
+	}
+	response.Receipt.ProviderReceiptID = "QUEUE_42"
+	queued.Merge.State = "future"
+	response.Result, _ = json.Marshal(queued)
+	if err := ValidateResponse(response); err == nil || err.Code != ErrorInvalidInput {
+		t.Fatalf("open-ended merge state accepted: %v", err)
+	}
+}
+
 func TestMutationRequestsRequirePolicyMaterial(t *testing.T) {
 	fixture := mustFixture(t)
 	for _, fixtureCase := range fixture.Cases {

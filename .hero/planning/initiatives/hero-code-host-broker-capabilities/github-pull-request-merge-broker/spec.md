@@ -169,8 +169,8 @@ blindly merge again.
 | 3 | Enforce commitment plus explicit acceptance inside the broker | DONE | The authoritative policy registry classifies `merge` as `commitment`/`explicit_acceptance`; `ValidateRequest` rejects weaker consent before adapter resolution. |
 | 4 | Dispatch nothing when required evidence is stale, partial, unknown, or contradictory | DONE | Merge preflight requires complete/current PR, head/base, checks, reviews, protection, permission, mergeability, queue, method, and capability evidence; focused tests cover every fail-closed state. |
 | 5 | Supply expected head SHA and fail safely on force-push races | DONE | Direct merge PUT includes `sha`; preflight and provider-race tests prove stale heads perform no accepted merge. |
-| 6 | Fail closed for unsupported queue submission | DONE | `queue_supported:false`; exact base-branch queue requirement makes merge unavailable with no direct merge write. Future queue-capable adapters remain contractually required to return a distinct queued receipt. |
-| 7 | Recognize exact externally completed merges without another write | DONE | Preflight proves merged lifecycle, expected head/base, and exact merge commit identity before returning `externally_completed`; conflicting heads fail. |
+| 6 | Fail closed for unsupported queue submission | DONE | `queue_supported:false`; exact base-branch queue requirement makes merge unavailable with no direct merge write. The closed `MergeMutationResult` requires future queue-capable adapters to return `state: queued` plus exact `queue_id` matching the safe receipt. |
+| 7 | Recognize exact externally completed merges without another write | DONE | Preflight proves merged lifecycle, expected head/base, and exact merge commit identity before returning `externally_completed`; a same-key retry after a zero-dispatch failure also classifies a later exact external merge as external, while conflicting heads fail. |
 | 8 | Reconcile lost responses into proven applied, conflict, or ambiguous state | DONE | Detached read-back proves exact merged head/base/commit identity; unavailable evidence remains `ambiguous`. |
 | 9 | Never describe a different-head merge as the requested effect | DONE | Preflight and reconciliation normalize different head/base evidence to conflict and return no applied receipt. |
 | 10 | Retry the same canonical key at most once | DONE | The durable mutation journal replays/reconciles before new runtime capability access; duplicate and post-permission-change retries keep one provider merge attempt. |
@@ -188,7 +188,7 @@ blindly merge again.
 | 3 | Explicit acceptance | DONE | Enforced through the authoritative operation policy before provider access. |
 | 4 | Direct GitHub merge | DONE | Added merge/squash/rebase PUT with expected-head protection and bounded normalized results. |
 | 5 | Queue unsupported boundary | DONE | Exact GraphQL queue discovery advertises unavailable and performs zero direct writes for queue-required bases. |
-| 6 | Durable receipts and reconciliation | DONE | Journal receipts retain exact head/base and merge commit identity; queue receipt/state stays conditional on future advertised support. |
+| 6 | Durable receipts and reconciliation | DONE | Journal receipts retain exact head/base and merge commit identity; the contract validates closed merged/queued result state and exact commit/queue receipt identity, and zero-dispatch external completion keeps its distinct classification. |
 | 7 | Deterministic fake | DONE | Extended `internal/mockcodehost` with merge methods, policy/races, lost responses, external effects, and cancellation. |
 | 8 | Contract, broker, and safety tests | DONE | Focused, race, full-suite, vet, fixture generation, and diff checks pass. |
 
@@ -202,8 +202,12 @@ blindly merge again.
 - [x] Exercised force pushes, readiness/protection/permission races, duplicate
   retries, lost responses, external completion, conflicting heads,
   cancellation, rate limits, and ambiguous read-back.
+- [x] Exercised a zero-dispatch failed attempt followed by an external merge
+  and same-key retry, confirming `externally_completed` with no provider write.
+- [x] Exercised the future typed queued-result contract and exact queue receipt
+  identity without advertising queue support in the GitHub adapter.
 - [x] Regenerated the canonical consumer fixture at SHA-256
-  `c8918b94c9b8debefd933eff5f53ca721504a27b95a4134e53dc8fc81252e987`.
+  `d32eb13200e9d36fd51b8c2240aa171f90ee9fc6c348f58ea35f695b469dde10`.
 - [x] Passed `go test ./... -count=1`, `go vet ./...`, and
   `go test -race ./internal/codehost ./internal/mockcodehost ./contracts/codehostbroker`.
 

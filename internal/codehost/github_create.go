@@ -321,6 +321,15 @@ func successfulMutationResult(request codehostbroker.Request, entry *journalEntr
 			codehostbroker.OperationGetPullRequest,
 			codehostbroker.OperationGetMergeReadiness,
 		}
+		if entry.Receipt != nil {
+			result.Merge = &codehostbroker.MergeMutationResult{State: entry.Receipt.State}
+			switch entry.Receipt.State {
+			case "merged":
+				result.Merge.MergeCommitID = entry.Receipt.ProviderReceiptID
+			case "queued":
+				result.Merge.QueueID = entry.Receipt.ProviderReceiptID
+			}
+		}
 	}
 	return adapterResult{
 		result:         result,

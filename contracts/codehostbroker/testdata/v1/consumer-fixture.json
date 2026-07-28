@@ -4209,7 +4209,7 @@
             "title": "[redacted]",
             "body": "[redacted]",
             "url": "https://github.com/hero-engine/hero/pull/42",
-            "state": "open",
+            "state": "merged",
             "draft": false,
             "author": {
               "provider_id": "U_fixture",
@@ -4238,7 +4238,8 @@
               "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
             },
             "created_at": "2026-07-27T20:00:00Z",
-            "updated_at": "2026-07-27T20:30:00Z"
+            "updated_at": "2026-07-27T20:30:00Z",
+            "merged_at": "2026-07-27T20:31:00Z"
           },
           "outcome": "fixture",
           "actor": {
@@ -4248,7 +4249,11 @@
           "invalidated_operations": [
             "get_pull_request",
             "get_merge_readiness"
-          ]
+          ],
+          "merge": {
+            "state": "merged",
+            "merge_commit_id": "receipt-merge"
+          }
         },
         "receipt": {
           "provider_receipt_id": "receipt-merge",

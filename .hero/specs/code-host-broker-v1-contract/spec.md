@@ -238,7 +238,7 @@ code-host-broker-v1-contract --since 1e3fa83 --format json`.
 | 10 | Publish closed errors and retries without raw provider bodies | DONE | `contracts/codehostbroker/policy.go:157`, `contract_test.go:213`, and `docs/contracts/code-host-broker-v1.md:184` publish and cross-check all 26 errors and five retry values. |
 | 11 | Ignore additive fields and fail closed on major version | DONE | The advertised operations array includes an unknown future operation, the independent consumer ignores it, unknown envelope fields decode, and a v2 request fails closed. |
 | 12 | Enforce explicit input and output bounds | DONE | `policy.go` declares every bound; request/result/envelope validators and boundary tests cover repository scopes, page/item counts, all text/body/diff dimensions, partial failures, error detail, duration, redirects, journal entries, rate values, cursors, and idempotency material. |
-| 13 | Produce byte-stable fixture and digest | DONE | `fixture.go`, its generator, and the golden test prove repeated generation matches embedded bytes and current SHA `c8918b94c9b8debefd933eff5f53ca721504a27b95a4134e53dc8fc81252e987`. |
+| 13 | Produce byte-stable fixture and digest | DONE | `fixture.go`, its generator, and the golden test prove repeated generation matches embedded bytes and current SHA `d32eb13200e9d36fd51b8c2240aa171f90ee9fc6c348f58ea35f695b469dde10`. |
 | 14 | Exclude credentials, raw bodies, and mutation text from safe material | DONE | Receipts contain IDs only, reconciliation has no free-form body field, fixture mutation text is the literal `[redacted]` sentinel, and tests reject credential canaries and previous example text. |
 
 ### Changes
@@ -257,7 +257,7 @@ code-host-broker-v1-contract --since 1e3fa83 --format json`.
 
 - [x] User-visible behavior was exercised end-to-end: `go generate
   ./contracts/codehostbroker` emitted digest
-  `c8918b94c9b8debefd933eff5f53ca721504a27b95a4134e53dc8fc81252e987`;
+  `d32eb13200e9d36fd51b8c2240aa171f90ee9fc6c348f58ea35f695b469dde10`;
   `sha256sum` matched the published sidecar, and every generated request and
   response decoded and validated through the canonical contract tests.
 
@@ -275,4 +275,4 @@ credential system.
   additive v1 evolution; the canonical fixture exercises both absent and
   present actor forms. The later lifecycle amendment added typed readiness
   invalidations for state transitions. The canonical fixture now publishes
-  SHA-256 `c8918b94c9b8debefd933eff5f53ca721504a27b95a4134e53dc8fc81252e987`.
+  SHA-256 `d32eb13200e9d36fd51b8c2240aa171f90ee9fc6c348f58ea35f695b469dde10`.

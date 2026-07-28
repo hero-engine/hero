@@ -316,10 +316,17 @@ type CommentsResult struct {
 }
 
 type MutationResult struct {
-	PullRequest           PullRequest `json:"pull_request"`
-	Outcome               string      `json:"outcome"`
-	Actor                 *Actor      `json:"actor,omitempty"`
-	InvalidatedOperations []Operation `json:"invalidated_operations,omitempty"`
+	PullRequest           PullRequest          `json:"pull_request"`
+	Outcome               string               `json:"outcome"`
+	Actor                 *Actor               `json:"actor,omitempty"`
+	InvalidatedOperations []Operation          `json:"invalidated_operations,omitempty"`
+	Merge                 *MergeMutationResult `json:"merge,omitempty"`
+}
+
+type MergeMutationResult struct {
+	State         string `json:"state"`
+	MergeCommitID string `json:"merge_commit_id,omitempty"`
+	QueueID       string `json:"queue_id,omitempty"`
 }
 
 type Response struct {
