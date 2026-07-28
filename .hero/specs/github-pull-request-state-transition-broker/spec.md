@@ -2,7 +2,7 @@
 title: "GitHub pull-request state-transition broker"
 slug: github-pull-request-state-transition-broker
 type: feature
-status: delivering
+status: completed
 domain: engineering
 priority: high
 size: medium
@@ -15,6 +15,7 @@ conflicts-with:
   - github-pull-request-merge-broker
 tags: [github, pull-request, lifecycle, retarget, idempotency, stale-state]
 delivery_method: manual
+completed_at: 2026-07-28T03:32:01Z
 ---
 
 # GitHub pull-request state-transition broker

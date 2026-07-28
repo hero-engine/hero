@@ -506,3 +506,5 @@
 {"ts":"2026-07-28T02:24:47.954223Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"github-pull-request-create-broker","message":"status -\u003e completed"}
 {"ts":"2026-07-28T03:03:27.357241Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"github-pull-request-collaboration-broker","message":"\"GitHub pull-request collaboration broker\""}
 {"ts":"2026-07-28T03:03:27.357517Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"github-pull-request-collaboration-broker","message":"status -\u003e completed"}
+{"ts":"2026-07-28T03:32:02.812838Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"github-pull-request-state-transition-broker","message":"\"GitHub pull-request state-transition broker\""}
+{"ts":"2026-07-28T03:32:02.812947Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"github-pull-request-state-transition-broker","message":"status -\u003e completed"}
