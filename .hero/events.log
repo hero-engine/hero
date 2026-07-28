@@ -502,3 +502,5 @@
 {"ts":"2026-07-28T01:18:17.122839Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"code-host-broker-v1-contract","message":"status -\u003e completed"}
 {"ts":"2026-07-28T01:55:22.185822Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"github-code-host-read-adapter","message":"\"GitHub code-host read adapter\""}
 {"ts":"2026-07-28T01:55:22.185948Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"github-code-host-read-adapter","message":"status -\u003e completed"}
+{"ts":"2026-07-28T02:24:47.954105Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"github-pull-request-create-broker","message":"\"GitHub pull-request creation broker\""}
+{"ts":"2026-07-28T02:24:47.954223Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"github-pull-request-create-broker","message":"status -\u003e completed"}

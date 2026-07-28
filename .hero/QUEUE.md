@@ -6,26 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-28T02:24:39Z · 83 ready specs_
-
-## github-pull-request-create-broker — "GitHub pull-request creation broker"
-_feature · delivering · horizon: now_
-
-Adds one guarded Hero-owned GitHub PR creation path with durable duplicate
-suppression and provider read-back after uncertain outcomes.
-
-**Status:** in-review — implementation, deterministic provider scenarios,
-stable-key regressions, full tests, race detection, and vet are green.
-
-**Pick up at:** cold-audit the committed creation broker against all 12
-criteria, then run `hero spec verify github-pull-request-create-broker`.
-
-→ `.hero/planning/initiatives/hero-code-host-broker-capabilities/github-pull-request-create-broker/spec.md`
-
-**Files:** `internal/codehost/github_create.go`, `internal/codehost/idempotency.go`, `internal/codehost/mutations.go`, `internal/codehost/github_create_test.go`
-**Skip:** do not push commits, choose branches, invoke `gh`, or create tracker work.
-
----
+_Generated: 2026-07-28T02:24:56Z · 83 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -72,6 +53,25 @@ surfaces:
    ambiguous-outcome recovery; and
 5. one in-process implementation surfaced through JSON CLI and typed MCP tools
    that Hero Code can validate against a released Hero binary.
+
+---
+
+## github-pull-request-collaboration-broker — "GitHub pull-request collaboration broker"
+_feature · planning · horizon: now_
+
+Add brokered PR discussion and review writes without allowing retries to post
+duplicate comments or reviews.
+
+**Status:** planning — GitHub review states, comment identities, mutation
+journal, and ambiguous-response requirements are mapped.
+
+**Pick up at:** define one collaboration reconciliation marker and normalized
+review receipt, then extend the mutation state machine operation by operation.
+
+→ `/deliver github-pull-request-collaboration-broker`
+
+**Files:** `internal/codehost/github_collaboration.go`, `internal/codehost/reconcile.go`, `internal/mockcodehost/reviews.go`
+**Skip:** do not change PR lifecycle state, retarget, merge, or infer user intent from message text.
 
 ---
 

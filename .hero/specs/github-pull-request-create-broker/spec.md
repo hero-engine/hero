@@ -2,7 +2,7 @@
 title: "GitHub pull-request creation broker"
 slug: github-pull-request-create-broker
 type: feature
-status: delivering
+status: completed
 domain: engineering
 priority: high
 size: medium
@@ -15,6 +15,7 @@ conflicts-with:
   - github-pull-request-collaboration-broker
 tags: [github, pull-request, create, idempotency, reconciliation]
 delivery_method: manual
+completed_at: 2026-07-28T02:24:46Z
 ---
 
 # GitHub pull-request creation broker
