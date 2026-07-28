@@ -2,7 +2,7 @@
 title: "GitHub code-host read adapter"
 slug: github-code-host-read-adapter
 type: feature
-status: delivering
+status: completed
 domain: engineering
 priority: high
 size: large
@@ -14,6 +14,7 @@ conflicts-with:
   - github-pull-request-create-broker
 tags: [github, code-host, pull-request, reads, pagination, fake-adapter]
 delivery_method: manual
+completed_at: 2026-07-28T01:55:20Z
 ---
 
 # GitHub code-host read adapter

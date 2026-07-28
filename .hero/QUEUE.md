@@ -6,26 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-28T01:55:17Z · 83 ready specs_
-
-## github-code-host-read-adapter — "GitHub code-host read adapter"
-_feature · delivering · horizon: now_
-
-Adds Hero's credential-safe GitHub read adapter and deterministic provider fake
-without coupling pull requests to issue tracking.
-
-**Status:** in-review — all ten read/discovery operations, safety boundaries,
-fake scenarios, and conformance tests are implemented and green.
-
-**Pick up at:** cold-audit the committed adapter against all 14 criteria, then
-run `hero spec verify github-code-host-read-adapter`.
-
-→ `.hero/planning/initiatives/hero-code-host-broker-capabilities/github-code-host-read-adapter/spec.md`
-
-**Files:** `internal/codehost/broker.go`, `internal/codehost/github.go`, `internal/codehost/broker_test.go`, `internal/mockcodehost/server.go`
-**Skip:** do not add PR routes to `internal/tracker` or `internal/mocktracker`.
-
----
+_Generated: 2026-07-28T01:55:37Z · 83 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -72,6 +53,25 @@ surfaces:
    ambiguous-outcome recovery; and
 5. one in-process implementation surfaced through JSON CLI and typed MCP tools
    that Hero Code can validate against a released Hero binary.
+
+---
+
+## github-pull-request-create-broker — "GitHub pull-request creation broker"
+_feature · planning · horizon: now_
+
+Replace the direct creation gap with one guarded Hero-owned write that cannot
+blindly duplicate a PR after a retry or lost response.
+
+**Status:** planning — preflight, existing-PR lookup, file-lock, and broker
+effect patterns are mapped.
+
+**Pick up at:** implement the bounded replay journal and create preflight before
+adding the single GitHub write request.
+
+→ `/deliver github-pull-request-create-broker`
+
+**Files:** `internal/codehost/mutations.go`, `internal/codehost/idempotency.go`, `internal/codehost/github_create.go`
+**Skip:** do not push commits, choose branches, invoke `gh`, or create tracker work.
 
 ---
 
