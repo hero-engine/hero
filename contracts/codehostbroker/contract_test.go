@@ -152,6 +152,45 @@ func TestCanonicalFixtureCoversAndValidatesEveryOperation(t *testing.T) {
 	}
 }
 
+func TestMergeCapabilityValidationFailsClosed(t *testing.T) {
+	tests := map[string]func(*Capability){
+		"missing runtime material": func(capability *Capability) {
+			capability.Merge = nil
+		},
+		"no executable path": func(capability *Capability) {
+			capability.Merge.Methods = nil
+		},
+		"queue required without support": func(capability *Capability) {
+			capability.Merge.Methods = nil
+			capability.Merge.QueueRequired = true
+		},
+		"duplicate method": func(capability *Capability) {
+			capability.Merge.Methods = []string{"merge", "merge"}
+		},
+		"unknown method": func(capability *Capability) {
+			capability.Merge.Methods = []string{"octopus"}
+		},
+	}
+	for name, mutate := range tests {
+		t.Run(name, func(t *testing.T) {
+			response := mustResponse(t, OperationCapabilities)
+			var result CapabilitiesResult
+			if err := json.Unmarshal(response.Result, &result); err != nil {
+				t.Fatal(err)
+			}
+			for index := range result.Capabilities {
+				if result.Capabilities[index].Policy.Operation == OperationMerge {
+					mutate(&result.Capabilities[index])
+				}
+			}
+			response.Result, _ = json.Marshal(result)
+			if err := ValidateResponse(response); err == nil || err.Code != ErrorInvalidInput {
+				t.Fatalf("invalid merge capability accepted: %v", err)
+			}
+		})
+	}
+}
+
 func TestMutationRequestsRequirePolicyMaterial(t *testing.T) {
 	fixture := mustFixture(t)
 	for _, fixtureCase := range fixture.Cases {

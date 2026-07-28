@@ -20,6 +20,10 @@ type githubRepositoryPermission struct {
 		Pull bool `json:"pull"`
 		Push bool `json:"push"`
 	} `json:"permissions"`
+	AllowMergeCommit bool   `json:"allow_merge_commit"`
+	AllowSquashMerge bool   `json:"allow_squash_merge"`
+	AllowRebaseMerge bool   `json:"allow_rebase_merge"`
+	DefaultBranch    string `json:"default_branch"`
 }
 
 type githubGitRef struct {
@@ -312,6 +316,11 @@ func successfulMutationResult(request codehostbroker.Request, entry *journalEntr
 	}
 	if isStateTransitionOperation(request.Operation) {
 		result.InvalidatedOperations = []codehostbroker.Operation{codehostbroker.OperationGetMergeReadiness}
+	} else if request.Operation == codehostbroker.OperationMerge {
+		result.InvalidatedOperations = []codehostbroker.Operation{
+			codehostbroker.OperationGetPullRequest,
+			codehostbroker.OperationGetMergeReadiness,
+		}
 	}
 	return adapterResult{
 		result:         result,

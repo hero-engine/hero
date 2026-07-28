@@ -57,6 +57,23 @@ func TestScenarioBuildersCoverDeclaredBehaviors(t *testing.T) {
 		StateMergedScenario("close"),
 		StateWriteDeniedScenario("close"),
 		StateCancelledAfterApplyScenario("close", time.Millisecond),
+		MergeScenario(),
+		MergeMethodScenario("squash"),
+		MergeQueueRequiredScenario(),
+		MergeQueuePolicyPartialScenario(),
+		MergePermissionRaceScenario(),
+		MergeReadinessScenario("checks_pending"),
+		MergeReadinessRaceScenario("ready", "blocked"),
+		MergeLostResponseScenario(),
+		MergeAmbiguousScenario(),
+		MergeExternallyCompletedScenario(),
+		MergeConflictingHeadScenario(),
+		MergeForcePushScenario(),
+		MergeBaseChangeScenario(),
+		MergeProviderForcePushScenario(),
+		MergeWriteDeniedScenario(),
+		MergeCancelledAfterApplyScenario(time.Millisecond),
+		MergeRateLimitScenario(),
 	}
 	seen := map[string]bool{}
 	for _, scenario := range scenarios {

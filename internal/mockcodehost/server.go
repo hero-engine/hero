@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -68,6 +69,21 @@ type Scenario struct {
 	StateBaseChanges                bool
 	StateMerged                     bool
 	StateResponseDelay              time.Duration
+	MergeEnabled                    bool
+	MergeMethods                    []string
+	MergeQueueRequired              bool
+	MergeQueuePolicyPartial         bool
+	MergePermissionSequence         []bool
+	MergeReadinessSequence          []string
+	MergeWriteDenied                bool
+	MergeLostResponse               bool
+	MergeAmbiguousReadback          bool
+	MergeExternallyCompleted        bool
+	MergeExternalDifferentHead      bool
+	MergeForcePushAfterReads        int
+	MergeBaseChangeAfterReads       int
+	MergeProviderForcePush          bool
+	MergeResponseDelay              time.Duration
 }
 
 func DefaultScenario() Scenario { return Scenario{Name: "default"} }
@@ -301,6 +317,122 @@ func StateCancelledAfterApplyScenario(operation string, delay time.Duration) Sce
 	return scenario
 }
 
+func MergeScenario() Scenario {
+	return Scenario{Name: "merge", MergeEnabled: true, MergeMethods: []string{"merge", "squash", "rebase"}}
+}
+
+func MergeMethodScenario(methods ...string) Scenario {
+	scenario := MergeScenario()
+	scenario.Name = "merge-methods-" + strings.Join(methods, "-")
+	scenario.MergeMethods = append([]string(nil), methods...)
+	return scenario
+}
+
+func MergeQueueRequiredScenario() Scenario {
+	scenario := MergeScenario()
+	scenario.Name = "merge-queue-required"
+	scenario.MergeQueueRequired = true
+	return scenario
+}
+
+func MergeQueuePolicyPartialScenario() Scenario {
+	scenario := MergeScenario()
+	scenario.Name = "merge-queue-policy-partial"
+	scenario.MergeQueuePolicyPartial = true
+	return scenario
+}
+
+func MergePermissionRaceScenario() Scenario {
+	scenario := MergeScenario()
+	scenario.Name = "merge-permission-race"
+	scenario.MergePermissionSequence = []bool{true, false}
+	return scenario
+}
+
+func MergeReadinessScenario(state string) Scenario {
+	scenario := MergeScenario()
+	scenario.Name = "merge-readiness-" + state
+	scenario.MergeReadinessSequence = []string{state}
+	return scenario
+}
+
+func MergeReadinessRaceScenario(states ...string) Scenario {
+	scenario := MergeScenario()
+	scenario.Name = "merge-readiness-race-" + strings.Join(states, "-")
+	scenario.MergeReadinessSequence = append([]string(nil), states...)
+	return scenario
+}
+
+func MergeLostResponseScenario() Scenario {
+	scenario := MergeScenario()
+	scenario.Name = "merge-lost-response"
+	scenario.MergeLostResponse = true
+	return scenario
+}
+
+func MergeAmbiguousScenario() Scenario {
+	scenario := MergeLostResponseScenario()
+	scenario.Name = "merge-ambiguous"
+	scenario.MergeAmbiguousReadback = true
+	return scenario
+}
+
+func MergeExternallyCompletedScenario() Scenario {
+	scenario := MergeScenario()
+	scenario.Name = "merge-external"
+	scenario.MergeExternallyCompleted = true
+	return scenario
+}
+
+func MergeConflictingHeadScenario() Scenario {
+	scenario := MergeExternallyCompletedScenario()
+	scenario.Name = "merge-external-conflicting-head"
+	scenario.MergeExternalDifferentHead = true
+	return scenario
+}
+
+func MergeForcePushScenario() Scenario {
+	scenario := MergeScenario()
+	scenario.Name = "merge-force-push"
+	scenario.MergeForcePushAfterReads = 3
+	return scenario
+}
+
+func MergeBaseChangeScenario() Scenario {
+	scenario := MergeScenario()
+	scenario.Name = "merge-base-change"
+	scenario.MergeBaseChangeAfterReads = 1
+	return scenario
+}
+
+func MergeProviderForcePushScenario() Scenario {
+	scenario := MergeScenario()
+	scenario.Name = "merge-provider-force-push"
+	scenario.MergeProviderForcePush = true
+	return scenario
+}
+
+func MergeWriteDeniedScenario() Scenario {
+	scenario := MergeScenario()
+	scenario.Name = "merge-write-denied"
+	scenario.MergeWriteDenied = true
+	return scenario
+}
+
+func MergeCancelledAfterApplyScenario(delay time.Duration) Scenario {
+	scenario := MergeScenario()
+	scenario.Name = "merge-cancelled-after-apply"
+	scenario.MergeResponseDelay = delay
+	return scenario
+}
+
+func MergeRateLimitScenario() Scenario {
+	scenario := MergeScenario()
+	scenario.Name = "merge-rate-limit"
+	scenario.RateLimitedSections = map[string]int{"graphql": 17}
+	return scenario
+}
+
 // Request records only non-sensitive request metadata.
 type Request struct {
 	Method string
@@ -328,6 +460,20 @@ type Server struct {
 	stateReads            int
 	statePermissionReads  int
 	stateTargetReads      int
+	mergeApplied          bool
+	mergeHeadSHA          string
+	mergeCommitSHA        string
+	mergeAttempts         int
+	mergePermissionReads  int
+	mergeReadinessReads   int
+	mergeRequests         []MergeRequest
+}
+
+type MergeRequest struct {
+	SHA           string
+	Method        string
+	CommitTitle   string
+	CommitMessage string
 }
 
 type lifecycleState struct {
@@ -344,7 +490,11 @@ func NewServer(scenario Scenario) *Server {
 	if scenario.Name == "" {
 		scenario.Name = "default"
 	}
-	server := &Server{scenario: scenario}
+	server := &Server{
+		scenario:       scenario,
+		mergeHeadSHA:   currentHeadSHA,
+		mergeCommitSHA: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+	}
 	server.stateCurrent = lifecycleState{
 		State: "open", Base: "main", BaseSHA: baseSHA, UpdatedAt: "2026-07-27T20:30:00Z",
 	}
@@ -365,6 +515,12 @@ func NewServer(scenario Scenario) *Server {
 	}
 	if scenario.CreateExternallyCompleted {
 		server.created = append(server.created, server.createdPullRequest("acme", "widgets", "acme", "feature/create", 45, "Create broker PR", "CREATE-BODY-CANARY create body", false))
+	}
+	if scenario.MergeExternallyCompleted {
+		server.mergeApplied = true
+		if scenario.MergeExternalDifferentHead {
+			server.mergeHeadSHA = forcedHeadSHA
+		}
 	}
 	if scenario.CollaborationExternalState != "" {
 		head := currentHeadSHA
@@ -438,6 +594,18 @@ func (s *Server) StateAttempts() int {
 	return s.stateAttempts
 }
 
+func (s *Server) MergeAttempts() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.mergeAttempts
+}
+
+func (s *Server) MergeRequests() []MergeRequest {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]MergeRequest(nil), s.mergeRequests...)
+}
+
 func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	s.record(request)
 	if strings.TrimSpace(request.Header.Get("Authorization")) == "" {
@@ -500,6 +668,8 @@ func (s *Server) handleRepository(writer http.ResponseWriter, request *http.Requ
 		s.getPullRequest(writer, request, owner, repository, parts[4])
 	case len(parts) == 5 && parts[3] == "pulls" && request.Method == http.MethodPatch:
 		s.updatePullRequest(writer, request, owner, repository, parts[4])
+	case len(parts) == 6 && parts[3] == "pulls" && parts[5] == "merge" && request.Method == http.MethodPut:
+		s.mergePullRequest(writer, request, parts[4])
 	case len(parts) >= 7 && parts[3] == "git" && parts[4] == "ref" && parts[5] == "heads" && request.Method == http.MethodGet:
 		s.getRef(writer, owner, repository, strings.Join(parts[6:], "/"))
 	case len(parts) == 6 && parts[3] == "pulls" && parts[5] == "commits" && request.Method == http.MethodGet:
@@ -532,10 +702,25 @@ func (s *Server) getRepository(writer http.ResponseWriter) {
 		index := min(s.permissionReads, len(s.scenario.CollaborationPermissionSequence)-1)
 		allowed = s.scenario.CollaborationPermissionSequence[index]
 		s.permissionReads++
+	} else if s.scenario.MergeEnabled && len(s.scenario.MergePermissionSequence) > 0 {
+		index := min(s.mergePermissionReads, len(s.scenario.MergePermissionSequence)-1)
+		allowed = s.scenario.MergePermissionSequence[index]
+		s.mergePermissionReads++
 	}
 	s.mu.Unlock()
+	methods := map[string]bool{"merge": true, "squash": true, "rebase": true}
+	if s.scenario.MergeEnabled && s.scenario.MergeMethods != nil {
+		methods = map[string]bool{}
+		for _, method := range s.scenario.MergeMethods {
+			methods[method] = true
+		}
+	}
 	writeJSON(writer, http.StatusOK, map[string]any{
-		"permissions": map[string]bool{"pull": !s.scenario.CreatePermissionDenied && allowed, "push": allowed},
+		"permissions":        map[string]bool{"pull": !s.scenario.CreatePermissionDenied && allowed, "push": allowed},
+		"allow_merge_commit": methods["merge"],
+		"allow_squash_merge": methods["squash"],
+		"allow_rebase_merge": methods["rebase"],
+		"default_branch":     "main",
 	})
 }
 
@@ -662,7 +847,13 @@ func (s *Server) getPullRequest(writer http.ResponseWriter, _ *http.Request, own
 	s.prReads++
 	reads := s.prReads
 	unavailable := s.scenario.StateEnabled && s.scenario.StateAmbiguousReadback && s.stateAttempts > 0
+	if s.scenario.MergeEnabled && s.scenario.MergeAmbiguousReadback && s.mergeAttempts > 0 {
+		unavailable = true
+	}
 	if s.scenario.ForcePush && s.prReads > 1 {
+		head = forcedHeadSHA
+	}
+	if s.scenario.MergeForcePushAfterReads > 0 && s.prReads > s.scenario.MergeForcePushAfterReads {
 		head = forcedHeadSHA
 	}
 	s.mu.Unlock()
@@ -708,24 +899,41 @@ func (s *Server) pullRequestAtRead(owner, repository string, number int64, headS
 			base, baseValueSHA = "develop", forcedHeadSHA
 		}
 	}
+	mergeCommitSHA := ""
+	if s.scenario.MergeEnabled {
+		s.mu.Lock()
+		if s.mergeApplied {
+			state = "closed"
+			merged = true
+			headSHA = s.mergeHeadSHA
+			updatedAt = "2026-07-27T20:45:00Z"
+			mergeCommitSHA = s.mergeCommitSHA
+		}
+		s.mu.Unlock()
+	}
+	if s.scenario.MergeBaseChangeAfterReads > 0 && reads > s.scenario.MergeBaseChangeAfterReads {
+		base = "develop"
+		baseValueSHA = forcedHeadSHA
+	}
 	mergedAt := ""
 	if merged {
 		mergedAt = "2026-07-27T20:35:00Z"
 	}
 	return map[string]any{
-		"id":         1000 + number,
-		"node_id":    fmt.Sprintf("PR_%d", number),
-		"number":     number,
-		"title":      fmt.Sprintf("Pull request %d", number),
-		"body":       "deterministic code-host fixture",
-		"html_url":   fmt.Sprintf("https://example.invalid/%s/%s/pull/%d", owner, repository, number),
-		"state":      state,
-		"draft":      draft,
-		"merged":     merged,
-		"created_at": "2026-07-27T20:00:00Z",
-		"updated_at": updatedAt,
-		"merged_at":  mergedAt,
-		"user":       user("contributor", 7),
+		"id":               1000 + number,
+		"node_id":          fmt.Sprintf("PR_%d", number),
+		"number":           number,
+		"title":            fmt.Sprintf("Pull request %d", number),
+		"body":             "deterministic code-host fixture",
+		"html_url":         fmt.Sprintf("https://example.invalid/%s/%s/pull/%d", owner, repository, number),
+		"state":            state,
+		"draft":            draft,
+		"merged":           merged,
+		"created_at":       "2026-07-27T20:00:00Z",
+		"updated_at":       updatedAt,
+		"merged_at":        mergedAt,
+		"merge_commit_sha": mergeCommitSHA,
+		"user":             user("contributor", 7),
 		"base": map[string]any{
 			"ref":  base,
 			"sha":  baseValueSHA,
@@ -737,6 +945,65 @@ func (s *Server) pullRequestAtRead(owner, repository string, number int64, headS
 			"repo": repositoryValue(headOwner, repository, 2),
 		},
 	}
+}
+
+func (s *Server) mergePullRequest(writer http.ResponseWriter, request *http.Request, number string) {
+	if number != "42" {
+		writeError(writer, http.StatusNotFound, "pull request not found")
+		return
+	}
+	var payload struct {
+		CommitTitle   string `json:"commit_title"`
+		CommitMessage string `json:"commit_message"`
+		MergeMethod   string `json:"merge_method"`
+		SHA           string `json:"sha"`
+	}
+	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 1<<20))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&payload); err != nil || payload.SHA == "" || payload.MergeMethod == "" {
+		writeError(writer, http.StatusUnprocessableEntity, "invalid merge payload")
+		return
+	}
+	s.mu.Lock()
+	s.mergeAttempts++
+	s.mergeRequests = append(s.mergeRequests, MergeRequest{
+		SHA: payload.SHA, Method: payload.MergeMethod,
+		CommitTitle: payload.CommitTitle, CommitMessage: payload.CommitMessage,
+	})
+	allowed := !s.scenario.MergeWriteDenied
+	if s.scenario.MergeMethods != nil {
+		allowed = allowed && slices.Contains(s.scenario.MergeMethods, payload.MergeMethod)
+	}
+	if !allowed {
+		s.mu.Unlock()
+		writeError(writer, http.StatusForbidden, "fixture merge denied")
+		return
+	}
+	if s.scenario.MergeProviderForcePush || payload.SHA != currentHeadSHA {
+		s.mu.Unlock()
+		writeError(writer, http.StatusConflict, "head SHA was modified")
+		return
+	}
+	s.mergeApplied = true
+	s.mergeHeadSHA = currentHeadSHA
+	commitSHA := s.mergeCommitSHA
+	s.mu.Unlock()
+	if s.scenario.MergeResponseDelay > 0 {
+		select {
+		case <-request.Context().Done():
+			return
+		case <-time.After(s.scenario.MergeResponseDelay):
+		}
+	}
+	if s.scenario.MergeLostResponse {
+		writer.Header().Set("Content-Type", "application/json")
+		writer.WriteHeader(http.StatusOK)
+		_, _ = writer.Write([]byte(`{"incomplete":`))
+		return
+	}
+	writeJSON(writer, http.StatusOK, map[string]any{
+		"sha": commitSHA, "merged": true, "message": "Pull Request successfully merged",
+	})
 }
 
 func (s *Server) createdPullRequest(owner, repository, headOwner, headRef string, number int64, title, body string, draft bool) map[string]any {
@@ -1117,9 +1384,36 @@ func (s *Server) handleGraphQL(writer http.ResponseWriter, request *http.Request
 		})
 		return
 	}
+	if strings.Contains(envelope.Query, "HeroMergeCapability") {
+		var mergeQueue any
+		if s.scenario.MergeQueueRequired {
+			mergeQueue = map[string]any{"id": "MERGE_QUEUE_main"}
+		}
+		errorsValue := []any{}
+		if s.scenario.MergeQueuePolicyPartial {
+			errorsValue = append(errorsValue, map[string]any{
+				"message": "fixture merge queue policy unavailable",
+				"type":    "FORBIDDEN",
+				"path":    []any{"repository", "mergeQueue"},
+			})
+		}
+		setRateHeaders(writer, "graphql", 5000, 4998, 0)
+		writeJSON(writer, http.StatusOK, map[string]any{
+			"data": map[string]any{
+				"repository": map[string]any{"id": "R_acme_widgets", "mergeQueue": mergeQueue},
+				"rateLimit":  map[string]any{"limit": 5000, "remaining": 4998, "resetAt": "2026-07-27T21:00:00Z"},
+			},
+			"errors": errorsValue,
+		})
+		return
+	}
 	s.mu.Lock()
 	index := s.graphQL
 	s.graphQL++
+	mergeIndex := s.mergeReadinessReads
+	if s.scenario.MergeEnabled {
+		s.mergeReadinessReads++
+	}
 	s.mu.Unlock()
 	mergeability := "MERGEABLE"
 	if len(s.scenario.MergeabilitySequence) > 0 {
@@ -1133,13 +1427,48 @@ func (s *Server) handleGraphQL(writer http.ResponseWriter, request *http.Request
 		"id": "PR_42", "headRefOid": currentHeadSHA, "baseRefOid": baseSHA,
 		"isDraft": false, "mergeable": mergeability, "mergeStateStatus": "CLEAN",
 		"reviewDecision": "APPROVED", "viewerCanMerge": viewerCanMerge,
-		"mergeQueueEntry": nil,
+		"mergeQueue": nil, "mergeQueueEntry": nil,
 		"baseRef": map[string]any{"branchProtectionRule": map[string]any{
 			"requiresApprovingReviews": true, "requiredApprovingReviewCount": 1, "requiresStatusChecks": true,
 		}},
 		"commits": map[string]any{"nodes": []map[string]any{
 			{"commit": map[string]any{"statusCheckRollup": map[string]any{"state": "SUCCESS"}}},
 		}},
+	}
+	if len(s.scenario.MergeReadinessSequence) > 0 {
+		if mergeIndex >= len(s.scenario.MergeReadinessSequence) {
+			mergeIndex = len(s.scenario.MergeReadinessSequence) - 1
+		}
+		switch s.scenario.MergeReadinessSequence[mergeIndex] {
+		case "checks_pending":
+			pullRequest["commits"] = map[string]any{"nodes": []map[string]any{{"commit": map[string]any{"statusCheckRollup": map[string]any{"state": "PENDING"}}}}}
+		case "checks_failure":
+			pullRequest["commits"] = map[string]any{"nodes": []map[string]any{{"commit": map[string]any{"statusCheckRollup": map[string]any{"state": "FAILURE"}}}}}
+		case "reviews_required":
+			pullRequest["reviewDecision"] = "REVIEW_REQUIRED"
+		case "changes_requested":
+			pullRequest["reviewDecision"] = "CHANGES_REQUESTED"
+		case "mergeability_unknown":
+			pullRequest["mergeable"] = "UNKNOWN"
+			pullRequest["mergeStateStatus"] = "UNKNOWN"
+		case "permission_denied":
+			pullRequest["viewerCanMerge"] = false
+		case "queue_entry":
+			pullRequest["mergeQueueEntry"] = map[string]any{"id": "QUEUE_42"}
+		case "draft":
+			pullRequest["isDraft"] = true
+		case "blocked":
+			pullRequest["mergeStateStatus"] = "BLOCKED"
+		case "head_changed":
+			pullRequest["headRefOid"] = forcedHeadSHA
+		case "base_changed":
+			pullRequest["baseRefOid"] = forcedHeadSHA
+		case "protection_unknown":
+			pullRequest["commits"] = map[string]any{"nodes": nil}
+		}
+	}
+	if s.scenario.MergeQueueRequired {
+		pullRequest["mergeQueue"] = map[string]any{"id": "MERGE_QUEUE_main"}
 	}
 	errorsValue := []map[string]any{}
 	if s.scenario.GraphQLPartial {

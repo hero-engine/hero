@@ -6,7 +6,27 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-28T03:32:10Z · 83 ready specs_
+_Generated: 2026-07-28T04:03:49Z · 83 ready specs_
+
+## github-pull-request-merge-broker — "GitHub pull-request merge broker"
+_feature · delivering · horizon: now_
+
+Add the final GitHub write only when Hero can prove the requested PR revision
+is mergeable under current repository policy and can reconcile every retry.
+
+**Status:** in review — guarded direct merge, exact base-branch queue policy,
+runtime capability material, and journal reconciliation are implemented and
+validated.
+
+**Pick up at:** run the cold delivery audit against the committed
+implementation, remediate any hold, then verify the spec.
+
+→ `/deliver github-pull-request-merge-broker`
+
+**Files:** `internal/codehost/github_merge.go`, `internal/codehost/github.go`, `internal/codehost/reconcile.go`, `internal/mockcodehost/server.go`, `contracts/codehostbroker/`
+**Skip:** do not auto-merge later, update branches, delete branches, deploy, release, or close Hero work.
+
+---
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -53,25 +73,6 @@ surfaces:
    ambiguous-outcome recovery; and
 5. one in-process implementation surfaced through JSON CLI and typed MCP tools
    that Hero Code can validate against a released Hero binary.
-
----
-
-## github-pull-request-merge-broker — "GitHub pull-request merge broker"
-_feature · planning · horizon: now_
-
-Add the final GitHub write only when Hero can prove the requested PR revision
-is mergeable under current repository policy and can reconcile every retry.
-
-**Status:** planning — readiness, merge methods, queue state, SHA guards, and
-mutation reconciliation requirements are mapped.
-
-**Pick up at:** define the merge preflight proof and provider result states,
-then implement one guarded dispatch using the existing journal.
-
-→ `/deliver github-pull-request-merge-broker`
-
-**Files:** `internal/codehost/github_merge.go`, `internal/codehost/readiness.go`, `internal/mockcodehost/merge.go`
-**Skip:** do not auto-merge later, update branches, delete branches, deploy, release, or close Hero work.
 
 ---
 

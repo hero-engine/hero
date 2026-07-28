@@ -274,9 +274,17 @@ type OperationPolicy struct {
 }
 
 type Capability struct {
-	Policy    OperationPolicy `json:"policy"`
-	Available bool            `json:"available"`
-	Reason    string          `json:"reason,omitempty"`
+	Policy    OperationPolicy  `json:"policy"`
+	Available bool             `json:"available"`
+	Reason    string           `json:"reason,omitempty"`
+	Merge     *MergeCapability `json:"merge,omitempty"`
+}
+
+type MergeCapability struct {
+	Methods        []string `json:"methods"`
+	QueueSupported bool     `json:"queue_supported"`
+	QueueRequired  bool     `json:"queue_required"`
+	Revision       string   `json:"revision"`
 }
 
 type CapabilitiesResult struct {

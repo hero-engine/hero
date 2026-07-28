@@ -63,8 +63,10 @@ outcome.
 Connection capabilities and runtime operation capabilities are different:
 `capabilities: [code-host]` makes a connection eligible for this broker;
 the `capabilities` operation advertises which of the twenty operations its
-selected provider adapter currently supports. Unsupported operations fail
-closed.
+selected provider adapter currently supports for the primary repository.
+Unsupported operations fail closed. Merge additionally advertises its exact
+repository-specific direct methods, queue support and requirement, and a
+revision binding that runtime material.
 
 ## Repository-qualified identity
 
@@ -193,7 +195,16 @@ whether a zero value is legal.
   `requires_unique_target`, `requires_idempotency`,
   `requires_fresh_observation`, `requires_reconciliation`, `replay_safe`,
   and `bounds`.
-- `Capability`: required `policy`, `available`; optional `reason`.
+- `Capability`: required `policy`, `available`; optional `reason` and
+  merge-only `merge` material.
+- `MergeCapability`: required bounded unique `methods` selected from `merge`,
+  `squash`, and `rebase`; required `queue_supported`, `queue_required`, and
+  runtime `revision`. An available merge capability must advertise a direct
+  method or queue support. A queue-required repository is unavailable when
+  the adapter does not support an exact queue mutation and receipt contract.
+  GitHub derives queue requirement from the GraphQL merge queue for the exact
+  base branch, not from repository REST metadata. Partial or unavailable queue
+  policy makes merge capability or preflight unavailable.
 - `Response`: required `version`, `operation`, `provider`, `connection_id`,
   `repository`, `policy`, both revisions, `observed_at`, `freshness`,
   `rate_limit`, `bounds`, `completeness`, `partial_failures`, `result`,
@@ -329,7 +340,7 @@ The canonical fixture is:
 
 Its SHA-256 digest is published beside it in
 `consumer-fixture.sha256`. The current digest is
-`f35203f1a3656b4d591e30def627d6d9d9cf4f2c688b61b45dca225fd4f92cd3`.
+`c8918b94c9b8debefd933eff5f53ca721504a27b95a4134e53dc8fc81252e987`.
 Regenerate both deterministically with:
 
 ```bash

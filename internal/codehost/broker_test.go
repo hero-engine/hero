@@ -37,12 +37,16 @@ func TestCapabilitiesAdvertiseExactlyImplementedOperations(t *testing.T) {
 		if !capability.Available || capability.Policy.Operation != availableOperations[index] {
 			t.Fatalf("capability[%d]=%+v", index, capability)
 		}
+		if capability.Policy.Operation == codehostbroker.OperationMerge &&
+			(capability.Merge == nil || len(capability.Merge.Methods) != 3 || capability.Merge.Revision == "") {
+			t.Fatalf("merge capability=%+v", capability.Merge)
+		}
 		want, _ := codehostbroker.Policy(capability.Policy.Operation)
 		if capability.Policy != want {
 			t.Fatalf("capability policy drift: got=%+v want=%+v", capability.Policy, want)
 		}
 	}
-	if server.RequestCount() != 0 {
+	if server.RequestCount() != 2 {
 		t.Fatalf("capability discovery made %d provider requests", server.RequestCount())
 	}
 }

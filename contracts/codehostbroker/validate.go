@@ -381,6 +381,29 @@ func validateOperationResult(operation Operation, raw json.RawMessage, bounds Bo
 			if policy, known := Policy(capability.Policy.Operation); known && !reflect.DeepEqual(capability.Policy, policy) {
 				return invalid(fmt.Sprintf("result.capabilities.%d.policy", i), "known capability policy does not match the authoritative registry")
 			}
+			if capability.Merge != nil {
+				if capability.Policy.Operation != OperationMerge || len(capability.Merge.Methods) > bounds.Items {
+					return invalid(fmt.Sprintf("result.capabilities.%d.merge", i), "merge capability material is attached to the wrong operation or exceeds its bound")
+				}
+				if capability.Merge.Revision == "" || tooLong(capability.Merge.Revision, 128) {
+					return invalid(fmt.Sprintf("result.capabilities.%d.merge.revision", i), "merge capability revision is required and bounded")
+				}
+				seenMethods := map[string]bool{}
+				for methodIndex, method := range capability.Merge.Methods {
+					if seenMethods[method] || !containsString([]string{"merge", "squash", "rebase"}, method) {
+						return invalid(fmt.Sprintf("result.capabilities.%d.merge.methods.%d", i, methodIndex), "merge methods must be unique supported values")
+					}
+					seenMethods[method] = true
+				}
+				if capability.Merge.QueueRequired && capability.Available && !capability.Merge.QueueSupported {
+					return invalid(fmt.Sprintf("result.capabilities.%d.merge", i), "queue-required merge cannot be available without queue support")
+				}
+				if capability.Available && len(capability.Merge.Methods) == 0 && !capability.Merge.QueueSupported {
+					return invalid(fmt.Sprintf("result.capabilities.%d.merge", i), "available merge capability requires a direct method or queue support")
+				}
+			} else if capability.Policy.Operation == OperationMerge && capability.Available {
+				return invalid(fmt.Sprintf("result.capabilities.%d.merge", i), "available merge capability requires runtime merge material")
+			}
 		}
 	case OperationListPullRequests, OperationSearchPullRequests:
 		var result PullRequestsResult

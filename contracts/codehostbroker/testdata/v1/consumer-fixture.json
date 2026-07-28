@@ -579,7 +579,17 @@
           "idempotency_bytes": 512
         }
       },
-      "available": true
+      "available": true,
+      "merge": {
+        "methods": [
+          "merge",
+          "squash",
+          "rebase"
+        ],
+        "queue_supported": false,
+        "queue_required": false,
+        "revision": "capability:fixture-merge-runtime"
+      }
     },
     {
       "policy": {
@@ -1274,7 +1284,17 @@
                   "idempotency_bytes": 512
                 }
               },
-              "available": true
+              "available": true,
+              "merge": {
+                "methods": [
+                  "merge",
+                  "squash",
+                  "rebase"
+                ],
+                "queue_supported": false,
+                "queue_required": false,
+                "revision": "capability:fixture-merge-runtime"
+              }
             },
             {
               "policy": {
@@ -4220,7 +4240,15 @@
             "created_at": "2026-07-27T20:00:00Z",
             "updated_at": "2026-07-27T20:30:00Z"
           },
-          "outcome": "fixture"
+          "outcome": "fixture",
+          "actor": {
+            "provider_id": "U_fixture",
+            "login": "contributor"
+          },
+          "invalidated_operations": [
+            "get_pull_request",
+            "get_merge_readiness"
+          ]
         },
         "receipt": {
           "provider_receipt_id": "receipt-merge",

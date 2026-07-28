@@ -117,7 +117,7 @@ func CanonicalFixture() ([]byte, error) {
 			Code: code, Message: "bounded normalized fixture error", Retry: fixtureRetry(code),
 		})
 	}
-	advertised := Capabilities(allOperationsAvailable())
+	advertised := fixtureCapabilities()
 	advertised = append(advertised, futureCapability())
 	bundle := ConsumerFixtureBundle{
 		Version:    Version,
@@ -168,7 +168,7 @@ func fixturePayload(operation Operation, base, head RefIdentity) json.RawMessage
 func fixtureResult(operation Operation, pullRequest PullRequest) any {
 	switch operation {
 	case OperationCapabilities:
-		return CapabilitiesResult{Capabilities: append(Capabilities(allOperationsAvailable()), futureCapability())}
+		return CapabilitiesResult{Capabilities: append(fixtureCapabilities(), futureCapability())}
 	case OperationListPullRequests, OperationSearchPullRequests:
 		return map[string]any{"pull_requests": []PullRequest{pullRequest}}
 	case OperationGetPullRequest:
@@ -201,6 +201,17 @@ func fixtureResult(operation Operation, pullRequest PullRequest) any {
 				OperationGetMergeReadiness,
 			},
 		}
+	case OperationMerge:
+		actor := pullRequest.Author
+		return MutationResult{
+			PullRequest: pullRequest,
+			Outcome:     "fixture",
+			Actor:       &actor,
+			InvalidatedOperations: []Operation{
+				OperationGetPullRequest,
+				OperationGetMergeReadiness,
+			},
+		}
 	default:
 		return MutationResult{PullRequest: pullRequest, Outcome: "fixture"}
 	}
@@ -216,6 +227,19 @@ func allOperationsAvailable() map[Operation]bool {
 		out[operation] = true
 	}
 	return out
+}
+
+func fixtureCapabilities() []Capability {
+	capabilities := Capabilities(allOperationsAvailable())
+	for index := range capabilities {
+		if capabilities[index].Policy.Operation == OperationMerge {
+			capabilities[index].Merge = &MergeCapability{
+				Methods:  []string{"merge", "squash", "rebase"},
+				Revision: "capability:fixture-merge-runtime",
+			}
+		}
+	}
+	return capabilities
 }
 
 func futureCapability() Capability {

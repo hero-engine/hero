@@ -29,21 +29,22 @@ type githubPullRef struct {
 }
 
 type githubPullRequest struct {
-	ID        int64         `json:"id"`
-	Node      string        `json:"node_id"`
-	Number    int64         `json:"number"`
-	Title     string        `json:"title"`
-	Body      string        `json:"body"`
-	HTMLURL   string        `json:"html_url"`
-	State     string        `json:"state"`
-	Draft     bool          `json:"draft"`
-	Merged    bool          `json:"merged"`
-	User      githubUser    `json:"user"`
-	Base      githubPullRef `json:"base"`
-	Head      githubPullRef `json:"head"`
-	CreatedAt string        `json:"created_at"`
-	UpdatedAt string        `json:"updated_at"`
-	MergedAt  string        `json:"merged_at"`
+	ID             int64         `json:"id"`
+	Node           string        `json:"node_id"`
+	Number         int64         `json:"number"`
+	Title          string        `json:"title"`
+	Body           string        `json:"body"`
+	HTMLURL        string        `json:"html_url"`
+	State          string        `json:"state"`
+	Draft          bool          `json:"draft"`
+	Merged         bool          `json:"merged"`
+	MergeCommitSHA string        `json:"merge_commit_sha"`
+	User           githubUser    `json:"user"`
+	Base           githubPullRef `json:"base"`
+	Head           githubPullRef `json:"head"`
+	CreatedAt      string        `json:"created_at"`
+	UpdatedAt      string        `json:"updated_at"`
+	MergedAt       string        `json:"merged_at"`
 }
 
 type githubCommit struct {
@@ -135,6 +136,9 @@ type githubGraphQLPullRequest struct {
 	MergeQueueEntry  *struct {
 		ID string `json:"id"`
 	} `json:"mergeQueueEntry"`
+	MergeQueue *struct {
+		ID string `json:"id"`
+	} `json:"mergeQueue"`
 	BaseRef struct {
 		BranchProtectionRule *struct {
 			RequiresApprovingReviews     bool `json:"requiresApprovingReviews"`

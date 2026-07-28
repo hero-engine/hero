@@ -166,6 +166,18 @@ func (t *githubTransport) patch(ctx context.Context, relative string, value, tar
 	return t.doJSON(ctx, http.MethodPatch, endpoint, bytes.NewReader(body), target)
 }
 
+func (t *githubTransport) put(ctx context.Context, relative string, value, target any) (http.Header, error) {
+	endpoint, err := t.restURL(relative)
+	if err != nil {
+		return nil, &providerError{code: codehostbroker.ErrorInvalidInput, message: "GitHub request path is invalid"}
+	}
+	body, err := json.Marshal(value)
+	if err != nil {
+		return nil, &providerError{code: codehostbroker.ErrorEncoding, message: "could not encode the GitHub request"}
+	}
+	return t.doJSON(ctx, http.MethodPut, endpoint, bytes.NewReader(body), target)
+}
+
 func (t *githubTransport) graphql(ctx context.Context, query string, variables map[string]any, target any) (http.Header, error) {
 	body, err := json.Marshal(map[string]any{"query": query, "variables": variables})
 	if err != nil {
@@ -356,7 +368,7 @@ func (g *githubAdapter) execute(ctx context.Context, request codehostbroker.Requ
 	var err error
 	switch request.Operation {
 	case codehostbroker.OperationCapabilities:
-		out.result = g.capabilities()
+		out, err = g.capabilities(ctx, request)
 	case codehostbroker.OperationListPullRequests:
 		out, err = g.list(ctx, request, scope, false)
 	case codehostbroker.OperationSearchPullRequests:
@@ -385,13 +397,27 @@ func (g *githubAdapter) execute(ctx context.Context, request codehostbroker.Requ
 	return out, err
 }
 
-func (g *githubAdapter) capabilities() codehostbroker.CapabilitiesResult {
+func (g *githubAdapter) capabilities(ctx context.Context, request codehostbroker.Request) (adapterResult, error) {
+	merge, err := g.mergeRuntimeCapability(ctx, request.Repository, "")
+	if err != nil {
+		return adapterResult{}, err
+	}
 	capabilities := make([]codehostbroker.Capability, 0, len(availableOperations))
 	for _, operation := range availableOperations {
 		policy, _ := codehostbroker.Policy(operation)
-		capabilities = append(capabilities, codehostbroker.Capability{Policy: policy, Available: true})
+		capability := codehostbroker.Capability{Policy: policy, Available: true}
+		if operation == codehostbroker.OperationMerge {
+			capability.Available = merge.available
+			capability.Reason = merge.reason
+			capability.Merge = &merge.material
+		}
+		capabilities = append(capabilities, capability)
 	}
-	return codehostbroker.CapabilitiesResult{Capabilities: capabilities}
+	return adapterResult{
+		result:             codehostbroker.CapabilitiesResult{Capabilities: capabilities},
+		completeness:       codehostbroker.CompletenessComplete,
+		capabilityRevision: capabilityRevision(g.connection, nil),
+	}, nil
 }
 
 type cursorPosition struct {
@@ -619,17 +645,22 @@ func (g *githubAdapter) getPullRequest(ctx context.Context, request codehostbrok
 }
 
 func (g *githubAdapter) fetchPullRequest(ctx context.Context, repository codehostbroker.RepositoryIdentity, number int64) (codehostbroker.PullRequest, error) {
+	pullRequest, _, err := g.fetchPullRequestWithProviderState(ctx, repository, number)
+	return pullRequest, err
+}
+
+func (g *githubAdapter) fetchPullRequestWithProviderState(ctx context.Context, repository codehostbroker.RepositoryIdentity, number int64) (codehostbroker.PullRequest, githubPullRequest, error) {
 	var wire githubPullRequest
 	path := fmt.Sprintf("repos/%s/%s/pulls/%d", url.PathEscape(repository.Owner), url.PathEscape(repository.Name), number)
 	if _, err := g.transport.get(ctx, path, &wire); err != nil {
-		return codehostbroker.PullRequest{}, err
+		return codehostbroker.PullRequest{}, githubPullRequest{}, err
 	}
 	pullRequest := normalizePullRequest(g.connection.ID, wire)
 	setPullRequestHost(&pullRequest, repository.Host)
 	if err := validateNormalizedPullRequest(pullRequest); err != nil {
-		return codehostbroker.PullRequest{}, err
+		return codehostbroker.PullRequest{}, githubPullRequest{}, err
 	}
-	return pullRequest, nil
+	return pullRequest, wire, nil
 }
 
 func setPullRequestHost(pullRequest *codehostbroker.PullRequest, host string) {
@@ -980,7 +1011,9 @@ func (g *githubAdapter) rejectStaleSection(ctx context.Context, request codehost
 		}
 		return out, err
 	}
-	if current.Head.SHA == observed.Head.SHA {
+	headMatches := current.Head.SHA == observed.Head.SHA
+	baseMatches := request.Operation != codehostbroker.OperationGetMergeReadiness || sameRefIdentity(current.Base, observed.Base)
+	if headMatches && baseMatches {
 		return out, nil
 	}
 	out.pullRequest = &current
@@ -988,7 +1021,7 @@ func (g *githubAdapter) rejectStaleSection(ctx context.Context, request codehost
 	out.truncated = true
 	out.partialFailures = append(out.partialFailures, codehostbroker.PartialFailure{
 		Section: string(request.Operation), Code: codehostbroker.ErrorStaleObservation,
-		Message: "pull request head changed during the read; section data was discarded",
+		Message: "pull request head or base changed during the read; section data was discarded",
 	})
 	switch request.Operation {
 	case codehostbroker.OperationGetCommits:
@@ -1022,6 +1055,7 @@ const mergeReadinessQuery = `query HeroMergeReadiness($owner: String!, $name: St
       mergeStateStatus
       reviewDecision
       viewerCanMerge
+      mergeQueue { id }
       mergeQueueEntry { id }
       baseRef { branchProtectionRule { requiresApprovingReviews requiredApprovingReviewCount requiresStatusChecks } }
       commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }
@@ -1064,6 +1098,14 @@ func (g *githubAdapter) getMergeReadiness(ctx context.Context, request codehostb
 		completeness:    codehostbroker.CompletenessComplete,
 		partialFailures: failures,
 		rateLimit:       graphQLRateLimit,
+		observedHeadSHA: wire.Data.Repository.PullRequest.HeadRefOID,
+		observedBaseSHA: wire.Data.Repository.PullRequest.BaseRefOID,
+	}
+	if wire.Data.Repository.PullRequest.MergeQueueEntry != nil {
+		out.queueID = wire.Data.Repository.PullRequest.MergeQueueEntry.ID
+	}
+	if wire.Data.Repository.PullRequest.MergeQueue != nil {
+		out.queueRequired = true
 	}
 	if len(failures) > 0 {
 		out.completeness = codehostbroker.CompletenessPartial
@@ -1128,6 +1170,10 @@ func normalizeMergeReadiness(response githubGraphQLResponse) (codehostbroker.Mer
 	if pullRequest.MergeQueueEntry != nil && readiness.Queue != codehostbroker.AvailabilityUnavailable {
 		readiness.Queue = codehostbroker.AvailabilityAvailable
 		readiness.Reasons = append(readiness.Reasons, "pull request is in the merge queue")
+	}
+	if pullRequest.MergeQueue != nil && readiness.Queue != codehostbroker.AvailabilityUnavailable {
+		readiness.Queue = codehostbroker.AvailabilityAvailable
+		readiness.Reasons = append(readiness.Reasons, "base branch requires the merge queue")
 	}
 	if readiness.BranchProtection != codehostbroker.AvailabilityUnavailable {
 		readiness.BranchProtection = codehostbroker.AvailabilityAvailable
@@ -1200,7 +1246,7 @@ func normalizeMergeReadiness(response githubGraphQLResponse) (codehostbroker.Mer
 		readiness.State = "unknown"
 	case pullRequest.IsDraft ||
 		strings.EqualFold(pullRequest.Mergeable, "CONFLICTING") ||
-		containsAnyFold(readiness.Reasons, "required checks are not successful", "changes are requested", "required reviews are missing", "cannot merge", "merge state is blocked", "merge state is dirty", "merge state is behind", "merge state is unstable"):
+		containsAnyFold(readiness.Reasons, "required checks are not successful", "changes are requested", "required reviews are missing", "cannot merge", "requires the merge queue", "merge state is blocked", "merge state is dirty", "merge state is behind", "merge state is unstable"):
 		readiness.State = "blocked"
 	case strings.EqualFold(pullRequest.Mergeable, "MERGEABLE") &&
 		pullRequest.ViewerCanMerge != nil && *pullRequest.ViewerCanMerge:

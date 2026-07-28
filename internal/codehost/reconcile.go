@@ -21,14 +21,17 @@ type mutationPreflight struct {
 // mutationPlan supplies operation-specific provider behavior to the one
 // journal/retry/reconciliation state machine shared by all broker mutations.
 type mutationPlan struct {
-	request       codehostbroker.Request
-	payloadDigest string
-	target        mutationTarget
-	connection    config.CodeHostConnection
-	adapter       *githubAdapter
-	preflight     func(context.Context) (mutationPreflight, error)
-	dispatch      func(context.Context) (mutationEffect, error)
-	reconcile     func(context.Context) (*mutationEffect, error)
+	request                codehostbroker.Request
+	payloadDigest          string
+	target                 mutationTarget
+	connection             config.CodeHostConnection
+	adapter                *githubAdapter
+	capabilityRevision     string
+	resolveCapability      func(context.Context) (string, error)
+	preflight              func(context.Context) (mutationPreflight, error)
+	dispatch               func(context.Context) (mutationEffect, error)
+	reconcile              func(context.Context) (*mutationEffect, error)
+	decisiveReconcileError func(error) bool
 }
 
 func (b *Broker) executeMutation(ctx context.Context, plan mutationPlan) (adapterResult, error) {
@@ -78,6 +81,21 @@ func (b *Broker) executeMutation(ctx context.Context, plan mutationPlan) (adapte
 		out.reconciliation = &codehostbroker.Reconciliation{Status: codehostbroker.ReconciliationInProgress, Key: plan.request.ReconciliationKey}
 		out.journalEntries = len(document.Entries)
 		expectedCapability := capabilityRevision(plan.connection, nil)
+		if plan.capabilityRevision != "" {
+			expectedCapability = plan.capabilityRevision
+		}
+		if plan.resolveCapability != nil {
+			var capabilityErr error
+			expectedCapability, capabilityErr = plan.resolveCapability(ctx)
+			out.capabilityRevision = expectedCapability
+			if capabilityErr != nil {
+				entry.State = journalNotApplied
+				entry.UpdatedAt = journal.timestamp()
+				out.reconciliation.Status = codehostbroker.ReconciliationNotApplied
+				executionErr = capabilityErr
+				return nil
+			}
+		}
 		out.capabilityRevision = expectedCapability
 		if plan.request.CapabilityRevision != expectedCapability {
 			entry.State = journalNotApplied
@@ -157,6 +175,16 @@ func (b *Broker) executeMutation(ctx context.Context, plan mutationPlan) (adapte
 			out = withTransportMetadata(out, plan.adapter)
 			return nil
 		}
+		if reconcileErr != nil && plan.decisiveReconcileError != nil && plan.decisiveReconcileError(reconcileErr) {
+			entry.State = journalNotApplied
+			entry.UpdatedAt = journal.timestamp()
+			entry.FailureCode = normalizeProviderError(reconcileErr).Code
+			out = mutationErrorResult(plan.request, entry, document, codehostbroker.ReconciliationNotApplied)
+			out = withTransportMetadata(out, plan.adapter)
+			out.observationRevision = preflight.observationRevision
+			executionErr = reconcileErr
+			return nil
+		}
 		entry.State = journalAmbiguous
 		entry.UpdatedAt = journal.timestamp()
 		out = mutationErrorResult(plan.request, entry, document, codehostbroker.ReconciliationAmbiguous)
@@ -199,6 +227,13 @@ func (b *Broker) reconcileExistingMutation(ctx context.Context, plan mutationPla
 		entry.UpdatedAt = entry.ReconciledAt
 		out := successfulMutationResult(plan.request, entry, document, effect.pullRequest, status, outcome)
 		return withTransportMetadata(out, plan.adapter), nil, true
+	}
+	if err != nil && plan.decisiveReconcileError != nil && plan.decisiveReconcileError(err) {
+		entry.State = journalNotApplied
+		entry.UpdatedAt = entry.ReconciledAt
+		entry.FailureCode = normalizeProviderError(err).Code
+		out := mutationErrorResult(plan.request, entry, document, codehostbroker.ReconciliationNotApplied)
+		return withTransportMetadata(out, plan.adapter), err, true
 	}
 	switch entry.State {
 	case journalApplied, journalExternal, journalDispatched, journalAmbiguous:
