@@ -515,3 +515,5 @@
 {"ts":"2026-07-28T05:01:09.045061Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-code-host-broker-capabilities","message":"\"Code Host Broker Capabilities — Hero-owned PR lifecycle boundary\""}
 {"ts":"2026-07-28T05:01:09.045146Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-code-host-broker-capabilities","message":"status -\u003e completed"}
 {"ts":"2026-07-30T14:48:02.387975Z","type":"mail.promote","agent":"hero-mail","slug":"mail-3ab437af53c66997e94a0268","message":"promote mail_3ab437af53c66997e94a0268 (thread mail_3ab437af53c66997e94a0268)"}
+{"ts":"2026-07-30T16:28:51.673015Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"mail-3ab437af53c66997e94a0268","message":"\"Jira attachment content is blocked by broker redirect policy\""}
+{"ts":"2026-07-30T16:28:51.67313Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"mail-3ab437af53c66997e94a0268","message":"status -\u003e completed"}

@@ -2,7 +2,7 @@
 title: "Jira attachment content is blocked by broker redirect policy"
 slug: mail-3ab437af53c66997e94a0268
 type: bug
-status: delivering
+status: completed
 diagnosis_status: diagnosed
 domain: engineering
 priority: high
@@ -19,6 +19,7 @@ relations:
   - target: tracker-source-evidence-preflight
     kind: related
 delivery_method: manual
+completed_at: 2026-07-30T16:28:49Z
 ---
 
 # Jira attachment content is blocked by broker redirect policy

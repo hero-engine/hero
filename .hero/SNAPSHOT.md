@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-30T16:02:01Z · projected from 610 source nodes_
+_Last refreshed: 2026-07-30T16:29:06Z · projected from 610 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 4m ago | mail-3ab437af53c66997e94a0268 |
+| core | building | cmd/, internal/ | <1m ago | satellite-corpus-integration |
 | docs | maturing | web/docs/ | 17d ago | — |
 | domains/chat | maturing | domains/chat/ | 11d ago | — |
 | domains/engineering | maturing | domains/engineering/ | 6d ago | — |
@@ -54,15 +54,15 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Recently completed (last 14 days)
 
 - **(unassigned)** — hero-code-host-broker-capabilities, code-host-broker-surfaces-and-conformance, github-pull-request-merge-broker, github-pull-request-state-transition-broker, github-pull-request-collaboration-broker, github-pull-request-create-broker, github-code-host-read-adapter, code-host-broker-v1-contract, code-host-integration-capability-model, windows-file-lock-cross-build, continuous-code-index-freshness
-- **core** — embeddings-never-refresh-on-commit
+- **core** — mail-3ab437af53c66997e94a0268
 
 ## Next up across surfaces
 
 1. **landing** — `hero-landing-page` (P0, delivering)
 2. **serve** — `hero-team-server` (P1, delivering)
-3. **core** — `mail-3ab437af53c66997e94a0268` (high, delivering)
-4. **core** — `satellite-corpus-integration` (high, delivering)
-5. **serve** — `agent-outposts` (medium, delivering)
+3. **core** — `satellite-corpus-integration` (high, delivering)
+4. **serve** — `agent-outposts` (medium, delivering)
+5. **serve** — `retrieval-contradiction-detection` (—, delivering)
 
 ## Open risks & blockers
 
