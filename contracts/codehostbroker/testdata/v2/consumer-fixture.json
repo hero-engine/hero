@@ -4590,6 +4590,11 @@
       "retry": "none"
     },
     {
+      "code": "sso_required",
+      "message": "bounded normalized fixture error",
+      "retry": "none"
+    },
+    {
       "code": "unsupported_provider",
       "message": "bounded normalized fixture error",
       "retry": "none"

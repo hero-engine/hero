@@ -636,3 +636,22 @@ func TestConfigurationFailureDoesNotLeakUnderlyingError(t *testing.T) {
 		t.Fatalf("configuration error leaked: %s", encoded)
 	}
 }
+
+func TestGitHubSSORequiredIsDistinctAndSafe(t *testing.T) {
+	header := http.Header{}
+	header.Set("X-GitHub-SSO", `required; url=https://github.com/orgs/acme/sso?authorization_request=secret`)
+
+	providerErr := (&githubTransport{}).httpError(http.StatusForbidden, header)
+	normalized := normalizeProviderError(providerErr)
+
+	if normalized.Code != codehostbroker.ErrorSSORequired {
+		t.Fatalf("code=%q", normalized.Code)
+	}
+	if normalized.Message != "GitHub requires this token to be authorized for the organization's SAML SSO" {
+		t.Fatalf("message=%q", normalized.Message)
+	}
+	if strings.Contains(normalized.Message, "authorization_request") ||
+		strings.Contains(normalized.Message, "github.com/orgs") {
+		t.Fatalf("SSO guidance leaked provider authorization URL: %q", normalized.Message)
+	}
+}

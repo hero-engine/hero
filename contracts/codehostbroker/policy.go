@@ -166,6 +166,7 @@ const (
 	ErrorCredentialUnavailable     = "credential_unavailable"
 	ErrorUnauthorized              = "unauthorized"
 	ErrorForbidden                 = "forbidden"
+	ErrorSSORequired               = "sso_required"
 	ErrorUnsupportedProvider       = "unsupported_provider"
 	ErrorUnsupportedOperation      = "unsupported_operation"
 	ErrorNotFound                  = "not_found"
@@ -195,6 +196,7 @@ var errorCodes = []string{
 	ErrorCredentialUnavailable,
 	ErrorUnauthorized,
 	ErrorForbidden,
+	ErrorSSORequired,
 	ErrorUnsupportedProvider,
 	ErrorUnsupportedOperation,
 	ErrorNotFound,

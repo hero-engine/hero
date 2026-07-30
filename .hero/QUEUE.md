@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-30T17:32:44Z · 82 ready specs_
+_Generated: 2026-07-30T17:36:30Z · 82 ready specs_
 
 ## code-host-authenticated-actor-mcp-schema-parity — "Authenticated-actor MCP schema incorrectly requires a pull request"
 _bug · delivering · horizon: now_

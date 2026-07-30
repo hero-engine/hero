@@ -414,7 +414,7 @@ func TestErrorAndRetryEnumsAreClosedAndFixtureComplete(t *testing.T) {
 	for _, contractError := range fixture.Errors {
 		codes[contractError.Code] = contractError.Retry
 	}
-	if len(codes) != 26 || !reflect.DeepEqual(sortedKeys(codes), sortedStrings(ErrorCodes())) {
+	if len(codes) != 27 || !reflect.DeepEqual(sortedKeys(codes), sortedStrings(ErrorCodes())) {
 		t.Fatalf("error inventory=%v", sortedKeys(codes))
 	}
 	if codes[ErrorRateLimited] != RetryAfter || codes[ErrorAmbiguousResult] != RetryReconcile || codes[ErrorStaleObservation] != RetryRefreshThenRetry {

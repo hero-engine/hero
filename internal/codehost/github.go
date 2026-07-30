@@ -291,6 +291,12 @@ func (t *githubTransport) httpError(status int, header http.Header) *providerErr
 		if header.Get("X-RateLimit-Remaining") == "0" {
 			code = codehostbroker.ErrorRateLimited
 			message = "GitHub rate limit was exhausted"
+		} else if strings.Contains(
+			strings.ToLower(header.Get("X-GitHub-SSO")),
+			"required",
+		) {
+			code = codehostbroker.ErrorSSORequired
+			message = "GitHub requires this token to be authorized for the organization's SAML SSO"
 		} else {
 			code = codehostbroker.ErrorForbidden
 		}
