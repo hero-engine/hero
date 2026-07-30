@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-30T15:58:23Z · projected from 610 source nodes_
+_Last refreshed: 2026-07-30T16:02:01Z · projected from 610 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | <1m ago | mail-3ab437af53c66997e94a0268 |
+| core | building | cmd/, internal/ | 4m ago | mail-3ab437af53c66997e94a0268 |
 | docs | maturing | web/docs/ | 17d ago | — |
 | domains/chat | maturing | domains/chat/ | 11d ago | — |
 | domains/engineering | maturing | domains/engineering/ | 6d ago | — |

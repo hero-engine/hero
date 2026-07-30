@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-30T15:58:23Z · 82 ready specs_
+_Generated: 2026-07-30T16:02:01Z · 82 ready specs_
 
 ## mail-3ab437af53c66997e94a0268 — "Jira attachment content is blocked by broker redirect policy"
 _bug · delivering · horizon: now_
