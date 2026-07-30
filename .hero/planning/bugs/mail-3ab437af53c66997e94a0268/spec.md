@@ -283,16 +283,23 @@ Validation performed:
 
 - compiled the complete `internal/tracker` and `internal/cli` test binaries;
 - ran both new regressions and the complete `internal/tracker` suite;
+- ran the complete `internal/cli` suite;
+- ran `go build ./...`;
+- ran `go test ./...`; every package passed except the unchanged
+  `internal/serve` package, where the pre-existing
+  `TestCodeHostMCPCanonicalFixtureParityAllOperations` fails on
+  `get_authenticated_actor` fixture parity;
 - ran `go vet ./...`;
 - ran `hero spec lint mail-3ab437af53c66997e94a0268`;
 - ran `git diff --check`.
 
-The host's macOS developer-tool classification blocked direct launch of newly
-linked binaries from Codex. The tracker tests were therefore launched through
-Apple's signed LLDB surface. The larger CLI test binary compiled cleanly but
-could not be runtime-launched through that host workaround; no CLI code changed,
-and every CLI/MCP caller continues to use the tested shared `Broker.Request`
-implementation.
+The host's macOS developer-tool classification initially blocked direct launch
+of newly linked binaries from Codex. Tests were assessed once through Apple's
+signed LLDB surface and then run normally. The complete CLI suite and every
+changed-package test pass. The sole repository-wide failure is outside this
+diff: `git diff f99496b..631608a -- internal/serve` is empty, while the failing
+test covers the code-host authenticated-actor fixture introduced at the
+baseline.
 
 ### Acceptance Criteria
 

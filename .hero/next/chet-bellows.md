@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-30T16:02:01Z
+updated: 2026-07-30T16:28:43Z
 repo: hero-engine/hero
 ---
 
@@ -14,11 +14,13 @@ repo: hero-engine/hero
 >   --project OWNER/REPOSITORY \
 >   --token-stdin
 
-_possibly stale — 2 commit(s) since, last set 1d 14h ago_
+_possibly stale — 3 commit(s) since, last set 1d 14h ago_
 
 ## Last user ask
 
 > Spec and deliver the Jira attachment redirect fix from handoff mail_3ab437af53c66997e94a0268
+
+_possibly stale — 1 commit(s) since, last set 1h 15m ago_
 
 ## Suggested next prompt
 

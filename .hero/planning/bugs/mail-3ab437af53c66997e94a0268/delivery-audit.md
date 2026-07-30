@@ -21,6 +21,6 @@
 
 ## Audit notes
 
-- The two focused regressions and complete `internal/tracker` suite passed, and both `internal/tracker` and `internal/cli` test binaries compiled. `go vet ./...`, spec lint (6/6), and `git diff --check` also passed.
-- Direct runtime execution of the larger CLI and full-repository test binaries was unavailable because macOS blocked newly linked binaries before Go runtime startup. This does not undermine the six acceptance criteria: no CLI code changed, the CLI/MCP adapters share the exercised `Broker.Request` path, and the complete changed package passed. It remains a transparent host-level validation limitation rather than a delivery blocker.
+- The two focused regressions, complete `internal/tracker` suite, and complete `internal/cli` suite passed. `go build ./...`, `go vet ./...`, spec lint (6/6), and `git diff --check` also passed.
+- A full `go test ./...` ran. Every package passed except unchanged `internal/serve`, where the pre-existing `TestCodeHostMCPCanonicalFixtureParityAllOperations` fixture-parity test fails on `get_authenticated_actor`. The audited diff does not touch `internal/serve` or the code-host fixture contract, so this baseline failure is not caused by or evidence against the Jira attachment delivery.
 - The diff is scoped to the four named tracker files plus the received handoff/spec and Hero-managed projections.
