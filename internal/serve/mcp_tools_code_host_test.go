@@ -118,6 +118,30 @@ func TestCodeHostMCPNestedSchemasAreClosedAndOperationSpecific(t *testing.T) {
 		[]string{"repository", "name", "sha"})
 }
 
+func TestCodeHostMCPAuthenticatedActorIsRepositoryScoped(t *testing.T) {
+	definitions := map[codehostbroker.Operation]ToolDefinition{}
+	for _, definition := range CodeHostToolDefinitions() {
+		operation := codehostbroker.Operation(strings.TrimPrefix(definition.Name, codeHostMCPToolPrefix))
+		definitions[operation] = definition
+	}
+
+	actorSchema := definitions[codehostbroker.OperationGetAuthenticatedActor].InputSchema
+	if _, ok := actorSchema.Properties["pull_request"]; ok {
+		t.Fatal("get_authenticated_actor schema accepts pull_request")
+	}
+	if !slices.Equal(actorSchema.Required, []string{"connection_id", "provider", "repository", "version"}) {
+		t.Fatalf("get_authenticated_actor required = %#v", actorSchema.Required)
+	}
+
+	pullRequestSchema := definitions[codehostbroker.OperationGetPullRequest].InputSchema
+	if _, ok := pullRequestSchema.Properties["pull_request"]; !ok {
+		t.Fatal("get_pull_request schema does not accept pull_request")
+	}
+	if !slices.Contains(pullRequestSchema.Required, "pull_request") {
+		t.Fatalf("get_pull_request required = %#v", pullRequestSchema.Required)
+	}
+}
+
 func TestCodeHostMCPDispatchForcesOperationAndReturnsOneStructuredContent(t *testing.T) {
 	server := NewMCPServer(t.TempDir(), t.TempDir(), "test")
 	const credentialCanary = "AUTHORIZATION-CANARY-DO-NOT-RETURN"

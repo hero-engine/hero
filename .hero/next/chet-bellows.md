@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-30T16:29:06Z
+updated: 2026-07-30T17:32:44Z
 repo: hero-engine/hero
 ---
 
@@ -14,21 +14,15 @@ repo: hero-engine/hero
 >   --project OWNER/REPOSITORY \
 >   --token-stdin
 
-_possibly stale — 4 commit(s) since, last set 1d 14h ago_
+_possibly stale — 5 commit(s) since, last set 1d 15h ago_
 
 ## Last user ask
 
-> Spec and deliver the Jira attachment redirect fix from handoff mail_3ab437af53c66997e94a0268
-
-_possibly stale — 2 commit(s) since, last set 1h 15m ago_
+> Diagnose the release-blocking get_authenticated_actor MCP canonical fixture parity mismatch and write a delivery-ready bug spec
 
 ## Suggested next prompt
 
-> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
-
-_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
-
-_Source: auto-derived from open feature — `hero next suggest "..."` to override._
+> Fix the pre-existing internal/serve get_authenticated_actor fixture-parity failure before the next tagged build
 
 ## Recent reflections
 

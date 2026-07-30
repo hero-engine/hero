@@ -122,6 +122,7 @@ func codeHostMCPInputSchema(operation codehostbroker.Operation, policy codehostb
 			Type: "array", Description: "Additional repository-qualified scopes",
 			Items: codeHostMCPRepositoryProperty(),
 		}
+	case codehostbroker.OperationGetAuthenticatedActor:
 	case codehostbroker.OperationListPullRequests, codehostbroker.OperationSearchPullRequests:
 		properties["repositories"] = PropSchema{
 			Type: "array", Description: "Additional repository-qualified scopes",

@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-30T16:29:06Z · projected from 610 source nodes_
+_Last refreshed: 2026-07-30T17:32:44Z · projected from 611 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | <1m ago | satellite-corpus-integration |
+| core | building | cmd/, internal/ | 1h ago | satellite-corpus-integration |
 | docs | maturing | web/docs/ | 17d ago | — |
-| domains/chat | maturing | domains/chat/ | 11d ago | — |
+| domains/chat | maturing | domains/chat/ | 12d ago | — |
 | domains/engineering | maturing | domains/engineering/ | 6d ago | — |
 | domains/pm | maturing | domains/pm/ | 12d ago | — |
 | domains/sales | maturing | domains/sales/ | 21d ago | — |
 | landing | building | web/landing/ | 18d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 6d ago | agent-outposts |
+| serve | building | internal/serve/ | 1m ago | code-host-authenticated-actor-mcp-schema-parity |
 | (unassigned) | — | — | — | 238 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -59,10 +59,10 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Next up across surfaces
 
 1. **landing** — `hero-landing-page` (P0, delivering)
-2. **serve** — `hero-team-server` (P1, delivering)
-3. **core** — `satellite-corpus-integration` (high, delivering)
-4. **serve** — `agent-outposts` (medium, delivering)
-5. **serve** — `retrieval-contradiction-detection` (—, delivering)
+2. **serve** — `code-host-authenticated-actor-mcp-schema-parity` (high, delivering)
+3. **serve** — `hero-team-server` (P1, delivering)
+4. **core** — `satellite-corpus-integration` (high, delivering)
+5. **serve** — `agent-outposts` (medium, delivering)
 
 ## Open risks & blockers
 
@@ -74,6 +74,6 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 205/443 (46%)
-- Projection generation: 1ms · Source nodes: 610
+- Specs covered: 206/444 (46%)
+- Projection generation: 1ms · Source nodes: 611
 

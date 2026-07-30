@@ -6,7 +6,26 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-30T16:29:06Z · 81 ready specs_
+_Generated: 2026-07-30T17:32:44Z · 82 ready specs_
+
+## code-host-authenticated-actor-mcp-schema-parity — "Authenticated-actor MCP schema incorrectly requires a pull request"
+_bug · delivering · horizon: now_
+
+Removes a false pull-request requirement from the repository-scoped
+`get_authenticated_actor` MCP tool so the v2 contract fixture and runtime agree.
+
+**Status:** delivering — implementation and release-prerequisite validation
+pass; the cold delivery audit is next.
+
+**Pick up at:** audit the isolated implementation diff, then run the Hero
+verification gate.
+
+→ `/deliver code-host-authenticated-actor-mcp-schema-parity`
+
+**Files:** `internal/serve/mcp_tools_code_host.go`, `internal/serve/mcp_tools_code_host_test.go`
+**Skip:** do not add a synthetic pull request or change the v2 fixture; actor identity is connection/repository scoped.
+
+---
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
