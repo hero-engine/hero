@@ -194,18 +194,17 @@ func TestCreateDuplicateConcurrentAndConflictingRetries(t *testing.T) {
 func TestCreateReconcilesLostAndCancelledResponses(t *testing.T) {
 	for name, scenario := range map[string]mockcodehost.Scenario{
 		"lost_response":         mockcodehost.CreateLostResponseScenario(),
-		"cancelled_after_apply": mockcodehost.CreateCancelledAfterApplyScenario(500 * time.Millisecond),
+		"cancelled_after_apply": mockcodehost.CreateCancelledAfterApplyScenario(cancelAfterApplyResponseDelay),
 	} {
 		t.Run(name, func(t *testing.T) {
 			fixture, fake, broker := createTestBroker(t, scenario, "acme/widgets")
 			request := preparedCreateRequest(t, fixture, broker, fixture.repository("acme/widgets"), name)
-			ctx := context.Background()
-			var cancel context.CancelFunc
+			var response codehostbroker.Response
 			if name == "cancelled_after_apply" {
-				ctx, cancel = context.WithTimeout(ctx, 150*time.Millisecond)
-				defer cancel()
+				response = executeThenCancelAfterAttempt(t, broker, request, fake.CreateAttempts)
+			} else {
+				response = broker.Execute(context.Background(), request)
 			}
-			response := broker.Execute(ctx, request)
 			requireValidResponse(t, response)
 			if response.Error != nil || response.Reconciliation == nil ||
 				response.Reconciliation.Status != codehostbroker.ReconciliationReconciledApplied ||

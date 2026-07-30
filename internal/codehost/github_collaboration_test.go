@@ -241,11 +241,9 @@ func TestCollaborationLostDelayedAmbiguousAndCancelledResponses(t *testing.T) {
 
 	for _, operation := range collaborationOperations {
 		t.Run("cancel_after_"+string(operation), func(t *testing.T) {
-			afterFixture, afterFake, afterBroker := createTestBroker(t, mockcodehost.CollaborationCancelledAfterApplyScenario(500*time.Millisecond), "acme/widgets")
+			afterFixture, afterFake, afterBroker := createTestBroker(t, mockcodehost.CollaborationCancelledAfterApplyScenario(cancelAfterApplyResponseDelay), "acme/widgets")
 			after := preparedCollaborationRequest(t, afterFixture, afterBroker, operation, "cancel-after-"+string(operation), collaborationBodyCanary)
-			afterCtx, afterCancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
-			defer afterCancel()
-			afterResponse := afterBroker.Execute(afterCtx, after)
+			afterResponse := executeThenCancelAfterAttempt(t, afterBroker, after, afterFake.CollaborationAttempts)
 			requireValidResponse(t, afterResponse)
 			if afterResponse.Error != nil || afterResponse.Reconciliation == nil ||
 				afterResponse.Reconciliation.Status != codehostbroker.ReconciliationReconciledApplied ||

@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-30T17:42:15Z
+updated: 2026-07-30T18:09:02Z
 repo: hero-engine/hero
 ---
 
@@ -14,13 +14,11 @@ repo: hero-engine/hero
 >   --project OWNER/REPOSITORY \
 >   --token-stdin
 
-_possibly stale — 8 commit(s) since, last set 1d 16h ago_
+_possibly stale — 9 commit(s) since, last set 1d 16h ago_
 
 ## Last user ask
 
-> Diagnose the release-blocking get_authenticated_actor MCP canonical fixture parity mismatch and write a delivery-ready bug spec
-
-_possibly stale — 2 commit(s) since, last set 16m ago_
+> Diagnose the release-blocking flaky internal/codehost cancellation test failure from GitHub Actions release run 30568093164 at v0.31.0: TestCollaborationLostDelayedAmbiguousAndCancelledResponses/cancel_after_approve returned typed deadline-exceeded with attempts=0 instead of cancellation/reconciliation behavior; write a complete deliverable bug spec only, no implementation.
 
 ## Suggested next prompt
 

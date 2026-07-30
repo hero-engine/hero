@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-30T17:42:15Z · projected from 611 source nodes_
+_Last refreshed: 2026-07-30T18:09:02Z · projected from 612 source nodes_
 
 ## Surfaces
 
@@ -16,8 +16,8 @@ _Last refreshed: 2026-07-30T17:42:15Z · projected from 611 source nodes_
 | domains/sales | maturing | domains/sales/ | 21d ago | — |
 | landing | building | web/landing/ | 18d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | <1m ago | agent-outposts |
-| (unassigned) | — | — | — | 238 specs without surface |
+| serve | building | internal/serve/ | 27m ago | agent-outposts |
+| (unassigned) | — | — | — | 239 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
 
@@ -60,21 +60,21 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Next up across surfaces
 
 1. **landing** — `hero-landing-page` (P0, delivering)
-2. **serve** — `hero-team-server` (P1, delivering)
-3. **core** — `satellite-corpus-integration` (high, delivering)
-4. **serve** — `agent-outposts` (medium, delivering)
-5. **serve** — `retrieval-contradiction-detection` (—, delivering)
+2. **(unassigned)** — `code-host-cancel-after-apply-test-timing` (high, delivering)
+3. **serve** — `hero-team-server` (P1, delivering)
+4. **core** — `satellite-corpus-integration` (high, delivering)
+5. **serve** — `agent-outposts` (medium, delivering)
 
 ## Open risks & blockers
 
 - **Blocked specs (13):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection); `wire-checks-to-boundaries` (waits on spec-contract-enums-unified).
 - **Stale-in-flight (6):** `hero-landing-page` (72d), `hero-team-server` (72d), `retrieval-contradiction-detection` (20d), `agent-outposts` (18d), `satellite-corpus-integration` (18d), `team-connect` (18d).
 - **Aged open bugs (9):** `install-target-emits-both-claude-and-agents-md` (open 76d), `next-project-file-conflict-not-regenerated` (open 57d), `desktop-sidebar-mcp-not-running` (open 56d), `hihcp-agent-loop-error-recovery` (open 51d), `hihcp-agents-md-harness-agnostic` (open 51d), `hihcp-mcp-auto-reconnect` (open 51d), `hihcp-mcp-first-turn-readiness` (open 51d), `hihcp-permission-bridge-validation` (open 51d), `hihcp-rgignore` (open 51d).
-- **Unassigned specs (238) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
+- **Unassigned specs (239) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 206/444 (46%)
-- Projection generation: 1ms · Source nodes: 611
+- Specs covered: 206/445 (46%)
+- Projection generation: 1ms · Source nodes: 612
 

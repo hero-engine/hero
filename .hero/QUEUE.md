@@ -6,7 +6,33 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-30T17:42:15Z · 81 ready specs_
+_Generated: 2026-07-30T18:09:03Z · 82 ready specs_
+
+## code-host-cancel-after-apply-test-timing — "Code-host cancel-after-apply tests race provider dispatch"
+_bug · delivering · horizon: now_
+
+Makes code-host cancel-after-apply coverage synchronize on the fake provider's
+observed write instead of assuming preflight completes within 100–150 ms.
+
+**Status:** delivering — deterministic synchronization is implemented and all
+validation passes; the cold delivery audit is next.
+
+**Pick up at:** audit the isolated test-only implementation, then run Hero's
+verification gate.
+
+→ `/deliver code-host-cancel-after-apply-test-timing`
+
+**Files:** `internal/codehost/github_create_test.go`,
+`internal/codehost/github_collaboration_test.go`,
+`internal/codehost/github_state_test.go`,
+`internal/codehost/github_merge_test.go`, and a shared
+`internal/codehost/*_test.go` helper if useful.
+
+**Skip:** do not weaken cancellation/reconciliation assertions or change
+production broker behavior; the broker correctly returns a pre-dispatch
+deadline error when the context expires before a provider write.
+
+---
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_

@@ -325,11 +325,9 @@ func TestStateTransitionLostAmbiguousDelayedAndCancellation(t *testing.T) {
 		})
 
 		t.Run("cancel_after_"+string(operation), func(t *testing.T) {
-			fixture, fake, broker := createTestBroker(t, mockcodehost.StateCancelledAfterApplyScenario(string(operation), 500*time.Millisecond), "acme/widgets")
+			fixture, fake, broker := createTestBroker(t, mockcodehost.StateCancelledAfterApplyScenario(string(operation), cancelAfterApplyResponseDelay), "acme/widgets")
 			request := preparedStateTransitionRequest(t, fixture, broker, operation, "state-cancel-after-"+string(operation))
-			ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
-			defer cancel()
-			response := broker.Execute(ctx, request)
+			response := executeThenCancelAfterAttempt(t, broker, request, fake.StateAttempts)
 			requireValidResponse(t, response)
 			if response.Error != nil || response.Reconciliation == nil ||
 				response.Reconciliation.Status != codehostbroker.ReconciliationReconciledApplied ||

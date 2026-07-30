@@ -6,7 +6,6 @@ import (
 	"slices"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/hero-engine/hero/contracts/codehostbroker"
 	"github.com/hero-engine/hero/internal/mockcodehost"
@@ -309,11 +308,9 @@ func TestMergeAmbiguityCancellationAndIdempotencyConflictRemainBounded(t *testin
 		t.Fatalf("ambiguous retry dispatched %d merges", fake.MergeAttempts())
 	}
 
-	cancelFixture, cancelFake, cancelBroker := createTestBroker(t, mockcodehost.MergeCancelledAfterApplyScenario(500*time.Millisecond), "acme/widgets")
+	cancelFixture, cancelFake, cancelBroker := createTestBroker(t, mockcodehost.MergeCancelledAfterApplyScenario(cancelAfterApplyResponseDelay), "acme/widgets")
 	cancelRequest := preparedMergeRequest(t, cancelFixture, cancelBroker, "cancelled")
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-	defer cancel()
-	cancelResponse := cancelBroker.Execute(ctx, cancelRequest)
+	cancelResponse := executeThenCancelAfterAttempt(t, cancelBroker, cancelRequest, cancelFake.MergeAttempts)
 	requireValidResponse(t, cancelResponse)
 	if cancelResponse.Error != nil || cancelResponse.Reconciliation == nil ||
 		cancelResponse.Reconciliation.Status != codehostbroker.ReconciliationReconciledApplied ||
