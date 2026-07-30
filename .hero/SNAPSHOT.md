@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-30T06:57:40Z · projected from 608 source nodes_
+_Last refreshed: 2026-07-30T15:58:23Z · projected from 610 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 2d ago | satellite-corpus-integration |
+| core | building | cmd/, internal/ | <1m ago | mail-3ab437af53c66997e94a0268 |
 | docs | maturing | web/docs/ | 17d ago | — |
 | domains/chat | maturing | domains/chat/ | 11d ago | — |
 | domains/engineering | maturing | domains/engineering/ | 6d ago | — |
@@ -60,9 +60,9 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 1. **landing** — `hero-landing-page` (P0, delivering)
 2. **serve** — `hero-team-server` (P1, delivering)
-3. **core** — `satellite-corpus-integration` (high, delivering)
-4. **serve** — `agent-outposts` (medium, delivering)
-5. **serve** — `retrieval-contradiction-detection` (—, delivering)
+3. **core** — `mail-3ab437af53c66997e94a0268` (high, delivering)
+4. **core** — `satellite-corpus-integration` (high, delivering)
+5. **serve** — `agent-outposts` (medium, delivering)
 
 ## Open risks & blockers
 
@@ -74,6 +74,6 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 204/442 (46%)
-- Projection generation: 1ms · Source nodes: 608
+- Specs covered: 205/443 (46%)
+- Projection generation: 1ms · Source nodes: 610
 

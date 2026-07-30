@@ -514,3 +514,4 @@
 {"ts":"2026-07-28T05:01:07.331418Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"code-host-broker-surfaces-and-conformance","message":"status -\u003e completed"}
 {"ts":"2026-07-28T05:01:09.045061Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-code-host-broker-capabilities","message":"\"Code Host Broker Capabilities — Hero-owned PR lifecycle boundary\""}
 {"ts":"2026-07-28T05:01:09.045146Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-code-host-broker-capabilities","message":"status -\u003e completed"}
+{"ts":"2026-07-30T14:48:02.387975Z","type":"mail.promote","agent":"hero-mail","slug":"mail-3ab437af53c66997e94a0268","message":"promote mail_3ab437af53c66997e94a0268 (thread mail_3ab437af53c66997e94a0268)"}

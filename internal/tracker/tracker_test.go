@@ -1,15 +1,19 @@
 package tracker
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -759,6 +763,96 @@ func TestJira_GetIssueEvidence_FullFieldsCommentsAndAttachment(t *testing.T) {
 	}
 	if _, err := j.DownloadEvidenceAttachment(srv.URL + ".evil.example/attachment/9"); err == nil {
 		t.Fatal("lookalike attachment host was not rejected")
+	}
+}
+
+func TestJiraDownloadEvidenceAttachmentNormalizesAndEnforcesRedirectBoundary(t *testing.T) {
+	var mediaCalls, originCalls int32
+	media := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&mediaCalls, 1)
+		fmt.Fprint(w, "media-host-body")
+	}))
+	defer media.Close()
+
+	var origin *httptest.Server
+	origin = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&originCalls, 1)
+		switch r.URL.Path {
+		case "/rest/api/3/attachment/content/9":
+			if r.URL.Query().Get("redirect") != "false" {
+				t.Errorf("attachment redirect query = %q", r.URL.RawQuery)
+			}
+			if user, token, ok := r.BasicAuth(); !ok || user != "user@example.com" || token != "test-token" {
+				t.Errorf("attachment auth = %q/%q ok=%t", user, token, ok)
+			}
+			w.Write([]byte{1, 2, 3})
+		case "/rest/api/3/attachment/content/10":
+			if r.URL.Query().Get("redirect") != "false" {
+				t.Errorf("cross-origin attachment redirect query = %q", r.URL.RawQuery)
+			}
+			http.Redirect(w, r, media.URL+"/attachment/10", http.StatusSeeOther)
+		case "/rest/api/3/attachment/content/11":
+			http.Redirect(w, r, "/attachment/final", http.StatusFound)
+		case "/attachment/final":
+			if user, token, ok := r.BasicAuth(); !ok || user != "user@example.com" || token != "test-token" {
+				t.Errorf("redirected attachment auth = %q/%q ok=%t", user, token, ok)
+			}
+			w.Write([]byte{4, 5, 6})
+		case "/rest/api/3/attachment/content/12":
+			http.Redirect(w, r, "/rest/api/3/attachment/content/12", http.StatusFound)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer origin.Close()
+
+	j, err := newJira("MORPH", "test-token", "user@example.com", origin.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := j.DownloadEvidenceAttachmentContext(
+		context.Background(),
+		origin.URL+"/rest/api/3/attachment/content/9?redirect=true",
+	)
+	if err != nil || !slices.Equal(data, []byte{1, 2, 3}) {
+		t.Fatalf("normalized attachment data=%v err=%v", data, err)
+	}
+
+	beforeRedirect := atomic.LoadInt32(&originCalls)
+	if _, err := j.DownloadEvidenceAttachment(
+		origin.URL + "/rest/api/3/attachment/content/10",
+	); !errors.Is(err, errJiraAttachmentCrossOriginRedirect) {
+		t.Fatalf("cross-origin redirect error = %v", err)
+	}
+	if got := atomic.LoadInt32(&mediaCalls); got != 0 {
+		t.Fatalf("cross-origin redirect contacted media host %d time(s)", got)
+	}
+	if got := atomic.LoadInt32(&originCalls) - beforeRedirect; got != 1 {
+		t.Fatalf("cross-origin source calls = %d, want 1", got)
+	}
+
+	data, err = j.DownloadEvidenceAttachment(
+		origin.URL + "/rest/api/3/attachment/content/11",
+	)
+	if err != nil || !slices.Equal(data, []byte{4, 5, 6}) {
+		t.Fatalf("same-origin redirect data=%v err=%v", data, err)
+	}
+
+	beforeLimit := atomic.LoadInt32(&originCalls)
+	if _, err := j.DownloadEvidenceAttachment(
+		origin.URL + "/rest/api/3/attachment/content/12",
+	); !errors.Is(err, errJiraAttachmentRedirectLimit) {
+		t.Fatalf("redirect-limit error = %v", err)
+	}
+	if got := atomic.LoadInt32(&originCalls) - beforeLimit; got != maxBrokerRedirects {
+		t.Fatalf("redirect-loop calls = %d, want %d", got, maxBrokerRedirects)
+	}
+
+	if _, err := j.DownloadEvidenceAttachment(media.URL + "/attachment/initial"); err == nil {
+		t.Fatal("initial cross-origin attachment URL was accepted")
+	}
+	if got := atomic.LoadInt32(&mediaCalls); got != 0 {
+		t.Fatalf("initial cross-origin URL contacted media host %d time(s)", got)
 	}
 }
 

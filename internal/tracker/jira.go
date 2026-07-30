@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -16,6 +17,13 @@ import (
 
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/spec"
+)
+
+const jiraAttachmentContentPathPrefix = "/rest/api/3/attachment/content/"
+
+var (
+	errJiraAttachmentCrossOriginRedirect = errors.New("cross-origin Jira attachment redirect rejected")
+	errJiraAttachmentRedirectLimit       = errors.New("Jira attachment redirect limit exceeded")
 )
 
 // jira implements the Tracker interface for Jira (Cloud or Server).
@@ -831,16 +839,34 @@ func (j *jira) DownloadEvidenceAttachmentContext(ctx context.Context, contentURL
 	if err != nil {
 		return nil, fmt.Errorf("parsing configured Jira URL: %w", err)
 	}
-	if !strings.EqualFold(attachmentURL.Scheme, configuredURL.Scheme) || !strings.EqualFold(attachmentURL.Host, configuredURL.Host) {
+	if !sameOrigin(attachmentURL, configuredURL) {
 		return nil, fmt.Errorf("refusing attachment URL outside configured Jira host")
 	}
+	normalizeJiraAttachmentContentURL(attachmentURL)
 	req, err := http.NewRequestWithContext(ctx, "GET", attachmentURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
 	j.setHeaders(req)
-	resp, err := j.client.Do(req)
+	client := *j.client
+	client.CheckRedirect = func(next *http.Request, via []*http.Request) error {
+		if len(via) >= maxBrokerRedirects {
+			return errJiraAttachmentRedirectLimit
+		}
+		if !sameOrigin(next.URL, configuredURL) {
+			return errJiraAttachmentCrossOriginRedirect
+		}
+		j.setHeaders(next)
+		return nil
+	}
+	resp, err := client.Do(req)
 	if err != nil {
+		if errors.Is(err, errJiraAttachmentCrossOriginRedirect) {
+			return nil, fmt.Errorf("downloading Jira attachment: %w", errJiraAttachmentCrossOriginRedirect)
+		}
+		if errors.Is(err, errJiraAttachmentRedirectLimit) {
+			return nil, fmt.Errorf("downloading Jira attachment: %w", errJiraAttachmentRedirectLimit)
+		}
 		return nil, fmt.Errorf("downloading Jira attachment: %w", err)
 	}
 	defer resp.Body.Close()
@@ -848,6 +874,21 @@ func (j *jira) DownloadEvidenceAttachmentContext(ctx context.Context, contentURL
 		return nil, fmt.Errorf("Jira attachment returned %d", resp.StatusCode)
 	}
 	return io.ReadAll(resp.Body)
+}
+
+func normalizeJiraAttachmentContentURL(target *url.URL) bool {
+	if target == nil || !isJiraAttachmentContentPath(target.Path) {
+		return false
+	}
+	query := target.Query()
+	query.Set("redirect", "false")
+	target.RawQuery = query.Encode()
+	return true
+}
+
+func isJiraAttachmentContentPath(path string) bool {
+	id := strings.TrimPrefix(path, jiraAttachmentContentPathPrefix)
+	return id != path && id != "" && !strings.Contains(id, "/")
 }
 
 // parseIssueRaw parses a raw Jira issue JSON object into an Issue.

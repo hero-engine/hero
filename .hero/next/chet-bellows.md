@@ -1,18 +1,24 @@
 ---
 user: chet-bellows
-updated: 2026-07-29T01:37:32Z
+updated: 2026-07-30T15:58:23Z
 repo: hero-engine/hero
 ---
 
 # chet-bellows's handoff
 
-## Last user ask
+## Session goal
 
-> so quick question on our cli here - for github connect - sample say - hero connect github \
+> Session opened with — so quick question on our cli here - for github connect - sample say - hero connect github \
 >   --integration-id github-code-host \
 >   --role code-host \
 >   --project OWNER/REPOSITORY \
 >   --token-stdin
+
+_possibly stale — 1 commit(s) since, last set 1d 14h ago_
+
+## Last user ask
+
+> Spec and deliver the Jira attachment redirect fix from handoff mail_3ab437af53c66997e94a0268
 
 ## Suggested next prompt
 

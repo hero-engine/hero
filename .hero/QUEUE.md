@@ -6,7 +6,28 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-30T06:57:41Z · 81 ready specs_
+_Generated: 2026-07-30T15:58:23Z · 82 ready specs_
+
+## mail-3ab437af53c66997e94a0268 — "Jira attachment content is blocked by broker redirect policy"
+_bug · delivering · horizon: now_
+
+Make Jira attachment bodies readable through Hero without weakening the
+same-origin credential boundary.
+
+**Status:** delivering — the shared normalizer, broker integration, typed
+redirect boundary, and regressions are implemented. Both focused regressions
+and the complete tracker package pass; repository-wide vet and compile checks
+are clean.
+
+**Pick up at:** commit the implementation, run the cold delivery audit, address
+any findings, and complete the `hero spec verify` gate.
+
+→ `/deliver mail-3ab437af53c66997e94a0268`
+
+**Files:** `internal/tracker/broker.go`, `internal/tracker/jira.go`, `internal/tracker/broker_test.go`, `internal/tracker/tracker_test.go`
+**Skip:** do not allowlist Jira media hosts or forward credentials across origins.
+
+---
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_

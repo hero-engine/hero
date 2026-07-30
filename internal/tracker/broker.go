@@ -350,6 +350,9 @@ func (b *Broker) Request(ctx context.Context, in brokercontract.RequestRequest) 
 	if err != nil {
 		return finishResponse(failResponse(resp, "unsafe_request", redact.apply(err.Error()), false), start, b.now)
 	}
+	if r.connection.Provider == "jira" && method == http.MethodGet {
+		normalizeJiraAttachmentContentURL(target)
+	}
 	if err := validateCallerHeaders(in.Headers); err != nil {
 		return finishResponse(failResponse(resp, "unsafe_headers", err.Error(), false), start, b.now)
 	}

@@ -375,6 +375,81 @@ func TestBrokerRequestRejectsOriginAndHeaderConfusionBeforeSend(t *testing.T) {
 	}
 }
 
+func TestBrokerRequestNormalizesJiraAttachmentContentWithoutWeakeningRedirectBoundary(t *testing.T) {
+	var mediaCalls int32
+	media := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&mediaCalls, 1)
+		fmt.Fprint(w, "media-host-body")
+	}))
+	defer media.Close()
+
+	var observedMethod, observedRedirect string
+	origin := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		observedMethod = r.Method
+		observedRedirect = r.URL.Query().Get("redirect")
+		switch r.URL.Path {
+		case "/rest/api/3/attachment/content/9":
+			if observedRedirect != "false" {
+				http.Redirect(w, r, media.URL+"/attachment/9", http.StatusSeeOther)
+				return
+			}
+			fmt.Fprint(w, "attachment-body")
+		case "/rest/api/3/attachment/content/10":
+			http.Redirect(w, r, media.URL+"/attachment/10", http.StatusSeeOther)
+		case "/rest/api/3/attachment/content/11":
+			fmt.Fprint(w, "observed")
+		default:
+			fmt.Fprint(w, "unrelated")
+		}
+	}))
+	defer origin.Close()
+
+	jiraBroker := testBroker(brokerTestConfig("jira", "P", origin.URL))
+	success := jiraBroker.Request(context.Background(), brokercontract.RequestRequest{
+		Method:       "GET",
+		RelativePath: "/rest/api/3/attachment/content/9",
+		Query:        map[string][]string{"redirect": {"true"}},
+	})
+	if success.Error != nil || success.Body != "attachment-body" ||
+		observedMethod != http.MethodGet || observedRedirect != "false" {
+		t.Fatalf("normalized Jira attachment response=%+v method=%q redirect=%q", success, observedMethod, observedRedirect)
+	}
+
+	redirected := jiraBroker.Request(context.Background(), brokercontract.RequestRequest{
+		Method:       "GET",
+		RelativePath: "/rest/api/3/attachment/content/10",
+	})
+	if redirected.Error == nil || redirected.Error.Code != "unsafe_redirect" ||
+		observedRedirect != "false" || atomic.LoadInt32(&mediaCalls) != 0 {
+		t.Fatalf("redirected response=%+v redirect=%q media_calls=%d", redirected, observedRedirect, mediaCalls)
+	}
+
+	unrelated := jiraBroker.Request(context.Background(), brokercontract.RequestRequest{
+		Method: "GET", RelativePath: "/unrelated",
+		Query: map[string][]string{"redirect": {"true"}},
+	})
+	if unrelated.Error != nil || observedRedirect != "true" {
+		t.Fatalf("unrelated Jira request=%+v redirect=%q", unrelated, observedRedirect)
+	}
+
+	write := jiraBroker.Request(context.Background(), brokercontract.RequestRequest{
+		Method: "POST", RelativePath: "/rest/api/3/attachment/content/11",
+		Query: map[string][]string{"redirect": {"true"}},
+	})
+	if write.Error != nil || observedMethod != http.MethodPost || observedRedirect != "true" {
+		t.Fatalf("non-GET Jira request=%+v method=%q redirect=%q", write, observedMethod, observedRedirect)
+	}
+
+	github := testBroker(brokerTestConfig("github", "owner/repo", origin.URL))
+	otherProvider := github.Request(context.Background(), brokercontract.RequestRequest{
+		Method: "GET", RelativePath: "/rest/api/3/attachment/content/11",
+		Query: map[string][]string{"redirect": {"true"}},
+	})
+	if otherProvider.Error != nil || observedRedirect != "true" {
+		t.Fatalf("non-Jira request=%+v redirect=%q", otherProvider, observedRedirect)
+	}
+}
+
 func TestBrokerRequestCancellationAndNonIdempotentSingleAttempt(t *testing.T) {
 	var calls int32
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
