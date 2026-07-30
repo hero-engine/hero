@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-const Version = "code-host-broker/v1"
+const Version = "code-host-broker/v2"
 
 type Operation string
 
@@ -156,13 +156,25 @@ type DiffHunk struct {
 	Patch  string `json:"patch"`
 }
 
+type DiffContentAvailability string
+
+const (
+	DiffContentText            DiffContentAvailability = "text"
+	DiffContentProviderOmitted DiffContentAvailability = "provider_omitted"
+	DiffContentBinary          DiffContentAvailability = "binary"
+	DiffContentGenerated       DiffContentAvailability = "generated"
+	DiffContentTruncated       DiffContentAvailability = "truncated"
+	DiffContentUnknown         DiffContentAvailability = "unknown"
+)
+
 type DiffFile struct {
-	Path      string     `json:"path"`
-	Status    string     `json:"status"`
-	Additions int        `json:"additions"`
-	Deletions int        `json:"deletions"`
-	Hunks     []DiffHunk `json:"hunks"`
-	Truncated bool       `json:"truncated"`
+	Path                string                  `json:"path"`
+	Status              string                  `json:"status"`
+	Additions           int                     `json:"additions"`
+	Deletions           int                     `json:"deletions"`
+	Hunks               []DiffHunk              `json:"hunks"`
+	Truncated           bool                    `json:"truncated"`
+	ContentAvailability DiffContentAvailability `json:"content_availability"`
 }
 
 type Check struct {
@@ -471,11 +483,11 @@ type ConsumerFixtureBundle struct {
 	UnknownFields map[string]json.RawMessage `json:"future_additive"`
 }
 
-//go:embed testdata/v1/consumer-fixture.json testdata/v1/consumer-fixture.sha256
+//go:embed testdata/v2/consumer-fixture.json testdata/v2/consumer-fixture.sha256
 var fixtures embed.FS
 
 func ConsumerFixture() ([]byte, error) {
-	b, err := fixtures.ReadFile("testdata/v1/consumer-fixture.json")
+	b, err := fixtures.ReadFile("testdata/v2/consumer-fixture.json")
 	if err != nil {
 		return nil, err
 	}
@@ -483,7 +495,7 @@ func ConsumerFixture() ([]byte, error) {
 }
 
 func ConsumerFixtureDigest() (string, error) {
-	b, err := fixtures.ReadFile("testdata/v1/consumer-fixture.sha256")
+	b, err := fixtures.ReadFile("testdata/v2/consumer-fixture.sha256")
 	if err != nil {
 		return "", err
 	}

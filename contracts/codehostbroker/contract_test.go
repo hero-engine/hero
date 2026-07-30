@@ -451,7 +451,7 @@ func TestFixtureIsByteStableAndMatchesPublishedDigest(t *testing.T) {
 	}
 }
 
-func TestUnknownAdditiveFieldsDecodeAndMajorVersionFailsClosed(t *testing.T) {
+func TestUnknownAdditiveFieldsDecodeAndPriorVersionFailsClosed(t *testing.T) {
 	data, err := ConsumerFixture()
 	if err != nil {
 		t.Fatal(err)
@@ -479,9 +479,14 @@ func TestUnknownAdditiveFieldsDecodeAndMajorVersionFailsClosed(t *testing.T) {
 		t.Fatalf("known capabilities=%d unknown=%d", knownCapabilities, unknownCapabilities)
 	}
 	request := mustFixture(t).Cases[0].Request
-	request.Version = "code-host-broker/v2"
+	request.Version = "code-host-broker/v1"
 	if contractErr := ValidateRequest(request); contractErr == nil || contractErr.Code != ErrorIncompatibleVersion {
 		t.Fatalf("version error=%v", contractErr)
+	}
+	response := mustFixture(t).Cases[0].Response
+	response.Version = "code-host-broker/v1"
+	if contractErr := ValidateResponse(response); contractErr == nil || contractErr.Code != ErrorIncompatibleVersion {
+		t.Fatalf("response version error=%v", contractErr)
 	}
 }
 
@@ -533,7 +538,9 @@ func TestOperationSpecificResultsRejectInvalidShapesAndBounds(t *testing.T) {
 		t.Fatalf("diff file bound error=%v", err)
 	}
 	diff.Result, _ = json.Marshal(DiffResult{Files: []DiffFile{{
-		Path: "file.go", Status: "modified", Hunks: make([]DiffHunk, MaxDiffHunks+1),
+		Path: "file.go", Status: "modified",
+		Hunks:               make([]DiffHunk, MaxDiffHunks+1),
+		ContentAvailability: DiffContentText,
 	}}})
 	if err := ValidateResponse(diff); err == nil || err.Code != ErrorInputTooLarge {
 		t.Fatalf("diff hunk bound error=%v", err)
@@ -1012,7 +1019,8 @@ func decodeIndependentConsumerResult(operation string, raw json.RawMessage) erro
 					Header string `json:"header"`
 					Patch  string `json:"patch"`
 				} `json:"hunks"`
-				Truncated bool `json:"truncated"`
+				Truncated           bool   `json:"truncated"`
+				ContentAvailability string `json:"content_availability"`
 			} `json:"files"`
 		}
 		return strictConsumerDecode(raw, &value)

@@ -17,7 +17,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	directory := filepath.Join("testdata", "v1")
+	directory := filepath.Join("testdata", "v2")
 	if err := os.MkdirAll(directory, 0o755); err != nil {
 		panic(err)
 	}

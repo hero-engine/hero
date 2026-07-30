@@ -831,14 +831,22 @@ func (g *githubAdapter) getDiff(ctx context.Context, request codehostbroker.Requ
 
 func normalizeDiffFile(item githubDiffFile, totalHunks, totalBytes *int) (codehostbroker.DiffFile, bool) {
 	file := codehostbroker.DiffFile{
-		Path:      boundedText(item.Filename, 4096),
-		Status:    boundedText(item.Status, 64),
-		Additions: max(item.Additions, 0),
-		Deletions: max(item.Deletions, 0),
-		Hunks:     []codehostbroker.DiffHunk{},
+		Path:                boundedText(item.Filename, 4096),
+		Status:              boundedText(item.Status, 64),
+		Additions:           max(item.Additions, 0),
+		Deletions:           max(item.Deletions, 0),
+		Hunks:               []codehostbroker.DiffHunk{},
+		ContentAvailability: codehostbroker.DiffContentUnknown,
+	}
+	if item.Patch == nil {
+		file.ContentAvailability = codehostbroker.DiffContentProviderOmitted
+		return file, false
+	}
+	if *item.Patch != "" {
+		file.ContentAvailability = codehostbroker.DiffContentText
 	}
 	truncated := false
-	for _, hunk := range splitPatch(item.Patch) {
+	for _, hunk := range splitPatch(*item.Patch) {
 		if *totalHunks >= codehostbroker.MaxDiffHunks {
 			truncated = true
 			break
@@ -861,12 +869,15 @@ func normalizeDiffFile(item githubDiffFile, totalHunks, totalBytes *int) (codeho
 		}
 	}
 	file.Truncated = truncated
+	if truncated {
+		file.ContentAvailability = codehostbroker.DiffContentTruncated
+	}
 	return file, truncated
 }
 
 func splitPatch(patch string) []codehostbroker.DiffHunk {
 	if patch == "" {
-		return []codehostbroker.DiffHunk{{Header: "@@ unavailable @@", Patch: ""}}
+		return nil
 	}
 	lines := strings.SplitAfter(patch, "\n")
 	hunks := []codehostbroker.DiffHunk{}

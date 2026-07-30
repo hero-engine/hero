@@ -1,8 +1,8 @@
-# Hero Code code-host broker v1 handoff
+# Hero Code code-host broker v2 handoff
 
 Hero owns provider credentials, connection selection, authorization, bounded
 provider calls, normalization, mutation journaling, and reconciliation. Hero
-Code sends and receives only `code-host-broker/v1` JSON. It must never persist
+Code sends and receives only `code-host-broker/v2` JSON. It must never persist
 or request a GitHub token and must not invoke `gh` or GitHub directly.
 
 ## Contract discovery
@@ -18,7 +18,7 @@ The command writes exactly one JSON object:
 
 ```json
 {
-  "version": "code-host-broker/v1",
+  "version": "code-host-broker/v2",
   "sha256": "<canonical fixture sha256>",
   "bounds": {},
   "policies": [],
@@ -27,14 +27,14 @@ The command writes exactly one JSON object:
 ```
 
 `fixture` is a JSON string so its decoded UTF-8 bytes are byte-for-byte equal
-to `contracts/codehostbroker/testdata/v1/consumer-fixture.json`. Hash those
+to `contracts/codehostbroker/testdata/v2/consumer-fixture.json`. Hash those
 decoded bytes and require an exact match with `sha256` before running decoder
 fixtures. `policies` is the authoritative ordered operation registry and
-`bounds` is the shared v1 bound set. Do not infer effect, consent, freshness,
+`bounds` is the shared v2 bound set. Do not infer effect, consent, freshness,
 idempotency, or reconciliation requirements from operation names.
 
 The current canonical fixture SHA-256 is
-`e66a8d5643dce518db66a5e20b2a39be1ac5766b464f2f1244c05ff6a8b43edb`.
+`03fd8c7a412751e795c07a4e21ceced6077fbfd5ced3026df77cdaf47de574ae`.
 
 ## CLI transport
 
@@ -51,13 +51,13 @@ the broker or reaching a provider. Provider tokens, authorization headers,
 request bodies, review text, and other content fields are not CLI flags or
 positional arguments.
 
-Known-operation input failures are returned as normalized v1 JSON on stdout.
+Known-operation input failures are returned as normalized v2 JSON on stdout.
 Process stderr is diagnostic only and is never a contract transport.
 Cancellation of the caller context propagates into Hero's provider request.
 
 ## MCP transport for chat-driven use
 
-Hero's MCP server advertises exactly twenty v1 tools, one for each
+Hero's MCP server advertises exactly twenty-one v2 tools, one for each
 authoritative operation:
 
 ```text
@@ -84,7 +84,7 @@ operations are open-world. An annotation is not proof of semantic consent and
 does not replace Hero Code's permission mode.
 
 A tool call returns exactly one MCP text content item. The text is exactly one
-structured `code-host-broker/v1` JSON envelope: `Response` for a read or
+structured `code-host-broker/v2` JSON envelope: `Response` for a read or
 execution and `PreparationResponse` for mutation preparation. Decode and
 validate that JSON as the contract result; do not scrape prose or treat MCP
 transport errors as provider results.
@@ -102,7 +102,7 @@ hero code-host broker comment --prepare < request.json > preparation.json
 
 ```json
 {
-  "version": "code-host-broker/v1",
+  "version": "code-host-broker/v2",
   "operation": "comment",
   "capability_revision": "<revision>",
   "observation_revision": "<revision>",
@@ -124,7 +124,7 @@ Read operations reject `--prepare`. A preparation result is observation
 material, not user authorization. Hero Code must still enforce the policy's
 consent requirement and its own execution permission mode before the separate
 mutation call. `merge` is a `commitment` requiring `explicit_acceptance`; the
-other v1 mutations require `explicit_user`.
+other v2 mutations require `explicit_user`.
 
 ## Retry and reconciliation
 
@@ -135,7 +135,7 @@ Treat `externally_completed`, `reconciled_applied`, and `replayed` as distinct
 successful outcomes. Unknown additive fields and unknown advertised
 capabilities remain inert but decodable.
 
-Queue submission is not supported by the GitHub v1 adapter. A queue-required
+Queue submission is not supported by the GitHub v2 adapter. A queue-required
 repository advertises merge unavailable and Hero performs no direct merge.
 
 ## Vendoring
@@ -143,7 +143,7 @@ repository advertises merge unavailable and Hero performs no direct merge.
 Hero Code's release-pinned fixture destination is:
 
 ```text
-packages/hero-swift/Tests/HeroSharedApplicationTests/Fixtures/CodeHost/code-host-broker-v1.json
+packages/hero-swift/Tests/HeroSharedApplicationTests/Fixtures/CodeHost/code-host-broker-contract-v2.json
 ```
 
 From the Hero Code repository root, use the released or clean locally built
@@ -152,9 +152,9 @@ Hero binary to copy and verify the exact decoded bytes:
 ```bash
 contract_tmp="$(mktemp)"
 hero code-host contract > "$contract_tmp"
-jq -jr '.fixture' "$contract_tmp" > packages/hero-swift/Tests/HeroSharedApplicationTests/Fixtures/CodeHost/code-host-broker-v1.json
+jq -jr '.fixture' "$contract_tmp" > packages/hero-swift/Tests/HeroSharedApplicationTests/Fixtures/CodeHost/code-host-broker-contract-v2.json
 expected="$(jq -r '.sha256' "$contract_tmp")"
-actual="$(shasum -a 256 packages/hero-swift/Tests/HeroSharedApplicationTests/Fixtures/CodeHost/code-host-broker-v1.json | awk '{print $1}')"
+actual="$(shasum -a 256 packages/hero-swift/Tests/HeroSharedApplicationTests/Fixtures/CodeHost/code-host-broker-contract-v2.json | awk '{print $1}')"
 test "$actual" = "$expected"
 ```
 

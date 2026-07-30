@@ -194,7 +194,48 @@ func fixtureResult(operation Operation, pullRequest PullRequest) any {
 	case OperationGetCommits:
 		return CommitsResult{Commits: []Commit{{SHA: pullRequest.Head.SHA, Message: redactedFixtureText, Author: pullRequest.Author}}}
 	case OperationGetDiff:
-		return map[string]any{"files": []DiffFile{{Path: "contracts/codehostbroker/contract.go", Status: "modified", Additions: 1, Hunks: []DiffHunk{{Header: "@@ -1 +1 @@", Patch: "+fixture"}}, Truncated: true}}}
+		return map[string]any{"files": []DiffFile{
+			{
+				Path:                "text.go",
+				Status:              "modified",
+				Additions:           1,
+				Deletions:           1,
+				Hunks:               []DiffHunk{{Header: "@@ -1 +1 @@", Patch: "-old\n+new"}},
+				ContentAvailability: DiffContentText,
+			},
+			{
+				Path:                "provider-omitted.dat",
+				Status:              "modified",
+				Hunks:               []DiffHunk{},
+				ContentAvailability: DiffContentProviderOmitted,
+			},
+			{
+				Path:                "binary.dat",
+				Status:              "modified",
+				Hunks:               []DiffHunk{},
+				ContentAvailability: DiffContentBinary,
+			},
+			{
+				Path:                "generated.go",
+				Status:              "modified",
+				Hunks:               []DiffHunk{},
+				ContentAvailability: DiffContentGenerated,
+			},
+			{
+				Path:                "unknown.dat",
+				Status:              "modified",
+				Hunks:               []DiffHunk{},
+				ContentAvailability: DiffContentUnknown,
+			},
+			{
+				Path:                "truncated.go",
+				Status:              "modified",
+				Additions:           1,
+				Hunks:               []DiffHunk{{Header: "@@ -1 +1 @@", Patch: "+partial"}},
+				Truncated:           true,
+				ContentAvailability: DiffContentTruncated,
+			},
+		}}
 	case OperationGetChecks:
 		return ChecksResult{Checks: []Check{
 			{ProviderID: "check-1", Name: "available", Status: "completed", Conclusion: "success", Availability: AvailabilityAvailable},

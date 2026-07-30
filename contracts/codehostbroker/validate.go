@@ -527,8 +527,16 @@ func validateOperationResult(operation Operation, raw json.RawMessage, bounds Bo
 		for i, file := range result.Files {
 			hunks += len(file.Hunks)
 			if file.Path == "" || tooLong(file.Path, 4096) || file.Status == "" || tooLong(file.Status, 64) ||
-				file.Additions < 0 || file.Deletions < 0 {
+				file.Additions < 0 || file.Deletions < 0 || !validDiffContentAvailability(file.ContentAvailability) {
 				return invalid(fmt.Sprintf("result.files.%d", i), "diff file is incomplete, negative, or unbounded")
+			}
+			if file.ContentAvailability == DiffContentText && len(file.Hunks) == 0 {
+				return invalid(fmt.Sprintf("result.files.%d.content_availability", i), "text diff content requires at least one hunk")
+			}
+			if file.ContentAvailability != DiffContentText &&
+				file.ContentAvailability != DiffContentTruncated &&
+				len(file.Hunks) != 0 {
+				return invalid(fmt.Sprintf("result.files.%d.hunks", i), "non-text diff content cannot publish hunks")
 			}
 			for j, hunk := range file.Hunks {
 				if hunk.Header == "" || tooLong(hunk.Header, bounds.TextBytes) || tooLong(hunk.Patch, bounds.DiffBytes) {
@@ -905,6 +913,17 @@ func validCompleteness(value Completeness) bool {
 
 func validAvailability(value Availability) bool {
 	return containsString([]Availability{AvailabilityAvailable, AvailabilityPartial, AvailabilityUnavailable, AvailabilityUnknown}, value)
+}
+
+func validDiffContentAvailability(value DiffContentAvailability) bool {
+	return containsString([]DiffContentAvailability{
+		DiffContentText,
+		DiffContentProviderOmitted,
+		DiffContentBinary,
+		DiffContentGenerated,
+		DiffContentTruncated,
+		DiffContentUnknown,
+	}, value)
 }
 
 func validReconciliation(value ReconciliationStatus) bool {

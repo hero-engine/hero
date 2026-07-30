@@ -1,5 +1,5 @@
 {
-  "version": "code-host-broker/v1",
+  "version": "code-host-broker/v2",
   "operations": [
     {
       "policy": {
@@ -654,7 +654,7 @@
     {
       "name": "capabilities",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "capabilities",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -667,7 +667,7 @@
         }
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "capabilities",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -1395,7 +1395,7 @@
     {
       "name": "get_authenticated_actor",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "get_authenticated_actor",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -1408,7 +1408,7 @@
         }
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "get_authenticated_actor",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -1490,7 +1490,7 @@
     {
       "name": "list_pull_requests",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "list_pull_requests",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -1506,7 +1506,7 @@
         "limit": 25
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "list_pull_requests",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -1574,7 +1574,7 @@
         "page": {
           "limit": 25,
           "count": 1,
-          "next_cursor": "eyJtYXRlcmlhbCI6eyJ2ZXJzaW9uIjoiY29kZS1ob3N0LWJyb2tlci92MSIsInByb3ZpZGVyIjoiZ2l0aHViIiwiY29ubmVjdGlvbl9pZCI6ImdpdGh1Yi1jb2RlLWhvc3QiLCJyZXBvc2l0b3JpZXMiOlt7Imhvc3QiOiJnaXRodWIuY29tIiwicHJvdmlkZXJfaWQiOiJSX2hlcm8iLCJvd25lciI6Imhlcm8tZW5naW5lIiwibmFtZSI6Imhlcm8iLCJmdWxsX25hbWUiOiJoZXJvLWVuZ2luZS9oZXJvIn1dLCJvcGVyYXRpb24iOiJsaXN0X3B1bGxfcmVxdWVzdHMiLCJxdWVyeSI6InN0YXRlOm9wZW4iLCJvcmRlciI6InVwZGF0ZWRfZGVzYyIsInBvc2l0aW9uIjoicGFnZS0yIn0sImZpbmdlcnByaW50IjoiY3Vyc29yOmFhMjAxNmEwNjA1ZWM0ODZjYzA1ZjllODc5MDNiNWQ2YmVjZmQyOWE3NzcwMWJkOTMwMWVjNjEwNTAwZjgwNjMifQ"
+          "next_cursor": "eyJtYXRlcmlhbCI6eyJ2ZXJzaW9uIjoiY29kZS1ob3N0LWJyb2tlci92MiIsInByb3ZpZGVyIjoiZ2l0aHViIiwiY29ubmVjdGlvbl9pZCI6ImdpdGh1Yi1jb2RlLWhvc3QiLCJyZXBvc2l0b3JpZXMiOlt7Imhvc3QiOiJnaXRodWIuY29tIiwicHJvdmlkZXJfaWQiOiJSX2hlcm8iLCJvd25lciI6Imhlcm8tZW5naW5lIiwibmFtZSI6Imhlcm8iLCJmdWxsX25hbWUiOiJoZXJvLWVuZ2luZS9oZXJvIn1dLCJvcGVyYXRpb24iOiJsaXN0X3B1bGxfcmVxdWVzdHMiLCJxdWVyeSI6InN0YXRlOm9wZW4iLCJvcmRlciI6InVwZGF0ZWRfZGVzYyIsInBvc2l0aW9uIjoicGFnZS0yIn0sImZpbmdlcnByaW50IjoiY3Vyc29yOmY0NmY4YmY3ODhlNzUyYTE0ODRmODE1NmZmZmU3NjVjYjA3M2U4OGRjMmYwODQ1YWEwYjMyM2MzZmIzZTJmN2MifQ"
         },
         "partial_failures": [],
         "result": {
@@ -1638,7 +1638,7 @@
     {
       "name": "search_pull_requests",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "search_pull_requests",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -1654,7 +1654,7 @@
         "limit": 25
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "search_pull_requests",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -1722,7 +1722,7 @@
         "page": {
           "limit": 25,
           "count": 1,
-          "next_cursor": "eyJtYXRlcmlhbCI6eyJ2ZXJzaW9uIjoiY29kZS1ob3N0LWJyb2tlci92MSIsInByb3ZpZGVyIjoiZ2l0aHViIiwiY29ubmVjdGlvbl9pZCI6ImdpdGh1Yi1jb2RlLWhvc3QiLCJyZXBvc2l0b3JpZXMiOlt7Imhvc3QiOiJnaXRodWIuY29tIiwicHJvdmlkZXJfaWQiOiJSX2hlcm8iLCJvd25lciI6Imhlcm8tZW5naW5lIiwibmFtZSI6Imhlcm8iLCJmdWxsX25hbWUiOiJoZXJvLWVuZ2luZS9oZXJvIn1dLCJvcGVyYXRpb24iOiJzZWFyY2hfcHVsbF9yZXF1ZXN0cyIsInF1ZXJ5Ijoic3RhdGU6b3BlbiIsIm9yZGVyIjoidXBkYXRlZF9kZXNjIiwicG9zaXRpb24iOiJwYWdlLTIifSwiZmluZ2VycHJpbnQiOiJjdXJzb3I6MTg4OWEzYTVkMjE0Mjk5YjAxM2Q2MzliY2Y5NWEyZTE4NGUwMWZkZTczOTAzYmI3ZjczOTJiMjkyY2E0YjE4ZSJ9"
+          "next_cursor": "eyJtYXRlcmlhbCI6eyJ2ZXJzaW9uIjoiY29kZS1ob3N0LWJyb2tlci92MiIsInByb3ZpZGVyIjoiZ2l0aHViIiwiY29ubmVjdGlvbl9pZCI6ImdpdGh1Yi1jb2RlLWhvc3QiLCJyZXBvc2l0b3JpZXMiOlt7Imhvc3QiOiJnaXRodWIuY29tIiwicHJvdmlkZXJfaWQiOiJSX2hlcm8iLCJvd25lciI6Imhlcm8tZW5naW5lIiwibmFtZSI6Imhlcm8iLCJmdWxsX25hbWUiOiJoZXJvLWVuZ2luZS9oZXJvIn1dLCJvcGVyYXRpb24iOiJzZWFyY2hfcHVsbF9yZXF1ZXN0cyIsInF1ZXJ5Ijoic3RhdGU6b3BlbiIsIm9yZGVyIjoidXBkYXRlZF9kZXNjIiwicG9zaXRpb24iOiJwYWdlLTIifSwiZmluZ2VycHJpbnQiOiJjdXJzb3I6YjYzOTEzNjNjMDZiYmQ1YmIyY2FjMjg1ZjZiYzJmZjQyMjE5ZGIwZDA2MjAzNTA0NDgzZDllNDViM2EwMjJiZiJ9"
         },
         "partial_failures": [],
         "result": {
@@ -1786,7 +1786,7 @@
     {
       "name": "get_pull_request",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "get_pull_request",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -1811,7 +1811,7 @@
         }
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "get_pull_request",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -1934,7 +1934,7 @@
     {
       "name": "get_commits",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "get_commits",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -1959,7 +1959,7 @@
         }
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "get_commits",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -2027,7 +2027,7 @@
         "page": {
           "limit": 25,
           "count": 1,
-          "next_cursor": "eyJtYXRlcmlhbCI6eyJ2ZXJzaW9uIjoiY29kZS1ob3N0LWJyb2tlci92MSIsInByb3ZpZGVyIjoiZ2l0aHViIiwiY29ubmVjdGlvbl9pZCI6ImdpdGh1Yi1jb2RlLWhvc3QiLCJyZXBvc2l0b3JpZXMiOlt7Imhvc3QiOiJnaXRodWIuY29tIiwicHJvdmlkZXJfaWQiOiJSX2hlcm8iLCJvd25lciI6Imhlcm8tZW5naW5lIiwibmFtZSI6Imhlcm8iLCJmdWxsX25hbWUiOiJoZXJvLWVuZ2luZS9oZXJvIn1dLCJvcGVyYXRpb24iOiJnZXRfY29tbWl0cyIsInF1ZXJ5IjoiIiwib3JkZXIiOiIiLCJwb3NpdGlvbiI6InBhZ2UtMiJ9LCJmaW5nZXJwcmludCI6ImN1cnNvcjo2ZDI4NTRiMGY3NGM1ZGI2MWUzZjZmNjRkNmNjNTA4MGE0YzA5M2ZkMGRkZDI4Y2JmMjYyY2RhZDIzZGEyNWQwIn0"
+          "next_cursor": "eyJtYXRlcmlhbCI6eyJ2ZXJzaW9uIjoiY29kZS1ob3N0LWJyb2tlci92MiIsInByb3ZpZGVyIjoiZ2l0aHViIiwiY29ubmVjdGlvbl9pZCI6ImdpdGh1Yi1jb2RlLWhvc3QiLCJyZXBvc2l0b3JpZXMiOlt7Imhvc3QiOiJnaXRodWIuY29tIiwicHJvdmlkZXJfaWQiOiJSX2hlcm8iLCJvd25lciI6Imhlcm8tZW5naW5lIiwibmFtZSI6Imhlcm8iLCJmdWxsX25hbWUiOiJoZXJvLWVuZ2luZS9oZXJvIn1dLCJvcGVyYXRpb24iOiJnZXRfY29tbWl0cyIsInF1ZXJ5IjoiIiwib3JkZXIiOiIiLCJwb3NpdGlvbiI6InBhZ2UtMiJ9LCJmaW5nZXJwcmludCI6ImN1cnNvcjo2MDAwMjdjOTc0ZDZlYWZlNTQxM2M2NWE1OWNkMjhhZDc4YTE2ZDhlZmU1M2UzOTlmZTk5ZmFjYjI3YzQ5ODcwIn0"
         },
         "partial_failures": [],
         "result": {
@@ -2052,7 +2052,7 @@
     {
       "name": "get_diff",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "get_diff",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -2077,7 +2077,7 @@
         }
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "get_diff",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -2146,17 +2146,68 @@
         "result": {
           "files": [
             {
-              "path": "contracts/codehostbroker/contract.go",
+              "path": "text.go",
+              "status": "modified",
+              "additions": 1,
+              "deletions": 1,
+              "hunks": [
+                {
+                  "header": "@@ -1 +1 @@",
+                  "patch": "-old\n+new"
+                }
+              ],
+              "truncated": false,
+              "content_availability": "text"
+            },
+            {
+              "path": "provider-omitted.dat",
+              "status": "modified",
+              "additions": 0,
+              "deletions": 0,
+              "hunks": [],
+              "truncated": false,
+              "content_availability": "provider_omitted"
+            },
+            {
+              "path": "binary.dat",
+              "status": "modified",
+              "additions": 0,
+              "deletions": 0,
+              "hunks": [],
+              "truncated": false,
+              "content_availability": "binary"
+            },
+            {
+              "path": "generated.go",
+              "status": "modified",
+              "additions": 0,
+              "deletions": 0,
+              "hunks": [],
+              "truncated": false,
+              "content_availability": "generated"
+            },
+            {
+              "path": "unknown.dat",
+              "status": "modified",
+              "additions": 0,
+              "deletions": 0,
+              "hunks": [],
+              "truncated": false,
+              "content_availability": "unknown"
+            },
+            {
+              "path": "truncated.go",
               "status": "modified",
               "additions": 1,
               "deletions": 0,
               "hunks": [
                 {
                   "header": "@@ -1 +1 @@",
-                  "patch": "+fixture"
+                  "patch": "+partial"
                 }
               ],
-              "truncated": true
+              "truncated": true,
+              "content_availability": "truncated"
             }
           ]
         },
@@ -2170,7 +2221,7 @@
     {
       "name": "get_checks",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "get_checks",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -2195,7 +2246,7 @@
         }
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "get_checks",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -2306,7 +2357,7 @@
     {
       "name": "get_reviews",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "get_reviews",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -2331,7 +2382,7 @@
         }
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "get_reviews",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -2414,7 +2465,7 @@
     {
       "name": "get_comments",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "get_comments",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -2439,7 +2490,7 @@
         }
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "get_comments",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -2531,7 +2582,7 @@
     {
       "name": "get_merge_readiness",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "get_merge_readiness",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -2556,7 +2607,7 @@
         }
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "get_merge_readiness",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -2644,7 +2695,7 @@
     {
       "name": "create_pull_request",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "create_pull_request",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -2690,7 +2741,7 @@
         }
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "create_pull_request",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -2825,7 +2876,7 @@
     {
       "name": "comment",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "comment",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -2860,7 +2911,7 @@
         }
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "comment",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -2999,7 +3050,7 @@
     {
       "name": "submit_review",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "submit_review",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -3034,7 +3085,7 @@
         }
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "submit_review",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -3173,7 +3224,7 @@
     {
       "name": "approve",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "approve",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -3208,7 +3259,7 @@
         }
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "approve",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -3347,7 +3398,7 @@
     {
       "name": "request_changes",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "request_changes",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -3382,7 +3433,7 @@
         }
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "request_changes",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -3521,7 +3572,7 @@
     {
       "name": "mark_ready",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "mark_ready",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -3555,7 +3606,7 @@
         }
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "mark_ready",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -3693,7 +3744,7 @@
     {
       "name": "retarget",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "retarget",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -3749,7 +3800,7 @@
         }
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "retarget",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -3887,7 +3938,7 @@
     {
       "name": "close",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "close",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -3921,7 +3972,7 @@
         }
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "close",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -4059,7 +4110,7 @@
     {
       "name": "reopen",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "reopen",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -4093,7 +4144,7 @@
         }
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "reopen",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -4231,7 +4282,7 @@
     {
       "name": "merge",
       "request": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "merge",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -4279,7 +4330,7 @@
         }
       },
       "response": {
-        "version": "code-host-broker/v1",
+        "version": "code-host-broker/v2",
         "operation": "merge",
         "provider": "github",
         "connection_id": "github-code-host",
@@ -4427,70 +4478,70 @@
   ],
   "preparations": [
     {
-      "version": "code-host-broker/v1",
+      "version": "code-host-broker/v2",
       "operation": "create_pull_request",
       "capability_revision": "cap:fixture",
       "observation_revision": "obs:fixture",
       "error": null
     },
     {
-      "version": "code-host-broker/v1",
+      "version": "code-host-broker/v2",
       "operation": "comment",
       "capability_revision": "cap:fixture",
       "observation_revision": "obs:fixture",
       "error": null
     },
     {
-      "version": "code-host-broker/v1",
+      "version": "code-host-broker/v2",
       "operation": "submit_review",
       "capability_revision": "cap:fixture",
       "observation_revision": "obs:fixture",
       "error": null
     },
     {
-      "version": "code-host-broker/v1",
+      "version": "code-host-broker/v2",
       "operation": "approve",
       "capability_revision": "cap:fixture",
       "observation_revision": "obs:fixture",
       "error": null
     },
     {
-      "version": "code-host-broker/v1",
+      "version": "code-host-broker/v2",
       "operation": "request_changes",
       "capability_revision": "cap:fixture",
       "observation_revision": "obs:fixture",
       "error": null
     },
     {
-      "version": "code-host-broker/v1",
+      "version": "code-host-broker/v2",
       "operation": "mark_ready",
       "capability_revision": "cap:fixture",
       "observation_revision": "obs:fixture",
       "error": null
     },
     {
-      "version": "code-host-broker/v1",
+      "version": "code-host-broker/v2",
       "operation": "retarget",
       "capability_revision": "cap:fixture",
       "observation_revision": "obs:fixture",
       "error": null
     },
     {
-      "version": "code-host-broker/v1",
+      "version": "code-host-broker/v2",
       "operation": "close",
       "capability_revision": "cap:fixture",
       "observation_revision": "obs:fixture",
       "error": null
     },
     {
-      "version": "code-host-broker/v1",
+      "version": "code-host-broker/v2",
       "operation": "reopen",
       "capability_revision": "cap:fixture",
       "observation_revision": "obs:fixture",
       "error": null
     },
     {
-      "version": "code-host-broker/v1",
+      "version": "code-host-broker/v2",
       "operation": "merge",
       "capability_revision": "cap:fixture",
       "observation_revision": "obs:fixture",

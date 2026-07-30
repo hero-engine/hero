@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-30T06:03:24Z · projected from 608 source nodes_
+_Last refreshed: 2026-07-30T06:57:40Z · projected from 608 source nodes_
 
 ## Surfaces
 
@@ -67,7 +67,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Open risks & blockers
 
 - **Blocked specs (13):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection); `wire-checks-to-boundaries` (waits on spec-contract-enums-unified).
-- **Stale-in-flight (6):** `hero-landing-page` (72d), `hero-team-server` (72d), `retrieval-contradiction-detection` (19d), `agent-outposts` (18d), `satellite-corpus-integration` (18d), `team-connect` (18d).
+- **Stale-in-flight (6):** `hero-landing-page` (72d), `hero-team-server` (72d), `retrieval-contradiction-detection` (20d), `agent-outposts` (18d), `satellite-corpus-integration` (18d), `team-connect` (18d).
 - **Aged open bugs (9):** `install-target-emits-both-claude-and-agents-md` (open 76d), `next-project-file-conflict-not-regenerated` (open 57d), `desktop-sidebar-mcp-not-running` (open 56d), `hihcp-agent-loop-error-recovery` (open 51d), `hihcp-agents-md-harness-agnostic` (open 51d), `hihcp-mcp-auto-reconnect` (open 51d), `hihcp-mcp-first-turn-readiness` (open 51d), `hihcp-permission-bridge-validation` (open 51d), `hihcp-rgignore` (open 51d).
 - **Unassigned specs (238) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 

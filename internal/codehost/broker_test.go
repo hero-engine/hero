@@ -90,7 +90,7 @@ func TestListAndSearchUseConfiguredRepositoryScopeAndOpaqueCursor(t *testing.T) 
 	}
 	versionMismatch := request
 	versionMismatch.Cursor = response.Page.NextCursor
-	versionMismatch.Version = "code-host-broker/v2"
+	versionMismatch.Version = "code-host-broker/v1"
 	rejected = broker.Execute(context.Background(), versionMismatch)
 	if rejected.Error == nil || rejected.Error.Code != codehostbroker.ErrorCursorMismatch {
 		t.Fatalf("cursor version mismatch response=%+v", rejected.Error)
@@ -216,6 +216,36 @@ func TestCommitAndDiffBoundsAreExplicit(t *testing.T) {
 	decodeResult(t, diff, &diffResult)
 	if len(diffResult.Files) == 0 || len(diffResult.Files) > codehostbroker.MaxDiffFiles || len(diff.Result) > codehostbroker.MaxDiffBytes {
 		t.Fatalf("diff files=%d bytes=%d", len(diffResult.Files), len(diff.Result))
+	}
+	if diffResult.Files[len(diffResult.Files)-1].ContentAvailability != codehostbroker.DiffContentTruncated {
+		t.Fatalf("bounded diff availability=%q", diffResult.Files[len(diffResult.Files)-1].ContentAvailability)
+	}
+}
+
+func TestGitHubDiffNormalizationPreservesAvailabilityAndSeparatedHunks(t *testing.T) {
+	patch := "@@ -1 +1 @@\n-old\n+new"
+	totalHunks, totalBytes := 0, 0
+	text, truncated := normalizeDiffFile(githubDiffFile{
+		Filename: "file.go",
+		Status:   "modified",
+		Patch:    &patch,
+	}, &totalHunks, &totalBytes)
+	if truncated || text.Truncated || text.ContentAvailability != codehostbroker.DiffContentText ||
+		len(text.Hunks) != 1 || text.Hunks[0].Header != "@@ -1 +1 @@" ||
+		text.Hunks[0].Patch != "-old\n+new" {
+		t.Fatalf("text diff=%+v truncated=%t", text, truncated)
+	}
+
+	totalHunks, totalBytes = 0, 0
+	omitted, truncated := normalizeDiffFile(githubDiffFile{
+		Filename: "unknown.dat",
+		Status:   "modified",
+		Patch:    nil,
+	}, &totalHunks, &totalBytes)
+	if truncated || omitted.Truncated ||
+		omitted.ContentAvailability != codehostbroker.DiffContentProviderOmitted ||
+		len(omitted.Hunks) != 0 {
+		t.Fatalf("omitted diff=%+v truncated=%t", omitted, truncated)
 	}
 }
 

@@ -519,6 +519,7 @@ func boundAdapterResult(operation codehostbroker.Operation, out adapterResult, b
 		for resultSize(result) > limit && len(result.Files) > 0 {
 			last := len(result.Files) - 1
 			result.Files[last].Truncated = true
+			result.Files[last].ContentAvailability = codehostbroker.DiffContentTruncated
 			hunks := result.Files[last].Hunks
 			if len(hunks) > 0 {
 				hunk := &result.Files[last].Hunks[len(hunks)-1]
