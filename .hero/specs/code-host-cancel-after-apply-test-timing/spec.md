@@ -2,7 +2,7 @@
 title: "Code-host cancel-after-apply tests race provider dispatch"
 slug: code-host-cancel-after-apply-test-timing
 type: bug
-status: delivering
+status: completed
 diagnosis_status: diagnosed
 domain: engineering
 priority: high
@@ -15,6 +15,7 @@ relations:
   - target: code-host-broker-github-adapter
     kind: related
 delivery_method: manual
+completed_at: 2026-07-30T18:12:15Z
 ---
 
 # Code-host cancel-after-apply tests race provider dispatch

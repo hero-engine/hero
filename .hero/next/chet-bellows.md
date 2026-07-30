@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-30T18:11:11Z
+updated: 2026-07-30T18:12:28Z
 repo: hero-engine/hero
 ---
 
@@ -14,11 +14,13 @@ repo: hero-engine/hero
 >   --project OWNER/REPOSITORY \
 >   --token-stdin
 
-_possibly stale — 10 commit(s) since, last set 1d 16h ago_
+_possibly stale — 11 commit(s) since, last set 1d 16h ago_
 
 ## Last user ask
 
 > Diagnose the release-blocking flaky internal/codehost cancellation test failure from GitHub Actions release run 30568093164 at v0.31.0: TestCollaborationLostDelayedAmbiguousAndCancelledResponses/cancel_after_approve returned typed deadline-exceeded with attempts=0 instead of cancellation/reconciliation behavior; write a complete deliverable bug spec only, no implementation.
+
+_possibly stale — 1 commit(s) since, last set 13m ago_
 
 ## Suggested next prompt
 

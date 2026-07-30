@@ -519,3 +519,5 @@
 {"ts":"2026-07-30T16:28:51.67313Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"mail-3ab437af53c66997e94a0268","message":"status -\u003e completed"}
 {"ts":"2026-07-30T17:41:46.499372Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"code-host-authenticated-actor-mcp-schema-parity","message":"\"Authenticated-actor MCP schema incorrectly requires a pull request\""}
 {"ts":"2026-07-30T17:41:46.499508Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"code-host-authenticated-actor-mcp-schema-parity","message":"status -\u003e completed"}
+{"ts":"2026-07-30T18:12:16.964498Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"code-host-cancel-after-apply-test-timing","message":"\"Code-host cancel-after-apply tests race provider dispatch\""}
+{"ts":"2026-07-30T18:12:16.964598Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"code-host-cancel-after-apply-test-timing","message":"status -\u003e completed"}
