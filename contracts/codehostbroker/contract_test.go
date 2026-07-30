@@ -12,7 +12,7 @@ import (
 
 func TestOperationRegistryIsCompleteAndAuthoritative(t *testing.T) {
 	operations := Operations()
-	if len(operations) != 20 {
+	if len(operations) != 21 {
 		t.Fatalf("operation count=%d", len(operations))
 	}
 	seen := map[Operation]bool{}
@@ -150,7 +150,7 @@ func TestCanonicalFixtureCoversAndValidatesEveryOperation(t *testing.T) {
 			invalidationResults[fixtureCase.Request.Operation] = true
 		}
 	}
-	if len(seen) != 20 || len(statuses) != 7 || len(actorResults) != 4 || len(invalidationResults) != 4 || !hasStaleResponse {
+	if len(seen) != len(Operations()) || len(statuses) != 7 || len(actorResults) != 4 || len(invalidationResults) != 4 || !hasStaleResponse {
 		t.Fatalf("coverage operations=%d reconciliation=%v actors=%v invalidations=%v stale=%t", len(seen), statuses, actorResults, invalidationResults, hasStaleResponse)
 	}
 	if len(fixture.Errors) != len(ErrorCodes()) || len(fixture.UnknownFields) == 0 {
@@ -462,7 +462,7 @@ func TestUnknownAdditiveFieldsDecodeAndMajorVersionFailsClosed(t *testing.T) {
 			Name string `json:"name"`
 		} `json:"cases"`
 	}
-	if err := json.Unmarshal(data, &known); err != nil || known.Version != Version || len(known.Cases) != 20 {
+	if err := json.Unmarshal(data, &known); err != nil || known.Version != Version || len(known.Cases) != len(Operations()) {
 		t.Fatalf("known decode=%+v err=%v", known, err)
 	}
 	fixture := mustFixture(t)
@@ -475,7 +475,7 @@ func TestUnknownAdditiveFieldsDecodeAndMajorVersionFailsClosed(t *testing.T) {
 			unknownCapabilities++
 		}
 	}
-	if knownCapabilities != 20 || unknownCapabilities != 1 {
+	if knownCapabilities != len(Operations()) || unknownCapabilities != 1 {
 		t.Fatalf("known capabilities=%d unknown=%d", knownCapabilities, unknownCapabilities)
 	}
 	request := mustFixture(t).Cases[0].Request
@@ -590,27 +590,27 @@ func TestMutationResponsesRequireReconciliationAndExactRetry(t *testing.T) {
 }
 
 func TestEveryPublishedBoundHasEnforcementEvidence(t *testing.T) {
-	request := mustFixture(t).Cases[1].Request
+	request := mustRequest(t, OperationGetAuthenticatedActor)
 	request.Repositories = make([]RepositoryIdentity, MaxRepositoryScopes)
 	if err := ValidateRequest(request); err == nil || err.Code != ErrorInputTooLarge {
 		t.Fatalf("primary plus %d additional repository scopes accepted: %v", MaxRepositoryScopes, err)
 	}
-	request = mustFixture(t).Cases[1].Request
+	request = mustRequest(t, OperationGetAuthenticatedActor)
 	request.Limit = MaxPageSize + 1
 	if err := ValidateRequest(request); err == nil {
 		t.Fatal("page size bound accepted")
 	}
-	request = mustFixture(t).Cases[1].Request
+	request = mustRequest(t, OperationGetAuthenticatedActor)
 	request.Query = strings.Repeat("x", MaxTextBytes+1)
 	if err := ValidateRequest(request); err == nil || err.Code != ErrorInputTooLarge {
 		t.Fatalf("text bound error=%v", err)
 	}
-	request = mustFixture(t).Cases[10].Request
+	request = mustRequest(t, OperationCreatePullRequest)
 	request.Payload = json.RawMessage(`"` + strings.Repeat("x", MaxBodyBytes+1) + `"`)
 	if err := ValidateRequest(request); err == nil || err.Code != ErrorInputTooLarge {
 		t.Fatalf("body bound error=%v", err)
 	}
-	request = mustFixture(t).Cases[10].Request
+	request = mustRequest(t, OperationCreatePullRequest)
 	request.IdempotencyKey = strings.Repeat("x", MaxIdempotencyBytes+1)
 	if err := ValidateRequest(request); err == nil {
 		t.Fatal("idempotency bound accepted")
@@ -763,7 +763,7 @@ func TestFixtureDecodesWithIndependentConsumerShapes(t *testing.T) {
 	if err := json.Unmarshal(data, &consumer); err != nil {
 		t.Fatal(err)
 	}
-	if consumer.Version != Version || len(consumer.Operations) != 21 || len(consumer.Cases) != 20 {
+	if consumer.Version != Version || len(consumer.Operations) != len(Operations())+1 || len(consumer.Cases) != len(Operations()) {
 		t.Fatalf("independent decoder inventory=%+v", consumer)
 	}
 	for _, fixtureCase := range consumer.Cases {
@@ -856,6 +856,17 @@ func mustResponse(t *testing.T, operation Operation) Response {
 	}
 	t.Fatalf("missing response %q", operation)
 	return Response{}
+}
+
+func mustRequest(t *testing.T, operation Operation) Request {
+	t.Helper()
+	for _, fixtureCase := range mustFixture(t).Cases {
+		if fixtureCase.Request.Operation == operation {
+			return fixtureCase.Request
+		}
+	}
+	t.Fatalf("missing request %q", operation)
+	return Request{}
 }
 
 func fixtureRepository() RepositoryIdentity {
@@ -964,6 +975,11 @@ func decodeIndependentConsumerResult(operation string, raw json.RawMessage) erro
 				Available bool           `json:"available"`
 				Reason    string         `json:"reason,omitempty"`
 			} `json:"capabilities"`
+		}
+		return strictConsumerDecode(raw, &value)
+	case OperationGetAuthenticatedActor:
+		var value struct {
+			Actor consumerActor `json:"actor"`
 		}
 		return strictConsumerDecode(raw, &value)
 	case OperationListPullRequests, OperationSearchPullRequests:

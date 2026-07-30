@@ -36,6 +36,7 @@ var defaultBounds = Bounds{
 
 var orderedOperations = []Operation{
 	OperationCapabilities,
+	OperationGetAuthenticatedActor,
 	OperationListPullRequests,
 	OperationSearchPullRequests,
 	OperationGetPullRequest,
@@ -58,22 +59,24 @@ var orderedOperations = []Operation{
 }
 
 var readOperations = map[Operation]bool{
-	OperationCapabilities:       true,
-	OperationListPullRequests:   true,
-	OperationSearchPullRequests: true,
-	OperationGetPullRequest:     true,
-	OperationGetCommits:         true,
-	OperationGetDiff:            true,
-	OperationGetChecks:          true,
-	OperationGetReviews:         true,
-	OperationGetComments:        true,
-	OperationGetMergeReadiness:  true,
+	OperationCapabilities:          true,
+	OperationGetAuthenticatedActor: true,
+	OperationListPullRequests:      true,
+	OperationSearchPullRequests:    true,
+	OperationGetPullRequest:        true,
+	OperationGetCommits:            true,
+	OperationGetDiff:               true,
+	OperationGetChecks:             true,
+	OperationGetReviews:            true,
+	OperationGetComments:           true,
+	OperationGetMergeReadiness:     true,
 }
 
 var collectionOperations = map[Operation]bool{
-	OperationCapabilities:       true,
-	OperationListPullRequests:   true,
-	OperationSearchPullRequests: true,
+	OperationCapabilities:          true,
+	OperationGetAuthenticatedActor: true,
+	OperationListPullRequests:      true,
+	OperationSearchPullRequests:    true,
 }
 
 func Operations() []Operation {

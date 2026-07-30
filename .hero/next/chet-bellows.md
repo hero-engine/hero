@@ -1,23 +1,18 @@
 ---
 user: chet-bellows
-updated: 2026-07-28T05:01:38Z
+updated: 2026-07-29T01:37:32Z
 repo: hero-engine/hero
 ---
 
 # chet-bellows's handoff
 
-## Session goal
-
-> Session opened with — Deliver initiative-autocomplete-ignores-declared-children. An initiative auto-completes when only some of its declared children have shipped, because the completion gate's roster is fed from an incomplete source. Two compounding defects: (1) children: (plural) frontmatter is silently dropped by the relation parser (internal/spec/spec.go:633), so declared children never become child edges and the r…
-> _possibly stale — 10 commit(s) since, last set 2d 4h ago_
-
-_possibly stale — 36 commit(s) since, last set 8h 22m ago_
-
 ## Last user ask
 
-> code-host-broker-surfaces-and-conformance
-
-_possibly stale — 2 commit(s) since, last set 43m ago_
+> so quick question on our cli here - for github connect - sample say - hero connect github \
+>   --integration-id github-code-host \
+>   --role code-host \
+>   --project OWNER/REPOSITORY \
+>   --token-stdin
 
 ## Suggested next prompt
 

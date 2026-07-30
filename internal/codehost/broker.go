@@ -23,6 +23,7 @@ const brokerTimeout = 120 * time.Second
 
 var readOperations = []codehostbroker.Operation{
 	codehostbroker.OperationCapabilities,
+	codehostbroker.OperationGetAuthenticatedActor,
 	codehostbroker.OperationListPullRequests,
 	codehostbroker.OperationSearchPullRequests,
 	codehostbroker.OperationGetPullRequest,

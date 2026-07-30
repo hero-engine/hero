@@ -369,6 +369,8 @@ func (g *githubAdapter) execute(ctx context.Context, request codehostbroker.Requ
 	switch request.Operation {
 	case codehostbroker.OperationCapabilities:
 		out, err = g.capabilities(ctx, request)
+	case codehostbroker.OperationGetAuthenticatedActor:
+		out, err = g.getAuthenticatedActor(ctx)
 	case codehostbroker.OperationListPullRequests:
 		out, err = g.list(ctx, request, scope, false)
 	case codehostbroker.OperationSearchPullRequests:
@@ -395,6 +397,17 @@ func (g *githubAdapter) execute(ctx context.Context, request codehostbroker.Requ
 	}
 	out.redirects = g.transport.redirects
 	return out, err
+}
+
+func (g *githubAdapter) getAuthenticatedActor(ctx context.Context) (adapterResult, error) {
+	actor, err := g.authenticatedActor(ctx)
+	if err != nil {
+		return adapterResult{}, err
+	}
+	return adapterResult{
+		result:       codehostbroker.AuthenticatedActorResult{Actor: actor},
+		completeness: codehostbroker.CompletenessComplete,
+	}, nil
 }
 
 func (g *githubAdapter) capabilities(ctx context.Context, request codehostbroker.Request) (adapterResult, error) {

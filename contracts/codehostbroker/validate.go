@@ -470,6 +470,15 @@ func validateOperationResult(operation Operation, raw json.RawMessage, bounds Bo
 				return invalid(fmt.Sprintf("result.capabilities.%d.merge", i), "available merge capability requires runtime merge material")
 			}
 		}
+	case OperationGetAuthenticatedActor:
+		var result AuthenticatedActorResult
+		if err := decodeResult(raw, &result); err != nil {
+			return err
+		}
+		if result.Actor.ProviderID == "" {
+			return invalid("result.actor.provider_id", "authenticated actor provider identity is required")
+		}
+		return validateActor(result.Actor, "result.actor")
 	case OperationListPullRequests, OperationSearchPullRequests:
 		var result PullRequestsResult
 		if err := decodeResult(raw, &result); err != nil {
@@ -763,6 +772,7 @@ func normalizedRepositoryScope(scope []RepositoryIdentity) []RepositoryIdentity 
 
 func requiresPullRequest(operation Operation) bool {
 	return operation != OperationCapabilities &&
+		operation != OperationGetAuthenticatedActor &&
 		operation != OperationListPullRequests &&
 		operation != OperationSearchPullRequests &&
 		operation != OperationCreatePullRequest

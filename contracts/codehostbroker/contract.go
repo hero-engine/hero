@@ -13,26 +13,27 @@ const Version = "code-host-broker/v1"
 type Operation string
 
 const (
-	OperationCapabilities       Operation = "capabilities"
-	OperationListPullRequests   Operation = "list_pull_requests"
-	OperationSearchPullRequests Operation = "search_pull_requests"
-	OperationGetPullRequest     Operation = "get_pull_request"
-	OperationGetCommits         Operation = "get_commits"
-	OperationGetDiff            Operation = "get_diff"
-	OperationGetChecks          Operation = "get_checks"
-	OperationGetReviews         Operation = "get_reviews"
-	OperationGetComments        Operation = "get_comments"
-	OperationGetMergeReadiness  Operation = "get_merge_readiness"
-	OperationCreatePullRequest  Operation = "create_pull_request"
-	OperationComment            Operation = "comment"
-	OperationSubmitReview       Operation = "submit_review"
-	OperationApprove            Operation = "approve"
-	OperationRequestChanges     Operation = "request_changes"
-	OperationMarkReady          Operation = "mark_ready"
-	OperationRetarget           Operation = "retarget"
-	OperationClose              Operation = "close"
-	OperationReopen             Operation = "reopen"
-	OperationMerge              Operation = "merge"
+	OperationCapabilities          Operation = "capabilities"
+	OperationGetAuthenticatedActor Operation = "get_authenticated_actor"
+	OperationListPullRequests      Operation = "list_pull_requests"
+	OperationSearchPullRequests    Operation = "search_pull_requests"
+	OperationGetPullRequest        Operation = "get_pull_request"
+	OperationGetCommits            Operation = "get_commits"
+	OperationGetDiff               Operation = "get_diff"
+	OperationGetChecks             Operation = "get_checks"
+	OperationGetReviews            Operation = "get_reviews"
+	OperationGetComments           Operation = "get_comments"
+	OperationGetMergeReadiness     Operation = "get_merge_readiness"
+	OperationCreatePullRequest     Operation = "create_pull_request"
+	OperationComment               Operation = "comment"
+	OperationSubmitReview          Operation = "submit_review"
+	OperationApprove               Operation = "approve"
+	OperationRequestChanges        Operation = "request_changes"
+	OperationMarkReady             Operation = "mark_ready"
+	OperationRetarget              Operation = "retarget"
+	OperationClose                 Operation = "close"
+	OperationReopen                Operation = "reopen"
+	OperationMerge                 Operation = "merge"
 )
 
 type Effect string
@@ -289,6 +290,10 @@ type MergeCapability struct {
 
 type CapabilitiesResult struct {
 	Capabilities []Capability `json:"capabilities"`
+}
+
+type AuthenticatedActorResult struct {
+	Actor Actor `json:"actor"`
 }
 
 type PullRequestsResult struct {

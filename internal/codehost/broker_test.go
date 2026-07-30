@@ -400,6 +400,40 @@ func TestEnterpriseOriginAndCredentialRedaction(t *testing.T) {
 	}
 }
 
+func TestAuthenticatedActorReadIsConnectionQualifiedAndCredentialSafe(t *testing.T) {
+	fixture, server, broker := testBroker(t, mockcodehost.DefaultScenario(), "acme/widgets")
+	response := broker.Execute(
+		context.Background(),
+		fixture.request(codehostbroker.OperationGetAuthenticatedActor),
+	)
+	requireValidResponse(t, response)
+	if response.Error != nil {
+		t.Fatal(response.Error)
+	}
+	var result codehostbroker.AuthenticatedActorResult
+	decodeResult(t, response, &result)
+	if response.ConnectionID != fixture.connectionID ||
+		response.Provider != "github" ||
+		result.Actor.ProviderID != "U_99" ||
+		result.Actor.Login != "hero-user" ||
+		result.Actor.Display != "" {
+		t.Fatalf("response identity=%s/%s actor=%+v", response.ConnectionID, response.Provider, result.Actor)
+	}
+	if server.RequestCount() != 1 || server.Requests()[0].Path != "/user" {
+		t.Fatalf("provider requests=%+v", server.Requests())
+	}
+	encoded, err := json.Marshal(response)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rendered := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"token", "email", "credential", strings.ToLower(credentialCanary)} {
+		if strings.Contains(rendered, forbidden) {
+			t.Fatalf("authenticated actor response exposed %q: %s", forbidden, encoded)
+		}
+	}
+}
+
 func TestEveryReadOperationProducesContractConformantResponse(t *testing.T) {
 	fixture, _, broker := testBroker(t, mockcodehost.DefaultScenario(), "acme/widgets")
 	for _, operation := range readOperations {

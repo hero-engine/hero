@@ -185,6 +185,8 @@ func fixtureResult(operation Operation, pullRequest PullRequest) any {
 	switch operation {
 	case OperationCapabilities:
 		return CapabilitiesResult{Capabilities: append(fixtureCapabilities(), futureCapability())}
+	case OperationGetAuthenticatedActor:
+		return AuthenticatedActorResult{Actor: pullRequest.Author}
 	case OperationListPullRequests, OperationSearchPullRequests:
 		return map[string]any{"pull_requests": []PullRequest{pullRequest}}
 	case OperationGetPullRequest:
