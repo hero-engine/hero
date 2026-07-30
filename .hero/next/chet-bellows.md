@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-07-30T17:40:48Z
+updated: 2026-07-30T17:42:15Z
 repo: hero-engine/hero
 ---
 
@@ -14,13 +14,13 @@ repo: hero-engine/hero
 >   --project OWNER/REPOSITORY \
 >   --token-stdin
 
-_possibly stale — 7 commit(s) since, last set 1d 16h ago_
+_possibly stale — 8 commit(s) since, last set 1d 16h ago_
 
 ## Last user ask
 
 > Diagnose the release-blocking get_authenticated_actor MCP canonical fixture parity mismatch and write a delivery-ready bug spec
 
-_possibly stale — 1 commit(s) since, last set 15m ago_
+_possibly stale — 2 commit(s) since, last set 16m ago_
 
 ## Suggested next prompt
 

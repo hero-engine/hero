@@ -2,7 +2,7 @@
 title: "Authenticated-actor MCP schema incorrectly requires a pull request"
 slug: code-host-authenticated-actor-mcp-schema-parity
 type: bug
-status: delivering
+status: completed
 diagnosis_status: diagnosed
 domain: engineering
 priority: high
@@ -15,6 +15,7 @@ relations:
   - target: code-host-broker-surfaces-and-conformance
     kind: related
 delivery_method: manual
+completed_at: 2026-07-30T17:41:44Z
 ---
 
 # Authenticated-actor MCP schema incorrectly requires a pull request

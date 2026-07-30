@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-07-30T17:40:48Z · projected from 611 source nodes_
+_Last refreshed: 2026-07-30T17:42:15Z · projected from 611 source nodes_
 
 ## Surfaces
 
@@ -16,7 +16,7 @@ _Last refreshed: 2026-07-30T17:40:48Z · projected from 611 source nodes_
 | domains/sales | maturing | domains/sales/ | 21d ago | — |
 | landing | building | web/landing/ | 18d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | <1m ago | code-host-authenticated-actor-mcp-schema-parity |
+| serve | building | internal/serve/ | <1m ago | agent-outposts |
 | (unassigned) | — | — | — | 238 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -53,16 +53,17 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — hero-code-host-broker-capabilities, code-host-broker-surfaces-and-conformance, github-pull-request-merge-broker, github-pull-request-state-transition-broker, github-pull-request-collaboration-broker, github-pull-request-create-broker, github-code-host-read-adapter, code-host-broker-v1-contract, code-host-integration-capability-model, windows-file-lock-cross-build, continuous-code-index-freshness
+- **(unassigned)** — hero-code-host-broker-capabilities, code-host-broker-surfaces-and-conformance, github-pull-request-merge-broker, github-pull-request-state-transition-broker, github-pull-request-collaboration-broker, github-pull-request-create-broker, github-code-host-read-adapter, code-host-broker-v1-contract, code-host-integration-capability-model, windows-file-lock-cross-build
 - **core** — mail-3ab437af53c66997e94a0268
+- **serve** — code-host-authenticated-actor-mcp-schema-parity
 
 ## Next up across surfaces
 
 1. **landing** — `hero-landing-page` (P0, delivering)
-2. **serve** — `code-host-authenticated-actor-mcp-schema-parity` (high, delivering)
-3. **serve** — `hero-team-server` (P1, delivering)
-4. **core** — `satellite-corpus-integration` (high, delivering)
-5. **serve** — `agent-outposts` (medium, delivering)
+2. **serve** — `hero-team-server` (P1, delivering)
+3. **core** — `satellite-corpus-integration` (high, delivering)
+4. **serve** — `agent-outposts` (medium, delivering)
+5. **serve** — `retrieval-contradiction-detection` (—, delivering)
 
 ## Open risks & blockers
 
