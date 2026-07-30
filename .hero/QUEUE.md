@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-07-30T17:36:30Z · 82 ready specs_
+_Generated: 2026-07-30T17:40:48Z · 82 ready specs_
 
 ## code-host-authenticated-actor-mcp-schema-parity — "Authenticated-actor MCP schema incorrectly requires a pull request"
 _bug · delivering · horizon: now_
@@ -14,11 +14,10 @@ _bug · delivering · horizon: now_
 Removes a false pull-request requirement from the repository-scoped
 `get_authenticated_actor` MCP tool so the v2 contract fixture and runtime agree.
 
-**Status:** delivering — implementation and release-prerequisite validation
-pass; the cold delivery audit is next.
+**Status:** delivering — implementation, cold audit, and release-prerequisite
+validation pass; the Hero verification gate is next.
 
-**Pick up at:** audit the isolated implementation diff, then run the Hero
-verification gate.
+**Pick up at:** run the Hero verification gate.
 
 → `/deliver code-host-authenticated-actor-mcp-schema-parity`
 

@@ -24,11 +24,10 @@ delivery_method: manual
 Removes a false pull-request requirement from the repository-scoped
 `get_authenticated_actor` MCP tool so the v2 contract fixture and runtime agree.
 
-**Status:** delivering — implementation and release-prerequisite validation
-pass; the cold delivery audit is next.
+**Status:** delivering — implementation, cold audit, and release-prerequisite
+validation pass; the Hero verification gate is next.
 
-**Pick up at:** audit the isolated implementation diff, then run the Hero
-verification gate.
+**Pick up at:** run the Hero verification gate.
 
 → `/deliver code-host-authenticated-actor-mcp-schema-parity`
 
@@ -139,7 +138,7 @@ the provider-neutral v2 contract, fixture, broker, or credential boundary.
 |---|---|---|---|
 | 1 | Classify actor lookup as repository-only | DONE | Added the explicit `OperationGetAuthenticatedActor` switch branch without changing capabilities or collection properties |
 | 2 | Add operation-shape regression coverage | DONE | Added focused actor-versus-PR assertions in `internal/serve/mcp_tools_code_host_test.go` |
-| 3 | Qualify focused and repository behavior | DONE | Focused canonical parity and full repository test/static-analysis gates pass; GoReleaser snapshot remains a release gate after concurrent unrelated edits clear |
+| 3 | Qualify focused, repository, and snapshot builds | DONE | Focused canonical parity, full repository tests/static analysis, and an exact-commit GoReleaser snapshot pass; the snapshot built all configured Darwin, Linux, and Windows targets plus package-manager metadata |
 
 ### Exercise-the-feature check
 
