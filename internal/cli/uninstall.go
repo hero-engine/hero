@@ -257,8 +257,6 @@ func uninstallCodex(projectRoot string, versionInfo *version.Info) (int, int, er
 //	.github/prompts/agents/<name>.prompt.md
 //	.github/prompts/commands/<name>.prompt.md
 //	.github/copilot-instructions.md         (Copilot-specific instructions)
-//	AGENTS.md                               (root instruction file — a SECOND,
-//	                                         distinct instruction surface)
 //	.github/copilot/{agents,commands,skills}/ (dead bytes from pre-prompt-file
 //	                                         installs; install cleans these too)
 //
@@ -303,14 +301,6 @@ func uninstallCopilot(projectRoot string, versionInfo *version.Info) (int, int, 
 	removed += r
 	preserved += p
 
-	// Clean hero section from AGENTS.md, Copilot's root instruction file.
-	// Same unconditional strip the other targets do — see the AGENTS.md
-	// sharing caveat on uninstallGeneric.
-	agentsMdPath := filepath.Join(projectRoot, "AGENTS.md")
-	if cleaned, err := removeHeroManagedSection(agentsMdPath); err == nil && cleaned {
-		removed++
-	}
-
 	// Drop the now-empty legacy and prompt parents. os.Remove refuses to
 	// delete a non-empty directory, so a user file under either one keeps
 	// its parent alive.
@@ -324,12 +314,9 @@ func uninstallCopilot(projectRoot string, versionInfo *version.Info) (int, int, 
 // identical to uninstallCodex minus the Codex hook and config.toml wiring,
 // which the generic target never writes.
 //
-// Caveat, replicated from the existing targets rather than fixed here:
-// AGENTS.md is written by five targets (opencode, cursor, copilot, codex,
-// generic) and the hero-managed section is stripped unconditionally, so
-// uninstalling one target removes a block another installed target still
-// relies on. Making removal conditional on the remaining installed-target
-// set touches all six uninstall paths and belongs in its own change.
+// Root AGENTS.md is intentionally not touched here. It is shared by harnesses
+// and deciding whether a managed region is still owned requires a cross-target
+// policy outside this target-owned cleanup.
 func uninstallGeneric(projectRoot string, versionInfo *version.Info) (int, int, error) {
 	base := filepath.Join(projectRoot, ".ai")
 	dirs := []string{
@@ -346,12 +333,6 @@ func uninstallGeneric(projectRoot string, versionInfo *version.Info) (int, int, 
 		}
 		removed += r
 		preserved += p
-	}
-
-	// Clean hero section from AGENTS.md
-	agentsMdPath := filepath.Join(projectRoot, "AGENTS.md")
-	if cleaned, err := removeHeroManagedSection(agentsMdPath); err == nil && cleaned {
-		removed++
 	}
 
 	// Drop .ai/ if nothing but Hero content lived under it.

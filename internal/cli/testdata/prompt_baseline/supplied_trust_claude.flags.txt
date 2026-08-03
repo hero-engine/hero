@@ -1,0 +1,8 @@
+$ hero trust claude
+stdin-condition: flags
+exit: 0
+--- stdout ---
+
+Claude Code: added Bash(hero:*) to <ROOT>/.claude/settings.json
+Claude Code will stop prompting for `hero` commands after it reloads settings.
+--- stderr ---

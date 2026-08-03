@@ -1,0 +1,13 @@
+$ hero trust codex
+stdin-condition: flags
+exit: 0
+--- stdout ---
+
+Codex permissions: optional one-time setup
+Hero cannot grant Codex permissions itself; Codex owns the approval.
+To avoid repeated Hero CLI prompts, ask Codex:
+
+  Please run `hero status` and request persistent approval for the `hero` command prefix.
+
+You can show this again with `hero trust codex`.
+--- stderr ---

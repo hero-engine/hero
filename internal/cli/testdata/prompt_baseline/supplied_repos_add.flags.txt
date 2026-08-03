@@ -1,0 +1,12 @@
+$ hero admin repos add peer ../peer
+stdin-condition: flags
+exit: 0
+--- stdout ---
+Warning: <BASE>/peer does not contain a .hero/ directory.
+The repo will be registered but cross-repo features won't work until it's initialized.
+
+Added peer → ../peer (in hero.json)
+--- stderr ---
+hero: minted peer_id for cross-repo peering (recorded in events.log)
+hero: 1 legacy install artifact(s) detected — Claude Code / Codex / Cursor will silently fail to load Hero skills and agents.
+hero: run 'hero upgrade' (or 'hero install <mode> .') to clean up.

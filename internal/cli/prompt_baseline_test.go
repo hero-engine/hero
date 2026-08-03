@@ -342,6 +342,53 @@ func TestPromptSiteBaselineCoversAllSites(t *testing.T) {
 	}
 }
 
+// TestSuppliedSetupCompatibilityBaseline records the byte-level contract for
+// setup commands that must never enter their new prompt paths when fully
+// specified. These are separate from prompt-site cases because each command
+// has no missing-input branch in this test.
+func TestSuppliedSetupCompatibilityBaseline(t *testing.T) {
+	cases := []struct {
+		name  string
+		args  []string
+		setup func(t *testing.T, root string)
+	}{
+		{"uninstall_opencode", []string{"uninstall", "--target", "opencode"}, setupWorkspace},
+		{"uninstall_cursor", []string{"uninstall", "--target", "cursor"}, setupWorkspace},
+		{"uninstall_claude", []string{"uninstall", "--target", "claude"}, setupWorkspace},
+		{"uninstall_codex", []string{"uninstall", "--target", "codex"}, setupWorkspace},
+		{"repos_add", []string{"admin", "repos", "add", "peer", "../peer"}, setupWorkspace},
+		{"users_add_password", []string{"admin", "users", "add", "alice", "--password", "hunter2", "--email", "alice@example.com"}, setupWorkspace},
+		{"trust_codex", []string{"trust", "codex"}, setupWorkspace},
+		{"trust_claude", []string{"trust", "claude"}, setupWorkspace},
+	}
+	bin := baselineBinary(t)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			base := t.TempDir()
+			root := filepath.Join(base, "work")
+			if err := os.MkdirAll(root, 0o755); err != nil {
+				t.Fatal(err)
+			}
+			tc.setup(t, root)
+			got := runBaselineCase(t, bin, base, root, tc.args, condFlags, "")
+			golden := filepath.Join("testdata", "prompt_baseline", "supplied_"+tc.name+".flags.txt")
+			if *updateBaseline {
+				if err := os.WriteFile(golden, []byte(got), 0o644); err != nil {
+					t.Fatal(err)
+				}
+				return
+			}
+			want, err := os.ReadFile(golden)
+			if err != nil {
+				t.Fatalf("read %s: %v; regenerate with -update-baseline", golden, err)
+			}
+			if got != string(want) {
+				t.Errorf("supplied-path baseline drift for %s\n--- want ---\n%s\n--- got ---\n%s", tc.name, want, got)
+			}
+		})
+	}
+}
+
 // TestPromptSitesReturnBeforeLivePipeEOF closes the false assurance in the
 // closed-reader fixtures. An empty strings.Reader reaches EOF immediately;
 // an open pipe has no bytes and no EOF, so any accidental prompt read blocks.

@@ -35,6 +35,68 @@ func TestUninstall_UnknownTarget(t *testing.T) {
 	}
 }
 
+func TestUninstallCopilotAndGenericRoundTripsPreserveAdjacentUserFilesAndAGENTS(t *testing.T) {
+	for _, tc := range []struct {
+		target   string
+		userPath string
+	}{
+		{target: "copilot", userPath: ".github/prompts/agents/user.prompt.md"},
+		{target: "generic", userPath: ".ai/agents/user.md"},
+	} {
+		t.Run(tc.target, func(t *testing.T) {
+			env := newTestEnv(t)
+			t.Setenv("HOME", t.TempDir())
+			agents := filepath.Join(env.dir, "AGENTS.md")
+			if err := os.WriteFile(agents, []byte("# Shared rules\n\n<!-- hero:managed -->\nkeep this shared block\n<!-- hero:managed -->\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			user := filepath.Join(env.dir, tc.userPath)
+			if err := os.MkdirAll(filepath.Dir(user), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(user, []byte("user-authored\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+
+			if _, err := runCmd("install", "project", env.dir, "--target", tc.target, "--no-hooks"); err != nil {
+				t.Fatalf("install %s: %v", tc.target, err)
+			}
+			agentsAfterInstall, err := os.ReadFile(agents)
+			if err != nil {
+				t.Fatalf("read AGENTS after install: %v", err)
+			}
+			info, err := version.Read(env.heroDir)
+			if err != nil {
+				t.Fatalf("read manifest: %v", err)
+			}
+			if len(info.InstalledFiles) == 0 {
+				t.Fatal("install did not write a manifest")
+			}
+
+			if _, err := runCmd("uninstall", "--target", tc.target); err != nil {
+				t.Fatalf("uninstall %s: %v", tc.target, err)
+			}
+			prefix := ".ai/"
+			if tc.target == "copilot" {
+				prefix = ".github/"
+			}
+			for rel := range info.InstalledFiles {
+				if strings.HasPrefix(filepath.ToSlash(rel), prefix) {
+					if _, err := os.Stat(filepath.Join(env.dir, rel)); !os.IsNotExist(err) {
+						t.Errorf("manifest-tracked %s survived %s uninstall: %v", rel, tc.target, err)
+					}
+				}
+			}
+			if got, err := os.ReadFile(user); err != nil || string(got) != "user-authored\n" {
+				t.Errorf("adjacent user file changed: %q, %v", got, err)
+			}
+			if got, err := os.ReadFile(agents); err != nil || string(got) != string(agentsAfterInstall) {
+				t.Errorf("shared AGENTS.md changed during %s uninstall: %q, %v", tc.target, got, err)
+			}
+		})
+	}
+}
+
 func TestUninstall_OpenCode_WithManifest(t *testing.T) {
 	env := newTestEnv(t)
 

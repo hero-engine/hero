@@ -63,7 +63,8 @@ stdin and a live non-TTY pipe fail promptly without a prompt or read.
 
 Closes interactive connect and setup flows while leaving automation paths non-blocking and manifest-safe.
 
-**Status:** delivering — one-writer connect, live-pipe gate, setup prompts, six-target uninstall, help, and regression coverage are implemented.
+**Status:** delivering — audit repairs now preserve shared `AGENTS.md` during
+copilot/generic uninstall and add byte-level supplied-path baselines.
 
 **Pick up at:** run the cold delivery audit and verification gate before archiving.
 
@@ -457,22 +458,22 @@ suites, vet, native build, and Windows cross-build.
 | 8 | Code-host resolver/default | DONE | Both code-host paths resolve without claiming default. |
 | 9 | Failed config leaves no credential | DONE | Write ordering regression coverage passes. |
 | 10 | Identical six target list | DONE | Install/uninstall use `installTargets`. |
-| 11 | Copilot/generic manifest removal | DONE | Six-target dispatch retains manifest-gated removers. |
+| 11 | Copilot/generic manifest removal | DONE | Real install→uninstall round trips prove manifest files are removed while adjacent user files and shared `AGENTS.md` survive. |
 | 12 | Frozen setup shortfall prompts | DONE | `promptableArgs`, repos/users/trust, and PTY matrix pass. |
 | 13 | Secure password behavior | DONE | Existing protected password seam remains exercised. |
 | 14 | Satellite confirmations honor streams | DONE | Existing prompt.Confirm satellite tests pass. |
 | 15 | Truthful connect help surfaces | DONE | Shared registration and `connect_help_test.go`. |
-| 16 | Supplied-path compatibility | DONE | Baseline/setup and full CLI suites pass. |
+| 16 | Supplied-path compatibility | DONE | Byte-level fixtures cover original-four uninstall, repos add, users add with password, and both trust targets. |
 
 ### Changes
 
 | # | Changes item (abbreviated) | Status | Note |
 |---|---|---|---|
-| 1 | Baseline contract | DONE | Existing baseline coverage retained; setup matrix added. |
+| 1 | Baseline contract | DONE | Added eight supplied-path byte-level baseline fixtures. |
 | 2 | Connect writer/collectors | DONE | `internal/cli/connect.go`. |
 | 3 | Connect regressions | DONE | `connect_writer_unification_test.go`, including live pipe. |
 | 4 | Named setup prompts | DONE | `prompt_args.go`, repos/users/trust, satellite paths. |
-| 5 | Six-target parity | DONE | `uninstall.go` uses `installTargets` and manifest removers. |
+| 5 | Six-target parity | DONE | `uninstall.go` uses `installTargets`; copilot/generic do not strip shared root `AGENTS.md`. |
 | 6 | Connect help | DONE | `connect.go`, alias, and help test. |
 | 7 | Setup/target test matrix | DONE | `prompt_setup_commands_test.go` plus focused tests. |
 | 8 | Bounded compatibility docs | DONE | Updated help documents the delivered behavior. |

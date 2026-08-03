@@ -6,14 +6,15 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-03T21:15:01Z · 83 ready specs_
+_Generated: 2026-08-03T21:23:49Z · 83 ready specs_
 
 ## interactive-setup-and-connect-closure — "Interactive Setup and Connect Closure"
 _feature · delivering · horizon: now_
 
 Closes interactive connect and setup flows while leaving automation paths non-blocking and manifest-safe.
 
-**Status:** delivering — one-writer connect, live-pipe gate, setup prompts, six-target uninstall, help, and regression coverage are implemented.
+**Status:** delivering — audit repairs now preserve shared `AGENTS.md` during
+copilot/generic uninstall and add byte-level supplied-path baselines.
 
 **Pick up at:** run the cold delivery audit and verification gate before archiving.
 
