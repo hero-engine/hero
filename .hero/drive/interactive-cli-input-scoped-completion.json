@@ -1,0 +1,8 @@
+{
+  "initiative": "interactive-cli-input-scoped-completion",
+  "pause": {
+    "spec": "prompt-and-tty-contract-closure",
+    "category": "SeamDetected",
+    "reason": "prompt-and-tty-contract-closure overlaps on internal/cli/connect.go with hero-team-server, which is currently delivering, but nobody declared a conflicts-with — pausing to surface the undeclared seam"
+  }
+}
