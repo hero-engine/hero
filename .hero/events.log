@@ -527,3 +527,7 @@
 {"ts":"2026-08-03T21:01:26.866333Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"corpus-selector-closure","message":"status -\u003e completed"}
 {"ts":"2026-08-03T21:25:43.149446Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"interactive-setup-and-connect-closure","message":"\"Interactive Setup and Connect Closure\""}
 {"ts":"2026-08-03T21:25:43.14966Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"interactive-setup-and-connect-closure","message":"status -\u003e completed"}
+{"ts":"2026-08-03T21:46:11.629063Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"interactive-cli-acceptance-and-merge-gate","message":"\"Interactive CLI Acceptance and Merge Gate\""}
+{"ts":"2026-08-03T21:46:11.629154Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"interactive-cli-acceptance-and-merge-gate","message":"status -\u003e completed"}
+{"ts":"2026-08-03T21:46:13.103164Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"interactive-cli-input-scoped-completion","message":"\"Interactive CLI Input — Scoped Completion\""}
+{"ts":"2026-08-03T21:46:13.103325Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"interactive-cli-input-scoped-completion","message":"status -\u003e completed"}

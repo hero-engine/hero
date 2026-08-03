@@ -2,7 +2,7 @@
 title: "Interactive CLI Input — Scoped Completion"
 slug: interactive-cli-input-scoped-completion
 type: initiative
-status: planning
+status: completed
 created: 2026-08-03
 domain: engineering
 size: x-large
@@ -15,6 +15,7 @@ child:
   - corpus-selector-closure
   - interactive-cli-acceptance-and-merge-gate
 relates-to: [cli-surface-consolidation]
+completed_at: 2026-08-03T21:46:11Z
 ---
 
 # Interactive CLI Input — Scoped Completion
@@ -60,7 +61,7 @@ stays intact until the final gate confirms every change was ported, extracted to
 named follow-up work, already present on `main`, or deliberately dropped with a
 reason.
 
-### Current truth
+### Starting-point truth
 
 | Original outcome | Candidate state | Acceptance state |
 |---|---|---|
@@ -82,7 +83,7 @@ branch is not merge-ready.
 | 1 | `prompt-and-tty-contract-closure` | Curate and close the shared prompt, stream, TTY, secret, and machine-path contract | `large` | `critical` | — | completed |
 | 2A | `interactive-setup-and-connect-closure` | Curate and close the original setup prompts, connect semantics, target parity, and help | `large` | `high` | prompt/TTY closure | completed |
 | 2B | `corpus-selector-closure` | Curate the original selector targets and make them useful beyond 25 candidates | `medium` | `high` | prompt/TTY closure | completed |
-| 3 | `interactive-cli-acceptance-and-merge-gate` | Prove the complete outcome, cold-audit the curated diff, and make the merge decision | `small` | `high` | setup/connect + selectors | delivering |
+| 3 | `interactive-cli-acceptance-and-merge-gate` | Prove the complete outcome, cold-audit the curated diff, and make the merge decision | `small` | `high` | setup/connect + selectors | completed |
 
 ## Delivery path
 
@@ -217,20 +218,19 @@ allowance for additional behavior changes.
   `cli-input-classification`.
 - The prompt/TTY, setup/connect, and selector children are archived as completed
   after independent SHIP audits and their verification gates.
-- The final gate is delivering: scope provenance maps 229 production hunks plus
-  four test-only portable PTY hunks; donor-only follow-ups are retained at
-  explicit donor paths rather than falsely claimed as local successor specs.
-- Integrated validation evidence is recorded by
-  interactive-cli-acceptance-and-merge-gate. Its remaining actions are a fresh
-  cold audit and both Hero verification gates; the donor branch must remain.
+- The final gate is archived as completed after a fresh independent SHIP
+  re-audit. Scope provenance maps 229 production hunks plus four test-only
+  portable PTY hunks; donor-only follow-ups are retained at explicit donor
+  paths rather than falsely claimed as local successor specs.
+- Integrated validation and both Hero verification gates passed. The donor
+  branch remains retained because several extracted follow-ups still live
+  there by exact commit and path.
 
 ## Kickoff
 
-Finish the original interactive CLI outcome without carrying forward its branch
-drift. Treat `design/interactive-cli-input` as a selective donor only. Start on
-clean `main` with `prompt-and-tty-contract-closure`; port the complete shared
-prompt foundation, close cross-platform TTY and liveness gaps, and verify it
-before setup or selector adoption. Do not import index, init, alias, timeout,
-invocation-lint, graph, or unrelated uninstall work.
-
-→ `/drive interactive-cli-input-scoped-completion`
+Completed on `codex/interactive-cli-input-scoped-completion`. All four children
+are archived after independent audits and Hero verification; the drive reports
+`done`. The curated branch contains the original interactive-input outcome and
+none of the donor branch's index, init, alias, timeout, invocation-lint, graph,
+or unrelated uninstall work. Keep `design/interactive-cli-input` until its
+retained follow-up artifacts are extracted.

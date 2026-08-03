@@ -6,27 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-03T21:46:05Z · 83 ready specs_
-
-## interactive-cli-acceptance-and-merge-gate — "Interactive CLI Acceptance and Merge Gate"
-_feature · delivering · horizon: now_
-
-Closes the interactive CLI initiative with a hunk map, donor disposition, and
-integrated validation evidence; it makes no production change.
-
-**Status:** delivering — the bounded evidence repair is complete and the fresh
-independent re-audit returned SHIP.
-
-**Pick up at:** run the child verification gate, then verify the parent
-initiative. Both are external closing operations and are not preclaimed in the
-ledger.
-
-→ `hero spec verify interactive-cli-acceptance-and-merge-gate --skip-tests`
-
-**Files:** `.hero/planning/initiatives/interactive-cli-input-scoped-completion/interactive-cli-acceptance-and-merge-gate/scope-provenance.md`, `.hero/planning/initiatives/interactive-cli-input-scoped-completion/donor-branch-disposition.md`, `.hero/planning/initiatives/interactive-cli-input-scoped-completion/interactive-cli-acceptance-and-merge-gate/acceptance-evidence.md`
-**Skip:** production repairs and donor branch deletion; route either to its owning child or retained donor destination.
-
----
+_Generated: 2026-08-03T21:47:34Z · 81 ready specs_
 
 ## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
 _feature · delivering · horizon: now_
@@ -46,19 +26,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-inter
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-interactive-cli-scoped/.hero/planning/features/agent-outposts/spec.md)_
-
----
-
-## interactive-cli-input-scoped-completion — "Interactive CLI Input — Scoped Completion"
-_initiative · planning · horizon: now_
-
-_Run opener — arm with `/drive interactive-cli-input-scoped-completion`_
-
-Produce one curated, merge-ready implementation whose production changes all
-trace to the original interactive-input outcome. The completed result has one
-cross-platform prompt authority, safe TTY and secret handling, additive setup
-prompts, selectors that work at actual corpus scale, unchanged machine paths,
-and evidence that no affected invocation can prompt or hang unexpectedly.
 
 ---
 

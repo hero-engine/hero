@@ -2,7 +2,7 @@
 title: "Interactive CLI Acceptance and Merge Gate"
 slug: interactive-cli-acceptance-and-merge-gate
 type: feature
-status: delivering
+status: completed
 created: 2026-08-03
 domain: engineering
 size: small
@@ -12,6 +12,7 @@ depends-on:
   - interactive-setup-and-connect-closure
   - corpus-selector-closure
 tags: [cli, validation, audit, merge-readiness]
+completed_at: 2026-08-03T21:46:10Z
 ---
 
 # Interactive CLI Acceptance and Merge Gate
@@ -124,16 +125,13 @@ The gate fails on either substitution.
 Closes the interactive CLI initiative with a hunk map, donor disposition, and
 integrated validation evidence; it makes no production change.
 
-**Status:** delivering — the bounded evidence repair is complete and the fresh
-independent re-audit returned SHIP.
+**Status:** completed — the bounded evidence repair received a fresh
+independent SHIP re-audit and the Hero verification gate passed.
 
-**Pick up at:** run the child verification gate, then verify the parent
-initiative. Both are external closing operations and are not preclaimed in the
-ledger.
+**Pick up at:** no remaining delivery action. The parent initiative is also
+completed and archived.
 
-→ `hero spec verify interactive-cli-acceptance-and-merge-gate --skip-tests`
-
-**Files:** `.hero/planning/initiatives/interactive-cli-input-scoped-completion/interactive-cli-acceptance-and-merge-gate/scope-provenance.md`, `.hero/planning/initiatives/interactive-cli-input-scoped-completion/donor-branch-disposition.md`, `.hero/planning/initiatives/interactive-cli-input-scoped-completion/interactive-cli-acceptance-and-merge-gate/acceptance-evidence.md`
+**Files:** `.hero/specs/interactive-cli-acceptance-and-merge-gate/scope-provenance.md`, `.hero/specs/interactive-cli-input-scoped-completion/donor-branch-disposition.md`, `.hero/specs/interactive-cli-acceptance-and-merge-gate/acceptance-evidence.md`
 **Skip:** production repairs and donor branch deletion; route either to its owning child or retained donor destination.
 
 ## Completion Ledger

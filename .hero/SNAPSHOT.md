@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-08-03T21:46:05Z · projected from 507 source nodes_
+_Last refreshed: 2026-08-03T21:47:34Z · projected from 507 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | maturing | cmd/, internal/ | 6m ago | hero-runner |
+| core | maturing | cmd/, internal/ | 7m ago | hero-runner |
 | docs | maturing | web/docs/ | 2h ago | — |
 | domains/chat | maturing | domains/chat/ | 2h ago | — |
 | domains/engineering | maturing | domains/engineering/ | 2h ago | — |
@@ -40,7 +40,6 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Hero Surface Architecture — One Surface, Every Layer, Every Role** (surface: serve) — 8/9 specs done
 - **Hero Team Experience — Complete Multi-Developer Workflow** (surface: —) — 0/1 specs done
 - **Install + Upgrade Contract Coverage — Prove Every Target Works Every Time** (surface: —) — 0/0 specs done
-- **"Interactive CLI Input — Scoped Completion"** (surface: core) — 3/4 specs done; in flight: interactive-cli-acceptance-and-merge-gate
 - **Launch Readiness — Telemetry, Deploy, and Public-Use Polish** (surface: —) — 0/0 specs done
 - **Pre-Launch Hardening — Federation Polish, Security, Observability** (surface: —) — 0/0 specs done
 - **"Retrieval Quality — Reranking, Expansion & Feedback Loop"** (surface: —) — 0/0 specs done
@@ -48,23 +47,23 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ### Recently completed initiatives
 
+- **"Interactive CLI Input — Scoped Completion"** (surface: core) — 4/4 specs done · COMPLETED 2026-08-03
 - **"Code Host Broker Capabilities — Hero-owned PR lifecycle boundary"** (surface: —) — 8/8 specs done · COMPLETED 2026-07-28
 - **"Continuous Code-Index Freshness"** (surface: core) — 3/3 specs done · COMPLETED 2026-07-27
-- **"Conversational Attention Operability — Safe Chat-Loop Access to Mail and Focus"** (surface: core, domains/engineering) — 6/6 specs done · COMPLETED 2026-07-24
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — mock-tracker-server, gitlab-tracker-support, cev2-verbatim-turn-counting, cev2-protect-compaction-summaries, code-host-cancel-after-apply-test-timing, hero-code-host-broker-capabilities, code-host-broker-surfaces-and-conformance
+- **(unassigned)** — interactive-cli-input-scoped-completion, interactive-cli-acceptance-and-merge-gate, mock-tracker-server, gitlab-tracker-support, cev2-verbatim-turn-counting, cev2-protect-compaction-summaries, code-host-cancel-after-apply-test-timing
 - **core** — interactive-setup-and-connect-closure, corpus-selector-closure, prompt-and-tty-contract-closure, mail-3ab437af53c66997e94a0268
 - **serve** — code-host-authenticated-actor-mcp-schema-parity
 
 ## Next up across surfaces
 
 1. **landing** — `hero-landing-page` (P0, delivering)
-2. **(unassigned)** — `interactive-cli-acceptance-and-merge-gate` (high, delivering)
-3. **serve** — `agent-outposts` (medium, delivering)
-4. **serve** — `retrieval-contradiction-detection` (—, delivering)
-5. **(unassigned)** — `team-connect` (—, delivering)
+2. **serve** — `agent-outposts` (medium, delivering)
+3. **serve** — `retrieval-contradiction-detection` (—, delivering)
+4. **(unassigned)** — `team-connect` (—, delivering)
+5. **(unassigned)** — `always-on-runtime` (P0, planning)
 
 ## Open risks & blockers
 
