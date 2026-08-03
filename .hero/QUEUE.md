@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-03T21:01:38Z · 83 ready specs_
+_Generated: 2026-08-03T21:02:26Z · 83 ready specs_
 
 ## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
 _feature · delivering · horizon: now_
@@ -22,17 +22,17 @@ _(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-inter
 
 ---
 
-## satellite-corpus-integration — "Satellite Corpus Integration — Scope as a First-Class Facet"
-_feature · delivering · horizon: now_
-
-Resume by reading `.hero/planning/features/satellite-corpus-integration/spec.md` for the full design, then continue Phase 2 (index + filter surfaces) — Phase 1 (slash-command scope injection) and Phase 3 (migration execution) are also pending. The parent spec [monorepo-satellite-installs](../monorepo-satellite-installs/spec.md) shipped in commits f279f42 and 48a379c. Phase 2 is the highest-leverage next step because it's what makes scope queryable from the existing read surfaces (`list`, `search`, `recap`, `feed`).
-
----
-
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-interactive-cli-scoped/.hero/planning/features/agent-outposts/spec.md)_
+
+---
+
+## satellite-corpus-integration — "Satellite Corpus Integration — Scope as a First-Class Facet"
+_feature · planning · horizon: now_
+
+Resume by reading `.hero/planning/features/satellite-corpus-integration/spec.md` for the full design, then continue Phase 2 (index + filter surfaces) — Phase 1 (slash-command scope injection) and Phase 3 (migration execution) are also pending. The parent spec [monorepo-satellite-installs](../monorepo-satellite-installs/spec.md) shipped in commits f279f42 and 48a379c. Phase 2 is the highest-leverage next step because it's what makes scope queryable from the existing read surfaces (`list`, `search`, `recap`, `feed`).
 
 ---
 

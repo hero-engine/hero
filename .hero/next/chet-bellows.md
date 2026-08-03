@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-03T20:58:03Z
+updated: 2026-08-03T21:02:26Z
 repo: hero-engine/hero
 ---
 
@@ -10,9 +10,11 @@ repo: hero-engine/hero
 
 > Deliver corpus-selector-closure completely with bounded local selector filtering and full verification.
 
+_possibly stale — 1 commit(s) since, last set 16m ago_
+
 ## Suggested next prompt
 
-> deliver interactive-setup-and-connect-closure now that the shared prompt and TTY contract is verified
+_(none — `hero next suggest "..."` to set, or open a Feature to derive one)_
 
 ## Recent reflections
 

@@ -2,7 +2,7 @@
 title: "Satellite Corpus Integration — Scope as a First-Class Facet"
 slug: satellite-corpus-integration
 type: feature
-status: delivering
+status: planning
 priority: high
 horizon: now
 tags: [monorepo, satellites, scoping, graph, skills, migration]

@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-08-03T21:01:37Z · projected from 507 source nodes_
+_Last refreshed: 2026-08-03T21:02:26Z · projected from 507 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | <1m ago | satellite-corpus-integration |
+| core | maturing | cmd/, internal/ | <1m ago | hero-runner |
 | docs | maturing | web/docs/ | 1h ago | — |
 | domains/chat | maturing | domains/chat/ | 1h ago | — |
 | domains/engineering | maturing | domains/engineering/ | 1h ago | — |
@@ -61,10 +61,10 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Next up across surfaces
 
 1. **landing** — `hero-landing-page` (P0, delivering)
-2. **core** — `satellite-corpus-integration` (high, delivering)
-3. **serve** — `agent-outposts` (medium, delivering)
-4. **serve** — `retrieval-contradiction-detection` (—, delivering)
-5. **(unassigned)** — `team-connect` (—, delivering)
+2. **serve** — `agent-outposts` (medium, delivering)
+3. **serve** — `retrieval-contradiction-detection` (—, delivering)
+4. **(unassigned)** — `team-connect` (—, delivering)
+5. **(unassigned)** — `always-on-runtime` (P0, planning)
 
 ## Open risks & blockers
 
