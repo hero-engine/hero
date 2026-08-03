@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hero-engine/hero/internal/cli/prompt"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/spf13/cobra"
 )
@@ -80,7 +82,7 @@ Examples:
 
 Use --local to write to hero.local.json (gitignored) instead of hero.json.
 This is useful when your local directory layout differs from teammates.`,
-	Args: cobra.ExactArgs(2),
+	Args: promptableArgs(2, cobra.ExactArgs(2)),
 	RunE: runReposAdd,
 }
 
@@ -169,8 +171,42 @@ func runReposList(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func reposAddArgs(cmd *cobra.Command, args []string) (string, string, error) {
+	alias, repoPath := "", ""
+	if len(args) > 0 {
+		alias = args[0]
+	}
+	if len(args) > 1 {
+		repoPath = args[1]
+	}
+	if alias == "" {
+		value, err := prompt.Prompt(cmd.InOrStdin(), cmd.OutOrStdout(), "Repo alias: ")
+		if err != nil {
+			return "", "", err
+		}
+		if value == "" {
+			return "", "", errors.New("alias is required")
+		}
+		alias = value
+	}
+	if repoPath == "" {
+		value, err := prompt.Prompt(cmd.InOrStdin(), cmd.OutOrStdout(), "Path to the repo: ")
+		if err != nil {
+			return "", "", err
+		}
+		if value == "" {
+			return "", "", errors.New("path is required")
+		}
+		repoPath = value
+	}
+	return alias, repoPath, nil
+}
+
 func runReposAdd(cmd *cobra.Command, args []string) error {
-	alias, repoPath := args[0], args[1]
+	alias, repoPath, err := reposAddArgs(cmd, args)
+	if err != nil {
+		return err
+	}
 
 	projectRoot := findProjectRoot()
 	cfg, err := config.Load(projectRoot)
@@ -449,4 +485,3 @@ func runReposCheck(cmd *cobra.Command, args []string) error {
 
 	return nil
 }
-

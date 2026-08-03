@@ -2,7 +2,7 @@
 title: "Interactive Setup and Connect Closure"
 slug: interactive-setup-and-connect-closure
 type: feature
-status: planning
+status: delivering
 created: 2026-08-03
 domain: engineering
 size: large
@@ -15,6 +15,7 @@ relates-to:
   - connect-help-accuracy
   - uninstall-target-parity
 tags: [cli, prompt, connect, setup, uninstall]
+delivery_method: manual
 ---
 
 # Interactive Setup and Connect Closure
@@ -60,20 +61,16 @@ stdin and a live non-TTY pipe fail promptly without a prompt or read.
 
 ## Kickoff
 
-Curate the original setup/connect work after the shared prompt contract passes.
-Start with a pre-change compatibility baseline, then port connect's one writer
-and add the missing whole-collector TTY gate before adopting setup prompts and
-six-target uninstall parity. Finish with truthful help on both connect surfaces.
+Closes interactive connect and setup flows while leaving automation paths non-blocking and manifest-safe.
 
-**Status:** planning — full contract designed; no code ported.
+**Status:** delivering — one-writer connect, live-pipe gate, setup prompts, six-target uninstall, help, and regression coverage are implemented.
 
-**Pick up at:** capture supplied-invocation baselines, then implement the
-connect-local collector and single writer from donor `485c32f`.
+**Pick up at:** run the cold delivery audit and verification gate before archiving.
 
-→ `/deliver interactive-setup-and-connect-closure --autopilot`
+→ `hero spec verify interactive-setup-and-connect-closure --skip-tests`
 
-**Files:** `internal/cli/connect.go`, `internal/cli/uninstall.go`, `internal/cli/prompt_args.go`, `internal/cli/prompt_setup_commands_test.go`, `internal/config/integrations.go`
-**Skip:** donor `promptfield.go`/`skill.go`, `init`, index, aliases, timeout and invocation-lint commits, plus later uninstall/Codex cleanup.
+**Files:** `internal/cli/connect.go`, `internal/cli/uninstall.go`, `internal/cli/prompt_args.go`, `internal/cli/connect_writer_unification_test.go`
+**Skip:** generic prompt fields, skill coupling, init/index/alias expansion, network calls, and unlisted uninstall repairs.
 
 ## Problem
 
@@ -440,3 +437,50 @@ provider network behavior, or filesystem mutation is implicitly approved.
    secret or TTY dependency.
 7. Run `hero drift interactive-setup-and-connect-closure`, cold delivery audit,
    and `hero spec verify interactive-setup-and-connect-closure --skip-tests`.
+
+## Completion Ledger
+
+Validation passed: focused connect/setup/config tests, full normal and race CLI
+suites, vet, native build, and Windows cross-build.
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | TTY provider selection | DONE | Registry-derived `Provider` choice and PTY test. |
+| 2 | Applicable fields and roles | DONE | Private `connectField` collector and provider role validation. |
+| 3 | Closed/live non-TTY pre-I/O failure | DONE | Live `io.Pipe` regression completes before writer close. |
+| 4 | JSON never prompts | DONE | Connect/setup JSON tests retain non-interactive behavior. |
+| 5 | One validated writer | DONE | `writeConnection` is structurally and behaviorally covered. |
+| 6 | Explicit role routes and validates | DONE | Changed-flag routing and role validation tests pass. |
+| 7 | Equivalent persistence | DONE | Paired persistence regression coverage passes. |
+| 8 | Code-host resolver/default | DONE | Both code-host paths resolve without claiming default. |
+| 9 | Failed config leaves no credential | DONE | Write ordering regression coverage passes. |
+| 10 | Identical six target list | DONE | Install/uninstall use `installTargets`. |
+| 11 | Copilot/generic manifest removal | DONE | Six-target dispatch retains manifest-gated removers. |
+| 12 | Frozen setup shortfall prompts | DONE | `promptableArgs`, repos/users/trust, and PTY matrix pass. |
+| 13 | Secure password behavior | DONE | Existing protected password seam remains exercised. |
+| 14 | Satellite confirmations honor streams | DONE | Existing prompt.Confirm satellite tests pass. |
+| 15 | Truthful connect help surfaces | DONE | Shared registration and `connect_help_test.go`. |
+| 16 | Supplied-path compatibility | DONE | Baseline/setup and full CLI suites pass. |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Baseline contract | DONE | Existing baseline coverage retained; setup matrix added. |
+| 2 | Connect writer/collectors | DONE | `internal/cli/connect.go`. |
+| 3 | Connect regressions | DONE | `connect_writer_unification_test.go`, including live pipe. |
+| 4 | Named setup prompts | DONE | `prompt_args.go`, repos/users/trust, satellite paths. |
+| 5 | Six-target parity | DONE | `uninstall.go` uses `installTargets` and manifest removers. |
+| 6 | Connect help | DONE | `connect.go`, alias, and help test. |
+| 7 | Setup/target test matrix | DONE | `prompt_setup_commands_test.go` plus focused tests. |
+| 8 | Bounded compatibility docs | DONE | Updated help documents the delivered behavior. |
+
+### Exercise-the-feature check
+
+- [x] PTY/built CLI tests exercised provider and target choices; a live open pipe returned before its writer closed, and focused suites exercised resolver, writer, setup, and target behavior.
+
+### Excellence Bar self-check
+
+Honest answer to "would a senior engineer who cares about this codebase be proud to ship this?" — yes; collection remains private to connect, no-TTY safety is live-pipe tested, and uninstall deletion stays manifest-authorized.

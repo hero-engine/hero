@@ -6,7 +6,23 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-03T21:02:26Z · 83 ready specs_
+_Generated: 2026-08-03T21:15:01Z · 83 ready specs_
+
+## interactive-setup-and-connect-closure — "Interactive Setup and Connect Closure"
+_feature · delivering · horizon: now_
+
+Closes interactive connect and setup flows while leaving automation paths non-blocking and manifest-safe.
+
+**Status:** delivering — one-writer connect, live-pipe gate, setup prompts, six-target uninstall, help, and regression coverage are implemented.
+
+**Pick up at:** run the cold delivery audit and verification gate before archiving.
+
+→ `hero spec verify interactive-setup-and-connect-closure --skip-tests`
+
+**Files:** `internal/cli/connect.go`, `internal/cli/uninstall.go`, `internal/cli/prompt_args.go`, `internal/cli/connect_writer_unification_test.go`
+**Skip:** generic prompt fields, skill coupling, init/index/alias expansion, network calls, and unlisted uninstall repairs.
+
+---
 
 ## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
 _feature · delivering · horizon: now_
@@ -46,26 +62,6 @@ trace to the original interactive-input outcome. The completed result has one
 cross-platform prompt authority, safe TTY and secret handling, additive setup
 prompts, selectors that work at actual corpus scale, unchanged machine paths,
 and evidence that no affected invocation can prompt or hang unexpectedly.
-
----
-
-## interactive-setup-and-connect-closure — "Interactive Setup and Connect Closure"
-_feature · planning · horizon: now_
-
-Curate the original setup/connect work after the shared prompt contract passes.
-Start with a pre-change compatibility baseline, then port connect's one writer
-and add the missing whole-collector TTY gate before adopting setup prompts and
-six-target uninstall parity. Finish with truthful help on both connect surfaces.
-
-**Status:** planning — full contract designed; no code ported.
-
-**Pick up at:** capture supplied-invocation baselines, then implement the
-connect-local collector and single writer from donor `485c32f`.
-
-→ `/deliver interactive-setup-and-connect-closure --autopilot`
-
-**Files:** `internal/cli/connect.go`, `internal/cli/uninstall.go`, `internal/cli/prompt_args.go`, `internal/cli/prompt_setup_commands_test.go`, `internal/config/integrations.go`
-**Skip:** donor `promptfield.go`/`skill.go`, `init`, index, aliases, timeout and invocation-lint commits, plus later uninstall/Codex cleanup.
 
 ---
 

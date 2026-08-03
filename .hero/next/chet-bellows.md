@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-03T21:02:26Z
+updated: 2026-08-03T21:15:00Z
 repo: hero-engine/hero
 ---
 
@@ -8,9 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver corpus-selector-closure completely with bounded local selector filtering and full verification.
-
-_possibly stale — 1 commit(s) since, last set 16m ago_
+> Deliver interactive-setup-and-connect-closure completely with six-target and live-pipe validation.
 
 ## Suggested next prompt
 

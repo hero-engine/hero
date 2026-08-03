@@ -2,12 +2,14 @@ package cli
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 
 	hero "github.com/hero-engine/hero"
+	"github.com/hero-engine/hero/internal/cli/prompt"
 	"github.com/hero-engine/hero/internal/install"
 	"github.com/hero-engine/hero/internal/version"
 	"github.com/spf13/cobra"
@@ -28,20 +30,43 @@ to determine which files were installed by Hero.
 
 For Claude Code, also removes the hero-managed section from CLAUDE.md.
 
-Supported targets: opencode, cursor, claude, codex.`,
+Supported targets: opencode, cursor, claude, copilot, codex, generic.`,
 	RunE: runUninstall,
 }
 
 func init() {
-	uninstallCmd.Flags().StringVar(&uninstallTarget, "target", "", "tool to uninstall from (opencode|cursor|claude|codex)")
+	uninstallCmd.Flags().StringVar(&uninstallTarget, "target", "", "tool to uninstall from ("+strings.Join(installTargets, "|")+")")
 	uninstallCmd.Flags().BoolVar(&uninstallDryRun, "dry-run", false, "show what would be removed without doing it")
+}
+
+func errUninstallTargetMissing() error {
+	return fmt.Errorf("--target is required (%s)", strings.Join(installTargets, "|"))
+}
+
+func promptUninstallTarget(in io.Reader, out io.Writer) (string, error) {
+	if !prompt.IsInputTTY(in) {
+		return "", errUninstallTargetMissing()
+	}
+	choice, err := prompt.Choice(in, out, "Uninstall target", installTargets)
+	if err != nil {
+		return "", err
+	}
+	if choice == "" {
+		return "", errUninstallTargetMissing()
+	}
+	return choice, nil
 }
 
 func runUninstall(cmd *cobra.Command, args []string) error {
 	projectRoot := findProjectRoot()
 
-	if uninstallTarget == "" {
-		return fmt.Errorf("--target is required (opencode|cursor|claude|codex)")
+	target := uninstallTarget
+	if target == "" {
+		chosen, err := promptUninstallTarget(cmd.InOrStdin(), cmd.OutOrStdout())
+		if err != nil {
+			return err
+		}
+		target = chosen
 	}
 
 	// Load the install manifest to know which files Hero installed
@@ -51,17 +76,21 @@ func runUninstall(cmd *cobra.Command, args []string) error {
 	var removed, preserved int
 	var err error
 
-	switch uninstallTarget {
+	switch target {
 	case "opencode":
 		removed, preserved, err = uninstallOpenCode(projectRoot, versionInfo)
 	case "cursor":
 		removed, preserved, err = uninstallCursor(projectRoot, versionInfo)
 	case "claude":
 		removed, preserved, err = uninstallClaude(projectRoot, versionInfo)
+	case "copilot":
+		removed, preserved, err = uninstallCopilot(projectRoot, versionInfo)
 	case "codex":
 		removed, preserved, err = uninstallCodex(projectRoot, versionInfo)
+	case "generic":
+		removed, preserved, err = uninstallGeneric(projectRoot, versionInfo)
 	default:
-		return fmt.Errorf("unknown target %q; supported: opencode, cursor, claude, codex", uninstallTarget)
+		return fmt.Errorf("unknown target %q; supported: %s", target, strings.Join(installTargets, ", "))
 	}
 
 	if err != nil {
@@ -71,7 +100,7 @@ func runUninstall(cmd *cobra.Command, args []string) error {
 	if removed == 0 {
 		fmt.Println("Nothing to remove.")
 	} else {
-		fmt.Printf("Removed %d hero files from %s.\n", removed, uninstallTarget)
+		fmt.Printf("Removed %d hero files from %s.\n", removed, target)
 	}
 	if preserved > 0 {
 		fmt.Printf("Preserved %d user-created files.\n", preserved)
@@ -79,10 +108,10 @@ func runUninstall(cmd *cobra.Command, args []string) error {
 
 	// Clean up satellite folders for this target.
 	if !uninstallDryRun {
-		if satRemoved, satErr := uninstallSatellites(projectRoot, install.Target(uninstallTarget)); satErr != nil {
+		if satRemoved, satErr := uninstallSatellites(projectRoot, install.Target(target)); satErr != nil {
 			fmt.Printf("  warning: could not clean satellites: %v\n", satErr)
 		} else if satRemoved > 0 {
-			fmt.Printf("Removed %s symlinks from %d satellite folder(s).\n", uninstallTarget, satRemoved)
+			fmt.Printf("Removed %s symlinks from %d satellite folder(s).\n", target, satRemoved)
 		}
 	}
 
@@ -221,6 +250,116 @@ func uninstallCodex(projectRoot string, versionInfo *version.Info) (int, int, er
 	return removed, preserved, nil
 }
 
+// uninstallCopilot removes the Copilot install, which spans more surfaces
+// than any other target (see internal/install/target_copilot.go):
+//
+//	.github/skills/<name>/SKILL.md          (nested skills)
+//	.github/prompts/agents/<name>.prompt.md
+//	.github/prompts/commands/<name>.prompt.md
+//	.github/copilot-instructions.md         (Copilot-specific instructions)
+//	AGENTS.md                               (root instruction file — a SECOND,
+//	                                         distinct instruction surface)
+//	.github/copilot/{agents,commands,skills}/ (dead bytes from pre-prompt-file
+//	                                         installs; install cleans these too)
+//
+// .github/ holds the user's CI workflows, so every removal here routes
+// through the manifest gate (removeHeroFiles / removeHeroFile). Nothing in
+// this function may delete a path it computed rather than one the install
+// manifest vouched for.
+func uninstallCopilot(projectRoot string, versionInfo *version.Info) (int, int, error) {
+	githubBase := filepath.Join(projectRoot, ".github")
+	dirs := []string{
+		filepath.Join(githubBase, "skills"),
+		filepath.Join(githubBase, "prompts", "agents"),
+		filepath.Join(githubBase, "prompts", "commands"),
+		// Legacy tree — never read by Copilot Chat. runCopilot deletes these
+		// on install; uninstall does too so an install/uninstall pair from any
+		// Hero version leaves nothing behind.
+		filepath.Join(githubBase, "copilot", "agents"),
+		filepath.Join(githubBase, "copilot", "commands"),
+		filepath.Join(githubBase, "copilot", "skills"),
+	}
+
+	removed, preserved := 0, 0
+	for _, dir := range dirs {
+		r, p, err := removeHeroFiles(projectRoot, dir, versionInfo)
+		if err != nil {
+			return removed, preserved, err
+		}
+		removed += r
+		preserved += p
+	}
+
+	// .github/copilot-instructions.md is generated whole-file by Hero
+	// (installInstructionsMd), not spliced into a user-owned document, so
+	// removal is a manifest-gated file removal rather than section stripping.
+	// It carries a single legacy marker, which removeHeroManagedSection —
+	// which requires a marker pair — cannot match.
+	instructionsPath := filepath.Join(githubBase, "copilot-instructions.md")
+	r, p, err := removeHeroFile(projectRoot, instructionsPath, versionInfo)
+	if err != nil {
+		return removed, preserved, err
+	}
+	removed += r
+	preserved += p
+
+	// Clean hero section from AGENTS.md, Copilot's root instruction file.
+	// Same unconditional strip the other targets do — see the AGENTS.md
+	// sharing caveat on uninstallGeneric.
+	agentsMdPath := filepath.Join(projectRoot, "AGENTS.md")
+	if cleaned, err := removeHeroManagedSection(agentsMdPath); err == nil && cleaned {
+		removed++
+	}
+
+	// Drop the now-empty legacy and prompt parents. os.Remove refuses to
+	// delete a non-empty directory, so a user file under either one keeps
+	// its parent alive.
+	os.Remove(filepath.Join(githubBase, "copilot"))
+	os.Remove(filepath.Join(githubBase, "prompts"))
+
+	return removed, preserved, nil
+}
+
+// uninstallGeneric removes the tool-agnostic .ai/ install. Structurally
+// identical to uninstallCodex minus the Codex hook and config.toml wiring,
+// which the generic target never writes.
+//
+// Caveat, replicated from the existing targets rather than fixed here:
+// AGENTS.md is written by five targets (opencode, cursor, copilot, codex,
+// generic) and the hero-managed section is stripped unconditionally, so
+// uninstalling one target removes a block another installed target still
+// relies on. Making removal conditional on the remaining installed-target
+// set touches all six uninstall paths and belongs in its own change.
+func uninstallGeneric(projectRoot string, versionInfo *version.Info) (int, int, error) {
+	base := filepath.Join(projectRoot, ".ai")
+	dirs := []string{
+		filepath.Join(base, "agents"),
+		filepath.Join(base, "commands"),
+		filepath.Join(base, "skills"),
+	}
+
+	removed, preserved := 0, 0
+	for _, dir := range dirs {
+		r, p, err := removeHeroFiles(projectRoot, dir, versionInfo)
+		if err != nil {
+			return removed, preserved, err
+		}
+		removed += r
+		preserved += p
+	}
+
+	// Clean hero section from AGENTS.md
+	agentsMdPath := filepath.Join(projectRoot, "AGENTS.md")
+	if cleaned, err := removeHeroManagedSection(agentsMdPath); err == nil && cleaned {
+		removed++
+	}
+
+	// Drop .ai/ if nothing but Hero content lived under it.
+	os.Remove(base)
+
+	return removed, preserved, nil
+}
+
 // removeHeroCodexConfigBlock strips the # hero:managed ... # end:hero:managed block
 // from .codex/config.toml. Returns true if a block was found and removed.
 func removeHeroCodexConfigBlock(path string) (bool, error) {
@@ -322,6 +461,42 @@ func removeHeroFiles(projectRoot, dir string, versionInfo *version.Info) (int, i
 	}
 
 	return removed, preserved, nil
+}
+
+// removeHeroFile removes a single Hero-installed file, applying the same
+// isHeroInstalledFile manifest gate that removeHeroFiles applies to every
+// file in a directory tree. Use it for standalone surfaces Hero generates
+// whole-file outside a Hero-owned directory — .github/copilot-instructions.md
+// is the only such surface today. A path the manifest does not vouch for is
+// preserved, never removed. Returns (removed, preserved).
+func removeHeroFile(projectRoot, path string, versionInfo *version.Info) (int, int, error) {
+	fi, err := os.Stat(path)
+	if err != nil || fi.IsDir() {
+		return 0, 0, nil
+	}
+
+	relPath, err := filepath.Rel(projectRoot, path)
+	if err != nil {
+		return 0, 0, nil
+	}
+
+	if !isHeroInstalledFile(relPath, versionInfo) {
+		fmt.Printf("  Preserving %s (user-created)\n", path)
+		return 0, 1, nil
+	}
+
+	if uninstallDryRun {
+		fmt.Printf("  Would remove %s\n", path)
+	} else {
+		if err := os.Remove(path); err != nil {
+			return 0, 0, fmt.Errorf("removing %s: %w", path, err)
+		}
+		fmt.Printf("  Removed %s\n", path)
+	}
+	if versionInfo != nil && versionInfo.InstalledFiles != nil {
+		delete(versionInfo.InstalledFiles, relPath)
+	}
+	return 1, 0, nil
 }
 
 // isHeroInstalledFile checks whether a file was installed by Hero.

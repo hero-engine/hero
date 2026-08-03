@@ -19,7 +19,7 @@ import (
 var connectCmd = &cobra.Command{
 	Use:   "connect [type]",
 	Short: "Connect hero to an external tracker or wiki service",
-	Long: `Interactively configure a tracker or wiki connection and save credentials.
+	Long: `Configure a tracker or wiki connection interactively, or with flags for automation.
 
 Supported types: github, jira, linear, gitlab, confluence
 
@@ -28,13 +28,18 @@ Examples:
   hero connect jira         — guided setup for Jira (asks for base_url too)
   hero connect linear       — guided setup for Linear
   hero connect confluence   — guided setup for Confluence wiki sync
+  printf 'TOKEN' | hero connect github --project owner/repo --role code-host --token-stdin --no-verify
   hero connect --list       — show all saved connections
   hero connect --remove github --project owner/repo  — remove a saved connection
 
 Tokens are saved to .hero/hero.local.json (project scope, gitignored) by default,
 or to ~/.config/hero/credentials.json when --global is passed.
 
-Non-secret config (type, project, base_url) is written to hero.json if not already set.`,
+Flag-driven connect requires --project and --token-stdin; --role selects the
+connection role, --local-only keeps all integration state local, and --json
+never opens the interactive form. --no-verify skips provider verification and
+should be used only when that risk is understood. Non-secret configuration is
+written before credentials so failed configuration writes leave no token.`,
 	RunE:    runConnect,
 	Args:    cobra.MaximumNArgs(1),
 	Aliases: []string{"conn"},
@@ -59,7 +64,7 @@ func init() {
 	connectCmd.Flags().BoolVar(&connectList, "list", false, "list saved connections")
 	connectCmd.Flags().StringVar(&connectRemove, "remove", "", "remove connection for the given tracker type")
 	connectCmd.Flags().BoolVar(&connectGlobal, "global", false, "save token to global credentials (~/.config/hero/credentials.json) instead of hero.local.json")
-	connectCmd.Flags().StringVar(&connectProject, "project", "", "project identifier (used with --remove)")
+	connectCmd.Flags().StringVar(&connectProject, "project", "", "project identifier (required for flag-driven connect; used with --remove)")
 	addIntegrationConnectFlags(connectCmd)
 }
 
@@ -90,31 +95,37 @@ func runConnect(cmd *cobra.Command, args []string) error {
 		return runConnectRemove(creds, connectRemove, connectProject)
 	}
 
-	if len(args) == 0 {
-		return fmt.Errorf("usage: hero connect <type>  (github, jira, linear, gitlab, confluence)\n\nRun 'hero connect --list' to see saved connections.")
+	trackerType := ""
+	if len(args) > 0 {
+		trackerType = strings.ToLower(args[0])
+	} else {
+		if connectJSON || !prompt.IsInputTTY(cmd.InOrStdin()) {
+			return fmt.Errorf("usage: hero connect <type>  (github, jira, linear, gitlab, confluence)\n\nRun 'hero connect --list' to see saved connections.")
+		}
+		providers := connectProviderNames()
+		choice, err := prompt.Choice(cmd.InOrStdin(), cmd.OutOrStdout(), "Provider", providers)
+		if err != nil {
+			return err
+		}
+		if choice == "" {
+			return fmt.Errorf("usage: hero connect <type>  (github, jira, linear, gitlab, confluence)\n\nRun 'hero connect --list' to see saved connections.")
+		}
+		trackerType = choice
 	}
 
-	trackerType := strings.ToLower(args[0])
-	if connectJSON || connectIntegrationID != "" || connectTokenStdin || connectProject != "" || connectBaseURL != "" || connectLocalOnly {
+	// --role belongs in this predicate for the same reason every other flag
+	// here does: it carries a value only the flag-driven writer can honor.
+	// While it was missing, `hero connect github --role code-host` landed on
+	// the interactive path, which hardcoded `delivery` — the user asked for a
+	// code-host connection explicitly, got no error, and got a delivery one.
+	//
+	// Changed() rather than a non-empty check: --role defaults to "delivery",
+	// so the flag's value can never distinguish "unset" from "set to the
+	// default".
+	if connectIntegrationID != "" || connectTokenStdin || connectProject != "" || connectBaseURL != "" || connectLocalOnly || cmd.Flags().Changed("role") {
 		return runConnectNonInteractive(cmd, projectRoot, creds, trackerType)
 	}
-	if !prompt.IsInputTTY(cmd.InOrStdin()) {
-		return fmt.Errorf("interactive connect requires an attached terminal; supply --integration-id, --project, and --token-stdin for automation")
-	}
-	switch trackerType {
-	case "github":
-		return runConnectGitHub(cmd, projectRoot, creds)
-	case "jira":
-		return runConnectJira(cmd, projectRoot, creds)
-	case "linear":
-		return runConnectLinear(cmd, projectRoot, creds)
-	case "gitlab":
-		return runConnectGitLab(cmd, projectRoot, creds)
-	case "confluence":
-		return runConnectConfluence(cmd, projectRoot, creds)
-	default:
-		return fmt.Errorf("unknown type %q — supported: github, jira, linear, gitlab, confluence", trackerType)
-	}
+	return runConnectInteractive(cmd, projectRoot, creds, trackerType, map[string]string{"provider": trackerType})
 }
 
 // ---------------------------------------------------------------------------
@@ -204,8 +215,11 @@ func runConnectList(w io.Writer, root string, creds config.Credentials) error {
 	return nil
 }
 
+// runConnectNonInteractive collects a connection from flags and hands it to
+// writeConnection. It obtains values differently from the interactive path;
+// it does not decide differently what a valid connection is.
 func runConnectNonInteractive(cmd *cobra.Command, root string, creds config.Credentials, provider string) error {
-	if !providersCLI[provider] {
+	if _, ok := connectProviders[provider]; !ok {
 		return fmt.Errorf("unknown provider %q", provider)
 	}
 	id := connectIntegrationID
@@ -215,12 +229,11 @@ func runConnectNonInteractive(cmd *cobra.Command, root string, creds config.Cred
 	if connectProject == "" {
 		return fmt.Errorf("--project is required for non-interactive connect")
 	}
-	role := connectRole
-	if provider == "confluence" && role == "delivery" {
-		role = "docs"
-	}
-	requiredCapability, err := config.ValidateProviderRole(provider, role)
-	if err != nil {
+	// Reject an impossible provider/role pairing before consuming the token
+	// stream or touching the network. writeConnection re-checks it as the
+	// single authority; this is only about the order in which a doomed
+	// invocation gives up.
+	if _, err := config.ValidateProviderRole(provider, connectResolveRole(provider, connectRole)); err != nil {
 		return err
 	}
 	token := ""
@@ -243,42 +256,94 @@ func runConnectNonInteractive(cmd *cobra.Command, root string, creds config.Cred
 		}
 	}
 	if token != "" && !connectNoVerify {
-		var verr error
-		switch provider {
-		case "github":
-			verr = verifyGitHubToken(connectProject, token)
-		case "jira":
-			verr = verifyJiraToken(connectBaseURL, connectProject, connectUserEmail, token)
-		case "linear":
-			verr = verifyLinearToken(connectProject, token)
-		case "gitlab":
-			verr = verifyGitLabToken(connectBaseURL, connectProject, token)
-		case "confluence":
-			verr = verifyConfluenceToken(connectBaseURL, connectProject, connectUserEmail, token)
+		values := map[string]string{
+			"project": connectProject, "base_url": connectBaseURL,
+			"user_email": connectUserEmail, "token": token,
 		}
-		if verr != nil {
+		if verr := connectProviders[provider].verify(values); verr != nil {
 			return fmt.Errorf("could not verify %s integration %q: %w", provider, id, verr)
 		}
 	}
-	settings := map[string]any{"project": connectProject}
-	if provider == "confluence" {
+	verification := "verified"
+	if connectNoVerify {
+		verification = "not-checked"
+	}
+	return writeConnection(cmd, root, creds, connectionInput{
+		provider:     provider,
+		id:           id,
+		project:      connectProject,
+		baseURL:      connectBaseURL,
+		userEmail:    connectUserEmail,
+		token:        token,
+		role:         connectRole,
+		verification: verification,
+	})
+}
+
+// ---------------------------------------------------------------------------
+// the write path — one function, both entry points
+// ---------------------------------------------------------------------------
+
+// connectionInput is one fully-collected connection, ready to persist.
+type connectionInput struct {
+	provider  string
+	id        string
+	project   string // repository, project key, team key, or space key
+	baseURL   string
+	userEmail string
+	token     string
+	role      string
+	// verification is what --list and the --json result report about whether
+	// the provider was actually reached.
+	verification string
+}
+
+// writeConnection is the only function that persists a connection.
+//
+// It used to have a twin. `saveConnection` + `updateHeroJSON` served the
+// interactive path and disagreed with this code about all three of the things
+// a connection is selected by: it hardcoded the role to delivery/docs, never
+// wrote `capabilities`, and always claimed `default`. The missing
+// `capabilities` was the load-bearing half — with none written,
+// EffectiveCapabilities falls back to the provider's legacy `tracker`, and
+// ResolveCodeHostConnection rejects the connection outright.
+//
+// So role, capabilities, and default resolve here and nowhere else. Adding a
+// second writer reintroduces the entire class of bug.
+func writeConnection(cmd *cobra.Command, root string, creds config.Credentials, in connectionInput) error {
+	role := connectResolveRole(in.provider, in.role)
+	// The capability derivation is exhaustive by construction:
+	// ValidateProviderRole fails an unknown role and a provider that cannot
+	// serve a known one, so no path reaches persistence with an empty
+	// capability — which would reproduce the legacy-`tracker` fallback this
+	// function exists to close.
+	requiredCapability, err := config.ValidateProviderRole(in.provider, role)
+	if err != nil {
+		return err
+	}
+
+	settings := map[string]any{"project": in.project}
+	if in.provider == "confluence" {
 		delete(settings, "project")
-		settings["space_key"] = connectProject
+		settings["space_key"] = in.project
 	}
-	if connectBaseURL != "" {
-		settings["base_url"] = connectBaseURL
+	if in.baseURL != "" {
+		settings["base_url"] = in.baseURL
 	}
-	if connectUserEmail != "" {
-		settings["user_email"] = connectUserEmail
+	if in.userEmail != "" {
+		settings["user_email"] = in.userEmail
 	}
-	if err := config.ValidateConnectionSettings(id, provider, settings); err != nil {
-		return fmt.Errorf("cannot connect %s: %s", provider, settingErrorToFlag(err, provider))
+	if err := config.ValidateConnectionSettings(in.id, in.provider, settings); err != nil {
+		return fmt.Errorf("cannot connect %s: %s", in.provider, settingErrorToFlag(err, in.provider))
 	}
-	connection := map[string]any{"provider": provider, "settings": settings}
-	if existingCfg, loadErr := config.Load(root); loadErr != nil {
-		return loadErr
-	} else if existingCfg.Integrations != nil {
-		if existing, ok := existingCfg.Integrations.Connections[id]; ok {
+
+	connection := map[string]any{"provider": in.provider, "settings": settings}
+	existingCfg, err := config.Load(root)
+	if err != nil {
+		return err
+	}
+	if existingCfg.Integrations != nil {
+		if existing, ok := existingCfg.Integrations.Connections[in.id]; ok {
 			capabilities := existing.EffectiveCapabilities()
 			present := false
 			for _, capability := range capabilities {
@@ -293,15 +358,20 @@ func runConnectNonInteractive(cmd *cobra.Command, root string, creds config.Cred
 	if _, explicit := connection["capabilities"]; !explicit && requiredCapability == config.CapabilityCodeHost {
 		connection["capabilities"] = []config.IntegrationCapability{config.CapabilityCodeHost}
 	}
+
 	patch := map[string]any{
-		"roles":       map[string]any{role: id},
-		"connections": map[string]any{id: connection},
+		"roles":       map[string]any{role: in.id},
+		"connections": map[string]any{in.id: connection},
 	}
+	// A code-host connection is selected by its role, never by falling back to
+	// the default, so claiming the default would only steal it from whatever
+	// tracker holds it.
 	if role != "code-host" {
-		patch["default"] = id
+		patch["default"] = in.id
 	}
+
 	if connectLocalOnly {
-		connection["auth"] = map[string]any{"token": token}
+		connection["auth"] = map[string]any{"token": in.token}
 		p, _ := json.Marshal(patch)
 		if err := config.PatchLocalIntegrations(root, config.DefaultFolder, p); err != nil {
 			return err
@@ -311,38 +381,42 @@ func runConnectNonInteractive(cmd *cobra.Command, root string, creds config.Cred
 		if err := config.PatchCommittedIntegrations(root, config.DefaultFolder, p); err != nil {
 			return err
 		}
-		if token != "" {
+		if in.token != "" {
 			if connectGlobal {
-				config.SetIntegrationCredential(creds, id, config.CredentialEntry{Token: token, BaseURL: connectBaseURL, UserEmail: connectUserEmail})
+				config.SetIntegrationCredential(creds, in.id, config.CredentialEntry{Token: in.token, BaseURL: in.baseURL, UserEmail: in.userEmail})
 				if err := config.SaveCredentials(creds); err != nil {
 					return err
 				}
 			} else {
-				p, _ := json.Marshal(map[string]any{"connections": map[string]any{id: map[string]any{"auth": map[string]any{"token": token}}}})
+				p, _ := json.Marshal(map[string]any{"connections": map[string]any{in.id: map[string]any{"auth": map[string]any{"token": in.token}}}})
 				if err := config.PatchLocalIntegrations(root, config.DefaultFolder, p); err != nil {
 					return err
 				}
 			}
 		}
 	}
-	verification := "verified"
-	if connectNoVerify {
-		verification = "not-checked"
-	}
+
 	result := map[string]any{
-		"id": id, "provider": provider, "role": role, "capability": requiredCapability,
-		"ready": token != "" || connectGlobal, "verification": verification,
+		"id": in.id, "provider": in.provider, "role": role, "capability": requiredCapability,
+		"ready": in.token != "" || connectGlobal, "verification": in.verification,
 	}
 	if connectJSON {
 		b, _ := json.Marshal(result)
 		fmt.Fprintln(cmd.OutOrStdout(), string(b))
 	} else {
-		fmt.Fprintf(cmd.OutOrStdout(), "Connected integration %s (%s). Inspect with 'hero connect --list'.\n", id, provider)
+		fmt.Fprintf(cmd.OutOrStdout(), "Connected integration %s (%s). Inspect with 'hero connect --list'.\n", in.id, in.provider)
 	}
 	return nil
 }
 
-var providersCLI = map[string]bool{"github": true, "jira": true, "linear": true, "gitlab": true, "confluence": true}
+// connectResolveRole applies connect's one role default: Confluence has no
+// tracker capability, so the `delivery` default means `docs` there.
+func connectResolveRole(provider, role string) string {
+	if provider == "confluence" && role == "delivery" {
+		return "docs"
+	}
+	return role
+}
 
 // settingFlagNames maps a provider-schema settings key to the connect flag the
 // user actually chose, so a schema rejection can be reported in flag vocabulary.
@@ -403,214 +477,253 @@ func runConnectRemove(creds config.Credentials, trackerType, project string) err
 }
 
 // ---------------------------------------------------------------------------
-// github
+// the interactive path — collect, then write
 // ---------------------------------------------------------------------------
 
-func runConnectGitHub(cmd *cobra.Command, projectRoot string, creds config.Credentials) error {
-	fmt.Println("Connecting to GitHub Issues...")
-	fmt.Println()
-
-	project := connectPrompt(cmd, "Repository (owner/repo): ")
-	if project == "" {
-		return fmt.Errorf("repository is required")
-	}
-
-	token := connectSecret("Personal access token (needs 'repo' scope): ")
-	if token == "" {
-		return fmt.Errorf("secure terminal token input unavailable or empty; retry in a TTY or use --token-stdin")
-	}
-
-	fmt.Println()
-	fmt.Print("Verifying connection... ")
-
-	if err := verifyGitHubToken(project, token); err != nil {
-		fmt.Println("FAILED")
-		return fmt.Errorf("could not verify GitHub connection: %w", err)
-	}
-	fmt.Println("OK")
-
-	entry := config.CredentialEntry{Token: token}
-	return saveConnection(projectRoot, creds, "github", project, entry, "", "")
+// connectProvider is the per-provider half of interactive connect: what it
+// says, and how it proves the credential works.
+type connectProvider struct {
+	intro  string // banner printed before the first prompt
+	name   string // display name used in the verification error
+	verify func(values map[string]string) error
 }
 
-// ---------------------------------------------------------------------------
-// jira
-// ---------------------------------------------------------------------------
-
-func runConnectJira(cmd *cobra.Command, projectRoot string, creds config.Credentials) error {
-	fmt.Println("Connecting to Jira...")
-	fmt.Println()
-
-	baseURL := connectPrompt(cmd, "Jira base URL (e.g. https://mycompany.atlassian.net): ")
-	if baseURL == "" {
-		return fmt.Errorf("base URL is required")
-	}
-	baseURL = strings.TrimRight(baseURL, "/")
-
-	project := connectPrompt(cmd, "Project key (e.g. PROJ): ")
-	if project == "" {
-		return fmt.Errorf("project key is required")
-	}
-
-	userEmail := connectPrompt(cmd, "User email (for Jira Cloud basic auth): ")
-	if userEmail == "" {
-		return fmt.Errorf("user email is required for Jira Cloud API authentication")
-	}
-
-	token := connectSecret("API token (from https://id.atlassian.com/manage-profile/security/api-tokens): ")
-	if token == "" {
-		return fmt.Errorf("secure terminal token input unavailable or empty; retry in a TTY or use --token-stdin")
-	}
-
-	fmt.Println()
-	fmt.Print("Verifying connection... ")
-
-	if err := verifyJiraToken(baseURL, project, userEmail, token); err != nil {
-		fmt.Println("FAILED")
-		return fmt.Errorf("could not verify Jira connection: %w", err)
-	}
-	fmt.Println("OK")
-
-	entry := config.CredentialEntry{Token: token, BaseURL: baseURL, UserEmail: userEmail}
-	return saveConnection(projectRoot, creds, "jira", project, entry, baseURL, userEmail)
+var connectProviders = map[string]connectProvider{
+	"github": {intro: "Connecting to GitHub Issues...", name: "GitHub", verify: func(v map[string]string) error {
+		return verifyGitHubToken(v["project"], v["token"])
+	}},
+	"jira": {intro: "Connecting to Jira...", name: "Jira", verify: func(v map[string]string) error {
+		return verifyJiraToken(v["base_url"], v["project"], v["user_email"], v["token"])
+	}},
+	"linear": {intro: "Connecting to Linear...", name: "Linear", verify: func(v map[string]string) error {
+		return verifyLinearToken(v["project"], v["token"])
+	}},
+	"gitlab": {intro: "Connecting to GitLab...", name: "GitLab", verify: func(v map[string]string) error {
+		return verifyGitLabToken(v["base_url"], v["project"], v["token"])
+	}},
+	"confluence": {intro: "Connecting to Confluence...", name: "Confluence", verify: func(v map[string]string) error {
+		return verifyConfluenceToken(v["base_url"], v["project"], v["user_email"], v["token"])
+	}},
 }
 
-// ---------------------------------------------------------------------------
-// linear
-// ---------------------------------------------------------------------------
+// secretUnavailable is the message every provider's credential prompt reports
+// when no terminal is available. It names --token-stdin because that is the
+// non-interactive alternative; prompt.Secret deliberately will not read a
+// credential from a stream.
+const secretUnavailable = "secure terminal token input unavailable or empty; retry in a TTY or use --token-stdin"
 
-func runConnectLinear(cmd *cobra.Command, projectRoot string, creds config.Credentials) error {
-	fmt.Println("Connecting to Linear...")
-	fmt.Println()
-
-	project := connectPrompt(cmd, "Team key (e.g. ENG): ")
-	if project == "" {
-		return fmt.Errorf("team key is required")
-	}
-
-	token := connectSecret("API key (from https://linear.app/settings/api): ")
-	if token == "" {
-		return fmt.Errorf("secure terminal token input unavailable or empty; retry in a TTY or use --token-stdin")
-	}
-
-	fmt.Println()
-	fmt.Print("Verifying connection... ")
-
-	if err := verifyLinearToken(project, token); err != nil {
-		fmt.Println("FAILED")
-		return fmt.Errorf("could not verify Linear connection: %w", err)
-	}
-	fmt.Println("OK")
-
-	entry := config.CredentialEntry{Token: token}
-	return saveConnection(projectRoot, creds, "linear", project, entry, "", "")
+// connectFields is the interactive collection order for every provider.
+//
+// One flat table rather than five near-identical functions. The conditionality
+// is real, not decorative: base_url exists only for the three self-hosted-or-
+// tenanted providers, user_email only where Cloud basic auth needs it, and the
+// labels genuinely differ per provider. Ordering within a provider is the
+// order these lines appear in.
+//
+// The values map is seeded with "provider", which is what every DependsOn
+// tests against. See promptfield.go for the cap on what this may grow into.
+type connectField struct {
+	name       string
+	provider   string
+	label      string
+	defaultVal string
+	missingErr string
+	secret     bool
 }
 
-// ---------------------------------------------------------------------------
-// gitlab
-// ---------------------------------------------------------------------------
+var connectFields = []connectField{
+	// github
+	{name: "project", provider: "github", label: "Repository (owner/repo): ", missingErr: "repository is required"},
+	{name: "token", provider: "github", secret: true, label: "Personal access token (needs 'repo' scope): ", missingErr: secretUnavailable},
 
-func runConnectGitLab(cmd *cobra.Command, projectRoot string, creds config.Credentials) error {
-	fmt.Println("Connecting to GitLab...")
-	fmt.Println()
+	// jira
+	{name: "base_url", provider: "jira", label: "Jira base URL (e.g. https://mycompany.atlassian.net): ", missingErr: "base URL is required"},
+	{name: "project", provider: "jira", label: "Project key (e.g. PROJ): ", missingErr: "project key is required"},
+	{name: "user_email", provider: "jira", label: "User email (for Jira Cloud basic auth): ", missingErr: "user email is required for Jira Cloud API authentication"},
+	{name: "token", provider: "jira", secret: true, label: "API token (from https://id.atlassian.com/manage-profile/security/api-tokens): ", missingErr: secretUnavailable},
 
-	baseURL := connectPrompt(cmd, "GitLab base URL [https://gitlab.com]: ")
-	if baseURL == "" {
-		baseURL = "https://gitlab.com"
-	}
-	baseURL = strings.TrimRight(baseURL, "/")
+	// linear
+	{name: "project", provider: "linear", label: "Team key (e.g. ENG): ", missingErr: "team key is required"},
+	{name: "token", provider: "linear", secret: true, label: "API key (from https://linear.app/settings/api): ", missingErr: secretUnavailable},
 
-	project := connectPrompt(cmd, "Project (namespace/project or numeric ID): ")
-	if project == "" {
-		return fmt.Errorf("project is required")
-	}
+	// gitlab
+	{name: "base_url", provider: "gitlab", label: "GitLab base URL [https://gitlab.com]: ", defaultVal: "https://gitlab.com"},
+	{name: "project", provider: "gitlab", label: "Project (namespace/project or numeric ID): ", missingErr: "project is required"},
+	{name: "token", provider: "gitlab", secret: true, label: "Personal/Project access token (needs 'api' scope): ", missingErr: secretUnavailable},
 
-	token := connectSecret("Personal/Project access token (needs 'api' scope): ")
-	if token == "" {
-		return fmt.Errorf("secure terminal token input unavailable or empty; retry in a TTY or use --token-stdin")
-	}
-
-	fmt.Println()
-	fmt.Print("Verifying connection... ")
-
-	if err := verifyGitLabToken(baseURL, project, token); err != nil {
-		fmt.Println("FAILED")
-		return fmt.Errorf("could not verify GitLab connection: %w", err)
-	}
-	fmt.Println("OK")
-
-	entry := config.CredentialEntry{Token: token, BaseURL: baseURL}
-	return saveConnection(projectRoot, creds, "gitlab", project, entry, baseURL, "")
+	// confluence — user_email is optional here and required for jira, which is
+	// the whole reason the message is per-field rather than per-command.
+	{name: "base_url", provider: "confluence", label: "Confluence base URL (e.g. https://mycompany.atlassian.net/wiki): ", missingErr: "base URL is required"},
+	{name: "project", provider: "confluence", label: "Space key (e.g. ENG): ", missingErr: "space key is required"},
+	{name: "user_email", provider: "confluence", label: "User email (for Confluence Cloud basic auth): "},
+	{name: "token", provider: "confluence", secret: true, label: "API token: ", missingErr: secretUnavailable},
 }
 
-// ---------------------------------------------------------------------------
-// confluence
-// ---------------------------------------------------------------------------
-
-func runConnectConfluence(cmd *cobra.Command, projectRoot string, creds config.Credentials) error {
-	fmt.Println("Connecting to Confluence...")
-	fmt.Println()
-
-	baseURL := connectPrompt(cmd, "Confluence base URL (e.g. https://mycompany.atlassian.net/wiki): ")
-	if baseURL == "" {
-		return fmt.Errorf("base URL is required")
+// runConnectInteractive collects a connection from the user and hands it to
+// writeConnection — the same writer the flag-driven path uses.
+//
+// known carries values that are already settled before any prompt;
+// collectFields skips a field whose value is present. Production passes only
+// the provider. Tests pass the credential too, because prompt.Secret reads
+// /dev/tty by construction and there is deliberately no stream to feed it —
+// seeding a known value is the only way to exercise the rest of this path
+// without weakening that guarantee.
+func runConnectInteractive(cmd *cobra.Command, root string, creds config.Credentials, provider string, known map[string]string) error {
+	p, ok := connectProviders[provider]
+	if !ok {
+		return fmt.Errorf("unknown type %q — supported: github, jira, linear, gitlab, confluence", provider)
 	}
-	baseURL = strings.TrimRight(baseURL, "/")
-
-	spaceKey := connectPrompt(cmd, "Space key (e.g. ENG): ")
-	if spaceKey == "" {
-		return fmt.Errorf("space key is required")
-	}
-
-	userEmail := connectPrompt(cmd, "User email (for Confluence Cloud basic auth): ")
-
-	token := connectSecret("API token: ")
-	if token == "" {
-		return fmt.Errorf("secure terminal token input unavailable or empty; retry in a TTY or use --token-stdin")
+	// --json is a machine-readable contract on stdout, and every value this
+	// path needs comes from a prompt. Refuse rather than ask.
+	if connectJSON {
+		return fmt.Errorf("--project is required with --json: pass --project (with --integration-id and --token-stdin) instead of the interactive form")
 	}
 
-	fmt.Println()
-	fmt.Print("Verifying connection... ")
-
-	if err := verifyConfluenceToken(baseURL, spaceKey, userEmail, token); err != nil {
-		fmt.Println("FAILED")
-		return fmt.Errorf("could not verify Confluence connection: %w", err)
-	}
-	fmt.Println("OK")
-
-	entry := config.CredentialEntry{Token: token, BaseURL: baseURL, UserEmail: userEmail}
-	return saveConnection(projectRoot, creds, "confluence", spaceKey, entry, baseURL, userEmail)
-}
-
-// ---------------------------------------------------------------------------
-// save helpers
-// ---------------------------------------------------------------------------
-
-// saveConnection persists the credential and updates hero.json / hero.local.json.
-func saveConnection(projectRoot string, creds config.Credentials, trackerType, project string, entry config.CredentialEntry, baseURL, userEmail string) error {
-	integrationID := canonicalIntegrationID(trackerType, project)
-	if connectGlobal {
-		// Save to global credentials file
-		config.SetIntegrationCredential(creds, integrationID, entry)
-		if err := config.SaveCredentials(creds); err != nil {
-			return fmt.Errorf("saving credentials: %w", err)
+	if !prompt.IsInputTTY(cmd.InOrStdin()) {
+		if err := firstMissingConnectField(provider, known); err != nil {
+			return err
 		}
-		fmt.Printf("Token saved to %s\n", config.CredentialsPath())
-	} else {
-		patch, _ := json.Marshal(map[string]any{"connections": map[string]any{integrationID: map[string]any{"auth": map[string]any{"token": entry.Token}}}})
-		if err := config.PatchLocalIntegrations(projectRoot, config.DefaultFolder, patch); err != nil {
-			return fmt.Errorf("saving hero.local.json: %w", err)
+	}
+
+	out := cmd.OutOrStdout()
+	fmt.Fprintln(out, p.intro)
+	fmt.Fprintln(out)
+
+	role, err := connectPromptRole(cmd, provider)
+	if err != nil {
+		return err
+	}
+	if err := collectConnectFields(cmd, provider, known); err != nil {
+		return err
+	}
+	known["base_url"] = strings.TrimRight(known["base_url"], "/")
+
+	verification := "not-checked"
+	if !connectNoVerify {
+		fmt.Fprintln(out)
+		fmt.Fprint(out, "Verifying connection... ")
+		if err := p.verify(known); err != nil {
+			fmt.Fprintln(out, "FAILED")
+			return fmt.Errorf("could not verify %s connection: %w", p.name, err)
 		}
-		fmt.Printf("Token saved to .hero/hero.local.json\n")
+		fmt.Fprintln(out, "OK")
+		verification = "verified"
 	}
 
-	// Update hero.json with non-secret config if not already set
-	if err := updateHeroJSON(projectRoot, trackerType, project, baseURL, userEmail); err != nil {
-		fmt.Fprintf(os.Stderr, "warning: could not update hero.json: %v\n", err)
-	}
+	return writeConnection(cmd, root, creds, connectionInput{
+		provider:     provider,
+		id:           canonicalIntegrationID(provider, known["project"]),
+		project:      known["project"],
+		baseURL:      known["base_url"],
+		userEmail:    known["user_email"],
+		token:        known["token"],
+		role:         role,
+		verification: verification,
+	})
+}
 
-	fmt.Printf("Connected. Run 'hero connect --list' to see all connections.\n")
+// connectRead reads one interactive connect answer.
+//
+// A read error yields "" rather than propagating: the caller's own
+// "X is required" message is what an unanswered prompt has always reported,
+// not a raw io.EOF. The golden fixtures under testdata/prompt_baseline record
+// exactly that for a piped and a closed stdin.
+func firstMissingConnectField(provider string, values map[string]string) error {
+	for _, field := range connectFields {
+		if field.provider == provider && values[field.name] == "" && field.missingErr != "" {
+			return fmt.Errorf("%s", field.missingErr)
+		}
+	}
 	return nil
+}
+
+func collectConnectFields(cmd *cobra.Command, provider string, values map[string]string) error {
+	for _, field := range connectFields {
+		if field.provider != provider || values[field.name] != "" {
+			continue
+		}
+		var answer string
+		var err error
+		if field.secret {
+			answer, err = prompt.Secret(field.label)
+		} else {
+			answer, err = prompt.Prompt(cmd.InOrStdin(), cmd.OutOrStdout(), field.label)
+		}
+		if err != nil {
+			answer = ""
+		}
+		if answer == "" {
+			answer = field.defaultVal
+		}
+		if answer == "" && field.missingErr != "" {
+			return fmt.Errorf("%s", field.missingErr)
+		}
+		values[field.name] = answer
+	}
+	return nil
+}
+
+func connectPrompt(cmd *cobra.Command, label string) string {
+	answer, err := prompt.Prompt(cmd.InOrStdin(), cmd.OutOrStdout(), label)
+	if err != nil {
+		return ""
+	}
+	return answer
+}
+
+func connectSecret(label string) string {
+	secret, err := prompt.Secret(label)
+	if err != nil {
+		return ""
+	}
+	return secret
+}
+
+func connectProviderNames() []string {
+	names := make([]string, 0, len(connectProviders))
+	for name := range connectProviders {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
+}
+
+func connectProviderOptions() []string { return connectProviderNames() }
+
+// connectPromptRole asks what the connection is for, offering only the roles
+// the provider can actually serve.
+//
+// Gated on a terminal for a specific reason: --role now routes to the
+// flag-driven path, so every scripted invocation already carries the answer.
+// Prompting into a pipe would add output to invocations that never asked a
+// question before, which the prompt baseline would catch and which nobody
+// would benefit from. A provider with a single possible role (Confluence) is
+// not asked at all.
+func connectPromptRole(cmd *cobra.Command, provider string) (string, error) {
+	options := connectRoleOptions(provider)
+	if len(options) < 2 || !prompt.IsInputTTY(cmd.InOrStdin()) {
+		return connectRole, nil
+	}
+	choice, err := prompt.Choice(cmd.InOrStdin(), cmd.OutOrStdout(), "Role", options)
+	if err != nil {
+		return "", err
+	}
+	if choice == "" {
+		return connectRole, nil
+	}
+	return choice, nil
+}
+
+// connectRoleOptions returns the roles this provider has the capability to
+// serve, in a stable order.
+func connectRoleOptions(provider string) []string {
+	options := []string{}
+	for _, role := range []string{"delivery", "docs", "roadmap", "code-host"} {
+		if _, err := config.ValidateProviderRole(provider, role); err == nil {
+			options = append(options, role)
+		}
+	}
+	return options
 }
 
 var nonID = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
@@ -621,30 +734,6 @@ func canonicalIntegrationID(provider, project string) string {
 		v = "default"
 	}
 	return provider + "-" + v
-}
-
-// updateHeroJSON writes non-secret tracker/confluence config to hero.json if not already set.
-func updateHeroJSON(projectRoot, trackerType, project, baseURL, userEmail string) error {
-	id := canonicalIntegrationID(trackerType, project)
-	settings := map[string]any{}
-	if baseURL != "" {
-		settings["base_url"] = baseURL
-	}
-	if userEmail != "" {
-		settings["user_email"] = userEmail
-	}
-	role := "delivery"
-	if trackerType == "confluence" {
-		settings["space_key"] = project
-		role = "docs"
-	} else {
-		settings["project"] = project
-	}
-	if err := config.ValidateConnectionSettings(id, trackerType, settings); err != nil {
-		return fmt.Errorf("cannot connect %s: %s", trackerType, settingErrorToFlag(err, trackerType))
-	}
-	patch, _ := json.Marshal(map[string]any{"default": id, "roles": map[string]any{role: id}, "connections": map[string]any{id: map[string]any{"provider": trackerType, "settings": settings}}})
-	return config.PatchCommittedIntegrations(projectRoot, config.DefaultFolder, patch)
 }
 
 // ---------------------------------------------------------------------------
@@ -758,40 +847,4 @@ func httpPOST(url, jsonBody string, headers map[string]string) ([]byte, error) {
 		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 	return body, nil
-}
-
-// ---------------------------------------------------------------------------
-// I/O helpers
-// ---------------------------------------------------------------------------
-
-// connectPrompt reads one answer from the command's input stream.
-//
-// The stream comes from cmd.InOrStdin() rather than a package-level
-// bufio.Reader. The old mutable `connectInput` var existed only because a
-// bufio.Reader buffers past the newline, so a fresh one per prompt would
-// swallow the next answer — prompt.Prompt reads unbuffered, so the shared
-// mutable state is no longer needed and is gone.
-//
-// A read error yields "", preserving the previous behaviour: the caller's own
-// "X is required" error is the message the user sees, not a raw io.EOF.
-func connectPrompt(cmd *cobra.Command, label string) string {
-	answer, err := prompt.Prompt(cmd.InOrStdin(), cmd.OutOrStdout(), label)
-	if err != nil {
-		return ""
-	}
-	return answer
-}
-
-// connectSecret reads a credential from the terminal, never from stdin.
-//
-// Automation must use --token-stdin; silently falling back to echoed input
-// would expose credentials. Returning "" on refusal preserves the existing
-// caller behaviour, which reports "secure terminal token input unavailable or
-// empty; retry in a TTY or use --token-stdin".
-func connectSecret(label string) string {
-	secret, err := prompt.Secret(label)
-	if err != nil {
-		return ""
-	}
-	return secret
 }

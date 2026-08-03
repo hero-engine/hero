@@ -26,7 +26,7 @@ Examples:
 var usersAddCmd = &cobra.Command{
 	Use:   "add <username>",
 	Short: "Create a new user",
-	Args:  cobra.ExactArgs(1),
+	Args:  promptableArgs(1, cobra.ExactArgs(1)),
 	RunE:  runUsersAdd,
 }
 
@@ -107,7 +107,20 @@ func runUsersList(cmd *cobra.Command, args []string) error {
 }
 
 func runUsersAdd(cmd *cobra.Command, args []string) error {
-	username := args[0]
+	username := ""
+	if len(args) > 0 {
+		username = args[0]
+	}
+	if username == "" {
+		asked, err := prompt.Prompt(cmd.InOrStdin(), cmd.OutOrStdout(), "Username: ")
+		if err != nil {
+			return err
+		}
+		if asked == "" {
+			return errors.New("username is required")
+		}
+		username = asked
+	}
 
 	jq, err := openJobQueue()
 	if err != nil {

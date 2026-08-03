@@ -35,7 +35,7 @@ func init() {
 	connectAliasCmd.Flags().BoolVar(&connectList, "list", false, "list saved connections")
 	connectAliasCmd.Flags().StringVar(&connectRemove, "remove", "", "remove connection for the given tracker type")
 	connectAliasCmd.Flags().BoolVar(&connectGlobal, "global", false, "save token to global credentials (~/.config/hero/credentials.json) instead of hero.local.json")
-	connectAliasCmd.Flags().StringVar(&connectProject, "project", "", "project identifier (used with --remove)")
+	connectAliasCmd.Flags().StringVar(&connectProject, "project", "", "project identifier (required for flag-driven connect; used with --remove)")
 	addIntegrationConnectFlags(connectAliasCmd)
 
 	connectTeamAliasCmd.Flags().StringVar(&connectTeamToken, "token", "", "auth token (if server uses token auth)")

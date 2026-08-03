@@ -2,22 +2,47 @@ package cli
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/hero-engine/hero/internal/cli/prompt"
 	"github.com/hero-engine/hero/internal/install"
 	"github.com/spf13/cobra"
 )
 
+var trustTargets = []string{"codex", "claude"}
+
 var trustCmd = &cobra.Command{
 	Use:   "trust <codex|claude> [project|global]",
 	Short: "Apply or show one-time harness permission setup for Hero",
-	Args:  cobra.RangeArgs(1, 2),
+	Args:  promptableArgs(1, cobra.RangeArgs(1, 2)),
 	RunE:  runTrust,
 }
 
+func promptTrustTarget(in io.Reader, out io.Writer) (string, error) {
+	choice, err := prompt.Choice(in, out, "Trust target", trustTargets)
+	if err != nil {
+		return "", err
+	}
+	if choice == "" {
+		return "", fmt.Errorf("trust target is required; supported targets: %s", strings.Join(trustTargets, ", "))
+	}
+	return choice, nil
+}
+
 func runTrust(cmd *cobra.Command, args []string) error {
+	target := ""
+	if len(args) > 0 {
+		target = args[0]
+	} else {
+		var err error
+		target, err = promptTrustTarget(cmd.InOrStdin(), cmd.OutOrStdout())
+		if err != nil {
+			return err
+		}
+	}
 	mode := install.ModeProject
 	scopeExplicit := false
 	if len(args) == 2 {
@@ -28,7 +53,7 @@ func runTrust(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	switch args[0] {
+	switch target {
 	case "codex":
 		printCodexTrustHint()
 		if scopeExplicit {
@@ -39,7 +64,7 @@ func runTrust(cmd *cobra.Command, args []string) error {
 	case "claude":
 		return applyClaudeTrust(mode)
 	default:
-		return fmt.Errorf("unsupported trust target %q; supported targets: codex, claude", args[0])
+		return fmt.Errorf("unsupported trust target %q; supported targets: codex, claude", target)
 	}
 }
 
