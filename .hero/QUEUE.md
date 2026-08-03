@@ -6,23 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-03T20:42:07Z · 83 ready specs_
-
-## prompt-and-tty-contract-closure — "Prompt and TTY Contract Closure"
-_feature · delivering · horizon: now_
-
-Closes the CLI's shared prompt, TTY, secret-input, and Cobra-stream contract.
-
-**Status:** delivering — implementation and validation are complete; cold audit and Hero verification remain.
-
-**Pick up at:** review the completion ledger against the prompt package and migration tests, then run the cold audit and `hero spec verify`.
-
-→ `hero spec verify prompt-and-tty-contract-closure --skip-tests`
-
-**Files:** `internal/cli/prompt/prompt.go`, `internal/cli/prompt/secret_terminal_windows.go`, `internal/cli/prompt_policy_test.go`, `internal/cli/prompt_streams_test.go`
-**Skip:** setup behavior, selectors, init, and unrelated donor changes.
-
----
+_Generated: 2026-08-03T20:44:59Z · 84 ready specs_
 
 ## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
 _feature · delivering · horizon: now_
@@ -62,6 +46,40 @@ trace to the original interactive-input outcome. The completed result has one
 cross-platform prompt authority, safe TTY and secret handling, additive setup
 prompts, selectors that work at actual corpus scale, unchanged machine paths,
 and evidence that no affected invocation can prompt or hang unexpectedly.
+
+---
+
+## interactive-setup-and-connect-closure — "Interactive Setup and Connect Closure"
+_feature · planning · horizon: now_
+
+Curate the original setup/connect work after the shared prompt contract passes.
+Start with a pre-change compatibility baseline, then port connect's one writer
+and add the missing whole-collector TTY gate before adopting setup prompts and
+six-target uninstall parity. Finish with truthful help on both connect surfaces.
+
+**Status:** planning — full contract designed; no code ported.
+
+**Pick up at:** capture supplied-invocation baselines, then implement the
+connect-local collector and single writer from donor `485c32f`.
+
+→ `/deliver interactive-setup-and-connect-closure --autopilot`
+
+**Files:** `internal/cli/connect.go`, `internal/cli/uninstall.go`, `internal/cli/prompt_args.go`, `internal/cli/prompt_setup_commands_test.go`, `internal/config/integrations.go`
+**Skip:** donor `promptfield.go`/`skill.go`, `init`, index, aliases, timeout and invocation-lint commits, plus later uninstall/Codex cleanup.
+
+---
+
+## corpus-selector-closure — "Corpus Selector Closure"
+_feature · planning · horizon: now_
+
+Design the smallest real-scale selector completion after the prompt foundation
+verifies. Port the donor's local resolvers and Cobra gates, then replace its
+hard refusal above 25 with selector-local substring filtering into a bounded
+choice. Keep the target list frozen. Prove large, empty, cancel, invalid,
+explicit, non-TTY, and JSON cases. Do not add a TUI, network lookup, fuzzy
+retrieval, prompt primitive, or command target.
+
+→ `/design corpus-selector-closure`
 
 ---
 

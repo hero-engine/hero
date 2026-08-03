@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-03T20:30:51Z
+updated: 2026-08-03T20:44:59Z
 repo: hero-engine/hero
 ---
 
@@ -9,6 +9,8 @@ repo: hero-engine/hero
 ## Last user ask
 
 > Deliver prompt-and-tty-contract-closure completely, including audit and verification.
+
+_possibly stale — 1 commit(s) since, last set 32m ago_
 
 ## Suggested next prompt
 

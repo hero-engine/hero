@@ -2,7 +2,7 @@
 title: "Prompt and TTY Contract Closure"
 slug: prompt-and-tty-contract-closure
 type: feature
-status: delivering
+status: completed
 created: 2026-08-03
 domain: engineering
 size: large
@@ -14,6 +14,7 @@ relates-to:
   - cli-input-classification
 tags: [cli, prompt, tty, security, platform]
 delivery_method: manual
+completed_at: 2026-08-03T20:44:30Z
 ---
 
 # Prompt and TTY Contract Closure
