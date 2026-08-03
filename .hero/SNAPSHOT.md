@@ -2,19 +2,19 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-08-03T21:40:46Z · projected from 507 source nodes_
+_Last refreshed: 2026-08-03T21:46:05Z · projected from 507 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | maturing | cmd/, internal/ | <1m ago | hero-runner |
-| docs | maturing | web/docs/ | 1h ago | — |
-| domains/chat | maturing | domains/chat/ | 1h ago | — |
-| domains/engineering | maturing | domains/engineering/ | 1h ago | — |
-| domains/pm | maturing | domains/pm/ | 1h ago | — |
-| domains/sales | maturing | domains/sales/ | 1h ago | — |
-| landing | building | web/landing/ | 1h ago | hero-landing-page |
+| core | maturing | cmd/, internal/ | 6m ago | hero-runner |
+| docs | maturing | web/docs/ | 2h ago | — |
+| domains/chat | maturing | domains/chat/ | 2h ago | — |
+| domains/engineering | maturing | domains/engineering/ | 2h ago | — |
+| domains/pm | maturing | domains/pm/ | 2h ago | — |
+| domains/sales | maturing | domains/sales/ | 2h ago | — |
+| landing | building | web/landing/ | 2h ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
 | serve | building | internal/serve/ | 1h ago | agent-outposts |
 | (unassigned) | — | — | — | 241 specs without surface |

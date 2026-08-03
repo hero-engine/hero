@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-03T21:34:11Z
+updated: 2026-08-03T21:46:05Z
 repo: hero-engine/hero
 ---
 
@@ -9,6 +9,8 @@ repo: hero-engine/hero
 ## Last user ask
 
 > Deliver the final interactive CLI acceptance and merge gate with provenance, donor disposition, comprehensive evidence, and no production changes.
+
+_possibly stale — 1 commit(s) since, last set 19m ago_
 
 ## Suggested next prompt
 

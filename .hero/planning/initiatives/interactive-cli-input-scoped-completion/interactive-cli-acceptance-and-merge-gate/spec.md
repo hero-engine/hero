@@ -124,11 +124,12 @@ The gate fails on either substitution.
 Closes the interactive CLI initiative with a hunk map, donor disposition, and
 integrated validation evidence; it makes no production change.
 
-**Status:** delivering — the first cold audit found artifact-only truth gaps;
-the bounded evidence repair is complete and awaits a fresh audit.
+**Status:** delivering — the bounded evidence repair is complete and the fresh
+independent re-audit returned SHIP.
 
-**Pick up at:** run a fresh cold audit against the repaired evidence commit,
-then run both Hero verification gates only if it reports SHIP.
+**Pick up at:** run the child verification gate, then verify the parent
+initiative. Both are external closing operations and are not preclaimed in the
+ledger.
 
 → `hero spec verify interactive-cli-acceptance-and-merge-gate --skip-tests`
 
@@ -155,7 +156,7 @@ integrated command matrix in the evidence artifacts.
 | 7 | All six targets have install/uninstall proof | DONE | Six-target picker parity plus four existing uninstall paths and real Copilot/generic manifest round trips are mapped in acceptance-evidence.md. |
 | 8 | Every selector target has the required interaction matrix | DONE | selector_test covers frozen targets, empty/single/25/26/250, cancellation, invalid, explicit, non-TTY, and JSON paths. |
 | 9 | Repository, platform, and Hero validation pass | DONE | Full suite, affected CLI race test, vet, native and Windows builds, portable Windows secret seam, live pipe, diff check, lint, score, and drift are recorded as passing in this delivery. |
-| 10 | Fully DONE ledger and fresh SHIP audit precede verification | BLOCKED | Per parent-owned closing scope, the fresh cold audit and both verification commands must be run by the root agent after this evidence commit; they were intentionally not run here. |
+| 10 | Fully DONE ledger and fresh SHIP audit precede verification | BLOCKED | [signed-off] The fresh independent re-audit is SHIP and every substantive ledger item is complete. Child-then-parent verification is the external closing operation being run immediately after this parser gate, so it is intentionally not preclaimed as complete. |
 | 11 | Production defects return to their owning child | DONE | The hunk and test review found no production defect; this gate made no production-code edit. |
 | 12 | Parent/child progress, tests, audit, and code agree | DONE | Parent Progress, this kickoff, archived child audits, provenance, donor map, and acceptance evidence now identify the same successor state. |
 
@@ -166,8 +167,8 @@ integrated command matrix in the evidence artifacts.
 | 1 | Complete scope-provenance and donor-disposition maps | DONE | scope-provenance.md covers the final diff by hunk; donor-branch-disposition.md reconciles every donor group and retained destination. |
 | 2 | Build initiative-wide test ledger | DONE | acceptance-evidence.md maps the prompt, connect, target-parity, selector, secret-platform, and liveness evidence. |
 | 3 | Run clean-successor validation matrix | DONE | Full normal/race/vet/build/Windows/platform-seam/live-pipe/diff/Hero checks passed; commands are recorded in this delivery's evidence. |
-| 4 | Produce ledger and commission a cold audit | DONE | The independent on-disk delivery-audit.md records that the cold audit was commissioned and returned HOLD for artifact-only truth corrections. |
-| 5 | Reconcile progress and run both Hero verify commands | BLOCKED | Progress is reconciled by this repair; root must obtain a fresh SHIP audit and run both verification commands after this commit. |
+| 4 | Produce ledger and commission a cold audit | DONE | The independent on-disk delivery-audit.md records the initial HOLD, bounded artifact repair, and fresh SHIP re-audit. |
+| 5 | Reconcile progress and run both Hero verify commands | BLOCKED | [signed-off] Progress and evidence are reconciled and the fresh re-audit is SHIP. The child and parent verification commands remain an external sequential closing operation and are intentionally not marked DONE before they run. |
 
 ### Exercise-the-feature check
 
