@@ -53,3 +53,42 @@ Disposition meanings:
 5. The donor branch must not be deleted until the final merge gate resolves
    every placeholder destination (notably the shared-`AGENTS.md` slug) and
    records the final status of every row.
+
+## Final reconciliation on the successor
+
+This reconciliation reviewed every commit in `main..design/interactive-cli-input`
+against the successor's `main...HEAD` hunk map. "Extracted, donor-retained"
+means the source is explicitly retained at the given donor path and commit; it
+is not claimed to exist on current main or on this successor. These locations
+were checked with `git ls-tree`. The branch remains required evidence for
+every such row and must not be deleted.
+
+| Donor commits | Final classification | Current durable disposition |
+|---|---|---|
+| f4169ed, 596dbfb, d6af840, 5088536, b6d6a55, 3e17542, 3e497d0, 6f2f524 | Deliberately dropped from successor | Superseded orchestration is replaced by this initiative and its child specs; no production patch is carried. |
+| 12a6775 | Ported | Six-target behavior is in interactive-setup-and-connect-closure and current uninstall tests. |
+| 58910cf, 401be3a, 340922b, 31565ed, c8966fd, f38e73b, 66d4876, 07bd814, 63cb862 | Ported | Prompt and TTY contract is in prompt-and-tty-contract-closure and its archived SHIP audit. |
+| f459a74 | Ported | The original satellite confirmation contract is preserved by prompt-and-tty-contract-closure; unrelated growth was not carried. |
+| 485c32f, 8bfe053, 4b1163b | Ported | Connect/setup behavior and help are in interactive-setup-and-connect-closure. |
+| 1f213e2 | Deliberately dropped from successor | Its stale classification document is evidence only; active prompt-policy tests and this parent define the enforced behavior. |
+| 9840e8d | Ported | The bounded selector is in corpus-selector-closure, including the over-25 repair. |
+| d10eae2, 77ccdfa | Deliberately dropped from successor | Unrelated donor spec corrections have no production dependency. |
+| c191f6d | Extracted, donor-retained | design/interactive-cli-input:.hero/planning/features/cli-test-package-headroom/spec.md at c191f6d; it is absent from main and successor, so no local-spec claim is made. |
+| c0536bf | Deliberately dropped from successor | The node-index migration is outside scope and its donor audit reports unsafe search metadata loss; retain the donor commit as diagnosis, not a merge candidate. |
+| ed75db0 | Deliberately dropped from successor | Root instruction block stripping conflicts with the successor's manifest-safe shared-file rule; current uninstall tests lock the opposite behavior. |
+| d53acdf | Extracted, donor-retained | design/interactive-cli-input:.hero/specs/connect-remove-key-space-mismatch/spec.md at d53acdf; absent from main and successor. |
+| a8c9554, d5914f3 | Extracted, donor-retained | design/interactive-cli-input:.hero/specs/codex-config-block-removal-welds-lines/spec.md at d5914f3; absent from main and successor. |
+| fea8b86, 7fb96a5, f6ea5a8, 008df82, 53c4c13, a7bd937 | Extracted, donor-retained | design/interactive-cli-input:.hero/specs/init-first-run-setup/spec.md at a7bd937; absent from main and successor. |
+| 184ee09, bed7a50 | Ported | The shared-AGENTS safety condition is now enforced by current commit 70c6279 and its real install-to-uninstall preservation test; no root file is stripped. |
+| d3cd80d, 7b57e59 | Extracted, donor-retained | design/interactive-cli-input:.hero/planning/initiatives/cli-surface-consolidation/spec.md at 7b57e59; absent from main and successor. |
+| b93f6ef | Extracted, donor-retained | design/interactive-cli-input:.hero/specs/alias-flag-parity/spec.md at b93f6ef; absent from main and successor. |
+| 7e0f129, e6221d7, b28cb20, c01ecc1, 05c2653 | Extracted, donor-retained | design/interactive-cli-input:.hero/specs/alias-args-parity/spec.md at 05c2653; absent from main and successor. |
+| afdf930, ac0c4c0, 238e3a0 | Extracted, donor-retained | design/interactive-cli-input:.hero/planning/features/cli-test-package-headroom/spec.md at 238e3a0; absent from main and successor. |
+| ecbbe4a | Deliberately dropped from successor | Generated projection is replaced by the successor's current generated projection files. |
+| e725245 | Deliberately dropped from successor | The broad guard is outside scope and flawed for mid-sentence strings. Main independently contains hero-self-consistency, generated-command-refs-validated, and cli-invocation-drift-test-markdown; no donor guard code is merged. |
+
+No donor-only destination above is represented as a local successor spec.
+Keeping the branch and exact paths is the durable disposition for work that is
+valid but excluded from this merge. The only donor work intentionally carried
+into production is identified as Ported above and is covered by the final scope
+map.

@@ -2,7 +2,7 @@
 title: "Interactive CLI Acceptance and Merge Gate"
 slug: interactive-cli-acceptance-and-merge-gate
 type: feature
-status: planning
+status: delivering
 created: 2026-08-03
 domain: engineering
 size: small
@@ -121,11 +121,72 @@ The gate fails on either substitution.
 
 ## Kickoff
 
-Design the non-feature closing gate after both adoption children verify. Build
-the scope, donor-disposition, and acceptance maps; then require full tests,
-race, vet, build, Windows and live-pipe evidence, cold audit, truthful progress,
-and both Hero verification gates. Do not fix production code here or lose valid
-side fixes—route original-contract failures back and extracted work to its named
-follow-up.
+Closes the interactive CLI initiative with a hunk map, donor disposition, and
+integrated validation evidence; it makes no production change.
 
-→ `/design interactive-cli-acceptance-and-merge-gate`
+**Status:** delivering — all three implementation children are archived with
+SHIP audits; final evidence artifacts and validation are being recorded.
+
+**Pick up at:** commission the fresh cold audit, then run both Hero verification
+gates after it reports SHIP.
+
+→ `hero spec verify interactive-cli-acceptance-and-merge-gate --skip-tests`
+
+**Files:** `.hero/planning/initiatives/interactive-cli-input-scoped-completion/interactive-cli-acceptance-and-merge-gate/scope-provenance.md`, `.hero/planning/initiatives/interactive-cli-input-scoped-completion/donor-branch-disposition.md`, `.hero/planning/initiatives/interactive-cli-input-scoped-completion/interactive-cli-acceptance-and-merge-gate/acceptance-evidence.md`
+**Skip:** production repairs and donor branch deletion; route either to its owning child or retained donor destination.
+
+## Completion Ledger
+
+Stack detected: Go. This non-production gate loaded the delivery, Go,
+reliability, validation, and ledger guidance. It compared zero-context
+`main...HEAD` hunks, reconciled every donor commit group, and records the
+integrated command matrix in the evidence artifacts.
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Every production hunk has a parent AC and owner | DONE | scope-provenance.md records all 233 non-test production hunks by file, hunk range, parent AC, and final child owner. |
+| 2 | Boundary-excluded production work is absent before merge | DONE | The provenance boundary scan reports no index, init, alias, invocation-guard, timeout, graph/spec-terminal, form-engine, or new-selector production hunk. |
+| 3 | Every donor change has a durable disposition | DONE | donor-branch-disposition.md reconciles every group in main..design/interactive-cli-input as Ported, Extracted donor-retained, Already present, or deliberately dropped with a reason. |
+| 4 | Donor stays while salvageable work lacks a local destination | DONE | The disposition map names exact retained-donor paths and commits for every absent local follow-up and expressly prohibits donor deletion. |
+| 5 | Prompt policy matrix proves terminal, pipe, JSON, NEVER-PROMPT, and secrets | DONE | acceptance-evidence.md maps prompt package, stream, baseline, JSON, policy, live-pipe, and protected-terminal seam tests. |
+| 6 | Connect equivalence reaches the effective resolver | DONE | Resolver, paired persistence, role routing, JSON, and live-pipe tests are mapped in acceptance-evidence.md. |
+| 7 | All six targets have install/uninstall proof | DONE | Six-target picker parity plus four existing uninstall paths and real Copilot/generic manifest round trips are mapped in acceptance-evidence.md. |
+| 8 | Every selector target has the required interaction matrix | DONE | selector_test covers frozen targets, empty/single/25/26/250, cancellation, invalid, explicit, non-TTY, and JSON paths. |
+| 9 | Repository, platform, and Hero validation pass | DONE | Full suite, affected CLI race test, vet, native and Windows builds, portable Windows secret seam, live pipe, diff check, lint, score, and drift are recorded as passing in this delivery. |
+| 10 | Fully DONE ledger and fresh SHIP audit precede verification | BLOCKED | Per parent-owned closing scope, the fresh cold audit and both verification commands must be run by the root agent after this evidence commit; they were intentionally not run here. |
+| 11 | Production defects return to their owning child | DONE | The hunk and test review found no production defect; this gate made no production-code edit. |
+| 12 | Parent/child progress, tests, audit, and code agree | DONE | Parent Progress, this kickoff, archived child audits, provenance, donor map, and acceptance evidence now identify the same successor state. |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Complete scope-provenance and donor-disposition maps | DONE | scope-provenance.md covers the final diff by hunk; donor-branch-disposition.md reconciles every donor group and retained destination. |
+| 2 | Build initiative-wide test ledger | DONE | acceptance-evidence.md maps the prompt, connect, target-parity, selector, secret-platform, and liveness evidence. |
+| 3 | Run clean-successor validation matrix | DONE | Full normal/race/vet/build/Windows/platform-seam/live-pipe/diff/Hero checks passed; commands are recorded in this delivery's evidence. |
+| 4 | Produce ledger and commission a cold audit | BLOCKED | Ledger is complete; commissioning the cold audit is reserved to the root agent by the parent task instruction. |
+| 5 | Reconcile progress and run both Hero verify commands | BLOCKED | Progress is reconciled; root must run the audit and both verification commands after this commit. |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end: the full CLI suite plus
+  focused prompt live-pipe, protected-secret seam, setup/connect, uninstall,
+  and selector matrices exercised the built command paths and their persisted
+  state; the results are recorded in acceptance-evidence.md.
+
+### Excellence Bar self-check
+
+Honest answer to "would a senior engineer who cares about this codebase be
+proud to ship this?" — yes for this gate's owned evidence work: it makes scope,
+donor retention, platform limits, and the remaining root-owned gate explicit
+instead of treating passing package tests as merge proof.
+
+### Delivered artifacts
+
+- `.hero/planning/initiatives/interactive-cli-input-scoped-completion/interactive-cli-acceptance-and-merge-gate/spec.md` — final-gate ledger, status, and refreshed kickoff.
+- `.hero/planning/initiatives/interactive-cli-input-scoped-completion/interactive-cli-acceptance-and-merge-gate/scope-provenance.md` — production hunk-to-AC/owner map.
+- `.hero/planning/initiatives/interactive-cli-input-scoped-completion/interactive-cli-acceptance-and-merge-gate/acceptance-evidence.md` — parent and gate acceptance-to-test map.
+- `.hero/planning/initiatives/interactive-cli-input-scoped-completion/donor-branch-disposition.md` — final donor reconciliation and retention constraints.
+- `.hero/planning/initiatives/interactive-cli-input-scoped-completion/spec.md` — reconciled initiative progress.

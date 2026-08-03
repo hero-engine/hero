@@ -6,7 +6,26 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-03T21:26:08Z · 83 ready specs_
+_Generated: 2026-08-03T21:34:11Z · 83 ready specs_
+
+## interactive-cli-acceptance-and-merge-gate — "Interactive CLI Acceptance and Merge Gate"
+_feature · delivering · horizon: now_
+
+Closes the interactive CLI initiative with a hunk map, donor disposition, and
+integrated validation evidence; it makes no production change.
+
+**Status:** delivering — all three implementation children are archived with
+SHIP audits; final evidence artifacts and validation are being recorded.
+
+**Pick up at:** commission the fresh cold audit, then run both Hero verification
+gates after it reports SHIP.
+
+→ `hero spec verify interactive-cli-acceptance-and-merge-gate --skip-tests`
+
+**Files:** `.hero/planning/initiatives/interactive-cli-input-scoped-completion/interactive-cli-acceptance-and-merge-gate/scope-provenance.md`, `.hero/planning/initiatives/interactive-cli-input-scoped-completion/donor-branch-disposition.md`, `.hero/planning/initiatives/interactive-cli-input-scoped-completion/interactive-cli-acceptance-and-merge-gate/acceptance-evidence.md`
+**Skip:** production repairs and donor branch deletion; route either to its owning child or retained donor destination.
+
+---
 
 ## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
 _feature · delivering · horizon: now_
@@ -29,13 +48,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-inter
 
 ---
 
-## satellite-corpus-integration — "Satellite Corpus Integration — Scope as a First-Class Facet"
-_feature · planning · horizon: now_
-
-Resume by reading `.hero/planning/features/satellite-corpus-integration/spec.md` for the full design, then continue Phase 2 (index + filter surfaces) — Phase 1 (slash-command scope injection) and Phase 3 (migration execution) are also pending. The parent spec [monorepo-satellite-installs](../monorepo-satellite-installs/spec.md) shipped in commits f279f42 and 48a379c. Phase 2 is the highest-leverage next step because it's what makes scope queryable from the existing read surfaces (`list`, `search`, `recap`, `feed`).
-
----
-
 ## interactive-cli-input-scoped-completion — "Interactive CLI Input — Scoped Completion"
 _initiative · planning · horizon: now_
 
@@ -49,17 +61,10 @@ and evidence that no affected invocation can prompt or hang unexpectedly.
 
 ---
 
-## interactive-cli-acceptance-and-merge-gate — "Interactive CLI Acceptance and Merge Gate"
+## satellite-corpus-integration — "Satellite Corpus Integration — Scope as a First-Class Facet"
 _feature · planning · horizon: now_
 
-Design the non-feature closing gate after both adoption children verify. Build
-the scope, donor-disposition, and acceptance maps; then require full tests,
-race, vet, build, Windows and live-pipe evidence, cold audit, truthful progress,
-and both Hero verification gates. Do not fix production code here or lose valid
-side fixes—route original-contract failures back and extracted work to its named
-follow-up.
-
-→ `/design interactive-cli-acceptance-and-merge-gate`
+Resume by reading `.hero/planning/features/satellite-corpus-integration/spec.md` for the full design, then continue Phase 2 (index + filter surfaces) — Phase 1 (slash-command scope injection) and Phase 3 (migration execution) are also pending. The parent spec [monorepo-satellite-installs](../monorepo-satellite-installs/spec.md) shipped in commits f279f42 and 48a379c. Phase 2 is the highest-leverage next step because it's what makes scope queryable from the existing read surfaces (`list`, `search`, `recap`, `feed`).
 
 ---
 

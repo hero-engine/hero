@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-08-03T21:26:08Z · projected from 507 source nodes_
+_Last refreshed: 2026-08-03T21:34:11Z · projected from 507 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | maturing | cmd/, internal/ | <1m ago | hero-runner |
+| core | maturing | cmd/, internal/ | 8m ago | hero-runner |
 | docs | maturing | web/docs/ | 1h ago | — |
 | domains/chat | maturing | domains/chat/ | 1h ago | — |
 | domains/engineering | maturing | domains/engineering/ | 1h ago | — |
@@ -40,7 +40,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Hero Surface Architecture — One Surface, Every Layer, Every Role** (surface: serve) — 8/9 specs done
 - **Hero Team Experience — Complete Multi-Developer Workflow** (surface: —) — 0/1 specs done
 - **Install + Upgrade Contract Coverage — Prove Every Target Works Every Time** (surface: —) — 0/0 specs done
-- **"Interactive CLI Input — Scoped Completion"** (surface: core) — 3/4 specs done
+- **"Interactive CLI Input — Scoped Completion"** (surface: core) — 3/4 specs done; in flight: interactive-cli-acceptance-and-merge-gate
 - **Launch Readiness — Telemetry, Deploy, and Public-Use Polish** (surface: —) — 0/0 specs done
 - **Pre-Launch Hardening — Federation Polish, Security, Observability** (surface: —) — 0/0 specs done
 - **"Retrieval Quality — Reranking, Expansion & Feedback Loop"** (surface: —) — 0/0 specs done
@@ -61,10 +61,10 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Next up across surfaces
 
 1. **landing** — `hero-landing-page` (P0, delivering)
-2. **serve** — `agent-outposts` (medium, delivering)
-3. **serve** — `retrieval-contradiction-detection` (—, delivering)
-4. **(unassigned)** — `team-connect` (—, delivering)
-5. **(unassigned)** — `always-on-runtime` (P0, planning)
+2. **(unassigned)** — `interactive-cli-acceptance-and-merge-gate` (high, delivering)
+3. **serve** — `agent-outposts` (medium, delivering)
+4. **serve** — `retrieval-contradiction-detection` (—, delivering)
+5. **(unassigned)** — `team-connect` (—, delivering)
 
 ## Open risks & blockers
 

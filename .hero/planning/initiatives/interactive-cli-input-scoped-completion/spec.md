@@ -215,11 +215,14 @@ allowance for additional behavior changes.
   `design/interactive-cli-input`.
 - Original input classification exists as active convention
   `cli-input-classification`.
-- Donor side work has an initial disposition ledger; the final gate must resolve
-  its placeholder destinations against current `main`.
-- All four successor children are fully designed; none has been delivered.
-- Next: arm `/drive interactive-cli-input-scoped-completion` on the clean
-  `main`-based successor branch.
+- The prompt/TTY, setup/connect, and selector children are archived as completed
+  after independent SHIP audits and their verification gates.
+- The final gate is delivering: scope provenance maps the 233 production hunks;
+  donor-only follow-ups are retained at explicit donor paths rather than falsely
+  claimed as local successor specs.
+- Integrated validation evidence is recorded by
+  interactive-cli-acceptance-and-merge-gate. Its remaining actions are a fresh
+  cold audit and both Hero verification gates; the donor branch must remain.
 
 ## Kickoff
 

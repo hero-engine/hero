@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-03T21:26:08Z
+updated: 2026-08-03T21:34:11Z
 repo: hero-engine/hero
 ---
 
@@ -8,9 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver interactive-setup-and-connect-closure completely with six-target and live-pipe validation.
-
-_possibly stale — 1 commit(s) since, last set 23m ago_
+> Deliver the final interactive CLI acceptance and merge gate with provenance, donor disposition, comprehensive evidence, and no production changes.
 
 ## Suggested next prompt
 
