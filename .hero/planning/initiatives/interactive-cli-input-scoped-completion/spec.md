@@ -54,6 +54,12 @@ ports only its owned original-scope changes, then closes the corresponding
 acceptance gaps. If a scoped patch needs a helper introduced by a side quest,
 port the minimum helper rather than importing the side quest.
 
+Valid side discoveries are preserved without entering this merge through
+[`donor-branch-disposition.md`](donor-branch-disposition.md). The donor branch
+stays intact until the final gate confirms every change was ported, extracted to
+named follow-up work, already present on `main`, or deliberately dropped with a
+reason.
+
 ### Current truth
 
 | Original outcome | Candidate state | Acceptance state |
@@ -73,8 +79,8 @@ branch is not merge-ready.
 
 | Phase | Slug | Outcome | Size | Priority | Depends on | Status |
 |---|---|---|---|---|---|---|
-| 1 | `prompt-and-tty-contract-closure` | Curate and close the shared prompt, stream, TTY, secret, and machine-path contract | `medium` | `critical` | — | planning |
-| 2A | `interactive-setup-and-connect-closure` | Curate and close the original setup prompts, connect semantics, target parity, and help | `medium` | `high` | prompt/TTY closure | planning |
+| 1 | `prompt-and-tty-contract-closure` | Curate and close the shared prompt, stream, TTY, secret, and machine-path contract | `large` | `critical` | — | planning |
+| 2A | `interactive-setup-and-connect-closure` | Curate and close the original setup prompts, connect semantics, target parity, and help | `large` | `high` | prompt/TTY closure | planning |
 | 2B | `corpus-selector-closure` | Curate the original selector targets and make them useful beyond 25 candidates | `medium` | `high` | prompt/TTY closure | planning |
 | 3 | `interactive-cli-acceptance-and-merge-gate` | Prove the complete outcome, cold-audit the curated diff, and make the merge decision | `small` | `high` | setup/connect + selectors | planning |
 
@@ -209,9 +215,11 @@ allowance for additional behavior changes.
   `design/interactive-cli-input`.
 - Original input classification exists as active convention
   `cli-input-classification`.
-- No successor child has been designed or delivered.
-- Next: `/design prompt-and-tty-contract-closure`, then deliver it on a clean
-  `main`-based branch.
+- Donor side work has an initial disposition ledger; the final gate must resolve
+  its placeholder destinations against current `main`.
+- All four successor children are fully designed; none has been delivered.
+- Next: arm `/drive interactive-cli-input-scoped-completion` on the clean
+  `main`-based successor branch.
 
 ## Kickoff
 
@@ -222,4 +230,4 @@ prompt foundation, close cross-platform TTY and liveness gaps, and verify it
 before setup or selector adoption. Do not import index, init, alias, timeout,
 invocation-lint, graph, or unrelated uninstall work.
 
-→ `/design prompt-and-tty-contract-closure`
+→ `/drive interactive-cli-input-scoped-completion`

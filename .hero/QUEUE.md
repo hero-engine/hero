@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-03T19:46:14Z · 83 ready specs_
+_Generated: 2026-08-03T19:57:24Z · 83 ready specs_
 
 ## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
 _feature · delivering · horizon: now_
@@ -54,10 +54,11 @@ _feature · planning · horizon: now_
 
 Design the clean foundation port for `interactive-cli-input-scoped-completion`.
 Use the old branch as evidence, not as the base. Close the Windows secret,
-remaining-reader, terminal-classification, and live-pipe gaps while preserving
-the original opt-in and machine-path behavior. Name the exact owned files and
-tests; exclude all setup, selector, index, init, alias, timeout, and invocation
-guard work.
+remaining-reader, terminal-classification, and live-pipe gaps while porting the
+complete original prompt-site set. Preserve `new --interactive`, JSON, and
+machine paths. Keep secure terminal acquisition platform-specific; never add an
+echoed test hook. Exclude setup behavior, selectors, index, init, aliases,
+timeouts, invocation guards, and unrelated uninstall work.
 
 → `/design prompt-and-tty-contract-closure`
 
