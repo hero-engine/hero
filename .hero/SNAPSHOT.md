@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-08-03T19:58:42Z · projected from 507 source nodes_
+_Last refreshed: 2026-08-03T20:11:45Z · projected from 507 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 2m ago | satellite-corpus-integration |
-| docs | maturing | web/docs/ | 13m ago | — |
-| domains/chat | maturing | domains/chat/ | 13m ago | — |
-| domains/engineering | maturing | domains/engineering/ | 13m ago | — |
-| domains/pm | maturing | domains/pm/ | 13m ago | — |
-| domains/sales | maturing | domains/sales/ | 13m ago | — |
-| landing | building | web/landing/ | 13m ago | hero-landing-page |
+| core | building | cmd/, internal/ | 15m ago | satellite-corpus-integration |
+| docs | maturing | web/docs/ | 26m ago | — |
+| domains/chat | maturing | domains/chat/ | 26m ago | — |
+| domains/engineering | maturing | domains/engineering/ | 26m ago | — |
+| domains/pm | maturing | domains/pm/ | 26m ago | — |
+| domains/sales | maturing | domains/sales/ | 26m ago | — |
+| landing | building | web/landing/ | 26m ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 13m ago | agent-outposts |
+| serve | building | internal/serve/ | <1m ago | agent-outposts |
 | (unassigned) | — | — | — | 241 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -35,7 +35,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **"Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"** (surface: —) — 0/9 specs done
 - **Hero Killer Features — Agent Effectiveness, Team Power, Living Specs** (surface: core, serve) — 10/11 specs done
 - **Hero Marketing — Positioning, Distribution, and Launch** (surface: landing) — 0/9 specs done; in flight: hero-landing-page
-- **Hero Platform — Headless Execution, Team Automation, and Shared Visibility** (surface: core, serve) — 2/8 specs done; in flight: hero-team-server
+- **Hero Platform — Headless Execution, Team Automation, and Shared Visibility** (surface: core, serve) — 2/8 specs done
 - **"Hero Doesn't Lie — Self-Consistency Between Generated Guidance, Hero's Own Writes, and Hero's Actual Contract"** (surface: core) — 0/5 specs done
 - **Hero Surface Architecture — One Surface, Every Layer, Every Role** (surface: serve) — 8/9 specs done
 - **Hero Team Experience — Complete Multi-Developer Workflow** (surface: —) — 0/1 specs done
@@ -61,10 +61,10 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Next up across surfaces
 
 1. **landing** — `hero-landing-page` (P0, delivering)
-2. **serve** — `hero-team-server` (P1, delivering)
-3. **core** — `satellite-corpus-integration` (high, delivering)
-4. **serve** — `agent-outposts` (medium, delivering)
-5. **serve** — `retrieval-contradiction-detection` (—, delivering)
+2. **core** — `satellite-corpus-integration` (high, delivering)
+3. **serve** — `agent-outposts` (medium, delivering)
+4. **serve** — `retrieval-contradiction-detection` (—, delivering)
+5. **(unassigned)** — `team-connect` (—, delivering)
 
 ## Open risks & blockers
 

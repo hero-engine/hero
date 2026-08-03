@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-03T19:58:42Z · 83 ready specs_
+_Generated: 2026-08-03T20:11:45Z · 83 ready specs_
 
 ## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
 _feature · delivering · horizon: now_

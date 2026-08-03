@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-03T19:57:23Z
+updated: 2026-08-03T20:11:45Z
 repo: hero-engine/hero
 ---
 
@@ -9,6 +9,8 @@ repo: hero-engine/hero
 ## Last user ask
 
 > Design every child of interactive-cli-input-scoped-completion up front, preserve useful donor-branch fixes through an explicit disposition ledger, then drive the whole initiative on a clean feature branch.
+
+_possibly stale — 1 commit(s) since, last set 24m ago_
 
 ## Suggested next prompt
 
