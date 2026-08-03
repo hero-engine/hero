@@ -4,5 +4,5 @@ schema: 1
 contracts_version: 2
 repo:
     peer_id: 6341a260-0409-4663-9a04-92ff34b01288
-    name: hero
-generated_at: 2026-07-09T00:07:44.482918Z
+    name: hero-interactive-cli-scoped
+generated_at: 2026-08-03T19:46:14.568929Z
