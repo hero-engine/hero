@@ -2,7 +2,7 @@
 title: "Corpus Selector Closure"
 slug: corpus-selector-closure
 type: feature
-status: delivering
+status: completed
 created: 2026-08-03
 domain: engineering
 size: medium
@@ -12,6 +12,7 @@ depends-on: [prompt-and-tty-contract-closure]
 relates-to: [selector-spec-pickers, cli-input-classification]
 tags: [cli, selector, prompt, corpus]
 delivery_method: manual
+completed_at: 2026-08-03T21:01:25Z
 ---
 
 # Corpus Selector Closure

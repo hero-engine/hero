@@ -523,3 +523,5 @@
 {"ts":"2026-07-30T18:12:16.964598Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"code-host-cancel-after-apply-test-timing","message":"status -\u003e completed"}
 {"ts":"2026-08-03T20:44:32.204023Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"prompt-and-tty-contract-closure","message":"\"Prompt and TTY Contract Closure\""}
 {"ts":"2026-08-03T20:44:32.204114Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"prompt-and-tty-contract-closure","message":"status -\u003e completed"}
+{"ts":"2026-08-03T21:01:26.865012Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"corpus-selector-closure","message":"\"Corpus Selector Closure\""}
+{"ts":"2026-08-03T21:01:26.866333Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"corpus-selector-closure","message":"status -\u003e completed"}

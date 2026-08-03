@@ -6,28 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-03T20:58:03Z · 84 ready specs_
-
-## corpus-selector-closure — "Corpus Selector Closure"
-_feature · delivering · horizon: now_
-
-Makes local-corpus CLI selectors work at real workspace scale without changing
-explicit or non-interactive command behavior.
-
-**Status:** delivering — frozen command paths and 0/1/25/26/250 coverage are
-implemented and validated; the delivery closing gate remains.
-
-**Pick up at:** review the selector diff and run the delivery audit/verify
-workflow before archiving the spec.
-
-→ `hero spec verify corpus-selector-closure`
-
-**Files:** `internal/cli/selector.go`, `internal/cli/selector_test.go`,
-`internal/cli/handoff.go`, `internal/cli/supersede.go`
-**Skip:** TUI, fuzzy retrieval, network lookup, general prompt changes, and
-selector targets outside the frozen list.
-
----
+_Generated: 2026-08-03T21:01:38Z · 83 ready specs_
 
 ## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
 _feature · delivering · horizon: now_
