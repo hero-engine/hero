@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-03T21:34:11Z · 83 ready specs_
+_Generated: 2026-08-03T21:40:46Z · 83 ready specs_
 
 ## interactive-cli-acceptance-and-merge-gate — "Interactive CLI Acceptance and Merge Gate"
 _feature · delivering · horizon: now_
@@ -14,11 +14,11 @@ _feature · delivering · horizon: now_
 Closes the interactive CLI initiative with a hunk map, donor disposition, and
 integrated validation evidence; it makes no production change.
 
-**Status:** delivering — all three implementation children are archived with
-SHIP audits; final evidence artifacts and validation are being recorded.
+**Status:** delivering — the first cold audit found artifact-only truth gaps;
+the bounded evidence repair is complete and awaits a fresh audit.
 
-**Pick up at:** commission the fresh cold audit, then run both Hero verification
-gates after it reports SHIP.
+**Pick up at:** run a fresh cold audit against the repaired evidence commit,
+then run both Hero verification gates only if it reports SHIP.
 
 → `hero spec verify interactive-cli-acceptance-and-merge-gate --skip-tests`
 

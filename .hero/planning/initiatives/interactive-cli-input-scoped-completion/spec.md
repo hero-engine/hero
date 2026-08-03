@@ -79,10 +79,10 @@ branch is not merge-ready.
 
 | Phase | Slug | Outcome | Size | Priority | Depends on | Status |
 |---|---|---|---|---|---|---|
-| 1 | `prompt-and-tty-contract-closure` | Curate and close the shared prompt, stream, TTY, secret, and machine-path contract | `large` | `critical` | — | planning |
-| 2A | `interactive-setup-and-connect-closure` | Curate and close the original setup prompts, connect semantics, target parity, and help | `large` | `high` | prompt/TTY closure | planning |
-| 2B | `corpus-selector-closure` | Curate the original selector targets and make them useful beyond 25 candidates | `medium` | `high` | prompt/TTY closure | planning |
-| 3 | `interactive-cli-acceptance-and-merge-gate` | Prove the complete outcome, cold-audit the curated diff, and make the merge decision | `small` | `high` | setup/connect + selectors | planning |
+| 1 | `prompt-and-tty-contract-closure` | Curate and close the shared prompt, stream, TTY, secret, and machine-path contract | `large` | `critical` | — | completed |
+| 2A | `interactive-setup-and-connect-closure` | Curate and close the original setup prompts, connect semantics, target parity, and help | `large` | `high` | prompt/TTY closure | completed |
+| 2B | `corpus-selector-closure` | Curate the original selector targets and make them useful beyond 25 candidates | `medium` | `high` | prompt/TTY closure | completed |
+| 3 | `interactive-cli-acceptance-and-merge-gate` | Prove the complete outcome, cold-audit the curated diff, and make the merge decision | `small` | `high` | setup/connect + selectors | delivering |
 
 ## Delivery path
 
@@ -217,9 +217,9 @@ allowance for additional behavior changes.
   `cli-input-classification`.
 - The prompt/TTY, setup/connect, and selector children are archived as completed
   after independent SHIP audits and their verification gates.
-- The final gate is delivering: scope provenance maps the 233 production hunks;
-  donor-only follow-ups are retained at explicit donor paths rather than falsely
-  claimed as local successor specs.
+- The final gate is delivering: scope provenance maps 229 production hunks plus
+  four test-only portable PTY hunks; donor-only follow-ups are retained at
+  explicit donor paths rather than falsely claimed as local successor specs.
 - Integrated validation evidence is recorded by
   interactive-cli-acceptance-and-merge-gate. Its remaining actions are a fresh
   cold audit and both Hero verification gates; the donor branch must remain.

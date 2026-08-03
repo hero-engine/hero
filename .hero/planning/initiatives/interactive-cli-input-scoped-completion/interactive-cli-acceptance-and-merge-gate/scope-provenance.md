@@ -8,7 +8,8 @@ uses zero context so the hunk count is an exact, reproducible unit:
 git diff --unified=0 --no-ext-diff main...HEAD -- internal/cli internal/ptytest
 ```
 
-It identifies 233 non-test Go hunks. Every production hunk is listed below.
+It identifies 229 production-behavior hunks plus four test-only portable PTY
+hunks. Every production hunk is listed below.
 For a file with multiple historical contributors, "owner" means the final child
 accountable for the behavior in the curated successor, rather than the commit
 that first touched the file. Hunk ranges are the ordinal hunks produced by the
@@ -44,9 +45,9 @@ command above; together they cover every hunk in each file.
 | internal/cli/users.go H1-H8 | AC-4, AC-5, AC-7 | interactive-setup-and-connect-closure | Adds missing-only setup prompts while preserving protected secret entry. |
 | internal/cli/verify.go H1-H3 | AC-10, AC-11, AC-12 | corpus-selector-closure | Adds the frozen verify selector target. |
 
-The four internal/ptytest files contribute four additional non-test Go hunks,
-but are test-only portable PTY support: every importer is a _test.go file.
-They are therefore validation infrastructure, not production behavior.
+The four internal/ptytest files contribute the four additional test-only
+portable PTY hunks: every importer is a _test.go file. They are validation
+infrastructure, not production behavior.
 
 ## Boundary result
 

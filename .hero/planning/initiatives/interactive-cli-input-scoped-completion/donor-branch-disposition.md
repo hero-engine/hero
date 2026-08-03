@@ -73,7 +73,7 @@ every such row and must not be deleted.
 | 1f213e2 | Deliberately dropped from successor | Its stale classification document is evidence only; active prompt-policy tests and this parent define the enforced behavior. |
 | 9840e8d | Ported | The bounded selector is in corpus-selector-closure, including the over-25 repair. |
 | d10eae2, 77ccdfa | Deliberately dropped from successor | Unrelated donor spec corrections have no production dependency. |
-| c191f6d | Extracted, donor-retained | design/interactive-cli-input:.hero/planning/features/cli-test-package-headroom/spec.md at c191f6d; it is absent from main and successor, so no local-spec claim is made. |
+| c191f6d | Extracted, donor-retained | design/interactive-cli-input:.hero/planning/features/cli-test-isolation-stray-workspace-boundary/spec.md at c191f6d; verified with git cat-file and absent from main and successor. |
 | c0536bf | Deliberately dropped from successor | The node-index migration is outside scope and its donor audit reports unsafe search metadata loss; retain the donor commit as diagnosis, not a merge candidate. |
 | ed75db0 | Deliberately dropped from successor | Root instruction block stripping conflicts with the successor's manifest-safe shared-file rule; current uninstall tests lock the opposite behavior. |
 | d53acdf | Extracted, donor-retained | design/interactive-cli-input:.hero/specs/connect-remove-key-space-mismatch/spec.md at d53acdf; absent from main and successor. |

@@ -155,14 +155,17 @@ reader plumbing changes. `brief` migrates its rendering check to
 
 Closes the CLI's shared prompt, TTY, secret-input, and Cobra-stream contract.
 
-**Status:** delivering — implementation and validation are complete; cold audit and Hero verification remain.
+**Status:** completed — independent SHIP audit and Hero verification archived
+the prompt, TTY, secret-input, and Cobra-stream closure.
 
-**Pick up at:** review the completion ledger against the prompt package and migration tests, then run the cold audit and `hero spec verify`.
+**Pick up at:** consult the archived audit and Completion Ledger only when
+investigating a regression in the shared prompt contract.
 
-→ `hero spec verify prompt-and-tty-contract-closure --skip-tests`
+→ `.hero/specs/prompt-and-tty-contract-closure/delivery-audit.md`
 
 **Files:** `internal/cli/prompt/prompt.go`, `internal/cli/prompt/secret_terminal_windows.go`, `internal/cli/prompt_policy_test.go`, `internal/cli/prompt_streams_test.go`
-**Skip:** setup behavior, selectors, init, and unrelated donor changes.
+**Skip:** reopening delivery, setup behavior, selectors, init, and unrelated
+donor changes.
 
 ## Completion Ledger
 

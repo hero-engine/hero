@@ -118,18 +118,18 @@ specs as appropriate.
 Makes local-corpus CLI selectors work at real workspace scale without changing
 explicit or non-interactive command behavior.
 
-**Status:** delivering — frozen command paths and 0/1/25/26/250 coverage are
-implemented and validated; the delivery closing gate remains.
+**Status:** completed — the frozen selector set and 0/1/25/26/250 coverage
+passed its independent SHIP audit and Hero verification.
 
-**Pick up at:** review the selector diff and run the delivery audit/verify
-workflow before archiving the spec.
+**Pick up at:** consult the archived audit and Completion Ledger only when
+investigating selector reachability, cancellation, or noninteractive behavior.
 
-→ `hero spec verify corpus-selector-closure`
+→ `.hero/specs/corpus-selector-closure/delivery-audit.md`
 
 **Files:** `internal/cli/selector.go`, `internal/cli/selector_test.go`,
 `internal/cli/handoff.go`, `internal/cli/supersede.go`
-**Skip:** TUI, fuzzy retrieval, network lookup, general prompt changes, and
-selector targets outside the frozen list.
+**Skip:** reopening delivery, TUI, fuzzy retrieval, network lookup, general
+prompt changes, and selector targets outside the frozen list.
 
 ## Completion Ledger
 

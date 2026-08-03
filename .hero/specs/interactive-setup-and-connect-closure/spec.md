@@ -64,15 +64,17 @@ stdin and a live non-TTY pipe fail promptly without a prompt or read.
 
 Closes interactive connect and setup flows while leaving automation paths non-blocking and manifest-safe.
 
-**Status:** delivering — audit repairs now preserve shared `AGENTS.md` during
-copilot/generic uninstall and add byte-level supplied-path baselines.
+**Status:** completed — the bounded preservation/baseline repair passed its
+independent SHIP audit and Hero verification.
 
-**Pick up at:** run the cold delivery audit and verification gate before archiving.
+**Pick up at:** consult the archived audit and Completion Ledger only when
+investigating connect/setup, six-target, or manifest-removal regressions.
 
-→ `hero spec verify interactive-setup-and-connect-closure --skip-tests`
+→ `.hero/specs/interactive-setup-and-connect-closure/delivery-audit.md`
 
 **Files:** `internal/cli/connect.go`, `internal/cli/uninstall.go`, `internal/cli/prompt_args.go`, `internal/cli/connect_writer_unification_test.go`
-**Skip:** generic prompt fields, skill coupling, init/index/alias expansion, network calls, and unlisted uninstall repairs.
+**Skip:** reopening delivery, generic prompt fields, skill coupling,
+init/index/alias expansion, network calls, and unlisted uninstall repairs.
 
 ## Problem
 

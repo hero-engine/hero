@@ -124,11 +124,11 @@ The gate fails on either substitution.
 Closes the interactive CLI initiative with a hunk map, donor disposition, and
 integrated validation evidence; it makes no production change.
 
-**Status:** delivering — all three implementation children are archived with
-SHIP audits; final evidence artifacts and validation are being recorded.
+**Status:** delivering — the first cold audit found artifact-only truth gaps;
+the bounded evidence repair is complete and awaits a fresh audit.
 
-**Pick up at:** commission the fresh cold audit, then run both Hero verification
-gates after it reports SHIP.
+**Pick up at:** run a fresh cold audit against the repaired evidence commit,
+then run both Hero verification gates only if it reports SHIP.
 
 → `hero spec verify interactive-cli-acceptance-and-merge-gate --skip-tests`
 
@@ -146,7 +146,7 @@ integrated command matrix in the evidence artifacts.
 
 | # | Criterion (abbreviated) | Status | Note |
 |---|---|---|---|
-| 1 | Every production hunk has a parent AC and owner | DONE | scope-provenance.md records all 233 non-test production hunks by file, hunk range, parent AC, and final child owner. |
+| 1 | Every production hunk has a parent AC and owner | DONE | scope-provenance.md records 229 production hunks by file, hunk range, parent AC, and final child owner; four portable PTY hunks are separately classified as test-only infrastructure. |
 | 2 | Boundary-excluded production work is absent before merge | DONE | The provenance boundary scan reports no index, init, alias, invocation-guard, timeout, graph/spec-terminal, form-engine, or new-selector production hunk. |
 | 3 | Every donor change has a durable disposition | DONE | donor-branch-disposition.md reconciles every group in main..design/interactive-cli-input as Ported, Extracted donor-retained, Already present, or deliberately dropped with a reason. |
 | 4 | Donor stays while salvageable work lacks a local destination | DONE | The disposition map names exact retained-donor paths and commits for every absent local follow-up and expressly prohibits donor deletion. |
@@ -166,8 +166,8 @@ integrated command matrix in the evidence artifacts.
 | 1 | Complete scope-provenance and donor-disposition maps | DONE | scope-provenance.md covers the final diff by hunk; donor-branch-disposition.md reconciles every donor group and retained destination. |
 | 2 | Build initiative-wide test ledger | DONE | acceptance-evidence.md maps the prompt, connect, target-parity, selector, secret-platform, and liveness evidence. |
 | 3 | Run clean-successor validation matrix | DONE | Full normal/race/vet/build/Windows/platform-seam/live-pipe/diff/Hero checks passed; commands are recorded in this delivery's evidence. |
-| 4 | Produce ledger and commission a cold audit | BLOCKED | Ledger is complete; commissioning the cold audit is reserved to the root agent by the parent task instruction. |
-| 5 | Reconcile progress and run both Hero verify commands | BLOCKED | Progress is reconciled; root must run the audit and both verification commands after this commit. |
+| 4 | Produce ledger and commission a cold audit | DONE | The independent on-disk delivery-audit.md records that the cold audit was commissioned and returned HOLD for artifact-only truth corrections. |
+| 5 | Reconcile progress and run both Hero verify commands | BLOCKED | Progress is reconciled by this repair; root must obtain a fresh SHIP audit and run both verification commands after this commit. |
 
 ### Exercise-the-feature check
 

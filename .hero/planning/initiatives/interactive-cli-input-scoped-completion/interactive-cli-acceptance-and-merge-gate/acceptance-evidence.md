@@ -18,7 +18,7 @@ recorded in the final gate Completion Ledger.
 | Parent AC-10 | selector_test covers 0, 1, 25, 26, and 250 candidates, filtering, exact match, stable ordering, and outside-first-25 selection. |
 | Parent AC-11 | TestPickerCancellationAndInvalidFinalChoiceDoNotScore proves nonzero cancellation and no mutation. |
 | Parent AC-12 | selector_test covers supplied, non-TTY, JSON, invalid, and frozen-target cases for every adopter. |
-| Parent AC-13 | scope-provenance.md covers all 233 production hunks and records no boundary categories. |
+| Parent AC-13 | scope-provenance.md covers 229 production hunks plus four test-only portable PTY hunks and records no boundary categories. |
 | Parent AC-14 | Full suite, focused race, vet, native build, Windows cross-build, platform-secret seam, and live-pipe commands are recorded below and in the ledger; final audit/verify remain root-owned gate actions. |
 | Gate AC-1 to AC-4 | scope-provenance.md and donor-branch-disposition.md supply the hunk and donor classifications and retain the donor branch. |
 | Gate AC-5 to AC-8 | Prompt, connect, uninstall, setup, and selector tests above provide the required matrices. |
