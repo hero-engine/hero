@@ -1,0 +1,15 @@
+$ hero install project proj --dry-run --target claude
+stdin-condition: flags
+exit: 0
+--- stdout ---
+target:      claude
+mode:        project
+
+<INSTALL MANIFEST LINES ELIDED>
+  CLAUDE.md -> proj/CLAUDE.md (create)
+  settings.json -> proj/.claude/settings.json (wire Stop + PreCompact hooks)
+  settings.json -> proj/.claude/settings.json (wire Bash(hero:*) permission)
+  MCP server -> proj/.mcp.json
+
+dry run complete — no files were written
+--- stderr ---

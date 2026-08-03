@@ -1,0 +1,9 @@
+$ hero handoff accept baseline-handed-back
+stdin-condition: closed
+exit: 0
+--- stdout ---
+Accepted baseline-handed-back: status handed_back → delivering
+--- stderr ---
+hero: minted peer_id for cross-repo peering (recorded in events.log)
+hero: 1 legacy install artifact(s) detected — Claude Code / Codex / Cursor will silently fail to load Hero skills and agents.
+hero: run 'hero upgrade' (or 'hero install <mode> .') to clean up.

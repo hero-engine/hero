@@ -1,0 +1,45 @@
+$ hero install satellites --migrate-nested --apply --yes
+stdin-condition: flags
+exit: 1
+--- stdout ---
+Found 1 nested .hero/ workspace(s) to migrate:
+
+Migration plan for nested workspace at nested
+  Scope: nested
+
+  0 spec(s) would be moved into root .hero/planning/ with scope frontmatter:
+  0 knowledge file(s) would be moved:
+  1 file(s) inside nested .hero/ are not recognized and will NOT move automatically:
+    - <ROOT>/nested/.hero/skills
+
+  After migration: nested .hero/ removed, satellite materialized,
+  scope auto-stamped on artifacts, root graph re-indexed.
+
+Migrated satellite at nested:
+  0 spec(s)
+  0 knowledge file(s)
+  nested .hero/ removed
+
+Migration of nested halted: materialize satellite: no harness targets installed at root <ROOT>; install one first
+--- stderr ---
+hero: minted peer_id for cross-repo peering (recorded in events.log)
+hero: 1 legacy install artifact(s) detected — Claude Code / Codex / Cursor will silently fail to load Hero skills and agents.
+hero: run 'hero upgrade' (or 'hero install <mode> .') to clean up.
+Error: materialize satellite: no harness targets installed at root <ROOT>; install one first
+Usage:
+  hero install satellites [flags]
+
+Flags:
+      --apply            with --migrate-nested: actually execute the migration (move files, append events, materialize satellite)
+      --force            with --migrate-nested --apply: ignore dirty git state
+      --force-resume     with --migrate-nested --apply: complete a partially-applied migration
+  -h, --help             help for satellites
+      --migrate-nested   scan for legacy nested .hero/ workspaces under root and print a migration plan (read-only without --apply)
+      --no               decline all prompts (audit-only mode for unattended runs)
+      --repair           verify and repair existing satellite symlinks/markers without re-prompting candidates
+      --yes              accept all candidates and reconciliation prompts without asking
+
+Global Flags:
+      --smoke   run smoke verification for this command and exit
+
+materialize satellite: no harness targets installed at root <ROOT>; install one first

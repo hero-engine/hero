@@ -1,13 +1,13 @@
 package cli
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/hero-engine/hero/internal/cli/prompt"
 	"github.com/hero-engine/hero/internal/index"
 	"github.com/hero-engine/hero/internal/install"
 	"github.com/hero-engine/hero/internal/workspace"
@@ -106,12 +106,35 @@ func runInstallSatellites(cmd *cobra.Command, args []string) error {
 			}
 			fmt.Println(install.FormatMigrationPlan(plan))
 		}
-		if !satellitesYesAll && isTerminal() {
-			fmt.Print("Apply these migrations? [y/N] ")
-			reader := bufio.NewReader(os.Stdin)
-			line, _ := reader.ReadString('\n')
-			ans := strings.TrimSpace(strings.ToLower(line))
-			if ans != "y" && ans != "yes" {
+		if !satellitesYesAll {
+			// This migration moves files and deletes the nested .hero/, so it
+			// must never run unconfirmed.
+			//
+			// The old guard was `!satellitesYesAll && isTerminal()`, i.e.
+			// "confirm only when there is a terminal, otherwise just proceed".
+			// That reads as an unattended-mode convenience, but combined with
+			// the ModeCharDevice bug it produced two opposite outcomes for two
+			// non-interactive invocations: `< /dev/null` was misclassified as a
+			// terminal, so it prompted, read EOF, and aborted — while a pipe
+			// was correctly classified and therefore silently performed the
+			// migration with no confirmation at all.
+			//
+			// Fixing the predicate without restructuring the guard would have
+			// made BOTH cases proceed, turning an accidental abort into an
+			// unattended destructive migration. Requiring an explicit answer
+			// instead keeps `< /dev/null` behaving exactly as before and makes
+			// the piped case fail safe. --yes remains the unattended path,
+			// which is what its help text already promises.
+			proceed := false
+			if prompt.IsInputTTY(cmd.InOrStdin()) {
+				yes, err := prompt.Confirm(cmd.InOrStdin(), cmd.OutOrStdout(),
+					"Apply these migrations? [y/N] ", false)
+				if err != nil {
+					return err
+				}
+				proceed = yes
+			}
+			if !proceed {
 				fmt.Println("Aborted.")
 				return nil
 			}
@@ -150,7 +173,7 @@ func runInstallSatellites(cmd *cobra.Command, args []string) error {
 	}
 
 	// First: reconcile declared-but-not-materialized.
-	if err := reconcileDeclared(ws, subs, binaryVersion, os.Stdin, os.Stdout); err != nil {
+	if err := reconcileDeclared(ws, subs, binaryVersion, cmd.InOrStdin(), cmd.OutOrStdout()); err != nil {
 		return err
 	}
 
@@ -164,7 +187,7 @@ func runInstallSatellites(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 	fmt.Printf("\nDetected %d candidate subproject(s):\n\n", len(candidates))
-	return walkCandidates(ws, subs, candidates, binaryVersion, os.Stdin, os.Stdout)
+	return walkCandidates(ws, subs, candidates, binaryVersion, cmd.InOrStdin(), cmd.OutOrStdout())
 }
 
 func runSatelliteRepair(ws *workspace.Workspace, version string, quiet bool) error {
@@ -211,23 +234,24 @@ func reconcileDeclared(ws *workspace.Workspace, subs *install.SubprojectsManifes
 	if len(missing) == 0 {
 		return nil
 	}
+	if !satellitesYesAll && !satellitesNoAll && !prompt.IsInputTTY(in) {
+		return fmt.Errorf("reconciling declared subprojects requires an attached terminal; pass --yes or --no")
+	}
 	fmt.Fprintf(out, "Found %d declared subproject(s) without local satellites:\n\n", len(missing))
 
-	reader := bufio.NewReader(in)
 	for _, sp := range missing {
-		decision := "y" // default Y for already-declared subprojects (team decided)
+		// Default Y for already-declared subprojects — the team already
+		// decided by committing them to subprojects.json.
+		materialize := !satellitesNoAll
 		if !satellitesYesAll && !satellitesNoAll {
-			fmt.Fprintf(out, "  %-40s materialize satellite? [Y/n] ", sp.Path)
-			line, _ := reader.ReadString('\n')
-			d := strings.TrimSpace(strings.ToLower(line))
-			if d != "" {
-				decision = d
+			yes, err := prompt.Confirm(in, out,
+				fmt.Sprintf("  %-40s materialize satellite? [Y/n] ", sp.Path), true)
+			if err != nil {
+				return err
 			}
-		} else if satellitesNoAll {
-			decision = "n"
+			materialize = yes
 		}
-		switch decision {
-		case "n", "no":
+		if !materialize {
 			fmt.Fprintf(out, "    skipped\n")
 			continue
 		}
@@ -240,9 +264,11 @@ func reconcileDeclared(ws *workspace.Workspace, subs *install.SubprojectsManifes
 }
 
 func walkCandidates(ws *workspace.Workspace, subs *install.SubprojectsManifest, candidates []install.Candidate, version string, in io.Reader, out io.Writer) error {
-	reader := bufio.NewReader(in)
 	yesAll := satellitesYesAll
 	skipAll := satellitesNoAll
+	if !yesAll && !skipAll && !prompt.IsInputTTY(in) {
+		return fmt.Errorf("walking subproject candidates requires an attached terminal; pass --yes or --no")
+	}
 	dirty := false
 
 	defer func() {
@@ -280,9 +306,11 @@ func walkCandidates(ws *workspace.Workspace, subs *install.SubprojectsManifest, 
 		if yesAll {
 			raw = "y"
 		} else {
-			fmt.Fprint(out, "        propose? [y/N/a/s/q/x/X/?] ")
-			line, _ := reader.ReadString('\n')
-			raw = strings.TrimSpace(line)
+			// Not prompt.Confirm: this is a 7-way menu, not a yes/no, and
+			// the answer is case-sensitive (X excludes a whole subtree, x
+			// excludes only the leaf). Reading through prompt.Prompt removes
+			// the bufio fork without flattening the menu into a boolean.
+			raw, _ = prompt.Prompt(in, out, "        propose? [y/N/a/s/q/x/X/?] ")
 		}
 
 		// Capital X is distinct from lowercase x — handle case-sensitive

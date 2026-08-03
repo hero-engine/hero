@@ -1,13 +1,14 @@
 package cli
 
 import (
-	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
+	"github.com/hero-engine/hero/internal/cli/prompt"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/skills"
 	"github.com/spf13/cobra"
@@ -172,13 +173,15 @@ func runSkillRun(cmd *cobra.Command, args []string) error {
 
 	// Find missing params and prompt interactively if TTY available
 	if len(skill.Params) > 0 {
-		isTTY := isTerminal()
+		in := cmd.InOrStdin()
+		out := cmd.OutOrStdout()
+		isTTY := prompt.IsInputTTY(in)
 		for _, p := range skill.Params {
 			if _, ok := params[p.Name]; ok {
 				continue
 			}
 			if isTTY {
-				val, err := promptParam(p.Name, p.Description)
+				val, err := promptParam(in, out, p.Name, p.Description)
 				if err != nil {
 					return fmt.Errorf("reading param %q: %w", p.Name, err)
 				}
@@ -205,24 +208,30 @@ func runSkillSave(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("creating skills directory: %w", err)
 	}
 
-	reader := bufio.NewReader(os.Stdin)
+	// Two fields read in sequence, not a form engine. A descriptor would need
+	// a third consumer to earn itself, and there isn't one — see the hard stop
+	// in the cli-prompt-package-adoption spec.
+	//
+	in := cmd.InOrStdin()
+	out := cmd.OutOrStdout()
+	if !prompt.IsInputTTY(in) {
+		return fmt.Errorf("skill save requires an attached terminal")
+	}
 
-	fmt.Print("Skill name (slug, e.g. my-workflow): ")
-	name, err := reader.ReadString('\n')
+	// promptLineStrict, not prompt.Prompt: these two reads act on the error, so
+	// they need bufio's end-of-stream contract. See prompt_line.go.
+	name, err := promptLineStrict(in, out, "Skill name (slug, e.g. my-workflow): ")
 	if err != nil {
 		return fmt.Errorf("reading name: %w", err)
 	}
-	name = strings.TrimSpace(name)
 	if name == "" {
 		return fmt.Errorf("skill name cannot be empty")
 	}
 
-	fmt.Print("Skill title: ")
-	title, err := reader.ReadString('\n')
+	title, err := promptLineStrict(in, out, "Skill title: ")
 	if err != nil {
 		return fmt.Errorf("reading title: %w", err)
 	}
-	title = strings.TrimSpace(title)
 
 	path := filepath.Join(dir, name+".md")
 	if _, err := os.Stat(path); err == nil {
@@ -316,16 +325,18 @@ func openEditor(path string) error {
 }
 
 // promptParam interactively prompts the user for a parameter value.
-func promptParam(name, description string) (string, error) {
+//
+// The caller has already established that in is a terminal; this only reads.
+func promptParam(in io.Reader, out io.Writer, name, description string) (string, error) {
+	label := fmt.Sprintf("  %s: ", name)
 	if description != "" {
-		fmt.Printf("  %s (%s): ", name, description)
-	} else {
-		fmt.Printf("  %s: ", name)
+		label = fmt.Sprintf("  %s (%s): ", name, description)
 	}
-	reader := bufio.NewReader(os.Stdin)
-	val, err := reader.ReadString('\n')
+	// promptLineStrict, not prompt.Prompt: the caller wraps this error into
+	// `reading param %q`, so a stream that ends mid-answer must stay an error.
+	val, err := promptLineStrict(in, out, label)
 	if err != nil {
 		return "", err
 	}
-	return strings.TrimSpace(val), nil
+	return val, nil
 }

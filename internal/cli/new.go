@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hero-engine/hero/internal/cli/prompt"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/spf13/cobra"
 )
@@ -17,9 +18,6 @@ var (
 	newSpecType    string
 	newInteractive bool
 )
-
-// newStdin is the reader used for interactive prompts. Tests can replace it.
-var newStdin io.Reader = os.Stdin
 
 var newCmd = &cobra.Command{
 	Use:   "new <slug>",
@@ -86,7 +84,10 @@ func runNew(cmd *cobra.Command, args []string) error {
 	// Collect interactive inputs if requested
 	var inputs *interactiveInputs
 	if newInteractive {
-		inputs, err = collectInteractiveInputs(slug, specType)
+		if !prompt.IsInputTTY(cmd.InOrStdin()) {
+			return fmt.Errorf("--interactive requires an attached terminal")
+		}
+		inputs, err = collectInteractiveInputs(cmd.InOrStdin(), slug, specType)
 		if err != nil {
 			return fmt.Errorf("interactive input: %w", err)
 		}
@@ -430,8 +431,8 @@ func slugToTitle(slug string) string {
 }
 
 // collectInteractiveInputs prompts the user for spec metadata.
-func collectInteractiveInputs(slug, specType string) (*interactiveInputs, error) {
-	scanner := bufio.NewScanner(newStdin)
+func collectInteractiveInputs(in io.Reader, slug, specType string) (*interactiveInputs, error) {
+	scanner := bufio.NewScanner(in)
 	inputs := &interactiveInputs{}
 
 	defaultTitle := slugToTitle(slug)

@@ -1,0 +1,10 @@
+$ hero connect github --integration-id gh-baseline --project owner/repo --local-only --no-verify --token-stdin
+stdin-condition: flags
+stdin-bytes: "baseline-token\n"
+exit: 0
+--- stdout ---
+Connected integration gh-baseline (github). Inspect with 'hero connect --list'.
+--- stderr ---
+hero: minted peer_id for cross-repo peering (recorded in events.log)
+hero: 1 legacy install artifact(s) detected — Claude Code / Codex / Cursor will silently fail to load Hero skills and agents.
+hero: run 'hero upgrade' (or 'hero install <mode> .') to clean up.

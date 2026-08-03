@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"bufio"
 	"bytes"
 	"os"
 	"path/filepath"
@@ -100,12 +99,23 @@ func TestNonInteractiveConnectAllProvidersLocalOnly(t *testing.T) {
 	}
 }
 
+// TestInteractivePromptsShareOneReader pins that consecutive prompts against
+// the same stream each get their own line.
+//
+// It used to prove this by reassigning the package-level `connectInput`
+// bufio.Reader, which existed precisely because a per-call bufio.Reader would
+// buffer past the newline and swallow the second answer. The mutable global is
+// gone; the guarantee now comes from prompt.Prompt reading unbuffered, and the
+// stream arrives through cobra rather than through package state.
 func TestInteractivePromptsShareOneReader(t *testing.T) {
-	connectInput = bufio.NewReader(strings.NewReader("first\nsecond\n"))
-	if got := prompt(""); got != "first" {
+	cmd := &cobra.Command{}
+	cmd.SetIn(strings.NewReader("first\nsecond\n"))
+	cmd.SetOut(&bytes.Buffer{})
+
+	if got := connectPrompt(cmd, ""); got != "first" {
 		t.Fatalf("first=%q", got)
 	}
-	if got := prompt(""); got != "second" {
+	if got := connectPrompt(cmd, ""); got != "second" {
 		t.Fatalf("second=%q", got)
 	}
 }

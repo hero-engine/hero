@@ -1,14 +1,13 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
-	"os"
-	"strings"
 
+	"github.com/hero-engine/hero/internal/cli/prompt"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/serve"
 	"github.com/spf13/cobra"
-	"golang.org/x/term"
 )
 
 var usersCmd = &cobra.Command{
@@ -185,17 +184,27 @@ func runUsersPasswd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func promptPassword(prompt string) (string, error) {
-	fmt.Print(prompt)
-	if isTerminal() {
-		data, err := term.ReadPassword(int(os.Stdin.Fd()))
-		fmt.Println()
-		if err != nil {
-			return "", err
-		}
-		return strings.TrimSpace(string(data)), nil
+// promptPassword reads a password from the controlling terminal, and refuses
+// to read one at all when there is no terminal.
+//
+// It previously fell through to fmt.Scanln when os.Stdin was not a terminal,
+// which accepted a password from whatever happened to be on stdin — a pipe, a
+// here-doc, a redirected file, a CI log. That is the contradiction this
+// initiative resolves: connect.go's promptSecret already refused in the same
+// situation, and refusing is the correct policy. Automation supplies the value
+// through --password instead.
+//
+// This is a deliberate behavior change: `hero admin users passwd` piped from a
+// script used to succeed and now fails. See docs/release-notes/.
+func promptPassword(label string) (string, error) {
+	pw, err := prompt.Secret(label)
+	if errors.Is(err, prompt.ErrNoTTY) {
+		return "", fmt.Errorf("cannot read a password without a terminal: Hero will not accept a password " +
+			"from a pipe, file, or here-doc. Run this command from an interactive terminal, or set the " +
+			"password non-interactively at creation time with `hero admin users add --password <value>`")
 	}
-	var pw string
-	fmt.Scanln(&pw)
-	return strings.TrimSpace(pw), nil
+	if err != nil {
+		return "", err
+	}
+	return pw, nil
 }

@@ -1,0 +1,19 @@
+$ hero install project sub --json
+stdin-condition: flags
+exit: 1
+--- stdout ---
+{
+  "target": "",
+  "mode": "project",
+  "target_dir": "sub",
+  "hero_version": "dev",
+  "result": null,
+  "duration": <DURATION>,
+  "error": {
+    "code": "install_failed",
+    "message": "materialize satellite: no harness targets installed at root <ROOT>; install one first"
+  }
+}
+--- stderr ---
+Error: materialize satellite: no harness targets installed at root <ROOT>; install one first
+materialize satellite: no harness targets installed at root <ROOT>; install one first

@@ -1,0 +1,21 @@
+$ hero spec new baseline-slug --interactive
+stdin-condition: pipe
+exit: 1
+--- stdout ---
+--- stderr ---
+hero: minted peer_id for cross-repo peering (recorded in events.log)
+hero: 1 legacy install artifact(s) detected — Claude Code / Codex / Cursor will silently fail to load Hero skills and agents.
+hero: run 'hero upgrade' (or 'hero install <mode> .') to clean up.
+Error: --interactive requires an attached terminal
+Usage:
+  hero spec new <slug> [flags]
+
+Flags:
+  -h, --help          help for new
+  -i, --interactive   prompt for title, tags, and other fields
+      --type string   spec type: feature, bug, initiative, convention, decision, rule, external, context, note (default "feature")
+
+Global Flags:
+      --smoke   run smoke verification for this command and exit
+
+--interactive requires an attached terminal

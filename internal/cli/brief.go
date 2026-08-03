@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/hero-engine/hero/internal/cli/prompt"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/digest"
 	"github.com/hero-engine/hero/internal/gitutil"
@@ -105,7 +106,7 @@ func runResume(cmd *cobra.Command, args []string) error {
 	}
 
 	focus := resumeFocus
-	if len(focus) == 0 && (resumeAuto || isInteractive()) {
+	if len(focus) == 0 && (resumeAuto || isInteractive(cmd.OutOrStdout())) {
 		focus = autoFocus(projectRoot)
 	}
 
@@ -833,12 +834,8 @@ func autoFocus(repoDir string) []string {
 	return files
 }
 
-func isInteractive() bool {
-	fi, err := os.Stdout.Stat()
-	if err != nil {
-		return false
-	}
-	return (fi.Mode() & os.ModeCharDevice) != 0
+func isInteractive(out io.Writer) bool {
+	return prompt.IsOutputTTY(out)
 }
 
 func oneLineString(s string) string {

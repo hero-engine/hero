@@ -1,15 +1,16 @@
 package cli
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	hero "github.com/hero-engine/hero"
+	"github.com/hero-engine/hero/internal/cli/prompt"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/install"
 	"github.com/hero-engine/hero/internal/workspace"
@@ -111,8 +112,24 @@ var (
 	installPruneOrphans    bool
 )
 
+// installTargets is the canonical set of harness targets `hero install`
+// accepts, in the order they are offered.
+//
+// The --target flag help and the interactive picker are both built from it, so
+// the advertised set, the validated set, and the offered set cannot drift
+// apart — a drift that has bitten this surface before, when `hero uninstall`
+// accepted only four of the six.
+var installTargets = []string{
+	string(install.TargetOpenCode),
+	string(install.TargetCursor),
+	string(install.TargetClaude),
+	string(install.TargetCopilot),
+	string(install.TargetCodex),
+	string(install.TargetGeneric),
+}
+
 func init() {
-	installCmd.Flags().StringVar(&installTarget, "target", "", "target tool (opencode|cursor|claude|copilot|codex|generic)")
+	installCmd.Flags().StringVar(&installTarget, "target", "", "target tool ("+strings.Join(installTargets, "|")+")")
 	installCmd.Flags().BoolVar(&installOnlyTarget, "only-target", false, "install ONLY the named --target; skip auto-sync of any other detected harnesses in the same project")
 	installCmd.Flags().BoolVar(&installForce, "force", false, "overwrite existing files")
 	installCmd.Flags().BoolVar(&installDryRun, "dry-run", false, "show what would be copied")
@@ -230,9 +247,9 @@ func runInstall(cmd *cobra.Command, args []string) error {
 					// exactly one JSON object on stdout, error field
 					// set, nonzero exit on failure.
 					return emitInstallJSON(mode, targetDir, binaryVersion, "install_failed",
-						func() error { return runSatelliteInstall(ws, absTarget, binaryVersion) })
+						func() error { return runSatelliteInstall(cmd, ws, absTarget, binaryVersion) })
 				}
-				return runSatelliteInstall(ws, absTarget, binaryVersion)
+				return runSatelliteInstall(cmd, ws, absTarget, binaryVersion)
 			}
 		}
 	}
@@ -245,7 +262,11 @@ func runInstall(cmd *cobra.Command, args []string) error {
 	// Prompt for target if not specified
 	target := install.Target(installTarget)
 	if target == "" {
-		target = promptTarget()
+		chosen, err := promptTarget(cmd.InOrStdin(), cmd.OutOrStdout(), installJSON)
+		if err != nil {
+			return err
+		}
+		target = chosen
 	}
 
 	// Resolve domain: flag > hero.json > default
@@ -369,7 +390,7 @@ func runInstall(cmd *cobra.Command, args []string) error {
 	// After a successful root project install, offer subproject walkthrough.
 	if mode == install.ModeProject && !installDryRun && err == nil {
 		if ws, locErr := workspace.Locate(targetDir); locErr == nil {
-			if walkErr := postRootInstallSubprojectWalk(ws, binaryVersion); walkErr != nil {
+			if walkErr := postRootInstallSubprojectWalk(cmd, ws, binaryVersion); walkErr != nil {
 				fmt.Printf("  warning: subproject walkthrough error: %v\n", walkErr)
 			}
 		}
@@ -433,35 +454,52 @@ func printHandoffHint(target install.Target) {
 	}
 }
 
-func promptTarget() install.Target {
-	if !isTerminal() {
-		return install.TargetOpenCode
+// promptTarget resolves the install target when --target was not supplied.
+//
+// Two deliberate changes from the previous implementation, both of which turn
+// a silent wrong answer into a loud failure:
+//
+//   - It used to return install.TargetOpenCode whenever stdin was not a
+//     terminal. So `hero install project .` in CI installed opencode, exited
+//     0, and said nothing — the wrong harness, with no signal that a choice
+//     had even been made. It now fails fast. Hard constraint 3 ("non-TTY must
+//     fail fast, never silently succeed") outranks "do not break what works"
+//     here, because this did not work; it quietly did the wrong thing.
+//
+//   - It used to return install.Target(input) unvalidated, so a typo at the
+//     prompt produced a bogus target that only surfaced later and deeper.
+//     prompt.Choice rejects anything outside installTargets at entry.
+//
+// See docs/release-notes/ — this is one of exactly two sanctioned behavior
+// changes in this child, and TestSanctionedBreakInstallTargetFailsOnNonTTY
+// asserts it positively so it cannot be quietly reverted.
+func promptTarget(in io.Reader, out io.Writer, jsonMode bool) (install.Target, error) {
+	// --json never prompts: stdout carries a machine-readable result object
+	// and a prompt would corrupt it. This generalizes the guard that
+	// previously existed only at the subproject-add confirm.
+	if jsonMode {
+		return "", fmt.Errorf("--target is required with --json: pass --target (%s)",
+			strings.Join(installTargets, "|"))
+	}
+	if !prompt.IsInputTTY(in) {
+		return "", fmt.Errorf("no --target given and no terminal available to ask for one: pass --target (%s)",
+			strings.Join(installTargets, "|"))
 	}
 
-	fmt.Print("Install target [opencode|cursor|claude|copilot|codex|generic] (default: opencode): ")
-	reader := bufio.NewReader(os.Stdin)
-	input, _ := reader.ReadString('\n')
-	input = strings.TrimSpace(input)
-
-	if input == "" {
-		return install.TargetOpenCode
-	}
-
-	return install.Target(input)
-}
-
-func isTerminal() bool {
-	fi, err := os.Stdin.Stat()
+	choice, err := prompt.Choice(in, out, "Install target (default: opencode)", installTargets)
 	if err != nil {
-		return false
+		return "", err
 	}
-	return fi.Mode()&os.ModeCharDevice != 0
+	if choice == "" {
+		return install.TargetOpenCode, nil
+	}
+	return install.Target(choice), nil
 }
 
 // runSatelliteInstall handles the case where targetDir is inside an
 // existing Hero workspace. It materializes a satellite and offers to
 // add the subproject to subprojects.json.
-func runSatelliteInstall(ws *workspace.Workspace, satAbs, version string) error {
+func runSatelliteInstall(cmd *cobra.Command, ws *workspace.Workspace, satAbs, version string) error {
 	// Compute scope (path relative to root, forward-slash).
 	rel, err := filepath.Rel(ws.Root, satAbs)
 	if err != nil {
@@ -484,14 +522,15 @@ func runSatelliteInstall(ws *workspace.Workspace, satAbs, version string) error 
 	if !subs.IsDeclared(rel) {
 		// Never prompt in --json mode — the caller is a program, and
 		// stdout is reserved for the JSON result object.
-		add := isTerminal() && !installDryRun && !installJSON
-		if add {
-			reader := bufio.NewReader(os.Stdin)
+		in := cmd.InOrStdin()
+		if prompt.IsInputTTY(in) && !installDryRun && !installJSON {
 			fmt.Printf("This subfolder is not declared in %s/%s.\n", workspace.HeroDir, install.SubprojectsFile)
-			fmt.Print("Add it as a subproject so teammates pick it up automatically? [y/N] ")
-			line, _ := reader.ReadString('\n')
-			ans := strings.TrimSpace(strings.ToLower(line))
-			if ans == "y" || ans == "yes" {
+			yes, err := prompt.Confirm(in, cmd.OutOrStdout(),
+				"Add it as a subproject so teammates pick it up automatically? [y/N] ", false)
+			if err != nil {
+				return err
+			}
+			if yes {
 				subs.AddSubproject(install.Subproject{Path: rel, Scope: rel})
 				if err := install.SaveSubprojects(ws.HeroDir, subs); err != nil {
 					return fmt.Errorf("save subprojects.json: %w", err)
@@ -547,8 +586,13 @@ func runSatelliteInstall(ws *workspace.Workspace, satAbs, version string) error 
 // postRootInstallSubprojectWalk runs after a successful root install to
 // offer the candidate-subproject walkthrough. It is best-effort — any
 // error is surfaced but does not fail the install itself.
-func postRootInstallSubprojectWalk(ws *workspace.Workspace, version string) error {
-	if !isTerminal() {
+func postRootInstallSubprojectWalk(cmd *cobra.Command, ws *workspace.Workspace, version string) error {
+	in := cmd.InOrStdin()
+	// The --json guard is new here. This site had no such guard, so a
+	// candidate walk could interleave a [y/N] prompt with the single JSON
+	// result object a programmatic caller is parsing. AC-10 makes the rule
+	// general rather than a per-command accident.
+	if installJSON || !prompt.IsInputTTY(in) {
 		return nil
 	}
 	subs, err := install.LoadSubprojects(ws.HeroDir)
@@ -563,13 +607,15 @@ func postRootInstallSubprojectWalk(ws *workspace.Workspace, version string) erro
 		return nil
 	}
 	fmt.Println()
-	fmt.Printf("Detected %d subproject candidate(s). Walk through them now? [y/N] ", len(candidates))
-	reader := bufio.NewReader(os.Stdin)
-	line, _ := reader.ReadString('\n')
-	ans := strings.TrimSpace(strings.ToLower(line))
-	if ans != "y" && ans != "yes" {
+	out := cmd.OutOrStdout()
+	yes, err := prompt.Confirm(in, out,
+		fmt.Sprintf("Detected %d subproject candidate(s). Walk through them now? [y/N] ", len(candidates)), false)
+	if err != nil {
+		return err
+	}
+	if !yes {
 		fmt.Println("Skipped — run `hero install satellites` later to walk through them.")
 		return nil
 	}
-	return walkCandidates(ws, subs, candidates, version, os.Stdin, os.Stdout)
+	return walkCandidates(ws, subs, candidates, version, in, out)
 }

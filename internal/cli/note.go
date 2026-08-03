@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hero-engine/hero/internal/cli/prompt"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/install"
 	"github.com/hero-engine/hero/internal/workspace"
@@ -17,9 +18,6 @@ import (
 var (
 	noteFrom string
 )
-
-// noteStdin is the reader used for piped input. Tests can replace it.
-var noteStdin io.Reader = os.Stdin
 
 var noteCmd = &cobra.Command{
 	Use:   "note [slug] [inline text...]",
@@ -105,15 +103,32 @@ func runNote(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("reading --from file: %w", err)
 		}
 		body = string(data)
-	} else if hasPipedInput() {
-		// Read from stdin
-		data, err := io.ReadAll(noteStdin)
-		if err != nil {
-			return fmt.Errorf("reading stdin: %w", err)
+	} else {
+		// Read from stdin when it is not a terminal.
+		//
+		// This replaces note.go's own hasPipedInput() helper, which asked
+		// "is stdin NOT a character device". Polarity is the obvious hazard
+		// (hasPipedInput is the negation of install.go's isTerminal, built on
+		// the same syscall), but the subtler one is /dev/null: it IS a
+		// character device, so the old helper answered "no piped input" for
+		// it and fell through to the inline text. term.IsTerminal answers
+		// "not a terminal" for /dev/null, so a bare inversion would read it
+		// and produce an empty note, silently discarding text the user
+		// passed on the command line.
+		//
+		// The empty-body fallback below preserves the old outcome for that
+		// case without reintroducing a second TTY predicate.
+		in := cmd.InOrStdin()
+		if !prompt.IsInputTTY(in) {
+			data, err := io.ReadAll(in)
+			if err != nil {
+				return fmt.Errorf("reading stdin: %w", err)
+			}
+			body = string(data)
 		}
-		body = string(data)
-	} else if inlineText != "" {
-		body = inlineText
+		if body == "" {
+			body = inlineText
+		}
 	}
 
 	// Build title
@@ -228,13 +243,4 @@ func textToSlug(text string) string {
 	}
 
 	return s
-}
-
-// hasPipedInput checks if stdin has data piped to it.
-func hasPipedInput() bool {
-	fi, err := os.Stdin.Stat()
-	if err != nil {
-		return false
-	}
-	return (fi.Mode() & os.ModeCharDevice) == 0
 }

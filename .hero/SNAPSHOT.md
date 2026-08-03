@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-08-03T20:11:45Z · projected from 507 source nodes_
+_Last refreshed: 2026-08-03T20:30:51Z · projected from 507 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | 15m ago | satellite-corpus-integration |
-| docs | maturing | web/docs/ | 26m ago | — |
-| domains/chat | maturing | domains/chat/ | 26m ago | — |
-| domains/engineering | maturing | domains/engineering/ | 26m ago | — |
-| domains/pm | maturing | domains/pm/ | 26m ago | — |
-| domains/sales | maturing | domains/sales/ | 26m ago | — |
-| landing | building | web/landing/ | 26m ago | hero-landing-page |
+| core | building | cmd/, internal/ | <1m ago | satellite-corpus-integration |
+| docs | maturing | web/docs/ | 45m ago | — |
+| domains/chat | maturing | domains/chat/ | 45m ago | — |
+| domains/engineering | maturing | domains/engineering/ | 45m ago | — |
+| domains/pm | maturing | domains/pm/ | 45m ago | — |
+| domains/sales | maturing | domains/sales/ | 45m ago | — |
+| landing | building | web/landing/ | 45m ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | <1m ago | agent-outposts |
+| serve | building | internal/serve/ | 19m ago | agent-outposts |
 | (unassigned) | — | — | — | 241 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -40,7 +40,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Hero Surface Architecture — One Surface, Every Layer, Every Role** (surface: serve) — 8/9 specs done
 - **Hero Team Experience — Complete Multi-Developer Workflow** (surface: —) — 0/1 specs done
 - **Install + Upgrade Contract Coverage — Prove Every Target Works Every Time** (surface: —) — 0/0 specs done
-- **"Interactive CLI Input — Scoped Completion"** (surface: core) — 0/4 specs done
+- **"Interactive CLI Input — Scoped Completion"** (surface: core) — 0/4 specs done; in flight: prompt-and-tty-contract-closure
 - **Launch Readiness — Telemetry, Deploy, and Public-Use Polish** (surface: —) — 0/0 specs done
 - **Pre-Launch Hardening — Federation Polish, Security, Observability** (surface: —) — 0/0 specs done
 - **"Retrieval Quality — Reranking, Expansion & Feedback Loop"** (surface: —) — 0/0 specs done
@@ -61,10 +61,10 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Next up across surfaces
 
 1. **landing** — `hero-landing-page` (P0, delivering)
-2. **core** — `satellite-corpus-integration` (high, delivering)
-3. **serve** — `agent-outposts` (medium, delivering)
-4. **serve** — `retrieval-contradiction-detection` (—, delivering)
-5. **(unassigned)** — `team-connect` (—, delivering)
+2. **core** — `prompt-and-tty-contract-closure` (critical, delivering)
+3. **core** — `satellite-corpus-integration` (high, delivering)
+4. **serve** — `agent-outposts` (medium, delivering)
+5. **serve** — `retrieval-contradiction-detection` (—, delivering)
 
 ## Open risks & blockers
 

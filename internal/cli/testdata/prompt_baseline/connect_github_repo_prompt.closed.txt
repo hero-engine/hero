@@ -1,0 +1,38 @@
+$ hero connect github
+stdin-condition: closed
+exit: 1
+--- stdout ---
+--- stderr ---
+hero: minted peer_id for cross-repo peering (recorded in events.log)
+hero: 1 legacy install artifact(s) detected — Claude Code / Codex / Cursor will silently fail to load Hero skills and agents.
+hero: run 'hero upgrade' (or 'hero install <mode> .') to clean up.
+Error: interactive connect requires an attached terminal; supply --integration-id, --project, and --token-stdin for automation
+Usage:
+  hero connect [type] [flags]
+  hero connect [command]
+
+Available Commands:
+  disconnect  Disconnect from the team server
+  team        Connect to a Hero team server
+
+Flags:
+      --base-url string         provider base URL
+      --global                  save token to global credentials (~/.config/hero/credentials.json) instead of hero.local.json
+  -h, --help                    help for connect
+      --integration-id string   stable integration ID
+      --json                    emit machine-readable redacted status
+      --list                    list saved connections
+      --local-only              write the complete integration and selectors only to hero.local.json
+      --no-verify               save without a provider network verification
+      --project string          project identifier (used with --remove)
+      --remove string           remove connection for the given tracker type
+      --role string             selection role (delivery, docs, roadmap, code-host) (default "delivery")
+      --token-stdin             read token from protected standard input (never argv)
+      --user-email string       user email (Jira/Confluence Cloud only)
+
+Global Flags:
+      --smoke   run smoke verification for this command and exit
+
+Use "hero connect [command] --help" for more information about a command.
+
+interactive connect requires an attached terminal; supply --integration-id, --project, and --token-stdin for automation

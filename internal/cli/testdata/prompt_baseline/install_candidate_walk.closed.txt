@@ -1,0 +1,11 @@
+$ hero install project . --target claude
+stdin-condition: closed
+exit: 0
+--- stdout ---
+  CLAUDE.md -> CLAUDE.md (create)
+Installed 122 files, merged 2 config(s)
+
+NEXT.md handoff: wired into Stop + PreCompact hooks in settings.json.
+It refreshes automatically every turn — no further setup needed.
+--- stderr ---
+  cleanup .hero/skills (empty after removing dead bytes)

@@ -1,11 +1,14 @@
 package cli
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/hero-engine/hero/internal/ptytest"
 )
 
 func TestNew_RequiresArg(t *testing.T) {
@@ -263,9 +266,7 @@ func TestNew_InteractiveFeature(t *testing.T) {
 	env := newTestEnv(t)
 
 	// Simulate interactive input: title, tags, claimed_by
-	oldStdin := newStdin
-	newStdin = strings.NewReader("My CSV Export Feature\nexport, data, csv\nalice\n")
-	defer func() { newStdin = oldStdin }()
+	setNewCommandInput(t, "My CSV Export Feature\nexport, data, csv\nalice\n")
 
 	output, err := runCmd("spec", "new", "csv-interactive", "--interactive")
 	if err != nil {
@@ -298,9 +299,7 @@ func TestNew_InteractiveDefaults(t *testing.T) {
 	env := newTestEnv(t)
 
 	// Empty title falls back to default, no tags, no claimed_by
-	oldStdin := newStdin
-	newStdin = strings.NewReader("\n\n\n")
-	defer func() { newStdin = oldStdin }()
+	setNewCommandInput(t, "\n\n\n")
 
 	output, err := runCmd("spec", "new", "default-test", "--interactive")
 	if err != nil {
@@ -334,9 +333,7 @@ func TestNew_InteractiveConvention(t *testing.T) {
 	env := newTestEnv(t)
 
 	// Convention: title, tags (no claimed_by prompt for conventions)
-	oldStdin := newStdin
-	newStdin = strings.NewReader("API Error Format\napi, errors\n")
-	defer func() { newStdin = oldStdin }()
+	setNewCommandInput(t, "API Error Format\napi, errors\n")
 
 	output, err := runCmd("spec", "new", "api-errors", "--type", "convention", "--interactive")
 	if err != nil {
@@ -509,9 +506,7 @@ func TestNew_CustomTemplateInteractive(t *testing.T) {
 		t.Fatalf("WriteFile template: %v", err)
 	}
 
-	oldStdin := newStdin
-	newStdin = strings.NewReader("My Custom Feature\ncustom, test\nbob\n")
-	defer func() { newStdin = oldStdin }()
+	setNewCommandInput(t, "My Custom Feature\ncustom, test\nbob\n")
 
 	_, err := runCmd("spec", "new", "custom-interactive", "--interactive")
 	if err != nil {
@@ -540,6 +535,21 @@ func TestNew_CustomTemplateInteractive(t *testing.T) {
 	if !strings.Contains(content, "# My Custom Feature") {
 		t.Error("expected resolved title in body")
 	}
+}
+
+func setNewCommandInput(t *testing.T, input string) {
+	t.Helper()
+	master, slave, err := ptytest.Open()
+	if err != nil {
+		t.Skipf("interactive new requires a PTY: %v", err)
+	}
+	rootCmd.SetIn(slave)
+	go func() { _, _ = io.WriteString(master, input) }()
+	t.Cleanup(func() {
+		rootCmd.SetIn(os.Stdin)
+		slave.Close()
+		master.Close()
+	})
 }
 
 func TestNew_NoCustomTemplateFallback(t *testing.T) {

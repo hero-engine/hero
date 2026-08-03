@@ -6,7 +6,23 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-03T20:11:45Z · 83 ready specs_
+_Generated: 2026-08-03T20:30:52Z · 83 ready specs_
+
+## prompt-and-tty-contract-closure — "Prompt and TTY Contract Closure"
+_feature · delivering · horizon: now_
+
+Closes the CLI's shared prompt, TTY, secret-input, and Cobra-stream contract.
+
+**Status:** delivering — implementation and validation are complete; cold audit and Hero verification remain.
+
+**Pick up at:** review the completion ledger against the prompt package and migration tests, then run the cold audit and `hero spec verify`.
+
+→ `hero spec verify prompt-and-tty-contract-closure --skip-tests`
+
+**Files:** `internal/cli/prompt/prompt.go`, `internal/cli/prompt/secret_terminal_windows.go`, `internal/cli/prompt_policy_test.go`, `internal/cli/prompt_streams_test.go`
+**Skip:** setup behavior, selectors, init, and unrelated donor changes.
+
+---
 
 ## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
 _feature · delivering · horizon: now_
@@ -46,21 +62,6 @@ trace to the original interactive-input outcome. The completed result has one
 cross-platform prompt authority, safe TTY and secret handling, additive setup
 prompts, selectors that work at actual corpus scale, unchanged machine paths,
 and evidence that no affected invocation can prompt or hang unexpectedly.
-
----
-
-## prompt-and-tty-contract-closure — "Prompt and TTY Contract Closure"
-_feature · planning · horizon: now_
-
-Design the clean foundation port for `interactive-cli-input-scoped-completion`.
-Use the old branch as evidence, not as the base. Close the Windows secret,
-remaining-reader, terminal-classification, and live-pipe gaps while porting the
-complete original prompt-site set. Preserve `new --interactive`, JSON, and
-machine paths. Keep secure terminal acquisition platform-specific; never add an
-echoed test hook. Exclude setup behavior, selectors, index, init, aliases,
-timeouts, invocation guards, and unrelated uninstall work.
-
-→ `/design prompt-and-tty-contract-closure`
 
 ---
 

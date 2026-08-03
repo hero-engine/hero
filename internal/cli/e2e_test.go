@@ -412,9 +412,7 @@ func TestE2E_InteractiveNew(t *testing.T) {
 	}
 
 	// Simulate interactive input
-	oldStdin := newStdin
-	newStdin = strings.NewReader("My Custom Feature\napi, export\nbob\n")
-	defer func() { newStdin = oldStdin }()
+	setNewCommandInput(t, "My Custom Feature\napi, export\nbob\n")
 
 	output, err := runCmd("spec", "new", "custom-feat", "--interactive")
 	if err != nil {

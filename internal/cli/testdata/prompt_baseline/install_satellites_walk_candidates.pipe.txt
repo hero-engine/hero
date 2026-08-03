@@ -1,0 +1,29 @@
+$ hero install satellites
+stdin-condition: pipe
+exit: 1
+--- stdout ---
+
+Detected 2 candidate subproject(s):
+
+--- stderr ---
+hero: minted peer_id for cross-repo peering (recorded in events.log)
+hero: 1 legacy install artifact(s) detected — Claude Code / Codex / Cursor will silently fail to load Hero skills and agents.
+hero: run 'hero upgrade' (or 'hero install <mode> .') to clean up.
+Error: walking subproject candidates requires an attached terminal; pass --yes or --no
+Usage:
+  hero install satellites [flags]
+
+Flags:
+      --apply            with --migrate-nested: actually execute the migration (move files, append events, materialize satellite)
+      --force            with --migrate-nested --apply: ignore dirty git state
+      --force-resume     with --migrate-nested --apply: complete a partially-applied migration
+  -h, --help             help for satellites
+      --migrate-nested   scan for legacy nested .hero/ workspaces under root and print a migration plan (read-only without --apply)
+      --no               decline all prompts (audit-only mode for unattended runs)
+      --repair           verify and repair existing satellite symlinks/markers without re-prompting candidates
+      --yes              accept all candidates and reconciliation prompts without asking
+
+Global Flags:
+      --smoke   run smoke verification for this command and exit
+
+walking subproject candidates requires an attached terminal; pass --yes or --no

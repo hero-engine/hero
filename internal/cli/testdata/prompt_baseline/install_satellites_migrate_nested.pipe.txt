@@ -1,0 +1,22 @@
+$ hero install satellites --migrate-nested --apply
+stdin-condition: pipe
+exit: 0
+--- stdout ---
+Found 1 nested .hero/ workspace(s) to migrate:
+
+Migration plan for nested workspace at nested
+  Scope: nested
+
+  0 spec(s) would be moved into root .hero/planning/ with scope frontmatter:
+  0 knowledge file(s) would be moved:
+  1 file(s) inside nested .hero/ are not recognized and will NOT move automatically:
+    - <ROOT>/nested/.hero/skills
+
+  After migration: nested .hero/ removed, satellite materialized,
+  scope auto-stamped on artifacts, root graph re-indexed.
+
+Aborted.
+--- stderr ---
+hero: minted peer_id for cross-repo peering (recorded in events.log)
+hero: 1 legacy install artifact(s) detected — Claude Code / Codex / Cursor will silently fail to load Hero skills and agents.
+hero: run 'hero upgrade' (or 'hero install <mode> .') to clean up.

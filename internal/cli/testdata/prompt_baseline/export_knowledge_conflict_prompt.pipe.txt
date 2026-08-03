@@ -1,0 +1,20 @@
+$ hero export knowledge dest --conflict interactive
+stdin-condition: pipe
+exit: 1
+--- stdout ---
+--- stderr ---
+hero: minted peer_id for cross-repo peering (recorded in events.log)
+hero: 1 legacy install artifact(s) detected — Claude Code / Codex / Cursor will silently fail to load Hero skills and agents.
+hero: run 'hero upgrade' (or 'hero install <mode> .') to clean up.
+Error: --conflict interactive requires an attached terminal
+Usage:
+  hero export knowledge <destination> [flags]
+
+Flags:
+      --conflict string   conflict strategy: fail, skip, overwrite, merge, interactive (default "fail")
+  -h, --help              help for knowledge
+
+Global Flags:
+      --smoke   run smoke verification for this command and exit
+
+--conflict interactive requires an attached terminal

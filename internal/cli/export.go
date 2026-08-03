@@ -1,17 +1,16 @@
 package cli
 
 import (
-	"bufio"
+	"errors"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/hero-engine/hero/internal/cli/prompt"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/knowledge"
 	"github.com/spf13/cobra"
-	"golang.org/x/term"
 )
 
 var exportConflict = string(knowledge.ConflictFail)
@@ -56,7 +55,12 @@ func runExportKnowledge(cmd *cobra.Command, args []string) error {
 	if strategy == knowledge.ConflictInteractive {
 		in := cmd.InOrStdin()
 		out := cmd.OutOrStdout()
-		if !exportIsTerminal(in) || !exportIsTerminal(out) {
+		// Two predicates, not one: this gate needs BOTH an input terminal to
+		// read the answer from and an output terminal to render the conflict
+		// on. The local helper this replaced answered both questions with a
+		// single function, which is what made it look interchangeable with
+		// brief.go's output-only check.
+		if !prompt.IsInputTTY(in) || !prompt.IsOutputTTY(out) {
 			return fmt.Errorf("--conflict interactive requires an attached terminal")
 		}
 		opts.Prompt = promptConflictStrategy(in, out)
@@ -87,7 +91,12 @@ func runExportMocks(cmd *cobra.Command, args []string) error {
 	if strategy == knowledge.ConflictInteractive {
 		in := cmd.InOrStdin()
 		out := cmd.OutOrStdout()
-		if !exportIsTerminal(in) || !exportIsTerminal(out) {
+		// Two predicates, not one: this gate needs BOTH an input terminal to
+		// read the answer from and an output terminal to render the conflict
+		// on. The local helper this replaced answered both questions with a
+		// single function, which is what made it look interchangeable with
+		// brief.go's output-only check.
+		if !prompt.IsInputTTY(in) || !prompt.IsOutputTTY(out) {
 			return fmt.Errorf("--conflict interactive requires an attached terminal")
 		}
 		opts.Prompt = promptConflictStrategy(in, out)
@@ -119,34 +128,42 @@ func printExportSummary(cmd *cobra.Command, label, destination string, summary *
 }
 
 func promptConflictStrategy(in io.Reader, out io.Writer) func(knowledge.Conflict) (knowledge.ConflictStrategy, error) {
-	reader := bufio.NewReader(in)
+	// Not prompt.Choice: this site re-asks on an invalid answer instead of
+	// erroring, and its option list renders slash-separated. Choice would
+	// rewrite both, and this child is not allowed a single visible change.
+	// prompt.Prompt removes the bufio fork without touching either.
+	//
+	// The reader used to be hoisted out of the closure so a buffered
+	// read-ahead could not swallow the next conflict's answer. prompt.Prompt
+	// reads a byte at a time and never reads past the newline, so each call is
+	// self-contained and no shared state is needed.
 	return func(c knowledge.Conflict) (knowledge.ConflictStrategy, error) {
 		for {
 			fmt.Fprintf(out, "Conflict: %s (%s)\n", c.RelPath, c.Reason)
 			fmt.Fprintf(out, "Source: %s\nDestination: %s\n", c.SourcePath, c.DestPath)
-			fmt.Fprint(out, "Choose [fail/skip/overwrite/merge]: ")
-			line, err := reader.ReadString('\n')
-			if err != nil && err != io.EOF {
+			// promptLine, not prompt.Prompt: this loop exits on end-of-stream,
+			// and `unterminated` is the same condition bufio's ReadString
+			// reported as io.EOF — including the no-data case. Without it a
+			// trailing invalid answer with no newline would re-ask once more
+			// before stopping. See prompt_line.go.
+			line, atEOF, err := promptLine(in, out, "Choose [fail/skip/overwrite/merge]: ")
+			if err != nil && !errors.Is(err, io.EOF) {
 				return "", err
 			}
-			choice := knowledge.ConflictStrategy(strings.ToLower(strings.TrimSpace(line)))
+			// A partial answer before end-of-stream is still an answer, so the
+			// EOF check comes after the switch, exactly as it did before.
+			// Answers are case-folded: `OVERWRITE` and `Skip` have always been
+			// accepted.
+			choice := knowledge.ConflictStrategy(strings.ToLower(line))
 			switch choice {
 			case knowledge.ConflictFail, knowledge.ConflictSkip, knowledge.ConflictOverwrite, knowledge.ConflictMerge:
 				return choice, nil
 			default:
-				fmt.Fprintf(out, "Invalid choice %q.\n", strings.TrimSpace(line))
+				fmt.Fprintf(out, "Invalid choice %q.\n", line)
 			}
-			if err == io.EOF {
+			if atEOF {
 				return "", io.EOF
 			}
 		}
 	}
-}
-
-func exportIsTerminal(r any) bool {
-	f, ok := r.(*os.File)
-	if !ok {
-		return false
-	}
-	return term.IsTerminal(int(f.Fd()))
 }

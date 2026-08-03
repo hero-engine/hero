@@ -1,0 +1,510 @@
+$ hero install project . --target claude --json
+stdin-condition: flags
+exit: 0
+--- stdout ---
+{
+  "target": "claude",
+  "mode": "project",
+  "target_dir": ".",
+  "hero_version": "dev",
+  "result": {
+    "copied": [
+      {
+        "source": "agents/api-engineer.md",
+        "dest": ".claude/agents/api-engineer.md"
+      },
+      {
+        "source": "agents/architecture-reviewer.md",
+        "dest": ".claude/agents/architecture-reviewer.md"
+      },
+      {
+        "source": "agents/brownfield-architect.md",
+        "dest": ".claude/agents/brownfield-architect.md"
+      },
+      {
+        "source": "agents/comment-scrubber.md",
+        "dest": ".claude/agents/comment-scrubber.md"
+      },
+      {
+        "source": "agents/convention-author.md",
+        "dest": ".claude/agents/convention-author.md"
+      },
+      {
+        "source": "agents/database-engineer.md",
+        "dest": ".claude/agents/database-engineer.md"
+      },
+      {
+        "source": "agents/deadcode-scrubber.md",
+        "dest": ".claude/agents/deadcode-scrubber.md"
+      },
+      {
+        "source": "agents/debug-investigator.md",
+        "dest": ".claude/agents/debug-investigator.md"
+      },
+      {
+        "source": "agents/dedup-scrubber.md",
+        "dest": ".claude/agents/dedup-scrubber.md"
+      },
+      {
+        "source": "agents/defensive-scrubber.md",
+        "dest": ".claude/agents/defensive-scrubber.md"
+      },
+      {
+        "source": "agents/dependency-analyst.md",
+        "dest": ".claude/agents/dependency-analyst.md"
+      },
+      {
+        "source": "agents/dependency-scrubber.md",
+        "dest": ".claude/agents/dependency-scrubber.md"
+      },
+      {
+        "source": "agents/design-reviewer.md",
+        "dest": ".claude/agents/design-reviewer.md"
+      },
+      {
+        "source": "agents/devops-engineer.md",
+        "dest": ".claude/agents/devops-engineer.md"
+      },
+      {
+        "source": "agents/documentation-engineer.md",
+        "dest": ".claude/agents/documentation-engineer.md"
+      },
+      {
+        "source": "agents/engineer.md",
+        "dest": ".claude/agents/engineer.md"
+      },
+      {
+        "source": "agents/feature-delivery-lead.md",
+        "dest": ".claude/agents/feature-delivery-lead.md"
+      },
+      {
+        "source": "agents/functional-qa-engineer.md",
+        "dest": ".claude/agents/functional-qa-engineer.md"
+      },
+      {
+        "source": "agents/greenfield-architect.md",
+        "dest": ".claude/agents/greenfield-architect.md"
+      },
+      {
+        "source": "agents/integration-engineer.md",
+        "dest": ".claude/agents/integration-engineer.md"
+      },
+      {
+        "source": "agents/issue-tracker.md",
+        "dest": ".claude/agents/issue-tracker.md"
+      },
+      {
+        "source": "agents/legacy-scrubber.md",
+        "dest": ".claude/agents/legacy-scrubber.md"
+      },
+      {
+        "source": "agents/migration-engineer.md",
+        "dest": ".claude/agents/migration-engineer.md"
+      },
+      {
+        "source": "agents/performance-engineer.md",
+        "dest": ".claude/agents/performance-engineer.md"
+      },
+      {
+        "source": "agents/platform-delivery-lead.md",
+        "dest": ".claude/agents/platform-delivery-lead.md"
+      },
+      {
+        "source": "agents/pr-reviewer.md",
+        "dest": ".claude/agents/pr-reviewer.md"
+      },
+      {
+        "source": "agents/product-ideator.md",
+        "dest": ".claude/agents/product-ideator.md"
+      },
+      {
+        "source": "agents/project-context-builder.md",
+        "dest": ".claude/agents/project-context-builder.md"
+      },
+      {
+        "source": "agents/release-engineer.md",
+        "dest": ".claude/agents/release-engineer.md"
+      },
+      {
+        "source": "agents/roadmap-reviewer.md",
+        "dest": ".claude/agents/roadmap-reviewer.md"
+      },
+      {
+        "source": "agents/security-reviewer.md",
+        "dest": ".claude/agents/security-reviewer.md"
+      },
+      {
+        "source": "agents/session-primer.md",
+        "dest": ".claude/agents/session-primer.md"
+      },
+      {
+        "source": "agents/test-architect.md",
+        "dest": ".claude/agents/test-architect.md"
+      },
+      {
+        "source": "agents/type-scrubber.md",
+        "dest": ".claude/agents/type-scrubber.md"
+      },
+      {
+        "source": "agents/ui-designer.md",
+        "dest": ".claude/agents/ui-designer.md"
+      },
+      {
+        "source": "commands/blocked.md",
+        "dest": ".claude/commands/blocked.md"
+      },
+      {
+        "source": "commands/capture.md",
+        "dest": ".claude/commands/capture.md"
+      },
+      {
+        "source": "commands/challenge.md",
+        "dest": ".claude/commands/challenge.md"
+      },
+      {
+        "source": "commands/check.md",
+        "dest": ".claude/commands/check.md"
+      },
+      {
+        "source": "commands/compose.md",
+        "dest": ".claude/commands/compose.md"
+      },
+      {
+        "source": "commands/convention.md",
+        "dest": ".claude/commands/convention.md"
+      },
+      {
+        "source": "commands/decide.md",
+        "dest": ".claude/commands/decide.md"
+      },
+      {
+        "source": "commands/deliver.md",
+        "dest": ".claude/commands/deliver.md"
+      },
+      {
+        "source": "commands/design.md",
+        "dest": ".claude/commands/design.md"
+      },
+      {
+        "source": "commands/diagnose.md",
+        "dest": ".claude/commands/diagnose.md"
+      },
+      {
+        "source": "commands/discover.md",
+        "dest": ".claude/commands/discover.md"
+      },
+      {
+        "source": "commands/docs.md",
+        "dest": ".claude/commands/docs.md"
+      },
+      {
+        "source": "commands/drive.md",
+        "dest": ".claude/commands/drive.md"
+      },
+      {
+        "source": "commands/handoff.md",
+        "dest": ".claude/commands/handoff.md"
+      },
+      {
+        "source": "commands/hero.md",
+        "dest": ".claude/commands/hero.md"
+      },
+      {
+        "source": "commands/import.md",
+        "dest": ".claude/commands/import.md"
+      },
+      {
+        "source": "commands/mock.md",
+        "dest": ".claude/commands/mock.md"
+      },
+      {
+        "source": "commands/note.md",
+        "dest": ".claude/commands/note.md"
+      },
+      {
+        "source": "commands/peer.md",
+        "dest": ".claude/commands/peer.md"
+      },
+      {
+        "source": "commands/release.md",
+        "dest": ".claude/commands/release.md"
+      },
+      {
+        "source": "commands/resume.md",
+        "dest": ".claude/commands/resume.md"
+      },
+      {
+        "source": "commands/retro.md",
+        "dest": ".claude/commands/retro.md"
+      },
+      {
+        "source": "commands/review.md",
+        "dest": ".claude/commands/review.md"
+      },
+      {
+        "source": "commands/roadmap-review.md",
+        "dest": ".claude/commands/roadmap-review.md"
+      },
+      {
+        "source": "commands/scan.md",
+        "dest": ".claude/commands/scan.md"
+      },
+      {
+        "source": "commands/scrub.md",
+        "dest": ".claude/commands/scrub.md"
+      },
+      {
+        "source": "commands/split.md",
+        "dest": ".claude/commands/split.md"
+      },
+      {
+        "source": "commands/sprint.md",
+        "dest": ".claude/commands/sprint.md"
+      },
+      {
+        "source": "commands/why.md",
+        "dest": ".claude/commands/why.md"
+      },
+      {
+        "source": "skills/agent-reliability/SKILL.md",
+        "dest": ".claude/skills/agent-reliability/SKILL.md"
+      },
+      {
+        "source": "skills/api-design-and-contracts/SKILL.md",
+        "dest": ".claude/skills/api-design-and-contracts/SKILL.md"
+      },
+      {
+        "source": "skills/architecture-principles/SKILL.md",
+        "dest": ".claude/skills/architecture-principles/SKILL.md"
+      },
+      {
+        "source": "skills/attention-lifecycle-awareness/SKILL.md",
+        "dest": ".claude/skills/attention-lifecycle-awareness/SKILL.md"
+      },
+      {
+        "source": "skills/auto-knowledge-capture/SKILL.md",
+        "dest": ".claude/skills/auto-knowledge-capture/SKILL.md"
+      },
+      {
+        "source": "skills/batch-discipline/SKILL.md",
+        "dest": ".claude/skills/batch-discipline/SKILL.md"
+      },
+      {
+        "source": "skills/challenge-diagnosis/SKILL.md",
+        "dest": ".claude/skills/challenge-diagnosis/SKILL.md"
+      },
+      {
+        "source": "skills/code-scrub/SKILL.md",
+        "dest": ".claude/skills/code-scrub/SKILL.md"
+      },
+      {
+        "source": "skills/completion-ledger/SKILL.md",
+        "dest": ".claude/skills/completion-ledger/SKILL.md"
+      },
+      {
+        "source": "skills/context-injection/SKILL.md",
+        "dest": ".claude/skills/context-injection/SKILL.md"
+      },
+      {
+        "source": "skills/convention-writing/SKILL.md",
+        "dest": ".claude/skills/convention-writing/SKILL.md"
+      },
+      {
+        "source": "skills/cross-repo-peering/SKILL.md",
+        "dest": ".claude/skills/cross-repo-peering/SKILL.md"
+      },
+      {
+        "source": "skills/database-stack/SKILL.md",
+        "dest": ".claude/skills/database-stack/SKILL.md"
+      },
+      {
+        "source": "skills/debugging-investigation/SKILL.md",
+        "dest": ".claude/skills/debugging-investigation/SKILL.md"
+      },
+      {
+        "source": "skills/deep-code-enrichment/SKILL.md",
+        "dest": ".claude/skills/deep-code-enrichment/SKILL.md"
+      },
+      {
+        "source": "skills/deferred-work-suggestions/SKILL.md",
+        "dest": ".claude/skills/deferred-work-suggestions/SKILL.md"
+      },
+      {
+        "source": "skills/delivery-audit/SKILL.md",
+        "dest": ".claude/skills/delivery-audit/SKILL.md"
+      },
+      {
+        "source": "skills/dependency-analysis/SKILL.md",
+        "dest": ".claude/skills/dependency-analysis/SKILL.md"
+      },
+      {
+        "source": "skills/devops-and-operations/SKILL.md",
+        "dest": ".claude/skills/devops-and-operations/SKILL.md"
+      },
+      {
+        "source": "skills/documentation-practices/SKILL.md",
+        "dest": ".claude/skills/documentation-practices/SKILL.md"
+      },
+      {
+        "source": "skills/drive/SKILL.md",
+        "dest": ".claude/skills/drive/SKILL.md"
+      },
+      {
+        "source": "skills/executive-report/SKILL.md",
+        "dest": ".claude/skills/executive-report/SKILL.md"
+      },
+      {
+        "source": "skills/explainer-format/SKILL.md",
+        "dest": ".claude/skills/explainer-format/SKILL.md"
+      },
+      {
+        "source": "skills/go-stack/SKILL.md",
+        "dest": ".claude/skills/go-stack/SKILL.md"
+      },
+      {
+        "source": "skills/greenfield-scaffolding/SKILL.md",
+        "dest": ".claude/skills/greenfield-scaffolding/SKILL.md"
+      },
+      {
+        "source": "skills/groovy-stack/SKILL.md",
+        "dest": ".claude/skills/groovy-stack/SKILL.md"
+      },
+      {
+        "source": "skills/html-mockup-generation/SKILL.md",
+        "dest": ".claude/skills/html-mockup-generation/SKILL.md"
+      },
+      {
+        "source": "skills/implementation-principles/SKILL.md",
+        "dest": ".claude/skills/implementation-principles/SKILL.md"
+      },
+      {
+        "source": "skills/incident-response/SKILL.md",
+        "dest": ".claude/skills/incident-response/SKILL.md"
+      },
+      {
+        "source": "skills/integration-boundaries/SKILL.md",
+        "dest": ".claude/skills/integration-boundaries/SKILL.md"
+      },
+      {
+        "source": "skills/issue-list-report/SKILL.md",
+        "dest": ".claude/skills/issue-list-report/SKILL.md"
+      },
+      {
+        "source": "skills/java-stack/SKILL.md",
+        "dest": ".claude/skills/java-stack/SKILL.md"
+      },
+      {
+        "source": "skills/javascript-stack/SKILL.md",
+        "dest": ".claude/skills/javascript-stack/SKILL.md"
+      },
+      {
+        "source": "skills/kickoff-prompt/SKILL.md",
+        "dest": ".claude/skills/kickoff-prompt/SKILL.md"
+      },
+      {
+        "source": "skills/knowledge-flywheel/SKILL.md",
+        "dest": ".claude/skills/knowledge-flywheel/SKILL.md"
+      },
+      {
+        "source": "skills/migration-safety/SKILL.md",
+        "dest": ".claude/skills/migration-safety/SKILL.md"
+      },
+      {
+        "source": "skills/next-handoff-emit/SKILL.md",
+        "dest": ".claude/skills/next-handoff-emit/SKILL.md"
+      },
+      {
+        "source": "skills/next-md/SKILL.md",
+        "dest": ".claude/skills/next-md/SKILL.md"
+      },
+      {
+        "source": "skills/note-capture/SKILL.md",
+        "dest": ".claude/skills/note-capture/SKILL.md"
+      },
+      {
+        "source": "skills/nudge-awareness/SKILL.md",
+        "dest": ".claude/skills/nudge-awareness/SKILL.md"
+      },
+      {
+        "source": "skills/performance-optimization/SKILL.md",
+        "dest": ".claude/skills/performance-optimization/SKILL.md"
+      },
+      {
+        "source": "skills/pr-review/SKILL.md",
+        "dest": ".claude/skills/pr-review/SKILL.md"
+      },
+      {
+        "source": "skills/project-context-generation/SKILL.md",
+        "dest": ".claude/skills/project-context-generation/SKILL.md"
+      },
+      {
+        "source": "skills/python-stack/SKILL.md",
+        "dest": ".claude/skills/python-stack/SKILL.md"
+      },
+      {
+        "source": "skills/react-stack/SKILL.md",
+        "dest": ".claude/skills/react-stack/SKILL.md"
+      },
+      {
+        "source": "skills/release-and-deployment/SKILL.md",
+        "dest": ".claude/skills/release-and-deployment/SKILL.md"
+      },
+      {
+        "source": "skills/roadmap-review/SKILL.md",
+        "dest": ".claude/skills/roadmap-review/SKILL.md"
+      },
+      {
+        "source": "skills/root-cause-classification/SKILL.md",
+        "dest": ".claude/skills/root-cause-classification/SKILL.md"
+      },
+      {
+        "source": "skills/rust-stack/SKILL.md",
+        "dest": ".claude/skills/rust-stack/SKILL.md"
+      },
+      {
+        "source": "skills/security-review/SKILL.md",
+        "dest": ".claude/skills/security-review/SKILL.md"
+      },
+      {
+        "source": "skills/spec-composition/SKILL.md",
+        "dest": ".claude/skills/spec-composition/SKILL.md"
+      },
+      {
+        "source": "skills/spec-format/SKILL.md",
+        "dest": ".claude/skills/spec-format/SKILL.md"
+      },
+      {
+        "source": "skills/spec-sizing/SKILL.md",
+        "dest": ".claude/skills/spec-sizing/SKILL.md"
+      },
+      {
+        "source": "skills/stack-detection/SKILL.md",
+        "dest": ".claude/skills/stack-detection/SKILL.md"
+      },
+      {
+        "source": "skills/swiftui-mockup-renderer/SKILL.md",
+        "dest": ".claude/skills/swiftui-mockup-renderer/SKILL.md"
+      },
+      {
+        "source": "skills/test-strategy/SKILL.md",
+        "dest": ".claude/skills/test-strategy/SKILL.md"
+      },
+      {
+        "source": "skills/testing-and-validation/SKILL.md",
+        "dest": ".claude/skills/testing-and-validation/SKILL.md"
+      },
+      {
+        "source": "generated",
+        "dest": "CLAUDE.md"
+      }
+    ],
+    "merged": [
+      ".claude/settings.json",
+      ".claude/settings.json"
+    ],
+    "skipped": null
+  },
+  "duration": <DURATION>
+}
+--- stderr ---
+  cleanup .hero/skills (empty after removing dead bytes)

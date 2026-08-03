@@ -1,0 +1,10 @@
+$ hero export knowledge dest --conflict skip
+stdin-condition: flags
+exit: 0
+--- stdout ---
+Knowledge export destination: <ROOT>/dest
+copied=0 skipped=1 overwritten=0 merged=0 identical=0 conflicts=0
+--- stderr ---
+hero: minted peer_id for cross-repo peering (recorded in events.log)
+hero: 1 legacy install artifact(s) detected — Claude Code / Codex / Cursor will silently fail to load Hero skills and agents.
+hero: run 'hero upgrade' (or 'hero install <mode> .') to clean up.

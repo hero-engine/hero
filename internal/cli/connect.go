@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,9 +11,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/hero-engine/hero/internal/cli/prompt"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/spf13/cobra"
-	"golang.org/x/term"
 )
 
 var connectCmd = &cobra.Command{
@@ -76,7 +75,6 @@ func addIntegrationConnectFlags(c *cobra.Command) {
 }
 
 func runConnect(cmd *cobra.Command, args []string) error {
-	connectInput = bufio.NewReader(cmd.InOrStdin())
 	projectRoot := findProjectRoot()
 
 	creds, err := config.LoadCredentials()
@@ -100,17 +98,20 @@ func runConnect(cmd *cobra.Command, args []string) error {
 	if connectIntegrationID != "" || connectTokenStdin || connectProject != "" || connectBaseURL != "" || connectLocalOnly {
 		return runConnectNonInteractive(cmd, projectRoot, creds, trackerType)
 	}
+	if !prompt.IsInputTTY(cmd.InOrStdin()) {
+		return fmt.Errorf("interactive connect requires an attached terminal; supply --integration-id, --project, and --token-stdin for automation")
+	}
 	switch trackerType {
 	case "github":
-		return runConnectGitHub(projectRoot, creds)
+		return runConnectGitHub(cmd, projectRoot, creds)
 	case "jira":
-		return runConnectJira(projectRoot, creds)
+		return runConnectJira(cmd, projectRoot, creds)
 	case "linear":
-		return runConnectLinear(projectRoot, creds)
+		return runConnectLinear(cmd, projectRoot, creds)
 	case "gitlab":
-		return runConnectGitLab(projectRoot, creds)
+		return runConnectGitLab(cmd, projectRoot, creds)
 	case "confluence":
-		return runConnectConfluence(projectRoot, creds)
+		return runConnectConfluence(cmd, projectRoot, creds)
 	default:
 		return fmt.Errorf("unknown type %q — supported: github, jira, linear, gitlab, confluence", trackerType)
 	}
@@ -405,16 +406,16 @@ func runConnectRemove(creds config.Credentials, trackerType, project string) err
 // github
 // ---------------------------------------------------------------------------
 
-func runConnectGitHub(projectRoot string, creds config.Credentials) error {
+func runConnectGitHub(cmd *cobra.Command, projectRoot string, creds config.Credentials) error {
 	fmt.Println("Connecting to GitHub Issues...")
 	fmt.Println()
 
-	project := prompt("Repository (owner/repo): ")
+	project := connectPrompt(cmd, "Repository (owner/repo): ")
 	if project == "" {
 		return fmt.Errorf("repository is required")
 	}
 
-	token := promptSecret("Personal access token (needs 'repo' scope): ")
+	token := connectSecret("Personal access token (needs 'repo' scope): ")
 	if token == "" {
 		return fmt.Errorf("secure terminal token input unavailable or empty; retry in a TTY or use --token-stdin")
 	}
@@ -436,27 +437,27 @@ func runConnectGitHub(projectRoot string, creds config.Credentials) error {
 // jira
 // ---------------------------------------------------------------------------
 
-func runConnectJira(projectRoot string, creds config.Credentials) error {
+func runConnectJira(cmd *cobra.Command, projectRoot string, creds config.Credentials) error {
 	fmt.Println("Connecting to Jira...")
 	fmt.Println()
 
-	baseURL := prompt("Jira base URL (e.g. https://mycompany.atlassian.net): ")
+	baseURL := connectPrompt(cmd, "Jira base URL (e.g. https://mycompany.atlassian.net): ")
 	if baseURL == "" {
 		return fmt.Errorf("base URL is required")
 	}
 	baseURL = strings.TrimRight(baseURL, "/")
 
-	project := prompt("Project key (e.g. PROJ): ")
+	project := connectPrompt(cmd, "Project key (e.g. PROJ): ")
 	if project == "" {
 		return fmt.Errorf("project key is required")
 	}
 
-	userEmail := prompt("User email (for Jira Cloud basic auth): ")
+	userEmail := connectPrompt(cmd, "User email (for Jira Cloud basic auth): ")
 	if userEmail == "" {
 		return fmt.Errorf("user email is required for Jira Cloud API authentication")
 	}
 
-	token := promptSecret("API token (from https://id.atlassian.com/manage-profile/security/api-tokens): ")
+	token := connectSecret("API token (from https://id.atlassian.com/manage-profile/security/api-tokens): ")
 	if token == "" {
 		return fmt.Errorf("secure terminal token input unavailable or empty; retry in a TTY or use --token-stdin")
 	}
@@ -478,16 +479,16 @@ func runConnectJira(projectRoot string, creds config.Credentials) error {
 // linear
 // ---------------------------------------------------------------------------
 
-func runConnectLinear(projectRoot string, creds config.Credentials) error {
+func runConnectLinear(cmd *cobra.Command, projectRoot string, creds config.Credentials) error {
 	fmt.Println("Connecting to Linear...")
 	fmt.Println()
 
-	project := prompt("Team key (e.g. ENG): ")
+	project := connectPrompt(cmd, "Team key (e.g. ENG): ")
 	if project == "" {
 		return fmt.Errorf("team key is required")
 	}
 
-	token := promptSecret("API key (from https://linear.app/settings/api): ")
+	token := connectSecret("API key (from https://linear.app/settings/api): ")
 	if token == "" {
 		return fmt.Errorf("secure terminal token input unavailable or empty; retry in a TTY or use --token-stdin")
 	}
@@ -509,22 +510,22 @@ func runConnectLinear(projectRoot string, creds config.Credentials) error {
 // gitlab
 // ---------------------------------------------------------------------------
 
-func runConnectGitLab(projectRoot string, creds config.Credentials) error {
+func runConnectGitLab(cmd *cobra.Command, projectRoot string, creds config.Credentials) error {
 	fmt.Println("Connecting to GitLab...")
 	fmt.Println()
 
-	baseURL := prompt("GitLab base URL [https://gitlab.com]: ")
+	baseURL := connectPrompt(cmd, "GitLab base URL [https://gitlab.com]: ")
 	if baseURL == "" {
 		baseURL = "https://gitlab.com"
 	}
 	baseURL = strings.TrimRight(baseURL, "/")
 
-	project := prompt("Project (namespace/project or numeric ID): ")
+	project := connectPrompt(cmd, "Project (namespace/project or numeric ID): ")
 	if project == "" {
 		return fmt.Errorf("project is required")
 	}
 
-	token := promptSecret("Personal/Project access token (needs 'api' scope): ")
+	token := connectSecret("Personal/Project access token (needs 'api' scope): ")
 	if token == "" {
 		return fmt.Errorf("secure terminal token input unavailable or empty; retry in a TTY or use --token-stdin")
 	}
@@ -546,24 +547,24 @@ func runConnectGitLab(projectRoot string, creds config.Credentials) error {
 // confluence
 // ---------------------------------------------------------------------------
 
-func runConnectConfluence(projectRoot string, creds config.Credentials) error {
+func runConnectConfluence(cmd *cobra.Command, projectRoot string, creds config.Credentials) error {
 	fmt.Println("Connecting to Confluence...")
 	fmt.Println()
 
-	baseURL := prompt("Confluence base URL (e.g. https://mycompany.atlassian.net/wiki): ")
+	baseURL := connectPrompt(cmd, "Confluence base URL (e.g. https://mycompany.atlassian.net/wiki): ")
 	if baseURL == "" {
 		return fmt.Errorf("base URL is required")
 	}
 	baseURL = strings.TrimRight(baseURL, "/")
 
-	spaceKey := prompt("Space key (e.g. ENG): ")
+	spaceKey := connectPrompt(cmd, "Space key (e.g. ENG): ")
 	if spaceKey == "" {
 		return fmt.Errorf("space key is required")
 	}
 
-	userEmail := prompt("User email (for Confluence Cloud basic auth): ")
+	userEmail := connectPrompt(cmd, "User email (for Confluence Cloud basic auth): ")
 
-	token := promptSecret("API token: ")
+	token := connectSecret("API token: ")
 	if token == "" {
 		return fmt.Errorf("secure terminal token input unavailable or empty; retry in a TTY or use --token-stdin")
 	}
@@ -763,27 +764,34 @@ func httpPOST(url, jsonBody string, headers map[string]string) ([]byte, error) {
 // I/O helpers
 // ---------------------------------------------------------------------------
 
-func prompt(label string) string {
-	fmt.Print(label)
-	line, _ := connectInput.ReadString('\n')
-	return strings.TrimSpace(line)
+// connectPrompt reads one answer from the command's input stream.
+//
+// The stream comes from cmd.InOrStdin() rather than a package-level
+// bufio.Reader. The old mutable `connectInput` var existed only because a
+// bufio.Reader buffers past the newline, so a fresh one per prompt would
+// swallow the next answer — prompt.Prompt reads unbuffered, so the shared
+// mutable state is no longer needed and is gone.
+//
+// A read error yields "", preserving the previous behaviour: the caller's own
+// "X is required" error is the message the user sees, not a raw io.EOF.
+func connectPrompt(cmd *cobra.Command, label string) string {
+	answer, err := prompt.Prompt(cmd.InOrStdin(), cmd.OutOrStdout(), label)
+	if err != nil {
+		return ""
+	}
+	return answer
 }
 
-var connectInput = bufio.NewReader(os.Stdin)
-
-// promptSecret requires a terminal and suppresses echo. Automation must use
-// --token-stdin; silently falling back to echoed input would expose credentials.
-func promptSecret(label string) string {
-	fmt.Print(label)
-	tty, err := os.OpenFile("/dev/tty", os.O_RDWR, 0)
+// connectSecret reads a credential from the terminal, never from stdin.
+//
+// Automation must use --token-stdin; silently falling back to echoed input
+// would expose credentials. Returning "" on refusal preserves the existing
+// caller behaviour, which reports "secure terminal token input unavailable or
+// empty; retry in a TTY or use --token-stdin".
+func connectSecret(label string) string {
+	secret, err := prompt.Secret(label)
 	if err != nil {
 		return ""
 	}
-	defer tty.Close()
-	b, err := term.ReadPassword(int(tty.Fd()))
-	fmt.Fprintln(tty)
-	if err != nil {
-		return ""
-	}
-	return strings.TrimSpace(string(b))
+	return secret
 }

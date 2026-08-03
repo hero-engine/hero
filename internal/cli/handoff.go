@@ -1,8 +1,9 @@
 package cli
 
 import (
-	"bufio"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -12,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	contractpeering "github.com/hero-engine/hero/contracts/peering"
+	"github.com/hero-engine/hero/internal/cli/prompt"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/feed"
 	"github.com/hero-engine/hero/internal/peering"
@@ -319,20 +321,34 @@ func runHandoffAccept(cmd *cobra.Command, args []string) error {
 }
 
 // promptNextStatus asks the user whether the accepted spec should
-// become `delivering` (default) or `in-review`. Reads from stdin —
-// when non-interactive (e.g. piped) defaults to delivering.
+// become `delivering` (default) or `in-review`. Reads from the command's
+// input stream — when non-interactive (e.g. piped) defaults to delivering.
+//
+// Not prompt.Choice: this menu is numbered, its answers have aliases
+// ("2"/"in-review"/"review"/"r" all mean the same thing), and its prompt is a
+// bare "> " under a rendered list. Choice would replace all of that with
+// "[1|delivering|d|2|in-review|review|r]: " and swap the error text — visible
+// changes this child is not allowed to make, and ones the baseline fixture
+// testdata/prompt_baseline/handoff_accept_next_status.*.txt records verbatim.
+// prompt.Prompt removes the os.Stdin fork without touching a byte of it.
 func promptNextStatus(cmd *cobra.Command) (spec.Status, error) {
+	if !prompt.IsInputTTY(cmd.InOrStdin()) {
+		return spec.StatusDelivering, nil
+	}
 	w := cmd.OutOrStdout()
 	fmt.Fprintln(w, "Pick the next status for this spec:")
 	fmt.Fprintln(w, "  1) delivering (default)")
 	fmt.Fprintln(w, "  2) in-review")
-	fmt.Fprint(w, "> ")
 
-	scanner := bufio.NewScanner(os.Stdin)
-	if !scanner.Scan() {
-		return spec.StatusDelivering, nil
+	choice, err := prompt.Prompt(cmd.InOrStdin(), w, "> ")
+	if err != nil {
+		// End of stream is the non-interactive case, not a failure: it took
+		// the delivering default before this migration and still does.
+		if errors.Is(err, io.EOF) {
+			return spec.StatusDelivering, nil
+		}
+		return "", err
 	}
-	choice := strings.TrimSpace(scanner.Text())
 	switch choice {
 	case "", "1", "delivering", "d":
 		return spec.StatusDelivering, nil

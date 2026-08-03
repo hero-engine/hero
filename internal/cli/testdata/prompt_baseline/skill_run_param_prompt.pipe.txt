@@ -1,0 +1,20 @@
+$ hero skill run baseline-skill
+stdin-condition: pipe
+exit: 1
+--- stdout ---
+--- stderr ---
+hero: minted peer_id for cross-repo peering (recorded in events.log)
+hero: 1 legacy install artifact(s) detected — Claude Code / Codex / Cursor will silently fail to load Hero skills and agents.
+hero: run 'hero upgrade' (or 'hero install <mode> .') to clean up.
+Error: missing required parameter "target" (use --param target=<value>)
+Usage:
+  hero skill run <name> [flags]
+
+Flags:
+  -h, --help            help for run
+      --param strings   parameter values as key=val (repeatable)
+
+Global Flags:
+      --smoke   run smoke verification for this command and exit
+
+missing required parameter "target" (use --param target=<value>)
