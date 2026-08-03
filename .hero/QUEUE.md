@@ -6,24 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-03T21:23:49Z · 83 ready specs_
-
-## interactive-setup-and-connect-closure — "Interactive Setup and Connect Closure"
-_feature · delivering · horizon: now_
-
-Closes interactive connect and setup flows while leaving automation paths non-blocking and manifest-safe.
-
-**Status:** delivering — audit repairs now preserve shared `AGENTS.md` during
-copilot/generic uninstall and add byte-level supplied-path baselines.
-
-**Pick up at:** run the cold delivery audit and verification gate before archiving.
-
-→ `hero spec verify interactive-setup-and-connect-closure --skip-tests`
-
-**Files:** `internal/cli/connect.go`, `internal/cli/uninstall.go`, `internal/cli/prompt_args.go`, `internal/cli/connect_writer_unification_test.go`
-**Skip:** generic prompt fields, skill coupling, init/index/alias expansion, network calls, and unlisted uninstall repairs.
-
----
+_Generated: 2026-08-03T21:26:08Z · 83 ready specs_
 
 ## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
 _feature · delivering · horizon: now_
@@ -63,6 +46,20 @@ trace to the original interactive-input outcome. The completed result has one
 cross-platform prompt authority, safe TTY and secret handling, additive setup
 prompts, selectors that work at actual corpus scale, unchanged machine paths,
 and evidence that no affected invocation can prompt or hang unexpectedly.
+
+---
+
+## interactive-cli-acceptance-and-merge-gate — "Interactive CLI Acceptance and Merge Gate"
+_feature · planning · horizon: now_
+
+Design the non-feature closing gate after both adoption children verify. Build
+the scope, donor-disposition, and acceptance maps; then require full tests,
+race, vet, build, Windows and live-pipe evidence, cold audit, truthful progress,
+and both Hero verification gates. Do not fix production code here or lose valid
+side fixes—route original-contract failures back and extracted work to its named
+follow-up.
+
+→ `/design interactive-cli-acceptance-and-merge-gate`
 
 ---
 

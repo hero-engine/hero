@@ -2,7 +2,7 @@
 title: "Interactive Setup and Connect Closure"
 slug: interactive-setup-and-connect-closure
 type: feature
-status: delivering
+status: completed
 created: 2026-08-03
 domain: engineering
 size: large
@@ -16,6 +16,7 @@ relates-to:
   - uninstall-target-parity
 tags: [cli, prompt, connect, setup, uninstall]
 delivery_method: manual
+completed_at: 2026-08-03T21:25:41Z
 ---
 
 # Interactive Setup and Connect Closure

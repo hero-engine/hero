@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-03T21:15:00Z
+updated: 2026-08-03T21:26:08Z
 repo: hero-engine/hero
 ---
 
@@ -9,6 +9,8 @@ repo: hero-engine/hero
 ## Last user ask
 
 > Deliver interactive-setup-and-connect-closure completely with six-target and live-pipe validation.
+
+_possibly stale — 1 commit(s) since, last set 23m ago_
 
 ## Suggested next prompt
 
