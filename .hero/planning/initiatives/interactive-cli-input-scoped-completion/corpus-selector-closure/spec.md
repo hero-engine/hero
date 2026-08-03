@@ -2,7 +2,7 @@
 title: "Corpus Selector Closure"
 slug: corpus-selector-closure
 type: feature
-status: planning
+status: delivering
 created: 2026-08-03
 domain: engineering
 size: medium
@@ -11,6 +11,7 @@ parent: interactive-cli-input-scoped-completion
 depends-on: [prompt-and-tty-contract-closure]
 relates-to: [selector-spec-pickers, cli-input-classification]
 tags: [cli, selector, prompt, corpus]
+delivery_method: manual
 ---
 
 # Corpus Selector Closure
@@ -56,39 +57,17 @@ specs as appropriate.
 
 ## Changes
 
-1. Port and close the selector infrastructure in `internal/cli/selector.go`.
-   - Preserve `selectorArgs`, `jsonModeOn`, local corpus resolvers, existing
-     missing-argument errors, and the 25-item direct-choice display limit.
-   - Replace the hard cap with the filter-to-bounded-choice flow above.
-   - Make blank input return a typed cancellation/error path so callers exit
-     non-zero without mutation.
-   - Keep filtering case-insensitive and stable-order; do not add fuzzy ranking.
-2. Port selector adoption for exactly these command paths:
-
-- `score`, `verify`, `spec move`, `supersede`, and `size`
-- `skill show`, `skill run`, `skill edit`, `skill rm`, and `skill log`
-- `handoff` and `handoff accept`
-
-   Update only `internal/cli/score.go`, `verify.go`, `spec_move.go`,
-   `supersede.go`, `size.go`, `skill.go`, and `handoff.go`, plus their tests.
-   Preserve the donor rule that commands with strict arity gate through
-   `selectorArgs.rule`, while zero-argument modes such as `size --check` and
-   `supersede --scan` gate in `RunE`.
-3. Preserve non-interactive behavior.
-   - Supplied arguments bypass discovery and prompting.
-   - Non-TTY input and `--json` retain the command's prior Cobra/usage error.
-   - Existing zero-argument operational modes continue without a picker.
-   - Empty corpora return the existing missing-argument error without printing
-     an empty choice.
-4. Add focused selector tests in `internal/cli/selector_test.go` and command
-   tests beside the adopting commands.
-   - Cover 0, 1, 25, 26, and 250 candidates.
-   - Prove a candidate outside the first 25 can be filtered and selected.
-   - Cover exact-filter acceptance, no-match retry, cancellation, invalid final
-     choice, stable ordering, active subproject filtering, and handed-back-only
-     filtering.
-   - Cover every adopting command's supplied-argument, non-TTY, and `--json`
-     paths.
+- `internal/cli/selector.go` — local corpus resolvers, missing-argument gates,
+  bounded filtering, cancellation errors, and stable selection helpers.
+- `internal/cli/score.go` — selector adoption for an omitted spec target.
+- `internal/cli/verify.go` — selector adoption while preserving JSON behavior.
+- `internal/cli/spec_move.go` — selector adoption after destination validation.
+- `internal/cli/supersede.go` — independent old/replacement spec selectors.
+- `internal/cli/size.go` — zero-argument selector without changing `--check`.
+- `internal/cli/skill.go` — shared installed-skill selection for five verbs.
+- `internal/cli/handoff.go` — spec/peer and handed-back-spec selectors.
+- `internal/cli/selector_test.go` — terminal adopter coverage and 0/1/25/26/250
+  corpus, filtering, cancellation, scope, ordering, and handoff cases.
 
 ## Boundaries
 
@@ -135,11 +114,61 @@ specs as appropriate.
 
 ## Kickoff
 
-Design the smallest real-scale selector completion after the prompt foundation
-verifies. Port the donor's local resolvers and Cobra gates, then replace its
-hard refusal above 25 with selector-local substring filtering into a bounded
-choice. Keep the target list frozen. Prove large, empty, cancel, invalid,
-explicit, non-TTY, and JSON cases. Do not add a TUI, network lookup, fuzzy
-retrieval, prompt primitive, or command target.
+Makes local-corpus CLI selectors work at real workspace scale without changing
+explicit or non-interactive command behavior.
 
-→ `/design corpus-selector-closure`
+**Status:** delivering — frozen command paths and 0/1/25/26/250 coverage are
+implemented and validated; the delivery closing gate remains.
+
+**Pick up at:** review the selector diff and run the delivery audit/verify
+workflow before archiving the spec.
+
+→ `hero spec verify corpus-selector-closure`
+
+**Files:** `internal/cli/selector.go`, `internal/cli/selector_test.go`,
+`internal/cli/handoff.go`, `internal/cli/supersede.go`
+**Skip:** TUI, fuzzy retrieval, network lookup, general prompt changes, and
+selector targets outside the frozen list.
+
+## Completion Ledger
+
+Selector filtering is local-only and bounded at 25 choices. Validation passed:
+`go test -count=1 ./internal/cli/...`, `go test -race ./internal/cli/...`,
+`go vet ./...`, and `go build ./...`.
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | ≤25 candidates render Choice | DONE | `internal/cli/selector.go` and `selector_test.go` cover 1 and 25 candidates. |
+| 2 | >25 candidates narrow to bounded choice | DONE | 26- and 250-candidate terminal tests filter into at most 25 choices. |
+| 3 | Exact filter selects immediately | DONE | `TestPickerFiltersAnOversizedCorpus` selects an exact 26th-corpus candidate. |
+| 4 | No match reports and retries | DONE | `TestPickerRetriesNoMatchThenSelects` proves retry then selection. |
+| 5 | Cancellation is non-mutating | DONE | `ErrSelectorCancelled` and cancellation/invalid score exercise stop before scoring. |
+| 6 | Empty corpus keeps missing-argument error | DONE | score, skill, and handed-back empty-corpus tests cover no empty picker. |
+| 7 | Supplied arguments bypass picker | DONE | adopter tests cover supplied score, size, skill, supersede, handoff, and accept paths. |
+| 8 | Non-TTY and JSON do not prompt | DONE | selector gate plus adopter pipe/closed/JSON tests preserve Cobra errors and modes. |
+| 9 | Only frozen command targets adopt selectors | DONE | `selector_test.go` exercises exactly score, verify, move, supersede, size, five skill verbs, handoff, and accept. |
+| 10 | Local, ordered corpus resolution | DONE | `selector.go` uses local specs/skills/config; stable, active-scope, and handed-back tests pass. |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | `internal/cli/selector.go` | DONE | Shared local resolvers, selector gates, bounded filtering, and cancellation errors. |
+| 2 | `internal/cli/score.go` | DONE | Omitted target selects locally; JSON still preserves Cobra arity. |
+| 3 | `internal/cli/verify.go` | DONE | Omitted target selects from the already-discovered corpus. |
+| 4 | `internal/cli/spec_move.go` | DONE | Destination validation still precedes source selection. |
+| 5 | `internal/cli/supersede.go` | DONE | Old and replacement selectors preserve independent supplied values. |
+| 6 | `internal/cli/size.go` | DONE | Zero-argument selector leaves `--check` operational. |
+| 7 | `internal/cli/skill.go` | DONE | Five name-taking skill verbs share installed-skill selection. |
+| 8 | `internal/cli/handoff.go` | DONE | Spec/peer and handed-back-only selectors retain partial argument behavior. |
+| 9 | `internal/cli/selector_test.go` | DONE | PTY end-to-end coverage covers frozen adopters and corpus boundaries. |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end through the built CLI in PTY tests: 26- and 250-candidate corpora narrowed and selected candidates outside the first 25, while cancellation and invalid choices exited non-zero before scoring.
+
+### Excellence Bar self-check
+
+Honest answer to "would a senior engineer who cares about this codebase be proud to ship this?" — yes; the change reuses local ordering/resolution rules, bounds every rendered choice list, and protects all explicit and machine-driven paths with focused end-to-end tests.

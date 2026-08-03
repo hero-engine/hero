@@ -27,7 +27,7 @@ var scoreCmd = &cobra.Command{
   - Clarity (10%) — absence of vague or ambiguous language
 
 Returns a score (0-100), grade (A-F), and actionable suggestions.`,
-	Args: cobra.ExactArgs(1),
+	Args: selectorOneArg.rule(),
 	RunE: runScore,
 }
 
@@ -44,7 +44,17 @@ func runScore(cmd *cobra.Command, args []string) error {
 
 	heroDir := cfg.HeroDir(projectRoot)
 
-	s, err := resolveSpec(args[0], heroDir)
+	target := ""
+	if len(args) > 0 {
+		target = args[0]
+	} else {
+		target, err = pickSpecSlug(cmd, selectorOneArg.missing(cmd, args))
+		if err != nil {
+			return err
+		}
+	}
+
+	s, err := resolveSpec(target, heroDir)
 	if err != nil {
 		return err
 	}

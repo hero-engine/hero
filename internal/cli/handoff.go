@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
@@ -51,7 +50,7 @@ Subcommands:
   hero handoff status [<slug>]    Show handoff state (one spec or all)
   hero handoff receive <message-id>  Explicitly promote a Mail request
   hero handoff accept <slug>         Pick up a legacy handed_back spec`,
-	Args: cobra.ExactArgs(2),
+	Args: selectorTwoArgs.rule(),
 	RunE: runHandoff,
 }
 
@@ -65,7 +64,7 @@ var handoffStatusCmd = &cobra.Command{
 var handoffAcceptCmd = &cobra.Command{
 	Use:   "accept <slug>",
 	Short: "Pick up a handed_back spec — move its status to delivering or in-review",
-	Args:  cobra.ExactArgs(1),
+	Args:  selectorOneArg.rule(),
 	RunE:  runHandoffAccept,
 }
 
@@ -92,22 +91,36 @@ func init() {
 }
 
 func runHandoff(cmd *cobra.Command, args []string) error {
-	slug, peerAlias := args[0], args[1]
+	slugSupplied, peerSupplied := len(args) > 0, len(args) > 1
+	slug, peerAlias := "", ""
+	if slugSupplied {
+		slug = args[0]
+	}
+	if peerSupplied {
+		peerAlias = args[1]
+	}
 	projectRoot := findProjectRoot()
 	cfg, err := config.Load(projectRoot)
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)
 	}
+	if !peerSupplied && len(cfg.Repos) == 0 {
+		return peerNotConfiguredErr(cfg, "", false)
+	}
+	if !slugSupplied {
+		slug, err = pickSpecSlug(cmd, selectorTwoArgs.missing(cmd, args))
+		if err != nil {
+			return err
+		}
+	}
+	if !peerSupplied {
+		peerAlias, err = pickFromCorpus(cmd, "Peer", sortedPeerAliases(cfg), selectorTwoArgs.missing(cmd, args))
+		if err != nil {
+			return err
+		}
+	}
 	if _, ok := cfg.Repos[peerAlias]; !ok {
-		var aliases []string
-		for a := range cfg.Repos {
-			aliases = append(aliases, a)
-		}
-		sort.Strings(aliases)
-		if len(aliases) == 0 {
-			return fmt.Errorf("peer %q is not configured — register one with `hero repos add <alias> <path>`", peerAlias)
-		}
-		return fmt.Errorf("peer %q is not configured — configured peers: %s", peerAlias, strings.Join(aliases, ", "))
+		return peerNotConfiguredErr(cfg, peerAlias, peerSupplied)
 	}
 
 	res, err := peering.Handoff(projectRoot, slug, peering.HandoffOptions{
@@ -128,6 +141,18 @@ func runHandoff(cmd *cobra.Command, args []string) error {
 		"Work transfer queued for %s (peer_id %s)\n  message_id: %s\n  thread_id: %s\n",
 		peerAlias, res.PeerID, res.MessageID, res.ThreadID)
 	return nil
+}
+
+func peerNotConfiguredErr(cfg config.Config, alias string, aliasSupplied bool) error {
+	subject := "no peers are configured"
+	if aliasSupplied {
+		subject = fmt.Sprintf("peer %q is not configured", alias)
+	}
+	aliases := sortedPeerAliases(cfg)
+	if len(aliases) == 0 {
+		return fmt.Errorf("%s — register one with `hero repos add <alias> <path>`", subject)
+	}
+	return fmt.Errorf("%s — configured peers: %s", subject, strings.Join(aliases, ", "))
 }
 
 func runHandoffReceive(cmd *cobra.Command, args []string) error {
@@ -256,7 +281,10 @@ func peerSpecSlug(e contractpeering.TrailEntry) string {
 }
 
 func runHandoffAccept(cmd *cobra.Command, args []string) error {
-	slug := args[0]
+	slug := ""
+	if len(args) > 0 {
+		slug = args[0]
+	}
 	projectRoot := findProjectRoot()
 	cfg, err := config.Load(projectRoot)
 	if err != nil {
@@ -266,6 +294,12 @@ func runHandoffAccept(cmd *cobra.Command, args []string) error {
 	specs, err := spec.Discover(heroDir)
 	if err != nil {
 		return fmt.Errorf("discovering specs: %w", err)
+	}
+	if len(args) == 0 {
+		slug, err = pickFromCorpus(cmd, "Spec", handedBackSlugCandidates(specs), selectorOneArg.missing(cmd, args))
+		if err != nil {
+			return err
+		}
 	}
 	var target *spec.Spec
 	for _, s := range specs {

@@ -33,7 +33,7 @@ Examples:
   hero spec move some-feature --to-scope ""           # re-root (remove scope)
   hero spec move some-feature --to-scope engines/cuda --relocate
   hero spec move some-feature --to-scope engines/cuda --dry-run`,
-	Args: cobra.ExactArgs(1),
+	Args: selectorOneArg.rule(),
 	RunE: runSpecMove,
 }
 
@@ -48,8 +48,11 @@ func runSpecMove(cmd *cobra.Command, args []string) error {
 	if !cmd.Flags().Changed("to-scope") {
 		return fmt.Errorf("--to-scope is required (use --to-scope \"\" to re-root)")
 	}
-	slug := strings.TrimSpace(args[0])
-	if slug == "" {
+	slug := ""
+	if len(args) > 0 {
+		slug = strings.TrimSpace(args[0])
+	}
+	if len(args) > 0 && slug == "" {
 		return fmt.Errorf("slug is required")
 	}
 
@@ -86,6 +89,12 @@ func runSpecMove(cmd *cobra.Command, args []string) error {
 	specs, err := spec.Discover(heroDir)
 	if err != nil {
 		return fmt.Errorf("discovering specs: %w", err)
+	}
+	if slug == "" {
+		slug, err = pickSpecSlugFrom(cmd, specs, selectorOneArg.missing(cmd, args))
+		if err != nil {
+			return err
+		}
 	}
 	var target *spec.Spec
 	for _, s := range specs {

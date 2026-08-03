@@ -1,10 +1,12 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"sort"
 
+	"github.com/hero-engine/hero/internal/cli/prompt"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/sizing"
 	"github.com/hero-engine/hero/internal/spec"
@@ -111,14 +113,29 @@ func runSize(cmd *cobra.Command, args []string) error {
 	}
 
 	switch len(args) {
+	case 0:
+		if !prompt.IsInputTTY(cmd.InOrStdin()) {
+			return errSizeUsage
+		}
+		specs, err := spec.Discover(heroDir)
+		if err != nil {
+			return fmt.Errorf("discovering specs: %w", err)
+		}
+		slug, err := pickFromCorpus(cmd, "Spec", specSlugCandidates(specs), errSizeUsage)
+		if err != nil {
+			return err
+		}
+		return runSizeGet(heroDir, slug)
 	case 1:
 		return runSizeGet(heroDir, args[0])
 	case 2:
 		return runSizeSet(heroDir, args[0], args[1])
 	default:
-		return fmt.Errorf("usage: hero size <slug> [tier] | hero size --ack <tier> <slug> | hero size --check")
+		return errSizeUsage
 	}
 }
+
+var errSizeUsage = errors.New("usage: hero size <slug> [tier] | hero size --ack <tier> <slug> | hero size --check")
 
 // runSizeGet prints the declared size for the given slug. Unset is
 // rendered as "(unset)" and is a normal (non-error) state.

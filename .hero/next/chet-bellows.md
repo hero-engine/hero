@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-03T20:44:59Z
+updated: 2026-08-03T20:58:03Z
 repo: hero-engine/hero
 ---
 
@@ -8,13 +8,11 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver prompt-and-tty-contract-closure completely, including audit and verification.
-
-_possibly stale — 1 commit(s) since, last set 32m ago_
+> Deliver corpus-selector-closure completely with bounded local selector filtering and full verification.
 
 ## Suggested next prompt
 
-_(none — `hero next suggest "..."` to set, or open a Feature to derive one)_
+> deliver interactive-setup-and-connect-closure now that the shared prompt and TTY contract is verified
 
 ## Recent reflections
 

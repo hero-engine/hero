@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-08-03T20:44:59Z · projected from 507 source nodes_
+_Last refreshed: 2026-08-03T20:58:03Z · projected from 507 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
 | core | building | cmd/, internal/ | <1m ago | satellite-corpus-integration |
-| docs | maturing | web/docs/ | 59m ago | — |
-| domains/chat | maturing | domains/chat/ | 59m ago | — |
-| domains/engineering | maturing | domains/engineering/ | 59m ago | — |
-| domains/pm | maturing | domains/pm/ | 59m ago | — |
-| domains/sales | maturing | domains/sales/ | 59m ago | — |
-| landing | building | web/landing/ | 59m ago | hero-landing-page |
+| docs | maturing | web/docs/ | 1h ago | — |
+| domains/chat | maturing | domains/chat/ | 1h ago | — |
+| domains/engineering | maturing | domains/engineering/ | 1h ago | — |
+| domains/pm | maturing | domains/pm/ | 1h ago | — |
+| domains/sales | maturing | domains/sales/ | 1h ago | — |
+| landing | building | web/landing/ | 1h ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 33m ago | agent-outposts |
+| serve | building | internal/serve/ | 46m ago | agent-outposts |
 | (unassigned) | — | — | — | 241 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -40,7 +40,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Hero Surface Architecture — One Surface, Every Layer, Every Role** (surface: serve) — 8/9 specs done
 - **Hero Team Experience — Complete Multi-Developer Workflow** (surface: —) — 0/1 specs done
 - **Install + Upgrade Contract Coverage — Prove Every Target Works Every Time** (surface: —) — 0/0 specs done
-- **"Interactive CLI Input — Scoped Completion"** (surface: core) — 1/4 specs done
+- **"Interactive CLI Input — Scoped Completion"** (surface: core) — 1/4 specs done; in flight: corpus-selector-closure
 - **Launch Readiness — Telemetry, Deploy, and Public-Use Polish** (surface: —) — 0/0 specs done
 - **Pre-Launch Hardening — Federation Polish, Security, Observability** (surface: —) — 0/0 specs done
 - **"Retrieval Quality — Reranking, Expansion & Feedback Loop"** (surface: —) — 0/0 specs done
@@ -61,10 +61,10 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Next up across surfaces
 
 1. **landing** — `hero-landing-page` (P0, delivering)
-2. **core** — `satellite-corpus-integration` (high, delivering)
-3. **serve** — `agent-outposts` (medium, delivering)
-4. **serve** — `retrieval-contradiction-detection` (—, delivering)
-5. **(unassigned)** — `team-connect` (—, delivering)
+2. **core** — `corpus-selector-closure` (high, delivering)
+3. **core** — `satellite-corpus-integration` (high, delivering)
+4. **serve** — `agent-outposts` (medium, delivering)
+5. **serve** — `retrieval-contradiction-detection` (—, delivering)
 
 ## Open risks & blockers
 

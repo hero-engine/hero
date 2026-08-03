@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hero-engine/hero/internal/cli/prompt"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/index"
 	"github.com/hero-engine/hero/internal/spec"
@@ -44,11 +46,11 @@ Refuses to:
 }
 
 var (
-	supersedeBy      string
-	supersedeReason  string
-	supersedeScan    bool
-	supersedeList    bool
-	supersedeUnset   bool
+	supersedeBy     string
+	supersedeReason string
+	supersedeScan   bool
+	supersedeList   bool
+	supersedeUnset  bool
 )
 
 func init() {
@@ -83,15 +85,49 @@ func runSupersede(cmd *cobra.Command, args []string) error {
 		return runSupersedeUnset(heroDir, args[0])
 	}
 
-	// Default: set superseded_by on the old spec.
-	if len(args) != 1 {
-		return fmt.Errorf("supply the old spec slug (the one being replaced)")
+	// The default mode has two independent local selectors. Existing supplied
+	// values are never replaced; only an omitted old slug or empty --by is
+	// eligible for a terminal picker.
+	oldSupplied := len(args) == 1
+	if len(args) > 1 {
+		return errSupersedeMissingOld
 	}
-	if supersedeBy == "" {
-		return fmt.Errorf("--by <new-slug> is required (the replacement spec)")
+	oldSlug := ""
+	if oldSupplied {
+		oldSlug = args[0]
 	}
-	return runSupersedeSet(heroDir, args[0], supersedeBy, supersedeReason)
+	by := supersedeBy
+	if !oldSupplied || by == "" {
+		if !prompt.IsInputTTY(cmd.InOrStdin()) {
+			if !oldSupplied {
+				return errSupersedeMissingOld
+			}
+			return errSupersedeMissingBy
+		}
+		specs, err := spec.Discover(heroDir)
+		if err != nil {
+			return fmt.Errorf("discovering specs: %w", err)
+		}
+		if !oldSupplied {
+			oldSlug, err = pickFromCorpus(cmd, "Spec to supersede", specSlugCandidates(specs), errSupersedeMissingOld)
+			if err != nil {
+				return err
+			}
+		}
+		if by == "" {
+			by, err = pickFromCorpus(cmd, "Replaced by", withoutSlug(specSlugCandidates(specs), oldSlug), errSupersedeMissingBy)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return runSupersedeSet(heroDir, oldSlug, by, supersedeReason)
 }
+
+var (
+	errSupersedeMissingOld = errors.New("supply the old spec slug (the one being replaced)")
+	errSupersedeMissingBy  = errors.New("--by <new-slug> is required (the replacement spec)")
+)
 
 // runSupersedeSet wires old.superseded_by = new and new.supersedes:
 // <old-slug>, then reindexes. Refuses cycles and chain-into-archive.

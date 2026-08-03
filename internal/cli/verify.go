@@ -38,7 +38,7 @@ If any gate fails, reports the failures and does NOT change status.
 
 Use --force to bypass gates (logged visibly). Use --skip-tests to skip Gate 4.
 Use --json for machine-readable output.`,
-	Args: cobra.ExactArgs(1),
+	Args: selectorOneArg.rule(),
 	RunE: runVerify,
 }
 
@@ -91,12 +91,22 @@ func runVerify(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("discovering specs: %w", err)
 	}
 
-	target, hint := spec.ResolveOrHint(args[0], specs)
+	slug := ""
+	if len(args) > 0 {
+		slug = args[0]
+	} else {
+		slug, err = pickSpecSlugFrom(cmd, specs, selectorOneArg.missing(cmd, args))
+		if err != nil {
+			return err
+		}
+	}
+
+	target, hint := spec.ResolveOrHint(slug, specs)
 	if target == nil {
 		if hint != "" {
 			return fmt.Errorf("%s", hint)
 		}
-		return fmt.Errorf("spec %q not found", args[0])
+		return fmt.Errorf("spec %q not found", slug)
 	}
 
 	// If already completed and archived, report and exit

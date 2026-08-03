@@ -29,14 +29,14 @@ var skillListCmd = &cobra.Command{
 var skillShowCmd = &cobra.Command{
 	Use:   "show <name>",
 	Short: "Print the skill markdown file",
-	Args:  cobra.ExactArgs(1),
+	Args:  selectorOneArg.rule(),
 	RunE:  runSkillShow,
 }
 
 var skillRunCmd = &cobra.Command{
 	Use:   "run <name>",
 	Short: "Run a skill",
-	Args:  cobra.ExactArgs(1),
+	Args:  selectorOneArg.rule(),
 	RunE:  runSkillRun,
 }
 
@@ -49,21 +49,21 @@ var skillSaveCmd = &cobra.Command{
 var skillEditCmd = &cobra.Command{
 	Use:   "edit <name>",
 	Short: "Open a skill in $EDITOR",
-	Args:  cobra.ExactArgs(1),
+	Args:  selectorOneArg.rule(),
 	RunE:  runSkillEdit,
 }
 
 var skillRmCmd = &cobra.Command{
 	Use:   "rm <name>",
 	Short: "Remove a skill file",
-	Args:  cobra.ExactArgs(1),
+	Args:  selectorOneArg.rule(),
 	RunE:  runSkillRm,
 }
 
 var skillLogCmd = &cobra.Command{
 	Use:   "log <name>",
 	Short: "Show git log for a skill file",
-	Args:  cobra.ExactArgs(1),
+	Args:  selectorOneArg.rule(),
 	RunE:  runSkillLog,
 }
 
@@ -128,7 +128,10 @@ func runSkillShow(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("loading config: %w", err)
 	}
 
-	name := args[0]
+	name, err := skillTarget(cmd, args, cfg, projectRoot)
+	if err != nil {
+		return err
+	}
 	path := skillFilePath(cfg, projectRoot, name)
 
 	data, err := os.ReadFile(path)
@@ -150,7 +153,10 @@ func runSkillRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("loading config: %w", err)
 	}
 
-	name := args[0]
+	name, err := skillTarget(cmd, args, cfg, projectRoot)
+	if err != nil {
+		return err
+	}
 	path := skillFilePath(cfg, projectRoot, name)
 
 	skill, err := skills.ParseSkillFile(path)
@@ -254,7 +260,10 @@ func runSkillEdit(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("loading config: %w", err)
 	}
 
-	name := args[0]
+	name, err := skillTarget(cmd, args, cfg, projectRoot)
+	if err != nil {
+		return err
+	}
 	path := skillFilePath(cfg, projectRoot, name)
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -271,7 +280,10 @@ func runSkillRm(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("loading config: %w", err)
 	}
 
-	name := args[0]
+	name, err := skillTarget(cmd, args, cfg, projectRoot)
+	if err != nil {
+		return err
+	}
 	path := skillFilePath(cfg, projectRoot, name)
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -293,7 +305,10 @@ func runSkillLog(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("loading config: %w", err)
 	}
 
-	name := args[0]
+	name, err := skillTarget(cmd, args, cfg, projectRoot)
+	if err != nil {
+		return err
+	}
 	path := skillFilePath(cfg, projectRoot, name)
 
 	// Use a path relative to project root for git log

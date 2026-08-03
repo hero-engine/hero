@@ -6,7 +6,28 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-03T20:44:59Z · 84 ready specs_
+_Generated: 2026-08-03T20:58:03Z · 84 ready specs_
+
+## corpus-selector-closure — "Corpus Selector Closure"
+_feature · delivering · horizon: now_
+
+Makes local-corpus CLI selectors work at real workspace scale without changing
+explicit or non-interactive command behavior.
+
+**Status:** delivering — frozen command paths and 0/1/25/26/250 coverage are
+implemented and validated; the delivery closing gate remains.
+
+**Pick up at:** review the selector diff and run the delivery audit/verify
+workflow before archiving the spec.
+
+→ `hero spec verify corpus-selector-closure`
+
+**Files:** `internal/cli/selector.go`, `internal/cli/selector_test.go`,
+`internal/cli/handoff.go`, `internal/cli/supersede.go`
+**Skip:** TUI, fuzzy retrieval, network lookup, general prompt changes, and
+selector targets outside the frozen list.
+
+---
 
 ## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
 _feature · delivering · horizon: now_
@@ -66,20 +87,6 @@ connect-local collector and single writer from donor `485c32f`.
 
 **Files:** `internal/cli/connect.go`, `internal/cli/uninstall.go`, `internal/cli/prompt_args.go`, `internal/cli/prompt_setup_commands_test.go`, `internal/config/integrations.go`
 **Skip:** donor `promptfield.go`/`skill.go`, `init`, index, aliases, timeout and invocation-lint commits, plus later uninstall/Codex cleanup.
-
----
-
-## corpus-selector-closure — "Corpus Selector Closure"
-_feature · planning · horizon: now_
-
-Design the smallest real-scale selector completion after the prompt foundation
-verifies. Port the donor's local resolvers and Cobra gates, then replace its
-hard refusal above 25 with selector-local substring filtering into a bounded
-choice. Keep the target list frozen. Prove large, empty, cancel, invalid,
-explicit, non-TTY, and JSON cases. Do not add a TUI, network lookup, fuzzy
-retrieval, prompt primitive, or command target.
-
-→ `/design corpus-selector-closure`
 
 ---
 
