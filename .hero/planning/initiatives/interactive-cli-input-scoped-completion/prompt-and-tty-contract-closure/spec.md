@@ -64,9 +64,12 @@ reader plumbing changes. `brief` migrates its rendering check to
    - Port the four primitives and two predicates from the donor branch.
    - Replace the Unix-only `Secret` body with the platform abstraction above.
    - Keep `ErrNoTTY` stable so commands can name their supported automation path.
-2. Port the original prompt-site migrations in `internal/cli/connect.go`,
-   `install.go`, `install_satellites.go`, `users.go`, `skill.go`, `handoff.go`,
-   `export.go`, `note.go`, and `brief.go`.
+2. Port the original prompt-site migrations in these files:
+   `internal/cli/connect.go`, `internal/cli/install.go`,
+   `internal/cli/install_satellites.go`, `internal/cli/users.go`,
+   `internal/cli/skill.go`, `internal/cli/handoff.go`,
+   `internal/cli/export.go`, `internal/cli/note.go`, and
+   `internal/cli/brief.go`.
    - Use Cobra input/output streams for every ordinary prompt.
    - Gate before reading: missing value plus real input TTY, with JSON and
      NEVER-PROMPT suppression where applicable.
@@ -94,8 +97,8 @@ reader plumbing changes. `brief` migrates its rendering check to
 
 - `internal/cli/prompt/prompt.go`, `secret_terminal*.go` — shared primitives,
   stream predicates, and protected Unix/Windows terminal adapters.
-- `internal/cli/{connect,install,install_satellites,users,skill,handoff,export,note,brief,new}.go` — Cobra-stream prompt migration and non-TTY guards.
-- `internal/cli/{prompt_*_test.go,note_stdin_test.go,new_test.go,e2e_test.go,connect_integrations_test.go}` plus `internal/cli/testdata/prompt_baseline/` — stream, policy, JSON, baseline, PTY, and open-pipe regression coverage.
+- `internal/cli/connect.go`, `internal/cli/install.go`, `internal/cli/install_satellites.go`, `internal/cli/users.go`, `internal/cli/skill.go`, `internal/cli/handoff.go`, `internal/cli/export.go`, `internal/cli/note.go`, `internal/cli/brief.go`, and `internal/cli/new.go` — Cobra-stream prompt migration and non-TTY guards.
+- `internal/cli/prompt_adoption_test.go`, `internal/cli/prompt_baseline_test.go`, `internal/cli/prompt_contract_test.go`, `internal/cli/prompt_json_test.go`, `internal/cli/prompt_policy_test.go`, `internal/cli/prompt_sanctioned_breaks_test.go`, `internal/cli/prompt_streams_test.go`, `internal/cli/note_stdin_test.go`, `internal/cli/new_test.go`, `internal/cli/e2e_test.go`, `internal/cli/connect_integrations_test.go`, and `internal/cli/testdata/prompt_baseline/` — stream, policy, JSON, baseline, PTY, and open-pipe regression coverage.
 - `internal/ptytest/` — portable PTY support for real-terminal test cases.
 
 ## Boundaries
@@ -179,9 +182,9 @@ of the Windows console-seam test binary.
 | 3 | Replaced readers and TTY helpers are removed | DONE | `connectInput`, `newStdin`, `isTerminal`, `hasPipedInput`, and `exportIsTerminal` are absent; `prompt_adoption_test.go` holds the structural guard. |
 | 4 | `new --interactive` reads `cmd.InOrStdin()` and remains opt-in | DONE | `internal/cli/new.go` passes Cobra input to `collectInteractiveInputs`; `new_test.go` drives real PTY Cobra input. |
 | 5 | Closed and live non-TTY input returns promptly without prompting | DONE | Non-TTY guards cover migrated required-input sites; `TestPromptSitesReturnBeforeLivePipeEOF` keeps a pipe writer open and proves each site returns before deadline. |
-| 6 | Unix/Windows protected secret input is non-echoed | DONE | `secret_terminal_unix.go` reads `/dev/tty`; `secret_terminal_windows.go` reads `CONIN$` with `term.ReadPassword`; package tests and Windows test-binary compilation cover the seam. |
+| 6 | Unix/Windows protected secret input is non-echoed | DONE | `secret_terminal_unix.go` reads `/dev/tty`; the Windows adapter reads `CONIN$` with `term.ReadPassword` and calls portable `openWindowsConsoleFiles`; locally executed seam tests verify `CONIN$`/`CONOUT$` names and input-handle cleanup. |
 | 7 | No protected terminal yields `ErrNoTTY` and no echoed fallback | DONE | `Secret` maps acquisition/read failure to `ErrNoTTY`; `secret_terminal_test.go`, `users.go`, and sanctioned-break tests cover refusal and alternatives. |
-| 8 | JSON paths never prompt | DONE | Install JSON guards use `installJSON`; `prompt_json_test.go` runs JSON cases under a PTY and checks JSON output. |
+| 8 | JSON paths never prompt | DONE | `connect.go` routes `connectJSON` through the non-interactive path; `prompt_json_test.go` runs missing-value install and connect JSON invocations under a PTY and asserts neither blocks or emits a prompt. |
 | 9 | NEVER-PROMPT commands do not prompt | DONE | `prompt_policy_test.go` enumerates and structurally checks all NEVER-PROMPT families. |
 | 10 | Fully supplied inputs preserve baseline behavior | DONE | `prompt_baseline_test.go` records stdout, stderr, status, and supplied-input fixtures; regenerated fixtures compare byte-for-byte. |
 | 11 | Non-TTY install project without target fails | DONE | `install.go` rejects missing `--target` before a non-TTY read; `prompt_sanctioned_breaks_test.go` verifies no opencode install. |
@@ -196,7 +199,7 @@ of the Windows console-seam test binary.
 | 2 | Port prompt-site migrations | DONE | `connect.go`, `install.go`, `install_satellites.go`, `users.go`, `skill.go`, `handoff.go`, `export.go`, `note.go`, and `brief.go` use shared stream/predicate rules. |
 | 3 | Reconcile `new.go` and tests | DONE | `newStdin` removed; interactive scanner receives `cmd.InOrStdin()`; PTY Cobra-stream tests preserve explicit `--interactive`. |
 | 4 | Preserve two compatibility corrections | DONE | Install target and protected-password failures are covered by `prompt_sanctioned_breaks_test.go`. |
-| 5 | Strengthen fixtures and policy tests | DONE | Baselines capture supplied/closed/pipe/TTY paths; JSON and NEVER-PROMPT matrices plus the live-open-pipe harness are present. |
+| 5 | Strengthen fixtures and policy tests | DONE | Baselines capture supplied/closed/pipe/TTY paths; JSON (including connect), NEVER-PROMPT, executable Windows console seam, and live-open-pipe harnesses are present. |
 
 ### Exercise-the-feature check
 

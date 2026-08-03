@@ -52,6 +52,15 @@ func TestJSONModeNeverPrompts(t *testing.T) {
 			promptText: "Add it as a subproject",
 			wantJSON:   true,
 		},
+		{
+			// This intentionally supplies none of connect's required values.
+			// Before the JSON route was explicit, a terminal entered the guided
+			// collector and blocked on its repository question.
+			name:       "connect missing values",
+			setup:      setupWorkspace,
+			args:       []string{"connect", "github", "--json"},
+			promptText: "Repository (owner/repo):",
+		},
 	}
 
 	for _, tc := range tests {

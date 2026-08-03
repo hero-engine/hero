@@ -18,13 +18,8 @@ type windowsSecretTerminal struct {
 }
 
 func openPlatformSecretTerminal() (secretTerminal, error) {
-	in, err := openWindowsConsoleFile("CONIN$", os.O_RDWR, 0)
+	in, out, err := openWindowsConsoleFiles(openWindowsConsoleFile)
 	if err != nil {
-		return nil, err
-	}
-	out, err := openWindowsConsoleFile("CONOUT$", os.O_RDWR, 0)
-	if err != nil {
-		in.Close()
 		return nil, err
 	}
 	return &windowsSecretTerminal{in: in, out: out}, nil

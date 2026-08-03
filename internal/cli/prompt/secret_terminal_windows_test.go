@@ -21,7 +21,7 @@ func TestOpenPlatformSecretTerminalUsesWindowsConsoleHandles(t *testing.T) {
 		t.Fatalf("openPlatformSecretTerminal: %v", err)
 	}
 	defer terminal.Close()
-	if len(names) != 2 || names[0] != "CONIN$" || names[1] != "CONOUT$" {
-		t.Errorf("opened %q, want [CONIN$ CONOUT$]", names)
+	if len(names) != 2 || names[0] != windowsConsoleInput || names[1] != windowsConsoleOutput {
+		t.Errorf("opened %q, want [%s %s]", names, windowsConsoleInput, windowsConsoleOutput)
 	}
 }

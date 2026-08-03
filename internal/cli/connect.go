@@ -95,7 +95,7 @@ func runConnect(cmd *cobra.Command, args []string) error {
 	}
 
 	trackerType := strings.ToLower(args[0])
-	if connectIntegrationID != "" || connectTokenStdin || connectProject != "" || connectBaseURL != "" || connectLocalOnly {
+	if connectJSON || connectIntegrationID != "" || connectTokenStdin || connectProject != "" || connectBaseURL != "" || connectLocalOnly {
 		return runConnectNonInteractive(cmd, projectRoot, creds, trackerType)
 	}
 	if !prompt.IsInputTTY(cmd.InOrStdin()) {

@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-03T20:30:52Z · 83 ready specs_
+_Generated: 2026-08-03T20:42:07Z · 83 ready specs_
 
 ## prompt-and-tty-contract-closure — "Prompt and TTY Contract Closure"
 _feature · delivering · horizon: now_
