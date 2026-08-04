@@ -91,12 +91,9 @@ func TestNeverPromptClassDoesNotPrompt(t *testing.T) {
 	}
 }
 
-// TestNoDeclarativeFieldDescriptor is AC-15.
-//
-// The declarative field-descriptor abstraction is explicitly out of scope for
-// this initiative: it is justified by exactly two consumers today, and a
-// general form engine is not. This guard fails loudly if one starts to appear,
-// rather than leaving it to a reviewer to notice.
+// TestNoDeclarativeFieldDescriptor guards the successor's explicit rejection
+// of a generic form or field-schema layer. Connect's private collector does not
+// justify a reusable abstraction.
 func TestNoDeclarativeFieldDescriptor(t *testing.T) {
 	banned := []string{"FormDefinition", "FieldSpec"}
 	// `Schema` is banned only as a type declaration — the word appears
@@ -203,33 +200,4 @@ func stripComments(src string) string {
 		}
 	}
 	return b.String()
-}
-
-// TestSanctionedBreaksAreDocumented is the second half of AC-14.
-//
-// The first half — a positive test per break — lives in
-// prompt_sanctioned_breaks_test.go. This half pins the user-facing half of the
-// obligation: a behavior change that breaks a scripted invocation is not done
-// when the code is done, it is done when an operator can find out why their
-// pipeline started failing.
-func TestSanctionedBreaksAreDocumented(t *testing.T) {
-	path := filepath.Join("..", "..", "docs", "release-notes", "breaking-changes.md")
-	notes, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatalf("read %s: %v", path, err)
-	}
-	text := string(notes)
-
-	for _, required := range []struct{ what, substring string }{
-		{"the users passwd command", "hero admin users passwd"},
-		{"the password refusal", "password from a pipe"},
-		{"the non-interactive alternative for passwords", "--password"},
-		{"the install project command", "hero install project"},
-		{"the target requirement", "--target"},
-		{"the previously-silent default", "opencode"},
-	} {
-		if !strings.Contains(text, required.substring) {
-			t.Errorf("release notes do not document %s (missing %q)", required.what, required.substring)
-		}
-	}
 }

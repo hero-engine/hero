@@ -262,9 +262,8 @@ func savedSkillTitle(t *testing.T, path string) string {
 	return ""
 }
 
-// TestSkillSaveBothFieldsSuppliedWritesTheFile is the fully-supplied case.
-// `skill save` has no flag form — the prompts ARE its interface — so "fully
-// supplied" means both answers arrive on the stream.
+// TestSkillSaveBothFieldsSuppliedWritesTheFile is the attached-terminal case.
+// `skill save` has no flag form, so its two answers must come from a terminal.
 //
 // $EDITOR is pointed at `true` so openEditor returns immediately instead of
 // launching vi against the test's terminal.
@@ -272,7 +271,7 @@ func TestSkillSaveBothFieldsSuppliedWritesTheFile(t *testing.T) {
 	env := newTestEnv(t)
 	t.Setenv("EDITOR", "true")
 
-	cmd, out := newStreamCmd("adopted-skill\nDeliberately Not The Slug\n")
+	cmd, out := newPTYStreamCmd(t, "adopted-skill\nDeliberately Not The Slug\n")
 	if err := runSkillSave(cmd, nil); err != nil {
 		t.Fatalf("runSkillSave: %v", err)
 	}
@@ -289,26 +288,34 @@ func TestSkillSaveBothFieldsSuppliedWritesTheFile(t *testing.T) {
 	}
 }
 
-// TestSkillSaveNonTTYFailsFastAndWritesNothing is the non-TTY missing case.
-//
-// It pins two things the baseline fixture also records: the exact error, and
-// that the name prompt is still printed. `skill save` has never had a TTY
-// gate, and adding one here would change what a piped invocation prints —
-// this child is allowed no such change.
+// TestSkillSaveNonTTYFailsFastAndWritesNothing pins that even a fully populated
+// pipe is not treated as an interactive form. The refusal is silent, consumes
+// no bytes, and leaves no file behind.
 func TestSkillSaveNonTTYFailsFastAndWritesNothing(t *testing.T) {
 	env := newTestEnv(t)
 	t.Setenv("EDITOR", "true")
 
-	cmd, out := newStreamCmd("")
+	in := strings.NewReader("adopted-skill\nDeliberately Not The Slug\n")
+	cmd := &cobra.Command{}
+	cmd.SetIn(in)
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
 	err := runSkillSave(cmd, nil)
 	if err == nil {
-		t.Fatal("runSkillSave succeeded on an empty stream")
+		t.Fatal("runSkillSave succeeded on a non-terminal stream")
 	}
-	if err.Error() != "reading name: EOF" {
-		t.Errorf("error = %q, want %q (byte-identical to the baseline fixture)", err, "reading name: EOF")
+	if err.Error() != "skill save requires an attached terminal" {
+		t.Errorf("error = %q, want the attached-terminal refusal", err)
 	}
-	if out.String() != "Skill name (slug, e.g. my-workflow): " {
-		t.Errorf("output = %q, want the name label and nothing more", out.String())
+	if out.String() != "" {
+		t.Errorf("non-TTY skill save prompted: %q", out.String())
+	}
+	remaining, readErr := io.ReadAll(in)
+	if readErr != nil {
+		t.Fatalf("read remaining input: %v", readErr)
+	}
+	if string(remaining) != "adopted-skill\nDeliberately Not The Slug\n" {
+		t.Errorf("non-TTY skill save consumed input: remaining = %q", remaining)
 	}
 	entries, err := os.ReadDir(filepath.Join(env.heroDir, "skills"))
 	if err != nil {
@@ -325,7 +332,7 @@ func TestSkillSaveEmptyNameRejected(t *testing.T) {
 	env := newTestEnv(t)
 	t.Setenv("EDITOR", "true")
 
-	cmd, _ := newStreamCmd("\nA Title\n")
+	cmd, _ := newPTYStreamCmd(t, "\nA Title\n")
 	err := runSkillSave(cmd, nil)
 	if err == nil || err.Error() != "skill name cannot be empty" {
 		t.Fatalf("error = %v, want %q", err, "skill name cannot be empty")
@@ -347,67 +354,6 @@ func TestSkillSaveTTYReadsBothFieldsFromTheTerminal(t *testing.T) {
 	path := filepath.Join(env.heroDir, "skills", "pty-skill.md")
 	if got := savedSkillTitle(t, path); got != "Typed At A Terminal" {
 		t.Errorf("saved title = %q, want %q", got, "Typed At A Terminal")
-	}
-}
-
-// --------------------------------------------------------------------------
-// end-of-stream parity for the reads that propagate their error
-// --------------------------------------------------------------------------
-//
-// These pin the contract restored in prompt_line.go. The shared package treats
-// trailing data with no final newline as a complete answer; every pre-package
-// site that DISCARDED its read error is unaffected by that, but the four that
-// act on it are not. Left unhandled, `printf 'myname\nMy Title' | hero skill
-// save` flipped from a non-zero exit that wrote nothing into a zero exit that
-// wrote a file — a failing invocation turning into a succeeding, disk-writing
-// one, in a child whose defining constraint is zero behaviour change.
-//
-// Nothing in the golden fixtures covers unterminated input, which is exactly
-// why it needed its own tests rather than a note.
-
-// TestSkillSaveUnterminatedTitleFailsAndWritesNothing is the case with teeth:
-// the name arrives cleanly and only the SECOND field is cut short, so the
-// command is already past the point where it knows what file to write.
-func TestSkillSaveUnterminatedTitleFailsAndWritesNothing(t *testing.T) {
-	env := newTestEnv(t)
-	t.Setenv("EDITOR", "true")
-
-	// No trailing newline after the title — a pipe that ended mid-answer.
-	cmd, _ := newStreamCmd("myname\nMy Title")
-	err := runSkillSave(cmd, nil)
-	if err == nil {
-		t.Fatal("runSkillSave accepted an unterminated title — a stream that ends mid-answer " +
-			"must not be promoted into a completed form")
-	}
-	if err.Error() != "reading title: EOF" {
-		t.Errorf("error = %q, want %q", err, "reading title: EOF")
-	}
-	if _, statErr := os.Stat(filepath.Join(env.heroDir, "skills", "myname.md")); statErr == nil {
-		t.Error("a failed `skill save` wrote myname.md — the invocation used to exit non-zero " +
-			"with nothing on disk")
-	}
-}
-
-// TestSkillSaveUnterminatedNameFailsAndWritesNothing is the same for the first
-// field.
-func TestSkillSaveUnterminatedNameFailsAndWritesNothing(t *testing.T) {
-	env := newTestEnv(t)
-	t.Setenv("EDITOR", "true")
-
-	cmd, _ := newStreamCmd("myname")
-	err := runSkillSave(cmd, nil)
-	if err == nil {
-		t.Fatal("runSkillSave accepted an unterminated name")
-	}
-	if err.Error() != "reading name: EOF" {
-		t.Errorf("error = %q, want %q", err, "reading name: EOF")
-	}
-	entries, readErr := os.ReadDir(filepath.Join(env.heroDir, "skills"))
-	if readErr != nil {
-		t.Fatalf("readdir skills: %v", readErr)
-	}
-	if len(entries) != 0 {
-		t.Errorf("a failed `skill save` left %d file(s) behind", len(entries))
 	}
 }
 
@@ -509,9 +455,8 @@ func (r *eofWithFinalRead) Read(p []byte) (int, error) {
 // 'delivering'" assertion would not have noticed.
 const handoffMenu = "Pick the next status for this spec:\n  1) delivering (default)\n  2) in-review\n> "
 
-// TestPromptNextStatusAnswersFromTheCommandStream is the fully-supplied case,
-// across every alias the site accepts.
-func TestPromptNextStatusAnswersFromTheCommandStream(t *testing.T) {
+// TestPromptNextStatusAnswersAtATerminal covers every alias the site accepts.
+func TestPromptNextStatusAnswersAtATerminal(t *testing.T) {
 	tests := []struct {
 		answer string
 		want   spec.Status
@@ -524,13 +469,10 @@ func TestPromptNextStatusAnswersFromTheCommandStream(t *testing.T) {
 		{"in-review\n", spec.StatusInReview},
 		{"review\n", spec.StatusInReview},
 		{"r\n", spec.StatusInReview},
-		// No trailing newline: a scanner treated this as an answer, and so
-		// must the migrated read.
-		{"2", spec.StatusInReview},
 	}
 	for _, tc := range tests {
 		t.Run(strings.TrimSpace(tc.answer)+"=>"+string(tc.want), func(t *testing.T) {
-			cmd, out := newStreamCmd(tc.answer)
+			cmd, out := newPTYStreamCmd(t, tc.answer)
 			got, err := promptNextStatus(cmd)
 			if err != nil {
 				t.Fatalf("promptNextStatus(%q): %v", tc.answer, err)
@@ -545,11 +487,14 @@ func TestPromptNextStatusAnswersFromTheCommandStream(t *testing.T) {
 	}
 }
 
-// TestPromptNextStatusNonTTYTakesTheDeliveringDefault is the non-TTY missing
-// case. End of stream is this site's documented non-interactive behaviour: it
-// defaults, with no error and no hang.
+// TestPromptNextStatusNonTTYTakesTheDeliveringDefault proves the non-terminal
+// path neither renders the menu nor consumes an answer waiting on the pipe.
 func TestPromptNextStatusNonTTYTakesTheDeliveringDefault(t *testing.T) {
-	cmd, out := newStreamCmd("")
+	in := strings.NewReader("2\n")
+	cmd := &cobra.Command{}
+	cmd.SetIn(in)
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
 	got, err := promptNextStatus(cmd)
 	if err != nil {
 		t.Fatalf("promptNextStatus on a closed stream: %v", err)
@@ -557,8 +502,15 @@ func TestPromptNextStatusNonTTYTakesTheDeliveringDefault(t *testing.T) {
 	if got != spec.StatusDelivering {
 		t.Errorf("closed stream => %q, want %q", got, spec.StatusDelivering)
 	}
-	if out.String() != handoffMenu {
-		t.Errorf("menu = %q, want %q", out.String(), handoffMenu)
+	if out.String() != "" {
+		t.Errorf("non-TTY menu = %q, want no output", out.String())
+	}
+	remaining, readErr := io.ReadAll(in)
+	if readErr != nil {
+		t.Fatalf("read remaining input: %v", readErr)
+	}
+	if string(remaining) != "2\n" {
+		t.Errorf("non-TTY path consumed input: remaining = %q", remaining)
 	}
 }
 
@@ -580,7 +532,7 @@ func TestPromptNextStatusTTYReadsTheTerminalAnswer(t *testing.T) {
 // TestPromptNextStatusRejectsUnknownAnswer pins the error text, which
 // prompt.Choice would also have replaced.
 func TestPromptNextStatusRejectsUnknownAnswer(t *testing.T) {
-	cmd, _ := newStreamCmd("3\n")
+	cmd, _ := newPTYStreamCmd(t, "3\n")
 	got, err := promptNextStatus(cmd)
 	if err == nil {
 		t.Fatalf("promptNextStatus accepted %q and returned %q", "3", got)

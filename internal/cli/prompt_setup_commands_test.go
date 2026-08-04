@@ -809,12 +809,9 @@ func TestTrustWithTargetSuppliedDoesNotPrompt(t *testing.T) {
 // TestSetupCommandsCallThePrimitivesDirectly is AC-8, and the standing guard
 // on the initiative's scope cap.
 //
-// connect's conditional-field descriptor (promptfield.go) is capped at two
-// consumers — connect itself and `skill run`. Every command adopted here has
-// one to three flat fields with no condition between them, so routing any of
-// them through collectFields would make it the third consumer and manufacture
-// the generalization pressure the cap exists to refuse. The cap survives only
-// while something checks it.
+// The scoped successor rejected a generic promptfield abstraction. Connect
+// owns its private collector; every other setup command has flat fields and
+// calls the prompt primitives directly.
 func TestSetupCommandsCallThePrimitivesDirectly(t *testing.T) {
 	adopters := []string{"install.go", "uninstall.go", "repos.go", "users.go", "trust.go"}
 	primitive := regexp.MustCompile(`prompt\.(Prompt|Choice|Secret|Confirm)\(`)
@@ -828,7 +825,7 @@ func TestSetupCommandsCallThePrimitivesDirectly(t *testing.T) {
 		for _, banned := range []string{"collectFields", "promptField", "fieldReader"} {
 			if strings.Contains(body, banned) {
 				t.Errorf("%s references %s — these commands have flat fields and must call the "+
-					"prompt primitives directly; the descriptor is capped at connect and `skill run`.", name, banned)
+					"prompt primitives directly; the generic descriptor is out of scope.", name, banned)
 			}
 		}
 	}

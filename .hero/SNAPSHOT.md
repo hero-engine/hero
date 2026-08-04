@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-08-04T05:29:28Z · projected from 508 source nodes_
+_Last refreshed: 2026-08-04T05:41:14Z · projected from 508 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | maturing | cmd/, internal/ | <1m ago | cli-successor-test-contract-reconciliation |
+| core | building | cmd/, internal/ | 1m ago | cli-successor-test-contract-reconciliation |
 | docs | maturing | web/docs/ | 9h ago | — |
 | domains/chat | maturing | domains/chat/ | 9h ago | — |
 | domains/engineering | maturing | domains/engineering/ | 9h ago | — |
@@ -59,11 +59,11 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Next up across surfaces
 
-1. **landing** — `hero-landing-page` (P0, delivering)
-2. **serve** — `agent-outposts` (medium, delivering)
-3. **serve** — `retrieval-contradiction-detection` (—, delivering)
-4. **(unassigned)** — `team-connect` (—, delivering)
-5. **(unassigned)** — `always-on-runtime` (P0, planning)
+1. **core** — `cli-successor-test-contract-reconciliation` (critical, delivering)
+2. **landing** — `hero-landing-page` (P0, delivering)
+3. **serve** — `agent-outposts` (medium, delivering)
+4. **serve** — `retrieval-contradiction-detection` (—, delivering)
+5. **(unassigned)** — `team-connect` (—, delivering)
 
 ## Open risks & blockers
 

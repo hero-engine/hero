@@ -6,7 +6,7 @@ exit: 1
 hero: minted peer_id for cross-repo peering (recorded in events.log)
 hero: 1 legacy install artifact(s) detected — Claude Code / Codex / Cursor will silently fail to load Hero skills and agents.
 hero: run 'hero upgrade' (or 'hero install <mode> .') to clean up.
-Error: interactive connect requires an attached terminal; supply --integration-id, --project, and --token-stdin for automation
+Error: repository is required
 Usage:
   hero connect [type] [flags]
   hero connect [command]
@@ -24,7 +24,7 @@ Flags:
       --list                    list saved connections
       --local-only              write the complete integration and selectors only to hero.local.json
       --no-verify               save without a provider network verification
-      --project string          project identifier (used with --remove)
+      --project string          project identifier (required for flag-driven connect; used with --remove)
       --remove string           remove connection for the given tracker type
       --role string             selection role (delivery, docs, roadmap, code-host) (default "delivery")
       --token-stdin             read token from protected standard input (never argv)
@@ -35,4 +35,4 @@ Global Flags:
 
 Use "hero connect [command] --help" for more information about a command.
 
-interactive connect requires an attached terminal; supply --integration-id, --project, and --token-stdin for automation
+repository is required

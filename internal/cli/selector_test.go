@@ -1697,13 +1697,8 @@ func TestSelectorArgsMissingMatchesItsOwnRule(t *testing.T) {
 // TestSelectorCommandsCallThePrimitivesDirectly is the standing guard on the
 // initiative's scope cap, extended to this child's files.
 //
-// promptfield.go's descriptor is capped at two consumers — `hero connect` and
-// `hero skill run`. A slug picker is a single value, so routing one through
-// collectFields would make it the third consumer and manufacture exactly the
-// generalization pressure the cap exists to refuse.
-//
-// skill.go is deliberately absent from the ban list: it IS sanctioned consumer
-// number two, for its --param loop, and the count is pinned separately below.
+// The scoped successor rejected a generic promptfield descriptor. A selector
+// picks one value and must call prompt.Choice directly.
 func TestSelectorCommandsCallThePrimitivesDirectly(t *testing.T) {
 	adopters := []string{"selector.go", "score.go", "verify.go", "spec_move.go", "supersede.go", "size.go", "handoff.go"}
 
@@ -1715,8 +1710,8 @@ func TestSelectorCommandsCallThePrimitivesDirectly(t *testing.T) {
 		body := stripComments(string(src))
 		for _, banned := range []string{"collectFields", "promptField", "fieldReader"} {
 			if strings.Contains(body, banned) {
-				t.Errorf("%s references %s — a SELECTOR picks one value; the descriptor is capped at "+
-					"connect and `skill run`, and a third consumer is the drift alarm, not the next step.", name, banned)
+				t.Errorf("%s references %s — a SELECTOR picks one value and must not introduce "+
+					"a generic field descriptor.", name, banned)
 			}
 		}
 	}
@@ -1725,12 +1720,10 @@ func TestSelectorCommandsCallThePrimitivesDirectly(t *testing.T) {
 	}
 }
 
-// TestFieldDescriptorStillHasExactlyTwoConsumers pins the cap by count.
-//
-// The ban list above can only catch a file someone adds to it. This catches the
-// case it cannot: a THIRD file anywhere in the package starting to call
-// collectFields.
-func TestFieldDescriptorStillHasExactlyTwoConsumers(t *testing.T) {
+// TestGenericFieldDescriptorRemainsAbsent pins the successor architecture:
+// connect owns collectConnectFields, skill prompts directly, and no reusable
+// promptfield.go surface exists.
+func TestGenericFieldDescriptorRemainsAbsent(t *testing.T) {
 	entries, err := os.ReadDir(".")
 	if err != nil {
 		t.Fatalf("readdir: %v", err)
@@ -1746,10 +1739,11 @@ func TestFieldDescriptorStillHasExactlyTwoConsumers(t *testing.T) {
 			consumers = append(consumers, name)
 		}
 	}
-	want := "connect.go,skill.go"
-	if strings.Join(consumers, ",") != want {
-		t.Errorf("collectFields consumers = %v, want exactly [%s]. The descriptor is capped at two; "+
-			"a third is the hard-stop drift alarm for this initiative.", consumers, want)
+	if len(consumers) != 0 {
+		t.Errorf("generic collectFields consumers = %v, want none; connect owns collectConnectFields and skill prompts directly", consumers)
+	}
+	if _, err := os.Stat("promptfield.go"); !os.IsNotExist(err) {
+		t.Errorf("promptfield.go must remain absent; stat error = %v", err)
 	}
 }
 

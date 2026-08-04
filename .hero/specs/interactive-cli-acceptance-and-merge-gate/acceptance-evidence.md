@@ -55,3 +55,28 @@ were written.
 | hero spec score interactive-cli-acceptance-and-merge-gate | PASS — 95/100, grade A. |
 | hero drift interactive-cli-acceptance-and-merge-gate | PASS — no drift detected. |
 | git diff --check | PASS. |
+
+## Correction — 2026-08-03
+
+The original full-suite PASS row above was not supported by the checked-in
+successor tree: stale cross-child prompt tests, four superseded connect golden
+fixtures, and a rejected generic-descriptor assertion were already present.
+`cli-successor-test-contract-reconciliation` preserves that historical row and
+corrects the merge evidence rather than silently rewriting it.
+
+After the test-contract-only repair, with no production `.go` change, the
+following commands exited zero outside the desktop network sandbox:
+
+| Command | Fresh result |
+|---|---|
+| go test -count=1 -timeout 10m ./internal/cli | PASS — `internal/cli` in 83.383s. |
+| go test -count=1 -timeout 10m ./... | PASS — full repository suite; `internal/cli` in 93.125s. |
+| go test -race -count=1 -timeout 10m ./internal/cli ./internal/cli/prompt | PASS — CLI in 137.457s; prompt in 1.284s. |
+| go vet ./... | PASS. |
+| go build ./... | PASS. |
+| GOOS=windows GOARCH=amd64 go build ./... | PASS. |
+| GOOS=windows GOARCH=amd64 go test -c ./internal/cli/prompt | PASS. |
+| git diff --check | PASS. |
+
+The initial sandbox failures in callback-listener tests were separately traced
+to denied loopback binds and are not counted as product evidence.

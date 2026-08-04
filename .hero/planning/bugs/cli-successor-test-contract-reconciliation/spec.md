@@ -2,7 +2,7 @@
 title: "Interactive CLI successor tests contradict the delivered contract"
 slug: cli-successor-test-contract-reconciliation
 type: bug
-status: planning
+status: delivering
 domain: engineering
 size: medium
 priority: critical
@@ -12,6 +12,7 @@ created: 2026-08-03
 tags: [cli, tests, prompts, merge-gate, regression]
 relates-to:
   - interactive-cli-input-scoped-completion
+delivery_method: manual
 ---
 
 # Interactive CLI successor tests contradict the delivered contract
@@ -491,8 +492,9 @@ contains an explicit correction backed by fresh command output.
    connect collection.
 4. Delete the donor-only release-note path assertion while retaining executable
    sanctioned-break and help coverage.
-5. Append a dated correction to the archived acceptance evidence and complete
-   this bug through the normal cold-audit and `hero spec verify` gates.
+5. Append a dated correction to the archived acceptance evidence. Use this
+   bug's normal cold-audit and `hero spec verify` workflow as the external
+   closing gate rather than preclaiming those operations in the implementation.
 
 ## Acceptance Criteria
 
@@ -617,11 +619,64 @@ record, and require a fresh full green run before merge.
 
 Reconciles stale interactive-CLI tests with the scoped successor contract; production prompt behavior stays unchanged.
 
-**Status:** planning — diagnosis complete; deterministic failures reproduced outside the sandbox.
+**Status:** delivering — test, fixture, architecture-guard, and evidence
+contracts are reconciled with no production change; the full validation matrix
+is green outside the network sandbox.
 
-**Pick up at:** update `prompt_adoption_test.go` terminal cases first, then refresh only the four connect fixtures and run the focused group.
+**Pick up at:** commission the independent cold delivery audit, then run the
+non-skipped Hero verification gate if it returns SHIP.
 
 → `.hero/planning/bugs/cli-successor-test-contract-reconciliation/spec.md`
 
 **Files:** `internal/cli/prompt_adoption_test.go`, `internal/cli/prompt_baseline_test.go`, `internal/cli/selector_test.go`, `internal/cli/prompt_policy_test.go`
 **Skip:** production rollback, generic promptfield resurrection, bulk golden regeneration, and stray-workspace hardening.
+
+## Completion Ledger
+
+Stack detected: Go. The repair changes tests, four generated golden fixtures,
+and archived evidence only; production `.go` files are unchanged.
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Real-terminal skill save prompts and persists both fields | DONE | `TestSkillSaveBothFieldsSuppliedWritesTheFile`, `TestSkillSaveEmptyNameRejected`, and `TestSkillSaveTTYReadsBothFieldsFromTheTerminal` use real PTYs and pass. |
+| 2 | Non-terminal skill save refuses silently without mutation | DONE | `TestSkillSaveNonTTYFailsFastAndWritesNothing` proves the exact refusal, no output, no input consumption, and no file. |
+| 3 | Terminal handoff aliases parse; non-TTY defaults silently | DONE | `TestPromptNextStatusAnswersAtATerminal`, the PTY error test, and the non-TTY no-read test pass. |
+| 4 | Four GitHub connect baselines match setup AC-3 | DONE | Only the named repo/secret closed/pipe fixtures were regenerated and pass focused byte comparisons. |
+| 5 | Generic descriptor remains absent | DONE | `TestGenericFieldDescriptorRemainsAbsent` requires zero `collectFields` consumers and no `promptfield.go`; direct selector/setup guards remain. |
+| 6 | No absent donor-only release-note dependency | DONE | The stale docs-path assertion is removed; sanctioned behavior and help tests remain and pass. |
+| 7 | Isolated CLI package passes | DONE | `go test -count=1 -timeout 10m ./internal/cli` passed outside the network sandbox in 83.383s. |
+| 8 | Full suite, race, vet, native, and Windows gates pass | DONE | Full suite, affected race suite, vet, native build, Windows build, and Windows prompt test compile all exited zero. |
+| 9 | Archived false PASS has an explicit correction | DONE | `acceptance-evidence.md` retains the historical row and appends the dated diagnosis plus fresh results. |
+| 10 | Production Go files remain unchanged | DONE | The repair touches `_test.go`, four text fixtures, Hero spec/evidence, and generated projections only. |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Reconcile skill-save and handoff terminal tests | DONE | PTY and non-TTY tests now exercise the delivered stream classes and focused tests pass. |
+| 2 | Refresh four superseded connect fixtures | DONE | Focused generation changed only the four named golden files; their complete diff was reviewed. |
+| 3 | Enforce zero generic descriptor | DONE | Stale two-consumer assertions/comments now encode private connect collection and direct primitives. |
+| 4 | Remove invalid donor release-note assertion | DONE | The nonexistent, excluded docs surface is no longer a test dependency; behavioral coverage remains. |
+| 5 | Append a dated correction to closing evidence | DONE | Archived evidence preserves the unsupported historical row and records the fresh green commands from this repair. |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised through real PTYs, non-terminal
+  streams with unread-byte assertions, focused subprocess goldens, the complete
+  CLI package, and the full repository suite.
+
+### Excellence Bar self-check
+
+- [x] The repair makes the merge evidence truthful without changing approved
+  production behavior, bulk-normalizing fixtures, or reviving rejected
+  abstractions.
+
+### Delivered artifacts
+
+- `internal/cli/prompt_adoption_test.go` — reconciled terminal/non-terminal contracts.
+- `internal/cli/prompt_policy_test.go` — removed the invalid donor-doc dependency.
+- `internal/cli/prompt_setup_commands_test.go` and `internal/cli/selector_test.go` — corrected architecture guards.
+- `internal/cli/testdata/prompt_baseline/connect_github_*` — four scoped golden updates.
+- `.hero/specs/interactive-cli-acceptance-and-merge-gate/acceptance-evidence.md` — explicit historical correction and fresh validation evidence.
