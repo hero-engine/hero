@@ -6,19 +6,18 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-04T05:48:49Z · 82 ready specs_
+_Generated: 2026-08-04T05:54:33Z · 82 ready specs_
 
 ## cli-successor-test-contract-reconciliation — "Interactive CLI successor tests contradict the delivered contract"
 _bug · delivering · horizon: now_
 
 Reconciles stale interactive-CLI tests with the scoped successor contract; production prompt behavior stays unchanged.
 
-**Status:** delivering — test, fixture, architecture-guard, and evidence
-contracts are reconciled with no production change; the full validation matrix
-is green outside the network sandbox.
+**Status:** delivering — the independent cold audit returned a clean SHIP at
+10/10 criteria; the full validation matrix is green with no production change.
 
-**Pick up at:** commission the independent cold delivery audit, then run the
-non-skipped Hero verification gate if it returns SHIP.
+**Pick up at:** run the non-skipped Hero verification gate, then archive the
+completed bug with the merge evidence.
 
 → `.hero/planning/bugs/cli-successor-test-contract-reconciliation/spec.md`
 

@@ -619,12 +619,11 @@ record, and require a fresh full green run before merge.
 
 Reconciles stale interactive-CLI tests with the scoped successor contract; production prompt behavior stays unchanged.
 
-**Status:** delivering — test, fixture, architecture-guard, and evidence
-contracts are reconciled with no production change; the full validation matrix
-is green outside the network sandbox.
+**Status:** delivering — the independent cold audit returned a clean SHIP at
+10/10 criteria; the full validation matrix is green with no production change.
 
-**Pick up at:** commission the independent cold delivery audit, then run the
-non-skipped Hero verification gate if it returns SHIP.
+**Pick up at:** run the non-skipped Hero verification gate, then archive the
+completed bug with the merge evidence.
 
 → `.hero/planning/bugs/cli-successor-test-contract-reconciliation/spec.md`
 
@@ -647,7 +646,7 @@ and archived evidence only; production `.go` files are unchanged.
 | 5 | Generic descriptor remains absent | DONE | `TestGenericFieldDescriptorRemainsAbsent` requires zero `collectFields` consumers and no `promptfield.go`; direct selector/setup guards remain. |
 | 6 | No absent donor-only release-note dependency | DONE | The stale docs-path assertion is removed; sanctioned behavior and help tests remain and pass. |
 | 7 | Isolated CLI package passes | DONE | `go test -count=1 -timeout 10m ./internal/cli` passed outside the network sandbox in 83.292s after the terminal EOF assertions were added. |
-| 8 | Full suite, race, vet, native, and Windows gates pass | DONE | Full suite, affected race suite, vet, native build, Windows build, and Windows prompt test compile all exited zero. |
+| 8 | Full suite, race, vet, native, and Windows gates pass | DONE | After `d67b06c`, the full suite passed with `internal/cli` in 131.405s; affected race, vet, native build, Windows build, and Windows prompt test compile also exited zero. |
 | 9 | Archived false PASS has an explicit correction | DONE | `acceptance-evidence.md` retains the historical row and appends the dated diagnosis plus fresh results. |
 | 10 | Production Go files remain unchanged | DONE | The repair touches `_test.go`, four text fixtures, Hero spec/evidence, and generated projections only. |
 
