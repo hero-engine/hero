@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-04T06:04:10Z
+updated: 2026-08-04T06:06:22Z
 repo: hero-engine/hero
 ---
 
@@ -8,28 +8,11 @@ repo: hero-engine/hero
 
 ## Session goal
 
-> Session opened with — Continuing CLI hardening work on the hero repo, branch design/interactive-cli-input
-> (50 commits, pushed, tree clean, do NOT merge to main without asking).
-> 
-> WHAT LANDED: the interactive-cli-input initiative (7 children) plus 8 standalone
-> bug fixes. hero init is now the one-command first run; connect/install/uninstall/
-> repos add/users add/trust prompt for missing input at a TTY; score/verify/spec
-> mo…
-
-_possibly stale — 23 commit(s) since, last set 12h 37m ago_
+> Finish the scoped interactive CLI successor safely: preserve useful fixes, prove compatibility, merge to main, and leave every validation gate green.
 
 ## Last user ask
 
-> Continuing CLI hardening work on the hero repo, branch design/interactive-cli-input
-> (50 commits, pushed, tree clean, do NOT merge to main without asking).
-> 
-> WHAT LANDED: the interactive-cli-input initiative (7 children) plus 8 standalone
-> bug fixes. hero init is now the one-command first run; connect/install/uninstall/
-> repos add/users add/trust prompt for missing input at a TTY; score/verify/spec
-> mo…
-> _possibly stale — 1 commit(s) since, last set 47m ago_
-
-_possibly stale — 22 commit(s) since, last set 11h 31m ago_
+> Get the audited interactive CLI successor merged to main, run the full test and cross-platform validation matrix, and push only when everything passes.
 
 ## Suggested next prompt
 
