@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-08-04T05:48:49Z · projected from 508 source nodes_
+_Last refreshed: 2026-08-04T05:57:39Z · projected from 508 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | <1m ago | cli-successor-test-contract-reconciliation |
+| core | maturing | cmd/, internal/ | 1m ago | hero-runner |
 | docs | maturing | web/docs/ | 10h ago | — |
 | domains/chat | maturing | domains/chat/ | 10h ago | — |
 | domains/engineering | maturing | domains/engineering/ | 10h ago | — |
@@ -54,16 +54,16 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Recently completed (last 14 days)
 
 - **(unassigned)** — interactive-cli-input-scoped-completion, interactive-cli-acceptance-and-merge-gate, mock-tracker-server, gitlab-tracker-support, cev2-verbatim-turn-counting, cev2-protect-compaction-summaries, code-host-cancel-after-apply-test-timing
-- **core** — interactive-setup-and-connect-closure, corpus-selector-closure, prompt-and-tty-contract-closure, mail-3ab437af53c66997e94a0268
+- **core** — cli-successor-test-contract-reconciliation, interactive-setup-and-connect-closure, corpus-selector-closure, prompt-and-tty-contract-closure
 - **serve** — code-host-authenticated-actor-mcp-schema-parity
 
 ## Next up across surfaces
 
-1. **core** — `cli-successor-test-contract-reconciliation` (critical, delivering)
-2. **landing** — `hero-landing-page` (P0, delivering)
-3. **serve** — `agent-outposts` (medium, delivering)
-4. **serve** — `retrieval-contradiction-detection` (—, delivering)
-5. **(unassigned)** — `team-connect` (—, delivering)
+1. **landing** — `hero-landing-page` (P0, delivering)
+2. **serve** — `agent-outposts` (medium, delivering)
+3. **serve** — `retrieval-contradiction-detection` (—, delivering)
+4. **(unassigned)** — `team-connect` (—, delivering)
+5. **(unassigned)** — `always-on-runtime` (P0, planning)
 
 ## Open risks & blockers
 

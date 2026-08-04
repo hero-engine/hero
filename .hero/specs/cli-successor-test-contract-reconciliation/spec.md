@@ -2,7 +2,7 @@
 title: "Interactive CLI successor tests contradict the delivered contract"
 slug: cli-successor-test-contract-reconciliation
 type: bug
-status: delivering
+status: completed
 domain: engineering
 size: medium
 priority: critical
@@ -13,6 +13,7 @@ tags: [cli, tests, prompts, merge-gate, regression]
 relates-to:
   - interactive-cli-input-scoped-completion
 delivery_method: manual
+completed_at: 2026-08-04T05:56:21Z
 ---
 
 # Interactive CLI successor tests contradict the delivered contract
@@ -619,13 +620,13 @@ record, and require a fresh full green run before merge.
 
 Reconciles stale interactive-CLI tests with the scoped successor contract; production prompt behavior stays unchanged.
 
-**Status:** delivering — the independent cold audit returned a clean SHIP at
-10/10 criteria; the full validation matrix is green with no production change.
+**Status:** completed — Hero verification passed every gate, including the
+non-skipped build and 103-package test run, with no production change.
 
-**Pick up at:** run the non-skipped Hero verification gate, then archive the
-completed bug with the merge evidence.
+**Pick up at:** no delivery work remains; this archived repair is the merge
+evidence for the scoped interactive CLI successor.
 
-→ `.hero/planning/bugs/cli-successor-test-contract-reconciliation/spec.md`
+→ `.hero/specs/cli-successor-test-contract-reconciliation/spec.md`
 
 **Files:** `internal/cli/prompt_adoption_test.go`, `internal/cli/prompt_baseline_test.go`, `internal/cli/selector_test.go`, `internal/cli/prompt_policy_test.go`
 **Skip:** production rollback, generic promptfield resurrection, bulk golden regeneration, and stray-workspace hardening.

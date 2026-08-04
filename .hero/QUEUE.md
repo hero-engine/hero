@@ -6,25 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-04T05:54:33Z · 82 ready specs_
-
-## cli-successor-test-contract-reconciliation — "Interactive CLI successor tests contradict the delivered contract"
-_bug · delivering · horizon: now_
-
-Reconciles stale interactive-CLI tests with the scoped successor contract; production prompt behavior stays unchanged.
-
-**Status:** delivering — the independent cold audit returned a clean SHIP at
-10/10 criteria; the full validation matrix is green with no production change.
-
-**Pick up at:** run the non-skipped Hero verification gate, then archive the
-completed bug with the merge evidence.
-
-→ `.hero/planning/bugs/cli-successor-test-contract-reconciliation/spec.md`
-
-**Files:** `internal/cli/prompt_adoption_test.go`, `internal/cli/prompt_baseline_test.go`, `internal/cli/selector_test.go`, `internal/cli/prompt_policy_test.go`
-**Skip:** production rollback, generic promptfield resurrection, bulk golden regeneration, and stray-workspace hardening.
-
----
+_Generated: 2026-08-04T05:57:40Z · 81 ready specs_
 
 ## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
 _feature · delivering · horizon: now_
