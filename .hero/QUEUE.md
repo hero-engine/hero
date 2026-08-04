@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-03T21:47:34Z · 81 ready specs_
+_Generated: 2026-08-04T05:29:28Z · 82 ready specs_
 
 ## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
 _feature · delivering · horizon: now_
@@ -26,6 +26,22 @@ _(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-inter
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-interactive-cli-scoped/.hero/planning/features/agent-outposts/spec.md)_
+
+---
+
+## cli-successor-test-contract-reconciliation — "Interactive CLI successor tests contradict the delivered contract"
+_bug · planning · horizon: now_
+
+Reconciles stale interactive-CLI tests with the scoped successor contract; production prompt behavior stays unchanged.
+
+**Status:** planning — diagnosis complete; deterministic failures reproduced outside the sandbox.
+
+**Pick up at:** update `prompt_adoption_test.go` terminal cases first, then refresh only the four connect fixtures and run the focused group.
+
+→ `.hero/planning/bugs/cli-successor-test-contract-reconciliation/spec.md`
+
+**Files:** `internal/cli/prompt_adoption_test.go`, `internal/cli/prompt_baseline_test.go`, `internal/cli/selector_test.go`, `internal/cli/prompt_policy_test.go`
+**Skip:** production rollback, generic promptfield resurrection, bulk golden regeneration, and stray-workspace hardening.
 
 ---
 

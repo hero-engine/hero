@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-03T21:47:34Z
+updated: 2026-08-04T05:29:28Z
 repo: hero-engine/hero
 ---
 
@@ -8,9 +8,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Deliver the final interactive CLI acceptance and merge gate with provenance, donor disposition, comprehensive evidence, and no production changes.
-
-_possibly stale — 2 commit(s) since, last set 20m ago_
+> Diagnose the flaky CLI suite before merging; determine whether stray /private/tmp/.hero workspace discovery is the root cause or whether additional shared-state leakage exists.
 
 ## Suggested next prompt
 
