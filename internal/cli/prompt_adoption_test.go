@@ -342,6 +342,41 @@ func TestSkillSaveEmptyNameRejected(t *testing.T) {
 	}
 }
 
+// TestSkillSaveUnterminatedTerminalInputWritesNothing preserves the strict
+// end-of-input contract on the only stream class skill save accepts. In
+// canonical terminal mode the first Ctrl-D flushes pending bytes without a
+// newline and the second reports EOF to the waiting read.
+func TestSkillSaveUnterminatedTerminalInputWritesNothing(t *testing.T) {
+	tests := []struct {
+		name    string
+		answers string
+		wantErr string
+	}{
+		{name: "name", answers: "myname\x04\x04", wantErr: "reading name: EOF"},
+		{name: "title", answers: "myname\nMy Title\x04\x04", wantErr: "reading title: EOF"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			env := newTestEnv(t)
+			t.Setenv("EDITOR", "true")
+
+			cmd, _ := newPTYStreamCmd(t, tc.answers)
+			err := runSkillSave(cmd, nil)
+			if err == nil || err.Error() != tc.wantErr {
+				t.Fatalf("error = %v, want %q", err, tc.wantErr)
+			}
+			entries, readErr := os.ReadDir(filepath.Join(env.heroDir, "skills"))
+			if readErr != nil {
+				t.Fatalf("readdir skills: %v", readErr)
+			}
+			if len(entries) != 0 {
+				t.Errorf("unterminated terminal input left %d skill file(s) behind", len(entries))
+			}
+		})
+	}
+}
+
 // TestSkillSaveTTYReadsBothFieldsFromTheTerminal is the TTY case.
 func TestSkillSaveTTYReadsBothFieldsFromTheTerminal(t *testing.T) {
 	env := newTestEnv(t)

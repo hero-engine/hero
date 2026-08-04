@@ -69,7 +69,8 @@ following commands exited zero outside the desktop network sandbox:
 
 | Command | Fresh result |
 |---|---|
-| go test -count=1 -timeout 10m ./internal/cli | PASS — `internal/cli` in 83.383s. |
+| go test -count=1 -timeout 10m ./internal/cli | PASS — `internal/cli` in 83.292s after adding the cold-audit-requested terminal EOF assertions. |
+| go test -count=1 -timeout 2m ./internal/cli -run '^(TestSkillSave\|TestPromptNextStatus)' | PASS — complete affected PTY/non-TTY regression group. |
 | go test -count=1 -timeout 10m ./... | PASS — full repository suite; `internal/cli` in 93.125s. |
 | go test -race -count=1 -timeout 10m ./internal/cli ./internal/cli/prompt | PASS — CLI in 137.457s; prompt in 1.284s. |
 | go vet ./... | PASS. |

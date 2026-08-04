@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-04T05:41:14Z · 82 ready specs_
+_Generated: 2026-08-04T05:48:49Z · 82 ready specs_
 
 ## cli-successor-test-contract-reconciliation — "Interactive CLI successor tests contradict the delivered contract"
 _bug · delivering · horizon: now_

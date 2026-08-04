@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-04T05:29:28Z
+updated: 2026-08-04T05:48:49Z
 repo: hero-engine/hero
 ---
 
@@ -9,6 +9,8 @@ repo: hero-engine/hero
 ## Last user ask
 
 > Diagnose the flaky CLI suite before merging; determine whether stray /private/tmp/.hero workspace discovery is the root cause or whether additional shared-state leakage exists.
+
+_possibly stale — 1 commit(s) since, last set 31m ago_
 
 ## Suggested next prompt
 

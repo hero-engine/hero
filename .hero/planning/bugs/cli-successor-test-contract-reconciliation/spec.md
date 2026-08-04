@@ -640,13 +640,13 @@ and archived evidence only; production `.go` files are unchanged.
 
 | # | Criterion (abbreviated) | Status | Note |
 |---|---|---|---|
-| 1 | Real-terminal skill save prompts and persists both fields | DONE | `TestSkillSaveBothFieldsSuppliedWritesTheFile`, `TestSkillSaveEmptyNameRejected`, and `TestSkillSaveTTYReadsBothFieldsFromTheTerminal` use real PTYs and pass. |
+| 1 | Real-terminal skill save prompts and persists both fields | DONE | The positive, empty-name, and unterminated-name/title cases use real PTYs; `TestSkillSaveUnterminatedTerminalInputWritesNothing` also proves terminal EOF leaves no file. |
 | 2 | Non-terminal skill save refuses silently without mutation | DONE | `TestSkillSaveNonTTYFailsFastAndWritesNothing` proves the exact refusal, no output, no input consumption, and no file. |
 | 3 | Terminal handoff aliases parse; non-TTY defaults silently | DONE | `TestPromptNextStatusAnswersAtATerminal`, the PTY error test, and the non-TTY no-read test pass. |
 | 4 | Four GitHub connect baselines match setup AC-3 | DONE | Only the named repo/secret closed/pipe fixtures were regenerated and pass focused byte comparisons. |
 | 5 | Generic descriptor remains absent | DONE | `TestGenericFieldDescriptorRemainsAbsent` requires zero `collectFields` consumers and no `promptfield.go`; direct selector/setup guards remain. |
 | 6 | No absent donor-only release-note dependency | DONE | The stale docs-path assertion is removed; sanctioned behavior and help tests remain and pass. |
-| 7 | Isolated CLI package passes | DONE | `go test -count=1 -timeout 10m ./internal/cli` passed outside the network sandbox in 83.383s. |
+| 7 | Isolated CLI package passes | DONE | `go test -count=1 -timeout 10m ./internal/cli` passed outside the network sandbox in 83.292s after the terminal EOF assertions were added. |
 | 8 | Full suite, race, vet, native, and Windows gates pass | DONE | Full suite, affected race suite, vet, native build, Windows build, and Windows prompt test compile all exited zero. |
 | 9 | Archived false PASS has an explicit correction | DONE | `acceptance-evidence.md` retains the historical row and appends the dated diagnosis plus fresh results. |
 | 10 | Production Go files remain unchanged | DONE | The repair touches `_test.go`, four text fixtures, Hero spec/evidence, and generated projections only. |
