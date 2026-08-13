@@ -101,6 +101,115 @@ func (s *MCPServer) toolHandlers() map[string]toolHandler {
 	return handlers
 }
 
+// toolSafetyClass is the read / mutate / analyze grouping that toolHandlers()
+// is already sectioned by, lifted from source-file comments into data so
+// tools/list can derive MCP annotations from it instead of hand-judging every
+// tool. It is kept adjacent to toolHandlers() and in the same section order.
+//
+// This map only needs the "regular" tools — the Attention/Mail/Focus and
+// code-host families already carry policy-derived annotations set at their
+// definition sites, and finalizeToolMetadata leaves those untouched. The
+// metadata drift guard asserts every advertised tool ends with annotations, so
+// a handler added here without a class below fails loudly.
+//
+// The grouping mirrors the existing toolHandlers() curation, EXCEPT that the
+// handler-section split is by a tool's PRIMARY action and several "read"/
+// "analyze" tools also write on some inputs (an action= parameter, archive:true,
+// etc.). Safety class must be "can this ever write," so every such conditional
+// writer is listed under mutate below with the write path noted. A cold audit
+// found three writers still misclassed as read (hero_active, hero_contract,
+// hero_snapshot) after a first pass fixed two (hero_plan, hero_error_pattern);
+// TestConditionalWritersAreNotReadOnly now pins all five so a regrouping that
+// flips one back to read fails loudly. This map is the safety source of truth.
+type toolSafetyClass int
+
+const (
+	safetyRead toolSafetyClass = iota
+	safetyMutate
+	safetyAnalyze
+)
+
+func toolSafetyClasses() map[string]toolSafetyClass {
+	return map[string]toolSafetyClass{
+		// read
+		"hero_context":   safetyRead,
+		"hero_search":    safetyRead,
+		"hero_status":    safetyRead,
+		"hero_check":     safetyRead,
+		"hero_nudge":     safetyRead,
+		"hero_list":      safetyRead,
+		"hero_queue":     safetyRead,
+		"hero_goal":      safetyRead,
+		"hero_kickoff":   safetyRead,
+		"hero_knowledge": safetyRead,
+		"hero_read_spec": safetyRead,
+		"hero_ask":       safetyRead,
+		"hero_anchor":    safetyRead,
+		"hero_pulse":     safetyRead,
+		"hero_impact":    safetyRead,
+		"hero_recap":     safetyRead,
+		"hero_coverage":  safetyRead,
+		"hero_ci":        safetyRead,
+		"hero_why":       safetyRead,
+		"hero_blocked":   safetyRead,
+		"hero_expand":    safetyRead,
+		"hero_feed":      safetyRead,
+
+		// mutate
+		"hero_tracker_get_issue":     safetyMutate,
+		"hero_tracker_search":        safetyMutate,
+		"hero_tracker_request":       safetyMutate,
+		"hero_tracker_cli":           safetyMutate,
+		"hero_tracker_load_evidence": safetyMutate,
+		"hero_event":                 safetyMutate,
+		"hero_claim":                 safetyMutate,
+		"hero_skill_run":             safetyMutate,
+		"hero_test_generate":         safetyMutate,
+		"hero_demo_record":           safetyMutate,
+		"hero_code":                  safetyMutate,
+		"hero_enrich":                safetyMutate,
+		"hero_synthesize":            safetyMutate,
+		// Conditional writers: these sit in the read/analyze handler sections
+		// of toolHandlers() because their PRIMARY action returns data, but each
+		// writes to disk on some inputs. Safety class is "can this ever write,"
+		// not "what does it usually do" — ReadOnlyHint=true would tell a client
+		// it is safe to call unprompted, and a conforming harness could then
+		// auto-invoke a state-writer. The handler-section grouping is by primary
+		// action and is NOT a safety oracle; every conditional writer must be
+		// listed here explicitly. (Covered by TestConditionalWritersAreNotReadOnly.)
+		"hero_plan":          safetyMutate, // action save → os.WriteFile(planPath)
+		"hero_error_pattern": safetyMutate, // → errpattern.SavePattern
+		"hero_contract":      safetyMutate, // action link → contract.Link writes tracker_id into the spec
+		"hero_active":        safetyMutate, // action register/unregister/prune → active.* writes .hero state
+		"hero_snapshot":      safetyMutate, // archive:true → snapshot archive os.WriteFile
+
+		// analyze
+		"hero_drift":     safetyAnalyze,
+		"hero_diagnose":  safetyAnalyze,
+		"hero_score":     safetyAnalyze,
+		"hero_velocity":  safetyAnalyze,
+		"hero_verify":    safetyAnalyze,
+		"hero_conflicts": safetyAnalyze,
+		"hero_sequence":  safetyAnalyze,
+		"hero_warnings":  safetyAnalyze,
+		"hero_insights":  safetyAnalyze,
+	}
+}
+
+// annotationsForSafety derives MCP annotations from a tool's safety class.
+// read/analyze → read-only and idempotent; mutate → not read-only. No regular
+// mutating Hero tool unconditionally deletes or overwrites workspace state, so
+// DestructiveHint is false across the set; a harness reads OpenWorldHint on the
+// policy-annotated tracker/code-host families for genuinely open-world reach.
+func annotationsForSafety(class toolSafetyClass) *ToolAnnotations {
+	switch class {
+	case safetyMutate:
+		return &ToolAnnotations{ReadOnlyHint: boolPointer(false), DestructiveHint: boolPointer(false)}
+	default: // safetyRead, safetyAnalyze
+		return &ToolAnnotations{ReadOnlyHint: boolPointer(true), DestructiveHint: boolPointer(false), IdempotentHint: boolPointer(true)}
+	}
+}
+
 // handleToolsCall validates the call, looks up the handler in the
 // dispatch table, and emits the result via finishToolCall. Adding a
 // tool no longer requires editing this function — see toolHandlers().

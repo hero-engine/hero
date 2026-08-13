@@ -191,7 +191,7 @@
       "kind": "mcp-tool-inventory",
       "purpose": "Model-facing Attention MCP tools generated from Hero's runtime registry",
       "media_type": "application/json",
-      "sha256": "ffd9b4acb4eb10c6b6c797e903b56948ce15e32ca5cccdc32463f1a021e29162",
+      "sha256": "a076d2168a9107a53d3a4c1f6909198342a31da1b078ca25fedadfe771c30e05",
       "schema": "schemas/mcp-tool-inventory.schema.json"
     },
     {

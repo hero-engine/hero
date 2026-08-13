@@ -59,7 +59,7 @@ absolute checkout path or an uncommitted working tree.
 
 - Bundle version: 1
 - Attention schema version: 1
-- Bundle manifest SHA-256: `bf5dc3524809dfdaf87935bbcfb28c0751f0493da7ed61eabb2fda3561598da5`
+- Bundle manifest SHA-256: `61dd0d42af00df76919b1b35a303f24da51afe25d72740799ae6ca5da81a42a8`
 - Runtime parity: HTTP and MCP contract discovery must advertise this exact
   bundle version and manifest hash.
 - Forward compatibility: Unknown additive fields and identifiers must remain inert but decodable; never grant executable behavior from an unknown value.

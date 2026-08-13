@@ -3,8 +3,10 @@
   "tools": [
     {
       "_meta": {
+        "hero.dev/category": "attention-and-mail",
         "hero.dev/consent": "advertised_action",
-        "hero.dev/effect": "advertised_action"
+        "hero.dev/effect": "advertised_action",
+        "hero.dev/tier": "deferrable"
       },
       "annotations": {
         "destructiveHint": false,
@@ -48,8 +50,10 @@
     },
     {
       "_meta": {
+        "hero.dev/category": "attention-and-mail",
         "hero.dev/consent": "none",
-        "hero.dev/effect": "read"
+        "hero.dev/effect": "read",
+        "hero.dev/tier": "deferrable"
       },
       "annotations": {
         "destructiveHint": false,
@@ -66,9 +70,11 @@
     },
     {
       "_meta": {
+        "hero.dev/category": "attention-and-mail",
         "hero.dev/consent": "none",
         "hero.dev/effect": "read",
-        "hero.dev/operation_id": "attention.snapshot"
+        "hero.dev/operation_id": "attention.snapshot",
+        "hero.dev/tier": "deferrable"
       },
       "annotations": {
         "destructiveHint": false,
@@ -91,9 +97,11 @@
     },
     {
       "_meta": {
+        "hero.dev/category": "attention-and-mail",
         "hero.dev/consent": "explicit_user",
         "hero.dev/effect": "commitment",
-        "hero.dev/operation_id": "focus.create"
+        "hero.dev/operation_id": "focus.create",
+        "hero.dev/tier": "deferrable"
       },
       "annotations": {
         "destructiveHint": false,
@@ -157,9 +165,11 @@
     },
     {
       "_meta": {
+        "hero.dev/category": "attention-and-mail",
         "hero.dev/consent": "none",
         "hero.dev/effect": "advisory_write",
-        "hero.dev/operation_id": "focus.suggest"
+        "hero.dev/operation_id": "focus.suggest",
+        "hero.dev/tier": "deferrable"
       },
       "annotations": {
         "destructiveHint": false,
@@ -214,8 +224,10 @@
     },
     {
       "_meta": {
+        "hero.dev/category": "attention-and-mail",
         "hero.dev/consent": "advertised_action",
-        "hero.dev/effect": "advertised_action"
+        "hero.dev/effect": "advertised_action",
+        "hero.dev/tier": "deferrable"
       },
       "annotations": {
         "destructiveHint": false,
@@ -256,9 +268,11 @@
     },
     {
       "_meta": {
+        "hero.dev/category": "attention-and-mail",
         "hero.dev/consent": "none",
         "hero.dev/effect": "read",
-        "hero.dev/operation_id": "focus.suggestions"
+        "hero.dev/operation_id": "focus.suggestions",
+        "hero.dev/tier": "deferrable"
       },
       "annotations": {
         "destructiveHint": false,
@@ -281,8 +295,10 @@
     },
     {
       "_meta": {
+        "hero.dev/category": "attention-and-mail",
         "hero.dev/consent": "advertised_action",
-        "hero.dev/effect": "advertised_action"
+        "hero.dev/effect": "advertised_action",
+        "hero.dev/tier": "deferrable"
       },
       "annotations": {
         "destructiveHint": false,
@@ -331,9 +347,11 @@
     },
     {
       "_meta": {
+        "hero.dev/category": "attention-and-mail",
         "hero.dev/consent": "none",
         "hero.dev/effect": "read",
-        "hero.dev/operation_id": "mail.list"
+        "hero.dev/operation_id": "mail.list",
+        "hero.dev/tier": "deferrable"
       },
       "annotations": {
         "destructiveHint": false,
@@ -356,9 +374,11 @@
     },
     {
       "_meta": {
+        "hero.dev/category": "attention-and-mail",
         "hero.dev/consent": "explicit_user",
         "hero.dev/effect": "external_write",
-        "hero.dev/operation_id": "mail.reply"
+        "hero.dev/operation_id": "mail.reply",
+        "hero.dev/tier": "deferrable"
       },
       "annotations": {
         "destructiveHint": false,
@@ -425,9 +445,11 @@
     },
     {
       "_meta": {
+        "hero.dev/category": "attention-and-mail",
         "hero.dev/consent": "explicit_user",
         "hero.dev/effect": "external_write",
-        "hero.dev/operation_id": "mail.send"
+        "hero.dev/operation_id": "mail.send",
+        "hero.dev/tier": "deferrable"
       },
       "annotations": {
         "destructiveHint": false,
@@ -495,9 +517,11 @@
     },
     {
       "_meta": {
+        "hero.dev/category": "attention-and-mail",
         "hero.dev/consent": "none",
         "hero.dev/effect": "read",
-        "hero.dev/operation_id": "mail.show"
+        "hero.dev/operation_id": "mail.show",
+        "hero.dev/tier": "deferrable"
       },
       "annotations": {
         "destructiveHint": false,

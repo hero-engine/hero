@@ -533,3 +533,5 @@
 {"ts":"2026-08-03T21:46:13.103325Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"interactive-cli-input-scoped-completion","message":"status -\u003e completed"}
 {"ts":"2026-08-04T05:56:23.19191Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"cli-successor-test-contract-reconciliation","message":"\"Interactive CLI successor tests contradict the delivered contract\""}
 {"ts":"2026-08-04T05:56:23.191994Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"cli-successor-test-contract-reconciliation","message":"status -\u003e completed"}
+{"ts":"2026-08-13T01:15:06.166267Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"mcp-tool-category-metadata","message":"\"MCP Tool Category \u0026 Tier Metadata — one label set every harness defers on\""}
+{"ts":"2026-08-13T01:15:06.166634Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"mcp-tool-category-metadata","message":"status -\u003e completed"}

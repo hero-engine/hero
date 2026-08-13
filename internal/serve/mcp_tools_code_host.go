@@ -46,6 +46,11 @@ func CodeHostToolDefinitions() []ToolDefinition {
 			Name:        codeHostMCPToolName(operation),
 			Description: codeHostMCPDescription(operation, policy),
 			InputSchema: codeHostMCPInputSchema(operation, policy),
+			// Code-host operations are credential-brokered calls against an
+			// external system; the whole family is external-integrations and
+			// deferrable. Declared here at the generated definition site.
+			Category: CategoryExternalIntegrations,
+			Tier:     TierDeferrable,
 			Annotations: &ToolAnnotations{
 				Title:           codehostbroker.Version + "." + string(operation),
 				ReadOnlyHint:    &readOnly,

@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-04T06:08:35Z · 81 ready specs_
+_Generated: 2026-08-13T01:15:43Z · 81 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -26,6 +26,31 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
+
+---
+
+## hero-marketing — "Hero Public Truth — Product Story and Documentation Repair"
+_initiative · planning · horizon: now_
+
+_Run opener — arm with `/drive hero-marketing`_
+
+Replace the stale launch-and-growth premise of this existing initiative with a bounded truth-repair program. Establish an evidence-backed claim baseline, rewrite positioning around reduced supervision through durable project intelligence, repair root and hosted documentation, prove continuity in a repeatable two-tool demonstration, refresh the landing message only after the proof exists, and close with production-aware drift guards.
+
+---
+
+## hero-public-truth-baseline — "Hero Public Truth Baseline"
+_feature · planning · horizon: now_
+
+Establishes what Hero may truthfully say and the executable replacements for known dangerous instructions.
+
+**Status:** planning — seeded by `../content-truth-audit.md`; the exhaustive inventory and correction packet remain to be produced.
+
+**Pick up at:** enumerate behavioral, architectural, compatibility, availability, version, count, and prerequisite claims across root docs, hosted docs, landing content, metadata, and generated guidance.
+
+→ `.hero/planning/initiatives/hero-marketing/hero-public-truth-baseline/spec.md`
+
+**Files:** `../content-truth-audit.md`, `README.md`, `GETTING-STARTED.md`, `MCP-SETUP.md`, `web/docs/src/`, `web/landing/site/`
+**Skip:** publishing corrections or changing product behavior.
 
 ---
 
@@ -744,18 +769,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## hero-marketing — Hero Marketing — Positioning, Distribution, and Launch
-_initiative · planning · horizon: someday_
-
-_Run opener — arm with `/drive hero-marketing`_
-
-Get Hero in front of the people who'd benefit most — engineering leads
-and AI-native developers — and convert curiosity into installs, installs
-into active workspaces, and active workspaces into teams. Build the
-positioning, surfaces, and content engine to do this repeatably.
-
----
-
 ## launch-readiness — Launch Readiness — Telemetry, Deploy, and Public-Use Polish
 _initiative · planning · horizon: someday_
 
@@ -773,13 +786,6 @@ dogfooding the polished core before we deploy.
 _feature · planning · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-telemetry/spec.md)_
-
----
-
-## hero-positioning — Hero Positioning — Narrative, ICP, Messaging, Comparison
-_feature · planning · horizon: someday_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-positioning/spec.md)_
 
 ---
 

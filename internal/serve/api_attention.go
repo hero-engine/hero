@@ -9,7 +9,7 @@ import (
 
 const attentionFixtureManifestSHA256 = "059b5418cc2005d506b0ca718df1ed25109ed022e385c7b16bca3e3c4a0d8e07"
 const attentionBundleVersion = 1
-const attentionBundleManifestSHA256 = "bf5dc3524809dfdaf87935bbcfb28c0751f0493da7ed61eabb2fda3561598da5"
+const attentionBundleManifestSHA256 = "61dd0d42af00df76919b1b35a303f24da51afe25d72740799ae6ca5da81a42a8"
 const attentionBundlePath = "contracts/attention/conformance/v1"
 
 func (a *API) handleAttentionSnapshot(w http.ResponseWriter, r *http.Request) {
