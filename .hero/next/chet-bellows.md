@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-13T01:08:15Z
+updated: 2026-08-14T14:40:53Z
 repo: hero-engine/hero
 ---
 
@@ -10,7 +10,7 @@ repo: hero-engine/hero
 
 > Finish the scoped interactive CLI successor safely: preserve useful fixes, prove compatibility, merge to main, and leave every validation gate green.
 
-_possibly stale — 1 commit(s) since, last set 8d 19h ago_
+_possibly stale — 2 commit(s) since, last set 10d 8h ago_
 
 ## Last user ask
 

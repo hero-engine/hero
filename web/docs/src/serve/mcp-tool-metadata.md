@@ -32,6 +32,13 @@ Hero so they never collide with another server's metadata:
 - `hero.dev/category` — the functional family (for grouping and lookup).
 - `hero.dev/tier` — Hero's advisory recommendation on eager-vs-deferrable.
 
+> **Namespace note.** `hero.dev/` is Hero's current `_meta` namespace (it is
+> also where the Attention v1 contract emits `hero.dev/effect` / `hero.dev/consent`).
+> It is a convention for collision-avoidance, not a claim to an owned domain, and
+> the prefix may be renamed to an owned namespace in a future contract version —
+> a versioned change with migration, not a silent break. Read the keys through a
+> single constant so a future rename is a one-line change on your side.
+
 ## `hero.dev/tier` — what to broadcast, what to defer
 
 | Value | Meaning |

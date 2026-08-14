@@ -175,6 +175,15 @@ func ToolTierValid(tier ToolTier) bool { return tier == TierEager || tier == Tie
 
 // Namespaced _meta keys for the progressive-disclosure facets. Namespaced per
 // MCP convention so they never collide with another server's _meta.
+//
+// The hero.dev/ prefix matches what the Attention v1 contract already emits
+// (hero.dev/effect, hero.dev/consent). It is a collision-avoidance convention,
+// not a claim to an owned domain — hero.dev is not currently a domain the
+// project controls. The prefix is provisional and intended to be renamed to an
+// owned namespace in a future contract version (a versioned change across this
+// and the attention bundle, with migration — not a silent break). Keep call
+// sites referencing these constants, never the literal string, so the rename is
+// a one-line change here.
 const (
 	MetaKeyCategory = "hero.dev/category"
 	MetaKeyTier     = "hero.dev/tier"
