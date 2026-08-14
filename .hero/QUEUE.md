@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-14T15:20:24Z · 81 ready specs_
+_Generated: 2026-08-14T16:02:19Z · 80 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -29,12 +29,10 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## hero-marketing — "Hero Public Truth — Product Story and Documentation Repair"
-_initiative · planning · horizon: now_
+## tracker-semantic-priority-field-mapping — "\"Jira custom field cannot be configured as canonical Hero priority\""
+_bug · planning · horizon: now_
 
-_Run opener — arm with `/drive hero-marketing`_
-
-Replace the stale launch-and-growth premise of this existing initiative with a bounded truth-repair program. Establish an evidence-backed claim baseline, rewrite positioning around reduced supervision through durable project intelligence, repair root and hosted documentation, prove continuity in a repeatable two-tool demonstration, refresh the landing message only after the proof exists, and close with production-aware drift guards.
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/tracker-semantic-priority-field-mapping/spec.md)_
 
 ---
 
@@ -54,27 +52,12 @@ Establishes what Hero may truthfully say and the executable replacements for kno
 
 ---
 
-## satellite-corpus-integration — "Satellite Corpus Integration — Scope as a First-Class Facet"
-_feature · planning · horizon: now_
-
-Resume by reading `.hero/planning/features/satellite-corpus-integration/spec.md` for the full design, then continue Phase 2 (index + filter surfaces) — Phase 1 (slash-command scope injection) and Phase 3 (migration execution) are also pending. The parent spec [monorepo-satellite-installs](../monorepo-satellite-installs/spec.md) shipped in commits f279f42 and 48a379c. Phase 2 is the highest-leverage next step because it's what makes scope queryable from the existing read surfaces (`list`, `search`, `recap`, `feed`).
-
----
-
-## single-source-install — Single-Source Install — One Canonical Tree, Every Harness Reads It
+## hero-marketing — "Hero Public Truth — Product Story and Documentation Repair"
 _initiative · planning · horizon: now_
 
-_Run opener — arm with `/drive single-source-install`_
+_Run opener — arm with `/drive hero-marketing`_
 
-A Hero-installed project has **one** canonical content tree in `.hero/`,
-**one** root instruction file at `AGENTS.md`, and zero duplicated content
-across harness directories. Every supported harness reads from the
-canonical via config-redirect, symlink, or rendered-copy fallback,
-chosen automatically based on what the harness supports and what the
-host filesystem allows. `hero install` and `hero upgrade` are the only
-operations that touch harness directories, and both are idempotent,
-non-destructive of user content, and capable of cleaning up legacy
-messy installs.
+Replace the stale launch-and-growth premise of this existing initiative with a bounded truth-repair program. Establish an evidence-backed claim baseline, rewrite positioning around reduced supervision through durable project intelligence, repair root and hosted documentation, prove continuity in a repeatable two-tool demonstration, refresh the landing message only after the proof exists, and close with production-aware drift guards.
 
 ---
 
@@ -82,6 +65,13 @@ messy installs.
 _initiative · planning · horizon: now_
 
 _(no `## Goal` run opener — hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-surface-architecture/spec.md)_
+
+---
+
+## satellite-corpus-integration — "Satellite Corpus Integration — Scope as a First-Class Facet"
+_feature · planning · horizon: now_
+
+Resume by reading `.hero/planning/features/satellite-corpus-integration/spec.md` for the full design, then continue Phase 2 (index + filter surfaces) — Phase 1 (slash-command scope injection) and Phase 3 (migration execution) are also pending. The parent spec [monorepo-satellite-installs](../monorepo-satellite-installs/spec.md) shipped in commits f279f42 and 48a379c. Phase 2 is the highest-leverage next step because it's what makes scope queryable from the existing read surfaces (`list`, `search`, `recap`, `feed`).
 
 ---
 
@@ -149,13 +139,6 @@ the shared `.hero/knowledge/` convention rendered into AGENTS.md (+ CLAUDE.md fo
 Claude); make AGENTS.md guidance self-contained since only Claude has an
 end-of-session hook. Decisions locked: retroactive + threshold-gated (NOT
 capture-then-edit), capture auto / promote manual.
-
----
-
-## tracker-semantic-priority-field-mapping — "\"Jira custom field cannot be configured as canonical Hero priority\""
-_bug · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/tracker-semantic-priority-field-mapping/spec.md)_
 
 ---
 

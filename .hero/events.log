@@ -535,3 +535,5 @@
 {"ts":"2026-08-04T05:56:23.191994Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"cli-successor-test-contract-reconciliation","message":"status -\u003e completed"}
 {"ts":"2026-08-13T01:15:06.166267Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"mcp-tool-category-metadata","message":"\"MCP Tool Category \u0026 Tier Metadata — one label set every harness defers on\""}
 {"ts":"2026-08-13T01:15:06.166634Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"mcp-tool-category-metadata","message":"status -\u003e completed"}
+{"ts":"2026-08-14T15:59:41.697643Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"single-source-install","message":"Single-Source Install — One Canonical Tree, Every Harness Reads It"}
+{"ts":"2026-08-14T15:59:41.697734Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"single-source-install","message":"status -\u003e completed"}

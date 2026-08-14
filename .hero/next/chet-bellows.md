@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-14T15:20:23Z
+updated: 2026-08-14T16:01:48Z
 repo: hero-engine/hero
 ---
 
@@ -8,29 +8,15 @@ repo: hero-engine/hero
 
 ## Session goal
 
-> Finish the scoped interactive CLI successor safely: preserve useful fixes, prove compatibility, merge to main, and leave every validation gate green.
-
-_possibly stale — 3 commit(s) since, last set 10d 9h ago_
+> Land the MCP tool refactor (category+tier metadata on tools/list) so codex can defer tool schemas and work as a provider. DELIVERED on main (f2626dc). The interactive-CLI-input work on design/interactive-cli-input is superseded by codex's successor repair on main — do not revive or merge that branch.
 
 ## Last user ask
 
-> Continuing CLI hardening work on the hero repo, branch design/interactive-cli-input
-> (50 commits, pushed, tree clean, do NOT merge to main without asking).
-> 
-> WHAT LANDED: the interactive-cli-input initiative (7 children) plus 8 standalone
-> bug fixes. hero init is now the one-command first run; connect/install/uninstall/
-> repos add/users add/trust prompt for missing input at a TTY; score/verify/spec
-> mo…
-
-_possibly stale — 1 commit(s) since, last set 39m ago_
+> All I wanted was the MCP tool refactor so codex works as a provider — done on main. Getting rid of the bad CLI stuff (the superseded design/interactive-cli-input refactor); codex owns the branch reconciliation. Do NOT chase the design-branch CLI queue.
 
 ## Suggested next prompt
 
-> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
-
-_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
-
-_Source: auto-derived from open feature — `hero next suggest "..."` to override._
+> Hand the design/interactive-cli-input cleanup to codex; pick next real work on main.
 
 ## Recent reflections
 
