@@ -49,10 +49,25 @@ user-state writer.
   lead's environment runs the full suite clean: 103 packages, 0 failures.)
 </AUDIT_HIGHLIGHTS>
 
-## Follow-up recorded
+## Follow-up recorded — ADDRESSED
 
-The safety guard's allowlist limitation is a real but low-priority hardening:
-today it regresses-proof the five known conditional-writers but cannot catch a
-future unlisted one. A structural replacement (probe each read-classed handler
-for a write path, or derive the writer set) is the durable fix. Out of scope for
-this delivery; surfaced to the user.
+The residual (the writer guard was a pinned allowlist that couldn't catch a
+future unlisted writer) has been closed by a structural guard:
+`TestReadClassedToolsDoNotReachWritePrimitives`
+(`internal/serve/mcp_tool_safety_reachability_test.go`). It builds a
+name-resolved call graph over the whole first-party module and asserts no
+read/analyze-classed tool transitively reaches `os.WriteFile`/`Create`/
+`Remove`/`RemoveAll`/`Rename`. Every user-state write funnels through those
+primitives; the index/graph cache uses `MkdirAll`+SQLite and never trips them,
+so there are no cache false-positives (31 read/analyze tools verified clean).
+
+Falsified against real code: reverting `hero_contract`, `hero_plan`,
+`hero_snapshot`, `hero_active` to `safetyRead` each turns it RED, naming the
+write path — e.g. `serve.toolActive -> active.Register -> active.Save ->
+os.WriteFile` (proving cross-package, multi-hop delegation detection, the exact
+thing body-grep missed). Reverts restore green.
+
+Residual limitation (documented in the test): a write reached through a method
+on a non-receiver type is not resolved without full type info, so the pinned
+`TestConditionalWritersAreNotReadOnly` is kept as a belt-and-suspenders net. No
+such path exists in the current tree.

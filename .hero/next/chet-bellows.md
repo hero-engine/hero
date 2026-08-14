@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-14T14:40:53Z
+updated: 2026-08-14T15:20:23Z
 repo: hero-engine/hero
 ---
 
@@ -10,7 +10,7 @@ repo: hero-engine/hero
 
 > Finish the scoped interactive CLI successor safely: preserve useful fixes, prove compatibility, merge to main, and leave every validation gate green.
 
-_possibly stale — 2 commit(s) since, last set 10d 8h ago_
+_possibly stale — 3 commit(s) since, last set 10d 9h ago_
 
 ## Last user ask
 
@@ -21,6 +21,8 @@ _possibly stale — 2 commit(s) since, last set 10d 8h ago_
 > bug fixes. hero init is now the one-command first run; connect/install/uninstall/
 > repos add/users add/trust prompt for missing input at a TTY; score/verify/spec
 > mo…
+
+_possibly stale — 1 commit(s) since, last set 39m ago_
 
 ## Suggested next prompt
 
