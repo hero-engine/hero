@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -36,6 +36,30 @@ jobs:
           # the private source repo and can't push cross-repo.
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           TAP_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Stage Hero Code binary artifact
+        run: |
+          set -euo pipefail
+          candidate_list="$(find dist -type f -path '*/hero_darwin_arm64_*/hero' -print)"
+          candidate_count="$(printf '%s\n' "$candidate_list" | sed '/^$/d' | wc -l | tr -d ' ')"
+          if [ "$candidate_count" -ne 1 ]; then
+            echo "expected exactly one Darwin ARM64 hero executable, found $candidate_count" >&2
+            printf '%s\n' "$candidate_list" >&2
+            exit 1
+          fi
+          candidate="$(printf '%s\n' "$candidate_list" | sed -n '1p')"
+          mkdir -p release-artifacts/hero-darwin-arm64
+          install -m 0755 "$candidate" release-artifacts/hero-darwin-arm64/hero
+          sha256sum release-artifacts/hero-darwin-arm64/hero \
+            > release-artifacts/hero-darwin-arm64/hero.sha256
+
+      - name: Upload Hero Code binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hero-darwin-arm64
+          path: release-artifacts/hero-darwin-arm64/
+          if-no-files-found: error
+          retention-days: 90
 
       - name: Trigger docs deploy to refresh the releases page
         # Only fires when docs.yml's own deploy gate is on — a tag push

@@ -537,3 +537,5 @@
 {"ts":"2026-08-13T01:15:06.166634Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"mcp-tool-category-metadata","message":"status -\u003e completed"}
 {"ts":"2026-08-14T15:59:41.697643Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"single-source-install","message":"Single-Source Install — One Canonical Tree, Every Harness Reads It"}
 {"ts":"2026-08-14T15:59:41.697734Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"single-source-install","message":"status -\u003e completed"}
+{"ts":"2026-08-14T16:29:37.11837Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-desktop-release-artifact-contract","message":"\"Hero release cannot supply a version-matched binary artifact to Hero Desktop\""}
+{"ts":"2026-08-14T16:29:37.118485Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-desktop-release-artifact-contract","message":"status -\u003e completed"}

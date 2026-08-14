@@ -2,13 +2,13 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-08-14T16:01:48Z · projected from 625 source nodes_
+_Last refreshed: 2026-08-14T16:31:37Z · projected from 626 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | maturing | cmd/, internal/ | 30m ago | hero-runner |
+| core | maturing | cmd/, internal/ | 2m ago | hero-runner |
 | docs | maturing | web/docs/ | 32d ago | — |
 | domains/chat | maturing | domains/chat/ | 26d ago | — |
 | domains/engineering | maturing | domains/engineering/ | 21d ago | — |
@@ -16,7 +16,7 @@ _Last refreshed: 2026-08-14T16:01:48Z · projected from 625 source nodes_
 | domains/sales | maturing | domains/sales/ | 36d ago | — |
 | landing | building | web/landing/ | 33d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 30m ago | agent-outposts |
+| serve | building | internal/serve/ | 1h ago | agent-outposts |
 | (unassigned) | — | — | — | 245 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -53,7 +53,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Recently completed (last 14 days)
 
 - **(unassigned)** — single-source-install, interactive-cli-input-scoped-completion, interactive-cli-acceptance-and-merge-gate
-- **core** — cli-successor-test-contract-reconciliation, interactive-setup-and-connect-closure, corpus-selector-closure, prompt-and-tty-contract-closure
+- **core** — hero-desktop-release-artifact-contract, cli-successor-test-contract-reconciliation, interactive-setup-and-connect-closure, corpus-selector-closure, prompt-and-tty-contract-closure
 - **serve** — mcp-tool-category-metadata
 
 ## Next up across surfaces
@@ -74,6 +74,6 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 213/458 (46%)
-- Projection generation: 1ms · Source nodes: 625
+- Specs covered: 214/459 (46%)
+- Projection generation: 1ms · Source nodes: 626
 

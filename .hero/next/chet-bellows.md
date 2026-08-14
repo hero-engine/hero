@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-14T16:01:48Z
+updated: 2026-08-14T16:31:37Z
 repo: hero-engine/hero
 ---
 
@@ -8,15 +8,15 @@ repo: hero-engine/hero
 
 ## Session goal
 
-> Land the MCP tool refactor (category+tier metadata on tools/list) so codex can defer tool schemas and work as a provider. DELIVERED on main (f2626dc). The interactive-CLI-input work on design/interactive-cli-input is superseded by codex's successor repair on main — do not revive or merge that branch.
+> Ship a verified Hero release containing the completed MCP tool metadata contract for hero-code while keeping the superseded interactive CLI donor branch evidence-only.
 
 ## Last user ask
 
-> All I wanted was the MCP tool refactor so codex works as a provider — done on main. Getting rid of the bad CLI stuff (the superseded design/interactive-cli-input refactor); codex owns the branch reconciliation. Do NOT chase the design-branch CLI queue.
+> Fix the Hero release artifact/version contract, verify it cold, then publish v0.32.0 so Hero Code can seal a build with the MCP provider metadata.
 
 ## Suggested next prompt
 
-> Hand the design/interactive-cli-input cleanup to codex; pick next real work on main.
+> After the release gates pass, tag and publish the Hero build consumed by hero-code; never merge or blindly cherry-pick design/interactive-cli-input.
 
 ## Recent reflections
 
