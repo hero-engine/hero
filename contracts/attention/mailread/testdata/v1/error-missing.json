@@ -1,0 +1,4 @@
+{
+  "schema_version": 1,
+  "error": {"code": "missing", "message": "message does not exist in the registered recipient project", "field": "message_id"}
+}

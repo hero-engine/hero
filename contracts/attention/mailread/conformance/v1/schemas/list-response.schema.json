@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/mailread/v1/list-response.schema.json",
+  "title": "MailReadListResponse",
+  "type": "object",
+  "required": ["schema_version", "total_count", "unread_count", "items"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "revision": {"type": "string", "minLength": 1},
+    "total_count": {"type": "integer", "minimum": 0},
+    "unread_count": {"type": "integer", "minimum": 0},
+    "items": {"type": "array", "items": {"$ref": "#/$defs/summary"}},
+    "page": {"$ref": "#/$defs/page"},
+    "next_cursor": {"type": "string", "minLength": 1, "maxLength": 4096},
+    "error": {"$ref": "#/$defs/error"}
+  },
+  "anyOf": [
+    {"required": ["revision", "page"]},
+    {"required": ["error"]}
+  ],
+  "$defs": {
+    "project": {
+      "type": "object",
+      "required": ["peer_id", "display_name"],
+      "properties": {
+        "peer_id": {"type": "string", "minLength": 1},
+        "registry_slug": {"type": "string", "minLength": 1},
+        "display_name": {"type": "string", "minLength": 1}
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "required": ["slug", "type", "status"],
+      "properties": {
+        "slug": {"type": "string", "minLength": 1},
+        "type": {"type": "string", "minLength": 1},
+        "status": {"type": "string"}
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "required": ["revision", "unread"],
+      "properties": {
+        "revision": {"type": "integer", "minimum": 0},
+        "unread": {"type": "boolean"},
+        "read_at": {"type": "string", "format": "date-time", "x-utcRFC3339Nano": true},
+        "acknowledged_at": {"type": "string", "format": "date-time", "x-utcRFC3339Nano": true},
+        "dismissed_at": {"type": "string", "format": "date-time", "x-utcRFC3339Nano": true},
+        "promoted_artifact": {"$ref": "#/$defs/artifact"},
+        "focus_item_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "action": {
+      "type": "object",
+      "required": ["id", "label", "required_row_revision", "requires_idempotency"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1},
+        "style": {"type": "string"},
+        "confirmation": {"type": "string"},
+        "operation_id": {"type": "string"},
+        "effect": {"type": "string"},
+        "consent": {"type": "string"},
+        "input_schema": {"type": "object"},
+        "required_row_revision": {"type": "integer", "minimum": 0},
+        "requires_idempotency": {"type": "boolean"}
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["project", "message_id", "sender", "recipient", "subject", "created_at", "activity_at", "unread", "receipt", "actions"],
+      "properties": {
+        "project": {"$ref": "#/$defs/project"},
+        "message_id": {"type": "string", "minLength": 1},
+        "thread_id": {"type": "string", "minLength": 1},
+        "in_reply_to": {"type": "string", "minLength": 1},
+        "sender": {"$ref": "#/$defs/project"},
+        "recipient": {"$ref": "#/$defs/project"},
+        "subject": {"type": "string", "maxLength": 200},
+        "kind": {"type": "string", "maxLength": 64},
+        "created_at": {"type": "string", "format": "date-time", "x-utcRFC3339Nano": true},
+        "activity_at": {"type": "string", "format": "date-time", "x-utcRFC3339Nano": true},
+        "unread": {"type": "boolean"},
+        "receipt": {"$ref": "#/$defs/receipt"},
+        "actions": {"type": "array", "items": {"$ref": "#/$defs/action"}}
+      }
+    },
+    "page": {
+      "type": "object",
+      "required": ["limit", "returned", "has_more"],
+      "properties": {
+        "limit": {"type": "integer", "minimum": 1, "maximum": 100},
+        "returned": {"type": "integer", "minimum": 0},
+        "has_more": {"type": "boolean"}
+      }
+    },
+    "error": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {"enum": ["validation", "stale", "unsupported", "missing", "incompatible_version", "unavailable", "idempotency_conflict", "permission"]},
+        "message": {"type": "string", "minLength": 1},
+        "field": {"type": "string"},
+        "details": {"type": "object"}
+      }
+    }
+  }
+}

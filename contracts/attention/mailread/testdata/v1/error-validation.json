@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "total_count": 0,
+  "unread_count": 0,
+  "items": [],
+  "error": {"code": "validation", "message": "project_peer_id is required when thread_id is set", "field": "project_peer_id"}
+}

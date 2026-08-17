@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "fixtures": [
+    {
+      "path": "action-failure.json",
+      "purpose": "structured stale action failure",
+      "schema": "action-response.schema.json",
+      "sha256": "dcdda35af5a27fc82551710d1002fcd6968e155f564c05e218953ebf74e4b807"
+    },
+    {
+      "path": "action-request.json",
+      "purpose": "canonical typed action request",
+      "schema": "action-request.schema.json",
+      "sha256": "6b9404b94d8189b2d0a332fbc018483966eab1ccd1a331cc83bff8d8edad688c"
+    },
+    {
+      "path": "action-success.json",
+      "purpose": "successful authoritative action result",
+      "schema": "action-response.schema.json",
+      "sha256": "6aed24e0af1b7ee8a66f3ac0f30ed72e64048e9d2f583dda3b214abe689c6c39"
+    },
+    {
+      "path": "canonical-actions.json",
+      "purpose": "all canonical Mail-read action descriptors",
+      "schema": "list-response.schema.json",
+      "sha256": "8969c17db27f369998c5d9899521f6cd9a7772d5d6233af67c0232242e8d6623"
+    },
+    {
+      "path": "cross-project.json",
+      "purpose": "duplicate message and thread IDs across projects with equal activity timestamps",
+      "schema": "list-response.schema.json",
+      "sha256": "f0bc40397d09c887d4bb668403c48380ec5ae70a063f1077949f6603d046b873"
+    },
+    {
+      "path": "detail.json",
+      "purpose": "exact full Mail detail",
+      "schema": "detail-response.schema.json",
+      "sha256": "770f180b8ce67eb4a2768c1abbb33da8fc65afea41446ac306c5bd4f20419c47"
+    },
+    {
+      "path": "error-incompatible-version.json",
+      "purpose": "structured incompatible-version failure",
+      "schema": "action-response.schema.json",
+      "sha256": "f2cd6f74806f52f223f70083c9df255e9539dada0547efb94a3af1937b3e629b"
+    },
+    {
+      "path": "error-missing.json",
+      "purpose": "structured missing-message failure",
+      "schema": "detail-response.schema.json",
+      "sha256": "3dc091c24fe4a4c1fd9e46190a4383c72c5191f3e2bded22300184ca94cddd20"
+    },
+    {
+      "path": "error-unavailable.json",
+      "purpose": "structured unavailable registry failure",
+      "schema": "list-response.schema.json",
+      "sha256": "c5d6ea1a93511cb04d7b6635952cd9217a72b244df1700938c24a950d4e03858"
+    },
+    {
+      "path": "error-validation.json",
+      "purpose": "structured request-validation failure",
+      "schema": "list-response.schema.json",
+      "sha256": "30cc900d8e1e5bd8c2b1fccd1aff4bef7db579780775c2e17ad88622234c1bb2"
+    },
+    {
+      "path": "list-page.json",
+      "purpose": "bounded metadata-only list page with opaque continuation",
+      "schema": "list-response.schema.json",
+      "sha256": "9c14b0b466ace06b56acdaf2d428471eb0597bb64a9538a08a68944dd2516764"
+    },
+    {
+      "path": "list-request.json",
+      "purpose": "project-scoped thread list request",
+      "schema": "list-request.schema.json",
+      "sha256": "b0a9045f82117aeb3f7b21aefdf313902ce20ffd54b7095445924e1aa7172493"
+    },
+    {
+      "path": "max-body.json",
+      "purpose": "exact 65536-byte Mail body with trailing canary",
+      "schema": "detail-response.schema.json",
+      "sha256": "2f1495f82fef100094c6bef156310af00a0b97cf0590ad82062440388384d4cd"
+    },
+    {
+      "path": "receipt-state.json",
+      "purpose": "normalized receipt state without internal journals",
+      "schema": "detail-response.schema.json",
+      "sha256": "51a2205a45f9fd12843380f9dd6f85272bc02d2fa57523181b232f5cbfc1115b"
+    },
+    {
+      "path": "reply-failure.json",
+      "purpose": "structured idempotency-conflict reply failure",
+      "schema": "reply-response.schema.json",
+      "sha256": "48ce9ba01ce7ab6a906052487e92e2993cd35ccbe0eaa7e7c5dfe66daed809a1"
+    },
+    {
+      "path": "reply-request.json",
+      "purpose": "canonical typed reply request",
+      "schema": "reply-request.schema.json",
+      "sha256": "c9f27e27eb16d9d5ccca1200bab718832f45b6347523344b99bf6740952da32b"
+    },
+    {
+      "path": "reply-success.json",
+      "purpose": "successful authoritative reply delivery",
+      "schema": "reply-response.schema.json",
+      "sha256": "5c209317de18a53096edfe54c8f7bbf6222fe8792be4d60976524b0a073ad9ce"
+    },
+    {
+      "path": "threaded-page.json",
+      "purpose": "authoritative project-scoped thread page",
+      "schema": "list-response.schema.json",
+      "sha256": "7acb51be027740c42a1f73b5f6ce0a9f6ae61738a45d40574fe8724a29588988"
+    },
+    {
+      "path": "unknown-additive.json",
+      "purpose": "unknown additive fields and raw identifiers remain inert",
+      "schema": "list-response.schema.json",
+      "sha256": "6646679398c5248baa79cebf91c59771621e76a41d7e81fdf6acc9fc18053c80"
+    }
+  ]
+}

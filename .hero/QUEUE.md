@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-14T16:31:37Z · 80 ready specs_
+_Generated: 2026-08-17T18:35:59Z · 81 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -26,6 +26,25 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
+
+---
+
+## cross-project-mail-read-contract — "Cross-Project Mail Read Contract — Paged Metadata and Full Detail"
+_feature · in-review · horizon: now_
+
+Adds Hero Code's typed Mail transport: paged cross-project metadata, exact full
+detail, canonical actions, and replies over Hero Serve HTTP.
+
+**Status:** in-review — implementation, standalone conformance bundle, docs,
+AC-linked tests, and the Completion Ledger are complete; all Go tests pass.
+
+**Pick up at:** run the cold delivery audit, then close with
+`hero spec verify cross-project-mail-read-contract --skip-tests`.
+
+→ `.hero/planning/features/cross-project-mail-read-contract/spec.md`
+
+**Files:** `contracts/attention/mailread/contract.go`, `internal/attention/mailquery/service.go`, `internal/attention/mail/capabilities.go`, `internal/serve/api_attention_mail.go`, `contracts/attention/mailread/conformance/v1/manifest.json`
+**Skip:** changing legacy `hero_mail_list/show` output or routing Hero Code full bodies through MCP.
 
 ---
 

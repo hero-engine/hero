@@ -5,12 +5,11 @@ import (
 	"strings"
 
 	"github.com/hero-engine/hero/contracts/attention"
+	"github.com/hero-engine/hero/internal/attention/mail"
 )
 
 var (
-	noInput      = json.RawMessage(`{"type":"object","additionalProperties":false}`)
-	noteInput    = json.RawMessage(`{"type":"object","properties":{"note":{"type":"string"}},"additionalProperties":false}`)
-	promoteInput = json.RawMessage(`{"type":"object","properties":{"artifact_type":{"type":"string"}},"required":["artifact_type"],"additionalProperties":false}`)
+	noInput = json.RawMessage(`{"type":"object","additionalProperties":false}`)
 )
 
 func action(operationID, id, label string, revision int64, schema json.RawMessage) attention.ActionDescriptor {
@@ -25,13 +24,7 @@ func action(operationID, id, label string, revision int64, schema json.RawMessag
 }
 
 func mailActions(revision int64) []attention.ActionDescriptor {
-	return []attention.ActionDescriptor{
-		action(attention.OperationMailMarkRead, "mark_read", "Mark Read", revision, noInput),
-		action(attention.OperationMailAcknowledge, "acknowledge", "Acknowledge", revision, noteInput),
-		action(attention.OperationMailDismiss, "dismiss", "Dismiss", revision, noInput),
-		action(attention.OperationMailPromote, "promote", "Promote", revision, promoteInput),
-		action(attention.OperationMailAddToToday, "add_to_today", "Add to Today", revision, noInput),
-	}
+	return mail.RowCapabilities(revision)
 }
 
 func focusActions(revision int64, available bool) []attention.ActionDescriptor {

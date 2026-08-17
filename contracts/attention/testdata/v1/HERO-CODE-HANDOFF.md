@@ -48,3 +48,16 @@ The exact SHA-256 of the canonical fixture inventory `manifest.json` is
 Within the vendorable conformance bundle this file is
 `fixtures/manifest.json`. The contract endpoint advertises this fixture
 checksum and schema version, not fixture bodies.
+
+## Independent Mail-read contract
+
+Cross-project Mail history, exact full detail, canonical Mail mutations, and
+typed replies use the separate `contracts/attention/mailread/conformance/v1`
+bundle over Hero Serve HTTP. Pin it independently from this Attention bundle:
+
+- Mail-read bundle version: 1
+- Mail-read schema version: 1
+- Mail-read bundle manifest SHA-256: `69cc93c0a4566d1fd4f9678ead9d2fef3c7c9655559d2c55eb94551f0facb69e`
+
+An absent or incompatible Mail-read bundle means Mail is unavailable. Do not
+fall back to local storage or legacy MCP body decoding.

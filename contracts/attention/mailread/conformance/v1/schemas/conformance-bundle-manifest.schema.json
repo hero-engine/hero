@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/mailread/v1/conformance-bundle-manifest.schema.json",
+  "title": "MailReadConformanceBundleManifest",
+  "type": "object",
+  "required": ["bundle_version", "schema_version", "compatibility", "artifacts"],
+  "properties": {
+    "bundle_version": {"const": 1},
+    "schema_version": {"const": 1},
+    "compatibility": {"type": "string", "minLength": 1},
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "kind", "purpose", "media_type", "sha256"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "kind": {"enum": ["schema", "fixture", "fixture-manifest"]},
+          "purpose": {"type": "string", "minLength": 1},
+          "media_type": {"const": "application/json"},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "schema": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

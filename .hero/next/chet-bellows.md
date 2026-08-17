@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-14T16:31:37Z
+updated: 2026-08-17T18:35:59Z
 repo: hero-engine/hero
 ---
 
@@ -12,7 +12,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-> Fix the Hero release artifact/version contract, verify it cold, then publish v0.32.0 so Hero Code can seal a build with the MCP provider metadata.
+> Deliver cross-project-mail-read-contract end to end, including implementation, cold audit, and verify
 
 ## Suggested next prompt
 

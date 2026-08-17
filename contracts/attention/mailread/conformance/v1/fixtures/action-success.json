@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "project": {"peer_id": "peer_alpha", "registry_slug": "alpha", "display_name": "Alpha"},
+  "message_id": "message_actions",
+  "receipt": {"revision": 5, "unread": false, "read_at": "2026-08-16T12:03:00Z", "promoted_artifact": {"slug": "promoted-mail", "type": "bug", "status": "planning"}},
+  "actions": [],
+  "navigation": {"project": {"peer_id": "peer_alpha", "registry_slug": "alpha", "display_name": "Alpha"}, "target": ".hero/planning/bugs/promoted-mail/spec.md"}
+}

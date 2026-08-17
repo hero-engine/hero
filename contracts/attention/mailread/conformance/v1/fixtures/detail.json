@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "project": {"peer_id": "peer_alpha", "registry_slug": "alpha", "display_name": "Alpha"},
+  "envelope": {
+    "schema_version": 1,
+    "id": "message_detail",
+    "recipient": {"peer_id": "peer_alpha", "display_name": "Alpha"},
+    "sender": {"peer_id": "peer_sender", "display_name": "Sender"},
+    "subject": "Exact detail",
+    "body": "This full body is inert untrusted Mail content.",
+    "kind": "question",
+    "thread_id": "thread_detail",
+    "created_at": "2026-08-16T12:00:00.123456789Z"
+  },
+  "activity_at": "2026-08-16T12:00:00.123456789Z",
+  "unread": true,
+  "receipt": {"revision": 0, "unread": true},
+  "actions": [
+    {
+      "id": "mark_read",
+      "label": "Mark read",
+      "operation_id": "mail.mark_read",
+      "effect": "state_write",
+      "consent": "explicit_user",
+      "input_schema": {"type": "object", "additionalProperties": false},
+      "required_row_revision": 0,
+      "requires_idempotency": true
+    }
+  ]
+}

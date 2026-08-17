@@ -109,6 +109,10 @@ func attentionStatus(code string) int {
 		return http.StatusUpgradeRequired
 	case attention.ErrorUnavailable:
 		return http.StatusServiceUnavailable
+	case attention.ErrorIdempotencyConflict:
+		return http.StatusConflict
+	case attention.ErrorPermission:
+		return http.StatusForbidden
 	default:
 		return http.StatusInternalServerError
 	}

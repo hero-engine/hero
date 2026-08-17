@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hero-engine/hero/contracts/attention/mailread"
+	"github.com/hero-engine/hero/internal/attention/mailquery"
 	"github.com/hero-engine/hero/internal/attention/projection"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/index"
@@ -45,6 +47,14 @@ type API struct {
 	// when unset.
 	healthCache      *healthcache.Cache
 	attentionService func() (*projection.Service, error)
+	mailQueryService func() (*mailquery.Service, error)
+}
+
+type mailQueryService interface {
+	List(mailread.ListRequest) mailread.ListResponse
+	Detail(projectPeerID, messageID string) mailread.DetailResponse
+	Action(mailread.ActionRequest) mailread.ActionResponse
+	Reply(mailread.ReplyRequest) mailread.ReplyResponse
 }
 
 // NewAPI creates a new API instance backed by a multi-project server.
@@ -73,6 +83,11 @@ func (a *API) SetHealthCache(c *healthcache.Cache) { a.healthCache = c }
 // state store into an empty snapshot.
 func (a *API) SetAttentionService(factory func() (*projection.Service, error)) {
 	a.attentionService = factory
+}
+
+// SetMailQueryService wires the process-global registry-backed Mail authority.
+func (a *API) SetMailQueryService(factory func() (*mailquery.Service, error)) {
+	a.mailQueryService = factory
 }
 
 // Handler returns a configured http.Handler with the API routes. The
@@ -110,6 +125,11 @@ func (a *API) Handler() http.Handler {
 	mux.HandleFunc("/api/attention/v1/snapshot", a.handleAttentionSnapshot)
 	mux.HandleFunc("/api/attention/v1/actions", a.handleAttentionAction)
 	mux.HandleFunc("/api/attention/v1/contract", a.handleAttentionContract)
+	mux.HandleFunc("/api/attention/v1/mail/messages", a.handleAttentionMailMessages)
+	mux.HandleFunc("/api/attention/v1/mail/messages/", a.handleAttentionMailMessage)
+	mux.HandleFunc("/api/attention/v1/mail/actions", a.handleAttentionMailAction)
+	mux.HandleFunc("/api/attention/v1/mail/replies", a.handleAttentionMailReply)
+	mux.HandleFunc("/api/attention/v1/mail/contract", a.handleAttentionMailContract)
 
 	// Project-namespaced endpoints: /api/{project}/...
 	mux.HandleFunc("/api/", a.routeProject)
@@ -1017,13 +1037,13 @@ func (a *API) handleDaemonOps(w http.ResponseWriter, r *http.Request) {
 // GET /api/{slug}/health. Mirrors the on-disk schema with the addition
 // of age_seconds + stale, computed at request time.
 type healthSnapshotResponse struct {
-	Slug        string                  `json:"slug"`
-	CapturedAt  *time.Time              `json:"captured_at,omitempty"`
-	Rows        []healthcache.HealthRow `json:"rows"`
-	FromDisk    bool                    `json:"from_disk"`
-	AgeSeconds  *int64                  `json:"age_seconds,omitempty"`
-	Stale       bool                    `json:"stale"`
-	TTLSeconds  int64                   `json:"ttl_seconds"`
+	Slug       string                  `json:"slug"`
+	CapturedAt *time.Time              `json:"captured_at,omitempty"`
+	Rows       []healthcache.HealthRow `json:"rows"`
+	FromDisk   bool                    `json:"from_disk"`
+	AgeSeconds *int64                  `json:"age_seconds,omitempty"`
+	Stale      bool                    `json:"stale"`
+	TTLSeconds int64                   `json:"ttl_seconds"`
 }
 
 // routeHealthCache dispatches /api/{slug}/health and

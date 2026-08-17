@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/mailread/v1/reply-request.schema.json",
+  "title": "MailReadReplyRequest",
+  "type": "object",
+  "required": ["schema_version", "project_peer_id", "message_id", "thread_id", "body", "idempotency_key"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "project_peer_id": {"type": "string", "minLength": 1},
+    "message_id": {"type": "string", "minLength": 1},
+    "thread_id": {"type": "string", "minLength": 1},
+    "body": {"type": "string", "x-maxBytes": 65536},
+    "subject": {"type": "string", "maxLength": 200},
+    "kind": {"type": "string", "maxLength": 64},
+    "idempotency_key": {"type": "string", "minLength": 1}
+  }
+}

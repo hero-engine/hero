@@ -1,0 +1,4 @@
+{
+  "schema_version": 1,
+  "error": {"code": "idempotency_conflict", "message": "idempotency key was already used with different reply content", "field": "idempotency_key"}
+}

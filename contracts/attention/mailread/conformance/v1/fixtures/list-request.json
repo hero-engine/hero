@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "project_peer_id": "peer_alpha",
+  "thread_id": "thread_contract",
+  "unread_only": true,
+  "limit": 20,
+  "cursor": "mailread.v1.eyJyZXZpc2lvbiI6InJldl8xIn0"
+}

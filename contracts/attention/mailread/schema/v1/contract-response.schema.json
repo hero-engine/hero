@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/mailread/v1/contract-response.schema.json",
+  "title": "MailReadContractResponse",
+  "type": "object",
+  "required": ["schema_version", "bundle_version", "bundle_manifest_sha256", "compatibility"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "bundle_version": {"const": 1},
+    "bundle_manifest_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "compatibility": {"const": "Unknown additive fields and identifiers must remain inert but decodable; never grant executable behavior from an unknown value."}
+  }
+}

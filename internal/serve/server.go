@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/hero-engine/hero/internal/attention/focus"
+	"github.com/hero-engine/hero/internal/attention/mailquery"
 	"github.com/hero-engine/hero/internal/attention/projection"
 	attentionstate "github.com/hero-engine/hero/internal/attention/state"
 	"github.com/hero-engine/hero/internal/attention/suggestion"
@@ -169,6 +170,7 @@ func NewServer(cfg ServerConfig) *Server {
 	// home routing, /-redirect) is composed in Run.
 	s.api = NewAPI(s, bus)
 	s.api.SetAttentionService(s.newAttentionProjectionService)
+	s.api.SetMailQueryService(s.newMailQueryService)
 
 	// OpsRunner backs the lifecycle-ops buttons on the Project page.
 	// Constructed before per-project Deps are built so both the API
@@ -208,6 +210,21 @@ func NewServer(cfg ServerConfig) *Server {
 	}
 
 	return s
+}
+
+func (s *Server) newMailQueryService() (*mailquery.Service, error) {
+	root, err := attentionstate.Ensure(attentionstate.Options{ProjectRoot: s.projectRoot})
+	if err != nil {
+		return nil, err
+	}
+	registry := s.registry
+	if registry == nil {
+		registry, err = projectregistry.Load()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return mailquery.NewService(root, registry)
 }
 
 func (s *Server) newAttentionProjectionService() (*projection.Service, error) {

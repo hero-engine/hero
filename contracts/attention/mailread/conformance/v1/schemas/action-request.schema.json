@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/mailread/v1/action-request.schema.json",
+  "title": "MailReadActionRequest",
+  "type": "object",
+  "required": ["schema_version", "project_peer_id", "message_id", "action_id", "receipt_revision", "idempotency_key"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "project_peer_id": {"type": "string", "minLength": 1},
+    "message_id": {"type": "string", "minLength": 1},
+    "action_id": {"enum": ["mark_read", "acknowledge", "dismiss", "promote", "add_to_today"]},
+    "receipt_revision": {"type": "integer", "minimum": 0},
+    "idempotency_key": {"type": "string", "minLength": 1},
+    "input": {"type": "object"}
+  }
+}

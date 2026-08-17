@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "revision": "mailmeta_01HR4N7MCK",
+  "total_count": 3,
+  "unread_count": 2,
+  "items": [
+    {
+      "project": {"peer_id": "peer_alpha", "registry_slug": "alpha", "display_name": "Alpha"},
+      "message_id": "message_newest",
+      "thread_id": "thread_contract",
+      "sender": {"peer_id": "peer_sender", "display_name": "Sender"},
+      "recipient": {"peer_id": "peer_alpha", "display_name": "Alpha"},
+      "subject": "Newest metadata",
+      "kind": "request",
+      "created_at": "2026-08-16T12:02:00Z",
+      "activity_at": "2026-08-16T12:02:00Z",
+      "unread": true,
+      "receipt": {"revision": 0, "unread": true},
+      "actions": []
+    },
+    {
+      "project": {"peer_id": "peer_beta", "registry_slug": "beta", "display_name": "Beta"},
+      "message_id": "message_older",
+      "sender": {"peer_id": "peer_sender", "display_name": "Sender"},
+      "recipient": {"peer_id": "peer_beta", "display_name": "Beta"},
+      "subject": "Older metadata",
+      "kind": "notice",
+      "created_at": "2026-08-16T12:01:00Z",
+      "activity_at": "2026-08-16T12:01:00Z",
+      "unread": false,
+      "receipt": {"revision": 1, "unread": false, "read_at": "2026-08-16T12:03:00Z"},
+      "actions": []
+    }
+  ],
+  "page": {"limit": 2, "returned": 2, "has_more": true},
+  "next_cursor": "mailread.v1.eyJyZXZpc2lvbiI6Im1haWxtZXRhXzAxSFI0TjdNQ0sifQ"
+}

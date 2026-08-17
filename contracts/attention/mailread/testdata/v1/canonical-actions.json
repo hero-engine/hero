@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "revision": "mailmeta_actions_4",
+  "total_count": 1,
+  "unread_count": 1,
+  "items": [{
+    "project": {"peer_id": "peer_alpha", "registry_slug": "alpha", "display_name": "Alpha"},
+    "message_id": "message_actions",
+    "thread_id": "thread_actions",
+    "sender": {"peer_id": "peer_sender", "display_name": "Sender"},
+    "recipient": {"peer_id": "peer_alpha", "display_name": "Alpha"},
+    "subject": "Canonical actions",
+    "kind": "request",
+    "created_at": "2026-08-16T12:00:00Z",
+    "activity_at": "2026-08-16T12:00:00Z",
+    "unread": true,
+    "receipt": {"revision": 4, "unread": true},
+    "actions": [
+      {"id": "mark_read", "label": "Mark read", "operation_id": "mail.mark_read", "effect": "state_write", "consent": "explicit_user", "input_schema": {"type": "object"}, "required_row_revision": 4, "requires_idempotency": true},
+      {"id": "acknowledge", "label": "Acknowledge", "operation_id": "mail.acknowledge", "effect": "state_write", "consent": "explicit_user", "input_schema": {"type": "object"}, "required_row_revision": 4, "requires_idempotency": true},
+      {"id": "dismiss", "label": "Dismiss", "operation_id": "mail.dismiss", "effect": "state_write", "consent": "explicit_user", "input_schema": {"type": "object"}, "required_row_revision": 4, "requires_idempotency": true},
+      {"id": "promote", "label": "Promote", "operation_id": "mail.promote", "effect": "commitment", "consent": "explicit_acceptance", "input_schema": {"type": "object"}, "required_row_revision": 4, "requires_idempotency": true},
+      {"id": "add_to_today", "label": "Add to Today", "operation_id": "mail.add_to_today", "effect": "commitment", "consent": "explicit_acceptance", "input_schema": {"type": "object"}, "required_row_revision": 4, "requires_idempotency": true},
+      {"id": "reply", "label": "Reply", "operation_id": "mail.reply", "effect": "external_write", "consent": "explicit_user", "input_schema": {"type": "object"}, "required_row_revision": 4, "requires_idempotency": true}
+    ]
+  }],
+  "page": {"limit": 20, "returned": 1, "has_more": false}
+}

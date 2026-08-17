@@ -1,0 +1,229 @@
+{
+  "bundle_version": 1,
+  "schema_version": 1,
+  "compatibility": "Unknown additive fields and identifiers must remain inert but decodable; never grant executable behavior from an unknown value.",
+  "artifacts": [
+    {
+      "path": "fixtures/action-failure.json",
+      "kind": "fixture",
+      "purpose": "structured stale action failure",
+      "media_type": "application/json",
+      "sha256": "dcdda35af5a27fc82551710d1002fcd6968e155f564c05e218953ebf74e4b807",
+      "schema": "schemas/action-response.schema.json"
+    },
+    {
+      "path": "fixtures/action-request.json",
+      "kind": "fixture",
+      "purpose": "canonical typed action request",
+      "media_type": "application/json",
+      "sha256": "6b9404b94d8189b2d0a332fbc018483966eab1ccd1a331cc83bff8d8edad688c",
+      "schema": "schemas/action-request.schema.json"
+    },
+    {
+      "path": "fixtures/action-success.json",
+      "kind": "fixture",
+      "purpose": "successful authoritative action result",
+      "media_type": "application/json",
+      "sha256": "6aed24e0af1b7ee8a66f3ac0f30ed72e64048e9d2f583dda3b214abe689c6c39",
+      "schema": "schemas/action-response.schema.json"
+    },
+    {
+      "path": "fixtures/canonical-actions.json",
+      "kind": "fixture",
+      "purpose": "all canonical Mail-read action descriptors",
+      "media_type": "application/json",
+      "sha256": "8969c17db27f369998c5d9899521f6cd9a7772d5d6233af67c0232242e8d6623",
+      "schema": "schemas/list-response.schema.json"
+    },
+    {
+      "path": "fixtures/cross-project.json",
+      "kind": "fixture",
+      "purpose": "duplicate message and thread IDs across projects with equal activity timestamps",
+      "media_type": "application/json",
+      "sha256": "f0bc40397d09c887d4bb668403c48380ec5ae70a063f1077949f6603d046b873",
+      "schema": "schemas/list-response.schema.json"
+    },
+    {
+      "path": "fixtures/detail.json",
+      "kind": "fixture",
+      "purpose": "exact full Mail detail",
+      "media_type": "application/json",
+      "sha256": "770f180b8ce67eb4a2768c1abbb33da8fc65afea41446ac306c5bd4f20419c47",
+      "schema": "schemas/detail-response.schema.json"
+    },
+    {
+      "path": "fixtures/error-incompatible-version.json",
+      "kind": "fixture",
+      "purpose": "structured incompatible-version failure",
+      "media_type": "application/json",
+      "sha256": "f2cd6f74806f52f223f70083c9df255e9539dada0547efb94a3af1937b3e629b",
+      "schema": "schemas/action-response.schema.json"
+    },
+    {
+      "path": "fixtures/error-missing.json",
+      "kind": "fixture",
+      "purpose": "structured missing-message failure",
+      "media_type": "application/json",
+      "sha256": "3dc091c24fe4a4c1fd9e46190a4383c72c5191f3e2bded22300184ca94cddd20",
+      "schema": "schemas/detail-response.schema.json"
+    },
+    {
+      "path": "fixtures/error-unavailable.json",
+      "kind": "fixture",
+      "purpose": "structured unavailable registry failure",
+      "media_type": "application/json",
+      "sha256": "c5d6ea1a93511cb04d7b6635952cd9217a72b244df1700938c24a950d4e03858",
+      "schema": "schemas/list-response.schema.json"
+    },
+    {
+      "path": "fixtures/error-validation.json",
+      "kind": "fixture",
+      "purpose": "structured request-validation failure",
+      "media_type": "application/json",
+      "sha256": "30cc900d8e1e5bd8c2b1fccd1aff4bef7db579780775c2e17ad88622234c1bb2",
+      "schema": "schemas/list-response.schema.json"
+    },
+    {
+      "path": "fixtures/list-page.json",
+      "kind": "fixture",
+      "purpose": "bounded metadata-only list page with opaque continuation",
+      "media_type": "application/json",
+      "sha256": "9c14b0b466ace06b56acdaf2d428471eb0597bb64a9538a08a68944dd2516764",
+      "schema": "schemas/list-response.schema.json"
+    },
+    {
+      "path": "fixtures/list-request.json",
+      "kind": "fixture",
+      "purpose": "project-scoped thread list request",
+      "media_type": "application/json",
+      "sha256": "b0a9045f82117aeb3f7b21aefdf313902ce20ffd54b7095445924e1aa7172493",
+      "schema": "schemas/list-request.schema.json"
+    },
+    {
+      "path": "fixtures/manifest.json",
+      "kind": "fixture-manifest",
+      "purpose": "Canonical Mail-read fixture inventory",
+      "media_type": "application/json",
+      "sha256": "d6c6a08d4cc7bda6375e42b2b63273da0f246587a0424cd2738ecdc189452bf3"
+    },
+    {
+      "path": "fixtures/max-body.json",
+      "kind": "fixture",
+      "purpose": "exact 65536-byte Mail body with trailing canary",
+      "media_type": "application/json",
+      "sha256": "2f1495f82fef100094c6bef156310af00a0b97cf0590ad82062440388384d4cd",
+      "schema": "schemas/detail-response.schema.json"
+    },
+    {
+      "path": "fixtures/receipt-state.json",
+      "kind": "fixture",
+      "purpose": "normalized receipt state without internal journals",
+      "media_type": "application/json",
+      "sha256": "51a2205a45f9fd12843380f9dd6f85272bc02d2fa57523181b232f5cbfc1115b",
+      "schema": "schemas/detail-response.schema.json"
+    },
+    {
+      "path": "fixtures/reply-failure.json",
+      "kind": "fixture",
+      "purpose": "structured idempotency-conflict reply failure",
+      "media_type": "application/json",
+      "sha256": "48ce9ba01ce7ab6a906052487e92e2993cd35ccbe0eaa7e7c5dfe66daed809a1",
+      "schema": "schemas/reply-response.schema.json"
+    },
+    {
+      "path": "fixtures/reply-request.json",
+      "kind": "fixture",
+      "purpose": "canonical typed reply request",
+      "media_type": "application/json",
+      "sha256": "c9f27e27eb16d9d5ccca1200bab718832f45b6347523344b99bf6740952da32b",
+      "schema": "schemas/reply-request.schema.json"
+    },
+    {
+      "path": "fixtures/reply-success.json",
+      "kind": "fixture",
+      "purpose": "successful authoritative reply delivery",
+      "media_type": "application/json",
+      "sha256": "5c209317de18a53096edfe54c8f7bbf6222fe8792be4d60976524b0a073ad9ce",
+      "schema": "schemas/reply-response.schema.json"
+    },
+    {
+      "path": "fixtures/threaded-page.json",
+      "kind": "fixture",
+      "purpose": "authoritative project-scoped thread page",
+      "media_type": "application/json",
+      "sha256": "7acb51be027740c42a1f73b5f6ce0a9f6ae61738a45d40574fe8724a29588988",
+      "schema": "schemas/list-response.schema.json"
+    },
+    {
+      "path": "fixtures/unknown-additive.json",
+      "kind": "fixture",
+      "purpose": "unknown additive fields and raw identifiers remain inert",
+      "media_type": "application/json",
+      "sha256": "6646679398c5248baa79cebf91c59771621e76a41d7e81fdf6acc9fc18053c80",
+      "schema": "schemas/list-response.schema.json"
+    },
+    {
+      "path": "schemas/action-request.schema.json",
+      "kind": "schema",
+      "purpose": "Published Mail-read v1 JSON Schema: action-request.schema.json",
+      "media_type": "application/json",
+      "sha256": "18840cc4b0546a24a38221541f084eafd32c458cfa536e0434e26ecda9b8a7e0"
+    },
+    {
+      "path": "schemas/action-response.schema.json",
+      "kind": "schema",
+      "purpose": "Published Mail-read v1 JSON Schema: action-response.schema.json",
+      "media_type": "application/json",
+      "sha256": "81854d6bc67a5cf5dffb8241af37b217e0468a65a0d4ac04f599adf67a86c823"
+    },
+    {
+      "path": "schemas/conformance-bundle-manifest.schema.json",
+      "kind": "schema",
+      "purpose": "Published Mail-read v1 JSON Schema: conformance-bundle-manifest.schema.json",
+      "media_type": "application/json",
+      "sha256": "7f7db6b92d0dec30f8837f77e391b36c336be12e858a28c07a336a5493688d8f"
+    },
+    {
+      "path": "schemas/contract-response.schema.json",
+      "kind": "schema",
+      "purpose": "Published Mail-read v1 JSON Schema: contract-response.schema.json",
+      "media_type": "application/json",
+      "sha256": "b9c1566fb65984451122afd2f82c0cd9fc5c9599b2e53e722b0ba5550e3fdeb5"
+    },
+    {
+      "path": "schemas/detail-response.schema.json",
+      "kind": "schema",
+      "purpose": "Published Mail-read v1 JSON Schema: detail-response.schema.json",
+      "media_type": "application/json",
+      "sha256": "790c230d68be4d648404f0623f2b65047d63bb0766c0ce270c057e617c088332"
+    },
+    {
+      "path": "schemas/list-request.schema.json",
+      "kind": "schema",
+      "purpose": "Published Mail-read v1 JSON Schema: list-request.schema.json",
+      "media_type": "application/json",
+      "sha256": "ca42969c8760a9e8a884686a0f475387f94256dd1ba60078a7599b3125a2b15a"
+    },
+    {
+      "path": "schemas/list-response.schema.json",
+      "kind": "schema",
+      "purpose": "Published Mail-read v1 JSON Schema: list-response.schema.json",
+      "media_type": "application/json",
+      "sha256": "01d2593e3fffe596733bf07d3ce6797afd3264947faca8ea26302d6ec88af3d4"
+    },
+    {
+      "path": "schemas/reply-request.schema.json",
+      "kind": "schema",
+      "purpose": "Published Mail-read v1 JSON Schema: reply-request.schema.json",
+      "media_type": "application/json",
+      "sha256": "6d20932d3d792a85029fc2a94e0ddb450eca875e4ffaae04d21340851a6186a0"
+    },
+    {
+      "path": "schemas/reply-response.schema.json",
+      "kind": "schema",
+      "purpose": "Published Mail-read v1 JSON Schema: reply-response.schema.json",
+      "media_type": "application/json",
+      "sha256": "d5118113613c8db5ffa7b8d1754e927f8000e77e53df7f15ead2fa8d87e7586c"
+    }
+  ]
+}

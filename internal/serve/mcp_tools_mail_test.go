@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/hero-engine/hero/contracts/attention"
@@ -53,6 +54,20 @@ func TestMCPMailToolsAdvertiseAndReturnStructuredFailures(t *testing.T) {
 	var messages []mailMCPMessage
 	if err := json.Unmarshal([]byte(list), &messages); err != nil || len(messages) != 1 || len(messages[0].Actions) != 5 {
 		t.Fatalf("list = %s, %v", list, err)
+	}
+	if messages[0].Body != "Please inspect." {
+		t.Fatalf("legacy list body shape changed: %#v", messages[0])
+	}
+	legacyIDs := make(map[string]bool, len(messages[0].Actions))
+	for _, descriptor := range messages[0].Actions {
+		legacyIDs[descriptor.ID] = true
+	}
+	if !legacyIDs[mail.ActionRead] || legacyIDs["mark_read"] || strings.Contains(list, `"operation_id"`) {
+		t.Fatalf("legacy descriptor shape changed: %s", list)
+	}
+	shown, err := server.toolMailShow(map[string]interface{}{"message_id": id})
+	if err != nil || !strings.Contains(shown, `"body":"Please inspect."`) || !strings.Contains(shown, `"id":"read"`) || strings.Contains(shown, "mark_read") {
+		t.Fatalf("legacy show shape changed: %s, %v", shown, err)
 	}
 	missingShow, err := server.toolMailShow(map[string]interface{}{"message_id": "mail_missing"})
 	if err != nil {

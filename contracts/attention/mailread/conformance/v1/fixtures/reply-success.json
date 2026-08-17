@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "delivery": {
+    "schema_version": 1,
+    "message_id": "message_outbound_reply",
+    "thread_id": "thread_actions",
+    "sender": {"peer_id": "peer_alpha", "registry_slug": "alpha", "display_name": "Alpha"},
+    "recipient": {"peer_id": "peer_sender", "display_name": "Sender"},
+    "idempotency_key": "mail_reply_1",
+    "delivered_at": "2026-08-16T12:04:00Z"
+  }
+}

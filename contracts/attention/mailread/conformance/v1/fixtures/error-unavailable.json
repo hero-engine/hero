@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "total_count": 0,
+  "unread_count": 0,
+  "items": [],
+  "error": {"code": "unavailable", "message": "registered projects claim conflicting paths for the same peer ID", "details": {"project_peer_id": "peer_conflict"}}
+}

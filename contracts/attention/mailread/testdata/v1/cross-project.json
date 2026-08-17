@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "revision": "mailmeta_cross_project_1",
+  "total_count": 2,
+  "unread_count": 2,
+  "items": [
+    {
+      "project": {"peer_id": "peer_alpha", "registry_slug": "alpha", "display_name": "Alpha"},
+      "message_id": "duplicate_message_id",
+      "thread_id": "duplicate_thread_id",
+      "sender": {"peer_id": "peer_sender", "display_name": "Sender"},
+      "recipient": {"peer_id": "peer_alpha", "display_name": "Alpha"},
+      "subject": "Alpha duplicate",
+      "created_at": "2026-08-16T12:00:00Z",
+      "activity_at": "2026-08-16T12:00:00Z",
+      "unread": true,
+      "receipt": {"revision": 0, "unread": true},
+      "actions": []
+    },
+    {
+      "project": {"peer_id": "peer_beta", "registry_slug": "beta", "display_name": "Beta"},
+      "message_id": "duplicate_message_id",
+      "thread_id": "duplicate_thread_id",
+      "sender": {"peer_id": "peer_sender", "display_name": "Sender"},
+      "recipient": {"peer_id": "peer_beta", "display_name": "Beta"},
+      "subject": "Beta duplicate",
+      "created_at": "2026-08-16T12:00:00Z",
+      "activity_at": "2026-08-16T12:00:00Z",
+      "unread": true,
+      "receipt": {"revision": 0, "unread": true},
+      "actions": []
+    }
+  ],
+  "page": {"limit": 20, "returned": 2, "has_more": false}
+}

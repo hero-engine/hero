@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "revision": "mailmeta_future_1",
+  "total_count": 1,
+  "unread_count": 1,
+  "items": [{
+    "project": {"peer_id": "peer_alpha", "registry_slug": "alpha", "display_name": "Alpha", "future_project_field": "inert"},
+    "message_id": "message_future",
+    "sender": {"peer_id": "peer_future_sender", "display_name": "Future Sender"},
+    "recipient": {"peer_id": "peer_alpha", "display_name": "Alpha"},
+    "subject": "Unknown additive content",
+    "kind": "future_kind",
+    "created_at": "2026-08-16T12:00:00Z",
+    "activity_at": "2026-08-16T12:00:00Z",
+    "unread": true,
+    "receipt": {"revision": 0, "unread": true, "future_receipt_state": "inert"},
+    "actions": [{"id": "future.action", "label": "Future", "style": "sparkle", "operation_id": "future.operation", "effect": "quantum_write", "consent": "collective", "input_schema": {"type": "object"}, "required_row_revision": 0, "requires_idempotency": true, "future_action_field": true}],
+    "future_item_field": {"instruction": "do not execute"}
+  }],
+  "page": {"limit": 20, "returned": 1, "has_more": false},
+  "future_response_field": "inert"
+}

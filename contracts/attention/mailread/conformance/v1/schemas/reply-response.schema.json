@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/mailread/v1/reply-response.schema.json",
+  "title": "MailReadReplyResponse",
+  "type": "object",
+  "required": ["schema_version"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "delivery": {"$ref": "#/$defs/delivery"},
+    "error": {"$ref": "#/$defs/error"}
+  },
+  "anyOf": [{"required": ["delivery"]}, {"required": ["error"]}],
+  "$defs": {
+    "project": {"type": "object", "required": ["peer_id", "display_name"], "properties": {"peer_id": {"type": "string", "minLength": 1}, "registry_slug": {"type": "string"}, "display_name": {"type": "string", "minLength": 1}}},
+    "delivery": {"type": "object", "required": ["schema_version", "message_id", "thread_id", "sender", "recipient", "idempotency_key", "delivered_at"], "properties": {"schema_version": {"const": 1}, "message_id": {"type": "string", "minLength": 1}, "thread_id": {"type": "string", "minLength": 1}, "sender": {"$ref": "#/$defs/project"}, "recipient": {"$ref": "#/$defs/project"}, "idempotency_key": {"type": "string", "minLength": 1}, "delivered_at": {"type": "string", "format": "date-time", "x-utcRFC3339Nano": true}}},
+    "error": {"type": "object", "required": ["code", "message"], "properties": {"code": {"type": "string", "minLength": 1}, "message": {"type": "string", "minLength": 1}, "field": {"type": "string"}, "details": {"type": "object"}}}
+  }
+}

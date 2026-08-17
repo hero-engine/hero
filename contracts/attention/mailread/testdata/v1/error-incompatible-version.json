@@ -1,0 +1,4 @@
+{
+  "schema_version": 1,
+  "error": {"code": "incompatible_version", "message": "unsupported Mail-read contract version", "field": "schema_version"}
+}

@@ -2,21 +2,21 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-08-14T16:31:37Z · projected from 626 source nodes_
+_Last refreshed: 2026-08-17T18:35:59Z · projected from 628 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | maturing | cmd/, internal/ | 2m ago | hero-runner |
-| docs | maturing | web/docs/ | 32d ago | — |
-| domains/chat | maturing | domains/chat/ | 26d ago | — |
-| domains/engineering | maturing | domains/engineering/ | 21d ago | — |
-| domains/pm | maturing | domains/pm/ | 27d ago | — |
-| domains/sales | maturing | domains/sales/ | 36d ago | — |
-| landing | building | web/landing/ | 33d ago | hero-landing-page |
+| core | maturing | cmd/, internal/ | 3d ago | hero-runner |
+| docs | maturing | web/docs/ | 35d ago | — |
+| domains/chat | maturing | domains/chat/ | 30d ago | — |
+| domains/engineering | maturing | domains/engineering/ | 24d ago | — |
+| domains/pm | maturing | domains/pm/ | 30d ago | — |
+| domains/sales | maturing | domains/sales/ | 39d ago | — |
+| landing | building | web/landing/ | 36d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 1h ago | agent-outposts |
+| serve | building | internal/serve/ | 1m ago | agent-outposts |
 | (unassigned) | — | — | — | 245 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -62,18 +62,18 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 2. **serve** — `agent-outposts` (medium, delivering)
 3. **serve** — `retrieval-contradiction-detection` (—, delivering)
 4. **(unassigned)** — `team-connect` (—, delivering)
-5. **(unassigned)** — `always-on-runtime` (P0, planning)
+5. **serve** — `cross-project-mail-read-contract` (high, in-review)
 
 ## Open risks & blockers
 
 - **Blocked specs (19):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-continuity-proof-demo` (waits on hero-public-truth-baseline, hero-positioning); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-hosted-docs-remediation` (waits on hero-public-truth-baseline, hero-positioning); `hero-landing-message-refresh` (waits on hero-root-docs-remediation, hero-hosted-docs-remediation, hero-continuity-proof-demo); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-positioning` (waits on hero-public-truth-baseline); `hero-public-docs-drift-guard` (waits on hero-root-docs-remediation, hero-hosted-docs-remediation, hero-landing-message-refresh); `hero-root-docs-remediation` (waits on hero-public-truth-baseline, hero-positioning); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection); `wire-checks-to-boundaries` (waits on spec-contract-enums-unified).
-- **Stale-in-flight (4):** `hero-landing-page` (87d), `retrieval-contradiction-detection` (35d), `agent-outposts` (33d), `team-connect` (33d).
-- **Aged open bugs (14):** `install-target-emits-both-claude-and-agents-md` (open 91d), `next-project-file-conflict-not-regenerated` (open 72d), `desktop-sidebar-mcp-not-running` (open 71d), `hihcp-rgignore` (open 66d), `hihcp-mcp-first-turn-readiness` (open 66d), `hihcp-permission-bridge-validation` (open 66d), `hihcp-mcp-auto-reconnect` (open 66d), `hihcp-agents-md-harness-agnostic` (open 66d), `hihcp-agent-loop-error-recovery` (open 66d), `jira-connection-onboarding-misleads-agents` (open 31d), `resume-emits-dead-recall-command` (open 31d), `tracker-backed-diagnosis-publication-contract-broken` (open 26d), `jira-import-classification-obscures-work-items` (open 25d), `tracker-semantic-priority-field-mapping` (open 25d).
+- **Stale-in-flight (4):** `hero-landing-page` (90d), `retrieval-contradiction-detection` (38d), `agent-outposts` (36d), `team-connect` (36d).
+- **Aged open bugs (16):** `install-target-emits-both-claude-and-agents-md` (open 94d), `next-project-file-conflict-not-regenerated` (open 75d), `desktop-sidebar-mcp-not-running` (open 74d), `hihcp-agents-md-harness-agnostic` (open 69d), `hihcp-mcp-auto-reconnect` (open 69d), `hihcp-mcp-first-turn-readiness` (open 69d), `hihcp-permission-bridge-validation` (open 69d), `hihcp-agent-loop-error-recovery` (open 69d), `hihcp-rgignore` (open 69d), `jira-connection-onboarding-misleads-agents` (open 34d), `resume-emits-dead-recall-command` (open 34d), `tracker-backed-diagnosis-publication-contract-broken` (open 29d), `tracker-semantic-priority-field-mapping` (open 28d), `jira-import-classification-obscures-work-items` (open 28d), `ledger-signoff-substring-match-fails-open` (open 23d), `graph-unpartitioned-writers-duplicate-nodes` (open 23d).
 - **Unassigned specs (245) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 9 (inferred: 9 · overrides applied: 0)
-- Specs covered: 214/459 (46%)
-- Projection generation: 1ms · Source nodes: 626
+- Specs covered: 215/460 (46%)
+- Projection generation: 1ms · Source nodes: 628
 

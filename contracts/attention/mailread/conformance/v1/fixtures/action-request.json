@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "project_peer_id": "peer_alpha",
+  "message_id": "message_actions",
+  "action_id": "promote",
+  "receipt_revision": 4,
+  "idempotency_key": "mail_action_promote_1",
+  "input": {"type": "bug", "title": "Promoted Mail"}
+}

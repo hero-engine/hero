@@ -1,0 +1,4 @@
+{
+  "schema_version": 1,
+  "error": {"code": "stale", "message": "receipt revision is stale", "field": "receipt_revision", "details": {"current_revision": "5"}}
+}

@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "project_peer_id": "peer_alpha",
+  "message_id": "message_actions",
+  "thread_id": "thread_actions",
+  "body": "Authoritative reply body",
+  "subject": "Re: Canonical actions",
+  "kind": "response",
+  "idempotency_key": "mail_reply_1"
+}

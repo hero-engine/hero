@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "project": {"peer_id": "peer_alpha", "registry_slug": "alpha", "display_name": "Alpha"},
+  "envelope": {
+    "schema_version": 1,
+    "id": "message_receipt",
+    "recipient": {"peer_id": "peer_alpha", "display_name": "Alpha"},
+    "sender": {"peer_id": "peer_sender", "display_name": "Sender"},
+    "subject": "Normalized receipt",
+    "body": "Internal journals are not exposed.",
+    "kind": "request",
+    "created_at": "2026-08-16T11:00:00Z"
+  },
+  "activity_at": "2026-08-16T11:00:00Z",
+  "unread": false,
+  "receipt": {
+    "revision": 4,
+    "unread": false,
+    "read_at": "2026-08-16T11:01:00Z",
+    "acknowledged_at": "2026-08-16T11:02:00Z",
+    "promoted_artifact": {"slug": "mail-follow-up", "type": "feature", "status": "planning"},
+    "focus_item_id": "focus_mail_follow_up"
+  },
+  "actions": []
+}

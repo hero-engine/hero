@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/mailread/v1/action-response.schema.json",
+  "title": "MailReadActionResponse",
+  "type": "object",
+  "required": ["schema_version"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "project": {"$ref": "#/$defs/project"},
+    "message_id": {"type": "string", "minLength": 1},
+    "receipt": {"$ref": "#/$defs/receipt"},
+    "actions": {"type": "array", "items": {"$ref": "#/$defs/action"}},
+    "navigation": {"type": "object"},
+    "error": {"$ref": "#/$defs/error"}
+  },
+  "anyOf": [{"required": ["project", "message_id", "receipt", "actions"]}, {"required": ["error"]}],
+  "$defs": {
+    "project": {"type": "object", "required": ["peer_id", "display_name"], "properties": {"peer_id": {"type": "string", "minLength": 1}, "registry_slug": {"type": "string"}, "display_name": {"type": "string", "minLength": 1}}},
+    "artifact": {"type": "object", "required": ["slug", "type", "status"], "properties": {"slug": {"type": "string", "minLength": 1}, "type": {"type": "string", "minLength": 1}, "status": {"type": "string"}}},
+    "receipt": {"type": "object", "required": ["revision", "unread"], "properties": {"revision": {"type": "integer", "minimum": 0}, "unread": {"type": "boolean"}, "read_at": {"type": "string", "format": "date-time"}, "acknowledged_at": {"type": "string", "format": "date-time"}, "dismissed_at": {"type": "string", "format": "date-time"}, "promoted_artifact": {"$ref": "#/$defs/artifact"}, "focus_item_id": {"type": "string", "minLength": 1}}},
+    "action": {"type": "object", "required": ["id", "label", "required_row_revision", "requires_idempotency"], "properties": {"id": {"type": "string", "minLength": 1}, "label": {"type": "string", "minLength": 1}, "operation_id": {"type": "string"}, "effect": {"type": "string"}, "consent": {"type": "string"}, "input_schema": {"type": "object"}, "required_row_revision": {"type": "integer", "minimum": 0}, "requires_idempotency": {"type": "boolean"}}},
+    "error": {"type": "object", "required": ["code", "message"], "properties": {"code": {"type": "string", "minLength": 1}, "message": {"type": "string", "minLength": 1}, "field": {"type": "string"}, "details": {"type": "object"}}}
+  }
+}
