@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-08-17T18:35:59Z · projected from 628 source nodes_
+_Last refreshed: 2026-08-17T18:40:10Z · projected from 628 source nodes_
 
 ## Surfaces
 
@@ -16,7 +16,7 @@ _Last refreshed: 2026-08-17T18:35:59Z · projected from 628 source nodes_
 | domains/sales | maturing | domains/sales/ | 39d ago | — |
 | landing | building | web/landing/ | 36d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 1m ago | agent-outposts |
+| serve | building | internal/serve/ | <1m ago | agent-outposts |
 | (unassigned) | — | — | — | 245 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -54,7 +54,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - **(unassigned)** — single-source-install, interactive-cli-input-scoped-completion, interactive-cli-acceptance-and-merge-gate
 - **core** — hero-desktop-release-artifact-contract, cli-successor-test-contract-reconciliation, interactive-setup-and-connect-closure, corpus-selector-closure, prompt-and-tty-contract-closure
-- **serve** — mcp-tool-category-metadata
+- **serve** — cross-project-mail-read-contract, mcp-tool-category-metadata
 
 ## Next up across surfaces
 
@@ -62,7 +62,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 2. **serve** — `agent-outposts` (medium, delivering)
 3. **serve** — `retrieval-contradiction-detection` (—, delivering)
 4. **(unassigned)** — `team-connect` (—, delivering)
-5. **serve** — `cross-project-mail-read-contract` (high, in-review)
+5. **(unassigned)** — `always-on-runtime` (P0, planning)
 
 ## Open risks & blockers
 

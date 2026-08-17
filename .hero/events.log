@@ -539,3 +539,5 @@
 {"ts":"2026-08-14T15:59:41.697734Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"single-source-install","message":"status -\u003e completed"}
 {"ts":"2026-08-14T16:29:37.11837Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-desktop-release-artifact-contract","message":"\"Hero release cannot supply a version-matched binary artifact to Hero Desktop\""}
 {"ts":"2026-08-14T16:29:37.118485Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-desktop-release-artifact-contract","message":"status -\u003e completed"}
+{"ts":"2026-08-17T18:39:29.768226Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"cross-project-mail-read-contract","message":"\"Cross-Project Mail Read Contract — Paged Metadata and Full Detail\""}
+{"ts":"2026-08-17T18:39:29.768369Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"cross-project-mail-read-contract","message":"status -\u003e completed"}

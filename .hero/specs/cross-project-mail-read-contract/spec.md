@@ -2,7 +2,7 @@
 title: "Cross-Project Mail Read Contract — Paged Metadata and Full Detail"
 slug: cross-project-mail-read-contract
 type: feature
-status: in-review
+status: completed
 domain: engineering
 priority: high
 size: medium
@@ -18,6 +18,7 @@ related:
   - attention-contract-bundle-publication
 tags: [mail, attention, hero-code, http, pagination, contracts]
 delivery_method: manual
+completed_at: 2026-08-17T18:39:27Z
 ---
 
 # Cross-Project Mail Read Contract — Paged Metadata and Full Detail
@@ -52,13 +53,13 @@ services using stable composite identity.
 Adds Hero Code's typed Mail transport: paged cross-project metadata, exact full
 detail, canonical actions, and replies over Hero Serve HTTP.
 
-**Status:** in-review — implementation, standalone conformance bundle, docs,
-AC-linked tests, and the Completion Ledger are complete; all Go tests pass.
+**Status:** completed — implementation, standalone conformance bundle, docs,
+AC-linked tests, cold delivery audit, and Hero verification all pass.
 
-**Pick up at:** run the cold delivery audit, then close with
-`hero spec verify cross-project-mail-read-contract --skip-tests`.
+**Pick up at:** Hero Code can vendor the Mail-read bundle and implement its
+sidebar/detail client against the five documented Hero Serve routes.
 
-→ `.hero/planning/features/cross-project-mail-read-contract/spec.md`
+→ `.hero/specs/cross-project-mail-read-contract/spec.md`
 
 **Files:** `contracts/attention/mailread/contract.go`, `internal/attention/mailquery/service.go`, `internal/attention/mail/capabilities.go`, `internal/serve/api_attention_mail.go`, `contracts/attention/mailread/conformance/v1/manifest.json`
 **Skip:** changing legacy `hero_mail_list/show` output or routing Hero Code full bodies through MCP.
