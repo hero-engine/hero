@@ -85,21 +85,22 @@ fi
 STATUS_ALL_OUT="${E2E_RUN_DIR}/status_all.txt"
 ( cd "${WORK_DIR}" && "${HERO_BIN}" status --all ) > "${STATUS_ALL_OUT}" 2>&1
 STATUS_ALL_EXIT=$?
-STATUS_ALL_BYTES=$(wc -c < "${STATUS_ALL_OUT}" | tr -d ' ')
+STATUS_UPCOMING=$(sed -nE 's/^Work: [0-9]+ in progress · ([0-9]+) upcoming.*/\1/p' "${STATUS_DEFAULT_OUT}" | head -1)
+STATUS_ALL_UPCOMING=$(sed -nE 's/^Work: [0-9]+ in progress · ([0-9]+) upcoming.*/\1/p' "${STATUS_ALL_OUT}" | head -1)
 
-# --all should show at least as many entries as default
-if [[ "${STATUS_ALL_EXIT}" -eq 0 && "${STATUS_ALL_BYTES}" -ge "${STATUS_BYTES}" ]]; then
+# --all should report at least as many upcoming specs as the default view.
+if [[ "${STATUS_ALL_EXIT}" -eq 0 && -n "${STATUS_UPCOMING}" && -n "${STATUS_ALL_UPCOMING}" && "${STATUS_ALL_UPCOMING}" -ge "${STATUS_UPCOMING}" ]]; then
   E2E_AC_IDS+=("AC-3"); E2E_STATUSES+=("pass"); E2E_DURATIONS+=("0")
-  E2E_DETAILS+=("hero status --all exits 0, ${STATUS_ALL_BYTES} bytes ≥ ${STATUS_BYTES}")
-  printf '  pass AC-3 — hero status --all exits 0, more output than default\n' >&2
+  E2E_DETAILS+=("hero status --all exits 0, ${STATUS_ALL_UPCOMING} upcoming ≥ ${STATUS_UPCOMING}")
+  printf '  pass AC-3 — hero status --all reports %d upcoming specs ≥ %d default\n' "${STATUS_ALL_UPCOMING}" "${STATUS_UPCOMING}" >&2
 else
   E2E_AC_IDS+=("AC-3"); E2E_STATUSES+=("fail"); E2E_DURATIONS+=("0")
-  E2E_DETAILS+=("exit=${STATUS_ALL_EXIT} or all(${STATUS_ALL_BYTES}) < default(${STATUS_BYTES})")
-  printf '  fail AC-3 — status --all exit=%d, bytes all=%d default=%d\n' \
-    "${STATUS_ALL_EXIT}" "${STATUS_ALL_BYTES}" "${STATUS_BYTES}" >&2
+  E2E_DETAILS+=("exit=${STATUS_ALL_EXIT} or all upcoming(${STATUS_ALL_UPCOMING:-missing}) < default(${STATUS_UPCOMING:-missing})")
+  printf '  fail AC-3 — status --all exit=%d, upcoming all=%s default=%s\n' \
+    "${STATUS_ALL_EXIT}" "${STATUS_ALL_UPCOMING:-missing}" "${STATUS_UPCOMING:-missing}" >&2
 fi
 {
-  printf '\n#### AC-3\n\n_Assertion:_ `hero status --all` exits 0 and output ≥ default view\n\n```\n'
+  printf '\n#### AC-3\n\n_Assertion:_ `hero status --all` exits 0 and reports at least as many upcoming specs as the default view\n\n```\n'
   head -c 2000 "${STATUS_ALL_OUT}"
   printf '\n```\n'
 } >> "${E2E_LOG}"
