@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-17T18:40:10Z
+updated: 2026-08-18T15:32:45Z
 repo: hero-engine/hero
 ---
 
@@ -10,27 +10,23 @@ repo: hero-engine/hero
 
 > Ship a verified Hero release containing the completed MCP tool metadata contract for hero-code while keeping the superseded interactive CLI donor branch evidence-only.
 
-_possibly stale — 1 commit(s) since, last set 3d 2h ago_
+_possibly stale — 2 commit(s) since, last set 3d 23h ago_
 
 ## Last user ask
 
-> Deliver cross-project-mail-read-contract end to end, including implementation, cold audit, and verify
+> Tag a release for the completed Grok harness and scan fix, then push it
 
 ## Suggested next prompt
 
-> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
-
-_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
-
-_Source: auto-derived from open feature — `hero next suggest "..."` to override._
+> let's launch Grok in Boxy and try /command-resume now that the scan path is fixed
 
 ## Recent reflections
 
+- Repo-scoped graph identity must propagate into every derived index; node_index kept the old two-column uniqueness after graph v5 and made valid sibling keys fatal.
+- Grok Build 1.0.4 inspect --json normalizes AGENTS.md as Agents.md; qualify native loading by source type and .grok path suffix, not display casing.
 - Release rehearsal exposed Unix-only file locks after native tests passed. Added a shared build-tagged lock primitive, Windows cross-build CI, direct failure-path coverage, and completed a clean cold audit plus six-target snapshot verification.
 - Tracker activity now has one provider-owned consumer contract: tracker_updated_at; import time, refresh time, and spec mtime are never substitutes.
 - Tracker-backed diagnosis postback was never a hidden hook; it was an explicit agent closing step. Hero Code's 2026-07-15 hardening blocked all generic sync and exposed only import, making attach/comment unreachable while hero_diagnose also omitted the publish contract.
-- Long session: shipped basic-chat + dormant research seed (chat-slim-to-basic-research-seed, on main), then root-caused and fixed the recurring 'hero why no node' bug (two-DB split + no graph.db self-heal + filepath.Base repoKey drift) — PR #2 open. Key stance to remember: core reliability (spec CRUD / install-copy / search) breaks weekly and needs a single self-healing store + write choke point + invariant tests. Chat/research/code content is Hero's call, not hero-code's; hero-code only consumes.
-- Integration config should key connections by stable IDs, not provider names: provider-keyed objects cannot represent two Jira projects, while explicit default/roles separate definition from selection.
 
 ## Tried and failed (this session)
 
