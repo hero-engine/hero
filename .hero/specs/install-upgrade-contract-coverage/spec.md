@@ -2,12 +2,13 @@
 title: Install + Upgrade Contract Coverage — Prove Every Target Works Every Time
 slug: install-upgrade-contract-coverage
 type: initiative
-status: planning
+status: completed
 priority: P0
 severity: high
 tags: [install, upgrade, testing, foundation, multi-harness, ci]
 created: 2026-05-12
 horizon: now
+completed_at: 2026-08-18T03:44:33Z
 ---
 
 ## Goal

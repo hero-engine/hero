@@ -541,3 +541,9 @@
 {"ts":"2026-08-14T16:29:37.118485Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-desktop-release-artifact-contract","message":"status -\u003e completed"}
 {"ts":"2026-08-17T18:39:29.768226Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"cross-project-mail-read-contract","message":"\"Cross-Project Mail Read Contract — Paged Metadata and Full Detail\""}
 {"ts":"2026-08-17T18:39:29.768369Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"cross-project-mail-read-contract","message":"status -\u003e completed"}
+{"ts":"2026-08-18T03:44:33.593672Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"grok-build-harness-target","message":"\"Grok Build Harness Target — Native Agents, Workflow Skills, MCP, and Lifecycle Parity\""}
+{"ts":"2026-08-18T03:44:33.593821Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"grok-build-harness-target","message":"status -\u003e completed"}
+{"ts":"2026-08-18T03:44:35.523056Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"install-upgrade-contract-coverage","message":"Install + Upgrade Contract Coverage — Prove Every Target Works Every Time"}
+{"ts":"2026-08-18T03:44:35.523139Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"install-upgrade-contract-coverage","message":"status -\u003e completed"}
+{"ts":"2026-08-18T04:57:00.611764Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"node-index-repo-identity-collision","message":"\"Repo-scoped graph nodes collide in the search projection and break hero scan\""}
+{"ts":"2026-08-18T04:57:00.611943Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"node-index-repo-identity-collision","message":"status -\u003e completed"}

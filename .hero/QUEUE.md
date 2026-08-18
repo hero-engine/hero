@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-17T18:40:10Z · 80 ready specs_
+_Generated: 2026-08-18T15:32:45Z · 79 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -550,25 +550,6 @@ Build a Hero-native system that actively manages session context — not just *i
 **Status:** planning — design captured; no code changes yet. Implementation will land as a v1 (additive only, ships on Claude Code today) and v2 (subtractive primitives, when the harness or SDK exposes them).
 
 **Pick up at:** decide curator implementation approach (rule-based vs Haiku-call vs hybrid), then scaffold the Ledger as a session-scoped record in `.hero/sessions/<id>/ledger.jsonl`.
-
----
-
-## install-upgrade-contract-coverage — Install + Upgrade Contract Coverage — Prove Every Target Works Every Time
-_initiative · planning · horizon: now_
-
-_Run opener — arm with `/drive install-upgrade-contract-coverage`_
-
-Make `hero install` and `hero upgrade` provably correct on every
-supported target, every release, by enforcing per-target contracts
-on the installed output rather than just file-existence smoke.
-
-Concrete bar: a Hero release SHALL NOT pass CI if any of the six
-install targets (claude, opencode, cursor, codex, copilot, generic)
-produces output that the consuming harness cannot register or
-consume. Today only one target × one content kind has that
-guarantee — claude × agents, just added in the
-`claude-subagent-frontmatter-registration` fix. The other 17
-target-by-kind cells are uncovered.
 
 ---
 
