@@ -701,6 +701,33 @@ func TestDiscover(t *testing.T) {
 	}
 }
 
+func TestDiscoverSkipsHiddenHeroInternals(t *testing.T) {
+	heroDir := filepath.Join(t.TempDir(), ".hero")
+	visibleDir := filepath.Join(heroDir, "planning", "features", "visible")
+	hiddenDir := filepath.Join(visibleDir, ".tracker-evidence.tmp-race")
+	for _, dir := range []string{visibleDir, hiddenDir} {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatalf("MkdirAll %s: %v", dir, err)
+		}
+	}
+	for path, content := range map[string]string{
+		filepath.Join(visibleDir, "spec.md"): "---\nslug: visible\ntype: feature\nstatus: planning\n---\n# Visible\n",
+		filepath.Join(hiddenDir, "spec.md"):  "---\nslug: transient\ntype: feature\nstatus: planning\n---\n# Transient\n",
+	} {
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatalf("WriteFile %s: %v", path, err)
+		}
+	}
+
+	discovered, err := Discover(heroDir)
+	if err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	if len(discovered) != 1 || discovered[0].Slug != "visible" {
+		t.Fatalf("Discover should skip hidden Hero internals; got %v", slugs(discovered))
+	}
+}
+
 // TestDiscoverFlatNamedSpec covers initiative children stored as flat
 // `<slug>.md` files sibling to the initiative's spec.md — they must be
 // discovered by their declared work type. Regression for

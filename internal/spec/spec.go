@@ -1246,6 +1246,15 @@ func Discover(heroDir string) ([]*Spec, error) {
 	loadedDirs := make(map[string]bool)
 
 	err := filepath.Walk(heroDir, func(path string, info os.FileInfo, err error) error {
+		if path != heroDir && hiddenHeroPath(heroDir, path) {
+			if err != nil {
+				return nil
+			}
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
 		if err != nil {
 			return err
 		}
@@ -1312,6 +1321,19 @@ func Discover(heroDir string) ([]*Spec, error) {
 	}
 
 	return specs, nil
+}
+
+func hiddenHeroPath(heroDir, path string) bool {
+	relative, err := filepath.Rel(heroDir, path)
+	if err != nil || relative == "." {
+		return false
+	}
+	for _, component := range strings.Split(relative, string(filepath.Separator)) {
+		if strings.HasPrefix(component, ".") {
+			return true
+		}
+	}
+	return false
 }
 
 // nonWorkFlatTypes are the explicit frontmatter `type:` values that must NOT
