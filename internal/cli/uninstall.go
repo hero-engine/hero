@@ -30,7 +30,7 @@ to determine which files were installed by Hero.
 
 For Claude Code, also removes the hero-managed section from CLAUDE.md.
 
-Supported targets: opencode, cursor, claude, copilot, codex, generic.`,
+Supported targets: opencode, cursor, claude, copilot, codex, generic, grok.`,
 	RunE: runUninstall,
 }
 
@@ -89,12 +89,19 @@ func runUninstall(cmd *cobra.Command, args []string) error {
 		removed, preserved, err = uninstallCodex(projectRoot, versionInfo)
 	case "generic":
 		removed, preserved, err = uninstallGeneric(projectRoot, versionInfo)
+	case "grok":
+		removed, preserved, err = uninstallGrok(projectRoot, versionInfo)
 	default:
 		return fmt.Errorf("unknown target %q; supported: %s", target, strings.Join(installTargets, ", "))
 	}
 
 	if err != nil {
 		return err
+	}
+	if !uninstallDryRun && target == string(install.TargetGrok) {
+		if err := install.RemoveTargetInstallState(projectRoot, install.TargetGrok); err != nil {
+			return fmt.Errorf("remove grok install state: %w", err)
+		}
 	}
 
 	if removed == 0 {
@@ -341,6 +348,44 @@ func uninstallGeneric(projectRoot string, versionInfo *version.Info) (int, int, 
 	return removed, preserved, nil
 }
 
+func uninstallGrok(projectRoot string, versionInfo *version.Info) (int, int, error) {
+	base := filepath.Join(projectRoot, ".grok")
+	removed, preserved := 0, 0
+	for _, dir := range []string{filepath.Join(base, "agents"), filepath.Join(base, "skills")} {
+		r, p, err := removeHeroFiles(projectRoot, dir, versionInfo)
+		if err != nil {
+			return removed, preserved, err
+		}
+		removed += r
+		preserved += p
+	}
+	if cleaned, err := install.RemoveManagedTOMLMCPConfig(filepath.Join(base, "config.toml"), uninstallDryRun); err != nil {
+		return removed, preserved, err
+	} else if cleaned {
+		removed++
+	}
+	if !uninstallDryRun {
+		_ = os.Remove(base)
+	}
+
+	// AGENTS.md is shared. Remove its Hero region only when no other
+	// non-Claude harness remains installed.
+	remaining := install.UnionTargets(install.PreviouslyInstalledTargets(projectRoot), install.InferInstalledTargets(projectRoot))
+	shared := false
+	for _, target := range remaining {
+		if target != install.TargetClaude && target != install.TargetGrok {
+			shared = true
+			break
+		}
+	}
+	if !shared {
+		if cleaned, err := install.RemoveManagedInstructionFile(filepath.Join(projectRoot, "AGENTS.md"), "# AGENTS.md", uninstallDryRun); err == nil && cleaned {
+			removed++
+		}
+	}
+	return removed, preserved, nil
+}
+
 // removeHeroCodexConfigBlock strips the # hero:managed ... # end:hero:managed block
 // from .codex/config.toml. Returns true if a block was found and removed.
 func removeHeroCodexConfigBlock(path string) (bool, error) {
@@ -542,6 +587,7 @@ func isKnownHeroFile(relPath string) bool {
 		".cursor/rules/",
 		".claude/",
 		".codex/",
+		".grok/",
 	}
 	contentRel := normalized
 	for _, prefix := range prefixes {
@@ -564,6 +610,17 @@ func isKnownHeroFile(relPath string) bool {
 		if len(parts) == 3 {
 			embeddedPath := "skills/" + parts[1] + ".md"
 			if known[embeddedPath] {
+				return true
+			}
+		}
+	}
+
+	// Grok and Codex render commands as command-* nested skills.
+	if strings.HasPrefix(contentRel, "skills/command-") && strings.HasSuffix(contentRel, "/SKILL.md") {
+		parts := strings.Split(contentRel, "/")
+		if len(parts) == 3 {
+			name := strings.TrimPrefix(parts[1], "command-")
+			if known["commands/"+name+".md"] {
 				return true
 			}
 		}

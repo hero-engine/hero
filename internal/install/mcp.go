@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/BurntSushi/toml"
 )
 
 // heroCommand is the command MCP configs point at. It is the bare name,
@@ -44,6 +46,8 @@ func RegisterMCP(target Target, opts Options) error {
 		return registerMCPOpenCode(opts)
 	case TargetCodex:
 		return registerMCPCodex(opts)
+	case TargetGrok:
+		return registerMCPGrok(opts)
 	default:
 		return nil
 	}
@@ -235,7 +239,26 @@ func registerMCPCodex(opts Options) error {
 		configPath = filepath.Join(home, ".codex", "config.toml")
 	}
 
-	return upsertCodexConfig(configPath, opts.DryRun, opts.ProjectRoot)
+	return upsertManagedTOMLMCPConfig(configPath, opts.DryRun, opts.ProjectRoot)
+}
+
+// registerMCPGrok writes Hero's MCP server to Grok Build's native TOML
+// configuration at the active project or user scope.
+func registerMCPGrok(opts Options) error {
+	var configPath string
+	switch opts.Mode {
+	case ModeProject:
+		configPath = filepath.Join(opts.TargetDir, ".grok", "config.toml")
+	case ModeGlobal:
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return err
+		}
+		configPath = filepath.Join(home, ".grok", "config.toml")
+	default:
+		return fmt.Errorf("unknown mode: %s", opts.Mode)
+	}
+	return upsertManagedTOMLMCPConfig(configPath, opts.DryRun, opts.ProjectRoot)
 }
 
 const codexMCPMarker = "# hero:managed"
@@ -244,6 +267,15 @@ const codexMCPEndMarker = "# end:hero:managed"
 // upsertCodexConfig reads an existing .codex/config.toml (or creates one) and
 // ensures the hero MCP server block is present within hero:managed markers.
 func upsertCodexConfig(configPath string, dryRun bool, projectRoot string) error {
+	return upsertManagedTOMLMCPConfig(configPath, dryRun, projectRoot)
+}
+
+// upsertManagedTOMLMCPConfig owns only Hero's marked MCP table. It removes
+// prior managed blocks and legacy unmanaged Hero tables, validates all bytes
+// that remain as user-owned TOML, then appends one canonical managed block.
+// This makes duplicate legacy Hero tables recoverable without permitting an
+// unrelated malformed setting to be overwritten.
+func upsertManagedTOMLMCPConfig(configPath string, dryRun bool, projectRoot string) error {
 	if dryRun {
 		fmt.Printf("  MCP server -> %s\n", configPath)
 		return nil
@@ -260,33 +292,94 @@ func upsertCodexConfig(configPath string, dryRun bool, projectRoot string) error
 	existing := ""
 	if data, err := os.ReadFile(configPath); err == nil {
 		existing = string(data)
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("read TOML config %s: %w", configPath, err)
 	}
 
-	// First, strip any pre-existing unmanaged [mcp_servers.hero] table that
-	// would collide with the managed block. TOML treats two `[mcp_servers.hero]`
-	// tables in the same file as a duplicate-key error, so leaving an old
-	// hand-written entry next to our managed block silently breaks codex.
-	// Only strips tables OUTSIDE the managed markers — the managed block
-	// itself is handled by the marker replacement below.
-	existing = stripUnmanagedCodexHeroTable(existing)
+	withoutLegacy := stripUnmanagedCodexHeroTable(existing)
+	withoutManaged, err := removeManagedTOMLBlocks(withoutLegacy)
+	if err != nil {
+		return fmt.Errorf("parse TOML config %s: %w", configPath, err)
+	}
+	var decoded map[string]any
+	if _, err := toml.Decode(withoutManaged, &decoded); err != nil {
+		return fmt.Errorf("parse TOML config %s: %w", configPath, err)
+	}
 
-	var newContent string
-	startIdx := strings.Index(existing, codexMCPMarker)
-	endIdx := strings.Index(existing, codexMCPEndMarker)
-	if startIdx >= 0 && endIdx > startIdx {
-		// Replace existing hero block
-		newContent = existing[:startIdx] + heroBlock + existing[endIdx+len(codexMCPEndMarker):]
-	} else if strings.TrimSpace(existing) == "" {
-		newContent = heroBlock + "\n"
-	} else {
-		// Append hero block
-		newContent = strings.TrimRight(existing, "\n") + "\n\n" + heroBlock + "\n"
+	newContent, err := replaceManagedTOMLBlocks(withoutLegacy, heroBlock)
+	if err != nil {
+		return fmt.Errorf("parse TOML config %s: %w", configPath, err)
+	}
+	decoded = nil
+	if _, err := toml.Decode(newContent, &decoded); err != nil {
+		return fmt.Errorf("render valid TOML config %s: %w", configPath, err)
 	}
 
 	if err := os.MkdirAll(filepath.Dir(configPath), 0o755); err != nil {
 		return err
 	}
 	return os.WriteFile(configPath, []byte(newContent), 0o644)
+}
+
+// replaceManagedTOMLBlocks replaces the first complete managed span in place
+// and removes any additional stale spans. With no prior span it appends one,
+// adding only the separator needed and leaving all existing bytes untouched.
+func replaceManagedTOMLBlocks(s, block string) (string, error) {
+	var out strings.Builder
+	rest := s
+	replaced := false
+	for {
+		start := strings.Index(rest, codexMCPMarker)
+		end := strings.Index(rest, codexMCPEndMarker)
+		if start < 0 && end < 0 {
+			out.WriteString(rest)
+			break
+		}
+		if start < 0 || end < 0 || end < start {
+			return "", fmt.Errorf("unmatched Hero managed marker")
+		}
+		out.WriteString(rest[:start])
+		if !replaced {
+			out.WriteString(block)
+			replaced = true
+		}
+		rest = rest[end+len(codexMCPEndMarker):]
+	}
+	if replaced {
+		return out.String(), nil
+	}
+	if s == "" {
+		return block + "\n", nil
+	}
+	separator := "\n\n"
+	if strings.HasSuffix(s, "\n\n") {
+		separator = ""
+	} else if strings.HasSuffix(s, "\n") {
+		separator = "\n"
+	}
+	return s + separator + block + "\n", nil
+}
+
+// removeManagedTOMLBlocks removes complete Hero marker spans while preserving
+// every byte outside them. An unmatched marker is refused because its
+// ownership boundary is ambiguous. Multiple complete spans are accepted and
+// converge to one canonical block.
+func removeManagedTOMLBlocks(s string) (string, error) {
+	var out strings.Builder
+	rest := s
+	for {
+		start := strings.Index(rest, codexMCPMarker)
+		end := strings.Index(rest, codexMCPEndMarker)
+		if start < 0 && end < 0 {
+			out.WriteString(rest)
+			return out.String(), nil
+		}
+		if start < 0 || end < 0 || end < start {
+			return "", fmt.Errorf("unmatched Hero managed marker")
+		}
+		out.WriteString(rest[:start])
+		rest = rest[end+len(codexMCPEndMarker):]
+	}
 }
 
 // stripUnmanagedCodexHeroTable removes any `[mcp_servers.hero]` TOML table
@@ -341,11 +434,7 @@ func stripUnmanagedCodexHeroTable(s string) string {
 		}
 
 		if trimmed == tableHeader {
-			// Start dropping. Do not emit this line; remove any trailing
-			// blank line that immediately preceded it for cleanliness.
-			for len(out) > 0 && strings.TrimSpace(out[len(out)-1]) == "" {
-				out = out[:len(out)-1]
-			}
+			// Start dropping. Preceding bytes are user-owned and stay exact.
 			skipping = true
 			continue
 		}
@@ -354,6 +443,36 @@ func stripUnmanagedCodexHeroTable(s string) string {
 	}
 
 	return strings.Join(out, "\n")
+}
+
+// RemoveManagedTOMLMCPConfig removes Hero's marked MCP block and preserves
+// every byte outside it. If no user-owned content remains, the file is removed.
+func RemoveManagedTOMLMCPConfig(configPath string, dryRun bool) (bool, error) {
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	content := string(data)
+	start := strings.Index(content, codexMCPMarker)
+	end := strings.Index(content, codexMCPEndMarker)
+	if start < 0 && end < 0 {
+		return false, nil
+	}
+	if start < 0 || end < start {
+		return false, fmt.Errorf("unmatched Hero managed marker in %s", configPath)
+	}
+	end += len(codexMCPEndMarker)
+	remaining := content[:start] + content[end:]
+	if dryRun {
+		return true, nil
+	}
+	if strings.TrimSpace(remaining) == "" {
+		return true, os.Remove(configPath)
+	}
+	return true, os.WriteFile(configPath, []byte(remaining), 0o644)
 }
 
 // RegisterProject registers a project directory in the global daemon registry

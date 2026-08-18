@@ -5,7 +5,7 @@ status: active
 triggers: [
   "CLAUDE.md", "AGENTS.md", "harness", "install target", "instruction file",
   "slash command", "routing", "agents", "skills", "commands",
-  "opencode", "cursor", "codex", "copilot", "generic", "hook", "PreCompact", "Stop hook"
+  "opencode", "cursor", "codex", "copilot", "generic", "grok", "hook", "PreCompact", "Stop hook"
 ]
 scope: [
   "CLAUDE.md", "AGENTS.md",
@@ -23,16 +23,16 @@ severity: high
 Do not implement or deliver a harness-facing change (instruction-file content,
 routing guidance, slash commands, agents, skills, or anything `hero install`
 propagates) that handles only **one** harness — most commonly Claude/`CLAUDE.md`.
-Hero installs to **six** targets: `opencode | cursor | claude | copilot | codex |
-generic`. Every harness-facing change must account for all of them, or be
+Hero installs to **seven** targets: `opencode | cursor | claude | copilot | codex |
+generic | grok`. Every harness-facing change must account for all of them, or be
 explicitly scoped with the reason the others are excluded.
 
 ## Why
 
 Claude Code is the conspicuous outlier — it reads `CLAUDE.md` and has end-of-
-session hooks (Stop/PreCompact); the other five read `AGENTS.md` and have **no
+session hooks (Stop/PreCompact); the other six read `AGENTS.md` and have **no
 equivalent hook**. A change authored against `CLAUDE.md` or a Claude-only hook
-silently breaks coverage for opencode, cursor, copilot, codex, and generic, and
+silently breaks coverage for opencode, cursor, copilot, codex, generic, and grok, and
 the gap is invisible until someone runs Hero in those harnesses. This recurs
 often enough to need an always-on guardrail. See
 [[harness-instruction-file-survey]] and the `--target` set in
@@ -47,7 +47,9 @@ often enough to need an always-on guardrail. See
   canonical one.** Under the harness-native, target-aware install model,
   `hero install` writes the file each installed target natively reads: `claude`
   → `CLAUDE.md`, every other target (`opencode | cursor | copilot | codex |
-  generic`) → `AGENTS.md`. Both carry the **same** Hero-managed block body
+  generic | grok`) → `AGENTS.md`. Codex and Grok additionally receive Hero
+  workflows as `command-*` skills in their native skill roots rather than a
+  standalone commands directory. Both root files carry the **same** Hero-managed block body
   (rendered once, written into each target's file) — so "author once, propagate
   to every target" still holds for the *content*, it just lands in per-target
   files. There is **no** `CLAUDE.md → AGENTS.md` symlink/`@import` shim, and a

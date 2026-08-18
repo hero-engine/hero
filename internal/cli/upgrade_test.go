@@ -7,6 +7,7 @@ import (
 	"testing"
 	"testing/fstest"
 
+	"github.com/hero-engine/hero/internal/install"
 	"github.com/hero-engine/hero/internal/version"
 )
 
@@ -408,6 +409,24 @@ func TestUpgradeRejectsUnknownTarget(t *testing.T) {
 	}
 }
 
+func TestResolveUpgradeTargetsIncludesGrok(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, ".grok", "agents"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	got, err := resolveUpgradeTargets(dir, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0] != install.TargetGrok {
+		t.Fatalf("default Grok detection = %v, want [grok]", got)
+	}
+	got, err = resolveUpgradeTargets(dir, nil, []string{"grok"})
+	if err != nil || len(got) != 1 || got[0] != install.TargetGrok {
+		t.Fatalf("explicit Grok resolution = %v, %v", got, err)
+	}
+}
+
 func TestDetectInstalledTargets_DedupsAndOrdersStably(t *testing.T) {
 	dir := t.TempDir()
 	// DetectInstalledTargets requires at least one symlinked subdir
@@ -423,7 +442,7 @@ func TestDetectInstalledTargets_DedupsAndOrdersStably(t *testing.T) {
 		t.Fatalf("len = %d, want 2: %v", len(got), got)
 	}
 	// install.DetectInstalledTargets walks targetLayouts in registration
-	// order: claude, codex, opencode, cursor, copilot, generic.
+	// order: claude, codex, opencode, cursor, copilot, generic, grok.
 	if string(got[0]) != "claude" || string(got[1]) != "opencode" {
 		t.Errorf("order = %v, want [claude opencode]", got)
 	}

@@ -44,6 +44,9 @@ func TestRegisterMCP_CommandIsPortable_AllTargets(t *testing.T) {
 			// The codex block lands in the PROJECT config, not ~/.codex.
 			return codexHeroCommand(t, filepath.Join(targetDir, ".codex", "config.toml"))
 		}},
+		{TargetGrok, func(t *testing.T, targetDir string) string {
+			return codexHeroCommand(t, filepath.Join(targetDir, ".grok", "config.toml"))
+		}},
 	}
 
 	for _, tc := range cases {

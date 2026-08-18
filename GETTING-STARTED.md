@@ -69,7 +69,12 @@ hero install project . --target claude
 hero install project . --target codex
 hero install project . --target copilot
 hero install project . --target generic
+hero install project . --target grok
 ```
+
+The Grok target uses Grok Build's native `.grok/agents`, `.grok/skills`,
+`AGENTS.md`, and `.grok/config.toml` surfaces. Hero workflows are installed as
+user-invocable `command-*` skills; no `.grok/commands` directory is required.
 
 The installer copies 29 slash command definitions, 35 agents, and 57
 skills from the active **domain pack**, then registers the `hero mcp`

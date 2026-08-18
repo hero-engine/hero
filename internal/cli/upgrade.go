@@ -63,7 +63,7 @@ func init() {
 	upgradeCmd.Flags().BoolVar(&upgradeDryRun, "dry-run", false, "show what would change without modifying files")
 	upgradeCmd.Flags().BoolVar(&upgradeForce, "force", false, "overwrite customized files")
 	upgradeCmd.Flags().BoolVar(&upgradeNoHooks, "no-hooks", false, "skip refreshing the installed pre-commit hook (mirrors `hero scan --no-hooks`)")
-	upgradeCmd.Flags().StringSliceVar(&upgradeTargets, "target", nil, "narrow to one or more targets (claude, opencode, cursor, codex, copilot, generic); default: every detected target")
+	upgradeCmd.Flags().StringSliceVar(&upgradeTargets, "target", nil, "narrow to one or more targets (claude, opencode, cursor, codex, copilot, generic, grok); default: every detected target")
 	upgradeCmd.Flags().BoolVar(&upgradePruneOrphans, "prune-orphaned-instruction-files", false, "delete a root instruction file (AGENTS.md/CLAUDE.md) whose target was not installed AND whose entire content is Hero-managed; files with any user content are never deleted (default: keep, maintain managed region)")
 }
 
@@ -423,13 +423,14 @@ func resolveUpgradeTargets(projectRoot string, info *version.Info, requested []s
 		"codex":    install.TargetCodex,
 		"copilot":  install.TargetCopilot,
 		"generic":  install.TargetGeneric,
+		"grok":     install.TargetGrok,
 	}
 	seen := map[install.Target]bool{}
 	out := make([]install.Target, 0, len(requested))
 	for _, name := range requested {
 		t, ok := known[strings.ToLower(name)]
 		if !ok {
-			return nil, fmt.Errorf("unknown --target %q (valid: opencode, cursor, claude, codex, copilot, generic)", name)
+			return nil, fmt.Errorf("unknown --target %q (valid: opencode, cursor, claude, codex, copilot, generic, grok)", name)
 		}
 		if seen[t] {
 			continue

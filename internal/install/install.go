@@ -5,7 +5,7 @@
 //
 //	install.go        — Run dispatcher + Options/Result types (this file)
 //	target_<name>.go  — per-harness installer (claude, opencode, cursor, codex,
-//	                    copilot, generic)
+//	                    copilot, generic, grok)
 //	agents_md.go      — AGENTS.md generation + marker-based merge
 //	claude_md.go      — CLAUDE.md generation + marker-based merge + Claude paths
 //	content.go        — installFlat + installSkillsNested + legacy-flat cleanup
@@ -35,6 +35,7 @@ const (
 	TargetCopilot  Target = "copilot"
 	TargetCodex    Target = "codex"
 	TargetGeneric  Target = "generic"
+	TargetGrok     Target = "grok"
 )
 
 // Mode represents whether installation is project-local or global.
@@ -176,8 +177,10 @@ func Run(opts Options) (*Result, error) {
 		result, err = runCodex(opts)
 	case TargetGeneric:
 		result, err = runGeneric(opts)
+	case TargetGrok:
+		result, err = runGrok(opts)
 	default:
-		return nil, fmt.Errorf("unknown target %q; supported targets: opencode, cursor, claude, copilot, codex, generic", opts.Target)
+		return nil, fmt.Errorf("unknown target %q; supported targets: opencode, cursor, claude, copilot, codex, generic, grok", opts.Target)
 	}
 
 	if err != nil {
@@ -188,7 +191,9 @@ func Run(opts Options) (*Result, error) {
 		result = &Result{}
 	}
 
-	if mcpErr := RegisterMCP(opts.Target, opts); mcpErr != nil {
+	if mcpErr := RegisterMCP(opts.Target, opts); mcpErr != nil && opts.Target == TargetGrok {
+		return result, fmt.Errorf("register grok MCP server: %w", mcpErr)
+	} else if mcpErr != nil {
 		fmt.Printf("  warning: could not register MCP server: %v\n", mcpErr)
 	}
 

@@ -164,11 +164,12 @@ func buildDoctorReport(info doctorInfo) string {
 	return b.String()
 }
 
-// inventoryTargetNames is the full six-target set, used to render the
+// inventoryTargetNames is the full seven-target set, used to render the
 // "not installed:" line for targets absent from the row set.
 var inventoryTargetNames = []install.Target{
 	install.TargetClaude, install.TargetOpenCode, install.TargetCursor,
 	install.TargetCopilot, install.TargetCodex, install.TargetGeneric,
+	install.TargetGrok,
 }
 
 // buildInventorySection renders the "Installed harness targets" section: one
@@ -186,7 +187,7 @@ func buildInventorySection(info doctorInfo) string {
 	}
 
 	if len(info.inventory) == 0 {
-		b.WriteString("  no harness targets installed — run `hero install --target <claude|codex|copilot|cursor|opencode|generic>`\n\n")
+		b.WriteString("  no harness targets installed — run `hero install --target <claude|codex|copilot|cursor|opencode|generic|grok>`\n\n")
 		return b.String()
 	}
 
@@ -195,11 +196,17 @@ func buildInventorySection(info doctorInfo) string {
 	incomplete := 0
 	hasCodex := false
 	var codex install.TargetInventory
+	hasGrok := false
+	var grok install.TargetInventory
 	for _, inv := range info.inventory {
 		installed[inv.Target] = true
 		if inv.Target == install.TargetCodex {
 			hasCodex = true
 			codex = inv
+		}
+		if inv.Target == install.TargetGrok {
+			hasGrok = true
+			grok = inv
 		}
 		if kindShort(inv.Agents) || kindShort(inv.Commands) || kindShort(inv.Skills) {
 			incomplete++
@@ -242,6 +249,13 @@ func buildInventorySection(info doctorInfo) string {
 		b.WriteString("\n")
 		fmt.Fprintf(&b, "  codex has no command loader — its %d commands install as skills under\n", cmds)
 		fmt.Fprintf(&b, "  .agents/skills/command-<name>/ (%d canonical + %d commands = %d).\n", canonical, cmds, codex.Skills.Expected)
+	}
+	if hasGrok {
+		cmds := grok.Commands.Expected
+		canonical := grok.Skills.Expected - cmds
+		b.WriteString("\n")
+		fmt.Fprintf(&b, "  grok has no standalone command loader — its %d commands install as skills under\n", cmds)
+		fmt.Fprintf(&b, "  .grok/skills/command-<name>/ (%d canonical + %d commands = %d).\n", canonical, cmds, grok.Skills.Expected)
 	}
 
 	b.WriteString("\n")

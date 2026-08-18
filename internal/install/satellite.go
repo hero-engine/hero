@@ -31,6 +31,9 @@ type TargetLayout struct {
 	// satellite folder, telling the model where the workspace lives.
 	// Empty if the target has no top-level marker.
 	MarkerFile string
+	// LinkableDirs lists content subdirectories this harness actually owns.
+	// Nil uses the historical agents/commands/skills set.
+	LinkableDirs []string
 }
 
 // targetLayouts is the registry of per-target satellite layouts. It
@@ -61,6 +64,14 @@ var targetLayouts = []TargetLayout{
 	{Target: TargetCursor, SubDir: filepath.Join(".cursor", "rules"), MarkerFile: ""},
 	{Target: TargetCopilot, SubDir: filepath.Join(".github", "copilot"), MarkerFile: ""},
 	{Target: TargetGeneric, SubDir: ".ai", MarkerFile: "AGENTS.md"},
+	{Target: TargetGrok, SubDir: ".grok", MarkerFile: "AGENTS.md", LinkableDirs: []string{"agents", "skills"}},
+}
+
+func (l TargetLayout) linkableDirs() []string {
+	if len(l.LinkableDirs) > 0 {
+		return l.LinkableDirs
+	}
+	return SymlinkedDirs
 }
 
 // LayoutFor returns the TargetLayout for the given target, or nil if the
@@ -84,7 +95,7 @@ func DetectInstalledTargets(rootDir string) []Target {
 		if info, err := os.Stat(dir); err == nil && info.IsDir() {
 			// Require at least one of the symlinked subdirs to exist —
 			// an empty .claude/ alone is not a real install.
-			for _, sub := range SymlinkedDirs {
+			for _, sub := range layout.linkableDirs() {
 				subPath := filepath.Join(dir, sub)
 				if subInfo, subErr := os.Stat(subPath); subErr == nil && subInfo.IsDir() {
 					found = append(found, layout.Target)
@@ -189,7 +200,7 @@ func Materialize(opts SatelliteOptions) (*SatelliteResult, error) {
 		}
 
 		if symlinkSupported {
-			for _, sub := range SymlinkedDirs {
+			for _, sub := range layout.linkableDirs() {
 				rootSub := filepath.Join(targetRootBase, sub)
 				if info, err := os.Stat(rootSub); err != nil || !info.IsDir() {
 					continue
@@ -274,7 +285,7 @@ func RemoveSatellite(satAbs string, targets []Target) error {
 		}
 		base := filepath.Join(satAbs, layout.SubDir)
 		// Remove only the symlinked subdirs and per-target marker.
-		for _, sub := range SymlinkedDirs {
+		for _, sub := range layout.linkableDirs() {
 			path := filepath.Join(base, sub)
 			if isSymlink(path) {
 				_ = os.Remove(path)

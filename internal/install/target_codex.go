@@ -107,7 +107,7 @@ func runCodex(opts Options) (*Result, error) {
 		// `source-command-` is a dead Hero namespace: a superseded layout
 		// rendered commands under that prefix. Nothing writes it now, so
 		// every such dir on disk is an orphan.
-		ownedPrefixes: []string{codexCommandSkillPrefix, "source-command-"},
+		ownedPrefixes: []string{commandSkillPrefix, "source-command-"},
 	}); err != nil {
 		return nil, fmt.Errorf("prune stale codex skills: %w", err)
 	}
@@ -143,6 +143,12 @@ func isLegacyCodexAgentMarkdown(name string) bool {
 // materializes at the skills dest: the canonical skills, plus one
 // command-<name> dir per command (renderCommandAsCodexSkill).
 func codexSkillDirNames(opts Options) ([]string, error) {
+	return commandSkillDirNames(opts)
+}
+
+// commandSkillDirNames returns the canonical skills plus one command-* skill
+// directory for each selected command.
+func commandSkillDirNames(opts Options) ([]string, error) {
 	names, err := canonicalSkillDirNames(opts)
 	if err != nil {
 		return nil, err
@@ -157,7 +163,7 @@ func codexSkillDirNames(opts Options) ([]string, error) {
 		return nil, err
 	}
 	for _, name := range trimMDNames(commands) {
-		names = append(names, codexCommandSkillDir(name))
+		names = append(names, commandSkillDir(name))
 	}
 	return names, nil
 }

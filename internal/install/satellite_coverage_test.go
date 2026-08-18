@@ -35,6 +35,7 @@ func TestTargetLayoutsCoverage(t *testing.T) {
 		TargetCursor:   {filepath.Join(".cursor", "rules"), ""},
 		TargetCopilot:  {filepath.Join(".github", "copilot"), ""},
 		TargetGeneric:  {".ai", "AGENTS.md"},
+		TargetGrok:     {".grok", "AGENTS.md"},
 	}
 	for tgt, w := range want {
 		layout := LayoutFor(tgt)
@@ -61,13 +62,18 @@ func TestDetectInstalledTargetsAllSupported(t *testing.T) {
 	addTargetSubdir(t, root, ".opencode")
 	addTargetSubdir(t, root, filepath.Join(".cursor", "rules"))
 	addTargetSubdir(t, root, ".ai")
+	for _, sub := range []string{"agents", "skills"} {
+		if err := os.MkdirAll(filepath.Join(root, ".grok", sub), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
 
 	got := DetectInstalledTargets(root)
 	gotSet := map[Target]bool{}
 	for _, tgt := range got {
 		gotSet[tgt] = true
 	}
-	for _, expected := range []Target{TargetClaude, TargetCodex, TargetOpenCode, TargetCursor, TargetGeneric} {
+	for _, expected := range []Target{TargetClaude, TargetCodex, TargetOpenCode, TargetCursor, TargetGeneric, TargetGrok} {
 		if !gotSet[expected] {
 			t.Errorf("expected %s in detected set; got %v", expected, got)
 		}

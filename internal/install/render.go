@@ -88,6 +88,9 @@ func renderToFile(opts Options, result *Result, kind, destDir string, fn func(ca
 		if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 			return err
 		}
+		if existing, err := os.ReadFile(dst); err == nil && bytes.Equal(existing, rendered) {
+			continue
+		}
 		if err := os.WriteFile(dst, rendered, 0o644); err != nil {
 			return err
 		}
@@ -176,14 +179,13 @@ func renderCodexAgentToml(entry canonicalEntry) (string, []byte, error) {
 	return entry.Name + ".toml", out.Bytes(), nil
 }
 
-// codexCommandSkillPrefix namespaces commands rendered as Codex skills.
-// The prune pass treats it as Hero-owned at the Codex skills dest, so it
-// must stay in lockstep with renderCommandAsCodexSkill's output path.
-const codexCommandSkillPrefix = "command-"
+// commandSkillPrefix namespaces commands rendered as harness skills. The
+// prune pass treats it as Hero-owned at commands-as-skills destinations.
+const commandSkillPrefix = "command-"
 
-// codexCommandSkillDir is the skill dir name for a canonical command.
-func codexCommandSkillDir(name string) string {
-	return codexCommandSkillPrefix + name
+// commandSkillDir is the skill dir name for a canonical command.
+func commandSkillDir(name string) string {
+	return commandSkillPrefix + name
 }
 
 // renderCommandAsCodexSkill renders a canonical command markdown file as
@@ -191,22 +193,32 @@ func codexCommandSkillDir(name string) string {
 // includes an execution preamble so Codex treats the file as a workflow
 // to execute rather than documentation to summarize.
 func renderCommandAsCodexSkill(entry canonicalEntry) (string, []byte, error) {
-	desc := entry.Frontmatter["description"]
-	if desc == "" {
-		desc = "Hero /" + entry.Name + " workflow — follow these steps to execute the command"
-	}
+	return commandAsSkillRenderer("Codex")(entry)
+}
 
-	var out bytes.Buffer
-	fmt.Fprintf(&out, "---\nname: command-%s\ndescription: %s\nmetadata:\n  purpose: command-workflow\n---\n\n", entry.Name, desc)
-	out.WriteString("> **This is a Hero workflow for Codex.** Read each step below and execute it in sequence.\n")
-	out.WriteString("> Do NOT summarize or treat these steps as documentation.\n")
-	out.WriteString("> Do NOT update spec frontmatter as a substitute for doing the actual work described.\n\n")
-	body := bytes.TrimLeft(entry.Body, "\n")
-	out.Write(body)
-	if len(body) > 0 && body[len(body)-1] != '\n' {
-		out.WriteByte('\n')
+// commandAsSkillRenderer renders canonical commands as user-invocable skills
+// for harnesses whose native workflow primitive is a skill. The harness label
+// is confined to the execution preamble; names, frontmatter, paths, and body
+// handling are shared so Codex's established byte contract remains stable.
+func commandAsSkillRenderer(harnessLabel string) func(canonicalEntry) (string, []byte, error) {
+	return func(entry canonicalEntry) (string, []byte, error) {
+		desc := entry.Frontmatter["description"]
+		if desc == "" {
+			desc = "Hero /" + entry.Name + " workflow — follow these steps to execute the command"
+		}
+
+		var out bytes.Buffer
+		fmt.Fprintf(&out, "---\nname: command-%s\ndescription: %s\nmetadata:\n  purpose: command-workflow\n---\n\n", entry.Name, desc)
+		fmt.Fprintf(&out, "> **This is a Hero workflow for %s.** Read each step below and execute it in sequence.\n", harnessLabel)
+		out.WriteString("> Do NOT summarize or treat these steps as documentation.\n")
+		out.WriteString("> Do NOT update spec frontmatter as a substitute for doing the actual work described.\n\n")
+		body := bytes.TrimLeft(entry.Body, "\n")
+		out.Write(body)
+		if len(body) > 0 && body[len(body)-1] != '\n' {
+			out.WriteByte('\n')
+		}
+		return commandSkillDir(entry.Name) + "/SKILL.md", out.Bytes(), nil
 	}
-	return codexCommandSkillDir(entry.Name) + "/SKILL.md", out.Bytes(), nil
 }
 
 // renderCopilotPromptFile emits a Copilot .prompt.md file from a

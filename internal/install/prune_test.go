@@ -83,6 +83,7 @@ func TestInstallLeavesForeignSkillDirsAlone(t *testing.T) {
 		{"opencode", TargetOpenCode, []string{".opencode", "skills"}},
 		{"copilot", TargetCopilot, []string{".github", "skills"}},
 		{"generic", TargetGeneric, []string{".ai", "skills"}},
+		{"grok", TargetGrok, []string{".grok", "skills"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			sourceDir := t.TempDir()
@@ -258,7 +259,7 @@ func TestCodexGlobalPrunesOwnedPrefixOnly(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// File-manifest prune tests (pruneStaleFiles). Table-driven over all six
+// File-manifest prune tests (pruneStaleFiles). Table-driven over all seven
 // targets where the criterion is per-target. See manifest-driven-prune spec.
 // ---------------------------------------------------------------------------
 
@@ -291,6 +292,7 @@ var fileTgts = []fileTgt{
 	{"cursor", TargetCursor, func(s string) string { return filepath.Join(".cursor", "rules", "agents", s+".md") }, "my-custom-agent.md", true},
 	{"opencode", TargetOpenCode, func(s string) string { return filepath.Join(".opencode", "agents", s+".md") }, "my-custom-agent.md", true},
 	{"generic", TargetGeneric, func(s string) string { return filepath.Join(".ai", "agents", s+".md") }, "my-custom-agent.md", true},
+	{"grok", TargetGrok, func(s string) string { return filepath.Join(".grok", "agents", s+".md") }, "my-custom-agent.md", true},
 }
 
 // setupPruneWorkspace builds a source content tree and a target workspace

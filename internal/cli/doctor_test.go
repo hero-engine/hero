@@ -29,6 +29,13 @@ func healthyCodex() install.TargetInventory {
 	}
 }
 
+func healthyGrok() install.TargetInventory {
+	return install.TargetInventory{
+		Target: install.TargetGrok, RootFile: "AGENTS.md",
+		Agents: kc(35, 35), Commands: install.KindCount{Expected: 29, NotApplicable: true}, Skills: kc(84, 84),
+	}
+}
+
 func TestBuildDoctorReport(t *testing.T) {
 	base := doctorInfo{
 		exe:           "/Users/dev/go/bin/hero",
@@ -125,9 +132,9 @@ func TestBuildDoctorReport(t *testing.T) {
 			"Installed harness targets",
 			"TARGET", "AGENTS", "COMMANDS", "SKILLS", "ROOT FILE",
 			"35/35", "29/29", "55/55", "84/84",
-			"—",         // codex commands cell (NotApplicable), never "0/29"
+			"—", // codex commands cell (NotApplicable), never "0/29"
 			"CLAUDE.md", "AGENTS.md",
-			"not installed: copilot, cursor, generic, opencode",
+			"not installed: copilot, cursor, generic, grok, opencode",
 			"codex has no command loader",
 			"(55 canonical + 29 commands = 84)",
 		} {
@@ -160,8 +167,19 @@ func TestBuildDoctorReport(t *testing.T) {
 		if strings.Contains(report, "codex has no command loader") {
 			t.Errorf("codex footnote must be omitted when codex is absent:\n%s", report)
 		}
-		if !strings.Contains(report, "not installed: codex, copilot, cursor, generic, opencode") {
+		if !strings.Contains(report, "not installed: codex, copilot, cursor, generic, grok, opencode") {
 			t.Errorf("expected codex on the not-installed line:\n%s", report)
+		}
+	})
+
+	t.Run("grok commands roll into native skills", func(t *testing.T) {
+		info := base
+		info.inventory = []install.TargetInventory{healthyGrok()}
+		report := buildDoctorReport(info)
+		for _, want := range []string{"grok", "—", "grok has no standalone command loader", ".grok/skills/command-<name>/", "(55 canonical + 29 commands = 84)"} {
+			if !strings.Contains(report, want) {
+				t.Errorf("Grok inventory missing %q:\n%s", want, report)
+			}
 		}
 	})
 
@@ -198,7 +216,7 @@ func TestBuildDoctorReport(t *testing.T) {
 		info.inventory = []install.TargetInventory{healthyClaude(), healthyCodex()}
 		report := buildDoctorReport(info)
 
-		if !strings.Contains(report, "not installed: copilot, cursor, generic, opencode") {
+		if !strings.Contains(report, "not installed: copilot, cursor, generic, grok, opencode") {
 			t.Errorf("expected cursor on the not-installed line:\n%s", report)
 		}
 		if strings.Contains(report, "!") {

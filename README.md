@@ -11,7 +11,7 @@ with the right project context.
 **New here? Start with [GETTING-STARTED.md](GETTING-STARTED.md).**
 
 Hero currently installs into OpenCode, Cursor, Claude Code, Codex,
-GitHub Copilot, and generic MCP-capable tools.
+GitHub Copilot, Grok Build, and generic MCP-capable tools.
 
 ---
 
@@ -90,7 +90,12 @@ hero install project . --target cursor
 hero install project . --target claude
 hero install project . --target codex
 hero install project . --target copilot
+hero install project . --target grok
 ```
+
+Grok Build receives native Markdown agents in `.grok/agents`, canonical
+skills and `command-*` workflow skills in `.grok/skills`, project guidance in
+`AGENTS.md`, and the Hero MCP server in `.grok/config.toml`.
 
 For monorepos where the AI tool runs from a subfolder, register each
 subfolder as a satellite of the root install:

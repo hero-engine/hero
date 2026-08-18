@@ -39,7 +39,7 @@ func managedBody(t *testing.T, path string) string {
 }
 
 // TestHarnessNative_PerTargetFileSet asserts the exact root instruction file
-// each of the six targets writes: claude → CLAUDE.md only; every other
+// each of the seven targets writes: claude → CLAUDE.md only; every other
 // target → AGENTS.md only.
 func TestHarnessNative_PerTargetFileSet(t *testing.T) {
 	cases := []struct {
@@ -53,6 +53,7 @@ func TestHarnessNative_PerTargetFileSet(t *testing.T) {
 		{TargetCursor, "AGENTS.md", "CLAUDE.md"},
 		{TargetCopilot, "AGENTS.md", "CLAUDE.md"},
 		{TargetGeneric, "AGENTS.md", "CLAUDE.md"},
+		{TargetGrok, "AGENTS.md", "CLAUDE.md"},
 	}
 	for _, tc := range cases {
 		t.Run(string(tc.target), func(t *testing.T) {
@@ -69,7 +70,7 @@ func TestHarnessNative_PerTargetFileSet(t *testing.T) {
 // TestHarnessNative_DoctorRoutingGuidanceAllTargets asserts that the
 // version/schema routing guidance (prefer the MCP surface; on a schema/
 // version mismatch run `hero doctor`, not `hero upgrade`; don't confabulate
-// a migration story) lands in every domain × every one of the six targets'
+// a migration story) lands in every domain × every one of the seven targets'
 // native root instruction file. The guidance is authored once as the shared
 // domain-agnostic operationalGuidanceSection wired into defaultSections, so
 // it must reach every pack (engineering, pm, sales, chat) and every target
@@ -97,7 +98,7 @@ func TestHarnessNative_DoctorRoutingGuidanceAllTargets(t *testing.T) {
 	}
 	targets := []Target{
 		TargetClaude, TargetCodex, TargetOpenCode,
-		TargetCursor, TargetCopilot, TargetGeneric,
+		TargetCursor, TargetCopilot, TargetGeneric, TargetGrok,
 	}
 	// Per-domain Options mutator supplying that domain's real pack body.
 	// engineering/pm/sales are installable, so they go through the real

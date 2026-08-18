@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// inventory_test.go — Inventory coverage, table-driven over all six targets
+// inventory_test.go — Inventory coverage, table-driven over all seven targets
 // per the harness-changes-cover-all-targets tripwire. Installs via the shared
 // harness, then asserts the introspection Inventory reports.
 //
@@ -47,10 +47,10 @@ func hasRow(invs []TargetInventory, target Target) bool {
 	return false
 }
 
-// TestInventory_AllSixTargets is the six-target gate: every target installs and
+// TestInventory_AllSevenTargets is the seven-target gate: every target installs and
 // reports a correct, complete row from its real destination paths. A t.Skip on
 // any target here is a failed delivery, not a green one.
-func TestInventory_AllSixTargets(t *testing.T) {
+func TestInventory_AllSevenTargets(t *testing.T) {
 	for _, tc := range integrityTargets {
 		t.Run(tc.name, func(t *testing.T) {
 			h := newInstallHarness(t)
@@ -69,13 +69,13 @@ func TestInventory_AllSixTargets(t *testing.T) {
 				t.Errorf("agents = %d/%d, want 2/2", row.Agents.Actual, row.Agents.Expected)
 			}
 
-			if tc.target == TargetCodex {
+			if tc.target == TargetCodex || tc.target == TargetGrok {
 				if !row.Commands.NotApplicable {
-					t.Errorf("codex commands must be NotApplicable")
+					t.Errorf("%s commands must be NotApplicable", tc.target)
 				}
 				// 2 canonical skills + 2 commands-as-skills.
 				if row.Skills.Expected != 4 || row.Skills.Actual != 4 {
-					t.Errorf("codex skills = %d/%d, want 4/4", row.Skills.Actual, row.Skills.Expected)
+					t.Errorf("%s skills = %d/%d, want 4/4", tc.target, row.Skills.Actual, row.Skills.Expected)
 				}
 			} else {
 				if row.Commands.NotApplicable {

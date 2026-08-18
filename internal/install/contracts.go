@@ -176,6 +176,20 @@ var targetContracts = map[Target]map[ContentKind]HarnessContract{
 			FilenameRequired: "SKILL.md",
 		},
 	},
+
+	// Grok Build loads Markdown agents and nested skills. Hero workflows are
+	// command-* skills, so there is intentionally no commands contract cell.
+	TargetGrok: {
+		KindAgents: {
+			Format:         FormatYAMLFrontmatter,
+			RequiredFields: []string{"name", "description"},
+		},
+		KindSkills: {
+			Format:           FormatYAMLFrontmatter,
+			RequiredFields:   []string{"name", "description"},
+			FilenameRequired: "SKILL.md",
+		},
+	},
 }
 
 // ContractsFor returns the contract for the (target, kind) cell or

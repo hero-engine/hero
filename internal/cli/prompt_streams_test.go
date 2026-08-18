@@ -204,7 +204,7 @@ func TestPromptTargetEmptyAnswerKeepsTheOpencodeDefault(t *testing.T) {
 func TestInstallTargetsMatchTheFlagHelp(t *testing.T) {
 	want := []install.Target{
 		install.TargetOpenCode, install.TargetCursor, install.TargetClaude,
-		install.TargetCopilot, install.TargetCodex, install.TargetGeneric,
+		install.TargetCopilot, install.TargetCodex, install.TargetGeneric, install.TargetGrok,
 	}
 	if len(installTargets) != len(want) {
 		t.Fatalf("installTargets has %d entries, want %d", len(installTargets), len(want))

@@ -21,6 +21,7 @@ func TestAttentionLifecycleGuidanceReachesAllHarnessNativeSurfaces(t *testing.T)
 		{"copilot", TargetCopilot, "AGENTS.md", ".github/skills/attention-lifecycle-awareness/SKILL.md", ".github/prompts/commands/resume.prompt.md"},
 		{"codex", TargetCodex, "AGENTS.md", ".agents/skills/attention-lifecycle-awareness/SKILL.md", ".agents/skills/command-resume/SKILL.md"},
 		{"generic", TargetGeneric, "AGENTS.md", ".ai/skills/attention-lifecycle-awareness/SKILL.md", ".ai/commands/resume.md"},
+		{"grok", TargetGrok, "AGENTS.md", ".grok/skills/attention-lifecycle-awareness/SKILL.md", ".grok/skills/command-resume/SKILL.md"},
 	}
 
 	for _, tc := range cases {

@@ -87,6 +87,7 @@ func DetectCandidates(rootDir string, manifest *SubprojectsManifest, depthCap in
 		".agents":       true,
 		".claude":       true,
 		".codex":        true,
+		".grok":         true,
 		".opencode":     true,
 		".cursor":       true,
 		".github":       true,

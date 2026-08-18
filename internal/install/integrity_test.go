@@ -9,12 +9,12 @@ import (
 	"github.com/hero-engine/hero/internal/managed"
 )
 
-// integrity_test.go — CheckIntegrity coverage, table-driven over all six
+// integrity_test.go — CheckIntegrity coverage, table-driven over all seven
 // targets per the harness-changes-cover-all-targets tripwire. Mirrors the
 // TestHarness_InstalledContentSurvivesOrdinaryCommands shape: install via
 // the harness, damage (or don't), then assert what CheckIntegrity reports.
 
-// integrityTargets is the full six-target table with each target's native
+// integrityTargets is the full seven-target table with each target's native
 // instruction file per nativeInstructionFile (AC-5).
 var integrityTargets = []struct {
 	name     string
@@ -27,6 +27,7 @@ var integrityTargets = []struct {
 	{"cursor", TargetCursor, "AGENTS.md"},
 	{"copilot", TargetCopilot, "AGENTS.md"},
 	{"generic", TargetGeneric, "AGENTS.md"},
+	{"grok", TargetGrok, "AGENTS.md"},
 }
 
 // newIntegrityHarness installs one target with a .hero/ workspace

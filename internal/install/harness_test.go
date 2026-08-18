@@ -64,8 +64,8 @@ func (h *installHarness) seedSource() {
 		"agents/reviewer.md":            "---\nname: reviewer\ndescription: Reviews PRs.\n---\n# Reviewer agent\nReviews PRs.",
 		"commands/design.md":            "---\ndescription: Produces a spec.\n---\n# /design command\n",
 		"commands/deliver.md":           "---\ndescription: Implements a spec.\n---\n# /deliver command\n",
-		"skills/spec-format/SKILL.md":   "---\ndescription: Defines spec structure.\n---\n# spec-format skill\n",
-		"skills/test-strategy/SKILL.md": "---\ndescription: Test pyramid guidance.\n---\n# test-strategy skill\n",
+		"skills/spec-format/SKILL.md":   "---\nname: spec-format\ndescription: Defines spec structure.\n---\n# spec-format skill\n",
+		"skills/test-strategy/SKILL.md": "---\nname: test-strategy\ndescription: Test pyramid guidance.\n---\n# test-strategy skill\n",
 		"opencode.json":                 `{"$schema":"https://opencode.ai/config.json"}`,
 	}
 
@@ -406,6 +406,8 @@ func (h *installHarness) harnessDirFor(target Target, kind ContentKind) string {
 		destBase = filepath.Join(h.TargetDir, ".github", "copilot")
 	case TargetGeneric:
 		destBase = filepath.Join(h.TargetDir, ".ai")
+	case TargetGrok:
+		destBase = filepath.Join(h.TargetDir, ".grok")
 	default:
 		h.t.Fatalf("harnessDirFor: unknown target %q", target)
 	}

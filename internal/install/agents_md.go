@@ -39,9 +39,9 @@ func resolveAgentsMdPath(opts Options) string {
 		if err != nil {
 			return ""
 		}
-		// Global-mode AGENTS.md only has a defined home for the two
+		// Global-mode AGENTS.md only has a defined home for the three
 		// harnesses that natively read a global AGENTS.md (Codex,
-		// OpenCode). Cursor/Copilot/Generic have no global root
+		// OpenCode, Grok). Cursor/Copilot/Generic have no global root
 		// instruction file, so return "" rather than mis-writing one
 		// into an unrelated harness dir.
 		switch opts.Target {
@@ -49,6 +49,8 @@ func resolveAgentsMdPath(opts Options) string {
 			return filepath.Join(home, ".codex", "AGENTS.md")
 		case TargetOpenCode:
 			return filepath.Join(home, ".config", "opencode", "AGENTS.md")
+		case TargetGrok:
+			return filepath.Join(home, ".grok", "AGENTS.md")
 		default:
 			return ""
 		}
@@ -59,7 +61,7 @@ func resolveAgentsMdPath(opts Options) string {
 
 // nativeInstructionFile returns the base name of the root instruction file
 // a target natively reads. Claude Code reads CLAUDE.md; every other harness
-// (codex, opencode, cursor, copilot, generic) reads AGENTS.md. This is the
+// (codex, opencode, cursor, copilot, generic, grok) reads AGENTS.md. This is the
 // single source of truth for the harness-native install mapping — no target
 // can silently miss coverage because each run<Target> routes through
 // installNativeInstructionFile, which consults this function.
@@ -124,6 +126,32 @@ func installAgentsMd(opts Options, result *Result, agentsMdPath string) error {
 		AllowSkip:   false,
 		SkipEnabled: false,
 	})
+}
+
+// RemoveManagedInstructionFile removes Hero's managed instruction region while
+// preserving all user-owned bytes around it. A file containing only Hero's
+// default heading and managed region is removed entirely.
+func RemoveManagedInstructionFile(path, defaultH1 string, dryRun bool) (bool, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	content := string(data)
+	region := managed.FindManagedRegion(content)
+	if !region.Present {
+		return false, nil
+	}
+	remaining := content[:region.StartIdx] + content[region.EndIdx:]
+	if dryRun {
+		return true, nil
+	}
+	if strings.TrimSpace(remaining) == "" || strings.TrimSpace(remaining) == strings.TrimSpace(defaultH1) {
+		return true, os.Remove(path)
+	}
+	return true, os.WriteFile(path, []byte(remaining), 0o644)
 }
 
 // InstructionFileOrphanAction is the outcome of applying the upgrade
@@ -503,6 +531,8 @@ func (s agentsMdBodySection) Render(_ managed.Context) (string, error) {
 	body := s.body + renderActiveDialectBlock(s.opts)
 	if s.opts.Target == TargetCodex {
 		body += renderCodexWorkflowSection()
+	} else if s.opts.Target == TargetGrok {
+		body += renderGrokWorkflowSection()
 	}
 	return body, nil
 }
@@ -534,6 +564,32 @@ func renderCodexWorkflowSection() string {
 	sb.WriteString("| Discover, brainstorm, explore | `.agents/skills/command-discover/SKILL.md` |\n\n")
 	sb.WriteString("If the skill file doesn't exist, fall back to reading `.claude/commands/<name>.md` directly.\n\n")
 	sb.WriteString("**A Hero workflow is not finished until its closing gate runs.** For `/deliver`, that gate is `hero spec verify <slug>` passing — and verify requires the cold delivery audit to have run first. Do NOT yield back to the user with a spec still in `planning` or `delivering` and the audit unrun. The audit and verify run in the **same turn** as the implementation — they are not a follow-up step the user triggers later. If you find yourself about to say \"the audit still needs to run\" or \"I did not mark the spec complete because the gate still needs to run\" — **run it now instead.** Stopping one step short of the closing gate is an unfinished delivery, not a handoff. This holds in every delivery mode, including the default supervised mode: \"pause at handoffs\" does not include the closing gates.\n")
+	return sb.String()
+}
+
+// renderGrokWorkflowSection teaches Grok Build to execute Hero's native
+// command-* workflow skills. It intentionally names Grok's own paths and does
+// not rely on compatibility command directories from another harness.
+func renderGrokWorkflowSection() string {
+	var sb strings.Builder
+	sb.WriteString("\n\n### Running Hero Workflows in Grok Build\n\n")
+	sb.WriteString("Hero's workflows are installed as **user-invocable Grok skills** under `.grok/skills/command-<name>/SKILL.md`.\n\n")
+	sb.WriteString("**When the user asks you to deliver, diagnose, design, or run any Hero workflow:**\n\n")
+	sb.WriteString("1. Read the workflow skill file at `.grok/skills/command-<name>/SKILL.md`\n")
+	sb.WriteString("   (e.g. `.grok/skills/command-deliver/SKILL.md` when the user says \"deliver\")\n")
+	sb.WriteString("2. Follow each step in the file as your workflow. These are **instructions to execute**, not documentation.\n")
+	sb.WriteString("3. **Do NOT** skip steps, flip spec frontmatter as a shortcut, or treat the workflow as informational.\n\n")
+	sb.WriteString("**Workflow routing table for Grok Build:**\n\n")
+	sb.WriteString("| User intent | Skill file to read and follow |\n|---|---|\n")
+	sb.WriteString("| Deliver, implement, ship, execute | `.grok/skills/command-deliver/SKILL.md` |\n")
+	sb.WriteString("| Diagnose, investigate, debug, fix | `.grok/skills/command-diagnose/SKILL.md` |\n")
+	sb.WriteString("| Design, plan, spec, add feature | `.grok/skills/command-design/SKILL.md` |\n")
+	sb.WriteString("| Review, PR, pull request | `.grok/skills/command-review/SKILL.md` |\n")
+	sb.WriteString("| Check, health, validate workspace | `.grok/skills/command-check/SKILL.md` |\n")
+	sb.WriteString("| Note, capture, remember | `.grok/skills/command-note/SKILL.md` |\n")
+	sb.WriteString("| Compose, break down, epic | `.grok/skills/command-compose/SKILL.md` |\n")
+	sb.WriteString("| Discover, brainstorm, explore | `.grok/skills/command-discover/SKILL.md` |\n\n")
+	sb.WriteString("**A Hero workflow is not finished until its closing gate runs.** For `/deliver`, that gate is `hero spec verify <slug>` passing — and verify requires the cold delivery audit to have run first. Do NOT yield back to the user with a spec still in `planning` or `delivering` and the audit unrun. The audit and verify run in the **same turn** as the implementation — they are not a follow-up step the user triggers later.\n")
 	return sb.String()
 }
 
@@ -615,7 +671,7 @@ func generateEngineeringAgentsMdBody(paths contentPathsForBody) string {
 	sb.WriteString("- `.hero/specs/` — Completed specs (archive)\n")
 	sb.WriteString("- `.hero/knowledge/` — Project knowledge base (conventions, decisions, context)\n")
 	sb.WriteString("- `.hero/hero.json` — Project configuration\n\n")
-	sb.WriteString("`hero install` **writes** these into your harness's own directory in that harness's native format — e.g. `.claude/commands/`, `.claude/agents/`, and `.claude/skills/` for Claude; `.codex/agents/*.toml` (TOML) plus workflow skills under `.agents/skills/` for Codex (Codex has no commands directory — its slash commands are a built-in enum, so Hero commands install there as skills). They are generated copies, **not** symlinks or views: re-running `hero install` regenerates them, so hand-edits to the installed files are overwritten on the next install.\n\n")
+	sb.WriteString("`hero install` **writes** these into your harness's own directory in that harness's native format — e.g. `.claude/commands/`, `.claude/agents/`, and `.claude/skills/` for Claude; `.codex/agents/*.toml` (TOML) plus workflow skills under `.agents/skills/` for Codex; and `.grok/agents/*.md` plus canonical and `command-*` skills under `.grok/skills/` for Grok Build. Codex and Grok have no Hero-owned commands directory, so Hero commands install there as skills. They are generated copies, **not** symlinks or views: re-running `hero install` regenerates them, so hand-edits to the installed files are overwritten on the next install.\n\n")
 
 	sb.WriteString("### Declaring Spec Relationships\n\n")
 	sb.WriteString("Relationships (parent/child, depends-on, blocks) become knowledge-graph edges **only** through frontmatter. Body `[[wikilinks]]` are searchable text and form **no** edges. Two syntaxes work:\n\n")

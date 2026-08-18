@@ -88,7 +88,7 @@ var installCmd = &cobra.Command{
 
 Install is harness-native: each target gets only the root instruction file it
 natively reads — CLAUDE.md for claude, AGENTS.md for every other target
-(codex, opencode, cursor, copilot, generic). Installing multiple targets that
+(codex, opencode, cursor, copilot, generic, grok). Installing multiple targets that
 include claude produces both files with the same Hero-managed body. The
 installed target set is recorded in .hero/install-state.json so 'hero upgrade'
 stays faithful to what was installed.`,
@@ -126,6 +126,7 @@ var installTargets = []string{
 	string(install.TargetCopilot),
 	string(install.TargetCodex),
 	string(install.TargetGeneric),
+	string(install.TargetGrok),
 }
 
 func init() {

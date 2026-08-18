@@ -3,7 +3,7 @@ stdin-condition: pipe
 exit: 1
 --- stdout ---
 --- stderr ---
-Error: no --target given and no terminal available to ask for one: pass --target (opencode|cursor|claude|copilot|codex|generic)
+Error: no --target given and no terminal available to ask for one: pass --target (opencode|cursor|claude|copilot|codex|generic|grok)
 Usage:
   hero install <project|global> [path] [flags]
   hero install [command]
@@ -24,7 +24,7 @@ Flags:
       --prune-orphaned-instruction-files   after install, delete a root instruction file (AGENTS.md/CLAUDE.md) whose target is not installed AND whose entire content is Hero-managed; files with any user content are never deleted
       --repair                             skip install; verify and repair existing satellite symlinks/markers and reconcile against subprojects.json
       --root                               force root install even when an ancestor already has .hero/ (creates a nested workspace; rare)
-      --target string                      target tool (opencode|cursor|claude|copilot|codex|generic)
+      --target string                      target tool (opencode|cursor|claude|copilot|codex|generic|grok)
       --workspace string                   sub-folder workspace path — writes MCP config there pointing at the project root (e.g. services/auth)
 
 Global Flags:
@@ -32,4 +32,4 @@ Global Flags:
 
 Use "hero install [command] --help" for more information about a command.
 
-no --target given and no terminal available to ask for one: pass --target (opencode|cursor|claude|copilot|codex|generic)
+no --target given and no terminal available to ask for one: pass --target (opencode|cursor|claude|copilot|codex|generic|grok)

@@ -32,6 +32,7 @@ func TestAllTargets_ShipSkills(t *testing.T) {
 		{TargetCodex, ".agents/skills", ".agents/skills/spec-format/SKILL.md"},
 		{TargetCopilot, ".github/skills", ".github/skills/spec-format/SKILL.md"},
 		{TargetGeneric, ".ai/skills", ".ai/skills/spec-format/SKILL.md"},
+		{TargetGrok, ".grok/skills", ".grok/skills/spec-format/SKILL.md"},
 	}
 
 	for _, tc := range cases {
@@ -71,6 +72,7 @@ Never create Focus directly. Only the user may accept Today, Later, or Do Next.
 		{TargetCopilot, ".github/skills/deferred-work-suggestions/SKILL.md"},
 		{TargetCodex, ".agents/skills/deferred-work-suggestions/SKILL.md"},
 		{TargetGeneric, ".ai/skills/deferred-work-suggestions/SKILL.md"},
+		{TargetGrok, ".grok/skills/deferred-work-suggestions/SKILL.md"},
 	}
 	for _, tc := range cases {
 		t.Run(string(tc.target), func(t *testing.T) {
@@ -119,6 +121,7 @@ func TestAllTargetsInstallMailSourceDedupGuidance(t *testing.T) {
 		{TargetCopilot, ".github/skills/auto-knowledge-capture/SKILL.md"},
 		{TargetCodex, ".agents/skills/auto-knowledge-capture/SKILL.md"},
 		{TargetGeneric, ".ai/skills/auto-knowledge-capture/SKILL.md"},
+		{TargetGrok, ".grok/skills/auto-knowledge-capture/SKILL.md"},
 	}
 	for _, testCase := range cases {
 		t.Run(string(testCase.target), func(t *testing.T) {
@@ -164,6 +167,7 @@ func TestAllTargetsInstallAsyncPeeringGuidance(t *testing.T) {
 		{TargetCopilot, ".github/skills/cross-repo-peering/SKILL.md"},
 		{TargetCodex, ".agents/skills/cross-repo-peering/SKILL.md"},
 		{TargetGeneric, ".ai/skills/cross-repo-peering/SKILL.md"},
+		{TargetGrok, ".grok/skills/cross-repo-peering/SKILL.md"},
 	}
 	for _, testCase := range cases {
 		t.Run(string(testCase.target), func(t *testing.T) {

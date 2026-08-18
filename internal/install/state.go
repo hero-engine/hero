@@ -151,6 +151,20 @@ func WriteInstallState(projectRoot string, st *InstallState) error {
 	return os.WriteFile(path, data, 0o644)
 }
 
+// RemoveTargetInstallState removes one harness target from persisted install
+// state without disturbing the metadata of other installed targets.
+func RemoveTargetInstallState(projectRoot string, target Target) error {
+	st, err := ReadInstallState(projectRoot)
+	if err != nil {
+		return err
+	}
+	if _, ok := st.Targets[string(target)]; !ok {
+		return nil
+	}
+	delete(st.Targets, string(target))
+	return WriteInstallState(projectRoot, st)
+}
+
 // RecordTargetInstall stamps the install-state file with metadata for the
 // just-completed install. Best-effort: errors here are non-fatal because the
 // install itself succeeded.

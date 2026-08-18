@@ -51,7 +51,7 @@ type TargetInventory struct {
 // targetLayouts / PreviouslyInstalledTargets) used for on-disk detection so
 // detected rows come out deterministically.
 var inventoryTargets = []Target{
-	TargetClaude, TargetCodex, TargetOpenCode, TargetCursor, TargetCopilot, TargetGeneric,
+	TargetClaude, TargetCodex, TargetOpenCode, TargetCursor, TargetCopilot, TargetGeneric, TargetGrok,
 }
 
 // Inventory returns one TargetInventory per installed harness target in the
@@ -104,11 +104,10 @@ func buildTargetInventory(t Target, projectRoot string, m ContentManifest) Targe
 		RootFile: nativeInstructionFile(t),
 		Agents:   KindCount{Expected: len(m.Agents), Actual: countInstalled(agentsPath)},
 	}
-	if t == TargetCodex {
-		// Codex has no command loader — its commands install as skills under
-		// .agents/skills/command-<name>/. Commands are therefore not a
-		// loadable column (NotApplicable), and skills expected rolls the two
-		// together, mirroring codexSkillDirNames (target_codex.go).
+	if t == TargetCodex || t == TargetGrok {
+		// Codex and Grok have no Hero-owned command loader — commands install
+		// as command-* skills under their respective native skill roots.
+		// Commands are NotApplicable and skills rolls both sets together.
 		inv.Commands = KindCount{Expected: len(m.Commands), NotApplicable: true}
 		inv.Skills = KindCount{Expected: len(m.Skills) + len(m.Commands), Actual: countInstalled(skillsPath)}
 	} else {
@@ -173,6 +172,11 @@ func targetInstallPaths(t Target, root string) (agents, commands, skills kindPat
 		base := filepath.Join(root, ".ai")
 		return kindPath{filepath.Join(base, "agents"), countFlatMD},
 			kindPath{filepath.Join(base, "commands"), countFlatMD},
+			kindPath{filepath.Join(base, "skills"), countNestedSkill}
+	case TargetGrok:
+		base := filepath.Join(root, ".grok")
+		return kindPath{filepath.Join(base, "agents"), countFlatMD},
+			kindPath{},
 			kindPath{filepath.Join(base, "skills"), countNestedSkill}
 	}
 	return kindPath{}, kindPath{}, kindPath{}

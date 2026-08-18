@@ -54,7 +54,7 @@ func runOverlayInstall(t *testing.T, target Target, domain string) string {
 // the install output proves the core layer reached the renderer.
 //
 // Maps to acceptance criterion "WHEN hero install --target <T> runs
-// for each of T in {claude, cursor, opencode, codex, copilot, generic}
+// for each of T in {claude, cursor, opencode, codex, copilot, generic, grok}
 // THE SYSTEM SHALL include core content in the install output".
 func TestOverlay_AllTargetsIncludeCoreAndDomain(t *testing.T) {
 	cases := []struct {
@@ -96,6 +96,11 @@ func TestOverlay_AllTargetsIncludeCoreAndDomain(t *testing.T) {
 			target:        TargetCopilot,
 			coreAgentAt:   ".github/prompts/agents/session-primer.prompt.md",
 			domainAgentAt: ".github/prompts/agents/prd-author.prompt.md",
+		},
+		{
+			target:        TargetGrok,
+			coreAgentAt:   ".grok/agents/session-primer.md",
+			domainAgentAt: ".grok/agents/prd-author.md",
 		},
 	}
 
