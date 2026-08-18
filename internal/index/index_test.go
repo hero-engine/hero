@@ -48,6 +48,132 @@ func TestOpenAndClose(t *testing.T) {
 	}
 }
 
+func TestOpenMigratesLegacyNodeIndexIdentity(t *testing.T) {
+	heroDir := t.TempDir()
+	dbPath := filepath.Join(heroDir, IndexFileName)
+
+	legacyDB, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatalf("open legacy index: %v", err)
+	}
+	for _, stmt := range []string{
+		`CREATE VIRTUAL TABLE fts_nodes USING fts5(title, body, tokenize='porter')`,
+		`CREATE TABLE node_index (
+			rowid      INTEGER PRIMARY KEY,
+			node_type  TEXT NOT NULL,
+			key        TEXT NOT NULL,
+			repo       TEXT NOT NULL DEFAULT '',
+			tags       TEXT NOT NULL DEFAULT '',
+			valid_from TEXT NOT NULL DEFAULT '',
+			path       TEXT NOT NULL DEFAULT '',
+			UNIQUE(node_type, key)
+		)`,
+		`CREATE INDEX idx_node_index_type ON node_index(node_type)`,
+		`CREATE INDEX idx_node_index_key ON node_index(key)`,
+		`INSERT INTO fts_nodes(rowid, title, body)
+		 VALUES (41, 'Legacy architecture', 'preserve this searchable body')`,
+		`INSERT INTO node_index(rowid, node_type, key, repo, tags, valid_from, path)
+		 VALUES (41, 'ContextDoc', 'architecture-overview', 'astroville/hydra',
+		         'documents:readme', '2026-08-01T00:00:00Z', '/hydra/.hero/architecture.md')`,
+	} {
+		if _, err := legacyDB.Exec(stmt); err != nil {
+			legacyDB.Close()
+			t.Fatalf("prepare legacy index (%s): %v", stmt, err)
+		}
+	}
+	legacy, repoScoped, err := nodeIndexIdentity(context.Background(), legacyDB)
+	if err != nil {
+		legacyDB.Close()
+		t.Fatalf("inspect legacy identity via pragma_index_info: %v", err)
+	}
+	if !legacy || repoScoped {
+		legacyDB.Close()
+		t.Fatalf("legacy identity = (%v, %v), want (true, false)", legacy, repoScoped)
+	}
+	if err := legacyDB.Close(); err != nil {
+		t.Fatalf("close legacy index: %v", err)
+	}
+
+	idx, err := Open(heroDir)
+	if err != nil {
+		t.Fatalf("Open legacy index: %v", err)
+	}
+
+	legacy, repoScoped, err = nodeIndexIdentity(context.Background(), idx.RawDB())
+	if err != nil {
+		idx.Close()
+		t.Fatalf("inspect migrated identity via pragma_index_info: %v", err)
+	}
+	if legacy || !repoScoped {
+		idx.Close()
+		t.Fatalf("migrated identity = (%v, %v), want (false, true)", legacy, repoScoped)
+	}
+
+	var rowID int64
+	var nodeType, key, repo, tags, validFrom, path, title, body string
+	err = idx.RawDB().QueryRow(`
+		SELECT ni.rowid, ni.node_type, ni.key, ni.repo, ni.tags, ni.valid_from,
+		       ni.path, f.title, f.body
+		  FROM node_index ni
+		  JOIN fts_nodes f ON f.rowid = ni.rowid
+		 WHERE ni.rowid = 41`).Scan(
+		&rowID, &nodeType, &key, &repo, &tags, &validFrom, &path, &title, &body,
+	)
+	if err != nil {
+		idx.Close()
+		t.Fatalf("read migrated FTS join: %v", err)
+	}
+	if rowID != 41 || nodeType != "ContextDoc" || key != "architecture-overview" ||
+		repo != "astroville/hydra" || tags != "documents:readme" ||
+		validFrom != "2026-08-01T00:00:00Z" || path != "/hydra/.hero/architecture.md" ||
+		title != "Legacy architecture" || body != "preserve this searchable body" {
+		idx.Close()
+		t.Fatalf("migrated row/FTS metadata changed: rowid=%d type=%q key=%q repo=%q tags=%q valid_from=%q path=%q title=%q body=%q",
+			rowID, nodeType, key, repo, tags, validFrom, path, title, body)
+	}
+
+	if _, err := idx.RawDB().Exec(`
+		INSERT INTO node_index(rowid, node_type, key, repo)
+		VALUES (42, 'ContextDoc', 'architecture-overview', 'boxy')`); err != nil {
+		idx.Close()
+		t.Fatalf("insert same key in second repo after migration: %v", err)
+	}
+	if _, err := idx.RawDB().Exec(`
+		INSERT INTO node_index(rowid, node_type, key, repo)
+		VALUES (43, 'ContextDoc', 'architecture-overview', 'boxy')`); err == nil {
+		idx.Close()
+		t.Fatal("same key in the same repo unexpectedly bypassed uniqueness")
+	}
+	if err := idx.Close(); err != nil {
+		t.Fatalf("close migrated index: %v", err)
+	}
+
+	// Reopening an already-migrated database must be a no-op that retains the
+	// original rowid-to-FTS pairing and repo-scoped constraint.
+	idx, err = Open(heroDir)
+	if err != nil {
+		t.Fatalf("reopen migrated index: %v", err)
+	}
+	defer idx.Close()
+	legacy, repoScoped, err = nodeIndexIdentity(context.Background(), idx.RawDB())
+	if err != nil {
+		t.Fatalf("inspect identity after reopen: %v", err)
+	}
+	if legacy || !repoScoped {
+		t.Fatalf("identity after reopen = (%v, %v), want (false, true)", legacy, repoScoped)
+	}
+	if err := idx.RawDB().QueryRow(`
+		SELECT ni.rowid
+		  FROM node_index ni
+		  JOIN fts_nodes f ON f.rowid = ni.rowid
+		 WHERE ni.repo = 'astroville/hydra' AND f.title = 'Legacy architecture'`).Scan(&rowID); err != nil {
+		t.Fatalf("FTS join after idempotent reopen: %v", err)
+	}
+	if rowID != 41 {
+		t.Fatalf("rowid after idempotent reopen = %d, want 41", rowID)
+	}
+}
+
 func TestIndexAndSearchSpec(t *testing.T) {
 	idx, _ := setupTestDB(t)
 

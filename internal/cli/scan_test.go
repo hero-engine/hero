@@ -395,6 +395,68 @@ func incrementalTestConfig() config.Config {
 	return cfg
 }
 
+func TestFullCodeRefreshProjectsSameContextKeyAcrossRepos(t *testing.T) {
+	root := t.TempDir()
+	heroDir := filepath.Join(root, ".hero")
+	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "main.go"), []byte("package main\nfunc main() {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	store, err := graph.Open(heroDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const key = "architecture-overview"
+	for _, repo := range []string{"astroville/hydra", "boxy"} {
+		if _, err := store.UpsertNode(&graph.Node{
+			Type:        "ContextDoc",
+			Domain:      "engineering",
+			Key:         key,
+			Repo:        repo,
+			Props:       map[string]any{"title": repo + " architecture", "body": "shared architecture scan probe"},
+			Scope:       graph.ScopeTeam,
+			ContentHash: repo,
+			Source:      map[string]any{"kind": "spec"},
+		}); err != nil {
+			store.Close()
+			t.Fatalf("seed %s graph node: %v", repo, err)
+		}
+	}
+	if err := store.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := incrementalTestConfig()
+	stats, err := refreshCodeIndex(context.Background(), cfg, root, heroDir, codeRefreshOptions{Parser: "heuristic"})
+	if err != nil {
+		t.Fatalf("full code refresh with repo-scoped graph collision: %v", err)
+	}
+	if !stats.Wrote || stats.Projected < 2 {
+		t.Fatalf("full code refresh stats = %+v, want a completed projection", stats)
+	}
+
+	idx, err := index.Open(heroDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer idx.Close()
+	var projected int
+	if err := idx.RawDB().QueryRow(`
+		SELECT count(*)
+		  FROM node_index
+		 WHERE node_type = 'ContextDoc'
+		   AND key = ?
+		   AND repo IN ('astroville/hydra', 'boxy')`, key).Scan(&projected); err != nil {
+		t.Fatal(err)
+	}
+	if projected != 2 {
+		t.Fatalf("repo-scoped scan projection rows = %d, want 2", projected)
+	}
+}
+
 func TestIncrementalCodeRefreshNoChangeAndAddDeleteConvergence(t *testing.T) {
 	root := t.TempDir()
 	heroDir := filepath.Join(root, ".hero")

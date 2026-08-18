@@ -52,6 +52,10 @@ func newHeroDirFTSOnly(t *testing.T) string {
 
 // addGraphNode inserts a node into the graph using graph.Open + UpsertNode.
 func addGraphNode(t *testing.T, heroDir, nodeType, key string, props map[string]any) {
+	addGraphNodeWithRepo(t, heroDir, nodeType, key, "", props)
+}
+
+func addGraphNodeWithRepo(t *testing.T, heroDir, nodeType, key, repo string, props map[string]any) {
 	t.Helper()
 	gstore, err := graph.Open(heroDir)
 	if err != nil {
@@ -67,6 +71,7 @@ func addGraphNode(t *testing.T, heroDir, nodeType, key string, props map[string]
 		Type:   nodeType,
 		Domain: domain,
 		Key:    key,
+		Repo:   repo,
 		Props:  props,
 		Scope:  graph.ScopeTeam,
 		Source: map[string]any{"_test": true},
@@ -453,6 +458,125 @@ func TestProjectionPopulatesFTSNodes(t *testing.T) {
 	}
 	if ftsCount != 3 {
 		t.Errorf("fts_nodes has %d rows, want 3", ftsCount)
+	}
+}
+
+func TestProjectionPreservesSameKeyAcrossRepos(t *testing.T) {
+	heroDir := newHeroDir(t)
+	const (
+		nodeType = "ContextDoc"
+		key      = "architecture-overview"
+	)
+	addGraphNodeWithRepo(t, heroDir, nodeType, key, "astroville/hydra", map[string]any{
+		"title": "Hydra shared architecture",
+		"body":  "federated architecture identity probe",
+	})
+	addGraphNodeWithRepo(t, heroDir, nodeType, key, "boxy", map[string]any{
+		"title": "Boxy shared architecture",
+		"body":  "federated architecture identity probe",
+	})
+
+	if n := projectNodes(t, heroDir); n != 2 {
+		t.Fatalf("ProjectGraphNodes returned %d, want 2", n)
+	}
+
+	idb, err := index.Open(heroDir)
+	if err != nil {
+		t.Fatalf("index.Open: %v", err)
+	}
+	var projected int
+	if err := idb.RawDB().QueryRow(`
+		SELECT count(*) FROM node_index
+		 WHERE node_type = ? AND key = ?
+		   AND repo IN ('astroville/hydra', 'boxy')`, nodeType, key).Scan(&projected); err != nil {
+		idb.Close()
+		t.Fatalf("count repo-scoped projection: %v", err)
+	}
+	if projected != 2 {
+		idb.Close()
+		t.Fatalf("repo-scoped projected rows = %d, want 2", projected)
+	}
+	if err := idb.Close(); err != nil {
+		t.Fatalf("close index: %v", err)
+	}
+
+	ret, err := New(heroDir)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	defer ret.Close()
+	results, err := ret.Retrieve(Query{Text: "federated architecture identity probe", Limit: 10})
+	if err != nil {
+		t.Fatalf("Retrieve: %v", err)
+	}
+	repos := map[string]bool{}
+	for _, result := range results {
+		if result.Type == nodeType && result.Key == key {
+			repos[result.Repo] = true
+		}
+	}
+	if !repos["astroville/hydra"] || !repos["boxy"] || len(repos) != 2 {
+		t.Fatalf("retrieval repos = %v, want astroville/hydra and boxy", repos)
+	}
+}
+
+func TestProjectionFailureRetainsCommittedIndex(t *testing.T) {
+	heroDir := newHeroDir(t)
+	const (
+		nodeType = "ContextDoc"
+		key      = "architecture-overview"
+	)
+	addGraphNodeWithRepo(t, heroDir, nodeType, key, "astroville/hydra", map[string]any{
+		"title": "Committed Hydra architecture",
+		"body":  "committed projection body",
+	})
+	if n := projectNodes(t, heroDir); n != 1 {
+		t.Fatalf("initial ProjectGraphNodes returned %d, want 1", n)
+	}
+	addGraphNodeWithRepo(t, heroDir, nodeType, key, "boxy", map[string]any{
+		"title": "Boxy architecture",
+		"body":  "replacement projection body",
+	})
+
+	gstore, err := graph.Open(heroDir)
+	if err != nil {
+		t.Fatalf("graph.Open: %v", err)
+	}
+	defer gstore.Close()
+	idb, err := index.Open(heroDir)
+	if err != nil {
+		t.Fatalf("index.Open: %v", err)
+	}
+	defer idb.Close()
+	if _, err := idb.RawDB().Exec(`
+		CREATE TRIGGER reject_boxy_projection
+		BEFORE INSERT ON node_index
+		WHEN NEW.repo = 'boxy'
+		BEGIN
+			SELECT RAISE(ABORT, 'forced repo projection failure');
+		END`); err != nil {
+		t.Fatalf("create failure trigger: %v", err)
+	}
+
+	if _, err := idb.ProjectGraphNodes(gstore.DB()); err == nil {
+		t.Fatal("ProjectGraphNodes unexpectedly succeeded")
+	} else if !strings.Contains(err.Error(), `repo "boxy"`) {
+		t.Fatalf("projection error %q does not identify failing repo", err)
+	}
+
+	var count int
+	var repo, title, body string
+	err = idb.RawDB().QueryRow(`
+		SELECT count(*), min(ni.repo), min(f.title), min(f.body)
+		  FROM node_index ni
+		  JOIN fts_nodes f ON f.rowid = ni.rowid`).Scan(&count, &repo, &title, &body)
+	if err != nil {
+		t.Fatalf("read committed projection after rollback: %v", err)
+	}
+	if count != 1 || repo != "astroville/hydra" ||
+		title != "Committed Hydra architecture" || body != "committed projection body" {
+		t.Fatalf("projection rollback left count=%d repo=%q title=%q body=%q",
+			count, repo, title, body)
 	}
 }
 

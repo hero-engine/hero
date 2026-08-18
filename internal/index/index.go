@@ -1,6 +1,7 @@
 package index
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
@@ -202,7 +203,7 @@ func (idx *DB) migrate() error {
 			tags       TEXT NOT NULL DEFAULT '',
 			valid_from TEXT NOT NULL DEFAULT '',
 			path       TEXT NOT NULL DEFAULT '',
-			UNIQUE(node_type, key)
+			UNIQUE(node_type, key, repo)
 		)`,
 
 		`CREATE INDEX IF NOT EXISTS idx_node_index_type ON node_index(node_type)`,
@@ -266,6 +267,9 @@ func (idx *DB) migrate() error {
 			return fmt.Errorf("executing migration: %w\nSQL: %s", err, m)
 		}
 	}
+	if err := idx.migrateNodeIndexRepoIdentity(); err != nil {
+		return err
+	}
 
 	// Schema evolution: add columns that may not exist in older databases.
 	evolve := []string{
@@ -286,6 +290,148 @@ func (idx *DB) migrate() error {
 	}
 
 	return nil
+}
+
+// migrateNodeIndexRepoIdentity rebuilds pre-federation node_index tables whose
+// uniqueness omitted repo. Explicit rowids keep the metadata rows paired with
+// their existing fts_nodes rows throughout the atomic table replacement.
+func (idx *DB) migrateNodeIndexRepoIdentity() error {
+	ctx := context.Background()
+	legacy, repoScoped, err := nodeIndexIdentity(ctx, idx.db)
+	if err != nil {
+		return fmt.Errorf("inspecting node_index identity: %w", err)
+	}
+	if !legacy {
+		if !repoScoped {
+			return fmt.Errorf("node_index has no supported unique identity constraint")
+		}
+		return nil
+	}
+
+	conn, err := idx.db.Conn(ctx)
+	if err != nil {
+		return fmt.Errorf("opening node_index migration connection: %w", err)
+	}
+	defer conn.Close()
+
+	if _, err := conn.ExecContext(ctx, "BEGIN IMMEDIATE"); err != nil {
+		return fmt.Errorf("beginning node_index identity migration: %w", err)
+	}
+	committed := false
+	defer func() {
+		if !committed {
+			_, _ = conn.ExecContext(ctx, "ROLLBACK")
+		}
+	}()
+
+	// Another opener may have completed the migration before this connection
+	// acquired the write lock. Re-inspect under the lock before rebuilding.
+	legacy, repoScoped, err = nodeIndexIdentity(ctx, conn)
+	if err != nil {
+		return fmt.Errorf("rechecking node_index identity: %w", err)
+	}
+	if !legacy {
+		if !repoScoped {
+			return fmt.Errorf("node_index has no supported unique identity constraint")
+		}
+		if _, err := conn.ExecContext(ctx, "COMMIT"); err != nil {
+			return fmt.Errorf("committing concurrent node_index migration check: %w", err)
+		}
+		committed = true
+		return nil
+	}
+
+	statements := []string{
+		`DROP TABLE IF EXISTS node_index_repo_identity`,
+		`CREATE TABLE node_index_repo_identity (
+			rowid      INTEGER PRIMARY KEY,
+			node_type  TEXT NOT NULL,
+			key        TEXT NOT NULL,
+			repo       TEXT NOT NULL DEFAULT '',
+			tags       TEXT NOT NULL DEFAULT '',
+			valid_from TEXT NOT NULL DEFAULT '',
+			path       TEXT NOT NULL DEFAULT '',
+			UNIQUE(node_type, key, repo)
+		)`,
+		`INSERT INTO node_index_repo_identity
+			(rowid, node_type, key, repo, tags, valid_from, path)
+		 SELECT rowid, node_type, key, repo, tags, valid_from, path
+		   FROM node_index`,
+		`DROP TABLE node_index`,
+		`ALTER TABLE node_index_repo_identity RENAME TO node_index`,
+		`CREATE INDEX idx_node_index_type ON node_index(node_type)`,
+		`CREATE INDEX idx_node_index_key ON node_index(key)`,
+	}
+	for _, stmt := range statements {
+		if _, err := conn.ExecContext(ctx, stmt); err != nil {
+			return fmt.Errorf("migrating node_index repo identity: %w\nSQL: %s", err, stmt)
+		}
+	}
+	if _, err := conn.ExecContext(ctx, "COMMIT"); err != nil {
+		return fmt.Errorf("committing node_index identity migration: %w", err)
+	}
+	committed = true
+	return nil
+}
+
+type contextQueryer interface {
+	QueryContext(context.Context, string, ...any) (*sql.Rows, error)
+}
+
+func nodeIndexIdentity(ctx context.Context, queryer contextQueryer) (legacy, repoScoped bool, err error) {
+	indexes, err := queryer.QueryContext(ctx, `
+		SELECT name
+		  FROM pragma_index_list('node_index')
+		 WHERE "unique" = 1`)
+	if err != nil {
+		return false, false, err
+	}
+	var names []string
+	for indexes.Next() {
+		var name string
+		if err := indexes.Scan(&name); err != nil {
+			indexes.Close()
+			return false, false, err
+		}
+		names = append(names, name)
+	}
+	if err := indexes.Err(); err != nil {
+		indexes.Close()
+		return false, false, err
+	}
+	indexes.Close()
+
+	for _, name := range names {
+		rows, err := queryer.QueryContext(ctx, `
+			SELECT name
+			  FROM pragma_index_info(?)
+			 ORDER BY seqno`, name)
+		if err != nil {
+			return false, false, err
+		}
+		var columns []string
+		for rows.Next() {
+			var column string
+			if err := rows.Scan(&column); err != nil {
+				rows.Close()
+				return false, false, err
+			}
+			columns = append(columns, column)
+		}
+		if err := rows.Err(); err != nil {
+			rows.Close()
+			return false, false, err
+		}
+		rows.Close()
+
+		switch strings.Join(columns, ",") {
+		case "node_type,key":
+			legacy = true
+		case "node_type,key,repo":
+			repoScoped = true
+		}
+	}
+	return legacy, repoScoped, nil
 }
 
 // IndexSpec adds or updates a spec in the index.
