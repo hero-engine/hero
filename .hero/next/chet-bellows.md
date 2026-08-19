@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-18T15:32:45Z
+updated: 2026-08-19T16:49:03Z
 repo: hero-engine/hero
 ---
 
@@ -10,15 +10,19 @@ repo: hero-engine/hero
 
 > Ship a verified Hero release containing the completed MCP tool metadata contract for hero-code while keeping the superseded interactive CLI donor branch evidence-only.
 
-_possibly stale — 2 commit(s) since, last set 3d 23h ago_
+_possibly stale — 11 commit(s) since, last set 5d ago_
 
 ## Last user ask
 
-> Tag a release for the completed Grok harness and scan fix, then push it
+> we need to get the branch merged back to main and get back on main
 
 ## Suggested next prompt
 
-> let's launch Grok in Boxy and try /command-resume now that the scan path is fixed
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 

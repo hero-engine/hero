@@ -9,6 +9,7 @@ received_from:
   handed_off_at: 2026-07-20T16:22:26Z
   at_commit: 7e6a3b5b
   reason: "Provider-neutral connection settings, Jira custom-field resolution, semantic normalization, and import/refresh output are owned by Hero; hero-code will consume the completed runtime contract in Bug Bash."
+created: 2026-07-20
 ---
 
 # "Jira custom field cannot be configured as canonical Hero priority"

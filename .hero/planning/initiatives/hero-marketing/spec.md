@@ -1,174 +1,169 @@
 ---
-title: Hero Marketing — Positioning, Distribution, and Launch
+title: "Hero Public Truth — Product Story and Documentation Repair"
 slug: hero-marketing
 type: initiative
 status: planning
-tags: [marketing, launch, distribution, docs, growth]
+domain: engineering
+size: x-large
+priority: critical
+horizon: now
 created: 2026-04-25
+tags: [marketing, positioning, documentation, public-truth, continuity, trust]
+child:
+  - hero-public-truth-baseline
+  - hero-positioning
+  - hero-root-docs-remediation
+  - hero-hosted-docs-remediation
+  - hero-continuity-proof-demo
+  - hero-landing-message-refresh
+  - hero-public-docs-drift-guard
 relations:
-  - target: hero-platform
+  - target: hero-self-consistency
     kind: related
-  - target: hero-domains
+  - target: generated-command-refs-validated
     kind: related
-horizon: someday
-size: giant
 ---
+
+# Hero Public Truth — Product Story and Documentation Repair
+
+## Vision
+
+Hero tells one public story that is both differentiated and demonstrably true: it carries a project's intent, decisions, corrections, and delivery evidence from one AI session to the next, so engineers spend less time re-explaining and supervising. Public onboarding works exactly as written, shipped capabilities are easy to discover, maturity labels prevent roadmap work from masquerading as product, and automated checks catch factual drift before deployment.
 
 ## Goal
 
-Get Hero in front of the people who'd benefit most — engineering leads
-and AI-native developers — and convert curiosity into installs, installs
-into active workspaces, and active workspaces into teams. Build the
-positioning, surfaces, and content engine to do this repeatably.
+Replace the stale launch-and-growth premise of this existing initiative with a bounded truth-repair program. Establish an evidence-backed claim baseline, rewrite positioning around reduced supervision through durable project intelligence, repair root and hosted documentation, prove continuity in a repeatable two-tool demonstration, refresh the landing message only after the proof exists, and close with production-aware drift guards.
 
-## Problem
+## Kickoff
 
-Hero is technically capable but commercially invisible:
+Rebuilds Hero's public story around session continuity and evidence-backed completion while repairing false onboarding and documentation claims.
 
-- No public landing page. The repo README is the de facto homepage.
-- No hosted docs site. `mkdocs.yml` exists but isn't published.
-- Homebrew install path is a personal tap (`hero-engine/tap/hero`),
-  not a polished release.
-- No demo media — nothing to show in a tweet, blog, or HN post.
-- No launch narrative. No Show HN draft, no comparison page, no
-  positioning doc the team can rally around.
-- No analytics. We don't know who installs, who returns, who churns.
-- No community surface. No Discord, no GitHub Discussions, no
-  contributor guide.
+**Status:** planning — the stale marketing program has been recomposed into seven sequenced truth-repair children; no public content has been changed.
 
-The team-platform work (runner, dashboard, team server) is the
-"why pay" story. The marketing initiative is the "why try" story.
-Both need to exist before we open the floodgates.
+**Pick up at:** design and deliver `hero-public-truth-baseline`, including the P0 correction packet and maturity registry every later child consumes.
 
-## Audience
+→ `.hero/planning/initiatives/hero-marketing/hero-public-truth-baseline/spec.md`
 
-**Primary ICP — AI-native engineering lead at a 5-50 person team**
+**Files:** `.hero/planning/initiatives/hero-marketing/content-truth-audit.md`, `README.md`, `web/docs/src/`, `web/landing/site/index.html`
+**Skip:** launch campaigns, telemetry, pricing, community growth, and a broad brand overhaul.
 
-- Already using Cursor, Claude Code, OpenCode, or Copilot
-- Frustrated that AI sessions lose context, repeat past mistakes, and
-  can't see across the team
-- Has tried writing CLAUDE.md / cursorrules / AGENTS.md by hand and
-  found it doesn't scale
-- Owns velocity, quality, and onboarding outcomes for their team
-- Buys tools without procurement gauntlets ($0–$500/mo decisions)
+## Product direction
 
-**Secondary — solo AI-power-user developer**
+### Core message
 
-- Builds side projects with AI tools, ships fast
-- Wants structure without bureaucracy
-- Will install via Homebrew, try it on a real project, tweet if it works
+> Hero carries your project's intent, decisions, and evidence from one AI session to the next, so you spend less time re-explaining and supervising.
 
-**Adjacent — CRO / RevOps lead (Hero Sales)**
+- **Category:** operating layer for AI-assisted engineering.
+- **Outcome:** AI sessions inherit the project and finish against evidence.
+- **Mechanism:** specs, decisions, conventions, project intelligence, and delivery evidence become durable context that supported harnesses can retrieve and act against.
+- **Wedge:** engineering leads; PM and Sales expansion must be described only with verified maturity labels.
+- **Candidate, not promise:** “Correct your AI once” remains a claim to test and prove. It is prohibited as an absolute statement until the continuity demonstration and claim baseline support it.
 
-- Out of scope for v1 launch but informs the "platform, not just engineering"
-  story that prevents the wedge from feeling too narrow
+Specs remain a forcing function for trustworthy work; they are not the headline category. Roster size, raw command counts, and “spec-driven” framing are reference detail rather than primary differentiation.
 
-## Positioning
+## Why now
 
-> Hero is the spec layer for AI coding tools. Design before you build,
-> diagnose before you fix. Your specs, knowledge, and conventions become
-> context every future AI session inherits.
+The current public surfaces contain operational falsehoods and material drift while structural checks remain green. Known P0 failures include nonexistent satellite commands, invalid repair syntax, a false nested-workspace architecture, an obsolete verify-then-complete sequence, an undecodable configuration example, an impossible Go prerequisite, and the dead `hero verify-install` command. P1 drift includes stale release/version claims, contradictory counts, fictional command output, inaccurate Codex slash-command language, stale repository trees, and wrong one-graph peering semantics.
 
-Three pillars to lead with:
+At the same time, the public story underplays shipped or meaningful abilities: cold delivery audit plus verification evidence, cross-session/tool continuity, Attention/Mail/Focus, the `hero serve` project intelligence UI, guarded code-host operations, tracker evidence and mutations, cross-repo Project Mail/advisory/spec-out/handoff, and approval-aware headless execution. PM and Sales domain packs may be mentioned only with maturity caveats until release-level proof exists.
 
-1. **Spec-driven** — every change starts as a written spec; agents work
-   against it instead of improvising
-2. **Knowledge that compounds** — conventions, decisions, and learnings
-   captured as you go, fed into every future session
-3. **Tool-agnostic** — runs alongside Cursor, Claude Code, OpenCode,
-   Copilot, or any MCP-capable client; not a new IDE
+The durable audit and claim taxonomy live in [`content-truth-audit.md`](content-truth-audit.md).
 
-Anti-positioning (what Hero is not):
+## Child specs and phases
 
-- Not a Cursor/Aider/Continue replacement — it sits on top of them
-- Not an LLM provider — bring your own model
-- Not a pure CLI tool — it's a workflow + corpus + dashboard
-- Not enterprise-first — single-developer install path is a first-class citizen
+| Phase | Child | Priority | Size | Depends on | Outcome |
+|---:|---|---|---|---|---|
+| 1 | [`hero-public-truth-baseline`](hero-public-truth-baseline/spec.md) | critical | medium | — | Claim/capability inventory, evidence authority, maturity labels, and a P0 correction packet. |
+| 1 | [`hero-positioning`](hero-positioning/spec.md) | high | medium | baseline | Supervision/continuity/trust message hierarchy, audiences, proof pillars, vocabulary, and prohibited claims. |
+| 2 | [`hero-root-docs-remediation`](hero-root-docs-remediation/spec.md) | high | medium | baseline + positioning | Executable root onboarding and accurate configuration, harness, peering, and team guidance. |
+| 2 | [`hero-hosted-docs-remediation`](hero-hosted-docs-remediation/spec.md) | high | large | baseline + positioning | Page-by-page hosted-doc factual repair and discoverability for differentiated capabilities. |
+| 2 | [`hero-continuity-proof-demo`](hero-continuity-proof-demo/spec.md) | high | medium | baseline + positioning | Repeatable two-tool cold-resume proof with a surviving correction and evidence-backed completion. |
+| 3 | [`hero-landing-message-refresh`](hero-landing-message-refresh/spec.md) | high | medium | root docs + hosted docs + demo | Current, truthful landing message using real or explicitly illustrative product evidence. |
+| 4 | [`hero-public-docs-drift-guard`](hero-public-docs-drift-guard/spec.md) | medium | medium | root docs + hosted docs + landing | Derived assertions, executable examples, deployment freshness, and a zero-unresolved-claims production crawl. |
 
-## Surfaces
+The critical path is:
 
-| Surface | Purpose | Owner |
+```text
+hero-public-truth-baseline
+  → hero-positioning
+      → hero-root-docs-remediation ─┐
+      → hero-hosted-docs-remediation├→ hero-landing-message-refresh
+      → hero-continuity-proof-demo ─┘
+          → hero-public-docs-drift-guard
+```
+
+Phase 2 children may proceed in parallel only when the reciprocal overlap guards below are respected. If `hero-hosted-docs-remediation` grows beyond a coherent page-by-page repair, `/split` it into factual remediation first and capability discoverability second.
+
+## In-flight overlap watch
+
+Every seam below has reciprocal `conflicts-with` relations on the named children. Do not deliver each pair concurrently without first partitioning the listed assets.
+
+| Child A | Child B | Shared seam |
 |---|---|---|
-| Landing page (heroengine.ai) | Convert visitors → installs | hero-landing-page |
-| Docs site | Self-serve onboarding + reference | hero-docs-site |
-| GitHub repo | Source, issues, releases, social card | hero-repo-polish (folded into landing) |
-| Homebrew tap | Install path for macOS/Linux | hero-distribution |
-| Install script (curl \| sh) | One-line install for everyone else | hero-distribution |
-| Demo media | GIFs, screencast, asciinema, OG images | hero-demo-content |
-| Launch posts | Show HN, Reddit, Twitter/X, dev.to | hero-launch-playbook |
-| Blog / changelog | Ongoing content + version notes | hero-content-engine |
-| Community (Discord or GitHub Discussions) | Support + signal | hero-community |
-| Telemetry (opt-in) | Measure adoption + retention | hero-telemetry |
+| `hero-public-truth-baseline` | `hero-public-docs-drift-guard` | claim registry, derived counts/version authority, and freshness contract |
+| `hero-root-docs-remediation` | `hero-public-docs-drift-guard` | root markdown scans, quickstarts, counts, and command assertions |
+| `hero-hosted-docs-remediation` | `hero-public-docs-drift-guard` | `web/docs/src` scanning, navigation, releases, and generated references |
+| `hero-continuity-proof-demo` | `hero-landing-message-refresh` | demonstration fixtures, captures, embeds, and proof claims |
+| `hero-hosted-docs-remediation` | `hero-landing-message-refresh` | `web/` metadata, terminology, navigation links, and destination URLs |
 
-## Children
+## Existing child disposition
 
-| Slug | Title | Priority | Effort |
-|---|---|---|---|
-| hero-positioning | Narrative, ICP, messaging, comparison | P0 | M |
-| hero-landing-page | Public homepage with install CTA | P0 | M |
-| hero-docs-site | Hosted docs at docs.heroengine.ai | P0 | M |
-| hero-distribution | Homebrew formula, install.sh, GitHub releases | P0 | M |
-| hero-demo-content | GIFs, screencast, social cards | P0 | S |
-| hero-launch-playbook | Show HN, Reddit, X, podcast outreach | P0 | S |
-| hero-content-engine | Ongoing blog + dev.to + case studies | P1 | M |
-| hero-community | Discord / Discussions + contributor guide | P1 | S |
-| hero-telemetry | Opt-in usage analytics + feedback channel | P1 | M |
+These dispositions preserve history without pretending stale lifecycle state is accurate. No historical item is being marked complete by this recomposition.
 
-## Sequencing
+| Existing slug | Disposition |
+|---|---|
+| `hero-positioning` | Relocated from `.hero/planning/features/hero-positioning/spec.md` and rewritten in place under this initiative. Its narrative/ICP/messaging/comparison intent is preserved; its “spec layer” headline and count-based proof are retired. |
+| `hero-landing-page` | Historical landing delivery with stale `delivering` status and a v0.9 premise. Reconcile its delivery evidence/status separately, then use `hero supersede hero-landing-page --by hero-landing-message-refresh` if genealogy is still appropriate. Its content scope is replaced here. |
+| `hero-docs-site` | Historical hosting/site delivery whose `planning` status and greenfield premise no longer describe reality. Reconcile separately, then formally supersede with `hero-hosted-docs-remediation` if warranted. Its content scope is replaced here. |
+| `hero-distribution` | Most stated gaps now exist (binaries/releases/install paths). Reconcile separately and move any remaining release hardening to a release/platform initiative; it is not a child of this truth-repair program. |
+| `hero-demo-content` | Broad asset-catalog premise is replaced by the narrow continuity proof. Reconcile the old spec, then formally supersede it with `hero-continuity-proof-demo` rather than hand-editing genealogy. |
+| `hero-launch-playbook` | Deferred until truthful surfaces and a small external cohort validate the message. Re-author later without coordinated voting/comment tactics. |
+| `hero-content-engine` | Removed from this initiative; ongoing publishing is a separate growth program. |
+| `hero-community` | Removed from this initiative; community/support operations are not a prerequisite for truthful docs. |
+| `hero-telemetry` | Removed from this initiative; product analytics and privacy policy require their own product decision. |
 
-**Wave 1 — foundation (must precede anything public)**
-1. **hero-positioning** — locks the narrative everything else inherits
-2. **hero-distribution** — install path has to actually work before we
-   point people at it
+Several historical specs still declare `hero-marketing` as parent. Their frontmatter and stale lifecycle state are intentionally untouched here; before `/drive hero-marketing`, reconcile those inbound relations with the supported lifecycle/supersession commands so the executable child set matches the seven-child roster above.
 
-**Wave 2 — surfaces (can run in parallel after positioning lands)**
-3. **hero-landing-page** — depends on positioning copy
-4. **hero-docs-site** — depends on positioning + existing mkdocs
-5. **hero-demo-content** — depends on positioning (what to demo)
+## Acceptance Criteria
 
-**Wave 3 — go to market**
-6. **hero-launch-playbook** — depends on all of wave 2 being live
-7. **hero-telemetry** — should ship with launch so we measure from day 1
-8. **hero-community** — open before launch so early adopters have a home
+- **AC-1:** THE SYSTEM SHALL provide one evidence-backed public claim registry with `shipped`, `optional`, `preview`, and `planned` availability labels.
+- **AC-2:** WHEN a user follows a public onboarding path THE SYSTEM SHALL execute the documented commands and configuration against the current product contract.
+- **AC-3:** WHEN Hero is described on a root doc, hosted docs page, or landing surface THE SYSTEM SHALL use the supervision/continuity/trust hierarchy and cite or link to appropriate proof.
+- **AC-4:** IF a claim depends on unverified cloud, team, outpost, domain-pack, licensing, or code-host readiness THEN THE SYSTEM SHALL label the uncertainty and prohibit an unconditional shipped claim.
+- **AC-5:** WHEN a public build is validated THE SYSTEM SHALL detect command, count, version, configuration, harness, peering, link, and deployment-freshness drift across all public surfaces.
+- **AC-6:** WHEN the initiative closes THE SYSTEM SHALL produce a production crawl with zero unresolved P0/P1 claims and a revision marker tying deployed content to reviewed source.
 
-**Wave 4 — sustain**
-9. **hero-content-engine** — ongoing after launch
+## Boundaries
 
-## Constraints
+- No launch campaign, Product Hunt/HN calendar, newsletter, social cadence, or community program.
+- No telemetry backend, pricing, competitor microsites, enterprise sales collateral, or domain-platform marketing.
+- No broad visual brand overhaul; only assets necessary to make repaired surfaces coherent and truthful.
+- No public claim that cloud/team/outposts or all 21 code-host operations are production-ready until evidence resolves their maturity and prerequisites.
+- No changing product behavior merely to preserve old docs; docs follow the supported product contract.
+- No implementation of README, docs, landing, site, or code during initiative composition.
 
-- Don't ship the launch wave until the team-platform story (hero-runner,
-  hero-team-server, hero-dashboard-v2) is dialed in. NEXT.md is explicit:
-  "Don't ship until team story is dialed in."
-- Solo-install path (Homebrew + a single project) must work before
-  anything else — that's how 95% of trial users will arrive.
-- Avoid enterprise-y polish that signals "this isn't for you" to solo
-  developers (no "Request a Demo" CTA, no logo wall before we have logos).
+## Non-Goals
 
-## Success criteria
+- Re-launching Hero, growing an audience, pricing the product, or choosing a new visual identity.
+- Making unfinished cloud, team, outpost, domain-pack, or integration work appear market-ready.
+- Preserving stale documentation behavior through compatibility code instead of documenting the supported contract.
 
-- A new visitor goes from landing page → installed → first spec written
-  in under 10 minutes without reading code
-- Show HN / Product Hunt / Reddit launch generates ≥ 1,000 unique
-  landing-page visits in week 1
-- ≥ 100 Homebrew installs in week 1
-- ≥ 25 active workspaces (defined as a `.hero/` folder with ≥ 1 spec
-  delivered, telemetry reporting back) by end of month 1
-- Community channel has ≥ 50 members and one non-team contributor PR
-  by end of month 1
+## Verification
 
-## Open questions
+- Lint and score the initiative and all seven children; index the corpus and confirm parent, dependency, related, and reciprocal `conflicts-with` edges resolve uniquely.
+- Require each delivery child to reconcile its assigned claim-registry rows and run its executable/build validation before completion.
+- Close only after strict source builds, executable examples, link/accessibility checks, deployment revision verification, and a production crawl report zero unresolved P0/P1 claims.
 
-- ~~Domain: do we have hero.dev, gohero.io, hero.so, etc.? Need to lock one
-  before landing page work starts.~~ — resolved 2026-05-14: `heroengine.ai`
-  (see `.hero/knowledge/decisions/domain-name.md`). `teamhero.cloud` parked
-  for possible microsite use.
-- ~~Hosting: GitHub Pages (free, simple) vs Vercel/Netlify (better DX) vs
-  self-hosted on Cloudflare Pages.~~ — resolved: Cloudflare Pages for both
-  landing and docs (unlimited bandwidth, native PR previews, one dashboard
-  with our DNS).
-- Telemetry vendor: PostHog (open-source, self-hostable) vs Plausible
-  (privacy-first, simple) vs roll our own via the existing daemon.
-- Community surface: Discord (best engagement, more work) vs GitHub
-  Discussions (zero-friction, lower energy).
-- Brand: do we invest in a logo / typeface / illustration system now
-  or ship plain-but-clear?
+## Risks and open decisions
+
+- **Licensing:** no repository `LICENSE` exists; “open source” and licensing claims remain prohibited until posture is decided.
+- **Maturity:** public readiness of cloud/team/outposts, PM/Sales packs, and all 21 code-host operations needs explicit evidence.
+- **Audience:** an individual AI-native engineer versus a 5–50-person engineering lead must be chosen as the lead audience during positioning.
+- **Release channel:** confirm whether the newest repository tag is the public channel and how deployed surfaces derive it.
+- **Counts:** avoid mutable roster counts outside generated reference pages; counts are weak differentiation and maintenance liabilities.
+- **False confidence:** `mkdocs --strict`, docs checks, and invocation checks currently pass despite false content, so green structure checks cannot be treated as truth evidence.
+
+## Progress
+
+- 2026-04-25 — Original broad positioning/distribution/launch initiative created.
+- 2026-08-04 — Recomposed in place into a truthful public product story and documentation repair program. Seven child stubs and a durable content-truth audit were authored; no public content was changed.

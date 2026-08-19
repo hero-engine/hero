@@ -7,6 +7,7 @@ priority: high
 size: small
 tags: [tracker, import, source-fidelity]
 completed_at: 2026-07-22T20:30:26Z
+created: 2026-07-22
 ---
 
 # Tracker source reconciliation

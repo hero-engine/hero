@@ -2,7 +2,7 @@
 title: Single-Source Install — One Canonical Tree, Every Harness Reads It
 slug: single-source-install
 type: initiative
-status: planning
+status: completed
 priority: P0
 tags: [install, upgrade, harness, agents-md, cleanup, multi-harness, hygiene]
 created: 2026-05-11
@@ -33,6 +33,7 @@ principles_check: |
   cross-platform portability via symlinks; mitigated by Phase 4's
   rendered-copy fallback with `hero verify-install` drift detection.
 size: giant
+completed_at: 2026-08-14T15:59:39Z
 ---
 
 > # ✏️ AMENDED (2026-07-12) — root-instruction-file model reversed

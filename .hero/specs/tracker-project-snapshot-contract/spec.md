@@ -7,6 +7,7 @@ priority: high
 size: medium
 tags: [tracker, integration, sprint, roadmap]
 completed_at: 2026-07-22T20:30:24Z
+created: 2026-07-22
 ---
 
 # Tracker project snapshot contract

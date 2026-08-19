@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-18T15:32:45Z · 79 ready specs_
+_Generated: 2026-08-19T16:49:04Z · 79 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
