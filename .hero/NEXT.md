@@ -5,7 +5,7 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-08-19T16:49:03Z
+updated: 2026-08-22T22:38:08Z
 repo: hero-engine/hero
 ---
 
@@ -22,17 +22,22 @@ Run `git log --oneline -10` for recent commits.
 ## Blocked on
 
 - **core-vertical-layering** ← waiting on `project-charter` (planning)
+- **dual-mode-pm-qa-capability-packs** ← waiting on `hero-pm` (designed)
+- **dual-mode-pm-qa-capability-packs** ← waiting on `hero-qa` (planning)
 - **e2e-area-suites** ← waiting on `project-charter` (planning)
+- **hero-apache-license-grant-gate** ← waiting on `hero-licensing-boundary-and-provenance` (planning)
+- **hero-apache-license-grant-gate** ← waiting on `hero-public-repo-readiness` (planning)
+- **hero-apache-license-grant-gate** ← waiting on `hero-v034-release-prep` (planning)
 - **hero-community-edition** ← waiting on `hero-governance` (planning)
 - **hero-content-engine** ← waiting on `hero-docs-site` (planning)
 - **hero-content-engine** ← waiting on `hero-positioning` (planning)
 - **hero-continuity-proof-demo** ← waiting on `hero-positioning` (planning)
+- **hero-continuity-proof-demo** ← waiting on `hero-public-repo-readiness` (planning)
 - **hero-continuity-proof-demo** ← waiting on `hero-public-truth-baseline` (planning)
 - **hero-demo-content** ← waiting on `hero-positioning` (planning)
 - **hero-docs-site** ← waiting on `hero-positioning` (planning)
 - **hero-hosted-docs-remediation** ← waiting on `hero-positioning` (planning)
 - **hero-hosted-docs-remediation** ← waiting on `hero-public-truth-baseline` (planning)
-- **hero-landing-message-refresh** ← waiting on `hero-continuity-proof-demo` (planning)
 - **hero-landing-message-refresh** ← waiting on `hero-hosted-docs-remediation` (planning)
 - **hero-landing-message-refresh** ← waiting on `hero-root-docs-remediation` (planning)
 - **hero-landing-page** ← waiting on `hero-demo-content` (planning)
@@ -42,13 +47,22 @@ Run `git log --oneline -10` for recent commits.
 - **hero-launch-playbook** ← waiting on `hero-distribution` (planning)
 - **hero-launch-playbook** ← waiting on `hero-landing-page` (delivering)
 - **hero-launch-playbook** ← waiting on `hero-positioning` (planning)
+- **hero-licensing-boundary-and-provenance** ← waiting on `hero-public-truth-baseline` (planning)
+- **hero-positioning** ← waiting on `hero-licensing-boundary-and-provenance` (planning)
 - **hero-positioning** ← waiting on `hero-public-truth-baseline` (planning)
+- **hero-public-docs-drift-guard** ← waiting on `hero-continuity-proof-demo` (planning)
 - **hero-public-docs-drift-guard** ← waiting on `hero-hosted-docs-remediation` (planning)
 - **hero-public-docs-drift-guard** ← waiting on `hero-landing-message-refresh` (planning)
+- **hero-public-docs-drift-guard** ← waiting on `hero-public-repo-readiness` (planning)
 - **hero-public-docs-drift-guard** ← waiting on `hero-root-docs-remediation` (planning)
+- **hero-public-repo-readiness** ← waiting on `hero-landing-message-refresh` (planning)
+- **hero-public-repo-readiness** ← waiting on `hero-licensing-boundary-and-provenance` (planning)
+- **hero-public-visibility-launch-gate** ← waiting on `hero-apache-license-grant-gate` (planning)
+- **hero-public-visibility-launch-gate** ← waiting on `hero-v034-release-prep` (planning)
 - **hero-root-docs-remediation** ← waiting on `hero-positioning` (planning)
 - **hero-root-docs-remediation** ← waiting on `hero-public-truth-baseline` (planning)
 - **hero-team-server** ← waiting on `hero-runner` (planning)
+- **hero-v034-release-prep** ← waiting on `hero-public-docs-drift-guard` (planning)
 - **timely-briefs** ← waiting on `retrieval-contradiction-detection` (delivering)
 - **wire-checks-to-boundaries** ← waiting on `spec-contract-enums-unified` (planning)
 

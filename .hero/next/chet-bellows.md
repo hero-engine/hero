@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-19T16:49:03Z
+updated: 2026-08-22T22:38:08Z
 repo: hero-engine/hero
 ---
 
@@ -10,11 +10,11 @@ repo: hero-engine/hero
 
 > Ship a verified Hero release containing the completed MCP tool metadata contract for hero-code while keeping the superseded interactive CLI donor branch evidence-only.
 
-_possibly stale — 11 commit(s) since, last set 5d ago_
+_possibly stale — 12 commit(s) since, last set 8d 6h ago_
 
 ## Last user ask
 
-> we need to get the branch merged back to main and get back on main
+> Deliver the public PM pack, public QA pack, and dual-mode setup in order, then run a full test build and smoke-test PM/QA project initialization.
 
 ## Suggested next prompt
 

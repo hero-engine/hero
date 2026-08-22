@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-19T16:49:04Z · 79 ready specs_
+_Generated: 2026-08-22T22:38:08Z · 80 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -29,10 +29,25 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## tracker-semantic-priority-field-mapping — "\"Jira custom field cannot be configured as canonical Hero priority\""
-_bug · planning · horizon: now_
+## qa-public-pack — Public Quality Assurance Capability Pack
+_feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/tracker-semantic-priority-field-mapping/spec.md)_
+Create `domains/qa/` from the locked public content design in `hero-qa` and its
+agent-pack design, embed it as a first-class domain, and prove substantive
+content plus native installation for every harness.
+
+**Status:** planning — public content boundary, minimum capability surface, and
+verification contract locked.
+
+**Pick up at:** author the QA pack manifest/body, P0 practitioner roster,
+method skills, shared-command QA routing guidance, and canonical QA artifact
+types; then add content and all-harness installation coverage.
+
+→ `/deliver qa-public-pack`
+
+**Files:** new `domains/qa/`, `content.go`, pack/install tests, this spec.
+**Skip:** proprietary Hero Code dashboards, hosted run-state services, TestRail
+or Xray connector implementations, and duplicated lightweight/full trees.
 
 ---
 
@@ -52,12 +67,19 @@ Establishes what Hero may truthfully say and the executable replacements for kno
 
 ---
 
-## hero-marketing — "Hero Public Truth — Product Story and Documentation Repair"
+## hero-marketing — "Hero v0.34 Public Readiness — Truth, Licensing, and Launch"
 _initiative · planning · horizon: now_
 
 _Run opener — arm with `/drive hero-marketing`_
 
-Replace the stale launch-and-growth premise of this existing initiative with a bounded truth-repair program. Establish an evidence-backed claim baseline, rewrite positioning around reduced supervision through durable project intelligence, repair root and hosted documentation, prove continuity in a repeatable two-tool demonstration, refresh the landing message only after the proof exists, and close with production-aware drift guards.
+Recompose the existing truth-repair initiative into the complete v0.34 public-readiness plan. Preserve its seven evidence, positioning, documentation, demonstration, landing, and drift-guard children; add only the legal-boundary, provenance, repository-readiness, release-preparation, and approval-gate work needed to make a safe public release possible. Completion requires current source and deployed surfaces, a reproducible proof of the product story, a clean v0.34 release candidate, an explicit human approval before adding Apache-2.0, and a second explicit human approval before changing repository visibility or launching the release.
+
+---
+
+## tracker-semantic-priority-field-mapping — "\"Jira custom field cannot be configured as canonical Hero priority\""
+_bug · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/tracker-semantic-priority-field-mapping/spec.md)_
 
 ---
 
@@ -585,6 +607,22 @@ _feature · planning · horizon: now_
 
 ---
 
+## hero-qa — Hero QA — Quality Assurance Domain Pack
+_feature · planning · horizon: next_
+
+Second non-engineering Hero domain pack: QA. The thesis: **Hero QA is the quality spine of the sprint and release, not a TestRail clone with chat.** Coverage is a story-completion gate (engineer hands off to QA in-flow); regression status is a release-readiness signal; defects exist when teams want them but the primary loop is fix-before-ship via story rejection. AI authors 40-80 test cases per sprint in minutes, not days. Integration to TestRail and Xray is seamless write-through so teams never duplicate-enter. Brand interaction: QA Reject augments the story with new acceptance criteria and bounces it back, without spawning orphan defect tickets.
+
+**Status:** planning — design pass advanced 2026-05-16. Three siblings landed in single-day dialog: research-brief (887 lines — 12 tools + agent prior art + methodology grounding + six design-original Hero-QA contributions), agent-pack-design (1,119 lines — 23 agents / 26 skills / 18 commands in eight tiers with P0/P1/P2 priorities and contextual-button inventory per artifact), mockup-brief (1,010 lines — eight killer screens with layout, interactions, anti-patterns, and preset variations). Total QA design depth ~3,670 lines vs PM's ~3,630 — at parity. Implementation gated on platform primitives 1-6 plus two amendments (primitive #2 lifecycle overlays; primitive #4 cross-pack ambient population). HTML mockups + handoff-to-hero-code still owed.
+
+**Pick up at:** Produce the eight HTML mockups under `.hero/mocks/hero-qa/` per `mockup-brief.md` (suggested order: Screen 1 → 4 → 2 → 3 → 7 → 5 → 6 → 8). Then write `handoff-to-hero-code.md` summarizing locked design + sibling docs + primitive amendments for a fresh hero-code session to pick up.
+
+→ `/design hero-qa`
+
+**Files:** .hero/planning/features/hero-qa/spec.md, .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/hero-pm/spec.md, .hero/planning/features/hero-pm/agent-pack-design.md
+**Skip:** Native-only-no-integration v1 (we ship Xray and TestRail). A standalone `defect` type by default (opt-in only). Treating QA as a thin variation of engineering. Letting QA reject stories without distinguishing AC-gap from scope-expansion.
+
+---
+
 ## hero-platform — Hero Platform — Headless Execution, Team Automation, and Shared Visibility
 _initiative · planning · horizon: next_
 
@@ -686,22 +724,6 @@ _feature · planning · horizon: next_
 _feature · planning · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-runner/spec.md)_
-
----
-
-## hero-qa — Hero QA — Quality Assurance Domain Pack
-_feature · planning · horizon: next_
-
-Second non-engineering Hero domain pack: QA. The thesis: **Hero QA is the quality spine of the sprint and release, not a TestRail clone with chat.** Coverage is a story-completion gate (engineer hands off to QA in-flow); regression status is a release-readiness signal; defects exist when teams want them but the primary loop is fix-before-ship via story rejection. AI authors 40-80 test cases per sprint in minutes, not days. Integration to TestRail and Xray is seamless write-through so teams never duplicate-enter. Brand interaction: QA Reject augments the story with new acceptance criteria and bounces it back, without spawning orphan defect tickets.
-
-**Status:** planning — design pass advanced 2026-05-16. Three siblings landed in single-day dialog: research-brief (887 lines — 12 tools + agent prior art + methodology grounding + six design-original Hero-QA contributions), agent-pack-design (1,119 lines — 23 agents / 26 skills / 18 commands in eight tiers with P0/P1/P2 priorities and contextual-button inventory per artifact), mockup-brief (1,010 lines — eight killer screens with layout, interactions, anti-patterns, and preset variations). Total QA design depth ~3,670 lines vs PM's ~3,630 — at parity. Implementation gated on platform primitives 1-6 plus two amendments (primitive #2 lifecycle overlays; primitive #4 cross-pack ambient population). HTML mockups + handoff-to-hero-code still owed.
-
-**Pick up at:** Produce the eight HTML mockups under `.hero/mocks/hero-qa/` per `mockup-brief.md` (suggested order: Screen 1 → 4 → 2 → 3 → 7 → 5 → 6 → 8). Then write `handoff-to-hero-code.md` summarizing locked design + sibling docs + primitive amendments for a fresh hero-code session to pick up.
-
-→ `/design hero-qa`
-
-**Files:** .hero/planning/features/hero-qa/spec.md, .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/hero-pm/spec.md, .hero/planning/features/hero-pm/agent-pack-design.md
-**Skip:** Native-only-no-integration v1 (we ship Xray and TestRail). A standalone `defect` type by default (opt-in only). Treating QA as a thin variation of engineering. Letting QA reject stories without distinguishing AC-gap from scope-expansion.
 
 ---
 
@@ -946,7 +968,7 @@ First non-engineering Hero domain pack. PM-shaped spec types (PRD, story, epic, 
 
 **Files:** `.hero/planning/features/hero-pm/spec.md`, `.hero/planning/features/hero-pm/research-brief.md`, `.hero/planning/features/hero-pm/mockup-brief.md`, `.hero/planning/features/hero-pm/agent-pack-design.md`, `.hero/planning/features/hero-pm/handoff-to-hero-code.md`, `.hero/planning/features/hero-pm/mockups/*.html`, `.hero/planning/initiatives/hero-domains/spec.md`, `.hero/planning/features/pm-platform-unblock/spec.md`, `.hero/planning/features/domain-scoped-knowledge-graph/spec.md`, `domains/pm/` *(existing scaffold; canonical content lands at delivery)*.
 
-**Skip:** New tracker integrations in v1 (reuse Jira/Linear/GitHub only). OKRs as a PM spec type (deferred to v2 / a future `strategy` domain). Methodology as a "mode" (not a mode — a layered preset). Forced point estimation. Cross-tracker handoff (Jira-PM → Linear-eng). Multi-active-domain workspaces. Roadmap-shaped providers (Productboard, Aha). PM-only Hero binary. Cross-domain reporting (combined PM/eng dashboards). Product analytics, experiment results, metrics pipelines.
+**Skip:** New tracker integrations in v1 (reuse Jira/Linear/GitHub only). OKRs as a PM spec type (deferred to v2 / a future `strategy` domain). Methodology as a "mode" (not a mode — a layered preset). Forced point estimation. Cross-tracker handoff (Jira-PM → Linear-eng). Arbitrary multi-primary-domain unions; PM extension composition is governed by `dual-mode-pm-qa-capability-packs`. Roadmap-shaped providers (Productboard, Aha). PM-only Hero binary. Cross-domain reporting (combined PM/eng dashboards). Product analytics, experiment results, metrics pipelines.
 
 ---
 

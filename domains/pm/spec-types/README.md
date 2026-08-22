@@ -4,8 +4,8 @@ Spec-type schemas in this directory are the **PM-led** artifact definitions,
 loaded by the spec-type registry (per primitive #2, `spec-type-registry`)
 when the active domain in `hero.json` is `pm`. Under the **unified spec-type
 model** (`.hero/planning/features/unified-spec-type-model/spec.md`),
-three of the work types are **shared** across domains and live in
-`core/spec-types/`: `feature`, `epic`, and `initiative`.
+five of the work types are **shared** across domains and live in
+`core/spec-types/`: `feature`, `epic`, `initiative`, `prd`, and `intake`.
 
 Each schema declares the artifact's lifecycle, the canonical `kind` set
 (per Decision 2 of the unified model), required frontmatter fields,
@@ -18,8 +18,14 @@ to `## Acceptance Criteria` on every work spec-type.
 | `feature` | `core/spec-types/` | Dev-ready unit (shared PM ↔ engineering; owner-flip handoff) | `feature, bug, chore, refactor, perf, infra, security, ux` |
 | `epic` | `core/spec-types/` | Mid-tier grouping (shared) | `theme, delivery, bet, milestone` |
 | `initiative` | `core/spec-types/` | Coarse aspirational bet (PM-led, shared visibility) | `now, next, later` (or quarter string) |
-| `prd` | `domains/pm/spec-types/` | Product requirement doc (PM-led) | `pitch, ten-section, lightweight` |
-| `intake` | `domains/pm/spec-types/` | Inbound feedback / request / signal (PM-led) | `customer, support, sales, internal, competitive` |
+| `prd` | `core/spec-types/` | Product requirement doc (PM-led, cross-domain visible) | Canonical Core record |
+| `intake` | `core/spec-types/` | Inbound feedback / request / signal (PM-led, cross-domain visible) | Canonical Core record |
+| `roadmap-item` | `domains/pm/spec-types/` | Evidence-backed roadmap commitment (PM-led) | Horizon is a required planning field |
+
+PM authoring behavior for shared records lives in its authoring roles and their
+referenced skills. The registry deliberately rejects a domain-local shadow of
+those Core records. Structured shared-type amendments are introduced by
+`dual-mode-pm-qa-capability-packs`.
 
 Display names render via the active vocabulary preset (e.g. `feature`
 renders as "Story" under `agile-scrum`, "Scope" under `shape-up`, "Card"

@@ -1,6 +1,6 @@
 ---
 name: metric-rca
-description: "Why did the metric move" — the disciplined method for localizing a metric change before naming a cause. Metric-tree decomposition, a five-class drift taxonomy, and a causality-before-asserting guard that treats correlation as a hypothesis, not a cause.
+description: '"Why did the metric move" — the disciplined method for localizing a metric change before naming a cause. Metric-tree decomposition, a five-class drift taxonomy, and a causality-before-asserting guard that treats correlation as a hypothesis, not a cause.'
 metadata:
   audience: metrics-analyst
   purpose: framework-guidance

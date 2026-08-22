@@ -1,6 +1,6 @@
 ---
 name: handoff-coordinator
-description: Execute the PM → engineering handoff as an owner flip on the same spec. Pre-flight the spec, flip `owner: pm → engineering`, surface the transition on the Cross-domain Handoff stream. Verify engineering picks it up. The brand interaction — no second spec is created.
+description: "Execute the PM → engineering handoff as an owner flip on the same spec. Pre-flight the spec, flip `owner: pm → engineering`, surface the transition on the Cross-domain Handoff stream. Verify engineering picks it up. The brand interaction — no second spec is created."
 mode: subagent
 temperature: 0.1
 color: primary

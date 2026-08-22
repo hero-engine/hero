@@ -65,42 +65,58 @@ func TestOverlay_AllTargetsIncludeCoreAndDomain(t *testing.T) {
 		coreAgentAt string
 		// domainAgentAt is a destination file path whose source is a
 		// PM-only agent (e.g. prd-author.md).
-		domainAgentAt string
+		domainAgentAt   string
+		domainSkillAt   string
+		domainCommandAt string
 	}{
 		{
-			target:        TargetClaude,
-			coreAgentAt:   ".claude/agents/session-primer.md",
-			domainAgentAt: ".claude/agents/prd-author.md",
+			target:          TargetClaude,
+			coreAgentAt:     ".claude/agents/session-primer.md",
+			domainAgentAt:   ".claude/agents/prd-author.md",
+			domainSkillAt:   ".claude/skills/pm-agent-doctrine/SKILL.md",
+			domainCommandAt: ".claude/commands/prd.md",
 		},
 		{
-			target:        TargetOpenCode,
-			coreAgentAt:   ".opencode/agents/session-primer.md",
-			domainAgentAt: ".opencode/agents/prd-author.md",
+			target:          TargetOpenCode,
+			coreAgentAt:     ".opencode/agents/session-primer.md",
+			domainAgentAt:   ".opencode/agents/prd-author.md",
+			domainSkillAt:   ".opencode/skills/pm-agent-doctrine/SKILL.md",
+			domainCommandAt: ".opencode/commands/prd.md",
 		},
 		{
-			target:        TargetCursor,
-			coreAgentAt:   ".cursor/rules/agents/session-primer.md",
-			domainAgentAt: ".cursor/rules/agents/prd-author.md",
+			target:          TargetCursor,
+			coreAgentAt:     ".cursor/rules/agents/session-primer.md",
+			domainAgentAt:   ".cursor/rules/agents/prd-author.md",
+			domainSkillAt:   ".cursor/rules/skills/pm-agent-doctrine.md",
+			domainCommandAt: ".cursor/rules/commands/prd.md",
 		},
 		{
-			target:        TargetGeneric,
-			coreAgentAt:   ".ai/agents/session-primer.md",
-			domainAgentAt: ".ai/agents/prd-author.md",
+			target:          TargetGeneric,
+			coreAgentAt:     ".ai/agents/session-primer.md",
+			domainAgentAt:   ".ai/agents/prd-author.md",
+			domainSkillAt:   ".ai/skills/pm-agent-doctrine/SKILL.md",
+			domainCommandAt: ".ai/commands/prd.md",
 		},
 		{
-			target:        TargetCodex,
-			coreAgentAt:   ".codex/agents/session-primer.toml",
-			domainAgentAt: ".codex/agents/prd-author.toml",
+			target:          TargetCodex,
+			coreAgentAt:     ".codex/agents/session-primer.toml",
+			domainAgentAt:   ".codex/agents/prd-author.toml",
+			domainSkillAt:   ".agents/skills/pm-agent-doctrine/SKILL.md",
+			domainCommandAt: ".agents/skills/command-prd/SKILL.md",
 		},
 		{
-			target:        TargetCopilot,
-			coreAgentAt:   ".github/prompts/agents/session-primer.prompt.md",
-			domainAgentAt: ".github/prompts/agents/prd-author.prompt.md",
+			target:          TargetCopilot,
+			coreAgentAt:     ".github/prompts/agents/session-primer.prompt.md",
+			domainAgentAt:   ".github/prompts/agents/prd-author.prompt.md",
+			domainSkillAt:   ".github/skills/pm-agent-doctrine/SKILL.md",
+			domainCommandAt: ".github/prompts/commands/prd.prompt.md",
 		},
 		{
-			target:        TargetGrok,
-			coreAgentAt:   ".grok/agents/session-primer.md",
-			domainAgentAt: ".grok/agents/prd-author.md",
+			target:          TargetGrok,
+			coreAgentAt:     ".grok/agents/session-primer.md",
+			domainAgentAt:   ".grok/agents/prd-author.md",
+			domainSkillAt:   ".grok/skills/pm-agent-doctrine/SKILL.md",
+			domainCommandAt: ".grok/skills/command-prd/SKILL.md",
 		},
 	}
 
@@ -112,6 +128,12 @@ func TestOverlay_AllTargetsIncludeCoreAndDomain(t *testing.T) {
 			}
 			if _, err := os.Stat(filepath.Join(dir, tc.domainAgentAt)); err != nil {
 				t.Errorf("expected domain-sourced agent %s: %v", tc.domainAgentAt, err)
+			}
+			if _, err := os.Stat(filepath.Join(dir, tc.domainSkillAt)); err != nil {
+				t.Errorf("expected domain-sourced skill %s: %v", tc.domainSkillAt, err)
+			}
+			if _, err := os.Stat(filepath.Join(dir, tc.domainCommandAt)); err != nil {
+				t.Errorf("expected domain-sourced command %s: %v", tc.domainCommandAt, err)
 			}
 		})
 	}

@@ -36,7 +36,7 @@ var engineeringContent embed.FS
 //go:embed domains/sales/agents domains/sales/commands domains/sales/skills domains/sales/spec-types domains/sales/AGENTS.md
 var salesContent embed.FS
 
-//go:embed domains/pm/agents domains/pm/commands domains/pm/skills domains/pm/spec-types domains/pm/AGENTS.md
+//go:embed domains/pm/agents domains/pm/commands domains/pm/skills domains/pm/spec-types domains/pm/AGENTS.md domains/pm/mission.md
 var pmContent embed.FS
 
 //go:embed core/agents core/commands core/skills

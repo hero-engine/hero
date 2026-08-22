@@ -1,12 +1,14 @@
 package hero
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	"path"
 	"regexp"
 	"strings"
 	"testing"
+	"testing/fstest"
 
 	"gopkg.in/yaml.v3"
 )
@@ -32,6 +34,7 @@ func TestEmbeddedAgents_HaveRequiredFrontmatter(t *testing.T) {
 	}{
 		{"core", coreContent, "core/agents"},
 		{"engineering", engineeringContent, "domains/engineering/agents"},
+		{"pm", pmContent, "domains/pm/agents"},
 	}
 
 	for _, tc := range cases {
@@ -73,6 +76,7 @@ func TestEmbeddedSkills_HaveRequiredFrontmatter(t *testing.T) {
 	}{
 		{"core", coreContent, "core/skills"},
 		{"engineering", engineeringContent, "domains/engineering/skills"},
+		{"pm", pmContent, "domains/pm/skills"},
 	}
 
 	for _, tc := range cases {
@@ -351,11 +355,331 @@ func TestDomainSpecTypesFS_PM(t *testing.T) {
 	if fsys == nil {
 		t.Fatal("DomainSpecTypesFS(\"pm\") returned nil")
 	}
-	for _, want := range []string{"intake.md", "prd.md"} {
+	for _, want := range []string{"roadmap-item.md"} {
 		if _, err := fs.Stat(fsys, want); err != nil {
 			t.Errorf("DomainSpecTypesFS(\"pm\"): %s not found: %v", want, err)
 		}
 	}
+}
+
+func TestPMCapabilityPackInventory(t *testing.T) {
+	fys, err := DomainFS("pm")
+	if err != nil {
+		t.Fatal(err)
+	}
+	required := []string{
+		"AGENTS.md", "mission.md",
+		"agents/ambiguous-story-scrubber.md", "agents/capacity-planner.md", "agents/competitive-analyst.md",
+		"agents/cycle-planner.md", "agents/dependency-mapper.md", "agents/discovery-researcher.md",
+		"agents/discovery-reviewer.md", "agents/duplicate-detector.md", "agents/duplicate-intake-scrubber.md",
+		"agents/epic-framer.md", "agents/experiment-designer.md", "agents/experiment-readout-reviewer.md",
+		"agents/handoff-coordinator.md", "agents/intake-triager.md", "agents/metrics-analyst.md",
+		"agents/pitch-author.md", "agents/pm-delivery-lead.md", "agents/pm-investigator.md",
+		"agents/pm-reviewer.md", "agents/portfolio-curator.md", "agents/prd-author.md",
+		"agents/prioritization-challenger.md", "agents/prioritization-strategist.md", "agents/product-strategist.md",
+		"agents/risk-curator.md", "agents/roadmap-curator.md", "agents/roadmap-reviewer.md",
+		"agents/stakeholder-communicator.md", "agents/stale-roadmap-scrubber.md", "agents/story-writer.md",
+		"commands/capacity.md", "commands/discover.md", "commands/experiment.md", "commands/handoff.md",
+		"commands/interview.md", "commands/launch.md", "commands/metrics.md", "commands/pitch.md",
+		"commands/plan-cycle.md", "commands/plan-iteration.md", "commands/plan-sprint.md", "commands/prd.md",
+		"commands/prioritize.md", "commands/refine.md", "commands/release-notes.md", "commands/roadmap.md",
+		"commands/scrub.md", "commands/standup.md", "commands/triage.md",
+		"skills/acceptance-criteria-ears/SKILL.md", "skills/acceptance-criteria-gherkin/SKILL.md",
+		"skills/assumption-testing/SKILL.md", "skills/capacity-planning/SKILL.md",
+		"skills/competitive-research/SKILL.md", "skills/continuous-discovery-cadence/SKILL.md",
+		"skills/cross-domain-graph-query/SKILL.md", "skills/customer-segment-weighting/SKILL.md",
+		"skills/cycle-planning/SKILL.md", "skills/dependency-mapping/SKILL.md",
+		"skills/discovery-interview-design/SKILL.md", "skills/domain-glossary-maintenance/SKILL.md",
+		"skills/duplicate-detection/SKILL.md", "skills/epic-framing/SKILL.md",
+		"skills/evidence-forcing/SKILL.md", "skills/evidence-synthesis/SKILL.md",
+		"skills/exec-narrative/SKILL.md", "skills/experiment-design/SKILL.md",
+		"skills/feature-comparison-framing/SKILL.md", "skills/handoff-protocol/SKILL.md",
+		"skills/hill-chart-reasoning/SKILL.md", "skills/horizon-assignment/SKILL.md",
+		"skills/intake-classification/SKILL.md", "skills/iteration-planning/SKILL.md",
+		"skills/jtbd-job-stories/SKILL.md", "skills/launch-gtm-tiering/SKILL.md",
+		"skills/market-sizing/SKILL.md", "skills/metric-rca/SKILL.md",
+		"skills/metrics-design/SKILL.md", "skills/opportunity-assessment/SKILL.md",
+		"skills/opportunity-solution-trees-torres/SKILL.md", "skills/outcome-drift/SKILL.md",
+		"skills/outcomes-over-outputs/SKILL.md", "skills/personas-and-journey-maps/SKILL.md",
+		"skills/pitch-writing-shape-up/SKILL.md", "skills/pm-agent-doctrine/SKILL.md",
+		"skills/pm-preset-detection/SKILL.md", "skills/positioning-canvas/SKILL.md",
+		"skills/prd-anti-patterns/SKILL.md", "skills/prd-structure/SKILL.md",
+		"skills/prfaq-writing/SKILL.md", "skills/prioritization-frameworks/SKILL.md",
+		"skills/product-vision-writing/SKILL.md", "skills/release-notes-writing/SKILL.md",
+		"skills/risk-surfacing/SKILL.md", "skills/roadmap-framing/SKILL.md",
+		"skills/shape-up-cadence/SKILL.md", "skills/sprint-planning/SKILL.md",
+		"skills/stakeholder-communication/SKILL.md", "skills/story-mapping/SKILL.md",
+		"skills/story-writing-invest/SKILL.md",
+		"spec-types/roadmap-item.md",
+	}
+	if err := validateRequiredPackFiles(fys, required); err != nil {
+		t.Fatal(err)
+	}
+	if err := validateAgentSkillReferences(fys, CoreFS()); err != nil {
+		t.Fatal(err)
+	}
+	if err := validatePackCrossReferences(fys, CoreFS()); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestValidateRequiredPackFilesNamesMissingCapability(t *testing.T) {
+	err := validateRequiredPackFiles(os.DirFS(t.TempDir()), []string{"agents/pm-reviewer.md"})
+	if err == nil || !strings.Contains(err.Error(), "agents/pm-reviewer.md") {
+		t.Fatalf("expected named missing capability, got %v", err)
+	}
+}
+
+func TestValidateAgentSkillReferencesNamesMissingReference(t *testing.T) {
+	pack := fstest.MapFS{
+		"agents/reviewer.md": {Data: []byte("---\nname: reviewer\ndescription: test\n---\n## Startup\n- `missing-method`\n\n## Work\nDo it.\n")},
+	}
+	err := validateAgentSkillReferences(pack, fstest.MapFS{})
+	if err == nil || !strings.Contains(err.Error(), "agents/reviewer.md") || !strings.Contains(err.Error(), "missing-method") {
+		t.Fatalf("expected named agent and missing skill, got %v", err)
+	}
+}
+
+func TestValidateRequiredPackFilesRejectsSemanticPlaceholder(t *testing.T) {
+	pack := fstest.MapFS{
+		"commands/roadmap.md": {Data: []byte("---\ndescription: roadmap\n---\n# TODO\nThis placeholder is intentionally long enough to defeat a size-only integrity check.\n")},
+	}
+	err := validateRequiredPackFiles(pack, []string{"commands/roadmap.md"})
+	if err == nil || !strings.Contains(err.Error(), "commands/roadmap.md") || !strings.Contains(err.Error(), "placeholder") {
+		t.Fatalf("expected named placeholder finding, got %v", err)
+	}
+}
+
+func TestValidatePackCrossReferencesNamesEachArtifactKind(t *testing.T) {
+	base := fstest.MapFS{
+		"agents/lead.md":         {Data: []byte("---\nname: lead\ndescription: lead\n---\n## Workflow\nLoad `missing-agent-skill` skills before work.\n")},
+		"commands/run.md":        {Data: []byte("---\ndescription: run\n---\nRoute to the `missing-command-agent` agent.\n")},
+		"skills/method/SKILL.md": {Data: []byte("---\nname: method\ndescription: method\n---\n## Cross-references\n- `missing-skill-reference` — required.\n")},
+		"spec-types/item.md":     {Data: []byte("---\ntitle: Item\ntype: item\ndomain: pm\ncategory: work\ndefault_agents:\n  authoring: missing-type-agent\n---\n# Item\n")},
+	}
+	err := validatePackCrossReferences(base, fstest.MapFS{})
+	if err == nil {
+		t.Fatal("expected missing cross-reference errors")
+	}
+	for _, want := range []string{"missing-agent-skill", "missing-command-agent", "missing-skill-reference", "missing-type-agent"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("error %q does not name %q", err, want)
+		}
+	}
+}
+
+func validateRequiredPackFiles(fsys fs.FS, required []string) error {
+	for _, name := range required {
+		data, err := fs.ReadFile(fsys, name)
+		if err != nil {
+			return fmt.Errorf("required pack capability %q is missing: %w", name, err)
+		}
+		if len(strings.TrimSpace(string(data))) < 80 {
+			return fmt.Errorf("required pack capability %q is placeholder-sized", name)
+		}
+		placeholder := regexp.MustCompile(`(?mi)^#{0,3}\s*(todo|tbd|stub|placeholder|coming soon)(?:\s|:|$)`)
+		if placeholder.Match(data) {
+			return fmt.Errorf("required pack capability %q contains placeholder content", name)
+		}
+	}
+	return nil
+}
+
+func validateAgentSkillReferences(packFS, coreFS fs.FS) error {
+	entries, err := fs.ReadDir(packFS, "agents")
+	if err != nil {
+		return fmt.Errorf("read pack agents: %w", err)
+	}
+	bulletPattern := regexp.MustCompile("(?m)^- `([a-z0-9][a-z0-9-]+)`")
+	loadPattern := regexp.MustCompile("(?i)load ([^.]*?) skills?(?: before|\\.|$)")
+	refPattern := regexp.MustCompile("`([a-z0-9][a-z0-9-]+)`")
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") || strings.EqualFold(entry.Name(), "README.md") {
+			continue
+		}
+		name := path.Join("agents", entry.Name())
+		data, err := fs.ReadFile(packFS, name)
+		if err != nil {
+			return fmt.Errorf("read %s: %w", name, err)
+		}
+		body := string(data)
+		refs := map[string]bool{}
+		for _, heading := range []string{"## Startup", "## Load before"} {
+			start := strings.Index(body, heading)
+			if start < 0 {
+				continue
+			}
+			section := body[start+len(heading):]
+			if end := strings.Index(section, "\n## "); end >= 0 {
+				section = section[:end]
+			}
+			for _, line := range strings.Split(section, "\n") {
+				if strings.Contains(strings.ToLower(line), "**not**") || strings.Contains(strings.ToLower(line), "not the right") {
+					continue
+				}
+				if match := bulletPattern.FindStringSubmatch(line); match != nil {
+					refs[match[1]] = true
+				}
+			}
+		}
+		normalized := strings.ReplaceAll(body, "\n", " ")
+		for _, load := range loadPattern.FindAllStringSubmatch(normalized, -1) {
+			for _, match := range refPattern.FindAllStringSubmatch(load[1], -1) {
+				refs[match[1]] = true
+			}
+		}
+		for skill := range refs {
+			skillPath := path.Join("skills", skill, "SKILL.md")
+			if _, packErr := fs.Stat(packFS, skillPath); packErr == nil {
+				continue
+			}
+			if _, coreErr := fs.Stat(coreFS, skillPath); coreErr == nil {
+				continue
+			}
+			return fmt.Errorf("%s references missing skill %q", name, skill)
+		}
+	}
+	return nil
+}
+
+func validatePackCrossReferences(packFS, coreFS fs.FS) error {
+	agents := artifactNames(packFS, "agents", ".md")
+	for name := range artifactNames(coreFS, "agents", ".md") {
+		agents[name] = true
+	}
+	skills := skillNames(packFS)
+	for name := range skillNames(coreFS) {
+		skills[name] = true
+	}
+	references := map[string]bool{"story": true}
+	for name := range agents {
+		references[name] = true
+	}
+	for name := range skills {
+		references[name] = true
+	}
+	for name := range artifactNames(packFS, "spec-types", ".md") {
+		references[name] = true
+	}
+	for name := range artifactNames(CoreSpecTypesFS(), ".", ".md") {
+		references[name] = true
+	}
+	var findings []string
+	if err := validateAgentSkillReferences(packFS, coreFS); err != nil {
+		findings = append(findings, err.Error())
+	}
+
+	commandAgent := regexp.MustCompile("(?i)(?:route(?: this [^ ]+)? to(?: the)?|invoke|delegat(?:e|ed) to) `([a-z0-9][a-z0-9-]+)`(?: agent)?")
+	commandSkill := regexp.MustCompile("(?i)(?:loads?|loading|from|via) (?:the )?`([a-z0-9][a-z0-9-]+)`(?: skill)?")
+	if entries, err := fs.ReadDir(packFS, "commands"); err == nil {
+		for _, entry := range entries {
+			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") || strings.EqualFold(entry.Name(), "README.md") {
+				continue
+			}
+			file := path.Join("commands", entry.Name())
+			data, _ := fs.ReadFile(packFS, file)
+			for _, match := range commandAgent.FindAllStringSubmatch(string(data), -1) {
+				if !agents[match[1]] {
+					findings = append(findings, fmt.Sprintf("%s references missing agent %q", file, match[1]))
+				}
+			}
+			for _, match := range commandSkill.FindAllStringSubmatch(string(data), -1) {
+				if !references[match[1]] {
+					findings = append(findings, fmt.Sprintf("%s references missing artifact %q", file, match[1]))
+				}
+			}
+		}
+	}
+
+	if entries, err := fs.ReadDir(packFS, "skills"); err == nil {
+		bullet := regexp.MustCompile("(?m)^- `([a-z0-9][a-z0-9-]+)`")
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				continue
+			}
+			file := path.Join("skills", entry.Name(), "SKILL.md")
+			data, err := fs.ReadFile(packFS, file)
+			if err != nil {
+				continue
+			}
+			body := string(data)
+			start := strings.Index(body, "## Cross-references")
+			if start < 0 {
+				continue
+			}
+			section := body[start+len("## Cross-references"):]
+			if end := strings.Index(section, "\n## "); end >= 0 {
+				section = section[:end]
+			}
+			for _, match := range bullet.FindAllStringSubmatch(section, -1) {
+				if !references[match[1]] {
+					findings = append(findings, fmt.Sprintf("%s references missing artifact %q", file, match[1]))
+				}
+			}
+		}
+	}
+
+	if entries, err := fs.ReadDir(packFS, "spec-types"); err == nil {
+		for _, entry := range entries {
+			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") || strings.EqualFold(entry.Name(), "README.md") {
+				continue
+			}
+			file := path.Join("spec-types", entry.Name())
+			data, _ := fs.ReadFile(packFS, file)
+			fm, _, ok := splitFrontmatter(data)
+			if !ok {
+				continue
+			}
+			var meta struct {
+				DefaultAgents map[string]string `yaml:"default_agents"`
+			}
+			if err := yaml.Unmarshal(fm, &meta); err != nil {
+				findings = append(findings, fmt.Sprintf("%s has invalid frontmatter: %v", file, err))
+				continue
+			}
+			for _, agent := range meta.DefaultAgents {
+				if !agents[agent] {
+					findings = append(findings, fmt.Sprintf("%s references missing agent %q", file, agent))
+				}
+			}
+		}
+	}
+	if len(findings) > 0 {
+		return fmt.Errorf("pack reference validation failed: %s", strings.Join(findings, "; "))
+	}
+	return nil
+}
+
+func artifactNames(fsys fs.FS, root, suffix string) map[string]bool {
+	names := map[string]bool{}
+	entries, err := fs.ReadDir(fsys, root)
+	if err != nil {
+		return names
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), suffix) || strings.EqualFold(entry.Name(), "README.md") {
+			continue
+		}
+		names[strings.TrimSuffix(entry.Name(), suffix)] = true
+	}
+	return names
+}
+
+func skillNames(fsys fs.FS) map[string]bool {
+	names := map[string]bool{}
+	entries, err := fs.ReadDir(fsys, "skills")
+	if err != nil {
+		return names
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		if _, err := fs.Stat(fsys, path.Join("skills", entry.Name(), "SKILL.md")); err == nil {
+			names[entry.Name()] = true
+		}
+	}
+	return names
 }
 
 // TestDomainSpecTypesFS_Engineering verifies the engineering domain

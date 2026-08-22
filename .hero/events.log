@@ -547,3 +547,5 @@
 {"ts":"2026-08-18T03:44:35.523139Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"install-upgrade-contract-coverage","message":"status -\u003e completed"}
 {"ts":"2026-08-18T04:57:00.611764Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"node-index-repo-identity-collision","message":"\"Repo-scoped graph nodes collide in the search projection and break hero scan\""}
 {"ts":"2026-08-18T04:57:00.611943Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"node-index-repo-identity-collision","message":"status -\u003e completed"}
+{"ts":"2026-08-22T22:37:35.382107Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"pm-public-pack","message":"Public Product Management Capability Pack"}
+{"ts":"2026-08-22T22:37:35.382204Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"pm-public-pack","message":"status -\u003e completed"}

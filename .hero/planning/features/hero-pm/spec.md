@@ -7,6 +7,7 @@ priority: P0
 tags: [platform, domains, product-management, roadmap, content-pack]
 created: 2026-05-15
 designed: 2026-05-19
+updated: 2026-08-22
 relations:
   - target: hero-domains
     kind: parent
@@ -14,6 +15,8 @@ relations:
     kind: follows
   - target: pm-platform-unblock
     kind: follows
+  - target: dual-mode-pm-qa-capability-packs
+    kind: related
 depends-on:
   - domain-plugin-architecture
   - spec-type-registry
@@ -38,6 +41,24 @@ smoke: deferred
 > (`domain-scoped-knowledge-graph` Go delivery), W7 (`hero-code-handover-pack`),
 > and W8–W11 (any remaining contract reconciliation) land.
 
+## Composition amendment (2026-08-22)
+
+The full PM pack is dual-mode. It can be enabled as a bounded extension
+of an engineering workspace or selected as the primary pack in a
+dedicated PM workspace. Engineering retains lightweight planning
+essentials for ordinary feature work; the full PM pack adds discovery,
+roadmaps, portfolio and capacity work, metrics, specialist artifacts,
+agents, and PM views. These are activation roles for one PM package, not
+separate `pm-lite` and `pm-full` content forks. The composition and
+collision contract is owned by `dual-mode-pm-qa-capability-packs`.
+
+## Public-pack delivery boundary (2026-08-22)
+
+The open-source, model-facing PM content is delivered and verified separately
+by `pm-public-pack`. This broad spec remains open for the proprietary Hero Code
+dashboard and application work described below; those surfaces are not part of
+the public repository or its future Apache-2.0 grant.
+
 ## Kickoff
 
 First non-engineering Hero domain pack. PM-shaped spec types (PRD, story, epic, roadmap-item, intake-item) with methodology-preset overlays, PM agents and workflows, seven dashboard views (Roadmap default + Story queue + PRD editor + Intake funnel + Story detail + Handoff stream + Chat). IDE-style layout: left nav, tabbed center pane, bottom strip (artifact-state actions + chat input), toggleable right panel (chat with sticky ambient smarts at top). Reuses existing tracker integrations (Jira/Linear/GitHub). Killer demo: a Jira epic becomes a Hero story, `/design` on the story produces an engineering `feature` spec, and the handoff edge surfaces in the Handoff stream live.
@@ -50,7 +71,7 @@ First non-engineering Hero domain pack. PM-shaped spec types (PRD, story, epic, 
 
 **Files:** `.hero/planning/features/hero-pm/spec.md`, `.hero/planning/features/hero-pm/research-brief.md`, `.hero/planning/features/hero-pm/mockup-brief.md`, `.hero/planning/features/hero-pm/agent-pack-design.md`, `.hero/planning/features/hero-pm/handoff-to-hero-code.md`, `.hero/planning/features/hero-pm/mockups/*.html`, `.hero/planning/initiatives/hero-domains/spec.md`, `.hero/planning/features/pm-platform-unblock/spec.md`, `.hero/planning/features/domain-scoped-knowledge-graph/spec.md`, `domains/pm/` *(existing scaffold; canonical content lands at delivery)*.
 
-**Skip:** New tracker integrations in v1 (reuse Jira/Linear/GitHub only). OKRs as a PM spec type (deferred to v2 / a future `strategy` domain). Methodology as a "mode" (not a mode — a layered preset). Forced point estimation. Cross-tracker handoff (Jira-PM → Linear-eng). Multi-active-domain workspaces. Roadmap-shaped providers (Productboard, Aha). PM-only Hero binary. Cross-domain reporting (combined PM/eng dashboards). Product analytics, experiment results, metrics pipelines.
+**Skip:** New tracker integrations in v1 (reuse Jira/Linear/GitHub only). OKRs as a PM spec type (deferred to v2 / a future `strategy` domain). Methodology as a "mode" (not a mode — a layered preset). Forced point estimation. Cross-tracker handoff (Jira-PM → Linear-eng). Arbitrary multi-primary-domain unions; PM extension composition is governed by `dual-mode-pm-qa-capability-packs`. Roadmap-shaped providers (Productboard, Aha). PM-only Hero binary. Cross-domain reporting (combined PM/eng dashboards). Product analytics, experiment results, metrics pipelines.
 
 ## Goal
 

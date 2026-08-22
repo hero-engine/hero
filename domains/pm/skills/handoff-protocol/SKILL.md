@@ -1,6 +1,6 @@
 ---
 name: handoff-protocol
-description: The formal protocol for handing a spec off from PM to engineering — pre-flight gates, the `owner: pm → engineering` flip on the same artifact, the bitemporal ownership history that is the cross-domain edge, and the hand-back path.
+description: "The formal protocol for handing a spec off from PM to engineering — pre-flight gates, the `owner: pm → engineering` flip on the same artifact, the bitemporal ownership history that is the cross-domain edge, and the hand-back path."
 metadata:
   audience: handoff-coordinator, pm-reviewer, pm-delivery-lead
   purpose: cross-domain
