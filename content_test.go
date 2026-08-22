@@ -35,6 +35,7 @@ func TestEmbeddedAgents_HaveRequiredFrontmatter(t *testing.T) {
 		{"core", coreContent, "core/agents"},
 		{"engineering", engineeringContent, "domains/engineering/agents"},
 		{"pm", pmContent, "domains/pm/agents"},
+		{"qa", qaContent, "domains/qa/agents"},
 	}
 
 	for _, tc := range cases {
@@ -77,6 +78,7 @@ func TestEmbeddedSkills_HaveRequiredFrontmatter(t *testing.T) {
 		{"core", coreContent, "core/skills"},
 		{"engineering", engineeringContent, "domains/engineering/skills"},
 		{"pm", pmContent, "domains/pm/skills"},
+		{"qa", qaContent, "domains/qa/skills"},
 	}
 
 	for _, tc := range cases {
@@ -168,7 +170,7 @@ func assertSkillFrontmatter(t *testing.T, fsys fs.FS, p string) {
 // which forces the change to be deliberate.
 func TestAvailableDomains(t *testing.T) {
 	got := AvailableDomains()
-	want := map[string]bool{"engineering": true, "sales": true, "pm": true}
+	want := map[string]bool{"engineering": true, "sales": true, "pm": true, "qa": true}
 
 	if len(got) != len(want) {
 		t.Fatalf("AvailableDomains() length = %d, want %d; got=%v", len(got), len(want), got)
@@ -680,6 +682,79 @@ func skillNames(fsys fs.FS) map[string]bool {
 		}
 	}
 	return names
+}
+
+func validateAllArtifactReferences(packFS, coreFS fs.FS, allowedLiterals map[string]bool) error {
+	known := map[string]bool{}
+	for name := range artifactNames(packFS, "agents", ".md") {
+		known[name] = true
+	}
+	for name := range artifactNames(coreFS, "agents", ".md") {
+		known[name] = true
+	}
+	for name := range artifactNames(packFS, "commands", ".md") {
+		known[name] = true
+	}
+	for name := range artifactNames(coreFS, "commands", ".md") {
+		known[name] = true
+	}
+	for name := range skillNames(packFS) {
+		known[name] = true
+	}
+	for name := range skillNames(coreFS) {
+		known[name] = true
+	}
+	types := artifactNames(packFS, "spec-types", ".md")
+	for name := range artifactNames(CoreSpecTypesFS(), ".", ".md") {
+		types[name] = true
+	}
+	for name := range types {
+		known[name] = true
+	}
+	for name := range allowedLiterals {
+		known[name] = true
+	}
+
+	backtick := regexp.MustCompile("`([a-z0-9][a-z0-9-]*)`")
+	refType := regexp.MustCompile(`ref\(([a-z0-9][a-z0-9-]*)\)`)
+	var findings []string
+	err := fs.WalkDir(packFS, ".", func(name string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if entry.IsDir() || !strings.HasSuffix(name, ".md") || strings.EqualFold(path.Base(name), "README.md") {
+			return nil
+		}
+		data, err := fs.ReadFile(packFS, name)
+		if err != nil {
+			return err
+		}
+		for _, match := range backtick.FindAllSubmatch(data, -1) {
+			target := string(match[1])
+			if !known[target] {
+				findings = append(findings, fmt.Sprintf("%s references missing artifact %q", name, target))
+			}
+		}
+		if strings.HasPrefix(name, "spec-types/") {
+			fm, _, ok := splitFrontmatter(data)
+			if ok {
+				for _, match := range refType.FindAllSubmatch(fm, -1) {
+					target := string(match[1])
+					if target != "spec" && !types[target] {
+						findings = append(findings, fmt.Sprintf("%s references missing spec type %q", name, target))
+					}
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("walk pack references: %w", err)
+	}
+	if len(findings) > 0 {
+		return fmt.Errorf("pack artifact reference validation failed: %s", strings.Join(findings, "; "))
+	}
+	return nil
 }
 
 // TestDomainSpecTypesFS_Engineering verifies the engineering domain

@@ -39,6 +39,9 @@ var salesContent embed.FS
 //go:embed domains/pm/agents domains/pm/commands domains/pm/skills domains/pm/spec-types domains/pm/AGENTS.md domains/pm/mission.md
 var pmContent embed.FS
 
+//go:embed domains/qa/agents domains/qa/commands domains/qa/skills domains/qa/spec-types domains/qa/AGENTS.md domains/qa/mission.md
+var qaContent embed.FS
+
 //go:embed core/agents core/commands core/skills
 var coreContent embed.FS
 
@@ -80,6 +83,8 @@ func DomainFS(domain string) (fs.FS, error) {
 		return fs.Sub(salesContent, "domains/sales")
 	case "pm":
 		return fs.Sub(pmContent, "domains/pm")
+	case "qa":
+		return fs.Sub(qaContent, "domains/qa")
 	}
 	return nil, fmt.Errorf("domain %q not found — available domains: %v", domain, AvailableDomains())
 }
@@ -149,6 +154,8 @@ func DomainSpecTypesFS(domain string) fs.FS {
 		src = pmContent
 	case "sales":
 		src = salesContent
+	case "qa":
+		src = qaContent
 	default:
 		return nil
 	}
@@ -273,11 +280,10 @@ func sortDirEntries(entries []fs.DirEntry) {
 }
 
 // AvailableDomains returns the list of embedded domain names.
-// Engineering is the canonical, populated vertical. PM is the second
-// populated vertical (intake/PRD/discovery flow). Sales is a scaffold
-// today (mission + structure but no real content yet).
+// Engineering is the canonical development vertical. PM and QA are
+// populated practitioner verticals. Sales remains a scaffold today.
 func AvailableDomains() []string {
-	return []string{"engineering", "sales", "pm"}
+	return []string{"engineering", "sales", "pm", "qa"}
 }
 
 // clientEmbeddedDomains lists directories under domains/ that are

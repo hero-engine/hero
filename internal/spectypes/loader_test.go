@@ -415,6 +415,36 @@ func TestLoad_PMIncludesOwnedTypesWithoutShadowingCore(t *testing.T) {
 	}
 }
 
+func TestLoad_QAIncludesOwnedTypesWithoutShadowingCore(t *testing.T) {
+	reg, err := Load("qa")
+	if err != nil {
+		t.Fatalf("Load(qa): %v", err)
+	}
+	for _, name := range []string{"test-plan", "test-case", "regression-suite", "release-gate", "defect"} {
+		rec, ok := reg.Lookup(name)
+		if !ok {
+			t.Errorf("QA registry missing %q", name)
+			continue
+		}
+		if rec.Domain != "qa" {
+			t.Errorf("%s domain = %q, want qa", name, rec.Domain)
+		}
+		if len(rec.Frontmatter.Required) == 0 {
+			t.Errorf("%s has no required frontmatter schema", name)
+		}
+	}
+	for _, name := range []string{"feature", "bug", "release", "intake", "prd"} {
+		rec, ok := reg.Lookup(name)
+		if !ok {
+			t.Errorf("QA registry missing shared Core type %q", name)
+			continue
+		}
+		if rec.Domain != "core" {
+			t.Errorf("shared type %s domain = %q, want core", name, rec.Domain)
+		}
+	}
+}
+
 // TestLoad_FrontmatterFieldShape_FeatureStatus pins one representative
 // field's full shape so changes to FieldDecl serialization are caught.
 func TestLoad_FrontmatterFieldShape_FeatureStatus(t *testing.T) {

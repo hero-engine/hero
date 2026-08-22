@@ -6,12 +6,14 @@ status: planning
 priority: P1
 tags: [platform, domains, qa, testing, content-pack]
 created: 2026-05-15
-updated: 2026-05-16
+updated: 2026-08-22
 relations:
   - target: hero-domains
     kind: parent
   - target: hero-pm
     kind: sequenced-after
+  - target: dual-mode-pm-qa-capability-packs
+    kind: related
 depends-on:
   - domain-plugin-architecture
   - spec-type-registry
@@ -32,6 +34,28 @@ smoke: deferred
 > platform primitives 1–6 plus the lifecycle-overlay amendment
 > to primitive #2 and cross-pack ambient amendment to primitive #4
 > named below.
+
+## Composition amendment (2026-08-22)
+
+The full QA pack is dual-mode. It can be enabled as a bounded extension
+of an engineering workspace or selected as the primary pack in a
+dedicated QA workspace. Engineering retains lightweight quality
+essentials for ordinary coding; the full QA pack adds first-class test
+artifacts, coverage operations, integrations, specialist agents, and QA
+views. These are activation roles for one QA package, not separate
+`qa-lite` and `qa-full` content forks. The composition and collision
+contract is owned by `dual-mode-pm-qa-capability-packs`.
+
+## Public pack delivery boundary (2026-08-22)
+
+The offline practitioner content is delivered independently by
+`qa-public-pack`: the locked 23-agent roster, QA workflow commands,
+testing-method skills, and QA-owned artifact definitions live in the public Hero
+repository and install without Hero Code, Hero Cloud, TestRail, or Xray. This broad
+spec remains open for the proprietary application views, lifecycle-overlay UI,
+hosted run history, and connector implementations described below. Those private
+surfaces may consume the public pack contract, but the public QA workflows cannot
+depend on them.
 
 ## Kickoff
 
