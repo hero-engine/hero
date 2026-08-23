@@ -441,7 +441,7 @@ func ValidateContractResponse(v ContractResponse) *attention.ContractError {
 }
 
 func canonicalAction(v string) bool {
-	return v == ActionResolve || v == ActionReopen || v == ActionArchive || v == ActionRestore
+	return v == ActionMarkRead || v == ActionMarkUnread || v == ActionResolve || v == ActionReopen || v == ActionArchive || v == ActionRestore
 }
 
 func canonicalEvent(v EventKind) bool {

@@ -39,6 +39,16 @@ func TestActionValidationIsClosedWorldAndStrict(t *testing.T) {
 	if err := ValidateActionRequest(malformed); err == nil || err.Field != "input" {
 		t.Fatalf("unknown executable input = %#v", err)
 	}
+	for _, actionID := range []string{ActionMarkRead, ActionMarkUnread} {
+		receipt := ActionRequest{SchemaVersion: 1, Identity: base.Identity, ActionID: actionID, ThreadRevision: 7, IdempotencyKey: actionID + "-1"}
+		if err := ValidateActionRequest(receipt); err != nil {
+			t.Fatalf("%s action = %#v", actionID, err)
+		}
+		receipt.Input = json.RawMessage(`{"reason":"not-allowed"}`)
+		if err := ValidateActionRequest(receipt); err == nil || err.Field != "input" {
+			t.Fatalf("%s accepted lifecycle input: %#v", actionID, err)
+		}
+	}
 }
 
 func TestOpenStateRejectsArchiveEligibility(t *testing.T) {

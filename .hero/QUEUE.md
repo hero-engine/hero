@@ -22,6 +22,13 @@ without changing Mail-read v1 behavior.
 
 **Files:** `contracts/attention/mailthread/contract.go`, `internal/attention/mail/store.go`, `internal/attention/mail/thread.go`
 **Skip:** do not infer thread identity or completion from Mail content.
+_Generated: 2026-08-23T02:34:51Z · 80 ready specs_
+
+## mail-thread-foreground-read-action — Mail Thread Foreground Read Action
+_feature · delivering · horizon: now_
+
+Add the service-level foreground-read regression first, then expose the exact
+descriptor through the existing thread projection and HTTP action route.
 
 ---
 

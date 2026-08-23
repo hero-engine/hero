@@ -58,7 +58,7 @@ func setupAttentionMailHTTP(t *testing.T, body string) (*API, *mail.Store, strin
 }
 
 func TestAttentionMailHTTPThreadProjectionDetailAndLifecycleAction(t *testing.T) {
-	api, _, _, threadID := setupAttentionMailHTTP(t, "thread body")
+	api, store, messageID, threadID := setupAttentionMailHTTP(t, "thread body")
 	handler := api.Handler()
 	listResponse := httptest.NewRecorder()
 	handler.ServeHTTP(listResponse, httptest.NewRequest(http.MethodGet, "/api/attention/v1/mail/threads?bucket=needs_attention&project_peer_id=peer_b", nil))
@@ -72,7 +72,18 @@ func TestAttentionMailHTTPThreadProjectionDetailAndLifecycleAction(t *testing.T)
 	if detailResponse.Code != http.StatusOK || json.Unmarshal(detailResponse.Body.Bytes(), &detail) != nil || detail.Error != nil || len(detail.Messages) != 1 || detail.Messages[0].Envelope.Body != "thread body" {
 		t.Fatalf("thread detail = %d %#v", detailResponse.Code, detail)
 	}
-	action := mailthread.ActionRequest{SchemaVersion: mailthread.SchemaVersion, Identity: list.Items[0].Identity, ActionID: mailthread.ActionArchive, ThreadRevision: list.Items[0].Revision, IdempotencyKey: "http-thread-archive", Input: json.RawMessage(`{}`)}
+	if _, err := store.Receipt("peer_b", messageID); !errors.Is(err, mail.ErrNotFound) {
+		t.Fatalf("thread GET mutated receipt: %v", err)
+	}
+	markRead := mailthread.ActionRequest{SchemaVersion: mailthread.SchemaVersion, Identity: list.Items[0].Identity, ActionID: mailthread.ActionMarkRead, ThreadRevision: list.Items[0].Revision, IdempotencyKey: "http-thread-read"}
+	readBody, _ := json.Marshal(markRead)
+	readResponse := httptest.NewRecorder()
+	handler.ServeHTTP(readResponse, httptest.NewRequest(http.MethodPost, "/api/attention/v1/mail/thread-actions", bytes.NewReader(readBody)))
+	var readResult mailthread.ActionResponse
+	if readResponse.Code != http.StatusOK || json.Unmarshal(readResponse.Body.Bytes(), &readResult) != nil || readResult.Error != nil || readResult.Thread == nil || readResult.Thread.Read.UnreadCount != 0 || readResult.Thread.Actions[0].ID != mailthread.ActionMarkUnread {
+		t.Fatalf("thread read action = %d %#v", readResponse.Code, readResult)
+	}
+	action := mailthread.ActionRequest{SchemaVersion: mailthread.SchemaVersion, Identity: list.Items[0].Identity, ActionID: mailthread.ActionArchive, ThreadRevision: readResult.Thread.State.Revision, IdempotencyKey: "http-thread-archive", Input: json.RawMessage(`{}`)}
 	body, _ := json.Marshal(action)
 	actionResponse := httptest.NewRecorder()
 	handler.ServeHTTP(actionResponse, httptest.NewRequest(http.MethodPost, "/api/attention/v1/mail/thread-actions", bytes.NewReader(body)))

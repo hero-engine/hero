@@ -47,7 +47,7 @@ func (s *Store) Thread(recipient, threadID string) (mailthread.ThreadView, bool,
 	if err != nil {
 		return mailthread.ThreadView{}, false, err
 	}
-	return mailthread.ThreadView{State: state, Read: read, Actions: ThreadCapabilities(state)}, created, nil
+	return mailthread.ThreadView{State: state, Read: read, Actions: ThreadCapabilities(state, read)}, created, nil
 }
 
 func (s *Store) ensureThreadLocked(recipient, threadID string) (mailthread.State, bool, error) {
@@ -135,7 +135,7 @@ func (s *Store) MutateThread(recipient, threadID string, expected int64, actionI
 				return mailthread.ThreadView{}, ErrIdempotencyConflict
 			}
 			read, err := s.threadReadSummaryLocked(recipient, threadID)
-			return mailthread.ThreadView{State: state, Read: read, Actions: ThreadCapabilities(state)}, err
+			return mailthread.ThreadView{State: state, Read: read, Actions: ThreadCapabilities(state, read)}, err
 		}
 	}
 	if state.Revision != expected {
@@ -156,7 +156,7 @@ func (s *Store) MutateThread(recipient, threadID string, expected int64, actionI
 		return mailthread.ThreadView{}, err
 	}
 	read, err := s.threadReadSummaryLocked(recipient, threadID)
-	return mailthread.ThreadView{State: state, Read: read, Actions: ThreadCapabilities(state)}, err
+	return mailthread.ThreadView{State: state, Read: read, Actions: ThreadCapabilities(state, read)}, err
 }
 
 func (s *Store) threadMessagesLocked(recipient, threadID string) ([]attention.MailEnvelope, error) {
@@ -248,9 +248,16 @@ func (s *Service) ThreadAction(request mailthread.ActionRequest) (mailthread.Thr
 	}
 	now := s.now().UTC().Format(time.RFC3339Nano)
 	hash := threadActionHash(request)
+	eventID := "lifecycle:" + request.IdempotencyKey
+	if request.ActionID == mailthread.ActionMarkRead || request.ActionID == mailthread.ActionMarkUnread {
+		eventID = "receipt:" + request.IdempotencyKey
+	}
 	view, err := s.store.MutateThread(s.cfg.PeerID, request.Identity.ThreadID, request.ThreadRevision, request.ActionID, request.IdempotencyKey, hash, now, func(state *mailthread.State) error {
 		from := state.Lifecycle
 		switch request.ActionID {
+		case mailthread.ActionMarkRead, mailthread.ActionMarkUnread:
+			// Receipt changes are applied to the captured message snapshot after
+			// the thread action CAS succeeds.
 		case mailthread.ActionResolve:
 			if state.Lifecycle != mailthread.LifecycleOpen {
 				return ErrUnsupportedAction
@@ -299,8 +306,12 @@ func (s *Service) ThreadAction(request mailthread.ActionRequest) (mailthread.Thr
 		if sourceID == "" {
 			sourceID = request.IdempotencyKey
 		}
+		kind := mailthread.EventActionSucceeded
+		if request.ActionID == mailthread.ActionMarkRead {
+			kind = mailthread.EventForegroundRead
+		}
 		state.Events = append(state.Events, mailthread.EventRecord{
-			EventID: "lifecycle:" + request.IdempotencyKey, Kind: mailthread.EventActionSucceeded,
+			EventID: eventID, Kind: kind,
 			RequestHash: hash, AppliedAt: now, Source: source, SourceID: sourceID,
 			Outcome: input.Outcome, FromLifecycle: from, ToLifecycle: state.Lifecycle,
 			PriorMessageIDs: append([]string(nil), messageIDs...),
@@ -310,8 +321,13 @@ func (s *Service) ThreadAction(request mailthread.ActionRequest) (mailthread.Thr
 	if err != nil {
 		return mailthread.ThreadView{}, err
 	}
-	messageIDs = eventRecordMessageIDs(view.State, "lifecycle:"+request.IdempotencyKey, messageIDs)
-	if err := s.markMessagesRead(messageIDs, "lifecycle:"+request.IdempotencyKey); err != nil {
+	messageIDs = eventRecordMessageIDs(view.State, eventID, messageIDs)
+	if request.ActionID == mailthread.ActionMarkUnread {
+		err = s.markMessagesUnread(messageIDs, eventID)
+	} else {
+		err = s.markMessagesRead(messageIDs, eventID)
+	}
+	if err != nil {
 		return mailthread.ThreadView{}, err
 	}
 	view, _, err = s.store.ReconcileThread(s.cfg.PeerID, request.Identity.ThreadID, s.now())
@@ -321,19 +337,24 @@ func (s *Service) ThreadAction(request mailthread.ActionRequest) (mailthread.Thr
 var lifecycleNoInput = json.RawMessage(`{"type":"object","additionalProperties":false}`)
 var lifecycleResolveInput = json.RawMessage(`{"type":"object","required":["reason","source"],"properties":{"reason":{"type":"string"},"source":{"type":"string"},"outcome":{"type":"string"},"source_id":{"type":"string"},"grace_class":{"enum":["informational","linked_work"]}},"additionalProperties":false}`)
 
-func ThreadCapabilities(state mailthread.State) []attention.ActionDescriptor {
+func ThreadCapabilities(state mailthread.State, read mailthread.ReadSummary) []attention.ActionDescriptor {
 	type definition struct {
 		operation, id, label string
 		input                json.RawMessage
 	}
-	var definitions []definition
+	definitions := make([]definition, 0, 3)
+	if read.UnreadCount > 0 {
+		definitions = append(definitions, definition{"mail.mark_read", mailthread.ActionMarkRead, "Mark Read", lifecycleNoInput})
+	} else if read.MessageCount > 0 {
+		definitions = append(definitions, definition{"mail.mark_unread", mailthread.ActionMarkUnread, "Mark Unread", lifecycleNoInput})
+	}
 	switch state.Lifecycle {
 	case mailthread.LifecycleOpen:
-		definitions = []definition{{"mail.resolve", mailthread.ActionResolve, "Resolve", lifecycleResolveInput}, {"mail.archive", mailthread.ActionArchive, "Archive", lifecycleNoInput}}
+		definitions = append(definitions, definition{"mail.resolve", mailthread.ActionResolve, "Resolve", lifecycleResolveInput}, definition{"mail.archive", mailthread.ActionArchive, "Archive", lifecycleNoInput})
 	case mailthread.LifecycleResolved:
-		definitions = []definition{{"mail.reopen", mailthread.ActionReopen, "Reopen", lifecycleNoInput}, {"mail.archive", mailthread.ActionArchive, "Archive", lifecycleNoInput}}
+		definitions = append(definitions, definition{"mail.reopen", mailthread.ActionReopen, "Reopen", lifecycleNoInput}, definition{"mail.archive", mailthread.ActionArchive, "Archive", lifecycleNoInput})
 	case mailthread.LifecycleArchived:
-		definitions = []definition{{"mail.restore", mailthread.ActionRestore, "Restore", lifecycleNoInput}}
+		definitions = append(definitions, definition{"mail.restore", mailthread.ActionRestore, "Restore", lifecycleNoInput})
 	}
 	result := make([]attention.ActionDescriptor, 0, len(definitions))
 	for _, definition := range definitions {

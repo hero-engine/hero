@@ -3,6 +3,7 @@
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
 _Last refreshed: 2026-08-24T16:52:06Z · projected from 534 source nodes_
+_Last refreshed: 2026-08-23T02:34:51Z · projected from 530 source nodes_
 
 ## Surfaces
 
@@ -62,6 +63,10 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 3. **hero-core** — `mail-b7ca19966ac5041e6ff604dd` (critical, delivering)
 4. **serve** — `agent-outposts` (medium, delivering)
 5. **serve** — `retrieval-contradiction-detection` (—, delivering)
+2. **hero-core** — `mail-thread-foreground-read-action` (high, delivering)
+3. **serve** — `agent-outposts` (medium, delivering)
+4. **serve** — `retrieval-contradiction-detection` (—, delivering)
+5. **(unassigned)** — `team-connect` (—, delivering)
 
 ## Open risks & blockers
 
@@ -74,4 +79,6 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - Surfaces detected: 10 (inferred: 10 · overrides applied: 0)
 - Specs covered: 217/474 (45%)
 - Projection generation: 1ms · Source nodes: 534
+- Specs covered: 221/469 (47%)
+- Projection generation: 1ms · Source nodes: 530
 

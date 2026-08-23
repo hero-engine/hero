@@ -165,6 +165,62 @@ func TestConcurrentThreadActionsAcceptOneRevisionAndPreserveValidState(t *testin
 	}
 }
 
+func TestThreadForegroundReadIsRevisionedReplaySafeAndLeavesLaterInboundUnread(t *testing.T) {
+	service, store, env, _ := triageService(t, "mail_thread_foreground_read")
+	open, _, err := store.Thread("peer_b", env.ThreadID)
+	if err != nil || len(open.Actions) == 0 || open.Actions[0].ID != mailthread.ActionMarkRead || open.Actions[0].RequiredRowRevision != open.State.Revision {
+		t.Fatalf("open read capability = %#v, %v", open, err)
+	}
+	stale := mailthread.ActionRequest{SchemaVersion: 1, Identity: open.State.Identity, ActionID: mailthread.ActionMarkRead, ThreadRevision: open.State.Revision + 1, IdempotencyKey: "foreground-read-stale"}
+	if _, err := service.ThreadAction(stale); !errors.Is(err, ErrStale) {
+		t.Fatalf("foreground stale = %v", err)
+	}
+	if _, err := store.Receipt("peer_b", env.ID); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("stale foreground read mutated receipt: %v", err)
+	}
+	request := mailthread.ActionRequest{SchemaVersion: 1, Identity: open.State.Identity, ActionID: mailthread.ActionMarkRead, ThreadRevision: open.State.Revision, IdempotencyKey: "foreground-read-1"}
+	read, err := service.ThreadAction(request)
+	if err != nil || read.Read.UnreadCount != 0 || read.State.Lifecycle != mailthread.LifecycleOpen || read.Actions[0].ID != mailthread.ActionMarkUnread {
+		t.Fatalf("foreground read = %#v, %v", read, err)
+	}
+	replay, err := service.ThreadAction(request)
+	if err != nil || replay.State.Revision != read.State.Revision || replay.Read.UnreadCount != 0 {
+		t.Fatalf("foreground read replay = %#v, %v", replay, err)
+	}
+	conflict := request
+	conflict.ActionID = mailthread.ActionMarkUnread
+	if _, err := service.ThreadAction(conflict); !errors.Is(err, ErrIdempotencyConflict) {
+		t.Fatalf("foreground idempotency conflict = %v", err)
+	}
+
+	late := testEnvelope("mail_thread_foreground_late")
+	late.ThreadID = env.ThreadID
+	late.IdempotencyKey = late.ID
+	if _, _, err := store.Deliver(late, testDelivery(late)); err != nil {
+		t.Fatal(err)
+	}
+	replay, err = service.ThreadAction(request)
+	if err != nil || replay.Read.UnreadCount != 1 {
+		t.Fatalf("foreground replay read later inbound content = %#v, %v", replay, err)
+	}
+	if _, err := store.Receipt("peer_b", late.ID); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("later inbound receipt mutated on replay: %v", err)
+	}
+}
+
+func TestThreadMarkUnreadChangesReceiptsWithoutChangingLifecycle(t *testing.T) {
+	service, store, env, _ := triageService(t, "mail_thread_mark_unread")
+	open, _, _ := store.Thread("peer_b", env.ThreadID)
+	read, err := service.ThreadAction(mailthread.ActionRequest{SchemaVersion: 1, Identity: open.State.Identity, ActionID: mailthread.ActionMarkRead, ThreadRevision: open.State.Revision, IdempotencyKey: "read-before-unread"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	unread, err := service.ThreadAction(mailthread.ActionRequest{SchemaVersion: 1, Identity: read.State.Identity, ActionID: mailthread.ActionMarkUnread, ThreadRevision: read.State.Revision, IdempotencyKey: "mark-unread-thread"})
+	if err != nil || unread.Read.UnreadCount != 1 || unread.State.Lifecycle != mailthread.LifecycleOpen || unread.Actions[0].ID != mailthread.ActionMarkRead {
+		t.Fatalf("thread mark unread = %#v, %v", unread, err)
+	}
+}
+
 func TestMarkUnreadChangesReceiptWithoutChangingLifecycle(t *testing.T) {
 	service, store, env, _ := triageService(t, "mail_unread")
 	service.now = func() time.Time { return time.Date(2026, 7, 22, 20, 0, 0, 0, time.UTC) }

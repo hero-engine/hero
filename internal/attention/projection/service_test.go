@@ -60,7 +60,7 @@ func TestSnapshotProjectsReadAndUnreadActionableThreadsOnce(t *testing.T) {
 			ActivityAt: "2026-08-22T10:00:00Z", Unread: unread, Actionable: true,
 			Lifecycle: state.Lifecycle, Bucket: mailthread.BucketNeedsAttention,
 			MessageCount: 2, UnreadCount: map[bool]int{true: 2, false: 0}[unread], Revision: revision,
-			Actions: mail.ThreadCapabilities(state),
+			Actions: mail.ThreadCapabilities(state, mailthread.ReadSummary{MessageCount: 1, UnreadCount: 1}),
 		}
 	}
 	source := &fakeThreadMail{items: []mailthread.ThreadSummary{makeSummary("thread_unread", true, 11), makeSummary("thread_read", false, 12)}}

@@ -57,7 +57,7 @@ func (s *Store) ApplyThreadEvent(event mailthread.Event) (ThreadEventResult, err
 			return ThreadEventResult{}, ErrIdempotencyConflict
 		}
 		read, readErr := s.threadReadSummaryLocked(event.Identity.ProjectPeerID, event.Identity.ThreadID)
-		return ThreadEventResult{Thread: mailthread.ThreadView{State: state, Read: read, Actions: ThreadCapabilities(state)}, Replayed: true}, readErr
+		return ThreadEventResult{Thread: mailthread.ThreadView{State: state, Read: read, Actions: ThreadCapabilities(state, read)}, Replayed: true}, readErr
 	}
 	if state.Revision != event.ExpectedRevision {
 		return ThreadEventResult{}, &ThreadStaleError{Current: state}
@@ -114,7 +114,7 @@ func (s *Store) ApplyThreadEvent(event mailthread.Event) (ThreadEventResult, err
 		return ThreadEventResult{}, err
 	}
 	read, err := s.threadReadSummaryLocked(event.Identity.ProjectPeerID, event.Identity.ThreadID)
-	return ThreadEventResult{Thread: mailthread.ThreadView{State: state, Read: read, Actions: ThreadCapabilities(state)}}, err
+	return ThreadEventResult{Thread: mailthread.ThreadView{State: state, Read: read, Actions: ThreadCapabilities(state, read)}}, err
 }
 
 func eventRecordMessageIDs(state mailthread.State, eventID string, fallback []string) []string {
@@ -197,6 +197,36 @@ func (s *Service) markMessagesRead(messageIDs []string, cause string) error {
 	return nil
 }
 
+func (s *Service) markMessagesUnread(messageIDs []string, cause string) error {
+	for _, messageID := range messageIDs {
+		current, err := currentReceipt(s.store, s.cfg.PeerID, messageID)
+		if err != nil {
+			return err
+		}
+		key := "thread-unread:" + cause + ":" + messageID
+		req := ActionRequest{MessageID: messageID, Action: ActionUnread, IdempotencyKey: key}
+		hash := actionHash(req)
+		_, err = s.store.MutateReceipt(s.cfg.PeerID, messageID, current.Revision, func(receipt *attention.MailReceipt) error {
+			if replay, conflict := actionReplay(*receipt, key, hash); replay {
+				return nil
+			} else if conflict {
+				return ErrIdempotencyConflict
+			}
+			appliedAt := s.now().UTC().Format(time.RFC3339Nano)
+			receipt.ReadAt = ""
+			if receipt.Kind == attention.ReceiptRead {
+				receipt.Kind = ""
+			}
+			receipt.Actions = append(receipt.Actions, attention.MailAction{ID: ActionUnread, IdempotencyKey: key, RequestHash: hash, EventEmitted: true, AppliedAt: appliedAt})
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func resolveFromEvent(state *mailthread.State, event mailthread.Event, graceClass mailthread.GraceClass, grace time.Duration) {
 	occurred, _ := time.Parse(time.RFC3339Nano, event.OccurredAt)
 	state.Lifecycle = mailthread.LifecycleResolved
@@ -264,7 +294,7 @@ func (s *Store) ReconcileThread(recipient, threadID string, now time.Time) (mail
 		}
 	}
 	read, err := s.threadReadSummaryLocked(recipient, threadID)
-	return mailthread.ThreadView{State: state, Read: read, Actions: ThreadCapabilities(state)}, changed, err
+	return mailthread.ThreadView{State: state, Read: read, Actions: ThreadCapabilities(state, read)}, changed, err
 }
 
 func threadEventHash(event mailthread.Event) string {
