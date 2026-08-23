@@ -14,6 +14,13 @@ SPEC.loader.exec_module(release_candidate)
 
 
 class ReleaseCandidateTests(unittest.TestCase):
+    def test_output_directory_can_already_exist(self):
+        with tempfile.TemporaryDirectory() as temp_name:
+            output = Path(temp_name)
+            release_candidate.ensure_directory(output)
+            release_candidate.ensure_directory(output)
+            self.assertTrue(output.is_dir())
+
     def test_repository_root_strips_git_newline(self):
         with mock.patch.object(release_candidate, "run", return_value="/tmp/example\n"):
             self.assertEqual(Path("/tmp/example").resolve(), release_candidate.repository_root(Path.cwd()))

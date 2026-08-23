@@ -90,6 +90,10 @@ def repository_root(cwd: Path) -> Path:
     return Path(str(run(["git", "rev-parse", "--show-toplevel"], cwd=cwd)).strip()).resolve()
 
 
+def ensure_directory(path: Path) -> None:
+    path.mkdir(parents=True, exist_ok=True)
+
+
 def parse_json_stream(payload: str) -> list[dict[str, Any]]:
     decoder = json.JSONDecoder()
     values: list[dict[str, Any]] = []
@@ -359,7 +363,7 @@ def build_once(
     go_version: str,
     modules: list[dict[str, str]],
 ) -> dict[str, str]:
-    output.mkdir(parents=True)
+    ensure_directory(output)
     notices = render_notices(root, modules)
     sbom = render_sbom(identity, go_version, modules)
     readme = candidate_readme(identity)

@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-23T21:38:56Z · 84 ready specs_
+_Generated: 2026-08-23T21:39:41Z · 84 ready specs_
 
 ## hero-v034-release-prep — "Hero v0.34 Release Preparation"
 _feature · delivering · horizon: now_
