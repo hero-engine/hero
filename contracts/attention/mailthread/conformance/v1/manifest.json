@@ -68,6 +68,22 @@
       "schema": "schemas/thread-view.schema.json"
     },
     {
+      "path": "fixtures/thread-detail.json",
+      "kind": "fixture",
+      "purpose": "Mail thread lifecycle v1 fixture: thread-detail.json",
+      "media_type": "application/json",
+      "sha256": "f7f8d08ea5d693645307092f744d74d0b6923b396e1c34ef68b01bf3933fb0c4",
+      "schema": "schemas/thread-detail-response.schema.json"
+    },
+    {
+      "path": "fixtures/thread-list.json",
+      "kind": "fixture",
+      "purpose": "Mail thread lifecycle v1 fixture: thread-list.json",
+      "media_type": "application/json",
+      "sha256": "0129bacbe2f1b967c351e6993277c9ec88ba7fa109e7a6d131da00f031178d96",
+      "schema": "schemas/thread-list-response.schema.json"
+    },
+    {
       "path": "fixtures/unknown-additive.json",
       "kind": "fixture",
       "purpose": "Mail thread lifecycle v1 fixture: unknown-additive.json",
@@ -123,6 +139,27 @@
       "purpose": "Mail thread lifecycle v1 schema: migration-result.schema.json",
       "media_type": "application/json",
       "sha256": "cc36b2b46d5508b8106b1bf60d17c83e889e8c9d587f38feb8ffb4533d224166"
+    },
+    {
+      "path": "schemas/thread-detail-response.schema.json",
+      "kind": "schema",
+      "purpose": "Mail thread lifecycle v1 schema: thread-detail-response.schema.json",
+      "media_type": "application/json",
+      "sha256": "308ef2512565a9bd2300ade51ce25ac4004481750eafcfce1469bf9c4ab092a8"
+    },
+    {
+      "path": "schemas/thread-list-request.schema.json",
+      "kind": "schema",
+      "purpose": "Mail thread lifecycle v1 schema: thread-list-request.schema.json",
+      "media_type": "application/json",
+      "sha256": "29413a1674fc1cfc177c8cb105dcfda68b5f9fb735f471d35fa3139d1639c4ff"
+    },
+    {
+      "path": "schemas/thread-list-response.schema.json",
+      "kind": "schema",
+      "purpose": "Mail thread lifecycle v1 schema: thread-list-response.schema.json",
+      "media_type": "application/json",
+      "sha256": "5c1ff39051e70f4642fdb1252a6d63e74ef40f82cf52e8fa9cd52ebc5b24488e"
     },
     {
       "path": "schemas/thread-view.schema.json",

@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-24T16:51:47Z · 85 ready specs_
+_Generated: 2026-08-24T16:51:57Z · 85 ready specs_
 
 ## mail-b7ca19966ac5041e6ff604dd — "Mail thread lifecycle contract and state"
 _feature · delivering · horizon: now_
@@ -59,6 +59,13 @@ _(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/agent-outposts/spec.md)_
+
+---
+
+## mail-da2727fd11615a9cafa5125c — Mail Da2727fd11615a9cafa5125c
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/mail-da2727fd11615a9cafa5125c/spec.md)_
 
 ---
 
@@ -414,13 +421,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-
 _feature · planning · horizon: now_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/peer-call-multi-cli/spec.md)_
-
----
-
-## mail-da2727fd11615a9cafa5125c — Mail Da2727fd11615a9cafa5125c
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/mail-da2727fd11615a9cafa5125c/spec.md)_
 
 ---
 

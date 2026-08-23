@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/mailthread/v1/thread-detail-response.schema.json",
+  "type": "object",
+  "required": ["schema_version"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "summary": {"type": "object"},
+    "thread": {"$ref": "thread-view.schema.json"},
+    "messages": {"type": "array", "items": {"type": "object", "required": ["envelope", "unread"]}},
+    "error": {"type": "object"}
+  }
+}

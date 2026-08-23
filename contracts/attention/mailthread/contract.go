@@ -11,7 +11,7 @@ import (
 const (
 	SchemaVersion             = 1
 	BundleVersion             = 1
-	ConformanceManifestSHA256 = "ef5c1b7fb929ff2e7f431c90292fbe65bc30bb57391775afbdfa6e52fe05339d"
+	ConformanceManifestSHA256 = "5438ed2da3e91d988a896656f7bc42a878f46bb6f1aa79811061bfe744abcd5a"
 
 	Compatibility = "Mail-read v1 remains authoritative for message receipts; unknown additive fields and identifiers remain inert and decodable, and unknown actions are never executable."
 )
@@ -129,6 +129,77 @@ type ThreadView struct {
 	State   State                        `json:"state"`
 	Read    ReadSummary                  `json:"read"`
 	Actions []attention.ActionDescriptor `json:"actions"`
+}
+
+type Bucket string
+
+const (
+	BucketNeedsAttention Bucket = "needs_attention"
+	BucketUpdates        Bucket = "updates"
+	BucketHistory        Bucket = "history"
+	DefaultListLimit            = 20
+	MaxListLimit                = 100
+)
+
+type ThreadListRequest struct {
+	SchemaVersion int       `json:"schema_version"`
+	ProjectPeerID string    `json:"project_peer_id,omitempty"`
+	Bucket        Bucket    `json:"bucket,omitempty"`
+	Lifecycle     Lifecycle `json:"lifecycle,omitempty"`
+	Limit         int       `json:"limit,omitempty"`
+	Cursor        string    `json:"cursor,omitempty"`
+}
+
+type PageMetadata struct {
+	Limit    int  `json:"limit"`
+	Returned int  `json:"returned"`
+	HasMore  bool `json:"has_more"`
+}
+
+type ThreadCounts struct {
+	Total            int `json:"total"`
+	Actionable       int `json:"actionable"`
+	ActionableUnread int `json:"actionable_unread"`
+}
+
+type ThreadSummary struct {
+	Identity     Identity                     `json:"identity"`
+	Project      attention.ProjectReference   `json:"project"`
+	Subject      string                       `json:"subject"`
+	Kind         string                       `json:"kind,omitempty"`
+	ActivityAt   string                       `json:"activity_at"`
+	Unread       bool                         `json:"unread"`
+	Actionable   bool                         `json:"actionable"`
+	Lifecycle    Lifecycle                    `json:"lifecycle"`
+	Bucket       Bucket                       `json:"bucket"`
+	MessageCount int                          `json:"message_count"`
+	UnreadCount  int                          `json:"unread_count"`
+	Revision     int64                        `json:"revision"`
+	Actions      []attention.ActionDescriptor `json:"actions"`
+}
+
+type ThreadListResponse struct {
+	SchemaVersion int                      `json:"schema_version"`
+	Revision      string                   `json:"revision,omitempty"`
+	Counts        ThreadCounts             `json:"counts"`
+	Items         []ThreadSummary          `json:"items"`
+	Page          *PageMetadata            `json:"page,omitempty"`
+	NextCursor    string                   `json:"next_cursor,omitempty"`
+	Error         *attention.ContractError `json:"error,omitempty"`
+}
+
+type MessageView struct {
+	Envelope attention.MailEnvelope `json:"envelope"`
+	Receipt  *attention.MailReceipt `json:"receipt,omitempty"`
+	Unread   bool                   `json:"unread"`
+}
+
+type ThreadDetailResponse struct {
+	SchemaVersion int                      `json:"schema_version"`
+	Summary       *ThreadSummary           `json:"summary,omitempty"`
+	Thread        *ThreadView              `json:"thread,omitempty"`
+	Messages      []MessageView            `json:"messages,omitempty"`
+	Error         *attention.ContractError `json:"error,omitempty"`
 }
 
 type CapabilitySet struct {

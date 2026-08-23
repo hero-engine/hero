@@ -213,6 +213,139 @@ func ValidateThreadView(v ThreadView) *attention.ContractError {
 	return nil
 }
 
+func ValidateThreadListRequest(v ThreadListRequest) *attention.ContractError {
+	if v.SchemaVersion != SchemaVersion {
+		return incompatible("schema_version")
+	}
+	if v.ProjectPeerID != "" {
+		if err := required("project_peer_id", v.ProjectPeerID); err != nil {
+			return err
+		}
+	}
+	if v.Bucket != "" && !canonicalBucket(v.Bucket) {
+		return invalid("bucket", "must be needs_attention, updates, or history")
+	}
+	if v.Lifecycle != "" && !canonicalLifecycle(v.Lifecycle) {
+		return invalid("lifecycle", "must be open, resolved, or archived")
+	}
+	if v.Limit < 0 || v.Limit > MaxListLimit {
+		return invalid("limit", "must be between zero and 100")
+	}
+	if len(v.Cursor) > 4096 {
+		return invalid("cursor", "must be at most 4096 bytes")
+	}
+	return nil
+}
+
+func ValidateThreadSummary(v ThreadSummary) *attention.ContractError {
+	if err := ValidateIdentity(v.Identity); err != nil {
+		return err
+	}
+	if v.Project.PeerID != v.Identity.ProjectPeerID {
+		return invalid("project.peer_id", "must match identity.project_peer_id")
+	}
+	if err := required("subject", v.Subject); err != nil {
+		return err
+	}
+	if err := requiredTimestamp("activity_at", v.ActivityAt); err != nil {
+		return err
+	}
+	if !canonicalLifecycle(v.Lifecycle) || !canonicalBucket(v.Bucket) {
+		return invalid("classification", "must contain a canonical lifecycle and bucket")
+	}
+	if v.MessageCount < 1 || v.UnreadCount < 0 || v.UnreadCount > v.MessageCount || v.Unread != (v.UnreadCount > 0) || v.Revision < 0 {
+		return invalid("counts", "message and unread counts are inconsistent")
+	}
+	switch v.Bucket {
+	case BucketNeedsAttention:
+		if v.Lifecycle != LifecycleOpen || !v.Actionable {
+			return invalid("bucket", "needs_attention requires an open actionable thread")
+		}
+	case BucketUpdates:
+		if v.Lifecycle == LifecycleArchived || v.Actionable {
+			return invalid("bucket", "updates requires a non-actionable open or resolved thread")
+		}
+	case BucketHistory:
+		if v.Lifecycle != LifecycleArchived || v.Actionable {
+			return invalid("bucket", "history requires an archived non-actionable thread")
+		}
+	}
+	for _, action := range v.Actions {
+		if action.RequiredRowRevision != v.Revision || !action.RequiresIdempotency || action.ID == "" || action.OperationID == "" || len(action.InputSchema) == 0 || !json.Valid(action.InputSchema) {
+			return invalid("actions", "descriptor is incomplete or carries the wrong revision")
+		}
+	}
+	return nil
+}
+
+func ValidateThreadListResponse(v ThreadListResponse) *attention.ContractError {
+	if v.SchemaVersion != SchemaVersion {
+		return incompatible("schema_version")
+	}
+	if v.Error != nil {
+		if strings.TrimSpace(v.Error.Message) == "" {
+			return invalid("error.message", "is required")
+		}
+		return nil
+	}
+	if v.Revision == "" || v.Counts.Total < 0 || v.Counts.Actionable < 0 || v.Counts.ActionableUnread < 0 || v.Counts.ActionableUnread > v.Counts.Actionable || v.Counts.Actionable > v.Counts.Total {
+		return invalid("counts", "thread counts and revision are required and must be consistent")
+	}
+	for _, item := range v.Items {
+		if err := ValidateThreadSummary(item); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func ValidateThreadDetailResponse(v ThreadDetailResponse) *attention.ContractError {
+	if v.SchemaVersion != SchemaVersion {
+		return incompatible("schema_version")
+	}
+	if v.Error != nil {
+		if strings.TrimSpace(v.Error.Message) == "" {
+			return invalid("error.message", "is required")
+		}
+		return nil
+	}
+	if v.Summary == nil || v.Thread == nil || len(v.Messages) == 0 {
+		return invalid("detail", "summary, thread, and messages are required")
+	}
+	if err := ValidateThreadSummary(*v.Summary); err != nil {
+		return err
+	}
+	if err := ValidateThreadView(*v.Thread); err != nil {
+		return err
+	}
+	if v.Summary.Identity != v.Thread.State.Identity || len(v.Messages) != v.Summary.MessageCount {
+		return invalid("detail", "summary, state, and messages must describe one thread")
+	}
+	for _, message := range v.Messages {
+		if err := attention.ValidateMailEnvelope(message.Envelope); err != nil {
+			return err
+		}
+		threadID := message.Envelope.ThreadID
+		if threadID == "" {
+			threadID = message.Envelope.ID
+		}
+		if message.Envelope.Recipient.PeerID != v.Summary.Identity.ProjectPeerID || threadID != v.Summary.Identity.ThreadID {
+			return invalid("messages", "every envelope must belong to the exact thread identity")
+		}
+		if message.Receipt != nil {
+			if err := attention.ValidateMailReceipt(*message.Receipt); err != nil {
+				return err
+			}
+			if message.Receipt.EnvelopeID != message.Envelope.ID || message.Unread != (message.Receipt.ReadAt == "") {
+				return invalid("messages.receipt", "must match its envelope and unread value")
+			}
+		} else if !message.Unread {
+			return invalid("messages.unread", "messages without receipts are unread")
+		}
+	}
+	return nil
+}
+
 func ValidateCapabilitySet(v CapabilitySet) *attention.ContractError {
 	want := map[string]bool{ActionMarkRead: true, ActionMarkUnread: true, ActionResolve: true, ActionReopen: true, ActionArchive: true, ActionRestore: true}
 	seen := map[string]bool{}
@@ -322,6 +455,10 @@ func canonicalEvent(v EventKind) bool {
 
 func canonicalLifecycle(v Lifecycle) bool {
 	return v == LifecycleOpen || v == LifecycleResolved || v == LifecycleArchived
+}
+
+func canonicalBucket(v Bucket) bool {
+	return v == BucketNeedsAttention || v == BucketUpdates || v == BucketHistory
 }
 
 func validateMessageIDs(field string, values []string) *attention.ContractError {

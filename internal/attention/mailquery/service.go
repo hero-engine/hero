@@ -16,6 +16,7 @@ import (
 
 	"github.com/hero-engine/hero/contracts/attention"
 	"github.com/hero-engine/hero/contracts/attention/mailread"
+	"github.com/hero-engine/hero/contracts/attention/mailthread"
 	"github.com/hero-engine/hero/internal/attention/mail"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/projectregistry"
@@ -23,9 +24,33 @@ import (
 
 type mailService interface {
 	Inbox(project string, unread bool) ([]mail.ListedMessage, error)
+	AllMessages(projectPeerID string) ([]mail.ListedMessage, error)
 	Show(id string, markRead bool) (mail.ListedMessage, error)
+	Thread(projectPeerID, threadID string) (mailthread.ThreadView, bool, error)
+	ThreadAction(mailthread.ActionRequest) (mailthread.ThreadView, error)
 	Action(mail.ActionRequest) (mail.ActionResult, error)
 	Reply(mail.ReplyRequest) (attention.MailDelivery, error)
+}
+
+func (s *Service) ThreadAction(request mailthread.ActionRequest) mailthread.ActionResponse {
+	fail := func(err *attention.ContractError) mailthread.ActionResponse {
+		return mailthread.ActionResponse{SchemaVersion: mailthread.SchemaVersion, Error: err}
+	}
+	if contractErr := mailthread.ValidateActionRequest(request); contractErr != nil {
+		return fail(contractErr)
+	}
+	if !validTargetID(request.Identity.ProjectPeerID) || !validTargetID(request.Identity.ThreadID) {
+		return fail(validation("thread identity is invalid", "identity"))
+	}
+	source, contractErr := s.resolveOne(request.Identity.ProjectPeerID)
+	if contractErr != nil {
+		return fail(contractErr)
+	}
+	view, err := source.mail.ThreadAction(request)
+	if err != nil {
+		return fail(translateSourceError(err, "thread_revision"))
+	}
+	return mailthread.ActionResponse{SchemaVersion: mailthread.SchemaVersion, Thread: &view}
 }
 
 type projectSource struct {

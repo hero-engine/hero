@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "summary": {
+    "identity": {"project_peer_id": "peer_a", "thread_id": "mail_thread_1"},
+    "project": {"peer_id": "peer_a", "registry_slug": "alpha", "display_name": "Alpha"},
+    "subject": "Review request",
+    "kind": "request",
+    "activity_at": "2026-08-22T10:00:00Z",
+    "unread": true,
+    "actionable": true,
+    "lifecycle": "open",
+    "bucket": "needs_attention",
+    "message_count": 1,
+    "unread_count": 1,
+    "revision": 7,
+    "actions": []
+  },
+  "thread": {
+    "state": {"schema_version": 1, "identity": {"project_peer_id": "peer_a", "thread_id": "mail_thread_1"}, "lifecycle": "open", "revision": 7},
+    "read": {"message_count": 1, "unread_count": 1},
+    "actions": []
+  },
+  "messages": [{
+    "envelope": {
+      "schema_version": 1,
+      "id": "mail_message_1",
+      "sender": {"peer_id": "peer_b", "display_name": "Beta"},
+      "recipient": {"peer_id": "peer_a", "display_name": "Alpha"},
+      "subject": "Review request",
+      "body": "Please review.",
+      "kind": "request",
+      "thread_id": "mail_thread_1",
+      "idempotency_key": "delivery-1",
+      "created_at": "2026-08-22T10:00:00Z"
+    },
+    "unread": true
+  }]
+}

@@ -51,6 +51,16 @@ func TestGoldenFixturesDecodeAndValidate(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+	var list ThreadListResponse
+	read("thread-list.json", &list)
+	if err := ValidateThreadListResponse(list); err != nil {
+		t.Fatal(err)
+	}
+	var detail ThreadDetailResponse
+	read("thread-detail.json", &detail)
+	if err := ValidateThreadDetailResponse(detail); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestConformanceBundleIsDeterministicAndPinned(t *testing.T) {

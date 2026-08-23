@@ -15,6 +15,7 @@ import (
 
 	"github.com/hero-engine/hero/contracts/attention"
 	"github.com/hero-engine/hero/contracts/attention/mailread"
+	"github.com/hero-engine/hero/contracts/attention/mailthread"
 	"github.com/hero-engine/hero/internal/attention/mail"
 	"github.com/hero-engine/hero/internal/attention/mailquery"
 	"github.com/hero-engine/hero/internal/projectregistry"
@@ -54,6 +55,36 @@ func setupAttentionMailHTTP(t *testing.T, body string) (*API, *mail.Store, strin
 	api := NewAPI(&Server{}, NewEventBus())
 	api.SetMailQueryService(func() (*mailquery.Service, error) { return service, nil })
 	return api, store, envelope.ID, envelope.ThreadID
+}
+
+func TestAttentionMailHTTPThreadProjectionDetailAndLifecycleAction(t *testing.T) {
+	api, _, _, threadID := setupAttentionMailHTTP(t, "thread body")
+	handler := api.Handler()
+	listResponse := httptest.NewRecorder()
+	handler.ServeHTTP(listResponse, httptest.NewRequest(http.MethodGet, "/api/attention/v1/mail/threads?bucket=needs_attention&project_peer_id=peer_b", nil))
+	var list mailthread.ThreadListResponse
+	if listResponse.Code != http.StatusOK || json.Unmarshal(listResponse.Body.Bytes(), &list) != nil || list.Error != nil || len(list.Items) != 1 || list.Items[0].Identity.ThreadID != threadID || list.Counts.ActionableUnread != 1 {
+		t.Fatalf("thread list = %d %#v", listResponse.Code, list)
+	}
+	detailResponse := httptest.NewRecorder()
+	handler.ServeHTTP(detailResponse, httptest.NewRequest(http.MethodGet, "/api/attention/v1/mail/threads/"+threadID+"?project_peer_id=peer_b", nil))
+	var detail mailthread.ThreadDetailResponse
+	if detailResponse.Code != http.StatusOK || json.Unmarshal(detailResponse.Body.Bytes(), &detail) != nil || detail.Error != nil || len(detail.Messages) != 1 || detail.Messages[0].Envelope.Body != "thread body" {
+		t.Fatalf("thread detail = %d %#v", detailResponse.Code, detail)
+	}
+	action := mailthread.ActionRequest{SchemaVersion: mailthread.SchemaVersion, Identity: list.Items[0].Identity, ActionID: mailthread.ActionArchive, ThreadRevision: list.Items[0].Revision, IdempotencyKey: "http-thread-archive", Input: json.RawMessage(`{}`)}
+	body, _ := json.Marshal(action)
+	actionResponse := httptest.NewRecorder()
+	handler.ServeHTTP(actionResponse, httptest.NewRequest(http.MethodPost, "/api/attention/v1/mail/thread-actions", bytes.NewReader(body)))
+	var result mailthread.ActionResponse
+	if actionResponse.Code != http.StatusOK || json.Unmarshal(actionResponse.Body.Bytes(), &result) != nil || result.Error != nil || result.Thread == nil || result.Thread.State.Lifecycle != mailthread.LifecycleArchived {
+		t.Fatalf("thread action = %d %#v", actionResponse.Code, result)
+	}
+	history := httptest.NewRecorder()
+	handler.ServeHTTP(history, httptest.NewRequest(http.MethodGet, "/api/attention/v1/mail/threads?bucket=history&project_peer_id=peer_b", nil))
+	if history.Code != http.StatusOK || !strings.Contains(history.Body.String(), threadID) {
+		t.Fatalf("history list = %d %s", history.Code, history.Body.String())
+	}
 }
 
 func TestAttentionMailHTTPListIsMetadataOnlyAndDetailRoundTripsMaxBody(t *testing.T) {
@@ -193,6 +224,19 @@ func TestAttentionMailHTTPUnavailableMissingAndContractHash(t *testing.T) {
 	if contractErr := mailread.ValidateContractResponse(descriptor); contractErr != nil {
 		t.Fatalf("invalid contract response: %#v", contractErr)
 	}
+	threadManifest, err := os.ReadFile("../../contracts/attention/mailthread/conformance/v1/manifest.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := fmt.Sprintf("%x", sha256.Sum256(threadManifest)); got != mailthread.ConformanceManifestSHA256 {
+		t.Fatalf("compiled thread hash = %s, manifest = %s", mailthread.ConformanceManifestSHA256, got)
+	}
+	threadContract := httptest.NewRecorder()
+	live.Handler().ServeHTTP(threadContract, httptest.NewRequest(http.MethodGet, "/api/attention/v1/mail/thread-contract", nil))
+	var threadDescriptor mailthread.ContractResponse
+	if threadContract.Code != http.StatusOK || json.Unmarshal(threadContract.Body.Bytes(), &threadDescriptor) != nil || mailthread.ValidateContractResponse(threadDescriptor) != nil {
+		t.Fatalf("thread contract = %d %s", threadContract.Code, threadContract.Body.String())
+	}
 }
 
 func TestAttentionMailHTTPEmptyAndStaleCursorAreDistinct(t *testing.T) {
@@ -240,6 +284,8 @@ func TestAttentionMailRoutesWinBeforeProjectRouter(t *testing.T) {
 	for _, path := range []string{
 		"/api/attention/v1/mail/messages", "/api/attention/v1/mail/messages/mail_http?project_peer_id=peer_b",
 		"/api/attention/v1/mail/contract",
+		"/api/attention/v1/mail/threads?project_peer_id=peer_b", "/api/attention/v1/mail/threads/mail_thread?project_peer_id=peer_b",
+		"/api/attention/v1/mail/thread-contract",
 	} {
 		response := httptest.NewRecorder()
 		api.Handler().ServeHTTP(response, httptest.NewRequest(http.MethodGet, path, nil))
@@ -251,6 +297,9 @@ func TestAttentionMailRoutesWinBeforeProjectRouter(t *testing.T) {
 
 func TestAttentionMailContractManifestPathExists(t *testing.T) {
 	if _, err := os.Stat(filepath.Join("..", "..", filepath.FromSlash(mailread.BundlePath), "manifest.json")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join("..", "..", filepath.FromSlash(mailthread.BundlePath), "manifest.json")); err != nil {
 		t.Fatal(err)
 	}
 }

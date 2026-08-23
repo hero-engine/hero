@@ -48,3 +48,30 @@ func TestOpenStateRejectsArchiveEligibility(t *testing.T) {
 		t.Fatal("open thread accepted archive eligibility")
 	}
 }
+
+func TestThreadSummaryClassificationKeepsReadAndActionableIndependent(t *testing.T) {
+	base := ThreadSummary{
+		Identity: Identity{ProjectPeerID: "peer_a", ThreadID: "mail_one"},
+		Project:  attention.ProjectReference{PeerID: "peer_a", DisplayName: "Alpha"},
+		Subject:  "Review", ActivityAt: "2026-08-22T10:00:00Z",
+		Actionable: true, Lifecycle: LifecycleOpen, Bucket: BucketNeedsAttention,
+		MessageCount: 2, Revision: 7,
+	}
+	if err := ValidateThreadSummary(base); err != nil {
+		t.Fatal(err)
+	}
+	base.Unread, base.UnreadCount = true, 2
+	if err := ValidateThreadSummary(base); err != nil {
+		t.Fatal(err)
+	}
+	invalid := base
+	invalid.Actionable = false
+	if err := ValidateThreadSummary(invalid); err == nil || err.Field != "bucket" {
+		t.Fatalf("needs-attention accepted non-actionable summary: %#v", err)
+	}
+	invalid = base
+	invalid.Bucket = BucketUpdates
+	if err := ValidateThreadSummary(invalid); err == nil || err.Field != "bucket" {
+		t.Fatalf("updates accepted actionable summary: %#v", err)
+	}
+}

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/mailthread/v1/thread-list-request.schema.json",
+  "type": "object",
+  "required": ["schema_version"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "project_peer_id": {"type": "string", "minLength": 1},
+    "bucket": {"enum": ["needs_attention", "updates", "history"]},
+    "lifecycle": {"enum": ["open", "resolved", "archived"]},
+    "limit": {"type": "integer", "minimum": 0, "maximum": 100},
+    "cursor": {"type": "string", "maxLength": 4096}
+  }
+}

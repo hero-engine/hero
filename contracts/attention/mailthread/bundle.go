@@ -47,6 +47,8 @@ var fixtureSchemas = map[string]string{
 	"errors.json":            "error-matrix.schema.json",
 	"migration.json":         "migration-matrix.schema.json",
 	"unknown-additive.json":  "thread-view.schema.json",
+	"thread-list.json":       "thread-list-response.schema.json",
+	"thread-detail.json":     "thread-detail-response.schema.json",
 }
 
 func BuildBundle(packageDir string) (Bundle, error) {

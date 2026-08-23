@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/hero-engine/hero/contracts/attention"
+	"github.com/hero-engine/hero/contracts/attention/mailthread"
 	"github.com/hero-engine/hero/internal/attention/focus"
 	"github.com/hero-engine/hero/internal/attention/mail"
 	"github.com/hero-engine/hero/internal/attention/suggestion"
@@ -20,6 +21,11 @@ import (
 type MailSource interface {
 	Inbox(project string, unread bool) ([]mail.ListedMessage, error)
 	Action(mail.ActionRequest) (mail.ActionResult, error)
+}
+
+type ThreadMailSource interface {
+	Threads(mailthread.ThreadListRequest) mailthread.ThreadListResponse
+	ThreadAction(mailthread.ActionRequest) (mailthread.ThreadView, error)
 }
 
 type FocusSource interface {
@@ -49,9 +55,30 @@ func (s *Service) Snapshot() (attention.AttentionSnapshot, error) {
 	if s.mail == nil || s.focus == nil || s.suggestions == nil {
 		return attention.AttentionSnapshot{}, contractError(attention.ErrorUnavailable, "attention sources are unavailable", "")
 	}
-	mails, err := s.mail.Inbox("", true)
-	if err != nil {
-		return attention.AttentionSnapshot{}, unavailable(err)
+	mailRows := []attention.AttentionRow{}
+	if source, ok := s.mail.(ThreadMailSource); ok {
+		request := mailthread.ThreadListRequest{SchemaVersion: mailthread.SchemaVersion, Bucket: mailthread.BucketNeedsAttention, Limit: mailthread.MaxListLimit}
+		for {
+			threads := source.Threads(request)
+			if threads.Error != nil {
+				return attention.AttentionSnapshot{}, threads.Error
+			}
+			for _, item := range threads.Items {
+				mailRows = append(mailRows, projectMailThread(item))
+			}
+			if threads.NextCursor == "" {
+				break
+			}
+			request.Cursor = threads.NextCursor
+		}
+	} else {
+		mails, err := s.mail.Inbox("", true)
+		if err != nil {
+			return attention.AttentionSnapshot{}, unavailable(err)
+		}
+		for _, item := range mails {
+			mailRows = append(mailRows, projectMail(item))
+		}
 	}
 	foci, err := s.focus.List(attention.FocusToday)
 	if err != nil {
@@ -61,10 +88,8 @@ func (s *Service) Snapshot() (attention.AttentionSnapshot, error) {
 	if err != nil {
 		return attention.AttentionSnapshot{}, unavailable(err)
 	}
-	rows := make([]attention.AttentionRow, 0, len(mails)+len(foci)+len(suggestions))
-	for _, item := range mails {
-		rows = append(rows, projectMail(item))
-	}
+	rows := make([]attention.AttentionRow, 0, len(mailRows)+len(foci)+len(suggestions))
+	rows = append(rows, mailRows...)
 	for _, item := range foci {
 		rows = append(rows, projectFocus(item))
 	}
@@ -80,7 +105,9 @@ func (s *Service) finish(rows []attention.AttentionRow) attention.AttentionSnaps
 	for _, row := range rows {
 		switch row.Group {
 		case "mail":
-			counts.Mail++
+			if row.Unread {
+				counts.Mail++
+			}
 		case "focus":
 			counts.Focus++
 		case "suggestion":
@@ -92,6 +119,18 @@ func (s *Service) finish(rows []attention.AttentionRow) attention.AttentionSnaps
 		SchemaVersion: attention.SchemaVersion,
 		GeneratedAt:   s.now().UTC().Format(time.RFC3339Nano),
 		Revision:      revision, RefreshToken: revision, Counts: counts, Rows: rows,
+	}
+}
+
+func projectMailThread(item mailthread.ThreadSummary) attention.AttentionRow {
+	sourceID := item.Identity.ProjectPeerID + "/" + item.Identity.ThreadID
+	return attention.AttentionRow{
+		SchemaVersion: attention.SchemaVersion, ID: "mail:" + sourceID,
+		SourceKind: "mail", SourceID: sourceID, Project: item.Project,
+		Title: item.Subject, Summary: item.Kind, Timestamp: item.ActivityAt,
+		CreatedAt: item.ActivityAt, ActivityAt: item.ActivityAt, Group: "mail",
+		Unread: item.Unread, Availability: "available", Revision: item.Revision,
+		Actions: append([]attention.ActionDescriptor(nil), item.Actions...),
 	}
 }
 
@@ -264,6 +303,20 @@ func (s *Service) Dispatch(request attention.ActionRequest) attention.ActionResu
 func (s *Service) dispatchSource(row attention.AttentionRow, request attention.ActionRequest) (attention.ActionResult, error) {
 	switch row.SourceKind {
 	case "mail":
+		if source, ok := s.mail.(ThreadMailSource); ok && strings.Contains(row.SourceID, "/") {
+			peerID, threadID, _ := strings.Cut(row.SourceID, "/")
+			thread, err := source.ThreadAction(mailthread.ActionRequest{
+				SchemaVersion: mailthread.SchemaVersion,
+				Identity:      mailthread.Identity{ProjectPeerID: peerID, ThreadID: threadID},
+				ActionID:      request.ActionID, ThreadRevision: request.RowRevision,
+				IdempotencyKey: request.IdempotencyKey, Input: request.Input,
+			})
+			if err != nil {
+				return attention.ActionResult{}, err
+			}
+			raw, _ := json.Marshal(thread)
+			return attention.ActionResult{Source: raw}, nil
+		}
 		actionID := request.ActionID
 		if actionID == "mark_read" {
 			actionID = mail.ActionRead

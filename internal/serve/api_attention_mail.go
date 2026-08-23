@@ -9,7 +9,80 @@ import (
 
 	"github.com/hero-engine/hero/contracts/attention"
 	"github.com/hero-engine/hero/contracts/attention/mailread"
+	"github.com/hero-engine/hero/contracts/attention/mailthread"
 )
+
+func (a *API) handleAttentionMailThreads(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	request := mailthread.ThreadListRequest{
+		SchemaVersion: mailthread.SchemaVersion,
+		ProjectPeerID: r.URL.Query().Get("project_peer_id"),
+		Bucket:        mailthread.Bucket(r.URL.Query().Get("bucket")),
+		Lifecycle:     mailthread.Lifecycle(r.URL.Query().Get("lifecycle")),
+		Cursor:        r.URL.Query().Get("cursor"),
+	}
+	if raw := r.URL.Query().Get("limit"); raw != "" {
+		limit, err := strconv.Atoi(raw)
+		if err != nil {
+			writeMailThreadListResponse(w, mailthread.ThreadListResponse{SchemaVersion: mailthread.SchemaVersion, Error: mailValidation("limit must be an integer", "limit")})
+			return
+		}
+		request.Limit = limit
+	}
+	service, err := a.loadMailQueryService()
+	if err != nil {
+		writeMailThreadListResponse(w, mailthread.ThreadListResponse{SchemaVersion: mailthread.SchemaVersion, Error: mailUnavailable(err.Error())})
+		return
+	}
+	writeMailThreadListResponse(w, service.Threads(request))
+}
+
+func (a *API) handleAttentionMailThread(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	threadID := strings.TrimPrefix(r.URL.Path, "/api/attention/v1/mail/threads/")
+	if threadID == "" || strings.Contains(threadID, "/") {
+		writeMailThreadDetailResponse(w, mailthread.ThreadDetailResponse{SchemaVersion: mailthread.SchemaVersion, Error: mailValidation("thread_id is required", "thread_id")})
+		return
+	}
+	service, err := a.loadMailQueryService()
+	if err != nil {
+		writeMailThreadDetailResponse(w, mailthread.ThreadDetailResponse{SchemaVersion: mailthread.SchemaVersion, Error: mailUnavailable(err.Error())})
+		return
+	}
+	writeMailThreadDetailResponse(w, service.ThreadDetail(r.URL.Query().Get("project_peer_id"), threadID))
+}
+
+func (a *API) handleAttentionMailThreadAction(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	var request mailthread.ActionRequest
+	if contractErr := decodeMailJSON(w, r, 128<<10, &request); contractErr != nil {
+		writeMailThreadActionResponse(w, mailthread.ActionResponse{SchemaVersion: mailthread.SchemaVersion, Error: contractErr})
+		return
+	}
+	service, err := a.loadMailQueryService()
+	if err != nil {
+		writeMailThreadActionResponse(w, mailthread.ActionResponse{SchemaVersion: mailthread.SchemaVersion, Error: mailUnavailable(err.Error())})
+		return
+	}
+	writeMailThreadActionResponse(w, service.ThreadAction(request))
+}
+
+func (a *API) handleAttentionMailThreadContract(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	writeJSON(w, http.StatusOK, mailthread.ContractResponse{SchemaVersion: mailthread.SchemaVersion, BundleVersion: mailthread.BundleVersion, BundleManifestSHA256: mailthread.ConformanceManifestSHA256, Compatibility: mailthread.Compatibility})
+}
 
 func (a *API) handleAttentionMailMessages(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -147,6 +220,18 @@ func writeMailActionResponse(w http.ResponseWriter, response mailread.ActionResp
 }
 
 func writeMailReplyResponse(w http.ResponseWriter, response mailread.ReplyResponse) {
+	writeJSON(w, mailResponseStatus(response.Error), response)
+}
+
+func writeMailThreadListResponse(w http.ResponseWriter, response mailthread.ThreadListResponse) {
+	writeJSON(w, mailResponseStatus(response.Error), response)
+}
+
+func writeMailThreadDetailResponse(w http.ResponseWriter, response mailthread.ThreadDetailResponse) {
+	writeJSON(w, mailResponseStatus(response.Error), response)
+}
+
+func writeMailThreadActionResponse(w http.ResponseWriter, response mailthread.ActionResponse) {
 	writeJSON(w, mailResponseStatus(response.Error), response)
 }
 

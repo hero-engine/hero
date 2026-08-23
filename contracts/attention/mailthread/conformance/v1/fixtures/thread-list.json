@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "revision": "thread-list-revision-1",
+  "counts": {"total": 1, "actionable": 1, "actionable_unread": 1},
+  "items": [{
+    "identity": {"project_peer_id": "peer_a", "thread_id": "mail_thread_1"},
+    "project": {"peer_id": "peer_a", "registry_slug": "alpha", "display_name": "Alpha"},
+    "subject": "Review request",
+    "kind": "request",
+    "activity_at": "2026-08-22T10:00:00Z",
+    "unread": true,
+    "actionable": true,
+    "lifecycle": "open",
+    "bucket": "needs_attention",
+    "message_count": 2,
+    "unread_count": 2,
+    "revision": 7,
+    "actions": []
+  }],
+  "page": {"limit": 20, "returned": 1, "has_more": false}
+}

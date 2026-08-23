@@ -418,6 +418,29 @@ func (s *Service) Inbox(project string, unread bool) ([]ListedMessage, error) {
 	return out, nil
 }
 
+// AllMessages returns the complete source-owned mailbox for one exact project,
+// including dismissed messages retained for authoritative thread History.
+func (s *Service) AllMessages(projectPeerID string) ([]ListedMessage, error) {
+	if projectPeerID != s.cfg.PeerID {
+		return nil, ErrRecipientMismatch
+	}
+	items, err := s.store.List(projectPeerID)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]ListedMessage, 0, len(items))
+	for _, env := range items {
+		var receipt *attention.MailReceipt
+		if value, receiptErr := s.store.Receipt(projectPeerID, env.ID); receiptErr == nil {
+			receipt = &value
+		} else if !errors.Is(receiptErr, ErrNotFound) {
+			return nil, receiptErr
+		}
+		out = append(out, ListedMessage{MailEnvelope: env, Receipt: receipt})
+	}
+	return out, nil
+}
+
 func readPeerManifest(projectRoot, folder string) (*contractpeering.PeerManifest, error) {
 	data, err := os.ReadFile(filepath.Join(projectRoot, folder, "peer-manifest.yaml"))
 	if err != nil {

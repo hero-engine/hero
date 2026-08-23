@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/hero-engine/hero/contracts/attention/mailread"
+	"github.com/hero-engine/hero/contracts/attention/mailthread"
 	"github.com/hero-engine/hero/internal/attention/mailquery"
 	"github.com/hero-engine/hero/internal/attention/projection"
 	"github.com/hero-engine/hero/internal/config"
@@ -55,6 +56,9 @@ type mailQueryService interface {
 	Detail(projectPeerID, messageID string) mailread.DetailResponse
 	Action(mailread.ActionRequest) mailread.ActionResponse
 	Reply(mailread.ReplyRequest) mailread.ReplyResponse
+	Threads(mailthread.ThreadListRequest) mailthread.ThreadListResponse
+	ThreadDetail(projectPeerID, threadID string) mailthread.ThreadDetailResponse
+	ThreadAction(mailthread.ActionRequest) mailthread.ActionResponse
 }
 
 // NewAPI creates a new API instance backed by a multi-project server.
@@ -130,6 +134,10 @@ func (a *API) Handler() http.Handler {
 	mux.HandleFunc("/api/attention/v1/mail/actions", a.handleAttentionMailAction)
 	mux.HandleFunc("/api/attention/v1/mail/replies", a.handleAttentionMailReply)
 	mux.HandleFunc("/api/attention/v1/mail/contract", a.handleAttentionMailContract)
+	mux.HandleFunc("/api/attention/v1/mail/threads", a.handleAttentionMailThreads)
+	mux.HandleFunc("/api/attention/v1/mail/threads/", a.handleAttentionMailThread)
+	mux.HandleFunc("/api/attention/v1/mail/thread-actions", a.handleAttentionMailThreadAction)
+	mux.HandleFunc("/api/attention/v1/mail/thread-contract", a.handleAttentionMailThreadContract)
 
 	// Project-namespaced endpoints: /api/{project}/...
 	mux.HandleFunc("/api/", a.routeProject)

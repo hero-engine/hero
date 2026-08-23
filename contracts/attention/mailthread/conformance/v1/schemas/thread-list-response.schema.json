@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/mailthread/v1/thread-list-response.schema.json",
+  "type": "object",
+  "required": ["schema_version", "counts", "items"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "revision": {"type": "string"},
+    "counts": {
+      "type": "object",
+      "required": ["total", "actionable", "actionable_unread"],
+      "properties": {
+        "total": {"type": "integer", "minimum": 0},
+        "actionable": {"type": "integer", "minimum": 0},
+        "actionable_unread": {"type": "integer", "minimum": 0}
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["identity", "project", "subject", "activity_at", "unread", "actionable", "lifecycle", "bucket", "message_count", "unread_count", "revision", "actions"]
+      }
+    },
+    "page": {"type": "object"},
+    "next_cursor": {"type": "string"},
+    "error": {"type": "object"}
+  }
+}

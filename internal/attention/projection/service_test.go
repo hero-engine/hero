@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/hero-engine/hero/contracts/attention"
+	"github.com/hero-engine/hero/contracts/attention/mailthread"
 	"github.com/hero-engine/hero/internal/attention/focus"
 	"github.com/hero-engine/hero/internal/attention/mail"
 	"github.com/hero-engine/hero/internal/attention/suggestion"
@@ -16,6 +17,74 @@ type fakeMail struct {
 	items []mail.ListedMessage
 	acted mail.ActionRequest
 	err   error
+}
+
+type fakeThreadMail struct {
+	fakeMail
+	items []mailthread.ThreadSummary
+}
+
+func (f *fakeThreadMail) Threads(request mailthread.ThreadListRequest) mailthread.ThreadListResponse {
+	items := make([]mailthread.ThreadSummary, 0, len(f.items))
+	counts := mailthread.ThreadCounts{Total: len(f.items)}
+	for _, item := range f.items {
+		if item.Actionable {
+			counts.Actionable++
+			if item.Unread {
+				counts.ActionableUnread++
+			}
+		}
+		if request.Bucket == "" || item.Bucket == request.Bucket {
+			items = append(items, item)
+		}
+	}
+	return mailthread.ThreadListResponse{SchemaVersion: mailthread.SchemaVersion, Revision: "thread-revision", Counts: counts, Items: items, Page: &mailthread.PageMetadata{Limit: mailthread.MaxListLimit, Returned: len(items)}}
+}
+
+func (f *fakeThreadMail) ThreadAction(request mailthread.ActionRequest) (mailthread.ThreadView, error) {
+	for i, item := range f.items {
+		if item.Identity == request.Identity {
+			f.items = append(f.items[:i], f.items[i+1:]...)
+			return mailthread.ThreadView{State: mailthread.State{SchemaVersion: mailthread.SchemaVersion, Identity: item.Identity, Lifecycle: mailthread.LifecycleArchived, Revision: item.Revision + 1}}, nil
+		}
+	}
+	return mailthread.ThreadView{}, mail.ErrNotFound
+}
+
+func TestSnapshotProjectsReadAndUnreadActionableThreadsOnce(t *testing.T) {
+	project := attention.ProjectReference{PeerID: "peer_a", RegistrySlug: "alpha", DisplayName: "Alpha"}
+	makeSummary := func(threadID string, unread bool, revision int64) mailthread.ThreadSummary {
+		state := mailthread.State{SchemaVersion: mailthread.SchemaVersion, Identity: mailthread.Identity{ProjectPeerID: project.PeerID, ThreadID: threadID}, Lifecycle: mailthread.LifecycleOpen, Revision: revision}
+		return mailthread.ThreadSummary{
+			Identity: state.Identity, Project: project, Subject: threadID, Kind: attention.MailKindRequest,
+			ActivityAt: "2026-08-22T10:00:00Z", Unread: unread, Actionable: true,
+			Lifecycle: state.Lifecycle, Bucket: mailthread.BucketNeedsAttention,
+			MessageCount: 2, UnreadCount: map[bool]int{true: 2, false: 0}[unread], Revision: revision,
+			Actions: mail.ThreadCapabilities(state),
+		}
+	}
+	source := &fakeThreadMail{items: []mailthread.ThreadSummary{makeSummary("thread_unread", true, 11), makeSummary("thread_read", false, 12)}}
+	service := NewService(source, &fakeFocus{}, &fakeSuggestions{})
+	snapshot, err := service.Snapshot()
+	if err != nil || len(snapshot.Rows) != 2 || snapshot.Counts.Mail != 1 || snapshot.Counts.Total != 2 {
+		t.Fatalf("thread snapshot = %#v, %v", snapshot, err)
+	}
+	if snapshot.Rows[0].SourceID == snapshot.Rows[1].SourceID || snapshot.Rows[0].Project.PeerID != "peer_a" {
+		t.Fatalf("composite thread rows = %#v", snapshot.Rows)
+	}
+	var readRow attention.AttentionRow
+	for _, row := range snapshot.Rows {
+		if row.SourceID == "peer_a/thread_read" {
+			readRow = row
+		}
+	}
+	if readRow.ID == "" || readRow.Unread || len(readRow.Actions) == 0 {
+		t.Fatalf("read actionable row disappeared or lost actions: %#v", readRow)
+	}
+	archive := service.Dispatch(attention.ActionRequest{SchemaVersion: attention.SchemaVersion, RowID: readRow.ID, ActionID: mailthread.ActionArchive, RowRevision: readRow.Revision, IdempotencyKey: "archive-read-thread", Input: json.RawMessage(`{}`)})
+	if archive.Error != nil || archive.RemovedRowID != readRow.ID {
+		t.Fatalf("thread action dispatch = %#v", archive)
+	}
 }
 
 func (f *fakeMail) Inbox(string, bool) ([]mail.ListedMessage, error) { return f.items, f.err }

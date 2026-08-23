@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/hero-engine/hero/contracts/attention"
+	"github.com/hero-engine/hero/contracts/attention/mailthread"
 	"github.com/hero-engine/hero/internal/attention/focus"
 	"github.com/hero-engine/hero/internal/attention/mail"
 	"github.com/hero-engine/hero/internal/attention/projection"
@@ -32,6 +33,28 @@ func (f *attentionHTTPMail) Inbox(string, bool) ([]mail.ListedMessage, error) {
 func (f *attentionHTTPMail) Action(mail.ActionRequest) (mail.ActionResult, error) {
 	f.actionCalls++
 	return mail.ActionResult{}, nil
+}
+
+type attentionHTTPThreadMail struct {
+	attentionHTTPMail
+	items []mailthread.ThreadSummary
+}
+
+func (f *attentionHTTPThreadMail) Threads(mailthread.ThreadListRequest) mailthread.ThreadListResponse {
+	counts := mailthread.ThreadCounts{Total: len(f.items)}
+	for _, item := range f.items {
+		if item.Actionable {
+			counts.Actionable++
+			if item.Unread {
+				counts.ActionableUnread++
+			}
+		}
+	}
+	return mailthread.ThreadListResponse{SchemaVersion: mailthread.SchemaVersion, Revision: "thread-snapshot", Counts: counts, Items: f.items}
+}
+
+func (*attentionHTTPThreadMail) ThreadAction(mailthread.ActionRequest) (mailthread.ThreadView, error) {
+	return mailthread.ThreadView{}, nil
 }
 
 type attentionHTTPFocus struct{ items []focus.ListedItem }
@@ -186,6 +209,26 @@ func TestAttentionMCPReturnsCompactWindowFromHTTPProjectionAuthority(t *testing.
 	}
 	if httpSnapshot.Rows[0].Body != "Same service record" {
 		t.Fatalf("HTTP full projection was unexpectedly compacted: %#v", httpSnapshot.Rows[0])
+	}
+}
+
+func TestAttentionMCPUsesThreadRowsAndActionableUnreadBadge(t *testing.T) {
+	project := attention.ProjectReference{PeerID: "peer", DisplayName: "Project"}
+	thread := func(id string, unread bool, revision int64) mailthread.ThreadSummary {
+		return mailthread.ThreadSummary{
+			Identity: mailthread.Identity{ProjectPeerID: project.PeerID, ThreadID: id}, Project: project,
+			Subject: id, Kind: attention.MailKindRequest, ActivityAt: "2026-08-22T10:00:00Z",
+			Unread: unread, Actionable: true, Lifecycle: mailthread.LifecycleOpen, Bucket: mailthread.BucketNeedsAttention,
+			MessageCount: 2, UnreadCount: map[bool]int{true: 2, false: 0}[unread], Revision: revision,
+		}
+	}
+	service := projection.NewService(&attentionHTTPThreadMail{items: []mailthread.ThreadSummary{thread("unread", true, 1), thread("read", false, 2)}}, &attentionHTTPFocus{}, &attentionHTTPSuggestions{})
+	mcp := NewMCPServer(t.TempDir(), t.TempDir(), "test")
+	mcp.attentionService = func() (*projection.Service, error) { return service, nil }
+	raw, err := mcp.toolAttentionSnapshot(nil)
+	var snapshot attention.AttentionSnapshot
+	if err != nil || json.Unmarshal([]byte(raw), &snapshot) != nil || len(snapshot.Rows) != 2 || snapshot.Counts.Mail != 1 || snapshot.Rows[0].Body != "" || snapshot.Rows[1].Body != "" {
+		t.Fatalf("thread MCP snapshot = %#v, %v", snapshot, err)
 	}
 }
 

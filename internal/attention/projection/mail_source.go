@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/hero-engine/hero/contracts/attention/mailthread"
 	"github.com/hero-engine/hero/internal/attention/mail"
+	"github.com/hero-engine/hero/internal/attention/mailquery"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/projectregistry"
 )
@@ -16,6 +18,7 @@ import (
 // service that owns the addressed envelope.
 type RegistryMailSource struct {
 	services []*mail.Service
+	query    *mailquery.Service
 }
 
 func NewRegistryMailSource(stateRoot string, registry *projectregistry.Registry) (*RegistryMailSource, error) {
@@ -34,6 +37,11 @@ func NewRegistryMailSource(stateRoot string, registry *projectregistry.Registry)
 	sort.Strings(slugs)
 	seen := make(map[string]bool)
 	source := &RegistryMailSource{}
+	query, err := mailquery.NewService(stateRoot, registry)
+	if err != nil {
+		return nil, err
+	}
+	source.query = query
 	for _, slug := range slugs {
 		entry := entries[slug]
 		cfg, err := config.Load(entry.Path)
@@ -47,6 +55,21 @@ func NewRegistryMailSource(stateRoot string, registry *projectregistry.Registry)
 		source.services = append(source.services, mail.NewService(store, entry.Path, cfg))
 	}
 	return source, nil
+}
+
+func (s *RegistryMailSource) Threads(request mailthread.ThreadListRequest) mailthread.ThreadListResponse {
+	return s.query.Threads(request)
+}
+
+func (s *RegistryMailSource) ThreadAction(request mailthread.ActionRequest) (mailthread.ThreadView, error) {
+	for _, service := range s.services {
+		if _, _, err := service.Thread(request.Identity.ProjectPeerID, request.Identity.ThreadID); err == nil {
+			return service.ThreadAction(request)
+		} else if !errors.Is(err, mail.ErrRecipientMismatch) && !errors.Is(err, mail.ErrNotFound) {
+			return mailthread.ThreadView{}, err
+		}
+	}
+	return mailthread.ThreadView{}, mail.ErrNotFound
 }
 
 func (s *RegistryMailSource) Inbox(_ string, unread bool) ([]mail.ListedMessage, error) {
