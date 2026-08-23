@@ -66,21 +66,23 @@ type MailPromotion struct {
 }
 
 type MailAction struct {
-	ID             string `json:"id"`
-	IdempotencyKey string `json:"idempotency_key"`
-	RequestHash    string `json:"request_hash"`
-	EventEmitted   bool   `json:"event_emitted,omitempty"`
-	AppliedAt      string `json:"applied_at,omitempty"`
+	ID              string   `json:"id"`
+	IdempotencyKey  string   `json:"idempotency_key"`
+	RequestHash     string   `json:"request_hash"`
+	EventEmitted    bool     `json:"event_emitted,omitempty"`
+	AppliedAt       string   `json:"applied_at,omitempty"`
+	PriorMessageIDs []string `json:"prior_message_ids,omitempty"`
 }
 
 type MailDelivery struct {
-	SchemaVersion  int              `json:"schema_version"`
-	MessageID      string           `json:"message_id"`
-	ThreadID       string           `json:"thread_id"`
-	Sender         ProjectReference `json:"sender"`
-	Recipient      ProjectReference `json:"recipient"`
-	IdempotencyKey string           `json:"idempotency_key"`
-	DeliveredAt    string           `json:"delivered_at"`
+	SchemaVersion   int              `json:"schema_version"`
+	MessageID       string           `json:"message_id"`
+	ThreadID        string           `json:"thread_id"`
+	Sender          ProjectReference `json:"sender"`
+	Recipient       ProjectReference `json:"recipient"`
+	IdempotencyKey  string           `json:"idempotency_key"`
+	DeliveredAt     string           `json:"delivered_at"`
+	PriorMessageIDs []string         `json:"prior_message_ids,omitempty"`
 }
 
 const (

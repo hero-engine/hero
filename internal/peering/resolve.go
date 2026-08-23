@@ -139,6 +139,10 @@ func findSpecBySlug(root, slug string) string {
 // `hero queue` render paths so the user sees handed-back work without
 // running a separate command.
 func ReconcileAwaitingPeer(projectRoot string, log func(format string, args ...any)) ([]string, error) {
+	return reconcileAwaitingPeer(projectRoot, "", log)
+}
+
+func reconcileAwaitingPeer(projectRoot, stateRoot string, log func(format string, args ...any)) ([]string, error) {
 	if log == nil {
 		log = func(string, ...any) {}
 	}
@@ -186,7 +190,15 @@ func ReconcileAwaitingPeer(projectRoot string, log func(format string, args ...a
 			log("reconcile: peer status for %s: %v", latest.PeerSpec, err)
 			continue
 		}
-		if peerStatus != string(spec.StatusCompleted) {
+		outcome := ""
+		switch peerStatus {
+		case string(spec.StatusCompleted):
+			outcome = mailthread.OutcomeCompleted
+		case string(spec.StatusRejected):
+			outcome = mailthread.OutcomeRejected
+		case string(spec.StatusSuperseded):
+			outcome = mailthread.OutcomeCancelled
+		default:
 			continue
 		}
 		// Move originator to handed_back and append a handed-back
@@ -200,9 +212,9 @@ func ReconcileAwaitingPeer(projectRoot string, log func(format string, args ...a
 			Mode:             contractpeering.ModeHandedBack,
 			OriginatingSpec:  s.Slug,
 			PeerSpec:         latest.PeerSpec,
-			PeerStatus:       string(spec.StatusCompleted),
+			PeerStatus:       peerStatus,
 			ResultRef:        peerPath,
-			Reason:           "peer-side spec reached completed",
+			Reason:           "peer-side spec reached terminal status " + peerStatus,
 		}
 		data, err := os.ReadFile(s.Path)
 		if err != nil {
@@ -216,7 +228,7 @@ func ReconcileAwaitingPeer(projectRoot string, log func(format string, args ...a
 			continue
 		}
 		if latest.ThreadID != "" {
-			svc, serviceErr := projectMailService(projectRoot, "", cfg)
+			svc, serviceErr := projectMailService(projectRoot, stateRoot, cfg)
 			if serviceErr != nil {
 				log("reconcile: mail service for %s: %v", s.Slug, serviceErr)
 			} else if view, _, threadErr := svc.Thread(cfg.PeerID, latest.ThreadID); threadErr != nil {
@@ -225,9 +237,9 @@ func ReconcileAwaitingPeer(projectRoot string, log func(format string, args ...a
 				event := mailthread.Event{
 					SchemaVersion: mailthread.SchemaVersion,
 					Identity:      view.State.Identity, Kind: mailthread.EventLinkedTerminal,
-					EventID:          "handoff:" + latest.ThreadID + ":completed",
+					EventID:          "handoff:" + latest.ThreadID + ":" + outcome,
 					ExpectedRevision: view.State.Revision, OccurredAt: transitionAt.Format(time.RFC3339Nano),
-					Source: "peer.handoff", SourceID: latest.PeerSpec, Outcome: mailthread.OutcomeCompleted,
+					Source: "peer.handoff", SourceID: latest.PeerSpec, Outcome: outcome,
 				}
 				if _, eventErr := svc.ThreadEvent(event); eventErr != nil {
 					log("reconcile: mail lifecycle for %s: %v", s.Slug, eventErr)

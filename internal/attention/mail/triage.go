@@ -25,12 +25,13 @@ const (
 var ErrUnsupportedAction = errors.New("unsupported mail action")
 
 type ActionRequest struct {
-	MessageID        string `json:"message_id"`
-	Action           string `json:"action"`
-	ExpectedRevision int64  `json:"expected_revision"`
-	IdempotencyKey   string `json:"idempotency_key"`
-	Note             string `json:"note,omitempty"`
-	ArtifactType     string `json:"artifact_type,omitempty"`
+	MessageID        string   `json:"message_id"`
+	Action           string   `json:"action"`
+	ExpectedRevision int64    `json:"expected_revision"`
+	IdempotencyKey   string   `json:"idempotency_key"`
+	Note             string   `json:"note,omitempty"`
+	ArtifactType     string   `json:"artifact_type,omitempty"`
+	PriorMessageIDs  []string `json:"-"`
 }
 
 type NavigationReference struct {
@@ -60,14 +61,15 @@ func (s *Service) Action(req ActionRequest) (ActionResult, error) {
 	if err != nil {
 		return ActionResult{}, err
 	}
+	if current, receiptErr := s.store.Receipt(s.cfg.PeerID, req.MessageID); receiptErr == nil {
+		messageIDs = receiptActionMessageIDs(current, req.IdempotencyKey, messageIDs)
+	} else if !errors.Is(receiptErr, ErrNotFound) {
+		return ActionResult{}, receiptErr
+	}
+	req.PriorMessageIDs = messageIDs
 	result, err := s.actionRaw(req)
 	if err != nil {
 		return ActionResult{}, err
-	}
-	if req.Action != ActionRead && req.Action != ActionUnread {
-		if err := s.markMessagesRead(messageIDs, "action:"+req.IdempotencyKey); err != nil {
-			return ActionResult{}, err
-		}
 	}
 	if authoritative, err := s.store.Receipt(s.cfg.PeerID, req.MessageID); err == nil {
 		result.Receipt = authoritative
@@ -82,17 +84,32 @@ func (s *Service) Action(req ActionRequest) (ActionResult, error) {
 		result.Thread = &view
 		return result, nil
 	}
+	messageIDs = receiptActionMessageIDs(result.Receipt, req.IdempotencyKey, messageIDs)
 	event := mailthread.Event{
 		SchemaVersion: mailthread.SchemaVersion,
 		Identity:      view.State.Identity, Kind: mailthread.EventActionSucceeded,
 		EventID: "action:" + req.IdempotencyKey, ExpectedRevision: view.State.Revision,
 		OccurredAt: actionAppliedAt(result.Receipt, req.IdempotencyKey, env.CreatedAt), Source: "mail.action", SourceID: req.MessageID,
+		PriorMessageIDs: messageIDs,
 	}
 	eventResult, err := s.applyStoreEventLatest(event)
 	if err != nil {
 		return ActionResult{}, err
 	}
-	result.Thread = &eventResult.Thread
+	messageIDs = eventRecordMessageIDs(eventResult.Thread.State, event.EventID, messageIDs)
+	if err := s.markMessagesRead(messageIDs, "action:"+req.IdempotencyKey); err != nil {
+		return ActionResult{}, err
+	}
+	authoritative, err := s.store.Receipt(s.cfg.PeerID, req.MessageID)
+	if err != nil {
+		return ActionResult{}, err
+	}
+	result.Receipt = authoritative
+	view, _, err = s.store.ReconcileThread(s.cfg.PeerID, threadIdentity(env), s.now())
+	if err != nil {
+		return ActionResult{}, err
+	}
+	result.Thread = &view
 	return result, nil
 }
 
@@ -168,7 +185,7 @@ func (s *Service) actionRaw(req ActionRequest) (ActionResult, error) {
 			}
 			r.Kind = attention.ReceiptDismissed
 		}
-		r.Actions = append(r.Actions, attention.MailAction{ID: req.Action, IdempotencyKey: req.IdempotencyKey, RequestHash: hash, AppliedAt: now})
+		r.Actions = append(r.Actions, attention.MailAction{ID: req.Action, IdempotencyKey: req.IdempotencyKey, RequestHash: hash, AppliedAt: now, PriorMessageIDs: append([]string(nil), req.PriorMessageIDs...)})
 		return nil
 	})
 	if err != nil {
@@ -194,6 +211,15 @@ func actionAppliedAt(receipt attention.MailReceipt, key, fallback string) string
 		}
 	}
 	return fallback
+}
+
+func receiptActionMessageIDs(receipt attention.MailReceipt, key string, fallback []string) []string {
+	for _, action := range receipt.Actions {
+		if action.IdempotencyKey == key && len(action.PriorMessageIDs) != 0 {
+			return append([]string(nil), action.PriorMessageIDs...)
+		}
+	}
+	return append([]string(nil), fallback...)
 }
 
 func actionResult(action string, env attention.MailEnvelope, receipt attention.MailReceipt) ActionResult {

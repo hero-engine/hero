@@ -65,6 +65,28 @@ func TestTypedTerminalEventsAreRevisionedIdempotentAndClosedWorld(t *testing.T) 
 	}
 }
 
+func TestEventOrderingUsesChronologicalRFC3339NanoTime(t *testing.T) {
+	sender, store, _, b := testService(t)
+	delivery, err := sender.Send(SendRequest{RecipientAlias: "b", Subject: "ordering", Body: "ignored", IdempotencyKey: "ordering-root"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	receiver := NewService(store, b, config.Config{Folder: ".hero", PeerID: "peer_b"})
+	view, _, _ := store.Thread("peer_b", delivery.ThreadID)
+	first := mailthread.Event{SchemaVersion: 1, Identity: view.State.Identity, Kind: mailthread.EventActionSucceeded, EventID: "ordering-newer", ExpectedRevision: view.State.Revision, OccurredAt: "2026-07-22T19:00:00.1Z", Source: "mail.action", SourceID: delivery.MessageID}
+	newer, err := receiver.ThreadEvent(first)
+	if err != nil {
+		t.Fatal(err)
+	}
+	older := first
+	older.EventID = "ordering-older"
+	older.ExpectedRevision = newer.Thread.State.Revision
+	older.OccurredAt = "2026-07-22T19:00:00Z"
+	if _, err := receiver.ThreadEvent(older); !errors.Is(err, ErrEventOutOfOrder) {
+		t.Fatalf("chronologically older fractional timestamp was accepted: %v", err)
+	}
+}
+
 func TestDeterministicGraceReconciliationUsesExactSevenAndThirtyDayBoundaries(t *testing.T) {
 	sender, store, _, b := testService(t)
 	receiver := NewService(store, b, config.Config{Folder: ".hero", PeerID: "peer_b"})
@@ -145,7 +167,8 @@ func TestReplyReadsPriorInboundAndNewInboundReopensWithHistory(t *testing.T) {
 	}
 	receiver := NewService(store, b, config.Config{Folder: ".hero", PeerID: "peer_b", Repos: map[string]string{"a": a}, RepoMeta: map[string]config.RepoMetaEntry{"a": {PeerID: "peer_a"}}})
 	receiver.now = func() time.Time { return time.Date(2026, 7, 22, 18, 1, 0, 0, time.UTC) }
-	reply, err := receiver.ReplyAndReconcile(ReplyRequest{MessageID: root.MessageID, ExpectedThread: root.ThreadID, Body: "answer", IdempotencyKey: "reply-1"})
+	replyRequest := ReplyRequest{MessageID: root.MessageID, ExpectedThread: root.ThreadID, Body: "answer", IdempotencyKey: "reply-1"}
+	reply, err := receiver.ReplyAndReconcile(replyRequest)
 	if err != nil || reply.Thread.Read.UnreadCount != 0 || reply.Thread.State.Lifecycle != mailthread.LifecycleOpen {
 		t.Fatalf("reply reconciliation = %#v, %v", reply, err)
 	}
@@ -169,6 +192,32 @@ func TestReplyReadsPriorInboundAndNewInboundReopensWithHistory(t *testing.T) {
 	last := reopened.State.Events[len(reopened.State.Events)-1]
 	if last.Kind != mailthread.EventInboundActivity || last.FromLifecycle != mailthread.LifecycleResolved || last.ToLifecycle != mailthread.LifecycleOpen {
 		t.Fatalf("reopen history = %#v", reopened.State.Events)
+	}
+	replayed, err := receiver.ReplyAndReconcile(replyRequest)
+	if err != nil || replayed.Thread.Read.UnreadCount != 1 {
+		t.Fatalf("reply replay read later inbound content: %#v, %v", replayed, err)
+	}
+}
+
+func TestSemanticActionReplayDoesNotReadLaterInboundContent(t *testing.T) {
+	service, store, env, _ := triageService(t, "mail_action_replay_root")
+	request := ActionRequest{MessageID: env.ID, Action: ActionAddToToday, ExpectedRevision: 0, IdempotencyKey: "today-replay-snapshot"}
+	first, err := service.Action(request)
+	if err != nil || first.Receipt.ReadAt == "" {
+		t.Fatalf("first semantic action = %#v, %v", first, err)
+	}
+	late := testEnvelope("mail_action_replay_late")
+	late.ThreadID = env.ThreadID
+	late.IdempotencyKey = late.ID
+	if _, _, err := store.Deliver(late, testDelivery(late)); err != nil {
+		t.Fatal(err)
+	}
+	replay, err := service.Action(request)
+	if err != nil || replay.Thread == nil || replay.Thread.Read.UnreadCount != 1 {
+		t.Fatalf("semantic action replay read later inbound content: %#v, %v", replay, err)
+	}
+	if _, err := store.Receipt("peer_b", late.ID); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("later inbound receipt mutated on replay: %v", err)
 	}
 }
 

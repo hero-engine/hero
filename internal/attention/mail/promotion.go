@@ -140,7 +140,7 @@ func (s *Service) promote(req ActionRequest) (ActionResult, error) {
 	receipt, err := s.store.MutateReceipt(s.cfg.PeerID, env.ID, current.Revision, func(r *attention.MailReceipt) error {
 		r.PromotedArtifact = r.Promotion.Artifact
 		r.Kind = attention.ReceiptPromoted
-		r.Actions = append(r.Actions, attention.MailAction{ID: ActionPromote, IdempotencyKey: req.IdempotencyKey, RequestHash: hash, EventEmitted: true, AppliedAt: s.now().UTC().Format(time.RFC3339Nano)})
+		r.Actions = append(r.Actions, attention.MailAction{ID: ActionPromote, IdempotencyKey: req.IdempotencyKey, RequestHash: hash, EventEmitted: true, AppliedAt: s.now().UTC().Format(time.RFC3339Nano), PriorMessageIDs: append([]string(nil), req.PriorMessageIDs...)})
 		return nil
 	})
 	if err != nil {
@@ -206,7 +206,7 @@ func (s *Service) addToToday(req ActionRequest) (ActionResult, error) {
 	}
 	receipt, err := s.store.MutateReceipt(s.cfg.PeerID, env.ID, current.Revision, func(r *attention.MailReceipt) error {
 		r.FocusItemID = item.ID
-		r.Actions = append(r.Actions, attention.MailAction{ID: ActionAddToToday, IdempotencyKey: req.IdempotencyKey, RequestHash: hash, AppliedAt: s.now().UTC().Format(time.RFC3339Nano)})
+		r.Actions = append(r.Actions, attention.MailAction{ID: ActionAddToToday, IdempotencyKey: req.IdempotencyKey, RequestHash: hash, AppliedAt: s.now().UTC().Format(time.RFC3339Nano), PriorMessageIDs: append([]string(nil), req.PriorMessageIDs...)})
 		return nil
 	})
 	if err != nil {

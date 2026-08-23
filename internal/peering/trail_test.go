@@ -21,6 +21,9 @@ func TestTrailRoundTrip(t *testing.T) {
 		PeerSpec:         "app/error-envelope-mismatch",
 		AtCommit:         "3176736",
 		Reason:           "Symptom is in the client, root cause is the API response shape.",
+		Transport:        "project_mail",
+		MessageID:        "mail_message_1",
+		ThreadID:         "mail_thread_1",
 	}
 
 	rendered := RenderTrailSection([]peering.TrailEntry{entry})
@@ -55,6 +58,15 @@ func TestTrailRoundTrip(t *testing.T) {
 	}
 	if got.Reason != entry.Reason {
 		t.Errorf("Reason: want %q, got %q", entry.Reason, got.Reason)
+	}
+	if got.Transport != entry.Transport {
+		t.Errorf("Transport: want %q, got %q", entry.Transport, got.Transport)
+	}
+	if got.MessageID != entry.MessageID {
+		t.Errorf("MessageID: want %q, got %q", entry.MessageID, got.MessageID)
+	}
+	if got.ThreadID != entry.ThreadID {
+		t.Errorf("ThreadID: want %q, got %q", entry.ThreadID, got.ThreadID)
 	}
 }
 

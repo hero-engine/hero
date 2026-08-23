@@ -33,15 +33,17 @@ type SendRequest struct {
 	MessageID             string
 	IdempotencyKey        string
 	Provenance            []attention.ProvenanceReference
+	PriorMessageIDs       []string
 }
 type ReplyRequest struct {
-	MessageID      string
-	ExpectedThread string
-	Subject        string
-	Body           string
-	Kind           string
-	IdempotencyKey string
-	Provenance     []attention.ProvenanceReference
+	MessageID       string
+	ExpectedThread  string
+	Subject         string
+	Body            string
+	Kind            string
+	IdempotencyKey  string
+	Provenance      []attention.ProvenanceReference
+	PriorMessageIDs []string
 }
 type ReplyResult struct {
 	Delivery attention.MailDelivery `json:"delivery"`
@@ -147,12 +149,13 @@ func (s *Service) ReplyAndReconcile(req ReplyRequest) (ReplyResult, error) {
 	if err != nil {
 		return ReplyResult{}, err
 	}
+	req.PriorMessageIDs = messageIDs
 	delivery, err := s.replyDelivery(req)
 	if err != nil {
 		return ReplyResult{}, err
 	}
-	if err := s.markMessagesRead(messageIDs, "reply:"+delivery.IdempotencyKey); err != nil {
-		return ReplyResult{Delivery: delivery}, err
+	if len(delivery.PriorMessageIDs) != 0 {
+		messageIDs = append([]string(nil), delivery.PriorMessageIDs...)
 	}
 	view, _, err := s.store.ReconcileThread(s.cfg.PeerID, threadID, s.now())
 	if err != nil {
@@ -164,12 +167,18 @@ func (s *Service) ReplyAndReconcile(req ReplyRequest) (ReplyResult, error) {
 		Kind:          mailthread.EventReplySucceeded, EventID: "reply:" + delivery.IdempotencyKey,
 		ExpectedRevision: view.State.Revision, OccurredAt: delivery.DeliveredAt,
 		Source: "mail.reply", SourceID: delivery.MessageID,
+		PriorMessageIDs: messageIDs,
 	}
 	eventResult, err := s.applyStoreEventLatest(event)
 	if err != nil {
 		return ReplyResult{Delivery: delivery}, err
 	}
-	return ReplyResult{Delivery: delivery, Thread: eventResult.Thread}, nil
+	messageIDs = eventRecordMessageIDs(eventResult.Thread.State, event.EventID, messageIDs)
+	if err := s.markMessagesRead(messageIDs, "reply:"+delivery.IdempotencyKey); err != nil {
+		return ReplyResult{Delivery: delivery}, err
+	}
+	view, _, err = s.store.ReconcileThread(s.cfg.PeerID, threadID, s.now())
+	return ReplyResult{Delivery: delivery, Thread: view}, err
 }
 
 func (s *Service) replyDelivery(req ReplyRequest) (attention.MailDelivery, error) {
@@ -257,6 +266,7 @@ func (s *Service) replyDelivery(req ReplyRequest) (attention.MailDelivery, error
 	}
 	return s.deliver(SendRequest{
 		Subject: subject, Body: req.Body, Kind: kind, IdempotencyKey: req.IdempotencyKey, Provenance: req.Provenance,
+		PriorMessageIDs: req.PriorMessageIDs,
 	}, attention.ProjectReference{PeerID: s.cfg.PeerID, DisplayName: senderName}, original.Sender, original.ThreadID, original.ID)
 }
 
@@ -307,7 +317,7 @@ func (s *Service) deliver(req SendRequest, sender, recipient attention.ProjectRe
 	if cerr := attention.ValidateMailEnvelope(env); cerr != nil {
 		return attention.MailDelivery{}, cerr
 	}
-	d := attention.MailDelivery{SchemaVersion: attention.SchemaVersion, MessageID: id, ThreadID: threadID, Sender: sender, Recipient: recipient, IdempotencyKey: key, DeliveredAt: now}
+	d := attention.MailDelivery{SchemaVersion: attention.SchemaVersion, MessageID: id, ThreadID: threadID, Sender: sender, Recipient: recipient, IdempotencyKey: key, DeliveredAt: now, PriorMessageIDs: append([]string(nil), req.PriorMessageIDs...)}
 	result, _, err := s.store.Deliver(env, d)
 	if err == nil {
 		view, _, threadErr := s.store.Thread(recipient.PeerID, result.ThreadID)

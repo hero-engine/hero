@@ -62,8 +62,13 @@ func (s *Store) ApplyThreadEvent(event mailthread.Event) (ThreadEventResult, err
 	if state.Revision != event.ExpectedRevision {
 		return ThreadEventResult{}, &ThreadStaleError{Current: state}
 	}
+	occurredAt, _ := time.Parse(time.RFC3339Nano, event.OccurredAt)
 	for _, prior := range state.Events {
-		if prior.AppliedAt > event.OccurredAt {
+		priorAt, parseErr := time.Parse(time.RFC3339Nano, prior.AppliedAt)
+		if parseErr != nil {
+			return ThreadEventResult{}, parseErr
+		}
+		if priorAt.After(occurredAt) {
 			return ThreadEventResult{}, ErrEventOutOfOrder
 		}
 	}
@@ -99,6 +104,7 @@ func (s *Store) ApplyThreadEvent(event mailthread.Event) (ThreadEventResult, err
 		EventID: event.EventID, Kind: event.Kind, RequestHash: hash,
 		AppliedAt: event.OccurredAt, Source: event.Source, SourceID: event.SourceID,
 		Outcome: event.Outcome, FromLifecycle: from, ToLifecycle: state.Lifecycle,
+		PriorMessageIDs: append([]string(nil), event.PriorMessageIDs...),
 	})
 	state.Revision = threadRevision(state)
 	if invalid := mailthread.ValidateState(state); invalid != nil {
@@ -109,6 +115,15 @@ func (s *Store) ApplyThreadEvent(event mailthread.Event) (ThreadEventResult, err
 	}
 	read, err := s.threadReadSummaryLocked(event.Identity.ProjectPeerID, event.Identity.ThreadID)
 	return ThreadEventResult{Thread: mailthread.ThreadView{State: state, Read: read, Actions: ThreadCapabilities(state)}}, err
+}
+
+func eventRecordMessageIDs(state mailthread.State, eventID string, fallback []string) []string {
+	for _, event := range state.Events {
+		if event.EventID == eventID && len(event.PriorMessageIDs) != 0 {
+			return append([]string(nil), event.PriorMessageIDs...)
+		}
+	}
+	return append([]string(nil), fallback...)
 }
 
 func (s *Service) applyStoreEventLatest(event mailthread.Event) (ThreadEventResult, error) {

@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-24T16:51:32Z · 85 ready specs_
+_Generated: 2026-08-24T16:51:47Z · 85 ready specs_
 
 ## mail-b7ca19966ac5041e6ff604dd — "Mail thread lifecycle contract and state"
 _feature · delivering · horizon: now_

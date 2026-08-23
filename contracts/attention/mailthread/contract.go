@@ -90,18 +90,20 @@ type Event struct {
 	SourceID         string    `json:"source_id"`
 	Outcome          string    `json:"outcome,omitempty"`
 	MessageID        string    `json:"message_id,omitempty"`
+	PriorMessageIDs  []string  `json:"prior_message_ids,omitempty"`
 }
 
 type EventRecord struct {
-	EventID       string    `json:"event_id"`
-	Kind          EventKind `json:"kind"`
-	RequestHash   string    `json:"request_hash"`
-	AppliedAt     string    `json:"applied_at"`
-	Source        string    `json:"source"`
-	SourceID      string    `json:"source_id"`
-	Outcome       string    `json:"outcome,omitempty"`
-	FromLifecycle Lifecycle `json:"from_lifecycle"`
-	ToLifecycle   Lifecycle `json:"to_lifecycle"`
+	EventID         string    `json:"event_id"`
+	Kind            EventKind `json:"kind"`
+	RequestHash     string    `json:"request_hash"`
+	AppliedAt       string    `json:"applied_at"`
+	Source          string    `json:"source"`
+	SourceID        string    `json:"source_id"`
+	Outcome         string    `json:"outcome,omitempty"`
+	FromLifecycle   Lifecycle `json:"from_lifecycle"`
+	ToLifecycle     Lifecycle `json:"to_lifecycle"`
+	PriorMessageIDs []string  `json:"prior_message_ids,omitempty"`
 }
 
 type State struct {

@@ -303,12 +303,14 @@ func (s *Service) ThreadAction(request mailthread.ActionRequest) (mailthread.Thr
 			EventID: "lifecycle:" + request.IdempotencyKey, Kind: mailthread.EventActionSucceeded,
 			RequestHash: hash, AppliedAt: now, Source: source, SourceID: sourceID,
 			Outcome: input.Outcome, FromLifecycle: from, ToLifecycle: state.Lifecycle,
+			PriorMessageIDs: append([]string(nil), messageIDs...),
 		})
 		return nil
 	})
 	if err != nil {
 		return mailthread.ThreadView{}, err
 	}
+	messageIDs = eventRecordMessageIDs(view.State, "lifecycle:"+request.IdempotencyKey, messageIDs)
 	if err := s.markMessagesRead(messageIDs, "lifecycle:"+request.IdempotencyKey); err != nil {
 		return mailthread.ThreadView{}, err
 	}

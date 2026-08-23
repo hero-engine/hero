@@ -109,6 +109,9 @@ func ValidateState(v State) *attention.ContractError {
 		if !canonicalLifecycle(event.FromLifecycle) || !canonicalLifecycle(event.ToLifecycle) {
 			return invalid("events.lifecycle", "must be open, resolved, or archived")
 		}
+		if err := validateMessageIDs("events.prior_message_ids", event.PriorMessageIDs); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -180,6 +183,12 @@ func ValidateEvent(v Event) *attention.ContractError {
 		if v.Outcome != "" {
 			return invalid("outcome", "is only accepted for terminal events")
 		}
+	}
+	if err := validateMessageIDs("prior_message_ids", v.PriorMessageIDs); err != nil {
+		return err
+	}
+	if len(v.PriorMessageIDs) != 0 && v.Kind != EventReplySucceeded && v.Kind != EventActionSucceeded && v.Kind != EventForegroundRead {
+		return invalid("prior_message_ids", "is only accepted for user interaction events")
 	}
 	return nil
 }
@@ -313,6 +322,20 @@ func canonicalEvent(v EventKind) bool {
 
 func canonicalLifecycle(v Lifecycle) bool {
 	return v == LifecycleOpen || v == LifecycleResolved || v == LifecycleArchived
+}
+
+func validateMessageIDs(field string, values []string) *attention.ContractError {
+	seen := map[string]bool{}
+	for _, value := range values {
+		if err := required(field, value); err != nil {
+			return err
+		}
+		if seen[value] {
+			return invalid(field, "must contain unique message identities")
+		}
+		seen[value] = true
+	}
+	return nil
 }
 
 func required(field, value string) *attention.ContractError {

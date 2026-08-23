@@ -23,14 +23,14 @@ const trailHeaderLine = TrailSectionHeader
 //
 // Recognized entry format (must round-trip cleanly with WriteTrail):
 //
-//	- 2026-05-15T14:00:00Z — out → app (peer_id: 9c1c2f3e-...)
-//	  mode: async-drop
-//	  originating_spec: order-failure-error-display
-//	  peer_spec: app/error-envelope-mismatch
-//	  peer_status: planning
-//	  at_commit: 3176736
-//	  result_ref: commit 4427cec
-//	  reason: "Symptom is in the client, root cause is the API response shape."
+//   - 2026-05-15T14:00:00Z — out → app (peer_id: 9c1c2f3e-...)
+//     mode: async-drop
+//     originating_spec: order-failure-error-display
+//     peer_spec: app/error-envelope-mismatch
+//     peer_status: planning
+//     at_commit: 3176736
+//     result_ref: commit 4427cec
+//     reason: "Symptom is in the client, root cause is the API response shape."
 //
 // The bullet header line is parsed for timestamp, direction, peer
 // alias display, and peer_id. The indented YAML-style key:value lines
@@ -120,6 +120,12 @@ func ParseTrail(content string) []peering.TrailEntry {
 			current.ResultRef = v
 		case "reason":
 			current.Reason = v
+		case "transport":
+			current.Transport = v
+		case "message_id":
+			current.MessageID = v
+		case "thread_id":
+			current.ThreadID = v
 		case "peer_id":
 			// Fallback if the header line didn't carry the id.
 			if current.PeerID == "" {
@@ -272,6 +278,15 @@ func renderTrailEntry(b *strings.Builder, e peering.TrailEntry) {
 	}
 	if e.Reason != "" {
 		fmt.Fprintf(b, "  reason: %q\n", e.Reason)
+	}
+	if e.Transport != "" {
+		fmt.Fprintf(b, "  transport: %s\n", e.Transport)
+	}
+	if e.MessageID != "" {
+		fmt.Fprintf(b, "  message_id: %s\n", e.MessageID)
+	}
+	if e.ThreadID != "" {
+		fmt.Fprintf(b, "  thread_id: %s\n", e.ThreadID)
 	}
 }
 
