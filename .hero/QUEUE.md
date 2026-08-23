@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-23T15:47:20Z · 81 ready specs_
+_Generated: 2026-08-23T16:07:52Z · 81 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -38,19 +38,19 @@ Deliver the complete v0.34 public-readiness path: an inventory of the shipped pr
 
 ---
 
-## hero-public-truth-baseline — "Hero Shipped Surface Inventory"
+## hero-licensing-boundary-and-provenance — "Hero Licensing Boundary and Open-Source Inventory"
 _feature · planning · horizon: now_
 
-Maps public descriptions to shipped behavior and produces executable replacements for stale or unsafe instructions.
+Records owner authorization and clears third-party licensing before any surface says “open source” or any license file is added.
 
-**Status:** planning — seeded by `../content-truth-audit.md`; the exhaustive inventory and correction packet remain to be produced.
+**Status:** planning — the sole owner has authorized Apache-2.0 preparation; third-party dependencies and bundled assets still need review before the grant mutation.
 
-**Pick up at:** enumerate behavioral, architectural, compatibility, availability, version, count, and prerequisite claims across root docs, hosted docs, landing content, metadata, and generated guidance.
+**Pick up at:** record the owner's authorization and inventory tracked source, generated material, vendored content, docs assets, and dependency manifests without adding the license or changing visibility.
 
-→ `.hero/planning/initiatives/hero-marketing/hero-public-truth-baseline/spec.md`
+→ `.hero/planning/initiatives/hero-marketing/hero-licensing-boundary-and-provenance/spec.md`
 
-**Files:** `../content-truth-audit.md`, `README.md`, `GETTING-STARTED.md`, `MCP-SETUP.md`, `web/docs/src/`, `web/landing/site/`
-**Skip:** publishing corrections or changing product behavior.
+**Files/components:** `go.mod`, `go.sum`, documentation dependency manifests, web dependency manifests, tracked media/fonts/logos/screenshots, generated distributions, and a licensing inventory beside this spec
+**Skip:** adding `LICENSE`, changing repository visibility, editing Sprout, or inspecting proprietary repositories beyond recording their exclusion.
 
 ---
 

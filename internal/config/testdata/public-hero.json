@@ -1,0 +1,137 @@
+{
+  "folder": ".hero",
+  "team": {
+    "require_review": true,
+    "stale_days": 14,
+    "auto_context": true,
+    "nudge_level": "assertive"
+  },
+  "integrations": {
+    "default": "jira-delivery",
+    "roles": {
+      "delivery": "jira-delivery"
+    },
+    "connections": {
+      "jira-delivery": {
+        "provider": "jira",
+        "settings": {
+          "project": "PROJ",
+          "base_url": "https://example.atlassian.net",
+          "user_email": "developer@example.com"
+        },
+        "auth": {
+          "token_env": "JIRA_API_TOKEN"
+        }
+      }
+    }
+  },
+  "import": {
+    "default_type": "bug",
+    "limit": 25,
+    "base_filter": {
+      "jql": "status != Done AND assignee = currentUser()"
+    },
+    "auto_refresh": true,
+    "refresh_interval": "30m"
+  },
+  "sync": {
+    "target": "none",
+    "auto": false
+  },
+  "conventions": {
+    "enforce": true,
+    "scope_default": "*"
+  },
+  "knowledge": {
+    "auto_capture": true,
+    "explainer_synthesis": "review"
+  },
+  "models": {
+    "roles": {
+      "design": "claude-opus-4",
+      "execution": "claude-sonnet-4-5",
+      "review": "o3"
+    },
+    "default_model": "claude-sonnet-4-5"
+  },
+  "hooks": {
+    "branch_patterns": [
+      "feat/{{slug}}",
+      "feature/{{slug}}",
+      "fix/{{slug}}",
+      "{{slug}}"
+    ],
+    "slug_transform": "kebab",
+    "inject_commit_prefix": true
+  },
+  "tracking": {
+    "stale_claim_days": 2,
+    "default_agent": "developer"
+  },
+  "sessions": {
+    "retention_days": 30,
+    "gitignore": true
+  },
+  "testing": {
+    "framework": "playwright",
+    "mode": "autonomous",
+    "test_dir": "e2e",
+    "runner_command": "npx playwright test",
+    "base_url": "http://localhost:3000"
+  },
+  "demos": {
+    "mode": "manual",
+    "framework": "playwright",
+    "output_dir": ".hero/demos",
+    "video_size": {
+      "width": 1280,
+      "height": 720
+    },
+    "on_deliver": false
+  },
+  "embeddings": {
+    "enabled": true,
+    "scope": [
+      "spec",
+      "knowledge",
+      "convention",
+      "event",
+      "code"
+    ],
+    "model": "hero-embed-v1"
+  },
+  "serve": {
+    "tool_filter": {
+      "allow": [
+        "hero_context",
+        "hero_search",
+        "hero_status"
+      ],
+      "deny": [
+        "hero_demo_record"
+      ],
+      "profiles": {
+        "minimal": [
+          "hero_context",
+          "hero_status"
+        ]
+      }
+    }
+  },
+  "specs": {
+    "layout": "single"
+  },
+  "delivery": {
+    "default_mode": "supervised",
+    "autopilot_halt_on": [
+      "drift",
+      "test",
+      "boundary",
+      "lint"
+    ]
+  },
+  "verify": {
+    "run_tests": true,
+    "test_command": "go test ./..."
+  }
+}

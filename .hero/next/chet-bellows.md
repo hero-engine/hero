@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-23T15:47:20Z
+updated: 2026-08-23T16:07:52Z
 repo: hero-engine/hero
 ---
 
@@ -10,17 +10,19 @@ repo: hero-engine/hero
 
 > Ship a verified Hero release containing the completed MCP tool metadata contract for hero-code while keeping the superseded interactive CLI donor branch evidence-only.
 
-_possibly stale — 14 commit(s) since, last set 8d 23h ago_
+_possibly stale — 15 commit(s) since, last set 9d ago_
 
 ## Last user ask
 
-> Deliver the public PM pack, public QA pack, and dual-mode setup in order, then run a full test build and smoke-test PM/QA project initialization.
-
-_possibly stale — 2 commit(s) since, last set 17h 40m ago_
+> Deliver all v0.34 public-release prep: refresh docs and site around Hero's memory-first two-system story, ready the repository and release candidate, and stop before final license, visibility, and publication mutations.
 
 ## Suggested next prompt
 
-> Refresh public docs and setup guidance for dual-mode PM/QA packs
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 

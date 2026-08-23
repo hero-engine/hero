@@ -555,3 +555,5 @@
 {"ts":"2026-08-23T00:25:35.451638Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"dual-mode-pm-qa-capability-packs","message":"status -\u003e completed"}
 {"ts":"2026-08-23T01:17:32.199263Z","type":"mail.promote","agent":"hero-mail","slug":"mail-d20bcb1654f2bb82d4d973b1","message":"promote mail_d20bcb1654f2bb82d4d973b1 (thread mail_d20bcb1654f2bb82d4d973b1)"}
 {"ts":"2026-08-23T01:56:15.76497Z","type":"mail.promote","agent":"hero-mail","slug":"mail-da2727fd11615a9cafa5125c","message":"promote mail_da2727fd11615a9cafa5125c (thread mail_da2727fd11615a9cafa5125c)"}
+{"ts":"2026-08-23T16:07:21.204561Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-public-truth-baseline","message":"\"Hero Shipped Surface Inventory\""}
+{"ts":"2026-08-23T16:07:21.204676Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-public-truth-baseline","message":"status -\u003e completed"}

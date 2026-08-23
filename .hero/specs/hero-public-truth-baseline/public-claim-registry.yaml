@@ -1,0 +1,528 @@
+schema_version: 1
+generated_for: v0.34.0
+verified_revision: 75ea3cb1
+verified_at: 2026-08-23
+evidence_classes:
+  A: executable implementation, runtime registry, decoder, CLI help, or isolated exercise
+  B: delivered and verified spec evidence, revision-tied capture, or repeatable demo
+  C: documentation without independent executable confirmation
+  D: planning, private sibling work, inference, or unresolved stakeholder statement
+availability_labels: [shipped, optional, preview, planned]
+resolution_states: [correct, bounded, incorrect, pending-update, blocked, prohibited]
+
+claims:
+  - id: product-memory-system
+    family: product
+    claim: Hero preserves project intent, decisions, corrections, conventions, evidence, and current state across sessions.
+    availability: shipped
+    evidence_class: A
+    prerequisites: A Hero workspace and a supported harness or CLI entry point.
+    evidence:
+      - internal/cli/next_handoff.go
+      - internal/knowledge/
+      - internal/graph/
+      - "hero next --help"
+      - "hero search --help"
+    surfaces: [README.md, web/docs/src/index.md, web/docs/src/what-is-hero.md, web/docs/src/concepts/knowledge-base.md, web/landing/site/index.html]
+    owner: hero-positioning
+    resolution: pending-update
+    last_verified: 2026-08-23
+
+  - id: product-delivery-system
+    family: product
+    claim: Hero's specs and specialized agents form a delivery system that designs, implements, cold-audits, and verifies work.
+    availability: shipped
+    evidence_class: A
+    prerequisites: Installed engineering pack; external agent execution depends on the active harness.
+    evidence:
+      - .agents/skills/command-design/SKILL.md
+      - .agents/skills/command-deliver/SKILL.md
+      - internal/cli/verify.go
+      - "hero spec verify --help"
+    surfaces: [README.md, GETTING-STARTED.md, web/docs/src/what-is-hero.md, web/docs/src/concepts/core-loop.md, web/docs/src/workflows/delivery-and-debugging.md, web/landing/site/index.html]
+    owner: hero-positioning
+    resolution: pending-update
+    last_verified: 2026-08-23
+
+  - id: product-two-system-loop
+    family: product
+    claim: Hero is two reinforcing systems in one; project memory informs delivery and verified delivery enriches later project memory.
+    availability: preview
+    evidence_class: D
+    prerequisites: Public wording must remain bounded until the continuity proof supplies a repeatable cross-tool demonstration.
+    evidence:
+      - .hero/planning/initiatives/hero-marketing/spec.md
+      - .hero/knowledge/notes/spec-kit-and-swappable-workflow-providers/spec.md
+    surfaces: [README.md, web/docs/src/index.md, web/docs/src/what-is-hero.md, web/docs/src/why-hero.md, web/landing/site/index.html]
+    owner: hero-positioning
+    resolution: pending-update
+    last_verified: 2026-08-23
+
+  - id: install-satellite-subcommands
+    family: onboarding
+    claim: Users can manage satellites with `hero install satellites list` and `hero install satellites add <path>`.
+    availability: planned
+    evidence_class: A
+    prerequisites: None; these positional subcommands do not exist.
+    evidence:
+      - "hero install satellites --help"
+      - internal/cli/install_satellites.go
+    surfaces: [README.md, GETTING-STARTED.md, web/docs/src/getting-started/project-setup.md]
+    owner: hero-root-docs-remediation
+    resolution: incorrect
+    replacement: Use `hero install satellites` for the guided flow, `--yes` for detected candidates, `--repair` for reconciliation, and `--migrate-nested` for legacy nested workspaces.
+    last_verified: 2026-08-23
+
+  - id: install-bare-repair
+    family: onboarding
+    claim: "`hero install --repair` is a complete repair command."
+    availability: planned
+    evidence_class: A
+    prerequisites: The install scope is required.
+    evidence:
+      - "hero install --help"
+      - internal/cli/install.go
+    surfaces: [README.md, GETTING-STARTED.md]
+    owner: hero-root-docs-remediation
+    resolution: incorrect
+    replacement: Use `hero install project --repair` for a project install, or `hero install satellites --repair` for satellite reconciliation.
+    last_verified: 2026-08-23
+
+  - id: satellite-workspace-architecture
+    family: architecture
+    claim: Monorepo subprojects should each initialize their own nested `.hero` workspace.
+    availability: planned
+    evidence_class: A
+    prerequisites: None; this is the rejected architecture.
+    evidence:
+      - internal/cli/install_satellites.go
+      - "hero install satellites --help"
+    surfaces: [README.md, GETTING-STARTED.md, web/docs/src/getting-started/project-setup.md, web/docs/src/project-structure.md]
+    owner: hero-root-docs-remediation
+    resolution: incorrect
+    replacement: Keep one root `.hero` corpus and materialize thin harness-native satellite trees in subproject folders.
+    last_verified: 2026-08-23
+
+  - id: verify-closes-delivery
+    family: delivery
+    claim: Users normally run `hero spec verify` and then `hero spec complete` to close a delivered spec.
+    availability: planned
+    evidence_class: A
+    prerequisites: A Completion Ledger, SHIP delivery audit, and passing build/test gate.
+    evidence:
+      - internal/cli/verify.go
+      - "hero spec verify --help"
+    surfaces: [README.md, GETTING-STARTED.md, web/docs/src/cli/spec-management.md, web/docs/src/project-structure.md, web/docs/src/commands/index.md]
+    owner: hero-root-docs-remediation
+    resolution: incorrect
+    replacement: Run `hero spec verify <slug>` once; it checks the four gates, completes the spec, and archives it. `hero spec complete` is not the normal delivery close.
+    last_verified: 2026-08-23
+
+  - id: public-config-example
+    family: configuration
+    claim: The hosted `hero.json` Full Example matches the production decoder.
+    availability: shipped
+    evidence_class: A
+    prerequisites: Configuration must use current field shapes and integration settings.
+    evidence:
+      - internal/config/config.go
+      - internal/config/integrations.go
+      - internal/config/testdata/public-hero.json
+      - internal/config/public_example_test.go
+    surfaces: [web/docs/src/configuration/hero-json.md, README.md, GETTING-STARTED.md]
+    owner: hero-hosted-docs-remediation
+    resolution: incorrect
+    replacement: Use `internal/config/testdata/public-hero.json` as the decoder-backed public example authority.
+    last_verified: 2026-08-23
+
+  - id: go-prerequisite
+    family: compatibility
+    claim: Building Hero requires Go 1.21 or newer.
+    availability: shipped
+    evidence_class: A
+    prerequisites: Go 1.26.4 as declared by the module.
+    evidence: [go.mod]
+    surfaces: [README.md, GETTING-STARTED.md, web/docs/src/getting-started/installation.md]
+    owner: hero-root-docs-remediation
+    resolution: incorrect
+    replacement: State Go 1.26.4 for source builds; binary installation should not imply a Go prerequisite.
+    last_verified: 2026-08-23
+
+  - id: verify-install-command
+    family: onboarding
+    claim: "`hero verify-install` checks an installed Hero workspace."
+    availability: planned
+    evidence_class: A
+    prerequisites: None; the root command does not exist.
+    evidence:
+      - "hero --help"
+      - "hero doctor --help"
+      - "hero check --help"
+    surfaces: [README.md]
+    owner: hero-root-docs-remediation
+    resolution: incorrect
+    replacement: Use `hero doctor` for binary/schema/install-target diagnosis and `hero check` for workspace health.
+    last_verified: 2026-08-23
+
+  - id: current-release-version
+    family: version
+    claim: Public surfaces identify the current released Hero version accurately.
+    availability: shipped
+    evidence_class: A
+    prerequisites: Derive the value from the latest release tag.
+    evidence:
+      - "git describe --tags --abbrev=0 => v0.33.0"
+    surfaces: [README.md, web/docs/src/index.md, web/docs/src/releases/index.md, web/landing/site/index.html]
+    owner: hero-v034-release-prep
+    resolution: incorrect
+    replacement: Current tag is v0.33.0; v0.34.0 remains the release candidate target until publication.
+    last_verified: 2026-08-23
+
+  - id: installed-command-count
+    family: inventory
+    claim: The engineering pack installs 29 workflow commands.
+    availability: shipped
+    evidence_class: A
+    prerequisites: Count applies to the engineering pack and varies by domain composition and harness rendering.
+    evidence:
+      - "hero doctor => claude 29 expected commands; codex folds the same 29 commands into skills"
+      - internal/install/inventory.go
+    surfaces: [README.md, GETTING-STARTED.md, web/docs/src/index.md, web/docs/src/why-hero.md, web/docs/src/cli/overview.md]
+    owner: hero-public-docs-drift-guard
+    resolution: incorrect
+    replacement: Remove mutable counts from narrative copy; generated inventory pages may show registry-derived values with scope and revision.
+    last_verified: 2026-08-23
+
+  - id: installed-agent-count
+    family: inventory
+    claim: The engineering pack installs 35 specialized agents.
+    availability: shipped
+    evidence_class: A
+    prerequisites: Count applies to the engineering pack and changes with installed domain composition.
+    evidence:
+      - "hero doctor => 35 expected agents"
+      - internal/install/inventory.go
+    surfaces: [README.md, GETTING-STARTED.md, web/docs/src/index.md, web/docs/src/agents/index.md, web/docs/src/why-hero.md, web/docs/src/cli/overview.md]
+    owner: hero-public-docs-drift-guard
+    resolution: bounded
+    replacement: Prefer role descriptions; generated inventory pages may show the derived count with scope and revision.
+    last_verified: 2026-08-23
+
+  - id: installed-skill-count
+    family: inventory
+    claim: The engineering pack installs 57 canonical skills.
+    availability: shipped
+    evidence_class: A
+    prerequisites: Codex/Grok additionally render the 29 workflows as command skills, for 86 installed skill directories.
+    evidence:
+      - "hero doctor => claude 57 skills; codex 86 skills"
+      - internal/install/inventory.go
+    surfaces: [README.md, GETTING-STARTED.md, web/docs/src/index.md, web/docs/src/why-hero.md, web/docs/src/cli/overview.md]
+    owner: hero-public-docs-drift-guard
+    resolution: incorrect
+    replacement: Remove mutable counts from narrative copy; show per-target derived inventory only in generated reference.
+    last_verified: 2026-08-23
+
+  - id: runtime-mcp-tool-count
+    family: inventory
+    claim: Hero advertises 82 runtime MCP tools before configured filtering.
+    availability: shipped
+    evidence_class: A
+    prerequisites: Count is 61 core definitions plus 21 code-host broker operations and may be reduced by tool filters.
+    evidence:
+      - internal/serve/mcp_test.go
+      - internal/serve/mcp_tools_def.go
+      - contracts/codehostbroker/contract.go
+    surfaces: [README.md, MCP-SETUP.md, web/docs/src/index.md, web/docs/src/cli/server-and-mcp.md, web/docs/src/serve/mcp-tool-metadata.md]
+    owner: hero-public-docs-drift-guard
+    resolution: incorrect
+    replacement: Prefer capability groups; if a count is shown, derive it from `tools/list`, state filter context, and tie it to a revision.
+    last_verified: 2026-08-23
+
+  - id: harness-native-workflows
+    family: compatibility
+    claim: Hero workflows appear as universal slash commands in every supported AI tool.
+    availability: shipped
+    evidence_class: A
+    prerequisites: Install one of seven supported targets.
+    evidence:
+      - internal/install/inventory.go
+      - "hero install --help"
+      - AGENTS.md
+    surfaces: [README.md, GETTING-STARTED.md, web/docs/src/index.md, web/docs/src/what-is-hero.md, web/docs/src/getting-started/project-setup.md, web/docs/src/commands/index.md, web/landing/site/index.html]
+    owner: hero-hosted-docs-remediation
+    resolution: incorrect
+    replacement: Say harness-native workflows. Claude uses command files; Codex and Grok use command skills; other targets receive their supported native surfaces and root instructions.
+    last_verified: 2026-08-23
+
+  - id: supported-install-targets
+    family: compatibility
+    claim: Hero installs to opencode, cursor, claude, copilot, codex, generic, and grok targets.
+    availability: shipped
+    evidence_class: A
+    prerequisites: Target-specific host support.
+    evidence:
+      - internal/install/inventory.go
+      - "hero install --help"
+    surfaces: [README.md, GETTING-STARTED.md, web/docs/src/getting-started/installation.md, web/docs/src/what-is-hero.md]
+    owner: hero-hosted-docs-remediation
+    resolution: pending-update
+    last_verified: 2026-08-23
+
+  - id: repository-layout-cloud
+    family: architecture
+    claim: This repository contains a local `cloud/` backend tree.
+    availability: planned
+    evidence_class: A
+    prerequisites: None; Hero Cloud is a separate proprietary repository.
+    evidence:
+      - "test ! -d cloud"
+      - .hero/hero.json
+    surfaces: [README.md, web/docs/src/project-structure.md]
+    owner: hero-root-docs-remediation
+    resolution: incorrect
+    replacement: Remove `cloud/` from the public repository tree and state that Hero Cloud is a separate proprietary product where boundary context is useful.
+    last_verified: 2026-08-23
+
+  - id: cold-audit-and-verify
+    family: verification
+    claim: Hero requires a Completion Ledger, cold delivery audit, and build/test gates before verified completion.
+    availability: shipped
+    evidence_class: A
+    prerequisites: Delivery workflow and a testable project.
+    evidence:
+      - internal/cli/verify.go
+      - .agents/skills/completion-ledger/SKILL.md
+      - .agents/skills/delivery-audit/SKILL.md
+    surfaces: [README.md, GETTING-STARTED.md, web/docs/src/concepts/core-loop.md, web/docs/src/workflows/delivery-and-debugging.md]
+    owner: hero-hosted-docs-remediation
+    resolution: pending-update
+    last_verified: 2026-08-23
+
+  - id: attention-mail-focus
+    family: project-intelligence
+    claim: Hero provides bounded Attention, Project Mail, and private Focus surfaces.
+    availability: shipped
+    evidence_class: A
+    prerequisites: Attention is metadata-bounded; Mail bodies require explicit reads; Focus is user-global private state.
+    evidence:
+      - contracts/attention/
+      - internal/serve/mcp_tools_def.go
+      - internal/cli/attention.go
+      - internal/cli/mail.go
+      - internal/cli/focus.go
+    surfaces: [web/docs/src/cli/focus.md, web/docs/src/cli/mail.md]
+    owner: hero-hosted-docs-remediation
+    resolution: bounded
+    last_verified: 2026-08-23
+
+  - id: hero-serve-intelligence
+    family: project-intelligence
+    claim: "`hero serve` provides the HTTP API, dashboard, MCP server, and file watcher for registered projects."
+    availability: shipped
+    evidence_class: A
+    prerequisites: Local daemon startup; team mode and external access have separate requirements.
+    evidence:
+      - internal/cli/serve.go
+      - internal/serve/
+      - "hero serve --help"
+    surfaces: [README.md, web/docs/src/cli/server-and-mcp.md, web/docs/src/serve/homes.md]
+    owner: hero-hosted-docs-remediation
+    resolution: bounded
+    last_verified: 2026-08-23
+
+  - id: code-host-operations
+    family: integration
+    claim: Hero exposes 21 provider-neutral code-host broker operations.
+    availability: optional
+    evidence_class: A
+    prerequisites: A supported code-host connection, credentials, repository identity, and operation-specific consent.
+    evidence:
+      - contracts/codehostbroker/contract.go
+      - internal/serve/mcp_tools_code_host.go
+      - internal/cli/code_host.go
+    surfaces: [README.md, web/docs/src/cli/overview.md, web/docs/src/cli/server-and-mcp.md]
+    owner: hero-hosted-docs-remediation
+    resolution: pending-update
+    last_verified: 2026-08-23
+
+  - id: tracker-evidence-and-mutations
+    family: integration
+    claim: Hero reads tracker evidence and performs bounded tracker operations through configured integrations.
+    availability: optional
+    evidence_class: A
+    prerequisites: A configured GitHub, Jira, Linear, or GitLab delivery connection; mutations require explicit consent.
+    evidence:
+      - contracts/trackerbroker/
+      - internal/tracker/
+      - internal/serve/mcp_tools_def.go
+      - internal/cli/tracker_broker.go
+    surfaces: [README.md, web/docs/src/configuration/tracker-setup.md, web/docs/src/cli/tracker-integration.md]
+    owner: hero-hosted-docs-remediation
+    resolution: bounded
+    last_verified: 2026-08-23
+
+  - id: cross-repo-peering
+    family: integration
+    claim: Hero peering uses one graph per project, shared manifests, asynchronous Project Mail, advisory/spec-out calls, and explicit handoff promotion.
+    availability: optional
+    evidence_class: A
+    prerequisites: Registered sibling repositories with reachable paths and peer manifests.
+    evidence:
+      - internal/peering/
+      - internal/mail/
+      - "hero peer --help"
+      - "hero handoff --help"
+    surfaces: [CROSS-REPO-PEERING.md, README.md, web/docs/src/concepts/cross-repo.md, web/docs/src/cli/peering.md]
+    owner: hero-hosted-docs-remediation
+    resolution: pending-update
+    last_verified: 2026-08-23
+
+  - id: headless-runtime
+    family: runtime
+    claim: Hero can launch and supervise headless agent jobs with approval-aware operations.
+    availability: preview
+    evidence_class: A
+    prerequisites: Configured model provider, credentials, and an execution environment; support boundaries require release-level validation.
+    evidence:
+      - internal/runner/
+      - internal/cli/agent.go
+      - "hero agent --help"
+    surfaces: [README.md, TEAM-SERVER.md, web/docs/src/cli/overview.md]
+    owner: hero-hosted-docs-remediation
+    resolution: bounded
+    last_verified: 2026-08-23
+
+  - id: engineering-default-pack
+    family: domains
+    claim: A default Hero project receives Core plus the Engineering pack, including lightweight PM and QA help used by coding workflows.
+    availability: shipped
+    evidence_class: A
+    prerequisites: Default `hero init`/`hero install` with the engineering primary domain.
+    evidence:
+      - internal/domains/
+      - domains/engineering/
+      - core/
+    surfaces: [README.md, GETTING-STARTED.md, web/docs/src/concepts/agents-and-skills.md, web/docs/src/getting-started/project-setup.md]
+    owner: hero-hosted-docs-remediation
+    resolution: pending-update
+    last_verified: 2026-08-23
+
+  - id: optional-domain-packs
+    family: domains
+    claim: PM, QA, and Sales can be installed as focused domain setups or composed with Engineering where supported.
+    availability: optional
+    evidence_class: B
+    prerequisites: Select the intended primary domain or extension composition and re-run installation.
+    evidence:
+      - domains/pm/
+      - domains/qa/
+      - domains/sales/
+      - .hero/specs/pm-public-pack/spec.md
+      - .hero/specs/qa-public-pack/spec.md
+      - .hero/specs/dual-mode-pm-qa-capability-packs/spec.md
+    surfaces: [README.md, GETTING-STARTED.md, web/docs/src/concepts/agents-and-skills.md]
+    owner: hero-hosted-docs-remediation
+    resolution: pending-update
+    last_verified: 2026-08-23
+
+  - id: pluggable-spec-systems
+    family: interoperability
+    claim: Hero can currently use GitHub Spec Kit, OpenSpec, or another external spec system as a pluggable delivery provider.
+    availability: planned
+    evidence_class: D
+    prerequisites: A provider contract and at least two proven adapters.
+    evidence:
+      - .hero/knowledge/notes/spec-kit-and-swappable-workflow-providers/spec.md
+    surfaces: [README.md, web/docs/src/what-is-hero.md, web/landing/site/index.html]
+    owner: hero-transparent-comparisons
+    resolution: prohibited
+    replacement: Describe provider interoperability as future direction only; do not claim it is shipped.
+    last_verified: 2026-08-23
+
+  - id: apache-license-status
+    family: licensing
+    claim: The Hero repository is currently open source under Apache License 2.0.
+    availability: planned
+    evidence_class: A
+    prerequisites: Owner-authorized final grant mutation and root license file.
+    evidence:
+      - "test ! -f LICENSE"
+      - .hero/planning/initiatives/hero-marketing/hero-apache-license-grant-gate/spec.md
+    surfaces: [README.md, repository metadata, web/docs/src/index.md, web/landing/site/index.html]
+    owner: hero-apache-license-grant-gate
+    resolution: prohibited
+    replacement: Say Apache-2.0 preparation is authorized but do not call Hero open source until the license gate lands.
+    last_verified: 2026-08-23
+
+  - id: sprout-license-boundary
+    family: licensing
+    claim: Sprout is a separate public MIT-licensed project and is not covered by Hero's future Apache-2.0 grant.
+    availability: preview
+    evidence_class: D
+    prerequisites: Verify the exact module version consumed by Hero carries MIT license metadata during the licensing inventory.
+    evidence:
+      - go.mod
+      - .hero/planning/initiatives/hero-marketing/hero-licensing-boundary-and-provenance/spec.md
+    surfaces: [README.md, web/docs/src/index.md, web/landing/site/index.html]
+    owner: hero-licensing-boundary-and-provenance
+    resolution: bounded
+    last_verified: 2026-08-23
+
+  - id: proprietary-repository-boundary
+    family: licensing
+    claim: "`hero-code` and `hero-cloud` are proprietary products and are excluded from this repository's open-source grant."
+    availability: shipped
+    evidence_class: B
+    prerequisites: Public text must not copy or expose their source.
+    evidence:
+      - .hero/hero.json
+      - .hero/planning/initiatives/hero-marketing/spec.md
+    surfaces: [README.md, web/docs/src/index.md, web/landing/site/index.html, repository metadata]
+    owner: hero-licensing-boundary-and-provenance
+    resolution: pending-update
+    last_verified: 2026-08-23
+
+  - id: landing-product-output
+    family: proof
+    claim: Landing-page terminal output is a real capture of current `hero status` behavior.
+    availability: planned
+    evidence_class: C
+    prerequisites: Revision-tied real output or an explicit illustrative label.
+    evidence:
+      - web/landing/site/index.html
+      - "hero status --help"
+    surfaces: [web/landing/site/index.html]
+    owner: hero-landing-message-refresh
+    resolution: incorrect
+    replacement: Replace the fictional `diagnosing` example with actual status/snapshot output or label it illustrative.
+    last_verified: 2026-08-23
+
+  - id: hosted-docs-deployment-parity
+    family: deployment
+    claim: The hosted documentation matches the current source revision.
+    availability: preview
+    evidence_class: C
+    prerequisites: A deployed revision marker and production crawl.
+    evidence:
+      - web/docs/src/
+      - web/docs/mkdocs.yml
+    surfaces: [hosted documentation]
+    owner: hero-hosted-docs-remediation
+    resolution: blocked
+    replacement: Do not infer live parity from a local strict build; prove the deployed revision independently.
+    last_verified: 2026-08-23
+
+  - id: canonical-domain-availability
+    family: deployment
+    claim: "`heroengine.ai` is a live canonical landing destination."
+    availability: preview
+    evidence_class: C
+    prerequisites: Working DNS, hosting deployment, redirects, and production smoke checks.
+    evidence:
+      - web/landing/site/
+    surfaces: [heroengine.ai, README.md, web/docs/src/]
+    owner: hero-landing-message-refresh
+    resolution: blocked
+    replacement: Treat the domain as unavailable until DNS and deployment checks pass.
+    last_verified: 2026-08-23
