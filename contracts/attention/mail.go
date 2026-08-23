@@ -70,6 +70,7 @@ type MailAction struct {
 	IdempotencyKey string `json:"idempotency_key"`
 	RequestHash    string `json:"request_hash"`
 	EventEmitted   bool   `json:"event_emitted,omitempty"`
+	AppliedAt      string `json:"applied_at,omitempty"`
 }
 
 type MailDelivery struct {

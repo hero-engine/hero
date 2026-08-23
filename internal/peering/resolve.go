@@ -9,6 +9,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/hero-engine/hero/contracts/attention/mailthread"
 	contractpeering "github.com/hero-engine/hero/contracts/peering"
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/spec"
@@ -190,8 +191,9 @@ func ReconcileAwaitingPeer(projectRoot string, log func(format string, args ...a
 		}
 		// Move originator to handed_back and append a handed-back
 		// trail entry pointing back at the peer's completed spec.
+		transitionAt := nowFn().UTC()
 		entry := contractpeering.TrailEntry{
-			At:               nowFn().UTC(),
+			At:               transitionAt,
 			Direction:        contractpeering.DirectionIn,
 			PeerAliasDisplay: latest.PeerAliasDisplay,
 			PeerID:           latest.PeerID,
@@ -212,6 +214,25 @@ func ReconcileAwaitingPeer(projectRoot string, log func(format string, args ...a
 		if err := os.WriteFile(s.Path, []byte(updated), 0o644); err != nil {
 			log("reconcile: write %s: %v", s.Slug, err)
 			continue
+		}
+		if latest.ThreadID != "" {
+			svc, serviceErr := projectMailService(projectRoot, "", cfg)
+			if serviceErr != nil {
+				log("reconcile: mail service for %s: %v", s.Slug, serviceErr)
+			} else if view, _, threadErr := svc.Thread(cfg.PeerID, latest.ThreadID); threadErr != nil {
+				log("reconcile: mail thread %s for %s: %v", latest.ThreadID, s.Slug, threadErr)
+			} else {
+				event := mailthread.Event{
+					SchemaVersion: mailthread.SchemaVersion,
+					Identity:      view.State.Identity, Kind: mailthread.EventLinkedTerminal,
+					EventID:          "handoff:" + latest.ThreadID + ":completed",
+					ExpectedRevision: view.State.Revision, OccurredAt: transitionAt.Format(time.RFC3339Nano),
+					Source: "peer.handoff", SourceID: latest.PeerSpec, Outcome: mailthread.OutcomeCompleted,
+				}
+				if _, eventErr := svc.ThreadEvent(event); eventErr != nil {
+					log("reconcile: mail lifecycle for %s: %v", s.Slug, eventErr)
+				}
+			}
 		}
 		transitioned = append(transitioned, s.Slug)
 	}

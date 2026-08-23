@@ -222,7 +222,8 @@ func (s *Service) Thread(projectPeerID, threadID string) (mailthread.ThreadView,
 	if projectPeerID != s.cfg.PeerID {
 		return mailthread.ThreadView{}, false, ErrRecipientMismatch
 	}
-	return s.store.Thread(projectPeerID, threadID)
+	view, changed, err := s.store.ReconcileThread(projectPeerID, threadID, s.now())
+	return view, changed, err
 }
 
 func (s *Service) ThreadAction(request mailthread.ActionRequest) (mailthread.ThreadView, error) {
@@ -231,6 +232,13 @@ func (s *Service) ThreadAction(request mailthread.ActionRequest) (mailthread.Thr
 	}
 	if request.Identity.ProjectPeerID != s.cfg.PeerID {
 		return mailthread.ThreadView{}, ErrRecipientMismatch
+	}
+	messageIDs, err := s.threadMessageIDs(request.Identity.ThreadID)
+	if err != nil {
+		return mailthread.ThreadView{}, err
+	}
+	if _, _, err := s.store.ReconcileThread(s.cfg.PeerID, request.Identity.ThreadID, s.now()); err != nil {
+		return mailthread.ThreadView{}, err
 	}
 	var input mailthread.ActionInput
 	if len(request.Input) != 0 {
@@ -241,6 +249,7 @@ func (s *Service) ThreadAction(request mailthread.ActionRequest) (mailthread.Thr
 	now := s.now().UTC().Format(time.RFC3339Nano)
 	hash := threadActionHash(request)
 	view, err := s.store.MutateThread(s.cfg.PeerID, request.Identity.ThreadID, request.ThreadRevision, request.ActionID, request.IdempotencyKey, hash, now, func(state *mailthread.State) error {
+		from := state.Lifecycle
 		switch request.ActionID {
 		case mailthread.ActionResolve:
 			if state.Lifecycle != mailthread.LifecycleOpen {
@@ -253,7 +262,12 @@ func (s *Service) ThreadAction(request mailthread.ActionRequest) (mailthread.Thr
 				state.GraceClass = mailthread.GraceInformational
 			}
 			state.ResolvedAt = now
-			state.ArchiveEligibleAt = ""
+			resolvedAt, _ := time.Parse(time.RFC3339Nano, now)
+			grace := informationalGrace
+			if state.GraceClass == mailthread.GraceLinkedWork {
+				grace = linkedWorkGrace
+			}
+			state.ArchiveEligibleAt = resolvedAt.Add(grace).UTC().Format(time.RFC3339Nano)
 			state.ArchivedAt = ""
 		case mailthread.ActionReopen, mailthread.ActionRestore:
 			if request.ActionID == mailthread.ActionReopen && state.Lifecycle != mailthread.LifecycleResolved {
@@ -277,12 +291,29 @@ func (s *Service) ThreadAction(request mailthread.ActionRequest) (mailthread.Thr
 		default:
 			return ErrUnsupportedAction
 		}
+		source := input.Source
+		if source == "" {
+			source = "mail.lifecycle"
+		}
+		sourceID := input.SourceID
+		if sourceID == "" {
+			sourceID = request.IdempotencyKey
+		}
+		state.Events = append(state.Events, mailthread.EventRecord{
+			EventID: "lifecycle:" + request.IdempotencyKey, Kind: mailthread.EventActionSucceeded,
+			RequestHash: hash, AppliedAt: now, Source: source, SourceID: sourceID,
+			Outcome: input.Outcome, FromLifecycle: from, ToLifecycle: state.Lifecycle,
+		})
 		return nil
 	})
 	if err != nil {
 		return mailthread.ThreadView{}, err
 	}
-	return view, nil
+	if err := s.markMessagesRead(messageIDs, "lifecycle:"+request.IdempotencyKey); err != nil {
+		return mailthread.ThreadView{}, err
+	}
+	view, _, err = s.store.ReconcileThread(s.cfg.PeerID, request.Identity.ThreadID, s.now())
+	return view, err
 }
 
 var lifecycleNoInput = json.RawMessage(`{"type":"object","additionalProperties":false}`)

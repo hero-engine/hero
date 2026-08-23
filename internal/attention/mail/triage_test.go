@@ -69,10 +69,10 @@ func TestTriageReceiptActionsAreRevisionedIdempotentAndOrthogonal(t *testing.T) 
 	}
 }
 
-func TestAddToTodayIsIdempotentAndDoesNotAlterOtherReceiptFields(t *testing.T) {
+func TestAddToTodayIsIdempotentAndReadsPriorInbound(t *testing.T) {
 	service, _, env, _ := triageService(t, "mail_today")
 	first, err := service.Action(ActionRequest{MessageID: env.ID, Action: ActionAddToToday, ExpectedRevision: 0, IdempotencyKey: "today-1"})
-	if err != nil || first.FocusItemID == "" || first.Receipt.ReadAt != "" || first.Receipt.DismissedAt != "" || first.Receipt.PromotedArtifact != nil {
+	if err != nil || first.FocusItemID == "" || first.Receipt.ReadAt == "" || first.Receipt.DismissedAt != "" || first.Receipt.PromotedArtifact != nil {
 		t.Fatalf("today = %#v, %v", first, err)
 	}
 	replay, err := service.Action(ActionRequest{MessageID: env.ID, Action: ActionAddToToday, ExpectedRevision: 0, IdempotencyKey: "today-1"})

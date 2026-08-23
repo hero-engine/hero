@@ -59,6 +59,51 @@ type ActionRecord struct {
 	AppliedAt      string `json:"applied_at"`
 }
 
+type EventKind string
+
+const (
+	EventForegroundRead   EventKind = "foreground_read"
+	EventReplySucceeded   EventKind = "reply_succeeded"
+	EventActionSucceeded  EventKind = "action_succeeded"
+	EventAdvisoryTerminal EventKind = "advisory_terminal"
+	EventSpecOutTerminal  EventKind = "spec_out_terminal"
+	EventLinkedTerminal   EventKind = "linked_work_terminal"
+	EventInboundActivity  EventKind = "inbound_activity"
+	EventGraceArchive     EventKind = "grace_archive"
+)
+
+const (
+	OutcomeAnswered  = "answered"
+	OutcomeCompleted = "completed"
+	OutcomeRejected  = "rejected"
+	OutcomeCancelled = "cancelled"
+)
+
+type Event struct {
+	SchemaVersion    int       `json:"schema_version"`
+	Identity         Identity  `json:"identity"`
+	Kind             EventKind `json:"kind"`
+	EventID          string    `json:"event_id"`
+	ExpectedRevision int64     `json:"expected_revision"`
+	OccurredAt       string    `json:"occurred_at"`
+	Source           string    `json:"source"`
+	SourceID         string    `json:"source_id"`
+	Outcome          string    `json:"outcome,omitempty"`
+	MessageID        string    `json:"message_id,omitempty"`
+}
+
+type EventRecord struct {
+	EventID       string    `json:"event_id"`
+	Kind          EventKind `json:"kind"`
+	RequestHash   string    `json:"request_hash"`
+	AppliedAt     string    `json:"applied_at"`
+	Source        string    `json:"source"`
+	SourceID      string    `json:"source_id"`
+	Outcome       string    `json:"outcome,omitempty"`
+	FromLifecycle Lifecycle `json:"from_lifecycle"`
+	ToLifecycle   Lifecycle `json:"to_lifecycle"`
+}
+
 type State struct {
 	SchemaVersion     int            `json:"schema_version"`
 	Identity          Identity       `json:"identity"`
@@ -70,6 +115,7 @@ type State struct {
 	ArchiveEligibleAt string         `json:"archive_eligible_at,omitempty"`
 	ArchivedAt        string         `json:"archived_at,omitempty"`
 	Actions           []ActionRecord `json:"actions,omitempty"`
+	Events            []EventRecord  `json:"events,omitempty"`
 }
 
 type ReadSummary struct {

@@ -6,29 +6,11 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-24T14:07:11Z · 84 ready specs_
-
-## hero-public-visibility-launch-gate — "Hero Public Visibility and v0.34 Launch Gate"
-_feature · delivering · horizon: now_
-
-This is the final human-controlled exposure gate; green dependencies do not authorize a visibility change.
-
-**Status:** delivering — approval, revision parity, artifacts, DNS, docs, and landing are evidenced, but the public-exposure gate still finds proprietary Cloud source and session databases in reachable Git history.
-
-**Pick up at:** obtain owner authorization to expand scope for the recoverable, bounded history rewrite described by the readiness audit; the current initiative excludes that rewrite, so visibility and `v0.34.0` publication remain halted.
-
-→ `.hero/planning/initiatives/hero-marketing/hero-public-visibility-launch-gate/spec.md`
-
-**Files:** `scripts/public-readiness-scan.sh`, `.hero/specs/hero-public-repo-readiness/exposure-audit.md`, `.build/release-candidate/v0.34.0/provenance.json`, `docs/releases/v0.34.0-launch-checklist.md`, this spec
-**Skip:** broad campaign execution and any visibility/license change to Sprout, `hero-code`, or `hero-cloud`.
-
----
-_Generated: 2026-08-23T01:01:22Z · 80 ready specs_
+_Generated: 2026-08-24T16:51:32Z · 85 ready specs_
 
 ## mail-b7ca19966ac5041e6ff604dd — "Mail thread lifecycle contract and state"
 _feature · delivering · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/team-connect/spec.md)_
 Adds a portable Mail thread contract and durable source-owned lifecycle state
 without changing Mail-read v1 behavior.
 
@@ -46,27 +28,44 @@ without changing Mail-read v1 behavior.
 ## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
 _feature · delivering · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/specs/retrieval-contradiction-detection/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/specs/retrieval-contradiction-detection/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/specs/retrieval-contradiction-detection/spec.md)_
+
+---
+
+## hero-public-visibility-launch-gate — "Hero Public Visibility and v0.34 Launch Gate"
+_feature · delivering · horizon: now_
+
+This is the final human-controlled exposure gate; green dependencies do not authorize a visibility change.
+
+**Status:** delivering — the approved history sanitation and archive-and-replace launch are complete; `v0.34.0` publication, production revision parity, and final anonymous journeys are in progress.
+
+**Pick up at:** publish `v0.34.0` from the sanitized public revision, redeploy the landing and docs artifacts at that revision, complete anonymous install and integrity checks, then run the cold audit and verify gate.
+
+→ `.hero/planning/initiatives/hero-marketing/hero-public-visibility-launch-gate/spec.md`
+
+**Files:** `scripts/public-readiness-scan.sh`, `.hero/specs/hero-public-repo-readiness/exposure-audit.md`, `.build/release-candidate/v0.34.0/provenance.json`, `docs/releases/v0.34.0-launch-checklist.md`, this spec
+**Skip:** broad campaign execution and any visibility/license change to Sprout, `hero-code`, or `hero-cloud`.
 
 ---
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/team-connect/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/team-connect/spec.md)_
 
 ---
 
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/agent-outposts/spec.md)_
 
 ---
 
-## hero-marketing — "Hero v0.34 Public Release Readiness"
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/agent-outposts/spec.md)_
+## mail-d20bcb1654f2bb82d4d973b1 — Mail D20bcb1654f2bb82d4d973b1
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/mail-d20bcb1654f2bb82d4d973b1/spec.md)_
 
 ---
 
@@ -114,7 +113,7 @@ Build a Hero-native system that actively manages session context — not just *i
 ## hero-surface-architecture — Hero Surface Architecture — One Surface, Every Layer, Every Role
 _initiative · planning · horizon: now_
 
-_(no `## Goal` run opener — hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/initiatives/hero-surface-architecture/spec.md)_
+_(no `## Goal` run opener — hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/initiatives/hero-surface-architecture/spec.md)_
 
 ---
 
@@ -174,28 +173,12 @@ Hero's digest shipped a `hero recall` reference for however long — the command
 
 ---
 
-## hero-marketing — "Hero Public Truth — Product Story and Documentation Repair"
+## hero-marketing — "Hero v0.34 Public Release Readiness"
 _initiative · planning · horizon: now_
 
 _Run opener — arm with `/drive hero-marketing`_
 
-Replace the stale launch-and-growth premise of this existing initiative with a bounded truth-repair program. Establish an evidence-backed claim baseline, rewrite positioning around reduced supervision through durable project intelligence, repair root and hosted documentation, prove continuity in a repeatable two-tool demonstration, refresh the landing message only after the proof exists, and close with production-aware drift guards.
-
----
-
-## hero-public-truth-baseline — "Hero Public Truth Baseline"
-_feature · planning · horizon: now_
-
-Establishes what Hero may truthfully say and the executable replacements for known dangerous instructions.
-
-**Status:** planning — seeded by `../content-truth-audit.md`; the exhaustive inventory and correction packet remain to be produced.
-
-**Pick up at:** enumerate behavioral, architectural, compatibility, availability, version, count, and prerequisite claims across root docs, hosted docs, landing content, metadata, and generated guidance.
-
-→ `.hero/planning/initiatives/hero-marketing/hero-public-truth-baseline/spec.md`
-
-**Files:** `../content-truth-audit.md`, `README.md`, `GETTING-STARTED.md`, `MCP-SETUP.md`, `web/docs/src/`, `web/landing/site/`
-**Skip:** publishing corrections or changing product behavior.
+Deliver the complete v0.34 public-readiness path: an inventory of the shipped product, memory-first positioning, current root and hosted documentation, a current public site, repository-readiness materials, drift guards, and a clean release candidate. The owner has authorized preparing this repository for an Apache-2.0 grant. Adding the license, changing repository visibility, and publishing the release remain explicit final mutations rather than prep work.
 
 ---
 
@@ -204,35 +187,6 @@ _initiative · planning · horizon: now_
 
 _Run opener — arm with `/drive hero-in-hero-code-parity`_
 
-Deliver the complete v0.34 public-readiness path: an inventory of the shipped product, memory-first positioning, current root and hosted documentation, a current public site, repository-readiness materials, drift guards, and a clean release candidate. The owner has authorized preparing this repository for an Apache-2.0 grant. Adding the license, changing repository visibility, and publishing the release remain explicit final mutations rather than prep work.
-
----
-
-## mail-da2727fd11615a9cafa5125c — Mail Da2727fd11615a9cafa5125c
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/mail-da2727fd11615a9cafa5125c/spec.md)_
-
----
-
-## mail-d20bcb1654f2bb82d4d973b1 — Mail D20bcb1654f2bb82d4d973b1
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/mail-d20bcb1654f2bb82d4d973b1/spec.md)_
-
----
-
-## tracker-semantic-priority-field-mapping — "\"Jira custom field cannot be configured as canonical Hero priority\""
-_bug · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/tracker-semantic-priority-field-mapping/spec.md)_
-
----
-
-## hero-surface-architecture — Hero Surface Architecture — One Surface, Every Layer, Every Role
-_initiative · planning · horizon: now_
-
-_(no `## Goal` run opener — hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/initiatives/hero-surface-architecture/spec.md)_
 Close all eight gaps so that Hero workflows in hero-code reach functional parity
 with Claude Code. "Parity" means: the model can invoke any Hero workflow, Hero
 MCP tools are available from turn one, the session is resilient to MCP
@@ -307,98 +261,6 @@ Adds the stable v1 job/event boundary consumed by Hero, hero-code, and Hero Clou
 ## version-mismatch-severity — Version mismatch severity
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/synthesis-maintenance/spec.md)_
-
----
-
-## satellite-walkthrough-ux — "Satellite Walkthrough UX — Vendor-Pattern Detection and Exclude-Parent Shortcut"
-_feature · planning · horizon: now_
-
-Resume by reading `.hero/planning/features/satellite-walkthrough-ux/spec.md`. Two small UX fixes for the satellite install walkthrough surfaced during the example codebase migration: auto-noise `*-vendor` / `vendor-*` / `vendored` directory names in the candidate detector, and add capital `X` as an "exclude parent" walkthrough option that drops all remaining candidates under the parent. Parent spec: monorepo-satellite-installs.
-
----
-
-## satellite-scope-finishers — "Satellite Scope Finishers — Queue Default and MCP Subproject Param"
-_feature · planning · horizon: now_
-
-Resume by reading the spec at `.hero/planning/features/satellite-scope-finishers/spec.md`. Two surface additions: `hero queue --subproject` flag (mirrors `hero list`), and `subproject` parameter on five MCP tools (`hero_list`, `hero_queue`, `hero_search`, `hero_recap`, `hero_feed`) with consistent description telling the model when to pass it. Parent specs in the satellite arc: monorepo-satellite-installs, satellite-corpus-integration, satellite-scope-extras — all shipped.
-
----
-
-## satellite-scope-extras — "Satellite Scope Extras — Why Traversal, Spec Move, Cloud Filtering"
-_feature · planning · horizon: now_
-
-Resume by reading `.hero/planning/features/satellite-scope-extras/spec.md`. Phases 1 (`hero why` annotation) and 2 (`hero spec move`) are local-CLI work; Phase 3 (cloud) touches `cloud/store`, `cloud/api`, and `cloud/web/app.js`. Parent specs that already shipped: [monorepo-satellite-installs](../monorepo-satellite-installs/spec.md) (foundation) and [satellite-corpus-integration](../satellite-corpus-integration/spec.md) (scope flows through corpus).
-
----
-
-## premise-interrogation — "Premise Interrogation — Force-Question the Framing Before Designing"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/premise-interrogation/spec.md)_
-
----
-
-## intake-capture-loop — "Intake Capture Loop — Silently Capture Intent-Bearing Loose Asks, Manual Promote Gate"
-_feature · planning · horizon: now_
-
-Lightweight loop on the shipped `intake` primitive. Treat it as a sibling of
-`auto_capture`: after a loose change lands, *if* the ask carried intent (a reason,
-a decision, a workaround — not a typo/rename/format, not work already under a
-spec), silently fire `hero intake "<ask + one-line why>"`. Reuse the existing
-auto-capture threshold machinery and `hero intake` CLI — no new verbs, no graph
-edges, no new hooks. Manual promote stays the gate. Land the trigger + threshold
-on **all six install targets** (opencode/cursor/claude/copilot/codex/generic) via
-the shared `.hero/knowledge/` convention rendered into AGENTS.md (+ CLAUDE.md for
-Claude); make AGENTS.md guidance self-contained since only Claude has an
-end-of-session hook. Decisions locked: retroactive + threshold-gated (NOT
-capture-then-edit), capture auto / promote manual.
-
----
-
-## ledger-signoff-substring-match-fails-open — "Completion Ledger sign-off gate fails open — any note mentioning [signed-off] self-approves"
-_bug · planning · horizon: now_
-
-Paste into a fresh session to start delivery:
-
-> Deliver `ledger-signoff-substring-match-fails-open`. `hero spec verify`
-> Gate 1 decides whether a SKIPPED/BLOCKED ledger row carries human sign-off
-> with a bare substring test — `strings.Contains(noteLower, "[signed-off]")`
-> at `internal/spec/ledger.go:216`. A note that *denies* sign-off
-> ("[signed-off] NOT yet given", "needs [signed-off] from the owner") contains
-> the literal marker and therefore grants it. The gate fails open: the agent
-> writing the ledger can self-approve its own descope while appearing to
-> escalate. Replace the substring test with anchored parsing that only honors
-> the marker as a standalone token, and add regression tests for the
-> negative-sentence cases. Start by reading **Key Files**, then work the
-> Acceptance Criteria in order. Close with the cold delivery audit and
-> `hero spec verify`.
-
----
-
-## graph-unpartitioned-writers-duplicate-nodes — "Ten graph writers omit Repo, so repo-scoped identity lets '' and stamped nodes coexist forever"
-_bug · planning · horizon: now_
-
-Paste into a fresh session to start delivery:
-
-> Deliver `graph-unpartitioned-writers-duplicate-nodes`. Ten production
-> `UpsertNode` call sites build their node without a `Repo` field, so they
-> write into the unpartitioned (`repo = ''`) bucket. Since
-> `graph-node-identity-repo-scoped` made identity `(type, key, repo)` and gave
-> the write path `repoWriteScope` (an unpartitioned write matches only
-> `repo = ''`, so it can never tombstone a stamped node), an unpartitioned
-> writer and a stamped writer targeting the same key now leave two live rows
-> that neither will ever retire. Stamp `Repo: repoKey` at each of the ten
-> sites listed in **Key Files**, then decide what to do with the rows already
-> in the `''` bucket. Start by reading **Key Files**, then work the Acceptance
-> Criteria in order. Close with the cold delivery audit and `hero spec verify`.
-
----
-
-## peer-call-multi-cli — "Peer Call Multi-CLI — Pluggable Subagent Backends"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/peer-call-multi-cli/spec.md)_
 Change `Mismatch()` in `internal/version/version.go` to return a `MismatchResult` struct with `Severity` (none/warning/error) and `Message` fields instead of a bare string. Severity is `error` when the major version component differs, `warning` when only minor/patch differ, and `none` when versions match or checks are skipped. Update `PersistentPreRun` in `internal/cli/root.go` to exit non-zero on error severity (keeping the existing exempt-command list: init, install, trust, upgrade, mcp, version, help, scan). Update all tests in `internal/version/version_test.go` to assert on `MismatchResult.Severity` and `MismatchResult.Message`. Dev builds ("dev") and empty versions continue to skip all checks.
 
 ---
@@ -474,7 +336,7 @@ Cold-start prompt:
 ## synthesis-maintenance — "Synthesis Maintenance — Write-Through Coherence for the Hero Graph"
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/synthesis-maintenance/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/synthesis-maintenance/spec.md)_
 
 ---
 
@@ -544,14 +406,21 @@ Resume by reading `.hero/planning/features/satellite-corpus-integration/spec.md`
 ## premise-interrogation — "Premise Interrogation — Force-Question the Framing Before Designing"
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/premise-interrogation/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/premise-interrogation/spec.md)_
 
 ---
 
 ## peer-call-multi-cli — "Peer Call Multi-CLI — Pluggable Subagent Backends"
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/peer-call-multi-cli/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/peer-call-multi-cli/spec.md)_
+
+---
+
+## mail-da2727fd11615a9cafa5125c — Mail Da2727fd11615a9cafa5125c
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/mail-da2727fd11615a9cafa5125c/spec.md)_
 
 ---
 
@@ -591,14 +460,14 @@ capture-then-edit), capture auto / promote manual.
 ## hihcp-fuzzy-path-resolution — "Add Workspace-Relative Path Fuzzy Resolution"
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/hihcp-fuzzy-path-resolution/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/hihcp-fuzzy-path-resolution/spec.md)_
 
 ---
 
 ## hero-search-tiered-response — hero search response tiering — max_results + pagination instead of compact boolean
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/hero-search-tiered-response/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/hero-search-tiered-response/spec.md)_
 
 ---
 
@@ -657,14 +526,14 @@ _feature · planning · horizon: now_
 ## agent-safety-conventions — "Agent Safety Conventions — Harness-Agnostic Behavioral Guardrails"
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/agent-safety-conventions/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/agent-safety-conventions/spec.md)_
 
 ---
 
 ## tracker-semantic-priority-field-mapping — "\"Jira custom field cannot be configured as canonical Hero priority\""
 _bug · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/bugs/tracker-semantic-priority-field-mapping/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/bugs/tracker-semantic-priority-field-mapping/spec.md)_
 
 ---
 
@@ -728,330 +597,6 @@ Paste into a fresh session to start delivery:
 
 ---
 
-## spec-state-axes — "Spec State Axes — Separate Delivery Lifecycle from Verification Health"
-_feature · planning · horizon: now_
-
-Splits spec `status` into two axes: `status` stays delivery lifecycle, and
-verification health becomes a read-only state derived from the AC graph — so a
-completed spec that breaks stays `completed` instead of being rewritten.
-
-**Status:** planning — spec just landed, no code yet. Design decisions are
-settled; see Approach.
-
-**Pick up at:** start with the pure-read conversion — add `VerificationState`
-+ `Evaluate()` in `internal/integrity/`, mapping from the existing `Verdict`
-enum (the compute path already exists in `verifySpec`). Then gut
-`AutoDowngradeRegressions` to `DetectRegressions` (no file writes) and fix its
-one call site at `internal/cli/ac.go:233`. Rendering is Phase 3.
-
-→ `.hero/planning/features/spec-state-axes/spec.md`
-
-**Files:** `internal/integrity/regression.go:34`, `internal/integrity/status.go:91`,
-`internal/cli/ac.go:233`, `internal/acceptance/query.go:14`
-
-**Skip:** don't add a `verification:` frontmatter field — derived-on-read is the
-decided approach, and a persisted copy would be a git-visible fact whose evidence
-is machine-local. Don't design legacy evidence migration; the no-AC path is
-already safe.
-
----
-
-## generated-command-refs-validated — "Generated Command Refs Validated — Every `hero <subcommand>` Hero Emits Must Exist"
-_feature · planning · horizon: now_
-
-Hero's digest shipped a `hero recall` reference for however long — the command was renamed to `hero search` and nothing noticed. This extracts every command ref Hero emits and asserts it resolves against Cobra.
-
-**Status:** planning — independent of the other children; can start immediately.
-
-**Pick up at:** build the Cobra registry walker first (flatten all registered command paths), then the extractor. Use the `hero recall` case as the regression test — it must catch it.
-
-→ `rg -n 'hero [a-z-]+' internal/digest/ core/ --only-matching | sort -u | head -40`
-
-**Files:** `internal/digest/digest.go:930`, `internal/cli/root.go`, `internal/install/agents_md.go`, `internal/cli/install.go:115`
-**Skip:** don't build general claim-checking (relations resolve, statuses accurate) — command refs only.
-
----
-
-## spec-contract-enums-unified — "Spec Contract Enums Unified — One Definition of Hero's Types and Statuses"
-_feature · planning · horizon: now_
-
-Hero has three disagreeing answers to "what is a spec type?" — a 6-type validator, an 11-type triage enum, and 9 files on disk. They intersect on 3. This makes one.
-
-**Status:** planning — three definitions located and diffed; the per-type fate decisions are the open work.
-
-**Pick up at:** decide the fate of each of the 7 orphan types before writing plumbing — `context`×114 and `enhancement`×15 are the load-bearing calls (admit to contract vs. migrate corpus). The enum plumbing is easy; the decisions are the spec.
-
-→ `hero check validate 2>&1 | rg 'invalid type|invalid status' | sort | uniq -c | sort -rn`
-
-**Files:** `internal/cli/validate.go:88`, `internal/triage/structural.go`, `internal/spec/spec.go`, `internal/peering/handoff.go:212`, `core/spec-types/`
-**Skip:** don't wire the validator to a boundary here — that's `wire-checks-to-boundaries`, which hard-depends on this.
-
----
-
-## hero-self-consistency — "Hero Doesn't Lie — Self-Consistency Between Generated Guidance, Hero's Own Writes, and Hero's Actual Contract"
-_initiative · planning · horizon: now_
-
-_Run opener — arm with `/drive hero-self-consistency`_
-
-Hero's generated guidance, Hero's own writes, and Hero's actual product contract agree — and something gates the disagreement when they drift apart. Done means: one definition of the spec-type and status contract instead of three; zero specs carrying a status Hero itself writes and Hero itself rejects; zero dead command references in generated output; and the checks that already exist running at a boundary instead of waiting for a human to remember them.
-
----
-
-## always-on-runtime — "Always-On Runtime"
-_initiative · planning · horizon: now_
-
-_Run opener — arm with `/drive always-on-runtime`_
-
-Deliver the versioned runtime contracts and reliable local/self-hosted execution spine that hero-code and Hero Cloud can consume. The first milestone proves a scheduled local workflow can run while the desktop is closed and later replay its complete history.
-
----
-
-## job-run-contract-v1 — "Job and Run Contract v1"
-_feature · planning · horizon: now_
-
-Adds the stable v1 job/event boundary consumed by Hero, hero-code, and Hero Cloud.
-
-**Status:** planning — design complete; implementation waits on the runner-authority decision.
-
-**Pick up at:** define `contracts/runtime` types, transition validation, JSON Schema, and golden fixtures before adapting existing stores.
-
-→ `.hero/planning/initiatives/always-on-runtime/job-run-contract-v1/spec.md`
-
-**Files:** `contracts/version.go`, `contracts/contracts_boundary_test.go`, `internal/serve/jobs.go`, `internal/runner/runner.go`, `../hero-cloud/cloud/internal/seam_smoke.go`
-
----
-
-## version-mismatch-severity — Version mismatch severity
-_feature · planning · horizon: now_
-
-Change `Mismatch()` in `internal/version/version.go` to return a `MismatchResult` struct with `Severity` (none/warning/error) and `Message` fields instead of a bare string. Severity is `error` when the major version component differs, `warning` when only minor/patch differ, and `none` when versions match or checks are skipped. Update `PersistentPreRun` in `internal/cli/root.go` to exit non-zero on error severity (keeping the existing exempt-command list: init, install, trust, upgrade, mcp, version, help, scan). Update all tests in `internal/version/version_test.go` to assert on `MismatchResult.Severity` and `MismatchResult.Message`. Dev builds ("dev") and empty versions continue to skip all checks.
-
----
-
-## satellite-harness-coverage — "Satellite Harness Coverage — Per-Target Markers for OpenCode, Cursor, Generic"
-_feature · planning · horizon: now_
-
-Resume by reading the spec at `.hero/planning/features/satellite-harness-coverage/spec.md`. Closes the per-harness coverage gap from the satellite arc. Mostly a registry edit (`targetLayouts`) plus a small refactor of `perTargetMarker` to accept multiple targets and a written-paths dedup in `Materialize`. Parent spec: monorepo-satellite-installs. Verified gap during example codebase migration (OpenCode+Claude both installed at root, only Claude got the marker).
-
----
-
-## cold-start-trust-hardening — "Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use"
-_initiative · planning · horizon: now_
-
-_Run opener — arm with `/drive cold-start-trust-hardening`_
-
-Eliminate the class of first-use failures where Hero degrades silently or misleadingly, forcing the user to guess. Concretely: every relationship a user declares either becomes an edge or produces a precise error; the deterministic (Tier-1) graph is never confused with optional LLM enrichment (Tier-2); and routine Hero commands stop dirtying the tree or crying wolf.
-
----
-
-## team-mode-cloud-coordination — "Team-Mode Cloud Coordination — Sync Mutable State via Hero Cloud, Keep Git for Source"
-_feature · planning · horizon: now_
-
-**Pick up at:** decide the ADR ("transport follows `next_mode`") first, then start with phase 1 (claims via `/api/claims`).
-
-Cold-start prompt:
-> Implement team-mode cloud coordination so mutable state (claims, events, projections) syncs via Hero Cloud / the team server instead of git, keyed on `next_mode`. The cloud primitives already exist — `hero sync graph push/pull` federates `graph.db` with `local`/`unit`/`team` scopes (`internal/cli/sync_graph.go`), and the team server exposes `/api/claims` and `/api/feed` (`internal/serve/team_coordination.go`). Start with phase 1: route `hero claim`/release through server-side arbitration when connected, falling back to frontmatter+git in solo mode. See the data classification and grounding facts above. This is a feature under the `hero-team-experience` initiative and relates to `hero-team-server`; it likely decomposes into the 5 phases listed — consider `/compose` to break it out.
-
----
-
-## agent-safety-conventions — "Agent Safety Conventions — Harness-Agnostic Behavioral Guardrails"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/agent-safety-conventions/spec.md)_
-
----
-
-## hihcp-fuzzy-path-resolution — "Add Workspace-Relative Path Fuzzy Resolution"
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hihcp-fuzzy-path-resolution/spec.md)_
-
----
-
-## hero-in-hero-code-parity — "Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"
-_initiative · planning · horizon: now_
-
-_Run opener — arm with `/drive hero-in-hero-code-parity`_
-
-Close all eight gaps so that Hero workflows in hero-code reach functional parity
-with Claude Code. "Parity" means: the model can invoke any Hero workflow, Hero
-MCP tools are available from turn one, the session is resilient to MCP
-disconnects and tool failures, and common DX operations (search, file reads,
-permissions) work without friction.
-
----
-
-## handoff-one-call-simplification — Handoff Simplification — One Persist, One Load, Fewest Files
-_feature · planning · horizon: now_
-
-You're picking up the umbrella simplification of Hero's handoff subsystem. Read this spec, then
-the two Phase-1 children. The thesis: the whole subsystem is "persist at end of turn, load at
-start of turn, travel via git," and it accreted into ~18 moving parts and 9 files where ~2 files
-and one persist/one load call would do. The two things the maintainer actually feels — drift and
-"not in my commit" — are **Phase 1** and are pure re-wires of existing code.
-
-**Pick up at:** deliver [next-auto-emit-user-ask](next-auto-emit-user-ask) and
-[next-unconditional-commit-staging](next-unconditional-commit-staging) — both are diagnosed,
-delivery-ready, and independent. Auto-emit reuses `resolveSessionContext` /
-`firstUserAskFromTranscript` from `internal/cli/next_compact_handoff.go`; staging consolidates
-the two installers in `internal/hooks/install.go` + `internal/cli/next_hooks.go`. After Phase 1,
-revisit Phase 2 (drop SNAPSHOT/QUEUE/local files) with fresh per-file specs.
-
-→ `internal/cli/checkpoint.go`, `internal/cli/next_compact_handoff.go`, `internal/cli/next_hooks.go`, `internal/hooks/install.go`, `internal/projection/user_handoff.go`
-
----
-
-## concurrent-session-branching — "Concurrent-Session Branching & Worktree Isolation"
-_initiative · planning · horizon: now_
-
-_Run opener — arm with `/drive concurrent-session-branching`_
-
-Eliminate the concurrent-session **clobbering** class of failure — one session's
-`git checkout` destroying another session's uncommitted work on a shared working
-tree — by isolating every active unit of work in its own git worktree, anchored
-to a `hero claim`, while leaving **content conflicts** (two committed changes
-that disagree) to surface naturally through git and `hero conflicts`. The
-initiative delivers net-new git *mutation* on top of today's read-only
-`gitutil`, generalizes the primitives the async runner already needs, and
-guarantees that nothing Hero does ever silently rewrites, rebases, or deletes
-work — orphaned and stale state is *surfaced*, never auto-removed.
-
----
-
-## get-back-on-track — Get Back on Track — Mission-First V2 Recovery
-_initiative · planning · horizon: now_
-
-_Run opener — arm with `/drive get-back-on-track`_
-
-Recover from the post-v2 drift by making the mission and principles
-load-bearing artifacts (not prose), restoring the broken corpus →
-injection loop, and shipping the v2 traversal-query showcase that
-justified the graph substrate. Treat the recovery itself as the
-dogfood proof that Hero serves its own mission.
-
----
-
-## hero-search-tiered-response — hero search response tiering — max_results + pagination instead of compact boolean
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-search-tiered-response/spec.md)_
-
----
-
-## hero-agent-run-validation — Hero Agent Run Validation — First-Use Smoke Test for Headless Delivery
-_feature · planning · horizon: now_
-
-First-time end-to-end smoke of `hero agent run deliver <slug>` against a real spec, in a real worktree, with real API credentials. Confirms async-delivery works as advertised before relying on it for bigger work.
-
-**Status:** planning — written 2026-04-30, awaiting credential setup and a test slot.
-
-**Pick up at:** ensure `ANTHROPIC_API_KEY` is set (or `hero login` completed), pick a small spec from `hero queue`, run with `--budget 2` first, observe.
-
-→ `hero agent run deliver <small-spec-slug> --budget 2`
-
-**Files:** [.hero/specs/async-delivery/spec.md](.hero/specs/async-delivery/spec.md), [internal/cli/agent_run.go](internal/cli/agent_run.go) (if exists), `hero agent run --help`
-
----
-
-## agent-end-of-turn-recap — Agent End-of-Turn Recap and Spin-Off Suggestions — Consistent Closing Behavior, Scope-Scaled
-_feature · planning · horizon: now_
-
-Codify how the agent ends a turn so multi-step / spec-touching work always closes with a short status + concrete next-ask, while trivial Q&A stays terse. AGENTS.md gets the contract; a new `end-of-turn-recap` skill carries the format and worked examples.
-
-**Status:** planning — design just finalized, no code changes yet.
-
-**Pick up at:** add the "End-of-turn recap" section to `AGENTS.md` with the L0/L1/L2 rules, then the matching skill in `skills/end-of-turn-recap.md`.
-
-→ `.hero/specs/agent-end-of-turn-recap/spec.md`
-
-**Files:** [AGENTS.md](AGENTS.md), [skills/next-md.md](skills/next-md.md) (mirror format), [skills/kickoff-prompt.md](skills/kickoff-prompt.md) (sibling rule)
-
----
-
-## active-context-management — Active Context Management — Hero-Native Curator for Lean, Sharp Sessions
-_feature · planning · horizon: now_
-
-Build a Hero-native system that actively manages session context — not just *injecting* the right things at the start (which `context-injection` already does), but *curating* what stays in the model's window throughout a session: dropping what's re-derivable, keeping what's load-bearing, and externalizing the rest to a scratchpad so context stays sharp across long runs.
-
-**Status:** planning — design captured; no code changes yet. Implementation will land as a v1 (additive only, ships on Claude Code today) and v2 (subtractive primitives, when the harness or SDK exposes them).
-
-**Pick up at:** decide curator implementation approach (rule-based vs Haiku-call vs hybrid), then scaffold the Ledger as a session-scoped record in `.hero/sessions/<id>/ledger.jsonl`.
-
----
-
-## hero-governance — "Hero Governance — Classification, Policy-Filtered Retrieval, Agent Identity, Audit-by-Construction"
-_feature · planning · horizon: now_
-
-Foundational governance model for Hero — classifications, subjects, policies,
-agent identity, and a single retrieval filter — split between the OSS
-contracts package (vocabulary + API shape) and the paid enforcement engine.
-
-**Status:** planning — spec just landed; this is the foundation for the
-hero-cloud repo split and the Community Edition packaging specs.
-
-**Pick up at:** lock the contracts-package surface first: write the Go
-interfaces for `Classification`, `Subject`, `Principal`, `Scope`,
-`PolicyNode`, `AuditEvent`, and the `Retriever` signature. Land those in
-a new `contracts/governance/` directory before any enforcement work.
-
-→ `.hero/planning/features/hero-governance/spec.md`
-
-**Files:** `contracts/governance/` (new), `internal/graph/node.go`,
-`internal/retrieval/`, `.hero/planning/features/agent-outposts/spec.md`,
-`.hero/planning/features/tenant-isolation-rls/spec.md`
-**Skip:** designing the admin UI, SSO/SAML wiring, specific PII regex
-catalogs, and LLM-call wrapping mechanics — all are out of scope here.
-
----
-
-## document-vocabulary-auto-select-schema — Document vocabulary auto_select rule schema — fields, allowed values, and authoring guide
-_feature · planning · horizon: now_
-
-> Read `.hero/planning/features/document-vocabulary-auto-select-schema/spec.md` (this file). Inspect `internal/vocabulary/vocabulary.go` and `internal/vocabulary/resolver.go` for the auto_select rule struct shape, allowed-value set, and match semantics — these are the authoritative source. Check existing presets: `core/vocabularies/agile-scrum.yaml`, `core/vocabularies/kanban.yaml`, `core/vocabularies/shape-up.yaml`, `core/vocabularies/default.yaml`, `core/vocabularies/jira.yaml`, `core/vocabularies/linear.yaml` for what auto_select blocks already exist. Author `docs/contracts/vocabulary-auto-select.md` per the six sections in this spec's Design. Update `docs/contracts/active-dialect.md` §3 with a cross-link and add a row to `docs/contracts/README.md`'s table. Keep the doc under 250 lines. Run `go build ./...` (should be unchanged). Report what shipped, the auto_select rule fields you documented, and any code-vs-prose discrepancies you spotted, under 250 words.
-
----
-
-## hero-transparent-comparisons — "Transparent Comparisons — Help People Choose Hero or an Alternative Honestly"
-_feature · planning · horizon: next_
-
-Adds a HashiCorp-style comparison section that helps readers honestly choose between Hero and adjacent spec, agent, memory, and context tools.
-
-**Status:** planning — comparison posture and initial candidate set are defined; no public copy exists yet.
-
-**Pick up at:** refresh every candidate from first-party sources, then write the shared comparison matrix and the Hero vs. Spec Kit page first.
-
-→ `.hero/planning/features/hero-transparent-comparisons/spec.md`
-
-**Files:** `.hero/marketing/positioning.md`, `web/docs/src/`, `web/landing/site/index.html`, `.hero/knowledge/notes/spec-kit-and-swappable-workflow-providers/`
-**Skip:** attack copy, unverifiable feature tables, and framing every adjacent tool as a direct replacement.
-
----
-
-## hero-qa — Hero QA — Quality Assurance Domain Pack
-_feature · planning · horizon: next_
-
-Second non-engineering Hero domain pack: QA. The thesis: **Hero QA is the quality spine of the sprint and release, not a TestRail clone with chat.** Coverage is a story-completion gate (engineer hands off to QA in-flow); regression status is a release-readiness signal; defects exist when teams want them but the primary loop is fix-before-ship via story rejection. AI authors 40-80 test cases per sprint in minutes, not days. Integration to TestRail and Xray is seamless write-through so teams never duplicate-enter. Brand interaction: QA Reject augments the story with new acceptance criteria and bounces it back, without spawning orphan defect tickets.
-
-**Status:** planning — design pass advanced 2026-05-16. Three siblings landed in single-day dialog: research-brief (887 lines — 12 tools + agent prior art + methodology grounding + six design-original Hero-QA contributions), agent-pack-design (1,119 lines — 23 agents / 26 skills / 18 commands in eight tiers with P0/P1/P2 priorities and contextual-button inventory per artifact), mockup-brief (1,010 lines — eight killer screens with layout, interactions, anti-patterns, and preset variations). Total QA design depth ~3,670 lines vs PM's ~3,630 — at parity. Implementation gated on platform primitives 1-6 plus two amendments (primitive #2 lifecycle overlays; primitive #4 cross-pack ambient population). HTML mockups + handoff-to-hero-code still owed.
-
-**Pick up at:** Produce the eight HTML mockups under `.hero/mocks/hero-qa/` per `mockup-brief.md` (suggested order: Screen 1 → 4 → 2 → 3 → 7 → 5 → 6 → 8). Then write `handoff-to-hero-code.md` summarizing locked design + sibling docs + primitive amendments for a fresh hero-code session to pick up.
-
-→ `/design hero-qa`
-
-**Files:** .hero/planning/features/hero-qa/spec.md, .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/hero-pm/spec.md, .hero/planning/features/hero-pm/agent-pack-design.md
-**Skip:** Native-only-no-integration v1 (we ship Xray and TestRail). A standalone `defect` type by default (opt-in only). Treating QA as a thin variation of engineering. Letting QA reject stories without distinguishing AC-gap from scope-expansion.
-
----
-
-## hero-platform — Hero Platform — Headless Execution, Team Automation, and Shared Visibility
-_initiative · planning · horizon: next_
-
-_Run opener — arm with `/drive hero-platform`_
-
-Transform Hero from a single-session CLI into a platform that runs agent
-work headlessly, triggers automations from external events, coordinates
-team members across sessions, and surfaces everything through a visual
-dashboard. Same binary, new modes.
 ## graph-unpartitioned-writers-duplicate-nodes — "Ten graph writers omit Repo, so repo-scoped identity lets '' and stamped nodes coexist forever"
 _bug · planning · horizon: now_
 
@@ -1143,24 +688,21 @@ data through CLI commands, MCP tools, and the `hero prime` context pipeline.
 ## spec-prioritization — Spec Prioritization — Now / Next / Someday / Parking-Lot
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/spec-prioritization/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/spec-prioritization/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/spec-prioritization/spec.md)_
 
 ---
 
 ## project-charter — Project Charter — Mission, Principles, and Auto-Injection
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/project-charter/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/project-charter/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/project-charter/spec.md)_
 
 ---
 
 ## lean-agent-profile — Lean Agent Profile — Opt-In Trim for Top-Tier Models
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/lean-agent-profile/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/lean-agent-profile/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/lean-agent-profile/spec.md)_
 
 ---
 
@@ -1171,11 +713,26 @@ _feature · planning · horizon: next_
 
 ---
 
+## hero-transparent-comparisons — "Transparent Comparisons — Help People Choose Hero or an Alternative Honestly"
+_feature · planning · horizon: next_
+
+Adds a HashiCorp-style comparison section that helps readers honestly choose between Hero and adjacent spec, agent, memory, and context tools.
+
+**Status:** planning — comparison posture and initial candidate set are defined; no public copy exists yet.
+
+**Pick up at:** refresh every candidate from first-party sources, then write the shared comparison matrix and the Hero vs. Spec Kit page first.
+
+→ `.hero/planning/features/hero-transparent-comparisons/spec.md`
+
+**Files:** `.hero/marketing/positioning.md`, `web/docs/src/`, `web/landing/site/index.html`, `.hero/knowledge/notes/spec-kit-and-swappable-workflow-providers/`
+**Skip:** attack copy, unverifiable feature tables, and framing every adjacent tool as a direct replacement.
+
+---
+
 ## hero-runner — Hero Runner — Headless Agent Execution via Claude API
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-runner/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/hero-runner/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/hero-runner/spec.md)_
 
 ---
 
@@ -1198,67 +755,28 @@ Second non-engineering Hero domain pack: QA. The thesis: **Hero QA is the qualit
 ## graph-memory — Graph Memory — Unified Substrate for Hero's Knowledge Corpus
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/graph-memory/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/graph-memory/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/graph-memory/spec.md)_
 
 ---
 
 ## graph-memory-federation — Graph Memory Federation — Multi-Repo, Multi-Team, Cross-Unit Topology
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/graph-memory-federation/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/graph-memory-federation/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/graph-memory-federation/spec.md)_
 
 ---
 
 ## graph-memory-7c-live-test — Graph Memory Phase 7c — Live Multi-Dev Sync Test
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/graph-memory-7c-live-test/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/graph-memory-7c-live-test/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/graph-memory-7c-live-test/spec.md)_
 
 ---
 
 ## e2e-onboarding — E2E Onboarding Suite — Fresh Repo to Productive Workspace
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/e2e-onboarding/spec.md)_
-
----
-
-## hero-demo-content — Hero Interactive Install Terminal Demo
-_feature · planning · horizon: someday_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-demo-content/spec.md)_
-
----
-
-## hero-distribution — Hero Distribution — Homebrew, Install Script, GitHub Releases
-_feature · planning · horizon: someday_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-distribution/spec.md)_
-
----
-
-## hero-docs-site — Hero Docs Site — Public, Searchable, Self-Serve Reference
-_feature · planning · horizon: someday_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-docs-site/spec.md)_
-
----
-
-## hero-telemetry — Hero Telemetry — Opt-In Usage Analytics + Feedback Channel
-_feature · planning · horizon: someday_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-telemetry/spec.md)_
-
----
-
-## hero-community — Hero Community — Discord/Discussions, Contributor Guide, Issue Templates
-_feature · planning · horizon: someday_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-community/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/e2e-onboarding/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/e2e-onboarding/spec.md)_
 
 ---
 
@@ -1275,59 +793,66 @@ dogfooding the polished core before we deploy.
 
 ---
 
-## configurable-workspace-location — Configurable Workspace Location — Hero Dir Anywhere
-_feature · planning · horizon: someday_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/configurable-workspace-location/spec.md)_
 ## hero-telemetry — Hero Telemetry — Opt-In Usage Analytics + Feedback Channel
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/hero-telemetry/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/hero-telemetry/spec.md)_
+
+---
+
+## hero-docs-site — Hero Docs Site — Public, Searchable, Self-Serve Reference
+_feature · planning · horizon: someday_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/hero-docs-site/spec.md)_
 
 ---
 
 ## hero-distribution — Hero Distribution — Homebrew, Install Script, GitHub Releases
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/hero-distribution/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/hero-distribution/spec.md)_
+
+---
+
+## hero-demo-content — Hero Interactive Install Terminal Demo
+_feature · planning · horizon: someday_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/hero-demo-content/spec.md)_
 
 ---
 
 ## hero-community — Hero Community — Discord/Discussions, Contributor Guide, Issue Templates
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/hero-community/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/hero-community/spec.md)_
 
 ---
 
 ## configurable-workspace-location — Configurable Workspace Location — Hero Dir Anywhere
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/configurable-workspace-location/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/configurable-workspace-location/spec.md)_
 
 ---
 
 ## multi-domain-core — "Multi-Domain Core Engine"
 _feature · draft · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/multi-domain-core/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/multi-domain-core/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/multi-domain-core/spec.md)_
 
 ---
 
 ## greenfield-scaffolding — "Greenfield Scaffolding"
 _feature · draft · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/greenfield-scaffolding/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/greenfield-scaffolding/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/greenfield-scaffolding/spec.md)_
 
 ---
 
 ## cross-spec-awareness — "Cross-Spec Awareness"
 _feature · draft · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/cross-spec-awareness/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/cross-spec-awareness/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/cross-spec-awareness/spec.md)_
 
 ---
 
@@ -1357,8 +882,7 @@ The deliverable is reviewable in two cuts: (a) the seam + direct backend (smalle
 ## architectural-drift-detection — "Architectural Drift Detection"
 _feature · draft · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/architectural-drift-detection/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/features/architectural-drift-detection/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/architectural-drift-detection/spec.md)_
 
 ---
 
@@ -1417,32 +941,28 @@ then the dispatch intercept and registry wiring. Three files, one new
 ## hihcp-rgignore — "Add .rgignore to hero-code Repo"
 _bug · handed_off · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-rgignore/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/bugs/hihcp-rgignore/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/bugs/hihcp-rgignore/spec.md)_
 
 ---
 
 ## hihcp-permission-bridge-validation — "Harden Permission Bridge Payload Validation"
 _bug · handed_off · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-permission-bridge-validation/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/bugs/hihcp-permission-bridge-validation/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/bugs/hihcp-permission-bridge-validation/spec.md)_
 
 ---
 
 ## hihcp-mcp-first-turn-readiness — "Gate First Turn on Hero MCP Readiness"
 _bug · handed_off · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-mcp-first-turn-readiness/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/bugs/hihcp-mcp-first-turn-readiness/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/bugs/hihcp-mcp-first-turn-readiness/spec.md)_
 
 ---
 
 ## hihcp-mcp-auto-reconnect — "Auto-Recover from MCP Server Disconnect Mid-Session"
 _bug · handed_off · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/bugs/hihcp-mcp-auto-reconnect/spec.md)_
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-project-mail.dswyYE/.hero/planning/bugs/hihcp-mcp-auto-reconnect/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/bugs/hihcp-mcp-auto-reconnect/spec.md)_
 
 ---
 

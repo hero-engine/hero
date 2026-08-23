@@ -16,6 +16,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/hero-engine/hero/contracts/attention"
+	"github.com/hero-engine/hero/contracts/attention/mailthread"
 	contractpeering "github.com/hero-engine/hero/contracts/peering"
 	"github.com/hero-engine/hero/internal/attention/focus"
 	"github.com/hero-engine/hero/internal/config"
@@ -41,6 +42,10 @@ type ReplyRequest struct {
 	Kind           string
 	IdempotencyKey string
 	Provenance     []attention.ProvenanceReference
+}
+type ReplyResult struct {
+	Delivery attention.MailDelivery `json:"delivery"`
+	Thread   mailthread.ThreadView  `json:"thread"`
 }
 type ListedMessage struct {
 	attention.MailEnvelope
@@ -128,6 +133,46 @@ func (s *Service) Send(req SendRequest) (attention.MailDelivery, error) {
 }
 
 func (s *Service) Reply(req ReplyRequest) (attention.MailDelivery, error) {
+	result, err := s.ReplyAndReconcile(req)
+	return result.Delivery, err
+}
+
+func (s *Service) ReplyAndReconcile(req ReplyRequest) (ReplyResult, error) {
+	original, err := s.store.Get(s.cfg.PeerID, req.MessageID)
+	if err != nil {
+		return ReplyResult{}, err
+	}
+	threadID := threadIdentity(original)
+	messageIDs, err := s.threadMessageIDs(threadID)
+	if err != nil {
+		return ReplyResult{}, err
+	}
+	delivery, err := s.replyDelivery(req)
+	if err != nil {
+		return ReplyResult{}, err
+	}
+	if err := s.markMessagesRead(messageIDs, "reply:"+delivery.IdempotencyKey); err != nil {
+		return ReplyResult{Delivery: delivery}, err
+	}
+	view, _, err := s.store.ReconcileThread(s.cfg.PeerID, threadID, s.now())
+	if err != nil {
+		return ReplyResult{Delivery: delivery}, err
+	}
+	event := mailthread.Event{
+		SchemaVersion: mailthread.SchemaVersion,
+		Identity:      mailthread.Identity{ProjectPeerID: s.cfg.PeerID, ThreadID: threadID},
+		Kind:          mailthread.EventReplySucceeded, EventID: "reply:" + delivery.IdempotencyKey,
+		ExpectedRevision: view.State.Revision, OccurredAt: delivery.DeliveredAt,
+		Source: "mail.reply", SourceID: delivery.MessageID,
+	}
+	eventResult, err := s.applyStoreEventLatest(event)
+	if err != nil {
+		return ReplyResult{Delivery: delivery}, err
+	}
+	return ReplyResult{Delivery: delivery, Thread: eventResult.Thread}, nil
+}
+
+func (s *Service) replyDelivery(req ReplyRequest) (attention.MailDelivery, error) {
 	original, err := s.store.Get(s.cfg.PeerID, req.MessageID)
 	if err != nil {
 		if !errors.Is(err, ErrNotFound) {
@@ -143,6 +188,11 @@ func (s *Service) Reply(req ReplyRequest) (attention.MailDelivery, error) {
 	}
 	if original.InReplyTo != "" {
 		target, err := s.store.Get(s.cfg.PeerID, original.InReplyTo)
+		if errors.Is(err, ErrNotFound) {
+			// A received reply points at the prior outbound envelope, which is
+			// authoritative in the remote recipient's mailbox.
+			target, err = s.store.Get(original.Sender.PeerID, original.InReplyTo)
+		}
 		if err != nil {
 			return attention.MailDelivery{}, fmt.Errorf("%w: reply target is missing", ErrUnavailable)
 		}
@@ -260,8 +310,45 @@ func (s *Service) deliver(req SendRequest, sender, recipient attention.ProjectRe
 	d := attention.MailDelivery{SchemaVersion: attention.SchemaVersion, MessageID: id, ThreadID: threadID, Sender: sender, Recipient: recipient, IdempotencyKey: key, DeliveredAt: now}
 	result, _, err := s.store.Deliver(env, d)
 	if err == nil {
-		if _, _, threadErr := s.store.Thread(recipient.PeerID, result.ThreadID); threadErr != nil {
+		view, _, threadErr := s.store.Thread(recipient.PeerID, result.ThreadID)
+		if threadErr != nil {
 			return result, fmt.Errorf("%w: initialize mail thread: %v", ErrUnavailable, threadErr)
+		}
+		event := mailthread.Event{
+			SchemaVersion: mailthread.SchemaVersion,
+			Identity:      mailthread.Identity{ProjectPeerID: recipient.PeerID, ThreadID: result.ThreadID},
+			Kind:          mailthread.EventInboundActivity, EventID: "delivery:" + result.MessageID,
+			ExpectedRevision: view.State.Revision, OccurredAt: result.DeliveredAt,
+			Source: "mail.delivery", SourceID: result.MessageID, MessageID: result.MessageID,
+		}
+		inbound, eventErr := s.applyStoreEventLatest(event)
+		if eventErr != nil {
+			return result, fmt.Errorf("%w: reconcile inbound mail thread: %v", ErrUnavailable, eventErr)
+		}
+		if inReplyTo != "" {
+			if original, originalErr := s.store.Get(sender.PeerID, inReplyTo); originalErr == nil {
+				kind := mailthread.EventKind("")
+				outcome := ""
+				source := ""
+				switch original.Kind {
+				case "peer.advisory":
+					kind, outcome, source = mailthread.EventAdvisoryTerminal, mailthread.OutcomeAnswered, "peer.advisory"
+				case "peer.spec_out":
+					kind, outcome, source = mailthread.EventSpecOutTerminal, mailthread.OutcomeCompleted, "peer.spec_out"
+				}
+				if kind != "" {
+					terminal := mailthread.Event{
+						SchemaVersion: mailthread.SchemaVersion,
+						Identity:      mailthread.Identity{ProjectPeerID: recipient.PeerID, ThreadID: result.ThreadID},
+						Kind:          kind, EventID: "terminal:" + result.MessageID,
+						ExpectedRevision: inbound.Thread.State.Revision, OccurredAt: result.DeliveredAt,
+						Source: source, SourceID: original.ID, Outcome: outcome,
+					}
+					if _, terminalErr := s.applyStoreEventLatest(terminal); terminalErr != nil {
+						return result, fmt.Errorf("%w: reconcile typed peer response: %v", ErrUnavailable, terminalErr)
+					}
+				}
+			}
 		}
 		return result, nil
 	}
@@ -301,7 +388,7 @@ func (s *Service) Inbox(project string, unread bool) ([]ListedMessage, error) {
 	}
 	out := make([]ListedMessage, 0, len(items))
 	for _, env := range items {
-		if _, _, threadErr := s.store.Thread(recipient, threadIdentity(env)); threadErr != nil {
+		if _, _, threadErr := s.store.ReconcileThread(recipient, threadIdentity(env), s.now()); threadErr != nil {
 			return nil, threadErr
 		}
 		var rp *attention.MailReceipt
@@ -362,7 +449,7 @@ func (s *Service) Show(id string, markRead bool) (ListedMessage, error) {
 	if err != nil {
 		return ListedMessage{}, err
 	}
-	if _, _, err := s.store.Thread(s.cfg.PeerID, threadIdentity(env)); err != nil {
+	if _, _, err := s.store.ReconcileThread(s.cfg.PeerID, threadIdentity(env), s.now()); err != nil {
 		return ListedMessage{}, err
 	}
 	var rp *attention.MailReceipt

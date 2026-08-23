@@ -10,6 +10,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/hero-engine/hero/contracts/attention"
+	"github.com/hero-engine/hero/contracts/attention/mailthread"
 )
 
 const (
@@ -47,9 +48,55 @@ type ActionResult struct {
 	ThreadID    string                     `json:"thread_id"`
 	Project     attention.ProjectReference `json:"project"`
 	Navigation  *NavigationReference       `json:"navigation,omitempty"`
+	Thread      *mailthread.ThreadView     `json:"thread,omitempty"`
 }
 
 func (s *Service) Action(req ActionRequest) (ActionResult, error) {
+	env, err := s.store.Get(s.cfg.PeerID, req.MessageID)
+	if err != nil {
+		return ActionResult{}, err
+	}
+	messageIDs, err := s.threadMessageIDs(threadIdentity(env))
+	if err != nil {
+		return ActionResult{}, err
+	}
+	result, err := s.actionRaw(req)
+	if err != nil {
+		return ActionResult{}, err
+	}
+	if req.Action != ActionRead && req.Action != ActionUnread {
+		if err := s.markMessagesRead(messageIDs, "action:"+req.IdempotencyKey); err != nil {
+			return ActionResult{}, err
+		}
+	}
+	if authoritative, err := s.store.Receipt(s.cfg.PeerID, req.MessageID); err == nil {
+		result.Receipt = authoritative
+	} else {
+		return ActionResult{}, err
+	}
+	view, _, err := s.store.ReconcileThread(s.cfg.PeerID, threadIdentity(env), s.now())
+	if err != nil {
+		return ActionResult{}, err
+	}
+	if req.Action == ActionRead || req.Action == ActionUnread {
+		result.Thread = &view
+		return result, nil
+	}
+	event := mailthread.Event{
+		SchemaVersion: mailthread.SchemaVersion,
+		Identity:      view.State.Identity, Kind: mailthread.EventActionSucceeded,
+		EventID: "action:" + req.IdempotencyKey, ExpectedRevision: view.State.Revision,
+		OccurredAt: actionAppliedAt(result.Receipt, req.IdempotencyKey, env.CreatedAt), Source: "mail.action", SourceID: req.MessageID,
+	}
+	eventResult, err := s.applyStoreEventLatest(event)
+	if err != nil {
+		return ActionResult{}, err
+	}
+	result.Thread = &eventResult.Thread
+	return result, nil
+}
+
+func (s *Service) actionRaw(req ActionRequest) (ActionResult, error) {
 	if req.Action == ActionPromote {
 		return s.promote(req)
 	}
@@ -121,7 +168,7 @@ func (s *Service) Action(req ActionRequest) (ActionResult, error) {
 			}
 			r.Kind = attention.ReceiptDismissed
 		}
-		r.Actions = append(r.Actions, attention.MailAction{ID: req.Action, IdempotencyKey: req.IdempotencyKey, RequestHash: hash})
+		r.Actions = append(r.Actions, attention.MailAction{ID: req.Action, IdempotencyKey: req.IdempotencyKey, RequestHash: hash, AppliedAt: now})
 		return nil
 	})
 	if err != nil {
@@ -138,6 +185,15 @@ func (s *Service) Action(req ActionRequest) (ActionResult, error) {
 		return ActionResult{}, err
 	}
 	return actionResult(req.Action, env, receipt), nil
+}
+
+func actionAppliedAt(receipt attention.MailReceipt, key, fallback string) string {
+	for _, action := range receipt.Actions {
+		if action.IdempotencyKey == key && action.AppliedAt != "" {
+			return action.AppliedAt
+		}
+	}
+	return fallback
 }
 
 func actionResult(action string, env attention.MailEnvelope, receipt attention.MailReceipt) ActionResult {

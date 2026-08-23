@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hero-engine/hero/contracts/attention/mailthread"
 	contractpeering "github.com/hero-engine/hero/contracts/peering"
 	"github.com/hero-engine/hero/internal/attention/mail"
 	"github.com/hero-engine/hero/internal/config"
@@ -76,6 +77,12 @@ func TestCallIdempotentAndWaitsForSameThreadReply(t *testing.T) {
 		t.Fatalf("did not return response: %+v", waited)
 	}
 	<-replied
+	originCfg, _ := config.Load(origin)
+	originSvc, _ := projectMailService(origin, state, originCfg)
+	thread, _, err := originSvc.Thread(originCfg.PeerID, first.ThreadID)
+	if err != nil || thread.State.Lifecycle != mailthread.LifecycleResolved || thread.State.Resolution == nil || thread.State.Resolution.Source != "peer.spec_out" {
+		t.Fatalf("typed spec-out response did not resolve requester thread: %#v, %v", thread, err)
+	}
 }
 
 // AC-2

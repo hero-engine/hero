@@ -82,6 +82,105 @@ func ValidateState(v State) *attention.ContractError {
 			return err
 		}
 	}
+	events := map[string]bool{}
+	for _, event := range v.Events {
+		if err := required("events.event_id", event.EventID); err != nil {
+			return err
+		}
+		if events[event.EventID] {
+			return invalid("events.event_id", "must be unique")
+		}
+		events[event.EventID] = true
+		if !canonicalEvent(event.Kind) {
+			return invalid("events.kind", "is not canonical")
+		}
+		if decoded, err := hex.DecodeString(event.RequestHash); err != nil || len(decoded) != 32 {
+			return invalid("events.request_hash", "must be a SHA-256 hex digest")
+		}
+		if err := requiredTimestamp("events.applied_at", event.AppliedAt); err != nil {
+			return err
+		}
+		if err := required("events.source", event.Source); err != nil {
+			return err
+		}
+		if err := required("events.source_id", event.SourceID); err != nil {
+			return err
+		}
+		if !canonicalLifecycle(event.FromLifecycle) || !canonicalLifecycle(event.ToLifecycle) {
+			return invalid("events.lifecycle", "must be open, resolved, or archived")
+		}
+	}
+	return nil
+}
+
+func ValidateEvent(v Event) *attention.ContractError {
+	if v.SchemaVersion != SchemaVersion {
+		return incompatible("schema_version")
+	}
+	if err := ValidateIdentity(v.Identity); err != nil {
+		return err
+	}
+	if !canonicalEvent(v.Kind) || v.Kind == EventGraceArchive {
+		return invalid("kind", "must be a supported external lifecycle event")
+	}
+	if err := required("event_id", v.EventID); err != nil {
+		return err
+	}
+	if v.ExpectedRevision < 0 {
+		return invalid("expected_revision", "must not be negative")
+	}
+	if err := requiredTimestamp("occurred_at", v.OccurredAt); err != nil {
+		return err
+	}
+	if err := required("source", v.Source); err != nil {
+		return err
+	}
+	if err := required("source_id", v.SourceID); err != nil {
+		return err
+	}
+	switch v.Kind {
+	case EventAdvisoryTerminal, EventSpecOutTerminal:
+		wantSource := "peer.advisory"
+		if v.Kind == EventSpecOutTerminal {
+			wantSource = "peer.spec_out"
+		}
+		if v.Source != wantSource {
+			return invalid("source", "does not match the registered peering event kind")
+		}
+		if v.Outcome != OutcomeAnswered && v.Outcome != OutcomeCompleted && v.Outcome != OutcomeRejected && v.Outcome != OutcomeCancelled {
+			return invalid("outcome", "must be a terminal advisory outcome")
+		}
+	case EventLinkedTerminal:
+		if v.Source != "peer.handoff" && v.Source != "work.registry" {
+			return invalid("source", "must be a registered handoff or work authority")
+		}
+		if v.Outcome != OutcomeCompleted && v.Outcome != OutcomeRejected && v.Outcome != OutcomeCancelled {
+			return invalid("outcome", "must be completed, rejected, or cancelled")
+		}
+	case EventInboundActivity:
+		if v.Source != "mail.delivery" {
+			return invalid("source", "must be mail.delivery")
+		}
+		if err := required("message_id", v.MessageID); err != nil {
+			return err
+		}
+	case EventReplySucceeded:
+		if v.Source != "mail.reply" {
+			return invalid("source", "must be mail.reply")
+		}
+	case EventActionSucceeded:
+		if v.Source != "mail.action" {
+			return invalid("source", "must be mail.action")
+		}
+	case EventForegroundRead:
+		if v.Source != "mail.foreground" {
+			return invalid("source", "must be mail.foreground")
+		}
+	default:
+		if v.Outcome != "" {
+			return invalid("outcome", "is only accepted for terminal events")
+		}
+	}
 	return nil
 }
 
@@ -201,6 +300,19 @@ func ValidateContractResponse(v ContractResponse) *attention.ContractError {
 
 func canonicalAction(v string) bool {
 	return v == ActionResolve || v == ActionReopen || v == ActionArchive || v == ActionRestore
+}
+
+func canonicalEvent(v EventKind) bool {
+	switch v {
+	case EventForegroundRead, EventReplySucceeded, EventActionSucceeded, EventAdvisoryTerminal, EventSpecOutTerminal, EventLinkedTerminal, EventInboundActivity, EventGraceArchive:
+		return true
+	default:
+		return false
+	}
+}
+
+func canonicalLifecycle(v Lifecycle) bool {
+	return v == LifecycleOpen || v == LifecycleResolved || v == LifecycleArchived
 }
 
 func required(field, value string) *attention.ContractError {
