@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-08-23T21:38:05Z · projected from 666 source nodes_
+_Last refreshed: 2026-08-23T22:00:38Z · projected from 666 source nodes_
 
 ## Surfaces
 
@@ -15,9 +15,9 @@ _Last refreshed: 2026-08-23T21:38:05Z · projected from 666 source nodes_
 | domains/pm | maturing | domains/pm/ | 36d ago | — |
 | domains/qa | concept | domains/qa/ | — | — |
 | domains/sales | maturing | domains/sales/ | 2d ago | — |
-| landing | building | web/landing/ | 5h ago | hero-landing-page |
+| landing | building | web/landing/ | 6h ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 6m ago | agent-outposts |
+| serve | building | internal/serve/ | 29m ago | agent-outposts |
 | (unassigned) | — | — | — | 256 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -35,7 +35,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 16/20 specs done
 - **"Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"** (surface: —) — 0/9 specs done
 - **Hero Killer Features — Agent Effectiveness, Team Power, Living Specs** (surface: core, serve) — 10/11 specs done
-- **"Hero v0.34 Public Release Readiness"** (surface: serve) — 8/11 specs done; in flight: hero-v034-release-prep
+- **"Hero v0.34 Public Release Readiness"** (surface: serve) — 9/11 specs done
 - **Hero Platform — Headless Execution, Team Automation, and Shared Visibility** (surface: core, serve) — 3/8 specs done
 - **"Hero Doesn't Lie — Self-Consistency Between Generated Guidance, Hero's Own Writes, and Hero's Actual Contract"** (surface: core) — 0/5 specs done
 - **Hero Surface Architecture — One Surface, Every Layer, Every Role** (surface: serve) — 8/9 specs done
@@ -52,21 +52,20 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — hero-public-repo-readiness, hero-landing-message-refresh, hero-root-docs-remediation, hero-hosted-docs-remediation, hero-positioning, hero-licensing-boundary-and-provenance, hero-public-truth-baseline, dual-mode-pm-qa-capability-packs, qa-public-pack, pm-public-pack
-- **core** — node-index-repo-identity-collision
+- **(unassigned)** — hero-v034-release-prep, hero-public-repo-readiness, hero-landing-message-refresh, hero-root-docs-remediation, hero-hosted-docs-remediation, hero-positioning, hero-licensing-boundary-and-provenance, hero-public-truth-baseline, dual-mode-pm-qa-capability-packs, qa-public-pack, pm-public-pack
 - **serve** — hero-public-docs-drift-guard
 
 ## Next up across surfaces
 
 1. **landing** — `hero-landing-page` (P0, delivering)
-2. **(unassigned)** — `hero-v034-release-prep` (high, delivering)
-3. **serve** — `agent-outposts` (medium, delivering)
-4. **serve** — `retrieval-contradiction-detection` (—, delivering)
-5. **(unassigned)** — `team-connect` (—, delivering)
+2. **serve** — `agent-outposts` (medium, delivering)
+3. **serve** — `retrieval-contradiction-detection` (—, delivering)
+4. **(unassigned)** — `team-connect` (—, delivering)
+5. **(unassigned)** — `always-on-runtime` (P0, planning)
 
 ## Open risks & blockers
 
-- **Blocked specs (13):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-apache-license-grant-gate` (waits on hero-v034-release-prep); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-docs-site); `hero-landing-page` (waits on hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-landing-page, hero-distribution, hero-demo-content); `hero-public-visibility-launch-gate` (waits on hero-apache-license-grant-gate, hero-v034-release-prep); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection); `wire-checks-to-boundaries` (waits on spec-contract-enums-unified).
+- **Blocked specs (12):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-docs-site); `hero-landing-page` (waits on hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-landing-page, hero-distribution, hero-demo-content); `hero-public-visibility-launch-gate` (waits on hero-apache-license-grant-gate); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection); `wire-checks-to-boundaries` (waits on spec-contract-enums-unified).
 - **Stale-in-flight (3):** `retrieval-contradiction-detection` (44d), `agent-outposts` (43d), `team-connect` (43d).
 - **Aged open bugs (16):** `install-target-emits-both-claude-and-agents-md` (open 100d), `next-project-file-conflict-not-regenerated` (open 81d), `desktop-sidebar-mcp-not-running` (open 80d), `hihcp-agents-md-harness-agnostic` (open 75d), `hihcp-mcp-auto-reconnect` (open 75d), `hihcp-mcp-first-turn-readiness` (open 75d), `hihcp-permission-bridge-validation` (open 75d), `hihcp-agent-loop-error-recovery` (open 75d), `hihcp-rgignore` (open 75d), `jira-connection-onboarding-misleads-agents` (open 40d), `resume-emits-dead-recall-command` (open 40d), `tracker-backed-diagnosis-publication-contract-broken` (open 35d), `tracker-semantic-priority-field-mapping` (open 34d), `jira-import-classification-obscures-work-items` (open 34d), `ledger-signoff-substring-match-fails-open` (open 29d), `graph-unpartitioned-writers-duplicate-nodes` (open 29d).
 - **Unassigned specs (256) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.

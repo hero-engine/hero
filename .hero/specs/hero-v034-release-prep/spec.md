@@ -2,7 +2,7 @@
 title: "Hero v0.34 Release Preparation"
 slug: hero-v034-release-prep
 type: feature
-status: delivering
+status: completed
 domain: engineering
 size: medium
 priority: high
@@ -13,6 +13,7 @@ parent: hero-marketing
 depends-on: [hero-public-docs-drift-guard]
 supersedes: [hero-distribution]
 delivery_method: manual
+completed_at: 2026-08-23T22:00:17Z
 ---
 
 # Hero v0.34 Release Preparation
@@ -72,7 +73,7 @@ either approval.
 
 | # | Criterion (abbreviated) | Status | Note |
 |---|---|---|---|
-| 1 | Target v0.34.0 from latest v0.33.0 authority | DONE | `source_identity` requires canonical semantic tags, proves `v0.33.0` is the latest release tag, rejects an existing `v0.34.0`, and records the exact source commit/tree. The exercised candidate used `fcc72b4988b479abe733c87ee0bfb6bd686830ff`. |
+| 1 | Target v0.34.0 from latest v0.33.0 authority | DONE | `source_identity` requires canonical semantic tags, proves `v0.33.0` is the latest release tag, rejects an existing `v0.34.0`, and records the exact source commit/tree. The final exercised candidate used `ea5386c6e3e55e2657ed279caf0dcef157be0845` / tree `2d0ee55873e22fcba41f3e13cff836d02fd0f69b`. |
 | 2 | Produce reproducible packages, checksums, SBOM, notices, and provenance | DONE | `scripts/release_candidate.py` independently built all five supported archives twice and compared complete outputs byte-for-byte. It emits verified SHA-256 checksums, a CycloneDX 1.5 SBOM with 19 components, a complete exact-license notice packet, and deterministic provenance; output deletion is confined to a symlink-resolved version directory below `.build/release-candidate`. |
 | 3 | Align candidate release claims with the public registry | DONE | `docs/releases/v0.34.0-candidate.md` labels memory and verified delivery shipped while their claimed reinforcing improvement loop remains preview, and preserves the exact Hero/Sprout/Hero Code/Hero Cloud boundary; `test_candidate_notes_preserve_public_maturity_and_product_boundaries` prevents drift. |
 | 4 | Complete clean local candidate installs without private source access | DONE | The extracted Darwin ARM64 archive ran its stamped version, `init`, Codex install, `status`, and `check` in a fresh Git repository with isolated HOME/XDG state and asserted installed artifacts. No source checkout or private repository was used by the smoke journey. |
@@ -90,7 +91,7 @@ either approval.
 
 ### Exercise-the-feature check
 
-- [x] From clean detached revision `fcc72b4988b479abe733c87ee0bfb6bd686830ff`, the candidate builder produced and independently reproduced five archives, verified every checksum, generated the SBOM/notices/provenance packet, and completed the extracted Darwin ARM64 clean-install journey. The evidence is available locally at `.build/release-candidate/v0.34.0`; it is ignored, unpublished, and stamped `pending-apache-2.0` so it cannot be mistaken for the final release.
+- [x] From clean detached revision `ea5386c6e3e55e2657ed279caf0dcef157be0845`, the candidate builder produced and independently reproduced five archives, verified every checksum, generated the SBOM/notices/provenance packet, and completed the extracted Darwin ARM64 clean-install journey. The evidence is available locally at `.build/release-candidate/v0.34.0`; it is ignored, unpublished, and stamped `pending-apache-2.0` so it cannot be mistaken for the final release.
 
 ### Excellence Bar self-check
 

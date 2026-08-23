@@ -6,23 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-23T21:55:09Z · 84 ready specs_
-
-## hero-v034-release-prep — "Hero v0.34 Release Preparation"
-_feature · delivering · horizon: now_
-
-Converts the repaired public product into a release candidate the final approval gates can inspect and publish.
-
-**Status:** in-review — the unpublished `v0.34.0` candidate is reproducible and smoke-tested; only the explicit Apache and public-launch gates remain.
-
-**Pick up at:** diff `v0.33.0` to the candidate revision, classify user-visible changes, and reconcile every release artifact and public version reference.
-
-→ `.hero/planning/initiatives/hero-marketing/hero-v034-release-prep/spec.md`
-
-**Files/components:** changelog/release notes, release automation, version metadata, package formulas/manifests, artifact build, checksums, SBOM/notice bundle, install verification, launch and rollback checklists
-**Skip:** creating `v0.34.0`, publishing a release, changing visibility, or adding the Apache license.
-
----
+_Generated: 2026-08-23T22:00:38Z · 84 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -51,6 +35,22 @@ _initiative · planning · horizon: now_
 _Run opener — arm with `/drive hero-marketing`_
 
 Deliver the complete v0.34 public-readiness path: an inventory of the shipped product, memory-first positioning, current root and hosted documentation, a current public site, repository-readiness materials, drift guards, and a clean release candidate. The owner has authorized preparing this repository for an Apache-2.0 grant. Adding the license, changing repository visibility, and publishing the release remain explicit final mutations rather than prep work.
+
+---
+
+## hero-apache-license-grant-gate — "Hero Apache-2.0 License Grant Gate"
+_feature · planning · horizon: now_
+
+This is a human-controlled mutation gate, not an automatic continuation of release preparation.
+
+**Status:** planning — do not deliver until the user explicitly approves adding Apache-2.0 after reviewing the final grant packet.
+
+**Pick up at:** present the exact included repository boundary, recorded owner authorization, cleared third-party obligations, proposed license files, and resulting public claim for final mutation approval.
+
+→ `.hero/planning/initiatives/hero-marketing/hero-apache-license-grant-gate/spec.md`
+
+**Files/components:** root `LICENSE`, `NOTICE` only when required, package/repository license metadata, public license references, approval evidence
+**Skip:** repository visibility, release publication, Sprout mutation, and any license change to `hero-code` or `hero-cloud`.
 
 ---
 
