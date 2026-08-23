@@ -1,471 +1,255 @@
 # Hero
 
-Hero is the sidekick brain for AI-augmented knowledge work.
+Hero gives AI coding tools durable project memory and a verified delivery
+system, so decisions survive sessions and agents finish work against evidence.
 
-For engineering teams, Hero adds a spec-driven workflow to AI coding
-tools: **design before you build, diagnose before you fix**. It captures
-specs, decisions, conventions, attempts, failures, tests, and recent
-activity into a local `.hero/` corpus so each new model session starts
-with the right project context.
+Project memory is the headline: Hero keeps intent, decisions, corrections,
+conventions, evidence, failures, and current state in a project-owned `.hero/`
+corpus. Verified delivery is the connected execution system: specs bound the
+work, specialized agents implement it, and Completion Ledgers, cold audits,
+builds, and tests establish whether it is done.
 
-**New here? Start with [GETTING-STARTED.md](GETTING-STARTED.md).**
+Memory informs delivery. Delivery can add decisions and evidence for later
+sessions. The components are shipped; the repeatable cross-tool continuity
+outcome remains preview until its public proof is complete.
 
-Hero currently installs into OpenCode, Cursor, Claude Code, Codex,
-GitHub Copilot, Grok Build, and generic MCP-capable tools.
-
----
-
-## What Hero Does
-
-Hero has two layers:
-
-| Layer | Purpose |
-|---|---|
-| Core Hero | Capture, structure, query, project, inject, and sync the project corpus. |
-| Hero Code | The engineering vertical: specs, commands, agents, skills, tests, tracker sync, delivery workflows. |
-
-The spec workflow is the surface. The durable value is the corpus that
-compounds across sessions, tools, teammates, and time.
-
-```text
-/discover  ->  /design  ->  /deliver
-                           ^
-              /diagnose ---|
-```
-
-| Workflow | Use it when |
-|---|---|
-| `/resume` | Starting a fresh session and loading current context. |
-| `/discover` | Exploring product direction or possible work. |
-| `/design` | Creating a feature, platform, or documentation spec before building. |
-| `/diagnose` | Investigating a bug and producing a fix spec. |
-| `/deliver` | Implementing and validating an approved spec. |
-| `/handoff` | Preserving state before switching tools or context gets tight. |
-| `/review` | Reviewing code, PRs, specs, architecture, security, or tests. |
-| `/scrub` | Removing dead code, duplication, weak types, stale comments, and legacy cruft. |
-
-Natural language is the default interface. In a Hero-aware harness, say
-what you want and Hero routes to the right workflow. The CLI remains the
-escape hatch for scripting, inspection, sync, and verification.
-
----
+**New here? Follow [Getting Started](GETTING-STARTED.md).**
 
 ## Install
 
-**macOS / Linux (Homebrew):**
+Prebuilt binaries do not require Go.
+
+macOS or Linux with Homebrew:
 
 ```bash
 brew install hero-engine/tap/hero
 ```
 
-**Linux (install script):**
+Linux install script:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/hero-engine/hero-releases/main/install.sh | sh
 ```
 
-**Windows (Scoop):**
+Windows with Scoop:
 
 ```powershell
 scoop bucket add hero-engine https://github.com/hero-engine/scoop-bucket
 scoop install hero
 ```
 
-**Windows (PowerShell install script):**
+Windows PowerShell install script:
 
 ```powershell
 irm https://raw.githubusercontent.com/hero-engine/hero-releases/main/install.ps1 | iex
 ```
 
-Full options — including direct downloads and build-from-source — are in
-the [installation guide](web/docs/src/getting-started/installation.md).
+The [installation guide](web/docs/src/getting-started/installation.md) covers
+direct downloads and source builds.
 
-Initialize a project and install Hero into your coding tool:
+## First project
+
+Run these commands from the repository root:
 
 ```bash
-cd /path/to/project
 hero init
-hero install project . --target opencode
-hero install project . --target cursor
-hero install project . --target claude
 hero install project . --target codex
-hero install project . --target copilot
-hero install project . --target grok
+hero status
 ```
 
-Grok Build receives native Markdown agents in `.grok/agents`, canonical
-skills and `command-*` workflow skills in `.grok/skills`, project guidance in
-`AGENTS.md`, and the Hero MCP server in `.grok/config.toml`.
+Replace `codex` with `opencode`, `cursor`, `claude`, `copilot`, `generic`, or
+`grok` for another supported target. Hero renders workflows into each target's
+native surfaces. Claude receives command files; Codex and Grok receive
+`command-*` workflow skills; other targets receive their supported native
+surfaces and root instructions. Do not assume slash commands exist everywhere.
 
-For monorepos where the AI tool runs from a subfolder, register each
-subfolder as a satellite of the root install:
+The default setup combines Core with Engineering, including lightweight PM and
+QA assistance used inside engineering workflows. Focused PM, QA, and Sales
+setups are optional and maturity-bounded:
 
 ```bash
-hero install project . --target cursor --workspace services/auth
-hero install satellites list
-hero install satellites add services/auth
-hero install --repair
+hero domain list
+hero domain enable qa
+hero install project . --target codex
 ```
 
-Hero ships content in two layers: a shared `core/` pack and one or more
-domain packs (currently `domains/engineering/` and a scaffolded
-`domains/sales/`). The active domain comes from `hero.json` or the
-`--domain` flag:
+## Project memory
+
+Start or resume work by asking your installed harness to resume the project, or
+use the CLI directly:
 
 ```bash
-hero install project . --target claude --domain engineering
-hero domain
-```
-
-`hero install` copies the active domain's command, agent, and skill
-files into the target harness format and registers `hero mcp` so the
-tool can call Hero directly. Use `--migrate` to reconcile drifted
-copies across multiple harnesses, and `hero check` to audit workspace
-and install state. The Hero-managed sections inside `AGENTS.md`/`CLAUDE.md`
-are regenerated in place on every install — the markers signal that
-the content between them is owned by Hero.
-
-Current installed content counts:
-
-| Surface | Count |
-|---|---:|
-| Slash command definitions | 29 |
-| Agent definitions | 35 |
-| Skill definitions | 57 |
-| MCP tools | 57 |
-
-Run `hero docs check` to validate these counts against the repo.
-
----
-
-## Daily Use
-
-Start every session:
-
-```text
-/resume
-```
-
-Seed a project:
-
-```text
-/scan
-/convention codify our API error response format
-```
-
-Design and deliver:
-
-```text
-/design add CSV export for user data
-/deliver .hero/planning/features/csv-export/spec.md
-```
-
-Investigate and fix:
-
-```text
-/diagnose login times out after 30 seconds
-/deliver .hero/planning/bugs/login-timeout/spec.md
-```
-
-Preserve context:
-
-```text
-/handoff
-```
-
-Ask the corpus:
-
-```bash
-hero ask "what is our error response format?"
+hero resume
+hero status
 hero search "OAuth session handling"
-hero search --hybrid "retry logic for failed logins"
+hero ask "What is our retry policy?"
 hero relevant src/auth/session.go src/auth/middleware.go
-hero why csv-export
+hero why session-retry
 hero blocked
 ```
 
----
-
-## Cross-Repo Peering
-
-When you run sibling Hero workspaces — backend, web client, desktop
-client — they can work as a tag team. A session in one repo can ask
-another's Hero a question, hand off a spec, or pull peer-surface
-conventions into context. Provenance travels with every operation.
-
-Three asynchronous request modes, plus a passive boundary detector:
-
-| Mode | Writes? | Pick when |
-|---|---|---|
-| Mail call — advisory | Mail only | You need a fact from peer B: "does this break you?", "what's your convention for X?" |
-| Mail call — spec-out | Mail only | Ask B to design work; B explicitly decides whether to promote it. |
-| Work-transfer request | Mail only | Offer investigated work without writing B's roadmap. |
-| Convention import (fallback) | Nothing | Work stays in A but must respect B's surface. |
-
-Quick cheat sheet:
+Capture durable context deliberately. Notes, conventions, decisions, and
+handoff projections are writes to the repository-owned corpus; search and
+retrieval are reads.
 
 ```bash
-hero init                                # mints a stable peer_id UUID
-hero admin repos add app ../app          # register a sibling peer
-hero peer call app --mode=advisory "What's your error envelope?"
-hero handoff order-failure app --reason "Root cause is the API"
-# on the receiving side, after review:
+hero note session-retry
+hero next
+hero recap --since 2d
+```
+
+Inside an installed harness, natural-language requests route to its native Hero
+workflow. For example: “resume this project,” “design CSV export,” or “diagnose
+the login timeout.”
+
+## Verified delivery
+
+The normal engineering loop is:
+
+1. Design a feature or diagnose a bug into an approved spec.
+2. Deliver against its acceptance criteria and project conventions.
+3. Record the Completion Ledger and run the project build/tests.
+4. Run a fresh, independent cold delivery audit.
+5. Close once with `hero spec verify <slug>`.
+
+```bash
+hero spec score csv-export
+hero spec deliver csv-export --manual
+hero spec verify csv-export
+```
+
+`hero spec verify` checks the Completion Ledger, cold audit, acceptance-criteria
+coverage, and configured build/test command. When the hard gates pass, it marks
+the spec complete and archives it. `hero spec complete` exists as a manual
+administrative path; it is not the normal evidence-backed delivery close.
+
+Use the active harness workflow for agent execution. The CLI is useful for
+inspection, automation, scoring, and the final verification gate:
+
+```bash
+hero list --ready --sort priority
+hero queue --format kickoff
+hero diff .hero/planning/features/csv-export/spec.md
+hero drift csv-export
+hero ac list csv-export
+hero coverage csv-export
+```
+
+`hero drift` and `hero coverage` exit non-zero when they find drift or missing
+coverage; that is a failed gate to address, not a broken invocation.
+
+## Monorepos: one corpus, thin satellites
+
+Initialize Hero once at the repository root. When a harness opens inside a
+subproject, materialize a thin harness-native satellite tree that points back
+to the root content:
+
+```bash
+hero install satellites                    # guided candidate review
+hero install satellites --yes              # accept detected candidates
+hero install satellites --repair           # reconcile satellite trees
+hero install satellites --migrate-nested   # print a legacy migration plan
+```
+
+A monorepo has one root `.hero` corpus. Satellites are not nested Hero
+workspaces. Do not run `hero init` inside a subproject under an existing Hero
+root.
+
+Repair the intended install scope explicitly:
+
+```bash
+hero install project . --target codex --repair
+hero install satellites --repair
+hero check
+hero doctor
+```
+
+`hero doctor` diagnoses binary, schema, and installed-target mismatches.
+`hero check` reports workspace and corpus health.
+
+## Optional integrations and runtime surfaces
+
+| Capability | Availability | Prerequisite and boundary |
+|---|---|---|
+| MCP project-memory tools | Shipped | An initialized workspace and harness MCP configuration. The runtime `tools/list` response is the inventory authority after filtering. |
+| Local `hero serve` dashboard/API | Shipped locally | Register local projects deliberately. Team or external access changes the trust boundary. |
+| Tracker operations | Optional | Configure GitHub, Jira, Linear, or GitLab credentials. Mutations require explicit consent for the exact issue and action. |
+| Code-host operations | Optional | Configure a supported code-host connection. Reads do not imply permission for writes. |
+| Cross-repository peering | Optional | Register reachable sibling repositories and manifests. Requests use asynchronous Project Mail. |
+| Headless agent runtime | Preview | Configure a model provider, credentials, and execution environment. Do not treat preview jobs as unsupervised or production-ready. |
+
+See [MCP Setup](MCP-SETUP.md), [Cross-Repo Peering](CROSS-REPO-PEERING.md),
+and [Team Server](TEAM-SERVER.md).
+
+## Cross-repository work
+
+Each Hero project keeps its own graph. Registered peers exchange asynchronous
+Project Mail; sending never launches a model or writes the receiver's tree.
+
+```bash
+hero admin repos add app ../app
+hero peer manifest
+hero peer list
+hero peer call app --mode=advisory --reason="Confirm the API contract" \
+  "Is the error envelope stable?"
+hero handoff order-failure app --reason="Implementation belongs to app"
+```
+
+The receiver must inspect and explicitly promote a work-transfer message:
+
+```bash
+hero mail show <message-id>
 hero handoff receive <message-id> --type bug
 ```
 
-Calls return immediately with Project Mail message/thread IDs. `--wait`
-optionally polls for an external response; Hero core never launches a model.
-Receiver promotion through Mail and Intake is the first receiver-tree write.
-V1 runs on sibling checkouts with no daemon, model CLI, or cloud.
-
-See [CROSS-REPO-PEERING.md](CROSS-REPO-PEERING.md) for setup, the full
-ladder, lifecycle reference, troubleshooting, and the dogfood checklist.
-
----
-
-## Current CLI Map
-
-The binary is organized around a few stable groups.
-
-| Area | Commands |
-|---|---|
-| Session context | `hero resume`, `hero next`, `hero recap`, `hero feed`, `hero relevant`, `hero ask`, `hero search`, `hero do` |
-| Spec lifecycle | `hero spec new`, `hero spec deliver`, `hero spec verify`, `hero spec complete`, `hero spec claim`, `hero spec plan`, `hero diff`, `hero drift`, `hero list`, `hero queue`, `hero suggest` |
-| Acceptance criteria | `hero ac list`, `hero ac record`, `hero ac status`, `hero ac history`, `hero coverage`, `hero spec contract` |
-| Workspace health | `hero status`, `hero dashboard`, `hero check`, `hero docs check`, `hero smoke`, `hero ci`, `hero anchor`, `hero tripwire` |
-| Graph and retrieval | `hero scan`, `hero graph`, `hero extract`, `hero impact`, `hero why`, `hero blocked`, `hero snapshot`, `hero synthesize`, `hero embeddings` |
-| Tracker and sync | `hero sync connect`, `hero sync import`, `hero sync pull`, `hero sync spec`, `hero sync link`, `hero sync comment`, `hero sync attach`, `hero sync graph` |
-| Cross-repo peering | `hero admin repos`, `hero peer manifest`, `hero peer list`, `hero peer show`, `hero peer call`, `hero handoff`, `hero handoff status`, `hero handoff accept`, `hero context imports` |
-| Personal attention | `hero attention today`, `hero attention act`, `hero focus`, `hero mail send`, `hero mail inbox`, `hero mail show`, `hero mail reply`, `hero mail ack` |
-| Automation and headless work | `hero agent run`, `hero agent jobs`, `hero agent approve`, `hero agent automate`, `hero pipeline`, `hero watch` |
-| Publishing and server | `hero serve`, `hero mcp`, `hero publish wiki`, `hero publish pages`, `hero login`, `hero logout` |
-| Installation | `hero install`, `hero install satellites`, `hero upgrade`, `hero uninstall`, `hero verify-install`, `hero trust`, `hero domain` |
-
-Useful examples:
-
-```bash
-hero status                         # compact current/upcoming/recent briefing
-hero status --all                   # include someday and parking work
-hero status --json                  # stable, unbounded automation surface
-hero list --ready --sort priority
-hero queue --format kickoff
-hero spec new csv-export
-hero spec claim csv-export --agent codex
-hero spec score csv-export
-hero spec verify csv-export
-hero spec complete .hero/planning/features/csv-export/spec.md
-hero ac list csv-export
-hero spec contract status csv-export
-hero coverage csv-export
-hero suggest --top 10
-hero agent run deliver csv-export --dry-run
-hero agent jobs
-hero agent approve job-abc123
-hero sync connect jira
-hero sync import
-hero sync pull .hero/planning/bugs/login-timeout/spec.md
-hero publish pages
-hero serve --add .
-```
-
-Use the grouped forms above for spec lifecycle, tracker sync, publishing,
-and headless execution.
-
-Jira descriptions imported before canonical ADF-to-Markdown rendering may
-already be missing nested lists or formatting in both the spec and its sync
-baseline. Hero does not migrate or overwrite authored problem text. Repair an
-affected item explicitly from Jira (re-import it, or inspect the current remote
-value with `hero sync pull <slug> --field description --json`); normal refresh
-only replaces Hero's untouched imported placeholder.
-
----
-
-## MCP Tools
-
-`hero mcp` is a hidden stdio server launched by AI tools. The current
-tool set is:
-
-`hero_context`, `hero_search`, `hero_status`, `hero_check`,
-`hero_nudge`, `hero_list`, `hero_queue`, `hero_kickoff`,
-`hero_knowledge`, `hero_read_spec`, `hero_ask`, `hero_anchor`,
-`hero_pulse`, `hero_skill_run`, `hero_claim`, `hero_velocity`,
-`hero_test_generate`, `hero_demo_record`, `hero_code`,
-`hero_error_pattern`, `hero_enrich`, `hero_score`, `hero_diagnose`,
-`hero_verify`, `hero_conflicts`, `hero_sequence`, `hero_warnings`,
-`hero_insights`, `hero_contract`, `hero_plan`, `hero_impact`,
-`hero_recap`, `hero_drift`, `hero_ci`, `hero_feed`, `hero_event`,
-`hero_active`, `hero_coverage`, `hero_why`, `hero_blocked`,
-`hero_expand`, `hero_snapshot`, `hero_synthesize`,
-`hero_attention_snapshot`, `hero_attention_action`,
-`hero_tracker_get_issue`, `hero_tracker_search`, `hero_tracker_request`,
-`hero_tracker_cli`, `hero_tracker_load_evidence`.
-
-Most tools are read-only. Tools that intentionally mutate local state
-include claim/event/plan/enrich/test/demo helpers. `hero_synthesize`
-assembles the material for an explainer (source specs, git activity,
-referenced decisions, target path, provenance frontmatter) and returns
-it for the in-session agent to write the document.
-
----
-
-## Workspace Layout
+## Workspace layout
 
 ```text
 .hero/
 ├── mission.md                  # project charter and first principles
-├── NEXT.md                     # shared projected handoff in solo mode
-├── QUEUE.md                    # ready-work queue for cold starts
-├── SNAPSHOT.md                 # project-shape rollup (managed by `hero snapshot --project`)
-├── planning/
-│   ├── features/
-│   ├── bugs/
-│   └── initiatives/
-├── specs/                      # completed specs
-├── knowledge/
-│   ├── conventions/
-│   ├── decisions/
-│   ├── rules/
-│   ├── context/
-│   ├── notes/
-│   ├── explainers/            # synthesized "how a feature works now" docs
-│   ├── templates/
-│   └── external/
-├── next/                       # per-user and local handoff projections
-├── smoke/                      # per-feature smoke metadata
-├── events.log                  # cross-session activity feed source
+├── NEXT.md                     # projected session handoff
+├── QUEUE.md                    # ready-work projection
+├── SNAPSHOT.md                 # project-shape rollup
+├── planning/                   # active specs
+├── specs/                      # verified, archived specs
+├── knowledge/                  # decisions, conventions, context, notes
+├── next/                       # personal/local handoff projections
+├── smoke/                      # feature smoke metadata
 ├── graph.db                    # generated graph store
-├── index.db                    # generated search index (BM25 + vec_chunks)
-└── hero.json                   # project config
+├── index.db                    # generated search index
+└── hero.json                   # committed project configuration
 ```
 
-Specs and knowledge entries are committed. Generated state such as
-`graph.db`, `index.db`, local overlays, and per-machine files are ignored.
+Specs, knowledge, and projected handoff files are committed. Generated
+databases, credentials, sessions, and local overlays remain ignored.
 
----
-
-## Repository Layout
+## This repository
 
 ```text
 cmd/hero/                 CLI entrypoint
-internal/                 Go implementation packages
-internal/serve/           HTTP daemon and MCP server
-internal/graph/           SQLite graph substrate and traversal support
-internal/retrieval/       hybrid retrieval layer (BM25 + semantic vector search)
-internal/embeddings/      pure-Go embedding engine and vector storage
-internal/scan/            master ingest and codebase scanning
-internal/traversal/       why/blocked graph queries
-core/                     universal core pack (agents, commands, skills, vocabularies)
-domains/engineering/      Hero Code engineering domain pack
-domains/pm/               Hero PM domain pack
-domains/sales/            scaffolded Hero Sales domain pack
-web/                      public web surfaces (docs, landing)
-cloud/                    team server and cloud backend
+contracts/                integration and operation contracts
+internal/                 Go implementation
+core/                     shared agents, workflows, skills, and vocabularies
+domains/engineering/      default Engineering content
+domains/pm/               optional focused PM content
+domains/qa/               optional focused QA content
+domains/sales/            optional focused Sales content
+web/                      hosted docs and landing source
 ```
 
-Engineering agents, commands, and skills live under
-`domains/engineering/`. The install pipeline overlays the active domain
-pack on top of the universal `core/` layer; domain wins on file
-conflicts.
+Hero Cloud is a separate proprietary product; there is no `cloud/` backend tree
+in this repository. Hero Code is also a separate proprietary product. Sprout
+(`github.com/bdwheeler/sprout`) is a separate public MIT-licensed dependency.
 
----
+This `hero` repository is being prepared for a future Apache-2.0 grant, but the
+grant has not happened: there is no root license file yet. Do not describe this
+repository, Hero Code, or Hero Cloud as open source until the explicit license
+and visibility gates land. Third-party components retain their own licenses.
 
-## Installed Content Inventory
+## Build from source
 
-Agents:
-
-`api-engineer`, `architecture-reviewer`, `brownfield-architect`,
-`comment-scrubber`, `convention-author`, `database-engineer`,
-`deadcode-scrubber`, `debug-investigator`, `dedup-scrubber`,
-`defensive-scrubber`, `dependency-analyst`, `dependency-scrubber`,
-`design-reviewer`, `devops-engineer`, `documentation-engineer`,
-`engineer`, `feature-delivery-lead`, `functional-qa-engineer`,
-`greenfield-architect`, `integration-engineer`, `issue-tracker`,
-`legacy-scrubber`, `migration-engineer`, `performance-engineer`,
-`platform-delivery-lead`, `pr-reviewer`, `product-ideator`,
-`project-context-builder`, `release-engineer`, `security-reviewer`,
-`session-primer`, `test-architect`, `type-scrubber`, `ui-designer`.
-
-Slash commands:
-
-`blocked`, `capture`, `challenge`, `check`, `compose`, `convention`,
-`decide`, `deliver`, `design`, `diagnose`, `discover`, `docs`,
-`handoff`, `hero`, `import`, `mock`, `note`, `peer`, `prime`,
-`release`, `resume`, `retro`, `review`, `scan`, `scrub`, `split`,
-`sprint`, `why`.
-
-Skills:
-
-`agent-reliability`, `api-design-and-contracts`,
-`architecture-principles`, `auto-knowledge-capture`,
-`challenge-diagnosis`, `code-scrub`, `context-injection`,
-`convention-writing`, `database-stack`, `debugging-investigation`,
-`deep-code-enrichment`, `dependency-analysis`, `devops-and-operations`,
-`documentation-practices`, `executive-report`, `go-stack`,
-`greenfield-scaffolding`, `groovy-stack`, `html-mockup-generation`,
-`implementation-principles`, `incident-response`,
-`integration-boundaries`, `issue-list-report`, `java-stack`,
-`javascript-stack`, `kickoff-prompt`, `knowledge-flywheel`,
-`migration-safety`, `next-handoff-emit`, `next-md`, `note-capture`,
-`nudge-awareness`, `performance-optimization`, `pr-review`,
-`project-context-generation`, `python-stack`, `react-stack`,
-`release-and-deployment`, `root-cause-classification`, `rust-stack`,
-`security-review`, `spec-format`, `stack-detection`, `test-strategy`,
-`testing-and-validation`.
-
----
-
-## Configuration
-
-Common `.hero/hero.json` fields:
-
-```json
-{
-  "folder": ".hero",
-  "team": {
-    "auto_context": true,
-    "nudge_level": "gentle",
-    "stale_days": 14
-  },
-  "knowledge": {
-    "auto_capture": true,
-    "explainer_synthesis": "review"
-  },
-  "next": {
-    "mode": "personal",
-    "projected": true
-  },
-  "testing": {
-    "framework": "playwright",
-    "mode": "autonomous",
-    "test_dir": "e2e"
-  },
-  "embeddings": {
-    "enabled": true,
-    "scope": ["spec", "knowledge", "convention", "event", "code"]
-  }
-}
-```
-
-See [web/docs/src/configuration/hero-json.md](web/docs/src/configuration/hero-json.md)
-for the full reference.
-
----
-
-## More Docs
-
-- [What Is Hero?](web/docs/src/what-is-hero.md) — plain-English overview
-- [Why Hero](web/docs/src/why-hero.md) — deeper technical evaluation
-- [Getting Started](GETTING-STARTED.md)
-- [Docs Index](web/docs/src/index.md)
-- [Commands Reference](web/docs/src/commands/index.md)
-- [Project Structure](web/docs/src/project-structure.md)
-- [MCP Setup](MCP-SETUP.md)
-- [Team Server](TEAM-SERVER.md)
-- [Cross-Repo Peering](CROSS-REPO-PEERING.md)
-
----
-
-## Build
+Building from source requires the Go version declared by `go.mod`, currently
+Go 1.26.4:
 
 ```bash
 make build
@@ -474,4 +258,14 @@ go build ./...
 go test ./...
 ```
 
-Hero requires Go 1.21+.
+Prebuilt binary installation does not require Go.
+
+## More documentation
+
+- [Getting Started](GETTING-STARTED.md)
+- [MCP Setup](MCP-SETUP.md)
+- [Cross-Repo Peering](CROSS-REPO-PEERING.md)
+- [Team Server and Headless Runtime](TEAM-SERVER.md)
+- [Hosted documentation source](web/docs/src/index.md)
+- [Configuration reference](web/docs/src/configuration/hero-json.md)
+- [Capability status](web/docs/src/reference/capability-status.md)

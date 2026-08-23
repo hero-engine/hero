@@ -1,439 +1,317 @@
 # Getting Started with Hero
 
-Hero is a spec-driven workflow and context engine for AI-augmented
-engineering. The habit is simple: **design before you build, diagnose
-before you fix, hand off before context disappears**.
+Hero is a project memory and verified delivery system for AI-assisted
+engineering. It first preserves the truth a future session needs—intent,
+decisions, corrections, conventions, evidence, failures, and current state.
+Its connected delivery workflow uses that memory to design, implement, audit,
+and verify bounded work.
 
-This guide covers the current commands in the binary and the installed
-harness content.
+This guide uses the current CLI and harness-native workflow surfaces.
 
----
+## 1. Install the binary
 
-## 1. Install
+Prebuilt binaries do not require Go.
 
-**macOS / Linux (Homebrew):**
+macOS or Linux with Homebrew:
 
 ```bash
 brew install hero-engine/tap/hero
 ```
 
-**Linux (install script):**
+Linux install script:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/hero-engine/hero-releases/main/install.sh | sh
 ```
 
-**Windows (Scoop):**
+Windows with Scoop:
 
 ```powershell
 scoop bucket add hero-engine https://github.com/hero-engine/scoop-bucket
 scoop install hero
 ```
 
-**Windows (PowerShell install script):**
+Windows PowerShell install script:
 
 ```powershell
 irm https://raw.githubusercontent.com/hero-engine/hero-releases/main/install.ps1 | iex
 ```
 
-All install options — direct downloads, build-from-source, version pinning —
-are documented in [web/docs/src/getting-started/installation.md](web/docs/src/getting-started/installation.md).
-
-Verify:
+Confirm the binary and available commands:
 
 ```bash
 hero --version
 hero --help
 ```
 
----
+Building from source requires the version in `go.mod`, currently Go 1.26.4.
+See the [installation guide](web/docs/src/getting-started/installation.md) for
+direct downloads and source-build instructions.
 
-## 2. Initialize a Project
+## 2. Initialize one project corpus
 
-From the project root:
+From the repository root:
 
 ```bash
 hero init
+hero install project . --target codex
+hero status
 ```
 
-This creates `.hero/`, including planning folders, knowledge folders,
-configuration, graph/search stores, and handoff surfaces. Commit the
-workspace files that contain specs and knowledge.
-
-Install Hero into your AI coding tool:
+This creates the root `.hero/` corpus and installs Hero into Codex. Replace
+`codex` with any supported target:
 
 ```bash
 hero install project . --target opencode
 hero install project . --target cursor
 hero install project . --target claude
-hero install project . --target codex
 hero install project . --target copilot
 hero install project . --target generic
 hero install project . --target grok
 ```
 
-The Grok target uses Grok Build's native `.grok/agents`, `.grok/skills`,
-`AGENTS.md`, and `.grok/config.toml` surfaces. Hero workflows are installed as
-user-invocable `command-*` skills; no `.grok/commands` directory is required.
+Hero uses each harness's native surface. Claude receives command files. Codex
+and Grok receive `command-*` workflow skills. Other targets receive the native
+instructions and integration files they support. Natural-language requests
+work across Hero-aware harnesses; slash-command syntax is not universal.
 
-The installer copies 29 slash command definitions, 35 agents, and 57
-skills from the active **domain pack**, then registers the `hero mcp`
-server so the harness can call Hero's 52 MCP tools.
-
-Hero ships content in layers: a shared `core/` pack and one or more
-domain packs (`domains/engineering/` for engineering teams,
-`domains/sales/` scaffolded for sales). The active domain comes from
-`hero.json` or `--domain`:
+The default project uses Core plus Engineering, including lightweight PM and QA
+help for engineering work. Focused PM, QA, and Sales setups are optional:
 
 ```bash
-hero install project . --target claude --domain engineering
-hero domain                    # show / switch active domain
+hero domain list
+hero domain enable qa
+hero install project . --target codex
 ```
 
-For monorepos where the harness runs from a sub-folder, register each
-sub-folder as a satellite of the root install:
+## 3. Build useful project memory
 
-```bash
-hero install project . --target cursor --workspace services/auth
-hero install satellites list
-hero install satellites add services/auth
-hero install --repair          # verify symlinks/markers
-```
-
-Other useful install flags:
-
-```bash
-hero install --migrate         # reconcile drifted copies across harnesses
-hero install --no-touch-claude-md  # leave CLAUDE.md alone
-hero check                     # audit workspace + install state
-```
-
----
-
-## 3. Seed Context
-
-In your AI tool, run:
-
-```text
-/scan
-```
-
-Or from a terminal:
+Run a scan after installation:
 
 ```bash
 hero scan
+hero status
 ```
 
-`hero scan` detects the stack, indexes code symbols, ingests planning
-and knowledge files, updates the graph, and opportunistically syncs
-team state when configured.
+The scan detects the stack, indexes code, and seeds project knowledge. Ask your
+harness to “scan this project” when you want the installed workflow to guide the
+same operation.
 
-Capture a few high-value conventions:
+Retrieve context from the corpus:
 
-```text
-/convention codify our API error response format
-/convention document our test naming pattern
+```bash
+hero resume
+hero search "OAuth session handling"
+hero ask "What is our retry policy?"
+hero relevant src/auth/session.go src/auth/middleware.go
+hero why session-retry
+hero blocked
 ```
 
-Those entries become reusable context for future sessions.
+Capture information that must survive the session:
 
----
-
-## 4. Start Every Session Warm
-
-```text
-/resume
+```bash
+hero note session-retry
+hero next
+hero recap --since 2d
 ```
 
-`/resume` calls the graph-backed session brief: mission, in-flight work,
-recent changes, blockers, relevant conventions, and dead ends to skip.
-Natural language such as "pick up where we left off" or "catch me up"
-routes here too.
+Installed workflows can also codify conventions and refresh handoff state. Ask
+the harness to “document our API error convention” or “prepare a session
+handoff”; it will use its installed native workflow surface.
 
-Before switching tools or compacting context:
+## 4. Deliver work against evidence
 
-```text
-/handoff
+Ask the installed harness to “design CSV export.” Review and approve the
+resulting spec before asking it to “deliver CSV export.” For a bug, ask it to
+“diagnose the login timeout” before delivery.
+
+Create an empty CLI scaffold only when you intend to author its required
+sections before delivery:
+
+```bash
+hero spec new csv-export --type feature
 ```
 
-This refreshes NEXT state so the next session starts with the latest
-ask, current direction, blockers, and machine state.
-
----
-
-## 5. Build a Feature
-
-Design first:
-
-```text
-/design add CSV export for user data
-```
-
-Hero writes a spec under `.hero/planning/features/<slug>/spec.md` with
-context, goals, approach, acceptance criteria, and a `## Kickoff`
-section for cold-starting future sessions.
-
-Deliver against the spec:
-
-```text
-/deliver .hero/planning/features/csv-export/spec.md
-```
-
-The delivery workflow loads relevant conventions, past work, risks, and
-acceptance criteria, then coordinates implementation and verification.
-
-Useful CLI checks:
+For an approved, harness-authored spec, the CLI exposes its state and gates:
 
 ```bash
 hero spec score csv-export
-hero spec verify csv-export
+hero spec deliver csv-export --manual
 hero diff .hero/planning/features/csv-export/spec.md
 hero drift csv-export
 hero ac list csv-export
 hero coverage csv-export
 ```
 
-Complete a delivered spec:
+`hero drift` and `hero coverage` return non-zero when they find drift or missing
+coverage. Treat that result as evidence to resolve before verification.
+
+The delivery workflow must finish its Completion Ledger, run the configured
+build/tests, and obtain a fresh independent cold audit. Then close once:
 
 ```bash
-hero spec complete .hero/planning/features/csv-export/spec.md
+hero spec verify csv-export
 ```
 
----
+`hero spec verify` checks the Completion Ledger, cold audit, acceptance-criteria
+coverage, and build/test result. When the hard gates pass, it marks the spec
+complete and archives it. Do not add `hero spec complete` after successful
+verification; that command is not the normal evidence-backed close.
 
-## 6. Fix a Bug
+## 5. Work in a monorepo
 
-Diagnose first:
-
-```text
-/diagnose login times out after 30 seconds
-```
-
-Hero investigates the root cause and creates a bug/fix spec under
-`.hero/planning/bugs/<slug>/spec.md`.
-
-Then deliver:
-
-```text
-/deliver .hero/planning/bugs/login-timeout/spec.md
-```
-
-For imported tracker bugs, sync before starting:
+Initialize Hero once at the monorepo root. Do not run `hero init` in each
+subproject. If sessions open within subfolders, materialize thin harness-native
+satellite trees that point to the one root corpus:
 
 ```bash
-hero sync pull .hero/planning/bugs/login-timeout/spec.md
+hero install satellites                    # guided candidate review
+hero install satellites --yes              # accept detected candidates
+hero install satellites --repair           # repair/reconcile satellites
+hero install satellites --migrate-nested   # print legacy migration plan
 ```
 
----
-
-## 7. Query the Corpus
+For an existing project install, select its scope when repairing:
 
 ```bash
-hero ask "what is our retry policy?"
-hero search "OAuth session handling"
-hero relevant src/auth/session.go src/auth/middleware.go
-hero impact internal/auth/session.go
-hero recap --since 2d
-hero why csv-export
-hero blocked
-hero queue --format kickoff
+hero install project . --target codex --repair
+hero install satellites --repair
+hero check
+hero doctor
 ```
 
-`hero relevant` is the current CLI command for file-aware context.
-The MCP tool is still named `hero_nudge` because it returns nudge-style
-context to agents.
+`hero doctor` diagnoses the running binary, schema, and installed targets.
+`hero check` validates workspace and corpus health.
 
----
-
-## 8. Track and Coordinate Work
+## 6. Query and coordinate work
 
 ```bash
-hero status
 hero list --ready --sort priority
+hero queue --format kickoff
 hero spec claim csv-export --agent codex
 hero spec claim csv-export --release
-hero spec claims
 hero feed --since 1h
-hero next
-hero next team
-```
-
-For dependency and graph state:
-
-```bash
 hero graph csv-export
-hero graph stats
-hero graph reingest specs
-hero ac status
+hero snapshot
 ```
 
-Working across sibling repos (backend + web client + desktop, etc.):
-register each peer and use asynchronous Project Mail requests to coordinate.
-Sending never launches a model or writes the receiver checkout.
+Cross-repository peering is optional and keeps one graph per project. After
+registering reachable sibling repositories, requests travel asynchronously
+through Project Mail:
 
 ```bash
 hero admin repos add app ../app
-hero peer call app --mode=advisory "What's your error envelope?"
-hero handoff order-failure app --reason "Root cause is the API"
-# receiver reviews the Mail request, then explicitly promotes it:
-hero handoff receive <message-id> --type bug
+hero peer manifest
+hero peer list
+hero peer call app --mode=advisory --reason="Confirm the contract" \
+  "Is the error envelope stable?"
+hero handoff order-failure app --reason="Implementation belongs to app"
 ```
 
-See [CROSS-REPO-PEERING.md](CROSS-REPO-PEERING.md) for the full setup
-and async request/receiver-promotion lifecycle.
+Sending does not launch a model or write the receiver tree. The receiver must
+inspect and explicitly promote a work-transfer message. See
+[Cross-Repo Peering](CROSS-REPO-PEERING.md).
 
----
+## 7. Optional integrations
 
-## 9. Tracker, Wiki, and Cloud
-
-Connect a tracker:
-
-```bash
-hero sync connect jira
-hero sync connect github
-hero sync connect linear
-```
-
-Sync issues and specs:
+Tracker access requires a configured provider and credentials. Never put tokens
+in command arguments or committed `hero.json`; use `--token-stdin`, environment
+variables, or `.hero/hero.local.json`.
 
 ```bash
-hero sync import
-hero sync spec .hero/planning/features/csv-export/spec.md
-hero sync link .hero/planning/features/csv-export/spec.md PROJ-123
+hero sync connect --list
+hero sync import --dry-run
 hero sync pull .hero/planning/features/csv-export/spec.md
-hero sync comment PROJ-123 "Root cause found"
-hero sync attach PROJ-123 diagnosis.md
 ```
 
-Publish outward:
+Local project intelligence is available through `hero serve`:
 
 ```bash
-hero publish wiki .hero/specs/csv-export/spec.md
-hero publish pages
+hero serve --add .
+hero serve --list
+hero serve
 ```
 
-Cloud/team graph sync:
-
-```bash
-hero login
-hero sync graph push
-hero sync graph pull
-hero logout
-```
-
----
-
-## 10. Headless Work and Automations
-
-Headless agent execution now lives under `hero agent`:
+Team mode and headless agent execution are preview capabilities. They require
+deliberate auth/network configuration and, for headless work, a model provider,
+credentials, and a supported execution environment:
 
 ```bash
 hero agent run deliver csv-export --dry-run
-hero agent run diagnose login-timeout --provider openai
 hero agent jobs
-hero agent jobs <job-id>
-hero agent approve <job-id>
-hero agent automate list
 ```
 
-Batch pipeline:
+Preview status means these paths are not a promise of unsupervised or
+production-ready execution. Direct runner jobs and team queue jobs currently
+use separate stores; no end-to-end approval pause/resume path between them is
+documented or shipped. See [Team Server](TEAM-SERVER.md).
 
-```bash
-hero pipeline
-hero pipeline --run diagnose
-hero pipeline --run deliver
-```
+## 8. Configuration
 
----
+This complete example is intentionally small and loads through Hero's production
+configuration decoder:
 
-## 11. MCP and Server
-
-`hero install` configures MCP automatically. Manual command:
-
-```bash
-hero mcp
-```
-
-This is a stdio server launched by the harness, not something you
-normally run yourself.
-
-For dashboard/API/team mode:
-
-```bash
-hero serve
-hero serve --add .
-hero serve --list
-hero serve --team --workers 2
-```
-
----
-
-## 12. Configuration
-
-Common `.hero/hero.json` fields:
-
+<!-- hero-config -->
 ```json
 {
   "folder": ".hero",
   "team": {
+    "require_review": true,
+    "stale_days": 14,
     "auto_context": true,
-    "nudge_level": "gentle",
-    "stale_days": 14
+    "nudge_level": "assertive"
   },
   "knowledge": {
-    "auto_capture": true
+    "auto_capture": true,
+    "explainer_synthesis": "review"
   },
   "next": {
     "mode": "personal",
     "projected": true
   },
-  "testing": {
-    "framework": "playwright",
-    "mode": "autonomous",
-    "test_dir": "e2e"
+  "delivery": {
+    "default_mode": "supervised",
+    "autopilot_halt_on": ["drift", "test", "boundary", "lint"]
+  },
+  "verify": {
+    "run_tests": true,
+    "test_command": "go test ./..."
   }
 }
 ```
 
-Generated/local files usually ignored:
+Commit `.hero/hero.json`. Keep secrets and personal overrides in the ignored
+`.hero/hero.local.json` or protected environment variables.
+
+Generated or machine-local files should remain ignored:
 
 ```gitignore
 .hero/index.db
 .hero/graph.db
+.hero/events.log
 .hero/hero.local.json
 .hero/next/*.local.md
 .hero/sessions/
 ```
 
----
+The complete decoder-backed example and field reference are in
+[Hero configuration](web/docs/src/configuration/hero-json.md).
 
-## Quick Reference
+## Quick reference
 
-Slash commands (`/<name>`) run inside AI tools (Claude Code, Cursor, etc.).
-CLI commands (`hero <name>`) run in the terminal. Some commands exist on both surfaces.
+| Goal | Surface |
+|---|---|
+| Resume project context | Ask the harness to resume, or run `hero resume` |
+| Design or diagnose work | Use the installed harness-native workflow |
+| Inspect ready work | `hero queue --format kickoff` |
+| Search project memory | `hero search "<query>"` |
+| Get file-aware context | `hero relevant <paths>` |
+| Verify and close delivery | `hero spec verify <slug>` |
+| Diagnose binary/install drift | `hero doctor` |
+| Check workspace health | `hero check` |
+| Inspect exact installed inventory | `hero doctor` |
+| Inspect exact MCP inventory | MCP `tools/list` after filtering |
 
-| I want to... | Run this | Surface |
-|---|---|---|
-| Warm up a session | `/resume` | slash |
-| Preserve handoff state | `/handoff` | slash |
-| Design a feature | `/design <description>` | both |
-| Diagnose a bug | `/diagnose <description>` | both |
-| Deliver work | `/deliver <spec-path-or-slug>` | both |
-| Route natural language | `/hero <request>` or `hero do "<request>"` | both |
-| Scan a repo | `/scan` or `hero scan` | both |
-| Search the corpus | `hero search "<query>"` | CLI |
-| Ask a question | `hero ask "<question>"` | CLI |
-| Get file-aware context | `hero relevant <paths>` | CLI |
-| See ready work | `hero queue --format kickoff` | CLI |
-| Create a spec from CLI | `hero spec new <slug>` | CLI |
-| Claim a spec | `hero spec claim <slug>` | CLI |
-| Verify a spec | `hero spec verify <slug>` | CLI |
-| Complete a spec | `hero spec complete <spec-path>` | CLI |
-| Find blockers | `hero blocked` | CLI |
-| Trace origins | `hero why <target>` | CLI |
-| Generate tests | `hero test generate <slug>` | CLI |
-| Record a demo | `hero spec demo record <slug>` | CLI |
-| Find high-churn undocumented areas | `hero suggest --top 10` | CLI |
-| Run headlessly | `hero agent run deliver <slug>` | CLI |
-| Validate docs | `hero docs check` | CLI |
-| Upgrade installed harness files | `hero upgrade` | CLI |
+Next: [MCP Setup](MCP-SETUP.md) or the
+[hosted documentation source](web/docs/src/index.md).

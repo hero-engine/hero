@@ -74,8 +74,15 @@ func TestMarkdownInvocationsResolveAgainstRootCmd(t *testing.T) {
 			requireAny: false,
 		},
 		{
-			label:      "top-level",
-			files:      []string{"README.md", "GETTING-STARTED.md", "domains/engineering/AGENTS.md"},
+			label: "top-level",
+			files: []string{
+				"README.md",
+				"GETTING-STARTED.md",
+				"MCP-SETUP.md",
+				"CROSS-REPO-PEERING.md",
+				"TEAM-SERVER.md",
+				"domains/engineering/AGENTS.md",
+			},
 			requireAny: true,
 		},
 		{

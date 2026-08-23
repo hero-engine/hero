@@ -2,20 +2,20 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-08-23T17:23:32Z · projected from 665 source nodes_
+_Last refreshed: 2026-08-23T17:50:45Z · projected from 665 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | maturing | cmd/, internal/ | 1h ago | hero-runner |
+| core | maturing | cmd/, internal/ | 2h ago | hero-runner |
 | docs | maturing | web/docs/ | 41d ago | — |
 | domains/chat | maturing | domains/chat/ | 36d ago | — |
 | domains/engineering | maturing | domains/engineering/ | 4d ago | — |
 | domains/pm | maturing | domains/pm/ | 36d ago | — |
 | domains/qa | concept | domains/qa/ | — | — |
 | domains/sales | maturing | domains/sales/ | 2d ago | — |
-| landing | building | web/landing/ | 1h ago | hero-landing-page |
+| landing | building | web/landing/ | 2h ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
 | serve | building | internal/serve/ | 1d ago | agent-outposts |
 | (unassigned) | — | — | — | 256 specs without surface |
@@ -35,7 +35,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 16/20 specs done
 - **"Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"** (surface: —) — 0/9 specs done
 - **Hero Killer Features — Agent Effectiveness, Team Power, Living Specs** (surface: core, serve) — 10/11 specs done
-- **"Hero v0.34 Public Release Readiness"** (surface: core, serve) — 4/12 specs done
+- **"Hero v0.34 Public Release Readiness"** (surface: core, serve) — 5/12 specs done
 - **Hero Platform — Headless Execution, Team Automation, and Shared Visibility** (surface: core, serve) — 3/8 specs done
 - **"Hero Doesn't Lie — Self-Consistency Between Generated Guidance, Hero's Own Writes, and Hero's Actual Contract"** (surface: core) — 0/5 specs done
 - **Hero Surface Architecture — One Surface, Every Layer, Every Role** (surface: serve) — 8/9 specs done
@@ -52,8 +52,8 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — hero-hosted-docs-remediation, hero-positioning, hero-licensing-boundary-and-provenance, hero-public-truth-baseline, dual-mode-pm-qa-capability-packs, qa-public-pack, pm-public-pack, install-upgrade-contract-coverage
-- **core** — node-index-repo-identity-collision, hero-desktop-release-artifact-contract
+- **(unassigned)** — hero-root-docs-remediation, hero-hosted-docs-remediation, hero-positioning, hero-licensing-boundary-and-provenance, hero-public-truth-baseline, dual-mode-pm-qa-capability-packs, qa-public-pack, pm-public-pack, install-upgrade-contract-coverage
+- **core** — node-index-repo-identity-collision
 - **domains/engineering** — grok-build-harness-target
 - **serve** — cross-project-mail-read-contract
 
@@ -67,7 +67,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Open risks & blockers
 
-- **Blocked specs (18):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-apache-license-grant-gate` (waits on hero-v034-release-prep, hero-public-repo-readiness); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-docs-site); `hero-continuity-proof-demo` (waits on hero-public-repo-readiness); `hero-landing-message-refresh` (waits on hero-root-docs-remediation); `hero-landing-page` (waits on hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-landing-page, hero-distribution, hero-demo-content); `hero-public-docs-drift-guard` (waits on hero-root-docs-remediation, hero-landing-message-refresh, hero-public-repo-readiness, hero-continuity-proof-demo); `hero-public-repo-readiness` (waits on hero-landing-message-refresh); `hero-public-visibility-launch-gate` (waits on hero-apache-license-grant-gate, hero-v034-release-prep); `hero-team-server` (waits on hero-runner); `hero-v034-release-prep` (waits on hero-public-docs-drift-guard); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection); `wire-checks-to-boundaries` (waits on spec-contract-enums-unified).
+- **Blocked specs (17):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-apache-license-grant-gate` (waits on hero-v034-release-prep, hero-public-repo-readiness); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-docs-site); `hero-continuity-proof-demo` (waits on hero-public-repo-readiness); `hero-landing-page` (waits on hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-landing-page, hero-distribution, hero-demo-content); `hero-public-docs-drift-guard` (waits on hero-landing-message-refresh, hero-public-repo-readiness, hero-continuity-proof-demo); `hero-public-repo-readiness` (waits on hero-landing-message-refresh); `hero-public-visibility-launch-gate` (waits on hero-apache-license-grant-gate, hero-v034-release-prep); `hero-team-server` (waits on hero-runner); `hero-v034-release-prep` (waits on hero-public-docs-drift-guard); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection); `wire-checks-to-boundaries` (waits on spec-contract-enums-unified).
 - **Stale-in-flight (3):** `retrieval-contradiction-detection` (44d), `agent-outposts` (42d), `team-connect` (42d).
 - **Aged open bugs (16):** `install-target-emits-both-claude-and-agents-md` (open 100d), `next-project-file-conflict-not-regenerated` (open 81d), `desktop-sidebar-mcp-not-running` (open 80d), `hihcp-agents-md-harness-agnostic` (open 75d), `hihcp-mcp-auto-reconnect` (open 75d), `hihcp-mcp-first-turn-readiness` (open 75d), `hihcp-permission-bridge-validation` (open 75d), `hihcp-agent-loop-error-recovery` (open 75d), `hihcp-rgignore` (open 75d), `jira-connection-onboarding-misleads-agents` (open 40d), `resume-emits-dead-recall-command` (open 40d), `tracker-backed-diagnosis-publication-contract-broken` (open 35d), `tracker-semantic-priority-field-mapping` (open 34d), `jira-import-classification-obscures-work-items` (open 34d), `ledger-signoff-substring-match-fails-open` (open 29d), `graph-unpartitioned-writers-duplicate-nodes` (open 29d).
 - **Unassigned specs (256) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.

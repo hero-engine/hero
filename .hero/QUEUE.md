@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-23T17:23:33Z · 84 ready specs_
+_Generated: 2026-08-23T17:50:45Z · 84 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -29,28 +29,28 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## hero-root-docs-remediation — "Hero Root Documentation Truth Repair"
-_feature · planning · horizon: now_
-
-Repairs the highest-risk public instructions before broader hosted-doc and landing publication.
-
-**Status:** planning — blocked on the shipped-surface inventory and positioning authority.
-
-**Pick up at:** apply the P0 correction packet to root docs, then exercise every changed quickstart in a clean workspace.
-
-→ `.hero/planning/initiatives/hero-marketing/hero-root-docs-remediation/spec.md`
-
-**Files:** `README.md`, `GETTING-STARTED.md`, `MCP-SETUP.md`, `CROSS-REPO-PEERING.md`, `TEAM-SERVER.md`, root metadata and generated public guidance
-**Skip:** `web/docs/src/` and landing publication.
-
----
-
 ## hero-marketing — "Hero v0.34 Public Release Readiness"
 _initiative · planning · horizon: now_
 
 _Run opener — arm with `/drive hero-marketing`_
 
 Deliver the complete v0.34 public-readiness path: an inventory of the shipped product, memory-first positioning, current root and hosted documentation, a current public site, repository-readiness materials, a reproducible product proof, drift guards, and a clean release candidate. The owner has authorized preparing this repository for an Apache-2.0 grant. Adding the license, changing repository visibility, and publishing the release remain explicit final mutations rather than prep work.
+
+---
+
+## hero-landing-message-refresh — "Hero Landing Message and Proof Refresh"
+_feature · planning · horizon: now_
+
+Publishes the repaired story only after root and hosted docs agree, while reserving final proof claims for the later continuity demonstration.
+
+**Status:** planning — blocked on documentation remediation; `heroengine.ai` currently does not resolve.
+
+**Pick up at:** translate the approved positioning house and completed evidence into the smallest coherent landing hierarchy, then restore DNS/deployment and gate any still-unproven claim.
+
+→ `.hero/planning/initiatives/hero-marketing/hero-landing-message-refresh/spec.md`
+
+**Files:** `web/landing/site/`, shared `web/` metadata/navigation, real product captures, docs destinations
+**Skip:** broad brand redesign, campaign calendar, pricing, or unsupported roadmap promises.
 
 ---
 

@@ -1,11 +1,9 @@
 package cli
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"testing"
 )
 
@@ -42,35 +40,45 @@ func TestCanonicalCountsNonZero(t *testing.T) {
 	}
 }
 
-// TestDocCountsMatchManifest ties the published counts in README.md and
-// GETTING-STARTED.md to the canonical install manifest. If content is
-// added/removed and the docs aren't refreshed, this fails — the drift
-// guard the runtime checker's regex can't fully cover (the README table
-// format isn't regex-matched at runtime).
-func TestDocCountsMatchManifest(t *testing.T) {
+// TestNarrativeDocsAvoidMutableInventoryCounts keeps changing install/runtime
+// inventories out of the onboarding narrative. Exact installed values belong
+// to `hero doctor`; the filtered MCP registry belongs to `tools/list`.
+func TestNarrativeDocsAvoidMutableInventoryCounts(t *testing.T) {
 	root := repoRootForTest(t)
-	agents, commands, skills, err := canonicalInstallCounts(activeDomainForRoot(root))
-	if err != nil {
-		t.Fatalf("canonicalInstallCounts: %v", err)
-	}
-
-	// GETTING-STARTED.md prose (whitespace-collapsed to survive line wraps).
-	getting := collapseWS(readDoc(t, root, "GETTING-STARTED.md"))
-	wantProse := fmt.Sprintf("%d slash command definitions, %d agents, and %d skills", commands, agents, skills)
-	if !strings.Contains(getting, wantProse) {
-		t.Errorf("GETTING-STARTED.md missing canonical counts; want substring %q", wantProse)
-	}
-
-	// README.md count table (one row per surface).
-	readme := readDoc(t, root, "README.md")
-	for _, want := range []string{
-		fmt.Sprintf("Slash command definitions | %d", commands),
-		fmt.Sprintf("Agent definitions | %d", agents),
-		fmt.Sprintf("Skill definitions | %d", skills),
-	} {
-		if !strings.Contains(readme, want) {
-			t.Errorf("README.md count table missing canonical row %q", want)
+	mutableCount := regexp.MustCompile(`(?i)\b\d+\s+(?:slash\s+command\s+definitions|commands|specialist\s+agents|agents|skills|mcp\s+tools)\b`)
+	for _, name := range []string{"README.md", "GETTING-STARTED.md", "MCP-SETUP.md"} {
+		if match := mutableCount.FindString(readDoc(t, root, name)); match != "" {
+			t.Errorf("%s contains mutable narrative inventory count %q", name, match)
 		}
+	}
+}
+
+func TestRootDocsUseSpecPathForSyncPull(t *testing.T) {
+	root := repoRootForTest(t)
+	for _, name := range []string{"README.md", "GETTING-STARTED.md", "MCP-SETUP.md", "CROSS-REPO-PEERING.md", "TEAM-SERVER.md"} {
+		for _, invocation := range ExtractInvocations(name, []byte(readDoc(t, root, name))) {
+			if len(invocation.Args) < 2 || invocation.Args[0] != "sync" || invocation.Args[1] != "pull" {
+				continue
+			}
+			if len(invocation.Args) < 3 || !regexp.MustCompile(`^\.hero/.+/spec\.md$`).MatchString(invocation.Args[2]) {
+				t.Errorf("%s:%d uses slug-only or missing sync-pull path: %q", name, invocation.Line, invocation.Raw)
+			}
+		}
+	}
+}
+
+func TestRootDocsRejectUnshippedApprovalBridgeAndSecretArgv(t *testing.T) {
+	root := repoRootForTest(t)
+	for _, name := range []string{"README.md", "GETTING-STARTED.md", "MCP-SETUP.md", "CROSS-REPO-PEERING.md", "TEAM-SERVER.md"} {
+		content := readDoc(t, root, name)
+		for _, forbidden := range []string{"hero agent approve", "--auth-token", "HERO_TEAM_TOKEN"} {
+			if regexp.MustCompile(regexp.QuoteMeta(forbidden)).MatchString(content) {
+				t.Errorf("%s contains forbidden root-doc guidance %q", name, forbidden)
+			}
+		}
+	}
+	if content := readDoc(t, root, "TEAM-SERVER.md"); !regexp.MustCompile(`HERO_AUTH_TOKEN`).MatchString(content) {
+		t.Error("TEAM-SERVER.md must direct the process manager to inject HERO_AUTH_TOKEN")
 	}
 }
 
@@ -81,12 +89,4 @@ func readDoc(t *testing.T, root, name string) string {
 		t.Fatalf("read %s: %v", name, err)
 	}
 	return string(data)
-}
-
-var wsRun = regexp.MustCompile(`\s+`)
-
-// collapseWS reduces every run of whitespace to a single space so
-// substring checks survive line wrapping in the source markdown.
-func collapseWS(s string) string {
-	return wsRun.ReplaceAllString(s, " ")
 }
