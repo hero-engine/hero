@@ -83,6 +83,38 @@ class ReleaseCandidateTests(unittest.TestCase):
         self.assertIn("startsWith(github.ref, 'refs/tags/v')", workflow)
         self.assertIn("scripts/release_candidate.py", workflow)
         self.assertIn("test -f LICENSE", workflow)
+        candidate_job = workflow.split("  candidate:", 1)[1].split("  goreleaser:", 1)[0]
+        self.assertNotIn("actions/upload-artifact", candidate_job)
+        self.assertIn("GITHUB_STEP_SUMMARY", candidate_job)
+
+    def test_candidate_notes_preserve_public_maturity_and_product_boundaries(self):
+        notes = (SCRIPT.parent.parent / "docs" / "releases" / "v0.34.0-candidate.md").read_text()
+        for expected in (
+            "Project memory and verified delivery are shipped",
+            "optional and require explicit setup",
+            "headless runtime remains preview",
+            "Hero Code and Hero Cloud remain separate proprietary products",
+            "Sprout remains a separate public MIT-licensed project",
+            "prepared, not published",
+        ):
+            self.assertIn(expected, notes)
+        self.assertNotIn("Hero is open source", notes)
+
+    def test_launch_checklist_has_every_artifact_and_explicit_gates(self):
+        checklist = (SCRIPT.parent.parent / "docs" / "releases" / "v0.34.0-launch-checklist.md").read_text()
+        for expected in (
+            "hero_0.34.0_darwin_amd64.tar.gz",
+            "hero_0.34.0_darwin_arm64.tar.gz",
+            "hero_0.34.0_linux_amd64.tar.gz",
+            "hero_0.34.0_linux_arm64.tar.gz",
+            "hero_0.34.0_windows_amd64.zip",
+            "hero-v0.34.0.cdx.json",
+            "THIRD_PARTY_NOTICES.txt",
+            "provenance.json",
+            "checksums.txt",
+        ):
+            self.assertIn(expected, checklist)
+        self.assertEqual(10, checklist.count("| GATED |"))
 
 
 if __name__ == "__main__":

@@ -17,15 +17,20 @@ type requirement struct {
 
 var requirements = []requirement{
 	{"v-prefixed binary version", "goreleaser", "main.version=v{{.Version}}", 0},
-	{"current checkout runtime", "release", "actions/checkout@v6", 0},
-	{"artifact uploader", "release", "actions/upload-artifact@v4", 0},
+	{"current checkout runtime", "release", "actions/checkout@v6", 2},
+	{"artifact uploader", "release", "actions/upload-artifact@v4", 1},
+	{"manual candidate isolation", "release", "if: github.event_name == 'workflow_dispatch'", 1},
+	{"tag-only publisher", "release", "if: startsWith(github.ref, 'refs/tags/v')", 1},
+	{"candidate builder", "release", "python3 scripts/release_candidate.py", 1},
+	{"final Hero license gate", "release", "test -f LICENSE", 1},
+	{"final notice gate", "release", "test -f THIRD_PARTY_NOTICES.txt", 1},
 	{"stable artifact name", "release", "name: hero-darwin-arm64", 1},
 	{"Darwin ARM64 binary selection", "release", "*/hero_darwin_arm64_*/hero", 0},
 	{"candidate count", "release", `candidate_count="$(printf '%s\n' "$candidate_list" | sed '/^$/d' | wc -l | tr -d ' ')"`, 0},
 	{"exactly-one guard", "release", `if [ "$candidate_count" -ne 1 ]; then`, 0},
 	{"raw executable staging", "release", `install -m 0755 "$candidate" release-artifacts/hero-darwin-arm64/hero`, 0},
 	{"checksum record", "release", `release-artifacts/hero-darwin-arm64/hero.sha256`, 0},
-	{"missing-file failure", "release", "if-no-files-found: error", 0},
+	{"missing-file failure", "release", "if-no-files-found: error", 1},
 	{"bounded retention", "release", "retention-days: 90", 0},
 }
 

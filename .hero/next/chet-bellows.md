@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-23T21:39:41Z
+updated: 2026-08-23T21:44:37Z
 repo: hero-engine/hero
 ---
 
@@ -10,13 +10,13 @@ repo: hero-engine/hero
 
 > Ship a verified Hero release containing the completed MCP tool metadata contract for hero-code while keeping the superseded interactive CLI donor branch evidence-only.
 
-_possibly stale — 26 commit(s) since, last set 9d 5h ago_
+_possibly stale — 27 commit(s) since, last set 9d 5h ago_
 
 ## Last user ask
 
 > Remove the cross-tool continuity detour, keep any synthetic install demo optional, and finish the real v0.34 open-source release preparation.
 
-_possibly stale — 2 commit(s) since, last set 38m ago_
+_possibly stale — 3 commit(s) since, last set 43m ago_
 
 ## Suggested next prompt
 

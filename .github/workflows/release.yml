@@ -46,13 +46,18 @@ jobs:
           --base "${{ inputs.baseline }}"
           --output ".build/release-candidate/${{ inputs.version }}"
 
-      - name: Upload candidate evidence
-        uses: actions/upload-artifact@v4
-        with:
-          name: hero-${{ inputs.version }}-candidate
-          path: .build/release-candidate/${{ inputs.version }}/
-          if-no-files-found: error
-          retention-days: 30
+      - name: Summarize candidate evidence
+        run: |
+          {
+            echo '## Candidate provenance'
+            echo '```json'
+            cat ".build/release-candidate/${{ inputs.version }}/provenance.json"
+            echo '```'
+            echo '## Candidate checksums'
+            echo '```text'
+            cat ".build/release-candidate/${{ inputs.version }}/checksums.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   goreleaser:
     if: startsWith(github.ref, 'refs/tags/v')
