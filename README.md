@@ -269,3 +269,14 @@ Prebuilt binary installation does not require Go.
 - [Hosted documentation source](web/docs/src/index.md)
 - [Configuration reference](web/docs/src/configuration/hero-json.md)
 - [Capability status](web/docs/src/reference/capability-status.md)
+
+## Project policy
+
+- [Contributing](CONTRIBUTING.md)
+- [Support](SUPPORT.md)
+- [Security](SECURITY.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+
+This repository remains private and does not yet carry a root open-source
+license. The policy files prepare the public contribution and reporting routes;
+they do not activate those routes or grant redistribution rights.

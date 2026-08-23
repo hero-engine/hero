@@ -1,0 +1,7 @@
+# file	type	fingerprint	disposition
+internal/config/integrations_test.go	embedded-credential-url	55402dd736cce191	synthetic invalid-provider fixture
+internal/config/integrations_test.go	embedded-credential-url	4a9162536a95cad9	synthetic invalid-provider fixture
+internal/wiki/wiki.go	embedded-credential-url	321f18808ab399d0	runtime interpolation, no stored credential; separate hardening review
+web/docs/src/configuration/tracker-setup.md	provider-token	60312e2c3ce61527	visibly synthetic documentation placeholder
+configuration/tracker-setup/index.html	provider-token	0fec53d4746fa334	historical generated-docs rendering of synthetic placeholder
+search/search_index.json	provider-token	f039bbb3c0355726	historical generated-docs index of synthetic placeholder

@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-23T19:27:12Z
+updated: 2026-08-23T20:06:17Z
 repo: hero-engine/hero
 ---
 
@@ -10,13 +10,11 @@ repo: hero-engine/hero
 
 > Ship a verified Hero release containing the completed MCP tool metadata contract for hero-code while keeping the superseded interactive CLI donor branch evidence-only.
 
-_possibly stale — 20 commit(s) since, last set 9d 3h ago_
+_possibly stale — 21 commit(s) since, last set 9d 4h ago_
 
 ## Last user ask
 
-> Deliver all v0.34 public-release prep: refresh docs and site around Hero's memory-first two-system story, ready the repository and release candidate, and stop before final license, visibility, and publication mutations.
-
-_possibly stale — 4 commit(s) since, last set 3h 39m ago_
+> Prepare Hero v0.34 for public open-source release without making the repository public yet.
 
 ## Suggested next prompt
 

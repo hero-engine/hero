@@ -1,0 +1,67 @@
+name: Bug report
+description: Report a reproducible problem in the Hero CLI or repository content
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. Do not include credentials, private repository content, or security vulnerabilities. Follow SECURITY.md for private reports.
+  - type: input
+    id: version
+    attributes:
+      label: Hero version
+      description: Run `hero version` or provide the release tag/commit.
+      placeholder: release tag or commit SHA
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS
+        - Linux
+        - Windows
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: harness
+    attributes:
+      label: Harness or integration
+      description: For example Codex, Claude, Cursor, or direct CLI use.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Provide the smallest safe sequence that reproduces the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Redacted evidence
+      description: Paste only logs or screenshots that have credentials and private project data removed.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed credentials, personal data, and private repository content.
+          required: true
+        - label: This is not a security vulnerability.
+          required: true

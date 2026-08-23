@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-23T19:27:12Z · 84 ready specs_
+_Generated: 2026-08-23T20:06:17Z · 84 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -29,28 +29,28 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## hero-public-repo-readiness — "Hero Public Repository Readiness"
-_feature · planning · horizon: now_
-
-Prepares the private repository for safe public exposure without performing the exposure.
-
-**Status:** planning — public source links are currently dead and repository contents/settings have not passed a public-exposure audit.
-
-**Pick up at:** inspect the complete public blast radius, then author the minimum repository policies and templates from verified support and security routes.
-
-→ `.hero/planning/initiatives/hero-marketing/hero-public-repo-readiness/spec.md`
-
-**Files/components:** `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `SUPPORT.md`, `.github/ISSUE_TEMPLATE/`, pull-request templates, repository metadata/settings checklist, secret/private-reference scan report
-**Skip:** broad community programming, CLA infrastructure without a demonstrated need, license creation, and repository visibility changes.
-
----
-
 ## hero-marketing — "Hero v0.34 Public Release Readiness"
 _initiative · planning · horizon: now_
 
 _Run opener — arm with `/drive hero-marketing`_
 
 Deliver the complete v0.34 public-readiness path: an inventory of the shipped product, memory-first positioning, current root and hosted documentation, a current public site, repository-readiness materials, a reproducible product proof, drift guards, and a clean release candidate. The owner has authorized preparing this repository for an Apache-2.0 grant. Adding the license, changing repository visibility, and publishing the release remain explicit final mutations rather than prep work.
+
+---
+
+## hero-continuity-proof-demo — "Hero Cross-Tool Continuity Proof"
+_feature · planning · horizon: now_
+
+Creates the must-win proof behind Hero's supervision-reduction claim.
+
+**Status:** planning — blocked on approved claims, positioning, and a public-safe repository fixture.
+
+**Pick up at:** define a deterministic fixture and evidence rubric before recording any output or assets.
+
+→ `.hero/planning/initiatives/hero-marketing/hero-continuity-proof-demo/spec.md`
+
+**Files:** `.hero/NEXT.md`, `.hero/events.log`, `.hero/planning/`, `internal/cli/verify.go`, repeatable fixture/scripts, evidence transcript, real captures, and landing/docs-ready assets
+**Skip:** a broad GIF/video asset catalog or synthetic output presented as a capture.
 
 ---
 
