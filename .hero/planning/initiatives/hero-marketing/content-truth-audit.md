@@ -56,7 +56,7 @@ The baseline child must turn every P0 row into a correction packet naming affect
 - Documentation dependencies are loosely bounded and warn about future incompatibility with MkDocs 2.0.
 - Canonical observed inventory is 29 workflow commands, 35 agents, 57 skills, and 82 runtime MCP tools, yet root and hosted pages disagree. Mutable counts should appear only in generated reference surfaces.
 - Landing presents fictional `hero status` output with a nonexistent `diagnosing` status as if it were captured product output.
-- “Slash commands inside your AI tool” is wrong for Codex, which consumes Hero workflows as skills. Harness copy must describe native surfaces per all six targets.
+- “Slash commands inside your AI tool” is wrong for Codex, which consumes Hero workflows as skills. Harness copy must describe native surfaces for all seven supported install targets.
 - Root/docs repository trees still show a local `cloud/` tree that moved out of this repository.
 - Peering copy implies one cross-repo graph or synchronous peer execution; current semantics are one graph per project plus manifests, asynchronous Project Mail, advisory/spec-out calls, and explicit handoff/promotion.
 - PM and Sales are real domain packs but lack sufficient release-level evidence for blanket production-readiness claims.
@@ -102,7 +102,7 @@ The baseline child expands this into an exhaustive registry covering every publi
 | PM and Sales packs | maturity open | Release-level smoke journey for each pack. |
 | Cloud/team/outposts | unknown/preview/planned until resolved | Public access path, ownership, support level, and sibling-repo evidence. |
 | Hero licensing/open-source posture | Apache-2.0 candidate; publication prohibited pending gate | Sole-owner authorization, third-party dependency/asset inventory, explicit final mutation approval, and repository `LICENSE`. |
-| Sprout licensing | public MIT dependency; pinned module tag still stale | `astroville/sprout` has a recognized MIT license on `main`; publish a licensed patch tag and update Hero from unlicensed `v0.1.0` before dependency clearance. |
+| Sprout licensing | cleared as a separate MIT dependency | Hero now pins `github.com/bdwheeler/sprout` at immutable licensed revision `v0.1.1-0.20260822024445-cd3f0c4a2208`; the exact module archive includes the MIT license and is content-identical to `v0.1.0` outside licensing metadata. See `hero-licensing-boundary-and-provenance`. |
 | `hero-code` / `hero-cloud` | proprietary | Boundary validation proving neither repository is included in Hero's grant or public claims. |
 
 ## Delivery scope
@@ -127,12 +127,15 @@ The baseline child expands this into an exhaustive registry covering every publi
 
 ## Open questions
 
-1. Are sole-owner authorization and all bundled third-party asset obligations recorded for the proposed Apache-2.0 grant?
-2. Which account/workflow owns docs and landing deployment, and what restores `heroengine.ai` DNS?
-3. Which cloud, team, outpost, domain-pack, and code-host capabilities are publicly supportable at v0.34?
-4. Which audience leads: individual AI-native engineer or engineering lead at a 5–50-person team?
-5. Should roster counts appear anywhere outside generated reference pages? Recommendation: no.
-6. When the readiness packets are green, will the owner explicitly approve the Apache grant and, separately, public visibility/v0.34 publication?
+1. Which account/workflow owns docs and landing deployment, and what restores `heroengine.ai` DNS?
+2. Which cloud, team, outpost, domain-pack, and code-host capabilities are publicly supportable at v0.34?
+3. When the readiness packets are green, will the owner explicitly approve the Apache grant and, separately, public visibility/v0.34 publication?
+
+Resolved in the initiative:
+
+- The owner authorized preparation of the sole-owned Hero repository for an Apache-2.0 grant. The exact repository, proprietary-product, Sprout, dependency, asset, and notice boundaries are recorded by `hero-licensing-boundary-and-provenance`; the grant itself remains a later explicit gate.
+- AI-native engineers and hands-on technical leads in long-lived codebases are the lead audience. Engineering leads, platform teams, and multi-repository maintainers are secondary; focused PM, QA, and Sales setups are maturity-labeled expansion paths.
+- Mutable roster counts stay out of positioning and narrative pages. If needed at all, they belong only on generated reference surfaces.
 
 ## Completion evidence expected
 

@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-23T16:28:59Z · 81 ready specs_
+_Generated: 2026-08-23T16:47:58Z · 85 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -29,19 +29,19 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## hero-positioning — "Hero Positioning — Durable Project Memory and Verified Delivery"
+## hero-root-docs-remediation — "Hero Root Documentation Truth Repair"
 _feature · planning · horizon: now_
 
-Defines the message hierarchy every repaired Hero surface inherits: project memory first, delivery system second, and a reinforcing loop in which each verified delivery leaves better context for the next session.
+Repairs the highest-risk public instructions before broader hosted-doc and landing publication.
 
-**Status:** planning — relocated from the original top-level feature and reframed; the shipped-surface inventory must land first.
+**Status:** planning — blocked on the shipped-surface inventory and positioning authority.
 
-**Pick up at:** use the baseline registry to choose the lead audience and draft the messaging house without promoting unverified capabilities.
+**Pick up at:** apply the P0 correction packet to root docs, then exercise every changed quickstart in a clean workspace.
 
-→ `.hero/planning/initiatives/hero-marketing/hero-positioning/spec.md`
+→ `.hero/planning/initiatives/hero-marketing/hero-root-docs-remediation/spec.md`
 
-**Files:** `.hero/planning/initiatives/hero-marketing/content-truth-audit.md`, `.hero/marketing/positioning.md`, `README.md`, `web/docs/src/what-is-hero.md`, `web/landing/site/index.html`
-**Skip:** “spec layer” as category, mutable roster counts as proof, and “Correct your AI once” as an absolute promise.
+**Files:** `README.md`, `GETTING-STARTED.md`, `MCP-SETUP.md`, `CROSS-REPO-PEERING.md`, `TEAM-SERVER.md`, root metadata and generated public guidance
+**Skip:** `web/docs/src/` and landing publication.
 
 ---
 
@@ -51,6 +51,22 @@ _initiative · planning · horizon: now_
 _Run opener — arm with `/drive hero-marketing`_
 
 Deliver the complete v0.34 public-readiness path: an inventory of the shipped product, memory-first positioning, current root and hosted documentation, a current public site, repository-readiness materials, a reproducible product proof, drift guards, and a clean release candidate. The owner has authorized preparing this repository for an Apache-2.0 grant. Adding the license, changing repository visibility, and publishing the release remain explicit final mutations rather than prep work.
+
+---
+
+## hero-hosted-docs-remediation — "Hero Hosted Documentation Truth and Capability Refresh"
+_feature · planning · horizon: now_
+
+Turns a structurally green but factually drifting docs site into the authoritative product reference.
+
+**Status:** planning — blocked on the claim baseline and positioning source.
+
+**Pick up at:** map every `web/docs/src` page and navigation entry to claim-registry rows, identify why newer source pages are absent from the June 11 live deployment, then resolve P0/P1 content before adding missing capability coverage.
+
+→ `.hero/planning/initiatives/hero-marketing/hero-hosted-docs-remediation/spec.md`
+
+**Files:** `web/docs/src/`, `web/docs/mkdocs.yml`, documentation generation scripts and navigation
+**Skip:** landing-page copy and broad visual rebranding.
 
 ---
 
@@ -599,6 +615,22 @@ _feature · planning · horizon: now_
 
 ---
 
+## hero-transparent-comparisons — "Transparent Comparisons — Help People Choose Hero or an Alternative Honestly"
+_feature · planning · horizon: next_
+
+Adds a HashiCorp-style comparison section that helps readers honestly choose between Hero and adjacent spec, agent, memory, and context tools.
+
+**Status:** planning — comparison posture and initial candidate set are defined; no public copy exists yet.
+
+**Pick up at:** refresh every candidate from first-party sources, then write the shared comparison matrix and the Hero vs. Spec Kit page first.
+
+→ `.hero/planning/features/hero-transparent-comparisons/spec.md`
+
+**Files:** `.hero/marketing/positioning.md`, `web/docs/src/`, `web/landing/site/index.html`, `.hero/knowledge/notes/spec-kit-and-swappable-workflow-providers/`
+**Skip:** attack copy, unverifiable feature tables, and framing every adjacent tool as a direct replacement.
+
+---
+
 ## hero-qa — Hero QA — Quality Assurance Domain Pack
 _feature · planning · horizon: next_
 
@@ -747,10 +779,24 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
+## hero-demo-content — Hero Demo Content — GIFs, Screencast, Asciinema, Social Cards
+_feature · planning · horizon: someday_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-demo-content/spec.md)_
+
+---
+
 ## hero-distribution — Hero Distribution — Homebrew, Install Script, GitHub Releases
 _feature · planning · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-distribution/spec.md)_
+
+---
+
+## hero-docs-site — Hero Docs Site — Public, Searchable, Self-Serve Reference
+_feature · planning · horizon: someday_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-docs-site/spec.md)_
 
 ---
 

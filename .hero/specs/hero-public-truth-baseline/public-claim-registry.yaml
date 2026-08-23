@@ -340,7 +340,7 @@ claims:
     evidence:
       - contracts/codehostbroker/contract.go
       - internal/serve/mcp_tools_code_host.go
-      - internal/cli/code_host.go
+      - internal/cli/code_host_broker.go
     surfaces: [README.md, web/docs/src/cli/overview.md, web/docs/src/cli/server-and-mcp.md]
     owner: hero-hosted-docs-remediation
     resolution: pending-update
@@ -370,7 +370,7 @@ claims:
     prerequisites: Registered sibling repositories with reachable paths and peer manifests.
     evidence:
       - internal/peering/
-      - internal/mail/
+      - internal/attention/mail/
       - "hero peer --help"
       - "hero handoff --help"
     surfaces: [CROSS-REPO-PEERING.md, README.md, web/docs/src/concepts/cross-repo.md, web/docs/src/cli/peering.md]
@@ -458,15 +458,17 @@ claims:
   - id: sprout-license-boundary
     family: licensing
     claim: Sprout is a separate public MIT-licensed project and is not covered by Hero's future Apache-2.0 grant.
-    availability: preview
-    evidence_class: D
-    prerequisites: Verify the exact module version consumed by Hero carries MIT license metadata during the licensing inventory.
+    availability: shipped
+    evidence_class: A
+    prerequisites: Hero must continue consuming an immutable Sprout revision whose module archive includes the MIT license.
     evidence:
       - go.mod
-      - .hero/planning/initiatives/hero-marketing/hero-licensing-boundary-and-provenance/spec.md
+      - go.sum
+      - .hero/specs/hero-licensing-boundary-and-provenance/repository-boundary.md
+      - .hero/specs/hero-licensing-boundary-and-provenance/third-party-inventory.md
     surfaces: [README.md, web/docs/src/index.md, web/landing/site/index.html]
     owner: hero-licensing-boundary-and-provenance
-    resolution: bounded
+    resolution: verified
     last_verified: 2026-08-23
 
   - id: proprietary-repository-boundary

@@ -2,7 +2,7 @@
 title: "Hero Positioning — Durable Project Memory and Verified Delivery"
 slug: hero-positioning
 type: feature
-status: planning
+status: completed
 domain: engineering
 size: medium
 priority: high
@@ -11,6 +11,8 @@ created: 2026-04-25
 tags: [marketing, positioning, messaging, continuity, trust]
 parent: hero-marketing
 depends-on: [hero-public-truth-baseline, hero-licensing-boundary-and-provenance]
+delivery_method: manual
+completed_at: 2026-08-23T16:47:06Z
 ---
 
 # Hero Positioning — Durable Project Memory and Verified Delivery
@@ -23,9 +25,9 @@ Define Hero clearly as two connected systems in one: durable project memory as t
 
 Defines the message hierarchy every repaired Hero surface inherits: project memory first, delivery system second, and a reinforcing loop in which each verified delivery leaves better context for the next session.
 
-**Status:** planning — relocated from the original top-level feature and reframed; the shipped-surface inventory must land first.
+**Status:** delivering — the baseline and licensing boundary are complete; the positioning authority is implemented and undergoing its closing review.
 
-**Pick up at:** use the baseline registry to choose the lead audience and draft the messaging house without promoting unverified capabilities.
+**Pick up at:** validate the messaging source against the baseline registry, run the cold audit, and close the spec.
 
 → `.hero/planning/initiatives/hero-marketing/hero-positioning/spec.md`
 
@@ -82,5 +84,39 @@ The direction changes because the shipped product and public evidence changed. H
 
 - Review every positioning proof against `content-truth-audit.md` and the materialized baseline registry.
 - Scan downstream child specs for vocabulary/prohibited-claim compatibility before they enter delivery.
-- Test candidate copy for comprehension with a small engineering cohort; record evidence rather than treating preference as fact.
+- Before promoting any test-only candidate into published copy, test it for comprehension with a small engineering cohort and record evidence rather than treating preference as fact. This is a downstream publication experiment, not a gate for establishing the canonical positioning authority.
 - Run `hero spec lint hero-positioning`, `hero spec score hero-positioning`, and `hero index`.
+
+## Completion Ledger
+
+The positioning authority was written against the executable public-claim baseline and the completed licensing boundary. The copy is intentionally not published by this child; root docs, hosted docs, landing, repository, and release children consume it after their own evidence gates.
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Define memory as the primary promise and verified delivery as the connected layer | DONE | `.hero/marketing/positioning.md` defines the category, outcome, two-system model, messaging house, and reinforcing loop with memory first. |
+| 2 | Link proof points to baseline claim, evidence class, and availability | DONE | The proof register maps every public proof to named baseline claims, evidence classes, availability, and required qualifiers; every registry ID referenced by the authority was validated against the registry. |
+| 3 | Choose one lead audience and label all others | DONE | AI-native engineers and hands-on technical leads are the sole lead audience; secondary and expansion audiences are explicitly separated. |
+| 4 | Bound “Correct your AI once” behind repeatable proof | DONE | The phrase is test-only and requires a revision-tied, cross-harness cold-session test to pass ten of ten runs across at least two harness pairings. |
+| 5 | Supply the complete public messaging toolkit | DONE | The authority contains preferred vocabulary, prohibited claims, jobs, objections, comparison guidance, taglines, and exact 25/50/150-word boilerplates. |
+| 6 | Treat PM and Sales as expansion after engineering | DONE | Lightweight PM/QA help is bounded to Engineering; focused PM, QA, and Sales are maturity-labeled expansion paths rather than the lead story. |
+| 7 | Make the two reinforcing systems legible without surrounding context | DONE | The one-sentence position, category, system breakdown, messaging house, proof register, and spec-kit objection independently preserve the two-system hierarchy. |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Rewrite the public messaging authority | DONE | Added `.hero/marketing/positioning.md` as the canonical source with category, audiences, jobs, proof, boundaries, and surface rules. |
+| 2 | Define messaging house and proof pillars | DONE | Added the “Your project remembers. Your agents finish.” roof with memory, verified delivery, and harness-native/project-owned pillars. |
+| 3 | Define vocabulary and prohibited claims | DONE | Added exact terminology plus licensing, proprietary-product, maturity, architecture, evidence, and count prohibitions. |
+| 4 | Produce candidate taglines and exact boilerplate | DONE | Added bounded candidates and blocks validated as exactly 25, 50, and 150 words under both editorial-token and whitespace counting. |
+| 5 | Write fair category comparison guidance | DONE | Added complementary boundaries for coding harnesses, rule files, wikis, trackers, and spec frameworks; named competitors remain deferred to researched comparison work. |
+
+### Exercise-the-feature check
+
+- [x] Read the positioning source as a standalone public authority, validated every referenced registry claim ID against the materialized registry, checked the three boilerplates under two word-count methods, scanned every downstream initiative child for incompatible vocabulary and boundary claims, and ran Hero lint (7/7 EARS), score (95/A), and index successfully. Candidate-tagline cohort testing remains a named pre-publication experiment rather than fabricated delivery evidence.
+
+### Excellence Bar self-check
+
+- [x] Yes — the authority tells one memorable story without flattening Hero into a spec kit, separates evidence from aspiration, names who the product is for, and gives every downstream surface enforceable language and product-boundary constraints.
