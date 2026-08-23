@@ -4,11 +4,21 @@ on:
   pull_request:
     paths:
       - "web/landing/**"
+      - "requirements-docs.txt"
+      - "internal/cli/docs_check.go"
+      - "internal/cli/public_docs_check.go"
+      - "internal/cli/public_docs_check_test.go"
+      - "internal/serve/mcp_tools_def.go"
       - ".github/workflows/landing.yml"
   push:
     branches: [main]
     paths:
       - "web/landing/**"
+      - "requirements-docs.txt"
+      - "internal/cli/docs_check.go"
+      - "internal/cli/public_docs_check.go"
+      - "internal/cli/public_docs_check_test.go"
+      - "internal/serve/mcp_tools_def.go"
       - ".github/workflows/landing.yml"
   workflow_dispatch:
     inputs:
@@ -31,6 +41,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Validate public documentation contract
+        run: go run ./cmd/hero docs check --public --invocations
 
       - name: Test landing claims and build tooling
         working-directory: web/landing
@@ -75,3 +92,10 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: web/landing
           command: deploy
+
+      - name: Verify deployed landing revision and production root
+        if: >
+          github.event_name == 'workflow_dispatch' &&
+          inputs.deploy &&
+          vars.LANDING_LAUNCH_APPROVED == 'true'
+        run: go run ./cmd/hero docs check --production landing --expected-revision "${{ github.sha }}"

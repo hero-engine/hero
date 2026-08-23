@@ -569,3 +569,5 @@
 {"ts":"2026-08-23T19:26:38.501886Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-landing-message-refresh","message":"status -\u003e completed"}
 {"ts":"2026-08-23T20:05:48.635996Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-public-repo-readiness","message":"\"Hero Public Repository Readiness\""}
 {"ts":"2026-08-23T20:05:48.636127Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-public-repo-readiness","message":"status -\u003e completed"}
+{"ts":"2026-08-23T21:31:09.64595Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-public-docs-drift-guard","message":"\"Hero Public Documentation Drift Guard\""}
+{"ts":"2026-08-23T21:31:09.646072Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-public-docs-drift-guard","message":"status -\u003e completed"}

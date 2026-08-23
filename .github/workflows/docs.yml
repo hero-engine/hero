@@ -5,12 +5,20 @@ on:
     paths:
       - "web/docs/**"
       - "requirements-docs.txt"
+      - "internal/cli/docs_check.go"
+      - "internal/cli/public_docs_check.go"
+      - "internal/cli/public_docs_check_test.go"
+      - "internal/serve/mcp_tools_def.go"
       - ".github/workflows/docs.yml"
   push:
     branches: [main]
     paths:
       - "web/docs/**"
       - "requirements-docs.txt"
+      - "internal/cli/docs_check.go"
+      - "internal/cli/public_docs_check.go"
+      - "internal/cli/public_docs_check_test.go"
+      - "internal/serve/mcp_tools_def.go"
       - ".github/workflows/docs.yml"
   workflow_dispatch:
     inputs:
@@ -38,7 +46,14 @@ jobs:
         with:
           node-version: "22"
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
       - run: pip install -r requirements-docs.txt
+
+      - name: Validate public documentation contract
+        run: go run ./cmd/hero docs check --public --invocations
 
       - name: Test documentation tooling
         working-directory: web/docs
@@ -94,3 +109,9 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy web/docs/site --project-name hero-docs --branch main --commit-hash ${{ github.sha }}
+
+      - name: Verify deployed documentation revision and production paths
+        if: >
+          (github.event_name == 'workflow_dispatch' && inputs.deploy) ||
+          (github.event_name == 'push' && vars.DEPLOY_DOCS == 'true')
+        run: go run ./cmd/hero docs check --production docs --expected-revision "${{ github.sha }}"

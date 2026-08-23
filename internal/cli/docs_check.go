@@ -36,10 +36,19 @@ skipped; .hero/specs/ and .hero/planning/ are excluded entirely.`,
 }
 
 var docsCheckInvocations bool
+var docsCheckPublic bool
+var docsCheckProduction string
+var docsCheckExpectedRevision string
 
 func init() {
 	docsCheckCmd.Flags().BoolVar(&docsCheckInvocations, "invocations", false,
 		"also scan markdown surfaces for stale `hero <command>` invocations")
+	docsCheckCmd.Flags().BoolVar(&docsCheckPublic, "public", false,
+		"validate public claims, config examples, dependency bounds, and revision markers")
+	docsCheckCmd.Flags().StringVar(&docsCheckProduction, "production", "",
+		"crawl a deployed surface and verify revision parity: docs, landing, or all")
+	docsCheckCmd.Flags().StringVar(&docsCheckExpectedRevision, "expected-revision", "",
+		"exact source revision required by --production")
 	docsCmd.AddCommand(docsCheckCmd)
 }
 
@@ -81,6 +90,17 @@ func runDocsCheck(cmd *cobra.Command, args []string) error {
 	fmt.Printf("  agents:   %d\n", agentCount)
 	fmt.Printf("  commands: %d\n", commandCount)
 	fmt.Printf("  skills:   %d\n", skillCount)
+	if docsCheckPublic {
+		inventory, inventoryErr := canonicalMCPInventory(projectRoot)
+		if inventoryErr != nil {
+			return inventoryErr
+		}
+		fmt.Printf("  MCP tools (total): %d\n", inventory.Total)
+		fmt.Printf("  MCP tools (default profile): %d\n", inventory.Default)
+		for _, profile := range inventory.Profiles {
+			fmt.Printf("  MCP tools (profile %s): %d\n", profile.Name, profile.Count)
+		}
+	}
 	fmt.Println()
 
 	// Check all documentation files.
@@ -171,6 +191,44 @@ func runDocsCheck(cmd *cobra.Command, args []string) error {
 		} else {
 			for _, f := range failures {
 				fmt.Printf("  %s:%d  `%s`  →  %s\n", f.File, f.Line, f.Raw, f.err)
+			}
+			issues += len(failures)
+		}
+		fmt.Println()
+	}
+
+	if docsCheckPublic || docsCheckProduction != "" {
+		fmt.Println("--- Public documentation contract ---")
+		fmt.Println()
+		failures := publicDocsIssues(projectRoot)
+		if docsCheckPublic {
+			executable, executableErr := os.Executable()
+			if executableErr != nil {
+				failures = append(failures, fmt.Sprintf("resolve current Hero executable for quickstart exercise: %v", executableErr))
+			} else {
+				failures = append(failures, publicQuickstartIssues(executable, projectRoot)...)
+			}
+		}
+		if len(failures) == 0 {
+			fmt.Println("  Public claims, config examples, dependency bounds, and revision templates are consistent.")
+		} else {
+			for _, failure := range failures {
+				fmt.Printf("  %s\n", failure)
+			}
+			issues += len(failures)
+		}
+		fmt.Println()
+	}
+
+	if docsCheckProduction != "" {
+		fmt.Println("--- Production parity ---")
+		fmt.Println()
+		failures := productionPublicIssues(nil, docsCheckProduction, docsCheckExpectedRevision, productionBaseURLs())
+		if len(failures) == 0 {
+			fmt.Printf("  %s surface matches source revision %s.\n", docsCheckProduction, docsCheckExpectedRevision)
+		} else {
+			for _, failure := range failures {
+				fmt.Printf("  %s\n", failure)
 			}
 			issues += len(failures)
 		}

@@ -51,6 +51,7 @@ direct downloads and source builds.
 
 Run these commands from the repository root:
 
+<!-- hero-quickstart -->
 ```bash
 hero init
 hero install project . --target codex

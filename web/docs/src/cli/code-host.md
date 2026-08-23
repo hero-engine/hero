@@ -13,7 +13,7 @@ hero code-host contract
 Machine clients send a versioned broker request on standard input:
 
 ```bash
-hero code-host broker < request.json
+hero code-host broker capabilities < request.json
 ```
 
 The exact operation registry is derived from

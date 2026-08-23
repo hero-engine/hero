@@ -46,6 +46,7 @@ implementation authorities behind these labels.
 
 ## Quick start
 
+<!-- hero-quickstart -->
 ```bash
 brew install hero-engine/tap/hero
 cd your-project

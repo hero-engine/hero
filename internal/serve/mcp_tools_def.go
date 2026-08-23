@@ -852,6 +852,15 @@ func (s *MCPServer) toolDefinitions() []ToolDefinition {
 	return finalizeToolMetadata(annotateAttentionToolDefinitions(definitions))
 }
 
+// MCPToolDefinitions returns the canonical unfiltered tools/list inventory.
+// Documentation and release checks use this accessor so public inventory
+// output cannot drift from the runtime registry.
+func MCPToolDefinitions() []ToolDefinition {
+	server := &MCPServer{}
+	definitions := server.toolDefinitions()
+	return append([]ToolDefinition(nil), definitions...)
+}
+
 // finalizeToolMetadata folds each tool's co-located Category/Tier declaration
 // into the wire _meta and backfills MCP annotations for any tool still missing
 // them. It is the single fold step: the per-tool literal stays the source of
