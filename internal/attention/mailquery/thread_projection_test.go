@@ -76,7 +76,8 @@ func TestThreadProjectionBucketsCountsHistoryAndStablePagination(t *testing.T) {
 		t.Fatalf("history detail = %#v", detail)
 	}
 
-	for _, id := range []string{"mail_request_1", "mail_request_2", "mail_request_status"} {
+	markRead := func(id string) {
+		t.Helper()
 		item, _ := mailA.Show(id, false)
 		revision := int64(0)
 		if item.Receipt != nil {
@@ -85,6 +86,18 @@ func TestThreadProjectionBucketsCountsHistoryAndStablePagination(t *testing.T) {
 		if _, err := mailA.Action(mail.ActionRequest{MessageID: id, Action: mail.ActionRead, ExpectedRevision: revision, IdempotencyKey: "read-" + id}); err != nil {
 			t.Fatal(err)
 		}
+	}
+	markRead("mail_request_1")
+	partiallyRead := service.Threads(mailthread.ThreadListRequest{SchemaVersion: mailthread.SchemaVersion, ProjectPeerID: "peer_a", Bucket: mailthread.BucketNeedsAttention})
+	if partiallyRead.Error != nil || len(partiallyRead.Items) != 1 || !partiallyRead.Items[0].Unread || partiallyRead.Items[0].UnreadCount != 2 {
+		t.Fatalf("partially read open thread = %#v", partiallyRead)
+	}
+	partialStalePage := service.Threads(mailthread.ThreadListRequest{SchemaVersion: mailthread.SchemaVersion, Limit: 2, Cursor: first.NextCursor})
+	if partialStalePage.Error == nil || partialStalePage.Error.Code != attention.ErrorStale {
+		t.Fatalf("partial-read stale thread cursor = %#v", partialStalePage)
+	}
+	for _, id := range []string{"mail_request_2", "mail_request_status"} {
+		markRead(id)
 	}
 	readOpen := service.Threads(mailthread.ThreadListRequest{SchemaVersion: mailthread.SchemaVersion, ProjectPeerID: "peer_a", Bucket: mailthread.BucketNeedsAttention})
 	if readOpen.Error != nil || len(readOpen.Items) != 1 || readOpen.Items[0].Unread || !readOpen.Items[0].Actionable || readOpen.Counts.ActionableUnread != 0 {

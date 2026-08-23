@@ -255,16 +255,7 @@ func threadRevision(items []projectedThread) string {
 	encoder := json.NewEncoder(hash)
 	encoder.SetEscapeHTML(false)
 	for _, item := range items {
-		_ = encoder.Encode(struct {
-			PeerID     string               `json:"peer_id"`
-			ThreadID   string               `json:"thread_id"`
-			Revision   int64                `json:"revision"`
-			ActivityAt string               `json:"activity_at"`
-			Bucket     mailthread.Bucket    `json:"bucket"`
-			Lifecycle  mailthread.Lifecycle `json:"lifecycle"`
-			Unread     bool                 `json:"unread"`
-			Actionable bool                 `json:"actionable"`
-		}{item.summary.Identity.ProjectPeerID, item.summary.Identity.ThreadID, item.summary.Revision, item.summary.ActivityAt, item.summary.Bucket, item.summary.Lifecycle, item.summary.Unread, item.summary.Actionable})
+		_ = encoder.Encode(item.summary)
 	}
 	return hex.EncodeToString(hash.Sum(nil))
 }
