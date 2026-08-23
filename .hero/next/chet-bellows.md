@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-23T16:07:52Z
+updated: 2026-08-23T16:28:59Z
 repo: hero-engine/hero
 ---
 
@@ -10,7 +10,7 @@ repo: hero-engine/hero
 
 > Ship a verified Hero release containing the completed MCP tool metadata contract for hero-code while keeping the superseded interactive CLI donor branch evidence-only.
 
-_possibly stale — 15 commit(s) since, last set 9d ago_
+_possibly stale — 16 commit(s) since, last set 9d ago_
 
 ## Last user ask
 

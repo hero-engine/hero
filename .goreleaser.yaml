@@ -61,7 +61,7 @@ brews:
     url_template: "https://github.com/hero-engine/hero-releases/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     homepage: "https://hero-engine.dev"
     description: "Spec-driven AI engineering workflow"
-    license: "MIT"
+    license: "Apache-2.0"
     commit_author:
       name: hero-engine-bot
       email: noreply@hero-engine.dev
@@ -79,7 +79,7 @@ scoops:
     url_template: "https://github.com/hero-engine/hero-releases/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     homepage: "https://hero-engine.dev"
     description: "Spec-driven AI engineering workflow"
-    license: "MIT"
+    license: "Apache-2.0"
     commit_author:
       name: hero-engine-bot
       email: noreply@hero-engine.dev

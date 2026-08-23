@@ -2,7 +2,7 @@
 """
 One-time distillation export for hero-embed-v1.
 
-Downloads minishlab/potion-base-8M (pre-distilled from all-MiniLM-L6-v2,
+Downloads minishlab/potion-base-8M (distilled from BAAI/bge-base-en-v1.5,
 256-dim) from HuggingFace and exports vocab.txt + weights.bin + config.json
 in the format the Go embedding engine expects.
 
@@ -30,6 +30,7 @@ from safetensors.numpy import load_file
 
 
 REPO_ID = "minishlab/potion-base-8M"
+REVISION = "bf8b056651a2c21b8d2565580b8569da283cab23"
 
 # Tokens that Hero's Go tokenizer will never produce.
 DEAD_PREFIXES = {"##", "[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]"}
@@ -111,11 +112,17 @@ def main():
     output_dir = args[0] if args else default_output
 
     print(f"Downloading {REPO_ID} from HuggingFace...")
-    tokenizer_path = hf_hub_download(REPO_ID, "tokenizer.json")
-    weights_path = hf_hub_download(REPO_ID, "model.safetensors")
+    tokenizer_path = hf_hub_download(
+        REPO_ID, "tokenizer.json", revision=REVISION
+    )
+    weights_path = hf_hub_download(
+        REPO_ID, "model.safetensors", revision=REVISION
+    )
 
     try:
-        config_path = hf_hub_download(REPO_ID, "config.json")
+        config_path = hf_hub_download(
+            REPO_ID, "config.json", revision=REVISION
+        )
         with open(config_path) as f:
             model_config = json.load(f)
         print(f"Model config: {json.dumps(model_config, indent=2)}")

@@ -4,7 +4,7 @@ go 1.26.4
 
 require (
 	github.com/BurntSushi/toml v1.6.0
-	github.com/bdwheeler/sprout/go v0.1.0
+	github.com/bdwheeler/sprout/go v0.1.1-0.20260822024445-cd3f0c4a2208
 	github.com/google/uuid v1.6.0
 	github.com/spf13/cobra v1.10.2
 	go.uber.org/goleak v1.3.0

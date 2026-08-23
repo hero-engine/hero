@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-23T16:07:52Z · 81 ready specs_
+_Generated: 2026-08-23T16:28:59Z · 81 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -29,28 +29,28 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
+## hero-positioning — "Hero Positioning — Durable Project Memory and Verified Delivery"
+_feature · planning · horizon: now_
+
+Defines the message hierarchy every repaired Hero surface inherits: project memory first, delivery system second, and a reinforcing loop in which each verified delivery leaves better context for the next session.
+
+**Status:** planning — relocated from the original top-level feature and reframed; the shipped-surface inventory must land first.
+
+**Pick up at:** use the baseline registry to choose the lead audience and draft the messaging house without promoting unverified capabilities.
+
+→ `.hero/planning/initiatives/hero-marketing/hero-positioning/spec.md`
+
+**Files:** `.hero/planning/initiatives/hero-marketing/content-truth-audit.md`, `.hero/marketing/positioning.md`, `README.md`, `web/docs/src/what-is-hero.md`, `web/landing/site/index.html`
+**Skip:** “spec layer” as category, mutable roster counts as proof, and “Correct your AI once” as an absolute promise.
+
+---
+
 ## hero-marketing — "Hero v0.34 Public Release Readiness"
 _initiative · planning · horizon: now_
 
 _Run opener — arm with `/drive hero-marketing`_
 
 Deliver the complete v0.34 public-readiness path: an inventory of the shipped product, memory-first positioning, current root and hosted documentation, a current public site, repository-readiness materials, a reproducible product proof, drift guards, and a clean release candidate. The owner has authorized preparing this repository for an Apache-2.0 grant. Adding the license, changing repository visibility, and publishing the release remain explicit final mutations rather than prep work.
-
----
-
-## hero-licensing-boundary-and-provenance — "Hero Licensing Boundary and Open-Source Inventory"
-_feature · planning · horizon: now_
-
-Records owner authorization and clears third-party licensing before any surface says “open source” or any license file is added.
-
-**Status:** planning — the sole owner has authorized Apache-2.0 preparation; third-party dependencies and bundled assets still need review before the grant mutation.
-
-**Pick up at:** record the owner's authorization and inventory tracked source, generated material, vendored content, docs assets, and dependency manifests without adding the license or changing visibility.
-
-→ `.hero/planning/initiatives/hero-marketing/hero-licensing-boundary-and-provenance/spec.md`
-
-**Files/components:** `go.mod`, `go.sum`, documentation dependency manifests, web dependency manifests, tracked media/fonts/logos/screenshots, generated distributions, and a licensing inventory beside this spec
-**Skip:** adding `LICENSE`, changing repository visibility, editing Sprout, or inspecting proprietary repositories beyond recording their exclusion.
 
 ---
 
