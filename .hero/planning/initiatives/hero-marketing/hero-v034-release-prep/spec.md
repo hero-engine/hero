@@ -2,7 +2,7 @@
 title: "Hero v0.34 Release Preparation"
 slug: hero-v034-release-prep
 type: feature
-status: planning
+status: delivering
 domain: engineering
 size: medium
 priority: high
@@ -12,6 +12,7 @@ tags: [release, v0-34, artifacts, sbom, changelog]
 parent: hero-marketing
 depends-on: [hero-public-docs-drift-guard]
 supersedes: [hero-distribution]
+delivery_method: manual
 ---
 
 # Hero v0.34 Release Preparation

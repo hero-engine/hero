@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-08-23T21:31:19Z · projected from 665 source nodes_
+_Last refreshed: 2026-08-23T21:38:05Z · projected from 666 source nodes_
 
 ## Surfaces
 
@@ -17,7 +17,7 @@ _Last refreshed: 2026-08-23T21:31:19Z · projected from 665 source nodes_
 | domains/sales | maturing | domains/sales/ | 2d ago | — |
 | landing | building | web/landing/ | 5h ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | <1m ago | agent-outposts |
+| serve | building | internal/serve/ | 6m ago | agent-outposts |
 | (unassigned) | — | — | — | 256 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -35,7 +35,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 16/20 specs done
 - **"Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"** (surface: —) — 0/9 specs done
 - **Hero Killer Features — Agent Effectiveness, Team Power, Living Specs** (surface: core, serve) — 10/11 specs done
-- **"Hero v0.34 Public Release Readiness"** (surface: serve) — 8/11 specs done
+- **"Hero v0.34 Public Release Readiness"** (surface: serve) — 8/11 specs done; in flight: hero-v034-release-prep
 - **Hero Platform — Headless Execution, Team Automation, and Shared Visibility** (surface: core, serve) — 3/8 specs done
 - **"Hero Doesn't Lie — Self-Consistency Between Generated Guidance, Hero's Own Writes, and Hero's Actual Contract"** (surface: core) — 0/5 specs done
 - **Hero Surface Architecture — One Surface, Every Layer, Every Role** (surface: serve) — 8/9 specs done
@@ -59,10 +59,10 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Next up across surfaces
 
 1. **landing** — `hero-landing-page` (P0, delivering)
-2. **serve** — `agent-outposts` (medium, delivering)
-3. **serve** — `retrieval-contradiction-detection` (—, delivering)
-4. **(unassigned)** — `team-connect` (—, delivering)
-5. **(unassigned)** — `always-on-runtime` (P0, planning)
+2. **(unassigned)** — `hero-v034-release-prep` (high, delivering)
+3. **serve** — `agent-outposts` (medium, delivering)
+4. **serve** — `retrieval-contradiction-detection` (—, delivering)
+5. **(unassigned)** — `team-connect` (—, delivering)
 
 ## Open risks & blockers
 
@@ -75,5 +75,5 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - Surfaces detected: 10 (inferred: 10 · overrides applied: 0)
 - Specs covered: 216/472 (45%)
-- Projection generation: 1ms · Source nodes: 665
+- Projection generation: 1ms · Source nodes: 666
 

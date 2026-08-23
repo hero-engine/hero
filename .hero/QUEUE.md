@@ -6,7 +6,23 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-23T21:31:19Z · 84 ready specs_
+_Generated: 2026-08-23T21:38:05Z · 84 ready specs_
+
+## hero-v034-release-prep — "Hero v0.34 Release Preparation"
+_feature · delivering · horizon: now_
+
+Converts the repaired public product into a release candidate the final approval gates can inspect and publish.
+
+**Status:** planning — `v0.33.0` is the latest tag and public-readiness work is not yet complete.
+
+**Pick up at:** diff `v0.33.0` to the candidate revision, classify user-visible changes, and reconcile every release artifact and public version reference.
+
+→ `.hero/planning/initiatives/hero-marketing/hero-v034-release-prep/spec.md`
+
+**Files/components:** changelog/release notes, release automation, version metadata, package formulas/manifests, artifact build, checksums, SBOM/notice bundle, install verification, launch and rollback checklists
+**Skip:** creating `v0.34.0`, publishing a release, changing visibility, or adding the Apache license.
+
+---
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -35,22 +51,6 @@ _initiative · planning · horizon: now_
 _Run opener — arm with `/drive hero-marketing`_
 
 Deliver the complete v0.34 public-readiness path: an inventory of the shipped product, memory-first positioning, current root and hosted documentation, a current public site, repository-readiness materials, drift guards, and a clean release candidate. The owner has authorized preparing this repository for an Apache-2.0 grant. Adding the license, changing repository visibility, and publishing the release remain explicit final mutations rather than prep work.
-
----
-
-## hero-v034-release-prep — "Hero v0.34 Release Preparation"
-_feature · planning · horizon: now_
-
-Converts the repaired public product into a release candidate the final approval gates can inspect and publish.
-
-**Status:** planning — `v0.33.0` is the latest tag and public-readiness work is not yet complete.
-
-**Pick up at:** diff `v0.33.0` to the candidate revision, classify user-visible changes, and reconcile every release artifact and public version reference.
-
-→ `.hero/planning/initiatives/hero-marketing/hero-v034-release-prep/spec.md`
-
-**Files/components:** changelog/release notes, release automation, version metadata, package formulas/manifests, artifact build, checksums, SBOM/notice bundle, install verification, launch and rollback checklists
-**Skip:** creating `v0.34.0`, publishing a release, changing visibility, or adding the Apache license.
 
 ---
 

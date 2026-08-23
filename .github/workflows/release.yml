@@ -5,13 +5,25 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      version:
+        description: Unpublished candidate version
+        required: true
+        default: v0.34.0
+        type: string
+      baseline:
+        description: Latest published release tag
+        required: true
+        default: v0.33.0
+        type: string
 
 permissions:
   contents: read
   actions: write
 
 jobs:
-  goreleaser:
+  candidate:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -23,6 +35,43 @@ jobs:
         with:
           go-version: "1.26.x"
           cache: true
+
+      - name: Test candidate builder
+        run: python3 -m unittest scripts/test_release_candidate.py
+
+      - name: Build reproducible unpublished candidate
+        run: >-
+          python3 scripts/release_candidate.py
+          --version "${{ inputs.version }}"
+          --base "${{ inputs.baseline }}"
+          --output ".build/release-candidate/${{ inputs.version }}"
+
+      - name: Upload candidate evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: hero-${{ inputs.version }}-candidate
+          path: .build/release-candidate/${{ inputs.version }}/
+          if-no-files-found: error
+          retention-days: 30
+
+  goreleaser:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.26.x"
+          cache: true
+
+      - name: Require final license and release notices
+        run: |
+          test -f LICENSE
+          test -f THIRD_PARTY_NOTICES.txt
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
