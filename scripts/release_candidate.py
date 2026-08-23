@@ -86,6 +86,10 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def repository_root(cwd: Path) -> Path:
+    return Path(str(run(["git", "rev-parse", "--show-toplevel"], cwd=cwd)).strip()).resolve()
+
+
 def parse_json_stream(payload: str) -> list[dict[str, Any]]:
     decoder = json.JSONDecoder()
     values: list[dict[str, Any]] = []
@@ -492,7 +496,7 @@ def main() -> int:
     parser.add_argument("--no-smoke", action="store_true", help="skip the native clean-install smoke")
     args = parser.parse_args()
     try:
-        root = Path(str(run(["git", "rev-parse", "--show-toplevel"], cwd=Path.cwd()))).resolve()
+        root = repository_root(Path.cwd())
         output = (root / args.output).resolve() if not Path(args.output).is_absolute() else Path(args.output).resolve()
         if output == root or root not in output.parents:
             raise CandidateError("output must be a child of the repository")

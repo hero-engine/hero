@@ -3,6 +3,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 SCRIPT = Path(__file__).with_name("release_candidate.py")
@@ -13,6 +14,10 @@ SPEC.loader.exec_module(release_candidate)
 
 
 class ReleaseCandidateTests(unittest.TestCase):
+    def test_repository_root_strips_git_newline(self):
+        with mock.patch.object(release_candidate, "run", return_value="/tmp/example\n"):
+            self.assertEqual(Path("/tmp/example").resolve(), release_candidate.repository_root(Path.cwd()))
+
     def test_semver_requires_canonical_release_tag(self):
         self.assertEqual((0, 34, 0), release_candidate.semver_key("v0.34.0"))
         with self.assertRaises(release_candidate.CandidateError):
