@@ -182,3 +182,29 @@ func TestMarkUnreadChangesReceiptWithoutChangingLifecycle(t *testing.T) {
 		t.Fatalf("read/lifecycle coupling: before=%#v after=%#v", before, after)
 	}
 }
+
+func TestFirstLegacyReceiptMutationCreatesThreadState(t *testing.T) {
+	service, store, env, _ := triageService(t, "mail_first_mutation")
+	threadPath := store.threadPath("peer_b", env.ThreadID)
+	if _, err := os.Stat(threadPath); !os.IsNotExist(err) {
+		t.Fatalf("legacy setup unexpectedly had thread state: %v", err)
+	}
+	if _, err := service.Action(ActionRequest{MessageID: env.ID, Action: ActionAcknowledge, ExpectedRevision: 0, IdempotencyKey: "ack-first", Note: "received"}); err != nil {
+		t.Fatal(err)
+	}
+	view, created, err := store.Thread("peer_b", env.ThreadID)
+	if err != nil || created || view.State.Lifecycle != mailthread.LifecycleOpen || view.State.ArchiveEligibleAt != "" {
+		t.Fatalf("first mutation migration = %#v, created=%v, err=%v", view, created, err)
+	}
+}
+
+func TestFirstLegacyDismissArchivesFullyDismissedThread(t *testing.T) {
+	service, store, env, _ := triageService(t, "mail_first_dismiss")
+	if _, err := service.Action(ActionRequest{MessageID: env.ID, Action: ActionDismiss, ExpectedRevision: 0, IdempotencyKey: "dismiss-first"}); err != nil {
+		t.Fatal(err)
+	}
+	view, created, err := store.Thread("peer_b", env.ThreadID)
+	if err != nil || created || view.State.Lifecycle != mailthread.LifecycleArchived || view.State.Resolution == nil || view.State.Resolution.Source != "mailread_v1" {
+		t.Fatalf("first dismiss migration = %#v, created=%v, err=%v", view, created, err)
+	}
+}

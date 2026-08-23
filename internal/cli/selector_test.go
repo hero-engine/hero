@@ -1297,7 +1297,7 @@ func queuedMail(t *testing.T, base string) []mailMessage {
 		if err != nil {
 			return err
 		}
-		if d.IsDir() || !strings.HasSuffix(path, ".json") {
+		if d.IsDir() || !strings.HasSuffix(path, ".json") || filepath.Base(filepath.Dir(path)) != "messages" {
 			return nil
 		}
 		data, readErr := os.ReadFile(path)

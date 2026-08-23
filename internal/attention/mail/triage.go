@@ -79,6 +79,9 @@ func (s *Service) Action(req ActionRequest) (ActionResult, error) {
 			if err != nil {
 				return ActionResult{}, err
 			}
+			if _, _, err := s.store.Thread(s.cfg.PeerID, threadIdentity(env)); err != nil {
+				return ActionResult{}, err
+			}
 			return actionResult(req.Action, env, current), nil
 		} else if conflict {
 			return ActionResult{}, ErrIdempotencyConflict
@@ -129,6 +132,9 @@ func (s *Service) Action(req ActionRequest) (ActionResult, error) {
 	}
 	receipt, err = s.markActionEvent(receipt, env.ID, req.IdempotencyKey)
 	if err != nil {
+		return ActionResult{}, err
+	}
+	if _, _, err := s.store.Thread(s.cfg.PeerID, threadIdentity(env)); err != nil {
 		return ActionResult{}, err
 	}
 	return actionResult(req.Action, env, receipt), nil
