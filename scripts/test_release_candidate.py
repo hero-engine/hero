@@ -14,6 +14,34 @@ SPEC.loader.exec_module(release_candidate)
 
 
 class ReleaseCandidateTests(unittest.TestCase):
+    def test_output_is_confined_to_candidate_version_directory(self):
+        with tempfile.TemporaryDirectory() as temp_name:
+            root = Path(temp_name).resolve()
+            release_root = root / ".build" / "release-candidate"
+            valid = release_root / "v0.34.0"
+            self.assertEqual(valid, release_candidate.validate_output_path(root, valid))
+            for invalid in (
+                root,
+                root / ".git" / "objects",
+                root / "internal",
+                release_root,
+                root.parent / "outside-candidate",
+            ):
+                with self.subTest(invalid=invalid):
+                    with self.assertRaises(release_candidate.CandidateError):
+                        release_candidate.validate_output_path(root, invalid)
+
+    def test_output_symlink_cannot_escape_candidate_directory(self):
+        with tempfile.TemporaryDirectory() as temp_name:
+            root = Path(temp_name).resolve()
+            release_root = root / ".build" / "release-candidate"
+            release_root.mkdir(parents=True)
+            outside = root / "internal"
+            outside.mkdir()
+            (release_root / "escape").symlink_to(outside, target_is_directory=True)
+            with self.assertRaises(release_candidate.CandidateError):
+                release_candidate.validate_output_path(root, release_root / "escape")
+
     def test_output_directory_can_already_exist(self):
         with tempfile.TemporaryDirectory() as temp_name:
             output = Path(temp_name)
@@ -89,16 +117,19 @@ class ReleaseCandidateTests(unittest.TestCase):
 
     def test_candidate_notes_preserve_public_maturity_and_product_boundaries(self):
         notes = (SCRIPT.parent.parent / "docs" / "releases" / "v0.34.0-candidate.md").read_text()
+        normalized = " ".join(notes.split())
         for expected in (
             "Project memory and verified delivery are shipped",
+            "reinforcing improvement loop remains preview",
+            "measurably enriches memory and improves later sessions remains **preview**",
             "optional and require explicit setup",
             "headless runtime remains preview",
             "Hero Code and Hero Cloud remain separate proprietary products",
             "Sprout remains a separate public MIT-licensed project",
             "prepared, not published",
         ):
-            self.assertIn(expected, notes)
-        self.assertNotIn("Hero is open source", notes)
+            self.assertIn(expected, normalized)
+        self.assertNotIn("Hero is open source", normalized)
 
     def test_launch_checklist_has_every_artifact_and_explicit_gates(self):
         checklist = (SCRIPT.parent.parent / "docs" / "releases" / "v0.34.0-launch-checklist.md").read_text()

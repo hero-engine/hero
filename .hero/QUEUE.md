@@ -6,14 +6,14 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-23T21:44:37Z · 84 ready specs_
+_Generated: 2026-08-23T21:55:09Z · 84 ready specs_
 
 ## hero-v034-release-prep — "Hero v0.34 Release Preparation"
 _feature · delivering · horizon: now_
 
 Converts the repaired public product into a release candidate the final approval gates can inspect and publish.
 
-**Status:** planning — `v0.33.0` is the latest tag and public-readiness work is not yet complete.
+**Status:** in-review — the unpublished `v0.34.0` candidate is reproducible and smoke-tested; only the explicit Apache and public-launch gates remain.
 
 **Pick up at:** diff `v0.33.0` to the candidate revision, classify user-visible changes, and reconcile every release artifact and public version reference.
 

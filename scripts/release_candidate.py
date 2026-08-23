@@ -94,6 +94,14 @@ def ensure_directory(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
 
 
+def validate_output_path(root: Path, requested: Path) -> Path:
+    release_root = (root / ".build" / "release-candidate").resolve()
+    output = requested.resolve()
+    if release_root not in output.parents:
+        raise CandidateError("output must be a version directory under .build/release-candidate")
+    return output
+
+
 def parse_json_stream(payload: str) -> list[dict[str, Any]]:
     decoder = json.JSONDecoder()
     values: list[dict[str, Any]] = []
@@ -501,9 +509,8 @@ def main() -> int:
     args = parser.parse_args()
     try:
         root = repository_root(Path.cwd())
-        output = (root / args.output).resolve() if not Path(args.output).is_absolute() else Path(args.output).resolve()
-        if output == root or root not in output.parents:
-            raise CandidateError("output must be a child of the repository")
+        requested = root / args.output if not Path(args.output).is_absolute() else Path(args.output)
+        output = validate_output_path(root, requested)
         result = build_candidate(root, output, args.version, args.base, not args.no_smoke)
     except CandidateError as exc:
         print(f"release candidate failed: {exc}", file=sys.stderr)

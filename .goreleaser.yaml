@@ -30,6 +30,9 @@ archives:
     format_overrides:
       - goos: windows
         formats: [zip]
+    files:
+      - LICENSE
+      - THIRD_PARTY_NOTICES.txt
 
 checksum:
   name_template: "checksums.txt"

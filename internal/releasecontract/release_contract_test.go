@@ -17,6 +17,8 @@ type requirement struct {
 
 var requirements = []requirement{
 	{"v-prefixed binary version", "goreleaser", "main.version=v{{.Version}}", 0},
+	{"final license archived", "goreleaser", "      - LICENSE", 1},
+	{"final notices archived", "goreleaser", "      - THIRD_PARTY_NOTICES.txt", 1},
 	{"current checkout runtime", "release", "actions/checkout@v6", 2},
 	{"artifact uploader", "release", "actions/upload-artifact@v4", 1},
 	{"manual candidate isolation", "release", "if: github.event_name == 'workflow_dispatch'", 1},
