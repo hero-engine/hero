@@ -1,31 +1,74 @@
-name: Deploy Landing
+name: Build Landing
 
 on:
-  # Automatic deployment is disabled by default.
-  # To enable: set DEPLOY_LANDING=true in repository variables
-  # (Settings > Secrets and variables > Actions > Variables)
-  # and configure CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID secrets.
+  pull_request:
+    paths:
+      - "web/landing/**"
+      - ".github/workflows/landing.yml"
   push:
     branches: [main]
     paths:
       - "web/landing/**"
+      - ".github/workflows/landing.yml"
   workflow_dispatch:
     inputs:
       deploy:
-        description: "Deploy to Cloudflare Workers"
+        description: "Deploy the validated artifact after the public launch gate"
         type: boolean
-        default: true
+        default: false
+
+permissions:
+  contents: read
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    if: >
-      (github.event_name == 'workflow_dispatch' && inputs.deploy) ||
-      (github.event_name == 'push' && vars.DEPLOY_LANDING == 'true')
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Deploy to Cloudflare
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Test landing claims and build tooling
+        working-directory: web/landing
+        run: python -m unittest discover -s scripts -p 'test_*.py'
+
+      - name: Validate tracked landing source
+        working-directory: web/landing
+        run: python scripts/landing_build.py check-source
+
+      - name: Build revision-identifiable landing artifact
+        working-directory: web/landing
+        run: python scripts/landing_build.py build
+        env:
+          HERO_LANDING_REVISION: ${{ github.sha }}
+
+      - name: Validate rendered HTML, links, assets, and revision metadata
+        working-directory: web/landing
+        run: python scripts/landing_build.py check-artifact
+
+      - name: Upload validated artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hero-landing-${{ github.sha }}
+          path: web/landing/dist
+
+      - name: Check public links before an approved deployment
+        if: >
+          github.event_name == 'workflow_dispatch' &&
+          inputs.deploy &&
+          vars.LANDING_LAUNCH_APPROVED == 'true'
+        working-directory: web/landing
+        run: python scripts/landing_build.py check-artifact --external
+
+      - name: Deploy approved artifact to Cloudflare
+        if: >
+          github.event_name == 'workflow_dispatch' &&
+          inputs.deploy &&
+          vars.LANDING_LAUNCH_APPROVED == 'true'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}

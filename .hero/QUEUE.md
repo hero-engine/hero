@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-23T17:50:45Z · 84 ready specs_
+_Generated: 2026-08-23T19:27:12Z · 84 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -29,28 +29,28 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
+## hero-public-repo-readiness — "Hero Public Repository Readiness"
+_feature · planning · horizon: now_
+
+Prepares the private repository for safe public exposure without performing the exposure.
+
+**Status:** planning — public source links are currently dead and repository contents/settings have not passed a public-exposure audit.
+
+**Pick up at:** inspect the complete public blast radius, then author the minimum repository policies and templates from verified support and security routes.
+
+→ `.hero/planning/initiatives/hero-marketing/hero-public-repo-readiness/spec.md`
+
+**Files/components:** `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `SUPPORT.md`, `.github/ISSUE_TEMPLATE/`, pull-request templates, repository metadata/settings checklist, secret/private-reference scan report
+**Skip:** broad community programming, CLA infrastructure without a demonstrated need, license creation, and repository visibility changes.
+
+---
+
 ## hero-marketing — "Hero v0.34 Public Release Readiness"
 _initiative · planning · horizon: now_
 
 _Run opener — arm with `/drive hero-marketing`_
 
 Deliver the complete v0.34 public-readiness path: an inventory of the shipped product, memory-first positioning, current root and hosted documentation, a current public site, repository-readiness materials, a reproducible product proof, drift guards, and a clean release candidate. The owner has authorized preparing this repository for an Apache-2.0 grant. Adding the license, changing repository visibility, and publishing the release remain explicit final mutations rather than prep work.
-
----
-
-## hero-landing-message-refresh — "Hero Landing Message and Proof Refresh"
-_feature · planning · horizon: now_
-
-Publishes the repaired story only after root and hosted docs agree, while reserving final proof claims for the later continuity demonstration.
-
-**Status:** planning — blocked on documentation remediation; `heroengine.ai` currently does not resolve.
-
-**Pick up at:** translate the approved positioning house and completed evidence into the smallest coherent landing hierarchy, then restore DNS/deployment and gate any still-unproven claim.
-
-→ `.hero/planning/initiatives/hero-marketing/hero-landing-message-refresh/spec.md`
-
-**Files:** `web/landing/site/`, shared `web/` metadata/navigation, real product captures, docs destinations
-**Skip:** broad brand redesign, campaign calendar, pricing, or unsupported roadmap promises.
 
 ---
 

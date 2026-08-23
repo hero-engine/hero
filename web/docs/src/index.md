@@ -1,6 +1,6 @@
 # Hero
 
-**Your project remembers. Your agents finish.**
+**Your project remembers. Your agents deliver.**
 
 Hero gives AI coding tools durable project memory and a verified delivery
 system, so decisions survive sessions and agents finish work against evidence.

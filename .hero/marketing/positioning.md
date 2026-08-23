@@ -59,7 +59,7 @@ When work crosses repositories or external trackers, keep boundaries explicit an
 
 ### Roof: durable continuity with a completion bar
 
-**Your project remembers. Your agents finish.** Hero carries project truth between AI sessions and connects it to a delivery system that closes work against evidence.
+**Your project remembers. Your agents deliver.** Hero carries project truth between AI sessions and connects it to a delivery system that closes work against evidence.
 
 ### Pillar 1: project memory that survives the session
 
@@ -184,7 +184,7 @@ Comparisons explain fit; they do not manufacture a winner.
 
 ## Tagline candidates
 
-**Recommended lead:** Your project remembers. Your agents finish.
+**Recommended lead:** Your project remembers. Your agents deliver.
 
 Other candidates:
 
@@ -226,7 +226,7 @@ Hero is a project memory and delivery system for AI-assisted engineering. It pre
 |---|---|
 | Root documentation | Explain memory first, delivery second, before installation; use factual quickstarts and no mutable roster counts as proof. |
 | Hosted documentation | Give memory, delivery, and their loop distinct navigation; keep evidence qualifiers beside claims and remove stale or unlicensed generated assets. |
-| Landing page | Lead with “Your project remembers. Your agents finish.” and show one concrete, revision-tied proof for each system. |
+| Landing page | Lead with “Your project remembers. Your agents deliver.” and show one concrete, revision-tied proof for each system. |
 | Continuity proof | Test the cross-harness memory outcome without pre-declaring it proven; publish the result and prerequisites even if it fails. |
 | Drift guard | Enforce prohibited claims, valid commands/configuration, derived inventories, release versions, deployment revision, and production links. |
 | Repository readiness | Describe only this repository's future grant; keep Hero Code, Hero Cloud, and Sprout outside the boundary. |

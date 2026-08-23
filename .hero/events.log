@@ -565,3 +565,5 @@
 {"ts":"2026-08-23T17:23:08.591426Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-hosted-docs-remediation","message":"status -\u003e completed"}
 {"ts":"2026-08-23T17:50:31.986882Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-root-docs-remediation","message":"\"Hero Root Documentation Truth Repair\""}
 {"ts":"2026-08-23T17:50:32.007002Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-root-docs-remediation","message":"status -\u003e completed"}
+{"ts":"2026-08-23T19:26:38.501744Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-landing-message-refresh","message":"\"Hero Landing Message and Proof Refresh\""}
+{"ts":"2026-08-23T19:26:38.501886Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-landing-message-refresh","message":"status -\u003e completed"}

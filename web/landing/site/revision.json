@@ -1,0 +1,8 @@
+{
+  "source_revision": "BUILD_TIME_SOURCE_REVISION",
+  "source_commit": "BUILD_TIME_SOURCE_COMMIT",
+  "source_digest": "BUILD_TIME_SOURCE_DIGEST",
+  "source_dirty": "BUILD_TIME_SOURCE_DIRTY",
+  "generated_at": "BUILD_TIME_GENERATED_AT",
+  "canonical_url": "https://heroengine.ai/"
+}
