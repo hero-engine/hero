@@ -2,7 +2,7 @@
 
 Date: 2026-08-04  
 Initiative: `hero-marketing`  
-Scope: public repository docs, hosted docs source, landing source, product-output examples, and automated documentation checks
+Scope: public repository/docs, deployed docs and landing, product-output examples, Apache-2.0 readiness, v0.34 release readiness, and automated public-truth checks
 
 ## Executive finding
 
@@ -49,8 +49,11 @@ The baseline child must turn every P0 row into a correction packet naming affect
 
 ## P1 drift and misleading claims
 
-- Landing source/live story says v0.9 while the repository has a v0.31.1 tag and newer commits; the public release-channel rule is unresolved.
+- Landing source/live story says v0.9 while `v0.33.0` is the latest tag and v0.34.0 is the target release.
 - Hosted release notes stop at v0.24.1.
+- The deployed docs are stale as of June 11 while newer pages exist in source; current green source builds do not prove deployment freshness.
+- `heroengine.ai` does not resolve, and public source links are dead while the repository remains private.
+- Documentation dependencies are loosely bounded and warn about future incompatibility with MkDocs 2.0.
 - Canonical observed inventory is 29 workflow commands, 35 agents, 57 skills, and 82 runtime MCP tools, yet root and hosted pages disagree. Mutable counts should appear only in generated reference surfaces.
 - Landing presents fictional `hero status` output with a nonexistent `diagnosing` status as if it were captured product output.
 - “Slash commands inside your AI tool” is wrong for Codex, which consumes Hero workflows as skills. Harness copy must describe native surfaces per all six targets.
@@ -98,21 +101,25 @@ The baseline child expands this into an exhaustive registry covering every publi
 | Headless runtime | maturity open | Supported execution path, approval behavior, and environment prerequisites. |
 | PM and Sales packs | maturity open | Release-level smoke journey for each pack. |
 | Cloud/team/outposts | unknown/preview/planned until resolved | Public access path, ownership, support level, and sibling-repo evidence. |
-| Licensing/open-source posture | prohibited pending decision | Repository `LICENSE` or an explicit public licensing statement. |
+| Hero licensing/open-source posture | Apache-2.0 candidate; publication prohibited pending gate | Sole-owner authorization, third-party dependency/asset inventory, explicit final mutation approval, and repository `LICENSE`. |
+| Sprout licensing | public MIT dependency; pinned module tag still stale | `astroville/sprout` has a recognized MIT license on `main`; publish a licensed patch tag and update Hero from unlicensed `v0.1.0` before dependency clearance. |
+| `hero-code` / `hero-cloud` | proprietary | Boundary validation proving neither repository is included in Hero's grant or public claims. |
 
 ## Delivery scope
 
 1. Establish the exhaustive public-truth baseline and P0 correction packet.
-2. Rewrite positioning around supervision reduction, continuity, and trust.
-3. Repair root onboarding/configuration/harness/peering guidance.
-4. Repair every hosted docs page and improve capability discoverability.
-5. Produce repeatable continuity proof.
-6. Refresh landing message and evidence only after docs and demo are true.
-7. Install source, CI, deployment, and production-crawl drift guards.
+2. Record sole-owner authorization and inventory the exact Apache boundary, dependencies, assets, and notices.
+3. Rewrite positioning around supervision reduction, continuity, trust, and the public/proprietary boundary.
+4. Repair root and hosted docs, restore deployed-doc revision parity, and bound docs dependencies.
+5. Refresh the landing message, restore `heroengine.ai`, and gate source links while the repository is private.
+6. Complete the public-repository exposure audit and minimum contribution/security/conduct/issue/support surfaces.
+7. Produce repeatable continuity proof and install source/deployment/production drift guards.
+8. Prepare v0.34 artifacts, notes, SBOM/notices, checksums, and install evidence without publication.
+9. Run separately approved Apache grant and repository visibility/v0.34 launch gates.
 
 ## Deferred
 
-- Launch campaigns, Product Hunt/HN plans, newsletter/social cadence, and community growth.
+- Launch campaigns, Product Hunt/HN plans, newsletter/social cadence, and broad community growth beyond minimum public-repository policies and support/issue surfaces.
 - Telemetry/analytics backend and privacy policy.
 - Pricing, enterprise collateral, broad competitor pages, and domain-platform marketing.
 - Broad visual brand overhaul.
@@ -120,12 +127,12 @@ The baseline child expands this into an exhaustive registry covering every publi
 
 ## Open questions
 
-1. What is the licensing posture? No repository `LICENSE` exists.
-2. Which cloud, team, and outpost capabilities are publicly usable today?
-3. Are all 21 code-host operations ready to market, and what provider/setup/approval prerequisites apply?
+1. Are sole-owner authorization and all bundled third-party asset obligations recorded for the proposed Apache-2.0 grant?
+2. Which account/workflow owns docs and landing deployment, and what restores `heroengine.ai` DNS?
+3. Which cloud, team, outpost, domain-pack, and code-host capabilities are publicly supportable at v0.34?
 4. Which audience leads: individual AI-native engineer or engineering lead at a 5–50-person team?
-5. What is the authoritative public release channel and deployment-freshness tolerance?
-6. Should roster counts appear anywhere outside generated reference pages? Recommendation: no.
+5. Should roster counts appear anywhere outside generated reference pages? Recommendation: no.
+6. When the readiness packets are green, will the owner explicitly approve the Apache grant and, separately, public visibility/v0.34 publication?
 
 ## Completion evidence expected
 
@@ -135,4 +142,6 @@ The baseline child expands this into an exhaustive registry covering every publi
 - Derived command/agent/skill/MCP inventories where counts remain necessary.
 - Root, hosted-docs, and landing scans plus link/build/accessibility checks.
 - Production crawl tied to deployed revision with zero unresolved P0/P1 claims.
-
+- Cleared owner-authorization/dependency/asset packet and exact Hero/Sprout/proprietary boundary.
+- v0.34 release candidate with reproducible artifacts, checksums, SBOM/notices, and clean-install evidence.
+- Recorded explicit approvals for the Apache grant and later public visibility/launch mutations.

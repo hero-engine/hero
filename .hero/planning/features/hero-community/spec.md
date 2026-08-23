@@ -6,9 +6,6 @@ status: planning
 priority: P1
 tags: [marketing, community, support, contributors]
 created: 2026-04-25
-relations:
-  - target: hero-marketing
-    kind: parent
 horizon: someday
 smoke: deferred
 ---

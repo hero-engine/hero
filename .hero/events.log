@@ -553,3 +553,5 @@
 {"ts":"2026-08-22T23:00:13.260559Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"qa-public-pack","message":"status -\u003e completed"}
 {"ts":"2026-08-23T00:25:35.451553Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"dual-mode-pm-qa-capability-packs","message":"Dual-Mode PM and QA Capability Packs"}
 {"ts":"2026-08-23T00:25:35.451638Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"dual-mode-pm-qa-capability-packs","message":"status -\u003e completed"}
+{"ts":"2026-08-23T01:17:32.199263Z","type":"mail.promote","agent":"hero-mail","slug":"mail-d20bcb1654f2bb82d4d973b1","message":"promote mail_d20bcb1654f2bb82d4d973b1 (thread mail_d20bcb1654f2bb82d4d973b1)"}
+{"ts":"2026-08-23T01:56:15.76497Z","type":"mail.promote","agent":"hero-mail","slug":"mail-da2727fd11615a9cafa5125c","message":"promote mail_da2727fd11615a9cafa5125c (thread mail_da2727fd11615a9cafa5125c)"}

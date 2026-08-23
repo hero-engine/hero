@@ -2,23 +2,23 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-08-23T00:26:22Z · projected from 662 source nodes_
+_Last refreshed: 2026-08-23T15:47:20Z · projected from 667 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | maturing | cmd/, internal/ | 1d ago | hero-runner |
+| core | maturing | cmd/, internal/ | 1m ago | hero-runner |
 | docs | maturing | web/docs/ | 41d ago | — |
 | domains/chat | maturing | domains/chat/ | 35d ago | — |
 | domains/engineering | maturing | domains/engineering/ | 3d ago | — |
 | domains/pm | maturing | domains/pm/ | 36d ago | — |
 | domains/qa | concept | domains/qa/ | — | — |
-| domains/sales | maturing | domains/sales/ | 1d ago | — |
-| landing | building | web/landing/ | 42d ago | hero-landing-page |
+| domains/sales | maturing | domains/sales/ | 2d ago | — |
+| landing | building | web/landing/ | <1m ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
 | serve | building | internal/serve/ | 1d ago | agent-outposts |
-| (unassigned) | — | — | — | 253 specs without surface |
+| (unassigned) | — | — | — | 256 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
 
@@ -35,7 +35,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 16/20 specs done
 - **"Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"** (surface: —) — 0/9 specs done
 - **Hero Killer Features — Agent Effectiveness, Team Power, Living Specs** (surface: core, serve) — 10/11 specs done
-- **"Hero v0.34 Public Readiness — Truth, Licensing, and Launch"** (surface: core, landing, serve) — 0/20 specs done; in flight: hero-landing-page
+- **"Hero v0.34 Public Release Readiness"** (surface: core, serve) — 0/12 specs done
 - **Hero Platform — Headless Execution, Team Automation, and Shared Visibility** (surface: core, serve) — 3/8 specs done
 - **"Hero Doesn't Lie — Self-Consistency Between Generated Guidance, Hero's Own Writes, and Hero's Actual Contract"** (surface: core) — 0/5 specs done
 - **Hero Surface Architecture — One Surface, Every Layer, Every Role** (surface: serve) — 8/9 specs done
@@ -67,14 +67,14 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Open risks & blockers
 
-- **Blocked specs (24):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-apache-license-grant-gate` (waits on hero-v034-release-prep, hero-licensing-boundary-and-provenance, hero-public-repo-readiness); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-continuity-proof-demo` (waits on hero-public-truth-baseline, hero-positioning, hero-public-repo-readiness); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-hosted-docs-remediation` (waits on hero-public-truth-baseline, hero-positioning); `hero-landing-message-refresh` (waits on hero-root-docs-remediation, hero-hosted-docs-remediation); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-licensing-boundary-and-provenance` (waits on hero-public-truth-baseline); `hero-positioning` (waits on hero-public-truth-baseline, hero-licensing-boundary-and-provenance); `hero-public-docs-drift-guard` (waits on hero-root-docs-remediation, hero-hosted-docs-remediation, hero-landing-message-refresh, hero-public-repo-readiness, hero-continuity-proof-demo); `hero-public-repo-readiness` (waits on hero-landing-message-refresh, hero-licensing-boundary-and-provenance); `hero-public-visibility-launch-gate` (waits on hero-apache-license-grant-gate, hero-v034-release-prep); `hero-root-docs-remediation` (waits on hero-public-truth-baseline, hero-positioning); `hero-team-server` (waits on hero-runner); `hero-v034-release-prep` (waits on hero-public-docs-drift-guard); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection); `wire-checks-to-boundaries` (waits on spec-contract-enums-unified).
-- **Stale-in-flight (4):** `hero-landing-page` (96d), `retrieval-contradiction-detection` (43d), `agent-outposts` (42d), `team-connect` (42d).
+- **Blocked specs (25):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-apache-license-grant-gate` (waits on hero-v034-release-prep, hero-licensing-boundary-and-provenance, hero-public-repo-readiness); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-positioning, hero-docs-site); `hero-continuity-proof-demo` (waits on hero-public-truth-baseline, hero-positioning, hero-public-repo-readiness); `hero-demo-content` (waits on hero-positioning); `hero-docs-site` (waits on hero-positioning); `hero-hosted-docs-remediation` (waits on hero-public-truth-baseline, hero-positioning); `hero-landing-message-refresh` (waits on hero-root-docs-remediation, hero-hosted-docs-remediation); `hero-landing-page` (waits on hero-positioning, hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-positioning, hero-landing-page, hero-distribution, hero-demo-content); `hero-licensing-boundary-and-provenance` (waits on hero-public-truth-baseline); `hero-positioning` (waits on hero-public-truth-baseline, hero-licensing-boundary-and-provenance); `hero-public-docs-drift-guard` (waits on hero-root-docs-remediation, hero-hosted-docs-remediation, hero-landing-message-refresh, hero-public-repo-readiness, hero-continuity-proof-demo); `hero-public-repo-readiness` (waits on hero-landing-message-refresh, hero-licensing-boundary-and-provenance); `hero-public-visibility-launch-gate` (waits on hero-apache-license-grant-gate, hero-v034-release-prep); `hero-root-docs-remediation` (waits on hero-public-truth-baseline, hero-positioning); `hero-team-server` (waits on hero-runner); `hero-transparent-comparisons` (waits on hero-positioning); `hero-v034-release-prep` (waits on hero-public-docs-drift-guard); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection); `wire-checks-to-boundaries` (waits on spec-contract-enums-unified).
+- **Stale-in-flight (3):** `retrieval-contradiction-detection` (44d), `agent-outposts` (42d), `team-connect` (42d).
 - **Aged open bugs (16):** `install-target-emits-both-claude-and-agents-md` (open 100d), `next-project-file-conflict-not-regenerated` (open 81d), `desktop-sidebar-mcp-not-running` (open 80d), `hihcp-agents-md-harness-agnostic` (open 75d), `hihcp-mcp-auto-reconnect` (open 75d), `hihcp-mcp-first-turn-readiness` (open 75d), `hihcp-permission-bridge-validation` (open 75d), `hihcp-agent-loop-error-recovery` (open 75d), `hihcp-rgignore` (open 75d), `jira-connection-onboarding-misleads-agents` (open 40d), `resume-emits-dead-recall-command` (open 40d), `tracker-backed-diagnosis-publication-contract-broken` (open 35d), `tracker-semantic-priority-field-mapping` (open 34d), `jira-import-classification-obscures-work-items` (open 34d), `ledger-signoff-substring-match-fails-open` (open 29d), `graph-unpartitioned-writers-duplicate-nodes` (open 29d).
-- **Unassigned specs (253) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
+- **Unassigned specs (256) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 10 (inferred: 10 · overrides applied: 0)
-- Specs covered: 217/470 (46%)
-- Projection generation: 1ms · Source nodes: 662
+- Specs covered: 217/473 (45%)
+- Projection generation: 1ms · Source nodes: 667
 

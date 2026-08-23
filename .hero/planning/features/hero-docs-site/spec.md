@@ -7,12 +7,12 @@ priority: P0
 tags: [marketing, docs, mkdocs, onboarding]
 created: 2026-04-25
 relations:
-  - target: hero-marketing
-    kind: parent
   - target: hero-positioning
     kind: depends-on
 horizon: someday
 smoke: deferred
+superseded_by: hero-hosted-docs-remediation
+# superseded_reason: Replaced the greenfield docs-site premise with remediation of the existing hosted documentation and deployment.
 ---
 
 ## Goal

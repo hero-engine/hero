@@ -7,12 +7,12 @@ priority: P0
 tags: [marketing, demo, content, video, social]
 created: 2026-04-25
 relations:
-  - target: hero-marketing
-    kind: parent
   - target: hero-positioning
     kind: depends-on
 horizon: someday
 smoke: deferred
+superseded_by: hero-continuity-proof-demo
+# superseded_reason: Replaced broad demo-asset scope with a bounded cross-tool continuity proof.
 ---
 
 ## Goal

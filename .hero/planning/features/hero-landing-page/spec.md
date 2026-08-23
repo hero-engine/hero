@@ -8,8 +8,6 @@ tags: [marketing, landing, web, conversion]
 created: 2026-04-25
 updated: 2026-05-15
 relations:
-  - target: hero-marketing
-    kind: parent
   - target: hero-positioning
     kind: depends-on
   - target: hero-distribution
@@ -17,6 +15,8 @@ relations:
   - target: hero-demo-content
     kind: depends-on
 horizon: now
+superseded_by: hero-landing-message-refresh
+# superseded_reason: Replaced stale v0.9 landing scope with the v0.34 memory-first public message and proof refresh.
 ---
 
 ## Goal

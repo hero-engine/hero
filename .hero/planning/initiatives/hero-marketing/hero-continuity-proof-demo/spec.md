@@ -10,10 +10,11 @@ horizon: now
 created: 2026-08-04
 tags: [demo, continuity, evidence, trust]
 parent: hero-marketing
-depends-on: [hero-public-truth-baseline, hero-positioning]
+depends-on: [hero-public-truth-baseline, hero-positioning, hero-public-repo-readiness]
 relations:
   - target: hero-landing-message-refresh
     kind: conflicts-with
+supersedes: [hero-demo-content]
 ---
 
 # Hero Cross-Tool Continuity Proof
@@ -26,7 +27,7 @@ Produce one repeatable two-tool demonstration proving that project intent, a rej
 
 Creates the must-win proof behind Hero's supervision-reduction claim.
 
-**Status:** planning — blocked on approved claims and positioning.
+**Status:** planning — blocked on approved claims, positioning, and a public-safe repository fixture.
 
 **Pick up at:** define a deterministic fixture and evidence rubric before recording any output or assets.
 

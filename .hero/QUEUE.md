@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-23T00:26:22Z · 79 ready specs_
+_Generated: 2026-08-23T15:47:20Z · 81 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -29,10 +29,19 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## hero-public-truth-baseline — "Hero Public Truth Baseline"
+## hero-marketing — "Hero v0.34 Public Release Readiness"
+_initiative · planning · horizon: now_
+
+_Run opener — arm with `/drive hero-marketing`_
+
+Deliver the complete v0.34 public-readiness path: an inventory of the shipped product, memory-first positioning, current root and hosted documentation, a current public site, repository-readiness materials, a reproducible product proof, drift guards, and a clean release candidate. The owner has authorized preparing this repository for an Apache-2.0 grant. Adding the license, changing repository visibility, and publishing the release remain explicit final mutations rather than prep work.
+
+---
+
+## hero-public-truth-baseline — "Hero Shipped Surface Inventory"
 _feature · planning · horizon: now_
 
-Establishes what Hero may truthfully say and the executable replacements for known dangerous instructions.
+Maps public descriptions to shipped behavior and produces executable replacements for stale or unsafe instructions.
 
 **Status:** planning — seeded by `../content-truth-audit.md`; the exhaustive inventory and correction packet remain to be produced.
 
@@ -45,12 +54,17 @@ Establishes what Hero may truthfully say and the executable replacements for kno
 
 ---
 
-## hero-marketing — "Hero v0.34 Public Readiness — Truth, Licensing, and Launch"
-_initiative · planning · horizon: now_
+## mail-da2727fd11615a9cafa5125c — Mail Da2727fd11615a9cafa5125c
+_feature · planning · horizon: now_
 
-_Run opener — arm with `/drive hero-marketing`_
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/mail-da2727fd11615a9cafa5125c/spec.md)_
 
-Recompose the existing truth-repair initiative into the complete v0.34 public-readiness plan. Preserve its seven evidence, positioning, documentation, demonstration, landing, and drift-guard children; add only the legal-boundary, provenance, repository-readiness, release-preparation, and approval-gate work needed to make a safe public release possible. Completion requires current source and deployed surfaces, a reproducible proof of the product story, a clean v0.34 release candidate, an explicit human approval before adding Apache-2.0, and a second explicit human approval before changing repository visibility or launching the release.
+---
+
+## mail-d20bcb1654f2bb82d4d973b1 — Mail D20bcb1654f2bb82d4d973b1
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/mail-d20bcb1654f2bb82d4d973b1/spec.md)_
 
 ---
 
@@ -733,16 +747,10 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## launch-readiness — Launch Readiness — Telemetry, Deploy, and Public-Use Polish
-_initiative · planning · horizon: someday_
+## hero-distribution — Hero Distribution — Homebrew, Install Script, GitHub Releases
+_feature · planning · horizon: someday_
 
-_Run opener — arm with `/drive launch-readiness`_
-
-Bridge the gap between "the product is good enough that we'd use it
-ourselves" and "the product is good enough that we'd hand it to a
-team we don't know." Tactically: stand up production infrastructure,
-turn on opt-in telemetry, and absorb whatever lessons fall out of
-dogfooding the polished core before we deploy.
+_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-distribution/spec.md)_
 
 ---
 
@@ -753,17 +761,23 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projec
 
 ---
 
-## hero-distribution — Hero Distribution — Homebrew, Install Script, GitHub Releases
-_feature · planning · horizon: someday_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-distribution/spec.md)_
-
----
-
 ## hero-community — Hero Community — Discord/Discussions, Contributor Guide, Issue Templates
 _feature · planning · horizon: someday_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/developer/projects/hero-engine/repository/hero/.hero/planning/features/hero-community/spec.md)_
+
+---
+
+## launch-readiness — Launch Readiness — Telemetry, Deploy, and Public-Use Polish
+_initiative · planning · horizon: someday_
+
+_Run opener — arm with `/drive launch-readiness`_
+
+Bridge the gap between "the product is good enough that we'd use it
+ourselves" and "the product is good enough that we'd hand it to a
+team we don't know." Tactically: stand up production infrastructure,
+turn on opt-in telemetry, and absorb whatever lessons fall out of
+dogfooding the polished core before we deploy.
 
 ---
 

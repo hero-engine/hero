@@ -7,8 +7,6 @@ priority: P1
 tags: [marketing, content, blog, seo, growth]
 created: 2026-04-25
 relations:
-  - target: hero-marketing
-    kind: parent
   - target: hero-positioning
     kind: depends-on
   - target: hero-docs-site

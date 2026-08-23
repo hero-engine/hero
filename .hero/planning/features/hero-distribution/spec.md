@@ -6,11 +6,10 @@ status: planning
 priority: P0
 tags: [marketing, distribution, install, release, packaging]
 created: 2026-04-25
-relations:
-  - target: hero-marketing
-    kind: parent
 horizon: someday
 smoke: deferred
+superseded_by: hero-v034-release-prep
+# superseded_reason: Narrowed broad distribution work to a reproducible v0.34 release candidate and explicit publication gate.
 ---
 
 ## Goal

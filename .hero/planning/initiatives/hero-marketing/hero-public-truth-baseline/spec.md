@@ -1,5 +1,5 @@
 ---
-title: "Hero Public Truth Baseline"
+title: "Hero Shipped Surface Inventory"
 slug: hero-public-truth-baseline
 type: feature
 status: planning
@@ -15,15 +15,15 @@ relations:
     kind: conflicts-with
 ---
 
-# Hero Public Truth Baseline
+# Hero Shipped Surface Inventory
 
 ## Goal
 
-Create the evidence authority every public Hero claim must use, classify capability maturity, and package the known P0 onboarding corrections before any downstream copy is rewritten.
+Inventory the product as it exists now, classify capability maturity, and package the known P0 onboarding corrections before downstream copy is rewritten.
 
 ## Kickoff
 
-Establishes what Hero may truthfully say and the executable replacements for known dangerous instructions.
+Maps public descriptions to shipped behavior and produces executable replacements for stale or unsafe instructions.
 
 **Status:** planning — seeded by `../content-truth-audit.md`; the exhaustive inventory and correction packet remain to be produced.
 
@@ -40,7 +40,7 @@ Establishes what Hero may truthfully say and the executable replacements for kno
 2. Resolve a P0 correction packet for satellites/monorepos, install repair syntax, verify/complete semantics, configuration decoding, Go prerequisite, and the dead `hero verify-install` command.
 3. Derive current command, agent, skill, and runtime MCP inventories from implementation authorities; recommend removal of mutable counts outside generated reference pages.
 4. Classify continuity, audit/verify, Attention/Mail/Focus, `hero serve`, code-host, tracker, peering, headless runtime, PM/Sales packs, and cloud/team/outposts as `shipped`, `optional`, `preview`, or `planned` with prerequisites.
-5. Record unresolved decisions as prohibited claims until licensing, public release channel, audience, and maturity evidence are explicit.
+5. Record the settled repository boundary—this `hero` repository as the Apache-2.0 candidate, Sprout separately MIT-licensed, and `hero-code`/`hero-cloud` proprietary—and keep actual Hero licensing/public claims prohibited until their evidence and approvals exist.
 
 ## Acceptance Criteria
 
@@ -56,6 +56,7 @@ Establishes what Hero may truthfully say and the executable replacements for kno
 - No public copy edits, landing redesign, or product implementation.
 - No inference from a planning spec as evidence of shipped behavior.
 - No unconditional licensing, cloud/team/outpost, domain-pack, or code-host readiness claims.
+- No license or visibility mutation and no inference that licensing this repository licenses Sprout, `hero-code`, or `hero-cloud`.
 
 ## Validation
 

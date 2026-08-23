@@ -1,22 +1,28 @@
 ---
-title: "Hero Public Truth — Product Story and Documentation Repair"
+title: "Hero v0.34 Public Release Readiness"
 slug: hero-marketing
 type: initiative
 status: planning
 domain: engineering
-size: x-large
+size: giant
 priority: critical
 horizon: now
+autonomy: autonomous
 created: 2026-04-25
-tags: [marketing, positioning, documentation, public-truth, continuity, trust]
+tags: [public-readiness, positioning, documentation, apache-2, release, trust]
 child:
   - hero-public-truth-baseline
+  - hero-licensing-boundary-and-provenance
   - hero-positioning
   - hero-root-docs-remediation
   - hero-hosted-docs-remediation
-  - hero-continuity-proof-demo
   - hero-landing-message-refresh
+  - hero-public-repo-readiness
+  - hero-continuity-proof-demo
   - hero-public-docs-drift-guard
+  - hero-v034-release-prep
+  - hero-apache-license-grant-gate
+  - hero-public-visibility-launch-gate
 relations:
   - target: hero-self-consistency
     kind: related
@@ -24,28 +30,29 @@ relations:
     kind: related
 ---
 
-# Hero Public Truth — Product Story and Documentation Repair
+# Hero v0.34 Public Release Readiness
 
 ## Vision
 
-Hero tells one public story that is both differentiated and demonstrably true: it carries a project's intent, decisions, corrections, and delivery evidence from one AI session to the next, so engineers spend less time re-explaining and supervising. Public onboarding works exactly as written, shipped capabilities are easy to discover, maturity labels prevent roadmap work from masquerading as product, and automated checks catch factual drift before deployment.
+Hero v0.34 presents one accurate, supportable public product: the `hero` CLI and this repository explain what is shipped, install and operate as documented, expose current hosted docs and landing pages, carry the minimum collaboration and security surfaces expected of a public repository, and are ready for an explicitly approved Apache-2.0 grant and public visibility change.
+
+The public boundary is narrow. The `hero` repository is the candidate Apache-2.0 work. Sprout is a separately owned, public MIT-licensed dependency. `hero-code` and `hero-cloud` remain proprietary and must not be relicensed, copied into this repository, or represented as part of Hero's open-source grant.
 
 ## Goal
 
-Replace the stale launch-and-growth premise of this existing initiative with a bounded truth-repair program. Establish an evidence-backed claim baseline, rewrite positioning around reduced supervision through durable project intelligence, repair root and hosted documentation, prove continuity in a repeatable two-tool demonstration, refresh the landing message only after the proof exists, and close with production-aware drift guards.
+Deliver the complete v0.34 public-readiness path: an inventory of the shipped product, memory-first positioning, current root and hosted documentation, a current public site, repository-readiness materials, a reproducible product proof, drift guards, and a clean release candidate. The owner has authorized preparing this repository for an Apache-2.0 grant. Adding the license, changing repository visibility, and publishing the release remain explicit final mutations rather than prep work.
 
-## Kickoff
+## Current reality
 
-Rebuilds Hero's public story around session continuity and evidence-backed completion while repairing false onboarding and documentation claims.
+- The latest release tag is `v0.33.0`; this initiative targets `v0.34.0`.
+- The repository has no `LICENSE`. Hero's sole owner has stated that he owns the repository content and authorizes preparing it for an Apache-2.0 grant; the remaining license review concerns third-party dependencies and bundled assets, not contributor consent.
+- Only the `hero` CLI/repository is in this Apache-2.0 licensing scope. Sprout is a separately owned public MIT project. `hero-code` and `hero-cloud` remain proprietary by product choice.
+- The deployed docs are stale as of June 11 even though newer pages exist in source. A green local build does not prove the public site is current.
+- `heroengine.ai` does not currently resolve. Domain and deployment restoration are release blockers.
+- Documentation dependencies are loosely bounded and the build warns about future incompatibility with MkDocs 2.0.
+- Public source links are dead while the repository is private. They must remain hidden or clearly unavailable until the visibility gate succeeds.
 
-**Status:** planning — the stale marketing program has been recomposed into seven sequenced truth-repair children; no public content has been changed.
-
-**Pick up at:** design and deliver `hero-public-truth-baseline`, including the P0 correction packet and maturity registry every later child consumes.
-
-→ `.hero/planning/initiatives/hero-marketing/hero-public-truth-baseline/spec.md`
-
-**Files:** `.hero/planning/initiatives/hero-marketing/content-truth-audit.md`, `README.md`, `web/docs/src/`, `web/landing/site/index.html`
-**Skip:** launch campaigns, telemetry, pricing, community growth, and a broad brand overhaul.
+The durable claim audit and evidence taxonomy live in [`content-truth-audit.md`](content-truth-audit.md).
 
 ## Product direction
 
@@ -53,46 +60,49 @@ Rebuilds Hero's public story around session continuity and evidence-backed compl
 
 > Hero carries your project's intent, decisions, and evidence from one AI session to the next, so you spend less time re-explaining and supervising.
 
-- **Category:** operating layer for AI-assisted engineering.
-- **Outcome:** AI sessions inherit the project and finish against evidence.
-- **Mechanism:** specs, decisions, conventions, project intelligence, and delivery evidence become durable context that supported harnesses can retrieve and act against.
-- **Wedge:** engineering leads; PM and Sales expansion must be described only with verified maturity labels.
-- **Candidate, not promise:** “Correct your AI once” remains a claim to test and prove. It is prohibited as an absolute statement until the continuity demonstration and claim baseline support it.
+- **Category:** project memory and delivery system for AI-assisted engineering.
+- **Primary promise:** durable project memory. Decisions, context, corrections, conventions, evidence, and current state survive sessions, tools, and agents.
+- **Execution system:** specs and specialized agents turn that memory into structured work, implementation, cold audit, and verified completion.
+- **Outcome:** every AI session can inherit the project, act with context, and leave the project smarter for the next session.
+- **Wedge:** engineering leads; PM and Sales expansion must use verified maturity labels.
+- **Candidate, not promise:** “Correct your AI once” remains prohibited as an absolute statement until the continuity proof supports a carefully bounded claim.
 
-Specs remain a forcing function for trustworthy work; they are not the headline category. Roster size, raw command counts, and “spec-driven” framing are reference detail rather than primary differentiation.
-
-## Why now
-
-The current public surfaces contain operational falsehoods and material drift while structural checks remain green. Known P0 failures include nonexistent satellite commands, invalid repair syntax, a false nested-workspace architecture, an obsolete verify-then-complete sequence, an undecodable configuration example, an impossible Go prerequisite, and the dead `hero verify-install` command. P1 drift includes stale release/version claims, contradictory counts, fictional command output, inaccurate Codex slash-command language, stale repository trees, and wrong one-graph peering semantics.
-
-At the same time, the public story underplays shipped or meaningful abilities: cold delivery audit plus verification evidence, cross-session/tool continuity, Attention/Mail/Focus, the `hero serve` project intelligence UI, guarded code-host operations, tracker evidence and mutations, cross-repo Project Mail/advisory/spec-out/handoff, and approval-aware headless execution. PM and Sales domain packs may be mentioned only with maturity caveats until release-level proof exists.
-
-The durable audit and claim taxonomy live in [`content-truth-audit.md`](content-truth-audit.md).
+Hero is two connected systems in one: project memory is the differentiated headline, and the spec-and-agent delivery loop is the execution layer built on it. Each delivery records more useful memory; that memory improves every later delivery. Specs remain a forcing function for trustworthy work, not the headline category. Public copy must not make Hero read like another spec kit.
 
 ## Child specs and phases
 
 | Phase | Child | Priority | Size | Depends on | Outcome |
 |---:|---|---|---|---|---|
-| 1 | [`hero-public-truth-baseline`](hero-public-truth-baseline/spec.md) | critical | medium | — | Claim/capability inventory, evidence authority, maturity labels, and a P0 correction packet. |
-| 1 | [`hero-positioning`](hero-positioning/spec.md) | high | medium | baseline | Supervision/continuity/trust message hierarchy, audiences, proof pillars, vocabulary, and prohibited claims. |
-| 2 | [`hero-root-docs-remediation`](hero-root-docs-remediation/spec.md) | high | medium | baseline + positioning | Executable root onboarding and accurate configuration, harness, peering, and team guidance. |
-| 2 | [`hero-hosted-docs-remediation`](hero-hosted-docs-remediation/spec.md) | high | large | baseline + positioning | Page-by-page hosted-doc factual repair and discoverability for differentiated capabilities. |
-| 2 | [`hero-continuity-proof-demo`](hero-continuity-proof-demo/spec.md) | high | medium | baseline + positioning | Repeatable two-tool cold-resume proof with a surviving correction and evidence-backed completion. |
-| 3 | [`hero-landing-message-refresh`](hero-landing-message-refresh/spec.md) | high | medium | root docs + hosted docs + demo | Current, truthful landing message using real or explicitly illustrative product evidence. |
-| 4 | [`hero-public-docs-drift-guard`](hero-public-docs-drift-guard/spec.md) | medium | medium | root docs + hosted docs + landing | Derived assertions, executable examples, deployment freshness, and a zero-unresolved-claims production crawl. |
+| 1 | [`hero-public-truth-baseline`](hero-public-truth-baseline/spec.md) | critical | medium | — | Shipped-surface inventory, maturity labels, P0 corrections, and current public-state baseline. |
+| 1 | [`hero-licensing-boundary-and-provenance`](hero-licensing-boundary-and-provenance/spec.md) | critical | small | baseline | Owner authorization, exact repository boundary, and third-party dependency, asset, and notice inventory. |
+| 2 | [`hero-positioning`](hero-positioning/spec.md) | high | medium | shipped inventory + licensing inventory | Approved message hierarchy and precise public/proprietary boundary language. |
+| 2 | [`hero-root-docs-remediation`](hero-root-docs-remediation/spec.md) | high | medium | baseline + positioning | Executable root onboarding and accurate product, repository, and licensing-boundary guidance. |
+| 2 | [`hero-hosted-docs-remediation`](hero-hosted-docs-remediation/spec.md) | high | large | baseline + positioning | Factual page repair, capability discoverability, bounded docs dependencies, and deployment restoration. |
+| 3 | [`hero-landing-message-refresh`](hero-landing-message-refresh/spec.md) | high | medium | root docs + hosted docs | Current truthful landing source, working destinations, and restored `heroengine.ai` DNS/deployment. |
+| 3 | [`hero-public-repo-readiness`](hero-public-repo-readiness/spec.md) | high | medium | landing + licensing inventory | Public-exposure audit plus minimum contribution, security, conduct, issue, and support surfaces. |
+| 3 | [`hero-continuity-proof-demo`](hero-continuity-proof-demo/spec.md) | high | medium | repo readiness + positioning | Repeatable two-tool cold-resume proof safe to publish with v0.34. |
+| 4 | [`hero-public-docs-drift-guard`](hero-public-docs-drift-guard/spec.md) | medium | medium | root + hosted + landing + repo readiness + demo | Derived assertions, pinned docs compatibility, deployment freshness, and production crawls. |
+| 4 | [`hero-v034-release-prep`](hero-v034-release-prep/spec.md) | high | medium | drift guard | Reconciled v0.34 notes, artifacts, SBOM/notices, checksums, install proof, and launch checklist without publication. |
+| 5 | [`hero-apache-license-grant-gate`](hero-apache-license-grant-gate/spec.md) | critical | small | release prep + licensing inventory + repo readiness | Explicitly approved Apache-2.0 grant for this repository only. |
+| 5 | [`hero-public-visibility-launch-gate`](hero-public-visibility-launch-gate/spec.md) | critical | medium | Apache grant + release prep | Explicitly approved visibility flip, anonymous verification, and v0.34 launch/publication. |
 
-The critical path is:
+The hard dependency chain is:
 
 ```text
 hero-public-truth-baseline
-  → hero-positioning
-      → hero-root-docs-remediation ─┐
-      → hero-hosted-docs-remediation├→ hero-landing-message-refresh
-      → hero-continuity-proof-demo ─┘
-          → hero-public-docs-drift-guard
+  → hero-licensing-boundary-and-provenance
+    → hero-positioning
+        → {hero-root-docs-remediation, hero-hosted-docs-remediation}
+          → hero-landing-message-refresh
+            → hero-public-repo-readiness
+              → hero-continuity-proof-demo
+                → hero-public-docs-drift-guard
+                  → hero-v034-release-prep
+                    → hero-apache-license-grant-gate
+                      → hero-public-visibility-launch-gate
 ```
 
-Phase 2 children may proceed in parallel only when the reciprocal overlap guards below are respected. If `hero-hosted-docs-remediation` grows beyond a coherent page-by-page repair, `/split` it into factual remediation first and capability discoverability second.
+Root and hosted documentation may proceed in parallel after positioning. All other arrows are hard order. Phase 5 contains human-controlled mutations and cannot be entered merely because its dependencies are green.
 
 ## In-flight overlap watch
 
@@ -105,65 +115,77 @@ Every seam below has reciprocal `conflicts-with` relations on the named children
 | `hero-hosted-docs-remediation` | `hero-public-docs-drift-guard` | `web/docs/src` scanning, navigation, releases, and generated references |
 | `hero-continuity-proof-demo` | `hero-landing-message-refresh` | demonstration fixtures, captures, embeds, and proof claims |
 | `hero-hosted-docs-remediation` | `hero-landing-message-refresh` | `web/` metadata, terminology, navigation links, and destination URLs |
+| `hero-root-docs-remediation` | `hero-public-repo-readiness` | root README support/contribution links and public-repository guidance |
 
-## Existing child disposition
+## Existing spec disposition
 
-These dispositions preserve history without pretending stale lifecycle state is accurate. No historical item is being marked complete by this recomposition.
+These dispositions preserve genealogy without mutating out-of-scope historical specs during composition.
 
 | Existing slug | Disposition |
 |---|---|
-| `hero-positioning` | Relocated from `.hero/planning/features/hero-positioning/spec.md` and rewritten in place under this initiative. Its narrative/ICP/messaging/comparison intent is preserved; its “spec layer” headline and count-based proof are retired. |
-| `hero-landing-page` | Historical landing delivery with stale `delivering` status and a v0.9 premise. Reconcile its delivery evidence/status separately, then use `hero supersede hero-landing-page --by hero-landing-message-refresh` if genealogy is still appropriate. Its content scope is replaced here. |
-| `hero-docs-site` | Historical hosting/site delivery whose `planning` status and greenfield premise no longer describe reality. Reconcile separately, then formally supersede with `hero-hosted-docs-remediation` if warranted. Its content scope is replaced here. |
-| `hero-distribution` | Most stated gaps now exist (binaries/releases/install paths). Reconcile separately and move any remaining release hardening to a release/platform initiative; it is not a child of this truth-repair program. |
-| `hero-demo-content` | Broad asset-catalog premise is replaced by the narrow continuity proof. Reconcile the old spec, then formally supersede it with `hero-continuity-proof-demo` rather than hand-editing genealogy. |
-| `hero-launch-playbook` | Deferred until truthful surfaces and a small external cohort validate the message. Re-author later without coordinated voting/comment tactics. |
-| `hero-content-engine` | Removed from this initiative; ongoing publishing is a separate growth program. |
-| `hero-community` | Removed from this initiative; community/support operations are not a prerequisite for truthful docs. |
-| `hero-telemetry` | Removed from this initiative; product analytics and privacy policy require their own product decision. |
+| `hero-positioning` | Preserved under this initiative; it consumes the explicit Hero/Sprout/proprietary repository boundary established by the licensing-inventory child. |
+| `hero-landing-page` | Superseded by `hero-landing-message-refresh`; the stale v0.9 scope is closed. |
+| `hero-docs-site` | Superseded by `hero-hosted-docs-remediation`, which owns source remediation and deployed-site restoration. |
+| `hero-distribution` | Superseded by `hero-v034-release-prep`; broad distribution work is not revived. |
+| `hero-demo-content` | Superseded by the bounded `hero-continuity-proof-demo`; broad asset-catalog work stays out of scope. |
+| `hero-launch-playbook` | Broad campaign work remains deferred. The final gate performs only the approved repository/release launch and verification. |
+| `hero-content-engine` | Remains outside this initiative; ongoing publishing is a separate growth program. |
+| `hero-community` | Broad community growth remains deferred; the minimum public repository policies and issue/support surfaces belong to `hero-public-repo-readiness`. |
+| `hero-telemetry` | Remains outside this initiative; analytics and privacy policy require a separate product decision. |
 
-Several historical specs still declare `hero-marketing` as parent. Their frontmatter and stale lifecycle state are intentionally untouched here; before `/drive hero-marketing`, reconcile those inbound relations with the supported lifecycle/supersession commands so the executable child set matches the seven-child roster above.
+The four deferred growth specs no longer declare `hero-marketing` as parent. The four replaced specs carry explicit supersession edges to their v0.34 successors.
+
+## Cross-cutting requirements
+
+- Public behavior, version, architecture, availability, and licensing claims require executable or source evidence, not repetition across docs.
+- The legal boundary must remain exact: Apache-2.0 can cover this `hero` repository only after approval; Sprout remains separately MIT-licensed; `hero-code` and `hero-cloud` remain proprietary.
+- Repository scans must include source, generated artifacts, dependencies, vendored material, docs assets, fonts, screenshots, and logos. Owner authorization is recorded; third-party material remains subject to license review.
+- Public URLs are part of the product contract. Source links, docs, DNS, anonymous clone, release artifacts, and install commands must be verified from an unauthenticated environment.
+- License and public exposure gates are fail-closed. Missing approval, unresolved third-party licensing, missing license text, non-resolving DNS, stale deployment, or dead anonymous links halt the gate.
 
 ## Acceptance Criteria
 
 - **AC-1:** THE SYSTEM SHALL provide one evidence-backed public claim registry with `shipped`, `optional`, `preview`, and `planned` availability labels.
-- **AC-2:** WHEN a user follows a public onboarding path THE SYSTEM SHALL execute the documented commands and configuration against the current product contract.
-- **AC-3:** WHEN Hero is described on a root doc, hosted docs page, or landing surface THE SYSTEM SHALL use the supervision/continuity/trust hierarchy and cite or link to appropriate proof.
-- **AC-4:** IF a claim depends on unverified cloud, team, outpost, domain-pack, licensing, or code-host readiness THEN THE SYSTEM SHALL label the uncertainty and prohibit an unconditional shipped claim.
-- **AC-5:** WHEN a public build is validated THE SYSTEM SHALL detect command, count, version, configuration, harness, peering, link, and deployment-freshness drift across all public surfaces.
-- **AC-6:** WHEN the initiative closes THE SYSTEM SHALL produce a production crawl with zero unresolved P0/P1 claims and a revision marker tying deployed content to reviewed source.
+- **AC-2:** THE SYSTEM SHALL record the owner's authorization and identify every third-party dependency, bundled asset, and repository included in or excluded from the proposed Apache-2.0 grant.
+- **AC-3:** WHEN a user follows a public onboarding path THE SYSTEM SHALL execute the documented commands and configuration against the v0.34 product contract.
+- **AC-4:** WHEN Hero is described on root docs, hosted docs, or the landing surface THE SYSTEM SHALL lead with durable project memory, explain the spec-and-agent delivery system as the connected execution layer, and state the exact public/proprietary repository boundary.
+- **AC-5:** IF content suggests `hero-code`, `hero-cloud`, or another proprietary repository is Apache-licensed or included in the public grant THEN THE SYSTEM SHALL fail public-readiness validation.
+- **AC-6:** WHEN the hosted docs or landing source changes THE SYSTEM SHALL verify deployed revision parity, resolvable DNS, live destinations, and compatibility-bounded documentation dependencies.
+- **AC-7:** WHEN the v0.34 release candidate is prepared THE SYSTEM SHALL provide reproducible artifacts, checksums, SBOM/notices, install evidence, release notes, and a launch checklist without creating a public release.
+- **AC-8:** IF explicit approval to add Apache-2.0 has not been recorded THEN THE SYSTEM SHALL leave this repository without a license mutation.
+- **AC-9:** IF explicit approval to make the repository public has not been recorded THEN THE SYSTEM SHALL leave repository visibility unchanged and SHALL NOT publish the v0.34 launch.
+- **AC-10:** WHEN the final launch is approved THE SYSTEM SHALL verify anonymous clone, install, docs, landing, source links, issue/support surfaces, and v0.34 artifacts from an unauthenticated environment.
 
 ## Boundaries
 
-- No launch campaign, Product Hunt/HN calendar, newsletter, social cadence, or community program.
-- No telemetry backend, pricing, competitor microsites, enterprise sales collateral, or domain-platform marketing.
-- No broad visual brand overhaul; only assets necessary to make repaired surfaces coherent and truthful.
-- No public claim that cloud/team/outposts or all 21 code-host operations are production-ready until evidence resolves their maturity and prerequisites.
-- No changing product behavior merely to preserve old docs; docs follow the supported product contract.
-- No implementation of README, docs, landing, site, or code during initiative composition.
-
-## Non-Goals
-
-- Re-launching Hero, growing an audience, pricing the product, or choosing a new visual identity.
-- Making unfinished cloud, team, outpost, domain-pack, or integration work appear market-ready.
-- Preserving stale documentation behavior through compatibility code instead of documenting the supported contract.
+- Do not license, publish, copy, or imply an Apache-2.0 grant for `hero-code` or `hero-cloud`; both remain proprietary.
+- Do not modify or relicense Sprout from this repository. Its MIT grant remains separate; only a licensed Sprout module release and Hero dependency bump are in scope as an external prerequisite.
+- Do not add `LICENSE`, change repository visibility, publish a GitHub release/tag, or announce launch without the explicit approval required by the corresponding final gate.
+- No launch campaign, Product Hunt/HN calendar, newsletter, social cadence, analytics backend, pricing, enterprise collateral, or broad community-growth program.
+- No broad visual brand overhaul; only changes needed for a coherent, truthful, accessible public surface.
+- No changing product behavior merely to preserve stale docs. Documentation follows the supported contract.
+- No history rewrite or contributor-rights investigation. The owner's authorization is authoritative for Hero-owned content; unresolved third-party licensing remains a blocker to surface.
 
 ## Verification
 
-- Lint and score the initiative and all seven children; index the corpus and confirm parent, dependency, related, and reciprocal `conflicts-with` edges resolve uniquely.
-- Require each delivery child to reconcile its assigned claim-registry rows and run its executable/build validation before completion.
-- Close only after strict source builds, executable examples, link/accessibility checks, deployment revision verification, and a production crawl report zero unresolved P0/P1 claims.
+- Lint and score the initiative and every child; confirm all parent/dependency/related edges resolve and every named overlap has reciprocal `conflicts-with` relations.
+- Reconcile each public claim, dependency, and bundled asset before entering either final gate.
+- Require strict source builds, bounded docs dependencies, executable examples, artifact/SBOM checks, link/accessibility checks, deployment revision verification, DNS resolution, and a production crawl.
+- Exercise both final gates in fail-closed mode before seeking approval, then record the approving human and exact authorized mutation when each gate runs.
 
 ## Risks and open decisions
 
-- **Licensing:** no repository `LICENSE` exists; “open source” and licensing claims remain prohibited until posture is decided.
-- **Maturity:** public readiness of cloud/team/outposts, PM/Sales packs, and all 21 code-host operations needs explicit evidence.
-- **Audience:** an individual AI-native engineer versus a 5–50-person engineering lead must be chosen as the lead audience during positioning.
-- **Release channel:** confirm whether the newest repository tag is the public channel and how deployed surfaces derive it.
-- **Counts:** avoid mutable roster counts outside generated reference pages; counts are weak differentiation and maintenance liabilities.
-- **False confidence:** `mkdocs --strict`, docs checks, and invocation checks currently pass despite false content, so green structure checks cannot be treated as truth evidence.
+- **Owner authorization:** the sole owner has authorized Apache-2.0 preparation for this repository; record that decision plainly and do not reopen contributor-rights analysis.
+- **Third-party material:** source dependencies may be compatible while bundled docs/media/font assets are not; asset licensing must be reviewed separately.
+- **Deployment ownership:** source contains newer docs than the June 11 live deployment, so the deploy trigger, hosting account, and revision marker must be proven.
+- **DNS:** `heroengine.ai` currently does not resolve; registrar/hosting access may require explicit external coordination.
+- **Dependency drift:** loose documentation bounds and the MkDocs 2.0 warning can turn a future rebuild into a breaking deploy unless resolved before v0.34.
+- **Sprout release metadata:** Sprout is a separate public MIT project; verify the exact version consumed by Hero carries the expected license metadata during third-party inventory.
+- **Exposure:** making a repository public reveals the full reachable history, issues/settings permitted by the host, and all tracked assets; scan results must be resolved before approval, not after.
 
 ## Progress
 
 - 2026-04-25 — Original broad positioning/distribution/launch initiative created.
-- 2026-08-04 — Recomposed in place into a truthful public product story and documentation repair program. Seven child stubs and a durable content-truth audit were authored; no public content was changed.
+- 2026-08-04 — Recomposed into seven evidence-led public-truth children.
+- 2026-08-21 — Expanded in place into the v0.34 public-readiness plan with bounded licensing, repository, release, Apache grant, and visibility gates; no repository license, visibility, public site, docs, code, or release state was changed.
+- 2026-08-23 — Owner authorization recorded, autonomous preparation armed, and public positioning sharpened to lead with durable project memory plus its connected spec-and-agent delivery system.

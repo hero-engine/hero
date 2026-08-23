@@ -10,7 +10,7 @@ horizon: now
 created: 2026-08-04
 tags: [documentation, ci, validation, deployment]
 parent: hero-marketing
-depends-on: [hero-root-docs-remediation, hero-hosted-docs-remediation, hero-landing-message-refresh]
+depends-on: [hero-root-docs-remediation, hero-hosted-docs-remediation, hero-landing-message-refresh, hero-public-repo-readiness, hero-continuity-proof-demo]
 relations:
   - target: hero-public-truth-baseline
     kind: conflicts-with
@@ -48,6 +48,7 @@ Closes the initiative with source-to-production truth gates rather than another 
 3. Scan root docs, all `web/docs/src` content/navigation/releases, landing HTML/meta/OG/output, and generated install guidance for high-risk contradictions.
 4. Build and link-check public surfaces; validate anchors, redirects, accessibility, assets, release freshness, and real-versus-illustrative output labels.
 5. Tie deployments to source revision/time and run a post-deploy production crawl that fails the initiative gate on unresolved P0/P1 claims or stale public content.
+6. Assert compatibility-bounded docs dependencies, resolvable `heroengine.ai` DNS, anonymous-source-link gating, and the exact Hero/Sprout/proprietary repository boundary.
 
 Extend the existing `internal/cli/docs_check.go` surface instead of creating a parallel truth checker. Decode configuration fixtures through `internal/config`, derive the full MCP inventory from the same runtime definitions asserted in `internal/serve/mcp_test.go`, and add source-revision parity to the existing docs and landing workflows.
 
@@ -59,12 +60,14 @@ Extend the existing `internal/cli/docs_check.go` surface instead of creating a p
 - **AC-4:** WHEN public content deploys THE SYSTEM SHALL expose and verify a source revision and deployment timestamp.
 - **AC-5:** WHEN the initiative closes THE SYSTEM SHALL crawl production landing/docs URLs and report zero unresolved P0/P1 claims with reviewed-source parity.
 - **AC-6:** THE SYSTEM SHALL preserve the distinct scope of `generated-command-refs-validated` and integrate or extend it without duplicating contradictory checkers.
+- **AC-7:** WHEN public-readiness validation runs THE SYSTEM SHALL fail on incompatible docs dependency drift, non-resolving production DNS, dead anonymous source links, or a claim that `hero-code`/`hero-cloud` is open source.
 
 ## Boundaries
 
 - No hardcoded duplicate registry, version, or count authority.
 - No claim that a build/link pass proves semantic truth without the claim and executable checks.
 - No silent deploy failure or source-only success reported as public correction.
+- No license or visibility mutation; this child validates the boundary but does not cross either approval gate.
 
 ## Validation
 

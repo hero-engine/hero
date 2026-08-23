@@ -5,7 +5,7 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-08-23T00:26:22Z
+updated: 2026-08-23T15:47:20Z
 repo: hero-engine/hero
 ---
 
@@ -22,8 +22,6 @@ Run `git log --oneline -10` for recent commits.
 ## Blocked on
 
 - **core-vertical-layering** ← waiting on `project-charter` (planning)
-- **dual-mode-pm-qa-capability-packs** ← waiting on `hero-pm` (designed)
-- **dual-mode-pm-qa-capability-packs** ← waiting on `hero-qa` (planning)
 - **e2e-area-suites** ← waiting on `project-charter` (planning)
 - **hero-apache-license-grant-gate** ← waiting on `hero-licensing-boundary-and-provenance` (planning)
 - **hero-apache-license-grant-gate** ← waiting on `hero-public-repo-readiness` (planning)

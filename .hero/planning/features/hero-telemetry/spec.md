@@ -7,8 +7,6 @@ priority: P1
 tags: [marketing, telemetry, analytics, privacy, feedback]
 created: 2026-04-25
 relations:
-  - target: hero-marketing
-    kind: parent
   - target: hero-launch-playbook
     kind: related
 horizon: someday
