@@ -1,132 +1,44 @@
 ---
-title: Hero Demo Content — GIFs, Screencast, Asciinema, Social Cards
+title: Hero Interactive Install Terminal Demo
 slug: hero-demo-content
 type: feature
 status: planning
-priority: P0
-tags: [marketing, demo, content, video, social]
+priority: P2
+tags: [marketing, demo, install, terminal, animation]
 created: 2026-04-25
 relations:
   - target: hero-positioning
     kind: depends-on
 horizon: someday
 smoke: deferred
-superseded_by: hero-continuity-proof-demo
-# superseded_reason: Replaced broad demo-asset scope with a bounded cross-tool continuity proof.
 ---
 
 ## Goal
 
-Produce the visual artifacts a launch run needs — animated GIF for the
-hero shot, a 60–90 second screencast for blog posts and the docs, an
-asciinema cast for terminal-friendly embedding, and Open Graph / Twitter
-card images for every shareable surface. Reuse `hero demo record` where
-possible.
+Produce one short, lightweight terminal animation showing Hero's real interactive project-install flow. The output may be generated or staged, but it must be visibly labeled illustrative and must use valid Hero commands and prompts.
 
 ## Problem
 
-You can describe spec-driven workflow in 1,000 words or you can show
-it in 30 seconds. Today we have neither — no GIFs, no screencast, no
-social card. Every share of a Hero link in a tweet or HN thread renders
-as a blank rectangle, which kills click-through. Every blog draft stalls
-because there's nothing to embed.
+The public site explains Hero in words but does not quickly show how little effort it takes to add Hero to a project. A concise install animation can make the onboarding path tangible without pretending to prove product outcomes.
 
-## Deliverables
+## Deliverable
 
-### 1. Hero shot GIF (or autoplay video)
-- 6–10 seconds, < 2MB
-- Loops cleanly
-- Shows the core loop in compressed form: typing `/design …`, spec
-  appearing, `/deliver`, code shipping, knowledge captured
-- Lives on the landing page above the fold
+- A 6–12 second looping GIF, WebM, or CSS terminal animation.
+- Show the real interactive `hero install` flow selecting the normal project setup and ending at a clear ready state.
+- Use synthetic timing and generated terminal output when useful.
+- Label the animation “Illustrative install flow” in the visible page or caption.
+- Provide a reduced-motion static fallback and accessible text transcript.
+- Keep the artifact small enough not to delay the first meaningful page render.
 
-### 2. Screencast (60–90 seconds)
-- One real example, one take, no marketing voiceover
-- Demonstrates: install → init → /design → /deliver → /capture
-- Hosted on YouTube + self-hosted MP4 fallback
-- Embeddable in docs and blog
-- Subtitles included (auto-generated, hand-edited)
+## Acceptance Criteria
 
-### 3. Asciinema cast
-- Terminal-only version of the screencast for the README and docs
-- Same flow, no GUI scenes
-- Self-hosted .cast file (asciinema-player JS lib in landing/docs)
-- Loadable as a fallback when video can't autoplay
+- **AC-1:** THE SYSTEM SHALL show only commands, questions, choices, and outcomes supported by the current interactive install flow.
+- **AC-2:** IF output or timing is generated, staged, abbreviated, or edited THEN THE SYSTEM SHALL label the presentation illustrative rather than recorded evidence.
+- **AC-3:** THE SYSTEM SHALL provide an accessible static fallback and respect reduced-motion preferences.
+- **AC-4:** THE SYSTEM SHALL add no release, license, or public-visibility dependency; this asset may ship later without blocking v0.34.
 
-### 4. Per-feature GIFs
-- Short loops (4–6s each) for the major features:
-  - `/design` producing a spec
-  - `/deliver` with context injection
-  - `/diagnose` finding root cause
-  - `hero recap`
-  - `hero pulse`
-  - `hero serve` dashboard (when v2 ships)
-- Used inline in docs and feature pages
+## Boundaries
 
-### 5. Open Graph + Twitter card images
-- One default OG image (1200×630) for every page that doesn't override
-- Per-page generated OG images for:
-  - Landing
-  - Quickstart
-  - Each major workflow (/design, /deliver, /diagnose)
-  - Each blog post
-- Generation: a small Go or Node script that takes a title + subtitle
-  and renders to PNG with the brand template. Runs in CI.
-
-### 6. Brand assets folder
-- `marketing/assets/` in this repo (or sibling repo)
-- Contains: logo SVG (light + dark), wordmark, OG template, favicon set,
-  social avatar, screenshot frame template (laptop bezel, terminal chrome)
-- Documented usage rules in `marketing/BRAND.md`
-
-## Production approach
-
-- **Use `hero demo record`** for the screencast and per-feature GIFs.
-  The infrastructure already exists — Playwright-driven runs against
-  acceptance criteria with video capture. We dogfood the product to
-  produce its own marketing.
-- **Manual cuts** for the asciinema cast — `asciinema rec`, edit if
-  needed with `asciinema-trim` or just re-record cleanly.
-- **OG generator** — keep simple. A single template, parameterized.
-  Don't build a Figma plugin.
-- **Subtitles** — Whisper for first pass, hand-correct. Save to `.vtt`
-  alongside the video.
-
-## File budget
-
-- Hero GIF: < 2MB
-- Per-feature GIFs: < 1MB each
-- Screencast MP4: < 10MB at 720p (host on YouTube primarily)
-- Asciinema cast: < 100KB
-- OG images: < 200KB each, PNG with WebP fallback
-
-## Acceptance criteria
-
-- Hero shot GIF lives on the landing page and renders in < 1s
-- Screencast has captions and is embedded in docs `/quickstart`
-- Asciinema cast is in the README + docs as a fallback
-- Every landing page section has at least one supporting visual
-- OG image renders correctly when a Hero URL is shared on Twitter,
-  LinkedIn, Slack, Discord, and Bluesky
-- Brand assets folder exists with documented usage
-- Generation pipeline (OG images, GIFs from `hero demo record`) runs
-  from a single Make target
-
-## Out of scope
-
-- Animated brand intro / outro — keep it raw and informal
-- Multi-language subtitles
-- Photography of humans / customer footage — defer until we have
-  customers willing to be on camera
-- Long-form YouTube channel — that's hero-content-engine territory
-
-## Open questions
-
-- Style: terminal-only (legible, niche) or include the dashboard
-  (broader appeal but adds visual noise)? Lean terminal-led with one
-  dashboard cameo.
-- Light or dark mode in screencasts? Dark reads better on most embeds.
-- Music in the screencast or silence? Silence — keeps file small and
-  doesn't trigger copyright weirdness.
-- Use the founder's voice for narration, no narration, or text overlays
-  only? Lean text overlays for v1.
+- No cross-tool continuity proof, cold-resume fixture, external harness authentication, or evidence claim.
+- No full screencast library, feature-by-feature GIF catalog, social campaign, or video hosting dependency.
+- No fabricated product capability or generated output presented as a real transcript.

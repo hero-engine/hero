@@ -12,8 +12,6 @@ tags: [landing-page, positioning, messaging, proof]
 parent: hero-marketing
 depends-on: [hero-root-docs-remediation, hero-hosted-docs-remediation]
 relations:
-  - target: hero-continuity-proof-demo
-    kind: conflicts-with
   - target: hero-hosted-docs-remediation
     kind: conflicts-with
 supersedes: [hero-landing-page]

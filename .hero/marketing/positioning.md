@@ -23,7 +23,7 @@ Hero is two connected systems in one:
 1. **Durable project memory is the headline.** Hero keeps the parts of a project that prompts, chat history, and tool-local rule files routinely lose: why decisions were made, which corrections matter, what conventions apply, what failed, what evidence exists, and what should happen next.
 2. **Verified delivery is the execution layer.** Specs, specialized agents, Completion Ledgers, cold audits, and verification use that project memory to move work from intent to tested completion.
 
-The reinforcing loop is the product model: memory informs delivery; delivery produces decisions, evidence, corrections, and current state; those artifacts improve later memory. The components ship, but the cross-tool outcome remains **preview** until the continuity proof produces a repeatable public demonstration (`product-two-system-loop`, Class D, preview).
+The reinforcing loop is the product model: memory informs delivery; delivery produces decisions, evidence, corrections, and current state; those artifacts improve later memory. The components ship, but the broad cross-tool outcome remains **preview** until it is independently validated (`product-two-system-loop`, Class D, preview). That validation is not a v0.34 release dependency.
 
 ## Audience
 
@@ -198,7 +198,7 @@ Publication threshold: a revision-tied public test must record a correction in o
 
 ## Reusable boilerplate
 
-The memory and delivery statements in these blocks are grounded in shipped Class A claims `product-memory-system` and `product-delivery-system`. Any sentence about the reinforcing cross-session loop remains bounded by the preview Class D claim `product-two-system-loop` until the continuity proof passes.
+The memory and delivery statements in these blocks are grounded in shipped Class A claims `product-memory-system` and `product-delivery-system`. Any sentence about the reinforcing cross-session loop remains bounded by the preview Class D claim `product-two-system-loop` until independent evidence supports a stronger claim.
 
 ### 25 words
 

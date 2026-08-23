@@ -18,7 +18,6 @@ child:
   - hero-hosted-docs-remediation
   - hero-landing-message-refresh
   - hero-public-repo-readiness
-  - hero-continuity-proof-demo
   - hero-public-docs-drift-guard
   - hero-v034-release-prep
   - hero-apache-license-grant-gate
@@ -40,7 +39,7 @@ The public boundary is narrow. The `hero` repository is the candidate Apache-2.0
 
 ## Goal
 
-Deliver the complete v0.34 public-readiness path: an inventory of the shipped product, memory-first positioning, current root and hosted documentation, a current public site, repository-readiness materials, a reproducible product proof, drift guards, and a clean release candidate. The owner has authorized preparing this repository for an Apache-2.0 grant. Adding the license, changing repository visibility, and publishing the release remain explicit final mutations rather than prep work.
+Deliver the complete v0.34 public-readiness path: an inventory of the shipped product, memory-first positioning, current root and hosted documentation, a current public site, repository-readiness materials, drift guards, and a clean release candidate. The owner has authorized preparing this repository for an Apache-2.0 grant. Adding the license, changing repository visibility, and publishing the release remain explicit final mutations rather than prep work.
 
 ## Current reality
 
@@ -65,7 +64,7 @@ The durable claim audit and evidence taxonomy live in [`content-truth-audit.md`]
 - **Execution system:** specs and specialized agents turn that memory into structured work, implementation, cold audit, and verified completion.
 - **Outcome:** every AI session can inherit the project, act with context, and leave the project smarter for the next session.
 - **Wedge:** engineering leads; PM and Sales expansion must use verified maturity labels.
-- **Candidate, not promise:** “Correct your AI once” remains prohibited as an absolute statement until the continuity proof supports a carefully bounded claim.
+- **Candidate, not promise:** “Correct your AI once” remains prohibited as an absolute statement unless it is independently validated as a carefully bounded claim. That validation is not a v0.34 release dependency.
 
 Hero is two connected systems in one: project memory is the differentiated headline, and the spec-and-agent delivery loop is the execution layer built on it. Each delivery records more useful memory; that memory improves every later delivery. Specs remain a forcing function for trustworthy work, not the headline category. Public copy must not make Hero read like another spec kit.
 
@@ -80,8 +79,7 @@ Hero is two connected systems in one: project memory is the differentiated headl
 | 2 | [`hero-hosted-docs-remediation`](hero-hosted-docs-remediation/spec.md) | high | large | baseline + positioning | Factual page repair, capability discoverability, bounded docs dependencies, and deployment restoration. |
 | 3 | [`hero-landing-message-refresh`](hero-landing-message-refresh/spec.md) | high | medium | root docs + hosted docs | Current truthful landing source, working destinations, and restored `heroengine.ai` DNS/deployment. |
 | 3 | [`hero-public-repo-readiness`](hero-public-repo-readiness/spec.md) | high | medium | landing + licensing inventory | Public-exposure audit plus minimum contribution, security, conduct, issue, and support surfaces. |
-| 3 | [`hero-continuity-proof-demo`](hero-continuity-proof-demo/spec.md) | high | medium | repo readiness + positioning | Repeatable two-tool cold-resume proof safe to publish with v0.34. |
-| 4 | [`hero-public-docs-drift-guard`](hero-public-docs-drift-guard/spec.md) | medium | medium | root + hosted + landing + repo readiness + demo | Derived assertions, pinned docs compatibility, deployment freshness, and production crawls. |
+| 4 | [`hero-public-docs-drift-guard`](hero-public-docs-drift-guard/spec.md) | medium | medium | root + hosted + landing + repo readiness | Derived assertions, pinned docs compatibility, deployment freshness, and production crawls. |
 | 4 | [`hero-v034-release-prep`](hero-v034-release-prep/spec.md) | high | medium | drift guard | Reconciled v0.34 notes, artifacts, SBOM/notices, checksums, install proof, and launch checklist without publication. |
 | 5 | [`hero-apache-license-grant-gate`](hero-apache-license-grant-gate/spec.md) | critical | small | release prep + licensing inventory + repo readiness | Explicitly approved Apache-2.0 grant for this repository only. |
 | 5 | [`hero-public-visibility-launch-gate`](hero-public-visibility-launch-gate/spec.md) | critical | medium | Apache grant + release prep | Explicitly approved visibility flip, anonymous verification, and v0.34 launch/publication. |
@@ -95,11 +93,10 @@ hero-public-truth-baseline
         → {hero-root-docs-remediation, hero-hosted-docs-remediation}
           → hero-landing-message-refresh
             → hero-public-repo-readiness
-              → hero-continuity-proof-demo
-                → hero-public-docs-drift-guard
-                  → hero-v034-release-prep
-                    → hero-apache-license-grant-gate
-                      → hero-public-visibility-launch-gate
+              → hero-public-docs-drift-guard
+                → hero-v034-release-prep
+                  → hero-apache-license-grant-gate
+                    → hero-public-visibility-launch-gate
 ```
 
 Root and hosted documentation may proceed in parallel after positioning. All other arrows are hard order. Phase 5 contains human-controlled mutations and cannot be entered merely because its dependencies are green.
@@ -113,7 +110,6 @@ Every seam below has reciprocal `conflicts-with` relations on the named children
 | `hero-public-truth-baseline` | `hero-public-docs-drift-guard` | claim registry, derived counts/version authority, and freshness contract |
 | `hero-root-docs-remediation` | `hero-public-docs-drift-guard` | root markdown scans, quickstarts, counts, and command assertions |
 | `hero-hosted-docs-remediation` | `hero-public-docs-drift-guard` | `web/docs/src` scanning, navigation, releases, and generated references |
-| `hero-continuity-proof-demo` | `hero-landing-message-refresh` | demonstration fixtures, captures, embeds, and proof claims |
 | `hero-hosted-docs-remediation` | `hero-landing-message-refresh` | `web/` metadata, terminology, navigation links, and destination URLs |
 | `hero-root-docs-remediation` | `hero-public-repo-readiness` | root README support/contribution links and public-repository guidance |
 
@@ -127,7 +123,7 @@ These dispositions preserve genealogy without mutating out-of-scope historical s
 | `hero-landing-page` | Superseded by `hero-landing-message-refresh`; the stale v0.9 scope is closed. |
 | `hero-docs-site` | Superseded by `hero-hosted-docs-remediation`, which owns source remediation and deployed-site restoration. |
 | `hero-distribution` | Superseded by `hero-v034-release-prep`; broad distribution work is not revived. |
-| `hero-demo-content` | Superseded by the bounded `hero-continuity-proof-demo`; broad asset-catalog work stays out of scope. |
+| `hero-demo-content` | Deferred outside this release initiative as an optional, clearly illustrative interactive-install terminal animation. |
 | `hero-launch-playbook` | Broad campaign work remains deferred. The final gate performs only the approved repository/release launch and verification. |
 | `hero-content-engine` | Remains outside this initiative; ongoing publishing is a separate growth program. |
 | `hero-community` | Broad community growth remains deferred; the minimum public repository policies and issue/support surfaces belong to `hero-public-repo-readiness`. |
@@ -189,3 +185,4 @@ The four deferred growth specs no longer declare `hero-marketing` as parent. The
 - 2026-08-04 — Recomposed into seven evidence-led public-truth children.
 - 2026-08-21 — Expanded in place into the v0.34 public-readiness plan with bounded licensing, repository, release, Apache grant, and visibility gates; no repository license, visibility, public site, docs, code, or release state was changed.
 - 2026-08-23 — Owner authorization recorded, autonomous preparation armed, and public positioning sharpened to lead with durable project memory plus its connected spec-and-agent delivery system.
+- 2026-08-23 — Removed the cross-tool continuity demonstration from the initiative and release critical path. Optional synthetic install animation work remains separate and cannot block v0.34.

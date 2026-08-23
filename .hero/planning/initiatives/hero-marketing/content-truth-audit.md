@@ -113,7 +113,7 @@ The baseline child expands this into an exhaustive registry covering every publi
 4. Repair root and hosted docs, restore deployed-doc revision parity, and bound docs dependencies.
 5. Refresh the landing message, restore `heroengine.ai`, and gate source links while the repository is private.
 6. Complete the public-repository exposure audit and minimum contribution/security/conduct/issue/support surfaces.
-7. Produce repeatable continuity proof and install source/deployment/production drift guards.
+7. Install source/deployment/production drift guards. Any optional illustrative demo remains separate from release readiness.
 8. Prepare v0.34 artifacts, notes, SBOM/notices, checksums, and install evidence without publication.
 9. Run separately approved Apache grant and repository visibility/v0.34 launch gates.
 

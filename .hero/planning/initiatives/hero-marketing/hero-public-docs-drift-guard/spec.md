@@ -10,7 +10,7 @@ horizon: now
 created: 2026-08-04
 tags: [documentation, ci, validation, deployment]
 parent: hero-marketing
-depends-on: [hero-root-docs-remediation, hero-hosted-docs-remediation, hero-landing-message-refresh, hero-public-repo-readiness, hero-continuity-proof-demo]
+depends-on: [hero-root-docs-remediation, hero-hosted-docs-remediation, hero-landing-message-refresh, hero-public-repo-readiness]
 relations:
   - target: hero-public-truth-baseline
     kind: conflicts-with

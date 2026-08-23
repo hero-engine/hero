@@ -49,7 +49,7 @@ claims:
     claim: Hero is two reinforcing systems in one; project memory informs delivery and verified delivery enriches later project memory.
     availability: preview
     evidence_class: D
-    prerequisites: Public wording must remain bounded until the continuity proof supplies a repeatable cross-tool demonstration.
+    prerequisites: Public wording must remain bounded until independent evidence supports a stronger cross-tool claim; that evidence is not required for v0.34.
     evidence:
       - .hero/planning/initiatives/hero-marketing/spec.md
       - .hero/knowledge/notes/spec-kit-and-swappable-workflow-providers/spec.md
