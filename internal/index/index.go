@@ -200,6 +200,7 @@ func (idx *DB) migrate() error {
 			node_type  TEXT NOT NULL,
 			key        TEXT NOT NULL,
 			repo       TEXT NOT NULL DEFAULT '',
+			domain     TEXT NOT NULL DEFAULT '',
 			tags       TEXT NOT NULL DEFAULT '',
 			valid_from TEXT NOT NULL DEFAULT '',
 			path       TEXT NOT NULL DEFAULT '',
@@ -278,6 +279,8 @@ func (idx *DB) migrate() error {
 		`CREATE INDEX IF NOT EXISTS idx_specs_subproject ON specs(subproject) WHERE subproject != ''`,
 		`ALTER TABLE specs ADD COLUMN domain TEXT NOT NULL DEFAULT ''`,
 		`CREATE INDEX IF NOT EXISTS idx_specs_domain ON specs(domain) WHERE domain != ''`,
+		`ALTER TABLE node_index ADD COLUMN domain TEXT NOT NULL DEFAULT ''`,
+		`CREATE INDEX IF NOT EXISTS idx_node_index_domain ON node_index(domain)`,
 		// superseded-specs-soft-archive: frontmatter-driven genealogy.
 		// Empty string means "not superseded" — non-empty carries the
 		// replacement slug. The index queries de-weight (in retrieval)
@@ -348,19 +351,21 @@ func (idx *DB) migrateNodeIndexRepoIdentity() error {
 			node_type  TEXT NOT NULL,
 			key        TEXT NOT NULL,
 			repo       TEXT NOT NULL DEFAULT '',
+			domain     TEXT NOT NULL DEFAULT '',
 			tags       TEXT NOT NULL DEFAULT '',
 			valid_from TEXT NOT NULL DEFAULT '',
 			path       TEXT NOT NULL DEFAULT '',
 			UNIQUE(node_type, key, repo)
 		)`,
 		`INSERT INTO node_index_repo_identity
-			(rowid, node_type, key, repo, tags, valid_from, path)
-		 SELECT rowid, node_type, key, repo, tags, valid_from, path
+			(rowid, node_type, key, repo, domain, tags, valid_from, path)
+		 SELECT rowid, node_type, key, repo, '', tags, valid_from, path
 		   FROM node_index`,
 		`DROP TABLE node_index`,
 		`ALTER TABLE node_index_repo_identity RENAME TO node_index`,
 		`CREATE INDEX idx_node_index_type ON node_index(node_type)`,
 		`CREATE INDEX idx_node_index_key ON node_index(key)`,
+		`CREATE INDEX idx_node_index_domain ON node_index(domain)`,
 	}
 	for _, stmt := range statements {
 		if _, err := conn.ExecContext(ctx, stmt); err != nil {
@@ -817,6 +822,55 @@ type SearchResult struct {
 	SupersededBy string
 }
 
+// DomainFilter constrains index reads before ranking and LIMIT are applied.
+// Empty stored domains are legacy work-spec provenance and resolve through
+// Fallback. Order is the preferred domain rank (focused, primary, enabled).
+type DomainFilter struct {
+	Allowed  []string
+	Order    []string
+	Fallback string
+	All      bool
+}
+
+func (f DomainFilter) sql(alias string) (where string, whereArgs []any, order string, orderArgs []any) {
+	if f.All || len(f.Allowed) == 0 {
+		return "", nil, "", nil
+	}
+	fallback := f.Fallback
+	if fallback == "" {
+		fallback = "engineering"
+	}
+	expr := "COALESCE(NULLIF(" + alias + ".domain, ''), ?)"
+	placeholders := make([]string, len(f.Allowed))
+	whereArgs = append(whereArgs, fallback)
+	for i, domain := range f.Allowed {
+		placeholders[i] = "?"
+		whereArgs = append(whereArgs, domain)
+	}
+	where = expr + " IN (" + strings.Join(placeholders, ",") + ")"
+
+	rankOrder := f.Order
+	if len(rankOrder) == 0 {
+		rankOrder = f.Allowed
+	}
+	var cases strings.Builder
+	cases.WriteString("CASE " + expr)
+	orderArgs = append(orderArgs, fallback)
+	seen := map[string]bool{}
+	rank := 0
+	for _, domain := range rankOrder {
+		if domain == "" || seen[domain] {
+			continue
+		}
+		seen[domain] = true
+		fmt.Fprintf(&cases, " WHEN ? THEN %d", rank)
+		orderArgs = append(orderArgs, domain)
+		rank++
+	}
+	fmt.Fprintf(&cases, " ELSE %d END", rank)
+	return where, whereArgs, cases.String(), orderArgs
+}
+
 // looksLikeTrackerID returns true if the query looks like a tracker issue ID
 // (e.g. "PROJ-123", "#42", "MORPH-456").
 func looksLikeTrackerID(query string) bool {
@@ -837,19 +891,35 @@ func looksLikeTrackerID(query string) bool {
 // tracker issue ID (e.g. PROJ-123), it first tries an exact tracker_id match
 // before falling back to FTS.
 func (idx *DB) Search(query string) ([]SearchResult, error) {
+	return idx.SearchDomains(query, DomainFilter{All: true})
+}
+
+// SearchDomains is Search with domain filtering and focus ranking applied in
+// SQL before the fixed result cap.
+func (idx *DB) SearchDomains(query string, domains DomainFilter) ([]SearchResult, error) {
 	// Try exact tracker_id match first. A tracker-ID-shaped query that
 	// finds nothing should return zero results — falling through to FTS
 	// would surface unrelated specs whose names share a token prefix
 	// (e.g. searching "MORPH-999" would match "morph-123-fix-login"),
 	// which is more confusing than helpful for typo'd ticket IDs.
 	if looksLikeTrackerID(query) {
-		rows, err := idx.db.Query(`
+		base := `
 			SELECT s.slug, s.title, s.type, s.status, s.path,
 				'' as snippet, s.claimed_by, s.tags, s.domain, s.superseded_by
 			FROM specs s
-			WHERE UPPER(s.tracker_id) = UPPER(?)
-			LIMIT 5
-		`, query)
+			WHERE UPPER(s.tracker_id) = UPPER(?)`
+		args := []any{query}
+		where, whereArgs, order, orderArgs := domains.sql("s")
+		if where != "" {
+			base += " AND " + where
+			args = append(args, whereArgs...)
+		}
+		if order != "" {
+			base += " ORDER BY " + order
+			args = append(args, orderArgs...)
+		}
+		base += " LIMIT 5"
+		rows, err := idx.db.Query(base, args...)
 		if err != nil {
 			return nil, fmt.Errorf("searching by tracker_id: %w", err)
 		}
@@ -864,16 +934,26 @@ func (idx *DB) Search(query string) ([]SearchResult, error) {
 	if ftsQuery == "" {
 		return nil, nil
 	}
-	rows, err := idx.db.Query(`
+	base := `
 		SELECT f.slug, s.title, s.type, s.status, s.path,
 			snippet(fts_specs, 2, '>>>', '<<<', '...', 32) as snippet,
 			s.claimed_by, s.tags, s.domain, s.superseded_by
 		FROM fts_specs f
 		JOIN specs s ON s.slug = f.slug
-		WHERE fts_specs MATCH ?
-		ORDER BY rank
-		LIMIT 20
-	`, ftsQuery)
+		WHERE fts_specs MATCH ?`
+	args := []any{ftsQuery}
+	where, whereArgs, order, orderArgs := domains.sql("s")
+	if where != "" {
+		base += " AND " + where
+		args = append(args, whereArgs...)
+	}
+	base += " ORDER BY "
+	if order != "" {
+		base += order + ", "
+		args = append(args, orderArgs...)
+	}
+	base += "rank LIMIT 20"
+	rows, err := idx.db.Query(base, args...)
 	if err != nil {
 		return nil, fmt.Errorf("searching index: %w", err)
 	}
@@ -887,14 +967,19 @@ func (idx *DB) Search(query string) ([]SearchResult, error) {
 // Pass `subproject` empty to skip subproject filtering, "all" is also
 // treated as no filter (callers may pass "all" to be explicit).
 func (idx *DB) SearchFilteredScoped(query, specType, status, tag, since, subproject string) ([]SearchResult, error) {
-	return idx.searchFilteredImpl(query, specType, status, tag, since, subproject)
+	return idx.searchFilteredImpl(query, specType, status, tag, since, subproject, DomainFilter{All: true})
+}
+
+// SearchFilteredScopedDomains applies domain scope before the result cap.
+func (idx *DB) SearchFilteredScopedDomains(query, specType, status, tag, since, subproject string, domains DomainFilter) ([]SearchResult, error) {
+	return idx.searchFilteredImpl(query, specType, status, tag, since, subproject, domains)
 }
 
 func (idx *DB) SearchFiltered(query string, specType string, status string, tag string, since string) ([]SearchResult, error) {
-	return idx.searchFilteredImpl(query, specType, status, tag, since, "")
+	return idx.searchFilteredImpl(query, specType, status, tag, since, "", DomainFilter{All: true})
 }
 
-func (idx *DB) searchFilteredImpl(query, specType, status, tag, since, subproject string) ([]SearchResult, error) {
+func (idx *DB) searchFilteredImpl(query, specType, status, tag, since, subproject string, domains DomainFilter) ([]SearchResult, error) {
 	ftsQuery := SanitizeFTSQuery(query)
 	if ftsQuery == "" {
 		return nil, nil
@@ -931,11 +1016,21 @@ func (idx *DB) searchFilteredImpl(query, specType, status, tag, since, subprojec
 		conditions = append(conditions, "s.subproject = ?")
 		args = append(args, subproject)
 	}
+	where, whereArgs, domainOrder, orderArgs := domains.sql("s")
+	if where != "" {
+		conditions = append(conditions, where)
+		args = append(args, whereArgs...)
+	}
 
 	if len(conditions) > 0 {
 		baseQuery += " AND " + strings.Join(conditions, " AND ")
 	}
-	baseQuery += " ORDER BY rank LIMIT 20"
+	baseQuery += " ORDER BY "
+	if domainOrder != "" {
+		baseQuery += domainOrder + ", "
+		args = append(args, orderArgs...)
+	}
+	baseQuery += "rank LIMIT 20"
 
 	rows, err := idx.db.Query(baseQuery, args...)
 	if err != nil {
@@ -949,15 +1044,20 @@ func (idx *DB) searchFilteredImpl(query, specType, status, tag, since, subprojec
 // ListFilteredScoped is the subproject-aware variant of ListFiltered.
 // Pass subproject empty or "all" to disable subproject filtering.
 func (idx *DB) ListFilteredScoped(specType, status, tag, since, subproject string) ([]SearchResult, error) {
-	return idx.listFilteredImpl(specType, status, tag, since, subproject)
+	return idx.listFilteredImpl(specType, status, tag, since, subproject, DomainFilter{All: true})
+}
+
+// ListFilteredScopedDomains applies domain scope before the result cap.
+func (idx *DB) ListFilteredScopedDomains(specType, status, tag, since, subproject string, domains DomainFilter) ([]SearchResult, error) {
+	return idx.listFilteredImpl(specType, status, tag, since, subproject, domains)
 }
 
 // ListFiltered lists specs with optional type, status, and tag filters (no FTS query).
 func (idx *DB) ListFiltered(specType string, status string, tag string, since string) ([]SearchResult, error) {
-	return idx.listFilteredImpl(specType, status, tag, since, "")
+	return idx.listFilteredImpl(specType, status, tag, since, "", DomainFilter{All: true})
 }
 
-func (idx *DB) listFilteredImpl(specType, status, tag, since, subproject string) ([]SearchResult, error) {
+func (idx *DB) listFilteredImpl(specType, status, tag, since, subproject string, domains DomainFilter) ([]SearchResult, error) {
 	var conditions []string
 	var args []interface{}
 
@@ -983,11 +1083,21 @@ func (idx *DB) listFilteredImpl(specType, status, tag, since, subproject string)
 		conditions = append(conditions, "subproject = ?")
 		args = append(args, subproject)
 	}
+	where, whereArgs, domainOrder, orderArgs := domains.sql("specs")
+	if where != "" {
+		conditions = append(conditions, where)
+		args = append(args, whereArgs...)
+	}
 
 	if len(conditions) > 0 {
 		baseQuery += " AND " + strings.Join(conditions, " AND ")
 	}
-	baseQuery += " ORDER BY modified_at DESC LIMIT 50"
+	baseQuery += " ORDER BY "
+	if domainOrder != "" {
+		baseQuery += domainOrder + ", "
+		args = append(args, orderArgs...)
+	}
+	baseQuery += "modified_at DESC LIMIT 50"
 
 	rows, err := idx.db.Query(baseQuery, args...)
 	if err != nil {
@@ -1000,17 +1110,31 @@ func (idx *DB) listFilteredImpl(specType, status, tag, since, subproject string)
 
 // SearchByFile finds specs that touch a given file path.
 func (idx *DB) SearchByFile(filePath string) ([]SearchResult, error) {
-	pattern := "%" + filePath + "%"
+	return idx.SearchByFileDomains(filePath, DomainFilter{All: true})
+}
 
-	rows, err := idx.db.Query(`
+// SearchByFileDomains applies domain scope before the result cap.
+func (idx *DB) SearchByFileDomains(filePath string, domains DomainFilter) ([]SearchResult, error) {
+	pattern := "%" + filePath + "%"
+	baseQuery := `
 		SELECT DISTINCT s.slug, s.title, s.type, s.status, s.path,
 			'' as snippet, s.claimed_by, s.tags, s.domain, s.superseded_by
 		FROM files_touched ft
 		JOIN specs s ON s.slug = ft.spec_slug
-		WHERE ft.file_path LIKE ?
-		ORDER BY s.modified_at DESC
-		LIMIT 20
-	`, pattern)
+		WHERE ft.file_path LIKE ?`
+	args := []any{pattern}
+	where, whereArgs, domainOrder, orderArgs := domains.sql("s")
+	if where != "" {
+		baseQuery += " AND " + where
+		args = append(args, whereArgs...)
+	}
+	baseQuery += " ORDER BY "
+	if domainOrder != "" {
+		baseQuery += domainOrder + ", "
+		args = append(args, orderArgs...)
+	}
+	baseQuery += "s.modified_at DESC LIMIT 20"
+	rows, err := idx.db.Query(baseQuery, args...)
 	if err != nil {
 		return nil, fmt.Errorf("searching by file: %w", err)
 	}
@@ -1813,14 +1937,14 @@ func (idx *DB) AllSpecs() ([]SearchResult, error) {
 
 // SequenceItem represents a spec in a suggested delivery sequence.
 type SequenceItem struct {
-	Slug          string   `json:"slug"`
-	Title         string   `json:"title"`
+	Slug          string      `json:"slug"`
+	Title         string      `json:"title"`
 	Type          spec.Type   `json:"type"`
 	Status        spec.Status `json:"status"`
-	Order         int      `json:"order"`
-	DependsOn     []string `json:"depends_on,omitempty"`
-	ConflictsWith []string `json:"conflicts_with,omitempty"`
-	Reason        string   `json:"reason"`
+	Order         int         `json:"order"`
+	DependsOn     []string    `json:"depends_on,omitempty"`
+	ConflictsWith []string    `json:"conflicts_with,omitempty"`
+	Reason        string      `json:"reason"`
 }
 
 // SuggestSequence returns in-flight specs in a recommended delivery order.
@@ -2405,15 +2529,15 @@ func findTestFile(fp string) string {
 
 // ContextBlock holds the context injection data for a set of files.
 type ContextBlock struct {
-	Tripwires     []ContextEntry     // forbidden-option guardrails matching file scope
+	Tripwires     []ContextEntry // forbidden-option guardrails matching file scope
 	Conventions   []ContextEntry
 	Rules         []ContextEntry
-	InFlight      []ContextEntry     // specs currently being delivered on these files
+	InFlight      []ContextEntry // specs currently being delivered on these files
 	PastWork      []ContextEntry
 	Decisions     []ContextEntry
 	KnownRisks    []ContextEntry
 	External      []ContextEntry
-	CodeStructure []CodeContextEntry // code intelligence for relevant packages
+	CodeStructure []CodeContextEntry  // code intelligence for relevant packages
 	TestCoverage  []TestCoverageEntry // test coverage for queried files
 }
 

@@ -270,27 +270,31 @@ func runInstall(cmd *cobra.Command, args []string) error {
 		target = chosen
 	}
 
-	// Resolve domain: flag > hero.json > default
-	domain := installDomain
-	if domain == "" && mode == install.ModeProject && targetDir != "" {
-		if cfg, cfgErr := config.Load(targetDir); cfgErr == nil && cfg.Domain != "" {
-			domain = cfg.Domain
+	// Resolve one canonical Core + primary + bounded-extensions manifest before
+	// any target renderer writes files. An explicit --domain retains its legacy
+	// meaning: install that primary pack without workspace extensions.
+	composition := hero.DomainComposition{Primary: installDomain}
+	if composition.Primary == "" && mode == install.ModeProject && targetDir != "" {
+		cfg, cfgErr := config.Load(targetDir)
+		if cfgErr != nil {
+			return fmt.Errorf("loading domain composition: %w", cfgErr)
+		}
+		resolved, resolveErr := cfg.ResolveDomains()
+		if resolveErr != nil {
+			return resolveErr
+		}
+		composition.Primary = string(resolved.Primary)
+		for _, extension := range resolved.Extensions {
+			composition.Extensions = append(composition.Extensions, string(extension))
 		}
 	}
-
-	// Resolve the domain FS (defaulting to engineering) and overlay it
-	// on top of the universal core layer. Domain wins on file-level
-	// path conflicts. Mirrors the precedence in
-	// internal/spectypes/loader.go: core first, domain overrides.
-	resolvedDomain := domain
-	if resolvedDomain == "" {
-		resolvedDomain = "engineering"
+	if composition.Primary == "" {
+		composition.Primary = "engineering"
 	}
-	domainFS, domainErr := hero.DomainFS(resolvedDomain)
-	if domainErr != nil {
-		return domainErr
+	contentFS, _, compositionErr := hero.ComposeContent(composition)
+	if compositionErr != nil {
+		return compositionErr
 	}
-	contentFS := hero.OverlayFS(domainFS, hero.CoreFS())
 
 	opts := install.Options{
 		ContentFS:       contentFS,
@@ -300,7 +304,7 @@ func runInstall(cmd *cobra.Command, args []string) error {
 		Force:           installForce,
 		DryRun:          installDryRun,
 		Version:         binaryVersion,
-		Domain:          domain,
+		Domain:          composition.Primary,
 		NoTouchClaudeMd: installNoTouchClaudeMd,
 		Quiet:           installJSON,
 		// Auto-sync detected sibling harnesses so adding one target to

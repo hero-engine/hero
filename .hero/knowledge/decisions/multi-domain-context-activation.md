@@ -1,7 +1,8 @@
 ---
 title: Multiple Domains Resolve by Context, Not by Union — hero-code Picks the Active Set
 type: decision
-status: proposed
+status: superseded
+superseded_by: hybrid-content-packs-and-workflow-providers
 created: 2026-07-05
 tags: [domains, hero-code, agents, skills, roster, context, architecture, decision]
 relations:
@@ -16,6 +17,12 @@ relations:
 ---
 
 # Multiple Domains Resolve by Context, Not by Union — hero-code Picks the Active Set
+
+> Superseded on 2026-08-22 by
+> `hybrid-content-packs-and-workflow-providers`. The useful invariant
+> remains: Hero does not union every available domain roster. The newer
+> decision permits one primary domain plus explicitly enabled, bounded
+> capability extensions such as PM and QA.
 
 ## Decision
 

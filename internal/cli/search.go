@@ -3,10 +3,12 @@ package cli
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/gitutil"
+	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/index"
 	"github.com/hero-engine/hero/internal/retrieval"
 	"github.com/spf13/cobra"
@@ -33,21 +35,24 @@ for backward compatibility.`,
 }
 
 var (
-	searchByFile    bool
-	searchType       string
-	searchStatus     string
-	searchTag        string
-	searchSince      string
-	searchListOnly   bool
-	searchCrossRepo  bool
-	searchSpecsOnly  bool
-	searchBudget     int
-	searchJSON       bool
-	searchSubproject string
-	searchSemantic        bool
-	searchHybrid          bool
+	searchByFile            bool
+	searchType              string
+	searchStatus            string
+	searchTag               string
+	searchSince             string
+	searchListOnly          bool
+	searchCrossRepo         bool
+	searchSpecsOnly         bool
+	searchBudget            int
+	searchJSON              bool
+	searchSubproject        string
+	searchSemantic          bool
+	searchHybrid            bool
 	searchIncludeSuperseded bool
 	searchKnowledge         bool
+	searchDomain            string
+	searchFocusedDomain     string
+	searchAllDomains        bool
 )
 
 func init() {
@@ -66,6 +71,9 @@ func init() {
 	searchCmd.Flags().BoolVar(&searchSemantic, "semantic", false, "vector-only semantic search (requires embedding model)")
 	searchCmd.Flags().BoolVar(&searchHybrid, "hybrid", false, "hybrid BM25+vector search (default when embeddings available)")
 	searchCmd.Flags().BoolVar(&searchIncludeSuperseded, "include-superseded", false, "skip the rank de-weight on specs carrying superseded_by (the [SUPERSEDED → slug] marker is shown either way)")
+	searchCmd.Flags().StringVar(&searchDomain, "domain", "", "search one domain instead of the enabled workspace stack (\"*\" = all)")
+	searchCmd.Flags().StringVar(&searchFocusedDomain, "focused-domain", "", "rank an enabled domain first without changing workspace configuration")
+	searchCmd.Flags().BoolVar(&searchAllDomains, "all-domains", false, "search every domain")
 }
 
 func runSearch(cmd *cobra.Command, args []string) error {
@@ -79,6 +87,7 @@ func runSearch(cmd *cobra.Command, args []string) error {
 	if _, err := os.Stat(heroDir); os.IsNotExist(err) {
 		return fmt.Errorf("no hero workspace found (run 'hero init' first)")
 	}
+	scope := searchDomainScope(cfg)
 
 	// Self-heal index drift so newly-created specs (or specs edited
 	// outside the indexing path) surface in search results without
@@ -102,6 +111,7 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		Limit:             searchBudget,
 		SemanticOK:        searchSemantic || searchHybrid,
 		IncludeSuperseded: searchIncludeSuperseded,
+		DomainFilter:      searchIndexDomainFilter(scope, cfg.PrimaryDomain()),
 	}
 	// --knowledge scopes to the isolated knowledge corpus; --type filters by
 	// knowledge kind (battlecards, decisions, …). Spec: knowledge-surfacing.
@@ -170,6 +180,7 @@ func runSearch(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("searching: %w", err)
 	}
+	results = filterAndRankRetrievalResults(results, scope, cfg.PrimaryDomain())
 
 	if len(results) == 0 {
 		if searchJSON {
@@ -201,13 +212,14 @@ func runSearchFTS(heroDir string, cfg config.Config, projectRoot string, args []
 
 	query := strings.Join(args, " ")
 	var results []index.SearchResult
+	domainFilter := searchIndexDomainFilter(searchDomainScope(cfg), cfg.PrimaryDomain())
 
 	if searchListOnly {
-		results, err = idx.ListFiltered(searchType, searchStatus, searchTag, searchSince)
+		results, err = idx.ListFilteredScopedDomains(searchType, searchStatus, searchTag, searchSince, "", domainFilter)
 	} else if searchByFile {
-		results, err = idx.SearchByFile(query)
+		results, err = idx.SearchByFileDomains(query, domainFilter)
 	} else {
-		results, err = idx.Search(query)
+		results, err = idx.SearchDomains(query, domainFilter)
 	}
 	if err != nil {
 		return fmt.Errorf("searching: %w", err)
@@ -226,11 +238,11 @@ func runSearchFTS(heroDir string, cfg config.Config, projectRoot string, args []
 			}
 			var repoResults []index.SearchResult
 			if searchListOnly {
-				repoResults, _ = repoIdx.ListFiltered(searchType, searchStatus, searchTag, searchSince)
+				repoResults, _ = repoIdx.ListFilteredScopedDomains(searchType, searchStatus, searchTag, searchSince, "", domainFilter)
 			} else if searchByFile {
-				repoResults, _ = repoIdx.SearchByFile(query)
+				repoResults, _ = repoIdx.SearchByFileDomains(query, domainFilter)
 			} else {
-				repoResults, _ = repoIdx.Search(query)
+				repoResults, _ = repoIdx.SearchDomains(query, domainFilter)
 			}
 			repoIdx.Close()
 			for i := range repoResults {
@@ -239,6 +251,7 @@ func runSearchFTS(heroDir string, cfg config.Config, projectRoot string, args []
 			results = append(results, repoResults...)
 		}
 	}
+	results = filterAndRankIndexResults(results, searchDomainScope(cfg), cfg.PrimaryDomain())
 
 	if len(results) == 0 {
 		if searchJSON {
@@ -280,6 +293,81 @@ func runSearchFTS(heroDir string, cfg config.Config, projectRoot string, args []
 	}
 	fmt.Printf("\n%d result(s)\n", len(results))
 	return nil
+}
+
+func searchDomainScope(cfg config.Config) graph.DomainScope {
+	override := searchDomain
+	if searchAllDomains {
+		override = "*"
+	}
+	return graph.ResolveDomainFocused(cfg, override, searchFocusedDomain)
+}
+
+func searchIndexDomainFilter(scope graph.DomainScope, fallback string) index.DomainFilter {
+	if scope.AllDomains {
+		return index.DomainFilter{All: true, Fallback: fallback}
+	}
+	allowed := append([]string(nil), scope.Enabled...)
+	if len(allowed) == 0 && scope.Active != "" {
+		allowed = []string{scope.Active}
+	}
+	order := make([]string, 0, len(allowed)+2)
+	for _, domain := range append([]string{scope.Focused, scope.Active}, allowed...) {
+		if domain == "" || searchContainsString(order, domain) {
+			continue
+		}
+		order = append(order, domain)
+	}
+	return index.DomainFilter{Allowed: allowed, Order: order, Fallback: fallback}
+}
+
+func searchContainsString(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
+}
+
+func filterAndRankRetrievalResults(results []retrieval.Result, scope graph.DomainScope, fallback string) []retrieval.Result {
+	filtered := results[:0]
+	for _, result := range results {
+		domain := result.Domain
+		if domain == "" {
+			if graph.IsGlobalNodeType(result.Type) || result.Source == "knowledge" {
+				filtered = append(filtered, result)
+				continue
+			}
+			domain = fallback
+		}
+		if scope.Match(domain) {
+			result.Domain = domain
+			filtered = append(filtered, result)
+		}
+	}
+	sort.SliceStable(filtered, func(i, j int) bool {
+		return scope.Rank(filtered[i].Domain) < scope.Rank(filtered[j].Domain)
+	})
+	return filtered
+}
+
+func filterAndRankIndexResults(results []index.SearchResult, scope graph.DomainScope, fallback string) []index.SearchResult {
+	filtered := results[:0]
+	for _, result := range results {
+		domain := result.Domain
+		if domain == "" {
+			domain = fallback
+		}
+		if scope.Match(domain) {
+			result.Domain = domain
+			filtered = append(filtered, result)
+		}
+	}
+	sort.SliceStable(filtered, func(i, j int) bool {
+		return scope.Rank(filtered[i].Domain) < scope.Rank(filtered[j].Domain)
+	})
+	return filtered
 }
 
 // printFTSResults formats FTS5-sourced retrieval.Results in the tabular layout,

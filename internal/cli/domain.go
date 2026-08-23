@@ -3,11 +3,14 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"sort"
+	"strings"
 
 	hero "github.com/hero-engine/hero"
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/domains"
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/install"
 	"github.com/spf13/cobra"
@@ -21,7 +24,9 @@ var domainCmd = &cobra.Command{
 Examples:
   hero domain                    # show current domain
   hero domain list               # list available domains
-  hero domain switch sales       # switch to sales domain`,
+  hero domain enable qa          # enable bounded QA
+  hero domain disable qa         # disable QA, preserve artifacts
+  hero domain switch pm          # make PM primary`,
 	RunE: runDomainShow,
 }
 
@@ -38,7 +43,25 @@ var domainSwitchCmd = &cobra.Command{
 	RunE:  runDomainSwitch,
 }
 
+var domainEnableCmd = &cobra.Command{
+	Use: "enable <domain>", Short: "Enable a bounded domain extension",
+	Args: cobra.ExactArgs(1), RunE: runDomainEnable,
+}
+
+var domainDisableCmd = &cobra.Command{
+	Use: "disable <domain>", Short: "Disable an extension without deleting artifacts",
+	Args: cobra.ExactArgs(1), RunE: runDomainDisable,
+}
+
+var domainContentCmd = &cobra.Command{
+	Use:   "content [stable-id]",
+	Short: "List or load deeper content from enabled packs",
+	Args:  cobra.MaximumNArgs(1),
+	RunE:  runDomainContent,
+}
+
 var domainVerifyJSON bool
+var domainInstallRunner = install.Run
 
 var domainVerifyCmd = &cobra.Command{
 	Use:   "verify",
@@ -58,8 +81,44 @@ leakage occurred. Pair with 'hero admin schema rollback v3
 func init() {
 	domainCmd.AddCommand(domainListCmd)
 	domainCmd.AddCommand(domainSwitchCmd)
+	domainCmd.AddCommand(domainEnableCmd)
+	domainCmd.AddCommand(domainDisableCmd)
+	domainCmd.AddCommand(domainContentCmd)
 	domainCmd.AddCommand(domainVerifyCmd)
 	domainVerifyCmd.Flags().BoolVar(&domainVerifyJSON, "json", false, "emit raw JSON instead of a human-readable summary")
+}
+
+func runDomainContent(cmd *cobra.Command, args []string) error {
+	projectRoot := findProjectRoot()
+	cfg, err := config.Load(projectRoot)
+	if err != nil {
+		return fmt.Errorf("loading config: %w", err)
+	}
+	resolved, err := cfg.ResolveDomains()
+	if err != nil {
+		return err
+	}
+	_, manifest, err := hero.ComposeContent(toPublicComposition(resolved))
+	if err != nil {
+		return err
+	}
+	if len(args) == 0 {
+		if len(manifest.DeferredEntries) == 0 {
+			fmt.Println("No deferred content is available for the enabled composition.")
+			return nil
+		}
+		fmt.Println("Bundled content available on demand:")
+		for _, entry := range manifest.DeferredEntries {
+			fmt.Printf("  %-48s owner=%-4s kind=%-8s local=true\n", entry.ID, entry.Owner, entry.Kind)
+		}
+		return nil
+	}
+	_, data, err := hero.ResolveDeferredContent(manifest, args[0])
+	if err != nil {
+		return err
+	}
+	_, err = os.Stdout.Write(data)
+	return err
 }
 
 func runDomainShow(cmd *cobra.Command, args []string) error {
@@ -68,90 +127,191 @@ func runDomainShow(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)
 	}
-
-	domain := cfg.Domain
-	if domain == "" {
-		domain = "engineering"
+	resolved, err := cfg.ResolveDomains()
+	if err != nil {
+		return err
 	}
-	fmt.Printf("Active domain: %s\n", domain)
+	fmt.Printf("Primary domain: %s\n", resolved.Primary)
+	fmt.Printf("Extensions: %s\n", displayExtensions(resolved.Extensions))
+	fmt.Println("Composition: ready (bundled, local)")
 	return nil
 }
 
 func runDomainList(cmd *cobra.Command, args []string) error {
 	projectRoot := findProjectRoot()
-	cfg, _ := config.Load(projectRoot)
-
-	active := cfg.Domain
-	if active == "" {
-		active = "engineering"
+	cfg, err := config.Load(projectRoot)
+	if err != nil {
+		return fmt.Errorf("loading config: %w", err)
 	}
-
-	fmt.Println("Available domains:")
-	for _, d := range hero.AvailableDomains() {
-		marker := "  "
-		if d == active {
-			marker = "* "
+	resolved, err := cfg.ResolveDomains()
+	if err != nil {
+		return err
+	}
+	fmt.Println("Bundled domains:")
+	for _, pack := range domains.AvailablePacks() {
+		state := "disabled"
+		if pack.ID == resolved.Primary {
+			state = "primary"
+		} else if resolved.Contains(pack.ID) {
+			state = "extension"
 		}
-		fmt.Printf("  %s%s\n", marker, d)
+		roles := make([]string, 0, len(pack.Roles))
+		for _, role := range pack.Roles {
+			roles = append(roles, string(role))
+		}
+		fmt.Printf("  %-12s state=%-9s roles=%-17s ready=%t bundled=%t\n", pack.ID, state, strings.Join(roles, ","), pack.Bundled, pack.Bundled)
 	}
 	return nil
 }
 
 func runDomainSwitch(cmd *cobra.Command, args []string) error {
-	domain := args[0]
-
-	domainFS, err := hero.DomainFS(domain)
-	if err != nil {
-		return err
-	}
-	// Overlay domain on universal core so reinstall renders core +
-	// domain merged. Domain wins on collisions.
-	mergedFS := hero.OverlayFS(domainFS, hero.CoreFS())
-
 	projectRoot := findProjectRoot()
 	cfg, err := config.Load(projectRoot)
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)
 	}
-
-	cfg.Domain = domain
-	if err := cfg.Save(projectRoot); err != nil {
-		return fmt.Errorf("saving config: %w", err)
+	current, err := cfg.ResolveDomains()
+	if err != nil {
+		return err
 	}
-
-	fmt.Printf("Switched to domain: %s\n", domain)
-
-	// Reinstall content for every harness currently installed in the
-	// project so the new domain's agents/commands/skills materialize
-	// immediately. .hero/ data (specs, knowledge, jobs) is untouched —
-	// only the harness-rendered content layer is replaced.
-	targets := install.DetectInstalledTargets(projectRoot)
-	if len(targets) == 0 {
-		fmt.Println("No installed harness detected — run 'hero install project . --target <tool>' to materialize content.")
-		return nil
+	next := domains.ResolvedComposition{Primary: domains.DomainID(args[0])}
+	for _, extension := range current.Extensions {
+		if extension != next.Primary {
+			next.Extensions = append(next.Extensions, extension)
+		}
 	}
-
-	binaryVersion := rootCmd.Version
-	if binaryVersion == "" {
-		binaryVersion = "dev"
+	if err := applyDomainComposition(projectRoot, &cfg, current, next); err != nil {
+		return err
 	}
+	fmt.Printf("Switched primary domain to %s; extensions: %s\n", next.Primary, displayExtensions(next.Extensions))
+	return nil
+}
 
+func runDomainEnable(cmd *cobra.Command, args []string) error {
+	projectRoot := findProjectRoot()
+	cfg, err := config.Load(projectRoot)
+	if err != nil {
+		return fmt.Errorf("loading config: %w", err)
+	}
+	current, err := cfg.ResolveDomains()
+	if err != nil {
+		return err
+	}
+	id := domains.DomainID(args[0])
+	if current.Primary == id {
+		return fmt.Errorf("domain %q is already primary", id)
+	}
+	next := domains.ResolvedComposition{Primary: current.Primary, Extensions: append([]domains.DomainID(nil), current.Extensions...)}
+	if !next.Contains(id) {
+		next.Extensions = append(next.Extensions, id)
+	}
+	if err := applyDomainComposition(projectRoot, &cfg, current, next); err != nil {
+		return err
+	}
+	fmt.Printf("Enabled %s extension; extensions: %s\n", id, displayExtensions(next.Extensions))
+	return nil
+}
+
+func runDomainDisable(cmd *cobra.Command, args []string) error {
+	projectRoot := findProjectRoot()
+	cfg, err := config.Load(projectRoot)
+	if err != nil {
+		return fmt.Errorf("loading config: %w", err)
+	}
+	current, err := cfg.ResolveDomains()
+	if err != nil {
+		return err
+	}
+	id := domains.DomainID(args[0])
+	if current.Primary == id {
+		return fmt.Errorf("cannot disable primary domain %q; switch primary first", id)
+	}
+	next := domains.ResolvedComposition{Primary: current.Primary}
+	found := false
+	for _, extension := range current.Extensions {
+		if extension == id {
+			found = true
+			continue
+		}
+		next.Extensions = append(next.Extensions, extension)
+	}
+	if !found {
+		return fmt.Errorf("domain %q is not an enabled extension", id)
+	}
+	if err := applyDomainComposition(projectRoot, &cfg, current, next); err != nil {
+		return err
+	}
+	fmt.Printf("Disabled %s extension; historical artifacts were preserved\n", id)
+	return nil
+}
+
+func applyDomainComposition(projectRoot string, cfg *config.Config, current, next domains.ResolvedComposition) error {
+	nextFS, _, err := hero.ComposeContent(toPublicComposition(next))
+	if err != nil {
+		return err
+	}
+	currentFS, _, err := hero.ComposeContent(toPublicComposition(current))
+	if err != nil {
+		return err
+	}
+	targets := unionTargets(install.PreviouslyInstalledTargets(projectRoot), install.DetectInstalledTargets(projectRoot))
+	version := rootCmd.Version
+	if version == "" {
+		version = "dev"
+	}
 	for _, target := range targets {
-		fmt.Printf("Reinstalling %s with %s domain...\n", target, domain)
-		opts := install.Options{
-			ContentFS: mergedFS,
-			Target:    target,
-			Mode:      install.ModeProject,
-			TargetDir: projectRoot,
-			Force:     true,
-			Version:   binaryVersion,
-			Domain:    domain,
+		if _, err := domainInstallRunner(install.Options{ContentFS: nextFS, Target: target, Mode: install.ModeProject, TargetDir: projectRoot, Force: true, Version: version, Domain: string(next.Primary)}); err != nil {
+			if rollbackErr := rollbackDomainTargets(projectRoot, currentFS, current.Primary, targets, version); rollbackErr != nil {
+				return fmt.Errorf("reinstalling %s failed: %w; rollback also failed: %v", target, err, rollbackErr)
+			}
+			return fmt.Errorf("reinstalling %s failed; prior composition restored: %w", target, err)
 		}
-		if _, err := install.Run(opts); err != nil {
-			return fmt.Errorf("reinstalling %s: %w", target, err)
+	}
+	previous := *cfg
+	if err := cfg.SetDomainComposition(next.Primary, next.Extensions); err != nil {
+		_ = rollbackDomainTargets(projectRoot, currentFS, current.Primary, targets, version)
+		return err
+	}
+	if err := cfg.Save(projectRoot); err != nil {
+		*cfg = previous
+		if rollbackErr := rollbackDomainTargets(projectRoot, currentFS, current.Primary, targets, version); rollbackErr != nil {
+			return fmt.Errorf("saving composition failed: %w; rollback also failed: %v", err, rollbackErr)
 		}
+		return fmt.Errorf("saving composition failed; prior rendered state restored: %w", err)
 	}
 	return nil
+}
+
+func rollbackDomainTargets(projectRoot string, content fs.FS, primary domains.DomainID, targets []install.Target, version string) error {
+	var failures []string
+	for _, target := range targets {
+		if _, err := domainInstallRunner(install.Options{ContentFS: content, Target: target, Mode: install.ModeProject, TargetDir: projectRoot, Force: true, Version: version, Domain: string(primary)}); err != nil {
+			failures = append(failures, fmt.Sprintf("%s: %v", target, err))
+		}
+	}
+	if len(failures) > 0 {
+		return fmt.Errorf("%s", strings.Join(failures, "; "))
+	}
+	return nil
+}
+
+func toPublicComposition(resolved domains.ResolvedComposition) hero.DomainComposition {
+	out := hero.DomainComposition{Primary: string(resolved.Primary)}
+	for _, extension := range resolved.Extensions {
+		out.Extensions = append(out.Extensions, string(extension))
+	}
+	return out
+}
+
+func displayExtensions(ids []domains.DomainID) string {
+	if len(ids) == 0 {
+		return "(none)"
+	}
+	values := make([]string, 0, len(ids))
+	for _, id := range ids {
+		values = append(values, string(id))
+	}
+	return strings.Join(values, ", ")
 }
 
 func runDomainVerify(cmd *cobra.Command, args []string) error {

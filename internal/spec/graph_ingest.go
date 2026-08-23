@@ -21,7 +21,7 @@ import (
 // (federation contract — see graph-memory-federation/spec.md).
 //
 // fallbackDomain is the workspace-level domain (typically from
-// cfg.Domain via graph.DomainFor) used when a spec's frontmatter
+// the resolved primary domain via graph.DomainFor) used when a spec's frontmatter
 // does not declare its own `domain:` field. Per-spec frontmatter
 // wins when set; empty falls back to fallbackDomain; empty
 // fallbackDomain falls back to "engineering" to keep pre-migration

@@ -154,20 +154,22 @@ func fileExists(path string) bool {
 // findings as the `install-integrity` row. Any damaged finding → fail
 // (the "agents are running cold" signal); stale only → warn. Silent-pass
 // row otherwise. Each finding line ends in the exact repair command.
-func reportInstallIntegrity(projectRoot, domain string, addRow func(name, status, message string), issues *int) {
-	resolvedDomain := domain
-	if resolvedDomain == "" {
-		resolvedDomain = "engineering"
-	}
-	domainFS, domainErr := hero.DomainFS(resolvedDomain)
+func reportInstallIntegrity(projectRoot string, cfg config.Config, addRow func(name, status, message string), issues *int) {
+	resolved, domainErr := cfg.ResolveDomains()
 	if domainErr != nil {
-		fmt.Fprintf(os.Stderr, "Warning: install integrity check skipped: resolving domain %q: %v\n", resolvedDomain, domainErr)
-		addRow("install-integrity", "warn", fmt.Sprintf("check skipped: resolving domain %q: %v", resolvedDomain, domainErr))
+		fmt.Fprintf(os.Stderr, "Warning: install integrity check skipped: %v\n", domainErr)
+		addRow("install-integrity", "warn", fmt.Sprintf("check skipped: %v", domainErr))
+		return
+	}
+	contentFS, _, domainErr := hero.ComposeContent(toPublicComposition(resolved))
+	if domainErr != nil {
+		fmt.Fprintf(os.Stderr, "Warning: install integrity check skipped: %v\n", domainErr)
+		addRow("install-integrity", "warn", fmt.Sprintf("check skipped: %v", domainErr))
 		return
 	}
 	base := install.Options{
-		ContentFS: hero.OverlayFS(domainFS, hero.CoreFS()),
-		Domain:    domain,
+		ContentFS: contentFS,
+		Domain:    string(resolved.Primary),
 	}
 
 	findings, err := install.CheckIntegrity(projectRoot, base)
@@ -652,7 +654,7 @@ func runCheck(cmd *cobra.Command, args []string) error {
 	// install command's construction (domain from hero.json, domain pack
 	// overlaid on core) so check resolves the same pack-body chain link
 	// install did.
-	reportInstallIntegrity(projectRoot, cfg.Domain, addRow, &issues)
+	reportInstallIntegrity(projectRoot, cfg, addRow, &issues)
 
 	// Size drift — rate-limited. Per spec Implementation Notes, dump
 	// at most two summary lines (one for leaf, one for container)

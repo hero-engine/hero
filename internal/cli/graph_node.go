@@ -20,11 +20,12 @@ import (
 // `graph.UpsertNode`'s domain/idempotency invariants in one place.
 
 var (
-	graphNodeType   string
-	graphNodeKey    string
-	graphNodeDomain string
-	graphNodeTitle  string
-	graphNodeJSON   bool
+	graphNodeType         string
+	graphNodeKey          string
+	graphNodeDomain       string
+	graphNodeHandlerOwner string
+	graphNodeTitle        string
+	graphNodeJSON         bool
 )
 
 var graphNodeCmd = &cobra.Command{
@@ -43,8 +44,10 @@ Default domains by type (override with --domain):
   Feature, Initiative, Decision, Bug, Convention, Rule → engineering
   Story, PRD, RoadmapItem                              → pm
 
-For types outside those defaults, --domain is required unless the
-type is in the global allow-list (Mission, Person, Org, Repo, Unit).
+For routed artifacts, --handler-owner validates the selected handler's
+durable owner against the enabled workspace composition and stamps it.
+For types outside the defaults, --domain or --handler-owner is required
+unless the type is in the global allow-list (Mission, Person, Org, Repo, Unit).
 
 First write wins on domain: re-upserting an existing node with a
 different domain returns ErrDomainMutation. To relocate a node across
@@ -58,6 +61,7 @@ func init() {
 	graphNodeAddCmd.Flags().StringVar(&graphNodeType, "type", "", "node type, e.g. Story (required)")
 	graphNodeAddCmd.Flags().StringVar(&graphNodeKey, "key", "", "node key (required)")
 	graphNodeAddCmd.Flags().StringVar(&graphNodeDomain, "domain", "", "domain partition (engineering, pm, ...); defaults by type")
+	graphNodeAddCmd.Flags().StringVar(&graphNodeHandlerOwner, "handler-owner", "", "durable owner selected by a composed pack handler")
 	graphNodeAddCmd.Flags().StringVar(&graphNodeTitle, "title", "", "optional human title; falls back to key")
 	graphNodeAddCmd.Flags().BoolVar(&graphNodeJSON, "json", false, "emit result as JSON")
 
@@ -98,14 +102,8 @@ func runGraphNodeAdd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("--key is required")
 	}
 
-	domain := graphNodeDomain
-	if domain == "" {
-		domain = defaultDomainFor(graphNodeType)
-	}
-	// If we still have no domain and the type isn't global, give the
-	// caller a clear message before UpsertNode's lower-level error.
-	if domain == "" && !graph.IsGlobalNodeType(graphNodeType) {
-		return fmt.Errorf("must specify --domain for type %q (no default registered)", graphNodeType)
+	if graphNodeDomain != "" && graphNodeHandlerOwner != "" {
+		return fmt.Errorf("--domain and --handler-owner are mutually exclusive")
 	}
 
 	title := graphNodeTitle
@@ -121,6 +119,21 @@ func runGraphNodeAdd(cmd *cobra.Command, args []string) error {
 	heroDir := cfg.HeroDir(projectRoot)
 	if _, statErr := os.Stat(heroDir); os.IsNotExist(statErr) {
 		return fmt.Errorf("no hero workspace found (run 'hero init' first)")
+	}
+
+	domain := graphNodeDomain
+	if graphNodeHandlerOwner != "" {
+		domain, err = graph.DomainForHandler(cfg, graphNodeHandlerOwner)
+		if err != nil {
+			return fmt.Errorf("resolving handler owner: %w", err)
+		}
+	} else if domain == "" {
+		domain = defaultDomainFor(graphNodeType)
+	}
+	// If we still have no domain and the type isn't global, give the
+	// caller a clear message before UpsertNode's lower-level error.
+	if domain == "" && !graph.IsGlobalNodeType(graphNodeType) {
+		return fmt.Errorf("must specify --domain or --handler-owner for type %q (no default registered)", graphNodeType)
 	}
 
 	store, err := graph.Open(heroDir)

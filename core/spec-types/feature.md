@@ -42,6 +42,7 @@ sections:
   required: [Goal, Acceptance Criteria]
   optional: [Tasks, Boundaries, Risks, User Value, Out of Scope, Dependencies, Notes]
 accepting_commands: [/refine, /design, /deliver, /diagnose, /handoff]
+extension_points: [lifecycle]
 default_agents:
   authoring: story-writer
   review: pm-reviewer

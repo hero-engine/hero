@@ -4,7 +4,80 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/domains"
+	"github.com/hero-engine/hero/internal/graph"
 )
+
+func TestGraphNodeAddHandlerOwnerStampsDurableProvenance(t *testing.T) {
+	env := newTestEnv(t)
+	cfg, err := config.Load(env.dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cfg.SetDomainComposition(domains.DomainEngineering, []domains.DomainID{domains.DomainQA}); err != nil {
+		t.Fatal(err)
+	}
+	if err := cfg.Save(env.dir); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := runCmd("graph", "node", "add",
+		"--type", "TestPlan", "--key", "checkout-qa", "--handler-owner", "qa", "--json")
+	if err != nil {
+		t.Fatalf("handler-owned write: %v", err)
+	}
+	var written nodeAddResult
+	if err := json.Unmarshal([]byte(out), &written); err != nil {
+		t.Fatal(err)
+	}
+	if written.Domain != "qa" {
+		t.Fatalf("written domain = %q, want qa", written.Domain)
+	}
+
+	// Primary/focus are retrieval context, not write ownership. Rewriting the
+	// same artifact through the same selected handler remains QA-owned.
+	cfg, err = config.Load(env.dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cfg.SetDomainComposition(domains.DomainQA, nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := cfg.Save(env.dir); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := runCmd("graph", "node", "add",
+		"--type", "TestPlan", "--key", "checkout-qa", "--handler-owner", "qa", "--json"); err != nil {
+		t.Fatalf("same-owner mutation after primary change: %v", err)
+	}
+	store, err := graph.Open(env.heroDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	node, err := store.GetNode("TestPlan", "checkout-qa", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if node.Domain != "qa" {
+		t.Fatalf("durable node domain = %q, want qa", node.Domain)
+	}
+
+	if _, err := runCmd("graph", "node", "add",
+		"--type", "TestPlan", "--key", "disabled-pm", "--handler-owner", "pm", "--json"); err == nil || !strings.Contains(err.Error(), "not enabled") {
+		t.Fatalf("disabled handler owner error = %v", err)
+	}
+}
+
+func TestGraphNodeAddRejectsDomainAndHandlerOwner(t *testing.T) {
+	_ = newTestEnv(t)
+	_, err := runCmd("graph", "node", "add", "--type", "Feature", "--key", "x", "--domain", "engineering", "--handler-owner", "engineering")
+	if err == nil || !strings.Contains(err.Error(), "mutually exclusive") {
+		t.Fatalf("error = %v", err)
+	}
+}
 
 func TestGraphNodeAddHappyPathStoryPM(t *testing.T) {
 	_ = newTestEnv(t)

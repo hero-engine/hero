@@ -274,10 +274,7 @@ func (s *Service) writeMailProvenance(env attention.MailEnvelope, intakeSlug str
 		return err
 	}
 	defer store.Close()
-	domain := s.cfg.Domain
-	if domain == "" {
-		domain = "engineering"
-	}
+	domain := graph.DomainFor(s.cfg, graph.IntrinsicActive)
 	// repoKey must be gitutil.RepoKey — the partition every graph reader
 	// filters on. This wrote spec nodes under cfg.PeerID (a UUID), so the
 	// nodes landed in a partition nothing queries. Same divergence class as

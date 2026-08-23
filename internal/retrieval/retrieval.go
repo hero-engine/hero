@@ -71,6 +71,10 @@ type Query struct {
 	// `hero search --knowledge`. Types, when present, filter by knowledge
 	// kind (e.g. "battlecards", "decisions").
 	KnowledgeOnly bool
+
+	// DomainFilter is applied by lexical retrieval before ranking limits so
+	// disabled-domain hits cannot starve enabled or explicitly scoped results.
+	DomainFilter index.DomainFilter
 }
 
 // supersededDeweight is the score multiplier applied to results whose
@@ -94,12 +98,13 @@ type Result struct {
 	ClaimedBy string // non-empty when a spec is claimed
 	Path      string // on-disk path when Source=="fts5"; empty for graph nodes
 	Repo      string // remote-origin key; non-empty when result is from a sibling repo
+	Domain    string // durable domain provenance (core / engineering / pm / qa / ...)
 }
 
 // Retriever wraps the graph store, FTS5 index, and optional embedding model.
 // Instantiate with New; call Close when done.
 type Retriever struct {
-	store    *graph.Store        // nil when graph DB is absent or failed to open
+	store    *graph.Store // nil when graph DB is absent or failed to open
 	fts      *index.DB
 	embModel *embeddings.Model   // nil when embeddings unavailable
 	embStore *embeddings.Storage // nil when embeddings unavailable
@@ -298,6 +303,7 @@ func (r *Retriever) retrieveKnowledge(q Query, limit int) ([]Result, error) {
 			Score:   score,
 			Source:  "knowledge",
 			Path:    h.Path,
+			Domain:  h.Domain,
 		})
 	}
 	return results, nil
@@ -329,8 +335,8 @@ func (r *Retriever) retrieveViaNodeIndex(q Query, limit int) ([]Result, error) {
 	// backed nodes (Feature/Bug/Initiative/...) without a second query.
 	// Non-spec nodes (Commit, Symbol, ...) have no specs row and the
 	// joined column comes back as NULL → empty string after scan.
-	rows, err := indexDB.Query(`
-		SELECT ni.node_type, ni.key, ni.path, ni.repo,
+	baseQuery := `
+		SELECT ni.node_type, ni.key, ni.path, ni.repo, ni.domain,
 		       snippet(fts_nodes, 0, '>>>', '<<<', '...', 24) AS title_snip,
 		       snippet(fts_nodes, 1, '>>>', '<<<', '...', 32) AS body_snip,
 		       fts_nodes.rank AS bm25_rank,
@@ -338,11 +344,21 @@ func (r *Retriever) retrieveViaNodeIndex(q Query, limit int) ([]Result, error) {
 		  FROM fts_nodes
 		  JOIN node_index ni ON ni.rowid = fts_nodes.rowid
 		  LEFT JOIN specs s ON s.slug = ni.key
-		 WHERE fts_nodes MATCH ?
-		 ORDER BY fts_nodes.rank
-		 LIMIT ?`,
-		ftsQuery, limit*3, // over-fetch; we re-sort by boosted score
-	)
+		 WHERE fts_nodes MATCH ?`
+	args := []any{ftsQuery}
+	where, whereArgs, domainOrder, orderArgs := retrievalDomainSQL("ni", q.DomainFilter)
+	if where != "" {
+		baseQuery += " AND " + where
+		args = append(args, whereArgs...)
+	}
+	baseQuery += " ORDER BY "
+	if domainOrder != "" {
+		baseQuery += domainOrder + ", "
+		args = append(args, orderArgs...)
+	}
+	baseQuery += "fts_nodes.rank LIMIT ?"
+	args = append(args, limit*3) // over-fetch; we re-sort by boosted score
+	rows, err := indexDB.Query(baseQuery, args...)
 	if err != nil {
 		return nil, nil // graceful: fts_nodes may be empty/absent
 	}
@@ -353,6 +369,7 @@ func (r *Retriever) retrieveViaNodeIndex(q Query, limit int) ([]Result, error) {
 		key          string
 		path         string
 		repo         string
+		domain       string
 		titleSnip    string
 		bodySnip     string
 		bm25Rank     float64
@@ -364,7 +381,7 @@ func (r *Retriever) retrieveViaNodeIndex(q Query, limit int) ([]Result, error) {
 	for rows.Next() {
 		var c cand
 		var rank sql.NullFloat64
-		if err := rows.Scan(&c.nodeType, &c.key, &c.path, &c.repo, &c.titleSnip, &c.bodySnip, &rank, &c.supersededBy); err != nil {
+		if err := rows.Scan(&c.nodeType, &c.key, &c.path, &c.repo, &c.domain, &c.titleSnip, &c.bodySnip, &rank, &c.supersededBy); err != nil {
 			continue
 		}
 		if rank.Valid {
@@ -386,6 +403,11 @@ func (r *Retriever) retrieveViaNodeIndex(q Query, limit int) ([]Result, error) {
 	}
 
 	sort.SliceStable(cands, func(i, j int) bool {
+		leftRank := retrievalDomainRank(cands[i].domain, q.DomainFilter)
+		rightRank := retrievalDomainRank(cands[j].domain, q.DomainFilter)
+		if leftRank != rightRank {
+			return leftRank < rightRank
+		}
 		return cands[i].score > cands[j].score
 	})
 	if len(cands) > limit {
@@ -414,6 +436,7 @@ func (r *Retriever) retrieveViaNodeIndex(q Query, limit int) ([]Result, error) {
 			Source:  "graph",
 			Path:    c.path,
 			Repo:    c.repo,
+			Domain:  c.domain,
 		}
 	}
 	return results, nil
@@ -474,8 +497,7 @@ func (r *Retriever) retrieveViaGraph(q Query, limit int) ([]Result, error) {
 
 	// Fetch up to 200 candidates; scoring + sort below brings the best to the
 	// front before we cap at limit.
-	rows, err := r.store.DB().Query(
-		`SELECT id, type, key, repo,
+	baseQuery := `SELECT id, type, key, repo, domain,
 		        COALESCE(json_extract(props, '$.title'),   '') AS title,
 		        COALESCE(json_extract(props, '$.body'),    '') AS body,
 		        COALESCE(json_extract(props, '$.subject'), '') AS subject
@@ -484,11 +506,20 @@ func (r *Retriever) retrieveViaGraph(q Query, limit int) ([]Result, error) {
 		    AND (lower(key) LIKE '%' || ? || '%'
 		         OR lower(COALESCE(json_extract(props, '$.title'),   '')) LIKE '%' || ? || '%'
 		         OR lower(COALESCE(json_extract(props, '$.body'),    '')) LIKE '%' || ? || '%'
-		         OR lower(COALESCE(json_extract(props, '$.subject'), '')) LIKE '%' || ? || '%')
-		  ORDER BY ingested_at DESC
-		  LIMIT 200`,
-		text, text, text, text,
-	)
+		         OR lower(COALESCE(json_extract(props, '$.subject'), '')) LIKE '%' || ? || '%')`
+	args := []any{text, text, text, text}
+	where, whereArgs, domainOrder, orderArgs := retrievalDomainSQL("nodes", q.DomainFilter)
+	if where != "" {
+		baseQuery += " AND " + where
+		args = append(args, whereArgs...)
+	}
+	baseQuery += " ORDER BY "
+	if domainOrder != "" {
+		baseQuery += domainOrder + ", "
+		args = append(args, orderArgs...)
+	}
+	baseQuery += "ingested_at DESC LIMIT 200"
+	rows, err := r.store.DB().Query(baseQuery, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -499,6 +530,7 @@ func (r *Retriever) retrieveViaGraph(q Query, limit int) ([]Result, error) {
 		nodeType string
 		key      string
 		repo     string
+		domain   string
 		title    string
 		body     string
 		score    float64
@@ -508,7 +540,7 @@ func (r *Retriever) retrieveViaGraph(q Query, limit int) ([]Result, error) {
 	for rows.Next() {
 		var c cand
 		var subject string
-		if err := rows.Scan(&c.id, &c.nodeType, &c.key, &c.repo, &c.title, &c.body, &subject); err != nil {
+		if err := rows.Scan(&c.id, &c.nodeType, &c.key, &c.repo, &c.domain, &c.title, &c.body, &subject); err != nil {
 			return nil, err
 		}
 		if c.body == "" && subject != "" {
@@ -530,6 +562,11 @@ func (r *Retriever) retrieveViaGraph(q Query, limit int) ([]Result, error) {
 	}
 
 	sort.SliceStable(cands, func(i, j int) bool {
+		leftRank := retrievalDomainRank(cands[i].domain, q.DomainFilter)
+		rightRank := retrievalDomainRank(cands[j].domain, q.DomainFilter)
+		if leftRank != rightRank {
+			return leftRank < rightRank
+		}
 		return cands[i].score > cands[j].score
 	})
 	if len(cands) > limit {
@@ -555,6 +592,7 @@ func (r *Retriever) retrieveViaGraph(q Query, limit int) ([]Result, error) {
 			Score:   c.score,
 			Source:  "graph",
 			Repo:    c.repo,
+			Domain:  c.domain,
 		}
 	}
 	return results, nil
@@ -586,11 +624,11 @@ func (r *Retriever) retrieveViaFTS(q Query, limit int) ([]Result, error) {
 
 	switch {
 	case q.Text == "":
-		hits, err = r.fts.ListFilteredScoped(specType, status, tag, since, subproject)
+		hits, err = r.fts.ListFilteredScopedDomains(specType, status, tag, since, subproject, q.DomainFilter)
 	case hasFilter:
-		hits, err = r.fts.SearchFilteredScoped(q.Text, specType, status, tag, since, subproject)
+		hits, err = r.fts.SearchFilteredScopedDomains(q.Text, specType, status, tag, since, subproject, q.DomainFilter)
 	default:
-		hits, err = r.fts.Search(q.Text)
+		hits, err = r.fts.SearchDomains(q.Text, q.DomainFilter)
 	}
 	if err != nil {
 		return nil, err
@@ -623,6 +661,7 @@ func (r *Retriever) retrieveViaFTS(q Query, limit int) ([]Result, error) {
 			Status:    string(h.Status),
 			ClaimedBy: h.ClaimedBy,
 			Path:      h.Path,
+			Domain:    h.Domain,
 		}
 	}
 
@@ -630,6 +669,11 @@ func (r *Retriever) retrieveViaFTS(q Query, limit int) ([]Result, error) {
 	// non-superseded peers regardless of original rank order. Stable
 	// sort preserves FTS rank tie-breaks within each tier.
 	sort.SliceStable(results, func(i, j int) bool {
+		leftRank := retrievalDomainRank(results[i].Domain, q.DomainFilter)
+		rightRank := retrievalDomainRank(results[j].Domain, q.DomainFilter)
+		if leftRank != rightRank {
+			return leftRank < rightRank
+		}
 		return results[i].Score > results[j].Score
 	})
 
@@ -637,6 +681,64 @@ func (r *Retriever) retrieveViaFTS(q Query, limit int) ([]Result, error) {
 		results = results[:limit]
 	}
 	return results, nil
+}
+
+func retrievalDomainSQL(alias string, filter index.DomainFilter) (where string, whereArgs []any, order string, orderArgs []any) {
+	if filter.All || len(filter.Allowed) == 0 {
+		return "", nil, "", nil
+	}
+	fallback := filter.Fallback
+	if fallback == "" {
+		fallback = "engineering"
+	}
+	expr := "COALESCE(NULLIF(" + alias + ".domain, ''), ?)"
+	placeholders := make([]string, len(filter.Allowed))
+	whereArgs = append(whereArgs, fallback)
+	for i, domain := range filter.Allowed {
+		placeholders[i] = "?"
+		whereArgs = append(whereArgs, domain)
+	}
+	where = expr + " IN (" + strings.Join(placeholders, ",") + ")"
+
+	orderDomains := filter.Order
+	if len(orderDomains) == 0 {
+		orderDomains = filter.Allowed
+	}
+	var cases strings.Builder
+	cases.WriteString("CASE " + expr)
+	orderArgs = append(orderArgs, fallback)
+	seen := map[string]bool{}
+	rank := 0
+	for _, domain := range orderDomains {
+		if domain == "" || seen[domain] {
+			continue
+		}
+		seen[domain] = true
+		fmt.Fprintf(&cases, " WHEN ? THEN %d", rank)
+		orderArgs = append(orderArgs, domain)
+		rank++
+	}
+	fmt.Fprintf(&cases, " ELSE %d END", rank)
+	return where, whereArgs, cases.String(), orderArgs
+}
+
+func retrievalDomainRank(domain string, filter index.DomainFilter) int {
+	if filter.All || len(filter.Allowed) == 0 {
+		return 0
+	}
+	if domain == "" {
+		domain = filter.Fallback
+	}
+	order := filter.Order
+	if len(order) == 0 {
+		order = filter.Allowed
+	}
+	for i, candidate := range order {
+		if domain == candidate {
+			return i
+		}
+	}
+	return len(order)
 }
 
 // ---------------------------------------------------------------------------

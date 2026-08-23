@@ -551,3 +551,5 @@
 {"ts":"2026-08-22T22:37:35.382204Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"pm-public-pack","message":"status -\u003e completed"}
 {"ts":"2026-08-22T23:00:13.260424Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"qa-public-pack","message":"Public Quality Assurance Capability Pack"}
 {"ts":"2026-08-22T23:00:13.260559Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"qa-public-pack","message":"status -\u003e completed"}
+{"ts":"2026-08-23T00:25:35.451553Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"dual-mode-pm-qa-capability-packs","message":"Dual-Mode PM and QA Capability Packs"}
+{"ts":"2026-08-23T00:25:35.451638Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"dual-mode-pm-qa-capability-packs","message":"status -\u003e completed"}

@@ -10,6 +10,7 @@ import (
 
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/index"
+	"github.com/hero-engine/hero/internal/install"
 	"github.com/hero-engine/hero/internal/spec"
 )
 
@@ -182,6 +183,12 @@ func resetFlags() {
 	searchTag = ""
 	searchSince = ""
 	searchListOnly = false
+	searchCrossRepo = false
+	searchSpecsOnly = false
+	searchKnowledge = false
+	searchDomain = ""
+	searchFocusedDomain = ""
+	searchAllDomains = false
 
 	// Reset goal flags
 	goalCheck = false
@@ -227,9 +234,15 @@ func resetFlags() {
 	// Reset init flags
 	initFolder = config.DefaultFolder
 	initDomain = ""
+	initWith = nil
+	initTargets = nil
 	initNoAgents = false
 	initInstallHooks = true
 	initNoHooks = false
+	domainInstallRunner = install.Run
+	blockedAllDomains = false
+	blockedDomain = ""
+	blockedFocus = ""
 
 	// Reset new flags
 	newSpecType = "feature"
@@ -253,6 +266,7 @@ func resetFlags() {
 	graphNodeType = ""
 	graphNodeKey = ""
 	graphNodeDomain = ""
+	graphNodeHandlerOwner = ""
 	graphNodeTitle = ""
 	graphNodeJSON = false
 
@@ -357,6 +371,10 @@ func resetFlags() {
 	listSortKey = string(spec.SortRecency)
 	listLimit = 0
 	listFormat = "table"
+	listSubproject = ""
+	listDomain = ""
+	listFocusedDomain = ""
+	listAllDomains = false
 
 	// Reset queue flags
 	queueLimit = 0

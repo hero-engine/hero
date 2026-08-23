@@ -1,6 +1,10 @@
 package graph
 
-import "github.com/hero-engine/hero/internal/config"
+import (
+	"fmt"
+
+	"github.com/hero-engine/hero/internal/config"
+)
 
 // NodeHint classifies a node's relationship to the domain partition
 // so write-side ingest sites can call DomainFor with a fixed constant
@@ -11,14 +15,14 @@ import "github.com/hero-engine/hero/internal/config"
 //
 //   - IntrinsicCode  → always engineering (codescan / git ingest)
 //   - IntrinsicGlobal → empty string (Mission / Person — shared across domains)
-//   - IntrinsicActive → workspace's active domain from Config.Domain
+//   - IntrinsicActive → workspace's primary domain from Config.ResolveDomains
 //
 // Callers pick the hint at the ingest-package level; the hint is a
 // package constant, not a per-call decision.
 type NodeHint int
 
 const (
-	// IntrinsicActive stamps from cfg.Domain (with "engineering" fallback).
+	// IntrinsicActive stamps from the resolved primary domain (with "engineering" fallback).
 	// Most ingest paths use this — specs, tracker issues, sessions, memory,
 	// next-doc, knowledge, tasks.
 	IntrinsicActive NodeHint = iota
@@ -35,7 +39,7 @@ const (
 //
 //   - IntrinsicCode  → "engineering"
 //   - IntrinsicGlobal → ""
-//   - IntrinsicActive → cfg.Domain, falling back to "engineering" when
+//   - IntrinsicActive → the resolved primary domain, falling back to "engineering" when
 //     the workspace has no domain configured (pre-migration workspaces
 //     and engineering-default setups)
 //
@@ -49,11 +53,28 @@ func DomainFor(cfg config.Config, hint NodeHint) string {
 	case IntrinsicGlobal:
 		return ""
 	case IntrinsicActive:
-		if cfg.Domain != "" {
-			return cfg.Domain
+		resolved, err := cfg.ResolveDomains()
+		if err == nil {
+			return string(resolved.Primary)
 		}
 		return "engineering"
 	default:
 		return "engineering"
 	}
+}
+
+// DomainForHandler returns the durable artifact owner for a routed pack
+// handler. Ownership is independent of workspace primary and UI focus, but the
+// owner must participate in the enabled stack so stale handlers cannot write.
+func DomainForHandler(cfg config.Config, owner string) (string, error) {
+	resolved, err := cfg.ResolveDomains()
+	if err != nil {
+		return "", err
+	}
+	for _, enabled := range resolved.Stack() {
+		if string(enabled) == owner {
+			return owner, nil
+		}
+	}
+	return "", fmt.Errorf("handler owner %q is not enabled in this workspace", owner)
 }

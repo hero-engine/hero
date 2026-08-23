@@ -117,8 +117,8 @@ func (discardReporter) Warn(string)                 {}
 // effectively read-only.
 type dispatcherState struct {
 	mu        sync.RWMutex
-	scanners  map[string]Scanner          // keyed by scanner_id
-	manifests map[string]*Manifest        // keyed by domain name
+	scanners  map[string]Scanner   // keyed by scanner_id
+	manifests map[string]*Manifest // keyed by domain name
 }
 
 var dispatcher = &dispatcherState{
@@ -171,10 +171,7 @@ func RegisterManifest(domain string, m *Manifest) {
 //     packname-specific error and exits non-zero
 //   - (nil, err) for scanner-internal errors
 func Dispatch(subcommand string, opts ScanOpts) (*Report, error) {
-	domain := opts.Config.Domain
-	if domain == "" {
-		domain = "engineering"
-	}
+	domain := opts.Config.PrimaryDomain()
 
 	dispatcher.mu.RLock()
 	manifest := dispatcher.manifests[domain]

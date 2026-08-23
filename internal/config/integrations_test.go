@@ -153,7 +153,7 @@ func TestLoadMutateSaveNeverCommitsEffectiveTrackerOrConfluenceSecrets(t *testin
 	if cfg.Tracker.Token == "" || cfg.Confluence.Token == "" {
 		t.Fatal("runtime secrets were not materialized")
 	}
-	cfg.Domain = "changed"
+	cfg.Domain = "pm"
 	if err := cfg.Save(root); err != nil {
 		t.Fatal(err)
 	}
@@ -166,7 +166,7 @@ func TestLoadMutateSaveNeverCommitsEffectiveTrackerOrConfluenceSecrets(t *testin
 			t.Fatalf("committed save leaked %q: %s", bad, saved)
 		}
 	}
-	if !strings.Contains(string(saved), `"domain": "changed"`) {
+	if !strings.Contains(string(saved), `"domain": "pm"`) {
 		t.Fatal("mutation was not saved")
 	}
 	var top map[string]json.RawMessage

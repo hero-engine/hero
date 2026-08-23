@@ -81,6 +81,42 @@ func addGraphNodeWithRepo(t *testing.T, heroDir, nodeType, key, repo string, pro
 	}
 }
 
+func addGraphNodeWithDomain(t *testing.T, heroDir, nodeType, key, domain string, props map[string]any) {
+	t.Helper()
+	gstore, err := graph.Open(heroDir)
+	if err != nil {
+		t.Fatalf("graph.Open: %v", err)
+	}
+	defer gstore.Close()
+	if _, err := gstore.UpsertNode(&graph.Node{
+		Type: nodeType, Key: key, Domain: domain, Props: props,
+		Scope: graph.ScopeTeam, Source: map[string]any{"_test": true},
+	}); err != nil {
+		t.Fatalf("UpsertNode(%s, %s): %v", nodeType, key, err)
+	}
+}
+
+func TestRetrieveCarriesProjectedGraphDomain(t *testing.T) {
+	heroDir := newHeroDir(t)
+	addGraphNodeWithDomain(t, heroDir, "TestPlan", "qa-checkout", "qa", map[string]any{
+		"title": "Checkout quality plan",
+	})
+	projectNodes(t, heroDir)
+
+	r, err := New(heroDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Close()
+	results, err := r.Retrieve(Query{Text: "checkout"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) == 0 || results[0].Domain != "qa" {
+		t.Fatalf("projected result domain = %#v, want qa", results)
+	}
+}
+
 // addFTSSpec creates a spec on disk and indexes it into the FTS5 index.
 func addFTSSpec(t *testing.T, heroDir, slug, title, specType, content string) {
 	t.Helper()
@@ -861,8 +897,8 @@ func TestRetrieveHybrid_WithEmbeddedModel(t *testing.T) {
 	}
 
 	texts := map[string]string{
-		"auth-retry-spec":    "Authentication retry with exponential backoff for failed login attempts",
-		"scan-pipeline-spec": "Scan pipeline optimization for parallel file tree walking and ingestion",
+		"auth-retry-spec":     "Authentication retry with exponential backoff for failed login attempts",
+		"scan-pipeline-spec":  "Scan pipeline optimization for parallel file tree walking and ingestion",
 		"landing-page-design": "Marketing landing page with hero bolt logo and call to action",
 	}
 	for key, text := range texts {

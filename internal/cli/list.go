@@ -6,12 +6,14 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/index"
 	"github.com/hero-engine/hero/internal/install"
 	"github.com/hero-engine/hero/internal/spec"
@@ -39,19 +41,22 @@ func recordScopeHintAck(heroDir, scope string) error {
 }
 
 var (
-	listTypes      []string
-	listStatuses   []string
-	listHorizons   []string
-	listTags       []string
-	listReady      bool
-	listBlocked    bool
-	listPinned     bool
-	listMine       string
-	listStale      int
-	listSortKey    string
-	listLimit      int
-	listFormat     string
-	listSubproject string
+	listTypes         []string
+	listStatuses      []string
+	listHorizons      []string
+	listTags          []string
+	listReady         bool
+	listBlocked       bool
+	listPinned        bool
+	listMine          string
+	listStale         int
+	listSortKey       string
+	listLimit         int
+	listFormat        string
+	listSubproject    string
+	listDomain        string
+	listFocusedDomain string
+	listAllDomains    bool
 )
 
 var listCmd = &cobra.Command{
@@ -91,6 +96,9 @@ func init() {
 	listCmd.Flags().IntVar(&listLimit, "limit", 0, "cap result count (0 = unlimited)")
 	listCmd.Flags().StringVar(&listFormat, "format", "table", "output format: table, text, json, kickoff")
 	listCmd.Flags().StringVar(&listSubproject, "subproject", "", "filter by subproject scope (e.g. engines/mlx); 'all' disables filtering. Default: active scope when run from a satellite/scoped cwd")
+	listCmd.Flags().StringVar(&listDomain, "domain", "", "list one domain instead of the enabled workspace stack (\"*\" = all)")
+	listCmd.Flags().StringVar(&listFocusedDomain, "focused-domain", "", "rank an enabled domain first without changing workspace configuration")
+	listCmd.Flags().BoolVar(&listAllDomains, "all-domains", false, "list specs from every domain")
 }
 
 // refreshIndexBeforeRead syncs the index against disk truth so the
@@ -116,6 +124,11 @@ func refreshIndexBeforeRead() {
 
 func runList(cmd *cobra.Command, args []string) error {
 	refreshIndexBeforeRead()
+	projectRoot := findProjectRoot()
+	cfg, err := config.Load(projectRoot)
+	if err != nil {
+		return fmt.Errorf("loading config: %w", err)
+	}
 	specs, err := loadAllSpecs()
 	if err != nil {
 		return err
@@ -128,7 +141,37 @@ func runList(cmd *cobra.Command, args []string) error {
 
 	maybePrintScopeHint(cmd.ErrOrStderr(), listSubproject, sel.Filter.Subproject)
 
-	out := sel.Apply(specs)
+	override := listDomain
+	if listAllDomains {
+		override = "*"
+	}
+	scope := graph.ResolveDomainFocused(cfg, override, listFocusedDomain)
+	visible := make([]*spec.Spec, 0, len(specs))
+	for _, candidate := range specs {
+		domain := candidate.Domain
+		if domain == "" {
+			domain = cfg.PrimaryDomain()
+		}
+		if scope.Match(domain) {
+			visible = append(visible, candidate)
+		}
+	}
+	limit := sel.Limit
+	sel.Limit = 0
+	out := sel.Apply(visible)
+	sort.SliceStable(out, func(i, j int) bool {
+		left, right := out[i].Domain, out[j].Domain
+		if left == "" {
+			left = cfg.PrimaryDomain()
+		}
+		if right == "" {
+			right = cfg.PrimaryDomain()
+		}
+		return scope.Rank(left) < scope.Rank(right)
+	})
+	if limit > 0 && len(out) > limit {
+		out = out[:limit]
+	}
 	return renderSpecs(cmd.OutOrStdout(), out, listFormat)
 }
 

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/hero-engine/hero/internal/domains"
 )
 
 const (
@@ -45,9 +47,12 @@ type Config struct {
 	// outside Config (registered via `hero repos add` on peers).
 	PeerID  string         `json:"peer_id,omitempty"`
 	Peering *PeeringConfig `json:"peering,omitempty"`
-	Domain  string         `json:"domain,omitempty"`
-	Team    *TeamConfig    `json:"team,omitempty"`
-	Tracker *TrackerConfig `json:"tracker,omitempty"`
+	// Domain is the legacy scalar primary-domain field. It remains readable
+	// for compatibility; explicit domain mutations write Domains and clear it.
+	Domain  string               `json:"domain,omitempty"`
+	Domains *domains.Composition `json:"domains,omitempty"`
+	Team    *TeamConfig          `json:"team,omitempty"`
+	Tracker *TrackerConfig       `json:"tracker,omitempty"`
 	// Integrations is the canonical provider-neutral integration contract.
 	// hero.local.json uses this exact shape and overlays hero.json by stable ID.
 	Integrations          *IntegrationsConfig          `json:"integrations,omitempty"`
@@ -136,6 +141,37 @@ type Config struct {
 	// Nil/empty → documented defaults apply.
 	// See spec roadmap-review-ambient-surfacing.
 	Roadmap *RoadmapConfig `json:"roadmap,omitempty"`
+}
+
+// ResolveDomains returns the canonical Core + primary + extensions workspace
+// composition without mutating or rewriting legacy configuration.
+func (c Config) ResolveDomains() (domains.ResolvedComposition, error) {
+	return domains.ResolveComposition(c.Domains, domains.DomainID(c.Domain))
+}
+
+// PrimaryDomain returns the resolved primary with the legacy engineering
+// fallback. Config loaded from disk is already validated.
+func (c Config) PrimaryDomain() string {
+	resolved, err := c.ResolveDomains()
+	if err != nil {
+		return "engineering"
+	}
+	return string(resolved.Primary)
+}
+
+// SetDomainComposition validates and records an explicit canonical mutation.
+// Invalid input leaves the config unchanged.
+func (c *Config) SetDomainComposition(primary domains.DomainID, extensions []domains.DomainID) error {
+	resolved, err := domains.ResolveComposition(&domains.Composition{Primary: primary, Extensions: extensions}, "")
+	if err != nil {
+		return err
+	}
+	c.Domain = ""
+	c.Domains = &domains.Composition{
+		Primary:    resolved.Primary,
+		Extensions: append([]domains.DomainID(nil), resolved.Extensions...),
+	}
+	return nil
 }
 
 // RoadmapConfig tunes the ambient roadmap-shape surfacing helper.
@@ -1546,6 +1582,9 @@ func Load(projectRoot string) (Config, error) {
 	if cfg.Peering != nil && cfg.Peering.Subagent != nil {
 		warnLegacySubagent()
 	}
+	if _, derr := cfg.ResolveDomains(); derr != nil {
+		return cfg, fmt.Errorf("parsing %s: %w", configPath, derr)
+	}
 
 	return cfg, nil
 }
@@ -1553,6 +1592,9 @@ func Load(projectRoot string) (Config, error) {
 // Save writes hero.json to the hero folder inside the given project root.
 func (c Config) Save(projectRoot string) error {
 	committed := c.forCommittedSave()
+	if _, err := committed.ResolveDomains(); err != nil {
+		return fmt.Errorf("invalid domain composition: %w", err)
+	}
 	if err := ValidateCommittedIntegrations(committed.Integrations, filepath.Join(projectRoot, c.Folder, ConfigFileName)); err != nil {
 		return err
 	}

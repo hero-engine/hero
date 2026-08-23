@@ -62,9 +62,12 @@ type Record struct {
 	Sections          SectionSpec
 	TasksSchema       ChecklistSchema
 	AcceptingCommands []string
-	DefaultAgents     map[string]string
-	Relations         []RelationDecl
-	Frontmatter       FrontmatterSchema
+	// ExtensionPoints declares the compatible amendment surfaces owned by
+	// this canonical type. Packs may amend only a point named here.
+	ExtensionPoints []string
+	DefaultAgents   map[string]string
+	Relations       []RelationDecl
+	Frontmatter     FrontmatterSchema
 }
 
 // Lifecycle declares the state machine for a record.
@@ -157,6 +160,15 @@ type FrontmatterSchema struct {
 	Optional []FieldDecl
 }
 
+// Amendment is a namespaced compatible extension to a canonical type.
+type Amendment struct {
+	ID             string   `json:"id"`
+	Owner          string   `json:"owner"`
+	TargetType     string   `json:"target_type"`
+	ExtensionPoint string   `json:"extension_point"`
+	Values         []string `json:"values,omitempty"`
+}
+
 // Registry is the read-only accessor surface. One instance per
 // process, built once at startup by Load.
 type Registry interface {
@@ -170,6 +182,7 @@ type Registry interface {
 	AcceptingCommand(cmd string) []*Record
 	DefaultWorkType() *Record
 	ActiveDomain() string
+	Amendments() []Amendment
 	JSONSchema() ([]byte, error)
 }
 
@@ -178,9 +191,15 @@ type registry struct {
 	records      map[string]*Record
 	order        []string // deterministic iteration order (load order)
 	activeDomain string
+	amendments   []Amendment
 }
 
 func (r *registry) ActiveDomain() string { return r.activeDomain }
+func (r *registry) Amendments() []Amendment {
+	out := make([]Amendment, len(r.amendments))
+	copy(out, r.amendments)
+	return out
+}
 
 func (r *registry) All() []*Record {
 	out := make([]*Record, 0, len(r.order))

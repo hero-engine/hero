@@ -273,8 +273,8 @@ func isEngineSourceRepo(root string) bool {
 // activeDomainForRoot resolves the active domain pack for the repo at root:
 // hero.json's domain if set, else the "engineering" default.
 func activeDomainForRoot(root string) string {
-	if cfg, err := config.Load(root); err == nil && cfg.Domain != "" {
-		return cfg.Domain
+	if cfg, err := config.Load(root); err == nil {
+		return cfg.PrimaryDomain()
 	}
 	return "engineering"
 }

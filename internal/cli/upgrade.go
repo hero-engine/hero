@@ -129,15 +129,14 @@ func runUpgrade(cmd *cobra.Command, args []string) error {
 	// treating them as user-authored.
 	contentFS := upgradeContentFS
 	if contentFS == nil {
-		activeDomain := cfg.Domain
-		if activeDomain == "" {
-			activeDomain = "engineering"
-		}
-		domainFS, domainErr := hero.DomainFS(activeDomain)
+		resolved, domainErr := cfg.ResolveDomains()
 		if domainErr != nil {
-			return fmt.Errorf("resolving domain %q: %w", activeDomain, domainErr)
+			return fmt.Errorf("resolving domain composition: %w", domainErr)
 		}
-		contentFS = hero.OverlayFS(domainFS, hero.CoreFS())
+		contentFS, _, domainErr = hero.ComposeContent(toPublicComposition(resolved))
+		if domainErr != nil {
+			return fmt.Errorf("composing domain content: %w", domainErr)
+		}
 	}
 
 	// Resolve which targets to upgrade. Filesystem probe finds every

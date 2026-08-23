@@ -20,6 +20,14 @@ import (
 // activeDomain is consulted to pick the domain overlay. Empty or
 // "engineering" both select engineering.
 func Load(activeDomain string) (Registry, error) {
+	return LoadComposition(activeDomain, nil)
+}
+
+// LoadComposition builds Core + primary + ordered extension type records.
+// Domain records may add types but may not shadow a previously loaded canonical
+// identity. Compatible cross-pack changes are exposed as amendments.
+func LoadComposition(primary string, extensions []string) (Registry, error) {
+	activeDomain := primary
 	if activeDomain == "" {
 		activeDomain = "engineering"
 	}
@@ -35,11 +43,25 @@ func Load(activeDomain string) (Registry, error) {
 		return nil, fmt.Errorf("loading core spec-types: %w", err)
 	}
 
-	// Domain overlay. Missing directory is fine — not every domain has
-	// extension types.
-	if domainFS := hero.DomainSpecTypesFS(activeDomain); domainFS != nil {
-		if err := loadFromFS(reg, domainFS, activeDomain); err != nil {
-			return nil, fmt.Errorf("loading %s spec-types: %w", activeDomain, err)
+	stack := append([]string{activeDomain}, extensions...)
+	seenDomain := map[string]bool{}
+	for _, domain := range stack {
+		if domain == "" || seenDomain[domain] {
+			continue
+		}
+		seenDomain[domain] = true
+		if domainFS := hero.DomainSpecTypesFS(domain); domainFS != nil {
+			if err := loadFromFS(reg, domainFS, domain); err != nil {
+				return nil, fmt.Errorf("loading %s spec-types: %w", domain, err)
+			}
+		}
+	}
+	if seenDomain["qa"] {
+		if err := applyAmendment(reg, Amendment{
+			ID: "qa.spec-type.feature.lifecycle", Owner: "qa", TargetType: "feature",
+			ExtensionPoint: "lifecycle", Values: []string{"qa-ready", "qa-rejected"},
+		}); err != nil {
+			return nil, fmt.Errorf("applying QA spec-type amendment: %w", err)
 		}
 	}
 
@@ -53,6 +75,87 @@ func Load(activeDomain string) (Registry, error) {
 	}
 
 	return reg, nil
+}
+
+// applyAmendment validates a pack amendment against the extension points
+// explicitly declared by the canonical target owner, then applies it to the
+// resolved record. Validation completes before mutation so rejected amendments
+// cannot leave a partially changed registry.
+func applyAmendment(reg *registry, amendment Amendment) error {
+	if amendment.ID == "" || amendment.Owner == "" || amendment.TargetType == "" || amendment.ExtensionPoint == "" {
+		return fmt.Errorf("amendment id, owner, target type, and extension point are required")
+	}
+	for _, existing := range reg.amendments {
+		if existing.ID == amendment.ID {
+			return fmt.Errorf("duplicate amendment id %q", amendment.ID)
+		}
+	}
+	target, ok := reg.records[amendment.TargetType]
+	if !ok {
+		return fmt.Errorf("amendment target %q is not registered", amendment.TargetType)
+	}
+	if !containsString(target.ExtensionPoints, amendment.ExtensionPoint) {
+		return fmt.Errorf(
+			"canonical owner %q for type %q does not declare extension point %q",
+			target.Domain, target.Name, amendment.ExtensionPoint,
+		)
+	}
+	if amendment.ExtensionPoint != "lifecycle" {
+		return fmt.Errorf("unsupported extension point %q", amendment.ExtensionPoint)
+	}
+	if len(target.Lifecycle.States) == 0 {
+		return fmt.Errorf("type %q has no lifecycle to amend", target.Name)
+	}
+	status := findFrontmatterField(target, "status")
+	if status == nil || status.Type != "enum" {
+		return fmt.Errorf("type %q has no enum status field to amend", target.Name)
+	}
+	seenValue := map[string]bool{}
+	for _, value := range amendment.Values {
+		if value == "" {
+			return fmt.Errorf("amendment %q contains an empty lifecycle value", amendment.ID)
+		}
+		if seenValue[value] {
+			return fmt.Errorf("amendment %q contains duplicate lifecycle value %q", amendment.ID, value)
+		}
+		seenValue[value] = true
+	}
+
+	for _, value := range amendment.Values {
+		if !containsString(target.Lifecycle.States, value) {
+			target.Lifecycle.States = append(target.Lifecycle.States, value)
+		}
+		if !containsString(status.Values, value) {
+			status.Values = append(status.Values, value)
+		}
+	}
+	stored := amendment
+	stored.Values = append([]string(nil), amendment.Values...)
+	reg.amendments = append(reg.amendments, stored)
+	return nil
+}
+
+func findFrontmatterField(record *Record, name string) *FieldDecl {
+	for i := range record.Frontmatter.Required {
+		if record.Frontmatter.Required[i].Name == name {
+			return &record.Frontmatter.Required[i]
+		}
+	}
+	for i := range record.Frontmatter.Optional {
+		if record.Frontmatter.Optional[i].Name == name {
+			return &record.Frontmatter.Optional[i]
+		}
+	}
+	return nil
+}
+
+func containsString(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
 }
 
 // LoadFromFS is a test seam: build a registry from arbitrary
@@ -126,28 +229,29 @@ func loadFromFS(reg *registry, fsys fs.FS, scope string) error {
 // rawFrontmatter mirrors the YAML shape we expect in each spec-type
 // markdown file's frontmatter. Anything optional is zero-value-safe.
 type rawFrontmatter struct {
-	Title             string           `yaml:"title"`
-	Type              string           `yaml:"type"`
-	Domain            string           `yaml:"domain"`
-	Category          string           `yaml:"category"`
-	Bucket            string           `yaml:"bucket"`
-	Location          string           `yaml:"location"`
-	Lifecycle         *rawLifecycle    `yaml:"lifecycle,omitempty"`
-	Kind              *rawKind         `yaml:"kind,omitempty"`
-	Owner             *rawOwner        `yaml:"owner,omitempty"`
-	TasksSchema       *rawTasksSchema  `yaml:"tasks_schema,omitempty"`
-	Sections          *rawSections     `yaml:"sections,omitempty"`
-	AcceptingCommands []string         `yaml:"accepting_commands,omitempty"`
+	Title             string            `yaml:"title"`
+	Type              string            `yaml:"type"`
+	Domain            string            `yaml:"domain"`
+	Category          string            `yaml:"category"`
+	Bucket            string            `yaml:"bucket"`
+	Location          string            `yaml:"location"`
+	Lifecycle         *rawLifecycle     `yaml:"lifecycle,omitempty"`
+	Kind              *rawKind          `yaml:"kind,omitempty"`
+	Owner             *rawOwner         `yaml:"owner,omitempty"`
+	TasksSchema       *rawTasksSchema   `yaml:"tasks_schema,omitempty"`
+	Sections          *rawSections      `yaml:"sections,omitempty"`
+	AcceptingCommands []string          `yaml:"accepting_commands,omitempty"`
+	ExtensionPoints   []string          `yaml:"extension_points,omitempty"`
 	DefaultAgents     map[string]string `yaml:"default_agents,omitempty"`
-	Relations         []rawRelation    `yaml:"relations,omitempty"`
-	Frontmatter       *rawFrontSchema  `yaml:"frontmatter,omitempty"`
+	Relations         []rawRelation     `yaml:"relations,omitempty"`
+	Frontmatter       *rawFrontSchema   `yaml:"frontmatter,omitempty"`
 }
 
 type rawLifecycle struct {
-	States      []string         `yaml:"states"`
-	Initial     string           `yaml:"initial"`
-	Terminal    []string         `yaml:"terminal"`
-	Transitions []rawTransition  `yaml:"transitions"`
+	States      []string        `yaml:"states"`
+	Initial     string          `yaml:"initial"`
+	Terminal    []string        `yaml:"terminal"`
+	Transitions []rawTransition `yaml:"transitions"`
 }
 
 type rawTransition struct {
@@ -175,10 +279,10 @@ type rawOwner struct {
 }
 
 type rawTasksSchema struct {
-	Required       bool                       `yaml:"required"`
-	SectionHeading string                     `yaml:"section_heading"`
-	History        string                     `yaml:"history"`
-	ItemShape      map[string]rawItemField    `yaml:"item_shape"`
+	Required       bool                    `yaml:"required"`
+	SectionHeading string                  `yaml:"section_heading"`
+	History        string                  `yaml:"history"`
+	ItemShape      map[string]rawItemField `yaml:"item_shape"`
 }
 
 type rawItemField struct {
@@ -350,6 +454,17 @@ func parseRecord(data []byte, filename, scope string) (*Record, error) {
 	}
 
 	rec.AcceptingCommands = append([]string(nil), raw.AcceptingCommands...)
+	rec.ExtensionPoints = append([]string(nil), raw.ExtensionPoints...)
+	seenExtensionPoint := map[string]bool{}
+	for _, point := range rec.ExtensionPoints {
+		if point == "" {
+			return nil, fmt.Errorf("extension_points contains an empty value")
+		}
+		if seenExtensionPoint[point] {
+			return nil, fmt.Errorf("extension_points contains duplicate %q", point)
+		}
+		seenExtensionPoint[point] = true
+	}
 	if len(raw.DefaultAgents) > 0 {
 		rec.DefaultAgents = map[string]string{}
 		for k, v := range raw.DefaultAgents {

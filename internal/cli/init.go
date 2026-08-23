@@ -8,7 +8,9 @@ import (
 
 	hero "github.com/hero-engine/hero"
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/domains"
 	hookspkg "github.com/hero-engine/hero/internal/hooks"
+	"github.com/hero-engine/hero/internal/install"
 	"github.com/hero-engine/hero/internal/peering"
 	"github.com/hero-engine/hero/internal/scan"
 	"github.com/hero-engine/hero/internal/version"
@@ -33,6 +35,8 @@ custom config) but will refresh AGENTS.md unless --no-agents is set.`,
 var (
 	initFolder       string
 	initDomain       string
+	initWith         []string
+	initTargets      []string
 	initNoAgents     bool
 	initInstallHooks bool
 	initNoHooks      bool
@@ -41,6 +45,8 @@ var (
 func init() {
 	initCmd.Flags().StringVar(&initFolder, "folder", config.DefaultFolder, "folder name for the hero workspace")
 	initCmd.Flags().StringVar(&initDomain, "domain", "", "domain pack to use (default: engineering); see `hero domain list`")
+	initCmd.Flags().StringSliceVar(&initWith, "with", nil, "bounded extension pack to enable; repeat or comma-separate values (pm,qa)")
+	initCmd.Flags().StringSliceVar(&initTargets, "target", nil, "install target during initialization; repeat or comma-separate values ("+strings.Join(installTargets, "|")+")")
 	initCmd.Flags().BoolVar(&initNoAgents, "no-agents", false, "skip AGENTS.md generation")
 	initCmd.Flags().BoolVar(&initInstallHooks, "install-hooks", true, "install the pre-commit hook so projected NEXT files travel with commits")
 	initCmd.Flags().BoolVar(&initNoHooks, "no-hooks", false, "skip installing the pre-commit hook")
@@ -64,11 +70,36 @@ func runInit(cmd *cobra.Command, args []string) error {
 	}
 	cfg.Next.Projected = true
 
-	if initDomain != "" {
-		if _, err := hero.DomainFS(initDomain); err != nil {
+	primary := initDomain
+	if primary == "" {
+		primary = "engineering"
+	}
+	extensions := make([]domains.DomainID, 0, len(initWith))
+	for _, extension := range initWith {
+		extensions = append(extensions, domains.DomainID(extension))
+	}
+	if initDomain != "" || len(initWith) > 0 {
+		if err := cfg.SetDomainComposition(domains.DomainID(primary), extensions); err != nil {
 			return err
 		}
-		cfg.Domain = initDomain
+	}
+	resolved, err := cfg.ResolveDomains()
+	if err != nil {
+		return err
+	}
+	composition := hero.DomainComposition{Primary: string(resolved.Primary)}
+	for _, extension := range resolved.Extensions {
+		composition.Extensions = append(composition.Extensions, string(extension))
+	}
+	contentFS, _, err := hero.ComposeContent(composition)
+	if err != nil {
+		return err
+	}
+	initTargets = dedupeStrings(initTargets)
+	for _, target := range initTargets {
+		if !isInstallTarget(target) {
+			return fmt.Errorf("unknown install target %q (available: %s)", target, strings.Join(installTargets, ", "))
+		}
 	}
 
 	heroDir := cfg.HeroDir(projectRoot)
@@ -158,6 +189,22 @@ func runInit(cmd *cobra.Command, args []string) error {
 	fmt.Printf("  hero.json             — configuration\n")
 	fmt.Printf("  hero.local.json       — local overrides, gitignored (tokens, personal prefs)\n")
 
+	if len(initTargets) > 0 {
+		for _, targetName := range initTargets {
+			result, installErr := install.Run(install.Options{
+				ContentFS: contentFS, Target: install.Target(targetName), Mode: install.ModeProject,
+				TargetDir: projectRoot, Force: true, Version: binaryVersion, Domain: string(resolved.Primary),
+			})
+			if installErr != nil {
+				return fmt.Errorf("installing %s during init: %w", targetName, installErr)
+			}
+			fmt.Printf("  installed %s (%d files)\n", targetName, len(result.Copied))
+		}
+	} else {
+		fmt.Println()
+		fmt.Println("  To materialize Hero for Codex: hero install project . --target codex")
+	}
+
 	// Install pre-commit hook so projected NEXT files travel with
 	// commits. Belongs at init (setup-time) rather than scan
 	// (analysis-time). Best-effort: a failure doesn't block init.
@@ -201,6 +248,28 @@ func runInit(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func isInstallTarget(want string) bool {
+	for _, value := range installTargets {
+		if value == want {
+			return true
+		}
+	}
+	return false
+}
+
+func dedupeStrings(values []string) []string {
+	seen := map[string]bool{}
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		if seen[value] {
+			continue
+		}
+		seen[value] = true
+		out = append(out, value)
+	}
+	return out
 }
 
 // generateAgentsMD runs a lightweight project scan and creates an AGENTS.md

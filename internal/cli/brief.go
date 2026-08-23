@@ -555,13 +555,14 @@ func runWhyEdges(store *graph.Store, repoKey, target string) error {
 var (
 	blockedAllDomains bool
 	blockedDomain     string
+	blockedFocus      string
 )
 
 var blockedCmd = &cobra.Command{
 	Use:   "blocked",
 	Short: "Show every open Feature that's waiting on something incomplete",
-	Long: `Filters by the active domain by default — a PM workspace
-sees PM blockers, an engineering workspace sees engineering ones.
+	Long: `Filters by the enabled domain stack by default — a composed engineering
+workspace sees engineering plus its enabled PM or QA blockers.
 Pass --all-domains to surface cross-domain blockers (e.g. an
 engineering Feature waiting on a PM PRD) tagged with their domain.`,
 	RunE: runBlocked,
@@ -570,6 +571,7 @@ engineering Feature waiting on a PM PRD) tagged with their domain.`,
 func init() {
 	blockedCmd.Flags().BoolVar(&blockedAllDomains, "all-domains", false, "include blockers from any domain; cross-domain entries are tagged inline")
 	blockedCmd.Flags().StringVar(&blockedDomain, "domain", "", "override the active domain filter (\"*\" = all)")
+	blockedCmd.Flags().StringVar(&blockedFocus, "focused-domain", "", "rank an enabled domain first without changing workspace configuration")
 }
 
 func runBlocked(cmd *cobra.Command, args []string) error {
@@ -588,7 +590,7 @@ func runBlocked(cmd *cobra.Command, args []string) error {
 	if cfg != nil {
 		cfgVal = *cfg
 	}
-	scope := graph.ResolveDomain(cfgVal, override)
+	scope := graph.ResolveDomainFocused(cfgVal, override, blockedFocus)
 
 	// Reconcile the spec subgraph from frontmatter (the durable source of
 	// truth) before querying, so `hero blocked` reflects current relations
@@ -599,7 +601,7 @@ func runBlocked(cmd *cobra.Command, args []string) error {
 	// just query whatever the graph already holds.
 	reconcileSpecGraph(store, findProjectRoot(), repoKey, cfg)
 
-	// f.domain = scope is the active filter on the Feature row; we
+	// f.domain = scope is the enabled-stack filter on the Feature row; we
 	// always JOIN both endpoints so cross-domain rows can be rendered
 	// with a [domain: …] tag in --all-domains mode.
 	q := `SELECT f.key,
@@ -615,8 +617,8 @@ func runBlocked(cmd *cobra.Command, args []string) error {
 	         AND COALESCE(json_extract(b.props, '$.status'), '') NOT IN ('completed','accepted')`
 	args2 := []any{repoKey}
 	if frag, fragArgs := scope.Where("f"); frag != "" {
-		// Default scope: feature AND blocker both in the active
-		// domain. Cross-domain blockers only surface with --all-domains.
+		// Default scope: feature AND blocker both belong to the enabled
+		// stack. Unenabled cross-domain blockers surface with --all-domains.
 		q += ` AND ` + frag
 		args2 = append(args2, fragArgs...)
 		bfrag, bfragArgs := scope.Where("b")
@@ -655,7 +657,14 @@ func runBlocked(cmd *cobra.Command, args []string) error {
 	for k := range byFeature {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
+	sort.Slice(keys, func(i, j int) bool {
+		left, right := byFeature[keys[i]][0], byFeature[keys[j]][0]
+		leftRank, rightRank := scope.Rank(left.fdomain), scope.Rank(right.fdomain)
+		if leftRank != rightRank {
+			return leftRank < rightRank
+		}
+		return keys[i] < keys[j]
+	})
 	for _, k := range keys {
 		cs := byFeature[k]
 		fmt.Printf("- **%s** (`%s`)\n", cs[0].ftitle, k)

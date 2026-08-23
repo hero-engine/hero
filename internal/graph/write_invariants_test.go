@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/domains"
 )
 
 // TestUpsertNodeRequiresDomainForNonGlobalType verifies AC #2:
@@ -161,6 +162,22 @@ func TestDomainForActiveFallback(t *testing.T) {
 				t.Errorf("DomainFor(%+v, %v) = %q, want %q", tc.cfg, tc.hint, got, tc.want)
 			}
 		})
+	}
+}
+
+func TestDomainForHandlerPreservesRoutedOwner(t *testing.T) {
+	cfg := config.Config{Domains: &domains.Composition{
+		Primary:    domains.DomainEngineering,
+		Extensions: []domains.DomainID{domains.DomainPM, domains.DomainQA},
+	}}
+	for _, owner := range []string{"engineering", "pm", "qa", "core"} {
+		got, err := DomainForHandler(cfg, owner)
+		if err != nil || got != owner {
+			t.Fatalf("DomainForHandler(%q) = %q, %v", owner, got, err)
+		}
+	}
+	if _, err := DomainForHandler(cfg, "sales"); err == nil {
+		t.Fatal("disabled handler owner was accepted")
 	}
 }
 

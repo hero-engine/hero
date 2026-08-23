@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/hero-engine/hero/internal/domains"
 )
 
 func TestDefaultConfig(t *testing.T) {
@@ -38,6 +40,45 @@ func TestDefaultConfig(t *testing.T) {
 	}
 	if cfg.Tracker.Type != "none" {
 		t.Errorf("Tracker.Type = %q, want %q", cfg.Tracker.Type, "none")
+	}
+}
+
+func TestConfigResolveDomainsAndCanonicalMutation(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Domain = "pm"
+
+	resolved, err := cfg.ResolveDomains()
+	if err != nil {
+		t.Fatalf("ResolveDomains() error = %v", err)
+	}
+	if resolved.Primary != domains.DomainPM || len(resolved.Extensions) != 0 {
+		t.Fatalf("ResolveDomains() = %#v", resolved)
+	}
+
+	extensions := []domains.DomainID{domains.DomainPM, domains.DomainQA}
+	if err := cfg.SetDomainComposition(domains.DomainEngineering, extensions); err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Domain != "" {
+		t.Fatalf("legacy Domain = %q, want empty", cfg.Domain)
+	}
+	if cfg.Domains == nil || cfg.Domains.Primary != domains.DomainEngineering {
+		t.Fatalf("Domains = %#v", cfg.Domains)
+	}
+	extensions[0] = domains.DomainQA
+	if cfg.Domains.Extensions[0] != domains.DomainPM {
+		t.Fatal("SetDomainComposition retained caller-owned extension slice")
+	}
+}
+
+func TestSetDomainCompositionRejectsInvalidWithoutMutation(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Domain = "pm"
+	if err := cfg.SetDomainComposition(domains.DomainPM, []domains.DomainID{domains.DomainEngineering}); err == nil {
+		t.Fatal("expected unsupported extension error")
+	}
+	if cfg.Domain != "pm" || cfg.Domains != nil {
+		t.Fatalf("invalid mutation changed config: Domain=%q Domains=%#v", cfg.Domain, cfg.Domains)
 	}
 }
 

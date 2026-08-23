@@ -20,6 +20,67 @@ package domains
 // DomainID is a stable identifier for a domain ("chat", "code", "pm", …).
 type DomainID string
 
+const (
+	DomainCore        DomainID = "core"
+	DomainEngineering DomainID = "engineering"
+	DomainSales       DomainID = "sales"
+	DomainPM          DomainID = "pm"
+	DomainQA          DomainID = "qa"
+)
+
+// ActivationRole describes how a bundled pack participates in a workspace.
+// A workspace has exactly one primary pack and zero or more ordered extension
+// packs. Core is implicit and therefore is not a configurable role.
+type ActivationRole string
+
+const (
+	RolePrimary   ActivationRole = "primary"
+	RoleExtension ActivationRole = "extension"
+)
+
+// Composition is the committed hero.json shape under the "domains" key.
+// Extensions preserve declaration order; resolution removes duplicates while
+// retaining the first occurrence.
+type Composition struct {
+	Primary    DomainID   `json:"primary"`
+	Extensions []DomainID `json:"extensions,omitempty"`
+}
+
+// ResolvedComposition is the canonical, validated workspace domain stack.
+// Core is implicit and always precedes Primary and Extensions.
+type ResolvedComposition struct {
+	Primary    DomainID
+	Extensions []DomainID
+}
+
+// Stack returns the complete resolution order: Core, primary, then extensions.
+func (c ResolvedComposition) Stack() []DomainID {
+	stack := make([]DomainID, 0, 2+len(c.Extensions))
+	stack = append(stack, DomainCore, c.Primary)
+	stack = append(stack, c.Extensions...)
+	return stack
+}
+
+// Contains reports whether id participates in the resolved workspace stack.
+func (c ResolvedComposition) Contains(id DomainID) bool {
+	if id == DomainCore || id == c.Primary {
+		return true
+	}
+	for _, extension := range c.Extensions {
+		if extension == id {
+			return true
+		}
+	}
+	return false
+}
+
+// Pack describes the activation roles supported by an embedded domain pack.
+type Pack struct {
+	ID      DomainID
+	Roles   []ActivationRole
+	Bundled bool
+}
+
 // ContributorID is a stable, namespaced identifier for any contributor —
 // sidebar entry, right-panel zone, bottom-panel tab, ambient producer,
 // status widget, or slash command. Must be namespaced under the
@@ -282,7 +343,7 @@ type DomainState struct {
 
 // WindowState is the per-window persistence root.
 type WindowState struct {
-	WorkspaceID   WorkspaceID                `json:"workspace_id"`
-	ActiveDomain  DomainID                   `json:"active_domain"`
-	DomainStates  map[DomainID]DomainState   `json:"domain_states,omitempty"`
+	WorkspaceID  WorkspaceID              `json:"workspace_id"`
+	ActiveDomain DomainID                 `json:"active_domain"`
+	DomainStates map[DomainID]DomainState `json:"domain_states,omitempty"`
 }

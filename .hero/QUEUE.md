@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-22T23:00:27Z · 80 ready specs_
+_Generated: 2026-08-23T00:26:22Z · 79 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -598,24 +598,6 @@ Second non-engineering Hero domain pack: QA. The thesis: **Hero QA is the qualit
 
 **Files:** .hero/planning/features/hero-qa/spec.md, .hero/planning/initiatives/hero-domains/spec.md, .hero/planning/features/hero-pm/spec.md, .hero/planning/features/hero-pm/agent-pack-design.md
 **Skip:** Native-only-no-integration v1 (we ship Xray and TestRail). A standalone `defect` type by default (opt-in only). Treating QA as a thin variation of engineering. Letting QA reject stories without distinguishing AC-gap from scope-expansion.
-
----
-
-## dual-mode-pm-qa-capability-packs — Dual-Mode PM and QA Capability Packs
-_feature · planning · horizon: next_
-
-Add one-primary-plus-extensions composition so engineering can enable full PM
-and QA capabilities without switching away from engineering or loading every
-domain roster at once.
-
-**Status:** planning — activation, routing, ownership, collision, and one-command setup contracts are designed; delivery is sequenced after the full PM and QA packs exist.
-
-**Pick up at:** implement the workspace configuration migration and a resolver that returns Core, one primary pack, and ordered bounded extensions.
-
-→ `/deliver dual-mode-pm-qa-capability-packs`
-
-**Files:** `internal/domains/types.go`, `content.go`, `internal/cli/install.go`, `internal/install/manifest.go`, `internal/graph/scope.go`
-**Skip:** separate PM/QA lite packages, arbitrary all-domain roster unions, and last-file-wins collision handling.
 
 ---
 

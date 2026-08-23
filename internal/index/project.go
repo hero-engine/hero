@@ -24,7 +24,7 @@ func (idx *DB) ProjectGraphNodesContext(ctx context.Context, graphDB *sql.DB) (i
 	}
 
 	rows, err := graphDB.QueryContext(ctx, `
-		SELECT type, key, repo, props, valid_from, COALESCE(
+		SELECT type, key, repo, domain, props, valid_from, COALESCE(
 			(SELECT GROUP_CONCAT(e.type || ':' || n2.key, ',')
 			 FROM edges e JOIN nodes n2 ON n2.id = e.to_id
 			 WHERE e.from_id = nodes.id AND e.valid_to IS NULL),
@@ -56,8 +56,8 @@ func (idx *DB) ProjectGraphNodesContext(ctx context.Context, graphDB *sql.DB) (i
 	}
 	defer insertFTS.Close()
 
-	insertMeta, err := tx.PrepareContext(ctx, `INSERT INTO node_index(rowid, node_type, key, repo, tags, valid_from)
-		VALUES (?, ?, ?, ?, ?, ?)`)
+	insertMeta, err := tx.PrepareContext(ctx, `INSERT INTO node_index(rowid, node_type, key, repo, domain, tags, valid_from)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return 0, fmt.Errorf("prepare meta insert: %w", err)
 	}
@@ -67,8 +67,8 @@ func (idx *DB) ProjectGraphNodesContext(ctx context.Context, graphDB *sql.DB) (i
 	var rowID int64 = 1
 
 	for rows.Next() {
-		var nodeType, key, repo, propsJSON, validFrom, tags string
-		if err := rows.Scan(&nodeType, &key, &repo, &propsJSON, &validFrom, &tags); err != nil {
+		var nodeType, key, repo, domain, propsJSON, validFrom, tags string
+		if err := rows.Scan(&nodeType, &key, &repo, &domain, &propsJSON, &validFrom, &tags); err != nil {
 			return count, fmt.Errorf("scanning node: %w", err)
 		}
 
@@ -96,7 +96,7 @@ func (idx *DB) ProjectGraphNodesContext(ctx context.Context, graphDB *sql.DB) (i
 		if _, err := insertFTS.ExecContext(ctx, rowID, title, body); err != nil {
 			return count, fmt.Errorf("insert fts node %s/%s: %w", nodeType, key, err)
 		}
-		if _, err := insertMeta.ExecContext(ctx, rowID, nodeType, key, repo, tags, validFrom); err != nil {
+		if _, err := insertMeta.ExecContext(ctx, rowID, nodeType, key, repo, domain, tags, validFrom); err != nil {
 			return count, fmt.Errorf("insert node_index %s/%s (repo %q): %w", nodeType, key, repo, err)
 		}
 

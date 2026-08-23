@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -224,8 +225,8 @@ func contains(haystack []string, needle string) bool {
 	return false
 }
 
-// TestJSONSchema_SchemaVersion verifies the JSON export carries the
-// 1.1 schema version and contains all loaded types.
+// TestJSONSchema_SchemaVersion verifies the JSON export carries the current
+// schema version and contains all loaded types.
 func TestJSONSchema_SchemaVersion(t *testing.T) {
 	reg, err := Load("engineering")
 	if err != nil {
@@ -442,6 +443,133 @@ func TestLoad_QAIncludesOwnedTypesWithoutShadowingCore(t *testing.T) {
 		if rec.Domain != "core" {
 			t.Errorf("shared type %s domain = %q, want core", name, rec.Domain)
 		}
+	}
+}
+
+func TestLoadCompositionEngineeringPMQAIncludesTypesAndAmendments(t *testing.T) {
+	reg, err := LoadComposition("engineering", []string{"pm", "qa"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"feature", "decision", "roadmap-item", "test-plan", "test-case", "regression-suite", "release-gate", "defect"} {
+		if _, ok := reg.Lookup(name); !ok {
+			t.Errorf("composed registry missing %q", name)
+		}
+	}
+	amendments := reg.Amendments()
+	if len(amendments) != 1 || amendments[0].ID != "qa.spec-type.feature.lifecycle" || amendments[0].TargetType != "feature" {
+		t.Fatalf("amendments = %#v", amendments)
+	}
+	for _, value := range []string{"qa-ready", "qa-rejected"} {
+		if !slices.Contains(amendments[0].Values, value) {
+			t.Errorf("amendment missing %q", value)
+		}
+	}
+	feature, ok := reg.Lookup("feature")
+	if !ok {
+		t.Fatal("composed registry missing feature")
+	}
+	if !slices.Contains(feature.ExtensionPoints, "lifecycle") {
+		t.Fatalf("feature extension points = %v, want lifecycle", feature.ExtensionPoints)
+	}
+	status := findFrontmatterField(feature, "status")
+	if status == nil {
+		t.Fatal("feature status field missing")
+	}
+	for _, value := range []string{"qa-ready", "qa-rejected"} {
+		if !slices.Contains(feature.Lifecycle.States, value) {
+			t.Errorf("resolved feature lifecycle missing %q", value)
+		}
+		if !slices.Contains(status.Values, value) {
+			t.Errorf("resolved feature status enum missing %q", value)
+		}
+	}
+
+	raw, err := reg.JSONSchema()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var exported struct {
+		Types []struct {
+			Name            string   `json:"name"`
+			ExtensionPoints []string `json:"extension_points"`
+			Lifecycle       *struct {
+				States []string `json:"states"`
+			} `json:"lifecycle"`
+		} `json:"types"`
+		Amendments []Amendment `json:"amendments"`
+	}
+	if err := json.Unmarshal(raw, &exported); err != nil {
+		t.Fatal(err)
+	}
+	if len(exported.Amendments) != 1 || exported.Amendments[0].ID != amendments[0].ID {
+		t.Fatalf("exported amendments = %#v", exported.Amendments)
+	}
+	var exportedFeature *struct {
+		Name            string   `json:"name"`
+		ExtensionPoints []string `json:"extension_points"`
+		Lifecycle       *struct {
+			States []string `json:"states"`
+		} `json:"lifecycle"`
+	}
+	for i := range exported.Types {
+		if exported.Types[i].Name == "feature" {
+			exportedFeature = &exported.Types[i]
+			break
+		}
+	}
+	if exportedFeature == nil || !slices.Contains(exportedFeature.ExtensionPoints, "lifecycle") {
+		t.Fatalf("exported feature extension points = %#v", exportedFeature)
+	}
+	for _, value := range []string{"qa-ready", "qa-rejected"} {
+		if exportedFeature.Lifecycle == nil || !slices.Contains(exportedFeature.Lifecycle.States, value) {
+			t.Errorf("exported feature lifecycle missing %q", value)
+		}
+	}
+}
+
+func TestApplyAmendmentRejectsUndeclaredTargetOrExtensionPointWithoutMutation(t *testing.T) {
+	tests := []struct {
+		name      string
+		amendment Amendment
+		wantError string
+	}{
+		{
+			name: "missing target",
+			amendment: Amendment{ID: "qa.missing.lifecycle", Owner: "qa", TargetType: "missing",
+				ExtensionPoint: "lifecycle", Values: []string{"qa-ready"}},
+			wantError: `target "missing" is not registered`,
+		},
+		{
+			name: "owner did not declare point",
+			amendment: Amendment{ID: "qa.feature.owner", Owner: "qa", TargetType: "feature",
+				ExtensionPoint: "owner", Values: []string{"qa"}},
+			wantError: `does not declare extension point "owner"`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			loaded, err := Load("engineering")
+			if err != nil {
+				t.Fatal(err)
+			}
+			reg := loaded.(*registry)
+			feature := reg.records["feature"]
+			beforeStates := append([]string(nil), feature.Lifecycle.States...)
+			beforeStatus := append([]string(nil), findFrontmatterField(feature, "status").Values...)
+			if err := applyAmendment(reg, tt.amendment); err == nil || !strings.Contains(err.Error(), tt.wantError) {
+				t.Fatalf("error = %v, want %q", err, tt.wantError)
+			}
+			if !slices.Equal(feature.Lifecycle.States, beforeStates) {
+				t.Fatalf("lifecycle mutated on rejection: %v", feature.Lifecycle.States)
+			}
+			if !slices.Equal(findFrontmatterField(feature, "status").Values, beforeStatus) {
+				t.Fatalf("status enum mutated on rejection: %v", findFrontmatterField(feature, "status").Values)
+			}
+			if len(reg.amendments) != 0 {
+				t.Fatalf("rejected amendment was recorded: %#v", reg.amendments)
+			}
+		})
 	}
 }
 

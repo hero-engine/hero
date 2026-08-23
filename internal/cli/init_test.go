@@ -158,8 +158,8 @@ func TestInitDomainFlag(t *testing.T) {
 	if err != nil {
 		t.Fatalf("hero.json not created: %v", err)
 	}
-	if !strings.Contains(string(data), `"domain": "engineering"`) {
-		t.Errorf("hero.json missing domain field: %s", data)
+	if !strings.Contains(string(data), `"domains"`) || !strings.Contains(string(data), `"primary": "engineering"`) {
+		t.Errorf("hero.json missing canonical domains.primary field: %s", data)
 	}
 }
 

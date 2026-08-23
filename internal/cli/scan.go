@@ -54,10 +54,7 @@ var (
 // to stamp DSKG domain tags through the wire-through path described in
 // scan-pluggability spec §5.
 func activeDomain(cfg config.Config) string {
-	if cfg.Domain == "" {
-		return "engineering"
-	}
-	return cfg.Domain
+	return cfg.PrimaryDomain()
 }
 
 var scanCmd = &cobra.Command{

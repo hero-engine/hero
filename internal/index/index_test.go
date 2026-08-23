@@ -3,6 +3,7 @@ package index
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -235,6 +236,36 @@ func TestSearchByFile(t *testing.T) {
 	}
 	if len(results) != 0 {
 		t.Errorf("SearchByFile returned %d results, want 0", len(results))
+	}
+}
+
+func TestSearchByFileDomainsFiltersBeforeLimit(t *testing.T) {
+	idx, _ := setupTestDB(t)
+	qa := makeSpec("qa-file-hit", "QA file hit", spec.TypeFeature, spec.StatusPlanning)
+	qa.Domain = "qa"
+	qa.FilesTouched = []string{"shared/checkout.go"}
+	qa.ModifiedAt = time.Now().Add(-time.Hour)
+	if err := idx.IndexSpec(qa, "# QA file hit"); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 25; i++ {
+		sales := makeSpec(fmt.Sprintf("sales-file-%02d", i), "Sales file", spec.TypeFeature, spec.StatusPlanning)
+		sales.Domain = "sales"
+		sales.FilesTouched = []string{"shared/checkout.go"}
+		sales.ModifiedAt = time.Now().Add(time.Duration(i) * time.Second)
+		if err := idx.IndexSpec(sales, "# Sales file"); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	results, err := idx.SearchByFileDomains("shared/checkout.go", DomainFilter{
+		Allowed: []string{"qa"}, Order: []string{"qa"}, Fallback: "engineering",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != 1 || results[0].Slug != "qa-file-hit" {
+		t.Fatalf("scoped file results = %#v, want qa-file-hit", results)
 	}
 }
 

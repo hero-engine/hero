@@ -9,9 +9,9 @@ import (
 	"time"
 )
 
-// SchemaVersion is the JSON-export schema version. Bumped to 1.1 to
-// carry kind, tasks_schema, and owner blocks alongside the v1 shape.
-const SchemaVersion = "1.1"
+// SchemaVersion is the JSON-export schema version. Version 1.2 adds canonical
+// extension-point declarations and resolved spec-type amendments.
+const SchemaVersion = "1.2"
 
 // jsonExport is the wire-shape consumed by hero-code (Rust dashboard).
 // Top-level shape is governed by §Cross-language contract of the
@@ -21,24 +21,26 @@ type jsonExport struct {
 	ActiveDomain  string             `json:"active_domain"`
 	GeneratedAt   string             `json:"generated_at"`
 	Types         []jsonExportRecord `json:"types"`
+	Amendments    []Amendment        `json:"amendments,omitempty"`
 }
 
 type jsonExportRecord struct {
-	Name              string                  `json:"name"`
-	Title             string                  `json:"title"`
-	Domain            string                  `json:"domain"`
-	Category          string                  `json:"category"`
-	Location          string                  `json:"location"`
-	Bucket            string                  `json:"bucket"`
-	Lifecycle         *jsonLifecycle          `json:"lifecycle,omitempty"`
-	Kind              *jsonKind               `json:"kind,omitempty"`
-	Owner             *jsonOwner              `json:"owner,omitempty"`
-	Frontmatter       *jsonFrontmatter        `json:"frontmatter,omitempty"`
-	Sections          *jsonSections           `json:"sections,omitempty"`
-	TasksSchema       *jsonTasksSchema        `json:"tasks_schema,omitempty"`
-	AcceptingCommands []string                `json:"accepting_commands,omitempty"`
-	DefaultAgents     map[string]string       `json:"default_agents,omitempty"`
-	Relations         []jsonRelation          `json:"relations,omitempty"`
+	Name              string            `json:"name"`
+	Title             string            `json:"title"`
+	Domain            string            `json:"domain"`
+	Category          string            `json:"category"`
+	Location          string            `json:"location"`
+	Bucket            string            `json:"bucket"`
+	Lifecycle         *jsonLifecycle    `json:"lifecycle,omitempty"`
+	Kind              *jsonKind         `json:"kind,omitempty"`
+	Owner             *jsonOwner        `json:"owner,omitempty"`
+	Frontmatter       *jsonFrontmatter  `json:"frontmatter,omitempty"`
+	Sections          *jsonSections     `json:"sections,omitempty"`
+	TasksSchema       *jsonTasksSchema  `json:"tasks_schema,omitempty"`
+	AcceptingCommands []string          `json:"accepting_commands,omitempty"`
+	ExtensionPoints   []string          `json:"extension_points,omitempty"`
+	DefaultAgents     map[string]string `json:"default_agents,omitempty"`
+	Relations         []jsonRelation    `json:"relations,omitempty"`
 }
 
 type jsonLifecycle struct {
@@ -118,6 +120,7 @@ func buildExport(r *registry) jsonExport {
 	doc := jsonExport{
 		SchemaVersion: SchemaVersion,
 		ActiveDomain:  r.activeDomain,
+		Amendments:    r.Amendments(),
 		GeneratedAt:   time.Now().UTC().Format(time.RFC3339),
 	}
 	for _, name := range r.order {
@@ -135,6 +138,7 @@ func exportRecord(rec *Record) jsonExportRecord {
 		Location:          rec.Location,
 		Bucket:            rec.Bucket,
 		AcceptingCommands: append([]string(nil), rec.AcceptingCommands...),
+		ExtensionPoints:   append([]string(nil), rec.ExtensionPoints...),
 	}
 	if len(rec.Lifecycle.States) > 0 || len(rec.Lifecycle.Transitions) > 0 {
 		lc := &jsonLifecycle{

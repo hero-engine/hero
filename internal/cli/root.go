@@ -192,7 +192,15 @@ func exportSpecTypesCache(projectRoot string) {
 	if err != nil {
 		return
 	}
-	reg, err := spectypes.Load(cfg.Domain)
+	resolved, err := cfg.ResolveDomains()
+	if err != nil {
+		return
+	}
+	extensions := make([]string, 0, len(resolved.Extensions))
+	for _, extension := range resolved.Extensions {
+		extensions = append(extensions, string(extension))
+	}
+	reg, err := spectypes.LoadComposition(string(resolved.Primary), extensions)
 	if err != nil {
 		return
 	}
