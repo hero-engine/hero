@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://hero.dev/contracts/attention/mailthread/v1/error-matrix.schema.json","type":"array","items":{"$ref":"action-response.schema.json"}}

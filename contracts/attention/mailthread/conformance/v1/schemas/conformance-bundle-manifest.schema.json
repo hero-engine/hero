@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/mailthread/v1/conformance-bundle-manifest.schema.json",
+  "type": "object",
+  "required": ["bundle_version", "schema_version", "compatibility", "artifacts"],
+  "properties": {
+    "bundle_version": {"const": 1},
+    "schema_version": {"const": 1},
+    "compatibility": {"type": "string", "minLength": 1},
+    "artifacts": {"type": "array"}
+  }
+}

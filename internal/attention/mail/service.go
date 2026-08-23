@@ -259,7 +259,13 @@ func (s *Service) deliver(req SendRequest, sender, recipient attention.ProjectRe
 	}
 	d := attention.MailDelivery{SchemaVersion: attention.SchemaVersion, MessageID: id, ThreadID: threadID, Sender: sender, Recipient: recipient, IdempotencyKey: key, DeliveredAt: now}
 	result, _, err := s.store.Deliver(env, d)
-	if err == nil || errors.Is(err, ErrIdempotencyConflict) {
+	if err == nil {
+		if _, _, threadErr := s.store.Thread(recipient.PeerID, result.ThreadID); threadErr != nil {
+			return result, fmt.Errorf("%w: initialize mail thread: %v", ErrUnavailable, threadErr)
+		}
+		return result, nil
+	}
+	if errors.Is(err, ErrIdempotencyConflict) {
 		return result, err
 	}
 	var contractErr *attention.ContractError
@@ -295,6 +301,9 @@ func (s *Service) Inbox(project string, unread bool) ([]ListedMessage, error) {
 	}
 	out := make([]ListedMessage, 0, len(items))
 	for _, env := range items {
+		if _, _, threadErr := s.store.Thread(recipient, threadIdentity(env)); threadErr != nil {
+			return nil, threadErr
+		}
 		var rp *attention.MailReceipt
 		if r, e := s.store.Receipt(recipient, env.ID); e == nil {
 			rp = &r
@@ -351,6 +360,9 @@ func (s *Service) UnreadSummary(limit int) (UnreadSummary, error) {
 func (s *Service) Show(id string, markRead bool) (ListedMessage, error) {
 	env, err := s.store.Get(s.cfg.PeerID, id)
 	if err != nil {
+		return ListedMessage{}, err
+	}
+	if _, _, err := s.store.Thread(s.cfg.PeerID, threadIdentity(env)); err != nil {
 		return ListedMessage{}, err
 	}
 	var rp *attention.MailReceipt

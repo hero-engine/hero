@@ -1,6 +1,7 @@
 ---
 user: chet-bellows
 updated: 2026-08-24T14:07:11Z
+updated: 2026-08-23T01:01:22Z
 repo: hero-engine/hero
 ---
 
@@ -15,6 +16,9 @@ _possibly stale — 36 commit(s) since, last set 9d 22h ago_
 ## Last user ask
 
 > Before rewriting Hero history, double-check the entire repository for anything else that should not become public, then finish the approved v0.34 launch.
+## Last user ask
+
+_(none recorded — `hero next ask "..."` to set)_
 
 ## Suggested next prompt
 
@@ -26,11 +30,7 @@ _Source: auto-derived from open feature — `hero next suggest "..."` to overrid
 
 ## Recent reflections
 
-- Repo-scoped graph identity must propagate into every derived index; node_index kept the old two-column uniqueness after graph v5 and made valid sibling keys fatal.
-- Grok Build 1.0.4 inspect --json normalizes AGENTS.md as Agents.md; qualify native loading by source type and .grok path suffix, not display casing.
-- Release rehearsal exposed Unix-only file locks after native tests passed. Added a shared build-tagged lock primitive, Windows cross-build CI, direct failure-path coverage, and completed a clean cold audit plus six-target snapshot verification.
-- Tracker activity now has one provider-owned consumer contract: tracker_updated_at; import time, refresh time, and spec mtime are never substitutes.
-- Tracker-backed diagnosis postback was never a hidden hook; it was an explicit agent closing step. Hero Code's 2026-07-15 hardening blocked all generic sync and exposed only import, making attach/comment unreachable while hero_diagnose also omitted the publish contract.
+_(none yet)_
 
 ## Tried and failed (this session)
 

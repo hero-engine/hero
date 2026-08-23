@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/mailthread/v1/thread-view.schema.json",
+  "type": "object",
+  "required": ["state", "read", "actions"],
+  "properties": {
+    "state": {
+      "type": "object",
+      "required": ["schema_version", "identity", "lifecycle", "revision"],
+      "properties": {
+        "schema_version": {"const": 1},
+        "identity": {"type": "object", "required": ["project_peer_id", "thread_id"]},
+        "lifecycle": {"enum": ["open", "resolved", "archived"]},
+        "revision": {"type": "integer", "minimum": 0},
+        "resolution": {"type": "object"},
+        "grace_class": {"enum": ["informational", "linked_work"]},
+        "resolved_at": {"type": "string"},
+        "archive_eligible_at": {"type": "string"},
+        "archived_at": {"type": "string"},
+        "actions": {"type": "array"}
+      }
+    },
+    "read": {"type": "object", "required": ["message_count", "unread_count"]},
+    "actions": {"type": "array"}
+  }
+}

@@ -1,0 +1,1 @@
+{"schema_version":1,"identity":{"project_peer_id":"peer_alpha","thread_id":"mail_open"},"action_id":"resolve","thread_revision":11,"idempotency_key":"resolve-1","input":{"reason":"completed","source":"user","outcome":"done","grace_class":"informational"}}

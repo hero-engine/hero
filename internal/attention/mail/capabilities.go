@@ -46,10 +46,21 @@ func SourceActionID(canonicalID string) (string, bool) {
 	switch canonicalID {
 	case "mark_read":
 		return ActionRead, true
+	case "mark_unread":
+		return ActionUnread, true
 	case ActionAcknowledge, ActionDismiss, ActionPromote, ActionAddToToday:
 		return canonicalID, true
 	default:
 		return "", false
+	}
+}
+
+// LifecycleReceiptCapabilities is the additive receipt surface published by
+// the Mail thread contract. Mail-read v1 remains unchanged for pinned clients.
+func LifecycleReceiptCapabilities(revision int64) []attention.ActionDescriptor {
+	return []attention.ActionDescriptor{
+		capability(attention.OperationMailMarkRead, "mark_read", "Mark Read", revision, capabilityNoInput),
+		{ID: "mark_unread", Label: "Mark Unread", OperationID: "mail.mark_unread", Effect: string(attention.EffectStateWrite), Consent: string(attention.ConsentExplicitUser), RequiredRowRevision: revision, RequiresIdempotency: true, InputSchema: capabilityNoInput},
 	}
 }
 

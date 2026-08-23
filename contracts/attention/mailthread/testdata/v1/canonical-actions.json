@@ -1,0 +1,12 @@
+{
+  "receipt": [
+    {"id":"mark_read","label":"Mark Read","operation_id":"mail.mark_read","effect":"state_write","consent":"explicit_user","input_schema":{"type":"object"},"required_row_revision":4,"requires_idempotency":true},
+    {"id":"mark_unread","label":"Mark Unread","operation_id":"mail.mark_unread","effect":"state_write","consent":"explicit_user","input_schema":{"type":"object"},"required_row_revision":4,"requires_idempotency":true}
+  ],
+  "lifecycle": [
+    {"id":"resolve","label":"Resolve","operation_id":"mail.resolve","effect":"state_write","consent":"explicit_user","input_schema":{"type":"object"},"required_row_revision":11,"requires_idempotency":true},
+    {"id":"reopen","label":"Reopen","operation_id":"mail.reopen","effect":"state_write","consent":"explicit_user","input_schema":{"type":"object"},"required_row_revision":11,"requires_idempotency":true},
+    {"id":"archive","label":"Archive","operation_id":"mail.archive","effect":"state_write","consent":"explicit_user","input_schema":{"type":"object"},"required_row_revision":11,"requires_idempotency":true},
+    {"id":"restore","label":"Restore","operation_id":"mail.restore","effect":"state_write","consent":"explicit_user","input_schema":{"type":"object"},"required_row_revision":11,"requires_idempotency":true}
+  ]
+}

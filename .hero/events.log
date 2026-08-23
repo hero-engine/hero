@@ -577,3 +577,4 @@
 {"ts":"2026-08-24T00:45:25.799947Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-apache-license-grant-gate","message":"status -\u003e completed"}
 {"ts":"2026-08-24T01:49:29.189699Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"remove-invented-preview-marketing-copy","message":"\"Remove Invented Preview and Internal Launch Copy from Public Marketing\""}
 {"ts":"2026-08-24T01:49:29.18981Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"remove-invented-preview-marketing-copy","message":"status -\u003e completed"}
+{"ts":"2026-08-23T00:45:42.353185Z","type":"mail.promote","agent":"hero-mail","slug":"mail-b7ca19966ac5041e6ff604dd","message":"promote mail_b7ca19966ac5041e6ff604dd (thread mail_b7ca19966ac5041e6ff604dd)"}

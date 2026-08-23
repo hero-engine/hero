@@ -14,6 +14,7 @@ import (
 
 const (
 	ActionRead        = "read"
+	ActionUnread      = "unread"
 	ActionAcknowledge = "acknowledge"
 	ActionDismiss     = "dismiss"
 	ActionPromote     = "promote"
@@ -55,7 +56,7 @@ func (s *Service) Action(req ActionRequest) (ActionResult, error) {
 	if req.Action == ActionAddToToday {
 		return s.addToToday(req)
 	}
-	if req.Action != ActionRead && req.Action != ActionAcknowledge && req.Action != ActionDismiss {
+	if req.Action != ActionRead && req.Action != ActionUnread && req.Action != ActionAcknowledge && req.Action != ActionDismiss {
 		return ActionResult{}, fmt.Errorf("%w: %q", ErrUnsupportedAction, req.Action)
 	}
 	if req.IdempotencyKey == "" {
@@ -99,6 +100,11 @@ func (s *Service) Action(req ActionRequest) (ActionResult, error) {
 			}
 			if r.Kind == "" {
 				r.Kind = attention.ReceiptRead
+			}
+		case ActionUnread:
+			r.ReadAt = ""
+			if r.Kind == attention.ReceiptRead {
+				r.Kind = ""
 			}
 		case ActionAcknowledge:
 			if r.AcknowledgedAt == "" {

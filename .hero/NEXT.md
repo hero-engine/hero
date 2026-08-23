@@ -6,6 +6,7 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 
 ---
 updated: 2026-08-24T14:07:11Z
+updated: 2026-08-23T01:01:22Z
 repo: hero-engine/hero
 ---
 
@@ -25,11 +26,28 @@ Run `git log --oneline -10` for recent commits.
 - **e2e-area-suites** ← waiting on `project-charter` (planning)
 - **hero-community-edition** ← waiting on `hero-governance` (planning)
 - **hero-content-engine** ← waiting on `hero-docs-site` (planning)
+- **hero-content-engine** ← waiting on `hero-positioning` (planning)
+- **hero-continuity-proof-demo** ← waiting on `hero-positioning` (planning)
+- **hero-continuity-proof-demo** ← waiting on `hero-public-truth-baseline` (planning)
+- **hero-demo-content** ← waiting on `hero-positioning` (planning)
+- **hero-docs-site** ← waiting on `hero-positioning` (planning)
+- **hero-hosted-docs-remediation** ← waiting on `hero-positioning` (planning)
+- **hero-hosted-docs-remediation** ← waiting on `hero-public-truth-baseline` (planning)
+- **hero-landing-message-refresh** ← waiting on `hero-continuity-proof-demo` (planning)
+- **hero-landing-message-refresh** ← waiting on `hero-hosted-docs-remediation` (planning)
+- **hero-landing-message-refresh** ← waiting on `hero-root-docs-remediation` (planning)
 - **hero-landing-page** ← waiting on `hero-demo-content` (planning)
 - **hero-landing-page** ← waiting on `hero-distribution` (planning)
 - **hero-launch-playbook** ← waiting on `hero-demo-content` (planning)
 - **hero-launch-playbook** ← waiting on `hero-distribution` (planning)
 - **hero-launch-playbook** ← waiting on `hero-landing-page` (delivering)
+- **hero-launch-playbook** ← waiting on `hero-positioning` (planning)
+- **hero-positioning** ← waiting on `hero-public-truth-baseline` (planning)
+- **hero-public-docs-drift-guard** ← waiting on `hero-hosted-docs-remediation` (planning)
+- **hero-public-docs-drift-guard** ← waiting on `hero-landing-message-refresh` (planning)
+- **hero-public-docs-drift-guard** ← waiting on `hero-root-docs-remediation` (planning)
+- **hero-root-docs-remediation** ← waiting on `hero-positioning` (planning)
+- **hero-root-docs-remediation** ← waiting on `hero-public-truth-baseline` (planning)
 - **hero-team-server** ← waiting on `hero-runner` (planning)
 - **timely-briefs** ← waiting on `retrieval-contradiction-detection` (delivering)
 - **wire-checks-to-boundaries** ← waiting on `spec-contract-enums-unified` (planning)

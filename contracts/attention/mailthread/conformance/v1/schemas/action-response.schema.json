@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/mailthread/v1/action-response.schema.json",
+  "type": "object",
+  "required": ["schema_version"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "thread": {"$ref": "thread-view.schema.json"},
+    "error": {"type": "object", "required": ["code", "message"]}
+  }
+}

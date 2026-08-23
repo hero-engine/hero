@@ -1,0 +1,8 @@
+{
+  "schema_version":1,
+  "thread": {
+    "state":{"schema_version":1,"identity":{"project_peer_id":"peer_alpha","thread_id":"mail_open"},"lifecycle":"resolved","revision":21,"resolution":{"reason":"completed","source":"user","outcome":"done"},"grace_class":"informational","resolved_at":"2026-08-22T12:00:00Z","actions":[{"action_id":"resolve","idempotency_key":"resolve-1","request_hash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","applied_at":"2026-08-22T12:00:00Z"}]},
+    "read":{"message_count":2,"unread_count":1},
+    "actions":[{"id":"reopen","label":"Reopen","operation_id":"mail.reopen","effect":"state_write","consent":"explicit_user","input_schema":{"type":"object"},"required_row_revision":21,"requires_idempotency":true},{"id":"archive","label":"Archive","operation_id":"mail.archive","effect":"state_write","consent":"explicit_user","input_schema":{"type":"object"},"required_row_revision":21,"requires_idempotency":true}]
+  }
+}

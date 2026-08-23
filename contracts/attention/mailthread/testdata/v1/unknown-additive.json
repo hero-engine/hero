@@ -1,0 +1,6 @@
+{
+  "state": {"schema_version":1,"identity":{"project_peer_id":"peer_alpha","thread_id":"mail_future"},"lifecycle":"resolved","revision":41,"resolution":{"reason":"future_typed_reason","source":"future_source","outcome":"future_outcome","future_field":"preserved-by-raw-consumers"},"grace_class":"informational","resolved_at":"2026-08-22T12:00:00Z","future_state":"inert"},
+  "read": {"message_count":1,"unread_count":0,"future_read":true},
+  "actions": [{"id":"reopen","label":"Reopen","operation_id":"mail.reopen","effect":"state_write","consent":"explicit_user","input_schema":{"type":"object"},"required_row_revision":41,"requires_idempotency":true}],
+  "future_top_level": {"ignored":true}
+}

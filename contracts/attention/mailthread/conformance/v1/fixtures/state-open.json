@@ -1,0 +1,8 @@
+{
+  "state": {"schema_version":1,"identity":{"project_peer_id":"peer_alpha","thread_id":"mail_open"},"lifecycle":"open","revision":11},
+  "read": {"message_count":2,"unread_count":1},
+  "actions": [
+    {"id":"resolve","label":"Resolve","operation_id":"mail.resolve","effect":"state_write","consent":"explicit_user","input_schema":{"type":"object"},"required_row_revision":11,"requires_idempotency":true},
+    {"id":"archive","label":"Archive","operation_id":"mail.archive","effect":"state_write","consent":"explicit_user","input_schema":{"type":"object"},"required_row_revision":11,"requires_idempotency":true}
+  ]
+}

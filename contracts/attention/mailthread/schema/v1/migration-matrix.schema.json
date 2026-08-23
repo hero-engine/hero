@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://hero.dev/contracts/attention/mailthread/v1/migration-matrix.schema.json","type":"array","items":{"$ref":"migration-result.schema.json"}}

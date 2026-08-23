@@ -1,0 +1,7 @@
+{
+  "state": {"schema_version":1,"identity":{"project_peer_id":"peer_alpha","thread_id":"mail_archived"},"lifecycle":"archived","revision":13,"resolution":{"reason":"migrated_dismissed","source":"mailread_v1","outcome":"dismissed"},"grace_class":"informational","resolved_at":"2026-08-01T12:00:00Z","archived_at":"2026-08-01T12:00:00Z"},
+  "read": {"message_count":3,"unread_count":0},
+  "actions": [
+    {"id":"restore","label":"Restore","operation_id":"mail.restore","effect":"state_write","consent":"explicit_user","input_schema":{"type":"object"},"required_row_revision":13,"requires_idempotency":true}
+  ]
+}

@@ -1,0 +1,6 @@
+[
+  {"schema_version":1,"error":{"code":"validation","message":"malformed input","field":"input"}},
+  {"schema_version":1,"error":{"code":"stale","message":"stale thread revision","field":"thread_revision"}},
+  {"schema_version":1,"error":{"code":"idempotency_conflict","message":"idempotency key was reused with different input","field":"idempotency_key"}},
+  {"schema_version":1,"error":{"code":"unsupported","message":"unknown action","field":"action_id"}}
+]

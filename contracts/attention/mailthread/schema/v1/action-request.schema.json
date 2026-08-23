@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/mailthread/v1/action-request.schema.json",
+  "type": "object",
+  "required": ["schema_version", "identity", "action_id", "thread_revision", "idempotency_key"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "identity": {"type": "object", "required": ["project_peer_id", "thread_id"]},
+    "action_id": {"enum": ["resolve", "reopen", "archive", "restore"]},
+    "thread_revision": {"type": "integer", "minimum": 0},
+    "idempotency_key": {"type": "string", "minLength": 1},
+    "input": {"type": "object"}
+  }
+}

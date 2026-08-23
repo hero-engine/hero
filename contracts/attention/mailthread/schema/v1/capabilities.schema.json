@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hero.dev/contracts/attention/mailthread/v1/capabilities.schema.json",
+  "type": "object",
+  "required": ["receipt", "lifecycle"],
+  "properties": {
+    "receipt": {"type": "array", "minItems": 2},
+    "lifecycle": {"type": "array", "minItems": 4}
+  }
+}

@@ -1,0 +1,135 @@
+{
+  "bundle_version": 1,
+  "schema_version": 1,
+  "compatibility": "Mail-read v1 remains authoritative for message receipts; unknown additive fields and identifiers remain inert and decodable, and unknown actions are never executable.",
+  "artifacts": [
+    {
+      "path": "fixtures/action-request.json",
+      "kind": "fixture",
+      "purpose": "Mail thread lifecycle v1 fixture: action-request.json",
+      "media_type": "application/json",
+      "sha256": "6461b054fe241c9fb53e757b74a6eeaf94550c2b0fc474445f9a22d3e6a52151",
+      "schema": "schemas/action-request.schema.json"
+    },
+    {
+      "path": "fixtures/action-success.json",
+      "kind": "fixture",
+      "purpose": "Mail thread lifecycle v1 fixture: action-success.json",
+      "media_type": "application/json",
+      "sha256": "fba59dcc84880499752bfe703a8edf34f3d24acfb2071ccccab50602aec3b225",
+      "schema": "schemas/action-response.schema.json"
+    },
+    {
+      "path": "fixtures/canonical-actions.json",
+      "kind": "fixture",
+      "purpose": "Mail thread lifecycle v1 fixture: canonical-actions.json",
+      "media_type": "application/json",
+      "sha256": "9a0682a18d19179a8b6944517f02c0564ac4c8f269109047101ab73c84754726",
+      "schema": "schemas/capabilities.schema.json"
+    },
+    {
+      "path": "fixtures/errors.json",
+      "kind": "fixture",
+      "purpose": "Mail thread lifecycle v1 fixture: errors.json",
+      "media_type": "application/json",
+      "sha256": "fdbaaf6692eb883710e812c3533fdeceec087bd4e9d57dd5b060cb4527cc2dcd",
+      "schema": "schemas/error-matrix.schema.json"
+    },
+    {
+      "path": "fixtures/migration.json",
+      "kind": "fixture",
+      "purpose": "Mail thread lifecycle v1 fixture: migration.json",
+      "media_type": "application/json",
+      "sha256": "26907bde7fd8ca849f4d89ef3058d9f1a6ef1edffc7d76f69a6b8f08c09273d2",
+      "schema": "schemas/migration-matrix.schema.json"
+    },
+    {
+      "path": "fixtures/state-archived.json",
+      "kind": "fixture",
+      "purpose": "Mail thread lifecycle v1 fixture: state-archived.json",
+      "media_type": "application/json",
+      "sha256": "c4f66a04a0c95340a5852b77082ea9f4834e0a5091989bdb3bab42a3cfda134a",
+      "schema": "schemas/thread-view.schema.json"
+    },
+    {
+      "path": "fixtures/state-open.json",
+      "kind": "fixture",
+      "purpose": "Mail thread lifecycle v1 fixture: state-open.json",
+      "media_type": "application/json",
+      "sha256": "98355edaf760d947c9e4fee25cd51eea4a03b0d46a9374893a4955efaee6325d",
+      "schema": "schemas/thread-view.schema.json"
+    },
+    {
+      "path": "fixtures/state-resolved.json",
+      "kind": "fixture",
+      "purpose": "Mail thread lifecycle v1 fixture: state-resolved.json",
+      "media_type": "application/json",
+      "sha256": "8ae58e27e1fb77bdff90c8a0aff8244ec81f8d18409c863ef73a4fe2ca54db11",
+      "schema": "schemas/thread-view.schema.json"
+    },
+    {
+      "path": "fixtures/unknown-additive.json",
+      "kind": "fixture",
+      "purpose": "Mail thread lifecycle v1 fixture: unknown-additive.json",
+      "media_type": "application/json",
+      "sha256": "9d994f2b02f3121e8fdc771f7cb9790478e536f53c298be70fa59c3fa19cef11",
+      "schema": "schemas/thread-view.schema.json"
+    },
+    {
+      "path": "schemas/action-request.schema.json",
+      "kind": "schema",
+      "purpose": "Mail thread lifecycle v1 schema: action-request.schema.json",
+      "media_type": "application/json",
+      "sha256": "a0efa5940dcbbccc9e25a9a99b4a7e8b87bd16bef32f810765b12da0e6097646"
+    },
+    {
+      "path": "schemas/action-response.schema.json",
+      "kind": "schema",
+      "purpose": "Mail thread lifecycle v1 schema: action-response.schema.json",
+      "media_type": "application/json",
+      "sha256": "6a36cd9f0c1d96146e4fdd003104454e160d0c2489cd88e4c28266571ed5d464"
+    },
+    {
+      "path": "schemas/capabilities.schema.json",
+      "kind": "schema",
+      "purpose": "Mail thread lifecycle v1 schema: capabilities.schema.json",
+      "media_type": "application/json",
+      "sha256": "f9e2d6378eab14365d39a1deb6a1c91d3315e4edc5af250e3c28af141112ef1b"
+    },
+    {
+      "path": "schemas/conformance-bundle-manifest.schema.json",
+      "kind": "schema",
+      "purpose": "Mail thread lifecycle v1 schema: conformance-bundle-manifest.schema.json",
+      "media_type": "application/json",
+      "sha256": "ac388cedd7e931f544e6f72e0c962a049dc335ac100fac905c971a9b18a358ac"
+    },
+    {
+      "path": "schemas/error-matrix.schema.json",
+      "kind": "schema",
+      "purpose": "Mail thread lifecycle v1 schema: error-matrix.schema.json",
+      "media_type": "application/json",
+      "sha256": "8ed9fd06e8afb9cce00339eed480f2075683b0ef356ee27173b46ce375f2c93c"
+    },
+    {
+      "path": "schemas/migration-matrix.schema.json",
+      "kind": "schema",
+      "purpose": "Mail thread lifecycle v1 schema: migration-matrix.schema.json",
+      "media_type": "application/json",
+      "sha256": "48c62659b5f7529295c0d30a4ee3c931ab49d37f747268a0a2fc2d7a4d7039ce"
+    },
+    {
+      "path": "schemas/migration-result.schema.json",
+      "kind": "schema",
+      "purpose": "Mail thread lifecycle v1 schema: migration-result.schema.json",
+      "media_type": "application/json",
+      "sha256": "cc36b2b46d5508b8106b1bf60d17c83e889e8c9d587f38feb8ffb4533d224166"
+    },
+    {
+      "path": "schemas/thread-view.schema.json",
+      "kind": "schema",
+      "purpose": "Mail thread lifecycle v1 schema: thread-view.schema.json",
+      "media_type": "application/json",
+      "sha256": "e07b003bb4a9188472b9fdcc05c4c7707263c86370bbfdbf65f33f415991f562"
+    }
+  ]
+}
