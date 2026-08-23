@@ -12,13 +12,17 @@ hero install project . --target claude
 hero install project . --target codex
 hero install project . --target copilot
 hero install project . --target generic
+hero install project . --target grok
 ```
 
 For sub-folder workspaces:
 
 ```bash
-hero install project . --target cursor --workspace services/auth
+hero install satellites
 ```
+
+Run the satellite command from the repository root. It creates thin
+harness-native trees that point to the one root `.hero` corpus.
 
 The installer preserves user-owned files where possible and writes only
 Hero-managed MCP blocks/config.
@@ -74,7 +78,8 @@ If the harness runs from a sub-folder, include the project root:
 
 ## Available Tools
 
-Hero currently exposes 41 MCP tools. The most common are:
+The authoritative tool inventory is the runtime `tools/list` response after
+configured filtering. Common tools include:
 
 | Tool | Purpose |
 |---|---|
@@ -91,8 +96,8 @@ Hero currently exposes 41 MCP tools. The most common are:
 | `hero_why` / `hero_blocked` | Graph traversal queries. |
 | `hero_expand` | Rehydrate compact tool responses. |
 
-The full list is documented in [Server and MCP](../cli/server-and-mcp.md)
-and in `internal/serve/mcp_tools_def.go`.
+Capability groups are documented in [Server and MCP](../cli/server-and-mcp.md).
+Use `tools/list` when an exact revision-tied inventory is required.
 
 ## Tool Filtering
 

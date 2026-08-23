@@ -4,7 +4,9 @@ Hero installs slash command definitions into the user's harness. The
 commands route natural-language work into repeatable workflows and
 delegate to the appropriate agents and skills.
 
-Current installed command definitions: **30**.
+The exact workflow inventory is derived from the installed domain and harness;
+run `hero doctor` for the current target rather than relying on a narrative
+count.
 
 ```text
 /design auth flow for OAuth2 providers
@@ -97,8 +99,9 @@ plain natural-language asks are routed to these same workflows.
 - `/prime` remains in older installed content as a session-start helper,
   but `/resume` is the current graph-backed warm-start workflow.
 - CLI spec operations live under `hero spec ...`; for example
-  `hero spec new`, `hero spec claim`, `hero spec verify`, and
-  `hero spec complete`.
+  `hero spec new`, `hero spec claim`, and `hero spec verify`. The verify command
+  checks the delivery gates, completes the spec, and archives it; `hero spec
+  complete` is not the normal delivery close.
 - Tracker operations live under `hero sync ...`; for example
   `hero sync connect`, `hero sync import`, `hero sync pull`, and
   `hero sync comment`.

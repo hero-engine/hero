@@ -16,13 +16,14 @@ install scripts and Windows (Scoop / PowerShell) options.
 
 | Group | Purpose | Commands |
 |---|---|---|
-| [Spec Management](spec-management.md) | Create, verify, complete, and visualize specs | `spec new`, `diagnose`, `spec complete`, `diff`, `drift`, `spec claim`, `size`, `supersede`, `graph`, `spec contract`, `spec plan` |
+| [Spec Management](spec-management.md) | Create, deliver, verify, and visualize specs | `spec new`, `diagnose`, `spec verify`, `diff`, `drift`, `spec claim`, `size`, `supersede`, `graph`, `spec contract`, `spec plan` |
 | [Search & Context](search-and-context.md) | Query the corpus and generate context for agents | `index`, `search`, `search --hybrid`, `ask`, `relevant`, `resume`, `status`, `dashboard`, `check`, `impact`, `recap`, `suggest`, `snapshot`, `synthesize`, `embeddings` |
 | [Import](import.md) | Ingest external content (URL, file, directory) into the knowledge base | `import` |
 | [Tracker Integration](tracker-integration.md) | Sync specs with GitHub Issues, Jira, Linear, and GitLab | `sync connect`, `sync import`, `sync spec`, `sync link`, `sync pull`, `sync push`, `sync jira`, `sprint load` |
 | [Cross-Repo Peering](peering.md) | Talk to sibling Hero workspaces — advisory, spec-out, async handoff | `peer list`, `peer show`, `peer call`, `handoff`, `handoff status`, `handoff accept`, `context imports` |
 | [Testing & Demos](testing-and-demos.md) | Generate acceptance tests and record demos from specs | `test generate`, `test run`, `test list`, `spec demo`, `coverage`, `smoke` |
 | [Server & MCP](server-and-mcp.md) | Run the MCP server, HTTP daemon, and manage installations | `mcp`, `serve`, `install`, `upgrade`, `uninstall`, `agent run`, `agent jobs` |
+| [Code-Host Operations](code-host.md) | Run credential-safe provider-neutral code-host requests | `code-host contract`, `code-host broker` |
 
 ## Not Sure Which Command?
 
@@ -74,36 +75,27 @@ hero doctor
 
 Running binary
   os.Executable(): /Users/you/go/bin/hero
-  version:         v0.25.0
-  binary schema:   4
-
-PATH resolution
-  `hero` on PATH:  /Users/you/go/bin/hero
+  version:         <derived from the running binary>
+  binary schema:   <derived>
 
 Workspace graph
   workspace:       /Users/you/projects/app/.hero
-  graph schema:    4
+  graph schema:    <derived>
 
 Installed harness targets
-  TARGET   AGENTS   COMMANDS   SKILLS   ROOT FILE
-  claude    35/35      29/29    55/55   CLAUDE.md
-  codex     35/35          —    84/84   AGENTS.md
-  not installed: copilot, cursor, generic, opencode
+  <expected-versus-installed inventory at this revision>
 
-  codex has no command loader — its 29 commands install as skills under
-  .agents/skills/command-<name>/ (55 canonical + 29 commands = 84).
-
-Verdict: OK — binary and graph agree on schema 4.
+Verdict: OK — binary and graph agree on schema <derived>.
 ```
 
 - **Running binary / PATH resolution / Workspace graph** answer *which binary
   is running and does its schema agree with the graph.*
 - **Installed harness targets** answers *did my install land?* Each row shows
-  expected-vs-actual counts of agents, commands, and skills for one installed
+  expected-versus-actual inventory of agents, commands, and skills for one installed
   target. Absent targets collapse to a single `not installed:` line.
   Codex's commands cell shows `—`, not a number: Codex has no command loader,
-  so Hero installs its commands as skills (which is why codex skills roll the
-  two together). A `—` there is expected, not a broken install.
+  so Hero installs its commands as skills. A `—` there is expected, not a
+  broken install.
 - If an installed target is **short on content**, its row is marked `!` and an
   in-section `WARNING:` recommends `hero upgrade` to re-materialize the missing
   files. The `Verdict:` line only ever answers the schema question, so an

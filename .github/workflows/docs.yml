@@ -1,34 +1,48 @@
 name: Deploy Docs
 
 on:
-  # Automatic deployment is disabled by default.
-  # To enable: set DEPLOY_DOCS=true in repository variables
-  # (Settings > Secrets and variables > Actions > Variables)
+  pull_request:
+    paths:
+      - "web/docs/**"
+      - "requirements-docs.txt"
+      - ".github/workflows/docs.yml"
   push:
     branches: [main]
     paths:
       - "web/docs/**"
+      - "requirements-docs.txt"
+      - ".github/workflows/docs.yml"
   workflow_dispatch:
     inputs:
       deploy:
-        description: "Deploy to GitHub Pages"
+        description: "Deploy the validated artifact to Cloudflare Pages"
         type: boolean
-        default: true
+        default: false
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
       - run: pip install -r requirements-docs.txt
+
+      - name: Test documentation tooling
+        working-directory: web/docs
+        run: python -m unittest discover -s scripts -p 'test_*.py'
 
       - name: Generate release notes page
         working-directory: web/docs
@@ -36,13 +50,47 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Generate release and source revision markers
+        working-directory: web/docs
+        run: python scripts/docs_build.py metadata
+        env:
+          HERO_DOCS_REVISION: ${{ github.sha }}
+
       - name: Build docs
         working-directory: web/docs
         run: mkdocs build --strict
 
-      - name: Deploy to GitHub Pages
+      - name: Remove unused reciprocal search bundles
+        working-directory: web/docs
+        run: python scripts/docs_build.py sanitize
+
+      - name: Check generated JavaScript syntax
+        working-directory: web/docs
+        run: python scripts/docs_build.py check-js
+
+      - name: Check internal links and anchors
+        working-directory: web/docs
+        run: python scripts/docs_build.py check
+
+      - name: Check external links before deployment
         if: >
           (github.event_name == 'workflow_dispatch' && inputs.deploy) ||
           (github.event_name == 'push' && vars.DEPLOY_DOCS == 'true')
         working-directory: web/docs
-        run: mkdocs gh-deploy --force
+        run: python scripts/docs_build.py check --external
+
+      - name: Upload validated artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hero-docs-${{ github.sha }}
+          path: web/docs/site
+
+      - name: Deploy to Cloudflare Pages
+        if: >
+          (github.event_name == 'workflow_dispatch' && inputs.deploy) ||
+          (github.event_name == 'push' && vars.DEPLOY_DOCS == 'true')
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy web/docs/site --project-name hero-docs --branch main --commit-hash ${{ github.sha }}

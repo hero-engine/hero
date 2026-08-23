@@ -1,105 +1,78 @@
-# Knowledge Base
+# Project memory
 
-Hero's knowledge base is a local, queryable store of project knowledge that agents use to make better decisions. It lives in `.hero/knowledge/` and grows organically as you work.
+Hero's project memory preserves the context later AI sessions need: intent,
+decisions, corrections, conventions, evidence, failures, and current state.
+The durable corpus belongs to the project, not to one model conversation.
 
-## Structure
+## What is durable
 
-```
-.hero/knowledge/
-├── conventions/    # How we write code (style, patterns, practices)
-├── decisions/      # ADRs — why we chose X over Y
-├── rules/          # Hard constraints (security, compliance, performance)
-├── context/        # Project background (architecture, domain model)
-├── notes/          # Brainstorms, ideas, rough thoughts
-├── explainers/     # Synthesized "how a feature works now" docs
-└── templates/      # Reusable spec and document templates
-```
-
-## Knowledge Types
-
-| Type | Purpose | Example |
-|---|---|---|
-| **Conventions** | Coding standards and patterns | "All API handlers return `Result<T>` types" |
-| **Decisions** | Architectural decision records | "Chose Postgres over DynamoDB for transactional consistency" |
-| **Rules** | Non-negotiable constraints | "No secrets in environment variables; use Vault" |
-| **Context** | Background information | "The billing service was extracted from the monolith in Q3" |
-| **Notes** | Informal captures | "Brainstorm: possible migration to gRPC" |
-| **Explainers** | Synthesized "how a feature works, as it exists now" docs | "How cluster detection assembles an explainer" |
-| **Templates** | Scaffolds for specs and docs | Feature spec template, ADR template |
-
-## Auto-Capture
-
-When `knowledge.auto_capture` is enabled in `hero.json`, agents silently persist learnings at the end of major workflows:
-
-```json
-{
-  "knowledge": {
-    "auto_capture": true
-  }
-}
+```text
+.hero/
+├── planning/          # active specs and initiatives
+├── specs/             # completed work and delivery evidence
+├── knowledge/
+│   ├── conventions/   # recurring implementation patterns
+│   ├── decisions/     # choices and rejected alternatives
+│   ├── rules/         # hard constraints and tripwires
+│   ├── context/       # architecture and domain background
+│   ├── notes/         # corrections, observations, and brainstorms
+│   └── explainers/    # synthesized current behavior
+├── NEXT.md            # projected session handoff
+├── QUEUE.md           # ready-work projection
+└── SNAPSHOT.md        # project-shape projection
 ```
 
-!!! info "What gets captured"
-    After a `/deliver` or `/diagnose` cycle, the agent evaluates whether it encountered novel patterns, gotchas, or architectural insights. If so, it writes them to the appropriate knowledge directory — no prompt required.
+The markdown corpus and committed projections are inspectable and reviewable.
+`graph.db` and `index.db` are derived local state. User-global Focus prompts,
+credentials, sessions, and local overlays are not committed project memory.
 
-## Querying
+## Capture
 
-Use `hero ask` or `hero search` to query the knowledge base:
+| Need | Workflow |
+|---|---|
+| Preserve a correction or observation | `/note` or `hero note <slug>` |
+| Record why a choice won | `/decide` |
+| Codify an established pattern | `/convention` |
+| Save the current pickup point | `/handoff` or `hero next checkpoint` |
+| Preserve delivery evidence | `/deliver` followed by `hero spec verify <slug>` |
+
+Auto-capture can propose or persist novel learning at major workflow boundaries
+when `knowledge.auto_capture` is enabled. It does not justify inventing facts;
+captured knowledge should cite the code, decision, or evidence that supports it.
+
+## Structure and retrieval
+
+Hero builds graph, full-text, and semantic indexes over the corpus. Use:
 
 ```bash
-hero ask "how do we handle authentication"
-hero search --hybrid "retry logic for failed requests"
+hero search "authentication retry"
+hero ask "why do we use an outbox?"
+hero relevant --files internal/auth/session.go
+hero why auth-retry
 ```
 
-Search uses **BM25/TF-IDF** ranking by default. With `--hybrid`, Hero
-fuses lexical results with semantic vector similarity — so a query about
-"login failure backoff" finds a spec titled "Authentication Retry Logic"
-even without keyword overlap. The embedding model ships inside the `hero`
-binary; no download, no external service, no LLM call.
+Retrieval should be bounded to the work. `hero relevant` is useful before
+delivery because it returns governing conventions, decisions, past work, and
+known risks without pasting the whole knowledge base into the prompt.
 
-## Context Injection
+## Corrections and decisions
 
-During `/deliver`, Hero automatically injects relevant knowledge into the agent's context:
+When project truth changes, preserve the replacement and its reason. Use a new
+decision, an explicit correction note, or `hero supersede <old> --by <new>` for
+spec genealogy. This keeps old context searchable without letting retrieval
+treat it as current authority.
 
-```mermaid
-flowchart LR
-    S[Spec] --> I[Context\nInjection]
-    C[Conventions] --> I
-    D[Decisions] --> I
-    R[Rules] --> I
-    I --> A[Delivery\nAgent]
-```
+## Cross-session and cross-tool use
 
-The delivery agent receives the spec plus any conventions, decisions, and rules that are relevant to the work at hand. This means agents follow your standards without being told each time.
+Supported harnesses receive native installed instructions that load Hero
+context. The CLI remains available when a harness does not expose the same
+interactive surface. Committed corpus and handoff projections can cross machine
+or tool boundaries; private and machine-local state does not.
 
-## Tripwire guardrails
+The memory system itself is **shipped** and requires a Hero workspace plus a
+supported harness or CLI. The repeatable end-to-end cross-tool loop remains
+**preview** pending its public proof.
 
-Conventions aren't only about how to write code — they can also encode what
-**not** to do. Hero supports **tripwire entries**: knowledge that marks a path
-as forbidden because it was already tried and ruled out.
-
-When Hero injects context into an agent session, tripwires surface as explicit
-constraints:
-
-> "We evaluated approach X and ruled it out because Y — do not revisit."
-
-This prevents agents from confidently proposing solutions that the team already
-rejected, and it prevents the same investigation from happening twice. Use
-`/decide` to record the ruled-out option alongside the chosen one, or write
-a `rules/` entry directly with a `forbidden:` marker.
-
-```bash
-# Record a decision with the rejected alternative captured
-/decide "chose outbox pattern over direct webhook delivery — direct delivery failed under load in Feb"
-```
-
-### Spec scoring and sizing
-
-The knowledge base also reflects spec health. `hero check`
-surface specs whose declared `size:` has drifted from their actual complexity,
-or that are oversized for their type. This sizing guidance flows into context
-injection — agents working on a `large` or `x-large` spec receive a nudge to
-consider splitting before starting implementation.
-
-!!! tip "Building the knowledge base"
-    You don't need to populate everything upfront. Use `/convention` to define standards as they come up, `/decide` to record choices when you make them, and `/note` to capture thoughts as you have them. The knowledge base compounds over time.
+Continue with [Continuity across sessions and tools](continuity.md), then see
+[Verified delivery](core-loop.md) for the execution path that consumes and
+enriches project memory.

@@ -1,6 +1,9 @@
 # Agents Reference
 
-Hero delegates work to **35 specialized agents**, each with a focused role and constrained set of tools. Commands orchestrate agents — you rarely invoke them directly.
+Hero delegates work to specialized agents with focused roles and tool
+boundaries. The exact inventory is derived from the installed domain
+composition and changes over time; run `hero doctor` for the current target.
+Workflows orchestrate agents, so users rarely invoke roles directly.
 
 Agents are defined as markdown files in the `agents/` directory and loaded at runtime based on the active command workflow.
 

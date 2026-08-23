@@ -29,7 +29,9 @@ This creates the `.hero/` directory structure:
 
 ## Install into Your AI Tool
 
-Hero provides its workflows as slash commands inside your AI coding tool. Install with:
+Hero renders workflows into each AI tool's native surfaces. Claude uses command
+files; Codex and Grok use command skills; other targets receive their supported
+surfaces and root instructions. Install with:
 
 === "OpenCode"
 
@@ -61,6 +63,12 @@ Hero provides its workflows as slash commands inside your AI coding tool. Instal
     hero install project . --target copilot
     ```
 
+=== "Grok"
+
+    ```bash
+    hero install project . --target grok
+    ```
+
 === "Generic MCP"
 
     ```bash
@@ -76,9 +84,10 @@ Hero provides its workflows as slash commands inside your AI coding tool. Instal
 
 ### Domain packs
 
-Hero ships content in layers: a shared `core/` pack and one or more
-domain packs. The default is `engineering`. Other domains can be
-scaffolded later.
+Hero ships content in layers: shared Core plus a primary domain. The default
+Engineering setup is shipped and includes lightweight PM and QA assistance used
+inside coding workflows. Focused PM, QA, and Sales setups are optional and
+maturity-bounded.
 
 ```bash
 hero install project . --target claude --domain engineering
@@ -87,23 +96,30 @@ hero domain               # show / switch active domain
 
 ### Monorepos
 
-For monorepos where the AI tool runs from a subfolder, register each
-subfolder as a satellite of the root install:
+Initialize Hero once at the repository root. For monorepos where the AI tool
+runs from a subfolder, materialize thin harness-native satellite trees that
+point back to the root corpus:
 
 ```bash
-hero install project . --target cursor --workspace services/auth
-hero install satellites list
-hero install satellites add services/auth
-hero install --repair     # verify symlinks/markers
+hero install satellites                    # guided candidate review
+hero install satellites --yes              # accept detected candidates
+hero install satellites --repair           # reconcile satellite trees
+hero install satellites --migrate-nested   # print legacy migration plan
 ```
+
+A monorepo has one root `.hero` corpus. Satellites are not nested Hero
+workspaces. Do not run `hero init` independently in a subproject under an
+existing Hero root.
 
 ### Reconciling existing installs
 
 Multiple AI tools, drifted copies, post-upgrade resets:
 
 ```bash
-hero install --migrate          # reconcile drifted copies across harnesses
-hero check                      # audit workspace + install state
+hero install project . --target codex --repair  # repair project install
+hero install satellites --repair                # repair satellites
+hero check                                      # workspace health
+hero doctor                                     # binary/schema/target diagnosis
 ```
 
 ## Scan Your Project

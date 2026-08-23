@@ -178,8 +178,8 @@ hero impact src/payments.go --format           # JSON output
 `hero impact` reports the blast radius of changing a file: which specs,
 conventions, and decisions are affected. Use it before a refactor to see
 what documentation and in-flight work touches the code you're about to
-move. (For teams on Hero Cloud, `--cross-repo` extends the query to
-callers in sibling repositories.)
+move. Cross-repository work uses explicit one-graph-per-project peering; a local
+impact query does not silently merge sibling graphs.
 
 ## Coverage Suggestions
 

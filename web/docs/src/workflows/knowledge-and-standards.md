@@ -29,7 +29,7 @@ The convention author:
 3. Identifies or synthesizes the canonical approach
 4. Produces a convention spec with examples, anti-patterns, and adoption notes
 
-Conventions are saved to `.hero/conventions/{slug}/spec.md` and are
+Conventions are saved to `.hero/knowledge/conventions/{slug}/spec.md` and are
 automatically loaded by delivery leads during `/deliver`.
 
 ---

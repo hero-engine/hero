@@ -1,8 +1,6 @@
 site_name: Hero
-site_description: Spec-driven AI engineering workflow
+site_description: Project memory and verified delivery for AI-assisted engineering
 site_url: https://docs.heroengine.ai
-repo_url: https://github.com/hero-engine/hero
-repo_name: hero-engine/hero
 docs_dir: src
 
 theme:
@@ -39,9 +37,6 @@ theme:
     - content.tabs.link
     - toc.follow
     - toc.integrate
-  icon:
-    repo: fontawesome/brands/github
-
 extra_css:
   - stylesheets/brand.css
 
@@ -74,35 +69,40 @@ nav:
   - Introduction:
     - What Is Hero?: what-is-hero.md
     - Why Hero: why-hero.md
+    - Capability Status & Evidence: reference/capability-status.md
   - Getting Started:
     - Installation: getting-started/installation.md
     - Project Setup: getting-started/project-setup.md
     - First Workflow: getting-started/first-workflow.md
-  - Concepts:
-    - The Core Loop: concepts/core-loop.md
-    - Specs & Lifecycle: concepts/specs.md
-    - Knowledge Base: concepts/knowledge-base.md
-    - Agents & Skills: concepts/agents-and-skills.md
+  - Project Memory:
+    - Memory Model: concepts/knowledge-base.md
+    - Session & Tool Continuity: concepts/continuity.md
+    - Search, Capture & Context: cli/search-and-context.md
+    - Knowledge Workflows: workflows/knowledge-and-standards.md
+    - Attention, Mail & Focus: cli/attention.md
+    - Project Mail: cli/mail.md
+    - Personal Focus: cli/focus.md
     - Cross-Repo Peering: concepts/cross-repo.md
-  - Workflows:
+  - Verified Delivery:
+    - Delivery System: concepts/core-loop.md
+    - Specs & Lifecycle: concepts/specs.md
+    - Agents & Skills: concepts/agents-and-skills.md
     - Discovery & Design: workflows/discovery-and-design.md
     - Delivery & Debugging: workflows/delivery-and-debugging.md
     - Review & Quality: workflows/review-and-quality.md
     - Sprint & Planning: workflows/sprint-and-planning.md
-    - Knowledge & Standards: workflows/knowledge-and-standards.md
   - CLI Reference:
     - Overview: cli/overview.md
-    - Personal Focus: cli/focus.md
-    - Project Mail: cli/mail.md
     - Spec Management: cli/spec-management.md
-    - Search & Context: cli/search-and-context.md
     - Import: cli/import.md
     - Tracker Integration: cli/tracker-integration.md
     - Cross-Repo Peering: cli/peering.md
+    - Code-Host Operations: cli/code-host.md
     - Testing & Demos: cli/testing-and-demos.md
     - Server & MCP: cli/server-and-mcp.md
   - Serve:
     - Homes: serve/homes.md
+    - MCP Tool Metadata: serve/mcp-tool-metadata.md
   - Commands Reference: commands/index.md
   - Agents Reference: agents/index.md
   - Configuration:
@@ -111,3 +111,7 @@ nav:
     - MCP Setup: configuration/mcp-setup.md
   - Project Structure: project-structure.md
   - Releases: releases/index.md
+  - About this site:
+    - Build Information: about/build.md
+    - Public Truth Reconciliation: about/truth-reconciliation.md
+    - Third-Party Attributions: about/third-party-notices.md

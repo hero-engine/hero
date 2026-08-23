@@ -1,8 +1,8 @@
 # Review & Quality
 
-Hero provides specialized review and code quality commands that are entirely
-**read-only** — they analyze and report but never modify code unless explicitly
-asked.
+Hero separates review from code-health mutation. `/review` analyzes and reports
+without implementing findings. `/scrub` is an explicit mutation workflow: it
+edits the selected concern area and verifies the result.
 
 ---
 
@@ -40,9 +40,9 @@ of review needed.
 If the review type is ambiguous, Hero asks for clarification. When a spec slug
 is provided, the agent loads the spec for additional context.
 
-!!! info "Read-only"
-    All review agents produce reports and recommendations only. They do not
-    modify files, create branches, or push commits.
+!!! info "Review workflow boundary"
+    A `/review` request produces findings. Applying those findings is a separate
+    explicit delivery or scrub request.
 
 ---
 

@@ -44,7 +44,10 @@ The delivery workflow reads the spec, follows your codified conventions, and imp
 
 - Write only the code required by the spec
 - Run tests or validation if defined in the acceptance criteria
-- Report completion against the spec's success criteria
+- Write a Completion Ledger against every acceptance criterion and Changes item
+- Send the result through a fresh cold audit
+- Run `hero spec verify <slug>` so the ledger, audit, test mapping, and build
+  gates close and archive the spec only when the hard gates pass
 
 !!! tip
     `/deliver` works from the spec, not from memory. If you want to change scope, update the spec first with `/design`, then deliver again.

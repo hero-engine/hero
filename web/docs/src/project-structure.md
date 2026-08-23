@@ -1,115 +1,84 @@
-# Project Structure
+# Project structure
 
 Hero has three important surfaces:
 
 | Surface | Purpose |
 |---|---|
-| Go source | The `hero` binary, daemon, MCP server, graph, and CLI. |
-| Domain content | Agent, command, and skill definitions installed into harnesses. |
-| `.hero/` workspace | Per-project corpus: specs, knowledge, graph state, handoff state, events. |
+| Go source | CLI, local daemon, MCP server, graph, retrieval, and integrations |
+| Core and domain content | Agent, workflow, and skill definitions rendered into supported harnesses |
+| `.hero/` workspace | Project memory: specs, knowledge, evidence, relationships, and handoff state |
 
----
-
-## Repository Layout
+## Repository layout
 
 ```text
 hero/
-├── cmd/hero/                 # CLI entrypoint
-├── internal/                 # Go implementation packages
-│   ├── cli/                  # Cobra command wiring
-│   ├── serve/                # HTTP daemon + MCP stdio server
-│   ├── graph/                # SQLite graph substrate
-│   ├── retrieval/            # hybrid retrieval (BM25 + semantic)
-│   ├── embeddings/           # pure-Go embedding engine + vector storage
-│   ├── scan/                 # master ingest and stack detection
-│   ├── traversal/            # why/blocked queries
-│   ├── spec/                 # spec parsing and lifecycle
-│   └── ...
-├── agents/                   # currently installed engineering agents
-├── commands/                 # currently installed slash commands
-├── skills/                   # currently installed skills
-├── core/                     # core domain pack content
-├── domains/engineering/      # Hero Code domain pack source
-├── domains/sales/            # scaffolded Hero Sales domain pack
-├── cloud/                    # team server / cloud backend
-├── web/                      # public web surfaces (docs, landing, ...)
-└── .hero/                    # this repo's Hero workspace
+├── cmd/hero/                 # CLI entry point
+├── internal/                 # implementation packages
+├── contracts/                # portable integration and Attention contracts
+├── core/                     # shared agents, workflows, and skills
+├── domains/engineering/      # default Engineering setup
+├── domains/pm/               # optional focused PM setup
+├── domains/qa/               # optional focused QA setup
+├── domains/sales/            # optional focused Sales setup
+├── web/                      # hosted docs and landing source
+└── .hero/                    # this repository's Hero workspace
 ```
 
-The top-level `agents/`, `commands/`, and `skills/` directories are the
-installed engineering pack. `core/` and `domains/` hold the domain-pack
-source split that newer install/upgrade paths use.
+Hero Code and Hero Cloud are separate proprietary products and are not
+directories in this repository. Sprout is a separate MIT-licensed dependency.
 
----
+Installed harness files are generated copies, not source directories or
+symlinks. Re-running `hero install` regenerates the managed content in the
+target's native layout.
 
-## Workspace Layout
+## Workspace layout
 
 ```text
 .hero/
-├── mission.md                 # project charter and first principles
-├── NEXT.md                    # shared projected handoff in solo mode
-├── QUEUE.md                   # ready-work queue snapshot
-├── SNAPSHOT.md                # project-shape rollup (managed by `hero snapshot --project`)
-├── snapshots/                 # timestamped snapshot archives
-├── peer-manifest.yaml         # cross-repo peering manifest
-├── planning/
-│   ├── features/
-│   ├── bugs/
-│   └── initiatives/
-├── specs/                     # completed specs
-├── knowledge/
-│   ├── context/
-│   ├── notes/
-│   └── rules/
-├── next/                      # per-user and local handoff projections
-├── smoke/                     # per-feature smoke metadata
-├── events.log                 # cross-session activity feed source
-├── graph.db                   # generated graph store
-├── index.db                   # generated search index (FTS5 + vec_chunks)
-└── hero.json                  # project config
+├── mission.md
+├── planning/                 # active specs and initiatives
+├── specs/                    # completed specs and delivery evidence
+├── knowledge/                # decisions, corrections, conventions, context
+├── NEXT.md                   # shared projected handoff
+├── next/                     # user and local projections
+├── QUEUE.md                  # ready-work projection
+├── SNAPSHOT.md               # project-shape projection
+├── peer-manifest.yaml        # optional peering surface
+├── hero.json                 # shared non-secret configuration
+├── hero.local.json           # private overlay; never commit
+├── graph.db                  # derived local graph
+└── index.db                  # derived local search index
 ```
 
----
+## Monorepo topology
 
-## What Goes in Git
+A monorepo has one root `.hero` corpus. `hero install satellites` creates thin
+harness-native trees in selected subproject folders so sessions opened there
+can reach the root content. It does not create nested project graphs or nested
+Hero workspaces.
 
-| Path | Git? | Notes |
-|---|---|---|
-| `.hero/mission.md` | Yes | Highest-priority project charter. |
-| `.hero/planning/` | Yes | Active specs and initiatives. |
-| `.hero/specs/` | Yes | Completed specs as project history. |
-| `.hero/knowledge/` | Yes | Conventions, notes, rules, context. |
-| `.hero/QUEUE.md` | Yes | Pre-rendered ready queue for cold-start harnesses. |
-| `.hero/events.log` | Yes | Meaningful cross-session events. |
-| `.hero/index.db` | No | Generated search index. |
-| `.hero/graph.db` | No | Generated graph store. |
-| `.hero/hero.local.json` | No | Local overlay and secrets. |
-| `.hero/next/*.local.md` | No | Per-machine handoff projection. |
+## Spec locations and closing path
 
-`hero init` manages the usual ignore entries.
-
----
-
-## Spec Locations
-
-| Type | Active location | Completed location |
+| Type | Active | Completed |
 |---|---|---|
 | Feature | `.hero/planning/features/<slug>/spec.md` | `.hero/specs/<slug>/spec.md` |
 | Bug | `.hero/planning/bugs/<slug>/spec.md` | `.hero/specs/<slug>/spec.md` |
-| Initiative | `.hero/planning/initiatives/<slug>/spec.md` | `.hero/specs/<slug>/spec.md` |
-| Note/context/rule | `.hero/knowledge/<type>/<slug>/spec.md` | Stays in knowledge. |
-
-Current lifecycle statuses are `planning`, `in-review`, `delivering`,
-and `completed`, with knowledge-specific statuses such as `active`,
-`accepted`, or `draft` where appropriate.
-
-CLI helpers:
+| Initiative child | `.hero/planning/initiatives/<parent>/<slug>/spec.md` | `.hero/specs/<slug>/spec.md` |
 
 ```bash
 hero spec new csv-export
 hero spec claim csv-export
 hero spec verify csv-export
-hero spec complete .hero/planning/features/csv-export/spec.md
-hero list --ready
-hero queue --format kickoff
 ```
+
+`hero spec verify <slug>` checks the Completion Ledger, cold audit,
+acceptance-criterion test coverage, and build/tests. When the hard gates pass,
+it completes and archives the spec. `hero spec complete` is not the normal
+evidence-backed close.
+
+## Commit boundary
+
+Commit the project corpus, including planning, completed specs, knowledge, and
+the projected `NEXT.md`, `QUEUE.md`, and `SNAPSHOT.md` files. Do not commit
+credentials, `.hero/hero.local.json`, sessions, per-machine `.local.md` files,
+or generated graph/index databases. `hero init` manages the usual ignore rules.

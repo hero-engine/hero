@@ -1,111 +1,50 @@
-# Agents & Skills
+# Agents, skills, and domain composition
 
-Hero ships with 34 specialized agents and 45 skills. Agents are roles with defined responsibilities and boundaries. Skills are domain knowledge loaded dynamically based on context.
+Agents are bounded roles; skills are instruction sets loaded for the work at
+hand. Exact inventories vary with the installed domain composition and harness,
+so narrative pages describe roles rather than freezing mutable counts.
 
-## Agent Organization
+## Engineering setup
 
-```mermaid
-flowchart TB
-    subgraph Orchestration
-        FDL[Feature Delivery Lead]
-        BDL[Bug Delivery Lead]
-    end
+The default project receives Core plus the **Engineering** setup. It includes:
 
-    subgraph Architecture
-        BFA[Brownfield Architect]
-        GFA[Greenfield Architect]
-    end
+- delivery leads for features and platform work;
+- architecture, design, pull-request, security, and roadmap reviewers;
+- implementation specialists for API, database, integration, migration,
+  performance, operations, release, and documentation work;
+- investigation and functional QA roles;
+- focused code-health scrubbers;
+- project context, conventions, and session warm-start roles.
 
-    subgraph Engineering
-        ENG[Engineer]
-        SPEC[Specialists]
-    end
-
-    subgraph Review
-        R1[7 Review Agents]
-    end
-
-    subgraph Code Health
-        S1[7 Scrubber Agents]
-    end
-
-    FDL --> BFA
-    FDL --> ENG
-    BDL --> ENG
-    BFA --> ENG
-    GFA --> ENG
-    ENG --> SPEC
-```
-
-### Orchestration
-
-Delivery leads coordinate the workflow. They read specs, break down tasks, delegate to specialists, and verify results.
-
-!!! warning "Delivery leads never write code"
-    They plan, coordinate, and verify — but all code changes are made by engineering agents. This separation prevents the orchestrator from cutting corners.
-
-### Architecture
-
-| Agent | Role |
-|---|---|
-| Brownfield Architect | Works within existing codebases — respects current patterns, minimizes disruption |
-| Greenfield Architect | Designs new systems from scratch — picks patterns, defines structure |
-
-### Engineering
-
-The **engineer** agent is the primary code-writing agent. It auto-detects the project's stack and loads the appropriate language-specific skills.
-
-Specialists handle narrow domains (database migrations, API design, infrastructure, etc.) and are called in by delivery leads when needed.
-
-### Review (Read-Only)
-
-Seven review agents cover different aspects of code quality:
-
-- Correctness and logic
-- Security
-- Performance
-- Test coverage
-- API design
-- Documentation
-- Conventions compliance
-
-!!! info "All review agents are read-only"
-    Review agents analyze and report — they never modify files. This makes them safe to run at any point without risk of unintended changes.
-
-### Code Health
-
-Seven scrubber agents (invoked via `/scrub`) target specific code health issues:
-
-- Dead code removal
-- Duplication detection
-- Weak type strengthening
-- Slop cleanup (AI-generated boilerplate)
-- Import organization
-- Error handling improvement
-- Naming consistency
+This setup is **shipped**. Agent execution depends on the active harness and its
+permissions. Read-only and write-capable roles follow the boundaries declared
+by the installed content; do not infer safety from a role name alone.
 
 ## Skills
 
-Skills are instruction sets loaded dynamically based on what the agent is working on. Hero includes 45 skills across four categories:
+The implementation agent detects the stack and loads only the relevant
+language, framework, testing, and architecture guidance. Workflow skills define
+Hero operations such as design, diagnosis, delivery, review, and capture.
 
-| Category | Examples |
-|---|---|
-| **Workflow** | Spec authoring, code review process, delivery verification |
-| **Principles** | SOLID, testing strategies, API design guidelines |
-| **Language / Framework** | Go, TypeScript, React, Next.js, Python, Rust |
-| **Domain** | Auth patterns, billing systems, data pipelines |
+Codex and Grok render workflow commands as command skills because they do not
+use Claude's command-file surface. That makes per-target skill totals different
+even when the underlying workflow inventory is the same.
 
-### Dynamic Loading
+## Optional domain setups
 
-Skills are not pre-loaded. When the engineer agent starts work, it inspects the project (languages, frameworks, config files) and loads only the relevant skills. A Go project with PostgreSQL gets Go + SQL skills. A React + TypeScript project gets TypeScript + React skills.
+Focused PM, QA, and Sales setups are **optional** and maturity-bounded. Select
+the intended primary domain or supported extension composition, then re-run
+installation. The default Engineering setup already contains lightweight PM
+and QA assistance used within coding workflows; installing a focused pack is a
+different composition choice, not a prerequisite for normal delivery.
 
-```mermaid
-flowchart LR
-    P[Project Files] --> D[Stack Detection]
-    D --> S1[Go skill]
-    D --> S2[SQL skill]
-    S1 --> E[Engineer Agent]
-    S2 --> E
+## Inspect the actual install
+
+```bash
+hero doctor
+hero domain
 ```
 
-This keeps context focused and avoids wasting token budget on irrelevant instructions.
+`hero doctor` reports expected-versus-installed content for each target at the
+running revision. Use that derived output when an exact command, agent, or skill
+inventory matters.

@@ -85,18 +85,13 @@ hero sync jira                                            # bulk-push status tra
 bulk (configure transition names under `jira.transitions` — see
 [Tracker Setup](../configuration/tracker-setup.md#status-sync-jira)).
 
-## Team Server & Cloud Sync
+## Mutation boundary
 
-For teams running the Hero team server / Hero Cloud, `hero sync` also
-exchanges state with the server:
-
-```bash
-hero sync cloud    # push specs to the Hero team server / Cloud
-hero sync graph    # push / pull knowledge-graph deltas with Hero Cloud
-```
-
-These require a configured team server or `hero login` to Hero Cloud;
-they are independent of your issue-tracker connection.
+Tracker reads can import or refresh evidence after a supported provider is
+configured. Writes require explicit consent for the exact issue and operation;
+a configured connection is not blanket approval. Keep tokens in environment
+variables or `.hero/hero.local.json`, never command arguments or committed
+configuration.
 
 ## Sprint Loading
 

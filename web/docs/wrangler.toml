@@ -1,5 +1,3 @@
 name = "hero-docs"
 compatibility_date = "2025-01-01"
-
-[assets]
-directory = "./site"
+pages_build_output_dir = "./site"

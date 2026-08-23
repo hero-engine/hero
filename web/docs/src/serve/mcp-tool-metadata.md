@@ -1,8 +1,9 @@
 # MCP Tool Metadata — Category & Tier (v1)
 
-Hero's MCP server advertises ~60 `hero_*` tools. Their schemas are the single
-largest fixed token cost at the start of a request, and most tools are not
-needed on any given turn. To let a harness defer schemas it does not need
+Hero's MCP server advertises its current `hero_*` registry through `tools/list`.
+The exact inventory can change and may be reduced by configured filtering.
+Schemas are a significant fixed token cost, and most tools are not needed on
+any given turn. To let a harness defer schemas it does not need
 *without* each harness re-inventing which Hero tools matter, Hero labels every
 tool in `tools/list` with two facets a client can read directly.
 
@@ -107,10 +108,5 @@ the harness's job, because only the harness owns its context window. Hero's
 contribution ends at the labels; you build the broadcast-plus-lookup on top of
 them.
 
-Reference implementations of the harness side:
-
-- **Claude Code** — `ToolSearch` over the deferred set.
-- **hero-code** — `discover_tools` over the deferred set
-  (spec `tool-deferred-schema-loading`, hero-code repo).
-
-Both read the same labels above.
+Claude Code's `ToolSearch` is one example of a harness consuming the tier labels
+over a deferred set. Hero emits the labels; the harness owns schema loading.

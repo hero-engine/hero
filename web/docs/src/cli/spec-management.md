@@ -30,7 +30,7 @@ hero graph csv-export --format mermaid
 Claims are advisory and visible in status/search output. They are not a
 distributed lock.
 
-## Deliver, Verify, Complete
+## Deliver and verify
 
 ```bash
 hero spec deliver csv-export
@@ -40,10 +40,15 @@ hero spec score csv-export
 hero diff .hero/planning/features/csv-export/spec.md
 hero drift csv-export
 hero drift --in-flight
-hero spec complete .hero/planning/features/csv-export/spec.md
 ```
 
 `hero deliver` is a top-level alias for `hero spec deliver`.
+
+`hero spec verify <slug>` is the normal evidence-backed close. It checks the
+Completion Ledger, cold delivery audit, acceptance-criterion test mapping, and
+build/tests. When the hard gates pass, it marks the spec complete and archives
+it. Do not follow it with `hero spec complete` and do not hand-edit completed
+status.
 
 ## Acceptance Criteria and Contracts
 

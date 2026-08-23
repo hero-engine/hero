@@ -1,0 +1,5 @@
+{
+  "source_revision": "BUILD_TIME_SOURCE_REVISION",
+  "current_release": "BUILD_TIME_CURRENT_RELEASE",
+  "generated_at": "BUILD_TIME_GENERATED_AT"
+}

@@ -1,2 +1,4 @@
-mkdocs>=1.6
-mkdocs-material>=9.5
+# Application build dependencies are pinned so a deploy cannot silently cross
+# the incompatible MkDocs 2.0 boundary or change the generated asset/license set.
+mkdocs==1.6.1
+mkdocs-material==9.7.7

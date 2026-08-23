@@ -4,6 +4,208 @@ Every release published to `hero-engine/hero-releases`, generated
 automatically at docs build time. Pick a version in the left nav to jump
 to its notes.
 
+## v0.33.0 — 2026-08-18
+
+### Major Features
+
+- 7c0423aa060e2bad40b5375a8f8f6cb8d91b2c6a feat(install): add native Grok Build target
+- 8088f225b61e2ff6e377fab7fb8d4b2bb7b082f5 feat(mail): add cross-project read contract
+
+### Fixes
+
+- ffc0e47c327e7ed8990fd75297f0fcfe19254f77 fix(index): preserve repo-scoped graph node identity
+- cfc0c5d83f36a7323f4db379d5674185fad2139d fix(spec): ignore hidden Hero internals during discovery
+
+## v0.32.0 — 2026-08-14
+
+### Major Features
+
+- 73fac3a3ba8bf118103c65d93e5e41889665da44 feat(cli): close interactive setup and connect
+- 2767452418ff7885c4b60d3f6b7fb37961196d9b feat(cli): close prompt and TTY contract
+- 268214cd55b059831984ad598f09fdb2657affdd feat(cli): complete corpus selectors
+- f2626dc313d71f3bea7f56ceae42a5bf1d3fe32f feat(mcp): category + tier metadata on tools/list for harness-agnostic deferral
+
+### Fixes
+
+- 02c47d42eb62243da005f88def331f7ceb5fbe7c fix(cli): close prompt-and-tty-contract-closure audit gaps
+- 70c62797f9a52cc2ce8a04257783a316afcacb62 fix(cli): preserve shared setup files on uninstall
+- 81ede0f517e7be1514e967c815ce843fb660d84d fix(cli): reconcile successor test contracts
+- 107272f8271c422f82254103c08bb712f554b496 fix(hero): reconcile interactive CLI audit evidence
+- 76ed88ee6d8fed562b067074a456be30c99b60cc fix(release): supply version-matched Hero Code artifact
+
+## v0.31.1 — 2026-07-30
+
+### Changes
+
+- Adds a GitHub-first, provider-neutral code-host boundary distinct from issue tracking, with versioned fixtures and credential-safe CLI and MCP surfaces.
+- Adds bounded pull-request discovery, detail, commits, diffs, checks, reviews, comments, merge readiness, creation, collaboration, lifecycle, and merge operations.
+- Adds authenticated actor identity, truthful diff availability, permission-aware mutations, and idempotent reconciliation.
+- Hardens Jira attachment downloads with redirect=false and same-origin credential enforcement.
+- Classifies GitHub SAML SSO requirements without exposing authorization URLs.
+- Makes cancel-after-apply coverage deterministic across create, collaboration, lifecycle, and merge operations.
+
+## v0.30.0 — 2026-07-27
+
+### Major Features
+
+- 1a0e66b07c7c39cc93a5b264b2f0012b0aecef25 feat(attention): define interaction consent contract
+- 5a725dde8e8b42a4454fe4643cba71f3c1e3714c feat(attention): deliver conversational inbox operability
+- b9e02e6250362db9ba7bf3ae00bd5ba63fbe975b feat(attention): deliver deferred work suggestions
+- 6ab4e091066c25c357738e122dcf4bab0fc41586 feat(attention): deliver global attention read model
+- f5a5b1bfd7253b58fb038fbc96ce84b38f6537c9 feat(attention): deliver project mail triage provenance
+- b48f2a15bd243102bc74c09e780e4bb48f75e86a feat(cli): make hero status actionable <!-- drift-test:ignore -->
+- ade0016883e8058510927f7b816e8049b112f084 feat(peering): route peer workflows through project mail
+- 40cd4c2db0cce0ae0d5650c32f3f1128e2220d41 feat: add durable attention contracts
+- 592cb9947d1b967389993daacfcdcac7323ea2cf feat: add incremental code index refresh
+- 42055dcaa2fab793c8afac584dae5525c4aadff8 feat: add personal focus core
+- 35fbc855bc54b5a75bcb0a89926cdb7b4f77caa7 feat: add project mail core
+- 0816a56cef7b09fd6d80f818e4003a936e8c0634 feat: add tracker project snapshots and durable attention specs
+- 08597718acbf7b11000af77a80d40e65502108da feat: keep code indexes fresh from git hooks
+
+### Fixes
+
+- 35ee79f297aab06b0e043a28f140d77ffbdef91f fix(attention): refresh suggestion surface counts
+- 23dc1e19be86c9fadedf7a15244be4ebd289a516 fix(graph): repo-scope node identity and close the peer-spec staleness tail (#4)
+- 9a6a8292e8dcba1b5cb5aeb87e2110f8ed4eaaf4 fix(release): make file locks portable
+- 1e5da796d5acc7ded190f27b5bac74ee91a55be9 fix(spec): block initiative auto-completion on unbuilt declared children (#3)
+- f4cc20d451b8a808ea54b682d1070df8c19ca59f fix: close intake primitive audit gaps
+- 3712247b813805c624e8b964ac2e8fba547b6243 fix: keep code refresh lock in cache
+- 189e28815e5f1200aaacfdce78668f1180fdf954 fix: refresh embeddings with code index
+
+## v0.29.0 — 2026-07-22
+
+### Major Features
+
+- 3f675c67646afd481cd18bb2a42b34cfa61bdad5 feat(tracker): add lazy evidence sidecars
+
+### Fixes
+
+- 1d5ae9596a63c3af2497322fb228327cbc0633e9 fix(tracker): preserve Jira ADF description fidelity
+
+## v0.28.2 — 2026-07-21
+
+### Major Features
+
+- 7981763753f941eda68fc45a5a44afcfab2d3b47 feat(tracker): add credential-safe brokered access
+
+## v0.28.1 — 2026-07-21
+
+### Fixes
+
+- f4d3a18aa6dc9f05848c361cb82e1b45bee61a7a fix(tracker): make serve auto-refresh bulk-only
+
+## v0.28.0 — 2026-07-20
+
+### Major Features
+
+- 85ada637fc91466b32b7b007193f059d912f4a22 feat(design): compact acceptance-criteria recaps
+- c3823e086592b84f933f851af7ed51e287a1c2c7 feat(tracker): harden imports and add full-ticket evidence
+
+## v0.27.3 — 2026-07-20
+
+### Major Features
+
+- f410356ab8524bd22b77bd508a54decc8a0ae994 feat(tracker): preserve native issue activity timestamps
+
+## v0.27.2 — 2026-07-18
+
+### Major Features
+
+- 9d7c707a493da81bcec04f379066763b27894011 feat(chat): add machine-readable checkpoint sentinels to /research contract
+- f5fb8d6b7fa9854417ab8fb8867494b03c4e99f0 feat(chat): extend domains/chat into the canonical generic Hero Chat pack
+- 267f8eb2cf14f6d95704a9ab59770ceb4c623584 feat(chat): slim chat to basic + preserve research apparatus as dormant seed
+- 04a0b5dcbd0b4d44dfb67270878bbcc710f822b1 feat(chat): trim research apparatus — keep chat simple, light research habits only
+
+### Fixes
+
+- cf6ebc28045410f7c5325e1bce246a336cb62d34 fix(graph): heal hero why on read + fix repoKey drift across graph writers (#2) <!-- drift-test:ignore -->
+
+## v0.27.1 — 2026-07-18
+
+## v0.27.0 — 2026-07-18
+
+### Major Features
+
+- aba3fa4d32986fe84e9f11dd2c836c7d4e3aba80 feat(doctor): show installed harness targets with per-target content counts
+- a14a0abf626fd13540dfd99a29e203222df3ae01 feat(pm): PRD editor comms backing — pitch-author + stakeholder-communicator (pm-pack-completion #4)
+- a7ccd0ef5a4c37ee7c696cb8a1b584a14a9a9fc1 feat(pm): adversarial critics bundle — drift, prioritization, doc, readout (pm-pack-completion #6)
+- 03245c2ef86fdd308d2bf0ad15ab2feec6b83688 feat(pm): competitive + market grounding (pm-pack-completion #8)
+- 15aeda7e11c63f2050fcf902dcaf4a265b3d7f48 feat(pm): discovery & framing coverage skills (pm-pack-completion #10)
+- 7f652f4a8df111ae0ddf009ee6e532c6e308db87 feat(pm): doctrine spine + skill backfill + canonical AGENTS.md (pm-pack-completion #1)
+- 917c5494621be0cd5585a717c4e30f75225b9773 feat(pm): exec narrative + evidence synthesis depth (pm-pack-completion #9)
+- e2b82c41d2b505858016497a790e27c96cbbb402 feat(pm): experiment stage + metric RCA (pm-pack-completion #7)
+- 2d3bfdf5cd254a693ade1675f626813488c3e80c feat(pm): remaining roles, scrubbers & launch (pm-pack-completion #11)
+- de5da2fa011c191330e7c73a0f30f0caeebde5df feat(pm): story queue planning backing — capacity + cycle planner (pm-pack-completion #3)
+- 7679134971240ea2a6c27222f908d15b6a98f0a1 feat(pm): story-detail deps + intake scrubber backing (pm-pack-completion #5)
+
+## v0.26.4 — 2026-07-17
+
+### Fixes
+
+- e42e272dfb568f7a4ca056f86d8cf4f84ad302f2 fix(tracker): validate connect settings before persist; add sync link --force and dir/slug args
+
+## v0.26.3 — 2026-07-17
+
+### Major Features
+
+- aa948a7aef7e2d0a46c84f0be69be5affb70d2f0 feat(design): show the acceptance-criteria table in the closing report
+- 5e87f84afafbeb0c8fa2fef367ac111dc6801f65 feat(install): manifest-driven prune of product-removed agents/commands/skills
+
+### Fixes
+
+- 9d31597654e9e8e6c3d9423b646090c3d63c510b fix(codex): scope .codex/agents cleanup to legacy .md — stop wiping user files
+
+## v0.26.1 — 2026-07-16
+
+### Fixes
+
+- 96db39359e807af8665e5cac5d98a97a0131a408 fix(projection): drop the drifting branch: line from NEXT.md; keep session:
+- b86b821648907967a2a0ea818da54e5e091a7a0c fix(projection): regenerate NEXT.md branch-free with the fixed binary
+- 353cc373cf7cb3f3f4743a57e834e0c7607f0572 fix(serve): join the parent-watchdog goroutine in tests — unbreak the -race CI gate
+
+## v0.26.0 — 2026-07-16
+
+### Major Features
+
+- 8f8972463c42e1880f5e1347c2106f57f707fe97 feat(check): install-integrity — hero check detects damaged or stale installs (install-integrity-self-check) <!-- drift-test:ignore -->
+- f122397c52c797fdd21f2264ff8f0da7f5928fb6 feat(config): add layered integration configuration
+- 79f47e8c19866e363518d3b6dac55607d91640cd feat(install): spec install-integrity self-check; capture the verification lesson
+
+### Fixes
+
+- c10b4dbbd7dd19fc4604c1a8e091342fccff8338 fix(check): orphan-instruction-files no longer false-positives on a fresh clone
+- 23c113539fa2da0d9a53bf4af644fd4fd4f2966b fix(install): MCP config points at the running binary; codex block moves to the User layer (codex-mcp-binary-path-resolution)
+- 5a4d1515678bcded17fa520847290072d7d7791b fix(install): MCP wiring is portable and lives in the project layer, all four targets
+- fa3b339449403c6c0bf927f6ebb3b3dfaf0056b5 fix(snapshot): stop the pointer writer erasing AGENTS.md; guard it for every target
+- 0d69f13ff4a258ccf9d9ec472ba47dee8040de2f fix(spec): classify EARS under an AC-N label; document the labeled form
+- 153ab290ed9d76a013df7e2597845da0a5f240dd fix(spec): stop fenced `## ` headings from forging phantom sections
+
+## v0.25.1 — 2026-07-13
+
+### Fixes
+
+- 2b35aca09ab6820ff2ee13c3a337690ba360c112 fix(docs-check): count canonical install set in the engine repo; refresh doc counts
+- 3c38bccb46b84fa2ebb71b594f94f0aa53b1fb7f fix(serve): stop hero mcp daemon dying mid-session; coexist instead of supersede <!-- drift-test:ignore -->
+
+## v0.25.0 — 2026-07-13
+
+### Major Features
+
+- feat(doctor): add `hero doctor` — reports the running binary path, the <!-- drift-test:ignore -->
+- feat(mcp): MCP `initialize` result now stamps binary + graph schema
+- feat(docs): auto-generated release notes page, built from published
+
+### Changes
+
+- MCP daemon startup now supersedes redundant daemons per (workspace +
+- Harness routing guidance across all six targets (opencode, cursor,
+
+### Fixes
+
+- fix(hero): schema-mismatch errors are now self-locating — they print
+- fix(hero): corrected a lexical schema-version comparison that inverted
+- fix(docs): corrected stale `hero verify` / `hero peer --peer` <!-- drift-test:ignore -->
+
 ## v0.24.1 — 2026-07-12
 
 ### Changes

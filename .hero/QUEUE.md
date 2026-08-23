@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-23T16:47:58Z · 85 ready specs_
+_Generated: 2026-08-23T17:23:33Z · 84 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -51,22 +51,6 @@ _initiative · planning · horizon: now_
 _Run opener — arm with `/drive hero-marketing`_
 
 Deliver the complete v0.34 public-readiness path: an inventory of the shipped product, memory-first positioning, current root and hosted documentation, a current public site, repository-readiness materials, a reproducible product proof, drift guards, and a clean release candidate. The owner has authorized preparing this repository for an Apache-2.0 grant. Adding the license, changing repository visibility, and publishing the release remain explicit final mutations rather than prep work.
-
----
-
-## hero-hosted-docs-remediation — "Hero Hosted Documentation Truth and Capability Refresh"
-_feature · planning · horizon: now_
-
-Turns a structurally green but factually drifting docs site into the authoritative product reference.
-
-**Status:** planning — blocked on the claim baseline and positioning source.
-
-**Pick up at:** map every `web/docs/src` page and navigation entry to claim-registry rows, identify why newer source pages are absent from the June 11 live deployment, then resolve P0/P1 content before adding missing capability coverage.
-
-→ `.hero/planning/initiatives/hero-marketing/hero-hosted-docs-remediation/spec.md`
-
-**Files:** `web/docs/src/`, `web/docs/mkdocs.yml`, documentation generation scripts and navigation
-**Skip:** landing-page copy and broad visual rebranding.
 
 ---
 

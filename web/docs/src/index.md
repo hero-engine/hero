@@ -1,111 +1,83 @@
 # Hero
 
-**Design before you build. Diagnose before you fix. Start every session warm.**
+**Your project remembers. Your agents finish.**
 
-Hero is the sidekick brain for AI-augmented engineering. It captures
-specs, decisions, conventions, acceptance criteria, attempts, failures,
-and recent activity into a local `.hero/` corpus, then exposes that
-context to AI coding tools through slash commands, CLI commands, and MCP.
+Hero gives AI coding tools durable project memory and a verified delivery
+system, so decisions survive sessions and agents finish work against evidence.
 
-```mermaid
-graph LR
-    A["/resume"] --> B["/discover"]
-    B --> C["/design"]
-    C --> D["/deliver"]
-    E["/diagnose"] --> D
-    D --> F["/handoff"]
-```
+## Two connected paths
 
-## Just tell it what you want
+### 1. Project memory
 
-You don't have to memorize commands. Describe what you need in plain
-English and Hero routes it to the right workflow:
+Hero keeps project-owned intent, decisions, corrections, conventions, evidence,
+failures, and current state in a local `.hero/` corpus. Supported harnesses and
+the CLI can retrieve the relevant slice instead of rebuilding context in every
+prompt.
 
-| You say... | Hero runs |
-|---|---|
-| "There's a bug in checkout, can you investigate?" | `/diagnose` |
-| "Let's add CSV export to the reports page" | `/design` |
-| "Ship the auth spec" | `/deliver` |
-| "Review this PR" | `/review` |
-| "Break this epic into smaller pieces" | `/compose` |
-| "What's the convention for error handling here?" | `/convention` |
-| "Help me decide between Postgres and SQLite" | `/decide` |
-| "Where did we leave off?" | `/resume` |
+[Follow the project-memory path](concepts/knowledge-base.md)
 
-Slash commands and the CLI are always there when you want precision —
-but day to day, conversation is the interface.
+### 2. Verified delivery
 
-## Why Hero?
+Specs bound intent and acceptance. Specialized agents implement the work. A
+Completion Ledger, a fresh cold audit, and build/test gates establish whether
+the result can be closed.
 
-- **Specs before code** — `/design` produces an explicit plan and
-  acceptance criteria before implementation.
-- **Diagnosis before fixes** — `/diagnose` investigates root cause and
-  creates a fix spec instead of guessing.
-- **Context compounds** — `/resume`, `hero search --hybrid`, `hero ask`,
-  `hero relevant`, and MCP tools make prior work available to the next
-  session. A built-in semantic embedding engine finds related content
-  even without exact keyword matches.
-- **Knowledge becomes structure** — the graph backs `hero why`,
-  `hero blocked`, AC status, drift checks, and session handoff.
-- **The harness stays the brain** — Hero feeds OpenCode, Cursor, Claude
-  Code, Codex, Copilot, and MCP-capable tools with the right context.
+[Follow the delivery-system path](concepts/core-loop.md)
 
-Current installed surfaces: 28 slash commands, 34 agents, 47 skills, and
-42 MCP tools.
+The reinforcing cross-session, cross-tool loop is currently **preview**: the
+components ship, but the repeatable continuity proof is not yet public. Hero
+preserves the artifacts needed for that loop; it does not claim that every tool
+or session applies them perfectly.
 
-!!! tip "What's new in v0.10"
-    - **`hero snapshot`** — project-shape rollup (surfaces, lifecycle
-      stages, recent activity, risks) with archive/diff/history.
-      See [Search & Context → Project Snapshot](cli/search-and-context.md#project-snapshot).
-    - **Cross-repo peering** — sibling Hero workspaces can advise each
-      other, design specs natively on a peer's side, or async-drop a
-      handoff. See [Cross-Repo Peering](cli/peering.md).
-    - **Cross-machine NEXT projection** — NEXT.md is projected from
-      graph events, per-machine `.local.md` stays out of git, and a
-      SessionStart hook keeps a fresh session warm. See
-      [Search & Context → Resume and Recap](cli/search-and-context.md#resume-and-recap).
-    - **Tracker subcommands are canonical** — use `hero sync import`
-      and `hero sync pull <slug>` (top-level `hero pull` is gone).
+## Capability status at a glance
 
-## Quick Start
+| Capability | Availability | Prerequisite | Action boundary |
+|---|---|---|---|
+| Project memory and retrieval | Shipped | Hero workspace plus supported harness or CLI | Reads project-owned corpus; writes happen only through explicit capture workflows |
+| Spec-and-agent delivery | Shipped | Engineering setup and an active harness | Implementation follows an approved spec; verification is evidence-gated |
+| Attention, Mail, and Focus | Shipped | User-global Hero state | Attention is bounded; Mail bodies require explicit reads; Focus is private |
+| `hero serve` project intelligence | Shipped | Local daemon startup | Local by default; team/external access needs separate auth and configuration |
+| Tracker and code-host operations | Optional | Configured provider, credentials, repository identity | Mutations require explicit operation-specific consent |
+| Cross-repository peering | Optional | Registered reachable siblings and peer manifests | One graph per project; calls and handoffs cross an explicit Mail boundary |
+| Headless runtime | Preview | Model provider, credentials, execution environment | Approval-gated jobs pause before protected actions |
+
+See [Capability status and evidence](reference/capability-status.md) for the
+implementation authorities behind these labels.
+
+## Quick start
 
 ```bash
-# macOS / Linux
 brew install hero-engine/tap/hero
-# Linux (no Homebrew): curl -fsSL https://raw.githubusercontent.com/hero-engine/hero-releases/main/install.sh | sh
-# Windows: scoop bucket add hero-engine https://github.com/hero-engine/scoop-bucket && scoop install hero
-
 cd your-project
 hero init
-hero install project . --target opencode
+hero install project . --target codex
+hero check
 ```
 
-See the [installation guide](getting-started/installation.md) for all options.
+Prebuilt binaries do not require Go. A source build requires the Go version in
+`go.mod`. Hero renders workflows into each supported target's native surfaces;
+they are not universal slash commands.
 
-Then in your AI tool:
+## Current release and documentation freshness
 
-```text
-/scan
-/resume
-/design add CSV export
-```
+Release notes are generated from published releases. The docs artifact also
+publishes its exact source revision at [Build information](about/build.md) and
+[`/revision.json`](revision.json). The current release is derived from the
+latest release tag during the build; it is not maintained as narrative copy.
 
-## Core Workflows
+## Product and repository boundary
 
-| Workflow | Commands | Purpose |
-|---|---|---|
-| Build | `/discover` -> `/design` -> `/deliver` | Explore, spec, implement. |
-| Fix | `/diagnose` -> `/deliver` | Investigate, spec fix, implement. |
-| Maintain | `/convention`, `/scrub`, `/review`, `/check` | Standards, cleanup, review, health. |
-| Coordinate | `/compose`, `/sprint`, `/handoff`, `hero queue` | Plan, sequence, preserve context. |
+This site documents the `hero` CLI repository. Hero Code and Hero Cloud are
+separate proprietary products. Sprout is a separate MIT-licensed project and
+is not covered by Hero's future license grant. Apache-2.0 preparation for this
+repository is authorized, but Hero must not be described as open source until
+the explicit license gate adds the root license.
 
-## Next Steps
+## Next steps
 
-- [What Is Hero?](what-is-hero.md) — plain-English explainer
-- [Why Hero](why-hero.md) — deeper technical evaluation
 - [Installation](getting-started/installation.md)
-- [Project Setup](getting-started/project-setup.md)
-- [First Workflow](getting-started/first-workflow.md)
-- [Commands Reference](commands/index.md)
-- [CLI Overview](cli/overview.md)
-- [MCP Setup](configuration/mcp-setup.md)
+- [Project memory](concepts/knowledge-base.md)
+- [Verified delivery](concepts/core-loop.md)
+- [Attention, Mail, and Focus](cli/attention.md)
+- [`hero serve`](cli/server-and-mcp.md)
+- [Build information](about/build.md)

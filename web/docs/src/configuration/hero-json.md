@@ -1,349 +1,186 @@
-# hero.json Configuration
+# `hero.json` configuration
 
-Hero is configured through a `hero.json` file at the root of your project (or inside `.hero/`). This file controls tracker integration, team workflows, import behavior, conventions, and more.
+Shared non-secret settings live in `.hero/hero.json`. Personal credentials and
+overrides belong in `.hero/hero.local.json`, which must not be committed.
+`hero init` creates a starter file; `hero connect` configures integrations.
 
-!!! tip "Generate a starter config"
-    Run `hero init` to generate a `hero.json` with sensible defaults, or `hero sync connect` for interactive tracker setup.
+## Decoder-backed full example
 
----
-
-## Full Example
+This example is mirrored by `internal/config/testdata/public-hero.json` and is
+loaded through the production decoder by
+`TestPublicHeroConfigFixtureLoadsThroughProductionDecoder`. Update that fixture
+and test before changing this block.
 
 ```json
 {
   "folder": ".hero",
-
   "team": {
     "require_review": true,
     "stale_days": 14,
     "auto_context": true,
-    "nudge_level": "moderate"
+    "nudge_level": "assertive"
   },
-
   "integrations": {
     "default": "jira-delivery",
-    "roles": {"delivery": "jira-delivery"},
+    "roles": {
+      "delivery": "jira-delivery"
+    },
     "connections": {
       "jira-delivery": {
         "provider": "jira",
-        "settings": {"project": "PROJ", "base_url": "https://myorg.atlassian.net"},
-        "auth": {"token_env": "JIRA_API_TOKEN"}
+        "settings": {
+          "project": "PROJ",
+          "base_url": "https://example.atlassian.net",
+          "user_email": "developer@example.com"
+        },
+        "auth": {
+          "token_env": "JIRA_API_TOKEN"
+        }
       }
     }
   },
-
   "import": {
     "default_type": "bug",
     "limit": 25,
-    "filter": "status != Done AND assignee = currentUser()",
+    "base_filter": {
+      "jql": "status != Done AND assignee = currentUser()"
+    },
     "auto_refresh": true,
     "refresh_interval": "30m"
   },
-
-  "jira": {
-    "custom_fields": {
-      "epic_link": "customfield_10014",
-      "sprint": "customfield_10020",
-      "story_points": "customfield_10028",
-      "acceptance_criteria": "customfield_10035"
-    },
-    "transitions": {
-      "in_progress": "In Progress",
-      "in_review": "In Review",
-      "done": "Done"
-    }
-  },
-
   "sync": {
-    "target": "github",
+    "target": "none",
     "auto": false
   },
-
   "conventions": {
     "enforce": true,
-    "scope_default": "project"
+    "scope_default": "*"
   },
-
   "knowledge": {
     "auto_capture": true,
     "explainer_synthesis": "review"
   },
-
   "models": {
     "roles": {
-      "plan": "claude-sonnet-4-20250514",
-      "build": "claude-sonnet-4-20250514",
-      "review": "claude-sonnet-4-20250514"
-    }
-  },
-
-  "hooks": {
-    "branch_patterns": {
-      "feature": "feature/{slug}",
-      "bug": "fix/{slug}",
-      "chore": "chore/{slug}"
+      "design": "claude-opus-4",
+      "execution": "claude-sonnet-4-5",
+      "review": "o3"
     },
-    "slug_transform": "kebab-case",
+    "default_model": "claude-sonnet-4-5"
+  },
+  "hooks": {
+    "branch_patterns": [
+      "feat/{{slug}}",
+      "feature/{{slug}}",
+      "fix/{{slug}}",
+      "{{slug}}"
+    ],
+    "slug_transform": "kebab",
     "inject_commit_prefix": true
   },
-
-  "tracking": {},
-
-  "sessions": {},
-
-  "pulse": {},
-
+  "tracking": {
+    "stale_claim_days": 2,
+    "default_agent": "developer"
+  },
+  "sessions": {
+    "retention_days": 30,
+    "gitignore": true
+  },
   "testing": {
-    "framework": "jest",
-    "mode": "unit",
-    "test_dir": "tests/",
-    "runner_command": "npm test",
+    "framework": "playwright",
+    "mode": "autonomous",
+    "test_dir": "e2e",
+    "runner_command": "npx playwright test",
     "base_url": "http://localhost:3000"
   },
-
-  "demos": {},
-
+  "demos": {
+    "mode": "manual",
+    "framework": "playwright",
+    "output_dir": ".hero/demos",
+    "video_size": {
+      "width": 1280,
+      "height": 720
+    },
+    "on_deliver": false
+  },
   "embeddings": {
     "enabled": true,
-    "scope": ["spec", "knowledge", "convention", "event", "code"],
+    "scope": [
+      "spec",
+      "knowledge",
+      "convention",
+      "event",
+      "code"
+    ],
     "model": "hero-embed-v1"
   },
-
   "serve": {
     "tool_filter": {
-      "allow": ["hero_context", "hero_search", "hero_status"],
-      "deny": ["hero_demo_record"],
+      "allow": [
+        "hero_context",
+        "hero_search",
+        "hero_status"
+      ],
+      "deny": [
+        "hero_demo_record"
+      ],
       "profiles": {
-        "minimal": {
-          "allow": ["hero_context", "hero_status"]
-        },
-        "full": {
-          "deny": []
-        }
+        "minimal": [
+          "hero_context",
+          "hero_status"
+        ]
       }
     }
+  },
+  "specs": {
+    "layout": "single"
+  },
+  "delivery": {
+    "default_mode": "supervised",
+    "autopilot_halt_on": [
+      "drift",
+      "test",
+      "boundary",
+      "lint"
+    ]
+  },
+  "verify": {
+    "run_tests": true,
+    "test_command": "go test ./..."
   }
 }
 ```
 
----
+## Important shapes
 
-## Section Reference
+- `import.base_filter` is an object containing a provider-native filter such as
+  `jql`; it is not a string-valued `import.filter`.
+- `hooks.branch_patterns` is a list of templates using `{{slug}}`.
+- `models.roles` uses `design`, `execution`, and `review`.
+- `serve.tool_filter.profiles` maps a profile name directly to a list of allowed
+  tool names.
+- Integration connections use stable IDs under
+  `integrations.connections`. Shared provider settings live here; personal
+  `auth.token` belongs at the same path in `.hero/hero.local.json`.
 
-### `folder`
+## Integration and action boundary
 
-The directory where Hero stores specs, knowledge, and reports. Defaults to `".hero"`.
+Supported delivery providers are GitHub, Jira, Linear, and GitLab. Configure
+them with `hero connect` or follow [Tracker Setup](tracker-setup.md). Connection
+configuration authorizes access to a provider; it does not grant blanket
+consent for mutations. A write still requires a uniquely resolved target and
+operation-specific user intent.
 
-```json
-"folder": ".hero"
+Never place a token directly in committed configuration or command arguments.
+Automation should pass credentials on standard input or reference an environment
+variable through `token_env`.
+
+## Validation
+
+```bash
+go test ./internal/config -run TestPublicHeroConfigFixtureLoadsThroughProductionDecoder -count=1
+hero check
 ```
 
----
-
-### `team`
-
-Team workflow settings that control collaboration behavior.
-
-| Key | Type | Default | Description |
-|---|---|---|---|
-| `require_review` | `bool` | `false` | Require review approval before a spec can be delivered |
-| `stale_days` | `int` | `14` | Number of days before an in-progress spec is flagged as stale |
-| `auto_context` | `bool` | `true` | Automatically load project context at session start |
-| `nudge_level` | `string` | `"moderate"` | How aggressively Hero nudges on process gaps: `"off"`, `"gentle"`, `"moderate"`, `"strict"` |
-
----
-
-### `integrations`
-
-Provider-neutral connections keyed by stable user-defined IDs. `default` and `roles` select a connection; `settings` are provider-specific and `auth` holds `token_env` or a local-only token overlay. The identical shape is accepted in `hero.local.json`, allowing either partial credentials or a complete personal integration. See [Tracker Setup](tracker-setup.md).
-
-| Key | Type | Description |
-|---|---|---|
-| `default` | `string` | Stable ID used when no role or `--integration` override is supplied |
-| `roles` | `object` | Maps `delivery`, `docs`, or `roadmap` to stable IDs |
-| `connections` | `object` | Stable ID → `{provider, settings, auth}` definitions |
-
-Valid `provider` values and their **required** `settings` differ per provider:
-
-| Provider | Role | Required `settings` | Notes |
-|---|---|---|---|
-| `github` | delivery | `project` | `project` is `owner/repo`. |
-| `linear` | delivery | `project` | `project` is the team key. |
-| `jira` | delivery | `project`, `base_url` | `user_email` required for Jira Cloud. |
-| `gitlab` | delivery | `project`, `base_url` | `base_url` is **mandatory** (`https://gitlab.com` for SaaS); token needs the `api` scope. |
-| `confluence` | docs | `space_key`, `base_url` | Not a tracker — a wiki *publish* target for `hero publish`. `base_url` includes `/wiki`; `user_email` required for Cloud. |
-
-A `delivery`-role Confluence connection is automatically rewritten to the
-`docs` role. See [Tracker Setup](tracker-setup.md) for full per-provider
-examples.
-
-`user_email` is valid **only** for `jira` and `confluence` (Cloud basic auth).
-It is **rejected for `github`, `linear`, and `gitlab` at connect time** — a
-`hero connect gitlab … --user-email …` fails immediately rather than writing a
-config the loader would later refuse. Each provider accepts only the `settings`
-keys listed above (plus the common `post_on_design`, `post_on_deliver`, and
-`size_mapping` options for trackers); any other key is an error.
-
----
-
-### `import`
-
-Controls how `/import` and `hero sync import` pull issues from the tracker.
-
-| Key | Type | Default | Description |
-|---|---|---|---|
-| `default_type` | `string` | `"bug"` | Default spec type for imported issues: `"bug"`, `"feature"`, `"chore"` |
-| `limit` | `int` | `25` | Maximum number of issues to import per run |
-| `filter` | `string` | — | Tracker-native filter query (JQL for Jira, search query for GitHub) |
-| `auto_refresh` | `bool` | `false` | While `hero serve` runs, periodically execute the canonical bulk `hero sync import --refresh` workflow. This discovers new matching issues and refreshes linked specs from the configured bulk result; it never loads full ticket evidence per issue. |
-| `refresh_interval` | `string` | `"30m"` | How often to run the bulk auto-refresh (minimum `"5m"`; examples: `"15m"`, `"1h"`) |
-
-Because auto-refresh delegates to the canonical importer, it honors the same
-configured filters, independent `by_type` queries, and per-query `limit`. It
-never expands the bulk result with per-ticket API calls; use
-`hero sync evidence <spec-slug>` explicitly when an investigation needs
-comments, attachments, changelog, or the full field envelope for one ticket.
-
----
-
-### `jira`
-
-Jira-specific configuration for custom fields and workflow transitions.
-
-#### `custom_fields`
-
-Map logical field names to Jira custom field IDs:
-
-| Key | Description |
-|---|---|
-| `epic_link` | Epic link field |
-| `sprint` | Sprint field |
-| `story_points` | Story points / estimation field |
-| `acceptance_criteria` | Acceptance criteria field |
-
-#### `transitions`
-
-Map Hero status changes to Jira transition names:
-
-| Key | Description |
-|---|---|
-| `in_progress` | Transition name when work starts |
-| `in_review` | Transition name when review begins |
-| `done` | Transition name when work completes |
-
-!!! note
-    Use `push_status_transitions` in your Jira config to enable automatic status syncing. Hero will transition issues as specs move through the workflow.
-
----
-
-### `sync`
-
-Spec synchronization settings.
-
-| Key | Type | Description |
-|---|---|---|
-| `target` | `string` | Sync target: `"github"`, `"jira"`, `"linear"` |
-| `auto` | `bool` | Automatically sync spec status changes to the tracker |
-
----
-
-### `conventions`
-
-Convention enforcement settings.
-
-| Key | Type | Default | Description |
-|---|---|---|---|
-| `enforce` | `bool` | `false` | Enforce conventions during `/check` and `/deliver` |
-| `scope_default` | `string` | `"project"` | Default scope for new conventions: `"project"` or `"team"` |
-
----
-
-### `knowledge`
-
-Knowledge base behavior.
-
-| Key | Type | Default | Description |
-|---|---|---|---|
-| `auto_capture` | `bool` | `true` | Automatically capture learnings at the end of major workflows |
-| `explainer_synthesis` | `string` | `"review"` | Autonomy for `hero synthesize`: `"auto"` (synthesize eligible clusters automatically), `"review"` (surface clusters for review), `"off"` (disabled) |
-
----
-
-### `models.roles`
-
-Assign models to Hero's operational roles.
-
-| Role | Description |
-|---|---|
-| `plan` | Model used for planning, design, and analysis (read-only agents) |
-| `build` | Model used for implementation (read-write agents) |
-| `review` | Model used for review agents |
-
-```json
-"models": {
-  "roles": {
-    "plan": "claude-sonnet-4-20250514",
-    "build": "claude-sonnet-4-20250514",
-    "review": "claude-sonnet-4-20250514"
-  }
-}
-```
-
----
-
-### `hooks`
-
-Git workflow integration.
-
-| Key | Type | Description |
-|---|---|---|
-| `branch_patterns` | `object` | Branch naming templates per spec type. Use `{slug}` as placeholder |
-| `slug_transform` | `string` | How to transform spec titles to slugs: `"kebab-case"`, `"snake_case"` |
-| `inject_commit_prefix` | `bool` | Prefix commit messages with the tracker ID (e.g. `PROJ-142: ...`) |
-
----
-
-### `testing`
-
-Test runner configuration used by delivery and QA agents.
-
-| Key | Type | Description |
-|---|---|---|
-| `framework` | `string` | Test framework: `"jest"`, `"pytest"`, `"go"`, `"vitest"`, etc. |
-| `mode` | `string` | Default test mode: `"unit"`, `"integration"`, `"e2e"` |
-| `test_dir` | `string` | Directory containing tests |
-| `runner_command` | `string` | Command to run tests |
-| `base_url` | `string` | Base URL for integration/e2e tests |
-
----
-
-### `embeddings`
-
-Semantic embedding engine for hybrid search. The embedding model ships
-inside the binary — no download or external tooling required.
-
-| Key | Type | Default | Description |
-|---|---|---|---|
-| `enabled` | `bool` | `true` | Enable semantic embeddings. Set to `false` to use BM25-only search |
-| `scope` | `string[]` | `["spec", "knowledge", "convention", "event", "code"]` | Which corpora to embed. Remove entries to reduce index size |
-| `model` | `string` | `"hero-embed-v1"` | Model name. Override to use a custom model from `~/.hero/models/embeddings/<name>/` |
-
-The embedding index lives inside `index.db` (the `vec_chunks` table) and
-is rebuilt incrementally on every `hero scan`. Use `hero embeddings status`
-to inspect the index and `hero embeddings rebuild` to force a full re-embed.
-
----
-
-### `serve`
-
-Configuration for `hero serve` and `hero mcp`. See [MCP Setup](mcp-setup.md).
-
-#### `tool_filter`
-
-Controls which MCP tools are exposed.
-
-| Key | Type | Description |
-|---|---|---|
-| `allow` | `string[]` | Allowlist of tool names. If set, only these tools are exposed |
-| `deny` | `string[]` | Denylist of tool names. These tools are hidden |
-| `profiles` | `object` | Named filter profiles for different use cases |
+`hero check` validates the active workspace. The Go test is the release guard
+that keeps the published full example synchronized with the production decoder.

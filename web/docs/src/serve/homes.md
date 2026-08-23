@@ -30,8 +30,8 @@ input you'd usually reach for first. Registered in
 A projected snapshot of the project's shape — surfaces, the spec
 table, initiatives, and the archives timeline. Aimed at leads and
 anyone trying to see the whole thing at a glance rather than the
-current sprint. Landed in v0.10 alongside the `hero snapshot`
-projector. Registered in `internal/serve/pages/rollup/page.go`
+current sprint. It is backed by the `hero snapshot` projector. Registered in
+`internal/serve/pages/rollup/page.go`
 (`Slug: "rollup"`).
 
 !!! note "Previously `/project`"

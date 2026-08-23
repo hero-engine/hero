@@ -1,53 +1,72 @@
-# The Core Loop
+# Verified delivery
 
-Hero's workflow revolves around a single principle: **specs before code**. Every change — feature, fix, or refactor — flows through a structured loop that keeps humans in control and agents productive.
+Hero's delivery system uses project memory to move bounded work from intent to
+tested completion. Specs are the execution mechanism; durable project memory is
+the product's primary context layer.
 
-## The Loop
+## The delivery path
 
 ```mermaid
 flowchart LR
-    D["/discover\nBrainstorm"] --> DS["/design\nSpec"]
-    DS --> DL["/deliver\nImplement"]
-    DL -->|learnings| KB[("Knowledge\nBase")]
-    KB -.->|context| DS
-    KB -.->|context| DL
-
-    BUG[Bug reported] --> DG["/diagnose\nInvestigate"]
-    DG --> DL
+    M[Project memory] --> D[Design or diagnose]
+    D --> S[Approved spec]
+    S --> I[Specialized agents implement]
+    I --> L[Completion Ledger]
+    L --> A[Fresh cold audit]
+    A --> V[Build, tests, verify]
+    V --> E[Evidence and current state]
+    E -. preview continuity loop .-> M
 ```
 
-### Features
+### 1. Bound intent
 
-1. **`/discover`** — Brainstorm and explore. Generate ideas, evaluate approaches, map out possibilities. No commitment yet.
-2. **`/design`** — Produce a spec. The spec captures what to build, why, acceptance criteria, and technical approach. It goes through human review before any code is written.
-3. **`/deliver`** — Implement from the approved spec. The agent follows the spec, writes code, runs tests, and verifies against the acceptance criteria.
+- `/design` produces a feature or platform spec.
+- `/diagnose` investigates a defect and produces a fix spec.
+- The spec states its goal, changes, acceptance criteria, validation, and
+  boundaries before implementation begins.
 
-### Bugs
+### 2. Implement with relevant context
 
-1. **`/diagnose`** — Investigate the bug. Reproduce it, trace the root cause, and produce a fix spec with a concrete plan.
-2. **`/deliver`** — Implement the fix from the diagnosis spec.
+`/deliver <slug>` loads the approved spec and retrieves applicable conventions,
+decisions, past work, and known risks. The Engineering setup routes bounded work
+to specialized agents supported by the active harness.
 
-## Specs Are the Core Artifact
+### 3. Account for every requirement
 
-Everything in Hero orbits the spec. A spec is:
+The implementing agent writes a Completion Ledger with one row for every
+acceptance criterion and every Changes item. `DONE` requires on-disk evidence
+and an end-to-end exercise for user-visible behavior.
 
-- **Human-reviewable** — Plain markdown with YAML frontmatter. You read it, comment on it, approve or reject it before any code is generated.
-- **Agent-consumable** — Structured enough that delivery agents can follow it without ambiguity. Acceptance criteria become verification steps.
-- **Tracker-synced** — Specs link to Jira, GitHub, or Linear issues. Status flows bidirectionally so your tracker stays current.
+### 4. Audit cold
 
-!!! info "Why specs matter"
-    Without a spec, an agent guesses at requirements and you discover problems in code review. With a spec, you catch misunderstandings *before* code exists — when they're cheap to fix.
+A fresh agent that did not implement the change checks the spec, diff, ledger,
+and test evidence. A `HOLD` verdict returns concrete concerns to implementation;
+only `SHIP` proceeds.
 
-## Supporting Commands
+### 5. Verify once
 
-The core loop is supported by commands that feed into it:
+```bash
+hero spec verify <slug>
+```
 
-| Command | Role in the loop |
-|---|---|
-| `/compose` | Break epics into a sequence of specs |
-| `/convention` | Define coding standards that `/deliver` follows |
-| `/decide` | Record architectural decisions that inform `/design` |
-| `/review` | Validate delivered code against the spec |
-| `/scrub` | Clean up code health issues, feeding findings back as specs |
+Verification checks:
 
-Every command either **produces** a spec, **consumes** a spec, or **enriches the knowledge base** that makes specs and delivery better over time.
+1. Completion Ledger status
+2. Cold delivery audit with a `SHIP` verdict
+3. Acceptance-criterion-to-test coverage
+4. Configured build and tests
+
+When the hard gates pass, the command marks the spec complete and archives it.
+Do not run `hero spec complete` as a second normal closing step and do not edit
+`status: completed` manually.
+
+## Availability and prerequisites
+
+Verified delivery is **shipped** with the Engineering setup. It requires an
+active harness capable of running the installed agents, a delivery workflow,
+and a project with meaningful validation. The gates establish recorded
+evidence; they do not guarantee correctness or eliminate human supervision.
+
+Next: [Continuity](continuity.md) explains how decisions and evidence can inform
+later sessions. That full cross-tool reinforcing outcome remains **preview**
+until the public continuity proof is complete.
